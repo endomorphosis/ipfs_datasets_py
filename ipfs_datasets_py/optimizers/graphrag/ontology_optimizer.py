@@ -206,8 +206,8 @@ class OntologyOptimizer:
             if hasattr(result, 'critic_scores') and result.critic_scores:
                 # MediatorState
                 scores.append(result.critic_scores[-1].overall)
-            elif hasattr(result, 'critic_score'):
-                # SessionResult
+            elif hasattr(result, 'critic_score') and result.critic_score is not None:
+                # SessionResult with valid critic_score
                 scores.append(result.critic_score.overall)
         
         if not scores:
@@ -327,7 +327,7 @@ class OntologyOptimizer:
         for result in session_results:
             if hasattr(result, "critic_scores") and result.critic_scores:
                 scores.append(result.critic_scores[-1].overall)
-            elif hasattr(result, "critic_score"):
+            elif hasattr(result, "critic_score") and result.critic_score is not None:
                 scores.append(result.critic_score.overall)
 
         if not scores:
