@@ -599,19 +599,24 @@ class SRLExtractor:
         # Temporal edge inference over sequential sentences
         # ------------------------------------------------------------------
         sentences = re.split(r"(?<=[.!?])\s+", text.strip())
-        # Build per-sentence frame map (frames in sentence order)
+        # Group original frames by sentence text so frame IDs match the KG
+        from collections import defaultdict as _defaultdict
+        _frame_map: dict = _defaultdict(list)
+        for _f in frames:
+            _frame_map[_f.sentence.strip()].append(_f)
+        # Build per-sentence frame list; fall back to extraction only when spaCy
+        # is available and the sentence produced no frames during full-text pass.
         sent_frames: List[List[SRLFrame]] = []
         for sent in sentences:
             sent = sent.strip()
             if not sent:
                 continue
-            if self.nlp is not None:
+            sf = list(_frame_map.get(sent, []))
+            if not sf and self.nlp is not None:
                 doc = self.nlp(sent)
                 sf = []
                 for sp in doc.sents:
                     sf.extend(_extract_spacy_frames(sp))
-            else:
-                sf = _extract_heuristic_frames(sent)
             sent_frames.append(sf)
 
         # Temporal connector patterns between consecutive sentences

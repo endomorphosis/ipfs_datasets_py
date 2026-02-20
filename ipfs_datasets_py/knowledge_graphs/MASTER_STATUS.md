@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 2.9.0  
+**Version:** 3.0.0  
 **Status:** ✅ Production Ready  
 **Last Updated:** 2026-02-20  
-**Last Major Release:** v2.9.0 (result.py 99%, session 98%, graph.py 98%, expression_evaluator 96%, unified_engine 88%, compiler 95%)
+**Last Major Release:** v3.0.0 (cross_document 96%, query_executor 97%, relationships 100%, _entity_helpers 98%, srl 84%, session 23)
 
 ---
 
@@ -147,7 +147,7 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 ## Test Coverage Status
 
-### Overall Coverage: ~86% (measured, session 22)
+### Overall Coverage: ~87% (measured, session 23)
 
 > Numbers from `python3 -m coverage run … pytest tests/unit/knowledge_graphs/` on 2026-02-20.
 > Includes shim files (100% — trivially covered) and optional-dep files skipped at runtime.
@@ -159,12 +159,12 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 | **Neo4j Compat** | **95%**–**99%** | ✅ **Excellent** | result.py **99%** (+14pp), session **98%** (+13pp), driver **86%**, types **96%** |
 | **Migration** | **93%**–**95%** | ✅ **Excellent** | neo4j_exporter **95%**, ipfs_importer **95%**, formats **93%** |
 | **JSON-LD** | **93%**–**96%** | ✅ **Excellent** | context.py **91%**, validation **96%**, rdf_serializer **94%**, translator **93%** |
-| **Core** | 69–**96%** | ✅ **Excellent** | expression_evaluator **96%** (+7pp), query_executor **85%**, ir_executor **91%**, _legacy_graph_engine **90%** |
+| **Core** | 69–**97%** | ✅ **Excellent** | expression_evaluator **96%**, query_executor **97%** (+12pp session 23), ir_executor **92%** (+1pp), _legacy_graph_engine **90%** |
 | **Constraints** | **100%** | ✅ **Excellent** | All constraint types + manager fully covered (session 12) |
 | **Transactions** | **89%**–96% | ✅ **Excellent** | manager **91%**, wal **89%**, types 96% |
-| **Query** | **88%**–**100%** | ✅ **Excellent** | sparql_templates **100%**, budget_manager **100%**, unified_engine **88%** (+6pp), distributed **94%** |
-| **Extraction** | 54–**99%** | 🔶 Improving | srl **79%**, graph.py **98%** (+20pp session 22), validator **69%**, finance_graphrag **95%**, advanced **99%** |
-| **Reasoning** | **88%**–**98%** | ✅ **Excellent** | ontology/reasoning **98%**, cross_document **88%**, helpers **94%** |
+| **Query** | **83%**–**100%** | ✅ **Excellent** | sparql_templates **100%**, budget_manager **100%**, unified_engine **89%**, knowledge_graph **83%** (+13pp session 23) |
+| **Extraction** | 54–**100%** | 🔶 Improving | srl **84%** (+4pp session 23), relationships **100%** (+14pp session 23), _entity_helpers **98%** (+18pp session 23), graph.py **98%** |
+| **Reasoning** | **88%**–**98%** | ✅ **Excellent** | ontology/reasoning **98%**, cross_document **96%** (+8pp session 23), helpers **94%** |
 | **Indexing** | 87–99% | ✅ Excellent | btree 87%, manager 99%, specialized 93% |
 | **Storage** | **89%**–100% | ✅ **Excellent** | ipld_backend **89%**, types **100%** |
 | **Lineage** | **97%**–100% | ✅ **Excellent** | visualization **94%**, enhanced **97%**, metrics **96%**, core **97%** |
@@ -508,6 +508,22 @@ reasoning = reasoner.reason_across_documents(
 ---
 
 ## Version History
+
+### v3.0.0 (2026-02-20) - Coverage Boost Session 23 + Bug Fix ✅
+
+**Summary:** Added 66 new GIVEN-WHEN-THEN tests across 7 modules; overall coverage from 86% to **87%** (+1pp). Critical **bug fixed** in `extraction/srl.py::build_temporal_graph()` — per-sentence re-extraction created new UUIDs so OVERLAPS/PRECEDES temporal relationships were never created; fixed by grouping original frames by sentence text. Largest gains: `extraction/relationships.py` 86%→**100%** (+14pp), `extraction/_entity_helpers.py` 80%→**98%** (+18pp), `core/query_executor.py` 85%→**97%** (+12pp), `reasoning/cross_document.py` 88%→**96%** (+8pp).
+
+**Test additions (66 new):**
+- `extraction/srl.py` (80% → **84%**, +4pp): heuristic Location/Time/Cause/Result modifier roles, no-frame-when-no-agent-or-patient, `to_knowledge_graph` confidence filter + empty-text-arg + entity-reuse, OVERLAPS/PRECEDES/default temporal links (bug fix), sentence_split=False, empty-sentence skip
+- `query/knowledge_graph.py` (70% → **83%**, +13pp): bad-op dict, ScanType+scope, max_results validation, empty-query, missing graph_id, unsupported query_type, missing manifest_cid for ir mode, sparql+cypher with mocked processor
+- `core/query_executor.py` (85% → **97%**, +12pp): `_is_cypher_query` False branch, CypherCompileError handler (raise_on_error=False/True), QueryError/StorageError/KnowledgeGraphError/Exception handlers, `_resolve_value` var/param branches, `_evaluate_case_expression`/`_evaluate_condition`/`_call_function` delegates, `_execute_ir`/`_execute_simple` stubs
+- `extraction/_entity_helpers.py` (80% → **98%**, +18pp): `_map_transformers_entity_type` full mapping (B-PER, I-ORG, GPE, LOC, MISC, DATE, unknown), dedup skip (line 121), stopword filter (line 125)
+- `extraction/relationships.py` (86% → **100%**, +14pp): wrong-calling-pattern auto-correction, source_text serialisation in to_dict
+- `core/ir_executor.py` (91% → **92%**, +1pp): Expand target_labels filter, OptionalExpand missing-source-var, OptionalExpand target_labels filter, Aggregate distinct, WithProject from result_set, OrderBy ASC+DESC with float values, Unwind scalar/result_set cross-product
+- `reasoning/cross_document.py` (88% → **96%**, +8pp): `_MissingUnifiedGraphRAGQueryOptimizer` ImportError, custom query_optimizer, cosine sim identical/orthogonal/LinAlgError fallback, empty content→0.0, synthesize_answer with entity_connections, _example_usage execution
+
+**Bug fixed:**
+- `extraction/srl.py::build_temporal_graph()`: Per-sentence re-extraction created new SRLFrame UUIDs not matching the KG entities built from original frames. Fixed by grouping original frames by `frame.sentence` text, so `event_a_id`/`event_b_id` now correctly match entity `srl_frame_id` properties and OVERLAPS/PRECEDES relationships are created.
 
 ### v2.9.0 (2026-02-20) - Coverage Boost Session 22 ✅
 
