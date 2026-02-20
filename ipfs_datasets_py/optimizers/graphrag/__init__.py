@@ -69,6 +69,7 @@ from .ontology_generator import (
 from .ontology_critic import (
     OntologyCritic,
     CriticScore,
+    BackendConfig,
     DIMENSION_WEIGHTS,
 )
 
@@ -136,6 +137,7 @@ __all__ = [
     # Critic
     'OntologyCritic',
     'CriticScore',
+    'BackendConfig',
     'DIMENSION_WEIGHTS',
     # Validator
     'LogicValidator',

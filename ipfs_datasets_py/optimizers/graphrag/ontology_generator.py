@@ -173,7 +173,7 @@ class OntologyGenerationContext:
         return ExtractionConfig()  # pragma: no cover — normalised in __post_init__
 
 
-@dataclass
+@dataclass(slots=True)
 class Entity:
     """
     Represents an extracted entity.
@@ -195,7 +195,7 @@ class Entity:
     source_span: Optional[tuple[int, int]] = None
 
 
-@dataclass
+@dataclass(slots=True)
 class Relationship:
     """
     Represents a relationship between entities.
@@ -217,7 +217,7 @@ class Relationship:
     confidence: float = 1.0
 
 
-@dataclass
+@dataclass(slots=True)
 class EntityExtractionResult:
     """
     Result of entity extraction from data.

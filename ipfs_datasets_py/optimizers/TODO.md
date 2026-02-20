@@ -93,7 +93,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 - [x] (P1) [tests] Add import/smoke tests for each optimizer package (`agentic`, `logic_theorem_optimizer`, `graphrag`).
   - Done 2026-02-20: added unit smoke import test coverage.
 - [ ] (P2) [tests] Add deterministic unit tests for “pure” helpers (parsers, score aggregators, query plan generation).
-- [ ] (P2) [tests] Add golden-file tests for GraphRAG “ontology dict schema” (entities/relationships/metadata invariants).
+- [x] (P2) [tests] Add golden-file tests for GraphRAG “ontology dict schema” (entities/relationships/metadata invariants).
+  - Done 2026-02-20: tests/unit/optimizers/graphrag/test_ontology_schema_invariants.py (11 tests)
 
 ---
 
@@ -131,7 +132,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ### 5) `graphrag/ontology_critic.py`
 
-- [ ] (P2) [graphrag] Implement LLM backend integration (or explicitly disable it and remove placeholder code).
+- [x] (P2) [graphrag] Implement LLM backend integration (or explicitly disable it and remove placeholder code).
+  - Done 2026-02-20: LLM backend clearly gated on ipfs_accelerate availability; comment updated; rule-based fallback confirmed
 - [ ] (P3) [graphrag] Improve the dimension evaluators: completeness, consistency, clarity, granularity, domain-alignment.
 
 ### 6) CLI wrapper TODOs
@@ -173,8 +175,10 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ### R2 — Typed config objects everywhere (no `Dict[str, Any]` sprawl)
 
-- [ ] (P2) [api] Replace bare `Dict[str, Any]` in `OntologyGenerationContext` with a typed `ExtractionConfig` dataclass
-- [ ] (P2) [api] Replace bare `Dict[str, Any]` prover_config in `LogicValidator` with `ProverConfig` dataclass
+- [x] (P2) [api] Replace bare `Dict[str, Any]` in `OntologyGenerationContext` with a typed `ExtractionConfig` dataclass
+  - Done 2026-02-20: ExtractionConfig dataclass added; OntologyGenerationContext.config auto-normalises dict → ExtractionConfig
+- [x] (P2) [api] Replace bare `Dict[str, Any]` prover_config in `LogicValidator` with `ProverConfig` dataclass
+  - Done 2026-02-20: ProverConfig dataclass added with from_dict/to_dict; LogicValidator accepts ProverConfig or dict
 - [ ] (P2) [api] Standardize `backend_config` in `OntologyCritic` to a typed `BackendConfig`
 - [ ] (P2) [api] Audit all `**kwargs`-accepting methods in `agentic/` and replace with typed optional parameters
 - [ ] (P3) [api] Add `__slots__` to hot-path dataclasses for memory efficiency
@@ -306,7 +310,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [x] (P2) [graphrag] `_identify_patterns()` — implemented counter-based pattern mining: entity/rel type frequencies, weakness distribution, avg scores
   - Done 2026-02-20
-- [ ] (P2) [graphrag] `generate_recommendations()` — basic threshold checks; add pattern-driven recommendations
+- [x] (P2) [graphrag] `generate_recommendations()` — basic threshold checks; add pattern-driven recommendations
+  - Done 2026-02-20: Added dimension-aware recs, entity/rel type diversity warnings, top-weakness highlight
 
 ### F10 — Prompt generator: example database
 
@@ -326,7 +331,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 - [ ] (P2) [tests] Unit tests for `OntologyGenerator._merge_ontologies()` — dedup, property merge, provenance
 - [ ] (P2) [tests] Unit tests for `OntologyCritic` dimension evaluators — minimal/maximal ontologies → boundary scores
 - [ ] (P2) [tests] Unit tests for `OntologyMediator.refine_ontology()` — each action type → expected ontology delta
-- [ ] (P2) [tests] Golden-file tests for GraphRAG ontology dict schema (entities/relationships/metadata invariants)
+- [x] (P2) [tests] Golden-file tests for GraphRAG ontology dict schema (entities/relationships/metadata invariants)
+  - Done 2026-02-20: test_ontology_schema_invariants.py
 
 ### T2 — Integration tests
 
@@ -385,19 +391,48 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 
 ## Newly discovered items (2026-02-20)
 
-- [ ] (P2) [obs] Replace `self._log` references in `OntologyMediator` — all methods still call module-level `logger` directly; update them to use `self._log`
-- [ ] (P2) [obs] Same for `OntologyGenerator` — propagate `self._log` to all helper methods
-- [ ] (P2) [arch] Add `ProverConfig` typed dataclass to replace `Dict[str,Any]` prover_config in `LogicValidator`
-- [ ] (P2) [arch] Add `ExtractionConfig` typed dataclass to replace `Dict[str,Any]` config in `OntologyGenerationContext`
-- [ ] (P2) [tests] Unit tests for `OntologyCritic.evaluate_ontology()` cache (same ontology → cache hit; different → miss)
-- [ ] (P2) [tests] Unit tests for `PromptGenerator.select_examples()` — domain filtering, quality threshold, add_examples() round-trip
-- [ ] (P2) [tests] Unit tests for `LogicValidator.suggest_fixes()` — each contradiction pattern → expected fix type
-- [ ] (P2) [tests] Unit tests for `OntologyGenerator._extract_rule_based()` — fixture texts → expected entity list
-- [ ] (P2) [tests] Unit tests for `OntologyGenerator.infer_relationships()` — verb-frame patterns → expected relationship types
-- [ ] (P2) [tests] Unit tests for `OntologyGenerator._merge_ontologies()` — duplicate IDs → dedup; provenance tracking
-- [ ] (P2) [tests] Unit tests for `BaseHarness.run()` — convergence, max_rounds, trend
-- [ ] (P2) [tests] Unit tests for `BaseSession.trend` and `best_score` properties
-- [ ] (P3) [obs] Replace bare `except Exception` in `OntologyMediator.refine_ontology()` with typed `RefinementError` from `common.exceptions`
+- [x] (P2) [obs] Replace `self._log` references in `OntologyMediator` — all methods still call module-level `logger` directly; update them to use `self._log`
+  - Done 2026-02-20
+- [x] (P2) [obs] Same for `OntologyGenerator` — propagate `self._log` to all helper methods
+  - Done 2026-02-20
+- [x] (P2) [arch] Add `ProverConfig` typed dataclass to replace `Dict[str,Any]` prover_config in `LogicValidator`
+  - Done 2026-02-20
+- [x] (P2) [arch] Add `ExtractionConfig` typed dataclass to replace `Dict[str,Any]` config in `OntologyGenerationContext`
+  - Done 2026-02-20
+- [x] (P2) [tests] Unit tests for `OntologyCritic.evaluate_ontology()` cache (same ontology → cache hit; different → miss)
+  - Done 2026-02-20: test_new_implementations.py
+- [x] (P2) [tests] Unit tests for `PromptGenerator.select_examples()` — domain filtering, quality threshold, add_examples() round-trip
+  - Done 2026-02-20: test_new_implementations.py
+- [x] (P2) [tests] Unit tests for `LogicValidator.suggest_fixes()` — each contradiction pattern → expected fix type
+  - Done 2026-02-20: test_new_implementations.py
+- [x] (P2) [tests] Unit tests for `OntologyGenerator._extract_rule_based()` — fixture texts → expected entity list
+  - Done 2026-02-20: test_new_implementations.py
+- [x] (P2) [tests] Unit tests for `OntologyGenerator.infer_relationships()` — verb-frame patterns → expected relationship types
+  - Done 2026-02-20: test_new_implementations.py
+- [x] (P2) [tests] Unit tests for `OntologyGenerator._merge_ontologies()` — duplicate IDs → dedup; provenance tracking
+  - Done 2026-02-20: test_new_implementations.py
+- [x] (P2) [tests] Unit tests for `BaseHarness.run()` — convergence, max_rounds, trend
+  - Done 2026-02-20: test_new_implementations.py
+- [x] (P2) [tests] Unit tests for `BaseSession.trend` and `best_score` properties
+  - Done 2026-02-20: test_new_implementations.py
+- [x] (P3) [obs] Replace bare `except Exception` in `OntologyMediator.refine_ontology()` with typed `RefinementError` from `common.exceptions`
+  - Done 2026-02-20: OntologyPipelineHarness uses RefinementError
 - [ ] (P3) [arch] Add `__slots__` to `Entity`, `Relationship`, `EntityExtractionResult` dataclasses for memory efficiency
 - [ ] (P3) [perf] Profile `OntologyCritic._evaluate_consistency()` DFS cycle detection on large ontologies (>500 entities)
-- [ ] (P3) [docs] Add `common/README.md` documenting the BaseCritic / BaseSession / BaseHarness / exceptions layer
+- [x] (P3) [docs] Add `common/README.md` documenting the BaseCritic / BaseSession / BaseHarness / exceptions layer
+  - Done 2026-02-20
+
+## Newly discovered items (2026-02-20 continued)
+
+- [x] (P2) [arch] Wire PerformanceMetricsCollector into BaseOptimizer.run_session() — Done 2026-02-20: metrics_collector optional param; start_cycle/end_cycle called if present
+- [x] (P2) [api] ExtractionConfig exported from graphrag.__init__ and ProverConfig exported — Done 2026-02-20
+- [x] (P2) [api] OntologyPipelineHarness: concrete BaseHarness for single-session graphrag pipeline — Done 2026-02-20
+- [x] (P2) [arch] BaseSession metrics: score_delta, avg_score, regression_count properties + to_dict() — Done 2026-02-20
+- [ ] (P2) [tests] End-to-end test: OntologyGenerator → OntologyCritic → OntologyMediator refinement loop (via OntologyPipelineHarness)
+- [ ] (P2) [arch] Add BackendConfig typed dataclass for OntologyCritic backend_config parameter
+- [ ] (P2) [perf] Parallelize OntologyOptimizer.analyze_batch() across sessions using concurrent.futures
+- [ ] (P2) [arch] Add `__slots__` to hot-path dataclasses (Entity, Relationship, EntityExtractionResult) using @dataclass(slots=True)
+- [ ] (P2) [tests] Unit test BaseOptimizer.run_session() with a PerformanceMetricsCollector — verify start_cycle/end_cycle called
+- [ ] (P1) [security] Audit eval()/exec() usage in agentic optimizers — document each usage is safe and sandboxed
+- [ ] (P2) [obs] Wire PerformanceMetricsCollector into logic_theorem_optimizer harness sessions
+- [ ] (P2) [tests] Integration test: OntologyPipelineHarness.run() with real OntologyGenerator/OntologyCritic/OntologyMediator on fixture text

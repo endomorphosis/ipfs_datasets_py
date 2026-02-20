@@ -749,3 +749,189 @@ class TestBaseSessionMetrics:
         assert s.score_delta == 0.0
         assert s.avg_score == 0.0
         assert s.regression_count == 0
+
+
+# ===========================================================================
+# BackendConfig tests (batch 9)
+# ===========================================================================
+
+class TestBackendConfig:
+    """Tests for the typed BackendConfig dataclass."""
+
+    def test_defaults(self):
+        from ipfs_datasets_py.optimizers.graphrag import BackendConfig
+        bc = BackendConfig()
+        assert bc.provider == "accelerate"
+        assert bc.model == "gpt-4"
+        assert bc.temperature == 0.3
+        assert bc.max_tokens == 2048
+        assert bc.extra == {}
+
+    def test_from_dict_all_fields(self):
+        from ipfs_datasets_py.optimizers.graphrag import BackendConfig
+        d = {"provider": "openai", "model": "gpt-4o", "temperature": 0.7, "max_tokens": 512, "top_p": 0.9}
+        bc = BackendConfig.from_dict(d)
+        assert bc.provider == "openai"
+        assert bc.model == "gpt-4o"
+        assert bc.temperature == 0.7
+        assert bc.max_tokens == 512
+        assert bc.extra == {"top_p": 0.9}
+
+    def test_from_dict_defaults(self):
+        from ipfs_datasets_py.optimizers.graphrag import BackendConfig
+        bc = BackendConfig.from_dict({})
+        assert bc.provider == "accelerate"
+        assert bc.model == "gpt-4"
+
+    def test_to_dict_roundtrip(self):
+        from ipfs_datasets_py.optimizers.graphrag import BackendConfig
+        bc = BackendConfig(provider="anthropic", model="claude-3", temperature=0.5, max_tokens=1024, extra={"stop": ["\n"]})
+        d = bc.to_dict()
+        assert d["provider"] == "anthropic"
+        assert d["model"] == "claude-3"
+        assert d["stop"] == ["\n"]
+
+    def test_critic_accepts_dict(self):
+        from ipfs_datasets_py.optimizers.graphrag import OntologyCritic, BackendConfig
+        critic = OntologyCritic(backend_config={"model": "gpt-3.5"})
+        assert isinstance(critic.backend_config, BackendConfig)
+        assert critic.backend_config.model == "gpt-3.5"
+
+    def test_critic_accepts_backendconfig(self):
+        from ipfs_datasets_py.optimizers.graphrag import OntologyCritic, BackendConfig
+        bc = BackendConfig(provider="anthropic", model="claude-3")
+        critic = OntologyCritic(backend_config=bc)
+        assert critic.backend_config is bc
+
+    def test_critic_default_none(self):
+        from ipfs_datasets_py.optimizers.graphrag import OntologyCritic, BackendConfig
+        critic = OntologyCritic()
+        assert isinstance(critic.backend_config, BackendConfig)
+
+    def test_exported_from_init(self):
+        from ipfs_datasets_py.optimizers.graphrag import BackendConfig
+        assert BackendConfig is not None
+
+
+# ===========================================================================
+# Slotted dataclass tests (batch 9)
+# ===========================================================================
+
+class TestSlottedDataclasses:
+    """Verify __slots__ is present on hot-path dataclasses."""
+
+    def test_entity_has_slots(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+        assert hasattr(Entity, "__slots__")
+
+    def test_relationship_has_slots(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+        assert hasattr(Relationship, "__slots__")
+
+    def test_entity_extraction_result_has_slots(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+        assert hasattr(EntityExtractionResult, "__slots__")
+
+    def test_entity_no_dict(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+        e = Entity(id="e1", type="Person", text="Alice")
+        assert not hasattr(e, "__dict__")
+
+    def test_relationship_no_dict(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+        r = Relationship(id="r1", source_id="e1", target_id="e2", type="knows")
+        assert not hasattr(r, "__dict__")
+
+    def test_entity_fields_accessible(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+        e = Entity(id="e2", type="Org", text="Acme", confidence=0.9)
+        assert e.id == "e2"
+        assert e.confidence == 0.9
+
+    def test_relationship_fields_accessible(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+        r = Relationship(id="r2", source_id="e1", target_id="e2", type="employs", confidence=0.85)
+        assert r.type == "employs"
+        assert r.confidence == 0.85
+
+
+# ===========================================================================
+# BaseOptimizer metrics collector wiring (batch 9)
+# ===========================================================================
+
+class TestBaseOptimizerMetrics:
+    """Tests for PerformanceMetricsCollector hooks in BaseOptimizer.run_session()."""
+
+    def _make_optimizer(self, collector=None):
+        from ipfs_datasets_py.optimizers.common.base_optimizer import (
+            BaseOptimizer, OptimizerConfig, OptimizationContext
+        )
+
+        class _Opt(BaseOptimizer):
+            def generate(self, data, ctx):
+                return {"entity": data}
+
+            def critique(self, art, ctx):
+                return 0.9, []
+
+            def optimize(self, art, score, fb, ctx):
+                return art
+
+            def validate(self, art, ctx):
+                return True
+
+        cfg = OptimizerConfig(max_iterations=1, target_score=0.8, validation_enabled=False)
+        opt = _Opt(config=cfg, metrics_collector=collector)
+        return opt
+
+    def _make_context(self):
+        from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationContext
+        return OptimizationContext(session_id="s1", input_data="input", domain="test")
+
+    def test_no_collector_runs_cleanly(self):
+        opt = self._make_optimizer()
+        ctx = self._make_context()
+        result = opt.run_session("input", ctx)
+        assert "artifact" in result
+        assert "score" in result
+
+    def test_metrics_dict_present(self):
+        opt = self._make_optimizer()
+        ctx = self._make_context()
+        result = opt.run_session("input", ctx)
+        assert "metrics" in result
+        assert "score_delta" in result["metrics"]
+
+    def test_collector_start_cycle_called(self):
+        collector = MagicMock()
+        opt = self._make_optimizer(collector=collector)
+        ctx = self._make_context()
+        opt.run_session("input", ctx)
+        collector.start_cycle.assert_called_once()
+        call_args = collector.start_cycle.call_args
+        assert call_args[0][0] == "s1"  # cycle_id == session_id
+
+    def test_collector_end_cycle_called(self):
+        collector = MagicMock()
+        opt = self._make_optimizer(collector=collector)
+        ctx = self._make_context()
+        opt.run_session("input", ctx)
+        collector.end_cycle.assert_called_once()
+        call_kwargs = collector.end_cycle.call_args
+        assert "success" in call_kwargs.kwargs or "success" in str(call_kwargs)
+
+    def test_collector_error_does_not_abort_session(self):
+        """A broken collector must never break the optimization."""
+        collector = MagicMock()
+        collector.start_cycle.side_effect = RuntimeError("db down")
+        opt = self._make_optimizer(collector=collector)
+        ctx = self._make_context()
+        result = opt.run_session("input", ctx)
+        assert result["score"] >= 0  # still returned
+
+    def test_initial_score_captured(self):
+        opt = self._make_optimizer()
+        ctx = self._make_context()
+        result = opt.run_session("input", ctx)
+        m = result["metrics"]
+        assert m["initial_score"] == m["final_score"]  # no improvement loop ran

@@ -49,7 +49,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from ipfs_datasets_py.optimizers.common.base_critic import BaseCritic, CriticResult
 
@@ -64,6 +64,47 @@ DIMENSION_WEIGHTS = {
     'granularity': 0.15,
     'domain_alignment': 0.20,
 }
+
+
+@dataclass
+class BackendConfig:
+    """
+    Typed configuration for the LLM backend used by OntologyCritic.
+
+    Attributes:
+        provider: Backend provider, e.g. 'openai', 'anthropic', 'accelerate'.
+        model: Model name / identifier.
+        temperature: Sampling temperature (0.0 – 1.0).
+        max_tokens: Maximum tokens to generate.
+        extra: Any additional provider-specific options.
+    """
+
+    provider: str = "accelerate"
+    model: str = "gpt-4"
+    temperature: float = 0.3
+    max_tokens: int = 2048
+    extra: Dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "BackendConfig":
+        known = {"provider", "model", "temperature", "max_tokens"}
+        extra = {k: v for k, v in d.items() if k not in known}
+        return cls(
+            provider=d.get("provider", "accelerate"),
+            model=d.get("model", "gpt-4"),
+            temperature=float(d.get("temperature", 0.3)),
+            max_tokens=int(d.get("max_tokens", 2048)),
+            extra=extra,
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "provider": self.provider,
+            "model": self.model,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+            **self.extra,
+        }
 
 
 @dataclass
@@ -171,23 +212,28 @@ class OntologyCritic(BaseCritic):
     
     def __init__(
         self,
-        backend_config: Optional[Dict[str, Any]] = None,
+        backend_config: Optional[Union[Dict[str, Any], BackendConfig]] = None,
         use_llm: bool = True
     ):
         """
         Initialize the ontology critic.
         
         Args:
-            backend_config: Configuration for LLM backend. Should include
-                'provider' (e.g., 'openai', 'anthropic'), 'model', and
-                optionally 'temperature', 'max_tokens', etc.
+            backend_config: Configuration for LLM backend. Accepts either a
+                ``BackendConfig`` instance or a plain dict with keys 'provider',
+                'model', 'temperature', 'max_tokens', etc.
             use_llm: Whether to use LLM for evaluation. If False, uses
                 rule-based heuristics.
                 
         Raises:
             ImportError: If LLM backend is required but not available
         """
-        self.backend_config = backend_config or {}
+        if backend_config is None:
+            self.backend_config: BackendConfig = BackendConfig()
+        elif isinstance(backend_config, dict):
+            self.backend_config = BackendConfig.from_dict(backend_config)
+        else:
+            self.backend_config = backend_config
         self.use_llm = use_llm
         self._llm_client = None
         
