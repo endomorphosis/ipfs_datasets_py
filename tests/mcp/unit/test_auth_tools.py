@@ -29,7 +29,6 @@ class TestAuthenticateUser:
         result = await authenticate_user(
             username="test_user",
             password="test_password",
-            auth_method="local",
         )
         assert result is not None
         assert isinstance(result, dict)

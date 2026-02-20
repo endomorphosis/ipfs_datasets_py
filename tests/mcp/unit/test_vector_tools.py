@@ -26,14 +26,15 @@ class TestCreateVectorIndex:
     async def test_create_index_returns_status(self):
         """
         GIVEN the vector_tools module
-        WHEN create_vector_index is called with valid parameters
+        WHEN create_vector_index is called with valid vectors
         THEN the result must be a dict containing 'status' or 'index_id'
         """
+        vectors = np.random.rand(5, 384).tolist()
         result = await create_vector_index(
-            index_name="test_index",
+            vectors=vectors,
             dimension=384,
             metric="cosine",
-            provider="faiss",
+            index_name="test_index",
         )
         assert result is not None
         assert isinstance(result, dict)
@@ -46,10 +47,12 @@ class TestCreateVectorIndex:
         WHEN create_vector_index is called with metadata
         THEN the result must not be None
         """
+        vectors = np.random.rand(3, 768).tolist()
         result = await create_vector_index(
-            index_name="test_index_meta",
+            vectors=vectors,
             dimension=768,
             metric="l2",
+            index_name="test_index_meta",
         )
         assert result is not None
 
@@ -66,7 +69,7 @@ class TestSearchVectorIndex:
         """
         query_vector = np.random.rand(384).tolist()
         result = await search_vector_index(
-            index_name="test_index",
+            index_id="test_index",
             query_vector=query_vector,
             top_k=5,
         )
@@ -83,10 +86,10 @@ class TestSearchVectorIndex:
         """
         query_vector = np.random.rand(384).tolist()
         result = await search_vector_index(
-            index_name="test_index",
+            index_id="test_index",
             query_vector=query_vector,
             top_k=3,
-            filter_criteria={"category": "test"},
+            filter_metadata={"category": "test"},
         )
         assert result is not None
 

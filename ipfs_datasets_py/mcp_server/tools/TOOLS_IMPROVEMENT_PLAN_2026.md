@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-20  
 **Scope:** `ipfs_datasets_py/mcp_server/tools/` and all subfolders  
-**Status:** 🟢 Phase A ✅ · Phase B ✅ · Phase C ✅ · Phase D ✅ Substantially Complete (D2 deferred)  
+**Status:** 🟢 Phase A ✅ · Phase B ✅ · Phase C ✅ · Phase D ✅ Complete (D2 deferred)  
 
 ---
 
@@ -409,7 +409,7 @@ files exist but are not actually run. These should be reviewed and either activa
 **Goal:** Address code quality issues that affect maintainability.  
 **Estimated effort:** 10-14h  
 **Priority:** 🟡 Medium  
-**Status:** D1 ✅ complete, D3 ✅ substantially complete (9 test files activated, 101 tests), D4 ✅ complete, D2 deferred
+**Status:** ✅ Complete (D1 ✅ D3 ✅ D4 ✅ D5 ✅ — D2 deferred)
 
 ### D1: Audit `legacy_mcp_tools/` — ✅ Complete
 
@@ -476,12 +476,26 @@ scheduled as a dedicated refactoring sprint with full test coverage:
 | `development_tools/claude_cli_server_tools.py` | 631 | CLI wrapper — less extractable |
 | `finance_data_tools/stock_scrapers.py` | 590 | Target: `stock_scraper_engine.py` |
 
-### D3: Activate Disabled Tests — ✅ Substantially Complete (9 of ~15 activated)
+### D3: Activate Disabled Tests — ✅ Complete (14 test files, 142 tests)
 
-**Action taken:** The 15 `_test_*.py` files in `tests/` root and `tests/original_tests/` were
-evaluated for activation. Nine files were activated by creating new `test_*.py` files in
-`tests/mcp/unit/` — either by copying clean passing tests or by writing new tests to match
-the actual tool API.
+**Action taken:** The `_test_*.py` files were evaluated for activation. Fourteen files
+were created in `tests/mcp/unit/` — either migrated from existing disabled tests or
+written from scratch to match the actual tool API (fixing incorrect kwarg names or
+missing positional arguments).
+
+**Session 3 additions (5 new files, 41 tests):**
+
+| New Test File | Tools Tested | Tests |
+|---------------|-------------|-------|
+| `tests/mcp/unit/test_dataset_tools.py` | load_dataset, save_dataset, process_dataset, convert_dataset_format | 9 |
+| `tests/mcp/unit/test_ipfs_tools.py` | pin_to_ipfs, get_from_ipfs | 7 |
+| `tests/mcp/unit/test_audit_tools.py` | record_audit_event, generate_audit_report | 9 |
+| `tests/mcp/unit/test_security_tools.py` | check_access_permission | 6 |
+| `tests/mcp/unit/test_session_tools.py` | create_session, manage_session_state, cleanup_sessions | 10 |
+
+**Session 3 fixes (5 tests):**
+- `test_auth_tools.py`: removed invalid `auth_method` kwarg from `authenticate_user()` call
+- `test_vector_tools.py`: corrected `create_vector_index` to use `vectors=` first arg (was `index_name=`) and `search_vector_index` to use `index_id=` (was `index_name=`) + `filter_metadata=` (was `filter_criteria=`)
 
 | New Test File | Tools Tested | Tests |
 |---------------|-------------|-------|
@@ -494,8 +508,13 @@ the actual tool API.
 | `tests/mcp/unit/test_monitoring_tools.py` | health_check, get_performance_metrics, monitor_services, generate_monitoring_report | 13 |
 | `tests/mcp/unit/test_analysis_tools.py` | perform_clustering_analysis, assess_embedding_quality, reduce_dimensionality, detect_outliers, analyze_diversity, detect_drift | 14 |
 | `tests/mcp/unit/test_embedding_tools.py` | generate_embedding, generate_batch_embeddings, generate_embeddings_from_file | 14 |
+| `tests/mcp/unit/test_dataset_tools.py` | load_dataset, save_dataset, process_dataset, convert_dataset_format | 9 |
+| `tests/mcp/unit/test_ipfs_tools.py` | pin_to_ipfs, get_from_ipfs | 7 |
+| `tests/mcp/unit/test_audit_tools.py` | record_audit_event, generate_audit_report | 9 |
+| `tests/mcp/unit/test_security_tools.py` | check_access_permission | 6 |
+| `tests/mcp/unit/test_session_tools.py` | create_session, manage_session_state, cleanup_sessions | 10 |
 
-**Total: 101 new active tests across 9 tool categories.**
+**Total: 142 active tests across 14 tool categories (0 failures, 2 skipped).**
 
 Note: `test_cache_tools.py`, `test_monitoring_tools.py`, `test_analysis_tools.py`, and
 `test_embedding_tools.py` were written from scratch to match the actual API because the
@@ -517,6 +536,23 @@ corresponding `_test_*.py` originals used incorrect function names or response k
 
 The lazy-loading pattern is preserved — no eager imports were added.
 
+### D5: Add Module Docstrings to Category `__init__.py` Files — ✅ Complete
+
+All 45 category-level `__init__.py` files now have module docstrings explaining the
+category purpose, listing core functions, and noting key dependencies.
+
+**7 files updated in session 3:**
+
+| File | Docstring Added |
+|------|----------------|
+| `embedding_tools/__init__.py` | Category overview + core function list |
+| `legacy_mcp_tools/__init__.py` | Deprecation notice + migration pointer |
+| `lizardpersons_function_tools/__init__.py` | Empty-category explanation + pointer to active tool |
+| `p2p_tools/__init__.py` | P2P layer description + dependency note |
+| `rate_limiting_tools/__init__.py` | Token-bucket description + backend note |
+| `sparse_embedding_tools/__init__.py` | BM25/TF-IDF description |
+| `storage_tools/__init__.py` | Multi-backend storage description |
+
 ---
 
 ## 8. Success Metrics
@@ -526,12 +562,13 @@ The lazy-loading pattern is preserved — no eager imports were added.
 | Categories with README | 3 | 4 ✅ | **15** ✅ | **51** ✅ |
 | Historical docs in root dirs | 14 (legal) | 0 ✅ | 0 ✅ | 0 ✅ |
 | Thick tools (>500 lines) | 10+ | 10+ | 10+ | 10 (D2 deferred) |
-| Disabled test files in `tests/` | ~15 | ~15 | ~15 | ~6 (9 activated) |
+| Disabled test files in `tests/` | ~15 | ~15 | ~15 | **~4** (14 activated) |
 | `_TOOL_SUBMODULES` coverage | 17/51 | 17/51 | 17/51 | **51/51** ✅ |
 | Top-level `tools/README.md` | ❌ | ✅ | ✅ | ✅ |
 | `legacy_mcp_tools/` migration guide | ❌ | ❌ | ✅ | ✅ |
 | Deprecation warnings in legacy files | 0 | 0 | 0 | **32/32** ✅ |
-| New active tests for tool categories | 0 | 0 | 0 | **101** ✅ |
+| New active tests for tool categories | 0 | 0 | 0 | **142** ✅ |
+| Category `__init__.py` with docstrings | 38/45 | 38/45 | 38/45 | **45/45** ✅ |
 
 ---
 
@@ -558,10 +595,12 @@ The lazy-loading pattern is preserved — no eager imports were added.
 | D | Deprecation warnings — all 32 legacy files | 2h | Medium | 🟡 Medium | ✅ Done |
 | D | Activate 3 clean test files (admin/auth/vector) | 1h | Medium | 🟡 Medium | ✅ Done |
 | D | Activate 6 more test files (bg_task/workflow/cache/monitoring/analysis/embedding) | 2h | Medium | 🟡 Medium | ✅ Done |
+| D | Fix 5 failing tests + 5 new test files (dataset/ipfs/audit/security/session) | 1h | Medium | 🟡 Medium | ✅ Done |
+| D | Add module docstrings to 7 category `__init__.py` | 30min | Low-Medium | 🟢 Later | ✅ Done |
 | D | Extract 5 thick tool engines | 4-6h | Medium | 🟡 Medium | 🟡 Deferred |
-| D | Activate remaining ~12 `_test_*.py` files | 2-3h | Medium | 🟡 Medium | 🟡 Deferred |
+| D | Activate remaining ~4 `_test_*.py` files | 1-2h | Low | 🟢 Later | 🟡 Deferred |
 
 ---
 
-**Last Updated:** 2026-02-20 (Phase D session 2: D3 substantially complete — 101 tests across 9 categories)  
+**Last Updated:** 2026-02-20 (Phase D session 3: D3 ✅ 14 files/142 tests, D5 ✅ 45/45 __init__.py with docstrings)  
 **Related:** [../MASTER_REFACTORING_PLAN_2026_v4.md](../MASTER_REFACTORING_PLAN_2026_v4.md) · [../MASTER_IMPROVEMENT_PLAN_2026_v5.md](../MASTER_IMPROVEMENT_PLAN_2026_v5.md)
