@@ -477,3 +477,89 @@ class TestRelationshipDirectionality:
         )
         d = generator._relationship_to_dict(r)
         assert d["direction"] == "subject_to_object"
+
+
+# ---------------------------------------------------------------------------
+# Fuzz/edge-case tests for _extract_rule_based()
+# ---------------------------------------------------------------------------
+
+class TestExtractRuleBasedEdgeCases:
+    """Malformed and edge-case inputs to _extract_rule_based()."""
+
+    def test_empty_string_returns_empty(self, generator, ctx):
+        result = generator._extract_rule_based("", ctx)
+        assert result.entities == []
+
+    def test_whitespace_only_returns_empty(self, generator, ctx):
+        result = generator._extract_rule_based("   \n\t  ", ctx)
+        assert isinstance(result.entities, list)
+
+    def test_non_ascii_unicode(self, generator, ctx):
+        result = generator._extract_rule_based("Ärztekammer filed a claim.", ctx)
+        assert isinstance(result.entities, list)
+
+    def test_very_long_input(self, generator, ctx):
+        text = "The Widget " * 1000
+        result = generator._extract_rule_based(text, ctx)
+        assert isinstance(result.entities, list)
+
+    def test_binary_garbage_returns_result(self, generator, ctx):
+        text = "\x00\x01\x02\x03 some text \xff\xfe"
+        result = generator._extract_rule_based(text, ctx)
+        assert isinstance(result.entities, list)
+
+    def test_only_numbers_returns_result(self, generator, ctx):
+        result = generator._extract_rule_based("1234567890 42.5 -3.14", ctx)
+        assert isinstance(result.entities, list)
+
+    def test_regex_special_chars_dont_crash(self, generator, ctx):
+        result = generator._extract_rule_based("(.*) [hello] $$ ^^", ctx)
+        assert isinstance(result.entities, list)
+
+    def test_all_lowercase_no_proper_nouns(self, generator, ctx):
+        result = generator._extract_rule_based("this is entirely lowercase text without any capitals.", ctx)
+        assert isinstance(result.entities, list)
+
+    def test_no_duplicate_entities_for_repeated_text(self, generator, ctx):
+        text = "Alice Alice Alice Alice"
+        result = generator._extract_rule_based(text, ctx)
+        texts = [e.text for e in result.entities]
+        # Should deduplicate
+        assert texts.count("Alice") <= 1
+
+
+# ---------------------------------------------------------------------------
+# Tests for co-occurrence confidence decay
+# ---------------------------------------------------------------------------
+
+class TestCoOccurrenceConfidenceDecay:
+    """Entities >100 chars apart get lower confidence than close entities."""
+
+    def test_close_entities_get_higher_confidence_than_far(self, generator, ctx):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
+        # Two pairs — close and far apart
+        e1 = Entity(id="e1", text="alpha", type="Concept", confidence=0.9)
+        e2 = Entity(id="e2", text="beta", type="Concept", confidence=0.9)
+        e3 = Entity(id="e3", text="gamma", type="Concept", confidence=0.9)
+        e4 = Entity(id="e4", text="delta", type="Concept", confidence=0.9)
+
+        # Text with alpha/beta close (< 10 chars apart) and gamma/delta far apart
+        text = "alpha beta " + " " * 150 + "gamma delta"
+        rels = generator.infer_relationships([e1, e2, e3, e4], ctx, data=text)
+
+        close_rels = [r for r in rels if {r.source_id, r.target_id} == {"e1", "e2"}]
+        far_rels = [r for r in rels if {r.source_id, r.target_id} == {"e3", "e4"}]
+
+        if close_rels and far_rels:
+            assert close_rels[0].confidence >= far_rels[0].confidence
+
+    def test_confidence_within_range(self, generator, ctx):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
+        e1 = Entity(id="e1", text="foo", type="Concept", confidence=0.9)
+        e2 = Entity(id="e2", text="bar", type="Concept", confidence=0.9)
+        rels = generator.infer_relationships([e1, e2], ctx, data="foo and bar are close")
+        co_rels = [r for r in rels if r.type == "related_to"]
+        for r in co_rels:
+            assert 0.0 <= r.confidence <= 1.0

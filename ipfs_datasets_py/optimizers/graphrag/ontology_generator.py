@@ -429,8 +429,10 @@ class OntologyGenerator:
                         direction='subject_to_object',
                     ))
 
-        # 2) Sliding-window co-occurrence (window=50 chars) for entities
-        # that weren't already linked by verb patterns
+        # 2) Sliding-window co-occurrence (window=200 chars) for entities
+        # that weren't already linked by verb patterns.
+        # Confidence decay: base 0.6 at distance 0, decays linearly.
+        # Entities >100 chars apart receive < 0.4 confidence; floor is 0.2.
         linked = {(r.source_id, r.target_id) for r in relationships}
         entity_list = list(entities)
         for i, e1 in enumerate(entity_list):
@@ -445,7 +447,12 @@ class OntologyGenerator:
                     continue
                 distance = abs(pos1 - pos2)
                 if distance <= 200:
-                    confidence = max(0.3, 0.6 - distance / 500.0)
+                    # Steeper decay beyond 100 chars to reflect weaker association
+                    if distance <= 100:
+                        confidence = max(0.4, 0.6 - distance / 500.0)
+                    else:
+                        # Extra penalty for distant entities (>100 chars apart)
+                        confidence = max(0.2, 0.4 - (distance - 100) / 500.0)
                     relationships.append(Relationship(
                         id=_make_rel_id(),
                         source_id=e1.id,
