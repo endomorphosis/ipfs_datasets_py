@@ -33,6 +33,28 @@ This document describes the unified architecture for all optimizers in `ipfs_dat
 - Cross-document reasoning
 - Performance analysis and visualization
 
+#### GraphRAG relationship semantics (implemented)
+
+`graphrag/ontology_generator.py` defines `Relationship.direction` with three runtime values:
+
+- `subject_to_object`: used for verb-frame inferred edges where subject/object can be detected.
+- `undirected`: used for co-occurrence inferred edges (`related_to`).
+- `unknown`: dataclass default when directionality is not explicitly inferred.
+
+Verb-frame edges are emitted with fixed confidence `0.65`.
+
+Co-occurrence edges use a 200-character window and a piecewise confidence decay by entity distance `d`:
+
+$$
+c(d) =
+\begin{cases}
+\max(0.4,\;0.6 - d/500), & 0 \le d \le 100 \\
+\max(0.2,\;0.4 - (d-100)/500), & 100 < d \le 200
+\end{cases}
+$$
+
+This matches current behavior: stronger confidence for near entities, steeper decay past 100 characters, and floor at `0.2`.
+
 ## Common Patterns
 
 All three optimizer types share a similar pipeline architecture:

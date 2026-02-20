@@ -273,41 +273,31 @@ class TestMergeOntologies:
 # ──────────────────────────────────────────────────────────────────────────────
 
 class TestDomainSpecificExtraction:
-    def test_legal_domain_extracts_legal_party(self, generator):
-        legal_ctx = OntologyGenerationContext(
+    @pytest.mark.parametrize(
+        "domain,text,expected_type",
+        [
+            ("legal", "The plaintiff filed a motion against the defendant.", "LegalParty"),
+            ("medical", "Administer 500 mg twice daily.", "Dosage"),
+            ("technical", "The service exposes a REST API over HTTP.", "Protocol"),
+            ("financial", "The balance includes interest on the principal.", "FinancialConcept"),
+        ],
+    )
+    def test_domain_specific_rules_extract_expected_type(
+        self,
+        generator,
+        domain,
+        text,
+        expected_type,
+    ):
+        domain_ctx = OntologyGenerationContext(
             data_source="test",
             data_type=DataType.TEXT,
-            domain="legal",
+            domain=domain,
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
-        text = "The plaintiff filed a motion against the defendant."
-        result = generator._extract_rule_based(text, legal_ctx)
+        result = generator._extract_rule_based(text, domain_ctx)
         types = [e.type for e in result.entities]
-        assert "LegalParty" in types
-
-    def test_medical_domain_extracts_dosage(self, generator):
-        med_ctx = OntologyGenerationContext(
-            data_source="test",
-            data_type=DataType.TEXT,
-            domain="medical",
-            extraction_strategy=ExtractionStrategy.RULE_BASED,
-        )
-        text = "Administer 500 mg twice daily."
-        result = generator._extract_rule_based(text, med_ctx)
-        types = [e.type for e in result.entities]
-        assert "Dosage" in types
-
-    def test_technical_domain_extracts_protocol(self, generator):
-        tech_ctx = OntologyGenerationContext(
-            data_source="test",
-            data_type=DataType.TEXT,
-            domain="technical",
-            extraction_strategy=ExtractionStrategy.RULE_BASED,
-        )
-        text = "The service exposes a REST API over HTTP."
-        result = generator._extract_rule_based(text, tech_ctx)
-        types = [e.type for e in result.entities]
-        assert "Protocol" in types
+        assert expected_type in types
 
     def test_custom_rules_pluggable(self, generator):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig

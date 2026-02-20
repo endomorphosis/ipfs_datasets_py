@@ -42,6 +42,7 @@ References:
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 import csv
@@ -204,6 +205,14 @@ class OntologyOptimizer:
         except Exception:
             # Tracing must never affect optimizer execution.
             return
+
+    def _emit_analyze_batch_summary(self, payload: Dict[str, Any]) -> None:
+        """Emit one structured JSON INFO log for ``analyze_batch`` observability."""
+        summary = {
+            "event": "ontology_optimizer.analyze_batch.summary",
+            **payload,
+        }
+        self._log.info(json.dumps(summary, sort_keys=True))
     
     def analyze_batch(
         self,
@@ -266,6 +275,14 @@ class OntologyOptimizer:
                     'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
                 }
             )
+            self._emit_analyze_batch_summary(
+                {
+                    "batch_id": id(session_results),
+                    "session_count": 0,
+                    "status": "insufficient_data",
+                    "duration_ms": round((time.time() - operation_start) * 1000.0, 3),
+                }
+            )
             return report
         
         # Extract scores
@@ -290,6 +307,14 @@ class OntologyOptimizer:
                     'session_count': len(session_results),
                     'status': 'no_scores',
                     'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
+                }
+            )
+            self._emit_analyze_batch_summary(
+                {
+                    "batch_id": id(session_results),
+                    "session_count": len(session_results),
+                    "status": "no_scores",
+                    "duration_ms": round((time.time() - operation_start) * 1000.0, 3),
                 }
             )
             return report
@@ -366,6 +391,17 @@ class OntologyOptimizer:
                 'score_distribution_granularity': report.score_distribution.get('granularity', 0.0),
                 'score_distribution_domain_alignment': report.score_distribution.get('domain_alignment', 0.0),
                 'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
+            }
+        )
+        self._emit_analyze_batch_summary(
+            {
+                "batch_id": id(session_results),
+                "session_count": len(session_results),
+                "status": "ok",
+                "average_score": round(average_score, 6),
+                "trend": trend,
+                "recommendation_count": len(recommendations),
+                "duration_ms": round((time.time() - operation_start) * 1000.0, 3),
             }
         )
 

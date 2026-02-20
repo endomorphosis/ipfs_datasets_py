@@ -1,6 +1,7 @@
 """Tests for OntologyOptimizer metrics collector wiring."""
 from __future__ import annotations
 
+import json
 import time
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -102,3 +103,49 @@ class TestMetricsCollectorWiring:
         args = collector.record_learning_cycle.call_args.args
         analyzed = args[1] if len(args) > 1 else call_kwargs.get("analyzed_queries")
         assert analyzed == n
+
+    def test_analyze_batch_emits_structured_json_summary_log(self, caplog):
+        """Successful analyze_batch emits one parseable JSON summary at INFO."""
+        opt = OntologyOptimizer()
+
+        with caplog.at_level("INFO"):
+            opt.analyze_batch([_make_result(0.8), _make_result(0.6)])
+
+        payloads = []
+        for rec in caplog.records:
+            try:
+                msg = json.loads(rec.message)
+            except Exception:
+                continue
+            if msg.get("event") == "ontology_optimizer.analyze_batch.summary":
+                payloads.append(msg)
+
+        assert payloads, "Expected structured analyze_batch summary JSON log"
+        summary = payloads[-1]
+        assert summary["status"] == "ok"
+        assert summary["session_count"] == 2
+        assert summary["trend"] in {"baseline", "improving", "stable", "degrading"}
+        assert summary["average_score"] == pytest.approx(0.7)
+
+    def test_analyze_batch_empty_emits_structured_json_summary_log(self, caplog):
+        """Empty analyze_batch also emits a structured JSON summary log."""
+        opt = OntologyOptimizer()
+
+        with caplog.at_level("INFO"):
+            report = opt.analyze_batch([])
+
+        assert report.trend == "insufficient_data"
+
+        payloads = []
+        for rec in caplog.records:
+            try:
+                msg = json.loads(rec.message)
+            except Exception:
+                continue
+            if msg.get("event") == "ontology_optimizer.analyze_batch.summary":
+                payloads.append(msg)
+
+        assert payloads, "Expected structured analyze_batch summary JSON log"
+        summary = payloads[-1]
+        assert summary["status"] == "insufficient_data"
+        assert summary["session_count"] == 0
