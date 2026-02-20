@@ -15,19 +15,16 @@ This module provides a complete suite of tools for:
 
 ```
 finance_data_tools/
-├── __init__.py                 # Module initialization
-├── stock_scrapers.py          # Stock market data scrapers
-├── news_scrapers.py           # Financial news scrapers
-├── finance_theorems.py        # Temporal deontic logic theorems
-├── README.md                  # This file
-└── (future modules)
-    ├── forex_scrapers.py      # Currency/Forex scrapers
-    ├── crypto_scrapers.py     # Cryptocurrency scrapers
-    ├── bond_scrapers.py       # Bonds and Treasury scrapers
-    ├── futures_scrapers.py    # Futures market scrapers
-    ├── timeseries_storage.py  # IPFS time series storage
-    ├── knowledge_graph.py     # Financial knowledge graph
-    └── causal_reasoning.py    # Causal reasoning chains
+├── __init__.py                     # Module initialization
+├── stock_scrapers.py               # Stock market data scrapers
+├── news_scrapers.py                # Financial news scrapers
+├── finance_theorems.py             # Temporal deontic logic theorems
+├── embedding_correlation.py        # MCP thin wrapper for embedding analysis
+├── embedding_analysis_engine.py    # Reusable embedding/latent-space engine
+├── graphrag_news_analyzer.py       # MCP wrapper for GraphRAG news analysis
+├── README.md                       # This file
+├── EMBEDDING_CORRELATION.md        # Architecture: vector embedding analysis
+└── GRAPHRAG_ANALYSIS.md            # Architecture: executive-performance analysis
 ```
 
 ## Features
@@ -144,23 +141,18 @@ All modules provide MCP-compatible tool functions that can be called through the
 - ✅ Financial theorem library with 5 core theorems
 - ✅ Data validation pipeline
 - ✅ MCP tool function wrappers
-- ✅ Documentation
+- ✅ Embedding analysis engine (`embedding_analysis_engine.py`) with reusable latent-space analysis
+- ✅ GraphRAG news analyzer (`graphrag_news_analyzer.py`) for executive-performance correlation
+- ✅ Documentation (README + EMBEDDING_CORRELATION.md + GRAPHRAG_ANALYSIS.md)
 
-### In Progress
-- 🔄 Yahoo Finance integration
-- 🔄 Entity extraction from news
-- 🔄 Sentiment analysis
-
-### Planned (Next Phases)
-- ⏳ Additional data sources (Alpha Vantage, Polygon.io)
-- ⏳ Forex/currency scrapers
-- ⏳ Cryptocurrency scrapers
-- ⏳ Bonds and Treasury scrapers
-- ⏳ Futures market scrapers
+### In Progress / Planned
+- ⏳ Yahoo Finance live data integration
+- ⏳ Entity extraction from news (NLP pipeline)
+- ⏳ Sentiment analysis models
+- ⏳ Additional market data sources (Alpha Vantage, Polygon.io)
+- ⏳ Forex/currency, cryptocurrency, bonds, futures scrapers
 - ⏳ IPFS time series storage
-- ⏳ Financial knowledge graph
 - ⏳ Causal reasoning engine
-- ⏳ Fuzzy logic evaluation
 - ⏳ Dashboard UI components
 
 ## Usage Examples
