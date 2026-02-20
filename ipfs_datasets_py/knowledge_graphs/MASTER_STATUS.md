@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 2.7.0  
+**Version:** 2.8.0  
 **Status:** ✅ Production Ready  
 **Last Updated:** 2026-02-20  
-**Last Major Release:** v2.7.0 (_legacy_graph_engine 90%, finance_graphrag 95%, distributed 94%, ipld_backend 89%, validator 69%, formats 93%)
+**Last Major Release:** v2.8.0 (lexer 99%, advanced 99%, graph.py 98%, lineage/core 97%, ipfs_importer 95%, cross_document 88%)
 
 ---
 
@@ -18,10 +18,10 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 84% overall | Measured 2026-02-20; _legacy_graph_engine **90%**, finance_graphrag **95%**, distributed **94%**, ipld_backend **89%**, validator **69%**; 2,547 pass
+| **Test Coverage** | 85% overall | Measured 2026-02-20; lexer **99%**, advanced **99%**, extraction/graph **98%**, lineage/core **97%**, ipfs_importer **95%**, cross_document **88%**; 2,612 pass
 | **Documentation** | ✅ Up to Date | Reflects v2.7.0 structure |
-| **Known Issues** | None | 11 bugs fixed (sessions 7-11, 18-19); 0 failures (2,547 pass)
-| **Next Milestone** | v2.7.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
+| **Known Issues** | None | 12 bugs fixed (sessions 7-11, 18-19, 21); 0 failures (2,612 pass)
+| **Next Milestone** | v2.8.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
 
 ---
 
@@ -147,7 +147,7 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 ## Test Coverage Status
 
-### Overall Coverage: ~84% (measured, session 20)
+### Overall Coverage: ~85% (measured, session 21)
 
 > Numbers from `python3 -m coverage run … pytest tests/unit/knowledge_graphs/` on 2026-02-20.
 > Includes shim files (100% — trivially covered) and optional-dep files skipped at runtime.
@@ -155,19 +155,19 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 | Module | Coverage | Status | Notes |
 |--------|----------|--------|-------|
-| **Cypher** | 85–**99%** | ✅ **Excellent** | functions.py **96%**, parser **94%** (+9pp), compiler **91%**, ast.py **99%** |
+| **Cypher** | 91–**99%** | ✅ **Excellent** | functions.py **96%**, parser **94%**, compiler **91%**, ast.py **99%**, lexer **99%** (+9pp) |
 | **Neo4j Compat** | **86%**–**96%** | ✅ **Excellent** | result.py **85%**, session **85%**, driver **86%**, types **96%** |
-| **Migration** | **90%**–**95%** | ✅ **Excellent** | neo4j_exporter **95%**, ipfs_importer **88%**, formats **93%** (+3pp) |
+| **Migration** | **93%**–**95%** | ✅ **Excellent** | neo4j_exporter **95%**, ipfs_importer **95%** (+7pp), formats **93%** |
 | **JSON-LD** | **93%**–**96%** | ✅ **Excellent** | context.py **91%**, validation **96%**, rdf_serializer **94%**, translator **93%** |
 | **Core** | 69–**91%** | ✅ **Excellent** | expression_evaluator **89%**, query_executor **85%**, ir_executor **91%**, _legacy_graph_engine **90%** (+22pp) |
 | **Constraints** | **100%** | ✅ **Excellent** | All constraint types + manager fully covered (session 12) |
 | **Transactions** | **89%**–96% | ✅ **Excellent** | manager **91%**, wal **89%**, types 96% |
 | **Query** | **82%**–**100%** | ✅ **Excellent** | sparql_templates **100%**, budget_manager **100%**, unified_engine **82%**, distributed **94%** (+11pp) |
-| **Extraction** | 54–**95%** | 🔶 Improving | srl **79%**, graph.py **75%**, validator **69%** (+10pp), finance_graphrag **95%** (+26pp) |
-| **Reasoning** | **78%**–**98%** | ✅ **Excellent** | ontology/reasoning **98%**, cross_document **78%**, helpers **94%** |
+| **Extraction** | 54–**99%** | 🔶 Improving | srl **79%**, graph.py **98%** (+23pp), validator **69%**, finance_graphrag **95%**, advanced **99%** (+12pp) |
+| **Reasoning** | **88%**–**98%** | ✅ **Excellent** | ontology/reasoning **98%**, cross_document **88%** (+10pp), helpers **94%** |
 | **Indexing** | 87–99% | ✅ Excellent | btree 87%, manager 99%, specialized 93% |
 | **Storage** | **89%**–100% | ✅ **Excellent** | ipld_backend **89%** (+20pp), types **100%** |
-| **Lineage** | **94%**–100% | ✅ **Excellent** | visualization **94%**, enhanced **97%**, metrics **96%**, core 89% |
+| **Lineage** | **97%**–100% | ✅ **Excellent** | visualization **94%**, enhanced **97%**, metrics **96%**, core **97%** (+8pp) |
 | **Root shims** | **100%** | ✅ Excellent | finance_graphrag, sparql_query_templates, lineage shims all **100%** |
 
 **Largest remaining coverage opportunities:**
@@ -508,6 +508,26 @@ reasoning = reasoner.reason_across_documents(
 ---
 
 ## Version History
+
+### v2.8.0 (2026-02-20) - Coverage Boost Session 21 ✅
+
+**Summary:** Added 65 new tests across 6 high-impact modules; overall coverage from 84% to **85%** (+1pp). Fixed 1 production bug. Largest gains: `cypher/lexer.py` 90%→**99%** (+9pp), `extraction/advanced.py` 87%→**99%** (+12pp), `extraction/graph.py` 75%→**98%** (+23pp), `lineage/core.py` 89%→**97%** (+8pp).
+
+**Bug fixed:**
+- `extraction/graph.py` `merge()`: When `existing_entity.properties is None`, the `key not in (existing_entity.properties or {})` guard passed but `existing_entity.properties[key] = value` raised `TypeError: 'NoneType' object does not support item assignment`. Fixed by initializing `existing_entity.properties = {}` before the loop when it is `None`.
+
+**Test additions (65 new):**
+- `cypher/lexer.py` (90% → **99%**, +9pp): `//` line comments skipped, `/* */` single-line/multi-line block comments skipped, float literal tokenized, escape sequences `\n`/`\t`/`\r` in strings, `<->` ARROW_BOTH token, `!=` NEQ token
+- `extraction/advanced.py` (87% → **99%**, +12pp): invalid regex in entities pass (logged, not raised), invalid regex tuple in relationships pass (logged, not raised), `_extract_context_entities` from relationship context, `_find_matching_entity` partial/exact/no match, `analyze_content_domain` (academic/technical/business/all keys)
+- `lineage/core.py` (89% → **97%**, +8pp): backward direction `add_link` (creates reverse edge), bidirectional (both edges), `get_neighbors` both direction / node-not-in-graph / invalid direction raises `ValueError`, `LineageTracker.get_upstream_entities` / `get_downstream_entities` (missing node → empty), `query(metadata=...)` matching/no-match, `_check_temporal_consistency` consistent/inconsistent/missing-nodes
+- `migration/ipfs_importer.py` (88% → **95%**, +7pp): `_validate_graph_data` duplicate relationship ID / non-existent start node, `_import_relationships` skips when node_id_map missing entry, `_close` session-error / driver-error logged not raised, `_import_schema` no-schema / with-indexes+constraints, `import_data` unexpected exception recorded in result
+- `extraction/graph.py` (75% → **98%**, +23pp): `add_relationship` with string source/target IDs, `add_relationship` string rel type no source raises, `merge` with `None` existing-entity properties (bug fix path), `export_to_rdf` turtle/xml/all-property-types/relationship-with-properties/no-rdflib-returns-error-string
+- `reasoning/cross_document.py` (78% → **88%**, +10pp): `_MissingUnifiedGraphRAGQueryOptimizer.__getattr__` raises ImportError, custom `query_optimizer` kwarg vs default stub, numpy cosine similarity orthogonal/parallel/zero-norm fallback, empty-content similarity returns 0.0, `documents=` alias path (line 251), multi-hop failure graceful warning, `_synthesize_answer` with LLM router mock / LLM exception → fallback confidence 0.75, `_example_usage` callable
+
+**Result:** 2,612 passed, 23 skipped, **0 failed** — up from 2,547 (session 20 baseline)
+**Coverage:** 84% → **85%** overall
+
+**Backward Compatibility:** 100% (bug fix corrects crash → correct behaviour; no API changes)
 
 ### v2.7.0 (2026-02-20) - Coverage Boost Session 20 ✅
 
