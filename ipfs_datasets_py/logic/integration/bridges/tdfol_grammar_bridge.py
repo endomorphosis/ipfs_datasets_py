@@ -591,19 +591,32 @@ class NaturalLanguageTDFOLInterface:
         premise_formulas = []
         for premise in premises:
             formula = self.understand(premise)
+            if formula is None:
+                # Try treating bare atom like "P" as a zero-arity predicate P()
+                import re as _re
+                if _re.fullmatch(r'[A-Z][A-Za-z0-9_]*', premise.strip()):
+                    formula = self.understand(f"{premise.strip()}()")
             if formula:
                 premise_formulas.append(formula)
             else:
                 return {
                     "valid": False,
+                    "premises": premises,
+                    "conclusion": conclusion,
                     "error": f"Could not parse premise: {premise}"
                 }
         
         # Parse conclusion
         conclusion_formula = self.understand(conclusion)
+        if conclusion_formula is None:
+            import re as _re
+            if _re.fullmatch(r'[A-Z][A-Za-z0-9_]*', conclusion.strip()):
+                conclusion_formula = self.understand(f"{conclusion.strip()}()")
         if not conclusion_formula:
             return {
                 "valid": False,
+                "premises": premises,
+                "conclusion": conclusion,
                 "error": f"Could not parse conclusion: {conclusion}"
             }
         
