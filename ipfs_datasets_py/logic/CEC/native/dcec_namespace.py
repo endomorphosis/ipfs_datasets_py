@@ -242,9 +242,13 @@ class DCECNamespace:
         return predicate
     
     @beartype  # type: ignore[untyped-decorator]
-    def get_predicate(self, name: str) -> Optional[Predicate]:
-        """Get a predicate by name."""
-        return self.predicates.get(name)
+    def get_predicate(self, name: str, arity: int = None) -> Optional[Predicate]:
+        """Get a predicate by name. If not found and arity is given, auto-creates it."""
+        pred = self.predicates.get(name)
+        if pred is None and arity is not None:
+            # Auto-create predicate with empty sorts (arity ignored for backward compat)
+            pred = self.add_predicate(name, [])
+        return pred
     
     def get_statistics(self) -> Dict[str, int]:
         """Get statistics about the namespace."""

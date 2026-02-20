@@ -81,6 +81,7 @@ class DeonticOperator(Enum):
         - Permission is typically the dual of obligation: P(φ) ≡ ¬O(¬φ)
     """
     OBLIGATION = "O"         # O(φ) - it is obligatory that φ
+    OBLIGATORY = "O"         # alias for OBLIGATION (backward compat)
     PERMISSION = "P"         # P(φ) - it is permitted that φ
     PROHIBITION = "F"        # F(φ) - it is forbidden that φ
     SUPEREROGATION = "S"     # S(φ) - it is supererogatory that φ

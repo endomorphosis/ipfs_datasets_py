@@ -612,6 +612,22 @@ class ConnectiveFormula(Formula):
     """
     connective: LogicalConnective
     formulas: List[Formula]
+
+    def __new__(cls, connective, formulas=None, *extra_formulas):
+        """Allow both ConnectiveFormula(op, [p, q]) and ConnectiveFormula(op, p, q)."""
+        instance = object.__new__(cls)
+        return instance
+
+    def __init__(self, connective, formulas=None, *extra_formulas):
+        """Accept formulas as a list or as positional args."""
+        if formulas is None:
+            formulas = []
+        elif not isinstance(formulas, list):
+            # Called as ConnectiveFormula(op, p, q) — formulas is the first formula
+            formulas = [formulas] + list(extra_formulas)
+        self.connective = connective
+        self.formulas = formulas
+        self.__post_init__()
     
     def __post_init__(self) -> None:
         if self.connective == LogicalConnective.NOT and len(self.formulas) != 1:
