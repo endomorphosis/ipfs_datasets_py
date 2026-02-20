@@ -941,8 +941,9 @@ class OntologyOptimizer:
             if hasattr(result, 'critic_scores') and result.critic_scores:
                 score = result.critic_scores[-1]
                 for dim in distribution:
-                    if hasattr(score, dim):
-                        distribution[dim].append(getattr(score, dim))
+                    val = getattr(score, dim, None)
+                    if val is not None:
+                        distribution[dim].append(val)
         
         # Compute averages
         return {
