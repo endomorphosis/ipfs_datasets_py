@@ -22,8 +22,9 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -118,6 +119,14 @@ class P2PServiceManager:
         self._workflow_scheduler = None
         self._peer_registry = None
         self._mcplusplus_available = False
+
+        # Phase 7: P2P connection pool — reuse live connections to known peers
+        # instead of opening a fresh socket on every call.
+        self._connection_pool: Dict[str, Any] = {}
+        self._pool_max_size: int = 10
+        self._pool_lock: threading.Lock = threading.Lock()
+        self._pool_hits: int = 0
+        self._pool_misses: int = 0
 
     def _setdefault_env(self, key: str, value: str) -> None:
         if key not in os.environ:
@@ -400,6 +409,99 @@ class P2PServiceManager:
         """
         return self._mcplusplus_available
 
+    # ── Phase 7: P2P Connection Pool ─────────────────────────────────────────
+
+    def acquire_connection(self, peer_id: str) -> Optional[Any]:
+        """Acquire a pooled connection to *peer_id*, or return ``None`` if unavailable.
+
+        The connection pool reuses existing live connections before the caller
+        falls back to opening a new one.  When a pooled connection is returned
+        the hit counter is incremented; otherwise the miss counter is incremented.
+
+        Thread-safe via ``_pool_lock``.
+
+        Args:
+            peer_id: Libp2p peer identifier (e.g. ``"QmABC123..."``).
+
+        Returns:
+            A connection object from the pool, or ``None`` if no pooled
+            connection is currently available for this peer.
+        """
+        with self._pool_lock:
+            conn = self._connection_pool.pop(peer_id, None)
+            if conn is not None:
+                self._pool_hits += 1
+                logger.debug("P2P pool hit for peer %s", peer_id)
+            else:
+                self._pool_misses += 1
+                logger.debug("P2P pool miss for peer %s", peer_id)
+            return conn
+
+    def release_connection(self, peer_id: str, conn: Any) -> bool:
+        """Return a connection to the pool for future reuse.
+
+        If the pool is already at capacity (``_pool_max_size``) the connection
+        is **not** pooled and the caller is responsible for closing it.
+
+        Thread-safe via ``_pool_lock``.
+
+        Args:
+            peer_id: Peer identifier the connection belongs to.
+            conn: Connection object to pool.
+
+        Returns:
+            ``True`` if the connection was accepted into the pool,
+            ``False`` if the pool is full and the connection was rejected.
+        """
+        if conn is None:
+            return False
+        with self._pool_lock:
+            if len(self._connection_pool) >= self._pool_max_size:
+                logger.debug(
+                    "P2P pool full (%d/%d); discarding connection for %s",
+                    len(self._connection_pool),
+                    self._pool_max_size,
+                    peer_id,
+                )
+                return False
+            self._connection_pool[peer_id] = conn
+            logger.debug("P2P pool: stored connection for %s", peer_id)
+            return True
+
+    def clear_connection_pool(self) -> int:
+        """Discard all pooled connections and reset hit/miss counters.
+
+        Returns:
+            Number of connections that were evicted.
+        """
+        with self._pool_lock:
+            count = len(self._connection_pool)
+            self._connection_pool.clear()
+            self._pool_hits = 0
+            self._pool_misses = 0
+            logger.debug("P2P pool cleared (%d connections evicted)", count)
+            return count
+
+    def get_pool_stats(self) -> Dict[str, Any]:
+        """Return connection-pool statistics.
+
+        Returns:
+            Dict with ``size``, ``max_size``, ``hits``, ``misses``, and
+            ``hit_rate`` (float 0.0–1.0, or ``None`` if no attempts yet).
+        """
+        with self._pool_lock:
+            total = self._pool_hits + self._pool_misses
+            hit_rate: Optional[float] = (
+                self._pool_hits / total if total > 0 else None
+            )
+            return {
+                "size": len(self._connection_pool),
+                "max_size": self._pool_max_size,
+                "hits": self._pool_hits,
+                "misses": self._pool_misses,
+                "hit_rate": hit_rate,
+            }
+
     def get_capabilities(self) -> Dict[str, Any]:
         """Get capabilities of this P2P service manager.
         
@@ -414,4 +516,5 @@ class P2PServiceManager:
             "bootstrap": self.enable_bootstrap and self._mcplusplus_available,
             "tools_enabled": self.enable_tools,
             "cache_enabled": self.enable_cache,
+            "connection_pool_max_size": self._pool_max_size,
         }

@@ -48,6 +48,10 @@ class ToolCategory:
         self._tools: Dict[str, Callable] = {}
         self._tool_metadata: Dict[str, Dict[str, Any]] = {}
         self._discovered = False
+        # Phase 7: schema result cache — avoids repeated inspect.signature() calls
+        self._schema_cache: Dict[str, Dict[str, Any]] = {}
+        self._cache_hits: int = 0
+        self._cache_misses: int = 0
     
     def discover_tools(self) -> None:
         """Discover all tools in this category."""
@@ -135,42 +139,81 @@ class ToolCategory:
         return self._tools.get(tool_name)
     
     def get_tool_schema(self, tool_name: str) -> Optional[Dict[str, Any]]:
-        """Get the full schema for a tool."""
+        """Get the full schema for a tool, returning a cached result when possible.
+
+        The first call introspects the function signature via ``inspect``; subsequent
+        calls return the memoised dict directly, avoiding repeated reflection work.
+        """
         if not self._discovered:
             self.discover_tools()
-        
+
+        # Phase 7: fast-path — return cached schema if available
+        if tool_name in self._schema_cache:
+            self._cache_hits += 1
+            return self._schema_cache[tool_name]
+
         metadata = self._tool_metadata.get(tool_name)
         if not metadata:
             return None
-        
+
         tool_func = self._tools.get(tool_name)
         if not tool_func:
             return None
-        
-        # Build full schema
+
+        # Build full schema (expensive — only done once per tool_name)
         sig = inspect.signature(tool_func)
         parameters = {}
-        
+
         for param_name, param in sig.parameters.items():
-            param_info = {
+            param_info: Dict[str, Any] = {
                 "name": param_name,
                 "required": param.default == inspect.Parameter.empty,
             }
-            
+
             # Try to get type annotation
             if param.annotation != inspect.Parameter.empty:
                 param_info["type"] = str(param.annotation)
-            
+
             # Get default value
             if param.default != inspect.Parameter.empty:
                 param_info["default"] = str(param.default)
-            
+
             parameters[param_name] = param_info
-        
-        return {
+
+        schema = {
             **metadata,
             "parameters": parameters,
-            "return_type": str(sig.return_annotation) if sig.return_annotation != inspect.Signature.empty else "Any"
+            "return_type": (
+                str(sig.return_annotation)
+                if sig.return_annotation != inspect.Signature.empty
+                else "Any"
+            ),
+        }
+
+        # Store in cache before returning
+        self._schema_cache[tool_name] = schema
+        self._cache_misses += 1
+        return schema
+
+    def clear_schema_cache(self) -> None:
+        """Evict all cached schemas (e.g. after tool reload).
+
+        Resets hit/miss counters as well.
+        """
+        self._schema_cache.clear()
+        self._cache_hits = 0
+        self._cache_misses = 0
+
+    def cache_info(self) -> Dict[str, Any]:
+        """Return schema-cache statistics.
+
+        Returns:
+            Dict with keys ``hits``, ``misses``, ``size``.
+        """
+        return {
+            "hits": self._cache_hits,
+            "misses": self._cache_misses,
+            "size": len(self._schema_cache),
         }
 
 

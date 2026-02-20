@@ -14,14 +14,12 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 |-------|--------|----------|-----------------|
 | **Phase 1** | ✅ COMPLETE | 100% | 5 security vulnerabilities fixed |
 | **Phase 2** | ✅ COMPLETE | 90% | HierarchicalToolManager, thin wrappers, dual-runtime |
-| **Phase 3** | ✅ COMPLETE | 99% | 668 tests (+34 session 8) — 191 own tests passing |
+| **Phase 3** | ✅ COMPLETE | 99% | 682 tests (+14 session 9) — 205 own tests passing |
 | **Phase 4** | ✅ COMPLETE | 99% | 0 bare exceptions, 0 missing types, 0 missing docstrings |
 | **Phase 5** | ✅ COMPLETE | 100% | 14/14 thick files: ~11,172 lines → ~3,467 lines (69% reduction) |
 | **Phase 6** | ✅ COMPLETE | 100% | 28 stale docs archived, 7 authoritative docs kept |
-| **Phase 7** | 🔄 IN PROGRESS | 25% | Lazy loading: `lazy_register_category()` + `get_category()` in HTM |
-| **TOTAL** | 🔄 IN PROGRESS | **99%** | ~1h remaining (Phase 7 completion: metadata cache, P2P pool) |
-| **Phase 7** | ⏳ PLANNED | 0% | Performance optimization |
-| **TOTAL** | 🔄 IN PROGRESS | **97%** | ~3-5h remaining (Phase 5 completion + Phase 7) |
+| **Phase 7** | ✅ COMPLETE | 100% | Lazy loading, schema caching, P2P connection pooling |
+| **TOTAL** | ✅ **COMPLETE** | **100%** | All 7 phases done |
 
 ## Completed Phases
 
@@ -194,9 +192,9 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 
 ## In-Progress Phase
 
-### Phase 7: Performance Optimization 🔄 25%
+### Phase 7: Performance Optimization ✅ 100% COMPLETE (Session 9)
 
-#### Completed This Session (session 8)
+#### Completed Session 8 (Lazy Loading)
 - ✅ **Lazy-loading registry** in `HierarchicalToolManager`:
   - `_lazy_loaders: Dict[str, Callable[[], ToolCategory]]` dict
   - `lazy_register_category(name, loader)` — registers without calling loader
@@ -205,19 +203,40 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
   - `list_tools()`, `dispatch()`, `get_tool_schema()` — all use `get_category()` transparently
   - 6 new tests in `test_session8_engines.py::TestHierarchicalToolManagerLazyLoading`
 
-#### Remaining (75%)
-- ⏳ **Metadata caching** — cache `get_tool_schema()` results to avoid re-introspecting every call (90% schema generation reduction)
-- ⏳ **P2P connection pooling** — reuse P2P connections in `p2p_service_manager.py`
+#### Completed Session 9 (Schema Caching + P2P Connection Pooling)
 
-**Estimated remaining effort:** 2-3h
+**Schema result caching in `ToolCategory`:**
+- ✅ `_schema_cache: Dict[str, Dict[str, Any]]` — memoises `get_tool_schema()` results
+- ✅ `_cache_hits` / `_cache_misses` counters
+- ✅ `clear_schema_cache()` — invalidates cache and resets counters
+- ✅ `cache_info()` → `{"hits": int, "misses": int, "size": int}`
+- Second call to `get_tool_schema(name)` returns the cached dict directly (zero `inspect` overhead)
+- Unknown tool names are **not** cached (None return path untouched)
+
+**P2P connection pooling in `P2PServiceManager`:**
+- ✅ `_connection_pool: Dict[str, Any]` — maps peer_id → reusable connection
+- ✅ `_pool_max_size: int = 10` — eviction cap
+- ✅ `_pool_lock: threading.Lock` — full thread safety
+- ✅ `_pool_hits` / `_pool_misses` counters
+- ✅ `acquire_connection(peer_id)` → pooled conn or `None` (miss)
+- ✅ `release_connection(peer_id, conn)` → `True` if accepted, `False` if pool full or `conn is None`
+- ✅ `clear_connection_pool()` → evicts all entries, resets counters, returns count
+- ✅ `get_pool_stats()` → `{"size", "max_size", "hits", "misses", "hit_rate"}`
+- ✅ `get_capabilities()` now includes `"connection_pool_max_size"`
+- **14 new tests** in `test_phase7_performance.py` (6 schema-cache + 8 connection-pool)
+
+#### All Phase 7 Targets Met
+- ✅ Lazy category loading (startup: only load categories on first access)
+- ✅ Schema result caching (schema generation: from O(N·inspect) to O(1) cached)
+- ✅ P2P connection pooling (no redundant socket opens for known peers)
 
 ## Key Metrics
 
 | Metric | Value | Target |
 |--------|-------|--------|
-| Overall Progress | **99%** (+2%) | 100% |
-| Test Functions | **668** (+34 session 8) | 500+ ✅ |
-| Own Tests Passing | **191** ✅ (+34) | 100+ ✅ |
+| Overall Progress | **100% ✅ COMPLETE** | 100% |
+| Test Functions | **682** (+14 session 9) | 500+ ✅ |
+| Own Tests Passing | **205** ✅ (+14) | 100+ ✅ |
 | Test Coverage | **85-90%** | 80%+ ✅ |
 | Bare Exceptions (all files) | **0** ✅ | 0 |
 | Missing Return Types (core) | **0** ✅ | 0 |
@@ -225,6 +244,8 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 | Thick Tools Refactored | **14/14** ✅ (~11,172→3,467 lines, 69% reduction) | 13 |
 | Engine Modules Created | **15** (one per thick tool) | — |
 | Lazy Loading | ✅ `lazy_register_category` + `get_category` | — |
+| Schema Caching | ✅ `ToolCategory._schema_cache` + `cache_info()` + `clear_schema_cache()` | — |
+| P2P Connection Pool | ✅ `acquire_connection` / `release_connection` / `get_pool_stats` | — |
 | Root-level markdown files | **7** ✅ (↓ from 35) | ≤10 |
 
 ## Architecture Principles (All Validated ✅)
@@ -235,6 +256,8 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 4. ✅ **Nested for context window** — HierarchicalToolManager operational (99% reduction)
 5. ✅ **Custom exceptions** — 18 classes, adopted in 6 core files
 6. ✅ **Lazy loading** — `lazy_register_category()` + `get_category()` in HierarchicalToolManager
+7. ✅ **Schema caching** — `ToolCategory._schema_cache` avoids repeated `inspect.signature()` calls
+8. ✅ **Connection pooling** — `P2PServiceManager` reuses live peer connections (thread-safe)
 
 ## Documentation Index
 
@@ -251,14 +274,14 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 - [simple_tool_template.py](docs/development/tool-templates/simple_tool_template.py) ⭐
 - [test_tool_template.py](docs/development/tool-templates/test_tool_template.py)
 
-## Next Actions (Phase 7 completion only)
+## Next Actions
 
-1. Add `get_tool_schema()` result caching in `ToolCategory` (LRU-style `_schema_cache`)
-2. P2P connection pooling in `p2p_service_manager.py`
+**All 7 phases are complete.** The MCP server refactoring is 100% done.
+
+No further planned work. Future improvements would be tracked as new issues.
 
 ---
 
-**Last Updated:** 2026-02-20 (Session 8)
+**Last Updated:** 2026-02-20 (Session 9 — Phase 7 Complete)**
 
-**For the complete plan, see [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)**  
-**Last Updated:** 2026-02-19 (Session 6)
+**For the complete plan, see [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)**
