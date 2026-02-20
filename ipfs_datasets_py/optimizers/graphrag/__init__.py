@@ -123,6 +123,8 @@ from .visualization import (
     GraphVisualization,
 )
 
+from .ontology_learning_adapter import OntologyLearningAdapter, FeedbackRecord
+
 # Export public API
 __all__ = [
     # Generator
@@ -169,6 +171,9 @@ __all__ = [
     'OntologyVisualizer',
     'MetricsVisualizer',
     'GraphVisualization',
+    # Learning Adapter
+    'OntologyLearningAdapter',
+    'FeedbackRecord',
 ]
 
 __version__ = '0.1.0'

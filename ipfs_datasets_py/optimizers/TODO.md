@@ -354,9 +354,9 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 ## Documentation Debt
 
 - [ ] (P2) [docs] `ARCHITECTURE_UNIFIED.md` — update to match current code (remove references to non-existent modules)
-- [ ] (P2) [docs] `README.md` — add quick-start examples for each optimizer type
+- [x] (P2) [docs] `README.md` — add quick-start examples for each optimizer type — Done batch 30: GraphRAG + Logic API/CLI examples added
 - [x] (P2) [docs] Add module-level docstrings to agentic/coordinator.py and production_hardening.py — Already present
-- [ ] (P2) [docs] Document the `BaseCritic` / `BaseSession` / `BaseHarness` extension pattern with examples
+- [x] (P2) [docs] Document the `BaseCritic` / `BaseSession` / `BaseHarness` extension pattern with examples — Done batch 30: BaseCritic module docstring expanded with full extension pattern + existing implementations list
 - [ ] (P3) [docs] Add Sphinx/MkDocs configuration and auto-generate API reference
 - [ ] (P3) [docs] Write a "How to add a new optimizer" guide covering all integration points
 - [ ] (P3) [docs] Add architecture ASCII diagram to each sub-package `__init__.py`
@@ -368,7 +368,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 - [x] (P1) [arch] Audit all `eval()`/`exec()` usage — Done batch 26: only intentionally sandboxed exec({}) in validation.py; adversarial.py detects but does not use eval/exec
 - [x] (P2) [arch] Validate file paths in CLI wrappers against path-traversal attacks (use `Path.resolve()`)
   - Done 2026-02-20: _safe_resolve() helper added to graphrag + logic CLI wrappers
-- [ ] (P2) [arch] Ensure no secrets are logged (prover API keys, LLM API keys)
+- [x] (P2) [arch] Ensure no secrets are logged (prover API keys, LLM API keys) — Done: production_hardening.py has mask_tokens_in_logs=True + _sanitize_log_message(); OntologyGenerator/Critic/LogicOptimizer only log structural data, never API keys
 - [ ] (P3) [arch] Add sandboxed subprocess execution for untrusted prover calls (seccomp profile)
 
 ---
@@ -464,13 +464,41 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 ## Newly discovered items (2026-02-20 batch 22)
 
 - [x] (P2) [logic] Add --from-file flag to prove command for JSON/YAML premise/goal loading — Done batch 22
-- [ ] (P2) [logic] Add --from-file flag to `validate` command (load ontology from JSON/YAML)
+- [x] (P2) [logic] Add --from-file flag to `validate` command (load ontology from JSON/YAML) — Done batch 30: mutually exclusive --input/--from-file with YAML support + 8 tests
 - [ ] (P2) [graphrag] `OntologyLearningAdapter` — track successful extraction patterns and tune confidence thresholds
 - [ ] (P2) [graphrag] `LearningAdapter.apply_feedback()` — update extraction weights based on mediator actions
 - [ ] (P2) [tests] Unit test for `cli_wrapper.py` prove command with --output flag (writes JSON report)
-- [ ] (P2) [tests] Unit test for `cli_wrapper.py` validate command happy path
+- [x] (P2) [tests] Unit test for `cli_wrapper.py` validate command happy path — Done batch 30: 8 tests in test_cli_validate.py
 - [ ] (P3) [graphrag] Add `entity_to_tdfol()` helper that converts a single entity to a Formula object
 - [ ] (P3) [graphrag] Cache ontology TDFOL output keyed on ontology hash (avoid re-conversion)
 - [ ] (P2) [agentic] Wire `ChangeController.create_change()` to actually create GitHub PR draft
 - [ ] (P2) [arch] Add `__init__` test: confirm all public symbols in `optimizers/graphrag/__init__` are importable
 - [ ] (P2) [docs] Update common/README.md to include ExtractionConfig.custom_rules usage example
+
+## Newly discovered items (batch 31+)
+
+- [ ] (P2) [graphrag] Add `ExtractionConfig.llm_fallback_threshold: float = 0.5` — trigger LLM extraction when rule-based confidence < threshold
+- [ ] (P2) [graphrag] Implement `_extract_with_llm_fallback()` in OntologyGenerator that wraps `_extract_rule_based()` + fallback
+- [ ] (P2) [tests] Unit tests for LLM fallback: low confidence triggers fallback, high confidence skips fallback, fallback disabled when `llm_backend=None`
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.apply_feedback()` — accept list of mediator `Action` objects and update confidence weights
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.get_extraction_hint()` — return adjusted threshold based on historical accuracy
+- [ ] (P2) [tests] Unit tests for `OntologyLearningAdapter` feedback loop (3+ scenarios)
+- [ ] (P2) [arch] Add `__init__` test for `optimizers/logic_theorem_optimizer/__init__` public symbols
+- [ ] (P2) [tests] Parametrize domain-specific rule tests with all 4 domains (legal, medical, financial, technical) — use `pytest.mark.parametrize`
+- [ ] (P2) [graphrag] Add `OntologyCritic.evaluate_batch()` method: evaluate a list of ontologies and return aggregated stats
+- [ ] (P2) [tests] Unit tests for `OntologyCritic.evaluate_batch()` (empty list, single, multiple ontologies)
+- [ ] (P2) [graphrag] Add `relationship_count`, `entity_type_diversity` fields to `OntologyGenerationResult` for richer reporting
+- [ ] (P2) [docs] Update `ARCHITECTURE_UNIFIED.md` to document Relationship.direction field and co-occurrence confidence decay formula
+- [ ] (P3) [graphrag] Add `ExtractionConfig.max_entities: int = 500` cap to prevent runaway extraction on large documents
+- [ ] (P3) [graphrag] Add `ExtractionConfig.min_entity_length: int = 2` to filter single-character entities
+- [ ] (P3) [tests] Fuzz test `OntologyMediator.run_refinement_cycle()` with Hypothesis-generated random documents
+- [ ] (P3) [agentic] Add `ChaosOptimizer.inject_cpu_spike()` method for realistic CPU load testing
+- [ ] (P3) [arch] Add `optimizers.__version__` string populated from `ipfs_datasets_py.__version__`
+- [ ] (P3) [tests] Test that `_safe_resolve()` raises/returns 1 on path traversal `../../etc/passwd`
+- [ ] (P2) [docs] Add `common/README.md` section documenting `CriticResult` fields and usage patterns
+- [ ] (P2) [graphrag] Emit a structured log line (JSON) after each `analyze_batch()` call for observability (INFO level, no secrets)
+- [ ] (P2) [logic] Add `--domain` flag to `validate` command (default: 'general', options: legal/medical/financial/technical)
+- [ ] (P2) [logic] Apply domain-specific validation rules in `cmd_validate()` when `--domain` is specified
+- [ ] (P2) [tests] Unit tests for `validate --domain legal` and `validate --domain medical`
+- [ ] (P3) [graphrag] Add `OntologyOptimizer.export_to_rdf()` stub: serialize ontology to Turtle format using rdflib (optional dep)
+- [ ] (P3) [graphrag] Add `OntologyOptimizer.export_to_graphml()` stub: serialize ontology to GraphML for visualization
