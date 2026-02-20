@@ -749,23 +749,20 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] 202 new tests in `test_integration_coverage_session8.py` (all 202 pass)
 - [x] **TOTAL `integration/` coverage: 64% → 70%** ✅ TARGET REACHED
 
-**Remaining (target 80%+):**
-- [ ] `bridges/external_provers.py` — 0%; requires E-prover/Vampire binaries
-- [ ] `bridges/prover_installer.py` — 0%; requires system binary installation
-- [ ] `domain/caselaw_bulk_processor.py` — 27%; requires database
-- [ ] `domain/symbolic_contracts.py` — 56%; pydantic/SymbolicAI-available branch
-- [ ] `symbolic/symbolic_logic_primitives.py` — 63%; SymbolicAI-dependent paths (103 lines) unreachable without symai
-- [ ] `symbolic/neurosymbolic/reasoning_coordinator.py` — 75%; embedding paths need full mocking
-- [ ] E2E test: legal text → TDFOL formula → proof → MCP response chain
-- [ ] `integration/` coverage: 70% → 80%+
+**Completed (2026-02-20 sessions 9-12):**
+- [x] Session 9: 199 new tests. `external_provers.py` 0%→95%, `prover_installer.py` 0%→70%, `caselaw_bulk_processor.py` helpers, `temporal_deontic_rag_store.py` 59%→80%+, `modal_logic_extension.py` 73%→89%, `logic_translation_core.py` 63%→76%
+- [x] Session 10: 93 new tests. `ipfs_proof_cache.py` 29%→77%, `tdfol_shadowprover_bridge.py` 71%→79%, `tdfol_cec_bridge.py` 63%→71%, `tdfol_grammar_bridge.py` 69%→71%, `deontic_logic_converter.py` 58%→69%, `deontic_logic_core.py` additional. Bug fix: `ipfs_proof_cache.close()` removed invalid `super().close()` call.
+- [x] Session 11: 90 new tests. `symbolic_contracts.py` 56%→72%, `logic_translation_core.py` 76%→90%, `tdfol_grammar_bridge.py` 71%→74%, `document_consistency_checker.py` 70%→improved, `deontic_logic_core.py` 79%→improved
+- [x] Session 12: 45 new tests. `deontic_logic_core.py` 79%→90%+, `integration/__init__.py` 52%→70%+, `ipfs_proof_cache.py` 77%→90%+, `prover_installer.py` 70%→80%+, `symbolic_contracts.py` additional coverage
+- [x] **TOTAL `integration/` coverage: 70% → 80%** ✅ TARGET REACHED (427 new tests, sessions 9-12)
 
-**Acceptance Criteria:**
-- [x] 15+ integration tests for TDFOL↔CEC cross-module interactions ✅ (via earlier sessions)
-- [x] `integration/` coverage ≥ 50% ✅ (51% as of session 5)
-- [x] `integration/` coverage ≥ 60% ✅ (60% as of session 6, 64% as of session 7)
-- [x] `integration/` coverage ≥ 70% ✅ (70% as of session 8)
+**Remaining (target 80%+ ✅ ACHIEVED):**
+- [x] `integration/` coverage: 70% → 80%+ ✅
 - [ ] E2E test: legal text → TDFOL formula → proof → MCP response chain
-- [ ] `integration/` coverage: 70% → 80%+
+- [ ] `bridges/tdfol_cec_bridge.py` — 71%; remaining CEC prover proof path (requires CEC native `parse_dcec_formula` function to be implemented)
+- [ ] `domain/caselaw_bulk_processor.py` — 48%; async methods require anyio/database mocking
+- [ ] `domain/symbolic_contracts.py` — 72%; SymbolicAI-available branch (lines 459-695) unreachable without symai
+- [ ] `symbolic/symbolic_logic_primitives.py` — 63%; SymbolicAI-dependent paths (103 lines) unreachable without symai
 
 ### 9.4 TDFOL Public API Docstrings
 
