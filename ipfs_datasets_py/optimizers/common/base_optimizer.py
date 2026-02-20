@@ -8,8 +8,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+_logger = logging.getLogger(__name__)
 
 
 class OptimizationStrategy(Enum):
@@ -291,6 +294,7 @@ class BaseOptimizer(ABC):
             valid = self.validate(artifact, context)
         
         execution_time = (datetime.now() - start_time).total_seconds()
+        execution_time_ms = execution_time * 1000.0
 
         # End metrics cycle
         if self.metrics_collector is not None:
@@ -298,6 +302,17 @@ class BaseOptimizer(ABC):
                 self.metrics_collector.end_cycle(cycle_id, success=valid)
             except Exception:
                 pass
+
+        _logger.info(
+            "run_session completed session_id=%s domain=%s "
+            "iterations=%d score=%.4f valid=%s execution_time_ms=%.1f",
+            context.session_id,
+            context.domain,
+            iterations,
+            score,
+            valid,
+            execution_time_ms,
+        )
         
         result = {
             'artifact': artifact,
@@ -305,6 +320,7 @@ class BaseOptimizer(ABC):
             'iterations': iterations,
             'valid': valid,
             'execution_time': execution_time,
+            'execution_time_ms': execution_time_ms,
         }
         
         if self.config.metrics_enabled:
@@ -315,6 +331,7 @@ class BaseOptimizer(ABC):
                 'score_delta': score - initial_score,
                 'iterations': iterations,
                 'execution_time': execution_time,
+                'execution_time_ms': execution_time_ms,
             }
         
         return result
