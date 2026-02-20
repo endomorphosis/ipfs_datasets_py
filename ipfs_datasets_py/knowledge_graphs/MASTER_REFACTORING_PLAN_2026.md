@@ -110,6 +110,13 @@ All work below was completed before this plan was written; it is recorded here t
 - P3: Neural extraction + aggressive extraction + complex inference
 - P4: Multi-hop traversal + LLM integration (OpenAI + Anthropic)
 
+### CAR Format + Expression Evaluator (Complete ✅, 2026-02-19)
+- Evaluated `libipld` (Option 1, Rust-backed) vs `ipld-car+ipld-dag-pb` (Option 2, pure Python)
+- Implemented CAR save/load using `libipld` (DAG-CBOR) + `ipld-car` (CAR container)
+- Fixed `evaluate_compiled_expression` to correctly handle NOT, AND, OR in complex WHERE clauses
+- Added `libipld>=3.3.2`, `dag-cbor>=0.3.3` to `setup.py` `ipld` extras
+- 18 new tests in `test_car_format.py` (all passing)
+
 ---
 
 ## 3. Remaining Work (Prioritized)

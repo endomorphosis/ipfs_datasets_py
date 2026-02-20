@@ -130,32 +130,29 @@ save_to_file(graph, "output.csv", format="csv")
 
 ### 6. CAR Format Support
 
-**Status:** 🔴 Intentionally Deferred (P3 — No Change Planned Before v3.0)
+**Status:** ✅ Implemented (v2.1.0 — 2026-02-19)
 **Location:** `migration/formats.py` — `_builtin_save_car` / `_builtin_load_car`
-**Current State:** Raises `NotImplementedError` with an informative message.
-**Reason for Deferral:** The Python IPLD CAR ecosystem has two candidates:
-  - `ipld-car` (PyPI) — only 0.0.1 available; API unstable.
-  - `py-car` / `dag-cbor` + custom streaming — requires significant integration work.
+**Library decision:**
+- **Option 1 — `libipld` (v3.3.2, Rust-backed):** Fast DAG-CBOR encoding/decoding and
+  CAR decoding. No `encode_car` function. Used as primary decoder (faster, Rust extension).
+- **Option 2 — `ipld-car` (v0.0.1) + `ipld-dag-pb` (v0.0.1):** Pure-Python CAR
+  encode + decode, supports any codec. `ipld-dag-pb` not needed for graph data.
+- **Decision:** Use `libipld` for DAG-CBOR encoding + `ipld-car` for CAR file
+  creation. Decode prefers `libipld` (fast), falls back to `ipld-car` + `dag-cbor`.
 
-**Decision (2026-02-19):** Keep CAR deferred. Rationale:
-1. The existing format registry (`register_format`) makes it easy to add CAR support as a plugin without modifying this file.
-2. DAG-JSON and JSON-Lines cover all current IPFS-native use cases.
-3. Re-evaluate when `ipld-car` reaches v1.0 or a stable community library emerges.
-4. Any third party can add CAR support without a core change:
-   ```python
-   from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-       MigrationFormat, register_format,
-   )
-   def _save_car(graph, filepath): ...
-   def _load_car(filepath): ...
-   register_format(MigrationFormat.CAR, _save_car, _load_car)
-   ```
+**Install extras:** `pip install -e ".[ipld]"` (adds `libipld`, `ipld-car`, `dag-cbor`)
 
-**Impact:** Low — affects only workflows that specifically need `.car` files.
-**Workaround:** Use IPLD backend directly, or use DAG-JSON then convert with an external CAR tool (e.g., `car` CLI from `go-car`).
+**Usage:**
+```python
+from ipfs_datasets_py.knowledge_graphs.migration.formats import (
+    GraphData, MigrationFormat,
+)
+graph_data.save_to_file("graph.car", format=MigrationFormat.CAR)
+loaded = GraphData.load_from_file("graph.car", format=MigrationFormat.CAR)
+```
 
-**Timeline:** Not scheduled — revisit when ipld-car ≥ 1.0 is available on PyPI.
-**Effort when ready:** 8-12 hours (streaming CAR writer/reader + tests).
+**Timeline:** Delivered in v2.1.0 (February 2026)  
+**Effort:** 4 hours (implementation + tests)
 
 ---
 

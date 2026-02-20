@@ -297,46 +297,59 @@ class TestPajekFormat:
 
 
 class TestCARFormat:
-    """Test suite for CAR format (should raise NotImplementedError with clear message)."""
-    
-    def test_car_format_not_implemented_save(self):
+    """Test suite for CAR format (now implemented via libipld + ipld-car)."""
+
+    def test_car_format_save_creates_file(self):
         """
         GIVEN: A graph
-        WHEN: Attempting to save to CAR format
-        THEN: Raises NotImplementedError with helpful message
+        WHEN: Saving to CAR format
+        THEN: A non-empty file is created successfully
         """
         # GIVEN
-        graph = GraphData(nodes=[], relationships=[])
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.car', delete=False) as f:
+        graph = GraphData(nodes=[NodeData(id="1", labels=["Test"])], relationships=[])
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.car') as f:
             filepath = f.name
-        
+
         try:
-            # WHEN/THEN
-            with pytest.raises(NotImplementedError) as exc_info:
-                graph.save_to_file(filepath, format=MigrationFormat.CAR)
-            
-            assert 'IPLD CAR library integration' in str(exc_info.value)
+            # WHEN
+            graph.save_to_file(filepath, format=MigrationFormat.CAR)
+
+            # THEN
+            assert os.path.exists(filepath)
+            assert os.path.getsize(filepath) > 0
         finally:
             if os.path.exists(filepath):
                 os.unlink(filepath)
-    
-    def test_car_format_not_implemented_load(self):
+
+    def test_car_format_roundtrip(self):
         """
-        GIVEN: A CAR file path
-        WHEN: Attempting to load from CAR format
-        THEN: Raises NotImplementedError with helpful message
+        GIVEN: A graph with nodes and relationships
+        WHEN: Saved to CAR format and loaded back
+        THEN: Node and relationship counts are preserved
         """
         # GIVEN
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.car', delete=False) as f:
+        graph = GraphData(
+            nodes=[
+                NodeData(id="1", labels=["Person"], properties={"name": "Alice"}),
+                NodeData(id="2", labels=["Person"], properties={"name": "Bob"}),
+            ],
+            relationships=[
+                RelationshipData(id="r1", type="KNOWS", start_node="1", end_node="2"),
+            ],
+        )
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.car') as f:
             filepath = f.name
-        
+
         try:
-            # WHEN/THEN
-            with pytest.raises(NotImplementedError) as exc_info:
-                GraphData.load_from_file(filepath, format=MigrationFormat.CAR)
-            
-            assert 'IPLD CAR library integration' in str(exc_info.value)
+            # WHEN
+            graph.save_to_file(filepath, format=MigrationFormat.CAR)
+            loaded = GraphData.load_from_file(filepath, format=MigrationFormat.CAR)
+
+            # THEN
+            assert loaded.node_count == 2
+            assert loaded.relationship_count == 1
         finally:
             if os.path.exists(filepath):
                 os.unlink(filepath)

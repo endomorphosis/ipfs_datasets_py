@@ -318,6 +318,27 @@ def evaluate_compiled_expression(expr: Any, binding: Dict[str, Any]) -> Any:
             return binding.get(expr["var"])
 
         if "op" in expr:
+            # Unary operator (e.g. NOT)
+            if "operand" in expr and "left" not in expr:
+                operand = evaluate_compiled_expression(expr["operand"], binding)
+                op = expr["op"].upper()
+                if op == "NOT":
+                    return not bool(operand)
+                if op in ("-", "MINUS"):
+                    return -operand
+                return operand
+            op_upper = expr["op"].upper()
+            # Short-circuit logical operators
+            if op_upper == "AND":
+                left = evaluate_compiled_expression(expr["left"], binding)
+                if not left:
+                    return False
+                return bool(evaluate_compiled_expression(expr["right"], binding))
+            if op_upper == "OR":
+                left = evaluate_compiled_expression(expr["left"], binding)
+                if left:
+                    return True
+                return bool(evaluate_compiled_expression(expr["right"], binding))
             left = evaluate_compiled_expression(expr["left"], binding)
             right = evaluate_compiled_expression(expr["right"], binding)
             return apply_operator(left, expr["op"], right)

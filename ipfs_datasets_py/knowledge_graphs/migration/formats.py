@@ -883,18 +883,94 @@ def _builtin_load_json_lines(filepath: str) -> GraphData:
     return GraphData(nodes=nodes, relationships=relationships, schema=schema)
 
 
-def _builtin_save_car(_graph: GraphData, _filepath: str) -> None:
-    raise NotImplementedError(
-        "CAR format requires IPLD CAR library integration (planned for future). "
-        "See DEFERRED_FEATURES.md for rationale."
-    )
+def _builtin_save_car(graph: GraphData, filepath: str) -> None:
+    """Save graph to Content Addressable aRchive (CAR) format.
+
+    Requires ``libipld`` (for DAG-CBOR encoding) and ``ipld_car`` +
+    ``multiformats`` (for CAR file creation).  Install with::
+
+        pip install libipld ipld-car dag-cbor multiformats
+
+    The graph is serialised as a single DAG-CBOR block containing the full
+    :class:`GraphData` dictionary.  The root CID of that block is stored as
+    the single CAR root.
+
+    Implementation notes:
+        - Uses ``libipld.encode_dag_cbor`` (Rust-backed) for fast serialisation.
+        - Uses ``ipld_car.encode`` for the CAR container format.
+        - CID is computed with SHA-256 multihash under the ``dag-cbor`` codec
+          (multicodec 0x71).
+    """
+    try:
+        import libipld  # type: ignore[import]
+    except ImportError as exc:
+        raise ImportError(
+            "CAR format requires 'libipld'. Install with: pip install libipld"
+        ) from exc
+    try:
+        import ipld_car  # type: ignore[import]
+        from multiformats import CID, multihash  # type: ignore[import]
+    except ImportError as exc:
+        raise ImportError(
+            "CAR format requires 'ipld-car', 'dag-cbor', and 'multiformats'. "
+            "Install with: pip install ipld-car dag-cbor multiformats"
+        ) from exc
+
+    graph_dict = graph.to_dict()
+    cbor_bytes = libipld.encode_dag_cbor(graph_dict)
+
+    # Compute SHA-256 multihash and CID (dag-cbor codec, version 1)
+    digest = multihash.digest(cbor_bytes, "sha2-256")
+    cid = CID("base32", 1, "dag-cbor", digest)
+
+    car_bytes = bytes(ipld_car.encode([cid], [(cid, cbor_bytes)]))
+    with open(filepath, "wb") as f:
+        f.write(car_bytes)
 
 
-def _builtin_load_car(_filepath: str) -> GraphData:
-    raise NotImplementedError(
-        "CAR format requires IPLD CAR library integration (planned for future). "
-        "See DEFERRED_FEATURES.md for rationale."
-    )
+def _builtin_load_car(filepath: str) -> GraphData:
+    """Load graph from Content Addressable aRchive (CAR) format.
+
+    Prefers ``libipld.decode_car`` (Rust-backed, DAG-CBOR only) with fallback
+    to ``ipld_car.decode`` for broader codec support.
+
+    Requires ``libipld`` **or** ``ipld_car`` + ``dag-cbor`` + ``multiformats``.
+    """
+    with open(filepath, "rb") as f:
+        car_bytes = f.read()
+
+    # --- Try libipld first (faster Rust path, DAG-CBOR only) ---
+    try:
+        import libipld  # type: ignore[import]
+        _header, blocks = libipld.decode_car(car_bytes)
+        # blocks is {cid_bytes: decoded_dict, ...}; take the first block
+        if blocks:
+            graph_dict = next(iter(blocks.values()))
+            return GraphData.from_dict(graph_dict)
+    except ImportError:
+        pass  # Fall through to ipld_car
+    except Exception:
+        pass  # Codec not DAG-CBOR – fall through to ipld_car
+
+    # --- Fallback: ipld_car + dag_cbor ---
+    try:
+        import ipld_car  # type: ignore[import]
+        import dag_cbor  # type: ignore[import]
+    except ImportError as exc:
+        raise ImportError(
+            "CAR format requires 'libipld' or ('ipld-car' + 'dag-cbor' + 'multiformats'). "
+            "Install with: pip install libipld  OR  pip install ipld-car dag-cbor multiformats"
+        ) from exc
+
+    _roots, blocks_iter = ipld_car.decode(car_bytes)
+    for _cid, data in blocks_iter:
+        if isinstance(data, (bytes, bytearray, memoryview)):
+            graph_dict = dag_cbor.decode(bytes(data))
+        else:
+            graph_dict = data
+        return GraphData.from_dict(graph_dict)
+
+    raise ValueError("CAR file contains no blocks")
 
 
 def _register_builtin_formats() -> None:

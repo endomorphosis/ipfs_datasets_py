@@ -234,29 +234,32 @@ class TestGraphData:
 class TestErrorHandling:
     """Test error handling in migration formats."""
     
-    def test_car_format_not_implemented_save(self):
-        """Test that CAR format raises NotImplementedError on save."""
-        graph = GraphData(nodes=[NodeData(id="1", labels=["Test"])])
-        
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.car') as f:
+    def test_car_format_roundtrip_save(self):
+        """Test that CAR format save/load works (now implemented)."""
+        graph = GraphData(nodes=[NodeData(id="1", labels=["Test"], properties={"x": 1})])
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.car') as f:
             filepath = f.name
-        
+
         try:
-            with pytest.raises(NotImplementedError, match="CAR format"):
-                graph.save_to_file(filepath, MigrationFormat.CAR)
+            graph.save_to_file(filepath, MigrationFormat.CAR)
+            loaded = GraphData.load_from_file(filepath, MigrationFormat.CAR)
+            assert loaded.node_count == 1
         finally:
             if os.path.exists(filepath):
                 os.unlink(filepath)
-    
-    def test_car_format_not_implemented_load(self):
-        """Test that CAR format raises NotImplementedError on load."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.car') as f:
+
+    def test_car_format_roundtrip_load(self):
+        """Test that CAR format load preserves node IDs."""
+        graph = GraphData(nodes=[NodeData(id="node1", labels=["Test"])])
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.car') as f:
             filepath = f.name
-            f.write("dummy content")
-        
+
         try:
-            with pytest.raises(NotImplementedError, match="CAR format"):
-                GraphData.load_from_file(filepath, MigrationFormat.CAR)
+            graph.save_to_file(filepath, MigrationFormat.CAR)
+            loaded = GraphData.load_from_file(filepath, MigrationFormat.CAR)
+            assert loaded.nodes[0].id == "node1"
         finally:
             if os.path.exists(filepath):
                 os.unlink(filepath)

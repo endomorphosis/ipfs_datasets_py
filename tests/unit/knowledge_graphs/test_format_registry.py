@@ -122,18 +122,22 @@ class TestFormatRegistry:
             if original:
                 _format_registry._save[MigrationFormat.DAG_JSON] = original
 
-    def test_car_save_raises_not_implemented(self, tmp_path):
+    def test_car_save_roundtrip(self, tmp_path):
         """
-        GIVEN: CAR format is registered with a not-implemented stub
+        GIVEN: CAR format is now implemented via libipld + ipld-car
         WHEN: save_to_file is called with CAR format
-        THEN: NotImplementedError is raised (CAR is intentionally deferred)
+        THEN: File is created and can be loaded back
         """
         # GIVEN
         graph = _make_small_graph(2)
 
-        # WHEN / THEN
-        with pytest.raises(NotImplementedError, match="CAR format"):
-            graph.save_to_file(str(tmp_path / "out.car"), MigrationFormat.CAR)
+        # WHEN
+        out = str(tmp_path / "out.car")
+        graph.save_to_file(out, MigrationFormat.CAR)
+
+        # THEN
+        loaded = GraphData.load_from_file(out, MigrationFormat.CAR)
+        assert loaded.node_count == graph.node_count
 
     def test_dag_json_roundtrip_via_registry(self, tmp_path):
         """
