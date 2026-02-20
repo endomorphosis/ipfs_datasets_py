@@ -1,7 +1,7 @@
 # Master Refactoring and Improvement Plan — Logic Module
 
 **Date:** 2026-02-20 (last updated)  
-**Version:** 10.0 (supersedes all previous plans)  
+**Version:** 11.0 (supersedes all previous plans)  
 **Status:** Phase 1 ✅ COMPLETE · Phase 2 🔄 In Progress · Phase 3 ✅ COMPLETE · Phase 4 🔄 Ongoing · Phase 5 ✅ COMPLETE · Phase 6 🔄 In Progress  
 **Scope:** `ipfs_datasets_py/logic/` and `tests/unit_tests/logic/`  
 **MCP Integration:** `ipfs_datasets_py/mcp_server/tools/logic_tools/`
@@ -723,23 +723,34 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] 144 new tests in `test_integration_coverage_session6.py`
 - [x] **TOTAL `integration/` coverage: 51% → 60%** (≥ 60% second milestone ✅)
 
+**Completed (2026-02-20 session 7):**
+- [x] Bug fixed: `_prover_backend_mixin.py` `_check_z3_consistency` — `"sat" in output` matched "unsat" substring before "unsat" check → reordered to check "unsat" first
+- [x] Bug fixed: `_prover_backend_mixin.py` `_check_cvc5_consistency` — same substring-order bug fixed
+- [x] `reasoning/_prover_backend_mixin.py` 12% → **97%**: all 6 execute/check methods (z3/cvc5/lean/coq proof + z3/cvc5 consistency) via `subprocess.run` mocking — all 4 branches each (success/error/timeout/exception)
+- [x] `symbolic/neurosymbolic_api.py` 46% → **88%**: full `NeurosymbolicReasoner` API (init/detect-capabilities/parse/add_knowledge/prove/explain/query/get_capabilities), `get_reasoner` singleton, `ReasoningCapabilities` dataclass
+- [x] `domain/symbolic_contracts.py` 55% → **56%**: FOLInput/FOLOutput models, `FOLSyntaxValidator` (all syntax/structure/semantic/suggestion branches), `ValidationContext`, `ContractedFOLConverter` fallback (all/some/other/prolog/tptp), factory functions
+- [x] `caching/ipld_logic_storage.py` 30% → improved: `LogicProvenanceChain`/`LogicIPLDNode` (to_dict/from_dict/with-provenance), `LogicIPLDStorage` filesystem path (all public methods), `LogicProvenanceTracker` (track/verify/find-related/export-report), factory
+- [x] 139 new tests in `test_integration_coverage_session7.py` (all 139 pass)
+- [x] **TOTAL `integration/` coverage: 60% → 64%** (progress toward 70% ✅)
+
 **Remaining (target 70%+):**
 - [ ] `bridges/external_provers.py` — 0%; requires E-prover/Vampire binaries
 - [ ] `bridges/prover_installer.py` — 0%; requires system binary installation
 - [ ] `domain/caselaw_bulk_processor.py` — 27%; requires database
-- [ ] `caching/ipld_logic_storage.py` — 30%; requires libipld
-- [ ] `reasoning/_prover_backend_mixin.py` — 12%; requires z3/cvc5/lean/coq binaries
 - [ ] `domain/medical_theorem_framework.py` — 0%; demo/optional module
-- [ ] `symbolic/neurosymbolic_api.py` — 46%; some paths need NL available
-- [ ] `domain/symbolic_contracts.py` — 55%; upper half needs complex setup
+- [ ] `domain/symbolic_contracts.py` — 56%; pydantic/SymbolicAI-available branch
+- [ ] `reasoning/_logic_verifier_backends_mixin.py` — 44%; SymbolicAI-dependent paths
+- [ ] `reasoning/proof_execution_engine.py` — 58%; binary-calling paths need mocking
+- [ ] `symbolic/symbolic_logic_primitives.py` — 62%; complex type system paths
 - [ ] E2E test: legal text → TDFOL formula → proof → MCP response chain
-- [ ] `integration/` coverage: 60% → 70%+
+- [ ] `integration/` coverage: 64% → 70%+
 
 **Acceptance Criteria:**
 - [x] 15+ integration tests for TDFOL↔CEC cross-module interactions ✅ (via earlier sessions)
 - [x] `integration/` coverage ≥ 50% ✅ (51% as of session 5)
+- [x] `integration/` coverage ≥ 60% ✅ (60% as of session 6, 64% as of session 7)
 - [ ] E2E test: legal text → TDFOL formula → proof → MCP response chain
-- [ ] `integration/` coverage: 51% → 60%+
+- [ ] `integration/` coverage: 64% → 70%+
 
 ### 9.4 TDFOL Public API Docstrings
 
@@ -780,7 +791,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | Phase 5: God-Module Splits | 2026-02-20 | All 6 oversized files split |
 | Phase 6 (partial): Test bug fixes | 2026-02-20 | 9 failures fixed (strategy/multiformats/d3/forward-chaining) |
 | Phase 6 (partial): TDFOL docstrings | 2026-02-20 | 100% coverage (486/486 public symbols) |
-| Phase 6 (partial): Integration coverage | 2026-02-20 | 38% → 60%; 354 new tests; 9 bugs fixed |
+| Phase 6 (partial): Integration coverage | 2026-02-20 | 38% → 64%; 493 new tests; 11 bugs fixed |
 
 ### Near Term (Next 2–4 weeks)
 | Task | Phase | Effort | Priority |
@@ -792,7 +803,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ### Medium Term (Weeks 4–8)
 | Task | Phase | Effort | Priority |
 |------|-------|--------|---------|
-| Integration tests for reasoning modules (60%→70%) | 6.3 | 8h | 🟠 P1 |
+| Integration tests for reasoning modules (64%→70%) | 6.3 | 8h | 🟠 P1 |
 | E2E tests: legal text → formal proof | 6.3 | 8h | 🟠 P1 |
 | Rate limiting for MCP tool calls | 4.2 | 4h | 🟡 P2 |
 
@@ -874,8 +885,11 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] 5 bugs fixed session 6: `proof_execution_engine.py` wrong kwargs to `get_global_cache`, `caselaw_bulk_processor.py` wrong relative import, `temporal_deontic_api.py` non-existent `query_similar_theorems()` method, `reasoning_coordinator.py` + `hybrid_confidence.py` `.valid` → `.is_proved()` (TDFOL API)
 - [x] Integration tests: 144 new tests session 6 (proof_engine 17%→58%, temporal_api 6%→82%, legal_analyzer 29%→64%, embedding_prover 17%→83%, hybrid_confidence 26%→91%, coordinator 33%→68%, fol_utils 10%→100%, engine_types/utils)
 - [x] **Integration coverage: 51% → 60%** (≥60% second milestone ✅)
+- [x] 2 bugs fixed session 7: `_prover_backend_mixin.py` `_check_z3_consistency`/`_check_cvc5_consistency` — `"sat" in output` matched "unsat" substring; reordered to check "unsat" before "sat"
+- [x] Integration tests: 139 new tests session 7 (`_prover_backend_mixin` 12%→97%, `neurosymbolic_api` 46%→88%, `symbolic_contracts` 55%→56%, `ipld_logic_storage` 30%→improved)
+- [x] **Integration coverage: 60% → 64%** (progress toward 70% ✅)
 - [ ] TDFOL NL test failures (~69) — requires spaCy
-- [ ] Integration test coverage: 60% → 70%+
+- [ ] Integration test coverage: 64% → 70%+
 
 ---
 
@@ -980,7 +994,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 |-----------|---------|----------------|----------------|
 | TDFOL Core | 91.5% pass | 95% pass | 97% pass |
 | CEC Native | 80-85% pass | 90% pass | 93% pass |
-| Integration | ~50% pass | 80% pass | 90% pass |
+| Integration | ~64% coverage | 80% pass | 90% pass |
 | NL Processing | 75% pass | 85% pass | 90% pass |
 | ZKP (simulation) | 80% pass | 85% pass | 85% pass |
 | MCP Tools | 167+ tests | 200+ tests | 250+ tests |
@@ -989,7 +1003,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Phase 2.2 TDFOL NL (spaCy); Phase 6.3 integration coverage (60%→70%); `_prover_backend_mixin.py` 12%→50%; `symbolic/neurosymbolic_api.py` 46%→70%  
+**Next Action:** Phase 2.2 TDFOL NL (spaCy); Phase 6.3 integration coverage (64%→70%); `reasoning/_logic_verifier_backends_mixin.py` 44%→70%; `reasoning/proof_execution_engine.py` 58%→75%; E2E tests  
 **Review Schedule:** After each phase completion, update this document  
 **Created:** 2026-02-19 | **Last Updated:** 2026-02-20  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
