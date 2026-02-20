@@ -106,7 +106,10 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 - [x] (P0) [graphrag] Replace abusive TODO comment with a normal TODO.
 - [x] (P1) [graphrag] Implement/verify the “continue with original optimize_query” merge path (the file appears to contain multiple `optimize_query` definitions; deduplicate).
   - Done 2026-02-20: removed broken override and restored `UnifiedGraphRAGQueryOptimizer.optimize_query`.
-- [ ] (P2) [graphrag] Split the file into smaller modules if it’s extremely large (planner, traversal heuristics, learning adapter, serialization).
+- [x] (P2) [graphrag] Split the file into smaller modules if it’s extremely large (planner, traversal heuristics, learning adapter, serialization).
+  - Done 2026-02-20: extracted `query_metrics.py` (`QueryMetricsCollector`), `query_visualizer.py` (`QueryVisualizer`), `query_rewriter.py` (`QueryRewriter`), `query_budget.py` (`QueryBudgetManager`), `query_stats.py` (`GraphRAGQueryStats`), `query_planner.py` (`GraphRAGQueryOptimizer`), and `query_unified_optimizer.py` (`UnifiedGraphRAGQueryOptimizer`).
+  - Result: `graphrag/query_optimizer.py` reduced from ~6K LOC to ~422 LOC while preserving compatibility via import re-exports.
+  - Validation: full optimizer suite green (`768/768`).
 - [x] (P2) [tests] Add unit tests for `get_execution_plan()` invariants.
   - Done 2026-02-20: vector + direct query plan shape asserted.
 
