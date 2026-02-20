@@ -130,18 +130,22 @@ Examples:
         )
         prove_parser.add_argument(
             '--theorem',
-            required=True,
-            help='Theorem to prove'
+            help='Theorem to prove (overridden by --from-file)'
         )
         prove_parser.add_argument(
             '--premises',
             action='append',
-            help='Premises (can be specified multiple times)'
+            help='Premises (can be specified multiple times; overridden by --from-file)'
         )
         prove_parser.add_argument(
             '--goal',
-            required=True,
-            help='Goal to prove'
+            help='Goal to prove (overridden by --from-file)'
+        )
+        prove_parser.add_argument(
+            '--from-file',
+            metavar='PATH',
+            help='Read theorem, premises, and goal from a JSON or YAML file. '
+                 'Expected keys: "theorem" (str), "premises" (list[str]), "goal" (str).'
         )
         prove_parser.add_argument(
             '--prover',
@@ -290,6 +294,40 @@ Examples:
         Returns:
             Exit code
         """
+        # Load from file if provided (overrides CLI --theorem/--premises/--goal)
+        from_file = getattr(args, 'from_file', None)
+        if from_file:
+            from pathlib import Path as _Path
+            try:
+                file_path = _Path(from_file)
+                if not file_path.exists():
+                    print(f"❌ File not found: {from_file}")
+                    return 1
+                text = file_path.read_text()
+                if from_file.endswith(('.yaml', '.yml')):
+                    try:
+                        import yaml as _yaml
+                        data = _yaml.safe_load(text)
+                    except ImportError:
+                        print("❌ PyYAML not installed. Install with: pip install pyyaml")
+                        return 1
+                else:
+                    import json as _json
+                    data = _json.loads(text)
+                if not isinstance(data, dict):
+                    print("❌ File must contain a JSON/YAML object with keys: theorem, premises, goal")
+                    return 1
+                args.theorem = data.get('theorem') or args.theorem
+                args.premises = data.get('premises', args.premises or [])
+                args.goal = data.get('goal') or args.goal
+            except (OSError, IOError, ValueError) as exc:
+                print(f"❌ Failed to load from file: {exc}")
+                return 1
+
+        if not args.theorem or not args.goal:
+            print("❌ --theorem and --goal are required (or provide --from-file)")
+            return 1
+
         print(f"🎯 Proving theorem: {args.theorem}")
         if args.premises:
             print(f"   Premises: {', '.join(args.premises)}")

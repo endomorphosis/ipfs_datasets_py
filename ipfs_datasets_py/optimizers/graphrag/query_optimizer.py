@@ -80,6 +80,12 @@ import csv
 import uuid
 import datetime
 
+from ipfs_datasets_py.optimizers.graphrag.learning_adapter import (
+    apply_learning_hook,
+    check_learning_cycle,
+    increment_failure_counter,
+)
+
 # Optional dependencies with graceful fallbacks
 try:
     import numpy as np
@@ -4757,43 +4763,7 @@ class UnifiedGraphRAGQueryOptimizer:
 
     def _apply_learning_hook(self) -> None:
         """Best-effort: learn from recent query stats and adjust defaults."""
-        learning_enabled = getattr(self, '_learning_enabled', False)
-        if not learning_enabled:
-            return
-        if not hasattr(self, 'metrics_collector') or self.metrics_collector is None:
-            return
-
-        learning_results = self._learn_from_query_statistics(recent_queries_count=50)
-
-        # Apply learned parameters to default values if significant improvements found
-        if learning_results.get("parameter_adjustments"):
-            for param, adjustment in learning_results.get("parameter_adjustments", {}).items():
-                if param == "traversal_depth" and hasattr(self, '_default_max_depth'):
-                    self._default_max_depth = adjustment.get("new_value")
-                elif param == "vector_top_k" and hasattr(self, '_default_vector_top_k'):
-                    self._default_vector_top_k = adjustment.get("new_value")
-                elif param == "min_similarity" and hasattr(self, '_default_min_similarity'):
-                    self._default_min_similarity = adjustment.get("new_value")
-
-        # Update relation usefulness from learning results
-        for relation, stats in learning_results.get("relation_effectiveness", {}).items():
-            if stats.get("sample_size", 0) >= 5:
-                self._traversal_stats["relation_usefulness"][relation] = stats.get("effectiveness")
-
-        # Apply learned optimization rules
-        for rule in learning_results.get("optimization_rules", []):
-            if rule.get("confidence", 0) > 0.7:
-                if "optimization_rules" not in self._traversal_stats:
-                    self._traversal_stats["optimization_rules"] = []
-                self._traversal_stats["optimization_rules"].append(rule)
-
-        if "learning_results" not in self._traversal_stats:
-            self._traversal_stats["learning_results"] = []
-        self._traversal_stats["learning_results"].append(learning_results)
-
-        # TODO: Refactor/clean up this learning-hook section.
-        # - Extract the parameter update logic into a helper method
-        # - Add unit tests that assert adjustments are applied correctly
+        apply_learning_hook(self)
 
     def get_execution_plan(self, query: Dict[str, Any], priority: str = "normal", graph_processor: Any = None) -> Dict[str, Any]:
         """
@@ -5010,201 +4980,7 @@ class UnifiedGraphRAGQueryOptimizer:
     
         Implements a circuit breaker pattern to disable learning after repeated failures.
         """
-        # Skip if learning is not enabled
-        if not getattr(self, '_learning_enabled', False):
-            return
-        
-        # Check circuit breaker for repeated failures
-        if hasattr(self, '_learning_circuit_breaker_tripped') and self._learning_circuit_breaker_tripped:
-            # Check if enough time has passed to retry
-            retry_after_interval = getattr(self, '_circuit_breaker_retry_time', None)
-            
-            if retry_after_interval is not None:
-                current_time = time.time()
-            
-                # Only reset circuit breaker if enough time has passed
-                if current_time >= retry_after_interval:
-                    # Reset circuit breaker and failure counter but log the reset
-                    self._learning_circuit_breaker_tripped = False
-                    self._learning_failure_count = 0
-                
-                    if hasattr(self, "metrics_collector") and self.metrics_collector is not None:
-                        try:
-                            self.metrics_collector.record_additional_metric(
-                                name="circuit_breaker_reset",
-                                value="Circuit breaker for learning reset after timeout period",
-                                category="statistical_learning"
-                            )
-                        except Exception:
-                            # Ignore errors in metrics collection
-                            pass
-                else:
-                    # Circuit breaker still active, skip learning
-                    return
-            else:
-                # No retry time set, remain tripped
-                return
-        
-        # Skip if query_stats is not available
-        if not hasattr(self, 'query_stats'):
-            return
-    
-        # Get the current query count consistently
-        try:
-            current_count = self.query_stats.query_count
-        except Exception as e:
-            # If we can't get the query count, log the error and return safely
-            print(f"Error retrieving query count: {str(e)}")
-        
-            # Increment failure counter for circuit breaker
-            self._increment_failure_counter("Failed to retrieve query count")
-        
-            return
-        
-        # Initialize last learning count if not set
-        if not hasattr(self, '_last_learning_query_count'):
-            self._last_learning_query_count = current_count
-            return
-        
-        # Check if enough queries have been processed since last learning cycle
-        try:
-            # Calculate queries processed since last learning cycle
-            queries_since_last_learning = current_count - self._last_learning_query_count
-        
-            # Store the queries_since_last_learning as an instance variable
-            # This ensures the same value is used in learning process and logs
-            self._queries_since_last_learning = queries_since_last_learning
-        
-            if queries_since_last_learning >= self._learning_cycle:
-                try:
-                    # Log learning attempt with consistent count
-                    if hasattr(self, "metrics_collector") and self.metrics_collector is not None:
-                        try:
-                            self.metrics_collector.record_additional_metric(
-                                name="learning_cycle_triggered",
-                                value=f"After {queries_since_last_learning} queries",
-                                category="statistical_learning"
-                            )
-                        except Exception:
-                            # Ignore metrics errors
-                            pass
-                
-                    # Record start time for metrics
-                    start_time = time.time()
-                
-                    # Trigger learning process with consistent count parameter
-                    learning_results = self._learn_from_query_statistics(recent_queries_count=queries_since_last_learning)
-                
-                    # Update last learning count with the current (pre-learning) count
-                    # This ensures we use the same point of reference for the next cycle
-                    self._last_learning_query_count = current_count
-                
-                    # Reset failure counter on successful learning
-                    if hasattr(self, '_learning_failure_count'):
-                        self._learning_failure_count = 0
-                    
-                    # Record successful learning cycle to metrics collector if available
-                    if hasattr(self, "learning_metrics_collector") and self.learning_metrics_collector is not None:
-                        try:
-                            # Get execution time
-                            duration = time.time() - start_time if 'start_time' in locals() else None
-                        
-                            # Record the cycle
-                            self.learning_metrics_collector.record_learning_cycle(
-                                cycle_id=f"cycle-{int(time.time())}",
-                                time_started=start_time if 'start_time' in locals() else time.time() - (duration or 0),
-                                query_count=queries_since_last_learning,
-                                is_success=True,
-                                duration=duration,
-                                results=learning_results
-                            )
-                        except Exception:
-                            # Ignore errors in metrics collection
-                            pass
-                
-                    # Log learning success with counts from the actual results
-                    if hasattr(self, "metrics_collector") and self.metrics_collector is not None:
-                        try:
-                            analyzed_queries = learning_results.get('analyzed_queries', 0)
-                            rules_generated = learning_results.get('rules_generated', 0)
-                        
-                            self.metrics_collector.record_additional_metric(
-                                name="learning_cycle_completed",
-                                value=f"Analyzed {analyzed_queries} queries, generated {rules_generated} rules",
-                                category="statistical_learning"
-                            )
-                        
-                            # Also record the metrics directly for better tracking
-                            self.metrics_collector.record_additional_metric(
-                                name="learning_analyzed_queries",
-                                value=analyzed_queries,
-                                category="statistical_learning"
-                            )
-                        
-                            self.metrics_collector.record_additional_metric(
-                                name="learning_rules_generated",
-                                value=rules_generated,
-                                category="statistical_learning"
-                            )
-                        
-                            # Log any warnings or errors that occurred
-                            if "error" in learning_results and learning_results["error"]:
-                                self.metrics_collector.record_additional_metric(
-                                    name="learning_cycle_warning",
-                                    value=learning_results["error"],
-                                    category="warning"
-                                )
-                            
-                                # Increment failure counter for non-critical errors
-                                self._increment_failure_counter(
-                                    f"Non-critical error in learning: {learning_results['error']}",
-                                    is_critical=False
-                                )
-                        except Exception:
-                            # Ignore metrics errors
-                            pass
-                except Exception as e:
-                    # Capture and log any exceptions in the learning process
-                    error_msg = f"Error during learning cycle: {str(e)}"
-                    print(f"Statistical learning error: {error_msg}")
-                
-                    # Increment failure counter for circuit breaker
-                    self._increment_failure_counter(error_msg)
-                
-                    # Log error if metrics collector is available
-                    if hasattr(self, "metrics_collector") and self.metrics_collector is not None:
-                        try:
-                            self.metrics_collector.record_additional_metric(
-                                name="learning_cycle_error",
-                                value=error_msg,
-                                category="error"
-                            )
-                        except Exception:
-                            # Ignore errors in error handling
-                            pass
-                        
-                    # Update last learning count despite error to prevent repeated failures
-                    self._last_learning_query_count = current_count
-        except Exception as e:
-            # Handle any unexpected errors in the cycle check itself
-            # This ensures the query optimization process is never affected
-            error_msg = f"Error checking learning cycle: {str(e)}"
-            print(f"Learning cycle check error: {error_msg}")
-        
-            # Increment failure counter for circuit breaker
-            self._increment_failure_counter(error_msg)
-        
-            # Try to log the error if metrics collector is available
-            if hasattr(self, "metrics_collector") and self.metrics_collector is not None:
-                try:
-                    self.metrics_collector.record_additional_metric(
-                        name="learning_cycle_error",
-                        value=error_msg,
-                        category="error"
-                    )
-                except Exception:
-                    # Ignore errors in error handling
-                    pass
+        check_learning_cycle(self)
     
     def _increment_failure_counter(self, error_message, is_critical=True):
         """
@@ -5214,106 +4990,7 @@ class UnifiedGraphRAGQueryOptimizer:
         error_message: The error message to log
         is_critical: Whether the error is critical (counts more heavily)
         """
-        # Record to learning metrics collector if available
-        if hasattr(self, "learning_metrics_collector") and self.learning_metrics_collector is not None:
-            try:
-                if is_critical and not hasattr(self, '_learning_failure_count'):
-                    self._learning_failure_count = 0
-                    
-                # Check if we'd be tripping the circuit breaker
-                threshold = getattr(self, '_circuit_breaker_threshold', 3)
-                current_count = getattr(self, '_learning_failure_count', 0)
-                will_trip = (current_count + (1 if is_critical else 0.25)) >= threshold
-                
-                if will_trip:
-                    # Calculate backoff minutes
-                    backoff_minutes = min(60, 5 * (2 ** (int(current_count) - threshold + 1)))
-                
-                    # Record circuit breaker event
-                    self.learning_metrics_collector.record_circuit_breaker_event(
-                        event_type="tripped",
-                        reason=error_message,
-                        backoff_minutes=backoff_minutes
-                    )
-                else:
-                    # Record learning cycle error
-                    self.learning_metrics_collector.record_learning_cycle(
-                        cycle_id=f"error-{int(time.time())}",
-                        time_started=time.time(),
-                        query_count=getattr(self, '_queries_since_last_learning', 0),
-                        is_success=False,
-                        error=error_message
-                    )
-            except Exception:
-                # Ignore errors in metrics collection
-                pass
-        try:
-            # Initialize failure count if not set
-            if not hasattr(self, '_learning_failure_count'):
-                self._learning_failure_count = 0
-            
-            # Increment failure counter
-            if is_critical:
-                self._learning_failure_count += 1
-            else:
-                # Non-critical errors count as 0.25 of a critical error
-                self._learning_failure_count += 0.25
-            
-            # Set the error message for logging
-            failure_message = f"Learning failure {self._learning_failure_count}: {error_message}"
-            
-            # Check if we've reached the threshold to trip the circuit breaker
-            threshold = getattr(self, '_circuit_breaker_threshold', 3)
-        
-            if self._learning_failure_count >= threshold:
-                # Trip the circuit breaker
-                self._learning_circuit_breaker_tripped = True
-            
-                # Calculate retry time (exponential backoff)
-                # Start with 5 minutes, then 15, then 30, then 60 minutes
-                backoff_minutes = min(60, 5 * (2 ** (int(self._learning_failure_count) - threshold)))
-                retry_after = time.time() + (backoff_minutes * 60)
-                self._circuit_breaker_retry_time = retry_after
-            
-                # Update the message to include circuit breaker information
-                failure_message = (
-                    f"{failure_message}. Circuit breaker tripped: "
-                    f"learning disabled for {backoff_minutes} minutes"
-                )
-            
-                # Print circuit breaker information
-                print(f"Learning circuit breaker tripped: disabled for {backoff_minutes} minutes")
-            
-            # Log the failure if metrics collector is available
-            if hasattr(self, "metrics_collector") and self.metrics_collector is not None:
-                try:
-                    self.metrics_collector.record_additional_metric(
-                        name="learning_failure",
-                        value=failure_message,
-                        category="error"
-                    )
-                
-                    # Also record the failure count
-                    self.metrics_collector.record_additional_metric(
-                        name="learning_failure_count",
-                        value=self._learning_failure_count,
-                        category="error"
-                    )
-                
-                    # Log circuit breaker state if tripped
-                    if hasattr(self, '_learning_circuit_breaker_tripped') and self._learning_circuit_breaker_tripped:
-                        self.metrics_collector.record_additional_metric(
-                            name="circuit_breaker_tripped",
-                            value=f"Learning disabled until {datetime.datetime.fromtimestamp(self._circuit_breaker_retry_time).isoformat()}",
-                            category="error"
-                        )
-                except Exception:
-                    # Ignore errors in metrics collection
-                    pass
-        except Exception as e:
-            # Even the failure counting can fail, but we don't want this to affect anything else
-            print(f"Error in failure counting mechanism: {str(e)}")
-            # We deliberately don't do anything further here to avoid cascading failures
+        increment_failure_counter(self, error_message, is_critical=is_critical)
 
     def save_learning_state(self, filepath=None):
         """
