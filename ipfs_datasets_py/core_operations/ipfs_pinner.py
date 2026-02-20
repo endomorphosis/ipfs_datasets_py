@@ -226,13 +226,7 @@ class IPFSPinner:
         This is provided for compatibility with synchronous code.
         For async code, use the pin() method directly.
         """
-        import asyncio
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        
-        return loop.run_until_complete(
+        from ipfs_datasets_py.utils.anyio_compat import run as _anyio_run
+        return _anyio_run(
             self.pin(content_source, recursive, wrap_with_directory, hash_algo)
         )

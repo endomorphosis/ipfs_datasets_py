@@ -8,7 +8,8 @@ Author: MCP Server Team
 Date: 2026-02-18
 """
 
-import asyncio
+import inspect
+import anyio
 import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set, Any, Callable
@@ -211,7 +212,7 @@ class WorkflowEngine:
         self.workflows: Dict[str, Workflow] = {}
         self.task_functions: Dict[str, Callable] = {}
         self._running_tasks: Set[str] = set()
-        self._semaphore = asyncio.Semaphore(max_concurrent_tasks)
+        self._semaphore = anyio.Semaphore(max_concurrent_tasks)
     
     def register_function(self, name: str, func: Callable) -> None:
         """Register a task function."""
@@ -276,25 +277,19 @@ class WorkflowEngine:
                 
                 # Execute with timeout
                 try:
-                    if asyncio.iscoroutinefunction(func):
-                        task.result = await asyncio.wait_for(
-                            func(*task.args, **task.kwargs),
-                            timeout=task.timeout
-                        )
-                    else:
-                        # Run sync function in executor
-                        task.result = await asyncio.wait_for(
-                            asyncio.get_event_loop().run_in_executor(
-                                None, 
+                    with anyio.fail_after(task.timeout):
+                        if inspect.iscoroutinefunction(func):
+                            task.result = await func(*task.args, **task.kwargs)
+                        else:
+                            # Run sync function in thread pool
+                            task.result = await anyio.to_thread.run_sync(
                                 lambda: func(*task.args, **task.kwargs)
-                            ),
-                            timeout=task.timeout
-                        )
+                            )
                     
                     task.status = TaskStatus.COMPLETED
                     logger.info(f"Task {task.task_id} completed successfully")
                     
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     task.status = TaskStatus.FAILED
                     task.error = f"Task timed out after {task.timeout}s"
                     logger.error(f"Task {task.task_id} timed out")
@@ -331,8 +326,6 @@ class WorkflowEngine:
         
         completed_tasks: Set[str] = set()
         failed_tasks: Set[str] = set()
-        running_futures: Dict[str, asyncio.Task] = {}
-        
         try:
             while True:
                 # Get ready tasks
@@ -342,40 +335,24 @@ class WorkflowEngine:
                 for task in ready_tasks:
                     task.status = TaskStatus.READY
                 
-                # Launch ready tasks
-                for task in ready_tasks:
-                    future = asyncio.create_task(self.execute_task(workflow, task))
-                    running_futures[task.task_id] = future
-                
-                # Wait for any task to complete
-                if running_futures:
-                    done, pending = await asyncio.wait(
-                        running_futures.values(),
-                        return_when=asyncio.FIRST_COMPLETED
-                    )
-                    
-                    # Process completed tasks
-                    for future in done:
-                        # Find task ID
-                        task_id = None
-                        for tid, fut in running_futures.items():
-                            if fut == future:
-                                task_id = tid
-                                break
-                        
-                        if task_id:
-                            task = workflow.tasks[task_id]
-                            if task.status == TaskStatus.COMPLETED:
-                                completed_tasks.add(task_id)
-                            elif task.status == TaskStatus.FAILED:
-                                if task.can_retry():
-                                    task.retry_count += 1
-                                    task.status = TaskStatus.PENDING
-                                    logger.info(f"Retrying task {task_id} (attempt {task.retry_count + 1})")
-                                else:
-                                    failed_tasks.add(task_id)
-                            
-                            del running_futures[task_id]
+                # Launch ready tasks via anyio task group
+                if ready_tasks:
+                    async with anyio.create_task_group() as tg:
+                        for task in ready_tasks:
+                            tg.start_soon(self.execute_task, workflow, task)
+
+                    # After task group exits all tasks are done - check status
+                    for task in ready_tasks:
+                        task_id = task.task_id
+                        if task.status == TaskStatus.COMPLETED:
+                            completed_tasks.add(task_id)
+                        elif task.status == TaskStatus.FAILED:
+                            if task.can_retry():
+                                task.retry_count += 1
+                                task.status = TaskStatus.PENDING
+                                logger.info(f"Retrying task {task_id} (attempt {task.retry_count + 1})")
+                            else:
+                                failed_tasks.add(task_id)
                 else:
                     # No running tasks and no ready tasks
                     break

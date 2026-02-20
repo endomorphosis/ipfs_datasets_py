@@ -289,7 +289,7 @@ def run_comprehensive_tests(path: str = ".",
             import sniffio
             sniffio.current_async_library()
             in_async = True
-        except Exception:
+        except (ImportError, ModuleNotFoundError, AttributeError):
             in_async = False
 
         if in_async:

@@ -153,13 +153,27 @@ class TestS4SubprocessSanitization:
         WHEN examining the source code
         THEN shell parameter should be explicitly set to False
         """
-        linting_file = Path(__file__).parent.parent.parent / 'ipfs_datasets_py' / 'mcp_server' / 'tools' / 'development_tools' / 'linting_tools.py'
-        if linting_file.exists():
+        tools_root = Path(__file__).parent.parent.parent / 'ipfs_datasets_py' / 'mcp_server' / 'tools' / 'development_tools'
+        # The linting engine holds the actual subprocess calls; the wrapper imports from it.
+        # Check whichever file exists and contains subprocess calls.
+        files_to_check = [
+            tools_root / 'linting_engine.py',
+            tools_root / 'linting_tools.py',
+        ]
+        for linting_file in files_to_check:
+            if not linting_file.exists():
+                continue
             content = linting_file.read_text()
+            if 'subprocess' not in content:
+                continue
             # Should contain shell=False
-            assert 'shell=False' in content, "subprocess calls should explicitly set shell=False"
+            assert 'shell=False' in content, (
+                f"subprocess calls in {linting_file.name} should explicitly set shell=False"
+            )
             # Should NOT contain shell=True
-            assert 'shell=True' not in content, "subprocess calls should never use shell=True"
+            assert 'shell=True' not in content, (
+                f"subprocess calls in {linting_file.name} should never use shell=True"
+            )
 
 
 class TestS5ErrorReportSanitization:

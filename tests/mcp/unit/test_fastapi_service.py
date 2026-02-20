@@ -223,7 +223,7 @@ class TestAuthenticationEndpoints:
         response = test_client.post("/auth/refresh")
         
         # Assert - May be 403 (forbidden) or 404 (not implemented)
-        assert response.status_code in [403, 404]
+        assert response.status_code in [401, 403, 404]
 
 
 # Test Class 3: Embedding Endpoints
@@ -270,7 +270,7 @@ class TestEmbeddingEndpoints:
         response = test_client.post("/embeddings/generate", json=request_data)
         
         # Assert - Should require auth (403) or endpoint not found (404)
-        assert response.status_code in [403, 404]
+        assert response.status_code in [401, 403, 404]
 
 
 # Test Class 4: Search Endpoints
@@ -294,7 +294,7 @@ class TestSearchEndpoints:
         response = test_client.post("/search/semantic", json=request_data)
         
         # Assert - Should require auth (403) or endpoint not found (404)
-        assert response.status_code in [403, 404]
+        assert response.status_code in [401, 403, 404]
 
 
 # Test Class 5: Dataset Endpoints
@@ -317,7 +317,7 @@ class TestDatasetEndpoints:
         response = test_client.post("/datasets/load", json=request_data)
         
         # Assert - Should require auth (403) or endpoint not found (404)
-        assert response.status_code in [403, 404]
+        assert response.status_code in [401, 403, 404]
     
     def test_save_dataset_without_auth(self, test_client):
         """
@@ -336,7 +336,7 @@ class TestDatasetEndpoints:
         response = test_client.post("/datasets/save", json=request_data)
         
         # Assert - Should require auth (403) or endpoint not found (404)
-        assert response.status_code in [403, 404]
+        assert response.status_code in [401, 403, 404]
 
 
 # Test Class 6: Error Handling

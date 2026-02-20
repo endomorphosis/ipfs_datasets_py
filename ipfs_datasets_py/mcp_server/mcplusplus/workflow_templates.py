@@ -11,7 +11,7 @@ Implements workflow templates with:
 This enables reusable workflow definitions.
 """
 
-import asyncio
+import anyio
 import json
 import logging
 import re

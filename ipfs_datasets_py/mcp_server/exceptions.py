@@ -20,12 +20,19 @@ class MCPServerError(Exception):
         details: Optional dictionary with additional error context
     """
     
-    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None) -> None:
+        """Initialise with a human-readable message and optional detail dict.
+
+        Args:
+            message: Human-readable description of the error.
+            details: Optional mapping of additional context (e.g. tool name, field).
+        """
         self.message = message
         self.details = details or {}
         super().__init__(self.message)
     
     def __str__(self) -> str:
+        """Return message with flattened details appended in parentheses."""
         if self.details:
             details_str = ", ".join(f"{k}={v}" for k, v in self.details.items())
             return f"{self.message} ({details_str})"
@@ -42,7 +49,13 @@ class ToolError(MCPServerError):
 class ToolNotFoundError(ToolError):
     """Raised when a requested tool cannot be found."""
     
-    def __init__(self, tool_name: str, category: Optional[str] = None):
+    def __init__(self, tool_name: str, category: Optional[str] = None) -> None:
+        """Initialise with the missing tool name and optional category.
+
+        Args:
+            tool_name: Name of the tool that could not be found.
+            category: Category prefix, if the lookup was qualified.
+        """
         self.tool_name = tool_name
         self.category = category
         message = f"Tool not found: {tool_name}"
@@ -54,7 +67,13 @@ class ToolNotFoundError(ToolError):
 class ToolExecutionError(ToolError):
     """Raised when tool execution fails."""
     
-    def __init__(self, tool_name: str, original_error: Exception):
+    def __init__(self, tool_name: str, original_error: Exception) -> None:
+        """Initialise with the tool name and the underlying cause.
+
+        Args:
+            tool_name: Name of the tool that failed.
+            original_error: The exception raised during execution.
+        """
         self.tool_name = tool_name
         self.original_error = original_error
         message = f"Tool execution failed: {tool_name} - {str(original_error)}"
@@ -72,7 +91,13 @@ class ToolRegistrationError(ToolError):
 class ValidationError(MCPServerError):
     """Raised when input validation fails."""
     
-    def __init__(self, field: str, message: str):
+    def __init__(self, field: str, message: str) -> None:
+        """Initialise with the field name and a description of the violation.
+
+        Args:
+            field: Name of the input field that failed validation.
+            message: Description of why validation failed.
+        """
         self.field = field
         super().__init__(f"Validation error for '{field}': {message}", {"field": field})
 
@@ -87,7 +112,12 @@ class RuntimeRoutingError(MCPServerError):
 class RuntimeNotFoundError(RuntimeRoutingError):
     """Raised when requested runtime is not available."""
     
-    def __init__(self, runtime: str):
+    def __init__(self, runtime: str) -> None:
+        """Initialise with the name of the unavailable runtime.
+
+        Args:
+            runtime: Identifier of the runtime that was not found.
+        """
         self.runtime = runtime
         super().__init__(f"Runtime not found: {runtime}", {"runtime": runtime})
 
@@ -138,7 +168,13 @@ class ServerShutdownError(MCPServerError):
 class HealthCheckError(MCPServerError):
     """Raised when health check fails."""
     
-    def __init__(self, check_name: str, message: str):
+    def __init__(self, check_name: str, message: str) -> None:
+        """Initialise with the health-check name and a failure description.
+
+        Args:
+            check_name: Identifier of the health check that failed.
+            message: Human-readable description of the failure.
+        """
         self.check_name = check_name
         super().__init__(f"Health check failed: {check_name} - {message}", {"check_name": check_name})
 

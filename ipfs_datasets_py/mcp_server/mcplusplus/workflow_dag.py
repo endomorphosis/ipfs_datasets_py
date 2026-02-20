@@ -14,7 +14,8 @@ import logging
 from typing import Dict, List, Set, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
-import asyncio
+import anyio
+from ipfs_datasets_py.utils.anyio_compat import gather as _anyio_gather
 
 logger = logging.getLogger(__name__)
 
@@ -318,7 +319,7 @@ class WorkflowDAGExecutor:
                 tasks.append(self._execute_step(step, step_executor))
             
             # Wait for all steps in this level to complete
-            level_results = await asyncio.gather(*tasks, return_exceptions=True)
+            level_results = await _anyio_gather(tasks)
             
             # Process results
             for step_id, result in zip(level, level_results):
@@ -336,10 +337,10 @@ class WorkflowDAGExecutor:
                     if self.on_step_complete:
                         self.on_step_complete(step_id, result)
             
-            # If any step in this level failed, we might want to skip dependent steps
-            # For now, we continue execution but mark dependent steps as skipped if their deps failed
+            # If any step in this level failed, skip remaining levels
             if steps_failed > 0:
                 self._mark_skipped_steps()
+                break
         
         return {
             'success': steps_failed == 0,
@@ -433,7 +434,7 @@ if __name__ == '__main__':
     
     async def example_step_executor(step: WorkflowStep) -> Any:
         """Example step executor for testing."""
-        await asyncio.sleep(0.1)  # Simulate work
+        await anyio.sleep(0.1)  # Simulate work
         return {'action': step.action, 'inputs': step.inputs}
     
     async def main():
@@ -467,4 +468,4 @@ if __name__ == '__main__':
         graph = executor.get_workflow_graph()
         print(json.dumps(graph, indent=2))
     
-    asyncio.run(main())
+    anyio.run(main)

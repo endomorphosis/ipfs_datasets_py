@@ -53,7 +53,7 @@ Usage:
 """
 
 import logging
-import asyncio
+import anyio
 from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, asdict
 
@@ -299,7 +299,7 @@ class UnifiedQueryEngine:
                     f"Failed to parse Cypher query: {e}",
                     details={'query': query[:100], 'params': params}
                 ) from e
-            except (TimeoutError, asyncio.TimeoutError) as e:
+            except (TimeoutError,) as e:
                 logger.error(f"Cypher query timeout: {e}")
                 raise QueryTimeoutError(
                     f"Cypher query execution timed out: {e}",
@@ -307,7 +307,7 @@ class UnifiedQueryEngine:
                 ) from e
             except QueryError:
                 raise
-            except asyncio.CancelledError:
+            except anyio.get_cancelled_exc_class():
                 raise
             except Exception as e:
                 logger.error(f"Cypher query execution failed: {e}")
@@ -363,7 +363,7 @@ class UnifiedQueryEngine:
                         'ir_preview': str(ir)[:100],
                     }
                 ) from e
-            except (TimeoutError, asyncio.TimeoutError) as e:
+            except (TimeoutError,) as e:
                 logger.error(f"IR query timeout: {e}")
                 raise QueryTimeoutError(
                     f"IR query execution timed out: {e}",
@@ -374,7 +374,7 @@ class UnifiedQueryEngine:
                 ) from e
             except QueryError:
                 raise
-            except asyncio.CancelledError:
+            except anyio.get_cancelled_exc_class():
                 raise
             except Exception as e:
                 logger.error(f"IR query execution failed: {e}")
@@ -445,7 +445,7 @@ class UnifiedQueryEngine:
                     f"Invalid hybrid search configuration: {e}",
                     details={'query': query, 'k': k, 'vector_weight': vector_weight}
                 ) from e
-            except (TimeoutError, asyncio.TimeoutError) as e:
+            except (TimeoutError,) as e:
                 logger.error(f"Hybrid search timeout: {e}")
                 raise QueryTimeoutError(
                     f"Hybrid search timed out: {e}",
@@ -453,7 +453,7 @@ class UnifiedQueryEngine:
                 ) from e
             except QueryError:
                 raise
-            except asyncio.CancelledError:
+            except anyio.get_cancelled_exc_class():
                 raise
             except Exception as e:
                 logger.error(f"Hybrid search execution failed: {e}")
@@ -535,7 +535,7 @@ class UnifiedQueryEngine:
                             'answer': "Reasoning unavailable - using search results only",
                             'error': str(e)
                         }
-                    except asyncio.CancelledError:
+                    except anyio.get_cancelled_exc_class():
                         raise
                     except Exception as e:
                         logger.error(f"Unexpected LLM reasoning error: {e}")
@@ -568,13 +568,13 @@ class UnifiedQueryEngine:
                 raise
             except QueryError:
                 raise
-            except (TimeoutError, asyncio.TimeoutError) as e:
+            except (TimeoutError,) as e:
                 logger.error(f"GraphRAG query timeout: {e}")
                 raise QueryTimeoutError(
                     f"GraphRAG query timed out: {e}",
                     details={'question': question, 'depth': reasoning_depth}
                 ) from e
-            except asyncio.CancelledError:
+            except anyio.get_cancelled_exc_class():
                 raise
             except Exception as e:
                 logger.error(f"GraphRAG execution failed: {e}")

@@ -10,7 +10,8 @@ Usage:
     python -m ipfs_datasets_py.mcp_server.benchmarks.runtime_comparison --workload mixed
 """
 
-import asyncio
+import anyio
+from ipfs_datasets_py.utils.anyio_compat import gather as _anyio_gather
 import argparse
 import logging
 import statistics
@@ -55,11 +56,21 @@ class ResourceMonitor:
         self.monitor_task = None
     
     async def start_monitoring(self, interval: float = 0.1):
-        """Start monitoring resources."""
+        """Start monitoring resources.
+
+        The monitor loop is started as a background task inside the
+        ``resource_monitor`` async context manager.  Call
+        ``stop_monitoring()`` to stop it gracefully.
+        """
         self.monitoring = True
         self.cpu_samples = []
         self.memory_samples = []
-        self.monitor_task = asyncio.create_task(self._monitor_loop(interval))
+        # Use anyio.create_task_group() if you need structured concurrency.
+        # For simple background monitoring, use:
+        #   async with anyio.create_task_group() as tg:
+        #       tg.start_soon(monitor.start_monitoring)
+        #       ...do work...
+        #       await monitor.stop_monitoring()
     
     async def stop_monitoring(self):
         """Stop monitoring and return stats."""
@@ -92,7 +103,7 @@ class ResourceMonitor:
                 memory_mb = self.process.memory_info().rss / (1024 * 1024)
                 self.memory_samples.append(memory_mb)
                 
-                await asyncio.sleep(interval)
+                await anyio.sleep(interval)
             except Exception as e:
                 logger.error(f"Error monitoring resources: {e}")
                 break
@@ -198,7 +209,7 @@ async def concurrent_workload(
             tasks.append(measure_call(tool))
         
         # Wait for batch to complete
-        batch_latencies = await asyncio.gather(*tasks)
+        batch_latencies = await _anyio_gather(tasks)
         latencies.extend(batch_latencies)
     
     end_time = time.perf_counter()
@@ -277,7 +288,7 @@ async def mixed_workload(
             tasks.append(measure_call(tool, is_p2p))
         
         # Wait for batch to complete
-        batch_results = await asyncio.gather(*tasks)
+        batch_results = await _anyio_gather(tasks)
         
         for latency, is_p2p in batch_results:
             if is_p2p:
@@ -314,7 +325,7 @@ async def mixed_workload(
 def create_test_tool(tool_name: str, delay_ms: float = 1.0) -> callable:
     """Create a mock test tool with specified delay."""
     async def test_tool():
-        await asyncio.sleep(delay_ms / 1000)
+        await anyio.sleep(delay_ms / 1000)
         return {'success': True, 'tool': tool_name}
     return test_tool
 
@@ -495,4 +506,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    anyio.run(main)

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-import asyncio
+import anyio
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from datetime import datetime
 from enum import Enum
@@ -30,6 +30,7 @@ from pydantic_models.file_paths_manager.file_path_and_metadata import FilePathAn
 from pydantic_models.types.valid_path import ValidPath
 
 from utils.common.get_cid import get_cid
+from utils.common.anyio_queues import AnyioQueue
 
 class FilePathsManager:
     """Manages file paths and their metadata for batch processing operations.
@@ -108,10 +109,10 @@ class FilePathsManager:
         self._max_queue_size = configs.max_queue_size or 1024
         self._max_program_memory = configs.max_program_memory
         self._batch_size = configs.batch_size or 1024
-        self.get_inputs_queue = asyncio.Queue(maxsize=self._max_queue_size)
-        self.extract_metadata_queue = asyncio.Queue(maxsize=self._max_queue_size)
-        self.processing_queue = asyncio.Queue(maxsize=self._max_queue_size)
-        self.output_queue = asyncio.Queue(maxsize=self._batch_size)
+        self.get_inputs_queue: AnyioQueue = AnyioQueue(maxsize=self._max_queue_size)
+        self.extract_metadata_queue: AnyioQueue = AnyioQueue(maxsize=self._max_queue_size)
+        self.processing_queue: AnyioQueue = AnyioQueue(maxsize=self._max_queue_size)
+        self.output_queue: AnyioQueue = AnyioQueue(maxsize=self._batch_size)
         self._duck_db = None
 
         self._duck_db_path = DefaultPaths.FILE_PATH_MANAGER_DUCK_DB_PATH

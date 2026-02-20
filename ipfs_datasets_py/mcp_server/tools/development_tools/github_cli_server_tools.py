@@ -35,7 +35,7 @@ def github_cli_status(install_dir: Optional[str] = None) -> Dict[str, Any]:
             "success": True,
             "status": status
         }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to get GitHub CLI status: {e}")
         return {
             "success": False,
@@ -77,7 +77,7 @@ def github_cli_install(
                 "success": False,
                 "error": "Installation failed"
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to install GitHub CLI: {e}")
         return {
             "success": False,
@@ -125,7 +125,7 @@ def github_cli_execute(
             "stderr": result.stderr,
             "command": command
         }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to execute GitHub CLI command: {e}")
         return {
             "success": False,
@@ -166,7 +166,7 @@ def github_cli_auth_login(
             "stdout": result.stdout,
             "stderr": result.stderr
         }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to authenticate with GitHub: {e}")
         return {
             "success": False,
@@ -200,7 +200,7 @@ def github_cli_auth_status(install_dir: Optional[str] = None) -> Dict[str, Any]:
             "stdout": result.stdout,
             "stderr": result.stderr
         }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to get GitHub auth status: {e}")
         return {
             "success": False,
@@ -238,7 +238,7 @@ def github_cli_repo_list(
             "repositories": repos,
             "count": len(repos)
         }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to list GitHub repositories: {e}")
         return {
             "success": False,
@@ -289,7 +289,7 @@ def github_get_repo_info(
                 "success": False,
                 "error": result.stderr
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to get repository info: {e}")
         return {
             "success": False,
@@ -348,7 +348,7 @@ def github_get_repo_issues(
                 "success": False,
                 "error": result.stderr
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to get repository issues: {e}")
         return {
             "success": False,
@@ -407,7 +407,7 @@ def github_get_pull_requests(
                 "success": False,
                 "error": result.stderr
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to get pull requests: {e}")
         return {
             "success": False,
@@ -460,7 +460,7 @@ def github_search_repos(
                 "success": False,
                 "error": result.stderr
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to search repositories: {e}")
         return {
             "success": False,
@@ -508,7 +508,7 @@ def github_get_user_info(
                 "success": False,
                 "error": result.stderr
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to get user info: {e}")
         return {
             "success": False,
@@ -569,7 +569,7 @@ def github_create_issue(
                 "success": False,
                 "error": result.stderr
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to create issue: {e}")
         return {
             "success": False,
@@ -668,7 +668,7 @@ def github_create_pull_request(
                 "success": False,
                 "error": result.stderr
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to create pull request: {e}")
         return {
             "success": False,
@@ -757,7 +757,7 @@ def github_update_pull_request(
                 "success": False,
                 "error": result.stderr
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to update pull request: {e}")
         return {
             "success": False,

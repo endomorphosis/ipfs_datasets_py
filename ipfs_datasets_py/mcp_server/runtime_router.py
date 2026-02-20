@@ -52,14 +52,14 @@ Usage:
     await router.shutdown()
 """
 
-import asyncio
+import anyio
 import inspect
 import logging
 import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from threading import RLock
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, Tuple
 
 from .exceptions import RuntimeRoutingError, RuntimeNotFoundError, RuntimeExecutionError
 
@@ -266,7 +266,7 @@ class RuntimeRouter:
         enable_metrics: bool = True,
         enable_memory_tracking: bool = False,
         metadata_registry: Optional[ToolMetadataRegistry] = None,
-    ):
+    ) -> None:
         """
         Initialize the RuntimeRouter.
         
@@ -369,6 +369,14 @@ class RuntimeRouter:
         Returns:
             Runtime identifier (RUNTIME_FASTAPI or RUNTIME_TRIO)
         """
+        # Guard: if no callable provided, fall back to name-based detection only.
+        if tool_func is None:
+            tool_name_lower = (tool_name or "").lower()
+            p2p_patterns = ['p2p_', 'workflow', 'taskqueue', 'peer_', 'bootstrap']
+            if any(p in tool_name_lower for p in p2p_patterns):
+                return RUNTIME_TRIO
+            return self.default_runtime
+
         # Check cached registry first
         if tool_name in self._tool_runtimes:
             return self._tool_runtimes[tool_name]
@@ -510,8 +518,7 @@ class RuntimeRouter:
             return await tool_func(*args, **kwargs)
         else:
             # Run sync function in thread pool
-            loop = asyncio.get_event_loop()
-            return await loop.run_in_executor(None, lambda: tool_func(*args, **kwargs))
+            return await anyio.to_thread.run_sync(lambda: tool_func(*args, **kwargs))
     
     async def _route_to_trio(self, tool_func: Callable, *args, **kwargs) -> Any:
         """
@@ -893,7 +900,7 @@ class RuntimeRouter:
         return count
     
     @asynccontextmanager
-    async def runtime_context(self):
+    async def runtime_context(self) -> AsyncGenerator["RuntimeRouter", None]:
         """
         Async context manager for runtime lifecycle.
         

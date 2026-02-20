@@ -7,7 +7,7 @@ import logging
 import psutil
 import threading
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Callable, Union
+from typing import Dict, Any, List, Optional, Callable, Union, AsyncGenerator
 from dataclasses import dataclass, field
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
@@ -53,7 +53,13 @@ class EnhancedMetricsCollector:
     Provides comprehensive performance tracking, health monitoring, and alerting.
     """
     
-    def __init__(self, enabled: bool = True, retention_hours: int = 24):
+    def __init__(self, enabled: bool = True, retention_hours: int = 24) -> None:
+        """Initialise the metrics collector with optional retention settings.
+
+        Args:
+            enabled: When False the collector records no data (useful in tests).
+            retention_hours: How many hours of metric history to retain in memory.
+        """
         self.enabled = enabled
         self.retention_hours = retention_hours
         self.start_time = datetime.utcnow()
@@ -275,7 +281,7 @@ class EnhancedMetricsCollector:
                 self.histograms[labeled_name].append(value)
     
     @asynccontextmanager
-    async def track_request(self, endpoint: str):
+    async def track_request(self, endpoint: str) -> AsyncGenerator[None, None]:
         """Context manager to track request duration and count."""
         try:
             task_id = str(id(anyio.get_current_task()))
@@ -916,7 +922,14 @@ class P2PMetricsCollector:
     Integrates with EnhancedMetricsCollector for comprehensive P2P monitoring.
     """
     
-    def __init__(self, base_collector: Optional[EnhancedMetricsCollector] = None):
+    def __init__(self, base_collector: Optional[EnhancedMetricsCollector] = None) -> None:
+        """Initialise the P2P metrics collector.
+
+        Args:
+            base_collector: Underlying :class:`EnhancedMetricsCollector` to use.
+                If *None*, the global instance returned by :func:`get_metrics_collector`
+                is used.
+        """
         self.base_collector = base_collector or get_metrics_collector()
         
         # P2P-specific metrics
@@ -1676,58 +1689,75 @@ class P2PMetricsCollector:
             - No network I/O or expensive calculations
             - Safe to call frequently (every 1-5 seconds)
         """
-        alerts = []
-        
-        # High discovery failure rate
-        if self.peer_discovery_metrics['total_discoveries'] > 10:
-            failure_rate = (
-                self.peer_discovery_metrics['failed_discoveries'] / 
-                self.peer_discovery_metrics['total_discoveries']
-            )
-            if failure_rate > 0.3:  # >30% failure rate
-                alerts.append({
-                    'type': 'warning',
-                    'component': 'peer_discovery',
-                    'message': f'High peer discovery failure rate: {failure_rate*100:.1f}%',
-                    'timestamp': datetime.utcnow().isoformat()
-                })
-        
-        # High workflow failure rate
+        alerts: List[Dict[str, Any]] = []
+        alerts.extend(self._check_peer_discovery_alerts())
+        alerts.extend(self._check_workflow_alerts())
+        alerts.extend(self._check_bootstrap_alerts())
+        return alerts
+
+    def _check_peer_discovery_alerts(self) -> List[Dict[str, Any]]:
+        """Check for peer discovery failure rate alerts (>30% threshold)."""
+        if self.peer_discovery_metrics['total_discoveries'] <= 10:
+            return []
+        failure_rate = (
+            self.peer_discovery_metrics['failed_discoveries'] /
+            self.peer_discovery_metrics['total_discoveries']
+        )
+        if failure_rate <= 0.3:
+            return []
+        return [{
+            'type': 'warning',
+            'component': 'peer_discovery',
+            'message': f'High peer discovery failure rate: {failure_rate * 100:.1f}%',
+            'timestamp': datetime.utcnow().isoformat(),
+        }]
+
+    def _check_workflow_alerts(self) -> List[Dict[str, Any]]:
+        """Check for workflow failure rate alerts (>20% threshold)."""
         total_workflows = (
-            self.workflow_metrics['completed_workflows'] + 
+            self.workflow_metrics['completed_workflows'] +
             self.workflow_metrics['failed_workflows']
         )
-        if total_workflows > 5:
-            failure_rate = self.workflow_metrics['failed_workflows'] / total_workflows
-            if failure_rate > 0.2:  # >20% failure rate
-                alerts.append({
-                    'type': 'warning',
-                    'component': 'workflows',
-                    'message': f'High workflow failure rate: {failure_rate*100:.1f}%',
-                    'timestamp': datetime.utcnow().isoformat()
-                })
-        
-        # High bootstrap failure rate
-        if self.bootstrap_metrics['total_bootstrap_attempts'] > 3:
-            failure_rate = (
-                self.bootstrap_metrics['failed_bootstraps'] / 
-                self.bootstrap_metrics['total_bootstrap_attempts']
-            )
-            if failure_rate > 0.5:  # >50% failure rate
-                alerts.append({
-                    'type': 'critical',
-                    'component': 'bootstrap',
-                    'message': f'High bootstrap failure rate: {failure_rate*100:.1f}%',
-                    'timestamp': datetime.utcnow().isoformat()
-                })
-        
-        return alerts
+        if total_workflows <= 5:
+            return []
+        failure_rate = self.workflow_metrics['failed_workflows'] / total_workflows
+        if failure_rate <= 0.2:
+            return []
+        return [{
+            'type': 'warning',
+            'component': 'workflows',
+            'message': f'High workflow failure rate: {failure_rate * 100:.1f}%',
+            'timestamp': datetime.utcnow().isoformat(),
+        }]
+
+    def _check_bootstrap_alerts(self) -> List[Dict[str, Any]]:
+        """Check for bootstrap failure rate alerts (>50% threshold — critical)."""
+        if self.bootstrap_metrics['total_bootstrap_attempts'] <= 3:
+            return []
+        failure_rate = (
+            self.bootstrap_metrics['failed_bootstraps'] /
+            self.bootstrap_metrics['total_bootstrap_attempts']
+        )
+        if failure_rate <= 0.5:
+            return []
+        return [{
+            'type': 'critical',
+            'component': 'bootstrap',
+            'message': f'High bootstrap failure rate: {failure_rate * 100:.1f}%',
+            'timestamp': datetime.utcnow().isoformat(),
+        }]
 
 
 # ✅ BETTER APPROACH
 metrics_collector = None
 
-def get_metrics_collector():
+def get_metrics_collector() -> EnhancedMetricsCollector:
+    """Get or create the global :class:`EnhancedMetricsCollector` singleton.
+
+    Returns:
+        The global :class:`EnhancedMetricsCollector` instance, creating it on
+        first call.
+    """
     global metrics_collector
     if metrics_collector is None:
         metrics_collector = EnhancedMetricsCollector()
@@ -1736,7 +1766,7 @@ def get_metrics_collector():
 # P2P metrics collector instance
 p2p_metrics_collector = None
 
-def get_p2p_metrics_collector():
+def get_p2p_metrics_collector() -> P2PMetricsCollector:
     """Get or create the global P2P metrics collector instance."""
     global p2p_metrics_collector
     if p2p_metrics_collector is None:

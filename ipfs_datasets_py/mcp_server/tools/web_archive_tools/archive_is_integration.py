@@ -285,7 +285,7 @@ async def get_archive_is_content(
                 if canonical and canonical.get('href'):
                     original_url = canonical['href']
                 
-            except Exception:
+            except (AttributeError, KeyError):
                 pass  # Continue without original URL extraction
 
         return {

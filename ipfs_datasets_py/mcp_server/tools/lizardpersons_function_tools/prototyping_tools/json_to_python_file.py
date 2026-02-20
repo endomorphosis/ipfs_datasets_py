@@ -502,7 +502,7 @@ def json_to_python_file(data: dict | str, output_path: str) -> None:
                     with open(path, 'r') as file:
                         output = func(file)
                     break
-                except Exception:
+                except (ValueError, KeyError, TypeError):
                     continue
             if output is None:
                 raise ValueError(f"Failed to read JSON data from {data}. Ensure it is a valid JSON file.")

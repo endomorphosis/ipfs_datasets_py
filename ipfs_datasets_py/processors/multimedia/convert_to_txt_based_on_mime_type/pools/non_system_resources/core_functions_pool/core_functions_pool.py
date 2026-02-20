@@ -2,8 +2,6 @@
 
 
 import ast
-import asyncio
-from asyncio import AbstractEventLoop
 import importlib
 import importlib.resources
 import os
@@ -160,7 +158,6 @@ class CoreFunctionsPool:
     def __init__(self, configs: Configs):
         self.logger = configs.make_logger(self.__class__.__qualname__)
         self.db = configs.make_duck_db('core_function_pool.db')
-        self.loop = asyncio.get_event_loop()
         self.load_functions = None
 
         # Import an Arbitrary file to prevent circular imports

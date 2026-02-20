@@ -9,7 +9,7 @@ Provides commands for:
 """
 
 import argparse
-import asyncio
+import anyio
 import json
 import sys
 from pathlib import Path

@@ -30,7 +30,7 @@ def _file_status(path: Path) -> Dict[str, Any]:
             "exists": True,
             "last_modified": datetime.fromtimestamp(path.stat().st_mtime).isoformat(),
         }
-    except Exception:
+    except (OSError, PermissionError):
         return {"exists": True, "last_modified": None}
 
 
@@ -67,7 +67,7 @@ async def system_status() -> Dict[str, Any]:
                 FAISS_AVAILABLE,
                 QDRANT_AVAILABLE,
             )
-        except Exception:
+        except (ImportError, ModuleNotFoundError):
             ELASTICSEARCH_AVAILABLE = False
             FAISS_AVAILABLE = False
             QDRANT_AVAILABLE = False

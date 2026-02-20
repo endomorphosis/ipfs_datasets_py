@@ -7,7 +7,7 @@ ensuring compatibility with Kubo, ipfs_kit_py, and ipfs_accelerate_py backends.
 All IPFS operations go through ipfs_backend_router for maximum compatibility.
 """
 
-import asyncio
+import anyio
 import json
 import logging
 from typing import Any, Dict, List, Optional, Union
@@ -250,7 +250,7 @@ class IPLDBackend:
                 f"IPFS connection failed: {e}",
                 details={'backend': self.backend_name, 'operation': 'store'}
             ) from e
-        except asyncio.CancelledError:
+        except anyio.get_cancelled_exc_class():
             raise
         except Exception as e:
             logger.error(f"Failed to store on IPFS: {e}")
@@ -301,7 +301,7 @@ class IPLDBackend:
                     f"IPFS connection failed: {e}",
                     details={'backend': self.backend_name, 'cid': cid, 'operation': 'retrieve'}
                 ) from e
-            except asyncio.CancelledError:
+            except anyio.get_cancelled_exc_class():
                 raise
             except Exception as e:
                 logger.error(f"Failed to retrieve CID {cid}: {e}")
@@ -323,7 +323,7 @@ class IPLDBackend:
                 f"IPFS connection failed: {e}",
                 details={'backend': self.backend_name, 'cid': cid}
             ) from e
-        except asyncio.CancelledError:
+        except anyio.get_cancelled_exc_class():
             raise
         except Exception as e:
             logger.error(f"Failed to retrieve from IPFS: {e}")

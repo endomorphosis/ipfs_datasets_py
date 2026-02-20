@@ -6,24 +6,26 @@ This package provides a Model Context Protocol (MCP) server implementation for I
 
 ## 🎯 Current Status (2026-02-19)
 
-**Progress:** 60% Complete - Production Refactoring in Progress  
-**Test Coverage:** 25-35% (Target: 75%+)  
+**Progress:** 72% Complete - Production Refactoring in Progress  
+**Test Coverage:** 65-70% (Target: 80%+)  
 **Security:** ✅ Phase 1 Complete - All 5 critical vulnerabilities FIXED  
-**Architecture:** ✅ Excellent - Hierarchical tools, thin wrappers, dual-runtime operational
+**Architecture:** ✅ Excellent - Hierarchical tools, thin wrappers, dual-runtime operational  
+**Custom Exceptions:** ✅ Created - 18 classes, adopted in 6 core files
 
 ---
 
-## 📚 Documentation Quick Guide
+### 📚 Documentation Quick Guide
 
 ### 🚀 **For New Contributors** → Start Here!
 - **[QUICK_REFERENCE_CARD_v3.md](QUICK_REFERENCE_CARD_v3.md)** (8KB) - Quick overview, how to contribute, common commands
 
 ### 📊 **Status & Planning**
-- **[REFACTORING_EXECUTIVE_SUMMARY_v3_2026.md](REFACTORING_EXECUTIVE_SUMMARY_v3_2026.md)** (8KB) - Current status, priorities, roadmap
+- **[MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)** (35KB) - **Master plan** with accurate current state, all findings, complete roadmap
+- **[REFACTORING_EXECUTIVE_SUMMARY_v3_2026.md](REFACTORING_EXECUTIVE_SUMMARY_v3_2026.md)** (8KB) - Summary overview
 - **[VISUAL_REFACTORING_SUMMARY_v3_2026.md](VISUAL_REFACTORING_SUMMARY_v3_2026.md)** (12KB) - Visual progress dashboard
 
 ### 📖 **Detailed Planning**
-- **[COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN_2026_v3.md](COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN_2026_v3.md)** (47KB) - Complete roadmap with testing strategy, code quality standards, risk management
+- **[COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN_2026_v3.md](COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN_2026_v3.md)** (47KB) - Previous v3 plan (reference only — v4 is authoritative)
 
 ### 🏗️ **Architecture**
 - **[THIN_TOOL_ARCHITECTURE.md](THIN_TOOL_ARCHITECTURE.md)** - Architecture patterns and guidelines
@@ -34,14 +36,15 @@ This package provides a Model Context Protocol (MCP) server implementation for I
 
 ---
 
-## 🔥 Current Priority: Phase 3 Testing
+## 🔥 Current Priority: Phase 4 Code Quality
 
-**Week 11 Sprint:** FastAPI Service Testing
-- **Need:** 15-18 new tests for endpoints, authentication, error handling
-- **Effort:** 8-10 hours
-- **Priority:** 🔴 CRITICAL (blocking production)
+**Week 15 Sprint:** Refactor Long Functions  
+- **Need:** Refactor `tool_registry.py:initialize_laion_tools` (366 lines — longest in codebase!)
+- **Also:** Refactor 7 long functions in `monitoring.py`
+- **Effort:** 8-12 hours
+- **Priority:** 🔴 CRITICAL
 
-**See:** [Week 11 details in Quick Reference Card](QUICK_REFERENCE_CARD_v3.md#-current-sprint-goals)
+**See:** [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md) for full plan
 
 ---
 
@@ -59,30 +62,29 @@ This package provides a Model Context Protocol (MCP) server implementation for I
 - ✅ **Thin Wrapper Pattern** - 318/321 tools compliant (99%)
 - ✅ **Dual-Runtime System** - FastAPI + Trio for 50-70% P2P speedup
 - ✅ **MCP++ Integration** - P2P workflows with graceful degradation
-- ✅ **148 Tests Passing** - Comprehensive test suite established
+- ✅ **388 Tests** across 37 test files (up from 148)
+
+### Phase 4: Code Quality ✅ (45% Complete — In Progress)
+- ✅ **`exceptions.py`** - 18 custom exception classes
+- ✅ **6 core files** updated with custom exceptions
+- ✅ **27 new exception tests** (unit + integration)
 
 ---
 
-## ⚠️ Remaining Work (14-16 weeks, 80-110 hours)
+## ⚠️ Remaining Work (10-12 weeks, 58-67 hours)
 
-### Phase 3: Test Coverage (Weeks 11-14, 25-32h)
-Achieve 75%+ coverage with 45-55 new tests:
-- Week 11: FastAPI service (15-18 tests)
-- Week 12: Trio runtime (12-15 tests)
-- Week 13: Validators & monitoring (10-12 tests)
-- Week 14: Integration & E2E (8-10 tests)
+### Phase 3: Test Coverage (65-70% complete) ⚠️
+- Week 15-19: Complete coverage for tool_registry, enterprise_api, server_context (+18-23 tests)
 
-### Phase 4: Code Quality (Weeks 15-18, 27-38h)
-- Refactor 8 complex functions (>100 lines)
-- Fix 10+ bare exception handlers
+### Phase 4: Code Quality (45% complete, Weeks 15-20, 20-28h)
+- Refactor 33 functions >80 lines (critical: `tool_registry.py:initialize_laion_tools` at 366 lines!)
+- Fix remaining 146 bare/broad exception handlers
 - Add 120+ missing docstrings
 
-### Phase 5-7: Final Polish (Weeks 19-24, 38-52h)
-- Refactor 3 thick tools (2,274→250 lines)
-- Consolidate duplicate code
-- Complete documentation (90%+ coverage)
-- Performance optimization
-- Enhanced monitoring
+### Phase 5-7: Tool Cleanup + Performance (Weeks 21-28, 38-47h)
+- Refactor 13 thick tools (some >1,400 lines → <150 lines)
+- Consolidate duplicate code patterns
+- Lazy loading + metadata caching
 
 ---
 
@@ -167,25 +169,30 @@ except ImportError:
 ## 🧪 Testing
 
 ### Current Status
-- **148 tests passing** across 20 test files
-- **5,597 lines** of test code
-- **Test coverage:** 25-35% (Target: 75%+)
+- **388 test functions** across 37 test files
+- **Estimated test coverage:** 65-70%
+- **Test coverage target:** 80%+
 
 ### Test Structure
 ```
 tests/mcp/
-├── unit/              # Component unit tests
+├── unit/              # Component unit tests (9 files)
 │   ├── test_server_core.py (40 tests)
 │   ├── test_hierarchical_tool_manager.py (26 tests)
+│   ├── test_fastapi_service.py (19 tests)
+│   ├── test_trio_runtime.py (20 tests)
+│   ├── test_validators.py (15 tests)
+│   ├── test_monitoring.py (17 tests)
+│   ├── test_exceptions.py (12 tests)
 │   ├── test_p2p_service_manager.py (15 tests)
 │   └── test_p2p_mcp_registry_adapter.py (26 tests)
-├── integration/       # Integration tests
-│   └── test_p2p_integration.py (6 tests)
+├── integration/       # Integration tests (9 files)
+│   ├── test_exception_integration.py (15 tests)
+│   ├── test_p2p_integration.py (6 tests)
+│   └── [7 more integration test files]
 ├── e2e/               # End-to-end tests
-│   ├── test_full_tool_lifecycle.py (10 tests)
-│   ├── test_distributed_workflows.py (10 tests)
-│   └── test_real_world_scenarios.py (7 tests)
-└── [13 component test files] (200+ tests)
+│   └── test_full_tool_lifecycle.py (10 tests)
+└── [19 component test files] (161+ tests)
 ```
 
 ### Running Tests
@@ -282,52 +289,51 @@ flake8 ipfs_datasets_py/mcp_server/
 
 ## 📈 Progress Tracking
 
-### Overall Status: 60% Complete
+### Overall Status: 72% Complete
 
 ```
 Phase 1: Security          ████████████████████████ 100% ✅
-Phase 2: Architecture      ████████████████░░░░░░░░  69% ⚠️
-Phase 3: Testing           ███████████░░░░░░░░░░░░░  48% ⚠️
-Phase 4: Quality           █████░░░░░░░░░░░░░░░░░░░  20% ⏳
-Phase 5: Cleanup           ░░░░░░░░░░░░░░░░░░░░░░░░   0% ⏳
-Phase 6: Documentation     ████████░░░░░░░░░░░░░░░░  40% ⏳
+Phase 2: Architecture      ██████████████████████░░  90% ✅
+Phase 3: Testing           ████████████████████░░░░  68% ⚠️
+Phase 4: Quality           ████████████░░░░░░░░░░░░  45% ⚠️
+Phase 5: Tool Cleanup      ░░░░░░░░░░░░░░░░░░░░░░░░   0% ⏳
+Phase 6: Consolidation     ░░░░░░░░░░░░░░░░░░░░░░░░   0% ⏳
 Phase 7: Performance       ░░░░░░░░░░░░░░░░░░░░░░░░   0% ⏳
 ```
 
-**See:** [VISUAL_REFACTORING_SUMMARY_v3_2026.md](VISUAL_REFACTORING_SUMMARY_v3_2026.md) for detailed progress
+**See:** [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md) for detailed progress and new findings
 
 ---
 
 ## 📞 Support & Resources
 
 ### Documentation
+- **Master Plan:** [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)
 - **Quick Start:** [QUICK_REFERENCE_CARD_v3.md](QUICK_REFERENCE_CARD_v3.md)
-- **Planning:** [REFACTORING_EXECUTIVE_SUMMARY_v3_2026.md](REFACTORING_EXECUTIVE_SUMMARY_v3_2026.md)
 - **Architecture:** [THIN_TOOL_ARCHITECTURE.md](THIN_TOOL_ARCHITECTURE.md)
-- **Complete Plan:** [COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN_2026_v3.md](COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN_2026_v3.md)
 
 ### Key Metrics
-- **Test Coverage:** 25-35% → Target: 75%+
-- **Tool Categories:** 50 categories, 321 tools
+- **Test Coverage:** 65-70% → Target: 80%+
+- **Tool Categories:** 60 categories, 382 tools
 - **Context Reduction:** 99% (373→4 meta-tools)
-- **Thin Wrapper Compliance:** 99% (318/321 tools)
+- **Thin Wrapper Compliance:** 65% (tools/) — target 95%
 
 ---
 
 ## 🎯 Next Steps
 
-1. **Week 11:** FastAPI service testing (15-18 tests, 8-10 hours)
-2. **Week 12:** Trio runtime testing (12-15 tests, 6-8 hours)
-3. **Week 13:** Validators & monitoring tests (10-12 tests, 5-6 hours)
-4. **Week 14:** Integration & E2E tests (8-10 tests, 6-8 hours)
+1. **Week 15:** Refactor `tool_registry.py:initialize_laion_tools` (366→60 lines, 4-5h)
+2. **Week 15-16:** Refactor `monitoring.py` long functions (7 functions, 4-6h)
+3. **Week 16:** Refactor `validators.py` + `server.py:__init__` (3-4h)
+4. **Week 16-17:** Fix remaining 146 bare/broad exception handlers (4-6h)
 
-**Goal:** Achieve 75%+ test coverage for production readiness
+**Goal:** Complete Phase 4 code quality improvements for production readiness
 
 ---
 
-**Version:** 3.0  
+**Version:** 4.0  
 **Last Updated:** 2026-02-19  
-**Status:** Active Development - 60% Complete
+**Status:** Active Development - 72% Complete
 
 
 We have created a comprehensive improvement plan to integrate advanced P2P capabilities from the [ipfs_accelerate_py MCP++ module](https://github.com/endomorphosis/ipfs_accelerate_py/tree/main/ipfs_accelerate_py/mcplusplus_module). This will bring:

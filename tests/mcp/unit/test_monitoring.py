@@ -303,5 +303,106 @@ class TestDataClasses:
         assert isinstance(snapshot.timestamp, datetime)
 
 
+class TestP2PAlertHelpers:
+    """Tests for P2PMetricsCollector alert helper methods (extracted from get_alert_conditions)."""
+
+    @pytest.fixture
+    def collector(self):
+        from ipfs_datasets_py.mcp_server.monitoring import P2PMetricsCollector
+        return P2PMetricsCollector()
+
+    # ── _check_peer_discovery_alerts ────────────────────────────────────────
+
+    def test_peer_discovery_no_alert_below_threshold(self, collector):
+        """GIVEN <10 total discoveries WHEN checking peer alerts THEN empty list."""
+        collector.peer_discovery_metrics['total_discoveries'] = 5
+        collector.peer_discovery_metrics['failed_discoveries'] = 4
+        assert collector._check_peer_discovery_alerts() == []
+
+    def test_peer_discovery_no_alert_good_rate(self, collector):
+        """GIVEN 10% failure rate (below 30%) THEN no alert."""
+        collector.peer_discovery_metrics['total_discoveries'] = 20
+        collector.peer_discovery_metrics['failed_discoveries'] = 2
+        assert collector._check_peer_discovery_alerts() == []
+
+    def test_peer_discovery_warning_at_high_rate(self, collector):
+        """GIVEN >30% failure rate THEN warning alert returned."""
+        collector.peer_discovery_metrics['total_discoveries'] = 20
+        collector.peer_discovery_metrics['failed_discoveries'] = 8  # 40%
+        alerts = collector._check_peer_discovery_alerts()
+        assert len(alerts) == 1
+        assert alerts[0]['type'] == 'warning'
+        assert alerts[0]['component'] == 'peer_discovery'
+        assert '40.0%' in alerts[0]['message']
+        assert 'timestamp' in alerts[0]
+
+    # ── _check_workflow_alerts ───────────────────────────────────────────────
+
+    def test_workflow_no_alert_insufficient_samples(self, collector):
+        """GIVEN ≤5 total workflows THEN no alert (avoid false positives)."""
+        collector.workflow_metrics['completed_workflows'] = 3
+        collector.workflow_metrics['failed_workflows'] = 2
+        assert collector._check_workflow_alerts() == []
+
+    def test_workflow_no_alert_good_rate(self, collector):
+        """GIVEN 10% failure rate (below 20%) THEN no alert."""
+        collector.workflow_metrics['completed_workflows'] = 9
+        collector.workflow_metrics['failed_workflows'] = 1
+        assert collector._check_workflow_alerts() == []
+
+    def test_workflow_warning_at_high_rate(self, collector):
+        """GIVEN >20% failure rate THEN warning alert returned."""
+        collector.workflow_metrics['completed_workflows'] = 7
+        collector.workflow_metrics['failed_workflows'] = 3  # 30%
+        alerts = collector._check_workflow_alerts()
+        assert len(alerts) == 1
+        assert alerts[0]['type'] == 'warning'
+        assert alerts[0]['component'] == 'workflows'
+        assert '30.0%' in alerts[0]['message']
+
+    # ── _check_bootstrap_alerts ──────────────────────────────────────────────
+
+    def test_bootstrap_no_alert_insufficient_samples(self, collector):
+        """GIVEN ≤3 bootstrap attempts THEN no alert."""
+        collector.bootstrap_metrics['total_bootstrap_attempts'] = 2
+        collector.bootstrap_metrics['failed_bootstraps'] = 2
+        assert collector._check_bootstrap_alerts() == []
+
+    def test_bootstrap_no_alert_good_rate(self, collector):
+        """GIVEN 25% failure rate (below 50%) THEN no alert."""
+        collector.bootstrap_metrics['total_bootstrap_attempts'] = 8
+        collector.bootstrap_metrics['failed_bootstraps'] = 2
+        assert collector._check_bootstrap_alerts() == []
+
+    def test_bootstrap_critical_at_high_rate(self, collector):
+        """GIVEN >50% failure rate THEN critical alert returned."""
+        collector.bootstrap_metrics['total_bootstrap_attempts'] = 10
+        collector.bootstrap_metrics['failed_bootstraps'] = 6  # 60%
+        alerts = collector._check_bootstrap_alerts()
+        assert len(alerts) == 1
+        assert alerts[0]['type'] == 'critical'
+        assert alerts[0]['component'] == 'bootstrap'
+        assert '60.0%' in alerts[0]['message']
+
+    # ── get_alert_conditions integration ────────────────────────────────────
+
+    def test_get_alert_conditions_delegates_to_helpers(self, collector):
+        """GIVEN all thresholds exceeded WHEN get_alert_conditions THEN 3 alerts."""
+        collector.peer_discovery_metrics['total_discoveries'] = 20
+        collector.peer_discovery_metrics['failed_discoveries'] = 8
+        collector.workflow_metrics['completed_workflows'] = 7
+        collector.workflow_metrics['failed_workflows'] = 3
+        collector.bootstrap_metrics['total_bootstrap_attempts'] = 10
+        collector.bootstrap_metrics['failed_bootstraps'] = 6
+        alerts = collector.get_alert_conditions()
+        assert len(alerts) == 3
+        types = {a['component'] for a in alerts}
+        assert types == {'peer_discovery', 'workflows', 'bootstrap'}
+
+    def test_get_alert_conditions_empty_when_healthy(self, collector):
+        """GIVEN healthy metrics WHEN get_alert_conditions THEN empty list."""
+        assert collector.get_alert_conditions() == []
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # Exposed for unit tests to patch/mocking.
 try:
     from ipfs_datasets_py.error_reporting.github_issue_client import GitHubIssueClient
-except Exception:  # pragma: no cover
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
     GitHubIssueClient = None  # type: ignore[assignment]
 
 
@@ -29,7 +29,7 @@ try:
     from ipfs_datasets_py.mcp_server.tools.software_engineering_tools.auto_healing_coordinator import (
         coordinate_auto_healing,
     )
-except Exception:  # pragma: no cover
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
     coordinate_auto_healing = None  # type: ignore[assignment]
 
 

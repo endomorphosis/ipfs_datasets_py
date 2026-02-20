@@ -1,4 +1,4 @@
-import asyncio
+import anyio
 from functools import wraps
 import logging
 from typing import Any, AsyncGenerator, Coroutine, Generator, Optional, TypeVar
@@ -50,8 +50,16 @@ def filter_exceptions(resource: Any) -> Optional[Resource]:
     return lambda x: filter(lambda: not isinstance(x, Exception), resource)
 
 @asyncio_coroutine
-def gather(l: Any) -> Generator[Optional[Any], None, None]:
-    return (yield from asyncio.gather(*l, return_exceptions=True))
+async def gather(l: Any) -> list:
+    results: list = [None] * len(l)
+
+    async def _run(idx: int, coro) -> None:
+        results[idx] = await coro
+
+    async with anyio.create_task_group() as tg:
+        for idx, coro in enumerate(l):
+            tg.start_soon(_run, idx, coro)
+    return results
 
 @asyncio_coroutine
 async def success_or_failure(resource: Optional[Resource]) -> None:

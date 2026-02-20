@@ -279,7 +279,7 @@ async def get_ipwb_content(
     try:
         try:
             from ipfs_datasets_py import ipfs_backend_router as ipfs_router
-        except Exception:
+        except (ImportError, ModuleNotFoundError):
             return {
                 "status": "error",
                 "error": "IPFS backend router not available"
@@ -362,7 +362,7 @@ async def verify_ipwb_archive(
                         verified_count += 1
                     else:
                         failed_count += 1
-                except Exception:
+                except (OSError, IOError):
                     failed_count += 1
 
         success_rate = verified_count / len(sample_records) if sample_records else 0.0

@@ -10,7 +10,7 @@ Usage:
     python -m ipfs_datasets_py.mcp_server.benchmarks.p2p_latency --tool workflow_submit
 """
 
-import asyncio
+import anyio
 import argparse
 import logging
 import statistics
@@ -529,4 +529,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    anyio.run(main)

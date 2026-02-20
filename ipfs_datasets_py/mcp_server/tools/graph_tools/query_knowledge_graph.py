@@ -55,6 +55,6 @@ async def query_knowledge_graph(
 
     try:
         return await anyio.to_thread.run_sync(_run_sync)
-    except Exception:
+    except (RuntimeError, OSError):
         logger.exception("Error querying knowledge graph")
         raise

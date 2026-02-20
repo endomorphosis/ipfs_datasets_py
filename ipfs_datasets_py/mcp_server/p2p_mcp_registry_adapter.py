@@ -164,19 +164,15 @@ class P2PMCPRegistryAdapter:
     
     def _discover_categories(self, manager):
         """Discover all available categories from the tool manager."""
-        import asyncio
-        
-        # Check if we're in a running event loop
-        try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                logger.debug("Cannot discover hierarchical tools in running loop context")
-                return []
-        except RuntimeError:
-            pass
-        
+        from ipfs_datasets_py.utils.anyio_compat import run as _anyio_run, in_async_context
+
+        # Cannot call from inside a running async context
+        if in_async_context():
+            logger.debug("Cannot discover hierarchical tools in running async context")
+            return []
+
         # Run async list_categories
-        categories_result = asyncio.run(manager.list_categories())
+        categories_result = _anyio_run(manager.list_categories())
         
         # Extract category names from result
         if isinstance(categories_result, dict) and "categories" in categories_result:
@@ -206,11 +202,11 @@ class P2PMCPRegistryAdapter:
     
     def _process_category_tools(self, manager, category: str, out: Dict[str, Dict[str, Any]]):
         """Process all tools in a given category and add to output dict."""
-        import asyncio
-        
+        from ipfs_datasets_py.utils.anyio_compat import run as _anyio_run
+
         try:
             # Get tools in this category (async operation)
-            cat_tools_result = asyncio.run(manager.list_tools(category))
+            cat_tools_result = _anyio_run(manager.list_tools(category))
             
             # Extract tools list
             if isinstance(cat_tools_result, dict) and "tools" in cat_tools_result:

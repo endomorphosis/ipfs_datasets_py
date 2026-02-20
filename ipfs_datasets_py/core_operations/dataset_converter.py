@@ -82,13 +82,7 @@ class DatasetConverter:
         """
         Synchronous version of convert method.
         """
-        import asyncio
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        
-        return loop.run_until_complete(
+        from ipfs_datasets_py.utils.anyio_compat import run as _anyio_run
+        return _anyio_run(
             self.convert(source, target_format, source_format, options)
         )

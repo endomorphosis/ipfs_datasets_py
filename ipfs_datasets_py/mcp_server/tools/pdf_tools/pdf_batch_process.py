@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.processors.pdf_processing import BatchProcessor  # type: ignore
-except Exception:
+except (ImportError, ModuleNotFoundError):
     BatchProcessor = None  # type: ignore
 
 from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (

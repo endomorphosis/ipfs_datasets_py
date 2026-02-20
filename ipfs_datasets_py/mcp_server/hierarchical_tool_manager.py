@@ -34,15 +34,26 @@ logger = logging.getLogger(__name__)
 class ToolCategory:
     """Represents a category of tools."""
     
-    def __init__(self, name: str, path: Path, description: str = ""):
+    def __init__(self, name: str, path: Path, description: str = "") -> None:
+        """Initialise a tool category backed by a directory on disk.
+
+        Args:
+            name: Short category identifier (e.g. ``"dataset_tools"``).
+            path: Filesystem path to the directory that contains the tool modules.
+            description: Optional human-readable description of the category.
+        """
         self.name = name
         self.path = path
         self.description = description
         self._tools: Dict[str, Callable] = {}
         self._tool_metadata: Dict[str, Dict[str, Any]] = {}
         self._discovered = False
+        # Phase 7: schema result cache — avoids repeated inspect.signature() calls
+        self._schema_cache: Dict[str, Dict[str, Any]] = {}
+        self._cache_hits: int = 0
+        self._cache_misses: int = 0
     
-    def discover_tools(self):
+    def discover_tools(self) -> None:
         """Discover all tools in this category."""
         if self._discovered:
             return
@@ -128,42 +139,81 @@ class ToolCategory:
         return self._tools.get(tool_name)
     
     def get_tool_schema(self, tool_name: str) -> Optional[Dict[str, Any]]:
-        """Get the full schema for a tool."""
+        """Get the full schema for a tool, returning a cached result when possible.
+
+        The first call introspects the function signature via ``inspect``; subsequent
+        calls return the memoised dict directly, avoiding repeated reflection work.
+        """
         if not self._discovered:
             self.discover_tools()
-        
+
+        # Phase 7: fast-path — return cached schema if available
+        if tool_name in self._schema_cache:
+            self._cache_hits += 1
+            return self._schema_cache[tool_name]
+
         metadata = self._tool_metadata.get(tool_name)
         if not metadata:
             return None
-        
+
         tool_func = self._tools.get(tool_name)
         if not tool_func:
             return None
-        
-        # Build full schema
+
+        # Build full schema (expensive — only done once per tool_name)
         sig = inspect.signature(tool_func)
         parameters = {}
-        
+
         for param_name, param in sig.parameters.items():
-            param_info = {
+            param_info: Dict[str, Any] = {
                 "name": param_name,
                 "required": param.default == inspect.Parameter.empty,
             }
-            
+
             # Try to get type annotation
             if param.annotation != inspect.Parameter.empty:
                 param_info["type"] = str(param.annotation)
-            
+
             # Get default value
             if param.default != inspect.Parameter.empty:
                 param_info["default"] = str(param.default)
-            
+
             parameters[param_name] = param_info
-        
-        return {
+
+        schema = {
             **metadata,
             "parameters": parameters,
-            "return_type": str(sig.return_annotation) if sig.return_annotation != inspect.Signature.empty else "Any"
+            "return_type": (
+                str(sig.return_annotation)
+                if sig.return_annotation != inspect.Signature.empty
+                else "Any"
+            ),
+        }
+
+        # Store in cache before returning
+        self._schema_cache[tool_name] = schema
+        self._cache_misses += 1
+        return schema
+
+    def clear_schema_cache(self) -> None:
+        """Evict all cached schemas (e.g. after tool reload).
+
+        Resets hit/miss counters as well.
+        """
+        self._schema_cache.clear()
+        self._cache_hits = 0
+        self._cache_misses = 0
+
+    def cache_info(self) -> Dict[str, Any]:
+        """Return schema-cache statistics.
+
+        Returns:
+            Dict with keys ``hits``, ``misses``, ``size``.
+        """
+        return {
+            "hits": self._cache_hits,
+            "misses": self._cache_misses,
+            "size": len(self._schema_cache),
         }
 
 
@@ -192,7 +242,7 @@ class HierarchicalToolManager:
                                        source="squad")
     """
     
-    def __init__(self, tools_root: Optional[Path] = None):
+    def __init__(self, tools_root: Optional[Path] = None) -> None:
         """Initialize the hierarchical tool manager.
         
         Args:
@@ -205,17 +255,20 @@ class HierarchicalToolManager:
         self.categories: Dict[str, ToolCategory] = {}
         self._category_metadata: Dict[str, Dict[str, Any]] = {}
         self._discovered_categories = False
+        # Phase 7: lazy-loading registry — maps category name → callable that
+        # returns a ready-to-use ToolCategory when first accessed.
+        self._lazy_loaders: Dict[str, Callable[[], ToolCategory]] = {}
         
         # Load category metadata
         self._load_category_metadata()
     
-    def _load_category_metadata(self):
+    def _load_category_metadata(self) -> None:
         """Load metadata for all categories."""
         # This could be from JSON files, but for now we'll use defaults
         # Users can customize by creating category.json files
         pass
     
-    def discover_categories(self):
+    def discover_categories(self) -> None:
         """Discover all tool categories."""
         if self._discovered_categories:
             return
@@ -259,6 +312,57 @@ class HierarchicalToolManager:
         self._discovered_categories = True
         logger.info(f"Discovered {len(self.categories)} tool categories")
     
+    def lazy_register_category(
+        self, name: str, loader: Callable[[], ToolCategory]
+    ) -> None:
+        """Register a category whose ``ToolCategory`` object is created on demand.
+
+        The *loader* callable is invoked the first time the category is accessed
+        (e.g. via :meth:`get_category`, :meth:`list_tools`, or :meth:`dispatch`).
+        This avoids importing heavy third-party dependencies at server startup.
+
+        Args:
+            name: Category name used for routing (e.g. ``"dataset_tools"``).
+            loader: Zero-argument callable that returns a populated
+                    :class:`ToolCategory` instance.
+
+        Example::
+
+            manager.lazy_register_category(
+                "my_tools",
+                lambda: ToolCategory("my_tools", Path("tools/my_tools")),
+            )
+        """
+        self._lazy_loaders[name] = loader
+        # Register minimal metadata so the category appears in listings.
+        # Only set metadata if no richer entry (from _load_category_metadata) exists.
+        if name not in self._category_metadata or not self._category_metadata[name].get("description"):
+            self._category_metadata[name] = {"name": name, "description": "", "path": ""}
+
+    def get_category(self, name: str) -> Optional[ToolCategory]:
+        """Return a :class:`ToolCategory` by name, triggering lazy loading if needed.
+
+        Args:
+            name: Category name.
+
+        Returns:
+            The ``ToolCategory`` instance, or ``None`` if the category does not
+            exist.
+        """
+        if name in self.categories:
+            return self.categories[name]
+        if name in self._lazy_loaders:
+            logger.debug("Lazy-loading category '%s'", name)
+            category = self._lazy_loaders.pop(name)()
+            self.categories[name] = category
+            self._category_metadata[name] = {
+                "name": name,
+                "description": category.description,
+                "path": str(category.path),
+            }
+            return category
+        return None
+
     async def list_categories(self, include_count: bool = False) -> List[Dict[str, Any]]:
         """List all available tool categories.
         
@@ -272,17 +376,22 @@ class HierarchicalToolManager:
             self.discover_categories()
         
         result = []
-        for name, metadata in self._category_metadata.items():
+        # Merge discovered categories AND lazily registered ones
+        all_names = set(self._category_metadata.keys()) | set(self._lazy_loaders.keys())
+        for name in all_names:
+            metadata = self._category_metadata.get(name, {"name": name, "description": ""})
             cat_info = {
                 "name": name,
-                "description": metadata["description"]
+                "description": metadata["description"],
+                "lazy": name in self._lazy_loaders,
             }
             
             if include_count:
-                category = self.categories[name]
-                if not category._discovered:
-                    category.discover_tools()
-                cat_info["tool_count"] = len(category._tools)
+                category = self.get_category(name)
+                if category is not None:
+                    if not category._discovered:
+                        category.discover_tools()
+                    cat_info["tool_count"] = len(category._tools)
             
             result.append(cat_info)
         
@@ -300,14 +409,14 @@ class HierarchicalToolManager:
         if not self._discovered_categories:
             self.discover_categories()
         
-        if category not in self.categories:
+        cat = self.get_category(category)
+        if cat is None:
             return {
                 "status": "error",
                 "error": f"Category '{category}' not found",
                 "available_categories": list(self.categories.keys())
             }
         
-        cat = self.categories[category]
         tools = cat.list_tools()
         
         return {
@@ -331,13 +440,13 @@ class HierarchicalToolManager:
         if not self._discovered_categories:
             self.discover_categories()
         
-        if category not in self.categories:
+        cat = self.get_category(category)
+        if cat is None:
             return {
                 "status": "error",
                 "error": f"Category '{category}' not found"
             }
         
-        cat = self.categories[category]
         schema = cat.get_tool_schema(tool)
         
         if schema is None:
@@ -373,14 +482,14 @@ class HierarchicalToolManager:
         if params is None:
             params = {}
         
-        if category not in self.categories:
+        cat = self.get_category(category)
+        if cat is None:
             return {
                 "status": "error",
                 "error": f"Category '{category}' not found",
                 "available_categories": list(self.categories.keys())
             }
         
-        cat = self.categories[category]
         tool_func = cat.get_tool(tool)
         
         if tool_func is None:

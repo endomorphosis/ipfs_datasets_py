@@ -1,8 +1,7 @@
 """
-Session Management Tools for IPFS Datasets MCP Server
+Session Management Tools for IPFS Datasets MCP Server (thin wrapper)
 
-This module provides comprehensive session management tools migrated
-from a legacy tooling codebase with enhanced features.
+Business logic lives in session_engine.
 """
 
 import logging
@@ -14,153 +13,14 @@ import re
 from ..tool_wrapper import EnhancedBaseMCPTool
 from ..validators import EnhancedParameterValidator
 from ..monitoring import EnhancedMetricsCollector
+from .session_engine import (  # noqa: F401
+    validate_session_id,
+    validate_user_id,
+    validate_session_type,
+    MockSessionManager,
+)
 
 logger = logging.getLogger(__name__)
-
-
-def validate_session_id(session_id: str) -> bool:
-    """Validate session ID format."""
-    if not session_id or not isinstance(session_id, str):
-        return False
-    try:
-        uuid.UUID(session_id)
-        return True
-    except (ValueError, TypeError):
-        return False
-
-
-def validate_user_id(user_id: str) -> bool:
-    """Validate user ID format."""
-    if not user_id or not isinstance(user_id, str):
-        return False
-    return len(user_id) > 0 and len(user_id) <= 100
-
-
-def validate_session_type(session_type: str) -> bool:
-    """Validate session type."""
-    valid_types = ['interactive', 'batch', 'api', 'temporary', 'embedding', 'search']
-    return session_type in valid_types
-
-
-class MockSessionManager:
-    """Enhanced mock session manager with production features."""
-    
-    def __init__(self):
-        self.sessions = {}
-        self.session_configs = {}
-        self.session_resources = {}
-        self.session_metrics = {}
-    
-    async def create_session(self, **kwargs):
-        """Create a new session with configuration and resource allocation."""
-        session_id = str(uuid.uuid4())
-        current_time = datetime.now()
-        
-        session_data = {
-            "session_id": session_id,
-            "user_id": kwargs.get("user_id", "default_user"),
-            "session_name": kwargs.get("session_name", f"Session-{session_id[:8]}"),
-            "session_type": kwargs.get("session_type", "interactive"),
-            "created_at": current_time.isoformat(),
-            "last_activity": current_time.isoformat(),
-            "status": "active",
-            "configuration": kwargs.get("session_config", {}),
-            "resource_limits": kwargs.get("resource_limits", {
-                "max_memory": "2GB",
-                "max_cpu": "2 cores",
-                "max_storage": "10GB",
-                "timeout": 3600
-            }),
-            "metadata": kwargs.get("metadata", {}),
-            "tags": kwargs.get("tags", [])
-        }
-        
-        self.sessions[session_id] = session_data
-        
-        # Initialize session metrics
-        self.session_metrics[session_id] = {
-            "requests_count": 0,
-            "data_processed": 0,
-            "errors_count": 0,
-            "start_time": current_time,
-            "cpu_time": 0,
-            "memory_peak": 0
-        }
-        
-        return session_data
-    
-    async def get_session(self, session_id: str):
-        """Get session information."""
-        session = self.sessions.get(session_id)
-        if session:
-            # Update last activity
-            session["last_activity"] = datetime.now().isoformat()
-            # Include metrics
-            session["metrics"] = self.session_metrics.get(session_id, {})
-        return session
-    
-    async def update_session(self, session_id: str, **kwargs):
-        """Update session properties."""
-        if session_id in self.sessions:
-            session = self.sessions[session_id]
-            session.update(kwargs)
-            session["last_activity"] = datetime.now().isoformat()
-            
-            # Update metrics if provided
-            if "metrics_update" in kwargs:
-                metrics = self.session_metrics.get(session_id, {})
-                metrics.update(kwargs["metrics_update"])
-                self.session_metrics[session_id] = metrics
-            
-            return session
-        return None
-    
-    async def delete_session(self, session_id: str):
-        """Delete session and cleanup resources."""
-        session = self.sessions.pop(session_id, None)
-        self.session_metrics.pop(session_id, None)
-        self.session_configs.pop(session_id, None)
-        self.session_resources.pop(session_id, None)
-        
-        if session:
-            session["status"] = "terminated"
-            session["deleted_at"] = datetime.now().isoformat()
-        
-        return session
-    
-    async def list_sessions(self, **filters):
-        """List sessions with filtering options."""
-        sessions = list(self.sessions.values())
-        
-        # Apply filters
-        if "user_id" in filters:
-            sessions = [s for s in sessions if s.get("user_id") == filters["user_id"]]
-        
-        if "status" in filters:
-            sessions = [s for s in sessions if s.get("status") == filters["status"]]
-        
-        if "session_type" in filters:
-            sessions = [s for s in sessions if s.get("session_type") == filters["session_type"]]
-        
-        # Add metrics to each session
-        for session in sessions:
-            session_id = session["session_id"]
-            session["metrics"] = self.session_metrics.get(session_id, {})
-        
-        return sessions
-    
-    async def cleanup_expired_sessions(self, max_age_hours: int = 24):
-        """Cleanup expired sessions."""
-        current_time = datetime.now()
-        expired_sessions = []
-        
-        for session_id, session in list(self.sessions.items()):
-            created_at = datetime.fromisoformat(session["created_at"])
-            if (current_time - created_at).total_seconds() > max_age_hours * 3600:
-                expired_session = await self.delete_session(session_id)
-                expired_sessions.append(expired_session)
-        
-        return expired_sessions
 
 
 class EnhancedSessionCreationTool(EnhancedBaseMCPTool):

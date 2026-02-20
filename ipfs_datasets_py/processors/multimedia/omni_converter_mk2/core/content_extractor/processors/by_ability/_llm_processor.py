@@ -3,7 +3,7 @@ LLM processor module for enhancing document processing with language models.
 Provides text summarization, metadata extraction, and content analysis capabilities.
 """
 import os
-import asyncio
+import anyio
 from typing import Any, Optional, Union
 
 from pydantic import BaseModel, Field
@@ -106,9 +106,8 @@ class LLMProcessor:
         elif options is None:
             options = LLMOptions()
         
-        # Run processing in an async loop
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(self._process_content_async(content, options))
+        # Run processing in an async context
+        result = anyio.run(self._process_content_async, content, options)
         return result
     
     async def _process_content_async(
@@ -142,7 +141,12 @@ class LLMProcessor:
 
         # Wait for all tasks to complete
         if tasks:
-            await asyncio.gather(*tasks)
+            async def _run_coro(coro) -> None:
+                await coro
+
+            async with anyio.create_task_group() as tg:
+                for coro in tasks:
+                    tg.start_soon(_run_coro, coro)
         
         return result
     

@@ -701,6 +701,7 @@ class TestWorkflowErrorHandlingAndRollback:
             transaction_log.append(("withdraw", amount))
         
         async def compensate():
+            nonlocal account_balance
             # Reverse all transactions
             for action, amount in reversed(transaction_log):
                 if action == "deposit":

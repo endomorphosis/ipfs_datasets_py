@@ -88,3 +88,39 @@ def move_on_after(seconds: float):
     """Create a timeout scope that cancels on timeout (no exception)."""
 
     return anyio.move_on_after(seconds)
+
+
+async def gather(*coros: Awaitable[T], return_exceptions: bool = True) -> list[T | BaseException]:
+    """Run *coros* concurrently and return a list of results.
+
+    Mirrors ``asyncio.gather(*coros, return_exceptions=True)``.
+
+    When *return_exceptions* is ``True`` (default) exceptions are collected
+    into the result list instead of propagating.  When ``False`` the first
+    exception is re-raised after all tasks finish.
+
+    Args:
+        *coros: Awaitables to run concurrently.
+        return_exceptions: If ``True`` (default) exceptions are returned as
+            items in the result list.
+
+    Returns:
+        List of results in the same order as *coros*.
+    """
+    coro_list = list(coros)
+    results: list[Any] = [None] * len(coro_list)
+
+    async def _run(i: int, coro: Awaitable[T]) -> None:
+        try:
+            results[i] = await coro
+        except Exception as exc:
+            if return_exceptions:
+                results[i] = exc
+            else:
+                raise
+
+    async with anyio.create_task_group() as tg:
+        for i, coro in enumerate(coro_list):
+            tg.start_soon(_run, i, coro)
+
+    return results

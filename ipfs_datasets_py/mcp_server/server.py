@@ -40,7 +40,7 @@ except ImportError as e:
             import mcp as _maybe_mcp
             _mcp_file = getattr(_maybe_mcp, "__file__", "") or ""
             _mcp_is_package = bool(getattr(_maybe_mcp, "__path__", None))
-        except Exception:
+        except ImportError:
             _mcp_file = ""
             _mcp_is_package = False
 
@@ -69,7 +69,7 @@ except ImportError as e:
                         continue
                     if Path(_p, "mcp.py").exists() or Path(_p, "mcp").is_dir():
                         _shadow_paths.append(_p)
-                except Exception:
+                except (OSError, ValueError):
                     continue
 
             if _shadow_paths:
@@ -79,16 +79,16 @@ except ImportError as e:
         from mcp.server import FastMCP  # type: ignore[no-redef]
         from mcp.types import CallToolResult, TextContent, Tool  # type: ignore[no-redef]
         from mcp import CallToolRequest  # type: ignore[no-redef]
-    except Exception:
+    except (ImportError, ModuleNotFoundError) as e:
         # Final fallback: leave MCP symbols undefined-but-present.
         FastMCP = None  # type: ignore[assignment]
 
         class TextContent:  # type: ignore[no-redef]
-            def __init__(self, *args, **kwargs):
+            def __init__(self, *args, **kwargs) -> None:
                 raise ImportError("mcp is required to construct TextContent")
 
         class CallToolResult:  # type: ignore[no-redef]
-            def __init__(self, *args, **kwargs):
+            def __init__(self, *args, **kwargs) -> None:
                 raise ImportError("mcp is required to construct CallToolResult")
 
         Tool = Any  # type: ignore[assignment]
@@ -324,7 +324,7 @@ class IPFSDatasetsMCPServer:
         - Tool execution is sandboxed for security and stability
     """
 
-    def __init__(self, server_configs: Optional[Configs] = None):
+    def __init__(self, server_configs: Optional[Configs] = None) -> None:
         """
         Initialize IPFS Datasets MCP Server with Comprehensive Configuration
 
@@ -412,8 +412,13 @@ class IPFSDatasetsMCPServer:
             - Custom configurations enable environment-specific optimization
         """
         self.configs = server_configs or configs
+        self._initialize_error_reporting()
+        self._initialize_mcp_server()
+        self.tools = {}
+        self._initialize_p2p_services()
 
-        # Initialize error reporting
+    def _initialize_error_reporting(self) -> None:
+        """Initialize global error reporting if available."""
         if ERROR_REPORTING_AVAILABLE:
             try:
                 error_reporter.install_global_handler()
@@ -423,20 +428,20 @@ class IPFSDatasetsMCPServer:
             except Exception as e:
                 logger.warning(f"Unexpected error installing error reporter: {e}", exc_info=True)
 
-        # Initialize MCP server (optional dependency).
-        # Allow constructing the server without MCP installed so tests/utilities
-        # can exercise non-MCP logic. Operations that require MCP remain
-        # fail-closed.
+    def _initialize_mcp_server(self) -> None:
+        """Initialize FastMCP server instance.
+
+        Allow constructing the server without MCP installed so tests/utilities
+        can exercise non-MCP logic. Operations that require MCP remain fail-closed.
+        """
         self._fastmcp_available = FastMCP is not None
         if self._fastmcp_available:
             self.mcp = FastMCP("ipfs_datasets")
         else:
             self.mcp = None
 
-        # Dictionary to store registered tools
-        self.tools = {}
-
-        # Optional in-process libp2p TaskQueue/cache service
+    def _initialize_p2p_services(self) -> None:
+        """Initialize optional in-process libp2p TaskQueue/cache service."""
         try:
             from .p2p_service_manager import P2PServiceManager
 
@@ -809,7 +814,7 @@ class IPFSDatasetsMCPServer:
                 except Exception as e:
                     logger.warning(f"Unexpected error stopping P2P service: {e}", exc_info=True)
 
-    async def start(self, host: str = "0.0.0.0", port: int = 8000):
+    async def start(self, host: str = "0.0.0.0", port: int = 8000) -> None:
         """
         Start the MCP server in HTTP mode (legacy).
 
@@ -936,7 +941,7 @@ class Args(pydantic.BaseModel):
     ipfs_kit_mcp_url: Optional[pydantic.AnyUrl] = None
     config: Optional[pydantic.FilePath] = None
 
-    def __init__(self, namespace: argparse.Namespace):
+    def __init__(self, namespace: argparse.Namespace) -> None:
         super().__init__(
             host=namespace.host,
             port=namespace.port,

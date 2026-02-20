@@ -7,7 +7,7 @@ and integrates all 6 core features for legal/deontic logic conversion.
 
 from __future__ import annotations
 
-import asyncio
+import anyio
 import logging
 import time
 from datetime import datetime
@@ -399,9 +399,8 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
             ConversionResult with deontic formula
         """
         # Run synchronous convert in thread pool to avoid blocking
-        loop = asyncio.get_event_loop()
         use_cache = kwargs.get("use_cache", True)
-        return await loop.run_in_executor(None, lambda: self.convert(text, use_cache=use_cache))
+        return await anyio.to_thread.run_sync(lambda: self.convert(text, use_cache=use_cache))
     
     def get_stats(self) -> Dict[str, Any]:
         """Get conversion statistics."""
