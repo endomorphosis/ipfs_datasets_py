@@ -101,7 +101,9 @@ class KnowledgeGraphExtractorWithValidation:
             self.validator_available = False
 
         # Configuration options
-        self.validate_during_extraction = validate_during_extraction and self.validator_available
+        # validate_during_extraction preserves the user's requested setting.
+        # Actual runtime validation is gated by self.validator_available separately.
+        self.validate_during_extraction = validate_during_extraction
         self.auto_correct_suggestions = auto_correct_suggestions
         self.min_confidence = min_confidence
 
@@ -205,6 +207,16 @@ class KnowledgeGraphExtractorWithValidation:
 
                     if corrections:
                         result["corrections"] = corrections
+
+            elif self.validate_during_extraction and not self.validator:
+                # Validation was requested but validator not available — include empty stubs
+                result["validation_results"] = {}
+                result["validation_metrics"] = {
+                    "entity_coverage": 0.0,
+                    "relationship_coverage": 0.0,
+                    "overall_coverage": 0.0,
+                    "validation_available": False,
+                }
 
             # Update trace if enabled
             if self.tracer and trace_id:
