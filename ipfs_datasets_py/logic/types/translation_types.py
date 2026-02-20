@@ -1,6 +1,6 @@
 """Translation type definitions (import-safe).
 
-These datatypes are used by the core logic subsystem and must not import
+These backward-compatible datatypes are used by the core logic subsystem and must not import
 `ipfs_datasets_py.logic.integration` (or other heavy optional subsystems) at
 import time.
 """

@@ -1,6 +1,6 @@
 """Deontic logic type definitions (import-safe).
 
-This module intentionally avoids importing anything from
+These backward-compatible types intentionally avoid importing anything from
 `ipfs_datasets_py.logic.integration` so that importing
 `ipfs_datasets_py.logic.api` stays lightweight and does not trigger optional
 dependencies, logging configuration, or warning cascades.
