@@ -703,7 +703,14 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] CEC inference rules: 8 modules, 67 rules total
 - [x] ZKP module: simulation warnings in place
 - [x] CEC NL converter: prohibition + cognitive patterns fixed (260 tests pass)
-- [ ] TDFOL NL test failures: ~69 → <20 (skipped — requires spaCy)
+- [x] TDFOL `tdfol_inference_rules.py` shim (60 tests unlocked)
+- [x] `TDFOLProver` helpers (`_is_modal_formula`, `_has_deontic_operators`, etc.) added (6 failures fixed)
+- [x] TDFOL prover cache key includes theorems (cross-test contamination fixed)
+- [x] `zkp_integration.py` API mismatches fixed (6 failures fixed)
+- [x] `OptimizedProver._prove_indexed` returns `ProofResult` (2 failures fixed)
+- [x] `logic_verification.py` compat aliases + `logic_verification_utils.py` shim (3 failures fixed)
+- [x] `test_tdfol_integration.py` NL skip guard fixed (9 spaCy failures → correct skips)
+- [ ] TDFOL NL test failures: ~69 → <20 (deferred — requires spaCy)
 - [ ] Overall test pass rate: 87% → 90%+
 
 ### Phase 3 ✅ COMPLETE
