@@ -637,7 +637,7 @@ class KnowledgeGraphExtractorWithValidation:
         # Apply entity corrections
         for original_entity_id, entity in kg.entities.items():
             # Create a copy of the entity
-            entity_properties = entity.properties.copy() if hasattr(entity, "properties") else {}
+            entity_properties = (entity.properties.copy() if entity.properties else {}) if hasattr(entity, "properties") else {}
 
             # Apply property corrections if available
             if original_entity_id in entity_corrections:
@@ -672,7 +672,7 @@ class KnowledgeGraphExtractorWithValidation:
                     rel_type,
                     source=source_entity,
                     target=target_entity,
-                    properties=rel.properties.copy() if hasattr(rel, "properties") else {},
+                    properties=(rel.properties.copy() if rel.properties else {}) if hasattr(rel, "properties") else {},
                     relationship_id=rel_id,
                     confidence=rel.confidence if hasattr(rel, "confidence") else 1.0,
                     source_text=rel.source_text if hasattr(rel, "source_text") else None,
