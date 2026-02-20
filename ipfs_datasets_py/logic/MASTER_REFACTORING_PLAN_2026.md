@@ -84,7 +84,7 @@ The `ipfs_datasets_py/logic/` folder contains a **production-ready neurosymbolic
 | `integration/reasoning/proof_execution_engine.py` | 968 | <600 | 🟠 High |
 | `integration/interactive/interactive_fol_constructor.py` | 787 | <600 | 🟡 Medium |
 | `integration/reasoning/deontological_reasoning.py` | 776 | <600 | 🟡 Medium |
-| `integration/reasoning/logic_verification.py` | 692 | <600 | 🟡 Medium |
+| `integration/reasoning/logic_verification.py` | 692 | <600 | ✅ Done (435 + 290 mixin) |
 | `TDFOL/performance_profiler.py` | 1,407 | <800 | 🟡 Medium |
 | `TDFOL/performance_dashboard.py` | 1,314 | <800 | 🟡 Medium |
 
@@ -537,7 +537,7 @@ mkdir -p ipfs_datasets_py/logic/zkp/ARCHIVE/
 
 **Required Actions:**
 - [ ] Audit all ImportError handlers — ensure all are tested
-- [ ] Create `logic[api]` extras group in `setup.py` for FastAPI + uvicorn
+- [x] Create `logic[api]` extras group in `setup.py` for FastAPI + uvicorn (`logic-api` key)
 - [ ] Document minimum vs recommended vs full dependency sets
 - [ ] CI test matrix: bare Python 3.12 + core dependencies only
 
@@ -630,9 +630,10 @@ mkdir -p ipfs_datasets_py/logic/zkp/ARCHIVE/
 **Acceptance Criteria:**
 - [ ] Main file reduced to <600 LOC
 
-### 8.6 `integration/reasoning/logic_verification.py` (692 → <600 LOC) 🟡 Medium
+### 8.6 `integration/reasoning/logic_verification.py` (692 → 435 LOC) ✅ Done
 
-**Approach:** Extract proof format adapters to `proof_format_adapters.py`
+**Completed:** Extracted backend methods to `_logic_verifier_backends_mixin.py` (290 LOC).
+`LogicVerifier` now inherits from `LogicVerifierBackendsMixin`.
 
 ### 8.7 TDFOL Visualization Tools (performance_profiler 1,407 + performance_dashboard 1,314) 🟡 Medium
 
@@ -672,7 +673,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | Split `proof_execution_engine.py` (968→2×<500) | 5.3 | 4h | 🟡 P2 |
 | Split `deontological_reasoning.py` (776→<600) | 5.4 | 4h | 🟡 P2 |
 | Spanish NL parser | 3.3 | 16h | 🟡 P2 |
-| `logic[api]` extras group | 4.3 | 2h | 🟡 P2 |
+| ~~`logic[api]` extras group~~ ✅ Done | 4.3 | 2h | 🟡 P2 |
 
 ### Ongoing (Per PR / Monthly / Quarterly)
 | Task | Frequency |
@@ -713,7 +714,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] Input validation security module (36 tests)
 - [x] ZKP simulation warnings
 - [ ] CI performance gates (per PR)
-- [ ] `logic[api]` pip extras group
+- [x] `logic[api]` pip extras group (`logic-api` key in setup.py)
 - [ ] Zero known vulnerabilities in dependencies
 
 ### Phase 5 📋 Planned

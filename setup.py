@@ -165,6 +165,11 @@ setup(
             'nltk>=3.8.1',
             'symbolicai>=0.13.1',
         ],
+        # API server extras for the logic module (FastAPI + uvicorn for api_server.py)
+        'logic-api': [
+            'fastapi>=0.100.0',
+            'uvicorn>=0.23.0',
+        ],
         # Knowledge graphs - entity extraction and graph database
         'knowledge_graphs': [
             'spacy>=3.0.0',
