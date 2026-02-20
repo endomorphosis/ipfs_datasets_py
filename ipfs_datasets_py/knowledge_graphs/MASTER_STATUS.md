@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 2.2.0  
+**Version:** 2.3.0  
 **Status:** ✅ Production Ready  
 **Last Updated:** 2026-02-20  
-**Last Major Release:** Session 15 (visualization 65%, sparql_templates/budget_manager 100%, expression_evaluator 89%)
+**Last Major Release:** Session 16 (validation 96%, enhanced 97%, metrics 96%, visualization 94%, driver 86%, helpers 94%)
 
 ---
 
@@ -18,9 +18,9 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 78% overall | Measured 2026-02-20; sparql_templates/**100%**, budget_manager/**100%**, expression_evaluator **89%**, visualization **65%**; 2,067 pass
-| **Documentation** | ✅ Up to Date | Reflects v2.2.0 structure |
-| **Known Issues** | None | 7 bugs fixed (sessions 7-11); 0 failures (2,067 pass)
+| **Test Coverage** | 79% overall | Measured 2026-02-20; sparql_templates/**100%**, budget_manager/**100%**, expression_evaluator **89%**, visualization **94%**, enhanced **97%**, metrics **96%**, driver **86%**, helpers **94%**, validation **96%**; 2,189 pass
+| **Documentation** | ✅ Up to Date | Reflects v2.3.0 structure |
+| **Known Issues** | None | 7 bugs fixed (sessions 7-11); 0 failures (2,189 pass)
 | **Next Milestone** | v2.3.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
 
 ---
@@ -147,7 +147,7 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 ## Test Coverage Status
 
-### Overall Coverage: ~78% (measured, session 15)
+### Overall Coverage: ~79% (measured, session 16)
 
 > Numbers from `python3 -m coverage run … pytest tests/unit/knowledge_graphs/` on 2026-02-20.
 > Includes shim files (100% — trivially covered) and optional-dep files skipped at runtime.
@@ -156,22 +156,21 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 | Module | Coverage | Status | Notes |
 |--------|----------|--------|-------|
 | **Cypher** | 78–96% | ✅ Excellent | functions.py **96%**, parser **85%**, compiler 84% |
-| **Neo4j Compat** | 71–95% | ✅ **Excellent** | result.py **85%**, session **85%** (+20pp), connection_pool 95% |
+| **Neo4j Compat** | **86%**–95% | ✅ **Excellent** | result.py **85%**, session **85%**, driver **86%** (+15pp), connection_pool 95% |
 | **Migration** | 86–95% | ✅ **Excellent** | neo4j_exporter **95%** (+34pp), ipfs_importer **88%** (+16pp), formats 86% |
-| **JSON-LD** | 81–**91%** | ✅ **Excellent** | context.py **91%**, validation 81%, types 98% |
+| **JSON-LD** | **91%**–**96%** | ✅ **Excellent** | context.py **91%**, validation **96%** (+15pp), types 98% |
 | **Core** | 68–**89%** | ✅ **Excellent** | expression_evaluator **89%** (+12pp), query_executor **85%**, ir_executor **81%** |
 | **Constraints** | **100%** | ✅ **Excellent** | All constraint types + manager fully covered (session 12) |
 | **Transactions** | **72%**–96% | ✅ Good | manager **77%**, wal **72%** (+3pp), types 96% |
 | **Query** | **100%**–**83%** | ✅ **Excellent** | sparql_templates **100%** (+34pp), budget_manager **100%** (+23pp), hybrid_search **83%** |
 | **Extraction** | 52–**69%** | 🔶 Improving | graph.py 71%, validator 59%, finance_graphrag **69%** |
-| **Reasoning** | **78%**–98% | ✅ **Good** | cross_document **78%** (+12pp), helpers 80%, types 94% |
+| **Reasoning** | **78%**–98% | ✅ **Good** | cross_document **78%** (+12pp), helpers **94%** (+14pp), types 94% |
 | **Indexing** | 87–99% | ✅ Excellent | btree 87%, manager 99%, specialized 93% |
 | **Storage** | 69–100% | ✅ Good | ipld_backend **69%** (+19pp), types **100%** |
-| **Lineage** | **65%**–100% | ✅ Good | visualization **65%** (+31pp), cross_document shims **100%**, core 89% |
+| **Lineage** | **94%**–100% | ✅ **Excellent** | visualization **94%** (+29pp), enhanced **97%** (+18pp), metrics **96%** (+15pp), core 89% |
 | **Root shims** | **100%** | ✅ Excellent | finance_graphrag, sparql_query_templates, lineage shims all **100%** |
 
 **Largest remaining coverage opportunities:**
-- `lineage/visualization.py` (65%) — render_plotly path requires plotly; remaining ~35pp need plotly install
 - `transactions/wal.py` (72%) — some StorageError/SerializationError error paths require specific mock combos
 - `extraction/extractor.py` (54%) — spaCy/transformers-dependent NLP paths
 - `extraction/_wikipedia_helpers.py` (9%) — requires `wikipedia` package + network access
@@ -206,13 +205,13 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - **test_master_status_session12.py** (98 tests — constraints 100%, ipfs_importer 72%, neo4j_exporter 61%, transaction manager 77%)
 - **test_master_status_session13.py** (66 tests — cypher/parser 85%, ir_executor 81%, visualization 63%, wal 66%)
 - **test_master_status_session14.py** (91 tests — cross_document 78%, session 85%, query_executor 85%, wal 69%, validator)
-- **test_master_status_session15.py** (113 tests — visualization 65%, sparql_templates 100%, budget_manager 100%, expression_evaluator 89%, knowledge_graph query 70%, wal 72%)
+- **test_master_status_session16.py** (122 tests — jsonld/validation 96%, lineage/enhanced 97%, lineage/metrics 96%, lineage/visualization 94%, neo4j_compat/driver 86%, reasoning/helpers 94%)
+
 - lineage/test_core.py, lineage/test_enhanced.py, lineage/test_metrics.py, lineage/test_types.py
 - ...and 10 more test files
 
-**Total Tests:** 2,067 passing, 23 skipped (libipld/anyio/plotly absent; networkx + pytest-mock + matplotlib + scipy available)
+**Total Tests:** 2,189 passing, 23 skipped (libipld/anyio/plotly absent; networkx + pytest-mock + matplotlib + scipy available)
 **Pass Rate:** 100% (excluding optional dependency skips)
-**Note:** Test count rose 1,926 → 2,067 (+141) = 113 new session-15 tests + 28 previously-skipped tests that now pass with matplotlib + scipy installed.
 
 ---
 
@@ -495,7 +494,7 @@ reasoning = reasoner.reason_across_documents(
 
 **Improving Tests:**
 1. See [tests/knowledge_graphs/TEST_GUIDE.md](../../tests/knowledge_graphs/TEST_GUIDE.md)
-2. Focus on `extraction/extractor.py` (54% — spaCy/transformers paths), `transactions/wal.py` (65% — StorageError paths), and `migration/neo4j_exporter.py` (61% — Neo4j session paths) — next highest-value targets
+2. Focus on `extraction/extractor.py` (54% — spaCy/transformers paths), `transactions/wal.py` (72% — StorageError paths), and `extraction/validator.py` (59% — Wikipedia/SPARQL paths) — next highest-value targets
 3. Add error handling and edge case tests
 4. Ensure tests work with and without optional dependencies (use `pytest.importorskip`)
 
@@ -509,7 +508,29 @@ reasoning = reasoner.reason_across_documents(
 
 ## Version History
 
-### v2.1.9 (2026-02-20) - Coverage Boost Session 14 ✅
+### v2.3.0 (2026-02-20) - Coverage Boost Session 16 ✅
+
+**Summary:** Added 122 new tests covering 6 high-impact modules; overall coverage from 78% to **79%**.
+
+**Bug fixes:** None (all targeted modules had correct behavior).
+
+**Test additions:**
+- `test_master_status_session16.py` — 122 new GIVEN-WHEN-THEN tests covering:
+  - `jsonld/validation.py` (81% → **96%**): `SchemaValidator` (valid/invalid type/required/autodetect/no-schema-warning), `SchemaValidator` without jsonschema (warning), `SHACLValidator` (no-shape-warning/targetClass-match/mismatch, minCount/maxCount, hasValue scalar/list/absent, datatype, class-constraint scalar/list, pattern, in/not-in, nested-node, minLength/maxLength, minInclusive/maxInclusive, sh:and/sh:or/sh:not, Warning severity, autodetect-by-type), `SemanticValidator` (both-pass/schema-fail/SHACL-fail/register-schema+shape)
+  - `lineage/enhanced.py` (79% → **97%**): `SemanticAnalyzer` (same-type/same-entity-id/different-type similarity, detect_semantic_patterns, categorize_relationship), `BoundaryDetector` (system/organization/format/temporal boundaries, classify risk high/medium/low), `ConfidenceScorer` (path confidence single-node/multi-hop, propagate_confidence root/downstream)
+  - `lineage/metrics.py` (81% → **96%**): `LineageMetrics` (compute_basic_stats/compute_node_metrics absent/root, find_root/leaf nodes, compute_path_statistics chain/empty), `ImpactAnalyzer` (downstream_impact/upstream_dependencies/critical_nodes), `DependencyAnalyzer` (no-cycles/with-cycle, chains upstream/downstream, dependency depth leaf/root)
+  - `neo4j_compat/driver.py` (71% → **86%**): `IPFSDriver` (daemon mode/embedded mode/invalid-scheme→ValueError/HAVE_DEPS=False→ImportError), session (returns-IPFSSession/with-database/closed-raises), lifecycle (closed-property/double-close/context-manager/pool-stats/verify-auth-with/without/verify-connectivity-closed-raises/backend-cache/backend-new), `GraphDatabase.driver()`/close_all_drivers()/`create_driver()`
+  - `reasoning/helpers.py` (80% → **94%**): `_infer_path_relation` (support/contradict/elaborate/prerequisite/consequence/complementary/empty), `_generate_llm_answer` (no-keys→fallback/router-used/openai-unavailable-falls-through/anthropic-unavailable-falls-through), `_get_llm_router` (no-LLMRouter→None/llm_service-returned/cached-default/LLMRouter-init-failure→None)
+  - `lineage/visualization.py` (65% → **94%**): `render_plotly` (plotly-unavailable→ImportError/mocked-plotly-returns-HTML/mocked-plotly-with-output-path), `visualize_lineage` (plotly renderer with mocked go)
+
+**Result:** 2,189 passed, 23 skipped (libipld/anyio/plotly absent), **0 failed** — up from 2,067 (session 15 baseline)
+**Coverage:** 78% → **79%** overall
+
+**Backward Compatibility:** 100% (no production code changes)
+
+---
+
+### v2.2.0 (2026-02-20) - Coverage Boost Session 15 ✅
 
 **Summary:** Added 91 new tests covering 5 high-impact modules; overall coverage from 76% to **77%**.
 
