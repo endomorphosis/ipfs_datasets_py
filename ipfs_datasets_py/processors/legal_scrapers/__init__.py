@@ -100,13 +100,30 @@ from .ipfs_storage_integration import (
     list_ipfs_datasets,
 )
 
+# Patent Engine — USPTO patent scraper domain classes
+from .patent_engine import (
+    Patent,
+    PatentDatasetBuilder,
+    PatentSearchCriteria,
+    USPTOPatentScraper,
+    search_patents_by_assignee,
+    search_patents_by_inventor,
+    search_patents_by_keyword,
+)
+
 # Brave Legal Search - Natural language search for legal rules and regulations
 from .brave_legal_search import (
     BraveLegalSearch,
     create_legal_search,
     search_legal,
 )
-from .multi_engine_legal_search import MultiEngineLegalSearch
+# NOTE: multi_engine_legal_search.py has no MultiEngineLegalSearch *class*.
+# It exposes standalone async functions: multi_engine_legal_search() and get_multi_engine_stats().
+# The module itself is aliased as MultiEngineLegalSearch for backward compatibility with code
+# that previously imported the (non-existent) class by that name.
+from . import multi_engine_legal_search as _multi_engine_module  # noqa: F401
+from .multi_engine_legal_search import multi_engine_legal_search, get_multi_engine_stats  # noqa: F401
+MultiEngineLegalSearch = _multi_engine_module  # module alias for backward compat
 from .knowledge_base_loader import (
     LegalKnowledgeBase,
     FederalEntity,
@@ -337,6 +354,15 @@ __all__ = [
     "list_scraping_jobs_from_parameters",
     "scrape_us_code_from_parameters",
     "scrape_municipal_codes_from_parameters",
+    
+    # Patent Engine
+    "Patent",
+    "PatentDatasetBuilder",
+    "PatentSearchCriteria",
+    "USPTOPatentScraper",
+    "search_patents_by_keyword",
+    "search_patents_by_inventor",
+    "search_patents_by_assignee",
     
     # Brave Legal Search
     "BraveLegalSearch",
