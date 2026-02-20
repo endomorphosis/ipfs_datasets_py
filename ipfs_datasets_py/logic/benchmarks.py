@@ -10,7 +10,7 @@ Benchmarks:
 """
 
 import time
-import asyncio
+import anyio
 import statistics
 from typing import List, Dict, Any, Callable
 from dataclasses import dataclass, field

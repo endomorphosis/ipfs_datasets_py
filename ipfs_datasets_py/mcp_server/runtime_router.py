@@ -52,7 +52,7 @@ Usage:
     await router.shutdown()
 """
 
-import asyncio
+import anyio
 import inspect
 import logging
 import time
@@ -518,8 +518,7 @@ class RuntimeRouter:
             return await tool_func(*args, **kwargs)
         else:
             # Run sync function in thread pool
-            loop = asyncio.get_event_loop()
-            return await loop.run_in_executor(None, lambda: tool_func(*args, **kwargs))
+            return await anyio.to_thread.run_sync(lambda: tool_func(*args, **kwargs))
     
     async def _route_to_trio(self, tool_func: Callable, *args, **kwargs) -> Any:
         """

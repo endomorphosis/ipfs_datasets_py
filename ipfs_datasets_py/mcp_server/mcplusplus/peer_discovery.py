@@ -14,7 +14,7 @@ Module: ipfs_datasets_py.mcp_server.mcplusplus.peer_discovery
 
 from __future__ import annotations
 
-import asyncio
+import anyio
 import json
 import logging
 import os

@@ -22,7 +22,7 @@ Example:
     ...     print("✅ All validation passed!")
 """
 
-import asyncio
+import anyio
 import time
 import logging
 from dataclasses import dataclass, field
@@ -321,10 +321,8 @@ class E2EValidator:
         
         try:
             # Run test with timeout
-            result = await asyncio.wait_for(
-                test_func(),
-                timeout=self.timeout
-            )
+            with anyio.fail_after(self.timeout):
+                result = await test_func()
             
             duration = time.time() - start_time
             
@@ -336,7 +334,7 @@ class E2EValidator:
                 details=result.get('details', {})
             ))
             
-        except asyncio.TimeoutError:
+        except TimeoutError:
             duration = time.time() - start_time
             self.results.append(ValidationResult(
                 test_name=test_name,
@@ -516,7 +514,7 @@ class E2EValidator:
             cache.put("test", {"data": "value"})
             
             # Wait for expiration
-            await asyncio.sleep(1.5)
+            await anyio.sleep(1.5)
             
             result = cache.get("test")
             passed = result is None  # Should be expired
@@ -690,4 +688,4 @@ async def run_validation() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(run_validation())
+    anyio.run(run_validation)

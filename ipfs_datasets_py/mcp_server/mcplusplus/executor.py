@@ -12,7 +12,9 @@ This enables efficient parallel execution of P2P tools without thread hops.
 
 import logging
 import time
-import asyncio
+import inspect
+import anyio
+from ipfs_datasets_py.utils.anyio_compat import gather as _anyio_gather
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from contextlib import asynccontextmanager
@@ -26,7 +28,7 @@ try:
     HAVE_TRIO = True
 except ImportError:
     HAVE_TRIO = False
-    logger.warning("Trio not available - executor will use asyncio fallback")
+    logger.warning("Trio not available - executor will use anyio fallback")
 
 
 @dataclass
@@ -173,7 +175,7 @@ class StructuredConcurrencyExecutor:
                     self._semaphore = None
         else:
             # Fallback to asyncio
-            self._semaphore = asyncio.Semaphore(self.max_concurrent)
+            self._semaphore = anyio.Semaphore(self.max_concurrent)
             self._active = True
             
             try:
@@ -225,16 +227,14 @@ class StructuredConcurrencyExecutor:
             else:
                 # Use asyncio with timeout
                 try:
-                    result.result = await asyncio.wait_for(
-                        tool_func(*args, **kwargs),
-                        timeout=timeout
-                    )
+                    with anyio.fail_after(timeout):
+                        result.result = await tool_func(*args, **kwargs)
                     result.success = True
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     result.timed_out = True
                     result.error = f"Tool execution timed out after {timeout}s"
         
-        except asyncio.CancelledError:
+        except anyio.get_cancelled_exc_class():
             result.cancelled = True
             result.error = "Tool execution was cancelled"
             raise  # Re-raise to properly handle cancellation
@@ -306,10 +306,10 @@ class StructuredConcurrencyExecutor:
                         timeout=timeout
                     )
             
-            results = await asyncio.gather(*[
+            results = await _anyio_gather([
                 run_task(tool_func, kwargs)
                 for tool_func, kwargs in tasks
-            ], return_exceptions=True)
+            ])
             
             # Convert exceptions to ExecutionResults
             processed_results = []
@@ -416,7 +416,7 @@ async def execute_batch_tool(
 if __name__ == '__main__':
     async def example_tool(value: int, delay: float = 0.1) -> Dict[str, Any]:
         """Example tool for testing."""
-        await asyncio.sleep(delay)
+        await anyio.sleep(delay)
         if value < 0:
             raise ValueError(f"Invalid value: {value}")
         return {'value': value, 'squared': value ** 2}
@@ -456,4 +456,4 @@ if __name__ == '__main__':
     if HAVE_TRIO:
         trio.run(main)
     else:
-        asyncio.run(main())
+        anyio.run(main)

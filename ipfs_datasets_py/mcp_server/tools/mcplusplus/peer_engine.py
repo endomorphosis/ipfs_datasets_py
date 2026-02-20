@@ -6,7 +6,7 @@ All methods can be imported and used independently of the MCP layer.
 """
 from __future__ import annotations
 
-import asyncio
+import anyio
 import hashlib
 import logging
 import random
@@ -169,7 +169,7 @@ class PeerEngine:
                     if attempt == retry_count - 1:
                         raise
                     logger.warning("Connection attempt %d failed, retrying…", attempt + 1)
-                    await asyncio.sleep(1)
+                    await anyio.sleep(1)
             return {
                 "success": False,
                 "error": "Connection failed after retries",
@@ -198,7 +198,7 @@ class PeerEngine:
                 return _no_registry({"peer_id": peer_id})
 
             if graceful:
-                await asyncio.sleep(0.1)
+                await anyio.sleep(0.1)
 
             return {
                 "success": True,
@@ -353,7 +353,7 @@ class PeerEngine:
 
             for i, node_addr in enumerate(bootstrap_nodes[:max_connections]):
                 try:
-                    await asyncio.sleep(0.1)
+                    await anyio.sleep(0.1)
                     connected_peers.append(f"QmBootstrap{i + 1}{'x' * 35}")
                     if len(connected_peers) >= max_connections:
                         break

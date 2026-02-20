@@ -8,7 +8,8 @@ Features:
 - Progress tracking
 """
 
-import asyncio
+import anyio
+from ipfs_datasets_py.utils.anyio_compat import gather as _anyio_gather
 import logging
 from typing import List, Dict, Any, Callable
 from dataclasses import dataclass, field
@@ -69,7 +70,7 @@ class BatchProcessor:
         self.max_concurrency = max_concurrency
         self.use_process_pool = use_process_pool
         self.show_progress = show_progress
-        self._semaphore = asyncio.Semaphore(max_concurrency)
+        self._semaphore = anyio.Semaphore(max_concurrency)
     
     async def process_batch_async(
         self,
@@ -108,7 +109,7 @@ class BatchProcessor:
         
         # Process all items concurrently
         tasks = [process_item(item, i) for i, item in enumerate(items)]
-        completed = await asyncio.gather(*tasks, return_exceptions=True)
+        completed = await _anyio_gather(tasks)
         
         # Collect results
         for item_result in completed:
@@ -291,7 +292,7 @@ class ProofBatchProcessor:
         
         async def prove_single(formula):
             # Wrap sync prove in async
-            return await asyncio.to_thread(
+            return await anyio.to_thread.run_sync(
                 engine.prove_deontic_formula,
                 formula,
                 prover=prover,

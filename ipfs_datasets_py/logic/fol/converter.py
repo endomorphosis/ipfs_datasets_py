@@ -13,7 +13,7 @@ and integrates all 6 core features:
 
 from __future__ import annotations
 
-import asyncio
+import anyio
 import logging
 import time
 from typing import Any, Dict, List, Optional, Union
@@ -418,9 +418,7 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
             >>> result = await converter.convert_async("All humans are mortal")
         """
         # Run synchronous convert in thread pool to avoid blocking
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
+        return await anyio.to_thread.run_sync(
             lambda: self.convert(text, options, use_cache)
         )
     

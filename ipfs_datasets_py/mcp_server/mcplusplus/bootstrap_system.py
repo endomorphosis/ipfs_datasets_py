@@ -11,7 +11,7 @@ Author: MCP Server Team
 Date: 2026-02-18
 """
 
-import asyncio
+import anyio
 import socket
 import logging
 from dataclasses import dataclass, field
@@ -280,7 +280,7 @@ class BootstrapSystem:
         
         self.bootstrap_nodes: List[BootstrapNode] = []
         self.attempts: List[BootstrapAttempt] = []
-        self._semaphore = asyncio.Semaphore(max_concurrent_attempts)
+        self._semaphore = anyio.Semaphore(max_concurrent_attempts)
         
         # Add default IPFS bootstrap nodes
         self._add_default_nodes()
@@ -352,27 +352,29 @@ class BootstrapSystem:
         successful = 0
         failed = 0
         
-        tasks = []
-        for node in sorted_nodes:
-            task = asyncio.create_task(self._bootstrap_node(node))
-            tasks.append(task)
-        
-        # Wait for all attempts with overall timeout
+        results = [None] * len(sorted_nodes)
+
+        async def _run_bootstrap(i, node):
+            try:
+                results[i] = await self._bootstrap_node(node)
+            except Exception as exc:
+                results[i] = exc
+
         try:
-            results = await asyncio.wait_for(
-                asyncio.gather(*tasks, return_exceptions=True),
-                timeout=timeout
-            )
-            
+            with anyio.fail_after(timeout):
+                async with anyio.create_task_group() as tg:
+                    for i, node in enumerate(sorted_nodes):
+                        tg.start_soon(_run_bootstrap, i, node)
+
             for result in results:
-                if isinstance(result, Exception):
+                if isinstance(result, Exception) or result is None:
                     failed += 1
                 elif result:
                     successful += 1
                 else:
                     failed += 1
-                    
-        except asyncio.TimeoutError:
+
+        except TimeoutError:
             logger.warning(f"Bootstrap timed out after {timeout}s")
         
         end_time = time.time()
@@ -415,7 +417,7 @@ class BootstrapSystem:
             try:
                 # Simulate bootstrap connection
                 # In production, this would connect to the actual node
-                await asyncio.sleep(0.1)  # Simulate network delay
+                await anyio.sleep(0.1)  # Simulate network delay
                 
                 # Placeholder logic - would actually connect to node
                 if node.multiaddr.startswith("/dns4/bootstrap.libp2p.io"):
@@ -429,7 +431,7 @@ class BootstrapSystem:
                     attempt.error = "Connection refused"
                     return False
                     
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 attempt.status = BootstrapStatus.TIMEOUT
                 attempt.error = f"Timeout after {node.timeout}s"
                 logger.warning(f"Bootstrap timeout for {node.multiaddr}")

@@ -6,7 +6,7 @@ style checking.
 """
 
 import ast
-import asyncio
+import anyio
 import subprocess
 import tempfile
 import time
@@ -211,12 +211,9 @@ class TypeValidator(Validator):
             if self.strict:
                 cmd.append("--strict")
             
-            proc = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=30)
+            async with anyio.open_process(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as proc:
+                with anyio.fail_after(30):
+                    stdout, stderr = await proc.communicate()
             
             output = stdout.decode() + stderr.decode()
             
@@ -233,7 +230,7 @@ class TypeValidator(Validator):
             # Clean up
             temp_path.unlink(missing_ok=True)
             
-        except asyncio.TimeoutError:
+        except TimeoutError:
             result["errors"].append("Type checking timed out")
             result["passed"] = False
         except Exception as e:
@@ -304,12 +301,9 @@ class TestValidator(Validator):
         try:
             cmd = ["pytest", "-v", "--tb=short"] + [str(f) for f in test_files]
             
-            proc = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
+            async with anyio.open_process(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as proc:
+                with anyio.fail_after(60):
+                    stdout, stderr = await proc.communicate()
             
             output = stdout.decode() + stderr.decode()
             
@@ -334,7 +328,7 @@ class TestValidator(Validator):
                     f"{result['tests_failed']} test(s) failed"
                 )
             
-        except asyncio.TimeoutError:
+        except TimeoutError:
             result["errors"].append("Tests timed out")
             result["passed"] = False
         except Exception as e:
@@ -471,12 +465,13 @@ class PerformanceValidator(Validator):
             
             # Compile benchmark
             compile_start = time.time()
-            proc = await asyncio.create_subprocess_exec(
-                "python", "-m", "py_compile", str(temp_path),
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            await asyncio.wait_for(proc.communicate(), timeout=10)
+            async with anyio.open_process(
+                ["python", "-m", "py_compile", str(temp_path)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            ) as proc:
+                with anyio.fail_after(10):
+                    await proc.communicate()
             metrics["compile_time"] = time.time() - compile_start
             
             # Execution benchmark (if no syntax errors)
@@ -842,13 +837,13 @@ class OptimizationValidator:
                 for name, result in zip(validator_names, results_list)
             }
         else:
-            # Fall back to standard asyncio.gather
+            # Fall back to standard anyio task group
             tasks = {
                 name: validator.validate(code, target_files, context)
                 for name, validator in self.validators.items()
             }
             
-            results = await asyncio.gather(*tasks.values(), return_exceptions=True)
+            results = await _anyio_gather(list(tasks.values()))
             
             return {
                 name: result if not isinstance(result, Exception) else {
@@ -904,4 +899,5 @@ class OptimizationValidator:
         Returns:
             Detailed validation result
         """
-        return asyncio.run(self.validate(code, target_files, context))
+        from ipfs_datasets_py.utils.anyio_compat import run as _anyio_run
+        return _anyio_run(self.validate(code, target_files, context))

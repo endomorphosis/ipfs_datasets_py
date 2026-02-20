@@ -9,7 +9,7 @@ that can be registered as an MCP tool.
 
 from __future__ import annotations
 
-import asyncio
+import anyio
 import logging
 from pathlib import Path
 from typing import Any
@@ -88,8 +88,6 @@ async def validate_bluebook_citations(
         mysql_database=mysql_database,
     )
 
-    loop = asyncio.get_event_loop()
-
     def _run_sync() -> dict[str, Any]:
         reference_db = error_db = report_db = None
         try:
@@ -145,4 +143,4 @@ async def validate_bluebook_citations(
                     except Exception:
                         pass
 
-    return await loop.run_in_executor(None, _run_sync)
+    return await anyio.to_thread.run_sync(_run_sync)

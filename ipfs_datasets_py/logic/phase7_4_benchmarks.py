@@ -11,7 +11,7 @@ Comprehensive benchmarking to validate all refactored components:
 """
 
 import time
-import asyncio
+import anyio
 import statistics
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
@@ -634,4 +634,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main)

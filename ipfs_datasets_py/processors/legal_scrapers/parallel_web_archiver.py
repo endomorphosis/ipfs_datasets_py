@@ -6,7 +6,7 @@ for fast batch retrieval of legal search results.
 
 Features:
 - Query HuggingFace datasets for Common Crawl WARC file pointers
-- Parallel/async content retrieval using asyncio
+- Parallel/async content retrieval using anyio
 - Multiple fallback sources with ordered priority:
   1. Common Crawl (via WARC pointers from HF)
   2. Wayback Machine API
@@ -33,7 +33,8 @@ Usage:
     pointers = await archiver.get_warc_pointers(urls)
 """
 
-import asyncio
+import anyio
+from ipfs_datasets_py.utils.anyio_compat import gather as _anyio_gather
 import logging
 import os
 import time
@@ -183,7 +184,7 @@ class ParallelWebArchiver:
         progress = ArchiveProgress(total=len(urls))
         
         # Create semaphore to limit concurrent requests
-        semaphore = asyncio.Semaphore(self.max_concurrent)
+        semaphore = anyio.Semaphore(self.max_concurrent)
         
         async def archive_with_semaphore(url: str) -> ArchiveResult:
             async with semaphore:
@@ -204,7 +205,7 @@ class ParallelWebArchiver:
         
         # Execute all tasks in parallel
         tasks = [archive_with_semaphore(url) for url in urls]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        results = await _anyio_gather(tasks)
         
         # Handle any exceptions
         final_results = []
@@ -336,9 +337,8 @@ class ParallelWebArchiver:
             from ipfs_datasets_py.data_transformation import web_archiving
             
             # Use web_archiving functionality (synchronous wrapper)
-            result = await asyncio.get_event_loop().run_in_executor(
-                None, 
-                web_archiving.archive_url, 
+            result = await anyio.to_thread.run_sync(
+                web_archiving.archive_url,
                 url
             )
             
@@ -381,7 +381,7 @@ class ParallelWebArchiver:
     async def get_warc_pointers(self, urls: List[str]) -> List[Optional[Dict[str, Any]]]:
         """Get WARC pointers for multiple URLs in parallel."""
         tasks = [self.get_warc_pointer(url) for url in urls]
-        return await asyncio.gather(*tasks, return_exceptions=True)
+        return await _anyio_gather(tasks)
     
     def _archive_urls_sync(
         self, 
@@ -443,7 +443,7 @@ class ParallelWebArchiver:
         elapsed = time.time() - self._last_request_time[source]
         
         if elapsed < min_interval:
-            await asyncio.sleep(min_interval - elapsed)
+            await anyio.sleep(min_interval - elapsed)
         
         self._last_request_time[source] = time.time()
     
