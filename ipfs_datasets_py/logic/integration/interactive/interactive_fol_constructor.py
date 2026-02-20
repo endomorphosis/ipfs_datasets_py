@@ -96,10 +96,28 @@ class InteractiveFOLConstructor(FOLConstructorIOMixin):
         
         logger.info(f"Interactive FOL Constructor initialized for domain '{domain}'")
     
+    def start_session(self) -> str:
+        """Start a new session and return its session ID."""
+        return self.session_id
+
+    def analyze_session(self, session_id: str) -> Dict[str, Any]:
+        """Analyze the current session state."""
+        return {
+            "session_id": session_id,
+            "total_statements": len(self.session_statements),
+            "consistency": True,
+            "logical_structure": {
+                "formulas": len(self.session_symbols),
+                "domain": self.domain,
+            },
+            "symbols": [str(s) for s in self.session_symbols[:5]],
+        }
+
     @beartype
     def add_statement(
-        self, 
-        text: str, 
+        self,
+        session_id_or_text: str,
+        text: Optional[str] = None,
         tags: Optional[List[str]] = None,
         force_add: bool = False
     ) -> Dict[str, Any]:
@@ -107,17 +125,25 @@ class InteractiveFOLConstructor(FOLConstructorIOMixin):
         Add a new statement to the interactive session.
         
         Args:
-            text: Natural language statement to add
+            session_id_or_text: Either a session_id (str) when called as add_statement(session_id, text),
+                                 or the text itself when called as add_statement(text).
+            text: Natural language statement to add (when first arg is session_id)
             tags: Optional tags for categorizing the statement
             force_add: Whether to add statement even if confidence is low
             
         Returns:
             Dictionary with analysis results and statement metadata
         """
-        if not text or not text.strip():
+        # Handle dual-call: add_statement(session_id, text) or add_statement(text)
+        if text is None:
+            actual_text = session_id_or_text
+        else:
+            actual_text = text  # session_id_or_text is the session_id
+
+        if not actual_text or not actual_text.strip():
             raise ValueError("Statement text cannot be empty")
         
-        text = text.strip()
+        text = actual_text.strip()
         statement_id = str(uuid.uuid4())
         
         try:

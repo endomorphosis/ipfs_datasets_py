@@ -225,6 +225,11 @@ class Predicate(Formula):
     name: str
     arguments: Tuple[Term, ...]
     
+    def __post_init__(self) -> None:
+        # Accept lists and convert to tuples for hashability
+        if isinstance(self.arguments, list):
+            object.__setattr__(self, 'arguments', tuple(self.arguments))
+    
     def to_string(self, pretty: bool = False) -> str:
         if not self.arguments:
             return self.name

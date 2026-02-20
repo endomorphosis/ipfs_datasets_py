@@ -928,6 +928,14 @@ class TestCompleteSystemIntegration:
                 except Exception as e:
                     errors_encountered.append(f"verifier: {type(e).__name__}")
             
+            if 'constructor' in self.available_components:
+                try:
+                    session_id = self.available_components['constructor'].start_session()
+                    self.available_components['constructor'].add_statement(session_id, problematic_input)
+                    successes.append("constructor")
+                except Exception as e:
+                    errors_encountered.append(f"constructor: {type(e).__name__}")
+            
             # Should either succeed gracefully or fail with informative errors
             total_components_tested = 1 + len(self.available_components)
             total_responses = len(successes) + len(errors_encountered)
