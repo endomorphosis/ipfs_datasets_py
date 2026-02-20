@@ -355,7 +355,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [ ] (P2) [docs] `ARCHITECTURE_UNIFIED.md` — update to match current code (remove references to non-existent modules)
 - [ ] (P2) [docs] `README.md` — add quick-start examples for each optimizer type
-- [ ] (P2) [docs] Add module-level docstrings to `agentic/coordinator.py` and `agentic/production_hardening.py`
+- [x] (P2) [docs] Add module-level docstrings to agentic/coordinator.py and production_hardening.py — Already present
 - [ ] (P2) [docs] Document the `BaseCritic` / `BaseSession` / `BaseHarness` extension pattern with examples
 - [ ] (P3) [docs] Add Sphinx/MkDocs configuration and auto-generate API reference
 - [ ] (P3) [docs] Write a "How to add a new optimizer" guide covering all integration points
@@ -429,12 +429,12 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [api] ExtractionConfig exported from graphrag.__init__ and ProverConfig exported — Done 2026-02-20
 - [x] (P2) [api] OntologyPipelineHarness: concrete BaseHarness for single-session graphrag pipeline — Done 2026-02-20
 - [x] (P2) [arch] BaseSession metrics: score_delta, avg_score, regression_count properties + to_dict() — Done 2026-02-20
-- [ ] (P2) [tests] End-to-end test: OntologyGenerator → OntologyCritic → OntologyMediator refinement loop (via OntologyPipelineHarness)
+- [x] (P2) [tests] End-to-end test: OntologyGenerator → OntologyCritic → OntologyMediator — Done batch 29 (test_ontology_pipeline_e2e.py: 10 tests)
 - [x] (P2) [arch] Add BackendConfig typed dataclass for OntologyCritic backend_config parameter — Done 2026-02-20
 - [ ] (P2) [perf] Parallelize OntologyOptimizer.analyze_batch() across sessions using concurrent.futures
 - [x] (P2) [arch] Add `__slots__` to hot-path dataclasses (Entity, Relationship, EntityExtractionResult) using @dataclass(slots=True) — Done 2026-02-20
 - [x] (P2) [tests] Unit test BaseOptimizer.run_session() with PerformanceMetricsCollector — Done: test_new_implementations.py:863 TestPerformanceMetricsCollectorHooks
-- [ ] (P1) [security] Audit eval()/exec() usage in agentic optimizers — document each usage is safe and sandboxed
+- [x] (P1) [security] Audit eval()/exec() usage — Done batch 26: only sandboxed exec({}) in validation.py benchmark; adversarial.py detects but never calls
 - [x] (P2) [obs] Wire PerformanceMetricsCollector into logic_theorem_optimizer harness sessions — Done 2026-02-20: LogicTheoremOptimizer.__init__ accepts metrics_collector param, forwarded to BaseOptimizer
 - [x] (P2) [tests] Integration test: OntologyPipelineHarness.run() with real OntologyGenerator/OntologyCritic/OntologyMediator on fixture text — Done 2026-02-20: tests/unit/optimizers/graphrag/test_pipeline_harness_e2e.py (16 tests)
 
@@ -451,10 +451,10 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [tests] OntologyGenerator helper method tests (infer_relationships, rule_based, merge) — Done batch 20-21: test_ontology_generator_helpers.py (34 tests)
 - [x] (P2) [tests] OntologyMediator refine_ontology action dispatch tests — Done batch 20-21: test_ontology_mediator_refinement.py (10 tests)
 - [ ] (P2) [arch] Wire MediatorState to extend BaseSession for unified session tracking
-- [ ] (P2) [tests] Fuzz tests for _extract_rule_based() with random/malformed text inputs
+- [x] (P2) [tests] Fuzz tests for _extract_rule_based() — Done batch 28 (9 edge-case tests: Unicode, binary, very long, regex special chars)
 - [ ] (P3) [perf] Benchmark _merge_ontologies() on 1000-entity ontologies
-- [ ] (P2) [graphrag] Add confidence decay for co-occurrence distance (entities >100 chars apart get lower confidence)
-- [ ] (P2) [tests] Property-based test: _merge_ontologies is idempotent (merging with itself returns same entity count)
+- [x] (P2) [graphrag] Add confidence decay for co-occurrence distance — Done batch 28 (steeper decay >100 chars, floor 0.2)
+- [x] (P2) [tests] Property-based test: _merge_ontologies is idempotent — Done batch 23 (5 idempotency tests)
 - [ ] (P2) [graphrag] LLM-based extraction fallback when rule-based confidence is too low (< threshold)
 - [ ] (P2) [agentic] ChangeController.create_change() — implement GitHub PR draft via github_control.py
 - [ ] (P2) [agentic] ChangeController.check_approval() — poll PR review status via GitHub API
