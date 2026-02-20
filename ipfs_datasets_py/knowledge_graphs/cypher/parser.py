@@ -39,6 +39,8 @@ from .ast import (
     RemoveClause,
     UnwindClause,
     WithClause,
+    ForeachClause,
+    CallSubquery,
     PatternNode,
     NodePattern,
     RelationshipPattern,
@@ -224,6 +226,10 @@ class CypherParser:
                 clauses.append(self._parse_merge())
             elif self._match(TokenType.REMOVE):
                 clauses.append(self._parse_remove())
+            elif self._match(TokenType.FOREACH):
+                clauses.append(self._parse_foreach())
+            elif self._match(TokenType.CALL):
+                clauses.append(self._parse_call_subquery())
             elif self._match(TokenType.SEMICOLON):
                 self._advance()  # Skip semicolons
             else:
@@ -562,7 +568,108 @@ class CypherParser:
             items.append(_parse_one_item())
 
         return RemoveClause(items=items)
-    
+
+    def _parse_foreach(self) -> ForeachClause:
+        """Parse FOREACH clause.
+
+        Grammar::
+
+            FOREACH (variable IN expression | clause*)
+
+        Example::
+
+            FOREACH (x IN [1, 2, 3] | CREATE (:Number {value: x}))
+        """
+        self._expect(TokenType.FOREACH)
+        self._expect(TokenType.LPAREN)
+        # Loop variable
+        var_token = self._expect(TokenType.IDENTIFIER)
+        variable = var_token.value
+        # IN keyword (lexed as IDENTIFIER because it's also used in expressions)
+        if self._match(TokenType.IN):
+            self._advance()
+        elif self._match(TokenType.IDENTIFIER) and self._current().value.upper() == "IN":
+            self._advance()
+        else:
+            raise CypherParseError("Expected 'IN' after FOREACH variable", self._current())
+        # List expression
+        expression = self._parse_expression()
+        # Pipe separator
+        self._expect(TokenType.PIPE)
+        # Body: one or more mutation clauses
+        body: List = []
+        while not self._match(TokenType.RPAREN) and not self._match(TokenType.EOF):
+            if self._match(TokenType.CREATE):
+                body.append(self._parse_create())
+            elif self._match(TokenType.SET):
+                body.append(self._parse_set())
+            elif self._match(TokenType.MERGE):
+                body.append(self._parse_merge())
+            elif self._match(TokenType.DELETE):
+                body.append(self._parse_delete())
+            elif self._match(TokenType.REMOVE):
+                body.append(self._parse_remove())
+            else:
+                break
+        self._expect(TokenType.RPAREN)
+        return ForeachClause(variable=variable, expression=expression, body=body)
+
+    def _parse_call_subquery(self) -> CallSubquery:
+        """Parse CALL { … } subquery clause.
+
+        Grammar::
+
+            CALL { inner_query } [YIELD item [AS alias] [, …]]
+
+        Example::
+
+            CALL { MATCH (n:Person) RETURN n.name AS name }
+            CALL { MATCH (n) RETURN count(n) AS total } YIELD total
+        """
+        self._expect(TokenType.CALL)
+        self._expect(TokenType.LBRACE)
+        # Parse the inner query body; save outer parser state
+        inner_tokens: List[Token] = []
+        depth = 1
+        while not self._match(TokenType.EOF):
+            tok = self._current()
+            if tok.type == TokenType.LBRACE:
+                depth += 1
+                inner_tokens.append(tok)
+                self._advance()
+            elif tok.type == TokenType.RBRACE:
+                depth -= 1
+                if depth == 0:
+                    self._advance()  # consume closing '}'
+                    break
+                inner_tokens.append(tok)
+                self._advance()
+            else:
+                inner_tokens.append(tok)
+                self._advance()
+        # Parse inner query using a fresh parser instance
+        inner_parser = CypherParser()
+        inner_parser.tokens = inner_tokens + [Token(TokenType.EOF, "", 0, 0)]
+        inner_parser.pos = 0
+        inner_parser.current_token = inner_parser.tokens[0] if inner_parser.tokens else None
+        inner_query = inner_parser._parse_query()
+        # Optional YIELD clause
+        yield_items: List[Dict[str, Any]] = []
+        if self._match(TokenType.YIELD):
+            self._advance()
+            while True:
+                name_tok = self._expect(TokenType.IDENTIFIER)
+                alias = name_tok.value
+                if self._match(TokenType.AS):
+                    self._advance()
+                    alias_tok = self._expect(TokenType.IDENTIFIER)
+                    alias = alias_tok.value
+                yield_items.append({"name": name_tok.value, "alias": alias})
+                if not self._match(TokenType.COMMA):
+                    break
+                self._advance()
+        return CallSubquery(body=inner_query, yield_items=yield_items)
+
     def _parse_return(self) -> ReturnClause:
         """Parse RETURN clause."""
         self._expect(TokenType.RETURN)

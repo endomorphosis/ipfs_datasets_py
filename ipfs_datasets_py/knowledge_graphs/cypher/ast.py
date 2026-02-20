@@ -29,6 +29,8 @@ class ASTNodeType(Enum):
     SET = auto()
     WITH = auto()
     UNWIND = auto()
+    FOREACH = auto()
+    CALL_SUBQUERY = auto()
     
     # Patterns
     PATTERN = auto()
@@ -368,6 +370,69 @@ class RemoveClause(ASTNode):
     def __post_init__(self):
         if not hasattr(self, "node_type") or self.node_type is None:
             self.node_type = ASTNodeType.REMOVE
+
+
+@dataclass
+class ForeachClause(ASTNode):
+    """
+    Represents a FOREACH clause.
+
+    Iterates a list expression and applies mutation clauses to each element.
+
+    Grammar::
+
+        FOREACH (variable IN expression | clause*)
+
+    Example::
+
+        FOREACH (x IN [1, 2, 3] | CREATE (:Number {value: x}))
+        FOREACH (n IN nodes | SET n.visited = true)
+
+    Attributes:
+        variable: The loop variable name (``x``, ``n``, …).
+        expression: The list expression to iterate over.
+        body: List of mutation clause AST nodes (CREATE, SET, MERGE, DELETE, REMOVE).
+    """
+
+    variable: str = ""
+    expression: Any = None  # ExpressionNode
+    body: List[Any] = field(default_factory=list)  # List of clause AST nodes
+
+    def __post_init__(self):
+        if not hasattr(self, "node_type") or self.node_type is None:
+            self.node_type = ASTNodeType.FOREACH
+
+
+@dataclass
+class CallSubquery(ASTNode):
+    """
+    Represents a CALL { … } subquery clause.
+
+    Executes an inner Cypher query and merges its results into the outer
+    query's bindings.  Optionally, the subquery's projected columns can be
+    aliased via a YIELD clause.
+
+    Grammar::
+
+        CALL { inner_query } [YIELD col [AS alias] [, …]]
+
+    Example::
+
+        CALL { MATCH (n:Person) RETURN n.name AS name }
+        CALL { MATCH (n) RETURN count(n) AS total } YIELD total
+
+    Attributes:
+        body: The inner ``QueryNode``.
+        yield_items: Optional list of ``{"name": str, "alias": str}`` dicts for
+            YIELD renaming.  Empty list means expose all projected columns.
+    """
+
+    body: Any = None  # QueryNode for the inner query
+    yield_items: List[Dict[str, Any]] = field(default_factory=list)
+
+    def __post_init__(self):
+        if not hasattr(self, "node_type") or self.node_type is None:
+            self.node_type = ASTNodeType.CALL_SUBQUERY
 
 
 # Pattern nodes

@@ -129,6 +129,54 @@ MATCH (n:Item) WHERE n.a XOR n.b RETURN n  -- True XOR False = True
 
 ---
 
+### 2f. Cypher FOREACH Clause
+
+**Status:** ✅ Implemented (v2.1.0 — 2026-02-20 session 5)
+**Location:** `cypher/lexer.py` (`FOREACH` TokenType), `cypher/ast.py` (`ForeachClause`),
+             `cypher/parser.py` (`_parse_foreach`), `cypher/compiler.py` (`_compile_foreach`),
+             `core/ir_executor.py` (Foreach op handler)
+**Implementation:**
+- Lexer: `FOREACH` keyword added to `TokenType` enum and `KEYWORDS` dict
+- AST: `ForeachClause(variable, expression, body)` dataclass with `FOREACH` node type
+- Parser: `_parse_foreach()` parses `FOREACH (variable IN list_expr | clause*)` grammar
+- Compiler: `_compile_foreach()` emits `{"op": "Foreach", "variable", "expression", "body_ops"}` IR
+- Executor: iterates list expression, runs `body_ops` sub-program with loop variable bound per element
+
+**Example (now works):**
+```cypher
+FOREACH (x IN [1, 2, 3] | CREATE (:Counter {value: x}))
+FOREACH (n IN relatedNodes | SET n.visited = true)
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_foreach_call_mcp.py` (10 FOREACH tests)
+
+---
+
+### 2g. Cypher CALL Subquery
+
+**Status:** ✅ Implemented (v2.1.0 — 2026-02-20 session 5)
+**Location:** `cypher/ast.py` (`CallSubquery`), `cypher/parser.py` (`_parse_call_subquery`),
+             `cypher/compiler.py` (`_compile_call_subquery`), `core/ir_executor.py` (CallSubquery handler)
+**Implementation:**
+- AST: `CallSubquery(body, yield_items)` dataclass with inner `QueryNode` body and optional YIELD declarations
+- Parser: `_parse_call_subquery()` collects inner token stream, re-parses via a fresh `CypherParser`, and
+  parses an optional `YIELD col [AS alias]` list
+- Compiler: `_compile_call_subquery()` compiles inner query into `inner_ops` and emits
+  `{"op": "CallSubquery", "inner_ops", "yield_items"}`
+- Executor: runs `inner_ops` recursively via `execute_ir_operations`, then merges inner records into
+  outer bindings (applying YIELD aliases where declared)
+
+**Example (now works):**
+```cypher
+CALL { MATCH (n:Person) RETURN n.name AS name }
+CALL { MATCH (n) RETURN count(n) AS total } YIELD total
+CALL { MATCH (n:Person) RETURN n.name AS nm } YIELD nm AS personName
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_foreach_call_mcp.py` (9 CALL tests)
+
+---
+
 ## P2: Medium Priority (v2.2.0)
 
 ### 3. GraphML Format Support

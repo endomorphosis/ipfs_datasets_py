@@ -35,6 +35,8 @@ from .ast import (
     UnionClause,
     UnwindClause,
     WithClause,
+    ForeachClause,
+    CallSubquery,
     PatternNode,
     NodePattern,
     RelationshipPattern,
@@ -139,6 +141,10 @@ class CypherCompiler:
             self._compile_merge(clause)
         elif isinstance(clause, RemoveClause):
             self._compile_remove(clause)
+        elif isinstance(clause, ForeachClause):
+            self._compile_foreach(clause)
+        elif isinstance(clause, CallSubquery):
+            self._compile_call_subquery(clause)
         else:
             raise CypherCompileError(f"Unknown clause type: {type(clause)}")
     
@@ -845,6 +851,67 @@ class CypherCompiler:
                     "variable": item["variable"],
                     "label": item["label"],
                 })
+
+    def _compile_foreach(self, foreach: ForeachClause) -> None:
+        """Compile FOREACH clause.
+
+        Emits a ``Foreach`` IR operation.  The executor iterates the list
+        expression, binds each element to ``foreach.variable``, and applies the
+        body mutation operations to each element.
+
+        IR emitted::
+
+            {
+              "op": "Foreach",
+              "variable":   "<var>",
+              "expression": <compiled-expr>,
+              "body_ops":   [<compiled mutation ops>]
+            }
+        """
+        # Compile body clauses into a sub-program
+        saved_ops = self.operations
+        self.operations = []
+        for clause in foreach.body:
+            self._compile_clause(clause)
+        body_ops = self.operations
+        self.operations = saved_ops
+
+        self.operations.append({
+            "op": "Foreach",
+            "variable": foreach.variable,
+            "expression": self._compile_expression(foreach.expression),
+            "body_ops": body_ops,
+        })
+
+    def _compile_call_subquery(self, call: CallSubquery) -> None:
+        """Compile CALL { … } subquery clause.
+
+        Emits a ``CallSubquery`` IR operation.  The executor runs the inner
+        query against the same graph engine, then merges its results (as
+        bindings) into the outer query's binding set.
+
+        IR emitted::
+
+            {
+              "op":          "CallSubquery",
+              "inner_ops":   [<compiled inner query ops>],
+              "yield_items": [{"name": "...", "alias": "..."}]
+            }
+        """
+        # Compile inner query body
+        saved_ops = self.operations
+        self.operations = []
+        if call.body is not None:
+            for clause in call.body.clauses:
+                self._compile_clause(clause)
+        inner_ops = self.operations
+        self.operations = saved_ops
+
+        self.operations.append({
+            "op": "CallSubquery",
+            "inner_ops": inner_ops,
+            "yield_items": list(call.yield_items),
+        })
 
     def _compile_expression(self, expr) -> Any:
         """

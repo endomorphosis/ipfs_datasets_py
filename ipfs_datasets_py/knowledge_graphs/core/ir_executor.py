@@ -688,6 +688,78 @@ def execute_ir_operations(
                     bindings = [{unwind_var: lst}]
             logger.debug("Unwind: expanded to %d bindings", len(bindings))
 
+        elif op_type == "Foreach":
+            # FOREACH (variable IN expression | body_ops*)
+            # Evaluates the list expression, then for each element runs the
+            # body mutation ops with the loop variable bound to the element.
+            foreach_var = op.get("variable")
+            expr = op.get("expression")
+            body_ops = op.get("body_ops", [])
+
+            # Determine base bindings to iterate over
+            base_bindings = bindings if bindings else [{}]
+
+            for base_binding in base_bindings:
+                lst = evaluate_compiled_expression(expr, base_binding)
+                if not isinstance(lst, (list, tuple)):
+                    lst = [lst] if lst is not None else []
+                for element in lst:
+                    # Build an augmented binding with the loop variable
+                    loop_binding = dict(base_binding)
+                    loop_binding[foreach_var] = element
+                    # Copy loop binding into result_set for the body ops
+                    result_set[foreach_var] = [element]
+                    # Run each body mutation op; only mutation side-effects matter
+                    execute_ir_operations(
+                        graph_engine=graph_engine,
+                        operations=body_ops,
+                        parameters={**parameters, foreach_var: element},
+                        resolve_value=resolve_value,
+                        apply_operator=apply_operator,
+                        evaluate_compiled_expression=evaluate_compiled_expression,
+                        evaluate_expression=evaluate_expression,
+                        compute_aggregation=compute_aggregation,
+                    )
+            logger.debug("Foreach: iterated over loop variable '%s'", foreach_var)
+
+        elif op_type == "CallSubquery":
+            # CALL { inner_ops } [YIELD ...]
+            # Runs the inner query against the same graph engine and merges
+            # its results into the outer query's binding set.
+            inner_ops = op.get("inner_ops", [])
+            yield_items = op.get("yield_items", [])
+
+            inner_results = execute_ir_operations(
+                graph_engine=graph_engine,
+                operations=inner_ops,
+                parameters=parameters,
+                resolve_value=resolve_value,
+                apply_operator=apply_operator,
+                evaluate_compiled_expression=evaluate_compiled_expression,
+                evaluate_expression=evaluate_expression,
+                compute_aggregation=compute_aggregation,
+            )
+
+            # Build a name→alias mapping from YIELD (empty means expose all)
+            yield_map: Dict[str, str] = {}
+            if yield_items:
+                for yi in yield_items:
+                    yield_map[yi["name"]] = yi["alias"]
+
+            # Merge inner results into outer bindings
+            if inner_results:
+                new_bindings: List[Dict[str, Any]] = []
+                outer_base = bindings if bindings else [{}]
+                for outer in outer_base:
+                    for record in inner_results:
+                        merged = dict(outer)
+                        for key, val in record._data.items():  # type: ignore[attr-defined]
+                            alias = yield_map.get(key, key) if yield_map else key
+                            merged[alias] = val
+                        new_bindings.append(merged)
+                bindings = new_bindings
+            logger.debug("CallSubquery: merged %d inner results", len(inner_results))
+
     if union_parts:
         all_parts: List[Record] = []
         for part in union_parts:

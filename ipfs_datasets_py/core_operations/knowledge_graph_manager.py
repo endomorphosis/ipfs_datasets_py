@@ -519,3 +519,216 @@ class KnowledgeGraphManager:
                 "message": str(e),
                 "constraint_name": constraint_name
             }
+
+    # -------------------------------------------------------------------------
+    # SRL, Ontology Reasoning, and Distributed Query (new features)
+    # -------------------------------------------------------------------------
+
+    async def extract_srl(
+        self,
+        text: str,
+        backend: str = "heuristic",
+        return_triples: bool = False,
+        return_temporal_graph: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Extract Semantic Role Labeling (SRL) frames from text.
+
+        Args:
+            text: The input text to analyze.
+            backend: ``"heuristic"`` or ``"spacy"``.
+            return_triples: If ``True``, also return flat triples.
+            return_temporal_graph: If ``True``, also return a temporal graph.
+
+        Returns:
+            Dict with status, frame_count, frames, and optionally triples /
+            temporal_graph_nodes.
+        """
+        try:
+            from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
+            extractor = SRLExtractor()
+            frames = extractor.extract_srl(text)
+
+            result: Dict[str, Any] = {
+                "status": "success",
+                "frame_count": len(frames),
+                "frames": [f.to_dict() for f in frames],
+            }
+
+            if return_triples:
+                triples = extractor.extract_to_triples(text)
+                result["triples"] = [list(t) for t in triples]
+
+            if return_temporal_graph:
+                temporal_kg = extractor.build_temporal_graph(text)
+                result["temporal_graph_nodes"] = len(temporal_kg.entities)
+                result["temporal_graph_relationships"] = len(temporal_kg.relationships)
+
+            return result
+
+        except Exception as e:
+            self.logger.error("SRL extraction failed: %s", e)
+            return {"status": "error", "message": str(e)}
+
+    async def ontology_materialize(
+        self,
+        graph_name: str,
+        schema: Optional[Dict[str, Any]] = None,
+        check_consistency: bool = False,
+        explain: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Apply OWL/RDFS ontology inference rules to a knowledge graph.
+
+        Args:
+            graph_name: Name of the graph (used for logging / future storage).
+            schema: Dict of ontology declarations.
+            check_consistency: Run consistency checks if True.
+            explain: Return inference traces without modifying the graph.
+
+        Returns:
+            Dict with status, inferred_count, and optionally violations / traces.
+        """
+        try:
+            from ipfs_datasets_py.knowledge_graphs.ontology.reasoning import (
+                OntologySchema,
+                OntologyReasoner,
+            )
+            from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
+            schema_dict = schema or {}
+            ont_schema = OntologySchema()
+
+            for pair in schema_dict.get("subclass", []):
+                ont_schema.add_subclass(pair[0], pair[1])
+            for pair in schema_dict.get("subproperty", []):
+                ont_schema.add_subproperty(pair[0], pair[1])
+            for prop in schema_dict.get("transitive", []):
+                ont_schema.add_transitive(prop)
+            for prop in schema_dict.get("symmetric", []):
+                ont_schema.add_symmetric(prop)
+            for pair in schema_dict.get("inverse", []):
+                ont_schema.add_inverse(pair[0], pair[1])
+            for pair in schema_dict.get("domain", []):
+                ont_schema.add_domain(pair[0], pair[1])
+            for pair in schema_dict.get("range", []):
+                ont_schema.add_range(pair[0], pair[1])
+            for pair in schema_dict.get("disjoint", []):
+                ont_schema.add_disjoint(pair[0], pair[1])
+            for chain_spec in schema_dict.get("property_chains", []):
+                ont_schema.add_property_chain(chain_spec["chain"], chain_spec["result"])
+            for pair in schema_dict.get("equivalent_classes", []):
+                ont_schema.add_equivalent_class(pair[0], pair[1])
+
+            reasoner = OntologyReasoner(ont_schema)
+            # Use an empty KG as the target (real usage would load from storage)
+            kg = KnowledgeGraph(name=graph_name)
+
+            result: Dict[str, Any] = {"status": "success", "graph_name": graph_name}
+
+            if explain:
+                traces = reasoner.explain_inferences(kg)
+                result["traces"] = [
+                    {
+                        "rule": t.rule,
+                        "subject_id": t.subject_id,
+                        "predicate": t.predicate,
+                        "object_id": t.object_id,
+                        "description": t.description,
+                    }
+                    for t in traces
+                ]
+                result["inferred_count"] = len(traces)
+            else:
+                before_nodes = len(kg.entities)
+                before_rels = len(kg.relationships)
+                kg = reasoner.materialize(kg)
+                result["inferred_count"] = (
+                    len(kg.entities) - before_nodes + len(kg.relationships) - before_rels
+                )
+
+            if check_consistency:
+                violations = reasoner.check_consistency(kg)
+                result["violations"] = [
+                    {
+                        "violation_type": v.violation_type,
+                        "entity_id": v.entity_id,
+                        "description": v.description,
+                    }
+                    for v in violations
+                ]
+
+            return result
+
+        except Exception as e:
+            self.logger.error("Ontology materialization failed: %s", e)
+            return {"status": "error", "message": str(e), "graph_name": graph_name}
+
+    async def distributed_execute(
+        self,
+        query: str,
+        num_partitions: int = 4,
+        partition_strategy: str = "hash",
+        parallel: bool = False,
+        explain: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Execute a Cypher query across a distributed (partitioned) knowledge graph.
+
+        Args:
+            query: Cypher query string.
+            num_partitions: Number of partitions.
+            partition_strategy: ``"hash"``, ``"range"``, or ``"round_robin"``.
+            parallel: Use thread-pool fan-out if True.
+            explain: Return query plan instead of executing.
+
+        Returns:
+            Dict with status, result_count, results, partition_stats, and
+            optionally a plan dict.
+        """
+        try:
+            from ipfs_datasets_py.knowledge_graphs.query.distributed import (
+                GraphPartitioner,
+                FederatedQueryExecutor,
+                PartitionStrategy,
+            )
+            from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
+            strategy_map = {
+                "hash": PartitionStrategy.HASH,
+                "range": PartitionStrategy.RANGE,
+                "round_robin": PartitionStrategy.ROUND_ROBIN,
+            }
+            strategy = strategy_map.get(partition_strategy.lower(), PartitionStrategy.HASH)
+
+            # Use a minimal empty KG; real usage would load from storage
+            kg = KnowledgeGraph(name="distributed_target")
+
+            partitioner = GraphPartitioner(num_partitions=num_partitions, strategy=strategy)
+            dist_graph = partitioner.partition(kg)
+            executor = FederatedQueryExecutor(dist_graph)
+
+            result: Dict[str, Any] = {
+                "status": "success",
+                "partition_stats": dist_graph.get_partition_stats(),
+            }
+
+            if explain:
+                plan = executor.explain_query(query)
+                result["plan"] = plan.to_dict()
+                result["result_count"] = 0
+            elif parallel:
+                federated = executor.execute_cypher_parallel(query)
+                result["results"] = federated.records
+                result["result_count"] = len(federated.records)
+            else:
+                federated = executor.execute_cypher(query)
+                result["results"] = federated.records
+                result["result_count"] = len(federated.records)
+
+            return result
+
+        except Exception as e:
+            self.logger.error("Distributed execute failed: %s", e)
+            return {"status": "error", "message": str(e), "query": query}

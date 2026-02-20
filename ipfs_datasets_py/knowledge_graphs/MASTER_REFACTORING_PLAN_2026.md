@@ -269,11 +269,12 @@ See `DEFERRED_FEATURES.md` Section 6 for plug-in example showing how to add CAR 
 
 #### 3.4.3 Additional Cypher Features
 
-**Status:** ✅ DONE (2026-02-20) — UNWIND clause + WITH clause + MERGE + REMOVE + IS NULL/IS NOT NULL + XOR  
-**Files:** `cypher/ast.py` (`UnwindClause`, `WithClause`, `MergeClause`, `RemoveClause`), `cypher/parser.py` (4 new `_parse_*` methods), `cypher/compiler.py` (4 new `_compile_*` methods), `core/ir_executor.py` (Unwind, WithProject, Merge, RemoveProperty, RemoveLabel ops), `core/expression_evaluator.py` (IS NULL, IS NOT NULL, XOR)  
+**Status:** ✅ DONE (2026-02-20) — UNWIND clause + WITH clause + MERGE + REMOVE + IS NULL/IS NOT NULL + XOR + FOREACH + CALL subquery
+**Files:** `cypher/ast.py` (`UnwindClause`, `WithClause`, `MergeClause`, `RemoveClause`, `ForeachClause`, `CallSubquery`), `cypher/lexer.py` (`FOREACH` TokenType), `cypher/parser.py` (6 new `_parse_*` methods), `cypher/compiler.py` (6 new `_compile_*` methods), `core/ir_executor.py` (Unwind, WithProject, Merge, RemoveProperty, RemoveLabel, Foreach, CallSubquery ops), `core/expression_evaluator.py` (IS NULL, IS NOT NULL, XOR)
 **Tests:**
 - `tests/unit/knowledge_graphs/test_unwind_with_clauses.py` (19 tests — UNWIND + WITH + async)
 - `tests/unit/knowledge_graphs/test_merge_remove_isnull_xor.py` (27 tests)
+- `tests/unit/knowledge_graphs/test_foreach_call_mcp.py` (19 FOREACH+CALL tests)
 
 Implemented:
 - **UNWIND**: expands a list literal or node-property list into individual rows
@@ -282,10 +283,10 @@ Implemented:
 - **REMOVE**: removes a property (`REMOVE n.prop`) or a label (`REMOVE n:Label`)
 - **IS NULL / IS NOT NULL**: null-check operators in WHERE
 - **XOR**: exclusive-or boolean operator in WHERE
+- **FOREACH**: iterates a list and applies mutation clauses to each element
+- **CALL { ... }**: executes a subquery and merges its results; supports YIELD for column aliasing
 
-Remaining lower-priority items (not implemented):
-- `FOREACH` for mutations
-- `CALL` subquery support
+All Cypher clause features are now complete.  No lower-priority items remain.
 
 ---
 
