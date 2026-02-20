@@ -3,15 +3,15 @@ import anyio
 import sys
 from pathlib import Path
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# Add parent directory to path (4 levels up from tests/mcp/scripts/ reaches repo root)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 
 from ipfs_datasets_py.mcp_server import IPFSDatasetsMCPServer
 try:
     from modelcontextprotocol.client import MCPClient  # type: ignore[import-not-found]
 except ImportError:
     # Use our mock for testing when the real package isn't available
-    from .mock_modelcontextprotocol_for_testing import MockMCPClientForTesting as MCPClient
+    from tests.mcp.mock_modelcontextprotocol_for_testing import MockMCPClientForTesting as MCPClient  # type: ignore[import-not-found]
 
 
 async def test_mcp_server():

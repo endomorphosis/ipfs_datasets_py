@@ -399,7 +399,7 @@ class ResultCache:
         """Estimate size of cached value in bytes."""
         try:
             return len(pickle.dumps(value))
-        except Exception:
+        except (pickle.PicklingError, TypeError, OverflowError, AttributeError):
             return 1024  # Default estimate
     
     async def get(

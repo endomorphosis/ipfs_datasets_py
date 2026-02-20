@@ -211,7 +211,7 @@ class NATHelper:
             
             # Assume cone NAT if we can bind
             return "cone"
-        except Exception:
+        except OSError:
             return "unknown"
     
     @staticmethod
