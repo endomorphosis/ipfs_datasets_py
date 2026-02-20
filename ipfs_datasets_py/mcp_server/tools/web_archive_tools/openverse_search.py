@@ -1,156 +1,16 @@
-"""OpenVerse API integration for Creative Commons media search.
+"""OpenVerse API integration for Creative Commons media search (thin MCP wrapper).
 
-This tool provides integration with OpenVerse API for searching
-Creative Commons licensed images, audio, and other media.
+Business logic (``OpenVerseSearchAPI``) lives in:
+    ipfs_datasets_py.web_archiving.openverse_engine
 """
 import logging
-from typing import Dict, List, Optional, Any, Literal
-from datetime import datetime
 import os
+from datetime import datetime
+from typing import Any, Dict, List, Literal, Optional
+
+from ipfs_datasets_py.web_archiving.openverse_engine import OpenVerseSearchAPI  # noqa: F401
 
 logger = logging.getLogger(__name__)
-
-
-class OpenVerseSearchAPI:
-    """OpenVerse Search API class with install, config, and queue methods."""
-    
-    def __init__(self, api_key: Optional[str] = None, api_url: str = "https://api.openverse.org/v1"):
-        """Initialize OpenVerse API.
-        
-        Args:
-            api_key: OpenVerse API key (optional, can use OPENVERSE_API_KEY env var)
-            api_url: Base API URL (default: https://api.openverse.org/v1)
-        """
-        self.api_key = api_key or os.environ.get("OPENVERSE_API_KEY")
-        self.api_url = api_url
-        self.queue = []
-        self.config = {
-            "api_url": api_url,
-            "timeout": 30,
-            "max_results": 100,
-            "default_license_type": "all"
-        }
-    
-    def _install(self) -> Dict[str, Any]:
-        """Install and verify OpenVerse API dependencies.
-        
-        Returns:
-            Dict containing installation status and instructions
-        """
-        try:
-            import aiohttp
-            aiohttp_installed = True
-        except ImportError:
-            aiohttp_installed = False
-        
-        return {
-            "status": "success" if aiohttp_installed else "incomplete",
-            "dependencies": {
-                "aiohttp": {
-                    "installed": aiohttp_installed,
-                    "required": True,
-                    "install_command": "pip install aiohttp"
-                }
-            },
-            "environment_variables": {
-                "OPENVERSE_API_KEY": {
-                    "set": bool(self.api_key),
-                    "required": False,
-                    "description": "OpenVerse API key (optional, increases rate limits)"
-                }
-            },
-            "instructions": {
-                "1": "Install aiohttp: pip install aiohttp" if not aiohttp_installed else "✓ Dependencies installed",
-                "2": "Set OPENVERSE_API_KEY environment variable (optional)" if not self.api_key else "✓ API key configured",
-                "3": "Get API key from: https://wordpress.org/openverse/register/"
-            }
-        }
-    
-    def _config(self, **kwargs) -> Dict[str, Any]:
-        """Configure OpenVerse API settings.
-        
-        Args:
-            **kwargs: Configuration options (api_url, timeout, max_results, etc.)
-        
-        Returns:
-            Dict containing current configuration
-        """
-        # Update configuration with provided kwargs
-        valid_config_keys = ["api_url", "timeout", "max_results", "default_license_type"]
-        
-        for key, value in kwargs.items():
-            if key in valid_config_keys:
-                self.config[key] = value
-            elif key == "api_key":
-                self.api_key = value
-        
-        return {
-            "status": "success",
-            "configuration": self.config,
-            "api_key_set": bool(self.api_key),
-            "valid_config_keys": valid_config_keys,
-            "example": {
-                "api_url": "https://api.openverse.org/v1",
-                "timeout": 30,
-                "max_results": 100,
-                "default_license_type": "all"
-            }
-        }
-    
-    def _queue(self, operation: str, **params) -> Dict[str, Any]:
-        """Queue a search operation for batch processing.
-        
-        Args:
-            operation: Operation type ('search_images', 'search_audio', etc.)
-            **params: Operation parameters
-        
-        Returns:
-            Dict containing queue status
-        """
-        queue_item = {
-            "id": len(self.queue) + 1,
-            "operation": operation,
-            "params": params,
-            "queued_at": datetime.now().isoformat(),
-            "status": "queued"
-        }
-        
-        self.queue.append(queue_item)
-        
-        return {
-            "status": "success",
-            "queue_item": queue_item,
-            "queue_length": len(self.queue),
-            "message": f"Operation '{operation}' queued successfully"
-        }
-    
-    def get_queue_status(self) -> Dict[str, Any]:
-        """Get current queue status.
-        
-        Returns:
-            Dict containing queue information
-        """
-        return {
-            "queue_length": len(self.queue),
-            "queued_operations": self.queue,
-            "operations_pending": len([item for item in self.queue if item["status"] == "queued"])
-        }
-    
-    def clear_queue(self) -> Dict[str, Any]:
-        """Clear all queued operations.
-        
-        Returns:
-            Dict containing clear status
-        """
-        cleared_count = len(self.queue)
-        self.queue = []
-        
-        return {
-            "status": "success",
-            "cleared_count": cleared_count,
-            "message": f"Cleared {cleared_count} queued operations"
-        }
-
 
 async def search_openverse_images(
     query: str,

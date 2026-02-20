@@ -1,158 +1,16 @@
-"""SerpStack API integration for search engine results.
+"""SerpStack API integration for search engine results (thin MCP wrapper).
 
-This tool provides integration with SerpStack API for retrieving
-search engine results from Google, Bing, and other search engines.
+Business logic (``SerpStackSearchAPI``) lives in:
+    ipfs_datasets_py.web_archiving.serpstack_engine
 """
 import logging
-from typing import Dict, List, Optional, Any, Literal
-from datetime import datetime
 import os
+from datetime import datetime
+from typing import Any, Dict, List, Literal, Optional
+
+from ipfs_datasets_py.web_archiving.serpstack_engine import SerpStackSearchAPI  # noqa: F401
 
 logger = logging.getLogger(__name__)
-
-
-class SerpStackSearchAPI:
-    """SerpStack Search API class with install, config, and queue methods."""
-    
-    def __init__(self, api_key: Optional[str] = None, api_url: str = "http://api.serpstack.com"):
-        """Initialize SerpStack API.
-        
-        Args:
-            api_key: SerpStack API key (required, can use SERPSTACK_API_KEY env var)
-            api_url: Base API URL (default: http://api.serpstack.com)
-        """
-        self.api_key = api_key or os.environ.get("SERPSTACK_API_KEY")
-        self.api_url = api_url
-        self.queue = []
-        self.config = {
-            "api_url": api_url,
-            "timeout": 30,
-            "max_results": 100,
-            "default_engine": "google"
-        }
-    
-    def _install(self) -> Dict[str, Any]:
-        """Install and verify SerpStack API dependencies.
-        
-        Returns:
-            Dict containing installation status and instructions
-        """
-        try:
-            import aiohttp
-            aiohttp_installed = True
-        except ImportError:
-            aiohttp_installed = False
-        
-        return {
-            "status": "success" if (aiohttp_installed and self.api_key) else "incomplete",
-            "dependencies": {
-                "aiohttp": {
-                    "installed": aiohttp_installed,
-                    "required": True,
-                    "install_command": "pip install aiohttp"
-                }
-            },
-            "environment_variables": {
-                "SERPSTACK_API_KEY": {
-                    "set": bool(self.api_key),
-                    "required": True,
-                    "description": "SerpStack API key (required for all searches)"
-                }
-            },
-            "instructions": {
-                "1": "Install aiohttp: pip install aiohttp" if not aiohttp_installed else "✓ Dependencies installed",
-                "2": "Set SERPSTACK_API_KEY environment variable" if not self.api_key else "✓ API key configured",
-                "3": "Get API key from: https://serpstack.com/signup/free"
-            },
-            "ready": aiohttp_installed and bool(self.api_key)
-        }
-    
-    def _config(self, **kwargs) -> Dict[str, Any]:
-        """Configure SerpStack API settings.
-        
-        Args:
-            **kwargs: Configuration options (api_url, timeout, max_results, default_engine, etc.)
-        
-        Returns:
-            Dict containing current configuration
-        """
-        # Update configuration with provided kwargs
-        valid_config_keys = ["api_url", "timeout", "max_results", "default_engine"]
-        
-        for key, value in kwargs.items():
-            if key in valid_config_keys:
-                self.config[key] = value
-            elif key == "api_key":
-                self.api_key = value
-        
-        return {
-            "status": "success",
-            "configuration": self.config,
-            "api_key_set": bool(self.api_key),
-            "valid_config_keys": valid_config_keys,
-            "supported_engines": ["google", "bing", "yandex", "yahoo", "baidu"],
-            "example": {
-                "api_url": "http://api.serpstack.com",
-                "timeout": 30,
-                "max_results": 100,
-                "default_engine": "google"
-            }
-        }
-    
-    def _queue(self, operation: str, **params) -> Dict[str, Any]:
-        """Queue a search operation for batch processing.
-        
-        Args:
-            operation: Operation type ('search', 'search_images', etc.)
-            **params: Operation parameters
-        
-        Returns:
-            Dict containing queue status
-        """
-        queue_item = {
-            "id": len(self.queue) + 1,
-            "operation": operation,
-            "params": params,
-            "queued_at": datetime.now().isoformat(),
-            "status": "queued"
-        }
-        
-        self.queue.append(queue_item)
-        
-        return {
-            "status": "success",
-            "queue_item": queue_item,
-            "queue_length": len(self.queue),
-            "message": f"Operation '{operation}' queued successfully"
-        }
-    
-    def get_queue_status(self) -> Dict[str, Any]:
-        """Get current queue status.
-        
-        Returns:
-            Dict containing queue information
-        """
-        return {
-            "queue_length": len(self.queue),
-            "queued_operations": self.queue,
-            "operations_pending": len([item for item in self.queue if item["status"] == "queued"])
-        }
-    
-    def clear_queue(self) -> Dict[str, Any]:
-        """Clear all queued operations.
-        
-        Returns:
-            Dict containing clear status
-        """
-        cleared_count = len(self.queue)
-        self.queue = []
-        
-        return {
-            "status": "success",
-            "cleared_count": cleared_count,
-            "message": f"Cleared {cleared_count} queued operations"
-        }
-
 
 async def search_serpstack(
     query: str,
