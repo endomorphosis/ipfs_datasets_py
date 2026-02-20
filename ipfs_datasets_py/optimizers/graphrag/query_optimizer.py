@@ -202,7 +202,8 @@ class QueryMetricsCollector:
         self, 
         max_history_size: int = 1000,
         metrics_dir: Optional[str] = None,
-        track_resources: bool = True
+        track_resources: bool = True,
+        logger: Optional[Any] = None,
     ):
         """
         Initialize the metrics collector.
@@ -211,7 +212,12 @@ class QueryMetricsCollector:
             max_history_size (int): Maximum number of query metrics to retain in memory
             metrics_dir (str, optional): Directory to store persisted metrics
             track_resources (bool): Whether to track system resource usage during query execution
+            logger: Optional :class:`logging.Logger` to use instead of the
+                module-level logger. Useful for dependency injection in tests.
         """
+        import logging as _logging
+        self._log = logger or _logging.getLogger(__name__)
+        
         self.max_history_size = max_history_size
         self.metrics_dir = metrics_dir
         self.track_resources = track_resources

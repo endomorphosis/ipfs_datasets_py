@@ -135,10 +135,18 @@ class OntologyOptimizer:
         ...         break
     """
     
-    def __init__(self):
-        """Initialize the ontology optimizer."""
+    def __init__(self, logger: Optional[logging.Logger] = None):
+        """
+        Initialize the ontology optimizer.
+        
+        Args:
+            logger: Optional :class:`logging.Logger` to use instead of the
+                module-level logger. Useful for dependency injection in tests.
+        """
+        import logging as _logging
+        self._log = logger or _logging.getLogger(__name__)
         self._history: List[OptimizationReport] = []
-        logger.info("Initialized OntologyOptimizer")
+        self._log.info("Initialized OntologyOptimizer")
     
     def analyze_batch(
         self,
@@ -170,7 +178,7 @@ class OntologyOptimizer:
             >>> for rec in report.recommendations:
             ...     print(f"- {rec}")
         """
-        logger.info(f"Analyzing batch of {len(session_results)} sessions")
+        self._log.info(f"Analyzing batch of {len(session_results)} sessions")
         
         if not session_results:
             return OptimizationReport(
@@ -241,7 +249,7 @@ class OntologyOptimizer:
                 report.average_score - self._history[-2].average_score
             )
         
-        logger.info(
+        self._log.info(
             f"Batch analysis: avg={average_score:.2f}, trend={trend}, "
             f"recs={len(recommendations)}"
         )
@@ -269,7 +277,7 @@ class OntologyOptimizer:
             ``OptimizationReport`` identical to what :meth:`analyze_batch`
             would return.
         """
-        logger.info(
+        self._log.info(
             "Analyzing batch of %d sessions (parallel, max_workers=%d)",
             len(session_results),
             max_workers,
@@ -335,7 +343,7 @@ class OntologyOptimizer:
                 report.average_score - self._history[-2].average_score
             )
 
-        logger.info(
+        self._log.info(
             "Parallel batch analysis: avg=%.2f, trend=%s, recs=%d",
             average_score,
             trend,
@@ -382,7 +390,7 @@ class OntologyOptimizer:
                 'recommendations': ["Need more batches to analyze trends"]
             }
         
-        logger.info(f"Analyzing trends across {len(results)} batches")
+        self._log.info(f"Analyzing trends across {len(results)} batches")
         
         # Compute improvement rates
         scores = [r.average_score for r in results]
@@ -453,7 +461,7 @@ class OntologyOptimizer:
             >>> patterns = optimizer.identify_patterns(successful)
             >>> print(f"Common entity types: {patterns['common_entity_types']}")
         """
-        logger.info(f"Identifying patterns in {len(successful_ontologies)} successful ontologies")
+        self._log.info(f"Identifying patterns in {len(successful_ontologies)} successful ontologies")
 
         if not successful_ontologies:
             return {"error": "No successful ontologies provided"}

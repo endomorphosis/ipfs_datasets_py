@@ -151,7 +151,8 @@ class OntologyHarness:
         critic_config: Optional[Dict[str, Any]] = None,
         validator_config: Optional[Dict[str, Any]] = None,
         parallelism: int = 4,
-        max_retries: int = 3
+        max_retries: int = 3,
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize the ontology harness.
@@ -162,10 +163,15 @@ class OntologyHarness:
             validator_config: Configuration for LogicValidator
             parallelism: Number of parallel workers (default: 4)
             max_retries: Maximum retry attempts per session (default: 3)
+            logger: Optional :class:`logging.Logger` to use instead of the
+                module-level logger. Useful for dependency injection in tests.
             
         Raises:
             ValueError: If parallelism or max_retries are not positive
         """
+        import logging as _logging
+        self._log = logger or _logging.getLogger(__name__)
+        
         if parallelism < 1:
             raise ValueError("parallelism must be at least 1")
         if max_retries < 0:
@@ -181,7 +187,7 @@ class OntologyHarness:
         self._components_imported = False
         self._import_components()
         
-        logger.info(
+        self._log.info(
             f"Initialized OntologyHarness: parallelism={parallelism}, "
             f"max_retries={max_retries}"
         )
@@ -209,9 +215,9 @@ class OntologyHarness:
             self.OntologyOptimizer = OntologyOptimizer
             
             self._components_imported = True
-            logger.info("Components imported successfully")
+            self._log.info("Components imported successfully")
         except ImportError as e:
-            logger.error(f"Failed to import components: {e}")
+            self._log.error(f"Failed to import components: {e}")
             raise
     
     def create_session(self) -> Any:  # OntologySession
@@ -260,13 +266,13 @@ class OntologyHarness:
         Returns:
             Tuple of (session_id, result, error)
         """
-        logger.info(f"Session {session_id}: Starting")
+        self._log.info(f"Session {session_id}: Starting")
         
         try:
             session = self.create_session()
             result = session.run(data, context)
             
-            logger.info(
+            self._log.info(
                 f"Session {session_id}: Complete - "
                 f"score={result.critic_score.overall:.2f}, "
                 f"rounds={result.num_rounds}"
@@ -275,7 +281,7 @@ class OntologyHarness:
             return (session_id, result, None)
             
         except Exception as e:
-            logger.error(f"Session {session_id}: Failed - {e}")
+            self._log.error(f"Session {session_id}: Failed - {e}")
             return (session_id, None, e)
     
     def run_sessions(
@@ -312,7 +318,7 @@ class OntologyHarness:
         if len(data_sources) != len(contexts):
             raise ValueError("data_sources and contexts must have same length")
         
-        logger.info(
+        self._log.info(
             f"Running batch: {len(data_sources)} sources x "
             f"{num_sessions_per_source} sessions/source = "
             f"{len(data_sources) * num_sessions_per_source} total sessions"
@@ -390,7 +396,7 @@ class OntologyHarness:
                 
                 optimization_report = optimizer.analyze_batch(mediator_states)
             except Exception as e:
-                logger.warning(f"Optimization analysis failed: {e}")
+                self._log.warning(f"Optimization analysis failed: {e}")
         
         # Build batch result
         elapsed_time = time.time() - start_time
@@ -411,7 +417,7 @@ class OntologyHarness:
             }
         )
         
-        logger.info(
+        self._log.info(
             f"Batch complete: {len(successful_results)}/{total_sessions} successful "
             f"({success_rate:.1%}), avg_score={average_score:.2f}, "
             f"time={elapsed_time:.2f}s"
@@ -454,7 +460,7 @@ class OntologyHarness:
             >>> for i, batch in enumerate(cycle_results):
             ...     print(f"Cycle {i+1}: avg={batch.average_score:.2f}")
         """
-        logger.info(
+        self._log.info(
             f"Starting SGD cycles: {num_cycles} cycles, "
             f"threshold={convergence_threshold}"
         )
@@ -462,7 +468,7 @@ class OntologyHarness:
         cycle_results = []
         
         for cycle in range(num_cycles):
-            logger.info(f"=== Cycle {cycle + 1}/{num_cycles} ===")
+            self._log.info(f"=== Cycle {cycle + 1}/{num_cycles} ===")
             
             # Run batch
             batch_result = self.run_sessions(
@@ -475,7 +481,7 @@ class OntologyHarness:
             
             # Check convergence
             if batch_result.average_score >= convergence_threshold:
-                logger.info(
+                self._log.info(
                     f"Converged at cycle {cycle + 1}: "
                     f"score={batch_result.average_score:.2f} >= {convergence_threshold}"
                 )
@@ -483,19 +489,19 @@ class OntologyHarness:
             
             # Log progress
             trend = batch_result.optimization_report.trend if batch_result.optimization_report else 'unknown'
-            logger.info(
+            self._log.info(
                 f"Cycle {cycle + 1} complete: avg={batch_result.average_score:.2f}, "
                 f"trend={trend}"
             )
             
             # Apply recommendations for next cycle
             if batch_result.optimization_report and batch_result.optimization_report.recommendations:
-                logger.info(
+                self._log.info(
                     f"Recommendations: {batch_result.optimization_report.recommendations[:3]}"
                 )
                 # In a full implementation, would adapt parameters here
         
-        logger.info(f"SGD cycles complete: {len(cycle_results)} cycles executed")
+        self._log.info(f"SGD cycles complete: {len(cycle_results)} cycles executed")
         
         return cycle_results
 
@@ -579,7 +585,7 @@ class OntologyPipelineHarness:
                 except RefinementError:
                     raise
                 except Exception as exc:
-                    logger.warning("refine_ontology failed: %s", exc)
+                    self._log.warning("refine_ontology failed: %s", exc)
                     refined = artifact
                 self._last_ontology = refined
                 return refined
