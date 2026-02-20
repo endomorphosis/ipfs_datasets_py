@@ -52,6 +52,7 @@ try:
     import trio
     TRIO_AVAILABLE = True
 except ImportError:
+    trio = None  # type: ignore[assignment]  # attribute must exist for patching
     TRIO_AVAILABLE = False
     logger.warning("Trio not available - TrioMCPServerAdapter will not function")
 

@@ -301,7 +301,7 @@ class TestMockTaskManager:
     def test_create_task(self):
         """GIVEN manager; WHEN creating task; THEN task_id returned and stored."""
         mgr = self.Manager()
-        task_id = asyncio.get_event_loop().run_until_complete(
+        task_id = asyncio.run(
             mgr.create_task("create_embeddings")
         )
         assert isinstance(task_id, str)
@@ -310,10 +310,10 @@ class TestMockTaskManager:
     def test_get_task(self):
         """GIVEN created task; WHEN get_task; THEN returns task object."""
         mgr = self.Manager()
-        task_id = asyncio.get_event_loop().run_until_complete(
+        task_id = asyncio.run(
             mgr.create_task("data_processing")
         )
-        task = asyncio.get_event_loop().run_until_complete(mgr.get_task(task_id))
+        task = asyncio.run(mgr.get_task(task_id))
         assert task is not None
         assert task.task_id == task_id
 
@@ -321,17 +321,17 @@ class TestMockTaskManager:
         """GIVEN pending task; WHEN cancel; THEN returns True."""
         mgr = self.Manager()
         mgr.max_concurrent_tasks = 0  # Keep tasks pending
-        task_id = asyncio.get_event_loop().run_until_complete(
+        task_id = asyncio.run(
             mgr.create_task("backup")
         )
-        result = asyncio.get_event_loop().run_until_complete(mgr.cancel_task(task_id))
+        result = asyncio.run(mgr.cancel_task(task_id))
         assert result is True
 
     def test_get_stats(self):
         """GIVEN manager with tasks; WHEN get_stats; THEN returns dict with expected keys."""
         mgr = self.Manager()
-        asyncio.get_event_loop().run_until_complete(mgr.create_task("general"))
-        stats = asyncio.get_event_loop().run_until_complete(mgr.get_stats())
+        asyncio.run(mgr.create_task("general"))
+        stats = asyncio.run(mgr.get_stats())
         assert "total_tasks" in stats
         assert stats["total_tasks"] >= 1
 
@@ -407,6 +407,6 @@ class TestHierarchicalToolManagerLazyLoading:
         # Prevent filesystem discovery for isolation
         mgr._discovered_categories = True
         mgr.lazy_register_category("my_lazy", lambda: self.TC("my_lazy", Path("/tmp"), "lazy desc"))
-        categories = asyncio.get_event_loop().run_until_complete(mgr.list_categories())
+        categories = asyncio.run(mgr.list_categories())
         names = [c["name"] for c in categories]
         assert "my_lazy" in names

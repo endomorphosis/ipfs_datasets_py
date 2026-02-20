@@ -23,7 +23,7 @@ class TestTaskQueueEngineUnavailable:
         self.engine = TaskQueueEngine()
 
     def _run(self, coro):  # type: ignore[no-untyped-def]
-        return asyncio.get_event_loop().run_until_complete(coro)
+        return asyncio.run(coro)
 
     def test_submit_returns_error_dict(self) -> None:
         result = self._run(self.engine.submit("t1", "download", {"url": "http://x"}))
@@ -91,7 +91,7 @@ class TestTaskQueueEngineMocked:
     """TaskQueueEngine with mock MCP++ wrapper."""
 
     def _run(self, coro):  # type: ignore[no-untyped-def]
-        return asyncio.get_event_loop().run_until_complete(coro)
+        return asyncio.run(coro)
 
     def _make_wrapper(self, **kwargs):  # type: ignore[no-untyped-def]
         wrapper = MagicMock()
@@ -153,7 +153,7 @@ class TestPeerEngineUnavailable:
         self.engine = PeerEngine()
 
     def _run(self, coro):  # type: ignore[no-untyped-def]
-        return asyncio.get_event_loop().run_until_complete(coro)
+        return asyncio.run(coro)
 
     def test_discover_returns_peers_key(self) -> None:
         result = self._run(self.engine.discover())
@@ -184,7 +184,7 @@ class TestPeerEngineMocked:
     """PeerEngine with mock peer registry."""
 
     def _run(self, coro):  # type: ignore[no-untyped-def]
-        return asyncio.get_event_loop().run_until_complete(coro)
+        return asyncio.run(coro)
 
     def test_discover_with_registry(self) -> None:
         mock_registry = MagicMock()
@@ -222,7 +222,7 @@ class TestWorkflowEngineUnavailable:
         self.engine = WorkflowEngine()
 
     def _run(self, coro):  # type: ignore[no-untyped-def]
-        return asyncio.get_event_loop().run_until_complete(coro)
+        return asyncio.run(coro)
 
     def test_submit_missing_params_returns_error(self) -> None:
         result = self._run(self.engine.submit("", "wf", []))
