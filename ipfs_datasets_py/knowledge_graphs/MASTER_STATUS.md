@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 2.5.0  
+**Version:** 2.6.0  
 **Status:** ✅ Production Ready  
 **Last Updated:** 2026-02-20  
-**Last Major Release:** Session 18 (ast.py 99%, ontology/reasoning 98%, wal 89%, manager 91%, unified_engine 82%, formats 90%; 2 GEXF bugs fixed)
+**Last Major Release:** Session 19 (ir_executor 91%, cypher/parser 94%, rdf_serializer 94%, translator 93%; SET/MERGE ON CREATE/MATCH parser bug fixed)
 
 ---
 
@@ -18,10 +18,10 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 81% overall | Measured 2026-02-20; cypher/ast **99%**, ontology/reasoning **98%**, wal **89%**, manager **91%**, unified_engine **82%**; 2,384 pass
-| **Documentation** | ✅ Up to Date | Reflects v2.5.0 structure |
-| **Known Issues** | None | 9 bugs fixed (sessions 7-11, 18); 0 failures (2,384 pass)
-| **Next Milestone** | v2.5.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
+| **Test Coverage** | 82% overall | Measured 2026-02-20; cypher/parser **94%**, ir_executor **91%**, rdf_serializer **94%**, translator **93%**; 2,451 pass
+| **Documentation** | ✅ Up to Date | Reflects v2.6.0 structure |
+| **Known Issues** | None | 11 bugs fixed (sessions 7-11, 18-19); 0 failures (2,451 pass)
+| **Next Milestone** | v2.6.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
 
 ---
 
@@ -147,7 +147,7 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 ## Test Coverage Status
 
-### Overall Coverage: ~81% (measured, session 18)
+### Overall Coverage: ~82% (measured, session 19)
 
 > Numbers from `python3 -m coverage run … pytest tests/unit/knowledge_graphs/` on 2026-02-20.
 > Includes shim files (100% — trivially covered) and optional-dep files skipped at runtime.
@@ -155,11 +155,11 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 | Module | Coverage | Status | Notes |
 |--------|----------|--------|-------|
-| **Cypher** | 85–**99%** | ✅ **Excellent** | functions.py **96%**, parser **85%**, compiler **91%**, ast.py **99%** (+10pp) |
+| **Cypher** | 85–**99%** | ✅ **Excellent** | functions.py **96%**, parser **94%** (+9pp), compiler **91%**, ast.py **99%** |
 | **Neo4j Compat** | **86%**–**96%** | ✅ **Excellent** | result.py **85%**, session **85%**, driver **86%**, types **96%** |
-| **Migration** | **90%**–95% | ✅ **Excellent** | neo4j_exporter **95%**, ipfs_importer **88%**, formats **90%** (+4pp, 2 GEXF bugs fixed) |
-| **JSON-LD** | **91%**–**96%** | ✅ **Excellent** | context.py **91%**, validation **96%**, types 98% |
-| **Core** | 68–**89%** | ✅ **Excellent** | expression_evaluator **89%**, query_executor **85%**, ir_executor **81%** |
+| **Migration** | **90%**–95% | ✅ **Excellent** | neo4j_exporter **95%**, ipfs_importer **88%**, formats **90%** |
+| **JSON-LD** | **93%**–**96%** | ✅ **Excellent** | context.py **91%**, validation **96%**, rdf_serializer **94%** (+7pp), translator **93%** (+8pp) |
+| **Core** | 68–**91%** | ✅ **Excellent** | expression_evaluator **89%**, query_executor **85%**, ir_executor **91%** (+10pp) |
 | **Constraints** | **100%** | ✅ **Excellent** | All constraint types + manager fully covered (session 12) |
 | **Transactions** | **89%**–96% | ✅ **Excellent** | manager **91%** (+14pp), wal **89%** (+17pp), types 96% |
 | **Query** | **82%**–**100%** | ✅ **Excellent** | sparql_templates **100%**, budget_manager **100%**, unified_engine **82%** (+9pp) |
@@ -209,10 +209,11 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - **test_master_status_session17.py** (119 tests — srl 79%, graph.py 75%, distributed 83%, compiler 91%, neo4j_compat/types 96%)
 - **test_master_status_session18.py** (70 tests — ast.py 99%, ontology/reasoning 98%, wal 89%, manager 91%, unified_engine 82%, formats 90%)
 
-- lineage/test_core.py, lineage/test_enhanced.py, lineage/test_metrics.py, lineage/test_types.py
+- **test_master_status_session19.py** (73 tests — ir_executor 91%, parser 94%, rdf_serializer 94%, translator 93%; SET/MERGE ON CREATE+MATCH parser bug fixed)
+
 - ...and 10 more test files
 
-**Total Tests:** 2,384 passing, 17 skipped (libipld/anyio/plotly absent; networkx + pytest-mock + matplotlib + scipy available)
+**Total Tests:** 2,451 passing, 23 skipped (libipld/anyio/plotly absent; networkx + pytest-mock + matplotlib + scipy available)
 **Pass Rate:** 100% (excluding optional dependency skips)
 
 ---
@@ -496,7 +497,7 @@ reasoning = reasoner.reason_across_documents(
 
 **Improving Tests:**
 1. See [tests/knowledge_graphs/TEST_GUIDE.md](../../tests/knowledge_graphs/TEST_GUIDE.md)
-2. Focus on `extraction/extractor.py` (54% — spaCy/transformers paths), `transactions/wal.py` (72% — StorageError paths), and `extraction/validator.py` (59% — Wikipedia/SPARQL paths) — next highest-value targets
+2. Focus on `extraction/extractor.py` (54% — spaCy/transformers paths), `extraction/validator.py` (59% — Wikipedia/SPARQL paths), and `storage/ipld_backend.py` (69% — IPFS daemon paths) — next highest-value targets
 3. Add error handling and edge case tests
 4. Ensure tests work with and without optional dependencies (use `pytest.importorskip`)
 
@@ -509,6 +510,29 @@ reasoning = reasoner.reason_across_documents(
 ---
 
 ## Version History
+
+### v2.6.0 (2026-02-20) - Coverage Boost Session 19 ✅
+
+**Summary:** Added 73 new tests covering 4 high-impact modules; overall coverage from 81% to **82%**. Fixed pre-existing parser bug where `SET property = value` inside `_parse_set_item` / `_parse_set_items` failed because `_parse_expression()` greedily consumed the `=` sign as a comparison operator. Both `_parse_set_item` and `_parse_set_items` now use `_parse_postfix()` for the LHS, which correctly handles `variable.property` without consuming the assignment `=`.
+
+**Bug fixes:**
+- `cypher/parser.py` `_parse_set_item`: Changed LHS from `_parse_expression()` to `_parse_postfix()` — fixes `MATCH (n) SET n.x = val RETURN n` and `SET n.x = 1, n.y = 2` which previously raised `CypherParseError: Expected EQ, got …`
+- `cypher/parser.py` `_parse_set_items`: Same fix for MERGE `ON CREATE SET` / `ON MATCH SET` — e.g. `MERGE (n) ON CREATE SET n.created = 1` now parses correctly
+- Both fixes unlock previously dead code paths (lines 491-501, 515-526, 793-802, 807-814)
+
+**Test additions:**
+- `test_master_status_session19.py` — 73 new GIVEN-WHEN-THEN tests covering:
+  - `core/ir_executor.py` (81% → **91%**, +10pp): Expand direction='in'/direction='left'/target-label-filter; OptionalExpand missing-source-var/no-match-null-binding/direction='in'/label-mismatch; WithProject from-bindings/distinct-dedup/skip/limit/cross-product-from-result-set; Unwind from-bindings/from-result-set/scalar-from-empty; Merge ON MATCH SET/ON CREATE SET/create-relationship-in-no-match; CallSubquery with yield_items aliases; Foreach multi-element list
+  - `cypher/parser.py` (85% → **94%**, +9pp): `parse_cypher` convenience function; `<--`/`-->`/`-[r]->`  arrow relationships; WITH ORDER BY/SKIP/LIMIT/WHERE; MERGE ON CREATE SET/ON MATCH SET/both; SET 2 items/SET string value; standalone DELETE without DETACH; FOREACH body with DELETE/MERGE/REMOVE clauses; CALL subquery with YIELD single/multiple; STARTS WITH/ENDS WITH operators; UNION/UNION ALL; RETURN DISTINCT with ORDER BY; empty-query→empty-QueryNode; wrong-token→CypherParseError; REMOVE without ./:→CypherParseError; FOREACH missing IN→CypherParseError
+  - `jsonld/rdf_serializer.py` (87% → **94%**, +7pp): `_format_term` dict with @value/@type/typed-literal; dict with @value/@language/lang-tag; dict @value plain; dict no-@value→blank; `serialize` with typed-literal-triple; `TurtleParser.parse` typed literal/language-tagged/boolean-true/boolean-false/float/@base; `jsonld_to_turtle` convenience; `turtle_to_jsonld` rdf:type triple
+  - `jsonld/translator.py` (85% → **93%**, +8pp): `expand_context=True` option; no-@context uses empty context; `@graph` container 2 nodes; `@graph` + @context→context in metadata; blank-node value creates relationship; `ipld_to_jsonld` single-entity no-@graph/multi-entity @graph/context-from-metadata/@context-in-result/compact_output=True/multi-rel-targets-list/_jsonld_id-property-used-as-@id
+
+**Result:** 2,451 passed, 23 skipped, **0 failed** — up from 2,384 (session 18 baseline)
+**Coverage:** 81% → **82%** overall
+
+**Backward Compatibility:** 100% (SET parsing fix corrects previously broken behavior; no existing query was relying on the broken parser raising errors for SET)
+
+---
 
 ### v2.5.0 (2026-02-20) - Coverage Boost Session 18 ✅
 

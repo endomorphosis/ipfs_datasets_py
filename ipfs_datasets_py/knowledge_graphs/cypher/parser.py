@@ -513,13 +513,13 @@ class CypherParser:
         format used by :class:`SetClause`.
         """
         items = []
-        prop_expr = self._parse_expression()
+        prop_expr = self._parse_postfix()
         self._expect(TokenType.EQ)
         value_expr = self._parse_expression()
         items.append((prop_expr, value_expr))
         while self._match(TokenType.COMMA):
             self._advance()
-            prop_expr = self._parse_expression()
+            prop_expr = self._parse_postfix()
             self._expect(TokenType.EQ)
             value_expr = self._parse_expression()
             items.append((prop_expr, value_expr))
@@ -804,7 +804,7 @@ class CypherParser:
     def _parse_set_item(self) -> tuple:
         """Parse single SET item: property = expression."""
         # Parse property (variable.property)
-        prop = self._parse_expression()
+        prop = self._parse_postfix()
         
         self._expect(TokenType.EQ)
         
