@@ -1,8 +1,8 @@
 # Master Refactoring and Improvement Plan — Logic Module
 
 **Date:** 2026-02-20 (last updated)  
-**Version:** 5.1 (supersedes all previous plans)  
-**Status:** Phase 1 ✅ COMPLETE · Phase 2 🔄 In Progress · Phase 3 ✅ COMPLETE · Phase 4 🔄 Ongoing · Phase 5 ✅ COMPLETE  
+**Version:** 6.0 (supersedes all previous plans)  
+**Status:** Phase 1 ✅ COMPLETE · Phase 2 🔄 In Progress · Phase 3 ✅ COMPLETE · Phase 4 🔄 Ongoing · Phase 5 ✅ COMPLETE · Phase 6 🔄 In Progress  
 **Scope:** `ipfs_datasets_py/logic/` and `tests/unit_tests/logic/`  
 **MCP Integration:** `ipfs_datasets_py/mcp_server/tools/logic_tools/`
 
@@ -21,9 +21,10 @@
 6. [Phase 3: Feature Completions](#6-phase-3-feature-completions) ✅ COMPLETE
 7. [Phase 4: Production Excellence](#7-phase-4-production-excellence) 🔄 Ongoing
 8. [Phase 5: Code Reduction — God-Module Splits](#8-phase-5-code-reduction--god-module-splits) ✅ COMPLETE
-9. [Timeline and Priorities](#9-timeline-and-priorities)
-10. [Success Criteria](#10-success-criteria)
-11. [Document Inventory and Disposition](#11-document-inventory-and-disposition)
+9. [Phase 6: Remaining Work and Continuous Improvement](#9-phase-6-remaining-work-and-continuous-improvement-) 🔄 In Progress
+10. [Timeline and Priorities](#10-timeline-and-priorities)
+11. [Success Criteria](#11-success-criteria)
+12. [Document Inventory and Disposition](#12-document-inventory-and-disposition)
 
 ---
 
@@ -46,13 +47,12 @@ The `ipfs_datasets_py/logic/` folder contains a **production-ready neurosymbolic
 | **Documentation** | ✅ Consolidated (69 active, 126 archived) | — | — |
 | **TOTAL** | 🟢 Production-Ready Core | ~93,431 | 1,739+ |
 
-### What Needs Work (Phases 2, 4, 5 — Remaining)
+### What Needs Work (Phases 2, 4 — Remaining)
 
 1. **NL Accuracy** — TDFOL 80% → 90%+, CEC 60% → 75%+
-2. **God-Module Splits** — 6 files over 700 LOC need decomposition (worst: `prover_core.py` 2,927 LOC)
-3. **CI Integration** — performance baselines not yet wired into GitHub Actions
-4. **Multi-language NL** — Spanish, French, German (medium priority)
-5. **Dependency audit** — `logic[api]` extras group for pip install
+2. **CI Integration** — performance baselines not yet wired into GitHub Actions
+3. **Multi-language NL** — Spanish coverage (French/German stubs exist)
+4. **Forward chaining infinite loop** — `ForwardChainingStrategy.__eq__` on unknown formulas
 
 ---
 
@@ -119,7 +119,7 @@ The `ipfs_datasets_py/logic/` folder contains a **production-ready neurosymbolic
 
 | Branch | Focus | Status |
 |--------|-------|--------|
-| `copilot/create-refactoring-plan-markdown-files` | This plan update | 🔄 Active |
+| `copilot/create-refactoring-plan-markdown-yet-again` | Continuing plan implementation | 🔄 Active |
 
 ---
 
@@ -408,21 +408,19 @@ mkdir -p ipfs_datasets_py/logic/zkp/ARCHIVE/
 ### 5.5 Test Coverage Gaps — 🔄 Partial
 
 **Completed:**
-- [x] 60 new CEC inference rule tests added
+- [x] 60 new tests for CEC modal/resolution/specialized rules (all passing)
+- [x] Package export tests covering all 67+ rules in `__all__`
+- [x] `test_tdfol_optimization.py` strategy method mismatch fixed (method now reflects enum value)
+- [x] `test_llm.py` multiformats tests: SHA256 fallback in `_make_key`; CID-specific test skipped
+- [x] `test_countermodel_visualizer.py` d3.v7 URL assertion updated
 
 **Remaining:**
 - [ ] Integration tests for `integration/reasoning/` modules (currently ~50% coverage)
 - [ ] E2E tests: legal text → formal proof pipeline
 - [ ] Stress tests for proof search under timeout conditions
-- [ ] Tests for `common/validators.py` edge cases (injection attack patterns)
-
-**Completed:**
-- [x] 60 new tests for CEC modal/resolution/specialized rules (all passing)
-- [x] Package export tests covering all 67+ rules in `__all__`
-
-**Remaining:**
 - [ ] Fix 69 NL test failures (see 5.2)
 - [ ] Add 15+ integration tests for TDFOL↔CEC cross-module interactions
+- [ ] Fix `ForwardChainingStrategy` infinite loop on unknown formulas (pre-existing hang)
 
 ---
 
@@ -648,34 +646,99 @@ Consider splitting only if test coverage or type checking becomes problematic.
 
 ---
 
-## 9. Timeline and Priorities (Updated 2026-02-20)
+## 9. Phase 6: Remaining Work and Continuous Improvement 🔄 In Progress
+
+**Duration:** Ongoing  
+**Priority:** P1/P2  
+**Goal:** Address the remaining open items and maintain production quality
+
+### 9.1 Fix Pre-existing Test Failures
+
+**Status:** 🔄 Partial (8 fixed this session)
+
+**Fixed (2026-02-20 this session):**
+- [x] `test_tdfol_optimization.py`: `test_prove_with_explicit_strategy_forward/backward` — `OptimizedProver.prove()` now overwrites `result.method` with the selected `ProvingStrategy.value` so `result["strategy"]` returns `"forward"` / `"backward"` as expected
+- [x] `test_llm.py`: 3 cache tests (`test_cache_miss`, `test_cache_lru_eviction`, `test_cache_stats`) — `LLMResponseCache._make_key()` now falls back to SHA256 when `multiformats` is unavailable
+- [x] `test_llm.py`: `test_cache_keys_are_ipfs_cids` — added `pytest.importorskip("multiformats")` guard; test skips cleanly when library absent
+- [x] `test_countermodel_visualizer.py`: `test_to_html_string` — assertion updated to accept versioned CDN URL (`d3js.org/d3`)
+
+**Remaining (P1):**
+- [ ] `test_forward_chaining.py::test_prove_unknown_formula` — `ForwardChainingStrategy.__eq__` infinite loop when proving unknown formulas; needs a depth/iteration guard in `_apply_rules`
+- [ ] ~69 TDFOL NL test failures — require spaCy; document as deferred until spaCy is added to CI
+
+### 9.2 TDFOL NL Accuracy Improvement — 🔄 Pending
+
+**Remaining Work:**
+1. **Diagnose ~69 NL test failures** — categorize: pattern gap vs. parser error vs. spaCy dependency
+2. **Add spaCy to optional dependencies** — currently gated by `pytest.mark.slow` or `importorskip`
+3. **Improve pattern matching** — add/refine patterns for obligation, prohibition, temporal constructs
+
+**Acceptance Criteria:**
+- [ ] NL test failures categorized with root-cause labels
+- [ ] `TDFOL/nl/tdfol_nl_patterns.py` tested with 50+ new cases (when spaCy available)
+- [ ] NL conversion accuracy: 80% → 90%+
+
+### 9.3 Integration Test Coverage
+
+**Status:** ~50% coverage for `integration/reasoning/` modules
+
+**Target:** 80% pass rate (from current ~50%)
+
+**Acceptance Criteria:**
+- [ ] 15+ integration tests for TDFOL↔CEC cross-module interactions
+- [ ] E2E test: legal text → TDFOL formula → proof → MCP response chain
+- [ ] `integration/reasoning/` coverage: 50% → 80%
+
+### 9.4 TDFOL Public API Docstrings
+
+**Status:** ~60% of public methods have docstrings (estimated)
+
+**Acceptance Criteria:**
+- [ ] 100% of public classes and methods in `TDFOL/` have Google-style docstrings
+- [ ] Usage examples in all major module docstrings (`tdfol_core.py`, `tdfol_prover.py`, `tdfol_parser.py`)
+- [ ] `API_REFERENCE.md` updated with current method signatures
+
+### 9.5 Multi-Language NL Support Completion
+
+**Status:** French (`CEC/nl/french_parser.py`) and German (`CEC/nl/german_parser.py`) exist; Spanish is pending
+
+**Acceptance Criteria:**
+- [ ] Spanish NL parser added (`CEC/nl/spanish_parser.py`) with vocabulary entries
+- [ ] All three parsers reach 70%+ accuracy on legal text samples
+- [ ] Language detection integrated into main NL pipeline (`CEC/native/nl_converter.py`)
+
+---
+
+## 10. Timeline and Priorities (Updated 2026-02-20)
 
 ### Completed ✅
 | Phase | Completed | Result |
 |-------|-----------|--------|
 | Phase 1: Documentation Consolidation | 2026-02-19 | 196 → 69 active files |
 | Phase 2.1: CEC Inference Rules | 2026-02-19 | 67 rules across 8 modules |
+| Phase 2.3: CEC NL Patterns (partial) | 2026-02-20 | Prohibition + cognitive patterns fixed |
 | Phase 2.4: ZKP Module Warnings | 2026-02-19 | `warnings.warn()` added |
 | Phase 3: MCP Server Tools | 2026-02-19 | 27 tools across 12 groups |
 | Phase 3: GraphRAG Integration | 2026-02-19 | 2 tools, 20 tests |
+| Phase 5: God-Module Splits | 2026-02-20 | All 6 oversized files split |
+| Phase 6 (partial): Test bug fixes | 2026-02-20 | 8 failures fixed (strategy/multiformats/d3) |
 
 ### Near Term (Next 2–4 weeks)
 | Task | Phase | Effort | Priority |
 |------|-------|--------|---------|
-| Fix ~69 TDFOL NL test failures | 2.2 | 8h | 🔴 P1 |
+| Fix ~69 TDFOL NL test failures (requires spaCy) | 2.2 | 8h | 🔴 P1 |
+| Fix `ForwardChainingStrategy` infinite loop | 2.5 | 4h | 🔴 P1 |
 | Improve CEC NL coverage (60%→75%) | 2.3 | 12h | 🟠 P1 |
-| Split `prover_core.py` (2,927→4×<600 LOC) | 5.1 | 8h | 🟠 P1 |
-| Add TDFOL docstrings (Phase 3.2) | 3.2 | 6h | 🟡 P2 |
+| Add TDFOL docstrings (100% public API) | 6.2 | 6h | 🟡 P2 |
 | CI performance regression gates | 4.1 | 4h | 🟡 P2 |
 
 ### Medium Term (Weeks 4–8)
 | Task | Phase | Effort | Priority |
 |------|-------|--------|---------|
-| Split `dcec_core.py` (1,399→2×<700) | 5.2 | 6h | 🟠 P1 |
-| Split `proof_execution_engine.py` (968→2×<500) | 5.3 | 4h | 🟡 P2 |
-| Split `deontological_reasoning.py` (776→<600) | 5.4 | 4h | 🟡 P2 |
-| Spanish NL parser | 3.3 | 16h | 🟡 P2 |
-| ~~`logic[api]` extras group~~ ✅ Done | 4.3 | 2h | 🟡 P2 |
+| Integration tests for reasoning modules (50%→80%) | 2.5 | 8h | 🟠 P1 |
+| E2E tests: legal text → formal proof | 2.5 | 8h | 🟠 P1 |
+| Spanish NL parser | 6.3 | 16h | 🟡 P2 |
+| Rate limiting for MCP tool calls | 4.2 | 4h | 🟡 P2 |
 
 ### Ongoing (Per PR / Monthly / Quarterly)
 | Task | Frequency |
@@ -687,7 +750,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 
 ---
 
-## 10. Success Criteria (Updated 2026-02-20)
+## 11. Success Criteria (Updated 2026-02-20)
 
 ### Phase 1 ✅ COMPLETE
 
@@ -729,18 +792,31 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ### Phase 5 ✅ COMPLETE (2026-02-20)
 
 - [x] `prover_core.py` 2,927 → 649 LOC (+ prover_core_extended_rules.py 1,116 LOC)
-- [x] `dcec_core.py` 1,399 → 777 LOC (+ dcec_types.py 379 LOC)
+- [x] `dcec_core.py` 1,399 → 849 LOC (+ dcec_types.py 379 LOC)
 - [x] `proof_execution_engine.py` 968 → 460 LOC (+ _prover_backend_mixin.py 527 LOC)
 - [x] `deontological_reasoning.py` 776 → 482 LOC (+ _deontic_conflict_mixin.py 304 LOC)
-- [x] `interactive_fol_constructor.py` 787 → 495 LOC (+ _fol_constructor_io.py 299 LOC)
+- [x] `interactive_fol_constructor.py` 787 → 521 LOC (+ _fol_constructor_io.py 299 LOC)
 - [x] `logic_verification.py` 692 → 435 LOC (+ _logic_verifier_backends_mixin.py 290 LOC)
-- [x] All backward-compat re-exports maintained; 174+ tests pass
+- [x] All backward-compat re-exports maintained
+
+### Phase 6 🔄 In Progress (2026-02-20 session)
+
+- [x] `OptimizedProver.prove()` — `result.method` overridden to `ProvingStrategy.value` (2 strategy tests fixed)
+- [x] `LLMResponseCache._make_key()` — SHA256 fallback when `multiformats` unavailable (3 cache tests fixed)
+- [x] `test_llm.py::test_cache_keys_are_ipfs_cids` — `pytest.importorskip("multiformats")` guard added
+- [x] `test_countermodel_visualizer.py::test_to_html_string` — assertion accepts d3.v7 CDN URL
+- [x] MASTER_REFACTORING_PLAN_2026.md — Phase 5 complete, Phase 6 added, timeline updated, ToC renumbered, Appendix A rules count fixed (70→67)
+- [ ] `ForwardChainingStrategy` infinite loop on unknown formulas
+- [ ] TDFOL NL test failures (~69) — requires spaCy
+- [ ] Integration test coverage: 50% → 80%
+- [ ] TDFOL public API docstrings: ~60% → 100%
+- [ ] Spanish NL parser
 
 ---
 
-## 11. Document Inventory and Disposition (Updated 2026-02-20)
+## 12. Document Inventory and Disposition (Updated 2026-02-20)
 
-### 11.1 Active Documents (69 total)
+### 12.1 Active Documents (69 total)
 
 **Root Level (20):**
 - `README.md` — Module overview ✅
@@ -762,7 +838,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 
 **Per-subdirectory READMEs (14):** common, fol, deontic, types, tools, external_provers, integration + subdirs
 
-### 11.2 Archive Policy
+### 12.2 Archive Policy
 
 **Archive Criteria:**
 1. Progress reports / completion summaries → Archive after phase completion
@@ -790,10 +866,12 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | Cognitive | — | 13 | 13 |
 | Modal | — | 5 | 5 |
 | Resolution | — | 6 | 6 |
-| Specialized | — | 9 | 9 |
-| **TOTAL** | **50** | **70** | **120** |
+| Specialized | — | 6 | 6 |
+| **TOTAL** | **50** | **67** | **117** |
 
-> All 67 CEC inference rules are now implemented and tested (modal + resolution + specialized modules added 2026-02-19).
+> All 67 CEC inference rules are implemented and tested across 7 rule modules (base + cognitive + temporal + deontic + modal + resolution + specialized). The `__all__` export from `CEC/native/inference_rules/` includes 67 concrete subclasses of `InferenceRule`.
+
+> TDFOL has 50 rules across propositional, first-order, temporal, deontic, and temporal-deontic categories.
 
 ---
 
@@ -846,7 +924,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Phase 2.2 TDFOL NL Accuracy (~69 failures → <20); Phase 4.1 CI Performance Gates  
+**Next Action:** Phase 6.1 — Fix `ForwardChainingStrategy` infinite loop; Phase 2.2 TDFOL NL (with spaCy)  
 **Review Schedule:** After each phase completion, update this document  
 **Created:** 2026-02-19 | **Last Updated:** 2026-02-20  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)

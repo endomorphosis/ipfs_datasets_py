@@ -582,7 +582,7 @@ class TestHTMLVisualization:
         # THEN
         assert "<!doctype html>" in lower_html
         assert "<html" in lower_html
-        assert ("d3.js" in lower_html) or ("d3.min.js" in lower_html)
+        assert ("d3.js" in lower_html) or ("d3.min.js" in lower_html) or ("d3js.org/d3" in lower_html)
         assert "kripke structure" in lower_html
     
     def test_html_contains_data(self):
