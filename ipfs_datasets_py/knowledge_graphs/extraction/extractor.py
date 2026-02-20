@@ -296,10 +296,6 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
             return relationships
         
         try:
-            # Try REBEL-style triplet extraction if available
-            # REBEL outputs triplets in format: (subject, relation, object)
-            from transformers import pipeline
-            
             # Check if we have a triplet extraction model
             if hasattr(self.re_model, 'task') and 'text2text' in str(self.re_model.task):
                 # REBEL-style generation model
