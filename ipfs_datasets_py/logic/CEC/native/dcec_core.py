@@ -613,6 +613,11 @@ class ConnectiveFormula(Formula):
     connective: LogicalConnective
     formulas: List[Formula]
 
+    @property
+    def operator(self) -> LogicalConnective:
+        """Alias for connective (backward compat)."""
+        return self.connective
+
     def __new__(cls, connective, formulas=None, *extra_formulas):
         """Allow both ConnectiveFormula(op, [p, q]) and ConnectiveFormula(op, p, q)."""
         instance = object.__new__(cls)
