@@ -375,3 +375,119 @@ class TestStorageEngine:
         assert retrieved["tags"] == ["test"]
         assert retrieved["storage_type"] == "memory"
 
+
+
+# ---------------------------------------------------------------------------
+# 7. CodebaseSearchEngine
+# ---------------------------------------------------------------------------
+
+_cs_eng = _load_module(
+    "mcp_server/tools/development_tools/codebase_search_engine.py",
+    "_cs_eng",
+)
+CodebaseSearchEngine = _cs_eng.CodebaseSearchEngine
+CodebaseSearchResult = _cs_eng.CodebaseSearchResult
+SearchMatch = _cs_eng.SearchMatch
+
+
+class TestCodebaseSearchEngine:
+    def setup_method(self):
+        self.engine = CodebaseSearchEngine()
+
+    def test_search_nonexistent_path(self):
+        """Searching a non-existent path raises FileNotFoundError."""
+        with pytest.raises(FileNotFoundError):
+            self.engine.search_codebase("anything", path="/no/such/path/xyz123")
+
+    def test_search_returns_result(self, tmp_path):
+        """Searching a directory with a match returns CodebaseSearchResult."""
+        (tmp_path / "sample.py").write_text("def hello_world():\n    pass\n")
+        result = self.engine.search_codebase("hello_world", path=str(tmp_path))
+        assert isinstance(result, CodebaseSearchResult)
+        assert result.summary.total_matches >= 1
+
+    def test_search_no_match(self, tmp_path):
+        """Searching with no match returns zero matches but valid summary."""
+        (tmp_path / "empty.py").write_text("# nothing here\n")
+        result = self.engine.search_codebase("xyz_does_not_exist", path=str(tmp_path))
+        assert result.summary.total_matches == 0
+
+    def test_compile_pattern_invalid_regex(self):
+        """Invalid regex raises ValueError."""
+        with pytest.raises(ValueError):
+            self.engine._compile_search_pattern("[invalid", False, False, True)
+
+    def test_format_results_json(self, tmp_path):
+        """format_results with json returns valid JSON string."""
+        import json
+        (tmp_path / "code.py").write_text("x = 42\n")
+        result = self.engine.search_codebase("42", path=str(tmp_path))
+        output = self.engine.format_results(result, format_type="json")
+        parsed = json.loads(output)
+        assert "summary" in parsed
+
+    def test_dataset_patterns_attribute(self):
+        """Engine has dataset_patterns dict with expected keys."""
+        assert "ipfs_hash" in self.engine.dataset_patterns
+        assert "ml_imports" in self.engine.dataset_patterns
+
+    def test_backward_compat_import(self):
+        """codebase_search_engine.py exports expected names."""
+        assert hasattr(_cs_eng, "CodebaseSearchEngine")
+        assert hasattr(_cs_eng, "CodebaseSearchResult")
+        assert hasattr(_cs_eng, "SearchMatch")
+        assert hasattr(_cs_eng, "FileSearchResult")
+        assert hasattr(_cs_eng, "SearchSummary")
+
+
+# ---------------------------------------------------------------------------
+# 8. VectorStoreManagementEngine
+# ---------------------------------------------------------------------------
+
+_vsm_eng = _load_module(
+    "mcp_server/tools/vector_tools/vector_store_management_engine.py",
+    "_vsm_eng",
+)
+VectorStoreManager = _vsm_eng.VectorStoreManager
+
+
+class TestVectorStoreManagementEngine:
+    def setup_method(self, tmp_path=None):
+        import tempfile
+        self.tmp_dir = tempfile.mkdtemp()
+        self.manager = VectorStoreManager(indexes_dir=self.tmp_dir)
+
+    def test_list_indexes_empty(self):
+        """list_indexes on empty dir returns success with empty faiss list."""
+        result = self.manager.list_indexes("faiss")
+        assert result["status"] == "success"
+        assert result["indexes"]["faiss"] == []
+
+    def test_delete_nonexistent_faiss(self):
+        """Deleting a non-existent FAISS index returns error."""
+        result = self.manager.delete_index("no_such_index", backend="faiss")
+        assert result["status"] == "error"
+        assert "not found" in result["error"]
+
+    def test_delete_unsupported_backend(self):
+        """Deleting with unsupported backend returns error."""
+        result = self.manager.delete_index("idx", backend="unknown")
+        assert result["status"] == "error"
+        assert "Unsupported" in result["error"]
+
+    def test_search_unavailable_backends(self):
+        """Search against qdrant/elasticsearch returns 'not implemented' error."""
+
+        async def _run():
+            return await self.manager.search_index("idx", "query", backend="qdrant")
+
+        result = anyio.run(_run)
+        assert result["status"] == "error"
+        assert "not implemented" in result["error"]
+
+    def test_backward_compat_import(self):
+        """vector_store_management_engine.py exports expected names."""
+        assert hasattr(_vsm_eng, "VectorStoreManager")
+        assert hasattr(_vsm_eng, "FAISS_AVAILABLE")
+        assert hasattr(_vsm_eng, "QDRANT_AVAILABLE")
+        assert hasattr(_vsm_eng, "ELASTICSEARCH_AVAILABLE")
