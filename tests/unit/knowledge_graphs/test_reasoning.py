@@ -8,7 +8,7 @@ Following GIVEN-WHEN-THEN format as per repository standards.
 """
 
 import pytest
-import numpy as np
+np = pytest.importorskip("numpy")
 from ipfs_datasets_py.knowledge_graphs.cross_document_reasoning import (
     InformationRelationType,
     DocumentNode,

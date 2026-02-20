@@ -128,6 +128,7 @@ class TestFormatRegistry:
         WHEN: save_to_file is called with CAR format
         THEN: File is created and can be loaded back
         """
+        pytest.importorskip("libipld")
         # GIVEN
         graph = _make_small_graph(2)
 

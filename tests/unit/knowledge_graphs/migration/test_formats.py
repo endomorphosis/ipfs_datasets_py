@@ -236,6 +236,7 @@ class TestErrorHandling:
     
     def test_car_format_roundtrip_save(self):
         """Test that CAR format save/load works (now implemented)."""
+        pytest.importorskip("libipld")
         graph = GraphData(nodes=[NodeData(id="1", labels=["Test"], properties={"x": 1})])
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.car') as f:
@@ -251,6 +252,7 @@ class TestErrorHandling:
 
     def test_car_format_roundtrip_load(self):
         """Test that CAR format load preserves node IDs."""
+        pytest.importorskip("libipld")
         graph = GraphData(nodes=[NodeData(id="node1", labels=["Test"])])
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.car') as f:

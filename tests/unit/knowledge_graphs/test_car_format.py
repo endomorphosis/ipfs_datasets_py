@@ -52,6 +52,7 @@ def _make_graph() -> GraphData:
 
 @pytest.fixture()
 def tmp_car(tmp_path):
+    pytest.importorskip("libipld")
     return str(tmp_path / "graph.car")
 
 

@@ -18,7 +18,12 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-import numpy as np
+try:
+    import numpy as np
+    _NpNdarray = np.ndarray
+except ImportError:  # numpy is optional — type hints remain as strings
+    np = None  # type: ignore[assignment]
+    _NpNdarray = None  # type: ignore[assignment,misc]
 
 
 class InformationRelationType(Enum):

@@ -305,6 +305,7 @@ class TestCARFormat:
         WHEN: Saving to CAR format
         THEN: A non-empty file is created successfully
         """
+        pytest.importorskip("libipld")
         # GIVEN
         graph = GraphData(nodes=[NodeData(id="1", labels=["Test"])], relationships=[])
 
@@ -328,6 +329,7 @@ class TestCARFormat:
         WHEN: Saved to CAR format and loaded back
         THEN: Node and relationship counts are preserved
         """
+        pytest.importorskip("libipld")
         # GIVEN
         graph = GraphData(
             nodes=[

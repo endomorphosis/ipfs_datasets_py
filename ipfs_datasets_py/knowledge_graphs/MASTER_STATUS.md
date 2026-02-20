@@ -20,7 +20,7 @@
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
 | **Test Coverage** | 75% overall | Critical modules at 80-85% |
 | **Documentation** | ✅ Up to Date | Reflects v2.1.0 structure |
-| **Known Issues** | None critical | Optional deps (numpy, libipld) |
+| **Known Issues** | None | All collection errors fixed; 0 failures (session 6) |
 | **Next Milestone** | v2.2.0 (Q3 2026) | Test coverage improvements |
 
 ---
@@ -163,7 +163,7 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 | **Ontology** | 75% | ✅ Good | Maintain |
 | **Reasoning** | 75% | ✅ Good | Maintain |
 
-### Test Files: 64 total (as of v2.1.0)
+### Test Files: 62 total (as of v2.1.0)
 
 **Unit Tests:** tests/unit/knowledge_graphs/
 - test_extraction.py, test_extraction_package.py, test_advanced_extractor.py
@@ -178,17 +178,18 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - test_merge_remove_isnull_xor.py (27 tests)
 - test_unwind_with_clauses.py (19 tests)
 - test_foreach_call_mcp.py (32 tests, FOREACH+CALL+MCP)
-- test_car_format.py (18 tests, CAR format)
+- test_car_format.py (18 tests, CAR format — skipped when libipld absent)
 - test_property_based_formats.py (32 tests, roundtrip)
 - test_srl_ontology_distributed.py (38 tests, SRL+OWL+distributed)
 - test_srl_ontology_distributed_cont.py (26 tests, session 3 deepening)
 - test_deferred_session4.py (36 tests, session 4 deepening)
+- test_reasoning.py (skipped when numpy absent)
 - migration/test_formats.py, migration/test_integrity_verifier.py, migration/test_schema_checker.py, ...
 - lineage/test_core.py, lineage/test_enhanced.py, lineage/test_metrics.py, lineage/test_types.py
-- ...and 12 more test files
+- ...and 10 more test files
 
-**Total Tests:** 1,075+ passing  
-**Pass Rate:** ~98% (excluding pre-existing optional dependency skips)
+**Total Tests:** 1,161 passing, 25 skipped (libipld/numpy/anyio absent)
+**Pass Rate:** 100% (excluding optional dependency skips)
 
 ---
 
@@ -483,6 +484,23 @@ reasoning = reasoner.reason_across_documents(
 
 ## Version History
 
+### v2.1.1 (2026-02-20) - Test Quality Fixes ✅
+
+**Summary:** Fixed all test collection errors and false failures caused by missing optional dependencies.
+
+**Fixes:**
+- `reasoning/types.py`: Made `numpy` import optional (try/except); type annotations lazy via `from __future__ import annotations`
+- `reasoning/cross_document.py`: Made `numpy` import optional; added `from __future__ import annotations` so `np.ndarray` type hints don't fail when numpy absent
+- `test_reasoning.py`: Use `np = pytest.importorskip("numpy")` instead of hard import
+- `test_p3_p4_advanced_features.py`: Updated `@patch` targets from deprecated `cross_document_reasoning.*` to canonical `reasoning.cross_document.*` module path
+- `test_car_format.py`, `test_format_registry.py`, `test_p2_format_support.py`, `migration/test_formats.py`: Added `pytest.importorskip("libipld")` guards so CAR-format tests skip gracefully instead of failing
+
+**Result:** 1,161 passed, 25 skipped (optional deps), **0 failed** — up from 1,092 passed / 13 failed
+
+**Backward Compatibility:** 100% (only test and optional-import fixes)
+
+---
+
 ### v2.1.0 (2026-02-20) - Refactoring + Cypher Completion ✅
 
 **Summary:** Completed all remaining Cypher features, restructured the module folder layout to canonical subpackages, and added 3 new MCP tools.
@@ -554,7 +572,7 @@ reasoning = reasoner.reason_across_documents(
 - ✅ 300KB+ comprehensive documentation
 - ✅ All P1-P4 features complete (PR #1085, 2026-02-18)
 - ✅ All deferred features complete (sessions 2-5, 2026-02-20)
-- ✅ Zero critical bugs or broken code
+- ✅ **Zero test failures** — 1,161 pass, 25 skip (optional deps), 0 fail (session 6, 2026-02-20)
 - ✅ All features now in permanent subpackage locations (reasoning/, ontology/, extraction/srl.py, query/distributed.py)
 - ✅ Proper error handling and graceful degradation
 - ✅ Backward compatible with all changes (deprecation shims for all moved modules)

@@ -18,13 +18,18 @@ The cross-document reasoning leverages the query optimization from
 optimizers/graphrag/query_optimizer
 to efficiently traverse entity relationships and find relevant connections.
 """
+from __future__ import annotations
+
 import logging
 import math
 import os
 import re
 from typing import Dict, List, Any, Optional, Tuple
 from collections import Counter
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    np = None  # type: ignore[assignment]
 import uuid
 
 from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import (
@@ -157,7 +162,7 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
         Returns:
             Similarity in [0.0, 1.0].
         """
-        if source_doc.vector is not None and target_doc.vector is not None:
+        if source_doc.vector is not None and target_doc.vector is not None and np is not None:
             try:
                 a = np.asarray(source_doc.vector, dtype=float)
                 b = np.asarray(target_doc.vector, dtype=float)
@@ -166,7 +171,8 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
                     if denom > 0:
                         sim = float(np.dot(a, b) / denom)
                         return max(0.0, min(1.0, sim))
-            except (TypeError, ValueError, AttributeError, FloatingPointError, np.linalg.LinAlgError):
+            except (TypeError, ValueError, AttributeError, FloatingPointError,
+                    np.linalg.LinAlgError):
                 pass
 
         def tokenize(text: str) -> List[str]:
