@@ -12,7 +12,7 @@ import re
 
 from ..tool_wrapper import EnhancedBaseMCPTool
 from ..validators import EnhancedParameterValidator
-from ..monitoring import EnhancedMetricsCollector
+from ...monitoring import EnhancedMetricsCollector
 from .session_engine import (  # noqa: F401
     validate_session_id,
     validate_user_id,

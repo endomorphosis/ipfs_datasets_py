@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional, List
 
 from ..tool_wrapper import EnhancedBaseMCPTool
 from ..validators import EnhancedParameterValidator
-from ..monitoring import EnhancedMetricsCollector
+from ...monitoring import EnhancedMetricsCollector
 
 # Import engine types — re-export for backward compatibility
 from .background_task_engine import (  # noqa: F401
