@@ -243,7 +243,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [x] (P2) [graphrag] `infer_relationships()` — skeleton returns empty list; implement heuristic co-occurrence + verb-proximity inference
   - Done 2026-02-20: implemented sliding-window co-occurrence + verb-frame heuristics
-- [ ] (P2) [graphrag] Improve verb extraction to classify relationship types from common verb patterns (obligates, owns, causes, part-of, etc.)
+- [x] (P2) [graphrag] Improve verb extraction to classify relationship types — Done: 7 verb patterns (obligates, owns, causes, is_a, part_of, employs, manages)
 - [x] (P2) [graphrag] Add directionality detection (subject→object via dependency parse stubs) — Done batch 25
 - [ ] (P3) [graphrag] Add confidence decay for distance-based co-occurrence (entities far apart = lower confidence)
 
@@ -339,8 +339,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [x] (P2) [tests] End-to-end test: `OntologyGenerator → OntologyCritic → OntologyMediator` refinement loop — Done 2026-02-20: test_pipeline_harness_e2e.py (16 tests)
 - [x] (P2) [tests] End-to-end test: `LogicTheoremOptimizer.run_session()` on a trivial theorem — Done 2026-02-20: test_metrics_wiring.py
-- [ ] (P2) [tests] CLI test: `graphrag-optimizer generate ...` on a fixture text file
-- [ ] (P2) [tests] CLI test: `logic-theorem-optimizer prove` on a trivial theorem
+- [x] (P2) [tests] CLI test: `graphrag-optimizer generate ...` — Done batch 27: test_cli_generate.py (7 tests)
+- [x] (P2) [tests] CLI test: `logic-theorem-optimizer prove` — Done batch 27: test_cli_prove.py (8 tests)
 - [ ] (P3) [tests] Mutation testing pass on `graphrag/ontology_critic.py` dimension evaluators
 
 ### T3 — Performance / regression tests
@@ -365,7 +365,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ## Security & Safety
 
-- [ ] (P1) [arch] Audit all `eval()`/`exec()` usage in agentic optimizers — replace or sandbox
+- [x] (P1) [arch] Audit all `eval()`/`exec()` usage — Done batch 26: only intentionally sandboxed exec({}) in validation.py; adversarial.py detects but does not use eval/exec
 - [x] (P2) [arch] Validate file paths in CLI wrappers against path-traversal attacks (use `Path.resolve()`)
   - Done 2026-02-20: _safe_resolve() helper added to graphrag + logic CLI wrappers
 - [ ] (P2) [arch] Ensure no secrets are logged (prover API keys, LLM API keys)
@@ -433,7 +433,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [arch] Add BackendConfig typed dataclass for OntologyCritic backend_config parameter — Done 2026-02-20
 - [ ] (P2) [perf] Parallelize OntologyOptimizer.analyze_batch() across sessions using concurrent.futures
 - [x] (P2) [arch] Add `__slots__` to hot-path dataclasses (Entity, Relationship, EntityExtractionResult) using @dataclass(slots=True) — Done 2026-02-20
-- [ ] (P2) [tests] Unit test BaseOptimizer.run_session() with a PerformanceMetricsCollector — verify start_cycle/end_cycle called
+- [x] (P2) [tests] Unit test BaseOptimizer.run_session() with PerformanceMetricsCollector — Done: test_new_implementations.py:863 TestPerformanceMetricsCollectorHooks
 - [ ] (P1) [security] Audit eval()/exec() usage in agentic optimizers — document each usage is safe and sandboxed
 - [x] (P2) [obs] Wire PerformanceMetricsCollector into logic_theorem_optimizer harness sessions — Done 2026-02-20: LogicTheoremOptimizer.__init__ accepts metrics_collector param, forwarded to BaseOptimizer
 - [x] (P2) [tests] Integration test: OntologyPipelineHarness.run() with real OntologyGenerator/OntologyCritic/OntologyMediator on fixture text — Done 2026-02-20: tests/unit/optimizers/graphrag/test_pipeline_harness_e2e.py (16 tests)
