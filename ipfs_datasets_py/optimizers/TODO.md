@@ -437,3 +437,26 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P1) [security] Audit eval()/exec() usage in agentic optimizers — document each usage is safe and sandboxed
 - [x] (P2) [obs] Wire PerformanceMetricsCollector into logic_theorem_optimizer harness sessions — Done 2026-02-20: LogicTheoremOptimizer.__init__ accepts metrics_collector param, forwarded to BaseOptimizer
 - [x] (P2) [tests] Integration test: OntologyPipelineHarness.run() with real OntologyGenerator/OntologyCritic/OntologyMediator on fixture text — Done 2026-02-20: tests/unit/optimizers/graphrag/test_pipeline_harness_e2e.py (16 tests)
+
+## Newly discovered items (2026-02-20 batch 20-21)
+
+- [x] (P2) [graphrag] Add domain-specific rule sets (legal, medical, technical, financial) to _extract_rule_based() — Done batch 20-21
+- [x] (P2) [graphrag] ExtractionConfig.custom_rules field for pluggable rule injection — Done batch 20-21
+- [x] (P2) [graphrag] Entity type conflict warning in _merge_ontologies() + higher-confidence type wins — Done batch 20-21
+- [x] (P2) [graphrag] add_missing_relationships refinement action in OntologyMediator.refine_ontology() — Done batch 20-21
+- [x] (P3) [arch] Replace bare except Exception in ontology_critic.py cache key computation — Done batch 21
+- [x] (P3) [arch] Replace bare except Exception in agentic/cli.py config file loading — Done batch 21
+- [x] (P3) [api] Replace **kwargs in validate_async() with typed optional parameters — Done batch 21
+- [x] (P2) [tests] OntologyCritic dimension evaluator boundary tests — Done batch 20-21: test_ontology_critic_dimensions.py (27 tests)
+- [x] (P2) [tests] OntologyGenerator helper method tests (infer_relationships, rule_based, merge) — Done batch 20-21: test_ontology_generator_helpers.py (34 tests)
+- [x] (P2) [tests] OntologyMediator refine_ontology action dispatch tests — Done batch 20-21: test_ontology_mediator_refinement.py (10 tests)
+- [ ] (P2) [arch] Wire MediatorState to extend BaseSession for unified session tracking
+- [ ] (P2) [tests] Fuzz tests for _extract_rule_based() with random/malformed text inputs
+- [ ] (P3) [perf] Benchmark _merge_ontologies() on 1000-entity ontologies
+- [ ] (P2) [graphrag] Add confidence decay for co-occurrence distance (entities >100 chars apart get lower confidence)
+- [ ] (P2) [tests] Property-based test: _merge_ontologies is idempotent (merging with itself returns same entity count)
+- [ ] (P2) [graphrag] LLM-based extraction fallback when rule-based confidence is too low (< threshold)
+- [ ] (P2) [agentic] ChangeController.create_change() — implement GitHub PR draft via github_control.py
+- [ ] (P2) [agentic] ChangeController.check_approval() — poll PR review status via GitHub API
+- [ ] (P3) [tests] Mutation testing pass on ontology_critic.py dimension evaluators (identify gaps)
+- [ ] (P2) [docs] Add type annotations to all remaining untyped methods in agentic/ (audit with mypy)
