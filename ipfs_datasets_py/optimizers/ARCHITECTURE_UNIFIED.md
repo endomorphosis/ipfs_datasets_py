@@ -509,3 +509,44 @@ optimizers/
 3. Are there other optimizer types planned?
 4. Should we create a migration tool for existing code?
 5. What is the timeline for completion?
+
+## Recent Improvements (2026-02-20)
+
+The following items from the original "planned / future work" list have been completed:
+
+### Typed Config Dataclasses
+- **`ExtractionConfig`** — replaces `Dict[str,Any]` config in `OntologyGenerationContext`;
+  auto-normalised in `__post_init__`, exported from `graphrag.__init__`
+- **`ProverConfig`** — replaces `Dict[str,Any]` prover_config in `LogicValidator`;
+  `from_dict()`/`to_dict()` helpers, accepted alongside plain dict
+- **`BackendConfig`** — replaces `Dict[str,Any]` backend_config in `OntologyCritic`;
+  `from_dict()`/`to_dict()` helpers, exported from `graphrag.__init__`
+
+### Memory Efficiency
+- `Entity`, `Relationship`, `EntityExtractionResult` now use `@dataclass(slots=True)`,
+  eliminating per-instance `__dict__` allocation
+
+### Metrics Wiring
+- `BaseOptimizer.__init__` now accepts an optional `metrics_collector`
+  (`PerformanceMetricsCollector`); `run_session()` calls `start_cycle`/`end_cycle`
+- `LogicTheoremOptimizer.__init__` forwards `metrics_collector` to `BaseOptimizer`
+- `BaseSession` gained `score_delta`, `avg_score`, `regression_count` properties
+  and they appear in `to_dict()` output
+
+### New Classes
+- **`OntologyPipelineHarness`** (`graphrag/ontology_harness.py`) — concrete
+  `BaseHarness` implementation for single-session graphrag pipeline; uses
+  `RefinementError` for typed error propagation
+- **`analyze_batch_parallel()`** on `OntologyOptimizer` — runs `_identify_patterns`,
+  `_compute_score_distribution`, and `_generate_recommendations` in a
+  `ThreadPoolExecutor`, identical results to `analyze_batch()`
+
+### Security
+- `exec(compiled, {})` in `agentic/validation.py` documented with SECURITY comment
+  explaining the empty-globals sandbox; marked `noqa: S102`
+
+### Testing
+- 359 tests passing (was 271 at start of session); 24 skipped; 0 failures
+- New test files: `test_new_implementations.py` (102 tests),
+  `test_ontology_schema_invariants.py` (11), `test_pipeline_harness_e2e.py` (16),
+  `test_metrics_wiring.py` (6)
