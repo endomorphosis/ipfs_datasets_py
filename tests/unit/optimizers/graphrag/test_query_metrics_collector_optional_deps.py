@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ipfs_datasets_py.optimizers.graphrag import query_optimizer as qo
+from ipfs_datasets_py.optimizers.graphrag import query_metrics
 
 
 def test_query_metrics_collector_track_resources_safe_without_psutil_process(monkeypatch):
@@ -9,8 +10,9 @@ def test_query_metrics_collector_track_resources_safe_without_psutil_process(mon
     class PsutilWithoutProcess:
         pass
 
-    monkeypatch.setattr(qo, "psutil", PsutilWithoutProcess(), raising=True)
-    monkeypatch.setattr(qo, "HAVE_PSUTIL", False, raising=True)
+    # Monkeypatch the query_metrics module since QueryMetricsCollector is now defined there
+    monkeypatch.setattr(query_metrics, "psutil", PsutilWithoutProcess(), raising=True)
+    monkeypatch.setattr(query_metrics, "HAVE_PSUTIL", False, raising=True)
 
     collector = qo.QueryMetricsCollector(track_resources=True)
     query_id = collector.start_query_tracking(query_params={"x": 1})
@@ -76,8 +78,9 @@ def test_query_metrics_collector_health_check_reports_process_memory(monkeypatch
         def Process():
             return _FakeProcess()
 
-    monkeypatch.setattr(qo, "psutil", _PsutilWithProcess(), raising=True)
-    monkeypatch.setattr(qo, "HAVE_PSUTIL", True, raising=True)
+    # Monkeypatch the query_metrics module since QueryMetricsCollector is now defined there
+    monkeypatch.setattr(query_metrics, "psutil", _PsutilWithProcess(), raising=True)
+    monkeypatch.setattr(query_metrics, "HAVE_PSUTIL", True, raising=True)
 
     collector = qo.QueryMetricsCollector(track_resources=False)
     health = collector.get_health_check()

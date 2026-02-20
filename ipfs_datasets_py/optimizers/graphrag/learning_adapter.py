@@ -7,8 +7,9 @@ behavior without changing existing data structures.
 
 from __future__ import annotations
 
+import datetime
 import time
-from typing import Any, Dict
+from typing import Any
 
 
 def apply_learning_hook(host: Any) -> None:
@@ -221,33 +222,39 @@ def increment_failure_counter(host: Any, error_message: str, is_critical: bool =
                 )
             else:
                 host.learning_metrics_collector.record_learning_cycle(
-                    cycle_id=f"cycle-error-{int(time.time())}",
+                    cycle_id=f"error-{int(time.time())}",
                     time_started=time.time(),
                     query_count=getattr(host, "_queries_since_last_learning", 0),
                     is_success=False,
-                    duration=0.0,
-                    results={"error": error_message},
+                    error=error_message,
                 )
         except Exception:
             pass
+    try:
+        if not hasattr(host, "_learning_failure_count"):
+            host._learning_failure_count = 0
 
-    if not hasattr(host, "_learning_failure_count"):
-        host._learning_failure_count = 0
+        if is_critical:
+            host._learning_failure_count += 1
+        else:
+            host._learning_failure_count += 0.25
 
-    if is_critical:
-        host._learning_failure_count += 1
-    else:
-        host._learning_failure_count += 0.25
+        failure_message = f"Learning failure {host._learning_failure_count}: {error_message}"
 
-    failure_message = f"Learning failure {host._learning_failure_count}: {error_message}"
+        threshold = getattr(host, "_circuit_breaker_threshold", 3)
 
-    threshold = getattr(host, "_circuit_breaker_threshold", 3)
-    if host._learning_failure_count >= threshold:
-        host._learning_circuit_breaker_tripped = True
-        backoff_minutes = min(60, 5 * (2 ** (int(host._learning_failure_count) - threshold)))
-        host._circuit_breaker_retry_time = time.time() + (backoff_minutes * 60)
+        if host._learning_failure_count >= threshold:
+            host._learning_circuit_breaker_tripped = True
 
-        print(f"Learning circuit breaker tripped: disabled for {backoff_minutes} minutes")
+            backoff_minutes = min(60, 5 * (2 ** (int(host._learning_failure_count) - threshold)))
+            host._circuit_breaker_retry_time = time.time() + (backoff_minutes * 60)
+
+            failure_message = (
+                f"{failure_message}. Circuit breaker tripped: "
+                f"learning disabled for {backoff_minutes} minutes"
+            )
+
+            print(f"Learning circuit breaker tripped: disabled for {backoff_minutes} minutes")
 
         if hasattr(host, "metrics_collector") and host.metrics_collector is not None:
             try:
@@ -256,29 +263,23 @@ def increment_failure_counter(host: Any, error_message: str, is_critical: bool =
                     value=failure_message,
                     category="error",
                 )
+
                 host.metrics_collector.record_additional_metric(
                     name="learning_failure_count",
                     value=host._learning_failure_count,
                     category="error",
                 )
+
                 if hasattr(host, "_learning_circuit_breaker_tripped") and host._learning_circuit_breaker_tripped:
                     host.metrics_collector.record_additional_metric(
-                        name="learning_circuit_breaker",
+                        name="circuit_breaker_tripped",
                         value=(
                             "Learning disabled until "
-                            f"{time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(host._circuit_breaker_retry_time))}"
+                            f"{datetime.datetime.fromtimestamp(host._circuit_breaker_retry_time).isoformat()}"
                         ),
                         category="error",
                     )
             except Exception:
                 pass
-    else:
-        if hasattr(host, "metrics_collector") and host.metrics_collector is not None:
-            try:
-                host.metrics_collector.record_additional_metric(
-                    name="learning_failure",
-                    value=failure_message,
-                    category="error",
-                )
-            except Exception:
-                pass
+    except Exception as exc:
+        print(f"Error in failure counting mechanism: {str(exc)}")
