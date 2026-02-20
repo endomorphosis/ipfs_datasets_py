@@ -1,7 +1,7 @@
 # Master Refactoring and Improvement Plan — Logic Module
 
 **Date:** 2026-02-20 (last updated)  
-**Version:** 11.0 (supersedes all previous plans)  
+**Version:** 12.0 (supersedes all previous plans)  
 **Status:** Phase 1 ✅ COMPLETE · Phase 2 🔄 In Progress · Phase 3 ✅ COMPLETE · Phase 4 🔄 Ongoing · Phase 5 ✅ COMPLETE · Phase 6 🔄 In Progress  
 **Scope:** `ipfs_datasets_py/logic/` and `tests/unit_tests/logic/`  
 **MCP Integration:** `ipfs_datasets_py/mcp_server/tools/logic_tools/`
@@ -733,24 +733,39 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] 139 new tests in `test_integration_coverage_session7.py` (all 139 pass)
 - [x] **TOTAL `integration/` coverage: 60% → 64%** (progress toward 70% ✅)
 
-**Remaining (target 70%+):**
+**Completed (2026-02-20 session 8):**
+- [x] Bug fixed: `deontological_reasoning_types.py` `DeonticConflict` missing `id` field — added `id: Optional[str] = None`
+- [x] Bug fixed: `proof_execution_engine.py` `ProofExecutionEngine` missing `prove`/`prove_with_all_available_provers`/`check_consistency` alias methods referenced by `proof_execution_engine_utils.py` public API
+- [x] `reasoning/_logic_verifier_backends_mixin.py` 44% → **96%**: `_check_consistency_symbolic` (consistent/inconsistent/unknown+fallback/unknown+no-fallback/exception), `_check_consistency_fallback` (no contradictions/with contradiction), `_check_entailment_symbolic` (yes/no/unknown+fallback/exception), `_check_entailment_fallback` (modus ponens/no entailment), `_generate_proof_symbolic` (with steps/exception), `_generate_proof_fallback` (modus ponens/failed)
+- [x] `reasoning/proof_execution_engine.py` 58% → **89%**: prove_deontic_formula (unavailable/unknown prover, no translator, translation failed, z3/cvc5/lean/coq dispatch, cache hit, rate limit exceeded, validation failed), prove_consistency (z3/cvc5/unsupported), prove_rule_set, prove_multiple_provers (empty/unavailable), get_prover_status (no provers/available prover/exception), _maybe_auto_install_provers (disabled/all available/missing but none enabled/subprocess triggered/exception), _env_truthy (true/false/default), _prover_cmd (z3/cvc5/coq/lean), _test_command (file not found), _get_translator (z3/lean/coq/unknown), _common_bin_dirs
+- [x] `reasoning/deontological_reasoning.py` 61% → **87%**: extract_statements (obligation/conditional/exception), _calculate_confidence (should vs must), _extract_context, _is_valid_entity_action (generic/short/valid), analyze_corpus_for_deontic_conflicts (empty/with text/error handling), _count_by_modality/entity, query_deontic_statements (entity/modality/keywords), query_conflicts (empty/by severity/by type)
+- [x] `reasoning/_deontic_conflict_mixin.py` 62% → **93%**: _check_statement_pair (PERMISSION_PROHIBITION/OBLIGATION_PROHIBITION/unrelated actions/CONDITIONAL_CONFLICT/JURISDICTIONAL), _generate_resolution_suggestions (jurisdictional/obligation-prohibition/conditional), _analyze_conflicts, _generate_entity_reports, _format_conflict_summary, _generate_analysis_recommendations (high severity/jurisdictional/conditional/no conflicts)
+- [x] `domain/medical_theorem_framework.py` 0% → **95%**: all dataclasses (MedicalEntity/TemporalConstraint/MedicalTheorem), MedicalTheoremGenerator (init/generate_from_clinical_trial with AE/calculate_confidence_from_frequency/_parse_time_frame/generate_from_pubmed_research), FuzzyLogicValidator.validate_theorem (TREATMENT_OUTCOME/ADVERSE_EVENT/unsupported), TimeSeriesTheoremValidator (with/without temporal_constraint), ConfidenceLevel+MedicalTheoremType enums
+- [x] `reasoning/logic_verification.py` 66% → **98%**: verify_formula_syntax (empty/valid/unbalanced/symbolic valid+invalid+unknown+exception), check_satisfiability (empty/contradiction/normal/symbolic unsatisfiable+satisfiable+unknown+exception), check_validity (empty/tautology/non-tautology/symbolic valid+invalid+unknown+exception), generate_proof (modus ponens/cache hit), check_consistency (empty/fallback), check_entailment (empty premises), add_axiom (valid/duplicate/invalid syntax), _initialize_proof_rules
+- [x] `reasoning/logic_verification_utils.py` 72% → **100%**: validate_formula_syntax (valid/empty/unbalanced/extra close), parse_proof_steps (valid 3 steps/empty/no matches), get_basic_proof_rules, are_contradictory (P/¬P, P/Q, " ¬P "/P, P/" ¬P "), create_logic_verifier
+- [x] `reasoning/proof_execution_engine_utils.py` 57% → **100%**: create_proof_engine, prove_formula, prove_with_all_provers, check_consistency, get_lean_template, get_coq_template, __all__ exports
+- [x] `symbolic/neurosymbolic/reasoning_coordinator.py` 68% → **75%**: init (no embeddings/with embeddings init), prove (returns CoordinatedResult), _choose_strategy (simple/medium+no embeddings/complex+no embeddings), _prove_neural (falls back to symbolic), _prove_hybrid (no embeddings → HYBRID strategy), _prove_symbolic (with axioms), get_capabilities
+- [x] `symbolic/symbolic_logic_primitives.py` 62% → **63%**: create_logic_symbol, get_available_primitives, _fallback_to_fol (all/every/some+are/some+no-split/if+then/if+no-then/or/default/prolog/tptp), _fallback_extract_quantifiers (universal/none), _fallback_extract_predicates, _fallback_logical_and/or/implies/negate, _fallback_analyze_structure, _fallback_simplify, are_contradictory whitespace branches
+- [x] 202 new tests in `test_integration_coverage_session8.py` (all 202 pass)
+- [x] **TOTAL `integration/` coverage: 64% → 70%** ✅ TARGET REACHED
+
+**Remaining (target 80%+):**
 - [ ] `bridges/external_provers.py` — 0%; requires E-prover/Vampire binaries
 - [ ] `bridges/prover_installer.py` — 0%; requires system binary installation
 - [ ] `domain/caselaw_bulk_processor.py` — 27%; requires database
-- [ ] `domain/medical_theorem_framework.py` — 0%; demo/optional module
 - [ ] `domain/symbolic_contracts.py` — 56%; pydantic/SymbolicAI-available branch
-- [ ] `reasoning/_logic_verifier_backends_mixin.py` — 44%; SymbolicAI-dependent paths
-- [ ] `reasoning/proof_execution_engine.py` — 58%; binary-calling paths need mocking
-- [ ] `symbolic/symbolic_logic_primitives.py` — 62%; complex type system paths
+- [ ] `symbolic/symbolic_logic_primitives.py` — 63%; SymbolicAI-dependent paths (103 lines) unreachable without symai
+- [ ] `symbolic/neurosymbolic/reasoning_coordinator.py` — 75%; embedding paths need full mocking
 - [ ] E2E test: legal text → TDFOL formula → proof → MCP response chain
-- [ ] `integration/` coverage: 64% → 70%+
+- [ ] `integration/` coverage: 70% → 80%+
 
 **Acceptance Criteria:**
 - [x] 15+ integration tests for TDFOL↔CEC cross-module interactions ✅ (via earlier sessions)
 - [x] `integration/` coverage ≥ 50% ✅ (51% as of session 5)
 - [x] `integration/` coverage ≥ 60% ✅ (60% as of session 6, 64% as of session 7)
+- [x] `integration/` coverage ≥ 70% ✅ (70% as of session 8)
 - [ ] E2E test: legal text → TDFOL formula → proof → MCP response chain
-- [ ] `integration/` coverage: 64% → 70%+
+- [ ] `integration/` coverage: 70% → 80%+
 
 ### 9.4 TDFOL Public API Docstrings
 
@@ -994,7 +1009,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 |-----------|---------|----------------|----------------|
 | TDFOL Core | 91.5% pass | 95% pass | 97% pass |
 | CEC Native | 80-85% pass | 90% pass | 93% pass |
-| Integration | ~64% coverage | 80% pass | 90% pass |
+| Integration | ~70% coverage | 80% pass | 90% pass |
 | NL Processing | 75% pass | 85% pass | 90% pass |
 | ZKP (simulation) | 80% pass | 85% pass | 85% pass |
 | MCP Tools | 167+ tests | 200+ tests | 250+ tests |
@@ -1003,7 +1018,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Phase 2.2 TDFOL NL (spaCy); Phase 6.3 integration coverage (64%→70%); `reasoning/_logic_verifier_backends_mixin.py` 44%→70%; `reasoning/proof_execution_engine.py` 58%→75%; E2E tests  
+**Next Action:** Phase 2.2 TDFOL NL (spaCy); Phase 6.3 integration coverage (70%→80%); `symbolic/symbolic_logic_primitives.py` 63%→70%+ (requires mocking SymbolicAI); `symbolic/neurosymbolic/reasoning_coordinator.py` 75%→85%; E2E tests  
 **Review Schedule:** After each phase completion, update this document  
 **Created:** 2026-02-19 | **Last Updated:** 2026-02-20  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)

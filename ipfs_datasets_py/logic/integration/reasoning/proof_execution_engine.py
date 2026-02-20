@@ -439,6 +439,18 @@ class ProofExecutionEngine(ProverBackendMixin):
 
         return status
 
+    def prove(self, formula, prover: Optional[str] = None, **kwargs):
+        """Alias for prove_deontic_formula for API compatibility."""
+        return self.prove_deontic_formula(formula, prover=prover, **kwargs)
+
+    def prove_with_all_available_provers(self, formula) -> List:
+        """Alias for prove_multiple_provers for API compatibility."""
+        return list(self.prove_multiple_provers(formula).values())
+
+    def check_consistency(self, rule_set, prover: str = "z3"):
+        """Alias for prove_consistency for API compatibility."""
+        return self.prove_consistency(rule_set, prover=prover)
+
 
 # Import convenience functions from utils for backward compatibility
 from .proof_execution_engine_utils import (
