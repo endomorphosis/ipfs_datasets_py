@@ -488,6 +488,64 @@ class FederatedQueryExecutor:
             errors=errors,
         )
 
+    async def execute_cypher_async(
+        self,
+        query: str,
+        params: Optional[Dict[str, Any]] = None,
+    ) -> FederatedQueryResult:
+        """Execute a Cypher query across all partitions asynchronously.
+
+        Runs the synchronous :meth:`execute_cypher` in an executor so the
+        event loop remains unblocked.  Results are identical to
+        :meth:`execute_cypher`.
+
+        Args:
+            query:  Cypher query string.
+            params: Optional query parameters.
+
+        Returns:
+            :class:`FederatedQueryResult` with merged, deduplicated records.
+        """
+        import asyncio
+
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.execute_cypher, query, params)
+
+    def lookup_entity(self, entity_id: str) -> Optional[Any]:
+        """Find an entity by ID across all partitions.
+
+        Searches each partition in order and returns the first matching entity
+        object.  Because the partitioner may replicate cross-partition edges,
+        the same entity could appear in multiple partitions; only the first
+        hit is returned.
+
+        Args:
+            entity_id: Entity ID to look up.
+
+        Returns:
+            The entity object, or ``None`` if the ID is not found in any
+            partition.
+        """
+        for partition_kg in self.distributed_graph.partitions:
+            entity = partition_kg.entities.get(entity_id)
+            if entity is not None:
+                return entity
+        return None
+
+    def lookup_entity_partition(self, entity_id: str) -> Optional[int]:
+        """Return the **index** of the first partition that contains *entity_id*.
+
+        Args:
+            entity_id: Entity ID to locate.
+
+        Returns:
+            Zero-based partition index, or ``None`` if not found.
+        """
+        for i, partition_kg in enumerate(self.distributed_graph.partitions):
+            if entity_id in partition_kg.entities:
+                return i
+        return None
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------

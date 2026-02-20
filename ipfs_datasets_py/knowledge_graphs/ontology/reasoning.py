@@ -60,6 +60,7 @@ from __future__ import annotations
 
 import copy
 import logging
+import re
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
@@ -127,6 +128,8 @@ class OntologySchema:
         self.domain_map: Dict[str, str] = {}
         self.range_map: Dict[str, str] = {}
         self.disjoint_map: Dict[str, Set[str]] = {}
+        # OWL 2 property chain axioms: list of (chain_props, result_property)
+        self.property_chains: List[Tuple[List[str], str]] = []
 
     # ------------------------------------------------------------------
     # Builder API
@@ -244,6 +247,150 @@ class OntologySchema:
         self.disjoint_map.setdefault(class_b, set()).add(class_a)
         return self
 
+    def add_property_chain(
+        self, chain: List[str], result_property: str
+    ) -> "OntologySchema":
+        """Declare an OWL 2 property chain axiom.
+
+        A property chain axiom states that a path of the form
+        ``(A, chain[0], B0), (B0, chain[1], B1), …, (B_{n-1}, chain[-1], C)``
+        implies the inferred relationship ``(A, result_property, C)``.
+
+        The chain must contain at least two properties.
+
+        Args:
+            chain:           Ordered list of property names forming the chain
+                             (minimum length 2).
+            result_property: Name of the resulting (inferred) property.
+
+        Returns:
+            ``self`` for chaining.
+
+        Raises:
+            ValueError: If *chain* contains fewer than two elements.
+
+        Example::
+
+            schema.add_property_chain(["hasMother", "hasMother"], "hasMaternalGrandmother")
+            schema.add_property_chain(["isPartOf", "isPartOf"], "isPartOf")  # transitive via chain
+        """
+        if len(chain) < 2:
+            raise ValueError(
+                "Property chain must contain at least two properties; "
+                f"got {chain!r}."
+            )
+        self.property_chains.append((list(chain), result_property))
+        return self
+
+    # ------------------------------------------------------------------
+    # Serialization
+    # ------------------------------------------------------------------
+
+    def to_turtle(self) -> str:
+        """Serialise the schema to Turtle / N-Triples notation.
+
+        The result uses the ``rdfs:`` and ``owl:`` prefixes and a local
+        ``urn:ontology:`` base URI (``:``) for all named terms.
+
+        Returns:
+            Turtle string that can be written to a ``.ttl`` file or round-
+            tripped via :meth:`from_turtle`.
+        """
+        lines: List[str] = [
+            "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
+            "@prefix owl:  <http://www.w3.org/2002/07/owl#> .",
+            "@prefix :     <urn:ontology:> .",
+            "",
+        ]
+        for child, parents in sorted(self.subclass_map.items()):
+            for parent in sorted(parents):
+                lines.append(f":{child} rdfs:subClassOf :{parent} .")
+        for child, parents in sorted(self.subproperty_map.items()):
+            for parent in sorted(parents):
+                lines.append(f":{child} rdfs:subPropertyOf :{parent} .")
+        for prop in sorted(self.transitive):
+            lines.append(f":{prop} a owl:TransitiveProperty .")
+        for prop in sorted(self.symmetric):
+            lines.append(f":{prop} a owl:SymmetricProperty .")
+        seen_inv: Set[FrozenSet[str]] = set()
+        for prop, inv_prop in sorted(self.inverse_map.items()):
+            pair: FrozenSet[str] = frozenset({prop, inv_prop})
+            if pair not in seen_inv:
+                seen_inv.add(pair)
+                lines.append(f":{prop} owl:inverseOf :{inv_prop} .")
+        for prop, domain_cls in sorted(self.domain_map.items()):
+            lines.append(f":{prop} rdfs:domain :{domain_cls} .")
+        for prop, range_cls in sorted(self.range_map.items()):
+            lines.append(f":{prop} rdfs:range :{range_cls} .")
+        seen_disj: Set[FrozenSet[str]] = set()
+        for cls_a, classes in sorted(self.disjoint_map.items()):
+            for cls_b in sorted(classes):
+                pair = frozenset({cls_a, cls_b})
+                if pair not in seen_disj:
+                    seen_disj.add(pair)
+                    lines.append(f":{cls_a} owl:disjointWith :{cls_b} .")
+        for chain_props, result_prop in self.property_chains:
+            chain_str = " ".join(f":{p}" for p in chain_props)
+            lines.append(f":{result_prop} owl:propertyChainAxiom ( {chain_str} ) .")
+        return "\n".join(lines) + "\n"
+
+    @classmethod
+    def from_turtle(cls, text: str) -> "OntologySchema":
+        """Parse a Turtle string produced by :meth:`to_turtle`.
+
+        Only the subset of Turtle understood by this class is recognised
+        (local prefix ``:``, predicate keywords, and property-chain lists).
+        Full Turtle or OWL/RDF files with arbitrary syntax are not supported.
+
+        Args:
+            text: Turtle string (as produced by :meth:`to_turtle`).
+
+        Returns:
+            New :class:`OntologySchema` populated from the declarations.
+        """
+        schema = cls()
+        # Match triples of the form ":Subject Predicate Object ."
+        # The non-greedy `(.+?)` object group is intentional: to_turtle()
+        # generates one logical triple per line and never embeds literal dots
+        # in the object value, so the trailing `\.\s*$` anchor is safe.
+        # Full Turtle files with multi-line statements are not supported.
+        triple_re = re.compile(
+            r"^:(\S+)\s+([\w:]+)\s+(.+?)\s*\.\s*$"
+        )
+        for raw_line in text.splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or line.startswith("@prefix"):
+                continue
+            m = triple_re.match(line)
+            if not m:
+                continue
+            subject, predicate, obj = m.group(1), m.group(2), m.group(3).strip()
+            # Strip leading ':' from simple object names
+            obj_name = obj.lstrip(":").strip()
+
+            if predicate == "rdfs:subClassOf":
+                schema.add_subclass(subject, obj_name)
+            elif predicate == "rdfs:subPropertyOf":
+                schema.add_subproperty(subject, obj_name)
+            elif predicate == "a" and obj_name == "owl:TransitiveProperty":
+                schema.add_transitive(subject)
+            elif predicate == "a" and obj_name == "owl:SymmetricProperty":
+                schema.add_symmetric(subject)
+            elif predicate == "owl:inverseOf":
+                schema.add_inverse(subject, obj_name)
+            elif predicate == "rdfs:domain":
+                schema.add_domain(subject, obj_name)
+            elif predicate == "rdfs:range":
+                schema.add_range(subject, obj_name)
+            elif predicate == "owl:disjointWith":
+                schema.add_disjoint(subject, obj_name)
+            elif predicate == "owl:propertyChainAxiom":
+                # Parse "( :p1 :p2 … )"
+                chain = re.findall(r":(\w+)", obj)
+                if len(chain) >= 2:
+                    schema.add_property_chain(chain, subject)
+        return schema
+
     # ------------------------------------------------------------------
     # Query helpers
     # ------------------------------------------------------------------
@@ -333,6 +480,7 @@ class OntologyReasoner:
             new_facts += self._apply_inverse(result_kg, Relationship)
             new_facts += self._apply_domain(result_kg, Entity)
             new_facts += self._apply_range(result_kg, Entity)
+            new_facts += self._apply_property_chains(result_kg, Relationship)
 
             if new_facts == 0:
                 logger.debug(
@@ -589,6 +737,82 @@ class OntologyReasoner:
     # ------------------------------------------------------------------
     # Consistency checks
     # ------------------------------------------------------------------
+
+    def _apply_property_chains(self, kg: Any, Relationship: Any) -> int:
+        """Apply OWL 2 property chain axioms.
+
+        For each chain ``[p1, p2, …, pn] → result``, if there exists a path::
+
+            (A, p1, B1), (B1, p2, B2), …, (B_{n-1}, pn, C)
+
+        then ``(A, result, C)`` is inferred and added to *kg*.
+
+        Args:
+            kg:           :class:`KnowledgeGraph` to augment.
+            Relationship: The :class:`Relationship` class (injected for
+                          testability).
+
+        Returns:
+            Number of new relationships added.
+        """
+        new_count = 0
+        for chain_props, result_prop in self.schema.property_chains:
+            if len(chain_props) < 2:
+                continue
+            # Build adjacency list for each step in the chain
+            adjs: List[Dict[str, Set[str]]] = []
+            for prop in chain_props:
+                adj: Dict[str, Set[str]] = {}
+                for rel in kg.relationships.values():
+                    if rel.relationship_type == prop:
+                        adj.setdefault(rel.source_id, set()).add(rel.target_id)
+                adjs.append(adj)
+
+            # Follow each chain starting from nodes that appear in adjs[0].
+            # adjs is built from kg.relationships above and is not mutated
+            # during this loop, so iterating keys() directly is safe.
+            for start_id in adjs[0].keys():
+                frontier: Set[str] = {start_id}
+                valid = True
+                for adj in adjs:
+                    next_frontier: Set[str] = set()
+                    for node in frontier:
+                        next_frontier.update(adj.get(node, set()))
+                    frontier = next_frontier
+                    if not frontier:
+                        valid = False
+                        break
+
+                if not valid:
+                    continue
+
+                for end_id in frontier:
+                    # Exclude self-loops: a property chain should not infer a
+                    # reflexive relationship on the same start node unless the
+                    # ontology explicitly declares reflexivity.
+                    if end_id == start_id:
+                        continue
+                    if self._rel_exists(kg, start_id, end_id, result_prop):
+                        continue
+                    src_ent = kg.entities.get(start_id)
+                    tgt_ent = kg.entities.get(end_id)
+                    if not src_ent or not tgt_ent:
+                        continue
+                    new_rel = Relationship(
+                        relationship_type=result_prop,
+                        source_entity=src_ent,
+                        target_entity=tgt_ent,
+                        confidence=0.8,
+                        properties={
+                            "inferred": True,
+                            "rule": "property_chain",
+                            "chain": chain_props,
+                        },
+                    )
+                    kg.add_relationship(new_rel)
+                    new_count += 1
+
+        return new_count
 
     def _check_disjoint_classes(self, kg: Any) -> List[ConsistencyViolation]:
         violations: List[ConsistencyViolation] = []

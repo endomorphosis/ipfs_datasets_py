@@ -225,8 +225,9 @@ kg = extractor.extract_knowledge_graph(text)
 
 ### 9. Semantic Role Labeling (SRL)
 
-**Status:** ✅ Implemented (v2.5.0 — 2026-02-20)
-**Location:** `extraction/srl.py` — `SRLExtractor`, `SRLFrame`, `RoleArgument`
+**Status:** ✅ Implemented (v2.5.0 — 2026-02-20); deepened (2026-02-20 session 3)
+**Location:** `extraction/srl.py` — `SRLExtractor`, `SRLFrame`, `RoleArgument`;
+             `extraction/extractor.py` — `KnowledgeGraphExtractor`
 **Implementation:**
 - `SRLExtractor.extract_srl(text)` → list of `SRLFrame` objects (one per predicate)
 - Heuristic backend: pure-Python SVO + modifier extraction (no external deps)
@@ -235,18 +236,29 @@ kg = extractor.extract_knowledge_graph(text)
 - `SRLExtractor.to_knowledge_graph(frames)` → event-centric `KnowledgeGraph` (Event nodes + typed role relationships)
 - `SRLExtractor.extract_to_triples(text)` → `(subject, predicate, object)` tuples
 - Graceful fallback: always works even without spaCy or any ML model
+- **Integration** (session 3): `KnowledgeGraphExtractor(use_srl=True)` merges SRL triples into
+  every `extract_knowledge_graph()` call via `_merge_srl_into_kg()`
+- **Standalone** (session 3): `extractor.extract_srl_knowledge_graph(text)` returns a
+  pure event-centric KG without entity/relationship extraction
 
 **Example (now works):**
 ```python
 from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+from ipfs_datasets_py.knowledge_graphs.extraction.extractor import KnowledgeGraphExtractor
 
-ext = SRLExtractor()                     # heuristic mode
-frames = ext.extract_srl("Alice sent the report to Bob yesterday.")
-kg = ext.to_knowledge_graph(frames)      # Event + Agent + Patient + Time entities
-triples = ext.extract_to_triples(text)   # (subject, predicate, object) list
+# Standalone SRL
+ext_srl = SRLExtractor()
+frames = ext_srl.extract_srl("Alice sent the report to Bob yesterday.")
+kg = ext_srl.to_knowledge_graph(frames)
+
+# Integrated SRL enrichment
+ext = KnowledgeGraphExtractor(use_srl=True)
+kg2 = ext.extract_knowledge_graph("Alice sent Bob a report.")  # SRL triples merged
+kg3 = ext.extract_srl_knowledge_graph("Alice taught Bob.")     # event-centric only
 ```
 
-**Tests:** `tests/unit/knowledge_graphs/test_srl_ontology_distributed.py` (12 tests)
+**Tests:** `tests/unit/knowledge_graphs/test_srl_ontology_distributed.py` (12 tests),
+           `tests/unit/knowledge_graphs/test_srl_ontology_distributed_cont.py` (7 tests)
 
 ---
 
@@ -290,10 +302,14 @@ result = reasoner.reason_across_documents(documents, query="Who collaborated wit
 
 ### 12. Inference Rules and Ontology Reasoning
 
-**Status:** ✅ Implemented (v3.0.0 — 2026-02-20)
+**Status:** ✅ Implemented (v3.0.0 — 2026-02-20); deepened (2026-02-20 session 3)
 **Location:** `ontology/reasoning.py` — `OntologySchema`, `OntologyReasoner`, `ConsistencyViolation`
 **Implementation:**
 - `OntologySchema` builder: `add_subclass`, `add_subproperty`, `add_transitive`, `add_symmetric`, `add_inverse`, `add_domain`, `add_range`, `add_disjoint`
+- **OWL 2 property chains** (session 3): `add_property_chain(chain, result_property)` — declares
+  `owl:propertyChainAxiom`; materialized during the fixpoint loop
+- **Turtle serialization** (session 3): `to_turtle()` and `from_turtle(text)` — round-trip OWL/RDFS
+  declarations in Turtle format without needing `rdflib`
 - `OntologyReasoner.materialize(kg)` — runs a fixpoint loop applying all declared rules
   - **subClassOf** — nodes gain inferred super-class types (stored in `entity.properties["inferred_types"]`)
   - **subPropertyOf** — new relationships generated for each declared super-property
@@ -302,6 +318,7 @@ result = reasoner.reason_across_documents(documents, query="Who collaborated wit
   - **inverseOf** — inverse-direction relationships generated
   - **domain** — source nodes of a property gain the declared domain class
   - **range** — target nodes of a property gain the declared range class
+  - **propertyChainAxiom** (session 3) — multi-step chain inference
 - `OntologyReasoner.check_consistency(kg)` — detects disjoint class violations and negative assertion conflicts
 
 **Example (now works):**
@@ -315,19 +332,28 @@ schema.add_symmetric("isSiblingOf")
 schema.add_inverse("isManagerOf", "isManagedBy")
 schema.add_domain("worksAt", "Person")
 schema.add_range("worksAt", "Organization")
+# OWL 2 property chain axiom
+schema.add_property_chain(["hasMother", "hasMother"], "hasMaternalGrandmother")
 
 reasoner = OntologyReasoner(schema)
 kg2 = reasoner.materialize(kg)          # returns augmented copy
 violations = reasoner.check_consistency(kg2)
+
+# Serialize / deserialize
+turtle_str = schema.to_turtle()
+schema2 = OntologySchema.from_turtle(turtle_str)  # round-trip
 ```
 
-**Tests:** `tests/unit/knowledge_graphs/test_srl_ontology_distributed.py` (11 tests)
+**Tests:** `tests/unit/knowledge_graphs/test_srl_ontology_distributed.py` (11 tests),
+           `tests/unit/knowledge_graphs/test_srl_ontology_distributed_cont.py` (12 tests)
 
 ---
 
 ### 13. Distributed Query Execution
 
-**Status:** ✅ Implemented (v3.0.0 — 2026-02-20)
+### 13. Distributed Query Execution
+
+**Status:** ✅ Implemented (v3.0.0 — 2026-02-20); deepened (2026-02-20 session 3)
 **Location:** `query/distributed.py` — `GraphPartitioner`, `DistributedGraph`, `FederatedQueryExecutor`
 **Implementation:**
 - `GraphPartitioner(num_partitions, strategy)` — partitions a `KnowledgeGraph` into N shards
@@ -340,6 +366,9 @@ violations = reasoner.check_consistency(kg2)
 - `FederatedQueryExecutor(dist_graph)` — fan-out Cypher query execution
   - `execute_cypher(query)` — serial fan-out, merge + deduplicate
   - `execute_cypher_parallel(query, max_workers)` — thread-pool fan-out
+  - **`execute_cypher_async(query)`** (session 3) — asyncio-native wrapper
+  - **`lookup_entity(entity_id)`** (session 3) — cross-partition O(partitions) entity lookup
+  - **`lookup_entity_partition(entity_id)`** (session 3) — returns partition index or None
   - Each partition gets its own in-memory `GraphEngine` populated from partition nodes/rels
   - Deduplication uses SHA1 fingerprint of serialised record dicts
 
@@ -350,14 +379,24 @@ from ipfs_datasets_py.knowledge_graphs.query.distributed import (
 )
 
 dist = GraphPartitioner(num_partitions=4, strategy=PartitionStrategy.HASH).partition(kg)
-result = FederatedQueryExecutor(dist).execute_cypher(
-    "MATCH (n:Person) WHERE n.age > 30 RETURN n.name, n.age"
-)
+executor = FederatedQueryExecutor(dist)
+
+# Synchronous fan-out
+result = executor.execute_cypher("MATCH (n:Person) WHERE n.age > 30 RETURN n.name, n.age")
 for row in result.records:
     print(row)
+
+# Async fan-out
+import asyncio
+result = asyncio.run(executor.execute_cypher_async("MATCH (n:Person) RETURN n"))
+
+# Cross-partition entity lookup
+entity = executor.lookup_entity(some_entity_id)  # returns entity or None
+part_idx = executor.lookup_entity_partition(some_entity_id)  # returns int or None
 ```
 
-**Tests:** `tests/unit/knowledge_graphs/test_srl_ontology_distributed.py` (15 tests)
+**Tests:** `tests/unit/knowledge_graphs/test_srl_ontology_distributed.py` (15 tests),
+           `tests/unit/knowledge_graphs/test_srl_ontology_distributed_cont.py` (7 tests)
 
 ---
 
