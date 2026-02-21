@@ -5489,6 +5489,32 @@ class OntologyGenerator:
 
         return {"q1": _percentile(0.25), "q2": _percentile(0.50), "q3": _percentile(0.75)}
 
+    def relationship_confidence_mean(self, result: Any) -> float:
+        """Return the mean confidence of all relationships in *result*.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float mean; 0.0 when no relationships are present.
+        """
+        rels = result.relationships if result.relationships else []
+        if not rels:
+            return 0.0
+        return sum(getattr(r, "confidence", 1.0) for r in rels) / len(rels)
+
+    def entities_above_confidence(self, result: Any, threshold: float = 0.7) -> list:
+        """Return entities whose confidence exceeds *threshold*.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+            threshold: Minimum confidence (exclusive).
+
+        Returns:
+            List of :class:`Entity` objects; empty list when none qualify.
+        """
+        return [e for e in (result.entities or []) if e.confidence > threshold]
+
 
 __all__ = [
     'OntologyGenerator',

@@ -3536,6 +3536,24 @@ class OntologyCritic(BaseCritic):
         k = max(0, min(k, len(dims_sorted)))
         return [d for d, _ in dims_sorted[:k]]
 
+    def dimension_improvement_rate(
+        self, before: "CriticScore", after: "CriticScore"
+    ) -> float:
+        """Return the fraction of dimensions that improved from *before* to *after*.
+
+        Args:
+            before: Earlier :class:`CriticScore`.
+            after: Later :class:`CriticScore`.
+
+        Returns:
+            Float in [0, 1]; 0.0 when no dimensions improved.
+        """
+        improved = sum(
+            1 for d in self._DIMENSIONS
+            if getattr(after, d, 0.0) > getattr(before, d, 0.0)
+        )
+        return improved / len(self._DIMENSIONS)
+
 
 # Export public API
 __all__ = [

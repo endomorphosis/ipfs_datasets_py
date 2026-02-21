@@ -3013,6 +3013,41 @@ class OntologyOptimizer:
             result.append(current_max)
         return result
 
+    def score_cumulative_min(self) -> list:
+        """Return the running minimum of average_score across history.
+
+        Each position *i* in the returned list is the minimum ``average_score``
+        seen in entries ``[0 … i]``.
+
+        Returns:
+            List of floats with the same length as ``_history``; empty list
+            when there is no history.
+        """
+        if not self._history:
+            return []
+        result = []
+        current_min = float("inf")
+        for entry in self._history:
+            current_min = min(current_min, entry.average_score)
+            result.append(current_min)
+        return result
+
+    def history_below_median_count(self) -> int:
+        """Return the number of history entries with average_score below the median.
+
+        Returns:
+            Integer count; 0 when fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        if n % 2 == 1:
+            median = scores[n // 2]
+        else:
+            median = (scores[n // 2 - 1] + scores[n // 2]) / 2.0
+        return sum(1 for e in self._history if e.average_score < median)
+
 
 # Export public API
 __all__ = [

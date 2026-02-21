@@ -2571,6 +2571,31 @@ class LogicValidator:
         # Each triangle A→B→C→A is counted 3 times (once per starting node)
         return count // 3
 
+    def leaf_node_count(self, ontology: Any) -> int:
+        """Return the number of leaf nodes (no outgoing relationships).
+
+        Args:
+            ontology: Ontology with ``relationships`` list; each item must have
+                ``source_id`` and ``target_id``.
+
+        Returns:
+            Integer count of nodes that appear only as targets (never as
+            sources) or isolated nodes with no relationships at all.
+        """
+        rels = getattr(ontology, "relationships", [])
+        all_nodes: set = set()
+        source_nodes: set = set()
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src:
+                all_nodes.add(src)
+                source_nodes.add(src)
+            if tgt:
+                all_nodes.add(tgt)
+        # leaf = in all_nodes but never a source
+        return len(all_nodes - source_nodes)
+
 
 # Export public API
 __all__ = [
