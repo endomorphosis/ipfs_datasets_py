@@ -939,6 +939,9 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] 1 production bug fixed session 28: `batch_processing.py` line 112 `_anyio_gather(tasks)` → `_anyio_gather(*tasks)` (list was passed as single argument, causing "object list can't be used in 'await' expression" error — 7 batch processing tests now pass instead of failing)
 - [x] Integration tests: 50 new tests session 28 (63 test classes covering TDFOL↔CEC cross-module interactions, E2E legal NL→TDFOL→CEC pipeline, grammar bridge NL API, DeonticRuleSet cross-module, integration converters+translators, batch processing regression, package exports, async document consistency E2E); 2907 integration tests passing (was 2857)
 - [x] **Logic test suite: 5905 passing, 300 skipped, 4 pre-existing failures** ✅ SESSION 28
+- [x] 2 production bugs fixed session 29: (1) `CEC/native/inference_rules/temporal.py` — ALL 15 rules broken because `f.operator.value == "ALWAYS"` compared string "ALWAYS" against `TemporalOperator.ALWAYS.value` which is `'□'` → fixed to `f.operator == TemporalOperator.ALWAYS` etc.; (2) `CEC/native/inference_rules/deontic.py` — ALL 7 rules broken: `hasattr(f, 'operand')` but `DeonticFormula` uses `.formula`; `Operator.IMPLIES` undefined; `apply()` returned `(ProofResult.SUCCESS, [...])` tuples instead of `List[Formula]`; used abstract `Formula(...)` factory → rewrote all rules using `isinstance(f, DeonticFormula)`, `f.formula`, `DeonticFormula(op, f)`, `ConnectiveFormula(connective, [f1,f2])`, return `[result]`
+- [x] 88 new tests session 29 in `tests/unit_tests/logic/CEC/native/test_temporal_deontic_inference_rules.py`: 15 temporal rule classes (can_apply true/false + apply structure) + 7 deontic rule classes + 4 chaining tests + 4 export tests; temporal.py 22%→100%, deontic.py 21%→98%
+- [x] **Logic test suite: 5993 passing, 300 skipped, 4 pre-existing failures** ✅ SESSION 29
 - [ ] TDFOL NL test failures (~65 skipped) — requires spaCy
 - [ ] Integration test coverage: remaining 55 lines (dead code confirmed: lines 79/397/474/529-530 unreachable; symai-gated: 69-72/138/339/421/523-673/116/206/256/305/335/368/398/434/478/506-507)
 
@@ -1046,6 +1049,8 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | TDFOL Core | 91.5% pass | 95% pass | 97% pass |
 | CEC Native | 80-85% pass | 90% pass | 93% pass |
 | Integration | ~91% coverage | 88%+ ✅ | 90% ✅ 91%✅ 92%✅ 93%✅ 94%✅ 94.5%✅ 97%✅ 99%✅ 99%(55 uncovered)✅ |
+| CEC temporal rules | 22% | 100% | 100%✅ (session 29: 15 rules fixed) |
+| CEC deontic rules | 21% | 100% | 98%✅ (session 29: 7 rules fixed) |
 | NL Processing | 75% pass | 85% pass | 90% pass |
 | ZKP (simulation) | 80% pass | 85% pass | 85% pass |
 | MCP Tools | 167+ tests | 200+ tests | 250+ tests |
@@ -1054,7 +1059,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Session 28 complete. Logic test suite: 5905 passing, 300 skipped, 4 pre-existing failures. Integration: 2907 passing (was 2857). Production bug fixed: batch_processing.py `_anyio_gather(tasks)` → `_anyio_gather(*tasks)`. 50 new E2E and TDFOL↔CEC cross-module tests. Remaining 55 uncovered integration lines confirmed dead code or symai-gated. Next: TDFOL NL improvement (5.2) if spaCy available; Phase 4 CI baseline wiring; E2E stress tests.
+**Next Action:** Session 29 complete. Logic test suite: 5993 passing (+88), 300 skipped, 4 pre-existing failures. 2 critical production bugs fixed: `temporal.py` (all 15 rules broke on `.value == "ALWAYS"` string vs `'□'` enum value) + `deontic.py` (all 7 rules broke on wrong attr names/undefined refs/wrong return types/abstract factory). temporal.py 22%→100%, deontic.py 21%→98%. 88 new tests cover all 15 temporal and 7 deontic rules with chaining and export verification. Next: CEC cognitive rules coverage (35%); TDFOL NL improvement (5.2) if spaCy available; Phase 4 CI baseline wiring.
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 28)  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 29)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
