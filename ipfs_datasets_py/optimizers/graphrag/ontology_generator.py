@@ -3958,6 +3958,74 @@ class OntologyGenerator:
         """
         return {e.id: e.confidence for e in result.entities}
 
+    def average_confidence(self, result: "EntityExtractionResult") -> float:
+        """Return the mean confidence across all entities in *result*.
+
+        Args:
+            result: :class:`EntityExtractionResult`.
+
+        Returns:
+            Mean confidence float; ``0.0`` when there are no entities.
+        """
+        if not result.entities:
+            return 0.0
+        return sum(e.confidence for e in result.entities) / len(result.entities)
+
+    def high_confidence_entities(
+        self,
+        result: "EntityExtractionResult",
+        threshold: float = 0.8,
+    ) -> list:
+        """Return entities whose confidence is >= *threshold*.
+
+        Args:
+            result: :class:`EntityExtractionResult`.
+            threshold: Minimum confidence to include (default 0.8).
+
+        Returns:
+            List of :class:`Entity` objects passing the threshold.
+        """
+        return [e for e in result.entities if e.confidence >= threshold]
+
+    def entities_by_type(
+        self,
+        result: "EntityExtractionResult",
+        entity_type: str,
+    ) -> list:
+        """Return all entities of a specific *entity_type*.
+
+        Args:
+            result: :class:`EntityExtractionResult`.
+            entity_type: Type string to filter by.
+
+        Returns:
+            List of :class:`Entity` objects with matching ``entity_type``.
+        """
+        return [e for e in result.entities if e.entity_type == entity_type]
+
+    def deduplicate_entities(
+        self,
+        result: "EntityExtractionResult",
+    ) -> "EntityExtractionResult":
+        """Return a copy of *result* with duplicate entity ids removed.
+
+        When duplicate ids appear, the entity with the highest confidence is
+        kept.  Uses :func:`dataclasses.replace` to preserve immutability.
+
+        Args:
+            result: :class:`EntityExtractionResult`.
+
+        Returns:
+            New :class:`EntityExtractionResult` with unique entities.
+        """
+        import dataclasses as _dc
+        seen: dict = {}
+        for e in result.entities:
+            if e.id not in seen or e.confidence > seen[e.id].confidence:
+                seen[e.id] = e
+        unique = list(seen.values())
+        return _dc.replace(result, entities=unique, entity_count=len(unique))
+
 
 __all__ = [
     'OntologyGenerator',
