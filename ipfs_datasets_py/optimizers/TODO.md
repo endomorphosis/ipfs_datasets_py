@@ -651,13 +651,13 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [graphrag] Add `CriticScore.to_html_report()` -- simple HTML table of dimensions + recs
 - [ ] (P2) [graphrag] Add `OntologyGenerator.anonymize_entities()` -- strip PII from entity text
 - [ ] (P3) [tests] Add round-trip test: Entity -> to_dict -> from_dict (Entity.from_dict classmethod)
-- [ ] (P2) [graphrag] Add `Entity.from_dict(d)` classmethod to complement `to_dict()`
-- [ ] (P3) [graphrag] Add `EntityExtractionResult.to_csv()` -- flat CSV of entities
-- [ ] (P2) [graphrag] Add `OntologyOptimizer.top_n_ontologies(n)` -- best N from history by score
+- [x] (P2) [graphrag] Add `Entity.from_dict(d)` classmethod -- Done batch-66: round-trip, span/props preserved; 7 tests
+- [x] (P3) [graphrag] Add `EntityExtractionResult.to_csv()` -- Done batch-66: header+rows, span cols; 7 tests
+- [x] (P2) [graphrag] Add `OntologyOptimizer.top_n_ontologies(n)` -- Done batch-66: sorted desc, n guard; 6 tests
 - [ ] (P3) [obs] Add `OntologyPipeline.run_with_metrics()` -- run + return latency/score dict
 - [ ] (P2) [graphrag] Add `OntologyMediator.preview_recommendations()` -- dry-run next round
 - [ ] (P3) [graphrag] Add `ExtractionConfig.from_dict()` classmethod
-- [ ] (P2) [graphrag] Add `OntologyOptimizer.score_variance()` -- variance of overall scores in history
+- [x] (P2) [graphrag] Add `OntologyOptimizer.score_variance()` -- Done batch-66: population variance; 6 tests
 - [ ] (P3) [arch] Add `OntologyPipeline.with_domain(domain)` -- fluent domain-override builder
 - [ ] (P2) [graphrag] Add `LogicValidator.explain_entity(entity)` -- single-entity validation explanation
 - [ ] (P3) [obs] Add `OntologyCritic.score_trend(scores)` -- linear regression direction
@@ -666,4 +666,4 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [graphrag] Add `OntologyMediator.get_action_summary()` -- sorted action stats
 - [ ] (P3) [arch] Add `OntologyPipeline.from_dict(d)` -- reconstruct from as_dict output
 - [ ] (P2) [graphrag] Add `ExtractionConfig.validate()` -- check field constraints
-- [ ] (P3) [obs] Add `OntologyOptimizer.improvement_rate()` -- % sessions with score increase
+- [x] (P3) [obs] Add `OntologyOptimizer.improvement_rate()` -- Done batch-66: pairwise comparison; 6 tests

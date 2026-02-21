@@ -427,6 +427,34 @@ class Entity:
             "source_span": list(self.source_span) if self.source_span else None,
         }
 
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "Entity":
+        """Reconstruct an :class:`Entity` from a plain dictionary.
+
+        Complements :meth:`to_dict` for round-trip serialisation.
+
+        Args:
+            d: Dictionary as returned by :meth:`to_dict`.
+
+        Returns:
+            A new :class:`Entity` instance.
+
+        Raises:
+            KeyError: If ``id``, ``type``, or ``text`` keys are missing.
+
+        Example:
+            >>> entity = Entity.from_dict(entity.to_dict())
+        """
+        span = d.get("source_span")
+        return cls(
+            id=d["id"],
+            type=d["type"],
+            text=d["text"],
+            confidence=float(d.get("confidence", 1.0)),
+            properties=dict(d.get("properties") or {}),
+            source_span=tuple(span) if span is not None else None,  # type: ignore[arg-type]
+        )
+
 
 @dataclass(slots=True)
 class Relationship:
@@ -623,6 +651,37 @@ class EntityExtractionResult:
             metadata={**self.metadata, **other.metadata},
             errors=list(self.errors) + list(other.errors),
         )
+
+    def to_csv(self) -> str:
+        """Return a flat CSV representation of the extracted entities.
+
+        Each row corresponds to one entity.  Columns are::
+
+            id,type,text,confidence,source_span_start,source_span_end
+
+        The header row is always included.  ``source_span_*`` columns are
+        empty strings when no span is available.
+
+        Returns:
+            A CSV string (newline-separated rows, comma-separated columns).
+
+        Example:
+            >>> csv_str = result.to_csv()
+            >>> lines = csv_str.splitlines()
+            >>> lines[0]
+            'id,type,text,confidence,source_span_start,source_span_end'
+        """
+        import csv
+        import io
+
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(["id", "type", "text", "confidence", "source_span_start", "source_span_end"])
+        for ent in self.entities:
+            span_start = ent.source_span[0] if ent.source_span else ""
+            span_end = ent.source_span[1] if ent.source_span else ""
+            writer.writerow([ent.id, ent.type, ent.text, ent.confidence, span_start, span_end])
+        return buf.getvalue()
 
 
 @dataclass

@@ -1328,6 +1328,79 @@ class OntologyOptimizer:
         best_report = max(self._history, key=lambda r: r.average_score)
         return best_report.best_ontology
 
+    def top_n_ontologies(self, n: int = 5) -> List[Dict[str, Any]]:
+        """Return up to *n* ontology dicts from the best-scoring history entries.
+
+        History entries are sorted by ``average_score`` in descending order;
+        entries without a stored ``best_ontology`` (i.e. ``None``) are skipped.
+
+        Args:
+            n: Maximum number of ontologies to return (default: 5).
+
+        Returns:
+            List of ontology dicts (at most *n* items, possibly fewer if
+            fewer entries have stored ontologies).
+
+        Raises:
+            ValueError: If *n* < 1.
+
+        Example:
+            >>> top3 = optimizer.top_n_ontologies(3)
+            >>> len(top3) <= 3
+            True
+        """
+        if n < 1:
+            raise ValueError(f"n must be >= 1; got {n}")
+        if not self._history:
+            return []
+        sorted_reports = sorted(self._history, key=lambda r: r.average_score, reverse=True)
+        result: List[Dict[str, Any]] = []
+        for report in sorted_reports:
+            if report.best_ontology is not None:
+                result.append(report.best_ontology)
+            if len(result) >= n:
+                break
+        return result
+
+    def score_variance(self) -> float:
+        """Return the variance of average scores across all history batches.
+
+        Uses the population variance formula (``sum(xi - mean)^2 / N``).
+
+        Returns:
+            Variance as a float; ``0.0`` if history has fewer than 2 entries.
+
+        Example:
+            >>> var = optimizer.score_variance()
+            >>> var >= 0.0
+            True
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [r.average_score for r in self._history]
+        mean = sum(scores) / len(scores)
+        return sum((s - mean) ** 2 for s in scores) / len(scores)
+
+    def improvement_rate(self) -> float:
+        """Return the fraction of consecutive history pairs where score improved.
+
+        Compares each history entry to the previous one (in insertion order).
+        The rate is ``improving_pairs / (total_pairs)``.
+
+        Returns:
+            Float in [0.0, 1.0]; ``0.0`` if history has fewer than 2 entries.
+
+        Example:
+            >>> rate = optimizer.improvement_rate()
+            >>> 0.0 <= rate <= 1.0
+            True
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [r.average_score for r in self._history]
+        improving = sum(1 for a, b in zip(scores, scores[1:]) if b > a)
+        return improving / (len(scores) - 1)
+
     def export_score_chart(self, filepath: Optional[str] = None) -> Optional[str]:
         """Produce a matplotlib line chart of average score across history batches.
 
