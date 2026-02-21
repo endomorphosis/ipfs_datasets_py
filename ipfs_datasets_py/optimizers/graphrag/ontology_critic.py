@@ -3350,6 +3350,30 @@ class OntologyCritic(BaseCritic):
         """
         return all(getattr(score, d, 0.0) < threshold for d in self._DIMENSIONS)
 
+    def dimension_mean(self, score) -> float:
+        """Return the mean value across all dimensions of *score*.
+
+        Args:
+            score: A ``CriticScore`` instance.
+
+        Returns:
+            Float average of all dimension values.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        return sum(vals) / len(vals)
+
+    def dimension_count_above(self, score, threshold: float = 0.5) -> int:
+        """Return the number of dimensions strictly above *threshold*.
+
+        Args:
+            score: A ``CriticScore`` instance.
+            threshold: Minimum value (exclusive). Defaults to ``0.5``.
+
+        Returns:
+            Integer count of dimensions with value > *threshold*.
+        """
+        return sum(1 for d in self._DIMENSIONS if getattr(score, d, 0.0) > threshold)
+
 
 # Export public API
 __all__ = [

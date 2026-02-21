@@ -1209,3 +1209,15 @@ class OntologyPipeline:
             return []
         scores = [r.score.overall for r in self._run_history]
         return [scores[i + 1] - scores[i] for i in range(len(scores) - 1)]
+
+    def run_score_variance(self) -> float:
+        """Return the population variance of all run overall scores.
+
+        Returns:
+            Float variance; ``0.0`` when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        mean = sum(scores) / len(scores)
+        return sum((s - mean) ** 2 for s in scores) / len(scores)

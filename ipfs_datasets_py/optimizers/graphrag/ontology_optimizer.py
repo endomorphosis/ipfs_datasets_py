@@ -2846,6 +2846,19 @@ class OntologyOptimizer:
                 changes += 1
         return changes
 
+    def score_moving_sum(self, n: int = 5) -> float:
+        """Return the sum of the last *n* history ``average_score`` values.
+
+        Args:
+            n: Window size. Defaults to ``5``.
+
+        Returns:
+            Float sum; ``0.0`` when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        return sum(e.average_score for e in self._history[-n:])
+
 
 # Export public API
 __all__ = [

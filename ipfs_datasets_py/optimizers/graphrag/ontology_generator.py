@@ -2558,7 +2558,6 @@ class OntologyGenerator:
                     # Calculate type confidence based on pattern specificity and verb matching
                     # More specific patterns (e.g., "obligates") and exact matches get higher scores
                     verb_text = m.group(0)
-                    pattern_parts = len(_re.split(r'\|', pattern.pattern))
                     
                     # Type confidence: how certain we are this is the correct relationship type
                     # Based on: pattern match exactness, specificity, and verb phrase clustering
@@ -2583,7 +2582,7 @@ class OntologyGenerator:
                         properties={
                             'type_confidence': type_confidence,
                             'type_method': 'verb_frame',
-                        } if hasattr(Relationship, '__dataclass_fields__') and 'properties' in Relationship.__dataclass_fields__ else None,
+                        },
                     ))
 
         # 2) Sliding-window co-occurrence (window=200 chars) with improved type inference
@@ -2651,7 +2650,7 @@ class OntologyGenerator:
                             'type_method': 'cooccurrence',
                             'source_entity_type': e1_type,
                             'target_entity_type': e2_type,
-                        } if hasattr(Relationship, '__dataclass_fields__') and 'properties' in Relationship.__dataclass_fields__ else None,
+                        },
                     ))
                     linked.add((e1.id, e2.id))
 
@@ -5275,6 +5274,17 @@ class OntologyGenerator:
         for r in result.relationships:
             counts[r.type] = counts.get(r.type, 0) + 1
         return counts
+
+    def entity_text_lengths(self, result) -> list:
+        """Return a list of text character counts for each entity.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            List of integer lengths, one per entity (in entity order).
+        """
+        return [len(e.text) for e in result.entities]
 
 
 __all__ = [
