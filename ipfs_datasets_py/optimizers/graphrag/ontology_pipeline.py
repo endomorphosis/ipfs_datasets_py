@@ -1267,3 +1267,29 @@ class OntologyPipeline:
         if denominator == 0 or numerator == 0:
             return "flat"
         return "up" if numerator > 0 else "down"
+
+    def best_k_scores(self, k: int = 3) -> list:
+        """Return the top-k overall scores across all runs, descending.
+
+        Args:
+            k: Number of scores to return. Defaults to 3.
+
+        Returns:
+            List of float scores, highest first. Fewer than k if fewer runs.
+        """
+        scores = sorted(
+            (r.score.overall for r in self._run_history), reverse=True
+        )
+        return scores[:k]
+
+    def worst_k_scores(self, k: int = 3) -> list:
+        """Return the bottom-k overall scores across all runs, ascending.
+
+        Args:
+            k: Number of scores to return. Defaults to 3.
+
+        Returns:
+            List of float scores, lowest first. Fewer than k if fewer runs.
+        """
+        scores = sorted(r.score.overall for r in self._run_history)
+        return scores[:k]

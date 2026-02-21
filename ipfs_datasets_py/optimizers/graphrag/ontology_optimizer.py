@@ -2859,6 +2859,30 @@ class OntologyOptimizer:
             return 0.0
         return sum(e.average_score for e in self._history[-n:])
 
+    def history_skewness(self) -> float:
+        """Return the sample skewness of ``average_score`` values in history.
+
+        Uses the standard adjusted Fisher-Pearson formula:
+        ``g1 = (n / ((n-1)(n-2))) * sum((xi - mean)^3) / std^3``
+
+        Returns:
+            Float skewness; ``0.0`` when fewer than 3 entries or std is 0.
+        """
+        n = len(self._history)
+        if n < 3:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        mean = sum(scores) / n
+        var = sum((s - mean) ** 2 for s in scores) / n
+        if var == 0.0:
+            return 0.0
+        std = var ** 0.5
+        third_moment = sum((s - mean) ** 3 for s in scores) / n
+        g1 = third_moment / (std ** 3)
+        # Adjusted Fisher-Pearson correction
+        adj = (n * (n - 1)) ** 0.5 / (n - 2)
+        return adj * g1
+
 
 # Export public API
 __all__ = [

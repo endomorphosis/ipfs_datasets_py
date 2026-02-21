@@ -3374,6 +3374,48 @@ class OntologyCritic(BaseCritic):
         """
         return sum(1 for d in self._DIMENSIONS if getattr(score, d, 0.0) > threshold)
 
+    def dimension_std(self, score) -> float:
+        """Return the standard deviation of dimension values in *score*.
+
+        Args:
+            score: A ``CriticScore`` instance.
+
+        Returns:
+            Float population std-dev; ``0.0`` when all dims are equal.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        mean = sum(vals) / len(vals)
+        variance = sum((v - mean) ** 2 for v in vals) / len(vals)
+        return variance ** 0.5
+
+    def dimension_improvement_mask(self, before, after) -> dict:
+        """Return a bool dict indicating which dimensions improved.
+
+        Args:
+            before: A ``CriticScore`` instance (baseline).
+            after: A ``CriticScore`` instance (new).
+
+        Returns:
+            Dict mapping dimension name → ``True`` if ``after > before``,
+            ``False`` otherwise.
+        """
+        return {
+            d: getattr(after, d, 0.0) > getattr(before, d, 0.0)
+            for d in self._DIMENSIONS
+        }
+
+    def passing_dimensions(self, score, threshold: float = 0.5) -> list:
+        """Return list of dimension names strictly above *threshold*.
+
+        Args:
+            score: A ``CriticScore`` instance.
+            threshold: Minimum value (exclusive). Defaults to ``0.5``.
+
+        Returns:
+            List of dimension name strings.
+        """
+        return [d for d in self._DIMENSIONS if getattr(score, d, 0.0) > threshold]
+
 
 # Export public API
 __all__ = [

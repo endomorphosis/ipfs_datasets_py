@@ -727,6 +727,34 @@ class ExtractionConfig:
         diff = abs(self.confidence_threshold - other.confidence_threshold)
         return max(0.0, 1.0 - diff)
 
+    def describe(self) -> str:
+        """Return a human-readable one-line summary of this configuration.
+
+        Example::
+
+            cfg = ExtractionConfig(confidence_threshold=0.7, max_entities=100)
+            print(cfg.describe())
+            # Output: ExtractionConfig: threshold=0.7, max_entities=100, window=5, min_len=2, llm_fallback=0.0
+
+        Returns:
+            A single-line descriptive string.
+        """
+        parts = [
+            f"threshold={self.confidence_threshold}",
+            f"max_entities={self.max_entities if self.max_entities > 0 else 'unlimited'}",
+            f"max_rels={self.max_relationships if self.max_relationships > 0 else 'unlimited'}",
+            f"window={self.window_size}",
+            f"min_len={self.min_entity_length}",
+            f"max_conf={self.max_confidence}",
+        ]
+        if self.llm_fallback_threshold > 0.0:
+            parts.append(f"llm_fallback={self.llm_fallback_threshold}")
+        if self.stopwords:
+            parts.append(f"stopwords={len(self.stopwords)}")
+        if self.allowed_entity_types:
+            parts.append(f"types={','.join(self.allowed_entity_types[:2])}")
+        return f"ExtractionConfig: {', '.join(parts)}"
+
 
 @dataclass
 class OntologyGenerationContext:
@@ -5300,6 +5328,88 @@ class OntologyGenerator:
         vals = [e.confidence for e in result.entities]
         mean = sum(vals) / len(vals)
         return sum((v - mean) ** 2 for v in vals) / len(vals)
+
+    def describe_extraction_pipeline(
+        self, config: ExtractionConfig, result: EntityExtractionResult = None
+    ) -> str:
+        """Generate a human-readable summary of the extraction pipeline configuration.
+
+        Combines the config description with extraction result statistics if provided.
+
+        Args:
+            config: The :class:`ExtractionConfig` used for extraction.
+            result: Optional :class:`EntityExtractionResult` to include statistics.
+
+        Returns:
+            Multi-line string describing the pipeline configuration and optional result stats.
+
+        Example::
+
+            config = ExtractionConfig(confidence_threshold=0.7, max_entities=100)
+            result = generator.extract_entities(text, config)
+            summary = generator.describe_extraction_pipeline(config, result)
+            print(summary)
+            # Output:
+            # ExtractionConfig: threshold=0.7, max_entities=100, ... 
+            # Extraction Result: 45 entities, 32 relationships, avg_conf=0.78
+        """
+        lines = [config.describe()]
+        if result:
+            status = "empty" if result.is_empty() else "populated"
+            entity_count = len(result.entities)
+            rel_count = len(result.relationships)
+            avg_conf = (
+                sum(e.confidence for e in result.entities) / entity_count
+                if entity_count > 0
+                else 0.0
+            )
+            lines.append(
+                f"Extraction Result [{status}]: {entity_count} entities, "
+                f"{rel_count} relationships, avg_conf={avg_conf:.2f}"
+            )
+        return "\n".join(lines)
+
+    def max_confidence_entity(self, result):
+        """Return the entity with the highest confidence in *result*.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            The ``Entity`` with maximum confidence; ``None`` when no entities.
+        """
+        if not result.entities:
+            return None
+        return max(result.entities, key=lambda e: e.confidence)
+
+    def min_confidence_entity(self, result):
+        """Return the entity with the lowest confidence in *result*.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            The ``Entity`` with minimum confidence; ``None`` when no entities.
+        """
+        if not result.entities:
+            return None
+        return min(result.entities, key=lambda e: e.confidence)
+
+    def entity_confidence_std(self, result) -> float:
+        """Return the population std-dev of entity confidence values.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float std-dev; ``0.0`` when fewer than 2 entities.
+        """
+        if len(result.entities) < 2:
+            return 0.0
+        vals = [e.confidence for e in result.entities]
+        mean = sum(vals) / len(vals)
+        variance = sum((v - mean) ** 2 for v in vals) / len(vals)
+        return variance ** 0.5
 
 
 __all__ = [
