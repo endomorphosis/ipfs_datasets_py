@@ -568,11 +568,11 @@ class TestFOLInput:
 
     def test_custom_threshold(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLInput
-        assert FOLInput(text="Test", confidence_threshold=0.9).confidence_threshold == 0.9
+        assert FOLInput(text="All things must comply", confidence_threshold=0.9).confidence_threshold == 0.9
 
     def test_domain_predicates(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLInput
-        inp = FOLInput(text="Test", domain_predicates=["Animal", "Cat"])
+        inp = FOLInput(text="All animals are entities", domain_predicates=["Animal", "Cat"])
         assert "Animal" in inp.domain_predicates
 
     def test_prolog_format(self):
@@ -745,7 +745,7 @@ class TestFOLHelpers:
 
     def test_validate_fol_input_with_kwargs(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import validate_fol_input
-        assert validate_fol_input("Test", confidence_threshold=0.8).confidence_threshold == 0.8
+        assert validate_fol_input("All things comply", confidence_threshold=0.8).confidence_threshold == 0.8
 
     def test_test_contracts_no_error(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import test_contracts

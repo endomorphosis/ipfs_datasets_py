@@ -593,10 +593,9 @@ class TestFOLInputPydanticStub:
             logical_components={},
             reasoning_steps=[],
             warnings=[],
-            metadata={},
-            complexity_score=5
+            metadata={"complexity_score": 5},
         )
-        assert out.complexity_score == 5
+        assert out.metadata["complexity_score"] == 5
 
     def test_converted_formula_output(self):
         """Full conversion test via ContractedFOLConverter."""

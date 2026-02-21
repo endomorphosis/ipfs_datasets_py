@@ -421,6 +421,7 @@ mkdir -p ipfs_datasets_py/logic/zkp/ARCHIVE/
 - [x] **Sessions 9–14 (2026-02-20):** Integration layer 50% → **86%** (2,075 tests, 106 skipped)
 - [x] **Session 15 (2026-02-20):** Integration layer 86% (110 tests; tdfol_grammar_bridge 77%→79%, tdfol_cec_bridge 72%→77%, deontic_logic_converter 83%→85%, caselaw_bulk_processor 84%→87%, neurosymbolic_api 88%→92%)
 - [x] **Session 16 (2026-02-21):** Integration layer 86% → **86%** (74 tests; symbolic_contracts field validators/FOLSyntaxValidator/fallback, tdfol_cec_bridge mocked prover paths PROVED/DISPROVED/TIMEOUT/UNKNOWN, InteractiveFOLConstructor low-confidence path, DeontologicalReasoning conditional+exception, TemporalDeonticAPI exception handlers, TDFOLGrammarBridge available=False paths, CECBridge prove paths, LegalDomainKnowledge edge paths)
+- [x] **Session 17 (2026-02-21):** Integration layer 86% → **87%** (57 new tests + 5 test bug fixes; CECBridge router/cec strategy + exception paths; FOLConstructorIOMixin export_session exception paths + _generate_insights branches; TemporalDeonticAPI async exception paths; IPLDLogicStorage IPLD exception fallback + collection filesystem + provenance find_related_formulas; ProverInstaller sudo paths; NaturalLanguageTDFOLInterface understand/explain/reason; EmbeddingEnhancedProver compute_similarity/find_similar/_get_embedding; NeuralSymbolicCoordinator NEURAL_ONLY + HYBRID embedding paths; init guard tests)
   - Sessions 9–13: reasoning/, fol/, converters/, bridges/, cec_bridge, external_provers,  
     logic_translation_core, symbolic_contracts, ipfs_proof_cache, deontic_logic_core  
   - Session 14 (14+14b+14c): demos, document_consistency_checker, temporal_deontic_api,  
@@ -1037,7 +1038,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 |-----------|---------|----------------|----------------|
 | TDFOL Core | 91.5% pass | 95% pass | 97% pass |
 | CEC Native | 80-85% pass | 90% pass | 93% pass |
-| Integration | ~86% coverage | 88%+ | 90% |
+| Integration | ~87% coverage | 88%+ | 90% |
 | NL Processing | 75% pass | 85% pass | 90% pass |
 | ZKP (simulation) | 80% pass | 85% pass | 85% pass |
 | MCP Tools | 167+ tests | 200+ tests | 250+ tests |
@@ -1046,7 +1047,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Integration coverage 86% (7892 lines, 1071 uncovered). Remaining high-value targets: symbolic_contracts.py ContractedFOLConverter class lines 459-695 (~100 SymbolicAI-only lines), symbolic_logic_primitives.py 63% (~100 SymbolicAI lines), legal_symbolic_analyzer.py 67% (~80 SymbolicAI lines). Non-SymbolicAI targets: tdfol_cec_bridge lines 246-307 (now mocked), cec_bridge lines 147/158/181-199 (prover router paths), neurosymbolic_graphrag lines 128-144 (NeuralSymbolicCoordinator init). Then: TDFOL NL tests (69 spaCy failures), E2E pipeline tests.  
+**Next Action:** Integration coverage 87% (7895 lines, 1012 uncovered). Remaining high-value targets: symbolic_contracts.py ContractedFOLConverter class lines 459-695 (~100 SymbolicAI-only lines), symbolic_logic_primitives.py 63% (~100 SymbolicAI lines), legal_symbolic_analyzer.py 67% (~80 SymbolicAI lines) — these require SymbolicAI (symai) to be installed. Non-SymbolicAI remaining targets: tdfol_grammar_bridge lines 222-249 (NaturalLanguageTDFOLInterface additional paths), cec_bridge lines 26/181-199 (exception handlers), deontic_logic_converter lines 567-592 (demonstrate function). Next: TDFOL NL tests (69 spaCy failures), E2E pipeline tests.  
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 16)  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 17)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
