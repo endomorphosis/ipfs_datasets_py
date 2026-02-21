@@ -3987,7 +3987,7 @@ class OntologyGenerator:
         """
         return [e for e in result.entities if e.confidence >= threshold]
 
-    def entities_by_type(
+    def filter_entities_by_type(
         self,
         result: "EntityExtractionResult",
         entity_type: str,
@@ -3999,11 +3999,11 @@ class OntologyGenerator:
             entity_type: Type string to filter by.
 
         Returns:
-            List of :class:`Entity` objects with matching ``entity_type``.
+            List of :class:`Entity` objects with matching ``type``.
         """
         return [e for e in result.entities if e.type == entity_type]
 
-    def deduplicate_entities(
+    def deduplicate_by_id(
         self,
         result: "EntityExtractionResult",
     ) -> "EntityExtractionResult":
@@ -4016,7 +4016,7 @@ class OntologyGenerator:
             result: :class:`EntityExtractionResult`.
 
         Returns:
-            New :class:`EntityExtractionResult` with unique entities.
+            New :class:`EntityExtractionResult` with unique entity ids.
         """
         import dataclasses as _dc
         seen: dict = {}

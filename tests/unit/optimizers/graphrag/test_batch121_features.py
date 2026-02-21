@@ -102,7 +102,7 @@ class TestEntitiesByType:
     def test_empty(self):
         g = _make_generator()
         result = _make_result([])
-        assert g.entities_by_type(result, "person") == []
+        assert g.filter_entities_by_type(result, "person") == []
 
     def test_matching(self):
         g = _make_generator()
@@ -111,14 +111,14 @@ class TestEntitiesByType:
             _make_entity("b", etype="org"),
             _make_entity("c", etype="person"),
         ])
-        persons = g.entities_by_type(result, "person")
+        persons = g.filter_entities_by_type(result, "person")
         assert len(persons) == 2
         assert all(e.type == "person" for e in persons)
 
     def test_no_match(self):
         g = _make_generator()
         result = _make_result([_make_entity("a", etype="org")])
-        assert g.entities_by_type(result, "person") == []
+        assert g.filter_entities_by_type(result, "person") == []
 
 
 # ---------------------------------------------------------------------------
@@ -130,7 +130,7 @@ class TestDeduplicateEntities:
         g = _make_generator()
         entities = [_make_entity("a"), _make_entity("b")]
         result = _make_result(entities)
-        deduped = g.deduplicate_entities(result)
+        deduped = g.deduplicate_by_id(result)
         assert len(deduped.entities) == 2
 
     def test_removes_lower_confidence_dup(self):
@@ -140,7 +140,7 @@ class TestDeduplicateEntities:
             _make_entity("a", confidence=0.5),
         ]
         result = _make_result(entities)
-        deduped = g.deduplicate_entities(result)
+        deduped = g.deduplicate_by_id(result)
         assert len(deduped.entities) == 1
         assert deduped.entities[0].confidence == pytest.approx(0.9)
 
@@ -152,11 +152,11 @@ class TestDeduplicateEntities:
             _make_entity("b", confidence=0.7),
         ]
         result = _make_result(entities)
-        deduped = g.deduplicate_entities(result)
+        deduped = g.deduplicate_by_id(result)
         assert len(deduped.entities) == 2
 
     def test_returns_new_result(self):
         g = _make_generator()
         result = _make_result([_make_entity("a")])
-        deduped = g.deduplicate_entities(result)
+        deduped = g.deduplicate_by_id(result)
         assert deduped is not result

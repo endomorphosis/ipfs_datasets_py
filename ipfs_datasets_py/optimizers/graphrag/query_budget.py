@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List
+
+
+logger = logging.getLogger(__name__)
 
 
 class QueryBudgetManager:
@@ -44,6 +48,7 @@ class QueryBudgetManager:
         }
         
         self.current_consumption = {}
+        logger.debug("QueryBudgetManager initialized with default budget: %s", self.default_budget)
         
     def allocate_budget(self, query: Dict[str, Any], priority: str = "normal") -> Dict[str, float]:
         """
@@ -95,6 +100,12 @@ class QueryBudgetManager:
             "edges_traversed": 0
         }
         
+        logger.info(
+            "Allocated budget (priority=%s, complexity=%s): %s",
+            priority,
+            query_complexity,
+            budget,
+        )
         return budget
         
     def track_consumption(self, resource: str, amount: float) -> None:
@@ -107,6 +118,12 @@ class QueryBudgetManager:
         """
         if resource in self.current_consumption:
             self.current_consumption[resource] += amount
+            logger.debug(
+                "Tracked consumption for %s: +%.3f (total=%.3f)",
+                resource,
+                amount,
+                self.current_consumption[resource],
+            )
             
     def is_budget_exceeded(self, resource: str) -> bool:
         """
@@ -122,7 +139,15 @@ class QueryBudgetManager:
             return False
         
         # Check if consumption exceeds budget
-        return self.current_consumption[resource] > self.default_budget[resource]
+        exceeded = self.current_consumption[resource] > self.default_budget[resource]
+        if exceeded:
+            logger.warning(
+                "Budget exceeded for %s: %.3f > %.3f",
+                resource,
+                self.current_consumption[resource],
+                self.default_budget[resource],
+            )
+        return exceeded
     
     def record_completion(self, success: bool = True) -> None:
         """
@@ -139,6 +164,7 @@ class QueryBudgetManager:
                 # Keep history manageable
                 if len(self.budget_history[resource]) > 100:
                     self.budget_history[resource] = self.budget_history[resource][-100:]
+            logger.info("Recorded query completion (success=%s)", success)
     
     def _estimate_complexity(self, query: Dict[str, Any]) -> str:
         """
@@ -200,6 +226,14 @@ class QueryBudgetManager:
                 # Ensure budget is not reduced below 80% of default
                 min_budget = self.default_budget.get(resource, 0) * 0.8
                 budget[resource] = max(adjusted, min_budget)
+                logger.debug(
+                    "Adjusted budget for %s: avg=%.3f p95=%.3f adjusted=%.3f min=%.3f",
+                    resource,
+                    avg_consumption,
+                    p95_consumption,
+                    budget[resource],
+                    min_budget,
+                )
     
     def suggest_early_stopping(self, current_results: List[Dict[str, Any]], budget_consumed_ratio: float) -> bool:
         """
@@ -215,6 +249,7 @@ class QueryBudgetManager:
         """
         # If minimal results, don't stop
         if len(current_results) < 3:
+            logger.debug("Early stopping not suggested: insufficient results")
             return False
             
         # If budget heavily consumed, check result quality
@@ -225,6 +260,11 @@ class QueryBudgetManager:
                 
                 # If high quality results already found
                 if avg_top_score > 0.85:
+                    logger.info(
+                        "Early stopping suggested: high top score %.3f with budget ratio %.2f",
+                        avg_top_score,
+                        budget_consumed_ratio,
+                    )
                     return True
                     
         # Check for score diminishing returns
@@ -237,8 +277,13 @@ class QueryBudgetManager:
                 
                 # If drop-off is significant
                 if top_score - fifth_score > 0.3:
+                    logger.info(
+                        "Early stopping suggested: score drop-off %.3f",
+                        top_score - fifth_score,
+                    )
                     return True
         
+        logger.debug("Early stopping not suggested")
         return False
         
     def get_current_consumption_report(self) -> Dict[str, Any]:
@@ -267,4 +312,5 @@ class QueryBudgetManager:
         else:
             report["overall_consumption_ratio"] = 0.0
             
+        logger.debug("Generated consumption report: %s", report)
         return report

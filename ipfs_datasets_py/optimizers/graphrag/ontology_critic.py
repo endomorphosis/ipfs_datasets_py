@@ -2529,7 +2529,7 @@ class OntologyCritic(BaseCritic):
             ``True`` when all scores meet the threshold; ``False`` otherwise.
             Returns ``True`` for an empty list.
         """
-        return all(s.overall >= threshold for s in scores)
+        return all(s.overall > threshold for s in scores)
 
     def score_variance(self, scores: list) -> float:
         """Return the population variance of the ``overall`` values.

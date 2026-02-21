@@ -80,7 +80,8 @@ class TestAllPass:
     def test_exactly_at_threshold(self):
         c = _make_critic()
         scores = [_score(0.6), _score(0.7)]
-        assert c.all_pass(scores, threshold=0.6) is True
+        # Exactly at threshold does NOT pass (strict >)
+        assert c.all_pass(scores, threshold=0.6) is False
 
 
 # ---------------------------------------------------------------------------
