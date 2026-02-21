@@ -544,3 +544,22 @@ class OntologyLearningAdapter:
             return 0.0
         mean = self.mean_score()
         return sum((r.final_score - mean) ** 2 for r in self._feedback) / len(self._feedback)
+
+    def load_feedback_from_list(self, records: List["FeedbackRecord"]) -> int:
+        """Bulk-load a list of :class:`FeedbackRecord` objects into this adapter.
+
+        Existing feedback is preserved; new records are appended.
+
+        Args:
+            records: List of :class:`FeedbackRecord` objects to add.
+
+        Returns:
+            Total number of feedback records after the load.
+
+        Example:
+            >>> n = adapter.load_feedback_from_list([record1, record2])
+            >>> n >= 2
+            True
+        """
+        self._feedback.extend(records)
+        return len(self._feedback)

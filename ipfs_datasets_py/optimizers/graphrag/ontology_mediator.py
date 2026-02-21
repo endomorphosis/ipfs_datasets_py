@@ -937,6 +937,20 @@ class OntologyMediator:
         self._undo_stack.append(_copy.deepcopy(ontology))
         return len(self._undo_stack)
 
+    def snapshot_count(self) -> int:
+        """Return the number of snapshots currently on the undo stack.
+
+        Alias for :meth:`get_undo_depth`.
+
+        Returns:
+            Non-negative integer.
+
+        Example:
+            >>> mediator.snapshot_count()
+            0
+        """
+        return len(self._undo_stack)
+
     def set_max_rounds(self, n: int) -> None:
         """Update the maximum refinement rounds at runtime.
 

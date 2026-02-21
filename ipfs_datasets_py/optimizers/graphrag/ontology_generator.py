@@ -1322,6 +1322,40 @@ class EntityExtractionResult:
             if r.source_id == entity_id or r.target_id == entity_id
         ]
 
+    def merge(self, other: "EntityExtractionResult") -> "EntityExtractionResult":
+        """Return a new result combining entities and relationships from both results.
+
+        Duplicate entity IDs are resolved by keeping the first occurrence
+        (``self`` takes priority over ``other``).
+
+        Args:
+            other: Another :class:`EntityExtractionResult` to merge with this one.
+
+        Returns:
+            New :class:`EntityExtractionResult` containing the union of both.
+
+        Example:
+            >>> merged = result_a.merge(result_b)
+            >>> len(merged.entities) >= len(result_a.entities)
+            True
+        """
+        seen_entity_ids: set = {e.id for e in self.entities}
+        new_entities = list(self.entities) + [
+            e for e in other.entities if e.id not in seen_entity_ids
+        ]
+        seen_rel_ids: set = {r.id for r in self.relationships}
+        new_rels = list(self.relationships) + [
+            r for r in other.relationships if r.id not in seen_rel_ids
+        ]
+        merged_confidence = (self.confidence + other.confidence) / 2.0
+        merged_meta = {**other.metadata, **self.metadata}
+        return EntityExtractionResult(
+            entities=new_entities,
+            relationships=new_rels,
+            confidence=merged_confidence,
+            metadata=merged_meta,
+        )
+
 
 @dataclass
 class OntologyGenerationResult:

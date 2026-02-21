@@ -961,6 +961,25 @@ class LogicValidator:
         """
         return self.count_contradictions(ontology) == 0
 
+    def quick_check(self, ontology: Dict[str, Any]) -> bool:
+        """Perform a fast consistency check on *ontology*.
+
+        Unlike the full :meth:`validate_ontology`, this method simply
+        delegates to :meth:`is_consistent` (contradiction count == 0).
+        It is intended as a lightweight boolean gate in hot loops.
+
+        Args:
+            ontology: Ontology dict to check.
+
+        Returns:
+            ``True`` if no contradictions are detected, ``False`` otherwise.
+
+        Example:
+            >>> validator.quick_check({"entities": [], "relationships": []})
+            True
+        """
+        return self.is_consistent(ontology)
+
     def format_report(self, result: "ValidationResult") -> str:
         """Produce a human-readable validation report from *result*.
 

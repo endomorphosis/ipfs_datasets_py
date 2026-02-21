@@ -2010,6 +2010,27 @@ class OntologyCritic(BaseCritic):
             return 0.0
         return sum(s.overall for s in scores) / len(scores)
 
+    def score_std(self, scores: List["CriticScore"]) -> float:
+        """Return the standard deviation of ``overall`` values across *scores*.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            Population standard deviation of ``overall`` values, or ``0.0``
+            when the list has fewer than 2 entries.
+
+        Example:
+            >>> critic.score_std([s1, s2])
+            0.1
+        """
+        if len(scores) < 2:
+            return 0.0
+        import math as _math
+        mean = sum(s.overall for s in scores) / len(scores)
+        variance = sum((s.overall - mean) ** 2 for s in scores) / len(scores)
+        return _math.sqrt(variance)
+
     def evaluate_list(
         self,
         ontologies: List[Dict[str, Any]],
