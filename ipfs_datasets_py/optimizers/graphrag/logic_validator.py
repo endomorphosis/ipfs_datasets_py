@@ -2534,6 +2534,43 @@ class LogicValidator:
             edges.add(fwd)
         return count
 
+    def triangle_count(self, ontology: Any) -> int:
+        """Return the number of directed triangles (3-cycles) in the graph.
+
+        A directed triangle exists when A→B, B→C, and C→A are all present
+        (any relationship type accepted).
+
+        Args:
+            ontology: Ontology with ``relationships`` list; each item must have
+                ``source_id`` and ``target_id``.
+
+        Returns:
+            Integer triangle count; 0 when no relationships are present.
+        """
+        rels = getattr(ontology, "relationships", [])
+        # Build adjacency set for O(1) edge lookup
+        edge_set: set = set()
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src and tgt:
+                edge_set.add((src, tgt))
+
+        # Build adjacency list
+        from collections import defaultdict as _dd
+        adj: dict = _dd(set)
+        for (src, tgt) in edge_set:
+            adj[src].add(tgt)
+
+        count = 0
+        for a in list(adj):
+            for b in list(adj[a]):
+                for c in list(adj.get(b, set())):
+                    if (c, a) in edge_set:
+                        count += 1
+        # Each triangle A→B→C→A is counted 3 times (once per starting node)
+        return count // 3
+
 
 # Export public API
 __all__ = [

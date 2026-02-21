@@ -1372,3 +1372,34 @@ class OntologyLearningAdapter:
         if hi == lo:
             return [0.0] * len(scores)
         return [(s - lo) / (hi - lo) for s in scores]
+
+    def feedback_score_std(self) -> float:
+        """Return the population standard deviation of feedback scores.
+
+        Returns:
+            Float std-dev; 0.0 when fewer than 2 feedback records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        return variance ** 0.5
+
+    def feedback_last_improvement(self) -> float:
+        """Return the score delta at the last improving transition.
+
+        Scans feedback in reverse chronological order for the most recent
+        consecutive-improving step.
+
+        Returns:
+            Float delta (positive); 0.0 when no improving transition exists or
+            fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        for i in range(len(self._feedback) - 1, 0, -1):
+            delta = self._feedback[i].final_score - self._feedback[i - 1].final_score
+            if delta > 0:
+                return delta
+        return 0.0

@@ -5463,6 +5463,32 @@ class OntologyGenerator:
         """
         return {r.target_id for r in result.relationships if r.target_id}
 
+    def confidence_quartiles(self, result: Any) -> dict:
+        """Return Q1, median (Q2), and Q3 confidence quartiles for entities.
+
+        Uses the standard method: sort values, then interpolate quartile
+        positions.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Dict with keys ``"q1"``, ``"q2"``, ``"q3"``; all 0.0 when no
+            entities are present.
+        """
+        entities = result.entities if result.entities else []
+        if not entities:
+            return {"q1": 0.0, "q2": 0.0, "q3": 0.0}
+        scores = sorted(e.confidence for e in entities)
+        n = len(scores)
+
+        def _percentile(p: float) -> float:
+            idx = p * (n - 1)
+            lo, hi = int(idx), min(int(idx) + 1, n - 1)
+            return scores[lo] + (scores[hi] - scores[lo]) * (idx - lo)
+
+        return {"q1": _percentile(0.25), "q2": _percentile(0.50), "q3": _percentile(0.75)}
+
 
 __all__ = [
     'OntologyGenerator',

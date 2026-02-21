@@ -3519,6 +3519,23 @@ class OntologyCritic(BaseCritic):
         """
         return all(getattr(score, d, 0.0) > baseline for d in self._DIMENSIONS)
 
+    def top_k_dimensions(self, score: "CriticScore", k: int = 3) -> list:
+        """Return the *k* highest-scoring dimension names for *score*.
+
+        Args:
+            score: :class:`CriticScore` to inspect.
+            k: Number of top dimensions to return; clamped to the number of
+               available dimensions.
+
+        Returns:
+            List of dimension-name strings sorted descending by value, length
+            min(k, 6).
+        """
+        dims = [(d, getattr(score, d, 0.0)) for d in self._DIMENSIONS]
+        dims_sorted = sorted(dims, key=lambda x: x[1], reverse=True)
+        k = max(0, min(k, len(dims_sorted)))
+        return [d for d, _ in dims_sorted[:k]]
+
 
 # Export public API
 __all__ = [
