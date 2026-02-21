@@ -524,4 +524,35 @@ __all__ = [
     "ArchiveProgress",
     "archive_urls",
     "HAVE_PARALLEL_ARCHIVER",
+
+    # Canonical engine functions (Phase E+F session 20)
+    "create_legal_knowledge_graph",
+    "search_legal_graph",
+    "visualize_legal_graph",
+    "detect_query_language",
+    "translate_legal_query",
+    "cross_language_legal_search",
+    "get_legal_term_translations",
 ]
+
+# ---------------------------------------------------------------------------
+# Lazy exports — Phase E+F session 20 engine functions
+# ---------------------------------------------------------------------------
+try:
+    from .legal_graphrag_engine import (  # noqa: F401
+        create_legal_knowledge_graph,
+        search_legal_graph,
+        visualize_legal_graph,
+    )
+except Exception:
+    pass
+
+try:
+    from .multilanguage_engine import (  # noqa: F401
+        detect_query_language,
+        translate_legal_query,
+        cross_language_legal_search,
+        get_legal_term_translations,
+    )
+except Exception:
+    pass
