@@ -836,3 +836,23 @@ class OntologyLearningAdapter:
         """
         self.clear_feedback()
         return self.load_feedback_from_list(records)
+
+    def score_range(self) -> tuple:
+        """Alias for :meth:`feedback_score_range`.
+
+        Returns:
+            ``(min_score, max_score)`` tuple, or ``(0.0, 0.0)`` when there is
+            no feedback.
+        """
+        return self.feedback_score_range()
+
+    def feedback_count_above(self, threshold: float = 0.6) -> int:
+        """Return the number of feedback records whose score is above *threshold*.
+
+        Args:
+            threshold: Minimum score value (exclusive) to count (default 0.6).
+
+        Returns:
+            Count of records with ``score > threshold``.
+        """
+        return sum(1 for r in self._feedback if r.final_score > threshold)
