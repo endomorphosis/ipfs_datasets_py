@@ -175,3 +175,14 @@ try:
 except Exception:
     email_analyze_export = None  # type: ignore[assignment]
     email_search_export = None  # type: ignore[assignment]
+
+try:
+    from .ffmpeg_convert_engine import (
+        ffmpeg_convert_media,
+        ffmpeg_extract_audio_engine,
+        ffmpeg_analyze_media,
+    )
+except Exception:
+    ffmpeg_convert_media = None  # type: ignore[assignment]
+    ffmpeg_extract_audio_engine = None  # type: ignore[assignment]
+    ffmpeg_analyze_media = None  # type: ignore[assignment]
