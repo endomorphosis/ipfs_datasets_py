@@ -76,3 +76,37 @@ from .ai_agent_pr_engine import (
     update_ai_agent_pr,
     analyze_code_for_pr,
 )
+from .dag_workflow_engine import (
+    create_workflow_dag,
+    plan_speculative_execution,
+)
+from .dependency_analysis_engine import (
+    analyze_dependency_chain,
+    parse_package_json_dependencies,
+    parse_requirements_txt,
+    suggest_dependency_improvements,
+)
+from .kubernetes_log_engine import (
+    parse_kubernetes_logs,
+    analyze_pod_health,
+)
+from .github_actions_engine import (
+    analyze_github_actions,
+    parse_workflow_logs,
+)
+from .error_pattern_engine import (
+    detect_error_patterns,
+    suggest_fixes,
+)
+from .auto_healing_engine import (
+    coordinate_auto_healing,
+    monitor_healing_effectiveness,
+)
+from .systemd_log_engine import (
+    parse_systemd_logs,
+    analyze_service_health,
+)
+from .gpu_provisioning_engine import (
+    predict_gpu_needs,
+    analyze_resource_utilization,
+)
