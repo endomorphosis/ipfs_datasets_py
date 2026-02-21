@@ -14,6 +14,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
     Entity,
     EntityExtractionResult,
     ExtractionConfig,
+    OntologyGenerator,
     Relationship,
 )
 from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
@@ -34,7 +35,13 @@ def _make_entity(eid: str, text: str, span: tuple | None = None) -> Entity:
 
 
 def _make_result(*entities: Entity) -> EntityExtractionResult:
-    return EntityExtractionResult(entities=list(entities), relationships=[], metadata={})
+    return EntityExtractionResult(entities=list(entities), relationships=[], confidence=0.8, metadata={})
+
+
+def _make_mediator():
+    gen = OntologyGenerator()
+    crit = OntologyCritic()
+    return OntologyMediator(gen, crit)
 
 
 def _make_score(c=0.8, con=0.7, cl=0.6, g=0.5, da=0.9) -> CriticScore:
@@ -54,21 +61,21 @@ def _make_score(c=0.8, con=0.7, cl=0.6, g=0.5, da=0.9) -> CriticScore:
 
 class TestExtractionConfigCopy:
     def test_copy_returns_new_instance(self):
-        cfg = ExtractionConfig(domain="test")
+        cfg = ExtractionConfig(confidence_threshold=0.7)
         c2 = cfg.copy()
         assert c2 is not cfg
 
     def test_copy_values_equal(self):
-        cfg = ExtractionConfig(domain="bio", min_confidence=0.6)
+        cfg = ExtractionConfig(confidence_threshold=0.6, max_entities=50)
         c2 = cfg.copy()
-        assert c2.domain == cfg.domain
-        assert c2.min_confidence == cfg.min_confidence
+        assert c2.confidence_threshold == cfg.confidence_threshold
+        assert c2.max_entities == cfg.max_entities
 
     def test_copy_is_independent(self):
-        cfg = ExtractionConfig(domain="bio", min_confidence=0.5)
+        cfg = ExtractionConfig(confidence_threshold=0.5)
         c2 = cfg.copy()
-        c2.domain = "tech"
-        assert cfg.domain == "bio"
+        c2.confidence_threshold = 0.9
+        assert cfg.confidence_threshold == 0.5
 
     def test_copy_preserves_min_entity_length(self):
         cfg = ExtractionConfig(min_entity_length=4)
@@ -81,7 +88,7 @@ class TestExtractionConfigCopy:
     def test_copy_default_config(self):
         cfg = ExtractionConfig()
         c2 = cfg.copy()
-        assert c2.domain == cfg.domain
+        assert c2.confidence_threshold == cfg.confidence_threshold
 
 
 # ---------------------------------------------------------------------------
