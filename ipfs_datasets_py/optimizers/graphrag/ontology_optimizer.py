@@ -2347,8 +2347,56 @@ class OntologyOptimizer:
         ]
         return sum(diffs) / len(diffs)
 
+    def history_slice(self, start: int, end: int) -> list:
+        """Return a slice of the history list from *start* to *end*.
 
-# Export public API
+        Args:
+            start: Start index (inclusive).
+            end: End index (exclusive).
+
+        Returns:
+            Sub-list of history entries.
+        """
+        return self._history[start:end]
+
+    def score_above_count(self, threshold: float) -> int:
+        """Alias for :meth:`entries_above_score` that returns the count instead of entries.
+
+        Args:
+            threshold: Minimum ``average_score`` to count.
+
+        Returns:
+            Number of history entries with ``average_score >= threshold``.
+        """
+        return len(self.entries_above_score(threshold))
+
+    def first_entry_above(self, threshold: float) -> "Any | None":
+        """Return the first history entry whose ``average_score`` meets *threshold*.
+
+        Args:
+            threshold: Minimum score to match.
+
+        Returns:
+            First matching entry, or ``None`` when none found.
+        """
+        for entry in self._history:
+            if entry.average_score >= threshold:
+                return entry
+        return None
+
+    def last_entry_above(self, threshold: float) -> "Any | None":
+        """Return the most-recent history entry whose ``average_score`` meets *threshold*.
+
+        Args:
+            threshold: Minimum score to match.
+
+        Returns:
+            Last matching entry, or ``None`` when none found.
+        """
+        for entry in reversed(self._history):
+            if entry.average_score >= threshold:
+                return entry
+        return None
 __all__ = [
     'OntologyOptimizer',
     'OptimizationReport',
