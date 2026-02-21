@@ -571,6 +571,32 @@ class ExtractionConfig:
             for f in _dc.fields(self)
         )
 
+    def merge(self, other: "ExtractionConfig") -> "ExtractionConfig":
+        """Return a new config merging *self* with *other*, *other* taking priority.
+
+        For each field, *other*'s value is used unless it matches the default,
+        in which case *self*'s value is preserved.
+
+        Args:
+            other: Config whose non-default fields override ``self``.
+
+        Returns:
+            New :class:`ExtractionConfig`.
+
+        Example:
+            >>> merged = cfg.merge(ExtractionConfig(max_entities=50))
+            >>> merged.max_entities
+            50
+        """
+        import dataclasses as _dc
+        default = ExtractionConfig()
+        overrides = {
+            f.name: getattr(other, f.name)
+            for f in _dc.fields(other)
+            if getattr(other, f.name) != getattr(default, f.name)
+        }
+        return _dc.replace(self, **overrides)
+
 
 @dataclass
 class OntologyGenerationContext:
@@ -3146,6 +3172,26 @@ class OntologyGenerator:
             ['e1', 'e2']
         """
         return [e.id for e in result.entities]
+
+    def entities_by_type(self, result: "EntityExtractionResult") -> Dict[str, List["Entity"]]:
+        """Return a dict grouping entities in *result* by their ``type``.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+
+        Returns:
+            Dict mapping entity type strings to lists of :class:`Entity`
+            objects of that type.  Types not present in *result* are omitted.
+
+        Example:
+            >>> d = gen.entities_by_type(result)
+            >>> d.get("PERSON", [])
+            [...]
+        """
+        groups: Dict[str, list] = {}
+        for e in result.entities:
+            groups.setdefault(e.type, []).append(e)
+        return groups
 
     def sorted_entities(
         self,

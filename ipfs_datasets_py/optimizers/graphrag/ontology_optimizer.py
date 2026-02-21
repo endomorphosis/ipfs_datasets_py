@@ -1595,6 +1595,24 @@ class OntologyOptimizer:
         sorted_history = sorted(self._history, key=lambda r: r.average_score)
         return [r.worst_ontology for r in sorted_history[:n]]
 
+    def score_delta(self, i: int, j: int) -> float:
+        """Return the score difference between history entries at indices *i* and *j*.
+
+        Args:
+            i: Index of the first entry (baseline).
+            j: Index of the second entry (comparison).
+
+        Returns:
+            ``history[j].average_score - history[i].average_score``
+
+        Raises:
+            IndexError: If either index is out of range.
+
+        Example:
+            >>> optimizer.score_delta(0, -1)  # first vs last
+        """
+        return self._history[j].average_score - self._history[i].average_score
+
     @property
     def history_length(self) -> int:
         """Return the number of :class:`OptimizationReport` entries in history.

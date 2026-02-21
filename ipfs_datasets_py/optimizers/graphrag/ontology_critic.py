@@ -2124,6 +2124,23 @@ class OntologyCritic(BaseCritic):
         """
         return sum(1 for s in scores if s.overall >= threshold)
 
+    def top_n_scores(self, scores: List["CriticScore"], n: int = 5) -> List["CriticScore"]:
+        """Return the top *n* :class:`CriticScore` objects by ``overall`` value.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+            n: Number of top scores to return.  Defaults to 5.
+
+        Returns:
+            List of up to *n* :class:`CriticScore` objects in descending order.
+
+        Example:
+            >>> top3 = critic.top_n_scores(scores, n=3)
+            >>> len(top3) <= 3
+            True
+        """
+        return sorted(scores, key=lambda s: s.overall, reverse=True)[:n]
+
     def evaluate_list(
         self,
         ontologies: List[Dict[str, Any]],
