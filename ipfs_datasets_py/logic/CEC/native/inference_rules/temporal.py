@@ -31,7 +31,7 @@ class AlwaysDistribution(InferenceRule):
     """
     
     def name(self) -> str:
-        return "Always Distribution"
+        return "AlwaysDistribution"
     
     def can_apply(self, formulas: List[Formula]) -> bool:
         for f in formulas:

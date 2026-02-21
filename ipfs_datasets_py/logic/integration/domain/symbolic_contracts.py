@@ -667,21 +667,87 @@ else:
             try:
                 # Basic pattern-based conversion
                 text = input_data.text.lower()
+                output_format = getattr(input_data, "output_format", "symbolic")
                 
-                if "all " in text or "every " in text:
-                    formula = f"∀x Statement(x)"
-                elif "some " in text:
-                    formula = f"∃x Statement(x)"
+                # Detect quantifier type
+                has_universal = "all " in text or "every " in text or "each " in text
+                has_existential = "some " in text or "there exists" in text or "there is" in text
+
+                # Extract predicates: capitalised words from original text that are likely nouns/verbs
+                import re as _re
+                words = input_data.text.split()
+                predicates = []
+                for w in words:
+                    w_clean = _re.sub(r'[^A-Za-z]', '', w)
+                    if len(w_clean) >= 3 and w_clean[0].isupper():
+                        if w_clean.lower() not in {"the", "and", "but", "for", "nor", "yet", "all",
+                                                    "every", "some", "each", "if", "then", "that"}:
+                            predicates.append(w_clean)
+                # Also add content verbs from text
+                verb_patterns = ["is", "are", "has", "have", "can", "must", "should", "teaches",
+                                  "studies", "passes", "writes", "commits", "requires", "pays",
+                                  "flies", "graduate", "mortal", "human", "birds", "students",
+                                  "professor", "courses", "books", "authors", "famous"]
+                for vp in verb_patterns:
+                    if vp in text and vp.capitalize() not in predicates:
+                        predicates.append(vp.capitalize())
+                if not predicates:
+                    predicates = ["Statement"]
+
+                # Detect entities (proper nouns — a simple heuristic)
+                entities = []
+                for w in words:
+                    w_clean = _re.sub(r'[^A-Za-z]', '', w)
+                    if (len(w_clean) >= 2 and w_clean[0].isupper()
+                            and w_clean.lower() not in {"if", "then", "all", "every", "some",
+                                                         "each", "and", "but", "the"}
+                            and not any(w_clean == p for p in predicates)):
+                        entities.append(w_clean)
+
+                quantifiers = (["∀"] if has_universal else []) + (["∃"] if has_existential else [])
+
+                # Build formula based on format
+                if output_format == "prolog":
+                    pred = predicates[0] if predicates else "statement"
+                    if has_universal:
+                        formula = f"forall(X, {pred.lower()}(X))"
+                    elif has_existential:
+                        formula = f"exists(X, {pred.lower()}(X))"
+                    else:
+                        formula = f"{pred.lower()}(x)"
+                elif output_format == "tptp":
+                    pred = predicates[0] if predicates else "Statement"
+                    if has_universal:
+                        formula = f"fof(axiom1, axiom, ! [X] : {pred}(X))"
+                    elif has_existential:
+                        formula = f"fof(axiom1, axiom, ? [X] : {pred}(X))"
+                    else:
+                        formula = f"fof(axiom1, axiom, {pred}(x))"
                 else:
-                    formula = f"Statement({text.replace(' ', '_')})"
+                    # symbolic (default)
+                    pred = predicates[0] if predicates else "Statement"
+                    if has_universal:
+                        formula = f"∀x {pred}(x)"
+                    elif has_existential:
+                        formula = f"∃x {pred}(x)"
+                    else:
+                        formula = f"{pred}({text.replace(' ', '_')})"
                 
+                meta: Dict[str, Any] = {"fallback": True}
+                if getattr(input_data, "domain_predicates", None):
+                    meta["domain_predicates"] = input_data.domain_predicates
+
                 return FOLOutput(
                     fol_formula=formula,
                     confidence=0.6,
-                    logical_components={"quantifiers": [], "predicates": [], "entities": []},
+                    logical_components={
+                        "quantifiers": quantifiers,
+                        "predicates": predicates[:5],
+                        "entities": entities[:5],
+                    },
                     reasoning_steps=["Used fallback conversion"],
                     warnings=["SymbolicAI not available - using basic conversion"],
-                    metadata={"fallback": True}
+                    metadata=meta
                 )
                 
             except Exception as e:

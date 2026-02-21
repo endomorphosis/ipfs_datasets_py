@@ -1397,3 +1397,42 @@ class DCECStatement:
         if self.label:
             return f"{self.label}: {self.formula.to_string()}"
         return self.formula.to_string()
+
+
+# Backward-compatible convenience aliases for test code that uses shorter names
+
+def Atom(predicate_or_name, arguments=None):
+    """Create an AtomicFormula from a predicate name string or Predicate object."""
+    if arguments is None:
+        arguments = []
+    if isinstance(predicate_or_name, str):
+        pred = Predicate(predicate_or_name, [])
+    else:
+        pred = predicate_or_name
+    return AtomicFormula(pred, arguments)
+
+
+def Conjunction(*formulas):
+    """Create an AND ConnectiveFormula from 2+ sub-formulas."""
+    fs = list(formulas)
+    return ConnectiveFormula(LogicalConnective.AND, fs)
+
+
+def Disjunction(*formulas):
+    """Create an OR ConnectiveFormula from 2+ sub-formulas."""
+    fs = list(formulas)
+    return ConnectiveFormula(LogicalConnective.OR, fs)
+
+
+def Negation(formula, _ignored=None):
+    """Create a NOT ConnectiveFormula wrapping a single sub-formula.
+    
+    The optional second argument is accepted for backward compatibility
+    but is ignored (NOT is always used).
+    """
+    return ConnectiveFormula(LogicalConnective.NOT, [formula])
+
+
+def Implication(antecedent, consequent):
+    """Create an IMPLIES ConnectiveFormula from antecedent → consequent."""
+    return ConnectiveFormula(LogicalConnective.IMPLIES, [antecedent, consequent])

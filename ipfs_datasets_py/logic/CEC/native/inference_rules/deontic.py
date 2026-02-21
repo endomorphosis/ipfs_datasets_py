@@ -31,7 +31,7 @@ class ObligationDistribution(InferenceRule):
     """
     
     def name(self) -> str:
-        return "Obligation Distribution"
+        return "ObligationDistribution"
     
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if obligation distribution can be applied."""
