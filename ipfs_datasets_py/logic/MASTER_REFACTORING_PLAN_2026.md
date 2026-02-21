@@ -1,12 +1,24 @@
 # Master Refactoring and Improvement Plan — Logic Module
 
 **Date:** 2026-02-19  
-**Version:** 4.7 (updated 2026-02-21 session 52)  
+**Version:** 4.8 (updated 2026-02-21 session 53)  
 **Status:** Phases 1–3 COMPLETE · Phase 4 Ongoing  
 **Scope:** `ipfs_datasets_py/logic/` and `tests/unit_tests/logic/`  
 **MCP Integration:** `ipfs_datasets_py/mcp_server/tools/logic_tools/`
 
-**Session 52 Updates (2026-02-21):**
+**Session 53 Updates (2026-02-21):**
+- **5 production changes** (backward-compat additions, zero breaking changes):
+  - `integration/proof_cache.py` — Replaced shim-to-shim with complete backward-compat standalone `CachedProof`/`ProofCache` that supports legacy `max_size`/`default_ttl` kwargs, `put(formula, prover, result)` method, `get_statistics()`, `get_cached_entries()`, `resize()`, `cleanup_expired()`, LRU eviction, per-entry TTL, thread-safety. Fixes 28 pre-existing `test_proof_cache.py` failures.
+  - `integration/reasoning/logic_verification.py` — Added `_validate_formula_syntax()` and `_are_contradictory()` backward-compat private method aliases to `LogicVerifier`. Fixes 2 pre-existing `test_logic_verification.py` failures.
+  - `integration/logic_verification_utils.py` — NEW shim re-exporting from `reasoning/logic_verification_utils`. Fixes 1 `test_refactored_modules.py` failure.
+  - `integration/interactive_fol_constructor.py` — NEW shim making `InteractiveFOLConstructor` importable as `from integration import interactive_fol_constructor`. Fixes 1 `test_logic_integration_modules.py` failure.
+- **75 new GIVEN-WHEN-THEN tests** in `test_logic_coverage_session53.py` (7 skipped — TDFOL not installed):
+  - `CachedProof` dataclass ×7, `ProofCache` backward-compat ×18, `get_global_cache` ×2
+  - `LogicVerifier._validate_formula_syntax` / `_are_contradictory` aliases ×8
+  - `logic_verification_utils` shim ×7, `interactive_fol_constructor` shim ×4
+  - `LegalSymbolicAnalyzer` fallback paths ×11, `LegalReasoningEngine` fallbacks ×6
+  - `DeonticLogicConverter` additional paths ×7, integration package exports ×5
+- **Net improvement:** 101 → 72 pre-existing test failures fixed (−29); 1259 → 1363 passing (+104)
 - 7 production bug fixes across CEC provers + integration cec_bridge:
   - `CEC/provers/tptp_utils.py` — Added missing `TPTPFormula` dataclass and `TPTPConverter` class (were imported in `__init__.py` but never defined)
   - `CEC/provers/__init__.py` — Fixed `VampireResult` alias → `VampireProofResult`, `EProverResult` → `EProverProofResult`, `ProverResult` → `UnifiedProofResult` (all wrong class names)
