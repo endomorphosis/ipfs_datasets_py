@@ -1887,6 +1887,47 @@ class LogicValidator:
             return float(ents)
         return ents / rels
 
+    def unreachable_entities(self, ontology: Dict[str, Any], source: str) -> List[str]:
+        """Return entity IDs not reachable from *source* following directed edges.
+
+        Uses BFS/DFS over relationships treated as directed edges
+        ``(subject_id → object_id)``.
+
+        Args:
+            ontology: Dict with optional ``"entities"`` and ``"relationships"`` lists.
+            source: Starting entity ID.
+
+        Returns:
+            Sorted list of entity IDs that cannot be reached from *source*.
+            Returns all entity IDs (excluding source) when source has no edges.
+        """
+        entities = ontology.get("entities", [])
+        relationships = ontology.get("relationships", [])
+
+        all_ids = {e.get("id") for e in entities if e.get("id")}
+
+        # Build adjacency list
+        adj: Dict[str, List[str]] = {eid: [] for eid in all_ids}
+        for rel in relationships:
+            s = rel.get("subject_id") or rel.get("source_id")
+            o = rel.get("object_id") or rel.get("target_id")
+            if s and o:
+                adj.setdefault(s, []).append(o)
+
+        # BFS from source
+        visited = set()
+        queue = [source]
+        while queue:
+            node = queue.pop()
+            if node in visited:
+                continue
+            visited.add(node)
+            for nbr in adj.get(node, []):
+                if nbr not in visited:
+                    queue.append(nbr)
+
+        return sorted(all_ids - visited)
+
 
 # Export public API
 __all__ = [

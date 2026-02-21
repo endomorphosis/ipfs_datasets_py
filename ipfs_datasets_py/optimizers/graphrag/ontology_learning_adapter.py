@@ -1040,3 +1040,25 @@ class OntologyLearningAdapter:
             return 0.0
         scores = [r.final_score for r in self._feedback]
         return max(scores) - min(scores)
+
+    def feedback_zscore(self, value: float) -> float:
+        """Return the z-score of *value* relative to the feedback distribution.
+
+        Args:
+            value: The score value to normalize.
+
+        Returns:
+            ``(value - mean) / std`` of all feedback final scores.
+            Returns ``0.0`` when fewer than 2 feedback records or std is zero.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        vals = [r.final_score for r in self._feedback]
+        n = len(vals)
+        mean = sum(vals) / n
+        variance = sum((v - mean) ** 2 for v in vals) / (n - 1)
+        if variance == 0:
+            return 0.0
+        import math
+        std = math.sqrt(variance)
+        return (value - mean) / std

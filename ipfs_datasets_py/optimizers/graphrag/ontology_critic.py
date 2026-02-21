@@ -3110,6 +3110,30 @@ class OntologyCritic(BaseCritic):
         q3_idx = 3 * n // 4
         return vals[q3_idx] - vals[q1_idx]
 
+    def dimension_covariance(self, scores: list, dim_a: str, dim_b: str) -> float:
+        """Return the sample covariance between two CriticScore dimensions.
+
+        Args:
+            scores: Iterable of ``CriticScore`` objects.
+            dim_a: First dimension name (e.g. ``"completeness"``).
+            dim_b: Second dimension name.
+
+        Returns:
+            Sample covariance as float; ``0.0`` when fewer than 2 scores.
+
+        Raises:
+            AttributeError: If either dimension does not exist on ``CriticScore``.
+        """
+        vals = list(scores)
+        if len(vals) < 2:
+            return 0.0
+        a_vals = [getattr(s, dim_a) for s in vals]
+        b_vals = [getattr(s, dim_b) for s in vals]
+        n = len(vals)
+        mean_a = sum(a_vals) / n
+        mean_b = sum(b_vals) / n
+        return sum((a_vals[i] - mean_a) * (b_vals[i] - mean_b) for i in range(n)) / (n - 1)
+
 
 # Export public API
 __all__ = [
