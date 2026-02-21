@@ -919,6 +919,23 @@ class EntityExtractionResult:
             "errors": list(self.errors),
         }
 
+    def entity_type_counts(self) -> Dict[str, int]:
+        """Return a frequency count of entity types in this result.
+
+        Returns:
+            Dict mapping entity-type string → count, sorted by count
+            descending.
+
+        Example:
+            >>> counts = result.entity_type_counts()
+            >>> counts.get("Person", 0) >= 0
+            True
+        """
+        freq: Dict[str, int] = {}
+        for ent in self.entities:
+            freq[ent.type] = freq.get(ent.type, 0) + 1
+        return dict(sorted(freq.items(), key=lambda kv: -kv[1]))
+
 
 @dataclass
 class OntologyGenerationResult:

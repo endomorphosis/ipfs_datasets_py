@@ -44,6 +44,52 @@ class PipelineResult:
     actions_applied: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize this result to a plain dictionary."""
+        score_data = self.score.to_dict() if hasattr(self.score, "to_dict") else self.score
+        return {
+            "ontology": self.ontology,
+            "score": score_data,
+            "entities": self.entities,
+            "relationships": self.relationships,
+            "actions_applied": self.actions_applied,
+            "metadata": self.metadata,
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "PipelineResult":
+        """Deserialize a :class:`PipelineResult` from a dictionary."""
+        score_obj = d.get("score")
+        if isinstance(score_obj, dict):
+            try:
+                from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
+                score_obj = CriticScore.from_dict(score_obj)
+            except Exception:
+                pass
+
+        return cls(
+            ontology=dict(d.get("ontology", {})),
+            score=score_obj,
+            entities=list(d.get("entities", [])),
+            relationships=list(d.get("relationships", [])),
+            actions_applied=list(d.get("actions_applied", [])),
+            metadata=dict(d.get("metadata", {})),
+        )
+
+    def to_json(self) -> str:
+        """Serialize this result to JSON."""
+        import json
+
+        return json.dumps(self.to_dict(), separators=(",", ":"), sort_keys=True)
+
+    @classmethod
+    def from_json(cls, payload: str) -> "PipelineResult":
+        """Deserialize a :class:`PipelineResult` from JSON."""
+        import json
+
+        return cls.from_dict(json.loads(payload))
+
 
 class OntologyPipeline:
     """Facade that runs the full ontology workflow in a single call.
@@ -436,3 +482,27 @@ class OntologyPipeline:
             ['extraction', 'evaluation', 'refinement']
         """
         return ["extraction", "evaluation", "refinement"]
+
+    @property
+    def domain_list(self) -> List[str]:
+        """Return a list of known domain presets supported by the pipeline.
+
+        These are the well-tested domain strings that receive specialised
+        entity-type vocabularies in the underlying generator.
+
+        Returns:
+            Sorted list of domain preset strings.
+
+        Example:
+            >>> "legal" in OntologyPipeline().domain_list
+            True
+        """
+        return sorted([
+            "general",
+            "legal",
+            "medical",
+            "finance",
+            "science",
+            "technology",
+            "news",
+        ])

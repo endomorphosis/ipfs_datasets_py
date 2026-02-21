@@ -1539,6 +1539,19 @@ class OntologyOptimizer:
         best_report = max(self._history, key=lambda r: r.average_score)
         return best_report.best_ontology
 
+    @property
+    def history_length(self) -> int:
+        """Return the number of :class:`OptimizationReport` entries in history.
+
+        Returns:
+            Integer >= 0.
+
+        Example:
+            >>> optimizer.history_length
+            0
+        """
+        return len(self._history)
+
     def export_score_chart(self, filepath: Optional[str] = None) -> Optional[str]:
         """Produce a matplotlib line chart of average score across history batches.
 

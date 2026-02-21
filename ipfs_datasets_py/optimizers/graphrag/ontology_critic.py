@@ -1605,7 +1605,40 @@ class OntologyCritic(BaseCritic):
             weaknesses.append("Poor alignment with domain conventions")
         
         return weaknesses
-    
+
+    def score_batch_summary(self, scores: List["CriticScore"]) -> Dict[str, Any]:
+        """Return descriptive statistics for a list of :class:`CriticScore` objects.
+
+        Args:
+            scores: Non-empty list of scores to summarise.
+
+        Returns:
+            Dict with keys ``"count"``, ``"mean_overall"``, ``"min_overall"``,
+            ``"max_overall"``, ``"std_overall"`` (population std).
+
+        Raises:
+            ValueError: If *scores* is empty.
+
+        Example:
+            >>> summary = critic.score_batch_summary([score1, score2])
+            >>> summary["count"]
+            2
+        """
+        if not scores:
+            raise ValueError("score_batch_summary requires at least one score")
+        overalls = [s.overall for s in scores]
+        count = len(overalls)
+        mean = sum(overalls) / count
+        variance = sum((x - mean) ** 2 for x in overalls) / count
+        import math as _math
+        return {
+            "count": count,
+            "mean_overall": round(mean, 6),
+            "min_overall": round(min(overalls), 6),
+            "max_overall": round(max(overalls), 6),
+            "std_overall": round(_math.sqrt(variance), 6),
+        }
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],

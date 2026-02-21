@@ -643,6 +643,24 @@ class OntologyMediator:
         self._undo_stack.clear()
         self._recommendation_counts.clear()
 
+    def clear_recommendation_history(self) -> int:
+        """Clear the recommendation phrase frequency table.
+
+        Removes all entries from :attr:`_recommendation_counts` without
+        touching action counts or the undo stack.
+
+        Returns:
+            Number of recommendation entries cleared.
+
+        Example:
+            >>> n = mediator.clear_recommendation_history()
+            >>> mediator.get_recommendation_stats()
+            {}
+        """
+        count = len(self._recommendation_counts)
+        self._recommendation_counts.clear()
+        return count
+
     def get_undo_depth(self) -> int:
         """Return the number of snapshots in the undo stack.
 
