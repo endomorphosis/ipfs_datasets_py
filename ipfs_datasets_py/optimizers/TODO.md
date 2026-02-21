@@ -533,23 +533,23 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 
 ## Batch 50+ Ideas (added batch 49)
 
-- [ ] (P2) [graphrag] `OntologyGenerator.generate_ontology_rich()` — add `elapsed_ms` to `OntologyGenerationResult.metadata`
+- [x] (P2) [graphrag] `OntologyGenerator.generate_ontology_rich()` elapsed_ms — Done batch 50: added to metadata; 4 tests
 - [ ] (P2) [graphrag] `OntologyCritic.evaluate_ontology()` — persist cache across instances via class-level `_SHARED_EVAL_CACHE`
 - [ ] (P3) [graphrag] Add `merge_provenance` tracking — which entities/rels came from which source doc
 - [ ] (P2) [graphrag] `LogicValidator.validate_ontology()` — add `ValidationReport.invalid_entity_ids` list
-- [ ] (P3) [graphrag] `OntologyOptimizer.compare_history()` — compute pairwise delta table for all history entries
+- [x] (P3) [graphrag] `OntologyOptimizer.compare_history()` — Done batch 50: returns list of dicts with batch_from/to, score_from/to, delta, direction; 7 tests
 - [ ] (P2) [tests] Add round-trip test for `OntologyMediator.run_refinement_cycle()` state serialization
 - [ ] (P3) [tests] Snapshot tests: freeze known-good critic scores for a reference ontology
 - [ ] (P2) [api] Add `OntologyGenerator.batch_extract(docs, context)` for multi-doc parallel extraction
-- [ ] (P3) [api] Add `OntologyOptimizer.prune_history(keep_last_n)` to cap memory growth
+- [x] (P3) [api] Add `OntologyOptimizer.prune_history(keep_last_n)` — Done batch 50: discards oldest entries, raises ValueError on n<1; 7 tests
 - [ ] (P3) [arch] Add `OntologyCritic.evaluate_ontology()` timeout guard (raises after N seconds)
 - [ ] (P2) [docs] Add per-method doctest examples to all public `OntologyGenerator` methods
 - [ ] (P2) [docs] Add per-method doctest examples to all public `OntologyCritic` methods
 - [ ] (P3) [obs] Add `OntologyGenerator.extract_entities()` structured log with entity_count + strategy
 - [ ] (P3) [obs] Add `OntologyMediator.refine_ontology()` structured log of actions_applied per round
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.get_stats()` — add `p50_score` / `p90_score` percentiles
+- [x] (P2) [graphrag] `OntologyLearningAdapter.get_stats()` p50/p90 percentiles — Done batch 50: linear interpolation; 6 tests
 - [ ] (P3) [graphrag] `OntologyMediator.refine_ontology()` — add `rename_entity` action (fix casing/normalisation)
 - [ ] (P3) [graphrag] Add `OntologyCritic._evaluate_provenance()` dimension — checks entities have source spans
 - [ ] (P2) [tests] Add tests for `OntologyHarness.run()` with real generator + critic (no mocks)
 - [ ] (P3) [perf] Cache `OntologyCritic._evaluate_consistency()` DFS result keyed on relationship set hash
-- [ ] (P2) [graphrag] `ExtractionConfig.max_confidence: float = 1.0` — cap entity confidence at this value
+- [x] (P2) [graphrag] `ExtractionConfig.max_confidence: float = 1.0` — Done batch 50: enforced in _extract_rule_based, to_dict/from_dict; 6 tests

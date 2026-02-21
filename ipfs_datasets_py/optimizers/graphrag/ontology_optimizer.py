@@ -1098,6 +1098,64 @@ class OntologyOptimizer:
             "trend": trend,
         }
 
+    def prune_history(self, keep_last_n: int) -> int:
+        """Discard all but the most recent *keep_last_n* history entries.
+
+        Useful for long-running processes where unbounded history would grow
+        memory unboundedly.
+
+        Args:
+            keep_last_n: Number of most recent :class:`OptimizationReport`
+                entries to retain.  Must be >= 1.
+
+        Returns:
+            Number of entries removed.
+
+        Raises:
+            ValueError: If ``keep_last_n`` is less than 1.
+        """
+        if keep_last_n < 1:
+            raise ValueError(f"keep_last_n must be >= 1, got {keep_last_n}")
+        n_removed = max(0, len(self._history) - keep_last_n)
+        if n_removed > 0:
+            self._history = self._history[-keep_last_n:]
+        return n_removed
+
+    def compare_history(self) -> List[Dict[str, Any]]:
+        """Compute a pairwise delta table over all history entries.
+
+        For each consecutive pair of :class:`OptimizationReport` objects in
+        ``_history``, computes the score delta and trend.
+
+        Returns:
+            List of dicts with keys:
+            - ``batch_from``: 0-based index of the earlier entry.
+            - ``batch_to``: 0-based index of the later entry.
+            - ``score_from``: average_score of the earlier entry.
+            - ``score_to``: average_score of the later entry.
+            - ``delta``: score_to - score_from (positive = improvement).
+            - ``direction``: ``"up"``, ``"down"``, or ``"flat"``.
+
+        Returns an empty list if fewer than 2 history entries exist.
+        """
+        if len(self._history) < 2:
+            return []
+        rows: List[Dict[str, Any]] = []
+        for i in range(len(self._history) - 1):
+            a = self._history[i]
+            b = self._history[i + 1]
+            delta = round(b.average_score - a.average_score, 6)
+            direction = "up" if delta > 0.001 else ("down" if delta < -0.001 else "flat")
+            rows.append({
+                "batch_from": i,
+                "batch_to": i + 1,
+                "score_from": round(a.average_score, 6),
+                "score_to": round(b.average_score, 6),
+                "delta": delta,
+                "direction": direction,
+            })
+        return rows
+
     def export_learning_curve_csv(self, filepath: Optional[str] = None) -> Optional[str]:
         """Export score progression history as CSV.
 

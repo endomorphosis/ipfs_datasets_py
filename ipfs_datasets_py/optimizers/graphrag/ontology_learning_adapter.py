@@ -155,10 +155,22 @@ class OntologyLearningAdapter:
 
         Returns:
             Dictionary with keys ``current_threshold``, ``sample_count``,
-            ``mean_score``, ``action_success_rates``, ``domain``.
+            ``mean_score``, ``p50_score``, ``p90_score``,
+            ``action_success_rates``, ``domain``.
         """
         scores = [r.final_score for r in self._feedback]
         mean_score = sum(scores) / len(scores) if scores else 0.0
+
+        def _percentile(data: list, pct: float) -> float:
+            """Return the *pct*-th percentile of *data* (0–100)."""
+            if not data:
+                return 0.0
+            sorted_data = sorted(data)
+            idx = (pct / 100.0) * (len(sorted_data) - 1)
+            lo = int(idx)
+            hi = min(lo + 1, len(sorted_data) - 1)
+            frac = idx - lo
+            return sorted_data[lo] + frac * (sorted_data[hi] - sorted_data[lo])
 
         action_success_rates: Dict[str, float] = {}
         for action, count in self._action_count.items():
@@ -171,6 +183,8 @@ class OntologyLearningAdapter:
             "base_threshold": self._base_threshold,
             "sample_count": len(self._feedback),
             "mean_score": mean_score,
+            "p50_score": _percentile(scores, 50),
+            "p90_score": _percentile(scores, 90),
             "action_success_rates": action_success_rates,
         }
 

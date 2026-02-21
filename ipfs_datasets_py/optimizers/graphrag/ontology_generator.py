@@ -110,6 +110,8 @@ class ExtractionConfig:
     stopwords: List[str] = field(default_factory=list)
     # Whitelist of allowed entity types; empty list = allow all types.
     allowed_entity_types: List[str] = field(default_factory=list)
+    # Upper bound on entity confidence scores (clamped to [0.0, max_confidence]).
+    max_confidence: float = 1.0
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a plain-dict representation (legacy compatibility)."""
@@ -125,6 +127,7 @@ class ExtractionConfig:
             "min_entity_length": self.min_entity_length,
             "stopwords": list(self.stopwords),
             "allowed_entity_types": list(self.allowed_entity_types),
+            "max_confidence": self.max_confidence,
         }
 
     @classmethod
@@ -142,6 +145,7 @@ class ExtractionConfig:
             min_entity_length=int(d.get("min_entity_length", 2)),
             stopwords=list(d.get("stopwords", [])),
             allowed_entity_types=list(d.get("allowed_entity_types", [])),
+            max_confidence=float(d.get("max_confidence", 1.0)),
         )
 
 
@@ -714,11 +718,15 @@ class OntologyGenerator:
                   f"Rels: {result.relationship_count}")
         """
         ontology = self.generate_ontology(data, context)
-        return OntologyGenerationResult.from_ontology(
+        import time as _time
+        _t0 = _time.perf_counter()
+        result = OntologyGenerationResult.from_ontology(
             ontology,
             extraction_strategy=context.extraction_strategy.value,
             domain=context.domain,
         )
+        result.metadata["elapsed_ms"] = round((_time.perf_counter() - _t0) * 1000, 3)
+        return result
     
     def _extract_rule_based(
         self,
@@ -813,10 +821,17 @@ class OntologyGenerator:
         except (TypeError, AttributeError):
             _allowed = set()
 
+        # Resolve max_confidence cap
+        try:
+            _max_conf = float(getattr(ext_config, "max_confidence", 1.0)) if ext_config is not None else 1.0
+        except (TypeError, ValueError, AttributeError):
+            _max_conf = 1.0
+
         for pattern, ent_type in _PATTERNS:
             if _allowed and ent_type not in _allowed:
                 continue
             confidence = 0.5 if ent_type == 'Concept' else 0.75
+            confidence = min(confidence, _max_conf)
             for m in _re.finditer(pattern, text):
                 raw = m.group(0).strip()
                 key = raw.lower()
