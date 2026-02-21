@@ -232,7 +232,7 @@ class PerformanceMetricsCollector:
             cycle.validation_count += validator_count
             self._total_validations += validator_count
     
-    def record_file_operation(self, cycle_id: str):
+    def record_file_operation(self, cycle_id: str) -> None:
         """Record a file I/O operation.
         
         Args:
@@ -342,7 +342,7 @@ class PerformanceMetricsCollector:
         if self.persistence_path and self.persistence_path.exists():
             self.persistence_path.unlink()
     
-    def _save_to_disk(self):
+    def _save_to_disk(self) -> None:
         """Persist metrics to disk."""
         if not self.persistence_path:
             return
@@ -361,7 +361,7 @@ class PerformanceMetricsCollector:
         with open(self.persistence_path, 'w') as f:
             json.dump(data, f, indent=2)
     
-    def _load_from_disk(self):
+    def _load_from_disk(self) -> None:
         """Load metrics from disk."""
         if not self.persistence_path or not self.persistence_path.exists():
             return
@@ -553,7 +553,7 @@ class PerformanceDashboard:
         
         return "\n".join(lines)
     
-    def export_json(self, output_path: Path):
+    def export_json(self, output_path: Path) -> None:
         """Export metrics to JSON.
         
         Args:
@@ -572,7 +572,7 @@ class PerformanceDashboard:
         with open(output_path, 'w') as f:
             json.dump(data, f, indent=2)
     
-    def export_csv(self, output_path: Path):
+    def export_csv(self, output_path: Path) -> None:
         """Export cycle metrics to CSV.
         
         Args:
@@ -623,7 +623,7 @@ def get_global_collector() -> PerformanceMetricsCollector:
     return _global_collector
 
 
-def set_global_collector(collector: PerformanceMetricsCollector):
+def set_global_collector(collector: PerformanceMetricsCollector) -> None:
     """Set global performance metrics collector.
     
     Args:

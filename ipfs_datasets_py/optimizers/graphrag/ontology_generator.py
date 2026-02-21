@@ -1761,6 +1761,29 @@ class EntityExtractionResult:
             "std": _math.sqrt(variance),
         }
 
+    def top_confidence_entity(self) -> Optional["Entity"]:
+        """Return the entity with the highest confidence score.
+
+        Returns:
+            The :class:`Entity` with the maximum ``confidence`` value, or
+            ``None`` when the result has no entities.
+
+        Example:
+            >>> result.top_confidence_entity()
+            Entity(id='e3', type='Person', text='Alice', confidence=0.95, ...)
+        """
+        if not self.entities:
+            return None
+        return max(self.entities, key=lambda e: e.confidence)
+
+    def entities_with_properties(self) -> List["Entity"]:
+        """Return entities that have at least one entry in their ``properties`` dict.
+
+        Returns:
+            List of :class:`Entity` objects with non-empty ``properties``.
+        """
+        return [e for e in self.entities if e.properties]
+
 
 @dataclass
 class OntologyGenerationResult:
@@ -3888,6 +3911,22 @@ class OntologyGenerator:
             for e in result.entities
         ]
         return _dc.replace(result, entities=new_entities)
+
+    def entity_confidence_map(self, result: "EntityExtractionResult") -> Dict[str, float]:
+        """Return a mapping of entity id → confidence for all entities in *result*.
+
+        Args:
+            result: :class:`EntityExtractionResult` with entities.
+
+        Returns:
+            Dict mapping each entity ``id`` string to its ``confidence`` float.
+            Returns ``{}`` when there are no entities.
+
+        Example:
+            >>> gen.entity_confidence_map(result)
+            {'e1': 0.9, 'e2': 0.7}
+        """
+        return {e.id: e.confidence for e in result.entities}
 
 
 __all__ = [

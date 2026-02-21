@@ -2468,6 +2468,42 @@ class OntologyCritic(BaseCritic):
             "dim_deltas": dim_deltas,
         }
 
+    def dimension_rankings(self, score: "CriticScore") -> List[str]:
+        """Return dimension names sorted from best (highest) to worst (lowest).
+
+        Args:
+            score: A :class:`CriticScore` object.
+
+        Returns:
+            List of the 5 dimension name strings in descending score order.
+
+        Example:
+            >>> critic.dimension_rankings(score)
+            ['domain_alignment', 'completeness', 'consistency', 'clarity', 'granularity']
+        """
+        dims = {
+            "completeness": score.completeness,
+            "consistency": score.consistency,
+            "clarity": score.clarity,
+            "granularity": score.granularity,
+            "domain_alignment": score.domain_alignment,
+        }
+        return sorted(dims.keys(), key=lambda d: -dims[d])
+
+    def weakest_scores(self, scores: List["CriticScore"], n: int = 3) -> List["CriticScore"]:
+        """Return the bottom *n* :class:`CriticScore` objects by overall value.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+            n: Maximum number of weak scores to return (default 3).
+
+        Returns:
+            List of up to *n* :class:`CriticScore` objects with the lowest
+            ``overall`` values, sorted ascending (weakest first).
+        """
+        sorted_scores = sorted(scores, key=lambda s: s.overall)
+        return sorted_scores[:n]
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],

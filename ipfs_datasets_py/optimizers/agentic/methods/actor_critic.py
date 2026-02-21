@@ -690,6 +690,16 @@ class Policy:
     usage_count: int
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize policy to dictionary for persistence.
+        
+        Returns:
+            Dictionary with policy pattern, success rate, average improvement, and usage count.
+            
+        Example:
+            >>> policy = Policy(pattern="refactor loops", success_rate=0.85)
+            >>> policy.to_dict()
+            {'pattern': 'refactor loops', 'success_rate': 0.85, 'avg_improvement': 0.0, 'usage_count': 0}
+        """
         return {
             "pattern": self.pattern,
             "success_rate": self.success_rate,
@@ -699,6 +709,20 @@ class Policy:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Policy":
+        """Create Policy instance from dictionary.
+        
+        Args:
+            data: Dictionary containing pattern, success_rate, avg_improvement, and usage_count.
+            
+        Returns:
+            New Policy instance with values from the dictionary.
+            
+        Example:
+            >>> data = {'pattern': 'optimize imports', 'success_rate': 0.90}
+            >>> policy = Policy.from_dict(data)
+            >>> policy.pattern
+            'optimize imports'
+        """
         return cls(
             pattern=data.get("pattern", ""),
             success_rate=float(data.get("success_rate", 0.0)),
@@ -739,6 +763,15 @@ class ActorCriticOptimizer(AgenticOptimizer):
         return OptimizationMethod.ACTOR_CRITIC
 
     def load_policies(self) -> None:
+        """Load learned policies from persistent storage.
+        
+        Reads policies from the JSON file specified in policy_file.
+        If the file doesn't exist or is invalid, initializes empty policies.
+        
+        Example:
+            >>> optimizer = ActorCriticOptimizer(llm_router, policy_file="policies.json")
+            >>> optimizer.load_policies()  # Loads from policies.json
+        """
         path = Path(self.policy_file)
         if not path.exists():
             self.policies = {}
@@ -759,11 +792,31 @@ class ActorCriticOptimizer(AgenticOptimizer):
             self._success_counts = {}
 
     def save_policies(self) -> None:
+        """Persist learned policies to disk.
+        
+        Writes all policies to the JSON file specified in policy_file.
+        Policies are serialized using Policy.to_dict().
+        
+        Example:
+            >>> optimizer.policies["pattern1"] = Policy("refactor loops", 0.85)
+            >>> optimizer.save_policies()  # Saves to policy_file
+        """
         path = Path(self.policy_file)
         payload = {key: pol.to_dict() for key, pol in self.policies.items()}
         path.write_text(json.dumps(payload, indent=2))
 
     def get_best_policy(self) -> Optional[Policy]:
+        """Retrieve the best-performing policy based on success rate.
+        
+        Returns:
+            The policy with highest success rate, then highest avg_improvement, then lowest usage_count.
+            Returns None if no policies exist.
+            
+        Example:
+            >>> best = optimizer.get_best_policy()
+            >>> if best:
+            ...     print(f"Best pattern: {best.pattern} (success rate: {best.success_rate})")
+        """
         if not self.policies:
             return None
         return max(self.policies.values(), key=lambda p: (p.success_rate, p.avg_improvement, -p.usage_count))

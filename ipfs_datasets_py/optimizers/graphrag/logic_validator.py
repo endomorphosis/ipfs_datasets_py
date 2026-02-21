@@ -1325,6 +1325,64 @@ class LogicValidator:
                     counts[t] = counts.get(t, 0) + 1
         return counts
 
+    def orphan_entities(self, ontology: Dict[str, Any]) -> List[str]:
+        """Return IDs of entities that appear in no relationships.
+
+        An *orphan* is an entity whose ``id`` does not appear as ``source_id``
+        or ``target_id`` in any relationship.
+
+        Args:
+            ontology: Ontology dict with ``"entities"`` and ``"relationships"``.
+
+        Returns:
+            Sorted list of orphan entity id strings.
+
+        Example:
+            >>> validator.orphan_entities({"entities": [{"id": "e1"}, {"id": "e2"}],
+            ...                             "relationships": [{"source_id": "e1", "target_id": "e2"}]})
+            []
+        """
+        entity_ids = set(self.all_entity_ids(ontology))
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if not isinstance(rels, (list, tuple)):
+            return sorted(entity_ids)
+        connected: set = set()
+        for rel in rels:
+            if isinstance(rel, dict):
+                src = rel.get("source_id")
+                tgt = rel.get("target_id")
+                if isinstance(src, str):
+                    connected.add(src)
+                if isinstance(tgt, str):
+                    connected.add(tgt)
+        return sorted(entity_ids - connected)
+
+    def hub_entities(self, ontology: Dict[str, Any], min_degree: int = 2) -> List[str]:
+        """Return IDs of entities with at least *min_degree* incident relationships.
+
+        Degree is the total count of appearances as either ``source_id`` or
+        ``target_id`` across all relationships.
+
+        Args:
+            ontology: Ontology dict.
+            min_degree: Minimum degree threshold (inclusive, default 2).
+
+        Returns:
+            Sorted list of entity id strings meeting the threshold.
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if not isinstance(rels, (list, tuple)):
+            return []
+        degree: Dict[str, int] = {}
+        for rel in rels:
+            if not isinstance(rel, dict):
+                continue
+            for key in ("source_id", "target_id"):
+                eid = rel.get(key)
+                if isinstance(eid, str) and eid:
+                    degree[eid] = degree.get(eid, 0) + 1
+        return sorted(eid for eid, d in degree.items() if d >= min_degree)
+
 
 # Export public API
 __all__ = [

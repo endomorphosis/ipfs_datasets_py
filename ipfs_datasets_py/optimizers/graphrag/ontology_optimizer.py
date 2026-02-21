@@ -2227,6 +2227,46 @@ class OntologyOptimizer:
         """
         return any(e.average_score > baseline for e in self._history)
 
+    def rolling_best(self, window: int = 5) -> Any:
+        """Return the history entry with the highest ``average_score`` within
+        the last *window* entries.
+
+        Args:
+            window: Number of most-recent entries to examine (default 5).
+
+        Returns:
+            The best history entry object, or ``None`` when history is empty.
+
+        Raises:
+            ValueError: If ``window`` < 1.
+        """
+        if window < 1:
+            raise ValueError("window must be >= 1")
+        entries = self._history[-window:] if self._history else []
+        if not entries:
+            return None
+        return max(entries, key=lambda e: e.average_score)
+
+    def plateau_count(self, tol: float = 0.005) -> int:
+        """Return the number of consecutive history pairs within *tol* of each other.
+
+        A "plateau pair" is a pair of adjacent entries whose absolute score
+        difference is ≤ *tol*.
+
+        Args:
+            tol: Tolerance for two scores to be considered the same (default 0.005).
+
+        Returns:
+            Non-negative integer count of plateau pairs.
+        """
+        if len(self._history) < 2:
+            return 0
+        count = 0
+        for i in range(len(self._history) - 1):
+            if abs(self._history[i + 1].average_score - self._history[i].average_score) <= tol:
+                count += 1
+        return count
+
 
 # Export public API
 __all__ = [
