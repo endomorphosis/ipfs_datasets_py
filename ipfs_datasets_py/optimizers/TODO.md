@@ -351,7 +351,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [ ] (P3) [perf] Benchmark `OntologyGenerator.extract_entities()` on 10k-token documents
 - [ ] (P3) [perf] Benchmark `LogicValidator.validate_ontology()` on 100-entity ontologies
-- [ ] (P3) [perf] Add pytest-benchmark harness to `tests/performance/optimizers/`
+- [x] (P3) [perf] Add pytest-benchmark harness to tests/performance/optimizers/ — Done batch 48: 9 benchmarks for extraction, critic, logic validator
 
 ---
 
@@ -363,7 +363,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 - [x] (P2) [docs] Document the `BaseCritic` / `BaseSession` / `BaseHarness` extension pattern with examples — Done batch 30: BaseCritic module docstring expanded with full extension pattern + existing implementations list
 - [ ] (P3) [docs] Add Sphinx/MkDocs configuration and auto-generate API reference
 - [ ] (P3) [docs] Write a "How to add a new optimizer" guide covering all integration points
-- [ ] (P3) [docs] Add architecture ASCII diagram to each sub-package `__init__.py`
+- [x] (P3) [docs] Add architecture ASCII diagram to sub-package __init__.py — Done batch 48: generate→critique→optimize→validate loop in graphrag/__init__.py
 
 ---
 
@@ -500,7 +500,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [agentic] Add `ChaosOptimizer.inject_cpu_spike()` method for realistic CPU load testing
 - [x] (P3) [arch] Add `optimizers.__version__` string populated from `ipfs_datasets_py.__version__` — Done batch 40
 - [x] (P3) [tests] Test `_safe_resolve()` path traversal — Done batch 36: test_safe_resolve_path_traversal.py (11 tests for graphrag + logic CLIs)
-- [ ] (P2) [docs] Add `common/README.md` section documenting `CriticResult` fields and usage patterns
+- [x] (P2) [docs] Add common/README.md section documenting CriticResult fields — Already present (discovered batch 48)
 - [x] (P2) [graphrag] Emit a structured log line (JSON) after each `analyze_batch()` call for observability (INFO level, no secrets) — Done batch 33: `OntologyOptimizer._emit_analyze_batch_summary()` emits `ontology_optimizer.analyze_batch.summary` JSON logs for success/empty/no-scores paths; covered by caplog tests in `test_ontology_optimizer_metrics.py`
 - [x] (P2) [logic] Add `--domain` flag to `validate` command — Done batch 34: 5 choices, passed to OptimizationContext domain
 - [x] (P2) [logic] Apply domain-specific validation rules in `cmd_validate()` — Done batch 34: domain passed to OptimizationContext; rules applied via LogicTheoremOptimizer
@@ -526,7 +526,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [tests] Parametrized tests for export_to_graphml — Done batch 46: 5 sizes (0/1/3/10/20 entities) verified node/edge counts
 - [ ] (P3) [agentic] Add `ChaosOptimizer.simulate_memory_pressure()` method for memory threshold testing
 - [x] (P2) [graphrag] Add `OntologyLearningAdapter.to_dict()` / `from_dict()` — Done batch 47: full round-trip; 16 tests
-- [ ] (P3) [tests] Hypothesis strategy for valid `ExtractionConfig` (generates random but valid configs)
+- [x] (P3) [tests] Hypothesis strategy for valid ExtractionConfig — Done batch 48: tests/unit/optimizers/graphrag/strategies.py; used in 7 property tests
 - [x] (P2) [arch] Add `BaseSession.to_json()` / `from_json()` round-trip serialization — Done batch 44: also adds from_dict()
-- [ ] (P3) [docs] Add usage example for `OntologyGenerationResult` to graphrag/README.md
+- [x] (P3) [docs] Add usage example for OntologyGenerationResult to graphrag/README.md — Done batch 48: code example + field reference table
 - [x] (P2) [graphrag] Add `OntologyCritic.dimension_weights` property — Done batch 44: returns copy of DIMENSION_WEIGHTS

@@ -630,3 +630,68 @@ For questions or issues, please open an issue on the main repository or refer to
 ---
 
 **🎉 Production Ready - All 6 Phases Complete! 🎉**
+
+---
+
+## `OntologyGenerationResult` Usage
+
+`OntologyGenerationResult` is a rich result wrapper around the raw ontology dict.
+Use `OntologyGenerator.generate_ontology_rich()` to get one instead of the plain
+dict returned by `generate_ontology()`.
+
+```python
+from ipfs_datasets_py.optimizers.graphrag import (
+    OntologyGenerator,
+    OntologyGenerationContext,
+)
+from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
+    OntologyGenerationResult,
+    ExtractionConfig,
+)
+
+config = ExtractionConfig(
+    confidence_threshold=0.6,
+    max_entities=50,
+    domain_vocab={"legal": ["contract", "party", "clause"]},
+)
+generator = OntologyGenerator(config=config)
+ctx = OntologyGenerationContext(domain="legal", source="contract-text")
+
+text = """
+Alice signed a contract with Acme Corp on 2024-01-15.
+The contract includes a termination clause that protects both parties.
+Bob witnessed the signing in New York.
+"""
+
+result: OntologyGenerationResult = generator.generate_ontology_rich(text, ctx)
+
+print(f"Entities:             {result.entity_count}")
+print(f"Relationships:        {result.relationship_count}")
+print(f"Entity type variety:  {result.entity_type_diversity}")
+print(f"Mean entity conf:     {result.mean_entity_confidence:.3f}")
+print(f"Mean rel conf:        {result.mean_relationship_confidence:.3f}")
+print(f"Strategy:             {result.extraction_strategy}")
+print(f"Domain:               {result.domain}")
+
+# Raw ontology dict is always accessible:
+for ent in result.ontology.get("entities", [])[:3]:
+    print(f"  {ent['text']} ({ent['type']}) conf={ent.get('confidence', '?'):.2f}")
+```
+
+### Field Reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ontology` | `dict` | Raw `{"entities": [...], "relationships": [...]}` dict. |
+| `entity_count` | `int` | Total extracted entities. |
+| `relationship_count` | `int` | Total inferred relationships. |
+| `entity_type_diversity` | `int` | Number of distinct entity type labels. |
+| `mean_entity_confidence` | `float` | Mean confidence across entities; 0.0 if none. |
+| `mean_relationship_confidence` | `float` | Mean confidence across relationships; 0.0 if none. |
+| `extraction_strategy` | `str` | `"rule_based"`, `"llm_based"`, etc. |
+| `domain` | `str` | Domain string from context. |
+| `metadata` | `dict` | Extra data (timings, backend, etc.). |
+
+Use `OntologyGenerationResult.from_ontology(raw_dict, extraction_strategy=..., domain=...)`
+to wrap any existing ontology dict without re-running extraction.
+

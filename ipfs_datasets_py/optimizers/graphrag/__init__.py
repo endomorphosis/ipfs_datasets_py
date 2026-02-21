@@ -10,14 +10,43 @@ Inspired by the adversarial harness from complaint-generator, adapted for ontolo
 generation with focus on logical consistency and automated improvement through
 stochastic gradient descent (SGD) cycles.
 
+Architecture (generate → critique → optimize → validate loop)::
+
+    ┌─────────────────────────────────────────────────────────────────┐
+    │                    OntologyHarness (batch)                      │
+    │  ┌────────────────────────────────────────────────────────────┐ │
+    │  │                  OntologySession (single)                  │ │
+    │  │                                                            │ │
+    │  │  ┌───────────────┐   ontology   ┌──────────────────────┐  │ │
+    │  │  │OntologyGener- │ ──────────── │   OntologyCritic     │  │ │
+    │  │  │ator           │              │  (5-dim evaluation)  │  │ │
+    │  │  │ExtractionConf.│ ◄──actions── │  CriticResult        │  │ │
+    │  │  └───────────────┘              └──────────┬───────────┘  │ │
+    │  │         ▲                                   │              │ │
+    │  │         │ refined ontology                  │ feedback     │ │
+    │  │  ┌──────┴──────────┐              ┌─────────▼──────────┐  │ │
+    │  │  │OntologyOptimizer│              │ OntologyMediator   │  │ │
+    │  │  │(SGD, history,   │ ◄──actions── │ (action selection) │  │ │
+    │  │  │ export)         │              └────────────────────┘  │ │
+    │  │  └─────────────────┘                                      │ │
+    │  │                           ┌─────────────────────────────┐  │ │
+    │  │       TDFOL formulas      │     LogicValidator          │  │ │
+    │  │  ─────────────────────────│  (theorem prover, cache)    │  │ │
+    │  │                           └─────────────────────────────┘  │ │
+    │  │                                                            │ │
+    │  │  OntologyLearningAdapter (feedback-driven threshold tuning) │ │
+    │  └────────────────────────────────────────────────────────────┘ │
+    └─────────────────────────────────────────────────────────────────┘
+
 Components:
     - OntologyGenerator: Generate ontologies from arbitrary data
     - OntologyCritic: LLM-based multi-dimensional evaluation
     - LogicValidator: TDFOL theorem prover integration
-    - OntologyMediator: Coordinate refinement cycles (planned)
-    - OntologyOptimizer: SGD-based optimization (planned)
-    - OntologySession: Single optimization session (planned)
-    - OntologyHarness: Parallel batch orchestrator (planned)
+    - OntologyMediator: Coordinate refinement cycles
+    - OntologyOptimizer: SGD-based optimization, export, history
+    - OntologySession: Single optimization session
+    - OntologyHarness: Parallel batch orchestrator
+    - OntologyLearningAdapter: Feedback-driven extraction threshold tuning
 
 Example:
     >>> from ipfs_datasets_py.optimizers.graphrag import (
