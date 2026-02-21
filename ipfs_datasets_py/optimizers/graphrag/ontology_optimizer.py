@@ -2825,6 +2825,27 @@ class OntologyOptimizer:
         recent = self._history[-n:]
         return max(e.average_score for e in recent)
 
+    def history_change_count(self) -> int:
+        """Return the number of times the score trend changed direction.
+
+        A "change" occurs when consecutive ``average_score`` values switch
+        from rising to falling or vice versa.
+
+        Returns:
+            Integer count of direction changes; ``0`` when history has fewer
+            than 3 entries.
+        """
+        if len(self._history) < 3:
+            return 0
+        scores = [e.average_score for e in self._history]
+        changes = 0
+        for i in range(1, len(scores) - 1):
+            prev_dir = scores[i] - scores[i - 1]
+            next_dir = scores[i + 1] - scores[i]
+            if prev_dir * next_dir < 0:
+                changes += 1
+        return changes
+
 
 # Export public API
 __all__ = [

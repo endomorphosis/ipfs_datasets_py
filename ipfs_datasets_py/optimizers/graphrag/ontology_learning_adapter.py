@@ -1230,3 +1230,25 @@ class OntologyLearningAdapter:
         scores = [r.final_score for r in self._feedback]
         improvements = sum(1 for a, b in zip(scores, scores[1:]) if b > a)
         return improvements / (len(scores) - 1)
+
+    def feedback_last_n(self, n: int = 5) -> list:
+        """Return the last *n* feedback records.
+
+        Args:
+            n: Number of recent records to return. Defaults to ``5``.
+
+        Returns:
+            List of ``FeedbackRecord`` objects (most recent last), up to *n*.
+        """
+        return self._feedback[-n:] if n > 0 else []
+
+    def feedback_top_n(self, n: int = 5) -> list:
+        """Return the *n* feedback records with the highest ``final_score``.
+
+        Args:
+            n: Number of top records to return. Defaults to ``5``.
+
+        Returns:
+            List sorted by ``final_score`` descending, up to *n* records.
+        """
+        return sorted(self._feedback, key=lambda r: r.final_score, reverse=True)[:n]

@@ -2300,6 +2300,39 @@ class LogicValidator:
         best = max(out_counts, key=lambda k: out_counts[k])
         return {"entity": best, "count": out_counts[best]}
 
+    def path_exists(self, ontology: dict, source: str, target: str) -> bool:
+        """Return True if *target* is reachable from *source*.
+
+        Uses BFS over directed relationships.
+
+        Args:
+            ontology: Ontology dict with ``relationships`` list.
+            source: Entity ID to start from.
+            target: Entity ID to check reachability for.
+
+        Returns:
+            ``True`` when a directed path exists; ``False`` otherwise.
+        """
+        if source == target:
+            return True
+        adjacency: dict = {}
+        for rel in ontology.get("relationships", []):
+            s = rel.get("source") or rel.get("source_id")
+            t = rel.get("target") or rel.get("target_id")
+            if s and t:
+                adjacency.setdefault(s, []).append(t)
+        visited = set()
+        queue = [source]
+        while queue:
+            current = queue.pop(0)
+            if current == target:
+                return True
+            if current in visited:
+                continue
+            visited.add(current)
+            queue.extend(adjacency.get(current, []))
+        return False
+
 
 # Export public API
 __all__ = [
