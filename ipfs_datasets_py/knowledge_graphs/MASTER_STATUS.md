@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.17.0  
+**Version:** 3.18.0  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-21 (session 40)  
-**Last Major Release:** v3.17.0 (CAR save/load with real deps, neo4j constraint exception, wikipedia tracer on ValueError; session 40)
+**Last Updated:** 2026-02-21 (session 41)  
+**Last Major Release:** v3.18.0 (session 41: ipld.py legacy module 0%→93%, add 73 tests, jump from 95%→**98%** coverage, 3,566 passing)
 
 ---
 
@@ -11,17 +11,17 @@
 
 | Aspect | Status | Details |
 |--------|--------|---------|
-| **Overall Status** | ✅ Production Ready | 80%+ test coverage, comprehensive docs |
+| **Overall Status** | ✅ Production Ready | 98% test coverage |
 | **Core Features** | ✅ Complete | All extraction, query, storage features working |
 | **P1-P4 Features** | ✅ Complete | Implemented in PR #1085 (2026-02-18) |
 | **Cypher Features** | ✅ Complete | FOREACH + CALL subquery added (2026-02-20) |
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 95% overall | Measured 2026-02-21 session 40; 9 new tests covering CAR format save/load with real libipld+ipld_car+multiformats (lines 914, 921-930, 950-951), neo4j constraint exception (lines 309-310), wikipedia tracer.update_validation_trace on ValueError (line 424); **3,424 pass** (9 new, baseline 3,400); dag_cbor/ipld_car/libipld/plotly installed
-| **Documentation** | ✅ Up to Date | Reflects v3.17.0 structure |
-| **Known Issues** | None | 20 bugs found (sessions 7-11, 18-19, 21-27, 30, 39-40); 0 failures (3,424 pass)
-| **Next Milestone** | v3.18.0 (Q3 2026) | extractor spaCy lines (requires spaCy NLP), ipld.py legacy coverage (requires IPLDStorage install), dead-code cleanup (expression_evaluator 153-163, graph.py 629/661 bool-in-match, ir_executor 435-442)
+| **Test Coverage** | **98% overall** | Measured 2026-02-21 session 41; 73 new tests covering legacy ipld.py (Entity, Relationship, IPLDKnowledgeGraph 0%→93%), ontology BFS cycle guard (line 828), cypher UnaryOpNode (line 953), entity stopword filter, SRL empty-sent guard; **3,566 pass** (73 new, baseline 3,493); 192 missed lines |
+| **Documentation** | ✅ Up to Date | Reflects v3.18.0 structure |
+| **Known Issues** | None | 20 bugs found (sessions 7-11, 18-19, 21-27, 30, 39-41); 0 failures (3,566 pass)
+| **Next Milestone** | v3.19.0 (Q3 2026) | extractor spaCy lines 73% (requires spaCy NLP installation), ipld.py CAR export/from_car (requires ipld_car encode/decode), dead-code cleanup (expression_evaluator 153-163, graph.py 629/661 bool-in-match, ir_executor 435-442, cypher/compiler 186/213/261 anon-var)
 
 ---
 
