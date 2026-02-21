@@ -78,22 +78,26 @@ class TestWorstNFeedback:
 class TestFeedbackScoreRange:
     def test_empty_returns_zero(self):
         a = _make_adapter()
-        assert a.feedback_score_range() == pytest.approx(0.0)
+        assert a.feedback_score_range() == (0.0, 0.0)
 
     def test_single_returns_zero(self):
         a = _make_adapter()
         _push_adapter(a, 0.5)
-        assert a.feedback_score_range() == pytest.approx(0.0)
+        assert a.feedback_score_range() == (0.5, 0.5)
 
     def test_known_range(self):
         a = _make_adapter()
         _push_adapter(a, 0.2, 0.8)
-        assert a.feedback_score_range() == pytest.approx(0.6)
+        lo, hi = a.feedback_score_range()
+        assert lo == pytest.approx(0.2)
+        assert hi == pytest.approx(0.8)
 
     def test_non_negative(self):
         a = _make_adapter()
         _push_adapter(a, 0.7, 0.3, 0.5)
-        assert a.feedback_score_range() >= 0.0
+        lo, hi = a.feedback_score_range()
+        assert lo >= 0.0
+        assert hi >= 0.0
 
 
 # ---------------------------------------------------------------------------
