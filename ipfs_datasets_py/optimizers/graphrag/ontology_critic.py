@@ -2728,6 +2728,34 @@ class OntologyCritic(BaseCritic):
 
         return recommendations
 
+    def passing_rate(self, scores: list, threshold: float = 0.6) -> float:
+        """Return the fraction of scores with ``overall > threshold``.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+            threshold: Exclusive lower bound (default 0.6).
+
+        Returns:
+            Float in [0.0, 1.0]; ``0.0`` for empty list.
+        """
+        if not scores:
+            return 0.0
+        return sum(1 for s in scores if s.overall > threshold) / len(scores)
+
+    def score_spread(self, scores: list) -> float:
+        """Return the range (max - min) of ``overall`` values.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            Float spread; ``0.0`` for empty or single-element lists.
+        """
+        if len(scores) < 2:
+            return 0.0
+        vals = [s.overall for s in scores]
+        return max(vals) - min(vals)
+
 
 # Export public API
 __all__ = [
@@ -2735,3 +2763,29 @@ __all__ = [
     'CriticScore',
     'DIMENSION_WEIGHTS',
 ]
+        """Return the fraction of scores with ``overall > threshold``.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+            threshold: Exclusive lower bound (default 0.6).
+
+        Returns:
+            Float in [0.0, 1.0]; ``0.0`` for empty list.
+        """
+        if not scores:
+            return 0.0
+        return sum(1 for s in scores if s.overall > threshold) / len(scores)
+
+    def score_spread(self, scores: list) -> float:
+        """Return the range (max - min) of ``overall`` values.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            Float spread; ``0.0`` for empty or single-element lists.
+        """
+        if len(scores) < 2:
+            return 0.0
+        vals = [s.overall for s in scores]
+        return max(vals) - min(vals)

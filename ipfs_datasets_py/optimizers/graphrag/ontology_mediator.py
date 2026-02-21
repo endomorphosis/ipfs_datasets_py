@@ -1336,6 +1336,28 @@ class OntologyMediator:
         """
         return sum(1 for v in self._action_counts.values() if v > 0)
 
+    def most_used_action(self) -> "str | None":
+        """Return the action name with the highest recorded count.
+
+        Returns:
+            Action name string, or ``None`` when no actions have been recorded.
+        """
+        if not self._action_counts:
+            return None
+        return max(self._action_counts, key=lambda k: self._action_counts[k])
+
+    def least_used_action(self) -> "str | None":
+        """Return the action name with the lowest positive recorded count.
+
+        Returns:
+            Action name string among actions that have been used at least once,
+            or ``None`` when no actions have been recorded.
+        """
+        active = {k: v for k, v in self._action_counts.items() if v > 0}
+        if not active:
+            return None
+        return min(active, key=lambda k: active[k])
+
 
 # Export public API
 __all__ = [

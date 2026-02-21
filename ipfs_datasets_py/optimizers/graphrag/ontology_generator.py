@@ -643,6 +643,19 @@ class ExtractionConfig:
         new_thresh = min(1.0, self.confidence_threshold + delta)
         return _dc.replace(self, confidence_threshold=new_thresh)
 
+    def describe(self) -> str:
+        """Return a human-readable one-line summary of this config.
+
+        Returns:
+            String like ``"ExtractionConfig(threshold=0.70, max_entities=100, ...)"``
+        """
+        import dataclasses as _dc
+        pairs = ", ".join(
+            f"{f.name}={getattr(self, f.name)!r}"
+            for f in _dc.fields(self)
+        )
+        return f"ExtractionConfig({pairs})"
+
     def threshold_distance(self, other: "ExtractionConfig") -> float:
         """Return the absolute difference between this and *other*'s thresholds.
 
@@ -4174,6 +4187,25 @@ class OntologyGenerator:
                 seen[e.id] = e
         unique = list(seen.values())
         return _dc.replace(result, entities=unique)
+
+    def filter_low_confidence(
+        self,
+        result: "EntityExtractionResult",
+        threshold: float = 0.5,
+    ) -> "EntityExtractionResult":
+        """Return a copy of *result* with entities below *threshold* removed.
+
+        Args:
+            result: :class:`EntityExtractionResult`.
+            threshold: Minimum confidence to retain (inclusive, default 0.5).
+
+        Returns:
+            New :class:`EntityExtractionResult` keeping only entities with
+            ``confidence >= threshold``.
+        """
+        import dataclasses as _dc
+        kept = [e for e in result.entities if e.confidence >= threshold]
+        return _dc.replace(result, entities=kept)
 
 
 __all__ = [
