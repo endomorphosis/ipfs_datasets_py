@@ -796,3 +796,25 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [graphrag] Add `OntologyCritic.evaluate_list(ontologies, ctx)` -- evaluate a list, return CriticScores
 - [ ] (P3) [graphrag] Add `OntologyPipeline.domain` setter -- update domain at runtime
 - [ ] (P2) [graphrag] Add `OntologyLearningAdapter.score_variance()` -- variance of feedback final_scores
+
+## Batch 91+ Ideas (added batch-90)
+- [ ] (P2) [graphrag] Add `OntologyCritic.score_range(scores)` -- (min, max) tuple of overall scores
+- [ ] (P2) [graphrag] Add `OntologyGenerator.sorted_entities(result, key)` -- sort entities by field
+- [ ] (P3) [graphrag] Add `OntologyLearningAdapter.clear_feedback()` -- clear all feedback records
+- [ ] (P2) [graphrag] Add `OntologyMediator.log_snapshot(label)` -- label current undo stack top
+- [ ] (P2) [graphrag] Add `EntityExtractionResult.confidence_histogram(bins)` -- bucket confidence values
+- [ ] (P3) [graphrag] Add `OntologyOptimizer.history_summary()` -- dict with min/max/mean/count
+- [ ] (P2) [graphrag] Add `OntologyPipeline.warmup(n_texts)` -- pre-warm pipeline with dummy texts
+- [ ] (P2) [graphrag] Add `LogicValidator.contradiction_count(ontology)` -- alias for count_contradictions
+- [ ] (P3) [graphrag] Add `OntologyCritic.dimension_scores(score)` -- dict of all 5 dim values
+- [ ] (P2) [graphrag] Add `ExtractionConfig.with_threshold(t)` -- return copy with new threshold
+- [ ] (P2) [graphrag] Add `OntologyGenerator.filter_result_by_confidence(result, min_conf)` -- alias for strip_low_confidence with cleaner name
+- [ ] (P3) [graphrag] Add `OntologyMediator.pending_recommendation()` -- top recommendation without consuming it
+- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.feedback_ids()` -- list of unique session_ids or feedback identifiers
+- [ ] (P2) [graphrag] Add `EntityExtractionResult.entity_texts()` -- list of all entity text values
+- [ ] (P2) [graphrag] Add `OntologyCritic.passes_all(scores, threshold)` -- True if all scores pass threshold
+- [ ] (P2) [graphrag] Add `OntologyOptimizer.latest_batch_size()` -- number of ontologies in last batch
+- [ ] (P3) [graphrag] Add `OntologyPipeline.has_run()` -- bool whether any runs have been made
+- [ ] (P2) [graphrag] Add `OntologyGenerator.entity_ids(result)` -- list of all entity IDs
+- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.feedback_summary_dict()` -- dict with count/mean/variance
+- [ ] (P2) [graphrag] Add `LogicValidator.is_empty(ontology)` -- True if no entities or relationships

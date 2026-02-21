@@ -533,6 +533,24 @@ class ExtractionConfig:
             f"max_relationships={self.max_relationships})"
         )
 
+    def with_threshold(self, threshold: float) -> "ExtractionConfig":
+        """Return a copy of this config with *threshold* as the confidence threshold.
+
+        Args:
+            threshold: New ``confidence_threshold`` value (0.0–1.0).
+
+        Returns:
+            New :class:`ExtractionConfig` with the updated threshold; all
+            other fields are copied from ``self``.
+
+        Example:
+            >>> strict = cfg.with_threshold(0.9)
+            >>> strict.confidence_threshold
+            0.9
+        """
+        import dataclasses as _dc
+        return _dc.replace(self, confidence_threshold=threshold)
+
 
 @dataclass
 class OntologyGenerationContext:
@@ -1358,6 +1376,18 @@ class EntityExtractionResult:
             metadata=merged_meta,
             errors=merged_errors,
         )
+
+    def entity_texts(self) -> List[str]:
+        """Return the ``text`` value of every entity in this result.
+
+        Returns:
+            List of strings in the same order as :attr:`entities`.
+
+        Example:
+            >>> result.entity_texts()
+            ['Alice', 'ACME Corp']
+        """
+        return [e.text for e in self.entities]
 
 
 @dataclass
@@ -3017,6 +3047,22 @@ class OntologyGenerator:
             3
         """
         return len(result.entities)
+
+    def entity_ids(self, result: "EntityExtractionResult") -> List[str]:
+        """Return the ``id`` of every entity in *result*.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+
+        Returns:
+            List of entity ID strings in the same order as
+            ``result.entities``.
+
+        Example:
+            >>> gen.entity_ids(result)
+            ['e1', 'e2']
+        """
+        return [e.id for e in result.entities]
 
     def explain_entity(self, entity: "Entity") -> str:
         """Return a concise one-line English description of *entity*.

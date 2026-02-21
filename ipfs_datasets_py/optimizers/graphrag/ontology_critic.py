@@ -2031,6 +2031,47 @@ class OntologyCritic(BaseCritic):
         variance = sum((s.overall - mean) ** 2 for s in scores) / len(scores)
         return _math.sqrt(variance)
 
+    def dimension_scores(self, score: "CriticScore") -> Dict[str, float]:
+        """Return a dict mapping each dimension name to its score value.
+
+        Args:
+            score: A :class:`CriticScore` to inspect.
+
+        Returns:
+            Dict with keys ``completeness``, ``consistency``, ``clarity``,
+            ``granularity``, ``domain_alignment``, and ``overall``.
+
+        Example:
+            >>> d = critic.dimension_scores(score)
+            >>> "completeness" in d
+            True
+        """
+        return {
+            "completeness": score.completeness,
+            "consistency": score.consistency,
+            "clarity": score.clarity,
+            "granularity": score.granularity,
+            "domain_alignment": score.domain_alignment,
+            "overall": score.overall,
+        }
+
+    def passes_all(self, scores: List["CriticScore"], threshold: float = 0.6) -> bool:
+        """Return ``True`` if every score in *scores* passes *threshold*.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+            threshold: Minimum ``overall`` required.  Defaults to 0.6.
+
+        Returns:
+            ``True`` when all scores have ``overall >= threshold``, or when
+            *scores* is empty.
+
+        Example:
+            >>> critic.passes_all([s1, s2])
+            True
+        """
+        return all(s.is_passing(threshold) for s in scores)
+
     def evaluate_list(
         self,
         ontologies: List[Dict[str, Any]],

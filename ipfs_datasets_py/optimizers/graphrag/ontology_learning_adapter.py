@@ -577,3 +577,33 @@ class OntologyLearningAdapter:
         if not self._feedback:
             return None
         return self._feedback[-1]
+
+    def clear_feedback(self) -> int:
+        """Remove all feedback records from this adapter.
+
+        Returns:
+            Number of records cleared.
+
+        Example:
+            >>> adapter.clear_feedback()
+            0
+        """
+        n = len(self._feedback)
+        self._feedback.clear()
+        return n
+
+    def feedback_summary_dict(self) -> dict:
+        """Return a summary dict with count, mean, and variance of feedback scores.
+
+        Returns:
+            Dict with keys ``count``, ``mean``, ``variance``.
+
+        Example:
+            >>> adapter.feedback_summary_dict()
+            {'count': 0, 'mean': 0.0, 'variance': 0.0}
+        """
+        return {
+            "count": self.feedback_count(),
+            "mean": self.mean_score(),
+            "variance": self.score_variance(),
+        }
