@@ -980,6 +980,26 @@ class LogicValidator:
         """
         return self.is_consistent(ontology)
 
+    def is_empty(self, ontology: Dict[str, Any]) -> bool:
+        """Return ``True`` if *ontology* contains no entities and no relationships.
+
+        Args:
+            ontology: Ontology dict to inspect.
+
+        Returns:
+            ``True`` when both ``entities`` and ``relationships`` are absent or
+            empty, ``False`` otherwise.
+
+        Example:
+            >>> validator.is_empty({"entities": [], "relationships": []})
+            True
+            >>> validator.is_empty({"entities": [{"id": "e1"}]})
+            False
+        """
+        return (
+            not ontology.get("entities") and not ontology.get("relationships")
+        )
+
     def format_report(self, result: "ValidationResult") -> str:
         """Produce a human-readable validation report from *result*.
 

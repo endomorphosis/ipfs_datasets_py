@@ -1705,6 +1705,44 @@ class OntologyOptimizer:
         """
         return self._history[index].average_score
 
+    def history_summary(self) -> Dict[str, Any]:
+        """Return a summary dict with statistics about the optimization history.
+
+        Returns:
+            Dict with keys ``count``, ``min``, ``max``, ``mean``, and
+            ``trend`` (string from the last entry or ``"n/a"``).
+            Returns zero-values dict when history is empty.
+
+        Example:
+            >>> optimizer.history_summary()
+            {'count': 0, 'min': 0.0, 'max': 0.0, 'mean': 0.0, 'trend': 'n/a'}
+        """
+        if not self._history:
+            return {"count": 0, "min": 0.0, "max": 0.0, "mean": 0.0, "trend": "n/a"}
+        scores = [e.average_score for e in self._history]
+        return {
+            "count": len(scores),
+            "min": min(scores),
+            "max": max(scores),
+            "mean": sum(scores) / len(scores),
+            "trend": self._history[-1].trend,
+        }
+
+    def latest_batch_size(self) -> int:
+        """Return the number of ontologies in the most recent batch.
+
+        Returns:
+            Integer count from ``metadata["batch_size"]`` of the last history
+            entry if present, otherwise ``0``.
+
+        Example:
+            >>> optimizer.latest_batch_size()
+            0
+        """
+        if not self._history:
+            return 0
+        return self._history[-1].metadata.get("batch_size", 0)
+
     def export_score_chart(self, filepath: Optional[str] = None) -> Optional[str]:
         """Produce a matplotlib line chart of average score across history batches.
 

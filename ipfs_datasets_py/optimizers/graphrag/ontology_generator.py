@@ -3064,6 +3064,31 @@ class OntologyGenerator:
         """
         return [e.id for e in result.entities]
 
+    def sorted_entities(
+        self,
+        result: "EntityExtractionResult",
+        key: str = "confidence",
+        reverse: bool = True,
+    ) -> List["Entity"]:
+        """Return entities from *result* sorted by *key*.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+            key: Entity attribute name to sort by.  Defaults to
+                ``"confidence"``.
+            reverse: If ``True`` (default), sort in descending order.
+
+        Returns:
+            New list of :class:`Entity` objects in the requested order.
+
+        Raises:
+            AttributeError: If *key* is not a valid entity attribute.
+
+        Example:
+            >>> sorted_ents = gen.sorted_entities(result, key="confidence")
+        """
+        return sorted(result.entities, key=lambda e: getattr(e, key), reverse=reverse)
+
     def explain_entity(self, entity: "Entity") -> str:
         """Return a concise one-line English description of *entity*.
 

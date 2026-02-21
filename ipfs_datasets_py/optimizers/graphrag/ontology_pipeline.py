@@ -612,6 +612,18 @@ class OntologyPipeline:
         self._mediator.reset_all_state()
         return n
 
+    def has_run(self) -> bool:
+        """Return ``True`` if :meth:`run` has been called at least once.
+
+        Returns:
+            Boolean.
+
+        Example:
+            >>> pipeline.has_run()
+            False
+        """
+        return len(self._run_history) > 0
+
     def summary(self) -> str:
         """Return a compact one-line description of this pipeline's configuration.
 
