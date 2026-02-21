@@ -4304,6 +4304,47 @@ class OntologyGenerator:
         kept = [e for e in result.entities if e.confidence >= threshold]
         return _dc.replace(result, entities=kept)
 
+    def confidence_histogram(self, result, bins: int = 5) -> dict:
+        """Return a bucket-count histogram of entity confidence scores.
+
+        Args:
+            result: :class:`EntityExtractionResult`.
+            bins: Number of equal-width buckets spanning [0.0, 1.0].
+
+        Returns:
+            Dict mapping bucket label (str like ``"0.0-0.2"``) to count.
+        """
+        if bins < 1:
+            bins = 1
+        width = 1.0 / bins
+        buckets: dict = {}
+        for i in range(bins):
+            lo = round(i * width, 6)
+            hi = round((i + 1) * width, 6)
+            label = f"{lo:.2f}-{hi:.2f}"
+            buckets[label] = sum(
+                1 for e in result.entities if lo <= e.confidence < hi
+            )
+        # Clamp exactly-1.0 confidence into the last bucket
+        last_label = list(buckets.keys())[-1]
+        buckets[last_label] += sum(
+            1 for e in result.entities if e.confidence == 1.0
+        )
+        return buckets
+
+    def mean_confidence(self, result) -> float:
+        """Return the mean confidence across all entities in *result*.
+
+        Args:
+            result: :class:`EntityExtractionResult`.
+
+        Returns:
+            Mean confidence; ``0.0`` when no entities.
+        """
+        if not result.entities:
+            return 0.0
+        return sum(e.confidence for e in result.entities) / len(result.entities)
+
 
 __all__ = [
     'OntologyGenerator',

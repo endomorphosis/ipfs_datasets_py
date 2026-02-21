@@ -484,18 +484,19 @@ class CriticScore:
         REPL inspection and logging.
         
         Returns:
-            A string like ``CriticScore(overall=0.8210, C:0.80 Co:0.85 Cl:0.75 G:0.80 DA:0.88)``
+            A string like ``CriticScore(overall=0.8210, C:0.80 Co:0.85 Cl:0.75 G:0.80 RC:0.82 DA:0.88)``
         """
         dim_abbr = {
             'completeness': 'C',
             'consistency': 'Co', 
             'clarity': 'Cl',
             'granularity': 'G',
+            'relationship_coherence': 'RC',
             'domain_alignment': 'DA'
         }
         dims_str = ' '.join(
             f"{dim_abbr[dim]}:{getattr(self, dim):.2f}"
-            for dim in ['completeness', 'consistency', 'clarity', 'granularity', 'domain_alignment']
+            for dim in ['completeness', 'consistency', 'clarity', 'granularity', 'relationship_coherence', 'domain_alignment']
         )
         return f"CriticScore(overall={self.overall:.4f}, {dims_str})"
 
@@ -650,6 +651,14 @@ class OntologyCritic(BaseCritic):
                 else "the ontology may be too coarse or too fine-grained for the domain."
             )
         )
+        explanations["relationship_coherence"] = (
+            f"Relationship coherence is {_band(score.relationship_coherence)} ({score.relationship_coherence:.0%}): "
+            + (
+                "relationships are well-formed, semantically meaningful, and appropriately typed."
+                if score.relationship_coherence >= 0.7
+                else "relationships lack semantic coherence or use overly generic/inconsistent types."
+            )
+        )
         explanations["domain_alignment"] = (
             f"Domain alignment is {_band(score.domain_alignment)} ({score.domain_alignment:.0%}): "
             + (
@@ -706,6 +715,7 @@ class OntologyCritic(BaseCritic):
                 'consistency': score_obj.consistency,
                 'clarity': score_obj.clarity,
                 'granularity': score_obj.granularity,
+                'relationship_coherence': score_obj.relationship_coherence,
                 'domain_alignment': score_obj.domain_alignment,
             },
             strengths=list(score_obj.strengths),
