@@ -1439,3 +1439,39 @@ class OntologyLearningAdapter:
         elif numerator < 0:
             return "down"
         return "flat"
+
+    def feedback_min(self) -> float:
+        """Return the minimum feedback score.
+
+        Returns:
+            Float minimum; 0.0 when no feedback is recorded.
+        """
+        if not self._feedback:
+            return 0.0
+        return min(r.final_score for r in self._feedback)
+
+    def feedback_max(self) -> float:
+        """Return the maximum feedback score.
+
+        Returns:
+            Float maximum; 0.0 when no feedback is recorded.
+        """
+        if not self._feedback:
+            return 0.0
+        return max(r.final_score for r in self._feedback)
+
+    def feedback_cumulative_sum(self) -> list:
+        """Return the running cumulative sum of feedback scores.
+
+        Returns:
+            List of floats with the same length as ``_feedback``; empty when
+            no feedback is recorded.
+        """
+        if not self._feedback:
+            return []
+        result = []
+        total = 0.0
+        for r in self._feedback:
+            total += r.final_score
+            result.append(total)
+        return result

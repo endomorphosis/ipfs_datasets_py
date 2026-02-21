@@ -3570,6 +3570,40 @@ class OntologyCritic(BaseCritic):
         w = weights if weights is not None else DIMENSION_WEIGHTS
         return sum(getattr(score, d, 0.0) * w.get(d, 1.0) for d in self._DIMENSIONS)
 
+    def dimension_min(self, score: "CriticScore") -> str:
+        """Return the name of the lowest-scoring dimension.
+
+        Args:
+            score: :class:`CriticScore` to inspect.
+
+        Returns:
+            String dimension name.
+        """
+        return min(self._DIMENSIONS, key=lambda d: getattr(score, d, 0.0))
+
+    def dimension_max(self, score: "CriticScore") -> str:
+        """Return the name of the highest-scoring dimension.
+
+        Args:
+            score: :class:`CriticScore` to inspect.
+
+        Returns:
+            String dimension name.
+        """
+        return max(self._DIMENSIONS, key=lambda d: getattr(score, d, 0.0))
+
+    def dimension_range(self, score: "CriticScore") -> float:
+        """Return the range (max - min) across all dimension values.
+
+        Args:
+            score: :class:`CriticScore` to inspect.
+
+        Returns:
+            Non-negative float.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        return max(vals) - min(vals)
+
 
 # Export public API
 __all__ = [

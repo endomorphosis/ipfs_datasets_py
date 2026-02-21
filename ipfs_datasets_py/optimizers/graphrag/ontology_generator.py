@@ -5541,6 +5541,39 @@ class OntologyGenerator:
                 entropy -= p * math.log2(p)
         return entropy
 
+    def entity_confidence_skewness(self, result: Any) -> float:
+        """Return the skewness of entity confidence scores.
+
+        Uses the sample skewness formula (Fisher-Pearson).
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float skewness; 0.0 when fewer than 3 entities or std is zero.
+        """
+        entities = result.entities or []
+        if len(entities) < 3:
+            return 0.0
+        scores = [e.confidence for e in entities]
+        n = len(scores)
+        mean = sum(scores) / n
+        std = (sum((s - mean) ** 2 for s in scores) / n) ** 0.5
+        if std == 0.0:
+            return 0.0
+        return sum(((s - mean) / std) ** 3 for s in scores) / n
+
+    def unique_relationship_types(self, result: Any) -> set:
+        """Return the set of unique relationship type strings in *result*.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Set of strings; empty set when no relationships.
+        """
+        return {getattr(r, "type", "") for r in (result.relationships or [])}
+
 
 __all__ = [
     'OntologyGenerator',

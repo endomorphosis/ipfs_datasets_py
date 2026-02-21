@@ -3070,6 +3070,43 @@ class OntologyOptimizer:
             return 0.0
         return abs(numerator / denominator)
 
+    def history_kurtosis(self) -> float:
+        """Return the excess kurtosis of ``average_score`` values in history.
+
+        Uses the population formula (Fisher's definition, excess kurtosis = 0
+        for a normal distribution).
+
+        Returns:
+            Float excess kurtosis; 0.0 when fewer than 4 history entries or
+            when variance is zero.
+        """
+        if len(self._history) < 4:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        mean = sum(scores) / n
+        variance = sum((s - mean) ** 2 for s in scores) / n
+        if variance == 0.0:
+            return 0.0
+        m4 = sum((s - mean) ** 4 for s in scores) / n
+        return m4 / (variance ** 2) - 3.0
+
+    def score_ewma(self, alpha: float = 0.3) -> float:
+        """Return the exponential weighted moving average of history scores.
+
+        Args:
+            alpha: Smoothing factor (0 < alpha <= 1).
+
+        Returns:
+            Float EWMA; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        ewma = self._history[0].average_score
+        for entry in self._history[1:]:
+            ewma = alpha * entry.average_score + (1.0 - alpha) * ewma
+        return ewma
+
 
 # Export public API
 __all__ = [
