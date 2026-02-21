@@ -1633,6 +1633,60 @@ class OntologyOptimizer:
             return 0.0
         return self._history[-1].average_score
 
+    def clear_history(self) -> int:
+        """Clear all optimization history entries.
+
+        Returns:
+            Number of entries that were cleared.
+
+        Example:
+            >>> optimizer.clear_history()
+            0
+        """
+        n = len(self._history)
+        self._history.clear()
+        return n
+
+    def percentile_score(self, p: float) -> float:
+        """Return the *p*-th percentile of average scores across all history entries.
+
+        Args:
+            p: Percentile in the range [0, 100].
+
+        Returns:
+            The *p*-th percentile value as a float.  Returns 0.0 if history is
+            empty.
+
+        Example:
+            >>> optimizer.percentile_score(50)
+            0.0
+        """
+        if not self._history:
+            return 0.0
+        scores = sorted(entry.average_score for entry in self._history)
+        idx = (p / 100.0) * (len(scores) - 1)
+        lo, hi = int(idx), min(int(idx) + 1, len(scores) - 1)
+        frac = idx - lo
+        return scores[lo] + frac * (scores[hi] - scores[lo])
+
+    def top_n_scores(self, n: int = 5) -> List[float]:
+        """Return the top *n* average scores from all history entries.
+
+        Args:
+            n: Number of top scores to return.  Defaults to 5.
+
+        Returns:
+            List of up to *n* floats in descending order.
+
+        Example:
+            >>> optimizer.top_n_scores(3)
+            []
+        """
+        scores = sorted(
+            (entry.average_score for entry in self._history), reverse=True
+        )
+        return scores[:n]
+
     def export_score_chart(self, filepath: Optional[str] = None) -> Optional[str]:
         """Produce a matplotlib line chart of average score across history batches.
 

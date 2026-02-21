@@ -117,7 +117,7 @@ class OntologyPipeline:
             OntologyLearningAdapter,
         )
 
-        self.domain = domain
+        self._domain = domain
         self._log = logger or _logger
         self._generator = OntologyGenerator()
         self._critic = OntologyCritic(use_llm=use_llm)
@@ -510,6 +510,29 @@ class OntologyPipeline:
             "news",
         ])
 
+    @domain_list.setter
+    def domain_list(self, value: List[str]) -> None:
+        raise AttributeError("domain_list is read-only; set pipeline.domain instead.")
+
+    @property
+    def domain(self) -> str:  # type: ignore[override]
+        """The active domain string for this pipeline."""
+        return self._domain
+
+    @domain.setter
+    def domain(self, value: str) -> None:
+        """Update the domain at runtime.
+
+        Args:
+            value: New domain string (e.g. ``"legal"``, ``"medical"``).
+
+        Example:
+            >>> pipeline.domain = "legal"
+            >>> pipeline.domain
+            'legal'
+        """
+        self._domain = value
+
     @property
     def history(self) -> List["PipelineResult"]:
         """Return a read-only view of past :class:`PipelineResult` objects.
@@ -552,6 +575,23 @@ class OntologyPipeline:
         if not self._run_history:
             return 0.0
         return self._run_history[-1].score.overall
+
+    def run_batch(self, texts: List[str]) -> List[Any]:
+        """Run :meth:`run` on each text in *texts* and return the results list.
+
+        Args:
+            texts: Sequence of raw text strings to process.
+
+        Returns:
+            List of :class:`PipelineResult` objects in the same order as
+            *texts*.  An empty list is returned for an empty input.
+
+        Example:
+            >>> results = pipeline.run_batch(["Alice at ACME.", "Bob at Corp."])
+            >>> len(results) == 2
+            True
+        """
+        return [self.run(text) for text in texts]
 
     def summary(self) -> str:
         """Return a compact one-line description of this pipeline's configuration.

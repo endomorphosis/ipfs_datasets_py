@@ -2981,6 +2981,53 @@ class OntologyGenerator:
         """
         return len(result.entities)
 
+    def explain_entity(self, entity: "Entity") -> str:
+        """Return a concise one-line English description of *entity*.
+
+        Args:
+            entity: The :class:`Entity` to describe.
+
+        Returns:
+            Human-readable string of the form
+            ``"<text> (<type>) — confidence: <conf>"``
+
+        Example:
+            >>> gen.explain_entity(Entity(id="e1", text="Alice", type="PERSON", confidence=0.9))
+            'Alice (PERSON) — confidence: 0.90'
+        """
+        return f"{entity.text} ({entity.type}) — confidence: {entity.confidence:.2f}"
+
+    def rebuild_result(
+        self,
+        entities: List["Entity"],
+        relationships: Optional[List["Relationship"]] = None,
+        confidence: float = 1.0,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> "EntityExtractionResult":
+        """Wrap *entities* (and optional *relationships*) in a new result.
+
+        Args:
+            entities: List of :class:`Entity` objects to include.
+            relationships: Optional list of :class:`Relationship` objects.
+                Defaults to an empty list.
+            confidence: Overall confidence for the result.  Defaults to 1.0.
+            metadata: Optional metadata dict.  Defaults to ``{}``.
+
+        Returns:
+            New :class:`EntityExtractionResult`.
+
+        Example:
+            >>> result = gen.rebuild_result([entity1, entity2])
+            >>> len(result.entities) == 2
+            True
+        """
+        return EntityExtractionResult(
+            entities=list(entities),
+            relationships=list(relationships) if relationships is not None else [],
+            confidence=confidence,
+            metadata=dict(metadata) if metadata is not None else {},
+        )
+
 
     def strip_low_confidence(
         self,
