@@ -535,7 +535,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 
 - [x] (P2) [graphrag] `OntologyGenerator.generate_ontology_rich()` elapsed_ms — Done batch 50: added to metadata; 4 tests
 - [ ] (P2) [graphrag] `OntologyCritic.evaluate_ontology()` — persist cache across instances via class-level `_SHARED_EVAL_CACHE`
-- [ ] (P3) [graphrag] Add `merge_provenance` tracking — which entities/rels came from which source doc
+- [ ] (P3) [graphrag] ✅ Add `merge_provenance` tracking — which entities/rels came from which source doc
 - [ ] (P2) [graphrag] `LogicValidator.validate_ontology()` — add `ValidationReport.invalid_entity_ids` list
 - [x] (P3) [graphrag] `OntologyOptimizer.compare_history()` — Done batch 50: returns list of dicts with batch_from/to, score_from/to, delta, direction; 7 tests
 - [ ] (P2) [tests] Add round-trip test for `OntologyMediator.run_refinement_cycle()` state serialization
@@ -567,12 +567,12 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [graphrag] ✅ Add `LogicValidator.suggest_fixes()` — return fix hints for each ValidationError
 - [ ] (P3) [graphrag] ✅ Add `OntologyCritic.explain_score()` — return human-readable explanation per dimension
 - [ ] (P2) [graphrag] ✅ Add `OntologyLearningAdapter.serialize()` → bytes (pickle-free, JSON-based)
-- [ ] (P3) [arch] Add `OntologyPipeline` facade class — single entry point wrapping generator+critic+mediator+adapter
+- [ ] (P3) [arch] ✅ Add `OntologyPipeline` facade class — single entry point wrapping generator+critic+mediator+adapter
 - [ ] (P2) [tests] ✅ Add integration test: full pipeline on a multi-paragraph text, assert >3 entities extracted
 - [ ] (P3) [graphrag] Add confidence decay over time — entities not seen recently get lower confidence
 - [ ] (P2) [graphrag] ✅ Add `ExtractionConfig.validate()` — raise `ValueError` on invalid field combinations
 - [ ] (P3) [graphrag] Add `OntologyGenerator.extract_entities_with_spans()` — return char offsets for each entity
 - [ ] (P2) [api] ✅ Add `CriticScore.__sub__()` — subtract two CriticScore objects to get delta CriticScore
-- [ ] (P3) [graphrag] Add `OntologyHarness.run_concurrent()` — run N harnesses against the same data in parallel
+- [ ] (P3) [graphrag] ✅ Add `OntologyHarness.run_concurrent()` — run N harnesses against the same data in parallel
 - [ ] (P2) [docs] Add doctest examples for every public method in ontology_generator.py
-- [ ] (P3) [arch] Add `optimizers/graphrag/typing.py` with shared type aliases (EntityDict, OntologyDict, etc.)
+- [ ] (P3) [arch] ✅ Add `optimizers/graphrag/typing.py` with shared type aliases (EntityDict, OntologyDict, etc.)

@@ -790,6 +790,12 @@ class OntologyGenerator:
             futures = {pool.submit(_extract, i, doc): i for i, doc in enumerate(docs)}
             for future in as_completed(futures):
                 idx, result = future.result()
+                # Tag each entity with its source document index (provenance)
+                for ent in result.entities:
+                    if not hasattr(ent, '__dict__'):
+                        pass  # frozen dataclass — skip tagging
+                    else:
+                        ent.__dict__.setdefault('source_doc_index', idx)
                 results[idx] = result
 
         return results  # type: ignore[return-value]

@@ -712,3 +712,42 @@ class OntologyPipelineHarness:
             raise RuntimeError(
                 f"OntologyHarness.run_single() failed: {exc}"
             ) from exc
+
+    def run_concurrent(
+        self,
+        docs: "List[Any]",
+        context: Any,
+        max_workers: int = 4,
+    ) -> "List[Dict[str, Any]]":
+        """Run the harness concurrently against multiple data inputs.
+
+        Each document is processed via :meth:`run_and_report` in a separate
+        thread.  Results are returned in the same order as *docs*.  Failed
+        runs produce a dict with ``{'error': str, 'success': False}``.
+
+        Args:
+            docs: List of input data objects to process.
+            context: Shared :class:`OntologyGenerationContext` for all runs.
+            max_workers: Thread pool size (default: 4).
+
+        Returns:
+            List of result dicts (one per document, order preserved).
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        from typing import List as _List, Dict as _Dict
+
+        results: _List[_Dict] = [{}] * len(docs)
+
+        def _run(idx: int, doc: Any) -> tuple:
+            try:
+                return idx, self.run_and_report(doc, context)
+            except Exception as exc:
+                return idx, {"error": str(exc), "success": False}
+
+        with ThreadPoolExecutor(max_workers=max(1, max_workers)) as pool:
+            futures = {pool.submit(_run, i, doc): i for i, doc in enumerate(docs)}
+            for future in as_completed(futures):
+                idx, result = future.result()
+                results[idx] = result
+
+        return results
