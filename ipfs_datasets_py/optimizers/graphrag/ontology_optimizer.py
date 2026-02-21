@@ -2482,6 +2482,43 @@ class OntologyOptimizer:
             for i, entry in enumerate(self._history)
         ]
 
+    def top_k_history(self, k: int = 3) -> list:
+        """Return the *k* history entries with the highest ``average_score``.
+
+        Args:
+            k: Number of entries to return.
+
+        Returns:
+            List of up to *k* history entries, sorted highest score first.
+        """
+        if not self._history:
+            return []
+        return sorted(self._history, key=lambda e: e.average_score, reverse=True)[:k]
+
+    def history_score_std(self) -> float:
+        """Return the standard deviation of ``average_score`` across history.
+
+        Returns:
+            Float standard deviation; ``0.0`` when fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        return variance ** 0.5
+
+    def count_entries_with_trend(self, trend: str) -> int:
+        """Count history entries matching a specific *trend* label.
+
+        Args:
+            trend: Trend string to match (e.g. ``"improving"``, ``"stable"``).
+
+        Returns:
+            Integer count.
+        """
+        return sum(1 for e in self._history if getattr(e, "trend", "stable") == trend)
+
 
 # Export public API
 __all__ = [

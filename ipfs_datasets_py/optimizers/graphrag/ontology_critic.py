@@ -803,20 +803,21 @@ class OntologyCritic(BaseCritic):
         consistency = self._evaluate_consistency(ontology, context)
         clarity = self._evaluate_clarity(ontology, context)
         granularity = self._evaluate_granularity(ontology, context)
+        relationship_coherence = self._evaluate_relationship_coherence(ontology, context)
         domain_alignment = self._evaluate_domain_alignment(ontology, context)
         
         # Identify strengths and weaknesses
         strengths = self._identify_strengths(
-            completeness, consistency, clarity, granularity, domain_alignment
+            completeness, consistency, clarity, granularity, relationship_coherence, domain_alignment
         )
         weaknesses = self._identify_weaknesses(
-            completeness, consistency, clarity, granularity, domain_alignment
+            completeness, consistency, clarity, granularity, relationship_coherence, domain_alignment
         )
         
         # Generate recommendations
         recommendations = self._generate_recommendations(
             ontology, context, completeness, consistency, clarity,
-            granularity, domain_alignment
+            granularity, relationship_coherence, domain_alignment
         )
         
         # Create score
@@ -836,6 +837,7 @@ class OntologyCritic(BaseCritic):
             consistency=consistency,
             clarity=clarity,
             granularity=granularity,
+            relationship_coherence=relationship_coherence,
             domain_alignment=domain_alignment,
             strengths=strengths,
             weaknesses=weaknesses,
