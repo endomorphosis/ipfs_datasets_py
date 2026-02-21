@@ -2056,6 +2056,29 @@ class OntologyCritic(BaseCritic):
         """
         return [self.evaluate_ontology(ont, context) for ont in ontologies]
 
+    def median_score(self, scores: List["CriticScore"]) -> float:
+        """Return the median ``overall`` value across *scores*.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            Median of ``overall`` values, or ``0.0`` for an empty list.
+            For an even-length list the average of the two middle values
+            is returned.
+
+        Example:
+            >>> critic.median_score([s1, s2, s3])
+        """
+        if not scores:
+            return 0.0
+        vals = sorted(s.overall for s in scores)
+        n = len(vals)
+        mid = n // 2
+        if n % 2 == 1:
+            return vals[mid]
+        return (vals[mid - 1] + vals[mid]) / 2.0
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],

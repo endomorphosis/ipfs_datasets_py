@@ -1687,6 +1687,24 @@ class OntologyOptimizer:
         )
         return scores[:n]
 
+    def score_at(self, index: int) -> float:
+        """Return the ``average_score`` from history at position *index*.
+
+        Args:
+            index: Zero-based or negative index (same semantics as Python list
+                indexing).
+
+        Returns:
+            ``average_score`` float at the given position.
+
+        Raises:
+            IndexError: If *index* is out of range.
+
+        Example:
+            >>> optimizer.score_at(0)  # first entry
+        """
+        return self._history[index].average_score
+
     def export_score_chart(self, filepath: Optional[str] = None) -> Optional[str]:
         """Produce a matplotlib line chart of average score across history batches.
 

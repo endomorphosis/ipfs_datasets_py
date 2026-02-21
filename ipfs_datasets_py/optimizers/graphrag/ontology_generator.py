@@ -3065,6 +3065,44 @@ class OntologyGenerator:
             metadata=dict(metadata) if metadata is not None else {},
         )
 
+    def rename_entity(
+        self,
+        result: "EntityExtractionResult",
+        entity_id: str,
+        new_text: str,
+    ) -> "EntityExtractionResult":
+        """Return a copy of *result* with the entity identified by *entity_id* renamed.
+
+        All other fields of the entity are preserved.  The result's
+        relationships are unchanged.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+            entity_id: The ``id`` of the entity to rename.
+            new_text: New text value for the entity.
+
+        Returns:
+            New :class:`EntityExtractionResult` with the renamed entity.
+
+        Raises:
+            KeyError: If no entity with *entity_id* exists in *result*.
+
+        Example:
+            >>> r2 = gen.rename_entity(result, "e1", "Alice Smith")
+        """
+        import dataclasses as _dc
+        found = False
+        new_entities = []
+        for e in result.entities:
+            if e.id == entity_id:
+                new_entities.append(_dc.replace(e, text=new_text))
+                found = True
+            else:
+                new_entities.append(e)
+        if not found:
+            raise KeyError(f"No entity with id={entity_id!r} in result")
+        return _dc.replace(result, entities=new_entities)
+
 
     def strip_low_confidence(
         self,

@@ -595,6 +595,22 @@ class OntologyPipeline:
         """
         return [self.run(text, **kwargs) for text in texts]
 
+    def reset(self) -> int:
+        """Clear the run history for this pipeline instance.
+
+        Does not affect the underlying generator, critic, or mediator state.
+
+        Returns:
+            Number of history entries that were cleared.
+
+        Example:
+            >>> pipeline.reset()
+            0
+        """
+        n = len(self._run_history)
+        self._run_history.clear()
+        return n
+
     def summary(self) -> str:
         """Return a compact one-line description of this pipeline's configuration.
 

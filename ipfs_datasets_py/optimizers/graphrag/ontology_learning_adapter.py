@@ -563,3 +563,17 @@ class OntologyLearningAdapter:
         """
         self._feedback.extend(records)
         return len(self._feedback)
+
+    def latest_feedback(self) -> Optional["FeedbackRecord"]:
+        """Return the most recently recorded :class:`FeedbackRecord`.
+
+        Returns:
+            The last feedback entry, or ``None`` if no feedback has been
+            recorded.
+
+        Example:
+            >>> adapter.latest_feedback()
+        """
+        if not self._feedback:
+            return None
+        return self._feedback[-1]
