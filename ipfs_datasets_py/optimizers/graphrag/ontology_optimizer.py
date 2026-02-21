@@ -2947,6 +2947,44 @@ class OntologyOptimizer:
         rank_sum = sum((i + 1) * s for i, s in enumerate(scores))
         return (2 * rank_sum) / (n * total) - (n + 1) / n
 
+    def history_trimmed_mean(self, trim: float = 0.1) -> float:
+        """Return the trimmed mean of history ``average_score`` values.
+
+        Args:
+            trim: Fraction to remove from each end (e.g., 0.1 removes 10%
+                  from both the bottom and top). Defaults to 0.1.
+
+        Returns:
+            Float trimmed mean; ``0.0`` when history is empty; regular mean
+            when ``trim <= 0`` or fewer entries remain after trimming.
+        """
+        if not self._history:
+            return 0.0
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        k = int(n * trim)
+        trimmed = scores[k:n - k] if k > 0 else scores
+        if not trimmed:
+            return sum(scores) / n
+        return sum(trimmed) / len(trimmed)
+
+    def score_z_scores(self) -> list:
+        """Return a list of z-scores for each history entry's ``average_score``.
+
+        Returns:
+            List of floats; empty list when history has fewer than 2 entries
+            or std is 0.
+        """
+        if len(self._history) < 2:
+            return []
+        scores = [e.average_score for e in self._history]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        if variance == 0.0:
+            return [0.0] * len(scores)
+        std = variance ** 0.5
+        return [(s - mean) / std for s in scores]
+
 
 # Export public API
 __all__ = [

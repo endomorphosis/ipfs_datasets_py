@@ -1359,3 +1359,39 @@ class OntologyPipeline:
             else:
                 result[key] = 1
         return result
+
+    def score_std(self) -> float:
+        """Return the population std-dev of all run overall scores.
+
+        Returns:
+            Float std-dev; 0.0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        return variance ** 0.5
+
+    def improvement_count(self) -> int:
+        """Return the number of runs that improved on the immediately preceding run.
+
+        Returns:
+            Integer count of consecutive-improving transitions; 0 when fewer
+            than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0
+        scores = [r.score.overall for r in self._run_history]
+        return sum(1 for i in range(1, len(scores)) if scores[i] > scores[i - 1])
+
+    def score_range(self) -> float:
+        """Return max - min of all run overall scores.
+
+        Returns:
+            Float range; 0.0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        return max(scores) - min(scores)

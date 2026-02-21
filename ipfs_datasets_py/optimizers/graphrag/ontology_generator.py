@@ -5422,6 +5422,47 @@ class OntologyGenerator:
         """
         return [e for e in result.entities if getattr(e, 'properties', None)]
 
+    def top_confidence_fraction(self, result, frac: float = 0.5) -> list:
+        """Return the top fraction of entities sorted by confidence.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+            frac: Fraction of entities to keep (e.g., 0.5 = top half).
+                  Defaults to 0.5.
+
+        Returns:
+            List of ``Entity`` objects, highest-confidence first, up to
+            ``ceil(len * frac)`` entries.
+        """
+        import math
+        if not result.entities:
+            return []
+        sorted_entities = sorted(result.entities, key=lambda e: e.confidence, reverse=True)
+        k = math.ceil(len(sorted_entities) * frac)
+        return sorted_entities[:k]
+
+    def relationship_source_set(self, result) -> set:
+        """Return the set of unique source entity IDs across all relationships.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Set of source entity ID strings.
+        """
+        return {r.source_id for r in result.relationships if r.source_id}
+
+    def relationship_target_set(self, result) -> set:
+        """Return the set of unique target entity IDs across all relationships.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Set of target entity ID strings.
+        """
+        return {r.target_id for r in result.relationships if r.target_id}
+
 
 __all__ = [
     'OntologyGenerator',

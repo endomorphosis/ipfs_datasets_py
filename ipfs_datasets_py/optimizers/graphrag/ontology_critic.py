@@ -3466,6 +3466,46 @@ class OntologyCritic(BaseCritic):
             return 0.0
         return cov / (std_a * std_b)
 
+    def dimension_entropy(self, score) -> float:
+        """Return Shannon entropy of dimension values in *score*.
+
+        Treats dimension values as a probability distribution (after
+        normalization). Values of 0 contribute 0 to entropy.
+
+        Args:
+            score: A ``CriticScore`` instance.
+
+        Returns:
+            Float entropy in bits; ``0.0`` when all dims are zero or equal.
+        """
+        import math
+        vals = [max(getattr(score, d, 0.0), 0.0) for d in self._DIMENSIONS]
+        total = sum(vals)
+        if total == 0.0:
+            return 0.0
+        entropy = 0.0
+        for v in vals:
+            p = v / total
+            if p > 0:
+                entropy -= p * math.log2(p)
+        return entropy
+
+    def compare_scores(self, before, after) -> dict:
+        """Return per-dimension diffs plus overall delta.
+
+        Args:
+            before: A ``CriticScore`` instance (baseline).
+            after: A ``CriticScore`` instance (new).
+
+        Returns:
+            Dict with dimension names as keys (float diffs) plus
+            ``"overall"`` key showing after.overall - before.overall.
+        """
+        diffs = {d: getattr(after, d, 0.0) - getattr(before, d, 0.0)
+                 for d in self._DIMENSIONS}
+        diffs["overall"] = getattr(after, "overall", 0.0) - getattr(before, "overall", 0.0)
+        return diffs
+
 
 # Export public API
 __all__ = [
