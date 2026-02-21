@@ -1146,3 +1146,34 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [graphrag] `LogicValidator.max_path_length(ontology, source, target)` — BFS shortest path
 - [ ] (P3) [graphrag] `OntologyPipeline.reset_to_initial` — clear history and restore defaults
 - [ ] (P3) [graphrag] `OntologyMediator.undo_stack_summary` — list of pending undo labels
+
+## Batches 131–143 Done ✅
+- [x] (batch-131) `OntologyCritic.describe/ExtractionConfig.describe`, various mediator/pipeline methods
+- [x] (batch-132) `EntityExtractionResult.entity_ids/relationship_ids`, `OntologyLearningAdapter.improvement_trend`
+- [x] (batch-133) `OntologyCritic.passing_rate/score_spread`, `OntologyMediator.most_used_action/least_used_action`, `LogicValidator.shortest_path_length/reachable_from`
+- [x] (batch-134) `OntologyOptimizer.export_history_csv/history_as_dicts`, `OntologyPipeline.stabilization_index/run_improvement`
+- [x] (batch-135) `LogicValidator.has_cycle/cycle_participant_count`, `OntologyMediator.undo_stack_summary/undo_stack_depth`
+- [x] (batch-136) `OntologyCritic.top_k_scores/below_threshold_count/average_dimension`, `OntologyLearningAdapter.feedback_streak/feedback_percentile/recent_average`
+- [x] (batch-137) `OntologyOptimizer.top_k_history/history_score_std/count_entries_with_trend`, `OntologyGenerator.confidence_histogram/mean_confidence`
+- [x] (batch-138) `OntologyPipeline.rolling_average/score_at_run/score_percentile`, `ExtractionConfig.combined_score/similarity_to`
+- [x] (batch-139) `LogicValidator.in_degree/out_degree/top_k_entities_by_degree`, `OntologyCritic.bucket_scores/median_score`
+- [x] (batch-140) `OntologyLearningAdapter.domain_coverage/volatility`, `OntologyGenerator.confidence_std/entity_type_distribution`
+- [x] (batch-141) `OntologyPipeline.is_plateau/peak_run_index`, `OntologyOptimizer.dominant_trend/history_range`
+- [x] (batch-142) `OntologyLearningAdapter.worst_n_feedback/feedback_score_range`, `LogicValidator.entity_count/relationship_count/entity_to_relationship_ratio`
+- [x] (batch-143) `OntologyCritic.improvement_over_baseline/score_iqr`, `OntologyMediator.total_actions_taken/unique_action_count`
+
+## Batch 144+ backlog
+- [ ] (P2) [graphrag] `OntologyGenerator.split_result(result, n)` — split into N balanced chunks
+- [ ] (P2) [graphrag] `OntologyOptimizer.min_score/max_score/median_score` — convenience properties
+- [ ] (P2) [graphrag] `OntologyPipeline.score_ewma(alpha)` — exponentially weighted moving average of scores
+- [ ] (P2) [graphrag] `LogicValidator.unreachable_entities(ontology, source)` — entities not reachable from source
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_zscore(value)` — z-score of a value in feedback distribution
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_covariance(scores, dim_a, dim_b)` — covariance of two dimensions
+- [ ] (P2) [graphrag] `OntologyGenerator.relationship_types(result)` — set of unique relationship types
+- [ ] (P2) [graphrag] `ExtractionConfig.is_default()` — check if config matches defaults
+- [ ] (P2) [graphrag] `OntologyMediator.apply_feedback_list(scores)` — batch apply multiple CriticScores
+- [ ] (P3) [graphrag] `OntologyOptimizer.convergence_score()` — measure how much history is converging
+- [ ] (P3) [graphrag] `LogicValidator.strongly_connected_components(ontology)` — Tarjan/Kosaraju SCC
+- [ ] (P3) [graphrag] `OntologyPipeline.trend_slope()` — linear regression slope of score history
+- [ ] (P3) [graphrag] `OntologyCritic.top_improving_dimension(before, after)` — most improved dim between two scores
+- [ ] (P3) [graphrag] `OntologyGenerator.compact_result(result)` — drop empty properties
