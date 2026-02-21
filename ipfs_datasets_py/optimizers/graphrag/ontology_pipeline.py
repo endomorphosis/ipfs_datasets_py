@@ -1015,3 +1015,34 @@ class OntologyPipeline:
         scores = sorted(r.score.overall for r in self._run_history)
         below = sum(1 for s in scores if s < value)
         return 100.0 * below / len(scores)
+
+    def is_plateau(self, window: int = 5, tolerance: float = 0.01) -> bool:
+        """Return ``True`` when recent score movement is within *tolerance*.
+
+        A plateau is detected when the absolute difference between the max and
+        min score in the last *window* runs is <= *tolerance*.
+
+        Args:
+            window: Number of recent runs to inspect (default 5).
+            tolerance: Maximum score change to still count as a plateau.
+
+        Returns:
+            ``True`` when plateaued; ``False`` when fewer than 2 runs or high
+            variability.
+        """
+        recent = self._run_history[-window:]
+        if len(recent) < 2:
+            return False
+        scores = [r.score.overall for r in recent]
+        return (max(scores) - min(scores)) <= tolerance
+
+    def peak_run_index(self) -> int:
+        """Return the zero-based index of the run with the highest overall score.
+
+        Returns:
+            Index of peak run; ``-1`` when no runs recorded.
+        """
+        if not self._run_history:
+            return -1
+        return max(range(len(self._run_history)),
+                   key=lambda i: self._run_history[i].score.overall)

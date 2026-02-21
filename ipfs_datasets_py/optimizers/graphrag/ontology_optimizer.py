@@ -2494,6 +2494,29 @@ class OntologyOptimizer:
         """
         return sum(1 for e in self._history if getattr(e, "trend", "stable") == trend)
 
+    def dominant_trend(self) -> str:
+        """Return the most frequent trend label across history.
+
+        Returns:
+            Trend string; ``"stable"`` when history is empty.
+        """
+        if not self._history:
+            return "stable"
+        from collections import Counter
+        counts = Counter(getattr(e, "trend", "stable") for e in self._history)
+        return counts.most_common(1)[0][0]
+
+    def history_range(self) -> float:
+        """Return the range (max - min) of ``average_score`` across history.
+
+        Returns:
+            Float range; ``0.0`` when fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        return max(scores) - min(scores)
+
 
 # Export public API
 __all__ = [

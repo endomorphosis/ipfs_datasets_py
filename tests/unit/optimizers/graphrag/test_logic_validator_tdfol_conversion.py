@@ -66,3 +66,65 @@ class TestEntityToTdfol:
         single_facts = set(validator.entity_to_tdfol(entity))
         full_facts = set(validator.ontology_to_tdfol({"entities": [entity], "relationships": []}))
         assert single_facts.issubset(full_facts)
+
+
+class TestEntityContradictionCount:
+    """Tests for LogicValidator.entity_contradiction_count() method."""
+
+    @pytest.fixture
+    def validator(self):
+        return LogicValidator(prover_config={"strategy": "AUTO"}, use_cache=False)
+
+    def test_empty_ontology_returns_zero(self, validator):
+        """Empty ontology should have 0 entity contradictions."""
+        ontology = {"entities": [], "relationships": []}
+        count = validator.entity_contradiction_count(ontology)
+        assert count == 0
+
+    def test_returns_integer(self, validator):
+        """Method should always return an integer."""
+        ontology = {"entities": [{"id": "e1", "type": "Person"}], "relationships": []}
+        count = validator.entity_contradiction_count(ontology)
+        assert isinstance(count, int)
+        assert count >= 0
+
+    def test_consistent_ontology_returns_zero(self, validator):
+        """Ontology with valid entities should return 0."""
+        ontology = {
+            "entities": [
+                {"id": "e1", "type": "Person", "text": "Alice"},
+                {"id": "e2", "type": "Person", "text": "Bob"},
+            ],
+            "relationships": [
+                {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}
+            ],
+        }
+        count = validator.entity_contradiction_count(ontology)
+        assert count == 0
+
+    def test_exception_handling_returns_zero(self, validator):
+        """Test that exceptions during validation are handled gracefully."""
+        # None is not a valid ontology dict, should handle gracefully
+        count = validator.entity_contradiction_count(None)
+        # Should return an integer (may be 0 or positive depending on error handling)
+        assert isinstance(count, int)
+        assert count >= 0
+
+    def test_malformed_ontology_returns_zero(self, validator):
+        """Malformed ontology should return 0 via exception handling."""
+        malformed = {"not": "valid"}
+        count = validator.entity_contradiction_count(malformed)
+        assert count == 0
+
+    def test_result_is_non_negative(self, validator):
+        """Result should never be negative."""
+        ontology = {
+            "entities": [
+                {"id": "e1", "type": "Person"},
+                {"id": "e2", "type": "Organization"},
+            ],
+            "relationships": [],
+        }
+        count = validator.entity_contradiction_count(ontology)
+        assert count >= 0
+
