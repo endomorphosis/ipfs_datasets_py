@@ -465,3 +465,20 @@ class OntologyLearningAdapter:
             for r in payload.get("feedback", [])
         ]
         return instance
+
+    def top_feedback_scores(self, n: int = 5) -> List["FeedbackRecord"]:
+        """Return the top *n* feedback records sorted by ``final_score`` descending.
+
+        Args:
+            n: Number of records to return.  Defaults to 5.
+
+        Returns:
+            List of :class:`FeedbackRecord` objects, length <= n, in
+            descending score order.
+
+        Example:
+            >>> top = adapter.top_feedback_scores(3)
+            >>> len(top) <= 3
+            True
+        """
+        return sorted(self._feedback, key=lambda r: r.final_score, reverse=True)[:n]

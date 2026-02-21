@@ -1729,6 +1729,22 @@ class OntologyCritic(BaseCritic):
         dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
         return max(dims, key=lambda d: getattr(score, d))
 
+    def bottom_dimension(self, score: "CriticScore") -> str:
+        """Return the name of the dimension with the lowest value.
+
+        Args:
+            score: A :class:`CriticScore` to inspect.
+
+        Returns:
+            Dimension name string (one of the five standard dimensions).
+
+        Example:
+            >>> critic.bottom_dimension(score)
+            'granularity'
+        """
+        dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        return min(dims, key=lambda d: getattr(score, d))
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],

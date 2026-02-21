@@ -728,3 +728,9 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] Add `OntologyOptimizer.score_history()` -- Done batch-79: list of average_score from history entries
 - [x] (P2) [graphrag] Add `OntologyCritic.top_dimension(score)` -- Done batch-79: dimension with highest value
 - [x] (P2) [graphrag] Add `OntologyMediator.action_log(max_entries)` -- Done batch-79: recent action entries list
+
+- [x] (P2) [graphrag] Add `OntologyGenerator.count_entities_by_type(result)` -- Done batch-80: type frequency dict
+- [x] (P2) [graphrag] Add `OntologyLearningAdapter.top_feedback_scores(n)` -- Done batch-80: top-N by score
+- [x] (P2) [graphrag] Add `EntityExtractionResult.span_coverage(text_length)` -- Done batch-80: fraction of chars covered
+- [x] (P2) [graphrag] Add `OntologyCritic.bottom_dimension(score)` -- Done batch-80: lowest-value dimension
+- [x] (P2) [graphrag] Add `OntologyMediator.reset_all_state()` -- Done batch-80: clear all state + action entries

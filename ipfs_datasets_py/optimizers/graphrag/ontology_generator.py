@@ -1082,6 +1082,42 @@ class EntityExtractionResult:
         ]
         return _dc.replace(self, entities=sampled, relationships=kept_rels)
 
+    def span_coverage(self, text_length: int) -> float:
+        """Compute the fraction of source text characters covered by entity spans.
+
+        Only entities with a non-None ``source_span`` are considered.  Overlapping
+        spans are merged before computing coverage so overlaps aren't double-counted.
+
+        Args:
+            text_length: Total number of characters in the source text.  Must be > 0.
+
+        Returns:
+            Float in [0.0, 1.0].  Returns 0.0 if no entities have spans or
+            *text_length* <= 0.
+
+        Example:
+            >>> result.span_coverage(100)
+            0.3
+        """
+        if text_length <= 0:
+            return 0.0
+        spans = sorted(
+            (e.source_span for e in self.entities if e.source_span is not None),
+            key=lambda s: s[0],
+        )
+        if not spans:
+            return 0.0
+        covered = 0
+        cur_start, cur_end = spans[0]
+        for start, end in spans[1:]:
+            if start <= cur_end:
+                cur_end = max(cur_end, end)
+            else:
+                covered += cur_end - cur_start
+                cur_start, cur_end = start, end
+        covered += cur_end - cur_start
+        return min(1.0, covered / text_length)
+
 
 @dataclass
 class OntologyGenerationResult:
@@ -2697,6 +2733,30 @@ class OntologyGenerator:
         import dataclasses as _dc
         return _dc.replace(result, entities=deduped, relationships=kept_rels)
 
+
+    def count_entities_by_type(
+        self,
+        result: "EntityExtractionResult",
+    ) -> Dict[str, int]:
+        """Return a frequency dict of entity type → count for *result*.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+
+        Returns:
+            Dict mapping entity ``type`` string to the number of entities with
+            that type, sorted by count descending.
+
+        Example:
+            >>> counts = gen.count_entities_by_type(result)
+            >>> counts.get("Person", 0) >= 0
+            True
+        """
+        freq: Dict[str, int] = {}
+        for entity in result.entities:
+            freq[entity.type] = freq.get(entity.type, 0) + 1
+        return dict(sorted(freq.items(), key=lambda kv: kv[1], reverse=True))
+
 __all__ = [
     'OntologyGenerator',
     'OntologyGenerationContext',
@@ -2706,4 +2766,5 @@ __all__ = [
     'ExtractionStrategy',
     'DataType',
 ]
+
 

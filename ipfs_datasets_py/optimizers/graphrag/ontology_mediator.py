@@ -744,6 +744,20 @@ class OntologyMediator:
         self._undo_stack.clear()
         self._recommendation_counts.clear()
 
+    def reset_all_state(self) -> None:
+        """Clear all internal mutable state including the action entry log.
+
+        Like :meth:`reset_state` but additionally clears the ``_action_entries``
+        list populated by :meth:`action_log`.
+
+        Example:
+            >>> mediator.reset_all_state()
+            >>> mediator.action_log()
+            []
+        """
+        self.reset_state()
+        self._action_entries.clear()
+
     def clear_recommendation_history(self) -> int:
         """Clear the recommendation phrase frequency table.
 
