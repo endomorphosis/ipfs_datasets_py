@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.12.0  
+**Version:** 3.13.0  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-21 (session 35)  
-**Last Major Release:** v3.12.0 (query_executor error branches, _legacy_engine traverse/find_paths, lineage enhanced/metrics, transactions manager, btree; session 35)
+**Last Updated:** 2026-02-21 (session 36)  
+**Last Major Release:** v3.13.0 (query_executor 100%, _legacy_engine 100%, lineage/enhanced 100%, hybrid_search 100%, cross_document 100%, jsonld/context 100%; session 36)
 
 ---
 
@@ -18,9 +18,9 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 94% overall | Measured 2026-02-21 session 35; _legacy_engine 100%, transaction manager 100%, lineage/enhanced 100%, lineage/metrics 100%, btree 100%; **3,380 pass** (17 new, baseline 3,363)
-| **Documentation** | ✅ Up to Date | Reflects v3.12.0 structure |
-| **Known Issues** | None | 18 bugs fixed (sessions 7-11, 18-19, 21-27, 30); 0 failures (3,380 pass)
+| **Test Coverage** | 94% overall | Measured 2026-02-21 session 36; query_executor 100%, _legacy_engine 100%, lineage/enhanced 100%, hybrid_search 100%, jsonld/context 100%; **3,396 pass** (16 new, baseline 3,380)
+| **Documentation** | ✅ Up to Date | Reflects v3.13.0 structure |
+| **Known Issues** | None | 18 bugs fixed (sessions 7-11, 18-19, 21-27, 30); 0 failures (3,396 pass)
 | **Next Milestone** | v3.13.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers), cypher compiler edge cases
 
 ---
