@@ -2050,6 +2050,24 @@ class LogicValidator:
 
         return [sorted(g) for g in sorted(groups.values())]
 
+    def entity_density(self, ontology: dict) -> float:
+        """Return the ratio of relationships to entities (graph density proxy).
+
+        Measures how connected the ontology is: higher values indicate more
+        relationships per entity.
+
+        Args:
+            ontology: Dict with optional ``"entities"`` and ``"relationships"`` lists.
+
+        Returns:
+            Float ``num_relationships / num_entities``; ``0.0`` when no entities.
+        """
+        n_entities = len(ontology.get("entities", []))
+        n_relationships = len(ontology.get("relationships", []))
+        if n_entities == 0:
+            return 0.0
+        return n_relationships / n_entities
+
 
 # Export public API
 __all__ = [

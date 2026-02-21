@@ -1063,3 +1063,15 @@ class OntologyLearningAdapter:
             ``final_score``.  Returns all records when *n* >= ``len(_feedback)``.
         """
         return sorted(self._feedback, key=lambda r: r.final_score, reverse=True)[:n]
+
+    def feedback_above_mean(self) -> list:
+        """Return feedback records whose ``final_score`` exceeds the mean.
+
+        Returns:
+            List of ``FeedbackRecord`` objects with ``final_score`` above the
+            arithmetic mean.  Returns all records when fewer than 2 exist.
+        """
+        if len(self._feedback) < 2:
+            return list(self._feedback)
+        mean = sum(r.final_score for r in self._feedback) / len(self._feedback)
+        return [r for r in self._feedback if r.final_score > mean]

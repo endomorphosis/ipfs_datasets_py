@@ -1097,3 +1097,25 @@ class OntologyPipeline:
             return 0.0
         scores = [r.score.overall for r in self._run_history]
         return max(scores) - min(scores)
+
+    def score_at_percentile(self, p: float) -> float:
+        """Return the *p*-th percentile of overall scores in run history.
+
+        Args:
+            p: Percentile in [0, 100].
+
+        Returns:
+            Float score at the requested percentile; ``0.0`` when no runs.
+
+        Raises:
+            ValueError: If *p* is outside [0, 100].
+        """
+        if not (0 <= p <= 100):
+            raise ValueError(f"Percentile must be in [0, 100], got {p}")
+        if not self._run_history:
+            return 0.0
+        scores = sorted(r.score.overall for r in self._run_history)
+        idx = (p / 100.0) * (len(scores) - 1)
+        lo = int(idx)
+        hi = min(lo + 1, len(scores) - 1)
+        return scores[lo] + (idx - lo) * (scores[hi] - scores[lo])

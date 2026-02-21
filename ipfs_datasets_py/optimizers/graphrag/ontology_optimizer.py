@@ -2606,6 +2606,25 @@ class OntologyOptimizer:
                 entropy -= p * math.log2(p)
         return entropy
 
+    def history_mode(self) -> float:
+        """Return the most common score bin (mode) across history.
+
+        Scores are bucketed into 10 equal-width bins.  The midpoint of the
+        most-populated bin is returned.
+
+        Returns:
+            Midpoint float of the most common bin; ``0.0`` when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        bins = [0] * 10
+        for s in scores:
+            idx = min(int(s * 10), 9)
+            bins[idx] += 1
+        max_idx = bins.index(max(bins))
+        return (max_idx + 0.5) / 10.0
+
 
 # Export public API
 __all__ = [
