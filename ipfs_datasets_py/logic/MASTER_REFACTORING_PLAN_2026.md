@@ -1060,6 +1060,10 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | CEC resolution rules | 84% | 100% | 96%✅ (session 31: edge cases covered) |
 | CEC specialized rules | 79% | 100% | 97%✅ (session 31: dilemma apply() covered) |
 | TDFOL formula_dependency_graph | 0% | 90% | 98%✅ (session 32: 90 tests, 325/335 lines; 8 lines require graphviz) |
+| TDFOL p2p/ipfs_proof_storage | 0% | 90% | 95%✅ (session 33: 39 tests, only import-error guards uncovered) |
+| TDFOL modal_tableaux | 81% | 95% | 96%✅ (session 33: deontic ops + World hash/eq + ancestor traversal) |
+| TDFOL nl/tdfol_nl_preprocessor | 48% | 75% | 60% (session 33: +12pp; remaining requires spaCy) |
+| TDFOL nl/tdfol_nl_patterns | 35% | 70% | 49% (session 33: +14pp; remaining requires spaCy) |
 | NL Processing | 75% pass | 85% pass | 90% pass |
 | ZKP (simulation) | 80% pass | 85% pass | 85% pass |
 | MCP Tools | 167+ tests | 200+ tests | 250+ tests |
@@ -1068,7 +1072,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Session 32 complete. `formula_dependency_graph.py` coverage: 0%→98% (+325 lines, 90 tests in `test_formula_dependency_graph.py`). TDFOL suite: 999→1089 tests (+90). Overall logic suite: 6185→6275 tests passing. Key: diamond-shaped dependency graph needed to hit `continue` branches in `get_all_dependencies`/`get_all_dependents` traversal loops. Remaining 8 uncovered lines are all inside `if HAS_GRAPHVIZ:` optional dependency guards — untestable without graphviz installed. Next: TDFOL NL processing improvement (nl/tdfol_nl_patterns.py 35%, nl/tdfol_nl_preprocessor.py 48%, nl/utils.py 48%), modal_tableaux.py (81%), TDFOL p2p module (0%).
+**Next Action:** Session 33 complete. 3 new test files: (1) `test_ipfs_proof_storage.py` (39 tests, p2p 0%→95%), (2) `test_nl_types_session33.py` (53 tests + 3 spaCy-skipped, preprocessor 48%→60%, patterns 35%→49%), (3) `test_modal_tableaux_deontic_session33.py` (34 tests, modal_tableaux 81%→96% — covers World hash/eq, _expand_deontic OBLIGATION/PERMISSION/FORBIDDEN, _expand_binary negated-OR/IMPLIES, _expand_formula atomic contradiction, ancestor box propagation, S4/S5 mutual accessibility). TDFOL suite: 1089→1215 tests (+126). Overall logic suite: 6275→6401 tests passing. Key: _expand_formula requires formula pre-loaded in world.formulas/world.negated_formulas before calling (returns None otherwise). Next: TDFOL `nl/tdfol_nl_generator.py` (73%), `nl/llm.py` (57%), `nl/tdfol_nl_api.py` (51%), and `strategies/modal_tableaux.py` (62%).
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 32)  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 33)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
