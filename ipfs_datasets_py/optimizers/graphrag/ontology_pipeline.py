@@ -576,11 +576,13 @@ class OntologyPipeline:
             return 0.0
         return self._run_history[-1].score.overall
 
-    def run_batch(self, texts: List[str]) -> List[Any]:
+    def run_batch(self, texts: List[str], **kwargs: Any) -> List[Any]:
         """Run :meth:`run` on each text in *texts* and return the results list.
 
         Args:
             texts: Sequence of raw text strings to process.
+            **kwargs: Additional keyword arguments forwarded to each :meth:`run`
+                call (e.g. ``data_source``, ``threshold_hint``).
 
         Returns:
             List of :class:`PipelineResult` objects in the same order as
@@ -591,7 +593,7 @@ class OntologyPipeline:
             >>> len(results) == 2
             True
         """
-        return [self.run(text) for text in texts]
+        return [self.run(text, **kwargs) for text in texts]
 
     def summary(self) -> str:
         """Return a compact one-line description of this pipeline's configuration.
