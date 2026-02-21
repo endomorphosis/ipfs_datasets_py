@@ -26,6 +26,11 @@ from .generation_engine import (
     generate_batch_embeddings,
     generate_embeddings_from_file,
 )
+from .embeddings_engine import (
+    AdvancedIPFSEmbeddings,
+    EmbeddingConfig,
+    ChunkingConfig,
+)
 
 __all__ = [
     # sparse embedding
@@ -46,4 +51,8 @@ __all__ = [
     "generate_embedding",
     "generate_batch_embeddings",
     "generate_embeddings_from_file",
+    # advanced embeddings engine
+    "AdvancedIPFSEmbeddings",
+    "EmbeddingConfig",
+    "ChunkingConfig",
 ]

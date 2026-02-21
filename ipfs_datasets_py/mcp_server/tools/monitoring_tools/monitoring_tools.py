@@ -8,10 +8,16 @@ that validates inputs, delegates to the engine, and formats responses.
 """
 
 import logging
-import psutil
 import time
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
+
+try:
+    import psutil
+    HAVE_PSUTIL = True
+except ImportError:
+    psutil = None  # type: ignore[assignment]
+    HAVE_PSUTIL = False
 
 from ipfs_datasets_py.monitoring_engine import (  # noqa: F401
     HealthStatus,
@@ -187,6 +193,9 @@ async def get_performance_metrics(
         
         # Collect current metrics
         for metric_type in metric_types:
+            if not HAVE_PSUTIL:
+                metrics["current_metrics"][metric_type] = {"status": "psutil not available"}
+                continue
             if metric_type == "cpu":
                 metrics["current_metrics"]["cpu"] = {
                     "usage_percent": psutil.cpu_percent(interval=1),
