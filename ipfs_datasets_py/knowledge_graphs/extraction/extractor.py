@@ -174,14 +174,14 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                 entity_type = _map_spacy_entity_type(ent.label_)
 
                 # Skip entities with low confidence
-                if ent._.get("confidence", 1.0) < self.min_confidence:
+                if getattr(ent._, "confidence", 1.0) < self.min_confidence:
                     continue
 
                 # Create entity
                 entity = Entity(
                     entity_type=entity_type,
                     name=ent.text,
-                    confidence=ent._.get("confidence", 0.8),
+                    confidence=getattr(ent._, "confidence", 0.8),
                     source_text=text[max(0, ent.start_char - 20):min(len(text), ent.end_char + 20)]
                 )
 

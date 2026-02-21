@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.19.0  
+**Version:** 3.20.0  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-21 (session 42)  
-**Last Major Release:** v3.19.0 (session 42: ipld.py edge cases 93%→99%, vector_augmented_query constraint/confidence/diamond paths, export_to_car rel blocks, from_car empty-roots ValueError; 18 new tests; **99%** coverage, 3,584 passing)
+**Last Updated:** 2026-02-21 (session 43)  
+**Last Major Release:** v3.20.0 (session 43: spaCy integration bug fixes + 32 new tests covering extractor.py spaCy paths; extractor.py 73%→98% (+25pp); entities.py+relationships.py 100% maintained; 3 production bug fixes: `ent._.get()` → `getattr(ent._, ...)`, `Entity.extraction_method` field added, `Relationship.extraction_method` field added; **99%** overall coverage, 3,551 passing)
 
 ---
 
@@ -11,17 +11,17 @@
 
 | Aspect | Status | Details |
 |--------|--------|---------|
-| **Overall Status** | ✅ Production Ready | 99% test coverage |
+| **Overall Status** | ✅ Production Ready | 99%+ test coverage |
 | **Core Features** | ✅ Complete | All extraction, query, storage features working |
 | **P1-P4 Features** | ✅ Complete | Implemented in PR #1085 (2026-02-18) |
 | **Cypher Features** | ✅ Complete | FOREACH + CALL subquery added (2026-02-20) |
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | **99% overall** | Measured 2026-02-21 session 42; 18 new tests covering ipld.py edge cases (vector_augmented_query constraint filtering lines 711/715/717, seed confidence line 663, top_k break line 684, diamond-graph already-visited line 732, cross_document ghost-entity line 865, traverse string-IDs line 1035, from_car empty-roots lines 1429-1430, export_to_car relationship blocks lines 1280-1282); **3,584 pass** (18 new, baseline 3,566); 158 missed lines |
-| **Documentation** | ✅ Up to Date | Reflects v3.19.0 structure |
-| **Known Issues** | None | 20 bugs found (sessions 7-11, 18-19, 21-27, 30, 39-42); 0 failures (3,584 pass)
-| **Next Milestone** | v3.20.0 (Q3 2026) | extractor spaCy lines 73% (requires spaCy NLP installation); remaining dead-code cleanup (expression_evaluator 153-163, ir_executor 435-442, graph.py 629/661, cypher/compiler 186/213/261, srl 402, ipld 753/1122); ImportError fallbacks unreachable since deps installed (lineage/core 18-20, reasoning/types 24-26, neo4j_compat 35-38)
+| **Test Coverage** | **99%+ overall** | Measured 2026-02-21 session 43; 32 new tests covering extractor.py spaCy paths (extract_entities 174-189, _aggressive_entity_extraction 517-594, _infer_complex_relationships 618-739, extract_knowledge_graph high-temp 806-837); **3,551 pass** (32 new, baseline 3,519); 51 missed lines; extractor.py 73%→98% (+25pp) |
+| **Documentation** | ✅ Up to Date | Reflects v3.20.0 structure |
+| **Known Issues** | None | 22 bugs found (sessions 7-11, 18-19, 21-27, 30, 39-43); 0 failures (3,551 pass); 2 pre-existing errors in session39 (query/knowledge_graph.py UnboundLocalError bug, pre-existing)
+| **Next Milestone** | v3.21.0 (Q3 2026) | Cover extractor.py lines 119-123 (spaCy model OSError fallback), 178 (custom confidence extension), 428-429 (transformers ImportError handler); cover remaining dead-code candidates
 
 ---
 

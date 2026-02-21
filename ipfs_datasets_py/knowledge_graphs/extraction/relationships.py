@@ -61,6 +61,7 @@ class Relationship:
     confidence: float = DEFAULT_CONFIDENCE
     source_text: Optional[str] = None
     bidirectional: bool = False
+    extraction_method: Optional[str] = None
 
     def __post_init__(self):
         """Handle flexible constructor patterns.
