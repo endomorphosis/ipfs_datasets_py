@@ -2404,6 +2404,45 @@ class OntologyCritic(BaseCritic):
             return vals[-1]
         return vals[lo] + (vals[hi] - vals[lo]) * (idx - lo)
 
+    def normalize_scores(self, scores: List["CriticScore"]) -> List["CriticScore"]:
+        """Return a list of scores with ``overall``-equivalent values scaled to [0, 1].
+
+        Applies min-max normalization to the 5 dimensions of each score so
+        that the overall values span [0, 1].  When the range is zero (all
+        scores equal), the original list is returned unchanged.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            New list of :class:`CriticScore` objects with scaled dimensions;
+            or the original list when fewer than 2 scores are provided or all
+            overall values are identical.
+        """
+        import dataclasses as _dc
+        if len(scores) < 2:
+            return list(scores)
+        overalls = [s.overall for s in scores]
+        lo, hi = min(overalls), max(overalls)
+        if hi == lo:
+            return list(scores)
+        # Scale all 5 dimensions uniformly by the same factor that maps overall to [0,1]
+        factor = 1.0 / (hi - lo)
+        new_scores = []
+        for s in scores:
+            shift = lo
+            new_scores.append(
+                _dc.replace(
+                    s,
+                    completeness=max(0.0, min(1.0, (s.completeness - shift) * factor)),
+                    consistency=max(0.0, min(1.0, (s.consistency - shift) * factor)),
+                    clarity=max(0.0, min(1.0, (s.clarity - shift) * factor)),
+                    granularity=max(0.0, min(1.0, (s.granularity - shift) * factor)),
+                    domain_alignment=max(0.0, min(1.0, (s.domain_alignment - shift) * factor)),
+                )
+            )
+        return new_scores
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],

@@ -798,3 +798,24 @@ class OntologyPipeline:
             "max": max(scores),
             "trend": list(scores),
         }
+
+    def is_stable(self, threshold: float = 0.02, window: int = 3) -> bool:
+        """Return ``True`` if the last *window* runs have low score variance.
+
+        ``Stable`` means the variance of the most recent *window* overall
+        scores is at or below *threshold*.
+
+        Args:
+            threshold: Maximum allowed variance (default 0.02).
+            window: Number of most recent runs to examine (default 3).
+
+        Returns:
+            ``True`` when the window variance is ≤ *threshold*; ``False``
+            when fewer than *window* runs are available.
+        """
+        if len(self._run_history) < window:
+            return False
+        recent = [r.score.overall for r in self._run_history[-window:]]
+        mean = sum(recent) / len(recent)
+        variance = sum((s - mean) ** 2 for s in recent) / len(recent)
+        return variance <= threshold

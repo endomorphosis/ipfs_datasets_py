@@ -3835,6 +3835,35 @@ class OntologyGenerator:
         """
         return len({e.type for e in result.entities})
 
+    def normalize_confidence(
+        self, result: "EntityExtractionResult"
+    ) -> "EntityExtractionResult":
+        """Return a new result with entity confidences scaled to [0, 1].
+
+        If all entities already have confidence in [0, 1] and the range
+        (max - min) is zero, the result is returned unchanged.  Otherwise,
+        each confidence is rescaled using min-max normalization.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+
+        Returns:
+            New :class:`EntityExtractionResult` with normalised entity
+            confidences.  Relationships are copied unchanged.
+        """
+        import dataclasses as _dc
+        if not result.entities:
+            return result
+        confs = [e.confidence for e in result.entities]
+        lo, hi = min(confs), max(confs)
+        if hi == lo:
+            return result
+        new_entities = [
+            _dc.replace(e, confidence=(e.confidence - lo) / (hi - lo))
+            for e in result.entities
+        ]
+        return _dc.replace(result, entities=new_entities)
+
 
 __all__ = [
     'OntologyGenerator',

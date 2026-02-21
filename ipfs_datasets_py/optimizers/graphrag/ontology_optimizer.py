@@ -2215,13 +2215,6 @@ class OntologyOptimizer:
         q1, _, q3 = self.score_quartiles()
         return q3 - q1
 
-
-# Export public API
-__all__ = [
-    'OntologyOptimizer',
-    'OptimizationReport',
-]
-
     def has_improved(self, baseline: float) -> bool:
         """Return ``True`` if any history entry has ``average_score > baseline``.
 
@@ -2233,3 +2226,10 @@ __all__ = [
             otherwise (including when history is empty).
         """
         return any(e.average_score > baseline for e in self._history)
+
+
+# Export public API
+__all__ = [
+    'OntologyOptimizer',
+    'OptimizationReport',
+]
