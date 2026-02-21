@@ -1507,6 +1507,39 @@ class OntologyMediator:
                 scores.append(float(v))
         return sum(scores) / len(scores) if scores else 0.0
 
+    def most_improved_action(self) -> Optional[str]:
+        """Return the action type with the highest average score across feedback.
+
+        Scans the mediator's refinement history for feedback scores tagged with
+        action types and returns the action with the best mean score.  Falls
+        back to returning the most-frequently-used action when no scored
+        feedback is available.
+
+        Returns:
+            String action type, or ``None`` when no feedback is recorded.
+        """
+        # Try scored feedback first (populated by subclasses / external callers)
+        scored_store = (
+            getattr(self, "_feedback_history", None)
+            or getattr(self, "_feedback", None)
+            or []
+        )
+        totals: dict = {}
+        counts: dict = {}
+        for entry in scored_store:
+            score = entry.get("score", 0.0) if isinstance(entry, dict) else getattr(entry, "final_score", 0.0)
+            actions = entry.get("actions", []) if isinstance(entry, dict) else getattr(entry, "action_types", [])
+            for action in actions:
+                totals[action] = totals.get(action, 0.0) + score
+                counts[action] = counts.get(action, 0) + 1
+        if totals:
+            return max(totals, key=lambda a: totals[a] / counts[a])
+        # Fallback: most-used action from _action_counts
+        action_counts = getattr(self, "_action_counts", {})
+        if not action_counts:
+            return None
+        return max(action_counts, key=lambda a: action_counts[a])
+
 
 # Export public API
 __all__ = [

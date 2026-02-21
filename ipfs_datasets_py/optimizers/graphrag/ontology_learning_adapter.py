@@ -59,6 +59,14 @@ class FeedbackRecord:
     action_types: List[str] = field(default_factory=list)
     confidence_at_extraction: Optional[float] = None
 
+    def __repr__(self) -> str:
+        return (
+            f"FeedbackRecord("
+            f"final_score={self.final_score:.3f}, "
+            f"actions={self.action_types}, "
+            f"confidence={self.confidence_at_extraction})"
+        )
+
 
 class OntologyLearningAdapter:
     """Adapt extraction thresholds based on refinement cycle feedback.
@@ -1330,3 +1338,37 @@ class OntologyLearningAdapter:
             return 0.0
         below = sum(1 for r in self._feedback if r.final_score < value)
         return below / len(self._feedback)
+
+    def feedback_ewma(self, alpha: float = 0.3) -> float:
+        """Return the exponential weighted moving average of feedback scores.
+
+        Processes ``_feedback`` in chronological order with the given smoothing
+        factor *alpha* (0 < alpha <= 1).
+
+        Args:
+            alpha: Smoothing factor; higher values weight recent feedback more.
+
+        Returns:
+            Float EWMA; 0.0 when no feedback is recorded.
+        """
+        if not self._feedback:
+            return 0.0
+        ewma = self._feedback[0].final_score
+        for r in self._feedback[1:]:
+            ewma = alpha * r.final_score + (1.0 - alpha) * ewma
+        return ewma
+
+    def feedback_normalized(self) -> list:
+        """Return feedback scores scaled to [0, 1] using min-max normalisation.
+
+        Returns:
+            List of floats; empty list when fewer than 2 records or when all
+            scores are identical.
+        """
+        if len(self._feedback) < 2:
+            return []
+        scores = [r.final_score for r in self._feedback]
+        lo, hi = min(scores), max(scores)
+        if hi == lo:
+            return [0.0] * len(scores)
+        return [(s - lo) / (hi - lo) for s in scores]

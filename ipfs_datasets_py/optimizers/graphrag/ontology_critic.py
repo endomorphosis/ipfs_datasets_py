@@ -3506,6 +3506,19 @@ class OntologyCritic(BaseCritic):
         diffs["overall"] = getattr(after, "overall", 0.0) - getattr(before, "overall", 0.0)
         return diffs
 
+    def score_is_above_baseline(self, score: "CriticScore", baseline: float = 0.5) -> bool:
+        """Return whether every dimension in *score* exceeds *baseline*.
+
+        Args:
+            score: :class:`CriticScore` to evaluate.
+            baseline: Threshold that each dimension must strictly exceed.
+
+        Returns:
+            ``True`` when all 6 dimensions are > *baseline*, ``False``
+            otherwise.
+        """
+        return all(getattr(score, d, 0.0) > baseline for d in self._DIMENSIONS)
+
 
 # Export public API
 __all__ = [

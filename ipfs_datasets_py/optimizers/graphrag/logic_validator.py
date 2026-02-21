@@ -2488,6 +2488,52 @@ class LogicValidator:
                         queue.append(neighbor)
         return max_dist
 
+    def fanout_ratio(self, ontology: Any) -> float:
+        """Return the ratio of unique target nodes to total relationships.
+
+        A high value (close to 1) means each relationship reaches a distinct
+        target; a low value indicates many relationships converge on the same
+        targets.
+
+        Args:
+            ontology: Ontology with ``relationships`` list; each item must have
+                ``target_id``.
+
+        Returns:
+            Float in [0, 1]; 0.0 when there are no relationships.
+        """
+        rels = getattr(ontology, "relationships", [])
+        if not rels:
+            return 0.0
+        unique_targets = len({getattr(r, "target_id", None) for r in rels})
+        return unique_targets / len(rels)
+
+    def symmetric_pair_count(self, ontology: Any) -> int:
+        """Return the number of symmetric relationship pairs.
+
+        A symmetric pair is a pair (A→B, B→A) of the *same* relationship type.
+
+        Args:
+            ontology: Ontology with ``relationships`` list; each item must have
+                ``source_id``, ``target_id``, and ``type``.
+
+        Returns:
+            Integer count of symmetric pairs (each pair counted once).
+        """
+        rels = getattr(ontology, "relationships", [])
+        edges: set = set()
+        count = 0
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            rtype = getattr(r, "type", None)
+            fwd = (src, tgt, rtype)
+            rev = (tgt, src, rtype)
+            if rev in edges:
+                count += 1
+            edges.add(fwd)
+        return count
+
 
 # Export public API
 __all__ = [

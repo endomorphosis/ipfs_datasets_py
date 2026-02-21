@@ -188,6 +188,15 @@ class OntologyOptimizer:
             self._metrics = None
         self._log.info("Initialized OntologyOptimizer")
 
+    def __repr__(self) -> str:
+        """Return a concise developer-readable summary of this optimizer."""
+        return (
+            f"OntologyOptimizer("
+            f"history_len={len(self._history)}, "
+            f"metrics={'yes' if self._metrics is not None else 'no'}, "
+            f"tracing={'yes' if self._tracer is not None else 'no'})"
+        )
+
     def _emit_trace(self, operation: str, attributes: Dict[str, Any]) -> None:
         """Emit a best-effort OpenTelemetry span with scalar attributes."""
         if self._tracer is None:
@@ -2984,6 +2993,25 @@ class OntologyOptimizer:
             return [0.0] * len(scores)
         std = variance ** 0.5
         return [(s - mean) / std for s in scores]
+
+    def score_cumulative_max(self) -> list:
+        """Return the running maximum of average_score across history.
+
+        Each position *i* in the returned list is the maximum ``average_score``
+        seen in entries ``[0 … i]``.
+
+        Returns:
+            List of floats with the same length as ``_history``; empty list
+            when there is no history.
+        """
+        if not self._history:
+            return []
+        result = []
+        current_max = float("-inf")
+        for entry in self._history:
+            current_max = max(current_max, entry.average_score)
+            result.append(current_max)
+        return result
 
 
 # Export public API

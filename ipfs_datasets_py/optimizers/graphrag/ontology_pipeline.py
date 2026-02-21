@@ -129,6 +129,14 @@ class OntologyPipeline:
         self._adapter = OntologyLearningAdapter(domain=domain)
         self._run_history: List["PipelineResult"] = []
 
+    def __repr__(self) -> str:
+        """Return a concise developer-readable summary of this pipeline."""
+        return (
+            f"OntologyPipeline("
+            f"domain={self._domain!r}, "
+            f"runs={len(self._run_history)})"
+        )
+
     def run(
         self,
         data: Any,
