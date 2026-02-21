@@ -4906,6 +4906,20 @@ class OntologyGenerator:
         """
         return sorted(result.entities, key=lambda e: e.confidence, reverse=True)[:k]
 
+    def entity_count_by_type(self, result) -> dict:
+        """Return a dict mapping entity type → count of entities of that type.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Dict of ``{type_str: int}``.  Empty dict when result has no entities.
+        """
+        counts: dict = {}
+        for e in result.entities:
+            counts[e.type] = counts.get(e.type, 0) + 1
+        return counts
+
 
 __all__ = [
     'OntologyGenerator',

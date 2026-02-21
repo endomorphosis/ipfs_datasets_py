@@ -1144,3 +1144,16 @@ class OntologyPipeline:
         first = self._run_history[0].score.overall
         last = self._run_history[-1].score.overall
         return (last - first) / (len(self._run_history) - 1)
+
+    def scores_above_mean(self) -> list:
+        """Return run records whose overall score exceeds the mean overall score.
+
+        Returns:
+            List of run records with ``score.overall > mean``.  Empty when
+            no runs exist.
+        """
+        if not self._run_history:
+            return []
+        scores = [r.score.overall for r in self._run_history]
+        mean = sum(scores) / len(scores)
+        return [r for r in self._run_history if r.score.overall > mean]

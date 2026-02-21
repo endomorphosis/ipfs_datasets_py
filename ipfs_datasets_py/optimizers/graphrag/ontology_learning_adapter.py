@@ -1155,3 +1155,22 @@ class OntologyLearningAdapter:
             return ""
         averages = {d: domain_totals[d] / domain_counts[d] for d in domain_totals}
         return min(averages, key=averages.get)
+
+    def best_domain(self) -> str:
+        """Return the domain with the highest average ``final_score`` in feedback.
+
+        Returns:
+            Domain string; ``""`` when no feedback has been recorded.
+        """
+        if not self._feedback:
+            return ""
+        domain_totals: dict = {}
+        domain_counts: dict = {}
+        for r in self._feedback:
+            domain = getattr(r, "domain", None) or "unknown"
+            domain_totals[domain] = domain_totals.get(domain, 0.0) + r.final_score
+            domain_counts[domain] = domain_counts.get(domain, 0) + 1
+        if not domain_totals:
+            return ""
+        averages = {d: domain_totals[d] / domain_counts[d] for d in domain_totals}
+        return max(averages, key=averages.get)

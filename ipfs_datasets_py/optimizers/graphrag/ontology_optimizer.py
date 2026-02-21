@@ -2709,6 +2709,25 @@ class OntologyOptimizer:
         """
         return [e for e in self._history if e.average_score > threshold]
 
+    def score_momentum_delta(self, window: int = 3) -> float:
+        """Return the difference between the last window average and the prior window average.
+
+        A positive value means recent scores are higher than earlier ones
+        (momentum is positive).
+
+        Args:
+            window: Window size for each half (default 3).
+
+        Returns:
+            Float delta; ``0.0`` when fewer than ``2 * window`` history entries.
+        """
+        if len(self._history) < 2 * window:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        recent = scores[-window:]
+        prior = scores[-(2 * window):-window]
+        return sum(recent) / len(recent) - sum(prior) / len(prior)
+
 
 # Export public API
 __all__ = [
