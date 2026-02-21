@@ -519,6 +519,64 @@ class OntologyMediator:
         """
         return dict(self._action_counts)
 
+    def get_action_summary(self, top_n: Optional[int] = None) -> List[Dict[str, Any]]:
+        """Return action statistics sorted by invocation count (descending).
+
+        Args:
+            top_n: If given, limit the result to the *top_n* most-frequent
+                actions.  ``None`` (default) returns all actions.
+
+        Returns:
+            List of dicts, each with keys:
+
+            * ``"action"`` -- action name.
+            * ``"count"`` -- number of times applied.
+            * ``"rank"``  -- 1-based rank (1 = most frequent).
+
+        Example:
+            >>> summary = mediator.get_action_summary(top_n=3)
+            >>> summary[0]["rank"]
+            1
+        """
+        sorted_items = sorted(self._action_counts.items(), key=lambda kv: kv[1], reverse=True)
+        if top_n is not None:
+            sorted_items = sorted_items[:top_n]
+        return [
+            {"action": action, "count": count, "rank": rank}
+            for rank, (action, count) in enumerate(sorted_items, start=1)
+        ]
+
+    def preview_recommendations(
+        self,
+        ontology: Dict[str, Any],
+        score: Any,
+        context: Any,
+    ) -> List[str]:
+        """Return the recommendations that *would* be applied without mutating state.
+
+        Runs the internal recommendation-generation logic (same as the first
+        step of :meth:`refine_ontology`) but does **not** apply any actions,
+        update counters, or modify the ontology.
+
+        Args:
+            ontology: Current ontology dict.
+            score: A :class:`~ipfs_datasets_py.optimizers.graphrag.ontology_critic.CriticScore`
+                (or any object with a ``.recommendations`` attribute).
+            context: Ontology generation context.
+
+        Returns:
+            List of recommendation strings that would be processed next round.
+
+        Example:
+            >>> recs = mediator.preview_recommendations(ont, score, ctx)
+            >>> isinstance(recs, list)
+            True
+        """
+        recs = getattr(score, "recommendations", None)
+        if recs is None:
+            return []
+        return list(recs)
+
     def undo_last_action(self) -> Dict[str, Any]:
         """Revert the last applied refinement action.
 

@@ -655,15 +655,15 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P3) [graphrag] Add `EntityExtractionResult.to_csv()` -- Done batch-66: header+rows, span cols; 7 tests
 - [x] (P2) [graphrag] Add `OntologyOptimizer.top_n_ontologies(n)` -- Done batch-66: sorted desc, n guard; 6 tests
 - [ ] (P3) [obs] Add `OntologyPipeline.run_with_metrics()` -- run + return latency/score dict
-- [ ] (P2) [graphrag] Add `OntologyMediator.preview_recommendations()` -- dry-run next round
+- [x] (P2) [graphrag] Add `OntologyMediator.preview_recommendations()` -- Done batch-67: no state mutation; 5 tests
 - [ ] (P3) [graphrag] Add `ExtractionConfig.from_dict()` classmethod
 - [x] (P2) [graphrag] Add `OntologyOptimizer.score_variance()` -- Done batch-66: population variance; 6 tests
 - [ ] (P3) [arch] Add `OntologyPipeline.with_domain(domain)` -- fluent domain-override builder
 - [ ] (P2) [graphrag] Add `LogicValidator.explain_entity(entity)` -- single-entity validation explanation
 - [ ] (P3) [obs] Add `OntologyCritic.score_trend(scores)` -- linear regression direction
-- [ ] (P2) [graphrag] Add `OntologyGenerator.deduplicate_entities(result)` -- post-extraction dedup
+- [x] (P2) [graphrag] Add `OntologyGenerator.deduplicate_entities(result)` -- Done batch-67: highest-conf wins, rel remapping, dedup_count; 8 tests
 - [ ] (P3) [tests] Hypothesis: LogicValidator.filter_valid_entities subset property
-- [ ] (P2) [graphrag] Add `OntologyMediator.get_action_summary()` -- sorted action stats
-- [ ] (P3) [arch] Add `OntologyPipeline.from_dict(d)` -- reconstruct from as_dict output
+- [x] (P2) [graphrag] Add `OntologyMediator.get_action_summary()` -- Done batch-67: sorted desc, top_n, rank; 6 tests
+- [x] (P3) [arch] Add `OntologyPipeline.from_dict(d)` -- Done batch-67: round-trip classmethod; 5 tests
 - [ ] (P2) [graphrag] Add `ExtractionConfig.validate()` -- check field constraints
 - [x] (P3) [obs] Add `OntologyOptimizer.improvement_rate()` -- Done batch-66: pairwise comparison; 6 tests

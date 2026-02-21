@@ -1884,6 +1884,82 @@ class OntologyGenerator:
             "domain": domain,
         }
 
+    def deduplicate_entities(
+        self,
+        result: "EntityExtractionResult",
+        key: str = "text",
+    ) -> "EntityExtractionResult":
+        """Return a new :class:`EntityExtractionResult` with duplicate entities removed.
+
+        Deduplication groups entities by normalised *key* value (lower-case,
+        stripped).  Within each group the entity with the **highest confidence**
+        is kept.  Relationships whose ``source_id`` or ``target_id`` refer to a
+        removed entity are remapped to the surviving entity from the same group.
+        Self-loops created by remapping are dropped.
+
+        The result's ``metadata["deduplication_count"]`` records how many
+        entities were removed.
+
+        Args:
+            result: The extraction result to deduplicate.
+            key: Entity attribute to group by (default: ``"text"``).
+                Currently only ``"text"`` and ``"id"`` are supported.
+
+        Returns:
+            A new :class:`EntityExtractionResult` with duplicates removed.
+
+        Raises:
+            ValueError: If *key* is not ``"text"`` or ``"id"``.
+
+        Example:
+            >>> deduped = generator.deduplicate_entities(result)
+            >>> len(deduped.entities) <= len(result.entities)
+            True
+        """
+        if key not in ("text", "id"):
+            raise ValueError(f"key must be 'text' or 'id'; got {key!r}")
+
+        from collections import defaultdict
+
+        # Group entities by normalised key value
+        groups: dict = defaultdict(list)
+        for ent in result.entities:
+            raw = getattr(ent, key, "")
+            normalised = str(raw).lower().strip()
+            groups[normalised].append(ent)
+
+        # Keep highest-confidence entity per group; build id -> surviving id map
+        kept: List[Entity] = []
+        id_map: dict = {}  # removed_id -> surviving_id
+        for group in groups.values():
+            winner = max(group, key=lambda e: e.confidence)
+            kept.append(winner)
+            for ent in group:
+                if ent.id != winner.id:
+                    id_map[ent.id] = winner.id
+
+        kept_ids = {e.id for e in kept}
+        deduplication_count = len(result.entities) - len(kept)
+
+        # Remap relationships; drop self-loops
+        kept_rels = []
+        for r in result.relationships:
+            src = id_map.get(r.source_id, r.source_id)
+            tgt = id_map.get(r.target_id, r.target_id)
+            if src in kept_ids and tgt in kept_ids and src != tgt:
+                import dataclasses as _dc
+                kept_rels.append(_dc.replace(r, source_id=src, target_id=tgt))
+
+        updated_metadata = dict(result.metadata)
+        updated_metadata["deduplication_count"] = deduplication_count
+        return EntityExtractionResult(
+            entities=kept,
+            relationships=kept_rels,
+            confidence=result.confidence,
+            metadata=updated_metadata,
+            errors=list(result.errors),
+        )
+
     def score_entity(self, entity: "Entity") -> float:
         """Return a single-entity confidence heuristic score (0.0 – 1.0).
 

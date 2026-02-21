@@ -307,3 +307,25 @@ class OntologyPipeline:
         self._adapter.reset()
         if hasattr(self._mediator, "reset_state"):
             self._mediator.reset_state()
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "OntologyPipeline":
+        """Reconstruct an :class:`OntologyPipeline` from a plain dict.
+
+        Complements :meth:`as_dict` for configuration round-trips.
+
+        Args:
+            d: Dict as returned by :meth:`as_dict` (keys ``domain``,
+                ``use_llm``, ``max_rounds``).
+
+        Returns:
+            A new :class:`OntologyPipeline` instance.
+
+        Example:
+            >>> p2 = OntologyPipeline.from_dict(pipeline.as_dict())
+        """
+        return cls(
+            domain=d.get("domain", "general"),
+            use_llm=bool(d.get("use_llm", False)),
+            max_rounds=int(d.get("max_rounds", 3)),
+        )

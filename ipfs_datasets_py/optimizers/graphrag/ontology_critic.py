@@ -751,6 +751,56 @@ class OntologyCritic(BaseCritic):
             item["rank"] = rank
         return scored
 
+    def calibrate_thresholds(
+        self,
+        scores: List["CriticScore"],
+        percentile: float = 75.0,
+    ) -> Dict[str, float]:
+        """Compute recommended per-dimension thresholds from a history of scores.
+
+        For each of the five evaluation dimensions the *percentile*-th value of
+        the supplied scores is used as a recommended "good enough" threshold.
+        The result is stored in ``self._calibrated_thresholds`` and also
+        returned for immediate use.
+
+        Args:
+            scores: Non-empty list of :class:`CriticScore` objects (e.g., from
+                :meth:`evaluate_batch`).
+            percentile: Target percentile in (0, 100] used as threshold
+                (default: 75 — top quartile).
+
+        Returns:
+            Dict mapping dimension name to its recommended threshold value.
+
+        Raises:
+            ValueError: If *scores* is empty or *percentile* is out of range.
+
+        Example:
+            >>> thresholds = critic.calibrate_thresholds(score_history, 80)
+            >>> thresholds["completeness"]  # e.g. 0.72
+            0.72
+        """
+        if not scores:
+            raise ValueError("scores must be non-empty")
+        if not (0 < percentile <= 100):
+            raise ValueError(f"percentile must be in (0, 100]; got {percentile}")
+
+        _DIMS = ("completeness", "consistency", "clarity", "granularity", "domain_alignment")
+
+        def _pct(values: List[float], p: float) -> float:
+            sorted_vals = sorted(values)
+            idx = (p / 100) * (len(sorted_vals) - 1)
+            lo, hi = int(idx), min(int(idx) + 1, len(sorted_vals) - 1)
+            frac = idx - lo
+            return sorted_vals[lo] * (1 - frac) + sorted_vals[hi] * frac
+
+        thresholds = {
+            dim: round(_pct([getattr(s, dim) for s in scores], percentile), 6)
+            for dim in _DIMS
+        }
+        self._calibrated_thresholds = thresholds
+        return thresholds
+
     def evaluate_with_rubric(
         self,
         ontology: Dict[str, Any],
