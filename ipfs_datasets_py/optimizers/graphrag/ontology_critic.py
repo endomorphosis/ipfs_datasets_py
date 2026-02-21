@@ -535,6 +535,7 @@ class OntologyCritic(BaseCritic):
                 'domain': getattr(context, 'domain', 'unknown'),
                 'entity_type_counts': _ent_type_counts,
                 'entity_type_fractions': _ent_type_fractions,
+                'provenance_score': self._evaluate_provenance(ontology),
             }
         )
         
@@ -974,6 +975,37 @@ class OntologyCritic(BaseCritic):
         )
         score = hits / len(all_terms)
         return round(min(max(score, 0.0), 1.0), 4)
+
+    def _evaluate_provenance(
+        self,
+        ontology: Dict[str, Any],
+    ) -> float:
+        """Evaluate whether entities have source-span provenance annotations.
+
+        Checks each entity for a ``'source_span'``, ``'span'``, or
+        ``'source'`` property.  Entities with provenance annotations score
+        1.0; those without score 0.0.  Returns the fraction of annotated
+        entities.
+
+        Args:
+            ontology: Ontology dict with an ``'entities'`` list.
+
+        Returns:
+            Float in [0, 1].  ``0.5`` when no entities are present (neutral).
+        """
+        entities = [e for e in (ontology.get("entities") or []) if isinstance(e, dict)]
+        if not entities:
+            return 0.5
+
+        _provenance_keys = {"source_span", "span", "source", "source_doc_index", "provenance"}
+        annotated = sum(
+            1 for ent in entities
+            if (
+                _provenance_keys & set(ent.keys())
+                or _provenance_keys & set((ent.get("properties") or {}).keys())
+            )
+        )
+        return round(annotated / len(entities), 4)
 
     def _identify_strengths(
         self,

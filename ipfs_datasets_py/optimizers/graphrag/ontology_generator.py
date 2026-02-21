@@ -821,6 +821,41 @@ class OntologyGenerator:
         result = self.extract_entities(data, context)
         yield from result.entities
 
+    def merge_provenance_report(
+        self,
+        results: List["EntityExtractionResult"],
+        doc_labels: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Build a provenance report mapping each entity to its source document.
+
+        Args:
+            results: List of :class:`EntityExtractionResult` objects, e.g.
+                from :meth:`batch_extract`.
+            doc_labels: Optional human-readable labels for each document.
+                Defaults to ``"doc_0"``, ``"doc_1"``, …
+
+        Returns:
+            List of dicts with keys:
+            - ``entity_id``: entity ID
+            - ``entity_text``: entity text
+            - ``entity_type``: entity type
+            - ``source_doc``: label of the source document
+            - ``source_doc_index``: 0-based source document index
+        """
+        report: List[Dict[str, Any]] = []
+        labels = doc_labels or [f"doc_{i}" for i in range(len(results))]
+        for idx, result in enumerate(results):
+            label = labels[idx] if idx < len(labels) else f"doc_{idx}"
+            for ent in result.entities:
+                report.append({
+                    "entity_id": ent.id,
+                    "entity_text": ent.text,
+                    "entity_type": ent.type,
+                    "source_doc": label,
+                    "source_doc_index": idx,
+                })
+        return report
+
     def generate_ontology(
         self,
         data: Any,

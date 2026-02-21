@@ -257,7 +257,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
   - Done 2026-02-20: dedup by id, merge properties, add provenance metadata
 - [x] (P2) [graphrag] Handle entity type conflicts on merge (e.g., same ID but different types) — emit a warning and pick the higher-confidence one — Done: warning logged + type override in _merge_ontologies()
 - [x] (P2) [graphrag] Handle relationship dedup (same source_id + target_id + type = merge properties) — Done: _merge_ontologies() deduplicates by (source_id, target_id, type)
-- [ ] (P3) [graphrag] Add merge provenance report (which entities came from which source)
+- [ ] (P3) [graphrag] ✅ Add merge provenance report (which entities came from which source)
 
 ### F4 — GraphRAG: Ontology critic dimension evaluators
 
@@ -549,7 +549,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [obs] Add `OntologyMediator.refine_ontology()` structured log of actions_applied per round
 - [x] (P2) [graphrag] `OntologyLearningAdapter.get_stats()` p50/p90 percentiles — Done batch 50: linear interpolation; 6 tests
 - [ ] (P3) [graphrag] `OntologyMediator.refine_ontology()` — add `rename_entity` action (fix casing/normalisation)
-- [ ] (P3) [graphrag] Add `OntologyCritic._evaluate_provenance()` dimension — checks entities have source spans
+- [ ] (P3) [graphrag] ✅ Add `OntologyCritic._evaluate_provenance()` dimension — checks entities have source spans
 - [ ] (P2) [tests] Add tests for `OntologyHarness.run()` with real generator + critic (no mocks)
 - [ ] (P3) [perf] Cache `OntologyCritic._evaluate_consistency()` DFS result keyed on relationship set hash
 - [x] (P2) [graphrag] `ExtractionConfig.max_confidence: float = 1.0` — Done batch 50: enforced in _extract_rule_based, to_dict/from_dict; 6 tests
@@ -576,3 +576,26 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [graphrag] ✅ Add `OntologyHarness.run_concurrent()` — run N harnesses against the same data in parallel
 - [ ] (P2) [docs] Add doctest examples for every public method in ontology_generator.py
 - [ ] (P3) [arch] ✅ Add `optimizers/graphrag/typing.py` with shared type aliases (EntityDict, OntologyDict, etc.)
+
+## Batch 57+ ideas (added automatically)
+
+- [ ] (P2) [graphrag] Add `OntologyGenerator.deduplicate_entities()` — merge entities with identical normalised text
+- [ ] (P3) [graphrag] Add `CriticScore.to_radar_chart_data()` — return data structure for radar/spider chart rendering
+- [ ] (P2) [graphrag] Add `OntologyOptimizer.score_trend_summary()` — return 'improving'/'stable'/'degrading' label
+- [ ] (P3) [graphrag] Add `OntologyMediator.get_recommendation_stats()` — count unique recommendation phrases seen
+- [ ] (P2) [tests] Add Hypothesis property test: ExtractionConfig round-trips through to_dict/from_dict
+- [ ] (P3) [graphrag] Add `OntologyGenerator.extract_with_coref()` — co-reference resolution pre-pass
+- [ ] (P2) [graphrag] Add `EntityExtractionResult.to_json()` — serialize full result to JSON string
+- [ ] (P3) [graphrag] Add `OntologyCritic.compare_batch()` — rank a list of ontologies by overall score
+- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.top_actions()` — return N best-performing actions by success rate
+- [ ] (P3) [graphrag] Add `OntologyPipeline.run_async()` — async coroutine wrapper around run()
+- [ ] (P2) [graphrag] Add `OntologyOptimizer.export_score_chart()` — matplotlib line chart of score history
+- [ ] (P3) [graphrag] Add `LogicValidator.batch_validate()` — validate a list of ontologies concurrently
+- [ ] (P2) [graphrag] Add `OntologyGenerator.filter_entities()` — post-extraction filter by type/confidence/text
+- [ ] (P3) [graphrag] Add `OntologyMediator.undo_last_action()` — revert last applied refinement action
+- [ ] (P2) [tests] Add negative tests for OntologyPipeline: empty domain, None data, very long text
+- [ ] (P3) [graphrag] Add `Entity.to_dict()` instance method for consistent serialisation
+- [ ] (P2) [graphrag] Add `OntologyCritic.weighted_overall()` — allow caller-supplied weight overrides
+- [ ] (P3) [graphrag] Add `OntologyOptimizer.rolling_average_score(n)` — mean of last N history entries
+- [ ] (P2) [graphrag] Add `ExtractionConfig.merge(other)` — merge two configs, latter values win on conflict
+- [ ] (P3) [graphrag] Add `OntologyPipeline.warm_cache()` — pre-evaluate a reference ontology to fill shared cache
