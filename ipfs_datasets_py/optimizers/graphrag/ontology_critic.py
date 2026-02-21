@@ -2559,6 +2559,44 @@ class OntologyCritic(BaseCritic):
             return None
         return max(scores, key=lambda s: s.overall)
 
+    def worst_score(self, scores: list) -> "CriticScore | None":
+        """Return the :class:`CriticScore` with the lowest ``overall`` value.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            Worst score, or ``None`` when list is empty.
+        """
+        if not scores:
+            return None
+        return min(scores, key=lambda s: s.overall)
+
+    def average_overall(self, scores: list) -> float:
+        """Return the mean ``overall`` across all scores.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            Mean float; ``0.0`` for empty list.
+        """
+        if not scores:
+            return 0.0
+        return sum(s.overall for s in scores) / len(scores)
+
+    def count_failing(self, scores: list, threshold: float = 0.6) -> int:
+        """Return the count of scores with ``overall <= threshold``.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+            threshold: Upper bound (inclusive) for a failing score (default 0.6).
+
+        Returns:
+            Count of scores that fail (overall <= threshold).
+        """
+        return sum(1 for s in scores if s.overall <= threshold)
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],
