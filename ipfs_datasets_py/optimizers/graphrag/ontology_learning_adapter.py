@@ -1313,3 +1313,20 @@ class OntologyLearningAdapter:
         if not self._feedback:
             return 0.0
         return sum(1 for r in self._feedback if r.final_score > threshold) / len(self._feedback)
+
+    def feedback_percentile_rank(self, value: float) -> float:
+        """Return the percentile rank of *value* among recorded feedback scores.
+
+        The percentile rank is the fraction of feedback records with a
+        final_score strictly less than *value*.
+
+        Args:
+            value: Score to rank.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no feedback records.
+        """
+        if not self._feedback:
+            return 0.0
+        below = sum(1 for r in self._feedback if r.final_score < value)
+        return below / len(self._feedback)

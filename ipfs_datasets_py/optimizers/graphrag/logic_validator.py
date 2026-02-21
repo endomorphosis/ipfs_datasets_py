@@ -2449,6 +2449,45 @@ class LogicValidator:
             frontier = next_frontier
         return len(visited) - 1  # exclude src itself
 
+    def graph_diameter(self, ontology: dict) -> int:
+        """Return the diameter of the directed graph (longest shortest path).
+
+        Runs BFS from every entity and takes the maximum shortest-path length
+        found. Note: ``float('inf')`` for disconnected pairs is excluded.
+
+        Args:
+            ontology: Ontology dict with ``entities`` and ``relationships``.
+
+        Returns:
+            Integer diameter; ``0`` when fewer than 2 entities or no edges.
+        """
+        entities = [
+            e.get("id", e) if isinstance(e, dict) else e
+            for e in ontology.get("entities", [])
+        ]
+        if len(entities) < 2:
+            return 0
+
+        adjacency: dict = {}
+        for rel in ontology.get("relationships", []):
+            s = rel.get("source") or rel.get("source_id")
+            t = rel.get("target") or rel.get("target_id")
+            if s and t:
+                adjacency.setdefault(s, []).append(t)
+
+        max_dist = 0
+        for src in entities:
+            dist = {src: 0}
+            queue = [src]
+            while queue:
+                current = queue.pop(0)
+                for neighbor in adjacency.get(current, []):
+                    if neighbor not in dist:
+                        dist[neighbor] = dist[current] + 1
+                        max_dist = max(max_dist, dist[neighbor])
+                        queue.append(neighbor)
+        return max_dist
+
 
 # Export public API
 __all__ = [
