@@ -513,3 +513,18 @@ class OntologyLearningAdapter:
             True
         """
         return sorted(self._feedback, key=lambda r: r.final_score)[:n]
+
+    def mean_score(self) -> float:
+        """Return the mean ``final_score`` across all feedback records.
+
+        Returns:
+            Mean score as a float.  Returns ``0.0`` if no feedback has been
+            recorded.
+
+        Example:
+            >>> adapter.mean_score()
+            0.0
+        """
+        if not self._feedback:
+            return 0.0
+        return sum(r.final_score for r in self._feedback) / len(self._feedback)

@@ -517,6 +517,22 @@ class ExtractionConfig:
         """
         return self.confidence_threshold >= 0.8
 
+    def summary(self) -> str:
+        """Return a one-line human-readable description of this config.
+
+        Returns:
+            String summarising the key parameters.
+
+        Example:
+            >>> ExtractionConfig().summary()
+            'ExtractionConfig(threshold=0.5, max_entities=100, max_relationships=200)'
+        """
+        return (
+            f"ExtractionConfig(threshold={self.confidence_threshold}, "
+            f"max_entities={self.max_entities}, "
+            f"max_relationships={self.max_relationships})"
+        )
+
 
 @dataclass
 class OntologyGenerationContext:
@@ -1254,6 +1270,35 @@ class EntityExtractionResult:
             return any(e.text == text for e in self.entities)
         needle = text.lower()
         return any(e.text.lower() == needle for e in self.entities)
+
+    def filter_by_type(self, etype: str, case_sensitive: bool = False) -> "EntityExtractionResult":
+        """Return a new result keeping only entities whose ``type`` matches *etype*.
+
+        Args:
+            etype: Entity type string to keep.
+            case_sensitive: If ``False`` (default), comparison is
+                case-insensitive.
+
+        Returns:
+            New :class:`EntityExtractionResult` with matching entities and
+            the original relationships list.
+
+        Example:
+            >>> filtered = result.filter_by_type("ORG")
+            >>> all(e.type == "ORG" for e in filtered.entities)
+            True
+        """
+        if case_sensitive:
+            kept = [e for e in self.entities if e.type == etype]
+        else:
+            needle = etype.lower()
+            kept = [e for e in self.entities if e.type.lower() == needle]
+        return EntityExtractionResult(
+            entities=kept,
+            relationships=list(self.relationships),
+            confidence=self.confidence,
+            metadata=dict(self.metadata),
+        )
 
 
 @dataclass
@@ -2898,6 +2943,21 @@ class OntologyGenerator:
         for entity in result.entities:
             freq[entity.type] = freq.get(entity.type, 0) + 1
         return dict(sorted(freq.items(), key=lambda kv: kv[1], reverse=True))
+
+    def entity_count(self, result: "EntityExtractionResult") -> int:
+        """Return the total number of entities in *result*.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+
+        Returns:
+            Non-negative integer entity count.
+
+        Example:
+            >>> gen.entity_count(result)
+            3
+        """
+        return len(result.entities)
 
 
     def strip_low_confidence(

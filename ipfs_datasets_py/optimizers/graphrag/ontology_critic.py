@@ -1993,6 +1993,23 @@ class OntologyCritic(BaseCritic):
             return None
         return max(scores, key=lambda s: s.overall)
 
+    def score_mean(self, scores: List["CriticScore"]) -> float:
+        """Return the mean ``overall`` value across *scores*.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            Mean of ``overall`` values, or ``0.0`` for an empty list.
+
+        Example:
+            >>> critic.score_mean([s1, s2])
+            0.72
+        """
+        if not scores:
+            return 0.0
+        return sum(s.overall for s in scores) / len(scores)
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],
