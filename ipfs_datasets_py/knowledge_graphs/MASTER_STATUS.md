@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.9.0  
+**Version:** 3.10.0  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-21 (session 32)  
-**Last Major Release:** v3.9.0 (graph_engine 100%, _wikipedia_helpers 99%, finance_graphrag 98%, transactions/manager 99%; session 32)
+**Last Updated:** 2026-02-21 (session 33)  
+**Last Major Release:** v3.10.0 (wal 100%, translator 100%, ontology/reasoning 100%, advanced 100%, extraction/graph 100%; session 33)
 
 ---
 
@@ -18,10 +18,10 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 93% overall | Measured 2026-02-21 session 32; graph_engine 100%, _wikipedia_helpers 99%, finance_graphrag 98%, transactions/manager 99%; **3,289 pass** (31 new, baseline 3,258 this env)
-| **Documentation** | ✅ Up to Date | Reflects v3.9.0 structure |
-| **Known Issues** | None | 18 bugs fixed (sessions 7-11, 18-19, 21-27, 30); 0 failures (3,289 pass)
-| **Next Milestone** | v3.10.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
+| **Test Coverage** | 93% overall | Measured 2026-02-21 session 33; wal 100%, translator 100%, ontology/reasoning 100%, advanced 100%, extraction/graph 100%; **3,332 pass** (37 new, baseline 3,289 this env)
+| **Documentation** | ✅ Up to Date | Reflects v3.10.0 structure |
+| **Known Issues** | None | 18 bugs fixed (sessions 7-11, 18-19, 21-27, 30); 0 failures (3,332 pass)
+| **Next Milestone** | v3.11.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
 
 ---
 
