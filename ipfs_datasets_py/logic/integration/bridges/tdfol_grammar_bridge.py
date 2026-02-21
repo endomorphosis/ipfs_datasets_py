@@ -286,7 +286,7 @@ class TDFOLGrammarBridge(BaseProverBridge):
                 # Parse DCEC string to Formula object
                 dcec_formula = parse_dcec(dcec_str)
                 
-                if dcec_formula:
+                if dcec_formula and not isinstance(dcec_formula, dict):
                     # Use grammar engine to generate natural English
                     natural_text = self.dcec_grammar.formula_to_english(dcec_formula)
                     
@@ -311,6 +311,8 @@ class TDFOLGrammarBridge(BaseProverBridge):
                 "O": "It is obligatory that",
                 "P": "It is permissible that",
                 "F": "It is forbidden that",
+                "G": "always",
+                "X": "next",
                 "always": "always",
                 "eventually": "eventually",
                 "forall": "For all",
@@ -320,6 +322,8 @@ class TDFOLGrammarBridge(BaseProverBridge):
                 "O": "must",
                 "P": "can",
                 "F": "must not",
+                "G": "always",
+                "X": "next",
                 "always": "always",
                 "eventually": "sometime",
                 "forall": "all",
@@ -329,8 +333,18 @@ class TDFOLGrammarBridge(BaseProverBridge):
         
         template_set = templates.get(style, templates["formal"])
         
-        # Simple template application
+        # Context-aware replacement: apply longest/most-specific patterns first
+        # Temporal F (eventually) wrapping deontic ops vs deontic F (forbidden)
+        temporal_eventually = "eventually" if style != "casual" else "sometime"
         result = dcec_str
+        result = result.replace("(F (P ", f"{temporal_eventually} It is permissible that ")
+        result = result.replace("(F (O ", f"{temporal_eventually} It is obligatory that ")
+        result = result.replace("(F (G ", f"{temporal_eventually} always ")
+        result = result.replace("(G (P ", "always It is permissible that ")
+        result = result.replace("(G (O ", "always It is obligatory that ")
+        result = result.replace("(X (P ", "next It is permissible that ")
+        result = result.replace("(X (O ", "next It is obligatory that ")
+        # Now apply remaining single-operator templates
         for key, value in template_set.items():
             result = result.replace(f"({key} ", f"{value} ")
         
@@ -527,7 +541,9 @@ class NaturalLanguageTDFOLInterface:
             else:
                 return {
                     "valid": False,
-                    "error": f"Could not parse premise: {premise}"
+                    "error": f"Could not parse premise: {premise}",
+                    "premises": premises,
+                    "conclusion": conclusion,
                 }
         
         # Parse conclusion
@@ -535,7 +551,9 @@ class NaturalLanguageTDFOLInterface:
         if not conclusion_formula:
             return {
                 "valid": False,
-                "error": f"Could not parse conclusion: {conclusion}"
+                "error": f"Could not parse conclusion: {conclusion}",
+                "premises": premises,
+                "conclusion": conclusion,
             }
         
         # Add premises to knowledge base

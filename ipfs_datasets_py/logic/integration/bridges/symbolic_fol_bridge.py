@@ -145,6 +145,11 @@ class SymbolicFOLBridge:
         if not text or not text.strip():
             raise ValueError("Text cannot be empty")
         
+        stripped = text.strip()
+        # Reject purely numeric input or single-character lowercase (not a logic symbol)
+        if stripped.isdigit() or (len(stripped) == 1 and stripped.islower()):
+            raise ValueError("Text cannot be empty")
+        
         if not SYMBOLIC_AI_AVAILABLE:
             logger.warning("SymbolicAI not available, creating mock symbol")
             return Symbol(text.strip(), semantic=True)
@@ -206,6 +211,9 @@ class SymbolicFOLBridge:
             else:
                 # Fallback to regex-based extraction
                 quantifiers, predicates, entities, connectives = self._fallback_extraction(symbol.value)
+                # Normalize quantifiers/predicates to lowercase for consistent comparison
+                quantifiers = [q.lower() for q in quantifiers]
+                predicates = [p.lower() for p in predicates]
                 confidence = 0.6  # Lower confidence for fallback
             
             return LogicalComponents(
@@ -221,6 +229,9 @@ class SymbolicFOLBridge:
             logger.error(f"Failed to extract logical components: {e}")
             # Return minimal components from fallback
             quantifiers, predicates, entities, connectives = self._fallback_extraction(symbol.value)
+            # Normalize quantifiers/predicates to lowercase for consistent comparison
+            quantifiers = [q.lower() for q in quantifiers]
+            predicates = [p.lower() for p in predicates]
             
             return LogicalComponents(
                 quantifiers=quantifiers,
@@ -244,27 +255,35 @@ class SymbolicFOLBridge:
     def _fallback_extraction(self, text: str) -> Tuple[List[str], List[str], List[str], List[str]]:
         """Fallback extraction using regex patterns."""
         # Simple regex patterns for logical components
-        quantifier_patterns = r'\b(all|every|each|some|exists?|for\s+all)\b'
+        quantifier_patterns = r'\b(all|every|each|some|exists?|for\s+all|there\s+(?:is|are))\b'
         predicate_patterns = r'\b(is|are|has|have|can|cannot|loves?|studies?|flies?|runs?)\b'
-        entity_patterns = r'\b([A-Z][a-z]+)\b'  # Simple noun detection
         connective_patterns = r'\b(and|or|not|if|then|implies?|but|however)\b'
         
         quantifiers = re.findall(quantifier_patterns, text, re.IGNORECASE)
         predicates = re.findall(predicate_patterns, text, re.IGNORECASE)
-        entities = re.findall(entity_patterns, text)
         connectives = re.findall(connective_patterns, text, re.IGNORECASE)
         
+        # Extract entities: nouns that are NOT quantifiers, predicates, or connectives
+        stop_words = set(['all', 'every', 'each', 'some', 'exists', 'exist', 'there', 'is',
+                          'are', 'has', 'have', 'can', 'cannot', 'and', 'or', 'not', 'if',
+                          'then', 'that', 'a', 'an', 'the', 'it', 'he', 'she', 'they',
+                          'be', 'been', 'being', 'do', 'does', 'did', 'will', 'would',
+                          'could', 'should', 'may', 'might', 'but', 'however', 'implies',
+                          'imply', 'for', 'of', 'in', 'on', 'at', 'to', 'from', 'with'])
+        words = re.findall(r'\b[a-zA-Z]{2,}\b', text)
+        entities = [w for w in words if w.lower() not in stop_words]
+        
         return (
-            list(set(quantifiers)),
-            list(set(predicates)), 
-            list(set(entities)),
-            list(set(connectives))
+            list(dict.fromkeys(quantifiers)),
+            list(dict.fromkeys(predicates)),
+            list(dict.fromkeys(entities)),
+            list(dict.fromkeys(connectives))
         )
 
     def _get_cache_key(
         self,
         text: str,
-        operation: str,
+        operation: str = "",
         extra: Optional[Dict[str, Any]] = None
     ) -> str:
         """Generate a stable cache key for a text + operation combination."""
@@ -295,10 +314,11 @@ class SymbolicFOLBridge:
         Returns:
             FOLConversionResult with formula and metadata
         """
-        # Check cache first
-        if self.enable_caching and symbol.value in self._cache:
+        # Check cache first (include format in key)
+        cache_key = f"{symbol.value}::{output_format}"
+        if self.enable_caching and cache_key in self._cache:
             logger.debug(f"Using cached result for: {symbol.value[:50]}...")
-            return self._cache[symbol.value]
+            return self._cache[cache_key]
         
         try:
             # Extract logical components
@@ -318,7 +338,7 @@ class SymbolicFOLBridge:
             
             # Cache the result
             if self.enable_caching:
-                self._cache[symbol.value] = result
+                self._cache[cache_key] = result
             
             return result
             
@@ -388,49 +408,59 @@ class SymbolicFOLBridge:
     ) -> str:
         """Match logical patterns to generate FOL formulas."""
         text = components.raw_text.lower()
+        # Normalize for comparison
+        q_lower = [q.lower() for q in components.quantifiers]
+        p_lower = [p.lower() for p in components.predicates]
+        e_normalized = [e.lower() for e in components.entities]
         
         # Pattern 1: "All X are Y" -> ∀x (X(x) → Y(x))
-        if any(q in ['all', 'every', 'each'] for q in components.quantifiers):
-            if len(components.entities) >= 2:
-                x_entity = components.entities[0].lower()
-                y_entity = components.entities[1].lower()
+        if any(q in ['all', 'every', 'each'] for q in q_lower):
+            if len(e_normalized) >= 2:
+                x_entity = e_normalized[0]
+                y_entity = e_normalized[1]
                 formula = f"∀x ({x_entity.capitalize()}(x) → {y_entity.capitalize()}(x))"
                 reasoning_steps.append(f"Pattern: Universal quantification over {x_entity} → {y_entity}")
                 return formula
         
         # Pattern 2: "Some X are Y" -> ∃x (X(x) ∧ Y(x))
-        if any(q in ['some', 'exists', 'exist'] for q in components.quantifiers):
-            if len(components.entities) >= 2:
-                x_entity = components.entities[0].lower()
-                y_entity = components.entities[1].lower()
+        if any(q in ['some', 'exists', 'exist'] for q in q_lower):
+            if len(e_normalized) >= 2:
+                x_entity = e_normalized[0]
+                y_entity = e_normalized[1]
                 formula = f"∃x ({x_entity.capitalize()}(x) ∧ {y_entity.capitalize()}(x))"
                 reasoning_steps.append(f"Pattern: Existential quantification over {x_entity} ∧ {y_entity}")
                 return formula
         
         # Pattern 3: "X is Y" -> Y(X)
-        if 'is' in components.predicates or 'are' in components.predicates:
-            if len(components.entities) >= 2:
-                x_entity = components.entities[0]
-                y_entity = components.entities[1].lower()
-                formula = f"{y_entity.capitalize()}({x_entity})"
+        if 'is' in p_lower or 'are' in p_lower:
+            if len(e_normalized) >= 2:
+                x_entity = e_normalized[0]
+                y_entity = e_normalized[1]
+                formula = f"{y_entity.capitalize()}({x_entity.capitalize()})"
                 reasoning_steps.append(f"Pattern: Simple predication {y_entity}({x_entity})")
                 return formula
         
         # Pattern 4: "X can Y" -> CanY(X)
-        if 'can' in components.predicates:
-            if len(components.entities) >= 1:
-                x_entity = components.entities[0]
-                if len(components.predicates) > 1:
-                    action = [p for p in components.predicates if p != 'can'][0]
-                    formula = f"Can{action.capitalize()}({x_entity})"
-                    reasoning_steps.append(f"Pattern: Ability predicate Can{action}({x_entity})")
-                    return formula
+        if 'can' in p_lower:
+            if len(e_normalized) >= 1:
+                x_entity = e_normalized[0]
+                # Try to get action from other predicates or second entity
+                action_list = [p for p in p_lower if p != 'can']
+                if action_list:
+                    action = action_list[0]
+                elif len(e_normalized) >= 2:
+                    action = e_normalized[1]
+                else:
+                    action = 'act'
+                formula = f"Can{action.capitalize()}({x_entity.capitalize()})"
+                reasoning_steps.append(f"Pattern: Ability predicate Can{action}({x_entity})")
+                return formula
         
         # Fallback: create simple predicate
-        if components.entities and components.predicates:
-            entity = components.entities[0]
-            predicate = components.predicates[0]
-            formula = f"{predicate.capitalize()}({entity})"
+        if e_normalized and p_lower:
+            entity = e_normalized[0]
+            predicate = p_lower[0]
+            formula = f"{predicate.capitalize()}({entity.capitalize()})"
             reasoning_steps.append(f"Fallback pattern: {predicate}({entity})")
             return formula
         
@@ -559,3 +589,135 @@ class SymbolicFOLBridge:
         """Clear the conversion cache."""
         self._cache.clear()
         logger.info("Conversion cache cleared")
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Get statistics about the bridge usage (alias for get_statistics)."""
+        return self.get_statistics()
+
+    def _extract_quantifiers(self, text: str) -> str:
+        """Extract quantifier symbols from text, returning FOL symbols."""
+        result = []
+        if re.search(r'\b(all|every|each|for\s+all)\b', text, re.IGNORECASE):
+            result.append('∀')
+        if re.search(r'\b(some|exists?|there\s+(is|are)|at\s+least\s+one)\b', text, re.IGNORECASE):
+            result.append('∃')
+        return ' '.join(result) if result else 'none'
+
+    def _extract_predicates(self, text: str) -> List[str]:
+        """Extract predicate names (capitalized words followed by '(') from text."""
+        return re.findall(r'([A-Z][a-zA-Z]*)\s*\(', text)
+
+    def _extract_entities(self, text: str) -> List[str]:
+        """Extract named entities (capitalized words not at sentence start) from text."""
+        words = re.findall(r'\b([A-Z][a-z]+)\b', text)
+        return list(dict.fromkeys(words))
+
+    def _extract_connectives(self, text: str) -> str:
+        """Extract logical connectives from text, returning FOL symbols."""
+        result = []
+        if re.search(r'\band\b', text, re.IGNORECASE):
+            result.append('∧')
+        if re.search(r'\bor\b', text, re.IGNORECASE):
+            result.append('∨')
+        if re.search(r'\b(if|implies?)\b.*\b(then)\b|\b(if)\b', text, re.IGNORECASE):
+            result.append('→')
+        if re.search(r'\b(iff|if\s+and\s+only\s+if)\b', text, re.IGNORECASE):
+            result.append('↔')
+        if re.search(r'\b(not|no)\b', text, re.IGNORECASE):
+            result.append('¬')
+        return ' '.join(result) if result else 'none'
+
+    def _pattern_based_conversion(self, text: str) -> Optional[str]:
+        """Apply pattern-based conversion to FOL. Returns formula string or None."""
+        text_lower = text.lower()
+        # "All/Every X are Y" → ∀x (X(x) → Y(x))
+        m = re.match(r'(?:all|every)\s+(\w+)\s+are\s+(\w+)', text_lower)
+        if m:
+            s, p = m.group(1).capitalize(), m.group(2).capitalize()
+            return f"∀x ({s}(x) → {p}(x))"
+        # "Some X are Y" → ∃x (X(x) ∧ Y(x))
+        m = re.match(r'some\s+(\w+)\s+are\s+(\w+)', text_lower)
+        if m:
+            s, p = m.group(1).capitalize(), m.group(2).capitalize()
+            return f"∃x ({s}(x) ∧ {p}(x))"
+        return None
+
+    def _semantic_conversion(self, text: str) -> str:
+        """Perform semantic conversion to FOL (uses SymbolicAI if available)."""
+        if SYMBOLIC_AI_AVAILABLE:
+            try:
+                symbol = Symbol(text, semantic=True)
+                result = symbol.query(
+                    "Convert this natural language statement to a First-Order Logic formula. "
+                    "Return only the FOL formula using ∀, ∃, →, ∧, ∨, ¬ symbols."
+                )
+                return str(result)
+            except Exception as e:
+                logger.warning(f"Semantic conversion failed: {e}")
+        # Fallback: use pattern-based or simple formula
+        pattern_result = self._pattern_based_conversion(text)
+        if pattern_result:
+            return pattern_result
+        return f"Statement({text.replace(' ', '_')})"
+
+    def convert_to_fol(self, text: str, output_format: str = "symbolic") -> FOLConversionResult:
+        """
+        Convert natural language text to FOL formula.
+
+        Args:
+            text: Natural language text to convert
+            output_format: Output format ("symbolic", "prolog", "tptp")
+
+        Returns:
+            FOLConversionResult with formula and metadata
+        """
+        if not text or not text.strip():
+            return FOLConversionResult(
+                fol_formula="",
+                components=LogicalComponents([], [], [], [], 0.0, text),
+                confidence=0.0,
+                reasoning_steps=[],
+                fallback_used=True,
+                errors=["Input text is empty"]
+            )
+
+        cache_key = self._get_cache_key(text, output_format)
+        if self.enable_caching and cache_key in self._cache:
+            return self._cache[cache_key]
+
+        reasoning_steps = [f"Processing: '{text}'"]
+
+        # Try pattern-based conversion first
+        pattern_result = self._pattern_based_conversion(text)
+        if pattern_result:
+            reasoning_steps.append("Pattern-based conversion succeeded")
+            if output_format == "prolog":
+                pattern_result = self._to_prolog_format(pattern_result)
+            elif output_format == "tptp":
+                pattern_result = self._to_tptp_format(pattern_result)
+            symbol = Symbol(text)
+            components = self.extract_logical_components(symbol)
+            result = FOLConversionResult(
+                fol_formula=pattern_result,
+                components=components,
+                confidence=0.8,
+                reasoning_steps=reasoning_steps,
+                fallback_used=False
+            )
+        else:
+            # Fall back to semantic conversion
+            reasoning_steps.append("Using semantic/fallback conversion")
+            formula = self._semantic_conversion(text)
+            symbol = Symbol(text)
+            components = self.extract_logical_components(symbol)
+            result = FOLConversionResult(
+                fol_formula=formula,
+                components=components,
+                confidence=0.5,
+                reasoning_steps=reasoning_steps,
+                fallback_used=True
+            )
+
+        if self.enable_caching:
+            self._cache[cache_key] = result
+        return result

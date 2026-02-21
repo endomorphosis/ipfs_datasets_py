@@ -83,13 +83,13 @@ class TDFOLCECBridge(BaseProverBridge):
         if not self.cec_available:
             return []
         
-        # Get all inference rule classes from prover_core
+        # Get all inference rule classes from native inference_rules module
         import inspect
         rules = []
         
         try:
-            # Get all classes that inherit from InferenceRule
-            members = inspect.getmembers(prover_core, inspect.isclass)
+            from ...CEC.native import inference_rules as _ir_module
+            members = inspect.getmembers(_ir_module, inspect.isclass)
             
             for name, cls in members:
                 if 'Rule' in name and name != 'InferenceRule':

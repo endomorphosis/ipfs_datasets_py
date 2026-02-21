@@ -432,3 +432,36 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
         if self.monitoring:
             return self.monitoring.get_stats()
         return {}
+
+    def to_deontic(self, text: str) -> str:
+        """
+        Convert legal/normative text to deontic logic formula string.
+
+        Convenience wrapper that returns a deontic formula as a plain string
+        using pattern matching as a lightweight fallback.
+
+        Args:
+            text: Legal/normative text to convert
+
+        Returns:
+            Deontic formula as a string (e.g. "O(pay_taxes)")
+        """
+        import re as _re
+        text_lower = text.lower()
+        # Obligation: "must", "shall", "obligatory", "required"
+        if _re.search(r'\b(must|shall|obligator|obliged|required)\b', text_lower):
+            action = _re.sub(r'\b(it\s+is\s+obligatory\s+that|must|shall|is\s+obliged\s+to|is\s+required\s+to)\b', '', text_lower).strip()
+            action = action.replace(' ', '_')
+            return f"O({action})"
+        # Permission: "may", "is permitted", "allowed"
+        if _re.search(r'\b(may|permitted|allowed|can)\b', text_lower):
+            action = _re.sub(r'\b(may|is\s+permitted\s+to|is\s+allowed\s+to|can)\b', '', text_lower).strip()
+            action = action.replace(' ', '_')
+            return f"P({action})"
+        # Prohibition: "must not", "shall not", "forbidden"
+        if _re.search(r'\b(must\s+not|shall\s+not|forbidden|prohibited)\b', text_lower):
+            action = _re.sub(r'\b(must\s+not|shall\s+not|is\s+forbidden\s+to|is\s+prohibited\s+from)\b', '', text_lower).strip()
+            action = action.replace(' ', '_')
+            return f"F({action})"
+        # Default: obligation
+        return f"Obligation({text.replace(' ', '_')})"

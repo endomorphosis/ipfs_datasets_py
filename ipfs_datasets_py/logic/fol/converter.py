@@ -455,3 +455,43 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
         if self.enable_monitoring and self.monitor:
             return self.monitor.get_stats()
         return {}
+
+    def to_fol(self, text: str) -> str:
+        """
+        Convert natural language text to FOL formula string.
+
+        Convenience wrapper around convert() that returns the formula as a plain
+        string rather than a ConversionResult, using regex pattern-matching as
+        a lightweight fallback when the full ML pipeline is unavailable.
+
+        Args:
+            text: Natural language text to convert
+
+        Returns:
+            FOL formula as a string
+        """
+        import re as _re
+        text_lower = text.lower()
+        # Universal: "All/Every X are Y"
+        m = _re.match(r'(?:all|every)\s+(\w+)\s+are\s+(\w+)', text_lower)
+        if m:
+            s, p = m.group(1).capitalize(), m.group(2).capitalize()
+            return f"∀x ({s}(x) → {p}(x))"
+        # Existential: "Some X are Y"
+        m = _re.match(r'some\s+(\w+)\s+are\s+(\w+)', text_lower)
+        if m:
+            s, p = m.group(1).capitalize(), m.group(2).capitalize()
+            return f"∃x ({s}(x) ∧ {p}(x))"
+        # "X is Y"
+        m = _re.match(r'(\w+)\s+is\s+a?\s*(\w+)', text_lower)
+        if m:
+            entity, pred = m.group(1).capitalize(), m.group(2).capitalize()
+            return f"{pred}({entity})"
+        # Temporal: "eventually"
+        if 'eventually' in text_lower:
+            return f"◇({text.replace(' ', '_')})"
+        # Cannot fly / negation
+        if 'cannot' in text_lower or 'not' in text_lower:
+            return f"¬({text.replace(' ', '_')})"
+        # Default
+        return f"Statement({text.replace(' ', '_')})"

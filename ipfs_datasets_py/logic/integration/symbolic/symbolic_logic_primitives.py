@@ -121,19 +121,27 @@ class LogicPrimitives(Primitive):
     
     def _fallback_to_fol(self, output_format: str) -> 'Symbol':
         """Fallback FOL conversion without SymbolicAI."""
+        import re as _re
         text = self.value.lower()
         
         # Simple pattern-based conversion
         if "all " in text or "every " in text:
-            # Universal quantification pattern
+            # Universal quantification pattern: "All/Every X are Y"
             parts = text.split(" are ")
             if len(parts) == 2:
                 subject = parts[0].replace("all ", "").replace("every ", "").strip()
                 predicate = parts[1].strip()
                 formula = f"∀x ({subject.capitalize()}(x) → {predicate.capitalize()}(x))"
             else:
-                formula = f"∀x Statement(x)"
-        elif "some " in text or "exists " in text:
+                # "All X [verb] Y" — extract subject after quantifier
+                m = _re.match(r'(?:all|every)\s+(\w+)\s+(.*)', text)
+                if m:
+                    subj = m.group(1).capitalize()
+                    rest = m.group(2).strip().replace(' ', '_')
+                    formula = f"∀x ({subj}(x) → {rest.capitalize()}(x))"
+                else:
+                    formula = f"∀x Statement(x)"
+        elif "some " in text or "exists " in text or "there " in text:
             # Existential quantification pattern
             parts = text.split(" are ")
             if len(parts) == 2:
@@ -141,10 +149,32 @@ class LogicPrimitives(Primitive):
                 predicate = parts[1].strip()
                 formula = f"∃x ({subject.capitalize()}(x) ∧ {predicate.capitalize()}(x))"
             else:
-                formula = f"∃x Statement(x)"
+                # "Some X can/is/does Y" — extract subject and predicate
+                m = _re.match(r'(?:some|there\s+(?:is|are))\s+(\w+)\s+(.*)', text)
+                if m:
+                    subj = m.group(1).capitalize()
+                    rest = m.group(2).strip().replace(' ', '_')
+                    formula = f"∃x ({subj}(x) ∧ {rest.capitalize()}(x))"
+                else:
+                    formula = f"∃x Statement(x)"
         else:
             # Simple predicate
             formula = f"Statement({text.replace(' ', '_')})"
+        
+        # Apply format conversions
+        if output_format == "prolog":
+            formula = formula.replace('∀', 'forall')
+            formula = formula.replace('∃', 'exists')
+            formula = formula.replace('→', ':-')
+            formula = formula.replace('∧', ',')
+            formula = formula.replace('∨', ';')
+        elif output_format == "tptp":
+            formula = formula.replace('∀', '!')
+            formula = formula.replace('∃', '?')
+            formula = formula.replace('→', '=>')
+            formula = formula.replace('∧', '&')
+            formula = formula.replace('∨', '|')
+            formula = f"fof(statement, axiom, {formula})."
         
         return self._to_type(formula)
     
@@ -462,7 +492,9 @@ if SYMBOLIC_AI_AVAILABLE:
     try:
         # Dynamically add LogicPrimitives methods to Symbol class
         for method_name in dir(LogicPrimitives):
-            if not method_name.startswith('_') and callable(getattr(LogicPrimitives, method_name)):
+            is_public = not method_name.startswith('_')
+            is_fallback = method_name.startswith('_fallback_')
+            if (is_public or is_fallback) and callable(getattr(LogicPrimitives, method_name)):
                 method = getattr(LogicPrimitives, method_name)
                 setattr(Symbol, method_name, method)
         
@@ -484,18 +516,15 @@ def create_logic_symbol(text: str, semantic: bool = True) -> Symbol:
     """
     symbol = Symbol(text, semantic=semantic)
     
-    # Ensure the symbol has logic primitive methods
-    if not hasattr(symbol, 'to_fol'):
-        # Manually attach methods if they weren't added to the class
-        primitives = LogicPrimitives()
+    # Ensure the Symbol class itself has logic primitive methods so that
+    # any Symbol returned by internal methods (e.g. _to_type) also has them.
+    if not hasattr(Symbol, 'to_fol'):
         for method_name in dir(LogicPrimitives):
-            if not method_name.startswith('_') and callable(getattr(LogicPrimitives, method_name)):
-                method = getattr(primitives, method_name)
-                # Bind the method to the symbol instance
-                def make_bound_method(m, s):
-                    return lambda *args, **kwargs: m.__func__(s, *args, **kwargs)
-                bound_method = make_bound_method(method, symbol)
-                setattr(symbol, method_name, bound_method)
+            is_public = not method_name.startswith('_')
+            is_fallback = method_name.startswith('_fallback_')
+            if (is_public or is_fallback) and callable(getattr(LogicPrimitives, method_name)):
+                method = getattr(LogicPrimitives, method_name)
+                setattr(Symbol, method_name, method)
     
     return symbol
 
