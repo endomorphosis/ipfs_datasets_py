@@ -991,3 +991,33 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [arch] Add TDFOL formula cache keyed on ontology hash to avoid re-proving
 - [ ] (P3) [arch] Add `freeze()` method to `ExtractionConfig` that makes it immutable (frozen dataclass)
 
+
+## Batches 107–113 Done ✅
+- [x] (batch-107) `Entity.to_json`, `Relationship.to_dict/from_dict/to_json`, `OntologyOptimizer.trend_string/entries_above_score/running_average/score_quartiles/score_iqr`, `LogicValidator.all_entity_ids/all_relationship_ids/entity_type_set/dangling_references`
+- [x] (batch-108) `OntologyPipeline.score_variance/score_stddev/passing_run_count/run_summary`, `OntologyLearningAdapter.has_feedback/recent_feedback/feedback_score_stats/feedback_percentile/passing_feedback_fraction`, `OntologyCritic.failing_scores/average_dimension/score_summary`
+- [x] (batch-109) `OntologyGenerator.validate_result/confidence_stats/clone_result/add_entity/remove_entity/type_diversity`
+- [x] (batch-110) `ExtractionConfig.clone`, `OntologyMediator.total_action_count/top_actions/undo_depth`
+- [x] (batch-111) `EntityExtractionResult.is_empty/has_relationships/entities_of_type`, `OntologyCritic.percentile_overall`
+- [x] (batch-112) `OntologyOptimizer.has_improved`, `OntologyGenerator.normalize_confidence`, `OntologyCritic.normalize_scores`, `OntologyPipeline.is_stable`
+- [x] (batch-113) `EntityExtractionResult.confidence_stats`, `OntologyCritic.compare_runs`, `OntologyLearningAdapter.reset_and_load`, `OntologyMediator.reset_action_counts`, `LogicValidator.count_relationship_types`
+
+## Batch 114+ backlog (fresh items)
+- [ ] (P2) [graphrag] `OntologyOptimizer.rolling_best(window)` — best entry within last N history entries
+- [ ] (P2) [graphrag] `OntologyOptimizer.plateau_count(tol)` — number of consecutive history pairs within tol of each other
+- [ ] (P2) [graphrag] `OntologyGenerator.split_result(result, n)` — split result into N balanced chunks
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_map(result)` — {entity_id: confidence} dict
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_rankings(score)` — ordered list of dim names best→worst
+- [ ] (P2) [graphrag] `OntologyCritic.weakest_scores(scores, n)` — bottom-N by overall
+- [ ] (P2) [graphrag] `OntologyPipeline.top_n_runs(n)` — top N run results by score
+- [ ] (P2) [graphrag] `OntologyPipeline.run_ids()` — list of run identifiers (indices or ids)
+- [ ] (P2) [graphrag] `OntologyMediator.apply_action_bulk(actions)` — apply list of (action, args) pairs
+- [ ] (P2) [graphrag] `OntologyMediator.action_count_for(action)` — already done, skip; try `actions_never_applied()` — action names with count == 0
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.score_range()` — (min, max) tuple of recorded scores
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.above_threshold_fraction(threshold)` — alias for passing_feedback_fraction
+- [ ] (P2) [graphrag] `LogicValidator.orphan_entities(ontology)` — entities with no relationships
+- [ ] (P2) [graphrag] `LogicValidator.hub_entities(ontology, min_degree)` — entities with >= min_degree relationships
+- [ ] (P3) [graphrag] `EntityExtractionResult.top_confidence_entity()` — entity with highest confidence
+- [ ] (P3) [graphrag] `EntityExtractionResult.entities_with_properties()` — entities that have non-empty properties dict
+- [ ] (P3) [graphrag] `OntologyGenerator.relationship_count(result)` — len(result.relationships)
+- [ ] (P3) [graphrag] `ExtractionConfig.relaxed()` — return copy with confidence_threshold -= 0.1 clamped to 0
+- [ ] (P3) [graphrag] `ExtractionConfig.tightened()` — return copy with confidence_threshold += 0.1 clamped to 1
