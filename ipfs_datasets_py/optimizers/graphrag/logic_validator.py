@@ -2260,6 +2260,46 @@ class LogicValidator:
                 has_incoming.add(o)
         return sorted(all_ids - has_incoming)
 
+    def max_in_degree(self, ontology: dict) -> dict:
+        """Return the entity with the most incoming relationships.
+
+        Args:
+            ontology: Ontology dict with ``entities`` and ``relationships``.
+
+        Returns:
+            Dict ``{"entity": id, "count": n}``; ``None`` when no entities.
+        """
+        entities = ontology.get("entities", [])
+        if not entities:
+            return None
+        in_counts: dict = {e.get("id", e) if isinstance(e, dict) else e: 0 for e in entities}
+        for rel in ontology.get("relationships", []):
+            target = rel.get("target") or rel.get("target_id")
+            if target in in_counts:
+                in_counts[target] += 1
+        best = max(in_counts, key=lambda k: in_counts[k])
+        return {"entity": best, "count": in_counts[best]}
+
+    def max_out_degree(self, ontology: dict) -> dict:
+        """Return the entity with the most outgoing relationships.
+
+        Args:
+            ontology: Ontology dict with ``entities`` and ``relationships``.
+
+        Returns:
+            Dict ``{"entity": id, "count": n}``; ``None`` when no entities.
+        """
+        entities = ontology.get("entities", [])
+        if not entities:
+            return None
+        out_counts: dict = {e.get("id", e) if isinstance(e, dict) else e: 0 for e in entities}
+        for rel in ontology.get("relationships", []):
+            source = rel.get("source") or rel.get("source_id")
+            if source in out_counts:
+                out_counts[source] += 1
+        best = max(out_counts, key=lambda k: out_counts[k])
+        return {"entity": best, "count": out_counts[best]}
+
 
 # Export public API
 __all__ = [

@@ -2788,6 +2788,44 @@ class OntologyOptimizer:
         return sorted(self._history, key=lambda e: e.average_score, reverse=True)[:n]
 
 
+    def score_streak(self, direction: str = "up") -> int:
+        """Return the length of the current consecutive streak.
+
+        Args:
+            direction: ``"up"`` for improving scores, ``"down"`` for declining.
+
+        Returns:
+            Length of the trailing streak (minimum 1 when any history exists,
+            0 when history is empty).
+        """
+        if not self._history:
+            return 0
+        scores = [e.average_score for e in self._history]
+        streak = 1
+        for i in range(len(scores) - 1, 0, -1):
+            if direction == "up" and scores[i] > scores[i - 1]:
+                streak += 1
+            elif direction == "down" and scores[i] < scores[i - 1]:
+                streak += 1
+            else:
+                break
+        return streak
+
+    def recent_best_score(self, n: int = 5) -> float:
+        """Return the best ``average_score`` among the last *n* history entries.
+
+        Args:
+            n: Number of recent entries to consider. Defaults to ``5``.
+
+        Returns:
+            Max score found; ``0.0`` when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        recent = self._history[-n:]
+        return max(e.average_score for e in recent)
+
+
 # Export public API
 __all__ = [
     'OntologyOptimizer',
