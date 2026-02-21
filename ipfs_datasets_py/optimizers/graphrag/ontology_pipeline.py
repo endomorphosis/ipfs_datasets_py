@@ -852,3 +852,42 @@ class OntologyPipeline:
         scores = [r.score.overall for r in entries]
         diffs = [scores[i + 1] - scores[i] for i in range(len(scores) - 1)]
         return sum(diffs) / len(diffs)
+
+    def worst_n_runs(self, n: int = 3) -> list:
+        """Return the bottom *n* run results ordered by ascending ``overall`` score.
+
+        Args:
+            n: Maximum number of runs to return (default 3).
+
+        Returns:
+            List of run result objects sorted by ``score.overall`` ascending.
+        """
+        if not self._run_history:
+            return []
+        sorted_runs = sorted(self._run_history, key=lambda r: r.score.overall)
+        return sorted_runs[:n]
+
+    def pass_rate(self, threshold: float = 0.6) -> float:
+        """Return fraction of runs whose ``score.overall`` is >= *threshold*.
+
+        Args:
+            threshold: Passing score threshold (default 0.6).
+
+        Returns:
+            Float in [0.0, 1.0]; ``0.0`` when no runs recorded.
+        """
+        if not self._run_history:
+            return 0.0
+        passing = sum(1 for r in self._run_history if r.score.overall >= threshold)
+        return passing / len(self._run_history)
+
+    def score_range(self) -> tuple:
+        """Return ``(min_score, max_score)`` across all recorded runs.
+
+        Returns:
+            Tuple of floats; ``(0.0, 0.0)`` when no runs recorded.
+        """
+        if not self._run_history:
+            return (0.0, 0.0)
+        scores = [r.score.overall for r in self._run_history]
+        return (min(scores), max(scores))
