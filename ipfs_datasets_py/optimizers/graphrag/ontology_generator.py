@@ -3006,6 +3006,122 @@ class OntologyGenerator:
         )
         return merged
 
+    def generate_merge_provenance_report(
+        self,
+        ontology: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Generate a detailed provenance report for a merged ontology.
+
+        Analyzes the provenance metadata tracked during ontology merges
+        and produces a comprehensive report showing which entities and
+        relationships came from which sources.
+
+        Args:
+            ontology: A merged ontology (from :meth:`_merge_ontologies`)
+
+        Returns:
+            Provenance report dictionary with keys:
+                - 'merged_from': List of source identifiers merged
+                - 'entity_counts_by_source': Dict mapping source → entity count
+                - 'relationship_counts_by_source': Dict mapping source → relationship count
+                - 'entities_by_source': Dict mapping source → list of entity IDs
+                - 'relationships_by_source': Dict mapping source → list of relationship IDs
+                - 'total_entities': Total entity count
+                - 'total_relationships': Total relationship count
+                - 'unique_sources': Set of unique source identifiers
+                - 'integration_stats': Dict with merge/new/conflict counts
+
+        Example:
+            >>> merged = generator._merge_ontologies(base_ont, ext_ont)
+            >>> report = generator.generate_merge_provenance_report(merged)
+            >>> print(f"Merged from: {report['merged_from']}")
+            >>> for source, entities in report['entities_by_source'].items():
+            ...     print(f"  {source}: {len(entities)} entities")
+        """
+        report: Dict[str, Any] = {
+            'merged_from': ontology.get('metadata', {}).get('merged_from', []),
+            'entity_counts_by_source': {},
+            'relationship_counts_by_source': {},
+            'entities_by_source': {},
+            'relationships_by_source': {},
+            'total_entities': 0,
+            'total_relationships': 0,
+            'unique_sources': set(),
+            'integration_stats': {
+                'merged_entities': 0,
+                'new_entities': 0,
+                'total_entities': 0,
+                'merged_relationships': 0,
+                'new_relationships': 0,
+                'total_relationships': 0,
+            }
+        }
+
+        # Process entities
+        for entity in ontology.get('entities', []):
+            if not isinstance(entity, dict):
+                continue
+
+            report['total_entities'] += 1
+            report['integration_stats']['total_entities'] += 1
+
+            provenance = entity.get('provenance', [])
+            if not provenance:
+                provenance = ['base']  # Implicit provenance for original entities
+
+            for source in provenance:
+                report['unique_sources'].add(source)
+                report['entity_counts_by_source'][source] = report['entity_counts_by_source'].get(source, 0) + 1
+                if source not in report['entities_by_source']:
+                    report['entities_by_source'][source] = []
+                entity_id = entity.get('id', f"unnamed_{len(report['entities_by_source'][source])}")
+                if entity_id not in report['entities_by_source'][source]:
+                    report['entities_by_source'][source].append(entity_id)
+
+            # Count merged vs new
+            if len(provenance) > 1:
+                report['integration_stats']['merged_entities'] += 1
+            else:
+                report['integration_stats']['new_entities'] += 1
+
+        # Process relationships
+        for rel in ontology.get('relationships', []):
+            if not isinstance(rel, dict):
+                continue
+
+            report['total_relationships'] += 1
+            report['integration_stats']['total_relationships'] += 1
+
+            provenance = rel.get('provenance', [])
+            if not provenance:
+                provenance = ['base']  # Implicit provenance for original relationships
+
+            for source in provenance:
+                report['unique_sources'].add(source)
+                report['relationship_counts_by_source'][source] = report['relationship_counts_by_source'].get(source, 0) + 1
+                if source not in report['relationships_by_source']:
+                    report['relationships_by_source'][source] = []
+                rel_id = rel.get('id', f"unnamed_{len(report['relationships_by_source'][source])}")
+                if rel_id not in report['relationships_by_source'][source]:
+                    report['relationships_by_source'][source].append(rel_id)
+
+            # Count merged vs new
+            if len(provenance) > 1:
+                report['integration_stats']['merged_relationships'] += 1
+            else:
+                report['integration_stats']['new_relationships'] += 1
+
+        # Convert set to sorted list for serialization
+        report['unique_sources'] = sorted(list(report['unique_sources']))
+
+        self._log.info(
+            f"Generated merge provenance report: {len(report['unique_sources'])} sources, "
+            f"{report['total_entities']} entities, {report['total_relationships']} relationships"
+        )
+
+        return report
+
     def generate_synthetic_ontology(self, domain: str, n_entities: int = 5) -> Dict[str, Any]:
         """Produce a sample ontology for a given *domain* without any input text.
 

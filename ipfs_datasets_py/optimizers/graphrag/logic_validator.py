@@ -1532,6 +1532,51 @@ class LogicValidator:
             if seen[key] > 1:
                 duplicates += 1
         return duplicates
+
+    def self_loop_count(self, ontology: Dict[str, Any]) -> int:
+        """Return the count of self-loops (relationships where source_id == target_id).
+
+        Args:
+            ontology: Ontology dict.
+
+        Returns:
+            Number of self-loop relationships.
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if not isinstance(rels, (list, tuple)):
+            return 0
+        return sum(
+            1 for r in rels
+            if isinstance(r, dict) and r.get("source_id") == r.get("target_id")
+        )
+
+    def average_entity_degree(self, ontology: Dict[str, Any]) -> float:
+        """Return the mean relationship degree per entity.
+
+        Degree is the number of relationships (directed) in which an entity
+        participates as source or target.
+
+        Args:
+            ontology: Ontology dict.
+
+        Returns:
+            Mean degree float; ``0.0`` when there are no entities.
+        """
+        entity_ids = self.all_entity_ids(ontology)
+        if not entity_ids:
+            return 0.0
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        degree: Dict[str, int] = {eid: 0 for eid in entity_ids}
+        for rel in (rels if isinstance(rels, (list, tuple)) else []):
+            if isinstance(rel, dict):
+                for key in ("source_id", "target_id"):
+                    eid = rel.get(key)
+                    if isinstance(eid, str) and eid in degree:
+                        degree[eid] += 1
+        return sum(degree.values()) / len(degree)
+
+
+# Export public API
 __all__ = [
     'LogicValidator',
     'ValidationResult',
