@@ -160,7 +160,6 @@ class TestSymbolicFOLBridgeSession27:
             new_mod = importlib.import_module(sfb_path)
             assert new_mod.SYMBOLIC_AI_AVAILABLE is True  # line 28 was executed
         finally:
-            sys.modules.pop(sfb_path, None)
             if orig_sfb is _MISSING:
                 sys.modules.pop(sfb_path, None)
             else:
@@ -186,8 +185,8 @@ class TestSymbolicFOLBridgeSession27:
         bridge.fallback_available = False
 
         # Build a fake fol.utils.fol_parser module without parse_fol
-        fake_fol_parser = MagicMock(spec=[])  # no attributes → getattr returns default
-        fake_fol_parser.parse_fol = None      # explicitly set to None
+        fake_fol_parser = MagicMock()       # standard mock; parse_fol set to None below
+        fake_fol_parser.parse_fol = None    # getattr returns None → AttributeError (line 137)
 
         # Fake predicate_extractor module
         fake_extractor = MagicMock()
@@ -749,10 +748,12 @@ class TestSymbolicContractsFallbackBaseModelSession27:
         WHEN   the subclass is instantiated without providing that field
         THEN   line 43 (setattr(self, name, cls_val())) executes: default_factory called
         """
-        if self._sc_mod is None:
-            pytest.skip(f"Could not load symbolic_contracts without pydantic: {self._import_error}")
+        if self.__class__._sc_mod is None:
+            pytest.skip(
+                f"Could not load symbolic_contracts without pydantic: {self.__class__._import_error}"
+            )
 
-        BaseModel = self._sc_mod.BaseModel  # type: ignore[attr-defined]
+        BaseModel = self.__class__._sc_mod.BaseModel  # type: ignore[attr-defined]
 
         class ModelWithFactory(BaseModel):
             __annotations__ = {"items": list}
@@ -769,10 +770,12 @@ class TestSymbolicContractsFallbackBaseModelSession27:
         WHEN   the subclass is instantiated without providing that field
         THEN   line 45 (setattr(self, name, cls_val)) executes: default value set
         """
-        if self._sc_mod is None:
-            pytest.skip(f"Could not load symbolic_contracts without pydantic: {self._import_error}")
+        if self.__class__._sc_mod is None:
+            pytest.skip(
+                f"Could not load symbolic_contracts without pydantic: {self.__class__._import_error}"
+            )
 
-        BaseModel = self._sc_mod.BaseModel  # type: ignore[attr-defined]
+        BaseModel = self.__class__._sc_mod.BaseModel  # type: ignore[attr-defined]
 
         class ModelWithDefault(BaseModel):
             __annotations__ = {"value": int}
