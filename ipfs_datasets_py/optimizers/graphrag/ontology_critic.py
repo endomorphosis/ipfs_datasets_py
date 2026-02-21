@@ -554,6 +554,7 @@ class OntologyCritic(BaseCritic):
         ontologies: List[Dict[str, Any]],
         context: Any,
         source_data: Optional[Any] = None,
+        progress_callback: Optional[Any] = None,
     ) -> Dict[str, Any]:
         """Evaluate a list of ontologies and return aggregated statistics.
 
@@ -561,6 +562,9 @@ class OntologyCritic(BaseCritic):
             ontologies: List of ontology dictionaries to evaluate.
             context: Shared evaluation context for all ontologies.
             source_data: Optional source text passed to each evaluation.
+            progress_callback: Optional callable invoked after each ontology is
+                evaluated.  Called as ``progress_callback(index, total, score)``
+                where *index* is 0-based.
 
         Returns:
             Dictionary with keys:
@@ -571,9 +575,15 @@ class OntologyCritic(BaseCritic):
                 - ``count``: number of ontologies evaluated
         """
         scores: List[CriticScore] = []
-        for ontology in ontologies:
+        total = len(ontologies)
+        for idx, ontology in enumerate(ontologies):
             score = self.evaluate_ontology(ontology, context, source_data=source_data)
             scores.append(score)
+            if progress_callback is not None:
+                try:
+                    progress_callback(idx, total, score)
+                except Exception:
+                    pass  # never let a callback crash the batch
 
         if not scores:
             return {

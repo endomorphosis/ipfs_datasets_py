@@ -347,6 +347,33 @@ class EntityExtractionResult:
     metadata: Dict[str, Any] = field(default_factory=dict)
     errors: List[str] = field(default_factory=list)
 
+    def to_dataframe(self):
+        """Convert extracted entities to a :class:`pandas.DataFrame`.
+
+        Returns:
+            A ``pandas.DataFrame`` with one row per entity and columns:
+            ``id``, ``text``, ``type``, ``confidence``.
+
+        Raises:
+            ImportError: If ``pandas`` is not installed.
+        """
+        try:
+            import pandas as _pd
+        except ImportError as exc:
+            raise ImportError(
+                "pandas is required for to_dataframe(); install with: pip install pandas"
+            ) from exc
+        rows = [
+            {
+                "id": e.id,
+                "text": e.text,
+                "type": e.type,
+                "confidence": e.confidence,
+            }
+            for e in self.entities
+        ]
+        return _pd.DataFrame(rows, columns=["id", "text", "type", "confidence"])
+
 
 @dataclass
 class OntologyGenerationResult:
@@ -766,6 +793,27 @@ class OntologyGenerator:
                 results[idx] = result
 
         return results  # type: ignore[return-value]
+
+    def extract_entities_streaming(
+        self,
+        data: Any,
+        context: "OntologyGenerationContext",
+    ):
+        """Yield entity extraction results one entity at a time (iterator API).
+
+        This is useful for streaming UIs or pipelines that want to process
+        each entity as soon as it is found, rather than waiting for the full
+        extraction to complete.
+
+        Args:
+            data: Input text/data to extract entities from.
+            context: Extraction context.
+
+        Yields:
+            :class:`Entity` objects in the order they were extracted.
+        """
+        result = self.extract_entities(data, context)
+        yield from result.entities
 
     def generate_ontology(
         self,

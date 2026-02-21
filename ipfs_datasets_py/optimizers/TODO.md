@@ -556,19 +556,19 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 
 ## Batch 52+ ideas (added automatically)
 
-- [ ] (P2) [graphrag] Add `OntologyCritic.evaluate_batch()` progress callback param for streaming results
+- [ ] (P2) [graphrag] ✅ Add `OntologyCritic.evaluate_batch()` progress callback param for streaming results
 - [ ] (P3) [graphrag] ✅ Add `OntologyMediator.get_action_stats()` — per-action counts + success rates
-- [ ] (P2) [graphrag] Add `OntologyGenerator.extract_entities_streaming()` — yield entities as found (iterator API)
+- [ ] (P2) [graphrag] ✅ Add `OntologyGenerator.extract_entities_streaming()` — yield entities as found (iterator API)
 - [ ] (P3) [tests] Add property tests for `OntologyMediator.refine_ontology()` using Hypothesis
 - [ ] (P2) [api] ✅ Add `ExtractionConfig.from_env()` classmethod — load config from ENV vars
-- [ ] (P3) [graphrag] Add `EntityExtractionResult.to_dataframe()` — convert to pandas DataFrame
+- [ ] (P3) [graphrag] ✅ Add `EntityExtractionResult.to_dataframe()` — convert to pandas DataFrame
 - [ ] (P2) [graphrag] ✅ Add `OntologyOptimizer.export_history_csv()` — save compare_history table as CSV
 - [ ] (P3) [obs] Add structured JSON log line at end of `analyze_batch_parallel()` with timing + scores
 - [ ] (P2) [graphrag] ✅ Add `LogicValidator.suggest_fixes()` — return fix hints for each ValidationError
 - [ ] (P3) [graphrag] ✅ Add `OntologyCritic.explain_score()` — return human-readable explanation per dimension
 - [ ] (P2) [graphrag] ✅ Add `OntologyLearningAdapter.serialize()` → bytes (pickle-free, JSON-based)
 - [ ] (P3) [arch] Add `OntologyPipeline` facade class — single entry point wrapping generator+critic+mediator+adapter
-- [ ] (P2) [tests] Add integration test: full pipeline on a multi-paragraph text, assert >3 entities extracted
+- [ ] (P2) [tests] ✅ Add integration test: full pipeline on a multi-paragraph text, assert >3 entities extracted
 - [ ] (P3) [graphrag] Add confidence decay over time — entities not seen recently get lower confidence
 - [ ] (P2) [graphrag] ✅ Add `ExtractionConfig.validate()` — raise `ValueError` on invalid field combinations
 - [ ] (P3) [graphrag] Add `OntologyGenerator.extract_entities_with_spans()` — return char offsets for each entity
