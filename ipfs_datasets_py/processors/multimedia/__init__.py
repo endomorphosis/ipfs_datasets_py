@@ -117,6 +117,11 @@ except ImportError:
 # Canonical FFmpeg editing/info engine functions
 from .ffmpeg_edit_engine import ffmpeg_cut, ffmpeg_splice, ffmpeg_concat  # noqa: E402
 from .ffmpeg_info_engine import ffmpeg_probe, ffmpeg_analyze  # noqa: E402
+# Canonical FFmpeg mux/demux, filters, stream, batch engines
+from .ffmpeg_mux_demux_engine import ffmpeg_mux, ffmpeg_demux  # noqa: E402
+from .ffmpeg_filters_engine import ffmpeg_apply_filters, get_available_filters  # noqa: E402
+from .ffmpeg_stream_engine import ffmpeg_stream_input, ffmpeg_stream_output  # noqa: E402
+from .ffmpeg_batch_engine import ffmpeg_batch_process, get_batch_status  # noqa: E402
 
 __all__ = [
     # Root processors (production-ready)
@@ -134,6 +139,14 @@ __all__ = [
     "ffmpeg_concat",
     "ffmpeg_probe",
     "ffmpeg_analyze",
+    "ffmpeg_mux",
+    "ffmpeg_demux",
+    "ffmpeg_apply_filters",
+    "get_available_filters",
+    "ffmpeg_stream_input",
+    "ffmpeg_stream_output",
+    "ffmpeg_batch_process",
+    "get_batch_status",
     # Unified converter interface (Phase 9C)
     "UnifiedConverter",
     "ConverterRegistry",
