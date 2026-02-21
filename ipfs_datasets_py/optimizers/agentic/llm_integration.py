@@ -14,6 +14,7 @@ from ...llm_router import generate_text as router_generate
 from .base import OptimizationMethod
 from .production_hardening import CircuitBreaker, RetryHandler
 from ..common.performance import LLMCache, get_global_cache
+from ..common.backend_selection import detect_provider_from_environment
 
 
 class LLMProvider(Enum):
@@ -175,33 +176,23 @@ class OptimizerLLMRouter:
         Returns:
             Best available LLM provider
         """
-        # Check environment variable
-        env_provider = os.environ.get("IPFS_DATASETS_PY_LLM_PROVIDER", "").lower()
-        
-        provider_map = {
-            "gpt4": LLMProvider.GPT4,
+        provider = detect_provider_from_environment(prefer_accelerate=False)
+        return self._provider_from_name(provider)
+
+    @staticmethod
+    def _provider_from_name(name: str) -> LLMProvider:
+        """Map canonical provider names to agentic provider enum."""
+        mapping = {
             "openai": LLMProvider.GPT4,
-            "claude": LLMProvider.CLAUDE,
             "anthropic": LLMProvider.CLAUDE,
             "codex": LLMProvider.CODEX,
             "copilot": LLMProvider.COPILOT,
             "gemini": LLMProvider.GEMINI,
+            # agentic does not have a distinct accelerate provider; local is fallback.
+            "accelerate": LLMProvider.LOCAL,
             "local": LLMProvider.LOCAL,
         }
-        
-        if env_provider in provider_map:
-            return provider_map[env_provider]
-        
-        # Check for API keys to determine availability
-        if os.environ.get("OPENAI_API_KEY"):
-            return LLMProvider.GPT4
-        elif os.environ.get("ANTHROPIC_API_KEY"):
-            return LLMProvider.CLAUDE
-        elif os.environ.get("GEMINI_API_KEY"):
-            return LLMProvider.GEMINI
-        
-        # Default to local if nothing else available
-        return LLMProvider.LOCAL
+        return mapping.get(name, LLMProvider.LOCAL)
     
     def _get_default_fallbacks(self) -> List[LLMProvider]:
         """Get default fallback providers.

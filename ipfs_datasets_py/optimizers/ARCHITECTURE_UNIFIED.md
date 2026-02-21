@@ -633,11 +633,11 @@ optimizers/
 
 ## Next Steps
 
-1. Review and approve this architecture
-2. Begin Phase 1: Create common base layer
-3. Incrementally migrate existing optimizers
-4. Add integration tests
-5. Update documentation
+1. Keep `common/` as stable, minimal primitives (`BaseOptimizer`, `BaseCritic`, `BaseSession`, `BaseHarness`).
+2. Continue incremental adoption through pipeline adapters (avoid risky rewrites of deprecated harnesses).
+3. Prioritize shared contracts where drift still exists (typed contexts, backend selection, logging keys).
+4. Add focused integration tests whenever a module adopts `common/` abstractions.
+5. Update this document in lockstep with code changes to avoid architecture drift.
 
 ## Questions for Stakeholders
 

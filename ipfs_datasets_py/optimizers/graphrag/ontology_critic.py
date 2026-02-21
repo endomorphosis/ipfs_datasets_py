@@ -52,6 +52,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
 from ipfs_datasets_py.optimizers.common.base_critic import BaseCritic, CriticResult
+from ipfs_datasets_py.optimizers.common.backend_selection import resolve_backend_settings
 
 logger = logging.getLogger(__name__)
 
@@ -87,14 +88,19 @@ class BackendConfig:
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "BackendConfig":
-        known = {"provider", "model", "temperature", "max_tokens"}
-        extra = {k: v for k, v in d.items() if k not in known}
+        resolved = resolve_backend_settings(
+            d,
+            default_provider="accelerate",
+            default_model="gpt-4",
+            use_ipfs_accelerate=bool(d.get("use_ipfs_accelerate", True)),
+            prefer_accelerate=True,
+        )
         return cls(
-            provider=d.get("provider", "accelerate"),
-            model=d.get("model", "gpt-4"),
-            temperature=float(d.get("temperature", 0.3)),
-            max_tokens=int(d.get("max_tokens", 2048)),
-            extra=extra,
+            provider=resolved.provider,
+            model=resolved.model,
+            temperature=resolved.temperature,
+            max_tokens=resolved.max_tokens,
+            extra=resolved.extra,
         )
 
     def to_dict(self) -> Dict[str, Any]:

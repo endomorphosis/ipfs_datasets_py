@@ -44,6 +44,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+from ..common.base_critic import CriticResult
+from ..common.base_harness import BaseHarness, HarnessConfig
+
 logger = logging.getLogger(__name__)
 
 
@@ -590,7 +593,7 @@ __all__ = [
 ]
 
 
-class OntologyPipelineHarness:
+class OntologyPipelineHarness(BaseHarness):
     """Single-session harness wiring Generator → Critic → Mediator via BaseHarness.
 
     This is a lightweight alternative to :class:`OntologyHarness` for running a
@@ -630,52 +633,48 @@ class OntologyPipelineHarness:
         generator: Any,
         critic: Any,
         mediator: Any,
-        config: Optional[Any] = None,  # HarnessConfig
+        config: Optional[HarnessConfig] = None,
         logger: Optional[logging.Logger] = None,
     ) -> None:
-        from ..common.base_harness import BaseHarness, HarnessConfig
-        from ..common.base_critic import CriticResult
-
         import logging as _logging
         self._log = logger or _logging.getLogger(__name__)
-
-        _config = config if config is not None else HarnessConfig()
-
-        class _Harness(BaseHarness):
-            def _generate(self_h, data: Any, context: Any) -> Any:
-                ontology = generator.generate_ontology(data, context)
-                self._last_ontology = ontology
-                return ontology
-
-            def _critique(self_h, artifact: Any, context: Any) -> CriticResult:
-                try:
-                    return critic.evaluate(artifact, context)
-                except Exception:
-                    raw = critic.evaluate_ontology(artifact, context)
-                    return CriticResult(
-                        score=raw.overall,
-                        feedback=raw.feedback,
-                        dimensions={k: v for k, v in raw.dimensions.items()},
-                    )
-
-            def _optimize(self_h, artifact: Any, critique: CriticResult, context: Any) -> Any:
-                from ..common.exceptions import RefinementError
-                try:
-                    refined = mediator.refine_ontology(artifact, critique.feedback)
-                except RefinementError:
-                    raise
-                except Exception as exc:
-                    self._log.warning("refine_ontology failed: %s", exc)
-                    refined = artifact
-                self._last_ontology = refined
-                return refined
-
-        self._harness = _Harness(config=_config)
+        self.generator = generator
+        self.critic = critic
+        self.mediator = mediator
         self._last_ontology: Optional[Dict[str, Any]] = None
+        super().__init__(config=config or HarnessConfig())
+
+    def _generate(self, data: Any, context: Any) -> Any:
+        ontology = self.generator.generate_ontology(data, context)
+        self._last_ontology = ontology
+        return ontology
+
+    def _critique(self, artifact: Any, context: Any) -> CriticResult:
+        try:
+            return self.critic.evaluate(artifact, context)
+        except Exception:
+            raw = self.critic.evaluate_ontology(artifact, context)
+            return CriticResult(
+                score=raw.overall,
+                feedback=raw.feedback,
+                dimensions={k: v for k, v in raw.dimensions.items()},
+            )
+
+    def _optimize(self, artifact: Any, critique: CriticResult, context: Any) -> Any:
+        from ..common.exceptions import RefinementError
+        try:
+            refined = self.mediator.refine_ontology(artifact, critique.feedback)
+        except RefinementError:
+            raise
+        except Exception as exc:
+            self._log.warning("refine_ontology failed: %s", exc)
+            refined = artifact
+        self._last_ontology = refined
+        return refined
 
     def run(self, data: Any, context: Any) -> Any:
         """Run the pipeline and return a :class:`~ipfs_datasets_py.optimizers.common.BaseSession`."""
-        return self._harness.run(data, context)
+        return super().run(data, context)
 
     def run_and_report(self, data: Any, context: Any) -> Dict[str, Any]:
         """Run and return a rich summary dict."""

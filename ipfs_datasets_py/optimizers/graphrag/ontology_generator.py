@@ -52,6 +52,7 @@ from enum import Enum
 from ipfs_datasets_py.optimizers.common.extraction_contexts import (
     GraphRAGExtractionConfig,
 )
+from ipfs_datasets_py.optimizers.common.backend_selection import resolve_backend_settings
 
 logger = logging.getLogger(__name__)
 
@@ -1060,11 +1061,22 @@ class OntologyGenerator:
         import logging as _logging
         self._log = logger or _logging.getLogger(__name__)
         self.ipfs_accelerate_config = ipfs_accelerate_config or {}
-        self.use_ipfs_accelerate = use_ipfs_accelerate
+        resolved_backend = resolve_backend_settings(
+            self.ipfs_accelerate_config,
+            default_provider="accelerate",
+            default_model=str(self.ipfs_accelerate_config.get("model", "gpt-4")),
+            use_ipfs_accelerate=use_ipfs_accelerate,
+            prefer_accelerate=True,
+        )
+        # Centralized backend rules: accelerate is only used when selected and enabled.
+        self.use_ipfs_accelerate = resolved_backend.use_ipfs_accelerate
+        self.backend_provider = resolved_backend.provider
+        self.ipfs_accelerate_config.setdefault("provider", resolved_backend.provider)
+        self.ipfs_accelerate_config.setdefault("model", resolved_backend.model)
         self._accelerate_client = None
         self.llm_backend = llm_backend
         
-        if use_ipfs_accelerate:
+        if self.use_ipfs_accelerate:
             try:
                 # Import ipfs_accelerate_py integration
                 from ipfs_datasets_py.processors.file_converter import (

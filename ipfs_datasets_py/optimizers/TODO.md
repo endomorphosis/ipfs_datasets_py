@@ -48,10 +48,11 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 - [x] (P0) [graphrag] Fix GraphRAG CLI ontology contract mismatch (dict vs object) and implement real JSON load + validate — **DoD**: `generate`/`validate`/`optimize` don’t crash for JSON ontologies.
   - Done 2026-02-20: `graphrag/cli_wrapper.py` now treats ontologies as dicts; `validate` supports JSON.
 
-- [ ] (P1) [arch] Resolve “docs vs code” drift for the unified common layer (`optimizers/common/`) — pick one:
+- [x] (P1) [arch] Resolve “docs vs code” drift for the unified common layer (`optimizers/common/`) — pick one:
   - implement minimal `BaseCritic`, `BaseSession`, `BaseHarness` scaffolding as documented, **or**
   - update architecture docs to match reality.
   - **DoD**: no misleading docs; no broken imports.
+  - Done 2026-02-20: chose code-first; `common/` scaffolding exists, `ARCHITECTURE_UNIFIED.md` reflects current adoption status and deferred items.
 
 - [x] (P1) [tests] Add smoke tests for GraphRAG optimizer components that are currently large but lightly validated (imports + basic API invariants).
   - Done 2026-02-20: import + basic invariants under `tests/unit/optimizers/graphrag/`.
@@ -69,19 +70,23 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ### A. Make the “unified architecture” real (or truthfully documented)
 
-- [ ] (P1) [arch] Decide source-of-truth: code-first vs doc-first for `ARCHITECTURE_UNIFIED.md`.
-- [ ] (P1) [arch] If code-first: shrink `ARCHITECTURE_UNIFIED.md` to match existing modules and add “future work” notes.
-- [ ] (P2) [arch] If doc-first: add missing common primitives (thin, safe abstractions):
+- [x] (P1) [arch] Decide source-of-truth: code-first vs doc-first for `ARCHITECTURE_UNIFIED.md`.
+  - Done 2026-02-20: code-first selected and documented in `ARCHITECTURE_UNIFIED.md`.
+- [x] (P1) [arch] If code-first: shrink `ARCHITECTURE_UNIFIED.md` to match existing modules and add “future work” notes.
+  - Done 2026-02-20: document now describes implemented `common/` primitives, partial integration, and explicit deferred roadmap.
+- [x] (P2) [arch] If doc-first: add missing common primitives (thin, safe abstractions):
   - `optimizers/common/base_critic.py`
   - `optimizers/common/base_session.py`
   - `optimizers/common/base_harness.py`
   - (optional) `optimizers/common/llm_integration.py` that wraps `agentic/llm_integration.py`
   - **DoD**: abstractions are used by at least one concrete optimizer (or are explicitly marked experimental).
+  - Done 2026-02-20: not required under code-first path; common primitives already implemented and at least partially adopted.
 
 ### B. Normalize configuration + dependency injection
 
 - [ ] (P2) [api] Standardize “context” objects across GraphRAG / logic / agentic (dataclasses with typed fields; avoid `Dict[str, Any]` sprawl).
-- [ ] (P2) [api] Centralize backend selection/config rules so GraphRAG and agentic don’t drift.
+- [x] (P2) [api] Centralize backend selection/config rules so GraphRAG and agentic don't drift.
+  - Done 2026-02-20: Added `optimizers/common/backend_selection.py` as shared provider/config resolver (`canonicalize_provider`, env/API-key detection, normalized settings). Wired into GraphRAG (`ontology_generator.py`, `ontology_critic.py`) and agentic (`llm_integration.py`) to remove duplicated provider-detection logic and keep backend defaults/fallback rules consistent.
 
 ### C. Logging, metrics, and observability
 
@@ -201,8 +206,10 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
   - Done 2026-02-20: evaluate_as_base() → BaseCriticResult; backward-compat evaluate() preserved
 - [x] (P2) [arch] Wire `OntologySession` / `MediatorState` to extend `BaseSession`
   - Done 2026-02-20: `MediatorState` now extends `BaseSession` and records rounds via BaseSession helpers.
-- [ ] (P2) [arch] Wire `OntologyHarness` to extend `BaseHarness`
-- [ ] (P2) [arch] Wire `LogicHarness` to extend `BaseHarness`
+- [x] (P2) [arch] Wire `OntologyHarness` to extend `BaseHarness`
+  - Done 2026-02-20: `OntologyPipelineHarness` now directly subclasses `BaseHarness` (removed wrapper composition), preserving `run_and_report` / `run_single` / `run_concurrent` APIs.
+- [x] (P2) [arch] Wire `LogicHarness` to extend `BaseHarness`
+  - Done 2026-02-20: added `LogicPipelineHarness` as a `BaseHarness`-native adapter for extractor→critic loops while keeping deprecated `LogicHarness` behavior stable.
 - [ ] (P3) [docs] Write architecture diagram for the `generate → critique → optimize → validate` loop
 
 ### R4 — Logging & observability consistency

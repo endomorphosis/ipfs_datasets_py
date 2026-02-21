@@ -95,6 +95,14 @@ from .extraction_contexts import (
     OptimizationMethod,
 )
 
+from .backend_selection import (
+    BackendResolution,
+    canonicalize_provider,
+    detect_provider_from_environment,
+    default_model_for_provider,
+    resolve_backend_settings,
+)
+
 __all__ = [
     # Base classes
     "BaseOptimizer",
@@ -139,6 +147,12 @@ __all__ = [
     "ExtractionMode",
     "AgenticExtractionConfig",
     "OptimizationMethod",
+    # Backend selection
+    "BackendResolution",
+    "canonicalize_provider",
+    "detect_provider_from_environment",
+    "default_model_for_provider",
+    "resolve_backend_settings",
 ]
 
 __version__ = "0.1.0"
