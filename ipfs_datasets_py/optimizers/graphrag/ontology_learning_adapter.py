@@ -967,21 +967,6 @@ class OntologyLearningAdapter:
                 break
         return streak
 
-    def feedback_percentile(self, value: float) -> float:
-        """Return the percentile rank of *value* among recorded feedback scores.
-
-        Args:
-            value: Score to rank.
-
-        Returns:
-            A float in [0.0, 100.0]; ``0.0`` when no feedback recorded.
-        """
-        if not self._feedback:
-            return 0.0
-        scores = sorted(r.final_score for r in self._feedback)
-        below = sum(1 for s in scores if s < value)
-        return 100.0 * below / len(scores)
-
     def recent_average(self, n: int = 5) -> float:
         """Return the average ``final_score`` of the *n* most-recent records.
 

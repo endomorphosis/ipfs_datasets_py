@@ -2471,7 +2471,7 @@ class OntologyCritic(BaseCritic):
             score: A :class:`CriticScore` object.
 
         Returns:
-            One of the 5 dimension names.
+            One of the 6 dimension names.
 
         Example:
             >>> critic.worst_dimension(score)
@@ -2482,9 +2482,60 @@ class OntologyCritic(BaseCritic):
             "consistency": score.consistency,
             "clarity": score.clarity,
             "granularity": score.granularity,
+            "relationship_coherence": score.relationship_coherence,
             "domain_alignment": score.domain_alignment,
         }
         return min(dims, key=dims.__getitem__)
+
+    def get_worst_entity(self, ontology: Dict[str, Any]) -> Optional[str]:
+        """Return the ID of the entity with the lowest confidence score.
+
+        Args:
+            ontology: A dictionary with an ``entities`` key containing a list
+                of entity dictionaries or :class:`Entity` objects. Each entity
+                must have ``id`` and ``confidence`` fields.
+
+        Returns:
+            The ``id`` string of the worst entity, or ``None`` if the ontology
+            is empty or contains no valid entities.
+
+        Example:
+            >>> ontology = {
+            ...     'entities': [
+            ...         {'id': 'e1', 'confidence': 0.9},
+            ...         {'id': 'e2', 'confidence': 0.3},
+            ...         {'id': 'e3', 'confidence': 0.7},
+            ...     ]
+            ... }
+            >>> critic.get_worst_entity(ontology)
+            'e2'
+        """
+        entities = ontology.get("entities", [])
+        if not entities:
+            return None
+
+        worst_entity = None
+        worst_confidence = float("inf")
+
+        for entity in entities:
+            # Handle both dict and Entity object formats
+            if isinstance(entity, dict):
+                entity_id = entity.get("id")
+                confidence = entity.get("confidence", 1.0)
+            else:  # Assume it's an Entity-like object with attributes
+                entity_id = getattr(entity, "id", None)
+                confidence = getattr(entity, "confidence", 1.0)
+
+            # Skip entities without valid IDs
+            if entity_id is None:
+                continue
+
+            # Track the entity with the lowest confidence
+            if confidence < worst_confidence:
+                worst_confidence = confidence
+                worst_entity = entity_id
+
+        return worst_entity
 
     def failing_scores(
         self, scores: List["CriticScore"], threshold: float = 0.6
@@ -2980,22 +3031,6 @@ class OntologyCritic(BaseCritic):
             Integer count of scores with ``overall < threshold``.
         """
         return sum(1 for s in scores if s.overall < threshold)
-
-    def average_dimension(self, scores: list, dimension: str) -> float:
-        """Return the mean value of a single dimension across all scores.
-
-        Args:
-            scores: List of ``CriticScore`` objects.
-            dimension: Attribute name on ``CriticScore`` (e.g. ``"coherence"``).
-
-        Returns:
-            Mean as float; ``0.0`` when *scores* is empty or the attribute is
-            missing.
-        """
-        if not scores:
-            return 0.0
-        vals = [getattr(s, dimension, 0.0) for s in scores]
-        return sum(vals) / len(vals)
 
     def bucket_scores(self, scores: list, buckets: int = 4) -> dict:
         """Partition scores into equal-width buckets across [0.0, 1.0].

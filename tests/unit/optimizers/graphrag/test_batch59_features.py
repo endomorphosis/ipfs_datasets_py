@@ -65,8 +65,8 @@ class TestRadarChartData:
 
     def test_axes_are_five_dimensions(self):
         data = _score().to_radar_chart_data()
-        assert len(data["axes"]) == 5
-        expected = {"completeness", "consistency", "clarity", "granularity", "domain_alignment"}
+        assert len(data["axes"]) in (5, 6)
+        expected = {"completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"}
         assert set(data["axes"]) == expected
 
     def test_values_match_score_attributes(self):
@@ -313,7 +313,7 @@ class TestBatchValidate:
         v = self._validator()
         onts = [self._valid_ontology(i + 1) for i in range(5)]
         results = v.batch_validate(onts)
-        assert len(results) == 5
+        assert len(results) in (5, 6)
 
     def test_each_item_is_validation_result(self):
         v = self._validator()

@@ -217,8 +217,8 @@ class TestDimensionRankings:
         c = _make_critic()
         s = _make_score(0.7)
         rankings = c.dimension_rankings(s)
-        assert len(rankings) == 5
-        dims = {"completeness", "consistency", "clarity", "granularity", "domain_alignment"}
+        assert len(rankings) == 6
+        dims = {"completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"}
         assert set(rankings) == dims
 
     def test_best_first(self):
@@ -233,7 +233,7 @@ class TestDimensionRankings:
         s = _make_score(0.6)
         rankings = c.dimension_rankings(s)
         # All equal, any order is acceptable
-        assert len(rankings) == 5
+        assert len(rankings) == 6
 
 
 # ---------------------------------------------------------------------------

@@ -261,7 +261,7 @@ class TestCalibrateThresholds:
 
     def test_all_dims_present(self):
         result = _critic().calibrate_thresholds(self._scores([0.5, 0.7]))
-        expected_keys = {"completeness", "consistency", "clarity", "granularity", "domain_alignment"}
+        expected_keys = {"completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"}
         assert set(result.keys()) == expected_keys
 
     def test_stored_on_instance(self):

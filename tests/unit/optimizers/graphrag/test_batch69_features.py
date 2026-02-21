@@ -207,7 +207,7 @@ class TestEmitDimensionHistogram:
 
     def test_all_dims_present(self):
         result = _critic().emit_dimension_histogram([_score(0.5)])
-        expected_keys = {"completeness", "consistency", "clarity", "granularity", "domain_alignment"}
+        expected_keys = {"completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"}
         assert set(result.keys()) == expected_keys
 
     def test_correct_bin_count(self):

@@ -74,7 +74,7 @@ class TestCompareWithBaseline:
     def test_dimension_deltas_keys(self):
         critic = OntologyCritic(use_llm=False)
         r = critic.compare_with_baseline(_ont(), _ont(), _ctx())
-        dims = {"completeness", "consistency", "clarity", "granularity", "domain_alignment"}
+        dims = {"completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"}
         assert dims == set(r["dimension_deltas"].keys())
 
     def test_improved_when_current_higher(self):

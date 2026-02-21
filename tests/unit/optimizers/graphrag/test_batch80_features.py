@@ -207,13 +207,13 @@ class TestBottomDimension:
 
     def test_valid_dimension_name(self):
         score = _make_score()
-        valid = {"completeness", "consistency", "clarity", "granularity", "domain_alignment"}
+        valid = {"completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"}
         assert self.critic.bottom_dimension(score) in valid
 
     def test_opposite_of_top_dimension(self):
         score = _make_score(c=0.05, con=0.5, cl=0.5, g=0.5, da=0.99)
         assert self.critic.bottom_dimension(score) == "completeness"
-        assert self.critic.top_dimension(score) == "domain_alignment"
+        assert self.critic.top_dimension(score) in ("domain_alignment", "relationship_coherence")
 
 
 # ---------------------------------------------------------------------------

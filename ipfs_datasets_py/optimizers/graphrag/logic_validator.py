@@ -1032,6 +1032,32 @@ class LogicValidator:
         """
         return self.count_contradictions(ontology)
 
+    def entity_contradiction_count(self, ontology: Dict[str, Any]) -> int:
+        """Return the count of entities involved in contradictions.
+
+        Runs :meth:`check_consistency` and returns the count of unique entity
+        IDs that appear in the ``invalid_entity_ids`` list of the validation
+        result. This is useful for understanding the scope of contradiction
+        issues at the entity level.
+
+        Args:
+            ontology: Ontology dict to check.
+
+        Returns:
+            Non-negative integer count of entities involved in validation
+            errors or contradictions.
+
+        Example:
+            >>> n = validator.entity_contradiction_count(ontology)
+            >>> n  # 0 if all entities are valid
+            0
+        """
+        try:
+            result = self.check_consistency(ontology)
+            return len(result.invalid_entity_ids)
+        except Exception:
+            return 0
+
     def validate_and_report(self, ontology: Dict[str, Any]) -> str:
         """Validate *ontology* and return a human-readable report in one call.
 

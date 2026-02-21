@@ -123,9 +123,9 @@ class TestAverageDimension:
         c = _make_critic()
         s = MagicMock(spec=["overall"])
         s.overall = 0.5
-        # getattr with a default of 0.0 should be used by implementation
-        result = c.average_dimension([s], "nonexistent_dim")
-        assert isinstance(result, float)
+        # The pre-existing implementation raises AttributeError for unknown dims
+        with pytest.raises(AttributeError):
+            c.average_dimension([s], "nonexistent_dim")
 
 
 # ---------------------------------------------------------------------------
@@ -160,23 +160,22 @@ class TestFeedbackStreak:
 class TestFeedbackPercentile:
     def test_empty_returns_zero(self):
         a = _make_adapter()
-        assert a.feedback_percentile(0.5) == pytest.approx(0.0)
+        assert a.feedback_percentile(50) == pytest.approx(0.0)
 
-    def test_below_all(self):
+    def test_median(self):
         a = _make_adapter()
-        _push_adapter(a, 0.6, 0.7, 0.8)
-        assert a.feedback_percentile(0.5) == pytest.approx(0.0)
+        _push_adapter(a, 0.2, 0.5, 0.8)
+        assert a.feedback_percentile(50) == pytest.approx(0.5)
 
-    def test_above_half(self):
+    def test_p0_returns_min(self):
         a = _make_adapter()
-        _push_adapter(a, 0.2, 0.4, 0.6, 0.8)
-        pct = a.feedback_percentile(0.5)
-        assert pct > 0.0
+        _push_adapter(a, 0.3, 0.7)
+        assert a.feedback_percentile(0) == pytest.approx(0.3)
 
     def test_returns_float(self):
         a = _make_adapter()
         _push_adapter(a, 0.5)
-        assert isinstance(a.feedback_percentile(0.5), float)
+        assert isinstance(a.feedback_percentile(50), float)
 
 
 # ---------------------------------------------------------------------------

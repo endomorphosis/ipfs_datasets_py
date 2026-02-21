@@ -598,3 +598,105 @@ class TestRelationshipCoherenceEvaluator:
         )
         assert any("generic" in r.lower() or "relationship" in r.lower() for r in recs)
 
+
+class TestGetWorstEntity:
+    """Test OntologyCritic.get_worst_entity() method."""
+
+    def test_returns_entity_with_lowest_confidence(self, critic):
+        """Should return the ID of the entity with the lowest confidence."""
+        ontology = {
+            "entities": [
+                {"id": "e1", "confidence": 0.9},
+                {"id": "e2", "confidence": 0.3},
+                {"id": "e3", "confidence": 0.7},
+            ]
+        }
+        assert critic.get_worst_entity(ontology) == "e2"
+
+    def test_empty_ontology_returns_none(self, critic):
+        """Should return None when ontology has no entities."""
+        ontology = {"entities": []}
+        assert critic.get_worst_entity(ontology) is None
+
+    def test_missing_entities_key_returns_none(self, critic):
+        """Should return None when ontology dict lacks 'entities' key."""
+        ontology = {"relationships": []}
+        assert critic.get_worst_entity(ontology) is None
+
+    def test_single_entity_returns_that_id(self, critic):
+        """Should return the only entity's ID when there's just one."""
+        ontology = {"entities": [{"id": "e1", "confidence": 0.5}]}
+        assert critic.get_worst_entity(ontology) == "e1"
+
+    def test_multiple_entities_same_confidence_returns_first(self, critic):
+        """When multiple entities have the same worst confidence, return one of them."""
+        ontology = {
+            "entities": [
+                {"id": "e1", "confidence": 0.3},
+                {"id": "e2", "confidence": 0.9},
+                {"id": "e3", "confidence": 0.3},
+            ]
+        }
+        # Should return one of e1 or e3 (both have 0.3)
+        result = critic.get_worst_entity(ontology)
+        assert result in ("e1", "e3")
+
+    def test_entities_as_objects_with_attributes(self, critic):
+        """Should work with Entity objects, not just dicts."""
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+        
+        ontology = {
+            "entities": [
+                Entity(id="e1", text="Alice", type="Person", confidence=0.9),
+                Entity(id="e2", text="Bob", type="Person", confidence=0.4),
+                Entity(id="e3", text="Charlie", type="Person", confidence=0.7),
+            ]
+        }
+        assert critic.get_worst_entity(ontology) == "e2"
+
+    def test_default_confidence_is_one(self, critic):
+        """Entities without explicit confidence should be treated as 1.0."""
+        ontology = {
+            "entities": [
+                {"id": "e1", "confidence": 0.5},
+                {"id": "e2"},  # Missing confidence
+            ]
+        }
+        # e1 has explicit 0.5, e2 defaults to 1.0, so e1 is worst
+        assert critic.get_worst_entity(ontology) == "e1"
+
+    def test_ignores_entities_without_id(self, critic):
+        """Should skip entities that lack an 'id' field."""
+        ontology = {
+            "entities": [
+                {"confidence": 0.2},  # No ID
+                {"id": "e1", "confidence": 0.8},
+            ]
+        }
+        assert critic.get_worst_entity(ontology) == "e1"
+
+    def test_handles_zero_confidence(self, critic):
+        """Should correctly identify entity with 0.0 confidence."""
+        ontology = {
+            "entities": [
+                {"id": "e1", "confidence": 0.5},
+                {"id": "e2", "confidence": 0.0},
+                {"id": "e3", "confidence": 0.3},
+            ]
+        }
+        assert critic.get_worst_entity(ontology) == "e2"
+
+    def test_mixed_dict_and_object_entities(self, critic):
+        """Should handle a mix of dict and Entity object formats."""
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+        
+        ontology = {
+            "entities": [
+                {"id": "e1", "confidence": 0.6},
+                Entity(id="e2", text="Bob", type="Person", confidence=0.2),
+                {"id": "e3", "confidence": 0.8},
+            ]
+        }
+        assert critic.get_worst_entity(ontology) == "e2"
+
+

@@ -671,3 +671,218 @@ class TestMinEntityLength:
     def test_from_dict_default_is_two(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
         assert ExtractionConfig.from_dict({}).min_entity_length == 2
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# filter_by_confidence
+# ──────────────────────────────────────────────────────────────────────────────
+
+class TestFilterByConfidence:
+    """Test OntologyGenerator.filter_by_confidence() with detailed stats."""
+
+    @pytest.fixture
+    def sample_result(self):
+        """Create a sample EntityExtractionResult with varying confidence scores."""
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
+            EntityExtractionResult,
+            Entity,
+            Relationship,
+        )
+        entities = [
+            Entity(id="e1", text="Alice", type="Person", confidence=0.9),
+            Entity(id="e2", text="Bob", type="Person", confidence=0.7),
+            Entity(id="e3", text="Charlie", type="Person", confidence=0.5),
+            Entity(id="e4", text="David", type="Person", confidence=0.3),
+            Entity(id="e5", text="Eve", type="Person", confidence=0.1),
+        ]
+        relationships = [
+            Relationship(
+                id="r1",
+                source_id="e1",
+                target_id="e2",
+                type="knows",
+                confidence=0.8,
+            ),
+            Relationship(
+                id="r2",
+                source_id="e2",
+                target_id="e3",
+                type="knows",
+                confidence=0.6,
+            ),
+            Relationship(
+                id="r3",
+                source_id="e4",
+                target_id="e5",
+                type="knows",
+                confidence=0.2,
+            ),
+        ]
+        return EntityExtractionResult(
+            entities=entities,
+            relationships=relationships,
+            confidence=0.6,
+        )
+
+    def test_filter_default_threshold(self, generator, sample_result):
+        """Test filtering with default threshold (0.5)."""
+        filtered_data = generator.filter_by_confidence(sample_result)
+        
+        assert "result" in filtered_data
+        assert "stats" in filtered_data
+        
+        result = filtered_data["result"]
+        stats = filtered_data["stats"]
+        
+        # Should keep e1 (0.9), e2 (0.7), e3 (0.5) - exactly at threshold
+        assert len(result.entities) == 3
+        assert stats["filtered_entity_count"] == 3
+        assert stats["original_entity_count"] == 5
+        assert stats["removed_entity_count"] == 2
+        assert stats["threshold"] == 0.5
+
+    def test_filter_high_threshold(self, generator, sample_result):
+        """Test filtering with high threshold (0.8)."""
+        filtered_data = generator.filter_by_confidence(sample_result, threshold=0.8)
+        
+        result = filtered_data["result"]
+        stats = filtered_data["stats"]
+        
+        # Should keep only e1 (0.9)
+        assert len(result.entities) == 1
+        assert result.entities[0].id == "e1"
+        assert stats["filtered_entity_count"] == 1
+        assert stats["removed_entity_count"] == 4
+
+    def test_filter_low_threshold(self, generator, sample_result):
+        """Test filtering with low threshold (0.1)."""
+        filtered_data = generator.filter_by_confidence(sample_result, threshold=0.1)
+        
+        result = filtered_data["result"]
+        stats = filtered_data["stats"]
+        
+        # Should keep all 5 entities (all >= 0.1)
+        assert len(result.entities) == 5
+        assert stats["filtered_entity_count"] == 5
+        assert stats["removed_entity_count"] == 0
+
+    def test_filter_removes_dangling_relationships(self, generator, sample_result):
+        """Test that relationships without valid endpoints are removed."""
+        # Filter to keep only e1, e2 (threshold=0.7)
+        filtered_data = generator.filter_by_confidence(sample_result, threshold=0.7)
+        
+        result = filtered_data["result"]
+        stats = filtered_data["stats"]
+        
+        # Should keep r1 (e1→e2) but not r2 (e2→e3, e3 removed) or r3 (e4→e5, both removed)
+        assert len(result.relationships) == 1
+        assert result.relationships[0].id == "r1"
+        assert stats["original_relationship_count"] == 3
+        assert stats["filtered_relationship_count"] == 1
+        assert stats["removed_relationship_count"] == 2
+
+    def test_filter_retention_rate(self, generator, sample_result):
+        """Test retention_rate statistic calculation."""
+        filtered_data = generator.filter_by_confidence(sample_result, threshold=0.5)
+        
+        stats = filtered_data["stats"]
+        
+        # 3 out of 5 entities kept = 0.6 retention rate
+        assert stats["retention_rate"] == 0.6
+
+    def test_filter_avg_confidence_computation(self, generator, sample_result):
+        """Test average confidence before and after filtering."""
+        filtered_data = generator.filter_by_confidence(sample_result, threshold=0.5)
+        
+        stats = filtered_data["stats"]
+        
+        # Before: (0.9 + 0.7 + 0.5 + 0.3 + 0.1) / 5 = 0.5
+        assert abs(stats["avg_confidence_before"] - 0.5) < 0.01
+        
+        # After: (0.9 + 0.7 + 0.5) / 3 = 0.7
+        assert abs(stats["avg_confidence_after"] - 0.7) < 0.01
+
+    def test_filter_invalid_threshold_too_high(self, generator, sample_result):
+        """Test that threshold > 1.0 raises ValueError."""
+        with pytest.raises(ValueError, match="threshold must be in"):
+            generator.filter_by_confidence(sample_result, threshold=1.5)
+
+    def test_filter_invalid_threshold_too_low(self, generator, sample_result):
+        """Test that threshold < 0.0 raises ValueError."""
+        with pytest.raises(ValueError, match="threshold must be in"):
+            generator.filter_by_confidence(sample_result, threshold=-0.1)
+
+    def test_filter_empty_result_returns_zero_stats(self, generator):
+        """Test filtering an empty EntityExtractionResult."""
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
+            EntityExtractionResult,
+        )
+        empty_result = EntityExtractionResult(
+            entities=[],
+            relationships=[],
+            confidence=0.0,
+        )
+        
+        filtered_data = generator.filter_by_confidence(empty_result, threshold=0.5)
+        
+        stats = filtered_data["stats"]
+        assert stats["original_entity_count"] == 0
+        assert stats["filtered_entity_count"] == 0
+        assert stats["retention_rate"] == 0.0
+        assert stats["avg_confidence_before"] == 0.0
+        assert stats["avg_confidence_after"] == 0.0
+
+    def test_filter_all_below_threshold(self, generator, sample_result):
+        """Test filtering when all entities are below threshold."""
+        # All entities have confidence <= 0.9, set threshold = 1.0
+        filtered_data = generator.filter_by_confidence(sample_result, threshold=1.0)
+        
+        result = filtered_data["result"]
+        stats = filtered_data["stats"]
+        
+        assert len(result.entities) == 0
+        assert len(result.relationships) == 0
+        assert stats["retention_rate"] == 0.0
+        assert stats["avg_confidence_after"] == 0.0
+
+    def test_filter_stats_keys_present(self, generator, sample_result):
+        """Test that all expected stats keys are present in the response."""
+        filtered_data = generator.filter_by_confidence(sample_result, threshold=0.5)
+        
+        stats = filtered_data["stats"]
+        expected_keys = {
+            "original_entity_count",
+            "filtered_entity_count",
+            "removed_entity_count",
+            "original_relationship_count",
+            "filtered_relationship_count",
+            "removed_relationship_count",
+            "threshold",
+            "retention_rate",
+            "avg_confidence_before",
+            "avg_confidence_after",
+        }
+        
+        assert set(stats.keys()) == expected_keys
+
+    def test_filter_preserves_metadata(self, generator):
+        """Test that original metadata is preserved in filtered result."""
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
+            EntityExtractionResult,
+            Entity,
+        )
+        result = EntityExtractionResult(
+            entities=[Entity(id="e1", text="Alice", type="Person", confidence=0.9)],
+            relationships=[],
+            confidence=0.8,
+            metadata={"source": "test", "version": "1.0"},
+        )
+        
+        filtered_data = generator.filter_by_confidence(result, threshold=0.5)
+        
+        # Check that metadata from EntityExtractionResult.filter_by_confidence is present
+        assert "filter_confidence_stats" in filtered_data["result"].metadata
+        # Original metadata should still be there
+        assert filtered_data["result"].metadata.get("source") == "test"
+        assert filtered_data["result"].metadata.get("version") == "1.0"
+

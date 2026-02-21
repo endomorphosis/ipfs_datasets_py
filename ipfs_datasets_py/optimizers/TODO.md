@@ -59,9 +59,12 @@ These should be started immediately when available:
 **Instructions**: When work capacity opens, random-select ONE item from each category below. Complete it fully before selecting another. This ensures breadth while maintaining focus.
 
 #### Quick Wins (30 min - 1 hour)
-- [ ] (P3) [graphrag] Add `OntologyGenerator.filter_by_confidence()` — threshold filter with stats
-- [ ] (P3) [graphrag] Add `OntologyCritic.get_worst_entity()` — lowest-scoring entity ID
-- [ ] (P2) [tests] Add parametrized tests for `ExtractionConfig` field validation
+- [x] (P3) [graphrag] Add `OntologyGenerator.filter_by_confidence()` — threshold filter with stats
+  - Done 2026-02-21: Added method returning dict with filtered result + 10 detailed stats (retention_rate, avg_confidence before/after, entity/relationship counts). 12 unit tests added, all passing.
+- [x] (P3) [graphrag] Add `OntologyCritic.get_worst_entity()` — lowest-scoring entity ID
+  - Done 2026-02-21: Added method to find entity with lowest confidence score. Handles both dict and Entity object formats. 10 unit tests added, all passing.
+- [x] (P2) [tests] Add parametrized tests for `ExtractionConfig` field validation
+  - Done (previous session): Complete test suite with 63 parametrized tests in test_extraction_config_validation.py. All validation rules covered, all tests passing.
 - [ ] (P3) [docs] Add one-page "Quick Start" guide for GraphRAG ontology generation
 - [ ] (P3) [graphrag] Add `LogicValidator.entity_contradiction_count()` integer count helper
 - [ ] (P3) [obs] Add timing instrumentation to `_extract_rule_based()` method
@@ -923,6 +926,21 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
   - File: `tests/unit/optimizers/graphrag/test_ontology_critic_dimensions.py` – Added 11 comprehensive unit tests
   - Test coverage: generic types, meaningful types, diversity, directionality, semantic consistency, edge cases
   - All 55 tests passing (100% success rate)
+- [x] (P3) [graphrag] Add `OntologyGenerator.filter_by_confidence()` — threshold filter with detailed stats
+  - File: `graphrag/ontology_generator.py` – Added method returning dict with filtered EntityExtractionResult + 10 statistical metrics
+  - Stats: retention_rate, avg_confidence before/after, entity/relationship counts (original, filtered, removed)
+  - Validates threshold in [0, 1], includes logging, preserves metadata
+  - File: `tests/unit/optimizers/graphrag/test_ontology_generator_helpers.py` – Added TestFilterByConfidence class with 12 tests
+  - Test coverage: thresholds (default, high, low), relationship pruning, edge cases (empty, all below threshold), stats validation
+  - All 12 tests passing
+- [x] (P3) [graphrag] Add `OntologyCritic.get_worst_entity()` — lowest-scoring entity ID
+  - File: `graphrag/ontology_critic.py` – Added method to identify entity with lowest confidence score
+  - Handles both dict (with 'id' and 'confidence' keys) and Entity object formats
+  - Returns None for empty ontologies or missing entities key
+  - Skips entities without valid IDs, defaults confidence to 1.0 if missing
+  - File: `tests/unit/optimizers/graphrag/test_ontology_critic_dimensions.py` – Added TestGetWorstEntity class with 10 tests
+  - Test coverage: multiple entities, empty ontology, single entity, tied scores, Entity objects, missing fields
+  - All 10 tests passing
 
 ---
 

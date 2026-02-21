@@ -2929,6 +2929,99 @@ class OntologyGenerator:
             errors=list(result.errors),
         )
 
+    def filter_by_confidence(
+        self,
+        result: "EntityExtractionResult",
+        threshold: float = 0.5,
+    ) -> Dict[str, Any]:
+        """Filter extraction result by confidence threshold with detailed stats.
+
+        This is a convenience wrapper around :meth:`EntityExtractionResult.filter_by_confidence`
+        that provides additional statistics and logging.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`to filter.
+            threshold: Minimum confidence score (0–1) to keep. Default: 0.5.
+
+        Returns:
+            A dictionary containing:
+                - ``result`` (:class:`EntityExtractionResult`): Filtered result
+                - ``stats`` (dict): Detailed filtering statistics including:
+                    - ``original_entity_count``: Number of entities before filtering
+                    - ``filtered_entity_count``: Number of entities after filtering
+                    - ``removed_entity_count``: Number of entities removed
+                    - ``original_relationship_count``: Number of relationships before filtering
+                    - ``filtered_relationship_count``: Number of relationships after filtering
+                    - ``removed_relationship_count``: Number of relationships removed
+                    - ``threshold``: The threshold value used
+                    - ``retention_rate``: Fraction of entities retained (0–1)
+                    - ``avg_confidence_before``: Average confidence before filtering
+                    - ``avg_confidence_after``: Average confidence after filtering
+
+        Raises:
+            ValueError: If threshold is not in [0, 1].
+
+        Example:
+            >>> result = generator.extract_entities(data, context)
+            >>> filtered_data = generator.filter_by_confidence(result, threshold=0.7)
+            >>> print(f"Retained {filtered_data['stats']['retention_rate']:.1%} of entities")
+            Retained 65.0% of entities
+        """
+        if not (0.0 <= threshold <= 1.0):
+            raise ValueError(f"threshold must be in [0, 1]; got {threshold}")
+
+        # Compute stats before filtering
+        original_entity_count = len(result.entities)
+        original_relationship_count = len(result.relationships)
+        avg_confidence_before = (
+            sum(e.confidence for e in result.entities) / original_entity_count
+            if original_entity_count > 0
+            else 0.0
+        )
+
+        # Perform filtering using EntityExtractionResult's method
+        filtered_result = result.filter_by_confidence(threshold)
+
+        # Compute stats after filtering
+        filtered_entity_count = len(filtered_result.entities)
+        filtered_relationship_count = len(filtered_result.relationships)
+        removed_entity_count = original_entity_count - filtered_entity_count
+        removed_relationship_count = original_relationship_count - filtered_relationship_count
+        retention_rate = (
+            filtered_entity_count / original_entity_count
+            if original_entity_count > 0
+            else 0.0
+        )
+        avg_confidence_after = (
+            sum(e.confidence for e in filtered_result.entities) / filtered_entity_count
+            if filtered_entity_count > 0
+            else 0.0
+        )
+
+        stats = {
+            "original_entity_count": original_entity_count,
+            "filtered_entity_count": filtered_entity_count,
+            "removed_entity_count": removed_entity_count,
+            "original_relationship_count": original_relationship_count,
+            "filtered_relationship_count": filtered_relationship_count,
+            "removed_relationship_count": removed_relationship_count,
+            "threshold": threshold,
+            "retention_rate": retention_rate,
+            "avg_confidence_before": avg_confidence_before,
+            "avg_confidence_after": avg_confidence_after,
+        }
+
+        self._log.info(
+            f"Filtered entities by confidence >= {threshold}: "
+            f"{filtered_entity_count}/{original_entity_count} entities retained "
+            f"({retention_rate:.1%})"
+        )
+
+        return {
+            "result": filtered_result,
+            "stats": stats,
+        }
+
     def generate_ontology(
         self,
         data: Any,
