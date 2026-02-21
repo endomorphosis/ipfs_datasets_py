@@ -980,3 +980,39 @@ class OntologyLearningAdapter:
         if not recs:
             return 0.0
         return sum(r.final_score for r in recs) / len(recs)
+
+    def domain_coverage(self) -> float:
+        """Return the fraction of distinct domain keys that have at least one
+        feedback record above 0.5.
+
+        A "domain key" is inferred from ``FeedbackRecord.domain`` if present,
+        otherwise all records are treated as belonging to the same implicit
+        domain.
+
+        Returns:
+            Float in [0.0, 1.0]; ``1.0`` when no domains can be inferred
+            (single implicit domain with any passing feedback), ``0.0`` when
+            no feedback recorded.
+        """
+        if not self._feedback:
+            return 0.0
+        domains = {getattr(r, "domain", "_default") for r in self._feedback}
+        covered = {
+            getattr(r, "domain", "_default")
+            for r in self._feedback if r.final_score > 0.5
+        }
+        if not domains:
+            return 0.0
+        return len(covered) / len(domains)
+
+    def volatility(self) -> float:
+        """Return the mean absolute difference between consecutive feedback scores.
+
+        Returns:
+            Mean absolute change; ``0.0`` when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        diffs = [abs(scores[i + 1] - scores[i]) for i in range(len(scores) - 1)]
+        return sum(diffs) / len(diffs)

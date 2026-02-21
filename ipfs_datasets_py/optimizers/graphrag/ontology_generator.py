@@ -4764,6 +4764,39 @@ class OntologyGenerator:
             return 0.0
         return sum(e.confidence for e in result.entities) / len(result.entities)
 
+    def confidence_std(self, result) -> float:
+        """Return the standard deviation of entity confidence scores.
+
+        Args:
+            result: :class:`EntityExtractionResult`.
+
+        Returns:
+            Float std; ``0.0`` when fewer than 2 entities.
+        """
+        if len(result.entities) < 2:
+            return 0.0
+        scores = [e.confidence for e in result.entities]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        return variance ** 0.5
+
+    def entity_type_distribution(self, result) -> dict:
+        """Return a dict mapping each entity type to its relative frequency.
+
+        Args:
+            result: :class:`EntityExtractionResult`.
+
+        Returns:
+            Dict of ``{type: fraction}``; empty dict when no entities.
+        """
+        if not result.entities:
+            return {}
+        counts: dict = {}
+        for e in result.entities:
+            counts[e.type] = counts.get(e.type, 0) + 1
+        total = len(result.entities)
+        return {t: c / total for t, c in counts.items()}
+
 
 __all__ = [
     'OntologyGenerator',

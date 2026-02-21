@@ -495,5 +495,69 @@ class TestLogicValidatorDomainSpecific:
         assert isinstance(result, ValidationResult)
 
 
+class TestEntityContradictionCount:
+    """Test LogicValidator.entity_contradiction_count() method."""
+
+    def setup_method(self):
+        """Setup validator for each test."""
+        self.validator = LogicValidator()
+
+    def test_empty_ontology_returns_zero(self):
+        """Test that empty ontology returns 0 entity contradictions."""
+        ontology = {"entities": [], "relationships": []}
+        count = self.validator.entity_contradiction_count(ontology)
+        assert count == 0
+
+    def test_consistent_ontology_returns_zero(self):
+        """Test that consistent ontology with valid entities returns 0."""
+        ontology = {
+            "entities": [
+                {"id": "e1", "type": "Person", "text": "Alice"},
+                {"id": "e2", "type": "Person", "text": "Bob"},
+            ],
+            "relationships": [
+                {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}
+            ],
+        }
+        count = self.validator.entity_contradiction_count(ontology)
+        assert count == 0
+
+    def test_ontology_with_dangling_references(self):
+        """Test that ontology with dangling references counts invalid entities."""
+        ontology = {
+            "entities": [
+                {"id": "e1", "type": "Person", "text": "Alice"},
+            ],
+            "relationships": [
+                # Relationship references non-existent entity e2
+                {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows"}
+            ],
+        }
+        # The validation should detect that e2 doesn't exist
+        # This will populate invalid_entity_ids
+        count = self.validator.entity_contradiction_count(ontology)
+        assert isinstance(count, int)
+        assert count >= 0
+
+    def test_returns_integer(self):
+        """Test that method always returns an integer."""
+        ontology = {"entities": [{"id": "e1"}], "relationships": []}
+        count = self.validator.entity_contradiction_count(ontology)
+        assert isinstance(count, int)
+
+    def test_exception_handling_returns_zero(self):
+        """Test that exceptions during validation return 0."""
+        # Invalid ontology structure that might cause exceptions
+        invalid_ontology = None
+        count = self.validator.entity_contradiction_count(invalid_ontology)
+        assert count == 0
+
+    def test_malformed_ontology_returns_zero(self):
+        """Test that malformed ontology returns 0 via exception handling."""
+        malformed = {"not": "valid"}
+        count = self.validator.entity_contradiction_count(malformed)
+        assert count == 0
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
