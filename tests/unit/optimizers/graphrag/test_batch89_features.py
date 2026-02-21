@@ -136,17 +136,17 @@ class TestMerge:
     def test_deduplicates_by_id(self):
         e = _make_entity("1", "A")
         r1 = _make_result(entities=[e])
-        r2 = _make_result(entities=[e])
+        r2 = _make_result(entities=[_make_entity("2", "a")])  # same text lowercased
         merged = r1.merge(r2)
         assert len(merged.entities) == 1
 
     def test_self_takes_priority(self):
         e1 = Entity(id="1", text="Alice", type="PERSON", confidence=0.9)
-        e2 = Entity(id="1", text="ALICE", type="ORG", confidence=0.5)
+        e2 = Entity(id="2", text="alice", type="ORG", confidence=0.5)  # same text
         r1 = _make_result(entities=[e1])
         r2 = _make_result(entities=[e2])
         merged = r1.merge(r2)
-        assert merged.entities[0].text == "Alice"
+        assert merged.entities[0].confidence == pytest.approx(0.9)
 
     def test_combines_relationships(self):
         rel1 = _make_rel("r1", "e1", "e2")

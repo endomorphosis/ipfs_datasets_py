@@ -1325,8 +1325,9 @@ class EntityExtractionResult:
     def merge(self, other: "EntityExtractionResult") -> "EntityExtractionResult":
         """Return a new result combining entities and relationships from both results.
 
-        Duplicate entity IDs are resolved by keeping the first occurrence
-        (``self`` takes priority over ``other``).
+        Duplicate entities are resolved by normalised text (lower-case); the
+        first occurrence (``self`` takes priority over ``other``) is kept.
+        Relationships are deduplicated by ID.
 
         Args:
             other: Another :class:`EntityExtractionResult` to merge with this one.
@@ -1339,9 +1340,9 @@ class EntityExtractionResult:
             >>> len(merged.entities) >= len(result_a.entities)
             True
         """
-        seen_entity_ids: set = {e.id for e in self.entities}
+        seen_texts: set = {e.text.lower() for e in self.entities}
         new_entities = list(self.entities) + [
-            e for e in other.entities if e.id not in seen_entity_ids
+            e for e in other.entities if e.text.lower() not in seen_texts
         ]
         seen_rel_ids: set = {r.id for r in self.relationships}
         new_rels = list(self.relationships) + [
@@ -1349,11 +1350,13 @@ class EntityExtractionResult:
         ]
         merged_confidence = (self.confidence + other.confidence) / 2.0
         merged_meta = {**other.metadata, **self.metadata}
+        merged_errors = list(self.errors) + [e for e in other.errors if e not in self.errors]
         return EntityExtractionResult(
             entities=new_entities,
             relationships=new_rels,
             confidence=merged_confidence,
             metadata=merged_meta,
+            errors=merged_errors,
         )
 
 
