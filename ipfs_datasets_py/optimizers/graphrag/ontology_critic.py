@@ -2108,6 +2108,22 @@ class OntologyCritic(BaseCritic):
         """
         return score_b.overall - score_a.overall
 
+    def above_threshold_count(self, scores: List["CriticScore"], threshold: float = 0.6) -> int:
+        """Return the count of scores with ``overall >= threshold``.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+            threshold: Minimum acceptable overall score.  Defaults to 0.6.
+
+        Returns:
+            Integer count of passing scores.
+
+        Example:
+            >>> critic.above_threshold_count([s1, s2, s3], threshold=0.7)
+            2
+        """
+        return sum(1 for s in scores if s.overall >= threshold)
+
     def evaluate_list(
         self,
         ontologies: List[Dict[str, Any]],

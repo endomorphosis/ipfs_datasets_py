@@ -624,6 +624,19 @@ class OntologyPipeline:
         """
         return len(self._run_history) > 0
 
+    def score_trend(self) -> List[float]:
+        """Return the sequence of ``overall`` scores across all runs.
+
+        Returns:
+            List of floats in chronological order.  Empty list before any
+            calls to :meth:`run`.
+
+        Example:
+            >>> pipeline.score_trend()
+            []
+        """
+        return [r.score.overall for r in self._run_history]
+
     def warmup(self, n_texts: int = 3) -> None:
         """Pre-warm the pipeline by running *n_texts* dummy single-word texts.
 

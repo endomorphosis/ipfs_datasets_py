@@ -1436,6 +1436,27 @@ class EntityExtractionResult:
             counts[bucket] += 1
         return counts
 
+    def sample_entities(self, n: int) -> List["Entity"]:
+        """Return up to *n* randomly sampled entities from this result.
+
+        Args:
+            n: Maximum number of entities to return.
+
+        Returns:
+            List of up to *n* :class:`Entity` objects chosen without
+            replacement.  If *n* >= len(entities), all entities are returned
+            (in shuffled order).
+
+        Example:
+            >>> sample = result.sample_entities(3)
+            >>> len(sample) <= 3
+            True
+        """
+        import random as _random
+        pool = list(self.entities)
+        _random.shuffle(pool)
+        return pool[:n]
+
 
 @dataclass
 class OntologyGenerationResult:

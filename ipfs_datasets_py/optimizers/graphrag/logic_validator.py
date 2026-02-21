@@ -1017,6 +1017,25 @@ class LogicValidator:
         """
         return self.count_contradictions(ontology)
 
+    def validate_and_report(self, ontology: Dict[str, Any]) -> str:
+        """Validate *ontology* and return a human-readable report in one call.
+
+        Combines :meth:`validate_ontology` and :meth:`format_report`.
+
+        Args:
+            ontology: Ontology dict to validate.
+
+        Returns:
+            Multi-line report string from :meth:`format_report`.
+
+        Example:
+            >>> report = validator.validate_and_report({"entities": [], "relationships": []})
+            >>> "CONSISTENT" in report
+            True
+        """
+        result = self.check_consistency(ontology)
+        return self.format_report(result)
+
     def format_report(self, result: "ValidationResult") -> str:
         """Produce a human-readable validation report from *result*.
 
