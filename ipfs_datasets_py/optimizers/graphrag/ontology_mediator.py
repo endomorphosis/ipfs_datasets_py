@@ -1540,6 +1540,35 @@ class OntologyMediator:
             return None
         return max(action_counts, key=lambda a: action_counts[a])
 
+    def feedback_count_by_action(self, action: str) -> int:
+        """Return how many times *action* appears in ``_action_counts``.
+
+        Args:
+            action: Action type string to look up.
+
+        Returns:
+            Integer count; 0 when the action has never been recorded.
+        """
+        return self._action_counts.get(action, 0)
+
+    def action_success_rate(self, action: str) -> float:
+        """Return the stored success rate for *action*.
+
+        Uses ``_action_success[action] / _action_count[action]`` when
+        available.
+
+        Args:
+            action: Action type string.
+
+        Returns:
+            Float in [0, 1]; 0.0 when no data is available for the action.
+        """
+        count = self._action_count.get(action, 0) if hasattr(self, "_action_count") else 0
+        success = self._action_success.get(action, 0.0) if hasattr(self, "_action_success") else 0.0
+        if count == 0:
+            return 0.0
+        return float(success) / count
+
 
 # Export public API
 __all__ = [

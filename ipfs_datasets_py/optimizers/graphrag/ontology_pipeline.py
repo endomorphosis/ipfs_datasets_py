@@ -1402,3 +1402,42 @@ class OntologyPipeline:
         scores = [r.score.overall for r in self._run_history]
         mean = sum(scores) / len(scores)
         return sum(1 for s in scores if s < mean)
+
+    def run_score_ewma(self, alpha: float = 0.3) -> list:
+        """Return the exponential weighted moving average of run overall scores.
+
+        Processes ``_run_history`` in chronological order.
+
+        Args:
+            alpha: Smoothing factor (0 < alpha <= 1).
+
+        Returns:
+            List of floats with same length as ``_run_history``; empty when no
+            runs have been recorded.
+        """
+        if not self._run_history:
+            return []
+        scores = [r.score.overall for r in self._run_history]
+        result = [scores[0]]
+        for s in scores[1:]:
+            result.append(alpha * s + (1.0 - alpha) * result[-1])
+        return result
+
+    def run_score_percentile(self, p: float = 50.0) -> float:
+        """Return the *p*-th percentile of run overall scores.
+
+        Uses linear interpolation.
+
+        Args:
+            p: Percentile in [0, 100].
+
+        Returns:
+            Float percentile; 0.0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = sorted(r.score.overall for r in self._run_history)
+        n = len(scores)
+        idx = (p / 100.0) * (n - 1)
+        lo, hi = int(idx), min(int(idx) + 1, n - 1)
+        return scores[lo] + (scores[hi] - scores[lo]) * (idx - lo)

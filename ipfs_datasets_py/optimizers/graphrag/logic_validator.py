@@ -2648,6 +2648,46 @@ class LogicValidator:
             return 0
         return sum(1 for e in entities if getattr(e, "id", None) not in connected)
 
+    def in_degree_distribution(self, ontology: Any) -> dict:
+        """Return a dict mapping each node to its in-degree (incoming relationship count).
+
+        Args:
+            ontology: Ontology with ``relationships`` list.
+
+        Returns:
+            Dict ``{node_id: int}``; empty dict when no relationships.
+        """
+        rels = getattr(ontology, "relationships", [])
+        distribution: dict = {}
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src and src not in distribution:
+                distribution[src] = 0
+            if tgt:
+                distribution[tgt] = distribution.get(tgt, 0) + 1
+        return distribution
+
+    def out_degree_distribution(self, ontology: Any) -> dict:
+        """Return a dict mapping each node to its out-degree (outgoing relationship count).
+
+        Args:
+            ontology: Ontology with ``relationships`` list.
+
+        Returns:
+            Dict ``{node_id: int}``; empty dict when no relationships.
+        """
+        rels = getattr(ontology, "relationships", [])
+        distribution: dict = {}
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if tgt and tgt not in distribution:
+                distribution[tgt] = 0
+            if src:
+                distribution[src] = distribution.get(src, 0) + 1
+        return distribution
+
 
 # Export public API
 __all__ = [
