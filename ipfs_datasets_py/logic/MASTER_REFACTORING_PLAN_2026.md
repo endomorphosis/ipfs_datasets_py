@@ -1039,7 +1039,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 |-----------|---------|----------------|----------------|
 | TDFOL Core | 91.5% pass | 95% pass | 97% pass |
 | CEC Native | 80-85% pass | 90% pass | 93% pass |
-| Integration | ~88% coverage | 88%+ ✅ | 90% |
+| Integration | ~90% coverage | 88%+ ✅ | 90% ✅ |
 | NL Processing | 75% pass | 85% pass | 90% pass |
 | ZKP (simulation) | 80% pass | 85% pass | 85% pass |
 | MCP Tools | 167+ tests | 200+ tests | 250+ tests |
@@ -1048,7 +1048,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Integration coverage 89% (7895 lines, 867 uncovered; 2436 tests passing). 88%+ milestone ✅ ACHIEVED. 89% milestone ✅ ACHIEVED. Remaining high-value targets: symbolic_logic_primitives.py 63% (~103 SymbolicAI-only lines; unreachable without symai), document_consistency_checker.py (ProofStatus.SATISFIABLE/UNSATISFIABLE do not exist in the enum — bug causing lines 473-474, 524-530 to be dead code), converters/__init__.py (circular import causes DeonticLogicConverter=None when test file imports domain.deontic_query_engine first), legal_symbolic_analyzer.py 67% (SymbolicAI-gated, requires symai). Next: target 90% — address remaining ~78 lines in legal_domain_knowledge (demonstrate fn), temporal_deontic_rag_store, caselaw_bulk_processor async methods, E2E pipeline tests.  
+**Next Action:** Integration coverage 90% ✅ ACHIEVED (7895 lines, 775 uncovered; 2478 tests passing). 90% milestone ACHIEVED. Bug fixes in session 20: ProofStep() step_number kwarg removed from prove_with_tableaux (shadowprover_bridge.py:386-392), ConversionContext target_jurisdiction→jurisdiction (caselaw_bulk_processor.py:383), dcec_parsing.parse_dcec_formula mocked for prove_with_cec coverage. Remaining hard-to-reach lines: symbolic_contracts.py 60% (pydantic ImportError paths require symai), legal_symbolic_analyzer.py 67% (SymbolicAI-gated), symbolic_fol_bridge.py 89% (SymbolicAI lines 28/131-225/323-584/717-725 all require symai), modal_logic_extension.py 89% (SymbolicAI-gated lines 278-436). Next targets: 91% — tdfol_cec_bridge ProofStep bug fix (lines 268-275 use step_number kwarg), caselaw_bulk_processor async _validate_unified_system/error paths, temporal_deontic_rag_store missing imports.  
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 19)  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 20)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)

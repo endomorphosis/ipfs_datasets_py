@@ -380,7 +380,7 @@ class CaselawBulkProcessor:
                     source_document_path=doc.file_path or "",
                     document_title=doc.title,
                     enable_temporal_analysis=True,
-                    target_jurisdiction=doc.jurisdiction,
+                    jurisdiction=doc.jurisdiction,
                     legal_domain=doc.legal_domains[0] if doc.legal_domains else "general"
                 )
                 
