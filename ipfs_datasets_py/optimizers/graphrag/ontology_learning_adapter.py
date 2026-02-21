@@ -1117,3 +1117,21 @@ class OntologyLearningAdapter:
             return 0.0
         std = math.sqrt(variance)
         return sum(((v - mean) / std) ** 4 for v in vals) / n - 3.0
+
+    def feedback_rolling_average(self, window: int = 5) -> list:
+        """Return a rolling average of ``final_score`` over a sliding window.
+
+        Args:
+            window: Size of the sliding window.
+
+        Returns:
+            List of float averages, same length as ``_feedback``.  Each
+            element is the mean of up to *window* preceding records
+            (including the current one).
+        """
+        result = []
+        for i, r in enumerate(self._feedback):
+            start = max(0, i - window + 1)
+            window_vals = [self._feedback[j].final_score for j in range(start, i + 1)]
+            result.append(sum(window_vals) / len(window_vals))
+        return result

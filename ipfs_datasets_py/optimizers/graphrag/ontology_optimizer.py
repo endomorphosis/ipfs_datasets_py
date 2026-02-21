@@ -2687,6 +2687,17 @@ class OntologyOptimizer:
         recent = self._history[-window:]
         return sum(e.average_score for e in recent) / len(recent)
 
+    def first_n_history(self, n: int) -> list:
+        """Return the first *n* history entries.
+
+        Args:
+            n: Number of entries to return from the start of history.
+
+        Returns:
+            List of up to *n* history entry objects.
+        """
+        return self._history[:n]
+
 
 # Export public API
 __all__ = [

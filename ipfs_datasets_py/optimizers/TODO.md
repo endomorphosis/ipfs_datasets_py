@@ -78,7 +78,8 @@ These should be started immediately when available:
   - Uses composite Hypothesis strategies (valid_entity, valid_extraction_result, valid_ontology_dict) for generating random, valid test inputs
 - [x] (P3) [graphrag] Add `OntologySession.elapsed_ms()` total wall-clock time getter
   - Done 2026-02-21: Added session-level timing tracking. Modified __init__ to initialize self.start_time (line 184), updated run() to set self.start_time at session start (line 191). Discovered elapsed_ms() method already exists (lines 387-408) and now fully functional. Returns milliseconds elapsed since session start; returns 0.0 if not started. 6 comprehensive unit tests added covering: before-run state, post-run tracking, runtime reflection, multiple calls (monotonic increase), type validation, and fractional precision. All 6 tests passing. File: tests/unit_tests/optimizers/graphrag/test_ontology_session.py::TestElapsedMs
-- [ ] (P3) [arch] Add `BaseOptimizer.dry_run()` method for validation without mutation
+- [x] (P3) [arch] Add `BaseOptimizer.dry_run()` method for validation without mutation
+  - Done 2026-02-21: Implemented dry_run() method in BaseOptimizer (common/base_optimizer.py, lines 284-338). Single-cycle execution (generate + critique + validate) without performing optimization. Useful for testing pipeline configuration and validating input data. Returns artifact, score, feedback, validity, and execution timing. Error handling via logging + exception propagation. 17 comprehensive unit tests added covering: basic functionality, return values, validation behavior, timing, error handling, non-mutation guarantee, multiple independent calls, documentation. All 17 tests passing. File: tests/unit/optimizers/common/test_base_optimizer_dry_run.py
 
 #### Medium Tasks (1-2 hours)
 - [ ] (P2) [api] Add comprehensive `ExtractionConfig` validation with clear error messages

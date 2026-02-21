@@ -2149,6 +2149,49 @@ class LogicValidator:
             dist[rtype] = dist.get(rtype, 0) + 1
         return dist
 
+    def average_path_length(self, ontology: dict) -> float:
+        """Return the mean shortest-path length between all reachable pairs.
+
+        Uses BFS from every entity as a source, collecting shortest-path
+        distances to all reachable targets.  The average is taken over all
+        (source, target) pairs where a path exists.
+
+        Args:
+            ontology: Dict with optional ``"entities"`` and ``"relationships"`` lists.
+
+        Returns:
+            Float mean; ``0.0`` when no reachable pairs exist.
+        """
+        entities = ontology.get("entities", [])
+        relationships = ontology.get("relationships", [])
+        all_ids = [e.get("id") for e in entities if e.get("id")]
+        if not all_ids:
+            return 0.0
+
+        adj: dict = {n: [] for n in all_ids}
+        for rel in relationships:
+            s = rel.get("subject_id") or rel.get("source_id")
+            o = rel.get("object_id") or rel.get("target_id")
+            if s and o and s in adj and o in adj:
+                adj[s].append(o)
+
+        total, count = 0, 0
+        for src in all_ids:
+            dist: dict = {src: 0}
+            queue = [src]
+            while queue:
+                node = queue.pop(0)
+                for nbr in adj[node]:
+                    if nbr not in dist:
+                        dist[nbr] = dist[node] + 1
+                        queue.append(nbr)
+            for tgt, d in dist.items():
+                if tgt != src:
+                    total += d
+                    count += 1
+
+        return total / count if count > 0 else 0.0
+
 
 # Export public API
 __all__ = [

@@ -3262,6 +3262,27 @@ class OntologyCritic(BaseCritic):
         """
         return sorted(self._DIMENSIONS, key=lambda d: getattr(score, d, 0.0))
 
+    def dimension_variance(self, scores: list, dim: str) -> float:
+        """Return the population variance of *dim* across a list of scores.
+
+        Args:
+            scores: Iterable of ``CriticScore`` objects.
+            dim: Dimension name (e.g. ``"completeness"``).
+
+        Returns:
+            Float population variance; ``0.0`` when fewer than 2 scores.
+
+        Raises:
+            AttributeError: If *dim* does not exist on ``CriticScore``.
+        """
+        vals = list(scores)
+        if len(vals) < 2:
+            return 0.0
+        dim_vals = [getattr(s, dim) for s in vals]
+        n = len(dim_vals)
+        mean = sum(dim_vals) / n
+        return sum((v - mean) ** 2 for v in dim_vals) / n
+
 
 # Export public API
 __all__ = [

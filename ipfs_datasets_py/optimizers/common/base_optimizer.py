@@ -352,3 +352,75 @@ class BaseOptimizer(ABC):
             'validation_enabled': self.config.validation_enabled,
             'metrics_enabled': self.config.metrics_enabled,
         }
+    
+    def dry_run(
+        self,
+        input_data: Any,
+        context: OptimizationContext,
+    ) -> Dict[str, Any]:
+        """Validate optimization setup without full optimization.
+        
+        Performs a single optimization cycle (generate + critique + validate)
+        to verify that the optimization pipeline is correctly configured
+        and can process the given input data. Useful for testing and validation.
+        
+        Args:
+            input_data: Input data to test
+            context: Optimization context
+            
+        Returns:
+            Dictionary with:
+            - artifact: Generated artifact
+            - score: Initial quality score
+            - valid: Whether artifact passed validation
+            - feedback: Initial critique feedback
+            - execution_time: Time in seconds
+            - execution_time_ms: Time in milliseconds
+            
+        Raises:
+            RuntimeError: If any step (generate, critique, validate) fails
+            ValueError: If input data is invalid
+        """
+        start_time = datetime.now()
+        
+        try:
+            # Generate initial artifact
+            artifact = self.generate(input_data, context)
+            
+            # Critique (without optimization)
+            score, feedback = self.critique(artifact, context)
+            
+            # Validate
+            valid = True
+            if self.config.validation_enabled:
+                valid = self.validate(artifact, context)
+            
+            execution_time = (datetime.now() - start_time).total_seconds()
+            execution_time_ms = execution_time * 1000.0
+            
+            _logger.info(
+                "dry_run completed session_id=%s domain=%s "
+                "score=%.4f valid=%s execution_time_ms=%.1f",
+                context.session_id,
+                context.domain,
+                score,
+                valid,
+                execution_time_ms,
+            )
+            
+            return {
+                'artifact': artifact,
+                'score': score,
+                'valid': valid,
+                'feedback': feedback,
+                'execution_time': execution_time,
+                'execution_time_ms': execution_time_ms,
+            }
+        except Exception as e:
+            _logger.error(
+                "dry_run failed session_id=%s domain=%s error=%s",
+                context.session_id,
+                context.domain,
+                str(e),
+            )
+            raise
