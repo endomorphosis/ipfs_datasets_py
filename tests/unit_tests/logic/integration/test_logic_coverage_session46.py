@@ -31,15 +31,6 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _new_loop():
-    """Run coroutine synchronously using a fresh event loop."""
-    loop = asyncio.new_event_loop()
-    try:
-        return loop
-    finally:
-        pass  # caller closes
-
-
 def _run(coro):
     loop = asyncio.new_event_loop()
     try:
@@ -470,7 +461,7 @@ class TestDeontologicalReasoningEngine:
 class TestLogicVerifier:
     """GIVEN LogicVerifier WHEN methods called THEN correct results returned."""
 
-    def test_init_no_symbaicai(self):
+    def test_init_no_symbolic_ai(self):
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
         v = LogicVerifier(use_symbolic_ai=False)
         assert v.fallback_enabled
