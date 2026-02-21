@@ -1043,12 +1043,12 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | NL Processing | 75% pass | 85% pass | 90% pass |
 | ZKP (simulation) | 80% pass | 85% pass | 85% pass |
 | MCP Tools | 167+ tests | 200+ tests | 250+ tests |
-| **Overall** | **~88%** | **~90%** | **~93%** |
+| **Overall** | **~89%** | **~90%** | **~93%** |
 
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Integration coverage 88% (7895 lines, 952 uncovered; 2380 tests passing). 88%+ milestone ✅ ACHIEVED. Remaining high-value targets: symbolic_logic_primitives.py 63% (~103 SymbolicAI-only lines; unreachable without symai), neurosymbolic_graphrag.py 84% (HAS_NEUROSYMBOLIC=True path: lines 29/122/128-144/195/271-277/282-283), neurosymbolic_api.py 93% (lines 121-122/131-132/179-181/275/277/365-366), reasoning_coordinator 97% (lines 133-135 ImportError handler now covered by sys.modules hack), hybrid_confidence 98% (depth branches 203/205 now covered). Next: E2E pipeline tests, TDFOL NL tests (69 spaCy failures deferred).  
+**Next Action:** Integration coverage 89% (7895 lines, 867 uncovered; 2436 tests passing). 88%+ milestone ✅ ACHIEVED. 89% milestone ✅ ACHIEVED. Remaining high-value targets: symbolic_logic_primitives.py 63% (~103 SymbolicAI-only lines; unreachable without symai), document_consistency_checker.py (ProofStatus.SATISFIABLE/UNSATISFIABLE do not exist in the enum — bug causing lines 473-474, 524-530 to be dead code), converters/__init__.py (circular import causes DeonticLogicConverter=None when test file imports domain.deontic_query_engine first), legal_symbolic_analyzer.py 67% (SymbolicAI-gated, requires symai). Next: target 90% — address remaining ~78 lines in legal_domain_knowledge (demonstrate fn), temporal_deontic_rag_store, caselaw_bulk_processor async methods, E2E pipeline tests.  
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 18)  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 19)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
