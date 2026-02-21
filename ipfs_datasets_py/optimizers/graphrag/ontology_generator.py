@@ -108,6 +108,8 @@ class ExtractionConfig:
     min_entity_length: int = 2
     # Stopwords: entity texts matching any of these (case-insensitive) are skipped.
     stopwords: List[str] = field(default_factory=list)
+    # Whitelist of allowed entity types; empty list = allow all types.
+    allowed_entity_types: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a plain-dict representation (legacy compatibility)."""
@@ -122,6 +124,7 @@ class ExtractionConfig:
             "llm_fallback_threshold": self.llm_fallback_threshold,
             "min_entity_length": self.min_entity_length,
             "stopwords": list(self.stopwords),
+            "allowed_entity_types": list(self.allowed_entity_types),
         }
 
     @classmethod
@@ -138,6 +141,7 @@ class ExtractionConfig:
             llm_fallback_threshold=float(d.get("llm_fallback_threshold", 0.0)),
             min_entity_length=int(d.get("min_entity_length", 2)),
             stopwords=list(d.get("stopwords", [])),
+            allowed_entity_types=list(d.get("allowed_entity_types", [])),
         )
 
 
@@ -599,7 +603,30 @@ class OntologyGenerator:
 
         self._log.info(f"Inferred {len(relationships)} relationships")
         return relationships
-    
+
+    def extract_entities_from_file(
+        self,
+        filepath: str,
+        context: "OntologyGenerationContext",
+        encoding: str = "utf-8",
+    ) -> "EntityExtractionResult":
+        """Convenience wrapper: read *filepath* and call :meth:`extract_entities`.
+
+        Args:
+            filepath: Path to a plain-text file to read.
+            context: Extraction context (strategy, config, etc.).
+            encoding: File encoding (default: ``"utf-8"``).
+
+        Returns:
+            :class:`EntityExtractionResult` from the file contents.
+
+        Raises:
+            OSError: If the file cannot be read.
+        """
+        with open(filepath, encoding=encoding) as fh:
+            text = fh.read()
+        return self.extract_entities(text, context)
+
     def generate_ontology(
         self,
         data: Any,
@@ -780,7 +807,15 @@ class OntologyGenerator:
         except (TypeError, AttributeError):
             _stop = set()
 
+        # Resolve allowed_entity_types whitelist (empty = allow all)
+        try:
+            _allowed = set(getattr(ext_config, "allowed_entity_types", []) or []) if ext_config is not None else set()
+        except (TypeError, AttributeError):
+            _allowed = set()
+
         for pattern, ent_type in _PATTERNS:
+            if _allowed and ent_type not in _allowed:
+                continue
             confidence = 0.5 if ent_type == 'Concept' else 0.75
             for m in _re.finditer(pattern, text):
                 raw = m.group(0).strip()

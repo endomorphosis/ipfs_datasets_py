@@ -152,7 +152,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 ## Logic theorem optimizer backlog
 
 - [x] (P2) [logic] Implement `logic_theorem_optimizer/cli_wrapper.py` theorem proving entrypoint (even a minimal stub wired to an existing prover integration). — Done: full 567-line CLI with extract/prove/validate/optimize commands
-- [ ] (P2) [tests] Add a minimal end-to-end “theorem session” smoke test.
+- [x] (P2) [tests] Add a minimal end-to-end theorem session smoke test — Already done: test_theorem_session_smoke.py exists
 
 ---
 
@@ -514,16 +514,16 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] Add `ExtractionConfig.stopwords` — Done batch 45: case-insensitive filter in _extract_rule_based; to_dict/from_dict updated; 6 tests
 - [x] (P3) [graphrag] Add `OntologyCritic.compare_versions()` — Done batch 45: wraps compare_ontologies; adds delta_<dim> + delta_overall keys; 3 tests
 - [x] (P3) [graphrag] Add `OntologyOptimizer.get_history_summary()` — Done batch 45: count/mean/std/min/max/mean_improvement_rate/trend; 5 tests
-- [ ] (P3) [tests] Property-based tests for `OntologyCritic.evaluate_ontology()` — all dimension scores should be in [0.0, 1.0]
+- [x] (P3) [tests] Property-based tests for OntologyCritic scores in [0.0, 1.0] — Done batch 46: Hypothesis random ontologies (30 examples)
 - [ ] (P2) [obs] Add `analyze_batch_parallel()` structured JSON log (mirrors analyze_batch summary logging)
-- [ ] (P3) [graphrag] Add `ExtractionConfig.allowed_entity_types: list[str] = []` whitelist filter (empty = allow all)
+- [x] (P3) [graphrag] Add `ExtractionConfig.allowed_entity_types` whitelist — Done batch 46: enforced in _extract_rule_based; 6 tests
 - [ ] (P2) [docs] Add CHANGELOG.md for the optimizers sub-package documenting changes by batch
 - [x] (P3) [arch] Add `optimizers.common.exceptions` re-export — Already done: all 6 exception classes already in common/__init__.py
 - [x] (P3) [tests] Round-trip test: ExtractionConfig.to_dict() → from_dict() — Done batch 45: TestExtractionConfigRoundTrip
-- [ ] (P2) [graphrag] Add `OntologyGenerator.extract_entities_from_file()` convenience method (reads text file, calls extract_entities)
+- [x] (P2) [graphrag] Add `OntologyGenerator.extract_entities_from_file()` — Done batch 46: reads UTF-8 file, delegates to extract_entities; 3 tests
 - [x] (P3) [graphrag] Add `LogicValidator.clear_tdfol_cache()` method — Done batch 44: returns count removed
 - [x] (P3) [docs] Add `py.typed` marker to `optimizers/` — Done batch 45: created ipfs_datasets_py/optimizers/py.typed
-- [ ] (P2) [tests] Parametrized tests for `OntologyOptimizer.export_to_graphml()` with multi-entity/multi-rel ontologies
+- [x] (P2) [tests] Parametrized tests for export_to_graphml — Done batch 46: 5 sizes (0/1/3/10/20 entities) verified node/edge counts
 - [ ] (P3) [agentic] Add `ChaosOptimizer.simulate_memory_pressure()` method for memory threshold testing
 - [ ] (P2) [graphrag] Add `OntologyLearningAdapter.to_dict()` / `from_dict()` for state serialization
 - [ ] (P3) [tests] Hypothesis strategy for valid `ExtractionConfig` (generates random but valid configs)
