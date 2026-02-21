@@ -12,9 +12,12 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
+import logging
 
 from ...TDFOL.tdfol_core import Formula
 from ...TDFOL.tdfol_prover import ProofResult
+
+logger = logging.getLogger(__name__)
 
 
 class BridgeCapability(Enum):

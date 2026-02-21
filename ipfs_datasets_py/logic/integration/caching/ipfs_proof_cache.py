@@ -165,7 +165,7 @@ class IPFSProofCache(ProofCache):
             >>> cache.put("∀x P(x)", {"success": True}, ttl=7200, pin=True)
         """
         # Store in local cache first
-        super().put(formula, result, ttl)
+        super().set(formula, result)
         
         # Upload to IPFS if enabled
         if self.enable_ipfs and self.ipfs_client:

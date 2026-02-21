@@ -1,10 +1,26 @@
 # Master Refactoring and Improvement Plan — Logic Module
 
 **Date:** 2026-02-19  
-**Version:** 4.5 (updated 2026-02-21 session 50)  
+**Version:** 4.6 (updated 2026-02-21 session 51)  
 **Status:** Phases 1–3 COMPLETE · Phase 4 Ongoing  
 **Scope:** `ipfs_datasets_py/logic/` and `tests/unit_tests/logic/`  
 **MCP Integration:** `ipfs_datasets_py/mcp_server/tools/logic_tools/`
+
+**Session 51 Updates (2026-02-21):**
+- 5 production bug fixes in bridges + caching:
+  - `bridges/tdfol_shadowprover_bridge.py:162` — `self.prove_modal_formula(formula)` → `self.prove_modal(formula)` (method didn't exist)
+  - `bridges/tdfol_shadowprover_bridge.py:120` — `self.tdfol_to_modal_string(formula)` → `self._tdfol_to_modal_format(formula)` (method didn't exist)
+  - `bridges/base_prover_bridge.py` — added `import logging` + `logger = logging.getLogger(__name__)` (NameError in `validate_formula` exception handler)
+  - `caching/ipfs_proof_cache.py:168` — `super().put(formula, result, ttl)` → `super().set(formula, result)` (ProofCache has `set()` not `put()`)
+  - `bridges/external_provers.py` — no changes needed, `VampireProver`/`EProver` have no `.available` attribute (by design — they fail at prove-time)
+- 135 new GIVEN-WHEN-THEN tests covering:
+  - `bridges/base_prover_bridge.py`: 63% → **99%** (BridgeCapability, BridgeMetadata, BridgeRegistry — register, get, list_available, find_capable, select_best, validate_formula)
+  - `bridges/tdfol_cec_bridge.py`: 36% → **68%** (TDFOLCECBridge — init, metadata, caps, to_target, from_target, dcec_string_to_tdfol, prove, prove_with_cec unavailable/exception, get_applicable_rules; EnhancedTDFOLProver — init with/without CEC, prove; create_enhanced_prover)
+  - `bridges/tdfol_shadowprover_bridge.py`: 30% → **76%** (TDFOLShadowProverBridge — init, metadata, to_target unavailable-raises, from_target passthrough/unknown, _tdfol_to_modal_format always/eventually/obligation/permission, select_modal_logic temporal/deontic/plain, _get_prover K/S4/S5/D/T, prove, prove_modal unavailable/exception/explicit-type, prove_with_tableaux unavailable/any-status; ModalAwareTDFOLProver — init, _has_temporal/deontic, prove plain/no-modal-specialized; create_modal_aware_prover)
+  - `bridges/tdfol_grammar_bridge.py`: 29% → **75%** (TDFOLGrammarBridge — metadata, availability, prove-unknown, from_target-unknown, parse_NL with/without fallback/unavailable, _fallback_parse unavailable, batch_parse, analyze_parse_quality with/without expected, formula_to_NL unavailable/formal/casual, to_target unavailable-raises, _dcec_to_nl template fallback, _apply_casual_style; parse_nl/explain_formula convenience; NaturalLanguageTDFOLInterface — init, understand, explain, reason unparseable-premise/conclusion)
+  - `bridges/external_provers.py`: 62% → **73%** (VampireProver — init, _formula_to_tptp, prove-error/with-axioms, _extract_proof found/not-found, _extract_statistics; EProver — init, _formula_to_tptp, prove-error, _extract_statistics; ProverResult — minimal/full; ProverRegistry — init, register, get, list, prove_auto empty/unavailable/preferred, _is_better_result; get_prover_registry global)
+  - `caching/ipfs_proof_cache.py`: 32% → **55%** (IPFSProofCache — init disabled/counters, set/get local, get missing, get_statistics, close no-client; put-locally/with-pin-no-ipfs; sync/pin/unpin/get_from_ipfs disabled; mocked IPFS: put-uploads/with-pin, get-from-ipfs, get-from-ipfs-error, close-with-client/exception; get_global_ipfs_cache singleton)
+- logic/integration overall: **66% → 70%** (7573 lines, 2296 missed, 300 more lines covered)
 
 **Session 50 Updates (2026-02-21):**
 - 4 production bug fixes (wrong relative imports in interactive/ and demos/):
