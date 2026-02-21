@@ -1483,6 +1483,23 @@ class EntityExtractionResult:
         _random.shuffle(pool)
         return pool[:n]
 
+    def entity_by_id(self, eid: str) -> Optional["Entity"]:
+        """Return the first entity with the given ``id``, or ``None``.
+
+        Args:
+            eid: Entity ID to look up.
+
+        Returns:
+            Matching :class:`Entity`, or ``None`` if not found.
+
+        Example:
+            >>> result.entity_by_id("e1")
+        """
+        for e in self.entities:
+            if e.id == eid:
+                return e
+        return None
+
     def average_confidence(self) -> float:
         """Return the mean confidence across all entities.
 

@@ -646,3 +646,19 @@ class OntologyLearningAdapter:
             True
         """
         return sorted(self._feedback, key=lambda r: r.final_score, reverse=True)[:k]
+
+    def feedback_score_range(self) -> tuple:
+        """Return the ``(min, max)`` range of ``final_score`` across all feedback.
+
+        Returns:
+            Tuple ``(min_score, max_score)``; ``(0.0, 0.0)`` when no feedback
+            has been recorded.
+
+        Example:
+            >>> adapter.feedback_score_range()
+            (0.3, 0.9)
+        """
+        if not self._feedback:
+            return (0.0, 0.0)
+        scores = [r.final_score for r in self._feedback]
+        return (min(scores), max(scores))

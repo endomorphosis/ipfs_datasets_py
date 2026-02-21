@@ -1395,6 +1395,22 @@ class OntologyOptimizer:
         """
         return self.score_variance() ** 0.5
 
+    def score_range(self) -> tuple:
+        """Return the ``(min, max)`` range of average scores in history.
+
+        Returns:
+            Tuple ``(min_score, max_score)``; ``(0.0, 0.0)`` when history is
+            empty.
+
+        Example:
+            >>> optimizer.score_range()
+            (0.3, 0.9)
+        """
+        if not self._history:
+            return (0.0, 0.0)
+        scores = [r.average_score for r in self._history]
+        return (min(scores), max(scores))
+
     def improvement_rate(self) -> float:
         """Return the fraction of consecutive history pairs where score improved.
 

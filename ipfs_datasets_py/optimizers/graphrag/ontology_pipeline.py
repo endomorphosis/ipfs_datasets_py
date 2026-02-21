@@ -561,6 +561,20 @@ class OntologyPipeline:
         """
         return len(self._run_history)
 
+    def run_count(self) -> int:
+        """Return the total number of times :meth:`run` has been called.
+
+        Alias for :meth:`total_runs` for a more natural name.
+
+        Returns:
+            Non-negative integer count.
+
+        Example:
+            >>> pipeline.run_count()
+            0
+        """
+        return self.total_runs()
+
     def last_score(self) -> float:
         """Return the ``overall`` score from the most recent :meth:`run` call.
 

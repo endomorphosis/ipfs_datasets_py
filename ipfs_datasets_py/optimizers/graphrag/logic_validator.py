@@ -1088,6 +1088,24 @@ class LogicValidator:
         entities = ontology.get("entities", ontology.get("nodes", []))
         return len(entities) if isinstance(entities, (list, tuple)) else 0
 
+    def relationship_count(self, ontology: Dict[str, Any]) -> int:
+        """Return the number of relationships in *ontology*.
+
+        Supports both ``"relationships"`` and ``"edges"`` keys.
+
+        Args:
+            ontology: Ontology dict.
+
+        Returns:
+            Integer count of relationships/edges; 0 if neither key is present.
+
+        Example:
+            >>> validator.relationship_count({"relationships": [{"id": "r1"}]})
+            1
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        return len(rels) if isinstance(rels, (list, tuple)) else 0
+
     def clear_tdfol_cache(self) -> int:
         """Clear the TDFOL formula cache.
 
