@@ -3307,6 +3307,19 @@ class OntologyCritic(BaseCritic):
         return {d: getattr(after, d, 0.0) - getattr(before, d, 0.0)
                 for d in self._DIMENSIONS}
 
+    def all_dimensions_above(self, score, threshold: float = 0.5) -> bool:
+        """Return True if all dimensions of *score* exceed *threshold*.
+
+        Args:
+            score: A ``CriticScore`` instance.
+            threshold: Minimum value (exclusive). Defaults to ``0.5``.
+
+        Returns:
+            ``True`` when every dimension value is strictly greater than
+            *threshold*; ``False`` otherwise.
+        """
+        return all(getattr(score, d, 0.0) > threshold for d in self._DIMENSIONS)
+
 
 # Export public API
 __all__ = [

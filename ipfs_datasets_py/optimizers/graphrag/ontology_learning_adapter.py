@@ -1195,3 +1195,15 @@ class OntologyLearningAdapter:
         elif second_mean < first_mean:
             return "declining"
         return "stable"
+
+    def feedback_in_range(self, lo: float, hi: float) -> list:
+        """Return feedback records whose ``final_score`` falls in [lo, hi].
+
+        Args:
+            lo: Lower bound (inclusive).
+            hi: Upper bound (inclusive).
+
+        Returns:
+            List of ``FeedbackRecord`` objects with ``lo <= final_score <= hi``.
+        """
+        return [r for r in self._feedback if lo <= r.final_score <= hi]

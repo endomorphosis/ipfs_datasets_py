@@ -4933,6 +4933,20 @@ class OntologyGenerator:
             return 0.0
         return sum(e.confidence for e in result.entities) / len(result.entities)
 
+    def avg_relationship_count(self, result) -> float:
+        """Return average relationships per entity in *result*.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float ``len(relationships) / len(entities)``; ``0.0`` when no
+            entities.
+        """
+        if not result.entities:
+            return 0.0
+        return len(result.relationships) / len(result.entities)
+
 
 __all__ = [
     'OntologyGenerator',

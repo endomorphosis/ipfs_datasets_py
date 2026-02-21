@@ -2750,6 +2750,18 @@ class OntologyOptimizer:
             return None
         return max(self._history, key=lambda e: e.average_score)
 
+    def history_variance(self) -> float:
+        """Return the population variance of ``average_score`` across history.
+
+        Returns:
+            Float variance; ``0.0`` when history has fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        mean = sum(scores) / len(scores)
+        return sum((s - mean) ** 2 for s in scores) / len(scores)
+
 
 # Export public API
 __all__ = [
