@@ -260,7 +260,7 @@ optimizer = AgenticOptimizer(
 
 ## Next Steps
 
-- **API Reference:** See [README.md](README.md) for full API documentation
+- **API Reference:** See [../README.md](../README.md) for optimizer APIs and setup
 - **Security:** See [SECURITY_AUDIT.md](SECURITY_AUDIT.md) for security model
 - **Performance:** See [PERFORMANCE_TUNING.md](PERFORMANCE_TUNING.md) for optimization tips
 - **Examples:** See [../examples/](../examples/) for complete examples
@@ -268,5 +268,5 @@ optimizer = AgenticOptimizer(
 ---
 
 **Last updated:** 2026-02-20  
-**Test coverage:** 164 tests in `tests/unit/optimizers/agentic/`  
+**Tests:** Unit coverage lives under `tests/unit/optimizers/agentic/`  
 **Security:** InputSanitizer, TokenMasker, SandboxExecutor, CircuitBreaker, RetryHandler

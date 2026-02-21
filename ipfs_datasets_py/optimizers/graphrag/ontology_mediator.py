@@ -676,6 +676,29 @@ class OntologyMediator:
             raise ValueError(f"max_rounds must be >= 1; got {n}")
         self.max_rounds = n
 
+    def log_action_summary(self, top_n: Optional[int] = 10) -> None:
+        """Log the top action counts at INFO level.
+
+        Calls :meth:`get_action_summary` and emits one INFO log line
+        containing a comma-separated ranking of the most-used mediator
+        actions.
+
+        Args:
+            top_n: How many top entries to include in the log message.
+
+        Example:
+            >>> mediator.log_action_summary(top_n=5)
+            # logs: "Action summary: [1] refine_ontology=12, ..."
+        """
+        entries = self.get_action_summary(top_n=top_n)
+        if not entries:
+            self._log.info("Action summary: (no actions recorded)")
+            return
+        parts = ", ".join(
+            f"[{e['rank']}] {e['action']}={e['count']}" for e in entries
+        )
+        self._log.info("Action summary: %s", parts)
+
     def run_refinement_cycle(
         self,
         data: Any,

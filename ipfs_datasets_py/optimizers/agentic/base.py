@@ -6,7 +6,13 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
+
+# Import unified extraction config from common module
+from ipfs_datasets_py.optimizers.common.extraction_contexts import (
+    AgenticExtractionConfig,
+    OptimizationMethod as UnifiedOptimizationMethod,
+)
 
 
 class ChangeControlMethod(Enum):
@@ -29,12 +35,16 @@ class OptimizationMethod(Enum):
 class OptimizationTask:
     """Represents a task for optimization.
     
+    This now integrates with the unified AgenticExtractionConfig from the common
+    extraction_contexts module, supporting both typed config and legacy dict config.
+    
     Attributes:
         task_id: Unique identifier for the task
         description: Human-readable description of what to optimize
         target_files: List of files to optimize (empty = auto-detect)
         method: Optimization method to use
         priority: Task priority (0-100, higher = more important)
+        config: Optimization configuration (AgenticExtractionConfig or dict)
         constraints: Additional constraints (performance targets, test coverage, etc.)
         assigned_agent: ID of agent assigned to this task
         created_at: When the task was created
@@ -46,10 +56,16 @@ class OptimizationTask:
     target_files: List[Path] = field(default_factory=list)
     method: OptimizationMethod = OptimizationMethod.TEST_DRIVEN
     priority: int = 50
+    config: Union[AgenticExtractionConfig, Dict[str, Any]] = field(default_factory=lambda: AgenticExtractionConfig())
     constraints: Dict[str, Any] = field(default_factory=dict)
     assigned_agent: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.now)
     metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def __post_init__(self):
+        """Normalise config to AgenticExtractionConfig if passed as dict."""
+        if isinstance(self.config, dict):
+            self.config = AgenticExtractionConfig.from_dict(self.config)
 
 
 @dataclass

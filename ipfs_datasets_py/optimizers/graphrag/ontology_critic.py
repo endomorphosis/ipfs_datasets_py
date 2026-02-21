@@ -924,6 +924,97 @@ class OntologyCritic(BaseCritic):
             histogram[dim] = counts
         return histogram
 
+    def compare_with_baseline(
+        self,
+        ontology: Dict[str, Any],
+        baseline: Dict[str, Any],
+        context: Any,
+        source_data: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        """Compare *ontology* against a *baseline* and return the deltas.
+
+        Both ontologies are evaluated with :meth:`evaluate_ontology` and the
+        per-dimension deltas (``current - baseline``) are computed.
+
+        Args:
+            ontology: Candidate ontology to evaluate.
+            baseline: Reference ontology to compare against.
+            context: Evaluation context (passed straight through).
+            source_data: Optional source text / data.
+
+        Returns:
+            Dict with keys:
+
+            * ``"current_score"`` -- overall score for *ontology*.
+            * ``"baseline_score"`` -- overall score for *baseline*.
+            * ``"delta"`` -- ``current_score - baseline_score``.
+            * ``"dimension_deltas"`` -- dict of per-dimension deltas.
+            * ``"improved"`` -- True if delta > 0.
+
+        Example:
+            >>> cmp = critic.compare_with_baseline(new_ont, old_ont, ctx)
+            >>> cmp["improved"]  # True if new is better
+            True
+        """
+        current = self.evaluate_ontology(ontology, context, source_data)
+        baseline_score = self.evaluate_ontology(baseline, context, source_data)
+        dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        dimension_deltas: Dict[str, float] = {
+            d: round(getattr(current, d) - getattr(baseline_score, d), 6) for d in dims
+        }
+        delta = round(current.overall - baseline_score.overall, 6)
+        return {
+            "current_score": current.overall,
+            "baseline_score": baseline_score.overall,
+            "delta": delta,
+            "dimension_deltas": dimension_deltas,
+            "improved": delta > 0,
+        }
+
+    def summarize_batch_results(
+        self,
+        batch_result: List[Dict[str, Any]],
+        context: Optional[Any] = None,
+        source_data: Optional[Any] = None,
+    ) -> List[str]:
+        """Return a one-line summary string for each ontology in *batch_result*.
+
+        Args:
+            batch_result: List of ontology dicts to summarise.
+            context: Optional shared evaluation context.  A minimal stub is
+                created if *None*.
+            source_data: Optional source text for evaluation.
+
+        Returns:
+            List of strings, one per ontology in the same order.
+
+        Example:
+            >>> lines = critic.summarize_batch_results([ont1, ont2], ctx)
+            >>> len(lines) == 2
+            True
+        """
+        if context is None:
+            from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
+                OntologyGenerationContext,
+            )
+            context = OntologyGenerationContext(
+                data_source="batch", data_type="text", domain="general"
+            )
+        summaries: List[str] = []
+        for i, ontology in enumerate(batch_result):
+            try:
+                score = self.evaluate_ontology(ontology, context, source_data)
+                entity_count = len(ontology.get("entities") or [])
+                line = (
+                    f"[{i}] entities={entity_count} overall={score.overall:.3f} "
+                    f"completeness={score.completeness:.3f} "
+                    f"consistency={score.consistency:.3f}"
+                )
+            except Exception as exc:  # pragma: no cover
+                line = f"[{i}] ERROR: {exc}"
+            summaries.append(line)
+        return summaries
+
     def evaluate_with_rubric(
         self,
         ontology: Dict[str, Any],

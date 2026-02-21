@@ -112,7 +112,14 @@ Each optimizer module implements domain-specific logic:
 │   ├── ontology_optimizer.py          # Improve ontologies
 │   ├── ontology_session.py            # Session lifecycle
 │   ├── ontology_harness.py            # Batch orchestrator
-│   ├── query_optimizer.py             # Query optimization (249 KB, largest module)
+│   ├── query_optimizer.py             # Query optimization (compat entrypoint)
+│   ├── query_planner.py               # Query planning (GraphRAGQueryOptimizer)
+│   ├── query_unified_optimizer.py     # UnifiedGraphRAGQueryOptimizer
+│   ├── query_stats.py                 # GraphRAGQueryStats
+│   ├── query_metrics.py               # QueryMetricsCollector
+│   ├── query_visualizer.py            # QueryVisualizer
+│   ├── query_rewriter.py              # QueryRewriter
+│   ├── query_budget.py                # QueryBudgetManager
 │   ├── cli_wrapper.py                 # Command-line interface
 │   └── [other domain-specific modules]
 │
@@ -137,8 +144,10 @@ Each optimizer module implements domain-specific logic:
 
 **Current integration**:
 - ✓ `common/` base classes exist and are available for import
-- ✓ Each optimizer module has its own implementations (not yet refactored to inherit from `common/` bases)
-- ⏳ Full inheritance hierarchy refactoring is deferred (high-effort, low-immediate-value)
+- ✓ `graphrag.OntologyCritic` and `logic_theorem_optimizer.LogicCritic` extend `BaseCritic`
+- ✓ `graphrag.MediatorState` extends `BaseSession` (round tracking + convergence metadata)
+- ✓ `graphrag.OntologyPipelineHarness` extends `BaseHarness` for single-session runs
+- ⏳ Other modules still use domain-specific session/harness code (batch harnesses remain standalone)
 
 ### Layer 3: Integration & Future Unification
 
@@ -226,39 +235,29 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
 class BaseOptimizer(ABC):
-    """Base class for all optimizers."""
-    
-    @abstractmethod
-    def generate(self, input_data: Any, context: Dict) -> Any:
-        """Generate initial artifact from input."""
-        pass
-    
-    @abstractmethod
-    def critique(self, artifact: Any, context: Dict) -> float:
-        """Evaluate artifact quality (0-1 score)."""
-        pass
-    
-    @abstractmethod
-    def optimize(self, artifact: Any, score: float, context: Dict) -> Any:
-        """Improve artifact based on critique."""
-        pass
-    
-    def run_session(self, input_data: Any, context: Dict) -> Dict:
-        """Run single optimization session."""
-        artifact = self.generate(input_data, context)
-        score = self.critique(artifact, context)
-        
-        for iteration in range(self.max_iterations):
-            if score >= self.target_score:
-                break
-            artifact = self.optimize(artifact, score, context)
-            score = self.critique(artifact, context)
-        
-        return {
-            'artifact': artifact,
-            'score': score,
-            'iterations': iteration + 1,
-        }
+  """Base class for all optimizers."""
+
+  @abstractmethod
+  def generate(self, input_data: Any, context: OptimizationContext) -> Any:
+    """Generate initial artifact from input."""
+
+  @abstractmethod
+  def critique(self, artifact: Any, context: OptimizationContext) -> Tuple[float, List[str]]:
+    """Evaluate artifact quality (score + feedback list)."""
+
+  @abstractmethod
+  def optimize(
+    self,
+    artifact: Any,
+    score: float,
+    feedback: List[str],
+    context: OptimizationContext,
+  ) -> Any:
+    """Improve artifact based on critique feedback."""
+
+  def run_session(self, input_data: Any, context: OptimizationContext) -> Dict[str, Any]:
+    """Run a full optimization session (generate → critique → optimize → validate)."""
+    ...
 ```
 
 ### BaseCritic Interface
@@ -292,45 +291,42 @@ class BaseCritic(ABC):
 
 ### BaseSession Interface
 
-```python
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from enum import Enum
+`BaseSession` is a concrete dataclass that tracks round-by-round scores and
+convergence rather than an abstract interface. It exposes helpers such as
+`start_round()`, `record_round()`, `best_score`, and `trend`.
 
-class SessionStatus(Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
+```python
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
 @dataclass
-class SessionResult:
-    """Standardized session result."""
-    session_id: str
-    status: SessionStatus
-    artifact: Any
-    score: float
-    iterations: int
-    metrics: Dict[str, Any]
-    error: Optional[str] = None
+class RoundRecord:
+  round_number: int
+  score: float
+  feedback: List[str] = field(default_factory=list)
+  artifact_snapshot: Optional[Any] = None
+  duration_ms: float = 0.0
+  metadata: Dict[str, Any] = field(default_factory=dict)
 
-class BaseSession(ABC):
-    """Base class for optimization sessions."""
-    
-    @abstractmethod
-    def start(self, input_data: Any, context: Dict) -> str:
-        """Start optimization session."""
-        pass
-    
-    @abstractmethod
-    def get_status(self, session_id: str) -> SessionStatus:
-        """Get session status."""
-        pass
-    
-    @abstractmethod
-    def get_result(self, session_id: str) -> SessionResult:
-        """Get session result."""
-        pass
+@dataclass
+class BaseSession:
+  session_id: str
+  domain: str = "general"
+  max_rounds: int = 10
+  target_score: float = 0.85
+  convergence_threshold: float = 0.01
+  rounds: List[RoundRecord] = field(default_factory=list)
+  converged: bool = False
+  metadata: Dict[str, Any] = field(default_factory=dict)
+
+  def start_round(self) -> int: ...
+  def record_round(self, score: float, feedback: Optional[List[str]] = None, **kwargs) -> RoundRecord: ...
+  @property
+  def current_round(self) -> int: ...
+  @property
+  def best_score(self) -> float: ...
+  @property
+  def trend(self) -> str: ...
 ```
 
 ## Integration Strategy
@@ -486,7 +482,7 @@ These components are candidates for shared infrastructure but are not yet implem
 
 ### Refactoring Opportunities
 
-- **query_optimizer.py in GraphRAG**: ~249 KB file; consider splitting into (planner.py, traversal.py, learning.py)
+- **GraphRAG query optimizer**: Split completed into focused modules (`query_planner.py`, `query_unified_optimizer.py`, `query_stats.py`, `query_metrics.py`, `query_visualizer.py`, `query_rewriter.py`, `query_budget.py`). Remaining refactoring opportunities are traversal heuristics and serialization helpers.
 - **LLM endpoint configuration**: Standardize across all modules (environment variables, config files, runtime overrides)
 - **Error handling contract**: Define standard exception hierarchy that all optimizers inherit
 - **Logging contract**: All optimizers should accept an optional logger for dependency injection
@@ -571,7 +567,14 @@ optimizers/
 │   ├── ontology_harness.py
 │   ├── ontology_mediator.py
 │   ├── ontology_templates.py
-│   ├── query_optimizer.py           # Large module (249 KB); candidate for refactoring
+│   ├── query_optimizer.py           # Compatibility entrypoint after split
+│   ├── query_planner.py
+│   ├── query_unified_optimizer.py
+│   ├── query_stats.py
+│   ├── query_metrics.py
+│   ├── query_visualizer.py
+│   ├── query_rewriter.py
+│   ├── query_budget.py
 │   ├── query_optimizer_minimal.py
 │   ├── logic_validator.py
 │   ├── prompt_generator.py
@@ -625,7 +628,7 @@ optimizers/
 - All optimizer modules are **functionally complete** and can run independently
 - Integration with `common/` base classes is deferred (see "Future Work")
 - Duplication exists but is manageable for current development velocity
-- Large modules (e.g., `query_optimizer.py` @ 249 KB) are candidates for future splitting
+- GraphRAG query optimizer split is complete; remaining large-file work focuses on traversal heuristics and serialization helpers
 
 
 ## Next Steps

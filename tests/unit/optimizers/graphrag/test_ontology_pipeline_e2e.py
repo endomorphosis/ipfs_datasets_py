@@ -19,6 +19,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import (
     OntologyMediator,
     MediatorState,
 )
+from ipfs_datasets_py.optimizers.common.base_session import BaseSession
 
 
 SAMPLE_TEXT = """
@@ -83,6 +84,7 @@ class TestOntologyPipelineE2E:
         )
         state = mediator.run_refinement_cycle(SAMPLE_TEXT, ctx)
         assert isinstance(state, MediatorState)
+        assert isinstance(state, BaseSession)
 
     def test_mediator_state_has_critic_scores(self, generator, critic, ctx):
         mediator = OntologyMediator(
@@ -114,6 +116,7 @@ class TestOntologyPipelineE2E:
         )
         state = mediator.run_refinement_cycle(SAMPLE_TEXT, ctx)
         assert len(state.refinement_history) > 0
+        assert state.current_round == len(state.refinement_history)
 
     def test_pipeline_entities_have_expected_fields(self, generator, ctx):
         ontology = generator.generate_ontology(SAMPLE_TEXT, ctx)

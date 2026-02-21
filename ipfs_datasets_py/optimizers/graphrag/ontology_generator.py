@@ -400,6 +400,21 @@ class ExtractionConfig:
         section = data.get("extraction_config", data)
         return cls.from_dict(section)
 
+    def to_json(self) -> str:
+        """Serialise this config to a JSON string.
+
+        Returns:
+            A compact JSON string representing all config fields.
+
+        Example:
+            >>> import json
+            >>> cfg2 = ExtractionConfig.from_dict(json.loads(cfg.to_json()))
+            >>> cfg2 == cfg
+            True
+        """
+        import json as _json
+        return _json.dumps(self.to_dict(), sort_keys=True)
+
     def scale_thresholds(self, factor: float) -> "ExtractionConfig":
         """Return a new config with confidence-related thresholds scaled by *factor*.
 
@@ -2335,6 +2350,43 @@ class OntologyGenerator:
                         errors=[f"Extraction error: {exc}"],
                     )
         return ordered  # type: ignore[return-value]
+
+    def extract_keyphrases(self, text: str, top_k: int = 10) -> List[str]:
+        """Extract the top-*k* keyphrases from *text*.
+
+        Uses a simple frequency-based heuristic: tokenise by whitespace,
+        normalise to lower-case, remove single-character tokens and common
+        English stop-words, count occurrences, and return the *top_k* most
+        frequent tokens.  This is intentionally lightweight and requires no
+        external dependencies.
+
+        Args:
+            text: Plain text to analyse.
+            top_k: Maximum number of keyphrases to return (default 10).
+
+        Returns:
+            List of keyphrase strings, highest-frequency first.
+
+        Example:
+            >>> kp = gen.extract_keyphrases("the cat sat on the mat cat cat", top_k=3)
+            >>> kp[0]
+            'cat'
+        """
+        _STOPWORDS = frozenset([
+            "the", "a", "an", "and", "or", "but", "in", "on", "at", "to",
+            "for", "of", "with", "by", "from", "is", "are", "was", "were",
+            "be", "been", "being", "have", "has", "had", "do", "does", "did",
+            "will", "would", "could", "should", "may", "might", "shall",
+            "not", "no", "it", "its", "this", "that", "these", "those",
+        ])
+        import re as _re
+        tokens = _re.findall(r"[A-Za-z][A-Za-z0-9'-]*", text.lower())
+        freq: Dict[str, int] = {}
+        for tok in tokens:
+            if len(tok) > 1 and tok not in _STOPWORDS:
+                freq[tok] = freq.get(tok, 0) + 1
+        sorted_tokens = sorted(freq, key=lambda t: (-freq[t], t))
+        return sorted_tokens[:top_k]
 
 
 __all__ = [

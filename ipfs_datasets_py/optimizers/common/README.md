@@ -248,6 +248,32 @@ class UnifiedGraphRAGOptimizer(BaseOptimizer):
         return (score.overall, feedback)
 ```
 
+#### GraphRAG ExtractionConfig: custom_rules
+
+```python
+from ipfs_datasets_py.optimizers.graphrag import (
+    OntologyGenerator,
+    OntologyGenerationContext,
+    ExtractionConfig,
+    ExtractionStrategy,
+    DataType,
+)
+
+config = ExtractionConfig(
+    custom_rules=[(r"\b(?:Widget|Gadget)\b", "Product")]
+)
+context = OntologyGenerationContext(
+    data_source="unit-test",
+    data_type=DataType.TEXT,
+    domain="general",
+    extraction_strategy=ExtractionStrategy.RULE_BASED,
+    config=config,
+)
+
+generator = OntologyGenerator(use_ipfs_accelerate=False)
+ontology = generator.generate_ontology("The Widget ships with a Gadget.", context)
+```
+
 ## Configuration
 
 ### OptimizerConfig
