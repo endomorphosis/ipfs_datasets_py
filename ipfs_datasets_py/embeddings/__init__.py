@@ -10,10 +10,31 @@ from .sparse_embedding_engine import (
     MockSparseEmbeddingService,
     get_default_sparse_service,
 )
+from .shard_embeddings_engine import (
+    shard_embeddings_by_dimension,
+    shard_embeddings_by_cluster,
+    merge_embedding_shards,
+)
+from .semantic_search_engine import (
+    semantic_search,
+    multi_modal_search,
+    hybrid_search,
+    search_with_filters,
+)
 
 __all__ = [
+    # sparse embedding
     "SparseModel",
     "SparseEmbedding",
     "MockSparseEmbeddingService",
     "get_default_sparse_service",
+    # shard engine
+    "shard_embeddings_by_dimension",
+    "shard_embeddings_by_cluster",
+    "merge_embedding_shards",
+    # semantic search engine
+    "semantic_search",
+    "multi_modal_search",
+    "hybrid_search",
+    "search_with_filters",
 ]

@@ -114,16 +114,26 @@ except ImportError:
     UnifiedConverter = None
     ConverterRegistry = None
 
+# Canonical FFmpeg editing/info engine functions
+from .ffmpeg_edit_engine import ffmpeg_cut, ffmpeg_splice, ffmpeg_concat  # noqa: E402
+from .ffmpeg_info_engine import ffmpeg_probe, ffmpeg_analyze  # noqa: E402
+
 __all__ = [
     # Root processors (production-ready)
     "YtDlpWrapper",
-    "FFmpegWrapper", 
+    "FFmpegWrapper",
     "MediaProcessor",
     "MediaUtils",
     "DiscordWrapper",
     "create_discord_wrapper",
     "EmailProcessor",
     "create_email_processor",
+    # Canonical FFmpeg engines
+    "ffmpeg_cut",
+    "ffmpeg_splice",
+    "ffmpeg_concat",
+    "ffmpeg_probe",
+    "ffmpeg_analyze",
     # Unified converter interface (Phase 9C)
     "UnifiedConverter",
     "ConverterRegistry",
