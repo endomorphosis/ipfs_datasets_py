@@ -607,18 +607,18 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [graphrag] Add `OntologyGenerator.extract_with_coref()` -- co-reference resolution pre-pass
 - [ ] (P2) [graphrag] Add `OntologyPipeline.run_async()` -- async coroutine wrapper around run()
 - [ ] (P3) [obs] Add structured JSON log at end of `analyze_batch_parallel()` with timing + scores
-- [ ] (P2) [tests] Hypothesis property test: ExtractionConfig round-trips through to_dict/from_dict
+- [x] (P2) [tests] Hypothesis property test: ExtractionConfig round-trips through to_dict/from_dict -- Done batch-61: 40 examples; 1 test
 - [ ] (P3) [graphrag] Add confidence decay over time -- entities not seen recently get lower confidence
 - [ ] (P2) [graphrag] Add `OntologyOptimizer.export_score_chart()` -- matplotlib line chart of score history
 - [ ] (P3) [graphrag] Add `OntologyMediator.get_recommendation_stats()` -- count unique recommendation phrases seen
-- [ ] (P2) [graphrag] Add `OntologyGenerator.extract_entities_with_spans()` -- return char offsets for each entity
+- [x] (P2) [graphrag] Add `OntologyGenerator.extract_entities_with_spans()` -- Done batch-61: str.find offset annotation; 5 tests
 - [ ] (P3) [tests] Add property tests for `OntologyMediator.refine_ontology()` using Hypothesis
-- [ ] (P2) [arch] Add `OntologyPipeline.clone()` -- deep copy a pipeline with fresh state
-- [ ] (P3) [graphrag] Add `CriticScore.from_dict()` classmethod -- inverse of to_dict()
+- [x] (P2) [arch] Add `OntologyPipeline.clone()` -- Done batch-61: fresh generator/critic/adapter, same settings; 7 tests
+- [x] (P3) [graphrag] Add `CriticScore.from_dict()` classmethod -- Done batch-61: nested+flat dict, round-trip; 8 tests
 - [x] (P2) [graphrag] Add `ExtractionConfig.to_yaml()` / `from_yaml()` -- Done batch-60: PyYAML round-trip; 8 tests
 - [ ] (P3) [graphrag] Add `OntologyOptimizer.best_ontology()` -- return ontology from highest-scoring history entry
 - [ ] (P2) [tests] Add negative tests for OntologyPipeline: empty domain, None data, very long text
 - [ ] (P3) [obs] Add `OntologyMediator.refine_ontology()` structured log of actions_applied per round
-- [ ] (P2) [graphrag] Add `LogicValidator.explain_contradictions()` -- human-readable contradiction explanations
+- [x] (P2) [graphrag] Add `LogicValidator.explain_contradictions()` -- Done batch-61: action labels + plain-English; 6 tests
 - [ ] (P3) [arch] Add `OntologyHarness.run()` integration test with real generator + critic (no mocks)
 - [x] (P2) [graphrag] Add `EntityExtractionResult.filter_by_type()` -- Done batch-60: prunes dangling relationships; 9 tests

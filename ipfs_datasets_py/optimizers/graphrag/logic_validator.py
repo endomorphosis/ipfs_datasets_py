@@ -771,6 +771,69 @@ class LogicValidator:
                     )
         return results  # type: ignore[return-value]
 
+    def explain_contradictions(
+        self,
+        ontology: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
+        """Return human-readable explanations for each detected contradiction.
+
+        Runs :meth:`check_consistency` and augments each contradiction string
+        with a structured explanation dict containing a plain-English
+        ``"explanation"`` and a suggested ``"action"``.
+
+        Args:
+            ontology: Ontology dict to analyse.
+
+        Returns:
+            List of dicts, one per contradiction, each with:
+
+            * ``"contradiction"`` -- original contradiction string.
+            * ``"explanation"`` -- plain-English description.
+            * ``"action"`` -- suggested fix action label.
+
+        Example:
+            >>> explanations = validator.explain_contradictions(ontology)
+            >>> for ex in explanations:
+            ...     print(ex["explanation"])
+        """
+        result = self.check_consistency(ontology)
+        explanations = []
+        for contradiction in result.contradictions:
+            c_lower = contradiction.lower()
+            if "dangling" in c_lower or "missing" in c_lower:
+                explanation = (
+                    f"A relationship references an entity ID that does not exist: {contradiction}. "
+                    "Remove the relationship or add the missing entity."
+                )
+                action = "remove_dangling_relationship"
+            elif "duplicate" in c_lower:
+                explanation = (
+                    f"Duplicate entity detected: {contradiction}. "
+                    "Merge duplicate entities to maintain a clean ontology."
+                )
+                action = "merge_duplicate_entities"
+            elif "self.loop" in c_lower or "self-loop" in c_lower or "source_id == target_id" in c_lower:
+                explanation = (
+                    f"A relationship points to itself: {contradiction}. "
+                    "Remove or redirect self-loop relationships."
+                )
+                action = "remove_self_loop"
+            elif "cycle" in c_lower:
+                explanation = (
+                    f"Circular dependency detected: {contradiction}. "
+                    "Break the cycle by removing one relationship in the loop."
+                )
+                action = "break_cycle"
+            else:
+                explanation = f"Logical inconsistency detected: {contradiction}."
+                action = "review_manually"
+            explanations.append({
+                "contradiction": contradiction,
+                "explanation": explanation,
+                "action": action,
+            })
+        return explanations
+
     def clear_tdfol_cache(self) -> int:
         """Clear the TDFOL formula cache.
 

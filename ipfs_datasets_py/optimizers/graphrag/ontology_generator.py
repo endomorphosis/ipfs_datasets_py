@@ -992,6 +992,54 @@ class OntologyGenerator:
         result = self.extract_entities(data, context)
         yield from result.entities
 
+    def extract_entities_with_spans(
+        self,
+        data: str,
+        context: "OntologyGenerationContext",
+    ) -> "EntityExtractionResult":
+        """Extract entities and annotate each with character-offset source spans.
+
+        Delegates to :meth:`extract_entities` and then searches for each
+        entity's ``text`` in *data* to attach a ``(start, end)``
+        ``source_span``.  Only the **first** occurrence is used.  Entities
+        whose text cannot be found in *data* retain their original
+        ``source_span`` (typically ``None``).
+
+        Args:
+            data: Raw input text string to extract from.
+            context: Extraction context.
+
+        Returns:
+            :class:`EntityExtractionResult` with :attr:`Entity.source_span`
+            populated where possible.
+
+        Example:
+            >>> result = generator.extract_entities_with_spans(text, ctx)
+            >>> for e in result.entities:
+            ...     if e.source_span:
+            ...         print(e.text, e.source_span)
+        """
+        import dataclasses as _dc
+
+        result = self.extract_entities(data, context)
+        annotated: List[Entity] = []
+        for ent in result.entities:
+            if ent.source_span is None and isinstance(data, str) and ent.text:
+                idx = data.find(ent.text)
+                if idx != -1:
+                    span: Optional[tuple] = (idx, idx + len(ent.text))
+                else:
+                    span = None
+                ent = _dc.replace(ent, source_span=span)
+            annotated.append(ent)
+        return EntityExtractionResult(
+            entities=annotated,
+            relationships=result.relationships,
+            confidence=result.confidence,
+            metadata=result.metadata,
+            errors=result.errors,
+        )
+
     def merge_provenance_report(
         self,
         results: List["EntityExtractionResult"],

@@ -187,6 +187,40 @@ class CriticScore:
             'metadata': self.metadata,
         }
 
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "CriticScore":
+        """Reconstruct a :class:`CriticScore` from a dictionary.
+
+        Accepts the format produced by :meth:`to_dict` (where dimension values
+        live under a ``"dimensions"`` sub-key) **or** a flat dict with
+        dimension names at the top level.
+
+        Args:
+            d: Dictionary with score data.
+
+        Returns:
+            A new :class:`CriticScore` instance.
+
+        Example:
+            >>> d = score.to_dict()
+            >>> restored = CriticScore.from_dict(d)
+            >>> restored.completeness == score.completeness
+            True
+        """
+        # Support both nested (to_dict format) and flat dicts
+        dims = d.get("dimensions", d)
+        return cls(
+            completeness=float(dims.get("completeness", 0.0)),
+            consistency=float(dims.get("consistency", 0.0)),
+            clarity=float(dims.get("clarity", 0.0)),
+            granularity=float(dims.get("granularity", 0.0)),
+            domain_alignment=float(dims.get("domain_alignment", 0.0)),
+            strengths=list(d.get("strengths", [])),
+            weaknesses=list(d.get("weaknesses", [])),
+            recommendations=list(d.get("recommendations", [])),
+            metadata=dict(d.get("metadata", {})),
+        )
+
     def __sub__(self, other: "CriticScore") -> "CriticScore":
         """Return a delta :class:`CriticScore` (``self - other``).
 

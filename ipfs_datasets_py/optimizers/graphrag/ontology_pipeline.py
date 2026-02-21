@@ -216,3 +216,28 @@ class OntologyPipeline:
         """
         self._log.info("Warming pipeline cache with reference data")
         self.run(reference_data, data_source=data_source, data_type=data_type, refine=False)
+
+    def clone(self) -> "OntologyPipeline":
+        """Return a deep copy of this pipeline with completely fresh state.
+
+        The clone shares the same configuration (``domain``, ``use_llm``,
+        ``max_rounds``) but gets brand-new generator, critic, mediator, and
+        adapter instances so runs against the clone don't pollute this
+        pipeline's internal state (caches, action counts, etc.).
+
+        Returns:
+            A new :class:`OntologyPipeline` with the same settings.
+
+        Example:
+            >>> pipeline = OntologyPipeline(domain="legal")
+            >>> pipeline.run("some text.", data_source="s1")
+            >>> fresh = pipeline.clone()
+            >>> fresh._adapter is not pipeline._adapter
+            True
+        """
+        return OntologyPipeline(
+            domain=self.domain,
+            use_llm=getattr(self._critic, "_use_llm", False),
+            max_rounds=self._mediator.max_rounds,
+            logger=self._log if self._log is not _logger else None,
+        )
