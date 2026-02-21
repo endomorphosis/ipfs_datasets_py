@@ -2596,6 +2596,58 @@ class LogicValidator:
         # leaf = in all_nodes but never a source
         return len(all_nodes - source_nodes)
 
+    def root_node_count(self, ontology: Any) -> int:
+        """Return the number of root nodes (no incoming relationships).
+
+        Args:
+            ontology: Ontology with ``relationships`` list; each item must have
+                ``source_id`` and ``target_id``.
+
+        Returns:
+            Integer count of nodes that appear only as sources (never as
+            targets).
+        """
+        rels = getattr(ontology, "relationships", [])
+        all_nodes: set = set()
+        target_nodes: set = set()
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src:
+                all_nodes.add(src)
+            if tgt:
+                all_nodes.add(tgt)
+                target_nodes.add(tgt)
+        return len(all_nodes - target_nodes)
+
+    def isolated_node_count(self, ontology: Any) -> int:
+        """Return the number of entities that have no relationships at all.
+
+        Requires the ontology to also expose an ``entities`` attribute.  Falls
+        back to 0 when ``entities`` is absent.
+
+        Args:
+            ontology: Ontology with optional ``entities`` list and
+                ``relationships`` list.
+
+        Returns:
+            Integer count of entities that appear in neither ``source_id`` nor
+            ``target_id`` of any relationship.
+        """
+        rels = getattr(ontology, "relationships", [])
+        connected: set = set()
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src:
+                connected.add(src)
+            if tgt:
+                connected.add(tgt)
+        entities = getattr(ontology, "entities", [])
+        if not entities:
+            return 0
+        return sum(1 for e in entities if getattr(e, "id", None) not in connected)
+
 
 # Export public API
 __all__ = [

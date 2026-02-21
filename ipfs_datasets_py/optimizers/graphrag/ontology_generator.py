@@ -5515,6 +5515,32 @@ class OntologyGenerator:
         """
         return [e for e in (result.entities or []) if e.confidence > threshold]
 
+    def entity_type_entropy(self, result: Any) -> float:
+        """Return the Shannon entropy of entity type distribution.
+
+        Higher entropy means types are more evenly distributed; lower entropy
+        means the result is dominated by one type.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float entropy in bits; 0.0 when no entities or all same type.
+        """
+        import math
+        entities = result.entities or []
+        if not entities:
+            return 0.0
+        from collections import Counter
+        counts = Counter(e.type for e in entities)
+        total = len(entities)
+        entropy = 0.0
+        for c in counts.values():
+            p = c / total
+            if p > 0:
+                entropy -= p * math.log2(p)
+        return entropy
+
 
 __all__ = [
     'OntologyGenerator',

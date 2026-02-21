@@ -3048,6 +3048,28 @@ class OntologyOptimizer:
             median = (scores[n // 2 - 1] + scores[n // 2]) / 2.0
         return sum(1 for e in self._history if e.average_score < median)
 
+    def score_trend_strength(self) -> float:
+        """Return the absolute linear trend magnitude normalised to history length.
+
+        Fits a linear regression to ``average_score`` vs. index and returns
+        the absolute slope.  Useful for measuring how strongly the optimizer
+        is improving or degrading over time.
+
+        Returns:
+            Non-negative float; 0.0 when fewer than 2 history entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        x_mean = (n - 1) / 2.0
+        y_mean = sum(scores) / n
+        numerator = sum((i - x_mean) * (scores[i] - y_mean) for i in range(n))
+        denominator = sum((i - x_mean) ** 2 for i in range(n))
+        if denominator == 0:
+            return 0.0
+        return abs(numerator / denominator)
+
 
 # Export public API
 __all__ = [

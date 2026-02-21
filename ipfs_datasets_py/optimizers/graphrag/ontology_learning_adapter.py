@@ -1403,3 +1403,39 @@ class OntologyLearningAdapter:
             if delta > 0:
                 return delta
         return 0.0
+
+    def feedback_volatility(self) -> float:
+        """Return a measure of feedback score volatility (mean absolute change).
+
+        Computes the average absolute difference between consecutive feedback
+        scores.
+
+        Returns:
+            Float; 0.0 when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        return sum(abs(scores[i] - scores[i - 1]) for i in range(1, len(scores))) / (len(scores) - 1)
+
+    def feedback_trend_direction(self) -> str:
+        """Return the overall trend direction of feedback scores.
+
+        Fits a simple linear slope to feedback scores in chronological order.
+
+        Returns:
+            ``"up"`` if scores are trending up, ``"down"`` if down, ``"flat"``
+            if fewer than 2 records or slope is zero.
+        """
+        if len(self._feedback) < 2:
+            return "flat"
+        scores = [r.final_score for r in self._feedback]
+        n = len(scores)
+        x_mean = (n - 1) / 2.0
+        y_mean = sum(scores) / n
+        numerator = sum((i - x_mean) * (scores[i] - y_mean) for i in range(n))
+        if numerator > 0:
+            return "up"
+        elif numerator < 0:
+            return "down"
+        return "flat"

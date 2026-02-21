@@ -3554,6 +3554,22 @@ class OntologyCritic(BaseCritic):
         )
         return improved / len(self._DIMENSIONS)
 
+    def dimension_weighted_sum(
+        self, score: "CriticScore", weights: dict = None
+    ) -> float:
+        """Return a weighted sum of all dimension scores.
+
+        Args:
+            score: :class:`CriticScore` to evaluate.
+            weights: Optional dict mapping dimension names to floats.  If
+                ``None``, uses the module-level ``DIMENSION_WEIGHTS``.
+
+        Returns:
+            Float weighted sum.
+        """
+        w = weights if weights is not None else DIMENSION_WEIGHTS
+        return sum(getattr(score, d, 0.0) * w.get(d, 1.0) for d in self._DIMENSIONS)
+
 
 # Export public API
 __all__ = [
