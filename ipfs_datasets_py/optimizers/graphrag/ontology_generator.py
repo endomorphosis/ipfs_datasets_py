@@ -305,6 +305,33 @@ class ExtractionConfig:
         d = _yaml.safe_load(yaml_str) or {}
         return cls.from_dict(d)
 
+    def diff(self, other: "ExtractionConfig") -> Dict[str, Any]:
+        """Return a mapping of fields that differ between ``self`` and *other*.
+
+        Only fields whose values differ are included.  Each entry maps a
+        field name to ``{"self": <self_value>, "other": <other_value>}``.
+
+        Args:
+            other: The :class:`ExtractionConfig` to compare against.
+
+        Returns:
+            Dict of differing fields; empty dict means the configs are equal.
+
+        Example:
+            >>> cfg1 = ExtractionConfig(confidence_threshold=0.5)
+            >>> cfg2 = ExtractionConfig(confidence_threshold=0.8)
+            >>> cfg1.diff(cfg2)
+            {'confidence_threshold': {'self': 0.5, 'other': 0.8}}
+        """
+        import dataclasses as _dc
+        result: Dict[str, Any] = {}
+        for f in _dc.fields(ExtractionConfig):
+            v_self = getattr(self, f.name)
+            v_other = getattr(other, f.name)
+            if v_self != v_other:
+                result[f.name] = {"self": v_self, "other": v_other}
+        return result
+
 
 @dataclass
 class OntologyGenerationContext:
@@ -543,6 +570,58 @@ class EntityExtractionResult:
             confidence=self.confidence,
             metadata=dict(self.metadata),
             errors=list(self.errors),
+        )
+
+    def merge(self, other: "EntityExtractionResult") -> "EntityExtractionResult":
+        """Merge *other* into this result, deduplicating by normalised entity text.
+
+        Entities whose normalised text (``lower().strip()``) already appears in
+        ``self.entities`` are **not** added from *other*; the existing entity is
+        kept.  Relationships from *other* that reference entity IDs that survive
+        in the merged set are included.
+
+        Args:
+            other: The :class:`EntityExtractionResult` to merge into this one.
+
+        Returns:
+            A new :class:`EntityExtractionResult` containing the merged content.
+
+        Example:
+            >>> merged = result_a.merge(result_b)
+            >>> len(merged.entities) <= len(result_a.entities) + len(result_b.entities)
+            True
+        """
+        seen_texts: dict = {e.text.lower().strip(): e.id for e in self.entities}
+        merged_entities = list(self.entities)
+        id_map: dict = {}  # old_id -> kept_id (for relationship remapping)
+
+        for e in other.entities:
+            norm = e.text.lower().strip()
+            if norm in seen_texts:
+                # Map old other entity ID to the existing entity's ID
+                id_map[e.id] = seen_texts[norm]
+            else:
+                seen_texts[norm] = e.id
+                merged_entities.append(e)
+                id_map[e.id] = e.id
+
+        kept_ids = {e.id for e in merged_entities}
+        # Keep self relationships as-is; add other relationships with remapped IDs
+        import dataclasses as _dc
+        merged_rels = list(self.relationships)
+        for r in other.relationships:
+            src = id_map.get(r.source_id, r.source_id)
+            tgt = id_map.get(r.target_id, r.target_id)
+            if src in kept_ids and tgt in kept_ids and src != tgt:
+                merged_rels.append(_dc.replace(r, source_id=src, target_id=tgt))
+
+        merged_confidence = (self.confidence + other.confidence) / 2.0
+        return EntityExtractionResult(
+            entities=merged_entities,
+            relationships=merged_rels,
+            confidence=merged_confidence,
+            metadata={**self.metadata, **other.metadata},
+            errors=list(self.errors) + list(other.errors),
         )
 
 
@@ -1691,8 +1770,60 @@ class OntologyGenerator:
         )
         return merged
 
+    def generate_synthetic_ontology(self, domain: str, n_entities: int = 5) -> Dict[str, Any]:
+        """Produce a sample ontology for a given *domain* without any input text.
 
-# Export public API
+        Generates a small, structurally valid ontology seeded with plausible
+        entity and relationship templates for the requested domain.  Useful for
+        testing, seeding warm-cache calls, and quick demonstrations.
+
+        Args:
+            domain: Domain label (e.g. ``"legal"``, ``"medical"``, ``"finance"``).
+            n_entities: Number of synthetic entities to generate (default: 5).
+
+        Returns:
+            Ontology dict with ``"entities"``, ``"relationships"``,
+            ``"metadata"``, and ``"domain"`` keys.
+
+        Example:
+            >>> ont = generator.generate_synthetic_ontology("legal", n_entities=3)
+            >>> len(ont["entities"]) == 3
+            True
+        """
+        _DOMAIN_TYPES = {
+            "legal": ["Party", "Contract", "Obligation", "Clause", "Court"],
+            "medical": ["Patient", "Doctor", "Condition", "Treatment", "Drug"],
+            "finance": ["Account", "Transaction", "Asset", "Liability", "Portfolio"],
+            "general": ["Entity", "Concept", "Property", "Action", "Event"],
+        }
+        entity_types = _DOMAIN_TYPES.get(domain.lower(), _DOMAIN_TYPES["general"])
+        entities = []
+        for i in range(n_entities):
+            etype = entity_types[i % len(entity_types)]
+            entities.append({
+                "id": f"syn_{domain}_{i}",
+                "type": etype,
+                "text": f"{etype}_{i}",
+                "properties": {"synthetic": True, "index": i},
+                "confidence": 0.9,
+            })
+
+        relationships = []
+        for i in range(min(n_entities - 1, 3)):
+            relationships.append({
+                "id": f"syn_rel_{i}",
+                "source_id": entities[i]["id"],
+                "target_id": entities[i + 1]["id"],
+                "type": "related_to",
+                "confidence": 0.8,
+            })
+
+        return {
+            "entities": entities,
+            "relationships": relationships,
+            "metadata": {"synthetic": True, "domain": domain, "n_entities": n_entities},
+            "domain": domain,
+        }
 __all__ = [
     'OntologyGenerator',
     'OntologyGenerationContext',

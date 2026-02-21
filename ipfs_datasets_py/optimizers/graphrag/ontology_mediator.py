@@ -562,6 +562,28 @@ class OntologyMediator:
             'Add more entity properties'
         """
         return dict(self._recommendation_counts)
+
+    def reset_state(self) -> None:
+        """Clear all internal mutable state accumulated across refinement calls.
+
+        Resets the following:
+
+        * ``_action_counts`` -- per-action invocation counters.
+        * ``_undo_stack`` -- ontology snapshots used by :meth:`undo_last_action`.
+        * ``_recommendation_counts`` -- recommendation phrase frequency table.
+
+        After calling this method the mediator behaves as if no refinements
+        have yet been applied.
+
+        Example:
+            >>> mediator.refine_ontology(ontology, score, ctx)
+            >>> mediator.reset_state()
+            >>> mediator.get_action_stats()
+            {}
+        """
+        self._action_counts.clear()
+        self._undo_stack.clear()
+        self._recommendation_counts.clear()
     
     def run_refinement_cycle(
         self,

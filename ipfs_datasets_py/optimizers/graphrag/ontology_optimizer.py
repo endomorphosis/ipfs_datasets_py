@@ -1121,6 +1121,42 @@ class OntologyOptimizer:
             self._history = self._history[-keep_last_n:]
         return n_removed
 
+    def reset_history(self) -> int:
+        """Clear all optimization history entries.
+
+        Removes every :class:`OptimizationReport` from ``_history``,
+        effectively resetting the optimizer to its initial empty state.
+
+        Returns:
+            Number of entries that were removed.
+
+        Example:
+            >>> optimizer.analyze_batch(sessions, domain_knowledge)
+            >>> removed = optimizer.reset_history()
+            >>> optimizer._history
+            []
+        """
+        n = len(self._history)
+        self._history.clear()
+        return n
+
+    def session_count(self) -> int:
+        """Return total number of sessions recorded across all history entries.
+
+        Sums ``metadata['num_sessions']`` for each
+        :class:`OptimizationReport` in ``_history``.  Falls back to 0 for
+        entries without that metadata key.
+
+        Returns:
+            Total session count as an integer.
+
+        Example:
+            >>> optimizer.analyze_batch(sessions, domain_knowledge)
+            >>> optimizer.session_count()
+            5
+        """
+        return sum(r.metadata.get("num_sessions", 0) for r in self._history)
+
     def compare_history(self) -> List[Dict[str, Any]]:
         """Compute a pairwise delta table over all history entries.
 

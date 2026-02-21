@@ -626,16 +626,16 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 ## Batch 63+ ideas (added automatically)
 
 - [ ] (P2) [graphrag] Add `OntologyCritic.evaluate_with_rubric()` -- pass a custom scoring rubric dict
-- [ ] (P3) [graphrag] Add `ExtractionConfig.diff(other)` -- show which fields differ between two configs
-- [ ] (P2) [graphrag] Add `OntologyGenerator.generate_synthetic_ontology(domain)` -- produce a sample ontology
+- [x] (P3) [graphrag] Add `ExtractionConfig.diff(other)` -- Done batch-64: self/other per-field dict; 5 tests
+- [x] (P2) [graphrag] Add `OntologyGenerator.generate_synthetic_ontology(domain)` -- Done batch-64: domain-typed entities + relations; 8 tests
 - [ ] (P3) [obs] Add `OntologyOptimizer.emit_summary_log()` -- log a one-line ASCII summary of current state
-- [ ] (P2) [graphrag] Add `EntityExtractionResult.merge(other)` -- merge two results, dedup by entity text
-- [ ] (P3) [graphrag] Add `OntologyMediator.reset_state()` -- clear action counts + undo stack
+- [x] (P2) [graphrag] Add `EntityExtractionResult.merge(other)` -- Done batch-64: dedup by normalised text, remap rel IDs; 8 tests
+- [x] (P3) [graphrag] Add `OntologyMediator.reset_state()` -- Done batch-64: clears action_counts, undo_stack, rec_counts; 5 tests
 - [ ] (P2) [tests] Add round-trip test: OntologyPipeline -> to_json -> from_json for PipelineResult
 - [ ] (P3) [graphrag] Add `OntologyCritic.calibrate_thresholds()` -- adjust dimension thresholds from history
 - [ ] (P2) [graphrag] Add `LogicValidator.filter_valid_entities()` -- return only entities passing consistency check
 - [ ] (P3) [arch] Add `OntologyPipeline.as_dict()` -- serialize pipeline config to a plain dict
-- [ ] (P2) [graphrag] Add `OntologyOptimizer.reset_history()` -- clear all history, confirm with guard
+- [x] (P2) [graphrag] Add `OntologyOptimizer.reset_history()` -- Done batch-64: returns removed count; 4 tests
 - [ ] (P3) [tests] Property test: Entity.to_dict() round-trips through from_dict equivalent
 - [ ] (P2) [graphrag] Add `OntologyGenerator.score_entity(entity)` -- single-entity confidence heuristic
 - [ ] (P3) [graphrag] Add `OntologyLearningAdapter.reset_feedback()` -- clear feedback history
@@ -644,4 +644,4 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [graphrag] Add `OntologyGenerator.batch_extract_with_spans()` -- per-doc span annotation
 - [ ] (P3) [arch] Add `OntologyPipeline.reset()` -- reset internal adapter + mediator state
 - [ ] (P2) [tests] Add fuzz test: refine_ontology with random recommendation strings
-- [ ] (P3) [graphrag] Add `OntologyOptimizer.session_count()` -- number of sessions across history
+- [x] (P3) [graphrag] Add `OntologyOptimizer.session_count()` -- Done batch-64: sums metadata[num_sessions]; 3 tests
