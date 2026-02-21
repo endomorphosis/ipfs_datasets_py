@@ -1483,6 +1483,33 @@ class EntityExtractionResult:
         _random.shuffle(pool)
         return pool[:n]
 
+    def average_confidence(self) -> float:
+        """Return the mean confidence across all entities.
+
+        Returns:
+            Mean ``confidence`` value; ``0.0`` for an empty result.
+
+        Example:
+            >>> result.average_confidence()
+            0.8
+        """
+        if not self.entities:
+            return 0.0
+        return sum(e.confidence for e in self.entities) / len(self.entities)
+
+    def distinct_types(self) -> List[str]:
+        """Return a sorted list of unique entity type strings.
+
+        Returns:
+            Sorted list of distinct ``type`` values across all entities.
+            Empty list when there are no entities.
+
+        Example:
+            >>> result.distinct_types()
+            ['ORG', 'PERSON']
+        """
+        return sorted({e.type for e in self.entities})
+
 
 @dataclass
 class OntologyGenerationResult:
@@ -3375,6 +3402,24 @@ class OntologyGenerator:
             >>> clean = gen.filter_result_by_confidence(result, min_conf=0.7)
         """
         return self.strip_low_confidence(result, threshold=min_conf)
+
+    def relationship_density(self, result: "EntityExtractionResult") -> float:
+        """Return the ratio of relationships to entities in *result*.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+
+        Returns:
+            Float ratio ``len(relationships) / len(entities)``.
+            Returns ``0.0`` when there are no entities.
+
+        Example:
+            >>> gen.relationship_density(result)
+            0.5
+        """
+        if not result.entities:
+            return 0.0
+        return len(result.relationships) / len(result.entities)
 
 
 __all__ = [

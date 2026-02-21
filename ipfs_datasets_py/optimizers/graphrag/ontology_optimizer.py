@@ -1381,6 +1381,20 @@ class OntologyOptimizer:
         mean = sum(scores) / len(scores)
         return sum((s - mean) ** 2 for s in scores) / len(scores)
 
+    def score_stddev(self) -> float:
+        """Return the population standard deviation of average scores in history.
+
+        Returns:
+            Square root of :meth:`score_variance`; ``0.0`` if fewer than 2
+            history entries.
+
+        Example:
+            >>> std = optimizer.score_stddev()
+            >>> std >= 0.0
+            True
+        """
+        return self.score_variance() ** 0.5
+
     def improvement_rate(self) -> float:
         """Return the fraction of consecutive history pairs where score improved.
 

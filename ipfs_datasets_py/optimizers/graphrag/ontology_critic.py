@@ -2195,6 +2195,25 @@ class OntologyCritic(BaseCritic):
             "count": n,
         }
 
+    def score_gap(self, scores: List["CriticScore"]) -> float:
+        """Return the difference between the highest and lowest ``overall`` values.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            ``max(overall) - min(overall)``; ``0.0`` for an empty or
+            single-element list.
+
+        Example:
+            >>> critic.score_gap([s_low, s_high])
+            0.4
+        """
+        if len(scores) < 2:
+            return 0.0
+        vals = [s.overall for s in scores]
+        return max(vals) - min(vals)
+
     def median_score(self, scores: List["CriticScore"]) -> float:
         """Return the median ``overall`` value across *scores*.
 
