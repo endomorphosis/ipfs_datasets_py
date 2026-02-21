@@ -403,6 +403,9 @@ def wrap_function_as_tool(*args, **kwargs):
                 setattr(function, "__mcp_tool_tags__", tags)
         except AttributeError:
             pass
+        return function
+
+    return decorator
 
 
 def wrap_function_with_metadata(function: Callable, 

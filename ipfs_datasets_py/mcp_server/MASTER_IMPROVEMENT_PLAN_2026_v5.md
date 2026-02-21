@@ -7,7 +7,7 @@
 
 **Phase Completion Summary:**
 - ✅ **Phase A** (Docs): `docs/tools/README.md` 49-cat table; `docs/api/tool-reference.md` 530L; `docs/adr/` 4 ADRs; **`performance-tuning.md` rewritten** with Phase 7 tuning guide (lazy load, schema cache, P2P pool, parallel dispatch, circuit breaker, benchmarks)
-- ✅ **Phase B** (Tests): **898 tests passing** (was 853 baseline); `tool_registry.py` 73%; `enterprise_api.py` 66%; `server_context.py` 90% (+40pp, session 29); `runtime_router.py` 83% (+33pp, session 29); **22 B2 test categories** (session 31: +logic_tools, development_tools, discord_tools, email_tools, software_engineering_tools) + B3 scenario tests + B4 property tests
+- ✅ **Phase B** (Tests): **898 tests passing** (was 853 baseline); `tool_registry.py` 73%; `enterprise_api.py` 66%; `server_context.py` 90% (+40pp, session 29); `runtime_router.py` 83% (+33pp, session 29); **27 B2 test categories** (session 31: +logic_tools, development_tools, discord_tools, email_tools, software_engineering_tools; session 32: +result_cache, p2p_connection_pool, llm_tools, p2p_workflow_tools, investigation_tools) + B3 scenario tests + B4 property tests
 - ✅ **Phase C** (Observability): `request_id` UUID4 in every `dispatch()` response; `/health/ready` + `/metrics` endpoints; `get_tool_latency_percentiles()` in `EnhancedMetricsCollector`
 - ✅ **Phase D** (Versioning): `ToolMetadata.schema_version`, `deprecated`, `deprecation_message` fields + `@tool_metadata()` params; `dispatch()` WARNING on deprecated tool
 - ✅ **Phase E** (Benchmarks): `benchmarks/` suite (4 files, 15 tests); `.github/workflows/mcp-benchmarks.yml` CI workflow
