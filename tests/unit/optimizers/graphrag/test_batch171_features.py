@@ -276,10 +276,14 @@ class TestPipelineScoreStats:
 
     def test_score_range_empty(self):
         p = _make_pipeline()
-        assert p.score_range() == pytest.approx(0.0)
+        lo, hi = p.score_range()
+        assert lo == pytest.approx(0.0)
+        assert hi == pytest.approx(0.0)
 
     def test_score_range_value(self):
         p = _make_pipeline()
         for v in [0.2, 0.8, 0.5]:
             _push_run(p, v)
-        assert p.score_range() == pytest.approx(0.6)
+        lo, hi = p.score_range()
+        assert lo == pytest.approx(0.2)
+        assert hi == pytest.approx(0.8)
