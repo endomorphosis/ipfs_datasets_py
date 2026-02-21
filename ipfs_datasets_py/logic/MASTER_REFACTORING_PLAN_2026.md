@@ -1,10 +1,22 @@
 # Master Refactoring and Improvement Plan — Logic Module
 
 **Date:** 2026-02-19  
-**Version:** 4.2 (updated 2026-02-21 session 46)  
+**Version:** 4.3 (updated 2026-02-21 session 47)  
 **Status:** Phases 1–3 COMPLETE · Phase 4 Ongoing  
 **Scope:** `ipfs_datasets_py/logic/` and `tests/unit_tests/logic/`  
 **MCP Integration:** `ipfs_datasets_py/mcp_server/tools/logic_tools/`
+
+**Session 47 Updates (2026-02-21):**
+- 116 new GIVEN-WHEN-THEN integration tests covering:
+  - `deontological_reasoning_utils.py`: 30% → **100%** (extract_keywords, calculate_text_similarity, are_entities_similar, are_actions_similar, normalize_entity/action, extract_conditions/exceptions)
+  - `legal_domain_knowledge.py`: 39% → **96%** (LegalDomainKnowledge — classify, extract_agents, extract_conditions, extract_temporal, identify_domain, extract_legal_entities, validate_deontic_extraction, demonstrate function)
+  - `deontic_query_engine.py`: 30% → **81%** (DeonticQueryEngine — init, load_rule_set, query_obligations/permissions/prohibitions, query_by_NL, check_compliance, find_conflicts, get_agent_summary, factory functions)
+  - `deontological_reasoning.py`: 75% → **85%** (conditional/exception extractors, _is_valid_entity_action, _calculate_confidence, _extract_context, _count_by_modality/entity, _analyze_conflicts, async query/corpus methods)
+  - `logic_verification.py`: 53% → **77%** (all fallback paths for consistency/entailment/proof/syntax/satisfiability/validity; SymbolicAI mock paths)
+  - `logic_verification_utils.py`: 85% → **95%** (verify_consistency/entailment/generate_proof convenience functions, create_logic_verifier factory, unbalanced closing paren edge case)
+  - `temporal_deontic_api.py`: 10% → **52%** (_parse_temporal_context all branches, check_document_consistency_from_parameters, query_theorems, add_theorem)
+- logic/integration overall: **46% → 52%** (7570 lines, 3610 missed, 480 more lines covered)
+- All 116 tests pass with 0 regressions
 
 **Session 46 Updates (2026-02-21):**
 - 3 bug fixes in reasoning/converters:
