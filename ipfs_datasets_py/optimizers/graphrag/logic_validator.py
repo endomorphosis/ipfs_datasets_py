@@ -2192,6 +2192,32 @@ class LogicValidator:
 
         return total / count if count > 0 else 0.0
 
+    def node_degree_histogram(self, ontology: dict) -> dict:
+        """Return a histogram of out-degrees for all entities.
+
+        Args:
+            ontology: Dict with optional ``"entities"`` and ``"relationships"`` lists.
+
+        Returns:
+            Dict mapping ``degree`` → ``count`` (number of entities with that
+            out-degree).  Entities with no outgoing edges are included with
+            degree ``0``.
+        """
+        entities = ontology.get("entities", [])
+        relationships = ontology.get("relationships", [])
+        all_ids = [e.get("id") for e in entities if e.get("id")]
+
+        out_degree = {eid: 0 for eid in all_ids}
+        for rel in relationships:
+            s = rel.get("subject_id") or rel.get("source_id")
+            if s and s in out_degree:
+                out_degree[s] += 1
+
+        histogram: dict = {}
+        for deg in out_degree.values():
+            histogram[deg] = histogram.get(deg, 0) + 1
+        return histogram
+
 
 # Export public API
 __all__ = [

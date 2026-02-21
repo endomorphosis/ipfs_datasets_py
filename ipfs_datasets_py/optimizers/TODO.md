@@ -82,8 +82,9 @@ These should be started immediately when available:
   - Done 2026-02-21: Implemented dry_run() method in BaseOptimizer (common/base_optimizer.py, lines 284-338). Single-cycle execution (generate + critique + validate) without performing optimization. Useful for testing pipeline configuration and validating input data. Returns artifact, score, feedback, validity, and execution timing. Error handling via logging + exception propagation. 17 comprehensive unit tests added covering: basic functionality, return values, validation behavior, timing, error handling, non-mutation guarantee, multiple independent calls, documentation. All 17 tests passing. File: tests/unit/optimizers/common/test_base_optimizer_dry_run.py
 
 #### Medium Tasks (1-2 hours)
+- [x] (P2) [graphrag] Implement `OntologyValidator.suggest_entity_merges()` — find candidate pairs for merging
+  - Done 2026-02-21: Created OntologyValidator class in ontology_validator.py with suggest_entity_merges() method. Analyzes entities to find deduplication candidates using string similarity, type matching, and confidence comparison. Returns sorted list of MergeSuggestion objects with evidence and reasoning. Supports threshold filtering and max_suggestions limit. 28 comprehensive unit tests covering: basic functionality, threshold behavior, max_suggestions limiting, evidence accuracy, error handling, string similarity, and real-world scenarios. All 28 tests passing. File: tests/unit/optimizers/graphrag/test_ontology_validator_merge_suggestions.py
 - [ ] (P2) [api] Add comprehensive `ExtractionConfig` validation with clear error messages
-- [ ] (P2) [graphrag] Implement `OntologyValidator.suggest_entity_merges()` — find candidate pairs for merging
 - [ ] (P2) [tests] Add end-to-end test: full pipeline (generate → critique → optimize → validate)
 - [ ] (P2) [obs] Add structured JSON logging to `OntologyMediator.refine_ontology()` per round
 - [ ] (P2) [graphrag] Add relationship type inference confidence scores (not just binary types)

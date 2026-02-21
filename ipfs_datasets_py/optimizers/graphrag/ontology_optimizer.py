@@ -2698,6 +2698,17 @@ class OntologyOptimizer:
         """
         return self._history[:n]
 
+    def score_above_threshold(self, threshold: float = 0.7) -> list:
+        """Return history entries whose ``average_score`` exceeds *threshold*.
+
+        Args:
+            threshold: Minimum score value (exclusive). Defaults to ``0.7``.
+
+        Returns:
+            List of history entries with ``average_score > threshold``.
+        """
+        return [e for e in self._history if e.average_score > threshold]
+
 
 # Export public API
 __all__ = [

@@ -3283,6 +3283,17 @@ class OntologyCritic(BaseCritic):
         mean = sum(dim_vals) / n
         return sum((v - mean) ** 2 for v in dim_vals) / n
 
+    def weakest_dimension(self, score) -> str:
+        """Return the name of the lowest-scoring dimension in *score*.
+
+        Args:
+            score: A ``CriticScore`` instance.
+
+        Returns:
+            Name of the dimension with the smallest value.
+        """
+        return min(self._DIMENSIONS, key=lambda d: getattr(score, d, 0.0))
+
 
 # Export public API
 __all__ = [
