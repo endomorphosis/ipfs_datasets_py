@@ -1598,6 +1598,19 @@ class EntityExtractionResult:
         """
         return [e for e in self.entities if low <= e.confidence <= high]
 
+    def relationship_types(self) -> List[str]:
+        """Return a sorted list of unique relationship type strings.
+
+        Returns:
+            Sorted list of distinct ``type`` values across all relationships.
+            Empty list when there are no relationships.
+
+        Example:
+            >>> result.relationship_types()
+            ['RELATED', 'WORKS_FOR']
+        """
+        return sorted({r.type for r in self.relationships})
+
 
 @dataclass
 class OntologyGenerationResult:

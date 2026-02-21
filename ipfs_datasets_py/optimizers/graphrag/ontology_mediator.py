@@ -978,6 +978,21 @@ class OntologyMediator:
         """
         return len(self._undo_stack)
 
+    def clear_stash(self) -> int:
+        """Clear all snapshots from the undo stack.
+
+        Returns:
+            Number of snapshots removed.
+
+        Example:
+            >>> mediator.stash({"entities": [], "relationships": []})
+            >>> mediator.clear_stash()
+            1
+        """
+        count = len(self._undo_stack)
+        self._undo_stack.clear()
+        return count
+
     def log_snapshot(self, label: str, ontology: Dict[str, Any]) -> None:
         """Store a labeled snapshot in the undo stack.
 

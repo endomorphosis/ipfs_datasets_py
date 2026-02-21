@@ -707,3 +707,17 @@ class OntologyLearningAdapter:
             >>> good = adapter.feedback_above(threshold=0.8)
         """
         return [r for r in self._feedback if r.final_score > threshold]
+
+    def feedback_mean(self) -> float:
+        """Return the mean ``final_score`` across all feedback records.
+
+        Returns:
+            Mean as a float; ``0.0`` when no feedback has been recorded.
+
+        Example:
+            >>> adapter.feedback_mean()
+            0.0
+        """
+        if not self._feedback:
+            return 0.0
+        return sum(r.final_score for r in self._feedback) / len(self._feedback)

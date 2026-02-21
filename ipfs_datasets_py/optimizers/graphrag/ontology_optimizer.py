@@ -1698,6 +1698,34 @@ class OntologyOptimizer:
         """
         return self._history[j].average_score - self._history[i].average_score
 
+    def best_entry(self) -> Optional[Any]:
+        """Return the history entry with the highest ``average_score``.
+
+        Returns:
+            :class:`OptimizationReport` (or compatible entry) with the max
+            average_score; ``None`` when history is empty.
+
+        Example:
+            >>> optimizer.best_entry()
+        """
+        if not self._history:
+            return None
+        return max(self._history, key=lambda r: r.average_score)
+
+    def worst_entry(self) -> Optional[Any]:
+        """Return the history entry with the lowest ``average_score``.
+
+        Returns:
+            :class:`OptimizationReport` (or compatible entry) with the min
+            average_score; ``None`` when history is empty.
+
+        Example:
+            >>> optimizer.worst_entry()
+        """
+        if not self._history:
+            return None
+        return min(self._history, key=lambda r: r.average_score)
+
     @property
     def history_length(self) -> int:
         """Return the number of :class:`OptimizationReport` entries in history.
