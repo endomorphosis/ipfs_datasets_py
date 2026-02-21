@@ -860,7 +860,7 @@ class AdversarialOptimizer(AgenticOptimizer):
             return solutions
         except Exception as e:
             # LLM generation or parsing failed - return empty list
-            self._log.warning(f"Failed to generate solutions for problem '{problem.description}': {e}")
+            self._log.warning(f"Failed to generate solutions for task '{task.description}': {e}")
             return []
 
     def benchmark_solution(self, solution: Solution, timeout: int = 5) -> BenchmarkResult:
