@@ -1575,6 +1575,83 @@ class LogicValidator:
                         degree[eid] += 1
         return sum(degree.values()) / len(degree)
 
+    def shortest_path_length(
+        self,
+        ontology: Dict[str, Any],
+        source: str,
+        target: str,
+    ) -> int:
+        """Return BFS shortest path length between *source* and *target* entities.
+
+        Treats all relationships as undirected edges.
+
+        Args:
+            ontology: Ontology dict.
+            source: Source entity id.
+            target: Target entity id.
+
+        Returns:
+            Number of hops (edges) in the shortest path.
+            Returns ``-1`` if no path exists or either id is not found.
+        """
+        if source == target:
+            return 0
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        adj: Dict[str, set] = {}
+        for rel in (rels if isinstance(rels, (list, tuple)) else []):
+            if isinstance(rel, dict):
+                src = rel.get("source_id")
+                tgt = rel.get("target_id")
+                if isinstance(src, str) and isinstance(tgt, str):
+                    adj.setdefault(src, set()).add(tgt)
+                    adj.setdefault(tgt, set()).add(src)
+        if source not in adj and source not in {e.get("id") for e in ontology.get("entities", []) if isinstance(e, dict)}:
+            return -1
+        visited = {source}
+        queue = [(source, 0)]
+        while queue:
+            node, dist = queue.pop(0)
+            for neighbour in adj.get(node, set()):
+                if neighbour == target:
+                    return dist + 1
+                if neighbour not in visited:
+                    visited.add(neighbour)
+                    queue.append((neighbour, dist + 1))
+        return -1
+
+    def reachable_from(self, ontology: Dict[str, Any], source: str) -> list:
+        """Return all entity ids reachable from *source* via BFS.
+
+        Treats all relationships as undirected edges.  The *source* itself is
+        NOT included in the result.
+
+        Args:
+            ontology: Ontology dict.
+            source: Starting entity id.
+
+        Returns:
+            Sorted list of reachable entity ids (excluding *source*).
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        adj: Dict[str, set] = {}
+        for rel in (rels if isinstance(rels, (list, tuple)) else []):
+            if isinstance(rel, dict):
+                src = rel.get("source_id")
+                tgt = rel.get("target_id")
+                if isinstance(src, str) and isinstance(tgt, str):
+                    adj.setdefault(src, set()).add(tgt)
+                    adj.setdefault(tgt, set()).add(src)
+        visited: set = {source}
+        queue = [source]
+        while queue:
+            node = queue.pop(0)
+            for neighbour in adj.get(node, set()):
+                if neighbour not in visited:
+                    visited.add(neighbour)
+                    queue.append(neighbour)
+        visited.discard(source)
+        return sorted(visited)
+
 
 # Export public API
 __all__ = [
