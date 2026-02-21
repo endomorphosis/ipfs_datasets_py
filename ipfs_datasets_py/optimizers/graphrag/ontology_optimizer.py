@@ -2115,6 +2115,106 @@ class OntologyOptimizer:
             return None
         return result
 
+    def trend_string(self, window: int = 5) -> str:
+        """Return a human-readable trend label based on recent score movement.
+
+        Looks at the last ``window`` history entries and classifies the trend
+        as one of ``"improving"``, ``"declining"``, ``"flat"``, or
+        ``"volatile"``.  Requires at least 2 entries; returns ``"n/a"`` when
+        fewer entries are available.
+
+        Args:
+            window: Number of most-recent entries to consider (default 5).
+
+        Returns:
+            One of ``"improving"``, ``"declining"``, ``"flat"``,
+            ``"volatile"``, or ``"n/a"``.
+        """
+        entries = self._history[-window:] if len(self._history) >= 2 else []
+        if len(entries) < 2:
+            return "n/a"
+        scores = [e.average_score for e in entries]
+        diffs = [scores[i + 1] - scores[i] for i in range(len(scores) - 1)]
+        up = sum(1 for d in diffs if d > 0.005)
+        down = sum(1 for d in diffs if d < -0.005)
+        if up > 0 and down > 0:
+            return "volatile"
+        if up > down:
+            return "improving"
+        if down > up:
+            return "declining"
+        return "flat"
+
+    def entries_above_score(self, threshold: float) -> list:
+        """Return history entries whose ``average_score`` exceeds *threshold*.
+
+        Args:
+            threshold: Minimum score (exclusive) to include.
+
+        Returns:
+            List of history entry objects (may be empty).
+        """
+        return [e for e in self._history if e.average_score > threshold]
+
+    def running_average(self, window: int) -> list:
+        """Return a list of window-averaged scores over history.
+
+        Each element is the mean of ``window`` consecutive history entries.
+        When ``window`` is larger than the history length, an empty list is
+        returned.  ``window`` must be >= 1.
+
+        Args:
+            window: Number of consecutive entries to average.
+
+        Returns:
+            List of float averages, length ``max(0, len(history) - window + 1)``.
+
+        Raises:
+            ValueError: If ``window`` < 1.
+        """
+        if window < 1:
+            raise ValueError("window must be >= 1")
+        scores = [e.average_score for e in self._history]
+        if len(scores) < window:
+            return []
+        return [
+            sum(scores[i : i + window]) / window
+            for i in range(len(scores) - window + 1)
+        ]
+
+    def score_quartiles(self) -> tuple:
+        """Return (Q1, Q2, Q3) of history average_scores.
+
+        Uses linear interpolation.  Returns ``(0.0, 0.0, 0.0)`` when history
+        is empty.
+
+        Returns:
+            Tuple ``(q1, q2, q3)`` of floats.
+        """
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        if n == 0:
+            return (0.0, 0.0, 0.0)
+
+        def _percentile(data, pct):
+            idx = (len(data) - 1) * pct / 100.0
+            lo = int(idx)
+            hi = lo + 1
+            if hi >= len(data):
+                return data[-1]
+            return data[lo] + (data[hi] - data[lo]) * (idx - lo)
+
+        return (_percentile(scores, 25), _percentile(scores, 50), _percentile(scores, 75))
+
+    def score_iqr(self) -> float:
+        """Return the interquartile range (Q3 - Q1) of history scores.
+
+        Returns:
+            Float IQR, or ``0.0`` when history has fewer than 2 entries.
+        """
+        q1, _, q3 = self.score_quartiles()
+        return q3 - q1
+
 
 # Export public API
 __all__ = [

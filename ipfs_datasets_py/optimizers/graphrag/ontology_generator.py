@@ -732,6 +732,21 @@ class Entity:
             last_seen=float(last_seen) if last_seen is not None else None,
         )
 
+    def to_json(self, **kwargs: Any) -> str:
+        """Serialise this entity to a JSON string.
+
+        All keyword arguments are forwarded to :func:`json.dumps`.
+
+        Args:
+            **kwargs: Extra arguments forwarded to :func:`json.dumps`
+                (e.g. ``indent``, ``sort_keys``, ``ensure_ascii``).
+
+        Returns:
+            JSON string representation.
+        """
+        import json as _json
+        return _json.dumps(self.to_dict(), **kwargs)
+
     def copy_with(self, **overrides: Any) -> "Entity":
         """Return a modified copy of this entity.
 
@@ -848,6 +863,62 @@ class Relationship:
     properties: Dict[str, Any] = field(default_factory=dict)
     confidence: float = 1.0
     direction: str = "unknown"
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialise this relationship to a plain dictionary.
+
+        Returns:
+            Dict with keys ``id``, ``source_id``, ``target_id``, ``type``,
+            ``properties``, ``confidence``, and ``direction``.
+        """
+        return {
+            "id": self.id,
+            "source_id": self.source_id,
+            "target_id": self.target_id,
+            "type": self.type,
+            "properties": dict(self.properties),
+            "confidence": self.confidence,
+            "direction": self.direction,
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "Relationship":
+        """Reconstruct a :class:`Relationship` from a plain dictionary.
+
+        Args:
+            d: Dictionary as returned by :meth:`to_dict`.
+
+        Returns:
+            A new :class:`Relationship` instance.
+
+        Raises:
+            KeyError: If ``id``, ``source_id``, ``target_id``, or ``type``
+                keys are missing.
+        """
+        return cls(
+            id=d["id"],
+            source_id=d["source_id"],
+            target_id=d["target_id"],
+            type=d["type"],
+            properties=dict(d.get("properties") or {}),
+            confidence=float(d.get("confidence", 1.0)),
+            direction=str(d.get("direction", "unknown")),
+        )
+
+    def to_json(self, **kwargs: Any) -> str:
+        """Serialise this relationship to a JSON string.
+
+        All keyword arguments are forwarded to :func:`json.dumps`.
+
+        Args:
+            **kwargs: Extra arguments forwarded to :func:`json.dumps`
+                (e.g. ``indent``, ``sort_keys``, ``ensure_ascii``).
+
+        Returns:
+            JSON string representation.
+        """
+        import json as _json
+        return _json.dumps(self.to_dict(), **kwargs)
 
 
 @dataclass(slots=True)

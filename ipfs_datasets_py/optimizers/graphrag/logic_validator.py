@@ -105,6 +105,19 @@ class ValidationResult:
     metadata: Dict[str, Any] = field(default_factory=dict)
     invalid_entity_ids: List[str] = field(default_factory=list)
     
+    def __repr__(self) -> str:
+        """Compact representation for debugging."""
+        status = "✓ consistent" if self.is_consistent else "✗ inconsistent"
+        details = []
+        if self.contradictions:
+            details.append(f"{len(self.contradictions)} contradictions")
+        if self.proofs:
+            details.append(f"{len(self.proofs)} proofs")
+        if self.invalid_entity_ids:
+            details.append(f"{len(self.invalid_entity_ids)} invalid entities")
+        detail_str = ", ".join(details) if details else "no issues"
+        return f"ValidationResult({status}, {self.prover_used}, {detail_str}, conf={self.confidence:.2f}, {self.time_ms:.0f}ms)"
+    
     def to_dict(self) -> Dict[str, Any]:
         """Convert validation result to dictionary."""
         return {
@@ -1195,6 +1208,96 @@ class LogicValidator:
         # Create deterministic representation
         ontology_str = json.dumps(ontology, sort_keys=True)
         return hashlib.sha256(ontology_str.encode()).hexdigest()
+
+    def all_entity_ids(self, ontology: Dict[str, Any]) -> List[str]:
+        """Return a list of all entity ``id`` strings in *ontology*.
+
+        Args:
+            ontology: Dict with ``"entities"`` list of entity dicts.
+
+        Returns:
+            List of id strings (may be empty).
+
+        Example:
+            >>> validator.all_entity_ids({"entities": [{"id": "e1"}, {"id": "e2"}]})
+            ['e1', 'e2']
+        """
+        entities = ontology.get("entities", ontology.get("nodes", []))
+        if not isinstance(entities, (list, tuple)):
+            return []
+        ids = []
+        for ent in entities:
+            if isinstance(ent, dict):
+                eid = ent.get("id")
+                if isinstance(eid, str) and eid:
+                    ids.append(eid)
+        return ids
+
+    def all_relationship_ids(self, ontology: Dict[str, Any]) -> List[str]:
+        """Return a list of all relationship ``id`` strings in *ontology*.
+
+        Args:
+            ontology: Dict with ``"relationships"`` list of relationship dicts.
+
+        Returns:
+            List of id strings (may be empty).
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if not isinstance(rels, (list, tuple)):
+            return []
+        ids = []
+        for rel in rels:
+            if isinstance(rel, dict):
+                rid = rel.get("id")
+                if isinstance(rid, str) and rid:
+                    ids.append(rid)
+        return ids
+
+    def entity_type_set(self, ontology: Dict[str, Any]) -> set:
+        """Return the set of distinct entity type strings in *ontology*.
+
+        Args:
+            ontology: Ontology dict with an ``"entities"`` list.
+
+        Returns:
+            Python ``set`` of type strings (may be empty).
+        """
+        entities = ontology.get("entities", ontology.get("nodes", []))
+        if not isinstance(entities, (list, tuple)):
+            return set()
+        types = set()
+        for ent in entities:
+            if isinstance(ent, dict):
+                t = ent.get("type")
+                if isinstance(t, str) and t:
+                    types.add(t)
+        return types
+
+    def dangling_references(self, ontology: Dict[str, Any]) -> List[str]:
+        """Return relationship endpoint IDs that are not in the entity list.
+
+        A *dangling reference* is a ``source_id`` or ``target_id`` in a
+        relationship whose value does not appear in the ``entities`` list.
+
+        Args:
+            ontology: Ontology dict.
+
+        Returns:
+            Sorted list of unique dangling reference id strings.
+        """
+        entity_ids = set(self.all_entity_ids(ontology))
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if not isinstance(rels, (list, tuple)):
+            return []
+        dangling: set = set()
+        for rel in rels:
+            if not isinstance(rel, dict):
+                continue
+            for key in ("source_id", "target_id"):
+                rid = rel.get(key)
+                if isinstance(rid, str) and rid and rid not in entity_ids:
+                    dangling.add(rid)
+        return sorted(dangling)
 
 
 # Export public API
