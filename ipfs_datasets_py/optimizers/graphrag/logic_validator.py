@@ -1106,6 +1106,17 @@ class LogicValidator:
         rels = ontology.get("relationships", ontology.get("edges", []))
         return len(rels) if isinstance(rels, (list, tuple)) else 0
 
+    def relationship_density(self, ontology: Dict[str, Any]) -> float:
+        """Return ``relationship_count / entity_count`` for *ontology*.
+
+        Returns:
+            Density as a float, or ``0.0`` when there are no entities.
+        """
+        n_entities = self.entity_count(ontology)
+        if n_entities == 0:
+            return 0.0
+        return self.relationship_count(ontology) / n_entities
+
     def has_contradictions(self, ontology: Dict[str, Any]) -> bool:
         """Return ``True`` if the ontology contains any contradictions.
 

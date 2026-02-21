@@ -1429,6 +1429,21 @@ class OntologyOptimizer:
         scores = [r.average_score for r in self._history]
         return (min(scores), max(scores))
 
+    def score_median(self) -> float:
+        """Return the median of ``average_score`` values in history.
+
+        Returns:
+            Median score, or ``0.0`` when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        vals = sorted(r.average_score for r in self._history)
+        n = len(vals)
+        mid = n // 2
+        if n % 2 == 1:
+            return vals[mid]
+        return (vals[mid - 1] + vals[mid]) / 2.0
+
     def convergence_rate(self, threshold: float = 0.01) -> float:
         """Return the fraction of consecutive history pairs where improvement < *threshold*.
 

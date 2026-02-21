@@ -3522,6 +3522,40 @@ class OntologyGenerator:
             return 0.0
         return len(result.relationships) / len(result.entities)
 
+    def group_entities_by_confidence_band(
+        self,
+        result: "EntityExtractionResult",
+        bands: List[float],
+    ) -> Dict[str, List["Entity"]]:
+        """Bucket entities by confidence using ascending threshold *bands*.
+
+        Labels are ``"<t0"``, ``"[t0,t1)"``, ... and ``">=t_last"``.
+        """
+        thresholds = sorted(float(b) for b in bands)
+        buckets: Dict[str, List["Entity"]] = {}
+        if not thresholds:
+            buckets["all"] = list(result.entities)
+            return buckets
+        labels = [f"<{thresholds[0]:g}"]
+        labels += [f"[{thresholds[i]:g},{thresholds[i+1]:g})" for i in range(len(thresholds) - 1)]
+        labels += [f">={thresholds[-1]:g}"]
+        for label in labels:
+            buckets[label] = []
+        for e in result.entities:
+            conf = e.confidence
+            if conf < thresholds[0]:
+                buckets[labels[0]].append(e)
+                continue
+            placed = False
+            for i in range(len(thresholds) - 1):
+                if thresholds[i] <= conf < thresholds[i + 1]:
+                    buckets[labels[i + 1]].append(e)
+                    placed = True
+                    break
+            if not placed:
+                buckets[labels[-1]].append(e)
+        return buckets
+
     def relationships_for_entity(
         self,
         result: "EntityExtractionResult",
@@ -3555,7 +3589,6 @@ __all__ = [
     'ExtractionStrategy',
     'DataType',
 ]
-
 
 
 

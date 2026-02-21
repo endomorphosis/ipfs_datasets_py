@@ -890,8 +890,9 @@ class OntologyCritic(BaseCritic):
             if progress_callback is not None:
                 try:
                     progress_callback(idx, total, score)
-                except Exception:
-                    pass  # never let a callback crash the batch
+                except Exception as e:
+                    # Never let a callback crash the batch
+                    self._log.warning(f"Progress callback failed at index {idx}: {e}")
 
         if not scores:
             return {
@@ -2071,6 +2072,19 @@ class OntologyCritic(BaseCritic):
             True
         """
         return all(s.is_passing(threshold) for s in scores)
+
+    def all_pass(self, scores: List["CriticScore"], threshold: float = 0.6) -> bool:
+        """Strict variant of :meth:`passes_all` using ``overall > threshold``.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+            threshold: Strict lower bound for ``overall``. Defaults to 0.6.
+
+        Returns:
+            ``True`` when every score has ``overall > threshold`` (or when
+            *scores* is empty), else ``False``.
+        """
+        return all(s.overall > threshold for s in scores)
 
     def score_range(self, scores: List["CriticScore"]) -> tuple:
         """Return a ``(min, max)`` tuple of ``overall`` values from *scores*.

@@ -545,6 +545,15 @@ class OntologyLearningAdapter:
         mean = self.mean_score()
         return sum((r.final_score - mean) ** 2 for r in self._feedback) / len(self._feedback)
 
+    def feedback_stddev(self) -> float:
+        """Return the population standard deviation of feedback final scores.
+
+        Returns:
+            Square root of :meth:`score_variance`, or ``0.0`` when fewer than
+            two feedback records exist.
+        """
+        return self.score_variance() ** 0.5
+
     def load_feedback_from_list(self, records: List["FeedbackRecord"]) -> int:
         """Bulk-load a list of :class:`FeedbackRecord` objects into this adapter.
 
