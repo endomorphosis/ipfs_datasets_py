@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.7.0  
+**Version:** 3.8.0  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-21 (session 30)  
-**Last Major Release:** v3.7.0 (_wikipedia_helpers 9→74%, core/types 85→100%, driver 86→96%, ipld_backend 89→93%, __init__ 88→100%; bug fix: _wikipedia_helpers Relationship kwarg; session 30)
+**Last Updated:** 2026-02-21 (session 31)  
+**Last Major Release:** v3.8.0 (_wikipedia_helpers 74→90%, srl modifier paths, formats CAR paths, expression_evaluator edge cases, jsonld/validation exception paths, distributed query error/dedup/streaming/filter paths; session 31)
 
 ---
 
@@ -18,10 +18,10 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 92% overall | Measured 2026-02-21 session 30; _wikipedia_helpers 74%, core/types 100%, driver 96%, ipld_backend 93%; **3,130 pass** (61 new, baseline 3,069 last env)
-| **Documentation** | ✅ Up to Date | Reflects v3.7.0 structure |
-| **Known Issues** | None | 18 bugs fixed (sessions 7-11, 18-19, 21-27, 30: _wikipedia_helpers Relationship kwarg); 0 failures (3,130 pass)
-| **Next Milestone** | v3.8.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
+| **Test Coverage** | 93% overall | Measured 2026-02-21 session 31; _wikipedia_helpers 90%, jsonld/validation 99%, formats 98%, distributed 98%; **3,163 pass** (59 new, baseline 3,104 this env)
+| **Documentation** | ✅ Up to Date | Reflects v3.8.0 structure |
+| **Known Issues** | None | 18 bugs fixed (sessions 7-11, 18-19, 21-27, 30); 0 failures (3,163 pass)
+| **Next Milestone** | v3.9.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
 
 ---
 
@@ -508,6 +508,33 @@ reasoning = reasoner.reason_across_documents(
 ---
 
 ## Version History
+
+### v3.8.0 (2026-02-21) - Coverage Boost Session 31 ✅
+
+**Summary:** Added 59 new GIVEN-WHEN-THEN tests across 7 modules; overall coverage **92%→93%** (+1pp, 935→879 misses, 56 more lines covered). Largest gain: `extraction/_wikipedia_helpers.py` **74%→90%** (+16pp), `jsonld/validation.py` **96%→99%** (+3pp). Notable: SRL modifier regex paths (Instrument/Location/Time/Cause/Result), CAR format fallback/no-blocks paths, dedup streaming, SchemaValidator exception paths, all without optional deps.
+
+**Test additions (59 new):**
+- `extraction/_wikipedia_helpers.py` (74% → **90%**, +16pp): `extract_from_wikipedia` network-exception-with-tracer/page-not-found-with-tracer/value-error-with-tracer/success-with-tracer; `validate_against_wikidata` no-wikidata-id-with-tracer/entity-not-in-kg-with-tracer/network-error-with-tracer/full-flow-with-tracer; `extract_and_validate_wikipedia_graph` success-with-tracer/entity-error-reraises/generic-error-with-tracer; `_get_wikidata_id` missing-search-key; `_get_wikidata_statements` None-valueLabel-raises-ValidationError/P31-filtered-P569-included-value_id
+- `extraction/srl.py` (84% → **84%**, +1 line): `_extract_heuristic_frames("walked")` → no-agent-no-patient `continue` at line 294; modifier regexes Instrument/Location/Time/Cause/Result (using sentences without trailing period to allow `$` anchor); `sentence_split=False` path; whitespace-only sentence skipped; `build_temporal_graph` OVERLAPS keyword (meanwhile) / PRECEDES keyword (then)
+- `migration/formats.py` (96% → **98%**, +2pp): JSON-Lines empty-line `continue` at line 877 + schema entry; `_builtin_save_car` ipld_car-missing raises ImportError; `_builtin_load_car` libipld-empty-blocks-falls-through / libipld-exception-falls-through / ipld_car-bytes-data-dag_cbor / ipld_car-dict-data / no-blocks-raises-ValueError
+- `core/expression_evaluator.py` (96% → **96%**, +1 line): `call_function("substring", ["hello", 6])` no-length arg → line 126; `call_function("substring", [42, 0])` non-string → line 127; `call_function("reverse/size", ...)` (FUNCTION_REGISTRY handles these — lines 153-163 are dead code); `evaluate_expression("reverse(toLower(\"hello\"))", {})` → nested parens exercise paren_depth +1/-1 at lines 206/208
+- `jsonld/validation.py` (96% → **99%**, +3pp): `HAVE_JSONSCHEMA=False` branch; `Draft7Validator.iter_errors` raising KnowledgeGraphError propagates / TypeError added to result / RuntimeError added via defensive fallback; `sh:and` scalar-dict wrapped in list / `sh:or` scalar-dict wrapped in list
+- `query/distributed.py` (96% → **98%**, +2pp): `execute_cypher` partition-exception recorded in errors; `execute_cypher_parallel` partition-exception recorded; `execute_cypher_streaming` dedup-filters-duplicates / no-dedup-returns-both / bad-partition-skipped; `_KGBackend.get_relationships` target_id filter; `_normalise_result` with `__dict__`-object / `__iter__`-raises-TypeError fallback; `_record_fingerprint` stable across key orderings
+- `query/knowledge_graph.py` (88% → **88%**, +0pp): IR no-manifest_cid ValueError; gremlin/semantic ImportError paths (module-level import unavailability); graphrag fallback import path
+
+**Key API facts learned this session:**
+- `_extract_heuristic_frames` modifier regexes use `(?:[,;]|$)` anchor — sentences must NOT end with `.` or period for `$` to match
+- `call_function("reverse/size", ...)` routes through FUNCTION_REGISTRY → lines 153-163 in string section are dead code
+- `evaluate_expression` nested function calls (e.g., `reverse(toLower("x"))`) exercise paren_depth tracking at lines 206/208
+- `FederatedQueryExecutor(DistributedGraph(...), dedup=True)` — dedup is set at construction, not per-call
+
+**Remaining untestable lines (require optional deps):**
+- `extractor.py` spaCy-gated lines (117-123, 170-189, 533-739)
+- `srl.py` spaCy-gated lines (366-419, 613-619)
+- `expression_evaluator.py` lines 153-163 (dead code — reverse/size handled by FUNCTION_REGISTRY)
+- `query/knowledge_graph.py` lines 131-132 (graphrag fallback — requires specific import timing)
+- `distributed.py` lines 751-752 (inner executor exception — never reached in practice with empty KG)
+- `ipld.py` 0% — deprecated legacy module requiring real IPFS infrastructure
 
 ### v3.7.0 (2026-02-21) - Coverage Boost Session 30 ✅
 
