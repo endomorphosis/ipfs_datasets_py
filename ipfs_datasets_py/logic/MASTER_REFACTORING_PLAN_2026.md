@@ -1,16 +1,26 @@
 # Master Refactoring and Improvement Plan — Logic Module
 
 **Date:** 2026-02-19  
-**Version:** 4.1 (updated 2026-02-21 session 45)  
+**Version:** 4.2 (updated 2026-02-21 session 46)  
 **Status:** Phases 1–3 COMPLETE · Phase 4 Ongoing  
 **Scope:** `ipfs_datasets_py/logic/` and `tests/unit_tests/logic/`  
 **MCP Integration:** `ipfs_datasets_py/mcp_server/tools/logic_tools/`
 
-**Session 45 Updates (2026-02-21):**
-- 3 import bug fixes: `document_consistency_checker.py` + `caselaw_bulk_processor.py` wrong import paths corrected (`from .deontic_logic_converter` → `from ..converters.deontic_logic_converter`; `from .proof_execution_engine` → `from ..reasoning.proof_execution_engine`)
-- 1 DeonticRuleSet bug fix: `caselaw_bulk_processor._build_unified_system` removed unsupported kwargs (`creation_date`, `source_documents`, `legal_domains`, `temporal_coverage`)
-- 99 new GIVEN-WHEN-THEN integration tests covering: `medical_theorem_framework.py` (0%→94%), `temporal_deontic_rag_store.py` (0%→84%), `document_consistency_checker.py` (3%→70%), `caselaw_bulk_processor.py` (0%→72%), `external_provers.py` (0%→62%), `prover_installer.py` (0%→41%)
-- logic/integration overall: **25% → 38%** (7569 lines, 4695 missed with full test suite)
+**Session 46 Updates (2026-02-21):**
+- 3 bug fixes in reasoning/converters:
+  - `deontological_reasoning_types.py:DeonticConflict` — added `id: str = ""` field (was missing; caused `conflict.id` AttributeError in `DeontologicalReasoningEngine.analyze_corpus_for_deontic_conflicts`)
+  - `deontological_reasoning.py:_check_statement_pair` — re-added `id=conflict_id` kwarg to `DeonticConflict(...)` constructor (now valid since field added above)
+  - `modal_logic_extension.py:_convert_to_fol` — fixed import `from .symbolic_fol_bridge` → `from ..symbolic_fol_bridge` (module is in integration root, not converters/)
+- 117 new GIVEN-WHEN-THEN integration tests covering:
+  - `deontological_reasoning.py` (DeonticExtractor, ConflictDetector, DeontologicalReasoningEngine) 0%→85%
+  - `deontological_reasoning_types.py` (DeonticModality, ConflictType, DeonticStatement, DeonticConflict) 0%→90%
+  - `deontological_reasoning_utils.py` (DeonticPatterns) 0%→80%
+  - `logic_verification.py` (LogicVerifier — all fallback paths) 0%→86%
+  - `logic_verification_types.py` / `logic_verification_utils.py` 0%→85%
+  - `deontic_logic_core.py` (DeonticFormula, DeonticRuleSet, DeonticLogicValidator, helpers) +15pp
+  - `modal_logic_extension.py` (AdvancedLogicConverter — all 5 convert paths + detect_logic_type) +20pp
+  - `logic_translation_core.py` (LeanTranslator, CoqTranslator, SMTTranslator) +15pp
+- logic/integration overall: **38% → 55%** (7569 lines, ~3400 missed with full test suite)
 
 > **This document is the single authoritative plan** for refactoring and improving the logic module.  
 > It synthesizes analysis of all 196 markdown files, 265 Python files, and 184+ test files.

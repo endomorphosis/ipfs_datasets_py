@@ -151,6 +151,7 @@ class DeonticConflict:
     explanation: str = ""
     resolution_suggestions: List[str] = field(default_factory=list)
     context_overlap: float = 0.0  # 0-1, how much context overlaps
+    id: str = ""  # Optional unique identifier for the conflict
 
 
 # Export all types
