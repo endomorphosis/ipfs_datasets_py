@@ -43,6 +43,7 @@ References:
 
 from __future__ import annotations
 
+import functools
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
@@ -567,6 +568,13 @@ class ExtractionConfig:
         import dataclasses as _dc
         return _dc.replace(self, confidence_threshold=threshold)
 
+    @staticmethod
+    @functools.lru_cache(maxsize=1)
+    def _default_values() -> tuple:
+        import dataclasses as _dc
+        default = ExtractionConfig()
+        return tuple(getattr(default, f.name) for f in _dc.fields(default))
+
     def is_default(self) -> bool:
         """Return ``True`` if this config has all default field values.
 
@@ -581,10 +589,8 @@ class ExtractionConfig:
             True
         """
         import dataclasses as _dc
-        default = ExtractionConfig()
-        return all(
-            getattr(self, f.name) == getattr(default, f.name)
-            for f in _dc.fields(self)
+        return self._default_values() == tuple(
+            getattr(self, f.name) for f in _dc.fields(self)
         )
 
     def merge(self, other: "ExtractionConfig") -> "ExtractionConfig":
@@ -1127,6 +1133,53 @@ class EntityExtractionResult:
             relationships=filtered_rels,
             confidence=self.confidence,
             metadata=dict(self.metadata),
+            errors=list(self.errors),
+        )
+
+    def filter_by_confidence(self, threshold: float = 0.5) -> "EntityExtractionResult":
+        """Return a new result containing only entities above a confidence threshold.
+
+        Relationships whose ``source_id`` or ``target_id`` no longer exists in
+        the filtered entity set are pruned from the result.
+
+        Args:
+            threshold: Minimum confidence score (0–1) to keep. Default: 0.5.
+
+        Returns:
+            A new :class:`EntityExtractionResult` with confidence-filtered entities
+            and pruned relationships.
+
+        Example:
+            >>> high_conf = result.filter_by_confidence(0.8)
+            >>> all(e.confidence >= 0.8 for e in high_conf.entities)
+            True
+        """
+        if not (0.0 <= threshold <= 1.0):
+            raise ValueError(f"threshold must be in [0, 1]; got {threshold}")
+
+        filtered_entities = [e for e in self.entities if e.confidence >= threshold]
+        kept_ids = {e.id for e in filtered_entities}
+        filtered_rels = [
+            r for r in self.relationships
+            if r.source_id in kept_ids and r.target_id in kept_ids
+        ]
+
+        # Compute stats
+        stats = {
+            "original_entity_count": len(self.entities),
+            "filtered_entity_count": len(filtered_entities),
+            "threshold": threshold,
+        }
+        if self.metadata is None:
+            self.metadata = {}
+        meta = dict(self.metadata)
+        meta.setdefault("filter_confidence_stats", {}).update(stats)
+
+        return EntityExtractionResult(
+            entities=filtered_entities,
+            relationships=filtered_rels,
+            confidence=self.confidence,
+            metadata=meta,
             errors=list(self.errors),
         )
 

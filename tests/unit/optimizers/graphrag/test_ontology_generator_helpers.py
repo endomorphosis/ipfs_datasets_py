@@ -14,6 +14,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
     OntologyGenerationContext,
     Entity,
     Relationship,
+    ExtractionConfig,
     ExtractionStrategy,
     DataType,
 )
@@ -169,6 +170,76 @@ class TestExtractRuleBased:
         result = generator._extract_rule_based(text, ctx)
         for e in result.entities:
             assert 0.0 <= e.confidence <= 1.0
+
+    def test_stopwords_filtered(self, generator):
+        context = OntologyGenerationContext(
+            data_source="test",
+            data_type=DataType.TEXT,
+            domain="general",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+            config=ExtractionConfig(stopwords=["alice"]),
+        )
+        result = generator._extract_rule_based("Alice and Bob", context)
+        texts = {e.text.lower() for e in result.entities}
+        assert "alice" not in texts
+
+    def test_allowed_entity_types_filters(self, generator):
+        context = OntologyGenerationContext(
+            data_source="test",
+            data_type=DataType.TEXT,
+            domain="general",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+            config=ExtractionConfig(allowed_entity_types=["Person"]),
+        )
+        result = generator._extract_rule_based("Mr. John Smith at Acme Corp", context)
+        assert all(e.type == "Person" for e in result.entities)
+
+    def test_min_entity_length_filters_short_tokens(self, generator):
+        context = OntologyGenerationContext(
+            data_source="test",
+            data_type=DataType.TEXT,
+            domain="general",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+            config=ExtractionConfig(min_entity_length=4),
+        )
+        result = generator._extract_rule_based("ABC", context)
+        assert result.entities == []
+
+    def test_max_confidence_caps_entities(self, generator):
+        context = OntologyGenerationContext(
+            data_source="test",
+            data_type=DataType.TEXT,
+            domain="general",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+            config=ExtractionConfig(max_confidence=0.6),
+        )
+        result = generator._extract_rule_based("Mr. John Smith", context)
+        assert result.entities
+        assert all(e.confidence <= 0.6 for e in result.entities)
+
+    def test_custom_rules_add_entity_type(self, generator):
+        context = OntologyGenerationContext(
+            data_source="test",
+            data_type=DataType.TEXT,
+            domain="general",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+            config=ExtractionConfig(custom_rules=[(r"\bFooBar\b", "Custom")]),
+        )
+        result = generator._extract_rule_based("FooBar appears once", context)
+        assert any(e.type == "Custom" for e in result.entities)
+
+    def test_custom_rules_before_concept_fallback(self, generator):
+        context = OntologyGenerationContext(
+            data_source="test",
+            data_type=DataType.TEXT,
+            domain="general",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+            config=ExtractionConfig(custom_rules=[(r"\bFooBar\b", "Custom")]),
+        )
+        result = generator._extract_rule_based("FooBar", context)
+        custom_entities = [e for e in result.entities if e.text == "FooBar"]
+        assert custom_entities
+        assert custom_entities[0].type == "Custom"
 
 
 # ──────────────────────────────────────────────────────────────────────────────

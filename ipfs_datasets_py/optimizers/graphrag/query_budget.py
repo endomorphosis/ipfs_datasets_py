@@ -117,13 +117,40 @@ class QueryBudgetManager:
             amount (float): Amount consumed
         """
         if resource in self.current_consumption:
+            old_consumption = self.current_consumption[resource]
             self.current_consumption[resource] += amount
+            new_consumption = self.current_consumption[resource]
+            
             logger.debug(
                 "Tracked consumption for %s: +%.3f (total=%.3f)",
                 resource,
                 amount,
-                self.current_consumption[resource],
+                new_consumption,
             )
+            
+            # Check if exceeded budget threshold
+            if resource in self.default_budget:
+                budget_limit = self.default_budget[resource]
+                ratio = new_consumption / budget_limit if budget_limit > 0 else 0.0
+                
+                # Warn if exceeding 80% of budget
+                if old_consumption <= budget_limit * 0.8 and new_consumption > budget_limit * 0.8:
+                    logger.warning(
+                        "Resource %s approaching budget limit: %.3f/%.3f (%.1f%%)",
+                        resource,
+                        new_consumption,
+                        budget_limit,
+                        ratio * 100,
+                    )
+                # Warn if exceeded budget
+                elif new_consumption > budget_limit and old_consumption <= budget_limit:
+                    logger.warning(
+                        "Resource %s budget exceeded: %.3f > %.3f (%.1f%%)",
+                        resource,
+                        new_consumption,
+                        budget_limit,
+                        ratio * 100,
+                    )
             
     def is_budget_exceeded(self, resource: str) -> bool:
         """
@@ -164,7 +191,12 @@ class QueryBudgetManager:
                 # Keep history manageable
                 if len(self.budget_history[resource]) > 100:
                     self.budget_history[resource] = self.budget_history[resource][-100:]
-            logger.info("Recorded query completion (success=%s)", success)
+        
+        logger.info(
+            "Recorded query completion (success=%s, consumption=%s)",
+            success,
+            self.current_consumption
+        )
     
     def _estimate_complexity(self, query: Dict[str, Any]) -> str:
         """
