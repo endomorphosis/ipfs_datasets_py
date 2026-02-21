@@ -818,3 +818,32 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [graphrag] Add `OntologyGenerator.entity_ids(result)` -- list of all entity IDs
 - [ ] (P2) [graphrag] Add `OntologyLearningAdapter.feedback_summary_dict()` -- dict with count/mean/variance
 - [ ] (P2) [graphrag] Add `LogicValidator.is_empty(ontology)` -- True if no entities or relationships
+
+## Batch 96–100 Done ✅
+- [x] (batch-96) `OntologyOptimizer.score_delta`, `OntologyGenerator.entities_by_type`, `OntologyCritic.top_n_scores`, `ExtractionConfig.merge`, `OntologyPipeline.best_run`
+- [x] (batch-97) `OntologyGenerator.filter_result_by_confidence`, `OntologyCritic.score_distribution`, `LogicValidator.entity_count`, `OntologyLearningAdapter.top_k_feedback`
+- [x] (batch-98) `EntityExtractionResult.average_confidence`, `EntityExtractionResult.distinct_types`, `OntologyGenerator.relationship_density`, `OntologyCritic.score_gap`, `OntologyOptimizer.score_stddev`
+- [x] (batch-99) `LogicValidator.relationship_count`, `OntologyOptimizer.score_range`, `OntologyPipeline.run_count`, `EntityExtractionResult.entity_by_id`, `OntologyLearningAdapter.feedback_score_range`
+- [x] (batch-100) `EntityExtractionResult.high_confidence_entities`, `EntityExtractionResult.low_confidence_entities`, `OntologyCritic.scores_above_threshold`, `OntologyOptimizer.recent_score_mean`, `OntologyLearningAdapter.feedback_count_above`
+
+## Batch 101+ backlog
+- [ ] (P2) [graphrag] `EntityExtractionResult.to_dict()` -- serialize result to plain dict
+- [ ] (P2) [graphrag] `EntityExtractionResult.entity_count` property -- len(self.entities)
+- [ ] (P2) [graphrag] `OntologyGenerator.group_entities_by_confidence_band(result, bands)` -- bucket entities into confidence ranges
+- [ ] (P2) [graphrag] `OntologyOptimizer.convergence_rate()` -- fraction of consecutive pairs with improvement < 0.01
+- [ ] (P2) [graphrag] `OntologyMediator.action_types()` -- sorted list of distinct action type strings seen
+- [ ] (P2) [graphrag] `OntologyCritic.all_pass(scores, threshold)` -- True if all score.overall > threshold (alias for passes_all, strict)
+- [ ] (P2) [graphrag] `LogicValidator.has_contradictions(ontology)` -- True if any contradictions found
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_below(threshold)` -- list of records below threshold
+- [ ] (P2) [graphrag] `OntologyPipeline.average_run_score()` -- mean score.overall across all runs
+- [ ] (P2) [graphrag] `OntologyGenerator.relationships_for_entity(result, eid)` -- rels where entity is source or target
+- [ ] (P3) [graphrag] `ExtractionConfig.to_dict()` -- serialize config to plain dict
+- [ ] (P3) [graphrag] `OntologyOptimizer.history_as_list()` -- list of average_score floats
+- [ ] (P3) [graphrag] `OntologyCritic.best_dimension(score)` -- name of highest-scoring dimension
+- [ ] (P3) [graphrag] `OntologyCritic.worst_dimension(score)` -- name of lowest-scoring dimension
+- [ ] (P3) [graphrag] `EntityExtractionResult.max_confidence()` -- highest entity confidence
+- [ ] (P3) [graphrag] `EntityExtractionResult.min_confidence()` -- lowest entity confidence
+- [ ] (P3) [graphrag] `OntologyLearningAdapter.feedback_above(threshold)` -- list of records above threshold
+- [ ] (P3) [graphrag] `OntologyMediator.clear_stash()` -- empty the stash stack
+- [ ] (P3) [graphrag] `LogicValidator.summary_dict(ontology)` -- {entity_count, relationship_count, has_contradictions}
+- [ ] (P2) [graphrag] `OntologyPipeline.score_at(index)` -- score.overall from _run_history[index]
