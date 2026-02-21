@@ -97,7 +97,8 @@ These should be started immediately when available:
 - [ ] (P2) [docs] Create detailed "Configuration Guide" for all `ExtractionConfig` fields
 - [ ] (P2) [perf] Implement `OntologyCritic.evaluate_batch_parallel()` with ThreadPoolExecutor
 - [ ] (P3) [arch] Add `BaseOptimizer.state_checksum()` for reproducibility verification
-- [ ] (P2) [graphrag] Add `OntologyGenerator.extract_with_context_windows()` for larger texts
+- [x] (P2) [graphrag] Add `OntologyGenerator.extract_with_context_windows()` for larger texts
+  - Done 2026-02-21: Implemented method to extract entities from very large texts using sliding overlapping windows. Supports configurable window size/overlap and three deduplication strategies (highest_confidence, first_occurrence, merge_spans). Handles extraction failures gracefully. Created 22 comprehensive unit tests covering: basic functionality, parameter validation, all dedup strategies, relationship handling, error handling, and confidence aggregation. All tests passing. File: ipfs_datasets_py/optimizers/graphrag/ontology_generator.py
 
 #### Strategic Refactoring (2-4 hours)
 - [ ] (P2) [arch] Extract `QueryValidationMixin` from query optimizer for reuse in GraphRAG
