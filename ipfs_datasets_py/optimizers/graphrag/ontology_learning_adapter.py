@@ -528,3 +528,19 @@ class OntologyLearningAdapter:
         if not self._feedback:
             return 0.0
         return sum(r.final_score for r in self._feedback) / len(self._feedback)
+
+    def score_variance(self) -> float:
+        """Return the variance of ``final_score`` across all feedback records.
+
+        Returns:
+            Variance as a float.  Returns ``0.0`` when there are fewer than
+            two feedback records.
+
+        Example:
+            >>> adapter.score_variance()
+            0.0
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        mean = self.mean_score()
+        return sum((r.final_score - mean) ** 2 for r in self._feedback) / len(self._feedback)

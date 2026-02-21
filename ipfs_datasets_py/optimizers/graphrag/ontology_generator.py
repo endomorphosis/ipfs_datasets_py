@@ -1300,6 +1300,28 @@ class EntityExtractionResult:
             metadata=dict(self.metadata),
         )
 
+    def relationships_for(self, entity_id: str) -> List["Relationship"]:
+        """Return all relationships that involve *entity_id* as source or target.
+
+        Args:
+            entity_id: Entity ID to look up.
+
+        Returns:
+            List of :class:`Relationship` objects where
+            ``source_id == entity_id`` or ``target_id == entity_id``.
+            Returns an empty list if the entity participates in no
+            relationships.
+
+        Example:
+            >>> rels = result.relationships_for("e1")
+            >>> all(r.source_id == "e1" or r.target_id == "e1" for r in rels)
+            True
+        """
+        return [
+            r for r in self.relationships
+            if r.source_id == entity_id or r.target_id == entity_id
+        ]
+
 
 @dataclass
 class OntologyGenerationResult:

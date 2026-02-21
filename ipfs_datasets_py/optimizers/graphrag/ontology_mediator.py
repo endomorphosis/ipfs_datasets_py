@@ -915,6 +915,28 @@ class OntologyMediator:
             return None
         return self._undo_stack[-1]
 
+    def stash(self, ontology: Dict[str, Any]) -> int:
+        """Push a snapshot of *ontology* onto the undo stack without running a
+        refinement step.
+
+        This is useful when the caller wants to manually save a checkpoint that
+        can later be restored via :meth:`undo_last_action`.
+
+        Args:
+            ontology: Ontology dict to snapshot (deep-copied before storage).
+
+        Returns:
+            New undo-stack depth after the stash.
+
+        Example:
+            >>> depth = mediator.stash({"entities": [], "relationships": []})
+            >>> depth >= 1
+            True
+        """
+        import copy as _copy
+        self._undo_stack.append(_copy.deepcopy(ontology))
+        return len(self._undo_stack)
+
     def set_max_rounds(self, n: int) -> None:
         """Update the maximum refinement rounds at runtime.
 

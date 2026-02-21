@@ -961,6 +961,39 @@ class LogicValidator:
         """
         return self.count_contradictions(ontology) == 0
 
+    def format_report(self, result: "ValidationResult") -> str:
+        """Produce a human-readable validation report from *result*.
+
+        Args:
+            result: A :class:`ValidationResult` as returned by
+                :meth:`validate_ontology` or :meth:`_basic_consistency_check`.
+
+        Returns:
+            Multi-line string summarising consistency status, contradiction
+            count, confidence and (optionally) the individual contradiction
+            messages.
+
+        Example:
+            >>> vr = validator.validate_ontology({"entities": [], "relationships": []})
+            >>> report = validator.format_report(vr)
+            >>> "consistent" in report.lower()
+            True
+        """
+        status = "CONSISTENT" if result.is_consistent else "INCONSISTENT"
+        lines = [
+            f"Validation Report",
+            f"  Status    : {status}",
+            f"  Confidence: {result.confidence:.2f}",
+            f"  Prover    : {result.prover_used}",
+            f"  Time (ms) : {result.time_ms:.1f}",
+            f"  Contradictions ({len(result.contradictions)}):",
+        ]
+        for c in result.contradictions:
+            lines.append(f"    - {c}")
+        if result.invalid_entity_ids:
+            lines.append(f"  Invalid entity IDs: {', '.join(result.invalid_entity_ids)}")
+        return "\n".join(lines)
+
     def clear_tdfol_cache(self) -> int:
         """Clear the TDFOL formula cache.
 

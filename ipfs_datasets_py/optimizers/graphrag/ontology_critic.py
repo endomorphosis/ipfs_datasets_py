@@ -2010,6 +2010,31 @@ class OntologyCritic(BaseCritic):
             return 0.0
         return sum(s.overall for s in scores) / len(scores)
 
+    def evaluate_list(
+        self,
+        ontologies: List[Dict[str, Any]],
+        context: Any,
+    ) -> List["CriticScore"]:
+        """Evaluate each ontology in *ontologies* and return a list of scores.
+
+        This is a convenience batch wrapper around :meth:`evaluate_ontology`.
+
+        Args:
+            ontologies: List of ontology dicts to evaluate.
+            context: Shared :class:`OntologyGenerationContext` passed to each
+                individual evaluation.
+
+        Returns:
+            List of :class:`CriticScore` objects in the same order as the
+            input.  An empty list is returned for an empty input.
+
+        Example:
+            >>> scores = critic.evaluate_list([ont1, ont2], ctx)
+            >>> len(scores) == 2
+            True
+        """
+        return [self.evaluate_ontology(ont, context) for ont in ontologies]
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],
