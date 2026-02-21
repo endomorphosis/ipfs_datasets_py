@@ -1409,7 +1409,7 @@ class OntologyCritic(BaseCritic):
         """
         result = self.compare_ontologies(v1, v2, context)
         if result.get("score1") and result.get("score2"):
-            dims = ("completeness", "consistency", "clarity", "granularity", "domain_alignment")
+            dims = ("completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment")
             for dim in dims:
                 result[f"delta_{dim}"] = round(
                     result["score2"].get(dim, 0.0) - result["score1"].get(dim, 0.0), 4
@@ -1990,7 +1990,7 @@ class OntologyCritic(BaseCritic):
             >>> delta["overall"] > 0  # improvement
             True
         """
-        dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment", "overall"]
+        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment", "overall"]
         return {d: round(getattr(score_b, d) - getattr(score_a, d), 6) for d in dims}
 
     def critical_weaknesses(
@@ -2014,7 +2014,7 @@ class OntologyCritic(BaseCritic):
             >>> all(v < 0.5 for v in weak.values())
             True
         """
-        dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
         return {d: getattr(score, d) for d in dims if getattr(score, d) < threshold}
 
     def top_dimension(self, score: "CriticScore") -> str:
