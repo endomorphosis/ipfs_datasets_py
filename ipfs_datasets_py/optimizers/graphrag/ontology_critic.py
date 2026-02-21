@@ -378,6 +378,17 @@ class OntologyCritic(BaseCritic):
         )
         
         # Create score
+        # Compute per-entity-type completeness breakdown for metadata
+        _ent_type_counts: Dict[str, int] = {}
+        for _ent in (ontology.get("entities") or []):
+            if isinstance(_ent, dict):
+                _etype = str(_ent.get("type", "Unknown"))
+            else:
+                _etype = str(getattr(_ent, "type", "Unknown"))
+            _ent_type_counts[_etype] = _ent_type_counts.get(_etype, 0) + 1
+        _total = sum(_ent_type_counts.values()) or 1
+        _ent_type_fractions = {k: round(v / _total, 4) for k, v in _ent_type_counts.items()}
+
         score = CriticScore(
             completeness=completeness,
             consistency=consistency,
@@ -390,7 +401,9 @@ class OntologyCritic(BaseCritic):
             metadata={
                 'evaluator': 'OntologyCritic',
                 'use_llm': self.use_llm,
-                'domain': getattr(context, 'domain', 'unknown')
+                'domain': getattr(context, 'domain', 'unknown'),
+                'entity_type_counts': _ent_type_counts,
+                'entity_type_fractions': _ent_type_fractions,
             }
         )
         

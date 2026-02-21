@@ -249,7 +249,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
   - Done 2026-02-20: implemented sliding-window co-occurrence + verb-frame heuristics
 - [x] (P2) [graphrag] Improve verb extraction to classify relationship types — Done: 7 verb patterns (obligates, owns, causes, is_a, part_of, employs, manages)
 - [x] (P2) [graphrag] Add directionality detection (subject→object via dependency parse stubs) — Done batch 25
-- [ ] (P3) [graphrag] Add confidence decay for distance-based co-occurrence (entities far apart = lower confidence)
+- [x] (P3) [graphrag] Add confidence decay for distance-based co-occurrence — Already done (batch 23); verified batch 49 with 2 tests
 
 ### F3 — GraphRAG: Smart ontology merging
 
@@ -272,7 +272,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 - [x] (P2) [graphrag] `_evaluate_domain_alignment()` — constant 0.80; implement keyword-based domain vocabulary matching
   - Done 2026-02-20: implemented domain vocabulary matching via configurable keyword sets
 - [ ] (P3) [graphrag] Add LLM-based fallback evaluator that rates quality when rule-based scores are ambiguous
-- [ ] (P3) [graphrag] Add per-entity type completeness breakdown in `CriticScore.metadata`
+- [x] (P3) [graphrag] Add per-entity type completeness breakdown in CriticScore.metadata — Done batch 49: entity_type_counts + entity_type_fractions added to metadata in evaluate_ontology; 7 tests
 
 ### F5 — GraphRAG: Ontology mediator refinements
 
@@ -281,7 +281,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 - [x] (P2) [graphrag] `generate_prompt()` — structured prompts with domain vocabulary, schema instructions, and feedback-driven refinement hints
   - Done 2026-02-20
 - [x] (P2) [graphrag] Add `refine_ontology()` action: `add_missing_relationships` (links orphan entities via co-occurrence) — Done: add_missing_relationships action in ontology_mediator.py
-- [ ] (P3) [graphrag] Add refinement action: `split_entity` (detect entities with multiple unrelated roles)
+- [x] (P3) [graphrag] Add refinement action: split_entity — Done batch 49: triggers on 'split'/'granular'/'overloaded' keywords, splits on ' and '/',' into individual entities; 6 tests
 
 ### F6 — GraphRAG: Logic validator TDFOL pipeline
 
@@ -435,7 +435,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [arch] BaseSession metrics: score_delta, avg_score, regression_count properties + to_dict() — Done 2026-02-20
 - [x] (P2) [tests] End-to-end test: OntologyGenerator → OntologyCritic → OntologyMediator — Done batch 29 (test_ontology_pipeline_e2e.py: 10 tests)
 - [x] (P2) [arch] Add BackendConfig typed dataclass for OntologyCritic backend_config parameter — Done 2026-02-20
-- [ ] (P2) [perf] Parallelize OntologyOptimizer.analyze_batch() across sessions using concurrent.futures
+- [x] (P2) [perf] Parallelize OntologyOptimizer.analyze_batch() — analyze_batch_parallel() already exists; batch 49 added verification tests
 - [x] (P2) [arch] Add `__slots__` to hot-path dataclasses (Entity, Relationship, EntityExtractionResult) using @dataclass(slots=True) — Done 2026-02-20
 - [x] (P2) [tests] Unit test BaseOptimizer.run_session() with PerformanceMetricsCollector — Done: test_new_implementations.py:863 TestPerformanceMetricsCollectorHooks
 - [x] (P1) [security] Audit eval()/exec() usage — Done batch 26: only sandboxed exec({}) in validation.py benchmark; adversarial.py detects but never calls
@@ -530,3 +530,26 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [arch] Add `BaseSession.to_json()` / `from_json()` round-trip serialization — Done batch 44: also adds from_dict()
 - [x] (P3) [docs] Add usage example for OntologyGenerationResult to graphrag/README.md — Done batch 48: code example + field reference table
 - [x] (P2) [graphrag] Add `OntologyCritic.dimension_weights` property — Done batch 44: returns copy of DIMENSION_WEIGHTS
+
+## Batch 50+ Ideas (added batch 49)
+
+- [ ] (P2) [graphrag] `OntologyGenerator.generate_ontology_rich()` — add `elapsed_ms` to `OntologyGenerationResult.metadata`
+- [ ] (P2) [graphrag] `OntologyCritic.evaluate_ontology()` — persist cache across instances via class-level `_SHARED_EVAL_CACHE`
+- [ ] (P3) [graphrag] Add `merge_provenance` tracking — which entities/rels came from which source doc
+- [ ] (P2) [graphrag] `LogicValidator.validate_ontology()` — add `ValidationReport.invalid_entity_ids` list
+- [ ] (P3) [graphrag] `OntologyOptimizer.compare_history()` — compute pairwise delta table for all history entries
+- [ ] (P2) [tests] Add round-trip test for `OntologyMediator.run_refinement_cycle()` state serialization
+- [ ] (P3) [tests] Snapshot tests: freeze known-good critic scores for a reference ontology
+- [ ] (P2) [api] Add `OntologyGenerator.batch_extract(docs, context)` for multi-doc parallel extraction
+- [ ] (P3) [api] Add `OntologyOptimizer.prune_history(keep_last_n)` to cap memory growth
+- [ ] (P3) [arch] Add `OntologyCritic.evaluate_ontology()` timeout guard (raises after N seconds)
+- [ ] (P2) [docs] Add per-method doctest examples to all public `OntologyGenerator` methods
+- [ ] (P2) [docs] Add per-method doctest examples to all public `OntologyCritic` methods
+- [ ] (P3) [obs] Add `OntologyGenerator.extract_entities()` structured log with entity_count + strategy
+- [ ] (P3) [obs] Add `OntologyMediator.refine_ontology()` structured log of actions_applied per round
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.get_stats()` — add `p50_score` / `p90_score` percentiles
+- [ ] (P3) [graphrag] `OntologyMediator.refine_ontology()` — add `rename_entity` action (fix casing/normalisation)
+- [ ] (P3) [graphrag] Add `OntologyCritic._evaluate_provenance()` dimension — checks entities have source spans
+- [ ] (P2) [tests] Add tests for `OntologyHarness.run()` with real generator + critic (no mocks)
+- [ ] (P3) [perf] Cache `OntologyCritic._evaluate_consistency()` DFS result keyed on relationship set hash
+- [ ] (P2) [graphrag] `ExtractionConfig.max_confidence: float = 1.0` — cap entity confidence at this value

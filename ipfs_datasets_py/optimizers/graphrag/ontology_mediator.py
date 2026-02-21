@@ -48,43 +48,45 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+import uuid
+
+from ipfs_datasets_py.optimizers.common.base_session import BaseSession
 
 logger = logging.getLogger(__name__)
 
 
+def _new_session_id() -> str:
+    return f"mediator-{uuid.uuid4().hex[:8]}"
+
+
 @dataclass
-class MediatorState:
-    """
-    Tracks state across refinement rounds.
-    
+class MediatorState(BaseSession):
+    """Tracks state across refinement rounds.
+
     Maintains complete history of the refinement process including all
-    ontology versions, critic scores, and refinement decisions.
-    
+    ontology versions, critic scores, and refinement decisions. Extends
+    :class:`BaseSession` for shared round tracking and convergence metadata.
+
     Attributes:
-        current_ontology: Current version of the ontology
-        refinement_history: History of all refinement steps
-        critic_scores: Scores from each evaluation round
-        converged: Whether refinement has converged
-        current_round: Current refinement round number
-        total_time_ms: Total time spent in refinement (milliseconds)
-        metadata: Additional state metadata
-        
+        current_ontology: Current version of the ontology.
+        refinement_history: History of all refinement steps.
+        critic_scores: Scores from each evaluation round.
+        total_time_ms: Total time spent in refinement (milliseconds).
+
     Example:
-        >>> state = MediatorState(
-        ...     current_ontology=ontology,
-        ...     current_round=3,
-        ...     converged=False
-        ... )
+        >>> state = MediatorState(current_ontology=ontology)
         >>> print(f"Round {state.current_round}, Score: {state.critic_scores[-1].overall}")
     """
     
-    current_ontology: Dict[str, Any]
+    session_id: str = field(default_factory=_new_session_id)
+    domain: str = "graphrag"
+    max_rounds: int = 10
+    target_score: float = 0.85
+    convergence_threshold: float = 0.01
+    current_ontology: Dict[str, Any] = field(default_factory=dict)
     refinement_history: List[Dict[str, Any]] = field(default_factory=list)
     critic_scores: List[Any] = field(default_factory=list)  # List[CriticScore]
-    converged: bool = False
-    current_round: int = 0
     total_time_ms: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
     
     def add_round(
         self,
@@ -100,15 +102,29 @@ class MediatorState:
             score: Critic score for this round
             refinement_action: Description of refinement action taken
         """
-        self.current_round += 1
+        self.start_round()
         self.current_ontology = ontology
         self.critic_scores.append(score)
+        round_number = len(self.refinement_history) + 1
         self.refinement_history.append({
-            'round': self.current_round,
+            'round': round_number,
             'ontology': ontology,
             'score': score.to_dict() if hasattr(score, 'to_dict') else score,
-            'action': refinement_action
+            'action': refinement_action,
         })
+
+        score_value = 0.0
+        if hasattr(score, "overall"):
+            score_value = float(score.overall)
+        elif isinstance(score, (int, float)):
+            score_value = float(score)
+
+        self.record_round(
+            score=score_value,
+            feedback=[refinement_action],
+            artifact_snapshot=ontology,
+            metadata={"action": refinement_action},
+        )
     
     def get_score_trend(self) -> str:
         """
@@ -426,6 +442,43 @@ class OntologyMediator:
                         })
                 actions_applied.append('add_missing_relationships')
 
+            # Action: split_entity — when granularity is flagged, detect entities
+            # whose text contains multiple comma/conjunction-delimited tokens and
+            # replace them with individual entities.
+            elif any(k in rec_lower for k in ('split', 'granular', 'too broad', 'overloaded')):
+                import uuid as _uuid
+                new_entities = []
+                removed_ids: set = set()
+                for ent in list(refined['entities']):
+                    if not isinstance(ent, dict):
+                        new_entities.append(ent)
+                        continue
+                    text = ent.get('text', '')
+                    # Only split on " and " or commas with 2+ parts, each ≥ 2 chars
+                    import re as _split_re
+                    parts = [p.strip() for p in _split_re.split(r'\s+and\s+|,\s*', text) if p.strip()]
+                    if len(parts) >= 2 and all(len(p) >= 2 for p in parts):
+                        removed_ids.add(ent.get('id'))
+                        for part in parts:
+                            new_ent = dict(ent)
+                            new_ent['id'] = f"split_{_uuid.uuid4().hex[:8]}"
+                            new_ent['text'] = part
+                            new_ent.setdefault('properties', {})
+                            new_ent['properties']['split_from'] = ent.get('id', '')
+                            new_entities.append(new_ent)
+                    else:
+                        new_entities.append(ent)
+                if removed_ids:
+                    # Remove relationships to/from removed IDs
+                    refined['relationships'] = [
+                        r for r in refined['relationships']
+                        if isinstance(r, dict)
+                        and r.get('source_id') not in removed_ids
+                        and r.get('target_id') not in removed_ids
+                    ]
+                    refined['entities'] = new_entities
+                    actions_applied.append('split_entity')
+
         refined.setdefault('metadata', {})
         refined['metadata']['refinement_actions'] = actions_applied
         self._log.info(f"Refinement complete. Actions applied: {actions_applied}")
@@ -476,7 +529,8 @@ class OntologyMediator:
         # Initialize state
         state = MediatorState(
             current_ontology=initial_ontology,
-            current_round=0
+            max_rounds=self.max_rounds,
+            target_score=self.convergence_threshold,
         )
         state.add_round(initial_ontology, initial_score, "initial_generation")
         
