@@ -277,7 +277,8 @@ class TestMediatorStateRepr:
                 consistency=0.65,
                 clarity=0.7,
                 granularity=0.6,
-                domain_alignment=0.65,
+                relationship_coherence=0.5,
+            domain_alignment=0.65,
             ),
             refinement_action="Initial extraction",
         )
@@ -288,7 +289,8 @@ class TestMediatorStateRepr:
                 consistency=0.72,
                 clarity=0.8,
                 granularity=0.75,
-                domain_alignment=0.78,
+                relationship_coherence=0.5,
+            domain_alignment=0.78,
             ),
             refinement_action="Add entities",
         )
@@ -315,7 +317,8 @@ class TestMediatorStateRepr:
                 consistency=0.5,
                 clarity=0.5,
                 granularity=0.5,
-                domain_alignment=0.5,
+                relationship_coherence=0.5,
+            domain_alignment=0.5,
             ),
             refinement_action="Start",
         )
@@ -326,7 +329,8 @@ class TestMediatorStateRepr:
                 consistency=0.6,
                 clarity=0.6,
                 granularity=0.6,
-                domain_alignment=0.6,
+                relationship_coherence=0.5,
+            domain_alignment=0.6,
             ),
             refinement_action="Improve",
         )

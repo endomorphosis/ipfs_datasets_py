@@ -1030,17 +1030,6 @@ class OntologyLearningAdapter:
             return []
         return sorted(self._feedback, key=lambda r: r.final_score)[:n]
 
-    def feedback_score_range(self) -> float:
-        """Return the range (max - min) of recorded feedback scores.
-
-        Returns:
-            Float range; ``0.0`` when fewer than 2 records.
-        """
-        if len(self._feedback) < 2:
-            return 0.0
-        scores = [r.final_score for r in self._feedback]
-        return max(scores) - min(scores)
-
     def feedback_zscore(self, value: float) -> float:
         """Return the z-score of *value* relative to the feedback distribution.
 

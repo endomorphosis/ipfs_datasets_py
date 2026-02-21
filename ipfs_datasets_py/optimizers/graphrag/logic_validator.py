@@ -1926,22 +1926,21 @@ class LogicValidator:
                 if nbr not in visited:
                     queue.append(nbr)
 
-        return sorted(sccs.get(find(n), []) for n in all_ids if n == find(n))
+        unreachable = all_ids - visited
+        unreachable.discard(source)
+        return sorted(unreachable)
 
-
-# Export public API
+    def strongly_connected_components(self, ontology: dict) -> list:
         """Return strongly connected components (SCCs) using Kosaraju's algorithm.
 
         Each SCC is a list of entity IDs that are mutually reachable via
-        directed relationship edges.  Singleton nodes (no outgoing edges
-        back to themselves) are returned as single-element SCCs.
+        directed relationship edges.
 
         Args:
             ontology: Dict with optional ``"entities"`` and ``"relationships"`` lists.
 
         Returns:
-            List of lists of entity IDs.  SCCs are not guaranteed to be in
-            any particular order.
+            List of sorted SCC lists.
         """
         entities = ontology.get("entities", [])
         relationships = ontology.get("relationships", [])
@@ -1950,7 +1949,6 @@ class LogicValidator:
         if not all_ids:
             return []
 
-        # Build adjacency and reverse adjacency
         adj = {n: [] for n in all_ids}
         radj = {n: [] for n in all_ids}
         for rel in relationships:
@@ -1960,7 +1958,6 @@ class LogicValidator:
                 adj[s].append(o)
                 radj[o].append(s)
 
-        # First pass: fill order stack
         visited = set()
         order = []
 
@@ -1982,7 +1979,6 @@ class LogicValidator:
             if n not in visited:
                 dfs1(n)
 
-        # Second pass: collect SCCs on reverse graph
         visited2 = set()
         sccs = []
 
