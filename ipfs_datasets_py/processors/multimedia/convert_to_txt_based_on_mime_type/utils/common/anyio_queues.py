@@ -21,6 +21,7 @@ Usage::
 from __future__ import annotations
 
 import heapq
+import math
 from typing import Any, Generic, TypeVar
 
 import anyio
@@ -43,7 +44,8 @@ class AnyioQueue(Generic[T]):
     """
 
     def __init__(self, maxsize: int = 0) -> None:
-        buf: float = float("inf") if maxsize == 0 else float(maxsize)
+        # anyio requires max_buffer_size to be an int or math.inf (not float)
+        buf: float = math.inf if maxsize == 0 else maxsize
         self._send: MemoryObjectSendStream[T]
         self._recv: MemoryObjectReceiveStream[T]
         self._send, self._recv = anyio.create_memory_object_stream(max_buffer_size=buf)

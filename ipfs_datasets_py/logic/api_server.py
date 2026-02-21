@@ -28,11 +28,11 @@ Usage (MCP tools)::
     )
 
     # Programmatic (async)
-    import asyncio
+    import anyio
     from ipfs_datasets_py.mcp_server.tools.logic_tools.logic_capabilities_tool import (
         LogicHealthTool, LogicCapabilitiesTool,
     )
-    result = asyncio.run(LogicHealthTool().execute({}))
+    result = anyio.run(lambda: LogicHealthTool().execute({}))
     print(result["status"])   # "healthy" | "degraded" | "unavailable"
 """
 

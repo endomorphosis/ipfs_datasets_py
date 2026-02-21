@@ -176,7 +176,6 @@ __all__ = ["SerpStackSearchAPI"]
 # Standalone async search functions — canonical business-logic location
 # ---------------------------------------------------------------------------
 
-import asyncio as _asyncio
 import os as _os
 from datetime import datetime as _datetime
 

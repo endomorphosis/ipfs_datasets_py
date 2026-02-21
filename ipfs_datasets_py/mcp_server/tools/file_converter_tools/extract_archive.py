@@ -4,7 +4,7 @@ MCP Server Tool: Extract Archive
 Extract contents from an archive file using the file_converter package exports.
 """
 
-from ipfs_datasets_py.processors.file_converter.exports import extract_archive_contents_sync
+from ipfs_datasets_py.processors.file_converter.exports import extract_archive_contents
 
 
 async def extract_archive_tool(
@@ -14,20 +14,20 @@ async def extract_archive_tool(
 ) -> dict:
     """
     Extract contents from an archive file.
-    
+
     Args:
         archive_path: Path to archive file (ZIP, TAR, GZ, BZ2, 7Z)
         max_depth: Maximum extraction depth for nested archives
         recursive: Whether to extract nested archives
-    
+
     Returns:
         Dict with extracted_files list, file_count, total_size, and extraction_path
-    
+
     Example:
         result = await extract_archive_tool('documents.zip')
         result = await extract_archive_tool('nested-archives.tar.gz', max_depth=5)
     """
-    return extract_archive_contents_sync(archive_path, max_depth, recursive)
+    return await extract_archive_contents(archive_path, max_depth, recursive)
 
 
 # Tool metadata for MCP server

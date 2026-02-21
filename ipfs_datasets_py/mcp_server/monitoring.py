@@ -4,7 +4,12 @@ import anyio
 import inspect
 import time
 import logging
-import psutil
+try:
+    import psutil
+    HAVE_PSUTIL = True
+except ImportError:  # pragma: no cover
+    psutil = None  # type: ignore[assignment]
+    HAVE_PSUTIL = False
 import threading
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional, Callable, Union, AsyncGenerator
@@ -183,6 +188,24 @@ class EnhancedMetricsCollector:
     async def _collect_system_metrics(self) -> None:
         """Collect system performance metrics."""
         try:
+            if not HAVE_PSUTIL:
+                # Fallback when psutil is not installed
+                cpu_percent = 0.0
+                snapshot = PerformanceSnapshot(
+                    timestamp=datetime.utcnow(),
+                    cpu_percent=0.0,
+                    memory_percent=0.0,
+                    memory_used_mb=0.0,
+                    disk_percent=0.0,
+                    active_connections=len(self.active_requests),
+                    request_rate=self._calculate_request_rate(),
+                    error_rate=self._calculate_error_rate(),
+                    avg_response_time_ms=self._calculate_avg_response_time()
+                )
+                with self._lock:
+                    self.performance_snapshots.append(snapshot)
+                return
+
             # CPU and memory
             cpu_percent = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()

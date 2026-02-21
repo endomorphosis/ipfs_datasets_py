@@ -13,6 +13,7 @@ from __future__ import annotations
 import ast
 import importlib
 import inspect
+import re
 from pathlib import Path
 from typing import List
 
@@ -29,15 +30,22 @@ _ASYNCIO_ALLOWED = {
     / "utils" / "converter_system" / "monads" / "async_.py",
 }
 
+# Pattern that matches ``import asyncio`` as a whole token on non-comment lines.
+# Uses a negative character class to ensure no ``#`` precedes the import on the
+# same line (handles both ``import asyncio`` and ``from x import asyncio``).
+_ASYNCIO_IMPORT_RE = re.compile(r"(?m)^[^#\n]*\bimport asyncio\b")
+
 
 def _collect_asyncio_import_files() -> List[Path]:
     """Return source files that still contain ``import asyncio``."""
     results: List[Path] = []
     for py_file in SRC_ROOT.rglob("*.py"):
+        if not py_file.is_file():
+            continue
         if py_file in _ASYNCIO_ALLOWED:
             continue
         content = py_file.read_text(encoding="utf-8", errors="replace")
-        if "import asyncio" in content:
+        if _ASYNCIO_IMPORT_RE.search(content):
             results.append(py_file)
     return results
 
@@ -435,7 +443,7 @@ def test_multimedia_source_files_use_anyio():
         if not p.exists():
             continue
         content = p.read_text(encoding="utf-8", errors="replace")
-        if "import asyncio" in content:
+        if _ASYNCIO_IMPORT_RE.search(content):
             violations.append(str(p.relative_to(SRC_ROOT)))
     if violations:
         pytest.fail(
