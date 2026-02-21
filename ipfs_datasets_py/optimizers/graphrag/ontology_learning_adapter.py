@@ -1096,3 +1096,24 @@ class OntologyLearningAdapter:
             return 0.0
         std = math.sqrt(variance)
         return sum(((v - mean) / std) ** 3 for v in vals) / n
+
+    def feedback_kurtosis(self) -> float:
+        """Return the excess kurtosis of the feedback ``final_score`` distribution.
+
+        Uses the fourth standardised moment minus 3 (Fisher's definition).
+        Positive values indicate heavier tails than a normal distribution.
+
+        Returns:
+            Float excess kurtosis; ``0.0`` when fewer than 4 records or std is zero.
+        """
+        import math
+        if len(self._feedback) < 4:
+            return 0.0
+        vals = [r.final_score for r in self._feedback]
+        n = len(vals)
+        mean = sum(vals) / n
+        variance = sum((v - mean) ** 2 for v in vals) / n
+        if variance == 0:
+            return 0.0
+        std = math.sqrt(variance)
+        return sum(((v - mean) / std) ** 4 for v in vals) / n - 3.0

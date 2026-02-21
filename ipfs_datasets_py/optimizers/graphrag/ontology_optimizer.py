@@ -2650,6 +2650,29 @@ class OntologyOptimizer:
                   for i in range(lag, n)) / (n - lag)
         return cov / variance
 
+    def history_stability(self) -> float:
+        """Return a stability score for history: inverse coefficient of variation.
+
+        Stability is defined as ``1 / (1 + CV)`` where CV = std / mean.
+        A value approaching 1.0 means very stable (low variance relative to
+        mean); lower values indicate high variability.
+
+        Returns:
+            Float in (0, 1]; ``0.0`` when history is empty or mean is zero.
+        """
+        import math
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        mean = sum(scores) / n
+        if mean == 0:
+            return 0.0
+        variance = sum((s - mean) ** 2 for s in scores) / n
+        std = math.sqrt(variance)
+        cv = std / mean
+        return 1.0 / (1.0 + cv)
+
 
 # Export public API
 __all__ = [

@@ -2132,6 +2132,23 @@ class LogicValidator:
 
         return max((v for v in dist.values() if v >= 0), default=0)
 
+    def relationship_type_distribution(self, ontology: dict) -> dict:
+        """Return a frequency distribution of relationship types.
+
+        Args:
+            ontology: Dict with optional ``"relationships"`` list.  Each
+                relationship may have a ``"type"`` key.
+
+        Returns:
+            Dict mapping relationship type string → count.  Relationships
+            without a ``"type"`` key are grouped under ``"unknown"``.
+        """
+        dist: dict = {}
+        for rel in ontology.get("relationships", []):
+            rtype = rel.get("type") or "unknown"
+            dist[rtype] = dist.get(rtype, 0) + 1
+        return dist
+
 
 # Export public API
 __all__ = [

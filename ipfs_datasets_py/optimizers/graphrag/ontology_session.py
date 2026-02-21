@@ -181,6 +181,7 @@ class OntologySession:
         self.critic = critic
         self.validator = validator
         self.max_rounds = max_rounds
+        self.start_time: Optional[float] = None
         
         logger.info(f"Initialized OntologySession with max_rounds={max_rounds}")
     
@@ -221,7 +222,8 @@ class OntologySession:
             >>> print(f"Rounds: {result.num_rounds}")
         """
         logger.info("Starting ontology optimization session")
-        start_time = time.time()
+        self.start_time = time.time()
+        start_time = self.start_time
         
         try:
             # Run refinement cycle through mediator
