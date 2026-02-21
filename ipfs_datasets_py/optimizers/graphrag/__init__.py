@@ -62,6 +62,7 @@ from .ontology_generator import (
     Entity,
     Relationship,
     EntityExtractionResult,
+    OntologyGenerationResult,
     ExtractionStrategy,
     DataType,
 )
@@ -134,6 +135,7 @@ __all__ = [
     'Entity',
     'Relationship',
     'EntityExtractionResult',
+    'OntologyGenerationResult',
     'ExtractionStrategy',
     'DataType',
     # Critic

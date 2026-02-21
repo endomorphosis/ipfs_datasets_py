@@ -490,7 +490,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [tests] Parametrize domain-specific rule tests with all 4 domains (legal, medical, financial, technical) — use `pytest.mark.parametrize` — Done batch 33: `tests/unit/optimizers/graphrag/test_ontology_generator_helpers.py` (`test_domain_specific_rules_extract_expected_type`, 4-domain parametrization)
 - [x] (P2) [graphrag] Add `OntologyCritic.evaluate_batch()` — Done batch 32: returns scores/mean_overall/min_overall/max_overall/count
 - [x] (P2) [tests] Unit tests for `OntologyCritic.evaluate_batch()` — Done batch 32: 14 tests in test_ontology_critic_evaluate_batch.py
-- [ ] (P2) [graphrag] Add `relationship_count`, `entity_type_diversity` fields to `OntologyGenerationResult` for richer reporting
+- [x] (P2) [graphrag] Add `OntologyGenerationResult` dataclass — Done batch 38: entity_count, relationship_count, entity_type_diversity, mean_entity_confidence, mean_rel_confidence; from_ontology() factory; generate_ontology_rich() method
 - [x] (P2) [docs] Update `ARCHITECTURE_UNIFIED.md` to document Relationship.direction field and co-occurrence confidence decay formula — Done batch 33: added GraphRAG relationship semantics + implemented piecewise confidence-decay equation
 - [ ] (P3) [graphrag] Add `ExtractionConfig.max_entities: int = 500` cap to prevent runaway extraction on large documents
 - [ ] (P3) [graphrag] Add `ExtractionConfig.min_entity_length: int = 2` to filter single-character entities

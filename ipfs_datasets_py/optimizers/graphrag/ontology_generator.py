@@ -252,6 +252,93 @@ class EntityExtractionResult:
     errors: List[str] = field(default_factory=list)
 
 
+@dataclass
+class OntologyGenerationResult:
+    """Rich result wrapper for a single ontology generation run.
+
+    Wraps the raw ontology dict with pre-computed summary statistics for
+    downstream reporting, logging, and dashboarding.
+
+    Attributes:
+        ontology: The raw ontology dict (``{"entities": [...], "relationships": [...]}``)
+            as returned by :meth:`OntologyGenerator.generate_ontology`.
+        entity_count: Total number of extracted entities.
+        relationship_count: Total number of inferred relationships.
+        entity_type_diversity: Number of distinct entity type labels.  Higher
+            values indicate a more varied ontology.
+        mean_entity_confidence: Mean confidence score across all entities.
+            ``0.0`` when there are no entities.
+        mean_relationship_confidence: Mean confidence score across all
+            relationships. ``0.0`` when there are no relationships.
+        extraction_strategy: Name of the extraction strategy used (e.g.
+            ``"rule_based"``, ``"llm_based"``).
+        domain: Domain string from the generation context.
+        metadata: Arbitrary extra data (timings, backend info, etc.).
+
+    Example::
+
+        result = generator.generate_ontology_rich(data, context)
+        print(f"Entities: {result.entity_count}, "
+              f"Types: {result.entity_type_diversity}, "
+              f"Rels: {result.relationship_count}")
+    """
+
+    ontology: Dict[str, Any]
+    entity_count: int = 0
+    relationship_count: int = 0
+    entity_type_diversity: int = 0
+    mean_entity_confidence: float = 0.0
+    mean_relationship_confidence: float = 0.0
+    extraction_strategy: str = "unknown"
+    domain: str = "general"
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_ontology(
+        cls,
+        ontology: Dict[str, Any],
+        *,
+        extraction_strategy: str = "unknown",
+        domain: str = "general",
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> "OntologyGenerationResult":
+        """Construct from a raw ontology dict, computing summary stats.
+
+        Args:
+            ontology: Raw ontology dict with ``entities`` and ``relationships`` lists.
+            extraction_strategy: Name of the strategy that produced this ontology.
+            domain: Domain string.
+            metadata: Optional extra metadata.
+
+        Returns:
+            Fully populated :class:`OntologyGenerationResult`.
+        """
+        entities = ontology.get("entities") or []
+        relationships = ontology.get("relationships") or []
+
+        entity_types = {e.get("type") for e in entities if isinstance(e, dict) and e.get("type")}
+
+        def _mean_confidence(items: list) -> float:
+            confs = [
+                float(i.get("confidence", 1.0))
+                for i in items
+                if isinstance(i, dict)
+            ]
+            return sum(confs) / len(confs) if confs else 0.0
+
+        return cls(
+            ontology=ontology,
+            entity_count=len(entities),
+            relationship_count=len(relationships),
+            entity_type_diversity=len(entity_types),
+            mean_entity_confidence=_mean_confidence(entities),
+            mean_relationship_confidence=_mean_confidence(relationships),
+            extraction_strategy=extraction_strategy,
+            domain=domain,
+            metadata=metadata or {},
+        )
+
+
 class OntologyGenerator:
     """
     Generate knowledge graph ontologies from arbitrary data.
@@ -561,6 +648,40 @@ class OntologyGenerator:
             ontology = self._merge_ontologies(context.base_ontology, ontology)
         
         return ontology
+
+    def generate_ontology_rich(
+        self,
+        data: Any,
+        context: OntologyGenerationContext,
+    ) -> "OntologyGenerationResult":
+        """Generate ontology and return a rich result with summary statistics.
+
+        Calls :meth:`generate_ontology` and wraps the result in an
+        :class:`OntologyGenerationResult` with pre-computed counts and
+        confidence averages for easy reporting and logging.
+
+        Args:
+            data: Input data to generate ontology from.
+            context: Context with generation configuration.
+
+        Returns:
+            :class:`OntologyGenerationResult` with the ontology dict and
+            computed ``entity_count``, ``relationship_count``,
+            ``entity_type_diversity``, and confidence averages.
+
+        Example::
+
+            result = generator.generate_ontology_rich(text, context)
+            print(f"Entities: {result.entity_count}, "
+                  f"Types: {result.entity_type_diversity}, "
+                  f"Rels: {result.relationship_count}")
+        """
+        ontology = self.generate_ontology(data, context)
+        return OntologyGenerationResult.from_ontology(
+            ontology,
+            extraction_strategy=context.extraction_strategy.value,
+            domain=context.domain,
+        )
     
     def _extract_rule_based(
         self,
