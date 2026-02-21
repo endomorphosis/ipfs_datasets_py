@@ -236,8 +236,8 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 | Metric | Value | Target |
 |--------|-------|--------|
 | Overall Progress | **100% ✅ COMPLETE** | 100% |
-| Test Functions | **947 passing, 29 skipped, 0 failing** | 500+ ✅ |
-| Own Tests Passing | **947 ✅** (was 853 before v5 sessions) | 100+ ✅ |
+| Test Functions | **987 passing, 29 skipped, 0 failing** | 500+ ✅ |
+| Own Tests Passing | **987 ✅** (was 853 before v5 sessions) | 100+ ✅ |
 | Test Coverage | **85-90%** | 80%+ ✅ |
 | Bare Exceptions (all files) | **0** ✅ | 0 |
 | Missing Return Types (core) | **0** ✅ | 0 |
@@ -283,7 +283,7 @@ Future improvements are tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_I
 
 **v5 Phases A-F status** (completed 2026-02-21, branch `copilot/refactor-markdown-files-again`):
 - ✅ **Phase A** (Docs): `docs/tools/README.md` 49-cat table; `docs/api/tool-reference.md` 530L; `docs/adr/` 4 ADRs; `performance-tuning.md` updated with Phase 7 guide
-- ✅ **Phase B** (Tests): **947 tests passing** (session 29); 14 B2 test categories + B3 scenario tests + B4 property tests; `tool_registry.py` 73%, `enterprise_api.py` 66%, `server_context.py` **90%** (+40pp), `runtime_router.py` **83%** (+33pp)
+- ✅ **Phase B** (Tests): **987 tests passing** (session 30); **18 B2 test categories** (added session 30: geospatial_tools, rate_limiting_tools, sparse_embedding_tools, index_management_tools) + B3 scenario tests + B4 property tests; `tool_registry.py` 73%, `enterprise_api.py` 66%, `server_context.py` **90%** (+40pp), `runtime_router.py` **83%** (+33pp)
 - ✅ **Phase C** (Observability): `request_id` UUID4 in dispatch; `/health/ready` + `/metrics` endpoints; latency percentiles
 - ✅ **Phase D** (Versioning): `schema_version` + `deprecated` + `deprecation_message` in `ToolMetadata`
 - ✅ **Phase E** (Benchmarks): 4-file benchmark suite + CI workflow + `conftest.py` stub fixture
