@@ -12,9 +12,15 @@ These rules are fundamental to multi-agent systems and theory of mind reasoning.
 """
 
 from typing import List, Optional
-from ..dcec_core import Formula, LogicalConnective, CognitiveOperator
+from ..dcec_core import (
+    Formula,
+    CognitiveFormula,
+    ConnectiveFormula,
+    LogicalConnective,
+    CognitiveOperator,
+)
 from ..exceptions import CECError
-from .base import InferenceRule, ProofResult
+from .base import InferenceRule
 
 
 class BeliefDistribution(InferenceRule):
@@ -36,33 +42,29 @@ class BeliefDistribution(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have B(agent, P∧Q)."""
         for formula in formulas:
-            if (hasattr(formula, 'operator') and 
+            if (isinstance(formula, CognitiveFormula) and
                 formula.operator == CognitiveOperator.BELIEF and
-                hasattr(formula, 'content') and
-                hasattr(formula.content, 'operator') and
-                formula.content.operator == LogicalConnective.AND):
+                isinstance(formula.formula, ConnectiveFormula) and
+                formula.formula.connective == LogicalConnective.AND):
                 return True
         return False
     
-    def apply(self, formulas: List[Formula]) -> ProofResult:
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
         """Apply belief distribution: B(agent, P∧Q) → B(agent, P) ∧ B(agent, Q)."""
         for formula in formulas:
-            if (hasattr(formula, 'operator') and 
+            if (isinstance(formula, CognitiveFormula) and
                 formula.operator == CognitiveOperator.BELIEF and
-                hasattr(formula, 'content') and
-                hasattr(formula.content, 'operator') and
-                formula.content.operator == LogicalConnective.AND):
-                
-                agent = formula.agent if hasattr(formula, 'agent') else None
-                p = formula.content.left if hasattr(formula.content, 'left') else None
-                q = formula.content.right if hasattr(formula.content, 'right') else None
-                
-                if p and q:
-                    # Create B(agent, P) and B(agent, Q)
-                    # Return success (actual formula construction depends on dcec_core implementation)
-                    return ProofResult.SUCCESS
-        
-        return ProofResult.FAILURE
+                isinstance(formula.formula, ConnectiveFormula) and
+                formula.formula.connective == LogicalConnective.AND and
+                len(formula.formula.formulas) >= 2):
+                agent = formula.agent
+                p = formula.formula.formulas[0]
+                q = formula.formula.formulas[1]
+                return [
+                    CognitiveFormula(CognitiveOperator.BELIEF, agent, p),
+                    CognitiveFormula(CognitiveOperator.BELIEF, agent, q),
+                ]
+        return []
 
 
 class KnowledgeImpliesBelief(InferenceRule):
@@ -84,19 +86,18 @@ class KnowledgeImpliesBelief(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have K(agent, P)."""
         for formula in formulas:
-            if (hasattr(formula, 'operator') and 
+            if (isinstance(formula, CognitiveFormula) and
                 formula.operator == CognitiveOperator.KNOWLEDGE):
                 return True
         return False
     
-    def apply(self, formulas: List[Formula]) -> ProofResult:
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
         """Apply knowledge→belief: K(agent, P) → B(agent, P)."""
         for formula in formulas:
-            if (hasattr(formula, 'operator') and 
+            if (isinstance(formula, CognitiveFormula) and
                 formula.operator == CognitiveOperator.KNOWLEDGE):
-                # Convert knowledge to belief
-                return ProofResult.SUCCESS
-        return ProofResult.FAILURE
+                return [CognitiveFormula(CognitiveOperator.BELIEF, formula.agent, formula.formula)]
+        return []
 
 
 class BeliefMonotonicity(InferenceRule):
@@ -118,23 +119,23 @@ class BeliefMonotonicity(InferenceRule):
     
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have B(agent, P) and (P→Q)."""
-        has_belief = False
-        has_implication = False
-        
-        for formula in formulas:
-            if (hasattr(formula, 'operator') and 
-                formula.operator == CognitiveOperator.BELIEF):
-                has_belief = True
-            if (hasattr(formula, 'operator') and 
-                formula.operator == LogicalConnective.IMPLIES):
-                has_implication = True
-        
+        has_belief = any(
+            isinstance(f, CognitiveFormula) and f.operator == CognitiveOperator.BELIEF
+            for f in formulas
+        )
+        has_implication = any(
+            isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES
+            for f in formulas
+        )
         return has_belief and has_implication
     
-    def apply(self, formulas: List[Formula]) -> ProofResult:
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
         """Apply belief monotonicity: B(agent, P) ∧ (P→Q) → B(agent, Q)."""
-        # Find B(agent, P) and matching (P→Q)
-        return ProofResult.SUCCESS
+        for f_belief in [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator == CognitiveOperator.BELIEF]:
+            for f_impl in [f for f in formulas if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES and len(f.formulas) == 2]:
+                if f_impl.formulas[0] == f_belief.formula:
+                    return [CognitiveFormula(CognitiveOperator.BELIEF, f_belief.agent, f_impl.formulas[1])]
+        return []
 
 
 class IntentionCommitment(InferenceRule):
@@ -160,21 +161,27 @@ class IntentionCommitment(InferenceRule):
         has_belief_implication = False
         
         for formula in formulas:
-            if (hasattr(formula, 'operator') and 
+            if (isinstance(formula, CognitiveFormula) and
                 formula.operator == CognitiveOperator.INTENTION):
                 has_intention = True
-            if (hasattr(formula, 'operator') and 
+            if (isinstance(formula, CognitiveFormula) and
                 formula.operator == CognitiveOperator.BELIEF and
-                hasattr(formula, 'content') and
-                hasattr(formula.content, 'operator') and
-                formula.content.operator == LogicalConnective.IMPLIES):
+                isinstance(formula.formula, ConnectiveFormula) and
+                formula.formula.connective == LogicalConnective.IMPLIES):
                 has_belief_implication = True
         
         return has_intention and has_belief_implication
     
-    def apply(self, formulas: List[Formula]) -> ProofResult:
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
         """Apply intention commitment: I(agent, P) ∧ B(agent, P→Q) → I(agent, Q)."""
-        return ProofResult.SUCCESS
+        for f_int in [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator == CognitiveOperator.INTENTION]:
+            for f_bel in [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator == CognitiveOperator.BELIEF]:
+                if (isinstance(f_bel.formula, ConnectiveFormula) and
+                        f_bel.formula.connective == LogicalConnective.IMPLIES and
+                        len(f_bel.formula.formulas) == 2 and
+                        f_bel.formula.formulas[0] == f_int.formula):
+                    return [CognitiveFormula(CognitiveOperator.INTENTION, f_int.agent, f_bel.formula.formulas[1])]
+        return []
 
 
 class BeliefConjunction(InferenceRule):
@@ -195,14 +202,20 @@ class BeliefConjunction(InferenceRule):
     
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have at least two beliefs by the same agent."""
-        beliefs = [f for f in formulas if 
-                  hasattr(f, 'operator') and 
+        beliefs = [f for f in formulas if
+                  isinstance(f, CognitiveFormula) and
                   f.operator == CognitiveOperator.BELIEF]
         return len(beliefs) >= 2
     
-    def apply(self, formulas: List[Formula]) -> ProofResult:
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
         """Apply belief conjunction: B(agent, P) ∧ B(agent, Q) → B(agent, P∧Q)."""
-        return ProofResult.SUCCESS
+        beliefs = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator == CognitiveOperator.BELIEF]
+        if len(beliefs) >= 2:
+            agent = beliefs[0].agent
+            p = beliefs[0].formula
+            q = beliefs[1].formula
+            return [CognitiveFormula(CognitiveOperator.BELIEF, agent, ConnectiveFormula(LogicalConnective.AND, [p, q]))]
+        return []
 
 
 class KnowledgeDistribution(InferenceRule):
@@ -224,17 +237,29 @@ class KnowledgeDistribution(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have K(agent, P∧Q)."""
         for formula in formulas:
-            if (hasattr(formula, 'operator') and 
+            if (isinstance(formula, CognitiveFormula) and
                 formula.operator == CognitiveOperator.KNOWLEDGE and
-                hasattr(formula, 'content') and
-                hasattr(formula.content, 'operator') and
-                formula.content.operator == LogicalConnective.AND):
+                isinstance(formula.formula, ConnectiveFormula) and
+                formula.formula.connective == LogicalConnective.AND):
                 return True
         return False
     
-    def apply(self, formulas: List[Formula]) -> ProofResult:
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
         """Apply knowledge distribution: K(agent, P∧Q) → K(agent, P) ∧ K(agent, Q)."""
-        return ProofResult.SUCCESS
+        for formula in formulas:
+            if (isinstance(formula, CognitiveFormula) and
+                formula.operator == CognitiveOperator.KNOWLEDGE and
+                isinstance(formula.formula, ConnectiveFormula) and
+                formula.formula.connective == LogicalConnective.AND and
+                len(formula.formula.formulas) >= 2):
+                agent = formula.agent
+                p = formula.formula.formulas[0]
+                q = formula.formula.formulas[1]
+                return [
+                    CognitiveFormula(CognitiveOperator.KNOWLEDGE, agent, p),
+                    CognitiveFormula(CognitiveOperator.KNOWLEDGE, agent, q),
+                ]
+        return []
 
 
 class IntentionMeansEnd(InferenceRule):
@@ -261,21 +286,27 @@ class IntentionMeansEnd(InferenceRule):
         has_belief_means = False
         
         for formula in formulas:
-            if (hasattr(formula, 'operator') and 
+            if (isinstance(formula, CognitiveFormula) and
                 formula.operator == CognitiveOperator.INTENTION):
                 has_intention = True
-            if (hasattr(formula, 'operator') and 
+            if (isinstance(formula, CognitiveFormula) and
                 formula.operator == CognitiveOperator.BELIEF and
-                hasattr(formula, 'content') and
-                hasattr(formula.content, 'operator') and
-                formula.content.operator == LogicalConnective.IMPLIES):
+                isinstance(formula.formula, ConnectiveFormula) and
+                formula.formula.connective == LogicalConnective.IMPLIES):
                 has_belief_means = True
         
         return has_intention and has_belief_means
     
-    def apply(self, formulas: List[Formula]) -> ProofResult:
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
         """Apply means-end reasoning: I(agent, goal) ∧ B(agent, action→goal) → I(agent, action)."""
-        return ProofResult.SUCCESS
+        for f_int in [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator == CognitiveOperator.INTENTION]:
+            for f_bel in [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator == CognitiveOperator.BELIEF]:
+                if (isinstance(f_bel.formula, ConnectiveFormula) and
+                        f_bel.formula.connective == LogicalConnective.IMPLIES and
+                        len(f_bel.formula.formulas) == 2 and
+                        f_bel.formula.formulas[1] == f_int.formula):
+                    return [CognitiveFormula(CognitiveOperator.INTENTION, f_int.agent, f_bel.formula.formulas[0])]
+        return []
 
 
 class PerceptionImpliesKnowledge(InferenceRule):
@@ -298,14 +329,18 @@ class PerceptionImpliesKnowledge(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have P(agent, φ)."""
         for formula in formulas:
-            if (hasattr(formula, 'operator') and 
+            if (isinstance(formula, CognitiveFormula) and
                 formula.operator == CognitiveOperator.PERCEPTION):
                 return True
         return False
     
-    def apply(self, formulas: List[Formula]) -> ProofResult:
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
         """Apply perception→knowledge: P(agent, φ) → K(agent, φ)."""
-        return ProofResult.SUCCESS
+        for formula in formulas:
+            if (isinstance(formula, CognitiveFormula) and
+                formula.operator == CognitiveOperator.PERCEPTION):
+                return [CognitiveFormula(CognitiveOperator.KNOWLEDGE, formula.agent, formula.formula)]
+        return []
 
 
 class BeliefNegation(InferenceRule):
@@ -328,17 +363,25 @@ class BeliefNegation(InferenceRule):
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have B(agent, ¬P)."""
         for formula in formulas:
-            if (hasattr(formula, 'operator') and 
+            if (isinstance(formula, CognitiveFormula) and
                 formula.operator == CognitiveOperator.BELIEF and
-                hasattr(formula, 'content') and
-                hasattr(formula.content, 'operator') and
-                formula.content.operator == LogicalConnective.NOT):
+                isinstance(formula.formula, ConnectiveFormula) and
+                formula.formula.connective == LogicalConnective.NOT):
                 return True
         return False
     
-    def apply(self, formulas: List[Formula]) -> ProofResult:
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
         """Apply belief negation: B(agent, ¬P) → ¬B(agent, P)."""
-        return ProofResult.SUCCESS
+        for formula in formulas:
+            if (isinstance(formula, CognitiveFormula) and
+                formula.operator == CognitiveOperator.BELIEF and
+                isinstance(formula.formula, ConnectiveFormula) and
+                formula.formula.connective == LogicalConnective.NOT and
+                len(formula.formula.formulas) == 1):
+                p = formula.formula.formulas[0]
+                belief_p = CognitiveFormula(CognitiveOperator.BELIEF, formula.agent, p)
+                return [ConnectiveFormula(LogicalConnective.NOT, [belief_p])]
+        return []
 
 
 class KnowledgeConjunction(InferenceRule):
@@ -359,14 +402,20 @@ class KnowledgeConjunction(InferenceRule):
     
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have at least two knowledge statements by the same agent."""
-        knowledge_formulas = [f for f in formulas if 
-                            hasattr(f, 'operator') and 
+        knowledge_formulas = [f for f in formulas if
+                            isinstance(f, CognitiveFormula) and
                             f.operator == CognitiveOperator.KNOWLEDGE]
         return len(knowledge_formulas) >= 2
     
-    def apply(self, formulas: List[Formula]) -> ProofResult:
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
         """Apply knowledge conjunction: K(agent, P) ∧ K(agent, Q) → K(agent, P∧Q)."""
-        return ProofResult.SUCCESS
+        knowledge = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator == CognitiveOperator.KNOWLEDGE]
+        if len(knowledge) >= 2:
+            agent = knowledge[0].agent
+            p = knowledge[0].formula
+            q = knowledge[1].formula
+            return [CognitiveFormula(CognitiveOperator.KNOWLEDGE, agent, ConnectiveFormula(LogicalConnective.AND, [p, q]))]
+        return []
 
 
 class IntentionPersistence(InferenceRule):
@@ -392,22 +441,34 @@ class IntentionPersistence(InferenceRule):
         has_not_belief = False
         
         for formula in formulas:
-            if (hasattr(formula, 'operator') and 
+            if (isinstance(formula, CognitiveFormula) and
                 formula.operator == CognitiveOperator.INTENTION):
                 has_intention = True
-            # Check for negated belief
-            if (hasattr(formula, 'operator') and 
-                formula.operator == LogicalConnective.NOT and
-                hasattr(formula, 'content') and
-                hasattr(formula.content, 'operator') and
-                formula.content.operator == CognitiveOperator.BELIEF):
+            # Check for negated belief: ConnectiveFormula(NOT, [CognitiveFormula(BELIEF, ...)])
+            if (isinstance(formula, ConnectiveFormula) and
+                formula.connective == LogicalConnective.NOT and
+                len(formula.formulas) == 1 and
+                isinstance(formula.formulas[0], CognitiveFormula) and
+                formula.formulas[0].operator == CognitiveOperator.BELIEF):
                 has_not_belief = True
         
         return has_intention and has_not_belief
     
-    def apply(self, formulas: List[Formula]) -> ProofResult:
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
         """Apply intention persistence: I(agent, P) ∧ ¬B(agent, P) → I(agent, P)'."""
-        return ProofResult.SUCCESS
+        has_not_belief = any(
+            isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.NOT and
+            len(f.formulas) == 1 and isinstance(f.formulas[0], CognitiveFormula) and
+            f.formulas[0].operator == CognitiveOperator.BELIEF
+            for f in formulas
+        )
+        if not has_not_belief:
+            return []
+        for formula in formulas:
+            if (isinstance(formula, CognitiveFormula) and
+                formula.operator == CognitiveOperator.INTENTION):
+                return [formula]
+        return []
 
 
 class BeliefRevision(InferenceRule):
@@ -429,22 +490,26 @@ class BeliefRevision(InferenceRule):
     
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have B(agent, P) and P(agent, ¬P)."""
-        has_belief = False
-        has_contradictory_perception = False
-        
-        for formula in formulas:
-            if (hasattr(formula, 'operator') and 
-                formula.operator == CognitiveOperator.BELIEF):
-                has_belief = True
-            if (hasattr(formula, 'operator') and 
-                formula.operator == CognitiveOperator.PERCEPTION):
-                has_contradictory_perception = True
-        
+        has_belief = any(
+            isinstance(f, CognitiveFormula) and f.operator == CognitiveOperator.BELIEF
+            for f in formulas
+        )
+        has_contradictory_perception = any(
+            isinstance(f, CognitiveFormula) and f.operator == CognitiveOperator.PERCEPTION
+            for f in formulas
+        )
         return has_belief and has_contradictory_perception
     
-    def apply(self, formulas: List[Formula]) -> ProofResult:
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
         """Apply belief revision: B(agent, P) ∧ P(agent, ¬P) → B(agent, ¬P)."""
-        return ProofResult.SUCCESS
+        for f_bel in [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator == CognitiveOperator.BELIEF]:
+            for f_per in [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator == CognitiveOperator.PERCEPTION]:
+                if (isinstance(f_per.formula, ConnectiveFormula) and
+                        f_per.formula.connective == LogicalConnective.NOT and
+                        len(f_per.formula.formulas) == 1 and
+                        f_per.formula.formulas[0] == f_bel.formula):
+                    return [CognitiveFormula(CognitiveOperator.BELIEF, f_bel.agent, f_per.formula)]
+        return []
 
 
 class KnowledgeMonotonicity(InferenceRule):
@@ -467,22 +532,23 @@ class KnowledgeMonotonicity(InferenceRule):
     
     def can_apply(self, formulas: List[Formula]) -> bool:
         """Check if we have K(agent, P) and (P→Q)."""
-        has_knowledge = False
-        has_implication = False
-        
-        for formula in formulas:
-            if (hasattr(formula, 'operator') and 
-                formula.operator == CognitiveOperator.KNOWLEDGE):
-                has_knowledge = True
-            if (hasattr(formula, 'operator') and 
-                formula.operator == LogicalConnective.IMPLIES):
-                has_implication = True
-        
+        has_knowledge = any(
+            isinstance(f, CognitiveFormula) and f.operator == CognitiveOperator.KNOWLEDGE
+            for f in formulas
+        )
+        has_implication = any(
+            isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES
+            for f in formulas
+        )
         return has_knowledge and has_implication
     
-    def apply(self, formulas: List[Formula]) -> ProofResult:
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
         """Apply knowledge monotonicity: K(agent, P) ∧ (P→Q) → K(agent, Q)."""
-        return ProofResult.SUCCESS
+        for f_know in [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator == CognitiveOperator.KNOWLEDGE]:
+            for f_impl in [f for f in formulas if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES and len(f.formulas) == 2]:
+                if f_impl.formulas[0] == f_know.formula:
+                    return [CognitiveFormula(CognitiveOperator.KNOWLEDGE, f_know.agent, f_impl.formulas[1])]
+        return []
 
 
 # Export all cognitive rules

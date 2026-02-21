@@ -146,6 +146,7 @@ class CognitiveOperator(Enum):
     INTENTION = "I"          # I(agent, φ) - agent intends φ
     DESIRE = "D"             # D(agent, φ) - agent desires φ
     GOAL = "G"               # G(agent, φ) - agent has goal φ
+    PERCEPTION = "P"         # P(agent, φ) - agent directly perceives φ
     # Backward-compat aliases
     BELIEVES = "B"
     KNOWS = "K"
