@@ -2218,6 +2218,48 @@ class LogicValidator:
             histogram[deg] = histogram.get(deg, 0) + 1
         return histogram
 
+    def leaf_entities(self, ontology: dict) -> list:
+        """Return entity IDs that have no outgoing relationships (leaf nodes).
+
+        A leaf has zero out-degree in the directed graph.
+
+        Args:
+            ontology: Dict with optional ``"entities"`` and ``"relationships"`` lists.
+
+        Returns:
+            Sorted list of entity ID strings with out-degree zero.
+        """
+        entities = ontology.get("entities", [])
+        relationships = ontology.get("relationships", [])
+        all_ids = {e.get("id") for e in entities if e.get("id")}
+        has_outgoing = set()
+        for rel in relationships:
+            s = rel.get("subject_id") or rel.get("source_id")
+            if s and s in all_ids:
+                has_outgoing.add(s)
+        return sorted(all_ids - has_outgoing)
+
+    def source_entities(self, ontology: dict) -> list:
+        """Return entity IDs that have no incoming relationships (source nodes).
+
+        A source has zero in-degree in the directed graph.
+
+        Args:
+            ontology: Dict with optional ``"entities"`` and ``"relationships"`` lists.
+
+        Returns:
+            Sorted list of entity ID strings with in-degree zero.
+        """
+        entities = ontology.get("entities", [])
+        relationships = ontology.get("relationships", [])
+        all_ids = {e.get("id") for e in entities if e.get("id")}
+        has_incoming = set()
+        for rel in relationships:
+            o = rel.get("object_id") or rel.get("target_id")
+            if o and o in all_ids:
+                has_incoming.add(o)
+        return sorted(all_ids - has_incoming)
+
 
 # Export public API
 __all__ = [

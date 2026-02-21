@@ -2739,6 +2739,17 @@ class OntologyOptimizer:
         """
         return [e for e in self._history if e.average_score < threshold]
 
+    def best_history_entry(self):
+        """Return the history entry with the highest ``average_score``.
+
+        Returns:
+            The history entry object with the maximum ``average_score``;
+            ``None`` when history is empty.
+        """
+        if not self._history:
+            return None
+        return max(self._history, key=lambda e: e.average_score)
+
 
 # Export public API
 __all__ = [

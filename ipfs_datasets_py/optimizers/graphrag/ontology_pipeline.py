@@ -1157,3 +1157,16 @@ class OntologyPipeline:
         scores = [r.score.overall for r in self._run_history]
         mean = sum(scores) / len(scores)
         return [r for r in self._run_history if r.score.overall > mean]
+
+    def last_n_scores(self, n: int) -> list:
+        """Return the overall scores from the last *n* runs.
+
+        Args:
+            n: Number of most recent runs to include.
+
+        Returns:
+            List of float overall scores, oldest first.  Fewer than *n*
+            values are returned when history has fewer than *n* runs.
+        """
+        recent = self._run_history[-n:]
+        return [r.score.overall for r in recent]

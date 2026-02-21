@@ -211,13 +211,14 @@ class TestOntologyMediatorJsonLogging:
         feedback.clarity = 0.5
         # Note: not setting granularity, relationship_coherence, domain_alignment
 
-        with caplog.at_level(logging.INFO):
+        logger_name = "ipfs_datasets_py.optimizers.graphrag.ontology_mediator"
+        with caplog.at_level(logging.INFO, logger=logger_name):
             refined = mediator.refine_ontology(sample_ontology, feedback, None)
 
         json_logs = [
             record for record in caplog.records if "REFINEMENT_ROUND:" in record.message
         ]
-        assert len(json_logs) > 0, "Should log even with minimal feedback"
+        assert len(json_logs) > 0, f"Should log even with minimal feedback. Logs: {[r.message for r in caplog.records]}"
 
         log_msg = json_logs[0].message
         json_str = log_msg.replace("REFINEMENT_ROUND: ", "")
