@@ -21,6 +21,15 @@ from symai.backend.base import Engine
 from symai.backend.settings import SYMAI_CONFIG
 
 try:
+    from ipfs_datasets_py.optimizers.common.backend_selection import (
+        detect_provider_from_environment,
+        canonicalize_provider,
+    )
+except Exception:
+    detect_provider_from_environment = None
+    canonicalize_provider = None
+
+try:
     from ipfs_datasets_py.embeddings_router import embed_texts
 except Exception:
     embed_texts = None
@@ -485,7 +494,12 @@ def _generate_text(prompt: str, model_name: str) -> Tuple[str, Dict[str, Any]]:
         from ipfs_datasets_py import llm_router
 
         deps = _get_symai_router_deps()
-        provider = os.environ.get("IPFS_DATASETS_PY_LLM_PROVIDER") or None
+        # Use centralized provider detection instead of ad-hoc env check
+        if detect_provider_from_environment and canonicalize_provider:
+            provider = detect_provider_from_environment(prefer_accelerate=False)
+            provider = canonicalize_provider(provider, default=None)
+        else:
+            provider = os.environ.get("IPFS_DATASETS_PY_LLM_PROVIDER") or None
         text = llm_router.generate_text(
             str(prompt),
             model_name=model_name or None,

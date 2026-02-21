@@ -368,3 +368,38 @@ class OntologyLearningAdapter:
         count = len(self._feedback)
         self._feedback.clear()
         return count
+
+    def feedback_summary(self) -> Dict[str, Any]:
+        """Return descriptive statistics for the current feedback history.
+
+        Returns:
+            Dict with keys:
+
+            * ``"count"`` -- number of feedback records.
+            * ``"mean_score"`` -- mean ``final_score`` across records.
+            * ``"min_score"`` -- minimum ``final_score``.
+            * ``"max_score"`` -- maximum ``final_score``.
+            * ``"current_threshold"`` -- current extraction threshold.
+
+        Example:
+            >>> summary = adapter.feedback_summary()
+            >>> summary["count"] == len(adapter._feedback)
+            True
+        """
+        count = len(self._feedback)
+        if count == 0:
+            return {
+                "count": 0,
+                "mean_score": 0.0,
+                "min_score": 0.0,
+                "max_score": 0.0,
+                "current_threshold": self._current_threshold,
+            }
+        scores = [r.final_score for r in self._feedback]
+        return {
+            "count": count,
+            "mean_score": round(sum(scores) / count, 6),
+            "min_score": round(min(scores), 6),
+            "max_score": round(max(scores), 6),
+            "current_threshold": self._current_threshold,
+        }

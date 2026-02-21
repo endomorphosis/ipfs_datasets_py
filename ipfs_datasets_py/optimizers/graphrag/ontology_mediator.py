@@ -759,6 +759,23 @@ class OntologyMediator:
         self._recommendation_counts.clear()
         return count
 
+    def get_round_count(self) -> int:
+        """Return the total number of refinement rounds performed.
+
+        Computed as the length of the undo stack (each round pushes one
+        snapshot) plus any rounds that have already been undone.  In
+        practice this returns the current undo stack depth — a simple
+        proxy for how many rounds have been executed without undo.
+
+        Returns:
+            Integer >= 0.
+
+        Example:
+            >>> mediator.get_round_count()
+            0
+        """
+        return len(self._undo_stack)
+
     def get_undo_depth(self) -> int:
         """Return the number of snapshots in the undo stack.
 

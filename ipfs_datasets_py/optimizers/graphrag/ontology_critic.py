@@ -1664,6 +1664,30 @@ class OntologyCritic(BaseCritic):
         lines.append(f"{'overall':18s}: {score.overall:.3f}")
         return "\n".join(lines)
 
+    def score_delta(
+        self,
+        score_a: "CriticScore",
+        score_b: "CriticScore",
+    ) -> Dict[str, float]:
+        """Return per-dimension delta (score_b - score_a) for two CriticScores.
+
+        Args:
+            score_a: Baseline score.
+            score_b: Target score.
+
+        Returns:
+            Dict mapping dimension name → (score_b.dim - score_a.dim), rounded
+            to 6 decimal places.  Includes ``"overall"`` as well as the five
+            individual dimensions.
+
+        Example:
+            >>> delta = critic.score_delta(old_score, new_score)
+            >>> delta["overall"] > 0  # improvement
+            True
+        """
+        dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment", "overall"]
+        return {d: round(getattr(score_b, d) - getattr(score_a, d), 6) for d in dims}
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],
