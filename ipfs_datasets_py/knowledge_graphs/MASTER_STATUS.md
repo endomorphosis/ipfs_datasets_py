@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.6.0  
+**Version:** 3.7.0  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-21 (session 29)  
-**Last Major Release:** v3.6.0 (neo4j_exporter 71→99%, ipfs_importer 82→97%, legacy_engine 90→99%, validator 79→99%, session 29)
+**Last Updated:** 2026-02-21 (session 30)  
+**Last Major Release:** v3.7.0 (_wikipedia_helpers 9→74%, core/types 85→100%, driver 86→96%, ipld_backend 89→93%, __init__ 88→100%; bug fix: _wikipedia_helpers Relationship kwarg; session 30)
 
 ---
 
@@ -18,10 +18,10 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 91% overall | Measured 2026-02-21 session 29; neo4j_exporter 99%, ipfs_importer 97%, legacy_engine 99%, validator 99%, overall 91%; **3,069 pass** (65 new, baseline 3,004 this env)
-| **Documentation** | ✅ Up to Date | Reflects v3.6.0 structure |
-| **Known Issues** | None | 17 bugs fixed (sessions 7-11, 18-19, 21-27); 0 failures (3,069 pass)
-| **Next Milestone** | v3.7.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
+| **Test Coverage** | 92% overall | Measured 2026-02-21 session 30; _wikipedia_helpers 74%, core/types 100%, driver 96%, ipld_backend 93%; **3,130 pass** (61 new, baseline 3,069 last env)
+| **Documentation** | ✅ Up to Date | Reflects v3.7.0 structure |
+| **Known Issues** | None | 18 bugs fixed (sessions 7-11, 18-19, 21-27, 30: _wikipedia_helpers Relationship kwarg); 0 failures (3,130 pass)
+| **Next Milestone** | v3.8.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
 
 ---
 
@@ -509,7 +509,34 @@ reasoning = reasoner.reason_across_documents(
 
 ## Version History
 
-### v3.6.0 (2026-02-21) - Coverage Boost Session 29 ✅
+### v3.7.0 (2026-02-21) - Coverage Boost Session 30 ✅
+
+**Summary:** Added 61 new GIVEN-WHEN-THEN tests across 8 modules + 1 bug fix; overall coverage **91%→92%** (+1pp, 1087→932 misses, 155 more lines covered). Largest gain: `extraction/_wikipedia_helpers.py` **9%→74%** (+65pp, first-ever comprehensive testing of this file). 1 production bug fixed: `_wikipedia_helpers.py` used `source=`/`target=` kwargs for `Relationship` instead of `source_entity=`/`target_entity=`.
+
+**Test additions (61 new):**
+- `extraction/_wikipedia_helpers.py` (9% → **74%**, +65pp): `extract_from_wikipedia` success/page-not-found/network-error/tracer-success/tracer-failure/sourced_from-rels; `validate_against_wikidata` no-wikidata-id/entity-not-in-kg/full-flow/network-error/with-tracer; `_get_wikidata_id` found/not-found/request-exception/key-error; `_get_wikidata_statements` success/network-error/unexpected-error-raises-ValidationError
+- `core/types.py` (85% → **100%**, +15pp): Protocol method bodies (StorageBackend.store/retrieve/retrieve_json/store_json, GraphEngineProtocol.create_node/get_node/find_nodes/create_relationship) covered by calling unbound Protocol methods on concrete subclass instances
+- `neo4j_compat/driver.py` (86% → **96%**, +10pp): `verify_connectivity` success/StorageError-propagates/RuntimeError→IPLDStorageError/ConnectionError→IPLDStorageError; `HAVE_DEPS=False` triggers ImportError at construction
+- `storage/ipld_backend.py` (89% → **93%**, +4pp): `store` reraises SerializationError/IPLDStorageError; `retrieve` reraises IPLDStorageError, cat ConnectionError/generic → IPLDStorageError, block_put ConnectionError/generic → IPLDStorageError; `retrieve_json` cache hit; `create_backend()` function; module HAVE_ROUTER attribute
+- `__init__.py` (88% → **100%**, +12pp): `__getattr__` success returns deprecated export with DeprecationWarning; `__getattr__` missing name → AttributeError; `__dir__` includes deprecated exports and regular globals
+- `extraction/extractor.py` (70% → **71%**, +1pp): classification model low-confidence-skipped/high-confidence-fires/exception-continues/low-structure-temperature-filters-rels (via direct field injection `extractor.use_transformers=True; extractor.re_model=mock`)
+- `core/graph_engine.py` (95% → **95%**, +0pp/traverse covered): `traverse_pattern` multi-hop with label filter; `traverse_pattern` label filter excludes non-matching; `find_paths` intermediate node / cycle-prevention / max_depth_limits_search
+- `migration/formats.py` (95% → **96%**, +1pp): `_builtin_load_car` libipld-not-available→ImportError, libipld-generic-exception-falls-through→ImportError; `_builtin_save_car` libipld-missing/ipld_car-missing → ImportError; `_load_from_pajek` comment-lines-skipped
+
+**Bug fix (1):**
+- `extraction/_wikipedia_helpers.py` line 161: `source=entity` → `source_entity=entity`; line 162: `target=page_entity` → `target_entity=page_entity` (TypeError at runtime when adding sourced_from relationships — `Relationship.__init__` does not accept `source`/`target` kwargs)
+
+**Result:** 3,130 passed, 23 skipped, **0 failed** — up from 3,069 (session 29 baseline)
+**Coverage:** 92% overall (932 misses, down from 1087)
+
+**Remaining untestable lines:**
+- `_wikipedia_helpers.py` lines 275/301-303/336-349/364/376/391-432/469-471/572-644 (require real Wikidata entities in KG for outgoing/incoming rel comparison)
+- `extractor.py` lines 117-123/170-189/533-586/618-739 (require spaCy model at runtime)
+- `neo4j_compat/driver.py` lines 35-38 (module-level `except ImportError` only runs at first import with missing RouterDeps)
+- `storage/ipld_backend.py` lines 166-167/254/380/407 (require live IPFS backend instance)
+
+**Backward Compatibility:** 100% (bug fix only corrects kwargs; no breaking API changes)
+
 
 **Summary:** Added 65 new GIVEN-WHEN-THEN tests across 4 modules; overall coverage **90%→91%** (+1pp, 1146→1087 misses, 59 more lines covered). Largest gains: `extraction/validator.py` 79%→**99%** (+20pp), `migration/neo4j_exporter.py` 71%→**99%** (+28pp), `migration/ipfs_importer.py` 82%→**97%** (+15pp), `core/_legacy_graph_engine.py` 90%→**99%** (+9pp).
 
