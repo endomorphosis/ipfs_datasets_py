@@ -380,7 +380,7 @@ def test_query_rewriter_integration():
     # Test entity importance-based pruning
     # Create a mock graph processor for testing
     class MockGraphProcessor:
-        def get_entity_info(self, entity_id):
+        def get_entity_info(self, entity_id) -> Dict[str, Any]:
             return {
                 "inbound_connections": [{"id": i} for i in range(10)],
                 "outbound_connections": [{"id": i} for i in range(5)],

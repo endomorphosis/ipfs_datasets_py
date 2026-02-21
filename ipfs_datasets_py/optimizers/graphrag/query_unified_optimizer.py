@@ -1558,7 +1558,7 @@ class UnifiedGraphRAGQueryOptimizer:
         """
         increment_failure_counter(self, error_message, is_critical=is_critical)
 
-    def save_learning_state(self, filepath=None):
+    def save_learning_state(self, filepath=None) -> None:
         """
         Save the current learning state to disk.
     
@@ -1630,7 +1630,7 @@ class UnifiedGraphRAGQueryOptimizer:
                     )
                 return None
         
-    def load_learning_state(self, filepath=None):
+    def load_learning_state(self, filepath=None) -> None:
         """
         Load learning state from disk.
     
@@ -1887,7 +1887,7 @@ class UnifiedGraphRAGQueryOptimizer:
             print("No visualizer available. Cannot create visualization.")
             return None
     
-    def visualize_metrics_dashboard(self, query_id=None, output_file=None, include_all_metrics=False):
+    def visualize_metrics_dashboard(self, query_id=None, output_file=None, include_all_metrics=False) -> None:
         """
         Generate a comprehensive metrics dashboard for visualization.
         
@@ -1921,7 +1921,7 @@ class UnifiedGraphRAGQueryOptimizer:
         
         return output_file
     
-    def visualize_performance_comparison(self, query_ids=None, labels=None, output_file=None, show_plot=True):
+    def visualize_performance_comparison(self, query_ids=None, labels=None, output_file=None, show_plot=True) -> None:
         """
         Compare performance metrics across multiple queries.
         
@@ -1955,7 +1955,7 @@ class UnifiedGraphRAGQueryOptimizer:
             output_file=output_file
         )
     
-    def visualize_resource_usage(self, query_id=None, output_file=None, show_plot=True):
+    def visualize_resource_usage(self, query_id=None, output_file=None, show_plot=True) -> None:
         """
         Visualize resource usage (memory and CPU) for a specific query.
         
@@ -1993,7 +1993,7 @@ class UnifiedGraphRAGQueryOptimizer:
             output_file=output_file
         )
     
-    def visualize_query_patterns(self, limit=10, output_file=None, show_plot=True):
+    def visualize_query_patterns(self, limit=10, output_file=None, show_plot=True) -> None:
         """
         Visualize common query patterns from collected metrics.
         
@@ -2016,7 +2016,7 @@ class UnifiedGraphRAGQueryOptimizer:
             output_file=output_file
         )
 
-    def export_metrics_to_csv(self, filepath=None):
+    def export_metrics_to_csv(self, filepath=None) -> None:
         """
         Export collected metrics to CSV format.
         

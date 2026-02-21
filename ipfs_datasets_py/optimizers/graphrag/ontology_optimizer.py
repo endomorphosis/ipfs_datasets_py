@@ -2440,6 +2440,48 @@ class OntologyOptimizer:
             return False
         return self._history[-1].average_score > self._history[0].average_score
 
+    def export_history_csv(self, filepath: str = None) -> str:
+        """Export the score history as a CSV string (or write to *filepath*).
+
+        Each row contains ``index,average_score,trend``.
+
+        Args:
+            filepath: Optional filesystem path. If given, the CSV is written
+                to the file and the path is returned. If ``None``, the CSV
+                string is returned directly.
+
+        Returns:
+            CSV string when *filepath* is ``None``; otherwise the file path.
+        """
+        import io as _io
+        buf = _io.StringIO()
+        buf.write("index,average_score,trend\n")
+        for i, entry in enumerate(self._history):
+            buf.write(f"{i},{entry.average_score:.6f},{getattr(entry, 'trend', 'stable')}\n")
+        csv_text = buf.getvalue()
+        if filepath is not None:
+            with open(filepath, "w", encoding="utf-8") as fh:
+                fh.write(csv_text)
+            return filepath
+        return csv_text
+
+    def history_as_dicts(self) -> list:
+        """Return the history as a list of plain dicts for easy serialization.
+
+        Each dict has keys ``index``, ``average_score``, and ``trend``.
+
+        Returns:
+            List of dicts; empty list when no history.
+        """
+        return [
+            {
+                "index": i,
+                "average_score": entry.average_score,
+                "trend": getattr(entry, "trend", "stable"),
+            }
+            for i, entry in enumerate(self._history)
+        ]
+
 
 # Export public API
 __all__ = [

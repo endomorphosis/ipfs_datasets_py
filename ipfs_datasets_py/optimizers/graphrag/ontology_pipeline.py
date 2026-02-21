@@ -932,3 +932,34 @@ class OntologyPipeline:
         if not self._run_history:
             return 0.0
         return min(r.score.overall for r in self._run_history)
+
+    def stabilization_index(self, window: int = 5) -> float:
+        """Return a score-change metric for the last *window* runs.
+
+        The stabilization index is ``1 - mean(abs(score_diffs))`` clamped to
+        [0.0, 1.0].  A value close to 1.0 means the pipeline has stabilized;
+        close to 0.0 means high variability.
+
+        Args:
+            window: Number of most-recent runs to inspect (default 5).
+
+        Returns:
+            Float in [0.0, 1.0]; ``0.0`` when fewer than 2 runs recorded.
+        """
+        entries = self._run_history[-window:] if len(self._run_history) >= 2 else []
+        if len(entries) < 2:
+            return 0.0
+        scores = [r.score.overall for r in entries]
+        diffs = [abs(scores[i + 1] - scores[i]) for i in range(len(scores) - 1)]
+        mean_change = sum(diffs) / len(diffs)
+        return max(0.0, min(1.0, 1.0 - mean_change))
+
+    def run_improvement(self) -> float:
+        """Return the score change from the first recorded run to the last.
+
+        Returns:
+            ``last_score - first_score``; ``0.0`` when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        return self._run_history[-1].score.overall - self._run_history[0].score.overall

@@ -108,7 +108,7 @@ class MetricsCollector:
         
         logger.info("Initialized MetricsCollector")
     
-    def record_session(self, session_result: Any):
+    def record_session(self, session_result: Any) -> None:
         """
         Record metrics from a session result.
         
@@ -170,7 +170,7 @@ class MetricsCollector:
             f"entities={num_entities}, time={metrics.time_elapsed:.2f}s"
         )
     
-    def record_batch(self, batch_result: Any):
+    def record_batch(self, batch_result: Any) -> None:
         """
         Record metrics from a batch result.
         
@@ -354,7 +354,7 @@ class MetricsCollector:
         
         return "\n".join(lines)
     
-    def clear(self):
+    def clear(self) -> None:
         """Clear all collected metrics."""
         self._metrics.clear()
         self._batch_metrics.clear()
