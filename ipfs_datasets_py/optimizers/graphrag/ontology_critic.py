@@ -316,7 +316,7 @@ class CriticScore:
             >>> list(zip(data["axes"], data["values"]))
             [('completeness', 0.8), ('consistency', 0.9), ...]
         """
-        axes = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        axes = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
         return {
             "axes": axes,
             "values": [getattr(self, ax) for ax in axes],
@@ -340,7 +340,7 @@ class CriticScore:
         Raises:
             ValueError: If *weights* sums to zero or is empty after filtering.
         """
-        dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
         filtered = {k: v for k, v in weights.items() if k in dims and v > 0}
         if not filtered:
             raise ValueError("weights must contain at least one positive standard dimension")
@@ -1136,7 +1136,7 @@ class OntologyCritic(BaseCritic):
         """
         current = self.evaluate_ontology(ontology, context, source_data)
         baseline_score = self.evaluate_ontology(baseline, context, source_data)
-        dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
         dimension_deltas: Dict[str, float] = {
             d: round(getattr(current, d) - getattr(baseline_score, d), 6) for d in dims
         }
@@ -1268,7 +1268,7 @@ class OntologyCritic(BaseCritic):
             >>> w = {"completeness": 1.0, "consistency": 1.0}
             >>> val = critic.weighted_overall(score, w)
         """
-        dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
         effective = dict(DIMENSION_WEIGHTS) if weights is None else {d: weights.get(d, 0.0) for d in dims}
         total_weight = sum(effective.values())
         if total_weight == 0:
@@ -2973,6 +2973,48 @@ class OntologyCritic(BaseCritic):
             return 0.0
         vals = [getattr(s, dimension, 0.0) for s in scores]
         return sum(vals) / len(vals)
+
+    def bucket_scores(self, scores: list, buckets: int = 4) -> dict:
+        """Partition scores into equal-width buckets across [0.0, 1.0].
+
+        Args:
+            scores: List of ``CriticScore`` objects.
+            buckets: Number of equal-width buckets.
+
+        Returns:
+            Dict mapping label string (e.g. ``"0.00-0.25"``) to count.
+        """
+        if buckets < 1:
+            buckets = 1
+        width = 1.0 / buckets
+        result: dict = {}
+        for i in range(buckets):
+            lo = round(i * width, 6)
+            hi = round((i + 1) * width, 6)
+            label = f"{lo:.2f}-{hi:.2f}"
+            result[label] = sum(1 for s in scores if lo <= s.overall < hi)
+        # clamp exact 1.0 into last bucket
+        last = list(result.keys())[-1]
+        result[last] += sum(1 for s in scores if s.overall == 1.0)
+        return result
+
+    def median_score(self, scores: list) -> float:
+        """Return the median ``overall`` across *scores*.
+
+        Args:
+            scores: List of ``CriticScore`` objects.
+
+        Returns:
+            Median float; ``0.0`` when *scores* is empty.
+        """
+        if not scores:
+            return 0.0
+        vals = sorted(s.overall for s in scores)
+        n = len(vals)
+        mid = n // 2
+        if n % 2 == 1:
+            return vals[mid]
+        return (vals[mid - 1] + vals[mid]) / 2.0
 
 
 # Export public API

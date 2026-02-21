@@ -1748,6 +1748,78 @@ class LogicValidator:
 
         return len(in_cycle)
 
+    def in_degree(self, ontology: Dict[str, Any], entity_id: str) -> int:
+        """Return the number of relationships where *entity_id* is the target.
+
+        Args:
+            ontology: Ontology dict.
+            entity_id: Entity identifier to count.
+
+        Returns:
+            Integer in-degree count.
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        return sum(
+            1 for r in (rels if isinstance(rels, (list, tuple)) else [])
+            if isinstance(r, dict) and r.get("target_id") == entity_id
+        )
+
+    def out_degree(self, ontology: Dict[str, Any], entity_id: str) -> int:
+        """Return the number of relationships where *entity_id* is the source.
+
+        Args:
+            ontology: Ontology dict.
+            entity_id: Entity identifier to count.
+
+        Returns:
+            Integer out-degree count.
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        return sum(
+            1 for r in (rels if isinstance(rels, (list, tuple)) else [])
+            if isinstance(r, dict) and r.get("source_id") == entity_id
+        )
+
+    def top_k_entities_by_degree(self, ontology: Dict[str, Any], k: int = 5) -> list:
+        """Return the *k* entity ids with the highest total degree (in + out).
+
+        Args:
+            ontology: Ontology dict.
+            k: Number of top entities to return.
+
+        Returns:
+            List of entity id strings, sorted highest degree first.
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        degree: Dict[str, int] = {}
+        for r in (rels if isinstance(rels, (list, tuple)) else []):
+            if isinstance(r, dict):
+                for key in ("source_id", "target_id"):
+                    eid = r.get(key)
+                    if isinstance(eid, str):
+                        degree[eid] = degree.get(eid, 0) + 1
+        return [n for n, _ in sorted(degree.items(), key=lambda x: -x[1])[:k]]
+
+    def entity_contradiction_count(self, ontology: Dict[str, Any]) -> int:
+        """Return the number of logical contradictions detected in an ontology.
+
+        This is a convenience method that runs consistency checking and returns
+        the count of contradictions found without the full ValidationResult.
+
+        Args:
+            ontology: Ontology dict to analyze
+
+        Returns:
+            Integer count of detected contradictions (0 if consistent)
+
+        Example:
+            >>> validator = LogicValidator()
+            >>> count = validator.entity_contradiction_count(ontology)
+            >>> print(f"Found {count} contradictions")
+        """
+        result = self.check_consistency(ontology)
+        return len(result.contradictions)
+
 
 # Export public API
 __all__ = [
