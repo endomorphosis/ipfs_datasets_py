@@ -102,9 +102,10 @@ The `ipfs_datasets_py/logic/` folder contains a **production-ready neurosymbolic
 | Other (MCP, integration) | ~170+ | ~282+ | ~85% |
 | **TOTAL** | **~252** | **~3,731+** | **~96%** |
 
-**Integration Coverage Milestone (Session 14, 2026-02-20):**  
-`ipfs_datasets_py/logic/integration/` — **86%** (7,892 lines, 1,144 uncovered)  
-Remaining uncovered lines are primarily SymbolicAI-gated code paths (~8%) that require `symai` to be installed.
+**Integration Coverage Milestone (Session 15, 2026-02-20):**  
+`ipfs_datasets_py/logic/integration/` — **86%** (7,892 lines, 1,108 uncovered)  
+Remaining uncovered lines are primarily SymbolicAI-gated code paths (~6%) that require `symai` to be installed,  
+plus ~6% in bridges/tdfol_cec_bridge.py/tdfol_grammar_bridge.py grammar CEC paths (require specific CEC modules loaded).
 
 ### 2.3 Markdown Files (✅ RESOLVED)
 
@@ -425,6 +426,14 @@ mkdir -p ipfs_datasets_py/logic/zkp/ARCHIVE/
     caselaw_bulk_processor, tdfol_grammar_bridge, tdfol_cec_bridge, ipld_logic_storage,  
     legal_symbolic_analyzer, embedding_prover, reasoning_coordinator
   - **4 source bugs fixed:** demo_temporal_deontic_rag imports, caselaw_bulk_processor DeonticRuleSet kwargs, cec_bridge proof_cache method names
+- [x] **Session 15 (2026-02-20):** 110 new GIVEN-WHEN-THEN tests covering:
+  - TDFOLGrammarBridge: parse_natural_language, _fallback_parse (implication/atom/empty/long-arrow), formula_to_natural_language (formal/casual/technical), batch_parse, analyze_parse_quality, NaturalLanguageTDFOLInterface.reason all branches (parse errors, uppercase-only premise/conclusion fallback)
+  - TDFOLCECBridge: to_target_format, tdfol_to_dcec_string, from_target_format, get_applicable_cec_rules, prove_with_cec, EnhancedTDFOLProver (no_cec/with_cec/override), create_enhanced_prover
+  - DeonticLogicConverter: convert_relationships_to_logic (obligation/permission/prohibition/unknown), _reset_statistics, _update_statistics (all 3 operators), _normalize_proposition, _validate_rule_set_consistency, _extract_temporal_conditions (enabled/disabled), _synthesize_complex_rules (no symbolic), demonstrate_deontic_conversion
+  - CaselawBulkProcessor: _extract_jurisdiction_from_path (4 branches), _extract_date_from_filename (3 formats + no-date), _is_legal_proposition, _extract_agent_from_context (6 branches), _passes_filters, _create_knowledge_graph_from_document, _extract_formulas_pattern_matching (obligation/permission/prohibition), _extract_theorems_sequential/parallel (async), _discover_caselaw_documents, _add_theorem_to_store (with/without source), ProcessingStats properties, create_bulk_processor factory
+  - NeuralSymbolicCoordinator: prove SYMBOLIC_ONLY/NEURAL_ONLY(fallback)/HYBRID/AUTO/invalid/string_goal/string_axioms
+  - NeurosymbolicGraphRAG: process_document (auto_prove True/False), get_pipeline_stats, check_consistency, export_knowledge_graph, query, get_document_summary, _extract_formulas, _prove_theorems
+  - NeurosymbolicReasoner: get_capabilities (both builds), parse (tdfol/auto), prove, explain, query, add_knowledge, get_reasoner singleton
 
 **Remaining:**
 - [ ] Integration tests for SymbolicAI-gated code paths (require `pip install symbolicai`)
@@ -1026,7 +1035,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 |-----------|---------|----------------|----------------|
 | TDFOL Core | 91.5% pass | 95% pass | 97% pass |
 | CEC Native | 80-85% pass | 90% pass | 93% pass |
-| Integration | ~70% coverage | 80% pass | 90% pass |
+| Integration | ~86% coverage | 88%+ | 90% |
 | NL Processing | 75% pass | 85% pass | 90% pass |
 | ZKP (simulation) | 80% pass | 85% pass | 85% pass |
 | MCP Tools | 167+ tests | 200+ tests | 250+ tests |
@@ -1035,7 +1044,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Phase 6.3 integration coverage (85%→90%); `symbolic/symbolic_logic_primitives.py` 63%→70%+ (requires mocking SymbolicAI); `symbolic/neurosymbolic/reasoning_coordinator.py` 75%→85%; `domain/caselaw_bulk_processor.py` 48% (async methods); TDFOL NL (spaCy); E2E tests  
+**Next Action:** Integration coverage 86%→90%: tdfol_grammar_bridge grammar-available paths (lines 35-36/52-53/67-69/186-203), tdfol_cec_bridge CEC prove paths (246-307 need CEC prover mock), neurosymbolic_graphrag lines 128-144 (neural init), reasoning_coordinator lines 269-322 (embedding prover mock), symbolic_logic_primitives (~100 SymbolicAI-only lines). Then: TDFOL NL tests (69 spaCy failures), E2E pipeline tests.  
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19 | **Last Updated:** 2026-02-20  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-20 (Session 15)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
