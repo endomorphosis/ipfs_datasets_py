@@ -431,6 +431,22 @@ class ExtractionConfig:
         """
         return ExtractionConfig.from_dict(self.to_dict())
 
+    def clone(self) -> "ExtractionConfig":
+        """Return a deep copy of this config.
+
+        Alias for :meth:`copy`.  Provided for API consistency with
+        :meth:`OntologyGenerator.clone_result`.
+
+        Returns:
+            New :class:`ExtractionConfig` with identical field values.
+
+        Example:
+            >>> cfg2 = cfg.clone()
+            >>> cfg2 is not cfg
+            True
+        """
+        return self.copy()
+
     def scale_thresholds(self, factor: float) -> "ExtractionConfig":
         """Return a new config with confidence-related thresholds scaled by *factor*.
 

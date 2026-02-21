@@ -863,6 +863,49 @@ class OntologyMediator:
         """
         return sorted(self._action_counts.keys())
 
+    def total_action_count(self) -> int:
+        """Return the total count of all action invocations.
+
+        Sums the per-action counts in :attr:`_action_counts`.
+
+        Returns:
+            Non-negative integer total; ``0`` when no actions have been applied.
+
+        Example:
+            >>> mediator.total_action_count()
+            0
+        """
+        return sum(self._action_counts.values())
+
+    def top_actions(self, n: int = 3) -> list:
+        """Return the top *n* most-frequently applied action names.
+
+        Args:
+            n: Maximum number of actions to return (default 3).
+
+        Returns:
+            List of action name strings sorted by descending count (ties broken
+            alphabetically).  May be shorter than *n* when fewer distinct
+            actions have been applied.
+        """
+        if not self._action_counts:
+            return []
+        sorted_actions = sorted(
+            self._action_counts.keys(),
+            key=lambda a: (-self._action_counts[a], a),
+        )
+        return sorted_actions[:n]
+
+    def undo_depth(self) -> int:
+        """Return the number of undoable snapshots in the undo stack.
+
+        Alias for :meth:`get_undo_depth`.
+
+        Returns:
+            Non-negative integer count.
+        """
+        return self.get_undo_depth()
+
     def clear_recommendation_history(self) -> int:
         """Clear the recommendation phrase frequency table.
 
