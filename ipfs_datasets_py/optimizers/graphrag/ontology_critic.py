@@ -187,6 +187,34 @@ class CriticScore:
             'metadata': self.metadata,
         }
 
+    def __sub__(self, other: "CriticScore") -> "CriticScore":
+        """Return a delta :class:`CriticScore` (``self - other``).
+
+        Each dimension is the arithmetic difference.  ``strengths``,
+        ``weaknesses``, and ``recommendations`` are cleared; ``metadata``
+        gets a ``'delta': True`` marker.  Negative scores are allowed so the
+        caller can tell whether each dimension improved or regressed.
+
+        Args:
+            other: The baseline :class:`CriticScore` to subtract.
+
+        Returns:
+            A new :class:`CriticScore` representing the change.
+
+        Raises:
+            TypeError: If *other* is not a :class:`CriticScore`.
+        """
+        if not isinstance(other, CriticScore):
+            return NotImplemented
+        return CriticScore(
+            completeness=self.completeness - other.completeness,
+            consistency=self.consistency - other.consistency,
+            clarity=self.clarity - other.clarity,
+            granularity=self.granularity - other.granularity,
+            domain_alignment=self.domain_alignment - other.domain_alignment,
+            metadata={"delta": True},
+        )
+
 
 class OntologyCritic(BaseCritic):
     """

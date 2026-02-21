@@ -209,7 +209,9 @@ class OntologyMediator:
         self.max_rounds = max_rounds
         self.convergence_threshold = convergence_threshold
         self._log = logger or _logging.getLogger(__name__)
-        
+        # Tracks cumulative action invocation counts across all refine_ontology() calls
+        self._action_counts: Dict[str, int] = {}
+
         self._log.info(
             f"Initialized mediator: max_rounds={max_rounds}, "
             f"threshold={convergence_threshold}"
@@ -493,7 +495,19 @@ class OntologyMediator:
         refined.setdefault('metadata', {})
         refined['metadata']['refinement_actions'] = actions_applied
         self._log.info(f"Refinement complete. Actions applied: {actions_applied}")
+        # Update cumulative action counts
+        for action in actions_applied:
+            self._action_counts[action] = self._action_counts.get(action, 0) + 1
         return refined
+
+    def get_action_stats(self) -> Dict[str, int]:
+        """Return cumulative per-action invocation counts across all :meth:`refine_ontology` calls.
+
+        Returns:
+            Dict mapping action name (str) to number of times it was applied.
+            Returns an empty dict if ``refine_ontology`` has not yet been called.
+        """
+        return dict(self._action_counts)
     
     def run_refinement_cycle(
         self,

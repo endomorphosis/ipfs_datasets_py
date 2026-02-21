@@ -1156,6 +1156,29 @@ class OntologyOptimizer:
             })
         return rows
 
+    def export_history_csv(self, filepath: Optional[str] = None) -> Optional[str]:
+        """Export the pairwise delta table from :meth:`compare_history` as CSV.
+
+        Args:
+            filepath: Optional path to write the CSV.  When ``None`` the CSV is
+                returned as a string.
+
+        Returns:
+            CSV string when *filepath* is ``None``; ``None`` otherwise.
+        """
+        rows = self.compare_history()
+        output = StringIO()
+        fieldnames = ["batch_from", "batch_to", "score_from", "score_to", "delta", "direction"]
+        writer = csv.DictWriter(output, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+        csv_str = output.getvalue()
+        if filepath:
+            with open(filepath, "w", newline="") as fh:
+                fh.write(csv_str)
+            return None
+        return csv_str
+
     def export_learning_curve_csv(self, filepath: Optional[str] = None) -> Optional[str]:
         """Export score progression history as CSV.
 

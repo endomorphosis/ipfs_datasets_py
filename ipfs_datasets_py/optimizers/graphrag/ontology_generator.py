@@ -148,6 +148,48 @@ class ExtractionConfig:
             max_confidence=float(d.get("max_confidence", 1.0)),
         )
 
+    def validate(self) -> None:
+        """Validate field values; raise :class:`ValueError` on invalid combinations.
+
+        Checks:
+        - ``confidence_threshold`` must be in [0, 1]
+        - ``max_confidence`` must be in (0, 1]
+        - ``confidence_threshold`` must be ≤ ``max_confidence``
+        - ``max_entities`` and ``max_relationships`` must be ≥ 0
+        - ``window_size`` must be ≥ 1
+        - ``min_entity_length`` must be ≥ 1
+        - ``llm_fallback_threshold`` must be in [0, 1]
+        """
+        if not (0.0 <= self.confidence_threshold <= 1.0):
+            raise ValueError(
+                f"confidence_threshold must be in [0, 1]; got {self.confidence_threshold}"
+            )
+        if not (0.0 < self.max_confidence <= 1.0):
+            raise ValueError(
+                f"max_confidence must be in (0, 1]; got {self.max_confidence}"
+            )
+        if self.confidence_threshold > self.max_confidence:
+            raise ValueError(
+                f"confidence_threshold ({self.confidence_threshold}) must be "
+                f"<= max_confidence ({self.max_confidence})"
+            )
+        if self.max_entities < 0:
+            raise ValueError(f"max_entities must be >= 0; got {self.max_entities}")
+        if self.max_relationships < 0:
+            raise ValueError(
+                f"max_relationships must be >= 0; got {self.max_relationships}"
+            )
+        if self.window_size < 1:
+            raise ValueError(f"window_size must be >= 1; got {self.window_size}")
+        if self.min_entity_length < 1:
+            raise ValueError(
+                f"min_entity_length must be >= 1; got {self.min_entity_length}"
+            )
+        if not (0.0 <= self.llm_fallback_threshold <= 1.0):
+            raise ValueError(
+                f"llm_fallback_threshold must be in [0, 1]; got {self.llm_fallback_threshold}"
+            )
+
 
 @dataclass
 class OntologyGenerationContext:
