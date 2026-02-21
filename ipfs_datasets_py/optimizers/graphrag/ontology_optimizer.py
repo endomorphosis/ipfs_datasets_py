@@ -2397,6 +2397,51 @@ class OntologyOptimizer:
             if entry.average_score >= threshold:
                 return entry
         return None
+
+    def score_at_index(self, index: int) -> float:
+        """Return the ``average_score`` at the given *index* in history.
+
+        Supports negative indexing (e.g., ``-1`` for last entry).
+
+        Args:
+            index: Position in history list.
+
+        Returns:
+            Score float; ``0.0`` when history is empty or index is out of range.
+        """
+        if not self._history:
+            return 0.0
+        try:
+            return self._history[index].average_score
+        except IndexError:
+            return 0.0
+
+    def improvement_from_start(self) -> float:
+        """Return the score improvement from the first to the last history entry.
+
+        Returns:
+            ``last.average_score - first.average_score``; ``0.0`` when history
+            has fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        return self._history[-1].average_score - self._history[0].average_score
+
+    def is_improving_overall(self) -> bool:
+        """Return ``True`` if the overall trend is positive.
+
+        Computed as ``last_score > first_score``.
+
+        Returns:
+            ``True`` when there is net improvement; ``False`` otherwise or when
+            history has fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return False
+        return self._history[-1].average_score > self._history[0].average_score
+
+
+# Export public API
 __all__ = [
     'OntologyOptimizer',
     'OptimizationReport',
