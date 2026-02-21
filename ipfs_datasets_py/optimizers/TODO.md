@@ -1021,3 +1021,39 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [graphrag] `OntologyGenerator.relationship_count(result)` — len(result.relationships)
 - [ ] (P3) [graphrag] `ExtractionConfig.relaxed()` — return copy with confidence_threshold -= 0.1 clamped to 0
 - [ ] (P3) [graphrag] `ExtractionConfig.tightened()` — return copy with confidence_threshold += 0.1 clamped to 1
+
+## Batches 114–130 Done ✅
+- [x] (batch-114) `OntologyOptimizer.rolling_best/plateau_count`, `OntologyGenerator.entity_confidence_map`, `EntityExtractionResult.top_confidence_entity/entities_with_properties`, `OntologyCritic.dimension_rankings/weakest_scores`, `LogicValidator.orphan_entities/hub_entities`
+- [x] (batch-115) `ExtractionConfig.relaxed/tightened`, `OntologyPipeline.top_n_runs/score_momentum`
+- [x] (batch-116) `OntologyMediator.apply_action_bulk`, `OntologyLearningAdapter.score_range/feedback_count_above`
+- [x] (batch-117) `OntologyOptimizer.best_streak/worst_streak/score_percentile_rank/score_momentum`
+- [x] (batch-118) `LogicValidator.isolated_entities/max_degree_entity/entity_type_counts`
+- [x] (batch-119) `OntologyCritic.score_delta_between/all_pass/score_variance/best_score`
+- [x] (batch-120) `OntologyPipeline.worst_n_runs/pass_rate/score_range`
+- [x] (batch-121) `OntologyGenerator.average_confidence/high_confidence_entities/filter_entities_by_type/deduplicate_by_id`
+- [x] (batch-122) `OntologyMediator.action_frequency/has_actions/action_diversity`, `OntologyLearningAdapter.all_feedback_above/feedback_scores/domain_threshold_delta`
+- [x] (batch-123) `LogicValidator.relationship_type_set/is_connected/duplicate_relationship_count`
+- [x] (batch-124) `OntologyOptimizer.history_slice/score_above_count/first_entry_above/last_entry_above`
+- [x] (batch-125) `OntologyPipeline.run_count_above/average_score/best_score/worst_score`
+- [x] (batch-126) `OntologyLearningAdapter.best/worst/average_feedback_score/feedback_above_fraction`
+- [x] (batch-127) `ExtractionConfig.threshold_distance/is_stricter_than/is_looser_than`
+- [x] (batch-128) `OntologyCritic.worst_score/average_overall/count_failing`
+- [x] (batch-129) `LogicValidator.self_loop_count/average_entity_degree`
+- [x] (batch-130) `OntologyOptimizer.score_at_index/improvement_from_start/is_improving_overall`
+
+## Batch 131+ backlog
+- [ ] (P2) [graphrag] `OntologyGenerator.split_result(result, n)` — split result into N balanced chunks
+- [ ] (P2) [graphrag] `OntologyOptimizer.min_score/max_score` — convenience properties
+- [ ] (P2) [graphrag] `OntologyCritic.passing_rate(scores, threshold)` — fraction of scores passing threshold
+- [ ] (P2) [graphrag] `OntologyMediator.most_used_action/least_used_action` — action name strings
+- [ ] (P2) [graphrag] `OntologyPipeline.run_improvement/stabilization_index` — pipeline convergence metrics
+- [ ] (P2) [graphrag] `LogicValidator.unreachable_entities(ontology, source)` — BFS unreachable from source
+- [ ] (P2) [graphrag] `ExtractionConfig.describe()` — human-readable summary string
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.improvement_trend` — EMA-based trend indicator
+- [ ] (P2) [graphrag] `EntityExtractionResult.entity_ids` — property returning list of all entity ids
+- [ ] (P2) [graphrag] `OntologyGenerator.filter_low_confidence(result, threshold)` — remove entities below threshold
+- [ ] (P2) [graphrag] `OntologyCritic.top_n_scores(scores, n)` — already exists; try `score_spread` — max-min of overalls
+- [ ] (P3) [graphrag] `OntologyOptimizer.export_history_csv(filepath)` — CSV of score history
+- [ ] (P3) [graphrag] `LogicValidator.max_path_length(ontology, source, target)` — BFS shortest path
+- [ ] (P3) [graphrag] `OntologyPipeline.reset_to_initial` — clear history and restore defaults
+- [ ] (P3) [graphrag] `OntologyMediator.undo_stack_summary` — list of pending undo labels
