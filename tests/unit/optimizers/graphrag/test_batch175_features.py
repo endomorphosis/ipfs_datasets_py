@@ -151,24 +151,24 @@ class TestFeedbackVolatility:
 class TestFeedbackTrendDirection:
     def test_empty_returns_flat(self):
         a = _make_adapter()
-        assert a.feedback_trend_direction() == "flat"
+        assert a.feedback_trend_direction() == "stable"
 
     def test_single_returns_flat(self):
         a = _make_adapter()
         _push_feedback(a, 0.5)
-        assert a.feedback_trend_direction() == "flat"
+        assert a.feedback_trend_direction() == "stable"
 
     def test_uptrend(self):
         a = _make_adapter()
         for v in [0.2, 0.5, 0.8]:
             _push_feedback(a, v)
-        assert a.feedback_trend_direction() == "up"
+        assert a.feedback_trend_direction() == "improving"
 
     def test_downtrend(self):
         a = _make_adapter()
         for v in [0.8, 0.5, 0.2]:
             _push_feedback(a, v)
-        assert a.feedback_trend_direction() == "down"
+        assert a.feedback_trend_direction() == "declining"
 
 
 # ── OntologyGenerator.entity_type_entropy ────────────────────────────────────

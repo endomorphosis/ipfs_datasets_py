@@ -1424,21 +1424,21 @@ class OntologyLearningAdapter:
         Fits a simple linear slope to feedback scores in chronological order.
 
         Returns:
-            ``"up"`` if scores are trending up, ``"down"`` if down, ``"flat"``
-            if fewer than 2 records or slope is zero.
+            ``"improving"`` if scores are trending up, ``"declining"`` if down,
+            ``"stable"`` if fewer than 2 records or slope is zero.
         """
         if len(self._feedback) < 2:
-            return "flat"
+            return "stable"
         scores = [r.final_score for r in self._feedback]
         n = len(scores)
         x_mean = (n - 1) / 2.0
         y_mean = sum(scores) / n
         numerator = sum((i - x_mean) * (scores[i] - y_mean) for i in range(n))
         if numerator > 0:
-            return "up"
+            return "improving"
         elif numerator < 0:
-            return "down"
-        return "flat"
+            return "declining"
+        return "stable"
 
     def feedback_min(self) -> float:
         """Return the minimum feedback score.
