@@ -1386,6 +1386,22 @@ class OntologyMediator:
         """
         return len(getattr(self, "_undo_stack", None) or [])
 
+    def total_actions_taken(self) -> int:
+        """Return the total number of actions recorded across all action types.
+
+        Returns:
+            Sum of all values in ``_action_counts``; ``0`` when no actions taken.
+        """
+        return sum(self._action_counts.values())
+
+    def unique_action_count(self) -> int:
+        """Return the number of distinct action types that have been used.
+
+        Returns:
+            Count of action types with at least one recorded use.
+        """
+        return sum(1 for v in self._action_counts.values() if v > 0)
+
 
 # Export public API
 __all__ = [

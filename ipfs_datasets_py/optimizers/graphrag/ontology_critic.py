@@ -3056,24 +3056,6 @@ class OntologyCritic(BaseCritic):
         result[last] += sum(1 for s in scores if s.overall == 1.0)
         return result
 
-    def median_score(self, scores: list) -> float:
-        """Return the median ``overall`` across *scores*.
-
-        Args:
-            scores: List of ``CriticScore`` objects.
-
-        Returns:
-            Median float; ``0.0`` when *scores* is empty.
-        """
-        if not scores:
-            return 0.0
-        vals = sorted(s.overall for s in scores)
-        n = len(vals)
-        mid = n // 2
-        if n % 2 == 1:
-            return vals[mid]
-        return (vals[mid - 1] + vals[mid]) / 2.0
-
     def log_evaluation_json(
         self, 
         score: CriticScore, 
@@ -3096,6 +3078,37 @@ class OntologyCritic(BaseCritic):
         json_str = score.to_json()
         log_fn = getattr(self._log, log_level.lower(), self._log.info)
         log_fn(f"Evaluation result: {json_str}")
+
+    def improvement_over_baseline(self, scores: list, baseline: float = 0.5) -> float:
+        """Return the fraction of scores strictly above *baseline*.
+
+        Args:
+            scores: List of ``CriticScore`` objects.
+            baseline: Reference threshold.
+
+        Returns:
+            Float in [0.0, 1.0]; ``0.0`` when *scores* is empty.
+        """
+        if not scores:
+            return 0.0
+        return sum(1 for s in scores if s.overall > baseline) / len(scores)
+
+    def score_iqr(self, scores: list) -> float:
+        """Return the inter-quartile range (Q3 - Q1) of overall scores.
+
+        Args:
+            scores: List of ``CriticScore`` objects.
+
+        Returns:
+            Float IQR; ``0.0`` when fewer than 4 scores.
+        """
+        if len(scores) < 4:
+            return 0.0
+        vals = sorted(s.overall for s in scores)
+        n = len(vals)
+        q1_idx = n // 4
+        q3_idx = 3 * n // 4
+        return vals[q3_idx] - vals[q1_idx]
 
 
 # Export public API
