@@ -35,8 +35,8 @@ except ImportError:
             self._semantic = semantic
 
 # Local imports
-from .symbolic_fol_bridge import SymbolicFOLBridge, LogicalComponents, FOLConversionResult
-from .symbolic_logic_primitives import create_logic_symbol, LogicPrimitives
+from ..bridges.symbolic_fol_bridge import SymbolicFOLBridge, LogicalComponents, FOLConversionResult
+from ..symbolic.symbolic_logic_primitives import create_logic_symbol, LogicPrimitives
 
 # Import types from separate module (refactored for modularity)
 from .interactive_fol_types import StatementRecord, SessionMetadata

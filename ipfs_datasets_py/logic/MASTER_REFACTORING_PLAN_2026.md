@@ -1,13 +1,36 @@
 # Master Refactoring and Improvement Plan — Logic Module
 
 **Date:** 2026-02-19  
-**Version:** 4.3 (updated 2026-02-21 session 47)  
+**Version:** 4.5 (updated 2026-02-21 session 50)  
 **Status:** Phases 1–3 COMPLETE · Phase 4 Ongoing  
 **Scope:** `ipfs_datasets_py/logic/` and `tests/unit_tests/logic/`  
 **MCP Integration:** `ipfs_datasets_py/mcp_server/tools/logic_tools/`
 
-**Session 47 Updates (2026-02-21):**
-- 116 new GIVEN-WHEN-THEN integration tests covering:
+**Session 50 Updates (2026-02-21):**
+- 4 production bug fixes (wrong relative imports in interactive/ and demos/):
+  - `interactive/interactive_fol_constructor.py:38` — `.symbolic_fol_bridge` → `..bridges.symbolic_fol_bridge`
+  - `interactive/interactive_fol_constructor.py:39` — `.symbolic_logic_primitives` → `..symbolic.symbolic_logic_primitives`
+  - `interactive/interactive_fol_types.py:16` — same LogicalComponents import fix
+  - `demos/demo_temporal_deontic_rag.py:14-21` — imports fixed to `..domain.*` and `..converters.*`
+- 95 new GIVEN-WHEN-THEN integration tests covering:
+  - `interactive/interactive_fol_types.py`: 0% → **100%** (StatementRecord, SessionMetadata)
+  - `interactive/interactive_fol_utils.py`: 0% → **100%** (create_interactive_session, demo_interactive_session)
+  - `interactive/interactive_fol_constructor.py`: 0% → **83%** (InteractiveFOLConstructor — all public methods)
+  - `bridges/symbolic_fol_bridge.py`: 33% → **80%** (+47pp — all patterns, formats, validation, cache)
+  - `integration/__init__.py`: 36% → **81%** (+45pp — lazy exports, enable_symbolicai, availability flags)
+  - `demos/demo_temporal_deontic_rag.py`: 0% → **99%** (all demo functions + print_debug_report)
+- logic/integration overall: **58% → 66%** (7571 lines, 2597 missed, 590 more lines covered)
+
+**Session 49 Updates (2026-02-21):**
+- 6 production bug fixes (ProofCache API, ipfs_proof_cache kwargs):
+  - `proof_execution_engine.py:74` — `get_global_cache(max_size=..., default_ttl=...)` → `get_global_cache(maxsize=..., ttl=...)`
+  - `proof_execution_engine.py:243` — `proof_cache.get(str, str)` → `proof_cache.get(str, prover_name=str)`
+  - `proof_execution_engine.py:340` — `proof_cache.put()` → `proof_cache.set()`
+  - `proof_execution_engine.py:768-777` — sat/unsat substring check order fixed (unsat before sat)
+  - `ipfs_proof_cache.py:109` — `super().__init__(max_size=..., cache_dir=...)` → `super().__init__(maxsize=..., ttl=...)`
+  - `ipfs_proof_cache.py:391,416` — `super().get_statistics()` → `super().get_stats()`; removed `super().close()`
+- 91 new GIVEN-WHEN-THEN integration tests covering proof_execution_engine, deontic_logic_converter, ipfs_proof_cache, ipld_logic_storage
+
   - `deontological_reasoning_utils.py`: 30% → **100%** (extract_keywords, calculate_text_similarity, are_entities_similar, are_actions_similar, normalize_entity/action, extract_conditions/exceptions)
   - `legal_domain_knowledge.py`: 39% → **96%** (LegalDomainKnowledge — classify, extract_agents, extract_conditions, extract_temporal, identify_domain, extract_legal_entities, validate_deontic_extraction, demonstrate function)
   - `deontic_query_engine.py`: 30% → **81%** (DeonticQueryEngine — init, load_rule_set, query_obligations/permissions/prohibitions, query_by_NL, check_compliance, find_conflicts, get_agent_summary, factory functions)
