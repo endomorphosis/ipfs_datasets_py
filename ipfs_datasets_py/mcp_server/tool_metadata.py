@@ -88,6 +88,9 @@ class ToolMetadata:
     io_intensive: bool = False
     mcp_schema: Optional[dict] = None
     mcp_description: Optional[str] = None
+    # Phase F2: opt-in per-tool result caching.  ``None`` disables caching;
+    # a positive float is the TTL in seconds for cached results.
+    cache_ttl: Optional[float] = None
 
     # Internal attributes (excluded from repr and equality)
     _func: Optional[Callable] = field(default=None, repr=False, compare=False)
@@ -331,7 +334,8 @@ def tool_metadata(
     cpu_intensive: bool = False,
     io_intensive: bool = False,
     mcp_schema: Optional[dict] = None,
-    mcp_description: Optional[str] = None
+    mcp_description: Optional[str] = None,
+    cache_ttl: Optional[float] = None,
 ) -> Callable:
     """
     Decorator to register tool metadata.
@@ -396,6 +400,7 @@ def tool_metadata(
             io_intensive=io_intensive,
             mcp_schema=mcp_schema,
             mcp_description=description,
+            cache_ttl=cache_ttl,
             _func=func
         )
         

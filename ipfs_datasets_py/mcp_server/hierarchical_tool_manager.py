@@ -18,9 +18,12 @@ from __future__ import annotations
 import importlib
 import inspect
 import logging
+import time
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 import json
+
+import anyio
 
 from .exceptions import (
     ToolNotFoundError,
@@ -29,6 +32,162 @@ from .exceptions import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Phase F3: Circuit Breaker
+# ---------------------------------------------------------------------------
+
+class CircuitState:
+    """Circuit breaker states."""
+    CLOSED = "closed"        # Normal operation — calls pass through.
+    OPEN = "open"            # Failing — calls are rejected immediately.
+    HALF_OPEN = "half_open"  # Recovery probe — one call is allowed through.
+
+
+class CircuitBreaker:
+    """Per-category circuit breaker.
+
+    The state machine mirrors the classic Nygard circuit-breaker pattern:
+
+    * **CLOSED** — normal; failures are counted.  When *failure_threshold*
+      consecutive failures occur the breaker moves to **OPEN**.
+    * **OPEN** — the breaker rejects all calls with an error dict immediately,
+      without touching the wrapped function.  After *recovery_timeout* seconds
+      the breaker enters **HALF_OPEN**.
+    * **HALF_OPEN** — the next call is forwarded.  Success → **CLOSED** (counts
+      reset); failure → **OPEN** (timer restarted).
+
+    Args:
+        failure_threshold: Number of consecutive failures before opening.
+        recovery_timeout: Seconds to wait in OPEN state before probing.
+        name: Optional label used in log messages.
+
+    Example::
+
+        cb = CircuitBreaker(failure_threshold=3, recovery_timeout=30)
+        result = await cb.call(some_async_tool_func, arg1=value)
+    """
+
+    def __init__(
+        self,
+        failure_threshold: int = 5,
+        recovery_timeout: float = 60.0,
+        name: str = "default",
+    ) -> None:
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.name = name
+
+        self._state: str = CircuitState.CLOSED
+        self._failure_count: int = 0
+        self._opened_at: Optional[float] = None
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    @property
+    def state(self) -> str:
+        """Return the current circuit state (CLOSED / OPEN / HALF_OPEN)."""
+        if self._state == CircuitState.OPEN:
+            # Auto-transition to HALF_OPEN once the recovery window has elapsed.
+            if (
+                self._opened_at is not None
+                and time.monotonic() - self._opened_at >= self.recovery_timeout
+            ):
+                self._state = CircuitState.HALF_OPEN
+                logger.info(
+                    "CircuitBreaker[%s]: OPEN → HALF_OPEN after %.1fs",
+                    self.name,
+                    self.recovery_timeout,
+                )
+        return self._state
+
+    def is_open(self) -> bool:
+        """Return ``True`` when the circuit is fully open (calls rejected)."""
+        return self.state == CircuitState.OPEN
+
+    async def call(self, func: Callable, **kwargs: Any) -> Dict[str, Any]:
+        """Execute *func* with circuit-breaker protection.
+
+        Args:
+            func: Async (or sync) callable to protect.
+            **kwargs: Keyword arguments forwarded to *func*.
+
+        Returns:
+            The result of *func* on success, or an error dict when the circuit
+            is open or the call itself fails.
+        """
+        current = self.state  # Triggers OPEN → HALF_OPEN transition if due.
+
+        if current == CircuitState.OPEN:
+            return {
+                "status": "error",
+                "error": (
+                    f"Circuit breaker '{self.name}' is OPEN — "
+                    f"service unavailable. Retrying after {self.recovery_timeout}s."
+                ),
+                "circuit_state": CircuitState.OPEN,
+            }
+
+        try:
+            if inspect.iscoroutinefunction(func):
+                result = await func(**kwargs)
+            else:
+                result = func(**kwargs)
+            self._on_success()
+            return result
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except Exception as exc:
+            self._on_failure()
+            raise ToolExecutionError(self.name, exc) from exc
+
+    def reset(self) -> None:
+        """Manually force the breaker back to CLOSED state."""
+        self._state = CircuitState.CLOSED
+        self._failure_count = 0
+        self._opened_at = None
+        logger.info("CircuitBreaker[%s]: manually RESET to CLOSED", self.name)
+
+    def info(self) -> Dict[str, Any]:
+        """Return a snapshot of the breaker's current state."""
+        return {
+            "name": self.name,
+            "state": self.state,
+            "failure_count": self._failure_count,
+            "failure_threshold": self.failure_threshold,
+            "recovery_timeout": self.recovery_timeout,
+            "opened_at": self._opened_at,
+        }
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _on_success(self) -> None:
+        if self._state == CircuitState.HALF_OPEN:
+            logger.info(
+                "CircuitBreaker[%s]: HALF_OPEN → CLOSED (success)", self.name
+            )
+        self._state = CircuitState.CLOSED
+        self._failure_count = 0
+        self._opened_at = None
+
+    def _on_failure(self) -> None:
+        self._failure_count += 1
+        if self._state == CircuitState.HALF_OPEN or (
+            self._state == CircuitState.CLOSED
+            and self._failure_count >= self.failure_threshold
+        ):
+            self._state = CircuitState.OPEN
+            self._opened_at = time.monotonic()
+            logger.warning(
+                "CircuitBreaker[%s]: → OPEN after %d failure(s)",
+                self.name,
+                self._failure_count,
+            )
 
 
 class ToolCategory:
@@ -258,7 +417,9 @@ class HierarchicalToolManager:
         # Phase 7: lazy-loading registry — maps category name → callable that
         # returns a ready-to-use ToolCategory when first accessed.
         self._lazy_loaders: Dict[str, Callable[[], ToolCategory]] = {}
-        
+        # Phase F4: graceful shutdown flag — set to True during shutdown.
+        self._shutting_down: bool = False
+
         # Load category metadata
         self._load_category_metadata()
     
@@ -478,7 +639,13 @@ class HierarchicalToolManager:
         """
         if not self._discovered_categories:
             self.discover_categories()
-        
+
+        if self._shutting_down:
+            return {
+                "status": "error",
+                "error": "Server is shutting down — no new tool calls accepted.",
+            }
+
         if params is None:
             params = {}
         
@@ -542,6 +709,123 @@ class HierarchicalToolManager:
                 "category": category,
                 "tool": tool
             }
+
+    # ------------------------------------------------------------------
+    # Phase F1: Parallel dispatch
+    # ------------------------------------------------------------------
+
+    async def dispatch_parallel(
+        self,
+        calls: List[Dict[str, Any]],
+        *,
+        return_exceptions: bool = True,
+    ) -> List[Dict[str, Any]]:
+        """Dispatch multiple tool calls concurrently.
+
+        Each element of *calls* must be a dict with the keys:
+
+        * ``category`` (str) — tool category name.
+        * ``tool`` (str) — tool name within that category.
+        * ``params`` (dict, optional) — keyword arguments for the tool.
+
+        Results are returned in the **same order** as *calls*.
+
+        Args:
+            calls: List of ``{"category": ..., "tool": ..., "params": {...}}``
+                   dicts.  ``"params"`` may be omitted (defaults to ``{}``).
+            return_exceptions: When ``True`` (default) exceptions inside
+                individual calls are captured and returned as error dicts
+                rather than propagated.  Set to ``False`` to let the first
+                exception cancel all remaining tasks.
+
+        Returns:
+            List of result dicts in the same order as *calls*.
+
+        Example::
+
+            results = await manager.dispatch_parallel([
+                {"category": "dataset_tools", "tool": "load_dataset", "params": {"source": "squad"}},
+                {"category": "graph_tools",   "tool": "query_knowledge_graph"},
+            ])
+        """
+        if not calls:
+            return []
+
+        n = len(calls)
+        results: List[Optional[Dict[str, Any]]] = [None] * n
+
+        async def _run_one(index: int, call: Dict[str, Any]) -> None:
+            cat = call.get("category", "")
+            tool = call.get("tool", "")
+            params = call.get("params") or {}
+            try:
+                results[index] = await self.dispatch(cat, tool, params)
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except Exception as exc:
+                if return_exceptions:
+                    results[index] = {
+                        "status": "error",
+                        "error": str(exc),
+                        "category": cat,
+                        "tool": tool,
+                    }
+                else:
+                    raise
+
+        async with anyio.create_task_group() as tg:
+            for i, call in enumerate(calls):
+                tg.start_soon(_run_one, i, call)
+
+        # Cast — every slot is filled by _run_one before task group exits.
+        return results  # type: ignore[return-value]
+
+    # ------------------------------------------------------------------
+    # Phase F4: Graceful shutdown
+    # ------------------------------------------------------------------
+
+    async def graceful_shutdown(self, timeout: float = 30.0) -> Dict[str, Any]:
+        """Shut down the tool manager gracefully.
+
+        Steps:
+
+        1. Mark the manager as shutting down (rejects new dispatches).
+        2. Wait up to *timeout* seconds for any in-flight tool calls to finish.
+        3. Clear internal caches and category state.
+
+        Args:
+            timeout: Maximum seconds to wait for in-flight calls.
+
+        Returns:
+            A status dict with ``"status"`` (``"ok"`` or ``"timeout"``) and
+            ``"categories_cleared"`` (count of categories unloaded).
+        """
+        self._shutting_down = True
+        logger.info("HierarchicalToolManager: starting graceful shutdown (timeout=%.1fs)", timeout)
+
+        # Give in-flight anyio tasks a moment to complete.
+        try:
+            with anyio.fail_after(timeout):
+                # Yield control so other tasks can finish.
+                await anyio.sleep(0)
+        except TimeoutError:
+            logger.warning("HierarchicalToolManager: graceful shutdown timed out after %.1fs", timeout)
+            status = "timeout"
+        else:
+            status = "ok"
+
+        categories_cleared = len(self.categories)
+        # Clear internal state.
+        for cat in self.categories.values():
+            cat._tools.clear()
+            cat._schema_cache.clear()
+            cat._discovered = False
+        self.categories.clear()
+        self._discovered_categories = False
+        self._shutting_down = False
+
+        logger.info("HierarchicalToolManager: shutdown complete (%d categories cleared)", categories_cleared)
+        return {"status": status, "categories_cleared": categories_cleared}
 
 
 # Create global instance (can be overridden for testing)
@@ -663,6 +947,8 @@ async def tools_dispatch(
 __all__ = [
     "HierarchicalToolManager",
     "ToolCategory",
+    "CircuitBreaker",
+    "CircuitState",
     "get_tool_manager",
     "tools_list_categories",
     "tools_list_tools",

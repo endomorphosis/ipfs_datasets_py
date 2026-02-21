@@ -19,6 +19,8 @@ from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import (
     tools_list_tools,
     tools_get_schema,
     tools_dispatch,
+    CircuitBreaker,
+    CircuitState,
 )
 
 
@@ -295,3 +297,246 @@ class TestMCPToolWrappers:
         
         # THEN we get a result
         assert isinstance(result, dict)
+
+
+# ---------------------------------------------------------------------------
+# Phase F1: dispatch_parallel
+# ---------------------------------------------------------------------------
+
+class TestDispatchParallel:
+    """Tests for HierarchicalToolManager.dispatch_parallel() (Phase F1)."""
+
+    def _build_manager_with_mock_tool(self) -> HierarchicalToolManager:
+        """Return a manager with a fast mock async tool in dataset_tools."""
+        from unittest.mock import AsyncMock
+
+        mgr = HierarchicalToolManager.__new__(HierarchicalToolManager)
+        mgr.tools_root = Path(__file__).parent
+        mgr.categories = {}
+        mgr._category_metadata = {}
+        mgr._discovered_categories = True
+        mgr._lazy_loaders = {}
+        mgr._shutting_down = False
+
+        cat = ToolCategory.__new__(ToolCategory)
+        cat.name = "dataset_tools"
+        cat.path = Path(__file__).parent
+        cat.description = ""
+        cat._tools = {"load_dataset": AsyncMock(return_value={"status": "ok", "rows": 50})}
+        cat._tool_metadata = {}
+        cat._discovered = True
+        cat._schema_cache = {}
+        cat._cache_hits = 0
+        cat._cache_misses = 0
+
+        mgr.categories["dataset_tools"] = cat
+        return mgr
+
+    @pytest.mark.anyio
+    async def test_dispatch_parallel_empty(self):
+        """GIVEN an empty call list THEN returns an empty list."""
+        # GIVEN
+        mgr = self._build_manager_with_mock_tool()
+        # WHEN
+        results = await mgr.dispatch_parallel([])
+        # THEN
+        assert results == []
+
+    @pytest.mark.anyio
+    async def test_dispatch_parallel_single_call(self):
+        """GIVEN one call THEN returns one result in a list."""
+        # GIVEN
+        mgr = self._build_manager_with_mock_tool()
+        calls = [{"category": "dataset_tools", "tool": "load_dataset", "params": {"source": "squad"}}]
+        # WHEN
+        results = await mgr.dispatch_parallel(calls)
+        # THEN
+        assert len(results) == 1
+        assert results[0]["status"] == "ok"
+
+    @pytest.mark.anyio
+    async def test_dispatch_parallel_multiple_calls_order_preserved(self):
+        """GIVEN N calls THEN results are in the same order as calls."""
+        # GIVEN
+        mgr = self._build_manager_with_mock_tool()
+        n = 8
+        calls = [
+            {"category": "dataset_tools", "tool": "load_dataset", "params": {"source": f"ds_{i}"}}
+            for i in range(n)
+        ]
+        # WHEN
+        results = await mgr.dispatch_parallel(calls)
+        # THEN
+        assert len(results) == n
+        for r in results:
+            assert r.get("status") == "ok"
+
+    @pytest.mark.anyio
+    async def test_dispatch_parallel_invalid_category_captured(self):
+        """GIVEN a call with an invalid category THEN an error dict is returned (not raised)."""
+        # GIVEN
+        mgr = self._build_manager_with_mock_tool()
+        calls = [
+            {"category": "nonexistent", "tool": "any_tool"},
+            {"category": "dataset_tools", "tool": "load_dataset"},
+        ]
+        # WHEN
+        results = await mgr.dispatch_parallel(calls, return_exceptions=True)
+        # THEN — both results present; first is error, second is ok
+        assert len(results) == 2
+        assert results[0]["status"] == "error"
+        assert results[1]["status"] == "ok"
+
+
+# ---------------------------------------------------------------------------
+# Phase F3: CircuitBreaker
+# ---------------------------------------------------------------------------
+
+class TestCircuitBreaker:
+    """Tests for CircuitBreaker (Phase F3)."""
+
+    def test_initial_state_is_closed(self):
+        """GIVEN a new circuit breaker THEN state is CLOSED."""
+        cb = CircuitBreaker(failure_threshold=3, recovery_timeout=1.0)
+        assert cb.state == CircuitState.CLOSED
+        assert not cb.is_open()
+
+    @pytest.mark.anyio
+    async def test_success_keeps_closed(self):
+        """GIVEN a successful call THEN state remains CLOSED."""
+        cb = CircuitBreaker(failure_threshold=3, recovery_timeout=1.0)
+
+        async def _ok():
+            return {"status": "ok"}
+
+        result = await cb.call(_ok)
+        assert result["status"] == "ok"
+        assert cb.state == CircuitState.CLOSED
+
+    @pytest.mark.anyio
+    async def test_failure_threshold_opens_circuit(self):
+        """GIVEN failure_threshold consecutive failures THEN circuit opens."""
+        from ipfs_datasets_py.mcp_server.exceptions import ToolExecutionError
+
+        cb = CircuitBreaker(failure_threshold=3, recovery_timeout=60.0)
+
+        async def _fail():
+            raise RuntimeError("boom")
+
+        for _ in range(3):
+            with pytest.raises(ToolExecutionError):
+                await cb.call(_fail)
+
+        assert cb.state == CircuitState.OPEN
+        assert cb.is_open()
+
+    @pytest.mark.anyio
+    async def test_open_circuit_rejects_calls(self):
+        """GIVEN an open circuit THEN calls return an error dict without invoking the function."""
+        from ipfs_datasets_py.mcp_server.exceptions import ToolExecutionError
+        called = []
+
+        cb = CircuitBreaker(failure_threshold=1, recovery_timeout=60.0)
+
+        async def _fail():
+            raise RuntimeError("boom")
+
+        async def _should_not_run():
+            called.append(1)
+            return {"status": "ok"}
+
+        # Open the circuit.
+        with pytest.raises(ToolExecutionError):
+            await cb.call(_fail)
+
+        assert cb.state == CircuitState.OPEN
+
+        result = await cb.call(_should_not_run)
+        assert result["status"] == "error"
+        assert "OPEN" in result["error"]
+        assert called == []  # Function was never invoked.
+
+    def test_reset_closes_circuit(self):
+        """GIVEN an open circuit WHEN reset() is called THEN state is CLOSED."""
+        import time
+        cb = CircuitBreaker(failure_threshold=1, recovery_timeout=60.0)
+        # Force open without async context.
+        cb._state = CircuitState.OPEN
+        cb._failure_count = 1
+        cb._opened_at = time.monotonic()
+
+        cb.reset()
+        assert cb.state == CircuitState.CLOSED
+        assert cb._failure_count == 0
+
+    def test_info_returns_snapshot(self):
+        """CircuitBreaker.info() returns a dict with expected keys."""
+        cb = CircuitBreaker(failure_threshold=5, recovery_timeout=30.0, name="test_cb")
+        info = cb.info()
+        assert info["name"] == "test_cb"
+        assert info["state"] == CircuitState.CLOSED
+        assert info["failure_threshold"] == 5
+        assert info["recovery_timeout"] == 30.0
+
+
+# ---------------------------------------------------------------------------
+# Phase F4: graceful_shutdown
+# ---------------------------------------------------------------------------
+
+class TestGracefulShutdown:
+    """Tests for HierarchicalToolManager.graceful_shutdown() (Phase F4)."""
+
+    @pytest.mark.anyio
+    async def test_graceful_shutdown_clears_categories(self):
+        """GIVEN a warm manager WHEN graceful_shutdown() THEN all categories cleared."""
+        # GIVEN
+        from unittest.mock import AsyncMock
+
+        mgr = HierarchicalToolManager.__new__(HierarchicalToolManager)
+        mgr.tools_root = Path(__file__).parent
+        mgr.categories = {}
+        mgr._category_metadata = {}
+        mgr._discovered_categories = True
+        mgr._lazy_loaders = {}
+        mgr._shutting_down = False
+
+        cat = ToolCategory.__new__(ToolCategory)
+        cat.name = "dataset_tools"
+        cat.path = Path(__file__).parent
+        cat.description = ""
+        cat._tools = {"load_dataset": AsyncMock(return_value={"status": "ok"})}
+        cat._tool_metadata = {}
+        cat._discovered = True
+        cat._schema_cache = {"load_dataset": {}}
+        cat._cache_hits = 0
+        cat._cache_misses = 0
+        mgr.categories["dataset_tools"] = cat
+
+        # WHEN
+        result = await mgr.graceful_shutdown(timeout=5.0)
+
+        # THEN
+        assert result["status"] == "ok"
+        assert result["categories_cleared"] == 1
+        assert len(mgr.categories) == 0
+
+    @pytest.mark.anyio
+    async def test_dispatch_rejected_during_shutdown(self):
+        """GIVEN _shutting_down=True THEN dispatch() returns an error immediately."""
+        # GIVEN
+        from unittest.mock import AsyncMock
+
+        mgr = HierarchicalToolManager.__new__(HierarchicalToolManager)
+        mgr.tools_root = Path(__file__).parent
+        mgr.categories = {}
+        mgr._category_metadata = {}
+        mgr._discovered_categories = True
+        mgr._lazy_loaders = {}
+        mgr._shutting_down = True
+
+        # WHEN
+        result = await mgr.dispatch("dataset_tools", "load_dataset")
+
+        # THEN
+        assert result["status"] == "error"
+        assert "shutting down" in result["error"].lower()
