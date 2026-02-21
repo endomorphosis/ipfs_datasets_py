@@ -1639,6 +1639,31 @@ class OntologyCritic(BaseCritic):
             "std_overall": round(_math.sqrt(variance), 6),
         }
 
+    def dimension_report(self, score: "CriticScore") -> str:
+        """Return a multi-line human-readable breakdown of all five dimensions.
+
+        Args:
+            score: :class:`CriticScore` to report on.
+
+        Returns:
+            Multi-line string with one line per dimension plus an overall line.
+
+        Example:
+            >>> print(critic.dimension_report(score))
+            completeness      : 0.750
+            ...
+        """
+        dims = [
+            ("completeness", score.completeness),
+            ("consistency", score.consistency),
+            ("clarity", score.clarity),
+            ("granularity", score.granularity),
+            ("domain_alignment", score.domain_alignment),
+        ]
+        lines = [f"{name:18s}: {val:.3f}" for name, val in dims]
+        lines.append(f"{'overall':18s}: {score.overall:.3f}")
+        return "\n".join(lines)
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],

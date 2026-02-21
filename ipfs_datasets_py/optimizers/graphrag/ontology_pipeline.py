@@ -506,3 +506,17 @@ class OntologyPipeline:
             "technology",
             "news",
         ])
+
+    def summary(self) -> str:
+        """Return a compact one-line description of this pipeline's configuration.
+
+        Returns:
+            String of the form ``"OntologyPipeline(domain=<domain>, use_llm=<bool>, stages=<n>)"``.
+
+        Example:
+            >>> print(pipeline.summary())
+            OntologyPipeline(domain=legal, use_llm=False, stages=3)
+        """
+        stages = len(self.get_stage_names())
+        use_llm = getattr(self._critic, "use_llm", False)
+        return f"OntologyPipeline(domain={self.domain}, use_llm={use_llm}, stages={stages})"

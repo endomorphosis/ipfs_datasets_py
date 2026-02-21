@@ -606,6 +606,20 @@ class Entity:
             raise TypeError(f"Unknown Entity field(s): {', '.join(sorted(unknown))}")
         return _dc.replace(self, **overrides)
 
+    def to_text(self) -> str:
+        """Return a compact human-readable summary of this entity.
+
+        Format: ``"<text> (<type>, conf=<confidence>)"``
+
+        Returns:
+            Single-line string.
+
+        Example:
+            >>> entity.to_text()
+            'Alice (Person, conf=0.90)'
+        """
+        return f"{self.text} ({self.type}, conf={self.confidence:.2f})"
+
 
 @dataclass(slots=True)
 class Relationship:
@@ -935,6 +949,22 @@ class EntityExtractionResult:
         for ent in self.entities:
             freq[ent.type] = freq.get(ent.type, 0) + 1
         return dict(sorted(freq.items(), key=lambda kv: -kv[1]))
+
+    def highest_confidence_entity(self) -> Optional["Entity"]:
+        """Return the entity with the highest confidence score.
+
+        Returns:
+            The :class:`Entity` with the maximum ``confidence`` value, or
+            ``None`` if there are no entities.
+
+        Example:
+            >>> best = result.highest_confidence_entity()
+            >>> best is None or isinstance(best, Entity)
+            True
+        """
+        if not self.entities:
+            return None
+        return max(self.entities, key=lambda e: e.confidence)
 
 
 @dataclass
@@ -2468,6 +2498,48 @@ class OntologyGenerator:
             else:
                 i += 1
         return phrases
+
+    def merge_results(
+        self,
+        results: List["EntityExtractionResult"],
+    ) -> "EntityExtractionResult":
+        """Merge multiple :class:`EntityExtractionResult` objects into one.
+
+        Entities and relationships from all results are concatenated.
+        The overall ``confidence`` of the merged result is the mean of the
+        individual confidence values (or 0.0 for an empty list).
+        Metadata dicts are shallow-merged (later results win on conflict).
+
+        Args:
+            results: List of results to merge.
+
+        Returns:
+            A single combined :class:`EntityExtractionResult`.
+
+        Example:
+            >>> merged = gen.merge_results([r1, r2, r3])
+            >>> len(merged.entities) == len(r1.entities) + len(r2.entities) + len(r3.entities)
+            True
+        """
+        if not results:
+            return EntityExtractionResult(entities=[], relationships=[], confidence=0.0)
+        all_entities: List["Entity"] = []
+        all_rels: List[Any] = []
+        all_errors: List[str] = []
+        merged_meta: Dict[str, Any] = {}
+        for r in results:
+            all_entities.extend(r.entities)
+            all_rels.extend(r.relationships)
+            all_errors.extend(r.errors)
+            merged_meta.update(r.metadata)
+        avg_conf = sum(r.confidence for r in results) / len(results)
+        return EntityExtractionResult(
+            entities=all_entities,
+            relationships=all_rels,
+            confidence=avg_conf,
+            metadata=merged_meta,
+            errors=all_errors,
+        )
 
 
 __all__ = [

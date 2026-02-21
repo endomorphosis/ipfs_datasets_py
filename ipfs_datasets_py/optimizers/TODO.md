@@ -702,12 +702,12 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 
 ## Batch 75+ Ideas (added automatically)
 
-- [ ] (P2) [graphrag] Add `OntologyGenerator.merge_results(results)` -- merge list of EntityExtractionResult into one
-- [ ] (P3) [graphrag] Add `OntologyCritic.dimension_report(score)` -- multi-line human-readable dimension breakdown
+- [x] (P2) [graphrag] Add `OntologyGenerator.merge_results(results)` -- merge list of EntityExtractionResult into one
+- [x] (P3) [graphrag] Add `OntologyCritic.dimension_report(score)` -- multi-line human-readable dimension breakdown
 - [ ] (P2) [graphrag] Add `OntologyOptimizer.prune_history(n)` -- keep only last N history entries
-- [ ] (P3) [graphrag] Add `EntityExtractionResult.highest_confidence_entity()` -- return entity with max confidence
-- [ ] (P2) [graphrag] Add `Entity.to_text()` -- return human-readable single-line summary
-- [ ] (P3) [graphrag] Add `OntologyPipeline.summary()` -- one-line string with domain/rounds/stage-count
+- [x] (P3) [graphrag] Add `EntityExtractionResult.highest_confidence_entity()` -- return entity with max confidence
+- [x] (P2) [graphrag] Add `Entity.to_text()` -- return human-readable single-line summary
+- [x] (P3) [graphrag] Add `OntologyPipeline.summary()` -- one-line string with domain/rounds/stage-count
 - [ ] (P2) [graphrag] Add `ExtractionConfig.copy()` -- shallow copy of the config
 - [ ] (P3) [graphrag] Add `OntologyLearningAdapter.feedback_summary()` -- stats dict for feedback history
 - [ ] (P2) [graphrag] Add `OntologyMediator.get_round_count()` -- number of refinement rounds performed
