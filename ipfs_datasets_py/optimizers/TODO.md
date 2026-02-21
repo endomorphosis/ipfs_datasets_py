@@ -485,8 +485,8 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] Add `ExtractionConfig.llm_fallback_threshold` — Done batch 33: default 0.0 (disabled); to_dict/from_dict updated
 - [ ] (P2) [graphrag] Implement `_extract_with_llm_fallback()` in OntologyGenerator that wraps `_extract_rule_based()` + fallback
 - [x] (P2) [tests] Unit tests for LLM fallback — Done batch 33: 11 tests in test_llm_fallback_extraction.py
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.apply_feedback()` — accept list of mediator `Action` objects and update confidence weights
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.get_extraction_hint()` — return adjusted threshold based on historical accuracy
+- [ ] (P2) [graphrag] ✅ `OntologyLearningAdapter.apply_feedback()` — accept list of mediator `Action` objects and update confidence weights
+- [ ] (P2) [graphrag] ✅ `OntologyLearningAdapter.get_extraction_hint()` — return adjusted threshold based on historical accuracy
 - [x] (P2) [tests] Unit tests for OntologyLearningAdapter feedback loop — Done batch 47: 6 scenarios (threshold rise/fall, clamping, action rates, reset, restore-then-continue)
 - [x] (P2) [arch] Add `__init__` test for logic_theorem_optimizer public symbols — Done batch 32: test_public_import_smoke.py
 - [x] (P2) [tests] Parametrize domain-specific rule tests with all 4 domains (legal, medical, financial, technical) — use `pytest.mark.parametrize` — Done batch 33: `tests/unit/optimizers/graphrag/test_ontology_generator_helpers.py` (`test_domain_specific_rules_extract_expected_type`, 4-domain parametrization)
@@ -553,3 +553,26 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [tests] Add tests for `OntologyHarness.run()` with real generator + critic (no mocks)
 - [ ] (P3) [perf] Cache `OntologyCritic._evaluate_consistency()` DFS result keyed on relationship set hash
 - [x] (P2) [graphrag] `ExtractionConfig.max_confidence: float = 1.0` — Done batch 50: enforced in _extract_rule_based, to_dict/from_dict; 6 tests
+
+## Batch 52+ ideas (added automatically)
+
+- [ ] (P2) [graphrag] Add `OntologyCritic.evaluate_batch()` progress callback param for streaming results
+- [ ] (P3) [graphrag] Add `OntologyMediator.get_action_stats()` — per-action counts + success rates
+- [ ] (P2) [graphrag] Add `OntologyGenerator.extract_entities_streaming()` — yield entities as found (iterator API)
+- [ ] (P3) [tests] Add property tests for `OntologyMediator.refine_ontology()` using Hypothesis
+- [ ] (P2) [api] Add `ExtractionConfig.from_env()` classmethod — load config from ENV vars
+- [ ] (P3) [graphrag] Add `EntityExtractionResult.to_dataframe()` — convert to pandas DataFrame
+- [ ] (P2) [graphrag] Add `OntologyOptimizer.export_history_csv()` — save compare_history table as CSV
+- [ ] (P3) [obs] Add structured JSON log line at end of `analyze_batch_parallel()` with timing + scores
+- [ ] (P2) [graphrag] Add `LogicValidator.suggest_fixes()` — return fix hints for each ValidationError
+- [ ] (P3) [graphrag] Add `OntologyCritic.explain_score()` — return human-readable explanation per dimension
+- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.serialize()` → bytes (pickle-free, JSON-based)
+- [ ] (P3) [arch] Add `OntologyPipeline` facade class — single entry point wrapping generator+critic+mediator+adapter
+- [ ] (P2) [tests] Add integration test: full pipeline on a multi-paragraph text, assert >3 entities extracted
+- [ ] (P3) [graphrag] Add confidence decay over time — entities not seen recently get lower confidence
+- [ ] (P2) [graphrag] Add `ExtractionConfig.validate()` — raise `ValueError` on invalid field combinations
+- [ ] (P3) [graphrag] Add `OntologyGenerator.extract_entities_with_spans()` — return char offsets for each entity
+- [ ] (P2) [api] Add `CriticScore.__sub__()` — subtract two CriticScore objects to get delta CriticScore
+- [ ] (P3) [graphrag] Add `OntologyHarness.run_concurrent()` — run N harnesses against the same data in parallel
+- [ ] (P2) [docs] Add doctest examples for every public method in ontology_generator.py
+- [ ] (P3) [arch] Add `optimizers/graphrag/typing.py` with shared type aliases (EntityDict, OntologyDict, etc.)

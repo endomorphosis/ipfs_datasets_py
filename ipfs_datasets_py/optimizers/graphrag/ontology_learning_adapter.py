@@ -144,11 +144,29 @@ class OntologyLearningAdapter:
     def get_extraction_hint(self) -> float:
         """Return the recommended extraction confidence threshold.
 
+        The hint is computed as the EMA-adjusted threshold with a small
+        correction derived from the **average per-action success rate**.
+        When successful actions dominate, the correction lowers the threshold
+        slightly (allow more extractions); when actions are rarely successful
+        the threshold is raised.
+
         Returns:
-            Float in [0, 1].  Values below this threshold should trigger
+            Float in [0.1, 0.9].  Values below this threshold should trigger
             LLM-based fallback extraction.
         """
-        return self._current_threshold
+        base = self._current_threshold
+        if not self._action_count:
+            return base
+
+        # Weighted mean success rate across all recorded actions
+        total_count = sum(self._action_count.values())
+        total_success = sum(self._action_success.values())
+        mean_action_success = total_success / total_count if total_count else 0.5
+
+        # Correction: ±0.05 based on deviation from neutral (0.5)
+        correction = 0.05 * (0.5 - mean_action_success)  # positive → raise threshold
+        adjusted = base + correction
+        return max(0.1, min(0.9, adjusted))
 
     def get_stats(self) -> Dict[str, Any]:
         """Return a summary of the adapter's internal state.

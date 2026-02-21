@@ -208,7 +208,18 @@ class OntologyCritic(BaseCritic):
         >>> score = critic.evaluate_ontology(ontology, context, data)
         >>> if score.overall < 0.7:
         ...     print("Needs improvement:", score.recommendations)
+
+    Class-level cache
+    -----------------
+    ``_SHARED_EVAL_CACHE`` is a class-level dict shared across *all* instances
+    so that equal ontologies are only evaluated once per Python process.  The
+    cache is bounded at 256 entries (cleared on overflow).  Pass
+    ``source_data`` to bypass caching.
     """
+
+    # Shared across all instances — survives instance teardown / recreation.
+    _SHARED_EVAL_CACHE: Dict[str, "CriticScore"] = {}
+    _SHARED_EVAL_CACHE_MAX: int = 256
     
     def __init__(
         self,
@@ -258,6 +269,20 @@ class OntologyCritic(BaseCritic):
                 self.use_llm = False
         else:
             self._llm_available = False
+
+    # ------------------------------------------------------------------ #
+    # Class-level shared cache helpers                                     #
+    # ------------------------------------------------------------------ #
+
+    @classmethod
+    def clear_shared_cache(cls) -> None:
+        """Clear the class-level evaluation cache shared across all instances."""
+        cls._SHARED_EVAL_CACHE.clear()
+
+    @classmethod
+    def shared_cache_size(cls) -> int:
+        """Return the number of entries in the shared evaluation cache."""
+        return len(cls._SHARED_EVAL_CACHE)
 
     # ------------------------------------------------------------------ #
     # BaseCritic interface                                                  #
@@ -344,11 +369,17 @@ class OntologyCritic(BaseCritic):
                 _cache_key = _hashlib.sha256(
                     _json.dumps(ontology, sort_keys=True, default=str).encode()
                 ).hexdigest()
+                # Check instance-local cache first, then shared class-level cache
                 if not hasattr(self, '_eval_cache'):
                     self._eval_cache: dict = {}
                 if _cache_key in self._eval_cache:
-                    self._log.debug("OntologyCritic cache hit")
+                    self._log.debug("OntologyCritic instance cache hit")
                     return self._eval_cache[_cache_key]
+                if _cache_key in OntologyCritic._SHARED_EVAL_CACHE:
+                    self._log.debug("OntologyCritic shared cache hit")
+                    cached = OntologyCritic._SHARED_EVAL_CACHE[_cache_key]
+                    self._eval_cache[_cache_key] = cached
+                    return cached
             except (TypeError, ValueError, OverflowError):
                 _cache_key = None
         else:
@@ -409,10 +440,13 @@ class OntologyCritic(BaseCritic):
         
         self._log.info(f"Evaluation complete. Overall score: {score.overall:.2f}")
         if _cache_key is not None:
-            # Limit cache to 128 entries (simple eviction: clear when full)
+            # Populate both instance-local and shared class-level cache
             if len(self._eval_cache) >= 128:
                 self._eval_cache.clear()
             self._eval_cache[_cache_key] = score
+            if len(OntologyCritic._SHARED_EVAL_CACHE) >= OntologyCritic._SHARED_EVAL_CACHE_MAX:
+                OntologyCritic._SHARED_EVAL_CACHE.clear()
+            OntologyCritic._SHARED_EVAL_CACHE[_cache_key] = score
         return score
 
     def evaluate_batch(

@@ -486,20 +486,33 @@ class OntologyGenerator:
                 try:
                     llm_result = self._extract_llm_based(data, context)
                     if llm_result.confidence >= result.confidence:
-                        return llm_result
+                        result = llm_result
                 except Exception as exc:
                     self._log.warning("LLM fallback extraction failed: %s", exc)
+            self._log.info(
+                "extract_entities complete: entity_count=%d strategy=%s confidence=%.3f",
+                len(result.entities),
+                context.extraction_strategy.value,
+                result.confidence,
+            )
             return result
         elif context.extraction_strategy == ExtractionStrategy.LLM_BASED:
-            return self._extract_llm_based(data, context)
+            result = self._extract_llm_based(data, context)
         elif context.extraction_strategy == ExtractionStrategy.HYBRID:
-            return self._extract_hybrid(data, context)
+            result = self._extract_hybrid(data, context)
         elif context.extraction_strategy == ExtractionStrategy.NEURAL:
-            return self._extract_neural(data, context)
+            result = self._extract_neural(data, context)
         else:
             raise ValueError(
                 f"Unknown extraction strategy: {context.extraction_strategy}"
             )
+        self._log.info(
+            "extract_entities complete: entity_count=%d strategy=%s confidence=%.3f",
+            len(result.entities),
+            context.extraction_strategy.value,
+            result.confidence,
+        )
+        return result
     
     def infer_relationships(
         self,
