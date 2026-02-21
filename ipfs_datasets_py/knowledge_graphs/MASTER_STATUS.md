@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.15.0  
+**Version:** 3.16.0  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-21 (session 38)  
-**Last Major Release:** v3.15.0 (backward-compat wrapper, high-structure-temp extractor, SRL NLP fallback, plotly ghost-node, libipld blocks, validator focus=False; session 38)
+**Last Updated:** 2026-02-21 (session 39)  
+**Last Major Release:** v3.16.0 (_extract_spacy_frames 100%, build_temporal_graph NLP fallback, IR query path, gremlin/semantic legacy paths; session 39)
 
 ---
 
@@ -18,10 +18,10 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 94% overall | Measured 2026-02-21 session 38; 14 new tests covering backward-compat wrapper (line 90), high-structure-temp extractor (lines 833-837), SRL NLP fallback (lines 616-619), plotly ghost-node (lines 233-234), libipld blocks (lines 950-951), validator focus=False (line 345); **3,363 pass** (14 new, baseline 3,349)
-| **Documentation** | ✅ Up to Date | Reflects v3.15.0 structure |
-| **Known Issues** | None | 18 bugs fixed (sessions 7-11, 18-19, 21-27, 30); 0 failures (3,363 pass)
-| **Next Milestone** | v3.16.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers), cypher compiler edge cases, ipld.py legacy coverage
+| **Test Coverage** | 94.5% overall | Measured 2026-02-21 session 39; 37 new tests covering _extract_spacy_frames (all dep branches), build_temporal_graph NLP fallback + empty-sent continue, IR query path (GraphQueryExecutor + budgets_from_preset + sharded_car_backend), gremlin/semantic legacy paths; **3,400 pass** (37 new, baseline 3,363)
+| **Documentation** | ✅ Up to Date | Reflects v3.16.0 structure |
+| **Known Issues** | None | 19 bugs found (sessions 7-11, 18-19, 21-27, 30, 39); 0 failures (3,400 pass)
+| **Next Milestone** | v3.17.0 (Q3 2026) | extractor spaCy lines (requires spaCy NLP), ipld.py legacy coverage (requires IPLDStorage install), dead-code cleanup (lines 131-132 UnboundLocalError bug, line 402 npadvmod dead code)
 
 ---
 
