@@ -1293,3 +1293,38 @@ class OntologyPipeline:
         """
         scores = sorted(r.score.overall for r in self._run_history)
         return scores[:k]
+
+    def run_moving_average(self, n: int = 3) -> list:
+        """Return a list of moving averages of run scores with window size n.
+
+        Args:
+            n: Window size. Defaults to 3.
+
+        Returns:
+            List of float averages, length = max(0, len(runs) - n + 1).
+        """
+        scores = [r.score.overall for r in self._run_history]
+        if len(scores) < n:
+            return []
+        return [
+            sum(scores[i:i + n]) / n
+            for i in range(len(scores) - n + 1)
+        ]
+
+    def convergence_round(self, variance_threshold: float = 0.01) -> int:
+        """Return the first run index where variance of last 3 scores drops below threshold.
+
+        Args:
+            variance_threshold: Maximum variance to be considered converged.
+
+        Returns:
+            Integer run index (0-based); -1 if convergence is never achieved.
+        """
+        scores = [r.score.overall for r in self._run_history]
+        for i in range(2, len(scores)):
+            window = scores[i - 2:i + 1]
+            mean = sum(window) / 3
+            var = sum((s - mean) ** 2 for s in window) / 3
+            if var < variance_threshold:
+                return i
+        return -1

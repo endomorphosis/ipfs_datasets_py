@@ -1469,6 +1469,44 @@ class OntologyMediator:
         """
         return len(self._action_counts)
 
+    def clear_feedback(self) -> int:
+        """Clear all recorded feedback history and return how many were removed.
+
+        Clears ``_feedback_history`` and/or ``_feedback`` depending on which
+        attribute is present.
+
+        Returns:
+            Integer count of records that were removed.
+        """
+        removed = 0
+        if hasattr(self, '_feedback_history') and self._feedback_history:
+            removed += len(self._feedback_history)
+            self._feedback_history.clear()
+        if hasattr(self, '_feedback') and isinstance(self._feedback, list):
+            removed += len(self._feedback)
+            self._feedback.clear()
+        return removed
+
+    def feedback_score_mean(self) -> float:
+        """Return the mean feedback score seen by this mediator.
+
+        Reads from ``_feedback_history`` or ``_feedback`` (whichever exists),
+        looking for a ``.score`` or ``.final_score`` numeric attribute on each
+        record.
+
+        Returns:
+            Float mean; ``0.0`` when no feedback records.
+        """
+        history = getattr(self, '_feedback_history', None) or getattr(self, '_feedback', None) or []
+        if not history:
+            return 0.0
+        scores = []
+        for rec in history:
+            v = getattr(rec, 'score', None) or getattr(rec, 'final_score', None)
+            if isinstance(v, (int, float)):
+                scores.append(float(v))
+        return sum(scores) / len(scores) if scores else 0.0
+
 
 # Export public API
 __all__ = [

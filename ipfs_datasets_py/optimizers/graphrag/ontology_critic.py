@@ -3416,6 +3416,29 @@ class OntologyCritic(BaseCritic):
         """
         return [d for d in self._DIMENSIONS if getattr(score, d, 0.0) > threshold]
 
+    def weighted_score(self, score, weights: dict = None) -> float:
+        """Return a custom-weighted overall score.
+
+        Args:
+            score: A ``CriticScore`` instance.
+            weights: Dict mapping dimension name → float weight. Missing
+                dimensions get weight 1.0. If ``None``, uses equal weights.
+
+        Returns:
+            Float weighted average across all dimensions.
+        """
+        if weights is None:
+            weights = {}
+        total_w = 0.0
+        total_s = 0.0
+        for d in self._DIMENSIONS:
+            w = weights.get(d, 1.0)
+            total_w += w
+            total_s += getattr(score, d, 0.0) * w
+        if total_w == 0.0:
+            return 0.0
+        return total_s / total_w
+
 
 # Export public API
 __all__ = [
