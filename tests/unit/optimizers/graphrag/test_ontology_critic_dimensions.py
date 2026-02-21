@@ -394,3 +394,71 @@ class TestCompletenessSourceCoverage:
         ents = [{"id": f"e{i}", "text": f"entity{i}", "type": "T"} for i in range(10)]
         score = self._call(critic, ctx, ents, src=None)
         assert 0.0 <= score <= 1.0
+
+
+# ── Intelligent recommendation generation ────────────────────────────────────
+
+class TestIntelligentRecommendations:
+    """Test that recommendations are specific and reference actual ontology facts."""
+
+    @pytest.fixture
+    def critic(self):
+        return OntologyCritic()
+
+    @pytest.fixture
+    def ctx(self):
+        return OntologyGenerationContext(
+            data_source="t", data_type=DataType.TEXT, domain="general",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+        )
+
+    def _recs(self, critic, ctx, ents, rels=None, **score_overrides):
+        scores = dict(completeness=0.3, consistency=0.3, clarity=0.3, granularity=0.3, domain_alignment=0.3)
+        scores.update(score_overrides)
+        ont = {"entities": ents, "relationships": rels or []}
+        return critic._generate_recommendations(ont, ctx, **scores)
+
+    def test_empty_entities_recommends_extraction(self, critic, ctx):
+        recs = self._recs(critic, ctx, [], completeness=0.0)
+        assert any("No entities" in r for r in recs)
+
+    def test_few_entities_cites_count(self, critic, ctx):
+        ents = [{"id": "e1", "text": "Alice", "type": "Person"}]
+        recs = self._recs(critic, ctx, ents, completeness=0.1)
+        assert any("1" in r or "entit" in r.lower() for r in recs)
+
+    def test_no_relationships_gives_advice(self, critic, ctx):
+        ents = [{"id": f"e{i}", "text": f"e{i}", "type": "T"} for i in range(3)]
+        recs = self._recs(critic, ctx, ents, completeness=0.2)
+        assert any("relationship" in r.lower() for r in recs)
+
+    def test_dangling_refs_cited_in_consistency_recs(self, critic, ctx):
+        ents = [{"id": "e1", "text": "Alice", "type": "Person"}]
+        rels = [{"id": "r1", "source_id": "e1", "target_id": "MISSING", "type": "knows"}]
+        recs = self._recs(critic, ctx, ents, rels, consistency=0.2)
+        assert any("dangling" in r.lower() or "reference" in r.lower() for r in recs)
+
+    def test_duplicate_ids_cited(self, critic, ctx):
+        ents = [
+            {"id": "dup", "text": "Alice", "type": "Person"},
+            {"id": "dup", "text": "Bob", "type": "Person"},
+        ]
+        recs = self._recs(critic, ctx, ents, consistency=0.2)
+        assert any("duplicate" in r.lower() or "ID" in r for r in recs)
+
+    def test_missing_props_cites_count(self, critic, ctx):
+        ents = [{"id": f"e{i}", "text": f"e{i}", "type": "T"} for i in range(5)]
+        recs = self._recs(critic, ctx, ents, clarity=0.1)
+        assert any("propert" in r.lower() for r in recs)
+
+    def test_domain_alignment_recs_mention_domain(self, critic, ctx):
+        recs = self._recs(critic, ctx, [{"id": "e1", "text": "foo", "type": "X"}], domain_alignment=0.1)
+        assert any("general" in r.lower() or "domain" in r.lower() for r in recs)
+
+    def test_high_scores_produce_no_recommendations(self, critic, ctx):
+        ents = [{"id": f"e{i}", "text": f"entity{i}", "type": "T"} for i in range(5)]
+        recs = self._recs(
+            critic, ctx, ents,
+            completeness=0.9, consistency=0.9, clarity=0.9, granularity=0.9, domain_alignment=0.9
+        )
+        assert len(recs) == 0

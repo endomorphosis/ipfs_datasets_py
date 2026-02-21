@@ -842,45 +842,125 @@ class OntologyCritic(BaseCritic):
         granularity: float,
         domain_alignment: float
     ) -> List[str]:
-        """Generate actionable recommendations for improvement."""
-        recommendations = []
-        
-        # Prioritize based on lowest scores
-        scores = [
-            (completeness, "completeness"),
-            (consistency, "consistency"),
-            (clarity, "clarity"),
-            (granularity, "granularity"),
-            (domain_alignment, "domain_alignment")
-        ]
-        
-        # Sort by score (lowest first)
-        sorted_scores = sorted(scores, key=lambda x: x[0])
-        
-        # Generate recommendations for lowest scoring dimensions
-        for score, dimension in sorted_scores[:3]:  # Top 3 areas for improvement
-            if score < 0.7:
-                if dimension == "completeness":
-                    recommendations.append(
-                        "Add more entities and relationships to improve coverage"
-                    )
-                elif dimension == "consistency":
-                    recommendations.append(
-                        "Review and fix logical inconsistencies in relationships"
-                    )
-                elif dimension == "clarity":
-                    recommendations.append(
-                        "Add more properties and descriptions to entities"
-                    )
-                elif dimension == "granularity":
-                    recommendations.append(
-                        "Adjust the level of detail to be more appropriate"
-                    )
-                elif dimension == "domain_alignment":
-                    recommendations.append(
-                        "Better align entity types with domain conventions"
-                    )
-        
+        """Generate specific, actionable recommendations for improvement.
+
+        Recommendations are tailored to the actual ontology content rather than
+        being generic — they cite entity counts, missing properties, dangling
+        references, etc.
+        """
+        recommendations: List[str] = []
+
+        entities = ontology.get('entities', [])
+        relationships = ontology.get('relationships', [])
+        entity_ids = {e.get('id') for e in entities if isinstance(e, dict) and e.get('id')}
+
+        # ── Completeness recommendations ─────────────────────────────────────
+        if completeness < 0.7:
+            n = len(entities)
+            if n == 0:
+                recommendations.append(
+                    "No entities found. Extract key concepts and named entities from the source data."
+                )
+            elif n < 5:
+                recommendations.append(
+                    f"Only {n} entit{'y' if n == 1 else 'ies'} extracted — aim for at least 10 "
+                    "to ensure adequate coverage."
+                )
+
+            n_rels = len(relationships)
+            if n > 0 and n_rels == 0:
+                recommendations.append(
+                    f"No relationships defined for {n} entities. "
+                    "Add at least one relationship per entity to improve connectivity."
+                )
+            elif n > 0 and n_rels < n * 0.5:
+                recommendations.append(
+                    f"Relationship density is low ({n_rels} relationships for {n} entities). "
+                    "Aim for at least one relationship per entity."
+                )
+
+            types = {e.get('type') for e in entities if isinstance(e, dict) and e.get('type')}
+            if len(types) < 2:
+                recommendations.append(
+                    "All entities share the same type. "
+                    "Introduce multiple entity types (e.g. Person, Organization, Concept) for richer semantics."
+                )
+
+        # ── Consistency recommendations ───────────────────────────────────────
+        if consistency < 0.7:
+            dangling = [
+                r for r in relationships
+                if isinstance(r, dict)
+                and (r.get('source_id') not in entity_ids or r.get('target_id') not in entity_ids)
+            ]
+            if dangling:
+                rel_ids = [r.get('id', '?') for r in dangling[:3]]
+                recommendations.append(
+                    f"{len(dangling)} relationship(s) have dangling references "
+                    f"(e.g. {', '.join(str(r) for r in rel_ids)}). "
+                    "Ensure all source_id / target_id values match existing entity IDs."
+                )
+
+            all_ids = [e.get('id') for e in entities if isinstance(e, dict) and e.get('id')]
+            dupes = len(all_ids) - len(set(all_ids))
+            if dupes > 0:
+                recommendations.append(
+                    f"{dupes} duplicate entity ID(s) detected. "
+                    "Assign unique IDs to prevent ambiguous references."
+                )
+
+        # ── Clarity recommendations ───────────────────────────────────────────
+        if clarity < 0.7:
+            no_props = [e for e in entities if isinstance(e, dict) and not e.get('properties')]
+            if len(no_props) > len(entities) * 0.5:
+                recommendations.append(
+                    f"{len(no_props)} of {len(entities)} entities lack properties. "
+                    "Add descriptive properties (e.g. role, description, domain) to improve interpretability."
+                )
+
+            no_text = [e for e in entities if isinstance(e, dict) and not e.get('text')]
+            if no_text:
+                recommendations.append(
+                    f"{len(no_text)} entit{'y' if len(no_text) == 1 else 'ies'} missing the 'text' field. "
+                    "Populate 'text' with the original surface form for traceability."
+                )
+
+            short = [
+                e for e in entities
+                if isinstance(e, dict) and len((e.get('text') or '').strip()) < 3
+            ]
+            if short:
+                recommendations.append(
+                    f"{len(short)} entit{'y' if len(short) == 1 else 'ies'} have very short names "
+                    "(< 3 characters). Review these for extraction noise."
+                )
+
+        # ── Granularity recommendations ───────────────────────────────────────
+        if granularity < 0.7:
+            prop_counts = [len(e.get('properties', {})) for e in entities if isinstance(e, dict)]
+            avg_props = sum(prop_counts) / max(len(prop_counts), 1)
+            if avg_props < 1.0:
+                recommendations.append(
+                    f"Average {avg_props:.1f} properties per entity is very low. "
+                    "Enrich entities with domain-specific attributes."
+                )
+
+            n_rels = len(relationships)
+            rel_ratio = n_rels / max(len(entities), 1)
+            if rel_ratio > 5.0:
+                recommendations.append(
+                    "Relationship count is very high relative to entity count — consider merging redundant entities "
+                    "or collapsing similar relationship types."
+                )
+
+        # ── Domain alignment recommendations ─────────────────────────────────
+        if domain_alignment < 0.7:
+            domain = (getattr(context, 'domain', None) or ontology.get('domain', 'general')).lower()
+            recommendations.append(
+                f"Many entity/relationship types don't align with '{domain}' domain vocabulary. "
+                "Review type names and replace generic labels with domain-specific terms."
+            )
+
         return recommendations
 
 
