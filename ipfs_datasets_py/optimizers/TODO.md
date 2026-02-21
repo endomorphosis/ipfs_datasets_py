@@ -1354,26 +1354,62 @@ This section captures the full architectural vision beyond batch-method addition
 
 ## Batch 171+ Backlog
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.history_trimmed_mean(trim)` — mean after removing top/bottom trim fraction
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_z_scores()` — list of z-scores for each history entry
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_entropy(score)` — Shannon entropy of dimension values
-- [ ] (P2) [graphrag] `OntologyCritic.compare_scores(a, b)` — dict of diffs per dimension + overall delta
-- [ ] (P2) [graphrag] `OntologyGenerator.top_confidence_fraction(result, frac)` — top-frac fraction of entities by confidence
-- [ ] (P2) [graphrag] `OntologyGenerator.relationship_source_set(result)` — set of unique source entity IDs
-- [ ] (P2) [graphrag] `OntologyGenerator.relationship_target_set(result)` — set of unique target entity IDs
-- [ ] (P2) [graphrag] `OntologyPipeline.score_std()` — std-dev of all run scores
-- [ ] (P2) [graphrag] `OntologyPipeline.improvement_count()` — number of runs that improved on previous
-- [ ] (P2) [graphrag] `LogicValidator.fanout_ratio(ontology)` — avg out-degree / avg in-degree
-- [ ] (P2) [graphrag] `LogicValidator.symmetric_pair_count(ontology)` — pairs where both (a→b) and (b→a) exist
-- [ ] (P2) [graphrag] `OntologyMediator.most_improved_action()` — action correlated with most score gain
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_ewma(alpha)` — EWMA of feedback scores
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_normalized()` — scores normalized to [0,1]
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_cumulative_max()` — running maximum of scores over history
-- [ ] (P2) [graphrag] `OntologyOptimizer.history_autocorrelation(lag)` — autocorr of scores at given lag _(check if exists first)_
-- [ ] (P2) [graphrag] `OntologyCritic.score_is_above_baseline(score, baseline)` — bool overall check
-- [ ] (P2) [graphrag] `LogicValidator.triangle_count(ontology)` — number of directed 3-cycles
-- [ ] (P2) [graphrag] `OntologyGenerator.confidence_quartiles(result)` — Q1, median, Q3 of entity confidences
-- [ ] (P2) [graphrag] `OntologyPipeline.score_range()` — max - min of all run scores
+- [x] (P2) [graphrag] `OntologyOptimizer.history_trimmed_mean(trim)` — mean after removing top/bottom trim fraction (batch-171)
+- [x] (P2) [graphrag] `OntologyOptimizer.score_z_scores()` — list of z-scores for each history entry (batch-171)
+- [x] (P2) [graphrag] `OntologyCritic.dimension_entropy(score)` — Shannon entropy of dimension values (batch-171)
+- [x] (P2) [graphrag] `OntologyCritic.compare_scores(a, b)` — dict of diffs per dimension + overall delta (batch-171)
+- [x] (P2) [graphrag] `OntologyGenerator.top_confidence_fraction(result, frac)` — top-frac fraction of entities by confidence (batch-171)
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_source_set(result)` — set of unique source entity IDs (batch-171)
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_target_set(result)` — set of unique target entity IDs (batch-171)
+- [x] (P2) [graphrag] `OntologyPipeline.score_std()` — std-dev of all run scores (batch-171)
+- [x] (P2) [graphrag] `OntologyPipeline.improvement_count()` — number of runs that improved on previous (batch-171)
+- [x] (P2) [graphrag] `LogicValidator.fanout_ratio(ontology)` — avg out-degree / avg in-degree (batch-172)
+- [x] (P2) [graphrag] `LogicValidator.symmetric_pair_count(ontology)` — pairs where both (a→b) and (b→a) exist (batch-172)
+- [x] (P2) [graphrag] `OntologyMediator.most_improved_action()` — action correlated with most score gain (batch-172)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_ewma(alpha)` — EWMA of feedback scores (batch-172)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_normalized()` — scores normalized to [0,1] (batch-172)
+- [x] (P2) [graphrag] `OntologyOptimizer.score_cumulative_max()` — running maximum of scores over history (batch-172)
+- [x] (P2) [graphrag] `OntologyOptimizer.history_autocorrelation(lag)` — autocorr of scores at given lag (pre-existing)
+- [x] (P2) [graphrag] `OntologyCritic.score_is_above_baseline(score, baseline)` — bool overall check (batch-172)
+- [x] (P2) [graphrag] `LogicValidator.triangle_count(ontology)` — number of directed 3-cycles (batch-173)
+- [x] (P2) [graphrag] `OntologyGenerator.confidence_quartiles(result)` — Q1, median, Q3 of entity confidences (batch-173)
+- [x] (P2) [graphrag] `OntologyPipeline.score_range()` — max - min of all run scores (batch-171)
+- [x] (P1) [api] **Add `__repr__` to `OntologyOptimizer`, `OntologyPipeline`, `FeedbackRecord`** — done in batch-172
+- [x] (P2) [graphrag] `OntologyCritic.top_k_dimensions(score, k)` — k highest-scoring dims (batch-173)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_score_std()` — std-dev of feedback scores (batch-173)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_last_improvement()` — score delta at last improving step (batch-173)
+- [x] (P2) [graphrag] `OntologyOptimizer.score_cumulative_min()` — running minimum of scores over history (batch-174)
+- [x] (P2) [graphrag] `OntologyOptimizer.history_below_median_count()` — entries below median score (batch-174)
+- [x] (P2) [graphrag] `OntologyPipeline.first_score()` — overall score of the first run (batch-174)
+- [x] (P2) [graphrag] `OntologyPipeline.score_below_mean_count()` — runs below mean score (batch-174)
+- [x] (P2) [graphrag] `OntologyCritic.dimension_improvement_rate(before, after)` — fraction of dims that improved (batch-174)
+- [x] (P2) [graphrag] `LogicValidator.leaf_node_count(ontology)` — nodes with no outgoing edges (batch-174)
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_confidence_mean(result)` — mean rel confidence (batch-174)
+- [x] (P2) [graphrag] `OntologyGenerator.entities_above_confidence(result, threshold)` — entities above threshold (batch-174)
+- [x] (P2) [graphrag] `OntologyOptimizer.score_trend_strength()` — absolute linear trend slope (batch-175)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_volatility()` — mean absolute change between feedback (batch-175)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_trend_direction()` — up/down/flat trend of feedback (batch-175)
+- [x] (P2) [graphrag] `OntologyGenerator.entity_type_entropy(result)` — Shannon entropy of entity type dist (batch-175)
+- [x] (P2) [graphrag] `LogicValidator.root_node_count(ontology)` — nodes with no incoming edges (batch-175)
+- [x] (P2) [graphrag] `LogicValidator.isolated_node_count(ontology)` — nodes with no edges at all (batch-175)
+- [x] (P2) [graphrag] `OntologyCritic.dimension_weighted_sum(score, weights)` — custom-weighted sum (batch-175)
+
+## Batch 176+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.history_kurtosis()` — excess kurtosis of score distribution
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_ewma(alpha)` — EWMA of average_score values
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_min(score)` — lowest-scoring dimension name
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_max(score)` — highest-scoring dimension name
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_range(score)` — max - min dimension value
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_skewness(result)` — skewness of entity confidences
+- [ ] (P2) [graphrag] `OntologyGenerator.unique_relationship_types(result)` — distinct relationship type strings
+- [ ] (P2) [graphrag] `LogicValidator.in_degree_distribution(ontology)` — dict of node→in-degree
+- [ ] (P2) [graphrag] `LogicValidator.out_degree_distribution(ontology)` — dict of node→out-degree
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_ewma(alpha)` — EWMA of pipeline run scores
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_percentile(p)` — p-th percentile of run scores
+- [ ] (P2) [graphrag] `OntologyMediator.feedback_count_by_action(action)` — how many times action was used
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_min()` — minimum feedback score
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_max()` — maximum feedback score
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_cumulative_sum()` — running sum of scores
 - [ ] (P1) [tests] **Fix `test_end_to_end_pipeline.py`** — Handle `ExtractionConfig` being passed as `ipfs_accelerate_config`; add `.get()` compat shim
-- [ ] (P1) [api] **Add `__repr__` to `OntologyOptimizer`, `OntologyPipeline`, `FeedbackRecord`** — critical for debugging
 - [ ] (P1) [docs] **`README.md` for `optimizers/`** — Quick-start, class diagram, example pipeline code
