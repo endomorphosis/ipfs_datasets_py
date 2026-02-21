@@ -49,6 +49,7 @@ References:
 from __future__ import annotations
 
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
@@ -949,6 +950,103 @@ class OntologyCritic(BaseCritic):
             "min_overall": min(overalls),
             "max_overall": max(overalls),
             "count": len(scores),
+        }
+    
+    def evaluate_batch_parallel(
+        self,
+        ontologies: List[Dict[str, Any]],
+        context: Any,
+        source_data: Optional[Any] = None,
+        progress_callback: Optional[Any] = None,
+        max_workers: int = 4,
+    ) -> Dict[str, Any]:
+        """Evaluate a list of ontologies in parallel using ThreadPoolExecutor.
+
+        This method provides the same interface as :meth:`evaluate_batch` but
+        uses multiple threads to evaluate ontologies concurrently, improving
+        throughput for large batches.
+
+        Thread Safety:
+            Evaluation results are collected from worker threads and
+            aggregated in the main thread. The progress callback is invoked
+            from each worker thread after evaluation completes.
+
+        Args:
+            ontologies: List of ontology dictionaries to evaluate.
+            context: Shared evaluation context for all ontologies.
+            source_data: Optional source text passed to each evaluation.
+            progress_callback: Optional callable invoked after each ontology is
+                evaluated.  Called as ``progress_callback(index, total, score)``
+                where *index* is 0-based.
+            max_workers: Maximum number of worker threads.  Defaults to 4.
+
+        Returns:
+            Dictionary with same structure as :meth:`evaluate_batch`:
+                - ``scores``: list of :class:`CriticScore` objects (one per ontology)
+                - ``mean_overall``: mean of the per-ontology overall scores
+                - ``min_overall``: minimum overall score across the batch
+                - ``max_overall``: maximum overall score across the batch
+                - ``count``: number of ontologies evaluated
+        """
+        if not ontologies:
+            return {
+                "scores": [],
+                "mean_overall": 0.0,
+                "min_overall": 0.0,
+                "max_overall": 0.0,
+                "count": 0,
+            }
+
+        total = len(ontologies)
+        scores: List[Optional[CriticScore]] = [None] * total
+
+        def _evaluate_with_index(idx_ontology_pair: tuple) -> tuple:
+            """Evaluate single ontology and return (index, score) pair."""
+            idx, ontology = idx_ontology_pair
+            try:
+                score = self.evaluate_ontology(
+                    ontology, context, source_data=source_data
+                )
+                if progress_callback is not None:
+                    try:
+                        progress_callback(idx, total, score)
+                    except Exception as e:
+                        self._log.warning(
+                            f"Progress callback failed at index {idx}: {e}"
+                        )
+                return (idx, score)
+            except Exception as e:
+                self._log.error(f"Evaluation failed for ontology {idx}: {e}")
+                return (idx, None)
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            results = executor.map(
+                _evaluate_with_index,
+                enumerate(ontologies),
+            )
+            for idx, score in results:
+                if score is not None:
+                    scores[idx] = score
+
+        # Filter out any None values (failed evaluations)
+        valid_scores = [s for s in scores if s is not None]
+
+        if not valid_scores:
+            return {
+                "scores": [],
+                "mean_overall": 0.0,
+                "min_overall": 0.0,
+                "max_overall": 0.0,
+                "count": 0,
+            }
+
+        overalls = [s.overall for s in valid_scores]
+        return {
+            "scores": valid_scores,
+            "mean_overall": sum(overalls) / len(overalls),
+            "min_overall": min(overalls),
+            "max_overall": max(overalls),
+            "count": len(valid_scores),
         }
     
     def compare_batch(
@@ -3151,6 +3249,18 @@ class OntologyCritic(BaseCritic):
         deltas = {d: getattr(after, d, 0.0) - getattr(before, d, 0.0)
                   for d in self._DIMENSIONS}
         return max(deltas, key=lambda d: deltas[d])
+
+    def critic_dimension_rank(self, score) -> list:
+        """Return dimensions ranked from lowest to highest score.
+
+        Args:
+            score: A ``CriticScore`` instance.
+
+        Returns:
+            List of dimension name strings sorted ascending by their value on
+            *score* (weakest first).
+        """
+        return sorted(self._DIMENSIONS, key=lambda d: getattr(score, d, 0.0))
 
 
 # Export public API
