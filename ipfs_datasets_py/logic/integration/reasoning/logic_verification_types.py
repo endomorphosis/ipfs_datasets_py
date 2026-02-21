@@ -73,12 +73,18 @@ class ProofStep:
         ...     premises=[]
         ... )
     """
-    step_number: int
     formula: str
     justification: str
-    rule_applied: str
+    step_number: int = 0
+    step_num: Optional[int] = field(default=None, repr=False)
+    rule_applied: str = ""
     premises: List[str] = field(default_factory=list)
     confidence: float = 1.0
+
+    def __post_init__(self):
+        # Support step_num as alias for step_number
+        if self.step_num is not None and self.step_number == 0:
+            self.step_number = self.step_num
 
 
 @dataclass

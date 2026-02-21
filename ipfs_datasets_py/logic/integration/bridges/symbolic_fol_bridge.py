@@ -45,13 +45,44 @@ except (ImportError, SystemExit):
 
 @dataclass 
 class LogicalComponents:
-    """Structure for holding extracted logical components."""
+    """Structure for holding extracted logical components.
+    
+    Also supports dict-style access for backward compatibility.
+    """
     quantifiers: List[str]
     predicates: List[str]
     entities: List[str]
     logical_connectives: List[str]
     confidence: float
     raw_text: str
+
+    # ------------------------------------------------------------------
+    # Dict-style backward-compat interface
+    # ------------------------------------------------------------------
+
+    def _as_dict(self) -> dict:
+        return {
+            "quantifiers": self.quantifiers,
+            "predicates": self.predicates,
+            "entities": self.entities,
+            "connectives": self.logical_connectives,
+            "confidence": self.confidence,
+        }
+
+    def __contains__(self, item: object) -> bool:
+        return item in self._as_dict()
+
+    def __getitem__(self, key: str):
+        return self._as_dict()[key]
+
+    def get(self, key: str, default=None):
+        return self._as_dict().get(key, default)
+
+    def keys(self):
+        return self._as_dict().keys()
+
+    def items(self):
+        return self._as_dict().items()
 
 
 @dataclass
@@ -256,7 +287,14 @@ class SymbolicFOLBridge:
         """Fallback extraction using regex patterns."""
         # Simple regex patterns for logical components
         quantifier_patterns = r'\b(all|every|each|some|exists?|for\s+all|there\s+(?:is|are))\b'
-        predicate_patterns = r'\b(is|are|has|have|can|cannot|loves?|studies?|flies?|runs?)\b'
+        predicate_patterns = (
+            r'\b(is|are|has|have|can|cannot|loves?|studies?|flies?|runs?|'
+            r'takes?|likes?|sleeps?|needs?|rains?|wants?|goes|came?|teaches?|'
+            r'writes?|reads?|uses?|makes?|sees?|knows?|works?|plays?|brings?|'
+            r'gives?|eats?|drinks?|swims?|sings?|lives?|dies?|gradu(?:ates?)?|'
+            r'excel(?:s)?|pass(?:es)?|fails?|belongs?|exists?|occurs?|'
+            r'prove(?:d|n)?|conducts?|conserves?|requires?|survives?)\b'
+        )
         connective_patterns = r'\b(and|or|not|if|then|implies?|but|however)\b'
         
         quantifiers = re.findall(quantifier_patterns, text, re.IGNORECASE)

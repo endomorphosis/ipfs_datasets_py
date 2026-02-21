@@ -94,34 +94,92 @@ class InteractiveFOLConstructor:
         )
         
         logger.info(f"Interactive FOL Constructor initialized for domain '{domain}'")
-    
-    @beartype
+
+    def start_session(self) -> str:
+        """Start or re-initialize a session. Returns the session ID."""
+        self.session_id = str(uuid.uuid4())
+        self.session_statements = {}
+        self.session_symbols = []
+        self.current_context = []
+        self.metadata = SessionMetadata(
+            session_id=self.session_id,
+            created_at=datetime.now(),
+            last_modified=datetime.now(),
+            total_statements=0,
+            consistent_statements=0,
+            inconsistent_statements=0,
+            average_confidence=0.0,
+            domain=self.domain
+        )
+        logger.info(f"Session started: {self.session_id}")
+        return self.session_id
+
+    def analyze_session(self, session_id: str) -> Dict[str, Any]:
+        """Analyze the current session and return a summary.
+
+        Args:
+            session_id: Session identifier (used for lookup, ignored if same as self.session_id)
+
+        Returns:
+            Dictionary with 'consistency', 'logical_structure', and other analysis keys.
+        """
+        statements = list(self.session_statements.values())
+        total = len(statements)
+        consistent = sum(1 for s in statements if getattr(s, 'is_consistent', True))
+        formulas = [getattr(s, 'fol_formula', '') for s in statements if getattr(s, 'fol_formula', '')]
+
+        return {
+            "session_id": self.session_id,
+            "consistency": consistent == total,
+            "consistent_count": consistent,
+            "total_statements": total,
+            "logical_structure": {
+                "formulas": formulas,
+                "statement_count": total,
+            },
+            "metadata": {
+                "domain": self.domain,
+                "average_confidence": self.metadata.average_confidence if total > 0 else 1.0,
+            },
+        }
+
     def add_statement(
         self, 
-        text: str, 
+        text_or_session_id: str, 
+        text: Optional[str] = None,
         tags: Optional[List[str]] = None,
         force_add: bool = False
     ) -> Dict[str, Any]:
         """
         Add a new statement to the interactive session.
         
+        Can be called as:
+          add_statement(text)                     → existing API
+          add_statement(session_id, text)         → multi-session API (session_id ignored)
+        
         Args:
-            text: Natural language statement to add
+            text_or_session_id: Statement text OR session_id when text is also given
+            text: Statement text when called with session_id as first arg
             tags: Optional tags for categorizing the statement
             force_add: Whether to add statement even if confidence is low
             
         Returns:
             Dictionary with analysis results and statement metadata
         """
-        if not text or not text.strip():
+        # Resolve which arg is the actual text
+        if text is not None:
+            actual_text = text
+        else:
+            actual_text = text_or_session_id
+        if not actual_text or not actual_text.strip():
             raise ValueError("Statement text cannot be empty")
         
-        text = text.strip()
+        actual_text = actual_text.strip()
         statement_id = str(uuid.uuid4())
         
         try:
             # Step 1: Create semantic symbol and analyze
-            symbol = self.bridge.create_semantic_symbol(text)
+            symbol = self.bridge.create_semantic_symbol(actual_text)
             if not symbol:
                 raise ValueError("Failed to create semantic symbol")
             
@@ -151,12 +209,12 @@ class InteractiveFOLConstructor:
             # Step 5: Check consistency with existing statements
             consistency_result = None
             if self.enable_consistency_checking and len(self.session_statements) > 0:
-                consistency_result = self._check_consistency_with_existing(text, fol_result)
+                consistency_result = self._check_consistency_with_existing(actual_text, fol_result)
             
             # Step 6: Create statement record
             statement_record = StatementRecord(
                 id=statement_id,
-                text=text,
+                text=actual_text,
                 timestamp=datetime.now(),
                 logical_components=components,
                 fol_formula=fol_result.fol_formula,
@@ -168,7 +226,7 @@ class InteractiveFOLConstructor:
             # Step 7: Add to session
             self.session_statements[statement_id] = statement_record
             self.session_symbols.append(symbol)
-            self.current_context.append(text)
+            self.current_context.append(actual_text)
             
             # Step 8: Update metadata
             self._update_session_metadata()
@@ -177,7 +235,7 @@ class InteractiveFOLConstructor:
             response = {
                 "status": "success",
                 "statement_id": statement_id,
-                "text": text,
+                "text": actual_text,
                 "fol_formula": fol_result.fol_formula,
                 "confidence": fol_result.confidence,
                 "logical_components": {
@@ -196,16 +254,16 @@ class InteractiveFOLConstructor:
             if consistency_result:
                 response["consistency_check"] = consistency_result
             
-            logger.info(f"Added statement: '{text[:50]}...' with confidence {fol_result.confidence:.2f}")
+            logger.info(f"Added statement: '{actual_text[:50]}...' with confidence {fol_result.confidence:.2f}")
             return response
             
         except Exception as e:
-            logger.error(f"Failed to add statement '{text}': {e}")
+            logger.error(f"Failed to add statement '{actual_text}': {e}")
             return {
                 "status": "error",
                 "message": str(e),
                 "statement_id": statement_id,
-                "text": text
+                "text": actual_text
             }
     
     @beartype

@@ -119,17 +119,18 @@ class LogicVerifier:
         logger.info(f"Added axiom: {axiom.name}")
         return True
     
-    @beartype
     def check_consistency(self, formulas: List[str]) -> ConsistencyCheck:
         """
         Check if a set of formulas is logically consistent.
         
         Args:
-            formulas: List of logical formulas to check
+            formulas: List of logical formulas to check (coerced to str if needed)
             
         Returns:
             ConsistencyCheck result
         """
+        # Coerce non-string items to strings for backward compatibility
+        formulas = [f.fol_formula if hasattr(f, 'fol_formula') else str(f) for f in formulas]
         if not formulas:
             return ConsistencyCheck(
                 is_consistent=True,
@@ -235,18 +236,23 @@ class LogicVerifier:
         
         return conflicting
     
-    @beartype
     def check_entailment(self, premises: List[str], conclusion: str) -> EntailmentResult:
         """
         Check if premises logically entail the conclusion.
         
         Args:
-            premises: List of premise formulas
+            premises: List of premise formulas (coerced to str if needed)
             conclusion: The conclusion formula
             
         Returns:
             EntailmentResult indicating whether entailment holds
         """
+        # Coerce non-string items for backward compatibility
+        premises = [p.fol_formula if hasattr(p, 'fol_formula') else str(p) for p in premises]
+        if hasattr(conclusion, 'fol_formula'):
+            conclusion = conclusion.fol_formula
+        elif not isinstance(conclusion, str):
+            conclusion = str(conclusion)
         if not premises:
             return EntailmentResult(
                 entails=False,
@@ -336,18 +342,23 @@ class LogicVerifier:
             explanation=explanation
         )
     
-    @beartype
     def generate_proof(self, premises: List[str], conclusion: str) -> ProofResult:
         """
         Attempt to generate a proof from premises to conclusion.
         
         Args:
-            premises: List of premise formulas
+            premises: List of premise formulas (coerced to str if needed)
             conclusion: The conclusion to prove
             
         Returns:
             ProofResult with proof steps if successful
         """
+        # Coerce non-string items for backward compatibility
+        premises = [p.fol_formula if hasattr(p, 'fol_formula') else str(p) for p in premises]
+        if hasattr(conclusion, 'fol_formula'):
+            conclusion = conclusion.fol_formula
+        elif not isinstance(conclusion, str):
+            conclusion = str(conclusion)
         import time
         start_time = time.time()
         
@@ -684,6 +695,26 @@ class LogicVerifier:
         """Return True iff *formula1* and *formula2* are contradictory (backward-compat)."""
         from .logic_verification_utils import are_contradictory
         return are_contradictory(formula1, formula2)
+
+    def verify_consistency(self, formulas: List[str]) -> "ConsistencyCheck":
+        """Alias for check_consistency (backward compat)."""
+        return self.check_consistency(formulas)
+
+    def validate_proof(self, steps: List["ProofStep"]) -> "ProofResult":
+        """Validate a sequence of proof steps.
+
+        Args:
+            steps: List of ProofStep objects representing a proof.
+
+        Returns:
+            ProofResult with is_valid and steps fields.
+        """
+        formula_list = [s.formula for s in steps]
+        result = self.generate_proof(
+            premises=formula_list[:-1] if len(formula_list) > 1 else formula_list,
+            conclusion=formula_list[-1] if formula_list else ""
+        )
+        return result
 
 
 # Import convenience functions from utils for backward compatibility

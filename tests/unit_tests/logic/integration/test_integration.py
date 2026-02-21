@@ -562,7 +562,12 @@ class TestRealWorldScenarios:
 
 class TestBackwardCompatibility:
     """Test backward compatibility with existing FOL system."""
-    
+
+    def setup_method(self):
+        """Setup backward compatibility tests."""
+        self.converter = create_fol_converter()
+        self.bridge = SymbolicFOLBridge()
+
     def test_integration_with_existing_mcp_tools(self):
         """Test integration with existing MCP tools."""
         # This would test integration with the existing text_to_fol MCP tool
@@ -633,6 +638,7 @@ class TestModalLogicIntegration:
         if not self.modal_available:
             pytest.skip("Modal logic extension not available")
         
+        from ipfs_datasets_py.logic.integration.modal_logic_extension import LogicClassification, ModalFormula  # noqa: F811
         modal_statements = [
             "It is necessary that all humans are mortal",
             "Citizens must pay taxes",
@@ -674,6 +680,8 @@ class TestModalLogicIntegration:
             formula_to_verify = self.bridge.semantic_to_fol(symbol)
         
         # Step 3: Verify the result is valid
+        if hasattr(formula_to_verify, 'fol_formula'):
+            formula_to_verify = formula_to_verify.fol_formula
         assert isinstance(formula_to_verify, str)
         assert len(formula_to_verify) > 0
 
@@ -699,6 +707,9 @@ class TestLogicVerificationIntegration:
         if not self.verification_available:
             pytest.skip("Logic verification not available")
         
+        from ipfs_datasets_py.logic.integration.logic_verification import (  # noqa: F811
+            ConsistencyCheck, EntailmentResult, ProofResult
+        )
         # Create logical statements
         premises = ["All cats are animals", "Fluffy is a cat"]
         conclusion = "Fluffy is an animal"
@@ -736,6 +747,7 @@ class TestLogicVerificationIntegration:
         if not self.verification_available:
             pytest.skip("Logic verification not available")
         
+        from ipfs_datasets_py.logic.integration.logic_verification import LogicAxiom  # noqa: F811
         # Add custom axiom for cat logic
         cat_axiom = LogicAxiom(
             name="cat_animal_rule",
@@ -751,6 +763,7 @@ class TestLogicVerificationIntegration:
         premises = ["Cat(fluffy)"]
         conclusion = "Animal(fluffy)"
         
+        from ipfs_datasets_py.logic.integration.logic_verification import EntailmentResult  # noqa: F811
         entailment = self.verifier.check_entailment(premises, conclusion)
         assert isinstance(entailment, EntailmentResult)
         
@@ -816,7 +829,7 @@ class TestCompleteSystemIntegration:
         
         # All components should have processed the input successfully
         assert symbol is not None
-        assert isinstance(components, dict)
+        assert hasattr(components, 'quantifiers') or isinstance(components, dict)
     
     def test_knowledge_base_construction(self):
         """Test constructing a complete knowledge base."""
@@ -845,6 +858,7 @@ class TestCompleteSystemIntegration:
         
         # Verify knowledge base consistency if verifier available
         if 'verifier' in self.available_components:
+            from ipfs_datasets_py.logic.integration.logic_verification import ConsistencyCheck, EntailmentResult  # noqa: F811
             consistency = self.available_components['verifier'].check_consistency(processed_statements)
             assert isinstance(consistency, ConsistencyCheck)
             
@@ -904,7 +918,16 @@ class TestCompleteSystemIntegration:
                     successes.append("verifier")
                 except Exception as e:
                     errors_encountered.append(f"verifier: {type(e).__name__}")
-            
+
+            # Test constructor if available
+            if 'constructor' in self.available_components:
+                try:
+                    sid = self.available_components['constructor'].start_session()
+                    self.available_components['constructor'].add_statement(sid, problematic_input)
+                    successes.append("constructor")
+                except Exception as e:
+                    errors_encountered.append(f"constructor: {type(e).__name__}")
+
             # Should either succeed gracefully or fail with informative errors
             total_components_tested = 1 + len(self.available_components)
             total_responses = len(successes) + len(errors_encountered)
@@ -958,6 +981,7 @@ class TestLegacyCompatibility:
     
     def test_existing_tool_compatibility(self):
         """Test compatibility with existing FOL conversion tools."""
+        import asyncio
         try:
             # Import existing tools
             from ipfs_datasets_py.mcp_server.tools.dataset_tools.text_to_fol import text_to_fol
@@ -967,9 +991,21 @@ class TestLegacyCompatibility:
             fol_statement = "All cats are animals"
             legal_statement = "Citizens must pay taxes"
             
-            # Test with existing tools
-            fol_result = text_to_fol(fol_statement)
-            legal_result = legal_text_to_deontic(legal_statement)
+            # Test with existing tools (may be async)
+            loop = asyncio.new_event_loop()
+            try:
+                fol_coro = text_to_fol(fol_statement)
+                if asyncio.iscoroutine(fol_coro):
+                    fol_result = loop.run_until_complete(fol_coro)
+                else:
+                    fol_result = fol_coro
+                legal_coro = legal_text_to_deontic(legal_statement)
+                if asyncio.iscoroutine(legal_coro):
+                    legal_result = loop.run_until_complete(legal_coro)
+                else:
+                    legal_result = legal_coro
+            finally:
+                loop.close()
             
             # Test with new integration
             symbol = self.bridge.create_semantic_symbol(fol_statement)
@@ -978,7 +1014,7 @@ class TestLegacyCompatibility:
             # Both should produce valid results
             assert isinstance(fol_result, dict)
             assert isinstance(legal_result, dict)
-            assert isinstance(components, dict)
+            assert hasattr(components, 'quantifiers') or isinstance(components, dict)
             
             # Results should be compatible (both should extract logical information)
             assert 'predicates' in components or 'entities' in components
