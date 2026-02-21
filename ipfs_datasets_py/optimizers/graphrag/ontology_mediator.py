@@ -841,6 +841,19 @@ class OntologyMediator:
         """
         return self._action_counts.get(action, 0)
 
+    def action_types(self) -> list:
+        """Return a sorted list of distinct action type strings that have been applied.
+
+        Returns:
+            Sorted list of action name strings from the action count log.
+            Returns an empty list if no actions have been applied.
+
+        Example:
+            >>> mediator.action_types()
+            []
+        """
+        return sorted(self._action_counts.keys())
+
     def clear_recommendation_history(self) -> int:
         """Clear the recommendation phrase frequency table.
 

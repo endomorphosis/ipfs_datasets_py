@@ -699,3 +699,34 @@ class OntologyPipeline:
         stages = len(self.get_stage_names())
         use_llm = getattr(self._critic, "use_llm", False)
         return f"OntologyPipeline(domain={self.domain}, use_llm={use_llm}, stages={stages})"
+
+    def average_run_score(self) -> float:
+        """Return the mean ``score.overall`` across all completed runs.
+
+        Returns:
+            Mean overall score; ``0.0`` when no runs have been made.
+
+        Example:
+            >>> pipeline.average_run_score()
+            0.0
+        """
+        if not self._run_history:
+            return 0.0
+        return sum(r.score.overall for r in self._run_history) / len(self._run_history)
+
+    def score_at(self, index: int) -> float:
+        """Return the ``score.overall`` for the run at *index* in history.
+
+        Args:
+            index: Zero-based position in run history.
+
+        Returns:
+            ``PipelineResult.score.overall`` at the given index.
+
+        Raises:
+            IndexError: If *index* is out of bounds.
+
+        Example:
+            >>> pipeline.score_at(0)
+        """
+        return self._run_history[index].score.overall

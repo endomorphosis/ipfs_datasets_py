@@ -1125,6 +1125,29 @@ class LogicValidator:
         result = self.check_consistency(ontology)
         return len(result.contradictions) > 0
 
+    def summary_dict(self, ontology: Dict[str, Any]) -> Dict[str, Any]:
+        """Return a summary dict with counts and contradiction status.
+
+        Args:
+            ontology: Ontology dict to summarise.
+
+        Returns:
+            Dict with keys:
+            - ``'entity_count'`` (int)
+            - ``'relationship_count'`` (int)
+            - ``'has_contradictions'`` (bool)
+
+        Example:
+            >>> s = validator.summary_dict({"entities": [{"id": "e1"}], "relationships": []})
+            >>> s["entity_count"]
+            1
+        """
+        return {
+            "entity_count": self.entity_count(ontology),
+            "relationship_count": self.relationship_count(ontology),
+            "has_contradictions": self.has_contradictions(ontology),
+        }
+
     def clear_tdfol_cache(self) -> int:
         """Clear the TDFOL formula cache.
 
