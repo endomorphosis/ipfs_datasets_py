@@ -2911,6 +2911,24 @@ class OntologyOptimizer:
                 current = 1
         return best
 
+    def score_above_percentile(self, p: float = 75.0) -> int:
+        """Return count of history entries whose score exceeds the p-th percentile.
+
+        Args:
+            p: Percentile in [0, 100]. Defaults to 75.0.
+
+        Returns:
+            Integer count of scores strictly above the p-th percentile value;
+            ``0`` when history is empty.
+        """
+        if not self._history:
+            return 0
+        scores = sorted(e.average_score for e in self._history)
+        idx = int(len(scores) * p / 100.0)
+        idx = min(idx, len(scores) - 1)
+        threshold = scores[idx]
+        return sum(1 for e in self._history if e.average_score > threshold)
+
 
 # Export public API
 __all__ = [

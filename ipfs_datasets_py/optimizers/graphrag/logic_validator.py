@@ -2419,6 +2419,36 @@ class LogicValidator:
                 pairs.add((s, t))
         return len(pairs)
 
+    def multi_hop_count(self, ontology: dict, src: str, max_hops: int = 2) -> int:
+        """Return the number of entities reachable from *src* in at most *max_hops* steps.
+
+        Args:
+            ontology: Ontology dict with ``relationships`` list.
+            src: Entity ID to start from.
+            max_hops: Maximum number of directed edges to traverse.
+
+        Returns:
+            Integer count of reachable entities (not counting *src* itself).
+        """
+        adjacency: dict = {}
+        for rel in ontology.get("relationships", []):
+            s = rel.get("source") or rel.get("source_id")
+            t = rel.get("target") or rel.get("target_id")
+            if s and t:
+                adjacency.setdefault(s, []).append(t)
+
+        visited = {src}
+        frontier = {src}
+        for _ in range(max_hops):
+            next_frontier = set()
+            for node in frontier:
+                for neighbor in adjacency.get(node, []):
+                    if neighbor not in visited:
+                        visited.add(neighbor)
+                        next_frontier.add(neighbor)
+            frontier = next_frontier
+        return len(visited) - 1  # exclude src itself
+
 
 # Export public API
 __all__ = [

@@ -1328,3 +1328,34 @@ class OntologyPipeline:
             if var < variance_threshold:
                 return i
         return -1
+
+    def score_histogram(self, bins: int = 5) -> dict:
+        """Return a histogram of run overall scores.
+
+        The score range [0, 1] is divided into *bins* equal-width buckets.
+        Keys are formatted as "lo-hi" strings.
+
+        Args:
+            bins: Number of equal-width buckets. Defaults to 5.
+
+        Returns:
+            Dict mapping "lo-hi" string → integer count. Empty dict when no runs.
+        """
+        if not self._run_history:
+            return {}
+        width = 1.0 / bins
+        result = {}
+        for i in range(bins):
+            lo = i * width
+            hi = lo + width
+            key = f"{lo:.2f}-{hi:.2f}"
+            result[key] = 0
+        for run in self._run_history:
+            s = run.score.overall
+            bucket = min(int(s / width), bins - 1)
+            key = f"{bucket * width:.2f}-{(bucket + 1) * width:.2f}"
+            if key in result:
+                result[key] += 1
+            else:
+                result[key] = 1
+        return result

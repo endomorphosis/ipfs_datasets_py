@@ -5411,6 +5411,17 @@ class OntologyGenerator:
         variance = sum((v - mean) ** 2 for v in vals) / len(vals)
         return variance ** 0.5
 
+    def entities_with_properties(self, result) -> list:
+        """Return entities that have at least one non-empty property.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            List of ``Entity`` objects whose ``properties`` dict is non-empty.
+        """
+        return [e for e in result.entities if getattr(e, 'properties', None)]
+
 
 __all__ = [
     'OntologyGenerator',
