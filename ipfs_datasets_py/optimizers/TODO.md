@@ -708,11 +708,11 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P3) [graphrag] Add `EntityExtractionResult.highest_confidence_entity()` -- return entity with max confidence
 - [x] (P2) [graphrag] Add `Entity.to_text()` -- return human-readable single-line summary
 - [x] (P3) [graphrag] Add `OntologyPipeline.summary()` -- one-line string with domain/rounds/stage-count
-- [ ] (P2) [graphrag] Add `ExtractionConfig.copy()` -- shallow copy of the config
-- [ ] (P3) [graphrag] Add `OntologyLearningAdapter.feedback_summary()` -- stats dict for feedback history
-- [ ] (P2) [graphrag] Add `OntologyMediator.get_round_count()` -- number of refinement rounds performed
-- [ ] (P3) [graphrag] Add `OntologyCritic.score_delta(score_a, score_b)` -- per-dim delta dict
-- [ ] (P2) [graphrag] Add `EntityExtractionResult.filter_by_span(start, end)` -- keep entities with source_span in range
+- [x] (P2) [graphrag] Add `ExtractionConfig.copy()` -- Done batch-77 -- shallow copy of the config
+- [x] (P3) [graphrag] Add `OntologyLearningAdapter.feedback_summary()` -- Done batch-77: -- stats dict for feedback history
+- [x] (P2) [graphrag] Add `OntologyMediator.get_round_count()` -- Done batch-77: -- number of refinement rounds performed
+- [x] (P3) [graphrag] Add `OntologyCritic.score_delta(score_a, score_b)` -- Done batch-77: -- per-dim delta dict
+- [x] (P2) [graphrag] Add `EntityExtractionResult.filter_by_span(start, end)` -- Done batch-77: -- keep entities with source_span in range
 - [ ] (P3) [graphrag] Add `OntologyOptimizer.worst_ontology()` -- return ontology from lowest-scoring history entry
 - [ ] (P2) [graphrag] Add `OntologyGenerator.dedup_by_text_prefix(result, prefix_len)` -- deduplicate entities with shared prefix
 - [ ] (P3) [graphrag] Add `LogicValidator.is_consistent(ontology)` -- boolean shortcut for check_consistency

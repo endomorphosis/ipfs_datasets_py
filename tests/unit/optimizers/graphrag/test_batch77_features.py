@@ -261,7 +261,7 @@ class TestFilterBySpan:
         e2 = _make_entity("2", "Bob", (100, 110))
         rel = Relationship(
             id="r1", source_id="1", target_id="2",
-            relation_type="knows", confidence=0.9,
+            type="knows", confidence=0.9,
         )
         r = EntityExtractionResult(entities=[e1, e2], relationships=[rel], confidence=0.8, metadata={})
         filtered = r.filter_by_span(0, 10)
@@ -273,7 +273,7 @@ class TestFilterBySpan:
         e2 = _make_entity("2", "Bob", (10, 15))
         rel = Relationship(
             id="r1", source_id="1", target_id="2",
-            relation_type="knows", confidence=0.9,
+            type="knows", confidence=0.9,
         )
         r = EntityExtractionResult(entities=[e1, e2], relationships=[rel], confidence=0.8, metadata={})
         filtered = r.filter_by_span(0, 20)
