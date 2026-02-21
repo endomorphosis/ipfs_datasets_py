@@ -21,7 +21,7 @@ def _make_generator():
 
 def _make_entity(eid, etype="person", confidence=0.8):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
-    return Entity(id=eid, name=eid, entity_type=etype, confidence=confidence)
+    return Entity(id=eid, type=etype, text=eid, properties={}, confidence=confidence)
 
 
 def _make_result(entities):
@@ -29,8 +29,7 @@ def _make_result(entities):
     return EntityExtractionResult(
         entities=entities,
         relationships=[],
-        entity_count=len(entities),
-        relationship_count=0,
+        confidence=0.8,
     )
 
 
@@ -114,7 +113,7 @@ class TestEntitiesByType:
         ])
         persons = g.entities_by_type(result, "person")
         assert len(persons) == 2
-        assert all(e.entity_type == "person" for e in persons)
+        assert all(e.type == "person" for e in persons)
 
     def test_no_match(self):
         g = _make_generator()
@@ -154,7 +153,7 @@ class TestDeduplicateEntities:
         ]
         result = _make_result(entities)
         deduped = g.deduplicate_entities(result)
-        assert deduped.entity_count == 2
+        assert len(deduped.entities) == 2
 
     def test_returns_new_result(self):
         g = _make_generator()

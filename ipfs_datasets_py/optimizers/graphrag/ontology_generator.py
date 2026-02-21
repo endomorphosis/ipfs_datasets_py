@@ -4001,7 +4001,7 @@ class OntologyGenerator:
         Returns:
             List of :class:`Entity` objects with matching ``entity_type``.
         """
-        return [e for e in result.entities if e.entity_type == entity_type]
+        return [e for e in result.entities if e.type == entity_type]
 
     def deduplicate_entities(
         self,
@@ -4024,7 +4024,7 @@ class OntologyGenerator:
             if e.id not in seen or e.confidence > seen[e.id].confidence:
                 seen[e.id] = e
         unique = list(seen.values())
-        return _dc.replace(result, entities=unique, entity_count=len(unique))
+        return _dc.replace(result, entities=unique)
 
 
 __all__ = [
