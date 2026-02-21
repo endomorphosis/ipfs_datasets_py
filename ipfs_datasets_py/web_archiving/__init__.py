@@ -24,8 +24,18 @@ MCP tool wrappers live in:
 """
 
 from .brave_search_engine import BraveSearchAPI  # noqa: F401
-from .serpstack_engine import SerpStackSearchAPI  # noqa: F401
-from .openverse_engine import OpenVerseSearchAPI  # noqa: F401
+from .serpstack_engine import (  # noqa: F401
+    SerpStackSearchAPI,
+    search_serpstack,
+    search_serpstack_images,
+    batch_search_serpstack,
+)
+from .openverse_engine import (  # noqa: F401
+    OpenVerseSearchAPI,
+    search_openverse_images,
+    search_openverse_audio,
+    batch_search_openverse,
+)
 from .github_repository_engine import (  # noqa: F401
     GitHubRepositoryScraper,
     analyze_repository_health,

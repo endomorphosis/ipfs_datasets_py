@@ -10,11 +10,17 @@ MCP tool classes (EnhancedHealthCheckTool etc.) live in enhanced_monitoring_tool
 
 import logging
 import time
-import psutil
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, asdict
 from enum import Enum
+
+try:
+    import psutil
+    HAVE_PSUTIL = True
+except ImportError:
+    psutil = None  # type: ignore[assignment]
+    HAVE_PSUTIL = False
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +113,15 @@ class MockMonitoringService:
 
     async def get_system_metrics(self) -> SystemMetrics:
         """Get current system metrics."""
+        if not HAVE_PSUTIL:
+            return SystemMetrics(
+                timestamp=datetime.now(),
+                cpu_usage_percent=0.0, memory_usage_percent=0.0,
+                disk_usage_percent=0.0, network_io_bytes_sent=0,
+                network_io_bytes_recv=0, disk_io_read_bytes=0,
+                disk_io_write_bytes=0, load_average=[0.0, 0.0, 0.0],
+                uptime_seconds=0.0,
+            )
         return SystemMetrics(
             timestamp=datetime.now(),
             cpu_usage_percent=psutil.cpu_percent(interval=0.1),
@@ -335,6 +350,8 @@ class MockMonitoringService:
 
 async def _check_system_health() -> Dict[str, Any]:
     """Return overall system health (uptime, process count)."""
+    if not HAVE_PSUTIL:
+        return {"status": "healthy", "note": "psutil not available"}
     try:
         uptime_hours = (time.time() - psutil.boot_time()) / 3600
         status = "warning" if uptime_hours < 0.1 else "healthy"
@@ -350,6 +367,8 @@ async def _check_system_health() -> Dict[str, Any]:
 
 async def _check_memory_health() -> Dict[str, Any]:
     """Return memory health (usage %, available GB, total GB)."""
+    if not HAVE_PSUTIL:
+        return {"status": "healthy", "note": "psutil not available"}
     try:
         mem = psutil.virtual_memory()
         if mem.percent > 90:
@@ -370,6 +389,8 @@ async def _check_memory_health() -> Dict[str, Any]:
 
 async def _check_cpu_health() -> Dict[str, Any]:
     """Return CPU health (usage %, count, load average)."""
+    if not HAVE_PSUTIL:
+        return {"status": "healthy", "note": "psutil not available"}
     try:
         cpu_pct = psutil.cpu_percent(interval=1)
         if cpu_pct > 95:
@@ -390,6 +411,8 @@ async def _check_cpu_health() -> Dict[str, Any]:
 
 async def _check_disk_health() -> Dict[str, Any]:
     """Return disk health (usage %, free GB, total GB)."""
+    if not HAVE_PSUTIL:
+        return {"status": "healthy", "note": "psutil not available"}
     try:
         disk = psutil.disk_usage("/")
         pct = (disk.used / disk.total) * 100
@@ -411,6 +434,8 @@ async def _check_disk_health() -> Dict[str, Any]:
 
 async def _check_network_health() -> Dict[str, Any]:
     """Return basic network I/O counters."""
+    if not HAVE_PSUTIL:
+        return {"status": "healthy", "note": "psutil not available"}
     try:
         net = psutil.net_io_counters()
         return {
@@ -509,6 +534,8 @@ async def _check_service_status(service_name: str) -> Dict[str, Any]:
 
 async def _get_performance_metrics() -> Dict[str, Any]:
     """Return current performance metrics snapshot."""
+    if not HAVE_PSUTIL:
+        return {"note": "psutil not available", "cpu_usage": 0.0, "memory_usage": 0.0}
     try:
         return {
             "cpu_usage": psutil.cpu_percent(interval=0.1),
@@ -581,4 +608,214 @@ __all__ = [
     "_check_service_status",
     "_get_performance_metrics",
     "_generate_health_recommendations",
+]
+
+
+# ---------------------------------------------------------------------------
+# High-level async API — canonical business-logic location
+# ---------------------------------------------------------------------------
+
+# Shared in-process metrics store (MCP tools import this directly)
+METRICS_STORAGE: Dict[str, Any] = {
+    "system_metrics": [],
+    "performance_metrics": [],
+    "service_health": {},
+    "alerts": [],
+}
+
+
+async def health_check(
+    check_type: str = "basic",
+    components: Optional[List[str]] = None,
+    include_metrics: bool = True,
+) -> Dict[str, Any]:
+    """Perform system health checks and return consolidated status."""
+    from datetime import datetime as _dt
+    timestamp = _dt.now()
+    all_components = ["system", "memory", "cpu", "disk", "network", "services", "embeddings", "vector_stores"]
+    if check_type == "basic":
+        components_to_check = ["system", "memory", "cpu", "services"]
+    elif check_type == "all":
+        components_to_check = all_components
+    else:
+        components_to_check = components or all_components
+    health_results: Dict[str, Any] = {
+        "timestamp": timestamp.isoformat(),
+        "check_type": check_type,
+        "overall_status": "healthy",
+        "components": {},
+    }
+    _component_fn = {
+        "system": _check_system_health,
+        "memory": _check_memory_health,
+        "cpu": _check_cpu_health,
+        "disk": _check_disk_health,
+        "network": _check_network_health,
+        "services": _check_services_health,
+        "embeddings": _check_embeddings_health,
+        "vector_stores": _check_vector_stores_health,
+    }
+    for component in components_to_check:
+        try:
+            fn = _component_fn.get(component)
+            if fn is not None:
+                health_results["components"][component] = await fn()
+            else:
+                health_results["components"][component] = {"status": "unknown"}
+        except Exception as e:
+            health_results["components"][component] = {"status": "error", "error": str(e)}
+    # Determine overall status
+    statuses = [c.get("status", "unknown") for c in health_results["components"].values()]
+    if any(s == "critical" for s in statuses):
+        health_results["overall_status"] = "critical"
+    elif any(s in ("degraded", "warning") for s in statuses):
+        health_results["overall_status"] = "degraded"
+    if include_metrics:
+        health_results["metrics_summary"] = await _get_performance_metrics()
+    # Persist to shared store
+    METRICS_STORAGE["system_metrics"].append({
+        "timestamp": timestamp.isoformat(),
+        "overall_status": health_results["overall_status"],
+        "health_score": 1.0 if health_results["overall_status"] == "healthy" else 0.5,
+    })
+    return {"success": True, "health_check": health_results,
+            "recommendations": await _generate_health_recommendations(health_results)}
+
+
+async def get_performance_metrics(
+    metric_types: Optional[List[str]] = None,
+    time_range: str = "1h",
+    include_history: bool = True,
+) -> Dict[str, Any]:
+    """Get current system performance metrics."""
+    from datetime import datetime as _dt
+    timestamp = _dt.now()
+    if not metric_types:
+        metric_types = ["cpu", "memory", "disk", "network", "system"]
+    raw = await _get_performance_metrics()
+    metrics: Dict[str, Any] = {
+        "timestamp": timestamp.isoformat(),
+        "time_range": time_range,
+        "current_metrics": {mt: raw.get(mt, {"status": "unavailable"}) for mt in metric_types},
+        "summary": raw.get("summary", {}),
+    }
+    METRICS_STORAGE["performance_metrics"].append({
+        "timestamp": timestamp.isoformat(),
+        "metrics": metrics["current_metrics"],
+    })
+    return {"success": True, "performance_metrics": metrics}
+
+
+async def monitor_services(
+    services: Optional[List[str]] = None,
+    check_interval: int = 30,
+) -> Dict[str, Any]:
+    """Monitor specific services and return health status."""
+    from datetime import datetime as _dt
+    timestamp = _dt.now()
+    default_services = ["embedding_service", "vector_store", "ipfs_node", "mcp_server", "cache_service"]
+    services = services or default_services
+    service_statuses: Dict[str, Any] = {}
+    for service in services:
+        try:
+            status = await _check_service_status(service)
+            service_statuses[service] = status
+            METRICS_STORAGE["service_health"][service] = {
+                "last_check": timestamp.isoformat(),
+                "status": status.get("status", "unknown"),
+                "response_time": status.get("response_time", 0),
+            }
+        except Exception as e:
+            service_statuses[service] = {"status": "error", "error": str(e)}
+    healthy_count = sum(1 for s in service_statuses.values() if s.get("status") == "healthy")
+    return {
+        "success": True,
+        "service_statuses": service_statuses,
+        "monitoring_results": service_statuses,  # backward-compat alias
+        "total_services": len(services),
+        "healthy_services": healthy_count,
+        "check_interval": check_interval,
+        "checked_at": timestamp.isoformat(),
+    }
+
+
+async def generate_monitoring_report(
+    report_type: str = "summary",
+    time_period: str = "24h",
+) -> Dict[str, Any]:
+    """Generate a consolidated monitoring report from in-process metrics store."""
+    from datetime import datetime as _dt, timedelta as _td
+    timestamp = _dt.now()
+    _period_map = {"1h": _td(hours=1), "6h": _td(hours=6), "24h": _td(hours=24), "7d": _td(days=7)}
+    start_time = timestamp - _period_map.get(time_period, _td(hours=24))
+    report: Dict[str, Any] = {
+        "report_type": report_type,
+        "time_period": time_period,
+        "generated_at": timestamp.isoformat(),
+        "start_time": start_time.isoformat(),
+        "end_time": timestamp.isoformat(),
+    }
+    if report_type in ("summary", "detailed"):
+        recent = [m for m in METRICS_STORAGE["system_metrics"]
+                  if _dt.fromisoformat(m["timestamp"]) >= start_time]
+        if recent:
+            report["health_summary"] = {
+                "average_health_score": round(sum(m["health_score"] for m in recent) / len(recent), 2),
+                "total_checks": len(recent),
+                "current_status": recent[-1]["overall_status"],
+            }
+        else:
+            report["health_summary"] = {"message": "No health metrics for this period"}
+    if report_type in ("performance", "detailed"):
+        recent_perf = [m for m in METRICS_STORAGE["performance_metrics"]
+                       if _dt.fromisoformat(m["timestamp"]) >= start_time]
+        if recent_perf:
+            report["performance_summary"] = {
+                "metrics_collected": len(recent_perf),
+                "latest_cpu": recent_perf[-1]["metrics"].get("cpu", {}).get("usage_percent", 0),
+                "latest_memory": recent_perf[-1]["metrics"].get("memory", {}).get("usage_percent", 0),
+            }
+        else:
+            report["performance_summary"] = {"message": "No performance metrics for this period"}
+    if report_type in ("alerts", "detailed"):
+        recent_alerts = [a for a in METRICS_STORAGE["alerts"]
+                         if _dt.fromisoformat(a.get("timestamp", timestamp.isoformat())) >= start_time]
+        report["alerts_summary"] = {
+            "total_alerts": len(recent_alerts),
+            "critical_alerts": sum(1 for a in recent_alerts if a.get("severity") == "critical"),
+            "warning_alerts": sum(1 for a in recent_alerts if a.get("severity") == "warning"),
+            "recent_alerts": recent_alerts[-5:],
+        }
+    report["service_health_summary"] = {
+        "services_monitored": len(METRICS_STORAGE["service_health"]),
+        "healthy_services": sum(1 for s in METRICS_STORAGE["service_health"].values()
+                                if s.get("status") == "healthy"),
+        "service_details": METRICS_STORAGE["service_health"],
+    }
+    return {"success": True, "monitoring_report": report}
+
+
+__all__ = [
+    "HealthStatus",
+    "AlertSeverity",
+    "SystemMetrics",
+    "ServiceMetrics",
+    "Alert",
+    "MockMonitoringService",
+    "METRICS_STORAGE",
+    "_check_system_health",
+    "_check_memory_health",
+    "_check_cpu_health",
+    "_check_disk_health",
+    "_check_network_health",
+    "_check_services_health",
+    "_check_embeddings_health",
+    "_check_vector_stores_health",
+    "_check_service_status",
+    "_get_performance_metrics",
+    "_generate_health_recommendations",
+    "health_check",
+    "get_performance_metrics",
+    "monitor_services",
+    "generate_monitoring_report",
 ]

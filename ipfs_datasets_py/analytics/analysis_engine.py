@@ -510,3 +510,215 @@ def analyze_similarity_patterns(
     except ImportError:
         return {"note": "sklearn not available for similarity calculation"}
 
+
+
+# ---------------------------------------------------------------------------
+# High-level async API — canonical business-logic location
+# ---------------------------------------------------------------------------
+
+_default_engine: "AnalysisEngine | None" = None  # module-level singleton
+
+
+async def cluster_analysis(
+    data_source: str = "mock",
+    algorithm: str = "kmeans",
+    n_clusters: "int | None" = None,
+    vectors: "list[list[float]] | None" = None,
+    data_params: "dict | None" = None,
+    clustering_params: "dict | None" = None,
+) -> "dict":
+    """Perform clustering analysis on embeddings or vector data."""
+    import logging as _logging
+    from datetime import datetime as _dt
+    _log = _logging.getLogger(__name__)
+    engine = get_analysis_engine()
+    try:
+        algo = ClusteringAlgorithm(algorithm)
+    except ValueError:
+        raise ValueError(f"Invalid algorithm: {algorithm}. Valid algorithms: {[a.value for a in ClusteringAlgorithm]}")
+    if vectors is not None:
+        data = np.array(vectors)
+    elif data_source == "mock":
+        n_s = (data_params or {}).get("n_samples", 1000)
+        n_f = (data_params or {}).get("n_features", 384)
+        data, _ = engine._generate_mock_embeddings(n_s, n_f)
+    else:
+        _log.warning(f"Using mock data for source: {data_source}")
+        data, _ = engine._generate_mock_embeddings(500, 384)
+    result = engine.perform_clustering(data=data, algorithm=algo, n_clusters=n_clusters, parameters=clustering_params)
+    cluster_sizes: "dict[int, int]" = {}
+    for label in result.labels:
+        cluster_sizes[label] = cluster_sizes.get(label, 0) + 1
+    data_shape = list(data.shape) if hasattr(data, "shape") else [len(data), len(data[0]) if data else 0]
+    return {
+        "success": True, "status": "success", "data_source": data_source,
+        "algorithm": result.algorithm, "n_clusters": result.n_clusters,
+        "cluster_labels": result.labels, "centroids": result.centroids,
+        "metrics": result.metrics, "cluster_sizes": cluster_sizes,
+        "data_shape": data_shape, "processing_time_seconds": result.processing_time,
+        "analyzed_at": _dt.now().isoformat(),
+    }
+
+
+async def quality_assessment(
+    data_source: str = "mock",
+    assessment_type: str = "comprehensive",
+    metrics: "list[str] | None" = None,
+    data: "dict | None" = None,
+    embeddings: "list[list[float]] | None" = None,
+    data_params: "dict | None" = None,
+    outlier_detection: bool = True,
+) -> "dict":
+    """Assess the quality of embeddings and vector data."""
+    import logging as _logging
+    from datetime import datetime as _dt
+    _log = _logging.getLogger(__name__)
+    engine = get_analysis_engine()
+    if data is not None and isinstance(data, dict) and data.get("vectors") is not None:
+        embeddings = data.get("vectors")
+        labels = data.get("labels")
+    else:
+        labels = None
+    if embeddings is not None:
+        embedding_data = np.array(embeddings)
+    elif data_source == "mock":
+        n_s = (data_params or {}).get("n_samples", 500)
+        n_f = (data_params or {}).get("n_features", 384)
+        embedding_data, labels = engine._generate_mock_embeddings(n_s, n_f)
+    else:
+        _log.warning(f"Using mock data for source: {data_source}")
+        embedding_data, labels = engine._generate_mock_embeddings(500, 384)
+    quality_metrics = None
+    if metrics:
+        quality_metrics = []
+        for m_str in metrics:
+            try:
+                quality_metrics.append(QualityMetric(m_str))
+            except ValueError:
+                _log.warning(f"Unknown metric: {m_str}, skipping")
+    result = engine.assess_quality(data=embedding_data, labels=labels, metrics=quality_metrics)
+    return {
+        "success": True, "status": "success", "data_source": data_source,
+        "assessment_type": assessment_type, "overall_score": result.overall_score,
+        "metric_scores": result.metric_scores,
+        "outliers": result.outliers if outlier_detection else [],
+        "n_outliers": len(result.outliers) if outlier_detection else 0,
+        "recommendations": result.recommendations, "data_statistics": result.data_stats,
+        "analyzed_at": _dt.now().isoformat(),
+    }
+
+
+async def dimensionality_reduction(
+    data_source: str = "mock",
+    method: str = "pca",
+    n_components: int = 2,
+    vectors: "list[list[float]] | None" = None,
+    data_params: "dict | None" = None,
+    method_params: "dict | None" = None,
+) -> "dict":
+    """Reduce dimensionality of embeddings using various algorithms."""
+    import logging as _logging
+    from datetime import datetime as _dt
+    _log = _logging.getLogger(__name__)
+    engine = get_analysis_engine()
+    try:
+        m = DimensionalityMethod(method)
+    except ValueError:
+        raise ValueError(f"Invalid method: {method}. Valid: {[m.value for m in DimensionalityMethod]}")
+    if vectors is not None:
+        data = np.array(vectors)
+    elif data_source == "mock":
+        n_s = (data_params or {}).get("n_samples", 1000)
+        n_f = (data_params or {}).get("n_features", 384)
+        data, _ = engine._generate_mock_embeddings(n_s, n_f)
+    else:
+        _log.warning(f"Using mock data for source: {data_source}")
+        data, _ = engine._generate_mock_embeddings(1000, 384)
+    result = engine.reduce_dimensionality(data=data, method=m, n_components=n_components, parameters=method_params)
+    return {
+        "success": True, "status": "success", "data_source": data_source,
+        "method": result.method, "original_dimensions": result.original_dim,
+        "reduced_dimensions": result.reduced_dim, "transformed_data": result.transformed_data,
+        "explained_variance": result.explained_variance,
+        "reconstruction_error": result.reconstruction_error,
+        "n_samples": len(result.transformed_data), "analyzed_at": _dt.now().isoformat(),
+    }
+
+
+async def analyze_data_distribution(
+    data_source: str = "mock",
+    analysis_type: str = "comprehensive",
+    vectors: "list[list[float]] | None" = None,
+    data_params: "dict | None" = None,
+    visualization_config: "dict | None" = None,
+) -> "dict":
+    """Analyze the statistical distribution of embedding vectors."""
+    import logging as _logging
+    from datetime import datetime as _dt
+    _log = _logging.getLogger(__name__)
+    engine = get_analysis_engine()
+    if vectors is not None:
+        data = np.array(vectors)
+    elif data_source == "mock":
+        n_s = (data_params or {}).get("n_samples", 1000)
+        n_f = (data_params or {}).get("n_features", 384)
+        data, _ = engine._generate_mock_embeddings(n_s, n_f)
+    else:
+        _log.warning(f"Using mock data for source: {data_source}")
+        data, _ = engine._generate_mock_embeddings(1000, 384)
+    norms = np.linalg.norm(data, axis=1)
+    means = np.mean(data, axis=0)
+    stds = np.std(data, axis=0)
+    feature_stats = {
+        "mean_values": {"mean": float(np.mean(means)), "std": float(np.std(means)),
+                        "min": float(np.min(means)), "max": float(np.max(means))},
+        "std_values": {"mean": float(np.mean(stds)), "std": float(np.std(stds)),
+                       "min": float(np.min(stds)), "max": float(np.max(stds))},
+    }
+    norm_stats = {"mean": float(np.mean(norms)), "std": float(np.std(norms)),
+                  "min": float(np.min(norms)), "max": float(np.max(norms)),
+                  "median": float(np.median(norms)),
+                  "q25": float(np.percentile(norms, 25)), "q75": float(np.percentile(norms, 75))}
+    correlation_strength = float(np.mean(np.abs(np.corrcoef(data.T))))
+    sparsity = float(np.mean(np.abs(data) < 1e-6))
+    try:
+        from sklearn.metrics.pairwise import pairwise_distances  # type: ignore[import]
+        sample = data[np.random.choice(len(data), min(50, len(data)), replace=False)]
+        dists = pairwise_distances(sample, sample)
+        idx = np.triu_indices_from(dists, k=1)
+        distance_stats: "dict" = {"mean_distance": float(np.mean(dists[idx])),
+                                   "std_distance": float(np.std(dists[idx])),
+                                   "min_distance": float(np.min(dists[dists > 0])),
+                                   "max_distance": float(np.max(dists))}
+    except ImportError:
+        distance_stats = {"note": "sklearn not available"}
+    result: "dict" = {
+        "success": True, "status": "success", "data_source": data_source,
+        "analysis_type": analysis_type, "data_shape": list(data.shape),
+        "feature_statistics": feature_stats, "vector_norm_statistics": norm_stats,
+        "distance_statistics": distance_stats, "correlation_strength": correlation_strength,
+        "sparsity_ratio": sparsity,
+        "data_quality_indicators": {"has_nans": bool(np.any(np.isnan(data))),
+                                    "has_infs": bool(np.any(np.isinf(data))),
+                                    "is_centered": abs(float(np.mean(data))) < 0.1,
+                                    "is_normalized": 0.8 < float(np.mean(norms)) < 1.2,
+                                    "distribution_type": ("normal" if norm_stats["std"] / (norm_stats["mean"] + 1e-10) < 0.5 else "diverse")},
+        "analyzed_at": _dt.now().isoformat(),
+    }
+    if visualization_config and visualization_config.get("include_histograms", False):
+        result["visualization_data"] = {
+            "norm_histogram": {"bins": np.histogram(norms, bins=20)[1].tolist(),
+                               "counts": np.histogram(norms, bins=20)[0].tolist()},
+        }
+    return result
+
+
+# Legacy aliases for backward compatibility
+async def perform_clustering_analysis(*args, **kwargs) -> "dict":  # noqa: D103
+    return await cluster_analysis(*args, **kwargs)
+
+async def assess_embedding_quality(*args, **kwargs) -> "dict":  # noqa: D103
+    return await quality_assessment(*args, **kwargs)
+
+async def reduce_dimensionality(*args, **kwargs) -> "dict":  # noqa: D103
+    return await dimensionality_reduction(*args, **kwargs)

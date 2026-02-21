@@ -170,3 +170,172 @@ class SerpStackSearchAPI:
 
 
 __all__ = ["SerpStackSearchAPI"]
+
+
+# ---------------------------------------------------------------------------
+# Standalone async search functions — canonical business-logic location
+# ---------------------------------------------------------------------------
+
+import asyncio as _asyncio
+import os as _os
+from datetime import datetime as _datetime
+
+
+async def search_serpstack(
+    query: str,
+    api_key: Optional[str] = None,
+    engine: str = "google",
+    num: int = 10,
+    page: int = 1,
+    location: Optional[str] = None,
+    device: Optional[str] = None,
+    lang: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Search using SerpStack API.
+
+    Args:
+        query: Search query string.
+        api_key: SerpStack API key (falls back to SERPSTACK_API_KEY env var).
+        engine: Search engine to use (google, bing, yandex, yahoo, baidu).
+        num: Number of results to return (1-100).
+        page: Page number (>=1).
+        location: Optional location string for localised results.
+        device: Optional device type (desktop, mobile, tablet).
+        lang: Optional language code (e.g. "en", "es").
+
+    Returns:
+        Dict with ``status``, ``results``, ``query``, ``total_results``, etc.
+    """
+    if not query or not isinstance(query, str):
+        return {"status": "error", "error": "Query must be a non-empty string"}
+    valid_engines = ["google", "bing", "yandex", "yahoo", "baidu"]
+    if engine not in valid_engines:
+        return {"status": "error", "error": f"Invalid engine: {engine}. Valid: {valid_engines}"}
+    if not (1 <= num <= 100):
+        return {"status": "error", "error": "num must be between 1 and 100"}
+    if page < 1:
+        return {"status": "error", "error": "page must be >= 1"}
+    api_key = api_key or _os.environ.get("SERPSTACK_API_KEY")
+    if not api_key:
+        return {"status": "error", "error": "SerpStack API key required. Set SERPSTACK_API_KEY."}
+    try:
+        import aiohttp
+    except ImportError:
+        return {"status": "error", "error": "aiohttp required: pip install aiohttp"}
+    url = "http://api.serpstack.com/search"
+    params: Dict[str, Any] = {"access_key": api_key, "query": query, "engine": engine,
+                               "num": min(num, 100), "page": page}
+    if location:
+        params["location"] = location
+    if device:
+        params["device"] = device
+    if lang:
+        params["lang"] = lang
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params, timeout=30) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    if "error" in data:
+                        return {"status": "error", "error": data["error"].get("info", "API error")}
+                    results = [
+                        {"title": r.get("title", ""), "url": r.get("url", ""),
+                         "description": r.get("description", ""), "position": r.get("position", 0)}
+                        for r in data.get("organic_results", [])
+                    ]
+                    info = data.get("search_information", {})
+                    return {"status": "success", "results": results, "query": query, "engine": engine,
+                            "total_results": info.get("total_results", "N/A"),
+                            "time_taken": info.get("time_taken", 0), "page": page,
+                            "search_timestamp": _datetime.now().isoformat()}
+                elif resp.status == 401:
+                    return {"status": "error", "error": "Invalid SerpStack API key"}
+                elif resp.status == 429:
+                    return {"status": "error", "error": "Rate limit exceeded"}
+                else:
+                    return {"status": "error", "error": f"HTTP {resp.status}"}
+    except Exception as e:
+        logger.error(f"SerpStack search failed: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+async def search_serpstack_images(
+    query: str,
+    api_key: Optional[str] = None,
+    engine: str = "google",
+    num: int = 10,
+    location: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Search for images using SerpStack API."""
+    if not query or not isinstance(query, str):
+        return {"status": "error", "error": "Query must be a non-empty string"}
+    api_key = api_key or _os.environ.get("SERPSTACK_API_KEY")
+    if not api_key:
+        return {"status": "error", "error": "SerpStack API key required. Set SERPSTACK_API_KEY."}
+    try:
+        import aiohttp
+    except ImportError:
+        return {"status": "error", "error": "aiohttp required: pip install aiohttp"}
+    url = "http://api.serpstack.com/search"
+    params: Dict[str, Any] = {"access_key": api_key, "query": query, "engine": engine,
+                               "type": "images", "num": min(num, 100)}
+    if location:
+        params["location"] = location
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params, timeout=30) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    if "error" in data:
+                        return {"status": "error", "error": data["error"].get("info", "API error")}
+                    results = [
+                        {"title": r.get("title", ""), "url": r.get("url", ""),
+                         "image_url": r.get("image_url", ""), "thumbnail": r.get("thumbnail", ""),
+                         "source": r.get("source", ""), "width": r.get("width"), "height": r.get("height")}
+                        for r in data.get("image_results", [])
+                    ]
+                    return {"status": "success", "results": results, "query": query,
+                            "total_results": len(results), "search_timestamp": _datetime.now().isoformat()}
+                else:
+                    return {"status": "error", "error": f"HTTP {resp.status}"}
+    except Exception as e:
+        logger.error(f"SerpStack image search failed: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+async def batch_search_serpstack(
+    queries: List[str],
+    api_key: Optional[str] = None,
+    engine: str = "google",
+    num: int = 10,
+    delay_seconds: float = 1.0,
+) -> Dict[str, Any]:
+    """Batch search multiple queries using SerpStack API."""
+    if not queries or not isinstance(queries, list):
+        return {"status": "error", "error": "queries must be a non-empty list"}
+    if not all(isinstance(q, str) for q in queries):
+        return {"status": "error", "error": "All queries must be strings"}
+    import anyio
+    results: Dict[str, Any] = {}
+    success_count = 0
+    error_count = 0
+    for q in queries:
+        r = await search_serpstack(query=q, api_key=api_key, engine=engine, num=num)
+        results[q] = r
+        if r["status"] == "success":
+            success_count += 1
+        else:
+            error_count += 1
+        if q != queries[-1]:
+            await anyio.sleep(delay_seconds)
+    return {"status": "success", "results": results, "engine": engine,
+            "total_queries": len(queries), "success_count": success_count,
+            "error_count": error_count, "batch_completed_at": _datetime.now().isoformat()}
+
+
+__all__ = [
+    "SerpStackSearchAPI",
+    "search_serpstack",
+    "search_serpstack_images",
+    "batch_search_serpstack",
+]
