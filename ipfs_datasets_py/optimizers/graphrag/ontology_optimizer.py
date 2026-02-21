@@ -1872,6 +1872,12 @@ class OntologyOptimizer:
         """
         return self._history[index].average_score
 
+    def last_entry(self) -> Optional[Any]:
+        """Return the most recent history entry, or ``None`` if empty."""
+        if not self._history:
+            return None
+        return self._history[-1]
+
     def history_summary(self) -> Dict[str, Any]:
         """Return a summary dict with statistics about the optimization history.
 

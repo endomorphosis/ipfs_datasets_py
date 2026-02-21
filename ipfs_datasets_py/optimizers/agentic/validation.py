@@ -863,14 +863,15 @@ class _AsyncOptimizationValidator:
             
             try:
                 results_list = await asyncio.gather(*task_coros, return_exceptions=True)
-            except Exception:
-                # Fallback if asyncio.gather fails
+            except Exception as e:
+                # Fallback if asyncio.gather itself fails (rare - event loop issues)
+                self._log.warning(f"asyncio.gather failed, falling back to sequential: {e}")
                 results_list = []
                 for coro in task_coros:
                     try:
                         results_list.append(await coro)
-                    except Exception as e:
-                        results_list.append({"passed": False, "errors": [str(e)]})
+                    except Exception as task_err:
+                        results_list.append({"passed": False, "errors": [str(task_err)]})
             
             return {
                 name: result if isinstance(result, dict) else {
@@ -985,7 +986,9 @@ class SyntaxValidator:
     def detect_undefined_names(self, code: str) -> List[str]:
         try:
             tree = ast.parse(code)
-        except Exception:
+        except (SyntaxError, ValueError) as e:
+            # Code has syntax errors - cannot analyze for undefined names
+            self._log.debug(f"Cannot parse code for undefined name detection: {e}")
             return []
 
         defined: set[str] = set()

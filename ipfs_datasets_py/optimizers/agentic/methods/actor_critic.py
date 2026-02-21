@@ -752,7 +752,9 @@ class ActorCriticOptimizer(AgenticOptimizer):
                 key: int(round(pol.success_rate * max(pol.usage_count, 0)))
                 for key, pol in self.policies.items()
             }
-        except Exception:
+        except (OSError, json.JSONDecodeError, KeyError, ValueError) as e:
+            # Policy file missing/corrupt - start with empty policies
+            self._log.warning(f"Could not load policies from {path}: {e}")
             self.policies = {}
             self._success_counts = {}
 
@@ -813,7 +815,9 @@ class ActorCriticOptimizer(AgenticOptimizer):
             if _first_return_expr(orig_ast) and _first_return_expr(prop_ast):
                 if _first_return_expr(orig_ast) != _first_return_expr(prop_ast):
                     correctness_score = 0.5
-        except Exception:
+        except (SyntaxError, ValueError) as e:
+            # Cannot parse code for AST comparison - assume medium correctness
+            self._log.debug(f"AST comparison failed: {e}")
             correctness_score = 0.5
 
         performance_score = 0.8

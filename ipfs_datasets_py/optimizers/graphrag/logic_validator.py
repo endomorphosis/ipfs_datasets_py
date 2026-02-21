@@ -1117,6 +1117,21 @@ class LogicValidator:
             return 0.0
         return self.relationship_count(ontology) / n_entities
 
+    def relationship_types(self, ontology: Dict[str, Any]) -> List[str]:
+        """Return sorted unique relationship types from ontology relationships."""
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if not isinstance(rels, (list, tuple)):
+            return []
+        types = set()
+        for rel in rels:
+            if isinstance(rel, dict):
+                t = rel.get("type")
+                if t is None:
+                    t = rel.get("relation_type")
+                if isinstance(t, str) and t:
+                    types.add(t)
+        return sorted(types)
+
     def has_contradictions(self, ontology: Dict[str, Any]) -> bool:
         """Return ``True`` if the ontology contains any contradictions.
 

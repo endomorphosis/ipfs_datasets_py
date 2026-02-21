@@ -300,8 +300,8 @@ class BaseOptimizer(ABC):
         if self.metrics_collector is not None:
             try:
                 self.metrics_collector.end_cycle(cycle_id, success=valid)
-            except Exception:
-                pass
+            except Exception as e:
+                _logger.warning(f"Metrics collection end failed: {e}")
 
         _logger.info(
             "run_session completed session_id=%s domain=%s "

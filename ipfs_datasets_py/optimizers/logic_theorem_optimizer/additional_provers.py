@@ -731,19 +731,22 @@ class AdditionalProversRegistry:
         try:
             isabelle = IsabelleProver()
             self._availability["isabelle"] = True
-        except Exception:
+        except (OSError, ImportError, RuntimeError) as e:
+            self._log.debug(f"Isabelle prover not available: {e}")
             self._availability["isabelle"] = False
         
         try:
             vampire = VampireProver()
             self._availability["vampire"] = True
-        except Exception:
+        except (OSError, ImportError, RuntimeError) as e:
+            self._log.debug(f"Vampire prover not available: {e}")
             self._availability["vampire"] = False
         
         try:
             e_prover = EProver()
             self._availability["e_prover"] = True
-        except Exception:
+        except (OSError, ImportError, RuntimeError) as e:
+            self._log.debug(f"E prover not available: {e}")
             self._availability["e_prover"] = False
     
     def is_available(self, prover_name: str) -> bool:

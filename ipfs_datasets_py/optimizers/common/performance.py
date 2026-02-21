@@ -599,7 +599,9 @@ class BatchFileProcessor:
                     with open(path, "w") as f:
                         f.write(content)
                     results.append(True)
-                except Exception:
+                except (OSError, UnicodeEncodeError) as e:
+                    # File write failed - record failure
+                    _logger.debug(f"Failed to write cache file {path}: {e}")
                     results.append(False)
         
         return results

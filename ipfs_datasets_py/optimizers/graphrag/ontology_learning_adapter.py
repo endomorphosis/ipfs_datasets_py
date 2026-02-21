@@ -554,6 +554,17 @@ class OntologyLearningAdapter:
         """
         return self.score_variance() ** 0.5
 
+    def feedback_median(self) -> float:
+        """Return median ``final_score`` across feedback records."""
+        if not self._feedback:
+            return 0.0
+        vals = sorted(r.final_score for r in self._feedback)
+        n = len(vals)
+        mid = n // 2
+        if n % 2 == 1:
+            return vals[mid]
+        return (vals[mid - 1] + vals[mid]) / 2.0
+
     def load_feedback_from_list(self, records: List["FeedbackRecord"]) -> int:
         """Bulk-load a list of :class:`FeedbackRecord` objects into this adapter.
 

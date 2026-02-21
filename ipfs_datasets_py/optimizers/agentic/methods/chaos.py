@@ -530,7 +530,9 @@ class ChaosEngineeringOptimizer(AgenticOptimizer):
                     if "try:" in content and "except" in content:
                         has_error_handling = True
                         break
-            except Exception:
+            except (OSError, UnicodeDecodeError) as e:
+                # File read errors shouldn't block chaos testing
+                self._log.debug(f"Could not read {file_path}: {e}")
                 pass
         
         if has_error_handling:
@@ -919,7 +921,9 @@ class ChaosOptimizer(AgenticOptimizer):
             raw = self.llm_router.generate(prompt)
             extractor = getattr(self.llm_router, "extract_code", None)
             return extractor(raw) if callable(extractor) else str(raw)
-        except Exception:
+        except Exception as e:
+            # LLM generation failed - return original code unchanged
+            self._log.warning(f"Auto-repair failed for vulnerability '{vulnerability.vulnerability_type}': {e}")
             return code
 
     def verify_resilience(self, code: str) -> ResilienceReport:

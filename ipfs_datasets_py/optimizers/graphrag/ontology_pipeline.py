@@ -730,3 +730,20 @@ class OntologyPipeline:
             >>> pipeline.score_at(0)
         """
         return self._run_history[index].score.overall
+
+    def worst_run(self) -> Optional[Any]:
+        """Return the :class:`PipelineResult` with the lowest ``overall`` score."""
+        if not self._run_history:
+            return None
+        return min(self._run_history, key=lambda r: r.score.overall)
+
+    def median_run_score(self) -> float:
+        """Return the median ``overall`` score across run history."""
+        if not self._run_history:
+            return 0.0
+        vals = sorted(r.score.overall for r in self._run_history)
+        n = len(vals)
+        mid = n // 2
+        if n % 2 == 1:
+            return vals[mid]
+        return (vals[mid - 1] + vals[mid]) / 2.0

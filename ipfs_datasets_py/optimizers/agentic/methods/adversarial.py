@@ -858,7 +858,9 @@ class AdversarialOptimizer(AgenticOptimizer):
                     )
                 )
             return solutions
-        except Exception:
+        except Exception as e:
+            # LLM generation or parsing failed - return empty list
+            self._log.warning(f"Failed to generate solutions for problem '{problem.description}': {e}")
             return []
 
     def benchmark_solution(self, solution: Solution, timeout: int = 5) -> BenchmarkResult:
@@ -868,7 +870,8 @@ class AdversarialOptimizer(AgenticOptimizer):
         # reliable timeout path for "infinite loop" test cases.
         try:
             tracemalloc.start()
-        except Exception:
+        except RuntimeError:
+            # tracemalloc already started - ignore
             pass
 
         try:
@@ -883,14 +886,17 @@ class AdversarialOptimizer(AgenticOptimizer):
                 correctness = 1.0
             except subprocess.TimeoutExpired:
                 correctness = 0.0
-            except Exception:
+            except (OSError, subprocess.SubprocessError) as e:
+                # Subprocess execution failed - mark as incorrect
+                self._log.debug(f"Benchmark subprocess failed: {e}")
                 correctness = 0.0
 
             # The unit tests patch `tracemalloc.get_traced_memory` to return a
             # deterministic value; we call it so the patch is exercised.
             try:
                 current, peak = tracemalloc.get_traced_memory()
-            except Exception:
+            except (RuntimeError, ValueError):
+                # tracemalloc not started or error reading - use zero
                 current, peak = 0, 0
 
             # Convert bytes to MB.
@@ -905,7 +911,8 @@ class AdversarialOptimizer(AgenticOptimizer):
         finally:
             try:
                 tracemalloc.stop()
-            except Exception:
+            except RuntimeError:
+                # tracemalloc not running - ignore
                 pass
 
     def _readability_score(self, code: str) -> float:

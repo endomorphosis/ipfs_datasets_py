@@ -3556,6 +3556,10 @@ class OntologyGenerator:
                 buckets[labels[-1]].append(e)
         return buckets
 
+    def entity_count_property(self, result: "EntityExtractionResult") -> int:
+        """Return ``len(result.entities)`` as a convenience alias."""
+        return len(result.entities)
+
     def relationships_for_entity(
         self,
         result: "EntityExtractionResult",
@@ -3589,6 +3593,5 @@ __all__ = [
     'ExtractionStrategy',
     'DataType',
 ]
-
 
 

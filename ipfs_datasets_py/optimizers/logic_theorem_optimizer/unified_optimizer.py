@@ -203,8 +203,9 @@ class LogicTheoremOptimizer(BaseOptimizer):
                     },
                     execution_time=round(duration_s, 4),
                 )
-            except Exception:  # metrics must never block optimization
-                pass
+            except Exception as e:
+                # Metrics must never block optimization
+                _logger.warning(f"Metrics collection failed: {e}")
 
         return result
 
