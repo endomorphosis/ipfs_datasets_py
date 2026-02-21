@@ -2504,6 +2504,61 @@ class OntologyCritic(BaseCritic):
         sorted_scores = sorted(scores, key=lambda s: s.overall)
         return sorted_scores[:n]
 
+    def score_delta_between(self, a: "CriticScore", b: "CriticScore") -> float:
+        """Return the signed difference ``b.overall - a.overall``.
+
+        Positive means *b* is better than *a*.
+
+        Args:
+            a: Earlier / baseline score.
+            b: Later / new score.
+
+        Returns:
+            Float difference.
+        """
+        return b.overall - a.overall
+
+    def all_pass(self, scores: list, threshold: float = 0.6) -> bool:
+        """Return ``True`` if every score's ``overall`` value is >= *threshold*.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+            threshold: Minimum acceptable overall score (default 0.6).
+
+        Returns:
+            ``True`` when all scores meet the threshold; ``False`` otherwise.
+            Returns ``True`` for an empty list.
+        """
+        return all(s.overall >= threshold for s in scores)
+
+    def score_variance(self, scores: list) -> float:
+        """Return the population variance of the ``overall`` values.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            Variance float; ``0.0`` for empty or single-element lists.
+        """
+        if len(scores) < 2:
+            return 0.0
+        vals = [s.overall for s in scores]
+        mean = sum(vals) / len(vals)
+        return sum((v - mean) ** 2 for v in vals) / len(vals)
+
+    def best_score(self, scores: list) -> "CriticScore | None":
+        """Return the :class:`CriticScore` with the highest ``overall`` value.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            Best score, or ``None`` when list is empty.
+        """
+        if not scores:
+            return None
+        return max(scores, key=lambda s: s.overall)
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],
