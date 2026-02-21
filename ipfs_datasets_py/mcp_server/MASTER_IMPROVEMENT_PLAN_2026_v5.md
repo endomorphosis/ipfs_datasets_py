@@ -1,9 +1,17 @@
 # MCP Server — Master Improvement Plan v5.0
 
-**Date:** 2026-02-20  
-**Status:** 🟡 Planning — Successor to v4 (100% complete)  
+**Date:** 2026-02-21 (last updated)  
+**Status:** 🟢 **ALL PHASES COMPLETE** — Sessions 22-26 on branch `copilot/refactor-markdown-files-again`  
 **Preconditions:** All 7 v4 phases are ✅ complete (see [PHASES_STATUS.md](PHASES_STATUS.md))  
-**Branch:** To be created when work begins
+**Branch:** `copilot/refactor-markdown-files-again`
+
+**Phase Completion Summary:**
+- ✅ **Phase A** (Docs): `docs/tools/README.md` 49-cat table; `docs/api/tool-reference.md` 530L; `docs/adr/` 4 ADRs
+- ✅ **Phase B** (Tests): 160+ tests passing; `test_graph/storage/provenance/file_converter/alert/media/p2p/web_archive/audit/security/monitoring/search/pdf/_tools.py` + `test_validators_property.py` + `test_tool_scenarios.py`
+- ✅ **Phase C** (Observability): `request_id` UUID4 in every `dispatch()` response; `/health/ready` + `/metrics` endpoints; `get_tool_latency_percentiles()` in `EnhancedMetricsCollector`
+- ✅ **Phase D** (Versioning): `ToolMetadata.schema_version`, `deprecated`, `deprecation_message` fields + `@tool_metadata()` params; `dispatch()` WARNING on deprecated tool
+- ✅ **Phase E** (Benchmarks): `benchmarks/` suite (4 files, 15 tests); `.github/workflows/mcp-benchmarks.yml` CI workflow
+- ✅ **Phase F** (Runtime): `dispatch_parallel()` (anyio task group); `CircuitBreaker` (CLOSED/OPEN/HALF_OPEN); `graceful_shutdown()`; `cache_ttl` result caching hook; `_get_result_cache()` lazy initialiser
 
 ---
 

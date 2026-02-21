@@ -23,6 +23,48 @@ try:
 except ImportError:
     HYPOTHESIS_AVAILABLE = False
 
+    # Stub out the hypothesis symbols so that class-body decorators don't cause
+    # a NameError at *collection* time when hypothesis is not installed.
+    # The pytestmark below will skip every test before they actually run.
+    def given(*_a, **_kw):  # type: ignore[misc]
+        return lambda f: f
+
+    def settings(*_a, **_kw):  # type: ignore[misc]
+        return lambda f: f
+
+    def assume(_cond: bool) -> None:  # type: ignore[misc]
+        pass
+
+    class st:  # type: ignore[no-redef]
+        @staticmethod
+        def text(**_kw):
+            return None
+
+        @staticmethod
+        def integers(**_kw):
+            return None
+
+        @staticmethod
+        def one_of(*_a):
+            return None
+
+        @staticmethod
+        def sampled_from(_seq):
+            return None
+
+        @staticmethod
+        def lists(*_a, **_kw):
+            return None
+
+        @staticmethod
+        def floats(**_kw):
+            return None
+
+        @staticmethod
+        def from_regex(_pattern, **_kw):
+            return None
+
+
 pytestmark = pytest.mark.skipif(
     not HYPOTHESIS_AVAILABLE,
     reason="hypothesis not installed",
