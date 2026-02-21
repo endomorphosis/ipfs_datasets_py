@@ -11,7 +11,7 @@
 
 All 7 refactoring phases are **complete** as of 2026-02-20. The MCP server now has:
 
-- **1134 tests passing, 29 skipped, 0 failing** (up from 388 at plan creation; v5 A-F + sessions 32-34 complete 2026-02-21; 29 skipped = hypothesis property tests + trio-dependent tests skipped when deps absent)
+- **1209 tests passing, 29 skipped, 0 failing** (up from 388 at plan creation; v5 A-F + sessions 32-35 complete 2026-02-21; 29 skipped = hypothesis property tests + trio-dependent tests skipped when deps absent)
 - **0 bare exception handlers** across all 40+ files
 - **0 missing docstrings** in all 8 core modules
 - **0 missing return type annotations** in all public methods
@@ -52,7 +52,7 @@ No further planned work. Future improvements would be tracked as new issues.
 | Core Server Files | 15 files, ~14,651 LOC |
 | Tool Categories | 60 categories |
 | Tool Python Files | 382 files, ~86,455 LOC |
-| Test Functions | **842 passing, 38 skipped, 0 failing** → **1134 passing, 29 skipped, 0 failing** (v5 sessions + sessions 32-34) |
+| Test Functions | **842 passing, 38 skipped, 0 failing** → **1209 passing, 29 skipped, 0 failing** (v5 sessions + sessions 32-35) |
 | Markdown Docs | **7 root-level** (down from 90+; 28 archived) |
 | Custom Exceptions | 18 classes in exceptions.py |
 | Long Functions (>100 lines) | **0 logic-heavy** (remaining are docstring-heavy, acceptable) |
