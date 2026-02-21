@@ -1307,7 +1307,7 @@ class OntologyCritic(BaseCritic):
             >>> rubric = {"completeness": 0.5, "consistency": 0.5}
             >>> score = critic.evaluate_with_rubric(ontology, ctx, rubric)
         """
-        _DIMS = ("completeness", "consistency", "clarity", "granularity", "domain_alignment")
+        _DIMS = ("completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment")
         base = self.evaluate_ontology(ontology, context, source_data=source_data)
 
         filtered = {k: float(v) for k, v in rubric.items() if k in _DIMS and float(v) > 0}
