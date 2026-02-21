@@ -1269,6 +1269,29 @@ class OntologyOptimizer:
 
         return output.getvalue()
 
+    def best_ontology(self) -> Optional[Dict[str, Any]]:
+        """Return the ontology from the history entry with the highest average score.
+
+        Iterates over all :class:`OptimizationReport` objects in ``_history``
+        and returns the ``best_ontology`` dict from the one with the maximum
+        ``average_score``.  If no history entries contain a stored ontology
+        (i.e. every ``best_ontology`` field is ``None``), returns ``None``.
+
+        Returns:
+            The best ontology dict, or ``None`` if history is empty or no
+            report has a stored ontology.
+
+        Example:
+            >>> optimizer.analyze_batch(sessions, domain_knowledge)
+            >>> top = optimizer.best_ontology()
+            >>> top is not None
+            True
+        """
+        if not self._history:
+            return None
+        best_report = max(self._history, key=lambda r: r.average_score)
+        return best_report.best_ontology
+
     def export_to_rdf(
         self,
         ontology: Optional[Dict[str, Any]] = None,

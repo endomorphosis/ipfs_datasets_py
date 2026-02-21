@@ -250,6 +250,61 @@ class ExtractionConfig:
             merged_kwargs[f.name] = other_val if other_val != default_val else self_val
         return ExtractionConfig(**merged_kwargs)
 
+    def to_yaml(self) -> str:
+        """Serialise this config to a YAML string.
+
+        Uses the same dict representation as :meth:`to_dict`.  Requires
+        ``PyYAML`` (``pip install pyyaml``).
+
+        Returns:
+            YAML string representation.
+
+        Raises:
+            ImportError: If ``PyYAML`` is not installed.
+
+        Example:
+            >>> yaml_str = config.to_yaml()
+            >>> config2 = ExtractionConfig.from_yaml(yaml_str)
+            >>> config == config2
+            True
+        """
+        try:
+            import yaml as _yaml
+        except ImportError as exc:
+            raise ImportError(
+                "PyYAML is required for to_yaml(); install with: pip install pyyaml"
+            ) from exc
+        return _yaml.dump(self.to_dict(), default_flow_style=False, sort_keys=True)
+
+    @classmethod
+    def from_yaml(cls, yaml_str: str) -> "ExtractionConfig":
+        """Deserialise an :class:`ExtractionConfig` from a YAML string.
+
+        Args:
+            yaml_str: YAML string produced by :meth:`to_yaml` (or any dict with
+                matching keys).
+
+        Returns:
+            A new :class:`ExtractionConfig` instance.
+
+        Raises:
+            ImportError: If ``PyYAML`` is not installed.
+
+        Example:
+            >>> config = ExtractionConfig(confidence_threshold=0.7)
+            >>> config2 = ExtractionConfig.from_yaml(config.to_yaml())
+            >>> config2.confidence_threshold
+            0.7
+        """
+        try:
+            import yaml as _yaml
+        except ImportError as exc:
+            raise ImportError(
+                "PyYAML is required for from_yaml(); install with: pip install pyyaml"
+            ) from exc
+        d = _yaml.safe_load(yaml_str) or {}
+        return cls.from_dict(d)
+
 
 @dataclass
 class OntologyGenerationContext:
@@ -457,6 +512,38 @@ class EntityExtractionResult:
             "errors": self.errors,
         }
         return _json.dumps(payload)
+
+    def filter_by_type(self, entity_type: str) -> "EntityExtractionResult":
+        """Return a new result containing only entities matching *entity_type*.
+
+        Relationships whose ``source_id`` or ``target_id`` no longer exists in
+        the filtered entity set are pruned from the result.
+
+        Args:
+            entity_type: Entity type string to keep (case-sensitive).
+
+        Returns:
+            A new :class:`EntityExtractionResult` with the filtered entities and
+            pruned relationships.
+
+        Example:
+            >>> persons = result.filter_by_type("Person")
+            >>> all(e.type == "Person" for e in persons.entities)
+            True
+        """
+        filtered_entities = [e for e in self.entities if e.type == entity_type]
+        kept_ids = {e.id for e in filtered_entities}
+        filtered_rels = [
+            r for r in self.relationships
+            if r.source_id in kept_ids and r.target_id in kept_ids
+        ]
+        return EntityExtractionResult(
+            entities=filtered_entities,
+            relationships=filtered_rels,
+            confidence=self.confidence,
+            metadata=dict(self.metadata),
+            errors=list(self.errors),
+        )
 
 
 @dataclass

@@ -189,3 +189,30 @@ class OntologyPipeline:
             self.run(doc, data_source=data_source, data_type=data_type, refine=refine)
             for doc in docs
         ]
+
+    def warm_cache(
+        self,
+        reference_data: Any,
+        *,
+        data_source: str = "warmup",
+        data_type: str = "text",
+    ) -> None:
+        """Pre-evaluate a reference ontology to fill the critic's shared cache.
+
+        Runs the full generation + evaluation pipeline on *reference_data* once
+        so subsequent calls to :meth:`run` benefit from a warm
+        :attr:`OntologyCritic._SHARED_EVAL_CACHE` and skip redundant evaluation
+        of identical ontologies.
+
+        Args:
+            reference_data: Input text or data used as the warmup corpus.
+            data_source: Data-source identifier string (default: ``"warmup"``).
+            data_type: Data-type hint (default: ``"text"``).
+
+        Example:
+            >>> pipeline = OntologyPipeline(domain="legal")
+            >>> pipeline.warm_cache(REFERENCE_CONTRACT_TEXT)
+            >>> result = pipeline.run(new_text)  # critic cache pre-warmed
+        """
+        self._log.info("Warming pipeline cache with reference data")
+        self.run(reference_data, data_source=data_source, data_type=data_type, refine=False)

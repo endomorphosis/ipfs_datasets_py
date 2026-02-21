@@ -602,8 +602,8 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 
 ## Batch 59+ ideas (added automatically)
 
-- [ ] (P2) [graphrag] Add `OntologyPipeline.warm_cache()` -- pre-evaluate a reference ontology to fill shared cache
-- [ ] (P3) [graphrag] Add `OntologyMediator.undo_last_action()` -- revert last applied refinement action
+- [x] (P2) [graphrag] Add `OntologyPipeline.warm_cache()` -- Done batch-60: runs pipeline.run() with refine=False; 5 tests
+- [x] (P3) [graphrag] Add `OntologyMediator.undo_last_action()` -- Done batch-60: deep-copy undo stack, IndexError on empty; 5 tests
 - [ ] (P3) [graphrag] Add `OntologyGenerator.extract_with_coref()` -- co-reference resolution pre-pass
 - [ ] (P2) [graphrag] Add `OntologyPipeline.run_async()` -- async coroutine wrapper around run()
 - [ ] (P3) [obs] Add structured JSON log at end of `analyze_batch_parallel()` with timing + scores
@@ -615,10 +615,10 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [tests] Add property tests for `OntologyMediator.refine_ontology()` using Hypothesis
 - [ ] (P2) [arch] Add `OntologyPipeline.clone()` -- deep copy a pipeline with fresh state
 - [ ] (P3) [graphrag] Add `CriticScore.from_dict()` classmethod -- inverse of to_dict()
-- [ ] (P2) [graphrag] Add `ExtractionConfig.to_yaml()` / `from_yaml()` -- YAML round-trip
+- [x] (P2) [graphrag] Add `ExtractionConfig.to_yaml()` / `from_yaml()` -- Done batch-60: PyYAML round-trip; 8 tests
 - [ ] (P3) [graphrag] Add `OntologyOptimizer.best_ontology()` -- return ontology from highest-scoring history entry
 - [ ] (P2) [tests] Add negative tests for OntologyPipeline: empty domain, None data, very long text
 - [ ] (P3) [obs] Add `OntologyMediator.refine_ontology()` structured log of actions_applied per round
 - [ ] (P2) [graphrag] Add `LogicValidator.explain_contradictions()` -- human-readable contradiction explanations
 - [ ] (P3) [arch] Add `OntologyHarness.run()` integration test with real generator + critic (no mocks)
-- [ ] (P2) [graphrag] Add `EntityExtractionResult.filter_by_type()` -- return subset of entities matching type
+- [x] (P2) [graphrag] Add `EntityExtractionResult.filter_by_type()` -- Done batch-60: prunes dangling relationships; 9 tests

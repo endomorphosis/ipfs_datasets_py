@@ -211,6 +211,8 @@ class OntologyMediator:
         self._log = logger or _logging.getLogger(__name__)
         # Tracks cumulative action invocation counts across all refine_ontology() calls
         self._action_counts: Dict[str, int] = {}
+        # Stack of (ontology_snapshot, action_name) for undo support
+        self._undo_stack: list = []
 
         self._log.info(
             f"Initialized mediator: max_rounds={max_rounds}, "
@@ -351,6 +353,8 @@ class OntologyMediator:
         self._log.info(f"Refining ontology based on {len(feedback.recommendations)} recommendations")
 
         refined = _copy.deepcopy(ontology)
+        # Save snapshot BEFORE applying refinements (for undo support)
+        self._undo_stack.append(_copy.deepcopy(ontology))
         refined.setdefault('entities', [])
         refined.setdefault('relationships', [])
 
@@ -508,6 +512,30 @@ class OntologyMediator:
             Returns an empty dict if ``refine_ontology`` has not yet been called.
         """
         return dict(self._action_counts)
+
+    def undo_last_action(self) -> Dict[str, Any]:
+        """Revert the last applied refinement action.
+
+        Returns the ontology snapshot that was saved immediately *before* the
+        most-recent :meth:`refine_ontology` call.  The matching entry is removed
+        from the internal undo stack so successive calls step further back.
+
+        Returns:
+            The ontology dict as it was before the last refinement.
+
+        Raises:
+            IndexError: If there is nothing to undo (no refinements have been
+                applied yet).
+
+        Example:
+            >>> refined = mediator.refine_ontology(ontology, score, ctx)
+            >>> original = mediator.undo_last_action()
+            >>> original == ontology
+            True
+        """
+        if not self._undo_stack:
+            raise IndexError("Nothing to undo: no refinements have been applied")
+        return self._undo_stack.pop()
     
     def run_refinement_cycle(
         self,
