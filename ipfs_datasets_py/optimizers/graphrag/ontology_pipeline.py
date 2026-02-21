@@ -241,3 +241,35 @@ class OntologyPipeline:
             max_rounds=self._mediator.max_rounds,
             logger=self._log if self._log is not _logger else None,
         )
+
+    async def run_async(
+        self,
+        data: Any,
+        *,
+        data_source: str = "pipeline",
+        data_type: str = "text",
+        refine: bool = True,
+    ) -> "PipelineResult":
+        """Async coroutine wrapper around :meth:`run`.
+
+        Delegates to the synchronous :meth:`run` in a thread-pool executor so
+        it does not block the event loop.
+
+        Args:
+            data: Input text or data.
+            data_source: Data source identifier (default: ``"pipeline"``).
+            data_type: Data type hint (default: ``"text"``).
+            refine: Whether to run mediator refinement (default: True).
+
+        Returns:
+            :class:`PipelineResult` from the synchronous :meth:`run`.
+
+        Example:
+            >>> result = await pipeline.run_async("Alice works at ACME.")
+        """
+        import asyncio
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None,
+            lambda: self.run(data, data_source=data_source, data_type=data_type, refine=refine),
+        )

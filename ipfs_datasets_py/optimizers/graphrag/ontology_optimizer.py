@@ -1292,6 +1292,59 @@ class OntologyOptimizer:
         best_report = max(self._history, key=lambda r: r.average_score)
         return best_report.best_ontology
 
+    def export_score_chart(self, filepath: Optional[str] = None) -> Optional[str]:
+        """Produce a matplotlib line chart of average score across history batches.
+
+        Requires ``matplotlib`` (``pip install matplotlib``).  Each batch is
+        plotted on the x-axis; average score on the y-axis.
+
+        Args:
+            filepath: If given, save the chart to this path (PNG/PDF/SVG etc.)
+                and return ``None``.  If ``None``, return the chart as a
+                base64-encoded PNG string.
+
+        Returns:
+            Base64-encoded PNG string when *filepath* is ``None``; ``None``
+            otherwise.
+
+        Raises:
+            ValueError: If history is empty.
+            ImportError: If ``matplotlib`` is not installed.
+        """
+        if not self._history:
+            raise ValueError("No history to plot; run analyze_batch() first.")
+        try:
+            import matplotlib
+            matplotlib.use("Agg")  # non-interactive backend
+            import matplotlib.pyplot as _plt
+        except ImportError as exc:
+            raise ImportError(
+                "matplotlib is required for export_score_chart(); "
+                "install with: pip install matplotlib"
+            ) from exc
+
+        scores = [r.average_score for r in self._history]
+        batches = list(range(1, len(scores) + 1))
+
+        fig, ax = _plt.subplots()
+        ax.plot(batches, scores, marker="o")
+        ax.set_xlabel("Batch")
+        ax.set_ylabel("Average Score")
+        ax.set_title("Ontology Optimization Score History")
+        ax.set_ylim(0.0, 1.0)
+
+        if filepath:
+            fig.savefig(filepath, bbox_inches="tight")
+            _plt.close(fig)
+            return None
+
+        import io, base64
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", bbox_inches="tight")
+        _plt.close(fig)
+        buf.seek(0)
+        return base64.b64encode(buf.read()).decode("ascii")
+
     def export_to_rdf(
         self,
         ontology: Optional[Dict[str, Any]] = None,

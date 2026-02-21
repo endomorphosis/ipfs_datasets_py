@@ -1040,6 +1040,54 @@ class OntologyGenerator:
             errors=result.errors,
         )
 
+    def extract_with_coref(
+        self,
+        data: str,
+        context: "OntologyGenerationContext",
+    ) -> "EntityExtractionResult":
+        """Extract entities after a lightweight co-reference resolution pre-pass.
+
+        This method applies a heuristic co-reference resolution step before
+        extraction: it replaces common pronoun forms (``he``, ``she``, ``they``,
+        ``it``, ``his``, ``her``, ``their``, ``its``) with the most-recently
+        seen proper-noun-like token (capitalised word) in the text.  This
+        increases the chance that pronoun-heavy text yields coherent entity
+        spans.
+
+        For production use-cases, replace this pre-pass with a full NLP
+        co-reference library such as ``spacy-experimental`` or ``fastcoref``.
+
+        Args:
+            data: Raw input text string.
+            context: Extraction context.
+
+        Returns:
+            :class:`EntityExtractionResult` from the resolved text with
+            ``metadata["coref_resolved"]`` set to ``True``.
+        """
+        import re as _re
+
+        resolved = data
+        if isinstance(data, str):
+            # Collect the last-seen proper-noun candidate (capitalised non-sentence-start word)
+            words = _re.split(r"(\W+)", data)
+            last_proper: Optional[str] = None
+            resolved_parts = []
+            pronoun_set = {"he", "she", "they", "it", "his", "her", "their", "its",
+                           "him", "them"}
+            for token in words:
+                if token.istitle() and len(token) > 2 and token.lower() not in pronoun_set:
+                    last_proper = token
+                if token.lower() in pronoun_set and last_proper:
+                    resolved_parts.append(last_proper)
+                else:
+                    resolved_parts.append(token)
+            resolved = "".join(resolved_parts)
+
+        result = self.extract_entities(resolved, context)
+        result.metadata["coref_resolved"] = True
+        return result
+
     def merge_provenance_report(
         self,
         results: List["EntityExtractionResult"],

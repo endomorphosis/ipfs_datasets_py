@@ -213,6 +213,8 @@ class OntologyMediator:
         self._action_counts: Dict[str, int] = {}
         # Stack of (ontology_snapshot, action_name) for undo support
         self._undo_stack: list = []
+        # Tracks unique recommendation phrases seen across all refine_ontology() calls
+        self._recommendation_counts: Dict[str, int] = {}
 
         self._log.info(
             f"Initialized mediator: max_rounds={max_rounds}, "
@@ -363,6 +365,10 @@ class OntologyMediator:
         for recommendation in feedback.recommendations:
             rec_lower = recommendation.lower()
             self._log.debug(f"Applying recommendation: {recommendation}")
+            # Track recommendation phrase counts
+            self._recommendation_counts[recommendation] = (
+                self._recommendation_counts.get(recommendation, 0) + 1
+            )
 
             # Action: add missing entity properties when clarity is low
             if any(k in rec_lower for k in ('property', 'detail', 'clarity', 'definition')):
@@ -536,6 +542,26 @@ class OntologyMediator:
         if not self._undo_stack:
             raise IndexError("Nothing to undo: no refinements have been applied")
         return self._undo_stack.pop()
+
+    def get_recommendation_stats(self) -> Dict[str, int]:
+        """Return counts of unique recommendation phrases seen across all refinements.
+
+        Each time :meth:`refine_ontology` processes a recommendation, its exact
+        string is counted.  This method returns a snapshot of those counts so
+        callers can identify the most-frequently-repeated suggestions.
+
+        Returns:
+            Dict mapping recommendation phrase (str) to occurrence count.
+            Empty if :meth:`refine_ontology` has not been called or no
+            recommendations were provided.
+
+        Example:
+            >>> mediator.refine_ontology(ont, score, ctx)
+            >>> stats = mediator.get_recommendation_stats()
+            >>> max(stats, key=stats.get)  # most common recommendation
+            'Add more entity properties'
+        """
+        return dict(self._recommendation_counts)
     
     def run_refinement_cycle(
         self,
