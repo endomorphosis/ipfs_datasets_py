@@ -425,6 +425,7 @@ class OntologyOptimizer:
         self,
         session_results: List[Any],
         max_workers: int = 4,
+        json_log_path: Optional[str] = None,
     ) -> "OptimizationReport":
         """Parallel variant of :meth:`analyze_batch`.
 
@@ -437,6 +438,11 @@ class OntologyOptimizer:
         Args:
             session_results: Same as :meth:`analyze_batch`.
             max_workers: Thread-pool size.  Defaults to 4.
+            json_log_path: Optional file path.  When provided, a structured
+                JSON summary of the batch is written to this path after
+                analysis completes (useful for offline inspection and CI
+                artefacts).  Errors writing the file are logged but do not
+                propagate.
 
         Returns:
             ``OptimizationReport`` identical to what :meth:`analyze_batch`
@@ -579,6 +585,28 @@ class OntologyOptimizer:
                 )
             except Exception:  # metrics must never block optimization
                 pass
+
+        if json_log_path is not None:
+            _summary = {
+                "session_count": len(session_results),
+                "average_score": round(average_score, 6),
+                "trend": trend,
+                "score_min": round(min(scores), 6),
+                "score_max": round(max(scores), 6),
+                "score_std": round(self._compute_std(scores), 6),
+                "recommendation_count": len(recommendations),
+                "recommendations": list(recommendations),
+                "max_workers": max_workers,
+                "duration_ms": round((time.time() - operation_start) * 1000.0, 3),
+            }
+            try:
+                with open(json_log_path, "w", encoding="utf-8") as _fh:
+                    json.dump(_summary, _fh, indent=2)
+                self._log.debug("Wrote batch parallel JSON log to %s", json_log_path)
+            except OSError as _exc:
+                self._log.warning(
+                    "Failed to write json_log_path=%s: %s", json_log_path, _exc
+                )
 
         return report
 

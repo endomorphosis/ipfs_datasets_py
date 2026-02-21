@@ -687,3 +687,28 @@ class OntologyPipelineHarness:
             "best_ontology": self._last_ontology,
             "session": session,
         }
+
+    def run_single(self, data: Any, context: Any) -> Dict[str, Any]:
+        """Convenience wrapper for single-document use cases.
+
+        Equivalent to :meth:`run_and_report` but always operates on a single
+        document.  Raises :class:`RuntimeError` if the session did not produce
+        a valid result.
+
+        Args:
+            data: Source document text or data object.
+            context: Generation context (dict or context object).
+
+        Returns:
+            Summary dict with keys ``best_score``, ``rounds``, ``converged``,
+            ``best_ontology``, and ``session``.
+
+        Raises:
+            RuntimeError: If the internal harness raises an unhandled error.
+        """
+        try:
+            return self.run_and_report(data, context)
+        except Exception as exc:
+            raise RuntimeError(
+                f"OntologyHarness.run_single() failed: {exc}"
+            ) from exc

@@ -487,7 +487,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [tests] Unit tests for LLM fallback — Done batch 33: 11 tests in test_llm_fallback_extraction.py
 - [ ] (P2) [graphrag] `OntologyLearningAdapter.apply_feedback()` — accept list of mediator `Action` objects and update confidence weights
 - [ ] (P2) [graphrag] `OntologyLearningAdapter.get_extraction_hint()` — return adjusted threshold based on historical accuracy
-- [ ] (P2) [tests] Unit tests for `OntologyLearningAdapter` feedback loop (3+ scenarios)
+- [x] (P2) [tests] Unit tests for OntologyLearningAdapter feedback loop — Done batch 47: 6 scenarios (threshold rise/fall, clamping, action rates, reset, restore-then-continue)
 - [x] (P2) [arch] Add `__init__` test for logic_theorem_optimizer public symbols — Done batch 32: test_public_import_smoke.py
 - [x] (P2) [tests] Parametrize domain-specific rule tests with all 4 domains (legal, medical, financial, technical) — use `pytest.mark.parametrize` — Done batch 33: `tests/unit/optimizers/graphrag/test_ontology_generator_helpers.py` (`test_domain_specific_rules_extract_expected_type`, 4-domain parametrization)
 - [x] (P2) [graphrag] Add `OntologyCritic.evaluate_batch()` — Done batch 32: returns scores/mean_overall/min_overall/max_overall/count
@@ -510,14 +510,14 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 
 ## Newly discovered items (batch 44+)
 
-- [ ] (P2) [arch] Add `OntologyHarness.run_single()` method that wraps BaseHarness.run() for single-document use cases
+- [x] (P2) [arch] Add `OntologyHarness.run_single()` — Done batch 47: thin wrapper over run_and_report, re-raises as RuntimeError
 - [x] (P2) [graphrag] Add `ExtractionConfig.stopwords` — Done batch 45: case-insensitive filter in _extract_rule_based; to_dict/from_dict updated; 6 tests
 - [x] (P3) [graphrag] Add `OntologyCritic.compare_versions()` — Done batch 45: wraps compare_ontologies; adds delta_<dim> + delta_overall keys; 3 tests
 - [x] (P3) [graphrag] Add `OntologyOptimizer.get_history_summary()` — Done batch 45: count/mean/std/min/max/mean_improvement_rate/trend; 5 tests
 - [x] (P3) [tests] Property-based tests for OntologyCritic scores in [0.0, 1.0] — Done batch 46: Hypothesis random ontologies (30 examples)
-- [ ] (P2) [obs] Add `analyze_batch_parallel()` structured JSON log (mirrors analyze_batch summary logging)
+- [x] (P2) [obs] Add `analyze_batch_parallel()` structured JSON log — Done batch 47: json_log_path param writes summary JSON; 7 tests
 - [x] (P3) [graphrag] Add `ExtractionConfig.allowed_entity_types` whitelist — Done batch 46: enforced in _extract_rule_based; 6 tests
-- [ ] (P2) [docs] Add CHANGELOG.md for the optimizers sub-package documenting changes by batch
+- [x] (P2) [docs] Add CHANGELOG.md for the optimizers sub-package — Done batch 47: updated existing CHANGELOG with batches 39-47
 - [x] (P3) [arch] Add `optimizers.common.exceptions` re-export — Already done: all 6 exception classes already in common/__init__.py
 - [x] (P3) [tests] Round-trip test: ExtractionConfig.to_dict() → from_dict() — Done batch 45: TestExtractionConfigRoundTrip
 - [x] (P2) [graphrag] Add `OntologyGenerator.extract_entities_from_file()` — Done batch 46: reads UTF-8 file, delegates to extract_entities; 3 tests
@@ -525,7 +525,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P3) [docs] Add `py.typed` marker to `optimizers/` — Done batch 45: created ipfs_datasets_py/optimizers/py.typed
 - [x] (P2) [tests] Parametrized tests for export_to_graphml — Done batch 46: 5 sizes (0/1/3/10/20 entities) verified node/edge counts
 - [ ] (P3) [agentic] Add `ChaosOptimizer.simulate_memory_pressure()` method for memory threshold testing
-- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.to_dict()` / `from_dict()` for state serialization
+- [x] (P2) [graphrag] Add `OntologyLearningAdapter.to_dict()` / `from_dict()` — Done batch 47: full round-trip; 16 tests
 - [ ] (P3) [tests] Hypothesis strategy for valid `ExtractionConfig` (generates random but valid configs)
 - [x] (P2) [arch] Add `BaseSession.to_json()` / `from_json()` round-trip serialization — Done batch 44: also adds from_dict()
 - [ ] (P3) [docs] Add usage example for `OntologyGenerationResult` to graphrag/README.md

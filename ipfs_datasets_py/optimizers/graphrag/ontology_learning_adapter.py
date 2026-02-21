@@ -201,6 +201,64 @@ class OntologyLearningAdapter:
         # Clamp to [0.1, 0.9]
         self._current_threshold = max(0.1, min(0.9, self._current_threshold))
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize adapter state to a JSON-compatible dictionary.
+
+        Returns:
+            Dict with all state needed to reconstruct the adapter via
+            :meth:`from_dict`.
+        """
+        return {
+            "domain": self.domain,
+            "base_threshold": self._base_threshold,
+            "current_threshold": self._current_threshold,
+            "ema_alpha": self._ema_alpha,
+            "min_samples": self._min_samples,
+            "feedback": [
+                {
+                    "final_score": r.final_score,
+                    "action_types": list(r.action_types),
+                    "confidence_at_extraction": r.confidence_at_extraction,
+                }
+                for r in self._feedback
+            ],
+            "action_success": dict(self._action_success),
+            "action_count": dict(self._action_count),
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "OntologyLearningAdapter":
+        """Reconstruct an adapter from a serialized dictionary.
+
+        Args:
+            data: Dictionary as produced by :meth:`to_dict`.
+
+        Returns:
+            New :class:`OntologyLearningAdapter` with restored state.
+        """
+        adapter = cls(
+            domain=data.get("domain", "general"),
+            base_threshold=float(data.get("base_threshold", _DEFAULT_THRESHOLD)),
+            ema_alpha=float(data.get("ema_alpha", _EMA_ALPHA)),
+            min_samples=int(data.get("min_samples", _MIN_SAMPLES_FOR_ADJUSTMENT)),
+        )
+        adapter._current_threshold = float(
+            data.get("current_threshold", adapter._base_threshold)
+        )
+        for rec in data.get("feedback", []):
+            adapter._feedback.append(
+                FeedbackRecord(
+                    final_score=float(rec.get("final_score", 0.0)),
+                    action_types=list(rec.get("action_types", [])),
+                    confidence_at_extraction=rec.get("confidence_at_extraction"),
+                )
+            )
+        for action, success in data.get("action_success", {}).items():
+            adapter._action_success[action] = float(success)
+        for action, count in data.get("action_count", {}).items():
+            adapter._action_count[action] = int(count)
+        return adapter
+
     @staticmethod
     def _score_to_threshold(mean_score: float) -> float:
         """Map mean quality score to a target confidence threshold.
