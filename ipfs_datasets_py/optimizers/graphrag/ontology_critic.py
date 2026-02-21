@@ -2031,7 +2031,7 @@ class OntologyCritic(BaseCritic):
             >>> critic.top_dimension(score)
             'domain_alignment'
         """
-        dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
         return max(dims, key=lambda d: getattr(score, d))
 
     def bottom_dimension(self, score: "CriticScore") -> str:
@@ -2047,7 +2047,7 @@ class OntologyCritic(BaseCritic):
             >>> critic.bottom_dimension(score)
             'granularity'
         """
-        dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
         return min(dims, key=lambda d: getattr(score, d))
 
     def score_range(
@@ -2109,7 +2109,7 @@ class OntologyCritic(BaseCritic):
             >>> all(v >= 0 for v in gaps.values())
             True
         """
-        dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
         return {d: round(target - getattr(score, d), 6) for d in dims}
 
     def worst_score(self, scores: List["CriticScore"]) -> Optional["CriticScore"]:
