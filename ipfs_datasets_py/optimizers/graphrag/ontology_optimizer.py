@@ -1052,6 +1052,152 @@ class OntologyOptimizer:
 
         return output.getvalue()
 
+    def export_to_rdf(
+        self,
+        ontology: Optional[Dict[str, Any]] = None,
+        filepath: Optional[str] = None,
+        *,
+        format: str = "turtle",
+    ) -> Optional[str]:
+        """Export ontology to RDF (Turtle or N-Triples) using rdflib.
+
+        This is a lightweight stub that serialises the entity/relationship
+        structure as RDF triples.  Requires ``rdflib`` (``pip install rdflib``).
+
+        Args:
+            ontology: Ontology dict with ``entities`` and ``relationships`` keys.
+                      When *None* the most recent batch result is used.
+            filepath: If given, write the RDF string to this file and return None.
+            format: Serialization format passed to ``rdflib.Graph.serialize()``.
+                    Common values: ``"turtle"`` (default), ``"n3"``, ``"nt"``.
+
+        Returns:
+            RDF string when *filepath* is None, else None.
+
+        Raises:
+            ImportError: If ``rdflib`` is not installed.
+        """
+        try:
+            from rdflib import Graph, Literal, Namespace, URIRef  # type: ignore[import]
+            from rdflib.namespace import RDF, RDFS, XSD  # type: ignore[import]
+        except ImportError as exc:  # pragma: no cover
+            raise ImportError(
+                "rdflib is required for RDF export. Install with: pip install rdflib"
+            ) from exc
+
+        if ontology is None:
+            if self._history:
+                ontology = self._history[-1].metadata.get("last_ontology", {})
+            ontology = ontology or {}
+
+        ONT = Namespace("urn:optimizers:ontology:")
+        g = Graph()
+        g.bind("ont", ONT)
+
+        for ent in ontology.get("entities", []):
+            if not isinstance(ent, dict):
+                continue
+            eid = ent.get("id")
+            if not eid:
+                continue
+            node = URIRef(ONT[eid])
+            g.add((node, RDF.type, URIRef(ONT["Entity"])))
+            if ent.get("text"):
+                g.add((node, RDFS.label, Literal(ent["text"])))
+            if ent.get("type"):
+                g.add((node, URIRef(ONT["entityType"]), Literal(ent["type"])))
+
+        for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
+            src = rel.get("source_id")
+            tgt = rel.get("target_id")
+            rel_type = rel.get("type")
+            if src and tgt and rel_type:
+                g.add((
+                    URIRef(ONT[src]),
+                    URIRef(ONT[rel_type]),
+                    URIRef(ONT[tgt]),
+                ))
+
+        serialized = g.serialize(format=format)
+        if filepath:
+            with open(filepath, "w", encoding="utf-8") as fh:
+                fh.write(serialized)
+            return None
+        return serialized
+
+    def export_to_graphml(
+        self,
+        ontology: Optional[Dict[str, Any]] = None,
+        filepath: Optional[str] = None,
+    ) -> Optional[str]:
+        """Export ontology to GraphML XML for visualization tools.
+
+        Produces a minimal GraphML document (no external dependencies) that
+        can be opened in Gephi, yEd, or NetworkX.
+
+        Args:
+            ontology: Ontology dict with ``entities`` and ``relationships`` keys.
+                      When *None* the most recent batch result is used.
+            filepath: If given, write the GraphML string to this file and return None.
+
+        Returns:
+            GraphML XML string when *filepath* is None, else None.
+        """
+        import xml.etree.ElementTree as ET
+
+        if ontology is None:
+            if self._history:
+                ontology = self._history[-1].metadata.get("last_ontology", {})
+            ontology = ontology or {}
+
+        graphml = ET.Element(
+            "graphml",
+            xmlns="http://graphml.graphstruct.org/graphml",
+        )
+        # Key declarations
+        ET.SubElement(graphml, "key", id="label", **{"for": "node", "attr.name": "label", "attr.type": "string"})
+        ET.SubElement(graphml, "key", id="etype", **{"for": "node", "attr.name": "entityType", "attr.type": "string"})
+        ET.SubElement(graphml, "key", id="rtype", **{"for": "edge", "attr.name": "relationshipType", "attr.type": "string"})
+
+        graph_el = ET.SubElement(graphml, "graph", id="G", edgedefault="directed")
+
+        for ent in ontology.get("entities", []):
+            if not isinstance(ent, dict):
+                continue
+            eid = ent.get("id")
+            if not eid:
+                continue
+            node = ET.SubElement(graph_el, "node", id=str(eid))
+            if ent.get("text"):
+                d = ET.SubElement(node, "data", key="label")
+                d.text = str(ent["text"])
+            if ent.get("type"):
+                d = ET.SubElement(node, "data", key="etype")
+                d.text = str(ent["type"])
+
+        for idx, rel in enumerate(ontology.get("relationships", [])):
+            if not isinstance(rel, dict):
+                continue
+            src = rel.get("source_id")
+            tgt = rel.get("target_id")
+            if not (src and tgt):
+                continue
+            edge = ET.SubElement(graph_el, "edge", id=f"e{idx}", source=str(src), target=str(tgt))
+            if rel.get("type"):
+                d = ET.SubElement(edge, "data", key="rtype")
+                d.text = str(rel["type"])
+
+        xml_str = ET.tostring(graphml, encoding="unicode", xml_declaration=False)
+        result = '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_str
+
+        if filepath:
+            with open(filepath, "w", encoding="utf-8") as fh:
+                fh.write(result)
+            return None
+        return result
+
 
 # Export public API
 __all__ = [

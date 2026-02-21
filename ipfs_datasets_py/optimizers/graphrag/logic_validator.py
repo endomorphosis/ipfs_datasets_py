@@ -221,6 +221,14 @@ class LogicValidator:
         if not isinstance(ontology, dict):
             raise ValueError("ontology must be a dict")
 
+        # Check TDFOL formula cache
+        _cache_key: Optional[str] = None
+        if self.use_cache and self._cache is not None:
+            _cache_key = self._get_cache_key(ontology)
+            if _cache_key in self._cache:
+                logger.debug("TDFOL cache hit for ontology hash %s", _cache_key[:12])
+                return list(self._cache[_cache_key])
+
         entities = ontology.get("entities", [])
         relationships = ontology.get("relationships", [])
 
@@ -284,6 +292,10 @@ class LogicValidator:
 
         if not self._tdfol_available:
             logger.info("TDFOL module unavailable; returning string facts")
+
+        # Store in cache before returning
+        if _cache_key is not None and self._cache is not None:
+            self._cache[_cache_key] = list(formulas)
 
         return formulas
 

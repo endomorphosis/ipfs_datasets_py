@@ -475,7 +475,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [tests] Unit test for `cli_wrapper.py` prove command with --output flag — Done: test_prove_outputs_json_on_success in test_cli_prove.py (already existed batch 27)
 - [x] (P2) [tests] Unit test for `cli_wrapper.py` validate command happy path — Done batch 30: 8 tests in test_cli_validate.py
 - [x] (P3) [graphrag] Add `entity_to_tdfol()` helper — Done batch 35: LogicValidator.entity_to_tdfol() added; 6 tests added to test_logic_validator_tdfol_conversion.py
-- [ ] (P3) [graphrag] Cache ontology TDFOL output keyed on ontology hash (avoid re-conversion)
+- [x] (P3) [graphrag] Cache ontology TDFOL output keyed on ontology hash — Done batch 40: uses _get_cache_key() + _cache dict
 - [ ] (P2) [agentic] Wire `ChangeController.create_change()` to actually create GitHub PR draft
 - [x] (P2) [arch] Add `__init__` test for graphrag/__init__ public symbols — Done batch 32: test_public_import_smoke.py (38 tests)
 - [x] (P2) [docs] Update common/README.md — Done batch 36/37: CriticResult field table + ExtractionConfig.custom_rules example in graphrag/README.md
@@ -498,12 +498,12 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P3) [graphrag] Add `ExtractionConfig.min_entity_length: int = 2` — Done batch 39: enforced in _extract_rule_based; 5 tests in TestMinEntityLength
 - [ ] (P3) [tests] Fuzz test `OntologyMediator.run_refinement_cycle()` with Hypothesis-generated random documents
 - [ ] (P3) [agentic] Add `ChaosOptimizer.inject_cpu_spike()` method for realistic CPU load testing
-- [ ] (P3) [arch] Add `optimizers.__version__` string populated from `ipfs_datasets_py.__version__`
+- [x] (P3) [arch] Add `optimizers.__version__` string populated from `ipfs_datasets_py.__version__` — Done batch 40
 - [x] (P3) [tests] Test `_safe_resolve()` path traversal — Done batch 36: test_safe_resolve_path_traversal.py (11 tests for graphrag + logic CLIs)
 - [ ] (P2) [docs] Add `common/README.md` section documenting `CriticResult` fields and usage patterns
 - [x] (P2) [graphrag] Emit a structured log line (JSON) after each `analyze_batch()` call for observability (INFO level, no secrets) — Done batch 33: `OntologyOptimizer._emit_analyze_batch_summary()` emits `ontology_optimizer.analyze_batch.summary` JSON logs for success/empty/no-scores paths; covered by caplog tests in `test_ontology_optimizer_metrics.py`
 - [x] (P2) [logic] Add `--domain` flag to `validate` command — Done batch 34: 5 choices, passed to OptimizationContext domain
 - [x] (P2) [logic] Apply domain-specific validation rules in `cmd_validate()` — Done batch 34: domain passed to OptimizationContext; rules applied via LogicTheoremOptimizer
 - [x] (P2) [tests] Unit tests for `validate --domain` — Done batch 34: parametrized test covers all 5 domains
-- [ ] (P3) [graphrag] Add `OntologyOptimizer.export_to_rdf()` stub: serialize ontology to Turtle format using rdflib (optional dep)
-- [ ] (P3) [graphrag] Add `OntologyOptimizer.export_to_graphml()` stub: serialize ontology to GraphML for visualization
+- [x] (P3) [graphrag] Add `OntologyOptimizer.export_to_rdf()` stub — Done batch 40: Turtle/NT via rdflib (optional dep)
+- [x] (P3) [graphrag] Add `OntologyOptimizer.export_to_graphml()` stub — Done batch 40: pure stdlib XML, works in Gephi/yEd
