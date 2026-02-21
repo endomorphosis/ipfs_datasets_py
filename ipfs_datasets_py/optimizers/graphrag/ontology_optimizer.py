@@ -2267,6 +2267,86 @@ class OntologyOptimizer:
                 count += 1
         return count
 
+    def best_streak(self) -> int:
+        """Return the length of the longest consecutive improving run.
+
+        An *improving* step is one where ``average_score`` strictly increases.
+
+        Returns:
+            Length of the longest consecutive improvement streak; 0 if empty or
+            no improvement was ever observed.
+        """
+        if len(self._history) < 2:
+            return 0
+        best = 0
+        current = 0
+        for i in range(len(self._history) - 1):
+            if self._history[i + 1].average_score > self._history[i].average_score:
+                current += 1
+                best = max(best, current)
+            else:
+                current = 0
+        return best
+
+    def worst_streak(self) -> int:
+        """Return the length of the longest consecutive declining run.
+
+        A *declining* step is one where ``average_score`` strictly decreases.
+
+        Returns:
+            Length of the longest consecutive decline streak; 0 if empty or
+            no decline was ever observed.
+        """
+        if len(self._history) < 2:
+            return 0
+        worst = 0
+        current = 0
+        for i in range(len(self._history) - 1):
+            if self._history[i + 1].average_score < self._history[i].average_score:
+                current += 1
+                worst = max(worst, current)
+            else:
+                current = 0
+        return worst
+
+    def score_percentile_rank(self, score: float) -> float:
+        """Return the percentile rank (0–100) of *score* among history entries.
+
+        The percentile rank is the fraction of historical scores that are
+        *less than or equal to* the given score, expressed as a percentage.
+
+        Args:
+            score: Score value to rank.
+
+        Returns:
+            Float in [0.0, 100.0]; 0.0 for empty history.
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        count_le = sum(1 for s in scores if s <= score)
+        return count_le / len(scores) * 100.0
+
+    def score_momentum(self, window: int = 5) -> float:
+        """Return the average score change over the last *window* history entries.
+
+        Positive means improving, negative means declining, zero means flat.
+
+        Args:
+            window: Number of most-recent entries to inspect (default 5).
+
+        Returns:
+            Mean score delta per step; ``0.0`` if fewer than 2 entries.
+        """
+        entries = self._history[-window:] if len(self._history) >= 2 else []
+        if len(entries) < 2:
+            return 0.0
+        diffs = [
+            entries[i + 1].average_score - entries[i].average_score
+            for i in range(len(entries) - 1)
+        ]
+        return sum(diffs) / len(diffs)
+
 
 # Export public API
 __all__ = [
