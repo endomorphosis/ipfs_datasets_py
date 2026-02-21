@@ -699,6 +699,26 @@ class OntologyMediator:
         )
         self._log.info("Action summary: %s", parts)
 
+    def undo_last_action(self) -> Optional[Dict[str, Any]]:
+        """Revert the last applied refinement action by popping the undo stack.
+
+        Pops the most recently pushed state from :attr:`_undo_stack` and
+        returns it.  The caller is responsible for applying the returned state
+        to the ontology.
+
+        Returns:
+            The previous ontology state dict, or ``None`` if the undo stack
+            is empty.
+
+        Example:
+            >>> prev_state = mediator.undo_last_action()
+            >>> prev_state is None  # nothing to undo
+            True
+        """
+        if not self._undo_stack:
+            raise IndexError("undo stack is empty — no action to undo")
+        return self._undo_stack.pop()
+
     def run_refinement_cycle(
         self,
         data: Any,

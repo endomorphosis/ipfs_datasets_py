@@ -1518,6 +1518,27 @@ class OntologyOptimizer:
         self._log.info(line)
         return line
 
+    def best_ontology(self) -> Optional[Dict[str, Any]]:
+        """Return the ontology from the highest-scoring history entry.
+
+        Iterates over :attr:`_history` and returns the ``best_ontology``
+        field of the :class:`OptimizationReport` with the highest
+        ``average_score``.
+
+        Returns:
+            The best ontology dict, or ``None`` if history is empty or no
+            entry has a ``best_ontology`` populated.
+
+        Example:
+            >>> ont = optimizer.best_ontology()
+            >>> ont is None or isinstance(ont, dict)
+            True
+        """
+        if not self._history:
+            return None
+        best_report = max(self._history, key=lambda r: r.average_score)
+        return best_report.best_ontology
+
     def export_score_chart(self, filepath: Optional[str] = None) -> Optional[str]:
         """Produce a matplotlib line chart of average score across history batches.
 

@@ -349,3 +349,22 @@ class OntologyLearningAdapter:
         """
         # Linear inverse mapping: score 1.0 → threshold 0.2, score 0.0 → 0.9
         return 0.9 - 0.7 * max(0.0, min(1.0, mean_score))
+
+    def reset_feedback(self) -> int:
+        """Clear the feedback history without resetting thresholds or action stats.
+
+        Removes all :class:`FeedbackRecord` entries from the internal list
+        while preserving the current threshold and action success/count
+        dictionaries.
+
+        Returns:
+            Number of feedback records that were cleared.
+
+        Example:
+            >>> n = adapter.reset_feedback()
+            >>> len(adapter._feedback) == 0
+            True
+        """
+        count = len(self._feedback)
+        self._feedback.clear()
+        return count

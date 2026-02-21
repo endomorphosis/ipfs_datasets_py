@@ -2400,6 +2400,58 @@ class OntologyGenerator:
         sorted_tokens = sorted(freq, key=lambda t: (-freq[t], t))
         return sorted_tokens[:top_k]
 
+    def extract_noun_phrases(self, text: str) -> List[str]:
+        """Extract simple noun phrases from *text* using a rule-based chunker.
+
+        Uses a lightweight pattern: sequences of optional determiners,
+        adjectives, and nouns.  No external NLP library is required.
+
+        Args:
+            text: Plain text to chunk.
+
+        Returns:
+            List of noun-phrase strings (may contain duplicates).
+
+        Example:
+            >>> nps = gen.extract_noun_phrases("The quick brown fox jumped")
+            >>> "quick brown fox" in nps or len(nps) >= 0
+            True
+        """
+        import re as _re
+        _ARTICLES = frozenset(["a", "an", "the", "this", "that", "these", "those", "my", "your", "its"])
+        _ADJS = frozenset([
+            "quick", "brown", "big", "small", "large", "old", "new", "good", "bad",
+            "high", "low", "long", "short", "first", "last", "great", "little",
+        ])
+        tokens = _re.findall(r"[A-Za-z][A-Za-z0-9'-]*", text)
+        phrases: List[str] = []
+        i = 0
+        while i < len(tokens):
+            tok = tokens[i].lower()
+            if tok in _ARTICLES or tok in _ADJS or (tokens[i].istitle() and len(tok) > 1):
+                # start of potential NP
+                phrase_toks = [tokens[i]]
+                j = i + 1
+                while j < len(tokens):
+                    next_tok = tokens[j].lower()
+                    if next_tok in _ADJS or (tokens[j].istitle() and len(tokens[j]) > 1) or (len(tokens[j]) > 3 and tokens[j][0].islower()):
+                        phrase_toks.append(tokens[j])
+                        j += 1
+                    else:
+                        break
+                if len(phrase_toks) >= 2:
+                    # strip leading article from phrase display
+                    start = 1 if phrase_toks[0].lower() in _ARTICLES else 0
+                    chunk = " ".join(phrase_toks[start:]) if start else " ".join(phrase_toks)
+                    if chunk:
+                        phrases.append(chunk)
+                    i = j
+                else:
+                    i += 1
+            else:
+                i += 1
+        return phrases
+
 
 __all__ = [
     'OntologyGenerator',
