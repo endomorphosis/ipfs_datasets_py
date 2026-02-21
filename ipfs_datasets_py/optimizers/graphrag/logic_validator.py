@@ -241,7 +241,8 @@ class LogicValidator:
         # Check TDFOL formula cache
         _cache_key: Optional[str] = None
         if self.use_cache and self._cache is not None:
-            _cache_key = self._get_cache_key(ontology)
+            # Use namespaced key to avoid conflicts with check_consistency cache
+            _cache_key = f"tdfol:{self._get_cache_key(ontology)}"
             if _cache_key in self._cache:
                 logger.debug("TDFOL cache hit for ontology hash %s", _cache_key[:12])
                 return list(self._cache[_cache_key])
@@ -395,9 +396,9 @@ class LogicValidator:
         """
         logger.info("Checking ontology consistency")
         
-        # Check cache if enabled
+        # Check cache if enabled (use namespaced key to avoid conflicts with ontology_to_tdfol)
         if self.use_cache:
-            cache_key = self._get_cache_key(ontology)
+            cache_key = f"consistency:{self._get_cache_key(ontology)}"
             if cache_key in self._cache:
                 logger.info("Using cached validation result")
                 return self._cache[cache_key]
@@ -426,8 +427,9 @@ class LogicValidator:
         # Update timing
         result.time_ms = (time.time() - start_time) * 1000
         
-        # Cache result if enabled
+        # Cache result if enabled (use namespaced key to avoid conflicts with ontology_to_tdfol)
         if self.use_cache:
+            cache_key = f"consistency:{self._get_cache_key(ontology)}"
             self._cache[cache_key] = result
         
         logger.info(
@@ -1451,8 +1453,85 @@ class LogicValidator:
                 counts[t] = counts.get(t, 0) + 1
         return counts
 
+    def relationship_type_set(self, ontology: Dict[str, Any]) -> set:
+        """Return the set of distinct relationship type strings.
 
-# Export public API
+        Args:
+            ontology: Ontology dict.
+
+        Returns:
+            Set of type/label strings from all relationships.  Empty set when
+            there are no relationships.
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if not isinstance(rels, (list, tuple)):
+            return set()
+        return {
+            r.get("type", r.get("label", "unknown"))
+            for r in rels
+            if isinstance(r, dict)
+        }
+
+    def is_connected(self, ontology: Dict[str, Any]) -> bool:
+        """Return ``True`` if every entity can reach every other entity.
+
+        Uses an undirected breadth-first search treating relationships as
+        undirected edges.
+
+        Args:
+            ontology: Ontology dict.
+
+        Returns:
+            ``True`` when the graph is connected (or has 0–1 entities).
+            ``False`` when there are isolated components.
+        """
+        entity_ids = self.all_entity_ids(ontology)
+        if len(entity_ids) <= 1:
+            return True
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        adj: Dict[str, set] = {eid: set() for eid in entity_ids}
+        for rel in (rels if isinstance(rels, (list, tuple)) else []):
+            if isinstance(rel, dict):
+                src = rel.get("source_id")
+                tgt = rel.get("target_id")
+                if isinstance(src, str) and isinstance(tgt, str):
+                    adj.setdefault(src, set()).add(tgt)
+                    adj.setdefault(tgt, set()).add(src)
+        visited: set = set()
+        queue = [entity_ids[0]]
+        while queue:
+            node = queue.pop()
+            if node in visited:
+                continue
+            visited.add(node)
+            queue.extend(adj.get(node, set()) - visited)
+        return visited == set(entity_ids)
+
+    def duplicate_relationship_count(self, ontology: Dict[str, Any]) -> int:
+        """Return the count of duplicate (source, target, type) relationship triples.
+
+        A duplicate is any (source_id, target_id, type) combination that
+        appears more than once.
+
+        Args:
+            ontology: Ontology dict.
+
+        Returns:
+            Number of *duplicate* relationship entries (extras beyond the first).
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if not isinstance(rels, (list, tuple)):
+            return 0
+        seen: dict = {}
+        duplicates = 0
+        for rel in rels:
+            if not isinstance(rel, dict):
+                continue
+            key = (rel.get("source_id"), rel.get("target_id"), rel.get("type", rel.get("label")))
+            seen[key] = seen.get(key, 0) + 1
+            if seen[key] > 1:
+                duplicates += 1
+        return duplicates
 __all__ = [
     'LogicValidator',
     'ValidationResult',
