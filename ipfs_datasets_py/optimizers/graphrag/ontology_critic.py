@@ -1784,6 +1784,29 @@ class OntologyCritic(BaseCritic):
         """
         return self.bottom_dimension(score)
 
+    def dimension_gap(
+        self,
+        score: "CriticScore",
+        target: float = 1.0,
+    ) -> Dict[str, float]:
+        """Return how far each dimension is from *target*.
+
+        Args:
+            score: A :class:`CriticScore` to inspect.
+            target: Desired value for all dimensions (defaults to 1.0).
+
+        Returns:
+            Dict mapping dimension name → (target - dim_value), rounded to 6
+            decimal places.  Positive means below target (needs improvement).
+
+        Example:
+            >>> gaps = critic.dimension_gap(score)
+            >>> all(v >= 0 for v in gaps.values())
+            True
+        """
+        dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        return {d: round(target - getattr(score, d), 6) for d in dims}
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],

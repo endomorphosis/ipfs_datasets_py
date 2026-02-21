@@ -776,6 +776,23 @@ class OntologyMediator:
             return None
         return max(self._recommendation_counts, key=self._recommendation_counts.get)
 
+    def most_frequent_action(self) -> Optional[str]:
+        """Return the action with the highest cumulative invocation count.
+
+        Uses :attr:`_action_counts` which is updated during
+        :meth:`refine_ontology`.
+
+        Returns:
+            Action name string, or ``None`` if no actions have been applied.
+
+        Example:
+            >>> mediator.most_frequent_action()
+            None
+        """
+        if not self._action_counts:
+            return None
+        return max(self._action_counts, key=self._action_counts.get)
+
     def clear_recommendation_history(self) -> int:
         """Clear the recommendation phrase frequency table.
 

@@ -496,3 +496,20 @@ class OntologyLearningAdapter:
             0
         """
         return len(self._feedback)
+
+    def worst_feedback_scores(self, n: int = 5) -> List["FeedbackRecord"]:
+        """Return the bottom *n* feedback records sorted by ``final_score`` ascending.
+
+        Args:
+            n: Number of records to return.  Defaults to 5.
+
+        Returns:
+            List of :class:`FeedbackRecord` objects, length <= n, in
+            ascending score order (worst first).
+
+        Example:
+            >>> worst = adapter.worst_feedback_scores(3)
+            >>> len(worst) <= 3
+            True
+        """
+        return sorted(self._feedback, key=lambda r: r.final_score)[:n]

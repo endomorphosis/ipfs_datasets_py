@@ -1218,6 +1218,23 @@ class EntityExtractionResult:
             return 0.0
         return sum(e.confidence for e in self.entities) / len(self.entities)
 
+    def by_id(self, eid: str) -> Optional["Entity"]:
+        """Look up an entity by its id string.
+
+        Args:
+            eid: Entity id to search for.
+
+        Returns:
+            The matching :class:`Entity`, or ``None`` if not found.
+
+        Example:
+            >>> entity = result.by_id("e_abc123")
+        """
+        for entity in self.entities:
+            if entity.id == eid:
+                return entity
+        return None
+
 
 @dataclass
 class OntologyGenerationResult:
@@ -2905,3 +2922,25 @@ __all__ = [
 
 
 
+
+    def top_entities(
+        self,
+        result: "EntityExtractionResult",
+        n: int = 10,
+    ) -> List["Entity"]:
+        """Return the top *n* entities by confidence in descending order.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+            n: Number of entities to return (at most).
+
+        Returns:
+            List of :class:`Entity` objects, length <= n, sorted by confidence
+            descending.
+
+        Example:
+            >>> top = gen.top_entities(result, n=5)
+            >>> len(top) <= 5
+            True
+        """
+        return sorted(result.entities, key=lambda e: e.confidence, reverse=True)[:n]
