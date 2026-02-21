@@ -74,7 +74,7 @@ class BackendConfig:
     Attributes:
         provider: Backend provider, e.g. 'openai', 'anthropic', 'accelerate'.
         model: Model name / identifier.
-        temperature: Sampling temperature (0.0 – 1.0).
+        temperature: Sampling temperature (0.0 - 1.0).
         max_tokens: Maximum tokens to generate.
         extra: Any additional provider-specific options.
     """
@@ -215,6 +215,56 @@ class CriticScore:
             metadata={"delta": True},
         )
 
+    def to_radar_chart_data(self) -> Dict[str, Any]:
+        """Return data suitable for rendering a radar / spider chart.
+
+        The returned dict has two keys:
+
+        * ``"axes"`` - ordered list of dimension names.
+        * ``"values"`` - list of float scores in the same order (0.0-1.0).
+
+        The ordering is fixed so that repeated calls produce comparable
+        structures across multiple :class:`CriticScore` instances.
+
+        Returns:
+            Dict with ``"axes"`` and ``"values"`` lists.
+
+        Example:
+            >>> data = score.to_radar_chart_data()
+            >>> list(zip(data["axes"], data["values"]))
+            [('completeness', 0.8), ('consistency', 0.9), ...]
+        """
+        axes = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        return {
+            "axes": axes,
+            "values": [getattr(self, ax) for ax in axes],
+        }
+
+    def weighted_overall(self, weights: Dict[str, float]) -> float:
+        """Compute an overall score using *caller-supplied* dimension weights.
+
+        Unlike the :attr:`overall` property (which uses the module-level
+        :data:`DIMENSION_WEIGHTS`), this method normalises the supplied
+        weights so they sum to 1.0 before computing the dot product.
+
+        Args:
+            weights: Mapping of dimension name -> weight.  Only the five
+                standard dimensions are used; unknown keys are silently
+                ignored.  At least one dimension must have a positive weight.
+
+        Returns:
+            Weighted overall score in [0.0, 1.0].
+
+        Raises:
+            ValueError: If *weights* sums to zero or is empty after filtering.
+        """
+        dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        filtered = {k: v for k, v in weights.items() if k in dims and v > 0}
+        if not filtered:
+            raise ValueError("weights must contain at least one positive standard dimension")
+        total_w = sum(filtered.values())
+        return sum(getattr(self, d) * w / total_w for d, w in filtered.items())
+
 
 class OntologyCritic(BaseCritic):
     """
@@ -245,7 +295,7 @@ class OntologyCritic(BaseCritic):
     ``source_data`` to bypass caching.
     """
 
-    # Shared across all instances — survives instance teardown / recreation.
+    # Shared across all instances -- survives instance teardown / recreation.
     _SHARED_EVAL_CACHE: Dict[str, "CriticScore"] = {}
     _SHARED_EVAL_CACHE_MAX: int = 256
     
@@ -604,6 +654,42 @@ class OntologyCritic(BaseCritic):
             "count": len(scores),
         }
     
+    def compare_batch(
+        self,
+        ontologies: List[Dict[str, Any]],
+        context: Any,
+    ) -> List[Dict[str, Any]]:
+        """Rank a list of ontologies by their overall critic score.
+
+        Each ontology is evaluated with :meth:`evaluate_ontology` and the
+        results are returned sorted from highest to lowest overall score.
+
+        Args:
+            ontologies: List of ontology dicts to compare.
+            context: Shared evaluation context forwarded to each call.
+
+        Returns:
+            List of dicts, each containing:
+
+            * ``"index"`` - original position in *ontologies* (0-based).
+            * ``"rank"`` - 1-based rank (1 = best).
+            * ``"overall"`` - overall :class:`CriticScore` value.
+            * ``"score"`` - the full :class:`CriticScore` object.
+
+        Example:
+            >>> ranking = critic.compare_batch([ont_a, ont_b, ont_c], ctx)
+            >>> print(ranking[0]["rank"], ranking[0]["overall"])
+            1 0.87
+        """
+        scored = []
+        for idx, ontology in enumerate(ontologies):
+            score = self.evaluate_ontology(ontology, context)
+            scored.append({"index": idx, "overall": score.overall, "score": score})
+        scored.sort(key=lambda d: d["overall"], reverse=True)
+        for rank, item in enumerate(scored, start=1):
+            item["rank"] = rank
+        return scored
+
     def compare_ontologies(
         self,
         ontology1: Dict[str, Any],
@@ -612,7 +698,7 @@ class OntologyCritic(BaseCritic):
     ) -> Dict[str, Any]:
         """
         Compare two ontologies and identify improvements.
-        
+
         Evaluates both ontologies and provides a comparative analysis,
         highlighting which ontology performs better in each dimension
         and identifying specific improvements.
@@ -655,9 +741,9 @@ class OntologyCritic(BaseCritic):
                 val1 = getattr(score1, dim)
                 val2 = getattr(score2, dim)
                 if val2 > val1:
-                    improvements.append(f"{dim}: {val1:.2f} → {val2:.2f}")
+                    improvements.append(f"{dim}: {val1:.2f} -> {val2:.2f}")
                 elif val2 < val1:
-                    regressions.append(f"{dim}: {val1:.2f} → {val2:.2f}")
+                    regressions.append(f"{dim}: {val1:.2f} -> {val2:.2f}")
         
         return {
             'score1': score1.to_dict() if score1 else None,
@@ -721,10 +807,10 @@ class OntologyCritic(BaseCritic):
         if not entities:
             return 0.0
 
-        # Sub-score 1: entity count (target ≥ 10 for "complete")
+        # Sub-score 1: entity count (target >= 10 for "complete")
         entity_count_score = min(len(entities) / 10.0, 1.0)
 
-        # Sub-score 2: relationship density (≥ 1 rel per entity)
+        # Sub-score 2: relationship density (>= 1 rel per entity)
         rel_density_score = min(len(relationships) / max(len(entities), 1), 1.0)
 
         # Sub-score 3: entity-type diversity (at least 3 distinct types)
@@ -741,7 +827,7 @@ class OntologyCritic(BaseCritic):
         orphan_ratio = len(entity_ids - entity_ids_in_rels) / max(len(entity_ids), 1)
         orphan_penalty = max(0.0, 1.0 - orphan_ratio)
 
-        # Sub-score 5 (optional): source coverage — fraction of entity texts found in source
+        # Sub-score 5 (optional): source coverage -- fraction of entity texts found in source
         source_coverage_score: Optional[float] = None
         if isinstance(source_data, str) and source_data:
             src_lower = source_data.lower()
@@ -847,7 +933,7 @@ class OntologyCritic(BaseCritic):
         Evaluate clarity of entity definitions and naming conventions.
 
         Scores based on:
-        - property completeness (entities with ≥ 1 property)
+        - property completeness (entities with >= 1 property)
         - naming convention consistency (camelCase / snake_case / PascalCase)
         - non-empty text field
         - short-name penalty (entity texts < 3 chars suggest poor extraction)
@@ -860,7 +946,7 @@ class OntologyCritic(BaseCritic):
         if not entities:
             return 0.0
 
-        # Sub-score 1: property completeness (entities with ≥ 1 property)
+        # Sub-score 1: property completeness (entities with >= 1 property)
         with_props = sum(1 for e in entities if isinstance(e, dict) and e.get('properties'))
         prop_score = with_props / len(entities)
 
@@ -876,14 +962,14 @@ class OntologyCritic(BaseCritic):
         with_text = sum(1 for e in entities if isinstance(e, dict) and e.get('text'))
         text_score = with_text / len(entities)
 
-        # Sub-score 4: short-name penalty — texts with < 3 chars suggest noisy extraction
+        # Sub-score 4: short-name penalty -- texts with < 3 chars suggest noisy extraction
         short_names = sum(
             1 for e in entities
             if isinstance(e, dict) and len((e.get('text') or e.get('id') or '').strip()) < 3
         )
         short_penalty = short_names / len(entities)
 
-        # Sub-score 5: confidence coverage — fraction with explicit confidence > 0
+        # Sub-score 5: confidence coverage -- fraction with explicit confidence > 0
         with_confidence = sum(
             1 for e in entities
             if isinstance(e, dict) and isinstance(e.get('confidence'), (int, float)) and e['confidence'] > 0
@@ -1072,7 +1158,7 @@ class OntologyCritic(BaseCritic):
         """Generate specific, actionable recommendations for improvement.
 
         Recommendations are tailored to the actual ontology content rather than
-        being generic — they cite entity counts, missing properties, dangling
+        being generic -- they cite entity counts, missing properties, dangling
         references, etc.
         """
         recommendations: List[str] = []
@@ -1081,7 +1167,7 @@ class OntologyCritic(BaseCritic):
         relationships = ontology.get('relationships', [])
         entity_ids = {e.get('id') for e in entities if isinstance(e, dict) and e.get('id')}
 
-        # ── Completeness recommendations ─────────────────────────────────────
+        # -- Completeness recommendations -------------------------------------
         if completeness < 0.7:
             n = len(entities)
             if n == 0:
@@ -1090,7 +1176,7 @@ class OntologyCritic(BaseCritic):
                 )
             elif n < 5:
                 recommendations.append(
-                    f"Only {n} entit{'y' if n == 1 else 'ies'} extracted — aim for at least 10 "
+                    f"Only {n} entit{'y' if n == 1 else 'ies'} extracted -- aim for at least 10 "
                     "to ensure adequate coverage."
                 )
 
@@ -1113,7 +1199,7 @@ class OntologyCritic(BaseCritic):
                     "Introduce multiple entity types (e.g. Person, Organization, Concept) for richer semantics."
                 )
 
-        # ── Consistency recommendations ───────────────────────────────────────
+        # -- Consistency recommendations ---------------------------------------
         if consistency < 0.7:
             dangling = [
                 r for r in relationships
@@ -1136,7 +1222,7 @@ class OntologyCritic(BaseCritic):
                     "Assign unique IDs to prevent ambiguous references."
                 )
 
-        # ── Clarity recommendations ───────────────────────────────────────────
+        # -- Clarity recommendations -------------------------------------------
         if clarity < 0.7:
             no_props = [e for e in entities if isinstance(e, dict) and not e.get('properties')]
             if len(no_props) > len(entities) * 0.5:
@@ -1162,7 +1248,7 @@ class OntologyCritic(BaseCritic):
                     "(< 3 characters). Review these for extraction noise."
                 )
 
-        # ── Granularity recommendations ───────────────────────────────────────
+        # -- Granularity recommendations ---------------------------------------
         if granularity < 0.7:
             prop_counts = [len(e.get('properties', {})) for e in entities if isinstance(e, dict)]
             avg_props = sum(prop_counts) / max(len(prop_counts), 1)
@@ -1176,11 +1262,11 @@ class OntologyCritic(BaseCritic):
             rel_ratio = n_rels / max(len(entities), 1)
             if rel_ratio > 5.0:
                 recommendations.append(
-                    "Relationship count is very high relative to entity count — consider merging redundant entities "
+                    "Relationship count is very high relative to entity count -- consider merging redundant entities "
                     "or collapsing similar relationship types."
                 )
 
-        # ── Domain alignment recommendations ─────────────────────────────────
+        # -- Domain alignment recommendations ---------------------------------
         if domain_alignment < 0.7:
             domain = (getattr(context, 'domain', None) or ontology.get('domain', 'general')).lower()
             recommendations.append(

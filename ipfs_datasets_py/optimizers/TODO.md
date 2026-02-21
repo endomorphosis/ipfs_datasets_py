@@ -594,8 +594,31 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [graphrag] ✅ Add `OntologyGenerator.filter_entities()` — post-extraction filter by type/confidence/text
 - [ ] (P3) [graphrag] Add `OntologyMediator.undo_last_action()` — revert last applied refinement action
 - [ ] (P2) [tests] Add negative tests for OntologyPipeline: empty domain, None data, very long text
-- [ ] (P3) [graphrag] Add `Entity.to_dict()` instance method for consistent serialisation
+- [x] (P3) [graphrag] Add `Entity.to_dict()` instance method -- Done batch-59: all fields, source_span as list; 9 tests
 - [ ] (P2) [graphrag] Add `OntologyCritic.weighted_overall()` — allow caller-supplied weight overrides
 - [ ] (P3) [graphrag] ✅ Add `OntologyOptimizer.rolling_average_score(n)` — mean of last N history entries
 - [ ] (P2) [graphrag] ✅ Add `ExtractionConfig.merge(other)` — merge two configs, latter values win on conflict
 - [ ] (P3) [graphrag] Add `OntologyPipeline.warm_cache()` — pre-evaluate a reference ontology to fill shared cache
+
+## Batch 59+ ideas (added automatically)
+
+- [ ] (P2) [graphrag] Add `OntologyPipeline.warm_cache()` -- pre-evaluate a reference ontology to fill shared cache
+- [ ] (P3) [graphrag] Add `OntologyMediator.undo_last_action()` -- revert last applied refinement action
+- [ ] (P3) [graphrag] Add `OntologyGenerator.extract_with_coref()` -- co-reference resolution pre-pass
+- [ ] (P2) [graphrag] Add `OntologyPipeline.run_async()` -- async coroutine wrapper around run()
+- [ ] (P3) [obs] Add structured JSON log at end of `analyze_batch_parallel()` with timing + scores
+- [ ] (P2) [tests] Hypothesis property test: ExtractionConfig round-trips through to_dict/from_dict
+- [ ] (P3) [graphrag] Add confidence decay over time -- entities not seen recently get lower confidence
+- [ ] (P2) [graphrag] Add `OntologyOptimizer.export_score_chart()` -- matplotlib line chart of score history
+- [ ] (P3) [graphrag] Add `OntologyMediator.get_recommendation_stats()` -- count unique recommendation phrases seen
+- [ ] (P2) [graphrag] Add `OntologyGenerator.extract_entities_with_spans()` -- return char offsets for each entity
+- [ ] (P3) [tests] Add property tests for `OntologyMediator.refine_ontology()` using Hypothesis
+- [ ] (P2) [arch] Add `OntologyPipeline.clone()` -- deep copy a pipeline with fresh state
+- [ ] (P3) [graphrag] Add `CriticScore.from_dict()` classmethod -- inverse of to_dict()
+- [ ] (P2) [graphrag] Add `ExtractionConfig.to_yaml()` / `from_yaml()` -- YAML round-trip
+- [ ] (P3) [graphrag] Add `OntologyOptimizer.best_ontology()` -- return ontology from highest-scoring history entry
+- [ ] (P2) [tests] Add negative tests for OntologyPipeline: empty domain, None data, very long text
+- [ ] (P3) [obs] Add `OntologyMediator.refine_ontology()` structured log of actions_applied per round
+- [ ] (P2) [graphrag] Add `LogicValidator.explain_contradictions()` -- human-readable contradiction explanations
+- [ ] (P3) [arch] Add `OntologyHarness.run()` integration test with real generator + critic (no mocks)
+- [ ] (P2) [graphrag] Add `EntityExtractionResult.filter_by_type()` -- return subset of entities matching type

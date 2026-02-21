@@ -727,6 +727,50 @@ class LogicValidator:
             prover_used=f"structural:{self.prover_config.strategy}",
         )
     
+    def batch_validate(
+        self,
+        ontologies: List[Dict[str, Any]],
+        max_workers: int = 4,
+    ) -> List[ValidationResult]:
+        """Validate a list of ontologies concurrently.
+
+        Uses a :class:`~concurrent.futures.ThreadPoolExecutor` to call
+        :meth:`check_consistency` on each ontology in parallel.
+
+        Args:
+            ontologies: List of ontology dicts to validate.
+            max_workers: Maximum number of worker threads (default: 4).
+
+        Returns:
+            List of :class:`ValidationResult` objects in the same order as
+            *ontologies*.
+
+        Example:
+            >>> results = validator.batch_validate([ont_a, ont_b, ont_c])
+            >>> [r.is_consistent for r in results]
+            [True, False, True]
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        if not ontologies:
+            return []
+
+        results: List[Optional[ValidationResult]] = [None] * len(ontologies)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(self.check_consistency, ont): idx for idx, ont in enumerate(ontologies)}
+            for future in as_completed(futures):
+                idx = futures[future]
+                try:
+                    results[idx] = future.result()
+                except Exception as exc:
+                    results[idx] = ValidationResult(
+                        is_consistent=False,
+                        contradictions=[f"Validation error: {exc}"],
+                        confidence=0.0,
+                        prover_used="error",
+                    )
+        return results  # type: ignore[return-value]
+
     def clear_tdfol_cache(self) -> int:
         """Clear the TDFOL formula cache.
 

@@ -324,6 +324,27 @@ class Entity:
     confidence: float = 1.0
     source_span: Optional[tuple[int, int]] = None
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialise this entity to a plain dictionary.
+
+        Returns:
+            Dict with keys ``id``, ``type``, ``text``, ``confidence``,
+            ``properties``, and ``source_span``.
+
+        Example:
+            >>> d = entity.to_dict()
+            >>> d["type"]
+            'Person'
+        """
+        return {
+            "id": self.id,
+            "type": self.type,
+            "text": self.text,
+            "confidence": self.confidence,
+            "properties": dict(self.properties),
+            "source_span": list(self.source_span) if self.source_span else None,
+        }
+
 
 @dataclass(slots=True)
 class Relationship:
@@ -397,6 +418,45 @@ class EntityExtractionResult:
             for e in self.entities
         ]
         return _pd.DataFrame(rows, columns=["id", "text", "type", "confidence"])
+
+    def to_json(self) -> str:
+        """Serialise the full extraction result to a JSON string.
+
+        Entities are serialised via :meth:`Entity.to_dict`; relationships are
+        serialised to dicts with the same field names as the
+        :class:`Relationship` dataclass.
+
+        Returns:
+            JSON string representation of this result.
+
+        Example:
+            >>> import json
+            >>> result = generator.extract_entities(data, ctx)
+            >>> d = json.loads(result.to_json())
+            >>> len(d["entities"]) == len(result.entities)
+            True
+        """
+        import json as _json
+
+        def _rel_to_dict(r):
+            return {
+                "id": r.id,
+                "source_id": r.source_id,
+                "target_id": r.target_id,
+                "type": r.type,
+                "confidence": r.confidence,
+                "direction": r.direction,
+                "properties": dict(r.properties),
+            }
+
+        payload = {
+            "entities": [e.to_dict() for e in self.entities],
+            "relationships": [_rel_to_dict(r) for r in self.relationships],
+            "confidence": self.confidence,
+            "metadata": self.metadata,
+            "errors": self.errors,
+        }
+        return _json.dumps(payload)
 
 
 @dataclass
