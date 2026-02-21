@@ -1046,3 +1046,43 @@ class OntologyPipeline:
             return -1
         return max(range(len(self._run_history)),
                    key=lambda i: self._run_history[i].score.overall)
+
+    def score_ewma(self, alpha: float = 0.3) -> list:
+        """Return a list of exponentially weighted moving averages of run scores.
+
+        Args:
+            alpha: Smoothing factor in (0, 1].  Higher values weight recent
+                observations more heavily.
+
+        Returns:
+            List of float EWMA values, same length as ``_run_history``.
+            Empty when no runs recorded.
+        """
+        if not self._run_history:
+            return []
+        scores = [r.score.overall for r in self._run_history]
+        ewma = [scores[0]]
+        for s in scores[1:]:
+            ewma.append(alpha * s + (1 - alpha) * ewma[-1])
+        return ewma
+
+    def trend_slope(self) -> float:
+        """Return the linear regression slope of overall scores over run indices.
+
+        A positive value indicates an improving trend; negative means declining.
+
+        Returns:
+            Slope as float; ``0.0`` when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        n = len(scores)
+        xs = list(range(n))
+        x_mean = sum(xs) / n
+        y_mean = sum(scores) / n
+        num = sum((xs[i] - x_mean) * (scores[i] - y_mean) for i in range(n))
+        den = sum((xs[i] - x_mean) ** 2 for i in range(n))
+        if den == 0:
+            return 0.0
+        return num / den

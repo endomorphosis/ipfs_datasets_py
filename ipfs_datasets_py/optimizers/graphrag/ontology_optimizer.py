@@ -2517,6 +2517,41 @@ class OntologyOptimizer:
         scores = [e.average_score for e in self._history]
         return max(scores) - min(scores)
 
+    def min_score(self) -> float:
+        """Return the minimum ``average_score`` across history.
+
+        Returns:
+            Minimum float; ``0.0`` when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        return min(e.average_score for e in self._history)
+
+    def max_score(self) -> float:
+        """Return the maximum ``average_score`` across history.
+
+        Returns:
+            Maximum float; ``0.0`` when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        return max(e.average_score for e in self._history)
+
+    def median_score(self) -> float:
+        """Return the median ``average_score`` across history.
+
+        Returns:
+            Median float; ``0.0`` when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        vals = sorted(e.average_score for e in self._history)
+        n = len(vals)
+        mid = n // 2
+        if n % 2 == 1:
+            return vals[mid]
+        return (vals[mid - 1] + vals[mid]) / 2.0
+
 
 # Export public API
 __all__ = [
