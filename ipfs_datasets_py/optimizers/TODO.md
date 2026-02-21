@@ -774,3 +774,25 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] Add `OntologyMediator.undo_all()` -- Done batch-84: undo to oldest snapshot
 - [x] (P2) [graphrag] Add `OntologyCritic.worst_score(scores)` -- Done batch-84: min overall CriticScore
 - [x] (P3) [graphrag] Add `OntologyPipeline.total_runs()` -- Done batch-84: count of run() calls
+
+## Batch 85+ Ideas (added batch-84)
+- [x] (P2) [graphrag] Add `OntologyCritic.best_score(scores)` -- Done batch-85: -- CriticScore with highest overall from list
+- [x] (P2) [graphrag] Add `EntityExtractionResult.has_entity(text)` -- Done batch-85: -- check if any entity has matching text
+- [ ] (P2) [graphrag] Add `OntologyGenerator.explain_entity(entity)` -- one-line English description of entity
+- [x] (P2) [graphrag] Add `OntologyMediator.action_count_for(action)` -- Done batch-85: -- invocation count for specific action
+- [ ] (P3) [graphrag] Add `ExtractionConfig.summary()` -- one-line config description
+- [ ] (P2) [graphrag] Add `OntologyOptimizer.clear_history()` -- clear all history entries (if not exists)
+- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.mean_score()` -- mean of all feedback final_scores
+- [x] (P3) [graphrag] Add `CriticScore.is_passing(threshold)` -- Done batch-85: -- True if overall >= threshold (default 0.6)
+- [x] (P2) [graphrag] Add `OntologyPipeline.last_score()` -- Done batch-85: -- overall score from most recent run()
+- [ ] (P3) [graphrag] Add `EntityExtractionResult.filter_by_type(etype)` -- keep only entities of given type
+- [ ] (P2) [graphrag] Add `OntologyGenerator.entity_count(result)` -- total entity count
+- [ ] (P2) [graphrag] Add `OntologyCritic.score_mean(scores)` -- mean CriticScore.overall from list
+- [ ] (P3) [graphrag] Add `OntologyMediator.stash()` -- push snapshot without advancing refine_ontology
+- [ ] (P2) [graphrag] Add `LogicValidator.format_report(result)` -- multi-line human-readable validation report
+- [ ] (P2) [graphrag] Add `OntologyOptimizer.percentile_score(p)` -- p-th percentile of score history
+- [ ] (P3) [graphrag] Add `EntityExtractionResult.relationships_for(entity_id)` -- rels involving entity
+- [ ] (P2) [graphrag] Add `OntologyGenerator.rebuild_result(entities)` -- wrap entities in new result
+- [ ] (P2) [graphrag] Add `OntologyCritic.evaluate_list(ontologies, ctx)` -- evaluate a list, return CriticScores
+- [ ] (P3) [graphrag] Add `OntologyPipeline.domain` setter -- update domain at runtime
+- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.score_variance()` -- variance of feedback final_scores

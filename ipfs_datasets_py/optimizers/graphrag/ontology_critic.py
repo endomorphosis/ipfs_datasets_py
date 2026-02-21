@@ -213,6 +213,23 @@ class CriticScore:
             self.domain_alignment,
         ]
 
+    def is_passing(self, threshold: float = 0.6) -> bool:
+        """Return ``True`` if ``overall`` is at or above *threshold*.
+
+        Args:
+            threshold: Minimum acceptable overall score.  Defaults to 0.6.
+
+        Returns:
+            ``True`` when ``self.overall >= threshold``.
+
+        Example:
+            >>> score.is_passing()
+            True
+            >>> score.is_passing(threshold=0.95)
+            False
+        """
+        return self.overall >= threshold
+
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "CriticScore":
         """Reconstruct a :class:`CriticScore` from a dictionary.
@@ -1959,6 +1976,22 @@ class OntologyCritic(BaseCritic):
         if not scores:
             return None
         return min(scores, key=lambda s: s.overall)
+
+    def best_score(self, scores: List["CriticScore"]) -> Optional["CriticScore"]:
+        """Return the :class:`CriticScore` with the highest ``overall`` value.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            The score with the maximum ``overall``, or ``None`` for an empty list.
+
+        Example:
+            >>> critic.best_score([s1, s2, s3])
+        """
+        if not scores:
+            return None
+        return max(scores, key=lambda s: s.overall)
 
     def _generate_recommendations(
         self,

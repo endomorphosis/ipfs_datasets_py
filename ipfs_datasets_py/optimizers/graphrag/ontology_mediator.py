@@ -811,6 +811,22 @@ class OntologyMediator:
             return None
         return max(self._action_counts, key=self._action_counts.get)
 
+    def action_count_for(self, action: str) -> int:
+        """Return the cumulative invocation count for a specific *action*.
+
+        Args:
+            action: Action name string to query.
+
+        Returns:
+            Non-negative integer count.  Returns 0 if the action has never
+            been applied.
+
+        Example:
+            >>> mediator.action_count_for("add_entity")
+            0
+        """
+        return self._action_counts.get(action, 0)
+
     def clear_recommendation_history(self) -> int:
         """Clear the recommendation phrase frequency table.
 

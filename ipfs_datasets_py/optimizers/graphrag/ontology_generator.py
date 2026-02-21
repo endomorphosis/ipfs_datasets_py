@@ -1235,6 +1235,26 @@ class EntityExtractionResult:
                 return entity
         return None
 
+    def has_entity(self, text: str, case_sensitive: bool = False) -> bool:
+        """Return ``True`` if any entity in this result matches *text*.
+
+        Args:
+            text: Text to search for.
+            case_sensitive: If ``False`` (default), comparison is
+                case-insensitive.
+
+        Returns:
+            Boolean.
+
+        Example:
+            >>> result.has_entity("Alice")
+            True
+        """
+        if case_sensitive:
+            return any(e.text == text for e in self.entities)
+        needle = text.lower()
+        return any(e.text.lower() == needle for e in self.entities)
+
 
 @dataclass
 class OntologyGenerationResult:

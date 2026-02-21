@@ -538,6 +538,21 @@ class OntologyPipeline:
         """
         return len(self._run_history)
 
+    def last_score(self) -> float:
+        """Return the ``overall`` score from the most recent :meth:`run` call.
+
+        Returns:
+            ``PipelineResult.score.overall`` of the last run, or 0.0 if
+            no runs have been executed.
+
+        Example:
+            >>> pipeline.last_score()
+            0.0
+        """
+        if not self._run_history:
+            return 0.0
+        return self._run_history[-1].score.overall
+
     def summary(self) -> str:
         """Return a compact one-line description of this pipeline's configuration.
 
