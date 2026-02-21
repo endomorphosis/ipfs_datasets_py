@@ -3321,6 +3321,36 @@ class OntologyCritic(BaseCritic):
         return all(getattr(score, d, 0.0) > threshold for d in self._DIMENSIONS)
 
 
+    def dimension_ratio(self, score) -> dict:
+        """Return each dimension score as a fraction of the total score sum.
+
+        Args:
+            score: A ``CriticScore`` instance.
+
+        Returns:
+            Dict mapping dimension name → fraction. All fractions sum to 1.0.
+            Returns equal fractions when total is 0.
+        """
+        total = sum(getattr(score, d, 0.0) for d in self._DIMENSIONS)
+        if total == 0.0:
+            frac = 1.0 / len(self._DIMENSIONS)
+            return {d: frac for d in self._DIMENSIONS}
+        return {d: getattr(score, d, 0.0) / total for d in self._DIMENSIONS}
+
+    def all_dimensions_below(self, score, threshold: float = 0.5) -> bool:
+        """Return True if all dimensions of *score* are below *threshold*.
+
+        Args:
+            score: A ``CriticScore`` instance.
+            threshold: Maximum value (exclusive). Defaults to ``0.5``.
+
+        Returns:
+            ``True`` when every dimension value is strictly less than
+            *threshold*; ``False`` otherwise.
+        """
+        return all(getattr(score, d, 0.0) < threshold for d in self._DIMENSIONS)
+
+
 # Export public API
 __all__ = [
     'OntologyCritic',

@@ -1184,3 +1184,17 @@ class OntologyPipeline:
         if not self._run_history:
             return False
         return all(r.score.overall > threshold for r in self._run_history)
+
+    def run_score_at(self, idx: int) -> float:
+        """Return the overall score of the run at *idx* in run history.
+
+        Args:
+            idx: Integer index into ``_run_history`` (supports negatives).
+
+        Returns:
+            Float overall score at the given index.
+
+        Raises:
+            IndexError: When *idx* is out of range.
+        """
+        return self._run_history[idx].score.overall

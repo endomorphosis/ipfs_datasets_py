@@ -1207,3 +1207,14 @@ class OntologyLearningAdapter:
             List of ``FeedbackRecord`` objects with ``lo <= final_score <= hi``.
         """
         return [r for r in self._feedback if lo <= r.final_score <= hi]
+
+    def feedback_range(self) -> float:
+        """Return max - min final_score across all feedback records.
+
+        Returns:
+            Float range; ``0.0`` when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        return max(scores) - min(scores)
