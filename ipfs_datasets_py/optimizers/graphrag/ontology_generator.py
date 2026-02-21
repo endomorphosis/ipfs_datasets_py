@@ -4920,6 +4920,19 @@ class OntologyGenerator:
             counts[e.type] = counts.get(e.type, 0) + 1
         return counts
 
+    def entity_avg_confidence(self, result) -> float:
+        """Return the mean confidence across all entities in *result*.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float mean confidence; ``0.0`` when the result has no entities.
+        """
+        if not result.entities:
+            return 0.0
+        return sum(e.confidence for e in result.entities) / len(result.entities)
+
 
 __all__ = [
     'OntologyGenerator',

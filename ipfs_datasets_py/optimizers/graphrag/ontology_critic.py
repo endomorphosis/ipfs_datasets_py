@@ -3294,6 +3294,19 @@ class OntologyCritic(BaseCritic):
         """
         return min(self._DIMENSIONS, key=lambda d: getattr(score, d, 0.0))
 
+    def dimension_delta_summary(self, before, after) -> dict:
+        """Return a dict of per-dimension deltas between two ``CriticScore`` objects.
+
+        Args:
+            before: Earlier ``CriticScore``.
+            after: Later ``CriticScore``.
+
+        Returns:
+            Dict mapping dimension name → ``after_dim - before_dim`` float delta.
+        """
+        return {d: getattr(after, d, 0.0) - getattr(before, d, 0.0)
+                for d in self._DIMENSIONS}
+
 
 # Export public API
 __all__ = [

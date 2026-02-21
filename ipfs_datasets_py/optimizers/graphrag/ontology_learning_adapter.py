@@ -1174,3 +1174,24 @@ class OntologyLearningAdapter:
             return ""
         averages = {d: domain_totals[d] / domain_counts[d] for d in domain_totals}
         return max(averages, key=averages.get)
+
+    def feedback_trend_direction(self) -> str:
+        """Return the overall trend direction of feedback scores.
+
+        Compares the mean of the first half to the mean of the second half.
+
+        Returns:
+            ``"improving"`` when second-half mean > first-half mean,
+            ``"declining"`` when lower, ``"stable"`` when equal or < 2 records.
+        """
+        if len(self._feedback) < 2:
+            return "stable"
+        vals = [r.final_score for r in self._feedback]
+        mid = len(vals) // 2
+        first_mean = sum(vals[:mid]) / mid
+        second_mean = sum(vals[mid:]) / (len(vals) - mid)
+        if second_mean > first_mean:
+            return "improving"
+        elif second_mean < first_mean:
+            return "declining"
+        return "stable"

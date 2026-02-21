@@ -2728,6 +2728,17 @@ class OntologyOptimizer:
         prior = scores[-(2 * window):-window]
         return sum(recent) / len(recent) - sum(prior) / len(prior)
 
+    def score_below_threshold(self, threshold: float = 0.5) -> list:
+        """Return history entries whose ``average_score`` is below *threshold*.
+
+        Args:
+            threshold: Maximum score value (exclusive). Defaults to ``0.5``.
+
+        Returns:
+            List of history entries with ``average_score < threshold``.
+        """
+        return [e for e in self._history if e.average_score < threshold]
+
 
 # Export public API
 __all__ = [

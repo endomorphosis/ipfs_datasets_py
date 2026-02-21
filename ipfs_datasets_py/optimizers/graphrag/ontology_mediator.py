@@ -613,6 +613,43 @@ class OntologyMediator:
 
         refined.setdefault('metadata', {})
         refined['metadata']['refinement_actions'] = actions_applied
+        
+        # Structured JSON logging for per-round metrics
+        try:
+            import json as _json
+            round_number = len(self._undo_stack)
+            entity_delta = len(refined.get('entities', [])) - len(ontology.get('entities', []))
+            relationship_delta = len(refined.get('relationships', [])) - len(ontology.get('relationships', []))
+            
+            round_metrics = {
+                'event': 'ontology_refinement_round',
+                'round': round_number,
+                'recommendations_count': len(feedback.recommendations),
+                'actions_applied': actions_applied,
+                'actions_count': len(actions_applied),
+                'entity_delta': entity_delta,
+                'relationship_delta': relationship_delta,
+                'final_entity_count': len(refined.get('entities', [])),
+                'final_relationship_count': len(refined.get('relationships', [])),
+                'feedback_score': feedback.overall,
+                'feedback_dimensions': {
+                    'completeness': feedback.completeness,
+                    'consistency': feedback.consistency,
+                    'clarity': feedback.clarity,
+                    'granularity': getattr(feedback, 'granularity', 0.0),
+                    'relationship_coherence': getattr(feedback, 'relationship_coherence', 0.0),
+                    'domain_alignment': getattr(feedback, 'domain_alignment', 0.0),
+                },
+                'timestamp': str(_json.dumps({}).replace('{}', '')).strip() or _json.dumps({'timestamp': str(__import__('datetime').datetime.now().isoformat())})
+            }
+            # Clean up timestamp field (simplified for logging)
+            round_metrics['timestamp'] = str(__import__('datetime').datetime.now().isoformat())
+            
+            # Log as structured JSON
+            self._log.info(f"REFINEMENT_ROUND: {_json.dumps(round_metrics)}")
+        except Exception as e:
+            self._log.debug(f"Could not log structured metrics: {e}")
+        
         self._log.info(f"Refinement complete. Actions applied: {actions_applied}")
         # Update cumulative action counts
         for action in actions_applied:
