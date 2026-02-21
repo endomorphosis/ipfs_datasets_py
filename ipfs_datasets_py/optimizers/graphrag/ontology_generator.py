@@ -4947,6 +4947,24 @@ class OntologyGenerator:
             return 0.0
         return len(result.relationships) / len(result.entities)
 
+    def entity_type_ratio(self, result) -> dict:
+        """Return fraction of each entity type in *result*.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Dict mapping entity type string → fraction (0.0–1.0). Empty dict
+            when no entities.
+        """
+        if not result.entities:
+            return {}
+        counts: dict = {}
+        for e in result.entities:
+            counts[e.type] = counts.get(e.type, 0) + 1
+        total = len(result.entities)
+        return {t: c / total for t, c in counts.items()}
+
 
 __all__ = [
     'OntologyGenerator',

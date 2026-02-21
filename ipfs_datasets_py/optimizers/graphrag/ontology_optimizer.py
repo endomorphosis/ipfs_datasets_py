@@ -2762,6 +2762,31 @@ class OntologyOptimizer:
         mean = sum(scores) / len(scores)
         return sum((s - mean) ** 2 for s in scores) / len(scores)
 
+    def history_iqr(self) -> float:
+        """Return the inter-quartile range (IQR) of ``average_score`` values.
+
+        Returns:
+            Float IQR (Q3 - Q1); ``0.0`` when history has fewer than 4 entries.
+        """
+        if len(self._history) < 4:
+            return 0.0
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        q1 = scores[n // 4]
+        q3 = scores[(3 * n) // 4]
+        return q3 - q1
+
+    def top_n_history(self, n: int = 3) -> list:
+        """Return the top-n history entries ordered by ``average_score`` desc.
+
+        Args:
+            n: Number of entries to return. Defaults to ``3``.
+
+        Returns:
+            List of history entries (up to *n*), highest score first.
+        """
+        return sorted(self._history, key=lambda e: e.average_score, reverse=True)[:n]
+
 
 # Export public API
 __all__ = [

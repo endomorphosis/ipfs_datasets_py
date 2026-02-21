@@ -1170,3 +1170,17 @@ class OntologyPipeline:
         """
         recent = self._run_history[-n:]
         return [r.score.overall for r in recent]
+
+    def all_runs_above(self, threshold: float = 0.5) -> bool:
+        """Return True if every run score exceeds *threshold*.
+
+        Args:
+            threshold: Minimum value (exclusive). Defaults to ``0.5``.
+
+        Returns:
+            ``True`` when all run overall scores are strictly greater than
+            *threshold*; ``False`` when history is empty or any score fails.
+        """
+        if not self._run_history:
+            return False
+        return all(r.score.overall > threshold for r in self._run_history)
