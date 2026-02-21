@@ -1358,6 +1358,34 @@ class OntologyMediator:
             return None
         return min(active, key=lambda k: active[k])
 
+    def undo_stack_summary(self) -> list:
+        """Return a list of labels for each item on the mediator's undo stack.
+
+        Walks ``self._undo_stack`` (if it exists and is iterable) and extracts
+        the ``"action"`` key when items are dicts, or their string
+        representation otherwise.
+
+        Returns:
+            List of label strings, oldest first.  Empty list when no undo stack
+            is present or when the stack is empty.
+        """
+        stack = getattr(self, "_undo_stack", None) or []
+        labels = []
+        for item in stack:
+            if isinstance(item, dict):
+                labels.append(str(item.get("action", item)))
+            else:
+                labels.append(str(item))
+        return labels
+
+    def undo_stack_depth(self) -> int:
+        """Return the number of items currently on the undo stack.
+
+        Returns:
+            Integer length of ``_undo_stack``; 0 when no stack exists.
+        """
+        return len(getattr(self, "_undo_stack", None) or [])
+
 
 # Export public API
 __all__ = [

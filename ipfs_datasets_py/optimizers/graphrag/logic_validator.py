@@ -1652,6 +1652,102 @@ class LogicValidator:
         visited.discard(source)
         return sorted(visited)
 
+    def has_cycle(self, ontology: Dict[str, Any]) -> bool:
+        """Return ``True`` if the directed relationship graph contains a cycle.
+
+        Uses DFS with three-colour marking (white/grey/black).
+
+        Args:
+            ontology: Ontology dict.
+
+        Returns:
+            ``True`` when at least one directed cycle exists.
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        adj: Dict[str, list] = {}
+        for rel in (rels if isinstance(rels, (list, tuple)) else []):
+            if isinstance(rel, dict):
+                src = rel.get("source_id")
+                tgt = rel.get("target_id")
+                if isinstance(src, str) and isinstance(tgt, str) and src != tgt:
+                    adj.setdefault(src, []).append(tgt)
+
+        WHITE, GREY, BLACK = 0, 1, 2
+        color: Dict[str, int] = {}
+
+        def dfs(node: str) -> bool:
+            color[node] = GREY
+            for neighbour in adj.get(node, []):
+                if color.get(neighbour, WHITE) == GREY:
+                    return True
+                if color.get(neighbour, WHITE) == WHITE:
+                    if dfs(neighbour):
+                        return True
+            color[node] = BLACK
+            return False
+
+        all_nodes = set(adj.keys())
+        for rel in (rels if isinstance(rels, (list, tuple)) else []):
+            if isinstance(rel, dict):
+                for key in ("source_id", "target_id"):
+                    v = rel.get(key)
+                    if isinstance(v, str):
+                        all_nodes.add(v)
+
+        for node in all_nodes:
+            if color.get(node, WHITE) == WHITE:
+                if dfs(node):
+                    return True
+        return False
+
+    def cycle_participant_count(self, ontology: Dict[str, Any]) -> int:
+        """Return an estimate of the number of nodes involved in cycles.
+
+        Uses DFS: counts nodes that are visited while their ancestor is still on
+        the stack (grey nodes that are re-entered).
+
+        Args:
+            ontology: Ontology dict.
+
+        Returns:
+            Count of entity ids that participate in at least one directed cycle.
+            Returns 0 when there are no cycles.
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        adj: Dict[str, list] = {}
+        for rel in (rels if isinstance(rels, (list, tuple)) else []):
+            if isinstance(rel, dict):
+                src = rel.get("source_id")
+                tgt = rel.get("target_id")
+                if isinstance(src, str) and isinstance(tgt, str) and src != tgt:
+                    adj.setdefault(src, []).append(tgt)
+
+        WHITE, GREY, BLACK = 0, 1, 2
+        color: Dict[str, int] = {}
+        in_cycle: set = set()
+        stack: list = []
+
+        def dfs(node: str) -> bool:
+            color[node] = GREY
+            stack.append(node)
+            for neighbour in adj.get(node, []):
+                if color.get(neighbour, WHITE) == GREY:
+                    # Found back-edge — mark cycle participants
+                    idx = stack.index(neighbour)
+                    for n in stack[idx:]:
+                        in_cycle.add(n)
+                elif color.get(neighbour, WHITE) == WHITE:
+                    dfs(neighbour)
+            stack.pop()
+            color[node] = BLACK
+
+        all_nodes = set(adj.keys())
+        for node in all_nodes:
+            if color.get(node, WHITE) == WHITE:
+                dfs(node)
+
+        return len(in_cycle)
+
 
 # Export public API
 __all__ = [
