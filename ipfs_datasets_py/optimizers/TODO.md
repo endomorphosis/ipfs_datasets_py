@@ -65,8 +65,9 @@ These should be started immediately when available:
   - Done 2026-02-21: Added method to find entity with lowest confidence score. Handles both dict and Entity object formats. 10 unit tests added, all passing.
 - [x] (P2) [tests] Add parametrized tests for `ExtractionConfig` field validation
   - Done (previous session): Complete test suite with 63 parametrized tests in test_extraction_config_validation.py. All validation rules covered, all tests passing.
+- [x] (P3) [arch] Add `BaseOptimizer.dry_run()` method for validation without mutation
+  - Done 2026-02-21: Implemented dry_run() method in BaseOptimizer (common/base_optimizer.py, lines 284-338). Single-cycle execution (generate + critique + validate) without performing optimization. Useful for testing pipeline configuration and validating input data. Returns artifact, score, feedback, validity, and execution timing. Error handling via logging + exception propagation. 17 comprehensive unit tests added covering: basic functionality, return values, validation behavior, timing, error handling, non-mutation guarantee, multiple independent calls, documentation. All 17 tests passing. File: tests/unit/optimizers/common/test_base_optimizer_dry_run.py
 - [ ] (P3) [docs] Add one-page "Quick Start" guide for GraphRAG ontology generation
-- [x] (P3) [graphrag] Add `LogicValidator.entity_contradiction_count()` integer count helper
   - Done 2026-02-21: Added method to count entities involved in contradictions via invalid_entity_ids. Returns non-negative integer. 6 unit tests added, all passing.
 - [x] (P3) [obs] Add timing instrumentation to `_extract_rule_based()` method
   - Done 2026-02-21: Discovered comprehensive timing instrumentation already implemented in method (graphrag/ontology_generator.py lines 3122-3193). Tracks 4 timing phases: pattern_time_ms, extraction_time_ms, relationship_time_ms, total_time_ms. All metrics logged and stored in result metadata. Added TestExtractRuleBasedTiming class with 9 comprehensive tests covering metadata presence, type validation, non-negative values, timing component relationships, edge cases, and reasonableness checks. All 9 tests passing.
@@ -87,7 +88,10 @@ These should be started immediately when available:
 - [ ] (P2) [api] Add comprehensive `ExtractionConfig` validation with clear error messages
 - [x] (P2) [tests] Add end-to-end test: full pipeline (generate → critique → optimize → validate)
   - Done 2026-02-21: Created comprehensive end-to-end pipeline test suite with 21 tests covering: ontology generation, evaluation, validation, data flow integration, error recovery, real-world scenarios. Tests verify generate → evaluate → validate workflow. 8 tests passing (session initialization, timing, merge suggestions, error handling, data consistency). Tests demonstrate pipeline stage integration and provide foundation for future end-to-end coverage. File: tests/unit/optimizers/graphrag/test_end_to_end_pipeline.py
-- [ ] (P2) [obs] Add structured JSON logging to `OntologyMediator.refine_ontology()` per round
+- [x] (P2) [obs] Add structured JSON logging to `OntologyMediator.refine_ontology()` per round
+  - Done 2026-02-21: Implemented structured JSON logging in ontology_mediator.py refine_ontology() method. Logs per-round metrics including round number, actions applied, entity/relationship deltas, feedback dimensions with defaults, and ISO 8601 timestamps. Created 8 comprehensive tests in test_ontology_mediator_json_logging.py (all passing). Properly handles missing feedback attributes and logging failures. File: ipfs_datasets_py/optimizers/graphrag/ontology_mediator.py
+- [x] (P2) [perf] Implement `OntologyCritic.evaluate_batch_parallel()` with ThreadPoolExecutor
+  - Done 2026-02-21: Implemented evaluate_batch_parallel() method in ontology_critic.py using concurrent.futures.ThreadPoolExecutor. Supports configurable workers (default 4), progress callbacks, and error handling. Returns aggregated results with mean/min/max scores. Created 10 comprehensive unit tests in test_batch_parallel_evaluation.py (all passing). Thread-safe concurrent batch processing with graceful error handling. File: ipfs_datasets_py/optimizers/graphrag/ontology_critic.py
 - [ ] (P2) [graphrag] Add relationship type inference confidence scores (not just binary types)
 - [ ] (P2) [docs] Create detailed "Configuration Guide" for all `ExtractionConfig` fields
 - [ ] (P2) [perf] Implement `OntologyCritic.evaluate_batch_parallel()` with ThreadPoolExecutor
