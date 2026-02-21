@@ -2688,32 +2688,50 @@ class OntologyGenerator:
         Returns:
             Extraction result with entities and relationships
         """
-        # Rule-based NER using regex patterns organized by entity type.
-        import re as _re
-        import uuid as _uuid
-        import time as _time
+        domain = getattr(context, 'domain', 'general').lower() if context else 'general'
+        ext_config = getattr(context, 'extraction_config', None) if context else None
+        _PATTERNS = self._build_rule_patterns(domain, ext_config)
 
+        text = str(data) if data is not None else ""
+        min_len, _stop, _allowed, _max_conf = self._resolve_rule_config(ext_config)
+        entities = self._extract_entities_from_patterns(
+            text,
+            _PATTERNS,
+            _allowed,
+            min_len,
+            _stop,
+            _max_conf,
+        )
+
+        # Derive relationships from extracted entities
+        relationships = self.infer_relationships(entities, context, data)
+
+        self._log.info(f"Rule-based extraction found {len(entities)} entities, {len(relationships)} relationships")
+        return EntityExtractionResult(
+            entities=entities,
+            relationships=relationships,
+            confidence=0.7,
+            metadata={'method': 'rule_based', 'entity_count': len(entities)},
+        )
+
+    def _build_rule_patterns(
+        self,
+        domain: str,
+        ext_config: Any,
+    ) -> list[tuple[str, str]]:
         # Base patterns (domain-agnostic)
-        _BASE_PATTERNS: list[tuple[str, str]] = [
-            # Person names (Title + Capitalised words)
+        base_patterns: list[tuple[str, str]] = [
             (r'\b(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*', 'Person'),
-            # Organisation suffixes
             (r'\b[A-Z][A-Za-z&\s]*(?:LLC|Ltd|Inc|Corp|GmbH|PLC|Co\.)\b', 'Organization'),
-            # Dates
             (r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', 'Date'),
             (r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b', 'Date'),
-            # Monetary amounts
             (r'\b(?:USD|EUR|GBP)\s*[\d,]+(?:\.\d{2})?\b', 'MonetaryAmount'),
-            # Locations — simple proper-noun heuristic for known indicators
             (r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:Street|Avenue|Road|City|County|State|Country|Region|District)\b', 'Location'),
-            # Legal obligations (noun phrases around "obligation", "duty", "right")
             (r'\b(?:the\s+)?(?:obligation|duty|right|liability|breach|claim|penalty)\s+(?:of\s+)?[A-Z][a-z]+\b', 'Obligation'),
-            # Generic capitalised concepts (fallback — lower confidence)
             (r'\b[A-Z][A-Za-z]{3,}\b', 'Concept'),
         ]
 
-        # Domain-specific supplemental patterns
-        _DOMAIN_PATTERNS: dict[str, list[tuple[str, str]]] = {
+        domain_patterns: dict[str, list[tuple[str, str]]] = {
             'legal': [
                 (r'\b(?:plaintiff|defendant|claimant|respondent|petitioner)\b', 'LegalParty'),
                 (r'\b(?:Article|Section|Clause|Schedule|Appendix)\s+\d+[\w.]*', 'LegalReference'),
@@ -2736,52 +2754,62 @@ class OntologyGenerator:
             ],
         }
 
-        domain = getattr(context, 'domain', 'general').lower() if context else 'general'
-        _PATTERNS = _BASE_PATTERNS + _DOMAIN_PATTERNS.get(domain, [])
-
-        # Append pluggable custom rules from context config (before generic Concept fallback)
-        ext_config = getattr(context, 'extraction_config', None) if context else None
+        patterns = base_patterns + domain_patterns.get(domain, [])
         if ext_config is not None and hasattr(ext_config, 'custom_rules') and ext_config.custom_rules:
-            # Insert custom rules before the last (generic Concept fallback) pattern
-            _PATTERNS = _PATTERNS[:-1] + list(ext_config.custom_rules) + [_PATTERNS[-1]]
+            patterns = patterns[:-1] + list(ext_config.custom_rules) + [patterns[-1]]
+        return patterns
 
-        text = str(data) if data is not None else ""
-        entities: list[Entity] = []
-        seen_texts: set[str] = set()
-
-        # Resolve min_entity_length from config (safe fallback if config is a mock)
+    def _resolve_rule_config(
+        self,
+        ext_config: Any,
+    ) -> tuple[int, set[str], set[str], float]:
         try:
             min_len = int(getattr(ext_config, "min_entity_length", 2)) if ext_config is not None else 2
         except (TypeError, ValueError):
             min_len = 2
 
-        # Resolve stopwords set (case-insensitive match against key)
         try:
-            _stop = {w.lower() for w in (getattr(ext_config, "stopwords", []) or [])} if ext_config is not None else set()
+            stopwords = {w.lower() for w in (getattr(ext_config, "stopwords", []) or [])} if ext_config is not None else set()
         except (TypeError, AttributeError):
-            _stop = set()
+            stopwords = set()
 
-        # Resolve allowed_entity_types whitelist (empty = allow all)
         try:
-            _allowed = set(getattr(ext_config, "allowed_entity_types", []) or []) if ext_config is not None else set()
+            allowed_types = set(getattr(ext_config, "allowed_entity_types", []) or []) if ext_config is not None else set()
         except (TypeError, AttributeError):
-            _allowed = set()
+            allowed_types = set()
 
-        # Resolve max_confidence cap
         try:
-            _max_conf = float(getattr(ext_config, "max_confidence", 1.0)) if ext_config is not None else 1.0
+            max_confidence = float(getattr(ext_config, "max_confidence", 1.0)) if ext_config is not None else 1.0
         except (TypeError, ValueError, AttributeError):
-            _max_conf = 1.0
+            max_confidence = 1.0
 
-        for pattern, ent_type in _PATTERNS:
-            if _allowed and ent_type not in _allowed:
+        return min_len, stopwords, allowed_types, max_confidence
+
+    def _extract_entities_from_patterns(
+        self,
+        text: str,
+        patterns: list[tuple[str, str]],
+        allowed_types: set[str],
+        min_len: int,
+        stopwords: set[str],
+        max_confidence: float,
+    ) -> list[Entity]:
+        import re as _re
+        import time as _time
+        import uuid as _uuid
+
+        entities: list[Entity] = []
+        seen_texts: set[str] = set()
+
+        for pattern, ent_type in patterns:
+            if allowed_types and ent_type not in allowed_types:
                 continue
             confidence = 0.5 if ent_type == 'Concept' else 0.75
-            confidence = min(confidence, _max_conf)
+            confidence = min(confidence, max_confidence)
             for m in _re.finditer(pattern, text):
                 raw = m.group(0).strip()
                 key = raw.lower()
-                if key in seen_texts or len(raw) < min_len or key in _stop:
+                if key in seen_texts or len(raw) < min_len or key in stopwords:
                     continue
                 seen_texts.add(key)
                 entities.append(Entity(
@@ -2790,19 +2818,10 @@ class OntologyGenerator:
                     text=raw,
                     confidence=confidence,
                     source_span=(m.start(), m.end()),
-                    last_seen=_time.time(),  # Track when this entity was observed
+                    last_seen=_time.time(),
                 ))
 
-        # Derive relationships from extracted entities
-        relationships = self.infer_relationships(entities, context, data)
-
-        self._log.info(f"Rule-based extraction found {len(entities)} entities, {len(relationships)} relationships")
-        return EntityExtractionResult(
-            entities=entities,
-            relationships=relationships,
-            confidence=0.7,
-            metadata={'method': 'rule_based', 'entity_count': len(entities)},
-        )
+        return entities
     
     def _extract_llm_based(
         self,

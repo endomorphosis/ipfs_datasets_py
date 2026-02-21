@@ -37,18 +37,74 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 - `[docs]` documentation accuracy
 
 ---
+---
 
-## Now (P0/P1): highest leverage
+## 🤖 Autonomous Work System
+
+This section enables continuous autonomous improvement through random task selection and rotation.
+
+### Immediate Execution Queue (P0/P1 Blockers)
+
+These should be started immediately when available:
 
 - [x] (P0) [graphrag] Remove abusive/toxic inline TODO comment in `graphrag/query_optimizer.py` and replace with a professional TODO — **DoD**: comment removed; behavior unchanged; module imports.
   - Done 2026-02-20: replaced with actionable refactor TODO.
 - [x] (P0) [docs] Ensure this file exists and is referenced consistently — **DoD**: `optimizers/TODO.md` present and discoverable.
   - Done 2026-02-20: confirmed present; keep as living backlog.
-
-- [x] (P0) [graphrag] Fix GraphRAG CLI ontology contract mismatch (dict vs object) and implement real JSON load + validate — **DoD**: `generate`/`validate`/`optimize` don’t crash for JSON ontologies.
+- [x] (P0) [graphrag] Fix GraphRAG CLI ontology contract mismatch (dict vs object) and implement real JSON load + validate — **DoD**: `generate`/`validate`/`optimize` don't crash for JSON ontologies.
   - Done 2026-02-20: `graphrag/cli_wrapper.py` now treats ontologies as dicts; `validate` supports JSON.
 
-- [x] (P1) [arch] Resolve “docs vs code” drift for the unified common layer (`optimizers/common/`) — pick one:
+### Rotating Work Queue (Pick randomly from each category)
+
+**Instructions**: When work capacity opens, random-select ONE item from each category below. Complete it fully before selecting another. This ensures breadth while maintaining focus.
+
+#### Quick Wins (30 min - 1 hour)
+- [ ] (P3) [graphrag] Add `OntologyGenerator.filter_by_confidence()` — threshold filter with stats
+- [ ] (P3) [graphrag] Add `OntologyCritic.get_worst_entity()` — lowest-scoring entity ID
+- [ ] (P2) [tests] Add parametrized tests for `ExtractionConfig` field validation
+- [ ] (P3) [docs] Add one-page "Quick Start" guide for GraphRAG ontology generation
+- [ ] (P3) [graphrag] Add `LogicValidator.entity_contradiction_count()` integer count helper
+- [ ] (P3) [obs] Add timing instrumentation to `_extract_rule_based()` method
+- [ ] (P2) [tests] Add property tests: ontology stats are mathematically consistent
+- [ ] (P3) [graphrag] Add `OntologySession.elapsed_ms()` total wall-clock time getter
+- [ ] (P3) [arch] Add `BaseOptimizer.dry_run()` method for validation without mutation
+
+#### Medium Tasks (1-2 hours)
+- [ ] (P2) [api] Add comprehensive `ExtractionConfig` validation with clear error messages
+- [ ] (P2) [graphrag] Implement `OntologyValidator.suggest_entity_merges()` — find candidate pairs for merging
+- [ ] (P2) [tests] Add end-to-end test: full pipeline (generate → critique → optimize → validate)
+- [ ] (P2) [obs] Add structured JSON logging to `OntologyMediator.refine_ontology()` per round
+- [ ] (P2) [graphrag] Add relationship type inference confidence scores (not just binary types)
+- [ ] (P2) [docs] Create detailed "Configuration Guide" for all `ExtractionConfig` fields
+- [ ] (P2) [perf] Implement `OntologyCritic.evaluate_batch_parallel()` with ThreadPoolExecutor
+- [ ] (P3) [arch] Add `BaseOptimizer.state_checksum()` for reproducibility verification
+- [ ] (P2) [graphrag] Add `OntologyGenerator.extract_with_context_windows()` for larger texts
+
+#### Strategic Refactoring (2-4 hours)
+- [ ] (P2) [arch] Extract `QueryValidationMixin` from query optimizer for reuse in GraphRAG
+- [ ] (P2) [arch] Unify exception hierarchy across `[graphrag]`, `[logic]`, `[agentic]` packages
+- [ ] (P2) [api] Create `ontology_types.py` with TypedDict definitions for all ontology structures
+- [ ] (P2) [tests] Migrate all mock ontology creation to factory fixtures in `conftest.py`
+- [ ] (P2) [graphrag] Split `ontology_critic.py` into `..._completeness.py`, `..._connectivity.py`, `..._consistency.py`
+- [ ] (P2) [perf] Implement lazy loading for domain-specific rule sets in `ExtractionConfig`
+- [ ] (P3) [arch] Create `ontology_serialization.py` with unified dict ↔ dataclass converters
+
+#### Complex Features (4+ hours)
+- [ ] (P2) [graphrag] Implement LLM-based relationship inference with fallback to heuristics
+- [ ] (P2) [graphrag] Add multi-language ontology support with language detection
+- [ ] (P2) [tests] Build comprehensive benchmark suite for GraphRAG on standard datasets
+- [ ] (P2) [arch] Implement distributed ontology refinement (split-merge parallelism)
+- [ ] (P3) [graphrag] Add interactive REPL mode to GraphRAG CLI with autocomplete
+- [ ] (P2) [obs] Implement distributed tracing (OpenTelemetry) across all optimizers
+- [ ] (P2) [graphrag] Add semantic similarity-based entity deduplication using embeddings
+
+---
+
+## Now (P0/P1): Highest Leverage Actions
+
+Execute these when no rotating work is in progress:
+
+- [x] (P1) [arch] Resolve "docs vs code" drift for the unified common layer (`optimizers/common/`) — pick one:
   - implement minimal `BaseCritic`, `BaseSession`, `BaseHarness` scaffolding as documented, **or**
   - update architecture docs to match reality.
   - **DoD**: no misleading docs; no broken imports.
@@ -60,11 +116,9 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 - [x] (P1) [perf] Consolidate duplicated resource monitoring in `performance_optimizer.py` (single source of truth via `ResourceMonitor`).
   - Done 2026-02-20: `WebsiteProcessingOptimizer.monitor_resources()` delegates to `ResourceMonitor.get_current_resources()`; schema covered by a unit test.
 
-
 - [x] (P1) [obs] Make `OptimizerLearningMetricsCollector` persistence consistent across all `record_*` methods and enforce `max_history_size` for `learning_cycles`.
   - Done: 2026-02-20 (tests updated + timestamp handling fixed).
 
----
 
 ## Architecture & Refactor plan (comprehensive)
 
