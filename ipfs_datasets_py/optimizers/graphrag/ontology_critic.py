@@ -2377,6 +2377,33 @@ class OntologyCritic(BaseCritic):
             "passing_fraction": passing / len(overalls),
         }
 
+    def percentile_overall(self, scores: List["CriticScore"], p: float) -> float:
+        """Return the *p*-th percentile of ``overall`` values across *scores*.
+
+        Uses linear interpolation.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+            p: Percentile in range [0, 100].
+
+        Returns:
+            Float percentile value; ``0.0`` when *scores* is empty.
+
+        Raises:
+            ValueError: If *p* is outside [0, 100].
+        """
+        if not 0 <= p <= 100:
+            raise ValueError(f"p must be in [0, 100]; got {p}")
+        if not scores:
+            return 0.0
+        vals = sorted(s.overall for s in scores)
+        idx = (len(vals) - 1) * p / 100.0
+        lo = int(idx)
+        hi = lo + 1
+        if hi >= len(vals):
+            return vals[-1]
+        return vals[lo] + (vals[hi] - vals[lo]) * (idx - lo)
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],

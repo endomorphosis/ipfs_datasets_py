@@ -1698,6 +1698,44 @@ class EntityExtractionResult:
         """
         return sorted({r.type for r in self.relationships})
 
+    def is_empty(self) -> bool:
+        """Return ``True`` if there are no entities AND no relationships.
+
+        Returns:
+            ``True`` when both ``entities`` and ``relationships`` are empty.
+
+        Example:
+            >>> EntityExtractionResult(entities=[], relationships=[], confidence=1.0).is_empty()
+            True
+        """
+        return len(self.entities) == 0 and len(self.relationships) == 0
+
+    def has_relationships(self) -> bool:
+        """Return ``True`` if the result contains at least one relationship.
+
+        Returns:
+            ``True`` when ``relationships`` is non-empty.
+        """
+        return len(self.relationships) > 0
+
+    def entities_of_type(self, etype: str, case_sensitive: bool = False) -> List["Entity"]:
+        """Return entities matching the given type string.
+
+        Alias for :meth:`filter_by_type` with a more explicit name.
+
+        Args:
+            etype: Entity type string to match.
+            case_sensitive: If ``False`` (default), comparison is
+                case-insensitive.
+
+        Returns:
+            List of :class:`Entity` objects whose ``type`` matches *etype*.
+        """
+        if case_sensitive:
+            return [e for e in self.entities if e.type == etype]
+        etype_lower = etype.lower()
+        return [e for e in self.entities if e.type.lower() == etype_lower]
+
 
 @dataclass
 class OntologyGenerationResult:
