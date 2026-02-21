@@ -400,6 +400,42 @@ class ExtractionConfig:
         section = data.get("extraction_config", data)
         return cls.from_dict(section)
 
+    def scale_thresholds(self, factor: float) -> "ExtractionConfig":
+        """Return a new config with confidence-related thresholds scaled by *factor*.
+
+        The following fields are scaled: ``confidence_threshold``,
+        ``llm_fallback_threshold``, and ``max_confidence``.  Each result is
+        clamped to [0.0, 1.0].  All other fields are copied unchanged.
+
+        Args:
+            factor: Multiplicative factor (e.g. 0.9 to lower thresholds by 10%).
+
+        Returns:
+            A new :class:`ExtractionConfig` instance.
+
+        Raises:
+            ValueError: If *factor* <= 0.
+
+        Example:
+            >>> relaxed = cfg.scale_thresholds(0.8)
+            >>> relaxed.confidence_threshold == cfg.confidence_threshold * 0.8
+            True
+        """
+        if factor <= 0:
+            raise ValueError(f"factor must be > 0; got {factor}")
+
+        import dataclasses as _dc
+
+        def _clamp(v: float) -> float:
+            return max(0.0, min(1.0, v))
+
+        return _dc.replace(
+            self,
+            confidence_threshold=_clamp(self.confidence_threshold * factor),
+            llm_fallback_threshold=_clamp(self.llm_fallback_threshold * factor),
+            max_confidence=_clamp(self.max_confidence * factor),
+        )
+
 
 @dataclass
 class OntologyGenerationContext:
@@ -776,6 +812,35 @@ class EntityExtractionResult:
             f"EntityExtractionResult: {len(self.entities)} entities ({n_types} types), "
             f"{len(self.relationships)} relationships, confidence={self.confidence:.2f}"
         )
+
+    def confidence_histogram(self, bins: int = 5) -> List[int]:
+        """Return a frequency histogram of entity confidence scores.
+
+        Divides the [0, 1] range into *bins* equal-width buckets and counts how
+        many entities fall into each.
+
+        Args:
+            bins: Number of buckets (default: 5).
+
+        Returns:
+            List of *bins* integers summing to ``len(self.entities)``.
+
+        Raises:
+            ValueError: If *bins* < 1.
+
+        Example:
+            >>> hist = result.confidence_histogram(bins=4)
+            >>> sum(hist) == len(result.entities)
+            True
+        """
+        if bins < 1:
+            raise ValueError(f"bins must be >= 1; got {bins}")
+        counts = [0] * bins
+        for ent in self.entities:
+            val = max(0.0, min(1.0, float(ent.confidence)))
+            bucket = min(int(val * bins), bins - 1)
+            counts[bucket] += 1
+        return counts
 
 
 @dataclass
@@ -2082,6 +2147,42 @@ class OntologyGenerator:
         anon_entities = [_dc.replace(e, text=replacement) for e in result.entities]
         return EntityExtractionResult(
             entities=anon_entities,
+            relationships=list(result.relationships),
+            confidence=result.confidence,
+            metadata=dict(result.metadata),
+            errors=list(result.errors),
+        )
+
+    def tag_entities(
+        self,
+        result: "EntityExtractionResult",
+        tags: Dict[str, Any],
+    ) -> "EntityExtractionResult":
+        """Return a new result with *tags* merged into every entity's properties.
+
+        Each entity's ``properties`` dict is shallow-merged with *tags*;
+        existing keys are **overwritten** by *tags* values.
+
+        Args:
+            result: Extraction result to annotate.
+            tags: Key-value pairs to add to each entity's properties.
+
+        Returns:
+            New :class:`EntityExtractionResult` with tagged entities.
+
+        Example:
+            >>> tagged = generator.tag_entities(result, {"source": "document_1", "review": True})
+            >>> tagged.entities[0].properties["source"]
+            'document_1'
+        """
+        import dataclasses as _dc
+
+        tagged_entities = [
+            _dc.replace(e, properties={**e.properties, **tags})
+            for e in result.entities
+        ]
+        return EntityExtractionResult(
+            entities=tagged_entities,
             relationships=list(result.relationships),
             confidence=result.confidence,
             metadata=dict(result.metadata),

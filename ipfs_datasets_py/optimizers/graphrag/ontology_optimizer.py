@@ -1401,6 +1401,77 @@ class OntologyOptimizer:
         improving = sum(1 for a, b in zip(scores, scores[1:]) if b > a)
         return improving / (len(scores) - 1)
 
+    def score_percentile(self, p: float) -> float:
+        """Return the *p*-th percentile of average scores in history.
+
+        Uses linear interpolation between adjacent sorted values.
+
+        Args:
+            p: Percentile in (0, 100].
+
+        Returns:
+            Interpolated score value.
+
+        Raises:
+            ValueError: If history is empty or *p* is out of range.
+
+        Example:
+            >>> median = optimizer.score_percentile(50)
+        """
+        if not self._history:
+            raise ValueError("score_percentile requires at least one history entry")
+        if not (0 < p <= 100):
+            raise ValueError(f"p must be in (0, 100]; got {p}")
+        scores = sorted(r.average_score for r in self._history)
+        idx = (p / 100) * (len(scores) - 1)
+        lo, hi = int(idx), min(int(idx) + 1, len(scores) - 1)
+        frac = idx - lo
+        return scores[lo] * (1 - frac) + scores[hi] * frac
+
+    def format_history_table(self) -> str:
+        """Return an ASCII table summarising each history entry.
+
+        Columns: ``#`` (1-based index), ``avg_score``, ``trend``,
+        ``improvement_rate``, ``num_sessions``.
+
+        Returns:
+            Multi-line string; a header + divider + one row per entry.
+            Returns a single-line ``"(no history)"`` message if empty.
+
+        Example:
+            >>> print(optimizer.format_history_table())
+            #   avg_score  trend      improvement_rate  num_sessions
+            ---- ...
+        """
+        if not self._history:
+            return "(no history)"
+        header = f"{'#':>4}  {'avg_score':>9}  {'trend':<10}  {'impr_rate':>9}  {'sessions':>8}"
+        divider = "-" * len(header)
+        rows = [header, divider]
+        for i, r in enumerate(self._history, start=1):
+            sessions = r.metadata.get("num_sessions", 0)
+            rows.append(
+                f"{i:>4}  {r.average_score:>9.4f}  {r.trend:<10}  "
+                f"{r.improvement_rate:>9.4f}  {sessions:>8}"
+            )
+        return "\n".join(rows)
+
+    def average_improvement_per_batch(self) -> float:
+        """Return the mean score delta between consecutive history entries.
+
+        Returns:
+            Mean of ``score[i+1] - score[i]`` for all pairs.  ``0.0`` if
+            fewer than 2 entries in history.
+
+        Example:
+            >>> avg_delta = optimizer.average_improvement_per_batch()
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [r.average_score for r in self._history]
+        deltas = [b - a for a, b in zip(scores, scores[1:])]
+        return sum(deltas) / len(deltas)
+
     def emit_summary_log(self) -> str:
         """Return a one-line ASCII summary of the current optimizer state.
 
