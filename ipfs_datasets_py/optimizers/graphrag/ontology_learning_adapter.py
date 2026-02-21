@@ -607,3 +607,25 @@ class OntologyLearningAdapter:
             "mean": self.mean_score(),
             "variance": self.score_variance(),
         }
+
+    def feedback_ids(self) -> List[str]:
+        """Return a list of identifiers for all feedback records.
+
+        Uses ``action_types`` of each record joined as a string to produce a
+        stable identifier; falls back to the record index if ``action_types``
+        is empty.
+
+        Returns:
+            List of string identifiers in insertion order.
+
+        Example:
+            >>> adapter.feedback_ids()
+            []
+        """
+        ids = []
+        for i, r in enumerate(self._feedback):
+            if r.action_types:
+                ids.append("+".join(r.action_types))
+            else:
+                ids.append(f"record_{i}")
+        return ids

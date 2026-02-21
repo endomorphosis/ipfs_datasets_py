@@ -551,6 +551,26 @@ class ExtractionConfig:
         import dataclasses as _dc
         return _dc.replace(self, confidence_threshold=threshold)
 
+    def is_default(self) -> bool:
+        """Return ``True`` if this config has all default field values.
+
+        Constructs a fresh :class:`ExtractionConfig` with no arguments and
+        compares every field.
+
+        Returns:
+            ``True`` when ``self`` equals the default config.
+
+        Example:
+            >>> ExtractionConfig().is_default()
+            True
+        """
+        import dataclasses as _dc
+        default = ExtractionConfig()
+        return all(
+            getattr(self, f.name) == getattr(default, f.name)
+            for f in _dc.fields(self)
+        )
+
 
 @dataclass
 class OntologyGenerationContext:
@@ -3074,6 +3094,21 @@ class OntologyGenerator:
             3
         """
         return len(result.entities)
+
+    def relationship_count(self, result: "EntityExtractionResult") -> int:
+        """Return the total number of relationships in *result*.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+
+        Returns:
+            Non-negative integer relationship count.
+
+        Example:
+            >>> gen.relationship_count(result)
+            0
+        """
+        return len(result.relationships)
 
     def entity_ids(self, result: "EntityExtractionResult") -> List[str]:
         """Return the ``id`` of every entity in *result*.

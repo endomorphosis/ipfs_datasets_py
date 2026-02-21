@@ -794,6 +794,20 @@ class OntologyMediator:
             return None
         return max(self._recommendation_counts, key=self._recommendation_counts.get)
 
+    def pending_recommendation(self) -> Optional[str]:
+        """Return the top recommendation phrase without modifying any state.
+
+        Alias for :meth:`top_recommended_action`.
+
+        Returns:
+            The most-frequent recommendation string, or ``None`` if none have
+            been tracked yet.
+
+        Example:
+            >>> rec = mediator.pending_recommendation()
+        """
+        return self.top_recommended_action()
+
     def most_frequent_action(self) -> Optional[str]:
         """Return the action with the highest cumulative invocation count.
 

@@ -2090,6 +2090,24 @@ class OntologyCritic(BaseCritic):
         vals = [s.overall for s in scores]
         return (min(vals), max(vals))
 
+    def score_improvement(self, score_a: "CriticScore", score_b: "CriticScore") -> float:
+        """Return the improvement in ``overall`` from *score_a* to *score_b*.
+
+        A positive value means *score_b* is better than *score_a*.
+
+        Args:
+            score_a: Baseline score.
+            score_b: Comparison score.
+
+        Returns:
+            ``score_b.overall - score_a.overall``
+
+        Example:
+            >>> critic.score_improvement(old_score, new_score)
+            0.05
+        """
+        return score_b.overall - score_a.overall
+
     def evaluate_list(
         self,
         ontologies: List[Dict[str, Any]],
