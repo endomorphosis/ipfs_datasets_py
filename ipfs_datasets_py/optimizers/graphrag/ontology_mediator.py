@@ -617,6 +617,8 @@ class OntologyMediator:
         # Structured JSON logging for per-round metrics
         try:
             import json as _json
+            from datetime import datetime as _datetime
+            
             round_number = len(self._undo_stack)
             entity_delta = len(refined.get('entities', [])) - len(ontology.get('entities', []))
             relationship_delta = len(refined.get('relationships', [])) - len(ontology.get('relationships', []))
@@ -640,10 +642,8 @@ class OntologyMediator:
                     'relationship_coherence': getattr(feedback, 'relationship_coherence', 0.0),
                     'domain_alignment': getattr(feedback, 'domain_alignment', 0.0),
                 },
-                'timestamp': str(_json.dumps({}).replace('{}', '')).strip() or _json.dumps({'timestamp': str(__import__('datetime').datetime.now().isoformat())})
+                'timestamp': _datetime.now().isoformat()
             }
-            # Clean up timestamp field (simplified for logging)
-            round_metrics['timestamp'] = str(__import__('datetime').datetime.now().isoformat())
             
             # Log as structured JSON
             self._log.info(f"REFINEMENT_ROUND: {_json.dumps(round_metrics)}")
