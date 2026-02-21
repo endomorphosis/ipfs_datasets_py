@@ -1555,6 +1555,34 @@ class EntityExtractionResult:
         """
         return [e for e in self.entities if e.confidence < threshold]
 
+    def max_confidence(self) -> float:
+        """Return the highest confidence value among all entities.
+
+        Returns:
+            Max ``confidence``; ``0.0`` for an empty result.
+
+        Example:
+            >>> result.max_confidence()
+            0.95
+        """
+        if not self.entities:
+            return 0.0
+        return max(e.confidence for e in self.entities)
+
+    def min_confidence(self) -> float:
+        """Return the lowest confidence value among all entities.
+
+        Returns:
+            Min ``confidence``; ``0.0`` for an empty result.
+
+        Example:
+            >>> result.min_confidence()
+            0.3
+        """
+        if not self.entities:
+            return 0.0
+        return min(e.confidence for e in self.entities)
+
 
 @dataclass
 class OntologyGenerationResult:

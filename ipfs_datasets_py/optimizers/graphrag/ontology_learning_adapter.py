@@ -677,3 +677,18 @@ class OntologyLearningAdapter:
             >>> adapter.feedback_count_above(threshold=0.7)
         """
         return sum(1 for r in self._feedback if r.final_score > threshold)
+
+    def feedback_below(self, threshold: float = 0.5) -> list:
+        """Return feedback records with ``final_score < threshold``.
+
+        Args:
+            threshold: Upper bound (exclusive). Defaults to 0.5.
+
+        Returns:
+            List of :class:`FeedbackRecord` objects where
+            ``final_score < threshold``.
+
+        Example:
+            >>> low = adapter.feedback_below(threshold=0.4)
+        """
+        return [r for r in self._feedback if r.final_score < threshold]

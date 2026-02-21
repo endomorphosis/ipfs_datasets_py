@@ -2255,6 +2255,51 @@ class OntologyCritic(BaseCritic):
         """
         return [s for s in scores if s.overall > threshold]
 
+    def best_dimension(self, score: "CriticScore") -> str:
+        """Return the name of the highest-scoring dimension in *score*.
+
+        Args:
+            score: A :class:`CriticScore` object.
+
+        Returns:
+            One of ``'completeness'``, ``'consistency'``, ``'clarity'``,
+            ``'granularity'``, ``'domain_alignment'``.
+
+        Example:
+            >>> critic.best_dimension(score)
+            'clarity'
+        """
+        dims = {
+            "completeness": score.completeness,
+            "consistency": score.consistency,
+            "clarity": score.clarity,
+            "granularity": score.granularity,
+            "domain_alignment": score.domain_alignment,
+        }
+        return max(dims, key=dims.__getitem__)
+
+    def worst_dimension(self, score: "CriticScore") -> str:
+        """Return the name of the lowest-scoring dimension in *score*.
+
+        Args:
+            score: A :class:`CriticScore` object.
+
+        Returns:
+            One of the 5 dimension names.
+
+        Example:
+            >>> critic.worst_dimension(score)
+            'granularity'
+        """
+        dims = {
+            "completeness": score.completeness,
+            "consistency": score.consistency,
+            "clarity": score.clarity,
+            "granularity": score.granularity,
+            "domain_alignment": score.domain_alignment,
+        }
+        return min(dims, key=dims.__getitem__)
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],

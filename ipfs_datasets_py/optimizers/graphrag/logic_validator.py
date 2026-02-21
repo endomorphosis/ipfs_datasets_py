@@ -1106,6 +1106,25 @@ class LogicValidator:
         rels = ontology.get("relationships", ontology.get("edges", []))
         return len(rels) if isinstance(rels, (list, tuple)) else 0
 
+    def has_contradictions(self, ontology: Dict[str, Any]) -> bool:
+        """Return ``True`` if the ontology contains any contradictions.
+
+        Uses :meth:`check_consistency` internally.
+
+        Args:
+            ontology: Ontology dict to check.
+
+        Returns:
+            ``True`` when the consistency check finds at least one
+            contradiction; ``False`` otherwise.
+
+        Example:
+            >>> validator.has_contradictions({"entities": [], "relationships": []})
+            False
+        """
+        result = self.check_consistency(ontology)
+        return len(result.contradictions) > 0
+
     def clear_tdfol_cache(self) -> int:
         """Clear the TDFOL formula cache.
 
