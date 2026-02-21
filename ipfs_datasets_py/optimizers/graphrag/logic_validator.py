@@ -2375,6 +2375,50 @@ class LogicValidator:
                 dfs(entity)
         return count[0]
 
+    def relationship_diversity(self, ontology: dict) -> float:
+        """Return Shannon entropy of the relationship type distribution.
+
+        Higher values indicate more evenly distributed relationship types.
+
+        Args:
+            ontology: Ontology dict with ``relationships`` list.
+
+        Returns:
+            Float entropy (bits); ``0.0`` when no relationships or only one type.
+        """
+        import math
+        rels = ontology.get("relationships", [])
+        if not rels:
+            return 0.0
+        counts: dict = {}
+        for rel in rels:
+            t = rel.get("type", "unknown")
+            counts[t] = counts.get(t, 0) + 1
+        total = len(rels)
+        entropy = 0.0
+        for c in counts.values():
+            p = c / total
+            if p > 0:
+                entropy -= p * math.log2(p)
+        return entropy
+
+    def entity_pair_count(self, ontology: dict) -> int:
+        """Return the number of unique (source, target) pairs in relationships.
+
+        Args:
+            ontology: Ontology dict with ``relationships`` list.
+
+        Returns:
+            Integer count of distinct directed pairs.
+        """
+        pairs = set()
+        for rel in ontology.get("relationships", []):
+            s = rel.get("source") or rel.get("source_id")
+            t = rel.get("target") or rel.get("target_id")
+            if s and t:
+                pairs.add((s, t))
+        return len(pairs)
+
 
 # Export public API
 __all__ = [

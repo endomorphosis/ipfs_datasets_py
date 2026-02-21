@@ -1268,3 +1268,48 @@ class OntologyLearningAdapter:
         else:
             median = scores[n // 2]
         return [r for r in self._feedback if r.final_score > median]
+
+    def feedback_decay_sum(self, decay: float = 0.9) -> float:
+        """Return exponentially decayed sum of final scores (oldest gets most decay).
+
+        The most recent record has weight 1.0; each older record is multiplied
+        by an additional factor of *decay*.
+
+        Args:
+            decay: Decay factor per step. Defaults to 0.9.
+
+        Returns:
+            Float weighted sum; 0.0 when no records.
+        """
+        if not self._feedback:
+            return 0.0
+        total = 0.0
+        weight = 1.0
+        for record in reversed(self._feedback):
+            total += record.final_score * weight
+            weight *= decay
+        return total
+
+    def feedback_count_below(self, threshold: float = 0.5) -> int:
+        """Return count of feedback records whose final_score is below *threshold*.
+
+        Args:
+            threshold: Maximum value (exclusive). Defaults to 0.5.
+
+        Returns:
+            Integer count of records with final_score < threshold.
+        """
+        return sum(1 for r in self._feedback if r.final_score < threshold)
+
+    def feedback_above_threshold_fraction(self, threshold: float = 0.5) -> float:
+        """Return fraction of feedback records above *threshold*.
+
+        Args:
+            threshold: Minimum value (exclusive). Defaults to 0.5.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no records.
+        """
+        if not self._feedback:
+            return 0.0
+        return sum(1 for r in self._feedback if r.final_score > threshold) / len(self._feedback)

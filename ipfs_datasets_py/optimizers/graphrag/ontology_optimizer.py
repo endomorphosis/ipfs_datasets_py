@@ -2884,6 +2884,34 @@ class OntologyOptimizer:
         return adj * g1
 
 
+    def score_plateau_length(self, tolerance: float = 0.005) -> int:
+        """Return the length of the longest flat-score plateau in history.
+
+        A plateau is a maximal consecutive run where every adjacent pair of
+        scores differs by no more than *tolerance*.
+
+        Args:
+            tolerance: Max absolute difference to be considered "flat".
+                Defaults to 0.005.
+
+        Returns:
+            Integer length of the longest plateau; 1 when no consecutive
+            pairs are flat; 0 when history is empty.
+        """
+        if not self._history:
+            return 0
+        scores = [e.average_score for e in self._history]
+        best = 1
+        current = 1
+        for i in range(1, len(scores)):
+            if abs(scores[i] - scores[i - 1]) <= tolerance:
+                current += 1
+                best = max(best, current)
+            else:
+                current = 1
+        return best
+
+
 # Export public API
 __all__ = [
     'OntologyOptimizer',
