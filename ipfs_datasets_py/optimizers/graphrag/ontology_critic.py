@@ -517,7 +517,8 @@ class OntologyCritic(BaseCritic):
         self,
         ontology: Dict[str, Any],
         context: Any,  # OntologyGenerationContext
-        source_data: Optional[Any] = None
+        source_data: Optional[Any] = None,
+        timeout: Optional[float] = None,
     ) -> CriticScore:
         """
         Evaluate ontology across all quality dimensions.
@@ -530,9 +531,15 @@ class OntologyCritic(BaseCritic):
             ontology: Ontology to evaluate (dictionary format)
             context: Context with domain and configuration information
             source_data: Optional source data for context-aware evaluation
+            timeout: Optional wall-clock timeout in seconds.  If the evaluation
+                takes longer than *timeout* seconds, a :exc:`TimeoutError` is
+                raised.  ``None`` (default) means no timeout.
             
         Returns:
             CriticScore with evaluation results and recommendations
+            
+        Raises:
+            TimeoutError: If *timeout* is set and evaluation exceeds it.
             
         Example:
             >>> score = critic.evaluate_ontology(
@@ -544,6 +551,26 @@ class OntologyCritic(BaseCritic):
             >>> for rec in score.recommendations:
             ...     print(f"- {rec}")
         """
+        if timeout is not None:
+            import concurrent.futures as _cf
+            with _cf.ThreadPoolExecutor(max_workers=1) as _ex:
+                _fut = _ex.submit(
+                    self._evaluate_ontology_impl, ontology, context, source_data
+                )
+                try:
+                    return _fut.result(timeout=timeout)
+                except _cf.TimeoutError:
+                    raise TimeoutError(
+                        f"evaluate_ontology() exceeded timeout of {timeout}s"
+                    )
+        return self._evaluate_ontology_impl(ontology, context, source_data)
+
+    def _evaluate_ontology_impl(
+        self,
+        ontology: Dict[str, Any],
+        context: Any,
+        source_data: Optional[Any] = None,
+    ) -> CriticScore:
         import hashlib as _hashlib
         import json as _json
 

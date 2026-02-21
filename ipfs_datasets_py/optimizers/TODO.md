@@ -542,7 +542,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [tests] Snapshot tests: freeze known-good critic scores for a reference ontology
 - [ ] (P2) [api] Add `OntologyGenerator.batch_extract(docs, context)` for multi-doc parallel extraction
 - [x] (P3) [api] Add `OntologyOptimizer.prune_history(keep_last_n)` — Done batch 50: discards oldest entries, raises ValueError on n<1; 7 tests
-- [ ] (P3) [arch] Add `OntologyCritic.evaluate_ontology()` timeout guard (raises after N seconds)
+- [x] (P3) [arch] Add `OntologyCritic.evaluate_ontology()` timeout guard -- Done batch-63: ThreadPoolExecutor with TimeoutError; 6 tests
 - [ ] (P2) [docs] Add per-method doctest examples to all public `OntologyGenerator` methods
 - [ ] (P2) [docs] Add per-method doctest examples to all public `OntologyCritic` methods
 - [ ] (P3) [obs] Add `OntologyGenerator.extract_entities()` structured log with entity_count + strategy
@@ -559,11 +559,11 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [graphrag] ✅ Add `OntologyCritic.evaluate_batch()` progress callback param for streaming results
 - [ ] (P3) [graphrag] ✅ Add `OntologyMediator.get_action_stats()` — per-action counts + success rates
 - [ ] (P2) [graphrag] ✅ Add `OntologyGenerator.extract_entities_streaming()` — yield entities as found (iterator API)
-- [ ] (P3) [tests] Add property tests for `OntologyMediator.refine_ontology()` using Hypothesis
+- [x] (P3) [tests] Add property tests for `OntologyMediator.refine_ontology()` using Hypothesis -- Done batch-63: 3 properties, 20 examples each
 - [ ] (P2) [api] ✅ Add `ExtractionConfig.from_env()` classmethod — load config from ENV vars
 - [ ] (P3) [graphrag] ✅ Add `EntityExtractionResult.to_dataframe()` — convert to pandas DataFrame
 - [ ] (P2) [graphrag] ✅ Add `OntologyOptimizer.export_history_csv()` — save compare_history table as CSV
-- [ ] (P3) [obs] Add structured JSON log line at end of `analyze_batch_parallel()` with timing + scores
+- [x] (P3) [obs] Add structured JSON log line to `analyze_batch_parallel()` -- Done batch-63: json_log_path param, timing + scores; 5 tests
 - [ ] (P2) [graphrag] ✅ Add `LogicValidator.suggest_fixes()` — return fix hints for each ValidationError
 - [ ] (P3) [graphrag] ✅ Add `OntologyCritic.explain_score()` — return human-readable explanation per dimension
 - [ ] (P2) [graphrag] ✅ Add `OntologyLearningAdapter.serialize()` → bytes (pickle-free, JSON-based)
@@ -593,7 +593,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [graphrag] Add `LogicValidator.batch_validate()` — validate a list of ontologies concurrently
 - [ ] (P2) [graphrag] ✅ Add `OntologyGenerator.filter_entities()` — post-extraction filter by type/confidence/text
 - [ ] (P3) [graphrag] Add `OntologyMediator.undo_last_action()` — revert last applied refinement action
-- [ ] (P2) [tests] Add negative tests for OntologyPipeline: empty domain, None data, very long text
+- [x] (P2) [tests] Add negative tests for OntologyPipeline -- Done batch-63: empty/whitespace/long/numeric/garbage/empty-domain; 9 tests
 - [x] (P3) [graphrag] Add `Entity.to_dict()` instance method -- Done batch-59: all fields, source_span as list; 9 tests
 - [ ] (P2) [graphrag] Add `OntologyCritic.weighted_overall()` — allow caller-supplied weight overrides
 - [ ] (P3) [graphrag] ✅ Add `OntologyOptimizer.rolling_average_score(n)` — mean of last N history entries
@@ -612,13 +612,36 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] Add `OntologyOptimizer.export_score_chart()` -- Done batch-62: matplotlib Agg PNG, base64 string; 5 tests
 - [x] (P3) [graphrag] Add `OntologyMediator.get_recommendation_stats()` -- Done batch-62: counted per refine_ontology call; 6 tests
 - [x] (P2) [graphrag] Add `OntologyGenerator.extract_entities_with_spans()` -- Done batch-61: str.find offset annotation; 5 tests
-- [ ] (P3) [tests] Add property tests for `OntologyMediator.refine_ontology()` using Hypothesis
+- [x] (P3) [tests] Add property tests for `OntologyMediator.refine_ontology()` using Hypothesis -- Done batch-63: 3 properties, 20 examples each
 - [x] (P2) [arch] Add `OntologyPipeline.clone()` -- Done batch-61: fresh generator/critic/adapter, same settings; 7 tests
 - [x] (P3) [graphrag] Add `CriticScore.from_dict()` classmethod -- Done batch-61: nested+flat dict, round-trip; 8 tests
 - [x] (P2) [graphrag] Add `ExtractionConfig.to_yaml()` / `from_yaml()` -- Done batch-60: PyYAML round-trip; 8 tests
 - [ ] (P3) [graphrag] Add `OntologyOptimizer.best_ontology()` -- return ontology from highest-scoring history entry
-- [ ] (P2) [tests] Add negative tests for OntologyPipeline: empty domain, None data, very long text
+- [x] (P2) [tests] Add negative tests for OntologyPipeline -- Done batch-63: empty/whitespace/long/numeric/garbage/empty-domain; 9 tests
 - [ ] (P3) [obs] Add `OntologyMediator.refine_ontology()` structured log of actions_applied per round
 - [x] (P2) [graphrag] Add `LogicValidator.explain_contradictions()` -- Done batch-61: action labels + plain-English; 6 tests
 - [x] (P3) [arch] Add `OntologyHarness.run()` integration test -- Done batch-62: OntologyPipeline full run + batch; 2 tests
 - [x] (P2) [graphrag] Add `EntityExtractionResult.filter_by_type()` -- Done batch-60: prunes dangling relationships; 9 tests
+
+## Batch 63+ ideas (added automatically)
+
+- [ ] (P2) [graphrag] Add `OntologyCritic.evaluate_with_rubric()` -- pass a custom scoring rubric dict
+- [ ] (P3) [graphrag] Add `ExtractionConfig.diff(other)` -- show which fields differ between two configs
+- [ ] (P2) [graphrag] Add `OntologyGenerator.generate_synthetic_ontology(domain)` -- produce a sample ontology
+- [ ] (P3) [obs] Add `OntologyOptimizer.emit_summary_log()` -- log a one-line ASCII summary of current state
+- [ ] (P2) [graphrag] Add `EntityExtractionResult.merge(other)` -- merge two results, dedup by entity text
+- [ ] (P3) [graphrag] Add `OntologyMediator.reset_state()` -- clear action counts + undo stack
+- [ ] (P2) [tests] Add round-trip test: OntologyPipeline -> to_json -> from_json for PipelineResult
+- [ ] (P3) [graphrag] Add `OntologyCritic.calibrate_thresholds()` -- adjust dimension thresholds from history
+- [ ] (P2) [graphrag] Add `LogicValidator.filter_valid_entities()` -- return only entities passing consistency check
+- [ ] (P3) [arch] Add `OntologyPipeline.as_dict()` -- serialize pipeline config to a plain dict
+- [ ] (P2) [graphrag] Add `OntologyOptimizer.reset_history()` -- clear all history, confirm with guard
+- [ ] (P3) [tests] Property test: Entity.to_dict() round-trips through from_dict equivalent
+- [ ] (P2) [graphrag] Add `OntologyGenerator.score_entity(entity)` -- single-entity confidence heuristic
+- [ ] (P3) [graphrag] Add `OntologyLearningAdapter.reset_feedback()` -- clear feedback history
+- [ ] (P2) [obs] Add `OntologyCritic.evaluate_ontology()` histogram of dimension scores
+- [ ] (P3) [graphrag] Add `ExtractionConfig.to_toml()` / `from_toml()` -- TOML round-trip
+- [ ] (P2) [graphrag] Add `OntologyGenerator.batch_extract_with_spans()` -- per-doc span annotation
+- [ ] (P3) [arch] Add `OntologyPipeline.reset()` -- reset internal adapter + mediator state
+- [ ] (P2) [tests] Add fuzz test: refine_ontology with random recommendation strings
+- [ ] (P3) [graphrag] Add `OntologyOptimizer.session_count()` -- number of sessions across history
