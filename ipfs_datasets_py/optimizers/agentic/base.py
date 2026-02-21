@@ -95,6 +95,30 @@ class ValidationResult:
     style_check: bool = True
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
+    
+    def __repr__(self) -> str:
+        """Compact representation for debugging."""
+        checks = []
+        if not self.syntax_check:
+            checks.append("syntax✗")
+        if not self.type_check:
+            checks.append("type✗")
+        if not self.unit_tests:
+            checks.append("unit✗")
+        if not self.integration_tests:
+            checks.append("int✗")
+        if not self.performance_tests:
+            checks.append("perf✗")
+        if not self.security_scan:
+            checks.append("sec✗")
+        if not self.style_check:
+            checks.append("style✗")
+        
+        status = "PASS" if self.passed else "FAIL"
+        failed_checks = ", ".join(checks) if checks else "all checks ✓"
+        error_summary = f", {len(self.errors)} errors" if self.errors else ""
+        warn_summary = f", {len(self.warnings)} warnings" if self.warnings else ""
+        return f"ValidationResult({status}: {failed_checks}{error_summary}{warn_summary})"
 
 
 @dataclass

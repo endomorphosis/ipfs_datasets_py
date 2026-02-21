@@ -3654,6 +3654,133 @@ class OntologyGenerator:
             if r.source_id == entity_id or r.target_id == entity_id
         ]
 
+    def validate_result(self, result: "EntityExtractionResult") -> List[str]:
+        """Return a list of validation issues found in *result*.
+
+        Checks include:
+        - Entities with empty or blank ``text``
+        - Entities with ``confidence`` outside [0, 1]
+        - Relationships with ``source_id`` or ``target_id`` not in the entity
+          id set
+
+        Args:
+            result: :class:`EntityExtractionResult` to validate.
+
+        Returns:
+            List of human-readable issue strings.  Empty list means no issues.
+        """
+        issues: List[str] = []
+        entity_ids = {e.id for e in result.entities}
+        for e in result.entities:
+            if not e.text or not e.text.strip():
+                issues.append(f"Entity {e.id!r} has empty text")
+            if not 0.0 <= e.confidence <= 1.0:
+                issues.append(
+                    f"Entity {e.id!r} has out-of-range confidence: {e.confidence}"
+                )
+        for r in result.relationships:
+            if r.source_id not in entity_ids:
+                issues.append(
+                    f"Relationship {r.id!r} references unknown source_id {r.source_id!r}"
+                )
+            if r.target_id not in entity_ids:
+                issues.append(
+                    f"Relationship {r.id!r} references unknown target_id {r.target_id!r}"
+                )
+        return issues
+
+    def confidence_stats(self, result: "EntityExtractionResult") -> Dict[str, float]:
+        """Return descriptive statistics for entity confidences in *result*.
+
+        Args:
+            result: :class:`EntityExtractionResult` with entities.
+
+        Returns:
+            Dict with keys ``count``, ``mean``, ``min``, ``max``, and ``std``.
+            All values are ``0.0`` when there are no entities.
+        """
+        import math as _math
+        if not result.entities:
+            return {"count": 0.0, "mean": 0.0, "min": 0.0, "max": 0.0, "std": 0.0}
+        confs = [e.confidence for e in result.entities]
+        mean = sum(confs) / len(confs)
+        variance = sum((c - mean) ** 2 for c in confs) / len(confs)
+        return {
+            "count": float(len(confs)),
+            "mean": mean,
+            "min": min(confs),
+            "max": max(confs),
+            "std": _math.sqrt(variance),
+        }
+
+    def clone_result(self, result: "EntityExtractionResult") -> "EntityExtractionResult":
+        """Return a deep copy of *result*.
+
+        The returned object has independent copies of the entities and
+        relationships lists so mutations to one do not affect the other.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+
+        Returns:
+            New :class:`EntityExtractionResult` with copied data.
+        """
+        import copy as _copy
+        return _copy.deepcopy(result)
+
+    def add_entity(
+        self, result: "EntityExtractionResult", entity: "Entity"
+    ) -> "EntityExtractionResult":
+        """Return a new result with *entity* appended to the entities list.
+
+        The original *result* is not modified.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+            entity: :class:`Entity` to append.
+
+        Returns:
+            New :class:`EntityExtractionResult` with *entity* added.
+        """
+        import dataclasses as _dc
+        new_entities = list(result.entities) + [entity]
+        return _dc.replace(result, entities=new_entities)
+
+    def remove_entity(
+        self, result: "EntityExtractionResult", entity_id: str
+    ) -> "EntityExtractionResult":
+        """Return a new result without the entity identified by *entity_id*.
+
+        Also prunes any relationships whose ``source_id`` or ``target_id``
+        matches the removed entity.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+            entity_id: ID of the entity to remove.
+
+        Returns:
+            New :class:`EntityExtractionResult` without the entity or its
+            associated relationships.
+        """
+        import dataclasses as _dc
+        new_entities = [e for e in result.entities if e.id != entity_id]
+        new_rels = [
+            r for r in result.relationships
+            if r.source_id != entity_id and r.target_id != entity_id
+        ]
+        return _dc.replace(result, entities=new_entities, relationships=new_rels)
+
+    def type_diversity(self, result: "EntityExtractionResult") -> int:
+        """Return the count of distinct entity types in *result*.
+
+        Args:
+            result: :class:`EntityExtractionResult` with entities.
+
+        Returns:
+            Integer count of unique ``type`` values; ``0`` when empty.
+        """
+        return len({e.type for e in result.entities})
+
 
 __all__ = [
     'OntologyGenerator',
