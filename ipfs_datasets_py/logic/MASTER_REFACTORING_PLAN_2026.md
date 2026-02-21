@@ -1,10 +1,16 @@
 # Master Refactoring and Improvement Plan — Logic Module
 
 **Date:** 2026-02-19  
-**Version:** 4.0 (supersedes all previous plans)  
+**Version:** 4.1 (updated 2026-02-21 session 45)  
 **Status:** Phases 1–3 COMPLETE · Phase 4 Ongoing  
 **Scope:** `ipfs_datasets_py/logic/` and `tests/unit_tests/logic/`  
 **MCP Integration:** `ipfs_datasets_py/mcp_server/tools/logic_tools/`
+
+**Session 45 Updates (2026-02-21):**
+- 3 import bug fixes: `document_consistency_checker.py` + `caselaw_bulk_processor.py` wrong import paths corrected (`from .deontic_logic_converter` → `from ..converters.deontic_logic_converter`; `from .proof_execution_engine` → `from ..reasoning.proof_execution_engine`)
+- 1 DeonticRuleSet bug fix: `caselaw_bulk_processor._build_unified_system` removed unsupported kwargs (`creation_date`, `source_documents`, `legal_domains`, `temporal_coverage`)
+- 99 new GIVEN-WHEN-THEN integration tests covering: `medical_theorem_framework.py` (0%→94%), `temporal_deontic_rag_store.py` (0%→84%), `document_consistency_checker.py` (3%→70%), `caselaw_bulk_processor.py` (0%→72%), `external_provers.py` (0%→62%), `prover_installer.py` (0%→41%)
+- logic/integration overall: **25% → 38%** (7569 lines, 4695 missed with full test suite)
 
 > **This document is the single authoritative plan** for refactoring and improving the logic module.  
 > It synthesizes analysis of all 196 markdown files, 265 Python files, and 184+ test files.
