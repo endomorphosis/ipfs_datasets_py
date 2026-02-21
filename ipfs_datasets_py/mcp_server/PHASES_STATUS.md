@@ -1,7 +1,7 @@
 # MCP Server Phases Status Report
 
-**Last Updated:** 2026-02-20 (Session 12 — Final)
-**Branch:** copilot/create-refactoring-improvement-plan  
+**Last Updated:** 2026-02-21 (Session 28 — All phases complete; v5 A-F also done)  
+**Branch:** `copilot/refactor-markdown-files-again`
 **Master Plan:** [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)  
 **Next Steps:** [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROVEMENT_PLAN_2026_v5.md)
 
@@ -236,8 +236,8 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 | Metric | Value | Target |
 |--------|-------|--------|
 | Overall Progress | **100% ✅ COMPLETE** | 100% |
-| Test Functions | **853 passing, 38 skipped, 0 failing** | 500+ ✅ |
-| Own Tests Passing | **853 ✅** (was 433 before session 12) | 100+ ✅ |
+| Test Functions | **868 passing, 35 skipped, 0 failing** | 500+ ✅ |
+| Own Tests Passing | **868 ✅** (was 853 before v5 sessions) | 100+ ✅ |
 | Test Coverage | **85-90%** | 80%+ ✅ |
 | Bare Exceptions (all files) | **0** ✅ | 0 |
 | Missing Return Types (core) | **0** ✅ | 0 |
@@ -280,6 +280,14 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 **All 7 phases are complete.** The MCP server refactoring is 100% done.
 
 Future improvements are tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROVEMENT_PLAN_2026_v5.md).
+
+**v5 Phases A-F status** (completed 2026-02-21, branch `copilot/refactor-markdown-files-again`):
+- ✅ **Phase A** (Docs): `docs/tools/README.md` 49-cat table; `docs/api/tool-reference.md` 530L; `docs/adr/` 4 ADRs; `performance-tuning.md` updated with Phase 7 guide
+- ✅ **Phase B** (Tests): 868 tests passing; 14 B2 test categories + B3 scenario tests + B4 property tests; `tool_registry.py` 73%, `enterprise_api.py` 66%
+- ✅ **Phase C** (Observability): `request_id` UUID4 in dispatch; `/health/ready` + `/metrics` endpoints; latency percentiles
+- ✅ **Phase D** (Versioning): `schema_version` + `deprecated` + `deprecation_message` in `ToolMetadata`
+- ✅ **Phase E** (Benchmarks): 4-file benchmark suite + CI workflow + `conftest.py` stub fixture
+- ✅ **Phase F** (Runtime): `dispatch_parallel` + `CircuitBreaker` + `graceful_shutdown` + result caching
 
 ---
 

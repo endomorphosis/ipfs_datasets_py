@@ -40,7 +40,12 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     CryptContext = None
 from pydantic import BaseModel, Field
-import uvicorn
+try:
+    import uvicorn
+    HAVE_UVICORN = True
+except ImportError:  # pragma: no cover - optional dependency
+    uvicorn = None  # type: ignore[assignment]
+    HAVE_UVICORN = False
 
 logger = logging.getLogger(__name__)
 

@@ -435,3 +435,162 @@ class TestClaudeMCPTool:
         result = asyncio.run(tool.execute({"input": "hello"}))
         assert isinstance(result, dict)
         assert result["status"] == "success"
+
+
+# ---------------------------------------------------------------------------
+# ToolRegistry – execute_tool (lines 639-695)
+# ---------------------------------------------------------------------------
+
+class TestToolRegistryExecuteTool:
+    """Tests for ToolRegistry.execute_tool() covering uncovered paths."""
+
+    def test_execute_tool_success(self):
+        """
+        GIVEN: A registry with a registered tool
+        WHEN: execute_tool() is called with valid parameters
+        THEN: Returns the tool's result dict; total_executions incremented
+        """
+        import asyncio
+        reg = ToolRegistry()
+        tool = _ConcreteTool("exec_tool")
+        reg.register_tool(tool)
+        result = asyncio.run(reg.execute_tool("exec_tool", {"input": "hello"}))
+        assert isinstance(result, dict)
+        assert result["status"] == "success"
+        assert reg.total_executions == 1
+
+    def test_execute_tool_not_found_raises(self):
+        """
+        GIVEN: A registry without a tool named 'missing'
+        WHEN: execute_tool('missing', {}) is called
+        THEN: ToolNotFoundError is raised
+        """
+        import asyncio
+        reg = ToolRegistry()
+        with pytest.raises(ToolNotFoundError):
+            asyncio.run(reg.execute_tool("missing", {}))
+
+    def test_execute_tool_reraises_tool_execution_error(self):
+        """
+        GIVEN: A tool whose execute() raises ToolExecutionError
+        WHEN: execute_tool() is called
+        THEN: ToolExecutionError is re-raised without wrapping
+        """
+        import asyncio
+
+        class _ErrorTool(ClaudeMCPTool):
+            def __init__(self):
+                super().__init__()
+                self.name = "error_tool"
+                self.description = "always fails"
+                self.category = "test"
+
+            async def execute(self, parameters):
+                raise ToolExecutionError("error_tool", ValueError("inner"))
+
+        reg = ToolRegistry()
+        reg.register_tool(_ErrorTool())
+        with pytest.raises(ToolExecutionError):
+            asyncio.run(reg.execute_tool("error_tool", {}))
+
+    def test_execute_tool_wraps_generic_exception(self):
+        """
+        GIVEN: A tool whose execute() raises a generic Exception
+        WHEN: execute_tool() is called
+        THEN: Exception is wrapped in ToolExecutionError
+        """
+        import asyncio
+
+        class _GenericErrorTool(ClaudeMCPTool):
+            def __init__(self):
+                super().__init__()
+                self.name = "generic_error_tool"
+                self.description = "raises generic error"
+                self.category = "test"
+
+            async def execute(self, parameters):
+                raise RuntimeError("unexpected failure")
+
+        reg = ToolRegistry()
+        reg.register_tool(_GenericErrorTool())
+        with pytest.raises(ToolExecutionError):
+            asyncio.run(reg.execute_tool("generic_error_tool", {}))
+
+    def test_execute_tool_increments_executions_on_error(self):
+        """
+        GIVEN: A tool that raises an exception
+        WHEN: execute_tool() is called and raises
+        THEN: total_executions is still incremented before the call
+        """
+        import asyncio
+
+        class _FailTool(ClaudeMCPTool):
+            def __init__(self):
+                super().__init__()
+                self.name = "fail_tool"
+                self.description = "fails"
+                self.category = "test"
+
+            async def execute(self, parameters):
+                raise ValueError("boom")
+
+        reg = ToolRegistry()
+        reg.register_tool(_FailTool())
+        try:
+            asyncio.run(reg.execute_tool("fail_tool", {}))
+        except ToolExecutionError:
+            pass
+        assert reg.total_executions == 1
+
+
+# ---------------------------------------------------------------------------
+# ToolRegistry – get_tags and get_all_tools (lines 608-639)
+# ---------------------------------------------------------------------------
+
+class TestToolRegistryGetTagsAndAllTools:
+    """Tests for get_tags() and get_all_tools() covering previously uncovered lines."""
+
+    def test_get_tags_returns_all_unique_tags(self):
+        """
+        GIVEN: A registry with tools tagged 'tag1', 'tag2', 'tag3'
+        WHEN: get_tags() is called
+        THEN: Returns all unique tag names
+        """
+        reg = ToolRegistry()
+        reg.register_tool(_ConcreteTool("tool_x", tags=["tag1", "tag2"]))
+        reg.register_tool(_ConcreteTool("tool_y", tags=["tag2", "tag3"]))
+        tags = reg.get_tags()
+        assert set(tags) >= {"tag1", "tag2", "tag3"}
+
+    def test_get_tags_empty_registry_returns_empty(self):
+        """
+        GIVEN: An empty registry
+        WHEN: get_tags() is called
+        THEN: Returns an empty list
+        """
+        reg = ToolRegistry()
+        assert reg.get_tags() == []
+
+    def test_get_all_tools_returns_all_registered(self):
+        """
+        GIVEN: A registry with 3 tools
+        WHEN: get_all_tools() is called
+        THEN: Returns a list with all 3 tools
+        """
+        reg = ToolRegistry()
+        reg.register_tool(_ConcreteTool("t1"))
+        reg.register_tool(_ConcreteTool("t2"))
+        reg.register_tool(_ConcreteTool("t3"))
+        all_tools = reg.get_all_tools()
+        assert len(all_tools) == 3
+        names = {t.name for t in all_tools}
+        assert names == {"t1", "t2", "t3"}
+
+    def test_get_all_tools_empty_registry_returns_empty(self):
+        """
+        GIVEN: An empty registry
+        WHEN: get_all_tools() is called
+        THEN: Returns an empty list
+        """
+        reg = ToolRegistry()
+        assert reg.get_all_tools() == []

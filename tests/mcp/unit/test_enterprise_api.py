@@ -403,3 +403,189 @@ class TestWebsiteProcessingRequest:
         from pydantic import ValidationError
         with pytest.raises(ValidationError):
             WebsiteProcessingRequest(url="https://example.com", crawl_depth=6)
+
+
+# ---------------------------------------------------------------------------
+# AuthenticationManager.authenticate — async path (lines 143-166)
+# ---------------------------------------------------------------------------
+
+class TestAuthenticationManagerAuthenticate:
+    """Tests for the async authenticate() method (lines 143-166)."""
+
+    def test_authenticate_valid_token_returns_user(self):
+        """
+        GIVEN: A valid JWT token for a known user
+        WHEN: authenticate() is called
+        THEN: Returns the User object
+        """
+        auth = AuthenticationManager()
+        token = auth.create_access_token("demo")
+        user = asyncio.run(auth.authenticate(token))
+        assert user is not None
+        assert user.username == "demo"
+
+    def test_authenticate_inactive_user_raises_http_exception(self):
+        """
+        GIVEN: A valid token for a user that is inactive
+        WHEN: authenticate() is called
+        THEN: HTTPException is raised with 401
+        """
+        from fastapi import HTTPException
+        auth = AuthenticationManager()
+        # Force demo user to be inactive
+        auth.users_db["demo"].is_active = False
+        token = auth.create_access_token("demo")
+        with pytest.raises(HTTPException) as exc_info:
+            asyncio.run(auth.authenticate(token))
+        assert exc_info.value.status_code == 401
+        # Restore
+        auth.users_db["demo"].is_active = True
+
+    def test_authenticate_invalid_token_raises_http_exception(self):
+        """
+        GIVEN: A malformed / invalid JWT token
+        WHEN: authenticate() is called
+        THEN: HTTPException is raised with 401
+        """
+        from fastapi import HTTPException
+        auth = AuthenticationManager()
+        with pytest.raises(HTTPException) as exc_info:
+            asyncio.run(auth.authenticate("this.is.not.valid"))
+        assert exc_info.value.status_code == 401
+
+    def test_authenticate_token_with_no_sub_raises_http_exception(self):
+        """
+        GIVEN: A JWT token whose payload has no 'sub' field
+        WHEN: authenticate() is called
+        THEN: HTTPException is raised with 401
+        """
+        import jwt as _jwt
+        from fastapi import HTTPException
+        auth = AuthenticationManager()
+        # Create a token without a 'sub' claim
+        token = _jwt.encode({"role": "user"}, auth.secret_key, algorithm=auth.algorithm)
+        with pytest.raises(HTTPException) as exc_info:
+            asyncio.run(auth.authenticate(token))
+        assert exc_info.value.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# ProcessingJobManager.process_job — background task (lines 275-354)
+# ---------------------------------------------------------------------------
+
+class TestProcessingJobManagerProcessJob:
+    """Tests for the async process_job() background task."""
+
+    def test_process_job_handles_tool_execution_error(self):
+        """
+        GIVEN: A submitted job whose processing raises ToolExecutionError
+        WHEN: process_job() is awaited
+        THEN: Job status is set to 'failed' and no exception propagates
+        """
+        from ipfs_datasets_py.mcp_server.exceptions import ToolExecutionError as MCPToolExecError
+        jm = ProcessingJobManager()
+        req = WebsiteProcessingRequest(url="https://example.com")
+        job_id = asyncio.run(jm.submit_job("user1", req))
+
+        # Patch the CompleteGraphRAGSystem to raise ToolExecutionError
+        with patch(
+            "ipfs_datasets_py.mcp_server.enterprise_api.CompleteGraphRAGSystem",
+            side_effect=MCPToolExecError("test", ValueError("err")),
+        ):
+            asyncio.run(jm.process_job(job_id, req))
+
+        assert jm.jobs[job_id]["status"] == "failed"
+
+    def test_process_job_handles_value_error(self):
+        """
+        GIVEN: A submitted job whose processing raises ValueError
+        WHEN: process_job() is awaited
+        THEN: Job status is set to 'failed'
+        """
+        jm = ProcessingJobManager()
+        req = WebsiteProcessingRequest(url="https://example.com")
+        job_id = asyncio.run(jm.submit_job("user1", req))
+
+        with patch(
+            "ipfs_datasets_py.mcp_server.enterprise_api.CompleteGraphRAGSystem",
+            side_effect=ValueError("bad param"),
+        ):
+            asyncio.run(jm.process_job(job_id, req))
+
+        assert jm.jobs[job_id]["status"] == "failed"
+
+    def test_process_job_handles_generic_exception(self):
+        """
+        GIVEN: A submitted job whose processing raises a generic Exception
+        WHEN: process_job() is awaited
+        THEN: Job status is set to 'failed' and error_message is set
+        """
+        jm = ProcessingJobManager()
+        req = WebsiteProcessingRequest(url="https://example.com")
+        job_id = asyncio.run(jm.submit_job("user1", req))
+
+        with patch(
+            "ipfs_datasets_py.mcp_server.enterprise_api.CompleteGraphRAGSystem",
+            side_effect=RuntimeError("unexpected"),
+        ):
+            asyncio.run(jm.process_job(job_id, req))
+
+        assert jm.jobs[job_id]["status"] == "failed"
+        assert jm.jobs[job_id]["error_message"] is not None
+
+
+# ---------------------------------------------------------------------------
+# RateLimiter — sliding window eviction (line 228)
+# ---------------------------------------------------------------------------
+
+class TestRateLimiterSlidingWindow:
+    """Covers the queue-eviction branch (line 228) in RateLimiter.check_limits()."""
+
+    def test_old_requests_outside_window_are_evicted(self):
+        """
+        GIVEN: A user who made requests in the past (outside the time window)
+        WHEN: check_limits() is called for a new request
+        THEN: Old timestamps are evicted; new request is allowed
+        """
+        rl = RateLimiter()
+        # Inject a very old timestamp (well outside the 3600s window) directly
+        old_ts = time.time() - 7200  # 2 hours ago
+        rl.user_requests["user1:website_processing"].append(old_ts)
+        # This should NOT raise because the old request is evicted
+        asyncio.run(rl.check_limits("user1", "website_processing"))
+
+
+# ---------------------------------------------------------------------------
+# ProcessingJobManager._send_webhook_notification (lines 355-370)
+# ---------------------------------------------------------------------------
+
+class TestSendWebhookNotification:
+    """Tests for _send_webhook_notification — covers lines 355-370."""
+
+    def test_webhook_with_aiohttp_missing_does_not_raise(self):
+        """
+        GIVEN: aiohttp is not installed
+        WHEN: _send_webhook_notification() is called
+        THEN: No exception propagates (ImportError branch)
+        """
+        jm = ProcessingJobManager()
+        with patch.dict("sys.modules", {"aiohttp": None}):
+            # Should not raise even when aiohttp is unavailable
+            asyncio.run(jm._send_webhook_notification("https://hook.example.com", "job1", "completed"))
+
+    def test_webhook_exception_does_not_propagate(self):
+        """
+        GIVEN: aiohttp raises an exception during POST
+        WHEN: _send_webhook_notification() is called
+        THEN: Exception is logged but not re-raised
+        """
+        jm = ProcessingJobManager()
+        mock_session = MagicMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=False)
+        mock_session.post = AsyncMock(side_effect=OSError("network error"))
+        mock_aiohttp = MagicMock()
+        mock_aiohttp.ClientSession.return_value = mock_session
+        with patch.dict("sys.modules", {"aiohttp": mock_aiohttp}):
+            # Should not raise
+            asyncio.run(jm._send_webhook_notification("https://hook.example.com", "job1", "failed"))
