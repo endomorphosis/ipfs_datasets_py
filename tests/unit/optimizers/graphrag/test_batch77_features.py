@@ -31,7 +31,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic,
 
 
 def _make_entity(eid: str, text: str, span: tuple | None = None) -> Entity:
-    return Entity(id=eid, text=text, entity_type="TEST", confidence=0.8, source_span=span)
+    return Entity(id=eid, text=text, type="TEST", confidence=0.8, source_span=span)
 
 
 def _make_result(*entities: Entity) -> EntityExtractionResult:
