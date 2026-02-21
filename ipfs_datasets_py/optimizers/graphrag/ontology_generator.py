@@ -416,6 +416,21 @@ class ExtractionConfig:
         import json as _json
         return _json.dumps(self.to_dict(), sort_keys=True)
 
+    def copy(self) -> "ExtractionConfig":
+        """Return a shallow copy of this config.
+
+        Equivalent to ``ExtractionConfig.from_dict(self.to_dict())``.
+
+        Returns:
+            New :class:`ExtractionConfig` with identical field values.
+
+        Example:
+            >>> cfg2 = cfg.copy()
+            >>> cfg2 == cfg
+            True
+        """
+        return ExtractionConfig.from_dict(self.to_dict())
+
     def scale_thresholds(self, factor: float) -> "ExtractionConfig":
         """Return a new config with confidence-related thresholds scaled by *factor*.
 
@@ -965,6 +980,42 @@ class EntityExtractionResult:
         if not self.entities:
             return None
         return max(self.entities, key=lambda e: e.confidence)
+
+    def filter_by_span(
+        self,
+        start: int,
+        end: int,
+    ) -> "EntityExtractionResult":
+        """Return a copy with only entities whose ``source_span`` overlaps [start, end).
+
+        Entities with ``source_span=None`` are excluded.
+
+        Args:
+            start: Inclusive start character index.
+            end: Exclusive end character index.
+
+        Returns:
+            New :class:`EntityExtractionResult` with filtered entities.
+            Relationships referencing removed entities are also removed.
+
+        Example:
+            >>> r2 = result.filter_by_span(0, 50)
+            >>> all(e.source_span is not None for e in r2.entities)
+            True
+        """
+        filtered = [
+            e for e in self.entities
+            if e.source_span is not None
+            and e.source_span[0] < end
+            and e.source_span[1] > start
+        ]
+        kept_ids = {e.id for e in filtered}
+        kept_rels = [
+            r for r in self.relationships
+            if r.source_id in kept_ids and r.target_id in kept_ids
+        ]
+        import dataclasses as _dc
+        return _dc.replace(self, entities=filtered, relationships=kept_rels)
 
 
 @dataclass

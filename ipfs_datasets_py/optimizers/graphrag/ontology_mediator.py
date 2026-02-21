@@ -150,6 +150,19 @@ class MediatorState(BaseSession):
         # Get base session fields from parent
         result = super().to_dict()
         
+        # Override rounds serialization to include full detail
+        result["rounds"] = [
+            {
+                "round": r.round_number,
+                "score": r.score,
+                "feedback": list(r.feedback),
+                "artifact_snapshot": r.artifact_snapshot,
+                "duration_ms": r.duration_ms,
+                "metadata": r.metadata,
+            }
+            for r in self.rounds
+        ]
+        
         # Add MediatorState-specific fields
         result["current_ontology"] = self.current_ontology
         result["refinement_history"] = self.refinement_history
@@ -174,6 +187,7 @@ class MediatorState(BaseSession):
         """
         import datetime as _dt
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+        from ipfs_datasets_py.optimizers.common.base_session import RoundRecord
         
         # Create base instance
         state = cls(
@@ -198,16 +212,22 @@ class MediatorState(BaseSession):
             else:
                 state.critic_scores.append(score_data)
         
-        # Restore base session rounds
-        for r in data.get("rounds", []):
-            state.start_round()
-            state.record_round(
+        # Restore base session rounds directly (not via record_round)
+        rounds_data = data.get("rounds", [])
+        state.rounds = []
+        for r in rounds_data:
+            round_record = RoundRecord(
+                round_number=r.get("round", len(state.rounds) + 1),
                 score=r.get("score", 0.0),
                 feedback=r.get("feedback", []),
                 artifact_snapshot=r.get("artifact_snapshot"),
                 duration_ms=r.get("duration_ms", 0.0),
                 metadata=r.get("metadata", {}),
             )
+            state.rounds.append(round_record)
+        
+        # Restore convergence state
+        state.converged = data.get("converged", False)
         
         # Restore metadata and timestamps
         state.metadata.update(data.get("metadata") or {})
