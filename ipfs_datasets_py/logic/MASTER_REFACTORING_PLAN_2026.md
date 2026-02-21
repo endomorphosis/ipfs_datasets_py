@@ -1,7 +1,7 @@
 # Master Refactoring and Improvement Plan — Logic Module
 
-**Date:** 2026-02-20 (last updated)  
-**Version:** 15.0 (supersedes all previous plans)  
+**Date:** 2026-02-21 (last updated)  
+**Version:** 21.0 (supersedes all previous plans)  
 **Status:** Phase 1 ✅ COMPLETE · Phase 2 🔄 In Progress · Phase 3 ✅ COMPLETE · Phase 4 🔄 Ongoing · Phase 5 ✅ COMPLETE · Phase 6 🔄 In Progress  
 **Scope:** `ipfs_datasets_py/logic/` and `tests/unit_tests/logic/`  
 **MCP Integration:** `ipfs_datasets_py/mcp_server/tools/logic_tools/`
@@ -1039,16 +1039,16 @@ Consider splitting only if test coverage or type checking becomes problematic.
 |-----------|---------|----------------|----------------|
 | TDFOL Core | 91.5% pass | 95% pass | 97% pass |
 | CEC Native | 80-85% pass | 90% pass | 93% pass |
-| Integration | ~90% coverage | 88%+ ✅ | 90% ✅ |
+| Integration | ~91% coverage | 88%+ ✅ | 90% ✅ 91%✅ |
 | NL Processing | 75% pass | 85% pass | 90% pass |
 | ZKP (simulation) | 80% pass | 85% pass | 85% pass |
 | MCP Tools | 167+ tests | 200+ tests | 250+ tests |
-| **Overall** | **~89%** | **~90%** | **~93%** |
+| **Overall** | **~91%** | **~90%** | **~93%** |
 
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Integration coverage 90% ✅ ACHIEVED (7895 lines, 775 uncovered; 2478 tests passing). 90% milestone ACHIEVED. Bug fixes in session 20: ProofStep() step_number kwarg removed from prove_with_tableaux (shadowprover_bridge.py:386-392), ConversionContext target_jurisdiction→jurisdiction (caselaw_bulk_processor.py:383), dcec_parsing.parse_dcec_formula mocked for prove_with_cec coverage. Remaining hard-to-reach lines: symbolic_contracts.py 60% (pydantic ImportError paths require symai), legal_symbolic_analyzer.py 67% (SymbolicAI-gated), symbolic_fol_bridge.py 89% (SymbolicAI lines 28/131-225/323-584/717-725 all require symai), modal_logic_extension.py 89% (SymbolicAI-gated lines 278-436). Next targets: 91% — tdfol_cec_bridge ProofStep bug fix (lines 268-275 use step_number kwarg), caselaw_bulk_processor async _validate_unified_system/error paths, temporal_deontic_rag_store missing imports.  
+**Next Action:** Integration coverage 91% ✅ ACHIEVED (7895 lines, 692 uncovered; 2526 tests passing). Session 21: 48 new tests covering domain/__init__.py ImportError branches (lines 17-28), deontological_reasoning conditional/exception modality branches (permission/prohibition/unknown-modal/IndexError paths), temporal_deontic_rag_store (TheoremMetadata hash/__eq__, embed model exception, temporal overlap/index paths, cosine similarity edge cases, temporal conflicts reasoning), neurosymbolic_graphrag HAS_NEUROSYMBOLIC=True coordinator init/exception/prove paths, neurosymbolic_api prove-with-given (axioms+theorems copy), query-success, get_reasoner singleton, caselaw_bulk_processor async exception paths (_validate_unified_system with docs+save, _extract_theorems_parallel/sequential exceptions). Remaining hard-to-reach (final ~9%): symbolic_contracts.py 60% (pydantic/SymbolicAI paths), legal_symbolic_analyzer.py 67% (SymbolicAI-gated), symbolic_fol_bridge.py 89% (SymbolicAI), modal_logic_extension.py 89% (SymbolicAI-gated lines 278-436), deontological_reasoning.py 94% (corpus async/edge), neurosymbolic_api 93% (caps CEC/shadowprover exception paths via sys.modules).  
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 20)  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 21)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
