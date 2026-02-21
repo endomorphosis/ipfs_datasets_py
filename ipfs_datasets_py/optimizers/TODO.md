@@ -752,16 +752,16 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [graphrag] Add `CriticScore.to_list()` -- [completeness, consistency, clarity, granularity, domain_alignment]
 - [ ] (P2) [graphrag] Add `OntologyLearningAdapter.feedback_count()` -- len(_feedback) shortcut
 - [ ] (P3) [graphrag] Add `OntologyGenerator.describe_result(result)` -- one-line English summary
-- [ ] (P2) [graphrag] Add `OntologyMediator.most_frequent_action()` -- action with highest invocation count
-- [ ] (P2) [graphrag] Add `OntologyCritic.dimension_gap(score, target)` -- how far each dim is from target
-- [ ] (P3) [graphrag] Add `EntityExtractionResult.by_id(eid)` -- look up entity by id
+- [x] (P2) [graphrag] Add `OntologyMediator.most_frequent_action()` -- Done batch-83: -- action with highest invocation count
+- [x] (P2) [graphrag] Add `OntologyCritic.dimension_gap(score, target)` -- Done batch-83: -- how far each dim is from target
+- [x] (P3) [graphrag] Add `EntityExtractionResult.by_id(eid)` -- Done batch-83: -- look up entity by id
 - [ ] (P2) [graphrag] Add `OntologyOptimizer.last_score()` -- average_score from most recent history entry
 - [ ] (P2) [graphrag] Add `ExtractionConfig.is_strict()` -- True if confidence_threshold >= 0.8
-- [ ] (P3) [graphrag] Add `OntologyGenerator.top_entities(result, n)` -- top-N by confidence
+- [x] (P3) [graphrag] Add `OntologyGenerator.top_entities(result, n)` -- Done batch-83: -- top-N by confidence
 - [ ] (P2) [graphrag] Add `OntologyMediator.undo_all()` -- undo to oldest snapshot in stack
 - [ ] (P2) [graphrag] Add `OntologyCritic.worst_score(scores)` -- CriticScore with lowest overall from list
 - [ ] (P3) [graphrag] Add `OntologyPipeline.total_runs()` -- number of times run() was called
-- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.worst_feedback_scores(n)` -- bottom-N by score
+- [x] (P2) [graphrag] Add `OntologyLearningAdapter.worst_feedback_scores(n)` -- Done batch-83: -- bottom-N by score
 
 - [x] (P2) [graphrag] Add `EntityExtractionResult.avg_confidence()` -- Done batch-82: mean confidence
 - [x] (P2) [graphrag] Add `OntologyCritic.improve_score_suggestion(score)` -- Done batch-82: lowest-dim recommendation

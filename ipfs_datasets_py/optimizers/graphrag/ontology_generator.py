@@ -2910,18 +2910,6 @@ class OntologyGenerator:
         import dataclasses as _dc
         return _dc.replace(result, entities=filtered, relationships=kept_rels)
 
-__all__ = [
-    'OntologyGenerator',
-    'OntologyGenerationContext',
-    'Entity',
-    'Relationship',
-    'EntityExtractionResult',
-    'ExtractionStrategy',
-    'DataType',
-]
-
-
-
 
     def top_entities(
         self,
@@ -2944,3 +2932,17 @@ __all__ = [
             True
         """
         return sorted(result.entities, key=lambda e: e.confidence, reverse=True)[:n]
+
+__all__ = [
+    'OntologyGenerator',
+    'OntologyGenerationContext',
+    'Entity',
+    'Relationship',
+    'EntityExtractionResult',
+    'ExtractionStrategy',
+    'DataType',
+]
+
+
+
+
