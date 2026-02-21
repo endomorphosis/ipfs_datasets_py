@@ -927,3 +927,24 @@ class OntologyLearningAdapter:
             return 0.0
         count = sum(1 for r in self._feedback if r.final_score > threshold)
         return count / len(self._feedback)
+
+    def improvement_trend(self, window: int = 5) -> float:
+        """Return the mean score change per step over the last *window* records.
+
+        Positive values indicate improving feedback scores; negative indicate
+        declining scores.
+
+        Args:
+            window: Number of most-recent feedback records to inspect (default 5).
+
+        Returns:
+            Mean score delta per step; ``0.0`` if fewer than 2 records.
+        """
+        recent = self._feedback[-window:]
+        if len(recent) < 2:
+            return 0.0
+        diffs = [
+            recent[i + 1].final_score - recent[i].final_score
+            for i in range(len(recent) - 1)
+        ]
+        return sum(diffs) / len(diffs)

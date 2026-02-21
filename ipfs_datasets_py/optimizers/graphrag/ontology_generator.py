@@ -1860,6 +1860,31 @@ class EntityExtractionResult:
         """
         return [e for e in self.entities if e.properties]
 
+    @property
+    def entity_ids(self) -> List[str]:
+        """Return a list of all entity id strings in this result.
+
+        Returns:
+            List of ``id`` strings in entity-insertion order.
+        """
+        return [e.id for e in self.entities]
+
+    @property
+    def relationship_ids(self) -> List[str]:
+        """Return a list of all relationship id strings in this result.
+
+        Returns:
+            List of ``id`` strings for each relationship that has one, in
+            insertion order.  Relationships without an ``id`` attribute are
+            silently skipped.
+        """
+        ids = []
+        for r in self.relationships:
+            rid = getattr(r, "id", None)
+            if rid is not None:
+                ids.append(rid)
+        return ids
+
 
 @dataclass
 class OntologyGenerationResult:
