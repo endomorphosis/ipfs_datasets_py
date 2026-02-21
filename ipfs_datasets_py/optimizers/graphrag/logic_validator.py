@@ -1846,6 +1846,47 @@ class LogicValidator:
         result = self.check_consistency(ontology)
         return len(result.contradictions)
 
+    def entity_count(self, ontology: Dict[str, Any]) -> int:
+        """Return the number of entities in *ontology*.
+
+        Args:
+            ontology: Ontology dict.
+
+        Returns:
+            Integer count of entities.
+        """
+        ents = ontology.get("entities", ontology.get("nodes", []))
+        return len(ents) if isinstance(ents, (list, tuple)) else 0
+
+    def relationship_count(self, ontology: Dict[str, Any]) -> int:
+        """Return the number of relationships in *ontology*.
+
+        Args:
+            ontology: Ontology dict.
+
+        Returns:
+            Integer count of relationships.
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        return len(rels) if isinstance(rels, (list, tuple)) else 0
+
+    def entity_to_relationship_ratio(self, ontology: Dict[str, Any]) -> float:
+        """Return the ratio of entities to relationships.
+
+        Args:
+            ontology: Ontology dict.
+
+        Returns:
+            ``entity_count / relationship_count``; ``0.0`` when no
+            relationships; ``float('inf')`` would never be returned — instead
+            returns ``float(entity_count)`` when there are no relationships.
+        """
+        ents = self.entity_count(ontology)
+        rels = self.relationship_count(ontology)
+        if rels == 0:
+            return float(ents)
+        return ents / rels
+
 
 # Export public API
 __all__ = [

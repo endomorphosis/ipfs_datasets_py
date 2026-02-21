@@ -1016,3 +1016,27 @@ class OntologyLearningAdapter:
         scores = [r.final_score for r in self._feedback]
         diffs = [abs(scores[i + 1] - scores[i]) for i in range(len(scores) - 1)]
         return sum(diffs) / len(diffs)
+
+    def worst_n_feedback(self, n: int = 3) -> list:
+        """Return the *n* feedback records with the lowest ``final_score``.
+
+        Args:
+            n: Number of records to return.
+
+        Returns:
+            List of up to *n* records, sorted lowest score first.
+        """
+        if not self._feedback:
+            return []
+        return sorted(self._feedback, key=lambda r: r.final_score)[:n]
+
+    def feedback_score_range(self) -> float:
+        """Return the range (max - min) of recorded feedback scores.
+
+        Returns:
+            Float range; ``0.0`` when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        return max(scores) - min(scores)
