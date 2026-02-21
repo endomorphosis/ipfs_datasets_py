@@ -919,10 +919,9 @@ class TestFormatsExtended:
         fake_car = tmp_path / "test.car"
         fake_car.write_bytes(b"\x00" * 16)  # Dummy bytes
 
-        # Make libipld.decode_car raise ImportError to trigger fallback
-        with patch.dict(sys.modules, {"libipld": None}):
-            # libipld is not available — should fall through to ipld_car
-            # ipld_car also not available → raises ImportError
+        # Make both libipld and ipld_car unavailable to trigger ImportError
+        with patch.dict(sys.modules, {"libipld": None, "ipld_car": None, "dag_cbor": None}):
+            # Neither libipld nor ipld_car is available → raises ImportError
             from ipfs_datasets_py.knowledge_graphs.migration.formats import _builtin_load_car
             with pytest.raises(ImportError, match="CAR format requires"):
                 _builtin_load_car(str(fake_car))

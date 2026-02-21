@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.16.0  
+**Version:** 3.17.0  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-21 (session 39)  
-**Last Major Release:** v3.16.0 (_extract_spacy_frames 100%, build_temporal_graph NLP fallback, IR query path, gremlin/semantic legacy paths; session 39)
+**Last Updated:** 2026-02-21 (session 40)  
+**Last Major Release:** v3.17.0 (CAR save/load with real deps, neo4j constraint exception, wikipedia tracer on ValueError; session 40)
 
 ---
 
@@ -18,10 +18,10 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 94.5% overall | Measured 2026-02-21 session 39; 37 new tests covering _extract_spacy_frames (all dep branches), build_temporal_graph NLP fallback + empty-sent continue, IR query path (GraphQueryExecutor + budgets_from_preset + sharded_car_backend), gremlin/semantic legacy paths; **3,400 pass** (37 new, baseline 3,363)
-| **Documentation** | ✅ Up to Date | Reflects v3.16.0 structure |
-| **Known Issues** | None | 19 bugs found (sessions 7-11, 18-19, 21-27, 30, 39); 0 failures (3,400 pass)
-| **Next Milestone** | v3.17.0 (Q3 2026) | extractor spaCy lines (requires spaCy NLP), ipld.py legacy coverage (requires IPLDStorage install), dead-code cleanup (lines 131-132 UnboundLocalError bug, line 402 npadvmod dead code)
+| **Test Coverage** | 95% overall | Measured 2026-02-21 session 40; 9 new tests covering CAR format save/load with real libipld+ipld_car+multiformats (lines 914, 921-930, 950-951), neo4j constraint exception (lines 309-310), wikipedia tracer.update_validation_trace on ValueError (line 424); **3,424 pass** (9 new, baseline 3,400); dag_cbor/ipld_car/libipld/plotly installed
+| **Documentation** | ✅ Up to Date | Reflects v3.17.0 structure |
+| **Known Issues** | None | 20 bugs found (sessions 7-11, 18-19, 21-27, 30, 39-40); 0 failures (3,424 pass)
+| **Next Milestone** | v3.18.0 (Q3 2026) | extractor spaCy lines (requires spaCy NLP), ipld.py legacy coverage (requires IPLDStorage install), dead-code cleanup (expression_evaluator 153-163, graph.py 629/661 bool-in-match, ir_executor 435-442)
 
 ---
 
