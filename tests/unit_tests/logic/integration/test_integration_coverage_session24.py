@@ -9,7 +9,7 @@ logic/integration package, focusing on:
 5. Small uncovered exception paths and branch conditions
 
 Previous sessions brought coverage to 94% (507 uncovered). This session
-targets an additional ~80 lines to reach ~95%.
+covers 72 additional lines, reaching ~94.5% (435 uncovered).
 """
 import sys
 import types
@@ -394,7 +394,10 @@ class TestGrammarBridgePaths:
             mod.nl_converter = mock_nlc  # type: ignore[attr-defined]
 
         orig_parse_dcec_string = getattr(cec_native, "parse_dcec_string", _MISSING)
-        cec_native.parse_dcec_string = lambda text: pred  # type: ignore[attr-defined]
+        # Use a simple function (not lambda) for clearer intent
+        def _mock_parse_dcec(text):  # noqa: E306
+            return pred
+        cec_native.parse_dcec_string = _mock_parse_dcec  # type: ignore[attr-defined]
         try:
             with patch.object(mod, "nl_converter") as mock_nlc2:
                 mock_nlc2.convert_to_dcec.return_value = None
@@ -1042,8 +1045,10 @@ class TestProverBackendMixinPaths:
         prover = ConcreteProver()
 
         translation = MagicMock()
-        # .metadata is a property that raises AttributeError
-        type(translation).metadata = property(lambda self: (_ for _ in ()).throw(AttributeError("no meta")))
+        # .metadata is a property that raises AttributeError (using a proper function)
+        def _raise_attr_err(self):
+            raise AttributeError("no meta")
+        type(translation).metadata = property(_raise_attr_err)
 
         formula = MagicMock()
 
