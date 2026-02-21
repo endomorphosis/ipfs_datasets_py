@@ -114,13 +114,13 @@ class TestLogSnapshot:
 class TestConfidenceHistogram:
     def test_empty_result(self):
         hist = _make_result().confidence_histogram()
-        assert sum(hist.values()) == 0
+        assert sum(hist) == 0
 
     def test_buckets_sum_to_entity_count(self):
         entities = [_make_entity(str(i), conf=i * 0.1) for i in range(1, 6)]
         result = _make_result(*entities)
         hist = result.confidence_histogram(bins=5)
-        assert sum(hist.values()) == len(entities)
+        assert sum(hist) == len(entities)
 
     def test_default_bins(self):
         hist = _make_result().confidence_histogram()
@@ -130,8 +130,8 @@ class TestConfidenceHistogram:
         hist = _make_result().confidence_histogram(bins=10)
         assert len(hist) == 10
 
-    def test_returns_dict(self):
-        assert isinstance(_make_result().confidence_histogram(), dict)
+    def test_returns_list(self):
+        assert isinstance(_make_result().confidence_histogram(), list)
 
 
 # ---------------------------------------------------------------------------

@@ -1389,7 +1389,7 @@ class EntityExtractionResult:
         """
         return [e.text for e in self.entities]
 
-    def confidence_histogram(self, bins: int = 5) -> Dict[str, int]:
+    def confidence_histogram(self, bins: int = 5) -> List[int]:
         """Return a histogram of entity confidence values bucketed into *bins*.
 
         Args:
@@ -1397,21 +1397,24 @@ class EntityExtractionResult:
                 Defaults to 5.
 
         Returns:
-            OrderedDict mapping ``"<lo>-<hi>"`` label strings to entity counts.
-            Buckets with zero entities are included.
+            List of integer counts, one per bucket, in ascending order of
+            confidence range.
+
+        Raises:
+            ValueError: If *bins* is less than 1.
 
         Example:
             >>> result.confidence_histogram(bins=2)
-            {'0.00-0.50': 1, '0.50-1.00': 3}
+            [1, 3]
         """
-        from collections import OrderedDict as _OD
+        if bins < 1:
+            raise ValueError(f"bins must be >= 1; got {bins}")
         width = 1.0 / bins
-        labels = [f"{i * width:.2f}-{(i + 1) * width:.2f}" for i in range(bins)]
-        counts: Dict[str, int] = _OD((lbl, 0) for lbl in labels)
+        counts = [0] * bins
         for e in self.entities:
             bucket = min(int(e.confidence / width), bins - 1)
-            counts[labels[bucket]] += 1
-        return dict(counts)
+            counts[bucket] += 1
+        return counts
 
 
 @dataclass
