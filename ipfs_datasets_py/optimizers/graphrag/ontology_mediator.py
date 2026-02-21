@@ -479,6 +479,17 @@ class OntologyMediator:
                     refined['entities'] = new_entities
                     actions_applied.append('split_entity')
 
+            # Action: rename_entity — normalise entity text to Title Case when
+            # casing issues are flagged (e.g. "alice" → "Alice", "LONDON" → "London").
+            elif any(k in rec_lower for k in ('rename', 'casing', 'normalise', 'normalize name', 'title case')):
+                for ent in refined['entities']:
+                    if isinstance(ent, dict) and isinstance(ent.get('text'), str):
+                        old_text = ent['text']
+                        new_text = old_text.title()
+                        if new_text != old_text:
+                            ent['text'] = new_text
+                actions_applied.append('rename_entity')
+
         refined.setdefault('metadata', {})
         refined['metadata']['refinement_actions'] = actions_applied
         self._log.info(f"Refinement complete. Actions applied: {actions_applied}")

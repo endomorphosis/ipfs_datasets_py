@@ -631,6 +631,51 @@ class OntologyGenerator:
             text = fh.read()
         return self.extract_entities(text, context)
 
+    def batch_extract(
+        self,
+        docs: List[Any],
+        context: "OntologyGenerationContext",
+        max_workers: int = 4,
+    ) -> List["EntityExtractionResult"]:
+        """Extract entities from multiple documents in parallel.
+
+        Uses :class:`concurrent.futures.ThreadPoolExecutor` to call
+        :meth:`extract_entities` for each document concurrently.
+
+        Args:
+            docs: List of document texts (or data objects) to extract from.
+            context: Shared extraction context used for all documents.
+            max_workers: Thread pool size (default: 4).
+
+        Returns:
+            List of :class:`EntityExtractionResult` in the same order as
+            *docs*.  Failed extractions produce an
+            :class:`EntityExtractionResult` with ``errors`` populated.
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        results: List[Any] = [None] * len(docs)
+
+        def _extract(idx: int, doc: Any) -> tuple:
+            try:
+                return idx, self.extract_entities(doc, context)
+            except Exception as exc:  # extraction must never crash the whole batch
+                empty = EntityExtractionResult(
+                    entities=[],
+                    relationships=[],
+                    confidence=0.0,
+                    errors=[str(exc)],
+                )
+                return idx, empty
+
+        with ThreadPoolExecutor(max_workers=max(1, max_workers)) as pool:
+            futures = {pool.submit(_extract, i, doc): i for i, doc in enumerate(docs)}
+            for future in as_completed(futures):
+                idx, result = future.result()
+                results[idx] = result
+
+        return results  # type: ignore[return-value]
+
     def generate_ontology(
         self,
         data: Any,

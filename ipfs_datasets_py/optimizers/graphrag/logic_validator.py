@@ -92,6 +92,8 @@ class ValidationResult:
         prover_used: Name of the theorem prover used
         time_ms: Time taken for validation in milliseconds
         metadata: Additional validation metadata
+        invalid_entity_ids: IDs of entities involved in validation errors
+            (e.g. entities referenced by dangling relationships).
     """
     
     is_consistent: bool
@@ -101,6 +103,7 @@ class ValidationResult:
     prover_used: str = "unknown"
     time_ms: float = 0.0
     metadata: Dict[str, Any] = field(default_factory=dict)
+    invalid_entity_ids: List[str] = field(default_factory=list)
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert validation result to dictionary."""
@@ -112,6 +115,7 @@ class ValidationResult:
             'prover_used': self.prover_used,
             'time_ms': self.time_ms,
             'metadata': self.metadata,
+            'invalid_entity_ids': self.invalid_entity_ids,
         }
 
 
@@ -580,6 +584,7 @@ class LogicValidator:
         entity_ids = {e.get('id') for e in entities if isinstance(e, dict)}
         
         # Check relationships reference valid entities
+        invalid_ids: list = []
         for rel in relationships:
             if not isinstance(rel, dict):
                 continue
@@ -591,10 +596,14 @@ class LogicValidator:
                 contradictions.append(
                     f"Relationship references non-existent source entity: {source_id}"
                 )
+                if source_id and source_id not in invalid_ids:
+                    invalid_ids.append(source_id)
             if target_id not in entity_ids:
                 contradictions.append(
                     f"Relationship references non-existent target entity: {target_id}"
                 )
+                if target_id and target_id not in invalid_ids:
+                    invalid_ids.append(target_id)
         
         is_consistent = len(contradictions) == 0
         
@@ -602,7 +611,8 @@ class LogicValidator:
             is_consistent=is_consistent,
             contradictions=contradictions,
             confidence=0.7,  # Lower confidence for basic check
-            prover_used="basic_structural"
+            prover_used="basic_structural",
+            invalid_entity_ids=invalid_ids,
         )
     
     def _prove_consistency(
