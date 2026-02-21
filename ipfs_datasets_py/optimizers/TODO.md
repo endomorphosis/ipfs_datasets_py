@@ -92,7 +92,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [x] (P1) [tests] Add import/smoke tests for each optimizer package (`agentic`, `logic_theorem_optimizer`, `graphrag`).
   - Done 2026-02-20: added unit smoke import test coverage.
-- [ ] (P2) [tests] Add deterministic unit tests for “pure” helpers (parsers, score aggregators, query plan generation).
+- [x] (P2) [tests] Add deterministic unit tests for pure helpers — Done batch 43: test_exceptions.py + test_base_harness.py (36 tests)
 - [x] (P2) [tests] Add golden-file tests for GraphRAG “ontology dict schema” (entities/relationships/metadata invariants).
   - Done 2026-02-20: Created golden fixture (ontology_golden_schema.json) and comprehensive 22-test suite (test_ontology_golden_schema.py) covering structure, entity/relationship invariants, global constraints, and JSON roundtrips.
   - Done 2026-02-20: tests/unit/optimizers/graphrag/test_ontology_schema_invariants.py (11 tests)
@@ -132,7 +132,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [x] (P3) [graphrag] Implement pattern identification across successful runs.
   - Done 2026-02-20: deterministic counters/averages in `identify_patterns()`.
-- [ ] (P3) [graphrag] Implement “intelligent recommendation generation”.
+- [x] (P3) [graphrag] Implement intelligent recommendation generation — Done batch 42: context-aware recs
 
 ### 5) `graphrag/ontology_critic.py`
 
