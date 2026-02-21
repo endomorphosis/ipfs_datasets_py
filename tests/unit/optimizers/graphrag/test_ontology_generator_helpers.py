@@ -886,3 +886,104 @@ class TestFilterByConfidence:
         assert filtered_data["result"].metadata.get("source") == "test"
         assert filtered_data["result"].metadata.get("version") == "1.0"
 
+
+# ──────────────────────────────────────────────────────────────────────────────
+# _extract_rule_based timing instrumentation
+# ──────────────────────────────────────────────────────────────────────────────
+
+class TestExtractRuleBasedTiming:
+    """Test timing instrumentation in _extract_rule_based method."""
+
+    def test_result_includes_timing_metadata(self, generator, ctx):
+        """Test that extraction result includes timing metrics in metadata."""
+        text = "Dr. Smith works at Acme Corp. He mentioned the obligation of the company."
+        result = generator._extract_rule_based(text, ctx)
+        
+        # Check that timing metrics are in metadata
+        assert "pattern_time_ms" in result.metadata
+        assert "extraction_time_ms" in result.metadata
+        assert "relationship_time_ms" in result.metadata
+        assert "total_time_ms" in result.metadata
+
+    def test_all_timing_metrics_are_floats(self, generator, ctx):
+        """Test that all timing metrics are float values."""
+        text = "Alice and Bob work together."
+        result = generator._extract_rule_based(text, ctx)
+        
+        assert isinstance(result.metadata["pattern_time_ms"], float)
+        assert isinstance(result.metadata["extraction_time_ms"], float)
+        assert isinstance(result.metadata["relationship_time_ms"], float)
+        assert isinstance(result.metadata["total_time_ms"], float)
+
+    def test_all_timing_metrics_are_non_negative(self, generator, ctx):
+        """Test that timing values are non-negative."""
+        text = "Test text"
+        result = generator._extract_rule_based(text, ctx)
+        
+        assert result.metadata["pattern_time_ms"] >= 0
+        assert result.metadata["extraction_time_ms"] >= 0
+        assert result.metadata["relationship_time_ms"] >= 0
+        assert result.metadata["total_time_ms"] >= 0
+
+    def test_total_time_approximates_sum_of_components(self, generator, ctx):
+        """Test that total_time is approximately the sum of component times."""
+        text = "Dr. Johnson is from New York. The company mentioned he has an obligation."
+        result = generator._extract_rule_based(text, ctx)
+        
+        pattern_time = result.metadata["pattern_time_ms"]
+        extraction_time = result.metadata["extraction_time_ms"]
+        relationship_time = result.metadata["relationship_time_ms"]
+        total_time = result.metadata["total_time_ms"]
+        
+        # Total should be >= sum of components (with small tolerance for overhead)
+        component_sum = pattern_time + extraction_time + relationship_time
+        assert total_time >= component_sum
+        # Total should be close to sum (within 10ms overhead tolerance)
+        assert total_time <= component_sum + 10.0
+
+    def test_empty_text_still_records_timing(self, generator, ctx):
+        """Test that even empty text produces timing metrics."""
+        result = generator._extract_rule_based("", ctx)
+        
+        assert "total_time_ms" in result.metadata
+        assert result.metadata["total_time_ms"] >= 0
+
+    def test_timing_recorded_on_large_text(self, generator, ctx):
+        """Test that timing metrics work on larger text extractions."""
+        # Generate larger text with multiple entities
+        text = " ".join([
+            f"Dr. Person{i} works at Company{i} Corp."
+            for i in range(20)
+        ])
+        result = generator._extract_rule_based(text, ctx)
+        
+        # Should have timing metrics
+        assert result.metadata["total_time_ms"] >= 0
+        # Larger text should take measurable time
+        assert result.metadata["total_time_ms"] > 0
+
+    def test_metadata_includes_method_field(self, generator, ctx):
+        """Test that metadata includes the extraction method name."""
+        result = generator._extract_rule_based("Test", ctx)
+        
+        assert result.metadata.get("method") == "rule_based"
+
+    def test_metadata_includes_entity_count(self, generator, ctx):
+        """Test that metadata includes entity count."""
+        text = "Dr. Smith and Prof. Jones work at Acme Corp."
+        result = generator._extract_rule_based(text, ctx)
+        
+        assert "entity_count" in result.metadata
+        assert result.metadata["entity_count"] == len(result.entities)
+
+    def test_timing_metrics_are_reasonable(self, generator, ctx):
+        """Test that timing values are in reasonable range (not absurdly high)."""
+        text = "Simple test text"
+        result = generator._extract_rule_based(text, ctx)
+        
+        # Timing should complete in reasonable time (< 1000ms for simple extraction)
+        assert result.metadata["total_time_ms"] < 1000.0
+        assert result.metadata["pattern_time_ms"] < 500.0
+        assert result.metadata["extraction_time_ms"] < 500.0
+        assert result.metadata["relationship_time_ms"] < 500.0
+

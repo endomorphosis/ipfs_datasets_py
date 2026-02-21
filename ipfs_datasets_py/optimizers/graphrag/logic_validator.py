@@ -1928,6 +1928,82 @@ class LogicValidator:
 
         return sorted(all_ids - visited)
 
+    def strongly_connected_components(self, ontology: dict) -> list:
+        """Return strongly connected components (SCCs) using Kosaraju's algorithm.
+
+        Each SCC is a list of entity IDs that are mutually reachable via
+        directed relationship edges.  Singleton nodes (no outgoing edges
+        back to themselves) are returned as single-element SCCs.
+
+        Args:
+            ontology: Dict with optional ``"entities"`` and ``"relationships"`` lists.
+
+        Returns:
+            List of lists of entity IDs.  SCCs are not guaranteed to be in
+            any particular order.
+        """
+        entities = ontology.get("entities", [])
+        relationships = ontology.get("relationships", [])
+
+        all_ids = [e.get("id") for e in entities if e.get("id")]
+        if not all_ids:
+            return []
+
+        # Build adjacency and reverse adjacency
+        adj = {n: [] for n in all_ids}
+        radj = {n: [] for n in all_ids}
+        for rel in relationships:
+            s = rel.get("subject_id") or rel.get("source_id")
+            o = rel.get("object_id") or rel.get("target_id")
+            if s and o and s in adj and o in adj:
+                adj[s].append(o)
+                radj[o].append(s)
+
+        # First pass: fill order stack
+        visited = set()
+        order = []
+
+        def dfs1(node):
+            stack = [(node, iter(adj[node]))]
+            visited.add(node)
+            while stack:
+                cur, children = stack[-1]
+                try:
+                    nxt = next(children)
+                    if nxt not in visited:
+                        visited.add(nxt)
+                        stack.append((nxt, iter(adj[nxt])))
+                except StopIteration:
+                    order.append(cur)
+                    stack.pop()
+
+        for n in all_ids:
+            if n not in visited:
+                dfs1(n)
+
+        # Second pass: collect SCCs on reverse graph
+        visited2 = set()
+        sccs = []
+
+        def dfs2(node):
+            comp = []
+            stack = [node]
+            visited2.add(node)
+            while stack:
+                cur = stack.pop()
+                comp.append(cur)
+                for nxt in radj[cur]:
+                    if nxt not in visited2:
+                        visited2.add(nxt)
+                        stack.append(nxt)
+            return comp
+
+        for n in reversed(order):
+            if n not in visited2:
+                sccs.append(sorted(dfs2(n)))
+
+        return sccs
+
 
 # Export public API
 __all__ = [

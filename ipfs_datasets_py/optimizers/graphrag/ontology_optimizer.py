@@ -2552,6 +2552,33 @@ class OntologyOptimizer:
             return vals[mid]
         return (vals[mid - 1] + vals[mid]) / 2.0
 
+    def convergence_score(self) -> float:
+        """Measure how much the optimization history is converging.
+
+        Convergence is defined as ``1 - (std_of_last_half / std_of_first_half)``
+        clamped to [0, 1].  A value of 1.0 means perfectly converged (zero
+        variance in the last half); 0.0 means no improvement in stability.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when fewer than 4 history entries.
+        """
+        if len(self._history) < 4:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        first_half = scores[: n // 2]
+        second_half = scores[n // 2 :]
+
+        def _std(vals):
+            m = sum(vals) / len(vals)
+            return (sum((v - m) ** 2 for v in vals) / len(vals)) ** 0.5
+
+        std_first = _std(first_half)
+        if std_first == 0:
+            return 1.0
+        std_second = _std(second_half)
+        return max(0.0, min(1.0, 1.0 - std_second / std_first))
+
 
 # Export public API
 __all__ = [

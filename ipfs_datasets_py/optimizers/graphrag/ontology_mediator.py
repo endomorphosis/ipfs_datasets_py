@@ -1402,6 +1402,18 @@ class OntologyMediator:
         """
         return sum(1 for v in self._action_counts.values() if v > 0)
 
+    def apply_feedback_list(self, scores: list) -> None:
+        """Apply a list of ``CriticScore`` objects to the mediator's feedback loop.
+
+        Iterates through each score and calls ``self.apply_feedback(score)``
+        for each one, allowing batch ingestion of evaluation results.
+
+        Args:
+            scores: List of ``CriticScore`` objects to apply in order.
+        """
+        for score in scores:
+            self.apply_feedback(score)
+
 
 # Export public API
 __all__ = [
