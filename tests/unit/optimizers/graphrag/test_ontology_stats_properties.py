@@ -13,6 +13,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
     Entity,
     EntityExtractionResult,
     OntologyGenerator,
+    Relationship,
 )
 from ipfs_datasets_py.optimizers.graphrag.ontology_critic import (
     OntologyCritic,
@@ -34,16 +35,18 @@ def valid_extraction_result(draw):
     if len(entities) >= 2:
         num_relationships = draw(st.integers(min_value=0, max_value=min(10, len(entities) * 2)))
         relationships = []
-        for _ in range(num_relationships):
+        for i in range(num_relationships):
             source_entity = draw(st.sampled_from(entities))
             target_entity = draw(st.sampled_from(entities))
             rel_type = draw(st.sampled_from(["has", "is", "part_of", "related_to", "mentions"]))
-            relationships.append({
-                "source": source_entity.id,
-                "target": target_entity.id,
-                "type": rel_type,
-                "confidence": draw(st.floats(min_value=0.0, max_value=1.0, allow_nan=False)),
-            })
+            rel_confidence = draw(st.floats(min_value=0.0, max_value=1.0, allow_nan=False))
+            relationships.append(Relationship(
+                id=f"rel_{i}",
+                source_id=source_entity.id,
+                target_id=target_entity.id,
+                type=rel_type,
+                confidence=rel_confidence,
+            ))
     else:
         relationships = []
     
