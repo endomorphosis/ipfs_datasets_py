@@ -62,7 +62,7 @@ class OptimizationCycleMetrics:
     error: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
     
-    def finalize(self):
+    def finalize(self) -> None:
         """Finalize cycle metrics."""
         if self.end_time is None:
             self.end_time = datetime.now()
@@ -169,7 +169,7 @@ class PerformanceMetricsCollector:
         cycle_id: str,
         success: bool = True,
         error: Optional[str] = None,
-    ):
+    ) -> None:
         """End tracking for an optimization cycle.
         
         Args:
@@ -196,7 +196,7 @@ class PerformanceMetricsCollector:
         self,
         cycle_id: str,
         cache_hit: bool,
-    ):
+    ) -> None:
         """Record an LLM API call.
         
         Args:
@@ -218,7 +218,7 @@ class PerformanceMetricsCollector:
         cycle_id: str,
         duration: float,
         validator_count: int = 1,
-    ):
+    ) -> None:
         """Record validation metrics.
         
         Args:
@@ -331,7 +331,7 @@ class PerformanceMetricsCollector:
         """
         return list(self._completed_cycles)[-n:]
     
-    def clear_history(self):
+    def clear_history(self) -> None:
         """Clear all historical metrics."""
         self._completed_cycles.clear()
         self._total_llm_calls = 0

@@ -309,7 +309,7 @@ class LLMCache:
 def cached_llm_call(
     cache: Optional[LLMCache] = None,
     ttl: Optional[int] = None,
-):
+) -> Callable[[Callable], Callable]:
     """Decorator to cache LLM function calls.
     
     Args:
@@ -450,7 +450,7 @@ class ParallelValidator:
         
         return results
     
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown executor."""
         self._executor.shutdown(wait=True)
 

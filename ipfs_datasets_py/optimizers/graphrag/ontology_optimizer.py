@@ -2221,3 +2221,15 @@ __all__ = [
     'OntologyOptimizer',
     'OptimizationReport',
 ]
+
+    def has_improved(self, baseline: float) -> bool:
+        """Return ``True`` if any history entry has ``average_score > baseline``.
+
+        Args:
+            baseline: Reference score to beat.
+
+        Returns:
+            ``True`` when at least one entry exceeds *baseline*; ``False``
+            otherwise (including when history is empty).
+        """
+        return any(e.average_score > baseline for e in self._history)
