@@ -5574,6 +5574,38 @@ class OntologyGenerator:
         """
         return {getattr(r, "type", "") for r in (result.relationships or [])}
 
+    def entity_relation_ratio(self, result: Any) -> float:
+        """Return the ratio of entity count to relationship count.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float ratio; 0.0 when there are no relationships.
+        """
+        rels = result.relationships or []
+        entities = result.entities or []
+        if not rels:
+            return 0.0
+        return len(entities) / len(rels)
+
+    def relationship_confidence_std(self, result: Any) -> float:
+        """Return the population std-dev of relationship confidence scores.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float std-dev; 0.0 when fewer than 2 relationships.
+        """
+        rels = result.relationships or []
+        if len(rels) < 2:
+            return 0.0
+        confs = [getattr(r, "confidence", 1.0) for r in rels]
+        mean = sum(confs) / len(confs)
+        variance = sum((c - mean) ** 2 for c in confs) / len(confs)
+        return variance ** 0.5
+
 
 __all__ = [
     'OntologyGenerator',

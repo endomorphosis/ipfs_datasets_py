@@ -1475,3 +1475,26 @@ class OntologyLearningAdapter:
             total += r.final_score
             result.append(total)
         return result
+
+    def feedback_rate_of_change(self) -> float:
+        """Return the mean absolute first-difference of feedback scores.
+
+        Alias for :meth:`feedback_volatility` but named to highlight that it
+        measures the average speed of change rather than instability.
+
+        Returns:
+            Float; 0.0 when fewer than 2 feedback records.
+        """
+        return self.feedback_volatility()
+
+    def feedback_above_mean_count(self) -> int:
+        """Return the count of feedback records whose score is above the mean.
+
+        Returns:
+            Integer count; 0 when no feedback or all scores are identical.
+        """
+        if not self._feedback:
+            return 0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        return sum(1 for s in scores if s > mean)

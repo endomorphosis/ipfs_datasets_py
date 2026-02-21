@@ -3604,6 +3604,27 @@ class OntologyCritic(BaseCritic):
         vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
         return max(vals) - min(vals)
 
+    def score_reliability(self, scores: list) -> float:
+        """Return a reliability measure for a list of :class:`CriticScore` objects.
+
+        Reliability is defined as 1 - (population std-dev of overall scores).
+        A value near 1 indicates consistent evaluation; near 0 indicates high
+        variance.
+
+        Args:
+            scores: List of :class:`CriticScore` instances.
+
+        Returns:
+            Float in [0, 1] (clamped); 0.0 when fewer than 2 scores.
+        """
+        if len(scores) < 2:
+            return 0.0
+        overalls = [getattr(s, "overall", 0.0) for s in scores]
+        mean = sum(overalls) / len(overalls)
+        variance = sum((v - mean) ** 2 for v in overalls) / len(overalls)
+        std = variance ** 0.5
+        return max(0.0, min(1.0, 1.0 - std))
+
 
 # Export public API
 __all__ = [

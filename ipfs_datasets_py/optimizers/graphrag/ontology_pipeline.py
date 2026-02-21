@@ -1441,3 +1441,28 @@ class OntologyPipeline:
         idx = (p / 100.0) * (n - 1)
         lo, hi = int(idx), min(int(idx) + 1, n - 1)
         return scores[lo] + (scores[hi] - scores[lo]) * (idx - lo)
+
+    def run_score_median(self) -> float:
+        """Return the median of all run overall scores.
+
+        Returns:
+            Float median; 0.0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = sorted(r.score.overall for r in self._run_history)
+        n = len(scores)
+        if n % 2 == 1:
+            return scores[n // 2]
+        return (scores[n // 2 - 1] + scores[n // 2]) / 2.0
+
+    def run_count_above(self, threshold: float = 0.7) -> int:
+        """Return the count of runs whose overall score exceeds *threshold*.
+
+        Args:
+            threshold: Score threshold (exclusive).
+
+        Returns:
+            Integer count; 0 when no runs recorded.
+        """
+        return sum(1 for r in self._run_history if r.score.overall > threshold)

@@ -3107,6 +3107,22 @@ class OntologyOptimizer:
             ewma = alpha * entry.average_score + (1.0 - alpha) * ewma
         return ewma
 
+    def history_second_derivative(self) -> list:
+        """Return the second derivative (acceleration) of average_score over history.
+
+        The first derivative is the list of consecutive differences; the second
+        derivative is the differences of the differences.
+
+        Returns:
+            List of floats with length ``len(_history) - 2``; empty list when
+            fewer than 3 history entries.
+        """
+        if len(self._history) < 3:
+            return []
+        scores = [e.average_score for e in self._history]
+        first_deriv = [scores[i + 1] - scores[i] for i in range(len(scores) - 1)]
+        return [first_deriv[i + 1] - first_deriv[i] for i in range(len(first_deriv) - 1)]
+
 
 # Export public API
 __all__ = [

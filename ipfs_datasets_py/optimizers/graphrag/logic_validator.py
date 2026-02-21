@@ -2688,6 +2688,49 @@ class LogicValidator:
                 distribution[src] = distribution.get(src, 0) + 1
         return distribution
 
+    def max_dag_depth(self, ontology: Any) -> int:
+        """Return the maximum depth of the directed graph from any root node.
+
+        Uses BFS from all root nodes (nodes with no incoming edges).  If the
+        graph contains cycles, returns the longest path found without revisiting
+        nodes.
+
+        Args:
+            ontology: Ontology with ``relationships`` list.
+
+        Returns:
+            Integer max depth; 0 when there are no relationships.
+        """
+        from collections import deque as _deque, defaultdict as _dd
+        rels = getattr(ontology, "relationships", [])
+        if not rels:
+            return 0
+        adj: dict = _dd(list)
+        in_deg: dict = _dd(int)
+        nodes: set = set()
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src and tgt:
+                adj[src].append(tgt)
+                in_deg[tgt] += 1
+                nodes.add(src)
+                nodes.add(tgt)
+        roots = [n for n in nodes if in_deg[n] == 0]
+        if not roots:
+            roots = list(nodes)[:1]
+        max_depth = 0
+        queue: _deque = _deque()
+        for root in roots:
+            queue.append((root, 0, {root}))
+        while queue:
+            node, depth, visited = queue.popleft()
+            max_depth = max(max_depth, depth)
+            for nbr in adj.get(node, []):
+                if nbr not in visited:
+                    queue.append((nbr, depth + 1, visited | {nbr}))
+        return max_depth
+
 
 # Export public API
 __all__ = [
