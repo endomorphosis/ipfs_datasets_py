@@ -1584,6 +1584,21 @@ class OntologyOptimizer:
         """
         return [r.average_score for r in self._history]
 
+    def average_score(self) -> float:
+        """Return the mean of all ``average_score`` values in history.
+
+        Returns:
+            Float mean, or 0.0 if history is empty.
+
+        Example:
+            >>> optimizer.average_score()
+            0.0
+        """
+        scores = self.score_history()
+        if not scores:
+            return 0.0
+        return sum(scores) / len(scores)
+
     def export_score_chart(self, filepath: Optional[str] = None) -> Optional[str]:
         """Produce a matplotlib line chart of average score across history batches.
 

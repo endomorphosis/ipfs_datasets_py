@@ -734,3 +734,9 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] Add `EntityExtractionResult.span_coverage(text_length)` -- Done batch-80: fraction of chars covered
 - [x] (P2) [graphrag] Add `OntologyCritic.bottom_dimension(score)` -- Done batch-80: lowest-value dimension
 - [x] (P2) [graphrag] Add `OntologyMediator.reset_all_state()` -- Done batch-80: clear all state + action entries
+
+- [x] (P2) [graphrag] Add `OntologyOptimizer.average_score()` -- Done batch-81: mean of all history average_scores
+- [x] (P2) [graphrag] Add `OntologyCritic.score_range(scores)` -- Done batch-81: (min, max) overall tuple
+- [x] (P2) [graphrag] Add `OntologyGenerator.strip_low_confidence(result, threshold)` -- Done batch-81: filter below threshold
+- [x] (P2) [graphrag] Add `OntologyMediator.top_recommended_action()` -- Done batch-81: highest-frequency recommendation
+- [x] (P2) [graphrag] Add `EntityExtractionResult.unique_types()` -- Done batch-81: sorted distinct type list

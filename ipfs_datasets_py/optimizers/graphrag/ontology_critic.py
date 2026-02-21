@@ -1745,6 +1745,27 @@ class OntologyCritic(BaseCritic):
         dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
         return min(dims, key=lambda d: getattr(score, d))
 
+    def score_range(
+        self,
+        scores: List["CriticScore"],
+    ) -> tuple:
+        """Return the (min, max) ``overall`` values from a list of CriticScores.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            Tuple ``(min_overall, max_overall)``.  Returns ``(0.0, 0.0)`` for
+            an empty list.
+
+        Example:
+            >>> lo, hi = critic.score_range([s1, s2, s3])
+        """
+        if not scores:
+            return (0.0, 0.0)
+        overalls = [s.overall for s in scores]
+        return (min(overalls), max(overalls))
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],

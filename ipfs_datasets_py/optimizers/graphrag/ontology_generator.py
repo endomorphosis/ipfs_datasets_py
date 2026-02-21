@@ -1118,6 +1118,19 @@ class EntityExtractionResult:
         covered += cur_end - cur_start
         return min(1.0, covered / text_length)
 
+    def unique_types(self) -> List[str]:
+        """Return a sorted list of distinct entity type strings in this result.
+
+        Returns:
+            Sorted list of unique ``type`` values across all entities.
+            Empty list if no entities.
+
+        Example:
+            >>> result.unique_types()
+            ['Org', 'Person']
+        """
+        return sorted({e.type for e in self.entities})
+
 
 @dataclass
 class OntologyGenerationResult:
@@ -2757,6 +2770,37 @@ class OntologyGenerator:
             freq[entity.type] = freq.get(entity.type, 0) + 1
         return dict(sorted(freq.items(), key=lambda kv: kv[1], reverse=True))
 
+
+    def strip_low_confidence(
+        self,
+        result: "EntityExtractionResult",
+        threshold: float = 0.5,
+    ) -> "EntityExtractionResult":
+        """Return a copy of *result* with low-confidence entities removed.
+
+        Entities with ``confidence < threshold`` are excluded.  Relationships
+        referencing removed entities are also pruned.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+            threshold: Minimum confidence required to keep an entity.
+                Defaults to 0.5.
+
+        Returns:
+            New :class:`EntityExtractionResult` with filtered entities.
+
+        Example:
+            >>> r2 = gen.strip_low_confidence(result, threshold=0.7)
+        """
+        filtered = [e for e in result.entities if e.confidence >= threshold]
+        kept_ids = {e.id for e in filtered}
+        kept_rels = [
+            r for r in result.relationships
+            if r.source_id in kept_ids and r.target_id in kept_ids
+        ]
+        import dataclasses as _dc
+        return _dc.replace(result, entities=filtered, relationships=kept_rels)
+
 __all__ = [
     'OntologyGenerator',
     'OntologyGenerationContext',
@@ -2766,5 +2810,6 @@ __all__ = [
     'ExtractionStrategy',
     'DataType',
 ]
+
 
 

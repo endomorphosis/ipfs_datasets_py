@@ -758,6 +758,24 @@ class OntologyMediator:
         self.reset_state()
         self._action_entries.clear()
 
+    def top_recommended_action(self) -> Optional[str]:
+        """Return the action name with the highest recommendation count.
+
+        Uses :attr:`_recommendation_counts` which tracks how many times each
+        recommendation phrase has been generated.
+
+        Returns:
+            Action/recommendation string with the highest frequency, or
+            ``None`` if no recommendations have been generated.
+
+        Example:
+            >>> mediator.top_recommended_action()
+            None
+        """
+        if not self._recommendation_counts:
+            return None
+        return max(self._recommendation_counts, key=self._recommendation_counts.get)
+
     def clear_recommendation_history(self) -> int:
         """Clear the recommendation phrase frequency table.
 
