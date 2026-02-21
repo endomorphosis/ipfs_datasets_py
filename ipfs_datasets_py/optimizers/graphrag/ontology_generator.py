@@ -501,6 +501,22 @@ class ExtractionConfig:
         self.confidence_threshold = preset["confidence_threshold"]
         self.max_entities = preset["max_entities"]
 
+    def is_strict(self) -> bool:
+        """Return ``True`` if this config uses a strict confidence threshold (>= 0.8).
+
+        Useful for quickly branching logic based on config strictness.
+
+        Returns:
+            ``True`` when ``confidence_threshold >= 0.8``.
+
+        Example:
+            >>> ExtractionConfig(confidence_threshold=0.9).is_strict()
+            True
+            >>> ExtractionConfig(confidence_threshold=0.5).is_strict()
+            False
+        """
+        return self.confidence_threshold >= 0.8
+
 
 @dataclass
 class OntologyGenerationContext:
@@ -572,6 +588,8 @@ class Entity:
         properties: Additional properties of the entity
         confidence: Confidence score for this entity (0.0 to 1.0)
         source_span: Optional source text span (start, end)
+        last_seen: Optional Unix timestamp of when this entity was last observed
+            (used for confidence decay over time)
     """
     
     id: str
@@ -580,13 +598,14 @@ class Entity:
     properties: Dict[str, Any] = field(default_factory=dict)
     confidence: float = 1.0
     source_span: Optional[tuple[int, int]] = None
+    last_seen: Optional[float] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialise this entity to a plain dictionary.
 
         Returns:
             Dict with keys ``id``, ``type``, ``text``, ``confidence``,
-            ``properties``, and ``source_span``.
+            ``properties``, ``source_span``, and ``last_seen``.
 
         Example:
             >>> d = entity.to_dict()
@@ -600,6 +619,7 @@ class Entity:
             "confidence": self.confidence,
             "properties": dict(self.properties),
             "source_span": list(self.source_span) if self.source_span else None,
+            "last_seen": self.last_seen,
         }
 
     @classmethod
@@ -621,6 +641,7 @@ class Entity:
             >>> entity = Entity.from_dict(entity.to_dict())
         """
         span = d.get("source_span")
+        last_seen = d.get("last_seen")
         return cls(
             id=d["id"],
             type=d["type"],
@@ -628,6 +649,7 @@ class Entity:
             confidence=float(d.get("confidence", 1.0)),
             properties=dict(d.get("properties") or {}),
             source_span=tuple(span) if span is not None else None,  # type: ignore[arg-type]
+            last_seen=float(last_seen) if last_seen is not None else None,
         )
 
     def copy_with(self, **overrides: Any) -> "Entity":
@@ -668,6 +690,57 @@ class Entity:
             'Alice (Person, conf=0.90)'
         """
         return f"{self.text} ({self.type}, conf={self.confidence:.2f})"
+
+    def apply_confidence_decay(
+        self,
+        current_time: Optional[float] = None,
+        half_life_days: float = 30.0,
+        min_confidence: float = 0.1,
+    ) -> "Entity":
+        """
+        Apply time-based confidence decay to this entity.
+
+        Entities that haven't been observed recently have their confidence
+        reduced using exponential decay. If :attr:`last_seen` is ``None``,
+        no decay is applied.
+
+        Args:
+            current_time: Reference timestamp (Unix time); defaults to current
+                time (via :func:`time.time`).
+            half_life_days: Number of days for confidence to decay to 50% of
+                original value. Default: 30.0 days.
+            min_confidence: Minimum confidence floor (decay stops here).
+                Default: 0.1.
+
+        Returns:
+            New :class:`Entity` with decayed confidence (or unchanged if
+            :attr:`last_seen` is ``None``).
+
+        Example:
+            >>> import time
+            >>> entity = Entity(id="e1", type="Person", text="Alice",
+            ...                 confidence=0.9, last_seen=time.time() - 86400*60)
+            >>> decayed = entity.apply_confidence_decay(half_life_days=30)
+            >>> decayed.confidence < 0.9
+            True
+        """
+        import time as _time
+        import math as _math
+
+        if self.last_seen is None:
+            return self  # No timestamp, no decay
+
+        if current_time is None:
+            current_time = _time.time()
+
+        elapsed_seconds = max(0.0, current_time - self.last_seen)
+        elapsed_days = elapsed_seconds / 86400.0
+
+        # Exponential decay: confidence(t) = original * (0.5 ^ (t / half_life))
+        decay_factor = 0.5 ** (elapsed_days / half_life_days)
+        new_confidence = max(min_confidence, self.confidence * decay_factor)
+
+        return self.copy_with(confidence=new_confidence)
 
 
 @dataclass(slots=True)
@@ -1130,6 +1203,20 @@ class EntityExtractionResult:
             ['Org', 'Person']
         """
         return sorted({e.type for e in self.entities})
+
+    def avg_confidence(self) -> float:
+        """Return the mean confidence across all entities.
+
+        Returns:
+            Float mean confidence, or 0.0 if there are no entities.
+
+        Example:
+            >>> result.avg_confidence()
+            0.75
+        """
+        if not self.entities:
+            return 0.0
+        return sum(e.confidence for e in self.entities) / len(self.entities)
 
 
 @dataclass
@@ -2035,6 +2122,7 @@ class OntologyGenerator:
                     text=raw,
                     confidence=confidence,
                     source_span=(m.start(), m.end()),
+                    last_seen=_time.time(),  # Track when this entity was observed
                 ))
 
         # Derive relationships from extracted entities
@@ -2315,6 +2403,8 @@ class OntologyGenerator:
             "general": ["Entity", "Concept", "Property", "Action", "Event"],
         }
         entity_types = _DOMAIN_TYPES.get(domain.lower(), _DOMAIN_TYPES["general"])
+        import time as _time
+        current_time = _time.time()
         entities = []
         for i in range(n_entities):
             etype = entity_types[i % len(entity_types)]
@@ -2324,6 +2414,7 @@ class OntologyGenerator:
                 "text": f"{etype}_{i}",
                 "properties": {"synthetic": True, "index": i},
                 "confidence": 0.9,
+                "last_seen": current_time,
             })
 
         relationships = []

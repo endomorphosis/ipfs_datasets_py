@@ -482,3 +482,17 @@ class OntologyLearningAdapter:
             True
         """
         return sorted(self._feedback, key=lambda r: r.final_score, reverse=True)[:n]
+
+    def feedback_count(self) -> int:
+        """Return the number of feedback records in the history.
+
+        Shortcut for ``len(adapter._feedback)``.
+
+        Returns:
+            Non-negative integer.
+
+        Example:
+            >>> adapter.feedback_count()
+            0
+        """
+        return len(self._feedback)

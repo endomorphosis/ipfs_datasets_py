@@ -1599,6 +1599,20 @@ class OntologyOptimizer:
             return 0.0
         return sum(scores) / len(scores)
 
+    def last_score(self) -> float:
+        """Return the ``average_score`` from the most recent history entry.
+
+        Returns:
+            Float score, or 0.0 if history is empty.
+
+        Example:
+            >>> optimizer.last_score()
+            0.0
+        """
+        if not self._history:
+            return 0.0
+        return self._history[-1].average_score
+
     def export_score_chart(self, filepath: Optional[str] = None) -> Optional[str]:
         """Produce a matplotlib line chart of average score across history batches.
 

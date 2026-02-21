@@ -1766,6 +1766,24 @@ class OntologyCritic(BaseCritic):
         overalls = [s.overall for s in scores]
         return (min(overalls), max(overalls))
 
+    def improve_score_suggestion(self, score: "CriticScore") -> str:
+        """Return the name of the dimension most needing improvement.
+
+        Returns the dimension with the lowest value — the best candidate for
+        focused improvement effort.
+
+        Args:
+            score: A :class:`CriticScore` to inspect.
+
+        Returns:
+            Dimension name string.
+
+        Example:
+            >>> critic.improve_score_suggestion(score)
+            'granularity'
+        """
+        return self.bottom_dimension(score)
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],
