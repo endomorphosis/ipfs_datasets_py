@@ -109,7 +109,7 @@ class BatchProcessor:
         
         # Process all items concurrently
         tasks = [process_item(item, i) for i, item in enumerate(items)]
-        completed = await _anyio_gather(tasks)
+        completed = await _anyio_gather(*tasks)
         
         # Collect results
         for item_result in completed:

@@ -936,7 +936,10 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] 2 bugs fixed session 27: `prover_installer.py` missing `import logging; logger = logging.getLogger(__name__)` (line 128 NameError before line 129); `test_integration_coverage_session26.py::TestTDFOLGrammarBridgeSession26::test_dcec_to_natural_language_none_dcec_formula_path` ordering failure — patched via `TDFOLGrammarBridge._dcec_to_natural_language.__globals__` to avoid importlib module identity issue
 - [x] Integration tests: 18 new tests session 27 (`__init__.py` lines 80-82 autoconfigure_env, `prover_installer.py` line 129 OSError, `symbolic_fol_bridge.py` lines 28+137, `tdfol_cec_bridge.py` line 254 axiom loop, `tdfol_grammar_bridge.py` lines 264+271-272 with available=True, `ipfs_proof_cache.py` line 329, `temporal_deontic_rag_store.py` lines 25+30 fallback stubs, `legal_symbolic_analyzer.py` methods, `symbolic_contracts.py` lines 43+45 BaseModel stubs, regression guard)
 - [x] **Integration coverage: 99% (7899 lines, 55 uncovered — 68→55)** ✅ SESSION 27 (2857 tests)
-- [ ] TDFOL NL test failures (~69) — requires spaCy
+- [x] 1 production bug fixed session 28: `batch_processing.py` line 112 `_anyio_gather(tasks)` → `_anyio_gather(*tasks)` (list was passed as single argument, causing "object list can't be used in 'await' expression" error — 7 batch processing tests now pass instead of failing)
+- [x] Integration tests: 50 new tests session 28 (63 test classes covering TDFOL↔CEC cross-module interactions, E2E legal NL→TDFOL→CEC pipeline, grammar bridge NL API, DeonticRuleSet cross-module, integration converters+translators, batch processing regression, package exports, async document consistency E2E); 2907 integration tests passing (was 2857)
+- [x] **Logic test suite: 5905 passing, 300 skipped, 4 pre-existing failures** ✅ SESSION 28
+- [ ] TDFOL NL test failures (~65 skipped) — requires spaCy
 - [ ] Integration test coverage: remaining 55 lines (dead code confirmed: lines 79/397/474/529-530 unreachable; symai-gated: 69-72/138/339/421/523-673/116/206/256/305/335/368/398/434/478/506-507)
 
 ---
@@ -1051,7 +1054,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Integration coverage 99% (7899 lines, 55 uncovered; 2857 tests passing). Session 27: 18 new tests + 2 bug fixes (prover_installer.py missing logger; session26 grammar bridge ordering fix via __globals__ patching). Coverage improved 68→55 uncovered lines. Remaining 55 lines confirmed dead code or symai-gated: lines 79/_prover_backend_mixin (sat/unsat substring), 397/deontic_logic_converter (all patterns ≥2 groups), 474/529-530/document_consistency_checker (ProofStatus.SATISFIABLE/UNSATISFIABLE don't exist in enum), 184-186/530-532/legal_symbolic_analyzer (except handlers for string-only try blocks), 63/75-76/legal_symbolic_analyzer (symai.functional EngineRepository + register_ipfs_symai_engines registration — requires live symai), 69-72/138/339/421/523-673/symbolic_contracts (symai ContractedFOLConverter.forward() internals — requires live symai), 116/206/256/305/335/368/398/434/478/506-507/symbolic_logic_primitives (@core.interpret dead exception branches + setattr exception — requires symai with @core.interpret raising).  
+**Next Action:** Session 28 complete. Logic test suite: 5905 passing, 300 skipped, 4 pre-existing failures. Integration: 2907 passing (was 2857). Production bug fixed: batch_processing.py `_anyio_gather(tasks)` → `_anyio_gather(*tasks)`. 50 new E2E and TDFOL↔CEC cross-module tests. Remaining 55 uncovered integration lines confirmed dead code or symai-gated. Next: TDFOL NL improvement (5.2) if spaCy available; Phase 4 CI baseline wiring; E2E stress tests.
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 27)  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 28)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
