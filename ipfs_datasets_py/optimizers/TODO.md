@@ -1212,6 +1212,8 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (batch-145) `OntologyMediator.apply_feedback_list`, `OntologyOptimizer.convergence_score`, `LogicValidator.strongly_connected_components`
 - [x] (batch-146) `OntologyCritic.top_improving_dimension`, `OntologyGenerator.compact_result`
 - [x] (batch-148) `OntologyGenerator.relationship_types(result)`, `OntologyGenerator.split_result(result, n)`
+- [x] (batch-149) `ExtractionConfig.describe()` — human-readable config summary, `OntologyGenerator.describe_extraction_pipeline()` — comprehensive pipeline report
+  - Done 2026-02-21: Added ExtractionConfig.describe() returning formatted string with all config parameters. Added OntologyGenerator.describe_extraction_pipeline() that combines config description with extraction result statistics. Created 26 comprehensive unit tests in test_batch_149_pipeline_descriptions.py covering both methods. All tests passing (100% pass rate). Enables user-friendly debugging and reporting of extraction pipelines.
 - [x] (batch-151) `OntologyOptimizer.history_stability`, `OntologyLearningAdapter.feedback_kurtosis`, `OntologyCritic.critic_dimension_rank`, `LogicValidator.relationship_type_distribution`
 - [x] (batch-152) `OntologyPipeline.best_run_index/score_improvement_rate`, `OntologyOptimizer.window_average`, `OntologyMediator.feedback_history_size`
 - [x] (batch-153) `OntologyOptimizer.first_n_history`, `OntologyLearningAdapter.feedback_rolling_average`, `OntologyCritic.dimension_variance`, `LogicValidator.average_path_length`

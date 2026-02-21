@@ -3439,6 +3439,33 @@ class OntologyCritic(BaseCritic):
             return 0.0
         return total_s / total_w
 
+    def dimension_correlation(self, scores_a: list, scores_b: list, dimension: str = "completeness") -> float:
+        """Return Pearson correlation for *dimension* across two score lists.
+
+        Args:
+            scores_a: List of ``CriticScore`` instances (series A).
+            scores_b: List of ``CriticScore`` instances (series B). Must be
+                the same length as *scores_a*.
+            dimension: Dimension name to compare. Defaults to ``"completeness"``.
+
+        Returns:
+            Float Pearson r in [-1, 1]; ``0.0`` when fewer than 2 samples or
+            std-dev is zero.
+        """
+        n = min(len(scores_a), len(scores_b))
+        if n < 2:
+            return 0.0
+        a = [getattr(s, dimension, 0.0) for s in scores_a[:n]]
+        b = [getattr(s, dimension, 0.0) for s in scores_b[:n]]
+        mean_a = sum(a) / n
+        mean_b = sum(b) / n
+        cov = sum((a[i] - mean_a) * (b[i] - mean_b) for i in range(n)) / n
+        std_a = (sum((v - mean_a) ** 2 for v in a) / n) ** 0.5
+        std_b = (sum((v - mean_b) ** 2 for v in b) / n) ** 0.5
+        if std_a == 0.0 or std_b == 0.0:
+            return 0.0
+        return cov / (std_a * std_b)
+
 
 # Export public API
 __all__ = [

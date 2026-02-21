@@ -2929,6 +2929,24 @@ class OntologyOptimizer:
         threshold = scores[idx]
         return sum(1 for e in self._history if e.average_score > threshold)
 
+    def score_gini_coefficient(self) -> float:
+        """Return the Gini coefficient of history ``average_score`` values.
+
+        A value of 0.0 means perfect equality; 1.0 means maximum inequality.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when history has fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        total = sum(scores)
+        if total == 0.0:
+            return 0.0
+        rank_sum = sum((i + 1) * s for i, s in enumerate(scores))
+        return (2 * rank_sum) / (n * total) - (n + 1) / n
+
 
 # Export public API
 __all__ = [
