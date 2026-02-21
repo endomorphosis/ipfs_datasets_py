@@ -526,6 +526,18 @@ class OntologyPipeline:
         """
         return list(self._run_history)
 
+    def total_runs(self) -> int:
+        """Return the total number of times :meth:`run` has been called.
+
+        Returns:
+            Non-negative integer count.
+
+        Example:
+            >>> pipeline.total_runs()
+            0
+        """
+        return len(self._run_history)
+
     def summary(self) -> str:
         """Return a compact one-line description of this pipeline's configuration.
 

@@ -702,6 +702,24 @@ class OntologyMediator:
             raise IndexError("Nothing to undo: no refinements have been applied")
         return self._undo_stack.pop()
 
+    def undo_all(self) -> Optional[Dict[str, Any]]:
+        """Undo all refinements and return the oldest ontology snapshot.
+
+        Pops every entry from the undo stack and returns the first (oldest)
+        snapshot, which represents the state before any refinements were applied.
+
+        Returns:
+            The oldest ontology snapshot dict, or ``None`` if the stack is empty.
+
+        Example:
+            >>> original = mediator.undo_all()
+        """
+        if not self._undo_stack:
+            return None
+        oldest = self._undo_stack[0]
+        self._undo_stack.clear()
+        return oldest
+
     def get_recommendation_stats(self) -> Dict[str, int]:
         """Return counts of unique recommendation phrases seen across all refinements.
 

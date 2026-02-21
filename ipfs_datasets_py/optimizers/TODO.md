@@ -768,3 +768,9 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] Add `OntologyLearningAdapter.feedback_count()` -- Done batch-82: len(_feedback) shortcut
 - [x] (P2) [graphrag] Add `OntologyOptimizer.last_score()` -- Done batch-82: most recent average_score
 - [x] (P2) [graphrag] Add `ExtractionConfig.is_strict()` -- Done batch-82: True if confidence_threshold >= 0.8
+
+- [x] (P2) [graphrag] Add `CriticScore.to_list()` -- Done batch-84: [c, con, cl, g, da] list
+- [x] (P2) [graphrag] Add `OntologyOptimizer.best_n_ontologies(n)` -- Done batch-84: top-N ontologies
+- [x] (P2) [graphrag] Add `OntologyMediator.undo_all()` -- Done batch-84: undo to oldest snapshot
+- [x] (P2) [graphrag] Add `OntologyCritic.worst_score(scores)` -- Done batch-84: min overall CriticScore
+- [x] (P3) [graphrag] Add `OntologyPipeline.total_runs()` -- Done batch-84: count of run() calls

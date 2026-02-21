@@ -193,6 +193,26 @@ class CriticScore:
             'metadata': self.metadata,
         }
 
+    def to_list(self) -> List[float]:
+        """Return dimension values as a flat list.
+
+        Order: ``[completeness, consistency, clarity, granularity, domain_alignment]``.
+
+        Returns:
+            List of 5 floats in the canonical dimension order.
+
+        Example:
+            >>> score.to_list()
+            [0.8, 0.7, 0.6, 0.5, 0.9]
+        """
+        return [
+            self.completeness,
+            self.consistency,
+            self.clarity,
+            self.granularity,
+            self.domain_alignment,
+        ]
+
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "CriticScore":
         """Reconstruct a :class:`CriticScore` from a dictionary.
@@ -340,6 +360,123 @@ class CriticScore:
             f"<h3>Recommendations</h3>{recs_section}\n"
             "</div>"
         )
+
+    def __eq__(self, other: object) -> bool:
+        """Check equality based on overall score within tolerance.
+        
+        Two :class:`CriticScore` instances are considered equal if their
+        overall scores differ by less than 0.0001 (tolerance for floating point).
+        
+        Args:
+            other: The object to compare with.
+            
+        Returns:
+            ``True`` if both are ``CriticScore`` instances with equal overall
+            scores (within tolerance).
+        """
+        if not isinstance(other, CriticScore):
+            return NotImplemented
+        return abs(self.overall - other.overall) < 0.0001
+
+    def __lt__(self, other: "CriticScore") -> bool:
+        """Compare based on overall score (less than).
+        
+        Args:
+            other: The :class:`CriticScore` to compare with.
+            
+        Returns:
+            ``True`` if this score's overall is less than the other's.
+            
+        Raises:
+            TypeError: If *other* is not a :class:`CriticScore`.
+        """
+        if not isinstance(other, CriticScore):
+            return NotImplemented
+        return self.overall < other.overall
+
+    def __le__(self, other: "CriticScore") -> bool:
+        """Compare based on overall score (less than or equal).
+        
+        Args:
+            other: The :class:`CriticScore` to compare with.
+            
+        Returns:
+            ``True`` if this score's overall is less than or equal to the other's.
+            
+        Raises:
+            TypeError: If *other* is not a :class:`CriticScore`.
+        """
+        if not isinstance(other, CriticScore):
+            return NotImplemented
+        return self.overall <= other.overall
+
+    def __gt__(self, other: "CriticScore") -> bool:
+        """Compare based on overall score (greater than).
+        
+        Args:
+            other: The :class:`CriticScore` to compare with.
+            
+        Returns:
+            ``True`` if this score's overall is greater than the other's.
+            
+        Raises:
+            TypeError: If *other* is not a :class:`CriticScore`.
+        """
+        if not isinstance(other, CriticScore):
+            return NotImplemented
+        return self.overall > other.overall
+
+    def __ge__(self, other: "CriticScore") -> bool:
+        """Compare based on overall score (greater than or equal).
+        
+        Args:
+            other: The :class:`CriticScore` to compare with.
+            
+        Returns:
+            ``True`` if this score's overall is greater than or equal to the other's.
+            
+        Raises:
+            TypeError: If *other* is not a :class:`CriticScore`.
+        """
+        if not isinstance(other, CriticScore):
+            return NotImplemented
+        return self.overall >= other.overall
+
+    def __ne__(self, other: object) -> bool:
+        """Check inequality based on overall score.
+        
+        Args:
+            other: The object to compare with.
+            
+        Returns:
+            ``True`` if the objects differ in overall score (or type).
+        """
+        result = self.__eq__(other)
+        if result is NotImplemented:
+            return result
+        return not result
+
+    def __repr__(self) -> str:
+        """Return a readable string representation of this score.
+        
+        Shows dimensions and overall score in a compact format suitable for
+        REPL inspection and logging.
+        
+        Returns:
+            A string like ``CriticScore(overall=0.8210, C:0.80 Co:0.85 Cl:0.75 G:0.80 DA:0.88)``
+        """
+        dim_abbr = {
+            'completeness': 'C',
+            'consistency': 'Co', 
+            'clarity': 'Cl',
+            'granularity': 'G',
+            'domain_alignment': 'DA'
+        }
+        dims_str = ' '.join(
+            f"{dim_abbr[dim]}:{getattr(self, dim):.2f}"
+            for dim in ['completeness', 'consistency', 'clarity', 'granularity', 'domain_alignment']
+        )
+        return f"CriticScore(overall={self.overall:.4f}, {dims_str})"
 
 
 class OntologyCritic(BaseCritic):
@@ -1806,6 +1943,22 @@ class OntologyCritic(BaseCritic):
         """
         dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
         return {d: round(target - getattr(score, d), 6) for d in dims}
+
+    def worst_score(self, scores: List["CriticScore"]) -> Optional["CriticScore"]:
+        """Return the :class:`CriticScore` with the lowest ``overall`` value.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            The score with the minimum ``overall``, or ``None`` for an empty list.
+
+        Example:
+            >>> critic.worst_score([s1, s2, s3])
+        """
+        if not scores:
+            return None
+        return min(scores, key=lambda s: s.overall)
 
     def _generate_recommendations(
         self,
