@@ -60,8 +60,11 @@ def _reload_symbolic_contracts_with_symai():
         assert sc.SYMBOLIC_AI_AVAILABLE is True
         return sc
     finally:
-        # Restore
-        sys.modules[mod_name] = old_mod
+        # Restore symbolic_contracts module
+        if old_mod is not None:
+            sys.modules[mod_name] = old_mod
+        else:
+            sys.modules.pop(mod_name, None)
         for key, val in prev.items():
             if val is None:
                 sys.modules.pop(key, None)
@@ -353,22 +356,28 @@ class TestSymbolicContractsSymbolicAISession26:
 # ===========================================================================
 
 # Capture references at module level to avoid sys.modules corruption issues
-import ipfs_datasets_py.logic.integration.domain.symbolic_contracts as _sc_orig_module
-_OrigFOLInput = _sc_orig_module.FOLInput
-_OrigFOLSyntaxValidator = _sc_orig_module.FOLSyntaxValidator
+try:
+    import ipfs_datasets_py.logic.integration.domain.symbolic_contracts as _sc_orig_module
+    _OrigFOLInput = _sc_orig_module.FOLInput
+    _OrigFOLSyntaxValidator = _sc_orig_module.FOLSyntaxValidator
+except ImportError:
+    _OrigFOLInput = None
+    _OrigFOLSyntaxValidator = None
 
 
 class TestFOLInputValidatorSession26:
     """Test FOLInput.validate_text_content raises on whitespace-only text (line 138)."""
 
     def test_fol_input_empty_text_raises(self):
-        """FOLInput validator raises ValueError for empty/whitespace text (line 138)."""
-        with pytest.raises(Exception):  # pydantic ValidationError or ValueError
+        """FOLInput validator raises ValidationError for empty/whitespace text (line 138)."""
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
             _OrigFOLInput(text='   ')
 
     def test_fol_input_single_word_raises(self):
-        """FOLInput validator raises ValueError for single-word text (line 143)."""
-        with pytest.raises(Exception):
+        """FOLInput validator raises ValidationError for single-word text (line 143)."""
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
             _OrigFOLInput(text='cats')
 
 
@@ -632,7 +641,7 @@ class TestSymbolicFOLBridgeSession26:
         from ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge import SymbolicFOLBridge
         bridge = SymbolicFOLBridge()
         # Pass a non-string that causes str.count to fail
-        result = bridge.validate_fol_formula(42)  # type: ignore
+        result = bridge.validate_fol_formula(42)  # type: ignore[arg-type]
         # validate_fol_formula does isinstance check first, then does formula.count
         # Actually it tries formula.count('(') — int has no .count
         assert 'valid' in result
@@ -696,11 +705,8 @@ class TestTDFOLGrammarBridgeSession26:
         # '!@# -> B' — '!@#' won't produce a valid formula (not alphanumeric)
         # so left=None and we hit the break
         result = bridge._fallback_parse('!@# -> valid_atom_B')
-        # result might be None or a partial result, but we hit line 264 (break)
-        # as long as no exception, we know the path was taken
-        # The right side 'valid_atom_B' should be alphanumeric so right != None
-        # left '!@#' is not alphanumeric, so left=None → break
-        assert result is None or True  # just ensure no exception
+        # result is None because left side failed and break was hit (no return before)
+        assert result is None
 
     def test_fallback_parse_atom_exception_handler(self):
         """_fallback_parse exception handler logs debug and returns None (lines 271-272)."""
