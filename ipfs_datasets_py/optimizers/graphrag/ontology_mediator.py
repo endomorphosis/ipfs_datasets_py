@@ -145,6 +145,15 @@ class MediatorState(BaseSession):
         else:
             return 'stable'
 
+    def __repr__(self) -> str:
+        """Concise REPL-friendly representation."""
+        latest_score = self.critic_scores[-1].overall if self.critic_scores else 0.0
+        trend = self.get_score_trend()
+        return (
+            f"MediatorState(id={self.session_id!r}, rounds={len(self.refinement_history)}/{self.max_rounds}, "
+            f"latest_score={latest_score:.3f}, trend={trend})"
+        )
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialize MediatorState to a dictionary, including all refinement-specific fields."""
         # Get base session fields from parent

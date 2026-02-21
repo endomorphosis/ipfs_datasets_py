@@ -68,6 +68,16 @@ class OptimizationCycleMetrics:
             self.end_time = datetime.now()
         self.duration = (self.end_time - self.start_time).total_seconds()
     
+    def __repr__(self) -> str:
+        """Concise REPL-friendly representation."""
+        status = "success" if self.success else "failed"
+        cache_rate = 100 * self.llm_cache_hits / (self.llm_calls or 1)
+        return (
+            f"OptimizationCycleMetrics(id={self.cycle_id!r}, duration={self.duration:.2f}s, "
+            f"llm_calls={self.llm_calls}, cache_rate={cache_rate:.1f}%, "
+            f"validations={self.validation_count}, status={status})"
+        )
+    
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         result = asdict(self)

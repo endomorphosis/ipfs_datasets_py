@@ -34,6 +34,16 @@ class RoundRecord:
     duration_ms: float = 0.0
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+    def __repr__(self) -> str:
+        """Concise REPL-friendly representation."""
+        fb_count = len(self.feedback)
+        has_snapshot = self.artifact_snapshot is not None
+        return (
+            f"RoundRecord(round={self.round_number}, score={self.score:.3f}, "
+            f"feedback_items={fb_count}, has_artifact={has_snapshot}, "
+            f"duration_ms={self.duration_ms:.1f})"
+        )
+
 
 @dataclass
 class BaseSession:
@@ -139,6 +149,16 @@ class BaseSession:
     def finish(self) -> None:
         """Mark the session as complete."""
         self.finished_at = datetime.now()
+
+    def __repr__(self) -> str:
+        """Concise REPL-friendly representation."""
+        status = "converged" if self.converged else "active" if self.finished_at is None else "finished"
+        best = self.best_score
+        return (
+            f"BaseSession(id={self.session_id!r}, domain={self.domain!r}, "
+            f"rounds={len(self.rounds)}/{self.max_rounds}, best_score={best:.3f}, "
+            f"status={status})"
+        )
 
     # ------------------------------------------------------------------ #
     # Derived properties                                                   #
