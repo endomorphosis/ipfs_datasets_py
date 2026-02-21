@@ -637,6 +637,20 @@ class OntologyPipeline:
         """
         return [r.score.overall for r in self._run_history]
 
+    def best_run(self) -> Optional[Any]:
+        """Return the :class:`PipelineResult` with the highest ``overall`` score.
+
+        Returns:
+            The run with the maximum ``score.overall``, or ``None`` if no
+            runs have been executed.
+
+        Example:
+            >>> best = pipeline.best_run()
+        """
+        if not self._run_history:
+            return None
+        return max(self._run_history, key=lambda r: r.score.overall)
+
     def warmup(self, n_texts: int = 3) -> None:
         """Pre-warm the pipeline by running *n_texts* dummy single-word texts.
 
