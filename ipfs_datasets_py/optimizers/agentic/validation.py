@@ -1321,7 +1321,21 @@ class OptimizationValidator:
         )
         
         # Run async validation
-        return await async_val.validate(code, target_files, val_context)
+        async_result = await async_val.validate(code, target_files, val_context)
+        
+        # Convert async result to test-facing result
+        return DetailedValidationResult(
+            passed=async_result.passed,
+            level=async_result.level,
+            syntax_passed=async_result.syntax.get("passed", False),
+            type_passed=async_result.types.get("passed", False),
+            test_passed=async_result.unit_tests.get("passed", False),
+            performance_passed=async_result.performance.get("passed", False),
+            security_passed=async_result.security.get("passed", False),
+            style_passed=async_result.style.get("passed", False),
+            errors=async_result.errors,
+            warnings=async_result.warnings,
+        )
 
     def validate_file(
         self,

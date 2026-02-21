@@ -2024,6 +2024,7 @@ class OntologyGenerator:
         # Rule-based NER using regex patterns organized by entity type.
         import re as _re
         import uuid as _uuid
+        import time as _time
 
         # Base patterns (domain-agnostic)
         _BASE_PATTERNS: list[tuple[str, str]] = [
