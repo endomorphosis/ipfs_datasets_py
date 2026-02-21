@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.4.0  
+**Version:** 3.5.0  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-20 (session 27)  
-**Last Major Release:** v3.4.0 (validator 69→~85%, srl 84→~87%, reasoning/helpers 94→~99%, rdf_serializer 94→~97%, jsonld/context 91→~96%, neo4j_exporter 95→99%, lineage 97→100%, session 27)
+**Last Updated:** 2026-02-21 (session 28)  
+**Last Major Release:** v3.5.0 (extractor 54→70%, graph_engine 69→95%, session 28)
 
 ---
 
@@ -18,10 +18,10 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 89% overall | Measured 2026-02-20 session 27; validator ~85%, srl ~87%, helpers ~99%, rdf_serializer ~97%, jsonld/context ~96%, neo4j_exporter 99%, lineage 100%; **3,007 pass** (42 new)
+| **Test Coverage** | 90% overall | Measured 2026-02-21 session 28; extractor 70%, graph_engine 95%, overall 90%; **3,073 pass** (66 new)
 | **Documentation** | ✅ Up to Date | Reflects v3.4.0 structure |
-| **Known Issues** | None | 17 bugs fixed (sessions 7-11, 18-19, 21-27); 0 failures (3,007 pass)
-| **Next Milestone** | v3.5.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
+| **Known Issues** | None | 17 bugs fixed (sessions 7-11, 18-19, 21-27); 0 failures (3,073 pass)
+| **Next Milestone** | v3.6.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
 
 ---
 
@@ -508,6 +508,23 @@ reasoning = reasoner.reason_across_documents(
 ---
 
 ## Version History
+
+### v3.5.0 (2026-02-21) - Coverage Boost Session 28 ✅
+
+**Summary:** Added 66 new GIVEN-WHEN-THEN tests across 2 modules; overall coverage **89%→90%** (+1pp, 1273→1146 misses, 127 more lines covered). Largest gains: `extraction/extractor.py` 54%→**70%** (+16pp), `core/graph_engine.py` 69%→**95%** (+26pp).
+
+**Test additions (66 new):**
+- `extraction/extractor.py` (54% → **70%**, +16pp): _parse_rebel_output (valid/multi/empty/missing-tags/non-string), transformers NER mock (ner_model+re_model via patched pipeline, confidence filter, duplicate entity dedup, ImportError+RuntimeError fallbacks), neural REBEL model lines 315-337 (text2text task, triplet parsing, entity lookup), neural classification model lines 346-376 (sentence loop, score threshold), neural extraction errors lines 378-394, rule-based <2-groups skip line 463, invalid-regex re.error line 486, unexpected exception → RelationshipExtractionError line 490, SRL merge all paths (empty-frames, no-roles, same-entity_id, existing-rel-key, matching entities, None-predicate), SRL warning in extract_knowledge_graph lines 850-851, low structure_temperature filters rels lines 826-827, extract_enhanced_knowledge_graph chunking >2000 lines 985-1003, extract_from_documents missing-text_key lines 1037-1038, enrich_with_types all rules lines 1093-1102, extract_srl_knowledge_graph reuse/create SRLExtractor lines 952-956
+- `core/graph_engine.py` (69% → **95%**, +26pp): create_node calls storage.store/StorageError handled; get_node loads from storage via CID-map/StorageError→None; update_node with persistence; delete_node clears CID key line 202; create_relationship with storage; save_graph calls store_graph/StorageError→None/no-storage→None; load_graph populates nodes+rels/StorageError→False/no-storage→False; get_relationships skips CID-prefixed/non-Relationship entries; find_nodes skips non-Node entries
+
+**Result:** 3,073 passed, 23 skipped, **0 failed** — up from 3,007 (session 27 baseline)
+**Coverage:** 90% overall (1146 misses, down from 1273)
+
+**Remaining untestable lines (require spaCy/real graph):**
+- `extractor.py` lines 117-123 (spaCy download on OSError), 170-189 (spaCy NER), 533-586 (_aggressive_entity_extraction), 618-739 (_infer_complex_relationships), 807-811 (high-temp spaCy)
+- `graph_engine.py` lines 484+490+504+536+548 (traverse_pattern/find_paths multi-hop)
+
+**Backward Compatibility:** 100% (no production code changes — tests and docs only)
 
 ### v3.4.0 (2026-02-20) - Coverage Boost Session 27 ✅
 
