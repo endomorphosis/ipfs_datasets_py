@@ -834,6 +834,42 @@ class LogicValidator:
             })
         return explanations
 
+    def filter_valid_entities(
+        self,
+        entities: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        """Return the subset of *entities* that pass a consistency check.
+
+        Builds a minimal single-entity ontology for each candidate and runs
+        :meth:`check_consistency`.  Only entities whose mini-ontology is
+        deemed consistent are returned.
+
+        Args:
+            entities: List of entity dicts (each with at least ``"id"`` and
+                ``"type"`` keys).
+
+        Returns:
+            List of entity dicts that are individually consistent.
+
+        Example:
+            >>> valid = validator.filter_valid_entities(result.entities)
+            >>> len(valid) <= len(result.entities)
+            True
+        """
+        valid: List[Dict[str, Any]] = []
+        for ent in entities:
+            mini_ont: Dict[str, Any] = {
+                "entities": [ent],
+                "relationships": [],
+            }
+            try:
+                result = self.check_consistency(mini_ont)
+                if result.is_consistent:
+                    valid.append(ent)
+            except Exception:
+                pass  # skip entities that cause unexpected errors
+        return valid
+
     def clear_tdfol_cache(self) -> int:
         """Clear the TDFOL formula cache.
 

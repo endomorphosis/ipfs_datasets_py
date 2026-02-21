@@ -273,3 +273,37 @@ class OntologyPipeline:
             None,
             lambda: self.run(data, data_source=data_source, data_type=data_type, refine=refine),
         )
+
+    def as_dict(self) -> Dict[str, Any]:
+        """Serialize pipeline configuration to a plain dictionary.
+
+        Returns a snapshot of the pipeline's constructor-level settings.
+        The returned dict can be used to recreate an equivalent pipeline with
+        :class:`OntologyPipeline(**as_dict())`.
+
+        Returns:
+            Dict with keys ``domain``, ``use_llm``, and ``max_rounds``.
+
+        Example:
+            >>> d = pipeline.as_dict()
+            >>> clone = OntologyPipeline(**d)
+        """
+        return {
+            "domain": self.domain,
+            "use_llm": getattr(self._critic, "_use_llm", False),
+            "max_rounds": self._mediator.max_rounds,
+        }
+
+    def reset(self) -> None:
+        """Reset internal adapter and mediator state.
+
+        Clears the learning adapter's feedback history and the mediator's
+        undo stack and action counts, returning the pipeline to a clean
+        post-construction state without recreating the underlying objects.
+
+        Example:
+            >>> pipeline.reset()
+        """
+        self._adapter.reset()
+        if hasattr(self._mediator, "reset_state"):
+            self._mediator.reset_state()

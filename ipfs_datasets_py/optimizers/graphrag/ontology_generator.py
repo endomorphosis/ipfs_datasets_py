@@ -1824,6 +1824,94 @@ class OntologyGenerator:
             "metadata": {"synthetic": True, "domain": domain, "n_entities": n_entities},
             "domain": domain,
         }
+
+    def score_entity(self, entity: "Entity") -> float:
+        """Return a single-entity confidence heuristic score (0.0 – 1.0).
+
+        The score is derived from three signals:
+
+        1. **Confidence** -- the entity's own ``confidence`` attribute (0 – 1).
+        2. **Text length** -- longer entity texts are typically more specific
+           and thus more trustworthy; saturates above 50 characters.
+        3. **Type specificity** -- concrete domain types (e.g. ``"Person"``,
+           ``"Organization"``) score higher than generic labels (``"Entity"``,
+           ``"Concept"``, ``"Unknown"``).
+
+        The three signals are blended with weights 0.5 / 0.25 / 0.25.
+
+        Args:
+            entity: An :class:`Entity` instance.
+
+        Returns:
+            Float in [0.0, 1.0].
+
+        Example:
+            >>> s = generator.score_entity(entity)
+            >>> 0.0 <= s <= 1.0
+            True
+        """
+        _GENERIC = {"entity", "concept", "unknown", "other", "thing"}
+
+        conf_score = max(0.0, min(1.0, float(entity.confidence)))
+
+        text_len = len(entity.text) if entity.text else 0
+        len_score = min(1.0, text_len / 50.0)
+
+        type_score = 0.0 if entity.type.lower() in _GENERIC else 1.0
+
+        return round(0.5 * conf_score + 0.25 * len_score + 0.25 * type_score, 6)
+
+    def batch_extract_with_spans(
+        self,
+        documents: List[str],
+        context: "OntologyGenerationContext",
+        max_workers: int = 4,
+    ) -> List["EntityExtractionResult"]:
+        """Extract entities with character spans from multiple documents.
+
+        Calls :meth:`extract_entities_with_spans` on each document using a
+        :class:`~concurrent.futures.ThreadPoolExecutor` to parallelise I/O-
+        bound work.  Results are returned in the **same order** as *documents*.
+
+        Args:
+            documents: List of raw text strings.
+            context: Shared extraction context.
+            max_workers: Thread-pool size (default: 4).
+
+        Returns:
+            List of :class:`EntityExtractionResult`, one per document, in
+            original order.
+
+        Example:
+            >>> results = generator.batch_extract_with_spans(docs, ctx)
+            >>> len(results) == len(docs)
+            True
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        if not documents:
+            return []
+
+        ordered: List[Optional["EntityExtractionResult"]] = [None] * len(documents)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(self.extract_entities_with_spans, doc, context): idx
+                for idx, doc in enumerate(documents)
+            }
+            for future in as_completed(futures):
+                idx = futures[future]
+                try:
+                    ordered[idx] = future.result()
+                except Exception as exc:
+                    ordered[idx] = EntityExtractionResult(
+                        entities=[],
+                        relationships=[],
+                        confidence=0.0,
+                        errors=[f"Extraction error: {exc}"],
+                    )
+        return ordered  # type: ignore[return-value]
+
+
 __all__ = [
     'OntologyGenerator',
     'OntologyGenerationContext',

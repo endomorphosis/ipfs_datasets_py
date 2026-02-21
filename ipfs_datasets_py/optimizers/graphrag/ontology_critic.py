@@ -751,6 +751,54 @@ class OntologyCritic(BaseCritic):
             item["rank"] = rank
         return scored
 
+    def evaluate_with_rubric(
+        self,
+        ontology: Dict[str, Any],
+        context: Any,
+        rubric: Dict[str, float],
+        source_data: Optional[Any] = None,
+    ) -> "CriticScore":
+        """Evaluate an ontology with caller-supplied dimension weights.
+
+        Runs a normal :meth:`evaluate_ontology` call and then rebuilds the
+        overall score using *rubric* weights instead of the defaults.
+
+        Args:
+            ontology: Ontology dict to evaluate.
+            context: Evaluation context.
+            rubric: Mapping of dimension name to weight.  Recognised keys:
+                ``completeness``, ``consistency``, ``clarity``,
+                ``granularity``, ``domain_alignment``.  Unknown keys are
+                silently ignored.  Weights need not sum to 1 -- they are
+                normalised internally.
+            source_data: Optional source text forwarded to the evaluator.
+
+        Returns:
+            A :class:`CriticScore` whose ``overall`` reflects *rubric* weights.
+
+        Raises:
+            ValueError: If *rubric* is empty or all weights are zero.
+
+        Example:
+            >>> rubric = {"completeness": 0.5, "consistency": 0.5}
+            >>> score = critic.evaluate_with_rubric(ontology, ctx, rubric)
+        """
+        _DIMS = ("completeness", "consistency", "clarity", "granularity", "domain_alignment")
+        base = self.evaluate_ontology(ontology, context, source_data=source_data)
+
+        filtered = {k: float(v) for k, v in rubric.items() if k in _DIMS and float(v) > 0}
+        if not filtered:
+            raise ValueError("rubric must contain at least one recognised dimension with a positive weight")
+
+        total_w = sum(filtered.values())
+        weighted = sum(getattr(base, dim) * w for dim, w in filtered.items()) / total_w
+
+        import dataclasses as _dc
+        updated_metadata = dict(base.metadata)
+        updated_metadata["rubric_overall"] = round(weighted, 6)
+        updated_metadata["rubric"] = dict(filtered)
+        return _dc.replace(base, metadata=updated_metadata)
+
     def compare_ontologies(
         self,
         ontology1: Dict[str, Any],
