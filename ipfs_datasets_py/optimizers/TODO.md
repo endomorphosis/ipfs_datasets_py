@@ -76,7 +76,8 @@ These should be started immediately when available:
   - TestOntologyGeneratorFilterStatsProperties: 8 Hypothesis-based tests for filter_by_confidence() statistical invariants (retention rate, removed counts, confidence averages, range bounds)
   - TestOntologyCriticScoreProperties: 2 Hypothesis-based tests for CriticScore invariants (dimension range bounds, overall score validity, worst entity identification)
   - Uses composite Hypothesis strategies (valid_entity, valid_extraction_result, valid_ontology_dict) for generating random, valid test inputs
-- [ ] (P3) [graphrag] Add `OntologySession.elapsed_ms()` total wall-clock time getter
+- [x] (P3) [graphrag] Add `OntologySession.elapsed_ms()` total wall-clock time getter
+  - Done 2026-02-21: Added session-level timing tracking. Modified __init__ to initialize self.start_time (line 184), updated run() to set self.start_time at session start (line 191). Discovered elapsed_ms() method already exists (lines 387-408) and now fully functional. Returns milliseconds elapsed since session start; returns 0.0 if not started. 6 comprehensive unit tests added covering: before-run state, post-run tracking, runtime reflection, multiple calls (monotonic increase), type validation, and fractional precision. All 6 tests passing. File: tests/unit_tests/optimizers/graphrag/test_ontology_session.py::TestElapsedMs
 - [ ] (P3) [arch] Add `BaseOptimizer.dry_run()` method for validation without mutation
 
 #### Medium Tasks (1-2 hours)

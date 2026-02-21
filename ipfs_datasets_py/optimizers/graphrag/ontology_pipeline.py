@@ -1119,3 +1119,28 @@ class OntologyPipeline:
         lo = int(idx)
         hi = min(lo + 1, len(scores) - 1)
         return scores[lo] + (idx - lo) * (scores[hi] - scores[lo])
+
+    def best_run_index(self) -> int:
+        """Return the index of the run with the highest overall score.
+
+        Returns:
+            Integer index into ``_run_history``; ``-1`` when no runs.
+        """
+        if not self._run_history:
+            return -1
+        return max(range(len(self._run_history)),
+                   key=lambda i: self._run_history[i].score.overall)
+
+    def score_improvement_rate(self) -> float:
+        """Return the mean per-step improvement in overall scores.
+
+        Computed as ``(last_score - first_score) / (n - 1)``.
+
+        Returns:
+            Float; ``0.0`` when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        first = self._run_history[0].score.overall
+        last = self._run_history[-1].score.overall
+        return (last - first) / (len(self._run_history) - 1)

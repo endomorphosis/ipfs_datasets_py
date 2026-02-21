@@ -2673,6 +2673,20 @@ class OntologyOptimizer:
         cv = std / mean
         return 1.0 / (1.0 + cv)
 
+    def window_average(self, window: int = 5) -> float:
+        """Return the average ``average_score`` over the last *window* entries.
+
+        Args:
+            window: Number of most recent history entries to average.
+
+        Returns:
+            Float mean; ``0.0`` when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        recent = self._history[-window:]
+        return sum(e.average_score for e in recent) / len(recent)
+
 
 # Export public API
 __all__ = [

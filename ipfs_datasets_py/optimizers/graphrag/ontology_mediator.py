@@ -1414,6 +1414,15 @@ class OntologyMediator:
         for score in scores:
             self.apply_feedback(score)
 
+    def feedback_history_size(self) -> int:
+        """Return the number of feedback records stored in the mediator.
+
+        Returns:
+            Integer count; ``0`` when no feedback has been recorded.
+        """
+        history = getattr(self, '_feedback_history', None) or getattr(self, '_feedback', None) or []
+        return len(history)
+
 
 # Export public API
 __all__ = [
