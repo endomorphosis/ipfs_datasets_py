@@ -329,3 +329,45 @@ class OntologyPipeline:
             use_llm=bool(d.get("use_llm", False)),
             max_rounds=int(d.get("max_rounds", 3)),
         )
+
+    def run_with_metrics(
+        self,
+        data: Any,
+        *,
+        data_source: str = "pipeline",
+        data_type: str = "text",
+        refine: bool = True,
+    ) -> Dict[str, Any]:
+        """Run the pipeline and return a metrics dict alongside the result.
+
+        Wraps :meth:`run` and captures wall-clock latency and score.
+
+        Args:
+            data: Input text or data.
+            data_source: Data source identifier (default: ``"pipeline"``).
+            data_type: Data type hint (default: ``"text"``).
+            refine: Whether to run mediator refinement (default: True).
+
+        Returns:
+            Dict with keys:
+
+            * ``"result"`` -- the :class:`PipelineResult`.
+            * ``"latency_seconds"`` -- wall-clock seconds elapsed.
+            * ``"score"`` -- the overall critic score (float).
+            * ``"entity_count"`` -- number of entities in the result.
+
+        Example:
+            >>> metrics = pipeline.run_with_metrics("Alice works at ACME.")
+            >>> metrics["latency_seconds"] >= 0
+            True
+        """
+        import time
+        start = time.perf_counter()
+        result = self.run(data, data_source=data_source, data_type=data_type, refine=refine)
+        latency = time.perf_counter() - start
+        return {
+            "result": result,
+            "latency_seconds": latency,
+            "score": result.score.overall if hasattr(result.score, "overall") else float(result.score),
+            "entity_count": len(result.entities),
+        }

@@ -299,6 +299,42 @@ class CriticScore:
         total_w = sum(filtered.values())
         return sum(getattr(self, d) * w / total_w for d, w in filtered.items())
 
+    def to_html_report(self) -> str:
+        """Render this :class:`CriticScore` as a simple HTML table.
+
+        Produces a self-contained ``<div>`` containing a ``<table>`` of
+        dimension scores, an overall score row, and an unordered list of
+        recommendations.
+
+        Returns:
+            HTML string (UTF-8 compatible).
+
+        Example:
+            >>> html = score.to_html_report()
+            >>> "<table" in html
+            True
+        """
+        _DIMS = [
+            ("Completeness", self.completeness),
+            ("Consistency", self.consistency),
+            ("Clarity", self.clarity),
+            ("Granularity", self.granularity),
+            ("Domain Alignment", self.domain_alignment),
+            ("Overall", self.overall),
+        ]
+        rows = "\n".join(
+            f"  <tr><td>{label}</td><td>{score:.4f}</td></tr>"
+            for label, score in _DIMS
+        )
+        recs_html = "".join(f"<li>{r}</li>" for r in self.recommendations)
+        recs_section = f"<ul>{recs_html}</ul>" if self.recommendations else "<p>No recommendations.</p>"
+        return (
+            "<div class='critic-report'>\n"
+            f"<table>\n<tr><th>Dimension</th><th>Score</th></tr>\n{rows}\n</table>\n"
+            f"<h3>Recommendations</h3>{recs_section}\n"
+            "</div>"
+        )
+
 
 class OntologyCritic(BaseCritic):
     """
@@ -800,6 +836,52 @@ class OntologyCritic(BaseCritic):
         }
         self._calibrated_thresholds = thresholds
         return thresholds
+
+    def score_trend(
+        self,
+        scores: List["CriticScore"],
+    ) -> str:
+        """Determine the trend direction across a sequence of scores.
+
+        Fits a simple linear regression (least-squares slope) to the
+        :attr:`~CriticScore.overall` values.  Returns a human-readable
+        direction label:
+
+        * ``"improving"`` — positive slope > 0.01
+        * ``"degrading"`` — negative slope < -0.01
+        * ``"stable"`` — |slope| ≤ 0.01
+
+        Args:
+            scores: Ordered list of :class:`CriticScore` objects (at least 2).
+
+        Returns:
+            One of ``"improving"``, ``"stable"``, or ``"degrading"``.
+
+        Raises:
+            ValueError: If *scores* has fewer than 2 entries.
+
+        Example:
+            >>> direction = critic.score_trend(score_history)
+            >>> direction in ("improving", "stable", "degrading")
+            True
+        """
+        if len(scores) < 2:
+            raise ValueError("score_trend requires at least 2 scores")
+
+        ys = [s.overall for s in scores]
+        n = len(ys)
+        xs = list(range(n))
+        mean_x = sum(xs) / n
+        mean_y = sum(ys) / n
+        num = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))
+        denom = sum((x - mean_x) ** 2 for x in xs)
+        slope = num / denom if denom != 0 else 0.0
+
+        if slope > 0.01:
+            return "improving"
+        if slope < -0.01:
+            return "degrading"
+        return "stable"
 
     def evaluate_with_rubric(
         self,

@@ -834,8 +834,7 @@ class LogicValidator:
             })
         return explanations
 
-    def filter_valid_entities(
-        self,
+    def filter_valid_entities(        self,
         entities: List[Dict[str, Any]],
     ) -> List[Dict[str, Any]]:
         """Return the subset of *entities* that pass a consistency check.
@@ -869,6 +868,60 @@ class LogicValidator:
             except Exception:
                 pass  # skip entities that cause unexpected errors
         return valid
+
+    def explain_entity(
+        self,
+        entity: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Return a human-readable validation explanation for a single entity.
+
+        Builds a minimal ontology containing only *entity* and runs
+        :meth:`check_consistency`.  Returns a structured explanation dict.
+
+        Args:
+            entity: Entity dict (at least ``"id"`` and ``"type"`` keys).
+
+        Returns:
+            Dict with keys:
+
+            * ``"entity_id"`` -- the entity's ``id`` field.
+            * ``"is_valid"`` -- bool, whether the entity is individually consistent.
+            * ``"contradictions"`` -- list of contradiction strings (empty if valid).
+            * ``"explanation"`` -- human-readable summary sentence.
+
+        Example:
+            >>> exp = validator.explain_entity({"id": "e1", "type": "Person", "text": "Alice"})
+            >>> exp["is_valid"]
+            True
+        """
+        mini_ont: Dict[str, Any] = {"entities": [entity], "relationships": []}
+        entity_id = entity.get("id", "unknown")
+        try:
+            result = self.check_consistency(mini_ont)
+            if result.is_consistent:
+                return {
+                    "entity_id": entity_id,
+                    "is_valid": True,
+                    "contradictions": [],
+                    "explanation": f"Entity '{entity_id}' passed all consistency checks.",
+                }
+            else:
+                return {
+                    "entity_id": entity_id,
+                    "is_valid": False,
+                    "contradictions": list(result.contradictions),
+                    "explanation": (
+                        f"Entity '{entity_id}' has {len(result.contradictions)} "
+                        f"consistency issue(s): {'; '.join(result.contradictions[:2])}"
+                    ),
+                }
+        except Exception as exc:
+            return {
+                "entity_id": entity_id,
+                "is_valid": False,
+                "contradictions": [str(exc)],
+                "explanation": f"Entity '{entity_id}' could not be validated: {exc}",
+            }
 
     def clear_tdfol_cache(self) -> int:
         """Clear the TDFOL formula cache.

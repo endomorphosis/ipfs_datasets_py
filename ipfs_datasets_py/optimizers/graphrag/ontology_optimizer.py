@@ -1401,6 +1401,52 @@ class OntologyOptimizer:
         improving = sum(1 for a, b in zip(scores, scores[1:]) if b > a)
         return improving / (len(scores) - 1)
 
+    def emit_summary_log(self) -> str:
+        """Return a one-line ASCII summary of the current optimizer state.
+
+        The summary is also emitted via the logger at INFO level.
+
+        Format::
+
+            [OntologyOptimizer] batches=N avg=X.XX best=X.XX trend=<word> variance=X.XXXXXX
+
+        Where:
+        * ``batches`` -- number of history entries.
+        * ``avg`` -- mean average score (or ``N/A`` when history is empty).
+        * ``best`` -- highest average score (or ``N/A``).
+        * ``trend`` -- ``"improving"`` / ``"stable"`` / ``"degrading"`` (or ``"N/A"``).
+        * ``variance`` -- population score variance.
+
+        Returns:
+            The formatted one-line summary string.
+
+        Example:
+            >>> line = optimizer.emit_summary_log()
+            >>> line.startswith("[OntologyOptimizer]")
+            True
+        """
+        n = len(self._history)
+        if n == 0:
+            line = "[OntologyOptimizer] batches=0 avg=N/A best=N/A trend=N/A variance=0.000000"
+        else:
+            scores = [r.average_score for r in self._history]
+            avg = sum(scores) / n
+            best = max(scores)
+            mean = avg
+            variance = sum((s - mean) ** 2 for s in scores) / n
+            if n >= 2:
+                improving = sum(1 for a, b in zip(scores, scores[1:]) if b > a)
+                rate = improving / (n - 1)
+                trend = "improving" if rate > 0.6 else ("degrading" if rate < 0.4 else "stable")
+            else:
+                trend = "stable"
+            line = (
+                f"[OntologyOptimizer] batches={n} avg={avg:.2f} best={best:.2f} "
+                f"trend={trend} variance={variance:.6f}"
+            )
+        self._log.info(line)
+        return line
+
     def export_score_chart(self, filepath: Optional[str] = None) -> Optional[str]:
         """Produce a matplotlib line chart of average score across history batches.
 
