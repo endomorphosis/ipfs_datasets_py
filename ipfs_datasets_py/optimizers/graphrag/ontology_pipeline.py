@@ -963,3 +963,55 @@ class OntologyPipeline:
         if len(self._run_history) < 2:
             return 0.0
         return self._run_history[-1].score.overall - self._run_history[0].score.overall
+
+    def rolling_average(self, window: int = 5) -> list:
+        """Return a list of rolling-window averages of overall scores.
+
+        Each element is the mean of up to *window* consecutive run scores,
+        starting from the first run.
+
+        Args:
+            window: Number of runs to average (default 5).
+
+        Returns:
+            List of float averages, same length as ``_run_history``.
+            Empty when no runs recorded.
+        """
+        if not self._run_history:
+            return []
+        scores = [r.score.overall for r in self._run_history]
+        result = []
+        for i in range(len(scores)):
+            start = max(0, i - window + 1)
+            chunk = scores[start : i + 1]
+            result.append(sum(chunk) / len(chunk))
+        return result
+
+    def score_at_run(self, index: int) -> float:
+        """Return the overall score of the run at *index*.
+
+        Args:
+            index: Zero-based run index. Negative indices are supported.
+
+        Returns:
+            ``overall`` score of the indexed run.
+
+        Raises:
+            IndexError: When *index* is out of range.
+        """
+        return self._run_history[index].score.overall
+
+    def score_percentile(self, value: float) -> float:
+        """Return the percentile rank of *value* among recorded run scores.
+
+        Args:
+            value: Score to rank.
+
+        Returns:
+            Float in [0.0, 100.0]; ``0.0`` when no runs recorded.
+        """
+        if not self._run_history:
+            return 0.0
+        scores = sorted(r.score.overall for r in self._run_history)
+        below = sum(1 for s in scores if s < value)
+        return 100.0 * below / len(scores)

@@ -695,6 +695,38 @@ class ExtractionConfig:
         """
         return self.confidence_threshold < other.confidence_threshold
 
+    def combined_score(self) -> float:
+        """Return a composite score combining ``confidence_threshold`` and
+        ``max_entities`` into a single float for comparison.
+
+        The formula normalises ``confidence_threshold`` directly and scales
+        ``max_entities`` logarithmically (capped at 1.0).
+
+        Returns:
+            Float in [0.0, 2.0].
+        """
+        import math
+        conf_component = self.confidence_threshold  # already in [0, 1]
+        max_e = getattr(self, "max_entities", 0) or 0
+        entity_component = min(1.0, math.log1p(max_e) / math.log1p(1000))
+        return conf_component + entity_component
+
+    def similarity_to(self, other: "ExtractionConfig") -> float:
+        """Return a similarity score between this config and *other* in [0.0, 1.0].
+
+        Currently based solely on the absolute difference in
+        ``confidence_threshold``.
+
+        Args:
+            other: Another :class:`ExtractionConfig`.
+
+        Returns:
+            ``1.0 - abs(self.confidence_threshold - other.confidence_threshold)``
+            clamped to [0.0, 1.0].
+        """
+        diff = abs(self.confidence_threshold - other.confidence_threshold)
+        return max(0.0, 1.0 - diff)
+
 
 @dataclass
 class OntologyGenerationContext:

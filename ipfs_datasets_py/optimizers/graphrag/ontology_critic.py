@@ -200,20 +200,21 @@ class CriticScore:
     def to_list(self) -> List[float]:
         """Return dimension values as a flat list.
 
-        Order: ``[completeness, consistency, clarity, granularity, domain_alignment]``.
+        Order: ``[completeness, consistency, clarity, granularity, relationship_coherence, domain_alignment]``.
 
         Returns:
-            List of 5 floats in the canonical dimension order.
+            List of 6 floats in the canonical dimension order.
 
         Example:
             >>> score.to_list()
-            [0.8, 0.7, 0.6, 0.5, 0.9]
+            [0.8, 0.7, 0.6, 0.5, 0.82, 0.9]
         """
         return [
             self.completeness,
             self.consistency,
             self.clarity,
             self.granularity,
+            self.relationship_coherence,
             self.domain_alignment,
         ]
 
@@ -998,7 +999,7 @@ class OntologyCritic(BaseCritic):
         if not (0 < percentile <= 100):
             raise ValueError(f"percentile must be in (0, 100]; got {percentile}")
 
-        _DIMS = ("completeness", "consistency", "clarity", "granularity", "domain_alignment")
+        _DIMS = ("completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment")
 
         def _pct(values: List[float], p: float) -> float:
             sorted_vals = sorted(values)
@@ -1090,7 +1091,7 @@ class OntologyCritic(BaseCritic):
         if bins < 1:
             raise ValueError(f"bins must be >= 1; got {bins}")
 
-        _DIMS = ("completeness", "consistency", "clarity", "granularity", "domain_alignment")
+        _DIMS = ("completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment")
         histogram: Dict[str, List[int]] = {}
         for dim in _DIMS:
             counts = [0] * bins
@@ -2754,6 +2755,7 @@ class OntologyCritic(BaseCritic):
         consistency: float,
         clarity: float,
         granularity: float,
+        relationship_coherence: float,
         domain_alignment: float
     ) -> List[str]:
         """Generate specific, actionable recommendations for improvement.
@@ -2865,6 +2867,31 @@ class OntologyCritic(BaseCritic):
                 recommendations.append(
                     "Relationship count is very high relative to entity count -- consider merging redundant entities "
                     "or collapsing similar relationship types."
+                )
+
+        # -- Relationship coherence recommendations ----------------------------
+        if relationship_coherence < 0.7:
+            _GENERIC_RELS = {'relates_to', 'related_to', 'links', 'connected', 'associated', 'rel'}
+            rel_types = [r.get('type', '') for r in relationships if isinstance(r, dict)]
+            generic_count = sum(1 for rt in rel_types if rt.lower() in _GENERIC_RELS)
+            
+            if generic_count > len(rel_types) * 0.3:
+                recommendations.append(
+                    f"{generic_count} of {len(rel_types)} relationships use generic types "
+                    "(e.g. 'relates_to', 'connected'). Replace with specific verbs like 'manages', 'causes', 'implements'."
+                )
+            
+            unique_types = set(rt for rt in rel_types if rt)
+            if len(unique_types) == 1 and len(relationships) > 5:
+                recommendations.append(
+                    "All relationships use the same type. Add variety by using domain-specific relationship types."
+                )
+            
+            no_type = [r for r in relationships if isinstance(r, dict) and not r.get('type')]
+            if no_type:
+                recommendations.append(
+                    f"{len(no_type)} relationship(s) missing type field. "
+                    "Assign meaningful types to all relationships."
                 )
 
         # -- Domain alignment recommendations ---------------------------------
