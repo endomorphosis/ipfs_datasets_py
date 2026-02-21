@@ -883,3 +883,47 @@ class OntologyLearningAdapter:
             ``current_threshold - base_threshold`` as a signed float.
         """
         return self._current_threshold - self._base_threshold
+
+    def best_feedback_score(self) -> float:
+        """Return the highest ``final_score`` among all feedback records.
+
+        Returns:
+            Maximum score float; ``0.0`` when there is no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        return max(r.final_score for r in self._feedback)
+
+    def worst_feedback_score(self) -> float:
+        """Return the lowest ``final_score`` among all feedback records.
+
+        Returns:
+            Minimum score float; ``0.0`` when there is no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        return min(r.final_score for r in self._feedback)
+
+    def average_feedback_score(self) -> float:
+        """Return the mean ``final_score`` across all feedback records.
+
+        Returns:
+            Mean score float; ``0.0`` when there is no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        return sum(r.final_score for r in self._feedback) / len(self._feedback)
+
+    def feedback_above_fraction(self, threshold: float = 0.6) -> float:
+        """Return the fraction of feedback records with ``final_score > threshold``.
+
+        Args:
+            threshold: Exclusive lower bound (default 0.6).
+
+        Returns:
+            Float in [0.0, 1.0]; ``0.0`` when there is no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        count = sum(1 for r in self._feedback if r.final_score > threshold)
+        return count / len(self._feedback)
