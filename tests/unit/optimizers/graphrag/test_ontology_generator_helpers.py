@@ -553,3 +553,50 @@ class TestCoOccurrenceConfidenceDecay:
         co_rels = [r for r in rels if r.type == "related_to"]
         for r in co_rels:
             assert 0.0 <= r.confidence <= 1.0
+
+
+class TestMinEntityLength:
+    """Tests for ExtractionConfig.min_entity_length enforcement."""
+
+    @pytest.fixture
+    def gen(self):
+        return OntologyGenerator(use_ipfs_accelerate=False)
+
+    def test_default_min_length_filters_single_chars(self, gen):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
+            ExtractionConfig, OntologyGenerationContext, DataType, ExtractionStrategy,
+        )
+        ctx = OntologyGenerationContext(
+            data_source="t", data_type=DataType.TEXT, domain="general",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+            config=ExtractionConfig(min_entity_length=2),
+        )
+        result = gen.extract_entities("A B C", ctx)
+        # Single-character matches should be filtered out
+        assert all(len(e.text) >= 2 for e in result.entities)
+
+    def test_custom_min_length_filters_short_entities(self, gen):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
+            ExtractionConfig, OntologyGenerationContext, DataType, ExtractionStrategy,
+        )
+        ctx = OntologyGenerationContext(
+            data_source="t", data_type=DataType.TEXT, domain="general",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+            config=ExtractionConfig(min_entity_length=10),
+        )
+        result = gen.extract_entities("Mr Smith and Dr Jones", ctx)
+        assert all(len(e.text) >= 10 for e in result.entities)
+
+    def test_to_dict_includes_min_entity_length(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+        cfg = ExtractionConfig(min_entity_length=5)
+        assert cfg.to_dict()["min_entity_length"] == 5
+
+    def test_from_dict_reads_min_entity_length(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+        cfg = ExtractionConfig.from_dict({"min_entity_length": 7})
+        assert cfg.min_entity_length == 7
+
+    def test_from_dict_default_is_two(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+        assert ExtractionConfig.from_dict({}).min_entity_length == 2

@@ -199,7 +199,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
   - Done 2026-02-20: added `evaluate()` → `CriticResult` bridge method
 - [x] (P2) [arch] Wire `LogicCritic` to extend `BaseCritic`
   - Done 2026-02-20: evaluate_as_base() → BaseCriticResult; backward-compat evaluate() preserved
-- [ ] (P2) [arch] Wire `OntologySession` / `MediatorState` to extend `BaseSession`
+- [x] (P2) [arch] Wire `OntologySession` / `MediatorState` to extend `BaseSession`
+  - Done 2026-02-20: `MediatorState` now extends `BaseSession` and records rounds via BaseSession helpers.
 - [ ] (P2) [arch] Wire `OntologyHarness` to extend `BaseHarness`
 - [ ] (P2) [arch] Wire `LogicHarness` to extend `BaseHarness`
 - [ ] (P3) [docs] Write architecture diagram for the `generate → critique → optimize → validate` loop
@@ -356,7 +357,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ## Documentation Debt
 
-- [ ] (P2) [docs] `ARCHITECTURE_UNIFIED.md` — update to match current code (remove references to non-existent modules)
+- [x] (P2) [docs] `ARCHITECTURE_UNIFIED.md` — update to match current code (remove references to non-existent modules) — Done batch 33: refreshed GraphRAG query optimizer split details and removed outdated size/refactor notes
 - [x] (P2) [docs] `README.md` — add quick-start examples for each optimizer type — Done batch 30: GraphRAG + Logic API/CLI examples added
 - [x] (P2) [docs] Add module-level docstrings to agentic/coordinator.py and production_hardening.py — Already present
 - [x] (P2) [docs] Document the `BaseCritic` / `BaseSession` / `BaseHarness` extension pattern with examples — Done batch 30: BaseCritic module docstring expanded with full extension pattern + existing implementations list
@@ -453,7 +454,8 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [tests] OntologyCritic dimension evaluator boundary tests — Done batch 20-21: test_ontology_critic_dimensions.py (27 tests)
 - [x] (P2) [tests] OntologyGenerator helper method tests (infer_relationships, rule_based, merge) — Done batch 20-21: test_ontology_generator_helpers.py (34 tests)
 - [x] (P2) [tests] OntologyMediator refine_ontology action dispatch tests — Done batch 20-21: test_ontology_mediator_refinement.py (10 tests)
-- [ ] (P2) [arch] Wire MediatorState to extend BaseSession for unified session tracking
+- [x] (P2) [arch] Wire MediatorState to extend BaseSession for unified session tracking
+  - Done 2026-02-20: MediatorState extends BaseSession with session_id, rounds, and scoring metadata.
 - [x] (P2) [tests] Fuzz tests for _extract_rule_based() — Done batch 28 (9 edge-case tests: Unicode, binary, very long, regex special chars)
 - [ ] (P3) [perf] Benchmark _merge_ontologies() on 1000-entity ontologies
 - [x] (P2) [graphrag] Add confidence decay for co-occurrence distance — Done batch 28 (steeper decay >100 chars, floor 0.2)
@@ -492,8 +494,8 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [tests] Unit tests for `OntologyCritic.evaluate_batch()` — Done batch 32: 14 tests in test_ontology_critic_evaluate_batch.py
 - [x] (P2) [graphrag] Add `OntologyGenerationResult` dataclass — Done batch 38: entity_count, relationship_count, entity_type_diversity, mean_entity_confidence, mean_rel_confidence; from_ontology() factory; generate_ontology_rich() method
 - [x] (P2) [docs] Update `ARCHITECTURE_UNIFIED.md` to document Relationship.direction field and co-occurrence confidence decay formula — Done batch 33: added GraphRAG relationship semantics + implemented piecewise confidence-decay equation
-- [ ] (P3) [graphrag] Add `ExtractionConfig.max_entities: int = 500` cap to prevent runaway extraction on large documents
-- [ ] (P3) [graphrag] Add `ExtractionConfig.min_entity_length: int = 2` to filter single-character entities
+- [x] (P3) [graphrag] `ExtractionConfig.max_entities` already exists — field present as int = 0 (unlimited by default); mark done
+- [x] (P3) [graphrag] Add `ExtractionConfig.min_entity_length: int = 2` — Done batch 39: enforced in _extract_rule_based; 5 tests in TestMinEntityLength
 - [ ] (P3) [tests] Fuzz test `OntologyMediator.run_refinement_cycle()` with Hypothesis-generated random documents
 - [ ] (P3) [agentic] Add `ChaosOptimizer.inject_cpu_spike()` method for realistic CPU load testing
 - [ ] (P3) [arch] Add `optimizers.__version__` string populated from `ipfs_datasets_py.__version__`

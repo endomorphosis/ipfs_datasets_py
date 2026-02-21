@@ -88,6 +88,8 @@ class ExtractionConfig:
         window_size: Co-occurrence window size for relationship inference.
         include_properties: Emit property predicates in the formula set.
         domain_vocab: Optional domain-specific vocabulary for entity typing.
+        min_entity_length: Minimum character length for entity text; shorter
+            entities are filtered out.  Defaults to 2 (filter single chars).
     """
 
     confidence_threshold: float = 0.5
@@ -102,6 +104,8 @@ class ExtractionConfig:
     # configured on the generator, LLM extraction is attempted as a fallback.
     # Set to 0.0 (default) to disable fallback.
     llm_fallback_threshold: float = 0.0
+    # Minimum entity text length; entities shorter than this are discarded.
+    min_entity_length: int = 2
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a plain-dict representation (legacy compatibility)."""
@@ -114,6 +118,7 @@ class ExtractionConfig:
             "domain_vocab": {k: list(v) for k, v in self.domain_vocab.items()},
             "custom_rules": list(self.custom_rules),
             "llm_fallback_threshold": self.llm_fallback_threshold,
+            "min_entity_length": self.min_entity_length,
         }
 
     @classmethod
@@ -128,6 +133,7 @@ class ExtractionConfig:
             domain_vocab=dict(d.get("domain_vocab", {})),
             custom_rules=list(d.get("custom_rules", [])),
             llm_fallback_threshold=float(d.get("llm_fallback_threshold", 0.0)),
+            min_entity_length=int(d.get("min_entity_length", 2)),
         )
 
 
@@ -758,12 +764,18 @@ class OntologyGenerator:
         entities: list[Entity] = []
         seen_texts: set[str] = set()
 
+        # Resolve min_entity_length from config (safe fallback if config is a mock)
+        try:
+            min_len = int(getattr(ext_config, "min_entity_length", 2)) if ext_config is not None else 2
+        except (TypeError, ValueError):
+            min_len = 2
+
         for pattern, ent_type in _PATTERNS:
             confidence = 0.5 if ent_type == 'Concept' else 0.75
             for m in _re.finditer(pattern, text):
                 raw = m.group(0).strip()
                 key = raw.lower()
-                if key in seen_texts or len(raw) < 2:
+                if key in seen_texts or len(raw) < min_len:
                     continue
                 seen_texts.add(key)
                 entities.append(Entity(
