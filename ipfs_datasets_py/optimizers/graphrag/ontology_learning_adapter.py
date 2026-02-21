@@ -662,3 +662,18 @@ class OntologyLearningAdapter:
             return (0.0, 0.0)
         scores = [r.final_score for r in self._feedback]
         return (min(scores), max(scores))
+
+    def feedback_count_above(self, threshold: float = 0.6) -> int:
+        """Return the number of feedback records with ``final_score > threshold``.
+
+        Args:
+            threshold: Threshold to compare against (exclusive). Defaults to 0.6.
+
+        Returns:
+            Count of :class:`FeedbackRecord` objects where
+            ``final_score > threshold``.
+
+        Example:
+            >>> adapter.feedback_count_above(threshold=0.7)
+        """
+        return sum(1 for r in self._feedback if r.final_score > threshold)

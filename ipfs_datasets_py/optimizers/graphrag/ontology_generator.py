@@ -1527,6 +1527,34 @@ class EntityExtractionResult:
         """
         return sorted({e.type for e in self.entities})
 
+    def high_confidence_entities(self, threshold: float = 0.8) -> List["Entity"]:
+        """Return entities with confidence >= *threshold*.
+
+        Args:
+            threshold: Minimum confidence (inclusive). Defaults to 0.8.
+
+        Returns:
+            List of :class:`Entity` objects with ``confidence >= threshold``.
+
+        Example:
+            >>> result.high_confidence_entities(threshold=0.9)
+        """
+        return [e for e in self.entities if e.confidence >= threshold]
+
+    def low_confidence_entities(self, threshold: float = 0.5) -> List["Entity"]:
+        """Return entities with confidence < *threshold*.
+
+        Args:
+            threshold: Upper bound (exclusive). Defaults to 0.5.
+
+        Returns:
+            List of :class:`Entity` objects with ``confidence < threshold``.
+
+        Example:
+            >>> result.low_confidence_entities(threshold=0.6)
+        """
+        return [e for e in self.entities if e.confidence < threshold]
+
 
 @dataclass
 class OntologyGenerationResult:

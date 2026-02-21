@@ -1395,6 +1395,24 @@ class OntologyOptimizer:
         """
         return self.score_variance() ** 0.5
 
+    def recent_score_mean(self, n: int = 5) -> float:
+        """Return the mean average_score over the most recent *n* history entries.
+
+        Args:
+            n: Number of most-recent entries to include. Defaults to 5.
+
+        Returns:
+            Mean of the last *n* ``average_score`` values; ``0.0`` when
+            history is empty.
+
+        Example:
+            >>> optimizer.recent_score_mean(n=3)
+        """
+        if not self._history:
+            return 0.0
+        recent = self._history[-n:]
+        return sum(r.average_score for r in recent) / len(recent)
+
     def score_range(self) -> tuple:
         """Return the ``(min, max)`` range of average scores in history.
 

@@ -2237,6 +2237,24 @@ class OntologyCritic(BaseCritic):
             return vals[mid]
         return (vals[mid - 1] + vals[mid]) / 2.0
 
+    def scores_above_threshold(
+        self, scores: List["CriticScore"], threshold: float = 0.6
+    ) -> List["CriticScore"]:
+        """Return all scores whose ``overall`` value exceeds *threshold*.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+            threshold: Minimum ``overall`` (exclusive). Defaults to 0.6.
+
+        Returns:
+            Filtered list of :class:`CriticScore` objects where
+            ``overall > threshold``.  Returns an empty list for empty input.
+
+        Example:
+            >>> passing = critic.scores_above_threshold(scores, threshold=0.7)
+        """
+        return [s for s in scores if s.overall > threshold]
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],
