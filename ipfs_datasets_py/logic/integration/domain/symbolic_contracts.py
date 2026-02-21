@@ -656,6 +656,18 @@ if SYMBOLIC_AI_AVAILABLE:
 
 else:
     # Fallback implementation without SymbolicAI
+    _FALLBACK_STOPWORDS = frozenset({
+        "the", "and", "but", "for", "nor", "yet", "all",
+        "every", "some", "each", "if", "then", "that",
+        "a", "an", "or", "is", "are", "was", "were",
+    })
+    _FALLBACK_CONTENT_WORDS = [
+        "is", "are", "has", "have", "can", "must", "should", "teaches",
+        "studies", "passes", "writes", "commits", "requires", "pays",
+        "flies", "graduates", "mortal", "human", "bird", "student",
+        "professor", "course", "book", "author", "famous",
+    ]
+
     class ContractedFOLConverter:
         """Fallback FOL converter without SymbolicAI contracts."""
         
@@ -680,15 +692,10 @@ else:
                 for w in words:
                     w_clean = _re.sub(r'[^A-Za-z]', '', w)
                     if len(w_clean) >= 3 and w_clean[0].isupper():
-                        if w_clean.lower() not in {"the", "and", "but", "for", "nor", "yet", "all",
-                                                    "every", "some", "each", "if", "then", "that"}:
+                        if w_clean.lower() not in _FALLBACK_STOPWORDS:
                             predicates.append(w_clean)
                 # Also add content verbs from text
-                verb_patterns = ["is", "are", "has", "have", "can", "must", "should", "teaches",
-                                  "studies", "passes", "writes", "commits", "requires", "pays",
-                                  "flies", "graduate", "mortal", "human", "birds", "students",
-                                  "professor", "courses", "books", "authors", "famous"]
-                for vp in verb_patterns:
+                for vp in _FALLBACK_CONTENT_WORDS:
                     if vp in text and vp.capitalize() not in predicates:
                         predicates.append(vp.capitalize())
                 if not predicates:
@@ -699,8 +706,7 @@ else:
                 for w in words:
                     w_clean = _re.sub(r'[^A-Za-z]', '', w)
                     if (len(w_clean) >= 2 and w_clean[0].isupper()
-                            and w_clean.lower() not in {"if", "then", "all", "every", "some",
-                                                         "each", "and", "but", "the"}
+                            and w_clean.lower() not in _FALLBACK_STOPWORDS
                             and not any(w_clean == p for p in predicates)):
                         entities.append(w_clean)
 

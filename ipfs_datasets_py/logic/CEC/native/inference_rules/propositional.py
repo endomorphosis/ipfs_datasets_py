@@ -16,6 +16,17 @@ from ..dcec_core import (
 from .base import InferenceRule
 
 
+def _flatten_formulas(formulas: List) -> List[Formula]:
+    """Flatten one level of nested lists (when apply() result is passed directly)."""
+    result = []
+    for f in formulas:
+        if isinstance(f, list):
+            result.extend(f)
+        else:
+            result.append(f)
+    return result
+
+
 class ModusPonens(InferenceRule):
     """
     Modus Ponens: From P and P→Q, derive Q.
@@ -28,19 +39,8 @@ class ModusPonens(InferenceRule):
     def name(self) -> str:
         return "Modus Ponens"
     
-    @staticmethod
-    def _flatten(formulas):
-        """Flatten one level of nested lists (when apply() result is passed directly)."""
-        result = []
-        for f in formulas:
-            if isinstance(f, list):
-                result.extend(f)
-            else:
-                result.append(f)
-        return result
-
     def can_apply(self, formulas: List[Formula]) -> bool:
-        flat = self._flatten(formulas)
+        flat = _flatten_formulas(formulas)
         # Check if we have both P and P→Q
         for f1 in flat:
             for f2 in flat:
@@ -50,7 +50,7 @@ class ModusPonens(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        flat = self._flatten(formulas)
+        flat = _flatten_formulas(formulas)
         results: List[Formula] = []
         for f1 in flat:
             for f2 in flat:
@@ -71,26 +71,15 @@ class Simplification(InferenceRule):
     def name(self) -> str:
         return "Simplification"
     
-    @staticmethod
-    def _flatten(formulas):
-        """Flatten one level of nested lists (e.g. when apply() result is passed directly)."""
-        result = []
-        for f in formulas:
-            if isinstance(f, list):
-                result.extend(f)
-            else:
-                result.append(f)
-        return result
-
     def can_apply(self, formulas: List[Formula]) -> bool:
-        flat = self._flatten(formulas)
+        flat = _flatten_formulas(formulas)
         return any(
             isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.AND
             for f in flat
         )
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        flat = self._flatten(formulas)
+        flat = _flatten_formulas(formulas)
         results: List[Formula] = []
         for f in flat:
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.AND:

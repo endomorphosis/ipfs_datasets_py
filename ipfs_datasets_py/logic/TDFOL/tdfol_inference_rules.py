@@ -1072,12 +1072,6 @@ class PermissionForbiddenEquivalenceRule(TDFOLInferenceRule):
 
 
 # ---------------------------------------------------------------------------
-# Aliases used in pre-existing tests (shorter names)
-# ---------------------------------------------------------------------------
-AlwaysEventuallyExpansionRule = AlwaysEventuallyExpansionRule  # noqa (already defined)
-
-
-# ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
 
