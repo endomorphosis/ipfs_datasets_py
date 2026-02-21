@@ -716,9 +716,15 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P3) [graphrag] Add `OntologyOptimizer.worst_ontology()` -- Done batch-78: -- return ontology from lowest-scoring history entry
 - [x] (P2) [graphrag] Add `OntologyGenerator.dedup_by_text_prefix(result, prefix_len)` -- Done batch-78: -- deduplicate entities with shared prefix
 - [x] (P3) [graphrag] Add `LogicValidator.is_consistent(ontology)` -- Done batch-78: -- boolean shortcut for check_consistency
-- [ ] (P2) [graphrag] Add `OntologyPipeline.history` property -- return list of PipelineResult from past runs
-- [ ] (P3) [graphrag] Add `ExtractionConfig.apply_defaults_for_domain(domain)` -- mutate thresholds in-place for domain
+- [x] (P2) [graphrag] Add `OntologyPipeline.history` property -- Done batch-79: -- return list of PipelineResult from past runs
+- [x] (P3) [graphrag] Add `ExtractionConfig.apply_defaults_for_domain(domain)` -- Done batch-79: -- mutate thresholds in-place for domain
 - [x] (P2) [graphrag] Add `OntologyCritic.critical_weaknesses(score)` -- Done batch-78: -- return only weaknesses below 0.5 threshold
 - [ ] (P3) [graphrag] Add `OntologyMediator.peek_undo()` -- return top of undo stack without popping
 - [x] (P2) [graphrag] Add `OntologyLearningAdapter.serialize_to_file(path)` and `from_file(path)` -- Done batch-78: -- file-based persistence
 - [x] (P3) [graphrag] Add `EntityExtractionResult.random_sample(n)` -- Done batch-78: -- return result with n random entities
+
+- [x] (P2) [graphrag] Add `OntologyPipeline.history` property -- Done batch-79: list of PipelineResult from past runs
+- [x] (P2) [graphrag] Add `ExtractionConfig.apply_defaults_for_domain(domain)` -- Done batch-79: mutate thresholds in-place for domain
+- [x] (P2) [graphrag] Add `OntologyOptimizer.score_history()` -- Done batch-79: list of average_score from history entries
+- [x] (P2) [graphrag] Add `OntologyCritic.top_dimension(score)` -- Done batch-79: dimension with highest value
+- [x] (P2) [graphrag] Add `OntologyMediator.action_log(max_entries)` -- Done batch-79: recent action entries list

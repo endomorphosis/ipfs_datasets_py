@@ -1567,6 +1567,23 @@ class OntologyOptimizer:
         """
         return len(self._history)
 
+    def score_history(self) -> List[float]:
+        """Return a list of average scores from all history entries.
+
+        Useful for plotting score trends or computing statistics over
+        optimization runs.
+
+        Returns:
+            List of ``float`` values, one per :class:`OptimizationReport` in
+            ``_history``.  Empty list if no history.
+
+        Example:
+            >>> scores = optimizer.score_history()
+            >>> all(0.0 <= s <= 1.0 for s in scores)
+            True
+        """
+        return [r.average_score for r in self._history]
+
     def export_score_chart(self, filepath: Optional[str] = None) -> Optional[str]:
         """Produce a matplotlib line chart of average score across history batches.
 

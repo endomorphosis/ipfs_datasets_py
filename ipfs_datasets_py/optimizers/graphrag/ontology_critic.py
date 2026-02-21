@@ -1712,6 +1712,23 @@ class OntologyCritic(BaseCritic):
         dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
         return {d: getattr(score, d) for d in dims if getattr(score, d) < threshold}
 
+    def top_dimension(self, score: "CriticScore") -> str:
+        """Return the name of the dimension with the highest value.
+
+        Args:
+            score: A :class:`CriticScore` to inspect.
+
+        Returns:
+            Dimension name string (one of: ``completeness``, ``consistency``,
+            ``clarity``, ``granularity``, ``domain_alignment``).
+
+        Example:
+            >>> critic.top_dimension(score)
+            'domain_alignment'
+        """
+        dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        return max(dims, key=lambda d: getattr(score, d))
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],

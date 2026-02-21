@@ -313,6 +313,8 @@ class OntologyMediator:
         self._undo_stack: list = []
         # Tracks unique recommendation phrases seen across all refine_ontology() calls
         self._recommendation_counts: Dict[str, int] = {}
+        # Ordered log of (action_name, round_index) entries for action_log()
+        self._action_entries: list = []
 
         self._log.info(
             f"Initialized mediator: max_rounds={max_rounds}, "
@@ -606,6 +608,7 @@ class OntologyMediator:
         # Update cumulative action counts
         for action in actions_applied:
             self._action_counts[action] = self._action_counts.get(action, 0) + 1
+            self._action_entries.append({"action": action, "round": len(self._undo_stack)})
         return refined
 
     def get_action_stats(self) -> Dict[str, int]:
@@ -775,6 +778,28 @@ class OntologyMediator:
             0
         """
         return len(self._undo_stack)
+
+    def action_log(self, max_entries: int = 50) -> List[Dict[str, Any]]:
+        """Return the most recent action log entries.
+
+        Each entry is a dict with keys:
+
+        * ``"action"`` -- action name string applied during refinement.
+        * ``"round"`` -- undo stack depth at the time of the action.
+
+        Args:
+            max_entries: Maximum number of entries to return (most recent).
+                Defaults to 50.
+
+        Returns:
+            List of entry dicts, newest last.
+
+        Example:
+            >>> log = mediator.action_log()
+            >>> all("action" in e for e in log)
+            True
+        """
+        return list(self._action_entries[-max_entries:])
 
     def get_undo_depth(self) -> int:
         """Return the number of snapshots in the undo stack.

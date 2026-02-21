@@ -127,6 +127,7 @@ class OntologyPipeline:
             max_rounds=max_rounds,
         )
         self._adapter = OntologyLearningAdapter(domain=domain)
+        self._run_history: List["PipelineResult"] = []
 
     def run(
         self,
@@ -199,7 +200,7 @@ class OntologyPipeline:
             actions=[{"action": a} for a in actions_applied],
         )
 
-        return PipelineResult(
+        result = PipelineResult(
             ontology=ontology,
             score=score,
             entities=ontology.get("entities", []),
@@ -211,6 +212,8 @@ class OntologyPipeline:
                 "entity_count": len(ontology.get("entities", [])),
             },
         )
+        self._run_history.append(result)
+        return result
 
     def run_batch(
         self,
@@ -506,6 +509,22 @@ class OntologyPipeline:
             "technology",
             "news",
         ])
+
+    @property
+    def history(self) -> List["PipelineResult"]:
+        """Return a read-only view of past :class:`PipelineResult` objects.
+
+        Each call to :meth:`run` appends one entry.  Useful for inspecting
+        how scores evolved over repeated invocations.
+
+        Returns:
+            List of :class:`PipelineResult` in chronological order.
+
+        Example:
+            >>> len(pipeline.history) == 0  # before any run
+            True
+        """
+        return list(self._run_history)
 
     def summary(self) -> str:
         """Return a compact one-line description of this pipeline's configuration.

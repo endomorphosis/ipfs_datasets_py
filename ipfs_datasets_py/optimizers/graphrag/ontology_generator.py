@@ -467,6 +467,40 @@ class ExtractionConfig:
             max_confidence=_clamp(self.max_confidence * factor),
         )
 
+    def apply_defaults_for_domain(self, domain: str) -> None:
+        """Mutate this config in-place with sensible defaults for *domain*.
+
+        Adjusts ``confidence_threshold``, ``max_entities``, and
+        ``domain_vocab`` based on well-known domain profiles.  Unrecognised
+        domains are silently ignored (config unchanged).
+
+        Supported domain values: ``"legal"``, ``"medical"``, ``"finance"``,
+        ``"science"``, ``"technology"``, ``"news"``, ``"general"``.
+
+        Args:
+            domain: Domain name string.
+
+        Example:
+            >>> cfg = ExtractionConfig()
+            >>> cfg.apply_defaults_for_domain("legal")
+            >>> cfg.confidence_threshold >= 0.5
+            True
+        """
+        _domain_presets: Dict[str, Any] = {
+            "legal": {"confidence_threshold": 0.75, "max_entities": 200},
+            "medical": {"confidence_threshold": 0.80, "max_entities": 150},
+            "finance": {"confidence_threshold": 0.70, "max_entities": 250},
+            "science": {"confidence_threshold": 0.65, "max_entities": 300},
+            "technology": {"confidence_threshold": 0.60, "max_entities": 350},
+            "news": {"confidence_threshold": 0.55, "max_entities": 500},
+            "general": {"confidence_threshold": 0.50, "max_entities": 1000},
+        }
+        preset = _domain_presets.get(domain.lower().strip())
+        if preset is None:
+            return
+        self.confidence_threshold = preset["confidence_threshold"]
+        self.max_entities = preset["max_entities"]
+
 
 @dataclass
 class OntologyGenerationContext:
