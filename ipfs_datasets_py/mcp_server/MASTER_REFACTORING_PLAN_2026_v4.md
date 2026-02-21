@@ -11,7 +11,7 @@
 
 All 7 refactoring phases are **complete** as of 2026-02-20. The MCP server now has:
 
-- **868 tests passing, 35 skipped, 0 failing** (up from 388 at plan creation; v5 A-F complete 2026-02-21)
+- **947 tests passing, 29 skipped, 0 failing** (up from 388 at plan creation; v5 A-F + session 29 complete 2026-02-21)
 - **0 bare exception handlers** across all 40+ files
 - **0 missing docstrings** in all 8 core modules
 - **0 missing return type annotations** in all public methods
@@ -52,7 +52,7 @@ No further planned work. Future improvements would be tracked as new issues.
 | Core Server Files | 15 files, ~14,651 LOC |
 | Tool Categories | 60 categories |
 | Tool Python Files | 382 files, ~86,455 LOC |
-| Test Functions | **842 passing, 38 skipped, 0 failing** → **868 passing, 35 skipped, 0 failing** (v5 sessions) |
+| Test Functions | **842 passing, 38 skipped, 0 failing** → **947 passing, 29 skipped, 0 failing** (v5 sessions + session 29) |
 | Markdown Docs | **7 root-level** (down from 90+; 28 archived) |
 | Custom Exceptions | 18 classes in exceptions.py |
 | Long Functions (>100 lines) | **0 logic-heavy** (remaining are docstring-heavy, acceptable) |
@@ -101,8 +101,8 @@ No further planned work. Future improvements would be tracked as new issues.
 | `exceptions.py` | 85%+ ✅ |
 | `tool_registry.py` | 73% ✅ (improved from 40% baseline) |
 | `enterprise_api.py` | 66% ✅ (improved from 30% baseline) |
-| `server_context.py` | 50% ⚠️ |
-| `runtime_router.py` | 50% ⚠️ |
+| `server_context.py` | 90% ✅ (improved from 50% — session 29) |
+| `runtime_router.py` | 83% ✅ (improved from 50% — session 29) |
 
 ### 1.4 Architecture Status
 
