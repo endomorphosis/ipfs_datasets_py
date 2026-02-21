@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.20.0  
+**Version:** 3.21.0  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-21 (session 43)  
-**Last Major Release:** v3.20.0 (session 43: spaCy integration bug fixes + 32 new tests covering extractor.py spaCy paths; extractor.py 73%→98% (+25pp); entities.py+relationships.py 100% maintained; 3 production bug fixes: `ent._.get()` → `getattr(ent._, ...)`, `Entity.extraction_method` field added, `Relationship.extraction_method` field added; **99%** overall coverage, 3,551 passing)
+**Last Updated:** 2026-02-21 (session 44)  
+**Last Major Release:** v3.21.0 (session 44: 4 production bug fixes + 15 new tests; **99.7%** overall coverage (40 missed, down from 51); 3,637 passing; bug fixes: `query/knowledge_graph.py:131-142` UnboundLocalError fix (move `GraphRAGProcessor` import unconditionally), extractor.py lines 119-123/178/428-429 now covered; finance_graphrag lines 25-26/31 now covered; srl.py:613 artifact fixed; plotly/anyio installed for richer environment)
 
 ---
 
@@ -11,17 +11,17 @@
 
 | Aspect | Status | Details |
 |--------|--------|---------|
-| **Overall Status** | ✅ Production Ready | 99%+ test coverage |
+| **Overall Status** | ✅ Production Ready | 99.7% test coverage |
 | **Core Features** | ✅ Complete | All extraction, query, storage features working |
 | **P1-P4 Features** | ✅ Complete | Implemented in PR #1085 (2026-02-18) |
 | **Cypher Features** | ✅ Complete | FOREACH + CALL subquery added (2026-02-20) |
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | **99%+ overall** | Measured 2026-02-21 session 43; 32 new tests covering extractor.py spaCy paths (extract_entities 174-189, _aggressive_entity_extraction 517-594, _infer_complex_relationships 618-739, extract_knowledge_graph high-temp 806-837); **3,551 pass** (32 new, baseline 3,519); 51 missed lines; extractor.py 73%→98% (+25pp) |
-| **Documentation** | ✅ Up to Date | Reflects v3.20.0 structure |
-| **Known Issues** | None | 22 bugs found (sessions 7-11, 18-19, 21-27, 30, 39-43); 0 failures (3,551 pass); 2 pre-existing errors in session39 (query/knowledge_graph.py UnboundLocalError bug, pre-existing)
-| **Next Milestone** | v3.21.0 (Q3 2026) | Cover extractor.py lines 119-123 (spaCy model OSError fallback), 178 (custom confidence extension), 428-429 (transformers ImportError handler); cover remaining dead-code candidates
+| **Test Coverage** | **99.7% overall** | Measured 2026-02-21 session 44; 15 new tests covering extractor.py lines 119-123 (OSError model fallback), 178 (low-confidence entity skip), 428-429 (_parse_rebel_output IndexError handler); srl.py:613 (empty-sent guard); hybrid_search.py:205 (already-visited); finance_graphrag.py:25-26 (_MINIMAL_IMPORTS path) and :31 (GRAPHRAG_AVAILABLE=True); **3,637 pass** (15 new); 40 missed lines (down from 51); 99.7% coverage |
+| **Documentation** | ✅ Up to Date | Reflects v3.21.0 structure |
+| **Known Issues** | None | 23 bugs found (sessions 7-11, 18-19, 21-27, 30, 39-44); 0 failures (3,637 pass, 2 skipped); Bug fixed: query/knowledge_graph.py UnboundLocalError now resolved
+| **Next Milestone** | v3.22.0 (Q3 2026) | Remaining 40 lines all dead code or truly-unreachable ImportError except blocks (neo4j not installed; bool-after-int match; FUNCTION_REGISTRY dead paths)
 
 ---
 

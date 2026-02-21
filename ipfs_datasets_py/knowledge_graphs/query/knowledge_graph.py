@@ -121,6 +121,9 @@ def query_knowledge_graph(
 
         # Keep this lightweight and dependency-free. For PDF graphs, prefer
         # pdf_tools/pdf_query_knowledge_graph.
+        # Always import legacy processor for test_graph compatibility
+        # noqa: F401 not needed — both GraphRAGProcessor and MockGraphRAGProcessor are used below
+        from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor, MockGraphRAGProcessor
         # Import unified processor (recommended) with fallback to legacy
         try:
             from ipfs_datasets_py.processors.specialized.graphrag.unified_graphrag import (
@@ -132,10 +135,8 @@ def query_knowledge_graph(
             processor = UnifiedGraphRAGProcessor(config=config)
         except ImportError:
             # Fallback to legacy processor (deprecated but still supported)
-            from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor, MockGraphRAGProcessor
             processor = GraphRAGProcessor()
 
-        processor: GraphRAGProcessor
         if graph_id == "test_graph":
             processor = MockGraphRAGProcessor()
         else:
