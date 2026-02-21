@@ -167,6 +167,46 @@ ontology = generator.generate_ontology(pdf_data, context)
 print(f"Generated {len(ontology['entities'])} entities")
 ```
 
+### Custom Extraction Rules and LLM Fallback
+
+```python
+from ipfs_datasets_py.optimizers.graphrag import (
+    OntologyGenerator,
+    OntologyGenerationContext,
+    ExtractionConfig,
+    ExtractionStrategy,
+    DataType,
+)
+
+# Domain-specific custom rules: (regex_pattern, entity_type) tuples
+config = ExtractionConfig(
+    confidence_threshold=0.6,
+    custom_rules=[
+        (r"\b(?:plaintiff|defendant|claimant)\b", "LegalParty"),
+        (r"\b(?:Article|Section|Clause)\s+\d+\b", "LegalReference"),
+        (r"\$[\d,]+(?:\.\d{2})?", "MonetaryAmount"),
+    ],
+    # Enable LLM fallback when rule-based confidence drops below 0.5
+    llm_fallback_threshold=0.5,
+)
+
+context = OntologyGenerationContext(
+    data_source="contract.txt",
+    data_type=DataType.TEXT,
+    domain="legal",
+    extraction_strategy=ExtractionStrategy.RULE_BASED,
+    config=config,
+)
+
+# Optional: wire an LLM backend for fallback
+generator = OntologyGenerator(
+    use_ipfs_accelerate=False,
+    llm_backend=my_llm_client,  # called when rule-based confidence < 0.5
+)
+ontology = generator.generate_ontology(contract_text, context)
+print(f"Entities: {len(ontology['entities'])}")
+```
+
 ### Complete Workflow with Session
 
 ```python

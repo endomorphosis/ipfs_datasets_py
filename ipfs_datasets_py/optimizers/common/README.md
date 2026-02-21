@@ -62,14 +62,32 @@ class MyCritic(BaseCritic):
             score=0.85,
             feedback=["Good coverage", "Needs more relationships"],
             dimensions={"completeness": 0.9, "consistency": 0.8},
+            strengths=["Well-structured entities"],
+            weaknesses=["Missing temporal relationships"],
+            metadata={"evaluator": "MyCritic", "domain": "legal"},
         )
 
 critic = MyCritic()
 result = critic.evaluate(my_artifact)
 print(result.score, result.feedback)
+
+# Convenience wrappers
+score = critic.score_only(my_artifact)        # float
+feedback = critic.feedback_only(my_artifact)  # list[str]
 ```
 
-`CriticResult` fields: `score`, `feedback`, `dimensions`, `strengths`, `weaknesses`, `metadata`.
+#### `CriticResult` Field Reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `score` | `float` | Overall quality score, clamped to [0.0, 1.0]. |
+| `feedback` | `list[str]` | Ordered list of actionable improvement suggestions. |
+| `dimensions` | `dict[str, float]` | Per-dimension scores keyed by dimension name (e.g. `"completeness"`, `"consistency"`). Values in [0.0, 1.0]. |
+| `strengths` | `list[str]` | Observed strengths in the evaluated artifact. |
+| `weaknesses` | `list[str]` | Observed weaknesses; typically drives the next refinement round. |
+| `metadata` | `dict[str, Any]` | Arbitrary extra data: evaluator name, domain, backend, timing, etc. |
+
+> **Tip**: Use `result.dimensions` to build per-dimension progress dashboards across multiple refinement rounds.  Use `result.weaknesses` as the seed for the next mediator action set.
 
 ### BaseSession
 

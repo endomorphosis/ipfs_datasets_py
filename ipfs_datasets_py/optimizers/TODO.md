@@ -160,7 +160,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [ ] (P2) [agentic] Reconcile docs claiming phases/tests exist with what’s actually present (e.g., referenced test paths).  
   **DoD**: docs don’t mention non-existent files; or missing files are added.
-- [ ] (P2) [agentic] Ensure `agentic/llm_integration.py` is exercised by at least one test at the repository’s current test entrypoints.
+- [x] (P2) [agentic] Ensure `agentic/llm_integration.py` is exercised — Done: test_llm_integration.py covers OptimizerLLMRouter, LLMProvider, PROVIDER_CAPABILITIES at the repository’s current test entrypoints.
 
 ---
 
@@ -476,7 +476,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [graphrag] Cache ontology TDFOL output keyed on ontology hash (avoid re-conversion)
 - [ ] (P2) [agentic] Wire `ChangeController.create_change()` to actually create GitHub PR draft
 - [x] (P2) [arch] Add `__init__` test for graphrag/__init__ public symbols — Done batch 32: test_public_import_smoke.py (38 tests)
-- [ ] (P2) [docs] Update common/README.md to include ExtractionConfig.custom_rules usage example
+- [x] (P2) [docs] Update common/README.md — Done batch 36/37: CriticResult field table + ExtractionConfig.custom_rules example in graphrag/README.md
 
 ## Newly discovered items (batch 31+)
 
@@ -497,7 +497,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [tests] Fuzz test `OntologyMediator.run_refinement_cycle()` with Hypothesis-generated random documents
 - [ ] (P3) [agentic] Add `ChaosOptimizer.inject_cpu_spike()` method for realistic CPU load testing
 - [ ] (P3) [arch] Add `optimizers.__version__` string populated from `ipfs_datasets_py.__version__`
-- [ ] (P3) [tests] Test that `_safe_resolve()` raises/returns 1 on path traversal `../../etc/passwd`
+- [x] (P3) [tests] Test `_safe_resolve()` path traversal — Done batch 36: test_safe_resolve_path_traversal.py (11 tests for graphrag + logic CLIs)
 - [ ] (P2) [docs] Add `common/README.md` section documenting `CriticResult` fields and usage patterns
 - [x] (P2) [graphrag] Emit a structured log line (JSON) after each `analyze_batch()` call for observability (INFO level, no secrets) — Done batch 33: `OntologyOptimizer._emit_analyze_batch_summary()` emits `ontology_optimizer.analyze_batch.summary` JSON logs for success/empty/no-scores paths; covered by caplog tests in `test_ontology_optimizer_metrics.py`
 - [x] (P2) [logic] Add `--domain` flag to `validate` command — Done batch 34: 5 choices, passed to OptimizationContext domain
