@@ -821,3 +821,18 @@ class OntologyLearningAdapter:
             return 0.0
         passing = sum(1 for r in self._feedback if r.final_score > threshold)
         return passing / len(self._feedback)
+
+    def reset_and_load(self, records: list) -> int:
+        """Clear all existing feedback and load *records* as the new history.
+
+        Equivalent to calling :meth:`clear_feedback` followed by
+        :meth:`load_feedback_from_list`.
+
+        Args:
+            records: List of :class:`FeedbackRecord` objects to load.
+
+        Returns:
+            Number of records successfully loaded.
+        """
+        self.clear_feedback()
+        return self.load_feedback_from_list(records)

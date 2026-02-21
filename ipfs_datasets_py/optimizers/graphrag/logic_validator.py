@@ -1299,6 +1299,32 @@ class LogicValidator:
                     dangling.add(rid)
         return sorted(dangling)
 
+    def count_relationship_types(self, ontology: Dict[str, Any]) -> Dict[str, int]:
+        """Return a mapping of relationship type → count for *ontology*.
+
+        Args:
+            ontology: Ontology dict with a ``"relationships"`` list.
+
+        Returns:
+            Dict mapping each relationship type string to its occurrence count.
+            Returns ``{}`` when there are no relationships.
+
+        Example:
+            >>> validator.count_relationship_types({"relationships": [
+            ...     {"type": "owns"}, {"type": "owns"}, {"type": "causes"}]})
+            {'causes': 1, 'owns': 2}
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if not isinstance(rels, (list, tuple)):
+            return {}
+        counts: Dict[str, int] = {}
+        for rel in rels:
+            if isinstance(rel, dict):
+                t = rel.get("type")
+                if isinstance(t, str) and t:
+                    counts[t] = counts.get(t, 0) + 1
+        return counts
+
 
 # Export public API
 __all__ = [

@@ -1736,6 +1736,31 @@ class EntityExtractionResult:
         etype_lower = etype.lower()
         return [e for e in self.entities if e.type.lower() == etype_lower]
 
+    def confidence_stats(self) -> Dict[str, float]:
+        """Return descriptive statistics for entity confidences in this result.
+
+        Returns:
+            Dict with keys ``count``, ``mean``, ``min``, ``max``, and ``std``.
+            All values are ``0.0`` when there are no entities.
+
+        Example:
+            >>> result.confidence_stats()
+            {'count': 3.0, 'mean': 0.8, 'min': 0.7, 'max': 0.9, 'std': ...}
+        """
+        import math as _math
+        if not self.entities:
+            return {"count": 0.0, "mean": 0.0, "min": 0.0, "max": 0.0, "std": 0.0}
+        confs = [e.confidence for e in self.entities]
+        mean = sum(confs) / len(confs)
+        variance = sum((c - mean) ** 2 for c in confs) / len(confs)
+        return {
+            "count": float(len(confs)),
+            "mean": mean,
+            "min": min(confs),
+            "max": max(confs),
+            "std": _math.sqrt(variance),
+        }
+
 
 @dataclass
 class OntologyGenerationResult:

@@ -906,6 +906,19 @@ class OntologyMediator:
         """
         return self.get_undo_depth()
 
+    def reset_action_counts(self) -> int:
+        """Clear all accumulated action count statistics.
+
+        Returns:
+            Number of action types that were cleared.
+
+        Example:
+            >>> n = mediator.reset_action_counts()
+        """
+        n = len(self._action_counts)
+        self._action_counts.clear()
+        return n
+
     def clear_recommendation_history(self) -> int:
         """Clear the recommendation phrase frequency table.
 

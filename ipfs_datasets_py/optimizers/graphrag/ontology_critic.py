@@ -2443,6 +2443,31 @@ class OntologyCritic(BaseCritic):
             )
         return new_scores
 
+    def compare_runs(
+        self, score_a: "CriticScore", score_b: "CriticScore"
+    ) -> Dict[str, Any]:
+        """Return a comparison dict showing how *score_b* differs from *score_a*.
+
+        Args:
+            score_a: Baseline :class:`CriticScore` (earlier / previous run).
+            score_b: Candidate :class:`CriticScore` (later / current run).
+
+        Returns:
+            Dict with keys:
+
+            - ``'overall_delta'`` (float) — ``score_b.overall - score_a.overall``
+            - ``'improved'`` (bool) — ``True`` when overall_delta > 0
+            - ``'dim_deltas'`` (dict) — per-dimension deltas (positive = improved)
+        """
+        dims = ("completeness", "consistency", "clarity", "granularity", "domain_alignment")
+        dim_deltas = {d: getattr(score_b, d) - getattr(score_a, d) for d in dims}
+        overall_delta = score_b.overall - score_a.overall
+        return {
+            "overall_delta": overall_delta,
+            "improved": overall_delta > 0,
+            "dim_deltas": dim_deltas,
+        }
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],
