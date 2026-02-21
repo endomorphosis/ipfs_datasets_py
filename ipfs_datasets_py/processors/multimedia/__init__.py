@@ -158,3 +158,11 @@ __all__ = [
     "HAVE_MEDIA_PROCESSOR",
     "HAVE_CONVERTERS"
 ]
+
+from .ytdlp_download_engine import (
+    ytdlp_download_video,
+    ytdlp_download_playlist,
+    ytdlp_extract_info,
+    ytdlp_search_videos,
+    ytdlp_batch_download,
+)

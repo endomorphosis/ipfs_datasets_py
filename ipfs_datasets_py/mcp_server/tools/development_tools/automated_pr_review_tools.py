@@ -1,313 +1,162 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Automated PR Review MCP Tools
+Automated PR Review MCP Tools (thin wrappers).
 
-This module provides MCP (Model Context Protocol) tool wrappers for the
-automated PR review system that uses GitHub Copilot agents.
-
-Available tools:
-- AutomatedPRReviewTool: Automatically review all open PRs
-- AnalyzePRTool: Analyze a specific PR
-- InvokeCopilotOnPRTool: Invoke Copilot on a specific PR
+Business logic delegates to `automated_pr_review.AutomatedPRReviewer` (a scripts-level
+helper) which is imported lazily inside each function to avoid hard import failures when
+the scripts directory is not on sys.path.
 """
+from __future__ import annotations
 
 import logging
 import sys
-import os
-from typing import Dict, Any, List
 from pathlib import Path
-
-# Add scripts directory to path
-scripts_dir = Path(__file__).parent.parent.parent / 'scripts'
-sys.path.insert(0, str(scripts_dir))
-
-from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+# Add scripts directory to path so AutomatedPRReviewer can be found at runtime
+_scripts_dir = Path(__file__).parent.parent.parent / "scripts"
+if str(_scripts_dir) not in sys.path:
+    sys.path.insert(0, str(_scripts_dir))
 
-class AutomatedPRReviewTool(ClaudeMCPTool):
+
+async def automated_pr_review(
+    dry_run: bool = False,
+    min_confidence: int = 60,
+    limit: int = 100,
+) -> Dict[str, Any]:
+    """Automatically review all open PRs and invoke GitHub Copilot agents.
+
+    Args:
+        dry_run: If True, show what would be done without invoking Copilot.
+        min_confidence: Minimum confidence score (0–100) to invoke Copilot.
+        limit: Maximum number of PRs to process.
+
+    Returns:
+        Dict with review statistics and results.
     """
-    Tool for automatically reviewing all open PRs with GitHub Copilot.
-    
-    Scans all open PRs and intelligently decides whether to invoke Copilot
-    coding agents based on multiple criteria.
-    """
-    
-    def __init__(self):
-        super().__init__()
-        self.name = "automated_pr_review"
-        self.description = "Automatically review all open PRs and invoke GitHub Copilot agents where appropriate"
-        self.category = "development"
-        self.tags = ["github", "copilot", "pr", "review", "automation", "ci-cd"]
-        self.input_schema = {
-            "type": "object",
-            "properties": {
-                "dry_run": {
-                    "type": "boolean",
-                    "description": "If true, only show what would be done without invoking Copilot",
-                    "default": False
-                },
-                "min_confidence": {
-                    "type": "integer",
-                    "description": "Minimum confidence score (0-100) to invoke Copilot",
-                    "default": 60,
-                    "minimum": 0,
-                    "maximum": 100
-                },
-                "limit": {
-                    "type": "integer",
-                    "description": "Maximum number of PRs to process",
-                    "default": 100,
-                    "minimum": 1,
-                    "maximum": 200
-                }
+    try:
+        from automated_pr_review import AutomatedPRReviewer  # type: ignore[import]
+
+        reviewer = AutomatedPRReviewer(dry_run=dry_run, min_confidence=min_confidence)
+        stats = reviewer.review_all_prs(limit=limit)
+        return {
+            "success": True,
+            "dry_run": dry_run,
+            "min_confidence": min_confidence,
+            "statistics": {
+                "total_prs": stats["total"],
+                "analyzed": stats["analyzed"],
+                "copilot_invoked": stats["invoked"],
+                "skipped": stats["skipped"],
+                "failed": stats["failed"],
             },
-            "required": []
+            "results": stats.get("results", []),
         }
-    
-    async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Execute automated PR review.
-        
-        Args:
-            parameters: Tool parameters with dry_run, min_confidence, and limit
-        
-        Returns:
-            Dictionary with review results and statistics
-        """
-        try:
-            from automated_pr_review import AutomatedPRReviewer
-            
-            dry_run = parameters.get("dry_run", False)
-            min_confidence = parameters.get("min_confidence", 60)
-            limit = parameters.get("limit", 100)
-            
-            # Create reviewer
-            reviewer = AutomatedPRReviewer(
-                dry_run=dry_run,
-                min_confidence=min_confidence
-            )
-            
-            # Review all PRs
-            stats = reviewer.review_all_prs(limit=limit)
-            
-            return {
-                "success": True,
-                "dry_run": dry_run,
-                "min_confidence": min_confidence,
-                "statistics": {
-                    "total_prs": stats['total'],
-                    "analyzed": stats['analyzed'],
-                    "copilot_invoked": stats['invoked'],
-                    "skipped": stats['skipped'],
-                    "failed": stats['failed']
-                },
-                "results": stats.get('results', [])
-            }
-        
-        except Exception as e:
-            logger.error(f"Failed to execute automated PR review: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+    except Exception as exc:
+        logger.error("automated_pr_review failed: %s", exc)
+        return {"success": False, "error": str(exc)}
 
 
-class AnalyzePRTool(ClaudeMCPTool):
+async def analyze_pr(
+    pr_number: int,
+    min_confidence: int = 60,
+) -> Dict[str, Any]:
+    """Analyse a specific PR to determine whether Copilot should be invoked.
+
+    Args:
+        pr_number: GitHub PR number to analyse.
+        min_confidence: Minimum confidence score for recommendation.
+
+    Returns:
+        Dict with PR analysis details.
     """
-    Tool for analyzing a specific PR to determine if Copilot should be invoked.
-    
-    Provides detailed analysis without actually invoking Copilot.
-    """
-    
-    def __init__(self):
-        super().__init__()
-        self.name = "analyze_pr"
-        self.description = "Analyze a specific PR to determine if GitHub Copilot should be invoked"
-        self.category = "development"
-        self.tags = ["github", "copilot", "pr", "analysis"]
-        self.input_schema = {
-            "type": "object",
-            "properties": {
-                "pr_number": {
-                    "type": "integer",
-                    "description": "PR number to analyze",
-                    "minimum": 1
-                },
-                "min_confidence": {
-                    "type": "integer",
-                    "description": "Minimum confidence score (0-100) for recommendation",
-                    "default": 60,
-                    "minimum": 0,
-                    "maximum": 100
-                }
+    try:
+        from automated_pr_review import AutomatedPRReviewer  # type: ignore[import]
+
+        reviewer = AutomatedPRReviewer(dry_run=True, min_confidence=min_confidence)
+        pr_details = reviewer.get_pr_details(pr_number)
+        if not pr_details:
+            return {"success": False, "error": f"Failed to get details for PR #{pr_number}"}
+
+        already_invoked = reviewer.check_copilot_already_invoked(pr_details)
+        analysis = reviewer.analyze_pr(pr_details)
+        return {
+            "success": True,
+            "pr_number": pr_number,
+            "pr_title": pr_details["title"],
+            "is_draft": pr_details["isDraft"],
+            "copilot_already_invoked": already_invoked,
+            "analysis": {
+                "should_invoke": analysis["should_invoke"],
+                "confidence": analysis["confidence"],
+                "reasons": analysis.get("reasons", []),
             },
-            "required": ["pr_number"]
         }
-    
-    async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Analyze a specific PR.
-        
-        Args:
-            parameters: Tool parameters with pr_number and min_confidence
-        
-        Returns:
-            Dictionary with analysis results
-        """
-        try:
-            from automated_pr_review import AutomatedPRReviewer
-            
-            pr_number = parameters.get("pr_number")
-            min_confidence = parameters.get("min_confidence", 60)
-            
-            if not pr_number:
-                return {
-                    "success": False,
-                    "error": "pr_number is required"
-                }
-            
-            # Create reviewer in dry-run mode for analysis
-            reviewer = AutomatedPRReviewer(
-                dry_run=True,
-                min_confidence=min_confidence
-            )
-            
-            # Get PR details
-            pr_details = reviewer.get_pr_details(pr_number)
-            if not pr_details:
-                return {
-                    "success": False,
-                    "error": f"Failed to get details for PR #{pr_number}"
-                }
-            
-            # Check if already invoked
-            already_invoked = reviewer.check_copilot_already_invoked(pr_details)
-            
-            # Analyze the PR
-            analysis = reviewer.analyze_pr(pr_details)
-            
-            return {
-                "success": True,
-                "pr_number": pr_number,
-                "pr_title": pr_details['title'],
-                "is_draft": pr_details['isDraft'],
-                "copilot_already_invoked": already_invoked,
-                "analysis": {
-                    "should_invoke": analysis['should_invoke'],
-                    "confidence": analysis['confidence'],
-                    "task_type": analysis['task_type'],
-                    "reasons": analysis['reasons'],
-                    "criteria_scores": analysis['criteria_scores']
-                },
-                "recommendation": (
-                    f"Invoke Copilot ({analysis['confidence']}% confidence)"
-                    if analysis['should_invoke']
-                    else f"Skip ({analysis['confidence']}% confidence, threshold: {min_confidence}%)"
-                )
-            }
-        
-        except Exception as e:
-            logger.error(f"Failed to analyze PR: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+    except Exception as exc:
+        logger.error("analyze_pr failed: %s", exc)
+        return {"success": False, "error": str(exc)}
 
 
-class InvokeCopilotOnPRTool(ClaudeMCPTool):
+async def invoke_copilot_on_pr(
+    pr_number: int,
+    dry_run: bool = False,
+) -> Dict[str, Any]:
+    """Invoke GitHub Copilot on a specific PR.
+
+    Args:
+        pr_number: GitHub PR number to process.
+        dry_run: If True, simulate invocation without actually calling Copilot.
+
+    Returns:
+        Dict with invocation result.
     """
-    Tool for invoking GitHub Copilot on a specific PR.
-    
-    Analyzes the PR and invokes Copilot if criteria are met.
-    """
-    
-    def __init__(self):
-        super().__init__()
-        self.name = "invoke_copilot_on_pr"
-        self.description = "Invoke GitHub Copilot coding agent on a specific PR"
-        self.category = "development"
-        self.tags = ["github", "copilot", "pr", "invoke"]
-        self.input_schema = {
-            "type": "object",
-            "properties": {
-                "pr_number": {
-                    "type": "integer",
-                    "description": "PR number to invoke Copilot on",
-                    "minimum": 1
-                },
-                "force": {
-                    "type": "boolean",
-                    "description": "Force invocation even if confidence is low",
-                    "default": False
-                },
-                "dry_run": {
-                    "type": "boolean",
-                    "description": "If true, only show what would be done",
-                    "default": False
-                }
-            },
-            "required": ["pr_number"]
+    try:
+        from automated_pr_review import AutomatedPRReviewer  # type: ignore[import]
+
+        reviewer = AutomatedPRReviewer(dry_run=dry_run)
+        pr_details = reviewer.get_pr_details(pr_number)
+        if not pr_details:
+            return {"success": False, "error": f"Failed to get details for PR #{pr_number}"}
+
+        result = reviewer.invoke_copilot(pr_details)
+        return {
+            "success": result.get("success", False),
+            "pr_number": pr_number,
+            "pr_title": pr_details["title"],
+            "dry_run": dry_run,
+            "invocation_result": result,
         }
-    
+    except Exception as exc:
+        logger.error("invoke_copilot_on_pr failed: %s", exc)
+        return {"success": False, "error": str(exc)}
+
+
+# ---------------------------------------------------------------------------
+# Backward-compatible class aliases
+# ---------------------------------------------------------------------------
+
+class AutomatedPRReviewTool:  # noqa: E302
+    """Thin compatibility shim — wraps automated_pr_review()."""
+    name = "automated_pr_review"
+
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Invoke Copilot on a specific PR.
-        
-        Args:
-            parameters: Tool parameters with pr_number, force, and dry_run
-        
-        Returns:
-            Dictionary with invocation results
-        """
-        try:
-            from automated_pr_review import AutomatedPRReviewer
-            
-            pr_number = parameters.get("pr_number")
-            force = parameters.get("force", False)
-            dry_run = parameters.get("dry_run", False)
-            
-            if not pr_number:
-                return {
-                    "success": False,
-                    "error": "pr_number is required"
-                }
-            
-            # Create reviewer
-            min_confidence = 0 if force else 60
-            reviewer = AutomatedPRReviewer(
-                dry_run=dry_run,
-                min_confidence=min_confidence
-            )
-            
-            # Invoke Copilot on the PR
-            result = reviewer.invoke_copilot_on_pr(pr_number)
-            
-            return {
-                "success": result['success'],
-                "pr_number": pr_number,
-                "action": result.get('action'),
-                "dry_run": dry_run,
-                "forced": force,
-                "confidence": result.get('confidence'),
-                "task_type": result.get('task_type'),
-                "reason": result.get('reason'),
-                "error": result.get('error')
-            }
-        
-        except Exception as e:
-            logger.error(f"Failed to invoke Copilot on PR: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+        return await automated_pr_review(**parameters)
 
 
-# Export all tools
-__all__ = [
-    'AutomatedPRReviewTool',
-    'AnalyzePRTool',
-    'InvokeCopilotOnPRTool'
-]
+class AnalyzePRTool:
+    """Thin compatibility shim — wraps analyze_pr()."""
+    name = "analyze_pr"
+
+    async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        return await analyze_pr(**parameters)
+
+
+class InvokeCopilotOnPRTool:
+    """Thin compatibility shim — wraps invoke_copilot_on_pr()."""
+    name = "invoke_copilot_on_pr"
+
+    async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        return await invoke_copilot_on_pr(**parameters)

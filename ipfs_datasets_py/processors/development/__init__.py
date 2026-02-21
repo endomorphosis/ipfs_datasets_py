@@ -70,3 +70,9 @@ __all__ = [
     "UNITTEST_TEMPLATE",
     "PYTEST_TEMPLATE",
 ]
+
+from .ai_agent_pr_engine import (
+    create_ai_agent_pr,
+    update_ai_agent_pr,
+    analyze_code_for_pr,
+)
