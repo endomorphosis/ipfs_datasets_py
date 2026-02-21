@@ -540,3 +540,190 @@ class TestGracefulShutdown:
         # THEN
         assert result["status"] == "error"
         assert "shutting down" in result["error"].lower()
+
+
+# ---------------------------------------------------------------------------
+# Phase C1: request_id structured logging
+# ---------------------------------------------------------------------------
+
+class TestRequestId:
+    """Phase C1: dispatch() attaches a unique request_id to every response."""
+
+    @pytest.mark.anyio
+    async def test_error_response_has_request_id(self):
+        """GIVEN a missing category THEN dispatch() returns request_id."""
+        mgr = HierarchicalToolManager.__new__(HierarchicalToolManager)
+        mgr.tools_root = Path(__file__).parent
+        mgr.categories = {}
+        mgr._category_metadata = {}
+        mgr._discovered_categories = True
+        mgr._lazy_loaders = {}
+        mgr._shutting_down = False
+
+        result = await mgr.dispatch("no_such_category", "no_such_tool")
+
+        assert result["status"] == "error"
+        assert "request_id" in result
+        assert len(result["request_id"]) == 36  # UUID4 string length
+
+    @pytest.mark.anyio
+    async def test_success_response_has_request_id(self):
+        """GIVEN a real tool dispatch THEN result contains a request_id."""
+        import asyncio
+        from unittest.mock import MagicMock
+
+        async def _fake_tool() -> dict:
+            return {"status": "success", "data": "ok"}
+
+        cat = ToolCategory("fake_cat", Path(__file__).parent)
+        cat._tools["fake_tool"] = _fake_tool
+        cat._tool_metadata["fake_tool"] = {
+            "name": "fake_tool",
+            "category": "fake_cat",
+            "description": "",
+            "signature": "()",
+            "schema_version": "1.0",
+            "deprecated": False,
+            "deprecation_message": "",
+        }
+        cat._discovered = True
+
+        mgr = HierarchicalToolManager.__new__(HierarchicalToolManager)
+        mgr.tools_root = Path(__file__).parent
+        mgr.categories = {"fake_cat": cat}
+        mgr._category_metadata = {}
+        mgr._discovered_categories = True
+        mgr._lazy_loaders = {}
+        mgr._shutting_down = False
+
+        result = await mgr.dispatch("fake_cat", "fake_tool")
+
+        assert result["status"] == "success"
+        assert "request_id" in result
+
+    @pytest.mark.anyio
+    async def test_request_ids_are_unique(self):
+        """GIVEN multiple calls THEN each gets a distinct request_id."""
+        mgr = HierarchicalToolManager.__new__(HierarchicalToolManager)
+        mgr.tools_root = Path(__file__).parent
+        mgr.categories = {}
+        mgr._category_metadata = {}
+        mgr._discovered_categories = True
+        mgr._lazy_loaders = {}
+        mgr._shutting_down = False
+
+        ids = {
+            (await mgr.dispatch("c", "t"))["request_id"]
+            for _ in range(5)
+        }
+        assert len(ids) == 5  # all unique
+
+
+# ---------------------------------------------------------------------------
+# Phase D1+D2: schema_version + deprecated in ToolMetadata
+# ---------------------------------------------------------------------------
+
+class TestToolMetadataVersioningAndDeprecation:
+    """Phase D1 + D2: schema_version and deprecated fields in ToolMetadata."""
+
+    def test_default_schema_version(self):
+        """GIVEN no schema_version THEN default is '1.0'."""
+        from ipfs_datasets_py.mcp_server.tool_metadata import ToolMetadata
+        m = ToolMetadata(name="my_tool")
+        assert m.schema_version == "1.0"
+
+    def test_custom_schema_version(self):
+        """GIVEN schema_version='2.1' THEN it is stored correctly."""
+        from ipfs_datasets_py.mcp_server.tool_metadata import ToolMetadata
+        m = ToolMetadata(name="versioned_tool", schema_version="2.1")
+        assert m.schema_version == "2.1"
+
+    def test_schema_version_in_to_dict(self):
+        """GIVEN a ToolMetadata THEN to_dict() includes schema_version."""
+        from ipfs_datasets_py.mcp_server.tool_metadata import ToolMetadata
+        m = ToolMetadata(name="t", schema_version="3.0")
+        d = m.to_dict()
+        assert d["schema_version"] == "3.0"
+
+    def test_deprecated_default_is_false(self):
+        """GIVEN no deprecated kwarg THEN default is False."""
+        from ipfs_datasets_py.mcp_server.tool_metadata import ToolMetadata
+        m = ToolMetadata(name="current_tool")
+        assert m.deprecated is False
+        assert m.deprecation_message == ""
+
+    def test_deprecated_marker(self):
+        """GIVEN deprecated=True THEN flag and message are stored."""
+        from ipfs_datasets_py.mcp_server.tool_metadata import ToolMetadata
+        m = ToolMetadata(
+            name="old_tool",
+            deprecated=True,
+            deprecation_message="Use new_tool instead.",
+        )
+        assert m.deprecated is True
+        assert m.deprecation_message == "Use new_tool instead."
+
+    def test_deprecated_in_to_dict(self):
+        """GIVEN deprecated=True THEN to_dict() exposes deprecated + deprecation_message."""
+        from ipfs_datasets_py.mcp_server.tool_metadata import ToolMetadata
+        m = ToolMetadata(name="x", deprecated=True, deprecation_message="bye")
+        d = m.to_dict()
+        assert d["deprecated"] is True
+        assert d["deprecation_message"] == "bye"
+
+    def test_tool_metadata_decorator_schema_version(self):
+        """GIVEN @tool_metadata(schema_version='2.0') THEN function has schema_version='2.0'."""
+        from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata
+        @tool_metadata(schema_version="2.0")
+        def my_versioned_tool() -> dict:
+            """A versioned tool."""
+            return {}
+        assert my_versioned_tool._mcp_metadata.schema_version == "2.0"
+
+    def test_tool_metadata_decorator_deprecated(self):
+        """GIVEN @tool_metadata(deprecated=True) THEN function has deprecated=True."""
+        from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata
+        @tool_metadata(deprecated=True, deprecation_message="Use replacement_tool.")
+        def my_old_tool() -> dict:
+            """A deprecated tool."""
+            return {}
+        assert my_old_tool._mcp_metadata.deprecated is True
+        assert "replacement_tool" in my_old_tool._mcp_metadata.deprecation_message
+
+    @pytest.mark.anyio
+    async def test_dispatch_warns_for_deprecated_tool(self, caplog):
+        """GIVEN a deprecated tool THEN dispatch() emits a deprecation warning."""
+        import logging
+        from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata
+
+        @tool_metadata(deprecated=True, deprecation_message="Use shiny_new_tool.")
+        async def legacy_operation() -> dict:
+            """Old tool."""
+            return {"status": "success", "legacy": True}
+
+        cat = ToolCategory("legacy_cat", Path(__file__).parent)
+        cat._tools["legacy_operation"] = legacy_operation
+        cat._tool_metadata["legacy_operation"] = {
+            "name": "legacy_operation",
+            "category": "legacy_cat",
+            "description": "",
+            "signature": "()",
+            "schema_version": "1.0",
+            "deprecated": True,
+            "deprecation_message": "Use shiny_new_tool.",
+        }
+        cat._discovered = True
+
+        mgr = HierarchicalToolManager.__new__(HierarchicalToolManager)
+        mgr.tools_root = Path(__file__).parent
+        mgr.categories = {"legacy_cat": cat}
+        mgr._category_metadata = {}
+        mgr._discovered_categories = True
+        mgr._lazy_loaders = {}
+        mgr._shutting_down = False
+
+        with caplog.at_level(logging.WARNING):
+            result = await mgr.dispatch("legacy_cat", "legacy_operation")
+
+        assert result["status"] == "success"
+        assert any("deprecated" in r.message.lower() for r in caplog.records)

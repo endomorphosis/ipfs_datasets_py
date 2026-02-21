@@ -65,6 +65,14 @@ class ToolMetadata:
         io_intensive: Whether tool is I/O-bound
         mcp_schema: MCP schema definition
         mcp_description: Tool description for MCP
+        schema_version: Semantic version string for the tool's public schema contract
+            (Phase D1).  Bump when parameters or return shape changes in a
+            breaking way so consumers can detect regressions.
+        deprecated: When ``True`` the tool is still callable but a deprecation
+            warning is logged on every invocation (Phase D2).
+        deprecation_message: Human-readable explanation of the deprecation and
+            recommended replacement tool (Phase D2).  Only used when
+            ``deprecated=True``.
 
     Example:
         >>> metadata = ToolMetadata(
@@ -91,6 +99,12 @@ class ToolMetadata:
     # Phase F2: opt-in per-tool result caching.  ``None`` disables caching;
     # a positive float is the TTL in seconds for cached results.
     cache_ttl: Optional[float] = None
+    # Phase D1: schema version string for stability contracts.
+    schema_version: str = "1.0"
+    # Phase D2: deprecation markers.  ``deprecated=True`` causes a warning to
+    # be logged on every invocation; ``deprecation_message`` gives guidance.
+    deprecated: bool = False
+    deprecation_message: str = ""
 
     # Internal attributes (excluded from repr and equality)
     _func: Optional[Callable] = field(default=None, repr=False, compare=False)
@@ -336,6 +350,9 @@ def tool_metadata(
     mcp_schema: Optional[dict] = None,
     mcp_description: Optional[str] = None,
     cache_ttl: Optional[float] = None,
+    schema_version: str = "1.0",
+    deprecated: bool = False,
+    deprecation_message: str = "",
 ) -> Callable:
     """
     Decorator to register tool metadata.
@@ -355,6 +372,12 @@ def tool_metadata(
         io_intensive: I/O usage hint
         mcp_schema: MCP schema definition
         mcp_description: Tool description
+        cache_ttl: Optional TTL in seconds for result caching (Phase F2)
+        schema_version: Semantic version for the tool's public schema contract
+            (Phase D1).  Bump on breaking parameter or return-type changes.
+        deprecated: Mark tool as deprecated (Phase D2).  Still callable but
+            logs a warning on every invocation.
+        deprecation_message: Guidance for callers of a deprecated tool.
     
     Returns:
         Decorated function with metadata attached
@@ -401,6 +424,9 @@ def tool_metadata(
             mcp_schema=mcp_schema,
             mcp_description=description,
             cache_ttl=cache_ttl,
+            schema_version=schema_version,
+            deprecated=deprecated,
+            deprecation_message=deprecation_message,
             _func=func
         )
         

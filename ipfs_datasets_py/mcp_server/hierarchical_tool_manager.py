@@ -19,6 +19,7 @@ import importlib
 import inspect
 import logging
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 import json
@@ -242,11 +243,17 @@ class ToolCategory:
                     # Use the tool name or the function that matches the file name
                     if name == tool_name or tool_name in name:
                         self._tools[name] = obj
+                        _obj_meta = getattr(obj, "_mcp_metadata", None)
                         self._tool_metadata[name] = {
                             "name": name,
                             "category": self.name,
                             "description": obj.__doc__ or "",
-                            "signature": str(inspect.signature(obj))
+                            "signature": str(inspect.signature(obj)),
+                            # Phase D1: expose schema version from @tool_metadata decorator
+                            "schema_version": getattr(_obj_meta, "schema_version", "1.0"),
+                            # Phase D2: expose deprecation info
+                            "deprecated": getattr(_obj_meta, "deprecated", False),
+                            "deprecation_message": getattr(_obj_meta, "deprecation_message", ""),
                         }
                         logger.debug(f"Discovered tool: {self.name}.{name}")
                 
@@ -635,7 +642,8 @@ class HierarchicalToolManager:
             params: Parameters to pass to the tool.
         
         Returns:
-            Tool execution result.
+            Tool execution result.  On success the dict always contains a
+            ``request_id`` key (Phase C1 structured logging).
         """
         if not self._discovered_categories:
             self.discover_categories()
@@ -648,24 +656,48 @@ class HierarchicalToolManager:
 
         if params is None:
             params = {}
+
+        # Phase C1: generate a per-request correlation ID and start a timer.
+        request_id = str(uuid.uuid4())
+        _t0 = time.monotonic()
+        tool_path = f"{category}/{tool}"
         
         cat = self.get_category(category)
         if cat is None:
+            logger.warning(
+                "dispatch: category_not_found request_id=%s tool=%s",
+                request_id, tool_path,
+            )
             return {
                 "status": "error",
                 "error": f"Category '{category}' not found",
-                "available_categories": list(self.categories.keys())
+                "available_categories": list(self.categories.keys()),
+                "request_id": request_id,
             }
         
         tool_func = cat.get_tool(tool)
         
         if tool_func is None:
             available_tools = [t["name"] for t in cat.list_tools()]
+            logger.warning(
+                "dispatch: tool_not_found request_id=%s tool=%s",
+                request_id, tool_path,
+            )
             return {
                 "status": "error",
                 "error": f"Tool '{tool}' not found in category '{category}'",
-                "available_tools": available_tools
+                "available_tools": available_tools,
+                "request_id": request_id,
             }
+
+        # Phase D2: log a deprecation warning when the tool is marked deprecated.
+        meta = getattr(tool_func, "_mcp_metadata", None)
+        if meta is not None and getattr(meta, "deprecated", False):
+            _dep_msg = getattr(meta, "deprecation_message", "") or "No replacement specified."
+            logger.warning(
+                "dispatch: deprecated_tool_called request_id=%s tool=%s message=%s",
+                request_id, tool_path, _dep_msg,
+            )
         
         try:
             # Get function signature
@@ -686,7 +718,14 @@ class HierarchicalToolManager:
             # Ensure result is a dict
             if not isinstance(result, dict):
                 result = {"status": "success", "result": str(result)}
-            
+
+            _duration_ms = (time.monotonic() - _t0) * 1000
+            # Phase C1: structured success log.
+            logger.info(
+                "dispatch: success request_id=%s tool=%s duration_ms=%.2f",
+                request_id, tool_path, _duration_ms,
+            )
+            result.setdefault("request_id", request_id)
             return result
             
         except ToolNotFoundError:
@@ -694,20 +733,32 @@ class HierarchicalToolManager:
         except ToolExecutionError:
             raise
         except (TypeError, ValueError) as e:
-            logger.error(f"Invalid parameters for {category}.{tool}: {e}", exc_info=True)
+            _duration_ms = (time.monotonic() - _t0) * 1000
+            logger.error(
+                "dispatch: invalid_params request_id=%s tool=%s duration_ms=%.2f error=%s",
+                request_id, tool_path, _duration_ms, e,
+                exc_info=True,
+            )
             return {
                 "status": "error",
                 "error": f"Invalid parameters: {e}",
                 "category": category,
-                "tool": tool
+                "tool": tool,
+                "request_id": request_id,
             }
         except Exception as e:
-            logger.error(f"Error dispatching to {category}.{tool}: {e}", exc_info=True)
+            _duration_ms = (time.monotonic() - _t0) * 1000
+            logger.error(
+                "dispatch: error request_id=%s tool=%s duration_ms=%.2f error=%s",
+                request_id, tool_path, _duration_ms, e,
+                exc_info=True,
+            )
             return {
                 "status": "error",
                 "error": str(e),
                 "category": category,
-                "tool": tool
+                "tool": tool,
+                "request_id": request_id,
             }
 
     # ------------------------------------------------------------------

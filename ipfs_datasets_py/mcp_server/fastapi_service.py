@@ -240,6 +240,9 @@ class VectorIndexRequest(BaseModel):
     index_name: Optional[str] = None
 
 # FastAPI app initialization
+# Phase C2: track server start time for uptime reporting in health endpoints.
+_SERVER_START_TIME: float = time.time()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
@@ -369,12 +372,98 @@ async def check_rate_limit(request: Request, endpoint: str) -> None:
 # Health check endpoint
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
+    """Liveness probe — returns 200 as long as the process is running."""
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "uptime_seconds": round(time.time() - _SERVER_START_TIME, 1),
     }
+
+
+@app.get("/health/ready")
+async def readiness_check():
+    """Readiness probe — verifies that key dependencies are operational.
+
+    Returns HTTP 200 when all checks pass, HTTP 503 otherwise so that
+    load-balancers can remove the instance from rotation.
+    """
+    checks: Dict[str, Any] = {}
+    all_ok = True
+
+    # Check 1: monitoring metrics collector is alive
+    try:
+        from .monitoring import get_metrics_collector
+        collector = get_metrics_collector()
+        checks["metrics_collector"] = {"status": "ok", "uptime_seconds": round(
+            getattr(collector, "_uptime_seconds", time.time() - _SERVER_START_TIME), 1
+        )}
+    except Exception as exc:  # pragma: no cover
+        checks["metrics_collector"] = {"status": "error", "error": str(exc)}
+        all_ok = False
+
+    # Check 2: tool manager has at least one category loaded
+    try:
+        from .hierarchical_tool_manager import get_tool_manager
+        mgr = get_tool_manager()
+        mgr.discover_categories()
+        n_cats = len(mgr.categories)
+        checks["tool_manager"] = {"status": "ok", "categories": n_cats}
+        if n_cats == 0:
+            checks["tool_manager"]["status"] = "warning"
+    except Exception as exc:  # pragma: no cover
+        checks["tool_manager"] = {"status": "error", "error": str(exc)}
+        all_ok = False
+
+    status_code = 200 if all_ok else 503
+    body = {
+        "status": "ready" if all_ok else "not_ready",
+        "timestamp": datetime.utcnow().isoformat(),
+        "uptime_seconds": round(time.time() - _SERVER_START_TIME, 1),
+        "checks": checks,
+    }
+    from fastapi.responses import JSONResponse
+    return JSONResponse(content=body, status_code=status_code)
+
+
+@app.get("/metrics")
+async def prometheus_metrics():
+    """Expose server metrics in a simple text format compatible with Prometheus.
+
+    Each metric is emitted on its own line:
+    ``# HELP <name> <description>``
+    ``<name>{<labels>} <value>``
+    """
+    try:
+        from .monitoring import get_metrics_collector
+        collector = get_metrics_collector()
+        summary = collector.get_metrics_summary()
+    except Exception:  # pragma: no cover
+        summary = {}
+
+    uptime = round(time.time() - _SERVER_START_TIME, 1)
+    req = summary.get("request_metrics", {})
+    sys_m = summary.get("system_metrics", {})
+
+    lines = [
+        "# HELP mcp_uptime_seconds Seconds since the server started",
+        f"mcp_uptime_seconds {uptime}",
+        "# HELP mcp_requests_total Total HTTP requests processed",
+        f"mcp_requests_total {req.get('total_requests', 0)}",
+        "# HELP mcp_errors_total Total errors encountered",
+        f"mcp_errors_total {req.get('total_errors', 0)}",
+        "# HELP mcp_active_requests Requests currently in flight",
+        f"mcp_active_requests {req.get('active_requests', 0)}",
+        "# HELP mcp_avg_response_time_ms Average response time in milliseconds",
+        f"mcp_avg_response_time_ms {req.get('avg_response_time_ms', 0.0):.3f}",
+        "# HELP process_cpu_percent CPU utilisation percent",
+        f"process_cpu_percent {sys_m.get('cpu_percent', 0.0):.1f}",
+        "# HELP process_memory_percent Memory utilisation percent",
+        f"process_memory_percent {sys_m.get('memory_percent', 0.0):.1f}",
+    ]
+
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse("\n".join(lines) + "\n", media_type="text/plain; version=0.0.4")
 
 # Authentication endpoints
 @app.post("/auth/login", response_model=TokenResponse)
