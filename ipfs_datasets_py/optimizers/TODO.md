@@ -507,3 +507,26 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [tests] Unit tests for `validate --domain` — Done batch 34: parametrized test covers all 5 domains
 - [x] (P3) [graphrag] Add `OntologyOptimizer.export_to_rdf()` stub — Done batch 40: Turtle/NT via rdflib (optional dep)
 - [x] (P3) [graphrag] Add `OntologyOptimizer.export_to_graphml()` stub — Done batch 40: pure stdlib XML, works in Gephi/yEd
+
+## Newly discovered items (batch 44+)
+
+- [ ] (P2) [arch] Add `OntologyHarness.run_single()` method that wraps BaseHarness.run() for single-document use cases
+- [ ] (P2) [graphrag] Add `ExtractionConfig.stopwords: list[str] = []` to filter common noise words from entity extraction
+- [ ] (P3) [graphrag] Add `OntologyCritic.compare_versions()` method: given two ontologies, return diff of scores per dimension
+- [ ] (P3) [graphrag] Add `OntologyOptimizer.get_history_summary()` returning descriptive stats (mean, std, min, max) over all batch reports
+- [ ] (P3) [tests] Property-based tests for `OntologyCritic.evaluate_ontology()` — all dimension scores should be in [0.0, 1.0]
+- [ ] (P2) [obs] Add `analyze_batch_parallel()` structured JSON log (mirrors analyze_batch summary logging)
+- [ ] (P3) [graphrag] Add `ExtractionConfig.allowed_entity_types: list[str] = []` whitelist filter (empty = allow all)
+- [ ] (P2) [docs] Add CHANGELOG.md for the optimizers sub-package documenting changes by batch
+- [x] (P3) [arch] Add `optimizers.common.exceptions` re-export — Already done: all 6 exception classes already in common/__init__.py
+- [ ] (P3) [tests] Round-trip test: `ExtractionConfig.to_dict()` → `from_dict()` is identity for all fields
+- [ ] (P2) [graphrag] Add `OntologyGenerator.extract_entities_from_file()` convenience method (reads text file, calls extract_entities)
+- [x] (P3) [graphrag] Add `LogicValidator.clear_tdfol_cache()` method — Done batch 44: returns count removed
+- [ ] (P3) [docs] Add type-stub file (`py.typed` marker) to `optimizers/` package
+- [ ] (P2) [tests] Parametrized tests for `OntologyOptimizer.export_to_graphml()` with multi-entity/multi-rel ontologies
+- [ ] (P3) [agentic] Add `ChaosOptimizer.simulate_memory_pressure()` method for memory threshold testing
+- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.to_dict()` / `from_dict()` for state serialization
+- [ ] (P3) [tests] Hypothesis strategy for valid `ExtractionConfig` (generates random but valid configs)
+- [x] (P2) [arch] Add `BaseSession.to_json()` / `from_json()` round-trip serialization — Done batch 44: also adds from_dict()
+- [ ] (P3) [docs] Add usage example for `OntologyGenerationResult` to graphrag/README.md
+- [x] (P2) [graphrag] Add `OntologyCritic.dimension_weights` property — Done batch 44: returns copy of DIMENSION_WEIGHTS

@@ -172,3 +172,47 @@ class TestBaseSessionAddRound:
         s.record_round(0.6)
         assert s.total_duration_ms >= 0.0
         assert abs(s.total_duration_ms - sum(r.duration_ms for r in s.rounds)) < 1e-9
+
+
+# ── JSON serialization round-trips ─────────────────────────────────────────
+
+class TestBaseSessionJSONRoundTrip:
+    def _session_with_rounds(self):
+        s = BaseSession(session_id="rt-1", domain="legal", max_rounds=5)
+        for score in [0.5, 0.6, 0.7]:
+            s.start_round()
+            s.record_round(score=score, feedback={"hint": "ok"}, metadata={})
+        s.finish()
+        return s
+
+    def test_to_json_returns_string(self):
+        s = self._session_with_rounds()
+        j = s.to_json()
+        assert isinstance(j, str) and len(j) > 0
+
+    def test_to_json_indent_is_valid_json(self):
+        import json
+        s = self._session_with_rounds()
+        j = s.to_json(indent=2)
+        data = json.loads(j)
+        assert data["session_id"] == "rt-1"
+
+    def test_from_json_restores_scores(self):
+        s = self._session_with_rounds()
+        s2 = BaseSession.from_json(s.to_json())
+        assert s2.best_score == pytest.approx(0.7)
+        assert len(s2.scores) == 3
+
+    def test_from_json_restores_domain(self):
+        s = self._session_with_rounds()
+        assert BaseSession.from_json(s.to_json()).domain == "legal"
+
+    def test_from_json_restores_session_id(self):
+        s = self._session_with_rounds()
+        assert BaseSession.from_json(s.to_json()).session_id == "rt-1"
+
+    def test_from_dict_empty_rounds(self):
+        s = BaseSession(session_id="empty", domain="general")
+        s2 = BaseSession.from_dict(s.to_dict())
+        assert s2.session_id == "empty"
+        assert len(s2.scores) == 0

@@ -239,5 +239,60 @@ class BaseSession:
             ],
         }
 
+    def to_json(self, **json_kwargs) -> str:
+        """Serialize session state to a JSON string.
+
+        Args:
+            **json_kwargs: Passed directly to ``json.dumps()`` (e.g. ``indent=2``).
+
+        Returns:
+            JSON string representation of the session.
+        """
+        import json as _json
+        return _json.dumps(self.to_dict(), **json_kwargs)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "BaseSession":
+        """Reconstruct a (finished) BaseSession from a plain dictionary.
+
+        Args:
+            data: Dictionary as produced by :meth:`to_dict`.
+
+        Returns:
+            A new :class:`BaseSession` with rounds and metadata populated.
+        """
+        import datetime as _dt
+
+        session = cls(
+            session_id=data.get("session_id", "unknown"),
+            domain=data.get("domain", "general"),
+            max_rounds=data.get("max_rounds", 10),
+            target_score=data.get("target_score", 0.85),
+        )
+        for r in data.get("rounds", []):
+            session.start_round()
+            session.record_round(score=r.get("score", 0.0), feedback={}, metadata={})
+        session.metadata.update(data.get("metadata") or {})
+        try:
+            session.started_at = _dt.datetime.fromisoformat(data["started_at"])
+        except (KeyError, ValueError):
+            pass
+        if data.get("finished_at"):
+            try:
+                session.finished_at = _dt.datetime.fromisoformat(data["finished_at"])
+            except (ValueError,):
+                pass
+        return session
+
+    @classmethod
+    def from_json(cls, json_str: str) -> "BaseSession":
+        """Reconstruct a :class:`BaseSession` from a JSON string.
+
+        Args:
+            json_str: JSON string as produced by :meth:`to_json`.
+        """
+        import json as _json
+        return cls.from_dict(_json.loads(json_str))
+
 
 __all__ = ["BaseSession", "RoundRecord"]

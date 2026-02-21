@@ -686,6 +686,19 @@ class LogicValidator:
             prover_used=f"structural:{self.prover_config.strategy}",
         )
     
+    def clear_tdfol_cache(self) -> int:
+        """Clear the TDFOL formula cache.
+
+        Returns:
+            Number of entries cleared from the cache.
+        """
+        if self._cache is None:
+            return 0
+        n = len(self._cache)
+        self._cache.clear()
+        logger.debug("TDFOL cache cleared (%d entries removed)", n)
+        return n
+
     def _get_cache_key(self, ontology: Dict[str, Any]) -> str:
         """Generate cache key for ontology."""
         import hashlib

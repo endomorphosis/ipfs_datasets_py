@@ -263,6 +263,11 @@ class OntologyCritic(BaseCritic):
     # BaseCritic interface                                                  #
     # ------------------------------------------------------------------ #
 
+    @property
+    def dimension_weights(self) -> Dict[str, float]:
+        """Return the scoring weights for each evaluation dimension (read-only copy)."""
+        return dict(DIMENSION_WEIGHTS)
+
     def evaluate(
         self,
         artifact: Any,

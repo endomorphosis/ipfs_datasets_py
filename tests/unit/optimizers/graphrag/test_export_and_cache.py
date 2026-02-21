@@ -139,3 +139,58 @@ class TestOptimizersVersion:
         from ipfs_datasets_py.optimizers import __version__ as opt_ver
         from ipfs_datasets_py import __version__ as pkg_ver
         assert opt_ver == pkg_ver
+
+
+# ── clear_tdfol_cache ────────────────────────────────────────────────────────
+
+class TestClearTDFOLCache:
+    @pytest.fixture
+    def validator(self):
+        from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+        return LogicValidator(use_cache=True)
+
+    def test_clear_returns_count(self, validator, sample_ontology):
+        validator.ontology_to_tdfol(sample_ontology)
+        n = validator.clear_tdfol_cache()
+        assert n == 1
+
+    def test_clear_empties_cache(self, validator, sample_ontology):
+        validator.ontology_to_tdfol(sample_ontology)
+        validator.clear_tdfol_cache()
+        assert len(validator._cache) == 0
+
+    def test_clear_on_empty_cache_returns_zero(self, validator):
+        assert validator.clear_tdfol_cache() == 0
+
+    def test_clear_on_no_cache_validator_returns_zero(self):
+        from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+        v = LogicValidator(use_cache=False)
+        assert v.clear_tdfol_cache() == 0
+
+
+# ── OntologyCritic.dimension_weights ─────────────────────────────────────────
+
+class TestDimensionWeights:
+    def test_returns_dict(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+        c = OntologyCritic()
+        assert isinstance(c.dimension_weights, dict)
+
+    def test_all_five_dimensions_present(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+        c = OntologyCritic()
+        w = c.dimension_weights
+        for dim in ("completeness", "consistency", "clarity", "granularity", "domain_alignment"):
+            assert dim in w, f"Missing dimension: {dim}"
+
+    def test_weights_sum_to_one(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+        c = OntologyCritic()
+        assert sum(c.dimension_weights.values()) == pytest.approx(1.0, abs=1e-6)
+
+    def test_is_copy_not_mutable_reference(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic, DIMENSION_WEIGHTS
+        c = OntologyCritic()
+        w = c.dimension_weights
+        w["completeness"] = 999.0
+        assert DIMENSION_WEIGHTS["completeness"] != 999.0
