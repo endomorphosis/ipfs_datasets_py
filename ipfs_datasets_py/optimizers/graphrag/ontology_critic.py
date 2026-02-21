@@ -312,6 +312,78 @@ class OntologyCritic(BaseCritic):
         """Return the number of entries in the shared evaluation cache."""
         return len(cls._SHARED_EVAL_CACHE)
 
+    def explain_score(self, score: "CriticScore") -> Dict[str, str]:
+        """Return human-readable explanations for each dimension score.
+
+        Args:
+            score: A :class:`CriticScore` returned by :meth:`evaluate_ontology`.
+
+        Returns:
+            Dict mapping each dimension name to a one-sentence explanation
+            that interprets the numeric score in plain English.
+        """
+        def _band(v: float) -> str:
+            if v >= 0.85:
+                return "excellent"
+            if v >= 0.70:
+                return "good"
+            if v >= 0.50:
+                return "acceptable"
+            if v >= 0.30:
+                return "weak"
+            return "poor"
+
+        explanations: Dict[str, str] = {}
+        explanations["completeness"] = (
+            f"Coverage is {_band(score.completeness)} ({score.completeness:.0%}): "
+            + (
+                "the ontology captures most expected concepts and relationships."
+                if score.completeness >= 0.7
+                else "many expected concepts or relationships appear to be missing."
+            )
+        )
+        explanations["consistency"] = (
+            f"Internal consistency is {_band(score.consistency)} ({score.consistency:.0%}): "
+            + (
+                "no significant contradictions were detected."
+                if score.consistency >= 0.7
+                else "logical contradictions or inconsistencies were detected."
+            )
+        )
+        explanations["clarity"] = (
+            f"Clarity is {_band(score.clarity)} ({score.clarity:.0%}): "
+            + (
+                "entity definitions and relationship labels are clear and unambiguous."
+                if score.clarity >= 0.7
+                else "some entities lack definitions or have ambiguous labels."
+            )
+        )
+        explanations["granularity"] = (
+            f"Granularity is {_band(score.granularity)} ({score.granularity:.0%}): "
+            + (
+                "the level of detail is appropriate for the domain."
+                if score.granularity >= 0.7
+                else "the ontology may be too coarse or too fine-grained for the domain."
+            )
+        )
+        explanations["domain_alignment"] = (
+            f"Domain alignment is {_band(score.domain_alignment)} ({score.domain_alignment:.0%}): "
+            + (
+                "entities and relationships follow domain conventions."
+                if score.domain_alignment >= 0.7
+                else "some entities or relationships deviate from expected domain conventions."
+            )
+        )
+        explanations["overall"] = (
+            f"Overall quality is {_band(score.overall)} ({score.overall:.0%}): "
+            + (
+                "the ontology is ready for use."
+                if score.overall >= 0.7
+                else "further refinement is recommended before production use."
+            )
+        )
+        return explanations
+
     # ------------------------------------------------------------------ #
     # BaseCritic interface                                                  #
     # ------------------------------------------------------------------ #

@@ -148,6 +148,42 @@ class ExtractionConfig:
             max_confidence=float(d.get("max_confidence", 1.0)),
         )
 
+    @classmethod
+    def from_env(cls, prefix: str = "EXTRACTION_") -> "ExtractionConfig":
+        """Construct an :class:`ExtractionConfig` from environment variables.
+
+        Each field is read from an ENV var named ``{prefix}{FIELD_NAME_UPPER}``.
+        Missing variables fall back to the field defaults.
+
+        Args:
+            prefix: Variable name prefix (default: ``"EXTRACTION_"``).
+
+        Returns:
+            A new :class:`ExtractionConfig` populated from the environment.
+
+        Example::
+
+            # Set env vars before calling:
+            # EXTRACTION_CONFIDENCE_THRESHOLD=0.7
+            # EXTRACTION_MAX_ENTITIES=100
+            cfg = ExtractionConfig.from_env()
+        """
+        import os as _os
+
+        def _get(name: str, default: str) -> str:
+            return _os.environ.get(f"{prefix}{name.upper()}", default)
+
+        return cls(
+            confidence_threshold=float(_get("confidence_threshold", "0.5")),
+            max_entities=int(_get("max_entities", "0")),
+            max_relationships=int(_get("max_relationships", "0")),
+            window_size=int(_get("window_size", "5")),
+            include_properties=_get("include_properties", "true").lower() == "true",
+            llm_fallback_threshold=float(_get("llm_fallback_threshold", "0.0")),
+            min_entity_length=int(_get("min_entity_length", "2")),
+            max_confidence=float(_get("max_confidence", "1.0")),
+        )
+
     def validate(self) -> None:
         """Validate field values; raise :class:`ValueError` on invalid combinations.
 

@@ -560,7 +560,38 @@ class LogicValidator:
 
         logger.info(f"Generated {len(fixes)} fix suggestions")
         return fixes
-    
+
+    def suggest_fixes_for_result(
+        self,
+        ontology: Dict[str, Any],
+        result: "ValidationResult",
+    ) -> List[Dict[str, Any]]:
+        """Convenience wrapper: derive fix hints from a :class:`ValidationResult`.
+
+        Combines hints from ``result.contradictions`` (via :meth:`suggest_fixes`)
+        with additional hints for any ``result.invalid_entity_ids``.
+
+        Args:
+            ontology: The validated ontology dict.
+            result: A :class:`ValidationResult` from :meth:`_basic_consistency_check`
+                or :meth:`validate_ontology`.
+
+        Returns:
+            List of fix suggestion dicts (same structure as :meth:`suggest_fixes`).
+        """
+        fixes = self.suggest_fixes(ontology, result.contradictions)
+        for eid in result.invalid_entity_ids:
+            fixes.append({
+                "description": (
+                    f"Entity id '{eid}' is referenced in a relationship but does not exist. "
+                    "Add a stub entity or remove the offending relationship."
+                ),
+                "type": "add_entity_or_remove_relationship",
+                "target": eid,
+                "confidence": 0.80,
+            })
+        return fixes
+
     def _basic_consistency_check(
         self,
         ontology: Dict[str, Any]

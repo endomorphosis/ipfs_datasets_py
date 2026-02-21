@@ -291,6 +291,31 @@ class OntologyLearningAdapter:
             adapter._action_count[action] = int(count)
         return adapter
 
+    def serialize(self) -> bytes:
+        """Serialize adapter state to UTF-8 encoded JSON bytes.
+
+        This is a pickle-free, human-readable alternative to binary
+        serialisation.  Round-trip via :meth:`deserialize`.
+
+        Returns:
+            UTF-8 encoded JSON bytes representing the full adapter state.
+        """
+        import json as _json
+        return _json.dumps(self.to_dict(), indent=None, separators=(",", ":")).encode("utf-8")
+
+    @classmethod
+    def deserialize(cls, data: bytes) -> "OntologyLearningAdapter":
+        """Reconstruct an adapter from bytes produced by :meth:`serialize`.
+
+        Args:
+            data: UTF-8 encoded JSON bytes (output of :meth:`serialize`).
+
+        Returns:
+            New :class:`OntologyLearningAdapter` with restored state.
+        """
+        import json as _json
+        return cls.from_dict(_json.loads(data.decode("utf-8")))
+
     @staticmethod
     def _score_to_threshold(mean_score: float) -> float:
         """Map mean quality score to a target confidence threshold.
