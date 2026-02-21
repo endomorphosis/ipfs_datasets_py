@@ -1455,3 +1455,22 @@ class OntologyPipeline:
             Integer count; 0 when no runs recorded.
         """
         return sum(1 for r in self._run_history if r.score.overall > threshold)
+
+    def consecutive_improvements(self) -> int:
+        """Return the length of the current (ending) improving streak.
+
+        Counts how many consecutive final runs each improved on the one before.
+
+        Returns:
+            Integer; 0 when fewer than 2 runs or latest run did not improve.
+        """
+        if len(self._run_history) < 2:
+            return 0
+        scores = [r.score.overall for r in self._run_history]
+        count = 0
+        for i in range(len(scores) - 1, 0, -1):
+            if scores[i] > scores[i - 1]:
+                count += 1
+            else:
+                break
+        return count

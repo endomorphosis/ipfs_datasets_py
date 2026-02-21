@@ -5606,6 +5606,29 @@ class OntologyGenerator:
         variance = sum((c - mean) ** 2 for c in confs) / len(confs)
         return variance ** 0.5
 
+    def entity_confidence_percentile(self, result: Any, p: float = 50.0) -> float:
+        """Return the *p*-th percentile of entity confidence scores.
+
+        Uses linear interpolation.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+            p: Percentile in [0, 100].
+
+        Returns:
+            Float; 0.0 when no entities are present.
+        """
+        entities = result.entities or []
+        if not entities:
+            return 0.0
+        scores = sorted(e.confidence for e in entities)
+        n = len(scores)
+        if n == 1:
+            return scores[0]
+        idx = (p / 100.0) * (n - 1)
+        lo, hi = int(idx), min(int(idx) + 1, n - 1)
+        return scores[lo] + (scores[hi] - scores[lo]) * (idx - lo)
+
 
 __all__ = [
     'OntologyGenerator',

@@ -2731,6 +2731,76 @@ class LogicValidator:
                     queue.append((nbr, depth + 1, visited | {nbr}))
         return max_depth
 
+    def strongly_connected_count(self, ontology: Any) -> int:
+        """Return the number of strongly connected components (SCCs) in the graph.
+
+        Uses Kosaraju's algorithm.
+
+        Args:
+            ontology: Ontology with ``relationships`` list; each item must have
+                ``source_id`` and ``target_id``.
+
+        Returns:
+            Integer SCC count; 0 when no nodes are present.
+        """
+        from collections import defaultdict as _dd
+        rels = getattr(ontology, "relationships", [])
+        if not rels:
+            return 0
+        adj: dict = _dd(list)
+        radj: dict = _dd(list)
+        nodes: set = set()
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src and tgt:
+                adj[src].append(tgt)
+                radj[tgt].append(src)
+                nodes.add(src)
+                nodes.add(tgt)
+        if not nodes:
+            return 0
+        # First pass: DFS on original graph to get finish order
+        visited: set = set()
+        finish_order: list = []
+
+        def _dfs1(node: str) -> None:
+            stack = [(node, iter(adj[node]))]
+            visited.add(node)
+            while stack:
+                n, children = stack[-1]
+                try:
+                    child = next(children)
+                    if child not in visited:
+                        visited.add(child)
+                        stack.append((child, iter(adj[child])))
+                except StopIteration:
+                    finish_order.append(n)
+                    stack.pop()
+
+        for node in nodes:
+            if node not in visited:
+                _dfs1(node)
+        # Second pass: DFS on reversed graph in reverse finish order
+        visited2: set = set()
+        scc_count = 0
+
+        def _dfs2(node: str) -> None:
+            stack = [node]
+            while stack:
+                n = stack.pop()
+                for child in radj[n]:
+                    if child not in visited2:
+                        visited2.add(child)
+                        stack.append(child)
+
+        for node in reversed(finish_order):
+            if node not in visited2:
+                visited2.add(node)
+                _dfs2(node)
+                scc_count += 1
+        return scc_count
+
 
 # Export public API
 __all__ = [

@@ -3625,6 +3625,48 @@ class OntologyCritic(BaseCritic):
         std = variance ** 0.5
         return max(0.0, min(1.0, 1.0 - std))
 
+    def dimensions_above_count(
+        self, score: "CriticScore", threshold: float = 0.5
+    ) -> int:
+        """Return the number of dimensions strictly above *threshold*.
+
+        Args:
+            score: :class:`CriticScore` to evaluate.
+            threshold: Comparison threshold.
+
+        Returns:
+            Integer count in [0, 6].
+        """
+        return sum(1 for d in self._DIMENSIONS if getattr(score, d, 0.0) > threshold)
+
+    def score_letter_grade(self, score: "CriticScore") -> str:
+        """Return a letter grade (A–F) based on the overall score.
+
+        Grading scale:
+          - A: overall >= 0.9
+          - B: overall >= 0.75
+          - C: overall >= 0.6
+          - D: overall >= 0.45
+          - F: overall < 0.45
+
+        Args:
+            score: :class:`CriticScore` to evaluate.
+
+        Returns:
+            Single-character string: ``"A"``, ``"B"``, ``"C"``, ``"D"``, or
+            ``"F"``.
+        """
+        overall = getattr(score, "overall", 0.0)
+        if overall >= 0.9:
+            return "A"
+        if overall >= 0.75:
+            return "B"
+        if overall >= 0.6:
+            return "C"
+        if overall >= 0.45:
+            return "D"
+        return "F"
+
 
 # Export public API
 __all__ = [

@@ -1498,3 +1498,36 @@ class OntologyLearningAdapter:
         scores = [r.final_score for r in self._feedback]
         mean = sum(scores) / len(scores)
         return sum(1 for s in scores if s > mean)
+
+    def feedback_window_mean(self, n: int = 5) -> float:
+        """Return the mean of the last *n* feedback scores.
+
+        Args:
+            n: Window size; negative or zero uses all records.
+
+        Returns:
+            Float mean; 0.0 when no feedback is recorded.
+        """
+        if not self._feedback:
+            return 0.0
+        window = self._feedback[-n:] if n > 0 else self._feedback
+        scores = [r.final_score for r in window]
+        return sum(scores) / len(scores)
+
+    def feedback_outlier_count(self, z_threshold: float = 2.0) -> int:
+        """Return the count of feedback scores that are outliers by z-score.
+
+        Args:
+            z_threshold: Absolute z-score threshold; default 2.0.
+
+        Returns:
+            Integer count; 0 when fewer than 3 records or std is zero.
+        """
+        if len(self._feedback) < 3:
+            return 0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        std = (sum((s - mean) ** 2 for s in scores) / len(scores)) ** 0.5
+        if std == 0.0:
+            return 0
+        return sum(1 for s in scores if abs((s - mean) / std) > z_threshold)

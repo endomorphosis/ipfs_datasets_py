@@ -3123,6 +3123,36 @@ class OntologyOptimizer:
         first_deriv = [scores[i + 1] - scores[i] for i in range(len(scores) - 1)]
         return [first_deriv[i + 1] - first_deriv[i] for i in range(len(first_deriv) - 1)]
 
+    def history_first_derivative(self) -> list:
+        """Return the first derivative of ``average_score`` over history.
+
+        The first derivative is the list of consecutive differences between
+        consecutive entries.
+
+        Returns:
+            List of floats with length ``len(_history) - 1``; empty list when
+            fewer than 2 history entries.
+        """
+        if len(self._history) < 2:
+            return []
+        scores = [e.average_score for e in self._history]
+        return [scores[i + 1] - scores[i] for i in range(len(scores) - 1)]
+
+    def score_improvement_ratio(self) -> float:
+        """Return the fraction of consecutive transitions that are improvements.
+
+        An improvement is when ``average_score`` increases from one entry to
+        the next.
+
+        Returns:
+            Float in [0, 1]; 0.0 when fewer than 2 history entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        improvements = sum(1 for i in range(1, len(scores)) if scores[i] > scores[i - 1])
+        return improvements / (len(scores) - 1)
+
 
 # Export public API
 __all__ = [
