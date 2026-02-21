@@ -1059,6 +1059,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | CEC modal rules | 64% | 100% | 99%✅ (session 31: apply() paths covered) |
 | CEC resolution rules | 84% | 100% | 96%✅ (session 31: edge cases covered) |
 | CEC specialized rules | 79% | 100% | 97%✅ (session 31: dilemma apply() covered) |
+| TDFOL formula_dependency_graph | 0% | 90% | 98%✅ (session 32: 90 tests, 325/335 lines; 8 lines require graphviz) |
 | NL Processing | 75% pass | 85% pass | 90% pass |
 | ZKP (simulation) | 80% pass | 85% pass | 85% pass |
 | MCP Tools | 167+ tests | 200+ tests | 250+ tests |
@@ -1067,7 +1068,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Session 31 complete. CEC inference rules coverage significantly improved: propositional 55%→100%, modal 64%→99%, resolution 84%→96%, specialized 79%→97%. Added `__all__` exports to modal.py, resolution.py, specialized.py (all 7 rule modules now have complete exports). 106 new tests in `test_propositional_modal_resolution_rules.py`. CEC suite: 833→939 tests (+106). Overall logic suite: 6079→6185 tests passing. Zero production bugs needed — these modules had correct logic but untested `apply()` paths. Next: TDFOL rule coverage (tests/unit_tests/logic/TDFOL/), NL processing improvement, Phase 4 CI baseline wiring.
+**Next Action:** Session 32 complete. `formula_dependency_graph.py` coverage: 0%→98% (+325 lines, 90 tests in `test_formula_dependency_graph.py`). TDFOL suite: 999→1089 tests (+90). Overall logic suite: 6185→6275 tests passing. Key: diamond-shaped dependency graph needed to hit `continue` branches in `get_all_dependencies`/`get_all_dependents` traversal loops. Remaining 8 uncovered lines are all inside `if HAS_GRAPHVIZ:` optional dependency guards — untestable without graphviz installed. Next: TDFOL NL processing improvement (nl/tdfol_nl_patterns.py 35%, nl/tdfol_nl_preprocessor.py 48%, nl/utils.py 48%), modal_tableaux.py (81%), TDFOL p2p module (0%).
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 31)  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 32)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
