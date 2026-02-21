@@ -720,19 +720,22 @@ class TestTDFOLGrammarBridgeSession26:
 
     def test_dcec_to_natural_language_none_dcec_formula_path(self):
         """_dcec_to_natural_language logs 'DCEC parsing returned None' (line 352)."""
-        import ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge as tgb_mod
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import TDFOLGrammarBridge
         bridge = self._get_bridge()
         bridge.dcec_grammar = MagicMock()
 
-        orig_ga = tgb_mod.GRAMMAR_AVAILABLE
-        tgb_mod.GRAMMAR_AVAILABLE = True
+        # Patch via the function's own __globals__ dict to avoid importlib identity issues
+        fn_globals = TDFOLGrammarBridge._dcec_to_natural_language.__globals__
+        orig_parse_dcec = fn_globals.get('parse_dcec')
+        orig_ga = fn_globals.get('GRAMMAR_AVAILABLE')
+        fn_globals['GRAMMAR_AVAILABLE'] = True
+        fn_globals['parse_dcec'] = lambda _s: None  # returns None → hits line 352
         try:
-            # parse_dcec returns None → hits line 352
-            with patch.object(tgb_mod, 'parse_dcec', return_value=None):
-                result = bridge._dcec_to_natural_language('O(pay)', 'formal')
-                assert isinstance(result, str)
+            result = bridge._dcec_to_natural_language('O(pay)', 'formal')
+            assert isinstance(result, str)
         finally:
-            tgb_mod.GRAMMAR_AVAILABLE = orig_ga
+            fn_globals['parse_dcec'] = orig_parse_dcec
+            fn_globals['GRAMMAR_AVAILABLE'] = orig_ga
 
 
 # ===========================================================================
