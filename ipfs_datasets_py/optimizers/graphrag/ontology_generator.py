@@ -48,6 +48,11 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 from enum import Enum
 
+# Import unified extraction config from common module
+from ipfs_datasets_py.optimizers.common.extraction_contexts import (
+    GraphRAGExtractionConfig,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -332,6 +337,69 @@ class ExtractionConfig:
                 result[f.name] = {"self": v_self, "other": v_other}
         return result
 
+    def to_toml(self) -> str:
+        """Serialise this config to a TOML string.
+
+        Uses a hand-rolled minimal TOML emitter (no third-party dependencies).
+        The output is compatible with Python 3.11+ ``tomllib.loads()``.
+
+        Returns:
+            TOML-formatted string.
+
+        Example:
+            >>> toml_str = cfg.to_toml()
+            >>> "[extraction_config]" in toml_str
+            True
+        """
+        def _toml_val(v: Any) -> str:
+            if isinstance(v, bool):
+                return "true" if v else "false"
+            if isinstance(v, (int, float)):
+                return repr(v)
+            if isinstance(v, str):
+                return f'"{v}"'
+            if isinstance(v, (list, set, frozenset)):
+                items = ", ".join(_toml_val(x) for x in v)
+                return f"[{items}]"
+            if isinstance(v, dict):
+                # Represent nested dicts as inline tables
+                pairs = ", ".join(f'{k} = {_toml_val(val)}' for k, val in v.items())
+                return "{" + pairs + "}"
+            return f'"{v}"'
+
+        d = self.to_dict()
+        lines = ["[extraction_config]"]
+        for key, val in d.items():
+            lines.append(f"{key} = {_toml_val(val)}")
+        return "\n".join(lines) + "\n"
+
+    @classmethod
+    def from_toml(cls, toml_str: str) -> "ExtractionConfig":
+        """Construct an :class:`ExtractionConfig` from a TOML string.
+
+        Requires Python 3.11+ (uses the stdlib ``tomllib`` module).
+
+        Args:
+            toml_str: TOML-formatted string, as produced by :meth:`to_toml`.
+
+        Returns:
+            A new :class:`ExtractionConfig` instance.
+
+        Raises:
+            ImportError: If ``tomllib`` is not available (Python < 3.11).
+
+        Example:
+            >>> cfg2 = ExtractionConfig.from_toml(cfg.to_toml())
+        """
+        try:
+            import tomllib as _tomllib
+        except ImportError:
+            raise ImportError("ExtractionConfig.from_toml() requires Python 3.11+ (tomllib)")
+
+        data = _tomllib.loads(toml_str)
+        section = data.get("extraction_config", data)
+        return cls.from_dict(section)
+
 
 @dataclass
 class OntologyGenerationContext:
@@ -366,7 +434,7 @@ class OntologyGenerationContext:
     domain: str
     base_ontology: Optional[Dict[str, Any]] = None
     extraction_strategy: Union[str, ExtractionStrategy] = ExtractionStrategy.HYBRID
-    config: Union[ExtractionConfig, Dict[str, Any]] = field(default_factory=dict)
+    config: Union[ExtractionConfig, GraphRAGExtractionConfig, Dict[str, Any]] = field(default_factory=dict)
     
     def __post_init__(self):
         """Convert string enums to proper enum types and normalise config."""
@@ -374,8 +442,14 @@ class OntologyGenerationContext:
             self.data_type = DataType(self.data_type)
         if isinstance(self.extraction_strategy, str):
             self.extraction_strategy = ExtractionStrategy(self.extraction_strategy)
+        # Support both old ExtractionConfig and new GraphRAGExtractionConfig
         if isinstance(self.config, dict):
-            self.config = ExtractionConfig.from_dict(self.config)
+            # Use GraphRAGExtractionConfig when available (new preferred way)
+            self.config = GraphRAGExtractionConfig.from_dict(self.config)
+        elif isinstance(self.config, ExtractionConfig) and not isinstance(self.config, GraphRAGExtractionConfig):
+            # Convert old ExtractionConfig to new GraphRAGExtractionConfig
+            # by passing through dict conversion
+            self.config = GraphRAGExtractionConfig.from_dict(self.config.to_dict())
 
     @property
     def extraction_config(self) -> ExtractionConfig:
@@ -682,6 +756,26 @@ class EntityExtractionResult:
             span_end = ent.source_span[1] if ent.source_span else ""
             writer.writerow([ent.id, ent.type, ent.text, ent.confidence, span_start, span_end])
         return buf.getvalue()
+
+    def summary(self) -> str:
+        """Return a concise human-readable summary of this extraction result.
+
+        Format::
+
+            EntityExtractionResult: N entities (K types), M relationships, confidence=X.XX
+
+        Returns:
+            One-line summary string.
+
+        Example:
+            >>> print(result.summary())
+            EntityExtractionResult: 4 entities (3 types), 2 relationships, confidence=0.85
+        """
+        n_types = len({e.type for e in self.entities})
+        return (
+            f"EntityExtractionResult: {len(self.entities)} entities ({n_types} types), "
+            f"{len(self.relationships)} relationships, confidence={self.confidence:.2f}"
+        )
 
 
 @dataclass
@@ -1957,6 +2051,40 @@ class OntologyGenerator:
             relationships=kept_rels,
             confidence=result.confidence,
             metadata=updated_metadata,
+            errors=list(result.errors),
+        )
+
+    def anonymize_entities(
+        self,
+        result: "EntityExtractionResult",
+        replacement: str = "[REDACTED]",
+    ) -> "EntityExtractionResult":
+        """Return a new result with entity text replaced by *replacement*.
+
+        Replaces the ``text`` field of every entity with *replacement*.
+        Other fields (id, type, confidence, properties, source_span) are
+        preserved.  Relationships are returned unchanged.
+
+        Args:
+            result: Extraction result to anonymise.
+            replacement: Placeholder string (default: ``"[REDACTED]"``).
+
+        Returns:
+            New :class:`EntityExtractionResult` with anonymised entity text.
+
+        Example:
+            >>> anon = generator.anonymize_entities(result)
+            >>> all(e.text == "[REDACTED]" for e in anon.entities)
+            True
+        """
+        import dataclasses as _dc
+
+        anon_entities = [_dc.replace(e, text=replacement) for e in result.entities]
+        return EntityExtractionResult(
+            entities=anon_entities,
+            relationships=list(result.relationships),
+            confidence=result.confidence,
+            metadata=dict(result.metadata),
             errors=list(result.errors),
         )
 

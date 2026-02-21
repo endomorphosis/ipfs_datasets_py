@@ -883,6 +883,47 @@ class OntologyCritic(BaseCritic):
             return "degrading"
         return "stable"
 
+    def emit_dimension_histogram(
+        self,
+        scores: List["CriticScore"],
+        bins: int = 5,
+    ) -> Dict[str, List[int]]:
+        """Compute a frequency histogram for each quality dimension.
+
+        Divides the [0, 1] range into *bins* equal-width buckets and counts how
+        many scores fall into each bucket for every dimension.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+            bins: Number of histogram buckets (default: 5).
+
+        Returns:
+            Dict mapping dimension name to a list of *bins* bucket counts.
+
+        Raises:
+            ValueError: If *scores* is empty or *bins* < 1.
+
+        Example:
+            >>> hist = critic.emit_dimension_histogram(score_list, bins=4)
+            >>> len(hist["completeness"]) == 4
+            True
+        """
+        if not scores:
+            raise ValueError("scores must be non-empty")
+        if bins < 1:
+            raise ValueError(f"bins must be >= 1; got {bins}")
+
+        _DIMS = ("completeness", "consistency", "clarity", "granularity", "domain_alignment")
+        histogram: Dict[str, List[int]] = {}
+        for dim in _DIMS:
+            counts = [0] * bins
+            for s in scores:
+                val = max(0.0, min(1.0, getattr(s, dim)))
+                bucket = min(int(val * bins), bins - 1)
+                counts[bucket] += 1
+            histogram[dim] = counts
+        return histogram
+
     def evaluate_with_rubric(
         self,
         ontology: Dict[str, Any],

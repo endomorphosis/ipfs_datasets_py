@@ -371,3 +371,22 @@ class OntologyPipeline:
             "score": result.score.overall if hasattr(result.score, "overall") else float(result.score),
             "entity_count": len(result.entities),
         }
+
+    def with_domain(self, domain: str) -> "OntologyPipeline":
+        """Return a new pipeline with *domain* overridden.
+
+        All other settings (``use_llm``, ``max_rounds``) are inherited from
+        ``self``.  The current pipeline is **not** mutated.
+
+        Args:
+            domain: Domain string for the new pipeline.
+
+        Returns:
+            A fresh :class:`OntologyPipeline` instance.
+
+        Example:
+            >>> legal_pipeline = pipeline.with_domain("legal")
+        """
+        d = self.as_dict()
+        d["domain"] = domain
+        return OntologyPipeline.from_dict(d)

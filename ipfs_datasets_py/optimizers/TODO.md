@@ -271,6 +271,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
   - Done 2026-02-20: implemented entity-depth and relationship-density scoring
 - [x] (P2) [graphrag] `_evaluate_domain_alignment()` — constant 0.80; implement keyword-based domain vocabulary matching
   - Done 2026-02-20: implemented domain vocabulary matching via configurable keyword sets
+- [x] (P3) [graphrag] Add `EntityExtractionResult.summary()` -- Done batch-69: N entities (K types), M rels, confidence; 6 tests
 - [ ] (P3) [graphrag] Add LLM-based fallback evaluator that rates quality when rule-based scores are ambiguous
 - [x] (P3) [graphrag] Add per-entity type completeness breakdown in CriticScore.metadata — Done batch 49: entity_type_counts + entity_type_fractions added to metadata in evaluate_ontology; 7 tests
 
@@ -639,8 +640,8 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [tests] Property test: Entity.to_dict() round-trips through from_dict equivalent
 - [x] (P2) [graphrag] Add `OntologyGenerator.score_entity(entity)` -- Done batch-65: conf+len+type signals blend; 7 tests
 - [ ] (P3) [graphrag] Add `OntologyLearningAdapter.reset_feedback()` -- clear feedback history
-- [ ] (P2) [obs] Add `OntologyCritic.evaluate_ontology()` histogram of dimension scores
-- [ ] (P3) [graphrag] Add `ExtractionConfig.to_toml()` / `from_toml()` -- TOML round-trip
+- [x] (P2) [obs] Add `OntologyCritic.emit_dimension_histogram(scores)` -- Done batch-69: bins per dim, count lists; 7 tests
+- [x] (P3) [graphrag] Add `ExtractionConfig.to_toml()` / `from_toml()` -- Done batch-69: stdlib tomllib, hand-rolled writer; 7 tests
 - [x] (P2) [graphrag] Add `OntologyGenerator.batch_extract_with_spans()` -- Done batch-65: ThreadPoolExecutor, order preserved; 6 tests
 - [x] (P3) [arch] Add `OntologyPipeline.reset()` -- Done batch-65: clears adapter + mediator state; 2 tests
 - [ ] (P2) [tests] Add fuzz test: refine_ontology with random recommendation strings
@@ -649,7 +650,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 ## Batch 66+ Ideas
 - [ ] (P2) [graphrag] Add `OntologyCritic.calibrate_thresholds()` -- adjust dimension thresholds from history of scores
 - [x] (P3) [graphrag] Add `CriticScore.to_html_report()` -- Done batch-68: table + recs list; 7 tests
-- [ ] (P2) [graphrag] Add `OntologyGenerator.anonymize_entities()` -- strip PII from entity text
+- [x] (P2) [graphrag] Add `OntologyGenerator.anonymize_entities()` -- Done batch-69: replaces text, preserves id/type/rels; 7 tests
 - [ ] (P3) [tests] Add round-trip test: Entity -> to_dict -> from_dict (Entity.from_dict classmethod)
 - [x] (P2) [graphrag] Add `Entity.from_dict(d)` classmethod -- Done batch-66: round-trip, span/props preserved; 7 tests
 - [x] (P3) [graphrag] Add `EntityExtractionResult.to_csv()` -- Done batch-66: header+rows, span cols; 7 tests
@@ -658,7 +659,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] Add `OntologyMediator.preview_recommendations()` -- Done batch-67: no state mutation; 5 tests
 - [ ] (P3) [graphrag] Add `ExtractionConfig.from_dict()` classmethod
 - [x] (P2) [graphrag] Add `OntologyOptimizer.score_variance()` -- Done batch-66: population variance; 6 tests
-- [ ] (P3) [arch] Add `OntologyPipeline.with_domain(domain)` -- fluent domain-override builder
+- [x] (P3) [arch] Add `OntologyPipeline.with_domain(domain)` -- Done batch-69: immutable fluent builder; 5 tests
 - [x] (P2) [graphrag] Add `LogicValidator.explain_entity(entity)` -- Done batch-68: structured dict with is_valid/contradictions; 7 tests
 - [x] (P3) [obs] Add `OntologyCritic.score_trend(scores)` -- Done batch-68: least-squares slope -> improving/stable/degrading; 7 tests
 - [x] (P2) [graphrag] Add `OntologyGenerator.deduplicate_entities(result)` -- Done batch-67: highest-conf wins, rel remapping, dedup_count; 8 tests
