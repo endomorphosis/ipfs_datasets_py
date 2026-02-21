@@ -2792,6 +2792,245 @@ class OntologyGenerator:
         result.metadata["coref_resolved"] = True
         return result
 
+    def extract_with_context_windows(
+        self,
+        data: str,
+        context: "OntologyGenerationContext",
+        window_size: int = 512,
+        window_overlap: int = 64,
+        dedup_method: str = "highest_confidence",
+    ) -> "EntityExtractionResult":
+        """Extract entities from large texts using sliding context windows.
+        
+        Handles texts larger than typical LLM context windows by:
+        1. Splitting text into overlapping windows
+        2. Extracting entities from each window independently
+        3. Deduplicating across windows using configurable strategy
+        4. Aggregating results into a single EntityExtractionResult
+        
+        This is useful for:
+        - Large documents that exceed LLM token limits
+        - Maintaining contextual coherence across text boundaries
+        - Reducing memory consumption for very large texts
+        
+        Args:
+            data: Input text to extract entities from (can be very large)
+            context: Extraction context with configuration
+            window_size: Number of characters per window (default 512)
+            window_overlap: Number of characters of overlap between windows (default 64)
+            dedup_method: Strategy for deduplicating overlapping entities:
+                - "highest_confidence": Keep entity with highest confidence
+                - "first_occurrence": Keep first-seen entity
+                - "merge_spans": Merge all occurrences with averaged confidence
+        
+        Returns:
+            EntityExtractionResult with all entities extracted from all windows,
+            deduplicated and aggregated. metadata["window_count"] tracks number
+            of windows processed.
+        
+        Raises:
+            ValueError: If window_size < 1, overlap >= window_size, or invalid dedup_method
+        
+        Example:
+            >>> large_text = "Alice and Bob..." # Very long document
+            >>> result = generator.extract_with_context_windows(
+            ...     large_text,
+            ...     context,
+            ...     window_size=512,
+            ...     window_overlap=64
+            ... )
+            >>> print(f"Found {len(result.entities)} entities across {result.metadata['window_count']} windows")
+        """
+        import copy as _copy
+        
+        # Validate parameters
+        if window_size < 1:
+            raise ValueError(f"window_size must be >= 1, got {window_size}")
+        if window_overlap < 0:
+            raise ValueError(f"window_overlap must be >= 0, got {window_overlap}")
+        if window_overlap >= window_size:
+            raise ValueError(f"window_overlap ({window_overlap}) must be < window_size ({window_size})")
+        if dedup_method not in ("highest_confidence", "first_occurrence", "merge_spans"):
+            raise ValueError(
+                f"Invalid dedup_method '{dedup_method}'; must be one of: "
+                "highest_confidence, first_occurrence, merge_spans"
+            )
+        
+        text = str(data) if data is not None else ""
+        if not text:
+            # Return empty result for empty input
+            return EntityExtractionResult(entities=[], relationships=[], confidence=1.0)
+        
+        # Split text into overlapping windows
+        windows = self._split_into_windows(text, window_size, window_overlap)
+        self._log.info(
+            f"extract_with_context_windows: splitting {len(text)} chars into "
+            f"{len(windows)} windows (size={window_size}, overlap={window_overlap})"
+        )
+        
+        # Extract from each window
+        window_results: List[EntityExtractionResult] = []
+        for i, window_text in enumerate(windows):
+            try:
+                result = self.extract_entities(window_text, context)
+                window_results.append(result)
+            except Exception as e:
+                self._log.warning(
+                    f"Extraction failed for window {i} ({len(window_text)} chars): {e}"
+                )
+                # Continue with remaining windows
+                continue
+        
+        if not window_results:
+            self._log.warning("No successful extractions from any window")
+            return EntityExtractionResult(entities=[], relationships=[], confidence=0.0)
+        
+        # Merge results with deduplication
+        merged = self._merge_window_results(
+            window_results,
+            dedup_method=dedup_method
+        )
+        
+        # Add window metadata
+        merged.metadata["window_count"] = len(windows)
+        merged.metadata["successful_windows"] = len(window_results)
+        merged.metadata["window_size"] = window_size
+        merged.metadata["window_overlap"] = window_overlap
+        merged.metadata["dedup_method"] = dedup_method
+        
+        self._log.info(
+            f"extract_with_context_windows complete: {len(merged.entities)} entities "
+            f"from {len(window_results)}/{len(windows)} windows, "
+            f"deduplicated with {dedup_method}"
+        )
+        
+        return merged
+    
+    def _split_into_windows(
+        self,
+        text: str,
+        window_size: int,
+        overlap: int,
+    ) -> List[str]:
+        """Split text into overlapping windows.
+        
+        Args:
+            text: Input text
+            window_size: Size of each window
+            overlap: Overlap between consecutive windows
+        
+        Returns:
+            List of window strings
+        """
+        if len(text) <= window_size:
+            return [text]
+        
+        windows = []
+        stride = window_size - overlap  # How much to advance per window
+        
+        i = 0
+        while i < len(text):
+            window = text[i:i + window_size]
+            windows.append(window)
+            i += stride
+            
+            # Ensure last window includes end of text
+            if i + window_size >= len(text) and i < len(text):
+                windows.append(text[-window_size:] if len(text) >= window_size else text)
+                break
+        
+        return windows
+    
+    def _merge_window_results(
+        self,
+        results: List["EntityExtractionResult"],
+        dedup_method: str = "highest_confidence",
+    ) -> "EntityExtractionResult":
+        """Merge results from multiple windows with deduplication.
+        
+        Args:
+            results: List of EntityExtractionResult from each window
+            dedup_method: Deduplication strategy
+        
+        Returns:
+            Merged EntityExtractionResult
+        """
+        import copy as _copy
+        
+        if not results:
+            return EntityExtractionResult(entities=[], relationships=[], confidence=0.0)
+        
+        # Collect all entities with separate tracking for merge strategy
+        entity_index: Dict[str, Entity] = {}  # Map key -> Entity
+        merge_tracking: Dict[str, Dict[str, float]] = {}  # Map key -> {count, total_conf}
+        
+        for result in results:
+            for entity in result.entities:
+                # Build deduplication key
+                key = (entity.type.lower(), entity.text.lower())
+                
+                if dedup_method == "highest_confidence":
+                    # Keep entity with highest confidence
+                    if key not in entity_index:
+                        entity_index[key] = _copy.deepcopy(entity)
+                    elif entity.confidence > entity_index[key].confidence:
+                        entity_index[key] = _copy.deepcopy(entity)
+                
+                elif dedup_method == "first_occurrence":
+                    # Keep first-seen entity
+                    if key not in entity_index:
+                        entity_index[key] = _copy.deepcopy(entity)
+                
+                elif dedup_method == "merge_spans":
+                    # Merge all occurrences with averaged confidence
+                    if key not in entity_index:
+                        entity_index[key] = _copy.deepcopy(entity)
+                        merge_tracking[key] = {"count": 1, "sum_conf": entity.confidence}
+                    else:
+                        # Track for averaging
+                        merge_tracking[key]["count"] += 1
+                        merge_tracking[key]["sum_conf"] += entity.confidence
+        
+        # Apply merge_spans averaging if used
+        if dedup_method == "merge_spans":
+            for key, tracking in merge_tracking.items():
+                if key in entity_index:
+                    entity_index[key].confidence = (
+                        tracking["sum_conf"] / tracking["count"]
+                    )
+        
+        # Get final entity list
+        deduped_entities = list(entity_index.values())
+        
+        # Collect all relationships (filter to valid entity IDs)
+        valid_entity_ids = {ent.id for ent in deduped_entities}
+        all_relationships = []
+        seen_rel_keys: set = set()
+        
+        for result in results:
+            for rel in result.relationships:
+                # Only include relationships where both entities exist
+                if (rel.source_id in valid_entity_ids and 
+                    rel.target_id in valid_entity_ids):
+                    # De-duplicate relationships
+                    rel_key = (rel.source_id, rel.target_id, rel.type.lower())
+                    if rel_key not in seen_rel_keys:
+                        all_relationships.append(rel)
+                        seen_rel_keys.add(rel_key)
+        
+        # Calculate average confidence
+        avg_confidence = (
+            sum(r.confidence for r in results) / len(results)
+            if results else 0.0
+        )
+        
+        return EntityExtractionResult(
+            entities=deduped_entities,
+            relationships=all_relationships,
+            confidence=avg_confidence,
+            metadata={"deduped_from": sum(len(r.entities) for r in results), "original_windows": len(results)},
+        )
+
     def merge_provenance_report(
         self,
         results: List["EntityExtractionResult"],
