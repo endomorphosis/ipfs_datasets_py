@@ -891,3 +891,44 @@ class OntologyPipeline:
             return (0.0, 0.0)
         scores = [r.score.overall for r in self._run_history]
         return (min(scores), max(scores))
+
+    def run_count_above(self, threshold: float = 0.6) -> int:
+        """Return the number of runs with ``score.overall > threshold``.
+
+        Args:
+            threshold: Score threshold (exclusive, default 0.6).
+
+        Returns:
+            Count of runs strictly above the threshold.
+        """
+        return sum(1 for r in self._run_history if r.score.overall > threshold)
+
+    def average_score(self) -> float:
+        """Return the mean ``score.overall`` across all recorded runs.
+
+        Returns:
+            Mean score float; ``0.0`` when no runs recorded.
+        """
+        if not self._run_history:
+            return 0.0
+        return sum(r.score.overall for r in self._run_history) / len(self._run_history)
+
+    def best_score(self) -> float:
+        """Return the highest ``score.overall`` across all recorded runs.
+
+        Returns:
+            Maximum score float; ``0.0`` when no runs recorded.
+        """
+        if not self._run_history:
+            return 0.0
+        return max(r.score.overall for r in self._run_history)
+
+    def worst_score(self) -> float:
+        """Return the lowest ``score.overall`` across all recorded runs.
+
+        Returns:
+            Minimum score float; ``0.0`` when no runs recorded.
+        """
+        if not self._run_history:
+            return 0.0
+        return min(r.score.overall for r in self._run_history)

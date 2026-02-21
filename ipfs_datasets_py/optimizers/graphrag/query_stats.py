@@ -5,9 +5,11 @@ from __future__ import annotations
 import json
 import time
 from collections import defaultdict
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Tuple
 
 
+@dataclass
 class GraphRAGQueryStats:
     """
     Collects and analyzes query statistics for optimization purposes.
@@ -16,14 +18,12 @@ class GraphRAGQueryStats:
     and query patterns to inform the query optimizer's decisions.
     """
     
-    def __init__(self):
-        """Initialize the query statistics tracker."""
-        self.query_count = 0
-        self.cache_hits = 0
-        self.total_query_time = 0.0
-        self.query_times = []
-        self.query_patterns = defaultdict(int)
-        self.query_timestamps = []
+    query_count: int = 0
+    cache_hits: int = 0
+    total_query_time: float = 0.0
+    query_times: List[float] = field(default_factory=list)
+    query_patterns: Dict[str, int] = field(default_factory=lambda: defaultdict(int))
+    query_timestamps: List[float] = field(default_factory=list)
         
     @property
     def avg_query_time(self) -> float:
