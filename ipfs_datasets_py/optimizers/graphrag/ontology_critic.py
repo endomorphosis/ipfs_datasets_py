@@ -3134,6 +3134,56 @@ class OntologyCritic(BaseCritic):
         mean_b = sum(b_vals) / n
         return sum((a_vals[i] - mean_a) * (b_vals[i] - mean_b) for i in range(n)) / (n - 1)
 
+    def top_improving_dimension(
+        self,
+        before: CriticScore,
+        after: CriticScore,
+    ) -> Optional[str]:
+        """Return the most improved dimension between two scores.
+
+        Improvement is measured as ``after_dim - before_dim`` for each
+        dimension. If no dimension has a positive delta, ``None`` is returned.
+
+        Args:
+            before: Baseline score.
+            after: New score to compare.
+
+        Returns:
+            Name of the most improved dimension, or ``None`` when no positive
+            improvement exists.
+        """
+        dims = [
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        ]
+        deltas = {dim: getattr(after, dim) - getattr(before, dim) for dim in dims}
+        best_dim = max(deltas, key=deltas.get)
+        if deltas[best_dim] <= 0.0:
+            return None
+        return best_dim
+
+    _DIMENSIONS = ("completeness", "consistency", "clarity", "granularity",
+                   "relationship_coherence", "domain_alignment")
+
+    def top_improving_dimension(self, before: "CriticScore", after: "CriticScore") -> str:
+        """Return the dimension with the largest improvement between two scores.
+
+        Args:
+            before: The earlier ``CriticScore``.
+            after:  The later ``CriticScore``.
+
+        Returns:
+            Name of the dimension whose ``after - before`` delta is largest.
+            If all deltas are equal (or zero) returns the first dimension.
+        """
+        deltas = {d: getattr(after, d, 0.0) - getattr(before, d, 0.0)
+                  for d in self._DIMENSIONS}
+        return max(deltas, key=lambda d: deltas[d])
+
 
 # Export public API
 __all__ = [

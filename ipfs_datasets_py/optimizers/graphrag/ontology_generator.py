@@ -4166,6 +4166,21 @@ class OntologyGenerator:
         """
         return len(result.relationships)
 
+    def relationship_types(self, result: "EntityExtractionResult") -> Set[str]:
+        """Return unique relationship types from *result*.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+
+        Returns:
+            Set of unique relationship type strings.
+
+        Example:
+            >>> gen.relationship_types(result)
+            {'WORKS_FOR', 'LOCATED_IN'}
+        """
+        return {rel.type for rel in result.relationships}
+
     def entity_ids(self, result: "EntityExtractionResult") -> List[str]:
         """Return the ``id`` of every entity in *result*.
 
@@ -4181,6 +4196,103 @@ class OntologyGenerator:
             ['e1', 'e2']
         """
         return [e.id for e in result.entities]
+
+    def split_result(
+        self,
+        result: "EntityExtractionResult",
+        n: int,
+    ) -> List["EntityExtractionResult"]:
+        """Split *result* into *n* balanced non-empty chunks by entities.
+
+        Relationships are retained only when both endpoints belong to the same
+        chunk.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+            n: Desired number of chunks. Must be >= 1.
+
+        Returns:
+            List of chunked :class:`EntityExtractionResult` values.
+
+        Raises:
+            ValueError: If ``n < 1``.
+        """
+        if n < 1:
+            raise ValueError("n must be >= 1")
+        if not result.entities:
+            return []
+
+        total = len(result.entities)
+        chunk_count = min(n, total)
+        base = total // chunk_count
+        remainder = total % chunk_count
+
+        chunks: List[EntityExtractionResult] = []
+        cursor = 0
+
+        for idx in range(chunk_count):
+            size = base + (1 if idx < remainder else 0)
+            entities_slice = result.entities[cursor:cursor + size]
+            cursor += size
+
+            entity_ids = {e.id for e in entities_slice}
+            relationships_slice = [
+                rel for rel in result.relationships
+                if rel.source_id in entity_ids and rel.target_id in entity_ids
+            ]
+
+            metadata = dict(result.metadata)
+            metadata.update({"chunk_index": idx, "chunk_count": chunk_count})
+
+            chunks.append(
+                EntityExtractionResult(
+                    entities=list(entities_slice),
+                    relationships=relationships_slice,
+                    confidence=result.confidence,
+                    metadata=metadata,
+                    errors=list(result.errors),
+                )
+            )
+
+        return chunks
+
+    def compact_result(self, result: "EntityExtractionResult") -> "EntityExtractionResult":
+        """Return a compacted copy of *result* without empty property entries.
+
+        Empty values (``None``, empty strings, empty containers) are removed
+        from entity and relationship ``properties`` dictionaries.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+
+        Returns:
+            New compacted :class:`EntityExtractionResult`.
+        """
+        import dataclasses as _dc
+
+        def _compact_dict(d: Dict[str, Any]) -> Dict[str, Any]:
+            return {
+                k: v
+                for k, v in d.items()
+                if v is not None and v != "" and v != [] and v != {}
+            }
+
+        compact_entities = [
+            _dc.replace(entity, properties=_compact_dict(entity.properties))
+            for entity in result.entities
+        ]
+        compact_relationships = [
+            _dc.replace(rel, properties=_compact_dict(rel.properties))
+            for rel in result.relationships
+        ]
+        compact_metadata = _compact_dict(result.metadata)
+
+        return _dc.replace(
+            result,
+            entities=compact_entities,
+            relationships=compact_relationships,
+            metadata=compact_metadata,
+        )
 
     def entities_by_type(self, result: "EntityExtractionResult") -> Dict[str, List["Entity"]]:
         """Return a dict grouping entities in *result* by their ``type``.
@@ -4796,6 +4908,28 @@ class OntologyGenerator:
             counts[e.type] = counts.get(e.type, 0) + 1
         total = len(result.entities)
         return {t: c / total for t, c in counts.items()}
+
+    def compact_result(self, result) -> "EntityExtractionResult":
+        """Return a copy of *result* with entities that have empty properties removed.
+
+        An entity is considered "empty-properties" when ``entity.properties``
+        is an empty dict or ``None``.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            New ``EntityExtractionResult`` retaining only entities whose
+            ``properties`` dict contains at least one key.
+        """
+        filtered = [e for e in result.entities if e.properties]
+        return EntityExtractionResult(
+            entities=filtered,
+            relationships=result.relationships,
+            confidence=result.confidence,
+            metadata=result.metadata,
+            errors=result.errors,
+        )
 
 
 __all__ = [
