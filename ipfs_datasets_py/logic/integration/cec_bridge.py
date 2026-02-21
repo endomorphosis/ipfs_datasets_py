@@ -189,7 +189,7 @@ class CECBridge:
                 is_valid=result.is_valid,
                 prover_used='cec_z3',
                 proof_time=proof_time,
-                status=result.status.value,
+                status=result.status.value if hasattr(result.status, 'value') else str(result.status),
                 model=result.model,
                 error_message=result.error_message,
                 cec_result=result
@@ -244,7 +244,7 @@ class CECBridge:
             return UnifiedProofResult(
                 is_proved=result.is_valid,
                 is_valid=result.is_valid,
-                prover_used=f"cec_{result.prover_used}",
+                prover_used=f"cec_{result.best_prover or 'manager'}",
                 proof_time=proof_time,
                 status='valid' if result.is_valid else 'invalid',
                 error_message=None
@@ -330,9 +330,20 @@ class CECBridge:
     
     def get_statistics(self) -> Dict[str, Any]:
         """Get statistics from all components."""
-        stats = {
-            'cec_cache': self.cec_cache.proof_cache.get_statistics() if self.cec_cache else {},
-            'ipfs_cache': self.ipfs_cache.get_statistics() if self.ipfs_cache else {},
-            'cec_manager': self.cec_prover_manager.get_statistics() if self.cec_prover_manager else {}
+        try:
+            cec_stats = self.cec_cache.proof_cache.get_stats() if self.cec_cache else {}
+        except AttributeError:
+            cec_stats = {}
+        try:
+            ipfs_stats = self.ipfs_cache.get_statistics() if self.ipfs_cache else {}
+        except AttributeError:
+            ipfs_stats = {}
+        try:
+            mgr_stats = self.cec_prover_manager.get_statistics() if self.cec_prover_manager else {}
+        except AttributeError:
+            mgr_stats = {}
+        return {
+            'cec_cache': cec_stats,
+            'ipfs_cache': ipfs_stats,
+            'cec_manager': mgr_stats,
         }
-        return stats

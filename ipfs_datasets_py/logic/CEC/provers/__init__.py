@@ -49,18 +49,18 @@ from .tptp_utils import (
 
 from .vampire_adapter import (
     VampireAdapter,
-    VampireResult,
+    VampireProofResult as VampireResult,
 )
 
 from .e_prover_adapter import (
     EProverAdapter,
-    EProverResult,
+    EProverProofResult as EProverResult,
 )
 
 from .prover_manager import (
     ProverManager,
     ProverStrategy,
-    ProverResult,
+    UnifiedProofResult as ProverResult,
 )
 
 __all__ = [

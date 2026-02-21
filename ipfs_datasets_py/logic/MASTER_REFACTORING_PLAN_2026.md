@@ -1,10 +1,29 @@
 # Master Refactoring and Improvement Plan — Logic Module
 
 **Date:** 2026-02-19  
-**Version:** 4.6 (updated 2026-02-21 session 51)  
+**Version:** 4.7 (updated 2026-02-21 session 52)  
 **Status:** Phases 1–3 COMPLETE · Phase 4 Ongoing  
 **Scope:** `ipfs_datasets_py/logic/` and `tests/unit_tests/logic/`  
 **MCP Integration:** `ipfs_datasets_py/mcp_server/tools/logic_tools/`
+
+**Session 52 Updates (2026-02-21):**
+- 7 production bug fixes across CEC provers + integration cec_bridge:
+  - `CEC/provers/tptp_utils.py` — Added missing `TPTPFormula` dataclass and `TPTPConverter` class (were imported in `__init__.py` but never defined)
+  - `CEC/provers/__init__.py` — Fixed `VampireResult` alias → `VampireProofResult`, `EProverResult` → `EProverProofResult`, `ProverResult` → `UnifiedProofResult` (all wrong class names)
+  - `integration/cec_bridge.py` — `result.prover_used` → `result.best_prover` in `_prove_with_cec_manager` (CEC `UnifiedProofResult` uses `best_prover` not `prover_used`)
+  - `integration/cec_bridge.py` — `result.status.value` → `result.status.value if hasattr(result.status, 'value') else str(result.status)` (status may already be string)
+  - `integration/cec_bridge.py` — `get_statistics()` now uses `get_stats()` (ProofResultCache method) with AttributeError fallback
+  - `integration/__init__.py` — Added lazy exports: `ContractedFOLConverter`, `FOLInput`, `FOLOutput`, `create_fol_converter`, `validate_fol_input`, `LogicPrimitives`, `create_logic_symbol` (test_integration.py was failing on missing exports)
+  - `test_cec_bridge.py` — Fixed `DeonticOperator.OBLIGATED→.OBLIGATION`, `AtomicFormula(predicate="P", terms=[])→(predicate=Predicate(name="P", argument_sorts=[]), arguments=[])`
+- 92 new GIVEN-WHEN-THEN tests in `test_logic_coverage_session52.py` covering:
+  - `cec_bridge.py`: 37% → **72%** (UnifiedProofResult, CECBridge init ×5, _select_strategy ×4, prove ×4, caching+hash ×6, statistics, mocked-z3 prove ×3)
+  - `bridges/prover_installer.py`: 41% → **78%** (ensure_lean ×5, ensure_coq ×7, main ×5)
+  - `converters/logic_translation_core.py`: 68% → **82%** (CoqTranslator — translate_rule_set, generate_theory, conditions, cache hit, validate, deps, target ×7; SMTTranslator — with agent, conditions, translate_rule_set, generate_theory, prohibition, validate, no-agent ×7; LeanTranslator — translate_rule_set, generate_theory, validate, conditions ×4)
+  - `caching/ipfs_proof_cache.py`: 55% → **70%** (put, put+pin, sync disabled, pin disabled, close, get_from_ipfs, statistics, mocked-IPFS ×4)
+  - `symbolic/symbolic_logic_primitives.py`: 56% → **68%** (Primitive, LogicPrimitives, create_logic_symbol, Symbol fallback ×7)
+  - `integration/__init__.py`: 81% → **90%** (new exports: ContractedFOLConverter, FOLInput, FOLOutput, create_fol_converter, validate_fol_input, LogicPrimitives, create_logic_symbol)
+- 1272 tests passing (+94 vs session51 baseline), 116 failing (−2 vs session51), 95 skipped
+- Overall coverage: **74% → 76%** (7573 lines, ~1850 missed)
 
 **Session 51 Updates (2026-02-21):**
 - 5 production bug fixes in bridges + caching:

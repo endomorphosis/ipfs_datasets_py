@@ -239,6 +239,19 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "NeurosymbolicReasoner": (".symbolic.neurosymbolic_api", "NeurosymbolicReasoner"),
     "ReasoningCapabilities": (".symbolic.neurosymbolic_api", "ReasoningCapabilities"),
     "get_reasoner": (".symbolic.neurosymbolic_api", "get_reasoner"),
+
+    # Symbolic contracts (re-exported for backward compat)
+    "ContractedFOLConverter": (".domain.symbolic_contracts", "ContractedFOLConverter"),
+    "FOLQualityContract": (".domain.symbolic_contracts", "FOLQualityContract"),
+    "ConsistencyContract": (".domain.symbolic_contracts", "ConsistencyContract"),
+    "FOLInput": (".domain.symbolic_contracts", "FOLInput"),
+    "FOLOutput": (".domain.symbolic_contracts", "FOLOutput"),
+    "create_fol_converter": (".domain.symbolic_contracts", "create_fol_converter"),
+    "validate_fol_input": (".domain.symbolic_contracts", "validate_fol_input"),
+
+    # Symbolic logic primitives
+    "LogicPrimitives": (".symbolic.symbolic_logic_primitives", "LogicPrimitives"),
+    "create_logic_symbol": (".symbolic.symbolic_logic_primitives", "create_logic_symbol"),
 }
 
 

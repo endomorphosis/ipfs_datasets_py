@@ -93,11 +93,12 @@ class TestCECBridgeStrategSelection:
         
         # Create mock deontic formula
         from ipfs_datasets_py.logic.CEC.native.dcec_core import (
-            DeonticFormula, DeonticOperator, AtomicFormula
+            DeonticFormula, DeonticOperator, AtomicFormula, Predicate
         )
+        pred = Predicate(name="P", argument_sorts=[])
         formula = DeonticFormula(
-            operator=DeonticOperator.OBLIGATED,
-            inner=AtomicFormula(predicate="P", terms=[])
+            operator=DeonticOperator.OBLIGATION,
+            inner=AtomicFormula(predicate=pred, arguments=[])
         )
         
         # WHEN
