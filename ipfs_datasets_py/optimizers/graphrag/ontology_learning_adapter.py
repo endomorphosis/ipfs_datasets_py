@@ -1252,3 +1252,19 @@ class OntologyLearningAdapter:
             List sorted by ``final_score`` descending, up to *n* records.
         """
         return sorted(self._feedback, key=lambda r: r.final_score, reverse=True)[:n]
+
+    def feedback_above_median(self) -> list:
+        """Return feedback records whose final_score is above the median.
+
+        Returns:
+            List of FeedbackRecord objects; empty when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return []
+        scores = sorted(r.final_score for r in self._feedback)
+        n = len(scores)
+        if n % 2 == 0:
+            median = (scores[n // 2 - 1] + scores[n // 2]) / 2.0
+        else:
+            median = scores[n // 2]
+        return [r for r in self._feedback if r.final_score > median]

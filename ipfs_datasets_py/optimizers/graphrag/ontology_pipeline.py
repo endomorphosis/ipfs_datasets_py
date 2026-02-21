@@ -1221,3 +1221,49 @@ class OntologyPipeline:
         scores = [r.score.overall for r in self._run_history]
         mean = sum(scores) / len(scores)
         return sum((s - mean) ** 2 for s in scores) / len(scores)
+
+    def run_trend(self, n: int = 5) -> str:
+        """Return the overall trend direction of the last *n* run scores.
+
+        Args:
+            n: Number of recent runs to consider. Defaults to ``5``.
+
+        Returns:
+            ``"up"`` if the linear trend is positive, ``"down"`` if negative,
+            ``"flat"`` if fewer than 2 runs or slope is zero.
+        """
+        recent = self._run_history[-n:]
+        if len(recent) < 2:
+            return "flat"
+        scores = [r.score.overall for r in recent]
+        n_pts = len(scores)
+        x_mean = (n_pts - 1) / 2.0
+        y_mean = sum(scores) / n_pts
+        numerator = sum((i - x_mean) * (scores[i] - y_mean) for i in range(n_pts))
+        denominator = sum((i - x_mean) ** 2 for i in range(n_pts))
+        if denominator == 0 or numerator == 0:
+            return "flat"
+        return "up" if numerator > 0 else "down"
+
+    def run_trend(self, n: int = 5) -> str:
+        """Return the overall trend direction of the last *n* run scores.
+
+        Args:
+            n: Number of recent runs to consider. Defaults to 5.
+
+        Returns:
+            "up" if linear trend is positive, "down" if negative,
+            "flat" if fewer than 2 runs or slope is zero.
+        """
+        recent = self._run_history[-n:]
+        if len(recent) < 2:
+            return "flat"
+        scores = [r.score.overall for r in recent]
+        n_pts = len(scores)
+        x_mean = (n_pts - 1) / 2.0
+        y_mean = sum(scores) / n_pts
+        numerator = sum((i - x_mean) * (scores[i] - y_mean) for i in range(n_pts))
+        denominator = sum((i - x_mean) ** 2 for i in range(n_pts))
+        if denominator == 0 or numerator == 0:
+            return "flat"
+        return "up" if numerator > 0 else "down"

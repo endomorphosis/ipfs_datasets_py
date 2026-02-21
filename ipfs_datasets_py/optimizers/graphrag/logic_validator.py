@@ -2333,6 +2333,48 @@ class LogicValidator:
             queue.extend(adjacency.get(current, []))
         return False
 
+    def cycle_count(self, ontology: dict) -> int:
+        """Count the number of simple cycles in the directed relationship graph.
+
+        Uses iterative DFS with a recursion stack to detect back-edges.
+
+        Args:
+            ontology: Ontology dict with ``entities`` and ``relationships``.
+
+        Returns:
+            Integer count of back-edges (proxy for cycle count).
+        """
+        adjacency: dict = {}
+        for rel in ontology.get("relationships", []):
+            s = rel.get("source") or rel.get("source_id")
+            t = rel.get("target") or rel.get("target_id")
+            if s and t:
+                adjacency.setdefault(s, []).append(t)
+
+        entities = [
+            e.get("id", e) if isinstance(e, dict) else e
+            for e in ontology.get("entities", [])
+        ]
+
+        visited: set = set()
+        rec_stack: set = set()
+        count = [0]
+
+        def dfs(node):
+            visited.add(node)
+            rec_stack.add(node)
+            for neighbor in adjacency.get(node, []):
+                if neighbor in rec_stack:
+                    count[0] += 1
+                elif neighbor not in visited:
+                    dfs(neighbor)
+            rec_stack.discard(node)
+
+        for entity in entities:
+            if entity not in visited:
+                dfs(entity)
+        return count[0]
+
 
 # Export public API
 __all__ = [

@@ -5286,6 +5286,21 @@ class OntologyGenerator:
         """
         return [len(e.text) for e in result.entities]
 
+    def entity_confidence_variance(self, result) -> float:
+        """Return the population variance of entity confidence values.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float variance; ``0.0`` when fewer than 2 entities.
+        """
+        if len(result.entities) < 2:
+            return 0.0
+        vals = [e.confidence for e in result.entities]
+        mean = sum(vals) / len(vals)
+        return sum((v - mean) ** 2 for v in vals) / len(vals)
+
 
 __all__ = [
     'OntologyGenerator',
