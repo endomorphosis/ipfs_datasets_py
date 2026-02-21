@@ -747,3 +747,54 @@ class OntologyPipeline:
         if n % 2 == 1:
             return vals[mid]
         return (vals[mid - 1] + vals[mid]) / 2.0
+
+    def score_variance(self) -> float:
+        """Return the variance of ``overall`` scores across run history.
+
+        Returns:
+            Variance as a float; ``0.0`` when fewer than 2 runs have been recorded.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        mean = sum(scores) / len(scores)
+        return sum((s - mean) ** 2 for s in scores) / len(scores)
+
+    def score_stddev(self) -> float:
+        """Return the standard deviation of run scores.
+
+        Returns:
+            Std-dev as a float; ``0.0`` when fewer than 2 runs are recorded.
+        """
+        import math as _math
+        return _math.sqrt(self.score_variance())
+
+    def passing_run_count(self, threshold: float = 0.6) -> int:
+        """Return the number of runs whose ``overall`` score exceeds *threshold*.
+
+        Args:
+            threshold: Minimum score (exclusive) to count a run as passing.
+
+        Returns:
+            Integer count.
+        """
+        return sum(1 for r in self._run_history if r.score.overall > threshold)
+
+    def run_summary(self) -> dict:
+        """Return a compact summary of run history statistics.
+
+        Returns:
+            Dict with keys ``count``, ``mean``, ``min``, ``max``, and
+            ``trend`` (list of overall scores in order).  When no runs have
+            been recorded, numeric fields are ``0.0`` and ``trend`` is ``[]``.
+        """
+        if not self._run_history:
+            return {"count": 0, "mean": 0.0, "min": 0.0, "max": 0.0, "trend": []}
+        scores = [r.score.overall for r in self._run_history]
+        return {
+            "count": len(scores),
+            "mean": sum(scores) / len(scores),
+            "min": min(scores),
+            "max": max(scores),
+            "trend": list(scores),
+        }

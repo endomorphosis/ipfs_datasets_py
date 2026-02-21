@@ -2314,6 +2314,69 @@ class OntologyCritic(BaseCritic):
         }
         return min(dims, key=dims.__getitem__)
 
+    def failing_scores(
+        self, scores: List["CriticScore"], threshold: float = 0.6
+    ) -> List["CriticScore"]:
+        """Return scores whose ``overall`` value does NOT exceed *threshold*.
+
+        Args:
+            scores: List of :class:`CriticScore` objects to filter.
+            threshold: Cut-off (scores with ``overall <= threshold`` are
+                returned).
+
+        Returns:
+            List of failing :class:`CriticScore` objects.
+        """
+        return [s for s in scores if s.overall <= threshold]
+
+    def average_dimension(self, scores: List["CriticScore"], dim: str) -> float:
+        """Return the mean value of dimension *dim* across *scores*.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+            dim: One of ``completeness``, ``consistency``, ``clarity``,
+                ``granularity``, or ``domain_alignment``.
+
+        Returns:
+            Mean as a float; ``0.0`` when *scores* is empty.
+
+        Raises:
+            AttributeError: If *dim* is not a valid dimension name.
+        """
+        if not scores:
+            return 0.0
+        return sum(getattr(s, dim) for s in scores) / len(scores)
+
+    def score_summary(self, scores: List["CriticScore"]) -> dict:
+        """Return a compact summary dict for a list of critic scores.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            Dict with keys ``count``, ``mean``, ``min``, ``max``, and
+            ``passing_fraction`` (fraction with ``overall > 0.6``).
+            Numeric fields are ``0.0`` when *scores* is empty.
+        """
+        if not scores:
+            return {
+                "count": 0,
+                "mean": 0.0,
+                "min": 0.0,
+                "max": 0.0,
+                "passing_fraction": 0.0,
+            }
+        overalls = [s.overall for s in scores]
+        mean = sum(overalls) / len(overalls)
+        passing = sum(1 for v in overalls if v > 0.6)
+        return {
+            "count": len(overalls),
+            "mean": mean,
+            "min": min(overalls),
+            "max": max(overalls),
+            "passing_fraction": passing / len(overalls),
+        }
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],

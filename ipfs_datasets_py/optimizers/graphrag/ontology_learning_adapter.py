@@ -741,3 +741,83 @@ class OntologyLearningAdapter:
         if not self._feedback:
             return 0.0
         return sum(r.final_score for r in self._feedback) / len(self._feedback)
+
+    def has_feedback(self) -> bool:
+        """Return ``True`` if at least one feedback record has been applied.
+
+        Returns:
+            ``True`` when the internal feedback list is non-empty.
+        """
+        return len(self._feedback) > 0
+
+    def recent_feedback(self, n: int = 5) -> list:
+        """Return the last *n* feedback records in order of application.
+
+        Args:
+            n: Maximum number of recent records to return (default 5).
+
+        Returns:
+            List of :class:`FeedbackRecord` objects (may be shorter than *n*).
+        """
+        return list(self._feedback[-n:]) if n > 0 else []
+
+    def feedback_score_stats(self) -> dict:
+        """Return descriptive statistics for all recorded final scores.
+
+        Returns:
+            Dict with keys ``count``, ``mean``, ``std``, ``min``, and ``max``.
+            Numeric fields are ``0.0`` when no feedback has been recorded.
+        """
+        import math as _math
+        if not self._feedback:
+            return {"count": 0, "mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0}
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        return {
+            "count": len(scores),
+            "mean": mean,
+            "std": _math.sqrt(variance),
+            "min": min(scores),
+            "max": max(scores),
+        }
+
+    def feedback_percentile(self, p: float) -> float:
+        """Return the *p*-th percentile of recorded final scores.
+
+        Uses linear interpolation (same method as ``numpy.percentile``).
+
+        Args:
+            p: Percentile in range [0, 100].
+
+        Returns:
+            Float percentile value; ``0.0`` when no feedback is recorded.
+
+        Raises:
+            ValueError: If *p* is outside [0, 100].
+        """
+        if not 0 <= p <= 100:
+            raise ValueError("p must be in [0, 100]")
+        if not self._feedback:
+            return 0.0
+        scores = sorted(r.final_score for r in self._feedback)
+        idx = (len(scores) - 1) * p / 100.0
+        lo = int(idx)
+        hi = lo + 1
+        if hi >= len(scores):
+            return scores[-1]
+        return scores[lo] + (scores[hi] - scores[lo]) * (idx - lo)
+
+    def passing_feedback_fraction(self, threshold: float = 0.6) -> float:
+        """Return the fraction of feedback records with score above *threshold*.
+
+        Args:
+            threshold: Minimum score (exclusive) to count as passing.
+
+        Returns:
+            Float in [0.0, 1.0]; ``0.0`` when no feedback is recorded.
+        """
+        if not self._feedback:
+            return 0.0
+        passing = sum(1 for r in self._feedback if r.final_score > threshold)
+        return passing / len(self._feedback)
