@@ -565,6 +565,31 @@ class Entity:
             source_span=tuple(span) if span is not None else None,  # type: ignore[arg-type]
         )
 
+    def copy_with(self, **overrides: Any) -> "Entity":
+        """Return a modified copy of this entity.
+
+        Any keyword argument matching an :class:`Entity` field name replaces
+        that field in the copy.  Unrecognised keys raise :class:`TypeError`.
+
+        Args:
+            **overrides: Field name -> new value.
+
+        Returns:
+            New :class:`Entity` instance.
+
+        Raises:
+            TypeError: If an unknown field name is provided.
+
+        Example:
+            >>> high_conf = entity.copy_with(confidence=1.0)
+        """
+        import dataclasses as _dc
+        valid = {f.name for f in _dc.fields(Entity)}
+        unknown = set(overrides) - valid
+        if unknown:
+            raise TypeError(f"Unknown Entity field(s): {', '.join(sorted(unknown))}")
+        return _dc.replace(self, **overrides)
+
 
 @dataclass(slots=True)
 class Relationship:
@@ -841,6 +866,42 @@ class EntityExtractionResult:
             bucket = min(int(val * bins), bins - 1)
             counts[bucket] += 1
         return counts
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return a plain-dict representation of this result.
+
+        Returns:
+            Dict with keys:
+
+            * ``"entities"`` -- list of entity dicts (via :meth:`Entity.to_dict`).
+            * ``"relationships"`` -- list of relationship dicts.
+            * ``"confidence"`` -- overall extraction confidence.
+            * ``"metadata"`` -- copy of metadata dict.
+            * ``"errors"`` -- list of error strings.
+
+        Example:
+            >>> d = result.to_dict()
+            >>> isinstance(d["entities"], list)
+            True
+        """
+        return {
+            "entities": [e.to_dict() for e in self.entities],
+            "relationships": [
+                {
+                    "id": r.id,
+                    "source_id": r.source_id,
+                    "target_id": r.target_id,
+                    "type": r.type,
+                    "confidence": r.confidence,
+                    "direction": r.direction,
+                    "properties": dict(r.properties),
+                }
+                for r in self.relationships
+            ],
+            "confidence": self.confidence,
+            "metadata": dict(self.metadata),
+            "errors": list(self.errors),
+        }
 
 
 @dataclass

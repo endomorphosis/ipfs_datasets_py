@@ -642,7 +642,40 @@ class OntologyMediator:
         self._action_counts.clear()
         self._undo_stack.clear()
         self._recommendation_counts.clear()
-    
+
+    def get_undo_depth(self) -> int:
+        """Return the number of snapshots in the undo stack.
+
+        Each call to :meth:`refine_ontology` pushes one snapshot onto the
+        stack (before applying changes).  :meth:`undo_last_action` pops one.
+
+        Returns:
+            Non-negative integer.
+
+        Example:
+            >>> mediator.get_undo_depth()
+            0
+        """
+        return len(self._undo_stack)
+
+    def set_max_rounds(self, n: int) -> None:
+        """Update the maximum refinement rounds at runtime.
+
+        Args:
+            n: New value for ``max_rounds`` (must be >= 1).
+
+        Raises:
+            ValueError: If *n* < 1.
+
+        Example:
+            >>> mediator.set_max_rounds(5)
+            >>> mediator.max_rounds
+            5
+        """
+        if n < 1:
+            raise ValueError(f"max_rounds must be >= 1; got {n}")
+        self.max_rounds = n
+
     def run_refinement_cycle(
         self,
         data: Any,

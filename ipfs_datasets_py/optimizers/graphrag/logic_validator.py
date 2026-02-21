@@ -923,6 +923,29 @@ class LogicValidator:
                 "explanation": f"Entity '{entity_id}' could not be validated: {exc}",
             }
 
+    def count_contradictions(self, ontology: Dict[str, Any]) -> int:
+        """Return the number of contradictions found in *ontology*.
+
+        Runs :meth:`check_consistency` and returns the length of the
+        ``contradictions`` list.
+
+        Args:
+            ontology: Ontology dict to check.
+
+        Returns:
+            Integer >= 0.
+
+        Example:
+            >>> n = validator.count_contradictions(ontology)
+            >>> n == 0  # consistent
+            True
+        """
+        try:
+            result = self.check_consistency(ontology)
+            return len(result.contradictions)
+        except Exception:
+            return 0
+
     def clear_tdfol_cache(self) -> int:
         """Clear the TDFOL formula cache.
 

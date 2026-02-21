@@ -671,7 +671,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 
 ## Batch 70+ Ideas
 - [x] (P2) [graphrag] Add `OntologyOptimizer.score_percentile(p)` -- Done batch-70: linear interp; 6 tests
-- [ ] (P3) [graphrag] Add `OntologyMediator.get_undo_depth()` -- length of undo stack
+- [x] (P3) [graphrag] Add `OntologyMediator.get_undo_depth()` -- length of undo stack
 - [ ] (P2) [graphrag] Add `OntologyGenerator.extract_noun_phrases(text)` -- simple NP chunker
 - [ ] (P3) [arch] Add `OntologyPipeline.clone_with(domain=None, max_rounds=None)` -- partial override clone
 - [x] (P2) [graphrag] Add `EntityExtractionResult.confidence_histogram(bins)` -- Done batch-70: bucket counts; 6 tests
@@ -679,14 +679,14 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] Add `ExtractionConfig.scale_thresholds(factor)` -- Done batch-70: clamp to [0,1]; 7 tests
 - [x] (P3) [obs] Add `OntologyOptimizer.format_history_table()` -- Done batch-70: header+divider+rows; 5 tests
 - [x] (P2) [graphrag] Add `OntologyGenerator.tag_entities(result, tags)` -- Done batch-70: shallow merge to properties; 6 tests
-- [ ] (P3) [graphrag] Add `OntologyMediator.set_max_rounds(n)` -- update max_rounds at runtime
-- [ ] (P2) [graphrag] Add `LogicValidator.count_contradictions(ontology)` -- integer count helper
+- [x] (P3) [graphrag] Add `OntologyMediator.set_max_rounds(n)` -- update max_rounds at runtime
+- [x] (P2) [graphrag] Add `LogicValidator.count_contradictions(ontology)` -- integer count helper
 - [ ] (P3) [arch] Add `OntologyPipeline.domain_list` property -- list of known domain presets
-- [ ] (P2) [graphrag] Add `EntityExtractionResult.to_dict()` -- full result as plain dict
+- [x] (P2) [graphrag] Add `EntityExtractionResult.to_dict()` -- full result as plain dict
 - [ ] (P3) [graphrag] Add `OntologyCritic.summarize_batch_results(batch_result)` -- one-line per ontology
 - [x] (P2) [graphrag] Add `OntologyOptimizer.average_improvement_per_batch()` -- Done batch-70: mean pairwise delta; 5 tests
 - [ ] (P3) [obs] Add `OntologyMediator.log_action_summary()` -- log get_action_summary to INFO
 - [ ] (P2) [graphrag] Add `ExtractionConfig.to_json()` -- JSON serialization
-- [ ] (P3) [graphrag] Add `Entity.copy_with(**overrides)` -- return modified copy of entity
+- [x] (P3) [graphrag] Add `Entity.copy_with(**overrides)` -- return modified copy of entity
 - [ ] (P2) [graphrag] Add `OntologyGenerator.extract_keyphrases(text)` -- top K keyphrases
 - [ ] (P3) [arch] Add `OntologyPipeline.get_stage_names()` -- list pipeline stages
