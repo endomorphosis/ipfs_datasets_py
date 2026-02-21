@@ -213,6 +213,30 @@ class OntologyLearningAdapter:
         self._action_count.clear()
         self._current_threshold = self._base_threshold
 
+    def top_actions(self, n: int = 5) -> List[Dict[str, Any]]:
+        """Return the top-N actions sorted by mean success rate (descending).
+
+        Args:
+            n: Maximum number of actions to return (default: 5).
+
+        Returns:
+            List of dicts with keys:
+            - ``action``: action name
+            - ``count``: number of times applied
+            - ``mean_success``: mean critic score when this action was applied
+        """
+        results = []
+        for action, count in self._action_count.items():
+            if count > 0:
+                mean_success = self._action_success[action] / count
+                results.append({
+                    "action": action,
+                    "count": count,
+                    "mean_success": round(mean_success, 4),
+                })
+        results.sort(key=lambda x: x["mean_success"], reverse=True)
+        return results[:max(1, n)]
+
     # ------------------------------------------------------------------ #
     # Internal helpers                                                     #
     # ------------------------------------------------------------------ #

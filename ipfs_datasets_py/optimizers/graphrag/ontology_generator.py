@@ -226,6 +226,30 @@ class ExtractionConfig:
                 f"llm_fallback_threshold must be in [0, 1]; got {self.llm_fallback_threshold}"
             )
 
+    def merge(self, other: "ExtractionConfig") -> "ExtractionConfig":
+        """Merge *other* into this config; *other* values take precedence on conflict.
+
+        All fields from *other* that are **not equal to their defaults** override
+        the corresponding field in *self*.  This lets you keep a base config and
+        layer overrides on top without manually spelling out every field.
+
+        Args:
+            other: The override config.
+
+        Returns:
+            A new :class:`ExtractionConfig` with merged values.
+        """
+        defaults = ExtractionConfig()
+        merged_kwargs: dict = {}
+        import dataclasses as _dc
+        for f in _dc.fields(ExtractionConfig):
+            self_val = getattr(self, f.name)
+            other_val = getattr(other, f.name)
+            default_val = getattr(defaults, f.name)
+            # Use other_val if it differs from the default (i.e. was explicitly set)
+            merged_kwargs[f.name] = other_val if other_val != default_val else self_val
+        return ExtractionConfig(**merged_kwargs)
+
 
 @dataclass
 class OntologyGenerationContext:
@@ -855,6 +879,108 @@ class OntologyGenerator:
                     "source_doc_index": idx,
                 })
         return report
+
+    def deduplicate_entities(
+        self,
+        result: "EntityExtractionResult",
+    ) -> "EntityExtractionResult":
+        """Merge entities with identical normalised text into a single entity.
+
+        Normalisation: lowercase + strip whitespace.  When multiple entities
+        share normalised text, the one with the highest confidence is kept.
+        Relationships that referenced removed entity IDs are updated to point
+        to the surviving entity.
+
+        Args:
+            result: An :class:`EntityExtractionResult` to deduplicate.
+
+        Returns:
+            A new :class:`EntityExtractionResult` with duplicates merged.
+        """
+        # Group by normalised text
+        groups: Dict[str, List[Any]] = {}
+        for ent in result.entities:
+            key = ent.text.strip().lower()
+            groups.setdefault(key, []).append(ent)
+
+        # For each group keep the highest-confidence entity
+        survivors: List[Any] = []
+        id_remap: Dict[str, str] = {}  # removed_id → survivor_id
+        for key, group in groups.items():
+            best = max(group, key=lambda e: e.confidence)
+            survivors.append(best)
+            for ent in group:
+                if ent.id != best.id:
+                    id_remap[ent.id] = best.id
+
+        # Remap relationship source/target IDs
+        new_rels: List[Any] = []
+        for rel in result.relationships:
+            src = id_remap.get(rel.source_id, rel.source_id)
+            tgt = id_remap.get(rel.target_id, rel.target_id)
+            if src == tgt:
+                continue  # skip self-loops created by deduplication
+            # Create a shallow copy with updated IDs
+            import dataclasses as _dc
+            new_rels.append(_dc.replace(rel, source_id=src, target_id=tgt))
+
+        return EntityExtractionResult(
+            entities=survivors,
+            relationships=new_rels,
+            confidence=result.confidence,
+            metadata={**result.metadata, "deduplication_count": len(id_remap)},
+            errors=list(result.errors),
+        )
+
+    def filter_entities(
+        self,
+        result: "EntityExtractionResult",
+        *,
+        min_confidence: float = 0.0,
+        allowed_types: Optional[List[str]] = None,
+        text_contains: Optional[str] = None,
+    ) -> "EntityExtractionResult":
+        """Post-extraction filter: keep only entities matching all criteria.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+            min_confidence: Minimum entity confidence (inclusive, default 0.0).
+            allowed_types: If provided, only keep entities whose ``type`` is in
+                this list (case-insensitive).
+            text_contains: If provided, only keep entities whose ``text``
+                contains this substring (case-insensitive).
+
+        Returns:
+            A new :class:`EntityExtractionResult` with filtered entities.
+            Relationships referencing removed entity IDs are also removed.
+        """
+        kept_ids: set = set()
+        filtered: List[Any] = []
+        for ent in result.entities:
+            if ent.confidence < min_confidence:
+                continue
+            if allowed_types is not None:
+                if ent.type.lower() not in {t.lower() for t in allowed_types}:
+                    continue
+            if text_contains is not None:
+                if text_contains.lower() not in ent.text.lower():
+                    continue
+            filtered.append(ent)
+            kept_ids.add(ent.id)
+
+        # Remove relationships that reference removed entities
+        new_rels = [
+            r for r in result.relationships
+            if r.source_id in kept_ids and r.target_id in kept_ids
+        ]
+
+        return EntityExtractionResult(
+            entities=filtered,
+            relationships=new_rels,
+            confidence=result.confidence,
+            metadata={**result.metadata, "filtered_entity_count": len(filtered)},
+            errors=list(result.errors),
+        )
 
     def generate_ontology(
         self,

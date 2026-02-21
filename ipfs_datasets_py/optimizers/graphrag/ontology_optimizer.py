@@ -1156,6 +1156,54 @@ class OntologyOptimizer:
             })
         return rows
 
+    def score_trend_summary(self) -> str:
+        """Return a one-word trend label based on recent score history.
+
+        Compares the mean score of the **first half** of history entries against
+        the **second half**.  Returns:
+
+        - ``"improving"``  — second half mean > first half mean by > 0.01
+        - ``"degrading"``  — second half mean < first half mean by > 0.01
+        - ``"stable"``     — otherwise (or fewer than 2 history entries)
+        - ``"insufficient_data"`` — 0 or 1 history entries
+
+        Returns:
+            One of: ``"improving"``, ``"degrading"``, ``"stable"``,
+            ``"insufficient_data"``.
+        """
+        if len(self._history) < 2:
+            return "insufficient_data"
+        scores = [r.average_score for r in self._history]
+        mid = len(scores) // 2
+        first_mean = sum(scores[:mid]) / mid
+        second_mean = sum(scores[mid:]) / (len(scores) - mid)
+        delta = second_mean - first_mean
+        if delta > 0.01:
+            return "improving"
+        if delta < -0.01:
+            return "degrading"
+        return "stable"
+
+    def rolling_average_score(self, n: int) -> float:
+        """Return the mean score of the last *n* history entries.
+
+        Args:
+            n: Number of most-recent entries to average.  Clamped to the
+               actual history length.
+
+        Returns:
+            Mean score.  Returns ``0.0`` if history is empty.
+
+        Raises:
+            ValueError: If *n* is < 1.
+        """
+        if n < 1:
+            raise ValueError(f"n must be >= 1; got {n}")
+        if not self._history:
+            return 0.0
+        recent = self._history[-n:]
+        return sum(r.average_score for r in recent) / len(recent)
+
     def export_history_csv(self, filepath: Optional[str] = None) -> Optional[str]:
         """Export the pairwise delta table from :meth:`compare_history` as CSV.
 
