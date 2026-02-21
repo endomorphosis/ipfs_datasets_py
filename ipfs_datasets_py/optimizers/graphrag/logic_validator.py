@@ -1069,6 +1069,25 @@ class LogicValidator:
             lines.append(f"  Invalid entity IDs: {', '.join(result.invalid_entity_ids)}")
         return "\n".join(lines)
 
+    def entity_count(self, ontology: Dict[str, Any]) -> int:
+        """Return the number of entities in *ontology*.
+
+        Supports both ``"entities"`` list and ``"nodes"`` list keys.
+
+        Args:
+            ontology: Ontology dict, typically containing ``"entities"`` or
+                ``"nodes"`` key.
+
+        Returns:
+            Integer count of entities/nodes; 0 if neither key is present.
+
+        Example:
+            >>> validator.entity_count({"entities": [{"id": "e1"}, {"id": "e2"}]})
+            2
+        """
+        entities = ontology.get("entities", ontology.get("nodes", []))
+        return len(entities) if isinstance(entities, (list, tuple)) else 0
+
     def clear_tdfol_cache(self) -> int:
         """Clear the TDFOL formula cache.
 

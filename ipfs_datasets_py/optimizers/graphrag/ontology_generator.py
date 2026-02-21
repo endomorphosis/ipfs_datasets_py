@@ -3357,6 +3357,26 @@ class OntologyGenerator:
         """
         return sorted(result.entities, key=lambda e: e.confidence, reverse=True)[:n]
 
+    def filter_result_by_confidence(
+        self,
+        result: "EntityExtractionResult",
+        min_conf: float = 0.5,
+    ) -> "EntityExtractionResult":
+        """Alias for :meth:`strip_low_confidence` with a cleaner parameter name.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+            min_conf: Minimum confidence required to keep an entity (default 0.5).
+
+        Returns:
+            New :class:`EntityExtractionResult` with filtered entities/relationships.
+
+        Example:
+            >>> clean = gen.filter_result_by_confidence(result, min_conf=0.7)
+        """
+        return self.strip_low_confidence(result, threshold=min_conf)
+
+
 __all__ = [
     'OntologyGenerator',
     'OntologyGenerationContext',

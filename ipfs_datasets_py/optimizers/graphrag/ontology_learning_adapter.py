@@ -629,3 +629,20 @@ class OntologyLearningAdapter:
             else:
                 ids.append(f"record_{i}")
         return ids
+
+    def top_k_feedback(self, k: int = 5) -> List["FeedbackRecord"]:
+        """Return the top *k* :class:`FeedbackRecord` objects by ``final_score``.
+
+        Args:
+            k: Maximum number of records to return.  Defaults to 5.
+
+        Returns:
+            List of :class:`FeedbackRecord` objects in descending score order,
+            length <= *k*.  Returns an empty list when no feedback is recorded.
+
+        Example:
+            >>> best = adapter.top_k_feedback(k=3)
+            >>> len(best) <= 3
+            True
+        """
+        return sorted(self._feedback, key=lambda r: r.final_score, reverse=True)[:k]

@@ -2166,6 +2166,35 @@ class OntologyCritic(BaseCritic):
         """
         return [self.evaluate_ontology(ont, context) for ont in ontologies]
 
+    def score_distribution(self, scores: List["CriticScore"]) -> Dict[str, float]:
+        """Return summary statistics for a list of :class:`CriticScore` overall values.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            Dict with keys ``'mean'``, ``'std'``, ``'min'``, ``'max'``, ``'count'``.
+            All numeric values are ``0.0`` for an empty list (count is 0).
+
+        Example:
+            >>> dist = critic.score_distribution([s1, s2])
+            >>> dist.keys()
+            dict_keys(['mean', 'std', 'min', 'max', 'count'])
+        """
+        if not scores:
+            return {"mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0, "count": 0}
+        vals = [s.overall for s in scores]
+        n = len(vals)
+        mean = sum(vals) / n
+        std = (sum((v - mean) ** 2 for v in vals) / n) ** 0.5
+        return {
+            "mean": mean,
+            "std": std,
+            "min": min(vals),
+            "max": max(vals),
+            "count": n,
+        }
+
     def median_score(self, scores: List["CriticScore"]) -> float:
         """Return the median ``overall`` value across *scores*.
 
