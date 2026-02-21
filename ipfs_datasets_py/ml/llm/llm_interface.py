@@ -24,6 +24,7 @@ import time
 import uuid
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Tuple, TYPE_CHECKING
+from ...optimizers.common.backend_selection import detect_provider_from_environment
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy as _np
@@ -643,6 +644,22 @@ class LLMInterfaceFactory:
     """Factory for creating LLM interfaces."""
 
     @staticmethod
+    def _router_requested_for_mock() -> bool:
+        """Return whether mock defaults should route through llm_router.
+
+        Router is considered requested when:
+        - a non-local shared provider is detected, or
+        - OpenRouter credentials are present.
+        """
+        provider = detect_provider_from_environment(prefer_accelerate=False)
+        if provider != "local":
+            return True
+        return bool(
+            os.getenv("OPENROUTER_API_KEY")
+            or os.getenv("IPFS_DATASETS_PY_OPENROUTER_API_KEY")
+        )
+
+    @staticmethod
     def create(model_name: str = "mock-llm", **kwargs) -> LLMInterface:
         """
         Create an LLM interface instance.
@@ -670,7 +687,7 @@ class LLMInterfaceFactory:
         # Create appropriate interface
         if model_name.startswith("mock-"):
             # Even for mock configs, allow opting into the router explicitly.
-            if os.getenv("IPFS_DATASETS_PY_LLM_PROVIDER") or os.getenv("OPENROUTER_API_KEY") or os.getenv("IPFS_DATASETS_PY_OPENROUTER_API_KEY"):
+            if LLMInterfaceFactory._router_requested_for_mock():
                 try:
                     from .llm_router_interface import RoutedLLMInterface
 

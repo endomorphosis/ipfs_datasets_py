@@ -145,6 +145,84 @@ class MediatorState(BaseSession):
         else:
             return 'stable'
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize MediatorState to a dictionary, including all refinement-specific fields."""
+        # Get base session fields from parent
+        result = super().to_dict()
+        
+        # Add MediatorState-specific fields
+        result["current_ontology"] = self.current_ontology
+        result["refinement_history"] = self.refinement_history
+        result["critic_scores"] = [
+            s.to_dict() if hasattr(s, "to_dict") else s
+            for s in self.critic_scores
+        ]
+        result["total_time_ms"] = self.total_time_ms
+        result["convergence_threshold"] = self.convergence_threshold
+        
+        return result
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "MediatorState":
+        """Reconstruct a MediatorState from a dictionary.
+        
+        Args:
+            data: Dictionary as produced by :meth:`to_dict`.
+            
+        Returns:
+            A new MediatorState with all fields restored.
+        """
+        import datetime as _dt
+        from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+        
+        # Create base instance
+        state = cls(
+            session_id=data.get("session_id", "unknown"),
+            domain=data.get("domain", "graphrag"),
+            max_rounds=data.get("max_rounds", 10),
+            target_score=data.get("target_score", 0.85),
+            convergence_threshold=data.get("convergence_threshold", 0.01),
+            current_ontology=data.get("current_ontology", {}),
+            total_time_ms=data.get("total_time_ms", 0.0),
+        )
+        
+        # Restore refinement history
+        state.refinement_history = data.get("refinement_history", [])
+        
+        # Restore critic scores
+        critic_scores_data = data.get("critic_scores", [])
+        state.critic_scores = []
+        for score_data in critic_scores_data:
+            if isinstance(score_data, dict):
+                state.critic_scores.append(CriticScore.from_dict(score_data))
+            else:
+                state.critic_scores.append(score_data)
+        
+        # Restore base session rounds
+        for r in data.get("rounds", []):
+            state.start_round()
+            state.record_round(
+                score=r.get("score", 0.0),
+                feedback=r.get("feedback", []),
+                artifact_snapshot=r.get("artifact_snapshot"),
+                duration_ms=r.get("duration_ms", 0.0),
+                metadata=r.get("metadata", {}),
+            )
+        
+        # Restore metadata and timestamps
+        state.metadata.update(data.get("metadata") or {})
+        try:
+            state.started_at = _dt.datetime.fromisoformat(data["started_at"])
+        except (KeyError, ValueError):
+            pass
+        if data.get("finished_at"):
+            try:
+                state.finished_at = _dt.datetime.fromisoformat(data["finished_at"])
+            except (ValueError,):
+                pass
+        
+        return state
+
 
 class OntologyMediator:
     """
