@@ -150,28 +150,28 @@ class TestFeedbackSummary:
 
 class TestGetRoundCount:
     def test_initial_zero(self):
-        med = OntologyMediator()
+        med = _make_mediator()
         assert med.get_round_count() == 0
 
     def test_equals_undo_depth_before_undo(self):
-        med = OntologyMediator()
+        med = _make_mediator()
         assert med.get_round_count() == med.get_undo_depth()
 
     def test_non_negative(self):
-        med = OntologyMediator()
+        med = _make_mediator()
         assert med.get_round_count() >= 0
 
     def test_returns_int(self):
-        med = OntologyMediator()
+        med = _make_mediator()
         assert isinstance(med.get_round_count(), int)
 
     def test_after_manual_stack_push(self):
-        med = OntologyMediator()
+        med = _make_mediator()
         med._undo_stack.append({"entities": [], "relationships": []})
         assert med.get_round_count() == 1
 
     def test_after_two_pushes(self):
-        med = OntologyMediator()
+        med = _make_mediator()
         med._undo_stack.append({})
         med._undo_stack.append({})
         assert med.get_round_count() == 2
@@ -263,7 +263,7 @@ class TestFilterBySpan:
             id="r1", source_id="1", target_id="2",
             relation_type="knows", confidence=0.9,
         )
-        r = EntityExtractionResult(entities=[e1, e2], relationships=[rel], metadata={})
+        r = EntityExtractionResult(entities=[e1, e2], relationships=[rel], confidence=0.8, metadata={})
         filtered = r.filter_by_span(0, 10)
         assert len(filtered.entities) == 1
         assert len(filtered.relationships) == 0
@@ -275,7 +275,7 @@ class TestFilterBySpan:
             id="r1", source_id="1", target_id="2",
             relation_type="knows", confidence=0.9,
         )
-        r = EntityExtractionResult(entities=[e1, e2], relationships=[rel], metadata={})
+        r = EntityExtractionResult(entities=[e1, e2], relationships=[rel], confidence=0.8, metadata={})
         filtered = r.filter_by_span(0, 20)
         assert len(filtered.relationships) == 1
 

@@ -84,3 +84,69 @@ def valid_extraction_config(draw) -> "ExtractionConfig":  # type: ignore[return]
         stopwords=stopwords,
         allowed_entity_types=list(allowed_entity_types),
     )
+
+
+@st.composite
+def valid_entity(draw) -> "Entity":  # type: ignore[return]
+    """Generate a valid :class:`Entity` instance.
+
+    All generated entities satisfy documented constraints:
+    - ``id`` is a non-empty string
+    - ``type`` is one of the known entity types
+    - ``text`` is a non-empty string
+    - ``confidence`` is in [0.0, 1.0]
+    - ``properties`` is a dict with string keys
+    - ``source_span`` is either None or a (start, end) tuple with start < end
+
+    Returns:
+        A randomly-generated Entity instance.
+    """
+    from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
+    entity_id = draw(st.text(
+        alphabet=st.characters(whitelist_categories=("L", "Nd", "Pc")),
+        min_size=1, max_size=20,
+    ))
+    entity_type = draw(st.sampled_from([
+        "Person", "Organization", "Location", "Event", "Concept",
+        "Obligation", "Date", "Legal", "Medical", "Technical"
+    ]))
+    text = draw(st.text(
+        alphabet=st.characters(whitelist_categories=("L", "Nd", "P", "Zs")),
+        min_size=1, max_size=100,
+    ))
+    confidence = draw(st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False))
+    
+    # Properties: dict with string keys and various JSON-compatible values
+    properties = draw(st.dictionaries(
+        keys=st.text(
+            alphabet=st.characters(whitelist_categories=("L", "Nd")),
+            min_size=1, max_size=20,
+        ),
+        values=st.one_of(
+            st.none(),
+            st.booleans(),
+            st.integers(min_value=-1000000, max_value=1000000),
+            st.floats(min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False),
+            st.text(max_size=50),
+        ),
+        min_size=0, max_size=5,
+    ))
+    
+    # source_span: either None or (start, end) with start < end
+    has_span = draw(st.booleans())
+    if has_span:
+        start = draw(st.integers(min_value=0, max_value=10000))
+        length = draw(st.integers(min_value=1, max_value=200))
+        source_span = (start, start + length)
+    else:
+        source_span = None
+
+    return Entity(
+        id=entity_id,
+        type=entity_type,
+        text=text,
+        confidence=confidence,
+        properties=properties,
+        source_span=source_span,
+    )
