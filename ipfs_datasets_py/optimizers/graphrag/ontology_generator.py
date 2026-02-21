@@ -643,6 +643,39 @@ class ExtractionConfig:
         new_thresh = min(1.0, self.confidence_threshold + delta)
         return _dc.replace(self, confidence_threshold=new_thresh)
 
+    def threshold_distance(self, other: "ExtractionConfig") -> float:
+        """Return the absolute difference between this and *other*'s thresholds.
+
+        Args:
+            other: Another :class:`ExtractionConfig`.
+
+        Returns:
+            ``abs(self.confidence_threshold - other.confidence_threshold)``.
+        """
+        return abs(self.confidence_threshold - other.confidence_threshold)
+
+    def is_stricter_than(self, other: "ExtractionConfig") -> bool:
+        """Return ``True`` if this config has a higher confidence threshold.
+
+        Args:
+            other: Another :class:`ExtractionConfig`.
+
+        Returns:
+            ``True`` when ``self.confidence_threshold > other.confidence_threshold``.
+        """
+        return self.confidence_threshold > other.confidence_threshold
+
+    def is_looser_than(self, other: "ExtractionConfig") -> bool:
+        """Return ``True`` if this config has a lower confidence threshold.
+
+        Args:
+            other: Another :class:`ExtractionConfig`.
+
+        Returns:
+            ``True`` when ``self.confidence_threshold < other.confidence_threshold``.
+        """
+        return self.confidence_threshold < other.confidence_threshold
+
 
 @dataclass
 class OntologyGenerationContext:
