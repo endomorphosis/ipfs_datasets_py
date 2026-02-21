@@ -66,7 +66,8 @@ These should be started immediately when available:
 - [x] (P2) [tests] Add parametrized tests for `ExtractionConfig` field validation
   - Done (previous session): Complete test suite with 63 parametrized tests in test_extraction_config_validation.py. All validation rules covered, all tests passing.
 - [ ] (P3) [docs] Add one-page "Quick Start" guide for GraphRAG ontology generation
-- [ ] (P3) [graphrag] Add `LogicValidator.entity_contradiction_count()` integer count helper
+- [x] (P3) [graphrag] Add `LogicValidator.entity_contradiction_count()` integer count helper
+  - Done 2026-02-21: Added method to count entities involved in contradictions via invalid_entity_ids. Returns non-negative integer. 6 unit tests added, all passing.
 - [ ] (P3) [obs] Add timing instrumentation to `_extract_rule_based()` method
 - [ ] (P2) [tests] Add property tests: ontology stats are mathematically consistent
 - [ ] (P3) [graphrag] Add `OntologySession.elapsed_ms()` total wall-clock time getter
@@ -941,6 +942,13 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
   - File: `tests/unit/optimizers/graphrag/test_ontology_critic_dimensions.py` – Added TestGetWorstEntity class with 10 tests
   - Test coverage: multiple entities, empty ontology, single entity, tied scores, Entity objects, missing fields
   - All 10 tests passing
+- [x] (P3) [graphrag] Add `LogicValidator.entity_contradiction_count()` — integer count helper
+  - File: `graphrag/logic_validator.py` – Added method returning count of entities involved in contradictions
+  - Uses ValidationResult.invalid_entity_ids to count entities with validation errors
+  - Returns 0 on exceptions, non-negative integer guaranteed
+  - File: `tests/unit/optimizers/graphrag/test_logic_validator_tdfol_conversion.py` – Added TestEntityContradictionCount class with 6 tests
+  - Test coverage: empty ontology, consistent ontology, exception handling, malformed input, return type validation
+  - All 6 tests passing
 
 ---
 
