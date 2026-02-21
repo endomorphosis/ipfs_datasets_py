@@ -4893,6 +4893,19 @@ class OntologyGenerator:
             errors=result.errors,
         )
 
+    def top_k_entities_by_confidence(self, result, k: int) -> list:
+        """Return the top-*k* entities sorted by descending confidence.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+            k: Maximum number of entities to return.
+
+        Returns:
+            List of up to *k* ``Entity`` objects sorted by ``confidence``
+            descending.
+        """
+        return sorted(result.entities, key=lambda e: e.confidence, reverse=True)[:k]
+
 
 __all__ = [
     'OntologyGenerator',

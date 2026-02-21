@@ -2625,6 +2625,31 @@ class OntologyOptimizer:
         max_idx = bins.index(max(bins))
         return (max_idx + 0.5) / 10.0
 
+    def history_autocorrelation(self, lag: int = 1) -> float:
+        """Return the lag-*k* autocorrelation of average scores in history.
+
+        A positive autocorrelation indicates trending behaviour; negative
+        suggests alternating patterns.
+
+        Args:
+            lag: Lag in number of steps (default 1).
+
+        Returns:
+            Float autocorrelation in [-1, 1]; ``0.0`` when not enough history
+            or variance is zero.
+        """
+        if len(self._history) <= lag:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        mean = sum(scores) / n
+        variance = sum((s - mean) ** 2 for s in scores) / n
+        if variance == 0:
+            return 0.0
+        cov = sum((scores[i] - mean) * (scores[i - lag] - mean)
+                  for i in range(lag, n)) / (n - lag)
+        return cov / variance
+
 
 # Export public API
 __all__ = [

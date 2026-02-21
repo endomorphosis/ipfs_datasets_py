@@ -1075,3 +1075,24 @@ class OntologyLearningAdapter:
             return list(self._feedback)
         mean = sum(r.final_score for r in self._feedback) / len(self._feedback)
         return [r for r in self._feedback if r.final_score > mean]
+
+    def feedback_skewness(self) -> float:
+        """Return the skewness of the feedback ``final_score`` distribution.
+
+        Uses Pearson's moment coefficient of skewness
+        ``mean(((x - mu) / sigma)^3)``.
+
+        Returns:
+            Float skewness; ``0.0`` when fewer than 3 records or std is zero.
+        """
+        import math
+        if len(self._feedback) < 3:
+            return 0.0
+        vals = [r.final_score for r in self._feedback]
+        n = len(vals)
+        mean = sum(vals) / n
+        variance = sum((v - mean) ** 2 for v in vals) / n
+        if variance == 0:
+            return 0.0
+        std = math.sqrt(variance)
+        return sum(((v - mean) / std) ** 3 for v in vals) / n

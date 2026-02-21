@@ -70,7 +70,12 @@ These should be started immediately when available:
   - Done 2026-02-21: Added method to count entities involved in contradictions via invalid_entity_ids. Returns non-negative integer. 6 unit tests added, all passing.
 - [x] (P3) [obs] Add timing instrumentation to `_extract_rule_based()` method
   - Done 2026-02-21: Discovered comprehensive timing instrumentation already implemented in method (graphrag/ontology_generator.py lines 3122-3193). Tracks 4 timing phases: pattern_time_ms, extraction_time_ms, relationship_time_ms, total_time_ms. All metrics logged and stored in result metadata. Added TestExtractRuleBasedTiming class with 9 comprehensive tests covering metadata presence, type validation, non-negative values, timing component relationships, edge cases, and reasonableness checks. All 9 tests passing.
-- [ ] (P2) [tests] Add property tests: ontology stats are mathematically consistent
+- [x] (P2) [tests] Add property tests: ontology stats are mathematically consistent
+  - Done 2026-02-21: Created comprehensive property-based test suite in test_ontology_stats_properties.py with 3 test classes (15 total tests, all passing)
+  - TestEntityExtractionResultProperties: 5 Hypothesis-based tests validating is_empty(), filter_by_confidence() edge cases (zero/one thresholds)
+  - TestOntologyGeneratorFilterStatsProperties: 8 Hypothesis-based tests for filter_by_confidence() statistical invariants (retention rate, removed counts, confidence averages, range bounds)
+  - TestOntologyCriticScoreProperties: 2 Hypothesis-based tests for CriticScore invariants (dimension range bounds, overall score validity, worst entity identification)
+  - Uses composite Hypothesis strategies (valid_entity, valid_extraction_result, valid_ontology_dict) for generating random, valid test inputs
 - [ ] (P3) [graphrag] Add `OntologySession.elapsed_ms()` total wall-clock time getter
 - [ ] (P3) [arch] Add `BaseOptimizer.dry_run()` method for validation without mutation
 

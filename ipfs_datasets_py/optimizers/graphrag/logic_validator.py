@@ -2068,6 +2068,70 @@ class LogicValidator:
             return 0.0
         return n_relationships / n_entities
 
+    def longest_path(self, ontology: dict, source: str) -> int:
+        """Return the length of the longest path from *source* in a DAG.
+
+        Uses a topological-order BFS/DP approach.  If the graph has cycles
+        (detected via DFS), returns ``-1`` to indicate the path is unbounded.
+
+        Args:
+            ontology: Dict with optional ``"entities"`` and ``"relationships"`` lists.
+            source: Starting entity ID.
+
+        Returns:
+            Integer length of the longest path (number of edges), or ``-1``
+            when a cycle is detected.  Returns ``0`` when *source* is isolated.
+        """
+        relationships = ontology.get("relationships", [])
+
+        # Build adjacency list
+        adj: dict = {}
+        in_degree: dict = {}
+        for rel in relationships:
+            s = rel.get("subject_id") or rel.get("source_id")
+            o = rel.get("object_id") or rel.get("target_id")
+            if s and o:
+                adj.setdefault(s, []).append(o)
+                in_degree.setdefault(o, 0)
+                in_degree[s] = in_degree.get(s, 0)
+
+        # Topological sort (Kahn) to detect cycles
+        entities = ontology.get("entities", [])
+        all_ids = {e.get("id") for e in entities if e.get("id")}
+        in_deg = {n: 0 for n in all_ids}
+        for s, targets in adj.items():
+            for t in targets:
+                if t in in_deg:
+                    in_deg[t] += 1
+
+        queue = [n for n in all_ids if in_deg[n] == 0]
+        topo = []
+        while queue:
+            node = queue.pop(0)
+            topo.append(node)
+            for nxt in adj.get(node, []):
+                if nxt in in_deg:
+                    in_deg[nxt] -= 1
+                    if in_deg[nxt] == 0:
+                        queue.append(nxt)
+
+        if len(topo) != len(all_ids):
+            return -1  # cycle detected
+
+        # DP for longest path from source
+        dist = {n: -1 for n in all_ids}
+        if source not in dist:
+            return 0
+        dist[source] = 0
+        for node in topo:
+            if dist[node] < 0:
+                continue
+            for nxt in adj.get(node, []):
+                if nxt in dist:
+                    dist[nxt] = max(dist[nxt], dist[node] + 1)
+
+        return max((v for v in dist.values() if v >= 0), default=0)
+
 
 # Export public API
 __all__ = [
