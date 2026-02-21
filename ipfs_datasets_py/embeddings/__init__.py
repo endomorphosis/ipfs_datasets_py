@@ -21,6 +21,11 @@ from .semantic_search_engine import (
     hybrid_search,
     search_with_filters,
 )
+from .generation_engine import (
+    generate_embedding,
+    generate_batch_embeddings,
+    generate_embeddings_from_file,
+)
 
 __all__ = [
     # sparse embedding
@@ -37,4 +42,8 @@ __all__ = [
     "multi_modal_search",
     "hybrid_search",
     "search_with_filters",
+    # generation engine
+    "generate_embedding",
+    "generate_batch_embeddings",
+    "generate_embeddings_from_file",
 ]
