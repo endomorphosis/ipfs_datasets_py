@@ -72,10 +72,10 @@ class ProofExecutionEngine:
         self.enable_caching = enable_caching
         if enable_caching:
             self.proof_cache = get_global_cache(
-                max_size=cache_size,
-                default_ttl=cache_ttl
+                maxsize=cache_size,
+                ttl=cache_ttl
             )
-            logger.info(f"Proof caching enabled: max_size={cache_size}, ttl={cache_ttl}s")
+            logger.info(f"Proof caching enabled: maxsize={cache_size}, ttl={cache_ttl}s")
         else:
             self.proof_cache = None
 
@@ -240,7 +240,7 @@ class ProofExecutionEngine:
         if use_cache and self.enable_caching and self.proof_cache:
             formula_str = formula.to_fol_string() if hasattr(formula, 'to_fol_string') else str(formula)
             prover_name = prover or self.default_prover or "z3"
-            cached_result = self.proof_cache.get(formula_str, prover_name)
+            cached_result = self.proof_cache.get(formula_str, prover_name=prover_name)
             if cached_result:
                 logger.debug(f"Cache hit for formula with prover={prover_name}")
                 # Convert cached dict back to ProofResult, deserializing enum
@@ -337,7 +337,7 @@ class ProofExecutionEngine:
             formula_str = formula.to_fol_string() if hasattr(formula, 'to_fol_string') else str(formula)
             # Convert ProofResult to dict for caching
             result_dict = result.to_dict()
-            self.proof_cache.put(formula_str, prover, result_dict)
+            self.proof_cache.set(formula_str, result_dict, prover_name=prover)
             logger.debug(f"Cached proof result for formula with prover={prover}")
         
         return result
@@ -765,12 +765,12 @@ Qed.
             
             if result.returncode == 0:
                 output = result.stdout.strip()
-                if "sat" in output.lower():
-                    status = ProofStatus.SUCCESS
-                    message = "Rule set is consistent (satisfiable)"
-                elif "unsat" in output.lower():
+                if "unsat" in output.lower():
                     status = ProofStatus.FAILURE
                     message = "Rule set is inconsistent (unsatisfiable)"
+                elif "sat" in output.lower():
+                    status = ProofStatus.SUCCESS
+                    message = "Rule set is consistent (satisfiable)"
                 else:
                     status = ProofStatus.ERROR
                     message = f"Unexpected Z3 output: {output}"

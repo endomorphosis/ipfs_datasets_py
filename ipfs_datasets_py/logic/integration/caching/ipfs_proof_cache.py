@@ -106,7 +106,7 @@ class IPFSProofCache(ProofCache):
         cache_dir: Optional[Path] = None
     ):
         """Initialize IPFS-backed cache."""
-        super().__init__(max_size=max_size, ttl=ttl, cache_dir=cache_dir)
+        super().__init__(maxsize=max_size, ttl=ttl)
         
         self.ipfs_host = ipfs_host
         self.ipfs_port = ipfs_port
@@ -388,7 +388,7 @@ class IPFSProofCache(ProofCache):
             >>> print(f"IPFS uploads: {stats['ipfs_uploads']}")
             >>> print(f"Hit rate: {stats['hit_rate']:.1%}")
         """
-        stats = super().get_statistics()
+        stats = super().get_stats()
         
         # Add IPFS-specific statistics
         stats.update({
@@ -412,8 +412,7 @@ class IPFSProofCache(ProofCache):
                 # IPFS client cleanup failed - ignore
                 logger.debug(f"IPFS client cleanup failed: {e}")
             self.ipfs_client = None
-        
-        super().close()
+        # ProofCache parent has no close() method
 
 
 # Global IPFS cache instance
