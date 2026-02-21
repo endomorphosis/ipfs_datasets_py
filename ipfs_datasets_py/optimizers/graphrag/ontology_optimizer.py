@@ -1429,6 +1429,43 @@ class OntologyOptimizer:
         scores = [r.average_score for r in self._history]
         return (min(scores), max(scores))
 
+    def convergence_rate(self, threshold: float = 0.01) -> float:
+        """Return the fraction of consecutive history pairs where improvement < *threshold*.
+
+        Measures how often the optimizer's score changes by less than
+        *threshold* between consecutive rounds — an indicator of convergence.
+
+        Args:
+            threshold: Improvement smaller than this is considered converged.
+                Defaults to 0.01.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` if history has fewer than 2 entries.
+
+        Example:
+            >>> optimizer.convergence_rate()
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [r.average_score for r in self._history]
+        converged = sum(
+            1 for a, b in zip(scores, scores[1:])
+            if abs(b - a) < threshold
+        )
+        return converged / (len(scores) - 1)
+
+    def history_as_list(self) -> list:
+        """Return a plain list of ``average_score`` floats from history.
+
+        Returns:
+            List of ``float`` in insertion order; empty list when no history.
+
+        Example:
+            >>> optimizer.history_as_list()
+            [0.4, 0.6, 0.75]
+        """
+        return [r.average_score for r in self._history]
+
     def improvement_rate(self) -> float:
         """Return the fraction of consecutive history pairs where score improved.
 

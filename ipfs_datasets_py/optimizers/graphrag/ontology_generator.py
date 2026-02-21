@@ -1583,6 +1583,21 @@ class EntityExtractionResult:
             return 0.0
         return min(e.confidence for e in self.entities)
 
+    def confidence_band(self, low: float = 0.0, high: float = 1.0) -> List["Entity"]:
+        """Return entities with confidence in [*low*, *high*] (inclusive on both ends).
+
+        Args:
+            low: Lower bound. Defaults to 0.0.
+            high: Upper bound. Defaults to 1.0.
+
+        Returns:
+            List of :class:`Entity` objects with ``low <= confidence <= high``.
+
+        Example:
+            >>> result.confidence_band(0.5, 0.8)
+        """
+        return [e for e in self.entities if low <= e.confidence <= high]
+
 
 @dataclass
 class OntologyGenerationResult:
@@ -3493,6 +3508,29 @@ class OntologyGenerator:
         if not result.entities:
             return 0.0
         return len(result.relationships) / len(result.entities)
+
+    def relationships_for_entity(
+        self,
+        result: "EntityExtractionResult",
+        entity_id: str,
+    ) -> List["Relationship"]:
+        """Return all relationships where *entity_id* is source or target.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+            entity_id: Entity ID to match against.
+
+        Returns:
+            List of :class:`Relationship` objects where
+            ``source_id == entity_id`` or ``target_id == entity_id``.
+
+        Example:
+            >>> rels = gen.relationships_for_entity(result, "e1")
+        """
+        return [
+            r for r in result.relationships
+            if r.source_id == entity_id or r.target_id == entity_id
+        ]
 
 
 __all__ = [
