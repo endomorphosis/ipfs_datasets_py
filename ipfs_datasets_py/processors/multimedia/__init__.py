@@ -166,3 +166,12 @@ from .ytdlp_download_engine import (
     ytdlp_search_videos,
     ytdlp_batch_download,
 )
+
+try:
+    from .email_analyze_engine import (
+        email_analyze_export,
+        email_search_export,
+    )
+except Exception:
+    email_analyze_export = None  # type: ignore[assignment]
+    email_search_export = None  # type: ignore[assignment]

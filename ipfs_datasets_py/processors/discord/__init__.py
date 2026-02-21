@@ -51,3 +51,17 @@ __all__ = [
     "discord_export_dm_channels",
     "discord_export_dm_channels_individual",
 ]
+
+try:
+    from .discord_convert_engine import (
+        discord_convert_export,
+        discord_batch_convert_exports,
+    )
+except Exception:
+    discord_convert_export = None  # type: ignore[assignment]
+    discord_batch_convert_exports = None  # type: ignore[assignment]
+
+__all__ += [
+    "discord_convert_export",
+    "discord_batch_convert_exports",
+]
