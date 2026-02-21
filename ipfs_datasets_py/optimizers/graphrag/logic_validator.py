@@ -1383,6 +1383,74 @@ class LogicValidator:
                     degree[eid] = degree.get(eid, 0) + 1
         return sorted(eid for eid, d in degree.items() if d >= min_degree)
 
+    def isolated_entities(self, ontology: Dict[str, Any]) -> List[str]:
+        """Return IDs of entities that appear in no relationship.
+
+        An entity is *isolated* when its ``id`` does not appear as either
+        ``source_id`` or ``target_id`` in any relationship.
+
+        Args:
+            ontology: Ontology dict.
+
+        Returns:
+            Sorted list of isolated entity ids.
+        """
+        entity_ids = set(self.all_entity_ids(ontology))
+        connected: set = set()
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if isinstance(rels, (list, tuple)):
+            for rel in rels:
+                if isinstance(rel, dict):
+                    for key in ("source_id", "target_id"):
+                        eid = rel.get(key)
+                        if isinstance(eid, str):
+                            connected.add(eid)
+        return sorted(entity_ids - connected)
+
+    def max_degree_entity(self, ontology: Dict[str, Any]) -> Optional[str]:
+        """Return the entity id with the highest relationship degree.
+
+        Degree is the count of appearances as ``source_id`` or ``target_id``.
+
+        Args:
+            ontology: Ontology dict.
+
+        Returns:
+            Entity id string, or ``None`` if there are no relationships.
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if not isinstance(rels, (list, tuple)) or not rels:
+            return None
+        degree: Dict[str, int] = {}
+        for rel in rels:
+            if isinstance(rel, dict):
+                for key in ("source_id", "target_id"):
+                    eid = rel.get(key)
+                    if isinstance(eid, str) and eid:
+                        degree[eid] = degree.get(eid, 0) + 1
+        if not degree:
+            return None
+        return max(degree, key=lambda k: degree[k])
+
+    def entity_type_counts(self, ontology: Dict[str, Any]) -> Dict[str, int]:
+        """Return a dict mapping each entity type to the count of entities with that type.
+
+        Args:
+            ontology: Ontology dict.
+
+        Returns:
+            Dict of ``{type_string: count}``.  Empty when no entities.
+        """
+        entities = ontology.get("entities", ontology.get("nodes", []))
+        if not isinstance(entities, (list, tuple)):
+            return {}
+        counts: Dict[str, int] = {}
+        for ent in entities:
+            if isinstance(ent, dict):
+                t = ent.get("type", ent.get("entity_type", "unknown"))
+                counts[t] = counts.get(t, 0) + 1
+        return counts
+
 
 # Export public API
 __all__ = [
