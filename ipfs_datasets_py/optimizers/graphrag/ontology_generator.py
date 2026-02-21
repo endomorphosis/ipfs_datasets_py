@@ -2547,7 +2547,7 @@ class OntologyGenerator:
             rel_id_counter[0] += 1
             return f"rel_{rel_id_counter[0]:04d}"
 
-        # 1) Verb-frame matching in text
+        # 1) Verb-frame matching in text with type confidence scoring
         for pattern, rel_type in _VERB_PATTERNS:
             for m in _re.finditer(pattern, text, _re.IGNORECASE):
                 subj_text = m.group(1).lower()
@@ -2555,6 +2555,24 @@ class OntologyGenerator:
                 src_id = entity_ids_by_text.get(subj_text)
                 tgt_id = entity_ids_by_text.get(obj_text)
                 if src_id and tgt_id and src_id != tgt_id:
+                    # Calculate type confidence based on pattern specificity and verb matching
+                    # More specific patterns (e.g., "obligates") and exact matches get higher scores
+                    verb_text = m.group(0)
+                    pattern_parts = len(_re.split(r'\|', pattern.pattern))
+                    
+                    # Type confidence: how certain we are this is the correct relationship type
+                    # Based on: pattern match exactness, specificity, and verb phrase clustering
+                    if rel_type == 'obligates':
+                        type_confidence = 0.85  # Very specific, legal domain
+                    elif rel_type in ('owns', 'employs', 'manages'):
+                        type_confidence = 0.80  # Clear semantic verbs
+                    elif rel_type in ('causes', 'is_a'):
+                        type_confidence = 0.75  # More general but clear intent
+                    elif rel_type == 'part_of':
+                        type_confidence = 0.72  # Compositional, sometimes ambiguous
+                    else:
+                        type_confidence = 0.65  # Default fallback
+                    
                     relationships.append(Relationship(
                         id=_make_rel_id(),
                         source_id=src_id,
@@ -2562,12 +2580,16 @@ class OntologyGenerator:
                         type=rel_type,
                         confidence=0.65,
                         direction='subject_to_object',
+                        properties={
+                            'type_confidence': type_confidence,
+                            'type_method': 'verb_frame',
+                        } if hasattr(Relationship, '__dataclass_fields__') and 'properties' in Relationship.__dataclass_fields__ else None,
                     ))
 
-        # 2) Sliding-window co-occurrence (window=200 chars) for entities
-        # that weren't already linked by verb patterns.
+        # 2) Sliding-window co-occurrence (window=200 chars) with improved type inference
         # Confidence decay: base 0.6 at distance 0, decays linearly.
         # Entities >100 chars apart receive < 0.4 confidence; floor is 0.2.
+        # Uses entity types and context to infer relationship types with confidence scores
         linked = {(r.source_id, r.target_id) for r in relationships}
         entity_list = list(entities)
         for i, e1 in enumerate(entity_list):
@@ -2588,13 +2610,48 @@ class OntologyGenerator:
                     else:
                         # Extra penalty for distant entities (>100 chars apart)
                         confidence = max(0.2, 0.4 - (distance - 100) / 500.0)
+                    
+                    # Infer relationship type from entity types and proximity
+                    # Type confidence based on entity type compatibility and distance
+                    e1_type = getattr(e1, 'type', 'unknown').lower()
+                    e2_type = getattr(e2, 'type', 'unknown').lower()
+                    
+                    # Heuristic type inference: some entity type combinations suggest certain rel types
+                    inferred_type = 'related_to'  # Default
+                    type_confidence = 0.50  # Lower base confidence for heuristic inference
+                    
+                    # Entity type-based inference rules
+                    if ('person' in e1_type or 'person' in e2_type) and ('organization' in e1_type or 'organization' in e2_type):
+                        inferred_type = 'works_for'
+                        type_confidence = 0.65 if distance < 100 else 0.50
+                    elif ('person' in e1_type or 'person' in e2_type) and ('location' in e1_type or 'location' in e2_type):
+                        inferred_type = 'located_in'
+                        type_confidence = 0.60 if distance < 80 else 0.45
+                    elif ('organization' in e1_type or 'organization' in e2_type) and ('product' in e1_type or 'product' in e2_type):
+                        inferred_type = 'produces'
+                        type_confidence = 0.65 if distance < 100 else 0.50
+                    elif (e1_type == e2_type) and (e1_type in ['person', 'organization']):
+                        # Same type entities are likely related but type is unclear
+                        inferred_type = 'related_to'
+                        type_confidence = 0.55
+                    
+                    # Discount confidence for very distant co-occurrences
+                    if distance > 150:
+                        type_confidence *= 0.8
+                    
                     relationships.append(Relationship(
                         id=_make_rel_id(),
                         source_id=e1.id,
                         target_id=e2.id,
-                        type='related_to',
+                        type=inferred_type,
                         confidence=confidence,
                         direction='undirected',
+                        properties={
+                            'type_confidence': type_confidence,
+                            'type_method': 'cooccurrence',
+                            'source_entity_type': e1_type,
+                            'target_entity_type': e2_type,
+                        } if hasattr(Relationship, '__dataclass_fields__') and 'properties' in Relationship.__dataclass_fields__ else None,
                     ))
                     linked.add((e1.id, e2.id))
 
@@ -5203,6 +5260,21 @@ class OntologyGenerator:
             counts[e.type] = counts.get(e.type, 0) + 1
         total = len(result.entities)
         return {t: c / total for t, c in counts.items()}
+
+    def relationship_type_counts(self, result) -> dict:
+        """Return a count of each relationship type in *result*.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Dict mapping relationship type string → integer count. Empty dict
+            when no relationships.
+        """
+        counts: dict = {}
+        for r in result.relationships:
+            counts[r.type] = counts.get(r.type, 0) + 1
+        return counts
 
 
 __all__ = [

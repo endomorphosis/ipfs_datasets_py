@@ -1460,6 +1460,15 @@ class OntologyMediator:
         history = getattr(self, '_feedback_history', None) or getattr(self, '_feedback', None) or []
         return len(history)
 
+    def action_count_unique(self) -> int:
+        """Return the number of distinct action types that have been invoked.
+
+        Returns:
+            Integer count of unique action names recorded in
+            ``_action_counts``; ``0`` when no actions have been taken.
+        """
+        return len(self._action_counts)
+
 
 # Export public API
 __all__ = [

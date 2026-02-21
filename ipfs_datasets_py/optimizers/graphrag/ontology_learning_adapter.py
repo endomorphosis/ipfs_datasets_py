@@ -1218,3 +1218,15 @@ class OntologyLearningAdapter:
             return 0.0
         scores = [r.final_score for r in self._feedback]
         return max(scores) - min(scores)
+
+    def feedback_improvement_rate(self) -> float:
+        """Return fraction of consecutive feedback pairs that improved.
+
+        Returns:
+            Float in [0.0, 1.0]; ``0.0`` when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        improvements = sum(1 for a, b in zip(scores, scores[1:]) if b > a)
+        return improvements / (len(scores) - 1)

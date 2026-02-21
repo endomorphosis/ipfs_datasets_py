@@ -1198,3 +1198,14 @@ class OntologyPipeline:
             IndexError: When *idx* is out of range.
         """
         return self._run_history[idx].score.overall
+
+    def run_score_deltas(self) -> list:
+        """Return list of consecutive score differences (score[i+1] - score[i]).
+
+        Returns:
+            List of floats; empty list when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return []
+        scores = [r.score.overall for r in self._run_history]
+        return [scores[i + 1] - scores[i] for i in range(len(scores) - 1)]
