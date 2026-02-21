@@ -1055,6 +1055,10 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | CEC temporal rules | 22% | 100% | 100%✅ (session 29: 15 rules fixed) |
 | CEC deontic rules | 21% | 100% | 98%✅ (session 29: 7 rules fixed) |
 | CEC cognitive rules | 35% | 100% | 100%✅ (session 30: 13 rules fixed) |
+| CEC propositional rules | 55% | 100% | 100%✅ (session 31: 10 rules fully covered) |
+| CEC modal rules | 64% | 100% | 99%✅ (session 31: apply() paths covered) |
+| CEC resolution rules | 84% | 100% | 96%✅ (session 31: edge cases covered) |
+| CEC specialized rules | 79% | 100% | 97%✅ (session 31: dilemma apply() covered) |
 | NL Processing | 75% pass | 85% pass | 90% pass |
 | ZKP (simulation) | 80% pass | 85% pass | 85% pass |
 | MCP Tools | 167+ tests | 200+ tests | 250+ tests |
@@ -1063,7 +1067,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Session 30 complete. Logic test suite: 6079 passing (+86 vs 5993), 300 skipped, 4 pre-existing failures. 2 production bugs fixed: (1) `cognitive.py` — all 13 cognitive rules broken: `ProofResult.SUCCESS/FAILURE` (don't exist), `.content` attr (should be `.formula`), `.operator == LogicalConnective.X` for `ConnectiveFormula` (should be `.connective`), `.left/.right` (should be `.formulas[0/1]`); (2) `dcec_types.py` — `CognitiveOperator.PERCEPTION` missing from enum (added `PERCEPTION = "P"`). cognitive.py 35%→100%. 86 new tests cover all 13 cognitive rules (can_apply T/F, apply output, 4 chain tests, 6 export/name tests). Next: TDFOL NL improvement (§5.2) if spaCy available; Phase 4 CI baseline wiring; review remaining CEC rule modules.
+**Next Action:** Session 31 complete. CEC inference rules coverage significantly improved: propositional 55%→100%, modal 64%→99%, resolution 84%→96%, specialized 79%→97%. Added `__all__` exports to modal.py, resolution.py, specialized.py (all 7 rule modules now have complete exports). 106 new tests in `test_propositional_modal_resolution_rules.py`. CEC suite: 833→939 tests (+106). Overall logic suite: 6079→6185 tests passing. Zero production bugs needed — these modules had correct logic but untested `apply()` paths. Next: TDFOL rule coverage (tests/unit_tests/logic/TDFOL/), NL processing improvement, Phase 4 CI baseline wiring.
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 30)  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 31)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
