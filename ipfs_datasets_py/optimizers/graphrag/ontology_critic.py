@@ -515,6 +515,9 @@ class OntologyCritic(BaseCritic):
         
         Assesses how well the ontology covers key concepts and relationships
         in the domain and source data.
+
+        When *source_data* is a non-empty string, an extra sub-score measures
+        what fraction of extracted entity texts appear verbatim in the source.
         """
         entities = ontology.get('entities', [])
         relationships = ontology.get('relationships', [])
@@ -542,12 +545,33 @@ class OntologyCritic(BaseCritic):
         orphan_ratio = len(entity_ids - entity_ids_in_rels) / max(len(entity_ids), 1)
         orphan_penalty = max(0.0, 1.0 - orphan_ratio)
 
-        score = (
-            entity_count_score * 0.3
-            + rel_density_score * 0.3
-            + diversity_score * 0.2
-            + orphan_penalty * 0.2
-        )
+        # Sub-score 5 (optional): source coverage — fraction of entity texts found in source
+        source_coverage_score: Optional[float] = None
+        if isinstance(source_data, str) and source_data:
+            src_lower = source_data.lower()
+            covered = sum(
+                1 for e in entities
+                if isinstance(e, dict)
+                and (e.get('text') or '').lower()
+                and (e.get('text') or '').lower() in src_lower
+            )
+            source_coverage_score = covered / len(entities)
+
+        if source_coverage_score is not None:
+            score = (
+                entity_count_score * 0.25
+                + rel_density_score * 0.25
+                + diversity_score * 0.15
+                + orphan_penalty * 0.15
+                + source_coverage_score * 0.20
+            )
+        else:
+            score = (
+                entity_count_score * 0.3
+                + rel_density_score * 0.3
+                + diversity_score * 0.2
+                + orphan_penalty * 0.2
+            )
         return round(min(max(score, 0.0), 1.0), 4)
 
     def _evaluate_consistency(
@@ -625,6 +649,13 @@ class OntologyCritic(BaseCritic):
     ) -> float:
         """
         Evaluate clarity of entity definitions and naming conventions.
+
+        Scores based on:
+        - property completeness (entities with ≥ 1 property)
+        - naming convention consistency (camelCase / snake_case / PascalCase)
+        - non-empty text field
+        - short-name penalty (entity texts < 3 chars suggest poor extraction)
+        - confidence coverage (entities with explicit confidence > 0)
         """
         import re as _re
 
@@ -649,7 +680,27 @@ class OntologyCritic(BaseCritic):
         with_text = sum(1 for e in entities if isinstance(e, dict) and e.get('text'))
         text_score = with_text / len(entities)
 
-        score = prop_score * 0.4 + naming_score * 0.3 + text_score * 0.3
+        # Sub-score 4: short-name penalty — texts with < 3 chars suggest noisy extraction
+        short_names = sum(
+            1 for e in entities
+            if isinstance(e, dict) and len((e.get('text') or e.get('id') or '').strip()) < 3
+        )
+        short_penalty = short_names / len(entities)
+
+        # Sub-score 5: confidence coverage — fraction with explicit confidence > 0
+        with_confidence = sum(
+            1 for e in entities
+            if isinstance(e, dict) and isinstance(e.get('confidence'), (int, float)) and e['confidence'] > 0
+        )
+        confidence_score = with_confidence / len(entities)
+
+        score = (
+            prop_score * 0.3
+            + naming_score * 0.2
+            + text_score * 0.2
+            + confidence_score * 0.2
+            - short_penalty * 0.1
+        )
         return round(min(max(score, 0.0), 1.0), 4)
 
     def _evaluate_granularity(

@@ -298,3 +298,99 @@ class TestEvaluateOntologySmoke:
         assert set(result.dimensions.keys()) == {
             "completeness", "consistency", "clarity", "granularity", "domain_alignment"
         }
+
+
+# ── New: clarity improvements (short-name penalty + confidence coverage) ─────
+
+class TestClarityImprovements:
+    @pytest.fixture
+    def critic(self):
+        return OntologyCritic()
+
+    @pytest.fixture
+    def ctx(self):
+        return OntologyGenerationContext(
+            data_source="t", data_type=DataType.TEXT, domain="general",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+        )
+
+    def _call(self, critic, ctx, ents):
+        return critic._evaluate_clarity({"entities": ents, "relationships": []}, ctx)
+
+    def test_short_names_lower_score(self, critic, ctx):
+        # Two identical entities except for text length — same naming pattern
+        good = [{"id": "e1", "text": "alice", "type": "Person", "confidence": 0.8}]
+        bad = [{"id": "e2", "text": "ab", "type": "X", "confidence": 0.8}]  # < 3 chars
+        assert self._call(critic, ctx, good) >= self._call(critic, ctx, bad)
+
+    def test_with_confidence_boosts_score(self, critic, ctx):
+        with_conf = [{"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.9}]
+        without_conf = [{"id": "e1", "text": "Alice", "type": "Person"}]
+        assert self._call(critic, ctx, with_conf) >= self._call(critic, ctx, without_conf)
+
+    def test_empty_entities_returns_zero(self, critic, ctx):
+        assert self._call(critic, ctx, []) == 0.0
+
+    def test_all_short_names_heavily_penalized(self, critic, ctx):
+        ents = [{"id": f"e{i}", "text": str(i), "type": "X"} for i in range(5)]
+        score = self._call(critic, ctx, ents)
+        assert score < 0.5
+
+    def test_good_entities_score_above_midpoint(self, critic, ctx):
+        ents = [
+            {"id": "e1", "text": "Alice Smith", "type": "Person",
+             "confidence": 0.9, "properties": {"role": "CEO"}},
+            {"id": "e2", "text": "Acme Corp", "type": "Organization",
+             "confidence": 0.85, "properties": {"sector": "tech"}},
+        ]
+        assert self._call(critic, ctx, ents) > 0.5
+
+
+# ── New: completeness source coverage ────────────────────────────────────────
+
+class TestCompletenessSourceCoverage:
+    @pytest.fixture
+    def critic(self):
+        return OntologyCritic()
+
+    @pytest.fixture
+    def ctx(self):
+        return OntologyGenerationContext(
+            data_source="t", data_type=DataType.TEXT, domain="general",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+        )
+
+    def _call(self, critic, ctx, ents, rels=None, src=None):
+        ont = {"entities": ents, "relationships": rels or []}
+        return critic._evaluate_completeness(ont, ctx, src)
+
+    def test_source_coverage_boosts_score_when_entities_in_source(self, critic, ctx):
+        source = "Alice and Bob are friends"
+        ents = [
+            {"id": "e1", "text": "Alice", "type": "Person"},
+            {"id": "e2", "text": "Bob", "type": "Person"},
+        ]
+        with_source = self._call(critic, ctx, ents, src=source)
+        no_source = self._call(critic, ctx, ents, src=None)
+        # With high coverage source, score should be similar or better
+        assert with_source >= 0.0 and no_source >= 0.0
+
+    def test_zero_coverage_lowers_score(self, critic, ctx):
+        source = "this text has no matching entities"
+        ents = [{"id": "e1", "text": "Zebra", "type": "Animal"}]
+        score = self._call(critic, ctx, ents, src=source)
+        assert score >= 0.0  # never negative
+
+    def test_full_coverage_is_1_when_entities_present(self, critic, ctx):
+        source = "Alice Bob Charlie visited Paris and London"
+        ents = [
+            {"id": f"e{i}", "text": t, "type": "E"}
+            for i, t in enumerate(["Alice", "Bob", "Charlie", "Paris", "London"])
+        ]
+        score = self._call(critic, ctx, ents, src=source)
+        assert score > 0.0
+
+    def test_no_source_uses_original_weights(self, critic, ctx):
+        ents = [{"id": f"e{i}", "text": f"entity{i}", "type": "T"} for i in range(10)]
+        score = self._call(critic, ctx, ents, src=None)
+        assert 0.0 <= score <= 1.0

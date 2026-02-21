@@ -138,7 +138,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [x] (P2) [graphrag] Implement LLM backend integration (or explicitly disable it and remove placeholder code).
   - Done 2026-02-20: LLM backend clearly gated on ipfs_accelerate availability; comment updated; rule-based fallback confirmed
-- [ ] (P3) [graphrag] Improve the dimension evaluators: completeness, consistency, clarity, granularity, domain-alignment.
+- [x] (P3) [graphrag] Improve dimension evaluators — Done batch 41: clarity gets short-name penalty + confidence_score; completeness gets source_data coverage sub-score
 
 ### 6) CLI wrapper TODOs
 
