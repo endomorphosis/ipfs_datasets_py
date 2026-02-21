@@ -856,3 +856,30 @@ class OntologyLearningAdapter:
             Count of records with ``score > threshold``.
         """
         return sum(1 for r in self._feedback if r.final_score > threshold)
+
+    def all_feedback_above(self, threshold: float = 0.6) -> bool:
+        """Return ``True`` if every feedback record's score exceeds *threshold*.
+
+        Args:
+            threshold: Minimum score (exclusive, default 0.6).
+
+        Returns:
+            ``True`` when all records pass; also ``True`` for empty feedback.
+        """
+        return all(r.final_score > threshold for r in self._feedback)
+
+    def feedback_scores(self) -> list:
+        """Return a plain list of all feedback final scores in insertion order.
+
+        Returns:
+            List of floats; empty when there is no feedback.
+        """
+        return [r.final_score for r in self._feedback]
+
+    def domain_threshold_delta(self) -> float:
+        """Return the current threshold relative to the base threshold.
+
+        Returns:
+            ``current_threshold - base_threshold`` as a signed float.
+        """
+        return self._current_threshold - self._base_threshold

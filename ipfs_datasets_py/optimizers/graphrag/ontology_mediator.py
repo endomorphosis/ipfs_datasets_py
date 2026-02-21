@@ -1306,6 +1306,36 @@ class OntologyMediator:
         
         return False
 
+    def action_frequency(self) -> dict:
+        """Return a normalised frequency map of action names.
+
+        Each value is the fraction of total actions for that action type.
+
+        Returns:
+            Dict mapping action name → frequency in [0.0, 1.0].
+            Empty dict if no actions recorded.
+        """
+        total = sum(self._action_counts.values())
+        if total == 0:
+            return {}
+        return {k: v / total for k, v in self._action_counts.items()}
+
+    def has_actions(self) -> bool:
+        """Return ``True`` if any actions have been recorded.
+
+        Returns:
+            ``True`` when at least one action type has a positive count.
+        """
+        return bool(self._action_counts) and any(v > 0 for v in self._action_counts.values())
+
+    def action_diversity(self) -> int:
+        """Return the number of distinct action types that have been used.
+
+        Returns:
+            Count of action types with at least one invocation.
+        """
+        return sum(1 for v in self._action_counts.values() if v > 0)
+
 
 # Export public API
 __all__ = [

@@ -197,6 +197,10 @@ Examples:
             '--output', '-o',
             help='Output validation report'
         )
+        validate_parser.add_argument(
+            '--tdfol-output',
+            help='Output file for generated TDFOL formulas (JSON list of predicates)'
+        )
         
         # query command
         query_parser = subparsers.add_parser(
@@ -522,6 +526,31 @@ Examples:
                 with open(args.output, "w") as f:
                     json.dump(report, f, indent=2)
                 print(f"\n📄 Report saved to: {args.output}")
+
+            # Generate TDFOL formulas if requested
+            if hasattr(args, 'tdfol_output') and args.tdfol_output:
+                try:
+                    import sys
+                    print(f"DEBUG: ontology type = {type(ontology)}, validator type = {type(validator)}", file=sys.stderr)
+                    print(f"DEBUG: ontology keys = {ontology.keys() if isinstance(ontology, dict) else 'not a dict'}", file=sys.stderr)
+                    
+                    formulas = validator.ontology_to_tdfol(ontology)
+                    print(f"DEBUG: formulas type = {type(formulas)}", file=sys.stderr)
+                    
+                    # Convert formulas to strings for JSON serialization
+                    formula_strings = [str(f) if not isinstance(f, str) else f for f in formulas]
+                    tdfol_report = {
+                        "source": str(input_path),
+                        "formula_count": len(formula_strings),
+                        "formulas": formula_strings,
+                    }
+                    with open(args.tdfol_output, "w") as f:
+                        json.dump(tdfol_report, f, indent=2)
+                    print(f"📐 TDFOL formulas saved to: {args.tdfol_output} ({len(formula_strings)} formulas)")
+                except Exception as e:
+                    import traceback
+                    print(f"⚠️  Failed to generate TDFOL formulas: {e}")
+                    traceback.print_exc()
 
             # Exit code: 0 only if consistency check passed when run.
             if "consistency" in report["checks"]:
