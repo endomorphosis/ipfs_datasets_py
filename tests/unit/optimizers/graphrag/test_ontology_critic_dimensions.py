@@ -1,7 +1,7 @@
 """Unit tests for OntologyCritic dimension evaluators.
 
-Tests boundary conditions for each of the five scoring dimensions:
-completeness, consistency, clarity, granularity, domain_alignment.
+Tests boundary conditions for each of the six scoring dimensions:
+completeness, consistency, clarity, granularity, relationship_coherence, domain_alignment.
 """
 
 from __future__ import annotations
@@ -286,7 +286,7 @@ class TestEvaluateOntologySmoke:
     def test_full_evaluation_has_all_dimensions(self, critic, ctx):
         ontology = {"entities": _ents(3), "relationships": []}
         result = critic.evaluate_ontology(ontology, ctx)
-        for dim in ("completeness", "consistency", "clarity", "granularity", "domain_alignment"):
+        for dim in ("completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"):
             assert hasattr(result, dim), f"Missing dimension: {dim}"
 
     def test_evaluate_returns_critic_result(self, critic, ctx):
@@ -296,7 +296,7 @@ class TestEvaluateOntologySmoke:
         assert isinstance(result, CriticResult)
         assert 0.0 <= result.score <= 1.0
         assert set(result.dimensions.keys()) == {
-            "completeness", "consistency", "clarity", "granularity", "domain_alignment"
+            "completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"
         }
 
 
@@ -462,3 +462,139 @@ class TestIntelligentRecommendations:
             completeness=0.9, consistency=0.9, clarity=0.9, granularity=0.9, domain_alignment=0.9
         )
         assert len(recs) == 0
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Relationship Coherence
+# ──────────────────────────────────────────────────────────────────────────────
+
+class TestRelationshipCoherenceEvaluator:
+    """Tests for the relationship_coherence dimension evaluator."""
+
+    def test_no_relationships_returns_low_score(self, critic, ctx):
+        """Ontology with entities but no relationships should score low."""
+        ents = _ents(5)
+        ontology = {"entities": ents, "relationships": []}
+        score = critic._evaluate_relationship_coherence(ontology, ctx)
+        assert score < 0.5
+
+    def test_empty_ontology_returns_neutral(self, critic, ctx):
+        """Empty ontology (no entities, no relationships) returns neutral 0.5."""
+        ontology = {"entities": [], "relationships": []}
+        score = critic._evaluate_relationship_coherence(ontology, ctx)
+        assert score == 0.5
+
+    def test_generic_relationship_types_lower_score(self, critic, ctx):
+        """Generic relationship types like 'relates_to' should lower the score."""
+        ents = _ents(3)
+        generic_rels = [
+            {"id": "r0", "source_id": "e0", "target_id": "e1", "type": "relates_to"},
+            {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "related_to"},
+            {"id": "r2", "source_id": "e0", "target_id": "e2", "type": "connected"},
+        ]
+        ontology = {"entities": ents, "relationships": generic_rels}
+        score = critic._evaluate_relationship_coherence(ontology, ctx)
+        assert score < 0.6
+
+    def test_meaningful_relationship_types_boost_score(self, critic, ctx):
+        """Meaningful relationship types should boost the score."""
+        ents = _ents(4)
+        meaningful_rels = [
+            {"id": "r0", "source_id": "e0", "target_id": "e1", "type": "manages"},
+            {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "implements"},
+            {"id": "r2", "source_id": "e2", "target_id": "e3", "type": "depends_on"},
+        ]
+        ontology = {"entities": ents, "relationships": meaningful_rels}
+        score = critic._evaluate_relationship_coherence(ontology, ctx)
+        assert score >= 0.6
+
+    def test_diverse_relationship_types_boost_score(self, critic, ctx):
+        """Good variety of relationship types should boost distribution score."""
+        ents = _ents(6)
+        diverse_rels = [
+            {"id": f"r{i}", "source_id": f"e{i}", "target_id": f"e{(i+1) % 6}", "type": f"rel_type_{i}"}
+            for i in range(6)
+        ]
+        ontology = {"entities": ents, "relationships": diverse_rels}
+        score = critic._evaluate_relationship_coherence(ontology, ctx)
+        assert score >= 0.5
+
+    def test_single_relationship_type_with_many_rels_lowers_score(self, critic, ctx):
+        """Using the same type for all relationships lowers distribution score."""
+        ents = _ents(6)
+        monotonous_rels = [
+            {"id": f"r{i}", "source_id": f"e{i}", "target_id": f"e{(i+1) % 6}", "type": "same_type"}
+            for i in range(6)
+        ]
+        ontology = {"entities": ents, "relationships": monotonous_rels}
+        score = critic._evaluate_relationship_coherence(ontology, ctx)
+        assert score < 0.7
+
+    def test_directed_relationships_score_higher(self, critic, ctx):
+        """Directed relationships (different source/target) should score well."""
+        ents = _ents(4)
+        directed_rels = [
+            {"id": "r0", "source_id": "e0", "target_id": "e1", "type": "causes"},
+            {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "part_of"},
+            {"id": "r2", "source_id": "e2", "target_id": "e3", "type": "implements"},
+        ]
+        ontology = {"entities": ents, "relationships": directed_rels}
+        score = critic._evaluate_relationship_coherence(ontology, ctx)
+        assert score >= 0.5
+
+    def test_relationships_missing_type_lower_score(self, critic, ctx):
+        """Relationships without type field should be handled gracefully."""
+        ents = _ents(3)
+        no_type_rels = [
+            {"id": "r0", "source_id": "e0", "target_id": "e1"},
+            {"id": "r1", "source_id": "e1", "target_id": "e2"},
+        ]
+        ontology = {"entities": ents, "relationships": no_type_rels}
+        score = critic._evaluate_relationship_coherence(ontology, ctx)
+        assert 0.0 <= score <= 1.0
+
+    def test_semantic_consistency_with_matching_entity_types(self, critic, ctx):
+        """Relationships should match expected entity type affinities."""
+        # Create entities with specific types
+        ents = [
+            {"id": "e0", "type": "Person", "text": "Alice"},
+            {"id": "e1", "type": "Organization", "text": "Acme Corp"},
+            {"id": "e2", "type": "Location", "text": "New York"},
+        ]
+        # 'manages' should work well with Person/Organization
+        # 'located_in' should work well with Location
+        coherent_rels = [
+            {"id": "r0", "source_id": "e0", "target_id": "e1", "type": "manages"},
+            {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "located_in"},
+        ]
+        ontology = {"entities": ents, "relationships": coherent_rels}
+        score = critic._evaluate_relationship_coherence(ontology, ctx)
+        assert score >= 0.4
+
+    def test_score_always_in_range(self, critic, ctx):
+        """Score should always be in [0, 1] range."""
+        ents = _ents(5)
+        varied_rels = [
+            {"id": "r0", "source_id": "e0", "target_id": "e1", "type": "has_part"},
+            {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "relates_to"},
+            {"id": "r2", "source_id": "e2", "target_id": "e3", "type": "implements"},
+        ]
+        ontology = {"entities": ents, "relationships": varied_rels}
+        score = critic._evaluate_relationship_coherence(ontology, ctx)
+        assert 0.0 <= score <= 1.0
+
+    def test_relationship_coherence_recommendations(self, critic, ctx):
+        """Low relationship coherence score should generate recommendations."""
+        ents = _ents(3)
+        generic_rels = [
+            {"id": "r0", "source_id": "e0", "target_id": "e1", "type": "relates_to"},
+            {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "related_to"},
+        ]
+        ontology = {"entities": ents, "relationships": generic_rels}
+        recs = critic._generate_recommendations(
+            ontology, ctx,
+            completeness=0.8, consistency=0.8, clarity=0.8,
+            granularity=0.8, relationship_coherence=0.3, domain_alignment=0.8
+        )
+        assert any("generic" in r.lower() or "relationship" in r.lower() for r in recs)
+

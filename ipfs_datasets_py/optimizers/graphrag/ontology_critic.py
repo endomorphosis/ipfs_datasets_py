@@ -2609,7 +2609,7 @@ class OntologyCritic(BaseCritic):
             - ``'improved'`` (bool) — ``True`` when overall_delta > 0
             - ``'dim_deltas'`` (dict) — per-dimension deltas (positive = improved)
         """
-        dims = ("completeness", "consistency", "clarity", "granularity", "domain_alignment")
+        dims = ("completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment")
         dim_deltas = {d: getattr(score_b, d) - getattr(score_a, d) for d in dims}
         overall_delta = score_b.overall - score_a.overall
         return {
@@ -2629,13 +2629,14 @@ class OntologyCritic(BaseCritic):
 
         Example:
             >>> critic.dimension_rankings(score)
-            ['domain_alignment', 'completeness', 'consistency', 'clarity', 'granularity']
+            ['domain_alignment', 'completeness', 'consistency', 'clarity', 'granularity', 'relationship_coherence']
         """
         dims = {
             "completeness": score.completeness,
             "consistency": score.consistency,
             "clarity": score.clarity,
             "granularity": score.granularity,
+            "relationship_coherence": score.relationship_coherence,
             "domain_alignment": score.domain_alignment,
         }
         return sorted(dims.keys(), key=lambda d: -dims[d])
