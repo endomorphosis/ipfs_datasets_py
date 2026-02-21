@@ -55,6 +55,7 @@ class BaseProverBridge(ABC):
         """Initialize the bridge."""
         self._metadata = self._init_metadata()
         self._available = self._check_availability()
+        self.available = self._available
     
     @abstractmethod
     def _init_metadata(self) -> BridgeMetadata:

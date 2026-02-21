@@ -23,7 +23,7 @@ from typing import Optional, List, Dict, Any, Tuple
 import hashlib
 
 # TDFOL imports
-from ...TDFOL.tdfol_core import Formula
+from ....TDFOL.tdfol_core import Formula
 
 logger = logging.getLogger(__name__)
 

@@ -19,15 +19,15 @@ from typing import Optional, List, Dict, Any, Union
 from dataclasses import dataclass
 
 # Core TDFOL imports
-from ..TDFOL.tdfol_core import Formula, TDFOLKnowledgeBase
-from ..TDFOL.tdfol_parser import parse_tdfol
-from ..TDFOL.tdfol_dcec_parser import parse_dcec
-from ..TDFOL.tdfol_prover import ProofResult
+from ...TDFOL.tdfol_core import Formula, TDFOLKnowledgeBase
+from ...TDFOL.tdfol_parser import parse_tdfol
+from ...TDFOL.tdfol_dcec_parser import parse_dcec
+from ...TDFOL.tdfol_prover import ProofResult
 
 # Integration imports
-from .tdfol_cec_bridge import EnhancedTDFOLProver
-from .tdfol_shadowprover_bridge import ModalAwareTDFOLProver
-from .tdfol_grammar_bridge import NaturalLanguageTDFOLInterface
+from ..tdfol_cec_bridge import EnhancedTDFOLProver
+from ..tdfol_shadowprover_bridge import ModalAwareTDFOLProver
+from ..tdfol_grammar_bridge import NaturalLanguageTDFOLInterface
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +94,7 @@ class NeurosymbolicReasoner:
             self.prover = EnhancedTDFOLProver(kb=self.kb, use_cec=True)
             logger.info("Initialized with CEC-enhanced prover (127 rules)")
         else:
-            from ..TDFOL.tdfol_prover import TDFOLProver
+            from ...TDFOL.tdfol_prover import TDFOLProver
             self.prover = TDFOLProver(kb=self.kb)
             logger.info("Initialized with base TDFOL prover (40 rules)")
         
@@ -252,7 +252,7 @@ class NeurosymbolicReasoner:
         if isinstance(goal, str):
             goal_formula = self.parse(goal)
             if not goal_formula:
-                from ..TDFOL.tdfol_prover import ProofResult, ProofStatus
+                from ...TDFOL.tdfol_prover import ProofResult, ProofStatus
                 return ProofResult(
                     status=ProofStatus.ERROR,
                     formula=None,
@@ -267,7 +267,7 @@ class NeurosymbolicReasoner:
         temp_kb = None
         if given:
             # Create temporary knowledge base with additional premises
-            from ..TDFOL.tdfol_core import TDFOLKnowledgeBase
+            from ...TDFOL.tdfol_core import TDFOLKnowledgeBase
             temp_kb = TDFOLKnowledgeBase()
             
             # Copy existing knowledge

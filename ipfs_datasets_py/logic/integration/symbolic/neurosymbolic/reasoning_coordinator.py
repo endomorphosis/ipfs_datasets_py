@@ -29,9 +29,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 # TDFOL imports
-from ...TDFOL.tdfol_core import Formula
-from ...TDFOL.tdfol_parser import parse_tdfol
-from ...TDFOL.tdfol_prover import TDFOLProver, ProofResult
+from ....TDFOL.tdfol_core import Formula
+from ....TDFOL.tdfol_parser import parse_tdfol
+from ....TDFOL.tdfol_prover import TDFOLProver, ProofResult
 
 # Integration imports
 from ..neurosymbolic_api import NeurosymbolicReasoner
@@ -236,10 +236,10 @@ class NeuralSymbolicCoordinator:
         result = self.symbolic_reasoner.prove(str(goal))
         
         # Map to coordinated result
-        confidence = 1.0 if result.valid else 0.0  # Symbolic is binary
+        confidence = 1.0 if result.is_proved() else 0.0  # Symbolic is binary
         
         return CoordinatedResult(
-            is_proved=result.valid,
+            is_proved=result.is_proved(),
             confidence=confidence,
             symbolic_result=result,
             neural_confidence=None,

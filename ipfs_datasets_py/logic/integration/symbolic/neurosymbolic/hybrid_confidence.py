@@ -25,8 +25,8 @@ from dataclasses import dataclass
 from enum import Enum
 
 # TDFOL imports
-from ...TDFOL.tdfol_core import Formula
-from ...TDFOL.tdfol_prover import ProofResult
+from ....TDFOL.tdfol_core import Formula
+from ....TDFOL.tdfol_prover import ProofResult
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +133,7 @@ class HybridConfidenceScorer:
         # Extract symbolic confidence
         symbolic_conf = 0.0
         if symbolic_result is not None:
-            symbolic_conf = 1.0 if symbolic_result.valid else 0.0
+            symbolic_conf = 1.0 if symbolic_result.is_proved() else 0.0
         
         # Use neural similarity as-is
         neural_conf = neural_similarity if neural_similarity is not None else 0.0

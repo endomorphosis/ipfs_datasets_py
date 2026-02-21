@@ -6,6 +6,7 @@ logical operations and natural language to logic conversion.
 """
 
 import logging
+import re
 from typing import List, Dict, Any, Optional, Union
 try:
     from beartype import beartype  # type: ignore
