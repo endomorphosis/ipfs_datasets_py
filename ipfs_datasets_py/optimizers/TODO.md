@@ -511,18 +511,18 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 ## Newly discovered items (batch 44+)
 
 - [ ] (P2) [arch] Add `OntologyHarness.run_single()` method that wraps BaseHarness.run() for single-document use cases
-- [ ] (P2) [graphrag] Add `ExtractionConfig.stopwords: list[str] = []` to filter common noise words from entity extraction
-- [ ] (P3) [graphrag] Add `OntologyCritic.compare_versions()` method: given two ontologies, return diff of scores per dimension
-- [ ] (P3) [graphrag] Add `OntologyOptimizer.get_history_summary()` returning descriptive stats (mean, std, min, max) over all batch reports
+- [x] (P2) [graphrag] Add `ExtractionConfig.stopwords` — Done batch 45: case-insensitive filter in _extract_rule_based; to_dict/from_dict updated; 6 tests
+- [x] (P3) [graphrag] Add `OntologyCritic.compare_versions()` — Done batch 45: wraps compare_ontologies; adds delta_<dim> + delta_overall keys; 3 tests
+- [x] (P3) [graphrag] Add `OntologyOptimizer.get_history_summary()` — Done batch 45: count/mean/std/min/max/mean_improvement_rate/trend; 5 tests
 - [ ] (P3) [tests] Property-based tests for `OntologyCritic.evaluate_ontology()` — all dimension scores should be in [0.0, 1.0]
 - [ ] (P2) [obs] Add `analyze_batch_parallel()` structured JSON log (mirrors analyze_batch summary logging)
 - [ ] (P3) [graphrag] Add `ExtractionConfig.allowed_entity_types: list[str] = []` whitelist filter (empty = allow all)
 - [ ] (P2) [docs] Add CHANGELOG.md for the optimizers sub-package documenting changes by batch
 - [x] (P3) [arch] Add `optimizers.common.exceptions` re-export — Already done: all 6 exception classes already in common/__init__.py
-- [ ] (P3) [tests] Round-trip test: `ExtractionConfig.to_dict()` → `from_dict()` is identity for all fields
+- [x] (P3) [tests] Round-trip test: ExtractionConfig.to_dict() → from_dict() — Done batch 45: TestExtractionConfigRoundTrip
 - [ ] (P2) [graphrag] Add `OntologyGenerator.extract_entities_from_file()` convenience method (reads text file, calls extract_entities)
 - [x] (P3) [graphrag] Add `LogicValidator.clear_tdfol_cache()` method — Done batch 44: returns count removed
-- [ ] (P3) [docs] Add type-stub file (`py.typed` marker) to `optimizers/` package
+- [x] (P3) [docs] Add `py.typed` marker to `optimizers/` — Done batch 45: created ipfs_datasets_py/optimizers/py.typed
 - [ ] (P2) [tests] Parametrized tests for `OntologyOptimizer.export_to_graphml()` with multi-entity/multi-rel ontologies
 - [ ] (P3) [agentic] Add `ChaosOptimizer.simulate_memory_pressure()` method for memory threshold testing
 - [ ] (P2) [graphrag] Add `OntologyLearningAdapter.to_dict()` / `from_dict()` for state serialization

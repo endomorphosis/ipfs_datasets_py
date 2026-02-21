@@ -508,7 +508,40 @@ class OntologyCritic(BaseCritic):
             'improvements': improvements,
             'regressions': regressions,
         }
-    
+
+    def compare_versions(
+        self,
+        v1: Dict[str, Any],
+        v2: Dict[str, Any],
+        context: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        """Compare two ontology versions and return per-dimension score diffs.
+
+        This is an alias for :meth:`compare_ontologies` with a cleaner return
+        that also includes per-dimension delta values (``delta_<dim>``).
+
+        Args:
+            v1: First (older) ontology version.
+            v2: Second (newer) ontology version.
+            context: Optional evaluation context.
+
+        Returns:
+            Dict with keys from :meth:`compare_ontologies` plus:
+            - ``delta_<dim>``: float difference (v2 - v1) for each of the 5 dimensions
+            - ``delta_overall``: overall score difference (v2 - v1)
+        """
+        result = self.compare_ontologies(v1, v2, context)
+        if result.get("score1") and result.get("score2"):
+            dims = ("completeness", "consistency", "clarity", "granularity", "domain_alignment")
+            for dim in dims:
+                result[f"delta_{dim}"] = round(
+                    result["score2"].get(dim, 0.0) - result["score1"].get(dim, 0.0), 4
+                )
+            result["delta_overall"] = round(
+                result["score2"].get("overall", 0.0) - result["score1"].get("overall", 0.0), 4
+            )
+        return result
+
     def _evaluate_completeness(
         self,
         ontology: Dict[str, Any],

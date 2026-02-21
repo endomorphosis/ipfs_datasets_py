@@ -106,6 +106,8 @@ class ExtractionConfig:
     llm_fallback_threshold: float = 0.0
     # Minimum entity text length; entities shorter than this are discarded.
     min_entity_length: int = 2
+    # Stopwords: entity texts matching any of these (case-insensitive) are skipped.
+    stopwords: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a plain-dict representation (legacy compatibility)."""
@@ -119,6 +121,7 @@ class ExtractionConfig:
             "custom_rules": list(self.custom_rules),
             "llm_fallback_threshold": self.llm_fallback_threshold,
             "min_entity_length": self.min_entity_length,
+            "stopwords": list(self.stopwords),
         }
 
     @classmethod
@@ -134,6 +137,7 @@ class ExtractionConfig:
             custom_rules=list(d.get("custom_rules", [])),
             llm_fallback_threshold=float(d.get("llm_fallback_threshold", 0.0)),
             min_entity_length=int(d.get("min_entity_length", 2)),
+            stopwords=list(d.get("stopwords", [])),
         )
 
 
@@ -770,12 +774,18 @@ class OntologyGenerator:
         except (TypeError, ValueError):
             min_len = 2
 
+        # Resolve stopwords set (case-insensitive match against key)
+        try:
+            _stop = {w.lower() for w in (getattr(ext_config, "stopwords", []) or [])} if ext_config is not None else set()
+        except (TypeError, AttributeError):
+            _stop = set()
+
         for pattern, ent_type in _PATTERNS:
             confidence = 0.5 if ent_type == 'Concept' else 0.75
             for m in _re.finditer(pattern, text):
                 raw = m.group(0).strip()
                 key = raw.lower()
-                if key in seen_texts or len(raw) < min_len:
+                if key in seen_texts or len(raw) < min_len or key in _stop:
                     continue
                 seen_texts.add(key)
                 entities.append(Entity(

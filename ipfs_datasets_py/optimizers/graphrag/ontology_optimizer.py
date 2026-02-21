@@ -1010,6 +1010,66 @@ class OntologyOptimizer:
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
         return variance ** 0.5
 
+    def get_history_summary(self) -> Dict[str, Any]:
+        """Return descriptive statistics over all historical batch reports.
+
+        Computes mean, standard deviation, min, and max of the
+        ``average_score`` and ``improvement_rate`` fields stored in
+        :attr:`_history`.
+
+        Returns:
+            Dictionary with keys:
+            - ``count``: number of batch reports in history
+            - ``mean_score``: arithmetic mean of per-batch average scores
+            - ``std_score``: sample standard deviation of per-batch scores
+            - ``min_score``: minimum per-batch average score seen
+            - ``max_score``: maximum per-batch average score seen
+            - ``mean_improvement_rate``: mean improvement rate across batches
+            - ``trend``: ``"improving"``, ``"stable"``, or ``"degrading"``
+              based on first-vs-last batch comparison
+        """
+        if not self._history:
+            return {
+                "count": 0,
+                "mean_score": 0.0,
+                "std_score": 0.0,
+                "min_score": 0.0,
+                "max_score": 0.0,
+                "mean_improvement_rate": 0.0,
+                "trend": "stable",
+            }
+
+        scores = [r.average_score for r in self._history]
+        imp_rates = [r.improvement_rate for r in self._history]
+        n = len(scores)
+        mean_s = sum(scores) / n
+        mean_i = sum(imp_rates) / n
+
+        if n > 1:
+            variance = sum((s - mean_s) ** 2 for s in scores) / (n - 1)
+            std_s = variance ** 0.5
+        else:
+            std_s = 0.0
+
+        first, last = scores[0], scores[-1]
+        delta = last - first
+        if delta > 0.02:
+            trend = "improving"
+        elif delta < -0.02:
+            trend = "degrading"
+        else:
+            trend = "stable"
+
+        return {
+            "count": n,
+            "mean_score": round(mean_s, 4),
+            "std_score": round(std_s, 4),
+            "min_score": round(min(scores), 4),
+            "max_score": round(max(scores), 4),
+            "mean_improvement_rate": round(mean_i, 4),
+            "trend": trend,
+        }
+
     def export_learning_curve_csv(self, filepath: Optional[str] = None) -> Optional[str]:
         """Export score progression history as CSV.
 
