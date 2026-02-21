@@ -1064,6 +1064,9 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | TDFOL modal_tableaux | 81% | 95% | 96%✅ (session 33: deontic ops + World hash/eq + ancestor traversal) |
 | TDFOL nl/tdfol_nl_preprocessor | 48% | 75% | 60% (session 33: +12pp; remaining requires spaCy) |
 | TDFOL nl/tdfol_nl_patterns | 35% | 70% | 49% (session 33: +14pp; remaining requires spaCy) |
+| TDFOL nl/tdfol_nl_generator | 73% | 95% | 97%✅ (session 34: 67 tests; all non-spaCy branches covered) |
+| TDFOL nl/llm.py | 57% | 90% | 97%✅ (session 34: 67 tests; _extract/_estimate/convert/init/cache all covered) |
+| TDFOL nl/tdfol_nl_api.py | 51% | 90% | 98%✅ (session 34: 67 tests; NLParser paths + module functions covered) |
 | NL Processing | 75% pass | 85% pass | 90% pass |
 | ZKP (simulation) | 80% pass | 85% pass | 85% pass |
 | MCP Tools | 167+ tests | 200+ tests | 250+ tests |
@@ -1072,7 +1075,12 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Session 33 complete. 3 new test files: (1) `test_ipfs_proof_storage.py` (39 tests, p2p 0%→95%), (2) `test_nl_types_session33.py` (53 tests + 3 spaCy-skipped, preprocessor 48%→60%, patterns 35%→49%), (3) `test_modal_tableaux_deontic_session33.py` (34 tests, modal_tableaux 81%→96% — covers World hash/eq, _expand_deontic OBLIGATION/PERMISSION/FORBIDDEN, _expand_binary negated-OR/IMPLIES, _expand_formula atomic contradiction, ancestor box propagation, S4/S5 mutual accessibility). TDFOL suite: 1089→1215 tests (+126). Overall logic suite: 6275→6401 tests passing. Key: _expand_formula requires formula pre-loaded in world.formulas/world.negated_formulas before calling (returns None otherwise). Next: TDFOL `nl/tdfol_nl_generator.py` (73%), `nl/llm.py` (57%), `nl/tdfol_nl_api.py` (51%), and `strategies/modal_tableaux.py` (62%).
+**Next Action (Session 34 complete):**
+- 1 new test file: `test_nl_session34.py` (67 tests)
+- tdfol_nl_generator 73%→97%; llm.py 57%→97%; tdfol_nl_api.py 51%→98%
+- TDFOL NL suite: 1215→1341 tests; overall logic: 6401→6468 passing
+- Remaining uncovered: import-time LLM_ROUTER_AVAILABLE=True (requires llm_router), utils.py 48% (requires multiformats)
+- **Next session targets:** TDFOL `strategies/` (62%), TDFOL `performance_dashboard.py` (0%), CEC `proof_state.py` (72%)
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 33)  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 34)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
