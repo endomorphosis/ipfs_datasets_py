@@ -426,6 +426,8 @@ class HierarchicalToolManager:
         self._lazy_loaders: Dict[str, Callable[[], ToolCategory]] = {}
         # Phase F4: graceful shutdown flag — set to True during shutdown.
         self._shutting_down: bool = False
+        # Phase F2: per-manager result cache (MemoryCacheBackend, LRU eviction).
+        self._result_cache: Optional[Any] = None  # Lazily created on first use.
 
         # Load category metadata
         self._load_category_metadata()
@@ -435,7 +437,42 @@ class HierarchicalToolManager:
         # This could be from JSON files, but for now we'll use defaults
         # Users can customize by creating category.json files
         pass
-    
+
+    def _get_result_cache(self) -> Any:
+        """Return the lazily-created in-process result cache (Phase F2).
+
+        The cache is a :class:`ResultCache` backed by a
+        :class:`MemoryCacheBackend` with LRU eviction.  It is created the
+        first time this helper is called and then reused for all subsequent
+        calls.
+
+        Returns:
+            A :class:`ResultCache` instance, or ``None`` if the dependency is
+            unavailable.
+        """
+        if self._result_cache is not None:
+            return self._result_cache
+        try:
+            from ipfs_datasets_py.mcp_server.mcplusplus.result_cache import (
+                ResultCache,
+                MemoryCacheBackend,
+                EvictionPolicy,
+            )
+            # max_size=512: maximum number of distinct tool-result entries kept
+            # in memory at once.  LRU eviction removes the least-recently-used
+            # entry when the limit is reached.  512 is a conservative default
+            # that covers hundreds of unique (tool, params) combinations without
+            # exceeding typical container memory budgets (~50 MB at 100 KB/entry).
+            backend = MemoryCacheBackend(max_size=512)
+            self._result_cache = ResultCache(
+                backend=backend,
+                default_ttl=300.0,
+                eviction_policy=EvictionPolicy.LRU,
+            )
+        except Exception:  # ImportError or any init failure — degrade gracefully
+            self._result_cache = None
+        return self._result_cache
+
     def discover_categories(self) -> None:
         """Discover all tool categories."""
         if self._discovered_categories:
@@ -708,6 +745,28 @@ class HierarchicalToolManager:
             for param_name in sig.parameters:
                 if param_name in params:
                     filtered_params[param_name] = params[param_name]
+
+            # Phase F2: opt-in result caching via cache_ttl in ToolMetadata.
+            # Only cache when the tool was decorated with @tool_metadata(cache_ttl=N).
+            _cache_ttl: Optional[float] = None
+            if meta is not None:
+                _cache_ttl = getattr(meta, "cache_ttl", None)
+
+            if _cache_ttl is not None and _cache_ttl > 0:
+                _rcache = self._get_result_cache()
+                if _rcache is not None:
+                    try:
+                        _cached = await _rcache.get(tool_path, inputs=filtered_params)
+                        if _cached is not None:
+                            logger.debug(
+                                "dispatch: cache_hit request_id=%s tool=%s",
+                                request_id, tool_path,
+                            )
+                            _cached.setdefault("request_id", request_id)
+                            _cached["_cached"] = True
+                            return _cached
+                    except Exception:
+                        pass  # Cache failure is non-fatal; fall through to live call.
             
             # Call the tool
             if inspect.iscoroutinefunction(tool_func):
@@ -718,6 +777,20 @@ class HierarchicalToolManager:
             # Ensure result is a dict
             if not isinstance(result, dict):
                 result = {"status": "success", "result": str(result)}
+
+            # Phase F2: store successful results in the cache when cache_ttl is set.
+            if _cache_ttl is not None and _cache_ttl > 0:
+                _rcache = self._get_result_cache()
+                if _rcache is not None:
+                    try:
+                        await _rcache.put(
+                            tool_path,
+                            result,
+                            ttl=_cache_ttl,
+                            inputs=filtered_params,
+                        )
+                    except Exception:
+                        pass  # Cache write failure is non-fatal.
 
             _duration_ms = (time.monotonic() - _t0) * 1000
             # Phase C1: structured success log.
