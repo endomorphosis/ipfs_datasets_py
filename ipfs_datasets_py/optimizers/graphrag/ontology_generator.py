@@ -4256,44 +4256,6 @@ class OntologyGenerator:
 
         return chunks
 
-    def compact_result(self, result: "EntityExtractionResult") -> "EntityExtractionResult":
-        """Return a compacted copy of *result* without empty property entries.
-
-        Empty values (``None``, empty strings, empty containers) are removed
-        from entity and relationship ``properties`` dictionaries.
-
-        Args:
-            result: Source :class:`EntityExtractionResult`.
-
-        Returns:
-            New compacted :class:`EntityExtractionResult`.
-        """
-        import dataclasses as _dc
-
-        def _compact_dict(d: Dict[str, Any]) -> Dict[str, Any]:
-            return {
-                k: v
-                for k, v in d.items()
-                if v is not None and v != "" and v != [] and v != {}
-            }
-
-        compact_entities = [
-            _dc.replace(entity, properties=_compact_dict(entity.properties))
-            for entity in result.entities
-        ]
-        compact_relationships = [
-            _dc.replace(rel, properties=_compact_dict(rel.properties))
-            for rel in result.relationships
-        ]
-        compact_metadata = _compact_dict(result.metadata)
-
-        return _dc.replace(
-            result,
-            entities=compact_entities,
-            relationships=compact_relationships,
-            metadata=compact_metadata,
-        )
-
     def entities_by_type(self, result: "EntityExtractionResult") -> Dict[str, List["Entity"]]:
         """Return a dict grouping entities in *result* by their ``type``.
 

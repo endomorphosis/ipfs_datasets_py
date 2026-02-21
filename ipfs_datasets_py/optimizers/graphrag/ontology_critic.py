@@ -3134,38 +3134,6 @@ class OntologyCritic(BaseCritic):
         mean_b = sum(b_vals) / n
         return sum((a_vals[i] - mean_a) * (b_vals[i] - mean_b) for i in range(n)) / (n - 1)
 
-    def top_improving_dimension(
-        self,
-        before: CriticScore,
-        after: CriticScore,
-    ) -> Optional[str]:
-        """Return the most improved dimension between two scores.
-
-        Improvement is measured as ``after_dim - before_dim`` for each
-        dimension. If no dimension has a positive delta, ``None`` is returned.
-
-        Args:
-            before: Baseline score.
-            after: New score to compare.
-
-        Returns:
-            Name of the most improved dimension, or ``None`` when no positive
-            improvement exists.
-        """
-        dims = [
-            "completeness",
-            "consistency",
-            "clarity",
-            "granularity",
-            "relationship_coherence",
-            "domain_alignment",
-        ]
-        deltas = {dim: getattr(after, dim) - getattr(before, dim) for dim in dims}
-        best_dim = max(deltas, key=deltas.get)
-        if deltas[best_dim] <= 0.0:
-            return None
-        return best_dim
-
     _DIMENSIONS = ("completeness", "consistency", "clarity", "granularity",
                    "relationship_coherence", "domain_alignment")
 

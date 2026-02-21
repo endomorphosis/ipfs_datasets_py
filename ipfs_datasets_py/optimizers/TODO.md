@@ -68,7 +68,8 @@ These should be started immediately when available:
 - [ ] (P3) [docs] Add one-page "Quick Start" guide for GraphRAG ontology generation
 - [x] (P3) [graphrag] Add `LogicValidator.entity_contradiction_count()` integer count helper
   - Done 2026-02-21: Added method to count entities involved in contradictions via invalid_entity_ids. Returns non-negative integer. 6 unit tests added, all passing.
-- [ ] (P3) [obs] Add timing instrumentation to `_extract_rule_based()` method
+- [x] (P3) [obs] Add timing instrumentation to `_extract_rule_based()` method
+  - Done 2026-02-21: Discovered comprehensive timing instrumentation already implemented in method (graphrag/ontology_generator.py lines 3122-3193). Tracks 4 timing phases: pattern_time_ms, extraction_time_ms, relationship_time_ms, total_time_ms. All metrics logged and stored in result metadata. Added TestExtractRuleBasedTiming class with 9 comprehensive tests covering metadata presence, type validation, non-negative values, timing component relationships, edge cases, and reasonableness checks. All 9 tests passing.
 - [ ] (P2) [tests] Add property tests: ontology stats are mathematically consistent
 - [ ] (P3) [graphrag] Add `OntologySession.elapsed_ms()` total wall-clock time getter
 - [ ] (P3) [arch] Add `BaseOptimizer.dry_run()` method for validation without mutation
@@ -949,6 +950,18 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
   - File: `tests/unit/optimizers/graphrag/test_logic_validator_tdfol_conversion.py` – Added TestEntityContradictionCount class with 6 tests
   - Test coverage: empty ontology, consistent ontology, exception handling, malformed input, return type validation
   - All 6 tests passing
+- [x] (P3) [obs] Add timing instrumentation to `_extract_rule_based()` method
+  - Discovery: Comprehensive timing already implemented in `graphrag/ontology_generator.py` (lines 3122-3193)
+  - Implementation: Tracks 4 timing phases with separate metrics:
+    - `pattern_time_ms`: Time to build rule patterns for entity extraction
+    - `extraction_time_ms`: Time to extract entities from patterns  
+    - `relationship_time_ms`: Time to infer relationships between entities
+    - `total_time_ms`: Total execution time for entire extraction
+  - All metrics logged at INFO level with detailed breakdown
+  - All metrics stored in EntityExtractionResult.metadata dict
+  - File: `tests/unit/optimizers/graphrag/test_ontology_generator_helpers.py` – Added TestExtractRuleBasedTiming class with 9 tests
+  - Test coverage: metadata presence, type validation (floats), non-negative values, timing relationships (total ≥ components), edge cases (empty input), large text, metadata structure, reasonableness checks
+  - All 9 tests passing
 
 ---
 
@@ -1163,17 +1176,23 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (batch-143) `OntologyCritic.improvement_over_baseline/score_iqr`, `OntologyMediator.total_actions_taken/unique_action_count`
 
 ## Batch 144+ backlog
-- [ ] (P2) [graphrag] `OntologyGenerator.split_result(result, n)` — split into N balanced chunks
-- [ ] (P2) [graphrag] `OntologyOptimizer.min_score/max_score/median_score` — convenience properties
-- [ ] (P2) [graphrag] `OntologyPipeline.score_ewma(alpha)` — exponentially weighted moving average of scores
-- [ ] (P2) [graphrag] `LogicValidator.unreachable_entities(ontology, source)` — entities not reachable from source
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_zscore(value)` — z-score of a value in feedback distribution
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_covariance(scores, dim_a, dim_b)` — covariance of two dimensions
-- [ ] (P2) [graphrag] `OntologyGenerator.relationship_types(result)` — set of unique relationship types
-- [ ] (P2) [graphrag] `ExtractionConfig.is_default()` — check if config matches defaults
-- [ ] (P2) [graphrag] `OntologyMediator.apply_feedback_list(scores)` — batch apply multiple CriticScores
-- [ ] (P3) [graphrag] `OntologyOptimizer.convergence_score()` — measure how much history is converging
-- [ ] (P3) [graphrag] `LogicValidator.strongly_connected_components(ontology)` — Tarjan/Kosaraju SCC
-- [ ] (P3) [graphrag] `OntologyPipeline.trend_slope()` — linear regression slope of score history
-- [ ] (P3) [graphrag] `OntologyCritic.top_improving_dimension(before, after)` — most improved dim between two scores
-- [ ] (P3) [graphrag] `OntologyGenerator.compact_result(result)` — drop empty properties
+- [x] (P2) [graphrag] `OntologyGenerator.split_result(result, n)` — split into N balanced chunks
+- [x] (P2) [graphrag] `OntologyOptimizer.min_score/max_score/median_score` — convenience properties
+- [x] (P2) [graphrag] `OntologyPipeline.score_ewma(alpha)` — exponentially weighted moving average of scores
+- [x] (P2) [graphrag] `LogicValidator.unreachable_entities(ontology, source)` — entities not reachable from source
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_zscore(value)` — z-score of a value in feedback distribution
+- [x] (P2) [graphrag] `OntologyCritic.dimension_covariance(scores, dim_a, dim_b)` — covariance of two dimensions
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_types(result)` — set of unique relationship types
+- [x] (P2) [graphrag] `ExtractionConfig.is_default()` — check if config matches defaults
+- [x] (P2) [graphrag] `OntologyMediator.apply_feedback_list(scores)` — batch apply multiple CriticScores
+- [x] (P3) [graphrag] `OntologyOptimizer.convergence_score()` — measure how much history is converging
+- [x] (P3) [graphrag] `LogicValidator.strongly_connected_components(ontology)` — Tarjan/Kosaraju SCC
+- [x] (P3) [graphrag] `OntologyPipeline.trend_slope()` — linear regression slope of score history
+- [x] (P3) [graphrag] `OntologyCritic.top_improving_dimension(before, after)` — most improved dim between two scores
+- [x] (P3) [graphrag] `OntologyGenerator.compact_result(result)` — drop empty properties
+
+## Batches 144–148 Done ✅
+- [x] (batch-144) `OntologyOptimizer.min/max/median_score`, `OntologyPipeline.score_ewma/trend_slope`, `LogicValidator.unreachable_entities`, `OntologyLearningAdapter.feedback_zscore`, `OntologyCritic.dimension_covariance`
+- [x] (batch-145) `OntologyMediator.apply_feedback_list`, `OntologyOptimizer.convergence_score`, `LogicValidator.strongly_connected_components`
+- [x] (batch-146) `OntologyCritic.top_improving_dimension`, `OntologyGenerator.compact_result`
+- [x] (batch-148) `OntologyGenerator.relationship_types(result)`, `OntologyGenerator.split_result(result, n)`

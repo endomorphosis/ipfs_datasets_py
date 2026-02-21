@@ -1062,3 +1062,15 @@ class OntologyLearningAdapter:
         import math
         std = math.sqrt(variance)
         return (value - mean) / std
+
+    def best_n_feedback(self, n: int) -> list:
+        """Return the top-*n* feedback records by ``final_score`` (highest first).
+
+        Args:
+            n: Maximum number of records to return.
+
+        Returns:
+            List of up to *n* ``FeedbackRecord`` objects sorted descending by
+            ``final_score``.  Returns all records when *n* >= ``len(_feedback)``.
+        """
+        return sorted(self._feedback, key=lambda r: r.final_score, reverse=True)[:n]

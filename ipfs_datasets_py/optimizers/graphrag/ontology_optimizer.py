@@ -2579,6 +2579,33 @@ class OntologyOptimizer:
         std_second = _std(second_half)
         return max(0.0, min(1.0, 1.0 - std_second / std_first))
 
+    def history_entropy(self) -> float:
+        """Estimate the entropy of the score distribution in history.
+
+        Scores are discretised into 10 equal-width bins between 0 and 1.
+        Shannon entropy is computed over the resulting probability mass function.
+
+        Returns:
+            Non-negative float; ``0.0`` when history is empty or all scores
+            fall in the same bin.
+        """
+        import math
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        # 10 bins in [0, 1]
+        bins = [0] * 10
+        for s in scores:
+            idx = min(int(s * 10), 9)
+            bins[idx] += 1
+        n = len(scores)
+        entropy = 0.0
+        for count in bins:
+            if count > 0:
+                p = count / n
+                entropy -= p * math.log2(p)
+        return entropy
+
 
 # Export public API
 __all__ = [

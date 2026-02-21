@@ -1086,3 +1086,14 @@ class OntologyPipeline:
         if den == 0:
             return 0.0
         return num / den
+
+    def pipeline_score_range(self) -> float:
+        """Return the range (max - min) of overall scores in run history.
+
+        Returns:
+            Float range; ``0.0`` when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        return max(scores) - min(scores)

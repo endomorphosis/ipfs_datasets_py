@@ -1926,9 +1926,10 @@ class LogicValidator:
                 if nbr not in visited:
                     queue.append(nbr)
 
-        return sorted(all_ids - visited)
+        return sorted(sccs.get(find(n), []) for n in all_ids if n == find(n))
 
-    def strongly_connected_components(self, ontology: dict) -> list:
+
+# Export public API
         """Return strongly connected components (SCCs) using Kosaraju's algorithm.
 
         Each SCC is a list of entity IDs that are mutually reachable via
@@ -2003,6 +2004,55 @@ class LogicValidator:
                 sccs.append(sorted(dfs2(n)))
 
         return sccs
+
+    def weakly_connected_components(self, ontology: dict) -> list:
+        """Return weakly connected components treating all edges as undirected.
+
+        Uses union-find (disjoint-set) over entity IDs.  Two entities are in
+        the same WCC if there exists any directed relationship between them
+        (regardless of direction).
+
+        Args:
+            ontology: Dict with optional ``"entities"`` and ``"relationships"`` lists.
+
+        Returns:
+            List of sorted entity-ID lists, one per WCC.  Each entity that has
+            no relationships appears as its own singleton WCC.
+        """
+        entities = ontology.get("entities", [])
+        relationships = ontology.get("relationships", [])
+
+        all_ids = [e.get("id") for e in entities if e.get("id")]
+        if not all_ids:
+            return []
+
+        # Union-Find
+        parent = {n: n for n in all_ids}
+
+        def find(x):
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        def union(a, b):
+            ra, rb = find(a), find(b)
+            if ra != rb:
+                parent[ra] = rb
+
+        for rel in relationships:
+            s = rel.get("subject_id") or rel.get("source_id")
+            o = rel.get("object_id") or rel.get("target_id")
+            if s and o and s in parent and o in parent:
+                union(s, o)
+
+        # Group by root
+        groups: dict = {}
+        for n in all_ids:
+            root = find(n)
+            groups.setdefault(root, []).append(n)
+
+        return [sorted(g) for g in sorted(groups.values())]
 
 
 # Export public API
