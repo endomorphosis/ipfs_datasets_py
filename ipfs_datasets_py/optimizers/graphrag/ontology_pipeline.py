@@ -819,3 +819,36 @@ class OntologyPipeline:
         mean = sum(recent) / len(recent)
         variance = sum((s - mean) ** 2 for s in recent) / len(recent)
         return variance <= threshold
+
+    def top_n_runs(self, n: int = 3) -> list:
+        """Return the top *n* run results ordered by descending ``overall`` score.
+
+        Args:
+            n: Maximum number of runs to return (default 3).
+
+        Returns:
+            List of run result objects sorted by ``score.overall`` descending.
+            May be shorter than *n* when fewer runs are recorded.
+        """
+        if not self._run_history:
+            return []
+        sorted_runs = sorted(self._run_history, key=lambda r: r.score.overall, reverse=True)
+        return sorted_runs[:n]
+
+    def score_momentum(self, window: int = 3) -> float:
+        """Return the average score change over the last *window* entries.
+
+        Positive means improving, negative means declining, zero means flat.
+
+        Args:
+            window: Number of most-recent runs to inspect (default 3).
+
+        Returns:
+            Mean score delta per step; ``0.0`` if fewer than 2 runs.
+        """
+        entries = self._run_history[-window:] if len(self._run_history) >= 2 else []
+        if len(entries) < 2:
+            return 0.0
+        scores = [r.score.overall for r in entries]
+        diffs = [scores[i + 1] - scores[i] for i in range(len(scores) - 1)]
+        return sum(diffs) / len(diffs)

@@ -613,6 +613,36 @@ class ExtractionConfig:
         }
         return _dc.replace(self, **overrides)
 
+    def relaxed(self, delta: float = 0.1) -> "ExtractionConfig":
+        """Return a copy of this config with ``confidence_threshold`` decreased by *delta*.
+
+        The result is clamped to [0.0, 1.0].
+
+        Args:
+            delta: Amount to subtract from ``confidence_threshold`` (default 0.1).
+
+        Returns:
+            New :class:`ExtractionConfig`.
+        """
+        import dataclasses as _dc
+        new_thresh = max(0.0, self.confidence_threshold - delta)
+        return _dc.replace(self, confidence_threshold=new_thresh)
+
+    def tightened(self, delta: float = 0.1) -> "ExtractionConfig":
+        """Return a copy of this config with ``confidence_threshold`` increased by *delta*.
+
+        The result is clamped to [0.0, 1.0].
+
+        Args:
+            delta: Amount to add to ``confidence_threshold`` (default 0.1).
+
+        Returns:
+            New :class:`ExtractionConfig`.
+        """
+        import dataclasses as _dc
+        new_thresh = min(1.0, self.confidence_threshold + delta)
+        return _dc.replace(self, confidence_threshold=new_thresh)
+
 
 @dataclass
 class OntologyGenerationContext:
