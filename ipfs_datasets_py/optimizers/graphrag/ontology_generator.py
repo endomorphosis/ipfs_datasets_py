@@ -1017,6 +1017,37 @@ class EntityExtractionResult:
         import dataclasses as _dc
         return _dc.replace(self, entities=filtered, relationships=kept_rels)
 
+    def random_sample(self, n: int) -> "EntityExtractionResult":
+        """Return a new result containing *n* randomly selected entities.
+
+        Relationships whose ``source_id`` or ``target_id`` no longer exists in
+        the sampled entity set are removed.
+
+        Args:
+            n: Number of entities to sample.  If *n* >= len(entities), returns
+               a copy of the full result (no error raised).
+
+        Returns:
+            New :class:`EntityExtractionResult` with sampled entities and
+            filtered relationships.
+
+        Example:
+            >>> r2 = result.random_sample(5)
+            >>> len(r2.entities) <= 5
+            True
+        """
+        import random as _random
+        import dataclasses as _dc
+        sampled = list(self.entities)
+        if n < len(sampled):
+            sampled = _random.sample(sampled, n)
+        kept_ids = {e.id for e in sampled}
+        kept_rels = [
+            r for r in self.relationships
+            if r.source_id in kept_ids and r.target_id in kept_ids
+        ]
+        return _dc.replace(self, entities=sampled, relationships=kept_rels)
+
 
 @dataclass
 class OntologyGenerationResult:
@@ -2593,6 +2624,45 @@ class OntologyGenerator:
         )
 
 
+
+    def dedup_by_text_prefix(
+        self,
+        result: "EntityExtractionResult",
+        prefix_len: int = 5,
+    ) -> "EntityExtractionResult":
+        """Deduplicate entities that share the same normalised text prefix.
+
+        When two entities share the first *prefix_len* characters (lowercased,
+        stripped), only the one with the higher ``confidence`` is kept.
+        Relationships referencing removed entities are also removed.
+
+        Args:
+            result: Source :class:`EntityExtractionResult`.
+            prefix_len: Number of leading characters used as the dedup key.
+                Must be >= 1.
+
+        Returns:
+            New :class:`EntityExtractionResult` with duplicates removed.
+
+        Example:
+            >>> r2 = gen.dedup_by_text_prefix(result, prefix_len=4)
+        """
+        if prefix_len < 1:
+            raise ValueError("prefix_len must be >= 1")
+        seen: dict = {}
+        for entity in result.entities:
+            key = entity.text.lower().strip()[:prefix_len]
+            if key not in seen or entity.confidence > seen[key].confidence:
+                seen[key] = entity
+        deduped = list(seen.values())
+        kept_ids = {e.id for e in deduped}
+        kept_rels = [
+            r for r in result.relationships
+            if r.source_id in kept_ids and r.target_id in kept_ids
+        ]
+        import dataclasses as _dc
+        return _dc.replace(result, entities=deduped, relationships=kept_rels)
+
 __all__ = [
     'OntologyGenerator',
     'OntologyGenerationContext',
@@ -2602,3 +2672,4 @@ __all__ = [
     'ExtractionStrategy',
     'DataType',
 ]
+

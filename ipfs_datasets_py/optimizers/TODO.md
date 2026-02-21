@@ -713,12 +713,12 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] Add `OntologyMediator.get_round_count()` -- Done batch-77: -- number of refinement rounds performed
 - [x] (P3) [graphrag] Add `OntologyCritic.score_delta(score_a, score_b)` -- Done batch-77: -- per-dim delta dict
 - [x] (P2) [graphrag] Add `EntityExtractionResult.filter_by_span(start, end)` -- Done batch-77: -- keep entities with source_span in range
-- [ ] (P3) [graphrag] Add `OntologyOptimizer.worst_ontology()` -- return ontology from lowest-scoring history entry
-- [ ] (P2) [graphrag] Add `OntologyGenerator.dedup_by_text_prefix(result, prefix_len)` -- deduplicate entities with shared prefix
-- [ ] (P3) [graphrag] Add `LogicValidator.is_consistent(ontology)` -- boolean shortcut for check_consistency
+- [x] (P3) [graphrag] Add `OntologyOptimizer.worst_ontology()` -- Done batch-78: -- return ontology from lowest-scoring history entry
+- [x] (P2) [graphrag] Add `OntologyGenerator.dedup_by_text_prefix(result, prefix_len)` -- Done batch-78: -- deduplicate entities with shared prefix
+- [x] (P3) [graphrag] Add `LogicValidator.is_consistent(ontology)` -- Done batch-78: -- boolean shortcut for check_consistency
 - [ ] (P2) [graphrag] Add `OntologyPipeline.history` property -- return list of PipelineResult from past runs
 - [ ] (P3) [graphrag] Add `ExtractionConfig.apply_defaults_for_domain(domain)` -- mutate thresholds in-place for domain
-- [ ] (P2) [graphrag] Add `OntologyCritic.critical_weaknesses(score)` -- return only weaknesses below 0.5 threshold
+- [x] (P2) [graphrag] Add `OntologyCritic.critical_weaknesses(score)` -- Done batch-78: -- return only weaknesses below 0.5 threshold
 - [ ] (P3) [graphrag] Add `OntologyMediator.peek_undo()` -- return top of undo stack without popping
-- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.serialize_to_file(path)` and `from_file(path)` -- file-based persistence
-- [ ] (P3) [graphrag] Add `EntityExtractionResult.random_sample(n)` -- return result with n random entities
+- [x] (P2) [graphrag] Add `OntologyLearningAdapter.serialize_to_file(path)` and `from_file(path)` -- Done batch-78: -- file-based persistence
+- [x] (P3) [graphrag] Add `EntityExtractionResult.random_sample(n)` -- Done batch-78: -- return result with n random entities

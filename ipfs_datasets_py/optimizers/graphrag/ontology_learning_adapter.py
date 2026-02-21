@@ -403,3 +403,65 @@ class OntologyLearningAdapter:
             "max_score": round(max(scores), 6),
             "current_threshold": self._current_threshold,
         }
+
+    def serialize_to_file(self, path: str) -> None:
+        """Persist the adapter state to a JSON file.
+
+        Serializes :attr:`_feedback`, :attr:`_current_threshold`, and
+        :attr:`_action_count` / :attr:`_action_success` dicts to a JSON file
+        so the adapter can be restored later via :meth:`from_file`.
+
+        Args:
+            path: Filesystem path to write.  Parent directory must exist.
+
+        Example:
+            >>> adapter.serialize_to_file("/tmp/adapter.json")
+        """
+        import json as _json
+        payload = {
+            "current_threshold": self._current_threshold,
+            "action_count": dict(self._action_count),
+            "action_success": dict(self._action_success),
+            "feedback": [
+                {
+                    "final_score": r.final_score,
+                    "action_types": list(r.action_types),
+                    "confidence_at_extraction": r.confidence_at_extraction,
+                }
+                for r in self._feedback
+            ],
+        }
+        with open(path, "w", encoding="utf-8") as fh:
+            _json.dump(payload, fh, indent=2)
+
+    @classmethod
+    def from_file(cls, path: str, **init_kwargs) -> "OntologyLearningAdapter":
+        """Restore an adapter previously saved with :meth:`serialize_to_file`.
+
+        Args:
+            path: Path of the JSON file written by :meth:`serialize_to_file`.
+            **init_kwargs: Extra keyword arguments forwarded to
+                :meth:`__init__` (e.g. ``domain``, ``base_threshold``).
+
+        Returns:
+            New :class:`OntologyLearningAdapter` with state restored.
+
+        Example:
+            >>> adapter2 = OntologyLearningAdapter.from_file("/tmp/adapter.json")
+        """
+        import json as _json
+        with open(path, "r", encoding="utf-8") as fh:
+            payload = _json.load(fh)
+        instance = cls(**init_kwargs)
+        instance._current_threshold = payload.get("current_threshold", instance._current_threshold)
+        instance._action_count = dict(payload.get("action_count", {}))
+        instance._action_success = dict(payload.get("action_success", {}))
+        instance._feedback = [
+            FeedbackRecord(
+                final_score=r["final_score"],
+                action_types=list(r.get("action_types", [])),
+                confidence_at_extraction=r.get("confidence_at_extraction"),
+            )
+            for r in payload.get("feedback", [])
+        ]
+        return instance

@@ -1539,6 +1539,21 @@ class OntologyOptimizer:
         best_report = max(self._history, key=lambda r: r.average_score)
         return best_report.best_ontology
 
+    def worst_ontology(self) -> Optional[Dict[str, Any]]:
+        """Return the ontology from the lowest-scoring :class:`OptimizationReport`.
+
+        Returns:
+            Ontology dict from the worst history entry, or ``None`` if history
+            is empty.
+
+        Example:
+            >>> worst = optimizer.worst_ontology()
+        """
+        if not self._history:
+            return None
+        worst_report = min(self._history, key=lambda r: r.average_score)
+        return worst_report.best_ontology
+
     @property
     def history_length(self) -> int:
         """Return the number of :class:`OptimizationReport` entries in history.

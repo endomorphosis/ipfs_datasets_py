@@ -791,6 +791,22 @@ class OntologyMediator:
         """
         return len(self._undo_stack)
 
+    def peek_undo(self) -> Optional[Dict[str, Any]]:
+        """Return the top snapshot from the undo stack without popping it.
+
+        Returns:
+            The most recent ontology snapshot dict, or ``None`` if the undo
+            stack is empty.
+
+        Example:
+            >>> snap = mediator.peek_undo()
+            >>> snap is not None or mediator.get_undo_depth() == 0
+            True
+        """
+        if not self._undo_stack:
+            return None
+        return self._undo_stack[-1]
+
     def set_max_rounds(self, n: int) -> None:
         """Update the maximum refinement rounds at runtime.
 

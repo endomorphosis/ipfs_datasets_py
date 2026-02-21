@@ -1688,6 +1688,30 @@ class OntologyCritic(BaseCritic):
         dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment", "overall"]
         return {d: round(getattr(score_b, d) - getattr(score_a, d), 6) for d in dims}
 
+    def critical_weaknesses(
+        self,
+        score: "CriticScore",
+        threshold: float = 0.5,
+    ) -> Dict[str, float]:
+        """Return dimensions whose value is below *threshold*.
+
+        Args:
+            score: A :class:`CriticScore` to inspect.
+            threshold: Dimensions strictly below this value are considered
+                critical weaknesses.  Defaults to ``0.5``.
+
+        Returns:
+            Dict mapping dimension name → score value for each weak dimension.
+            Empty dict means no critical weaknesses.
+
+        Example:
+            >>> weak = critic.critical_weaknesses(score)
+            >>> all(v < 0.5 for v in weak.values())
+            True
+        """
+        dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        return {d: getattr(score, d) for d in dims if getattr(score, d) < threshold}
+
     def _generate_recommendations(
         self,
         ontology: Dict[str, Any],

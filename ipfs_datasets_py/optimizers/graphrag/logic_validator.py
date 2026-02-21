@@ -946,6 +946,21 @@ class LogicValidator:
         except Exception:
             return 0
 
+    def is_consistent(self, ontology: Dict[str, Any]) -> bool:
+        """Return ``True`` if the ontology has no logical contradictions.
+
+        Convenience boolean shortcut wrapping :meth:`check_consistency`.
+
+        Returns:
+            ``True`` when :meth:`count_contradictions` returns 0, ``False``
+            otherwise.
+
+        Example:
+            >>> validator.is_consistent({"entities": []})
+            True
+        """
+        return self.count_contradictions(ontology) == 0
+
     def clear_tdfol_cache(self) -> int:
         """Clear the TDFOL formula cache.
 

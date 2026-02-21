@@ -31,8 +31,8 @@ class ValidationLevel(Enum):
 
 
 @dataclass
-class DetailedValidationResult:
-    """Extended validation result with detailed breakdown.
+class _AsyncDetailedValidationResult:
+    """Extended validation result with detailed breakdown (async implementation).
     
     Attributes:
         passed: Overall validation status
@@ -101,7 +101,7 @@ class Validator(ABC):
         pass
 
 
-class SyntaxValidator(Validator):
+class _AsyncSyntaxValidator(Validator):
     """Validates Python syntax using AST parsing."""
     
     async def validate(
@@ -150,7 +150,7 @@ class SyntaxValidator(Validator):
         return result
 
 
-class TypeValidator(Validator):
+class _AsyncTypeValidator(Validator):
     """Validates type hints using mypy."""
     
     def __init__(self, strict: bool = False):
@@ -239,7 +239,7 @@ class TypeValidator(Validator):
         return result
 
 
-class TestValidator(Validator):
+class _AsyncTestValidator(Validator):
     """Validates code by running tests."""
     
     def __init__(self, test_path: Optional[Path] = None):
@@ -365,7 +365,7 @@ class TestValidator(Validator):
         return test_files
 
 
-class PerformanceValidator(Validator):
+class _AsyncPerformanceValidator(Validator):
     """Validates performance improvements."""
     
     def __init__(
@@ -489,7 +489,7 @@ class PerformanceValidator(Validator):
         return metrics
 
 
-class SecurityValidator(Validator):
+class _AsyncSecurityValidator(Validator):
     """Validates code security."""
     
     async def validate(
@@ -585,7 +585,7 @@ class SecurityValidator(Validator):
         return result
 
 
-class StyleValidator(Validator):
+class _AsyncStyleValidator(Validator):
     """Validates code style."""
     
     def __init__(self, strict: bool = False):
@@ -702,8 +702,13 @@ class StyleValidator(Validator):
         return result
 
 
-class OptimizationValidator:
-    """Comprehensive multi-level validation orchestrator."""
+class _AsyncOptimizationValidator:
+    """Comprehensive multi-level validation orchestrator (async implementation).
+    
+    This class provides the actual async validation pipeline that supports
+    syntax checking, type checking, unit tests, integration tests, performance
+    validation, security scanning, and style checking.
+    """
     
     def __init__(
         self,
@@ -734,25 +739,25 @@ class OptimizationValidator:
         self.validators: Dict[str, Validator] = {}
         
         # All levels include syntax
-        self.validators["syntax"] = SyntaxValidator()
+        self.validators["syntax"] = _AsyncSyntaxValidator()
         
         if level in [ValidationLevel.STANDARD, ValidationLevel.STRICT, ValidationLevel.PARANOID]:
-            self.validators["types"] = TypeValidator(strict=(level == ValidationLevel.PARANOID))
-            self.validators["unit_tests"] = TestValidator()
+            self.validators["types"] = _AsyncTypeValidator(strict=(level == ValidationLevel.PARANOID))
+            self.validators["unit_tests"] = _AsyncTestValidator()
         
         if level in [ValidationLevel.STRICT, ValidationLevel.PARANOID]:
-            self.validators["performance"] = PerformanceValidator()
+            self.validators["performance"] = _AsyncPerformanceValidator()
         
         if level == ValidationLevel.PARANOID:
-            self.validators["security"] = SecurityValidator()
-            self.validators["style"] = StyleValidator(strict=True)
+            self.validators["security"] = _AsyncSecurityValidator()
+            self.validators["style"] = _AsyncStyleValidator(strict=True)
     
     async def validate(
         self,
         code: str,
         target_files: List[Path],
         context: Optional[Dict[str, Any]] = None,
-    ) -> DetailedValidationResult:
+    ) -> _AsyncDetailedValidationResult:
         """Perform comprehensive validation.
         
         Args:
@@ -780,7 +785,7 @@ class OptimizationValidator:
             all_errors.extend(result.get("errors", []))
             all_warnings.extend(result.get("warnings", []))
         
-        detailed_result = DetailedValidationResult(
+        detailed_result = _AsyncDetailedValidationResult(
             passed=all_passed,
             level=self.level,
             syntax=results.get("syntax", {}),
@@ -827,30 +832,52 @@ class OptimizationValidator:
                 validator_funcs.append(validate_wrapper)
             
             # Run with enhanced parallel validator
+            # Note: run_async returns List[Tuple[bool, Any]] where:
+            # - bool indicates success
+            # - Any is either the result dict or error message
             results_list = await self.parallel_validator.run_async(validator_funcs)
             
-            return {
-                name: result if not isinstance(result, Exception) else {
-                    "passed": False,
-                    "errors": [str(result)],
-                }
-                for name, result in zip(validator_names, results_list)
-            }
+            result_dict = {}
+            for name, (success, data) in zip(validator_names, results_list):
+                if success and isinstance(data, dict):
+                    result_dict[name] = data
+                else:
+                    # Error case: data is error message
+                    result_dict[name] = {
+                        "passed": False,
+                        "errors": [str(data)] if data else ["Unknown error"],
+                    }
+            
+            return result_dict
         else:
-            # Fall back to standard anyio task group
+            # Fall back to standard asyncio gathering
             tasks = {
                 name: validator.validate(code, target_files, context)
                 for name, validator in self.validators.items()
             }
             
-            results = await _anyio_gather(list(tasks.values()))
+            # Use asyncio.gather to run all tasks concurrently
+            import asyncio
+            task_names = list(tasks.keys())
+            task_coros = list(tasks.values())
+            
+            try:
+                results_list = await asyncio.gather(*task_coros, return_exceptions=True)
+            except Exception:
+                # Fallback if asyncio.gather fails
+                results_list = []
+                for coro in task_coros:
+                    try:
+                        results_list.append(await coro)
+                    except Exception as e:
+                        results_list.append({"passed": False, "errors": [str(e)]})
             
             return {
-                name: result if not isinstance(result, Exception) else {
+                name: result if isinstance(result, dict) else {
                     "passed": False,
-                    "errors": [str(result)],
+                    "errors": [str(result)] if result else ["Unknown error"],
                 }
-                for name, result in zip(tasks.keys(), results)
+                for name, result in zip(task_names, results_list)
             }
     
     async def _validate_sequential(
@@ -888,7 +915,7 @@ class OptimizationValidator:
         code: str,
         target_files: List[Path],
         context: Optional[Dict[str, Any]] = None,
-    ) -> DetailedValidationResult:
+    ) -> _AsyncDetailedValidationResult:
         """Synchronous wrapper for validate().
         
         Args:
@@ -924,6 +951,7 @@ class ValidationLevel(Enum):
 
 @dataclass
 class DetailedValidationResult:
+    """Lightweight result for unit tests."""
     passed: bool
     level: ValidationLevel
     syntax_passed: Optional[bool] = None
@@ -937,6 +965,7 @@ class DetailedValidationResult:
 
 
 class SyntaxValidator:
+    """Lightweight syntax validator for unit tests."""
     def validate(self, code: str) -> ValidationResult:
         errors: List[str] = []
         try:
@@ -986,8 +1015,10 @@ class SyntaxValidator:
 
 
 class TypeValidator:
-    def __init__(self, strict_mode: bool = False):
-        self.strict_mode = bool(strict_mode)
+    """Lightweight type validator for unit tests."""
+    def __init__(self, strict: bool = False, strict_mode: bool = False):
+        # Accept both 'strict' and 'strict_mode' for compatibility
+        self.strict_mode = bool(strict or strict_mode)
 
     def validate(self, file_path: str) -> ValidationResult:
         # If mypy is unavailable, be permissive.
@@ -999,6 +1030,7 @@ class TypeValidator:
 
 
 class TestValidator:
+    """Lightweight test validator for unit tests."""
     def discover_tests(self, root: str) -> List[str]:
         root_path = Path(root)
         if not root_path.exists():
@@ -1011,6 +1043,7 @@ class TestValidator:
 
 
 class PerformanceValidator:
+    """Lightweight performance validator for unit tests."""
     def __init__(self, min_improvement: float = 0.0):
         self.min_improvement = float(min_improvement)
 
@@ -1050,6 +1083,7 @@ class PerformanceValidator:
 
 
 class SecurityValidator:
+    """Lightweight security validator for unit tests."""
     def detect_dangerous_patterns(self, code: str) -> List[str]:
         issues: List[str] = []
         lowered = code.lower()
@@ -1085,6 +1119,7 @@ class SecurityValidator:
 
 
 class StyleValidator:
+    """Lightweight style validator for unit tests."""
     def check_docstrings(self, code: str) -> float:
         tree = ast.parse(code)
         funcs = [n for n in tree.body if isinstance(n, ast.FunctionDef)]
@@ -1130,104 +1165,206 @@ class StyleValidator:
 
 
 class OptimizationValidator:
-    def __init__(self):
+    """Unified validation orchestrator using the full async pipeline.
+    
+    This is the main entry point for agentic validation. It delegates to the
+    comprehensive async validators (_AsyncOptimizationValidator) while maintaining
+    backward compatibility with synchronous code via anyio runner.
+    """
+    
+    def __init__(
+        self,
+        level: ValidationLevel = ValidationLevel.STANDARD,
+        parallel: bool = True,
+        max_workers: int = 4,
+        use_enhanced_parallel: bool = True,
+    ):
+        """Initialize validation orchestrator using async validators.
+        
+        Args:
+            level: Validation level to use
+            parallel: Run validators in parallel
+            max_workers: Maximum parallel workers
+            use_enhanced_parallel: Use enhanced parallel validator
+        """
+        # Delegate to the full async implementation
+        self._async_validator = _AsyncOptimizationValidator(
+            level=level,
+            parallel=parallel,
+            max_workers=max_workers,
+            use_enhanced_parallel=use_enhanced_parallel,
+        )
+        self.level = level
+        self.parallel = parallel
+        
+        # Provide simple validators as attributes for test compatibility
         self.syntax_validator = SyntaxValidator()
-        self.type_validator = TypeValidator(strict_mode=False)
+        self.type_validator = TypeValidator()
         self.test_validator = TestValidator()
-        self.performance_validator = PerformanceValidator(min_improvement=5.0)
+        self.performance_validator = PerformanceValidator()
         self.security_validator = SecurityValidator()
         self.style_validator = StyleValidator()
 
     def validate(
         self,
         code: str,
-        level: ValidationLevel = ValidationLevel.STANDARD,
+        target_files: Optional[List[Path]] = None,
+        level: Optional[ValidationLevel] = None,
         baseline_metrics: Optional[Dict[str, float]] = None,
         optimized_metrics: Optional[Dict[str, float]] = None,
-        parallel: bool = False,
+        parallel: Optional[bool] = None,
         timeout: Optional[int] = None,
+        context: Optional[Dict[str, Any]] = None,
     ) -> DetailedValidationResult:
-        errors: List[str] = []
-        warnings: List[str] = []
-
-        syntax_res = self.syntax_validator.validate(code)
-        syntax_passed = syntax_res.passed
-        if not syntax_passed:
-            errors.extend(syntax_res.errors)
-
-        type_passed: Optional[bool] = None
-        test_passed: Optional[bool] = None
-        perf_passed: Optional[bool] = None
-        sec_passed: Optional[bool] = None
-        style_passed: Optional[bool] = None
-
-        if level in {ValidationLevel.STANDARD, ValidationLevel.STRICT, ValidationLevel.PARANOID}:
-            type_passed = True
-            test_passed = True
-
-        if level in {ValidationLevel.STRICT, ValidationLevel.PARANOID}:
-            if baseline_metrics is not None and optimized_metrics is not None:
-                perf_res = self.performance_validator.validate_improvement(baseline_metrics, optimized_metrics)
-                perf_passed = perf_res.passed
-                if not perf_passed:
-                    errors.extend(perf_res.errors)
-            else:
-                perf_passed = True
-
-        if level == ValidationLevel.PARANOID:
-            sec = self.security_validator.validate(code)
-            sec_passed = sec.passed
-            if not sec_passed:
-                errors.extend(sec.errors)
-
-            style = self.style_validator.validate(code)
-            style_passed = style.passed
-            if not style_passed:
-                errors.extend(style.errors)
-
-        passed = len(errors) == 0
-        return DetailedValidationResult(
-            passed=passed,
+        """Synchronous validation using the full async pipeline.
+        
+        This delegates to the async validators via anyio runner, providing
+        full validation while maintaining a synchronous API.
+        
+        Args:
+            code: Code to validate
+            target_files: Original target files (default: empty list)
+            level: Validation level (default: use instance level)
+            baseline_metrics: Baseline performance metrics for comparison
+            optimized_metrics: Optimized code metrics for comparison
+            parallel: Run validators in parallel
+            timeout: Validation timeout in seconds
+            context: Additional validation context
+            
+        Returns:
+            Detailed validation result with comprehensive breakdown
+        """
+        from ipfs_datasets_py.utils.anyio_compat import run as _anyio_run
+        
+        target_files = target_files or []
+        level = level or self.level
+        parallel = parallel if parallel is not None else self.parallel
+        
+        # Build validation context
+        val_context = context or {}
+        if baseline_metrics:
+            val_context["baseline_metrics"] = baseline_metrics
+        if optimized_metrics:
+            val_context["optimized_metrics"] = optimized_metrics
+        
+        # Create a new async validator with specified level for this validation
+        async_val = _AsyncOptimizationValidator(
             level=level,
-            syntax_passed=syntax_passed,
-            type_passed=type_passed,
-            test_passed=test_passed,
-            performance_passed=perf_passed,
-            security_passed=sec_passed,
-            style_passed=style_passed,
-            errors=errors,
-            warnings=warnings,
+            parallel=parallel,
+            use_enhanced_parallel=True,
+        )
+        
+        # Run async validation synchronously
+        async_result = _anyio_run(
+            async_val.validate(code, target_files, val_context)
+        )
+        
+        # Convert async result to test-facing result for backward compatibility
+        return DetailedValidationResult(
+            passed=async_result.passed,
+            level=async_result.level,
+            syntax_passed=async_result.syntax.get("passed", False),
+            type_passed=async_result.types.get("passed", True),
+            test_passed=async_result.unit_tests.get("passed", True),
+            performance_passed=async_result.performance.get("passed", True),
+            security_passed=async_result.security.get("passed", True),
+            style_passed=async_result.style.get("passed", True),
+            errors=async_result.errors,
+            warnings=async_result.warnings,
         )
 
     async def validate_async(
         self,
         code: str,
-        level: "ValidationLevel" = None,
+        target_files: Optional[List[Path]] = None,
+        level: Optional[ValidationLevel] = None,
         baseline_metrics: Optional[Dict[str, float]] = None,
         optimized_metrics: Optional[Dict[str, float]] = None,
-        parallel: bool = False,
+        parallel: Optional[bool] = None,
         timeout: Optional[int] = None,
-    ) -> "DetailedValidationResult":
-        kwargs = {}
-        if level is not None:
-            kwargs["level"] = level
-        if baseline_metrics is not None:
-            kwargs["baseline_metrics"] = baseline_metrics
-        if optimized_metrics is not None:
-            kwargs["optimized_metrics"] = optimized_metrics
-        kwargs["parallel"] = parallel
-        if timeout is not None:
-            kwargs["timeout"] = timeout
-        return self.validate(code, **kwargs)
+        context: Optional[Dict[str, Any]] = None,
+    ) -> DetailedValidationResult:
+        """Asynchronous validation using the full async pipeline.
+        
+        This is the preferred method for async code as it provides the most
+        comprehensive validation without blocking.
+        
+        Args:
+            code: Code to validate
+            target_files: Original target files
+            level: Validation level
+            baseline_metrics: Baseline performance metrics
+            optimized_metrics: Optimized code metrics
+            parallel: Run validators in parallel
+            timeout: Validation timeout
+            context: Additional validation context
+            
+        Returns:
+            Detailed validation result with comprehensive breakdown
+        """
+        target_files = target_files or []
+        level = level or self.level
+        parallel = parallel if parallel is not None else self.parallel
+        
+        # Build validation context
+        val_context = context or {}
+        if baseline_metrics:
+            val_context["baseline_metrics"] = baseline_metrics
+        if optimized_metrics:
+            val_context["optimized_metrics"] = optimized_metrics
+        
+        # Create async validator with specified level
+        async_val = _AsyncOptimizationValidator(
+            level=level,
+            parallel=parallel,
+            use_enhanced_parallel=True,
+        )
+        
+        # Run async validation
+        return await async_val.validate(code, target_files, val_context)
 
-    # CLI helper: validate a file at a given level name.
-    def validate_file(self, file_path: str, level: str = "standard") -> ValidationResult:
+    def validate_file(
+        self,
+        file_path: str,
+        level: Optional[str] = None,
+    ) -> ValidationResult:
+        """Validate a Python file synchronously.
+        
+        Args:
+            file_path: Path to Python file
+            level: Validation level name (basic/standard/strict/paranoid)
+            
+        Returns:
+            Simple validation result
+        """
         p = Path(file_path)
         try:
             code = p.read_text() if p.exists() else str(file_path)
         except (OSError, IOError, UnicodeDecodeError):
             code = str(file_path)
 
-        lvl = ValidationLevel(str(level).lower()) if str(level).lower() in {l.value for l in ValidationLevel} else ValidationLevel.STANDARD
-        detailed = self.validate(code, level=lvl)
-        return ValidationResult(passed=detailed.passed, errors=detailed.errors, warnings=detailed.warnings)
+        # Parse level name
+        level_str = str(level or "standard").lower()
+        try:
+            val_level = ValidationLevel(level_str)
+        except ValueError:
+            val_level = ValidationLevel.STANDARD
+        
+        # Validate using async pipeline
+        detailed = self.validate(code, level=val_level)
+        
+        # Convert to simple ValidationResult for backward compatibility
+        return ValidationResult(
+            passed=detailed.passed,
+            syntax_check=detailed.syntax.get("passed", False),
+            type_check=detailed.types.get("passed", True),
+            unit_tests=detailed.unit_tests.get("passed", True),
+            integration_tests=detailed.integration_tests.get("passed", True),
+            performance_tests=detailed.performance.get("passed", True),
+            security_scan=detailed.security.get("passed", True),
+            style_check=detailed.style.get("passed", True),
+            errors=detailed.errors,
+            warnings=detailed.warnings,
+        )
+
+
