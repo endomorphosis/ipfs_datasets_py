@@ -624,6 +624,27 @@ class OntologyPipeline:
         """
         return len(self._run_history) > 0
 
+    def warmup(self, n_texts: int = 3) -> None:
+        """Pre-warm the pipeline by running *n_texts* dummy single-word texts.
+
+        Results are discarded and do NOT appear in :meth:`history`.  This is
+        useful to trigger any lazy initialization (e.g. LLM model loading)
+        before live requests.
+
+        Args:
+            n_texts: Number of dummy runs to execute.  Defaults to 3.
+
+        Example:
+            >>> pipeline.warmup()
+        """
+        saved = list(self._run_history)
+        for i in range(n_texts):
+            try:
+                self.run(f"warmup_{i}")
+            except Exception:
+                pass
+        self._run_history[:] = saved
+
     def summary(self) -> str:
         """Return a compact one-line description of this pipeline's configuration.
 

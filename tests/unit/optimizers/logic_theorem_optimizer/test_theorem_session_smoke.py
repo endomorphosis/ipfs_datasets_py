@@ -19,6 +19,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_critic import (
     CriticScore,
     DimensionScore,
 )
+from ipfs_datasets_py.optimizers.common.extraction_contexts import LogicExtractionConfig
 
 
 def test_logic_theorem_optimizer_run_session_smoke(monkeypatch):
@@ -34,8 +35,8 @@ def test_logic_theorem_optimizer_run_session_smoke(monkeypatch):
     extraction_context = LogicExtractionContext(
         data="All employees must complete training.",
         data_type=DataType.TEXT,
-        extraction_mode=ExtractionMode.FOL,
         domain="general",
+        config=LogicExtractionConfig(extraction_mode=ExtractionMode.FOL)
     )
     extraction_result = ExtractionResult(
         statements=[

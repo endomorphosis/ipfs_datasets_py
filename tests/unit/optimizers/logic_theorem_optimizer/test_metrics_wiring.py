@@ -128,10 +128,12 @@ class TestLogicTheoremOptimizerLearningMetrics:
             CriticScore, CriticDimensions, DimensionScore,
         )
         from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationContext
+        from ipfs_datasets_py.optimizers.common.extraction_contexts import LogicExtractionConfig
 
+        config = LogicExtractionConfig(extraction_mode=ExtractionMode.FOL, domain="general")
         extraction_ctx = LogicExtractionContext(
             data="Test theorem.", data_type=DataType.TEXT,
-            extraction_mode=ExtractionMode.FOL, domain="general",
+            domain="general", config=config
         )
         fake_result = ExtractionResult(
             statements=[LogicalStatement(

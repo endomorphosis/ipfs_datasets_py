@@ -36,6 +36,7 @@ from ..common.base_optimizer import (
     OptimizationContext,
     OptimizationStrategy,
 )
+from ..common.extraction_contexts import LogicExtractionConfig
 from .logic_extractor import (
     LogicExtractor,
     LogicExtractionContext,
@@ -278,12 +279,15 @@ class LogicTheoremOptimizer(BaseOptimizer):
             # Determine data type
             data_type = self._infer_data_type(input_data)
             
+            # Create extraction config with extraction mode
+            config = LogicExtractionConfig(extraction_mode=self.extraction_mode)
+            
             # Create extraction context
             extraction_context = LogicExtractionContext(
                 data=input_data,
                 data_type=data_type,
-                extraction_mode=self.extraction_mode,
                 domain=context.domain or self.domain,
+                config=config,
                 previous_extractions=self.extraction_history[-3:],  # Last 3 for context
                 hints=context.metadata.get('hints'),
             )
@@ -401,11 +405,14 @@ class LogicTheoremOptimizer(BaseOptimizer):
             combined_feedback = feedback + optimization_report.recommendations
             
             # Create improved extraction context with feedback
+            improved_config = LogicExtractionConfig(
+                extraction_mode=artifact.context.extraction_mode
+            )
             improved_context = LogicExtractionContext(
                 data=artifact.context.data,
                 data_type=artifact.context.data_type,
-                extraction_mode=artifact.context.extraction_mode,
                 domain=artifact.context.domain,
+                config=improved_config,
                 ontology=artifact.context.ontology,
                 previous_extractions=self.extraction_history[-3:],
                 hints=combined_feedback,  # Use feedback as hints

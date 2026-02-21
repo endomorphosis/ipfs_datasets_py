@@ -951,6 +951,23 @@ class OntologyMediator:
         """
         return len(self._undo_stack)
 
+    def log_snapshot(self, label: str, ontology: Dict[str, Any]) -> None:
+        """Store a labeled snapshot in the undo stack.
+
+        Pushes a deep copy of *ontology* onto the undo stack and records
+        *label* in ``_action_entries`` for traceability.
+
+        Args:
+            label: Human-readable label for this snapshot.
+            ontology: Ontology dict to snapshot.
+
+        Example:
+            >>> mediator.log_snapshot("before_refinement", my_ontology)
+        """
+        import copy as _copy
+        self._undo_stack.append(_copy.deepcopy(ontology))
+        self._action_entries.append({"action": f"snapshot:{label}", "round": len(self._undo_stack)})
+
     def set_max_rounds(self, n: int) -> None:
         """Update the maximum refinement rounds at runtime.
 

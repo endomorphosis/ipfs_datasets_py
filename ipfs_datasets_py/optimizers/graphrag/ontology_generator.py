@@ -1389,6 +1389,30 @@ class EntityExtractionResult:
         """
         return [e.text for e in self.entities]
 
+    def confidence_histogram(self, bins: int = 5) -> Dict[str, int]:
+        """Return a histogram of entity confidence values bucketed into *bins*.
+
+        Args:
+            bins: Number of equal-width buckets from 0.0 to 1.0.
+                Defaults to 5.
+
+        Returns:
+            OrderedDict mapping ``"<lo>-<hi>"`` label strings to entity counts.
+            Buckets with zero entities are included.
+
+        Example:
+            >>> result.confidence_histogram(bins=2)
+            {'0.00-0.50': 1, '0.50-1.00': 3}
+        """
+        from collections import OrderedDict as _OD
+        width = 1.0 / bins
+        labels = [f"{i * width:.2f}-{(i + 1) * width:.2f}" for i in range(bins)]
+        counts: Dict[str, int] = _OD((lbl, 0) for lbl in labels)
+        for e in self.entities:
+            bucket = min(int(e.confidence / width), bins - 1)
+            counts[labels[bucket]] += 1
+        return dict(counts)
+
 
 @dataclass
 class OntologyGenerationResult:

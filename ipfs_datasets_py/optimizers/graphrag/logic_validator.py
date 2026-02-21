@@ -1000,6 +1000,23 @@ class LogicValidator:
             not ontology.get("entities") and not ontology.get("relationships")
         )
 
+    def contradiction_count(self, ontology: Dict[str, Any]) -> int:
+        """Return the number of logical contradictions in *ontology*.
+
+        Alias for :meth:`count_contradictions` with a more explicit name.
+
+        Args:
+            ontology: Ontology dict to check.
+
+        Returns:
+            Non-negative integer contradiction count.
+
+        Example:
+            >>> validator.contradiction_count({"entities": []})
+            0
+        """
+        return self.count_contradictions(ontology)
+
     def format_report(self, result: "ValidationResult") -> str:
         """Produce a human-readable validation report from *result*.
 

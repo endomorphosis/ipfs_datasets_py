@@ -2072,6 +2072,24 @@ class OntologyCritic(BaseCritic):
         """
         return all(s.is_passing(threshold) for s in scores)
 
+    def score_range(self, scores: List["CriticScore"]) -> tuple:
+        """Return a ``(min, max)`` tuple of ``overall`` values from *scores*.
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+
+        Returns:
+            Tuple ``(min_overall, max_overall)``, or ``(0.0, 0.0)`` for an
+            empty list.
+
+        Example:
+            >>> lo, hi = critic.score_range([s1, s2, s3])
+        """
+        if not scores:
+            return (0.0, 0.0)
+        vals = [s.overall for s in scores]
+        return (min(vals), max(vals))
+
     def evaluate_list(
         self,
         ontologies: List[Dict[str, Any]],
