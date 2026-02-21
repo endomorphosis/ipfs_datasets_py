@@ -45,7 +45,7 @@ def _make_critic_score(overall_approx=0.7):
         consistency=overall_approx,
         clarity=overall_approx,
         granularity=overall_approx,
-        domain_alignment=overall_approx,
+        relationship_coherence=overall_approx, domain_alignment=overall_approx,
     )
 
 

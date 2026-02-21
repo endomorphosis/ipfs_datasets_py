@@ -45,7 +45,7 @@ def _score(overall):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
     return CriticScore(
         completeness=overall, consistency=overall, clarity=overall,
-        granularity=overall, domain_alignment=overall,
+        granularity=overall, relationship_coherence=overall, domain_alignment=overall,
     )
 
 

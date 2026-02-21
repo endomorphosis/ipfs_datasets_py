@@ -86,7 +86,7 @@ class TestScoreBatchSummary:
 
     def test_mean_correct(self):
         critic = OntologyCritic(use_llm=False)
-        s1 = _score(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, domain_alignment=0.5)
+        s1 = _score(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
         s2 = _score(completeness=1.0, consistency=1.0, clarity=1.0, granularity=1.0, domain_alignment=1.0)
         summary = critic.score_batch_summary([s1, s2])
         assert abs(summary["mean_overall"] - 0.75) < 0.01  # rough check

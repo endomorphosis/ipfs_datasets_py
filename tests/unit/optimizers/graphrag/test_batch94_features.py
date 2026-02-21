@@ -53,7 +53,7 @@ def _make_mediator():
 def _make_score(overall_target: float) -> CriticScore:
     # completeness has weight 0.3, let's set all equal for predictable overall
     v = overall_target
-    return CriticScore(completeness=v, consistency=v, clarity=v, granularity=v, domain_alignment=v)
+    return CriticScore(completeness=v, consistency=v, clarity=v, granularity=v, relationship_coherence=v, domain_alignment=v)
 
 
 # ---------------------------------------------------------------------------

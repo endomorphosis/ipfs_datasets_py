@@ -38,7 +38,7 @@ def _make_result(*entities: Entity) -> EntityExtractionResult:
 
 
 def _make_score(v: float) -> CriticScore:
-    return CriticScore(completeness=v, consistency=v, clarity=v, granularity=v, domain_alignment=v)
+    return CriticScore(completeness=v, consistency=v, clarity=v, granularity=v, relationship_coherence=v, domain_alignment=v)
 
 
 # ---------------------------------------------------------------------------

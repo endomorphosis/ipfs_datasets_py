@@ -108,9 +108,9 @@ class TestCriticScoreSub:
     def scores(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
         a = CriticScore(completeness=0.8, consistency=0.7, clarity=0.6,
-                        granularity=0.5, domain_alignment=0.9)
+                        granularity=0.5, relationship_coherence=0.9, domain_alignment=0.9)
         b = CriticScore(completeness=0.6, consistency=0.5, clarity=0.4,
-                        granularity=0.3, domain_alignment=0.7)
+                        granularity=0.3, relationship_coherence=0.7, domain_alignment=0.7)
         return a, b
 
     def test_sub_returns_critic_score(self, scores):
@@ -162,7 +162,7 @@ class TestCriticScoreSub:
     def test_identity_sub_gives_zero_deltas(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
         s = CriticScore(completeness=0.7, consistency=0.7, clarity=0.7,
-                        granularity=0.7, domain_alignment=0.7)
+                        granularity=0.7, relationship_coherence=0.7, domain_alignment=0.7)
         delta = s - s
         for dim in ("completeness", "consistency", "clarity", "granularity", "domain_alignment"):
             assert abs(getattr(delta, dim)) < 1e-9

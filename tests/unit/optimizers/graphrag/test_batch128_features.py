@@ -24,7 +24,7 @@ def _score(overall):
         consistency=overall,
         clarity=overall,
         granularity=overall,
-        domain_alignment=overall,
+        relationship_coherence=overall, domain_alignment=overall,
     )
 
 

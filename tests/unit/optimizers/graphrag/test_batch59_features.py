@@ -33,7 +33,7 @@ def _score(c=0.8, co=0.7, cl=0.9, g=0.6, da=0.75):
         consistency=co,
         clarity=cl,
         granularity=g,
-        domain_alignment=da,
+        relationship_coherence=da, domain_alignment=da,
     )
 
 

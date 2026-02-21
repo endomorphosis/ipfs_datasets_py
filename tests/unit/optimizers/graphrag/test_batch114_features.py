@@ -63,13 +63,13 @@ def _make_critic():
 def _make_score(v):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
     return CriticScore(completeness=v, consistency=v, clarity=v,
-                       granularity=v, domain_alignment=v)
+                       granularity=v, relationship_coherence=v, domain_alignment=v)
 
 
 def _make_mixed_score(c, cn, cl, g, da):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
     return CriticScore(completeness=c, consistency=cn, clarity=cl,
-                       granularity=g, domain_alignment=da)
+                       granularity=g, relationship_coherence=da, domain_alignment=da)
 
 
 def _make_validator():

@@ -85,7 +85,7 @@ class TestBestDimension:
         self.critic = OntologyCritic()
 
     def test_returns_string(self):
-        s = CriticScore(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, domain_alignment=0.5)
+        s = CriticScore(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
         assert isinstance(self.critic.best_dimension(s), str)
 
     def test_identifies_best(self):
@@ -93,7 +93,7 @@ class TestBestDimension:
         assert self.critic.best_dimension(s) == "completeness"
 
     def test_valid_dimension_name(self):
-        s = CriticScore(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, domain_alignment=0.5)
+        s = CriticScore(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
         valid = {"completeness", "consistency", "clarity", "granularity", "domain_alignment"}
         assert self.critic.best_dimension(s) in valid
 
@@ -103,7 +103,7 @@ class TestWorstDimension:
         self.critic = OntologyCritic()
 
     def test_returns_string(self):
-        s = CriticScore(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, domain_alignment=0.5)
+        s = CriticScore(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
         assert isinstance(self.critic.worst_dimension(s), str)
 
     def test_identifies_worst(self):
@@ -111,7 +111,7 @@ class TestWorstDimension:
         assert self.critic.worst_dimension(s) == "completeness"
 
     def test_valid_dimension_name(self):
-        s = CriticScore(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, domain_alignment=0.5)
+        s = CriticScore(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
         valid = {"completeness", "consistency", "clarity", "granularity", "domain_alignment"}
         assert self.critic.worst_dimension(s) in valid
 

@@ -25,7 +25,7 @@ def _score(**recs) -> CriticScore:
         consistency=0.5,
         clarity=0.5,
         granularity=0.5,
-        domain_alignment=0.5,
+        relationship_coherence=0.5, domain_alignment=0.5,
         recommendations=recommendations,
     )
 

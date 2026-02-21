@@ -35,7 +35,7 @@ def _make_critic():
 
 def _make_score(v):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
-    return CriticScore(completeness=v, consistency=v, clarity=v, granularity=v, domain_alignment=v)
+    return CriticScore(completeness=v, consistency=v, clarity=v, granularity=v, relationship_coherence=v, domain_alignment=v)
 
 
 def _make_adapter():

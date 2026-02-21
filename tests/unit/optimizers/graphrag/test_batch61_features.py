@@ -72,7 +72,7 @@ class TestCriticScoreFromDict:
     def test_round_trip_to_dict(self):
         original = CriticScore(
             completeness=0.75, consistency=0.65, clarity=0.55,
-            granularity=0.45, domain_alignment=0.35,
+            granularity=0.45, relationship_coherence=0.35, domain_alignment=0.35,
             strengths=["s1"], weaknesses=["w1"], recommendations=["r1"],
         )
         restored = CriticScore.from_dict(original.to_dict())

@@ -16,11 +16,12 @@ Key Features:
     - Domain-aware evaluation
 
 Evaluation Dimensions:
-    - Completeness (25%): Coverage of key concepts and relationships
-    - Consistency (25%): Internal logical consistency
-    - Clarity (15%): Clear entity definitions and relationships
-    - Granularity (15%): Appropriate level of detail
-    - Domain Alignment (20%): Adherence to domain conventions
+    - Completeness (22%): Coverage of key concepts and relationships
+    - Consistency (22%): Internal logical consistency
+    - Clarity (14%): Clear entity definitions and relationships
+    - Granularity (14%): Appropriate level of detail
+    - Relationship Coherence (13%): Quality and semantic coherence of relationships
+    - Domain Alignment (15%): Adherence to domain conventions
 
 Example:
     >>> from ipfs_datasets_py.optimizers.graphrag import (
@@ -59,11 +60,12 @@ logger = logging.getLogger(__name__)
 
 # Evaluation dimension weights (must sum to 1.0)
 DIMENSION_WEIGHTS = {
-    'completeness': 0.25,
-    'consistency': 0.25,
-    'clarity': 0.15,
-    'granularity': 0.15,
-    'domain_alignment': 0.20,
+    'completeness': 0.22,
+    'consistency': 0.22,
+    'clarity': 0.14,
+    'granularity': 0.14,
+    'relationship_coherence': 0.13,
+    'domain_alignment': 0.15,
 }
 
 
@@ -188,6 +190,7 @@ class CriticScore:
                 'consistency': self.consistency,
                 'clarity': self.clarity,
                 'granularity': self.granularity,
+                'relationship_coherence': self.relationship_coherence,
                 'domain_alignment': self.domain_alignment,
             },
             'weights': DIMENSION_WEIGHTS,
@@ -262,6 +265,7 @@ class CriticScore:
             consistency=float(dims.get("consistency", 0.0)),
             clarity=float(dims.get("clarity", 0.0)),
             granularity=float(dims.get("granularity", 0.0)),
+            relationship_coherence=float(dims.get("relationship_coherence", 0.0)),
             domain_alignment=float(dims.get("domain_alignment", 0.0)),
             strengths=list(d.get("strengths", [])),
             weaknesses=list(d.get("weaknesses", [])),
@@ -293,6 +297,7 @@ class CriticScore:
             consistency=self.consistency - other.consistency,
             clarity=self.clarity - other.clarity,
             granularity=self.granularity - other.granularity,
+            relationship_coherence=self.relationship_coherence - other.relationship_coherence,
             domain_alignment=self.domain_alignment - other.domain_alignment,
             metadata={"delta": True},
         )
@@ -500,6 +505,23 @@ class CriticScore:
             for dim in ['completeness', 'consistency', 'clarity', 'granularity', 'relationship_coherence', 'domain_alignment']
         )
         return f"CriticScore(overall={self.overall:.4f}, {dims_str})"
+    
+    def to_json(self) -> str:
+        """Return JSON representation of this score.
+        
+        Useful for structured logging and programmatic result handling.
+        The JSON contains all dimension scores, weights, strengths, weaknesses,
+        recommendations, and metadata.
+        
+        Returns:
+            JSON string representation of the score
+        
+        Example:
+            >>> score.to_json()
+            '{"overall": 0.821, "dimensions": {...}, ...}'
+        """
+        import json
+        return json.dumps(self.to_dict(), default=str, indent=None)
 
 
 class OntologyCritic(BaseCritic):
@@ -3016,6 +3038,29 @@ class OntologyCritic(BaseCritic):
         if n % 2 == 1:
             return vals[mid]
         return (vals[mid - 1] + vals[mid]) / 2.0
+
+    def log_evaluation_json(
+        self, 
+        score: CriticScore, 
+        log_level: str = "INFO"
+    ) -> None:
+        """Log evaluation result as structured JSON.
+
+        Outputs the evaluation score as a single JSON line to the class logger,
+        useful for structured logging systems, analytics, and audit trails.
+
+        Args:
+            score: CriticScore to log
+            log_level: Logging level ('DEBUG', 'INFO', 'WARNING', 'ERROR').
+                       Defaults to 'INFO'.
+
+        Example:
+            >>> critic.log_evaluation_json(score, log_level='INFO')
+            # Logs: INFO {"overall": 0.821, "dimensions": {...}}
+        """
+        json_str = score.to_json()
+        log_fn = getattr(self._log, log_level.lower(), self._log.info)
+        log_fn(f"Evaluation result: {json_str}")
 
 
 # Export public API

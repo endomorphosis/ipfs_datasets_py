@@ -12,7 +12,7 @@ def _score() -> CriticScore:
         consistency=0.75,
         clarity=0.7,
         granularity=0.65,
-        domain_alignment=0.9,
+        relationship_coherence=0.9, domain_alignment=0.9,
         strengths=["good coverage"],
         weaknesses=["naming drift"],
         recommendations=["normalize naming"],

@@ -53,7 +53,7 @@ def _make_critic():
 
 
 def _make_critic_score(completeness=0.8, consistency=0.7, clarity=0.6,
-                        granularity=0.5, domain_alignment=0.9):
+                        granularity=0.5, relationship_coherence=0.9, domain_alignment=0.9):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
 
     return CriticScore(
@@ -61,6 +61,7 @@ def _make_critic_score(completeness=0.8, consistency=0.7, clarity=0.6,
         consistency=consistency,
         clarity=clarity,
         granularity=granularity,
+        relationship_coherence=relationship_coherence,
         domain_alignment=domain_alignment,
     )
 
@@ -346,7 +347,7 @@ class TestAverageDimension:
 
     def test_domain_alignment(self):
         c = _make_critic()
-        s = _make_critic_score(domain_alignment=0.7)
+        s = _make_critic_score(relationship_coherence=0.7, domain_alignment=0.7)
         assert c.average_dimension([s], "domain_alignment") == pytest.approx(0.7)
 
     def test_invalid_dim_raises(self):

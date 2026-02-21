@@ -23,7 +23,8 @@ from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
 def _score(overall_value: float) -> CriticScore:
     v = overall_value
     return CriticScore(
-        completeness=v, consistency=v, clarity=v, granularity=v, domain_alignment=v,
+        completeness=v, consistency=v, clarity=v, granularity=v,
+        relationship_coherence=v, domain_alignment=v,
         recommendations=["Add entities", "Improve clarity"] if v < 0.8 else [],
     )
 
@@ -74,12 +75,12 @@ class TestCriticScoreToHtmlReport:
         assert "Add entities" in html
 
     def test_no_recs_message(self):
-        score = CriticScore(completeness=0.9, consistency=0.9, clarity=0.9, granularity=0.9, domain_alignment=0.9)
+        score = CriticScore(completeness=0.9, consistency=0.9, clarity=0.9, granularity=0.9, relationship_coherence=0.9, domain_alignment=0.9)
         html = score.to_html_report()
         assert "No recommendations" in html
 
     def test_scores_in_output(self):
-        score = CriticScore(completeness=0.75, consistency=0.75, clarity=0.75, granularity=0.75, domain_alignment=0.75)
+        score = CriticScore(completeness=0.75, consistency=0.75, clarity=0.75, granularity=0.75, relationship_coherence=0.75, domain_alignment=0.75)
         html = score.to_html_report()
         assert "0.7500" in html
 

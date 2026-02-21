@@ -30,7 +30,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
 def _score(c=0.8, co=0.7, cl=0.6, g=0.5, da=0.4):
     return CriticScore(
         completeness=c, consistency=co, clarity=cl,
-        granularity=g, domain_alignment=da,
+        granularity=g, relationship_coherence=da, domain_alignment=da,
         recommendations=[],
     )
 

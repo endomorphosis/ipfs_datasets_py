@@ -104,7 +104,8 @@ class TestExplainScore:
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
         return CriticScore(
             completeness=0.9, consistency=0.9, clarity=0.9,
-            granularity=0.9, domain_alignment=0.9
+            granularity=0.9, relationship_coherence=0.9
+        , domain_alignment=0.9
         )
 
     @pytest.fixture
@@ -112,7 +113,8 @@ class TestExplainScore:
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
         return CriticScore(
             completeness=0.2, consistency=0.2, clarity=0.2,
-            granularity=0.2, domain_alignment=0.2
+            granularity=0.2, relationship_coherence=0.2
+        , domain_alignment=0.2
         )
 
     def test_returns_dict_with_all_dimensions(self, critic, high_score):

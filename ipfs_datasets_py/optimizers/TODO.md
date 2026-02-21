@@ -914,6 +914,15 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [arch] Replace broad `except Exception:` with specific types across 13 sites
 - [x] (P2) [obs] Add `profile_memory`, `profile_time`, `profile_both` decorators in `common/profiling_decorators.py`
 - [x] (P2) [api] Add `__repr__` to `OptimizationCycleMetrics`, `MediatorState`, `BaseSession`, `RoundRecord`
+- [x] (P1) [graphrag] Implement `relationship_coherence` dimension for OntologyCritic (6th dimension)
+  - File: `graphrag/ontology_critic.py` – Added `_evaluate_relationship_coherence()` method (120 LOC)
+  - Sub-scores: type quality (35%), directionality (20%), distribution (25%), semantic consistency (20%)
+  - Updated DIMENSION_WEIGHTS: rebalanced 5→6 dimensions (weights sum to 1.0)
+  - Updated 30+ methods referencing dimension lists (to_dict, to_list, explain_score, calibrate_thresholds, etc.)
+  - Updated module docstring with new dimension percentages
+  - File: `tests/unit/optimizers/graphrag/test_ontology_critic_dimensions.py` – Added 11 comprehensive unit tests
+  - Test coverage: generic types, meaningful types, diversity, directionality, semantic consistency, edge cases
+  - All 55 tests passing (100% success rate)
 
 ---
 

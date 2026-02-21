@@ -1970,6 +1970,274 @@ class EntityExtractionResult:
                 ids.append(rid)
         return ids
 
+    def extraction_statistics(self) -> Dict[str, Any]:
+        """Return comprehensive extraction statistics.
+
+        Calculates and returns key metrics about the extracted entities and
+        relationships, useful for monitoring extraction quality and progress.
+
+        Returns:
+            Dict with statistics including:
+                - total_entities: Count of extracted entities
+                - total_relationships: Count of inferred relationships
+                - unique_types: Count of distinct entity types
+                - avg_confidence: Average entity confidence (0.0-1.0)
+                - min_confidence: Minimum entity confidence
+                - max_confidence: Maximum entity confidence
+                - entities_by_type: Dict mapping types to counts
+                - relationship_types: List of unique relationship types
+                - entities_with_properties: Count of entities with properties
+                - avg_text_length: Average character length of entity text
+                - dangling_relationships: Count of relationships missing entities
+
+        Example:
+            >>> stats = result.extraction_statistics()
+            >>> print(f"Extracted {stats['total_entities']} entities")
+            >>> print(f"Average confidence: {stats['avg_confidence']:.2%}")
+        """
+        # Basic counts
+        total_entities = len(self.entities)
+        total_relationships = len(self.relationships)
+        
+        # Confidence statistics
+        confidences = [e.confidence for e in self.entities] if self.entities else [0.0]
+        avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
+        min_confidence = min(confidences) if confidences else 0.0
+        max_confidence = max(confidences) if confidences else 0.0
+        
+        # Type analysis
+        type_counts = {}
+        for e in self.entities:
+            type_counts[e.type] = type_counts.get(e.type, 0) + 1
+        unique_types = len(type_counts)
+        
+        # Relationship types
+        rel_types = set()
+        entity_ids = {e.id for e in self.entities}
+        dangling_count = 0
+        
+        for r in self.relationships:
+            rel_types.add(r.type)
+            if r.source_id not in entity_ids or r.target_id not in entity_ids:
+                dangling_count += 1
+        
+        # Entity properties
+        entities_with_props = sum(1 for e in self.entities if e.properties)
+        
+        # Text length
+        text_lengths = [len(e.text) for e in self.entities] if self.entities else [0]
+        avg_text_length = sum(text_lengths) / len(text_lengths) if text_lengths else 0.0
+        
+        return {
+            'total_entities': total_entities,
+            'total_relationships': total_relationships,
+            'unique_types': unique_types,
+            'avg_confidence': round(avg_confidence, 4),
+            'min_confidence': round(min_confidence, 4),
+            'max_confidence': round(max_confidence, 4),
+            'entities_by_type': dict(sorted(type_counts.items())),
+            'relationship_types': sorted(list(rel_types)),
+            'entities_with_properties': entities_with_props,
+            'avg_text_length': round(avg_text_length, 2),
+            'dangling_relationships': dangling_count,
+        }
+
+    def relationship_coherence_issues(self) -> Dict[str, Any]:
+        """Analyze relationship coherence and identify quality issues.
+
+        Examines relationships for common quality problems, such as:
+        - Low confidence relationships
+        - Relationships with missing entities (dangling references)
+        - Self-relationships (entity points to itself)
+        - Duplicate relationships (same source/target/type)
+        - Highly connected entities (potential hubs needing normalization)
+
+        Returns:
+            Dict with issue analysis:
+                - low_confidence_relationships: List of (rel_id, confidence) pairs
+                - dangling_relationships: List of (rel_id, missing_id) pairs
+                - self_relationships: List of (rel_id, entity_id) pairs
+                - duplicate_relationships: List of duplicate relationship groups
+                - high_degree_entities: List of (entity_id, degree) pairs for hubs
+                - total_issues: Integer count of all issues found
+
+        Example:
+            >>> issues = result.relationship_coherence_issues()
+            >>> if issues['total_issues'] > 0:
+            ...     print(f"Found {issues['total_issues']} relationship issues")
+        """
+        entity_ids = {e.id for e in self.entities}
+        low_conf = []
+        dangling = []
+        self_rels = []
+        seen_triples = {}  # (src, tgt, type) -> rel_id for duplicate detection
+        degree = {}  # count relationships per entity
+        
+        for r in self.relationships:
+            # Track degree
+            degree[r.source_id] = degree.get(r.source_id, 0) + 1
+            degree[r.target_id] = degree.get(r.target_id, 0) + 1
+            
+            # Low confidence check
+            if r.confidence < 0.5:
+                low_conf.append((r.id, round(r.confidence, 3)))
+            
+            # Dangling reference check
+            if r.source_id not in entity_ids:
+                dangling.append((r.id, r.source_id))
+            if r.target_id not in entity_ids:
+                dangling.append((r.id, r.target_id))
+            
+            # Self-relationship check
+            if r.source_id == r.target_id:
+                self_rels.append((r.id, r.source_id))
+            
+            # Duplicate check
+            triple = (r.source_id, r.target_id, r.type)
+            if triple in seen_triples:
+                seen_triples[triple].append(r.id)
+            else:
+                seen_triples[triple] = [r.id]
+        
+        # Extract actual duplicates (groups of size > 1)
+        duplicates = [group for group in seen_triples.values() if len(group) > 1]
+        
+        # High degree entities (hubs with degree >= 5)
+        high_degree = sorted(
+            [(eid, cnt) for eid, cnt in degree.items() if cnt >= 5],
+            key=lambda x: -x[1]
+        )
+        
+        total_issues = (
+            len(low_conf) + 
+            len(dangling) + 
+            len(self_rels) + 
+            sum(len(g) - 1 for g in duplicates)  # Count duplicates past first
+        )
+        
+        return {
+            'low_confidence_relationships': low_conf,
+            'dangling_relationships': dangling,
+            'self_relationships': self_rels,
+            'duplicate_relationships': duplicates,
+            'high_degree_entities': high_degree,
+            'total_issues': total_issues,
+        }
+
+    def get_entity_by_id(self, entity_id: str) -> Optional["Entity"]:
+        """Get a specific entity by its ID.
+
+        Args:
+            entity_id: The entity ID to look up
+
+        Returns:
+            The Entity object, or None if not found
+
+        Example:
+            >>> entity = result.get_entity_by_id('e1')
+            >>> if entity:
+            ...     print(f"Found: {entity.text}")
+        """
+        for e in self.entities:
+            if e.id == entity_id:
+                return e
+        return None
+
+    def get_relationship_by_id(self, rel_id: str) -> Optional["Relationship"]:
+        """Get a specific relationship by its ID.
+
+        Args:
+            rel_id: The relationship ID to look up
+
+        Returns:
+            The Relationship object, or None if not found
+        """
+        for r in self.relationships:
+            if r.id == rel_id:
+                return r
+        return None
+
+    def relationships_for_entity(self, entity_id: str) -> List["Relationship"]:
+        """Get all relationships where entity is source or target.
+
+        Args:
+            entity_id: The entity ID to find relationships for
+
+        Returns:
+            List of Relationship objects involving this entity
+        """
+        return [
+            r for r in self.relationships
+            if r.source_id == entity_id or r.target_id == entity_id
+        ]
+
+    def entities_by_confidence_range(
+        self,
+        min_conf: float = 0.0,
+        max_conf: float = 1.0,
+    ) -> List["Entity"]:
+        """Get entities within a confidence range.
+
+        Args:
+            min_conf: Minimum confidence threshold (inclusive)
+            max_conf: Maximum confidence threshold (inclusive)
+
+        Returns:
+            List of entities with confidence in [min_conf, max_conf]
+
+        Example:
+            >>> high_conf = result.entities_by_confidence_range(min_conf=0.8)
+            >>> print(f"Found {len(high_conf)} high-confidence entities")
+        """
+        return [
+            e for e in self.entities
+            if min_conf <= e.confidence <= max_conf
+        ]
+
+    def low_confidence_entities(self, threshold: float = 0.5) -> List["Entity"]:
+        """Get all entities below confidence threshold.
+
+        Args:
+            threshold: Confidence threshold (default 0.5)
+
+        Returns:
+            List of entities with confidence < threshold
+        """
+        return [e for e in self.entities if e.confidence < threshold]
+
+    def high_confidence_entities(self, threshold: float = 0.8) -> List["Entity"]:
+        """Get all entities above confidence threshold.
+
+        Args:
+            threshold: Confidence threshold (default 0.8)
+
+        Returns:
+            List of entities with confidence >= threshold
+        """
+        return [e for e in self.entities if e.confidence >= threshold]
+
+    def relationships_by_type(self, rel_type: str) -> List["Relationship"]:
+        """Get all relationships of a specific type.
+
+        Args:
+            rel_type: The relationship type to filter by
+
+        Returns:
+            List of relationships matching the type
+        """
+        return [r for r in self.relationships if r.type == rel_type]
+
+    def relationship_count_by_type(self) -> Dict[str, int]:
+        """Get count of relationships grouped by type.
+
+        Returns:
+            Dict mapping relationship types to counts
+        """
+        counts = {}
+        for r in self.relationships:
+            counts[r.type] = counts.get(r.type, 0) + 1
+        return dict(sorted(counts.items(), key=lambda x: -x[1]))
+
 
 @dataclass
 class OntologyGenerationResult:
@@ -2773,12 +3041,22 @@ class OntologyGenerator:
         Returns:
             Extraction result with entities and relationships
         """
+        import time
+        
+        start_time = time.time()
         domain = getattr(context, 'domain', 'general').lower() if context else 'general'
         ext_config = getattr(context, 'extraction_config', None) if context else None
+        
+        # Timing: Pattern building
+        t1 = time.time()
         _PATTERNS = self._build_rule_patterns(domain, ext_config)
+        pattern_time_ms = (time.time() - t1) * 1000
 
         text = str(data) if data is not None else ""
         min_len, _stop, _allowed, _max_conf = self._resolve_rule_config(ext_config)
+        
+        # Timing: Entity extraction from patterns
+        t2 = time.time()
         entities = self._extract_entities_from_patterns(
             text,
             _PATTERNS,
@@ -2787,16 +3065,32 @@ class OntologyGenerator:
             _stop,
             _max_conf,
         )
+        extraction_time_ms = (time.time() - t2) * 1000
 
-        # Derive relationships from extracted entities
+        # Timing: Relationship inference
+        t3 = time.time()
         relationships = self.infer_relationships(entities, context, data)
+        relationship_time_ms = (time.time() - t3) * 1000
 
-        self._log.info(f"Rule-based extraction found {len(entities)} entities, {len(relationships)} relationships")
+        total_time_ms = (time.time() - start_time) * 1000
+        
+        self._log.info(
+            f"Rule-based extraction: {len(entities)} entities, {len(relationships)} relationships | "
+            f"timing: patterns={pattern_time_ms:.1f}ms, extraction={extraction_time_ms:.1f}ms, "
+            f"relationships={relationship_time_ms:.1f}ms, total={total_time_ms:.1f}ms"
+        )
         return EntityExtractionResult(
             entities=entities,
             relationships=relationships,
             confidence=0.7,
-            metadata={'method': 'rule_based', 'entity_count': len(entities)},
+            metadata={
+                'method': 'rule_based',
+                'entity_count': len(entities),
+                'pattern_time_ms': pattern_time_ms,
+                'extraction_time_ms': extraction_time_ms,
+                'relationship_time_ms': relationship_time_ms,
+                'total_time_ms': total_time_ms,
+            },
         )
 
     def _build_rule_patterns(

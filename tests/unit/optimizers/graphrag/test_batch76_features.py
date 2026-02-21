@@ -38,7 +38,7 @@ def _result(*entities, rels=None):
 
 
 def _score(**kw):
-    defaults = dict(completeness=0.7, consistency=0.8, clarity=0.6, granularity=0.5, domain_alignment=0.9)
+    defaults = dict(completeness=0.7, consistency=0.8, clarity=0.6, granularity=0.5, relationship_coherence=0.9, domain_alignment=0.9)
     defaults.update(kw)
     return CriticScore(**defaults)
 

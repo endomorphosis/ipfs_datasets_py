@@ -167,7 +167,7 @@ class TestRefineOntologySchema:
             consistency=0.9,
             clarity=0.6,
             granularity=0.5,
-            domain_alignment=0.8,
+            relationship_coherence=0.8, domain_alignment=0.8,
             recommendations=recommendations or ["Add more entity properties"],
         )
 

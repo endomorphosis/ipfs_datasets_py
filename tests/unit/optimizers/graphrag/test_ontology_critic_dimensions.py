@@ -413,7 +413,7 @@ class TestIntelligentRecommendations:
         )
 
     def _recs(self, critic, ctx, ents, rels=None, **score_overrides):
-        scores = dict(completeness=0.3, consistency=0.3, clarity=0.3, granularity=0.3, domain_alignment=0.3)
+        scores = dict(completeness=0.3, consistency=0.3, clarity=0.3, granularity=0.3, relationship_coherence=0.3, domain_alignment=0.3)
         scores.update(score_overrides)
         ont = {"entities": ents, "relationships": rels or []}
         return critic._generate_recommendations(ont, ctx, **scores)
@@ -459,7 +459,7 @@ class TestIntelligentRecommendations:
         ents = [{"id": f"e{i}", "text": f"entity{i}", "type": "T"} for i in range(5)]
         recs = self._recs(
             critic, ctx, ents,
-            completeness=0.9, consistency=0.9, clarity=0.9, granularity=0.9, domain_alignment=0.9
+            completeness=0.9, consistency=0.9, clarity=0.9, granularity=0.9, relationship_coherence=0.9, domain_alignment=0.9
         )
         assert len(recs) == 0
 

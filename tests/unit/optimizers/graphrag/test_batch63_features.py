@@ -36,7 +36,7 @@ def _ctx(domain: str = "test"):
 def _score(**kwargs):
     defaults = dict(
         completeness=0.7, consistency=0.7, clarity=0.6, granularity=0.5,
-        domain_alignment=0.4, recommendations=[],
+        relationship_coherence=0.4, domain_alignment=0.4, recommendations=[],
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)

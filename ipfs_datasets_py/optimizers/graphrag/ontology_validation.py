@@ -505,3 +505,230 @@ def format_validation_result(result: ValidationResult, verbose: bool = False) ->
             lines.append(f"First warning: {result.warnings[0]}")
     
     return "\n".join(lines)
+
+
+def suggest_entity_merges(
+    ontology: Dict[str, Any],
+    similarity_threshold: float = 0.8,
+) -> List[Dict[str, Any]]:
+    """Suggest entity pairs that should be merged based on similarity.
+
+    Analyzes entities by name and type similarity to identify potential
+    duplicate or near-duplicate entities that could be merged to reduce
+    redundancy and improve ontology consistency.
+
+    Args:
+        ontology: Ontology dict with 'entities' list
+        similarity_threshold: Minimum similarity score [0.0, 1.0] for suggestions
+            (default 0.8 means 80% similar)
+
+    Returns:
+        List of merge suggestions, each a dict with:
+            - 'entity_id_1': First entity ID
+            - 'entity_id_2': Second entity ID
+            - 'similarity_score': Normalized similarity [0.0, 1.0]
+            - 'reason': Why merge is suggested (name match, type match, both)
+            - 'recommendation': Human-readable merge instruction
+
+    Example:
+        >>> ontology = {
+        ...     "entities": [
+        ...         {"id": "e1", "type": "Person", "text": "Alice Smith"},
+        ...         {"id": "e2", "type": "Person", "text": "Alice Smythe"},
+        ...     ]
+        ... }
+        >>> suggestions = suggest_entity_merges(ontology, similarity_threshold=0.7)
+        >>> len(suggestions)
+        1
+        >>> suggestions[0]['similarity_score']
+        0.85
+    """
+    import difflib
+    
+    entities = ontology.get('entities', [])
+    if not isinstance(entities, list) or len(entities) < 2:
+        return []
+    
+    # Build entity index (text, type, id)
+    entity_index = []
+    for ent in entities:
+        if isinstance(ent, dict) and ent.get('id'):
+            entity_index.append({
+                'id': ent['id'],
+                'text': str(ent.get('text', '')).lower(),
+                'type': str(ent.get('type', 'Unknown')).lower(),
+            })
+    
+    suggestions = []
+    seen_pairs = set()
+    
+    for i, ent1 in enumerate(entity_index):
+        for j, ent2 in enumerate(entity_index):
+            if i >= j:  # Skip duplicates and self-comparisons
+                continue
+            
+            # Create pair signature (sorted IDs)
+            pair_sig = tuple(sorted([ent1['id'], ent2['id']]))
+            if pair_sig in seen_pairs:
+                continue
+            seen_pairs.add(pair_sig)
+            
+            # Calculate text similarity using SequenceMatcher
+            text_sim = difflib.SequenceMatcher(None, ent1['text'], ent2['text']).ratio()
+            
+            # Check type and name matches
+            type_match = ent1['type'] == ent2['type']
+            name_match = text_sim >= 0.7  # High text similarity
+            
+            # Compute overall similarity score
+            if type_match and name_match:
+                similarity = min(0.95, text_sim + 0.15)  # Type match boosts score
+                reason = "name and type match"
+            elif type_match:
+                similarity = min(0.85, text_sim + 0.10)
+                reason = "type match"
+            elif name_match:
+                similarity = text_sim
+                reason = "name similarity"
+            else:
+                similarity = text_sim * 0.5  # Penalize mismatched types
+                reason = "partial name similarity"
+            
+            # Only include if similarity meets threshold
+            if similarity >= similarity_threshold:
+                suggestions.append({
+                    'entity_id_1': ent1['id'],
+                    'entity_id_2': ent2['id'],
+                    'similarity_score': round(similarity, 3),
+                    'reason': reason,
+                    'recommendation': (
+                        f"Consider merging '{ent1['text']}' (type: {ent1['type']}) "
+                        f"with '{ent2['text']}' (type: {ent2['type']}) - "
+                        f"similarity: {similarity:.1%} ({reason})"
+                    ),
+                })
+    
+    # Sort by similarity score descending
+    suggestions.sort(key=lambda s: s['similarity_score'], reverse=True)
+    
+    return suggestions
+
+
+def generate_validation_report(
+    ontology: Dict[str, Any],
+    include_merge_suggestions: bool = True,
+    merge_threshold: float = 0.8,
+) -> Dict[str, Any]:
+    """Generate a comprehensive validation report for an ontology.
+
+    Combines multiple validation checks into a single structured report with
+    scores, identified issues, and actionable recommendations for improvement.
+
+    Args:
+        ontology: Ontology dict to validate
+        include_merge_suggestions: Whether to include entity merge suggestions
+        merge_threshold: Similarity threshold for merge suggestions [0.0, 1.0]
+
+    Returns:
+        Dict with comprehensive validation report:
+            - validation: ValidationResult from validate_ontology()
+            - issues_summary: Count and types of issues
+            - quality_score: Overall quality score [0.0, 1.0]
+            - merge_suggestions: List of suggested entity merges (if enabled)
+            - recommendations: List of actionable recommendations
+            - report_html: Human-readable HTML formatted report
+
+    Example:
+        >>> report = generate_validation_report(ontology)
+        >>> print(f"Quality score: {report['quality_score']:.2%}")
+        >>> for rec in report['recommendations']:
+        ...     print(f"- {rec}")
+    """
+    # Run comprehensive validation
+    val_result = validate_ontology(ontology, strict=False)
+    
+    # Count issues by type
+    total_issues = val_result.total_issues
+    issue_types = {
+        'errors': len(val_result.errors),
+        'warnings': len(val_result.warnings),
+    }
+    
+    # Calculate quality score (100% if valid, reduced by issues)
+    entity_count = len(ontology.get('entities', []))
+    rel_count = len(ontology.get('relationships', []))
+    total_elements = entity_count + rel_count if entity_count > 0 else 1
+    
+    # Quality = 1.0 - (issues / total_elements * 0.1)
+    quality_score = max(0.0, min(1.0, 1.0 - (total_issues / total_elements * 0.1)))
+    
+    # Generate recommendations
+    recommendations = []
+    
+    if not val_result.is_valid:
+        recommendations.append(f"Fix {len(val_result.errors)} critical errors first")
+    
+    if val_result.warnings:
+        recommendations.append(f"Address {len(val_result.warnings)} warnings to improve quality")
+    
+    if entity_count == 0:
+        recommendations.append("Add entities to the ontology")
+    
+    if rel_count == 0 and entity_count > 1:
+        recommendations.append("Define relationships between entities")
+    
+    if rel_count > entity_count * 2:
+        recommendations.append("Consider simplifying relationships (too many connections)")
+    
+    # Get merge suggestions
+    merge_suggestions = []
+    if include_merge_suggestions and entity_count > 1:
+        merge_suggestions = suggest_entity_merges(ontology, merge_threshold)
+        if merge_suggestions:
+            recommendations.insert(
+                0,
+                f"Found {len(merge_suggestions)} potential entity merges to reduce duplication"
+            )
+    
+    # Format HTML report
+    html_lines = [
+        "<html><head><style>",
+        "body { font-family: Arial; margin: 10px; }",
+        ".score { font-size: 24px; font-weight: bold; }",
+        ".valid { color: green; }",
+        ".invalid { color: red; }",
+        ".section { margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; }",
+        "</style></head><body>",
+        "<h1>Ontology Validation Report</h1>",
+        f'<p class="score"><span class="{"valid" if val_result.is_valid else "invalid"}">',
+        f'Quality: {quality_score:.2%}</span></p>',
+        f"<p>Entities: {entity_count} | Relationships: {rel_count} | Issues: {total_issues}</p>",
+    ]
+    
+    if val_result.errors:
+        html_lines.append('<div class="section"><h3>Errors</h3><ul>')
+        for err in val_result.errors[:5]:  # Show first 5
+            html_lines.append(f"<li>{err}</li>")
+        if len(val_result.errors) > 5:
+            html_lines.append(f"<li>... and {len(val_result.errors) - 5} more</li>")
+        html_lines.append("</ul></div>")
+    
+    if recommendations:
+        html_lines.append('<div class="section"><h3>Recommendations</h3><ul>')
+        for rec in recommendations[:5]:  # Show first 5
+            html_lines.append(f"<li>{rec}</li>")
+        html_lines.append("</ul></div>")
+    
+    html_lines.append("</body></html>")
+    report_html = "\n".join(html_lines)
+    
+    return {
+        'validation': val_result,
+        'issues_summary': issue_types,
+        'quality_score': round(quality_score, 4),
+        'entity_count': entity_count,
+        'relationship_count': rel_count,
+        'merge_suggestions': merge_suggestions,
+        'recommendations': recommendations,
+        'report_html': report_html,
+    }

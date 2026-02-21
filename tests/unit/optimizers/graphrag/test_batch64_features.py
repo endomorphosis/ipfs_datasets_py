@@ -33,7 +33,7 @@ def _ctx():
 def _score(**kwargs):
     defaults = dict(
         completeness=0.7, consistency=0.7, clarity=0.6, granularity=0.5,
-        domain_alignment=0.4, recommendations=["Add more entity properties"],
+        relationship_coherence=0.4, domain_alignment=0.4, recommendations=["Add more entity properties"],
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)

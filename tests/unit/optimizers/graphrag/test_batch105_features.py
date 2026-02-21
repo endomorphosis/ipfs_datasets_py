@@ -30,7 +30,7 @@ def _score(v: float) -> CriticScore:
         consistency=v,
         clarity=v,
         granularity=v,
-        domain_alignment=v,
+        relationship_coherence=v, domain_alignment=v,
     )
 
 

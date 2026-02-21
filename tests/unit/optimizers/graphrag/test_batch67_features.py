@@ -47,6 +47,7 @@ def _make_score(c=0.7, cons=0.8, cl=0.6, g=0.7, da=0.8) -> CriticScore:
         consistency=cons,
         clarity=cl,
         granularity=g,
+        relationship_coherence=da,
         domain_alignment=da,
         recommendations=["Add more entities", "Improve clarity"],
     )
@@ -136,7 +137,7 @@ class TestPreviewRecommendations:
 
     def test_empty_recommendations(self):
         med = _mediator()
-        score = CriticScore(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, domain_alignment=0.5)
+        score = CriticScore(completeness=0.5, consistency=0.5, clarity=0.5, granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
         result = med.preview_recommendations({}, score, _ctx())
         assert result == []
 
@@ -250,7 +251,8 @@ class TestDeduplicateEntities:
 class TestCalibrateThresholds:
     def _scores(self, values):
         return [CriticScore(
-            completeness=v, consistency=v, clarity=v, granularity=v, domain_alignment=v
+            completeness=v, consistency=v, clarity=v, granularity=v,
+            relationship_coherence=v, domain_alignment=v
         ) for v in values]
 
     def test_returns_dict(self):

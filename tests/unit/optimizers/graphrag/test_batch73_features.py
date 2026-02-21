@@ -37,7 +37,8 @@ def _ont(n=2):
 
 def _score(**overrides):
     defaults = dict(
-        completeness=0.7, consistency=0.8, clarity=0.6, granularity=0.5, domain_alignment=0.9
+        completeness=0.7, consistency=0.8, clarity=0.6, granularity=0.5, relationship_coherence=0.9
+    , domain_alignment=0.9
     )
     defaults.update(overrides)
     return CriticScore(**defaults)

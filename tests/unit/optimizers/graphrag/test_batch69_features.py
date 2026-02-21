@@ -31,7 +31,7 @@ def _cfg(**kw) -> ExtractionConfig:
 
 
 def _score(v: float) -> CriticScore:
-    return CriticScore(completeness=v, consistency=v, clarity=v, granularity=v, domain_alignment=v)
+    return CriticScore(completeness=v, consistency=v, clarity=v, granularity=v, relationship_coherence=v, domain_alignment=v)
 
 
 def _entity(eid="e1", text="Alice", etype="Person") -> Entity:
