@@ -948,3 +948,50 @@ class OntologyLearningAdapter:
             for i in range(len(recent) - 1)
         ]
         return sum(diffs) / len(diffs)
+
+    def feedback_streak(self, threshold: float = 0.6) -> int:
+        """Return the length of the current consecutive streak of feedback scores
+        that are >= *threshold* (from the most recent record backwards).
+
+        Args:
+            threshold: Minimum ``final_score`` to include in streak.
+
+        Returns:
+            Integer streak length; 0 when latest feedback is below threshold.
+        """
+        streak = 0
+        for r in reversed(self._feedback):
+            if r.final_score >= threshold:
+                streak += 1
+            else:
+                break
+        return streak
+
+    def feedback_percentile(self, value: float) -> float:
+        """Return the percentile rank of *value* among recorded feedback scores.
+
+        Args:
+            value: Score to rank.
+
+        Returns:
+            A float in [0.0, 100.0]; ``0.0`` when no feedback recorded.
+        """
+        if not self._feedback:
+            return 0.0
+        scores = sorted(r.final_score for r in self._feedback)
+        below = sum(1 for s in scores if s < value)
+        return 100.0 * below / len(scores)
+
+    def recent_average(self, n: int = 5) -> float:
+        """Return the average ``final_score`` of the *n* most-recent records.
+
+        Args:
+            n: Window size (default 5).
+
+        Returns:
+            Mean score; ``0.0`` when no records exist.
+        """
+        recs = self._feedback[-n:] if self._feedback else []
+        if not recs:
+            return 0.0
+        return sum(r.final_score for r in recs) / len(recs)
