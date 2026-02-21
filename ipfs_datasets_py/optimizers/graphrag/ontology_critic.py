@@ -1021,6 +1021,88 @@ class OntologyCritic(BaseCritic):
             summaries.append(line)
         return summaries
 
+    def compare_batch(
+        self,
+        ontologies: List[Dict[str, Any]],
+        context: Any,
+        source_data: Optional[Any] = None,
+    ) -> List[Dict[str, Any]]:
+        """Rank a list of ontologies by overall score (descending).
+
+        Each ontology in *ontologies* is evaluated and the results are
+        returned sorted highest-first with the original index included.
+
+        Args:
+            ontologies: List of ontology dicts to compare.
+            context: Evaluation context passed to :meth:`evaluate_ontology`.
+            source_data: Optional source text.
+
+        Returns:
+            List of dicts sorted by ``"overall"`` descending, each with:
+
+            * ``"rank"`` -- 1-based rank (1 = best).
+            * ``"index"`` -- original position in *ontologies*.
+            * ``"overall"`` -- overall critic score.
+            * ``"completeness"`` -- completeness dimension.
+            * ``"consistency"`` -- consistency dimension.
+
+        Example:
+            >>> ranked = critic.compare_batch([ont1, ont2, ont3], ctx)
+            >>> ranked[0]["rank"]
+            1
+        """
+        scored = []
+        for idx, ontology in enumerate(ontologies):
+            try:
+                score = self.evaluate_ontology(ontology, context, source_data)
+                scored.append({
+                    "index": idx,
+                    "overall": score.overall,
+                    "completeness": score.completeness,
+                    "consistency": score.consistency,
+                    "score": score,
+                })
+            except Exception:  # pragma: no cover
+                scored.append({"index": idx, "overall": 0.0, "completeness": 0.0, "consistency": 0.0, "score": None})
+        scored.sort(key=lambda d: -d["overall"])
+        for rank, entry in enumerate(scored, start=1):
+            entry["rank"] = rank
+        return scored
+
+    def weighted_overall(
+        self,
+        score: "CriticScore",
+        weights: Optional[Dict[str, float]] = None,
+    ) -> float:
+        """Compute a weighted overall score with caller-supplied dimension weights.
+
+        The five dimensions are ``completeness``, ``consistency``, ``clarity``,
+        ``granularity``, and ``domain_alignment``.  If *weights* is ``None``
+        the module-level :data:`DIMENSION_WEIGHTS` defaults are used.  Weights
+        are normalised so they sum to 1.0 before application.
+
+        Args:
+            score: :class:`CriticScore` to re-weight.
+            weights: Optional mapping of dimension name → weight.  Missing
+                dimensions get a weight of 0.
+
+        Returns:
+            Float in [0, 1].
+
+        Raises:
+            ValueError: If all weights are zero.
+
+        Example:
+            >>> w = {"completeness": 1.0, "consistency": 1.0}
+            >>> val = critic.weighted_overall(score, w)
+        """
+        dims = ["completeness", "consistency", "clarity", "granularity", "domain_alignment"]
+        effective = dict(DIMENSION_WEIGHTS) if weights is None else {d: weights.get(d, 0.0) for d in dims}
+        total_weight = sum(effective.values())
+        if total_weight == 0:
+            raise ValueError("All dimension weights are zero — cannot compute weighted overall.")
+        return sum(getattr(score, d) * effective[d] / total_weight for d in dims)
+
     def evaluate_with_rubric(
         self,
         ontology: Dict[str, Any],

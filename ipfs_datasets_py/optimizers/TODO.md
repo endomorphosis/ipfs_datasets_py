@@ -594,7 +594,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [tests] Add Hypothesis property test: ExtractionConfig round-trips through to_dict/from_dict
 - [ ] (P3) [graphrag] Add `OntologyGenerator.extract_with_coref()` — co-reference resolution pre-pass
 - [ ] (P2) [graphrag] Add `EntityExtractionResult.to_json()` — serialize full result to JSON string
-- [ ] (P3) [graphrag] Add `OntologyCritic.compare_batch()` — rank a list of ontologies by overall score
+- [x] (P3) [graphrag] Add `OntologyCritic.compare_batch()` — rank a list of ontologies by overall score
 - [ ] (P2) [graphrag] ✅ Add `OntologyLearningAdapter.top_actions()` — return N best-performing actions by success rate
 - [ ] (P3) [graphrag] Add `OntologyPipeline.run_async()` — async coroutine wrapper around run()
 - [ ] (P2) [graphrag] Add `OntologyOptimizer.export_score_chart()` — matplotlib line chart of score history
@@ -603,7 +603,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [graphrag] Add `OntologyMediator.undo_last_action()` — revert last applied refinement action
 - [x] (P2) [tests] Add negative tests for OntologyPipeline -- Done batch-63: empty/whitespace/long/numeric/garbage/empty-domain; 9 tests
 - [x] (P3) [graphrag] Add `Entity.to_dict()` instance method -- Done batch-59: all fields, source_span as list; 9 tests
-- [ ] (P2) [graphrag] Add `OntologyCritic.weighted_overall()` — allow caller-supplied weight overrides
+- [x] (P2) [graphrag] Add `OntologyCritic.weighted_overall()` — allow caller-supplied weight overrides
 - [ ] (P3) [graphrag] ✅ Add `OntologyOptimizer.rolling_average_score(n)` — mean of last N history entries
 - [ ] (P2) [graphrag] ✅ Add `ExtractionConfig.merge(other)` — merge two configs, latter values win on conflict
 - [ ] (P3) [graphrag] Add `OntologyPipeline.warm_cache()` — pre-evaluate a reference ontology to fill shared cache
@@ -673,14 +673,14 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [tests] Hypothesis: LogicValidator.filter_valid_entities subset property
 - [x] (P2) [graphrag] Add `OntologyMediator.get_action_summary()` -- Done batch-67: sorted desc, top_n, rank; 6 tests
 - [x] (P3) [arch] Add `OntologyPipeline.from_dict(d)` -- Done batch-67: round-trip classmethod; 5 tests
-- [ ] (P2) [graphrag] Add `ExtractionConfig.validate()` -- check field constraints
+- [x] (P2) [graphrag] Add `ExtractionConfig.validate()` -- check field constraints
 - [x] (P3) [obs] Add `OntologyOptimizer.improvement_rate()` -- Done batch-66: pairwise comparison; 6 tests
 
 ## Batch 70+ Ideas
 - [x] (P2) [graphrag] Add `OntologyOptimizer.score_percentile(p)` -- Done batch-70: linear interp; 6 tests
 - [x] (P3) [graphrag] Add `OntologyMediator.get_undo_depth()` -- length of undo stack
 - [ ] (P2) [graphrag] Add `OntologyGenerator.extract_noun_phrases(text)` -- simple NP chunker
-- [ ] (P3) [arch] Add `OntologyPipeline.clone_with(domain=None, max_rounds=None)` -- partial override clone
+- [x] (P3) [arch] Add `OntologyPipeline.clone_with(domain=None, max_rounds=None)` -- partial override clone
 - [x] (P2) [graphrag] Add `EntityExtractionResult.confidence_histogram(bins)` -- Done batch-70: bucket counts; 6 tests
 - [x] (P3) [graphrag] Add `OntologyCritic.compare_with_baseline(ontology, baseline, ctx)` -- delta vs baseline
 - [x] (P2) [graphrag] Add `ExtractionConfig.scale_thresholds(factor)` -- Done batch-70: clamp to [0,1]; 7 tests
@@ -696,4 +696,4 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] Add `ExtractionConfig.to_json()` -- JSON serialization
 - [x] (P3) [graphrag] Add `Entity.copy_with(**overrides)` -- return modified copy of entity
 - [x] (P2) [graphrag] Add `OntologyGenerator.extract_keyphrases(text)` -- top K keyphrases
-- [ ] (P3) [arch] Add `OntologyPipeline.get_stage_names()` -- list pipeline stages
+- [x] (P3) [arch] Add `OntologyPipeline.get_stage_names()` -- list pipeline stages

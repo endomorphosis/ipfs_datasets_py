@@ -390,3 +390,49 @@ class OntologyPipeline:
         d = self.as_dict()
         d["domain"] = domain
         return OntologyPipeline.from_dict(d)
+
+    def clone_with(
+        self,
+        domain: Optional[str] = None,
+        max_rounds: Optional[int] = None,
+        use_llm: Optional[bool] = None,
+    ) -> "OntologyPipeline":
+        """Return a shallow clone with selected fields overridden.
+
+        Only the supplied keyword arguments are changed; everything else is
+        inherited from ``self``.
+
+        Args:
+            domain: Override the domain string.
+            max_rounds: Override the maximum refinement rounds.
+            use_llm: Override the LLM flag.
+
+        Returns:
+            A new :class:`OntologyPipeline` instance.
+
+        Example:
+            >>> fast = pipeline.clone_with(max_rounds=1)
+        """
+        d = self.as_dict()
+        if domain is not None:
+            d["domain"] = domain
+        if max_rounds is not None:
+            d["max_rounds"] = max_rounds
+        if use_llm is not None:
+            d["use_llm"] = use_llm
+        return OntologyPipeline.from_dict(d)
+
+    def get_stage_names(self) -> List[str]:
+        """Return the ordered names of the pipeline stages.
+
+        The canonical GraphRAG pipeline has three stages: extraction,
+        evaluation, and refinement.
+
+        Returns:
+            List of stage-name strings in execution order.
+
+        Example:
+            >>> pipeline.get_stage_names()
+            ['extraction', 'evaluation', 'refinement']
+        """
+        return ["extraction", "evaluation", "refinement"]
