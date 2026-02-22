@@ -35,6 +35,15 @@ __all__ = [
     "add_delegation",
     "get_delegation",
     "get_delegation_evaluator",
+    # Phase H
+    "RevocationList",
+    "can_invoke_with_revocation",
+    # Phase I
+    "DelegationStore",
+    # Session 56
+    "DIDSignedDelegation",
+    "sign_delegation",
+    "verify_delegation_signature",
 ]
 
 
@@ -492,3 +501,250 @@ def verify_delegation_signature(
     except Exception as exc:
         logger.warning("verify_delegation_signature failed: %s", exc)
         return False
+
+
+# ---------------------------------------------------------------------------
+# Phase H — Revocation list (session 57)
+# ---------------------------------------------------------------------------
+
+class RevocationList:
+    """Tracks revoked delegation CIDs to prevent use in chain evaluation.
+
+    Revoked CIDs are stored in a ``set`` for O(1) lookup.  This is
+    intentionally a simple in-process store; persistence is the caller's
+    responsibility (e.g., save :meth:`to_list` to a secrets vault).
+
+    Usage::
+
+        revlist = RevocationList()
+        revlist.revoke("cid-compromised")
+        assert revlist.is_revoked("cid-compromised")
+
+        # Revoke an entire chain at once
+        revlist.revoke_chain("leaf-cid", evaluator)
+    """
+
+    def __init__(self) -> None:
+        self._revoked: set[str] = set()
+
+    def revoke(self, cid: str) -> None:
+        """Mark *cid* as revoked."""
+        self._revoked.add(cid)
+
+    def is_revoked(self, cid: str) -> bool:
+        """Return *True* if *cid* has been revoked."""
+        return cid in self._revoked
+
+    def revoke_chain(
+        self,
+        root_cid: str,
+        evaluator: "DelegationEvaluator",
+    ) -> int:
+        """Revoke *root_cid* and every delegation reachable from it.
+
+        Uses :meth:`DelegationEvaluator.build_chain` to follow ``proof_cid``
+        links.  CIDs already in the revocation list are counted but not
+        double-added.
+
+        Returns:
+            Number of **newly** revoked CIDs (≥ 0).
+        """
+        try:
+            chain = evaluator.build_chain(root_cid)
+        except Exception:
+            chain = []
+        count = 0
+        for delegation in chain:
+            if delegation.cid not in self._revoked:
+                self._revoked.add(delegation.cid)
+                count += 1
+        return count
+
+    def clear(self) -> None:
+        """Remove all revocations."""
+        self._revoked.clear()
+
+    def to_list(self) -> List[str]:
+        """Return a sorted list of revoked CIDs."""
+        return sorted(self._revoked)
+
+    def __len__(self) -> int:
+        return len(self._revoked)
+
+    def __contains__(self, cid: str) -> bool:
+        return cid in self._revoked
+
+
+def can_invoke_with_revocation(
+    leaf_cid: str,
+    tool: str,
+    actor: str,
+    *,
+    evaluator: Optional["DelegationEvaluator"] = None,
+    revocation_list: Optional["RevocationList"] = None,
+) -> Tuple[bool, str]:
+    """Check whether *actor* can invoke *tool* via *leaf_cid*, respecting revocations.
+
+    Like :meth:`DelegationEvaluator.can_invoke` but checks every CID in the
+    chain against *revocation_list* before performing the capability check.
+    This allows individual delegations to be revoked without rebuilding the
+    entire chain.
+
+    Args:
+        leaf_cid: The leaf delegation CID to check.
+        tool: The tool name / resource / ability to authorise.
+        actor: The actor requesting the invocation.
+        evaluator: :class:`DelegationEvaluator` to use.  Defaults to the
+            global singleton.
+        revocation_list: :class:`RevocationList` to check against.  If *None*,
+            no revocation check is performed.
+
+    Returns:
+        ``(authorized, reason)`` tuple.  *authorized* is ``True`` only when
+        the delegation chain is valid **and** no CID is revoked.
+    """
+    ev = evaluator if evaluator is not None else get_delegation_evaluator()
+
+    try:
+        chain = ev.build_chain(leaf_cid)
+    except Exception as exc:
+        return False, f"chain build failed: {exc}"
+
+    # Check revocations first.
+    if revocation_list is not None:
+        for delegation in chain:
+            if revocation_list.is_revoked(delegation.cid):
+                return False, f"delegation {delegation.cid!r} has been revoked"
+
+    return ev.can_invoke(leaf_cid, resource=tool, ability=tool, actor=actor)
+
+
+# ---------------------------------------------------------------------------
+# Phase I — Persistent delegation store (session 57)
+# ---------------------------------------------------------------------------
+
+class DelegationStore:
+    """Persistent store for :class:`Delegation` objects backed by a JSON file.
+
+    The in-memory store maps ``cid → Delegation``.  :meth:`save` serialises
+    all delegations to a JSON file; :meth:`load` reconstructs them.
+
+    Args:
+        path: Filesystem path for the JSON delegation file.
+
+    Usage::
+
+        store = DelegationStore("/var/lib/mcp/delegations.json")
+        store.add(delegation)
+        store.save()    # persist on shutdown
+
+        store2 = DelegationStore("/var/lib/mcp/delegations.json")
+        store2.load()   # restore on startup
+        ev = store2.to_evaluator()
+    """
+
+    def __init__(self, path: str) -> None:
+        self.path = path
+        self._store: Dict[str, Delegation] = {}
+
+    # ------------------------------------------------------------------
+    # In-memory operations
+    # ------------------------------------------------------------------
+
+    def add(self, delegation: Delegation) -> None:
+        """Add *delegation* to the in-memory store."""
+        self._store[delegation.cid] = delegation
+
+    def get(self, cid: str) -> Optional[Delegation]:
+        """Retrieve a delegation by CID; returns *None* if not found."""
+        return self._store.get(cid)
+
+    def remove(self, cid: str) -> bool:
+        """Remove a delegation; return *True* if it existed."""
+        if cid in self._store:
+            del self._store[cid]
+            return True
+        return False
+
+    def list_cids(self) -> List[str]:
+        """Return a sorted list of stored delegation CIDs."""
+        return sorted(self._store)
+
+    def __len__(self) -> int:
+        return len(self._store)
+
+    # ------------------------------------------------------------------
+    # Persistence
+    # ------------------------------------------------------------------
+
+    def save(self) -> None:
+        """Persist all delegations to *path* as JSON.
+
+        Creates parent directories if necessary.
+        """
+        import json as _json
+        import os
+
+        data: Dict[str, Any] = {
+            cid: d.to_dict() for cid, d in self._store.items()
+        }
+        parent = os.path.dirname(self.path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        with open(self.path, "w", encoding="utf-8") as fh:
+            _json.dump(data, fh, indent=2)
+        logger.debug("Saved %d delegations to %s", len(data), self.path)
+
+    def load(self) -> int:
+        """Load delegations from *path*.
+
+        Missing or unreadable files return 0 without raising.
+
+        Returns:
+            The number of delegations successfully loaded.
+        """
+        import json as _json
+
+        try:
+            with open(self.path, encoding="utf-8") as fh:
+                data: Dict[str, Any] = _json.load(fh)
+        except FileNotFoundError:
+            logger.debug("Delegation store file not found: %s", self.path)
+            return 0
+        except (OSError, ValueError) as exc:
+            logger.warning("Could not read delegation store %s: %s", self.path, exc)
+            return 0
+
+        loaded = 0
+        for cid, entry in data.items():
+            try:
+                caps = [
+                    Capability(resource=c["resource"], ability=c["ability"])
+                    for c in entry.get("capabilities", [])
+                ]
+                d = Delegation(
+                    cid=cid,
+                    issuer=entry.get("issuer", ""),
+                    audience=entry.get("audience", ""),
+                    capabilities=caps,
+                    expiry=entry.get("expiry"),
+                    proof_cid=entry.get("proof_cid"),
+                    signature=entry.get("signature", ""),
+                )
+                self._store[cid] = d
+                loaded += 1
+            except Exception as exc:
+                logger.warning("Skipping malformed delegation %r: %s", cid, exc)
+        logger.debug("Loaded %d delegations from %s", loaded, self.path)
+        return loaded
+
+    # ------------------------------------------------------------------
+    # Conversion
+    # ------------------------------------------------------------------
+
+    def to_evaluator(self) -> "DelegationEvaluator":
+        """Create a :class:`DelegationEvaluator` populated with all stored delegations."""
+        ev = DelegationEvaluator()
+        for delegation in self._store.values():
+            ev.add(delegation)
+        return ev

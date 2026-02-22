@@ -960,3 +960,136 @@ def compile_nl_policy(
     """
     compiler = NLUCANPolicyCompiler(use_logic_module=use_logic_module)
     return compiler.compile(nl_policy, description=description)
+
+
+# ---------------------------------------------------------------------------
+# Phase G — IPFS-backed policy store (session 57)
+# ---------------------------------------------------------------------------
+
+class IPFSPolicyStore(FilePolicyStore):
+    """IPFS-backed :class:`PolicyRegistry` store (Phase G).
+
+    Extends :class:`FilePolicyStore` by optionally pinning each compiled policy
+    to the IPFS network via ``ipfs_kit_py``.  When an IPFS client is
+    unavailable, the store degrades transparently to file-only behaviour.
+
+    Policy content is identified by the same multiformats CIDv1 that
+    :class:`NLPolicySource` computes; this CID is the natural IPFS address for
+    the policy source.
+
+    Args:
+        path: Local JSON cache file (same as :class:`FilePolicyStore`).
+        registry: :class:`PolicyRegistry` to populate.  Defaults to global.
+        ipfs_client: Optional ``ipfs_kit_py`` client instance.  If *None*,
+            the class tries ``from ipfs_kit_py import ipfs_kit; ipfs_kit()``.
+    """
+
+    def __init__(
+        self,
+        path: str,
+        registry: Optional["PolicyRegistry"] = None,
+        *,
+        ipfs_client: Any = None,
+    ) -> None:
+        super().__init__(path, registry)
+        self._ipfs_client = ipfs_client
+        # Maps policy name → IPFS CID string (populated by pin_policy)
+        self._cid_map: Dict[str, str] = {}
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _get_ipfs_client(self) -> Any:
+        """Return the IPFS client, lazily importing if not set."""
+        if self._ipfs_client is not None:
+            return self._ipfs_client
+        try:
+            from ipfs_kit_py import ipfs_kit  # noqa: PLC0415
+            return ipfs_kit()
+        except Exception:
+            return None
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def pin_policy(self, name: str) -> Optional[str]:
+        """Pin a single policy to IPFS and return its IPFS CID.
+
+        The pinned content is a JSON object containing the NL policy text,
+        description, and source CID so the full policy can be reconstructed
+        from IPFS alone.
+
+        Args:
+            name: Policy name as registered in the :class:`PolicyRegistry`.
+
+        Returns:
+            The IPFS CID string (``"Qm..."`` or ``"bafy..."``), or *None*
+            if IPFS is unavailable or the pin fails.
+        """
+        compiled = self._registry._compiled.get(name)
+        source = self._registry._sources.get(name)
+        if not compiled or not source:
+            return None
+        client = self._get_ipfs_client()
+        if client is None:
+            return None
+        content = json.dumps(
+            {
+                "nl_policy": source.text,
+                "description": compiled.policy.description,
+                "source_cid": source.source_cid,
+            }
+        ).encode()
+        try:
+            result = client.add(content)
+            ipfs_cid: Optional[str] = result.get("Hash") or result.get("cid")
+            if ipfs_cid:
+                self._cid_map[name] = ipfs_cid
+                logger.debug("Pinned policy %r to IPFS as %s", name, ipfs_cid)
+            return ipfs_cid
+        except Exception as exc:
+            logger.warning("IPFS pin_policy %r failed: %s", name, exc)
+            return None
+
+    def retrieve_from_ipfs(self, ipfs_cid: str) -> Optional[Dict[str, Any]]:
+        """Fetch policy data from IPFS by CID.
+
+        Args:
+            ipfs_cid: The IPFS CID to retrieve.
+
+        Returns:
+            A dict with keys ``nl_policy``, ``description``, ``source_cid``,
+            or *None* if retrieval fails or IPFS is unavailable.
+        """
+        client = self._get_ipfs_client()
+        if client is None:
+            return None
+        try:
+            data_bytes: bytes = client.cat(ipfs_cid)
+            return json.loads(data_bytes)
+        except Exception as exc:
+            logger.warning("IPFS retrieve_from_ipfs %s failed: %s", ipfs_cid, exc)
+            return None
+
+    def get_ipfs_cid(self, name: str) -> Optional[str]:
+        """Return the IPFS CID for *name*, or *None* if not yet pinned."""
+        return self._cid_map.get(name)
+
+    def save(self) -> None:
+        """Persist policies to file *and* pin all policies to IPFS.
+
+        IPFS pin failures are logged but do not prevent the file save.
+        """
+        super().save()
+        for name in self._registry.list_names():
+            self.pin_policy(name)
+
+    def load(self) -> int:
+        """Load policies from the local JSON cache.
+
+        IPFS retrieval is available via :meth:`retrieve_from_ipfs` for
+        individual policies identified by their CID.
+        """
+        return super().load()
