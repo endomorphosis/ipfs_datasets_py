@@ -1970,3 +1970,17 @@ class OntologyLearningAdapter:
             return 0.0
         top_k = sorted((r.final_score for r in self._feedback), reverse=True)[:k]
         return sum(top_k) / len(top_k)
+
+    def feedback_worst_k_mean(self, k: int = 3) -> float:
+        """Return the mean of the bottom *k* feedback scores.
+
+        Args:
+            k: Number of lowest-scored records to average. Defaults to 3.
+
+        Returns:
+            Float mean; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        bottom_k = sorted(r.final_score for r in self._feedback)[:k]
+        return sum(bottom_k) / len(bottom_k)

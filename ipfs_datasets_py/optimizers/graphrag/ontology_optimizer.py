@@ -4131,6 +4131,40 @@ class OntologyOptimizer:
         """
         return self.score_trailing_mean(n=n)
 
+    def history_stagnation_rate(self, tolerance: float = 0.005) -> float:
+        """Return the fraction of consecutive pairs where the score did not improve.
+
+        A step is "stagnant" when |score[i] - score[i-1]| <= tolerance.
+
+        Args:
+            tolerance: Maximum absolute change to consider stagnant. Defaults to 0.005.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        n = len(self._history) - 1
+        stagnant = sum(
+            1
+            for i in range(1, len(self._history))
+            if abs(self._history[i].average_score - self._history[i - 1].average_score) <= tolerance
+        )
+        return stagnant / n
+
+    def score_vs_baseline(self, baseline: float = 0.5) -> float:
+        """Return the difference between the latest score and *baseline*.
+
+        Args:
+            baseline: Reference score. Defaults to 0.5.
+
+        Returns:
+            Float difference (latest - baseline); 0.0 when no history.
+        """
+        if not self._history:
+            return 0.0
+        return self._history[-1].average_score - baseline
+
 
 # Export public API
 __all__ = [

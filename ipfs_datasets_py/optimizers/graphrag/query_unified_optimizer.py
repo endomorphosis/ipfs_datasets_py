@@ -116,9 +116,10 @@ from ipfs_datasets_py.optimizers.graphrag.query_planner import GraphRAGQueryOpti
 from ipfs_datasets_py.optimizers.graphrag.query_rewriter import QueryRewriter
 from ipfs_datasets_py.optimizers.graphrag.query_budget import QueryBudgetManager
 from ipfs_datasets_py.optimizers.graphrag.query_visualizer import QueryVisualizer
+from ipfs_datasets_py.optimizers.common.query_validation import QueryValidationMixin
 
 
-class UnifiedGraphRAGQueryOptimizer:
+class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
     """
     Combines optimization strategies for different graph types.
     
@@ -133,6 +134,7 @@ class UnifiedGraphRAGQueryOptimizer:
     - Statistical optimization for Wikipedia-derived knowledge graphs
     - Dynamic prioritization of semantically important paths
     - Entity importance-based traversal optimization
+    - Query parameter validation with fallback defaults
     """
     
     def __init__(self, 
@@ -227,6 +229,62 @@ class UnifiedGraphRAGQueryOptimizer:
             "ipld": ipld_optimizer,
             "general": self.base_optimizer
         }
+    
+    def _validate_query_parameters(self, query: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Validate and sanitize query parameters using QueryValidationMixin.
+        
+        Args:
+            query: Original query dictionary
+            
+        Returns:
+            Dict: Query with validated parameters
+        """
+        validated = query.copy()
+        
+        # Validate max_vector_results (1-1000, default 5)
+        validated["max_vector_results"] = self.validate_numeric_range(
+            validated, "max_vector_results", 
+            min_val=1, max_val=1000, default=5
+        )
+        
+        # Validate min_similarity (0.0-1.0, default 0.5)
+        validated["min_similarity"] = self.validate_numeric_range(
+            validated, "min_similarity",
+            min_val=0.0, max_val=1.0, default=0.5
+        )
+        
+        # Ensure traversal section exists with defaults
+        validated = self.ensure_nested_dict(
+            validated, "traversal", default_value={}
+        )
+        
+        # Validate traversal.max_depth (1-10, default 2)
+        if isinstance(validated.get("traversal"), dict):
+            validated["traversal"]["max_depth"] = self.validate_numeric_range(
+                validated["traversal"], "max_depth",
+                min_val=1, max_val=10, default=2
+            )
+            
+            # Validate edge_types as list if present
+            if "edge_types" in validated["traversal"]:
+                edge_types = validated["traversal"]["edge_types"]
+                if edge_types is not None:
+                    validated["traversal"]["edge_types"] = self.validate_list_filter(
+                        validated["traversal"], "edge_types",
+                        allowed_values=None,  # Accept any edge types
+                        default=None
+                    )
+        
+        # Validate priority parameter if present
+        if "priority" in validated:
+            validated["priority"] = self.validate_string_enum(
+                validated, "priority",
+                allowed_values=["low", "normal", "high", "critical"],
+                default="normal"
+            )
+        
+        return validated
     
     def _create_fallback_plan(self, query: Dict[str, Any], priority: str = "normal", error: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -1214,6 +1272,9 @@ class UnifiedGraphRAGQueryOptimizer:
 
         # Defensive copy to avoid mutating caller input.
         planned_query: Dict[str, Any] = copy.deepcopy(query)
+        
+        # Validate and sanitize query parameters using QueryValidationMixin
+        planned_query = self._validate_query_parameters(planned_query)
 
         # Normalize traversal parameters into the nested `traversal` object.
         traversal = planned_query.setdefault("traversal", {})

@@ -3041,6 +3041,43 @@ class LogicValidator:
                 targets.add(tgt)
         return sorted(targets - sources)
 
+    def root_nodes(self, ontology: dict) -> list:
+        """Return nodes that appear only as sources (no incoming relationships).
+
+        Args:
+            ontology: Dict with optional ``relationships`` list.
+
+        Returns:
+            Sorted list of root node ID strings.
+        """
+        sources: set = set()
+        targets: set = set()
+        for rel in ontology.get("relationships", []):
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src:
+                sources.add(src)
+            if tgt:
+                targets.add(tgt)
+        return sorted(sources - targets)
+
+    def relationship_loop_count(self, ontology: dict) -> int:
+        """Count relationships where source and target are the same node.
+
+        Args:
+            ontology: Dict with optional ``relationships`` list.
+
+        Returns:
+            Integer count of self-loop relationships.
+        """
+        count = 0
+        for rel in ontology.get("relationships", []):
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src and tgt and src == tgt:
+                count += 1
+        return count
+
 
 # Export public API
 __all__ = [

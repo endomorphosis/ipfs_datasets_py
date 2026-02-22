@@ -6394,6 +6394,32 @@ class OntologyGenerator:
         symmetric = sum(1 for (src, tgt) in edge_set if (tgt, src) in edge_set)
         return symmetric / len(edge_set)
 
+    def entity_confidence_entropy(self, result: "EntityExtractionResult") -> float:
+        """Return the Shannon entropy of entity confidence values (bucketed in 0.1 bins).
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float entropy in nats; 0.0 when no entities.
+        """
+        import math
+        entities = result.entities or []
+        if not entities:
+            return 0.0
+        n = len(entities)
+        buckets: dict = {}
+        for e in entities:
+            conf = float(getattr(e, "confidence", 0.0) or 0.0)
+            bucket = min(int(conf * 10), 9)
+            buckets[bucket] = buckets.get(bucket, 0) + 1
+        entropy = 0.0
+        for count in buckets.values():
+            p = count / n
+            if p > 0:
+                entropy -= p * math.log(p)
+        return entropy
+
 
 __all__ = [
     'OntologyGenerator',

@@ -1733,6 +1733,21 @@ class OntologyMediator:
             return 0
         return max(self._action_counts.values())
 
+    def action_least_recent(self) -> str:
+        """Return the name of the least-performed action type.
+
+        When multiple types have the same minimum count the lexicographically
+        first name is returned.
+
+        Returns:
+            String action name; empty string when no actions.
+        """
+        if not self._action_counts:
+            return ""
+        min_count = min(self._action_counts.values())
+        candidates = sorted(k for k, v in self._action_counts.items() if v == min_count)
+        return candidates[0]
+
 
 # Export public API
 __all__ = [

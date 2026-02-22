@@ -1880,3 +1880,21 @@ class OntologyPipeline:
         cov = sum((t - t_mean) * (s - s_mean) for t, s in zip(t_vals, scores))
         var_t = sum((t - t_mean) ** 2 for t in t_vals)
         return cov / var_t if var_t != 0 else 0.0
+
+    def run_score_rolling_std(self, window: int = 3) -> float:
+        """Return the standard deviation of the last *window* run scores.
+
+        Args:
+            window: Rolling window size. Defaults to 3.
+
+        Returns:
+            Float std; 0.0 when fewer than 2 runs in window.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        tail = [r.score.overall for r in self._run_history[-window:]]
+        if len(tail) < 2:
+            return 0.0
+        mean = sum(tail) / len(tail)
+        var = sum((s - mean) ** 2 for s in tail) / len(tail)
+        return var ** 0.5
