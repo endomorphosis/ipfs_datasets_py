@@ -1607,6 +1607,16 @@ class OntologyMediator:
             return 0.0
         return self._action_counts.get(action, 0) / total
 
+    def action_mode(self) -> str:
+        """Return the action name with the highest count.
+
+        Returns:
+            String action name; empty string when no actions recorded.
+        """
+        if not self._action_counts:
+            return ""
+        return max(self._action_counts, key=lambda a: self._action_counts[a])
+
 
 # Export public API
 __all__ = [

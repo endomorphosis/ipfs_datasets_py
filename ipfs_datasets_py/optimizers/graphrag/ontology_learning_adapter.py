@@ -1773,3 +1773,19 @@ class OntologyLearningAdapter:
         num = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))
         den = sum((x - mean_x) ** 2 for x in xs)
         return num / den if den else 0.0
+
+    def feedback_median_deviation(self) -> float:
+        """Return the mean absolute deviation from the median of final_score values.
+
+        Returns:
+            Float mean absolute deviation; 0.0 when fewer than 2 records.
+        """
+        n = len(self._feedback)
+        if n < 2:
+            return 0.0
+        scores = sorted(r.final_score for r in self._feedback)
+        if n % 2 == 0:
+            median = (scores[n // 2 - 1] + scores[n // 2]) / 2.0
+        else:
+            median = scores[n // 2]
+        return sum(abs(s - median) for s in scores) / n

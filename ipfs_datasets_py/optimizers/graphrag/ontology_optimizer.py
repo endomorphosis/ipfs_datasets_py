@@ -3553,6 +3553,41 @@ class OntologyOptimizer:
         return count
 
 
+    def history_min(self) -> float:
+        """Return the minimum average_score across all history entries.
+
+        Returns:
+            Float minimum; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        return min(e.average_score for e in self._history)
+
+    def history_max(self) -> float:
+        """Return the maximum average_score across all history entries.
+
+        Returns:
+            Float maximum; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        return max(e.average_score for e in self._history)
+
+    def history_rolling_mean(self, window: int = 3) -> float:
+        """Return the mean of the last *window* history entries.
+
+        Args:
+            window: Number of most-recent entries to average. Defaults to 3.
+
+        Returns:
+            Float mean; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        recent = self._history[-window:]
+        return sum(e.average_score for e in recent) / len(recent)
+
+
 # Export public API
 __all__ = [
     'OntologyOptimizer',

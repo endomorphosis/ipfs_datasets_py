@@ -5936,6 +5936,36 @@ class OntologyGenerator:
             return 0.0
         return max(getattr(e, "confidence", 0.0) or 0.0 for e in entities)
 
+    def entity_with_most_properties(self, result: "EntityExtractionResult") -> str:
+        """Return the ID of the entity with the most properties.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Entity ID string; empty string when no entities.
+        """
+        entities = result.entities or []
+        if not entities:
+            return ""
+        best = max(entities, key=lambda e: len(getattr(e, "properties", {}) or {}))
+        return best.id
+
+    def relationship_max_weight(self, result: "EntityExtractionResult") -> float:
+        """Return the maximum weight among all relationships.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float max weight; 0.0 when no relationships or no weight attribute.
+        """
+        rels = result.relationships or []
+        if not rels:
+            return 0.0
+        weights = [getattr(r, "weight", 0.0) or 0.0 for r in rels]
+        return max(weights)
+
 
 __all__ = [
     'OntologyGenerator',

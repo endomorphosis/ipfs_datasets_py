@@ -1721,3 +1721,13 @@ class OntologyPipeline:
         if not self._run_history:
             return 0.0
         return self._run_history[0].score.overall
+
+    def run_score_last(self) -> float:
+        """Return the score from the most recent run in history.
+
+        Returns:
+            Float score of the last run; 0.0 when no runs recorded.
+        """
+        if not self._run_history:
+            return 0.0
+        return self._run_history[-1].score.overall

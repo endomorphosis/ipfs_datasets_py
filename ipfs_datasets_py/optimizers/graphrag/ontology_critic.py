@@ -3949,6 +3949,18 @@ class OntologyCritic(BaseCritic):
         frac = idx - lo
         return vals[lo] + frac * (vals[hi] - vals[lo])
 
+    def dimension_above_threshold(self, score: "CriticScore", threshold: float = 0.7) -> int:
+        """Count how many dimensions in a CriticScore exceed a threshold.
+
+        Args:
+            score: CriticScore to evaluate.
+            threshold: Exclusive lower bound. Defaults to 0.7.
+
+        Returns:
+            Integer count of dimensions with value > threshold.
+        """
+        return sum(1 for d in self._DIMENSIONS if getattr(score, d, 0.0) > threshold)
+
 
 # Export public API
 __all__ = [
