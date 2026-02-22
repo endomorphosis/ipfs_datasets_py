@@ -20,6 +20,7 @@ import uuid
 from typing import Any, Dict
 from unittest.mock import MagicMock, patch
 import importlib
+import importlib.util
 
 import pytest
 

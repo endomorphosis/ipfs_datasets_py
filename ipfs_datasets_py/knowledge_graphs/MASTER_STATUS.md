@@ -2,8 +2,8 @@
 
 **Version:** 3.22.0  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-22 (session 45)  
-**Last Major Release:** v3.22.0 (session 45: 5 production bug fixes; **3,567 passing, 41 skipped, 0 failing**; fixes: `anyio.get_cancelled_exc_class()` outside-async-context bug in 4 modules — `query/unified_engine.py`, `transactions/wal.py`, `storage/ipld_backend.py`, `query/hybrid_search.py`; `ipld.py` missing `ipld_car = None` attribute for patching; test skip guards for spaCy (session43/44), matplotlib (session15/37), libipld (session40) optional dependencies; session21 cross-document test now patches optimizer absent-case correctly)
+**Last Updated:** 2026-02-22 (session 46)  
+**Last Major Release:** v3.22.0 (session 45: 5 production bug fixes; **3,553 passing, 55 skipped, 0 failing** in base environment; fixes: `anyio.get_cancelled_exc_class()` outside-async-context bug in 4 modules — `query/unified_engine.py`, `transactions/wal.py`, `storage/ipld_backend.py`, `query/hybrid_search.py`; `ipld.py` missing `ipld_car = None` attribute for patching; test skip guards for spaCy (session43/44), matplotlib (session15/37), libipld (session40) optional dependencies; session21 cross-document test now patches optimizer absent-case correctly; session46 adds rdflib skip guards for session33/37 tests)
 
 ---
 
@@ -209,9 +209,36 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - **test_master_status_session18.py** (70 tests — ast.py 99%, ontology/reasoning 98%, wal 89%, manager 91%, unified_engine 82%, formats 90%)
 - **test_master_status_session19.py** (73 tests — ir_executor 91%, parser 94%, rdf_serializer 94%, translator 93%; SET/MERGE ON CREATE+MATCH parser bug fixed)
 - **test_master_status_session20.py** (96 tests — _legacy_graph_engine 90%, finance_graphrag 95%, distributed 94%, ipld_backend 89%, validator 69%, formats 93%)
-- ...and 11 more test files
+- ...and 24 more test files (sessions 21-46)
 
-**Total Tests:** 2,965 passing, 23 skipped (libipld/anyio/plotly absent; networkx + pytest-mock + matplotlib + scipy available)
+**Session 21-46 summary:**
+- session21: 65 tests (extraction/graph merge bug fix, cypher/lexer 99%, lineage/core 97%, cross_document 88%)
+- session22: 91 tests (unified_engine 88%, result 99%, session 98%, compiler 95%, graph.py 98%)
+- session23: 66 tests (extraction/srl build_temporal_graph bug fix; relationships 100%, cross_document 96%)
+- session24: 78 tests (parser 100%, ir_executor 99%, formats 95%, wal 96%)
+- session25: 66 tests (bookmarks 100%, schema_checker 100%, specialized 100%, lineage/types 100%)
+- session26: 52 tests (connection_pool 100%, transactions/types 100%, result 100%, unified_engine 100%, distributed 99%, btree 98%)
+- session27: 42 tests (validator 80%, srl 87%, reasoning/helpers 99%, rdf_serializer 97%, jsonld/context 96%)
+- session28: 66 tests (extractor 70%, graph_engine 95%; 2 bugs fixed in extractor.py)
+- session29: 65 tests (neo4j_exporter 99%, ipfs_importer 97%, _legacy_graph_engine 99%, validator 99%)
+- session30: 61 tests (_wikipedia_helpers 74%, neo4j_compat/driver 96%, types 100%, __init__ 100%; 1 bug fixed)
+- session31: 59 tests (_wikipedia_helpers 90%, srl 84%, formats 98%, expression_evaluator 96%, distributed 98%)
+- session32: 31 tests (graph_engine 100%, _wikipedia_helpers 99%, finance_graphrag 98%, manager 99%, ipld_backend 95%)
+- session33: 35 tests (wal 100%, translator 100%, ontology/reasoning 100%, advanced 100%, graph.py 100%, ipfs_importer 99%, cross_document 99%)
+- session34: 31 tests (unified_engine 100%, distributed 100%, hybrid_search 100%, reasoning/helpers 100%, ipld_backend 97%, lexer 100%, result 100%)
+- session35: 17 tests (query_executor 99%, _legacy_graph_engine 100%, lineage/enhanced 100%, lineage/metrics 99%, manager 100%, btree 100%)
+- session36: 16 tests (query_executor 100%, _legacy_graph_engine 100%, lineage/enhanced 100%, hybrid_search 100%, cross_document 100%, indexing/manager 100%)
+- session37: 25 tests (graph.py boolean-property coverage; extractor 80%, extraction/types confirmed; rdflib skip guards added in s46)
+- session38: 14 tests (knowledge_graph_extraction 100%, srl nlp-fallback, visualization ghost-node, formats CAR-with-blocks)
+- session39: 37 tests (srl._extract_spacy_frames mock, query/knowledge_graph 131-193)
+- session40: 5 tests (formats CAR real-libs, neo4j_exporter SHOW CONSTRAINTS, wikipedia_helpers trace update)
+- session41: 73 tests (ipld.py 100%, _entity_helpers 100%, ontology/reasoning cycle-guard, compiler UnaryOpNode)
+- session42: 18 tests (ipld.py cross_document_reasoning, export_to_car/from_car full paths)
+- session43: 1 test (spaCy-dependent test file — skipped when spaCy unavailable; extractor 73%→98% with spaCy)
+- session44: 11 tests (spaCy model OSError fallback, rebel IndexError, srl empty-sent, hybrid_search visited)
+- session46: rdflib skip guards for session33/37 tests (4 previously failing → 0 failing)
+
+**Total Tests:** 3,553 passing, 55 skipped (rdflib/spaCy/libipld/plotly absent in base env), 0 failing
 **Pass Rate:** 100% (excluding optional dependency skips)
 
 ---

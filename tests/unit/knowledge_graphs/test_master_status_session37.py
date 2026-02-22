@@ -23,6 +23,7 @@ Targets (744 missed → ~685 missed):
 
 import sys
 import importlib
+import importlib.util
 import warnings
 from unittest.mock import MagicMock, patch
 import pytest

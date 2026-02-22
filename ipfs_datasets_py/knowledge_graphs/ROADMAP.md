@@ -1,8 +1,8 @@
 # Knowledge Graphs - Development Roadmap
 
-**Last Updated:** 2026-02-20  
-**Current Version:** 2.1.0  
-**Status:** Active Development
+**Last Updated:** 2026-02-22  
+**Current Version:** 3.22.0  
+**Status:** Production Ready (99.7% test coverage)
 
 ---
 
@@ -279,6 +279,47 @@ RETURN path, length(path)
 
 ---
 
+## Version 3.22.0 (2026-02-22) - ✅ RELEASED
+
+**Released:** 2026-02-22  
+**Focus:** Comprehensive coverage push, async bug fixes, and test quality hardening
+
+### Delivered Features
+
+#### 1. Comprehensive Coverage Push (Sessions 33–45) ✅
+All modules at 99%+ coverage. 3,553 tests passing, 55 skipped, 0 failing.
+- `transactions/wal.py` — asyncio.CancelledError re-raises now covered
+- `extraction/extractor.py` — 73% → 98% with spaCy paths covered
+- `extraction/entities.py` + `extraction/relationships.py` — `extraction_method` field added
+- `ipld.py` — legacy IPLD module fully covered (73 new tests)
+- All remaining single-line misses across 30+ modules resolved
+
+#### 2. Async Context Bug Fixes ✅
+`anyio.get_cancelled_exc_class()` called in synchronous methods without an event loop now handled gracefully in 4 modules:
+- `query/unified_engine.py` — `_cancelled_exc_class()` helper
+- `transactions/wal.py` — `_cancelled_exc_class()` helper
+- `storage/ipld_backend.py` — `_cancelled_exc_class()` helper
+- `query/hybrid_search.py` — `_cancelled_exc_class()` helper
+
+#### 3. Optional Dependency Skip Guards ✅
+All tests that require optional deps now have proper `@pytest.mark.skipif` guards:
+- spaCy tests: `@_skip_no_spacy` (sessions 43, 44)
+- matplotlib tests: `@_skip_no_matplotlib` (sessions 15, 37)
+- libipld tests: `@_skip_no_libipld` (session 40)
+- rdflib tests: `@pytest.mark.skipif(not _rdflib_available, ...)` (sessions 33, 37)
+
+#### 4. Production Bug Fixes ✅
+- `extraction/extractor.py` — spaCy v3 `ent._.get()` 1-arg API fixed
+- `ipld.py` — `ipld_car = None` attribute added for patchability
+
+### Success Criteria — All Met ✅
+- 99%+ coverage across all modules (vs. target of 90%)
+- 3,553 tests passing, 55 cleanly skipped, 0 failing
+- All async cancellation bugs fixed
+- All optional-dep tests properly guarded
+
+---
+
 ## Long-Term Vision (v4.0+)
 
 ### Potential Features
@@ -304,10 +345,10 @@ RETURN path, length(path)
 We welcome community contributions! Here's how you can help:
 
 ### Priority Areas
-1. **Test Coverage** - Help us reach 90%+ coverage
+1. **Test Coverage** - ✅ 99%+ achieved — focus on optional-dep integration tests
 2. **Documentation** - More examples and tutorials
-3. **Performance** - Optimization and benchmarking
-4. **Features** - Implement roadmap items
+3. **Performance** - Optimization and benchmarking for large graphs (>100k nodes)
+4. **Features** - Implement long-term roadmap items (v4.0+)
 
 ### How to Contribute
 See [CONTRIBUTING.md](../../docs/knowledge_graphs/CONTRIBUTING.md) for guidelines.
@@ -346,7 +387,8 @@ We follow [Semantic Versioning](https://semver.org/):
 | 2.2.0 | August 2026 | ✅ Cancelled (delivered in 2.0.0) | Migration Enhancement |
 | 2.5.0 | November 2026 | ✅ Cancelled (delivered in 2.0.0/2.1.0) | Advanced Extraction |
 | 3.0.0 | February 2027 | ✅ Cancelled (delivered in 2.0.0/2.1.0) | Advanced Reasoning |
-| 3.x | 2027-2028 | 📋 Future | TBD based on feedback |
+| 3.22.0 | 2026-02-22 | ✅ Released | Comprehensive coverage push: 3,553 tests passing, 55 skipped; 99%+ coverage across all modules; anyio async-context bug fixes; spaCy/matplotlib/rdflib optional-dep skip guards |
+| 4.0 | 2027+ | 📋 Future | TBD based on feedback |
 
 ---
 

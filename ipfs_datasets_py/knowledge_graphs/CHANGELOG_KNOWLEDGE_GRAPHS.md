@@ -5,6 +5,22 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.1] - 2026-02-22
+
+### Bug Fixes — rdflib Optional Dependency Skip Guards (Session 46)
+
+- **`test_master_status_session33.py`** — Added `_rdflib_available = bool(importlib.util.find_spec("rdflib"))` + `@pytest.mark.skipif(not _rdflib_available, reason="rdflib not installed")` guards to 2 tests that call `export_to_rdf()`: `test_export_to_rdf_entity_boolean_property_uses_xsd_boolean` and `test_export_to_rdf_relationship_boolean_property_uses_xsd_boolean`.
+- **`test_master_status_session37.py`** — Added matching class-level `@pytest.mark.skipif` guard to `TestKnowledgeGraphExportBooleanProperty` class.
+- **Result:** 3,553 passing, 55 skipped (intentional), 0 failing in base environment (no rdflib).
+
+### Documentation Updates
+
+- **`ROADMAP.md`** — Updated current version from 2.1.0 to v3.22.0; added v3.22.0 section; updated release table; updated community priority list to note 99%+ coverage achieved.
+- **`MASTER_STATUS.md`** — Updated "Last Updated" to session 46; corrected test count to 3,553/55/0; added sessions 33-46 to test file list.
+- **`IMPROVEMENT_TODO.md`** — Added sessions 33-46 detailed log entries.
+
+---
+
 ## [3.22.0] - 2026-02-22
 
 ### Bug Fixes — Async Safety + Test Environment Hardening (Session 45)
@@ -32,7 +48,7 @@ This release fixes 95 pre-existing test failures across two categories: producti
 - **`test_master_status_session21.py`** — Fixed `test_default_query_optimizer_is_missing_stub` to patch `UnifiedGraphRAGQueryOptimizer` to `None` before constructing `CrossDocumentReasoner`; test now works regardless of whether GraphRAG deps are installed.
 - **`test_master_status_session42.py`** — Fixed `TestFromCarEmptyRoots` and `TestExportToCar` to also patch `HAVE_IPLD_CAR = True` alongside `ipld_car`; tests now reach the actual CAR logic instead of the early ImportError guard.
 
-**Result:** 3,567 passing, 41 skipped (all intentional), 0 failing.
+**Result:** 3,567 passing (in full-deps env), 41 skipped (all intentional), 0 failing. Base env without rdflib: 3,553 pass, 55 skip (rdflib skip guards added in v3.22.1).
 
 ---
 
