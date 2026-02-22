@@ -14,3 +14,15 @@ __all__ = [
     'router_remote_cache',
     'CacheManager',
 ]
+
+# Cache engine (moved from mcp_server/tools)
+try:
+    from .cache_engine import (
+        CacheType,
+        CacheStrategy,
+        CacheEntry,
+        CacheStats,
+        MockCacheService,
+    )
+except ImportError:
+    pass

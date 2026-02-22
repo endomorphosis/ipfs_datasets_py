@@ -12,9 +12,10 @@ Features:
 from __future__ import annotations
 
 import logging
+import re as _re
 from typing import Optional, List, Dict, Any, Tuple
 
-from ...TDFOL.tdfol_core import Formula
+from ...TDFOL.tdfol_core import Formula, TDFOLKnowledgeBase
 from ...TDFOL.tdfol_dcec_parser import parse_dcec
 from ...TDFOL.tdfol_prover import ProofResult, ProofStatus
 from .base_prover_bridge import (
@@ -225,6 +226,51 @@ class TDFOLGrammarBridge(BaseProverBridge):
         except Exception as e:
             logger.debug(f"Fallback parsing failed: {e}")
         
+        # Try CEC DCEC parser for formal logical syntax (handles P -> Q, etc.)
+        # Only use if TDFOL parser didn't work; wrap in try/except to convert if needed
+        try:
+            from ...CEC.native import parse_dcec_string as _cec_parse
+            from ...TDFOL.tdfol_core import Formula as _TDFOLFormula
+            cec_formula = _cec_parse(text)
+            if cec_formula is not None and isinstance(cec_formula, _TDFOLFormula):
+                logger.debug(f"CEC parser (TDFOL-compat) succeeded for '{text}'")
+                return cec_formula
+        except Exception as e:
+            logger.debug(f"CEC parser fallback failed: {e}")
+        
+        # Last resort: try to parse directly as TDFOL formula syntax
+        try:
+            from ...TDFOL.tdfol_parser import parse_tdfol_safe
+            formula = parse_tdfol_safe(text)
+            if formula is not None:
+                logger.debug(f"TDFOL parser fallback succeeded for '{text}'")
+                return formula
+        except Exception as e:
+            logger.debug(f"TDFOL parser fallback failed: {e}")
+        
+        # Final fallback: build simple TDFOL formula from text structure
+        try:
+            from ...TDFOL.tdfol_core import Predicate, create_implication, create_conjunction, create_negation
+            stripped = text.strip()
+            
+            # Handle implication "A -> B" or "A => B"
+            for sep in [' -> ', ' => ', ' --> ']:
+                if sep in stripped:
+                    parts = stripped.split(sep, 1)
+                    left = self._fallback_parse(parts[0].strip())
+                    right = self._fallback_parse(parts[1].strip())
+                    if left is not None and right is not None:
+                        return create_implication(left, right)
+                    break
+            
+            # Handle simple atom
+            if stripped and stripped.replace("_", "").replace("-", "").isalnum():
+                pred = Predicate(stripped, ())
+                logger.debug(f"Created atom '{stripped}' as fallback for '{text}'")
+                return pred
+        except Exception as e:
+            logger.debug(f"Atom creation fallback failed: {e}")
+        
         return None
     
     def formula_to_natural_language(
@@ -286,19 +332,22 @@ class TDFOLGrammarBridge(BaseProverBridge):
                 # Parse DCEC string to Formula object
                 dcec_formula = parse_dcec(dcec_str)
                 
-                if dcec_formula and not isinstance(dcec_formula, dict):
+                if dcec_formula:
                     # Use grammar engine to generate natural English
                     natural_text = self.dcec_grammar.formula_to_english(dcec_formula)
                     
-                    # Apply style modifications
-                    if style == "casual":
-                        natural_text = self._apply_casual_style(natural_text)
-                    elif style == "technical":
-                        # Technical style currently uses the default formal output unchanged
-                        pass
-                    
-                    logger.debug(f"Grammar-based generation successful: {natural_text}")
-                    return natural_text
+                    # Reject dict-like fallback strings from grammar (e.g. "{'type': 'unknown', ...}")
+                    if isinstance(natural_text, str) and natural_text.startswith("{"):
+                        logger.debug("Grammar returned dict-like string, using template fallback")
+                    else:
+                        # Apply style modifications
+                        if style == "casual":
+                            natural_text = self._apply_casual_style(natural_text)
+                        elif style == "technical":
+                            pass
+                        
+                        logger.debug(f"Grammar-based generation successful: {natural_text}")
+                        return natural_text
                 else:
                     logger.debug("DCEC parsing returned None, using template fallback")
             
@@ -309,10 +358,8 @@ class TDFOLGrammarBridge(BaseProverBridge):
         templates = {
             "formal": {
                 "O": "It is obligatory that",
-                "P": "It is permissible that",
+                "P": "It is permitted that",
                 "F": "It is forbidden that",
-                "G": "always",
-                "X": "next",
                 "always": "always",
                 "eventually": "eventually",
                 "forall": "For all",
@@ -320,10 +367,8 @@ class TDFOLGrammarBridge(BaseProverBridge):
             },
             "casual": {
                 "O": "must",
-                "P": "can",
+                "P": "may",
                 "F": "must not",
-                "G": "always",
-                "X": "next",
                 "always": "always",
                 "eventually": "sometime",
                 "forall": "all",
@@ -333,20 +378,31 @@ class TDFOLGrammarBridge(BaseProverBridge):
         
         template_set = templates.get(style, templates["formal"])
         
-        # Context-aware replacement: apply longest/most-specific patterns first
-        # Temporal F (eventually) wrapping deontic ops vs deontic F (forbidden)
-        temporal_eventually = "eventually" if style != "casual" else "sometime"
+        # Simple template application
+        # Strategy: G→always (always temporal), X→next (always temporal)
+        # F: temporal only when wrapping another modal op (G/F/X/O/P), else deontic (forbidden)
         result = dcec_str
-        result = result.replace("(F (P ", f"{temporal_eventually} It is permissible that ")
-        result = result.replace("(F (O ", f"{temporal_eventually} It is obligatory that ")
-        result = result.replace("(F (G ", f"{temporal_eventually} always ")
-        result = result.replace("(G (P ", "always It is permissible that ")
-        result = result.replace("(G (O ", "always It is obligatory that ")
-        result = result.replace("(X (P ", "next It is permissible that ")
-        result = result.replace("(X (O ", "next It is obligatory that ")
-        # Now apply remaining single-operator templates
+        import re as _re
+        
+        # G and X are always temporal
+        result = _re.sub(r'\(G ', '(always ', result)
+        result = _re.sub(r'\(X ', '(next ', result)
+        
+        # F: temporal when wrapping deontic/modal sub-ops, else deontic
+        # Match (F (O ...), (F (P ...), (F (G ...), (F (F ...) — these are temporal F wrapping modal
+        deontic_ops = '|'.join(['O', 'P', 'F', 'G', 'X', 'always', 'next', 'eventually'])
+        result = _re.sub(r'\(F \((' + deontic_ops + r')\b', r'(eventually (\1', result)
+        # (G (P x)) after G replacement: (always (P x)) — now apply deontic for P
+        
+        # Apply deontic templates for O/P/F (if not already converted)
         for key, value in template_set.items():
-            result = result.replace(f"({key} ", f"{value} ")
+            if key in ('O', 'P', 'F'):
+                result = result.replace(f"({key} ", f"{value} ")
+        
+        # Apply remaining template keywords (always, eventually etc.)
+        for key, value in template_set.items():
+            if key not in ('O', 'P', 'F'):
+                result = result.replace(f"({key} ", f"({value} ")
         
         logger.debug(f"Template-based generation: {result}")
         return result
@@ -536,28 +592,34 @@ class NaturalLanguageTDFOLInterface:
         premise_formulas = []
         for premise in premises:
             formula = self.understand(premise)
+            if formula is None:
+                # Try treating bare atom like "P" as a zero-arity predicate P()
+                if _re.fullmatch(r'[A-Z][A-Za-z0-9_]*', premise.strip()):
+                    formula = self.understand(f"{premise.strip()}()")
             if formula:
                 premise_formulas.append(formula)
             else:
                 return {
                     "valid": False,
-                    "error": f"Could not parse premise: {premise}",
                     "premises": premises,
                     "conclusion": conclusion,
+                    "error": f"Could not parse premise: {premise}"
                 }
         
         # Parse conclusion
         conclusion_formula = self.understand(conclusion)
+        if conclusion_formula is None:
+            if _re.fullmatch(r'[A-Z][A-Za-z0-9_]*', conclusion.strip()):
+                conclusion_formula = self.understand(f"{conclusion.strip()}()")
         if not conclusion_formula:
             return {
                 "valid": False,
-                "error": f"Could not parse conclusion: {conclusion}",
                 "premises": premises,
                 "conclusion": conclusion,
+                "error": f"Could not parse conclusion: {conclusion}"
             }
         
         # Add premises to knowledge base
-        from ...TDFOL.tdfol_core import TDFOLKnowledgeBase
         kb = TDFOLKnowledgeBase()
         for formula in premise_formulas:
             kb.add_axiom(formula)

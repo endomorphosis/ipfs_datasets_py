@@ -35,7 +35,7 @@ class AlwaysDistribution(InferenceRule):
     
     def can_apply(self, formulas: List[Formula]) -> bool:
         for f in formulas:
-            if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS":
+            if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.ALWAYS:
                 if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.AND:
                     return True
         return False
@@ -43,7 +43,7 @@ class AlwaysDistribution(InferenceRule):
     def apply(self, formulas: List[Formula]) -> List[Formula]:
         results: List[Formula] = []
         for f in formulas:
-            if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS":
+            if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.ALWAYS:
                 if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.AND:
                     # □(P∧Q) → □P ∧ □Q
                     always_formulas: List[Formula] = []
@@ -65,7 +65,7 @@ class AlwaysImplication(InferenceRule):
         return "Always Implication"
     
     def can_apply(self, formulas: List[Formula]) -> bool:
-        always_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS"]
+        always_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.ALWAYS]
         
         for af1 in always_formulas:
             for af2 in always_formulas:
@@ -77,7 +77,7 @@ class AlwaysImplication(InferenceRule):
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
         results: List[Formula] = []
-        always_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS"]
+        always_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.ALWAYS]
         
         for af1 in always_formulas:
             for af2 in always_formulas:
@@ -101,16 +101,16 @@ class AlwaysTransitive(InferenceRule):
     
     def can_apply(self, formulas: List[Formula]) -> bool:
         for f in formulas:
-            if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS":
-                if isinstance(f.formula, TemporalFormula) and f.formula.operator.value == "ALWAYS":
+            if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.ALWAYS:
+                if isinstance(f.formula, TemporalFormula) and f.formula.operator == TemporalOperator.ALWAYS:
                     return True
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
         results: List[Formula] = []
         for f in formulas:
-            if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS":
-                if isinstance(f.formula, TemporalFormula) and f.formula.operator.value == "ALWAYS":
+            if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.ALWAYS:
+                if isinstance(f.formula, TemporalFormula) and f.formula.operator == TemporalOperator.ALWAYS:
                     # □□P → □P
                     result = TemporalFormula(f.operator, f.formula.formula)
                     results.append(result)
@@ -128,14 +128,14 @@ class AlwaysImpliesNext(InferenceRule):
     
     def can_apply(self, formulas: List[Formula]) -> bool:
         return any(
-            isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS"
+            isinstance(f, TemporalFormula) and f.operator == TemporalOperator.ALWAYS
             for f in formulas
         )
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
         results: List[Formula] = []
         for f in formulas:
-            if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS":
+            if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.ALWAYS:
                 # □P → ○P
                 next_formula = TemporalFormula(TemporalOperator.NEXT, f.formula)
                 results.append(next_formula)
@@ -155,13 +155,13 @@ class AlwaysInduction(InferenceRule):
         # Check for P and □(P→○P) pattern
         for f1 in formulas:
             for f2 in formulas:
-                if isinstance(f2, TemporalFormula) and f2.operator.value == "ALWAYS":
+                if isinstance(f2, TemporalFormula) and f2.operator == TemporalOperator.ALWAYS:
                     if isinstance(f2.formula, ConnectiveFormula) and f2.formula.connective == LogicalConnective.IMPLIES:
                         if len(f2.formula.formulas) == 2:
                             antecedent = f2.formula.formulas[0]
                             consequent = f2.formula.formulas[1]
                             if f1 == antecedent:
-                                if isinstance(consequent, TemporalFormula) and consequent.operator.value == "NEXT":
+                                if isinstance(consequent, TemporalFormula) and consequent.operator == TemporalOperator.NEXT:
                                     if consequent.formula == f1:
                                         return True
         return False
@@ -170,13 +170,13 @@ class AlwaysInduction(InferenceRule):
         results: List[Formula] = []
         for f1 in formulas:
             for f2 in formulas:
-                if isinstance(f2, TemporalFormula) and f2.operator.value == "ALWAYS":
+                if isinstance(f2, TemporalFormula) and f2.operator == TemporalOperator.ALWAYS:
                     if isinstance(f2.formula, ConnectiveFormula) and f2.formula.connective == LogicalConnective.IMPLIES:
                         if len(f2.formula.formulas) == 2:
                             antecedent = f2.formula.formulas[0]
                             consequent = f2.formula.formulas[1]
                             if f1 == antecedent:
-                                if isinstance(consequent, TemporalFormula) and consequent.operator.value == "NEXT":
+                                if isinstance(consequent, TemporalFormula) and consequent.operator == TemporalOperator.NEXT:
                                     if consequent.formula == f1:
                                         # P and □(P→○P) → □P
                                         always_p = TemporalFormula(TemporalOperator.ALWAYS, f1)
@@ -199,14 +199,14 @@ class EventuallyFromAlways(InferenceRule):
     
     def can_apply(self, formulas: List[Formula]) -> bool:
         return any(
-            isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS"
+            isinstance(f, TemporalFormula) and f.operator == TemporalOperator.ALWAYS
             for f in formulas
         )
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
         results: List[Formula] = []
         for f in formulas:
-            if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS":
+            if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.ALWAYS:
                 # □P → ◊P
                 eventually = TemporalFormula(TemporalOperator.EVENTUALLY, f.formula)
                 results.append(eventually)
@@ -224,7 +224,7 @@ class EventuallyDistribution(InferenceRule):
     
     def can_apply(self, formulas: List[Formula]) -> bool:
         for f in formulas:
-            if isinstance(f, TemporalFormula) and f.operator.value == "EVENTUALLY":
+            if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.EVENTUALLY:
                 if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.OR:
                     return True
         return False
@@ -232,7 +232,7 @@ class EventuallyDistribution(InferenceRule):
     def apply(self, formulas: List[Formula]) -> List[Formula]:
         results: List[Formula] = []
         for f in formulas:
-            if isinstance(f, TemporalFormula) and f.operator.value == "EVENTUALLY":
+            if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.EVENTUALLY:
                 if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.OR:
                     # ◊(P∨Q) → ◊P ∨ ◊Q
                     eventually_formulas: List[Formula] = []
@@ -255,16 +255,16 @@ class EventuallyTransitive(InferenceRule):
     
     def can_apply(self, formulas: List[Formula]) -> bool:
         for f in formulas:
-            if isinstance(f, TemporalFormula) and f.operator.value == "EVENTUALLY":
-                if isinstance(f.formula, TemporalFormula) and f.formula.operator.value == "EVENTUALLY":
+            if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.EVENTUALLY:
+                if isinstance(f.formula, TemporalFormula) and f.formula.operator == TemporalOperator.EVENTUALLY:
                     return True
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
         results: List[Formula] = []
         for f in formulas:
-            if isinstance(f, TemporalFormula) and f.operator.value == "EVENTUALLY":
-                if isinstance(f.formula, TemporalFormula) and f.formula.operator.value == "EVENTUALLY":
+            if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.EVENTUALLY:
+                if isinstance(f.formula, TemporalFormula) and f.formula.operator == TemporalOperator.EVENTUALLY:
                     # ◊◊P → ◊P
                     result = TemporalFormula(f.operator, f.formula.formula)
                     results.append(result)
@@ -281,8 +281,8 @@ class EventuallyImplication(InferenceRule):
         return "Eventually Implication"
     
     def can_apply(self, formulas: List[Formula]) -> bool:
-        eventually_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "EVENTUALLY"]
-        always_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS"]
+        eventually_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.EVENTUALLY]
+        always_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.ALWAYS]
         
         for ef in eventually_formulas:
             for af in always_formulas:
@@ -294,8 +294,8 @@ class EventuallyImplication(InferenceRule):
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
         results: List[Formula] = []
-        eventually_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "EVENTUALLY"]
-        always_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS"]
+        eventually_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.EVENTUALLY]
+        always_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.ALWAYS]
         
         for ef in eventually_formulas:
             for af in always_formulas:
@@ -323,7 +323,7 @@ class NextDistribution(InferenceRule):
     
     def can_apply(self, formulas: List[Formula]) -> bool:
         for f in formulas:
-            if isinstance(f, TemporalFormula) and f.operator.value == "NEXT":
+            if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.NEXT:
                 if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.AND:
                     return True
         return False
@@ -331,7 +331,7 @@ class NextDistribution(InferenceRule):
     def apply(self, formulas: List[Formula]) -> List[Formula]:
         results: List[Formula] = []
         for f in formulas:
-            if isinstance(f, TemporalFormula) and f.operator.value == "NEXT":
+            if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.NEXT:
                 if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.AND:
                     # ○(P∧Q) → ○P ∧ ○Q
                     next_formulas: List[Formula] = []
@@ -353,7 +353,7 @@ class NextImplication(InferenceRule):
         return "Next Implication"
     
     def can_apply(self, formulas: List[Formula]) -> bool:
-        next_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "NEXT"]
+        next_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.NEXT]
         
         for nf1 in next_formulas:
             for nf2 in next_formulas:
@@ -365,7 +365,7 @@ class NextImplication(InferenceRule):
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
         results: List[Formula] = []
-        next_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "NEXT"]
+        next_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.NEXT]
         
         for nf1 in next_formulas:
             for nf2 in next_formulas:
@@ -393,14 +393,14 @@ class UntilWeakening(InferenceRule):
     
     def can_apply(self, formulas: List[Formula]) -> bool:
         for f in formulas:
-            if isinstance(f, TemporalFormula) and f.operator.value == "UNTIL":
+            if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.UNTIL:
                 return True
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
         results: List[Formula] = []
         for f in formulas:
-            if isinstance(f, TemporalFormula) and f.operator.value == "UNTIL":
+            if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.UNTIL:
                 # P U Q → ◊Q (the second argument eventually holds)
                 if isinstance(f.formula, ConnectiveFormula) and len(f.formula.formulas) >= 2:
                     eventually_q = TemporalFormula(TemporalOperator.EVENTUALLY, f.formula.formulas[1])
@@ -419,14 +419,14 @@ class SinceWeakening(InferenceRule):
     
     def can_apply(self, formulas: List[Formula]) -> bool:
         for f in formulas:
-            if isinstance(f, TemporalFormula) and f.operator.value == "SINCE":
+            if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.SINCE:
                 return True
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
         results: List[Formula] = []
         for f in formulas:
-            if isinstance(f, TemporalFormula) and f.operator.value == "SINCE":
+            if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.SINCE:
                 # P S Q → Q held in the past
                 # For simplicity, we derive that Q held (without explicit past operator)
                 if isinstance(f.formula, ConnectiveFormula) and len(f.formula.formulas) >= 2:
@@ -444,7 +444,7 @@ class TemporalUntilElimination(InferenceRule):
         return "Temporal Until Elimination"
     
     def can_apply(self, formulas: List[Formula]) -> bool:
-        until_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "UNTIL"]
+        until_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.UNTIL]
         
         for uf in until_formulas:
             if isinstance(uf.formula, ConnectiveFormula) and len(uf.formula.formulas) >= 2:
@@ -455,7 +455,7 @@ class TemporalUntilElimination(InferenceRule):
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
         results: List[Formula] = []
-        until_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "UNTIL"]
+        until_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.UNTIL]
         
         for uf in until_formulas:
             if isinstance(uf.formula, ConnectiveFormula) and len(uf.formula.formulas) >= 2:
@@ -484,7 +484,7 @@ class TemporalNegation(InferenceRule):
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.NOT:
                 if len(f.formulas) > 0:
                     inner = f.formulas[0]
-                    if isinstance(inner, TemporalFormula) and inner.operator.value == "ALWAYS":
+                    if isinstance(inner, TemporalFormula) and inner.operator == TemporalOperator.ALWAYS:
                         return True
         return False
     
@@ -494,7 +494,7 @@ class TemporalNegation(InferenceRule):
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.NOT:
                 if len(f.formulas) > 0:
                     inner = f.formulas[0]
-                    if isinstance(inner, TemporalFormula) and inner.operator.value == "ALWAYS":
+                    if isinstance(inner, TemporalFormula) and inner.operator == TemporalOperator.ALWAYS:
                         # ¬□P → ◊¬P
                         negated_formula = ConnectiveFormula(LogicalConnective.NOT, [inner.formula])
                         eventually_not = TemporalFormula(TemporalOperator.EVENTUALLY, negated_formula)

@@ -417,17 +417,58 @@ class PromptGenerator:
         Returns:
             List of example dictionaries
         """
-        # TODO: Implement example database integration
-        # This is a placeholder for Phase 2 full implementation
-        
+        # Built-in example store: curated few-shot examples keyed by domain.
+        # Callers can extend this via ``add_examples()``.
+        _BUILTIN_EXAMPLES: dict[str, list[dict]] = {
+            'legal': [
+                {
+                    'input': 'Alice must pay Bob USD 500 by 2025-01-01.',
+                    'ontology': {
+                        'entities': [
+                            {'id': 'e1', 'type': 'Person', 'text': 'Alice', 'properties': {'role': 'obligor'}},
+                            {'id': 'e2', 'type': 'Person', 'text': 'Bob', 'properties': {'role': 'obligee'}},
+                            {'id': 'e3', 'type': 'MonetaryAmount', 'text': 'USD 500', 'properties': {'currency': 'USD', 'amount': 500}},
+                        ],
+                        'relationships': [
+                            {'id': 'r1', 'source_id': 'e1', 'target_id': 'e2', 'type': 'obligates', 'confidence': 0.95},
+                            {'id': 'r2', 'source_id': 'e1', 'target_id': 'e3', 'type': 'owes', 'confidence': 0.90},
+                        ],
+                    },
+                    'quality_score': 0.92,
+                },
+            ],
+            'medical': [
+                {
+                    'input': 'Patient John was diagnosed with hypertension and prescribed lisinopril.',
+                    'ontology': {
+                        'entities': [
+                            {'id': 'e1', 'type': 'Patient', 'text': 'John', 'properties': {'role': 'patient'}},
+                            {'id': 'e2', 'type': 'Condition', 'text': 'hypertension', 'properties': {'icd10': 'I10'}},
+                            {'id': 'e3', 'type': 'Medication', 'text': 'lisinopril', 'properties': {'class': 'ACE inhibitor'}},
+                        ],
+                        'relationships': [
+                            {'id': 'r1', 'source_id': 'e1', 'target_id': 'e2', 'type': 'diagnosed_with', 'confidence': 0.95},
+                            {'id': 'r2', 'source_id': 'e1', 'target_id': 'e3', 'type': 'prescribed', 'confidence': 0.90},
+                        ],
+                    },
+                    'quality_score': 0.91,
+                },
+            ],
+        }
+
+        # Merge with any instance-level examples added via add_examples()
+        all_examples = list(_BUILTIN_EXAMPLES.get(domain, []))
+        all_examples.extend(getattr(self, '_example_store', {}).get(domain, []))
+
+        # Filter by quality threshold and limit count
+        filtered = [e for e in all_examples if e.get('quality_score', 0.0) >= quality_threshold]
+        selected = filtered[:num_examples]
+
         logger.info(
-            f"Selecting {num_examples} examples for domain '{domain}' "
-            f"with quality >= {quality_threshold}"
+            f"Selected {len(selected)}/{len(filtered)} examples for domain '{domain}' "
+            f"(quality >= {quality_threshold})"
         )
-        
-        # Placeholder: return empty list
-        # In full implementation, would query example database
-        return []
+        return selected
     
     def get_template(self, domain: str) -> PromptTemplate:
         """
@@ -451,6 +492,31 @@ class PromptGenerator:
         """
         self.template_library[domain] = template
         logger.info(f"Added template for domain: {domain}")
+
+    def add_examples(
+        self,
+        domain: str,
+        examples: List[Dict[str, Any]],
+    ) -> None:
+        """Add few-shot examples for a domain to the instance-level example store.
+
+        These examples are merged with the built-in store when :meth:`select_examples`
+        is called.
+
+        Args:
+            domain: Domain name (e.g. ``'legal'``, ``'medical'``).
+            examples: List of example dicts, each with at minimum::
+
+                {
+                    'input': str,
+                    'ontology': dict,
+                    'quality_score': float,   # 0.0–1.0
+                }
+        """
+        if not hasattr(self, '_example_store'):
+            self._example_store: Dict[str, List[Dict[str, Any]]] = {}
+        self._example_store.setdefault(domain, []).extend(examples)
+        logger.info(f"Added {len(examples)} examples for domain '{domain}'")
 
 
 # Export public API

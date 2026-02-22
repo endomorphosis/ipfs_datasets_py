@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 from functools import wraps
 import logging
 from typing import Any, Callable, TypeVar
@@ -42,7 +43,7 @@ def ensure_this_is_a_coroutine(fn_or_coro):
     Coerce a function into being a coroutine.
     Like the asyncio_coroutine decorator, except it's a regular function.
     """
-    if asyncio.iscoroutinefunction(fn_or_coro):
+    if inspect.iscoroutinefunction(fn_or_coro):
         return fn_or_coro
 
     elif callable(fn_or_coro):
@@ -50,7 +51,7 @@ def ensure_this_is_a_coroutine(fn_or_coro):
         @wraps(fn_or_coro)
         async def wrapper(*args, **kwargs):
             result = fn_or_coro(*args, **kwargs)
-            if asyncio.iscoroutine(result):
+            if inspect.iscoroutine(result):
                 return await result
             else:
                 return result
@@ -66,17 +67,17 @@ from .error import ErrorMonad
 class Async(Monad[T]):
 
     def __init__(self, work, *args, **kwargs) -> None:
-
+        loop = asyncio.get_event_loop()
         if isinstance(work, asyncio.Future):
             self._future = work
-        elif asyncio.iscoroutine(work):
-            self._future = asyncio.ensure_future(work)
+        elif inspect.iscoroutine(work):
+            self._future = loop.create_task(work)
         elif callable(work):
-            self._future = asyncio.ensure_future(
+            self._future = loop.create_task(
                 ensure_this_is_a_coroutine(work)(*args, **kwargs)
             )
         else:
-            self._future = asyncio.ensure_future(
+            self._future = loop.create_task(
                 ensure_this_is_a_coroutine(lambda: work)()
             )
         self._chained = None
@@ -95,16 +96,17 @@ class Async(Monad[T]):
             return self.left(next_work) # Propagate errors
 
         next_work = ensure_this_is_a_coroutine(next_work)
+        loop = asyncio.get_event_loop()
 
         def resolved(func):
             try:
                 res = check_result(func, self._chained)
             except TaskError as e:
                 return self.left(next_work) # Return an Error Monad if one occurred.
-            task: asyncio.Future = asyncio.ensure_future(next_work(res))
+            task: asyncio.Future = loop.create_task(next_work(res))
             task.add_done_callback(lambda func: pass_result(func, new_future))
 
-        new_future = asyncio.Future()
+        new_future = loop.create_future()
         next_async = Async(new_future)
         self._chained = new_future
         self._future.add_done_callback(resolved)

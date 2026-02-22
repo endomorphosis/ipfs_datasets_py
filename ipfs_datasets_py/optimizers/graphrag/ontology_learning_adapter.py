@@ -1,0 +1,2130 @@
+"""OntologyLearningAdapter — feedback-driven extraction tuning.
+
+Tracks which extraction patterns led to high-quality ontologies (as judged
+by the critic) and adjusts confidence thresholds accordingly.  This creates
+a closed feedback loop:
+
+    OntologyGenerator → OntologyCritic → OntologyMediator → OntologyLearningAdapter
+                ↑_____________________________________________|
+
+The adapter is **stateful but side-effect-free**: it never mutates the
+generator directly.  Instead call :meth:`get_extraction_hint` to retrieve
+a recommended threshold before generating, and call :meth:`apply_feedback`
+after each refinement cycle to record the outcome.
+
+Usage
+-----
+.. code-block:: python
+
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
+    adapter = OntologyLearningAdapter(domain="legal")
+
+    # Before extraction:
+    threshold = adapter.get_extraction_hint()
+
+    # After a refinement cycle:
+    adapter.apply_feedback(final_score=state.critic_scores[-1].overall,
+                           actions=state.refinement_history)
+
+    # Inspect weights:
+    print(adapter.get_stats())
+"""
+
+from __future__ import annotations
+
+import logging
+import math
+from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Sequence
+
+_logger = logging.getLogger(__name__)
+
+# Default fallback threshold for LLM extraction
+_DEFAULT_THRESHOLD: float = 0.5
+# How many feedback samples must accumulate before adjusting threshold
+_MIN_SAMPLES_FOR_ADJUSTMENT: int = 3
+# Weight given to recent feedback vs. historical average (0–1, higher = more reactive)
+_EMA_ALPHA: float = 0.3
+
+
+@dataclass
+class FeedbackRecord:
+    """Single feedback observation from one refinement cycle."""
+
+    final_score: float
+    action_types: List[str] = field(default_factory=list)
+    confidence_at_extraction: Optional[float] = None
+
+    def __repr__(self) -> str:
+        return (
+            f"FeedbackRecord("
+            f"final_score={self.final_score:.3f}, "
+            f"actions={self.action_types}, "
+            f"confidence={self.confidence_at_extraction})"
+        )
+
+
+class OntologyLearningAdapter:
+    """Adapt extraction thresholds based on refinement cycle feedback.
+
+    Args:
+        domain: Domain hint used for per-domain threshold tracking.
+        base_threshold: Initial extraction confidence threshold.
+        ema_alpha: Exponential moving-average smoothing factor for threshold
+            updates (0 < alpha ≤ 1, higher = more reactive to recent data).
+        min_samples: Minimum feedback samples before adjusting threshold.
+    """
+
+    def __init__(
+        self,
+        domain: str = "general",
+        base_threshold: float = _DEFAULT_THRESHOLD,
+        ema_alpha: float = _EMA_ALPHA,
+        min_samples: int = _MIN_SAMPLES_FOR_ADJUSTMENT,
+    ) -> None:
+        self.domain = domain
+        self._base_threshold = base_threshold
+        self._current_threshold: float = base_threshold
+        self._ema_alpha = ema_alpha
+        self._min_samples = min_samples
+
+        self._feedback: List[FeedbackRecord] = []
+        # Per action-type: running weighted success count and total count
+        self._action_success: Dict[str, float] = defaultdict(float)
+        self._action_count: Dict[str, int] = defaultdict(int)
+
+    # ------------------------------------------------------------------ #
+    # Public API                                                           #
+    # ------------------------------------------------------------------ #
+
+    def apply_feedback(
+        self,
+        final_score: float,
+        actions: Optional[Sequence[Any]] = None,
+        confidence_at_extraction: Optional[float] = None,
+    ) -> None:
+        """Record outcomes of a completed refinement cycle.
+
+        Args:
+            final_score: Overall critic score at the end of the cycle (0–1).
+            actions: Sequence of refinement history entries (dicts with an
+                ``'action'`` key) or :class:`MediatorState` round entries.
+            confidence_at_extraction: Rule-based confidence that was
+                reported at extraction time (optional, used for correlation).
+        """
+        action_types: List[str] = []
+        for entry in (actions or []):
+            action_str = (
+                entry.get("action", "") if isinstance(entry, dict) else str(entry)
+            )
+            if action_str:
+                action_types.append(action_str)
+
+        record = FeedbackRecord(
+            final_score=max(0.0, min(1.0, float(final_score))),
+            action_types=action_types,
+            confidence_at_extraction=confidence_at_extraction,
+        )
+        self._feedback.append(record)
+
+        # Update per-action success rates
+        for action in action_types:
+            self._action_count[action] += 1
+            self._action_success[action] += record.final_score
+
+        # Adjust threshold via EMA once we have enough samples
+        if len(self._feedback) >= self._min_samples:
+            self._update_threshold()
+
+        _logger.debug(
+            "OntologyLearningAdapter.apply_feedback: score=%.3f actions=%s "
+            "new_threshold=%.3f samples=%d",
+            record.final_score,
+            action_types,
+            self._current_threshold,
+            len(self._feedback),
+        )
+
+    def get_extraction_hint(self) -> float:
+        """Return the recommended extraction confidence threshold.
+
+        The hint is computed as the EMA-adjusted threshold with a small
+        correction derived from the **average per-action success rate**.
+        When successful actions dominate, the correction lowers the threshold
+        slightly (allow more extractions); when actions are rarely successful
+        the threshold is raised.
+
+        Returns:
+            Float in [0.1, 0.9].  Values below this threshold should trigger
+            LLM-based fallback extraction.
+        """
+        base = self._current_threshold
+        if not self._action_count:
+            return base
+
+        # Weighted mean success rate across all recorded actions
+        total_count = sum(self._action_count.values())
+        total_success = sum(self._action_success.values())
+        mean_action_success = total_success / total_count if total_count else 0.5
+
+        # Correction: ±0.05 based on deviation from neutral (0.5)
+        correction = 0.05 * (0.5 - mean_action_success)  # positive → raise threshold
+        adjusted = base + correction
+        return max(0.1, min(0.9, adjusted))
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Return a summary of the adapter's internal state.
+
+        Returns:
+            Dictionary with keys ``current_threshold``, ``sample_count``,
+            ``mean_score``, ``p50_score``, ``p90_score``,
+            ``action_success_rates``, ``domain``.
+        """
+        scores = [r.final_score for r in self._feedback]
+        mean_score = sum(scores) / len(scores) if scores else 0.0
+
+        def _percentile(data: list, pct: float) -> float:
+            """Return the *pct*-th percentile of *data* (0–100)."""
+            if not data:
+                return 0.0
+            sorted_data = sorted(data)
+            idx = (pct / 100.0) * (len(sorted_data) - 1)
+            lo = int(idx)
+            hi = min(lo + 1, len(sorted_data) - 1)
+            frac = idx - lo
+            return sorted_data[lo] + frac * (sorted_data[hi] - sorted_data[lo])
+
+        action_success_rates: Dict[str, float] = {}
+        for action, count in self._action_count.items():
+            if count > 0:
+                action_success_rates[action] = self._action_success[action] / count
+
+        return {
+            "domain": self.domain,
+            "current_threshold": self._current_threshold,
+            "base_threshold": self._base_threshold,
+            "sample_count": len(self._feedback),
+            "mean_score": mean_score,
+            "p50_score": _percentile(scores, 50),
+            "p90_score": _percentile(scores, 90),
+            "action_success_rates": action_success_rates,
+        }
+
+    def reset(self) -> None:
+        """Reset adapter state to base threshold (useful for testing)."""
+        self._feedback.clear()
+        self._action_success.clear()
+        self._action_count.clear()
+        self._current_threshold = self._base_threshold
+
+    def top_actions(self, n: int = 5) -> List[Dict[str, Any]]:
+        """Return the top-N actions sorted by mean success rate (descending).
+
+        Args:
+            n: Maximum number of actions to return (default: 5).
+
+        Returns:
+            List of dicts with keys:
+            - ``action``: action name
+            - ``count``: number of times applied
+            - ``mean_success``: mean critic score when this action was applied
+        """
+        results = []
+        for action, count in self._action_count.items():
+            if count > 0:
+                mean_success = self._action_success[action] / count
+                results.append({
+                    "action": action,
+                    "count": count,
+                    "mean_success": round(mean_success, 4),
+                })
+        results.sort(key=lambda x: x["mean_success"], reverse=True)
+        return results[:max(1, n)]
+
+    # ------------------------------------------------------------------ #
+    # Internal helpers                                                     #
+    # ------------------------------------------------------------------ #
+
+    def _update_threshold(self) -> None:
+        """Update current threshold using EMA of recent mean scores."""
+        recent = self._feedback[-self._min_samples :]
+        recent_mean = sum(r.final_score for r in recent) / len(recent)
+
+        # When recent mean quality is high (≥ 0.8), loosen threshold (let more
+        # rule-based results through).  When low (< 0.5), tighten threshold
+        # (trigger LLM fallback more aggressively).
+        target = self._score_to_threshold(recent_mean)
+        self._current_threshold = (
+            self._ema_alpha * target
+            + (1.0 - self._ema_alpha) * self._current_threshold
+        )
+        # Clamp to [0.1, 0.9]
+        self._current_threshold = max(0.1, min(0.9, self._current_threshold))
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize adapter state to a JSON-compatible dictionary.
+
+        Returns:
+            Dict with all state needed to reconstruct the adapter via
+            :meth:`from_dict`.
+        """
+        return {
+            "domain": self.domain,
+            "base_threshold": self._base_threshold,
+            "current_threshold": self._current_threshold,
+            "ema_alpha": self._ema_alpha,
+            "min_samples": self._min_samples,
+            "feedback": [
+                {
+                    "final_score": r.final_score,
+                    "action_types": list(r.action_types),
+                    "confidence_at_extraction": r.confidence_at_extraction,
+                }
+                for r in self._feedback
+            ],
+            "action_success": dict(self._action_success),
+            "action_count": dict(self._action_count),
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "OntologyLearningAdapter":
+        """Reconstruct an adapter from a serialized dictionary.
+
+        Args:
+            data: Dictionary as produced by :meth:`to_dict`.
+
+        Returns:
+            New :class:`OntologyLearningAdapter` with restored state.
+        """
+        adapter = cls(
+            domain=data.get("domain", "general"),
+            base_threshold=float(data.get("base_threshold", _DEFAULT_THRESHOLD)),
+            ema_alpha=float(data.get("ema_alpha", _EMA_ALPHA)),
+            min_samples=int(data.get("min_samples", _MIN_SAMPLES_FOR_ADJUSTMENT)),
+        )
+        adapter._current_threshold = float(
+            data.get("current_threshold", adapter._base_threshold)
+        )
+        for rec in data.get("feedback", []):
+            adapter._feedback.append(
+                FeedbackRecord(
+                    final_score=float(rec.get("final_score", 0.0)),
+                    action_types=list(rec.get("action_types", [])),
+                    confidence_at_extraction=rec.get("confidence_at_extraction"),
+                )
+            )
+        for action, success in data.get("action_success", {}).items():
+            adapter._action_success[action] = float(success)
+        for action, count in data.get("action_count", {}).items():
+            adapter._action_count[action] = int(count)
+        return adapter
+
+    def serialize(self) -> bytes:
+        """Serialize adapter state to UTF-8 encoded JSON bytes.
+
+        This is a pickle-free, human-readable alternative to binary
+        serialisation.  Round-trip via :meth:`deserialize`.
+
+        Returns:
+            UTF-8 encoded JSON bytes representing the full adapter state.
+        """
+        import json as _json
+        return _json.dumps(self.to_dict(), indent=None, separators=(",", ":")).encode("utf-8")
+
+    @classmethod
+    def deserialize(cls, data: bytes) -> "OntologyLearningAdapter":
+        """Reconstruct an adapter from bytes produced by :meth:`serialize`.
+
+        Args:
+            data: UTF-8 encoded JSON bytes (output of :meth:`serialize`).
+
+        Returns:
+            New :class:`OntologyLearningAdapter` with restored state.
+        """
+        import json as _json
+        return cls.from_dict(_json.loads(data.decode("utf-8")))
+
+    @staticmethod
+    def _score_to_threshold(mean_score: float) -> float:
+        """Map mean quality score to a target confidence threshold.
+
+        Higher quality → lower threshold (less LLM fallback needed).
+        Lower quality  → higher threshold (more LLM fallback triggered).
+        """
+        # Linear inverse mapping: score 1.0 → threshold 0.2, score 0.0 → 0.9
+        return 0.9 - 0.7 * max(0.0, min(1.0, mean_score))
+
+    def reset_feedback(self) -> int:
+        """Clear the feedback history without resetting thresholds or action stats.
+
+        Removes all :class:`FeedbackRecord` entries from the internal list
+        while preserving the current threshold and action success/count
+        dictionaries.
+
+        Returns:
+            Number of feedback records that were cleared.
+
+        Example:
+            >>> n = adapter.reset_feedback()
+            >>> len(adapter._feedback) == 0
+            True
+        """
+        count = len(self._feedback)
+        self._feedback.clear()
+        return count
+
+    def feedback_summary(self) -> Dict[str, Any]:
+        """Return descriptive statistics for the current feedback history.
+
+        Returns:
+            Dict with keys:
+
+            * ``"count"`` -- number of feedback records.
+            * ``"mean_score"`` -- mean ``final_score`` across records.
+            * ``"min_score"`` -- minimum ``final_score``.
+            * ``"max_score"`` -- maximum ``final_score``.
+            * ``"current_threshold"`` -- current extraction threshold.
+
+        Example:
+            >>> summary = adapter.feedback_summary()
+            >>> summary["count"] == len(adapter._feedback)
+            True
+        """
+        count = len(self._feedback)
+        if count == 0:
+            return {
+                "count": 0,
+                "mean_score": 0.0,
+                "min_score": 0.0,
+                "max_score": 0.0,
+                "current_threshold": self._current_threshold,
+            }
+        scores = [r.final_score for r in self._feedback]
+        return {
+            "count": count,
+            "mean_score": round(sum(scores) / count, 6),
+            "min_score": round(min(scores), 6),
+            "max_score": round(max(scores), 6),
+            "current_threshold": self._current_threshold,
+        }
+
+    def serialize_to_file(self, path: str) -> None:
+        """Persist the adapter state to a JSON file.
+
+        Serializes :attr:`_feedback`, :attr:`_current_threshold`, and
+        :attr:`_action_count` / :attr:`_action_success` dicts to a JSON file
+        so the adapter can be restored later via :meth:`from_file`.
+
+        Args:
+            path: Filesystem path to write.  Parent directory must exist.
+
+        Example:
+            >>> adapter.serialize_to_file("/tmp/adapter.json")
+        """
+        import json as _json
+        payload = {
+            "current_threshold": self._current_threshold,
+            "action_count": dict(self._action_count),
+            "action_success": dict(self._action_success),
+            "feedback": [
+                {
+                    "final_score": r.final_score,
+                    "action_types": list(r.action_types),
+                    "confidence_at_extraction": r.confidence_at_extraction,
+                }
+                for r in self._feedback
+            ],
+        }
+        with open(path, "w", encoding="utf-8") as fh:
+            _json.dump(payload, fh, indent=2)
+
+    @classmethod
+    def from_file(cls, path: str, **init_kwargs) -> "OntologyLearningAdapter":
+        """Restore an adapter previously saved with :meth:`serialize_to_file`.
+
+        Args:
+            path: Path of the JSON file written by :meth:`serialize_to_file`.
+            **init_kwargs: Extra keyword arguments forwarded to
+                :meth:`__init__` (e.g. ``domain``, ``base_threshold``).
+
+        Returns:
+            New :class:`OntologyLearningAdapter` with state restored.
+
+        Example:
+            >>> adapter2 = OntologyLearningAdapter.from_file("/tmp/adapter.json")
+        """
+        import json as _json
+        with open(path, "r", encoding="utf-8") as fh:
+            payload = _json.load(fh)
+        instance = cls(**init_kwargs)
+        instance._current_threshold = payload.get("current_threshold", instance._current_threshold)
+        instance._action_count = dict(payload.get("action_count", {}))
+        instance._action_success = dict(payload.get("action_success", {}))
+        instance._feedback = [
+            FeedbackRecord(
+                final_score=r["final_score"],
+                action_types=list(r.get("action_types", [])),
+                confidence_at_extraction=r.get("confidence_at_extraction"),
+            )
+            for r in payload.get("feedback", [])
+        ]
+        return instance
+
+    def top_feedback_scores(self, n: int = 5) -> List["FeedbackRecord"]:
+        """Return the top *n* feedback records sorted by ``final_score`` descending.
+
+        Args:
+            n: Number of records to return.  Defaults to 5.
+
+        Returns:
+            List of :class:`FeedbackRecord` objects, length <= n, in
+            descending score order.
+
+        Example:
+            >>> top = adapter.top_feedback_scores(3)
+            >>> len(top) <= 3
+            True
+        """
+        return sorted(self._feedback, key=lambda r: r.final_score, reverse=True)[:n]
+
+    def feedback_count(self) -> int:
+        """Return the number of feedback records in the history.
+
+        Shortcut for ``len(adapter._feedback)``.
+
+        Returns:
+            Non-negative integer.
+
+        Example:
+            >>> adapter.feedback_count()
+            0
+        """
+        return len(self._feedback)
+
+    def worst_feedback_scores(self, n: int = 5) -> List["FeedbackRecord"]:
+        """Return the bottom *n* feedback records sorted by ``final_score`` ascending.
+
+        Args:
+            n: Number of records to return.  Defaults to 5.
+
+        Returns:
+            List of :class:`FeedbackRecord` objects, length <= n, in
+            ascending score order (worst first).
+
+        Example:
+            >>> worst = adapter.worst_feedback_scores(3)
+            >>> len(worst) <= 3
+            True
+        """
+        return sorted(self._feedback, key=lambda r: r.final_score)[:n]
+
+    def mean_score(self) -> float:
+        """Return the mean ``final_score`` across all feedback records.
+
+        Returns:
+            Mean score as a float.  Returns ``0.0`` if no feedback has been
+            recorded.
+
+        Example:
+            >>> adapter.mean_score()
+            0.0
+        """
+        if not self._feedback:
+            return 0.0
+        return sum(r.final_score for r in self._feedback) / len(self._feedback)
+
+    def score_variance(self) -> float:
+        """Return the variance of ``final_score`` across all feedback records.
+
+        Returns:
+            Variance as a float.  Returns ``0.0`` when there are fewer than
+            two feedback records.
+
+        Example:
+            >>> adapter.score_variance()
+            0.0
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        mean = self.mean_score()
+        return sum((r.final_score - mean) ** 2 for r in self._feedback) / len(self._feedback)
+
+    def feedback_stddev(self) -> float:
+        """Return the population standard deviation of feedback final scores.
+
+        Returns:
+            Square root of :meth:`score_variance`, or ``0.0`` when fewer than
+            two feedback records exist.
+        """
+        return self.score_variance() ** 0.5
+
+    def feedback_median(self) -> float:
+        """Return median ``final_score`` across feedback records."""
+        if not self._feedback:
+            return 0.0
+        vals = sorted(r.final_score for r in self._feedback)
+        n = len(vals)
+        mid = n // 2
+        if n % 2 == 1:
+            return vals[mid]
+        return (vals[mid - 1] + vals[mid]) / 2.0
+
+    def load_feedback_from_list(self, records: List["FeedbackRecord"]) -> int:
+        """Bulk-load a list of :class:`FeedbackRecord` objects into this adapter.
+
+        Existing feedback is preserved; new records are appended.
+
+        Args:
+            records: List of :class:`FeedbackRecord` objects to add.
+
+        Returns:
+            Total number of feedback records after the load.
+
+        Example:
+            >>> n = adapter.load_feedback_from_list([record1, record2])
+            >>> n >= 2
+            True
+        """
+        self._feedback.extend(records)
+        return len(self._feedback)
+
+    def latest_feedback(self) -> Optional["FeedbackRecord"]:
+        """Return the most recently recorded :class:`FeedbackRecord`.
+
+        Returns:
+            The last feedback entry, or ``None`` if no feedback has been
+            recorded.
+
+        Example:
+            >>> adapter.latest_feedback()
+        """
+        if not self._feedback:
+            return None
+        return self._feedback[-1]
+
+    def clear_feedback(self) -> int:
+        """Remove all feedback records from this adapter.
+
+        Returns:
+            Number of records cleared.
+
+        Example:
+            >>> adapter.clear_feedback()
+            0
+        """
+        n = len(self._feedback)
+        self._feedback.clear()
+        return n
+
+    def feedback_summary_dict(self) -> dict:
+        """Return a summary dict with count, mean, and variance of feedback scores.
+
+        Returns:
+            Dict with keys ``count``, ``mean``, ``variance``.
+
+        Example:
+            >>> adapter.feedback_summary_dict()
+            {'count': 0, 'mean': 0.0, 'variance': 0.0}
+        """
+        return {
+            "count": self.feedback_count(),
+            "mean": self.mean_score(),
+            "variance": self.score_variance(),
+        }
+
+    def feedback_ids(self) -> List[str]:
+        """Return a list of identifiers for all feedback records.
+
+        Uses ``action_types`` of each record joined as a string to produce a
+        stable identifier; falls back to the record index if ``action_types``
+        is empty.
+
+        Returns:
+            List of string identifiers in insertion order.
+
+        Example:
+            >>> adapter.feedback_ids()
+            []
+        """
+        ids = []
+        for i, r in enumerate(self._feedback):
+            if r.action_types:
+                ids.append("+".join(r.action_types))
+            else:
+                ids.append(f"record_{i}")
+        return ids
+
+    def top_k_feedback(self, k: int = 5) -> List["FeedbackRecord"]:
+        """Return the top *k* :class:`FeedbackRecord` objects by ``final_score``.
+
+        Args:
+            k: Maximum number of records to return.  Defaults to 5.
+
+        Returns:
+            List of :class:`FeedbackRecord` objects in descending score order,
+            length <= *k*.  Returns an empty list when no feedback is recorded.
+
+        Example:
+            >>> best = adapter.top_k_feedback(k=3)
+            >>> len(best) <= 3
+            True
+        """
+        return sorted(self._feedback, key=lambda r: r.final_score, reverse=True)[:k]
+
+    def feedback_score_range(self) -> tuple:
+        """Return the ``(min, max)`` range of ``final_score`` across all feedback.
+
+        Returns:
+            Tuple ``(min_score, max_score)``; ``(0.0, 0.0)`` when no feedback
+            has been recorded.
+
+        Example:
+            >>> adapter.feedback_score_range()
+            (0.3, 0.9)
+        """
+        if not self._feedback:
+            return (0.0, 0.0)
+        scores = [r.final_score for r in self._feedback]
+        return (min(scores), max(scores))
+
+    def feedback_count_above(self, threshold: float = 0.6) -> int:
+        """Return the number of feedback records with ``final_score > threshold``.
+
+        Args:
+            threshold: Threshold to compare against (exclusive). Defaults to 0.6.
+
+        Returns:
+            Count of :class:`FeedbackRecord` objects where
+            ``final_score > threshold``.
+
+        Example:
+            >>> adapter.feedback_count_above(threshold=0.7)
+        """
+        return sum(1 for r in self._feedback if r.final_score > threshold)
+
+    def feedback_below(self, threshold: float = 0.5) -> list:
+        """Return feedback records with ``final_score < threshold``.
+
+        Args:
+            threshold: Upper bound (exclusive). Defaults to 0.5.
+
+        Returns:
+            List of :class:`FeedbackRecord` objects where
+            ``final_score < threshold``.
+
+        Example:
+            >>> low = adapter.feedback_below(threshold=0.4)
+        """
+        return [r for r in self._feedback if r.final_score < threshold]
+
+    def feedback_above(self, threshold: float = 0.6) -> list:
+        """Return feedback records with ``final_score > threshold``.
+
+        Args:
+            threshold: Lower bound (exclusive). Defaults to 0.6.
+
+        Returns:
+            List of :class:`FeedbackRecord` objects where
+            ``final_score > threshold``.
+
+        Example:
+            >>> good = adapter.feedback_above(threshold=0.8)
+        """
+        return [r for r in self._feedback if r.final_score > threshold]
+
+    def feedback_mean(self) -> float:
+        """Return the mean ``final_score`` across all feedback records.
+
+        Returns:
+            Mean as a float; ``0.0`` when no feedback has been recorded.
+
+        Example:
+            >>> adapter.feedback_mean()
+            0.0
+        """
+        if not self._feedback:
+            return 0.0
+        return sum(r.final_score for r in self._feedback) / len(self._feedback)
+
+    def has_feedback(self) -> bool:
+        """Return ``True`` if at least one feedback record has been applied.
+
+        Returns:
+            ``True`` when the internal feedback list is non-empty.
+        """
+        return len(self._feedback) > 0
+
+    def recent_feedback(self, n: int = 5) -> list:
+        """Return the last *n* feedback records in order of application.
+
+        Args:
+            n: Maximum number of recent records to return (default 5).
+
+        Returns:
+            List of :class:`FeedbackRecord` objects (may be shorter than *n*).
+        """
+        return list(self._feedback[-n:]) if n > 0 else []
+
+    def feedback_score_stats(self) -> dict:
+        """Return descriptive statistics for all recorded final scores.
+
+        Returns:
+            Dict with keys ``count``, ``mean``, ``std``, ``min``, and ``max``.
+            Numeric fields are ``0.0`` when no feedback has been recorded.
+        """
+        import math as _math
+        if not self._feedback:
+            return {"count": 0, "mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0}
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        return {
+            "count": len(scores),
+            "mean": mean,
+            "std": _math.sqrt(variance),
+            "min": min(scores),
+            "max": max(scores),
+        }
+
+    def feedback_percentile(self, p: float) -> float:
+        """Return the *p*-th percentile of recorded final scores.
+
+        Uses linear interpolation (same method as ``numpy.percentile``).
+
+        Args:
+            p: Percentile in range [0, 100].
+
+        Returns:
+            Float percentile value; ``0.0`` when no feedback is recorded.
+
+        Raises:
+            ValueError: If *p* is outside [0, 100].
+        """
+        if not 0 <= p <= 100:
+            raise ValueError("p must be in [0, 100]")
+        if not self._feedback:
+            return 0.0
+        scores = sorted(r.final_score for r in self._feedback)
+        idx = (len(scores) - 1) * p / 100.0
+        lo = int(idx)
+        hi = lo + 1
+        if hi >= len(scores):
+            return scores[-1]
+        return scores[lo] + (scores[hi] - scores[lo]) * (idx - lo)
+
+    def passing_feedback_fraction(self, threshold: float = 0.6) -> float:
+        """Return the fraction of feedback records with score above *threshold*.
+
+        Args:
+            threshold: Minimum score (exclusive) to count as passing.
+
+        Returns:
+            Float in [0.0, 1.0]; ``0.0`` when no feedback is recorded.
+        """
+        if not self._feedback:
+            return 0.0
+        passing = sum(1 for r in self._feedback if r.final_score > threshold)
+        return passing / len(self._feedback)
+
+    def reset_and_load(self, records: list) -> int:
+        """Clear all existing feedback and load *records* as the new history.
+
+        Equivalent to calling :meth:`clear_feedback` followed by
+        :meth:`load_feedback_from_list`.
+
+        Args:
+            records: List of :class:`FeedbackRecord` objects to load.
+
+        Returns:
+            Number of records successfully loaded.
+        """
+        self.clear_feedback()
+        return self.load_feedback_from_list(records)
+
+    def score_range(self) -> tuple:
+        """Alias for :meth:`feedback_score_range`.
+
+        Returns:
+            ``(min_score, max_score)`` tuple, or ``(0.0, 0.0)`` when there is
+            no feedback.
+        """
+        return self.feedback_score_range()
+
+    def feedback_count_above(self, threshold: float = 0.6) -> int:
+        """Return the number of feedback records whose score is above *threshold*.
+
+        Args:
+            threshold: Minimum score value (exclusive) to count (default 0.6).
+
+        Returns:
+            Count of records with ``score > threshold``.
+        """
+        return sum(1 for r in self._feedback if r.final_score > threshold)
+
+    def all_feedback_above(self, threshold: float = 0.6) -> bool:
+        """Return ``True`` if every feedback record's score exceeds *threshold*.
+
+        Args:
+            threshold: Minimum score (exclusive, default 0.6).
+
+        Returns:
+            ``True`` when all records pass; also ``True`` for empty feedback.
+        """
+        return all(r.final_score > threshold for r in self._feedback)
+
+    def feedback_scores(self) -> list:
+        """Return a plain list of all feedback final scores in insertion order.
+
+        Returns:
+            List of floats; empty when there is no feedback.
+        """
+        return [r.final_score for r in self._feedback]
+
+    def domain_threshold_delta(self) -> float:
+        """Return the current threshold relative to the base threshold.
+
+        Returns:
+            ``current_threshold - base_threshold`` as a signed float.
+        """
+        return self._current_threshold - self._base_threshold
+
+    def best_feedback_score(self) -> float:
+        """Return the highest ``final_score`` among all feedback records.
+
+        Returns:
+            Maximum score float; ``0.0`` when there is no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        return max(r.final_score for r in self._feedback)
+
+    def worst_feedback_score(self) -> float:
+        """Return the lowest ``final_score`` among all feedback records.
+
+        Returns:
+            Minimum score float; ``0.0`` when there is no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        return min(r.final_score for r in self._feedback)
+
+    def average_feedback_score(self) -> float:
+        """Return the mean ``final_score`` across all feedback records.
+
+        Returns:
+            Mean score float; ``0.0`` when there is no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        return sum(r.final_score for r in self._feedback) / len(self._feedback)
+
+    def feedback_above_fraction(self, threshold: float = 0.6) -> float:
+        """Return the fraction of feedback records with ``final_score > threshold``.
+
+        Args:
+            threshold: Exclusive lower bound (default 0.6).
+
+        Returns:
+            Float in [0.0, 1.0]; ``0.0`` when there is no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        count = sum(1 for r in self._feedback if r.final_score > threshold)
+        return count / len(self._feedback)
+
+    def improvement_trend(self, window: int = 5) -> float:
+        """Return the mean score change per step over the last *window* records.
+
+        Positive values indicate improving feedback scores; negative indicate
+        declining scores.
+
+        Args:
+            window: Number of most-recent feedback records to inspect (default 5).
+
+        Returns:
+            Mean score delta per step; ``0.0`` if fewer than 2 records.
+        """
+        recent = self._feedback[-window:]
+        if len(recent) < 2:
+            return 0.0
+        diffs = [
+            recent[i + 1].final_score - recent[i].final_score
+            for i in range(len(recent) - 1)
+        ]
+        return sum(diffs) / len(diffs)
+
+    def feedback_streak(self, threshold: float = 0.6) -> int:
+        """Return the length of the current consecutive streak of feedback scores
+        that are >= *threshold* (from the most recent record backwards).
+
+        Args:
+            threshold: Minimum ``final_score`` to include in streak.
+
+        Returns:
+            Integer streak length; 0 when latest feedback is below threshold.
+        """
+        streak = 0
+        for r in reversed(self._feedback):
+            if r.final_score >= threshold:
+                streak += 1
+            else:
+                break
+        return streak
+
+    def recent_average(self, n: int = 5) -> float:
+        """Return the average ``final_score`` of the *n* most-recent records.
+
+        Args:
+            n: Window size (default 5).
+
+        Returns:
+            Mean score; ``0.0`` when no records exist.
+        """
+        recs = self._feedback[-n:] if self._feedback else []
+        if not recs:
+            return 0.0
+        return sum(r.final_score for r in recs) / len(recs)
+
+    def domain_coverage(self) -> float:
+        """Return the fraction of distinct domain keys that have at least one
+        feedback record above 0.5.
+
+        A "domain key" is inferred from ``FeedbackRecord.domain`` if present,
+        otherwise all records are treated as belonging to the same implicit
+        domain.
+
+        Returns:
+            Float in [0.0, 1.0]; ``1.0`` when no domains can be inferred
+            (single implicit domain with any passing feedback), ``0.0`` when
+            no feedback recorded.
+        """
+        if not self._feedback:
+            return 0.0
+        domains = {getattr(r, "domain", "_default") for r in self._feedback}
+        covered = {
+            getattr(r, "domain", "_default")
+            for r in self._feedback if r.final_score > 0.5
+        }
+        if not domains:
+            return 0.0
+        return len(covered) / len(domains)
+
+    def volatility(self) -> float:
+        """Return the mean absolute difference between consecutive feedback scores.
+
+        Returns:
+            Mean absolute change; ``0.0`` when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        diffs = [abs(scores[i + 1] - scores[i]) for i in range(len(scores) - 1)]
+        return sum(diffs) / len(diffs)
+
+    def worst_n_feedback(self, n: int = 3) -> list:
+        """Return the *n* feedback records with the lowest ``final_score``.
+
+        Args:
+            n: Number of records to return.
+
+        Returns:
+            List of up to *n* records, sorted lowest score first.
+        """
+        if not self._feedback:
+            return []
+        return sorted(self._feedback, key=lambda r: r.final_score)[:n]
+
+    def feedback_zscore(self, value: float) -> float:
+        """Return the z-score of *value* relative to the feedback distribution.
+
+        Args:
+            value: The score value to normalize.
+
+        Returns:
+            ``(value - mean) / std`` of all feedback final scores.
+            Returns ``0.0`` when fewer than 2 feedback records or std is zero.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        vals = [r.final_score for r in self._feedback]
+        n = len(vals)
+        mean = sum(vals) / n
+        variance = sum((v - mean) ** 2 for v in vals) / (n - 1)
+        if variance == 0:
+            return 0.0
+        import math
+        std = math.sqrt(variance)
+        return (value - mean) / std
+
+    def best_n_feedback(self, n: int) -> list:
+        """Return the top-*n* feedback records by ``final_score`` (highest first).
+
+        Args:
+            n: Maximum number of records to return.
+
+        Returns:
+            List of up to *n* ``FeedbackRecord`` objects sorted descending by
+            ``final_score``.  Returns all records when *n* >= ``len(_feedback)``.
+        """
+        return sorted(self._feedback, key=lambda r: r.final_score, reverse=True)[:n]
+
+    def feedback_above_mean(self) -> list:
+        """Return feedback records whose ``final_score`` exceeds the mean.
+
+        Returns:
+            List of ``FeedbackRecord`` objects with ``final_score`` above the
+            arithmetic mean.  Returns all records when fewer than 2 exist.
+        """
+        if len(self._feedback) < 2:
+            return list(self._feedback)
+        mean = sum(r.final_score for r in self._feedback) / len(self._feedback)
+        return [r for r in self._feedback if r.final_score > mean]
+
+    def feedback_skewness(self) -> float:
+        """Return the skewness of the feedback ``final_score`` distribution.
+
+        Uses Pearson's moment coefficient of skewness
+        ``mean(((x - mu) / sigma)^3)``.
+
+        Returns:
+            Float skewness; ``0.0`` when fewer than 3 records or std is zero.
+        """
+        import math
+        if len(self._feedback) < 3:
+            return 0.0
+        vals = [r.final_score for r in self._feedback]
+        n = len(vals)
+        mean = sum(vals) / n
+        variance = sum((v - mean) ** 2 for v in vals) / n
+        if variance == 0:
+            return 0.0
+        std = math.sqrt(variance)
+        return sum(((v - mean) / std) ** 3 for v in vals) / n
+
+    def feedback_kurtosis(self) -> float:
+        """Return the excess kurtosis of the feedback ``final_score`` distribution.
+
+        Uses the fourth standardised moment minus 3 (Fisher's definition).
+        Positive values indicate heavier tails than a normal distribution.
+
+        Returns:
+            Float excess kurtosis; ``0.0`` when fewer than 4 records or std is zero.
+        """
+        import math
+        if len(self._feedback) < 4:
+            return 0.0
+        vals = [r.final_score for r in self._feedback]
+        n = len(vals)
+        mean = sum(vals) / n
+        variance = sum((v - mean) ** 2 for v in vals) / n
+        if variance == 0:
+            return 0.0
+        std = math.sqrt(variance)
+        return sum(((v - mean) / std) ** 4 for v in vals) / n - 3.0
+
+    def feedback_rolling_average(self, window: int = 5) -> list:
+        """Return a rolling average of ``final_score`` over a sliding window.
+
+        Args:
+            window: Size of the sliding window.
+
+        Returns:
+            List of float averages, same length as ``_feedback``.  Each
+            element is the mean of up to *window* preceding records
+            (including the current one).
+        """
+        result = []
+        for i, r in enumerate(self._feedback):
+            start = max(0, i - window + 1)
+            window_vals = [self._feedback[j].final_score for j in range(start, i + 1)]
+            result.append(sum(window_vals) / len(window_vals))
+        return result
+
+    def worst_domain(self) -> str:
+        """Return the domain with the lowest average ``final_score`` in feedback.
+
+        Returns:
+            Domain string; ``""`` when no feedback has been recorded or no
+            domain information is available.
+        """
+        if not self._feedback:
+            return ""
+        domain_totals: dict = {}
+        domain_counts: dict = {}
+        for r in self._feedback:
+            domain = getattr(r, "domain", None) or "unknown"
+            domain_totals[domain] = domain_totals.get(domain, 0.0) + r.final_score
+            domain_counts[domain] = domain_counts.get(domain, 0) + 1
+        if not domain_totals:
+            return ""
+        averages = {d: domain_totals[d] / domain_counts[d] for d in domain_totals}
+        return min(averages, key=averages.get)
+
+    def best_domain(self) -> str:
+        """Return the domain with the highest average ``final_score`` in feedback.
+
+        Returns:
+            Domain string; ``""`` when no feedback has been recorded.
+        """
+        if not self._feedback:
+            return ""
+        domain_totals: dict = {}
+        domain_counts: dict = {}
+        for r in self._feedback:
+            domain = getattr(r, "domain", None) or "unknown"
+            domain_totals[domain] = domain_totals.get(domain, 0.0) + r.final_score
+            domain_counts[domain] = domain_counts.get(domain, 0) + 1
+        if not domain_totals:
+            return ""
+        averages = {d: domain_totals[d] / domain_counts[d] for d in domain_totals}
+        return max(averages, key=averages.get)
+
+    def feedback_trend_direction(self) -> str:
+        """Return the overall trend direction of feedback scores.
+
+        Compares the mean of the first half to the mean of the second half.
+
+        Returns:
+            ``"improving"`` when second-half mean > first-half mean,
+            ``"declining"`` when lower, ``"stable"`` when equal or < 2 records.
+        """
+        if len(self._feedback) < 2:
+            return "stable"
+        vals = [r.final_score for r in self._feedback]
+        mid = len(vals) // 2
+        first_mean = sum(vals[:mid]) / mid
+        second_mean = sum(vals[mid:]) / (len(vals) - mid)
+        if second_mean > first_mean:
+            return "improving"
+        elif second_mean < first_mean:
+            return "declining"
+        return "stable"
+
+    def feedback_in_range(self, lo: float, hi: float) -> list:
+        """Return feedback records whose ``final_score`` falls in [lo, hi].
+
+        Args:
+            lo: Lower bound (inclusive).
+            hi: Upper bound (inclusive).
+
+        Returns:
+            List of ``FeedbackRecord`` objects with ``lo <= final_score <= hi``.
+        """
+        return [r for r in self._feedback if lo <= r.final_score <= hi]
+
+    def feedback_range(self) -> float:
+        """Return max - min final_score across all feedback records.
+
+        Returns:
+            Float range; ``0.0`` when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        return max(scores) - min(scores)
+
+    def feedback_improvement_rate(self) -> float:
+        """Return fraction of consecutive feedback pairs that improved.
+
+        Returns:
+            Float in [0.0, 1.0]; ``0.0`` when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        improvements = sum(1 for a, b in zip(scores, scores[1:]) if b > a)
+        return improvements / (len(scores) - 1)
+
+    def feedback_last_n(self, n: int = 5) -> list:
+        """Return the last *n* feedback records.
+
+        Args:
+            n: Number of recent records to return. Defaults to ``5``.
+
+        Returns:
+            List of ``FeedbackRecord`` objects (most recent last), up to *n*.
+        """
+        return self._feedback[-n:] if n > 0 else []
+
+    def feedback_top_n(self, n: int = 5) -> list:
+        """Return the *n* feedback records with the highest ``final_score``.
+
+        Args:
+            n: Number of top records to return. Defaults to ``5``.
+
+        Returns:
+            List sorted by ``final_score`` descending, up to *n* records.
+        """
+        return sorted(self._feedback, key=lambda r: r.final_score, reverse=True)[:n]
+
+    def feedback_above_median(self) -> list:
+        """Return feedback records whose final_score is above the median.
+
+        Returns:
+            List of FeedbackRecord objects; empty when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return []
+        scores = sorted(r.final_score for r in self._feedback)
+        n = len(scores)
+        if n % 2 == 0:
+            median = (scores[n // 2 - 1] + scores[n // 2]) / 2.0
+        else:
+            median = scores[n // 2]
+        return [r for r in self._feedback if r.final_score > median]
+
+    def feedback_decay_sum(self, decay: float = 0.9) -> float:
+        """Return exponentially decayed sum of final scores (oldest gets most decay).
+
+        The most recent record has weight 1.0; each older record is multiplied
+        by an additional factor of *decay*.
+
+        Args:
+            decay: Decay factor per step. Defaults to 0.9.
+
+        Returns:
+            Float weighted sum; 0.0 when no records.
+        """
+        if not self._feedback:
+            return 0.0
+        total = 0.0
+        weight = 1.0
+        for record in reversed(self._feedback):
+            total += record.final_score * weight
+            weight *= decay
+        return total
+
+    def feedback_count_below(self, threshold: float = 0.5) -> int:
+        """Return count of feedback records whose final_score is below *threshold*.
+
+        Args:
+            threshold: Maximum value (exclusive). Defaults to 0.5.
+
+        Returns:
+            Integer count of records with final_score < threshold.
+        """
+        return sum(1 for r in self._feedback if r.final_score < threshold)
+
+    def feedback_above_threshold_fraction(self, threshold: float = 0.5) -> float:
+        """Return fraction of feedback records above *threshold*.
+
+        Args:
+            threshold: Minimum value (exclusive). Defaults to 0.5.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no records.
+        """
+        if not self._feedback:
+            return 0.0
+        return sum(1 for r in self._feedback if r.final_score > threshold) / len(self._feedback)
+
+    def feedback_percentile_rank(self, value: float) -> float:
+        """Return the percentile rank of *value* among recorded feedback scores.
+
+        The percentile rank is the fraction of feedback records with a
+        final_score strictly less than *value*.
+
+        Args:
+            value: Score to rank.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no feedback records.
+        """
+        if not self._feedback:
+            return 0.0
+        below = sum(1 for r in self._feedback if r.final_score < value)
+        return below / len(self._feedback)
+
+    def feedback_ewma(self, alpha: float = 0.3) -> float:
+        """Return the exponential weighted moving average of feedback scores.
+
+        Processes ``_feedback`` in chronological order with the given smoothing
+        factor *alpha* (0 < alpha <= 1).
+
+        Args:
+            alpha: Smoothing factor; higher values weight recent feedback more.
+
+        Returns:
+            Float EWMA; 0.0 when no feedback is recorded.
+        """
+        if not self._feedback:
+            return 0.0
+        ewma = self._feedback[0].final_score
+        for r in self._feedback[1:]:
+            ewma = alpha * r.final_score + (1.0 - alpha) * ewma
+        return ewma
+
+    def feedback_normalized(self) -> list:
+        """Return feedback scores scaled to [0, 1] using min-max normalisation.
+
+        Returns:
+            List of floats; empty list when fewer than 2 records or when all
+            scores are identical.
+        """
+        if len(self._feedback) < 2:
+            return []
+        scores = [r.final_score for r in self._feedback]
+        lo, hi = min(scores), max(scores)
+        if hi == lo:
+            return [0.0] * len(scores)
+        return [(s - lo) / (hi - lo) for s in scores]
+
+    def feedback_score_std(self) -> float:
+        """Return the population standard deviation of feedback scores.
+
+        Returns:
+            Float std-dev; 0.0 when fewer than 2 feedback records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        return variance ** 0.5
+
+    def feedback_last_improvement(self) -> float:
+        """Return the score delta at the last improving transition.
+
+        Scans feedback in reverse chronological order for the most recent
+        consecutive-improving step.
+
+        Returns:
+            Float delta (positive); 0.0 when no improving transition exists or
+            fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        for i in range(len(self._feedback) - 1, 0, -1):
+            delta = self._feedback[i].final_score - self._feedback[i - 1].final_score
+            if delta > 0:
+                return delta
+        return 0.0
+
+    def feedback_volatility(self) -> float:
+        """Return a measure of feedback score volatility (mean absolute change).
+
+        Computes the average absolute difference between consecutive feedback
+        scores.
+
+        Returns:
+            Float; 0.0 when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        return sum(abs(scores[i] - scores[i - 1]) for i in range(1, len(scores))) / (len(scores) - 1)
+
+    def feedback_trend_direction(self) -> str:
+        """Return the overall trend direction of feedback scores.
+
+        Fits a simple linear slope to feedback scores in chronological order.
+
+        Returns:
+            ``"improving"`` if scores are trending up, ``"declining"`` if down,
+            ``"stable"`` if fewer than 2 records or slope is zero.
+        """
+        if len(self._feedback) < 2:
+            return "stable"
+        scores = [r.final_score for r in self._feedback]
+        n = len(scores)
+        x_mean = (n - 1) / 2.0
+        y_mean = sum(scores) / n
+        numerator = sum((i - x_mean) * (scores[i] - y_mean) for i in range(n))
+        if numerator > 0:
+            return "improving"
+        elif numerator < 0:
+            return "declining"
+        return "stable"
+
+    def feedback_min(self) -> float:
+        """Return the minimum feedback score.
+
+        Returns:
+            Float minimum; 0.0 when no feedback is recorded.
+        """
+        if not self._feedback:
+            return 0.0
+        return min(r.final_score for r in self._feedback)
+
+    def feedback_max(self) -> float:
+        """Return the maximum feedback score.
+
+        Returns:
+            Float maximum; 0.0 when no feedback is recorded.
+        """
+        if not self._feedback:
+            return 0.0
+        return max(r.final_score for r in self._feedback)
+
+    def feedback_cumulative_sum(self) -> list:
+        """Return the running cumulative sum of feedback scores.
+
+        Returns:
+            List of floats with the same length as ``_feedback``; empty when
+            no feedback is recorded.
+        """
+        if not self._feedback:
+            return []
+        result = []
+        total = 0.0
+        for r in self._feedback:
+            total += r.final_score
+            result.append(total)
+        return result
+
+    def feedback_rate_of_change(self) -> float:
+        """Return the mean absolute first-difference of feedback scores.
+
+        Alias for :meth:`feedback_volatility` but named to highlight that it
+        measures the average speed of change rather than instability.
+
+        Returns:
+            Float; 0.0 when fewer than 2 feedback records.
+        """
+        return self.feedback_volatility()
+
+    def feedback_above_mean_count(self) -> int:
+        """Return the count of feedback records whose score is above the mean.
+
+        Returns:
+            Integer count; 0 when no feedback or all scores are identical.
+        """
+        if not self._feedback:
+            return 0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        return sum(1 for s in scores if s > mean)
+
+    def feedback_window_mean(self, n: int = 5) -> float:
+        """Return the mean of the last *n* feedback scores.
+
+        Args:
+            n: Window size; negative or zero uses all records.
+
+        Returns:
+            Float mean; 0.0 when no feedback is recorded.
+        """
+        if not self._feedback:
+            return 0.0
+        window = self._feedback[-n:] if n > 0 else self._feedback
+        scores = [r.final_score for r in window]
+        return sum(scores) / len(scores)
+
+    def feedback_outlier_count(self, z_threshold: float = 2.0) -> int:
+        """Return the count of feedback scores that are outliers by z-score.
+
+        Args:
+            z_threshold: Absolute z-score threshold; default 2.0.
+
+        Returns:
+            Integer count; 0 when fewer than 3 records or std is zero.
+        """
+        if len(self._feedback) < 3:
+            return 0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        std = (sum((s - mean) ** 2 for s in scores) / len(scores)) ** 0.5
+        if std == 0.0:
+            return 0
+        return sum(1 for s in scores if abs((s - mean) / std) > z_threshold)
+
+    def feedback_interquartile_range(self) -> float:
+        """Return the interquartile range (Q3 - Q1) of feedback scores.
+
+        Returns:
+            Float IQR; 0.0 when fewer than 4 feedback records.
+        """
+        if len(self._feedback) < 4:
+            return 0.0
+        scores = sorted(r.final_score for r in self._feedback)
+        n = len(scores)
+
+        def _percentile(p: float) -> float:
+            idx = (p / 100.0) * (n - 1)
+            lo, hi = int(idx), min(int(idx) + 1, n - 1)
+            return scores[lo] + (scores[hi] - scores[lo]) * (idx - lo)
+
+        return _percentile(75.0) - _percentile(25.0)
+
+    def feedback_entropy(self) -> float:
+        """Return the Shannon entropy of a 5-bin histogram of feedback scores.
+
+        Returns:
+            Float; 0.0 when fewer than 2 feedback records.
+        """
+        import math
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        mn, mx = min(scores), max(scores)
+        if mx == mn:
+            return 0.0
+        bins = [0] * 5
+        for v in scores:
+            idx = min(4, int((v - mn) / (mx - mn) * 5))
+            bins[idx] += 1
+        total = len(scores)
+        return -sum((c / total) * math.log(c / total) for c in bins if c > 0)
+
+    def feedback_positive_fraction(self, threshold: float = 0.5) -> float:
+        """Return fraction of feedback scores at or above *threshold*.
+
+        Args:
+            threshold: Minimum score considered "positive" (default 0.5).
+
+        Returns:
+            Float in [0, 1]; 0.0 when no feedback records.
+        """
+        if not self._feedback:
+            return 0.0
+        return sum(1 for r in self._feedback if r.final_score >= threshold) / len(self._feedback)
+
+    def feedback_consecutive_positive(self, threshold: float = 0.5) -> int:
+        """Return the length of the current trailing streak of positive feedback.
+
+        A feedback record is "positive" when ``final_score >= threshold``.
+
+        Args:
+            threshold: Minimum score for "positive" (default 0.5).
+
+        Returns:
+            Integer count; 0 when no positive trailing streak.
+        """
+        count = 0
+        for r in reversed(self._feedback):
+            if r.final_score >= threshold:
+                count += 1
+            else:
+                break
+        return count
+
+    def feedback_gini(self) -> float:
+        """Return the Gini coefficient of feedback scores.
+
+        Returns:
+            Float in [0, 1); 0.0 when fewer than 2 feedback records.
+        """
+        scores = sorted(r.final_score for r in self._feedback)
+        n = len(scores)
+        if n < 2:
+            return 0.0
+        total = sum(scores)
+        if total == 0.0:
+            return 0.0
+        numer = sum((i + 1) * v for i, v in enumerate(scores))
+        return (2 * numer / (n * total)) - (n + 1) / n
+
+    def feedback_below_mean_count(self) -> int:
+        """Return the number of feedback records below the mean score.
+
+        Returns:
+            Integer count; 0 when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        return sum(1 for s in scores if s < mean)
+
+    def feedback_min_max_ratio(self) -> float:
+        """Return min/max ratio of feedback scores.
+
+        Useful as a normalised spread indicator: value near 1.0 means tight
+        cluster; near 0.0 means wide spread.
+
+        Returns:
+            Float in [0, 1]; 0.0 when no records or max is 0.
+        """
+        if not self._feedback:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        mx = max(scores)
+        if mx == 0.0:
+            return 0.0
+        return min(scores) / mx
+
+    def feedback_count(self) -> int:
+        """Return the total number of feedback records.
+
+        Returns:
+            Integer count.
+        """
+        return len(self._feedback)
+
+    def feedback_longest_positive_streak(self, threshold: float = 0.5) -> int:
+        """Return the length of the longest consecutive positive streak.
+
+        Args:
+            threshold: Minimum score for "positive" (default 0.5).
+
+        Returns:
+            Integer count; 0 when no records.
+        """
+        if not self._feedback:
+            return 0
+        best = current = 0
+        for r in self._feedback:
+            if r.final_score >= threshold:
+                current += 1
+                best = max(best, current)
+            else:
+                current = 0
+        return best
+
+    def feedback_weighted_mean(self, weights: "list | None" = None) -> float:
+        """Return a positionally weighted mean of feedback scores.
+
+        Weights are applied in order (index 0 = oldest record).  If *weights*
+        is ``None``, later records are given higher weights (linear ramp).
+
+        Args:
+            weights: Optional list of non-negative floats (same length as
+                feedback). ``None`` uses a linear ramp ``[1, 2, …, n]``.
+
+        Returns:
+            Float; 0.0 when no feedback records.
+        """
+        if not self._feedback:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        n = len(scores)
+        if weights is None:
+            weights = [i + 1 for i in range(n)]
+        total_w = sum(weights)
+        if total_w == 0.0:
+            return 0.0
+        return sum(w * s for w, s in zip(weights, scores)) / total_w
+
+    def feedback_last_score(self) -> float:
+        """Return the most recent feedback score.
+
+        Returns:
+            Float; 0.0 when no feedback records.
+        """
+        if not self._feedback:
+            return 0.0
+        return self._feedback[-1].final_score
+
+    def feedback_acceleration(self) -> float:
+        """Return mean second derivative of feedback scores.
+
+        Returns:
+            Float; 0.0 when fewer than 3 records.
+        """
+        n = len(self._feedback)
+        if n < 3:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        fd = [scores[i + 1] - scores[i] for i in range(n - 1)]
+        sd = [fd[i + 1] - fd[i] for i in range(len(fd) - 1)]
+        return sum(sd) / len(sd)
+
+    def feedback_first_score(self) -> float:
+        """Return the first (oldest) feedback score.
+
+        Returns:
+            Float; 0.0 when no feedback records.
+        """
+        if not self._feedback:
+            return 0.0
+        return self._feedback[0].final_score
+
+    def feedback_improvement_count(self) -> int:
+        """Return the number of consecutive pairs where feedback improved.
+
+        Returns:
+            Integer; 0 when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0
+        scores = [r.final_score for r in self._feedback]
+        return sum(1 for i in range(1, len(scores)) if scores[i] > scores[i - 1])
+
+    def feedback_decline_count(self) -> int:
+        """Return the number of consecutive pairs where feedback declined.
+
+        Returns:
+            Integer; 0 when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0
+        scores = [r.final_score for r in self._feedback]
+        return sum(1 for i in range(1, len(scores)) if scores[i] < scores[i - 1])
+
+    def feedback_trend_slope(self) -> float:
+        """Return the linear regression slope of final_score over feedback records.
+
+        Uses ordinary least squares. Positive slope = improving trend.
+
+        Returns:
+            Float slope; 0.0 when fewer than 2 records.
+        """
+        n = len(self._feedback)
+        if n < 2:
+            return 0.0
+        xs = list(range(n))
+        ys = [r.final_score for r in self._feedback]
+        mean_x = sum(xs) / n
+        mean_y = sum(ys) / n
+        num = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))
+        den = sum((x - mean_x) ** 2 for x in xs)
+        return num / den if den else 0.0
+
+    def feedback_median_deviation(self) -> float:
+        """Return the mean absolute deviation from the median of final_score values.
+
+        Returns:
+            Float mean absolute deviation; 0.0 when fewer than 2 records.
+        """
+        n = len(self._feedback)
+        if n < 2:
+            return 0.0
+        scores = sorted(r.final_score for r in self._feedback)
+        if n % 2 == 0:
+            median = (scores[n // 2 - 1] + scores[n // 2]) / 2.0
+        else:
+            median = scores[n // 2]
+        return sum(abs(s - median) for s in scores) / n
+
+    def feedback_score_sum(self) -> float:
+        """Return the sum of all final_score values in feedback.
+
+        Returns:
+            Float sum; 0.0 when no feedback.
+        """
+        return sum(r.final_score for r in self._feedback)
+
+    def feedback_positive_rate(self, threshold: float = 0.6) -> float:
+        """Return the fraction of feedback records with final_score above threshold.
+
+        Args:
+            threshold: Exclusive lower bound. Defaults to 0.6.
+
+        Returns:
+            Float in [0, 1]; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        return sum(1 for r in self._feedback if r.final_score > threshold) / len(self._feedback)
+
+    def feedback_negative_rate(self, threshold: float = 0.4) -> float:
+        """Return the fraction of feedback records with final_score below threshold.
+
+        Args:
+            threshold: Exclusive upper bound. Defaults to 0.4.
+
+        Returns:
+            Float in [0, 1]; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        return sum(1 for r in self._feedback if r.final_score < threshold) / len(self._feedback)
+
+    def feedback_weighted_sum(self, decay: float = 0.9) -> float:
+        """Return exponentially decayed sum of final scores (most recent weight = 1.0).
+
+        Args:
+            decay: Decay factor per step. Defaults to 0.9.
+
+        Returns:
+            Float weighted sum; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        entries = list(reversed(self._feedback))
+        return sum(r.final_score * (decay ** i) for i, r in enumerate(entries))
+
+    def feedback_variance(self) -> float:
+        """Return the variance of final_score values across all feedback.
+
+        Returns:
+            Float variance; 0.0 when fewer than 2 records.
+        """
+        n = len(self._feedback)
+        if n < 2:
+            return 0.0
+        vals = [r.final_score for r in self._feedback]
+        mean = sum(vals) / n
+        return sum((v - mean) ** 2 for v in vals) / n
+
+    def feedback_longest_negative_streak(self, threshold: float = 0.4) -> int:
+        """Return the length of the longest consecutive streak of feedback scores below threshold.
+
+        Args:
+            threshold: Exclusive upper bound. Defaults to 0.4.
+
+        Returns:
+            Integer length of longest negative streak; 0 when no feedback or none below threshold.
+        """
+        max_streak = 0
+        current = 0
+        for r in self._feedback:
+            if r.final_score < threshold:
+                current += 1
+                max_streak = max(max_streak, current)
+            else:
+                current = 0
+        return max_streak
+
+    def feedback_trimmed_mean(self, trim: float = 0.1) -> float:
+        """Return the mean after trimming the top and bottom *trim* fraction of scores.
+
+        Args:
+            trim: Fraction to trim from each end. Defaults to 0.1 (10%).
+
+        Returns:
+            Float trimmed mean; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        vals = sorted(r.final_score for r in self._feedback)
+        n = len(vals)
+        cut = int(n * trim)
+        trimmed = vals[cut: n - cut] if cut > 0 else vals
+        if not trimmed:
+            return sum(vals) / n
+        return sum(trimmed) / len(trimmed)
+
+    def feedback_mode(self) -> float:
+        """Return the most frequently occurring score (rounded to 1 decimal place).
+
+        Returns:
+            Float mode score; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        from collections import Counter
+        rounded = [round(r.final_score, 1) for r in self._feedback]
+        return float(Counter(rounded).most_common(1)[0][0])
+
+    def feedback_plateau_length(self, tolerance: float = 0.05) -> int:
+        """Return the length of the longest plateau in feedback scores.
+
+        A plateau is a maximal run of consecutive scores within *tolerance*.
+
+        Args:
+            tolerance: Max absolute difference for consecutive scores. Defaults to 0.05.
+
+        Returns:
+            Integer length of the longest plateau; 0 when no feedback.
+        """
+        if not self._feedback:
+            return 0
+        vals = [r.final_score for r in self._feedback]
+        max_len = 1
+        cur_len = 1
+        for i in range(1, len(vals)):
+            if abs(vals[i] - vals[i - 1]) <= tolerance:
+                cur_len += 1
+                max_len = max(max_len, cur_len)
+            else:
+                cur_len = 1
+        return max_len
+
+    def feedback_recent_positive_count(self, n: int = 5, threshold: float = 0.5) -> int:
+        """Return the count of positive scores in the last *n* feedback records.
+
+        Args:
+            n: Number of most-recent records to examine. Defaults to 5.
+            threshold: Minimum score to consider positive. Defaults to 0.5.
+
+        Returns:
+            Integer count; 0 when no feedback.
+        """
+        if not self._feedback:
+            return 0
+        recent = self._feedback[-n:]
+        return sum(1 for r in recent if r.final_score >= threshold)
+
+    def feedback_oscillation_count(self, threshold: float = 0.5) -> int:
+        """Count sign-changes in feedback scores relative to *threshold*.
+
+        An oscillation is when a score crosses the threshold from above to below
+        or below to above between consecutive records.
+
+        Args:
+            threshold: Crossing threshold. Defaults to 0.5.
+
+        Returns:
+            Integer count of threshold crossings.
+        """
+        if len(self._feedback) < 2:
+            return 0
+        above = [r.final_score >= threshold for r in self._feedback]
+        return sum(1 for i in range(1, len(above)) if above[i] != above[i - 1])
+
+    def feedback_best_k_mean(self, k: int = 3) -> float:
+        """Return the mean of the top *k* feedback scores.
+
+        Args:
+            k: Number of top records to average. Defaults to 3.
+
+        Returns:
+            Float mean; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        top_k = sorted((r.final_score for r in self._feedback), reverse=True)[:k]
+        return sum(top_k) / len(top_k)
+
+    def feedback_worst_k_mean(self, k: int = 3) -> float:
+        """Return the mean of the bottom *k* feedback scores.
+
+        Args:
+            k: Number of lowest-scored records to average. Defaults to 3.
+
+        Returns:
+            Float mean; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        bottom_k = sorted(r.final_score for r in self._feedback)[:k]
+        return sum(bottom_k) / len(bottom_k)
+
+    def feedback_above_own_mean_count(self) -> int:
+        """Return the count of feedback records with score above the overall mean.
+
+        Returns:
+            Integer count; 0 when no feedback.
+        """
+        if not self._feedback:
+            return 0
+        vals = [r.final_score for r in self._feedback]
+        mean = sum(vals) / len(vals)
+        return sum(1 for v in vals if v > mean)
+
+    def feedback_mean_last_n(self, n: int = 5) -> float:
+        """Return the mean feedback score of the last *n* records.
+
+        Args:
+            n: Number of most-recent records. Defaults to 5.
+
+        Returns:
+            Float mean; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        tail = self._feedback[-n:]
+        return sum(r.final_score for r in tail) / len(tail)
+
+    def feedback_std_last_n(self, n: int = 5) -> float:
+        """Return the std of the last *n* feedback scores.
+
+        Args:
+            n: Number of most-recent records to examine. Defaults to 5.
+
+        Returns:
+            Float std; 0.0 when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        tail = [r.final_score for r in self._feedback[-n:]]
+        if len(tail) < 2:
+            return 0.0
+        mean = sum(tail) / len(tail)
+        var = sum((v - mean) ** 2 for v in tail) / len(tail)
+        return var ** 0.5
+
+    def feedback_recovery_count(self, threshold: float = 0.5) -> int:
+        """Count recoveries: steps where score was below then above *threshold*.
+
+        Args:
+            threshold: Crossing threshold. Defaults to 0.5.
+
+        Returns:
+            Integer count of below→above transitions.
+        """
+        if len(self._feedback) < 2:
+            return 0
+        count = 0
+        above = [r.final_score >= threshold for r in self._feedback]
+        for i in range(1, len(above)):
+            if not above[i - 1] and above[i]:
+                count += 1
+        return count
+
+    def feedback_z_score_last(self) -> float:
+        """Return the z-score of the last feedback score relative to the full history.
+
+        Uses population std (divides by N).
+
+        Returns:
+            Float z-score; 0.0 when fewer than 2 records or std == 0.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        vals = [r.final_score for r in self._feedback]
+        mean = sum(vals) / len(vals)
+        var = sum((v - mean) ** 2 for v in vals) / len(vals)
+        std = var ** 0.5
+        if std == 0:
+            return 0.0
+        return (vals[-1] - mean) / std
+
+    def feedback_half_above_threshold(self, threshold: float = 0.5) -> bool:
+        """Return True if at least half of feedback records are at or above *threshold*.
+
+        Args:
+            threshold: Score cutoff. Defaults to 0.5.
+
+        Returns:
+            Boolean; False when no feedback.
+        """
+        if not self._feedback:
+            return False
+        above = sum(1 for r in self._feedback if r.final_score >= threshold)
+        return above >= len(self._feedback) / 2
+
+    def feedback_positive_fraction_last_n(self, n: int = 5, threshold: float = 0.5) -> float:
+        """Return the fraction of the last *n* feedback records at or above *threshold*.
+
+        Args:
+            n: Window size. Defaults to 5.
+            threshold: Score cutoff. Defaults to 0.5.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        window = self._feedback[-n:]
+        above = sum(1 for r in window if r.final_score >= threshold)
+        return above / len(window)
+
+    def feedback_mean_change(self) -> float:
+        """Return the mean step-by-step change in feedback scores.
+
+        Computes (score[i] - score[i-1]) for each consecutive pair and returns
+        the mean of those deltas.
+
+        Returns:
+            Float; 0.0 when fewer than 2 feedback records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        deltas = [
+            self._feedback[i].final_score - self._feedback[i - 1].final_score
+            for i in range(1, len(self._feedback))
+        ]
+        return sum(deltas) / len(deltas)
+
+    def feedback_consistency_score(self) -> float:
+        """Return a consistency score in [0.0, 1.0] based on feedback variance.
+
+        Defined as 1.0 - (std / max_std) where max_std is 0.5 (the max standard
+        deviation for values in [0, 1]).  Returns 1.0 when fewer than 2 records.
+
+        Returns:
+            Float in [0.0, 1.0].
+        """
+        if len(self._feedback) < 2:
+            return 1.0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        std = variance ** 0.5
+        return float(max(0.0, 1.0 - std / 0.5))

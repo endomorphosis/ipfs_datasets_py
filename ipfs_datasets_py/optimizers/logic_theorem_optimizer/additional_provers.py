@@ -80,6 +80,13 @@ class ProverResult:
     error_message: Optional[str] = None
     timeout: bool = False
     metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def __repr__(self) -> str:
+        """Compact representation for debugging."""
+        status = "✓" if self.is_proved else "✗" if self.timeout else "?"
+        cert_status = " [cert]" if self.proof_certificate else ""
+        error_status = f" ERROR: {self.error_message[:30]}..." if self.error_message else ""
+        return f"ProverResult({status} {self.prover_name}, conf={self.confidence:.2f}, {self.proof_time:.3f}s{cert_status}{error_status})"
 
 
 class IsabelleProver:
@@ -731,19 +738,22 @@ class AdditionalProversRegistry:
         try:
             isabelle = IsabelleProver()
             self._availability["isabelle"] = True
-        except Exception:
+        except (OSError, ImportError, RuntimeError) as e:
+            self._log.debug(f"Isabelle prover not available: {e}")
             self._availability["isabelle"] = False
         
         try:
             vampire = VampireProver()
             self._availability["vampire"] = True
-        except Exception:
+        except (OSError, ImportError, RuntimeError) as e:
+            self._log.debug(f"Vampire prover not available: {e}")
             self._availability["vampire"] = False
         
         try:
             e_prover = EProver()
             self._availability["e_prover"] = True
-        except Exception:
+        except (OSError, ImportError, RuntimeError) as e:
+            self._log.debug(f"E prover not available: {e}")
             self._availability["e_prover"] = False
     
     def is_available(self, prover_name: str) -> bool:

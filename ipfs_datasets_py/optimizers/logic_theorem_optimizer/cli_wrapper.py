@@ -13,6 +13,81 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+
+def _safe_resolve(path_str: str, *, must_exist: bool = False) -> Path:
+    """Resolve a user-supplied path, guarding against path-traversal.
+
+    Raises:
+        ValueError: If path escapes a restricted system directory.
+        FileNotFoundError: If *must_exist* and path does not exist.
+    """
+    resolved = Path(path_str).resolve()
+    for forbidden in (Path('/proc'), Path('/sys'), Path('/dev'), Path('/etc')):
+        try:
+            resolved.relative_to(forbidden)
+            raise ValueError(f"Path '{path_str}' resolves into restricted area: {forbidden}")
+        except ValueError as exc:
+            if 'restricted area' in str(exc):
+                raise
+    if must_exist and not resolved.exists():
+        raise FileNotFoundError(f"Path not found: {resolved}")
+    return resolved
+
+
+_DOMAIN_KEYWORDS: Dict[str, List[str]] = {
+    "legal": ["contract", "agreement", "plaintiff", "defendant", "shall", "obligation"],
+    "medical": ["patient", "diagnosis", "treatment", "dose", "symptom", "clinic"],
+    "financial": ["asset", "liability", "interest", "equity", "balance", "credit"],
+    "technical": ["api", "protocol", "database", "service", "latency", "endpoint"],
+}
+
+
+def _extract_statements(logic_data: Any) -> List[str]:
+    if not isinstance(logic_data, dict):
+        return []
+    for key in ("statements", "formulas", "theorems"):
+        raw = logic_data.get(key)
+        if isinstance(raw, list):
+            statements: List[str] = []
+            for item in raw:
+                if isinstance(item, str):
+                    statements.append(item)
+                elif isinstance(item, dict):
+                    for field in ("statement", "formula", "text"):
+                        value = item.get(field)
+                        if isinstance(value, str):
+                            statements.append(value)
+                            break
+            return statements
+    return []
+
+
+def _domain_validation_errors(logic_data: Any, domain: str) -> List[str]:
+    if domain == "general":
+        return []
+    errors: List[str] = []
+    data_domain = None
+    if isinstance(logic_data, dict):
+        data_domain = logic_data.get("domain")
+        if data_domain is None and isinstance(logic_data.get("metadata"), dict):
+            data_domain = logic_data.get("metadata", {}).get("domain")
+    if isinstance(data_domain, str) and data_domain and data_domain != domain:
+        errors.append(
+            f"Domain mismatch: input declares '{data_domain}' but CLI requested '{domain}'."
+        )
+    statements = _extract_statements(logic_data)
+    if not statements:
+        errors.append("No statements found for domain validation.")
+        return errors
+    keywords = _DOMAIN_KEYWORDS.get(domain, [])
+    if keywords:
+        joined = " ".join(statements).lower()
+        if not any(keyword in joined for keyword in keywords):
+            errors.append(
+                f"No {domain} keywords detected in statements; check --domain or input data."
+            )
+    return errors
+
 try:
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
         LogicExtractor,
@@ -110,18 +185,22 @@ Examples:
         )
         prove_parser.add_argument(
             '--theorem',
-            required=True,
-            help='Theorem to prove'
+            help='Theorem to prove (overridden by --from-file)'
         )
         prove_parser.add_argument(
             '--premises',
             action='append',
-            help='Premises (can be specified multiple times)'
+            help='Premises (can be specified multiple times; overridden by --from-file)'
         )
         prove_parser.add_argument(
             '--goal',
-            required=True,
-            help='Goal to prove'
+            help='Goal to prove (overridden by --from-file)'
+        )
+        prove_parser.add_argument(
+            '--from-file',
+            metavar='PATH',
+            help='Read theorem, premises, and goal from a JSON or YAML file. '
+                 'Expected keys: "theorem" (str), "premises" (list[str]), "goal" (str).'
         )
         prove_parser.add_argument(
             '--prover',
@@ -135,16 +214,25 @@ Examples:
             default=30,
             help='Timeout in seconds'
         )
+        prove_parser.add_argument(
+            '--output', '-o',
+            help='Write proof result as JSON to this file path'
+        )
         
         # validate command
         validate_parser = subparsers.add_parser(
             'validate',
             help='Validate logical consistency'
         )
-        validate_parser.add_argument(
+        _validate_input_group = validate_parser.add_mutually_exclusive_group(required=True)
+        _validate_input_group.add_argument(
             '--input', '-i',
-            required=True,
-            help='Input file (ontology, logic statements)'
+            help='Input file (JSON with logic statements)'
+        )
+        _validate_input_group.add_argument(
+            '--from-file',
+            dest='from_file',
+            help='Input file (JSON or YAML); alias for --input with YAML support'
         )
         validate_parser.add_argument(
             '--check-consistency',
@@ -155,6 +243,12 @@ Examples:
             '--check-completeness',
             action='store_true',
             help='Check completeness'
+        )
+        validate_parser.add_argument(
+            '--domain', '-d',
+            default='general',
+            choices=['general', 'legal', 'medical', 'financial', 'technical'],
+            help='Domain for domain-specific validation rules (default: general)'
         )
         validate_parser.add_argument(
             '--output', '-o',
@@ -208,7 +302,7 @@ Examples:
         print(f"   Domain: {args.domain}")
         print(f"   Format: {args.format}\n")
         
-        input_path = Path(args.input)
+        input_path = _safe_resolve(args.input, must_exist=True)
         if not input_path.exists():
             print(f"❌ Input file not found: {args.input}")
             return 1
@@ -266,6 +360,40 @@ Examples:
         Returns:
             Exit code
         """
+        # Load from file if provided (overrides CLI --theorem/--premises/--goal)
+        from_file = getattr(args, 'from_file', None)
+        if from_file:
+            from pathlib import Path as _Path
+            try:
+                file_path = _Path(from_file)
+                if not file_path.exists():
+                    print(f"❌ File not found: {from_file}")
+                    return 1
+                text = file_path.read_text()
+                if from_file.endswith(('.yaml', '.yml')):
+                    try:
+                        import yaml as _yaml
+                        data = _yaml.safe_load(text)
+                    except ImportError:
+                        print("❌ PyYAML not installed. Install with: pip install pyyaml")
+                        return 1
+                else:
+                    import json as _json
+                    data = _json.loads(text)
+                if not isinstance(data, dict):
+                    print("❌ File must contain a JSON/YAML object with keys: theorem, premises, goal")
+                    return 1
+                args.theorem = data.get('theorem') or args.theorem
+                args.premises = data.get('premises', args.premises or [])
+                args.goal = data.get('goal') or args.goal
+            except (OSError, IOError, ValueError) as exc:
+                print(f"❌ Failed to load from file: {exc}")
+                return 1
+
+        if not args.theorem or not args.goal:
+            print("❌ --theorem and --goal are required (or provide --from-file)")
+            return 1
+
         print(f"🎯 Proving theorem: {args.theorem}")
         if args.premises:
             print(f"   Premises: {', '.join(args.premises)}")
@@ -273,14 +401,59 @@ Examples:
         print(f"   Prover: {args.prover}\n")
         
         try:
-            # TODO: Implement theorem proving
-            # This is a placeholder for the actual implementation
+            import time as _time
+            _start = _time.monotonic()
+
+            # Build statements list: premises + goal
+            statements: list[str] = list(args.premises or [])
+            statements.append(args.goal)
+
+            optimizer = LogicTheoremOptimizer(
+                config=OptimizerConfig(max_iterations=1, validation_enabled=True),
+                use_provers=[args.prover] if args.prover else ['z3'],
+            )
+            context = OptimizationContext(
+                session_id=f"prove-{args.theorem[:20].replace(' ', '-')}",
+                input_data=args.theorem,
+                domain='general',
+            )
+
             print("⏳ Proving...")
-            print("✅ Theorem proven successfully!")
-            print("   Prover: Z3")
-            print("   Time: 0.5s")
-            
-            return 0
+            result = optimizer.validate_statements(statements, context)
+            elapsed = _time.monotonic() - _start
+
+            provers_used = getattr(result, 'provers_used', None) or [args.prover or 'z3']
+            is_valid = getattr(result, 'all_valid', None)
+            if is_valid is None:
+                is_valid = getattr(result, 'valid', True)
+
+            if is_valid:
+                print("✅ Theorem proven successfully!")
+            else:
+                print("❌ Theorem could not be proven.")
+                errors = getattr(result, 'errors', [])
+                for err in errors:
+                    print(f"   {err}")
+
+            print(f"   Prover: {', '.join(str(p) for p in provers_used)}")
+            print(f"   Time: {elapsed:.3f}s")
+
+            if getattr(args, 'output', None):
+                import json as _json
+                proof_data = {
+                    'theorem': args.theorem,
+                    'premises': list(args.premises or []),
+                    'goal': args.goal,
+                    'proven': bool(is_valid),
+                    'provers': [str(p) for p in provers_used],
+                    'elapsed_seconds': round(elapsed, 3),
+                    'errors': getattr(result, 'errors', []),
+                }
+                output_path = _safe_resolve(args.output)
+                output_path.write_text(_json.dumps(proof_data, indent=2))
+                print(f"   Saved to: {args.output}")
+
+            return 0 if is_valid else 1
             
         except Exception as e:
             print(f"❌ Error: {e}")
@@ -288,6 +461,9 @@ Examples:
     
     def cmd_validate(self, args: argparse.Namespace) -> int:
         """Validate logical consistency.
+
+        Accepts a JSON or YAML file via ``--input``/``-i`` or ``--from-file``.
+        YAML support requires the *PyYAML* package (``pip install pyyaml``).
         
         Args:
             args: Command arguments
@@ -295,17 +471,27 @@ Examples:
         Returns:
             Exit code
         """
-        print(f"✓ Validating: {args.input}\n")
-        
-        input_path = Path(args.input)
+        # Resolve input path: either --input or --from-file
+        raw_path = getattr(args, 'from_file', None) or getattr(args, 'input', None)
+        print(f"✓ Validating: {raw_path}\n")
+
+        input_path = _safe_resolve(raw_path, must_exist=True)
         if not input_path.exists():
-            print(f"❌ Input file not found: {args.input}")
+            print(f"❌ Input file not found: {raw_path}")
             return 1
         
         try:
-            # Load logic data
+            # Load logic data — JSON or YAML
             with open(input_path, 'r') as f:
-                logic_data = json.load(f)
+                if str(input_path).endswith(('.yaml', '.yml')):
+                    try:
+                        import yaml  # type: ignore[import]
+                        logic_data = yaml.safe_load(f)
+                    except ImportError:
+                        print("❌ PyYAML is required for YAML input: pip install pyyaml")
+                        return 1
+                else:
+                    logic_data = json.load(f)
             
             # Create optimizer with validation focus
             optimizer = LogicTheoremOptimizer(
@@ -313,14 +499,23 @@ Examples:
                 enable_caching=True
             )
             
+            domain = getattr(args, 'domain', 'general') or 'general'
+
+            domain_errors = _domain_validation_errors(logic_data, domain)
+            if domain_errors:
+                print("❌ Domain validation failed:")
+                for err in domain_errors:
+                    print(f"   - {err}")
+                return 1
+
             # Create context
             context = OptimizationContext(
                 session_id=f"validate_{input_path.stem}",
                 input_data=logic_data,
-                domain='general'
+                domain=domain
             )
             
-            print("⏳ Validating with theorem provers...")
+            print(f"⏳ Validating with theorem provers (domain: {domain})...")
             is_valid = optimizer.validate(logic_data, context)
             
             if is_valid:
@@ -355,7 +550,7 @@ Examples:
         
         try:
             # Load input data
-            input_path = Path(args.input)
+            input_path = _safe_resolve(args.input, must_exist=True)
             if not input_path.exists():
                 print(f"❌ Input file not found: {args.input}")
                 return 1
@@ -393,7 +588,7 @@ Examples:
             
             # Save results if output specified
             if args.output:
-                output_path = Path(args.output)
+                output_path = _safe_resolve(args.output)
                 with open(output_path, 'w') as f:
                     json.dump(result, f, indent=2)
                 print(f"   Saved to: {args.output}")

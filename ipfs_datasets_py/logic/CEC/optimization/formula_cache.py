@@ -326,7 +326,11 @@ class ProofResultCache:
     def get_stats(self) -> Dict[str, Any]:
         """Get cache statistics."""
         return self._cache.get_stats()
-    
+
+    def get_statistics(self) -> Dict[str, Any]:
+        """Alias for get_stats() for API consistency."""
+        return self.get_stats()
+
     def clear(self) -> None:
         """Clear the cache."""
         self._cache.clear()

@@ -10,7 +10,8 @@ Usage:
     python -m ipfs_datasets_py.mcp_server.benchmarks.concurrent_workflows --scenario complex
 """
 
-import asyncio
+import anyio
+from ipfs_datasets_py.utils.anyio_compat import gather as _anyio_gather
 import argparse
 import logging
 import statistics
@@ -136,7 +137,7 @@ async def submit_workflow(workflow: Dict[str, Any]) -> Dict[str, Any]:
             result = await mcplusplus_workflow_tools.workflow_submit(**workflow)
         else:
             # Mock result
-            await asyncio.sleep(0.01)  # Simulate submission
+            await anyio.sleep(0.01)  # Simulate submission
             result = {
                 'success': True,
                 'workflow_id': workflow['workflow_id'],
@@ -180,11 +181,11 @@ async def monitor_workflow(workflow_id: str, timeout: float = 30.0) -> Dict[str,
                     break
             else:
                 # Mock completion
-                await asyncio.sleep(0.1)
+                await anyio.sleep(0.1)
                 final_status = 'completed'
                 break
             
-            await asyncio.sleep(0.5)  # Check every 500ms
+            await anyio.sleep(0.5)  # Check every 500ms
     except Exception as e:
         logger.error(f"Error monitoring workflow {workflow_id}: {e}")
         final_status = 'error'
@@ -237,7 +238,7 @@ async def run_scenario(
     
     # Submit all workflows concurrently
     start_time = time.perf_counter()
-    submission_results = await asyncio.gather(*[
+    submission_results = await _anyio_gather([
         submit_workflow(wf) for wf in workflows
     ])
     submission_time = time.perf_counter() - start_time
@@ -246,7 +247,7 @@ async def run_scenario(
     monitoring_results = []
     if monitor:
         workflow_ids = [r['workflow_id'] for r in submission_results if r['success']]
-        monitoring_results = await asyncio.gather(*[
+        monitoring_results = await _anyio_gather([
             monitor_workflow(wid) for wid in workflow_ids
         ])
     
@@ -446,4 +447,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    anyio.run(main)

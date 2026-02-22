@@ -17,7 +17,11 @@ from .analysis_engine import (
     ClusterResult,
     QualityAssessment,
     DimensionalityResult,
-    get_analysis_engine
+    get_analysis_engine,
+    detect_outliers,
+    analyze_diversity,
+    detect_drift,
+    analyze_similarity_patterns,
 )
 
 # Try to import cross-website analyzer (has optional dependencies)

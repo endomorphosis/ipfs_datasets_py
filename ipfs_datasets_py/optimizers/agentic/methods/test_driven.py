@@ -5,6 +5,7 @@ while improving performance and code quality.
 """
 
 import ast
+import logging as _logging
 import subprocess
 import tempfile
 import time
@@ -55,6 +56,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
         llm_router: Any,
         change_control: ChangeControlMethod = ChangeControlMethod.PATCH,
         config: Optional[Dict[str, Any]] = None,
+        logger: Optional[_logging.Logger] = None,
     ):
         """Initialize test-driven optimizer.
         
@@ -63,8 +65,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
             llm_router: LLM router for text generation
             change_control: Change control method to use
             config: Optional configuration dictionary
+            logger: Optional logger instance (defaults to module logger)
         """
-        super().__init__(agent_id, llm_router, change_control, config)
+        super().__init__(agent_id, llm_router, change_control, config, logger)
         self.patch_manager = PatchManager()
         
     def _get_method(self) -> OptimizationMethod:
@@ -83,14 +86,36 @@ class TestDrivenOptimizer(AgenticOptimizer):
         start_time = time.time()
         
         try:
+            self._log.info("Starting test-driven optimization", extra={
+                'task_id': task.task_id,
+                'agent_id': self.agent_id,
+                'target_file_count': len(task.target_files),
+                'priority': task.priority,
+            })
+            
             # Step 1: Analyze target files
             target_analysis = self._analyze_targets(task.target_files)
+            self._log.debug("Analyzed target files", extra={
+                'task_id': task.task_id,
+                'functions_found': len(target_analysis.get('functions', [])),
+                'classes_found': len(target_analysis.get('classes', [])),
+            })
             
             # Step 2: Generate or enhance tests
             test_results = self._generate_tests(task, target_analysis)
+            self._log.info("Generated tests", extra={
+                'task_id': task.task_id,
+                'test_generation_success': test_results.get('success', False),
+            })
             
             # Step 3: Run baseline tests
             baseline_metrics = self._run_baseline_tests(task.target_files)
+            self._log.info("Baseline tests completed", extra={
+                'task_id': task.task_id,
+                'baseline_time': baseline_metrics.get('execution_time', 0),
+                'tests_passed': baseline_metrics.get('tests_passed', 0),
+                'coverage': baseline_metrics.get('coverage', 0),
+            })
             
             # Step 4: Generate optimized code
             optimized_code = self._generate_optimizations(
@@ -98,12 +123,21 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 target_analysis,
                 baseline_metrics
             )
+            self._log.debug("Generated optimizations", extra={
+                'task_id': task.task_id,
+                'optimizations_count': len(optimized_code),
+            })
             
             # Step 5: Apply optimizations to temporary location
             temp_results = self._apply_optimizations(
                 task.target_files,
                 optimized_code
             )
+            self._log.info("Applied optimizations", extra={
+                'task_id': task.task_id,
+                'optimized_time': temp_results.get('execution_time', 0),
+                'tests_passed_after': temp_results.get('tests_passed', 0),
+            })
             
             # Step 6: Create patch
             patch = self.patch_manager.create_patch(
@@ -118,6 +152,18 @@ class TestDrivenOptimizer(AgenticOptimizer):
             
             execution_time = time.time() - start_time
             
+            improvement = self._calculate_improvement(
+                baseline_metrics.get('execution_time', 1),
+                temp_results.get('execution_time', 1)
+            )
+            
+            self._log.info("Optimization completed successfully", extra={
+                'task_id': task.task_id,
+                'total_time': execution_time,
+                'improvement_percent': improvement,
+                'patch_path': str(patch_path),
+            })
+            
             return OptimizationResult(
                 task_id=task.task_id,
                 success=True,
@@ -127,10 +173,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 metrics={
                     'baseline_time': baseline_metrics.get('execution_time', 0),
                     'optimized_time': temp_results.get('execution_time', 0),
-                    'improvement_percent': self._calculate_improvement(
-                        baseline_metrics.get('execution_time', 1),
-                        temp_results.get('execution_time', 1)
-                    ),
+                    'improvement_percent': improvement,
                     'tests_passed': temp_results.get('tests_passed', 0),
                     'test_coverage': temp_results.get('coverage', 0),
                 },
@@ -139,13 +182,21 @@ class TestDrivenOptimizer(AgenticOptimizer):
             )
             
         except Exception as e:
+            execution_time = time.time() - start_time
+            self._log.error("Optimization failed", extra={
+                'task_id': task.task_id,
+                'error_type': type(e).__name__,
+                'error_message': str(e),
+                'total_time': execution_time,
+            }, exc_info=True)
+            
             return OptimizationResult(
                 task_id=task.task_id,
                 success=False,
                 method=self.method,
                 changes="",
                 error_message=str(e),
-                execution_time=time.time() - start_time,
+                execution_time=execution_time,
                 agent_id=self.agent_id,
             )
     
@@ -158,6 +209,12 @@ class TestDrivenOptimizer(AgenticOptimizer):
         Returns:
             ValidationResult with detailed validation status
         """
+        self._log.info("Starting validation", extra={
+            'task_id': result.task_id,
+            'agent_id': self.agent_id,
+            'optimization_success': result.success,
+        })
+        
         errors = []
         warnings = []
         
@@ -181,8 +238,19 @@ class TestDrivenOptimizer(AgenticOptimizer):
         if not performance['passed']:
             warnings.append(performance['message'])
         
+        passed = len(errors) == 0
+        self._log.info("Validation completed", extra={
+            'task_id': result.task_id,
+            'validation_passed': passed,
+            'error_count': len(errors),
+            'warning_count': len(warnings),
+            'syntax_check': syntax_check['passed'],
+            'type_check': type_check['passed'],
+            'unit_tests': unit_tests['passed'],
+        })
+        
         return ValidationResult(
-            passed=len(errors) == 0,
+            passed=passed,
             syntax_check=syntax_check['passed'],
             type_check=type_check['passed'],
             unit_tests=unit_tests['passed'],
@@ -202,6 +270,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
         
         for file_path in target_files:
             if not file_path.exists():
+                self._log.warning("Target file does not exist", extra={'file': str(file_path)})
                 continue
             
             try:
@@ -223,7 +292,11 @@ class TestDrivenOptimizer(AgenticOptimizer):
                             'lineno': node.lineno,
                         })
             except Exception as e:
-                print(f"Error analyzing {file_path}: {e}")
+                self._log.error("Error analyzing file", extra={
+                    'file': str(file_path),
+                    'error_type': type(e).__name__,
+                    'error_message': str(e),
+                })
         
         return analysis
     
@@ -275,6 +348,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
         
         for target_file in task.target_files:
             if not target_file.exists():
+                self._log.warning("Target file does not exist", extra={'file': str(target_file)})
                 continue
             
             # Read current code
@@ -297,9 +371,18 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     temperature=0.2,
                 )
                 
+                self._log.debug("Generated optimization", extra={
+                    'file': str(target_file),
+                    'response_length': len(response),
+                })
+                
                 optimizations[str(target_file)] = response
             except Exception as e:
-                print(f"Error optimizing {target_file}: {e}")
+                self._log.error("Error generating optimization", extra={
+                    'file': str(target_file),
+                    'error_type': type(e).__name__,
+                    'error_message': str(e),
+                })
         
         return optimizations
     

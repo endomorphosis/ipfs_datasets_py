@@ -3,8 +3,10 @@
 Reusable core logic behind MCP-facing sparse embedding tools.
 MCP wrappers should stay thin delegates that validate/dispatch/format.
 
-Implementation note: This currently delegates to the existing implementation in
-`ipfs_datasets_py.mcp_server.tools.sparse_embedding_tools.sparse_embedding_tools`.
+This module delegates to the canonical engine at
+`ipfs_datasets_py.mcp_server.tools.sparse_embedding_tools.sparse_embedding_tools`,
+which in turn imports from the engine at
+`ipfs_datasets_py.ml.embeddings.sparse_embedding_engine`.
 """
 
 from __future__ import annotations
@@ -16,6 +18,15 @@ from ipfs_datasets_py.mcp_server.tools.sparse_embedding_tools.sparse_embedding_t
     index_sparse_collection as _index_sparse_collection,
     manage_sparse_models as _manage_sparse_models,
     sparse_search as _sparse_search,
+)
+
+# Re-export engine types so callers can use:
+#   from ipfs_datasets_py.ml.embeddings.sparse_embedding_tools_api import SparseModel
+from ipfs_datasets_py.embeddings.sparse_embedding_engine import (  # noqa: F401
+    SparseModel,
+    SparseEmbedding,
+    MockSparseEmbeddingService,
+    get_default_sparse_service,
 )
 
 

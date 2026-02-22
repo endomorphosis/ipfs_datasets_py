@@ -93,12 +93,12 @@ class TestCECBridgeStrategSelection:
         
         # Create mock deontic formula
         from ipfs_datasets_py.logic.CEC.native.dcec_core import (
-            DeonticFormula, DeonticOperator, AtomicFormula, Predicate
+            DeonticFormula, DeonticOperator, AtomicFormula
         )
-        pred = Predicate(name="P", argument_sorts=[])
+        from ipfs_datasets_py.logic.CEC.native.dcec_types import Predicate as DCECPredicate
         formula = DeonticFormula(
             operator=DeonticOperator.OBLIGATION,
-            formula=AtomicFormula(predicate=pred, arguments=[])
+            formula=AtomicFormula(predicate=DCECPredicate("P", []), arguments=[])
         )
         
         # WHEN
@@ -113,8 +113,9 @@ class TestCECBridgeStrategSelection:
         bridge = CECBridge(enable_ipfs_cache=False)
         
         # Create mock atomic formula
-        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula, Predicate
-        formula = AtomicFormula(predicate=Predicate(name="P", argument_sorts=[]), arguments=[])
+        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula
+        from ipfs_datasets_py.logic.CEC.native.dcec_types import Predicate as DCECPredicate
+        formula = AtomicFormula(predicate=DCECPredicate("P", []), arguments=[])
         
         # WHEN
         strategy = bridge._select_strategy(formula)
@@ -130,8 +131,9 @@ class TestCECBridgeProving:
         """GIVEN formula and cache disabled WHEN proving THEN proof is attempted."""
         # GIVEN
         bridge = CECBridge(enable_ipfs_cache=False)
-        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula, Predicate
-        formula = AtomicFormula(predicate=Predicate(name="P", argument_sorts=[]), arguments=[])
+        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula
+        from ipfs_datasets_py.logic.CEC.native.dcec_types import Predicate as DCECPredicate
+        formula = AtomicFormula(predicate=DCECPredicate("P", []), arguments=[])
         
         # Mock the CEC manager
         mock_result = Mock()
@@ -151,8 +153,9 @@ class TestCECBridgeProving:
         """GIVEN proving fails WHEN using CEC manager THEN error result is returned."""
         # GIVEN
         bridge = CECBridge(enable_ipfs_cache=False)
-        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula, Predicate
-        formula = AtomicFormula(predicate=Predicate(name="P", argument_sorts=[]), arguments=[])
+        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula
+        from ipfs_datasets_py.logic.CEC.native.dcec_types import Predicate as DCECPredicate
+        formula = AtomicFormula(predicate=DCECPredicate("P", []), arguments=[])
         
         # Mock the CEC manager to raise exception
         bridge.cec_prover_manager.prove = Mock(side_effect=Exception("Test error"))
@@ -173,8 +176,9 @@ class TestCECBridgeCaching:
         """GIVEN formula WHEN computing hash THEN consistent hash is returned."""
         # GIVEN
         bridge = CECBridge(enable_ipfs_cache=False)
-        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula, Predicate
-        formula = AtomicFormula(predicate=Predicate(name="P", argument_sorts=[]), arguments=[])
+        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula
+        from ipfs_datasets_py.logic.CEC.native.dcec_types import Predicate as DCECPredicate
+        formula = AtomicFormula(predicate=DCECPredicate("P", []), arguments=[])
         
         # WHEN
         hash1 = bridge._compute_formula_hash(formula)
@@ -188,8 +192,9 @@ class TestCECBridgeCaching:
         """GIVEN proof result WHEN caching without IPFS THEN stored in local cache."""
         # GIVEN
         bridge = CECBridge(enable_ipfs_cache=False)
-        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula, Predicate
-        formula = AtomicFormula(predicate=Predicate(name="P", argument_sorts=[]), arguments=[])
+        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula
+        from ipfs_datasets_py.logic.CEC.native.dcec_types import Predicate as DCECPredicate
+        formula = AtomicFormula(predicate=DCECPredicate("P", []), arguments=[])
         
         result = UnifiedProofResult(
             is_proved=True,
@@ -209,8 +214,9 @@ class TestCECBridgeCaching:
         """GIVEN empty cache WHEN getting cached proof THEN None is returned."""
         # GIVEN
         bridge = CECBridge(enable_ipfs_cache=False)
-        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula, Predicate
-        formula = AtomicFormula(predicate=Predicate(name="P", argument_sorts=[]), arguments=[])
+        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula
+        from ipfs_datasets_py.logic.CEC.native.dcec_types import Predicate as DCECPredicate
+        formula = AtomicFormula(predicate=DCECPredicate("P", []), arguments=[])
         
         # WHEN
         cached = bridge._get_cached_proof(formula)
@@ -258,8 +264,9 @@ class TestCECBridgeIntegration:
         """GIVEN simple formula WHEN proving with Z3 THEN proof succeeds."""
         # GIVEN
         bridge = CECBridge(enable_ipfs_cache=False, enable_z3=True)
-        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula, Predicate
-        formula = AtomicFormula(predicate=Predicate(name="P", argument_sorts=[]), arguments=[])
+        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula
+        from ipfs_datasets_py.logic.CEC.native.dcec_types import Predicate as DCECPredicate
+        formula = AtomicFormula(predicate=DCECPredicate("P", []), arguments=[])
         
         # WHEN
         result = bridge.prove(formula, strategy='z3', use_cache=False)
@@ -272,9 +279,10 @@ class TestCECBridgeIntegration:
         """GIVEN formula and axioms WHEN proving THEN axioms are used."""
         # GIVEN
         bridge = CECBridge(enable_ipfs_cache=False)
-        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula, Predicate
-        formula = AtomicFormula(predicate=Predicate(name="Q", argument_sorts=[]), arguments=[])
-        axiom = AtomicFormula(predicate=Predicate(name="P", argument_sorts=[]), arguments=[])
+        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula
+        from ipfs_datasets_py.logic.CEC.native.dcec_types import Predicate as DCECPredicate
+        formula = AtomicFormula(predicate=DCECPredicate("Q", []), arguments=[])
+        axiom = AtomicFormula(predicate=DCECPredicate("P", []), arguments=[])
         
         # Mock the CEC manager
         mock_result = Mock()

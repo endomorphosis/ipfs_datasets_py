@@ -234,3 +234,20 @@ class ZKPProver:
     def clear_cache(self):
         """Clear proof cache."""
         self._proof_cache.clear()
+
+    def prove(self, statement: str, witness=None, metadata=None) -> 'ZKPProof':
+        '''Alias for generate_proof() for backward compatibility.'''
+        if isinstance(witness, dict):
+            private_axioms = witness.get('axioms', [])
+        elif isinstance(witness, str):
+            private_axioms = [witness]
+        elif isinstance(witness, list):
+            private_axioms = witness
+        else:
+            private_axioms = []
+        return self.generate_proof(
+            theorem=statement,
+            private_axioms=private_axioms,
+            metadata=metadata,
+        )
+

@@ -44,6 +44,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+from ..common.base_critic import CriticResult
+from ..common.base_harness import BaseHarness, HarnessConfig
+
 logger = logging.getLogger(__name__)
 
 
@@ -151,7 +154,8 @@ class OntologyHarness:
         critic_config: Optional[Dict[str, Any]] = None,
         validator_config: Optional[Dict[str, Any]] = None,
         parallelism: int = 4,
-        max_retries: int = 3
+        max_retries: int = 3,
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize the ontology harness.
@@ -162,10 +166,15 @@ class OntologyHarness:
             validator_config: Configuration for LogicValidator
             parallelism: Number of parallel workers (default: 4)
             max_retries: Maximum retry attempts per session (default: 3)
+            logger: Optional :class:`logging.Logger` to use instead of the
+                module-level logger. Useful for dependency injection in tests.
             
         Raises:
             ValueError: If parallelism or max_retries are not positive
         """
+        import logging as _logging
+        self._log = logger or _logging.getLogger(__name__)
+        
         if parallelism < 1:
             raise ValueError("parallelism must be at least 1")
         if max_retries < 0:
@@ -181,9 +190,12 @@ class OntologyHarness:
         self._components_imported = False
         self._import_components()
         
-        logger.info(
-            f"Initialized OntologyHarness: parallelism={parallelism}, "
-            f"max_retries={max_retries}"
+        self._log.info(
+            "Initialized OntologyHarness",
+            extra={
+                'parallelism': parallelism,
+                'max_retries': max_retries,
+            }
         )
     
     def _import_components(self):
@@ -209,9 +221,21 @@ class OntologyHarness:
             self.OntologyOptimizer = OntologyOptimizer
             
             self._components_imported = True
-            logger.info("Components imported successfully")
+            self._log.info(
+                "Components imported successfully",
+                extra={
+                    'components_imported': True,
+                }
+            )
         except ImportError as e:
-            logger.error(f"Failed to import components: {e}")
+            self._log.error(
+                "Failed to import components",
+                extra={
+                    'error_type': type(e).__name__,
+                    'error_message': str(e),
+                },
+                exc_info=True,
+            )
             raise
     
     def create_session(self) -> Any:  # OntologySession
@@ -260,22 +284,39 @@ class OntologyHarness:
         Returns:
             Tuple of (session_id, result, error)
         """
-        logger.info(f"Session {session_id}: Starting")
+        self._log.info(
+            "Session starting",
+            extra={
+                'session_id': session_id,
+            }
+        )
         
         try:
             session = self.create_session()
             result = session.run(data, context)
             
-            logger.info(
-                f"Session {session_id}: Complete - "
-                f"score={result.critic_score.overall:.2f}, "
-                f"rounds={result.num_rounds}"
+            self._log.info(
+                "Session complete",
+                extra={
+                    'session_id': session_id,
+                    'score': round(result.critic_score.overall, 3) if result.critic_score else None,
+                    'rounds': result.num_rounds,
+                    'converged': getattr(result, 'converged', None),
+                }
             )
             
             return (session_id, result, None)
             
         except Exception as e:
-            logger.error(f"Session {session_id}: Failed - {e}")
+            self._log.error(
+                "Session failed",
+                extra={
+                    'session_id': session_id,
+                    'error_type': type(e).__name__,
+                    'error_message': str(e),
+                },
+                exc_info=True,
+            )
             return (session_id, None, e)
     
     def run_sessions(
@@ -312,10 +353,14 @@ class OntologyHarness:
         if len(data_sources) != len(contexts):
             raise ValueError("data_sources and contexts must have same length")
         
-        logger.info(
-            f"Running batch: {len(data_sources)} sources x "
-            f"{num_sessions_per_source} sessions/source = "
-            f"{len(data_sources) * num_sessions_per_source} total sessions"
+        self._log.info(
+            "Running batch",
+            extra={
+                'source_count': len(data_sources),
+                'sessions_per_source': num_sessions_per_source,
+                'total_sessions': len(data_sources) * num_sessions_per_source,
+                'parallelism': self.parallelism,
+            }
         )
         
         start_time = time.time()
@@ -390,7 +435,13 @@ class OntologyHarness:
                 
                 optimization_report = optimizer.analyze_batch(mediator_states)
             except Exception as e:
-                logger.warning(f"Optimization analysis failed: {e}")
+                self._log.warning(
+                    "Optimization analysis failed",
+                    extra={
+                        'error_type': type(e).__name__,
+                        'error_message': str(e),
+                    }
+                )
         
         # Build batch result
         elapsed_time = time.time() - start_time
@@ -411,10 +462,16 @@ class OntologyHarness:
             }
         )
         
-        logger.info(
-            f"Batch complete: {len(successful_results)}/{total_sessions} successful "
-            f"({success_rate:.1%}), avg_score={average_score:.2f}, "
-            f"time={elapsed_time:.2f}s"
+        self._log.info(
+            "Batch complete",
+            extra={
+                'successful_sessions': len(successful_results),
+                'total_sessions': total_sessions,
+                'failed_sessions': len(failed_sessions),
+                'success_rate': round(success_rate, 4),
+                'average_score': round(average_score, 3),
+                'elapsed_time_s': round(elapsed_time, 3),
+            }
         )
         
         return batch_result
@@ -454,15 +511,25 @@ class OntologyHarness:
             >>> for i, batch in enumerate(cycle_results):
             ...     print(f"Cycle {i+1}: avg={batch.average_score:.2f}")
         """
-        logger.info(
-            f"Starting SGD cycles: {num_cycles} cycles, "
-            f"threshold={convergence_threshold}"
+        self._log.info(
+            "Starting SGD cycles",
+            extra={
+                'num_cycles': num_cycles,
+                'convergence_threshold': convergence_threshold,
+                'source_count': len(data_sources),
+            }
         )
         
         cycle_results = []
         
         for cycle in range(num_cycles):
-            logger.info(f"=== Cycle {cycle + 1}/{num_cycles} ===")
+            self._log.info(
+                "Cycle start",
+                extra={
+                    'cycle': cycle + 1,
+                    'num_cycles': num_cycles,
+                }
+            )
             
             # Run batch
             batch_result = self.run_sessions(
@@ -475,27 +542,45 @@ class OntologyHarness:
             
             # Check convergence
             if batch_result.average_score >= convergence_threshold:
-                logger.info(
-                    f"Converged at cycle {cycle + 1}: "
-                    f"score={batch_result.average_score:.2f} >= {convergence_threshold}"
+                self._log.info(
+                    "Converged early",
+                    extra={
+                        'cycle': cycle + 1,
+                        'score': round(batch_result.average_score, 3),
+                        'convergence_threshold': convergence_threshold,
+                    }
                 )
                 break
             
             # Log progress
             trend = batch_result.optimization_report.trend if batch_result.optimization_report else 'unknown'
-            logger.info(
-                f"Cycle {cycle + 1} complete: avg={batch_result.average_score:.2f}, "
-                f"trend={trend}"
+            self._log.info(
+                "Cycle complete",
+                extra={
+                    'cycle': cycle + 1,
+                    'average_score': round(batch_result.average_score, 3),
+                    'trend': trend,
+                }
             )
             
             # Apply recommendations for next cycle
             if batch_result.optimization_report and batch_result.optimization_report.recommendations:
-                logger.info(
-                    f"Recommendations: {batch_result.optimization_report.recommendations[:3]}"
+                self._log.info(
+                    "Cycle recommendations",
+                    extra={
+                        'cycle': cycle + 1,
+                        'recommendation_count': len(batch_result.optimization_report.recommendations),
+                        'recommendations_preview': batch_result.optimization_report.recommendations[:3],
+                    }
                 )
                 # In a full implementation, would adapt parameters here
         
-        logger.info(f"SGD cycles complete: {len(cycle_results)} cycles executed")
+        self._log.info(
+            "SGD cycles complete",
+            extra={
+                'cycles_executed': len(cycle_results),
+            }
+        )
         
         return cycle_results
 
@@ -503,5 +588,165 @@ class OntologyHarness:
 # Export public API
 __all__ = [
     'OntologyHarness',
+    'OntologyPipelineHarness',
     'BatchResult',
 ]
+
+
+class OntologyPipelineHarness(BaseHarness):
+    """Single-session harness wiring Generator → Critic → Mediator via BaseHarness.
+
+    This is a lightweight alternative to :class:`OntologyHarness` for running a
+    single iterative refinement session rather than a parallel batch.  It extends
+    :class:`~ipfs_datasets_py.optimizers.common.BaseHarness` so the session
+    lifecycle (``BaseSession``, convergence, round tracking) is handled centrally.
+
+    Example::
+
+        from ipfs_datasets_py.optimizers.graphrag import (
+            OntologyGenerator, OntologyCritic, OntologyMediator,
+            OntologyGenerationContext, ExtractionStrategy,
+        )
+        from ipfs_datasets_py.optimizers.graphrag.ontology_harness import (
+            OntologyPipelineHarness,
+        )
+        from ipfs_datasets_py.optimizers.common import HarnessConfig
+
+        harness = OntologyPipelineHarness(
+            generator=OntologyGenerator(),
+            critic=OntologyCritic(),
+            mediator=OntologyMediator(),
+            config=HarnessConfig(max_rounds=5, target_score=0.8),
+        )
+        context = OntologyGenerationContext(
+            data_source="contract.txt",
+            data_type="text",
+            domain="legal",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+        )
+        session = harness.run(source_text, context)
+        print(f"Best score: {session.best_score:.3f}")
+    """
+
+    def __init__(
+        self,
+        generator: Any,
+        critic: Any,
+        mediator: Any,
+        config: Optional[HarnessConfig] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        import logging as _logging
+        self._log = logger or _logging.getLogger(__name__)
+        self.generator = generator
+        self.critic = critic
+        self.mediator = mediator
+        self._last_ontology: Optional[Dict[str, Any]] = None
+        super().__init__(config=config or HarnessConfig())
+
+    def _generate(self, data: Any, context: Any) -> Any:
+        ontology = self.generator.generate_ontology(data, context)
+        self._last_ontology = ontology
+        return ontology
+
+    def _critique(self, artifact: Any, context: Any) -> CriticResult:
+        try:
+            return self.critic.evaluate(artifact, context)
+        except Exception:
+            raw = self.critic.evaluate_ontology(artifact, context)
+            return CriticResult(
+                score=raw.overall,
+                feedback=raw.feedback,
+                dimensions={k: v for k, v in raw.dimensions.items()},
+            )
+
+    def _optimize(self, artifact: Any, critique: CriticResult, context: Any) -> Any:
+        from ..common.exceptions import RefinementError
+        try:
+            refined = self.mediator.refine_ontology(artifact, critique.feedback)
+        except RefinementError:
+            raise
+        except Exception as exc:
+            self._log.warning("refine_ontology failed: %s", exc)
+            refined = artifact
+        self._last_ontology = refined
+        return refined
+
+    def run(self, data: Any, context: Any) -> Any:
+        """Run the pipeline and return a :class:`~ipfs_datasets_py.optimizers.common.BaseSession`."""
+        return super().run(data, context)
+
+    def run_and_report(self, data: Any, context: Any) -> Dict[str, Any]:
+        """Run and return a rich summary dict."""
+        session = self.run(data, context)
+        return {
+            "best_score": session.best_score,
+            "rounds": len(session.rounds),
+            "converged": session.converged,
+            "best_ontology": self._last_ontology,
+            "session": session,
+        }
+
+    def run_single(self, data: Any, context: Any) -> Dict[str, Any]:
+        """Convenience wrapper for single-document use cases.
+
+        Equivalent to :meth:`run_and_report` but always operates on a single
+        document.  Raises :class:`RuntimeError` if the session did not produce
+        a valid result.
+
+        Args:
+            data: Source document text or data object.
+            context: Generation context (dict or context object).
+
+        Returns:
+            Summary dict with keys ``best_score``, ``rounds``, ``converged``,
+            ``best_ontology``, and ``session``.
+
+        Raises:
+            RuntimeError: If the internal harness raises an unhandled error.
+        """
+        try:
+            return self.run_and_report(data, context)
+        except Exception as exc:
+            raise RuntimeError(
+                f"OntologyHarness.run_single() failed: {exc}"
+            ) from exc
+
+    def run_concurrent(
+        self,
+        docs: "List[Any]",
+        context: Any,
+        max_workers: int = 4,
+    ) -> "List[Dict[str, Any]]":
+        """Run the harness concurrently against multiple data inputs.
+
+        Each document is processed via :meth:`run_and_report` in a separate
+        thread.  Results are returned in the same order as *docs*.  Failed
+        runs produce a dict with ``{'error': str, 'success': False}``.
+
+        Args:
+            docs: List of input data objects to process.
+            context: Shared :class:`OntologyGenerationContext` for all runs.
+            max_workers: Thread pool size (default: 4).
+
+        Returns:
+            List of result dicts (one per document, order preserved).
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        from typing import List as _List, Dict as _Dict
+
+        results: _List[_Dict] = [{}] * len(docs)
+
+        def _run(idx: int, doc: Any) -> tuple:
+            try:
+                return idx, self.run_and_report(doc, context)
+            except Exception as exc:
+                return idx, {"error": str(exc), "success": False}
+
+        with ThreadPoolExecutor(max_workers=max(1, max_workers)) as pool:
+            futures = {pool.submit(_run, i, doc): i for i, doc in enumerate(docs)}
+            for future in as_completed(futures):
+                idx, result = future.result()
+                results[idx] = result
+
+        return results

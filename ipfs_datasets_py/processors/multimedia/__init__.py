@@ -114,16 +114,39 @@ except ImportError:
     UnifiedConverter = None
     ConverterRegistry = None
 
+# Canonical FFmpeg editing/info engine functions
+from .ffmpeg_edit_engine import ffmpeg_cut, ffmpeg_splice, ffmpeg_concat  # noqa: E402
+from .ffmpeg_info_engine import ffmpeg_probe, ffmpeg_analyze  # noqa: E402
+# Canonical FFmpeg mux/demux, filters, stream, batch engines
+from .ffmpeg_mux_demux_engine import ffmpeg_mux, ffmpeg_demux  # noqa: E402
+from .ffmpeg_filters_engine import ffmpeg_apply_filters, get_available_filters  # noqa: E402
+from .ffmpeg_stream_engine import ffmpeg_stream_input, ffmpeg_stream_output  # noqa: E402
+from .ffmpeg_batch_engine import ffmpeg_batch_process, get_batch_status  # noqa: E402
+
 __all__ = [
     # Root processors (production-ready)
     "YtDlpWrapper",
-    "FFmpegWrapper", 
+    "FFmpegWrapper",
     "MediaProcessor",
     "MediaUtils",
     "DiscordWrapper",
     "create_discord_wrapper",
     "EmailProcessor",
     "create_email_processor",
+    # Canonical FFmpeg engines
+    "ffmpeg_cut",
+    "ffmpeg_splice",
+    "ffmpeg_concat",
+    "ffmpeg_probe",
+    "ffmpeg_analyze",
+    "ffmpeg_mux",
+    "ffmpeg_demux",
+    "ffmpeg_apply_filters",
+    "get_available_filters",
+    "ffmpeg_stream_input",
+    "ffmpeg_stream_output",
+    "ffmpeg_batch_process",
+    "get_batch_status",
     # Unified converter interface (Phase 9C)
     "UnifiedConverter",
     "ConverterRegistry",
@@ -135,3 +158,31 @@ __all__ = [
     "HAVE_MEDIA_PROCESSOR",
     "HAVE_CONVERTERS"
 ]
+
+from .ytdlp_download_engine import (
+    ytdlp_download_video,
+    ytdlp_download_playlist,
+    ytdlp_extract_info,
+    ytdlp_search_videos,
+    ytdlp_batch_download,
+)
+
+try:
+    from .email_analyze_engine import (
+        email_analyze_export,
+        email_search_export,
+    )
+except Exception:
+    email_analyze_export = None  # type: ignore[assignment]
+    email_search_export = None  # type: ignore[assignment]
+
+try:
+    from .ffmpeg_convert_engine import (
+        ffmpeg_convert_media,
+        ffmpeg_extract_audio_engine,
+        ffmpeg_analyze_media,
+    )
+except Exception:
+    ffmpeg_convert_media = None  # type: ignore[assignment]
+    ffmpeg_extract_audio_engine = None  # type: ignore[assignment]
+    ffmpeg_analyze_media = None  # type: ignore[assignment]

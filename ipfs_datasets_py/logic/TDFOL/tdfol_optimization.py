@@ -33,7 +33,7 @@ import time
 import logging
 from collections import defaultdict
 
-from .tdfol_core import Formula, TDFOLKnowledgeBase
+from .tdfol_core import Formula, TDFOLKnowledgeBase, ProofResult, ProofStatus, ProofStep
 from .exceptions import ProofError, ProofTimeoutError
 
 logger = logging.getLogger(__name__)
@@ -404,6 +404,11 @@ class OptimizedProver:
         # Step 4: Prove using indexed KB (O(n² log n))
         result = self._prove_indexed(formula, selected_strategy, timeout_ms)
         
+        # Ensure result.method reflects the selected strategy enum value so that
+        # result["strategy"] returns e.g. "forward" / "backward" (not "Forward Chaining").
+        if hasattr(result, 'method') and selected_strategy != ProvingStrategy.AUTO:
+            result.method = selected_strategy.value
+        
         # Step 5: Cache result
         if self.enable_cache and self.cache:
             self._cache_result(formula, result, "indexed")
@@ -504,15 +509,18 @@ class OptimizedProver:
         """
         self.stats.indexed_lookups += 1
         
-        # For now, return a basic result structure
-        # In full implementation, this would call the appropriate strategy
-        return {
-            "is_proved": False,
-            "formula": formula,
-            "strategy": strategy.value,
-            "method": "indexed",
-            "message": "Indexed proving not fully implemented yet"
-        }
+        # Delegate to the standard prover for actual proving
+        try:
+            from .tdfol_prover import TDFOLProver
+            _prover = TDFOLProver(self.kb)
+            return _prover.prove(formula, timeout_ms=timeout_ms)
+        except Exception as e:
+            return ProofResult(
+                status=ProofStatus.UNKNOWN,
+                formula=formula,
+                method="indexed",
+                message=f"Indexed proving not available: {e}"
+            )
     
     def get_stats(self) -> OptimizationStats:
         """Get optimization statistics."""

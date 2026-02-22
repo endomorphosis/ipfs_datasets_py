@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "entities": [
+    {
+      "id": "entity_1",
+      "type": "Person",
+      "text": "Alice",
+      "properties": {
+        "role": "plaintiff",
+        "jurisdiction": "CA"
+      },
+      "confidence": 0.95,
+      "source_span": [0, 5]
+    },
+    {
+      "id": "entity_2",
+      "type": "Organization",
+      "text": "Acme Corp",
+      "properties": {
+        "industry": "retail",
+        "headquarters": "USA"
+      },
+      "confidence": 0.88,
+      "source_span": [10, 19]
+    },
+    {
+      "id": "entity_3",
+      "type": "Obligation",
+      "text": "provide disclosure",
+      "properties": {
+        "party": "defendant",
+        "deadline": "2026-03-01"
+      },
+      "confidence": 0.75,
+      "source_span": null
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel_1",
+      "source_id": "entity_1",
+      "target_id": "entity_2",
+      "type": "claims_against",
+      "properties": {
+        "basis": "contract_breach",
+        "damages": "$50000"
+      },
+      "confidence": 0.92
+    },
+    {
+      "id": "rel_2",
+      "source_id": "entity_2",
+      "target_id": "entity_3",
+      "type": "obligated_to",
+      "properties": {},
+      "confidence": 0.80
+    }
+  ],
+  "metadata": {
+    "source": "complaint_document",
+    "domain": "legal",
+    "extraction_strategy": "hybrid",
+    "timestamp": "2026-02-20T12:00:00Z",
+    "extraction_config": {
+      "confidence_threshold": 0.7,
+      "max_entities": 100,
+      "max_relationships": 200
+    }
+  }
+}

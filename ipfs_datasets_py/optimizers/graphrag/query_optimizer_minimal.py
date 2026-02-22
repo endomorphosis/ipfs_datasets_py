@@ -22,7 +22,15 @@ class GraphRAGQueryStats:
     def record_query(self, query_id: str, params: Dict[str, Any],
                     results: List[Dict], duration: float, success: bool = True) -> None:
         """Record a query and its results."""
-        pass
+        self.queries[query_id] = {
+            'params': params,
+            'result_count': len(results),
+            'duration': duration,
+            'success': success,
+        }
+        if success:
+            self.analyzed_queries += 1
+            self.learning_counter += 1
 
 class GraphRAGQueryOptimizer:
     """Optimizer for GraphRAG queries based on statistical learning."""

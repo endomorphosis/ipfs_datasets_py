@@ -100,13 +100,60 @@ from .ipfs_storage_integration import (
     list_ipfs_datasets,
 )
 
+# Patent Engine — USPTO patent scraper domain classes
+from .patent_engine import (
+    Patent,
+    PatentDatasetBuilder,
+    PatentSearchCriteria,
+    USPTOPatentScraper,
+    search_patents_by_assignee,
+    search_patents_by_inventor,
+    search_patents_by_keyword,
+)
+
+# Municipal Scraper Engine — fallback scraping strategies
+from .municipal_scraper_engine import (
+    MunicipalScraperFallbacks,
+    scrape_with_fallbacks as scrape_municipal_with_fallbacks,
+)
+
+# State Laws Scheduler Engine — periodic update scheduling
+from .state_laws_scheduler_engine import (
+    StateLawsUpdateScheduler,
+    create_schedule,
+    remove_schedule,
+    list_schedules,
+    run_schedule_now,
+    enable_disable_schedule,
+)
+
+# Incremental Updates Engine — delta scraping helpers
+from .incremental_updates_engine import (
+    IncrementalUpdateTracker,
+    calculate_update_parameters,
+    scrape_recap_incremental,
+    scrape_with_incremental_update,
+)
+
+# HuggingFace Pipeline Engine — rate limiting + parallel upload
+from .huggingface_pipeline_engine import (
+    RateLimiter,
+    UploadToHuggingFaceInParallel,
+)
+
 # Brave Legal Search - Natural language search for legal rules and regulations
 from .brave_legal_search import (
     BraveLegalSearch,
     create_legal_search,
     search_legal,
 )
-from .multi_engine_legal_search import MultiEngineLegalSearch
+# NOTE: multi_engine_legal_search.py has no MultiEngineLegalSearch *class*.
+# It exposes standalone async functions: multi_engine_legal_search() and get_multi_engine_stats().
+# The module itself is aliased as MultiEngineLegalSearch for backward compatibility with code
+# that previously imported the (non-existent) class by that name.
+from . import multi_engine_legal_search as _multi_engine_module  # noqa: F401
+from .multi_engine_legal_search import multi_engine_legal_search, get_multi_engine_stats  # noqa: F401
+MultiEngineLegalSearch = _multi_engine_module  # module alias for backward compat
 from .knowledge_base_loader import (
     LegalKnowledgeBase,
     FederalEntity,
@@ -261,6 +308,21 @@ except ImportError:
     HuggingFaceAPISearch = None
     HAVE_HF_API_SEARCH = False
 
+# Verifier engines (new — extracted from MCP tool verification scripts)
+try:
+    from .federal_register_verifier import FederalRegisterVerifier
+    HAVE_FEDERAL_REGISTER_VERIFIER = True
+except Exception:
+    FederalRegisterVerifier = None  # type: ignore[assignment]
+    HAVE_FEDERAL_REGISTER_VERIFIER = False
+
+try:
+    from .us_code_verifier import USCodeVerifier
+    HAVE_US_CODE_VERIFIER = True
+except Exception:
+    USCodeVerifier = None  # type: ignore[assignment]
+    HAVE_US_CODE_VERIFIER = False
+
 # Parallel web archiver (Enhancement 11 Part 2)
 try:
     from .parallel_web_archiver import (
@@ -337,6 +399,37 @@ __all__ = [
     "list_scraping_jobs_from_parameters",
     "scrape_us_code_from_parameters",
     "scrape_municipal_codes_from_parameters",
+    
+    # Patent Engine
+    "Patent",
+    "PatentDatasetBuilder",
+    "PatentSearchCriteria",
+    "USPTOPatentScraper",
+    "search_patents_by_keyword",
+    "search_patents_by_inventor",
+    "search_patents_by_assignee",
+
+    # Municipal Scraper Engine
+    "MunicipalScraperFallbacks",
+    "scrape_municipal_with_fallbacks",
+
+    # State Laws Scheduler Engine
+    "StateLawsUpdateScheduler",
+    "create_schedule",
+    "remove_schedule",
+    "list_schedules",
+    "run_schedule_now",
+    "enable_disable_schedule",
+
+    # Incremental Updates Engine
+    "IncrementalUpdateTracker",
+    "calculate_update_parameters",
+    "scrape_recap_incremental",
+    "scrape_with_incremental_update",
+
+    # HuggingFace Pipeline Engine
+    "RateLimiter",
+    "UploadToHuggingFaceInParallel",
     
     # Brave Legal Search
     "BraveLegalSearch",
@@ -419,6 +512,11 @@ __all__ = [
     # HuggingFace API search (Enhancement 11 Part 1)
     "HuggingFaceAPISearch",
     "HAVE_HF_API_SEARCH",
+    # Verifier engines
+    "FederalRegisterVerifier",
+    "HAVE_FEDERAL_REGISTER_VERIFIER",
+    "USCodeVerifier",
+    "HAVE_US_CODE_VERIFIER",
     
     # Parallel web archiver (Enhancement 11 Part 2)
     "ParallelWebArchiver",
@@ -426,4 +524,35 @@ __all__ = [
     "ArchiveProgress",
     "archive_urls",
     "HAVE_PARALLEL_ARCHIVER",
+
+    # Canonical engine functions (Phase E+F session 20)
+    "create_legal_knowledge_graph",
+    "search_legal_graph",
+    "visualize_legal_graph",
+    "detect_query_language",
+    "translate_legal_query",
+    "cross_language_legal_search",
+    "get_legal_term_translations",
 ]
+
+# ---------------------------------------------------------------------------
+# Lazy exports — Phase E+F session 20 engine functions
+# ---------------------------------------------------------------------------
+try:
+    from .legal_graphrag_engine import (  # noqa: F401
+        create_legal_knowledge_graph,
+        search_legal_graph,
+        visualize_legal_graph,
+    )
+except Exception:
+    pass
+
+try:
+    from .multilanguage_engine import (  # noqa: F401
+        detect_query_language,
+        translate_legal_query,
+        cross_language_legal_search,
+        get_legal_term_translations,
+    )
+except Exception:
+    pass

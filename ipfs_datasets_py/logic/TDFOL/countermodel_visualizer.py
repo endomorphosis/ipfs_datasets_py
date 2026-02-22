@@ -51,7 +51,9 @@ except ImportError:
     Fore = _Fore()
     Back = _Back()
     Style = _Style()
-    def colorama_init(): pass
+    def colorama_init():
+        """No-op stub — colorama is unavailable; ANSI init is skipped."""
+        pass
 
 from .countermodels import KripkeStructure
 from .modal_tableaux import ModalLogicType

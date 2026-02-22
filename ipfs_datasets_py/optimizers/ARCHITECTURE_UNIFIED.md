@@ -33,6 +33,28 @@ This document describes the unified architecture for all optimizers in `ipfs_dat
 - Cross-document reasoning
 - Performance analysis and visualization
 
+#### GraphRAG relationship semantics (implemented)
+
+`graphrag/ontology_generator.py` defines `Relationship.direction` with three runtime values:
+
+- `subject_to_object`: used for verb-frame inferred edges where subject/object can be detected.
+- `undirected`: used for co-occurrence inferred edges (`related_to`).
+- `unknown`: dataclass default when directionality is not explicitly inferred.
+
+Verb-frame edges are emitted with fixed confidence `0.65`.
+
+Co-occurrence edges use a 200-character window and a piecewise confidence decay by entity distance `d`:
+
+$$
+c(d) =
+\begin{cases}
+\max(0.4,\;0.6 - d/500), & 0 \le d \le 100 \\
+\max(0.2,\;0.4 - (d-100)/500), & 100 < d \le 200
+\end{cases}
+$$
+
+This matches current behavior: stronger confidence for near entities, steeper decay past 100 characters, and floor at `0.2`.
+
 ## Common Patterns
 
 All three optimizer types share a similar pipeline architecture:
@@ -57,26 +79,84 @@ Data → Generator → Critic → Optimizer → Session → Harness → Validate
 
 ### Layer 1: Common Base (`optimizers/common/`)
 
+**Status**: ✓ Implemented (code-first decision, 2026-02-20)
+
 ```
 optimizers/
 ├── common/
 │   ├── __init__.py
-│   ├── base_optimizer.py         # Abstract base for all optimizers
-│   ├── base_critic.py            # Abstract base for critics
-│   ├── base_session.py           # Session management framework
-│   ├── base_harness.py           # Batch processing framework
-│   ├── llm_integration.py        # Unified LLM backend
-│   ├── prompt_templates.py       # Shared prompt system
-│   ├── metrics_framework.py      # Metrics collection base
-│   ├── visualization_base.py     # Visualization framework
-│   └── distributed_base.py       # Distributed processing base
+│   ├── base_optimizer.py         # Abstract base for all optimizers ✓
+│   ├── base_critic.py            # Abstract base for critics ✓
+│   ├── base_session.py           # Session management framework ✓
+│   ├── base_harness.py           # Batch processing framework ✓
+│   ├── exceptions.py             # Common exception types ✓
+│   ├── performance.py            # Lightweight performance helpers ✓
+│   └── performance_monitor.py    # Resource/metrics monitoring helpers ✓
 ```
+
+**Note on architecture decision**: We chose a **code-first** approach:
+- Implemented `common/` base classes early (Phase 1)
+- Concrete optimizers (`graphrag/`, `logic_theorem_optimizer/`, `agentic/`) are partially integrated
+- LLM integration, metrics, and visualization remain module-specific (see "Future Work" below)
 
 ### Layer 2: Specialized Optimizers
 
-Each optimizer extends the common base with domain-specific logic:
+**Status**: ✓ Partially implemented (domain-specific code is mature; base class integration is in-progress)
+
+Each optimizer module implements domain-specific logic:
+
+```
+├── graphrag/                          # Knowledge graph optimization ✓
+│   ├── ontology_generator.py          # Generate ontologies from data
+│   ├── ontology_critic.py             # Evaluate ontology quality
+│   ├── ontology_optimizer.py          # Improve ontologies
+│   ├── ontology_session.py            # Session lifecycle
+│   ├── ontology_harness.py            # Batch orchestrator
+│   ├── query_optimizer.py             # Query optimization (compat entrypoint)
+│   ├── query_planner.py               # Query planning (GraphRAGQueryOptimizer)
+│   ├── query_unified_optimizer.py     # UnifiedGraphRAGQueryOptimizer
+│   ├── query_stats.py                 # GraphRAGQueryStats
+│   ├── query_metrics.py               # QueryMetricsCollector
+│   ├── query_visualizer.py            # QueryVisualizer
+│   ├── query_rewriter.py              # QueryRewriter
+│   ├── query_budget.py                # QueryBudgetManager
+│   ├── cli_wrapper.py                 # Command-line interface
+│   └── [other domain-specific modules]
+│
+├── logic_theorem_optimizer/           # Theorem proving ✓
+│   ├── logic_optimizer.py             # Main optimizer
+│   ├── logic_critic.py                # Evaluation
+│   ├── theorem_session.py             # Session management
+│   ├── logic_harness.py               # Batch processing
+│   ├── prover_integration.py          # Z3, CVC5, Lean, Coq
+│   ├── cli_wrapper.py                 # CLI entrypoint
+│   └── [other domain-specific modules]
+│
+└── agentic/                           # LLM-driven code optimization ✓
+    ├── base.py                        # Agentic base implementation
+    ├── llm_integration.py             # Provider abstraction (OpenAI, Anthropic, etc.)
+    ├── cli.py                         # CLI entrypoint
+    ├── coordinator.py                 # Multi-agent coordination
+    ├── patch_control.py               # Local patch management
+    ├── github_control.py              # GitHub integration
+    └── [other domain-specific modules]
+```
+
+**Current integration**:
+- ✓ `common/` base classes exist and are available for import
+- ✓ `graphrag.OntologyCritic` and `logic_theorem_optimizer.LogicCritic` extend `BaseCritic`
+- ✓ `graphrag.MediatorState` extends `BaseSession` (round tracking + convergence metadata)
+- ✓ `graphrag.OntologyPipelineHarness` extends `BaseHarness` for single-session runs
+- ⏳ Other modules still use domain-specific session/harness code (batch harnesses remain standalone)
+
+### Layer 3: Integration & Future Unification
+
+**Status**: ⏳ Planned (not yet implemented)
+
+The vision is for all optimizers to eventually converge on the common base:
 
 ```python
+# Future state (after full refactoring):
 from ipfs_datasets_py.optimizers.common import (
     BaseOptimizer,
     BaseCritic,
@@ -97,26 +177,11 @@ class AgenticCodeOptimizer(BaseOptimizer):
     pass
 ```
 
-### Layer 3: Integration with Agentic Framework
-
-```python
-from ipfs_datasets_py.optimizers.agentic import (
-    AgenticOptimizer,
-    PatchManager,
-    WorktreeManager,
-    IPFSPatchStore,
-)
-from ipfs_datasets_py.optimizers.common import BaseOptimizer
-
-class UnifiedOptimizer(BaseOptimizer, AgenticOptimizer):
-    """Combines common base with agentic capabilities."""
-    
-    def __init__(self, *args, **kwargs):
-        BaseOptimizer.__init__(self, *args, **kwargs)
-        AgenticOptimizer.__init__(self, *args, **kwargs)
-        self.patch_manager = PatchManager()
-        self.worktree_manager = WorktreeManager()
-```
+**Current state (2026-02-20)**:
+- Each optimizer is **functionally complete** but operates **independently**
+- Shared code patterns exist but are not yet unified through base classes
+- This approach allows rapid feature development without strict interface requirements
+- See "Future Work" section (below) for full unification roadmap
 
 ## Architecture Diagram
 
@@ -158,48 +223,41 @@ graph TD
     N --> S
 ```
 
-## Key Interfaces
+## Key Interfaces (Reference)
 
-### BaseOptimizer Interface
+These interfaces exist in `common/` but are not yet adopted across all optimizer modules. 
+They serve as both documentation and as reference implementations for new optimizers.
+
+### BaseOptimizer Interface (from `common/base_optimizer.py`)
 
 ```python
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
 class BaseOptimizer(ABC):
-    """Base class for all optimizers."""
-    
-    @abstractmethod
-    def generate(self, input_data: Any, context: Dict) -> Any:
-        """Generate initial artifact from input."""
-        pass
-    
-    @abstractmethod
-    def critique(self, artifact: Any, context: Dict) -> float:
-        """Evaluate artifact quality (0-1 score)."""
-        pass
-    
-    @abstractmethod
-    def optimize(self, artifact: Any, score: float, context: Dict) -> Any:
-        """Improve artifact based on critique."""
-        pass
-    
-    def run_session(self, input_data: Any, context: Dict) -> Dict:
-        """Run single optimization session."""
-        artifact = self.generate(input_data, context)
-        score = self.critique(artifact, context)
-        
-        for iteration in range(self.max_iterations):
-            if score >= self.target_score:
-                break
-            artifact = self.optimize(artifact, score, context)
-            score = self.critique(artifact, context)
-        
-        return {
-            'artifact': artifact,
-            'score': score,
-            'iterations': iteration + 1,
-        }
+  """Base class for all optimizers."""
+
+  @abstractmethod
+  def generate(self, input_data: Any, context: OptimizationContext) -> Any:
+    """Generate initial artifact from input."""
+
+  @abstractmethod
+  def critique(self, artifact: Any, context: OptimizationContext) -> Tuple[float, List[str]]:
+    """Evaluate artifact quality (score + feedback list)."""
+
+  @abstractmethod
+  def optimize(
+    self,
+    artifact: Any,
+    score: float,
+    feedback: List[str],
+    context: OptimizationContext,
+  ) -> Any:
+    """Improve artifact based on critique feedback."""
+
+  def run_session(self, input_data: Any, context: OptimizationContext) -> Dict[str, Any]:
+    """Run a full optimization session (generate → critique → optimize → validate)."""
+    ...
 ```
 
 ### BaseCritic Interface
@@ -233,45 +291,42 @@ class BaseCritic(ABC):
 
 ### BaseSession Interface
 
-```python
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from enum import Enum
+`BaseSession` is a concrete dataclass that tracks round-by-round scores and
+convergence rather than an abstract interface. It exposes helpers such as
+`start_round()`, `record_round()`, `best_score`, and `trend`.
 
-class SessionStatus(Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
+```python
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
 @dataclass
-class SessionResult:
-    """Standardized session result."""
-    session_id: str
-    status: SessionStatus
-    artifact: Any
-    score: float
-    iterations: int
-    metrics: Dict[str, Any]
-    error: Optional[str] = None
+class RoundRecord:
+  round_number: int
+  score: float
+  feedback: List[str] = field(default_factory=list)
+  artifact_snapshot: Optional[Any] = None
+  duration_ms: float = 0.0
+  metadata: Dict[str, Any] = field(default_factory=dict)
 
-class BaseSession(ABC):
-    """Base class for optimization sessions."""
-    
-    @abstractmethod
-    def start(self, input_data: Any, context: Dict) -> str:
-        """Start optimization session."""
-        pass
-    
-    @abstractmethod
-    def get_status(self, session_id: str) -> SessionStatus:
-        """Get session status."""
-        pass
-    
-    @abstractmethod
-    def get_result(self, session_id: str) -> SessionResult:
-        """Get session result."""
-        pass
+@dataclass
+class BaseSession:
+  session_id: str
+  domain: str = "general"
+  max_rounds: int = 10
+  target_score: float = 0.85
+  convergence_threshold: float = 0.01
+  rounds: List[RoundRecord] = field(default_factory=list)
+  converged: bool = False
+  metadata: Dict[str, Any] = field(default_factory=dict)
+
+  def start_round(self) -> int: ...
+  def record_round(self, score: float, feedback: Optional[List[str]] = None, **kwargs) -> RoundRecord: ...
+  @property
+  def current_round(self) -> int: ...
+  @property
+  def best_score(self) -> float: ...
+  @property
+  def trend(self) -> str: ...
 ```
 
 ## Integration Strategy
@@ -304,97 +359,140 @@ class BaseSession(ABC):
 3. Enable multi-agent coordination across all types
 4. Unified change control workflow
 
-## Code Reuse Opportunities
+## Code Reuse Opportunities (Deferred to Future Work)
 
-### High-Priority Shared Components
+The following reflects identified duplication across optimizer modules. These are candidates for consolidation 
+when/if we unify around the common base architecture:
+
+### High-Priority Shared Components (estimated duplication)
 
 1. **LLM Backend Integration** (40% duplication)
-   - Currently duplicated across all three optimizers
-   - Unify into single adapter with provider abstraction
-   - Share prompt template system
+    - Currently: `agentic/llm_integration.py`, custom implementations in `graphrag/` and `logic_theorem_optimizer/`
+    - Opportunity: Move to `common/llm_integration.py` with provider abstraction
+    - Status: Deferred (works as-is; unified approach requires refactoring all three modules)
 
 2. **Critic Evaluation** (35% duplication)
-   - Similar scoring dimensions across optimizers
-   - Share dimension weighting logic
-   - Unified feedback generation
+   - Currently: Each module implements scoring independently
+   - Opportunity: Shared `common/base_critic.py` with dimension weighting (exists but not used)
+   - Status: Deferred (inheritance refactoring needed)
 
 3. **Session Management** (30% duplication)
-   - All use similar session lifecycle
-   - Share state management and persistence
-   - Common error handling
+   - Currently: `*_session.py` files in each module (graphrag, logic, agentic)
+   - Opportunity: Unified `common/base_session.py` (exists but not used)
+   - Status: Deferred (inheritance refactoring needed)
 
 4. **Metrics Collection** (45% duplication)
-   - Similar performance metrics
-   - Share visualization code
-   - Common export formats
+   - Currently: Module-specific metric collectors
+   - Opportunity: Unified metrics framework in `common/`
+   - Status: Deferred (requires metrics API design)
 
 5. **Distributed Processing** (50% duplication)
-   - Task distribution logic
-   - Worker management
-   - Result aggregation
-
-### Medium-Priority Shared Components
-
-1. **Prompt Engineering** (25% duplication)
-2. **Conflict Resolution** (20% duplication)
-3. **Ontology Management** (15% duplication)
-4. **Validation Frameworks** (30% duplication)
+   - Currently: Custom in `logic_theorem_optimizer/`, harness-based in others
+   - Opportunity: Common distributed base in `common/`
+   - Status: Deferred (not critical; harnesses work independently)
 
 ## Benefits
 
 ### Code Quality
 - **Reduced Duplication**: 40-50% reduction in duplicate code
-- **Consistency**: Unified interfaces and patterns
-- **Maintainability**: Single source of truth
-- **Testability**: Shared test infrastructure
+- **Consist (Current & Future)
 
-### Functionality
+### Current State (2026-02-20)
+
+**Code Quality**
+- ✓ Common base classes available for optional use
+- ✗ Unified interfaces not yet adopted across modules (duplication exists)
+- ✓ Each optimizer has good internal documentation
+- ✓ Testability is improved where tests exist
+
+**Functionality**
+- ✓ All three optimizer types are independently functional
+- ✗ Interoperability between optimizer types is manual (no built-in composition)
+- ✓ Within-module component reuse is solid (e.g., session/harness patterns)
+- ✓ Extensibility within modules is straightforward
+
+**Performance**
+- ✓ No cross-module bottlenecks
+- ✓ Each optimizer optimizes for its own domain
+- ◑ Metrics/caching strategies are module-specific (not unified)
+
+### Future State (After Unification)
+
+When Phase 2-5 are completed:
+
+- **Reduced Duplication**: 40-50% reduction in duplicate code
+- **Consistency**: Unified interfaces and patterns across all optimizers
+- **Maintainability**: Single source of truth for shared patterns
+- **Testability**: Shared test infrastructure
 - **Extensibility**: Easy to add new optimizer types
 - **Interoperability**: Optimizers can work together
-- **Composability**: Mix and match components
-- **Reusability**: Components usable across projects
+- **Resource Management**: Shared resource pools and monitoring
+)
+- [x] Create `optimizers/common/` structure
+- [x] Implement base classes (`base_optimizer`, `base_critic`, `base_session`, `base_harness`)
+- [x] Define exception types and performance monitoring helpers
+- [x] Document interfaces (see `optimizers/common/README.md`)
 
-### Performance
-- **Optimization**: Share performance improvements
-- **Caching**: Unified caching strategy
-- **Distribution**: Common distributed processing
-- **Resource Management**: Shared resource pools
+### Phase 2-5: Optimizer Refactoring & Shared Infrastructure (Deferred)
 
-## Migration Path
+These phases require substantial refactoring of existing optimizer modules to inherit from common bases. 
+Current optimizers are **functionally complete but operationally independent**. Unification is planned but deferred 
+until business requirements demand tighter integration or when duplication becomes a maintainability burden.
 
-### Step 1: Create Common Base (Week 1)
-- [ ] Create `optimizers/common/` structure
-- [ ] Implement base classes
-- [ ] Add comprehensive tests
-- [ ] Document interfaces
+**Deferred items**:
+- [ ] Refactor logic-theorem-optimizer to extend BaseOptimizer/BaseCritic/BaseSession
+- [ ] Refactor graphrag to extend BaseOptimizer/BaseCritic/BaseSession
+- [ ] Refactor agentic to extend BaseOptimizer
+- [ ] Centralize LLM backend integration (currently: `graphrag/`, `logic_theorem_optimizer/`, and `agentic/` each have their own)
+- [ ] Unified metrics and visualization framework (currently module-specific)
+- [ ] Cross-optimizer coordination and multi-agent strategies
 
-### Step 2: Refactor Logic Theorem (Week 2)
-- [ ] Update to use common base
-- [ ] Integrate with unified LLM backend
-- [ ] Add patch management support
-- [ ] Update tests
+---
 
-### Step 3: Refactor GraphRAG (Week 3)
-- [ ] Update to use common base
-- [ ] Share query optimization logic
-- [ ] Add patch management support
-- [ ] Update tests
+## Future Work
 
-### Step 4: Integrate Agentic (Week 4)
-- [ ] Update agentic to extend base
-- [ ] Enable cross-optimizer coordination
-- [ ] Unified change control
-- [ ] Final integration tests
+### Planned Abstractions (Not Yet in `common/`)
 
-### Step 5: Documentation & Examples (Week 5)
-- [ ] Architecture documentation
-- [ ] API reference
-- [ ] Usage examples
-- [ ] Migration guide
+These components are candidates for shared infrastructure but are not yet implemented or are still module-specific:
 
-## Configuration
+1. **LLM Backend Unification** (40% duplication across modules)
+   - Current: `agentic/llm_integration.py`, module-level approaches in `graphrag/` and `logic_theorem_optimizer/`
+   - Goal: Single adapter interface with provider abstraction (OpenAI, Anthropic, etc.)
+   - Priority: Medium (would unblock cross-module standardization)
 
-### Unified Configuration Schema
+2. **Unified Prompt Template System** (25% duplication)
+   - Current: Each module defines its own prompts inline or in dedicated files
+   - Goal: Centralized `common/prompt_templates.py` with inheritance/composition
+   - Priority: Low (works as-is; refactoring is optimization only)
+
+3. **Metrics & Observation Framework** (45% duplication)
+   - Current: Module-specific metric collectors and logging
+   - Goal: Common/metrics_framework.py with hooks for session durations, score deltas, error counts
+   - Priority: Medium (critical for system observability)
+
+4. **Visualization Base** (Module-specific)
+   - Current: `graphrag/visualization.py` is large and domain-specific
+   - Goal: Optional visualization contract that optimizers can implement
+   - Priority: Low (visualization is optional; current approach is fine)
+
+5. **Distributed Processing Base** (50% duplication)
+   - Current: `logic_theorem_optimizer/distributed_processor.py`, custom harness approaches
+   - Goal: Common/distributed_base.py with task distribution and worker management
+   - Priority: Low (deferred until scale requires it)
+
+### Refactoring Opportunities
+
+- **GraphRAG query optimizer**: Split completed into focused modules (`query_planner.py`, `query_unified_optimizer.py`, `query_stats.py`, `query_metrics.py`, `query_visualizer.py`, `query_rewriter.py`, `query_budget.py`). Remaining refactoring opportunities are traversal heuristics and serialization helpers.
+- **LLM endpoint configuration**: Standardize across all modules (environment variables, config files, runtime overrides)
+- **Error handling contract**: Define standard exception hierarchy that all optimizers inherit
+- **Logging contract**: All optimizers should accept an optional logger for dependency injection
+
+## Configuration (Future - After Unified Refactoring)
+
+Once Phase 2-5 are completed and all optimizers inherit from the common base, 
+a unified configuration schema could look like:
+
+### Unified Configuration Schema (Aspirational)
 
 ```yaml
 optimizers:
@@ -438,59 +536,108 @@ optimizers:
       - syntax
       - types
       - tests
-      - performance
-```
 
-## Appendix: File Organization
+
+## File Organization (Actual as of 2026-02-20)
 
 ```
 optimizers/
-├── common/                          # Shared components (NEW)
+├── README.md                        # Module overview
+├── TODO.md                          # Living infinite backlog
+├── ARCHITECTURE_UNIFIED.md          # This document
+├── ARCHITECTURE_AGENTIC_OPTIMIZERS.md
+│
+├── common/                          # Shared abstractions ✓
 │   ├── __init__.py
 │   ├── base_optimizer.py
 │   ├── base_critic.py
 │   ├── base_session.py
 │   ├── base_harness.py
-│   ├── llm_integration.py
-│   ├── prompt_templates.py
-│   ├── metrics_framework.py
-│   ├── visualization_base.py
-│   └── distributed_base.py
+│   ├── exceptions.py
+│   ├── performance.py
+│   └── performance_monitor.py
 │
-├── agentic/                         # LLM-driven code optimization
-│   ├── base.py                      # (UPDATE: extend common.BaseOptimizer)
+├── graphrag/                        # Knowledge graph optimization ✓ (mature, independent)
+│   ├── README.md
+│   ├── __init__.py
+│   ├── ontology_generator.py
+│   ├── ontology_critic.py
+│   ├── ontology_optimizer.py
+│   ├── ontology_session.py
+│   ├── ontology_harness.py
+│   ├── ontology_mediator.py
+│   ├── ontology_templates.py
+│   ├── query_optimizer.py           # Compatibility entrypoint after split
+│   ├── query_planner.py
+│   ├── query_unified_optimizer.py
+│   ├── query_stats.py
+│   ├── query_metrics.py
+│   ├── query_visualizer.py
+│   ├── query_rewriter.py
+│   ├── query_budget.py
+│   ├── query_optimizer_minimal.py
+│   ├── logic_validator.py
+│   ├── prompt_generator.py
+│   ├── metrics_collector.py
+│   ├── visualization.py
+│   ├── cli_wrapper.py
+│   └── wikipedia_optimizer.py
+│
+├── logic_theorem_optimizer/         # Theorem proving ✓ (mature, independent)
+│   ├── README.md
+│   ├── __init__.py
+│   ├── logic_optimizer.py
+│   ├── logic_critic.py
+│   ├── theorem_session.py
+│   ├── logic_harness.py
+│   ├── logic_extractor.py
+│   ├── prover_integration.py
+│   ├── neural_symbolic_prover.py
+│   ├── additional_provers.py
+│   ├── formula_translation.py
+│   ├── kg_integration.py
+│   ├── rag_integration.py
+│   ├── ontology_evolution.py
+│   ├── ontology_stabilizer.py
+│   ├── prompt_engineer.py
+│   ├── prompt_optimizer.py
+│   ├── conflict_resolver.py
+│   ├── distributed_processor.py
+│   ├── llm_backend.py
+│   └── cli_wrapper.py
+│
+├── agentic/                         # LLM-driven code optimization ✓ (mature, independent)
+│   ├── README.md
+│   ├── SECURITY_AUDIT.md
+│   ├── __init__.py
+│   ├── base.py
+│   ├── llm_integration.py           # Provider abstraction (unused by other modules)
+│   ├── cli.py
+│   ├── coordinator.py
 │   ├── patch_control.py
 │   ├── github_control.py
-│   ├── coordinator.py
-│   └── methods/
-│       └── test_driven.py
+│   ├── github_api_unified.py
+│   ├── production_hardening.py
+│   └── validation.py
 │
-├── logic_theorem_optimizer/         # Theorem proving
-│   ├── logic_optimizer.py           # (UPDATE: extend common.BaseOptimizer)
-│   ├── logic_critic.py              # (UPDATE: extend common.BaseCritic)
-│   ├── theorem_session.py           # (UPDATE: extend common.BaseSession)
-│   ├── logic_harness.py             # (UPDATE: extend common.BaseHarness)
-│   └── ...
-│
-├── graphrag/                        # Knowledge graph optimization
-│   ├── ontology_optimizer.py        # (UPDATE: extend common.BaseOptimizer)
-│   ├── ontology_critic.py           # (UPDATE: extend common.BaseCritic)
-│   ├── ontology_session.py          # (UPDATE: extend common.BaseSession)
-│   ├── ontology_harness.py          # (UPDATE: extend common.BaseHarness)
-│   └── ...
-│
-├── ARCHITECTURE_UNIFIED.md          # This document
-├── IMPLEMENTATION_PLAN.md           # Agentic implementation plan
-└── USAGE_GUIDE.md                   # Agentic usage guide
+└── logic/                           # (Legacy or alternate logic optimizer)
+    └── [contents not enumerated]
 ```
+
+**Notes:**
+- All optimizer modules are **functionally complete** and can run independently
+- Integration with `common/` base classes is deferred (see "Future Work")
+- Duplication exists but is manageable for current development velocity
+- GraphRAG query optimizer split is complete; remaining large-file work focuses on traversal heuristics and serialization helpers
+
 
 ## Next Steps
 
-1. Review and approve this architecture
-2. Begin Phase 1: Create common base layer
-3. Incrementally migrate existing optimizers
-4. Add integration tests
-5. Update documentation
+1. Keep `common/` as stable, minimal primitives (`BaseOptimizer`, `BaseCritic`, `BaseSession`, `BaseHarness`).
+2. Continue incremental adoption through pipeline adapters (avoid risky rewrites of deprecated harnesses).
+3. Prioritize shared contracts where drift still exists (typed contexts, backend selection, logging keys).
+4. Add focused integration tests whenever a module adopts `common/` abstractions.
+5. Update this document in lockstep with code changes to avoid architecture drift.
 
 ## Questions for Stakeholders
 
@@ -499,3 +646,44 @@ optimizers/
 3. Are there other optimizer types planned?
 4. Should we create a migration tool for existing code?
 5. What is the timeline for completion?
+
+## Recent Improvements (2026-02-20)
+
+The following items from the original "planned / future work" list have been completed:
+
+### Typed Config Dataclasses
+- **`ExtractionConfig`** — replaces `Dict[str,Any]` config in `OntologyGenerationContext`;
+  auto-normalised in `__post_init__`, exported from `graphrag.__init__`
+- **`ProverConfig`** — replaces `Dict[str,Any]` prover_config in `LogicValidator`;
+  `from_dict()`/`to_dict()` helpers, accepted alongside plain dict
+- **`BackendConfig`** — replaces `Dict[str,Any]` backend_config in `OntologyCritic`;
+  `from_dict()`/`to_dict()` helpers, exported from `graphrag.__init__`
+
+### Memory Efficiency
+- `Entity`, `Relationship`, `EntityExtractionResult` now use `@dataclass(slots=True)`,
+  eliminating per-instance `__dict__` allocation
+
+### Metrics Wiring
+- `BaseOptimizer.__init__` now accepts an optional `metrics_collector`
+  (`PerformanceMetricsCollector`); `run_session()` calls `start_cycle`/`end_cycle`
+- `LogicTheoremOptimizer.__init__` forwards `metrics_collector` to `BaseOptimizer`
+- `BaseSession` gained `score_delta`, `avg_score`, `regression_count` properties
+  and they appear in `to_dict()` output
+
+### New Classes
+- **`OntologyPipelineHarness`** (`graphrag/ontology_harness.py`) — concrete
+  `BaseHarness` implementation for single-session graphrag pipeline; uses
+  `RefinementError` for typed error propagation
+- **`analyze_batch_parallel()`** on `OntologyOptimizer` — runs `_identify_patterns`,
+  `_compute_score_distribution`, and `_generate_recommendations` in a
+  `ThreadPoolExecutor`, identical results to `analyze_batch()`
+
+### Security
+- `exec(compiled, {})` in `agentic/validation.py` documented with SECURITY comment
+  explaining the empty-globals sandbox; marked `noqa: S102`
+
+### Testing
+- 359 tests passing (was 271 at start of session); 24 skipped; 0 failures
+- New test files: `test_new_implementations.py` (102 tests),
+  `test_ontology_schema_invariants.py` (11), `test_pipeline_harness_e2e.py` (16),
+  `test_metrics_wiring.py` (6)

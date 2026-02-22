@@ -8,16 +8,16 @@ All bridges (TDFOL-CEC, TDFOL-ShadowProver, TDFOL-Grammar, etc.) should inherit
 from BaseProverBridge to ensure uniform behavior and simplify maintenance.
 """
 
+import logging
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
-import logging
+
+logger = logging.getLogger(__name__)
 
 from ...TDFOL.tdfol_core import Formula
 from ...TDFOL.tdfol_prover import ProofResult
-
-logger = logging.getLogger(__name__)
 
 
 class BridgeCapability(Enum):
@@ -58,7 +58,16 @@ class BaseProverBridge(ABC):
         """Initialize the bridge."""
         self._metadata = self._init_metadata()
         self._available = self._check_availability()
-        self.available = self._available
+
+    @property
+    def available(self) -> bool:
+        """Whether this bridge's target system is available."""
+        return self._available
+
+    @available.setter
+    def available(self, value: bool) -> None:
+        """Allow subclasses to override availability (e.g., on init failure)."""
+        self._available = value
     
     @abstractmethod
     def _init_metadata(self) -> BridgeMetadata:

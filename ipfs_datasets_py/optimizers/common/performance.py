@@ -10,7 +10,7 @@ Features:
 - Performance profiling and monitoring
 """
 
-import asyncio
+import anyio
 import functools
 import hashlib
 import json
@@ -309,7 +309,7 @@ class LLMCache:
 def cached_llm_call(
     cache: Optional[LLMCache] = None,
     ttl: Optional[int] = None,
-):
+) -> Callable[[Callable], Callable]:
     """Decorator to cache LLM function calls.
     
     Args:
@@ -349,7 +349,7 @@ def cached_llm_call(
 class ParallelValidator:
     """Parallel validation executor for optimization workflows.
     
-    Executes multiple validators in parallel using asyncio or thread pools,
+    Executes multiple validators in parallel using anyio or thread pools,
     achieving 40-60% speedup in validation time.
     
     Example:
@@ -394,24 +394,22 @@ class ParallelValidator:
         Returns:
             List of (success, result) tuples
         """
-        tasks = [
-            asyncio.wait_for(
-                validator(*args, **kwargs),
-                timeout=self.timeout
-            )
-            for validator in validators
-        ]
-        
         results = []
-        for task in asyncio.as_completed(tasks):
+
+        async def run_one(validator):
             try:
-                result = await task
+                with anyio.fail_after(self.timeout):
+                    result = await validator(*args, **kwargs)
                 results.append((True, result))
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 results.append((False, "Timeout"))
             except Exception as e:
                 results.append((False, str(e)))
-        
+
+        async with anyio.create_task_group() as tg:
+            for validator in validators:
+                tg.start_soon(run_one, validator)
+
         return results
     
     def run_sync(
@@ -452,7 +450,7 @@ class ParallelValidator:
         
         return results
     
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown executor."""
         self._executor.shutdown(wait=True)
 
@@ -601,7 +599,9 @@ class BatchFileProcessor:
                     with open(path, "w") as f:
                         f.write(content)
                     results.append(True)
-                except Exception:
+                except (OSError, UnicodeEncodeError) as e:
+                    # File write failed - record failure
+                    _logger.debug(f"Failed to write cache file {path}: {e}")
                     results.append(False)
         
         return results

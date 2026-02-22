@@ -14,7 +14,7 @@ Architecture:
 import logging
 import time
 import uuid
-import asyncio
+import anyio
 from typing import Dict, List, Optional, Set, Any
 
 from .types import (
@@ -261,7 +261,7 @@ class TransactionManager:
             raise
         except TransactionError:
             raise
-        except (TimeoutError, asyncio.TimeoutError) as e:
+        except (TimeoutError,) as e:
             # Transaction timeout
             transaction.state = TransactionState.FAILED
             del self._active_transactions[transaction.txn_id]

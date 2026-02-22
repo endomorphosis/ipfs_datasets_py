@@ -11,7 +11,7 @@ Implements result caching with:
 This enables efficient result reuse across workflow executions.
 """
 
-import asyncio
+import anyio
 import hashlib
 import json
 import logging
@@ -210,14 +210,21 @@ class DiskCacheBackend(CacheBackend):
         self._lock = RLock()
         
         # Load index
-        asyncio.create_task(self._load_index())
+        # Index is loaded lazily on first cache access; see _ensure_index_loaded()
     
     async def _load_index(self) -> None:
-        """Load cache index from disk."""
+        """Load cache index from disk, keyed by the original entry key."""
         with self._lock:
             for cache_file in self.cache_dir.glob("*.cache"):
-                key = cache_file.stem
-                self._index[key] = cache_file
+                try:
+                    with open(cache_file, 'rb') as f:
+                        entry = pickle.load(f)
+                    self._index[entry.key] = cache_file
+                except Exception as e:
+                    logger.warning(
+                        f"Skipping unreadable cache file {cache_file}: {e}. "
+                        "The entry will not be available in this session."
+                    )
     
     def _get_cache_path(self, key: str) -> Path:
         """Get file path for cache key."""
@@ -392,7 +399,7 @@ class ResultCache:
         """Estimate size of cached value in bytes."""
         try:
             return len(pickle.dumps(value))
-        except Exception:
+        except (pickle.PicklingError, TypeError, OverflowError, AttributeError):
             return 1024  # Default estimate
     
     async def get(
@@ -576,7 +583,7 @@ if __name__ == '__main__':
         result = await cache.get('temp')
         print(f"Before expiration: {result}")
         
-        await asyncio.sleep(1.5)
+        await anyio.sleep(1.5)
         result = await cache.get('temp')
         print(f"After expiration: {result}")
         
@@ -595,4 +602,4 @@ if __name__ == '__main__':
         # Clear
         await disk_cache.clear()
     
-    asyncio.run(main())
+    anyio.run(main)

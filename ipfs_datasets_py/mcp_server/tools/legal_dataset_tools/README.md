@@ -2,6 +2,8 @@
 
 This package provides MCP server tools for scraping and building datasets from various legal sources with production-ready features including real API integration, resume capability, incremental updates, and multiple export formats.
 
+> **Documentation note:** Historical implementation reports and test summaries have been moved to [`ARCHIVE/`](./ARCHIVE/). See the archive index for historical context.
+
 ## Features
 
 ### ✅ Real Data Source Integration
@@ -38,11 +40,7 @@ Scrapes the United States Code from uscode.house.gov.
 - Metadata includes effective dates and amendments
 - Rate limiting support
 
-**Status:** ⚠️ Placeholder data (production API connection pending)
-
-**Usage:**
-```python
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_us_code, get_us_code_titles
+**Status:** ⚠️ Placeholder data (production API connection pending; uscode.house.gov)
 
 # Get available titles
 titles = await get_us_code_titles()
@@ -70,11 +68,7 @@ Scrapes Federal Register documents from federalregister.gov.
 - Document type filtering (RULE, NOTICE, PRORULE)
 - Keyword search capability
 
-**Status:** ⚠️ Placeholder data (production API connection pending)
-
-**Usage:**
-```python
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_federal_register
+**Status:** ✅ Production-ready with real Federal Register API (federalregister.gov)
 
 result = await scrape_federal_register(
     agencies=["EPA", "FDA"],
@@ -151,15 +145,7 @@ python state_laws_cron.py daemon --check-interval 300
 Schedules are stored in `~/.ipfs_datasets/state_laws/schedule.json` and persist across restarts.
 Scraped data is saved to `~/.ipfs_datasets/state_laws/` with timestamped filenames.
 
-**Status:** ⚠️ Placeholder data (production connections pending)
-
-**Usage:**
-```python
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_state_laws
-
-result = await scrape_state_laws(
-    states=["CA", "NY", "TX"],
-    legal_areas=["criminal", "civil"],
+**Status:** ✅ Production-ready with real data scraping via Justia.com (all 51 US jurisdictions)
     include_metadata=True,
     max_statutes=100
 )
@@ -177,11 +163,7 @@ Scrapes municipal codes and ordinances from city and county governments.
 - Population-based filtering
 - City name pattern matching
 
-**Status:** ⚠️ Placeholder data (production connections pending)
-
-**Usage:**
-```python
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_municipal_laws
+**Status:** ⚠️ Placeholder data (production API connection pending; varies by municipality)
 
 result = await scrape_municipal_laws(
     cities=["NYC", "LAX", "CHI"],
@@ -422,8 +404,8 @@ python test_legal_scrapers_simple.py
 |---------|--------|----------------|
 | **RECAP Archive** | ✅ **Production Ready** | ✅ **CourtListener API (courtlistener.com)** |
 | **Federal Register** | ✅ **Production Ready** | ✅ **Federal Register API (federalregister.gov)** |
+| **State Laws** | ✅ **Production Ready** | ✅ **Justia.com (all 51 US jurisdictions)** |
 | US Code | ⚠️ Placeholder | ⚠️ Pending (uscode.house.gov) |
-| State Laws | ⚠️ Placeholder | ⚠️ Pending (varies by state) |
 | Municipal Laws | ⚠️ Placeholder | ⚠️ Pending (varies by municipality) |
 
 ### Integration Status

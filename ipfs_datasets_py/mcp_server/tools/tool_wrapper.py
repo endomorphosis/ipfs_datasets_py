@@ -401,7 +401,7 @@ def wrap_function_as_tool(*args, **kwargs):
                 setattr(function, "__mcp_tool_description__", description)
             if tags:
                 setattr(function, "__mcp_tool_tags__", tags)
-        except Exception:
+        except AttributeError:
             pass
         return function
 

@@ -162,14 +162,13 @@ class UnifiedGitHubAPICache:
             **(metadata or {})
         )
     
-    def run_gh_command(self, command, timeout: int = 60, check: bool = True, **kwargs):
+    def run_gh_command(self, command, timeout: int = 60, check: bool = True):
         """Run a GitHub CLI command and count the API call.
         
         Args:
             command: Command to run
             timeout: Timeout in seconds
             check: Whether to raise on non-zero exit
-            **kwargs: Additional arguments for subprocess.run
         
         Returns:
             CompletedProcess instance

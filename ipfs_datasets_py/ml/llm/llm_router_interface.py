@@ -23,6 +23,10 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from .llm_interface import LLMConfig, LLMInterface
+from ...optimizers.common.backend_selection import (
+    canonicalize_provider,
+    detect_provider_from_environment,
+)
 
 # Optional numpy with graceful fallback (mirrors llm_interface.py pattern)
 try:
@@ -166,6 +170,12 @@ class RoutedLLMInterface(LLMInterface):
         self._word_pattern = re.compile(r"\b\w+\b")
         self._use_embedding_adapter = _truthy(os.getenv("IPFS_DATASETS_PY_USE_EMBEDDING_ADAPTER"))
 
+    def _resolved_provider_name(self) -> str:
+        """Return provider name with centralized normalization rules."""
+        if self._provider:
+            return canonicalize_provider(self._provider, default="auto")
+        return detect_provider_from_environment(prefer_accelerate=False)
+
     def generate(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
         from ipfs_datasets_py import llm_router
 
@@ -195,7 +205,7 @@ class RoutedLLMInterface(LLMInterface):
                 "total_tokens": self.count_tokens(str(prompt)) + self.count_tokens(str(text)),
             },
             "model": (model_name or self.config.model_name or "").strip(),
-            "provider": (self._provider or os.getenv("IPFS_DATASETS_PY_LLM_PROVIDER") or "auto").strip(),
+            "provider": self._resolved_provider_name(),
             "id": f"router-{uuid.uuid4()}",
             "created": int(time.time()),
             "latency": elapsed,

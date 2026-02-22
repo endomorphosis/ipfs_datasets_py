@@ -43,25 +43,57 @@ from .z3_adapter import (
 )
 
 from .tptp_utils import (
-    TPTPConverter,
-    TPTPFormula,
+    formula_to_tptp,
+    create_tptp_problem,
 )
 
 from .vampire_adapter import (
     VampireAdapter,
-    VampireProofResult as VampireResult,
+    VampireProofResult,
 )
 
 from .e_prover_adapter import (
     EProverAdapter,
-    EProverProofResult as EProverResult,
+    EProverProofResult,
 )
 
 from .prover_manager import (
     ProverManager,
     ProverStrategy,
-    UnifiedProofResult as ProverResult,
+    ProverConfig,
+    ProverType,
+    UnifiedProofResult,
 )
+
+# Backward-compat aliases
+VampireResult = VampireProofResult
+EProverResult = EProverProofResult
+ProverResult = UnifiedProofResult
+
+
+class TPTPFormula:
+    """Wrapper for a TPTP-formatted formula string."""
+
+    def __init__(self, content: str):
+        self.content = content
+
+    def __str__(self) -> str:
+        return self.content
+
+
+class TPTPConverter:
+    """OOP wrapper around formula_to_tptp / create_tptp_problem utilities."""
+
+    @staticmethod
+    def convert(formula, role: str = "conjecture", name: str = "formula") -> TPTPFormula:
+        """Convert a CEC formula to TPTP format."""
+        return TPTPFormula(formula_to_tptp(formula, role=role, name=name))
+
+    @staticmethod
+    def create_problem(axioms, conjecture, problem_name: str = "problem") -> str:
+        """Create a complete TPTP problem string."""
+        return create_tptp_problem(axioms, conjecture, problem_name=problem_name)
+
 
 __all__ = [
     # Z3
@@ -71,14 +103,21 @@ __all__ = [
     # TPTP
     'TPTPConverter',
     'TPTPFormula',
+    'formula_to_tptp',
+    'create_tptp_problem',
     # Vampire
     'VampireAdapter',
-    'VampireResult',
+    'VampireProofResult',
+    'VampireResult',  # compat alias
     # E Prover
     'EProverAdapter',
-    'EProverResult',
+    'EProverProofResult',
+    'EProverResult',  # compat alias
     # Manager
     'ProverManager',
     'ProverStrategy',
-    'ProverResult',
+    'ProverConfig',
+    'ProverType',
+    'UnifiedProofResult',
+    'ProverResult',  # compat alias
 ]

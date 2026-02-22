@@ -12,6 +12,7 @@ This module consolidates:
 - Prompt templates and few-shot examples (previously llm_nl_prompts.py)
 """
 
+import hashlib
 import json
 import logging
 import time
@@ -322,7 +323,8 @@ class LLMResponseCache:
     
     def _make_key(self, text: str, provider: str, prompt_hash: str) -> str:
         """
-        Create IPFS CID cache key using multiformats.
+        Create IPFS CID cache key using multiformats, falling back to SHA256 if
+        the multiformats library is not installed.
         
         Generates a deterministic Content Identifier (CID) from cache parameters.
         The CID is created using:
@@ -336,12 +338,13 @@ class LLMResponseCache:
             prompt_hash: Hash of the prompt template
         
         Returns:
-            CIDv1 string in base32 format (e.g., 'bafkreig...')
+            CIDv1 string in base32 format (e.g., 'bafkreig...') when multiformats
+            is available, otherwise a hex SHA256 digest prefixed with 'sha256-'.
         
         Example:
             >>> cache = LLMResponseCache()
             >>> key = cache._make_key("hello", "openai", "abc123")
-            >>> assert key.startswith("bafk")  # CIDv1 base32
+            >>> assert key.startswith("bafk") or key.startswith("sha256-")
         """
         cache_data = {
             "text": text,
@@ -349,7 +352,12 @@ class LLMResponseCache:
             "prompt_hash": prompt_hash,
             "version": "1.0"  # Schema version for future compatibility
         }
-        return create_cache_cid(cache_data)
+        try:
+            return create_cache_cid(cache_data)
+        except ImportError:
+            # Graceful fallback: use SHA256 hex digest when multiformats is unavailable
+            raw = json.dumps(cache_data, sort_keys=True, separators=(",", ":")).encode()
+            return "sha256-" + hashlib.sha256(raw).hexdigest()
     
     def get(self, text: str, provider: str, prompt_hash: str) -> Optional[Tuple[str, float]]:
         """Get cached response if available."""

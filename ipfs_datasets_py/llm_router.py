@@ -55,6 +55,7 @@ import importlib.util
 from typing import Callable, Dict, List, Optional, Protocol, Sequence, TypedDict, runtime_checkable
 
 from .router_deps import RouterDeps, get_default_router_deps
+from .optimizers.common.backend_selection import canonicalize_provider
 
 
 class LLMRouterError(RuntimeError):
@@ -1851,7 +1852,9 @@ def _get_mock_provider() -> LLMProvider:
 def _resolve_provider_uncached(preferred: Optional[str], *, deps: RouterDeps) -> LLMProvider:
     preferred_value = (preferred or "").strip()
     if preferred_value:
-        name = preferred_value.lower()
+        raw_name = preferred_value.lower()
+        # Shared canonicalization keeps alias handling consistent across modules.
+        name = canonicalize_provider(raw_name, default=raw_name)
         if name in {"ipfs_accelerate_py", "accelerate"}:
             accelerate_provider = _get_accelerate_provider(deps)
             if accelerate_provider is None:
@@ -1877,7 +1880,8 @@ def _resolve_provider_uncached(preferred: Optional[str], *, deps: RouterDeps) ->
 
     forced = os.getenv("IPFS_DATASETS_PY_LLM_PROVIDER", "").strip()
     if forced:
-        forced_name = forced.strip().lower()
+        raw_forced_name = forced.strip().lower()
+        forced_name = canonicalize_provider(raw_forced_name, default=raw_forced_name)
         if forced_name in {"ipfs_accelerate_py", "accelerate"}:
             accelerate_provider = _get_accelerate_provider(deps)
             if accelerate_provider is None:

@@ -325,6 +325,7 @@ def example_6_report_generation():
     print("Running profiling operations...")
     
     def sample_operation(n):
+        """Compute the sum of squares from 0 to n-1 (used for profiling benchmarks)."""
         return sum(i ** 2 for i in range(n))
     
     profiler.profile_function(sample_operation, 1000, runs=5)
@@ -427,9 +428,11 @@ def example_8_complete_workflow():
     print("\n2. Profiling functions...")
     
     def operation_a(n):
+        """Sum squares 0..n-1 in a generator (baseline for profiling comparison)."""
         return sum(i ** 2 for i in range(n))
     
     def operation_b(n):
+        """Sum squares 0..n-1 via a list (alternative for profiling comparison)."""
         data = [i ** 2 for i in range(n)]
         return sum(data)
     

@@ -86,11 +86,5 @@ class IPFSGetter:
         """
         Synchronous version of get method.
         """
-        import asyncio
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        
-        return loop.run_until_complete(self.get(cid, output_path, options))
+        from ipfs_datasets_py.utils.anyio_compat import run as _anyio_run
+        return _anyio_run(self.get(cid, output_path, options))

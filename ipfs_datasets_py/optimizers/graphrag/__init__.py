@@ -10,14 +10,43 @@ Inspired by the adversarial harness from complaint-generator, adapted for ontolo
 generation with focus on logical consistency and automated improvement through
 stochastic gradient descent (SGD) cycles.
 
+Architecture (generate → critique → optimize → validate loop)::
+
+    ┌─────────────────────────────────────────────────────────────────┐
+    │                    OntologyHarness (batch)                      │
+    │  ┌────────────────────────────────────────────────────────────┐ │
+    │  │                  OntologySession (single)                  │ │
+    │  │                                                            │ │
+    │  │  ┌───────────────┐   ontology   ┌──────────────────────┐  │ │
+    │  │  │OntologyGener- │ ──────────── │   OntologyCritic     │  │ │
+    │  │  │ator           │              │  (5-dim evaluation)  │  │ │
+    │  │  │ExtractionConf.│ ◄──actions── │  CriticResult        │  │ │
+    │  │  └───────────────┘              └──────────┬───────────┘  │ │
+    │  │         ▲                                   │              │ │
+    │  │         │ refined ontology                  │ feedback     │ │
+    │  │  ┌──────┴──────────┐              ┌─────────▼──────────┐  │ │
+    │  │  │OntologyOptimizer│              │ OntologyMediator   │  │ │
+    │  │  │(SGD, history,   │ ◄──actions── │ (action selection) │  │ │
+    │  │  │ export)         │              └────────────────────┘  │ │
+    │  │  └─────────────────┘                                      │ │
+    │  │                           ┌─────────────────────────────┐  │ │
+    │  │       TDFOL formulas      │     LogicValidator          │  │ │
+    │  │  ─────────────────────────│  (theorem prover, cache)    │  │ │
+    │  │                           └─────────────────────────────┘  │ │
+    │  │                                                            │ │
+    │  │  OntologyLearningAdapter (feedback-driven threshold tuning) │ │
+    │  └────────────────────────────────────────────────────────────┘ │
+    └─────────────────────────────────────────────────────────────────┘
+
 Components:
     - OntologyGenerator: Generate ontologies from arbitrary data
     - OntologyCritic: LLM-based multi-dimensional evaluation
     - LogicValidator: TDFOL theorem prover integration
-    - OntologyMediator: Coordinate refinement cycles (planned)
-    - OntologyOptimizer: SGD-based optimization (planned)
-    - OntologySession: Single optimization session (planned)
-    - OntologyHarness: Parallel batch orchestrator (planned)
+    - OntologyMediator: Coordinate refinement cycles
+    - OntologyOptimizer: SGD-based optimization, export, history
+    - OntologySession: Single optimization session
+    - OntologyHarness: Parallel batch orchestrator
+    - OntologyLearningAdapter: Feedback-driven extraction threshold tuning
 
 Example:
     >>> from ipfs_datasets_py.optimizers.graphrag import (
@@ -58,9 +87,11 @@ References:
 from .ontology_generator import (
     OntologyGenerator,
     OntologyGenerationContext,
+    ExtractionConfig,
     Entity,
     Relationship,
     EntityExtractionResult,
+    OntologyGenerationResult,
     ExtractionStrategy,
     DataType,
 )
@@ -68,12 +99,14 @@ from .ontology_generator import (
 from .ontology_critic import (
     OntologyCritic,
     CriticScore,
+    BackendConfig,
     DIMENSION_WEIGHTS,
 )
 
 from .logic_validator import (
     LogicValidator,
     ValidationResult,
+    ProverConfig,
 )
 
 # Phase 2 components (complete)
@@ -94,6 +127,7 @@ from .ontology_session import (
 
 from .ontology_harness import (
     OntologyHarness,
+    OntologyPipelineHarness,
     BatchResult,
 )
 
@@ -119,23 +153,61 @@ from .visualization import (
     GraphVisualization,
 )
 
+from .ontology_learning_adapter import OntologyLearningAdapter, FeedbackRecord
+
+# Type definitions (for static type checking and IDE support)
+from .ontology_types import (
+    # Ontology structures
+    Entity as EntityType,
+    Relationship as RelationshipType,
+    OntologyMetadata,
+    Ontology,
+    # Extraction results
+    EntityExtractionResult as EntityExtractionResultType,
+    RelationshipExtractionResult,
+    # Critique types
+    DimensionalScore,
+    CriticRecommendation,
+    CriticScore as CriticScoreType,
+    # Session and context
+    SessionRound,
+    OntologySession as OntologySessionType,
+    GenerationContext,
+    # Statistics
+    EntityStatistics,
+    RelationshipStatistics,
+    OntologyStatistics,
+    PerformanceMetrics,
+    QualityMetrics,
+    # Pipeline types
+    PipelineStageResult,
+    RefinementCycleResult,
+    # Configuration
+    ExtractionConfigDict,
+    OptimizerConfig,
+)
+
 # Export public API
 __all__ = [
     # Generator
     'OntologyGenerator',
     'OntologyGenerationContext',
+    'ExtractionConfig',
     'Entity',
     'Relationship',
     'EntityExtractionResult',
+    'OntologyGenerationResult',
     'ExtractionStrategy',
     'DataType',
     # Critic
     'OntologyCritic',
     'CriticScore',
+    'BackendConfig',
     'DIMENSION_WEIGHTS',
     # Validator
     'LogicValidator',
     'ValidationResult',
+    'ProverConfig',
     # Mediator (Phase 2)
     'OntologyMediator',
     'MediatorState',
@@ -147,6 +219,7 @@ __all__ = [
     'SessionResult',
     # Harness (Phase 2)
     'OntologyHarness',
+    'OntologyPipelineHarness',
     'BatchResult',
     # Prompt Generator (Phase 2)
     'PromptGenerator',
@@ -161,6 +234,31 @@ __all__ = [
     'OntologyVisualizer',
     'MetricsVisualizer',
     'GraphVisualization',
+    # Learning Adapter
+    'OntologyLearningAdapter',
+    'FeedbackRecord',
+    # Type Definitions (for static type checking)
+    'EntityType',
+    'RelationshipType',
+    'OntologyMetadata',
+    'Ontology',
+    'EntityExtractionResultType',
+    'RelationshipExtractionResult',
+    'DimensionalScore',
+    'CriticRecommendation',
+    'CriticScoreType',
+    'SessionRound',
+    'OntologySessionType',
+    'GenerationContext',
+    'EntityStatistics',
+    'RelationshipStatistics',
+    'OntologyStatistics',
+    'PerformanceMetrics',
+    'QualityMetrics',
+    'PipelineStageResult',
+    'RefinementCycleResult',
+    'ExtractionConfigDict',
+    'OptimizerConfig',
 ]
 
 __version__ = '0.1.0'

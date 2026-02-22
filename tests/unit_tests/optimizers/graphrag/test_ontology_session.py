@@ -16,11 +16,8 @@ try:
         OntologySession
     )
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-        OntologyGenerationResult,
         OntologyGenerationContext
     )
-    from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CritiqueResult
-    from ipfs_datasets_py.optimizers.graphrag.logic_validator import ValidationResult
     IMPORTS_AVAILABLE = True
 except ImportError as e:
     IMPORTS_AVAILABLE = False
@@ -578,6 +575,179 @@ class TestSessionEdgeCases:
         except Exception as e:
             # If exception, it should be meaningful
             assert "error" in str(e).lower() or True
+
+
+class TestElapsedMs:
+    """Test elapsed_ms() timing method"""
+    
+    @pytest.fixture
+    def mock_components(self):
+        """Create mock components for OntologySession"""
+        return {
+            'generator': Mock(),
+            'mediator': Mock(),
+            'critic': Mock(),
+            'validator': Mock(),
+        }
+    
+    def test_elapsed_ms_before_run(self, mock_components):
+        """
+        GIVEN: Fresh session
+        WHEN: Calling elapsed_ms before run
+        THEN: Returns 0.0
+        """
+        # GIVEN
+        session = OntologySession(**mock_components)
+        
+        # WHEN
+        elapsed = session.elapsed_ms()
+        
+        # THEN
+        assert elapsed == 0.0
+        assert isinstance(elapsed, float)
+    
+    def test_elapsed_ms_after_run_started(self, mock_components):
+        """
+        GIVEN: Session with mocked components
+        WHEN: Calling elapsed_ms during/after run
+        THEN: Returns elapsed time in milliseconds
+        """
+        # GIVEN
+        session = OntologySession(**mock_components)
+        session.generator.extract_ontology = Mock(return_value=MagicMock(
+            ontology={"entities": ["E1"]},
+            confidence=0.8
+        ))
+        
+        session.mediator.orchestrate_refinement = Mock(return_value=MagicMock(
+            final_ontology={"entities": ["E1"]},
+            final_score=0.8,
+            num_rounds=1,
+            converged=True
+        ))
+        
+        # WHEN
+        result = session.run(
+            data="Test",
+            context=OntologyGenerationContext(data_source="test", data_type="text", domain="test")
+        )
+        elapsed = session.elapsed_ms()
+        
+        # THEN
+        assert elapsed > 0.0
+        assert isinstance(elapsed, float)
+    
+    def test_elapsed_ms_reflects_runtime(self, mock_components):
+        """
+        GIVEN: Session with elapsed time tracked
+        WHEN: Calling elapsed_ms
+        THEN: Returns reasonable elapsed time proportional to actual time passed
+        """
+        # GIVEN
+        import time
+        session = OntologySession(**mock_components)
+        
+        # Simulate a session that started 100ms ago
+        session.start_time = time.time() - 0.1  # 0.1 seconds = 100ms
+        time.sleep(0.02)  # Add slight additional time
+        
+        # WHEN
+        elapsed = session.elapsed_ms()
+        
+        # THEN
+        # Should be at least ~100ms, allowing for some overhead
+        assert elapsed >= 80.0  # 80ms to account for overhead variance
+        assert elapsed < 10000.0  # Should be less than 10 seconds
+        assert isinstance(elapsed, float)
+    
+    def test_elapsed_ms_multiple_calls(self):
+        """
+        GIVEN: Session already running
+        WHEN: Calling elapsed_ms multiple times
+        THEN: Returns increasing elapsed time
+        """
+        # GIVEN
+        import time
+        mock_components = {
+            'generator': Mock(),
+            'mediator': Mock(),
+            'critic': Mock(),
+            'validator': Mock(),
+        }
+        session = OntologySession(**mock_components)
+        
+        # Manually set start_time to an earlier point
+        session.start_time = time.time() - 1.0  # Simulate 1 second ago
+        
+        # WHEN
+        elapsed1 = session.elapsed_ms()
+        time.sleep(0.1)
+        elapsed2 = session.elapsed_ms()
+        time.sleep(0.1)
+        elapsed3 = session.elapsed_ms()
+        
+        # THEN
+        assert elapsed1 > 0
+        assert elapsed2 > elapsed1
+        assert elapsed3 > elapsed2
+        # Verify they're within reasonable bounds (1 to 1.3 seconds)
+        assert 950 < elapsed1 < 1100
+        assert 1050 < elapsed2 < 1200
+        assert 1150 < elapsed3 < 1300
+    
+    def test_elapsed_ms_returns_float(self, mock_components):
+        """
+        GIVEN: Session after run
+        WHEN: Calling elapsed_ms
+        THEN: Always returns float type
+        """
+        # GIVEN
+        session = OntologySession(**mock_components)
+        session.generator.extract_ontology = Mock(return_value=MagicMock(
+            ontology={},
+            confidence=0.5
+        ))
+        
+        session.mediator.orchestrate_refinement = Mock(return_value=MagicMock(
+            final_ontology={},
+            final_score=0.5,
+            num_rounds=1,
+            converged=False
+        ))
+        
+        # WHEN
+        session.run(data="Test", context=OntologyGenerationContext(data_source="test", data_type="text", domain="test"))
+        elapsed = session.elapsed_ms()
+        
+        # THEN
+        assert isinstance(elapsed, float)
+    
+    def test_elapsed_ms_rounded_precision(self):
+        """
+        GIVEN: Session tracking milliseconds
+        WHEN: Getting elapsed time
+        THEN: Result can represent fractional milliseconds
+        """
+        # GIVEN
+        import time
+        mock_components = {
+            'generator': Mock(),
+            'mediator': Mock(),
+            'critic': Mock(),
+            'validator': Mock(),
+        }
+        session = OntologySession(**mock_components)
+        session.start_time = time.time()
+        time.sleep(0.05)  # Sleep 50ms
+        
+        # WHEN
+        elapsed = session.elapsed_ms()
+        
+        # THEN
+        # Should be ~50ms, allow 25-100ms tolerance for system variance
+        assert 25 < elapsed < 100
+        # Should be a float
+        assert isinstance(elapsed, float)
 
 
 # Performance marker for slow tests

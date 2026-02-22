@@ -1,3 +1,173 @@
+# MCP Server — Performance Tuning Guide
+
+**Date:** 2026-02-21 (updated from v4/v5 plan sessions)
+**Applies to:** `copilot/refactor-markdown-files-again` and later
+
+This guide covers all three Phase 7 performance optimisations that are active in
+the current codebase: lazy category loading, schema result caching, and P2P
+connection pooling.  It also documents the dual-runtime architecture and
+structured-concurrency improvements from Phase 3.
+
+---
+
+## Quick-Reference — Key Targets
+
+| Operation | Target | Mechanism |
+|-----------|--------|-----------|
+| `dispatch()` warm cache | < 5 ms | Lazy loading + schema cache |
+| `get_tool_schema()` cached | < 0.1 ms | `ToolCategory._schema_cache` |
+| Server startup (lazy) | < 1 s | `lazy_register_category()` |
+| P2P connection acquire (pool hit) | < 1 ms | `P2PServiceManager` pool |
+| `dispatch_parallel(N)` | ~1 tool RTT | `anyio.create_task_group()` |
+
+---
+
+## 1. Lazy Category Loading
+
+### What It Does
+Categories are registered via `lazy_register_category(name, loader_fn)`.  The
+`loader_fn` is only called on the **first** access of that category (via
+`get_category(name)` or `dispatch()`).  Subsequent accesses return the cached
+`ToolCategory` object.
+
+### Configuration
+```python
+manager = HierarchicalToolManager()
+manager.lazy_register_category(
+    "pdf_tools",
+    lambda: _build_pdf_category()   # called once, on first use
+)
+```
+
+### When to Tune
+- If startup latency matters, keep all categories lazy (the default).
+- If you need all tools pre-loaded (e.g., for schema export), call
+  `get_category(name)` for each name at startup to warm the cache.
+
+---
+
+## 2. Schema Result Caching
+
+### What It Does
+`ToolCategory.get_tool_schema(name)` caches its result in
+`ToolCategory._schema_cache`.  The cache is a plain `dict`; there is no TTL —
+schemas are considered stable for the lifetime of a server process.
+
+### Cache Statistics
+```python
+cat = manager.get_category("graph_tools")
+info = cat.cache_info()   # {"hits": 42, "misses": 3, "size": 12}
+```
+
+### Invalidating the Cache
+```python
+cat.clear_schema_cache()   # resets hits/misses counters and purges entries
+```
+
+### When to Tune
+- For hot paths (e.g., MCP schema introspection on every call), schema caching
+  provides O(1) lookup after the first miss.
+- If a tool's signature changes at runtime (unusual), call `clear_schema_cache()`
+  after patching to avoid serving stale schemas.
+
+---
+
+## 3. P2P Connection Pooling
+
+### What It Does
+`P2PServiceManager` maintains a `_connection_pool` dict keyed by `peer_id`.
+`acquire_connection(peer_id)` returns a live connection from the pool (hit) or
+`None` (miss).  `release_connection(peer_id, conn)` returns the connection to
+the pool if it is not full.
+
+### Pool Configuration
+```python
+manager = P2PServiceManager()
+manager._pool_max_size = 20   # default: 10; increase for high-concurrency workloads
+```
+
+### Pool Statistics
+```python
+stats = manager.get_pool_stats()
+# {"size": 5, "max_size": 10, "hits": 120, "misses": 8, "hit_rate": 0.94}
+```
+
+### Eviction
+The pool uses simple capacity-capped insertion.  When the pool is at
+`_pool_max_size`, `release_connection()` returns `False` and the connection is
+discarded (caller should close it).  For LRU-style eviction, subclass
+`P2PServiceManager` and override `release_connection`.
+
+### When to Tune
+- Increase `_pool_max_size` when serving many distinct peers concurrently.
+- Monitor `hit_rate`; a rate below 0.80 indicates the pool is too small or
+  peers are too short-lived for pooling to help.
+
+---
+
+## 4. Parallel Dispatch (`dispatch_parallel`)
+
+`HierarchicalToolManager.dispatch_parallel(calls, return_exceptions=True)`
+fans out a list of `{"category": …, "tool": …, "params": {…}}` dicts
+concurrently using `anyio.create_task_group()`.
+
+### Example
+```python
+results = await manager.dispatch_parallel([
+    {"category": "graph_tools", "tool": "graph_create", "params": {"name": "G1"}},
+    {"category": "search_tools", "tool": "semantic_search", "params": {"query": "AI"}},
+])
+```
+
+### Performance Notes
+- All N calls are submitted to the event loop simultaneously; total latency ≈
+  max(individual latencies) rather than sum.
+- I/O-bound tools benefit most; CPU-bound tools on a GIL-limited interpreter
+  will not see speed-up.
+
+---
+
+## 5. Circuit Breaker (`CircuitBreaker`)
+
+Wraps a flaky async or sync function with CLOSED / OPEN / HALF_OPEN state
+machine logic.
+
+```python
+cb = CircuitBreaker(failure_threshold=5, recovery_timeout=60.0, name="ipfs_api")
+result = await cb.call(call_ipfs, cid=cid)
+```
+
+- CLOSED → OPEN after `failure_threshold` consecutive errors.
+- OPEN → HALF_OPEN after `recovery_timeout` seconds (auto-transition).
+- HALF_OPEN → CLOSED on success; → OPEN on failure.
+
+---
+
+## 6. Running the Benchmark Suite
+
+```bash
+# Install pytest-benchmark
+pip install pytest-benchmark
+
+# Run all benchmarks with default settings
+pytest benchmarks/ --benchmark-disable   # functional only (no timing)
+pytest benchmarks/ --benchmark-min-rounds=5   # collect timing data
+
+# Compare against a previous baseline
+pytest benchmarks/ --benchmark-compare=baseline.json --benchmark-compare-fail=mean:20%
+```
+
+Benchmark targets are in `benchmarks/README.md`.
+
+---
+
+## 7. Historical Analysis (Phase 3.2)
+
+The remainder of this document is the original Phase 3.2 validation report,
+preserved for reference.
+
+---
+
 # MCP++ Performance Analysis Report
 
 **Date:** 2026-02-17  

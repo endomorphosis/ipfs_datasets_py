@@ -54,6 +54,9 @@ from dataclasses import dataclass, field
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
+from ipfs_datasets_py.optimizers.common.base_critic import CriticResult
+from ipfs_datasets_py.optimizers.common.base_harness import BaseHarness, HarnessConfig as BaseHarnessConfig
+
 logger = logging.getLogger(__name__)
 
 
@@ -451,3 +454,85 @@ class LogicHarness:
         # Example: Adjust extractor parameters based on feedback
         # if 'soundness' in report.metrics and report.metrics['soundness']['average'] < 0.5:
         #     self.extractor.set_strict_mode(True)
+
+
+class LogicPipelineHarness(BaseHarness):
+    """BaseHarness-native logic extraction pipeline.
+
+    This class offers a unified, lightweight harness API that composes an
+    extractor and critic with :class:`BaseHarness` orchestration. It does not
+    replace the deprecated :class:`LogicHarness` batch API, but provides a
+    modern path for single-session refinement loops.
+    """
+
+    def __init__(
+        self,
+        extractor: Any,
+        critic: Any,
+        optimizer: Optional[Any] = None,
+        config: Optional[BaseHarnessConfig] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        self.extractor = extractor
+        self.critic = critic
+        self.optimizer = optimizer
+        self._last_extraction: Optional[Any] = None
+        self._log = logger or logging.getLogger(__name__)
+        super().__init__(config=config or BaseHarnessConfig())
+
+    def _build_context(self, data: Any, context: Any) -> Any:
+        """Normalize context so extractor always receives a LogicExtractionContext-like object."""
+        if context is None:
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import LogicExtractionContext
+
+            return LogicExtractionContext(data=data)
+
+        if hasattr(context, "data"):
+            if getattr(context, "data", None) is None:
+                setattr(context, "data", data)
+            return context
+
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import LogicExtractionContext
+
+        return LogicExtractionContext(data=data, domain=getattr(context, "domain", "general"))
+
+    def _generate(self, data: Any, context: Any) -> Any:
+        normalized = self._build_context(data, context)
+        extraction = self.extractor.extract(normalized)
+        self._last_extraction = extraction
+        return extraction
+
+    def _critique(self, artifact: Any, context: Any) -> CriticResult:
+        if hasattr(self.critic, "evaluate_as_base"):
+            return self.critic.evaluate_as_base(artifact, context)
+
+        raw = self.critic.evaluate_extraction(artifact)
+        dims = {
+            ds.dimension.value if hasattr(ds.dimension, "value") else str(ds.dimension): ds.score
+            for ds in getattr(raw, "dimension_scores", [])
+        }
+        return CriticResult(
+            score=getattr(raw, "overall", 0.0),
+            feedback=list(getattr(raw, "recommendations", [])),
+            dimensions=dims,
+            strengths=list(getattr(raw, "strengths", [])),
+            weaknesses=list(getattr(raw, "weaknesses", [])),
+        )
+
+    def _optimize(self, artifact: Any, critique: CriticResult, context: Any) -> Any:
+        # LogicOptimizer currently focuses on batch analysis; no in-place artifact
+        # mutation contract exists here yet, so preserve artifact as-is.
+        _ = critique
+        _ = context
+        return artifact
+
+    def run_and_report(self, data: Any, context: Any) -> Dict[str, Any]:
+        """Execute one session and return a compact report payload."""
+        session = self.run(data, context)
+        return {
+            "best_score": session.best_score,
+            "rounds": len(session.rounds),
+            "converged": session.converged,
+            "extraction": self._last_extraction,
+            "session": session,
+        }

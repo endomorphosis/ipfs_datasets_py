@@ -443,3 +443,14 @@ class CommutativityConjunction(InferenceRule):
                 p, q = f.formulas[0], f.formulas[1]
                 results.append(ConnectiveFormula(LogicalConnective.AND, [q, p]))
         return results
+
+
+__all__ = [
+    'ConstructiveDilemma',
+    'DestructiveDilemma',
+    'ExportationRule',
+    'AbsorptionRule',
+    'AdditionRule',
+    'TautologyRule',
+    'CommutativityConjunction',
+]

@@ -131,7 +131,7 @@ def test_text_to_fol_error_handling():
         try:
             result3 = await convert_text_to_fol(123)  # type: ignore
             assert result3["status"] == "error"
-        except Exception:
+        except (TypeError, ValueError):
             # Expected to fail due to type checking
             pass
 

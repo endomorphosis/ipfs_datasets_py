@@ -287,6 +287,11 @@ def _check_conflict_pair(elem1: Dict[str, Any], elem2: Dict[str, Any]) -> Option
     if not (actions_match and subjects_match):
         return None
     
+    # Check for temporal conflicts first (more specific than direct conflicts)
+    temporal_conflict = _check_temporal_conflict(elem1, elem2)
+    if temporal_conflict:
+        return temporal_conflict
+    
     # Check for direct conflicts: O(p) ∧ F(p)
     if (norm1_type == "obligation" and norm2_type == "prohibition") or \
        (norm1_type == "prohibition" and norm2_type == "obligation"):
@@ -306,11 +311,6 @@ def _check_conflict_pair(elem1: Dict[str, Any], elem2: Dict[str, Any]) -> Option
             "description": f"Permission conflict: {norm1_type} conflicts with {norm2_type} for same action",
             "strategies": ["prohibition_prevails", "context_dependent"]
         }
-    
-    # Check for temporal conflicts
-    temporal_conflict = _check_temporal_conflict(elem1, elem2)
-    if temporal_conflict:
-        return temporal_conflict
     
     # Check for conditional conflicts
     conditional_conflict = _check_conditional_conflict(elem1, elem2)

@@ -75,11 +75,12 @@ class PatternMatcher:
     
     def _init_patterns(self):
         """Initialize conversion patterns."""
-        # Deontic patterns
+        # Deontic patterns (PROHIBITION must come before OBLIGATION to avoid
+        # "must not X" being captured as O(not))
         self.deontic_patterns = [
+            (r"(?:must not|should not|forbidden to|prohibited from) (\w+)", DeonticOperator.PROHIBITION),
             (r"(?:must|should|ought to|required to|obligated to) (\w+)", DeonticOperator.OBLIGATION),
             (r"(?:may|can|allowed to|permitted to) (\w+)", DeonticOperator.PERMISSION),
-            (r"(?:must not|should not|forbidden to|prohibited from) (\w+)", DeonticOperator.PROHIBITION),
         ]
         
         # Cognitive patterns
@@ -162,18 +163,8 @@ class PatternMatcher:
         # Extract agent if present
         agent_name = self._extract_agent(text)
         
-        # Try deontic patterns
-        for pattern, operator in self.deontic_patterns:
-            match = re.search(pattern, text)
-            if match:
-                action = match.group(1)
-                pred = self._create_simple_predicate(action)
-                agent_var = self._create_agent_variable(agent_name)
-                
-                base_formula = AtomicFormula(pred, [VariableTerm(agent_var)])
-                return DeonticFormula(operator, base_formula)
-        
-        # Try cognitive patterns
+        # Try cognitive patterns first so nested formulas like
+        # "believes that ... must act" are handled before deontic patterns
         for pattern, operator in self.cognitive_patterns:
             match = re.search(pattern, text)
             if match:
@@ -189,6 +180,17 @@ class PatternMatcher:
                     pred = self._create_simple_predicate(content)
                     inner_formula = AtomicFormula(pred, [VariableTerm(agent_var)])
                     return CognitiveFormula(operator, VariableTerm(agent_var), inner_formula)
+        
+        # Try deontic patterns
+        for pattern, operator in self.deontic_patterns:
+            match = re.search(pattern, text)
+            if match:
+                action = match.group(1)
+                pred = self._create_simple_predicate(action)
+                agent_var = self._create_agent_variable(agent_name)
+                
+                base_formula = AtomicFormula(pred, [VariableTerm(agent_var)])
+                return DeonticFormula(operator, base_formula)
         
         # Try temporal patterns
         for pattern, operator in self.temporal_patterns:

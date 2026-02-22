@@ -33,6 +33,8 @@ def mock_fastapi_app():
     if not FASTAPI_AVAILABLE:
         pytest.skip("FastAPI not available")
     
+    from fastapi import Request
+    
     app = FastAPI()
     
     @app.get("/health")
@@ -44,17 +46,29 @@ def mock_fastapi_app():
         return {"total_requests": 100, "active_connections": 5}
     
     @app.post("/tools/execute")
-    async def execute_tool(tool_name: str, params: dict):
+    async def execute_tool(request: Request):
+        body = await request.json()
+        tool_name = body.get("tool_name", "")
+        params = body.get("params", {})
         if tool_name == "fail_tool":
-            raise ValueError("Tool execution failed")
+            from fastapi import HTTPException
+            raise HTTPException(status_code=500, detail="Tool execution failed")
         return {"status": "success", "result": {"tool": tool_name, "params": params}}
     
     @app.post("/embeddings/generate")
-    async def generate_embedding(text: str):
+    async def generate_embedding(request: Request):
+        body = {}
+        try:
+            body = await request.json()
+        except Exception:
+            pass
+        text = body.get("text") or request.query_params.get("text", "")
         return {"embedding": [0.1, 0.2, 0.3], "dimension": 3}
     
     @app.post("/embeddings/batch")
-    async def batch_embeddings(texts: list):
+    async def batch_embeddings(request: Request):
+        body = await request.json()
+        texts = body.get("texts", [])
         return {"embeddings": [[0.1] * 3 for _ in texts], "count": len(texts)}
     
     return app

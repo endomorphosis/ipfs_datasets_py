@@ -1,4 +1,15 @@
 
+# DEPRECATED: This legacy module is superseded by
+#   ipfs_datasets_py.mcp_server.tools
+# See legacy_mcp_tools/MIGRATION_GUIDE.md for migration instructions.
+import warnings
+warnings.warn(
+    "legacy_mcp_tools.tool_wrapper is deprecated. "
+    "Use ipfs_datasets_py.mcp_server.tools instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 from __future__ import annotations
 
 import inspect
@@ -6,7 +17,6 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Dict, Optional, Union, get_type_hints
 
 from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
-
 
 class FunctionTool(ClaudeMCPTool):
     """
@@ -75,7 +85,7 @@ class FunctionTool(ClaudeMCPTool):
             if required:
                 schema["required"] = required
             return schema
-        except Exception:
+        except (TypeError, ValueError):
             return {"type": "object", "properties": {}}
 
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -99,7 +109,6 @@ class FunctionTool(ClaudeMCPTool):
                 "tool_name": self.name,
                 "executed_at": datetime.now(tz=timezone.utc).isoformat(),
             }
-
 
 def wrap_function_as_tool(*args, **kwargs) -> Union[FunctionTool, Callable]:
     """
@@ -135,8 +144,5 @@ def wrap_function_as_tool(*args, **kwargs) -> Union[FunctionTool, Callable]:
                 setattr(function, "__mcp_tool_description__", description)
             if tags:
                 setattr(function, "__mcp_tool_tags__", tags)
-        except Exception:
+        except AttributeError:
             pass
-        return function
-
-    return decorator

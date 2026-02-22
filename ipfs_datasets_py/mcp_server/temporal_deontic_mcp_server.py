@@ -134,7 +134,7 @@ class TemporalDeonticMCPServer:
                         payload = e.to_dict()  # type: ignore[attr-defined]
                         if isinstance(payload, dict):
                             error_details.update(payload)
-                    except Exception:
+                    except (AttributeError, TypeError):
                         pass
                 else:
                     for key in ("budget", "actual", "limit", "detail"):

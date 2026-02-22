@@ -182,6 +182,7 @@ class TestLLMResponseCache:
     
     def test_cache_keys_are_ipfs_cids(self):
         """Test that cache keys are valid IPFS CIDs."""
+        pytest.importorskip("multiformats", reason="multiformats library not available")
         from ipfs_datasets_py.logic.TDFOL.nl.utils import validate_cid
         
         # GIVEN a cache

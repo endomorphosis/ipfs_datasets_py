@@ -27,6 +27,11 @@ from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, field
 import json
 
+from ipfs_datasets_py.optimizers.common.backend_selection import (
+    canonicalize_provider,
+    detect_provider_from_environment,
+)
+
 logger = logging.getLogger(__name__)
 
 # Import llm_router from the repository
@@ -83,7 +88,10 @@ class QueryExpander:
         max_alternatives: int = 5,
         use_llm: bool = True
     ):
-        self.llm_provider = llm_provider or os.getenv("IPFS_DATASETS_PY_LLM_PROVIDER")
+        selected_provider = llm_provider or detect_provider_from_environment(
+            prefer_accelerate=False
+        )
+        self.llm_provider = canonicalize_provider(selected_provider, default="local")
         self.model = model or os.getenv("IPFS_DATASETS_PY_LLM_MODEL")
         self.cache_dir = cache_dir
         self.max_alternatives = max_alternatives

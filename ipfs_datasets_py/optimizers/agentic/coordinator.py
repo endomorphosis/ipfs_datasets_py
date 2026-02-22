@@ -8,7 +8,7 @@ ENHANCED: Added caching layer using utils.cache for improved performance
 of agent state, task queue, and conflict history management.
 """
 
-import asyncio
+import anyio
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -427,7 +427,7 @@ class AgentCoordinator:
         
         try:
             # Execute optimization
-            result = await asyncio.to_thread(
+            result = await anyio.to_thread.run_sync(
                 state.optimizer.optimize,
                 state.current_task
             )
@@ -437,7 +437,7 @@ class AgentCoordinator:
             state.last_activity = datetime.now()
             
             # Validate
-            validation = await asyncio.to_thread(
+            validation = await anyio.to_thread.run_sync(
                 state.optimizer.validate,
                 result
             )
@@ -550,7 +550,7 @@ class AgentCoordinator:
             idle_agents = self.get_idle_agents()
             if not idle_agents:
                 # Wait for agents to become available
-                await asyncio.sleep(1)
+                await anyio.sleep(1)
                 continue
             
             # Assign tasks to idle agents

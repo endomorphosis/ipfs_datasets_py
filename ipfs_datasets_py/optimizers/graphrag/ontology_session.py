@@ -181,6 +181,7 @@ class OntologySession:
         self.critic = critic
         self.validator = validator
         self.max_rounds = max_rounds
+        self.start_time: Optional[float] = None
         
         logger.info(f"Initialized OntologySession with max_rounds={max_rounds}")
     
@@ -221,7 +222,8 @@ class OntologySession:
             >>> print(f"Rounds: {result.num_rounds}")
         """
         logger.info("Starting ontology optimization session")
-        start_time = time.time()
+        self.start_time = time.time()
+        start_time = self.start_time
         
         try:
             # Run refinement cycle through mediator
@@ -383,6 +385,30 @@ class OntologySession:
         
         logger.info("Session configuration validated")
         return True
+
+    def elapsed_ms(self) -> float:
+        """Return current elapsed time in milliseconds since session start.
+
+        Useful for monitoring progress or implementing time-based constraints
+        during an active session. Returns 0.0 if session has not started yet.
+
+        Returns:
+            Elapsed time in milliseconds as float (potentially fractional)
+
+        Example:
+            >>> session = OntologySession(...)
+            >>> result = session.run(data, context)
+            >>> elapsed = session.elapsed_ms()
+            >>> print(f"Session took {elapsed:.2f}ms")
+        """
+        import time
+        
+        # Return elapsed time if session has started
+        if hasattr(self, 'start_time') and self.start_time is not None:
+            return (time.time() - self.start_time) * 1000
+        
+        # Session not started yet
+        return 0.0
 
 
 # Export public API

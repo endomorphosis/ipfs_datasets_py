@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 
 try:
     from ipfs_datasets_py.processors.pdf_processing import QueryEngine  # type: ignore
-except Exception:
+except (ImportError, ModuleNotFoundError):
     QueryEngine = None  # type: ignore
 
 from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (

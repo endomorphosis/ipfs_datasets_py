@@ -10,7 +10,7 @@ Usage:
     python -m ipfs_datasets_py.mcp_server.benchmarks.memory_usage --runtime trio
 """
 
-import asyncio
+import anyio
 import argparse
 import logging
 import gc
@@ -87,13 +87,13 @@ async def measure_baseline_memory(tracker: MemoryTracker) -> Dict[str, Any]:
     
     # Force garbage collection
     gc.collect()
-    await asyncio.sleep(0.5)
+    await anyio.sleep(0.5)
     
     # Take initial snapshot
     initial = tracker.take_snapshot('baseline_start')
     
     # Wait and take another snapshot
-    await asyncio.sleep(2.0)
+    await anyio.sleep(2.0)
     
     final = tracker.take_snapshot('baseline_end')
     
@@ -114,7 +114,7 @@ async def measure_memory_per_request(
     
     # Force GC before test
     gc.collect()
-    await asyncio.sleep(0.5)
+    await anyio.sleep(0.5)
     
     initial = tracker.take_snapshot(f'{runtime}_before')
     
@@ -129,7 +129,7 @@ async def measure_memory_per_request(
                 logger.debug(f"Request failed (expected): {e}")
         else:
             # Mock request
-            await asyncio.sleep(0.001)
+            await anyio.sleep(0.001)
         
         # Take periodic snapshots
         if i % (iterations // 10) == 0:
@@ -137,7 +137,7 @@ async def measure_memory_per_request(
     
     # Force GC after test
     gc.collect()
-    await asyncio.sleep(0.5)
+    await anyio.sleep(0.5)
     
     final = tracker.take_snapshot(f'{runtime}_after')
     
@@ -177,7 +177,7 @@ async def detect_memory_leaks(
                 except Exception as e:
                     logger.debug(f"Request failed (expected): {e}")
             else:
-                await asyncio.sleep(0.001)
+                await anyio.sleep(0.001)
         
         gc.collect()
         final = tracker.take_snapshot(f'leak_check_batch_{batch}_after')
@@ -234,7 +234,7 @@ async def measure_gc_impact(
                 except Exception as e:
                     logger.debug(f"Request failed (expected): {e}")
             else:
-                await asyncio.sleep(0.001)
+                await anyio.sleep(0.001)
             
             # Force GC every 100 iterations
             if i % 100 == 0:
@@ -480,4 +480,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    anyio.run(main)

@@ -261,8 +261,8 @@ class TestForwardChainingApplyRules:
         derived = {Predicate("P", ())}
         proof_steps = []
         
-        # WHEN applying rules
-        new_formulas = strategy._apply_rules(derived, proof_steps)
+        # WHEN applying rules (frontier == derived for this unit test)
+        new_formulas = strategy._apply_rules(derived, derived, proof_steps)
         
         # THEN no new formulas should be derived
         assert len(new_formulas) == 0
@@ -274,8 +274,8 @@ class TestForwardChainingApplyRules:
         derived = set()
         proof_steps = []
         
-        # WHEN applying rules
-        new_formulas = strategy._apply_rules(derived, proof_steps)
+        # WHEN applying rules (frontier == derived for this unit test)
+        new_formulas = strategy._apply_rules(derived, derived, proof_steps)
         
         # THEN no new formulas
         assert len(new_formulas) == 0

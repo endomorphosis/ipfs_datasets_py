@@ -40,7 +40,12 @@ try:
 except ImportError:  # pragma: no cover - optional dependency
     CryptContext = None
 from pydantic import BaseModel, Field
-import uvicorn
+try:
+    import uvicorn
+    HAVE_UVICORN = True
+except ImportError:  # pragma: no cover - optional dependency
+    uvicorn = None  # type: ignore[assignment]
+    HAVE_UVICORN = False
 
 logger = logging.getLogger(__name__)
 
@@ -73,12 +78,14 @@ except ImportError:
             """Fallback embeddings implementation when dependencies are missing."""
 
             def __init__(self, *args: Any, **kwargs: Any) -> None:
+                """No-op constructor; real implementation requires optional dependencies."""
                 pass
 
         class BaseVectorStore:  # type: ignore[too-many-public-methods]
             """Fallback vector store base class."""
 
             def __init__(self, *args: Any, **kwargs: Any) -> None:
+                """No-op constructor; real implementation requires optional dependencies."""
                 pass
 
         class QdrantVectorStore(BaseVectorStore):
@@ -91,12 +98,14 @@ except ImportError:
             """Fallback MCP server implementation."""
 
             def __init__(self, *args: Any, **kwargs: Any) -> None:
+                """No-op constructor; real implementation requires optional dependencies."""
                 pass
 
         class FastAPISettings:
             """Fallback FastAPI settings with safe defaults."""
 
             def __init__(self) -> None:
+                """Initialise settings with defaults; SECRET_KEY is required at runtime."""
                 self.app_name = "IPFS Datasets API"
                 self.app_version = "1.0.0"
                 self.debug = False
@@ -116,13 +125,20 @@ except ImportError:
                 self.algorithm = "HS256"
                 self.access_token_expire_minutes = 30
 
-# Load configuration
-settings = FastAPISettings()
-
-# Security configuration
-SECRET_KEY = settings.secret_key
-ALGORITHM = settings.algorithm
-ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
+# Load configuration (SECRET_KEY may be absent in test environments)
+try:
+    settings = FastAPISettings()
+    SECRET_KEY = settings.secret_key
+    ALGORITHM = settings.algorithm
+    ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
+except ValueError as _cfg_err:
+    import os as _os
+    logger.warning(f"FastAPISettings could not be fully initialised: {_cfg_err}. "
+                   "Using fallback values — set SECRET_KEY env var for production.")
+    settings = None
+    SECRET_KEY = _os.environ.get("SECRET_KEY", "dev-fallback-key-NOT-for-production")
+    ALGORITHM = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 if CryptContext:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -155,21 +171,25 @@ rate_limit_storage: Dict[str, Dict[str, Any]] = {}
 
 # Pydantic models for API
 class TokenResponse(BaseModel):
+    """Response body returned by authentication endpoints."""
     access_token: str
     token_type: str = "bearer"
     expires_in: int
 
 class UserCredentials(BaseModel):
+    """Credentials submitted by the client to obtain a JWT token."""
     username: str
     password: str
 
 class EmbeddingGenerationRequest(BaseModel):
+    """Request body for the /embeddings/generate endpoint."""
     text: Union[str, List[str]]
     model: str = "sentence-transformers/all-MiniLM-L6-v2"
     normalize: bool = True
     batch_size: Optional[int] = 32
     
 class VectorSearchRequest(BaseModel):
+    """Request body for the /search/vector endpoint."""
     query: Union[str, List[float]]
     top_k: int = Field(default=10, ge=1, le=100)
     collection_name: str
@@ -177,39 +197,46 @@ class VectorSearchRequest(BaseModel):
     include_metadata: bool = True
     
 class AnalysisRequest(BaseModel):
+    """Request body for vector analysis endpoints (clustering, quality, etc.)."""
     vectors: List[List[float]]
     analysis_type: str = Field(..., pattern="^(clustering|quality|similarity|drift)$")
     parameters: Optional[Dict[str, Any]] = None
 
 # Additional Pydantic models
 class DatasetLoadRequest(BaseModel):
+    """Request body for loading a dataset from a source."""
     source: str
     format: Optional[str] = None
     options: Optional[Dict[str, Any]] = None
 
 class DatasetProcessRequest(BaseModel):
+    """Request body for applying transformation operations to a dataset."""
     dataset_source: Union[str, Dict[str, Any]]
     operations: List[Dict[str, Any]]
     output_id: Optional[str] = None
 
 class DatasetSaveRequest(BaseModel):
+    """Request body for persisting a dataset to a destination."""
     dataset_data: Union[str, Dict[str, Any]]
     destination: str
     format: Optional[str] = "json"
     options: Optional[Dict[str, Any]] = None
 
 class IPFSPinRequest(BaseModel):
+    """Request body for pinning content to IPFS."""
     content_source: Union[str, Dict[str, Any]]
     recursive: bool = True
     wrap_with_directory: bool = False
     hash_algo: str = "sha2-256"
 
 class WorkflowRequest(BaseModel):
+    """Request body for submitting a multi-step workflow."""
     workflow_name: str
     steps: List[Dict[str, Any]]
     parameters: Optional[Dict[str, Any]] = None
 
 class VectorIndexRequest(BaseModel):
+    """Request body for creating or updating a vector index."""
     vectors: List[List[float]]
     dimension: Optional[int] = None
     metric: str = "cosine"
@@ -218,6 +245,9 @@ class VectorIndexRequest(BaseModel):
     index_name: Optional[str] = None
 
 # FastAPI app initialization
+# Phase C2: track server start time for uptime reporting in health endpoints.
+_SERVER_START_TIME: float = time.time()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
@@ -347,12 +377,98 @@ async def check_rate_limit(request: Request, endpoint: str) -> None:
 # Health check endpoint
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
+    """Liveness probe — returns 200 as long as the process is running."""
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "uptime_seconds": round(time.time() - _SERVER_START_TIME, 1),
     }
+
+
+@app.get("/health/ready")
+async def readiness_check():
+    """Readiness probe — verifies that key dependencies are operational.
+
+    Returns HTTP 200 when all checks pass, HTTP 503 otherwise so that
+    load-balancers can remove the instance from rotation.
+    """
+    checks: Dict[str, Any] = {}
+    all_ok = True
+
+    # Check 1: monitoring metrics collector is alive
+    try:
+        from .monitoring import get_metrics_collector
+        collector = get_metrics_collector()
+        checks["metrics_collector"] = {"status": "ok", "uptime_seconds": round(
+            getattr(collector, "_uptime_seconds", time.time() - _SERVER_START_TIME), 1
+        )}
+    except Exception as exc:  # pragma: no cover
+        checks["metrics_collector"] = {"status": "error", "error": str(exc)}
+        all_ok = False
+
+    # Check 2: tool manager has at least one category loaded
+    try:
+        from .hierarchical_tool_manager import get_tool_manager
+        mgr = get_tool_manager()
+        mgr.discover_categories()
+        n_cats = len(mgr.categories)
+        checks["tool_manager"] = {"status": "ok", "categories": n_cats}
+        if n_cats == 0:
+            checks["tool_manager"]["status"] = "warning"
+    except Exception as exc:  # pragma: no cover
+        checks["tool_manager"] = {"status": "error", "error": str(exc)}
+        all_ok = False
+
+    status_code = 200 if all_ok else 503
+    body = {
+        "status": "ready" if all_ok else "not_ready",
+        "timestamp": datetime.utcnow().isoformat(),
+        "uptime_seconds": round(time.time() - _SERVER_START_TIME, 1),
+        "checks": checks,
+    }
+    from fastapi.responses import JSONResponse
+    return JSONResponse(content=body, status_code=status_code)
+
+
+@app.get("/metrics")
+async def prometheus_metrics():
+    """Expose server metrics in a simple text format compatible with Prometheus.
+
+    Each metric is emitted on its own line:
+    ``# HELP <name> <description>``
+    ``<name>{<labels>} <value>``
+    """
+    try:
+        from .monitoring import get_metrics_collector
+        collector = get_metrics_collector()
+        summary = collector.get_metrics_summary()
+    except Exception:  # pragma: no cover
+        summary = {}
+
+    uptime = round(time.time() - _SERVER_START_TIME, 1)
+    req = summary.get("request_metrics", {})
+    sys_m = summary.get("system_metrics", {})
+
+    lines = [
+        "# HELP mcp_uptime_seconds Seconds since the server started",
+        f"mcp_uptime_seconds {uptime}",
+        "# HELP mcp_requests_total Total HTTP requests processed",
+        f"mcp_requests_total {req.get('total_requests', 0)}",
+        "# HELP mcp_errors_total Total errors encountered",
+        f"mcp_errors_total {req.get('total_errors', 0)}",
+        "# HELP mcp_active_requests Requests currently in flight",
+        f"mcp_active_requests {req.get('active_requests', 0)}",
+        "# HELP mcp_avg_response_time_ms Average response time in milliseconds",
+        f"mcp_avg_response_time_ms {req.get('avg_response_time_ms', 0.0):.3f}",
+        "# HELP process_cpu_percent CPU utilisation percent",
+        f"process_cpu_percent {sys_m.get('cpu_percent', 0.0):.1f}",
+        "# HELP process_memory_percent Memory utilisation percent",
+        f"process_memory_percent {sys_m.get('memory_percent', 0.0):.1f}",
+    ]
+
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse("\n".join(lines) + "\n", media_type="text/plain; version=0.0.4")
 
 # Authentication endpoints
 @app.post("/auth/login", response_model=TokenResponse)

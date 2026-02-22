@@ -1,11 +1,11 @@
 
-import asyncio
-from asyncio import AbstractEventLoop
+import anyio
 import concurrent.futures
 import itertools
 from functools import singledispatch
 from typing import Any, AsyncGenerator, Optional
 from pydantic import BaseModel
+from utils.common.anyio_queues import AnyioQueue
 
 
 from pydantic_models.resource.resource import Resource
@@ -29,10 +29,9 @@ class FilePathQueue:
 
     def __init__(self, configs: Configs):
         self.batch_size = configs.batch_size
-        self.process_queue: asyncio.Queue[ProcessInput] = asyncio.Queue(maxsize=configs.max_queue_size)
-        self.thread_queue: asyncio.Queue[ThreadInput] = asyncio.Queue(maxsize=configs.max_queue_size)
-        self.loop = asyncio.get_event_loop()
-
+        self.process_queue: 'AnyioQueue[ProcessInput]' = AnyioQueue(maxsize=configs.max_queue_size)
+        self.thread_queue: 'AnyioQueue[ThreadInput]' = AnyioQueue(maxsize=configs.max_queue_size)
+        
     async def core_resource_manager_interface(self, resource: Optional[Resource]):
         """
         Get a steady stream of resources from the Core Resource Manager.
@@ -61,7 +60,7 @@ class FilePathQueue:
                 ProcessInput(resource=resource)
             )
 
-    def get_queues(self) -> tuple[asyncio.Queue[ProcessInput], asyncio.Queue[ThreadInput]]:
+    def get_queues(self) -> tuple['AnyioQueue[ProcessInput]', 'AnyioQueue[ThreadInput]']:
         return self.process_queue, self.thread_queue
 
 

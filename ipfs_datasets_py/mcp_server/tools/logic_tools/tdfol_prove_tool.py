@@ -99,4 +99,62 @@ async def tdfol_batch_prove(
     )
 
 
-__all__ = ["tdfol_prove", "tdfol_batch_prove"]
+class TDFOLProveTool:
+    """OOP wrapper for the tdfol_prove MCP tool."""
+
+    name = "tdfol_prove"
+    category = "logic"
+
+    async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        formula = params.get("formula", "")
+        axioms = params.get("axioms", [])
+        strategy = params.get("strategy", "auto")
+        timeout_ms = params.get("timeout_ms", 5000)
+        include_proof_steps = params.get("include_proof_steps", True)
+
+        result = await tdfol_prove(
+            formula=formula,
+            axioms=axioms or None,
+            strategy=strategy,
+            timeout_ms=timeout_ms,
+            include_proof_steps=include_proof_steps,
+        )
+        if not isinstance(result, dict):
+            result = {"proved": False}
+        result.setdefault("success", True)
+        result.setdefault("formula", formula)
+        result.setdefault("proved", result.get("proved", False))
+        result.setdefault("status", "proved" if result.get("proved") else "unknown")
+        return result
+
+
+class TDFOLBatchProveTool:
+    """OOP wrapper for the tdfol_batch_prove MCP tool."""
+
+    name = "tdfol_batch_prove"
+    category = "logic"
+
+    async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        formulas = params.get("formulas", [])
+        shared_axioms = params.get("shared_axioms", None)
+        strategy = params.get("strategy", "auto")
+        timeout_per_formula_ms = params.get("timeout_per_formula_ms", 5000)
+        stop_on_first_failure = params.get("stop_on_first_failure", False)
+
+        result = await tdfol_batch_prove(
+            formulas=formulas,
+            shared_axioms=shared_axioms,
+            strategy=strategy,
+            timeout_per_formula_ms=timeout_per_formula_ms,
+            stop_on_first_failure=stop_on_first_failure,
+        )
+        if not isinstance(result, dict):
+            result = {}
+        result.setdefault("success", True)
+        result.setdefault("results", [])
+        result.setdefault("total_formulas", len(formulas))
+        result.setdefault("total_proved", sum(1 for r in result["results"] if r.get("proved")))
+        return result
+
+
+__all__ = ["tdfol_prove", "tdfol_batch_prove", "TDFOLProveTool", "TDFOLBatchProveTool"]

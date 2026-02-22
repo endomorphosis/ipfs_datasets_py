@@ -73,18 +73,23 @@ class ProofStep:
         ...     premises=[]
         ... )
     """
+    step_number: int
     formula: str
     justification: str
-    step_number: int = 0
-    step_num: Optional[int] = field(default=None, repr=False)
-    rule_applied: str = ""
+    rule_applied: str
     premises: List[str] = field(default_factory=list)
     confidence: float = 1.0
 
-    def __post_init__(self):
-        # Support step_num as alias for step_number
-        if self.step_num is not None and self.step_number == 0:
-            self.step_number = self.step_num
+    def __init__(self, step_number: int = 0, formula: str = "", justification: str = "",
+                 rule_applied: str = "", premises=None, confidence: float = 1.0,
+                 step_num: int = None, **kwargs):
+        """Accept both step_number and step_num (alias)."""
+        self.step_number = step_num if step_num is not None else step_number
+        self.formula = formula
+        self.justification = justification
+        self.rule_applied = rule_applied
+        self.premises = premises if premises is not None else []
+        self.confidence = confidence
 
 
 @dataclass

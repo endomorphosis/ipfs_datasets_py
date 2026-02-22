@@ -209,7 +209,7 @@ class TestCLIIntegration:
         # Test that CLI properly integrates with TDFOL
         from ipfs_datasets_py.logic.TDFOL import parse_tdfol
         
-        formula = parse_tdfol("P")
+        formula = parse_tdfol("atom")  # "P" alone is the PERMISSION deontic operator
         assert formula is not None
     
     def test_cli_uses_prover_router(self):

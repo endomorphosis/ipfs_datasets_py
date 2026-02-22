@@ -208,6 +208,13 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "LogicPrimitives": (".symbolic.symbolic_logic_primitives", "LogicPrimitives"),
     "create_logic_symbol": (".symbolic.symbolic_logic_primitives", "create_logic_symbol"),
 
+    # Symbolic contracts (pydantic optional)
+    "FOLInput": (".domain.symbolic_contracts", "FOLInput"),
+    "FOLOutput": (".domain.symbolic_contracts", "FOLOutput"),
+    "ContractedFOLConverter": (".domain.symbolic_contracts", "ContractedFOLConverter"),
+    "create_fol_converter": (".domain.symbolic_contracts", "create_fol_converter"),
+    "validate_fol_input": (".domain.symbolic_contracts", "validate_fol_input"),
+
     # Optional bridges
     "TDFOLCECBridge": (".bridges.tdfol_cec_bridge", "TDFOLCECBridge"),
     "EnhancedTDFOLProver": (".bridges.tdfol_cec_bridge", "EnhancedTDFOLProver"),

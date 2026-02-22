@@ -1,5 +1,5 @@
 
-import asyncio
+import anyio
 from concurrent.futures import ProcessPoolExecutor
 import os
 from pathlib import Path
@@ -18,6 +18,7 @@ from fixtures.mock_input_output_directory import mock_input_output_directory
 
 
 from utils.common.asyncio_coroutine import asyncio_coroutine
+from utils.common.anyio_queues import AnyioQueue
 from logger.logger import Logger
 logger = Logger(__name__)
 
@@ -49,9 +50,9 @@ def test_file_paths_manager_initialization(configs: Configs):
     # assert hasattr(file_manager.duck_db, 'fetchall')
 
     # Test asyncio queues
-    assert isinstance(file_manager.get_inputs_queue, asyncio.Queue)
-    assert isinstance(file_manager.extract_metadata_queue, asyncio.Queue)
-    assert isinstance(file_manager.output_queue, asyncio.Queue)
+    assert hasattr(file_manager.get_inputs_queue, 'put')
+    assert hasattr(file_manager.extract_metadata_queue, 'put')
+    assert hasattr(file_manager.output_queue, 'put')
     assert file_manager.get_inputs_queue.maxsize == 2048
     assert file_manager.extract_metadata_queue.maxsize == 2048
     assert file_manager.output_queue.maxsize == 10 # batch size because we want to batch outputs.
@@ -220,7 +221,7 @@ def test_ignore_symlinks(test_directory: Path):
     assert test_directory / "file1.txt" in detected_files
 
 import pytest
-import asyncio
+import anyio
 from pathlib import Path
 from pydantic import ValidationError
 
@@ -228,13 +229,13 @@ from pydantic_models.file_paths_manager.file_path import FilePath
 from external_interface.file_paths_manager.file_paths_manager import FilePathsManager
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_get_inputs(monkeypatch: pytest.MonkeyPatch, test_files):
 
     # Mock FilePathsManager and its methods
     class MockFilePathsManager(FilePathsManager):
         def __init__(self):
-            self.extract_metadata_queue = asyncio.Queue()
+            self.extract_metadata_queue = AnyioQueue()
             self._logger = MockLogger()
 
         def scan_for_files(self):
@@ -285,7 +286,7 @@ async def test_get_inputs(monkeypatch: pytest.MonkeyPatch, test_files):
     # Check if get_inputs_queue is empty after processing
     assert fpm.extract_metadata_queue.empty()
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_get_inputs_empty_directory():
 
     class MockLogger:
@@ -297,8 +298,8 @@ async def test_get_inputs_empty_directory():
 
     class MockEmptyFilePathsManager(FilePathsManager):
         def __init__(self):
-            self.get_inputs_queue = asyncio.Queue()
-            self.extract_metadata_queue = asyncio.Queue()
+            self.get_inputs_queue = AnyioQueue()
+            self.extract_metadata_queue = AnyioQueue()
             self._logger = MockLogger()
 
         def scan_for_files(self):
@@ -310,7 +311,7 @@ async def test_get_inputs_empty_directory():
     assert fpm.extract_metadata_queue.empty()
     assert fpm.get_inputs_queue.empty()
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_get_inputs_all_invalid(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
 
     class MockLogger:
@@ -322,8 +323,8 @@ async def test_get_inputs_all_invalid(monkeypatch: pytest.MonkeyPatch, tmp_path:
 
     class MockInvalidFilePathsManager(FilePathsManager):
         def __init__(self):
-            self.get_inputs_queue = asyncio.Queue()
-            self.extract_metadata_queue = asyncio.Queue()
+            self.get_inputs_queue = AnyioQueue()
+            self.extract_metadata_queue = AnyioQueue()
             self._logger = MockLogger()
 
         def scan_for_files(self):
@@ -345,7 +346,7 @@ async def test_get_inputs_all_invalid(monkeypatch: pytest.MonkeyPatch, tmp_path:
 from pydantic_models.file_paths_manager.file_path_and_metadata import FilePathAndMetadata
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_extract_metadata(test_directory):
     configs = Configs(batch_size=10, input_folder=test_directory, output_folder="output", max_workers=4, max_queue_size=2048)
 
@@ -443,7 +444,7 @@ def test_proc_methods_files(tmp_path: Path):
     }
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_requires_processing_new_file(file_paths_manager_fixture, test_proc_methods_files):
 
     file_paths_manager: FilePathsManager = file_paths_manager_fixture[0]
@@ -462,7 +463,7 @@ async def test_requires_processing_new_file(file_paths_manager_fixture, test_pro
 # 4. Test Repeat File Prevention
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_requires_processing_existing_file(mock_input_output_directory):
 
     input_dir, output_dir = mock_input_output_directory
@@ -482,7 +483,7 @@ async def test_requires_processing_existing_file(mock_input_output_directory):
     assert result == False
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_requires_processing_invalid_input(file_paths_manager_fixture):
 
     file_paths_manager: FilePathsManager = file_paths_manager_fixture[0]
@@ -494,12 +495,12 @@ async def test_requires_processing_invalid_input(file_paths_manager_fixture):
     assert result == False
 
 import pytest
-import asyncio
+import anyio
 from pydantic_models.file_paths_manager.file_path_and_metadata import FilePathAndMetadata
 from pydantic_models.configs import Configs
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_make_batch_empty_queue(mock_input_output_directory):
     """
     Test make_batch when processing_queue is empty.
@@ -516,7 +517,7 @@ async def test_make_batch_empty_queue(mock_input_output_directory):
     assert len(batches) == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_make_batch_full_batch(test_files_all_valid):
     """
     Test make_batch when a full batch can be created.
@@ -546,7 +547,7 @@ async def test_make_batch_full_batch(test_files_all_valid):
     assert len(batches[0]) == 2
     assert len(batches[1]) == 1
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_make_batch_partial_batch(test_files_all_valid):
     """
     Test make_batch when only a partial batch can be created.
@@ -578,7 +579,7 @@ async def test_make_batch_partial_batch(test_files_all_valid):
     assert len(batches) == 1
     assert len(batches[0]) == 2
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_make_batch_skip_processing(test_files_all_valid):
     """
     Test make_batch when some items don't require processing.
@@ -608,7 +609,7 @@ async def test_make_batch_skip_processing(test_files_all_valid):
     assert len(batches[0]) == 2
     assert all(item.file_path != "valid.txt" for item in batches[0])
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_make_batch_multiple_iterations():
     """
     Test make_batch with multiple iterations of the while loop.
@@ -626,11 +627,11 @@ async def test_make_batch_multiple_iterations():
         for i in range(5):
             await file_manager.processing_queue.put(FilePathAndMetadata(file_path=f"file{i}.txt"))
             if i % 2 == 1:
-                await asyncio.sleep(0.1)  # Small delay to allow for iteration
+                await anyio.sleep(0.1)  # Small delay to allow for iteration
 
-    asyncio.create_task(add_items())
-
-    await file_manager.make_batch()
+    async with anyio.create_task_group() as _tg:
+        _tg.start_soon(add_items)
+        await file_manager.make_batch()
     batches = [batch for batch in file_manager.output_queue.get_nowait()]
 
     assert len(batches) == 3
@@ -651,7 +652,7 @@ async def test_make_batch_multiple_iterations():
 
 #     return tmp_path
 
-# @pytest.mark.asyncio
+# @pytest.mark.anyio
 # async def test_repeat_file_prevention(test_directory_with_repeats):
 #     configs = Configs(
 #         batch_size=2,

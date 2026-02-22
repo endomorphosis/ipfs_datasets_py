@@ -1,5 +1,4 @@
 from typing import Optional, Any, Dict, List
-import asyncio
 
 
 def check_if_available() -> bool:
@@ -150,7 +149,7 @@ async def generate_text(
         anthropic.RateLimitError: If API rate limits are exceeded.
         anthropic.BadRequestError: If request parameters are invalid.
         anthropic.APIError: If there's a general API error from Anthropic.
-        asyncio.TimeoutError: If the request times out.
+        TimeoutError: If the request times out.
         
     Example:
         >>> client = create_async_anthropic_client("your-api-key")

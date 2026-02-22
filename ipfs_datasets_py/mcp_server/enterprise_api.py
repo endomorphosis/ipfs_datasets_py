@@ -112,6 +112,13 @@ class AuthenticationManager:
     """JWT-based authentication manager"""
     
     def __init__(self, secret_key: str = None):
+        """Initialise with an optional JWT signing key.
+
+        Args:
+            secret_key: HMAC secret used for JWT signing. Falls back to the
+                ``JWT_SECRET_KEY`` environment variable or a development default.
+                **Always set this via environment variable in production.**
+        """
         self.secret_key = secret_key or os.getenv("JWT_SECRET_KEY", "dev-secret-key-change-in-production")
         self.algorithm = "HS256"
         self.access_token_expire_minutes = 30
@@ -199,6 +206,7 @@ class RateLimiter:
     """Rate limiting for API endpoints"""
     
     def __init__(self):
+        """Initialise with an in-memory request queue and default endpoint limits."""
         self.user_requests = defaultdict(lambda: deque())
         self.limits = {
             "website_processing": {"requests": 5, "window": 3600},  # 5 per hour
@@ -234,6 +242,7 @@ class ProcessingJobManager:
     """Manages background processing jobs"""
     
     def __init__(self):
+        """Initialise with empty job and result dictionaries."""
         self.jobs: Dict[str, Dict[str, Any]] = {}
         self.job_results: Dict[str, CompleteProcessingResult] = {}
     
@@ -370,6 +379,12 @@ class EnterpriseGraphRAGAPI:
     """
     
     def __init__(self, config: Dict[str, Any] = None):
+        """Initialise the enterprise API with optional configuration overrides.
+
+        Args:
+            config: Optional dictionary of configuration values. Merged with
+                defaults. When *None* an empty dict is used.
+        """
         self.config = config or {}
         
         # Initialize core components
@@ -415,6 +430,7 @@ class EnterpriseGraphRAGAPI:
         
         @asynccontextmanager
         async def lifespan(app: FastAPI):
+            """Manage startup and shutdown of the Enterprise GraphRAG API."""
             # Startup
             logger.info("Starting Enterprise GraphRAG API")
             yield
@@ -451,6 +467,7 @@ class EnterpriseGraphRAGAPI:
         """
         # Setup authentication dependency (used across all route groups)
         async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(self.security)):
+            """Authenticate the bearer token and return the resolved :class:`User`."""
             return await self.auth_manager.authenticate(credentials.credentials)
         
         # Setup all route groups
@@ -624,6 +641,12 @@ class AdvancedAnalyticsDashboard:
     """Advanced analytics and monitoring dashboard"""
     
     def __init__(self, job_manager: ProcessingJobManager):
+        """Initialise the dashboard with a reference to the job manager.
+
+        Args:
+            job_manager: The :class:`ProcessingJobManager` instance whose job
+                data this dashboard will aggregate and report on.
+        """
         self.job_manager = job_manager
         self.start_time = datetime.now()
     
@@ -732,6 +755,7 @@ if __name__ == "__main__":
     
     # Create the API
     async def main():
+        """Entry point: start the enterprise API server with uvicorn."""
         api = await create_enterprise_api()
         
         # Add sample data for demo

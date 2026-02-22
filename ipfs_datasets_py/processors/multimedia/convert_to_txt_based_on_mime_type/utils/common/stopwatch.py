@@ -1,6 +1,6 @@
 import time
 import sys
-import asyncio
+import inspect
 import threading
 from functools import wraps
 from typing import Union, Callable, Any
@@ -111,7 +111,7 @@ def stopwatch_decorator(func: Union[Callable, Callable[..., Any]], cursed: bool 
             _display_exec_time(start_time, cursed=cursed)  # Fixed: Added cursed parameter
 
     # Determine if the function is async or sync
-    if asyncio.iscoroutinefunction(func):
+    if inspect.iscoroutinefunction(func):
         return async_wrapper
     return sync_wrapper
 

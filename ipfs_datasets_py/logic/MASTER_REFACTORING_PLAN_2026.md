@@ -1,111 +1,13 @@
 # Master Refactoring and Improvement Plan — Logic Module
 
-**Date:** 2026-02-19  
-**Version:** 4.8 (updated 2026-02-21 session 53)  
-**Status:** Phases 1–3 COMPLETE · Phase 4 Ongoing  
+**Date:** 2026-02-21 (last updated)  
+**Version:** 21.0 (supersedes all previous plans)  
+**Status:** Phase 1 ✅ COMPLETE · Phase 2 🔄 In Progress · Phase 3 ✅ COMPLETE · Phase 4 🔄 Ongoing · Phase 5 ✅ COMPLETE · Phase 6 🔄 In Progress  
 **Scope:** `ipfs_datasets_py/logic/` and `tests/unit_tests/logic/`  
 **MCP Integration:** `ipfs_datasets_py/mcp_server/tools/logic_tools/`
 
-**Session 53 Updates (2026-02-21):**
-- **5 production changes** (backward-compat additions, zero breaking changes):
-  - `integration/proof_cache.py` — Replaced shim-to-shim with complete backward-compat standalone `CachedProof`/`ProofCache` that supports legacy `max_size`/`default_ttl` kwargs, `put(formula, prover, result)` method, `get_statistics()`, `get_cached_entries()`, `resize()`, `cleanup_expired()`, LRU eviction, per-entry TTL, thread-safety. Fixes 28 pre-existing `test_proof_cache.py` failures.
-  - `integration/reasoning/logic_verification.py` — Added `_validate_formula_syntax()` and `_are_contradictory()` backward-compat private method aliases to `LogicVerifier`. Fixes 2 pre-existing `test_logic_verification.py` failures.
-  - `integration/logic_verification_utils.py` — NEW shim re-exporting from `reasoning/logic_verification_utils`. Fixes 1 `test_refactored_modules.py` failure.
-  - `integration/interactive_fol_constructor.py` — NEW shim making `InteractiveFOLConstructor` importable as `from integration import interactive_fol_constructor`. Fixes 1 `test_logic_integration_modules.py` failure.
-- **75 new GIVEN-WHEN-THEN tests** in `test_logic_coverage_session53.py` (7 skipped — TDFOL not installed):
-  - `CachedProof` dataclass ×7, `ProofCache` backward-compat ×18, `get_global_cache` ×2
-  - `LogicVerifier._validate_formula_syntax` / `_are_contradictory` aliases ×8
-  - `logic_verification_utils` shim ×7, `interactive_fol_constructor` shim ×4
-  - `LegalSymbolicAnalyzer` fallback paths ×11, `LegalReasoningEngine` fallbacks ×6
-  - `DeonticLogicConverter` additional paths ×7, integration package exports ×5
-- **Net improvement:** 101 → 72 pre-existing test failures fixed (−29); 1259 → 1363 passing (+104)
-- 7 production bug fixes across CEC provers + integration cec_bridge:
-  - `CEC/provers/tptp_utils.py` — Added missing `TPTPFormula` dataclass and `TPTPConverter` class (were imported in `__init__.py` but never defined)
-  - `CEC/provers/__init__.py` — Fixed `VampireResult` alias → `VampireProofResult`, `EProverResult` → `EProverProofResult`, `ProverResult` → `UnifiedProofResult` (all wrong class names)
-  - `integration/cec_bridge.py` — `result.prover_used` → `result.best_prover` in `_prove_with_cec_manager` (CEC `UnifiedProofResult` uses `best_prover` not `prover_used`)
-  - `integration/cec_bridge.py` — `result.status.value` → `result.status.value if hasattr(result.status, 'value') else str(result.status)` (status may already be string)
-  - `integration/cec_bridge.py` — `get_statistics()` now uses `get_stats()` (ProofResultCache method) with AttributeError fallback
-  - `integration/__init__.py` — Added lazy exports: `ContractedFOLConverter`, `FOLInput`, `FOLOutput`, `create_fol_converter`, `validate_fol_input`, `LogicPrimitives`, `create_logic_symbol` (test_integration.py was failing on missing exports)
-  - `test_cec_bridge.py` — Fixed `DeonticOperator.OBLIGATED→.OBLIGATION`, `AtomicFormula(predicate="P", terms=[])→(predicate=Predicate(name="P", argument_sorts=[]), arguments=[])`
-- 92 new GIVEN-WHEN-THEN tests in `test_logic_coverage_session52.py` covering:
-  - `cec_bridge.py`: 37% → **72%** (UnifiedProofResult, CECBridge init ×5, _select_strategy ×4, prove ×4, caching+hash ×6, statistics, mocked-z3 prove ×3)
-  - `bridges/prover_installer.py`: 41% → **78%** (ensure_lean ×5, ensure_coq ×7, main ×5)
-  - `converters/logic_translation_core.py`: 68% → **82%** (CoqTranslator — translate_rule_set, generate_theory, conditions, cache hit, validate, deps, target ×7; SMTTranslator — with agent, conditions, translate_rule_set, generate_theory, prohibition, validate, no-agent ×7; LeanTranslator — translate_rule_set, generate_theory, validate, conditions ×4)
-  - `caching/ipfs_proof_cache.py`: 55% → **70%** (put, put+pin, sync disabled, pin disabled, close, get_from_ipfs, statistics, mocked-IPFS ×4)
-  - `symbolic/symbolic_logic_primitives.py`: 56% → **68%** (Primitive, LogicPrimitives, create_logic_symbol, Symbol fallback ×7)
-  - `integration/__init__.py`: 81% → **90%** (new exports: ContractedFOLConverter, FOLInput, FOLOutput, create_fol_converter, validate_fol_input, LogicPrimitives, create_logic_symbol)
-- 1272 tests passing (+94 vs session51 baseline), 116 failing (−2 vs session51), 95 skipped
-- Overall coverage: **74% → 76%** (7573 lines, ~1850 missed)
-
-**Session 51 Updates (2026-02-21):**
-- 5 production bug fixes in bridges + caching:
-  - `bridges/tdfol_shadowprover_bridge.py:162` — `self.prove_modal_formula(formula)` → `self.prove_modal(formula)` (method didn't exist)
-  - `bridges/tdfol_shadowprover_bridge.py:120` — `self.tdfol_to_modal_string(formula)` → `self._tdfol_to_modal_format(formula)` (method didn't exist)
-  - `bridges/base_prover_bridge.py` — added `import logging` + `logger = logging.getLogger(__name__)` (NameError in `validate_formula` exception handler)
-  - `caching/ipfs_proof_cache.py:168` — `super().put(formula, result, ttl)` → `super().set(formula, result)` (ProofCache has `set()` not `put()`)
-  - `bridges/external_provers.py` — no changes needed, `VampireProver`/`EProver` have no `.available` attribute (by design — they fail at prove-time)
-- 135 new GIVEN-WHEN-THEN tests covering:
-  - `bridges/base_prover_bridge.py`: 63% → **99%** (BridgeCapability, BridgeMetadata, BridgeRegistry — register, get, list_available, find_capable, select_best, validate_formula)
-  - `bridges/tdfol_cec_bridge.py`: 36% → **68%** (TDFOLCECBridge — init, metadata, caps, to_target, from_target, dcec_string_to_tdfol, prove, prove_with_cec unavailable/exception, get_applicable_rules; EnhancedTDFOLProver — init with/without CEC, prove; create_enhanced_prover)
-  - `bridges/tdfol_shadowprover_bridge.py`: 30% → **76%** (TDFOLShadowProverBridge — init, metadata, to_target unavailable-raises, from_target passthrough/unknown, _tdfol_to_modal_format always/eventually/obligation/permission, select_modal_logic temporal/deontic/plain, _get_prover K/S4/S5/D/T, prove, prove_modal unavailable/exception/explicit-type, prove_with_tableaux unavailable/any-status; ModalAwareTDFOLProver — init, _has_temporal/deontic, prove plain/no-modal-specialized; create_modal_aware_prover)
-  - `bridges/tdfol_grammar_bridge.py`: 29% → **75%** (TDFOLGrammarBridge — metadata, availability, prove-unknown, from_target-unknown, parse_NL with/without fallback/unavailable, _fallback_parse unavailable, batch_parse, analyze_parse_quality with/without expected, formula_to_NL unavailable/formal/casual, to_target unavailable-raises, _dcec_to_nl template fallback, _apply_casual_style; parse_nl/explain_formula convenience; NaturalLanguageTDFOLInterface — init, understand, explain, reason unparseable-premise/conclusion)
-  - `bridges/external_provers.py`: 62% → **73%** (VampireProver — init, _formula_to_tptp, prove-error/with-axioms, _extract_proof found/not-found, _extract_statistics; EProver — init, _formula_to_tptp, prove-error, _extract_statistics; ProverResult — minimal/full; ProverRegistry — init, register, get, list, prove_auto empty/unavailable/preferred, _is_better_result; get_prover_registry global)
-  - `caching/ipfs_proof_cache.py`: 32% → **55%** (IPFSProofCache — init disabled/counters, set/get local, get missing, get_statistics, close no-client; put-locally/with-pin-no-ipfs; sync/pin/unpin/get_from_ipfs disabled; mocked IPFS: put-uploads/with-pin, get-from-ipfs, get-from-ipfs-error, close-with-client/exception; get_global_ipfs_cache singleton)
-- logic/integration overall: **66% → 70%** (7573 lines, 2296 missed, 300 more lines covered)
-
-**Session 50 Updates (2026-02-21):**
-- 4 production bug fixes (wrong relative imports in interactive/ and demos/):
-  - `interactive/interactive_fol_constructor.py:38` — `.symbolic_fol_bridge` → `..bridges.symbolic_fol_bridge`
-  - `interactive/interactive_fol_constructor.py:39` — `.symbolic_logic_primitives` → `..symbolic.symbolic_logic_primitives`
-  - `interactive/interactive_fol_types.py:16` — same LogicalComponents import fix
-  - `demos/demo_temporal_deontic_rag.py:14-21` — imports fixed to `..domain.*` and `..converters.*`
-- 95 new GIVEN-WHEN-THEN integration tests covering:
-  - `interactive/interactive_fol_types.py`: 0% → **100%** (StatementRecord, SessionMetadata)
-  - `interactive/interactive_fol_utils.py`: 0% → **100%** (create_interactive_session, demo_interactive_session)
-  - `interactive/interactive_fol_constructor.py`: 0% → **83%** (InteractiveFOLConstructor — all public methods)
-  - `bridges/symbolic_fol_bridge.py`: 33% → **80%** (+47pp — all patterns, formats, validation, cache)
-  - `integration/__init__.py`: 36% → **81%** (+45pp — lazy exports, enable_symbolicai, availability flags)
-  - `demos/demo_temporal_deontic_rag.py`: 0% → **99%** (all demo functions + print_debug_report)
-- logic/integration overall: **58% → 66%** (7571 lines, 2597 missed, 590 more lines covered)
-
-**Session 49 Updates (2026-02-21):**
-- 6 production bug fixes (ProofCache API, ipfs_proof_cache kwargs):
-  - `proof_execution_engine.py:74` — `get_global_cache(max_size=..., default_ttl=...)` → `get_global_cache(maxsize=..., ttl=...)`
-  - `proof_execution_engine.py:243` — `proof_cache.get(str, str)` → `proof_cache.get(str, prover_name=str)`
-  - `proof_execution_engine.py:340` — `proof_cache.put()` → `proof_cache.set()`
-  - `proof_execution_engine.py:768-777` — sat/unsat substring check order fixed (unsat before sat)
-  - `ipfs_proof_cache.py:109` — `super().__init__(max_size=..., cache_dir=...)` → `super().__init__(maxsize=..., ttl=...)`
-  - `ipfs_proof_cache.py:391,416` — `super().get_statistics()` → `super().get_stats()`; removed `super().close()`
-- 91 new GIVEN-WHEN-THEN integration tests covering proof_execution_engine, deontic_logic_converter, ipfs_proof_cache, ipld_logic_storage
-
-  - `deontological_reasoning_utils.py`: 30% → **100%** (extract_keywords, calculate_text_similarity, are_entities_similar, are_actions_similar, normalize_entity/action, extract_conditions/exceptions)
-  - `legal_domain_knowledge.py`: 39% → **96%** (LegalDomainKnowledge — classify, extract_agents, extract_conditions, extract_temporal, identify_domain, extract_legal_entities, validate_deontic_extraction, demonstrate function)
-  - `deontic_query_engine.py`: 30% → **81%** (DeonticQueryEngine — init, load_rule_set, query_obligations/permissions/prohibitions, query_by_NL, check_compliance, find_conflicts, get_agent_summary, factory functions)
-  - `deontological_reasoning.py`: 75% → **85%** (conditional/exception extractors, _is_valid_entity_action, _calculate_confidence, _extract_context, _count_by_modality/entity, _analyze_conflicts, async query/corpus methods)
-  - `logic_verification.py`: 53% → **77%** (all fallback paths for consistency/entailment/proof/syntax/satisfiability/validity; SymbolicAI mock paths)
-  - `logic_verification_utils.py`: 85% → **95%** (verify_consistency/entailment/generate_proof convenience functions, create_logic_verifier factory, unbalanced closing paren edge case)
-  - `temporal_deontic_api.py`: 10% → **52%** (_parse_temporal_context all branches, check_document_consistency_from_parameters, query_theorems, add_theorem)
-- logic/integration overall: **46% → 52%** (7570 lines, 3610 missed, 480 more lines covered)
-- All 116 tests pass with 0 regressions
-
-**Session 46 Updates (2026-02-21):**
-- 3 bug fixes in reasoning/converters:
-  - `deontological_reasoning_types.py:DeonticConflict` — added `id: str = ""` field (was missing; caused `conflict.id` AttributeError in `DeontologicalReasoningEngine.analyze_corpus_for_deontic_conflicts`)
-  - `deontological_reasoning.py:_check_statement_pair` — re-added `id=conflict_id` kwarg to `DeonticConflict(...)` constructor (now valid since field added above)
-  - `modal_logic_extension.py:_convert_to_fol` — fixed import `from .symbolic_fol_bridge` → `from ..symbolic_fol_bridge` (module is in integration root, not converters/)
-- 117 new GIVEN-WHEN-THEN integration tests covering:
-  - `deontological_reasoning.py` (DeonticExtractor, ConflictDetector, DeontologicalReasoningEngine) 0%→85%
-  - `deontological_reasoning_types.py` (DeonticModality, ConflictType, DeonticStatement, DeonticConflict) 0%→90%
-  - `deontological_reasoning_utils.py` (DeonticPatterns) 0%→80%
-  - `logic_verification.py` (LogicVerifier — all fallback paths) 0%→86%
-  - `logic_verification_types.py` / `logic_verification_utils.py` 0%→85%
-  - `deontic_logic_core.py` (DeonticFormula, DeonticRuleSet, DeonticLogicValidator, helpers) +15pp
-  - `modal_logic_extension.py` (AdvancedLogicConverter — all 5 convert paths + detect_logic_type) +20pp
-  - `logic_translation_core.py` (LeanTranslator, CoqTranslator, SMTTranslator) +15pp
-- logic/integration overall: **38% → 55%** (7569 lines, ~3400 missed with full test suite)
-
 > **This document is the single authoritative plan** for refactoring and improving the logic module.  
-> It synthesizes analysis of all 196 markdown files, 265 Python files, and 184+ test files.
+> It synthesizes analysis of all 195 markdown files (69 active, 126 archived), 281 Python files (~93,529 LOC), and 168+ test files.
 
 ---
 
@@ -114,169 +16,176 @@
 1. [Executive Summary](#1-executive-summary)
 2. [Current State Inventory](#2-current-state-inventory)
 3. [Critical Issues](#3-critical-issues)
-4. [Phase 1: Documentation Consolidation](#4-phase-1-documentation-consolidation)
-5. [Phase 2: Code Quality and Test Coverage](#5-phase-2-code-quality-and-test-coverage)
-6. [Phase 3: Feature Completions](#6-phase-3-feature-completions)
-7. [Phase 4: Production Excellence](#7-phase-4-production-excellence)
-8. [Timeline and Priorities](#8-timeline-and-priorities)
-9. [Success Criteria](#9-success-criteria)
-10. [Document Inventory and Disposition](#10-document-inventory-and-disposition)
+4. [Phase 1: Documentation Consolidation](#4-phase-1-documentation-consolidation) ✅ COMPLETE
+5. [Phase 2: Code Quality and Test Coverage](#5-phase-2-code-quality-and-test-coverage) 🔄 In Progress
+6. [Phase 3: Feature Completions](#6-phase-3-feature-completions) ✅ COMPLETE
+7. [Phase 4: Production Excellence](#7-phase-4-production-excellence) 🔄 Ongoing
+8. [Phase 5: Code Reduction — God-Module Splits](#8-phase-5-code-reduction--god-module-splits) ✅ COMPLETE
+9. [Phase 6: Remaining Work and Continuous Improvement](#9-phase-6-remaining-work-and-continuous-improvement-) 🔄 In Progress
+10. [Timeline and Priorities](#10-timeline-and-priorities)
+11. [Success Criteria](#11-success-criteria)
+12. [Document Inventory and Disposition](#12-document-inventory-and-disposition)
 
 ---
 
 ## 1. Executive Summary
 
-The `ipfs_datasets_py/logic/` folder contains a **production-ready neurosymbolic reasoning system** with solid foundations, but suffered from significant **documentation sprawl** accumulated across multiple parallel development sessions.
+The `ipfs_datasets_py/logic/` folder contains a **production-ready neurosymbolic reasoning system** with solid foundations, but accumulated significant **documentation sprawl** and several **oversized Python modules** across multiple parallel development sessions.
 
-### What Was Accomplished (2026-02-10 to 2026-02-19) — Phases 1–3 COMPLETE
+### What Was Accomplished (2026-02-10 to 2026-02-20)
 
 | Component | Status | LOC | Tests |
 |-----------|--------|-----|-------|
 | **TDFOL** (Temporal Deontic FOL) | ✅ Phases 1–12 Complete | 19,311 | 765+ |
 | **CEC Native** (Cognitive Event Calculus) | ✅ Phases 1–3 Complete | 8,547 | 418+ |
 | **CEC Inference Rules** | ✅ All 67 rules, 7 modules | ~3,200 | 120+ |
-| **Integration Layer** | ✅ Complete | ~1,100 | 110+ |
+| **Integration Layer | ✅ Complete (86% coverage, +74 s16) | ~10,000 | 2,259++ |
 | **ZKP Module** | ⚠️ Simulation Only (warnings added) | ~633 | 35+ |
 | **Common Infrastructure** | ✅ Complete + validators | ~2,200 | 86+ |
 | **External Provers** | ✅ Integration Ready | ~800 | 40+ |
-| **MCP Server Tools** | ✅ 24 tools across 10 groups | ~4,500 | 167+ |
-| **TOTAL** | 🟢 Production-Ready Core | ~40,291 | 1,739+ |
+| **MCP Server Tools** | ✅ 27 tools across 12 groups | ~4,500 | 167+ |
+| **Documentation** | ✅ Consolidated (69 active, 126 archived) | — | — |
+| **TOTAL** | 🟢 Production-Ready Core | ~93,431 | 3,731+ |
 
-### What Needs Work (Phase 4 — Ongoing)
+### What Needs Work (Phases 2, 4 — Remaining)
 
-1. **NL Accuracy** — TDFOL 80% → 90%+, CEC 60% → 75%+
+1. **NL Accuracy** — TDFOL 80% → 90%+ (needs spaCy), CEC 60% → 75%+
 2. **CI Integration** — performance baselines not yet wired into GitHub Actions
-3. **Multi-language NL** — Spanish, French, German (medium priority)
-4. **Dependency audit** — `logic[api]` extras group for pip install
+3. **Multi-language NL** — Spanish coverage (French/German stubs exist)
+4. **Integration test coverage** — `integration/` at 86% (target 90%+); SymbolicAI-only branches unreachable without symai installed (accounts for ~8% gap)
 
 ---
 
 ## 2. Current State Inventory
 
-### 2.1 Python Files
+### 2.1 Python Files (Updated 2026-02-20)
 
-| Directory | Files | LOC (approx) | Status |
-|-----------|-------|-------------|--------|
-| `logic/TDFOL/` | ~35 | 19,311 | ✅ Production |
-| `logic/CEC/native/` | ~30 | 8,547 | ✅ Production |
-| `logic/CEC/native/inference_rules/` | 6 | ~2,000 | 🔄 Expanding |
-| `logic/integration/` | ~8 | ~1,100 | ✅ Complete |
-| `logic/fol/` | ~15 | ~3,500 | ✅ Production |
-| `logic/deontic/` | ~8 | ~2,000 | ✅ Production |
-| `logic/common/` | ~5 | ~800 | ✅ Complete |
-| `logic/zkp/` | ~8 | ~800 | ⚠️ Simulation |
-| `logic/external_provers/` | ~10 | ~1,500 | ✅ Integration |
-| `logic/types/` | ~3 | ~500 | ✅ Complete |
-| `logic/*.py` (root) | ~10 | ~2,000 | ✅ Complete |
-| **TOTAL** | **~138+** | **~42,000** | 🟢 Strong |
+| Directory | Files | LOC (approx) | Status | Notes |
+|-----------|-------|-------------|--------|-------|
+| `logic/TDFOL/` | ~35 | 19,311 | ✅ Production | Large files: performance_profiler.py (1,407), performance_dashboard.py (1,314) |
+| `logic/CEC/native/` | ~30 | 8,547 | ✅ Production | prover_core.py split (649 LOC + extended_rules) |
+| `logic/CEC/native/inference_rules/` | 8 | ~3,200 | ✅ Complete | 67 rules across 7 modules |
+| `logic/integration/` | ~30 | ~10,000 | ✅ Complete | God-module splits complete (Phase 5 ✅) |
+| `logic/fol/` | ~15 | ~3,500 | ✅ Production | — |
+| `logic/deontic/` | ~8 | ~2,000 | ✅ Production | — |
+| `logic/common/` | ~5 | ~800 | ✅ Complete | validators, converters |
+| `logic/zkp/` | ~8 | ~800 | ⚠️ Simulation | Simulation warnings added |
+| `logic/external_provers/` | ~10 | ~1,500 | ✅ Integration | — |
+| `logic/types/` | ~3 | ~500 | ✅ Complete | Shared type definitions |
+| `logic/*.py` (root) | ~10 | ~2,000 | ✅ Complete | api.py, cli.py, etc. |
+| **TOTAL** | **~281** | **~93,529** | 🟢 Strong | — |
 
-### 2.2 Test Files
+#### Files Requiring Decomposition (Phase 5 ✅ COMPLETE)
+
+| File | Original LOC | After Split | Status |
+|------|-------------|-------------|--------|
+| `CEC/native/prover_core.py` | 2,927 | 649 + extended_rules 1,116 | ✅ Done |
+| `CEC/native/dcec_core.py` | 1,399 | 849 + dcec_types 379 (171 LOC removed/deduplicated during split) | ✅ Done |
+| `integration/reasoning/proof_execution_engine.py` | 968 | 460 + _prover_backend_mixin 527 | ✅ Done |
+| `integration/interactive/interactive_fol_constructor.py` | 787 | 521 + _fol_constructor_io 299 (33 LOC added for compat shims) | ✅ Done |
+| `integration/reasoning/deontological_reasoning.py` | 776 | 482 + _deontic_conflict_mixin 304 | ✅ Done |
+| `integration/reasoning/logic_verification.py` | 692 | 435 + _logic_verifier_backends_mixin 290 | ✅ Done |
+| `TDFOL/performance_profiler.py` | 1,407 | — | 🟡 Optional (see §8.7) |
+| `TDFOL/performance_dashboard.py` | 1,314 | — | 🟡 Optional (see §8.7) |
+
+### 2.2 Test Files (Updated 2026-02-20, session 14)
 
 | Test Directory | Files | Tests | Pass Rate |
 |---------------|-------|-------|-----------|
 | `tests/logic/TDFOL/` | ~20 | 765+ | ~91.5% |
 | `tests/logic/CEC/native/` | ~13 | 418+ | ~80-85% |
-| `tests/logic/integration/` | ~5 | 110+ | ~90% |
-| `tests/logic/common/` | ~4 | 50+ | ~95% |
+| `tests/unit_tests/logic/integration/` | 17 | 2,075+ | ~99% (106 skipped) |
+| `tests/logic/common/` | ~4 | 86+ | ~95% |
 | `tests/logic/deontic/` | ~3 | ~40 | ~90% |
 | `tests/logic/fol/` | ~2 | ~30 | ~90% |
-| Other | ~8 | ~60 | ~85% |
-| **TOTAL** | **~55** | **~1,473+** | **~87%** |
+| `tests/logic/zkp/` | ~20 | 35+ | ~80% |
+| Other (MCP, integration) | ~170+ | ~282+ | ~85% |
+| **TOTAL** | **~252** | **~3,731+** | **~96%** |
 
-### 2.3 Markdown Files (The Core Problem)
+**Integration Coverage Milestone (Session 15, 2026-02-20):**  
+`ipfs_datasets_py/logic/integration/` — **86%** (7,892 lines, 1,108 uncovered)  
+Remaining uncovered lines are primarily SymbolicAI-gated code paths (~6%) that require `symai` to be installed,  
+plus ~6% in bridges/tdfol_cec_bridge.py/tdfol_grammar_bridge.py grammar CEC paths (require specific CEC modules loaded).
 
-| Directory | Current Count | Target Count | Action |
-|-----------|--------------|-------------|--------|
-| `logic/` (root) | 39 | 20 | Archive 19 files |
-| `logic/TDFOL/` | 52 | 15 | Archive 37 files |
-| `logic/CEC/` | 31 | 10 | Archive 21 files |
-| `logic/CEC/native/` | 2 | 2 | Keep as-is |
-| `logic/zkp/` | 22 | 8 | Archive 14 files |
-| `logic/zkp/ARCHIVE/` | 10 | 10 | Already archived |
-| `logic/docs/archive/` | ~25 | ~25 | Already archived |
-| `logic/integration/` | 2 | 2 | Keep as-is |
-| `logic/common/` | 2 | 2 | Keep as-is |
-| Other | ~11 | ~8 | Minor cleanup |
-| **TOTAL** | **196** | **~102** | **Archive ~94 files** |
+### 2.3 Markdown Files (✅ RESOLVED)
 
-> **Note:** "Archive" means moving to an appropriate `ARCHIVE/` or `docs/archive/` subdirectory, never deleting.
+| Directory | Before | After (2026-02-20) | Status |
+|-----------|--------|-------------------|--------|
+| `logic/` (root) | 39 | 20 | ✅ Done |
+| `logic/TDFOL/` | 52 | 15 | ✅ Done |
+| `logic/CEC/` (active) | 31 | 12 | ✅ Done |
+| `logic/zkp/` (active) | 22 | 8 | ✅ Done |
+| All ARCHIVE/ dirs | — | 126 | ✅ Archived |
+| **TOTAL active** | **196** | **69** | ✅ **65% reduction** |
 
-### 2.4 Parallel Development Branches (As of 2026-02-19)
+> **Documentation goal met:** 69 active files across all directories (well under the 102 target).
 
-The following work streams are in progress on separate branches and need to be coordinated:
+### 2.4 Current Branch
 
 | Branch | Focus | Status |
 |--------|-------|--------|
-| `copilot/refactor-improvement-plan-cec` | CEC inference rules Phase 1–3 | 🔄 Active |
-| `copilot/finish-phase-2-and-3` | TDFOL Phase 3 (139 tests) | 🔄 Active |
-| `copilot/refactor-and-improve-tdfol-folder` | TDFOL NL consolidation | 🔄 Active |
-| `copilot/create-refactoring-plan-markdown` | This plan document | 🔄 Active |
+| `copilot/create-refactoring-plan-markdown-yet-again` | Continuing plan implementation | 🔄 Active |
 
 ---
 
-## 3. Critical Issues
+## 3. Critical Issues (Updated 2026-02-20)
 
-### Issue 1: Documentation Sprawl (P0 — Critical)
+### Issue 1: Documentation Sprawl (P0) — ✅ RESOLVED
 
-**Problem:** 196 markdown files across the logic folder. Previous refactoring reduced root level from 61→30, but parallel work sessions each added 5–20 new markdown files (progress reports, completion summaries, phase reports), causing documentation to balloon back to 196.
-
-**Impact:** Developers cannot find relevant documentation; it's buried under progress reports.
-
-**Root Cause:** Each AI session creates new documentation files but doesn't clean up old ones.
-
-**Solution:** Systematic archiving policy (see Phase 1).
+**Resolution:** Phase 1 complete. Reduced from 196 → 69 active files (65% reduction). All historical files moved to ARCHIVE/ subdirs. Documentation maintenance policy established (see Section 7.4).
 
 ---
 
-### Issue 2: CEC Inference Rules Fragmentation (P1 — High)
+### Issue 2: God Modules — Several Files > 700 LOC (P1) — ✅ RESOLVED
 
-**Problem:** The CEC native refactoring extracted 88 inference rules into 9 modules on `copilot/refactor-improvement-plan-cec`, but only 5 modules are on the main/current branch (base, propositional, temporal, deontic, cognitive). Modules for modal, resolution, and specialized rules are pending merge.
+**Resolution (Phase 5 complete 2026-02-20):** All 6 oversized files have been split into focused, single-responsibility modules with backward-compatible re-exports:
 
-**Impact:** Missing 43+ inference rules in the current codebase.
-
-**Solution:** Merge the CEC refactoring branch (see Phase 2).
+| File | Before | After | Status |
+|------|--------|-------|--------|
+| `CEC/native/prover_core.py` | 2,927 LOC | 649 + extended_rules 1,116 | ✅ Done |
+| `CEC/native/dcec_core.py` | 1,399 LOC | 849 + dcec_types 379 | ✅ Done |
+| `integration/reasoning/proof_execution_engine.py` | 968 LOC | 460 + _prover_backend_mixin 527 | ✅ Done |
+| `integration/interactive/interactive_fol_constructor.py` | 787 LOC | 521 + _fol_constructor_io 299 | ✅ Done |
+| `integration/reasoning/deontological_reasoning.py` | 776 LOC | 482 + _deontic_conflict_mixin 304 | ✅ Done |
+| `integration/reasoning/logic_verification.py` | 692 LOC | 435 + _logic_verifier_backends_mixin 290 | ✅ Done |
 
 ---
 
 ### Issue 3: NL Processing Accuracy Gaps (P1 — High)
 
-**Problem:** Both TDFOL (80% accuracy, 69 test failures) and CEC (60% coverage) have natural language processing gaps.
+**Problem:** Both TDFOL (80% accuracy, ~69 test failures) and CEC (60% coverage) have natural language processing gaps.
 
 **Impact:** Limits usability for real-world legal/technical text processing.
 
-**Solution:** NL improvement sprints (see Phase 3).
+**Solution:** NL improvement sprints (Phase 2.2 and 2.3 below).
 
 ---
 
-### Issue 4: No REST API (P2 — Medium)
+### Issue 4: CI Performance Integration (P2 — Medium)
 
-**Problem:** The logic module exposes Python APIs only. No HTTP interface for external consumers.
+**Problem:** Performance baselines exist (14x cache speedup validated) but are not wired into GitHub Actions as regression gates.
 
-**Impact:** Cannot be consumed by non-Python services or web applications.
+**Impact:** Performance regressions can be introduced silently.
 
-**Solution:** FastAPI-based REST API implementation (see Phase 3).
-
----
-
-### Issue 5: ZKP Module Misleading Status (P1 — High)
-
-**Problem:** ZKP module is simulation-only but README and some docs imply production-readiness.
-
-**Impact:** Users may rely on it for security-critical applications.
-
-**Solution:** Clear warning labels and a production upgrade roadmap (see Phase 2).
+**Solution:** Add performance regression test workflow (Phase 4.1).
 
 ---
 
-## 4. Phase 1: Documentation Consolidation
+### Issue 5: ZKP Module Misleading Status (P1) — ✅ RESOLVED
 
-**Duration:** 1–2 weeks  
-**Priority:** P0 — Do First  
-**Goal:** Reduce 196 markdown files to ~102, create clear navigation, eliminate confusion
+**Resolution:** `warnings.warn()` added to `ZKPProver.__init__` and `ZKPVerifier.__init__`. Both classes state simulation-only status prominently in docstrings.
 
-### 4.1 Root Logic Level (39 → 20 files)
+---
 
-**Keep (20 essential files):**
+## 4. Phase 1: Documentation Consolidation ✅ COMPLETE
+
+**Duration:** Completed 2026-02-19  
+**Priority:** P0 — Done  
+**Result:** Reduced from 196 → 69 active markdown files (65% reduction)
+
+### 4.1 Root Logic Level — ✅ Done (20 files)
+
+Active files maintained:
 
 | File | Purpose |
 |------|---------|
@@ -324,9 +233,9 @@ The following work streams are in progress on separate branches and need to be c
 - `FALLBACK_BEHAVIORS.md` (merge into KNOWN_LIMITATIONS.md)
 - `ADVANCED_FEATURES_ROADMAP.md` (merge into EVERGREEN_IMPROVEMENT_PLAN.md)
 
-### 4.2 TDFOL Directory (52 → 15 files)
+### 4.2 TDFOL Directory — ✅ Done (15 files, historical in TDFOL/ARCHIVE/)
 
-**Keep (15 essential files):**
+Active files maintained (15):
 
 | File | Purpose |
 |------|---------|
@@ -359,7 +268,7 @@ All other TDFOL markdown files including:
 - `IMPLEMENTATION_QUICK_START_2026.md` (merge into README.md)
 - `PHASE_13_WEEK_1_COMPLETE.md` and all similar completion reports
 
-### 4.3 CEC Directory (31 → 10 files)
+### 4.3 CEC Directory — ✅ Done (12 active files, historical in CEC/ARCHIVE/)
 
 **Keep (10 essential files):**
 
@@ -388,7 +297,7 @@ All other TDFOL markdown files including:
 - `PHASE_3_COMPLETE_AND_PHASES_4_8_SUMMARY.md`, `PHASE_3_TRACKER.md`
 - `COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md` (superseded by 2026 version)
 
-### 4.4 ZKP Directory (22 → 8 files)
+### 4.4 ZKP Directory — ✅ Done (8 active files, historical in zkp/ARCHIVE/)
 
 **Keep (8 essential files):**
 
@@ -444,95 +353,111 @@ mkdir -p ipfs_datasets_py/logic/zkp/ARCHIVE/
 
 ## 5. Phase 2: Code Quality and Test Coverage
 
-**Duration:** 2–4 weeks  
+**Duration:** 2026-02-19 (partial) → ongoing  
 **Priority:** P1 — High  
-**Status:** ✅ COMPLETE (2026-02-19)  
-**Goal:** Complete CEC Phase 3, fix test failures, improve code quality
+**Status:** 🔄 In Progress (CEC inference rules + ZKP warnings COMPLETE; NL improvements pending)  
+**Goal:** Complete NL accuracy improvements, fix test failures, improve code quality
 
-### 5.1 CEC Inference Rules Completion
-
-**Status:** ✅ COMPLETE — modal.py, resolution.py, specialized.py added (20 new rules, 67 total)
+### 5.1 CEC Inference Rules Completion — ✅ COMPLETE
 
 **Completed:**
 
 1. ✅ **Added modal.py** — 5 rules: NecessityElimination, PossibilityIntroduction, NecessityDistribution, PossibilityDuality, NecessityConjunction
 2. ✅ **Added resolution.py** — 6 rules: ResolutionRule, UnitResolutionRule, FactoringRule, SubsumptionRule, CaseAnalysisRule, ProofByContradictionRule
 3. ✅ **Added specialized.py** — 9 rules: BiconditionalIntroduction/Elimination, ConstructiveDilemma, DestructiveDilemma, ExportationRule, AbsorptionRule, AdditionRule, TautologyRule, CommutativityConjunction
-4. ✅ **Updated `__init__.py`** — exports all 67 rules across 7 rule modules
+4. ✅ **Updated `__init__.py`** — exports all 67 rules across 8 modules (base + 7 rule modules)
 
 **Acceptance Criteria:**
 - [x] `CEC/native/inference_rules/` contains 8 modules (base + 7 rule modules)
-- [x] 67 CEC inference rules implemented and tested (60 new tests, all passing)
-- [x] Performance: rule instantiation <1ms, can_apply() <0.5ms (baselines added)
+- [x] 67 CEC inference rules implemented and tested (60+ new tests passing)
+- [x] Performance: rule instantiation <1ms, can_apply() <0.5ms
 
-### 5.2 TDFOL NL Accuracy Improvement
-
-**Status:** 🔄 Deferred — requires separate PR on `copilot/refactor-and-improve-tdfol-folder`
+### 5.2 TDFOL NL Accuracy Improvement — 🔄 Pending
 
 **Remaining Work:**
 
-1. **Diagnose 69 NL test failures** — categorize by failure type
-2. **Improve pattern matching** — add/refine patterns for common failure cases
-3. **Target accuracy:** 90%+ on legal/deontic text
+1. **Diagnose ~69 NL test failures** — categorize by failure type (pattern gap vs. parser error)
+2. **Improve pattern matching** — add/refine patterns for obligation, prohibition, temporal constructs
+3. **Target accuracy:** 90%+ on legal/deontic text (from current ~80%)
 
 **Acceptance Criteria:**
-- [ ] NL test failures reduced from 69 to <20
+- [ ] NL test failures reduced from ~69 to <20
 - [ ] NL conversion accuracy: 80% → 90%+
+- [ ] Coverage: `TDFOL/nl/tdfol_nl_patterns.py` (826 LOC) tested with 50+ new cases
 
-### 5.3 CEC NL Coverage Improvement
+### 5.3 CEC NL Coverage Improvement — ✅ PARTIAL COMPLETE
 
-**Status:** 🔄 Deferred — future work item
+**Completed (2026-02-20):**
+1. ✅ Fixed PROHIBITION pattern priority in `nl_converter.py` — "must not X" now correctly produces `F(X)` instead of `O(not(X))`
+2. ✅ Fixed cognitive-before-deontic pattern order — "believes that X must Y" now correctly produces `B(O(Y))` nested formula
+3. ✅ 260 NL parser tests pass (FR/DE/ES/EN + domain vocabularies)
+4. ✅ All 36 NL converter tests pass (up from 34)
+
+**Remaining Work:**
+- [ ] Expand grammar patterns for edge cases in `CEC/native/grammar_rules.yaml`
+- [ ] Add Spanish-language `CEC/nl/` vocabulary entries
 
 **Acceptance Criteria:**
-- [ ] NL coverage: 60% → 75%+
-- [ ] Added 50+ new conversion patterns
+- [x] PROHIBITION pattern prioritized correctly
+- [x] Cognitive nesting patterns fixed
+- [x] `CEC/nl/` parsers (french_parser.py, german_parser.py, spanish_parser.py) have 260+ tests passing
 
-### 5.4 ZKP Module Status Clarification
-
-**Status:** ✅ COMPLETE — runtime warnings added
+### 5.4 ZKP Module Status Clarification — ✅ COMPLETE
 
 **Completed:**
 
-1. ✅ **Added `warnings.warn()` to `ZKPProver.__init__`** — explicit simulation warning at instantiation time
-2. ✅ **Added `warnings.warn()` to `ZKPVerifier.__init__`** — explicit simulation warning at instantiation time
-3. ✅ **Updated docstrings** — both classes state simulation-only status prominently
+1. ✅ `warnings.warn()` added to `ZKPProver.__init__`
+2. ✅ `warnings.warn()` added to `ZKPVerifier.__init__`
+3. ✅ Docstrings state simulation-only status prominently
 
-**Acceptance Criteria:**
-- [x] `ZKPProver` warns at instantiation: "SIMULATED proofs only. NOT cryptographically secure."
-- [x] `ZKPVerifier` warns at instantiation: "SIMULATED proofs only. NOT cryptographically secure."
-- [x] Docstrings reference `PRODUCTION_UPGRADE_PATH.md` for upgrade instructions
-
-### 5.5 Test Coverage Gaps
-
-**Status:** ✅ PARTIAL — 60 new CEC tests added
+### 5.5 Test Coverage Gaps — ✅ MAJOR PROGRESS (Sessions 1–14)
 
 **Completed:**
 - [x] 60 new tests for CEC modal/resolution/specialized rules (all passing)
 - [x] Package export tests covering all 67+ rules in `__all__`
+- [x] `test_tdfol_optimization.py` strategy method mismatch fixed (method now reflects enum value)
+- [x] `test_llm.py` multiformats tests: SHA256 fallback in `_make_key`; CID-specific test skipped
+- [x] `test_countermodel_visualizer.py` d3.v7 URL assertion updated
+- [x] **Sessions 9–14 (2026-02-20):** Integration layer 50% → **86%** (2,075 tests, 106 skipped)
+- [x] **Session 15 (2026-02-20):** Integration layer 86% (110 tests; tdfol_grammar_bridge 77%→79%, tdfol_cec_bridge 72%→77%, deontic_logic_converter 83%→85%, caselaw_bulk_processor 84%→87%, neurosymbolic_api 88%→92%)
+- [x] **Session 16 (2026-02-21):** Integration layer 86% → **86%** (74 tests; symbolic_contracts field validators/FOLSyntaxValidator/fallback, tdfol_cec_bridge mocked prover paths PROVED/DISPROVED/TIMEOUT/UNKNOWN, InteractiveFOLConstructor low-confidence path, DeontologicalReasoning conditional+exception, TemporalDeonticAPI exception handlers, TDFOLGrammarBridge available=False paths, CECBridge prove paths, LegalDomainKnowledge edge paths)
+- [x] **Session 17 (2026-02-21):** Integration layer 86% → **87%** (57 new tests + 5 test bug fixes; CECBridge router/cec strategy + exception paths; FOLConstructorIOMixin export_session exception paths + _generate_insights branches; TemporalDeonticAPI async exception paths; IPLDLogicStorage IPLD exception fallback + collection filesystem + provenance find_related_formulas; ProverInstaller sudo paths; NaturalLanguageTDFOLInterface understand/explain/reason; EmbeddingEnhancedProver compute_similarity/find_similar/_get_embedding; NeuralSymbolicCoordinator NEURAL_ONLY + HYBRID embedding paths; init guard tests)
+- [x] **Session 18 (2026-02-21):** Integration layer 87% → **88%** ✅ (53 new tests; EmbeddingEnhancedProver mock-model paths 99%; HybridConfidenceScorer depth branches 3-5/6-10/>10 + operator>7 + both/symbolic-only/neural-only structural 98%; NeuralSymbolicCoordinator ImportError handler via sys.modules hack + complex/medium+embeddings→HYBRID 97%; NeurosymbolicReasoner _detect_capabilities + prove with axioms + query paths; NeurosymbolicGraphRAG proof_caching init + no-coordinator prove + pipeline_stats; DeontologicalReasoning conditional/exception permission/prohibition extraction + corpus error/outer-exception handlers; DeonticConflictMixin JURISDICTIONAL conflict (PROHIBITION+OBLIGATION, different docs) + semantic_similarity + conditional_conflict_exists + modalities_conflict all pairs; ProofExecutionEngine _maybe_auto_install env-var args + _common_bin_dirs OSError + _find_executable with extra + _test_command timeout + prove_deontic_formula cache UNSUPPORTED)
+  - Sessions 9–13: reasoning/, fol/, converters/, bridges/, cec_bridge, external_provers,  
+    logic_translation_core, symbolic_contracts, ipfs_proof_cache, deontic_logic_core  
+  - Session 14 (14+14b+14c): demos, document_consistency_checker, temporal_deontic_api,  
+    symbolic_contracts (non-symai), deontic_logic_converter, symbolic_logic_primitives,  
+    caselaw_bulk_processor, tdfol_grammar_bridge, tdfol_cec_bridge, ipld_logic_storage,  
+    legal_symbolic_analyzer, embedding_prover, reasoning_coordinator
+  - **4 source bugs fixed:** demo_temporal_deontic_rag imports, caselaw_bulk_processor DeonticRuleSet kwargs, cec_bridge proof_cache method names
+- [x] **Session 15 (2026-02-20):** 110 new GIVEN-WHEN-THEN tests covering:
+  - TDFOLGrammarBridge: parse_natural_language, _fallback_parse (implication/atom/empty/long-arrow), formula_to_natural_language (formal/casual/technical), batch_parse, analyze_parse_quality, NaturalLanguageTDFOLInterface.reason all branches (parse errors, uppercase-only premise/conclusion fallback)
+  - TDFOLCECBridge: to_target_format, tdfol_to_dcec_string, from_target_format, get_applicable_cec_rules, prove_with_cec, EnhancedTDFOLProver (no_cec/with_cec/override), create_enhanced_prover
+  - DeonticLogicConverter: convert_relationships_to_logic (obligation/permission/prohibition/unknown), _reset_statistics, _update_statistics (all 3 operators), _normalize_proposition, _validate_rule_set_consistency, _extract_temporal_conditions (enabled/disabled), _synthesize_complex_rules (no symbolic), demonstrate_deontic_conversion
+  - CaselawBulkProcessor: _extract_jurisdiction_from_path (4 branches), _extract_date_from_filename (3 formats + no-date), _is_legal_proposition, _extract_agent_from_context (6 branches), _passes_filters, _create_knowledge_graph_from_document, _extract_formulas_pattern_matching (obligation/permission/prohibition), _extract_theorems_sequential/parallel (async), _discover_caselaw_documents, _add_theorem_to_store (with/without source), ProcessingStats properties, create_bulk_processor factory
+  - NeuralSymbolicCoordinator: prove SYMBOLIC_ONLY/NEURAL_ONLY(fallback)/HYBRID/AUTO/invalid/string_goal/string_axioms
+  - NeurosymbolicGraphRAG: process_document (auto_prove True/False), get_pipeline_stats, check_consistency, export_knowledge_graph, query, get_document_summary, _extract_formulas, _prove_theorems
+  - NeurosymbolicReasoner: get_capabilities (both builds), parse (tdfol/auto), prove, explain, query, add_knowledge, get_reasoner singleton
 
 **Remaining:**
+- [ ] Integration tests for SymbolicAI-gated code paths (require `pip install symbolicai`)
+- [ ] E2E tests: legal text → formal proof pipeline
+- [ ] Stress tests for proof search under timeout conditions
 - [ ] Fix 69 NL test failures (see 5.2)
 - [ ] Add 15+ integration tests for TDFOL↔CEC cross-module interactions
+- [ ] Fix `ForwardChainingStrategy` infinite loop on unknown formulas (pre-existing hang)
 
 ---
 
-## 6. Phase 3: Feature Completions
+## 6. Phase 3: Feature Completions ✅ COMPLETE
 
-**Duration:** 4–8 weeks  
-**Priority:** P2 — Medium  
-**Status:** 🔄 Partially COMPLETE (2026-02-19)  
+**Duration:** Completed 2026-02-19  
+**Priority:** P2 — Done  
 **Goal:** High-value feature additions
 
-### 6.1 MCP Server Integration (replaces REST API)
+### 6.1 MCP Server Integration — ✅ COMPLETE
 
-**Status:** ✅ COMPLETE — 24 MCP tools across 10 tool groups (2026-02-19)
-
-> **Architecture decision:** The FastAPI `logic/api_server.py` has been deprecated
-> in favour of native MCP tools registered in `mcp_server/tools/logic_tools/`.
-> This avoids the FastAPI + uvicorn dependency and integrates the logic module
-> directly with the MCP server already used by AI assistants throughout the codebase.
-
-**Tool Groups (24 tools total):**
+**27 MCP tools across 12 tool groups (updated from earlier count):**
 
 | Tool Group | File | Tools | Description |
 |------------|------|-------|-------------|
@@ -549,40 +474,23 @@ mkdir -p ipfs_datasets_py/logic/zkp/ARCHIVE/
 | Capabilities | `logic_capabilities_tool.py` | 2 | Discovery + health check |
 | GraphRAG | `logic_graphrag_tool.py` | 2 | KG construction + RAG verification |
 
-**Migration from former REST endpoints:**
+**167+ MCP logic tool tests passing.**
 
-```
-GET  /health               → logic_health
-GET  /capabilities         → logic_capabilities
-POST /prove                → tdfol_prove / cec_prove
-POST /convert/fol          → tdfol_convert
-POST /convert/dcec         → tdfol_convert
-POST /parse                → tdfol_parse / cec_parse
-```
-
-**Validated:** 167 MCP tool tests passing (50 original + 67 new + existing)
-
-### 6.2 TDFOL Phase 3 Week 2: Documentation Enhancement
-
-**Status:** 🔄 Deferred — Phase 3 Week 1 complete (139 tests), Week 2 pending
+### 6.2 TDFOL Documentation Enhancement — 🔄 Pending
 
 **Acceptance Criteria:**
 - [ ] 100% of public classes/methods have docstrings
 - [ ] Usage examples in all major module docstrings
 - [ ] API_REFERENCE.md updated with new test coverage
 
-### 6.3 Multi-Language NL Support
+### 6.3 Multi-Language NL Support — 🔄 In Progress (FR/DE stubs exist)
 
-**Priority:** Medium  
-**Estimated Effort:** 4–6 weeks
+**Status:** `CEC/nl/french_parser.py` and `german_parser.py` exist; Spanish stub pending
 
-**Target Languages:** Spanish, French, German (first round)
-
-**Implementation:**
-1. Extract language-specific patterns from grammar YAML
-2. Add translation dictionaries for key logical terms
-3. Implement language detection
-4. Create language-specific test suites
+**Acceptance Criteria:**
+- [ ] Spanish parser added (`CEC/nl/spanish_parser.py`)
+- [ ] All three parsers reach 70%+ accuracy on legal text samples
+- [ ] Language detection integrated into main NL pipeline
 
 **Acceptance Criteria:**
 - [ ] Spanish NL → TDFOL/DCEC conversion (80%+ accuracy)
@@ -614,195 +522,442 @@ POST /parse                → tdfol_parse / cec_parse
 
 ---
 
-## 7. Phase 4: Production Excellence
+## 7. Phase 4: Production Excellence 🔄 Ongoing
 
-**Duration:** Ongoing  
-**Priority:** Continuous  
-**Status:** 🔄 Partially COMPLETE (2026-02-19)  
+**Duration:** Continuous  
+**Priority:** P1/P2  
 **Goal:** Maintain and improve production quality
 
 ### 7.1 Performance Monitoring
 
-**Status:** ✅ COMPLETE — Performance regression tests added
+**Status:** ✅ Baseline tests added, CI integration pending
 
 **Completed:**
-
-1. ✅ **Added `tests/unit_tests/logic/test_performance_baselines.py`** — 13 tests covering:
-   - CEC inference rule operations (<1ms instantiation, <0.5ms can_apply)
-   - Input validator performance (<0.1ms)
-   - REST API endpoint latency (<50ms health, <100ms capabilities)
-   - Import time (<2s for inference_rules package)
+- [x] `tests/unit_tests/logic/test_performance_baselines.py` — 13+ tests
+- [x] CEC rule instantiation <1ms, can_apply() <0.5ms (validated)
+- [x] Cache speedup: 14x (validated in proof cache)
+- [x] Import time < 2s (validated)
 
 **Remaining:**
-- [ ] CI integration for performance baselines
-- [ ] Alert when proof times exceed 2x baseline
-
-**Key Metrics Verified:**
-- [x] Rule instantiation: <1ms ✅
-- [x] can_apply(): <0.5ms ✅
-- [x] Validator: <0.1ms ✅
-- [x] REST API health: <50ms ✅
+- [ ] Wire performance baselines into GitHub Actions (fail PR if >2x regression)
+- [ ] Alert on proof times exceeding 2x baseline
 
 ### 7.2 Security Hardening
 
-**Status:** ✅ COMPLETE — Input validation module added
+**Status:** ✅ Core security complete
 
 **Completed:**
-
-1. ✅ **Added `logic/common/validators.py`** — 5 validation functions:
-   - `validate_formula_string()` — size limits, injection pattern detection
-   - `validate_axiom_list()` — count limits, per-axiom validation
-   - `validate_logic_system()` — allowlist of supported logics
-   - `validate_timeout_ms()` — bounds checking (10ms–60s)
-   - `validate_format()` — supported format allowlist
-2. ✅ **Exported from `common/__init__.py`** — all 5 validators
-3. ✅ **REST API uses Pydantic validation** — input size limits on all endpoints
-4. ✅ **ZKP runtime warnings** — `warnings.warn()` in ZKPProver/ZKPVerifier
-5. ✅ **36 validator tests** — all passing
+- [x] `logic/common/validators.py` — 5 validators with injection detection
+- [x] All 5 validators exported from `common/__init__.py`
+- [x] ZKP runtime warnings (`warnings.warn()`)
+- [x] 36 validator tests
 
 **Remaining:**
-- [ ] Rate limiting for REST API
-- [ ] Formal ZKP security audit
+- [ ] Rate limiting for MCP tool calls
+- [ ] Formal ZKP security audit before production upgrade
 
 ### 7.3 Dependency Management
 
 **Current State:** 70+ optional dependency graceful fallbacks
 
-**Policy:**
-1. Core module must work with zero optional deps
-2. Optional deps categorized: `[logic]`, `[logic-full]`, `[logic-api]`
-3. All optional deps behind lazy imports
-4. Quarterly dependency updates
-
 **Required Actions:**
 - [ ] Audit all ImportError handlers — ensure all are tested
-- [ ] Create `logic[api]` extras for FastAPI + uvicorn
+- [x] Create `logic[api]` extras group in `setup.py` for FastAPI + uvicorn (`logic-api` key)
 - [ ] Document minimum vs recommended vs full dependency sets
-- [ ] CI test matrix: bare Python 3.12 + core only
-
-**Current State:** 70+ optional dependency graceful fallbacks
-
-**Policy:**
-1. Core module must work with zero optional deps
-2. Optional deps categorized: `[logic]`, `[logic-full]`, `[logic-api]`
-3. All optional deps behind lazy imports
-4. Quarterly dependency updates
-
-**Required Actions:**
-- [ ] Audit all ImportError handlers — ensure all are tested
-- [ ] Create `logic[api]` extras for FastAPI + uvicorn
-- [ ] Document minimum vs recommended vs full dependency sets
-- [ ] CI test matrix: bare Python 3.12 + core only
+- [ ] CI test matrix: bare Python 3.12 + core dependencies only
 
 ### 7.4 Documentation Maintenance Policy
 
-To prevent future documentation sprawl:
-
-**Rules:**
+**Rules (enforced from 2026-02-19 onward):**
 1. **Never create new markdown files in active directories** for progress reports
 2. **Use git commit messages** for progress tracking (not markdown files)
 3. **Archive immediately** any completion report after the work is merged
 4. **One status document** per subsystem, updated in place (don't create new ones)
 5. **Quarterly review** — archive any document not referenced in 90 days
 
-**Naming Convention:**
-- Current plans: `PLAN_*.md` or `ROADMAP_*.md`
-- Status: `STATUS.md` (single file, updated in place)
-- Archived: `ARCHIVE/[YYYY-MM-DD]_*.md` (with date prefix)
+---
+
+## 8. Phase 5: Code Reduction — God-Module Splits ✅ COMPLETE
+
+**Duration:** 3–5 weeks  
+**Priority:** P1 — Important for maintainability  
+**Goal:** Break up modules >700 LOC into focused, single-responsibility components
+
+### 8.1 `CEC/native/prover_core.py` (2,927 → ~4 files × <600 LOC) 🔴 Critical
+
+**Proposed Split:**
+
+| New File | Responsibility | Est. LOC |
+|----------|---------------|---------|
+| `prover_core.py` | Core proof search entry points only | ~400 |
+| `proof_strategies.py` | Strategy pattern implementations | ~500 |
+| `proof_cache_manager.py` | Cache management and CID operations | ~350 |
+| `proof_result_builder.py` | Result assembly, formatting, serialization | ~300 |
+
+**Approach:**
+1. Extract `ProofStrategy` subclasses to `proof_strategies.py`
+2. Extract cache I/O methods to `proof_cache_manager.py`
+3. Extract result building methods to `proof_result_builder.py`
+4. Keep `prover_core.py` as thin orchestration layer
+5. Add `__all__` and deprecation shims for any moved public names
+6. Add tests for each new module
+
+**Acceptance Criteria:**
+- [x] `prover_core.py` reduced to <600 LOC
+- [x] All existing `prover_core` tests still pass
+- [x] New tests added for split modules (20+ tests)
+- [x] Import compatibility shims in place for any moved symbols
+
+### 8.2 `CEC/native/dcec_core.py` (1,399 → ~2 files × <700 LOC) 🟠 High
+
+**Proposed Split:**
+
+| New File | Responsibility | Est. LOC |
+|----------|---------------|---------|
+| `dcec_core.py` | Core DCEC data model and formula types | ~600 |
+| `dcec_inference.py` | Inference engine and rule dispatch | ~600 |
+
+**Approach:**
+1. Separate pure data model (Formula, Term, Atom classes) from inference logic
+2. Move rule application methods to `dcec_inference.py`
+3. Keep shared types in `dcec_core.py`
+
+**Acceptance Criteria:**
+- [x] `dcec_core.py` reduced to <700 LOC
+- [x] New `dcec_types.py` module < 700 LOC
+- [x] All existing tests pass
+
+### 8.3 `integration/reasoning/proof_execution_engine.py` (968 → ~2 files × <500 LOC) 🟠 High
+
+**Proposed Split:**
+
+| New File | Responsibility | Est. LOC |
+|----------|---------------|---------|
+| `proof_execution_engine.py` | Orchestration and public API | ~400 |
+| `proof_step_executor.py` | Step-level execution logic | ~450 |
+
+**Acceptance Criteria:**
+- [x] `proof_execution_engine.py` reduced to <500 LOC
+- [x] All existing tests pass
+
+### 8.4 `integration/reasoning/deontological_reasoning.py` (776 → ~600 LOC) 🟡 Medium
+
+**Approach:** Extract `DeonticConflictResolver` class to `deontic_conflict_resolver.py`
+
+**Acceptance Criteria:**
+- [x] Main file reduced to <600 LOC
+- [x] Extracted class has unit tests (15+ tests)
+
+### 8.5 `integration/interactive/interactive_fol_constructor.py` (787 → ~600 LOC) 🟡 Medium
+
+**Approach:** Extract serialization/deserialization methods to `fol_constructor_io.py`
+
+**Acceptance Criteria:**
+- [x] Main file reduced to <600 LOC
+
+### 8.6 `integration/reasoning/logic_verification.py` (692 → 435 LOC) ✅ Done
+
+**Completed:** Extracted backend methods to `_logic_verifier_backends_mixin.py` (290 LOC).
+`LogicVerifier` now inherits from `LogicVerifierBackendsMixin`.
+
+### 8.7 TDFOL Visualization Tools (performance_profiler 1,407 + performance_dashboard 1,314) 🟡 Medium
+
+**Note:** These files are legitimately large (they implement complex visualization features).
+Consider splitting only if test coverage or type checking becomes problematic.
+
+**Provisional Approach:**
+- `performance_profiler.py` → `profiler_core.py` + `profiler_reporters.py`
+- `performance_dashboard.py` → `dashboard_core.py` + `dashboard_widgets.py`
 
 ---
 
-## 8. Timeline and Priorities
+## 9. Phase 6: Remaining Work and Continuous Improvement 🔄 In Progress
 
-### Week 1–2: Documentation Consolidation (Phase 1)
+**Duration:** Ongoing  
+**Priority:** P1/P2  
+**Goal:** Address the remaining open items and maintain production quality
 
-| Task | Owner | Effort |
-|------|-------|--------|
-| Archive 19 root-level historical files | Agent | 2h |
-| Archive 37 TDFOL historical files | Agent | 2h |
-| Archive 21 CEC historical files | Agent | 1h |
-| Archive 14 ZKP historical files | Agent | 1h |
-| Update DOCUMENTATION_INDEX.md | Agent | 1h |
-| Fix broken cross-references | Agent | 2h |
-| Update PROJECT_STATUS.md | Agent | 1h |
-| **Total Phase 1** | | **~10h** |
+### 9.1 Fix Pre-existing Test Failures
 
-### Week 2–4: Code Quality (Phase 2)
+**Status:** ✅ All known fixable failures resolved
 
-| Task | Owner | Effort |
-|------|-------|--------|
-| Merge CEC inference rules branch | Agent | 4h |
-| Fix 69 TDFOL NL test failures | Agent | 8h |
-| Improve CEC NL coverage (60%→75%) | Agent | 12h |
-| ZKP status clarification/warnings | Agent | 2h |
-| Add 30+ edge case tests | Agent | 6h |
-| **Total Phase 2** | | **~32h** |
+**Fixed (2026-02-20 session 2):**
+- [x] `test_tdfol_optimization.py`: `test_prove_with_explicit_strategy_forward/backward` — `OptimizedProver.prove()` now overwrites `result.method` with the selected `ProvingStrategy.value` so `result["strategy"]` returns `"forward"` / `"backward"` as expected
+- [x] `test_llm.py`: 3 cache tests (`test_cache_miss`, `test_cache_lru_eviction`, `test_cache_stats`) — `LLMResponseCache._make_key()` now falls back to SHA256 when `multiformats` is unavailable
+- [x] `test_llm.py`: `test_cache_keys_are_ipfs_cids` — added `pytest.importorskip("multiformats")` guard; test skips cleanly when library absent
+- [x] `test_countermodel_visualizer.py`: `test_to_html_string` — assertion updated to accept versioned CDN URL (`d3js.org/d3`)
 
-### Week 4–8: Feature Completions (Phase 3)
+**Fixed (2026-02-20 session 3):**
+- [x] `test_forward_chaining.py::test_prove_unknown_formula` — `ForwardChainingStrategy` exponential blowup fixed; now uses frontier-based iteration with `max_derived=500` guard
 
-| Task | Owner | Effort |
-|------|-------|--------|
-| REST API implementation | Agent | 40h |
-| TDFOL Phase 3 Week 2 docs | Agent | 8h |
-| Multi-language NL (1 language) | Agent | 24h |
-| GraphRAG integration | Agent | 40h |
-| **Total Phase 3** | | **~112h** |
+**Remaining:**
+- [ ] ~69 TDFOL NL test failures — require spaCy; document as deferred until spaCy is added to CI
 
-### Ongoing: Production Excellence (Phase 4)
+### 9.2 TDFOL NL Accuracy Improvement — 🔄 Pending
 
+**Remaining Work:**
+1. **Diagnose ~69 NL test failures** — categorize: pattern gap vs. parser error vs. spaCy dependency
+2. **Add spaCy to optional dependencies** — currently gated by `pytest.mark.slow` or `importorskip`
+3. **Improve pattern matching** — add/refine patterns for obligation, prohibition, temporal constructs
+
+**Acceptance Criteria:**
+- [ ] NL test failures categorized with root-cause labels
+- [ ] `TDFOL/nl/tdfol_nl_patterns.py` tested with 50+ new cases (when spaCy available)
+- [ ] NL conversion accuracy: 80% → 90%+
+
+### 9.3 Integration Test Coverage
+
+**Status:** 🔄 Partial (38% → 51%, sessions 4–5)
+
+**Completed (2026-02-20 session 4):**
+- [x] `converters/deontic_logic_core.py` 45% → 79%: DeonticFormula (to_dict/from_dict, to_fol_string with all branches), DeonticRuleSet (add/remove/find/check_consistency), DeonticLogicValidator, create_* helpers
+- [x] `converters/logic_translation_core.py` 33% → 57%: LeanTranslator (translate/cache/clear/deps/generate/validate), CoqTranslator, TranslationResult
+- [x] `domain/deontic_query_engine.py` 26% → 84%: DeonticQueryEngine (init, load, query_obligations/permissions/prohibitions, check_compliance, find_conflicts, get_agent_summary, search_by_keywords, query_by_nl), dataclasses
+- [x] `caching/ipfs_proof_cache.py` 18% → 29%: IPFSProofCache local-only path (put/compat_get/clear/stats/sync/pin)
+- [x] `converters/modal_logic_extension.py` 29% → 73%: covered by new tests exercising logic translator dependencies
+- [x] Bug fixed: `IPFSProofCache.__init__()` passed unsupported `cache_dir` keyword to `ProofCache.__init__()` → removed
+- [x] Bug fixed: `IPFSProofCache.put()` called `super().put(formula, result, ttl)` with wrong arg order → corrected to `super().put(formula, "ipfs_cache", result, ttl)`
+- [x] 101 new tests in `test_integration_coverage_session4.py` (+ reasoning/utils/types modules)
+
+**Completed (2026-02-20 session 5):**
+- [x] Bug fixed: `document_consistency_checker.py` L19 — `from .deontic_logic_converter import ...` → `from ..converters.deontic_logic_converter import ...` (module was in `converters/`, not `domain/`)
+- [x] Bug fixed: `document_consistency_checker.py` L21 — `from .proof_execution_engine import ...` → `from ..reasoning.proof_execution_engine import ...` (module was in `reasoning/`, not `domain/`)
+- [x] `converters/deontic_logic_converter.py` 27% → 58%: ConversionContext (to_dict, full init), ConversionResult (to_dict), DeonticLogicConverter (init, convert_knowledge_graph/entities/relationships_to_logic with all branches: empty, obligation, permission, prohibition, entity-as-dict, threshold filtering, multiple stats)
+- [x] `domain/document_consistency_checker.py` 21% → 70%: DocumentConsistencyChecker (init, check_document with obligation/permission/prohibition/jurisdiction/empty text, generate_debug_report, batch_check_documents), DocumentAnalysis/DebugReport dataclasses
+- [x] `domain/legal_domain_knowledge.py` 39% → 86%: LegalDomainKnowledge (identify_legal_domain contract/criminal/employment, classify_legal_statement, extract_agents, extract_conditions, extract_temporal_expressions, validate_deontic_extraction, extract_legal_entities), LegalDomain enum
+- [x] `interactive/interactive_fol_constructor.py` 43% → 72%: InteractiveFOLConstructor (init, start_session, add_statement with obligation/permission/prohibition/dual-call, remove_statement, analyze_logical_structure, generate_fol_incrementally, validate_consistency, get_session_statistics, export_session, analyze_session)
+- [x] `reasoning/deontological_reasoning_utils.py` 30% → 96%: DeonticPatterns (all 5 pattern lists, regex matching), normalize_entity/normalize_action, calculate_text_similarity, are_entities_similar/are_actions_similar, extract_keywords, extract_conditions_from_text, extract_exceptions_from_text
+- [x] 109 new tests in `test_integration_coverage_session5.py`
+- [x] **TOTAL integration/ coverage: 45% → 51%** (≥ 50% first milestone ✅)
+
+**Completed (2026-02-20 session 6):**
+- [x] Bug fixed: `proof_execution_engine.py` L77-80 — `get_global_cache(max_size=..., default_ttl=...)` → `get_global_cache(maxsize=..., ttl=...)` (wrong kwargs caused `TypeError` on engine init)
+- [x] Bug fixed: `caselaw_bulk_processor.py` L27 — `from .deontic_logic_converter import ...` → `from ..converters.deontic_logic_converter import ...` (module was in `converters/`, not `domain/`)
+- [x] Bug fixed: `temporal_deontic_api.py::query_theorems_from_parameters()` — called non-existent `query_similar_theorems()` → rewrote to use `retrieve_relevant_theorems()` (actual API), now builds a `DeonticFormula` from query params
+- [x] Bug fixed: `reasoning_coordinator.py` L239,242 — `result.valid` → `result.is_proved()` (TDFOL `ProofResult` uses `is_proved()` method, not `.valid` attr)
+- [x] Bug fixed: `hybrid_confidence.py` L136 — `symbolic_result.valid` → `symbolic_result.is_proved()` (same TDFOL API fix)
+- [x] `reasoning/proof_execution_engine.py` 17% → 58%: `__init__` (all branches), `_find_executable`, `_prover_cmd`, `_test_command`, `_env_truthy`, `_detect_available_provers`, `_get_translator`, `prove_deontic_formula` (UNSUPPORTED/ERROR early exits, caching enabled/disabled), `prove_rule_set` (empty+formulas), `prove_consistency` (unsupported prover), `prove_multiple_provers` (no available), `get_prover_status`
+- [x] `domain/temporal_deontic_api.py` 6% → 82%: `_parse_temporal_context` (None/current_time/valid-ISO/invalid/empty), `check_document_consistency_from_parameters` (missing text, valid text, jurisdiction, temporal_context), `query_theorems_from_parameters` (missing query, valid query, operator/jurisdiction filters), `bulk_process_caselaw_from_parameters` (empty dirs, invalid dirs, valid dir+async), `add_theorem_from_parameters` (missing prop, valid obligation)
+- [x] `domain/legal_symbolic_analyzer.py` 29% → 64%: All dataclass types (`LegalAnalysisResult`, `DeonticProposition`, `LegalEntity`, `TemporalCondition`), `LegalSymbolicAnalyzer` (init, `analyze_legal_document`, `extract_deontic_propositions` obligation/permission/prohibition, `identify_legal_entities` contractor/client/government, `extract_temporal_conditions` deadline/before/empty, all `_fallback_*` methods), `LegalReasoningEngine` (init, `infer_implicit_obligations` contract/empty, `check_legal_consistency` contradiction/no-contradiction, `analyze_legal_precedents`, `_parse_consistency_result`), convenience factories
+- [x] `symbolic/neurosymbolic/embedding_prover.py` 17% → 83%: `EmbeddingEnhancedProver` (init, cache disabled, empty cache), `compute_similarity` (empty, same, different, multiple axioms), `find_similar_formulas` (empty, top_k, sorted), `_get_embedding` (cached, not cached), `_cosine_similarity` (same, orthogonal, zero, mismatched), `_fallback_similarity` (exact, substring, partial, empty), `clear_cache`, `get_cache_stats`
+- [x] `symbolic/neurosymbolic/hybrid_confidence.py` 26% → 91%: `ConfidenceBreakdown` (defaults, values), `HybridConfidenceScorer` (init, custom weights, no structural), `compute_confidence` (no inputs, neural only, symbolic success/failure, both, with formula, calibration, history), `_compute_structural_confidence` (simple/complex), `get_statistics` (empty, populated)
+- [x] `symbolic/neurosymbolic/reasoning_coordinator.py` 33% → 68%: `CoordinatedResult` (valid/invalid confidence, default strategy, empty steps), `NeuralSymbolicCoordinator` (no embeddings, threshold, capabilities), `_choose_strategy` (simple formula, complex no embeddings), `_prove_symbolic` (returns result), `prove` (AUTO, NEURAL fallback)
+- [x] `interactive/interactive_fol_utils.py` 10% → 100%: `create_interactive_session` (domain, default, custom threshold), `demo_interactive_session` (output, return type)
+- [x] `reasoning/proof_execution_engine_utils.py` 38% → 57%+: `create_proof_engine` (with/without timeout), `get_lean_template`, `get_coq_template`
+- [x] `reasoning/proof_execution_engine_types.py` 95% → 100%: `ProofResult` (creation, to_dict), `ProofStatus` (values)
+- [x] 144 new tests in `test_integration_coverage_session6.py`
+- [x] **TOTAL `integration/` coverage: 51% → 60%** (≥ 60% second milestone ✅)
+
+**Completed (2026-02-20 session 7):**
+- [x] Bug fixed: `_prover_backend_mixin.py` `_check_z3_consistency` — `"sat" in output` matched "unsat" substring before "unsat" check → reordered to check "unsat" first
+- [x] Bug fixed: `_prover_backend_mixin.py` `_check_cvc5_consistency` — same substring-order bug fixed
+- [x] `reasoning/_prover_backend_mixin.py` 12% → **97%**: all 6 execute/check methods (z3/cvc5/lean/coq proof + z3/cvc5 consistency) via `subprocess.run` mocking — all 4 branches each (success/error/timeout/exception)
+- [x] `symbolic/neurosymbolic_api.py` 46% → **88%**: full `NeurosymbolicReasoner` API (init/detect-capabilities/parse/add_knowledge/prove/explain/query/get_capabilities), `get_reasoner` singleton, `ReasoningCapabilities` dataclass
+- [x] `domain/symbolic_contracts.py` 55% → **56%**: FOLInput/FOLOutput models, `FOLSyntaxValidator` (all syntax/structure/semantic/suggestion branches), `ValidationContext`, `ContractedFOLConverter` fallback (all/some/other/prolog/tptp), factory functions
+- [x] `caching/ipld_logic_storage.py` 30% → improved: `LogicProvenanceChain`/`LogicIPLDNode` (to_dict/from_dict/with-provenance), `LogicIPLDStorage` filesystem path (all public methods), `LogicProvenanceTracker` (track/verify/find-related/export-report), factory
+- [x] 139 new tests in `test_integration_coverage_session7.py` (all 139 pass)
+- [x] **TOTAL `integration/` coverage: 60% → 64%** (progress toward 70% ✅)
+
+**Completed (2026-02-20 session 8):**
+- [x] Bug fixed: `deontological_reasoning_types.py` `DeonticConflict` missing `id` field — added `id: Optional[str] = None`
+- [x] Bug fixed: `proof_execution_engine.py` `ProofExecutionEngine` missing `prove`/`prove_with_all_available_provers`/`check_consistency` alias methods referenced by `proof_execution_engine_utils.py` public API
+- [x] `reasoning/_logic_verifier_backends_mixin.py` 44% → **96%**: `_check_consistency_symbolic` (consistent/inconsistent/unknown+fallback/unknown+no-fallback/exception), `_check_consistency_fallback` (no contradictions/with contradiction), `_check_entailment_symbolic` (yes/no/unknown+fallback/exception), `_check_entailment_fallback` (modus ponens/no entailment), `_generate_proof_symbolic` (with steps/exception), `_generate_proof_fallback` (modus ponens/failed)
+- [x] `reasoning/proof_execution_engine.py` 58% → **89%**: prove_deontic_formula (unavailable/unknown prover, no translator, translation failed, z3/cvc5/lean/coq dispatch, cache hit, rate limit exceeded, validation failed), prove_consistency (z3/cvc5/unsupported), prove_rule_set, prove_multiple_provers (empty/unavailable), get_prover_status (no provers/available prover/exception), _maybe_auto_install_provers (disabled/all available/missing but none enabled/subprocess triggered/exception), _env_truthy (true/false/default), _prover_cmd (z3/cvc5/coq/lean), _test_command (file not found), _get_translator (z3/lean/coq/unknown), _common_bin_dirs
+- [x] `reasoning/deontological_reasoning.py` 61% → **87%**: extract_statements (obligation/conditional/exception), _calculate_confidence (should vs must), _extract_context, _is_valid_entity_action (generic/short/valid), analyze_corpus_for_deontic_conflicts (empty/with text/error handling), _count_by_modality/entity, query_deontic_statements (entity/modality/keywords), query_conflicts (empty/by severity/by type)
+- [x] `reasoning/_deontic_conflict_mixin.py` 62% → **93%**: _check_statement_pair (PERMISSION_PROHIBITION/OBLIGATION_PROHIBITION/unrelated actions/CONDITIONAL_CONFLICT/JURISDICTIONAL), _generate_resolution_suggestions (jurisdictional/obligation-prohibition/conditional), _analyze_conflicts, _generate_entity_reports, _format_conflict_summary, _generate_analysis_recommendations (high severity/jurisdictional/conditional/no conflicts)
+- [x] `domain/medical_theorem_framework.py` 0% → **95%**: all dataclasses (MedicalEntity/TemporalConstraint/MedicalTheorem), MedicalTheoremGenerator (init/generate_from_clinical_trial with AE/calculate_confidence_from_frequency/_parse_time_frame/generate_from_pubmed_research), FuzzyLogicValidator.validate_theorem (TREATMENT_OUTCOME/ADVERSE_EVENT/unsupported), TimeSeriesTheoremValidator (with/without temporal_constraint), ConfidenceLevel+MedicalTheoremType enums
+- [x] `reasoning/logic_verification.py` 66% → **98%**: verify_formula_syntax (empty/valid/unbalanced/symbolic valid+invalid+unknown+exception), check_satisfiability (empty/contradiction/normal/symbolic unsatisfiable+satisfiable+unknown+exception), check_validity (empty/tautology/non-tautology/symbolic valid+invalid+unknown+exception), generate_proof (modus ponens/cache hit), check_consistency (empty/fallback), check_entailment (empty premises), add_axiom (valid/duplicate/invalid syntax), _initialize_proof_rules
+- [x] `reasoning/logic_verification_utils.py` 72% → **100%**: validate_formula_syntax (valid/empty/unbalanced/extra close), parse_proof_steps (valid 3 steps/empty/no matches), get_basic_proof_rules, are_contradictory (P/¬P, P/Q, " ¬P "/P, P/" ¬P "), create_logic_verifier
+- [x] `reasoning/proof_execution_engine_utils.py` 57% → **100%**: create_proof_engine, prove_formula, prove_with_all_provers, check_consistency, get_lean_template, get_coq_template, __all__ exports
+- [x] `symbolic/neurosymbolic/reasoning_coordinator.py` 68% → **75%**: init (no embeddings/with embeddings init), prove (returns CoordinatedResult), _choose_strategy (simple/medium+no embeddings/complex+no embeddings), _prove_neural (falls back to symbolic), _prove_hybrid (no embeddings → HYBRID strategy), _prove_symbolic (with axioms), get_capabilities
+- [x] `symbolic/symbolic_logic_primitives.py` 62% → **63%**: create_logic_symbol, get_available_primitives, _fallback_to_fol (all/every/some+are/some+no-split/if+then/if+no-then/or/default/prolog/tptp), _fallback_extract_quantifiers (universal/none), _fallback_extract_predicates, _fallback_logical_and/or/implies/negate, _fallback_analyze_structure, _fallback_simplify, are_contradictory whitespace branches
+- [x] 202 new tests in `test_integration_coverage_session8.py` (all 202 pass)
+- [x] **TOTAL `integration/` coverage: 64% → 70%** ✅ TARGET REACHED
+
+**Completed (2026-02-20 sessions 9-12):**
+- [x] Session 9: 199 new tests. `external_provers.py` 0%→95%, `prover_installer.py` 0%→70%, `caselaw_bulk_processor.py` helpers, `temporal_deontic_rag_store.py` 59%→80%+, `modal_logic_extension.py` 73%→89%, `logic_translation_core.py` 63%→76%
+- [x] Session 10: 93 new tests. `ipfs_proof_cache.py` 29%→77%, `tdfol_shadowprover_bridge.py` 71%→79%, `tdfol_cec_bridge.py` 63%→71%, `tdfol_grammar_bridge.py` 69%→71%, `deontic_logic_converter.py` 58%→69%, `deontic_logic_core.py` additional. Bug fix: `ipfs_proof_cache.close()` removed invalid `super().close()` call.
+- [x] Session 11: 90 new tests. `symbolic_contracts.py` 56%→72%, `logic_translation_core.py` 76%→90%, `tdfol_grammar_bridge.py` 71%→74%, `document_consistency_checker.py` 70%→improved, `deontic_logic_core.py` 79%→improved
+- [x] Session 12: 45 new tests. `deontic_logic_core.py` 79%→90%+, `integration/__init__.py` 52%→70%+, `ipfs_proof_cache.py` 77%→90%+, `prover_installer.py` 70%→80%+, `symbolic_contracts.py` additional coverage
+- [x] **TOTAL `integration/` coverage: 70% → 80%** ✅ TARGET REACHED (427 new tests, sessions 9-12)
+
+**Remaining (target 80%+ ✅ ACHIEVED):**
+- [x] `integration/` coverage: 70% → 80%+ ✅
+- [ ] E2E test: legal text → TDFOL formula → proof → MCP response chain
+- [ ] `bridges/tdfol_cec_bridge.py` — 71%; remaining CEC prover proof path (requires CEC native `parse_dcec_formula` function to be implemented)
+- [ ] `domain/caselaw_bulk_processor.py` — 48%; async methods require anyio/database mocking
+- [ ] `domain/symbolic_contracts.py` — 72%; SymbolicAI-available branch (lines 459-695) unreachable without symai
+- [ ] `symbolic/symbolic_logic_primitives.py` — 63%; SymbolicAI-dependent paths (103 lines) unreachable without symai
+
+### 9.4 TDFOL Public API Docstrings
+
+**Status:** ✅ COMPLETE (2026-02-20 session 3)
+
+**Completed:**
+- [x] 100% of public classes and methods in `TDFOL/` have docstrings (486/486)
+- [x] All Formula subclass methods (`to_string`, `get_free_variables`, `get_predicates`, `substitute`) in `tdfol_core.py` (40 methods)
+- [x] All expansion rule methods (`can_expand`, `expand`) in `expansion_rules.py` (10 methods)
+- [x] Decorator inner functions in `performance_profiler.py` and `performance_metrics.py` (6 closures)
+- [x] Demo/example functions in `demonstrate_performance_dashboard.py` and `example_performance_profiler.py` (3 functions)
+- [x] `colorama_init` stub in `countermodel_visualizer.py`
+
+### 9.5 Multi-Language NL Support Completion
+
+**Status:** ✅ COMPLETE (all three parsers implemented)
+
+**Completed:**
+- [x] Spanish NL parser: `CEC/nl/spanish_parser.py` (578 lines), 74 tests in `test_spanish_parser.py`
+- [x] French NL parser: `CEC/nl/french_parser.py`, tests in `test_french_parser.py`
+- [x] German NL parser: `CEC/nl/german_parser.py`, tests in `test_german_parser.py`
+- [x] Language detector: `CEC/nl/language_detector.py` (413 lines), tests in `test_language_detector.py`
+- [x] Domain vocabularies: `CEC/nl/domain_vocabularies/` for each language
+
+---
+
+## 10. Timeline and Priorities (Updated 2026-02-20)
+
+### Completed ✅
+| Phase | Completed | Result |
+|-------|-----------|--------|
+| Phase 1: Documentation Consolidation | 2026-02-19 | 196 → 69 active files |
+| Phase 2.1: CEC Inference Rules | 2026-02-19 | 67 rules across 8 modules |
+| Phase 2.3: CEC NL Patterns (partial) | 2026-02-20 | Prohibition + cognitive patterns fixed |
+| Phase 2.4: ZKP Module Warnings | 2026-02-19 | `warnings.warn()` added |
+| Phase 3: MCP Server Tools | 2026-02-19 | 27 tools across 12 groups |
+| Phase 3: GraphRAG Integration | 2026-02-19 | 2 tools, 20 tests |
+| Phase 5: God-Module Splits | 2026-02-20 | All 6 oversized files split |
+| Phase 6 (partial): Test bug fixes | 2026-02-20 | 9 failures fixed (strategy/multiformats/d3/forward-chaining) |
+| Phase 6 (partial): TDFOL docstrings | 2026-02-20 | 100% coverage (486/486 public symbols) |
+| Phase 6 (partial): Integration coverage | 2026-02-20 | 38% → 64%; 493 new tests; 11 bugs fixed |
+
+### Near Term (Next 2–4 weeks)
+| Task | Phase | Effort | Priority |
+|------|-------|--------|---------|
+| Fix ~69 TDFOL NL test failures (requires spaCy) | 2.2 | 8h | 🔴 P1 |
+| Improve CEC NL coverage (60%→75%) | 2.3 | 12h | 🟠 P1 |
+| CI performance regression gates | 4.1 | 4h | 🟡 P2 |
+
+### Medium Term (Weeks 4–8)
+| Task | Phase | Effort | Priority |
+|------|-------|--------|---------|
+| Integration tests for reasoning modules (64%→70%) | 6.3 | 8h | 🟠 P1 |
+| E2E tests: legal text → formal proof | 6.3 | 8h | 🟠 P1 |
+| Rate limiting for MCP tool calls | 4.2 | 4h | 🟡 P2 |
+
+### Ongoing (Per PR / Monthly / Quarterly)
 | Task | Frequency |
 |------|-----------|
-| Performance regression testing | Per PR |
+| Performance regression testing (CI) | Per PR |
+| Documentation archive review | Monthly |
 | Security audit | Quarterly |
-| Documentation review | Monthly |
-| Dependency updates | Quarterly |
+| Dependency vulnerability scan | Quarterly |
 
 ---
 
-## 9. Success Criteria
+## 11. Success Criteria (Updated 2026-02-20)
 
-### Phase 1 Complete ✅ when:
+### Phase 1 ✅ COMPLETE
 
-- [ ] Total markdown files: 196 → ≤102
-- [ ] No phase completion reports in active directories
-- [ ] Single status document per subsystem
-- [ ] All cross-references valid (no broken links)
-- [ ] DOCUMENTATION_INDEX.md reflects current structure
+- [x] Total active markdown files: 196 → 69 (target was ≤102)
+- [x] No phase completion reports in active directories
+- [x] Single status document per subsystem
+- [x] DOCUMENTATION_INDEX.md reflects current structure
 
-### Phase 2 Complete ✅ when:
+### Phase 2 ✅ Partial — Remaining Items
 
-- [ ] CEC inference rules: 5 modules → 9 modules (88 total rules)
-- [ ] TDFOL NL test failures: 69 → <20
-- [ ] CEC NL coverage: 60% → 75%+
-- [ ] ZKP module: clear simulation warnings in place
+- [x] CEC inference rules: 8 modules, 67 rules total
+- [x] ZKP module: simulation warnings in place
+- [x] CEC NL converter: prohibition + cognitive patterns fixed (260 tests pass)
+- [x] TDFOL `tdfol_inference_rules.py` shim (60 tests unlocked)
+- [x] `TDFOLProver` helpers (`_is_modal_formula`, `_has_deontic_operators`, etc.) added (6 failures fixed)
+- [x] TDFOL prover cache key includes theorems (cross-test contamination fixed)
+- [x] `zkp_integration.py` API mismatches fixed (6 failures fixed)
+- [x] `OptimizedProver._prove_indexed` returns `ProofResult` (2 failures fixed)
+- [x] `logic_verification.py` compat aliases + `logic_verification_utils.py` shim (3 failures fixed)
+- [x] `test_tdfol_integration.py` NL skip guard fixed (9 spaCy failures → correct skips)
+- [ ] TDFOL NL test failures: ~69 → <20 (deferred — requires spaCy)
 - [ ] Overall test pass rate: 87% → 90%+
 
-### Phase 3 Complete ✅ when:
+### Phase 3 ✅ COMPLETE
 
-- [ ] REST API: `/prove`, `/convert/*`, `/capabilities` endpoints operational
-- [ ] Multi-language NL: at least Spanish support (80%+ accuracy)
-- [ ] GraphRAG integration: text → KG pipeline functional
-- [ ] TDFOL documentation: 100% public methods have docstrings
+- [x] MCP tools: 27 tools replacing REST API
+- [x] GraphRAG integration: text → KG pipeline functional
+- [x] TDFOL documentation: 100% public methods with docstrings ✅ (session 3)
+- [x] Spanish NL support: 80%+ accuracy ✅ (session 3 verified existing)
 
-### Phase 4 Ongoing ✅ when:
+### Phase 4 🔄 Ongoing
 
-- [ ] Performance metrics: all targets met (see 7.1)
-- [ ] Security: REST API endpoints protected
-- [ ] Documentation: no accumulation of historical files in active dirs
-- [ ] Dependencies: zero known vulnerabilities
+- [x] Input validation security module (36 tests)
+- [x] ZKP simulation warnings
+- [ ] CI performance gates (per PR)
+- [x] `logic[api]` pip extras group (`logic-api` key in setup.py)
+- [ ] Zero known vulnerabilities in dependencies
+
+### Phase 5 ✅ COMPLETE (2026-02-20)
+
+- [x] `prover_core.py` 2,927 → 649 LOC (+ prover_core_extended_rules.py 1,116 LOC)
+- [x] `dcec_core.py` 1,399 → 849 LOC (+ dcec_types.py 379 LOC)
+- [x] `proof_execution_engine.py` 968 → 460 LOC (+ _prover_backend_mixin.py 527 LOC)
+- [x] `deontological_reasoning.py` 776 → 482 LOC (+ _deontic_conflict_mixin.py 304 LOC)
+- [x] `interactive_fol_constructor.py` 787 → 521 LOC (+ _fol_constructor_io.py 299 LOC)
+- [x] `logic_verification.py` 692 → 435 LOC (+ _logic_verifier_backends_mixin.py 290 LOC)
+- [x] All backward-compat re-exports maintained
+
+### Phase 6 🔄 In Progress (2026-02-20 session)
+
+- [x] `OptimizedProver.prove()` — `result.method` overridden to `ProvingStrategy.value` (2 strategy tests fixed)
+- [x] `LLMResponseCache._make_key()` — SHA256 fallback when `multiformats` unavailable (3 cache tests fixed)
+- [x] `test_llm.py::test_cache_keys_are_ipfs_cids` — `pytest.importorskip("multiformats")` guard added
+- [x] `test_countermodel_visualizer.py::test_to_html_string` — assertion accepts d3.v7 CDN URL
+- [x] MASTER_REFACTORING_PLAN_2026.md — Phase 5 complete, Phase 6 added, timeline updated, ToC renumbered, Appendix A rules count fixed (70→67)
+- [x] `ForwardChainingStrategy._apply_rules()` — frontier-based iteration + `max_derived=500` guard (forward-chaining hang fixed)
+- [x] TDFOL public API docstrings — 100% coverage (486/486, up from ~88%)
+- [x] `IPFSProofCache.__init__()` — removed unsupported `cache_dir` kwarg forwarded to `ProofCache.__init__()`
+- [x] `IPFSProofCache.put()` — fixed arg order: `super().put(formula, "ipfs_cache", result, ttl)`
+- [x] Integration tests: 101 new tests (deontic_logic_core 45%→79%, deontic_query_engine 26%→84%, logic_translation_core 33%→57%, ipfs_proof_cache 18%→29%, reasoning types/utils/engine)
+- [x] Spanish NL parser — already complete (578 LOC), plan updated to mark §9.5 COMPLETE
+- [x] `document_consistency_checker.py` — 2 broken relative imports fixed (`deontic_logic_converter` and `proof_execution_engine`)
+- [x] Integration tests: 109 new tests session 5 (converter 27%→58%, doc_checker 21%→70%, legal_domain 39%→86%, fol_constructor 43%→72%, deontic_utils 30%→96%)
+- [x] **Integration coverage: 45% → 51%** (≥ 50% first milestone ✅)
+- [x] 5 bugs fixed session 6: `proof_execution_engine.py` wrong kwargs to `get_global_cache`, `caselaw_bulk_processor.py` wrong relative import, `temporal_deontic_api.py` non-existent `query_similar_theorems()` method, `reasoning_coordinator.py` + `hybrid_confidence.py` `.valid` → `.is_proved()` (TDFOL API)
+- [x] Integration tests: 144 new tests session 6 (proof_engine 17%→58%, temporal_api 6%→82%, legal_analyzer 29%→64%, embedding_prover 17%→83%, hybrid_confidence 26%→91%, coordinator 33%→68%, fol_utils 10%→100%, engine_types/utils)
+- [x] **Integration coverage: 51% → 60%** (≥60% second milestone ✅)
+- [x] 2 bugs fixed session 7: `_prover_backend_mixin.py` `_check_z3_consistency`/`_check_cvc5_consistency` — `"sat" in output` matched "unsat" substring; reordered to check "unsat" before "sat"
+- [x] Integration tests: 139 new tests session 7 (`_prover_backend_mixin` 12%→97%, `neurosymbolic_api` 46%→88%, `symbolic_contracts` 55%→56%, `ipld_logic_storage` 30%→improved)
+- [x] **Integration coverage: 60% → 64%** (progress toward 70% ✅)
+- [x] 3 bugs fixed session 8: `deontological_reasoning_types.py` missing `id` field on `DeonticConflict`, `ProofExecutionEngine` missing `prove`/`prove_with_all_available_provers`/`check_consistency` aliases
+- [x] Integration tests: 202 new tests session 8 (`proof_execution_engine` 17%→58%, `deontological_reasoning` 45%→85%+, `deontic_query_engine` 84%→improved)
+- [x] **Integration coverage: 64% → 70%** ✅ TARGET REACHED (session 8)
+- [x] Integration tests sessions 9-12: 427 new tests pushing 70%→80%+ (see §9.3 above for per-session breakdown)
+- [x] **Integration coverage: 70% → 80%** ✅ TARGET REACHED (sessions 9-12)
+- [x] 3 bugs fixed session 13: `FOLConverter._convert_impl` called `ml_scorer.predict()` (non-existent → fix to `predict_confidence()`); `TDFOLShadowProverBridge.prove_modal` used `ProofStep(step_number=...)` kwarg (invalid → removed); `TDFOLGrammarBridge._fallback_parse` imported `Implication, Conjunction, Negation` from `tdfol_core` (don't exist as classes → fix to `create_implication, create_conjunction, create_negation`)
+- [x] Integration tests: 76 new tests session 13 (`deontological_reasoning_types` string modality 108-118, `tdfol_shadowprover_bridge` PROVED/DISPROVED/TIMEOUT/UNKNOWN/ERROR branches, `tdfol_cec_bridge` prove paths, `deontological_reasoning` async query/conflicts entity filters, `deontic_query_engine` rate-limiter/validator/context-filter, `document_consistency_checker` check/batch/debug_report, `temporal_deontic_rag_store` embedding+vector_store, `ipld_logic_storage` store+provenance, `prover_installer` ensure_coq/lean, `tdfol_grammar_bridge` fallback_parse+NL interface)
+- [x] **Integration coverage: 80% → 85%+** ✅ TARGET REACHED (session 13)
+- [x] 2 bugs fixed session 27: `prover_installer.py` missing `import logging; logger = logging.getLogger(__name__)` (line 128 NameError before line 129); `test_integration_coverage_session26.py::TestTDFOLGrammarBridgeSession26::test_dcec_to_natural_language_none_dcec_formula_path` ordering failure — patched via `TDFOLGrammarBridge._dcec_to_natural_language.__globals__` to avoid importlib module identity issue
+- [x] Integration tests: 18 new tests session 27 (`__init__.py` lines 80-82 autoconfigure_env, `prover_installer.py` line 129 OSError, `symbolic_fol_bridge.py` lines 28+137, `tdfol_cec_bridge.py` line 254 axiom loop, `tdfol_grammar_bridge.py` lines 264+271-272 with available=True, `ipfs_proof_cache.py` line 329, `temporal_deontic_rag_store.py` lines 25+30 fallback stubs, `legal_symbolic_analyzer.py` methods, `symbolic_contracts.py` lines 43+45 BaseModel stubs, regression guard)
+- [x] **Integration coverage: 99% (7899 lines, 55 uncovered — 68→55)** ✅ SESSION 27 (2857 tests)
+- [x] 1 production bug fixed session 28: `batch_processing.py` line 112 `_anyio_gather(tasks)` → `_anyio_gather(*tasks)` (list was passed as single argument, causing "object list can't be used in 'await' expression" error — 7 batch processing tests now pass instead of failing)
+- [x] Integration tests: 50 new tests session 28 (63 test classes covering TDFOL↔CEC cross-module interactions, E2E legal NL→TDFOL→CEC pipeline, grammar bridge NL API, DeonticRuleSet cross-module, integration converters+translators, batch processing regression, package exports, async document consistency E2E); 2907 integration tests passing (was 2857)
+- [x] **Logic test suite: 5905 passing, 300 skipped, 4 pre-existing failures** ✅ SESSION 28
+- [x] 2 production bugs fixed session 29: (1) `CEC/native/inference_rules/temporal.py` — ALL 15 rules broken because `f.operator.value == "ALWAYS"` compared string "ALWAYS" against `TemporalOperator.ALWAYS.value` which is `'□'` → fixed to `f.operator == TemporalOperator.ALWAYS` etc.; (2) `CEC/native/inference_rules/deontic.py` — ALL 7 rules broken: `hasattr(f, 'operand')` but `DeonticFormula` uses `.formula`; `Operator.IMPLIES` undefined; `apply()` returned `(ProofResult.SUCCESS, [...])` tuples instead of `List[Formula]`; used abstract `Formula(...)` factory → rewrote all rules using `isinstance(f, DeonticFormula)`, `f.formula`, `DeonticFormula(op, f)`, `ConnectiveFormula(connective, [f1,f2])`, return `[result]`
+- [x] 88 new tests session 29 in `tests/unit_tests/logic/CEC/native/test_temporal_deontic_inference_rules.py`: 15 temporal rule classes (can_apply true/false + apply structure) + 7 deontic rule classes + 4 chaining tests + 4 export tests; temporal.py 22%→100%, deontic.py 21%→98%
+- [x] **Logic test suite: 5993 passing, 300 skipped, 4 pre-existing failures** ✅ SESSION 29
+- [x] 2 production bugs fixed session 30: (1) `CEC/native/inference_rules/cognitive.py` — ALL 13 cognitive rules broken: `ProofResult.SUCCESS/FAILURE` don't exist in enum (has PROVED/DISPROVED/TIMEOUT/UNKNOWN/ERROR), all `apply()` methods returned enum values instead of `List[Formula]`; used `formula.content` (doesn't exist) instead of `formula.formula` for `CognitiveFormula` inner content; used `x.operator == LogicalConnective.X` for `ConnectiveFormula` (which uses `.connective` not `.operator`); used `.left`/`.right` instead of `.formulas[0]`/`.formulas[1]`; `IntentionPersistence.can_apply` checked `formula.operator == LogicalConnective.NOT` on ConnectiveFormula; (2) `CEC/native/dcec_types.py` — `CognitiveOperator.PERCEPTION` was missing from enum (cognitive.py uses it in 3 rules) → added `PERCEPTION = "P"`
+- [x] 86 new tests session 30 in `tests/unit_tests/logic/CEC/native/test_cognitive_inference_rules.py`: 13 cognitive rule classes (can_apply true/false + apply structure + apply output) + 4 chain tests + 6 export/name/type-safety tests; cognitive.py 35%→100%
+- [x] **Logic test suite: 6079 passing, 300 skipped, 4 pre-existing failures** ✅ SESSION 30
+- [ ] TDFOL NL test failures (~65 skipped) — requires spaCy
+- [ ] Integration test coverage: remaining 55 lines (dead code confirmed: lines 79/397/474/529-530 unreachable; symai-gated: 69-72/138/339/421/523-673/116/206/256/305/335/368/398/434/478/506-507)
 
 ---
 
-## 10. Document Inventory and Disposition
+## 12. Document Inventory and Disposition (Updated 2026-02-20)
 
-### 10.1 Documents to Keep (Essential)
+### 12.1 Active Documents (69 total)
 
-These files are current, authoritative, and should be maintained:
-
-**Root Level:**
+**Root Level (20):**
 - `README.md` — Module overview ✅
-- `MASTER_REFACTORING_PLAN_2026.md` — This document ✅ NEW
-- `PROJECT_STATUS.md` — Current status (needs update) ✅
+- `MASTER_REFACTORING_PLAN_2026.md` — This document ✅
+- `PROJECT_STATUS.md` — Current status snapshot ✅
 - `EVERGREEN_IMPROVEMENT_PLAN.md` — Ongoing backlog ✅
 - `ARCHITECTURE.md`, `API_REFERENCE.md`, `FEATURES.md` ✅
 - `QUICKSTART.md`, `UNIFIED_CONVERTER_GUIDE.md` ✅
@@ -813,15 +968,13 @@ These files are current, authoritative, and should be maintained:
 
 **TDFOL (15):** STATUS_2026.md, README.md, INDEX.md, QUICK_REFERENCE.md, + 11 component docs
 
-**CEC (10):** STATUS.md, README.md, QUICKSTART.md, CEC_SYSTEM_GUIDE.md, + 6 reference docs
+**CEC (12):** STATUS.md, README.md, QUICKSTART.md, CEC_SYSTEM_GUIDE.md, + 8 reference docs
 
 **ZKP (8):** README.md, QUICKSTART.md, IMPLEMENTATION_GUIDE.md, INTEGRATION_GUIDE.md, + 4 docs
 
-**Per subdirectory READMEs:** common, fol, deontic, types, tools, external_provers, integration
+**Per-subdirectory READMEs (14):** common, fol, deontic, types, tools, external_provers, integration + subdirs
 
-### 10.2 Documents to Archive (Historical)
-
-See Sections 4.1–4.4 for complete archive lists.
+### 12.2 Archive Policy
 
 **Archive Criteria:**
 1. Progress reports / completion summaries → Archive after phase completion
@@ -829,39 +982,32 @@ See Sections 4.1–4.4 for complete archive lists.
 3. Session summaries → Archive after session completes
 4. Phase tracking files → Archive after phase merges to main
 
-### 10.3 Documents to Merge (Content Consolidation)
-
-| Source | Merge Into |
-|--------|-----------|
-| `VERIFIED_STATUS_REPORT_2026.md` | `PROJECT_STATUS.md` |
-| `TYPE_SYSTEM_STATUS.md` | `ARCHITECTURE.md` (type system section) |
-| `CACHING_ARCHITECTURE.md` | `ARCHITECTURE.md` (caching section) |
-| `FALLBACK_BEHAVIORS.md` | `KNOWN_LIMITATIONS.md` |
-| `ADVANCED_FEATURES_ROADMAP.md` | `EVERGREEN_IMPROVEMENT_PLAN.md` |
-| `CEC/COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md` | `CEC/CEC_REFACTORING_AND_IMPROVEMENT_PLAN_2026.md` |
-| `TDFOL/COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md` | `TDFOL/COMPREHENSIVE_REFACTORING_PLAN_2026_02_19.md` |
-| `ZKP/LEGAL_THEOREM_SEMANTICS.md` | `ZKP/INTEGRATION_GUIDE.md` |
+**126 files already archived** in:
+- `docs/archive/` (root-level historical docs)
+- `TDFOL/ARCHIVE/` (TDFOL historical docs)
+- `CEC/ARCHIVE/` (CEC historical docs)
+- `zkp/ARCHIVE/` (ZKP historical docs)
 
 ---
 
-## Appendix A: Inference Rules Summary
+## Appendix A: Inference Rules Summary (Updated 2026-02-20)
 
-As of 2026-02-19 (current branch):
-
-| Module | TDFOL Rules | CEC Rules (Merged) | Total |
-|--------|------------|-------------------|-------|
+| Module | TDFOL Rules | CEC Rules | Total |
+|--------|------------|-----------|-------|
 | Propositional | 15 | 10 | 25 |
 | First-Order | 10 | 5 | 15 |
 | Temporal | 10 | 15 | 25 |
 | Deontic | 8 | 7 | 15 |
 | Temporal-Deontic | 7 | — | 7 |
-| Cognitive | — | 26 | 26 |
-| Modal | — | 2 (pending) | 2 |
-| Resolution | — | 7 (pending) | 7 |
-| Specialized | — | 21 (pending) | 21 |
-| **TOTAL** | **50** | **93** | **143** |
+| Cognitive | — | 13 | 13 |
+| Modal | — | 5 | 5 |
+| Resolution | — | 6 | 6 |
+| Specialized | — | 6 | 6 |
+| **TOTAL** | **50** | **67** | **117** |
 
-> **Note:** CEC modal/resolution/specialized rules pending merge from `copilot/refactor-improvement-plan-cec`
+> All 67 CEC inference rules are implemented and tested across 7 rule modules (base + cognitive + temporal + deontic + modal + resolution + specialized). The `__all__` export from `CEC/native/inference_rules/` includes 67 concrete subclasses of `InferenceRule`.
+
+> TDFOL has 50 rules across propositional, first-order, temporal, deontic, and temporal-deontic categories.
 
 ---
 
@@ -889,26 +1035,60 @@ As of 2026-02-19 (current branch):
 
 **Decision:** Maintain ZKP module as educational simulation, not production cryptography  
 **Rationale:** Real ZKP (Groth16) requires Rust/Go FFI; pure Python is simulation  
-**Status:** Simulation implemented; production upgrade path documented
+**Status:** Simulation implemented; production upgrade path documented in `zkp/PRODUCTION_UPGRADE_PATH.md`
+
+### Decision 5: MCP Tools instead of REST API
+
+**Decision:** Replace FastAPI REST API with MCP Server tool registration  
+**Rationale:** Integrates directly with AI assistant workflows; no uvicorn dependency; 27 tools available through the existing MCP infrastructure  
+**Status:** 27 MCP tools implemented; `api_server.py` deprecated
 
 ---
 
 ## Appendix C: Test Coverage Targets
 
-| Component | Current | Phase 2 Target | Phase 3 Target |
+| Component | Current | Phase 2 Target | Phase 5 Target |
 |-----------|---------|----------------|----------------|
 | TDFOL Core | 91.5% pass | 95% pass | 97% pass |
 | CEC Native | 80-85% pass | 90% pass | 93% pass |
-| Integration | 90% pass | 92% pass | 95% pass |
+| Integration | ~91% coverage | 88%+ ✅ | 90% ✅ 91%✅ 92%✅ 93%✅ 94%✅ 94.5%✅ 97%✅ 99%✅ 99%(55 uncovered)✅ |
+| CEC temporal rules | 22% | 100% | 100%✅ (session 29: 15 rules fixed) |
+| CEC deontic rules | 21% | 100% | 98%✅ (session 29: 7 rules fixed) |
+| CEC cognitive rules | 35% | 100% | 100%✅ (session 30: 13 rules fixed) |
+| CEC propositional rules | 55% | 100% | 100%✅ (session 31: 10 rules fully covered) |
+| CEC modal rules | 64% | 100% | 99%✅ (session 31: apply() paths covered) |
+| CEC resolution rules | 84% | 100% | 96%✅ (session 31: edge cases covered) |
+| CEC specialized rules | 79% | 100% | 97%✅ (session 31: dilemma apply() covered) |
+| TDFOL formula_dependency_graph | 0% | 90% | 98%✅ (session 32: 90 tests, 325/335 lines; 8 lines require graphviz) |
+| TDFOL p2p/ipfs_proof_storage | 0% | 90% | 95%✅ (session 33: 39 tests, only import-error guards uncovered) |
+| TDFOL modal_tableaux | 81% | 95% | 96%✅ (session 33: deontic ops + World hash/eq + ancestor traversal) |
+| TDFOL nl/tdfol_nl_preprocessor | 48% | 75% | 60% (session 33: +12pp; remaining requires spaCy) |
+| TDFOL nl/tdfol_nl_patterns | 35% | 70% | 49% (session 33: +14pp; remaining requires spaCy) |
+| TDFOL nl/tdfol_nl_generator | 73% | 95% | 97%✅ (session 34: 67 tests; all non-spaCy branches covered) |
+| TDFOL nl/llm.py | 57% | 90% | 97%✅ (session 34: 67 tests; _extract/_estimate/convert/init/cache all covered) |
+| TDFOL nl/tdfol_nl_api.py | 51% | 90% | 98%✅ (session 34: 67 tests; NLParser paths + module functions covered) |
+| TDFOL performance_dashboard.py | 0% | 85% | 99%✅ (session 35: 140 tests; all public methods + global functions) |
+| TDFOL performance_profiler.py | 0% | 80% | 90%✅ (session 35: 140 tests; profile_function/memory/benchmark/identify_bottlenecks) |
+| TDFOL proof_explainer.py | 96% | 99% | 98% (session 35: ZKP/tableaux/compare_proofs/explain_inference_rule) |
+| TDFOL strategies/base.py | 100% | 100% | 100%✅ |
+| TDFOL strategies/strategy_selector.py | 67% | 90% | 85% (session 35: fallback/add_strategy/select_multiple) |
+| TDFOL strategies/cec_delegate.py | 76% | 90% | 88% (session 35: CEC=True paths + exception handling) |
+| TDFOL strategies/modal_tableaux.py | 65% | 90% | 74% (session 35: _prove_basic_modal/estimate_cost/traverse) |
+| TDFOL proof_tree_visualizer.py | 26% | 90% | 97%✅ (session 36: 104 tests; all ProofTreeVisualizer methods, visualize_proof, enum/dataclass coverage) |
+| CEC/native/proof_optimization.py | 43% | 85% | 95%✅ (session 36: ProofNode/OptimizationMetrics/ProofTreePruner/RedundancyEliminator/ParallelProofSearch/ProofOptimizer) |
 | NL Processing | 75% pass | 85% pass | 90% pass |
 | ZKP (simulation) | 80% pass | 85% pass | 85% pass |
-| REST API | N/A | N/A | 90% pass |
-| **Overall** | **~87%** | **~90%** | **~93%** |
+| MCP Tools | 167+ tests | 200+ tests | 250+ tests |
+| **Overall** | **~91%** | **~90%** | **~93%** |
 
 ---
 
-**Document Status:** Active Plan — Ready for Implementation  
-**Next Action:** Execute Phase 1 (Documentation Consolidation)  
+**Document Status:** Active Plan — Being Implemented  
+**Next Action (Session 36 complete):**
+- 1 new test file: `test_proof_tree_visualizer_session36.py` (104 tests)
+- proof_tree_visualizer.py 26%→97%; CEC/native/proof_optimization.py 43%→95%
+- TDFOL suite: 1422→1526 tests (+104); overall logic: 6608→6712 passing
+- **Next session targets:** TDFOL `strategies/modal_tableaux.py` (74%→95%), `strategies/cec_delegate.py` (88%→98%), `strategies/strategy_selector.py` (85%→97%), CEC `proof_strategies.py` coverage
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-22 (Session 36)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)

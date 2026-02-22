@@ -15,17 +15,18 @@ from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, field
 from enum import Enum
 
+# Import unified extraction config from common module
+from ipfs_datasets_py.optimizers.common.extraction_contexts import (
+    LogicExtractionConfig,
+    ExtractionMode,
+)
+
 logger = logging.getLogger(__name__)
 
 
-class ExtractionMode(Enum):
-    """Mode of logic extraction."""
-    TDFOL = "tdfol"  # Temporal Deontic First-Order Logic
-    FOL = "fol"  # First-Order Logic
-    CEC = "cec"  # Cognitive Event Calculus
-    MODAL = "modal"  # Modal Logic
-    DEONTIC = "deontic"  # Deontic Logic
-    AUTO = "auto"  # Automatic mode selection
+# Re-export ExtractionMode for backward compatibility
+__all__ = ["ExtractionMode", "DataType", "LogicExtractionContext", "LogicalStatement", "ExtractionResult", "LogicExtractor"]
+
 
 
 class DataType(Enum):
@@ -41,22 +42,41 @@ class DataType(Enum):
 class LogicExtractionContext:
     """Context for logic extraction.
     
+    This now integrates with the unified LogicExtractionConfig from the common
+    extraction_contexts module, supporting both typed config and legacy dict config.
+    
     Attributes:
         data: Input data to extract logic from
         data_type: Type of input data
-        extraction_mode: Logic formalism to extract
         domain: Domain context (legal, medical, general, etc.)
+        config: Extraction configuration (LogicExtractionConfig or dict)
         ontology: Knowledge graph ontology to align with
         previous_extractions: Previous extraction results for consistency
         hints: Optional hints for extraction
     """
     data: Any
-    data_type: DataType = DataType.TEXT
-    extraction_mode: ExtractionMode = ExtractionMode.AUTO
+    data_type: 'DataType' = DataType.TEXT
     domain: str = "general"
+    config: Union[LogicExtractionConfig, Dict[str, Any]] = field(default_factory=lambda: LogicExtractionConfig())
     ontology: Optional[Dict[str, Any]] = None
     previous_extractions: List['ExtractionResult'] = field(default_factory=list)
     hints: Optional[List[str]] = None
+    
+    def __post_init__(self):
+        """Normalise config to LogicExtractionConfig if passed as dict."""
+        if isinstance(self.config, dict):
+            self.config = LogicExtractionConfig.from_dict(self.config)
+        elif isinstance(self.data_type, str):
+            # Support string data types (backward compat)
+            try:
+                self.data_type = DataType(self.data_type)
+            except ValueError:
+                pass  # Keep as string if invalid enum value
+    
+    @property
+    def extraction_mode(self) -> ExtractionMode:
+        """Convenience accessor for config.extraction_mode."""
+        return self.config.extraction_mode
 
 
 @dataclass

@@ -1,6 +1,6 @@
 
 
-import asyncio
+from utils.common.anyio_queues import AnyioPriorityQueue
 import logging
 
 import duckdb
@@ -15,7 +15,7 @@ class FilePathPool():
 
     """
     def __init__(self, configs: Configs):
-        self.file_path_queue = asyncio.PriorityQueue(maxsize=configs.BATCH_SIZE)
+        self.file_path_queue = AnyioPriorityQueue(maxsize=configs.BATCH_SIZE)
         self.logger = configs.make_logger(__name__)
 
     def receive(self, resource: Resource) -> Resource:

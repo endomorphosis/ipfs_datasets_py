@@ -6,7 +6,6 @@ logical operations and natural language to logic conversion.
 """
 
 import logging
-import re
 from typing import List, Dict, Any, Optional, Union
 try:
     from beartype import beartype  # type: ignore
@@ -33,9 +32,13 @@ except (ImportError, SystemExit):
         def __init__(self, value: str, semantic: bool = False):
             self.value = value
             self._semantic = semantic
-        
+
         def _to_type(self, result):
-            return Symbol(str(result), self._semantic)
+            # Import lazily to avoid circular dependency
+            from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
+                create_logic_symbol,
+            )
+            return create_logic_symbol(str(result), semantic=self._semantic)
     
     class Primitive:
         pass
@@ -119,63 +122,65 @@ class LogicPrimitives(Primitive):
             logger.error(f"Failed to convert to FOL: {e}")
             return self._fallback_to_fol(output_format)
     
-    def _fallback_to_fol(self, output_format: str) -> 'Symbol':
+    def _fallback_to_fol(self, output_format: str = "symbolic") -> 'Symbol':
         """Fallback FOL conversion without SymbolicAI."""
-        import re as _re
         text = self.value.lower()
-        
-        # Simple pattern-based conversion
+
+        # Simple pattern-based conversion (symbolic by default)
         if "all " in text or "every " in text:
-            # Universal quantification pattern: "All/Every X are Y"
             parts = text.split(" are ")
             if len(parts) == 2:
                 subject = parts[0].replace("all ", "").replace("every ", "").strip()
                 predicate = parts[1].strip()
                 formula = f"∀x ({subject.capitalize()}(x) → {predicate.capitalize()}(x))"
             else:
-                # "All X [verb] Y" — extract subject after quantifier
-                m = _re.match(r'(?:all|every)\s+(\w+)\s+(.*)', text)
-                if m:
-                    subj = m.group(1).capitalize()
-                    rest = m.group(2).strip().replace(' ', '_')
-                    formula = f"∀x ({subj}(x) → {rest.capitalize()}(x))"
-                else:
-                    formula = f"∀x Statement(x)"
-        elif "some " in text or "exists " in text or "there " in text:
-            # Existential quantification pattern
+                formula = "∀x Statement(x)"
+        elif "some " in text or "exists " in text:
             parts = text.split(" are ")
             if len(parts) == 2:
                 subject = parts[0].replace("some ", "").replace("exists ", "").strip()
                 predicate = parts[1].strip()
                 formula = f"∃x ({subject.capitalize()}(x) ∧ {predicate.capitalize()}(x))"
             else:
-                # "Some X can/is/does Y" — extract subject and predicate
-                m = _re.match(r'(?:some|there\s+(?:is|are))\s+(\w+)\s+(.*)', text)
-                if m:
-                    subj = m.group(1).capitalize()
-                    rest = m.group(2).strip().replace(' ', '_')
-                    formula = f"∃x ({subj}(x) ∧ {rest.capitalize()}(x))"
+                # Try splitting by other verbs
+                parts2 = text.split(" can ")
+                if len(parts2) == 2:
+                    subject = parts2[0].replace("some ", "").strip()
+                    predicate = parts2[1].strip()
+                    formula = f"∃x ({subject.capitalize()}(x) ∧ {predicate.capitalize()}(x))"
                 else:
-                    formula = f"∃x Statement(x)"
+                    formula = "∃x Statement(x)"
+        elif " if " in text or text.startswith("if "):
+            # Conditional: extract condition and consequence
+            if " then " in text:
+                parts = text.split(" then ", 1)
+                condition = parts[0].replace("if ", "").strip()
+                consequence = parts[1].strip()
+                formula = f"{condition.replace(' ', '_').capitalize()} → {consequence.replace(' ', '_').capitalize()}"
+            else:
+                formula = f"If_condition → Consequence"
+        elif " or " in text:
+            parts = text.split(" or ", 1)
+            formula = f"{parts[0].replace(' ', '_').capitalize()} ∨ {parts[1].replace(' ', '_').capitalize()}"
         else:
-            # Simple predicate
             formula = f"Statement({text.replace(' ', '_')})"
-        
-        # Apply format conversions
+
+        # Convert to requested format
         if output_format == "prolog":
-            formula = formula.replace('∀', 'forall')
-            formula = formula.replace('∃', 'exists')
-            formula = formula.replace('→', ':-')
-            formula = formula.replace('∧', ',')
-            formula = formula.replace('∨', ';')
+            formula = (formula.replace("∀x", "forall(X,")
+                       .replace("∃x", "exists(X,")
+                       .replace("∧", ",").replace("∨", ";")
+                       .replace("→", ":-").replace("∀", "forall")
+                       .replace("∃", "exists"))
+            if not formula.endswith(")"):
+                formula += ")"
         elif output_format == "tptp":
-            formula = formula.replace('∀', '!')
-            formula = formula.replace('∃', '?')
-            formula = formula.replace('→', '=>')
-            formula = formula.replace('∧', '&')
-            formula = formula.replace('∨', '|')
-            formula = f"fof(statement, axiom, {formula})."
-        
+            formula = (formula.replace("∀x", "! [X]:")
+                       .replace("∃x", "? [X]:")
+                       .replace("∧", " & ").replace("∨", " | ")
+                       .replace("→", " => ").replace("∀", "! []:")
+                       .replace("∃", "? []:"))
+
         return self._to_type(formula)
     
     @beartype
@@ -481,6 +486,7 @@ class LogicPrimitives(Primitive):
     
     def _fallback_simplify(self) -> 'Symbol':
         """Fallback simplification."""
+        import re
         # Basic simplification - remove extra spaces and parentheses
         simplified = re.sub(r'\s+', ' ', self.value.strip())
         simplified = re.sub(r'\(\s*([^)]+)\s*\)', r'(\1)', simplified)
@@ -492,9 +498,7 @@ if SYMBOLIC_AI_AVAILABLE:
     try:
         # Dynamically add LogicPrimitives methods to Symbol class
         for method_name in dir(LogicPrimitives):
-            is_public = not method_name.startswith('_')
-            is_fallback = method_name.startswith('_fallback_')
-            if (is_public or is_fallback) and callable(getattr(LogicPrimitives, method_name)):
+            if not method_name.startswith('_') and callable(getattr(LogicPrimitives, method_name)):
                 method = getattr(LogicPrimitives, method_name)
                 setattr(Symbol, method_name, method)
         
@@ -516,15 +520,22 @@ def create_logic_symbol(text: str, semantic: bool = True) -> Symbol:
     """
     symbol = Symbol(text, semantic=semantic)
     
-    # Ensure the Symbol class itself has logic primitive methods so that
-    # any Symbol returned by internal methods (e.g. _to_type) also has them.
-    if not hasattr(Symbol, 'to_fol'):
+    # Ensure the symbol has logic primitive methods
+    if not hasattr(symbol, 'to_fol'):
+        # Manually attach methods if they weren't added to the class
+        primitives = LogicPrimitives()
         for method_name in dir(LogicPrimitives):
-            is_public = not method_name.startswith('_')
-            is_fallback = method_name.startswith('_fallback_')
-            if (is_public or is_fallback) and callable(getattr(LogicPrimitives, method_name)):
-                method = getattr(LogicPrimitives, method_name)
-                setattr(Symbol, method_name, method)
+            # Include public methods and _fallback_ private methods
+            if callable(getattr(LogicPrimitives, method_name, None)) and (
+                not method_name.startswith('__') and
+                (not method_name.startswith('_') or method_name.startswith('_fallback_') or method_name.startswith('_analyze_'))
+            ):
+                method = getattr(primitives, method_name)
+                # Bind the method to the symbol instance
+                def make_bound_method(m, s):
+                    return lambda *args, **kwargs: m.__func__(s, *args, **kwargs)
+                bound_method = make_bound_method(method, symbol)
+                setattr(symbol, method_name, bound_method)
     
     return symbol
 

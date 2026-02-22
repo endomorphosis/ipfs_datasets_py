@@ -52,7 +52,7 @@ def list_tools_in_functions_dir(get_docstring: bool = True) -> list[dict[str, st
                     
                     file_dict['docstring'] = docstring
                     
-                except Exception:
+                except (OSError, SyntaxError, AttributeError):
                     # If we can't read the file or parse it, set docstring to None
                     file_dict['docstring'] = None
             

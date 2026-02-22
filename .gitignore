@@ -10,6 +10,9 @@ dist/
 *__pycache__*
 test_screenshots/
 test_outputs/
+.benchmarks
+.reasoning_traces
+
 *.egg-info/
 *.venv/*
 *.venv/
@@ -91,3 +94,8 @@ unified_deontic_logic_system/
 *.bak
 *~
 *_stubs.md
+
+# Local git-worktree artifacts
+ipfs_datasets_py/web_archiving/common_crawl_search_engine.worktrees/
+ipfs_datasets_py/web_archiving/common_crawl_search_engine
+ipfs_datasets_py/logic/CEC/Eng-DCEC

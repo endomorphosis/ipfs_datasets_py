@@ -32,6 +32,17 @@ from .dcec_prototypes import DCECPrototypeNamespace
 logger = logging.getLogger(__name__)
 
 
+def _make_agent_term(agent_str: str, variables: Dict[str, Variable]) -> Term:
+    """Create a Variable or Function term for an agent string."""
+    if isinstance(agent_str, str) and agent_str[0].islower():
+        if agent_str not in variables:
+            variables[agent_str] = Variable(agent_str, Sort("Agent"))
+        return VariableTerm(variables[agent_str])
+    # Constant (e.g. "Agent", "agent")
+    func = Function(str(agent_str), [], Sort("Agent"))
+    return FunctionTerm(func, [])
+
+
 class DCECParsingError(Exception):
     """Exception raised for errors during DCEC parsing."""
     pass
@@ -157,7 +168,8 @@ def token_to_formula(
     if variables is None:
         variables = {}
     
-    func_name = token.func_name.lower()
+    # Strip leading/trailing parens from function name (parser artifacts)
+    func_name = token.func_name.strip("()").lower()
     
     # Special case: "atomic" tokens wrap a single predicate name in parens.
     # e.g. ParseToken("atomic", ["(a)"]) → AtomicFormula(Predicate("a", []), [])
@@ -170,6 +182,14 @@ def token_to_formula(
     
     # Logical connectives
     if func_name == "and":
+        if len(token.args) == 2:
+            # Check for embedded NOT: and(["not", "x"]) is really NOT(x)
+            first_raw = token.args[0] if isinstance(token.args[0], str) else ""
+            first_clean = first_raw.strip("()").lower()
+            if first_clean == "not":
+                inner = _arg_to_formula(token.args[1], namespace, variables)
+                if inner:
+                    return ConnectiveFormula(LogicalConnective.NOT, [inner])
         if len(token.args) >= 2:
             formulas = [_arg_to_formula(arg, namespace, variables) for arg in token.args]
             formulas = [f for f in formulas if f is not None]
@@ -226,7 +246,9 @@ def token_to_formula(
     
     # Cognitive operators
     elif func_name == "b":  # Belief
-        if len(token.args) >= 2:
+        if len(token.args) >= 1:
+            agent_str = token.args[0] if len(token.args) >= 2 else "agent"
+            agent_term = _make_agent_term(str(agent_str), variables)
             formula = _arg_to_formula(token.args[-1], namespace, variables)
             agent_arg = token.args[0]
             agent_term = FunctionTerm(Function(str(agent_arg), [], Sort("agent")), [])
@@ -234,7 +256,9 @@ def token_to_formula(
                 return CognitiveFormula(CognitiveOperator.BELIEF, agent_term, formula)
     
     elif func_name == "k":  # Knowledge
-        if len(token.args) >= 2:
+        if len(token.args) >= 1:
+            agent_str = token.args[0] if len(token.args) >= 2 else "agent"
+            agent_term = _make_agent_term(str(agent_str), variables)
             formula = _arg_to_formula(token.args[-1], namespace, variables)
             agent_arg = token.args[0]
             agent_term = FunctionTerm(Function(str(agent_arg), [], Sort("agent")), [])
@@ -242,7 +266,9 @@ def token_to_formula(
                 return CognitiveFormula(CognitiveOperator.KNOWLEDGE, agent_term, formula)
     
     elif func_name == "i":  # Intention
-        if len(token.args) >= 2:
+        if len(token.args) >= 1:
+            agent_str = token.args[0] if len(token.args) >= 2 else "agent"
+            agent_term = _make_agent_term(str(agent_str), variables)
             formula = _arg_to_formula(token.args[-1], namespace, variables)
             agent_arg = token.args[0]
             agent_term = FunctionTerm(Function(str(agent_arg), [], Sort("agent")), [])
@@ -271,7 +297,6 @@ def token_to_formula(
     # Atomic formula (predicate)
     else:
         # Try to create as atomic formula
-        predicate = Predicate(token.func_name, [])  # 0-ary predicate
         terms = []
         for arg in token.args:
             if isinstance(arg, str):
@@ -283,7 +308,7 @@ def token_to_formula(
                     terms.append(VariableTerm(variables[arg]))
                 else:
                     # Constant (treated as 0-ary function)
-                    func = Function(arg, Sort("Object"), [])
+                    func = Function(arg, [], Sort("Object"))
                     terms.append(FunctionTerm(func, []))
             elif isinstance(arg, ParseToken):
                 # Nested token - recursively convert
@@ -292,6 +317,9 @@ def token_to_formula(
                     # Convert formula to term (simplified)
                     logger.warning(f"Nested formula as term not fully supported: {arg}")
         
+        # Create predicate with arity matching actual terms
+        arg_sorts = [Sort("Object")] * len(terms)
+        predicate = Predicate(token.func_name, arg_sorts)
         return AtomicFormula(predicate, terms)
     
     logger.warning(f"Could not convert token to formula: {token.func_name}")
@@ -307,8 +335,12 @@ def _arg_to_formula(
     if isinstance(arg, ParseToken):
         return token_to_formula(arg, namespace, variables)
     elif isinstance(arg, str):
+        # Strip parser-added outer parentheses
+        clean_arg = arg.strip("()")
+        if not clean_arg:
+            return None
         # Atomic predicate (0-ary)
-        predicate = Predicate(arg, [])
+        predicate = Predicate(clean_arg, [])
         return AtomicFormula(predicate, [])
     return None
 
@@ -340,6 +372,11 @@ def parse_dcec_string(
         LogicalConnective.IMPLIES
     """
     try:
+        # Pre-process: convert "not X" prefix notation to "not(X)" if not already
+        import re as _re
+        # Normalize: "not X" (not followed by paren) -> "not(X)"
+        expression = _re.sub(r'\bnot\s+(?!\()(\w+)', r'not(\1)', expression)
+        
         # Step 1: Parse to token
         token = parse_expression_to_token(expression, namespace)
         if token is None:

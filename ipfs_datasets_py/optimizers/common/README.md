@@ -36,33 +36,131 @@ from ipfs_datasets_py.optimizers.common import (
 
 class MyOptimizer(BaseOptimizer):
     def generate(self, input_data, context):
-        # Create initial artifact
         return artifact
     
     def critique(self, artifact, context):
-        # Evaluate quality (0-1) and provide feedback
         return (score, feedback_list)
     
     def optimize(self, artifact, score, feedback, context):
-        # Improve artifact based on feedback
         return improved_artifact
-    
-    def validate(self, artifact, context):
-        # Optional: verify artifact is valid
-        return True
 
-# Use it
 optimizer = MyOptimizer(config=OptimizerConfig())
 result = optimizer.run_session(input_data, context)
 ```
 
-### Key Features
+### BaseCritic
 
-- **Automatic Optimization Loop**: `run_session()` handles the iteration logic
-- **Early Stopping**: Stops when score plateaus or target reached
-- **Metrics Collection**: Tracks performance automatically
-- **Validation**: Optional verification step
-- **Configurable**: All parameters tunable via `OptimizerConfig`
+Abstract base for all domain critics.  Returns a typed `CriticResult` with score,
+multi-dimensional breakdown, strengths, and weaknesses.
+
+```python
+from ipfs_datasets_py.optimizers.common import BaseCritic, CriticResult
+
+class MyCritic(BaseCritic):
+    def evaluate(self, artifact, context=None) -> CriticResult:
+        return CriticResult(
+            score=0.85,
+            feedback=["Good coverage", "Needs more relationships"],
+            dimensions={"completeness": 0.9, "consistency": 0.8},
+            strengths=["Well-structured entities"],
+            weaknesses=["Missing temporal relationships"],
+            metadata={"evaluator": "MyCritic", "domain": "legal"},
+        )
+
+critic = MyCritic()
+result = critic.evaluate(my_artifact)
+print(result.score, result.feedback)
+
+# Convenience wrappers
+score = critic.score_only(my_artifact)        # float
+feedback = critic.feedback_only(my_artifact)  # list[str]
+```
+
+#### `CriticResult` Field Reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `score` | `float` | Overall quality score, clamped to [0.0, 1.0]. |
+| `feedback` | `list[str]` | Ordered list of actionable improvement suggestions. |
+| `dimensions` | `dict[str, float]` | Per-dimension scores keyed by dimension name (e.g. `"completeness"`, `"consistency"`). Values in [0.0, 1.0]. |
+| `strengths` | `list[str]` | Observed strengths in the evaluated artifact. |
+| `weaknesses` | `list[str]` | Observed weaknesses; typically drives the next refinement round. |
+| `metadata` | `dict[str, Any]` | Arbitrary extra data: evaluator name, domain, backend, timing, etc. |
+
+> **Tip**: Use `result.dimensions` to build per-dimension progress dashboards across multiple refinement rounds.  Use `result.weaknesses` as the seed for the next mediator action set.
+
+### BaseSession
+
+Tracks the full state of one optimization session (all rounds, best score,
+convergence, timings).
+
+```python
+from ipfs_datasets_py.optimizers.common import BaseSession
+
+session = BaseSession(target_score=0.85, convergence_threshold=0.005)
+session.start_round()
+session.record_round(score=0.72, feedback=["add more props"])
+session.start_round()
+session.record_round(score=0.81, feedback=["nearly there"])
+print(session.best_score)   # 0.81
+print(session.trend)        # "improving"
+print(session.converged)    # False
+report = session.to_dict()
+```
+
+`RoundRecord` fields: `round_number`, `score`, `feedback`, `duration_s`, `timestamp`.
+
+### BaseHarness
+
+Orchestrates the full generate → critique → optimize loop using a `BaseSession`.
+Concrete harnesses implement `_generate()`, `_critique()`, `_optimize()`.
+
+```python
+from ipfs_datasets_py.optimizers.common import BaseHarness, HarnessConfig
+
+class MyHarness(BaseHarness):
+    def _generate(self, data, context):
+        return self.generator.extract(data, context)
+
+    def _critique(self, artifact, context):
+        return self.critic.evaluate(artifact, context)
+
+    def _optimize(self, artifact, critique, context):
+        return self.optimizer.refine(artifact, critique.feedback)
+
+harness = MyHarness(
+    generator=gen, critic=critic, optimizer=opt,
+    config=HarnessConfig(max_rounds=5, target_score=0.8),
+)
+session = harness.run(data, context)
+print(session.best_score)
+```
+
+`HarnessConfig` fields: `max_rounds`, `target_score`, `convergence_threshold`.
+
+### Exceptions
+
+Typed exception hierarchy rooted at `OptimizerError`:
+
+```
+OptimizerError
+├── ExtractionError    – entity / relationship extraction failures
+├── ValidationError    – ontology / logic validation failures
+├── ProvingError       – theorem-prover failures
+├── RefinementError    – refinement / mediator failures
+└── ConfigurationError – invalid optimizer configuration
+```
+
+```python
+from ipfs_datasets_py.optimizers.common import (
+    ExtractionError, ValidationError, ProvingError,
+)
+
+try:
+    result = extractor.extract(data)
+except ExtractionError as exc:
+    logger.error("Extraction failed: %s", exc)
+```
 
 ## Usage
 
@@ -148,6 +246,32 @@ class UnifiedGraphRAGOptimizer(BaseOptimizer):
         score = self.critic.evaluate_ontology(artifact)
         feedback = score.feedback
         return (score.overall, feedback)
+```
+
+#### GraphRAG ExtractionConfig: custom_rules
+
+```python
+from ipfs_datasets_py.optimizers.graphrag import (
+    OntologyGenerator,
+    OntologyGenerationContext,
+    ExtractionConfig,
+    ExtractionStrategy,
+    DataType,
+)
+
+config = ExtractionConfig(
+    custom_rules=[(r"\b(?:Widget|Gadget)\b", "Product")]
+)
+context = OntologyGenerationContext(
+    data_source="unit-test",
+    data_type=DataType.TEXT,
+    domain="general",
+    extraction_strategy=ExtractionStrategy.RULE_BASED,
+    config=config,
+)
+
+generator = OntologyGenerator(use_ipfs_accelerate=False)
+ontology = generator.generate_ontology("The Widget ships with a Gadget.", context)
 ```
 
 ## Configuration

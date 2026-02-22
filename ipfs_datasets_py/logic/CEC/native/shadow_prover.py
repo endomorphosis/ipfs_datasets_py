@@ -665,15 +665,17 @@ class ProblemReader:
             return parse_problem_file(filepath)
         except ImportError:
             logger.warning("Problem parser not available, using basic implementation")
-            
-            # Basic fallback implementation
-            return ProblemFile(
-                name="placeholder",
-                logic=ModalLogic.K,
-                assumptions=[],
-                goals=[],
-                metadata={"filepath": filepath, "message": "Parser not available"}
-            )
+        except FileNotFoundError:
+            logger.warning(f"Problem file not found: {filepath}, returning placeholder")
+        
+        # Fallback: return a placeholder problem
+        return ProblemFile(
+            name="placeholder",
+            logic=ModalLogic.K,
+            assumptions=[],
+            goals=[],
+            metadata={"filepath": filepath, "message": "Parser not available or file not found"}
+        )
 
 
 def create_prover(logic: ModalLogic) -> Union[KProver, S4Prover, S5Prover]:
@@ -698,7 +700,7 @@ def create_prover(logic: ModalLogic) -> Union[KProver, S4Prover, S5Prover]:
     if not prover_class:
         raise ProvingError(
             f"Unsupported modal logic: {logic}",
-            proof_state={"requested_logic": str(logic)},
+            formula=str(logic),
             suggestion=f"Use one of the supported modal logics: K, S4, S5"
         )
     

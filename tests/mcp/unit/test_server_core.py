@@ -14,6 +14,19 @@ from typing import Dict, Any
 # Test markers
 pytestmark = [pytest.mark.unit]
 
+# Detect whether the real `mcp` package is available (not a shadow module)
+try:
+    import mcp.types as _mcp_types  # noqa: F401
+    _MCP_PACKAGE_AVAILABLE = True
+except Exception:  # noqa: BLE001
+    _MCP_PACKAGE_AVAILABLE = False
+
+# Decorator to skip tests that require the real mcp package
+requires_mcp = pytest.mark.skipif(
+    not _MCP_PACKAGE_AVAILABLE,
+    reason="requires the 'mcp' PyPI package",
+)
+
 
 class TestServerInitialization:
     """Tests for server initialization."""
@@ -273,21 +286,24 @@ class TestErrorHandling:
     
     def test_fastmcp_none_raises_import_error(self):
         """
-        Test that FastMCP None raises ImportError.
+        Test that FastMCP None raises ImportError when registering tools.
         
-        GIVEN: FastMCP is None
-        WHEN: Server tries to initialize
+        GIVEN: FastMCP is None (mcp package unavailable)
+        WHEN: Server registers tools
         THEN: ImportError should be raised
         """
+        import asyncio
         # GIVEN
         from ipfs_datasets_py.mcp_server import server as server_module
         from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
         
         with patch.object(server_module, 'FastMCP', None):
             with patch.object(server_module, 'ERROR_REPORTING_AVAILABLE', False):
-                # WHEN & THEN
+                # Construction succeeds even without FastMCP (fail-open for utilities)
+                server = IPFSDatasetsMCPServer()
+                # WHEN & THEN: registering tools raises ImportError
                 with pytest.raises(ImportError, match="MCP dependency is not available"):
-                    server = IPFSDatasetsMCPServer()
+                    asyncio.run(server.register_tools())
     
     def test_p2p_exception_handled_gracefully(self):
         """
@@ -627,6 +643,7 @@ class TestToolDiscovery:
         assert hasattr(server_module, 'import_tools_from_directory')
         assert callable(server_module.import_tools_from_directory)
     
+    @requires_mcp
     def test_return_text_content_function(self):
         """
         Test return_text_content utility function.
@@ -648,6 +665,7 @@ class TestToolDiscovery:
         assert "test_result" in result.text
         assert "test_input" in result.text
     
+    @requires_mcp
     def test_return_tool_call_results_success(self):
         """
         Test return_tool_call_results for successful calls.
@@ -669,6 +687,7 @@ class TestToolDiscovery:
         assert result.isError is False
         assert len(result.content) == 1
     
+    @requires_mcp
     def test_return_tool_call_results_error(self):
         """
         Test return_tool_call_results for error cases.
@@ -866,6 +885,7 @@ class TestUtilityFunctions:
         assert isinstance(result, dict)
         assert len(result) == 0
     
+    @requires_mcp
     def test_return_text_content_with_special_characters(self):
         """
         Test return_text_content handles special characters.

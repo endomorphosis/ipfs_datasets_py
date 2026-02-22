@@ -191,6 +191,7 @@ class TDFOLShadowProverBridge(BaseProverBridge):
         self,
         formula: Formula,
         logic_type: Optional[ModalLogicType] = None,
+        modal_type: Optional[ModalLogicType] = None,  # compat alias for logic_type
         timeout_ms: int = 5000
     ) -> ProofResult:
         """
@@ -212,7 +213,11 @@ class TDFOLShadowProverBridge(BaseProverBridge):
                 method="shadowprover",
                 message="ShadowProver not available"
             )
-        
+
+        # Resolve modal_type alias
+        if modal_type is not None and logic_type is None:
+            logic_type = modal_type
+
         import time
         start_time = time.time()
         
@@ -257,7 +262,6 @@ class TDFOLShadowProverBridge(BaseProverBridge):
                 proof_steps = []
                 for i, sp_step in enumerate(proof_tree.steps):
                     step = ProofStep(
-                        step_number=i + 1,
                         formula=formula,
                         rule_name=sp_step.rule_name,
                         premises=[],  # Could extract from sp_step.premises
@@ -380,11 +384,10 @@ class TDFOLShadowProverBridge(BaseProverBridge):
                 proof_steps = []
                 for i, sp_step in enumerate(tableau.proof_steps):
                     step = ProofStep(
-                        step_number=i + 1,
                         formula=formula,
+                        justification=sp_step.justification or f"Tableau rule: {sp_step.rule_name}",
                         rule_name=sp_step.rule_name,
                         premises=[],
-                        justification=sp_step.justification or f"Tableau rule: {sp_step.rule_name}"
                     )
                     proof_steps.append(step)
                 

@@ -108,7 +108,7 @@ class MetricsCollector:
         
         logger.info("Initialized MetricsCollector")
     
-    def record_session(self, session_result: Any):
+    def record_session(self, session_result: Any) -> None:
         """
         Record metrics from a session result.
         
@@ -170,7 +170,7 @@ class MetricsCollector:
             f"entities={num_entities}, time={metrics.time_elapsed:.2f}s"
         )
     
-    def record_batch(self, batch_result: Any):
+    def record_batch(self, batch_result: Any) -> None:
         """
         Record metrics from a batch result.
         
@@ -354,7 +354,7 @@ class MetricsCollector:
         
         return "\n".join(lines)
     
-    def clear(self):
+    def clear(self) -> None:
         """Clear all collected metrics."""
         self._metrics.clear()
         self._batch_metrics.clear()
@@ -396,6 +396,72 @@ class MetricsCollector:
             'time_trend': time_trend,
             'time_change': times[-1] - times[0],
             'convergence_rate': recent_convergence,
+        }
+
+    def batch_statistics_summary(self) -> Dict[str, Any]:
+        """Generate comprehensive statistics summary from all collected metrics.
+
+        Returns summary statistics including counts, averages, distributions,
+        and quality indicators across all collected sessions.
+
+        Returns:
+            Dict with comprehensive statistics:
+                - total_sessions: Total number of sessions collected
+                - total_time: Sum of all session times
+                - avg_quality_score: Average quality across sessions
+                - avg_time_per_session: Average session duration
+                - convergence_rate: Percentage of sessions that converged
+                - quality_distribution: Buckets of quality scores
+                - time_distribution: Buckets of session times
+                - entities_generated: Total entities extracted
+                - relationships_generated: Total relationships extracted
+                - domains_covered: Set of unique domains
+
+        Example:
+            >>> summary = collector.batch_statistics_summary()
+            >>> print(f"Processed {summary['total_sessions']} sessions")
+            >>> print(f"Convergence: {summary['convergence_rate']:.1%}")
+        """
+        if not self._metrics:
+            return {'error': 'No metrics collected yet'}
+        
+        n = len(self._metrics)
+        quality_scores = [m.quality_score for m in self._metrics]
+        times = [m.time_elapsed for m in self._metrics]
+        converged_count = sum(1 for m in self._metrics if m.converged)
+        
+        # Distributions (5 buckets each)
+        quality_buckets = [0, 0, 0, 0, 0]
+        time_buckets = [0, 0, 0, 0, 0]
+        
+        max_time = max(times) if times else 1
+        
+        for score in quality_scores:
+            bucket = min(4, int(score * 5))
+            quality_buckets[bucket] += 1
+        
+        for t in times:
+            bucket = min(4, int((t / max_time) * 5)) if max_time > 0 else 0
+            time_buckets[bucket] += 1
+        
+        # Domains
+        domains = {m.domain for m in self._metrics if m.domain}
+        
+        return {
+            'total_sessions': n,
+            'total_time_seconds': round(sum(times), 2),
+            'avg_quality_score': round(sum(quality_scores) / n, 4),
+            'avg_time_per_session': round(sum(times) / n, 2),
+            'convergence_rate': round(converged_count / n, 4),
+            'min_quality': round(min(quality_scores), 4),
+            'max_quality': round(max(quality_scores), 4),
+            'min_time': round(min(times), 2),
+            'max_time': round(max(times), 2),
+            'quality_distribution': quality_buckets,
+            'time_distribution': time_buckets,
+            'entities_generated': sum(m.num_entities for m in self._metrics),
+            'relationships_generated': sum(m.num_relationships for m in self._metrics),
+            'domains_covered': sorted(list(domains)),
         }
 
 

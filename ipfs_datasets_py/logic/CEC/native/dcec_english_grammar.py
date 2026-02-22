@@ -529,10 +529,12 @@ class DCECEnglishGrammar:
         elif sem_type == "atomic":
             pred = semantic_value["predicate"]
             args = semantic_value.get("arguments", [])
+            # pred may be a Predicate object or a string
+            pred_name = pred.name if hasattr(pred, 'name') else str(pred)
             if args:
                 agent_name = args[0].get("name", "?")
-                return f"{agent_name} {pred}"
-            return pred
+                return f"{agent_name} {pred_name}"
+            return pred_name
         
         return str(semantic_value)
     
@@ -605,9 +607,11 @@ class DCECEnglishGrammar:
     def _formula_to_semantic(self, formula: Formula) -> Dict[str, Any]:
         """Convert Formula object to semantic representation."""
         if isinstance(formula, AtomicFormula):
+            pred = formula.predicate
+            pred_name = pred.name if hasattr(pred, 'name') else str(pred)
             return {
                 "type": "atomic",
-                "predicate": formula.predicate,
+                "predicate": pred_name,
                 "arguments": []
             }
         elif isinstance(formula, ConnectiveFormula):

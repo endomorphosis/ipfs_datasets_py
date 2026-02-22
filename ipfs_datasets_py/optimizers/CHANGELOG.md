@@ -5,6 +5,19 @@ All notable changes to the optimizers module will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Batch 47
+
+### Added
+- `OntologyLearningAdapter.to_dict()` / `from_dict()` — full round-trip state
+  serialization (feedback records, per-action stats, thresholds, EMA config).
+- `OntologyHarness.run_single(data, context)` — thin wrapper around
+  `run_and_report()` for single-document callers; re-raises as `RuntimeError`.
+- `OntologyOptimizer.analyze_batch_parallel(json_log_path=...)` — optional
+  parameter to write a structured JSON summary file after each parallel batch.
+- `CHANGELOG.md` updated with batch 47 entries.
+
+---
+
 ## [1.0.0] - 2025-07-04
 
 ### Added - Initial Implementation

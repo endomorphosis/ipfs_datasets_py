@@ -1,5 +1,4 @@
-import asyncio
-from asyncio import AbstractEventLoop
+import anyio
 from collections import Counter
 import concurrent.futures as cf
 import itertools
@@ -9,6 +8,7 @@ import time
 import threading
 from typing import Any, AsyncGenerator, AsyncIterator, AsyncIterable, Generator, Iterator, Iterable, Optional, TypeVar
 
+from utils.common.anyio_queues import AnyioQueue
 
 from pydantic_models.configs import Configs
 from pydantic_models.resource.resource import Resource
@@ -28,9 +28,9 @@ class AsyncStreamProcessor:
             max_workers=max_workers,
             thread_name_prefix='stream_worker'
         )
-        self.queue = asyncio.Queue(maxsize=queue_size)
+        self.queue: AnyioQueue = AnyioQueue(maxsize=queue_size)
         self.processing = set()
-        self.done = asyncio.Event()
+        self.done = anyio.Event()
 
     async def feed_queue(self, iterator: Iterator[T]) -> None:
         """Feed items from iterator into the async queue"""
@@ -44,49 +44,40 @@ class AsyncStreamProcessor:
                            source: Iterator[T],
                            processor: callable) -> AsyncGenerator[Counter, None]:
         """Process items from the stream with parallel execution"""
+        results: list = []
         
-        # Start queue feeder in the background
-        feeder = asyncio.create_task(self.feed_queue(source))
-        
-        try:
-            while True:
-                # Get next item from queue
-                item = await self.queue.get()
-                if item is None:
-                    break
+        async def _feed_and_process() -> None:
+            # Feed queue in background while consuming in the same task group
+            async with anyio.create_task_group() as tg:
+                tg.start_soon(self.feed_queue, source)
+                # Consume while feeder is running
+                while True:
+                    item = await self.queue.get()
+                    if item is None:
+                        break
+                    future = self.executor.submit(processor, item)
+                    self.processing.add(future)
+                    done, self.processing = cf.wait(
+                        self.processing, timeout=0, return_when=cf.FIRST_COMPLETED
+                    )
+                    for fut in done:
+                        try:
+                            results.append(fut.result())
+                        except Exception as e:
+                            print(f"Error processing item: {e}")
+                # Wait for remaining tasks
+                if self.processing:
+                    done, _ = cf.wait(self.processing)
+                    for fut in done:
+                        try:
+                            results.append(fut.result())
+                        except Exception as e:
+                            print(f"Error processing item: {e}")
+                self.done.set()
 
-                # Submit work to thread pool
-                future = self.executor.submit(processor, item)
-                self.processing.add(future)
-                
-                # Clean up completed futures and yield results
-                done, self.processing = cf.wait(
-                    self.processing,
-                    timeout=0,
-                    return_when=cf.FIRST_COMPLETED
-                )
-                
-                for future in done:
-                    try:
-                        result = future.result()
-                        yield result
-                    except Exception as e:
-                        # Handle or log errors as needed
-                        print(f"Error processing item: {e}")
-
-            # Wait for remaining tasks
-            if self.processing:
-                done, _ = cf.wait(self.processing)
-                for future in done:
-                    try:
-                        result = future.result()
-                        yield result
-                    except Exception as e:
-                        print(f"Error processing item: {e}")
-                        
-        finally:
-            self.done.set()
-            feeder.cancel()
+        await _feed_and_process()
+        for r in results:
+            yield r
 
 class ResourceGenerator:
     """Simulates a source of resources being generated"""
@@ -129,8 +120,7 @@ class Core:
         self.core_error_manager = CoreErrorManager(configs)
         self.core_resource_manager = CoreResourceManager(configs)
 
-        self.loop = asyncio.get_event_loop()
-        self.semaphore = asyncio.Semaphore(configs.concurrency_limit)
+        self.semaphore = anyio.Semaphore(configs.concurrency_limit)
 
         self.stream_processor = AsyncStreamProcessor(
             max_workers=configs.concurrency_limit # TODO
@@ -259,8 +249,7 @@ class Core:
 
     async def optimize(resources: Iterable[Resource], *, batch_size=1024) -> AsyncGenerator:
 
-        input_queue = asyncio.Queue()
-        loop = asyncio.get_event_loop()
+        input_queue: AnyioQueue = AnyioQueue()
 
         for resource in resources:
             if resource.prefer == "thread":
@@ -270,8 +259,8 @@ class Core:
 
             await input_queue.put(input)
 
-        while input_queue:
-            for input, output in concurrently(input_queue, batch_size, max_concurrency, loop):
+        while not input_queue.empty():
+            for input, output in concurrently(input_queue, batch_size, max_concurrency):
                 yield output
 
 

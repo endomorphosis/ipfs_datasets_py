@@ -30,6 +30,8 @@ __all__ = [
     'LogicExtractor',
     'LogicExtractionContext',
     'ExtractionResult',
+    'ExtractionMode',
+    'DataType',
     # Critic
     'LogicCritic',
     'CriticScore',
@@ -44,6 +46,7 @@ __all__ = [
     'SessionConfig',
     # Harness (DEPRECATED - Use LogicTheoremOptimizer)
     'LogicHarness',
+    'LogicPipelineHarness',
     'HarnessConfig',
     'HarnessResult',
     # Ontology
@@ -119,14 +122,18 @@ def __getattr__(name):
         # NEW: Unified optimizer using BaseOptimizer
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer import LogicTheoremOptimizer
         return LogicTheoremOptimizer
-    elif name == 'LogicExtractor' or name == 'LogicExtractionContext' or name == 'ExtractionResult':
+    elif name in ('LogicExtractor', 'LogicExtractionContext', 'ExtractionResult', 'ExtractionMode', 'DataType'):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import (
-            LogicExtractor, LogicExtractionContext, ExtractionResult
+            LogicExtractor, LogicExtractionContext, ExtractionResult, ExtractionMode, DataType
         )
         if name == 'LogicExtractor':
             return LogicExtractor
         elif name == 'LogicExtractionContext':
             return LogicExtractionContext
+        elif name == 'ExtractionMode':
+            return ExtractionMode
+        elif name == 'DataType':
+            return DataType
         else:
             return ExtractionResult
     elif name == 'LogicCritic' or name == 'CriticScore' or name == 'CriticDimensions':
@@ -161,12 +168,14 @@ def __getattr__(name):
             return SessionResult
         else:
             return SessionConfig
-    elif name == 'LogicHarness' or name == 'HarnessConfig' or name == 'HarnessResult':
+    elif name == 'LogicHarness' or name == 'LogicPipelineHarness' or name == 'HarnessConfig' or name == 'HarnessResult':
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_harness import (
-            LogicHarness, HarnessConfig, HarnessResult
+            LogicHarness, LogicPipelineHarness, HarnessConfig, HarnessResult
         )
         if name == 'LogicHarness':
             return LogicHarness
+        elif name == 'LogicPipelineHarness':
+            return LogicPipelineHarness
         elif name == 'HarnessConfig':
             return HarnessConfig
         else:

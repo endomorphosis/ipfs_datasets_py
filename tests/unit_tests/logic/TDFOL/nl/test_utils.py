@@ -20,7 +20,11 @@ from ipfs_datasets_py.logic.TDFOL.nl.utils import (
 
 class TestCreateCacheCID:
     """Tests for create_cache_cid function."""
-    
+
+    pytestmark = pytest.mark.skipif(
+        not MULTIFORMATS_AVAILABLE, reason="multiformats not installed"
+    )
+
     def test_create_cid_basic(self):
         """Test creating a basic CID from cache data."""
         # GIVEN cache data
@@ -92,7 +96,11 @@ class TestCreateCacheCID:
 
 class TestValidateCID:
     """Tests for validate_cid function."""
-    
+
+    pytestmark = pytest.mark.skipif(
+        not MULTIFORMATS_AVAILABLE, reason="multiformats not installed"
+    )
+
     def test_validate_valid_cid(self):
         """Test validation of a valid CID."""
         # GIVEN a valid CID
@@ -136,7 +144,11 @@ class TestValidateCID:
 
 class TestParseCID:
     """Tests for parse_cid function."""
-    
+
+    pytestmark = pytest.mark.skipif(
+        not MULTIFORMATS_AVAILABLE, reason="multiformats not installed"
+    )
+
     def test_parse_cid_structure(self):
         """Test parsing CID structure."""
         # GIVEN a CID
@@ -188,7 +200,11 @@ class TestParseCID:
 
 class TestCacheIntegration:
     """Integration tests for cache CID usage."""
-    
+
+    pytestmark = pytest.mark.skipif(
+        not MULTIFORMATS_AVAILABLE, reason="multiformats not installed"
+    )
+
     def test_cid_as_dict_key(self):
         """Test that CIDs work as dictionary keys."""
         # GIVEN a cache dictionary and some CIDs

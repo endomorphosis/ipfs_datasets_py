@@ -4,10 +4,15 @@ import anyio
 import inspect
 import time
 import logging
-import psutil
+try:
+    import psutil
+    HAVE_PSUTIL = True
+except ImportError:  # pragma: no cover
+    psutil = None  # type: ignore[assignment]
+    HAVE_PSUTIL = False
 import threading
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Callable, Union
+from typing import Dict, Any, List, Optional, Callable, Union, AsyncGenerator
 from dataclasses import dataclass, field
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
@@ -53,7 +58,13 @@ class EnhancedMetricsCollector:
     Provides comprehensive performance tracking, health monitoring, and alerting.
     """
     
-    def __init__(self, enabled: bool = True, retention_hours: int = 24):
+    def __init__(self, enabled: bool = True, retention_hours: int = 24) -> None:
+        """Initialise the metrics collector with optional retention settings.
+
+        Args:
+            enabled: When False the collector records no data (useful in tests).
+            retention_hours: How many hours of metric history to retain in memory.
+        """
         self.enabled = enabled
         self.retention_hours = retention_hours
         self.start_time = datetime.utcnow()
@@ -177,6 +188,24 @@ class EnhancedMetricsCollector:
     async def _collect_system_metrics(self) -> None:
         """Collect system performance metrics."""
         try:
+            if not HAVE_PSUTIL:
+                # Fallback when psutil is not installed
+                cpu_percent = 0.0
+                snapshot = PerformanceSnapshot(
+                    timestamp=datetime.utcnow(),
+                    cpu_percent=0.0,
+                    memory_percent=0.0,
+                    memory_used_mb=0.0,
+                    disk_percent=0.0,
+                    active_connections=len(self.active_requests),
+                    request_rate=self._calculate_request_rate(),
+                    error_rate=self._calculate_error_rate(),
+                    avg_response_time_ms=self._calculate_avg_response_time()
+                )
+                with self._lock:
+                    self.performance_snapshots.append(snapshot)
+                return
+
             # CPU and memory
             cpu_percent = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
@@ -275,7 +304,7 @@ class EnhancedMetricsCollector:
                 self.histograms[labeled_name].append(value)
     
     @asynccontextmanager
-    async def track_request(self, endpoint: str):
+    async def track_request(self, endpoint: str) -> AsyncGenerator[None, None]:
         """Context manager to track request duration and count."""
         try:
             task_id = str(id(anyio.get_current_task()))
@@ -767,9 +796,79 @@ class EnhancedMetricsCollector:
                     }
                     for name, check in self.health_checks.items()
                 },
-                'recent_alerts': list(self.alerts)[-10:] if self.alerts else []
+                'recent_alerts': list(self.alerts)[-10:] if self.alerts else [],
+                'tool_latency_percentiles': {
+                    tool: self._compute_percentiles(
+                        list(self.tool_metrics['execution_times'][tool])
+                    )
+                    for tool in self.tool_metrics['call_counts'].keys()
+                },
             }
-    
+
+    # ------------------------------------------------------------------
+    # Phase C3: per-tool latency histogram  (public + internal helper)
+    # ------------------------------------------------------------------
+
+    def _compute_percentiles(self, times: list) -> Dict[str, float]:
+        """Return p50/p95/p99 latency percentiles from a list of durations (ms).
+
+        Must be called while ``self._lock`` is **already held** (or from a
+        context that doesn't need the lock, e.g. ``get_tool_latency_percentiles``
+        which acquires the lock externally).
+
+        Args:
+            times: List of execution times in milliseconds (unsorted).
+
+        Returns:
+            Dict with keys ``p50``, ``p95``, ``p99``, ``min``, ``max``,
+            ``count`` — all values in milliseconds, all ``0.0`` when fewer
+            than 2 samples are available.
+        """
+        n = len(times)
+        if n < 2:
+            return {"p50": 0.0, "p95": 0.0, "p99": 0.0, "min": 0.0, "max": 0.0, "count": n}
+        s = sorted(times)
+
+        def _pct(pct: float) -> float:
+            idx = (pct / 100.0) * (n - 1)
+            lo, hi = int(idx), min(int(idx) + 1, n - 1)
+            return s[lo] + (idx - lo) * (s[hi] - s[lo])
+
+        return {
+            "p50": _pct(50),
+            "p95": _pct(95),
+            "p99": _pct(99),
+            "min": s[0],
+            "max": s[-1],
+            "count": n,
+        }
+
+    def get_tool_latency_percentiles(self, tool_name: str) -> Dict[str, float]:
+        """Return p50/p95/p99 latency percentiles for a specific tool.
+
+        Uses the buffered execution-time history (up to the last 100 samples).
+        Returns all-zero dict if fewer than 2 samples are available.
+
+        Args:
+            tool_name: Exact tool name as recorded via ``track_tool_execution()``.
+
+        Returns:
+            Dict with keys ``p50``, ``p95``, ``p99``, ``min``, ``max``, ``count``
+            (all values in milliseconds).
+
+        Example::
+
+            >>> collector = EnhancedMetricsCollector()
+            >>> for t in [10, 20, 30, 40, 50, 200]:
+            ...     collector.track_tool_execution("my_tool", t, True)
+            >>> p = collector.get_tool_latency_percentiles("my_tool")
+            >>> p["p50"]   # 35.0
+            >>> p["p99"]   # ~198.0
+        """
+        with self._lock:
+            times = list(self.tool_metrics["execution_times"].get(tool_name, []))
+        return self._compute_percentiles(times)
+
     def get_performance_trends(self, hours: int = 1) -> Dict[str, List[Dict[str, Any]]]:
         """Retrieve time-series performance trends for specified historical period.
         
@@ -916,7 +1015,14 @@ class P2PMetricsCollector:
     Integrates with EnhancedMetricsCollector for comprehensive P2P monitoring.
     """
     
-    def __init__(self, base_collector: Optional[EnhancedMetricsCollector] = None):
+    def __init__(self, base_collector: Optional[EnhancedMetricsCollector] = None) -> None:
+        """Initialise the P2P metrics collector.
+
+        Args:
+            base_collector: Underlying :class:`EnhancedMetricsCollector` to use.
+                If *None*, the global instance returned by :func:`get_metrics_collector`
+                is used.
+        """
         self.base_collector = base_collector or get_metrics_collector()
         
         # P2P-specific metrics
@@ -1676,58 +1782,75 @@ class P2PMetricsCollector:
             - No network I/O or expensive calculations
             - Safe to call frequently (every 1-5 seconds)
         """
-        alerts = []
-        
-        # High discovery failure rate
-        if self.peer_discovery_metrics['total_discoveries'] > 10:
-            failure_rate = (
-                self.peer_discovery_metrics['failed_discoveries'] / 
-                self.peer_discovery_metrics['total_discoveries']
-            )
-            if failure_rate > 0.3:  # >30% failure rate
-                alerts.append({
-                    'type': 'warning',
-                    'component': 'peer_discovery',
-                    'message': f'High peer discovery failure rate: {failure_rate*100:.1f}%',
-                    'timestamp': datetime.utcnow().isoformat()
-                })
-        
-        # High workflow failure rate
+        alerts: List[Dict[str, Any]] = []
+        alerts.extend(self._check_peer_discovery_alerts())
+        alerts.extend(self._check_workflow_alerts())
+        alerts.extend(self._check_bootstrap_alerts())
+        return alerts
+
+    def _check_peer_discovery_alerts(self) -> List[Dict[str, Any]]:
+        """Check for peer discovery failure rate alerts (>30% threshold)."""
+        if self.peer_discovery_metrics['total_discoveries'] <= 10:
+            return []
+        failure_rate = (
+            self.peer_discovery_metrics['failed_discoveries'] /
+            self.peer_discovery_metrics['total_discoveries']
+        )
+        if failure_rate <= 0.3:
+            return []
+        return [{
+            'type': 'warning',
+            'component': 'peer_discovery',
+            'message': f'High peer discovery failure rate: {failure_rate * 100:.1f}%',
+            'timestamp': datetime.utcnow().isoformat(),
+        }]
+
+    def _check_workflow_alerts(self) -> List[Dict[str, Any]]:
+        """Check for workflow failure rate alerts (>20% threshold)."""
         total_workflows = (
-            self.workflow_metrics['completed_workflows'] + 
+            self.workflow_metrics['completed_workflows'] +
             self.workflow_metrics['failed_workflows']
         )
-        if total_workflows > 5:
-            failure_rate = self.workflow_metrics['failed_workflows'] / total_workflows
-            if failure_rate > 0.2:  # >20% failure rate
-                alerts.append({
-                    'type': 'warning',
-                    'component': 'workflows',
-                    'message': f'High workflow failure rate: {failure_rate*100:.1f}%',
-                    'timestamp': datetime.utcnow().isoformat()
-                })
-        
-        # High bootstrap failure rate
-        if self.bootstrap_metrics['total_bootstrap_attempts'] > 3:
-            failure_rate = (
-                self.bootstrap_metrics['failed_bootstraps'] / 
-                self.bootstrap_metrics['total_bootstrap_attempts']
-            )
-            if failure_rate > 0.5:  # >50% failure rate
-                alerts.append({
-                    'type': 'critical',
-                    'component': 'bootstrap',
-                    'message': f'High bootstrap failure rate: {failure_rate*100:.1f}%',
-                    'timestamp': datetime.utcnow().isoformat()
-                })
-        
-        return alerts
+        if total_workflows <= 5:
+            return []
+        failure_rate = self.workflow_metrics['failed_workflows'] / total_workflows
+        if failure_rate <= 0.2:
+            return []
+        return [{
+            'type': 'warning',
+            'component': 'workflows',
+            'message': f'High workflow failure rate: {failure_rate * 100:.1f}%',
+            'timestamp': datetime.utcnow().isoformat(),
+        }]
+
+    def _check_bootstrap_alerts(self) -> List[Dict[str, Any]]:
+        """Check for bootstrap failure rate alerts (>50% threshold — critical)."""
+        if self.bootstrap_metrics['total_bootstrap_attempts'] <= 3:
+            return []
+        failure_rate = (
+            self.bootstrap_metrics['failed_bootstraps'] /
+            self.bootstrap_metrics['total_bootstrap_attempts']
+        )
+        if failure_rate <= 0.5:
+            return []
+        return [{
+            'type': 'critical',
+            'component': 'bootstrap',
+            'message': f'High bootstrap failure rate: {failure_rate * 100:.1f}%',
+            'timestamp': datetime.utcnow().isoformat(),
+        }]
 
 
 # ✅ BETTER APPROACH
 metrics_collector = None
 
-def get_metrics_collector():
+def get_metrics_collector() -> EnhancedMetricsCollector:
+    """Get or create the global :class:`EnhancedMetricsCollector` singleton.
+
+    Returns:
+        The global :class:`EnhancedMetricsCollector` instance, creating it on
+        first call.
+    """
     global metrics_collector
     if metrics_collector is None:
         metrics_collector = EnhancedMetricsCollector()
@@ -1736,7 +1859,7 @@ def get_metrics_collector():
 # P2P metrics collector instance
 p2p_metrics_collector = None
 
-def get_p2p_metrics_collector():
+def get_p2p_metrics_collector() -> P2PMetricsCollector:
     """Get or create the global P2P metrics collector instance."""
     global p2p_metrics_collector
     if p2p_metrics_collector is None:

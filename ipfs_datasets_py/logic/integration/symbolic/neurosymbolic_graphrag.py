@@ -95,7 +95,8 @@ class NeurosymbolicGraphRAG:
             enable_proof_caching: Whether to enable proof caching for performance
             proving_strategy: Strategy for theorem proving ("AUTO", "SYMBOLIC_ONLY", "NEURAL_ONLY", "HYBRID")
         """
-        self.use_neural = use_neural and HAS_NEUROSYMBOLIC
+        self.use_neural = use_neural  # Store requested value; HAS_NEUROSYMBOLIC only affects behavior
+        self._neural_available = use_neural and HAS_NEUROSYMBOLIC
         self.enable_proof_caching = enable_proof_caching
         self.proving_strategy = proving_strategy
         
@@ -123,7 +124,7 @@ class NeurosymbolicGraphRAG:
                 logger.warning(f"Could not enable proof caching: {e}")
         
         # Phase 3: Neurosymbolic reasoning
-        if self.use_neural and HAS_NEUROSYMBOLIC:
+        if self._neural_available:
             try:
                 # Map string strategy to enum
                 strategy_map = {

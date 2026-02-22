@@ -52,6 +52,11 @@ except ImportError as e:
     MultiEngineOCR = None
     _ocr_available = False
 
+from .cross_document_engine import pdf_cross_document_analysis
+from .entity_extraction_engine import pdf_extract_entities
+from .batch_processing_engine import pdf_batch_process
+from .llm_optimize_engine import pdf_optimize_for_llm
+
 __all__ = [
     'PDFProcessor',
     'InitializationError',
@@ -62,4 +67,9 @@ __all__ = [
     'EasyOCR',
     'TrOCREngine',
     'MultiEngineOCR',
+    # New canonical engine functions
+    'pdf_cross_document_analysis',
+    'pdf_extract_entities',
+    'pdf_batch_process',
+    'pdf_optimize_for_llm',
 ]

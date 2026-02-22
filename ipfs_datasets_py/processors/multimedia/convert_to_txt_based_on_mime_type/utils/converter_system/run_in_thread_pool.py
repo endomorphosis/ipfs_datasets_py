@@ -1,4 +1,3 @@
-import asyncio
 import concurrent.futures as cf
 import itertools
 from typing import Callable, Iterable, Generator
@@ -6,20 +5,19 @@ from typing import Callable, Iterable, Generator
 
 def run_pipeline_in_thread_pool(inputs: Iterable[tuple], max_concurrency=5) -> Generator[tuple, None, None]:
     """
-    Runs a pipeline of functions in a process pool.
-    
+    Runs a pipeline of functions in a thread pool.
+
     Args:
-        inputs (Iterable[tuple]): An iterable of tuples. 
+        inputs (Iterable[tuple]): An iterable of tuples.
             The first tuple element is a function, and the second is its input.
     """
     func_inputs = iter(inputs)
-    loop = asyncio.get_event_loop()
 
     with cf.ThreadPoolExecutor() as executor:
         futures = {
-            loop.run_in_executor(executor, input[0], input[1]): input
+            executor.submit(input[0], input[1]): input
             for input in itertools.islice(func_inputs, max_concurrency)
-            if isinstance(input[0], Callable) # Filter out non-callable functions
+            if callable(input[0])
         }
 
         while futures:

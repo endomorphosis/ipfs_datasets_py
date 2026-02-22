@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py import ipfs_datasets as ipfs_datasets  # type: ignore
-except Exception:
+except (ImportError, ModuleNotFoundError):
     ipfs_datasets = None  # type: ignore
 
 from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
@@ -268,7 +268,7 @@ async def _fetch_via_http_gateway(
                 try:
                     decoded = content.decode("utf-8")
                     ctype = "text"
-                except Exception:
+                except UnicodeDecodeError:
                     decoded = None
                     ctype = "binary"
                 return {

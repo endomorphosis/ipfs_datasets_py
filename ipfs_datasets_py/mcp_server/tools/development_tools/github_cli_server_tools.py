@@ -7,11 +7,30 @@ This module provides MCP server tool functions for GitHub CLI integration.
 These functions are designed to be registered with the MCP server for AI assistant access.
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 import logging
 from ipfs_datasets_py.utils.github_cli import GitHubCLI
 
 logger = logging.getLogger(__name__)
+
+_NOT_INSTALLED_MSG = "GitHub CLI is not installed. Use github_cli_install first."
+
+
+def _get_cli_or_error(
+    install_dir: Optional[str] = None,
+) -> Tuple[Optional["GitHubCLI"], Optional[Dict[str, Any]]]:
+    """Return an initialised GitHubCLI instance, or an error dict if not installed.
+
+    Args:
+        install_dir: Optional custom installation directory path.
+
+    Returns:
+        ``(cli, None)`` when installed, or ``(None, error_dict)`` otherwise.
+    """
+    cli = GitHubCLI(install_dir=install_dir)
+    if not cli.is_installed():
+        return None, {"success": False, "error": _NOT_INSTALLED_MSG}
+    return cli, None
 
 
 def github_cli_status(install_dir: Optional[str] = None) -> Dict[str, Any]:
@@ -30,12 +49,11 @@ def github_cli_status(install_dir: Optional[str] = None) -> Dict[str, Any]:
     try:
         cli = GitHubCLI(install_dir=install_dir)
         status = cli.get_status()
-        
         return {
             "success": True,
             "status": status
         }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to get GitHub CLI status: {e}")
         return {
             "success": False,
@@ -77,7 +95,7 @@ def github_cli_install(
                 "success": False,
                 "error": "Installation failed"
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to install GitHub CLI: {e}")
         return {
             "success": False,
@@ -108,13 +126,9 @@ def github_cli_execute(
                 "error": "command must be a list of strings"
             }
         
-        cli = GitHubCLI(install_dir=install_dir)
-        
-        if not cli.is_installed():
-            return {
-                "success": False,
-                "error": "GitHub CLI is not installed. Use github_cli_install first."
-            }
+        cli, err = _get_cli_or_error(install_dir)
+        if err:
+            return err
         
         result = cli.execute(command, timeout=timeout)
         
@@ -125,7 +139,7 @@ def github_cli_execute(
             "stderr": result.stderr,
             "command": command
         }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to execute GitHub CLI command: {e}")
         return {
             "success": False,
@@ -150,13 +164,9 @@ def github_cli_auth_login(
         Dictionary with authentication result
     """
     try:
-        cli = GitHubCLI(install_dir=install_dir)
-        
-        if not cli.is_installed():
-            return {
-                "success": False,
-                "error": "GitHub CLI is not installed. Use github_cli_install first."
-            }
+        cli, err = _get_cli_or_error(install_dir)
+        if err:
+            return err
         
         result = cli.auth_login(hostname=hostname, web=web)
         
@@ -166,7 +176,7 @@ def github_cli_auth_login(
             "stdout": result.stdout,
             "stderr": result.stderr
         }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to authenticate with GitHub: {e}")
         return {
             "success": False,
@@ -185,13 +195,9 @@ def github_cli_auth_status(install_dir: Optional[str] = None) -> Dict[str, Any]:
         Dictionary with authentication status
     """
     try:
-        cli = GitHubCLI(install_dir=install_dir)
-        
-        if not cli.is_installed():
-            return {
-                "success": False,
-                "error": "GitHub CLI is not installed. Use github_cli_install first."
-            }
+        cli, err = _get_cli_or_error(install_dir)
+        if err:
+            return err
         
         result = cli.auth_status()
         
@@ -200,7 +206,7 @@ def github_cli_auth_status(install_dir: Optional[str] = None) -> Dict[str, Any]:
             "stdout": result.stdout,
             "stderr": result.stderr
         }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to get GitHub auth status: {e}")
         return {
             "success": False,
@@ -223,13 +229,9 @@ def github_cli_repo_list(
         Dictionary with repository list
     """
     try:
-        cli = GitHubCLI(install_dir=install_dir)
-        
-        if not cli.is_installed():
-            return {
-                "success": False,
-                "error": "GitHub CLI is not installed. Use github_cli_install first."
-            }
+        cli, err = _get_cli_or_error(install_dir)
+        if err:
+            return err
         
         repos = cli.repo_list(limit=limit)
         
@@ -238,7 +240,7 @@ def github_cli_repo_list(
             "repositories": repos,
             "count": len(repos)
         }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to list GitHub repositories: {e}")
         return {
             "success": False,
@@ -266,13 +268,9 @@ def github_get_repo_info(
         Dictionary with repository information
     """
     try:
-        cli = GitHubCLI(install_dir=install_dir)
-        
-        if not cli.is_installed():
-            return {
-                "success": False,
-                "error": "GitHub CLI is not installed. Use github_cli_install first."
-            }
+        cli, err = _get_cli_or_error(install_dir)
+        if err:
+            return err
         
         result = cli.execute(['repo', 'view', f'{owner}/{repo}', '--json', 
                              'name,description,url,stars,forks,issues,pullRequests,createdAt,updatedAt,languages'])
@@ -289,7 +287,7 @@ def github_get_repo_info(
                 "success": False,
                 "error": result.stderr
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to get repository info: {e}")
         return {
             "success": False,
@@ -321,13 +319,9 @@ def github_get_repo_issues(
         Dictionary with issue list and metadata
     """
     try:
-        cli = GitHubCLI(install_dir=install_dir)
-        
-        if not cli.is_installed():
-            return {
-                "success": False,
-                "error": "GitHub CLI is not installed. Use github_cli_install first."
-            }
+        cli, err = _get_cli_or_error(install_dir)
+        if err:
+            return err
         
         result = cli.execute(['issue', 'list', '--repo', f'{owner}/{repo}', 
                              '--state', state, '--limit', str(limit), '--json',
@@ -348,7 +342,7 @@ def github_get_repo_issues(
                 "success": False,
                 "error": result.stderr
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to get repository issues: {e}")
         return {
             "success": False,
@@ -380,13 +374,9 @@ def github_get_pull_requests(
         Dictionary with PR list and metadata
     """
     try:
-        cli = GitHubCLI(install_dir=install_dir)
-        
-        if not cli.is_installed():
-            return {
-                "success": False,
-                "error": "GitHub CLI is not installed. Use github_cli_install first."
-            }
+        cli, err = _get_cli_or_error(install_dir)
+        if err:
+            return err
         
         result = cli.execute(['pr', 'list', '--repo', f'{owner}/{repo}', 
                              '--state', state, '--limit', str(limit), '--json',
@@ -407,7 +397,7 @@ def github_get_pull_requests(
                 "success": False,
                 "error": result.stderr
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to get pull requests: {e}")
         return {
             "success": False,
@@ -435,13 +425,9 @@ def github_search_repos(
         Dictionary with search results
     """
     try:
-        cli = GitHubCLI(install_dir=install_dir)
-        
-        if not cli.is_installed():
-            return {
-                "success": False,
-                "error": "GitHub CLI is not installed. Use github_cli_install first."
-            }
+        cli, err = _get_cli_or_error(install_dir)
+        if err:
+            return err
         
         result = cli.execute(['search', 'repos', query, '--limit', str(limit), '--json',
                              'name,fullName,description,url,stars,language,createdAt,updatedAt'])
@@ -460,7 +446,7 @@ def github_search_repos(
                 "success": False,
                 "error": result.stderr
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to search repositories: {e}")
         return {
             "success": False,
@@ -486,13 +472,9 @@ def github_get_user_info(
         Dictionary with user information
     """
     try:
-        cli = GitHubCLI(install_dir=install_dir)
-        
-        if not cli.is_installed():
-            return {
-                "success": False,
-                "error": "GitHub CLI is not installed. Use github_cli_install first."
-            }
+        cli, err = _get_cli_or_error(install_dir)
+        if err:
+            return err
         
         result = cli.execute(['api', f'users/{username}'])
         
@@ -508,7 +490,7 @@ def github_get_user_info(
                 "success": False,
                 "error": result.stderr
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to get user info: {e}")
         return {
             "success": False,
@@ -542,13 +524,9 @@ def github_create_issue(
         Dictionary with created issue information
     """
     try:
-        cli = GitHubCLI(install_dir=install_dir)
-        
-        if not cli.is_installed():
-            return {
-                "success": False,
-                "error": "GitHub CLI is not installed. Use github_cli_install first."
-            }
+        cli, err = _get_cli_or_error(install_dir)
+        if err:
+            return err
         
         cmd = ['issue', 'create', '--repo', f'{owner}/{repo}', 
                '--title', title, '--body', body]
@@ -569,7 +547,7 @@ def github_create_issue(
                 "success": False,
                 "error": result.stderr
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to create issue: {e}")
         return {
             "success": False,
@@ -624,13 +602,9 @@ def github_create_pull_request(
         ... )
     """
     try:
-        cli = GitHubCLI(install_dir=install_dir)
-        
-        if not cli.is_installed():
-            return {
-                "success": False,
-                "error": "GitHub CLI is not installed. Use github_cli_install first."
-            }
+        cli, err = _get_cli_or_error(install_dir)
+        if err:
+            return err
         
         # Build PR creation command
         cmd = [
@@ -668,7 +642,7 @@ def github_create_pull_request(
                 "success": False,
                 "error": result.stderr
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to create pull request: {e}")
         return {
             "success": False,
@@ -718,13 +692,9 @@ def github_update_pull_request(
         ... )
     """
     try:
-        cli = GitHubCLI(install_dir=install_dir)
-        
-        if not cli.is_installed():
-            return {
-                "success": False,
-                "error": "GitHub CLI is not installed. Use github_cli_install first."
-            }
+        cli, err = _get_cli_or_error(install_dir)
+        if err:
+            return err
         
         # Build PR edit command
         cmd = ['pr', 'edit', str(pr_number), '--repo', f'{owner}/{repo}']
@@ -757,7 +727,7 @@ def github_update_pull_request(
                 "success": False,
                 "error": result.stderr
             }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Failed to update pull request: {e}")
         return {
             "success": False,

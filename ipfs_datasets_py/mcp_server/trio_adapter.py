@@ -33,7 +33,7 @@ Usage:
     await adapter.shutdown()
 """
 
-import asyncio
+import anyio
 import logging
 from typing import Any, Callable, Dict, List, Optional
 from dataclasses import dataclass
@@ -52,6 +52,7 @@ try:
     import trio
     TRIO_AVAILABLE = True
 except ImportError:
+    trio = None  # type: ignore[assignment]  # attribute must exist for patching
     TRIO_AVAILABLE = False
     logger.warning("Trio not available - TrioMCPServerAdapter will not function")
 
@@ -236,7 +237,7 @@ class TrioMCPServerAdapter:
     async def wait_stopped(self) -> None:
         """Wait until the server is stopped."""
         while self.is_running:
-            await asyncio.sleep(0.1)
+            await anyio.sleep(0.1)
     
     def get_health(self) -> Dict[str, Any]:
         """

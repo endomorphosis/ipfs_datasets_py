@@ -494,3 +494,20 @@ __all__ = [
     "ProverStrategy",
     "RouterProofResult",
 ]
+
+
+# Add backward-compat aliases to ProverRouter
+def _prover_router_select_prover(self, formula):
+    """Alias for _select_prover_for_formula()."""
+    return self._select_prover_for_formula(formula)
+
+
+def _prover_router_route(self, formula, **kwargs):
+    """Alias for prove()."""
+    return self.prove(formula, **kwargs)
+
+
+ProverRouter.select_prover = _prover_router_select_prover
+ProverRouter.route = _prover_router_route
+ProverRouter.fallback_prover = property(lambda self: "native")
+ProverRouter.backup_provers = property(lambda self: list(self._provers.keys()))

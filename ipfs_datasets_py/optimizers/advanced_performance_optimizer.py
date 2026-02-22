@@ -12,14 +12,13 @@ GraphRAG website processing, including:
 - Quality vs. speed trade-off management
 """
 
-import os
 import gc
 import time
 import psutil
 import threading
-from typing import Dict, List, Optional, Any, Tuple, Callable
+from typing import Dict, List, Any
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from collections import deque
 import logging
 import json

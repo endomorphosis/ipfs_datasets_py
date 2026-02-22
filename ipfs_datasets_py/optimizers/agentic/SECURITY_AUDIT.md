@@ -2,7 +2,7 @@
 
 **Document Version:** 1.0  
 **Last Updated:** 2026-02-14  
-**Status:** ✅ PRODUCTION READY
+**Status:** ✅ PRODUCTION READY (with noted test gaps)
 
 ## Executive Summary
 
@@ -298,11 +298,9 @@ if stats['peak_memory_mb'] > 1000:
 ## Security Testing
 
 ### Automated Tests:
-- ✅ Path traversal prevention tests
-- ✅ Forbidden pattern detection tests
-- ✅ Token masking tests
-- ✅ Sandbox timeout tests
-- ✅ Circuit breaker tests
+- ⚠️ Dedicated agentic unit tests for these controls are not yet present.
+- ✅ Related security tests exist in other suites (e.g., logic/TDFOL security validator, general error-handling circuit breaker tests).
+- 🧪 Action item: add agentic-specific tests that exercise InputSanitizer, token masking, sandboxing, and circuit breaker behaviors.
 
 ### Manual Testing:
 - ✅ Penetration testing (basic)

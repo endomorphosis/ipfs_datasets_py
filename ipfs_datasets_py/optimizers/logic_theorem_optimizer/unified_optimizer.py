@@ -25,6 +25,8 @@ Example:
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+import logging as _logging
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -34,6 +36,7 @@ from ..common.base_optimizer import (
     OptimizationContext,
     OptimizationStrategy,
 )
+from ..common.extraction_contexts import LogicExtractionConfig
 from .logic_extractor import (
     LogicExtractor,
     LogicExtractionContext,
@@ -49,7 +52,24 @@ from .logic_critic import (
 from .logic_optimizer import LogicOptimizer as LegacyLogicOptimizer
 from .prover_integration import ProverIntegrationAdapter
 
-logger = logging.getLogger(__name__)
+try:
+    from ipfs_datasets_py.optimizers.optimizer_learning_metrics import (
+        OptimizerLearningMetricsCollector,
+    )
+    _HAVE_LEARNING_METRICS = True
+except ImportError:  # pragma: no cover
+    OptimizerLearningMetricsCollector = None  # type: ignore[assignment,misc]
+    _HAVE_LEARNING_METRICS = False
+
+
+@dataclass
+class StatementValidationResult:
+    """Result of validating one or more logical statements."""
+
+    all_valid: bool
+    provers_used: List[str] = field(default_factory=list)
+    errors: List[str] = field(default_factory=list)
+    details: Dict[str, Any] = field(default_factory=dict)
 
 
 class LogicTheoremOptimizer(BaseOptimizer):
@@ -94,7 +114,11 @@ class LogicTheoremOptimizer(BaseOptimizer):
         llm_backend: Optional[Any] = None,
         extraction_mode: ExtractionMode = ExtractionMode.AUTO,
         use_provers: Optional[List[str]] = None,
+        enable_caching: bool = True,
         domain: str = "general",
+        metrics_collector: Optional[Any] = None,
+        learning_metrics_collector: Optional[Any] = None,
+        logger: Optional[logging.Logger] = None,
     ):
         """Initialize the unified logic theorem optimizer.
         
@@ -104,14 +128,28 @@ class LogicTheoremOptimizer(BaseOptimizer):
             extraction_mode: Logic formalism to extract
             use_provers: Theorem provers to use for validation
             domain: Domain context
+            metrics_collector: Optional :class:`~ipfs_datasets_py.optimizers.common.PerformanceMetricsCollector`
+                instance.  When provided, each ``run_session()`` call records
+                timing and success/failure via ``start_cycle`` / ``end_cycle``.
+            learning_metrics_collector: Optional
+                :class:`~ipfs_datasets_py.optimizers.optimizer_learning_metrics.OptimizerLearningMetricsCollector`
+                instance.  When provided, each ``run_session()`` call records
+                a learning cycle via ``record_learning_cycle()``.  If ``None``
+                and ``_HAVE_LEARNING_METRICS`` is True a default in-memory
+                instance is created automatically.
+            logger: Optional logger instance for dependency injection
         """
-        super().__init__(config=config, llm_backend=llm_backend)
+        super().__init__(config=config, llm_backend=llm_backend, metrics_collector=metrics_collector)
+        self._log = logger or _logging.getLogger(__name__)
         
         # Initialize components
         self.extractor = LogicExtractor(backend=llm_backend)
         self.critic = LogicCritic(use_provers=use_provers or ['z3'])
         self.legacy_optimizer = LegacyLogicOptimizer()
-        self.prover_adapter = ProverIntegrationAdapter(use_provers=use_provers or ['z3'])
+        self.prover_adapter = ProverIntegrationAdapter(
+            use_provers=use_provers or ['z3'],
+            enable_cache=enable_caching,
+        )
         
         # Store settings
         self.extraction_mode = extraction_mode
@@ -119,6 +157,102 @@ class LogicTheoremOptimizer(BaseOptimizer):
         
         # Track extraction history for optimization
         self.extraction_history: List[ExtractionResult] = []
+
+        # Wire learning-metrics collector
+        if learning_metrics_collector is not None:
+            self._learning_metrics = learning_metrics_collector
+        elif _HAVE_LEARNING_METRICS and OptimizerLearningMetricsCollector is not None:
+            self._learning_metrics: Any = OptimizerLearningMetricsCollector()
+        else:
+            self._learning_metrics = None
+
+    def run_session(
+        self,
+        input_data: Any,
+        context: OptimizationContext,
+    ) -> Dict[str, Any]:
+        """Run complete logic theorem optimization session.
+
+        Delegates to :meth:`BaseOptimizer.run_session` and then records the
+        learning cycle in the :class:`OptimizerLearningMetricsCollector` when
+        available.
+
+        Args:
+            input_data: Input text or data to extract logic from.
+            context: Optimization context (session_id, domain, …).
+
+        Returns:
+            Result dict from :meth:`BaseOptimizer.run_session`.
+        """
+        import time as _time
+        t0 = _time.monotonic()
+        result = super().run_session(input_data, context)
+        duration_s = _time.monotonic() - t0
+
+        if self._learning_metrics is not None:
+            feedback = result.get("metrics", {}).get("feedback", [])
+            try:
+                self._learning_metrics.record_learning_cycle(
+                    cycle_id=f"logic_{context.session_id}",
+                    analyzed_queries=1,
+                    patterns_identified=len(feedback) if isinstance(feedback, list) else 0,
+                    parameters_adjusted={
+                        "score": round(result.get("score", 0.0), 6),
+                        "valid": result.get("valid", False),
+                        "iterations": result.get("iterations", 0),
+                    },
+                    execution_time=round(duration_s, 4),
+                )
+            except Exception as e:
+                # Metrics must never block optimization
+                _logger.warning(f"Metrics collection failed: {e}")
+
+        return result
+
+    def validate_statements(
+        self,
+        statements: List[Any],
+        context: Optional[OptimizationContext] = None,
+        timeout: Optional[float] = None,
+    ) -> StatementValidationResult:
+        """Validate one or more statements using configured theorem provers.
+
+        This is a lightweight adapter around `ProverIntegrationAdapter.verify_statement`.
+        It is intentionally conservative: if no provers are available or any statement
+        is not verified as valid, the result is `all_valid=False`.
+        """
+        errors: List[str] = []
+        per_statement: List[Dict[str, Any]] = []
+        verified_by: List[str] = []
+
+        for idx, statement in enumerate(statements, start=1):
+            aggregated = self.prover_adapter.verify_statement(
+                statement,
+                timeout=timeout,
+            )
+            per_statement.append(
+                {
+                    'index': idx,
+                    'statement': str(statement),
+                    'overall_valid': aggregated.overall_valid,
+                    'confidence': aggregated.confidence,
+                    'agreement_rate': aggregated.agreement_rate,
+                    'verified_by': aggregated.verified_by,
+                }
+            )
+            verified_by.extend(list(aggregated.verified_by or []))
+            if not aggregated.overall_valid:
+                errors.append(f"Statement {idx} failed verification")
+
+        provers_used = sorted(set(verified_by)) or list(self.prover_adapter.use_provers)
+        all_valid = len(errors) == 0
+
+        return StatementValidationResult(
+            all_valid=all_valid,
+            provers_used=provers_used,
+            errors=errors,
+            details={'statements': per_statement},
+        )
         
     def generate(
         self,
@@ -146,12 +280,15 @@ class LogicTheoremOptimizer(BaseOptimizer):
             # Determine data type
             data_type = self._infer_data_type(input_data)
             
+            # Create extraction config with extraction mode
+            config = LogicExtractionConfig(extraction_mode=self.extraction_mode)
+            
             # Create extraction context
             extraction_context = LogicExtractionContext(
                 data=input_data,
                 data_type=data_type,
-                extraction_mode=self.extraction_mode,
                 domain=context.domain or self.domain,
+                config=config,
                 previous_extractions=self.extraction_history[-3:],  # Last 3 for context
                 hints=context.metadata.get('hints'),
             )
@@ -165,7 +302,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             # Store in history
             self.extraction_history.append(result)
             
-            logger.info(
+            self._log.info(
                 f"Generated {len(result.statements)} logical statements "
                 f"using {self.extraction_mode.value} formalism"
             )
@@ -173,7 +310,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             return result
             
         except Exception as e:
-            logger.error(f"Generation failed: {e}")
+            self._log.error(f"Generation failed: {e}")
             raise RuntimeError(f"Failed to generate logical statements: {e}")
     
     def critique(
@@ -223,7 +360,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
                         f"Improve {dim_score.dimension.value}: {dim_score.feedback}"
                     )
             
-            logger.info(
+            self._log.info(
                 f"Critique complete: score={critic_score.overall:.2f}, "
                 f"feedback_count={len(feedback)}"
             )
@@ -231,7 +368,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             return critic_score.overall, feedback
             
         except Exception as e:
-            logger.error(f"Critique failed: {e}")
+            self._log.error(f"Critique failed: {e}")
             raise ValueError(f"Failed to critique artifact: {e}")
     
     def optimize(
@@ -269,11 +406,14 @@ class LogicTheoremOptimizer(BaseOptimizer):
             combined_feedback = feedback + optimization_report.recommendations
             
             # Create improved extraction context with feedback
+            improved_config = LogicExtractionConfig(
+                extraction_mode=artifact.context.extraction_mode
+            )
             improved_context = LogicExtractionContext(
                 data=artifact.context.data,
                 data_type=artifact.context.data_type,
-                extraction_mode=artifact.context.extraction_mode,
                 domain=artifact.context.domain,
+                config=improved_config,
                 ontology=artifact.context.ontology,
                 previous_extractions=self.extraction_history[-3:],
                 hints=combined_feedback,  # Use feedback as hints
@@ -283,7 +423,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             improved_result = self.extractor.extract(improved_context)
             
             if not improved_result.success:
-                logger.warning(
+                self._log.warning(
                     f"Optimization extraction failed, returning original: "
                     f"{improved_result.errors}"
                 )
@@ -292,7 +432,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             # Store improved result
             self.extraction_history.append(improved_result)
             
-            logger.info(
+            self._log.info(
                 f"Optimization complete: {len(improved_result.statements)} statements, "
                 f"previous_score={score:.2f}"
             )
@@ -300,9 +440,9 @@ class LogicTheoremOptimizer(BaseOptimizer):
             return improved_result
             
         except Exception as e:
-            logger.error(f"Optimization failed: {e}")
+            self._log.error(f"Optimization failed: {e}")
             # Return original artifact rather than failing completely
-            logger.warning("Returning original artifact due to optimization failure")
+            self._log.warning("Returning original artifact due to optimization failure")
             return artifact
     
     def validate(
@@ -342,7 +482,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             valid_count = sum(validation_results)
             total_count = len(validation_results)
             
-            logger.info(
+            self._log.info(
                 f"Validation complete: {valid_count}/{total_count} statements valid"
             )
             
@@ -350,7 +490,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             return valid_count >= (total_count * 0.8) if total_count > 0 else True
             
         except Exception as e:
-            logger.error(f"Validation failed: {e}")
+            self._log.error(f"Validation failed: {e}")
             # On validation error, be conservative and return False
             return False
     

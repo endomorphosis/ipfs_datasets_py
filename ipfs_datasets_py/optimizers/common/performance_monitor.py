@@ -62,11 +62,21 @@ class OptimizationCycleMetrics:
     error: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
     
-    def finalize(self):
+    def finalize(self) -> None:
         """Finalize cycle metrics."""
         if self.end_time is None:
             self.end_time = datetime.now()
         self.duration = (self.end_time - self.start_time).total_seconds()
+    
+    def __repr__(self) -> str:
+        """Concise REPL-friendly representation."""
+        status = "success" if self.success else "failed"
+        cache_rate = 100 * self.llm_cache_hits / (self.llm_calls or 1)
+        return (
+            f"OptimizationCycleMetrics(id={self.cycle_id!r}, duration={self.duration:.2f}s, "
+            f"llm_calls={self.llm_calls}, cache_rate={cache_rate:.1f}%, "
+            f"validations={self.validation_count}, status={status})"
+        )
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
@@ -159,7 +169,7 @@ class PerformanceMetricsCollector:
         cycle_id: str,
         success: bool = True,
         error: Optional[str] = None,
-    ):
+    ) -> None:
         """End tracking for an optimization cycle.
         
         Args:
@@ -186,7 +196,7 @@ class PerformanceMetricsCollector:
         self,
         cycle_id: str,
         cache_hit: bool,
-    ):
+    ) -> None:
         """Record an LLM API call.
         
         Args:
@@ -208,7 +218,7 @@ class PerformanceMetricsCollector:
         cycle_id: str,
         duration: float,
         validator_count: int = 1,
-    ):
+    ) -> None:
         """Record validation metrics.
         
         Args:
@@ -222,7 +232,7 @@ class PerformanceMetricsCollector:
             cycle.validation_count += validator_count
             self._total_validations += validator_count
     
-    def record_file_operation(self, cycle_id: str):
+    def record_file_operation(self, cycle_id: str) -> None:
         """Record a file I/O operation.
         
         Args:
@@ -321,7 +331,7 @@ class PerformanceMetricsCollector:
         """
         return list(self._completed_cycles)[-n:]
     
-    def clear_history(self):
+    def clear_history(self) -> None:
         """Clear all historical metrics."""
         self._completed_cycles.clear()
         self._total_llm_calls = 0
@@ -332,7 +342,7 @@ class PerformanceMetricsCollector:
         if self.persistence_path and self.persistence_path.exists():
             self.persistence_path.unlink()
     
-    def _save_to_disk(self):
+    def _save_to_disk(self) -> None:
         """Persist metrics to disk."""
         if not self.persistence_path:
             return
@@ -351,7 +361,7 @@ class PerformanceMetricsCollector:
         with open(self.persistence_path, 'w') as f:
             json.dump(data, f, indent=2)
     
-    def _load_from_disk(self):
+    def _load_from_disk(self) -> None:
         """Load metrics from disk."""
         if not self.persistence_path or not self.persistence_path.exists():
             return
@@ -543,7 +553,7 @@ class PerformanceDashboard:
         
         return "\n".join(lines)
     
-    def export_json(self, output_path: Path):
+    def export_json(self, output_path: Path) -> None:
         """Export metrics to JSON.
         
         Args:
@@ -562,7 +572,7 @@ class PerformanceDashboard:
         with open(output_path, 'w') as f:
             json.dump(data, f, indent=2)
     
-    def export_csv(self, output_path: Path):
+    def export_csv(self, output_path: Path) -> None:
         """Export cycle metrics to CSV.
         
         Args:
@@ -613,7 +623,7 @@ def get_global_collector() -> PerformanceMetricsCollector:
     return _global_collector
 
 
-def set_global_collector(collector: PerformanceMetricsCollector):
+def set_global_collector(collector: PerformanceMetricsCollector) -> None:
     """Set global performance metrics collector.
     
     Args:

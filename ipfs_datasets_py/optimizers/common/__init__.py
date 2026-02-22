@@ -13,6 +13,27 @@ to benefit from:
 - Shared visualization framework
 - Distributed processing support
 - Consistent interfaces and patterns
+
+Unified Extraction Contexts
+---------------------------
+To standardize configuration across optimizer types, this framework provides
+a hierarchy of typed extraction config dataclasses:
+
+- BaseExtractionConfig: Common fields (confidence_threshold, domain, etc.)
+- GraphRAGExtractionConfig: Adds window_size, include_properties, domain_vocab
+- LogicExtractionConfig: Adds extraction_mode, formalism_hint, prover_list
+- AgenticExtractionConfig: Adds optimization_method, validation_level, change_control_method
+
+These replace legacy dict-based configs and provide IDE support, validation,
+and to_dict/from_dict serialization for backward compatibility.
+
+Example:
+    >>> from ipfs_datasets_py.optimizers.common import GraphRAGExtractionConfig
+    >>> config = GraphRAGExtractionConfig(
+    ...     confidence_threshold=0.7,
+    ...     domain='legal',
+    ...     min_entity_length=3
+    ... )
 """
 
 from .base_optimizer import (
@@ -20,6 +41,30 @@ from .base_optimizer import (
     OptimizerConfig,
     OptimizationContext,
     OptimizationStrategy,
+)
+
+from .base_critic import (
+    BaseCritic,
+    CriticResult,
+)
+
+from .base_session import (
+    BaseSession,
+    RoundRecord,
+)
+
+from .base_harness import (
+    BaseHarness,
+    HarnessConfig,
+)
+
+from .exceptions import (
+    OptimizerError,
+    ExtractionError,
+    ValidationError,
+    ProvingError,
+    RefinementError,
+    ConfigurationError,
 )
 
 from .performance import (
@@ -41,12 +86,45 @@ from .performance_monitor import (
     set_global_collector,
 )
 
+from .extraction_contexts import (
+    BaseExtractionConfig,
+    GraphRAGExtractionConfig,
+    LogicExtractionConfig,
+    ExtractionMode,
+    AgenticExtractionConfig,
+    OptimizationMethod,
+)
+
+from .backend_selection import (
+    BackendResolution,
+    canonicalize_provider,
+    detect_provider_from_environment,
+    default_model_for_provider,
+    resolve_backend_settings,
+)
+
 __all__ = [
     # Base classes
     "BaseOptimizer",
     "OptimizerConfig",
     "OptimizationContext",
     "OptimizationStrategy",
+    # Critic
+    "BaseCritic",
+    "CriticResult",
+    # Session
+    "BaseSession",
+    "RoundRecord",
+    # Harness
+    "BaseHarness",
+    "HarnessConfig",
+    # Exceptions
+    "OptimizerError",
+    "ExtractionError",
+    "ValidationError",
+    "ProvingError",
+    "RefinementError",
+    "ConfigurationError",
     # Performance utilities
     "CacheEntry",
     "LLMCache",
@@ -62,6 +140,19 @@ __all__ = [
     "PerformanceDashboard",
     "get_global_collector",
     "set_global_collector",
+    # Unified extraction contexts
+    "BaseExtractionConfig",
+    "GraphRAGExtractionConfig",
+    "LogicExtractionConfig",
+    "ExtractionMode",
+    "AgenticExtractionConfig",
+    "OptimizationMethod",
+    # Backend selection
+    "BackendResolution",
+    "canonicalize_provider",
+    "detect_provider_from_environment",
+    "default_model_for_provider",
+    "resolve_backend_settings",
 ]
 
 __version__ = "0.1.0"

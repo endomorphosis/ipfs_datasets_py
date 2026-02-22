@@ -51,6 +51,7 @@ class TableauNode:
     parent: Optional['TableauNode'] = None
     children: List['TableauNode'] = field(default_factory=list)
     accessible_worlds: Set[int] = field(default_factory=set)
+    expanded_formulas: Set[str] = field(default_factory=set)
     
     def add_formula(self, formula: str) -> bool:
         """Add a formula to this node.
@@ -231,11 +232,16 @@ class TableauProver:
         formulas = list(node.formulas)
         
         for formula in formulas:
+            # Skip already-expanded formulas to prevent infinite loops
+            if formula in node.expanded_formulas:
+                continue
+
             # α-rules (conjunctions)
             if "∧" in formula:
                 # P∧Q → P, Q
                 parts = formula.split("∧", 1)
                 if len(parts) == 2:
+                    node.expanded_formulas.add(formula)
                     node.add_formula(parts[0].strip())
                     node.add_formula(parts[1].strip())
                     return True
@@ -245,18 +251,24 @@ class TableauProver:
                 # P∨Q → branch into P and Q
                 parts = formula.split("∨", 1)
                 if len(parts) == 2:
+                    node.expanded_formulas.add(formula)
+                    # Children inherit parent formulas except the disjunction
+                    inherited = node.formulas - {formula}
+                    inherited_expanded = node.expanded_formulas.copy()
                     # Create two child nodes
                     child1 = TableauNode(
-                        formulas=node.formulas.copy(),
+                        formulas=inherited.copy(),
                         world=node.world,
-                        parent=node
+                        parent=node,
+                        expanded_formulas=inherited_expanded.copy()
                     )
                     child1.add_formula(parts[0].strip())
                     
                     child2 = TableauNode(
-                        formulas=node.formulas.copy(),
+                        formulas=inherited.copy(),
                         world=node.world,
-                        parent=node
+                        parent=node,
+                        expanded_formulas=inherited_expanded.copy()
                     )
                     child2.add_formula(parts[1].strip())
                     
@@ -266,6 +278,7 @@ class TableauProver:
             # Double negation
             elif formula.startswith("¬¬"):
                 # ¬¬P → P
+                node.expanded_formulas.add(formula)
                 node.add_formula(formula[2:])
                 return True
         
@@ -284,11 +297,15 @@ class TableauProver:
         formulas = list(node.formulas)
         
         for formula in formulas:
+            if formula in node.expanded_formulas:
+                continue
+
             # □-formula (necessity)
             if formula.startswith("□"):
                 inner = formula[1:]
                 # Create accessible world
                 if not node.accessible_worlds:
+                    node.expanded_formulas.add(formula)
                     new_world = tableau.new_world()
                     node.accessible_worlds.add(new_world)
                     
@@ -304,6 +321,7 @@ class TableauProver:
             # ◇-formula (possibility)
             elif formula.startswith("◇"):
                 inner = formula[1:]
+                node.expanded_formulas.add(formula)
                 # Must create new accessible world
                 new_world = tableau.new_world()
                 node.accessible_worlds.add(new_world)
