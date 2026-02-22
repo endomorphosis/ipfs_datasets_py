@@ -1,6 +1,6 @@
 # MCP Server Phases Status Report
 
-**Last Updated:** 2026-02-22 (Session 40 — v6 phases G-L complete: monitoring 80%, enterprise_api 80%, tool-reference.md 52 sections, 155 mcp tests)  
+**Last Updated:** 2026-02-22 (Session 41 — tool_metadata.py 100%, validators.py 94%, +115 new tests)  
 **Branch:** `copilot/refactor-markdown-files-again`
 **Master Plan:** [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)  
 **Next Steps:** [MASTER_IMPROVEMENT_PLAN_2026_v6.md](MASTER_IMPROVEMENT_PLAN_2026_v6.md)
@@ -283,9 +283,11 @@ Active improvement tasks are tracked in [MASTER_IMPROVEMENT_PLAN_2026_v6.md](MAS
 
 Completed v5 tasks tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROVEMENT_PLAN_2026_v5.md).
 
-**v6 Tasks — ALL COMPLETE ✅ (session 40):**
+**v6 Tasks — ALL COMPLETE ✅ (sessions 40-41):**
 - ✅ `monitoring.py` coverage: 63%→80% (Phase I) — `test_monitoring_session40.py` (44 tests)
 - ✅ `enterprise_api.py` coverage: 66%→80% (Phase I) — `test_enterprise_api_session40.py` (20 tests)
+- ✅ `tool_metadata.py` coverage: 0%→100% (Phase I) — `test_tool_metadata_session41.py` (38 tests)
+- ✅ `validators.py` coverage: 0%→94% (Phase I) — `test_validators_session41.py` (77 tests)
 - ✅ `docs/api/tool-reference.md`: expanded 530L/15 sections → 1283L/52 sections (Phase H)
 - ✅ 15 tool category READMEs verified — already have tables/usage/status from v5 (Phase J)
 - ✅ `compat/` and architecture docs refreshed (Phase L)
