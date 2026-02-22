@@ -531,6 +531,59 @@ class PubSubBus:
         """Return the number of subscribers for *topic*."""
         return len(self._subscribers.get(str(topic), []))
 
+    async def publish_async(
+        self,
+        topic: Union[str, "PubSubEventType"],
+        payload: Dict[str, Any],
+    ) -> int:
+        """Async variant of :meth:`publish`.
+
+        Invokes each handler concurrently inside an *anyio* task group so
+        async handlers can ``await`` without blocking others.  Falls back to
+        synchronous :meth:`publish` (with a ``UserWarning``) when *anyio* is
+        not installed.
+
+        Args:
+            topic: A :class:`PubSubEventType` value or raw topic string.
+            payload: JSON-serialisable event payload.
+
+        Returns:
+            The number of handlers notified.
+        """
+        try:
+            import anyio  # noqa: PLC0415
+        except ImportError:
+            import warnings  # noqa: PLC0415
+
+            warnings.warn(
+                "anyio is not installed; publish_async() falling back to synchronous publish()",
+                UserWarning,
+                stacklevel=2,
+            )
+            return self.publish(topic, payload)
+
+        key = str(topic)
+        handlers = list(self._subscribers.get(key, []))
+        notified = 0
+        results: Dict[int, bool] = {}
+
+        async def _call(idx: int, h: Any) -> None:
+            try:
+                result = h(key, payload)
+                # Support both sync and async handlers.
+                if hasattr(result, "__await__"):
+                    await result
+                results[idx] = True
+            except Exception:  # pragma: no cover
+                results[idx] = False
+
+        async with anyio.create_task_group() as tg:
+            for i, handler in enumerate(handlers):
+                tg.start_soon(_call, i, handler)
+
+        notified = sum(1 for v in results.values() if v)
+        return notified
+
     def clear(self, topic: Optional[Union[str, "PubSubEventType"]] = None) -> None:
         """Clear all subscribers, optionally for a single *topic*."""
         if topic is None:

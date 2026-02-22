@@ -51,7 +51,9 @@ class TestFilePolicyStore:
         store = FilePolicyStore(path, reg)
         store.save()
         with open(path) as f:
-            data = json.load(f)
+            raw = json.load(f)
+        # Support both versioned {"version":..,"policies":{..}} and legacy flat format
+        data = raw.get("policies", raw)
         assert "p1" in data
         assert "admin may call admin_tools" in data["p1"]["nl_policy"]
 
@@ -62,7 +64,8 @@ class TestFilePolicyStore:
         path = str(tmp_path / "policies.json")
         FilePolicyStore(path, reg).save()
         with open(path) as f:
-            data = json.load(f)
+            raw = json.load(f)
+        data = raw.get("policies", raw)
         assert data["p1"]["source_cid"] == _make_policy_cid("admin may call admin_tools")
 
     def test_load_returns_zero_when_file_absent(self, tmp_path):
@@ -98,12 +101,13 @@ class TestFilePolicyStore:
         path = str(tmp_path / "policies.json")
         FilePolicyStore(path, reg).save()
 
-        # Tamper the stored CID
+        # Tamper the stored CID (handle both versioned and legacy format)
         with open(path) as f:
-            data = json.load(f)
+            raw = json.load(f)
+        data = raw.get("policies", raw)
         data["p1"]["source_cid"] = "bafy-tampered-cid"
         with open(path, "w") as f:
-            json.dump(data, f)
+            json.dump(raw, f)
 
         reg2 = _fresh_registry()
         # Should load successfully (recompiles), not raise
@@ -135,7 +139,8 @@ class TestFilePolicyStore:
         path = str(tmp_path / "policies.json")
         FilePolicyStore(path, reg).save()
         with open(path) as f:
-            data = json.load(f)
+            raw = json.load(f)
+        data = raw.get("policies", raw)
         assert data["p1"]["description"] == "Admin policy"
 
 

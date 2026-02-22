@@ -346,9 +346,10 @@ Completed v5 tasks tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROV
 - ✅ **Session 45** (Phase M/N start): Flask deprecated in `simple_server.py`+`standalone_server.py`+`__main__.py`; `executor.py` asyncio comments fixed; `README.md`+`DUAL_RUNTIME_ARCHITECTURE.md` asyncio→anyio; `MASTER_IMPROVEMENT_PLAN_2026_v7.md` created; 16 tests
 - ✅ **Session 46** (Phase M1/M2/N2/N3/O1-O3): `Dockerfile.standalone` Flask-free; `start_services.sh` --http removed; `Dockerfile.simple` HTTP healthcheck replaced; PLAYWRIGHT/CRON/COURTLISTENER guides asyncio→anyio; ADR-002 anyio-first; external callers warned; AST-based CI check (`test_no_asyncio_session46.py` 4 tests)
 - ✅ **Session 47** (Phase M2/M3/O4 complete): `Dockerfile.simple` EXPOSE 8000/8080 removed + CMD→MCP stdio; `start_simple_server.sh` Flask→MCP stdio + deprecation notice; `simple_server.py` TODO removal comment; `requirements-docker.txt` Flask removed + anyio added; `test_flask_removal_session47.py` 13 tests
+- ✅ **Session 64** (v19 Next Steps): `FilePolicyStore.reload()` hot-reload; `DelegationManager.merge(other)` delegation merge (no revocation copy); `ComplianceChecker.save_encrypted` adds `"version"` field to encrypted payload; `PubSubBus.publish_async()` async variant with anyio / sync fallback; session 56 test format compatibility fixed; 32 new session 64 tests, 788+ spec tests pass
 
 ---
 
-**Last Updated:** 2026-02-22 (Session 63 — v18 Next Steps: _POLICY_STORE_VERSION + versioned FilePolicyStore.save/load; IPFSPolicyStore.save_encrypted/load_encrypted; DelegationManager.revoke_chain() RECEIPT_DISSEMINATE pubsub notification; ComplianceChecker.merge(other); 38 new session 63 tests, 756+ spec tests pass)
+**Last Updated:** 2026-02-22 (Session 64 — v19 Next Steps: FilePolicyStore.reload(); DelegationManager.merge(other); ComplianceChecker.save_encrypted version field; PubSubBus.publish_async(); 32 new session 64 tests, 788+ spec tests pass)
 
-**For the complete plan, see [MASTER_IMPROVEMENT_PLAN_2026_v19.md](MASTER_IMPROVEMENT_PLAN_2026_v19.md)**
+**For the complete plan, see [MASTER_IMPROVEMENT_PLAN_2026_v20.md](MASTER_IMPROVEMENT_PLAN_2026_v20.md)**

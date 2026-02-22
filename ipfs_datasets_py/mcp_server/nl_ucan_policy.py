@@ -1058,6 +1058,20 @@ class FilePolicyStore:
         logger.debug("Loaded %d policies encrypted from %s", count, enc_path)
         return count
 
+    def reload(self) -> int:
+        """Hot-reload policies from disk without creating a new instance.
+
+        Clears the current registry and re-:meth:`load`\\ s from
+        :attr:`path`.  Any in-memory policies that have not been persisted
+        will be lost.
+
+        Returns:
+            Number of policies loaded.
+        """
+        self._registry._sources.clear()
+        self._registry._compiled.clear()
+        return self.load()
+
 
 # ---------------------------------------------------------------------------
 # Async policy registration (session 56)

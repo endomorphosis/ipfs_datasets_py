@@ -442,6 +442,7 @@ class ComplianceChecker:
         key = hashlib.sha256(pw_bytes).digest()
         nonce = os.urandom(12)
         data: Dict[str, Any] = {
+            "version": _COMPLIANCE_RULE_VERSION,
             "rule_order": list(self._rule_order),
             "deny_list": sorted(self._deny_list),
         }

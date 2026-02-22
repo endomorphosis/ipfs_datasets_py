@@ -1148,6 +1148,33 @@ class DelegationManager:
             "max_chain_depth": self._max_chain_depth,
         }
 
+    def merge(self, other: "DelegationManager") -> int:
+        """Merge delegation entries from *other* into this manager.
+
+        Only delegations whose CID is **not** already present in this
+        manager are added.  The revocation list is **not** merged (revocations
+        are security-sensitive; callers must explicitly choose which
+        revocations to carry over).  The evaluator cache is invalidated
+        after any additions.
+
+        Args:
+            other: The source :class:`DelegationManager` to copy from.
+
+        Returns:
+            Number of newly-added delegations.
+        """
+        added = 0
+        current_cids = set(self._store.list_cids())
+        for cid in other._store.list_cids():
+            if cid not in current_cids:
+                delegation = other._store.get(cid)
+                if delegation is not None:
+                    self._store.add(delegation)
+                    added += 1
+        if added:
+            self._evaluator = None  # invalidate on mutation
+        return added
+
     def __len__(self) -> int:
         return len(self._store)
 
