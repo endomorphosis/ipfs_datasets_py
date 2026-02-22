@@ -18,6 +18,9 @@ import importlib
 import pytest
 from unittest.mock import MagicMock
 
+# Sentinel — distinct from None (which is a valid sys.modules value)
+_MISSING = object()
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -30,35 +33,35 @@ def _reload_with_absent_dep(module_name: str, absent_deps: list[str]):
     freshly-loaded module.  Always restores sys.modules and parent package
     attributes afterwards to avoid polluting test isolation.
     """
-    saved: dict = {}
+    saved: dict[str, object] = {}
 
     # Block each dependency
     for dep in absent_deps:
-        saved[dep] = sys.modules.pop(dep, ...)
+        saved[dep] = sys.modules.pop(dep, _MISSING)
         sys.modules[dep] = None  # type: ignore[assignment]
 
     # Remove cached module so Python re-executes it
-    saved_mod = sys.modules.pop(module_name, ...)
+    saved_mod = sys.modules.pop(module_name, _MISSING)
 
     # Also save the parent package's attribute for the leaf module name, because
     # Python sets pkg.leaf = <module> when it first imports a sub-module.  If we
     # don't restore this, the fresh (wrong) module leaks via `import pkg.leaf`.
     parent_name, _, leaf = module_name.rpartition(".")
     parent_pkg = sys.modules.get(parent_name)
-    saved_pkg_attr = getattr(parent_pkg, leaf, ...) if parent_pkg and leaf else ...
+    saved_pkg_attr = getattr(parent_pkg, leaf, _MISSING) if parent_pkg and leaf else _MISSING
 
     try:
         fresh = importlib.import_module(module_name)
     finally:
         # Restore dependencies
         for dep, old in saved.items():
-            if old is ...:
+            if old is _MISSING:
                 sys.modules.pop(dep, None)
             else:
                 sys.modules[dep] = old  # type: ignore[assignment]
 
         # Restore the original module in sys.modules
-        if saved_mod is ...:
+        if saved_mod is _MISSING:
             sys.modules.pop(module_name, None)
         else:
             sys.modules[module_name] = saved_mod  # type: ignore[assignment]
@@ -66,7 +69,7 @@ def _reload_with_absent_dep(module_name: str, absent_deps: list[str]):
         # Restore the parent package attribute so `import pkg.leaf as m` sees
         # the original module, not the freshly-reloaded one.
         if parent_pkg is not None and leaf:
-            if saved_pkg_attr is ...:
+            if saved_pkg_attr is _MISSING:
                 try:
                     delattr(parent_pkg, leaf)
                 except AttributeError:
@@ -77,9 +80,49 @@ def _reload_with_absent_dep(module_name: str, absent_deps: list[str]):
     return fresh
 
 
-# ---------------------------------------------------------------------------
-# reasoning/types.py:24-26 — numpy ImportError except
-# ---------------------------------------------------------------------------
+def _reload_with_mock_dep(module_name: str, mock_deps: dict[str, object]):
+    """
+    Reload *module_name* with each entry in *mock_deps* injected into
+    sys.modules (so ``import dep`` succeeds with the mock value).  Returns the
+    freshly-loaded module.  Always restores sys.modules and parent package
+    attributes afterwards.
+    """
+    saved: dict[str, object] = {}
+
+    for dep, mock_val in mock_deps.items():
+        saved[dep] = sys.modules.pop(dep, _MISSING)
+        sys.modules[dep] = mock_val  # type: ignore[assignment]
+
+    saved_mod = sys.modules.pop(module_name, _MISSING)
+
+    parent_name, _, leaf = module_name.rpartition(".")
+    parent_pkg = sys.modules.get(parent_name)
+    saved_pkg_attr = getattr(parent_pkg, leaf, _MISSING) if parent_pkg and leaf else _MISSING
+
+    try:
+        fresh = importlib.import_module(module_name)
+    finally:
+        for dep, old in saved.items():
+            if old is _MISSING:
+                sys.modules.pop(dep, None)
+            else:
+                sys.modules[dep] = old  # type: ignore[assignment]
+
+        if saved_mod is _MISSING:
+            sys.modules.pop(module_name, None)
+        else:
+            sys.modules[module_name] = saved_mod  # type: ignore[assignment]
+
+        if parent_pkg is not None and leaf:
+            if saved_pkg_attr is _MISSING:
+                try:
+                    delattr(parent_pkg, leaf)
+                except AttributeError:
+                    pass
+            else:
+                setattr(parent_pkg, leaf, saved_pkg_attr)
+
+    return fresh
 
 class TestReasoningTypesNumpyAbsent:
     """
@@ -274,54 +317,18 @@ class TestIpldCarAvailable:
         """GIVEN mock ipld_car in sys.modules WHEN ipld.py loaded THEN HAVE_IPLD_CAR=True."""
         mock_ipld_car = MagicMock()
         mock_ipld_car.__name__ = "ipld_car"
-
-        mod_name = "ipfs_datasets_py.knowledge_graphs.ipld"
-        saved_mod = sys.modules.pop(mod_name, ...)
-        saved_dep = sys.modules.pop("ipld_car", ...)
-
-        sys.modules["ipld_car"] = mock_ipld_car  # type: ignore[assignment]
-
-        try:
-            fresh = importlib.import_module(mod_name)
-            result = fresh.HAVE_IPLD_CAR
-        finally:
-            # Restore ipld_car state
-            if saved_dep is ...:
-                sys.modules.pop("ipld_car", None)
-            else:
-                sys.modules["ipld_car"] = saved_dep  # type: ignore[assignment]
-
-            # Restore original ipld module
-            if saved_mod is ...:
-                sys.modules.pop(mod_name, None)
-            else:
-                sys.modules[mod_name] = saved_mod  # type: ignore[assignment]
-
-        assert result is True
+        fresh = _reload_with_mock_dep(
+            "ipfs_datasets_py.knowledge_graphs.ipld",
+            {"ipld_car": mock_ipld_car},
+        )
+        assert fresh.HAVE_IPLD_CAR is True
 
     def test_ipld_car_attribute_set_when_available(self):
         """GIVEN mock ipld_car WHEN ipld.py loaded THEN ipld_car attr is the mock."""
         mock_ipld_car = MagicMock()
         mock_ipld_car.__name__ = "ipld_car"
-
-        mod_name = "ipfs_datasets_py.knowledge_graphs.ipld"
-        saved_mod = sys.modules.pop(mod_name, ...)
-        saved_dep = sys.modules.pop("ipld_car", ...)
-
-        sys.modules["ipld_car"] = mock_ipld_car  # type: ignore[assignment]
-
-        try:
-            fresh = importlib.import_module(mod_name)
-            actual_dep = fresh.ipld_car
-        finally:
-            if saved_dep is ...:
-                sys.modules.pop("ipld_car", None)
-            else:
-                sys.modules["ipld_car"] = saved_dep  # type: ignore[assignment]
-
-            if saved_mod is ...:
-                sys.modules.pop(mod_name, None)
-            else:
-                sys.modules[mod_name] = saved_mod  # type: ignore[assignment]
-
-        assert actual_dep is mock_ipld_car
+        fresh = _reload_with_mock_dep(
+            "ipfs_datasets_py.knowledge_graphs.ipld",
+            {"ipld_car": mock_ipld_car},
+        )
+        assert fresh.ipld_car is mock_ipld_car
