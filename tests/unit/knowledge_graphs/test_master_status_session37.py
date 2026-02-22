@@ -25,6 +25,9 @@ import sys
 import importlib
 import warnings
 from unittest.mock import MagicMock, patch
+import pytest
+
+_matplotlib_available = bool(importlib.util.find_spec("matplotlib"))
 
 
 # ---------------------------------------------------------------------------
@@ -187,6 +190,7 @@ class TestLineageVisualizationImportError:
             sys.modules["matplotlib.pyplot"] = real_plt
         importlib.reload(viz_mod)
 
+    @pytest.mark.skipif(not _matplotlib_available, reason="matplotlib not installed")
     def test_render_networkx_ghost_node_gets_lightgray(self):
         """GIVEN node in _graph but not in _nodes WHEN render_networkx THEN lightgray color used."""
         import networkx as nx

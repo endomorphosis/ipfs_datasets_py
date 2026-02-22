@@ -97,6 +97,7 @@ try:
     import ipld_car
     HAVE_IPLD_CAR = True
 except ImportError:
+    ipld_car = None  # type: ignore[assignment]
     HAVE_IPLD_CAR = False
 
 # Maximum size for a single IPLD block before chunking (800KB to stay under 1MB limit)

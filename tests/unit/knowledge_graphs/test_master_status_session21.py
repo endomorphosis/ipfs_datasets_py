@@ -672,12 +672,14 @@ class TestCrossDocumentReasonerUncoveredPaths:
         assert isinstance(r.query_optimizer, FakeOptimizer)
 
     def test_default_query_optimizer_is_missing_stub(self):
-        """GIVEN no query_optimizer kwarg WHEN CrossDocumentReasoner init THEN stub assigned."""
+        """GIVEN UnifiedGraphRAGQueryOptimizer absent WHEN CrossDocumentReasoner init THEN stub assigned."""
+        import ipfs_datasets_py.knowledge_graphs.reasoning.cross_document as mod
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import (
             CrossDocumentReasoner,
             _MissingUnifiedGraphRAGQueryOptimizer,
         )
-        r = CrossDocumentReasoner()
+        with patch.object(mod, "UnifiedGraphRAGQueryOptimizer", None):
+            r = CrossDocumentReasoner()
         assert isinstance(r.query_optimizer, _MissingUnifiedGraphRAGQueryOptimizer)
 
     # --- numpy cosine similarity paths (lines 166-176) ----------------------

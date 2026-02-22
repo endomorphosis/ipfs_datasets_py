@@ -5,6 +5,37 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.0] - 2026-02-22
+
+### Bug Fixes — Async Safety + Test Environment Hardening (Session 45)
+
+This release fixes 95 pre-existing test failures across two categories: production async-safety bugs and test skip guards for optional dependencies.
+
+#### Production Bug Fixes
+
+- **`anyio.get_cancelled_exc_class()` outside async context** — Fixed in 4 modules:
+  - `query/unified_engine.py`: added `_cancelled_exc_class()` helper that falls back to `asyncio.CancelledError` when no event loop is active; replaced 5 `except anyio.get_cancelled_exc_class():` calls.
+  - `transactions/wal.py`: same helper added; replaced 6 calls.
+  - `storage/ipld_backend.py`: same helper added; replaced 3 calls.
+  - `query/hybrid_search.py`: same helper added; replaced 3 calls.
+  - Root cause: newer anyio versions raise `anyio.NoEventLoopError` when `get_cancelled_exc_class()` is called outside an async event loop, breaking synchronous error-handling paths.
+
+- **`ipld.py` missing `ipld_car` module attribute** — Added `ipld_car = None` to the `except ImportError` block so the module-level attribute is always defined (patchable) even when `ipld-car` is not installed. Tests patching `_IPLD.ipld_car` now work correctly.
+
+#### Test Environment Fixes
+
+- **`test_master_status_session43.py`** — Added `pytest.importorskip("spacy")` at module level; all 32 tests are properly skipped when spaCy is absent.
+- **`test_master_status_session44.py`** — Added per-class `@_skip_no_spacy` marks for `TestExtractorSpacyModelOSError` and `TestExtractEntitiesLowConfidenceSkip`; non-spaCy tests continue running.
+- **`test_master_status_session15.py`** — Added `@_skip_no_matplotlib` decorator to `TestLineageVisualizerRenderNetworkx` class and two methods in `TestVisualizeLinkageFunction`; non-matplotlib tests continue running.
+- **`test_master_status_session37.py`** — Added `@pytest.mark.skipif` to `test_render_networkx_ghost_node_gets_lightgray`.
+- **`test_master_status_session40.py`** — Added `@_skip_no_libipld` decorator to `TestBuiltinCarSaveLoad` class; non-libipld tests continue running.
+- **`test_master_status_session21.py`** — Fixed `test_default_query_optimizer_is_missing_stub` to patch `UnifiedGraphRAGQueryOptimizer` to `None` before constructing `CrossDocumentReasoner`; test now works regardless of whether GraphRAG deps are installed.
+- **`test_master_status_session42.py`** — Fixed `TestFromCarEmptyRoots` and `TestExportToCar` to also patch `HAVE_IPLD_CAR = True` alongside `ipld_car`; tests now reach the actual CAR logic instead of the early ImportError guard.
+
+**Result:** 3,567 passing, 41 skipped (all intentional), 0 failing.
+
+---
+
 ## [2.1.0] - 2026-02-20
 
 ### Cypher Feature Completion + Folder Refactoring

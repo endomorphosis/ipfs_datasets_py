@@ -7,11 +7,23 @@ ensuring compatibility with Kubo, ipfs_kit_py, and ipfs_accelerate_py backends.
 All IPFS operations go through ipfs_backend_router for maximum compatibility.
 """
 
+import asyncio
 import anyio
 import json
 import logging
 from typing import Any, Dict, List, Optional, Union
 from collections import OrderedDict
+
+
+def _cancelled_exc_class() -> type:
+    """Return the current async framework's cancellation exception class.
+
+    Falls back to asyncio.CancelledError when called outside an async context.
+    """
+    try:
+        return anyio.get_cancelled_exc_class()
+    except anyio.NoEventLoopError:
+        return asyncio.CancelledError
 
 try:
     from ipfs_datasets_py.ipfs_backend_router import get_ipfs_backend
@@ -250,7 +262,7 @@ class IPLDBackend:
                 f"IPFS connection failed: {e}",
                 details={'backend': self.backend_name, 'operation': 'store'}
             ) from e
-        except anyio.get_cancelled_exc_class():
+        except _cancelled_exc_class():
             raise
         except Exception as e:
             logger.error(f"Failed to store on IPFS: {e}")
@@ -301,7 +313,7 @@ class IPLDBackend:
                     f"IPFS connection failed: {e}",
                     details={'backend': self.backend_name, 'cid': cid, 'operation': 'retrieve'}
                 ) from e
-            except anyio.get_cancelled_exc_class():
+            except _cancelled_exc_class():
                 raise
             except Exception as e:
                 logger.error(f"Failed to retrieve CID {cid}: {e}")
@@ -323,7 +335,7 @@ class IPLDBackend:
                 f"IPFS connection failed: {e}",
                 details={'backend': self.backend_name, 'cid': cid}
             ) from e
-        except anyio.get_cancelled_exc_class():
+        except _cancelled_exc_class():
             raise
         except Exception as e:
             logger.error(f"Failed to retrieve from IPFS: {e}")

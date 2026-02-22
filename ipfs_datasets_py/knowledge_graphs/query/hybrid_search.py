@@ -31,10 +31,22 @@ Usage:
     )
 """
 
+import asyncio
 import anyio
 import logging
 from typing import Any, Dict, List, Optional, Set, Tuple
 from dataclasses import dataclass
+
+
+def _cancelled_exc_class() -> type:
+    """Return the current async framework's cancellation exception class.
+
+    Falls back to asyncio.CancelledError when called outside an async context.
+    """
+    try:
+        return anyio.get_cancelled_exc_class()
+    except anyio.NoEventLoopError:
+        return asyncio.CancelledError
 
 from ..exceptions import KnowledgeGraphError, QueryExecutionError
 
@@ -155,7 +167,7 @@ class HybridSearchEngine:
             
         except KnowledgeGraphError:
             raise
-        except anyio.get_cancelled_exc_class():
+        except _cancelled_exc_class():
             raise
         except (AttributeError, TypeError, ValueError, KeyError) as e:
             logger.error(f"Vector search failed (degrading gracefully): {e}")
@@ -379,7 +391,7 @@ class HybridSearchEngine:
                 return None
         except KnowledgeGraphError:
             raise
-        except anyio.get_cancelled_exc_class():
+        except _cancelled_exc_class():
             raise
         except (AttributeError, TypeError, ValueError) as e:
             logger.error(f"Failed to generate embedding (degrading gracefully): {e}")
@@ -424,7 +436,7 @@ class HybridSearchEngine:
             
         except KnowledgeGraphError:
             raise
-        except anyio.get_cancelled_exc_class():
+        except _cancelled_exc_class():
             raise
         except (AttributeError, TypeError, ValueError, KeyError) as e:
             logger.warning(f"Failed to get neighbors for {node_id} (degrading gracefully): {e}")
