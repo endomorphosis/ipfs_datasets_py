@@ -1475,3 +1475,32 @@ This section captures the full architectural vision beyond batch-method addition
 - [ ] (P2) [graphrag] `OntologyPipeline.run_score_delta_sum()` — sum of consecutive score deltas
 - [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_weighted_mean(weights)` — positionally weighted mean
 - [ ] (P2) [graphrag] `OntologyMediator.unique_action_count()` — number of distinct actions used
+
+## Batches 186–197 Completed
+
+- [x] Batch 186: history_momentum_score, score_signed_sum, score_classification, dimension_rank_order, relationship_bidirectionality_rate, entity_text_length_mean, run_score_delta_sum, run_score_improving_fraction, feedback_weighted_mean, feedback_last_score
+- [x] Batch 187: score_acceleration, history_peak_count, dimension_normalized_vector, score_above_median, entity_confidence_mode, relationship_types_count, run_score_acceleration, run_score_peak_count, feedback_acceleration, feedback_first_score
+- [x] Batch 188: history_valley_count, score_trend_correlation, dimension_cosine_similarity, score_distance, entity_confidence_std, entity_avg_property_count, self_loop_count, node_count, run_score_trend_direction, feedback_improvement_count, feedback_decline_count
+- [x] Regression fixes: removed duplicate feedback_above_median/feedback_score_range/self_loop_count overrides; fixed 3 test files
+- [x] Batch 189: history_weighted_mean, score_consecutive_above, dimension_percentile, entity_min/max_confidence, edge_count, run_score_first, feedback_trend_slope, action_ratio
+- [x] Batch 190: history_min, history_max, history_rolling_mean, dimension_above_threshold, entity_with_most_properties, relationship_max_weight, run_score_last, feedback_median_deviation, action_mode
+- [x] Batch 191: history_above_mean_count, score_delta_mean, history_median, score_above_rolling_mean, dimension_mean, entity_count_with_confidence_above, relationship_avg_confidence, run_score_delta, feedback_score_sum, action_least_frequent
+- [x] Batch 192: history_first, history_last, score_first, score_last, dimension_below_threshold, entity_confidence_range, relationship_min_confidence, run_improvement_rate
+- [x] Batch 193: history_streak_above, score_volatility, history_percentile_rank, dimension_weighted_score, entity_avg_text_length, relationship_confidence_range, feedback_positive_rate, action_diversity_score
+- [x] Batch 194: history_span, history_change_rate, history_trend_direction, dimension_top_k, entity_property_keys, run_score_mean, feedback_negative_rate, action_gini
+- [x] Batch 195: history_cumulative_sum, score_normalized, history_decay_sum, dimension_bottom_k, entity_text_max_length, relationship_type_diversity, run_score_std, feedback_weighted_sum, action_count_per_round
+- [x] Batch 196: score_delta_std, history_coefficient_of_variation, dimension_sum, relationship_avg_weight, run_score_min, run_score_max, feedback_variance
+- [x] Batch 197: history_above_threshold_rate, history_improving_fraction, score_percentile_of_last, score_diff_from_mean, entity_confidence_sum, feedback_longest_negative_streak, action_names
+
+## Batch 198+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.history_trimmed_mean(trim_fraction)` — trimmed mean ignoring extremes
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_z_score()` — z-score of last entry relative to history
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_z_scores(score)` — dict of dim→z-score vs history
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_id_list(result)` — sorted list of entity IDs
+- [ ] (P2) [graphrag] `OntologyGenerator.relationship_source_ids(result)` — set of source entity IDs
+- [ ] (P2) [graphrag] `OntologyGenerator.relationship_target_ids(result)` — set of target entity IDs
+- [ ] (P2) [graphrag] `LogicValidator.hub_nodes(ontology, min_degree)` — nodes with degree >= min_degree
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_trimmed_mean(trim_fraction)` — trimmed mean of run scores
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_trimmed_mean(trim_fraction)` — trimmed mean of feedback
+- [ ] (P2) [graphrag] `OntologyMediator.action_entropy_change()` — change in action entropy over rounds
