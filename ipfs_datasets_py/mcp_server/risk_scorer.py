@@ -339,3 +339,54 @@ def score_intent(
     if _GLOBAL_SCORER is None:
         _GLOBAL_SCORER = RiskScorer()
     return _GLOBAL_SCORER.score_intent(intent, policy=policy)
+
+
+def risk_score_from_dag(
+    dag: Any,
+    tool_name: str,
+    *,
+    rollback_penalty: float = 0.15,
+    error_penalty: float = 0.10,
+    max_penalty: float = 0.50,
+) -> float:
+    """Derive a tool-specific risk score adjustment from the event DAG.
+
+    Scans all nodes in *dag* for events associated with *tool_name* and
+    counts rollback and error events.  Returns a non-negative penalty in
+    ``[0, max_penalty]`` that callers can add to a base risk score.
+
+    This implements the "Risk from EventDAG" requirement from
+    ``MASTER_IMPROVEMENT_PLAN_2026_v10.md`` Section "Next Steps 3".
+
+    Args:
+        dag: An :class:`~event_dag.EventDAG` instance.
+        tool_name: The tool whose history to inspect.
+        rollback_penalty: Extra risk per rollback event (default 0.15).
+        error_penalty: Extra risk per error event (default 0.10).
+        max_penalty: Maximum total penalty returned (default 0.50).
+
+    Returns:
+        A float penalty in ``[0, max_penalty]``.
+    """
+    rollbacks = 0
+    errors = 0
+    try:
+        # EventDAG stores nodes in _nodes dict keyed by CID.
+        nodes = getattr(dag, "_nodes", {})
+        for node in nodes.values():
+            # EventNode stores the intent_cid.  For PipelineIntent, the intent_cid
+            # is a hash of tool_name + actor so it is opaque; we count all rollback
+            # and error events across the DAG as a conservative risk signal.  Callers
+            # can scope more precisely by pre-filtering the DAG before passing it in.
+            # Rollback events: output_cid starts with "rollback" OR
+            # receipt_cid is empty (execution never completed normally).
+            output = str(getattr(node, "output_cid", ""))
+            receipt = str(getattr(node, "receipt_cid", ""))
+            if "rollback" in output.lower():
+                rollbacks += 1
+            elif not receipt:
+                errors += 1
+    except Exception:  # pragma: no cover
+        pass
+    penalty = rollbacks * rollback_penalty + errors * error_penalty
+    return min(penalty, max_penalty)

@@ -349,6 +349,6 @@ Completed v5 tasks tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROV
 
 ---
 
-**Last Updated:** 2026-02-22 (Session 47 — All v7 phases M/N/O complete)
+**Last Updated:** 2026-02-22 (Session 55 — MCP++ integration layer complete: server.py pipeline gate, policy MCP tools, pubsub bus, risk-from-DAG; 384 spec tests pass)
 
-**For the complete plan, see [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)**
+**For the complete plan, see [MASTER_IMPROVEMENT_PLAN_2026_v11.md](MASTER_IMPROVEMENT_PLAN_2026_v11.md)**

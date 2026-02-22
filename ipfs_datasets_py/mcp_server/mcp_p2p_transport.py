@@ -39,7 +39,7 @@ import json
 import struct
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Dict, List, Optional, Union
 
 # ---------------------------------------------------------------------------
 # Normative constants
@@ -426,3 +426,115 @@ class TokenBucketRateLimiter:
     def reset(self) -> None:
         """Reset token count to full capacity."""
         self._tokens = self.capacity
+
+
+# ---------------------------------------------------------------------------
+# PubSub integration
+# ---------------------------------------------------------------------------
+
+
+class PubSubEventType(str, Enum):
+    """Event types published over the MCP++ pubsub transport.
+
+    These map directly to the topic names in :data:`MCP_P2P_PUBSUB_TOPICS`
+    and represent the canonical event categories defined in Section 6 of the
+    MCP++ transport spec.
+
+    Values match the corresponding topic strings so they can be used
+    interchangeably with raw string topic names.
+    """
+
+    INTERFACE_ANNOUNCE = MCP_P2P_PUBSUB_TOPICS["interface_announce"]
+    RECEIPT_DISSEMINATE = MCP_P2P_PUBSUB_TOPICS["receipt_disseminate"]
+    DECISION_DISSEMINATE = MCP_P2P_PUBSUB_TOPICS["decision_disseminate"]
+    SCHEDULING_SIGNAL = MCP_P2P_PUBSUB_TOPICS["scheduling_signal"]
+
+
+class PubSubBus:
+    """Lightweight in-process pubsub bus for MCP++ transport events.
+
+    This class provides ``publish`` / ``subscribe`` / ``unsubscribe`` hooks
+    that mirror the libp2p GossipSub API shape described in the MCP++ spec
+    Section 6 ("Event Dissemination via PubSub").
+
+    In production the bus should be replaced with a real GossipSub bridge;
+    this implementation is intended for testing, local development, and
+    in-process peer notification.
+
+    Usage
+    -----
+    ::
+
+        bus = PubSubBus()
+        received = []
+
+        def on_event(topic, payload):
+            received.append((topic, payload))
+
+        bus.subscribe(PubSubEventType.TOOL_INVOKED, on_event)
+        bus.publish(PubSubEventType.TOOL_INVOKED, {"tool": "ipfs_add"})
+        assert len(received) == 1
+    """
+
+    def __init__(self) -> None:
+        self._subscribers: Dict[str, List[Any]] = {}
+
+    def subscribe(self, topic: Union[str, "PubSubEventType"], handler: Any) -> None:
+        """Register *handler* to receive messages on *topic*.
+
+        Args:
+            topic: A :class:`PubSubEventType` value or raw topic string.
+            handler: Callable ``(topic: str, payload: dict) -> None``.
+        """
+        key = str(topic)
+        self._subscribers.setdefault(key, [])
+        if handler not in self._subscribers[key]:
+            self._subscribers[key].append(handler)
+
+    def unsubscribe(self, topic: Union[str, "PubSubEventType"], handler: Any) -> bool:
+        """Remove *handler* from *topic*.
+
+        Returns:
+            ``True`` if the handler was found and removed; ``False`` otherwise.
+        """
+        key = str(topic)
+        subs = self._subscribers.get(key, [])
+        if handler in subs:
+            subs.remove(handler)
+            return True
+        return False
+
+    def publish(self, topic: Union[str, "PubSubEventType"], payload: Dict[str, Any]) -> int:
+        """Broadcast *payload* to all subscribers of *topic*.
+
+        Args:
+            topic: A :class:`PubSubEventType` value or raw topic string.
+            payload: JSON-serialisable event payload.
+
+        Returns:
+            The number of handlers notified.
+        """
+        key = str(topic)
+        count = 0
+        for handler in list(self._subscribers.get(key, [])):
+            try:
+                handler(key, payload)
+                count += 1
+            except Exception:  # pragma: no cover
+                pass
+        return count
+
+    def topic_count(self, topic: Union[str, "PubSubEventType"]) -> int:
+        """Return the number of subscribers for *topic*."""
+        return len(self._subscribers.get(str(topic), []))
+
+    def clear(self, topic: Optional[Union[str, "PubSubEventType"]] = None) -> None:
+        """Clear all subscribers, optionally for a single *topic*."""
+        if topic is None:
+            self._subscribers.clear()
+        else:
+            self._subscribers.pop(str(topic), None)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        topics = list(self._subscribers)
+        return f"PubSubBus(topics={topics!r})"
