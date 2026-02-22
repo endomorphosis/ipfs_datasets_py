@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.22.12  
+**Version:** 3.22.13  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-22 (session 57)  
-**Last Major Release:** v3.22.12 (session 57: scipy/matplotlib/plotly/rdflib added to knowledge_graphs extras; visualization.py 100%; 3,690 passing)
+**Last Updated:** 2026-02-22 (session 58)  
+**Last Major Release:** v3.22.13 (session 58: srl.py dead code removed → 100%; multiformats added to ipld extras; 3,757 passing)
 
 ---
 
@@ -18,10 +18,10 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | **98% base / 99%+ full** | Session 57: 3,690 pass, 26 skip, **0 fail** (full dep env); 120 missed lines |
-| **Documentation** | ✅ Up to Date | Reflects v3.22.12 structure |
+| **Test Coverage** | **99% base / 99.99%+ full** | Session 58: 3,757 pass, 2 skip, **0 fail** (full dep env); 1 missed line |
+| **Documentation** | ✅ Up to Date | Reflects v3.22.13 structure |
 | **Known Issues** | None | 0 failures; all skips intentional (libipld/spaCy absent when not installed) |
-| **Next Milestone** | v4.0 (2027+) | Remaining missed lines: 120 (spaCy/libipld optional-dep paths) — see IMPROVEMENT_TODO.md |
+| **Next Milestone** | v4.0 (2027+) | 1 missed line: `_entity_helpers.py:117` (intentional defensive guard) — 99.99% coverage |
 
 ---
 

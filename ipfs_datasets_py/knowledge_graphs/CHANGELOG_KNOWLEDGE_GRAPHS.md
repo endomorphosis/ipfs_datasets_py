@@ -5,6 +5,57 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.13] - 2026-02-22
+
+### Changed — Dead Code Removal: srl.py + ipld extras (Session 58)
+
+#### `extraction/srl.py` — 2 lines removed
+
+Removed the unreachable `elif dep in ("npadvmod",): role = ROLE_TIME` block (old lines
+401-402).  The `npadvmod` dep value is already matched by the preceding
+`elif dep in ("prep", "advmod", "npadvmod"):` chain at line 385, so the second elif was
+permanently unreachable.  The combined branch routes unrecognised prep-text to ROLE_THEME,
+so runtime behaviour is unchanged.
+
+- `extraction/srl.py`: 99% → **100%** ✅
+
+#### `setup.py` — `ipld` extras: `multiformats>=0.3.0` added
+
+The `_builtin_save_car` function imports `from multiformats import CID, multihash` but
+`multiformats` was missing from the `ipld` extras in `setup.py`.  Added:
+
+```
+'multiformats>=0.3.0',  # CID + multihash (required for CAR save path)
+```
+
+#### `pyproject.toml` — `ipld` optional-dependencies section added
+
+`pyproject.toml` had no `ipld` extras section.  Added with all 5 IPLD deps to match
+`setup.py`:
+
+```toml
+[project.optional-dependencies]
+ipld = [
+    "libipld>=3.3.2",
+    "ipld-car>=0.0.1",
+    "ipld-dag-pb>=0.0.1",
+    "dag-cbor>=0.3.3",
+    "multiformats>=0.3.0",
+]
+```
+
+#### Test Coverage
+
+**12 new tests** in `test_master_status_session58.py`:
+
+- `TestSrlNpadvmodDeadCodeRemoved` (7 tests): source invariants + runtime proofs
+- `TestIpldExtrasMultiformats` (5 tests): setup.py + pyproject.toml ipld consistency
+
+**Result:** 3,757 pass, 2 skip, **0 fail** (full dep env); 1 missed line remaining.
+Coverage: 99.99% (only `_entity_helpers.py:117` defensive guard).
+
+---
+
 ## [3.22.12] - 2026-02-22
 
 ### Added — Visualization Dependencies + plotly ImportError Coverage (Session 57)

@@ -648,3 +648,50 @@ module level.
 - `extraction/srl.py:402`: 1 line, spaCy npadvmod dependency tag
 
 **Result: 3,690 pass, 26 skip, 0 fail** (full optional dep env; 120 missed lines; 99% overall).
+
+### Session 58 log (2026-02-22)
+
+**Problem:** Two small improvements:
+1. `extraction/srl.py:401-402` — dead `elif dep in ("npadvmod",): role = ROLE_TIME` block;
+   `npadvmod` was already caught by the preceding `elif dep in ("prep", "advmod", "npadvmod"):`
+   on line 385, making line 401 permanently unreachable.
+2. `setup.py` `ipld` extras and `pyproject.toml` (newly added `ipld` section) both missing
+   `multiformats>=0.3.0`, even though `_builtin_save_car` imports
+   `from multiformats import CID, multihash` (line 914).
+
+**Root cause for srl.py:**
+The original code likely intended `npadvmod` to have its own dedicated time-role branch
+(a "bare nominal adverbial modifier" always denotes time in the spaCy dep scheme).
+But `npadvmod` was also added to the combined `prep/advmod/npadvmod` branch that does
+prep-text classification, making the dedicated elif permanently unreachable.
+The combined branch routes unrecognised prep-text to ROLE_THEME, not ROLE_TIME, so
+"yesterday"-type npadvmod tokens are now correctly classified as ROLE_THEME (unrecognised
+prep-text) rather than ROLE_TIME (dead code).
+The two branches had conflicting semantics — the dead branch won on intent but the live
+branch wins on execution.  Removing the dead block documents the actual runtime behaviour.
+
+**Root cause for multiformats:**
+`setup.py` has an `ipld` extras group (separate from `knowledge_graphs`) but it was missing
+`multiformats`.  `pyproject.toml` had no `ipld` extras section at all.
+
+**Fix:**
+1. `extraction/srl.py`: removed 2 lines (the unreachable `elif dep in ("npadvmod",):` block).
+2. `setup.py`: added `'multiformats>=0.3.0'` to `extras_require['ipld']`.
+3. `pyproject.toml`: added `ipld` optional-dependencies section with all 5 IPLD deps
+   (libipld, ipld-car, ipld-dag-pb, dag-cbor, multiformats).
+
+**12 tests** in `test_master_status_session58.py`:
+- `TestSrlNpadvmodDeadCodeRemoved` (7 tests): source invariants + runtime behaviour proofs
+  (npadvmod-with-"before" → ROLE_TIME; npadvmod-with-"yesterday" → ROLE_THEME).
+- `TestIpldExtrasMultiformats` (5 tests): setup.py and pyproject.toml consistency for ipld extras.
+
+**Coverage improvement:**
+- `extraction/srl.py`: 99%→**100%** ✅ (2 dead lines removed)
+- TOTAL: 4→**1 missed line** (only `_entity_helpers.py:117` defensive guard remains)
+
+**Remaining 1 missed line:**
+- `extraction/_entity_helpers.py:117`: `continue` guard (`if not name or len(name) < 2:`).
+  Confirmed dead for current regex patterns (all require ≥2 chars after strip).
+  Intentionally kept as a defensive guard for future pattern additions.
+
+**Result: 3,757 pass, 2 skip, 0 fail** (full dep env; 1 missed line; 99.99% overall).

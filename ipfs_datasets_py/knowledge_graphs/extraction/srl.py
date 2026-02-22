@@ -398,8 +398,6 @@ def _extract_spacy_frames(sentence_span: Any) -> List[SRLFrame]:
                     role = ROLE_CAUSE
                 else:
                     role = ROLE_THEME
-            elif dep in ("npadvmod",):
-                role = ROLE_TIME
             else:
                 continue
 

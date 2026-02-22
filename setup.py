@@ -187,10 +187,11 @@ setup(
         ],
         # Optional but recommended dependencies
         'ipld': [
-            'libipld>=3.3.2',      # Rust-backed DAG-CBOR + CAR decode (primary)
-            'ipld-car>=0.0.1',     # Pure-Python CAR encode+decode (required for save)
-            'ipld-dag-pb>=0.0.1',  # DAG-PB codec (optional, for IPFS file-system nodes)
-            'dag-cbor>=0.3.3',     # DAG-CBOR codec (required by ipld-car)
+            'libipld>=3.3.2',       # Rust-backed DAG-CBOR + CAR decode (primary)
+            'ipld-car>=0.0.1',      # Pure-Python CAR encode+decode (required for save)
+            'ipld-dag-pb>=0.0.1',   # DAG-PB codec (optional, for IPFS file-system nodes)
+            'dag-cbor>=0.3.3',      # DAG-CBOR codec (required by ipld-car)
+            'multiformats>=0.3.0',  # CID + multihash (required for CAR save path)
         ],
         'web_archive': [
             'archivenow==2020.7.18.12.19.44',

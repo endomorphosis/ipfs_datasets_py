@@ -23,6 +23,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# IPLD / CAR format extras
+ipld = [
+    "libipld>=3.3.2",       # Rust-backed DAG-CBOR + CAR decode (primary)
+    "ipld-car>=0.0.1",      # Pure-Python CAR encode+decode (required for save)
+    "ipld-dag-pb>=0.0.1",   # DAG-PB codec (optional, for IPFS file-system nodes)
+    "dag-cbor>=0.3.3",      # DAG-CBOR codec (required by ipld-car)
+    "multiformats>=0.3.0",  # CID + multihash (required for CAR save path)
+]
 # Knowledge-graph extras (numpy already in base deps)
 knowledge_graphs = [
     "spacy>=3.0.0",
