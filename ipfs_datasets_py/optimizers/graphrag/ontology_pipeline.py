@@ -1492,3 +1492,41 @@ class OntologyPipeline:
             return scores[lo] + (scores[hi] - scores[lo]) * (idx - lo)
 
         return _percentile(75.0) - _percentile(25.0)
+
+    def score_variance_trend(self) -> float:
+        """Return variance(second_half) - variance(first_half) of run scores.
+
+        Positive means variance is growing; negative means it is shrinking.
+
+        Returns:
+            Float; 0.0 when fewer than 4 runs.
+        """
+        n = len(self._run_history)
+        if n < 4:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+
+        def _var(vals: list) -> float:
+            if len(vals) < 2:
+                return 0.0
+            mean = sum(vals) / len(vals)
+            return sum((v - mean) ** 2 for v in vals) / len(vals)
+
+        mid = n // 2
+        return _var(scores[mid:]) - _var(scores[:mid])
+
+    def run_score_coefficient_of_variation(self) -> float:
+        """Return std / mean of run overall scores (coefficient of variation).
+
+        Returns:
+            Float; 0.0 when fewer than 2 runs or mean is 0.
+        """
+        n = len(self._run_history)
+        if n < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        mean = sum(scores) / n
+        if mean == 0.0:
+            return 0.0
+        variance = sum((v - mean) ** 2 for v in scores) / n
+        return (variance ** 0.5) / mean

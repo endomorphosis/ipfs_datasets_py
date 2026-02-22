@@ -3687,6 +3687,37 @@ class OntologyCritic(BaseCritic):
         variance = sum((v - mean) ** 2 for v in vals) / n
         return (variance ** 0.5) / mean
 
+    def dimensions_at_max_count(self, score: "CriticScore", threshold: float = 0.9) -> int:  # type: ignore[name-defined]
+        """Return the number of dimensions at or above *threshold*.
+
+        Args:
+            score: ``CriticScore`` to inspect.
+            threshold: Minimum value to consider "at max" (default 0.9).
+
+        Returns:
+            Integer count in range [0, 6].
+        """
+        return sum(
+            1 for d in self._DIMENSIONS
+            if getattr(score, d, 0.0) >= threshold
+        )
+
+    def dimension_harmonic_mean(self, score: "CriticScore") -> float:  # type: ignore[name-defined]
+        """Return the harmonic mean of the six dimension values.
+
+        Dimensions with value 0 are replaced by a small epsilon to avoid
+        division by zero.
+
+        Args:
+            score: ``CriticScore`` to inspect.
+
+        Returns:
+            Float in (0, 1].
+        """
+        epsilon = 1e-9
+        vals = [max(getattr(score, d, 0.0), epsilon) for d in self._DIMENSIONS]
+        return len(vals) / sum(1.0 / v for v in vals)
+
 
 # Export public API
 __all__ = [

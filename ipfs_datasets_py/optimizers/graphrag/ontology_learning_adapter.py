@@ -1549,3 +1549,36 @@ class OntologyLearningAdapter:
             return scores[lo] + (scores[hi] - scores[lo]) * (idx - lo)
 
         return _percentile(75.0) - _percentile(25.0)
+
+    def feedback_entropy(self) -> float:
+        """Return the Shannon entropy of a 5-bin histogram of feedback scores.
+
+        Returns:
+            Float; 0.0 when fewer than 2 feedback records.
+        """
+        import math
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        mn, mx = min(scores), max(scores)
+        if mx == mn:
+            return 0.0
+        bins = [0] * 5
+        for v in scores:
+            idx = min(4, int((v - mn) / (mx - mn) * 5))
+            bins[idx] += 1
+        total = len(scores)
+        return -sum((c / total) * math.log(c / total) for c in bins if c > 0)
+
+    def feedback_positive_fraction(self, threshold: float = 0.5) -> float:
+        """Return fraction of feedback scores at or above *threshold*.
+
+        Args:
+            threshold: Minimum score considered "positive" (default 0.5).
+
+        Returns:
+            Float in [0, 1]; 0.0 when no feedback records.
+        """
+        if not self._feedback:
+            return 0.0
+        return sum(1 for r in self._feedback if r.final_score >= threshold) / len(self._feedback)

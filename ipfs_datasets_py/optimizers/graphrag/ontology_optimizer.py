@@ -3186,6 +3186,61 @@ class OntologyOptimizer:
         threshold = self.history_percentile(p)
         return sum(1 for e in self._history if e.average_score < threshold)
 
+    def history_entropy_change(self) -> float:
+        """Return the change in entropy of scores between first half and second half.
+
+        Computes a rough 5-bin histogram entropy for each half and returns
+        ``entropy_second - entropy_first``.  A positive value means scores are
+        becoming more spread; negative means more concentrated.
+
+        Returns:
+            Float; 0.0 when fewer than 4 history entries.
+        """
+        import math
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        if n < 4:
+            return 0.0
+
+        def _entropy(vals: list) -> float:
+            if not vals:
+                return 0.0
+            mn, mx = min(vals), max(vals)
+            if mx == mn:
+                return 0.0
+            bins = [0] * 5
+            for v in vals:
+                idx = min(4, int((v - mn) / (mx - mn) * 5))
+                bins[idx] += 1
+            total = len(vals)
+            return -sum((c / total) * math.log(c / total) for c in bins if c > 0)
+
+        mid = n // 2
+        return _entropy(scores[mid:]) - _entropy(scores[:mid])
+
+    def score_variance_trend(self) -> float:
+        """Estimate whether score variance is increasing or decreasing over time.
+
+        Splits history into halves and returns variance(second_half) - variance(first_half).
+        Positive → variance growing; negative → variance shrinking.
+
+        Returns:
+            Float; 0.0 when fewer than 4 history entries.
+        """
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        if n < 4:
+            return 0.0
+
+        def _var(vals: list) -> float:
+            if len(vals) < 2:
+                return 0.0
+            mean = sum(vals) / len(vals)
+            return sum((v - mean) ** 2 for v in vals) / len(vals)
+
+        mid = n // 2
+        return _var(scores[mid:]) - _var(scores[:mid])
+
 
 # Export public API
 __all__ = [

@@ -809,7 +809,7 @@ class OntologyGenerationContext:
     @property
     def extraction_config(self) -> ExtractionConfig:
         """Typed alias for :attr:`config`."""
-        if isinstance(self.config, ExtractionConfig):
+        if isinstance(self.config, (ExtractionConfig, GraphRAGExtractionConfig)):
             return self.config
         return ExtractionConfig()  # pragma: no cover — normalised in __post_init__
 
@@ -5671,6 +5671,35 @@ class OntologyGenerator:
             Set of strings; empty set when no entities.
         """
         return {e.id for e in (result.entities or []) if e.id}
+
+    def entity_source_span_coverage(self, result: Any) -> float:
+        """Return the fraction of entities that have a non-None source_span.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float in [0, 1]; 0.0 when no entities.
+        """
+        entities = result.entities or []
+        if not entities:
+            return 0.0
+        return sum(1 for e in entities if getattr(e, "source_span", None) is not None) / len(entities)
+
+    def relationship_density(self, result: Any) -> float:
+        """Return edges / nodes ratio (density proxy).
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float; 0.0 when there are no entities.
+        """
+        entities = result.entities or []
+        rels = result.relationships or []
+        if not entities:
+            return 0.0
+        return len(rels) / len(entities)
 
 
 __all__ = [
