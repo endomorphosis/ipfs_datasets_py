@@ -1,6 +1,6 @@
 # Optimizers: Infinite TODO / Improvement Plan
 
-_Last updated: 2026-02-20_
+_Last updated: 2026-02-21_
 
 This is the living, “infinite” backlog for refactoring and completing work across `ipfs_datasets_py/optimizers/`.
 
@@ -35,6 +35,41 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 - `[perf]` performance/benchmarking
 - `[obs]` logging/metrics/telemetry
 - `[docs]` documentation accuracy
+
+---
+
+## Comprehensive Improvement Plan (Rolling)
+
+This plan is intentionally evergreen. It balances refactors, feature growth, test hardening, and documentation quality while keeping delivery incremental and verifiable.
+
+### Phase 1: Stabilize & Align (Always-On)
+- Keep test baselines green; fix regressions first.
+- Tighten contracts between modules (`dict` ↔ dataclass drift, schema checks).
+- Ensure CLI interfaces stay compatible and documented.
+
+### Phase 2: Refactor & Simplify (Rolling)
+- Reduce mega-files into focused modules (planner, traversal, serialization).
+- Centralize shared primitives (exceptions, logging, adapters).
+- Replace ad-hoc `Dict[str, Any]` with typed configs and helpers.
+
+### Phase 3: Extend & Optimize (Rolling)
+- Add performance affordances (batching, caching, streaming, lazy loads).
+- Improve inference quality (confidence calibration, entity linking, dedup).
+- Expand observability (structured logs, metrics, profiling hooks).
+
+### Phase 4: Document & Teach (Rolling)
+- Maintain accurate README/architecture docs.
+- Add task-oriented guides (quick starts, configuration guides).
+- Provide examples that mirror real usage patterns.
+
+### Random Work Rotation (Active Picks)
+- [ ] (P2) [docs] Configuration Guide for `ExtractionConfig` fields (see Medium Tasks)
+- [ ] (P2) [arch] Extract `QueryValidationMixin` for GraphRAG reuse (see Strategic Refactoring)
+- [x] (P2) [graphrag] Implement `_extract_with_llm_fallback()` wrapper (see GraphRAG backlog)
+  - Done 2026-02-21: added `_extract_with_llm_fallback()` helper and refactored RULE_BASED path; fixed `extraction_config` to return `GraphRAGExtractionConfig` so fallback thresholds apply; 11 tests passing.
+- [ ] (P2) [tests] Add integration test: full pipeline on a multi-paragraph text, assert >3 entities extracted (see Batch 52+ ideas)
+
+Note: When a pick is completed, select a new item at random from a different track and record completion in-place.
 
 ---
 ---
@@ -566,7 +601,8 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 ## Newly discovered items (batch 31+)
 
 - [x] (P2) [graphrag] Add `ExtractionConfig.llm_fallback_threshold` — Done batch 33: default 0.0 (disabled); to_dict/from_dict updated
-- [ ] (P2) [graphrag] Implement `_extract_with_llm_fallback()` in OntologyGenerator that wraps `_extract_rule_based()` + fallback
+- [x] (P2) [graphrag] Implement `_extract_with_llm_fallback()` in OntologyGenerator that wraps `_extract_rule_based()` + fallback
+  - Done 2026-02-21: added `_extract_with_llm_fallback()` helper and refactored RULE_BASED extraction; ensured `extraction_config` returns GraphRAG configs so thresholds apply; tests in test_llm_fallback_extraction.py passing.
 - [x] (P2) [tests] Unit tests for LLM fallback — Done batch 33: 11 tests in test_llm_fallback_extraction.py
 - [ ] (P2) [graphrag] ✅ `OntologyLearningAdapter.apply_feedback()` — accept list of mediator `Action` objects and update confidence weights
 - [ ] (P2) [graphrag] ✅ `OntologyLearningAdapter.get_extraction_hint()` — return adjusted threshold based on historical accuracy
@@ -1413,3 +1449,29 @@ This section captures the full architectural vision beyond batch-method addition
 - [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_cumulative_sum()` — running sum of scores
 - [ ] (P1) [tests] **Fix `test_end_to_end_pipeline.py`** — Handle `ExtractionConfig` being passed as `ipfs_accelerate_config`; add `.get()` compat shim
 - [ ] (P1) [docs] **`README.md` for `optimizers/`** — Quick-start, class diagram, example pipeline code
+
+## Batches 176–185 Completed
+
+- [x] Batch 176: history_kurtosis, score_ewma, dimension_min/max/range, entity_confidence_skewness, unique_relationship_types, feedback_min/max/cumulative_sum
+- [x] Batch 177: in/out_degree_distribution, run_score_ewma/percentile, feedback_count_by_action, action_success_rate
+- [x] Batch 178: history_second_derivative, score_reliability, entity_relation_ratio, relationship_confidence_std, max_dag_depth, feedback_rate_of_change/above_mean_count, run_score_median/count_above
+- [x] Batch 179: history_first_derivative, score_improvement_ratio, dimensions_above_count, score_letter_grade, entity_confidence_percentile, strongly_connected_count, consecutive_improvements, feedback_window_mean/outlier_count
+- [x] Batch 180: history_percentile, score_below_percentile_count, dimension_coefficient_of_variation, relationship_type_frequency, entity_id_set, weakly_connected_count, run_score_iqr, feedback_interquartile_range
+- [x] Batch 181: history_entropy_change, score_variance_trend, dimensions_at_max_count, dimension_harmonic_mean, entity_source_span_coverage, relationship_density, run_score_CV, feedback_entropy, feedback_positive_fraction
+- [x] Batch 182: score_above_mean_fraction, history_gini, dimension_geometric_mean, dimensions_below_count, average_in_degree, average_out_degree, run_score_range, run_score_above_mean_fraction, feedback_consecutive_positive, feedback_gini
+- [x] Batch 183: history_outlier_count, score_autocorrelation, dimension_spread, top_dimension, relationship_coverage, entity_confidence_variance, run_score_kurtosis, run_score_sum, feedback_below_mean_count, feedback_above_median, action_entropy, total_action_count
+- [x] Batch 184: history_cross_mean_count, score_recent_max, score_recent_min, bottom_dimension, score_above_threshold_count, entity_property_count, entity_types_set, run_score_geometric_mean, best_run_index, feedback_min_max_ratio, feedback_count
+- [x] Batch 185: history_std_ratio, score_turning_points, dimension_balance_score, score_percentile_rank, entity_confidence_iqr, avg_entity_confidence, run_score_harmonic_mean, worst_run_index, feedback_longest_positive_streak, feedback_score_range
+
+## Batch 186+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.history_momentum_score()` — weighted sum of recent improvements
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_signed_sum()` — sum of signed deltas
+- [ ] (P2) [graphrag] `OntologyCritic.score_classification(score)` — "excellent"/"good"/"fair"/"poor" bucket
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_rank_order(score)` — list of dims sorted by value desc
+- [ ] (P2) [graphrag] `OntologyGenerator.relationship_bidirectionality_rate(result)` — fraction of bidirectional pairs
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_text_length_mean(result)` — mean len of entity text strings
+- [ ] (P2) [graphrag] `LogicValidator.avg_path_length(ontology)` — average shortest-path length (BFS)
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_delta_sum()` — sum of consecutive score deltas
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_weighted_mean(weights)` — positionally weighted mean
+- [ ] (P2) [graphrag] `OntologyMediator.unique_action_count()` — number of distinct actions used
