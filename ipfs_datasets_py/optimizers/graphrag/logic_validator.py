@@ -4182,6 +4182,38 @@ class LogicValidator:
             return 0
         return sum(1 for e in eccs if e == diameter)
 
+    def center_size(self, ontology: dict) -> int:
+        """Count the number of nodes in the *center* of the directed graph.
+
+        The center consists of all nodes whose eccentricity equals the graph's
+        radius.  Nodes with eccentricity ``0`` (unable to reach any other node)
+        are excluded, as they would trivially dominate.
+
+        Args:
+            ontology: Dict with ``"entities"`` and ``"relationships"`` lists.
+                Each relationship must have ``"source"`` and ``"target"`` keys.
+
+        Returns:
+            Non-negative integer; ``0`` when the graph has fewer than 2 nodes,
+            when no node can reach any other, or when the radius is 0.
+
+        Example::
+
+            >>> validator.center_size(
+            ...     {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+            ...      "relationships": [{"source": "A", "target": "B"},
+            ...                        {"source": "B", "target": "C"}]})
+            1  # A→B→C: ecc(A)=2, ecc(B)=1, ecc(C)=0; radius=1; center={B}
+        """
+        eccs = self.eccentricity_distribution(ontology)
+        positive = [e for e in eccs if e > 0]
+        if not positive:
+            return 0
+        radius = min(positive)
+        if radius == 0:
+            return 0
+        return sum(1 for e in eccs if e == radius)
+
 __all__ = [
     'LogicValidator',
     'ValidationResult',

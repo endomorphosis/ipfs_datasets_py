@@ -1919,9 +1919,29 @@ Testing: 38 tests in test_batch_217_features.py; all passing.
 
 ## Batch 218+ Backlog
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_harmonic_mean()` — harmonic mean of history scores
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_geometric_mean(score)` — geometric mean of 6 dimension values
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_range(result)` — max − min confidence
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_valley_score()` — min score ever observed in feedback
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_harmonic_mean()` — harmonic mean of run scores
-- [ ] (P2) [graphrag] `LogicValidator.center_size(ontology)` — count nodes with eccentricity == radius
+- [x] (P2) [graphrag] `OntologyOptimizer.score_harmonic_mean()` — harmonic mean of history scores
+  - Stale: already existed at ontology_optimizer.py:4715.
+- [x] (P2) [graphrag] `OntologyCritic.dimension_geometric_mean(score)` — geometric mean of 6 dimension values
+  - Stale: already existed at ontology_critic.py:3779.
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_range(result)` — max − min confidence
+  - Stale: already existed at ontology_generator.py:6917.
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_valley_score()` — min score ever observed in feedback
+  - Done 2026-02-22 (Batch 218): `min(r.final_score for r in self._feedback)`; 0.0 when empty.
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_harmonic_mean()` — harmonic mean of run scores
+  - Stale: already existed at ontology_pipeline.py:1691.
+- [x] (P2) [graphrag] `LogicValidator.center_size(ontology)` — count nodes with eccentricity == radius
+  - Done 2026-02-22 (Batch 218): uses `eccentricity_distribution()`; counts nodes matching `radius_approx()`; 0 when no positive eccentricities.
+
+### Batch 218 completion notes (2026-02-22)
+- 2 new methods: `feedback_valley_score`, `center_size`
+- 4 stale backlog items marked [x]
+- 32 tests in `test_batch_218_features.py` — all passing
+
+## Batch 219+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_quartile_dispersion()` — (Q3−Q1)/(Q3+Q1); 0.0 when Q3+Q1=0
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_min(score)` — minimum of the 6 dimension values
+- [ ] (P2) [graphrag] `OntologyGenerator.relationship_avg_confidence(result)` — mean confidence of relationships
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_range_ratio()` — (peak−valley)/(peak+valley); 0.0 when peak+valley=0
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_quartile_dispersion()` — QCD of run scores
+- [ ] (P2) [graphrag] `LogicValidator.source_count(ontology)` — number of nodes with in-degree 0

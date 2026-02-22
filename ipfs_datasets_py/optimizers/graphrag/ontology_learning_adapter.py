@@ -2449,3 +2449,25 @@ class OntologyLearningAdapter:
         if not self._feedback:
             return 0.0
         return max(r.final_score for r in self._feedback)
+
+    def feedback_valley_score(self) -> float:
+        """Return the minimum ``final_score`` ever observed in feedback records.
+
+        This is the symmetric counterpart of :meth:`feedback_peak_score` and
+        identifies the worst performing round recorded so far.
+
+        Returns:
+            Minimum ``final_score`` as a float, or ``0.0`` when there are no
+            feedback records.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.4, actions={})
+            >>> adapter.apply_feedback(final_score=0.9, actions={})
+            >>> adapter.apply_feedback(final_score=0.6, actions={})
+            >>> adapter.feedback_valley_score()
+            0.4
+        """
+        if not self._feedback:
+            return 0.0
+        return min(r.final_score for r in self._feedback)
