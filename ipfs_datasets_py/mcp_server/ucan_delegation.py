@@ -1148,17 +1148,26 @@ class DelegationManager:
             "max_chain_depth": self._max_chain_depth,
         }
 
-    def merge(self, other: "DelegationManager") -> int:
+    def merge(
+        self,
+        other: "DelegationManager",
+        *,
+        copy_revocations: bool = False,
+    ) -> int:
         """Merge delegation entries from *other* into this manager.
 
         Only delegations whose CID is **not** already present in this
-        manager are added.  The revocation list is **not** merged (revocations
-        are security-sensitive; callers must explicitly choose which
-        revocations to carry over).  The evaluator cache is invalidated
-        after any additions.
+        manager are added.  The evaluator cache is invalidated after any
+        additions.
+
+        By default the revocation list is **not** copied because revocations
+        are security-sensitive — callers must explicitly opt in via
+        *copy_revocations* to import revocations from another manager.
 
         Args:
             other: The source :class:`DelegationManager` to copy from.
+            copy_revocations: When *True*, all CIDs revoked in *other*'s
+                :class:`RevocationList` are also revoked in *self*.
 
         Returns:
             Number of newly-added delegations.
@@ -1173,6 +1182,9 @@ class DelegationManager:
                     added += 1
         if added:
             self._evaluator = None  # invalidate on mutation
+        if copy_revocations:
+            for cid in other._revocation.to_list():
+                self._revocation.revoke(cid)
         return added
 
     def __len__(self) -> int:

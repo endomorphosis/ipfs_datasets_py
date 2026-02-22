@@ -574,7 +574,8 @@ class PubSubBus:
                 if hasattr(result, "__await__"):
                     await result
                 results[idx] = True
-            except Exception:  # pragma: no cover
+            except Exception as exc:  # pragma: no cover
+                logger.debug("publish_async handler %d raised: %s", idx, exc)
                 results[idx] = False
 
         async with anyio.create_task_group() as tg:

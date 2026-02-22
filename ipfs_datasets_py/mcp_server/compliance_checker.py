@@ -502,6 +502,17 @@ class ComplianceChecker:
             return 0
 
         # Re-use the JSON deserialization logic from load()
+        # Also perform the version check that load() does for plain files.
+        file_version = data.get("version", "")
+        if file_version and file_version != _COMPLIANCE_RULE_VERSION:
+            import warnings
+            warnings.warn(
+                f"Encrypted compliance rule file was saved with version "
+                f"{file_version!r} but current version is "
+                f"{_COMPLIANCE_RULE_VERSION!r}. Proceeding with caution.",
+                UserWarning,
+                stacklevel=2,
+            )
         import io
         import tempfile
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tf:

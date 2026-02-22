@@ -1287,6 +1287,21 @@ class IPFSPolicyStore(FilePolicyStore):
         for name in self._registry.list_names():
             self.pin_policy(name)
 
+    def reload(self) -> int:
+        """Hot-reload policies from disk and re-pin to IPFS.
+
+        Delegates to :meth:`FilePolicyStore.reload` (which clears the
+        in-memory registry and re-reads from disk), then re-pins every
+        reloaded policy to IPFS so the IPFS CID map stays current.
+
+        Returns:
+            Number of policies reloaded.
+        """
+        count = super().reload()
+        for name in self._registry.list_names():
+            self.pin_policy(name)
+        return count
+
     def load(self) -> int:
         """Load policies from the local JSON cache.
 
