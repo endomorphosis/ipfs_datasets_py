@@ -28,6 +28,10 @@ knowledge_graphs = [
     "spacy>=3.0.0",
     "networkx>=2.8.0",
     "transformers>=4.30.0",
+    "scipy>=1.7.0",
+    "matplotlib>=3.5.0",
+    "plotly>=5.9.0",
+    "rdflib>=6.0.0",
 ]
 
 [tool.setuptools]

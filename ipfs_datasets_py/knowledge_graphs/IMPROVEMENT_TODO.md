@@ -601,3 +601,50 @@ module level.
 - `extraction/srl.py:402`: 1 line, spaCy npadvmod dependency tag
 
 **Result: 3,640 pass, 64 skip, 0 fail** (numpy+networkx env; 204 missed lines).
+
+### Session 57 log (2026-02-22)
+
+**Problem:** Three groups of improvements:
+1. `lineage/visualization.py:29-31` (plotly ImportError except block) still missed — 3 lines.
+2. `scipy>=1.7.0`, `matplotlib>=3.5.0`, `plotly>=5.9.0`, `rdflib>=6.0.0` were missing from the
+   `knowledge_graphs` extras in `setup.py` and `pyproject.toml`, even though visualization.py,
+   extraction/graph.py, and the kamada_kawai_layout branch depend on them.
+3. With these deps installed, 15 previously-skipped tests (scipy hierarchical-layout guard) and
+   many rdflib tests now pass, improving coverage from 204→120 missed lines.
+
+**Root cause:**
+- `_reload_with_absent_dep("visualization", ["plotly", "plotly.graph_objects"])` correctly
+  triggers lines 29-31 to exercise `PLOTLY_AVAILABLE=False` and `go=None`.
+- `test_render_plotly_returns_html` / `test_render_plotly_saves_to_file` must explicitly
+  restore `viz_mod.go = real_go` because session38's
+  `test_render_plotly_ghost_node_gets_gray_color` sets `viz_mod.go = MagicMock()` and
+  **never restores it**, leaving a stale mock for subsequent tests.
+- `setup.py` `knowledge_graphs` extras only had spaCy/transformers/openai/anthropic/networkx;
+  scipy/matplotlib/plotly/rdflib were missing even though they enable core visualization and
+  RDF export features.
+
+**Fix:**
+1. `setup.py`: added `scipy>=1.7.0`, `matplotlib>=3.5.0`, `plotly>=5.9.0`, `rdflib>=6.0.0`
+   to `extras_require['knowledge_graphs']`.
+2. `pyproject.toml`: same 4 deps added to `[project.optional-dependencies] knowledge_graphs`.
+3. `requirements.txt`: added `scipy>=1.7.0`, `matplotlib>=3.5.0`, `plotly>=5.9.0`, `rdflib>=6.0.0`.
+
+**12 tests** in `test_master_status_session57.py`:
+- `TestVisualizationPlotlyImportError` (7 tests): covers `visualization.py:29-31` + plotly
+  available tests (with go restore to avoid session38 mock leak).
+- `TestSetupPyScipy` (3 tests): verifies scipy/matplotlib/plotly in setup.py knowledge_graphs.
+- `TestVisualizationHierarchicalLayout` (2 tests): kamada_kawai_layout with real scipy.
+
+**Coverage improvement:**
+- `lineage/visualization.py`: 97%→**100%** ✅ (3 lines newly covered)
+- `extraction/graph.py`: 80%→**100%** ✅ (45 lines newly covered with rdflib)
+- 15 previously-skipped scipy tests now run
+- TOTAL: 204→**120 missed lines**
+
+**Remaining 120 missed lines** (all optional-dep gated):
+- `extraction/extractor.py`: 108 lines, spaCy NLP model required (hard dep)
+- `migration/formats.py`: 10 lines, libipld/ipld-car success paths (hard dep)
+- `extraction/_entity_helpers.py:117`: 1 line, defensive guard (kept for safety)
+- `extraction/srl.py:402`: 1 line, spaCy npadvmod dependency tag
+
+**Result: 3,690 pass, 26 skip, 0 fail** (full optional dep env; 120 missed lines; 99% overall).

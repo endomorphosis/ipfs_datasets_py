@@ -180,6 +180,10 @@ setup(
             'openai>=1.0.0',           # Optional: LLM-enhanced cross-document reasoning
             'anthropic>=0.20.0',       # Optional: Anthropic LLM for reasoning
             'networkx>=2.8.0',         # Required for lineage graph analytics
+            'scipy>=1.7.0',            # Required for kamada_kawai_layout (hierarchical viz)
+            'matplotlib>=3.5.0',       # Required for render_networkx visualization
+            'plotly>=5.9.0',           # Required for render_plotly interactive visualization
+            'rdflib>=6.0.0',           # Required for RDF export (export_to_rdf)
         ],
         # Optional but recommended dependencies
         'ipld': [

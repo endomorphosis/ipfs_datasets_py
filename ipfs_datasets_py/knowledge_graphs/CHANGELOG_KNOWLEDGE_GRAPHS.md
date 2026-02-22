@@ -5,7 +5,48 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.22.11] - 2026-02-22
+## [3.22.12] - 2026-02-22
+
+### Added — Visualization Dependencies + plotly ImportError Coverage (Session 57)
+
+**4 optional dependencies added to `knowledge_graphs` extras.**
+
+#### `setup.py` / `pyproject.toml` / `requirements.txt`
+
+Added to `extras_require['knowledge_graphs']` (setup.py) and
+`[project.optional-dependencies] knowledge_graphs` (pyproject.toml):
+
+- `scipy>=1.7.0` — enables `nx.kamada_kawai_layout` for hierarchical visualization
+- `matplotlib>=3.5.0` — enables `LineageVisualizer.render_networkx()`
+- `plotly>=5.9.0` — enables `LineageVisualizer.render_plotly()`
+- `rdflib>=6.0.0` — enables `KnowledgeGraph.export_to_rdf()`
+
+Also added to `requirements.txt` for consistent pip installs.
+
+#### Test Coverage
+
+**12 new tests** in `test_master_status_session57.py`:
+
+- `TestVisualizationPlotlyImportError` (7 tests): covers `visualization.py:29-31`
+  (plotly ImportError except block) via `_reload_with_absent_dep`; also covers
+  render_plotly with real plotly (with `go` restore to guard against session38's
+  test which sets `viz_mod.go = MagicMock()` and never restores it).
+- `TestSetupPyScipy` (3 tests): verifies scipy/matplotlib/plotly present in
+  setup.py knowledge_graphs extras.
+- `TestVisualizationHierarchicalLayout` (2 tests): confirms kamada_kawai_layout
+  branch (line 116) runs correctly with real scipy.
+
+#### Coverage Results
+
+With all optional deps installed:
+
+- `lineage/visualization.py`: 97% → **100%** ✅ (plotly ImportError except block covered)
+- `extraction/graph.py`: 80% → **100%** ✅ (45 rdflib-gated lines covered)
+- 15 previously-skipped scipy tests now pass
+- TOTAL missed lines: 204 → **120** (99% overall coverage)
+- **Test counts: 3,690 passed, 26 skipped, 0 failed**
+
+
 
 ### Removed — Dead Code in cross_document.py and ir_executor.py (Session 56)
 
