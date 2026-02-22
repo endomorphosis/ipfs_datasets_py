@@ -14,7 +14,9 @@ def documentation_generator(input_path: str,
                           include_inheritance: bool = True,
                           include_examples: bool = True,
                           include_source_links: bool = True,
-                          format_type: str = "markdown") -> Dict[str, Any]:
+                          format_type: str = "markdown",
+                          format: Optional[str] = None,
+                          include_private: bool = True) -> Dict[str, Any]:
     """
     Generate comprehensive documentation from Python source code.
 
@@ -27,6 +29,8 @@ def documentation_generator(input_path: str,
         include_examples: Include code examples in documentation (default: True)
         include_source_links: Include links to source code (default: True)
         format_type: Output format - 'markdown', 'html' (default: "markdown")
+        format: Alias for format_type used by legacy callers (default: None)
+        include_private: Include private members in docs (default: True)
 
     Returns:
         Dictionary containing generation results, file paths, and metadata
@@ -34,20 +38,22 @@ def documentation_generator(input_path: str,
     try:
         # For now, return a simple success response
         # In a full implementation, this would generate actual documentation
+        final_format = format or format_type
         return {
             "success": True,
             "result": {
                 "message": "Documentation generation completed successfully",
                 "input_path": input_path,
                 "output_path": output_path,
-                "format_type": format_type,
-                "files_generated": [f"{output_path}/documentation.{format_type}"]
+                "format_type": final_format,
+                "files_generated": [f"{output_path}/documentation.{final_format}"]
             },
             "metadata": {
                 "tool": "documentation_generator",
                 "input_path": input_path,
                 "output_path": output_path,
-                "format_type": format_type
+                "format_type": final_format,
+                "include_private": include_private
             }
         }
     except Exception as e:

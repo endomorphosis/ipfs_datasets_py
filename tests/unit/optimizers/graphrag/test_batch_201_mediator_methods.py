@@ -408,15 +408,16 @@ class TestBatch201Integration:
         
         mediator._history = [
             {"score": 0.7},
-            {"score": 0.701},
-            {"score": 0.702},
-            {"score": 0.701},
+            {"score": 0.8},  # Initial improvement
+            {"score": 0.8001},  # Stagnation starts
+            {"score": 0.8002},
+            {"score": 0.8001},
         ]
         mediator._action_counts = {"update": 50}
         
         # Should detect stagnation and low efficiency
-        stagnation = mediator.refinement_stagnation_rounds()
-        assert stagnation > 0
+        stagnation = mediator.refinement_stagnation_rounds(threshold=0.001)
+        assert stagnation == 3  # Last 3 rounds are stagnant
         efficiency = mediator.refinement_efficiency()
         assert efficiency < 0.01  # Very low efficiency
 
