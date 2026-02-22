@@ -2967,6 +2967,38 @@ class LogicValidator:
                 connected.add(tgt)
         return sorted(entity_ids - connected)
 
+    def node_in_degree(self, ontology: dict) -> dict:
+        """Return a mapping of each node to its in-degree (incoming relationships).
+
+        Args:
+            ontology: Dict with optional ``relationships`` list.
+
+        Returns:
+            Dict of {node_id: in_degree_count}; empty dict when no relationships.
+        """
+        degree: dict = {}
+        for rel in ontology.get("relationships", []):
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if tgt:
+                degree[tgt] = degree.get(tgt, 0) + 1
+        return degree
+
+    def node_out_degree(self, ontology: dict) -> dict:
+        """Return a mapping of each node to its out-degree (outgoing relationships).
+
+        Args:
+            ontology: Dict with optional ``relationships`` list.
+
+        Returns:
+            Dict of {node_id: out_degree_count}; empty dict when no relationships.
+        """
+        degree: dict = {}
+        for rel in ontology.get("relationships", []):
+            src = rel.get("source") or rel.get("source_id", "")
+            if src:
+                degree[src] = degree.get(src, 0) + 1
+        return degree
+
 
 # Export public API
 __all__ = [

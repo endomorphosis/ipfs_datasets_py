@@ -1839,3 +1839,14 @@ class OntologyPipeline:
             return 0.0
         n = len(scores)
         return n / sum(1.0 / s for s in scores)
+
+    def run_score_above_first(self) -> int:
+        """Return the count of run scores that are strictly above the first run score.
+
+        Returns:
+            Integer count; 0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0
+        first = self._run_history[0].score.overall
+        return sum(1 for r in self._run_history[1:] if r.score.overall > first)

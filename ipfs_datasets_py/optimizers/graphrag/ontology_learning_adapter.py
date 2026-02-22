@@ -1924,3 +1924,18 @@ class OntologyLearningAdapter:
             else:
                 cur_len = 1
         return max_len
+
+    def feedback_recent_positive_count(self, n: int = 5, threshold: float = 0.5) -> int:
+        """Return the count of positive scores in the last *n* feedback records.
+
+        Args:
+            n: Number of most-recent records to examine. Defaults to 5.
+            threshold: Minimum score to consider positive. Defaults to 0.5.
+
+        Returns:
+            Integer count; 0 when no feedback.
+        """
+        if not self._feedback:
+            return 0
+        recent = self._feedback[-n:]
+        return sum(1 for r in recent if r.final_score >= threshold)

@@ -4042,6 +4042,42 @@ class OntologyOptimizer:
                 last = i
         return float(last)
 
+    def history_above_threshold_streak(self, threshold: float = 0.5) -> int:
+        """Return the length of the current trailing run of scores above *threshold*.
+
+        Args:
+            threshold: Score cutoff. Defaults to 0.5.
+
+        Returns:
+            Integer length of the current streak from the end; 0 when no history.
+        """
+        streak = 0
+        for entry in reversed(self._history):
+            if entry.average_score > threshold:
+                streak += 1
+            else:
+                break
+        return streak
+
+    def score_above_threshold_longest_streak(self, threshold: float = 0.5) -> int:
+        """Return the length of the longest consecutive run of scores above *threshold*.
+
+        Args:
+            threshold: Score cutoff. Defaults to 0.5.
+
+        Returns:
+            Integer length of the longest such streak; 0 when no history.
+        """
+        max_streak = 0
+        cur_streak = 0
+        for entry in self._history:
+            if entry.average_score > threshold:
+                cur_streak += 1
+                max_streak = max(max_streak, cur_streak)
+            else:
+                cur_streak = 0
+        return max_streak
+
 
 # Export public API
 __all__ = [

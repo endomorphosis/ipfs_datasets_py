@@ -6281,6 +6281,54 @@ class OntologyGenerator:
                 degree[tgt] += 1
         return {node for node, cnt in degree.items() if cnt == 1}
 
+    def entity_max_property_count(self, result: "EntityExtractionResult") -> int:
+        """Return the maximum number of properties across all entities.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Integer max property count; 0 when no entities.
+        """
+        entities = result.entities or []
+        if not entities:
+            return 0
+        return max(len(getattr(e, "properties", None) or {}) for e in entities)
+
+    def entity_min_confidence_above(
+        self, result: "EntityExtractionResult", threshold: float = 0.5
+    ) -> float:
+        """Return the minimum confidence among entities with confidence > threshold.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+            threshold: Minimum confidence filter. Defaults to 0.5.
+
+        Returns:
+            Float minimum confidence; 0.0 when no qualifying entities.
+        """
+        qualifying = [
+            getattr(e, "confidence", 0.0) or 0.0
+            for e in (result.entities or [])
+            if (getattr(e, "confidence", 0.0) or 0.0) > threshold
+        ]
+        return min(qualifying) if qualifying else 0.0
+
+    def relationship_avg_type_length(self, result: "EntityExtractionResult") -> float:
+        """Return the average character length of relationship type names.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float average; 0.0 when no relationships.
+        """
+        rels = result.relationships or []
+        if not rels:
+            return 0.0
+        lengths = [len(str(getattr(r, "type", "") or "")) for r in rels]
+        return sum(lengths) / len(lengths)
+
 
 __all__ = [
     'OntologyGenerator',
