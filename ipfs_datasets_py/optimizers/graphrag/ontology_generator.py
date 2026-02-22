@@ -5880,6 +5880,157 @@ class OntologyGenerator:
 
         return ewma_series
 
+    def confidence_min(self, results: List[Any]) -> float:
+        """Return the minimum confidence score across all results.
+
+        Useful for identifying the worst-case extraction quality in a batch.
+
+        Args:
+            results: List of ``EntityExtractionResult`` instances.
+
+        Returns:
+            Float minimum confidence; 0.0 when no entities.
+
+        Example:
+            >>> results = [result1, result2, result3]
+            >>> min_conf = generator.confidence_min(results)
+            >>> if min_conf < 0.5:
+            ...     print(f"⚠️  Minimum confidence very low: {min_conf:.2f}")
+        """
+        all_scores = []
+        for result in results:
+            entities = getattr(result, 'entities', []) or []
+            all_scores.extend(e.confidence for e in entities)
+        
+        return min(all_scores) if all_scores else 0.0
+
+    def confidence_max(self, results: List[Any]) -> float:
+        """Return the maximum confidence score across all results.
+
+        Useful for identifying the best extraction quality achieved.
+
+        Args:
+            results: List of ``EntityExtractionResult`` instances.
+
+        Returns:
+            Float maximum confidence; 0.0 when no entities.
+
+        Example:
+            >>> results = [result1, result2, result3]
+            >>> max_conf = generator.confidence_max(results)
+            >>> print(f"Best confidence achieved: {max_conf:.2f}")
+        """
+        all_scores = []
+        for result in results:
+            entities = getattr(result, 'entities', []) or []
+            all_scores.extend(e.confidence for e in entities)
+        
+        return max(all_scores) if all_scores else 0.0
+
+    def confidence_range(self, results: List[Any]) -> float:
+        """Return the range (max - min) of confidence scores.
+
+        Large ranges indicate inconsistent extraction quality. Small ranges
+        suggest stable, predictable performance.
+
+        Args:
+            results: List of ``EntityExtractionResult`` instances.
+
+        Returns:
+            Float range; 0.0 when no entities or all scores identical.
+
+        Example:
+            >>> results = [result1, result2, result3]
+            >>> conf_range = generator.confidence_range(results)
+            >>> if conf_range > 0.5:
+            ...     print(f"⚠️  High variance in quality (range: {conf_range:.2f})")
+            >>> else:
+            ...     print(f"✓ Stable quality (range: {conf_range:.2f})")
+        """
+        all_scores = []
+        for result in results:
+            entities = getattr(result, 'entities', []) or []
+            all_scores.extend(e.confidence for e in entities)
+        
+        if not all_scores:
+            return 0.0
+        
+        return max(all_scores) - min(all_scores)
+
+    def confidence_percentile(
+        self,
+        results: List[Any],
+        percentile: float = 50.0
+    ) -> float:
+        """Return the specified percentile of confidence scores.
+
+        Percentiles provide robust measures of distribution characteristics.
+        Common percentiles: 25 (Q1), 50 (median), 75 (Q3), 90, 95, 99.
+
+        Args:
+            results: List of ``EntityExtractionResult`` instances.
+            percentile: Percentile to compute (0-100). Default 50 (median).
+
+        Returns:
+            Float percentile value; 0.0 when no entities.
+
+        Example:
+            >>> results = [result1, result2, result3]
+            >>> p50 = generator.confidence_percentile(results, 50)  # Median
+            >>> p95 = generator.confidence_percentile(results, 95)  # 95th percentile
+            >>> if p95 > 0.9:
+            ...     print(f"95% of entities have confidence > {p95:.2f}")
+        """
+        all_scores = []
+        for result in results:
+            entities = getattr(result, 'entities', []) or []
+            all_scores.extend(e.confidence for e in entities)
+        
+        if not all_scores:
+            return 0.0
+        
+        # Clamp percentile to valid range
+        percentile = max(0.0, min(100.0, percentile))
+        
+        # Sort scores
+        sorted_scores = sorted(all_scores)
+        n = len(sorted_scores)
+        
+        # Calculate percentile index
+        k = (n - 1) * percentile / 100.0
+        f = int(k)
+        c = k - f
+        
+        if f + 1 < n:
+            return sorted_scores[f] + c * (sorted_scores[f + 1] - sorted_scores[f])
+        else:
+            return sorted_scores[f]
+
+    def confidence_iqr(self, results: List[Any]) -> float:
+        """Return the interquartile range (IQR) of confidence scores.
+
+        IQR = Q3 - Q1, measures the spread of the middle 50% of the data.
+        It's robust to outliers and useful for identifying anomalies.
+
+        Args:
+            results: List of ``EntityExtractionResult`` instances.
+
+        Returns:
+            Float IQR; 0.0 when no entities.
+
+        Example:
+            >>> results = [result1, result2, result3]
+            >>> iqr = generator.confidence_iqr(results)
+            >>> # Scores outside [Q1 - 1.5*IQR, Q3 + 1.5*IQR] are outliers
+            >>> q1 = generator.confidence_percentile(results, 25)
+            >>> q3 = generator.confidence_percentile(results, 75)
+            >>> lower_fence = q1 - 1.5 * iqr
+            >>> upper_fence = q3 + 1.5 * iqr
+        """
+        q1 = self.confidence_percentile(results, 25)
+        q3 = self.confidence_percentile(results, 75)
+        return q3 - q1
+
     def entity_relation_ratio(self, result: Any) -> float:
         """Return the ratio of entity count to relationship count.
 
