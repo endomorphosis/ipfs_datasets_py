@@ -28,6 +28,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 _matplotlib_available = bool(importlib.util.find_spec("matplotlib"))
+_rdflib_available = bool(importlib.util.find_spec("rdflib"))
 
 
 # ---------------------------------------------------------------------------
@@ -368,6 +369,7 @@ class TestHybridSearchAlreadyVisited:
 # ---------------------------------------------------------------------------
 # 11. extraction/graph.py — boolean property XSD (629, 661)
 # ---------------------------------------------------------------------------
+@pytest.mark.skipif(not _rdflib_available, reason="rdflib not installed")
 class TestKnowledgeGraphExportBooleanProperty:
     def test_entity_bool_property_rdf_line_629(self):
         """GIVEN entity with bool property WHEN export_to_rdf THEN XSD.boolean triple added."""
