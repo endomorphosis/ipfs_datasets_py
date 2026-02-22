@@ -7898,6 +7898,18 @@ class OntologyGenerator:
         confs = [getattr(r, "confidence", 1.0) for r in rels]
         return sum(confs) / len(confs)
 
+    def entity_type_count(self, result: "EntityExtractionResult") -> int:
+        """Return the number of distinct entity types in *result*.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Non-negative integer count of unique entity type strings.
+        """
+        entities = getattr(result, "entities", []) or []
+        return len({getattr(e, "type", "") for e in entities if getattr(e, "type", "")})
+
 
 __all__ = [
     'OntologyGenerator',

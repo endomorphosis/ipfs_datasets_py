@@ -4930,6 +4930,20 @@ class OntologyOptimizer:
         slope = num / den
         return y_mean - slope * x_mean
 
+    def above_target_rate(self, target: float = 0.7) -> float:
+        """Return the fraction of history entries with score strictly above *target*.
+
+        Args:
+            target: Score threshold.  Default ``0.7``.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        count = sum(1 for e in self._history if e.average_score > target)
+        return count / len(self._history)
+
 
 # Export public API
 __all__ = [

@@ -4399,6 +4399,23 @@ class OntologyCritic(BaseCritic):
         )
         return tuple(ranked[:2])
 
+    def dimension_trend_slope(self, score: "CriticScore", prev_score: "CriticScore") -> dict:
+        """Return per-dimension slope between two successive CriticScore objects.
+
+        For each dimension ``d``, slope = ``score.d - prev_score.d``.
+
+        Args:
+            score: The newer CriticScore.
+            prev_score: The older (reference) CriticScore.
+
+        Returns:
+            Dict mapping dimension name → float delta (positive = improving).
+        """
+        return {
+            d: getattr(score, d, 0.0) - getattr(prev_score, d, 0.0)
+            for d in self._DIMENSIONS
+        }
+
 
 # Export public API
 __all__ = [

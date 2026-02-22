@@ -2300,3 +2300,17 @@ class OntologyLearningAdapter:
         slope = num / den
         return y_mean - slope * x_mean
 
+
+    def feedback_above_mean_ratio(self) -> float:
+        """Return the fraction of feedback scores strictly above their collective mean.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when feedback is empty or all scores
+            are equal (none strictly above mean).
+        """
+        if not self._feedback:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        above = sum(1 for s in scores if s > mean)
+        return above / len(scores)

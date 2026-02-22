@@ -3777,6 +3777,79 @@ class LogicValidator:
                 seen.add((src, tgt))
         return count
 
+    def betweenness_centrality_approx(self, ontology: dict) -> dict:
+        """Return approximate betweenness centrality for each node.
+
+        Uses a BFS-based shortest-path approach: for each source node *s*,
+        for each target node *t*, find the shortest path and increment the
+        betweenness of each intermediate node by 1.  The result is normalised
+        by ``(n-1)*(n-2)`` (un-directed convention) where *n* is the number
+        of nodes.
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Dict of ``{node_id: centrality}``; empty dict when fewer than
+            3 nodes or no relationships.
+        """
+        from collections import deque
+
+        relationships = ontology.get("relationships", []) or []
+        if not relationships:
+            return {}
+
+        # Build undirected adjacency
+        adj: dict[str, set] = {}
+        for rel in relationships:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src and tgt:
+                adj.setdefault(src, set()).add(tgt)
+                adj.setdefault(tgt, set()).add(src)
+
+        nodes = list(adj.keys())
+        n = len(nodes)
+        if n < 3:
+            return {nd: 0.0 for nd in nodes}
+
+        betweenness: dict[str, float] = {nd: 0.0 for nd in nodes}
+
+        for source in nodes:
+            # BFS to find shortest paths from source
+            dist: dict[str, int] = {source: 0}
+            predecessors: dict[str, list] = {nd: [] for nd in nodes}
+            sigma: dict[str, int] = {nd: 0 for nd in nodes}
+            sigma[source] = 1
+            queue: deque[str] = deque([source])
+            ordered: list[str] = []
+
+            while queue:
+                node = queue.popleft()
+                ordered.append(node)
+                for nb in adj.get(node, set()):
+                    if nb not in dist:
+                        dist[nb] = dist[node] + 1
+                        queue.append(nb)
+                    if dist[nb] == dist[node] + 1:
+                        sigma[nb] += sigma[node]
+                        predecessors[nb].append(node)
+
+            # Accumulate dependencies
+            delta: dict[str, float] = {nd: 0.0 for nd in nodes}
+            for node in reversed(ordered):
+                for pred in predecessors[node]:
+                    if sigma[node] > 0:
+                        delta[pred] += (sigma[pred] / sigma[node]) * (1 + delta[node])
+                if node != source:
+                    betweenness[node] += delta[node]
+
+        # Normalise (undirected: divide by (n-1)*(n-2))
+        norm = (n - 1) * (n - 2)
+        if norm > 0:
+            betweenness = {nd: v / norm for nd, v in betweenness.items()}
+        return betweenness
+
 
 # Export public API
 __all__ = [

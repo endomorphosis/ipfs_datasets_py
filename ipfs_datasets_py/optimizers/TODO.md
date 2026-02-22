@@ -1753,14 +1753,36 @@ Implementation notes:
 
 Testing: 39 new tests in test_batch_209_features.py; all passing.
 
-## Batch 210+ Backlog
+## Batch 210 — Done ✅ (2026-02-22)
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.history_range()` — max - min of history scores
-- [ ] (P2) [graphrag] `OntologyOptimizer.above_target_rate(target)` — fraction of history scores above target
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_trend_slope(score, prev_score)` — per-dimension OLS slope between two scores
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_type_count(result)` — count of distinct entity types
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_above_mean_ratio()` — fraction of scores above their mean
-- [ ] (P2) [graphrag] `OntologyPipeline.best_run_index()` — index of the run with the highest overall score
-- [ ] (P2) [graphrag] `OntologyPipeline.worst_run_index()` — index of the run with the lowest overall score
-- [ ] (P2) [graphrag] `LogicValidator.betweenness_centrality_approx(ontology)` — approximate betweenness centrality
-- [ ] (P2) [graphrag] `LogicValidator.leaf_node_count(ontology)` — count of nodes with out-degree zero
+- [x] (P2) [graphrag] `OntologyOptimizer.history_range()` — already existed in source
+- [x] (P2) [graphrag] `OntologyOptimizer.above_target_rate(target)` — fraction strictly above target (default 0.7)
+- [x] (P2) [graphrag] `OntologyCritic.dimension_trend_slope(score, prev_score)` — per-dim delta dict {dim: score.d - prev.d}
+- [x] (P2) [graphrag] `OntologyGenerator.entity_type_count(result)` — count of distinct entity type strings
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_above_mean_ratio()` — fraction of scores > mean
+- [x] (P2) [graphrag] `OntologyPipeline.best_run_index()` — already existed in source
+- [x] (P2) [graphrag] `OntologyPipeline.worst_run_index()` — already existed in source
+- [x] (P2) [graphrag] `LogicValidator.betweenness_centrality_approx(ontology)` — BFS-based undirected betweenness
+- [x] (P2) [graphrag] `LogicValidator.leaf_node_count(ontology)` — already existed in source
+
+Implementation notes:
+- above_target_rate(target): strictly above (not >=); default target=0.7.
+- dimension_trend_slope: returns dict of 6 per-dimension deltas (score.d - prev_score.d).
+- entity_type_count: len of set of entity.type values; ignores "" empty type.
+- feedback_above_mean_ratio: fraction of scores strictly above mean; 0.0 when all equal.
+- betweenness_centrality_approx: BFS shortest paths; accumulates predecessor dependencies;
+  normalised by (n-1)*(n-2); 0.0 for n<3 or endpoint nodes.
+
+Testing: 39 new tests in test_batch_210_features.py; all passing.
+
+## Batch 211+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.history_trimmed_mean(trim_pct)` — mean after dropping top/bottom k%
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_autocorrelation(lag)` — autocorrelation at given lag
+- [ ] (P2) [graphrag] `OntologyCritic.min_max_dimension_ratio(score)` — ratio of min to max dimension value
+- [ ] (P2) [graphrag] `OntologyGenerator.avg_entity_confidence(result)` — mean confidence across entities
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_z_scores()` — list of z-scores for each feedback record
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_range()` — max - min of run scores
+- [ ] (P2) [graphrag] `OntologyPipeline.score_plateau_length()` — longest streak where score didn't change
+- [ ] (P2) [graphrag] `LogicValidator.edge_density(ontology)` — edges / max_possible_edges
+- [ ] (P2) [graphrag] `LogicValidator.strongly_connected_count(ontology)` — approximate strongly-connected components count
