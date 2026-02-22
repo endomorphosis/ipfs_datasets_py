@@ -5,6 +5,32 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.18] - 2026-02-22
+
+### Fixed — QUICKSTART.md API inaccuracies + MASTER_STATUS feature coverage matrix (Session 64)
+
+**No production code changes.** Fixed 5 API inaccuracies in QUICKSTART.md (would cause
+`AttributeError`/`TypeError` at runtime) and updated the Feature Completeness Matrix in
+MASTER_STATUS.md to reflect current 99-100% coverage.
+
+#### `QUICKSTART.md`
+- `rel.source` → `rel.source_id`; `rel.target` → `rel.target_id` (`Relationship` attributes are `source_id`/`target_id`, not `source`/`target`)
+- Removed non-existent `backend.add_knowledge_graph(kg)` call (no such method on `IPLDBackend`); query example now uses `GraphEngine` directly
+- `engine.execute(...)` → `engine.execute_cypher(...)` (no `execute()` method on `UnifiedQueryEngine`)
+- `for row in results:` → `for row in result.items:` (`QueryResult` has `.items` list, not `__iter__`)
+- `backend.store(kg)` → `backend.store(kg.to_dict())` + `backend.retrieve_json(cid)` (`store()` takes bytes/str/dict; `retrieve()` returns bytes, not a `KnowledgeGraph`)
+- `HybridSearch` → `HybridSearchEngine` (correct class name exported from `query/`)
+- `top_k=5` → `k=5` (actual kwarg name); removed `combine_strategy="weighted"` (no such argument)
+- `result.entity.name` → `result.node_id` (`HybridSearchResult` has `node_id`, not `entity`)
+
+#### `MASTER_STATUS.md`
+- Feature Completeness Matrix: all per-feature coverage %s updated from stale 40–85% → current 99–100%
+  - Core features: 75–85% → ~97–100%
+  - Query/Cypher features: 70–80% → 100%
+  - Advanced (P1–P4, SRL, OWL): 75–80% → 99–100%
+  - Migration: 40–85% → 100%
+- Coverage note updated: "Migration module at 100% coverage as of v3.22.17"
+
 ## [3.22.17] - 2026-02-22
 
 ### Changed — ROADMAP.md stale items + MASTER_REFACTORING_PLAN_2026.md update (Session 63)

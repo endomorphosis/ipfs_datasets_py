@@ -1,7 +1,7 @@
 # Knowledge Graphs - Development Roadmap
 
 **Last Updated:** 2026-02-22  
-**Current Version:** 3.22.17  
+**Current Version:** 3.22.18  
 **Status:** Production Ready (99.99% test coverage)
 
 ---
@@ -426,6 +426,7 @@ We follow [Semantic Versioning](https://semver.org/):
 | 3.22.15 | 2026-02-22 | ✅ Released | MASTER_STATUS stale coverage table updated (99.99%); duplicate ROADMAP v2.0.1 section removed; sessions 47–59 added to session list; 15 doc integrity tests (session60) |
 | 3.22.16 | 2026-02-22 | ✅ Released | DOCUMENTATION_GUIDE.md v1.0→v3.22.16; duplicate MASTER_STATUS entry removed; DEFERRED_FEATURES+IMPROVEMENT_TODO stale paths/dates fixed; 18 doc integrity tests (session62) |
 | 3.22.17 | 2026-02-22 | ✅ Released | ROADMAP stale "Status: Planned" items in CANCELLED sections fixed (Migration Performance+spaCy→Delivered; Confidence Scoring→Deferred v4.0+); MASTER_REFACTORING_PLAN v1.0→v3.22.17; snapshot/sessions 59-62/§3.3.2 updated; 15 doc tests (session63) |
+| 3.22.18 | 2026-02-22 | ✅ Released | QUICKSTART.md 5 API inaccuracies fixed (rel.source_id, execute_cypher, result.items, store(kg.to_dict()), HybridSearchEngine); MASTER_STATUS feature coverage matrix updated 40-85%→99-100%; 19 doc+API tests (session64) |
 | 4.0 | 2027+ | 📋 Future | TBD based on feedback |
 
 ---

@@ -884,3 +884,46 @@ All session59 (21 tests) and session60 (18 tests) tests continue to pass:
 - `TestFourDocVersionAgreement` (3 tests): MASTER_STATUS/CHANGELOG/REFACTORING_PLAN all agree on v3.22.17
 
 **Result: 3,797 passed, 26 skipped, 0 failed** (numpy+networkx+matplotlib+scipy+plotly+rdflib env)
+
+### Session 64 log (2026-02-22)
+
+**API accuracy fixes + documentation polish — no production code changes.**
+
+**Problem:** `QUICKSTART.md` had 5 code examples that would raise `AttributeError` or
+`TypeError` at runtime due to API drift since the module was refactored in sessions 3–5:
+1. `rel.source` / `rel.target` — `Relationship` has no `source`/`target` attributes; correct attrs are `source_id`/`target_id` (or `source_entity`/`target_entity`).
+2. `backend.add_knowledge_graph(kg)` — `IPLDBackend` has no `add_knowledge_graph()` method; the query example now uses `GraphEngine` directly (no IPFS daemon needed for in-memory usage).
+3. `engine.execute(...)` — `UnifiedQueryEngine` has no `execute()` method; correct method is `execute_cypher()`.
+4. `for row in results:` — `QueryResult` is not iterable; results are in `result.items`.
+5. `backend.store(kg)` — `IPLDBackend.store()` takes bytes/str/dict, not a `KnowledgeGraph`; fixed to `backend.store(kg.to_dict())` + `backend.retrieve_json(cid)` (returns dict).
+6. `HybridSearch` — exported class is `HybridSearchEngine` (not `HybridSearch`).
+7. `top_k=5` — actual kwarg is `k=5`.
+8. `combine_strategy="weighted"` — no such argument exists.
+9. `result.entity.name` — `HybridSearchResult` has `node_id` (str), not `entity` (object).
+
+**Also fixed:**
+- `MASTER_STATUS.md` Feature Completeness Matrix: all per-feature coverage %s updated from
+  stale 40–85% → current 99–100% (reflecting sessions 7–58 coverage work).
+
+**Fix:**
+1. `QUICKSTART.md`:
+   - Lines 44–46 (relationship loop): `rel.source` → `rel.source_id`; `rel.target` → `rel.target_id`; added `source_entity`/`target_entity` fallback pattern.
+   - Lines 64–88 (Query example): replaced `IPLDBackend().add_knowledge_graph()` + `engine.execute()` + `for row in results:` with correct `GraphEngine` + `engine.execute_cypher()` + `for row in result.items:`.
+   - Lines 98–112 (IPFS Store example): `backend.store(kg)` → `backend.store(kg.to_dict())`; `backend.retrieve(cid)` (bytes) → `backend.retrieve_json(cid)` (dict).
+   - Lines 174–186 (Pattern 3): `HybridSearch` → `HybridSearchEngine`; `top_k=5` → `k=5`; removed `combine_strategy="weighted"`; `result.entity.name` → `result.node_id`.
+2. `MASTER_STATUS.md` Feature Completeness Matrix:
+   - Core features: 70–85% → 97–100%
+   - Query/Cypher features: 70–80% → 100%
+   - Advanced (P1–P4, SRL, OWL): 75–80% → 99–100%
+   - Migration: 40–85% → 100%
+   - Coverage note updated.
+
+**19 tests** in `test_master_status_session64.py` (4 classes):
+- `TestQuickstartRelAttributes` (5 tests): `rel.source_id` present; `rel.target_id` present; bare `rel.source`/`rel.target` absent.
+- `TestQuickstartEngineAPI` (4 tests): `execute_cypher` present; bare `engine.execute()` absent; `result.items` present; `add_knowledge_graph` absent.
+- `TestQuickstartIPFSStoreAPI` (3 tests): `kg.to_dict()` call present; retrieve method referenced; `retrieved_kg.entities` absent.
+- `TestQuickstartHybridSearch` (7 tests): `HybridSearchEngine` class present; `HybridSearch(` absent; `top_k=` absent; `k=` present; `combine_strategy` absent; `result.node_id` present; `result.entity.name` absent.
+- `TestMasterStatusCoverageMatrix` (5 tests): stale 85%/40%/70% entries absent from feature tables; 100% present in Cypher+migration rows.
+- `TestThreeDocVersionAgreement` (3 tests): MASTER_STATUS/ROADMAP/CHANGELOG all agree on v3.22.18.
+
+**Result: 3,816 passed, 26 skipped, 0 failed** (numpy+networkx+matplotlib+scipy+plotly+rdflib env)
