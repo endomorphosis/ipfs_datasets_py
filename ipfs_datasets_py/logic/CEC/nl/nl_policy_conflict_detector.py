@@ -28,8 +28,11 @@ Usage::
 """
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -116,6 +119,53 @@ class NLPolicyConflictDetector:
             Empty list when no conflicts are detected.
         """
         return self._check_perm_prohib(clauses) + self._check_multiple_obligations(clauses)
+
+    def detect_and_warn(
+        self,
+        clauses: List[Any],
+        *,
+        audit_log: Any = None,
+        policy_cid: str = "nl_policy",
+    ) -> List[PolicyConflict]:
+        """BX134: Detect conflicts and emit :mod:`warnings` + optional audit entries.
+
+        Parameters
+        ----------
+        clauses:
+            Policy clause list (see :meth:`detect`).
+        audit_log:
+            Optional :class:`~mcp_server.policy_audit_log.PolicyAuditLog`.
+            Each conflict is recorded as a ``"deny"`` entry with
+            ``intent_cid="conflict:<conflict_type>"`` and
+            ``actor="conflict_detector"``.
+        policy_cid:
+            Policy CID to use in audit entries.
+
+        Returns
+        -------
+        list of :class:`PolicyConflict`
+            Same as :meth:`detect`.
+        """
+        import warnings
+        conflicts = self.detect(clauses)
+        for conflict in conflicts:
+            msg = (
+                f"Policy conflict detected [{conflict.conflict_type}]: "
+                f"{conflict.description}"
+            )
+            warnings.warn(msg, stacklevel=2)
+            if audit_log is not None:
+                try:
+                    audit_log.record(
+                        policy_cid=policy_cid,
+                        intent_cid=f"conflict:{conflict.conflict_type}",
+                        decision="deny",
+                        tool=conflict.action,
+                        actor="conflict_detector",
+                    )
+                except (TypeError, AttributeError, ValueError) as exc:
+                    logger.debug("detect_and_warn: failed to record audit entry: %s", exc)
+        return conflicts
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -241,3 +291,111 @@ def detect_conflicts(
     list of :class:`PolicyConflict`
     """
     return NLPolicyConflictDetector(wildcard=wildcard).detect(clauses)
+
+
+# ---------------------------------------------------------------------------
+# CB138 – i18n NL conflict scan (keyword-level, no clause compilation)
+# ---------------------------------------------------------------------------
+
+_I18N_KEYWORD_LOADERS: Dict[str, str] = {
+    "fr": "ipfs_datasets_py.logic.CEC.nl.french_parser:get_french_deontic_keywords",
+    "es": "ipfs_datasets_py.logic.CEC.nl.spanish_parser:get_spanish_deontic_keywords",
+    "de": "ipfs_datasets_py.logic.CEC.nl.german_parser:get_german_deontic_keywords",
+}
+
+
+def _load_i18n_keywords(language: str) -> Dict[str, List[str]]:
+    """Load deontic keywords for *language* (``"fr"``, ``"es"``, or ``"de"``)."""
+    loader_path = _I18N_KEYWORD_LOADERS.get(language)
+    if loader_path is None:
+        return {}
+    module_path, func_name = loader_path.split(":")
+    try:
+        import importlib
+        mod = importlib.import_module(module_path)
+        fn = getattr(mod, func_name)
+        return fn()
+    except (ImportError, AttributeError):
+        return {}
+
+
+@dataclass
+class I18NConflictResult:
+    """Result of an i18n keyword-level conflict scan.
+
+    Attributes
+    ----------
+    language:
+        ISO 639-1 code of the language scanned (``"fr"``, ``"es"``, ``"de"``).
+    has_permission:
+        Whether any permission keyword was found.
+    has_prohibition:
+        Whether any prohibition keyword was found.
+    has_simultaneous_conflict:
+        ``True`` when *both* a permission **and** a prohibition keyword appear
+        in the same text.
+    matched_permission_keywords:
+        Permission keywords found in the text.
+    matched_prohibition_keywords:
+        Prohibition keywords found in the text.
+    """
+
+    language: str
+    has_permission: bool = False
+    has_prohibition: bool = False
+    has_simultaneous_conflict: bool = False
+    matched_permission_keywords: List[str] = field(default_factory=list)
+    matched_prohibition_keywords: List[str] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "language": self.language,
+            "has_permission": self.has_permission,
+            "has_prohibition": self.has_prohibition,
+            "has_simultaneous_conflict": self.has_simultaneous_conflict,
+            "matched_permission_keywords": self.matched_permission_keywords,
+            "matched_prohibition_keywords": self.matched_prohibition_keywords,
+        }
+
+
+def detect_i18n_conflicts(
+    text: str,
+    language: str = "fr",
+) -> I18NConflictResult:
+    """Scan *text* for simultaneous permission+prohibition keywords in *language*.
+
+    This is a lightweight keyword-level scan — no full clause compilation is
+    performed.  It is useful as a pre-filter before running the full
+    :class:`NLPolicyConflictDetector`.
+
+    Parameters
+    ----------
+    text:
+        Raw natural language text to scan.
+    language:
+        ISO 639-1 language code.  Supported: ``"fr"``, ``"es"``, ``"de"``.
+
+    Returns
+    -------
+    :class:`I18NConflictResult`
+    """
+    keywords = _load_i18n_keywords(language)
+    text_lower = text.lower()
+
+    perm_hits: List[str] = [
+        kw for kw in keywords.get("permission", [])
+        if kw.lower() in text_lower
+    ]
+    prohib_hits: List[str] = [
+        kw for kw in keywords.get("prohibition", [])
+        if kw.lower() in text_lower
+    ]
+
+    return I18NConflictResult(
+        language=language,
+        has_permission=bool(perm_hits),
+        has_prohibition=bool(prohib_hits),
+        has_simultaneous_conflict=bool(perm_hits) and bool(prohib_hits),
+        matched_permission_keywords=perm_hits,
+        matched_prohibition_keywords=prohib_hits,
+    )

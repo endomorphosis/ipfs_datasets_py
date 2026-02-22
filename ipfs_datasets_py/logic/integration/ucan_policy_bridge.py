@@ -352,6 +352,103 @@ class UCANPolicyBridge:
 
         return result
 
+    def evaluate_with_manager(
+        self,
+        policy_cid: str,
+        *,
+        tool: str,
+        actor: Optional[str] = None,
+        leaf_cid: Optional[str] = None,
+        at_time: Optional[float] = None,
+        manager: Optional[Any] = None,
+    ) -> "BridgeEvaluationResult":
+        """BZ136: Evaluate *tool* access using a full :class:`~mcp_server.ucan_delegation.DelegationManager`.
+
+        This extends :meth:`evaluate` by delegating the UCAN chain check to
+        *manager* (which also checks the revocation list internally) instead of
+        using the bridge's standalone :class:`~mcp_server.ucan_delegation.DelegationStore`.
+
+        .. note::
+           **Evaluation order (explicit):**
+           1. Revocation check via ``manager.is_revoked(leaf_cid)`` — fail-closed (returns
+              immediately on revocation, before policy or UCAN evaluation).
+           2. Deontic policy evaluation against ``policy_cid``.
+           3. UCAN chain check via ``manager.can_invoke(actor, …)`` — uses the manager's
+              built-in revocation list, so revoked intermediate tokens are also blocked.
+
+        Parameters
+        ----------
+        policy_cid:
+            CID of the policy to evaluate against.
+        tool:
+            The tool/action being requested.
+        actor:
+            Optional actor for deontic clause matching *and* UCAN chain check.
+        leaf_cid:
+            CID of the leaf delegation token held by the principal.
+        at_time:
+            Optional Unix timestamp for temporal evaluation.
+        manager:
+            A :class:`~mcp_server.ucan_delegation.DelegationManager` instance.
+            When ``None``, falls back to :meth:`evaluate` (standard path).
+
+        Returns
+        -------
+        BridgeEvaluationResult
+        """
+        if manager is None:
+            return self.evaluate(
+                policy_cid, tool=tool, actor=actor,
+                leaf_cid=leaf_cid, at_time=at_time,
+            )
+
+        result = BridgeEvaluationResult(policy_cid=policy_cid)
+
+        # Check revocation via manager
+        if leaf_cid is not None:
+            if manager.is_revoked(leaf_cid):
+                result.revoked = True
+                result.decision = "deny"
+                result.reason = f"Token {leaf_cid} has been revoked"
+                result.ucan_allowed = False
+                return result
+
+        # Deontic policy evaluation (same as evaluate())
+        try:
+            from ipfs_datasets_py.mcp_server.temporal_policy import PolicyEvaluator
+            from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
+            policy_ev = self._policy_evaluator or PolicyEvaluator()
+            intent = IntentObject(tool=tool)
+            decision_obj = policy_ev.evaluate(intent, policy_cid, at_time=at_time, actor=actor)
+            result.decision = decision_obj.decision
+            result.reason = decision_obj.justification or ""
+        except ImportError:
+            result.decision = "deny"
+            result.reason = "PolicyEvaluator unavailable"
+        except Exception as exc:
+            result.decision = "deny"
+            result.reason = f"Policy evaluation error: {exc}"
+
+        # UCAN chain check via DelegationManager
+        if leaf_cid is not None and actor is not None:
+            try:
+                allowed, reason = manager.can_invoke(
+                    actor,
+                    f"logic/{tool}",
+                    f"{tool}/invoke",
+                    leaf_cid=leaf_cid,
+                    at_time=at_time,
+                )
+                result.ucan_allowed = allowed
+                if not allowed and result.decision != "deny":
+                    result.decision = "deny"
+                    result.reason = f"UCAN chain denied: {reason}"
+            except Exception as exc:
+                result.ucan_allowed = None
+                logger.debug("DelegationManager chain evaluation skipped: %s", exc)
+
+        return result
+
     # ── revocation helpers ────────────────────────────────────────────────────
 
     def revoke_token(self, cid: str) -> None:

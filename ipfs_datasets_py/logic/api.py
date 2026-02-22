@@ -174,6 +174,7 @@ if _nl_ucan_ns:
 # BW133: Populate UCAN delegation + conflict detector into namespace (best-effort)
 _BW133_DELEGATION_AVAILABLE = False
 _BW133_CONFLICT_AVAILABLE = False
+_CD140_I18N_AVAILABLE = False  # CD140
 try:
 	from ipfs_datasets_py.mcp_server.ucan_delegation import (  # type: ignore[import-not-found]
 		DelegationManager,
@@ -188,10 +189,21 @@ try:
 		NLPolicyConflictDetector,
 		PolicyConflict,
 		detect_conflicts,
+		detect_i18n_conflicts,  # CB138
+		I18NConflictResult,  # CB138
 	)
 	_BW133_CONFLICT_AVAILABLE = True
+	_CD140_I18N_AVAILABLE = True  # CD140
 except (ImportError, ModuleNotFoundError):
 	pass  # optional
+
+try:
+	from .integration.ucan_policy_bridge import (  # type: ignore[import-not-found]
+		UCANPolicyBridge as _UCANPolicyBridge_check,  # already imported above
+	)
+	# evaluate_with_manager is a method, not a standalone symbol
+except (ImportError, ModuleNotFoundError):
+	pass
 
 
 __all__ = [
@@ -289,3 +301,6 @@ if _BW133_DELEGATION_AVAILABLE:
 	__all__ += ["DelegationManager", "get_delegation_manager"]
 if _BW133_CONFLICT_AVAILABLE:
 	__all__ += ["NLPolicyConflictDetector", "PolicyConflict", "detect_conflicts"]
+# CD140: i18n conflict symbols
+if _CD140_I18N_AVAILABLE:
+	__all__ += ["detect_i18n_conflicts", "I18NConflictResult"]

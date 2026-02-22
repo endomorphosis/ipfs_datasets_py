@@ -213,6 +213,49 @@ class DelegationChain:
             for token in self.tokens
         )
 
+    # CC139 ── ASCII visualization ───────────────────────────────────────────
+
+    def to_ascii_tree(self) -> str:
+        """CC139: Return an ASCII-art tree showing the delegation chain.
+
+        Each row shows the token index, issuer→audience link, and capabilities.
+        An empty chain returns ``"(empty chain)"``.
+
+        Example output::
+
+            DelegationChain [3 tokens]
+            ├─[0] did:key:root → did:key:agent1  (caps: logic/*:invoke/*)
+            ├─[1] did:key:agent1 → did:key:agent2  (caps: logic/read:read/invoke)
+            └─[2] did:key:agent2 → did:key:leaf  (caps: *)
+
+        Returns
+        -------
+        str
+            Multi-line ASCII representation.
+        """
+        if not self.tokens:
+            return "(empty chain)"
+
+        num_tokens = len(self.tokens)
+        lines: List[str] = [f"DelegationChain [{num_tokens} token{'s' if num_tokens != 1 else ''}]"]
+        for i, tok in enumerate(self.tokens):
+            prefix = "└─" if i == num_tokens - 1 else "├─"
+            caps_str = ", ".join(
+                f"{c.resource}:{c.ability}" for c in tok.capabilities
+            ) or "(no caps)"
+            cid_short = tok.cid[:12] + "…" if len(tok.cid) > 12 else tok.cid
+            lines.append(
+                f"{prefix}[{i}] {tok.issuer} → {tok.audience}"
+                f"  (cid: {cid_short}, caps: {caps_str})"
+            )
+        return "\n".join(lines)
+
+    def __str__(self) -> str:  # CC139
+        return self.to_ascii_tree()
+
+    def __len__(self) -> int:
+        return len(self.tokens)
+
 
 # ─── evaluator ──────────────────────────────────────────────────────────────
 

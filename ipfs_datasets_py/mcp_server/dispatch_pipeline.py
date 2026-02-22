@@ -87,10 +87,19 @@ class PipelineMetricsRecorder:
     ----------
     namespace:
         Optional label prefix for all recorded metric names.
+    audit_log:
+        CE141: Optional :class:`~policy_audit_log.PolicyAuditLog` instance.
+        When provided, :meth:`record_run` writes a summary audit entry for
+        every completed pipeline run.
     """
 
-    def __init__(self, namespace: str = "mcp_pipeline") -> None:
+    def __init__(
+        self,
+        namespace: str = "mcp_pipeline",
+        audit_log: Optional[Any] = None,  # CE141
+    ) -> None:
         self.namespace = namespace
+        self._audit_log = audit_log  # CE141
         self._stage_durations: Dict[str, List[float]] = {}
         self._stage_executions: Dict[str, int] = {}
         self._stage_skips: Dict[str, int] = {}
@@ -125,12 +134,32 @@ class PipelineMetricsRecorder:
             )
 
     def record_run(self, *, allowed: bool) -> None:
-        """Record the final allowed/denied outcome of a complete pipeline run."""
+        """Record the final allowed/denied outcome of a complete pipeline run.
+
+        CE141: When *audit_log* is set, also writes a summary audit entry.
+        """
         self._total_runs += 1
         if allowed:
             self._total_allowed += 1
         else:
             self._total_denied += 1
+
+        # CE141 — write audit entry for every completed pipeline run
+        if self._audit_log is not None:
+            try:
+                decision_str = "allow" if allowed else "deny"
+                self._audit_log.record(
+                    policy_cid=f"pipeline:{self.namespace}:run",
+                    intent_cid=f"run:{self._total_runs}",
+                    decision=decision_str,
+                    tool="pipeline",
+                    actor="pipeline",
+                )
+            except (TypeError, AttributeError, ValueError) as exc:
+                logger.warning(
+                    "PipelineMetricsRecorder audit record failed (namespace=%s, run=%s): %s",
+                    self.namespace, self._total_runs, exc,
+                )
 
     # ------------------------------------------------------------------
     # Metrics retrieval
@@ -235,6 +264,9 @@ class DispatchPipeline:
     short_circuit:
         If *True* (default), the pipeline stops as soon as a stage returns
         ``allowed=False``.
+    audit_log:
+        CA137: Optional :class:`~policy_audit_log.PolicyAuditLog` instance.
+        When provided, each stage result is recorded to the audit log.
     """
 
     def __init__(
@@ -243,10 +275,12 @@ class DispatchPipeline:
         metrics_recorder: Optional[PipelineMetricsRecorder] = None,
         *,
         short_circuit: bool = True,
+        audit_log: Optional[Any] = None,  # CA137
     ) -> None:
         self._stages: List[PipelineStage] = list(stages or [])
         self._recorder = metrics_recorder or PipelineMetricsRecorder()
         self.short_circuit = short_circuit
+        self._audit_log = audit_log  # CA137
 
     # ------------------------------------------------------------------
     # Stage management
@@ -334,6 +368,22 @@ class DispatchPipeline:
                 allowed=allowed,
             )
             executed.append(stage.name)
+
+            # CA137 — record stage result to audit log
+            if self._audit_log is not None:
+                try:
+                    decision_str = "allow" if allowed else "deny"
+                    tool = intent.get("tool", stage.name)
+                    actor = intent.get("actor", "unknown")
+                    self._audit_log.record(
+                        policy_cid=f"pipeline:{stage.name}",
+                        intent_cid="pipeline_intent",
+                        decision=decision_str,
+                        tool=tool,
+                        actor=actor,
+                    )
+                except (TypeError, AttributeError, ValueError) as exc:
+                    logger.warning("DispatchPipeline audit record failed for stage %s: %s", stage.name, exc)
 
             if not allowed:
                 final_allowed = False
