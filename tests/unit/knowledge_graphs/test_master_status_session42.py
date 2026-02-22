@@ -22,8 +22,8 @@ import os
 import json
 import warnings
 import importlib
-import numpy as np
 import pytest
+np = pytest.importorskip("numpy")
 from unittest.mock import MagicMock, patch
 
 
@@ -427,7 +427,8 @@ class TestFromCarEmptyRoots:
         with open(dummy, "wb") as f:
             f.write(b"dummy car data")
 
-        with patch.object(_IPLD, "ipld_car") as mock_car:
+        with patch.object(_IPLD, "HAVE_IPLD_CAR", True), \
+             patch.object(_IPLD, "ipld_car") as mock_car:
             mock_car.decode.return_value = ([], [])  # empty roots
             with pytest.raises(ValueError, match="no roots"):
                 IPLDKnowledgeGraph.from_car(dummy)
@@ -443,7 +444,8 @@ class TestFromCarEmptyRoots:
             f.write(b"dummy car data")
 
         root_cid = "Qmroot999"
-        with patch.object(_IPLD, "ipld_car") as mock_car:
+        with patch.object(_IPLD, "HAVE_IPLD_CAR", True), \
+             patch.object(_IPLD, "ipld_car") as mock_car:
             # Provide blocks as a dict so .items() works (code expects dict, real lib returns list)
             mock_car.decode.return_value = ([root_cid], {root_cid: b"block_data"})
             with patch.object(IPLDKnowledgeGraph, "from_cid", return_value=MagicMock()) as fc:
@@ -481,7 +483,8 @@ class TestExportToCar:
         e = kg.add_entity(entity_type="person", name="Eve", entity_id="ev1", confidence=1.0)
 
         output = str(tmp_path / "out.car")
-        with patch.object(_IPLD, "ipld_car") as mock_car:
+        with patch.object(_IPLD, "HAVE_IPLD_CAR", True), \
+             patch.object(_IPLD, "ipld_car") as mock_car:
             mock_car.encode.return_value = b"CAR_BYTES"
             root_cid = kg.export_to_car(output)
 
@@ -497,7 +500,8 @@ class TestExportToCar:
         kg.add_relationship("KNOWS", source=e1, target=e2)
 
         output = str(tmp_path / "out2.car")
-        with patch.object(_IPLD, "ipld_car") as mock_car:
+        with patch.object(_IPLD, "HAVE_IPLD_CAR", True), \
+             patch.object(_IPLD, "ipld_car") as mock_car:
             mock_car.encode.return_value = b"CAR_WITH_RELS"
             root_cid = kg.export_to_car(output)
 

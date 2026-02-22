@@ -1145,8 +1145,10 @@ class TestLineageVisualizerPlotly:
         mock_go.Scatter.return_value = MagicMock()
         mock_go.Figure.return_value = mock_fig
         mock_go.Layout.return_value = MagicMock()
+        _pos = {"a": (0.0, 0.1), "b": (0.2, 0.3), "c": (0.4, 0.5)}
         with patch.object(mod, "PLOTLY_AVAILABLE", True), \
-             patch.object(mod, "go", mock_go):
+             patch.object(mod, "go", mock_go), \
+             patch("networkx.spring_layout", return_value=_pos):
             result = vis.render_plotly()
         assert result == "<html>graph</html>"
 
@@ -1161,8 +1163,10 @@ class TestLineageVisualizerPlotly:
         mock_go.Scatter.return_value = MagicMock()
         mock_go.Figure.return_value = mock_fig
         mock_go.Layout.return_value = MagicMock()
+        _pos = {"a": (0.0, 0.1), "b": (0.2, 0.3), "c": (0.4, 0.5)}
         with patch.object(mod, "PLOTLY_AVAILABLE", True), \
-             patch.object(mod, "go", mock_go):
+             patch.object(mod, "go", mock_go), \
+             patch("networkx.spring_layout", return_value=_pos):
             result = vis.render_plotly(output_path=outfile)
         assert result is None
         mock_fig.write_html.assert_called_once_with(outfile)
@@ -1179,7 +1183,9 @@ class TestLineageVisualizerPlotly:
         mock_go.Scatter.return_value = MagicMock()
         mock_go.Figure.return_value = mock_fig
         mock_go.Layout.return_value = MagicMock()
+        _pos = {"x": (0.0, 0.0)}
         with patch.object(mod, "PLOTLY_AVAILABLE", True), \
-             patch.object(mod, "go", mock_go):
+             patch.object(mod, "go", mock_go), \
+             patch("networkx.spring_layout", return_value=_pos):
             result = mod.visualize_lineage(t, renderer="plotly")
         assert result == "<html></html>"

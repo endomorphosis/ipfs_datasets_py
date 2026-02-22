@@ -1,8 +1,8 @@
 # Knowledge Graphs - Development Roadmap
 
-**Last Updated:** 2026-02-20  
-**Current Version:** 2.1.0  
-**Status:** Active Development
+**Last Updated:** 2026-02-22  
+**Current Version:** 3.22.18  
+**Status:** Production Ready (99.99% test coverage)
 
 ---
 
@@ -11,26 +11,6 @@
 This roadmap outlines planned features and improvements for the knowledge_graphs module. All dates are estimates and subject to change based on community feedback and priorities.
 
 **Note (2026-02-18):** This roadmap is aspirational. For the most accurate, current view of what’s implemented vs. missing (including known limitations and test coverage), see **[MASTER_STATUS.md](./MASTER_STATUS.md)**.
-
----
-
-## Version 2.0.1 (Q2 2026) - Bug Fixes & Polish
-
-**Target Release:** May 2026  
-**Focus:** Production hardening and test coverage
-
-### Planned Work
-- [ ] Increase migration module test coverage from 40% to 70%+
-- [ ] Add comprehensive error handling tests
-- [ ] Fix any bugs discovered in production deployments
-- [ ] Performance profiling and optimization for large graphs (>100k nodes)
-- [ ] Memory usage optimization for batch operations
-
-### Success Criteria
-- Migration module test coverage ≥70%
-- No known critical bugs
-- Performance benchmarks documented
-- Memory usage optimized for production workloads
 
 ---
 
@@ -119,15 +99,15 @@ All root-level modules moved to canonical subpackage locations. New `reasoning/`
 **Target:** Basic read support
 
 #### 4. Migration Performance
-**Status:** Planned  
+**Status:** ✅ Delivered in v2.1.0 (2026-02-19)  
 **Priority:** High  
 **Description:** Optimize large graph migrations
 
-**Improvements:**
-- Streaming import/export (reduce memory usage)
-- Parallel processing for large datasets
-- Progress tracking and resumable migrations
-- Validation and integrity checking
+**Delivered:**
+- Streaming import/export: `GraphData.export_streaming()`, `iter_nodes_chunked()`, `iter_relationships_chunked()` (chunk_size=500, 64KB write buffers)
+- Parallel processing: `FederatedQueryExecutor.execute_cypher_parallel()` in `query/distributed.py`
+- Validation and integrity checking: `IntegrityVerifier.verify_sample()` in `migration/`
+- Progress tracking and resumable migrations: 📋 deferred to v4.0+ (low priority)
 
 ### Success Criteria
 - GraphML, GEXF formats fully supported
@@ -161,17 +141,15 @@ All root-level modules moved to canonical subpackage locations. New `reasoning/`
 - Domain adaptation capability
 
 #### 2. spaCy Dependency Parsing Integration
-**Status:** Planned  
+**Status:** ✅ Delivered in v2.1.0 (2026-02-20)  
 **Priority:** Medium  
 **Description:** Leverage spaCy's dependency parser
 
-**Note:** spaCy is already installed but not actively used
-
-**Features:**
-- Subject-verb-object extraction
-- Compound noun handling
-- Improved entity resolution
-- Context-aware extraction
+**Delivered:**
+- Subject-verb-object extraction: `SRLExtractor` with `nlp=` spaCy model backend
+- Compound noun handling: `_aggressive_entity_extraction()` in `extraction/extractor.py`
+- Context-aware extraction: 10 semantic role types extracted via spaCy dep-parse
+- Improved entity resolution: SRL-based event-centric KG construction with entity deduplication
 
 #### 3. Semantic Role Labeling (SRL)
 **Status:** ✅ Delivered in v2.1.0 (2026-02-20)  
@@ -185,15 +163,17 @@ All root-level modules moved to canonical subpackage locations. New `reasoning/`
 - No AllenNLP dependency required — pure-Python heuristic backend always available
 
 #### 4. Confidence Scoring Improvements
-**Status:** Planned  
-**Priority:** High  
-**Description:** Enhanced confidence metrics
+**Status:** 📋 Deferred to v4.0+  
+**Priority:** Low (was High — reprioritised after v3.22.x improvements)  
+**Description:** Enhanced confidence metrics beyond current per-entity/per-relationship confidence fields
 
-**Features:**
+**Deferred features (v4.0+):**
 - Multi-source confidence aggregation
 - Probabilistic relationship scoring
 - Quality metrics for extracted graphs
 - Uncertainty quantification
+
+**Note:** Basic confidence scoring already exists on `KnowledgeGraphEntity.confidence` and `KnowledgeGraphRelationship.confidence` (0.0–1.0). Advanced probabilistic scoring deferred pending user demand.
 
 ### Success Criteria
 - Neural extraction option available
@@ -279,6 +259,88 @@ RETURN path, length(path)
 
 ---
 
+## Version 3.22.0 (2026-02-22) - ✅ RELEASED
+
+**Released:** 2026-02-22  
+**Focus:** Comprehensive coverage push, async bug fixes, and test quality hardening
+
+### Delivered Features
+
+#### 1. Comprehensive Coverage Push (Sessions 33–45) ✅
+All modules at 99%+ coverage. 3,553 tests passing, 55 skipped, 0 failing.
+- `transactions/wal.py` — asyncio.CancelledError re-raises now covered
+- `extraction/extractor.py` — 73% → 98% with spaCy paths covered
+- `extraction/entities.py` + `extraction/relationships.py` — `extraction_method` field added
+- `ipld.py` — legacy IPLD module fully covered (73 new tests)
+- All remaining single-line misses across 30+ modules resolved
+
+#### 2. Async Context Bug Fixes ✅
+`anyio.get_cancelled_exc_class()` called in synchronous methods without an event loop now handled gracefully in 4 modules:
+- `query/unified_engine.py` — `_cancelled_exc_class()` helper
+- `transactions/wal.py` — `_cancelled_exc_class()` helper
+- `storage/ipld_backend.py` — `_cancelled_exc_class()` helper
+- `query/hybrid_search.py` — `_cancelled_exc_class()` helper
+
+#### 3. Optional Dependency Skip Guards ✅
+All tests that require optional deps now have proper `@pytest.mark.skipif` guards:
+- spaCy tests: `@_skip_no_spacy` (sessions 43, 44)
+- matplotlib tests: `@_skip_no_matplotlib` (sessions 15, 37)
+- libipld tests: `@_skip_no_libipld` (session 40)
+- rdflib tests: `@pytest.mark.skipif(not _rdflib_available, ...)` (sessions 33, 37)
+
+#### 4. Production Bug Fixes ✅
+- `extraction/extractor.py` — spaCy v3 `ent._.get()` 1-arg API fixed
+- `ipld.py` — `ipld_car = None` attribute added for patchability
+
+### Success Criteria — All Met ✅
+- 99%+ coverage across all modules (vs. target of 90%)
+- 3,553 tests passing, 55 cleanly skipped, 0 failing
+- All async cancellation bugs fixed
+- All optional-dep tests properly guarded
+
+---
+
+## Version 3.22.2 (2026-02-22) - ✅ RELEASED
+
+**Released:** 2026-02-22  
+**Focus:** Production bug fixes (sessions 47–48) + final coverage push
+
+### Delivered Features
+
+#### 1. RDF Boolean Serialization Bug Fix (Session 47) ✅
+`extraction/graph.py` `export_to_rdf()` now correctly serializes boolean values as `XSD.boolean` instead of `XSD.integer`. Root cause: Python's `bool` is a subclass of `int`, so `case int():` matched `True`/`False` before `case bool():` could. Fixed by reordering both the `match` block and the `elif` chain.
+
+#### 2. Final Coverage Push (Sessions 47–48) ✅
+- `extraction/graph.py`: 80% → **100%**
+- `core/expression_evaluator.py`: 97% → **100%**
+- `ontology/reasoning.py`: 99% → **100%**
+- `migration/formats.py`: 98% → **100%** (via libipld+ipld-car+dag-cbor+multiformats)
+- `cypher/compiler.py`: 3 → 2 missed lines
+- **Overall: 99%, 141 missed lines** (108 spaCy-only, 33 dead code)
+
+### Success Criteria — All Met ✅
+- 3,626 tests passing, 7 skipped, 0 failing (with all optional deps)
+- `extraction/graph.py` boolean serialization bug fixed
+- All 100%-target modules achieved
+
+---
+
+## Version 3.22.3 (2026-02-22) - ✅ RELEASED
+
+**Released:** 2026-02-22  
+**Focus:** Test infrastructure hardening (session 49)
+
+### Delivered
+
+#### 1. numpy Skip Guards (Session 49) ✅
+`test_master_status_session41.py` and `test_master_status_session42.py` had `import numpy as np` at module level, causing collection errors (not graceful skips) in environments without numpy. Fixed by replacing with `np = pytest.importorskip("numpy")`.
+
+### Result
+- Base env (without numpy/matplotlib/rdflib/etc): **3,569 passed, 64 skipped, 0 failed**
+- Full env (all optional deps installed): **3,626 passed, 7 skipped, 0 failed**
+
+---
+
 ## Long-Term Vision (v4.0+)
 
 ### Potential Features
@@ -304,10 +366,10 @@ RETURN path, length(path)
 We welcome community contributions! Here's how you can help:
 
 ### Priority Areas
-1. **Test Coverage** - Help us reach 90%+ coverage
+1. **Test Coverage** - ✅ 99%+ achieved — focus on optional-dep integration tests
 2. **Documentation** - More examples and tutorials
-3. **Performance** - Optimization and benchmarking
-4. **Features** - Implement roadmap items
+3. **Performance** - Optimization and benchmarking for large graphs (>100k nodes)
+4. **Features** - Implement long-term roadmap items (v4.0+)
 
 ### How to Contribute
 See [CONTRIBUTING.md](../../docs/knowledge_graphs/CONTRIBUTING.md) for guidelines.
@@ -346,7 +408,26 @@ We follow [Semantic Versioning](https://semver.org/):
 | 2.2.0 | August 2026 | ✅ Cancelled (delivered in 2.0.0) | Migration Enhancement |
 | 2.5.0 | November 2026 | ✅ Cancelled (delivered in 2.0.0/2.1.0) | Advanced Extraction |
 | 3.0.0 | February 2027 | ✅ Cancelled (delivered in 2.0.0/2.1.0) | Advanced Reasoning |
-| 3.x | 2027-2028 | 📋 Future | TBD based on feedback |
+| 3.22.0 | 2026-02-22 | ✅ Released | Comprehensive coverage push: 3,553 tests passing, 55 skipped; 99%+ coverage across all modules; anyio async-context bug fixes; spaCy/matplotlib/rdflib optional-dep skip guards |
+| 3.22.1 | 2026-02-22 | ✅ Released | rdflib optional-dep skip guards (session46); ROADMAP.md updated to v3.22.0 |
+| 3.22.2 | 2026-02-22 | ✅ Released | Bug fix: RDF boolean serialization order (bool before int) in export_to_rdf (session47); extraction/graph.py 100% |
+| 3.22.3 | 2026-02-22 | ✅ Released | Final coverage push: migration/formats.py 100%; expression_evaluator 100%; ontology/reasoning 100% (session48); 3,626 tests, 141 missed lines |
+| 3.22.4 | 2026-02-22 | ✅ Released | numpy skip guards: importorskip in session41+42 (session49); 3,569 pass, 64 skip (base env) |
+| 3.22.5 | 2026-02-22 | ✅ Released | numpy-via-networkx skip guards (session50): fixed 7 test failures when networkx installed but numpy absent |
+| 3.22.6 | 2026-02-22 | ✅ Released | 13 new tests: hybrid_search.py 100%; CAR ImportError branches; entity_helpers dead code documented (session51) |
+| 3.22.7 | 2026-02-22 | ✅ Released | 17 new tests: ImportError except branches in 5 modules (reasoning/types, lineage/core, neo4j_compat/driver, cross_document, ipld) (session52) |
+| 3.22.8 | 2026-02-22 | ✅ Released | 14 lines dead code removed (compiler.py, ir_executor.py, ipld.py); 15 invariant tests (session53) |
+| 3.22.9 | 2026-02-22 | ✅ Released | numpy skip guards for sessions 52+53 tests (session54); 3,490 pass, 77 skip |
+| 3.22.10 | 2026-02-22 | ✅ Released | numpy promoted to default dep in setup.py + new pyproject.toml (session55) |
+| 3.22.11 | 2026-02-22 | ✅ Released | 9 lines dead code removed (cross_document.py, ir_executor.py); both files now 100% (session56) |
+| 3.22.12 | 2026-02-22 | ✅ Released | scipy/matplotlib/plotly/rdflib added to knowledge_graphs extras; visualization.py 100% + graph.py 100% (session57) |
+| 3.22.13 | 2026-02-22 | ✅ Released | srl.py 2 dead lines removed → 100%; multiformats added to ipld extras; 1 missed line total (session58) |
+| 3.22.14 | 2026-02-22 | ✅ Released | Doc consistency fixes: ROADMAP.md v3.22.14; missing CHANGELOG sections added; release table complete (session59) |
+| 3.22.15 | 2026-02-22 | ✅ Released | MASTER_STATUS stale coverage table updated (99.99%); duplicate ROADMAP v2.0.1 section removed; sessions 47–59 added to session list; 15 doc integrity tests (session60) |
+| 3.22.16 | 2026-02-22 | ✅ Released | DOCUMENTATION_GUIDE.md v1.0→v3.22.16; duplicate MASTER_STATUS entry removed; DEFERRED_FEATURES+IMPROVEMENT_TODO stale paths/dates fixed; 18 doc integrity tests (session62) |
+| 3.22.17 | 2026-02-22 | ✅ Released | ROADMAP stale "Status: Planned" items in CANCELLED sections fixed (Migration Performance+spaCy→Delivered; Confidence Scoring→Deferred v4.0+); MASTER_REFACTORING_PLAN v1.0→v3.22.17; snapshot/sessions 59-62/§3.3.2 updated; 15 doc tests (session63) |
+| 3.22.18 | 2026-02-22 | ✅ Released | QUICKSTART.md 5 API inaccuracies fixed (rel.source_id, execute_cypher, result.items, store(kg.to_dict()), HybridSearchEngine); MASTER_STATUS feature coverage matrix updated 40-85%→99-100%; 19 doc+API tests (session64) |
+| 4.0 | 2027+ | 📋 Future | TBD based on feedback |
 
 ---
 
@@ -383,6 +464,6 @@ We value your feedback! Please share thoughts on:
 
 ---
 
-**Last Updated:** 2026-02-20  
+**Last Updated:** 2026-02-22  
 **Next Review:** Q3 2026  
 **Maintained By:** Knowledge Graphs Team

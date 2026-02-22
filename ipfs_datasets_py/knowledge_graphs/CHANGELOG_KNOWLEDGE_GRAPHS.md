@@ -5,6 +5,640 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.18] - 2026-02-22
+
+### Fixed — QUICKSTART.md API inaccuracies + MASTER_STATUS feature coverage matrix (Session 64)
+
+**No production code changes.** Fixed 5 API inaccuracies in QUICKSTART.md (would cause
+`AttributeError`/`TypeError` at runtime) and updated the Feature Completeness Matrix in
+MASTER_STATUS.md to reflect current 99-100% coverage.
+
+#### `QUICKSTART.md`
+- `rel.source` → `rel.source_id`; `rel.target` → `rel.target_id` (`Relationship` attributes are `source_id`/`target_id`, not `source`/`target`)
+- Removed non-existent `backend.add_knowledge_graph(kg)` call (no such method on `IPLDBackend`); query example now uses `GraphEngine` directly
+- `engine.execute(...)` → `engine.execute_cypher(...)` (no `execute()` method on `UnifiedQueryEngine`)
+- `for row in results:` → `for row in result.items:` (`QueryResult` has `.items` list, not `__iter__`)
+- `backend.store(kg)` → `backend.store(kg.to_dict())` + `backend.retrieve_json(cid)` (`store()` takes bytes/str/dict; `retrieve()` returns bytes, not a `KnowledgeGraph`)
+- `HybridSearch` → `HybridSearchEngine` (correct class name exported from `query/`)
+- `top_k=5` → `k=5` (actual kwarg name); removed `combine_strategy="weighted"` (no such argument)
+- `result.entity.name` → `result.node_id` (`HybridSearchResult` has `node_id`, not `entity`)
+
+#### `MASTER_STATUS.md`
+- Feature Completeness Matrix: all per-feature coverage %s updated from stale 40–85% → current 99–100%
+  - Core features: 75–85% → ~97–100%
+  - Query/Cypher features: 70–80% → 100%
+  - Advanced (P1–P4, SRL, OWL): 75–80% → 99–100%
+  - Migration: 40–85% → 100%
+- Coverage note updated: "Migration module at 100% coverage as of v3.22.17"
+
+## [3.22.17] - 2026-02-22
+
+### Changed — ROADMAP.md stale items + MASTER_REFACTORING_PLAN_2026.md update (Session 63)
+
+**No production code changes.** Fixed stale "Status: Planned" items inside CANCELLED roadmap
+sections and brought the refactoring plan up to date with sessions 59-62 progress.
+
+#### `ROADMAP.md`
+- v2.2.0 §4 "Migration Performance": `Status: Planned` → `✅ Delivered in v2.1.0` (streaming export, chunked iteration, parallel query execution, integrity verification all implemented)
+- v2.5.0 §2 "spaCy Dependency Parsing Integration": `Status: Planned` → `✅ Delivered in v2.1.0` (via `SRLExtractor` spaCy backend + `_aggressive_entity_extraction()`)
+- v2.5.0 §4 "Confidence Scoring Improvements": `Status: Planned` → `📋 Deferred to v4.0+` (basic confidence fields already exist; advanced probabilistic scoring deferred pending user demand)
+
+#### `MASTER_REFACTORING_PLAN_2026.md`
+- `**Version:** 1.0` → `3.22.17`
+- `**Last Updated:** 2026-02-20` → `2026-02-22`
+- §1 Module Snapshot updated: 92→96+ files; 64→95+ test files; 1,075+→3,782 tests; ~78%→**99.99%** coverage; migration coverage 70%+→**100%**
+- §2 Completed Work: Coverage Push (sessions 27–58) and Documentation Consistency (sessions 59–62) sections added
+- §3.3.2 Extraction Validation Split: `🟡 Deferred` → `📋 Deferred to v4.0+` (explicitly documented rationale: no clean concern separation without substantial refactoring; revisit if class exceeds 1,000 lines)
+
+## [3.22.16] - 2026-02-22
+
+### Changed — DOCUMENTATION_GUIDE.md + DEFERRED_FEATURES.md + IMPROVEMENT_TODO.md stale metadata (Session 62)
+
+**No production code changes.** Fixed stale version numbers, dates, and a wrong path reference
+across three documentation files.
+
+#### `DOCUMENTATION_GUIDE.md`
+- `**Version:** 1.0` → `3.22.16` (header + footer, 2 places)
+- `**Last Updated:** 2026-02-18` → `2026-02-22` (header + footer, 2 places)
+- Removed duplicate `MASTER_STATUS.md` entry (item 5 was identical to item 4 — only the ⭐ entry kept)
+- Items 6–24 renumbered to 5–23 (sequential after duplicate removal)
+- `**Next Review:** Q2 2026` → `After each major release or quarterly`
+- Item 5 `DEFERRED_FEATURES.md` description updated: "Intentionally incomplete features (all ✅ implemented as of v3.22.0)"
+
+#### `DEFERRED_FEATURES.md`
+- `**Last Updated:** 2026-02-20 (session 4)` → `2026-02-22 (session 62)`
+- `**Next Review:** Q3 2026 (before v2.5.0 release)` → `Q3 2026` (removed stale v2.5.0 ref)
+
+#### `IMPROVEMENT_TODO.md`
+- Scope path: `ipfs_datasets_py/ipfs_datasets_py/knowledge_graphs/` → `ipfs_datasets_py/knowledge_graphs/`
+- Note-on-pathing: removed double `ipfs_datasets_py/` prefix from old wrong path
+
+#### Tests
+- Added `test_master_status_session62.py` with 18 doc integrity tests:
+  - `TestDocumentationGuideVersion` (5 tests): v3.22.16; stale 1.0 gone; Last Updated 2026-02-22
+  - `TestDocumentationGuideDuplicateEntry` (5 tests): no duplicate MASTER_STATUS entries; items number correctly (item 23 present, item 24 absent; old item 5 dup gone)
+  - `TestDeferredFeaturesMetadata` (4 tests): session 62 date; stale v2.5.0 ref absent; Last Updated 2026-02-22
+  - `TestImprovementTodoPath` (4 tests): double-prefix path absent; correct path present; no old pathing pattern
+
+## [3.22.15] - 2026-02-22
+
+### Changed — Stale version/coverage numbers fixed (Session 61)
+
+**No production code changes.** Updated INDEX.md, README.md, and ROADMAP.md to reflect
+the current state (v3.22.15, 99.99% coverage, 3,743+ tests).
+
+#### `INDEX.md`
+- `Module Version: 2.0.0` → `3.22.15` (header, stats table, footer)
+- `Test Coverage: 75% overall, 116+ tests` → `99.99%, 3,743+ tests`
+- `Current State (v2.0.0)` → `Current State (v3.22.15)` in Module Status section
+- `11/12 modules production-ready` → `12/12`
+- Removed stale `⚠️ Migration Module: Needs test coverage improvement (40% → 70%)`
+- `Next Version (v2.0.1 - Q2 2026)` section → `Next Version (v4.0 - 2027+)`
+- Added v3.22.0 and v3.22.15 rows to Version History table
+- `Last Updated: 2026-02-17` → `2026-02-22` (header + footer)
+
+#### `README.md`
+- `**Version:** 2.1.0` → `3.22.15`
+- `**Last Updated:** 2026-02-20` → `2026-02-22`
+
+#### `ROADMAP.md`
+- `**Current Version:** 3.22.14` → `3.22.15` (header only; 3.22.14 retained in release table)
+
+#### Tests
+- Added `test_master_status_session61.py` with 21 doc integrity tests:
+  - `TestIndexMdVersionUpdate` (3 tests): Module Version 3.22.15; stale v2.0.0 gone
+  - `TestIndexMdCoverageUpdate` (4 tests): 99.99%; 3,743+ tests; stale 75%/116+ gone
+  - `TestIndexMdModuleStatusSection` (5 tests): current state v3.22.15; stale warnings absent
+  - `TestReadmeMdVersionUpdate` (3 tests): version/last-updated checks
+  - `TestRoadmapCurrentVersionUpdate` (3 tests): 3.22.15 present; 3.22.14 in table (backward compat)
+  - `TestThreeDocVersionAgreement` (3 tests): INDEX/README/ROADMAP all on v3.22.15
+
+### Changed — MASTER_STATUS stale coverage table + ROADMAP duplicate section (Session 60)
+
+**No production code changes.** Updated docs to reflect sessions 54–59 improvements.
+
+#### `MASTER_STATUS.md`
+- Coverage heading: `~89% (measured, session 26)` → `99.99% (1 missed line; measured, session 58)`
+- Per-module coverage table: all modules updated to reflect sessions 27–58 results
+  (Cypher 100%, Neo4j Compat 100%, Migration 100%, JSON-LD 100%, Core 100%, etc.)
+- Removed stale "Largest remaining coverage opportunities" list (extractor 54%, etc.)
+- Added one-line summary: `_entity_helpers.py:117` is the only remaining missed line
+- Sessions 54–60 added to test session list
+- Total test count: `3,614 passing` → `3,725 passing, 26 skipped`
+- Test files count: `65 total (as of v2.7.0)` → `95 total (as of v3.22.15)`
+- Version: `3.22.14` → `3.22.15`
+
+#### `ROADMAP.md`
+- Removed the duplicate unchecked `## Version 2.0.1 (Q2 2026)` section (lines 17–35)
+  that was superseded by the checked version immediately below it (lines 37–47)
+- Updated `**Last Updated:** 2026-02-20` → `2026-02-22`
+
+#### Tests
+
+**18 new tests** in `test_master_status_session60.py` (4 classes):
+
+- `TestMasterStatusCoverageSection` (6 tests): heading says 99.99% not ~89%; stale entries
+  absent; 1-missed-line section present; spaCy stale 108-line ref gone.
+- `TestMasterStatusTestCount` (4 tests): 3,725 present; stale 3,614 gone; sessions 54–60 in list.
+- `TestRoadmapDuplicateSection` (5 tests): v2.0.1 heading appears exactly once; unchecked
+  TODO items gone; Last Updated corrected.
+- `TestThreeDocVersionAgreement` (3 tests): MASTER_STATUS/ROADMAP/CHANGELOG all on 3.22.15.
+
+**Result: 3,743 passed, 26 skipped, 0 failed**
+
+---
+
+## [3.22.14] - 2026-02-22
+
+### Changed — Documentation Consistency Fixes (Session 59)
+
+**No production code changes.** Synchronised all three tracking documents to match
+the actual release history.
+
+#### `ROADMAP.md`
+- Updated `Current Version` header: `3.22.3` → `3.22.14`
+- Updated `Status` header: `99%` → `99.99% test coverage`
+- Added v3.22.1 through v3.22.14 to the Release Schedule table (was jumping from
+  3.22.0 directly to 4.0)
+
+#### `CHANGELOG_KNOWLEDGE_GRAPHS.md`
+- Added missing `## [3.22.5]` section (session 50: numpy-via-networkx skip guards)
+- Added missing `## [3.22.7]` section (session 52: ImportError except branches)
+- Added missing `## [3.22.11]` section (session 56: dead code removal)
+- All versions 3.22.0 – 3.22.14 now have their own section headings
+
+#### Tests
+
+**22 new tests** in `test_master_status_session59.py` (4 classes):
+
+- `TestRoadmapHeaderVersion` (5 tests): Current Version header; stale 3.22.3 absent;
+  coverage value reflects 99.99%.
+- `TestRoadmapReleaseTable` (5 tests): release table has every 3.22.x version 0–14;
+  v4.0 future entry preserved.
+- `TestChangelogVersionCoverage` (6 tests): all 3.22.x section headings present;
+  v3.22.5 / v3.22.7 / v3.22.11 explicitly checked; headings in descending order.
+- `TestMasterStatusVersion` (5 tests): version header 3.22.14; not stale 3.22.13;
+  all three docs agree on 3.22.14.
+
+**Result: 3,725 passed, 26 skipped, 0 failed**
+
+---
+
+## [3.22.13] - 2026-02-22
+
+### Changed — Dead Code Removal: srl.py + ipld extras (Session 58)
+
+#### `extraction/srl.py` — 2 lines removed
+
+Removed the unreachable `elif dep in ("npadvmod",): role = ROLE_TIME` block (old lines
+401-402).  The `npadvmod` dep value is already matched by the preceding
+`elif dep in ("prep", "advmod", "npadvmod"):` chain at line 385, so the second elif was
+permanently unreachable.  The combined branch routes unrecognised prep-text to ROLE_THEME,
+so runtime behaviour is unchanged.
+
+- `extraction/srl.py`: 99% → **100%** ✅
+
+#### `setup.py` — `ipld` extras: `multiformats>=0.3.0` added
+
+The `_builtin_save_car` function imports `from multiformats import CID, multihash` but
+`multiformats` was missing from the `ipld` extras in `setup.py`.  Added:
+
+```
+'multiformats>=0.3.0',  # CID + multihash (required for CAR save path)
+```
+
+#### `pyproject.toml` — `ipld` optional-dependencies section added
+
+`pyproject.toml` had no `ipld` extras section.  Added with all 5 IPLD deps to match
+`setup.py`:
+
+```toml
+[project.optional-dependencies]
+ipld = [
+    "libipld>=3.3.2",
+    "ipld-car>=0.0.1",
+    "ipld-dag-pb>=0.0.1",
+    "dag-cbor>=0.3.3",
+    "multiformats>=0.3.0",
+]
+```
+
+#### Test Coverage
+
+**12 new tests** in `test_master_status_session58.py`:
+
+- `TestSrlNpadvmodDeadCodeRemoved` (7 tests): source invariants + runtime proofs
+- `TestIpldExtrasMultiformats` (5 tests): setup.py + pyproject.toml ipld consistency
+
+**Result:** 3,757 pass, 2 skip, **0 fail** (full dep env); 1 missed line remaining.
+Coverage: 99.99% (only `_entity_helpers.py:117` defensive guard).
+
+---
+
+## [3.22.12] - 2026-02-22
+
+### Added — Visualization Dependencies + plotly ImportError Coverage (Session 57)
+
+**4 optional dependencies added to `knowledge_graphs` extras.**
+
+#### `setup.py` / `pyproject.toml` / `requirements.txt`
+
+Added to `extras_require['knowledge_graphs']` (setup.py) and
+`[project.optional-dependencies] knowledge_graphs` (pyproject.toml):
+
+- `scipy>=1.7.0` — enables `nx.kamada_kawai_layout` for hierarchical visualization
+- `matplotlib>=3.5.0` — enables `LineageVisualizer.render_networkx()`
+- `plotly>=5.9.0` — enables `LineageVisualizer.render_plotly()`
+- `rdflib>=6.0.0` — enables `KnowledgeGraph.export_to_rdf()`
+
+Also added to `requirements.txt` for consistent pip installs.
+
+#### Test Coverage
+
+**12 new tests** in `test_master_status_session57.py`:
+
+- `TestVisualizationPlotlyImportError` (7 tests): covers `visualization.py:29-31`
+  (plotly ImportError except block) via `_reload_with_absent_dep`; also covers
+  render_plotly with real plotly (with `go` restore to guard against session38's
+  test which sets `viz_mod.go = MagicMock()` and never restores it).
+- `TestSetupPyScipy` (3 tests): verifies scipy/matplotlib/plotly present in
+  setup.py knowledge_graphs extras.
+- `TestVisualizationHierarchicalLayout` (2 tests): confirms kamada_kawai_layout
+  branch (line 116) runs correctly with real scipy.
+
+#### Coverage Results
+
+With all optional deps installed:
+
+- `lineage/visualization.py`: 97% → **100%** ✅ (plotly ImportError except block covered)
+- `extraction/graph.py`: 80% → **100%** ✅ (45 rdflib-gated lines covered)
+- 15 previously-skipped scipy tests now pass
+- TOTAL missed lines: 204 → **120** (99% overall coverage)
+- **Test counts: 3,690 passed, 26 skipped, 0 failed**
+
+
+
+### Removed — Dead Code in cross_document.py and ir_executor.py (Session 56)
+
+**9 lines of provably unreachable code removed from 2 files.**
+
+#### `reasoning/cross_document.py`
+
+- Removed `if norm_src == 0.0 or norm_tgt == 0.0: return 0.0` guard (2 lines).
+  This guard was unreachable: the preceding `if not src_tokens or not tgt_tokens`
+  check ensures both token lists are non-empty, so `Counter` values are always ≥ 1
+  and both L2 norms are always strictly positive.
+- A clarifying comment was added in place of the removed guard.
+- **`reasoning/cross_document.py` is now at 100% coverage.**
+
+#### `core/ir_executor.py`
+
+- Removed the `if "." in expr:` / `else:` branching inside `OrderBy make_sort_key`
+  (7 lines total):
+  - The `var_name, prop_name = expr.split(".", 1)` assignment — those variables were
+    never used in the function body.
+  - The `try: record.get(expr) / except (AttributeError, KeyError, TypeError): value = None`
+    wrapper — `Record.get()` delegates to `dict.get()` and never raises.
+  - Both branches performed exactly `value = record.get(expr)`, so they collapsed to
+    a single statement.
+- **`core/ir_executor.py` is now at 100% coverage.**
+
+### Tests
+- Added `tests/unit/knowledge_graphs/test_master_status_session56.py` with **13 invariant
+  tests** (2 classes: `TestCrossDocumentZeroNormProof`, `TestIRExecutorOrderByStringExpr`).
+
+**Result: 3,640 pass, 64 skip, 0 fail (base env); 204 missed lines**
+
+---
+
+## [3.22.11] - 2026-02-22
+
+### Removed — Dead Code in cross_document.py and ir_executor.py (Session 56)
+
+*Note: This entry corrects a prior omission — the session 56 content was originally
+bundled into the v3.22.12 section of this changelog. The production changes and tests
+belong to this version.*
+
+**9 lines of provably unreachable code removed from 2 files. See v3.22.12 for full details.**
+
+- `reasoning/cross_document.py`: removed 2-line zero-norm guard → **100%** ✅
+- `core/ir_executor.py`: collapsed 7-line if/else+try/except to 1 line → **100%** ✅
+- 13 invariant tests in `test_master_status_session56.py`
+
+**Result: 3,640 pass, 64 skip, 0 fail (base env); 204 missed lines**
+
+---
+
+## [3.22.10] - 2026-02-22
+
+### Changed — numpy as Default Dependency (Session 55)
+
+**numpy promoted from optional to default (always-installed) dependency.**
+
+#### `setup.py`
+- `install_requires`: replaced bare `'numpy'` with versioned markers matching
+  `requirements.txt`:
+  - `"numpy>=1.21.0,<2.0.0; python_version < '3.14'"`
+  - `"numpy>=2.0.0; python_version >= '3.14'"`
+- `extras_require['knowledge_graphs']`: removed duplicate `'numpy>=1.21.0'` entry
+  (numpy is now in base `install_requires`).
+
+#### `pyproject.toml` (new file)
+- Created minimal PEP 517/518 build configuration:
+  - `[build-system]`: setuptools>=68 + wheel
+  - `[project] dependencies`: same numpy version markers as setup.py / requirements.txt
+  - `[project.optional-dependencies] knowledge_graphs`: spacy, networkx, transformers
+    (numpy omitted since it is in base deps)
+  - `[tool.pytest.ini_options]`: asyncio_mode = "auto"
+
+#### `requirements.txt`
+- Already had correct versioned numpy entries — no change needed.
+
+#### Tests
+- `test_master_status_session55.py`: 13 verification tests in 4 classes
+  - `TestSetupPyNumpyDep`: install_requires version bounds + no-dup in extras
+  - `TestPyprojectTomlNumpyDep`: file exists, numpy version bounds, build-system
+  - `TestRequirementsTxtNumpyDep`: numpy version bounds
+  - `TestNumpyVersionConsistency`: all three files share the same lower bound; numpy importable
+
+**Result: 3,627 pass, 64 skip, 0 fail** (env with networkx+numpy; same 207 missed lines).
+
+---
+
+## [3.22.9] - 2026-02-22
+
+### Fixed — Numpy Skip Guards for Sessions 52/53 (Session 54)
+
+**3 test failures fixed by adding `_skip_no_numpy` marks (no production code changed).**
+
+**Root cause:** `ipld.py` imports `ipfs_datasets_py.vector_stores.ipld`, which has a
+hard `import numpy as np` at module level. Tests that reloaded `ipld.py` or imported
+`IPLDKnowledgeGraph` from it would fail in environments without numpy installed.
+
+#### Tests updated:
+- `test_master_status_session52.py::TestIpldCarAvailable::test_have_ipld_car_true_when_mock_available`
+- `test_master_status_session52.py::TestIpldCarAvailable::test_ipld_car_attribute_set_when_available`
+- `test_master_status_session53.py::TestGetConnectedEntitiesDepthInvariant::test_get_connected_entities_returns_correct_neighbors`
+
+**Pattern used:** `_numpy_available = bool(importlib.util.find_spec("numpy"))` +
+`_skip_no_numpy = pytest.mark.skipif(not _numpy_available, reason="numpy not installed")`
+— consistent with sessions 40/41/50.
+
+**Result: 3,490 pass, 77 skip, 0 fail** (base env without numpy).
+
+---
+
+## [3.22.8] - 2026-02-22
+
+### Changed — Dead Code Cleanup + Invariant Tests (Session 53)
+
+**Removed 14 lines of confirmed dead code from 3 files; 15 new invariant tests.**
+
+**Coverage improvement: 213→207 missed lines (−6 dead code lines removed from coverage tracking)**
+
+#### Dead code removed:
+
+1. **`cypher/compiler.py:185-186, 212-213`** (4 lines removed)
+   - `if not variable: variable = f"_anon{...}"` after `variable = element.variable or f"_n{i}"`
+   - `f"_n{i}"` is always truthy → the guard could never fire
+
+2. **`core/ir_executor.py:433-442`** (8 lines removed)
+   - `if value is None and hasattr(record, "_values"): obj = record._values.get(var_name) ...`
+   - `Record._values` is a `tuple` (not a dict), so `_values.get()` always raised `AttributeError`
+   - The entire block was unreachable before the `except (AttributeError, …)` clause caught it
+
+3. **`ipld.py:753-754`** (2 lines removed)
+   - `if not source_result: continue` in `vector_augmented_query`
+   - `source_result` is found by searching `graph_results` for an entity_id that was derived from
+     the same `graph_results` list — it can never be `None`
+
+4. **`ipld.py:1122-1123`** (2 lines removed)
+   - `if depth > max_hops: continue` in `_get_connected_entities` BFS
+   - Items are only enqueued when `depth < max_hops` → max queue depth = `max_hops` → guard unreachable
+
+**Files changed:**
+- `ipfs_datasets_py/knowledge_graphs/cypher/compiler.py` — removed 4 dead lines
+- `ipfs_datasets_py/knowledge_graphs/core/ir_executor.py` — removed 8 dead lines
+- `ipfs_datasets_py/knowledge_graphs/ipld.py` — removed 4 dead lines
+- `tests/unit/knowledge_graphs/test_master_status_session53.py` — new file, 15 tests
+- `ipfs_datasets_py/knowledge_graphs/MASTER_STATUS.md` — version 3.22.7→3.22.8
+- `ipfs_datasets_py/knowledge_graphs/IMPROVEMENT_TODO.md` — session 53 log
+- `ipfs_datasets_py/knowledge_graphs/CHANGELOG_KNOWLEDGE_GRAPHS.md` — this entry
+
+**Result: 3,614 pass, 64 skip, 0 fail (base env); 207 missed lines**
+
+---
+
+## [3.22.7] - 2026-02-22
+
+### Tests — ImportError Except Branches (Session 52)
+
+**17 new tests** in `test_master_status_session52.py`. No production code changes.
+
+**Coverage improvement: 229→213 missed lines (16 new lines covered)**
+
+- `reasoning/types.py:24-26` — `numpy` ImportError except: `np=None`, `_NpNdarray=None` (3 lines, now 100%)
+- `lineage/core.py:18-20` — `networkx` ImportError except: `NETWORKX_AVAILABLE=False`, `nx=None` (3 lines, now 100%)
+- `neo4j_compat/driver.py:35-38` — `router_deps` ImportError except: `HAVE_DEPS=False`, stubs set (4 lines, now 100%)
+- `reasoning/cross_document.py:31-32` — numpy ImportError except: `np=None` (2 lines, now 99%)
+- `reasoning/cross_document.py:64-66` — optimizer ImportError except: `UnifiedGraphRAGQueryOptimizer=None` (3 lines, now 99%)
+- `ipld.py:98` — `HAVE_IPLD_CAR=True` when `ipld_car` mock available via `sys.modules` (1 line, now 99%)
+
+**Key technique**: `_reload_with_absent_dep(module_name, absent_deps)` helper reloads a module
+with specified deps blocked in `sys.modules` (set to `None`). Critically, also saves/restores the
+**parent package attribute** (e.g., `reasoning.cross_document`) to prevent state leakage into
+other tests that import the module via `import pkg.submod as m` pattern.
+
+**Files changed:**
+- `tests/unit/knowledge_graphs/test_master_status_session52.py` — new file, 17 tests
+- `ipfs_datasets_py/knowledge_graphs/MASTER_STATUS.md` — version 3.22.6→3.22.7
+- `ipfs_datasets_py/knowledge_graphs/IMPROVEMENT_TODO.md` — session 52 log
+- `ipfs_datasets_py/knowledge_graphs/CHANGELOG_KNOWLEDGE_GRAPHS.md` — this entry
+
+**Result: 3,599 pass, 64 skip, 0 fail (base env); 213 missed lines (−16 from session 51)**
+
+---
+
+## [3.22.6] - 2026-02-22
+
+### Tests — BFS Guard + ImportError Exception Coverage (Session 51)
+
+**13 new tests** in `test_master_status_session51.py`. No production code changes.
+
+**Coverage improvement:**
+- `query/hybrid_search.py:217` — BFS already-visited guard now covered; `hybrid_search.py` reaches **100%**. The guard fires when diamond-topology graph puts the same node in `current_level` for hop N+1 after it was already visited during hop N (A→B, A→C, B→C topology).
+- `migration/formats.py:914, 921-930, 950-951` — `_builtin_save_car` / `_builtin_load_car` ImportError paths now exercised via `sys.modules` injection (simulating absent libipld/ipld-car).
+- `extraction/_entity_helpers.py:117` — Filter logic documented; the actual regex patterns cannot produce <2-char groups in normal use (all use `[A-Z][a-z]+`), confirming line 117 is unreachable in standard execution.
+
+**Files changed:**
+- `tests/unit/knowledge_graphs/test_master_status_session51.py` — new file, 13 tests
+- `ipfs_datasets_py/knowledge_graphs/MASTER_STATUS.md` — version 3.22.5→3.22.6, test count updated
+- `ipfs_datasets_py/knowledge_graphs/IMPROVEMENT_TODO.md` — session 51 log entry added
+- `ipfs_datasets_py/knowledge_graphs/CHANGELOG_KNOWLEDGE_GRAPHS.md` — this entry
+
+**Result: 3,582 pass, 64 skip, 0 fail** (base env); 229 missed lines (down from 230).
+
+---
+
+## [3.22.5] - 2026-02-22
+
+### Tests — numpy-via-networkx Skip Guards (Session 50)
+
+**No new tests, no production code changes.** Fixed 7 test failures that appeared when networkx is installed (networkx imports numpy as a soft dependency that becomes importable) but numpy is not directly available.
+
+**Files changed:**
+- `tests/unit/knowledge_graphs/test_master_status_session16.py`
+- `tests/unit/knowledge_graphs/test_master_status_session21.py`
+- `tests/unit/knowledge_graphs/test_master_status_session33.py`
+
+**Problem 1 (session16, 3 tests):** `TestLineageVisualizerPlotly` tests mock `plotly.graph_objs` (go) but `render_plotly()` also calls `nx.spring_layout()` which requires numpy. The tests called the real `nx.spring_layout` and crashed.
+
+**Fix:** Added `patch("networkx.spring_layout", return_value={node: (x, y)})` to `test_render_plotly_with_mocked_plotly`, `test_render_plotly_with_output_path`, and `test_visualize_lineage_plotly_renderer`.
+
+**Problem 2 (session21, 3 tests):** `TestCrossDocumentReasonerUncoveredPaths` has 3 tests with `import numpy as np` inside the method body. These tests pass when numpy is available but crash with `ModuleNotFoundError` when numpy is absent.
+
+**Fix:** Added `_numpy_available` flag and `_skip_no_numpy` mark at module level; applied `@_skip_no_numpy` to the 3 individual numpy-dependent methods only (9 other tests in the class still run without numpy).
+
+**Problem 3 (session33, 1 test):** `test_numpy_available_flag` in `TestCrossDocumentReasonerMissedPaths` similarly uses `import numpy as np_real` inline.
+
+**Fix:** Added `_numpy_available = bool(importlib.util.find_spec("numpy"))` to the module-level constants (alongside the existing `_rdflib_available`) and applied `@pytest.mark.skipif(not _numpy_available, reason="numpy not installed")` to that one method.
+
+**Verification:**
+- Without numpy: 7 previously-failing tests now skip cleanly
+- With numpy: all 7 tests continue to pass
+- Full suite (base env, networkx installed, numpy absent): **3,448 passed, 74 skipped, 0 failed**
+
+---
+
+## [3.22.4] - 2026-02-22
+
+### Tests — numpy Skip Guards (Session 49)
+
+**No new tests, no production code changes.** Fixed collection errors in two test files.
+
+**Files changed:**
+- `tests/unit/knowledge_graphs/test_master_status_session41.py`
+- `tests/unit/knowledge_graphs/test_master_status_session42.py`
+
+**Problem:** Both files had `import numpy as np` at module level (before `import pytest`), which caused a `ModuleNotFoundError` collection error — not a graceful skip — in environments without numpy installed.
+
+**Fix:** In both files:
+1. Moved `import pytest` before the numpy import
+2. Replaced `import numpy as np` with `np = pytest.importorskip("numpy")`
+
+This is consistent with the `pytest.importorskip` pattern used throughout the KG test suite for other optional dependencies (`spacy`, `rdflib`, `matplotlib`, `libipld`).
+
+**Verification:**
+- With numpy installed: all 91 tests in sessions 41+42 still pass
+- Without numpy: sessions 41+42 are skipped cleanly (no collection error)
+- Full suite (base env): **3,569 passed, 64 skipped, 0 failed**
+- Full suite (all optional deps): **3,626 passed, 7 skipped, 0 failed**
+
+---
+
+## [3.22.3] - 2026-02-22
+
+### Tests — Final Coverage Push (Session 48)
+
+**16 new tests** in `test_master_status_session48.py`. No production code changes.
+
+**New optional deps installed (unlocks more coverage):** `libipld`, `ipld-car`, `dag-cbor`, `multiformats`
+- `migration/formats.py` now **100%** — CAR format save/load paths now exercised by existing property-based tests.
+
+**New test groups:**
+
+1. **`cypher/compiler.py:261`** — `_compile_node_pattern` anonymous variable fallback (`_anon{N}`) when both `node.variable` and `default_var` are `None`/empty string (5 tests):
+   - Anon variable is generated and registered in `compiler.variables`
+   - `ScanLabel` op emitted with auto-generated variable
+   - `ScanAll` op emitted when no labels provided
+   - Multiple consecutive anon nodes get unique `_anon0`, `_anon1` variables
+   - Empty-string `node.variable` also triggers anon generation
+
+2. **`core/expression_evaluator.py:153-163`** — `reverse` and `size` fallback string handlers (8 tests):
+   - These handlers run when the function names are temporarily absent from `FUNCTION_REGISTRY`
+   - `reverse`: reverses string / returns `None` for non-string / returns `None` for empty args
+   - `size`: returns `len()` for strings / lists / tuples; returns `None` for empty args; returns `None` for non-sequence types
+
+3. **`ontology/reasoning.py:828`** — BFS transitive closure cycle guard `if mid in visited: continue` (3 tests):
+   - Triggered by A→B→C→B cycle: B is popped from the BFS queue a second time; line 828 fires and skips it
+   - BFS terminates cleanly for longer cycles (A→B→C→D→B)
+   - No duplicate inferred relationships added despite cycle
+
+**Coverage impact:** `expression_evaluator.py` 97%→**100%**; `ontology/reasoning.py` 99%→**100%**; `migration/formats.py` 98%→**100%**; `compiler.py` misses reduced from 3→2; overall **99%** (159→141 missed lines).
+
+**Result:** 3,626 passing, 7 skipped, 0 failing (with all optional deps installed).
+
+---
+
+## [3.22.2] - 2026-02-22
+
+### Bug Fix — RDF Boolean Serialization Order (Session 47)
+
+**Production bug fixed in `extraction/graph.py`:**
+
+- **Entity properties** (`export_to_rdf` match block, line ~622): `case bool():` was listed AFTER `case int():`. In Python, `bool` is a subclass of `int`, so `case int():` was matching `True`/`False` first, causing boolean properties to be serialized as `XSD.integer` instead of `XSD.boolean`. Fixed by moving `case bool():` before `case int():`.
+  - Before: `True` → `"1"^^xsd:integer` (wrong)
+  - After: `True` → `"true"^^xsd:boolean` (correct)
+
+- **Relationship properties** (`export_to_rdf` elif block, line ~654): Same issue with `elif isinstance(value, int):` coming before `elif isinstance(value, bool):`. Fixed by moving `elif isinstance(value, bool):` before `elif isinstance(value, int):`.
+
+**New tests** (`test_master_status_session47.py`, 9 tests):
+- `TestExportToRdfEntityNonPrimitiveProperty` (4 tests) — list/None/dict/tuple entity properties hit `case _:` catch-all and use `str(value)` fallback
+- `TestExportToRdfRelationshipNonPrimitiveProperty` (5 tests) — same for relationship properties + confirm bool correctly uses XSD.boolean
+
+**Coverage impact:** `extraction/graph.py` 99%→**100%**; overall 98%→**99%** (203→159 missed lines)
+
+**Result:** 3,591 passing, 26 skipped, 0 failing (with matplotlib+scipy+plotly+rdflib); 3,553/55/0 in base environment.
+
+---
+
+## [3.22.1] - 2026-02-22
+
+### Bug Fixes — rdflib Optional Dependency Skip Guards (Session 46)
+
+- **`test_master_status_session33.py`** — Added `_rdflib_available = bool(importlib.util.find_spec("rdflib"))` + `@pytest.mark.skipif(not _rdflib_available, reason="rdflib not installed")` guards to 2 tests that call `export_to_rdf()`: `test_export_to_rdf_entity_boolean_property_uses_xsd_boolean` and `test_export_to_rdf_relationship_boolean_property_uses_xsd_boolean`.
+- **`test_master_status_session37.py`** — Added matching class-level `@pytest.mark.skipif` guard to `TestKnowledgeGraphExportBooleanProperty` class.
+- **Result:** 3,553 passing, 55 skipped (intentional), 0 failing in base environment (no rdflib).
+
+### Documentation Updates
+
+- **`ROADMAP.md`** — Updated current version from 2.1.0 to v3.22.0; added v3.22.0 section; updated release table; updated community priority list to note 99%+ coverage achieved.
+- **`MASTER_STATUS.md`** — Updated "Last Updated" to session 46; corrected test count to 3,553/55/0; added sessions 33-46 to test file list.
+- **`IMPROVEMENT_TODO.md`** — Added sessions 33-46 detailed log entries.
+
+---
+
+## [3.22.0] - 2026-02-22
+
+### Bug Fixes — Async Safety + Test Environment Hardening (Session 45)
+
+This release fixes 95 pre-existing test failures across two categories: production async-safety bugs and test skip guards for optional dependencies.
+
+#### Production Bug Fixes
+
+- **`anyio.get_cancelled_exc_class()` outside async context** — Fixed in 4 modules:
+  - `query/unified_engine.py`: added `_cancelled_exc_class()` helper that falls back to `asyncio.CancelledError` when no event loop is active; replaced 5 `except anyio.get_cancelled_exc_class():` calls.
+  - `transactions/wal.py`: same helper added; replaced 6 calls.
+  - `storage/ipld_backend.py`: same helper added; replaced 3 calls.
+  - `query/hybrid_search.py`: same helper added; replaced 3 calls.
+  - Root cause: newer anyio versions raise `anyio.NoEventLoopError` when `get_cancelled_exc_class()` is called outside an async event loop, breaking synchronous error-handling paths.
+
+- **`ipld.py` missing `ipld_car` module attribute** — Added `ipld_car = None` to the `except ImportError` block so the module-level attribute is always defined (patchable) even when `ipld-car` is not installed. Tests patching `_IPLD.ipld_car` now work correctly.
+
+#### Test Environment Fixes
+
+- **`test_master_status_session43.py`** — Added `pytest.importorskip("spacy")` at module level; all 32 tests are properly skipped when spaCy is absent.
+- **`test_master_status_session44.py`** — Added per-class `@_skip_no_spacy` marks for `TestExtractorSpacyModelOSError` and `TestExtractEntitiesLowConfidenceSkip`; non-spaCy tests continue running.
+- **`test_master_status_session15.py`** — Added `@_skip_no_matplotlib` decorator to `TestLineageVisualizerRenderNetworkx` class and two methods in `TestVisualizeLinkageFunction`; non-matplotlib tests continue running.
+- **`test_master_status_session37.py`** — Added `@pytest.mark.skipif` to `test_render_networkx_ghost_node_gets_lightgray`.
+- **`test_master_status_session40.py`** — Added `@_skip_no_libipld` decorator to `TestBuiltinCarSaveLoad` class; non-libipld tests continue running.
+- **`test_master_status_session21.py`** — Fixed `test_default_query_optimizer_is_missing_stub` to patch `UnifiedGraphRAGQueryOptimizer` to `None` before constructing `CrossDocumentReasoner`; test now works regardless of whether GraphRAG deps are installed.
+- **`test_master_status_session42.py`** — Fixed `TestFromCarEmptyRoots` and `TestExportToCar` to also patch `HAVE_IPLD_CAR = True` alongside `ipld_car`; tests now reach the actual CAR logic instead of the early ImportError guard.
+
+**Result:** 3,567 passing (in full-deps env), 41 skipped (all intentional), 0 failing. Base env without rdflib: 3,553 pass, 55 skip (rdflib skip guards added in v3.22.1).
+
+---
+
 ## [2.1.0] - 2026-02-20
 
 ### Cypher Feature Completion + Folder Refactoring

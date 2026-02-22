@@ -19,8 +19,13 @@ import time
 import uuid
 from typing import Any, Dict
 from unittest.mock import MagicMock, patch
+import importlib
+import importlib.util
 
 import pytest
+
+_rdflib_available = bool(importlib.util.find_spec("rdflib"))
+_numpy_available = bool(importlib.util.find_spec("numpy"))
 
 
 # ---------------------------------------------------------------------------
@@ -650,6 +655,7 @@ class TestExtractionGraphMissedPaths:
     # -----------------------------------------------------------------------
     # Line 629: export_to_rdf – entity boolean property → XSD.boolean
     # -----------------------------------------------------------------------
+    @pytest.mark.skipif(not _rdflib_available, reason="rdflib not installed")
     def test_export_to_rdf_entity_boolean_property_uses_xsd_boolean(self):
         """GIVEN an entity with a boolean property
         WHEN export_to_rdf is called THEN XSD.boolean literal appears (line 629)."""
@@ -669,6 +675,7 @@ class TestExtractionGraphMissedPaths:
     # -----------------------------------------------------------------------
     # Line 661: export_to_rdf – relationship boolean property → XSD.boolean
     # -----------------------------------------------------------------------
+    @pytest.mark.skipif(not _rdflib_available, reason="rdflib not installed")
     def test_export_to_rdf_relationship_boolean_property_uses_xsd_boolean(self):
         """GIVEN a relationship with a boolean property
         WHEN export_to_rdf is called THEN XSD.boolean literal appears (line 661)."""
@@ -853,6 +860,7 @@ class TestCrossDocumentReasonerMissedPaths:
     # Lines 31-32: numpy import-failure guard is dead code when numpy installed;
     # verify the fallback flag is False (np is available)
     # -----------------------------------------------------------------------
+    @pytest.mark.skipif(not _numpy_available, reason="numpy not installed")
     def test_numpy_available_flag(self):
         """GIVEN numpy is installed
         WHEN cross_document module is imported

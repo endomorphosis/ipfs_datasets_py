@@ -11,11 +11,15 @@ Targets (measured before session):
 
 All tests follow GIVEN-WHEN-THEN conventions and require no external services.
 """
+import importlib.util
 import re
 import time
 import logging
 import pytest
 from unittest.mock import MagicMock, patch
+
+_numpy_available = bool(importlib.util.find_spec("numpy"))
+_skip_no_numpy = pytest.mark.skipif(not _numpy_available, reason="numpy not installed")
 
 
 # ---------------------------------------------------------------------------
@@ -672,15 +676,18 @@ class TestCrossDocumentReasonerUncoveredPaths:
         assert isinstance(r.query_optimizer, FakeOptimizer)
 
     def test_default_query_optimizer_is_missing_stub(self):
-        """GIVEN no query_optimizer kwarg WHEN CrossDocumentReasoner init THEN stub assigned."""
+        """GIVEN UnifiedGraphRAGQueryOptimizer absent WHEN CrossDocumentReasoner init THEN stub assigned."""
+        import ipfs_datasets_py.knowledge_graphs.reasoning.cross_document as mod
         from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import (
             CrossDocumentReasoner,
             _MissingUnifiedGraphRAGQueryOptimizer,
         )
-        r = CrossDocumentReasoner()
+        with patch.object(mod, "UnifiedGraphRAGQueryOptimizer", None):
+            r = CrossDocumentReasoner()
         assert isinstance(r.query_optimizer, _MissingUnifiedGraphRAGQueryOptimizer)
 
     # --- numpy cosine similarity paths (lines 166-176) ----------------------
+    @_skip_no_numpy
     def test_compute_document_similarity_with_numpy_vectors(self, reasoner):
         """GIVEN docs with numpy vectors WHEN _compute_document_similarity THEN cosine similarity returned."""
         import numpy as np
@@ -692,6 +699,7 @@ class TestCrossDocumentReasonerUncoveredPaths:
         sim = reasoner._compute_document_similarity(doc1, doc2)
         assert sim == pytest.approx(0.0, abs=1e-6)
 
+    @_skip_no_numpy
     def test_compute_document_similarity_parallel_vectors(self, reasoner):
         """GIVEN docs with identical direction vectors WHEN computed THEN similarity ≈ 1.0."""
         import numpy as np
@@ -703,6 +711,7 @@ class TestCrossDocumentReasonerUncoveredPaths:
         sim = reasoner._compute_document_similarity(doc1, doc2)
         assert sim == pytest.approx(1.0, abs=1e-4)
 
+    @_skip_no_numpy
     def test_compute_document_similarity_zero_norm_vector_falls_back(self, reasoner):
         """GIVEN a zero-norm vector WHEN computed THEN falls back to token similarity (no crash)."""
         import numpy as np
