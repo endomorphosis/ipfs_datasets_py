@@ -4719,6 +4719,46 @@ class OntologyCritic(BaseCritic):
         std = variance ** 0.5
         return max(abs((v - mean) / std) for v in vals)
 
+    def score_dimension_min_z(self, score: "CriticScore") -> float:
+        """Return the minimum absolute z-score across the 6 CriticScore dimensions.
+
+        Each dimension value is z-scored relative to the distribution formed
+        by all 6 dimension values of the supplied ``score`` object.  The
+        z-scoring uses the **population** mean and standard deviation of those
+        6 values.  The method then returns ``min(|z_i|)`` — the dimension
+        that is closest to the within-score average.
+
+        This is the symmetric counterpart of
+        :meth:`score_dimension_max_z`:  ``min_z`` ≤ ``max_z`` always.
+
+        Args:
+            score: A :class:`CriticScore` instance to evaluate.
+
+        Returns:
+            Float ``min(|z_i|)`` for ``i`` in the 6 dimensions; ``0.0``
+            when all six dimension values are equal (zero variance).
+
+        Example::
+
+            >>> s = CriticScore(completeness=1.0, consistency=0.0,
+            ...                  clarity=0.0, granularity=0.0,
+            ...                  relationship_coherence=0.0, domain_alignment=0.0)
+            >>> critic.score_dimension_min_z(s)
+            0.0  # five dims at 0.0 have z=0 — closest to mean
+        """
+        dims = [
+            "completeness", "consistency", "clarity",
+            "granularity", "relationship_coherence", "domain_alignment",
+        ]
+        vals = [getattr(score, d, 0.0) for d in dims]
+        n = len(vals)
+        mean = sum(vals) / n
+        variance = sum((v - mean) ** 2 for v in vals) / n
+        if variance == 0.0:
+            return 0.0
+        std = variance ** 0.5
+        return min(abs((v - mean) / std) for v in vals)
+
 
 # Export public API
 __all__ = [

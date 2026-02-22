@@ -4437,6 +4437,33 @@ class LogicValidator:
         singletons = sum(1 for s in sizes if s == 1)
         return singletons / len(sizes)
 
+    def scc_non_singleton_fraction(self, ontology: Any) -> float:
+        """Return the fraction of SCCs that contain more than one node.
+
+        This is exactly ``1 - scc_singleton_fraction(ontology)`` and
+        provides the complement view: what share of the strongly connected
+        components are non-trivial (i.e. contain at least two nodes with
+        a directed cycle between them)?
+
+        Args:
+            ontology: Ontology object or dict — same format accepted by
+                :meth:`strongly_connected_component_sizes`.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when the ontology has no
+            entities or when every SCC is a singleton.
+
+        Example::
+
+            >>> lv.scc_non_singleton_fraction({"entities": [], "relationships": []})
+            0.0
+        """
+        sizes = self.strongly_connected_component_sizes(ontology)
+        if not sizes:
+            return 0.0
+        non_singletons = sum(1 for s in sizes if s > 1)
+        return non_singletons / len(sizes)
+
 
 __all__ = [
     'LogicValidator',

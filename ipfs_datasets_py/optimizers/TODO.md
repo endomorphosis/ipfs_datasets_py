@@ -2079,9 +2079,31 @@ Completed items:
 
 ## Batch 227+ Backlog
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_valley_density()` — fraction of history scores below mean; 0.0 for empty
-- [ ] (P2) [graphrag] `OntologyCritic.score_dimension_min_z(score)` — min absolute z-score across 6 dims; 0.0 for uniform
-- [ ] (P2) [graphrag] `OntologyGenerator.relationship_type_entropy(result)` — STALE CHECK (search before implementing)
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_above_mean_count()` — count entries strictly above the mean final_score
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_velocity_range()` — velocity_max - velocity_min; 0.0 for <2 runs
-- [ ] (P2) [graphrag] `LogicValidator.scc_non_singleton_fraction(ontology)` — 1 - scc_singleton_fraction; complement
+- [x] (P2) [graphrag] `OntologyOptimizer.score_valley_density()` — fraction of history scores below mean; 0.0 for empty
+- [x] (P2) [graphrag] `OntologyCritic.score_dimension_min_z(score)` — min absolute z-score across 6 dims; 0.0 for uniform
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_type_entropy(result)` — STALE (already exists at line 7547)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_above_mean_count()` — STALE (already exists at line 1513)
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_velocity_range()` — velocity_max - velocity_min; 0.0 for <2 runs
+- [x] (P2) [graphrag] `LogicValidator.scc_non_singleton_fraction(ontology)` — non-singletons/len(sccs); 0.0 empty
+
+### Batch 227 Completion Notes (2026-02-22)
+
+4 genuinely new methods implemented; `relationship_type_entropy` (line 7547) and `feedback_above_mean_count` (line 1513) were stale.
+
+- `OntologyOptimizer.score_valley_density()` — `sum(1 for s in scores if s < mean) / n`; 0.0 for empty (nothing strictly below mean)
+- `OntologyCritic.score_dimension_min_z(score)` — `min(|z_i|)` using population mean/std of 6 dims; 0.0 when all dims equal; requires value at distribution mean to get 0.0
+- `OntologyPipeline.run_score_velocity_range()` — `max(fd) - min(fd)`; 0.0 for <2 runs; always non-negative; equals `velocity_max - velocity_min`
+- `LogicValidator.scc_non_singleton_fraction(ontology)` — `non_singletons / len(sccs)`; 0.0 for empty; NOT a simple `1 - singleton_fraction` (both return 0.0 for empty); for non-empty graphs `sf + nsf == 1.0` holds
+
+Key fix: `scc_non_singleton_fraction` counts SCCs with `size > 1` and divides by total, handling empty graph explicitly (both singleton and non-singleton fractions return 0.0 for empty).
+
+41 tests in `test_batch_227_features.py` — all passing.
+
+## Batch 228+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_above_target_count(target=0.7)` — count scores strictly above target; 0 for empty
+- [ ] (P2) [graphrag] `OntologyCritic.score_dimension_mean_abs_deviation(score)` — MAD of 6 CriticScore dims; 0.0 for uniform
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_type_ratio(result, type_name)` — fraction of entities with given type; 0.0 for empty
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_below_mean_count()` — count entries strictly below mean final_score; complement of feedback_above_mean_count
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_velocity_std()` — population std of first differences; 0.0 for <2 runs
+- [ ] (P2) [graphrag] `LogicValidator.node_in_cycle_fraction(ontology)` — fraction of nodes that belong to a non-singleton SCC; 0.0 for empty

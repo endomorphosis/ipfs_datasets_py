@@ -5318,6 +5318,30 @@ class OntologyOptimizer:
             deltas.append(abs(h_curr - h_prev))
         return sum(deltas) / len(deltas)
 
+    def score_valley_density(self) -> float:
+        """Return the fraction of history scores that are strictly below the mean.
+
+        The *valley density* counts how many recorded ``average_score`` values
+        fall **strictly** below the arithmetic mean of all history scores, then
+        divides by the total number of history entries.  A value close to 0.5
+        means the distribution is roughly symmetric around its mean; a value
+        close to 1.0 means most scores cluster near the bottom (right-skewed).
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when the history is empty.
+
+        Example::
+
+            >>> opt.score_valley_density()
+            0.0  # empty history
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        mean = sum(scores) / len(scores)
+        below = sum(1 for s in scores if s < mean)
+        return below / len(scores)
+
 
 # Export public API
 __all__ = [
