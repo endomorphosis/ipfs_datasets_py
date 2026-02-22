@@ -6329,6 +6329,40 @@ class OntologyGenerator:
         lengths = [len(str(getattr(r, "type", "") or "")) for r in rels]
         return sum(lengths) / len(lengths)
 
+    def entity_unique_types(self, result: "EntityExtractionResult") -> set:
+        """Return the set of unique entity type strings in the result.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Set of type strings; empty set when no entities.
+        """
+        return {e.type for e in (result.entities or []) if e.type}
+
+    def relationship_bidirectional_count(self, result: "EntityExtractionResult") -> int:
+        """Return the number of bidirectional relationship pairs.
+
+        A pair (A→B) and (B→A) counts as one bidirectional pair.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Integer count of bidirectional pairs.
+        """
+        edges: set = set()
+        pairs = 0
+        for r in result.relationships or []:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src and tgt:
+                if (tgt, src) in edges:
+                    pairs += 1
+                else:
+                    edges.add((src, tgt))
+        return pairs
+
 
 __all__ = [
     'OntologyGenerator',

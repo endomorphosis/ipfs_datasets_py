@@ -1707,6 +1707,20 @@ class OntologyMediator:
         """
         return sum(self._action_counts.values())
 
+    def action_diversity_ratio(self) -> float:
+        """Return the ratio of distinct action types to total actions performed.
+
+        A ratio of 1.0 means each action was performed exactly once.
+        A ratio approaching 0.0 means one action dominates.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no actions.
+        """
+        total = sum(self._action_counts.values())
+        if total == 0:
+            return 0.0
+        return len(self._action_counts) / total
+
 
 # Export public API
 __all__ = [

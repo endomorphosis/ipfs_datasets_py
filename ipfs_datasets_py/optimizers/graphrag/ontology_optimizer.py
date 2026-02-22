@@ -4078,6 +4078,34 @@ class OntologyOptimizer:
                 cur_streak = 0
         return max_streak
 
+    def score_delta_abs_mean(self) -> float:
+        """Return the mean of the absolute score deltas between consecutive entries.
+
+        Returns:
+            Float mean absolute delta; 0.0 when fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        deltas = [
+            abs(self._history[i].average_score - self._history[i - 1].average_score)
+            for i in range(1, len(self._history))
+        ]
+        return sum(deltas) / len(deltas)
+
+    def history_improving_count(self) -> int:
+        """Return the number of steps where the score improved over the previous entry.
+
+        Returns:
+            Integer count; 0 when fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0
+        return sum(
+            1
+            for i in range(1, len(self._history))
+            if self._history[i].average_score > self._history[i - 1].average_score
+        )
+
 
 # Export public API
 __all__ = [

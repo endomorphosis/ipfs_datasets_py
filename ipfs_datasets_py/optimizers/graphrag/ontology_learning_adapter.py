@@ -1939,3 +1939,20 @@ class OntologyLearningAdapter:
             return 0
         recent = self._feedback[-n:]
         return sum(1 for r in recent if r.final_score >= threshold)
+
+    def feedback_oscillation_count(self, threshold: float = 0.5) -> int:
+        """Count sign-changes in feedback scores relative to *threshold*.
+
+        An oscillation is when a score crosses the threshold from above to below
+        or below to above between consecutive records.
+
+        Args:
+            threshold: Crossing threshold. Defaults to 0.5.
+
+        Returns:
+            Integer count of threshold crossings.
+        """
+        if len(self._feedback) < 2:
+            return 0
+        above = [r.final_score >= threshold for r in self._feedback]
+        return sum(1 for i in range(1, len(above)) if above[i] != above[i - 1])

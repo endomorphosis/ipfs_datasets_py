@@ -2999,6 +2999,28 @@ class LogicValidator:
                 degree[src] = degree.get(src, 0) + 1
         return degree
 
+    def bridge_nodes(self, ontology: dict) -> list:
+        """Return nodes that are both a source and a target in the relationship graph.
+
+        These nodes act as "bridges" connecting two sides of the graph.
+
+        Args:
+            ontology: Dict with optional ``relationships`` list.
+
+        Returns:
+            Sorted list of bridge node ID strings.
+        """
+        sources: set = set()
+        targets: set = set()
+        for rel in ontology.get("relationships", []):
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src:
+                sources.add(src)
+            if tgt:
+                targets.add(tgt)
+        return sorted(sources & targets)
+
 
 # Export public API
 __all__ = [

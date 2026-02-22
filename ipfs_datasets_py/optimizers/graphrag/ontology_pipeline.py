@@ -1850,3 +1850,14 @@ class OntologyPipeline:
             return 0
         first = self._run_history[0].score.overall
         return sum(1 for r in self._run_history[1:] if r.score.overall > first)
+
+    def run_score_below_last(self) -> int:
+        """Return the count of run scores strictly below the last run score.
+
+        Returns:
+            Integer count; 0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0
+        last = self._run_history[-1].score.overall
+        return sum(1 for r in self._run_history[:-1] if r.score.overall < last)
