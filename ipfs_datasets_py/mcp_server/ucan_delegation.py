@@ -303,11 +303,191 @@ class DelegationEvaluator:
 
         return True, "allowed"
 
+    def can_invoke_with_revocation(
+        self,
+        principal: str,
+        resource: str,
+        ability: str,
+        *,
+        leaf_cid: str,
+        revocation_list: Optional["RevocationList"] = None,
+        at_time: Optional[float] = None,
+    ) -> Tuple[bool, str]:
+        """Like :meth:`can_invoke` but also checks *revocation_list*.
 
-# ─── module-level singleton ───────────────────────────────────────────────────
+        If any token in the chain has been revoked the request is denied.
+        """
+        if revocation_list is not None:
+            chain = self.build_chain(leaf_cid)
+            for token in chain.tokens:
+                if revocation_list.is_revoked(token.cid):
+                    return False, f"Token {token.cid} has been revoked"
+
+        return self.can_invoke(
+            principal, resource, ability,
+            leaf_cid=leaf_cid, at_time=at_time,
+        )
+
+
+# ─── revocation list (spec §7) ────────────────────────────────────────────────
+
+
+class RevocationList:
+    """Tracks revoked delegation token CIDs (spec Profile C §7).
+
+    Revoked tokens are permanently invalid regardless of their temporal window.
+    """
+
+    def __init__(self) -> None:
+        self._revoked: set[str] = set()
+
+    def revoke(self, cid: str) -> None:
+        """Add *cid* to the revocation list."""
+        self._revoked.add(cid)
+
+    def is_revoked(self, cid: str) -> bool:
+        """Return ``True`` if *cid* is on the revocation list."""
+        return cid in self._revoked
+
+    def revoke_chain(self, chain: "DelegationChain") -> None:
+        """Revoke every token CID in *chain*."""
+        for token in chain.tokens:
+            self._revoked.add(token.cid)
+
+    def clear(self) -> None:
+        """Remove all revocations."""
+        self._revoked.clear()
+
+    def to_list(self) -> List[str]:
+        """Return a sorted list of revoked CIDs."""
+        return sorted(self._revoked)
+
+    def __len__(self) -> int:
+        return len(self._revoked)
+
+    def __contains__(self, cid: object) -> bool:
+        return cid in self._revoked
+
+    def __repr__(self) -> str:
+        return f"RevocationList({len(self._revoked)} revoked)"
+
+
+# ─── delegation store (spec §6) ──────────────────────────────────────────────
+
+
+import json
+import os
+
+
+class DelegationStore:
+    """Durable delegation token store with optional JSON persistence.
+
+    Provides add/get/remove operations and can serialise to/from a JSON file.
+    """
+
+    def __init__(self, store_path: Optional[str] = None) -> None:
+        """Initialise store, optionally loading from *store_path* if it exists."""
+        self._tokens: Dict[str, DelegationToken] = {}
+        self._store_path = store_path
+        if store_path and os.path.isfile(store_path):
+            try:
+                self.load(store_path)
+            except Exception as exc:
+                logger.warning("Could not load delegation store from %s: %s", store_path, exc)
+
+    # ── CRUD ──────────────────────────────────────────────────────────────────
+
+    def add(self, token: DelegationToken) -> str:
+        """Store *token* and return its CID."""
+        cid = token.cid
+        self._tokens[cid] = token
+        return cid
+
+    def get(self, cid: str) -> Optional[DelegationToken]:
+        """Return the token for *cid*, or ``None`` if not found."""
+        return self._tokens.get(cid)
+
+    def remove(self, cid: str) -> bool:
+        """Remove *cid* from the store.  Returns ``True`` if it existed."""
+        if cid in self._tokens:
+            del self._tokens[cid]
+            return True
+        return False
+
+    def list_cids(self) -> List[str]:
+        """Return a sorted list of all stored CIDs."""
+        return sorted(self._tokens)
+
+    # ── persistence ───────────────────────────────────────────────────────────
+
+    def save(self, path: Optional[str] = None) -> str:
+        """Serialise all tokens to JSON.
+
+        Args:
+            path: File path to write.  Falls back to the path given at
+                  construction time.  If neither is set, raises ``ValueError``.
+
+        Returns:
+            The path that was written.
+        """
+        target = path or self._store_path
+        if not target:
+            raise ValueError("No store_path configured and no path given to save()")
+        records = {cid: tok.to_dict() for cid, tok in self._tokens.items()}
+        with open(target, "w", encoding="utf-8") as fh:
+            json.dump({"tokens": list(records.values())}, fh, indent=2)
+        try:
+            os.chmod(target, 0o600)
+        except OSError:
+            pass
+        return target
+
+    def load(self, path: Optional[str] = None) -> int:
+        """Load tokens from a JSON file.
+
+        Returns the number of tokens loaded.
+        """
+        target = path or self._store_path
+        if not target:
+            raise ValueError("No store_path configured and no path given to load()")
+        with open(target, encoding="utf-8") as fh:
+            data = json.load(fh)
+        loaded = 0
+        for record in data.get("tokens", []):
+            try:
+                tok = DelegationToken.from_dict(record)
+                self._tokens[tok.cid] = tok
+                loaded += 1
+            except Exception as exc:
+                logger.warning("Skipping malformed token record: %s", exc)
+        return loaded
+
+    # ── helpers ───────────────────────────────────────────────────────────────
+
+    def to_evaluator(self) -> DelegationEvaluator:
+        """Return a :class:`DelegationEvaluator` seeded with all stored tokens."""
+        ev = DelegationEvaluator()
+        for tok in self._tokens.values():
+            ev.add_token(tok)
+        return ev
+
+    # ── dunder ────────────────────────────────────────────────────────────────
+
+    def __len__(self) -> int:
+        return len(self._tokens)
+
+    def __contains__(self, cid: object) -> bool:
+        return cid in self._tokens
+
+    def __repr__(self) -> str:
+        return f"DelegationStore({len(self._tokens)} tokens, path={self._store_path!r})"
+
+
+# ─── module-level singletons ─────────────────────────────────────────────────
 
 
 _global_evaluator: Optional[DelegationEvaluator] = None
+_global_store: Optional[DelegationStore] = None
 
 
 def get_delegation_evaluator() -> DelegationEvaluator:
@@ -316,3 +496,11 @@ def get_delegation_evaluator() -> DelegationEvaluator:
     if _global_evaluator is None:
         _global_evaluator = DelegationEvaluator()
     return _global_evaluator
+
+
+def get_delegation_store() -> DelegationStore:
+    """Return the process-global DelegationStore (lazy-init, no persistence)."""
+    global _global_store
+    if _global_store is None:
+        _global_store = DelegationStore()
+    return _global_store
