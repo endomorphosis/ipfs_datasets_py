@@ -18,16 +18,16 @@ This document is the **single authoritative planning reference** for refactoring
 
 ---
 
-## 1. Module Snapshot (2026-02-22, session 63)
+## 1. Module Snapshot (2026-02-22, session 66)
 
 | Dimension | Metric |
 |-----------|--------|
 | Python source files | 96+ |
 | Total source lines | ~38,000 |
-| Test files | 95+ |
+| Test files | 108+ |
 | Total test lines | ~60,000 |
-| Tests collected | 3,782+ |
-| Tests passing | 3,782 (26 intentional optional-dep skips) |
+| Tests collected | 3,856+ |
+| Tests passing | 3,856 (26 intentional optional-dep skips) |
 | Pre-existing skip/fail | 26 (optional-dep skips only) |
 | Overall test coverage | **99.99%** (1 missed line: `_entity_helpers.py:117`) |
 | Migration module coverage | **100%** ✅ |
@@ -426,12 +426,12 @@ An improvement item is **Done** when:
 
 ## 8. Contact and Review
 
-**Next scheduled review:** Q2 2026 (after v2.0.1 release)  
+**Next scheduled review:** Q3 2026  
 **Maintained by:** Knowledge Graphs Module Team  
 **Questions:** Open a GitHub issue with label `knowledge-graphs`  
 
 ---
 
-**Document Version:** 1.0  
+**Document Version:** 3.22.21  
 **Created:** 2026-02-19  
 **Status:** Active — supersedes no prior documents (this is the first consolidated plan)

@@ -996,3 +996,62 @@ was listed as "Priority: MEDIUM — Prioritized action items" despite all items 
 - `TestVersionAgreement` (3 tests): MASTER_STATUS/CHANGELOG/ROADMAP all agree on v3.22.20
 
 **Result: 3,856 passed, 26 skipped, 0 failed** (numpy+networkx+matplotlib+scipy+plotly+rdflib env)
+
+### Session 67 log (2026-02-22)
+
+**Stale test-infrastructure docs + archive/README + MASTER_REFACTORING_PLAN — doc-only.**
+
+**Problem:** 4 groups of stale documentation accumulated since sessions 27-63:
+1. `tests/knowledge_graphs/TEST_STATUS.md` — still said v2.0.0, ~75%, 647+ tests (47 files);
+   stale broken link to deleted `IMPLEMENTATION_STATUS.md`; migration coverage still 40%.
+2. `tests/knowledge_graphs/TEST_GUIDE.md` — same stale v2.0.0/75%/116+ metrics; coverage table
+   at 40-85%; stale "not yet implemented - v2.1.0" notes for NOT operator + CREATE relationships
+   (both fully implemented by v3.22.0); broken links to IMPLEMENTATION_STATUS.md and
+   NEW_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md.
+3. `archive/README.md` — `COMPREHENSIVE_ANALYSIS_2026_02_18.md` still had `⭐ **NEW**` tag
+   (that doc now has a historical banner); `IMPLEMENTATION_STATUS.md` parent-link was broken
+   (file was archived to superseded_plans); `Last Updated: 2026-02-18`.
+4. `MASTER_REFACTORING_PLAN_2026.md`:
+   - Section 1 "Module Snapshot" heading said "session 63" (3 sessions behind)
+   - Test counts: 3,782+ (was accurate at session 63; now 3,856+)
+   - Test files: 95+ (was accurate at session 63; now 108+ with sessions 64-66 additions)
+   - Footer: `Document Version: 1.0` (was never updated from original; now 3.22.21)
+   - Section 8: "Next review: Q2 2026 (after v2.0.1 release)" — stale v2.0.1 ref
+5. `DOCUMENTATION_GUIDE.md` had unchecked `[ ] Update tests/knowledge_graphs/TEST_GUIDE.md`.
+
+**Changes:**
+1. `tests/knowledge_graphs/TEST_STATUS.md`:
+   - Module Version 2.0.0→3.22.21; Last Updated 2026-02-18→2026-02-22
+   - Total Test Files 47→108+; Total Test Functions 647+→3,856+; Coverage ~75%→99.99%
+   - Per-module coverage updated (Extraction 85%→~99%, Cypher 80%→100%, Migration 40%→100%, etc.)
+   - Migration section: ⚠️→✅; stale v2.0.1 improvement plan replaced with completion note
+   - Fixed broken IMPLEMENTATION_STATUS.md link → MASTER_STATUS.md
+   - Next Review Q2→Q3 2026
+2. `tests/knowledge_graphs/TEST_GUIDE.md`:
+   - Overview: 43/116+/75% → 108+/3,856+/99.99%
+   - Coverage table: all rows updated to current 99-100%
+   - Removed stale "not yet implemented - v2.1.0" notes for NOT operator + CREATE rels
+   - Migration section: 40%→100%; stale "What's NOT Tested" for unimplemented formats removed
+   - Coverage Targets section: historical v2.0.0/v2.0.1/v2.1.0 targets updated with actuals
+   - Fixed broken IMPLEMENTATION_STATUS.md + NEW_COMPREHENSIVE_IMPROVEMENT_PLAN links
+   - Last Updated 2026-02-18→2026-02-22; Next Review Q2→Q3 2026
+3. `archive/README.md`:
+   - Removed `⭐ **NEW**` tag from COMPREHENSIVE_ANALYSIS entry (×2 occurrences)
+   - Fixed IMPLEMENTATION_STATUS.md parent-link → MASTER_STATUS.md
+   - Last Updated 2026-02-18→2026-02-22
+4. `MASTER_REFACTORING_PLAN_2026.md`:
+   - Section 1 heading: session 63 → session 66
+   - Test counts: 3,782+ → 3,856+; test files: 95+ → 108+
+   - Document Version footer: 1.0 → 3.22.21
+   - Section 8: Next review Q2 2026 (after v2.0.1) → Q3 2026
+5. `DOCUMENTATION_GUIDE.md`: Ticked `[x] Update tests/knowledge_graphs/TEST_GUIDE.md`
+
+**25 tests** in `test_master_status_session67.py` (6 classes):
+- `TestTestStatusMdUpdated` (6 tests): version/coverage/test count/file count/migration/broken-link
+- `TestTestGuideMdUpdated` (6 tests): overview count/coverage/migration-table/stale-notes/links/date
+- `TestArchiveReadmeUpdated` (4 tests): **NEW** tag removed; IMPLEMENTATION_STATUS fixed; date; historical note
+- `TestMasterRefactoringPlanUpdated` (5 tests): session 66; 3,856+; 108+; Doc Version 3.22.21; Q3 2026
+- `TestDocumentationGuideTODOTicked` (1 test): TEST_GUIDE.md TODO ticked [x]
+- `TestVersionAgreement` (3 tests): MASTER_STATUS/CHANGELOG/ROADMAP all agree on v3.22.21
+
+**Result: 25 passed, 0 failed** ✅

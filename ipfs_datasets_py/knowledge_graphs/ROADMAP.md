@@ -1,7 +1,7 @@
 # Knowledge Graphs - Development Roadmap
 
 **Last Updated:** 2026-02-22  
-**Current Version:** 3.22.20  
+**Current Version:** 3.22.21  
 **Status:** Production Ready (99.99% test coverage)
 
 ---
@@ -429,6 +429,7 @@ We follow [Semantic Versioning](https://semver.org/):
 | 3.22.18 | 2026-02-22 | ✅ Released | QUICKSTART.md 5 API inaccuracies fixed (rel.source_id, execute_cypher, result.items, store(kg.to_dict()), HybridSearchEngine); MASTER_STATUS feature coverage matrix updated 40-85%→99-100%; 19 doc+API tests (session64) |
 | 3.22.19 | 2026-02-22 | ✅ Released | cross_document.py stale docstring "see TODO at line 542" fixed; MASTER_STATUS doc-ref v3.22.15→v3.22.18 + test-file count 95→102; MASTER_REFACTORING_PLAN 3.22.17→3.22.18; 16 doc+code tests (session65) |
 | 3.22.20 | 2026-02-22 | ✅ Released | Historical banners added to COMPREHENSIVE_ANALYSIS/EXECUTIVE_SUMMARY_FINAL/REFACTORING_COMPLETE 2026-02-18 docs; EXECUTIVE_SUMMARY stale [ ]→[x]; DOCUMENTATION_GUIDE Tier 6 updated; 21 doc tests (session66) |
+| 3.22.21 | 2026-02-22 | ✅ Released | TEST_STATUS.md+TEST_GUIDE.md stale v2.0.0/75%/116+ metrics updated to v3.22.21/99.99%/3856+; archive/README.md **NEW** tag removed; MASTER_REFACTORING_PLAN session 63→66 + 3782→3856+ + Document Version 1.0→3.22.21; 19 doc tests (session67) |
 | 4.0 | 2027+ | 📋 Future | TBD based on feedback |
 
 ---

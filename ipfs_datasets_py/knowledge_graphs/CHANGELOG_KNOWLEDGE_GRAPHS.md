@@ -5,6 +5,42 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.21] - 2026-02-22
+
+### Fixed — Stale TEST_STATUS/TEST_GUIDE metrics + archive/README + MASTER_REFACTORING_PLAN (Session 67)
+
+**Documentation-only changes (test infrastructure docs).**
+
+#### `tests/knowledge_graphs/TEST_STATUS.md`
+- `Module Version: 2.0.0` → `3.22.21`; `Last Updated: 2026-02-18` → `2026-02-22`
+- `Total Test Files: 47` → `108+`; `Total Test Functions: 647+` → `3,856+`
+- `Overall Coverage: ~75%` → `99.99%`; per-module coverage updated (40-85% → 99-100%)
+- `Migration Module: ~40%` → `100%`; removed stale v2.0.1 improvement plan
+- Fixed broken `IMPLEMENTATION_STATUS.md` link → `MASTER_STATUS.md`
+
+#### `tests/knowledge_graphs/TEST_GUIDE.md`
+- Overview: `43 test files / 116+ tests / 75%` → `108+ files / 3,856+ tests / 99.99%`
+- Coverage table: all modules updated to current 99-100% (was 40-85%)
+- Removed stale "not yet implemented" notes for NOT/CREATE (both implemented in v2.1.0)
+- Migration section updated from 40% to 100%
+- Coverage Targets table: historical `v2.0.0` targets updated with actual achievements
+- Fixed broken links: `IMPLEMENTATION_STATUS.md` → `MASTER_STATUS.md`; removed stale `NEW_COMPREHENSIVE_IMPROVEMENT_PLAN` link
+- `Last Updated: 2026-02-18` → `2026-02-22`; Next Review Q2→Q3 2026
+
+#### `archive/README.md`
+- Removed `⭐ **NEW**` tag from `COMPREHENSIVE_ANALYSIS_2026_02_18.md` entries (now a historical doc)
+- Fixed broken `IMPLEMENTATION_STATUS.md` parent link → `MASTER_STATUS.md`
+- `Last Updated: 2026-02-18` → `2026-02-22`
+
+#### `MASTER_REFACTORING_PLAN_2026.md`
+- Section 1 heading: `Module Snapshot (session 63)` → `session 66`
+- Test counts: `3,782+` → `3,856+`; test files: `95+` → `108+`
+- Footer: `Document Version: 1.0` → `3.22.21`
+- Section 8: Next review `Q2 2026 (after v2.0.1 release)` → `Q3 2026`
+
+#### `DOCUMENTATION_GUIDE.md`
+- Ticked `[ ] Update tests/knowledge_graphs/TEST_GUIDE.md` → `[x]`
+
 ## [3.22.20] - 2026-02-22
 
 ### Fixed — Historical doc banners + DOCUMENTATION_GUIDE tier classification (Session 66)

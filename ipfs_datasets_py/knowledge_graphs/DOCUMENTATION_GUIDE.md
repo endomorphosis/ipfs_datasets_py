@@ -220,7 +220,7 @@ These documents are superseded but kept for historical reference:
 - [ ] Document workaround in relevant module README
 
 #### After Test Addition
-- [ ] Update tests/knowledge_graphs/TEST_GUIDE.md
+- [x] Update tests/knowledge_graphs/TEST_GUIDE.md
 - [ ] Update MASTER_STATUS.md (coverage numbers)
 
 #### Quarterly or After Major Release
