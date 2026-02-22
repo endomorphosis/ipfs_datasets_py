@@ -399,12 +399,12 @@ Qed.
 
             if result.returncode == 0:
                 output = result.stdout.strip()
-                if "sat" in output.lower():
-                    status = ProofStatus.SUCCESS
-                    message = "Rule set is consistent (satisfiable)"
-                elif "unsat" in output.lower():
+                if "unsat" in output.lower():
                     status = ProofStatus.FAILURE
                     message = "Rule set is inconsistent (unsatisfiable)"
+                elif "sat" in output.lower():
+                    status = ProofStatus.SUCCESS
+                    message = "Rule set is consistent (satisfiable)"
                 else:
                     status = ProofStatus.ERROR
                     message = f"Unexpected Z3 output: {output}"
@@ -486,10 +486,10 @@ Qed.
 
             if result.returncode == 0:
                 output = result.stdout.strip()
-                if "sat" in output.lower():
-                    status = ProofStatus.SUCCESS
-                elif "unsat" in output.lower():
+                if "unsat" in output.lower():
                     status = ProofStatus.FAILURE
+                elif "sat" in output.lower():
+                    status = ProofStatus.SUCCESS
                 else:
                     status = ProofStatus.ERROR
 

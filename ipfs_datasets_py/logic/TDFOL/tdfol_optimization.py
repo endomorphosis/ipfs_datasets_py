@@ -404,6 +404,11 @@ class OptimizedProver:
         # Step 4: Prove using indexed KB (O(n² log n))
         result = self._prove_indexed(formula, selected_strategy, timeout_ms)
         
+        # Ensure result.method reflects the selected strategy enum value so that
+        # result["strategy"] returns e.g. "forward" / "backward" (not "Forward Chaining").
+        if hasattr(result, 'method') and selected_strategy != ProvingStrategy.AUTO:
+            result.method = selected_strategy.value
+        
         # Step 5: Cache result
         if self.enable_cache and self.cache:
             self._cache_result(formula, result, "indexed")

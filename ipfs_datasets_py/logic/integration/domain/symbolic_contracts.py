@@ -725,6 +725,10 @@ else:
                 else:
                     formula = formula_symbolic
                 
+                meta: Dict[str, Any] = {"fallback": True}
+                if hasattr(input_data, "domain_predicates") and input_data.domain_predicates:
+                    meta["domain_predicates"] = input_data.domain_predicates
+
                 return FOLOutput(
                     fol_formula=formula,
                     confidence=0.6,
@@ -735,7 +739,7 @@ else:
                     },
                     reasoning_steps=["Used fallback conversion"],
                     warnings=["SymbolicAI not available - using basic conversion"],
-                    metadata={"fallback": True}
+                    metadata=meta
                 )
                 
             except Exception as e:

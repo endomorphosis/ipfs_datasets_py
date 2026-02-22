@@ -16,9 +16,9 @@ from ..converters.deontic_logic_core import (
     DeonticFormula, DeonticOperator, DeonticRuleSet, TemporalCondition,
     LegalAgent, LegalContext
 )
-from .deontic_logic_converter import DeonticLogicConverter, ConversionContext
+from ..converters.deontic_logic_converter import DeonticLogicConverter, ConversionContext
 from .temporal_deontic_rag_store import TemporalDeonticRAGStore, ConsistencyResult
-from .proof_execution_engine import ProofExecutionEngine, ProofResult, ProofStatus
+from ..reasoning.proof_execution_engine import ProofExecutionEngine, ProofResult, ProofStatus
 from .deontic_query_engine import DeonticQueryEngine
 
 logger = logging.getLogger(__name__)

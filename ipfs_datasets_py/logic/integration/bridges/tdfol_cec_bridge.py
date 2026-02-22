@@ -266,7 +266,6 @@ class TDFOLCECBridge(BaseProverBridge):
                 proof_steps = []
                 for i, cec_step in enumerate(cec_result.proof_tree.steps):
                     step = ProofStep(
-                        step_number=i + 1,
                         formula=goal,  # Simplified - could convert each step
                         rule_name=cec_step.rule,
                         premises=cec_step.premises,

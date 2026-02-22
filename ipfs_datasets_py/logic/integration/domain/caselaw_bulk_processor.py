@@ -24,7 +24,7 @@ from ..converters.deontic_logic_core import (
 )
 from .temporal_deontic_rag_store import TemporalDeonticRAGStore, TheoremMetadata
 from .document_consistency_checker import DocumentConsistencyChecker
-from .deontic_logic_converter import DeonticLogicConverter, ConversionContext
+from ..converters.deontic_logic_converter import DeonticLogicConverter, ConversionContext
 
 logger = logging.getLogger(__name__)
 
@@ -380,7 +380,7 @@ class CaselawBulkProcessor:
                     source_document_path=doc.file_path or "",
                     document_title=doc.title,
                     enable_temporal_analysis=True,
-                    target_jurisdiction=doc.jurisdiction,
+                    jurisdiction=doc.jurisdiction,
                     legal_domain=doc.legal_domains[0] if doc.legal_domains else "general"
                 )
                 
@@ -564,10 +564,6 @@ class CaselawBulkProcessor:
             name="Unified Caselaw Deontic Logic System",
             formulas=all_formulas,
             description=f"Unified system built from {len(all_formulas)} theorems across {len(self.stats.jurisdictions_processed)} jurisdictions",
-            creation_date=datetime.now(),
-            source_documents=list(self.document_cache.keys()),
-            legal_domains=list(self.stats.legal_domains_processed),
-            temporal_coverage=self.stats.temporal_range
         )
         
         # Save unified system

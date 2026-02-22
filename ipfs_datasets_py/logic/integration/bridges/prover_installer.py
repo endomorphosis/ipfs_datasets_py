@@ -20,6 +20,7 @@ The installer is best-effort and never raises on failure unless `--strict` is us
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import shutil
 import subprocess
@@ -27,6 +28,8 @@ import sys
 import tempfile
 import urllib.request
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def _truthy(value: str | None) -> bool:

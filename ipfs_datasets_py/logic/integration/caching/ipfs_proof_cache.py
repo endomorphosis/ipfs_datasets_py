@@ -106,7 +106,7 @@ class IPFSProofCache(ProofCache):
         cache_dir: Optional[Path] = None
     ):
         """Initialize IPFS-backed cache."""
-        super().__init__(max_size=max_size, ttl=ttl, cache_dir=cache_dir)
+        super().__init__(max_size=max_size, ttl=ttl)
         
         self.ipfs_host = ipfs_host
         self.ipfs_port = ipfs_port
@@ -164,8 +164,8 @@ class IPFSProofCache(ProofCache):
         Example:
             >>> cache.put("∀x P(x)", {"success": True}, ttl=7200, pin=True)
         """
-        # Store in local cache first
-        super().put(formula, result, ttl)
+        # Store in local cache first using the compat API: put(formula, prover_name, result, ttl)
+        super().put(formula, "ipfs_cache", result, ttl)
         
         # Upload to IPFS if enabled
         if self.enable_ipfs and self.ipfs_client:
@@ -412,8 +412,6 @@ class IPFSProofCache(ProofCache):
                 # IPFS client cleanup failed - ignore
                 logger.debug(f"IPFS client cleanup failed: {e}")
             self.ipfs_client = None
-        
-        super().close()
 
 
 # Global IPFS cache instance

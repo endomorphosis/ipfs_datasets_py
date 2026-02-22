@@ -368,3 +368,13 @@ class ProofByContradictionRule(InferenceRule):
         # Here we just signal that a contradiction was found by returning empty.
         # The caller can use the ProofResult.PROVED on the negated assumption.
         return []
+
+
+__all__ = [
+    'ResolutionRule',
+    'UnitResolutionRule',
+    'FactoringRule',
+    'SubsumptionRule',
+    'CaseAnalysisRule',
+    'ProofByContradictionRule',
+]

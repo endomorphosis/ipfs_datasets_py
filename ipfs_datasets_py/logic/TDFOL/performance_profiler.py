@@ -347,11 +347,13 @@ def profile_this(
         ...     pass
     """
     def decorator(f: F) -> F:
+        """Enable cProfile on *f* and optionally print stats after each call."""
         if not enabled:
             return f
         
         @functools.wraps(f)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
+            """Run *f* under cProfile; print stats if requested."""
             profiler_obj = cProfile.Profile()
             
             try:
@@ -404,8 +406,10 @@ def memory_profile_this(func: Optional[F] = None) -> F:
         ...     return len(data)
     """
     def decorator(f: F) -> F:
+        """Enable tracemalloc on *f* and log peak memory after each call."""
         @functools.wraps(f)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
+            """Run *f* under tracemalloc and log memory statistics."""
             tracemalloc.start()
             
             try:

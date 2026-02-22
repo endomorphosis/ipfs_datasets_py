@@ -134,6 +134,7 @@ class DeonticConflict:
         explanation: Human-readable explanation of the conflict
         resolution_suggestions: Suggested ways to resolve the conflict
         context_overlap: Degree of context overlap between statements (0.0-1.0)
+        id: Optional unique identifier for this conflict
         
     Example:
         >>> conflict = DeonticConflict(
@@ -151,6 +152,7 @@ class DeonticConflict:
     explanation: str = ""
     resolution_suggestions: List[str] = field(default_factory=list)
     context_overlap: float = 0.0  # 0-1, how much context overlaps
+    id: Optional[str] = None  # unique identifier for this conflict
 
 
 # Export all types

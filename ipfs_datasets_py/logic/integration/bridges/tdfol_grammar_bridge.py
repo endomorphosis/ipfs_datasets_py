@@ -250,7 +250,7 @@ class TDFOLGrammarBridge(BaseProverBridge):
         
         # Final fallback: build simple TDFOL formula from text structure
         try:
-            from ...TDFOL.tdfol_core import Predicate, Implication, Conjunction, Negation
+            from ...TDFOL.tdfol_core import Predicate, create_implication, create_conjunction, create_negation
             stripped = text.strip()
             
             # Handle implication "A -> B" or "A => B"
@@ -260,7 +260,7 @@ class TDFOLGrammarBridge(BaseProverBridge):
                     left = self._fallback_parse(parts[0].strip())
                     right = self._fallback_parse(parts[1].strip())
                     if left is not None and right is not None:
-                        return Implication(left, right)
+                        return create_implication(left, right)
                     break
             
             # Handle simple atom

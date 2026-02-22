@@ -138,17 +138,21 @@ class Variable(Term):
     sort: Optional[Sort] = None
     
     def to_string(self, pretty: bool = False) -> str:
+        """Return the variable name, optionally annotated with its sort (e.g., ``x:Agent``)."""
         if pretty and self.sort:
             return f"{self.name}:{self.sort.value}"
         return self.name
     
     def get_free_variables(self) -> Set[str]:
+        """Return a singleton set containing this variable's name (it is itself free)."""
         return {self.name}
     
     def get_variables(self) -> Set[str]:
+        """Return a singleton set containing this variable's name."""
         return {self.name}
     
     def substitute(self, var: str, term: Term) -> Term:
+        """Return *term* if *var* matches this variable's name; otherwise return self."""
         if self.name == var:
             return term
         return self
@@ -162,15 +166,19 @@ class Constant(Term):
     sort: Optional[Sort] = None
     
     def to_string(self, pretty: bool = False) -> str:
+        """Return the constant's name."""
         return self.name
     
     def get_free_variables(self) -> Set[str]:
+        """Return an empty set (constants contain no variables)."""
         return set()
     
     def get_variables(self) -> Set[str]:
+        """Return an empty set (constants contain no variables)."""
         return set()
     
     def substitute(self, var: str, term: Term) -> Term:
+        """Return self unchanged (constants are not substituted)."""
         return self
 
 
@@ -183,22 +191,26 @@ class FunctionApplication(Term):
     sort: Optional[Sort] = None
     
     def to_string(self, pretty: bool = False) -> str:
+        """Return ``f(arg1, arg2, ...)`` with arguments rendered recursively."""
         args_str = ", ".join(arg.to_string(pretty) for arg in self.arguments)
         return f"{self.function_name}({args_str})"
     
     def get_free_variables(self) -> Set[str]:
+        """Return the union of free variables from all arguments."""
         result = set()
         for arg in self.arguments:
             result.update(arg.get_free_variables())
         return result
     
     def get_variables(self) -> Set[str]:
+        """Return the union of all variables (free or bound) from all arguments."""
         result = set()
         for arg in self.arguments:
             result.update(arg.get_variables())
         return result
     
     def substitute(self, var: str, term: Term) -> Term:
+        """Return a new ``FunctionApplication`` with *var* replaced by *term* in every argument."""
         new_args = tuple(arg.substitute(var, term) for arg in self.arguments)
         return FunctionApplication(self.function_name, new_args, self.sort)
 
@@ -231,21 +243,25 @@ class Predicate(Formula):
             object.__setattr__(self, 'arguments', tuple(self.arguments))
     
     def to_string(self, pretty: bool = False) -> str:
+        """Return ``Name`` for zero-arity predicates or ``Name(arg1, arg2, ...)`` for non-zero arity."""
         if not self.arguments:
             return self.name
         args_str = ", ".join(arg.to_string(pretty) for arg in self.arguments)
         return f"{self.name}({args_str})"
     
     def get_free_variables(self) -> Set[str]:
+        """Return the union of free variables from all arguments."""
         result = set()
         for arg in self.arguments:
             result.update(arg.get_free_variables())
         return result
     
     def get_predicates(self) -> Set[str]:
+        """Return a singleton set containing this predicate's name."""
         return {self.name}
     
     def substitute(self, var: str, term: Term) -> Formula:
+        """Return a new ``Predicate`` with *var* replaced by *term* in every argument."""
         new_args = tuple(arg.substitute(var, term) for arg in self.arguments)
         return Predicate(self.name, new_args)
 
@@ -259,17 +275,21 @@ class BinaryFormula(Formula):
     right: Formula
     
     def to_string(self, pretty: bool = False) -> str:
+        """Return ``(op left right)`` in prefix form, or ``(left op right)`` when *pretty* is True."""
         if pretty:
             return f"({self.left.to_string(True)} {self.operator.value} {self.right.to_string(True)})"
         return f"({self.operator.value} {self.left.to_string()} {self.right.to_string()})"
     
     def get_free_variables(self) -> Set[str]:
+        """Return the union of free variables from both subformulas."""
         return self.left.get_free_variables() | self.right.get_free_variables()
     
     def get_predicates(self) -> Set[str]:
+        """Return the union of predicate names from both subformulas."""
         return self.left.get_predicates() | self.right.get_predicates()
     
     def substitute(self, var: str, term: Term) -> Formula:
+        """Return a new ``BinaryFormula`` with *var* replaced by *term* in both subformulas."""
         return BinaryFormula(
             self.operator,
             self.left.substitute(var, term),
@@ -289,15 +309,19 @@ class UnaryFormula(Formula):
             raise ValueError("UnaryFormula only supports NOT operator")
     
     def to_string(self, pretty: bool = False) -> str:
+        """Return ``¬formula`` (negation prefix notation)."""
         return f"{self.operator.value}{self.formula.to_string(pretty)}"
     
     def get_free_variables(self) -> Set[str]:
+        """Return free variables of the negated subformula."""
         return self.formula.get_free_variables()
     
     def get_predicates(self) -> Set[str]:
+        """Return predicate names of the negated subformula."""
         return self.formula.get_predicates()
     
     def substitute(self, var: str, term: Term) -> Formula:
+        """Return a new ``UnaryFormula`` with *var* replaced by *term* in the subformula."""
         return UnaryFormula(self.operator, self.formula.substitute(var, term))
 
 
@@ -310,18 +334,22 @@ class QuantifiedFormula(Formula):
     formula: Formula
     
     def to_string(self, pretty: bool = False) -> str:
+        """Return ``Qx.formula`` where *Q* is ∀ or ∃ and *x* is the bound variable."""
         var_str = self.variable.to_string(pretty)
         return f"{self.quantifier.value}{var_str}.{self.formula.to_string(pretty)}"
     
     def get_free_variables(self) -> Set[str]:
+        """Return free variables of the body, excluding the bound variable."""
         bound_vars = self.formula.get_free_variables()
         bound_vars.discard(self.variable.name)
         return bound_vars
     
     def get_predicates(self) -> Set[str]:
+        """Return predicate names in the quantified body."""
         return self.formula.get_predicates()
     
     def substitute(self, var: str, term: Term) -> Formula:
+        """Return self if *var* is the bound variable; otherwise substitute in body."""
         if var == self.variable.name:
             # Don't substitute for bound variable
             return self
@@ -342,21 +370,25 @@ class DeonticFormula(Formula):
     context: Optional[str] = None
     
     def to_string(self, pretty: bool = False) -> str:
+        """Return ``Op(formula)``; in pretty mode also annotate agent: ``Op_agent(formula)``."""
         base = f"{self.operator.value}({self.formula.to_string(pretty)})"
         if pretty and self.agent:
             base = f"{self.operator.value}_{self.agent.to_string(pretty)}({self.formula.to_string(pretty)})"
         return base
     
     def get_free_variables(self) -> Set[str]:
+        """Return free variables from the deontic formula and optional agent term."""
         result = self.formula.get_free_variables()
         if self.agent:
             result.update(self.agent.get_free_variables())
         return result
     
     def get_predicates(self) -> Set[str]:
+        """Return predicate names of the deontic subformula."""
         return self.formula.get_predicates()
     
     def substitute(self, var: str, term: Term) -> Formula:
+        """Return a new ``DeonticFormula`` with *var* replaced by *term* in formula and agent."""
         new_agent = self.agent.substitute(var, term) if self.agent else None
         return DeonticFormula(
             self.operator,
@@ -375,18 +407,22 @@ class TemporalFormula(Formula):
     time_bound: Optional[int] = None  # Optional bound for bounded temporal operators
     
     def to_string(self, pretty: bool = False) -> str:
+        """Return ``Op(formula)``; in pretty mode also include time bound: ``Op[n](formula)``."""
         base = f"{self.operator.value}({self.formula.to_string(pretty)})"
         if pretty and self.time_bound is not None:
             base = f"{self.operator.value}[{self.time_bound}]({self.formula.to_string(pretty)})"
         return base
     
     def get_free_variables(self) -> Set[str]:
+        """Return free variables of the temporal subformula."""
         return self.formula.get_free_variables()
     
     def get_predicates(self) -> Set[str]:
+        """Return predicate names of the temporal subformula."""
         return self.formula.get_predicates()
     
     def substitute(self, var: str, term: Term) -> Formula:
+        """Return a new ``TemporalFormula`` with *var* replaced by *term* in the subformula."""
         return TemporalFormula(
             self.operator,
             self.formula.substitute(var, term),
@@ -408,15 +444,19 @@ class BinaryTemporalFormula(Formula):
             raise ValueError(f"BinaryTemporalFormula only supports binary temporal operators")
     
     def to_string(self, pretty: bool = False) -> str:
+        """Return ``(left Op right)`` with both subformulas rendered recursively."""
         return f"({self.left.to_string(pretty)} {self.operator.value} {self.right.to_string(pretty)})"
     
     def get_free_variables(self) -> Set[str]:
+        """Return the union of free variables from both subformulas."""
         return self.left.get_free_variables() | self.right.get_free_variables()
     
     def get_predicates(self) -> Set[str]:
+        """Return the union of predicate names from both subformulas."""
         return self.left.get_predicates() | self.right.get_predicates()
     
     def substitute(self, var: str, term: Term) -> Formula:
+        """Return a new ``BinaryTemporalFormula`` with *var* replaced by *term* in both sides."""
         return BinaryTemporalFormula(
             self.operator,
             self.left.substitute(var, term),

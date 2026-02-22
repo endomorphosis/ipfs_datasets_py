@@ -1,7 +1,7 @@
 # Logic Module Documentation Index
 
-**Last Updated:** 2026-02-19  
-**Status:** Reorganized — 102 markdown files (reduced from 196)
+**Last Updated:** 2026-02-20  
+**Status:** Consolidated — 195 total markdown files (69 active, 126 archived)
 
 This index provides a comprehensive guide to all documentation in the logic module, organized by purpose and audience.
 
@@ -38,14 +38,12 @@ This index provides a comprehensive guide to all documentation in the logic modu
 
 | Document | Content | Status |
 |----------|---------|--------|
-| **[ARCHITECTURE.md](./ARCHITECTURE.md)** 🆕 | **Visual architecture guide** - Mermaid diagrams for module dependencies, converters, caches, data flows, ZKP, integration | ✅ Production |
+| **[ARCHITECTURE.md](./ARCHITECTURE.md)** | **Visual architecture guide** - Mermaid diagrams for module dependencies, converters, caches, data flows, ZKP, integration | ✅ Production |
 | [FEATURES.md](./FEATURES.md) | **Complete feature catalog** - All 12+ features documented | ✅ Current (v2.0) |
-| [TYPE_SYSTEM_STATUS.md](./TYPE_SYSTEM_STATUS.md) | Type coverage analysis (95%+, Grade A) | ✅ Current |
-| [CACHING_ARCHITECTURE.md](./CACHING_ARCHITECTURE.md) | Caching strategies and unified cache | ✅ Current |
 
 ### Specialized Components
 
-**Quick Start Guides:** ✨ NEW - Hands-on examples and practical usage
+**Quick Start Guides:** Hands-on examples and practical usage
 
 | Module | Description | Guide |
 |--------|-------------|-------|
@@ -69,8 +67,6 @@ This index provides a comprehensive guide to all documentation in the logic modu
 ---
 
 ## API Reference
-
-### Converter APIs
 
 ```python
 # Primary converters (unified architecture)
@@ -115,23 +111,27 @@ from ipfs_datasets_py.logic.CEC import CEC_wrapper
 
 ## Current Refactoring Status
 
-### Active Planning Documents (2026-02-17)
+### Active Planning Documents (2026-02-20)
 
 | Document | Purpose | Status |
 |----------|---------|--------|
-| **[COMPREHENSIVE_REFACTORING_PLAN.md](./COMPREHENSIVE_REFACTORING_PLAN.md)** 🆕 | **Master refactoring plan** - 5-phase plan for documentation consolidation and code polish | 🔄 ACTIVE |
-| **[VERIFIED_STATUS_REPORT.md](./VERIFIED_STATUS_REPORT.md)** 🆕 | **Ground truth status** - Verified metrics and implementation status | ✅ Current |
-| **[IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md)** 🆕 | **Execution roadmap** - Prioritized action items from all planning docs | 🔄 ACTIVE |
-| [PROJECT_STATUS.md](./PROJECT_STATUS.md) | Overall project status (60% complete, Phase 6 done, Phase 7 at 55%) | ✅ Current |
-| [IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md) | Detailed P0/P1/P2 backlog (477 lines, 16 refactor slices) | 📋 Reference |
+| **[MASTER_REFACTORING_PLAN_2026.md](./MASTER_REFACTORING_PLAN_2026.md)** | **Master refactoring plan** - Authoritative 5-phase plan (v5.1) | ✅ ACTIVE |
+| **[PROJECT_STATUS.md](./PROJECT_STATUS.md)** | **Current status snapshot** - Verified metrics and implementation status | ✅ Current |
+| **[EVERGREEN_IMPROVEMENT_PLAN.md](./EVERGREEN_IMPROVEMENT_PLAN.md)** | **Ongoing improvement backlog** - Continuous quality loops and prioritized slices | 🔄 Ongoing |
+| [integration/CHANGELOG.md](./integration/CHANGELOG.md) | Integration-specific changelog | 📋 Reference |
 | [integration/TODO.md](./integration/TODO.md) | Integration-specific Phase 2 tasks | 📋 Reference |
 
-### Refactoring Objectives
+### Refactoring Summary (2026-02-20)
 
-1. **Documentation Consolidation** - Reduce 48→30 files, eliminate redundancy
-2. **Complete Unfinished Work** - Phase 7 Parts 2+4 (optional), P0 critical items
-3. **Add Missing Documentation** - API versioning, deployment guide, error reference
-4. **Polish and Validation** - Final quality pass, verify all claims
+Phases 1, 3, and 5 are complete; Phases 2 and 4 are ongoing:
+
+1. **Phase 1 ✅ COMPLETE** — Documentation Consolidation (196 → 69 active files)
+2. **Phase 2 🔄 In Progress** — Code Quality (CEC inference rules ✅, NL accuracy pending)
+3. **Phase 3 ✅ COMPLETE** — Feature Completions (27 MCP tools, GraphRAG integration)
+4. **Phase 4 🔄 Ongoing** — Production Excellence (validators ✅, CI gates pending)
+5. **Phase 5 ✅ COMPLETE** — God-Module Splits (all 6 oversized files decomposed)
+
+For details, see [MASTER_REFACTORING_PLAN_2026.md](./MASTER_REFACTORING_PLAN_2026.md).
 
 ---
 
@@ -141,22 +141,18 @@ from ipfs_datasets_py.logic.CEC import CEC_wrapper
 
 | Document | Purpose |
 |----------|---------|
-| [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) | Current implementation status by module |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | Contribution guidelines |
 | [KNOWN_LIMITATIONS.md](./KNOWN_LIMITATIONS.md) | Honest assessment of limitations and workarounds |
 | [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Common issues and solutions |
-| [FALLBACK_BEHAVIORS.md](./FALLBACK_BEHAVIORS.md) | Graceful degradation when dependencies missing |
 | [docs/archive/README.md](./docs/archive/README.md) | Historical archive index |
 
 ### Planning Documents (Reference)
 
 | Document | Status | Use |
 |----------|--------|-----|
-| [REFACTORING_IMPROVEMENT_PLAN.md](./REFACTORING_IMPROVEMENT_PLAN.md) | 📋 Reference | Original comprehensive plan (964 lines) |
-| [PHASE7_PERFORMANCE_OPTIMIZATION_PLAN.md](./PHASE7_PERFORMANCE_OPTIMIZATION_PLAN.md) | 📋 Active | Performance optimization roadmap (Parts 2+4 remaining) |
-| [PHASE8_FINAL_TESTING_PLAN.md](./PHASE8_FINAL_TESTING_PLAN.md) | 📋 Future | Comprehensive testing plan (410+ tests, >95% coverage) |
-| [ADVANCED_FEATURES_ROADMAP.md](./ADVANCED_FEATURES_ROADMAP.md) | 📋 Future | Future enhancements roadmap |
-
-**Note:** See IMPLEMENTATION_ROADMAP.md for prioritized execution order of all planning items.
+| [MASTER_REFACTORING_PLAN_2026.md](./MASTER_REFACTORING_PLAN_2026.md) | ✅ Active (v5.1) | Authoritative improvement roadmap |
+| [EVERGREEN_IMPROVEMENT_PLAN.md](./EVERGREEN_IMPROVEMENT_PLAN.md) | 🔄 Ongoing | Continuous quality improvement backlog |
+| [PROJECT_STATUS.md](./PROJECT_STATUS.md) | ✅ Current | Verified status and metrics |
 
 ---
 
@@ -173,24 +169,12 @@ All phase completion reports have been archived to maintain repository cleanline
 | Phase 7 Session | [docs/archive/phases/PHASE_7_SESSION_SUMMARY.md](./docs/archive/phases/) | 2026-02-17 |
 | Final Status (Pre-refactor) | [docs/archive/phases/FINAL_STATUS_REPORT.md](./docs/archive/phases/) | 2026-02-17 |
 | Analysis Summary | [docs/archive/phases/ANALYSIS_SUMMARY.md](./docs/archive/phases/) | 2026-02-17 |
-| Session Notes | [docs/archive/SESSIONS/](./docs/archive/SESSIONS/) | 2026-02-13/14 |
-
-### Session History
-
-Development session notes are archived in `docs/archive/SESSIONS/`:
-- `SESSION_2026-02-13.md` - Initial refactoring work
-- `SESSION_2026-02-14.md` - Phase 6 and 7 completion
-- `SESSION_2026-02-14_evening.md` - Final validation
+| Planning Docs (archived) | [docs/archive/planning/](./docs/archive/planning/) | 2026-02-19 |
+| Session Notes | [docs/archive/sessions/](./docs/archive/sessions/) | 2026-02-17 |
 
 ---
 
 ## Testing & Validation
-
-### Test Documentation
-
-- **Test Results:** See [PHASE7_3_TEST_RESULTS.md](./docs/archive/PHASE_REPORTS/PHASE7_3_TEST_RESULTS.md)
-- **Performance:** See [PHASE7_4_PERFORMANCE_REPORT.md](./docs/archive/PHASE_REPORTS/PHASE7_4_PERFORMANCE_REPORT.md)
-- **Final Validation:** See [PHASE7_5_FINAL_VALIDATION.md](./docs/archive/PHASE_REPORTS/PHASE7_5_FINAL_VALIDATION.md)
 
 ### Running Tests
 
@@ -205,7 +189,7 @@ pytest tests/unit_tests/logic/integration/ -v
 pytest tests/unit_tests/logic/ --cov=ipfs_datasets_py.logic
 ```
 
-**Test Status:** 174 tests, 94% pass rate (164 passing), 100% core modules passing
+**Test Status:** 1,744+ tests across 168 test files, ~87% pass rate (790+ tests in production-ready core modules).
 
 ---
 
@@ -217,6 +201,7 @@ pytest tests/unit_tests/logic/ --cov=ipfs_datasets_py.logic
 ipfs_datasets_py/logic/
 ├── README.md                   # Main documentation (START HERE)
 ├── DOCUMENTATION_INDEX.md      # This file
+├── MASTER_REFACTORING_PLAN_2026.md  # Active improvement plan (v5.1)
 ├── FEATURES.md                 # Feature catalog
 ├── MIGRATION_GUIDE.md          # Migration from old APIs
 ├── UNIFIED_CONVERTER_GUIDE.md  # Converter usage guide
@@ -226,61 +211,70 @@ ipfs_datasets_py/logic/
 │   ├── CONVERTER_USAGE.md
 │   ├── converters.py          # Base converter framework
 │   ├── utility_monitor.py     # Performance monitoring
+│   ├── validators.py          # Input validation + injection detection
+│   ├── proof_cache.py         # Shared proof cache
 │   └── errors.py              # Common exceptions
 │
 ├── types/                      # Type definitions
 │   └── README.md
 │
 ├── fol/                        # First-Order Logic
+│   ├── README.md
 │   ├── converter.py           # FOL converter (unified)
-│   ├── text_to_fol.py         # NLP parser
-│   └── utils/                 # FOL utilities
+│   └── text_to_fol.py         # NLP parser
 │
 ├── deontic/                    # Deontic Logic
+│   ├── README.md
 │   ├── converter.py           # Deontic converter (unified)
-│   ├── legal_text_to_deontic.py
-│   └── utils/                 # Deontic utilities
+│   └── legal_text_to_deontic.py
 │
-├── TDFOL/                      # Temporal Deontic FOL
+├── TDFOL/                      # Temporal Deontic FOL (19,311 LOC)
 │   ├── README.md
 │   ├── tdfol_core.py
 │   ├── tdfol_parser.py
-│   └── tdfol_prover.py
+│   ├── tdfol_prover.py
+│   ├── modal_tableaux.py
+│   └── inference_rules/       # 50 TDFOL inference rules
 │
-├── CEC/                        # Cognitive Event Calculus
+├── CEC/                        # Cognitive Event Calculus (8,547 LOC)
 │   ├── CEC_SYSTEM_GUIDE.md
-│   ├── native/                # Native implementation
+│   ├── native/                # Native Python implementation
+│   │   ├── prover_core.py     # Core proof search (~649 LOC after split)
+│   │   ├── dcec_core.py       # DCEC data model (~849 LOC after split)
+│   │   └── inference_rules/   # 67 CEC rules (8 modules)
 │   └── *.py                   # Wrapper modules
 │
-├── integration/                # Integration layer
+├── integration/                # Integration layer (~10,000 LOC)
 │   ├── __init__.py            # Main integration API
 │   ├── bridges/               # Cross-module bridges
 │   ├── caching/               # Caching subsystem
-│   ├── reasoning/             # Reasoning engines
+│   ├── reasoning/             # Reasoning engines (split into focused files)
 │   ├── converters/            # Integration converters
 │   ├── domain/                # Domain models
 │   ├── symbolic/              # Neurosymbolic integration
 │   ├── interactive/           # Interactive tools
 │   └── demos/                 # Example applications
 │
-├── zkp/                        # Zero-Knowledge Proofs
+├── zkp/                        # Zero-Knowledge Proofs (simulation only)
 │   ├── README.md
 │   ├── zkp_prover.py
 │   ├── zkp_verifier.py
 │   └── circuits.py
 │
-├── external_provers/           # External theorem provers
+├── external_provers/           # External theorem provers (Z3, Lean, Coq)
 │   ├── README.md
-│   ├── proof_cache.py
 │   └── *.py
 │
 ├── security/                   # Security features
 │   └── rate_limiting.py
 │
 └── docs/                       # Additional documentation
-    └── archive/               # Historical records
-        ├── SESSIONS/          # Session notes
-        ├── PHASE_REPORTS/     # Phase completion reports
+    └── archive/               # Historical records (126 files)
+        ├── sessions/          # Session notes
+        ├── phases/            # Phase completion reports
+        ├── phases_2026/       # 2026 phase reports
+        ├── planning/          # Archived planning docs
+        ├── HISTORICAL/        # Pre-2026 records
         └── README.md          # Archive index
 ```
 
@@ -293,7 +287,7 @@ ipfs_datasets_py/logic/
 1. **API Documentation** - Add docstrings to code, update module README
 2. **User Guides** - Create in root `logic/` directory
 3. **Architecture Changes** - Update FEATURES.md and DOCUMENTATION_INDEX.md
-4. **Session Notes** - Archive immediately after completion to `docs/archive/SESSIONS/`
+4. **Session Notes** - Archive immediately after completion to `docs/archive/sessions/`
 
 ### Document Lifecycle
 
@@ -301,13 +295,15 @@ ipfs_datasets_py/logic/
 - **Reference** - Still useful but not updated (e.g., planning docs after completion)
 - **Archived** - Moved to `docs/archive/` with appropriate subdirectory
 
-### Archive Policy
+### Archive Policy (per MASTER_REFACTORING_PLAN_2026.md §7.4)
 
 Documents are archived when:
 - Phase/project completion reports after work is done
 - Session notes after session ends
 - Superseded documentation when replaced by newer versions
 - Historical planning documents after plans are executed
+
+**Never create new markdown files in active directories for progress reports** — use git commit messages for progress tracking instead.
 
 ---
 
@@ -332,12 +328,13 @@ If you find:
 
 ### Documentation Statistics
 
-- **Total Documentation:** ~200 KB (48 markdown files)
-- **Active Documents:** 10 primary + 8 module-specific READMEs + 6 planning docs
-- **Archived Documents:** 40+ historical records in docs/archive/
-- **Test Coverage:** 790+ tests (94% pass rate), 10,200+ repo-wide
-- **Type Coverage:** 95%+ (Grade A-)
-- **Phase Status:** Phase 6 100%, Phase 7 55% (Parts 1+3 complete)
+- **Total Markdown Files:** 195 (69 active, 126 archived)
+- **Active Documents:** 20 root-level + 15 TDFOL + 14 CEC + 8 ZKP + 12 module READMEs
+- **Archived Documents:** 126 historical records in `docs/archive/`, `TDFOL/ARCHIVE/`, `CEC/ARCHIVE/`, `zkp/ARCHIVE/`
+- **Python Files:** 281 files (~93,529 LOC)
+- **Test Files:** 168 test files, 1,744+ tests, ~87% pass rate
+- **Type Coverage:** 95%+ (Grade A-, mypy validated)
+- **Performance:** 14x cache speedup validated; 30-40% memory reduction with __slots__
 
 ### Version History
 
@@ -345,6 +342,7 @@ If you find:
 |---------|------|---------|
 | 1.0 | 2026-02-14 | Initial consolidated index created |
 | 1.1 | 2026-02-17 | Added refactoring status, updated with current planning docs, archived phase reports |
+| 2.0 | 2026-02-20 | Major update: removed archived file references, updated counts, added Phase 5 completion, fixed statistics |
 
 ---
 

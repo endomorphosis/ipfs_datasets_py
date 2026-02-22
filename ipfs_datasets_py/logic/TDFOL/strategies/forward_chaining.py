@@ -44,15 +44,18 @@ class ForwardChainingStrategy(ProverStrategy):
         >>> assert result.is_proved()
     """
     
-    def __init__(self, max_iterations: int = 100):
+    def __init__(self, max_iterations: int = 100, max_derived: int = 500):
         """
         Initialize forward chaining strategy.
         
         Args:
             max_iterations: Maximum number of rule application iterations
+            max_derived: Maximum number of formulas in the derived set before
+                stopping (prevents exponential blowup with rule-rich KBs).
         """
         super().__init__("Forward Chaining", StrategyType.FORWARD_CHAINING)
         self.max_iterations = max_iterations
+        self.max_derived = max_derived
         self.tdfol_rules = []
         
         # Load TDFOL inference rules
@@ -119,6 +122,9 @@ class ForwardChainingStrategy(ProverStrategy):
                 method=self.name
             )
         
+        # frontier: formulas added in the last step (only these need new rule applications)
+        frontier: Set[Formula] = set(derived)
+        
         # Iteratively apply rules until goal is derived or no progress
         for iteration in range(self.max_iterations):
             # Check timeout
@@ -133,6 +139,17 @@ class ForwardChainingStrategy(ProverStrategy):
                     message=f"Timeout after {iteration} iterations"
                 )
             
+            # Guard against combinatorial explosion
+            if len(derived) >= self.max_derived:
+                return ProofResult(
+                    status=ProofStatus.UNKNOWN,
+                    formula=formula,
+                    proof_steps=proof_steps,
+                    time_ms=elapsed_ms,
+                    method=self.name,
+                    message=f"Derived set exceeded {self.max_derived} formulas after {iteration} iterations"
+                )
+            
             # Check if goal is derived
             if formula in derived:
                 return ProofResult(
@@ -144,15 +161,17 @@ class ForwardChainingStrategy(ProverStrategy):
                     message=f"Proved in {iteration} iterations"
                 )
             
-            # Apply all TDFOL rules to derive new formulas
-            new_formulas = self._apply_rules(derived, proof_steps)
+            # Apply rules using frontier (new formulas from last step only)
+            # to avoid O(n²) blowup across all formula pairs.
+            new_formulas = self._apply_rules(frontier, derived, proof_steps)
             
             # No progress made - stop
             if not new_formulas:
                 break
             
-            # Add new formulas to derived set
+            # Add new formulas to derived set; next frontier = only the new ones
             derived.update(new_formulas)
+            frontier = new_formulas
         
         # Goal not derived
         return ProofResult(
@@ -166,23 +185,35 @@ class ForwardChainingStrategy(ProverStrategy):
     
     def _apply_rules(
         self,
+        frontier: Set[Formula],
         derived: Set[Formula],
         proof_steps: List[ProofStep]
     ) -> Set[Formula]:
         """
-        Apply all inference rules to derived formulas.
+        Apply all inference rules to the frontier formulas.
+        
+        Uses a frontier-based approach: only formulas added in the previous
+        step are tried as primary inputs. This avoids the O(n²) blowup that
+        occurs when iterating over all pairs of an ever-growing derived set.
+        
+        Single-formula rules are applied to every frontier formula.
+        Two-formula rules are applied between each frontier formula and each
+        formula in the full derived set (frontier ∪ already-known), ensuring
+        completeness while keeping the inner loop bounded by ``len(derived)``
+        (not ``len(derived)²``).
         
         Args:
-            derived: Set of currently derived formulas
+            frontier: Formulas added in the last iteration (new candidates)
+            derived: Complete set of currently known formulas
             proof_steps: List to append proof steps to
         
         Returns:
-            Set of newly derived formulas
+            Set of newly derived formulas (not already in derived)
         """
         new_formulas: Set[Formula] = set()
         
-        # Try each formula with each rule
-        for current_formula in list(derived):
+        # Apply rules with each frontier formula as the primary input
+        for current_formula in list(frontier):
             for rule in self.tdfol_rules:
                 try:
                     # Try single-formula rules
@@ -198,9 +229,13 @@ class ForwardChainingStrategy(ProverStrategy):
                                     premises=[current_formula]
                                 ))
                     
-                    # Try two-formula rules
+                    # Two-formula rules: pair frontier formula with every known formula.
+                    # Using derived (not frontier×frontier) keeps this O(|frontier|×|derived|).
+                    # Identity check (`is`) is safe here because `derived` is a set of
+                    # frozen dataclasses; value-equality uniqueness means each distinct
+                    # logical formula appears exactly once as one Python object in the set.
                     for other_formula in list(derived):
-                        if current_formula == other_formula:
+                        if current_formula is other_formula:
                             continue
                         try:
                             if hasattr(rule, 'can_apply'):
@@ -215,7 +250,6 @@ class ForwardChainingStrategy(ProverStrategy):
                                             premises=[current_formula, other_formula]
                                         ))
                         except (AttributeError, TypeError, ValueError):
-                            # Rule doesn't support two formulas or application failed
                             continue
                 
                 except (AttributeError, TypeError, ValueError) as e:

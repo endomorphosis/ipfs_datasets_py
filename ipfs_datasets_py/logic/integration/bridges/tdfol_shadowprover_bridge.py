@@ -262,7 +262,6 @@ class TDFOLShadowProverBridge(BaseProverBridge):
                 proof_steps = []
                 for i, sp_step in enumerate(proof_tree.steps):
                     step = ProofStep(
-                        step_number=i + 1,
                         formula=formula,
                         rule_name=sp_step.rule_name,
                         premises=[],  # Could extract from sp_step.premises
@@ -385,11 +384,10 @@ class TDFOLShadowProverBridge(BaseProverBridge):
                 proof_steps = []
                 for i, sp_step in enumerate(tableau.proof_steps):
                     step = ProofStep(
-                        step_number=i + 1,
                         formula=formula,
+                        justification=sp_step.justification or f"Tableau rule: {sp_step.rule_name}",
                         rule_name=sp_step.rule_name,
                         premises=[],
-                        justification=sp_step.justification or f"Tableau rule: {sp_step.rule_name}"
                     )
                     proof_steps.append(step)
                 

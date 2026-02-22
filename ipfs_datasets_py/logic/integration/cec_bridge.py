@@ -281,7 +281,7 @@ class CECBridge:
         
         # Try CEC cache
         try:
-            cached = self.cec_cache.proof_cache.get(formula_hash)
+            cached = self.cec_cache.proof_cache.get_proof(formula_hash)
             if cached:
                 return UnifiedProofResult(
                     is_proved=True,
@@ -318,7 +318,7 @@ class CECBridge:
         
         # Cache to CEC cache
         try:
-            self.cec_cache.proof_cache.put(formula_hash, result)
+            self.cec_cache.proof_cache.cache_proof(formula_hash, None, result)
         except Exception as e:
             logger.warning(f"CEC cache storage failed: {e}")
     

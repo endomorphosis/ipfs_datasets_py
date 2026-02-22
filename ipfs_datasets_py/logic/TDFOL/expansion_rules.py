@@ -34,9 +34,11 @@ class AndExpansionRule(ExpansionRule):
     """
     
     def can_expand(self, formula: Formula, negated: bool = False) -> bool:
+        """Return True when *formula* is an AND binary formula."""
         return isinstance(formula, BinaryFormula) and formula.operator == LogicOperator.AND
     
     def expand(self, context: ExpansionContext) -> ExpansionResult:
+        """Expand: positive → linear (φ, ψ); negative ¬(φ∧ψ) → branching (¬φ | ¬ψ)."""
         formula = context.formula
         assert isinstance(formula, BinaryFormula)
         
@@ -63,9 +65,11 @@ class OrExpansionRule(ExpansionRule):
     """
     
     def can_expand(self, formula: Formula, negated: bool = False) -> bool:
+        """Return True when *formula* is an OR binary formula."""
         return isinstance(formula, BinaryFormula) and formula.operator == LogicOperator.OR
     
     def expand(self, context: ExpansionContext) -> ExpansionResult:
+        """Expand: positive → branching (φ | ψ); negative ¬(φ∨ψ) → linear (¬φ, ¬ψ)."""
         formula = context.formula
         assert isinstance(formula, BinaryFormula)
         
@@ -92,9 +96,11 @@ class ImpliesExpansionRule(ExpansionRule):
     """
     
     def can_expand(self, formula: Formula, negated: bool = False) -> bool:
+        """Return True when *formula* is an IMPLIES binary formula."""
         return isinstance(formula, BinaryFormula) and formula.operator == LogicOperator.IMPLIES
     
     def expand(self, context: ExpansionContext) -> ExpansionResult:
+        """Expand: positive → branching (¬φ | ψ); negative ¬(φ→ψ) → linear (φ, ¬ψ)."""
         formula = context.formula
         assert isinstance(formula, BinaryFormula)
         
@@ -121,9 +127,11 @@ class IffExpansionRule(ExpansionRule):
     """
     
     def can_expand(self, formula: Formula, negated: bool = False) -> bool:
+        """Return True when *formula* is an IFF binary formula."""
         return isinstance(formula, BinaryFormula) and formula.operator == LogicOperator.IFF
     
     def expand(self, context: ExpansionContext) -> ExpansionResult:
+        """Expand: positive → branching (φ,ψ | ¬φ,¬ψ); negative → branching (φ,¬ψ | ¬φ,ψ)."""
         formula = context.formula
         assert isinstance(formula, BinaryFormula)
         
@@ -149,9 +157,11 @@ class NotExpansionRule(ExpansionRule):
     """
     
     def can_expand(self, formula: Formula, negated: bool = False) -> bool:
+        """Return True when *formula* is a UnaryFormula NOT (double negation case)."""
         return isinstance(formula, UnaryFormula) and formula.operator == LogicOperator.NOT
     
     def expand(self, context: ExpansionContext) -> ExpansionResult:
+        """Expand double negation: ¬¬φ → φ (flip the negation flag, linear expansion)."""
         formula = context.formula
         assert isinstance(formula, UnaryFormula)
         

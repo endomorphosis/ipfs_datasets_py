@@ -8,10 +8,13 @@ All bridges (TDFOL-CEC, TDFOL-ShadowProver, TDFOL-Grammar, etc.) should inherit
 from BaseProverBridge to ensure uniform behavior and simplify maintenance.
 """
 
+import logging
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 from ...TDFOL.tdfol_core import Formula
 from ...TDFOL.tdfol_prover import ProofResult

@@ -250,8 +250,13 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
             # Calculate confidence
             if self.use_ml and self.ml_scorer:
                 # Use ML confidence scoring
-                features = self._extract_features(text, formula_string, predicates, quantifiers)
-                confidence = self.ml_scorer.predict(features)
+                confidence = self.ml_scorer.predict_confidence(
+                    sentence=text,
+                    fol_formula=formula_string,
+                    predicates=predicates,
+                    quantifiers=quantifiers,
+                    operators=operators,
+                )
             else:
                 # Use heuristic confidence
                 confidence = self._calculate_heuristic_confidence(text, formula_string, predicates, quantifiers)
