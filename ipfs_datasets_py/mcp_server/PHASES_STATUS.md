@@ -1,6 +1,6 @@
 # MCP Server Phases Status Report
 
-**Last Updated:** 2026-02-22 (Session 43 — client/fastapi_config/trio_adapter/register_p2p_tools all 85%+, +101 tests)  
+**Last Updated:** 2026-02-22 (Session 44 — __main__/investigation_mcp_client/simple_server/standalone_server/temporal_deontic all 80%+, +98 tests)  
 **Branch:** `copilot/create-improvement-refactoring-plan`
 **Master Plan:** [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)  
 **Next Steps:** [MASTER_IMPROVEMENT_PLAN_2026_v6.md](MASTER_IMPROVEMENT_PLAN_2026_v6.md)
@@ -293,7 +293,11 @@ Completed v5 tasks tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROV
 - ✅ `exceptions.py` coverage: 78%→100% (Phase I) — `test_core_modules_session42.py`
 - ✅ `configs.py` coverage: 48%→100% (Phase I) — `test_core_modules_session42.py`
 - ✅ `trio_bridge.py` coverage: 0%→100% (Phase I) — `test_core_modules_session42.py`
-- ✅ `client.py` coverage: 0%→90%+ (Phase I) — `test_server_components_session43.py` (22 tests)
+- ✅ `__main__.py` coverage: 0%→92% (Phase I) — `test_additional_servers_session44.py`
+- ✅ `investigation_mcp_client.py` coverage: 0%→97% (Phase I) — `test_additional_servers_session44.py`
+- ✅ `simple_server.py` coverage: 8%→83% (Phase I) — `test_additional_servers_session44.py`
+- ✅ `standalone_server.py` coverage: 0%→81% (Phase I) — `test_additional_servers_session44.py`
+- ✅ `temporal_deontic_mcp_server.py` coverage: 0%→90% (Phase I) — `test_additional_servers_session44.py`
 - ✅ `fastapi_config.py` coverage: 0%→85%+ (Phase I) — `test_server_components_session43.py` (20 tests)
 - ✅ `trio_adapter.py` coverage: 0%→88%+ (Phase I) — `test_server_components_session43.py` (38 tests)
 - ✅ `register_p2p_tools.py` coverage: 0%→87%+ (Phase I) — `test_server_components_session43.py` (21 tests)

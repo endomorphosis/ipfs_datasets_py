@@ -394,9 +394,7 @@ class TestTrioBridge:
         with patch("sniffio.current_async_library",
                    side_effect=sniffio.AsyncLibraryNotFoundError):
             with patch("anyio.to_thread.run_sync", mock_coro):
-                result = asyncio.get_event_loop().run_until_complete(
-                    trio_bridge.run_in_trio(simple)
-                )
+                result = asyncio.run(trio_bridge.run_in_trio(simple))
         assert result == "fallback_ok"
 
     def test_import_error_raises_runtime_execution_error(self):
@@ -408,12 +406,13 @@ class TestTrioBridge:
         def simple():
             return "unreachable"
 
-        with patch("sniffio.current_async_library",
-                   side_effect=ImportError("trio not installed")):
-            with pytest.raises(RuntimeExecutionError, match="Trio runtime unavailable"):
-                asyncio.get_event_loop().run_until_complete(
-                    trio_bridge.run_in_trio(simple)
-                )
+        async def run_it():
+            with patch("sniffio.current_async_library",
+                       side_effect=ImportError("trio not installed")):
+                with pytest.raises(RuntimeExecutionError, match="Trio runtime unavailable"):
+                    await trio_bridge.run_in_trio(simple)
+
+        asyncio.run(run_it())
 
     def test_generic_exception_falls_back_to_thread_runner(self):
         """A generic exception from sniffio detection falls back to thread runner."""
@@ -426,9 +425,7 @@ class TestTrioBridge:
         with patch("sniffio.current_async_library",
                    side_effect=RuntimeError("unexpected")):
             with patch("anyio.to_thread.run_sync", mock_coro):
-                result = asyncio.get_event_loop().run_until_complete(
-                    trio_bridge.run_in_trio(simple)
-                )
+                result = asyncio.run(trio_bridge.run_in_trio(simple))
         assert result == "generic_fallback"
 
     def test_in_trio_context_runs_inline_sync(self):
@@ -440,9 +437,7 @@ class TestTrioBridge:
 
         # Simulate being inside a Trio event loop
         with patch("sniffio.current_async_library", return_value="trio"):
-            result = asyncio.get_event_loop().run_until_complete(
-                trio_bridge.run_in_trio(sync_fn)
-            )
+            result = asyncio.run(trio_bridge.run_in_trio(sync_fn))
         assert result == "inline_sync"
 
     def test_in_trio_context_runs_inline_async(self):
@@ -453,9 +448,7 @@ class TestTrioBridge:
             return "inline_async"
 
         with patch("sniffio.current_async_library", return_value="trio"):
-            result = asyncio.get_event_loop().run_until_complete(
-                trio_bridge.run_in_trio(async_fn)
-            )
+            result = asyncio.run(trio_bridge.run_in_trio(async_fn))
         assert result == "inline_async"
 
 

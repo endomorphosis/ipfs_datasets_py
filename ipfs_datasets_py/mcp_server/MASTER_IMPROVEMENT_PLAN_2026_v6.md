@@ -411,7 +411,7 @@ Phase 2 and Phase 5 are both complete.  Update status checkboxes.
 
 | Metric | Baseline (2026-02-22) | Target | Achieved |
 |--------|----------------------|--------|---------|
-| Tests passing | 1457 | 1500+ | **1718** (s41: +115, s42: +45, s43: +101) |
+| Tests passing | 1457 | 1500+ | **1816** (s41: +115, s42: +45, s43: +101, s44: +98) |
 | monitoring.py coverage | ~75% | 85%+ | **80%** ✅ (session 40) |
 | enterprise_api.py coverage | ~66% | 80%+ | **80%** ✅ (session 40) |
 | tool_metadata.py coverage | 0% | 85%+ | **100%** ✅ (session 41) |
@@ -425,6 +425,11 @@ Phase 2 and Phase 5 are both complete.  Update status checkboxes.
 | fastapi_config.py coverage | 0% | 80%+ | **85%+** ✅ (session 43) |
 | trio_adapter.py coverage | 0% | 85%+ | **88%+** ✅ (session 43) |
 | register_p2p_tools.py coverage | 0% | 85%+ | **87%+** ✅ (session 43) |
+| __main__.py coverage | 0% | 85%+ | **92%** ✅ (session 44) |
+| investigation_mcp_client.py coverage | 0% | 85%+ | **97%** ✅ (session 44) |
+| simple_server.py coverage | 8% | 80%+ | **83%** ✅ (session 44) |
+| standalone_server.py coverage | 0% | 80%+ | **81%** ✅ (session 44) |
+| temporal_deontic_mcp_server.py coverage | 0% | 80%+ | **90%** ✅ (session 44) |
 | docs/api/tool-reference.md categories | ~4/51 | 51/51 | **52 sections** ✅ |
 | Stub tool READMEs (≤50 lines) | 15 | improved | ✅ (all have tables/usage/status) |
 | Empty TODO.md files | 6 | 0 | **0** ✅ |
