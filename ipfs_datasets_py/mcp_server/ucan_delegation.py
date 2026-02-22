@@ -354,9 +354,6 @@ class DelegationEvaluator:
         )
 
 
-# ─── revocation list (spec §7) ────────────────────────────────────────────────
-
-
 class RevocationList:
     """Tracks revoked delegation token CIDs (spec Profile C §7).
 
@@ -580,6 +577,7 @@ class DelegationStore:
 
 _global_evaluator: Optional[DelegationEvaluator] = None
 _global_store: Optional[DelegationStore] = None
+_global_manager: Optional["DelegationManager"] = None
 
 
 def get_delegation_evaluator() -> DelegationEvaluator:
@@ -596,3 +594,162 @@ def get_delegation_store() -> DelegationStore:
     if _global_store is None:
         _global_store = DelegationStore()
     return _global_store
+
+
+# ─── DelegationManager (BH118) ───────────────────────────────────────────────
+
+
+class DelegationManager:
+    """High-level facade that combines :class:`DelegationStore`,
+    :class:`DelegationEvaluator`, and :class:`RevocationList` into a single
+    lifecycle object with optional persistence.
+
+    Parameters
+    ----------
+    path:
+        Optional path to store delegation tokens on disk.  When ``None``,
+        the manager works entirely in-memory.
+    """
+
+    def __init__(self, path: Optional[str] = None) -> None:
+        self._store = DelegationStore(store_path=path)
+        self._revocation = RevocationList()
+        self._evaluator: Optional[DelegationEvaluator] = None  # lazy / cache
+
+    # ------------------------------------------------------------------
+    # Token lifecycle
+    # ------------------------------------------------------------------
+
+    def add(self, token: DelegationToken) -> str:
+        """Add *token* and return its CID.  Invalidates the evaluator cache."""
+        cid = self._store.add(token)
+        self._evaluator = None  # invalidate cache
+        return cid
+
+    def remove(self, cid: str) -> bool:
+        """Remove token by *cid*.  Invalidates the evaluator cache."""
+        result = self._store.remove(cid)
+        if result:
+            self._evaluator = None
+        return result
+
+    def get(self, cid: str) -> Optional[DelegationToken]:
+        """Return token by *cid* or ``None``."""
+        return self._store.get(cid)
+
+    def list_cids(self) -> List[str]:
+        """Return list of all token CIDs in the store."""
+        return self._store.list_cids()
+
+    # ------------------------------------------------------------------
+    # Revocation
+    # ------------------------------------------------------------------
+
+    def revoke(self, cid: str) -> None:
+        """Revoke a token by *cid*."""
+        self._revocation.revoke(cid)
+
+    def revoke_chain(self, root_cid: str) -> int:
+        """Revoke an entire chain rooted at *root_cid*.
+
+        Builds the chain from the store and revokes all constituent tokens.
+        Returns the number of tokens revoked.
+        """
+        ev = self.get_evaluator()
+        try:
+            chain = ev.build_chain(root_cid)
+            self._revocation.revoke_chain(chain)
+            return len(chain.tokens)
+        except (KeyError, ValueError, RuntimeError) as exc:
+            logger.warning("revoke_chain(%s): could not build chain, revoking root only: %s", root_cid, exc)
+            self._revocation.revoke(root_cid)
+            return 1
+
+    def is_revoked(self, cid: str) -> bool:
+        """Return ``True`` if *cid* has been revoked."""
+        return self._revocation.is_revoked(cid)
+
+    # ------------------------------------------------------------------
+    # Evaluation
+    # ------------------------------------------------------------------
+
+    def get_evaluator(self) -> DelegationEvaluator:
+        """Return a :class:`DelegationEvaluator` (cached; rebuilt on add/remove)."""
+        if self._evaluator is None:
+            self._evaluator = self._store.to_evaluator()
+        return self._evaluator
+
+    def can_invoke(
+        self,
+        principal: str,
+        resource: str,
+        ability: str,
+        *,
+        leaf_cid: str,
+        at_time: Optional[float] = None,
+    ) -> Tuple[bool, str]:
+        """Check whether *principal* can invoke *ability* on *resource*.
+
+        Also checks the revocation list before evaluating the chain.
+
+        Returns
+        -------
+        (allowed: bool, reason: str)
+        """
+        ev = self.get_evaluator()
+        return ev.can_invoke_with_revocation(
+            principal,
+            resource,
+            ability,
+            leaf_cid=leaf_cid,
+            revocation_list=self._revocation,
+            at_time=at_time,
+        )
+
+    # ------------------------------------------------------------------
+    # Persistence
+    # ------------------------------------------------------------------
+
+    def save(self) -> str:
+        """Persist the store to disk.  Returns the path written."""
+        return self._store.save()
+
+    def load(self) -> int:
+        """Load the store from disk.  Returns the number of tokens loaded."""
+        count = self._store.load()
+        self._evaluator = None  # invalidate cache
+        return count
+
+    # ------------------------------------------------------------------
+    # Metrics
+    # ------------------------------------------------------------------
+
+    def get_metrics(self) -> Dict[str, Any]:
+        """Return a metrics snapshot."""
+        return {
+            "token_count": len(self._store),
+            "revoked_count": len(self._revocation),
+            "has_path": self._store._store_path is not None,
+        }
+
+    # ------------------------------------------------------------------
+    # Introspection
+    # ------------------------------------------------------------------
+
+    def __len__(self) -> int:
+        return len(self._store)
+
+    def __repr__(self) -> str:
+        return (
+            f"DelegationManager(tokens={len(self._store)}, "
+            f"revoked={len(self._revocation)})"
+        )
+
+
+def get_delegation_manager() -> "DelegationManager":
+    """Return the process-global :class:`DelegationManager` (lazy-init)."""
+    global _global_manager
+    if _global_manager is None:
+        _global_manager = DelegationManager()
+    return _global_manager
+

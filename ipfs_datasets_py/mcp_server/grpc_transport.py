@@ -1,9 +1,19 @@
 # ipfs_datasets_py/mcp_server/grpc_transport.py
 """
-L52 — gRPC Transport Adapter (stub)
-====================================
-Provides a thin gRPC adapter so MCP tool calls can be served over gRPC in
-addition to the default HTTP/stdio transports.
+L52 — gRPC Transport Adapter (optional stub)
+============================================
+.. important::
+   **The canonical MCP transport is MCP+P2P (Profile E).**
+   See :mod:`ipfs_datasets_py.mcp_server.mcp_p2p_transport` for the primary
+   transport implementation.  The protocol identifier is ``/mcp+p2p/1.0.0``
+   (see :data:`~ipfs_datasets_py.mcp_server.mcp_p2p_transport.MCP_P2P_PROTOCOL_ID`).
+
+   This module provides an *optional, secondary* gRPC bridge adapter for
+   deployments that also need gRPC connectivity (e.g., bridging to existing
+   gRPC service meshes).  It is **not** used by the MCP++ pipeline stages.
+
+Provides a thin gRPC adapter so MCP tool calls can *optionally* be served over
+gRPC in addition to the default MCP+P2P/stdio transports.
 
 **Status:** stub — gRPC server bootstrapping is wired up but the protobuf
 service definition and generated code are intentionally omitted here.  Wire
