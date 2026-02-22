@@ -4340,6 +4340,28 @@ class OntologyCritic(BaseCritic):
         mean_val = sum(vals) / len(vals)
         return sum(1 for v in vals if v > mean_val)
 
+    def dimension_gini(self, score: "CriticScore") -> float:
+        """Return the Gini coefficient of the 6 evaluation dimension values.
+
+        Uses the sorted-list formula:
+        ``G = (2 * sum(i * x_i) - (n+1) * sum(x_i)) / (n * sum(x_i))``
+        where x_i are sorted values (1-indexed).
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Float Gini coefficient in [0, 1]; ``0.0`` when all values are
+            equal or sum is zero.
+        """
+        vals = sorted(getattr(score, d, 0.0) for d in self._DIMENSIONS)
+        n = len(vals)
+        total = sum(vals)
+        if total == 0.0:
+            return 0.0
+        weighted = sum((i + 1) * v for i, v in enumerate(vals))
+        return (2 * weighted - (n + 1) * total) / (n * total)
+
 
 # Export public API
 __all__ = [

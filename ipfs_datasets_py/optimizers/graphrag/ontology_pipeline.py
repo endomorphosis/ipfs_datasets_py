@@ -2338,3 +2338,38 @@ class OntologyPipeline:
             else:
                 current_streak = 0
         return max_streak
+
+    def run_score_gini(self) -> float:
+        """Return the Gini coefficient of run ``score.overall`` values.
+
+        Uses the sorted-list formula:
+        ``G = (2 * sum(i * x_i) - (n+1) * sum(x_i)) / (n * sum(x_i))``
+
+        Returns:
+            Float Gini in [0, 1]; ``0.0`` when fewer than 2 runs or all
+            scores are equal.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        vals = sorted(r.score.overall for r in self._run_history)
+        n = len(vals)
+        total = sum(vals)
+        if total == 0.0:
+            return 0.0
+        weighted = sum((i + 1) * v for i, v in enumerate(vals))
+        return (2 * weighted - (n + 1) * total) / (n * total)
+
+    def first_improving_run(self) -> int:
+        """Return the 0-based index of the first run that improved on the previous.
+
+        Returns:
+            Non-negative integer index; ``-1`` when fewer than 2 runs or no
+            run improved on its predecessor.
+        """
+        if len(self._run_history) < 2:
+            return -1
+        scores = [r.score.overall for r in self._run_history]
+        for i in range(1, len(scores)):
+            if scores[i] > scores[i - 1]:
+                return i
+        return -1

@@ -4874,6 +4874,16 @@ class OntologyOptimizer:
         threshold = scores[idx]
         return sum(1 for e in self._history if e.average_score > threshold)
 
+    def score_gini(self) -> float:
+        """Return the Gini coefficient of history ``average_score`` values.
+
+        Alias for :meth:`score_gini_coefficient`.
+
+        Returns:
+            Float Gini coefficient in [0, 1]; ``0.0`` when history is empty.
+        """
+        return self.score_gini_coefficient()
+
 
 # Export public API
 __all__ = [

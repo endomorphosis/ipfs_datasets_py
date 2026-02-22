@@ -1690,14 +1690,35 @@ Implementation notes:
 
 Testing: 43 new tests in test_batch_206_features.py; all passing.
 
-## Batch 207+ Backlog
+## Batch 207 — Done ✅ (2026-02-22)
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_gini()` — Gini coefficient of history score distribution
-- [ ] (P2) [graphrag] `OntologyOptimizer.history_percentile(p)` — p-th percentile of all history scores
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_gini(score)` — Gini coefficient of dimension values
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_gini(result)` — Gini coefficient of entity confidences
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_gini()` — Gini coefficient of feedback scores
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_gini()` — Gini coefficient of run score distribution
-- [ ] (P2) [graphrag] `OntologyPipeline.first_improving_run()` — index of first run that improved on the previous
-- [ ] (P2) [graphrag] `LogicValidator.degree_centrality(ontology)` — dict of node→degree_centrality
-- [ ] (P2) [graphrag] `LogicValidator.max_degree_node_count(ontology)` — count of nodes at maximum degree
+- [x] (P2) [graphrag] `OntologyOptimizer.score_gini()` — alias for score_gini_coefficient()
+- [x] (P2) [graphrag] `OntologyOptimizer.history_percentile(p)` — already existed in source
+- [x] (P2) [graphrag] `OntologyCritic.dimension_gini(score)` — Gini coefficient of 6 dimension values
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_gini(result)` — Gini coefficient of entity confidences
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_gini()` — already existed in source
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_gini()` — Gini coefficient of run score distribution
+- [x] (P2) [graphrag] `OntologyPipeline.first_improving_run()` — 0-based index of first improving run (-1 if none)
+- [x] (P2) [graphrag] `LogicValidator.degree_centrality(ontology)` — dict of node→degree/(n-1) centrality
+- [x] (P2) [graphrag] `LogicValidator.max_degree_node_count(ontology)` — count of nodes at maximum degree
+
+Implementation notes:
+- score_gini / run_score_gini / dimension_gini / entity_confidence_gini: sorted-list Gini formula
+  G = (2*sum(i*x_i) - (n+1)*sum(x_i)) / (n*sum(x_i)); 0.0 when total=0 or single value.
+- first_improving_run: returns 0-based index of first run with score > previous run; -1 if none.
+- degree_centrality: deg / (n-1) for each node; returns {node: 0.0} when n < 2.
+- max_degree_node_count: count of nodes with degree equal to max degree; 0 when no relationships.
+
+Testing: 48 new tests in test_batch_207_features.py; all passing.
+
+## Batch 208+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_trend_slope()` — linear regression slope of history scores
+- [ ] (P2) [graphrag] `OntologyOptimizer.history_variance()` — variance of all history scores
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_variance(score)` — variance of the 6 dimension values
+- [ ] (P2) [graphrag] `OntologyGenerator.relationship_type_count(result)` — number of distinct relationship types
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_trend_slope()` — linear regression slope of feedback scores
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_variance()` — variance of run score distribution
+- [ ] (P2) [graphrag] `OntologyPipeline.last_improving_run()` — index of last run that improved on previous
+- [ ] (P2) [graphrag] `LogicValidator.closeness_centrality_approx(ontology)` — approximate closeness centrality
+- [ ] (P2) [graphrag] `LogicValidator.reciprocal_edge_count(ontology)` — count of bidirectional edge pairs

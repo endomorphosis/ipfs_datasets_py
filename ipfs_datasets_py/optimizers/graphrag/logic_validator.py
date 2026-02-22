@@ -3640,6 +3640,60 @@ class LogicValidator:
             return 0.0
         return sum(degree.values()) / len(degree)
 
+    def degree_centrality(self, ontology: dict) -> dict:
+        """Return a dict mapping each node to its degree centrality.
+
+        Degree centrality = ``total_degree(node) / (n_nodes - 1)`` where
+        ``n_nodes`` is the number of distinct nodes in the relationship graph.
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Dict of ``{node_id: centrality}``; empty dict when fewer than
+            2 nodes or no relationships.
+        """
+        relationships = ontology.get("relationships", []) or []
+        if not relationships:
+            return {}
+        degree: dict = {}
+        for rel in relationships:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src:
+                degree[src] = degree.get(src, 0) + 1
+            if tgt:
+                degree[tgt] = degree.get(tgt, 0) + 1
+        n = len(degree)
+        if n < 2:
+            return {node: 0.0 for node in degree}
+        return {node: deg / (n - 1) for node, deg in degree.items()}
+
+    def max_degree_node_count(self, ontology: dict) -> int:
+        """Return the count of nodes that share the maximum total degree.
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Non-negative integer; ``0`` when no relationships exist.
+        """
+        relationships = ontology.get("relationships", []) or []
+        if not relationships:
+            return 0
+        degree: dict = {}
+        for rel in relationships:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src:
+                degree[src] = degree.get(src, 0) + 1
+            if tgt:
+                degree[tgt] = degree.get(tgt, 0) + 1
+        if not degree:
+            return 0
+        max_deg = max(degree.values())
+        return sum(1 for d in degree.values() if d == max_deg)
+
 
 # Export public API
 __all__ = [

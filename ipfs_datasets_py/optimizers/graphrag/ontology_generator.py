@@ -7849,6 +7849,29 @@ class OntologyGenerator:
         variance = sum((l - mean) ** 2 for l in lengths) / n
         return variance ** 0.5
 
+    def entity_confidence_gini(self, result: "EntityExtractionResult") -> float:
+        """Return the Gini coefficient of entity confidence scores.
+
+        Uses the sorted-list formula.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Float Gini coefficient in [0, 1]; ``0.0`` when no entities or
+            all confidences are equal.
+        """
+        entities = getattr(result, "entities", []) or []
+        if not entities:
+            return 0.0
+        vals = sorted(getattr(e, "confidence", 0.0) for e in entities)
+        n = len(vals)
+        total = sum(vals)
+        if total == 0.0:
+            return 0.0
+        weighted = sum((i + 1) * v for i, v in enumerate(vals))
+        return (2 * weighted - (n + 1) * total) / (n * total)
+
 
 __all__ = [
     'OntologyGenerator',
