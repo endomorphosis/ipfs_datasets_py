@@ -8034,6 +8034,41 @@ class OntologyGenerator:
             return 0.0
         return sum(len(getattr(r, "type", "") or "") for r in rels) / len(rels)
 
+    def entity_avg_degree(self, result: "EntityExtractionResult") -> float:
+        """Return the average number of relationships per entity in *result*.
+
+        For each entity the *degree* is the number of relationships in which
+        it appears as either the source or the target.  This method returns
+        the mean degree across all entities.
+
+        An entity that appears in no relationships has degree 0.  Relationships
+        that reference entities not in ``result.entities`` are ignored.
+
+        Args:
+            result: :class:`EntityExtractionResult` to analyse.
+
+        Returns:
+            Non-negative float; ``0.0`` when there are no entities.
+
+        Example::
+
+            >>> gen.entity_avg_degree(result)
+            0.0  # no entities
+        """
+        entities = getattr(result, "entities", []) or []
+        rels = getattr(result, "relationships", []) or []
+        if not entities:
+            return 0.0
+        degree: dict = {e.id: 0 for e in entities}
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src in degree:
+                degree[src] += 1
+            if tgt in degree:
+                degree[tgt] += 1
+        return sum(degree.values()) / len(entities)
+
 
 __all__ = [
     'OntologyGenerator',

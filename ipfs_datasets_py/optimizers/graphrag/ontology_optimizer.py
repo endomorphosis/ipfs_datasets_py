@@ -5149,6 +5149,43 @@ class OntologyOptimizer:
             return 0.0
         return sum(abs(u - l) for u, l in zip(upper, lower)) / len(lower)
 
+    def score_trimmed_mean(self, trim_pct: float = 10.0) -> float:
+        """Return the trimmed mean of history scores.
+
+        Both the lowest *trim_pct* % and the highest *trim_pct* % of history
+        scores are discarded before computing the mean.  This reduces the
+        influence of extreme outliers.
+
+        Args:
+            trim_pct: Percentage of entries to trim from each tail.
+                Must be in ``[0.0, 50.0)``.  Default ``10.0``.
+
+        Returns:
+            Trimmed mean as a float; ``0.0`` when the history is empty or
+            after trimming leaves an empty list.
+
+        Raises:
+            ValueError: If *trim_pct* is outside ``[0.0, 50.0)``.
+
+        Example::
+
+            >>> opt.score_trimmed_mean()
+            0.0  # empty history
+        """
+        if not self._history:
+            return 0.0
+        if trim_pct < 0.0 or trim_pct >= 50.0:
+            raise ValueError(
+                f"trim_pct must be in [0.0, 50.0), got {trim_pct!r}"
+            )
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        k = int(n * trim_pct / 100.0)
+        trimmed = scores[k: n - k] if (k < n and n - 2 * k > 0) else scores
+        if not trimmed:
+            return 0.0
+        return sum(trimmed) / len(trimmed)
+
 
 # Export public API
 __all__ = [

@@ -2515,3 +2515,29 @@ class OntologyPipeline:
             return 0.0
         positive = sum(1 for r in self._run_history if r.score.overall > threshold)
         return positive / len(self._run_history)
+
+    def run_score_negative_rate(self, threshold: float = 0.5) -> float:
+        """Return the fraction of run overall scores at or below *threshold*.
+
+        This is the exact complement of :meth:`run_score_positive_rate` when
+        both use the same *threshold*: ``negative_rate + positive_rate == 1.0``
+        always, because the positive rate uses strict ``>`` and this method
+        uses ``<=``, so every run score falls into exactly one category.
+
+        Args:
+            threshold: Score value at or below which a run is considered
+                negative.  Default ``0.5``.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when there are no runs.
+
+        Example::
+
+            >>> pipeline.run_score_negative_rate()
+            0.0  # no runs yet
+        """
+        if not self._run_history:
+            return 0.0
+        negative = sum(1 for r in self._run_history if r.score.overall <= threshold)
+        return negative / len(self._run_history)
+

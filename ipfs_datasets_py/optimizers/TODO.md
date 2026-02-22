@@ -1995,11 +1995,20 @@ Completed stale items:
 - [x] (P2) [graphrag] `OntologyPipeline.run_score_positive_rate()` — implemented in Batch 221
 - [x] (P2) [graphrag] `LogicValidator.isolated_node_count(ontology)` — already existed (line 2677)
 
-## Batch 222+ Backlog
+## Batch 222 — Completed 2026-02-22
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_trimmed_mean(trim_pct)` — trim both tails of history scores
-- [ ] (P2) [graphrag] `OntologyCritic.score_dimension_kurtosis(score)` — excess kurtosis of 6-dim values
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_avg_degree(result)` — average entity mention count across text
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_negative_rate()` — fraction with final_score <= 0.5
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_negative_rate()` — fraction of run scores <= 0.5
-- [ ] (P2) [graphrag] `LogicValidator.weakly_connected_components(ontology)` — count WCCs (union-find)
+- [x] (P2) [graphrag] `OntologyOptimizer.score_trimmed_mean(trim_pct)` — trim both tails; `k < n and n-2*k > 0` guard; ValueError for trim_pct outside [0.0, 50.0)
+- [x] (P2) [graphrag] `OntologyCritic.score_dimension_kurtosis(score)` — population excess kurtosis (m4/σ⁴ - 3); 0.0 when uniform or zero variance
+- [x] (P2) [graphrag] `OntologyGenerator.entity_avg_degree(result)` — mean degree across entities (# rels as source or target); 0.0 no entities
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_negative_rate()` — already implemented (line 1837)
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_negative_rate()` — fraction of run scores <= threshold (default 0.5); complement of positive_rate
+- [x] (P2) [graphrag] `LogicValidator.weakly_connected_components(ontology)` — already implemented (line 2058)
+
+## Batch 223+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_range_ratio()` — (max−min) / (max+min); 0.0 when max+min==0
+- [ ] (P2) [graphrag] `OntologyCritic.score_dimension_skewness(score)` — population skewness of 6-dim values
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_below_threshold(result, threshold)` — count entities with confidence < threshold
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_improvement_streaks()` — length of longest consecutive improvement run
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_acceleration()` — second derivative of run scores (avg delta of deltas)
+- [ ] (P2) [graphrag] `LogicValidator.strongly_connected_component_sizes(ontology)` — list of SCC sizes (Kosaraju)

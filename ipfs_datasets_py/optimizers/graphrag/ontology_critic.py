@@ -4549,6 +4549,47 @@ class OntologyCritic(BaseCritic):
         probs = [v / total for v in vals]
         return -sum(p * math.log(p) for p in probs if p > 0.0)
 
+    def score_dimension_kurtosis(self, score: "CriticScore") -> float:
+        """Return the population excess kurtosis of the six CriticScore dimensions.
+
+        The six dimension values are treated as a population.  Excess kurtosis
+        (also called *Fisher's* kurtosis) is defined as the fourth standardised
+        moment minus 3::
+
+            κ = (μ₄ / σ²²) − 3
+
+        where *μ₄* is the fourth central moment and *σ²* is the population
+        variance.
+
+        A value near 0 indicates a mesokurtic distribution (similar to
+        Normal), negative values indicate platykurtic (flatter), and
+        positive values indicate leptokurtic (more peaked / heavy-tailed).
+
+        Args:
+            score: :class:`CriticScore` instance to analyse.
+
+        Returns:
+            Excess kurtosis as a float; ``0.0`` when all six dimensions are
+            equal (zero variance).
+
+        Example::
+
+            >>> s = CriticScore(completeness=0.0, consistency=0.0,
+            ...                  clarity=0.0, granularity=0.0,
+            ...                  relationship_coherence=0.0, domain_alignment=1.0)
+            >>> critic.score_dimension_kurtosis(s)  # leptokurtic
+            5.0
+        """
+        dims = self._DIMENSIONS
+        vals = [getattr(score, d, 0.0) for d in dims]
+        n = len(vals)  # always 6
+        mean = sum(vals) / n
+        variance = sum((v - mean) ** 2 for v in vals) / n
+        if variance == 0.0:
+            return 0.0
+        m4 = sum((v - mean) ** 4 for v in vals) / n
+        return m4 / (variance ** 2) - 3.0
+
 
 # Export public API
 __all__ = [
