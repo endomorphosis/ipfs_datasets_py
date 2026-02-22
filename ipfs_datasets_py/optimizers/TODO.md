@@ -1525,13 +1525,42 @@ This section captures the full architectural vision beyond batch-method addition
 
 ## Batch 198+ Backlog
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.history_trimmed_mean(trim_fraction)` — trimmed mean ignoring extremes
+- [x] (P2) [graphrag] `OntologyOptimizer.history_trimmed_mean(trim_fraction)` — trimmed mean ignoring extremes
+  - Done 2026-02-21: Added method to OntologyOptimizer (lines 3827-3862) with trim_fraction validation and outlier removal
 - [x] (P2) [graphrag] `OntologyOptimizer.score_z_score()` — z-score of last entry relative to history
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_z_scores(score)` — dict of dim→z-score vs history
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_id_list(result)` — sorted list of entity IDs
+- [x] (P2) [graphrag] `OntologyCritic.dimension_z_scores(score)` — dict of dim→z-score vs history
+  - Done 2026-02-21: Added method to OntologyCritic (lines 2235-2267) with nominal=0.5 and std_dev=0.2 for z-score computation
+- [x] (P2) [graphrag] `OntologyGenerator.entity_id_list(result)` — sorted list of entity IDs
+  - Done 2026-02-21: Added method to OntologyGenerator (lines 5620-5640) with deduplication and None filtering
 - [x] (P2) [graphrag] `OntologyGenerator.relationship_source_ids(result)` — set of source entity IDs
 - [x] (P2) [graphrag] `OntologyGenerator.relationship_target_ids(result)` — set of target entity IDs
-- [ ] (P2) [graphrag] `LogicValidator.hub_nodes(ontology, min_degree)` — nodes with degree >= min_degree
+- [x] (P2) [graphrag] `LogicValidator.hub_nodes(ontology, min_degree)` — nodes with degree >= min_degree
+  - Done 2026-02-21: Added method to LogicValidator (lines 1014-1070) with degree-based hub identification and sorting
 - [x] (P2) [graphrag] `OntologyPipeline.run_score_trimmed_mean(trim_fraction)` — trimmed mean of run scores
 - [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_trimmed_mean(trim_fraction)` — trimmed mean of feedback
 - [x] (P2) [graphrag] `OntologyMediator.action_entropy_change()` — change in action entropy over rounds
+
+## Batch 199 - Complete ✅ (2026-02-21)
+- [x] (P2) [graphrag] `OntologyOptimizer.history_trimmed_mean(trim_fraction)`
+- [x] (P2) [graphrag] `OntologyCritic.dimension_z_scores(score)`
+- [x] (P2) [graphrag] `OntologyGenerator.entity_id_list(result)`
+- [x] (P2) [graphrag] `LogicValidator.hub_nodes(ontology, min_degree)`
+- [x] (P2) [tests] Unit tests for all 4 methods (32 tests, all passing)
+- [x] (P2) [tests] Property-based tests with Hypothesis (2 property tests)
+
+Implementations Summary:
+- history_trimmed_mean: Removes outliers from score history using trim_fraction parameter [0, 0.5)
+- dimension_z_scores: Computes z-scores for each CriticScore dimension (nominal=0.5, std_dev=0.2)
+- entity_id_list: Returns sorted unique entity IDs from extraction results with None/empty filtering
+- hub_nodes: Identifies high-degree nodes in ontology network graphs based on relationship count
+
+Testing Coverage:
+- 8 unit tests for history_trimmed_mean (edge cases, error handling, extremes)
+- 6 unit tests for dimension_z_scores (boundary conditions, dimension coverage)
+- 6 unit tests for entity_id_list (sorting, deduplication, filtering)
+- 10 unit tests for hub_nodes (topology types, sortinf, None handling)
+- 2 property-based tests with Hypothesis for statistical invariants
+
+Bug Fixes in Implementation:
+- Removed duplicate entity_id_list implementation on line 6625
+- Fixed None ID handling in entity_id_list deduplication logic
