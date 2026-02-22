@@ -1823,3 +1823,17 @@ class OntologyLearningAdapter:
         if not self._feedback:
             return 0.0
         return sum(1 for r in self._feedback if r.final_score < threshold) / len(self._feedback)
+
+    def feedback_weighted_sum(self, decay: float = 0.9) -> float:
+        """Return exponentially decayed sum of final scores (most recent weight = 1.0).
+
+        Args:
+            decay: Decay factor per step. Defaults to 0.9.
+
+        Returns:
+            Float weighted sum; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        entries = list(reversed(self._feedback))
+        return sum(r.final_score * (decay ** i) for i, r in enumerate(entries))

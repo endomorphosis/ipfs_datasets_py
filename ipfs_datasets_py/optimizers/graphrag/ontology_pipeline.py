@@ -1765,3 +1765,16 @@ class OntologyPipeline:
         if not self._run_history:
             return 0.0
         return sum(r.score.overall for r in self._run_history) / len(self._run_history)
+
+    def run_score_std(self) -> float:
+        """Return the standard deviation of all run scores.
+
+        Returns:
+            Float std dev; 0.0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        return variance ** 0.5

@@ -1666,6 +1666,19 @@ class OntologyMediator:
         numerator = sum((i + 1) * v for i, v in enumerate(counts_sorted))
         return (2 * numerator) / (n * total) - (n + 1) / n
 
+    def action_count_per_round(self) -> float:
+        """Return the average number of actions recorded per round.
+
+        Uses ``total_action_count() / round_count`` where round_count is the
+        number of entries in ``_round_history`` (falls back to 1 if unavailable).
+
+        Returns:
+            Float average; equals total_action_count() when round count is 1.
+        """
+        total = sum(self._action_counts.values())
+        rounds = len(getattr(self, "_round_history", None) or []) or 1
+        return total / rounds
+
 
 # Export public API
 __all__ = [

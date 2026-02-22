@@ -2381,6 +2381,84 @@ class OntologyGenerator:
         >>> ontology = generator.generate_ontology(data, context)
     """
     
+    # Lazy-loaded domain-specific rule patterns (class-level caching)
+    _verb_patterns_cache = None
+    _type_inference_rules_cache = None
+    
+    @classmethod
+    def _get_verb_patterns(cls):
+        """
+        Get verb-frame patterns for relationship type inference (lazy-loaded).
+        
+        Patterns are compiled once on first access and cached at class level.
+        Each pattern is a tuple of (regex_pattern, relationship_type).
+        
+        Returns:
+            List of tuples: (pattern: str, rel_type: str)
+        """
+        if cls._verb_patterns_cache is None:
+            cls._verb_patterns_cache = [
+                (r'\b(\w+)\s+(?:must|shall|is required to|is obligated to)\s+\w+\s+(\w+)\b', 'obligates'),
+                (r'\b(\w+)\s+owns?\s+(\w+)\b', 'owns'),
+                (r'\b(\w+)\s+causes?\s+(\w+)\b', 'causes'),
+                (r'\b(\w+)\s+(?:is a|is an)\s+(\w+)\b', 'is_a'),
+                (r'\b(\w+)\s+(?:part of|belongs to)\s+(\w+)\b', 'part_of'),
+                (r'\b(\w+)\s+(?:employs?|hired?)\s+(\w+)\b', 'employs'),
+                (r'\b(\w+)\s+(?:manages?|supervises?)\s+(\w+)\b', 'manages'),
+            ]
+        return cls._verb_patterns_cache
+    
+    @classmethod
+    def _get_type_inference_rules(cls):
+        """
+        Get entity type-based relationship type inference rules (lazy-loaded).
+        
+        Rules map entity type pairs to likely relationship types with base confidence.
+        Cached at class level for reuse across instances.
+        
+        Returns:
+            List of dicts with 'condition', 'type', and 'base_confidence' keys
+        """
+        if cls._type_inference_rules_cache is None:
+            cls._type_inference_rules_cache = [
+                {
+                    'condition': lambda e1_type, e2_type: (
+                        ('person' in e1_type or 'person' in e2_type) and 
+                        ('organization' in e1_type or 'organization' in e2_type)
+                    ),
+                    'type': 'works_for',
+                    'base_confidence': 0.65,
+                    'distance_threshold': 100
+                },
+                {
+                    'condition': lambda e1_type, e2_type: (
+                        ('person' in e1_type or 'person' in e2_type) and 
+                        ('location' in e1_type or 'location' in e2_type)
+                    ),
+                    'type': 'located_in',
+                    'base_confidence': 0.60,
+                    'distance_threshold': 80
+                },
+                {
+                    'condition': lambda e1_type, e2_type: (
+                        ('organization' in e1_type or 'organization' in e2_type) and 
+                        ('product' in e1_type or 'product' in e2_type)
+                    ),
+                    'type': 'produces',
+                    'base_confidence': 0.65,
+                    'distance_threshold': 100
+                },
+                {
+                    'condition': lambda e1_type, e2_type: (
+                        (e1_type == e2_type) and (e1_type in ['person', 'organization'])
+                    ),
+                    'type': 'related_to',
+                    'base_confidence': 0.55,
+                    'distance_threshold': 150
+                },
+            ]
+        return cls._type_inference_rules_cache
+    
     def __init__(
         self,
         ipfs_accelerate_config: Optional[Dict[str, Any]] = None,
@@ -2573,16 +2651,8 @@ class OntologyGenerator:
         relationships = []
         text = str(data) if data is not None else ""
 
-        # Heuristic verb-frame patterns: (pattern, relationship_type)
-        _VERB_PATTERNS = [
-            (r'\b(\w+)\s+(?:must|shall|is required to|is obligated to)\s+\w+\s+(\w+)\b', 'obligates'),
-            (r'\b(\w+)\s+owns?\s+(\w+)\b', 'owns'),
-            (r'\b(\w+)\s+causes?\s+(\w+)\b', 'causes'),
-            (r'\b(\w+)\s+(?:is a|is an)\s+(\w+)\b', 'is_a'),
-            (r'\b(\w+)\s+(?:part of|belongs to)\s+(\w+)\b', 'part_of'),
-            (r'\b(\w+)\s+(?:employs?|hired?)\s+(\w+)\b', 'employs'),
-            (r'\b(\w+)\s+(?:manages?|supervises?)\s+(\w+)\b', 'manages'),
-        ]
+        # Use lazy-loaded verb-frame patterns (cached at class level)
+        _VERB_PATTERNS = self._get_verb_patterns()
 
         import re as _re
         entity_texts = {e.text.lower(): e for e in entities}
@@ -2662,24 +2732,21 @@ class OntologyGenerator:
                     e1_type = getattr(e1, 'type', 'unknown').lower()
                     e2_type = getattr(e2, 'type', 'unknown').lower()
                     
-                    # Heuristic type inference: some entity type combinations suggest certain rel types
+                    # Use lazy-loaded type inference rules (cached at class level)
                     inferred_type = 'related_to'  # Default
                     type_confidence = 0.50  # Lower base confidence for heuristic inference
                     
-                    # Entity type-based inference rules
-                    if ('person' in e1_type or 'person' in e2_type) and ('organization' in e1_type or 'organization' in e2_type):
-                        inferred_type = 'works_for'
-                        type_confidence = 0.65 if distance < 100 else 0.50
-                    elif ('person' in e1_type or 'person' in e2_type) and ('location' in e1_type or 'location' in e2_type):
-                        inferred_type = 'located_in'
-                        type_confidence = 0.60 if distance < 80 else 0.45
-                    elif ('organization' in e1_type or 'organization' in e2_type) and ('product' in e1_type or 'product' in e2_type):
-                        inferred_type = 'produces'
-                        type_confidence = 0.65 if distance < 100 else 0.50
-                    elif (e1_type == e2_type) and (e1_type in ['person', 'organization']):
-                        # Same type entities are likely related but type is unclear
-                        inferred_type = 'related_to'
-                        type_confidence = 0.55
+                    # Apply entity type-based inference rules
+                    type_inference_rules = self._get_type_inference_rules()
+                    for rule in type_inference_rules:
+                        if rule['condition'](e1_type, e2_type):
+                            inferred_type = rule['type']
+                            # Apply distance-based confidence thresholding
+                            if distance < rule['distance_threshold']:
+                                type_confidence = rule['base_confidence']
+                            else:
+                                type_confidence = rule['base_confidence'] - 0.15
+                            break
                     
                     # Discount confidence for very distant co-occurrences
                     if distance > 150:
@@ -6064,6 +6131,32 @@ class OntologyGenerator:
         for e in (result.entities or []):
             keys.update((getattr(e, "properties", {}) or {}).keys())
         return keys
+
+    def entity_text_max_length(self, result: "EntityExtractionResult") -> int:
+        """Return the maximum character length of entity text strings.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Integer max length; 0 when no entities.
+        """
+        entities = result.entities or []
+        if not entities:
+            return 0
+        return max(len(getattr(e, "text", "") or "") for e in entities)
+
+    def relationship_type_diversity(self, result: "EntityExtractionResult") -> int:
+        """Return the count of distinct relationship types.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Integer count of unique relationship types; 0 when no relationships.
+        """
+        rels = result.relationships or []
+        return len({getattr(r, "type", None) for r in rels if getattr(r, "type", None)})
 
 
 __all__ = [

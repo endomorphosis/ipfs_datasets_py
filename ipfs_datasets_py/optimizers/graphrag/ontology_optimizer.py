@@ -3784,6 +3784,44 @@ class OntologyOptimizer:
         return "stable"
 
 
+    def history_cumulative_sum(self) -> float:
+        """Return the cumulative sum of all average_score values in history.
+
+        Returns:
+            Float sum; 0.0 when history is empty.
+        """
+        return sum(e.average_score for e in self._history)
+
+    def score_normalized(self) -> float:
+        """Return the last score normalized by the max score in history.
+
+        Returns:
+            Float in [0, 1]; 0.0 when history is empty or max is 0.
+        """
+        if not self._history:
+            return 0.0
+        max_score = max(e.average_score for e in self._history)
+        if max_score == 0:
+            return 0.0
+        return self._history[-1].average_score / max_score
+
+    def history_decay_sum(self, decay: float = 0.9) -> float:
+        """Return exponentially decayed sum of average_score (oldest gets most decay).
+
+        The most recent entry has weight 1.0; each older entry multiplied by *decay*.
+
+        Args:
+            decay: Decay factor per step. Defaults to 0.9.
+
+        Returns:
+            Float weighted sum; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        entries = list(reversed(self._history))
+        return sum(e.average_score * (decay ** i) for i, e in enumerate(entries))
+
+
 # Export public API
 __all__ = [
     'OntologyOptimizer',
