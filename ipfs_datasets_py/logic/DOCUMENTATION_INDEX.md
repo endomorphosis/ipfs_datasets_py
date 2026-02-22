@@ -1,7 +1,7 @@
 # Logic Module Documentation Index
 
-**Last Updated:** 2026-02-20  
-**Status:** Consolidated — 195 total markdown files (69 active, 126 archived)
+**Last Updated:** 2026-02-22  
+**Status:** Consolidated — 196 total markdown files (69 active, 127 archived)
 
 This index provides a comprehensive guide to all documentation in the logic module, organized by purpose and audience.
 
@@ -189,7 +189,7 @@ pytest tests/unit_tests/logic/integration/ -v
 pytest tests/unit_tests/logic/ --cov=ipfs_datasets_py.logic
 ```
 
-**Test Status:** 1,744+ tests across 168 test files, ~87% pass rate (790+ tests in production-ready core modules).
+**Test Status:** 5,500+ tests across 278+ test files, ~97% pass rate. Integration layer: 99% coverage (7,899 lines; 55 uncovered). TDFOL: 1,526+ tests. MCP B2: 1,457 tests (53 categories).
 
 ---
 
@@ -328,11 +328,12 @@ If you find:
 
 ### Documentation Statistics
 
-- **Total Markdown Files:** 195 (69 active, 126 archived)
+- **Total Markdown Files:** 196 (69 active, 127 archived)
 - **Active Documents:** 20 root-level + 15 TDFOL + 14 CEC + 8 ZKP + 12 module READMEs
-- **Archived Documents:** 126 historical records in `docs/archive/`, `TDFOL/ARCHIVE/`, `CEC/ARCHIVE/`, `zkp/ARCHIVE/`
-- **Python Files:** 281 files (~93,529 LOC)
-- **Test Files:** 168 test files, 1,744+ tests, ~87% pass rate
+- **Archived Documents:** 127 historical records in `docs/archive/`, `TDFOL/ARCHIVE/`, `CEC/ARCHIVE/`, `zkp/ARCHIVE/`
+- **Python Files:** 281+ files (~93,529 LOC)
+- **Test Files:** 278+ test files, 5,500+ tests, ~97% pass rate
+- **Integration Coverage:** 99% (7,899 lines; 55 uncovered = dead/symai-gated code)
 - **Type Coverage:** 95%+ (Grade A-, mypy validated)
 - **Performance:** 14x cache speedup validated; 30-40% memory reduction with __slots__
 
