@@ -55,6 +55,7 @@ __all__ = [
     "ComplianceReport",
     "ComplianceChecker",
     "make_default_compliance_checker",
+    "_COMPLIANCE_RULE_VERSION",
 ]
 
 
@@ -194,6 +195,9 @@ ComplianceRuleFn = Callable[[Any], ComplianceResult]
 # Regex for valid tool names
 _TOOL_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 
+# Schema version stored in persisted rule files (Session 62)
+_COMPLIANCE_RULE_VERSION = "1"
+
 
 def _is_json_serializable(obj: Any, _depth: int = 0) -> bool:
     """Return True if *obj* is JSON-serializable."""
@@ -277,6 +281,7 @@ class ComplianceChecker:
         if parent:
             os.makedirs(parent, exist_ok=True)
         data: Dict[str, Any] = {
+            "version": _COMPLIANCE_RULE_VERSION,
             "rule_order": list(self._rule_order),
             "deny_list": sorted(self._deny_list),
         }
@@ -297,6 +302,10 @@ class ComplianceChecker:
         so that the rule slot is preserved in the order.  Callers should then
         call :meth:`add_rule` with the real implementation.
 
+        Emits :class:`UserWarning` when the file's ``"version"`` field differs
+        from :data:`_COMPLIANCE_RULE_VERSION` so that rule migrations are
+        detectable at load time.
+
         Returns:
             Number of rule IDs loaded (including stubs for unknown rules).
         """
@@ -309,6 +318,18 @@ class ComplianceChecker:
         except Exception as exc:
             logger.warning("Could not load compliance rules from %s: %s", path, exc)
             return 0
+
+        # Version compatibility check (Session 62)
+        file_version = data.get("version", "")
+        if file_version and file_version != _COMPLIANCE_RULE_VERSION:
+            import warnings
+            warnings.warn(
+                f"Compliance rule file {path!r} was saved with version "
+                f"{file_version!r} but current version is "
+                f"{_COMPLIANCE_RULE_VERSION!r}. Rule migration may be needed.",
+                UserWarning,
+                stacklevel=2,
+            )
 
         # Restore deny list
         deny_list = data.get("deny_list", [])

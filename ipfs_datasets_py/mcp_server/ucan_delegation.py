@@ -1119,11 +1119,13 @@ class DelegationManager:
         """Return a dict of delegation-related metrics.
 
         Returns:
-            ``{"delegation_count": int, "revoked_cid_count": int}``
+            ``{"delegation_count": int, "revoked_cid_count": int,
+            "max_chain_depth": int}`` — ``max_chain_depth`` is 0 for unlimited.
         """
         return {
             "delegation_count": len(self._store),
             "revoked_cid_count": len(self._revocation),
+            "max_chain_depth": self._max_chain_depth,
         }
 
     def __len__(self) -> int:
@@ -1165,10 +1167,11 @@ def get_delegation_manager(
 def record_delegation_metrics(manager: "DelegationManager", collector: Any) -> None:
     """Surface :class:`DelegationManager` metrics via *collector*.
 
-    Calls :meth:`set_gauge` on *collector* with two metrics:
+    Calls :meth:`set_gauge` on *collector* with three metrics:
 
     - ``mcp_revoked_cids_total`` — number of CIDs in the revocation list.
     - ``mcp_delegation_store_depth`` — number of stored delegations.
+    - ``mcp_delegation_max_chain_depth`` — configured max chain depth (0 = unlimited).
 
     All collector errors are swallowed with a warning so that metric
     recording never crashes the server.
@@ -1187,6 +1190,10 @@ def record_delegation_metrics(manager: "DelegationManager", collector: Any) -> N
         collector.set_gauge(
             "mcp_delegation_store_depth",
             float(metrics["delegation_count"]),
+        )
+        collector.set_gauge(
+            "mcp_delegation_max_chain_depth",
+            float(metrics["max_chain_depth"]),
         )
     except Exception as exc:
         logger.warning("record_delegation_metrics failed: %s", exc)

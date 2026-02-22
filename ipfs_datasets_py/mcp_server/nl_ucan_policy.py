@@ -871,6 +871,148 @@ class FilePolicyStore:
         logger.debug("Loaded %d policies from %s", loaded, self.path)
         return loaded
 
+    # ------------------------------------------------------------------
+    # Encrypted persistence (Session 62)
+    # ------------------------------------------------------------------
+
+    def save_encrypted(self, password: str) -> None:
+        """Persist the current registry to an encrypted companion file.
+
+        The encryption file path is ``<self.path>.enc`` (sibling of the plain
+        JSON file).  Uses AES-256-GCM with a 32-byte key derived from
+        ``SHA-256(password)`` and a random 12-byte nonce.  The file format is
+        ``<12-byte nonce> || <AES-GCM ciphertext>``.
+
+        Creates parent directories if necessary.
+
+        Falls back to :meth:`save` with a :class:`UserWarning` when the
+        ``cryptography`` package is not installed.
+
+        Args:
+            password: Passphrase used to derive the AES key.
+        """
+        try:
+            from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        except ImportError:
+            warnings.warn(
+                "cryptography package not installed; using plain save() instead of "
+                "save_encrypted().",
+                UserWarning,
+                stacklevel=2,
+            )
+            self.save()
+            return
+
+        import os as _os
+        import hashlib as _hashlib
+
+        enc_path = self.path + ".enc"
+        parent = _os.path.dirname(enc_path)
+        if parent:
+            _os.makedirs(parent, exist_ok=True)
+
+        # Build the plain JSON that save() would write.
+        data: Dict[str, Any] = {}
+        for name in self._registry.list_names():
+            compiled = self._registry._compiled.get(name)
+            source = self._registry._sources.get(name)
+            if compiled and source:
+                data[name] = {
+                    "nl_policy": source.text,
+                    "description": compiled.policy.description,
+                    "source_cid": source.source_cid,
+                }
+        plaintext = json.dumps(data, indent=2).encode()
+
+        key = _hashlib.sha256(password.encode()).digest()
+        nonce = _os.urandom(12)
+        ciphertext = AESGCM(key).encrypt(nonce, plaintext, None)
+        with open(enc_path, "wb") as fh:
+            fh.write(nonce + ciphertext)
+        logger.debug("Saved %d policies encrypted to %s", len(data), enc_path)
+
+    def load_encrypted(self, password: str) -> int:
+        """Load policies from the encrypted companion file ``<self.path>.enc``.
+
+        Returns 0 when the file is missing, the password is wrong (authentication
+        failure), the file is too short, or the JSON is corrupt — without raising.
+
+        Falls back to :meth:`load` with a :class:`UserWarning` when the
+        ``cryptography`` package is not installed.
+
+        Args:
+            password: Passphrase used to derive the AES key.
+
+        Returns:
+            Number of policies loaded (0 on any error).
+        """
+        try:
+            from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+            from cryptography.exceptions import InvalidTag
+        except ImportError:
+            warnings.warn(
+                "cryptography package not installed; using plain load() instead of "
+                "load_encrypted().",
+                UserWarning,
+                stacklevel=2,
+            )
+            return self.load()
+
+        import os as _os
+        import hashlib as _hashlib
+        import tempfile as _tempfile
+
+        enc_path = self.path + ".enc"
+        _MIN_BYTES = 13  # 12-byte nonce + at least 1 byte of ciphertext
+        if not _os.path.exists(enc_path):
+            logger.debug("Encrypted policy store file not found: %s", enc_path)
+            return 0
+        try:
+            with open(enc_path, "rb") as fh:
+                raw = fh.read()
+        except OSError as exc:
+            logger.warning("Could not read encrypted policy store %s: %s", enc_path, exc)
+            return 0
+        if len(raw) < _MIN_BYTES:
+            logger.warning("Encrypted policy store %s is too short (%d bytes)", enc_path, len(raw))
+            return 0
+
+        nonce, ciphertext = raw[:12], raw[12:]
+        key = _hashlib.sha256(password.encode()).digest()
+        try:
+            plaintext = AESGCM(key).decrypt(nonce, ciphertext, None)
+        except InvalidTag:
+            logger.warning("Encrypted policy store %s: decryption failed (wrong password?)", enc_path)
+            return 0
+        except Exception as exc:
+            logger.warning("Encrypted policy store %s: error: %s", enc_path, exc)
+            return 0
+
+        try:
+            data = json.loads(plaintext.decode())
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            logger.warning("Encrypted policy store %s: corrupt JSON: %s", enc_path, exc)
+            return 0
+
+        # Write to a temp file and delegate to load() for unified registration logic.
+        with _tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, encoding="utf-8"
+        ) as tmp:
+            json.dump(data, tmp, indent=2)
+            tmp_path = tmp.name
+        try:
+            original_path = self.path
+            self.path = tmp_path
+            count = self.load()
+            self.path = original_path
+        finally:
+            try:
+                _os.unlink(tmp_path)
+            except OSError:
+                pass
+        logger.debug("Loaded %d policies encrypted from %s", count, enc_path)
+        return count
+
 
 # ---------------------------------------------------------------------------
 # Async policy registration (session 56)

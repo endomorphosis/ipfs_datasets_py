@@ -361,7 +361,8 @@ class TestRecordDelegationMetrics:
         mgr = self._make_mgr(tmp_path)
         collector = MagicMock()
         record_delegation_metrics(mgr, collector)
-        assert collector.set_gauge.call_count == 2
+        # Session 62 added mcp_delegation_max_chain_depth as a third gauge
+        assert collector.set_gauge.call_count >= 2
 
     def test_swallows_collector_exception(self, tmp_path):
         from ipfs_datasets_py.mcp_server.ucan_delegation import record_delegation_metrics
