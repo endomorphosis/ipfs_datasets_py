@@ -4056,6 +4056,70 @@ class LogicValidator:
 
         return max_dist
 
+    def eccentricity_distribution(self, ontology: dict) -> list:
+        """Return the eccentricity of every node in the directed graph.
+
+        The eccentricity of a node is the maximum shortest-path distance from
+        that node to any other node it can reach via directed edges.  Nodes
+        that cannot reach any other node have eccentricity **0**.
+
+        Args:
+            ontology: Dict with ``"entities"`` and ``"relationships"`` lists.
+                Each relationship must have ``"source"`` and ``"target"`` keys.
+
+        Returns:
+            List of non-negative integers, one per node in deterministic
+            (sorted) order; empty list when the graph has no nodes.
+
+        Example::
+
+            >>> dist = validator.eccentricity_distribution(
+            ...     {"entities": [{"id": "A"}, {"id": "B"}],
+            ...      "relationships": [{"source": "A", "target": "B"}]})
+            >>> dist  # A reaches B in 1 hop; B reaches nothing
+            [1, 0]
+        """
+        from collections import deque
+        entities = ontology.get("entities", []) or []
+        rels = ontology.get("relationships", []) or []
+
+        nodes: set = set()
+        for e in entities:
+            node_id = (e.get("id") or e.get("name", "")) if isinstance(e, dict) else str(e)
+            if node_id:
+                nodes.add(node_id)
+
+        adj: dict = {}
+        for r in rels:
+            if not isinstance(r, dict):
+                continue
+            src = r.get("source")
+            tgt = r.get("target")
+            if not src or not tgt or src == tgt:
+                continue
+            nodes.add(src)
+            nodes.add(tgt)
+            adj.setdefault(src, []).append(tgt)
+            adj.setdefault(tgt, [])
+
+        if not nodes:
+            return []
+
+        result = []
+        for start in sorted(nodes):
+            dist: dict = {start: 0}
+            queue: deque = deque([start])
+            while queue:
+                node = queue.popleft()
+                for nb in adj.get(node, []):
+                    if nb not in dist:
+                        dist[nb] = dist[node] + 1
+                        queue.append(nb)
+            max_dist = max(dist.values()) if len(dist) > 1 else 0
+            result.append(max_dist)
+
+        return result
+
 
 # Export public API
 __all__ = [

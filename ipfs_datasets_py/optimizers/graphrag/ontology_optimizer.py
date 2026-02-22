@@ -5021,6 +5021,51 @@ class OntologyOptimizer:
         uniform_freq = 1.0 / num_bins
         return max(abs(count / n - uniform_freq) for count in bins)
 
+    def score_bimodality_index(self) -> float:
+        """Return a variance-ratio bimodality index for history ``average_score``.
+
+        Sorts all history scores and splits them into a lower and upper half
+        at the median.  The index is the fraction of total variance *explained*
+        by that median split (η²):
+
+        .. math::
+
+            \\text{index} = 1 - \\frac{\\text{within-split variance}}{\\text{total variance}}
+
+        A value close to **1.0** indicates the scores form two well-separated
+        clusters (strongly bimodal), while **0.0** means all scores are equal.
+        A uniformly spread distribution scores roughly 0.75.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when fewer than 2 entries or total
+            variance is zero.
+
+        Example::
+
+            >>> opt.score_bimodality_index()
+            0.0  # single entry or all identical scores
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        mean = sum(scores) / n
+        total_var = sum((s - mean) ** 2 for s in scores) / n
+        if total_var == 0.0:
+            return 0.0
+        mid = n // 2
+        lower = scores[:mid]
+        upper = scores[mid:]
+
+        def _var(xs: list) -> float:
+            m = sum(xs) / len(xs)
+            return sum((x - m) ** 2 for x in xs) / len(xs)
+
+        var_lower = _var(lower) if lower else 0.0
+        var_upper = _var(upper) if upper else 0.0
+        within_var = (var_lower * len(lower) + var_upper * len(upper)) / n
+        return max(0.0, 1.0 - within_var / total_var)
+
 
 # Export public API
 __all__ = [

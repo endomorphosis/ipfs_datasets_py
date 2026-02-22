@@ -1860,11 +1860,30 @@ Implementation notes:
 
 Testing: 48 tests in test_batch_214_features.py; all passing.
 
-## Batch 215+ Backlog
+## Batch 215 — Done ✅ (2026-02-22)
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_bimodality_index()` — bimodality based on second histogram moment (var ratio)
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_percentile_rank(score, dim)` — rank of given dimension among all dims
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_avg_text_length(result)` — mean character length of entity text
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_last_n_mean(n)` — mean of last n feedback scores
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_iqr()` — IQR of run overall scores
-- [ ] (P2) [graphrag] `LogicValidator.eccentricity_distribution(ontology)` — list of per-node eccentricities
+- [x] (P2) [graphrag] `OntologyOptimizer.score_bimodality_index()` — variance-ratio bimodality (η²)
+- [x] (P2) [graphrag] `OntologyCritic.dimension_percentile_rank(score, dim)` — rank of given dimension among all 6 dims
+- [x] (P2) [graphrag] `OntologyGenerator.entity_avg_text_length(result)` — already existed at line 6946 (stale)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_last_n_mean(n)` — already existed as `feedback_mean_last_n` at line 2023 (stale)
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_iqr()` — already existed at line 1560 (stale)
+- [x] (P2) [graphrag] `LogicValidator.eccentricity_distribution(ontology)` — per-node BFS eccentricity list
+
+Implementation notes:
+- score_bimodality_index: sorts scores, splits at median, returns 1 - within_split_var/total_var (η²).
+  0.0 when fewer than 2 entries or total variance = 0; 1.0 for perfectly bimodal (2 tight clusters).
+- dimension_percentile_rank: count(v ≤ dim_val) / 6; 0.0 for invalid dim names.
+- eccentricity_distribution: BFS from each node (directed); 0 for nodes that reach no other node;
+  result is sorted by node ID for determinism; empty list for empty graphs.
+
+Testing: 40 tests in test_batch_215_features.py; 36 pass (4 stale smoke tests fail in this env
+  due to pre-existing numpy import issue in ontology_generator/__init__, same as batch 214).
+
+## Batch 216+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_bimodality_coefficient()` — Pearson BC (skewness² + 1)/(kurtosis + 3)
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_coefficient_of_variation(score)` — std/mean of 6 dims
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_mode(result)` — most common confidence bucket
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_spike_count(threshold)` — count sudden score jumps
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_range()` — max - min of run scores
+- [ ] (P2) [graphrag] `LogicValidator.radius_approx(ontology)` — min eccentricity of reachable nodes

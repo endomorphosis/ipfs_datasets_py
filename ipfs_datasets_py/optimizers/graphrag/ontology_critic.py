@@ -4483,6 +4483,36 @@ class OntologyCritic(BaseCritic):
         wvar = sum(w * (v - wmean) ** 2 for w, v in zip(norm_w, vals))
         return wvar ** 0.5
 
+    def dimension_percentile_rank(self, score: "CriticScore", dim: str) -> float:
+        """Return the percentile rank of a named dimension within a CriticScore.
+
+        The percentile rank is the fraction of all six dimension values that
+        are **less than or equal to** the named dimension's value.
+
+        Args:
+            score: :class:`CriticScore` instance to inspect.
+            dim: Name of the dimension to rank (e.g. ``'completeness'``).
+                Must be one of the six standard dimensions.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when *dim* is not a valid
+            dimension name.
+
+        Example::
+
+            >>> s = CriticScore(completeness=1.0, consistency=0.5,
+            ...                  clarity=0.5, granularity=0.5,
+            ...                  relationship_coherence=0.5, domain_alignment=0.5)
+            >>> critic.dimension_percentile_rank(s, 'completeness')
+            1.0
+        """
+        dims = self._DIMENSIONS
+        if dim not in dims:
+            return 0.0
+        dim_val = getattr(score, dim, 0.0)
+        all_vals = [getattr(score, d, 0.0) for d in dims]
+        return sum(1 for v in all_vals if v <= dim_val) / len(all_vals)
+
 
 # Export public API
 __all__ = [
