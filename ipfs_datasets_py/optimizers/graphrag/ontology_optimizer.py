@@ -3734,6 +3734,56 @@ class OntologyOptimizer:
         return (below / n) * 100.0
 
 
+    def history_span(self) -> float:
+        """Return the difference between max and min average_score in history.
+
+        Returns:
+            Float span (max - min); 0.0 when fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        vals = [e.average_score for e in self._history]
+        return max(vals) - min(vals)
+
+    def history_change_rate(self) -> float:
+        """Return the fraction of consecutive pairs where score changed (non-zero delta).
+
+        Returns:
+            Float in [0, 1]; 0.0 when fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        changes = sum(
+            1 for i in range(len(self._history) - 1)
+            if self._history[i + 1].average_score != self._history[i].average_score
+        )
+        return changes / (len(self._history) - 1)
+
+    def history_trend_direction(self) -> str:
+        """Return a string indicating the overall trend direction of history.
+
+        Compares the mean of the second half against the first half.
+
+        Returns:
+            ``"improving"``, ``"declining"``, or ``"stable"``.
+            Returns ``"stable"`` when history is empty or has 1 entry.
+        """
+        n = len(self._history)
+        if n < 2:
+            return "stable"
+        mid = n // 2
+        first_half = [e.average_score for e in self._history[:mid]]
+        second_half = [e.average_score for e in self._history[mid:]]
+        mean_first = sum(first_half) / len(first_half)
+        mean_second = sum(second_half) / len(second_half)
+        diff = mean_second - mean_first
+        if diff > 0.01:
+            return "improving"
+        if diff < -0.01:
+            return "declining"
+        return "stable"
+
+
 # Export public API
 __all__ = [
     'OntologyOptimizer',

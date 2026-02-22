@@ -4006,6 +4006,19 @@ class OntologyCritic(BaseCritic):
             return 0.0
         return sum(getattr(score, d, 0.0) * weights.get(d, 1.0) for d in self._DIMENSIONS) / total_w
 
+    def dimension_top_k(self, score: "CriticScore", k: int = 3) -> list:
+        """Return the names of the top-k highest-scoring dimensions.
+
+        Args:
+            score: CriticScore to evaluate.
+            k: Number of top dimensions to return. Defaults to 3.
+
+        Returns:
+            List of dimension name strings sorted descending by value.
+        """
+        ranked = sorted(self._DIMENSIONS, key=lambda d: getattr(score, d, 0.0), reverse=True)
+        return ranked[:k]
+
 
 # Export public API
 __all__ = [

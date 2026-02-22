@@ -6051,6 +6051,20 @@ class OntologyGenerator:
         confs = [getattr(r, "confidence", 0.0) or 0.0 for r in rels]
         return max(confs) - min(confs)
 
+    def entity_property_keys(self, result: "EntityExtractionResult") -> set:
+        """Return the union of all property keys across entities.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Set of string property key names; empty set when no entities.
+        """
+        keys: set = set()
+        for e in (result.entities or []):
+            keys.update((getattr(e, "properties", {}) or {}).keys())
+        return keys
+
 
 __all__ = [
     'OntologyGenerator',

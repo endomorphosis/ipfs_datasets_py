@@ -1755,3 +1755,13 @@ class OntologyPipeline:
             if self._run_history[i + 1].score.overall > self._run_history[i].score.overall
         )
         return improvements / (len(self._run_history) - 1)
+
+    def run_score_mean(self) -> float:
+        """Return the arithmetic mean of all run scores.
+
+        Returns:
+            Float mean; 0.0 when no runs.
+        """
+        if not self._run_history:
+            return 0.0
+        return sum(r.score.overall for r in self._run_history) / len(self._run_history)

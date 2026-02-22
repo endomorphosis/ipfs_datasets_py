@@ -1649,6 +1649,23 @@ class OntologyMediator:
         )
         return entropy / max_entropy
 
+    def action_gini(self) -> float:
+        """Return the Gini coefficient of the action count distribution.
+
+        A value of 0 = perfect equality; 1 = complete concentration.
+
+        Returns:
+            Float Gini coefficient; 0.0 when no actions or only one action type.
+        """
+        counts = list(self._action_counts.values())
+        n = len(counts)
+        if n <= 1 or sum(counts) == 0:
+            return 0.0
+        counts_sorted = sorted(counts)
+        total = sum(counts_sorted)
+        numerator = sum((i + 1) * v for i, v in enumerate(counts_sorted))
+        return (2 * numerator) / (n * total) - (n + 1) / n
+
 
 # Export public API
 __all__ = [

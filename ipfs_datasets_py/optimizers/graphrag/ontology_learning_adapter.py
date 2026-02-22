@@ -1810,3 +1810,16 @@ class OntologyLearningAdapter:
         if not self._feedback:
             return 0.0
         return sum(1 for r in self._feedback if r.final_score > threshold) / len(self._feedback)
+
+    def feedback_negative_rate(self, threshold: float = 0.4) -> float:
+        """Return the fraction of feedback records with final_score below threshold.
+
+        Args:
+            threshold: Exclusive upper bound. Defaults to 0.4.
+
+        Returns:
+            Float in [0, 1]; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        return sum(1 for r in self._feedback if r.final_score < threshold) / len(self._feedback)
