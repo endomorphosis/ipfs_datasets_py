@@ -4353,6 +4353,38 @@ class LogicValidator:
         )
         return sorted((len(scc) for scc in sccs), reverse=True)
 
+    def scc_giant_fraction(self, ontology: Any) -> float:
+        """Return the fraction of nodes belonging to the largest SCC.
+
+        Computed as ``largest_SCC_size / total_nodes``.  A value of
+        ``1.0`` means the entire graph is one strongly connected component;
+        a value close to ``0`` indicates that no large mutually-reachable
+        cluster exists.
+
+        In Kosaraju's algorithm every node belongs to exactly one SCC, so
+        ``sum(SCC sizes) == total_nodes`` always holds.
+
+        Args:
+            ontology: Ontology object or dict — same format accepted by
+                :meth:`strongly_connected_component_sizes`.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when the ontology has no
+            entities.
+
+        Example::
+
+            >>> lv.scc_giant_fraction({"entities": [], "relationships": []})
+            0.0
+        """
+        sizes = self.strongly_connected_component_sizes(ontology)
+        if not sizes:
+            return 0.0
+        total = sum(sizes)
+        if total == 0:
+            return 0.0
+        return sizes[0] / total
+
 
 __all__ = [
     'LogicValidator',

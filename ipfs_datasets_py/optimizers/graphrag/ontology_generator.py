@@ -8098,6 +8098,40 @@ class OntologyGenerator:
                 count += 1
         return count
 
+    def entity_confidence_above_threshold(
+        self,
+        result: "EntityExtractionResult",
+        threshold: float = 0.5,
+    ) -> int:
+        """Count entities whose confidence score is at or above *threshold*.
+
+        This is the complement of
+        :meth:`entity_confidence_below_threshold`: for any given
+        *threshold*, both counts sum to the total number of entities that
+        have a non-``None`` confidence value.
+
+        Args:
+            result: An :class:`EntityExtractionResult` (or any object with an
+                ``entities`` attribute).
+            threshold: Lower bound (inclusive) for the high-confidence test.
+                Default ``0.5``.
+
+        Returns:
+            Non-negative integer count; ``0`` when *result* has no entities.
+
+        Example::
+
+            >>> gen.entity_confidence_above_threshold(result, threshold=0.5)
+            0  # no entities
+        """
+        entities = getattr(result, "entities", []) or []
+        count = 0
+        for e in entities:
+            conf = getattr(e, "confidence", None)
+            if conf is not None and conf >= threshold:
+                count += 1
+        return count
+
 
 __all__ = [
     'OntologyGenerator',

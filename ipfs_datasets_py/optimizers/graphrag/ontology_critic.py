@@ -4626,6 +4626,35 @@ class OntologyCritic(BaseCritic):
         m3 = sum((v - mean) ** 3 for v in vals) / n
         return m3 / (std ** 3)
 
+    def score_dimension_range_ratio(self, score: "CriticScore") -> float:
+        """Return the range ratio of the six CriticScore dimension values.
+
+        Computed as ``(max − min) / (max + min)`` across the six dimension
+        values.  Mirrors :meth:`OntologyOptimizer.score_range_ratio` but
+        operates on a single :class:`CriticScore` rather than the history.
+
+        Args:
+            score: A :class:`CriticScore` instance to evaluate.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when ``max + min == 0`` (all
+            dimension values are zero).
+
+        Example::
+
+            >>> s = CriticScore(completeness=0.2, consistency=0.8,
+            ...                  clarity=0.5, granularity=0.5,
+            ...                  relationship_coherence=0.5, domain_alignment=0.5)
+            >>> critic.score_dimension_range_ratio(s)
+            0.6  # (0.8 − 0.2) / (0.8 + 0.2)
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        lo = min(vals)
+        hi = max(vals)
+        if hi + lo == 0.0:
+            return 0.0
+        return (hi - lo) / (hi + lo)
+
 
 # Export public API
 __all__ = [

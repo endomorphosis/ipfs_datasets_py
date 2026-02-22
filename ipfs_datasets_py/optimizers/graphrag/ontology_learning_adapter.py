@@ -2567,3 +2567,41 @@ class OntologyLearningAdapter:
             else:
                 current = 0
         return best
+
+    def feedback_decline_streaks(self) -> int:
+        """Return the length of the longest consecutive decline run.
+
+        A decline step is a consecutive pair where
+        ``scores[i] < scores[i-1]``.  The method returns the length of the
+        longest such run (number of decline *steps* in the run).
+
+        This is the exact symmetric counterpart of
+        :meth:`feedback_improvement_streaks` with the inequality reversed.
+
+        Returns:
+            Non-negative integer; ``0`` when fewer than 2 feedback records or
+            when there are no declining steps.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.9, actions={})
+            >>> adapter.apply_feedback(final_score=0.7, actions={})
+            >>> adapter.apply_feedback(final_score=0.8, actions={})
+            >>> adapter.apply_feedback(final_score=0.5, actions={})
+            >>> adapter.apply_feedback(final_score=0.3, actions={})
+            >>> adapter.feedback_decline_streaks()
+            2  # longest streak: 0.8→0.5 and 0.5→0.3
+        """
+        if len(self._feedback) < 2:
+            return 0
+        scores = [r.final_score for r in self._feedback]
+        best = 0
+        current = 0
+        for i in range(1, len(scores)):
+            if scores[i] < scores[i - 1]:
+                current += 1
+                if current > best:
+                    best = current
+            else:
+                current = 0
+        return best

@@ -5211,6 +5211,36 @@ class OntologyOptimizer:
             return 0.0
         return (hi - lo) / (hi + lo)
 
+    def score_variance_to_range_ratio(self) -> float:
+        """Return the ratio of population variance to the square of the range.
+
+        Computed as ``σ² / (max − min)²``.  This dimensionless measure
+        compares how spread out the scores are relative to their full extent.
+        A value near ``0`` means the variance is negligible compared to the
+        range; a value near ``1/4`` is expected for a uniform distribution.
+
+        Returns:
+            Float; ``0.0`` when the history is empty or when
+            ``max == min`` (zero range).
+
+        Example::
+
+            >>> opt.score_variance_to_range_ratio()
+            0.0  # empty history
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        lo = min(scores)
+        hi = max(scores)
+        rng = hi - lo
+        if rng == 0.0:
+            return 0.0
+        n = len(scores)
+        mean = sum(scores) / n
+        variance = sum((s - mean) ** 2 for s in scores) / n
+        return variance / (rng ** 2)
+
 
 # Export public API
 __all__ = [

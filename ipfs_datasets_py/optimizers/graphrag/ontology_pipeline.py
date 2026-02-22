@@ -2541,3 +2541,33 @@ class OntologyPipeline:
         negative = sum(1 for r in self._run_history if r.score.overall <= threshold)
         return negative / len(self._run_history)
 
+    def run_score_jerk(self) -> float:
+        """Return the mean third derivative of run overall scores.
+
+        The *jerk* is the rate of change of acceleration
+        (:meth:`run_score_acceleration`).  It is computed as the mean of
+        ``acceleration[i+1] − acceleration[i]`` across successive
+        acceleration values, which requires at least **4** run history
+        entries.
+
+        A positive jerk indicates the acceleration itself is increasing
+        (the improvement rate is speeding up); negative jerk indicates
+        the acceleration is decreasing.
+
+        Returns:
+            Float; ``0.0`` when fewer than 4 runs are recorded.
+
+        Example::
+
+            >>> pipeline.run_score_jerk()
+            0.0  # fewer than 4 runs
+        """
+        n = len(self._run_history)
+        if n < 4:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        fd = [scores[i + 1] - scores[i] for i in range(n - 1)]
+        sd = [fd[i + 1] - fd[i] for i in range(len(fd) - 1)]
+        td = [sd[i + 1] - sd[i] for i in range(len(sd) - 1)]
+        return sum(td) / len(td)
+
