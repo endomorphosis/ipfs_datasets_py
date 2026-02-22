@@ -1553,3 +1553,28 @@ class OntologyPipeline:
         scores = [r.score.overall for r in self._run_history]
         mean = sum(scores) / len(scores)
         return sum(1 for s in scores if s > mean) / len(scores)
+
+    def run_score_kurtosis(self) -> float:
+        """Return the excess kurtosis of run overall scores.
+
+        Returns:
+            Float; 0.0 when fewer than 4 runs.
+        """
+        n = len(self._run_history)
+        if n < 4:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        mean = sum(scores) / n
+        m2 = sum((s - mean) ** 2 for s in scores) / n
+        if m2 == 0.0:
+            return 0.0
+        m4 = sum((s - mean) ** 4 for s in scores) / n
+        return m4 / (m2 ** 2) - 3.0
+
+    def run_score_sum(self) -> float:
+        """Return the sum of all run overall scores.
+
+        Returns:
+            Float; 0.0 when no runs.
+        """
+        return sum(r.score.overall for r in self._run_history)

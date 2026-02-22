@@ -3272,6 +3272,52 @@ class OntologyOptimizer:
         numer = sum((i + 1) * v for i, v in enumerate(scores))
         return (2 * numer / (n * total)) - (n + 1) / n
 
+    def history_outlier_count(self, z_thresh: float = 2.0) -> int:
+        """Return the number of history entries whose z-score exceeds *z_thresh*.
+
+        Args:
+            z_thresh: Absolute z-score threshold (default 2.0).
+
+        Returns:
+            Integer count; 0 when fewer than 2 entries.
+        """
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        if n < 2:
+            return 0
+        mean = sum(scores) / n
+        std = (sum((s - mean) ** 2 for s in scores) / n) ** 0.5
+        if std == 0.0:
+            return 0
+        return sum(1 for s in scores if abs((s - mean) / std) > z_thresh)
+
+    def score_autocorrelation(self, lag: int = 1) -> float:
+        """Return the lag-*lag* autocorrelation of history scores.
+
+        Uses the Pearson correlation between ``scores[:-lag]`` and ``scores[lag:]``.
+
+        Args:
+            lag: Lag value (default 1).
+
+        Returns:
+            Float in [-1, 1]; 0.0 when insufficient data.
+        """
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        if n <= lag:
+            return 0.0
+        x = scores[:-lag]
+        y = scores[lag:]
+        m = len(x)
+        mx = sum(x) / m
+        my = sum(y) / m
+        num = sum((xi - mx) * (yi - my) for xi, yi in zip(x, y))
+        dx = sum((xi - mx) ** 2 for xi in x) ** 0.5
+        dy = sum((yi - my) ** 2 for yi in y) ** 0.5
+        if dx == 0.0 or dy == 0.0:
+            return 0.0
+        return num / (dx * dy)
+
 
 # Export public API
 __all__ = [

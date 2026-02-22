@@ -5701,6 +5701,47 @@ class OntologyGenerator:
             return 0.0
         return len(rels) / len(entities)
 
+    def relationship_coverage(self, result: Any) -> float:
+        """Return fraction of entities that appear in at least one relationship.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float in [0, 1]; 0.0 when no entities.
+        """
+        entities = result.entities or []
+        rels = result.relationships or []
+        if not entities:
+            return 0.0
+        connected: set = set()
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src:
+                connected.add(src)
+            if tgt:
+                connected.add(tgt)
+        entity_ids = {e.id for e in entities if e.id}
+        return len(entity_ids & connected) / len(entities)
+
+    def entity_confidence_variance(self, result: Any) -> float:
+        """Return the variance of entity confidence scores.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float; 0.0 when fewer than 2 entities.
+        """
+        entities = result.entities or []
+        n = len(entities)
+        if n < 2:
+            return 0.0
+        confs = [getattr(e, "confidence", 0.5) for e in entities]
+        mean = sum(confs) / n
+        return sum((c - mean) ** 2 for c in confs) / n
+
 
 __all__ = [
     'OntologyGenerator',

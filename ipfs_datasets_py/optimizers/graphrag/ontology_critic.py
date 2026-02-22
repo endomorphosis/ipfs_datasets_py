@@ -3751,6 +3751,29 @@ class OntologyCritic(BaseCritic):
             if getattr(score, d, 0.0) < threshold
         )
 
+    def dimension_spread(self, score: "CriticScore") -> float:  # type: ignore[name-defined]
+        """Return max - min of the six dimension values.
+
+        Args:
+            score: ``CriticScore`` to inspect.
+
+        Returns:
+            Float in [0, 1].
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        return max(vals) - min(vals)
+
+    def top_dimension(self, score: "CriticScore") -> str:  # type: ignore[name-defined]
+        """Return the name of the highest-scoring dimension.
+
+        Args:
+            score: ``CriticScore`` to inspect.
+
+        Returns:
+            String dimension name.
+        """
+        return max(self._DIMENSIONS, key=lambda d: getattr(score, d, 0.0))
+
 
 # Export public API
 __all__ = [

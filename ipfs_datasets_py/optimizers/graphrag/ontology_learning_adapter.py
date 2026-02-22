@@ -1617,3 +1617,31 @@ class OntologyLearningAdapter:
             return 0.0
         numer = sum((i + 1) * v for i, v in enumerate(scores))
         return (2 * numer / (n * total)) - (n + 1) / n
+
+    def feedback_below_mean_count(self) -> int:
+        """Return the number of feedback records below the mean score.
+
+        Returns:
+            Integer count; 0 when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        return sum(1 for s in scores if s < mean)
+
+    def feedback_above_median(self) -> int:
+        """Return the count of feedback records with score above the median.
+
+        Returns:
+            Integer count; 0 when no records.
+        """
+        if not self._feedback:
+            return 0
+        scores = sorted(r.final_score for r in self._feedback)
+        n = len(scores)
+        if n % 2 == 0:
+            median = (scores[n // 2 - 1] + scores[n // 2]) / 2.0
+        else:
+            median = scores[n // 2]
+        return sum(1 for r in self._feedback if r.final_score > median)

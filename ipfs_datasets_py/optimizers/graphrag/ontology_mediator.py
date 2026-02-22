@@ -1569,6 +1569,30 @@ class OntologyMediator:
             return 0.0
         return float(success) / count
 
+    def action_entropy(self) -> float:
+        """Return the Shannon entropy of the action count distribution.
+
+        A uniform distribution gives maximum entropy; a single dominant
+        action gives entropy near 0.
+
+        Returns:
+            Float; 0.0 when no actions recorded.
+        """
+        import math
+        counts = [v for v in self._action_counts.values() if v > 0]
+        total = sum(counts)
+        if total == 0:
+            return 0.0
+        return -sum((c / total) * math.log(c / total) for c in counts)
+
+    def total_action_count(self) -> int:
+        """Return the total number of action invocations recorded.
+
+        Returns:
+            Integer count; 0 when no actions recorded.
+        """
+        return sum(self._action_counts.values())
+
 
 # Export public API
 __all__ = [
