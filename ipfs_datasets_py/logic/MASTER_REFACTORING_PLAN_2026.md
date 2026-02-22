@@ -1074,6 +1074,8 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | TDFOL strategies/strategy_selector.py | 67% | 90% | 85% (session 35: fallback/add_strategy/select_multiple) |
 | TDFOL strategies/cec_delegate.py | 76% | 90% | 88% (session 35: CEC=True paths + exception handling) |
 | TDFOL strategies/modal_tableaux.py | 65% | 90% | 74% (session 35: _prove_basic_modal/estimate_cost/traverse) |
+| TDFOL proof_tree_visualizer.py | 26% | 90% | 97%✅ (session 36: 104 tests; all ProofTreeVisualizer methods, visualize_proof, enum/dataclass coverage) |
+| CEC/native/proof_optimization.py | 43% | 85% | 95%✅ (session 36: ProofNode/OptimizationMetrics/ProofTreePruner/RedundancyEliminator/ParallelProofSearch/ProofOptimizer) |
 | NL Processing | 75% pass | 85% pass | 90% pass |
 | ZKP (simulation) | 80% pass | 85% pass | 85% pass |
 | MCP Tools | 167+ tests | 200+ tests | 250+ tests |
@@ -1082,12 +1084,11 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action (Session 35 complete):**
-- 1 new test file: `test_dashboard_profiler_strategies_session35.py` (140 tests)
-- performance_dashboard 0%->99%; performance_profiler 0%->90%; proof_explainer 96%->98%
-- strategies/strategy_selector 67%->85%; strategies/cec_delegate 76%->88%; strategies/modal_tableaux 65%->74%
-- TDFOL suite: 1282->1422 tests (+140); overall logic: 6468->6608 passing
-- **Next session targets:** TDFOL `proof_tree_visualizer.py` (26%), CEC `proof_state.py` (72%), TDFOL `strategies/__init__` ImportError branches, `tdfol_optimization.py` coverage
+**Next Action (Session 36 complete):**
+- 1 new test file: `test_proof_tree_visualizer_session36.py` (104 tests)
+- proof_tree_visualizer.py 26%→97%; CEC/native/proof_optimization.py 43%→95%
+- TDFOL suite: 1422→1526 tests (+104); overall logic: 6608→6712 passing
+- **Next session targets:** TDFOL `strategies/modal_tableaux.py` (74%→95%), `strategies/cec_delegate.py` (88%→98%), `strategies/strategy_selector.py` (85%→97%), CEC `proof_strategies.py` coverage
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19 | **Last Updated:** 2026-02-22 (Session 35)  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-22 (Session 36)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
