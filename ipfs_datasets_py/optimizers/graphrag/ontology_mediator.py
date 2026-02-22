@@ -1585,6 +1585,50 @@ class OntologyMediator:
             return 0.0
         return -sum((c / total) * math.log(c / total) for c in counts)
 
+    def action_entropy_change(self) -> float:
+        """Return the change in action entropy over the feedback history.
+
+        Splits available feedback history into halves, computes action entropy
+        for each half, and returns ``entropy_second - entropy_first``.
+
+        Returns:
+            Float entropy delta; 0.0 when insufficient action history exists.
+        """
+        import math
+
+        history = (
+            getattr(self, "_feedback_history", None)
+            or getattr(self, "_feedback", None)
+            or []
+        )
+        if len(history) < 2:
+            return 0.0
+
+        def _extract_actions(entries: list) -> list:
+            actions = []
+            for entry in entries:
+                if isinstance(entry, dict):
+                    actions.extend(entry.get("actions", []))
+                else:
+                    actions.extend(getattr(entry, "action_types", []) or [])
+            return actions
+
+        def _entropy(action_list: list) -> float:
+            if not action_list:
+                return 0.0
+            counts: dict = {}
+            for action in action_list:
+                counts[action] = counts.get(action, 0) + 1
+            total = sum(counts.values())
+            if total == 0:
+                return 0.0
+            return -sum((c / total) * math.log(c / total) for c in counts.values())
+
+        mid = len(history) // 2
+        first_actions = _extract_actions(history[:mid])
+        second_actions = _extract_actions(history[mid:])
+        return _entropy(second_actions) - _entropy(first_actions)
+
     def total_action_count(self) -> int:
         """Return the total number of action invocations recorded.
 

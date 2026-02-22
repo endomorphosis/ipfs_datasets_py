@@ -3805,6 +3805,25 @@ class OntologyOptimizer:
             return 0.0
         return self._history[-1].average_score / max_score
 
+    def score_z_score(self) -> float:
+        """Return the z-score of the most recent history entry.
+
+        Computes z = (last - mean) / std using the population standard deviation.
+
+        Returns:
+            Float z-score; 0.0 when fewer than 2 entries or std is zero.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        mean = sum(scores) / n
+        variance = sum((s - mean) ** 2 for s in scores) / n
+        std = variance ** 0.5
+        if std == 0.0:
+            return 0.0
+        return (scores[-1] - mean) / std
+
     def history_decay_sum(self, decay: float = 0.9) -> float:
         """Return exponentially decayed sum of average_score (oldest gets most decay).
 

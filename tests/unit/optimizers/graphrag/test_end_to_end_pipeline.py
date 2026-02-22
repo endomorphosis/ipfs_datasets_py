@@ -394,6 +394,60 @@ class TestEndToEndPipelineRealWorldScenario:
             assert ontology is not None
             assert eval_result is not None
             assert isinstance(suggestions, list)
+
+    def test_large_document_pipeline(self):
+        """Process a large multi-paragraph document end-to-end."""
+        config = ExtractionConfig(max_entities=120, max_relationships=300)
+        generator = OntologyGenerator(config.to_dict())
+        critic = OntologyCritic()
+        context = create_test_context()
+        validator = OntologyValidator()
+
+        document = """
+        Alice Johnson leads the research group at Northwind Labs in Seattle.
+        Bob Smith coordinates with Carol Diaz at Contoso Research in Denver.
+        Daniel Wu reports to Evelyn Hart at Fabrikam Systems in Austin.
+        Fiona Brooks manages George Patel at GlobeTech in Atlanta.
+        Hannah Lee collaborates with Ian Park at Initech in Chicago.
+        Julia Kim partners with Kevin Ross at Umbrella Analytics in Boston.
+        Laura Chen works alongside Michael Ortiz at Stark Industries in Miami.
+        Nora Silva coordinates with Oliver Reed at Waypoint Solutions in Portland.
+        Priya Nair supports Quentin Shaw at Redstone Dynamics in Phoenix.
+        Rachel Young leads Samuel Price at Bluebird Networks in San Diego.
+        Tina Xu guides Umar Farid at Orion Data in Raleigh.
+        Victor Allen mentors Wendy Zhou at Vector Labs in Detroit.
+        Xavier Gomez assists Yara Ahmed at Summit Health in Minneapolis.
+        Zoe Baker collaborates with Aaron Cole at Vertex Bio in Nashville.
+        Bianca Cruz works with Carlos Dean at Harbor Logistics in Dallas.
+        Devin Ellis partners with Elise Foster at Pinecone AI in Salt Lake City.
+        Gavin Hall coordinates with Helena Ives at Lumina Systems in Tampa.
+        Isaac Jones supports Jasmine King at Nova Robotics in Pittsburgh.
+        Liam Moore works with Maya Nguyen at Polestar Analytics in Kansas City.
+        Noah Owens partners with Paige Quinn at Horizon Tech in Columbus.
+        Olivia Perez collaborates with Quinn Reyes at Crestline Media in Cincinnati.
+        Paul Scott assists Reina Torres at Silverline Telecom in St. Louis.
+        Sofia Vega works with Tomas West at Brightpath Energy in Indianapolis.
+        Uma Yates coordinates with Victor Zane at BlueSky Capital in Charlotte.
+        Wendy Adams collaborates with Xander Brooks at Riverstone Labs in Orlando.
+        Yuki Chan partners with Zane Doyle at Atlas Bio in Baltimore.
+        """
+
+        ontology = generator.generate_ontology(document, context)
+
+        if ontology and isinstance(ontology, dict):
+            entities = ontology.get("entities", [])
+            relationships = ontology.get("relationships", [])
+
+            assert len(entities) >= 15
+            assert len(relationships) >= 5
+
+            eval_result = critic.evaluate_ontology(ontology, context)
+            assert eval_result is not None
+            if hasattr(eval_result, "overall"):
+                assert 0.0 <= eval_result.overall <= 1.0
+
+            suggestions = validator.suggest_entity_merges(ontology, threshold=0.8)
+            assert isinstance(suggestions, list)
     
     def test_multiple_entity_types(self):
         """Handle document with multiple entity types."""

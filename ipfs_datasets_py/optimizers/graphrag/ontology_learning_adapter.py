@@ -1476,6 +1476,29 @@ class OntologyLearningAdapter:
             result.append(total)
         return result
 
+    def feedback_trimmed_mean(self, trim: float = 0.1) -> float:
+        """Return the trimmed mean of feedback scores.
+
+        Removes a fraction of scores from both ends of the sorted list.
+
+        Args:
+            trim: Fraction in [0, 0.5) to trim from each tail.
+
+        Returns:
+            Float trimmed mean; 0.0 when no feedback is recorded.
+        """
+        if not self._feedback:
+            return 0.0
+        if trim < 0.0 or trim >= 0.5:
+            raise ValueError("trim must be in [0.0, 0.5).")
+        scores = sorted(r.final_score for r in self._feedback)
+        n = len(scores)
+        k = int(n * trim)
+        if k == 0 or k * 2 >= n:
+            return sum(scores) / n
+        trimmed = scores[k:n - k]
+        return sum(trimmed) / len(trimmed)
+
     def feedback_rate_of_change(self) -> float:
         """Return the mean absolute first-difference of feedback scores.
 

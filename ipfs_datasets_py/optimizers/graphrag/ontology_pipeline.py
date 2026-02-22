@@ -1431,6 +1431,29 @@ class OntologyPipeline:
         lo, hi = int(idx), min(int(idx) + 1, n - 1)
         return scores[lo] + (scores[hi] - scores[lo]) * (idx - lo)
 
+    def run_score_trimmed_mean(self, trim_fraction: float = 0.1) -> float:
+        """Return the trimmed mean of run overall scores.
+
+        The trim removes a fraction of scores from both ends of the sorted list.
+
+        Args:
+            trim_fraction: Fraction in [0, 0.5) to trim from each tail.
+
+        Returns:
+            Float trimmed mean; 0.0 when no runs recorded.
+        """
+        if not self._run_history:
+            return 0.0
+        if trim_fraction < 0.0 or trim_fraction >= 0.5:
+            raise ValueError("trim_fraction must be in [0.0, 0.5).")
+        scores = sorted(r.score.overall for r in self._run_history)
+        n = len(scores)
+        k = int(n * trim_fraction)
+        if k == 0 or k * 2 >= n:
+            return sum(scores) / n
+        trimmed = scores[k:n - k]
+        return sum(trimmed) / len(trimmed)
+
     def run_score_median(self) -> float:
         """Return the median of all run overall scores.
 

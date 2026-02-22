@@ -1495,12 +1495,12 @@ This section captures the full architectural vision beyond batch-method addition
 ## Batch 198+ Backlog
 
 - [ ] (P2) [graphrag] `OntologyOptimizer.history_trimmed_mean(trim_fraction)` — trimmed mean ignoring extremes
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_z_score()` — z-score of last entry relative to history
+- [x] (P2) [graphrag] `OntologyOptimizer.score_z_score()` — z-score of last entry relative to history
 - [ ] (P2) [graphrag] `OntologyCritic.dimension_z_scores(score)` — dict of dim→z-score vs history
 - [ ] (P2) [graphrag] `OntologyGenerator.entity_id_list(result)` — sorted list of entity IDs
-- [ ] (P2) [graphrag] `OntologyGenerator.relationship_source_ids(result)` — set of source entity IDs
-- [ ] (P2) [graphrag] `OntologyGenerator.relationship_target_ids(result)` — set of target entity IDs
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_source_ids(result)` — set of source entity IDs
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_target_ids(result)` — set of target entity IDs
 - [ ] (P2) [graphrag] `LogicValidator.hub_nodes(ontology, min_degree)` — nodes with degree >= min_degree
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_trimmed_mean(trim_fraction)` — trimmed mean of run scores
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_trimmed_mean(trim_fraction)` — trimmed mean of feedback
-- [ ] (P2) [graphrag] `OntologyMediator.action_entropy_change()` — change in action entropy over rounds
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_trimmed_mean(trim_fraction)` — trimmed mean of run scores
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_trimmed_mean(trim_fraction)` — trimmed mean of feedback
+- [x] (P2) [graphrag] `OntologyMediator.action_entropy_change()` — change in action entropy over rounds

@@ -5567,49 +5567,39 @@ class OntologyGenerator:
         """
         return {r.target_id for r in result.relationships if r.target_id}
 
-    def relationship_source_ids(self, result) -> List[str]:
-        """Return sorted list of unique source entity IDs across all relationships.
-
-        Unlike :meth:`relationship_source_set`, this returns a deterministically
-        sorted list (alphabetically by ID) instead of a set, useful for
-        reproducible outputs and testing.
+    def relationship_source_ids(self, result) -> set:
+        """Return the set of unique source entity IDs across all relationships.
 
         Args:
             result: An ``EntityExtractionResult`` instance.
 
         Returns:
-            Sorted list of source entity ID strings.
+            Set of source entity ID strings.
 
         Example:
             >>> result = generator.extract_entities("Alice knows Bob. Bob knows Alice.")
             >>> source_ids = generator.relationship_source_ids(result)
-            >>> source_ids
-            ['alice', 'bob']
+            >>> source_ids == {"alice", "bob"}
+            True
         """
-        source_set = {r.source_id for r in result.relationships if r.source_id}
-        return sorted(source_set)
+        return {r.source_id for r in result.relationships if r.source_id}
 
-    def relationship_target_ids(self, result) -> List[str]:
-        """Return sorted list of unique target entity IDs across all relationships.
-
-        Unlike :meth:`relationship_target_set`, this returns a deterministically
-        sorted list (alphabetically by ID) instead of a set, useful for
-        reproducible outputs and testing.
+    def relationship_target_ids(self, result) -> set:
+        """Return the set of unique target entity IDs across all relationships.
 
         Args:
             result: An ``EntityExtractionResult`` instance.
 
         Returns:
-            Sorted list of target entity ID strings.
+            Set of target entity ID strings.
 
         Example:
             >>> result = generator.extract_entities("Alice knows Bob. Bob knows Alice.")
             >>> target_ids = generator.relationship_target_ids(result)
-            >>> target_ids
-            ['alice', 'bob']
+            >>> target_ids == {"alice", "bob"}
+            True
         """
-        target_set = {r.target_id for r in result.relationships if r.target_id}
-        return sorted(target_set)
+        return {r.target_id for r in result.relationships if r.target_id}
 
     def confidence_quartiles(self, result: Any) -> dict:
         """Return Q1, median (Q2), and Q3 confidence quartiles for entities.
@@ -5710,6 +5700,53 @@ class OntologyGenerator:
         if std == 0.0:
             return 0.0
         return sum(((s - mean) / std) ** 3 for s in scores) / n
+
+    def history_kurtosis(self, results: List[Any]) -> float:
+        """Return the kurtosis of confidence scores across multiple results.
+
+        Calculates excess kurtosis (Fisher's definition) which is 0.0 for a
+        normal distribution. Positive values indicate heavy tails (more outliers),
+        negative values indicate light tails (fewer outliers).
+
+        Uses the sample kurtosis formula: E[((X - μ) / σ)^4] - 3
+
+        Args:
+            results: List of ``EntityExtractionResult`` instances.
+
+        Returns:
+            Float excess kurtosis; 0.0 when fewer than 4 total entities or std is zero.
+
+        Example:
+            >>> results = [result1, result2, result3]
+            >>> kurt = generator.history_kurtosis(results)
+            >>> if kurt > 1.0:
+            ...     print("Heavy-tailed distribution (many outliers)")
+        """
+        # Collect all confidence scores from all results
+        all_scores = []
+        for result in results:
+            entities = getattr(result, 'entities', []) or []
+            all_scores.extend(e.confidence for e in entities)
+        
+        # Need at least 4 values for meaningful kurtosis
+        if len(all_scores) < 4:
+            return 0.0
+        
+        n = len(all_scores)
+        mean = sum(all_scores) / n
+        
+        # Calculate standard deviation
+        variance = sum((s - mean) ** 2 for s in all_scores) / n
+        std = variance ** 0.5
+        
+        if std == 0.0:
+            return 0.0
+        
+        # Calculate fourth moment (kurtosis)
+        # Excess kurtosis = (fourth_moment / variance^2) - 3
+        fourth_moment = sum(((s - mean) / std) ** 4 for s in all_scores) / n
+        
+        return fourth_moment - 3.0  # Excess kurtosis
 
     def entity_relation_ratio(self, result: Any) -> float:
         """Return the ratio of entity count to relationship count.
