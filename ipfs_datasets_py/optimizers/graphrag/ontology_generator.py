@@ -5187,6 +5187,24 @@ class OntologyGenerator:
         unique = list(seen.values())
         return _dc.replace(result, entities=unique)
 
+    def unique_relationship_types(self, result: "EntityExtractionResult") -> List[str]:
+        """Return the list of distinct relationship types in *result*.
+
+        Args:
+            result: :class:`EntityExtractionResult` with relationships.
+
+        Returns:
+            Sorted list of unique relationship ``type`` strings;
+            ``[]`` when there are no relationships.
+
+        Example:
+            >>> types = gen.unique_relationship_types(result)
+            >>> types
+            ['causes', 'is_a', 'part_of']
+        """
+        unique_types = {r.type for r in result.relationships}
+        return sorted(unique_types)
+
     def filter_low_confidence(
         self,
         result: "EntityExtractionResult",
@@ -6216,6 +6234,26 @@ class OntologyGenerator:
             Set of target ID strings.
         """
         return {getattr(r, "target_id", None) for r in (result.relationships or []) if getattr(r, "target_id", None)}
+
+    def entity_confidence_histogram(self, result: "EntityExtractionResult", bins: int = 5) -> list:
+        """Bucket entity confidence values into *bins* equal-width buckets and return counts.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+            bins: Number of buckets between 0.0 and 1.0. Defaults to 5.
+
+        Returns:
+            List of ``bins`` integers (counts per bucket), or empty list when no entities.
+        """
+        entities = result.entities or []
+        if not entities:
+            return []
+        counts = [0] * bins
+        for e in entities:
+            conf = float(getattr(e, "confidence", 0.0) or 0.0)
+            idx = min(int(conf * bins), bins - 1)
+            counts[idx] += 1
+        return counts
 
 
 __all__ = [

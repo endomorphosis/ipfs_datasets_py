@@ -2946,6 +2946,27 @@ class LogicValidator:
                 degree[tgt] = degree.get(tgt, 0) + 1
         return sorted(node for node, deg in degree.items() if deg >= min_degree)
 
+    def orphan_nodes(self, ontology: dict) -> list:
+        """Return entity IDs that appear in no relationship as source or target.
+
+        Args:
+            ontology: Dict with optional ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Sorted list of orphan entity ID strings.
+        """
+        entities = ontology.get("entities", [])
+        entity_ids = {e.get("id", "") for e in entities if e.get("id")}
+        connected: set = set()
+        for rel in ontology.get("relationships", []):
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src:
+                connected.add(src)
+            if tgt:
+                connected.add(tgt)
+        return sorted(entity_ids - connected)
+
 
 # Export public API
 __all__ = [

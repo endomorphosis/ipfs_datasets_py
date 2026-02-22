@@ -1888,3 +1888,15 @@ class OntologyLearningAdapter:
         if not trimmed:
             return sum(vals) / n
         return sum(trimmed) / len(trimmed)
+
+    def feedback_mode(self) -> float:
+        """Return the most frequently occurring score (rounded to 1 decimal place).
+
+        Returns:
+            Float mode score; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        from collections import Counter
+        rounded = [round(r.final_score, 1) for r in self._feedback]
+        return float(Counter(rounded).most_common(1)[0][0])

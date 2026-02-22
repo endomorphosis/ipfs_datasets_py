@@ -3951,6 +3951,47 @@ class OntologyOptimizer:
         frac = idx - lo
         return vals[lo] + frac * (vals[hi] - vals[lo])
 
+    def score_interquartile_mean(self) -> float:
+        """Return the mean of scores within the IQR (25th–75th percentile).
+
+        Returns:
+            Float mean; 0.0 when fewer than 4 entries.
+        """
+        if len(self._history) < 4:
+            return 0.0
+        vals = sorted(e.average_score for e in self._history)
+        n = len(vals)
+        q1_idx = n // 4
+        q3_idx = (3 * n) // 4
+        iqr_vals = vals[q1_idx:q3_idx + 1]
+        return sum(iqr_vals) / len(iqr_vals) if iqr_vals else 0.0
+
+    def score_bimodality_coefficient(self) -> float:
+        """Return Sarle's bimodality coefficient for the history scores.
+
+        BC = (skewness^2 + 1) / kurtosis, clipped to [0, 1].
+        Returns 0.0 when fewer than 3 entries or kurtosis == 0.
+
+        Returns:
+            Float in [0.0, 1.0].
+        """
+        if len(self._history) < 3:
+            return 0.0
+        vals = [e.average_score for e in self._history]
+        n = len(vals)
+        mean = sum(vals) / n
+        diffs = [v - mean for v in vals]
+        var = sum(d ** 2 for d in diffs) / n
+        if var == 0:
+            return 0.0
+        std = var ** 0.5
+        skew = (sum(d ** 3 for d in diffs) / n) / (std ** 3)
+        kurt = (sum(d ** 4 for d in diffs) / n) / (var ** 2)
+        if kurt == 0:
+            return 0.0
+        bc = (skew ** 2 + 1) / kurt
+        return float(max(0.0, min(1.0, bc)))
+
 
 # Export public API
 __all__ = [

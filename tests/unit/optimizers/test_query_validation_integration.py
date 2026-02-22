@@ -413,7 +413,7 @@ class TestQueryValidationRealWorldScenarios:
         # Ensure additional nested defaults
         optimizer.ensure_nested_dict(
             query,
-            ['config', 'caching', 'ttl'],
+            'config', 'caching', 'ttl',
             default_value=3600
         )
         

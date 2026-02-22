@@ -1810,3 +1810,18 @@ class OntologyPipeline:
         scores = [r.score.overall for r in self._run_history]
         mean = sum(scores) / len(scores)
         return sum(1 for s in scores if s > mean)
+
+    def run_score_geometric_mean(self) -> float:
+        """Return the geometric mean of all run scores.
+
+        Returns:
+            Float geometric mean; 0.0 when no runs or any score <= 0.
+        """
+        if not self._run_history:
+            return 0.0
+        import math
+        scores = [r.score.overall for r in self._run_history]
+        if any(s <= 0 for s in scores):
+            return 0.0
+        log_sum = sum(math.log(s) for s in scores)
+        return math.exp(log_sum / len(scores))

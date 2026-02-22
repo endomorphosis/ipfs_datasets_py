@@ -1687,6 +1687,18 @@ class OntologyMediator:
         """
         return sorted(self._action_counts.keys())
 
+    def action_top_n(self, n: int = 3) -> list:
+        """Return the top *n* most-performed actions as (name, count) tuples.
+
+        Args:
+            n: Number of top actions to return. Defaults to 3.
+
+        Returns:
+            List of (action_name, count) tuples sorted descending by count.
+        """
+        items = sorted(self._action_counts.items(), key=lambda kv: kv[1], reverse=True)
+        return items[:n]
+
 
 # Export public API
 __all__ = [
