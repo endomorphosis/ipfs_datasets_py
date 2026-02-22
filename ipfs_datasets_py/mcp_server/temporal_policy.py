@@ -254,6 +254,123 @@ def get_policy_evaluator() -> PolicyEvaluator:
     return _global_evaluator
 
 
+class PolicyRegistry:
+    """
+    Durable policy store with JSON persistence (Profile D: spec §2).
+
+    Wraps a :class:`PolicyEvaluator` and provides :meth:`save` / :meth:`load`
+    helpers for JSON-based persistence.  In a production deployment these would
+    serialize to IPFS CAR files; the JSON implementation here is intended for
+    development and testing.
+    """
+
+    def __init__(self, evaluator: Optional[PolicyEvaluator] = None) -> None:
+        self._evaluator = evaluator or PolicyEvaluator()
+        self._meta: Dict[str, str] = {}  # policy_cid → policy_id
+
+    @property
+    def evaluator(self) -> PolicyEvaluator:
+        return self._evaluator
+
+    def register(self, policy: "PolicyObject") -> str:
+        """Register a policy and return its policy_cid."""
+        cid = self._evaluator.register_policy(policy)
+        self._meta[cid] = policy.policy_id
+        return cid
+
+    def list_policies(self) -> List[Dict[str, str]]:
+        """Return a list of registered policies with id and cid."""
+        return [
+            {"policy_id": pid, "policy_cid": cid}
+            for cid, pid in self._meta.items()
+        ]
+
+    def evaluate(
+        self,
+        intent: "IntentObject",
+        policy_cid: str,
+        **kwargs: Any,
+    ) -> "DecisionObject":
+        """Delegate evaluation to the inner evaluator."""
+        return self._evaluator.evaluate(intent, policy_cid, **kwargs)
+
+    def save(self, path: str) -> None:
+        """Persist registered policies to a JSON file.
+
+        In production, replace with IPFS CAR serialisation.
+        """
+        import json as _json
+        records = []
+        for _cid, pol in self._evaluator._policies.items():
+            records.append({
+                "policy_id": pol.policy_id,
+                "version": pol.version,
+                "description": pol.description,
+                "clauses": [
+                    {
+                        "clause_type": c.clause_type,
+                        "actor": c.actor,
+                        "action": c.action,
+                        "resource": c.resource,
+                        "valid_from": c.valid_from,
+                        "valid_until": c.valid_until,
+                        "condition": c.condition,
+                        "obligation_deadline": c.obligation_deadline,
+                    }
+                    for c in pol.clauses
+                ],
+            })
+        with open(path, "w") as f:
+            _json.dump(records, f, indent=2)
+
+    def load(self, path: str) -> int:
+        """Load policies from a JSON file.  Returns number of policies loaded.
+
+        In production, replace with IPFS CAR deserialisation.
+        """
+        import json as _json
+        with open(path) as f:
+            records = _json.load(f)
+        count = 0
+        for rec in records:
+            clauses = [
+                PolicyClause(
+                    clause_type=c["clause_type"],
+                    actor=c.get("actor"),
+                    action=c.get("action"),
+                    resource=c.get("resource"),
+                    valid_from=c.get("valid_from"),
+                    valid_until=c.get("valid_until"),
+                    condition=c.get("condition"),
+                    obligation_deadline=c.get("obligation_deadline"),
+                )
+                for c in rec.get("clauses", [])
+            ]
+            pol = PolicyObject(
+                policy_id=rec["policy_id"],
+                clauses=clauses,
+                version=rec.get("version", "v1"),
+                description=rec.get("description"),
+            )
+            self.register(pol)
+            count += 1
+        return count
+
+
+# ─── module-level registry singleton ────────────────────────────────────────
+
+
+_global_registry: Optional[PolicyRegistry] = None
+
+
+def get_policy_registry() -> PolicyRegistry:
+    """Return the process-global PolicyRegistry (lazy-init)."""
+    global _global_registry
+    if _global_registry is None:
+        _global_registry = PolicyRegistry()
+    return _global_registry
+
+
 def make_simple_permission_policy(
     *,
     policy_id: str,
