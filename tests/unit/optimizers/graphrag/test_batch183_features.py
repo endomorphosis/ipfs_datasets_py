@@ -324,22 +324,23 @@ class TestFeedbackBelowMeanCount:
 # ── OntologyLearningAdapter.feedback_above_median ────────────────────────────
 
 class TestFeedbackAboveMedian:
-    def test_empty_returns_zero(self):
+    def test_empty_returns_empty_list(self):
         a = _make_adapter()
-        assert a.feedback_above_median() == 0
+        assert a.feedback_above_median() == []
 
-    def test_all_same_returns_zero(self):
+    def test_fewer_than_two_returns_empty(self):
         a = _make_adapter()
-        for _ in range(3):
-            _push_feedback(a, 0.5)
-        assert a.feedback_above_median() == 0
+        _push_feedback(a, 0.5)
+        assert a.feedback_above_median() == []
 
     def test_one_above(self):
         a = _make_adapter()
         for v in [0.3, 0.5, 0.9]:
             _push_feedback(a, v)
-        # median = 0.5; only 0.9 > 0.5
-        assert a.feedback_above_median() == 1
+        # median = 0.5; only record with 0.9 > 0.5
+        result = a.feedback_above_median()
+        assert len(result) == 1
+        assert result[0].final_score == pytest.approx(0.9)
 
 
 # ── OntologyMediator.action_entropy ──────────────────────────────────────────

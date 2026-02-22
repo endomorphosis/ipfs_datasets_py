@@ -1630,22 +1630,6 @@ class OntologyLearningAdapter:
         mean = sum(scores) / len(scores)
         return sum(1 for s in scores if s < mean)
 
-    def feedback_above_median(self) -> int:
-        """Return the count of feedback records with score above the median.
-
-        Returns:
-            Integer count; 0 when no records.
-        """
-        if not self._feedback:
-            return 0
-        scores = sorted(r.final_score for r in self._feedback)
-        n = len(scores)
-        if n % 2 == 0:
-            median = (scores[n // 2 - 1] + scores[n // 2]) / 2.0
-        else:
-            median = scores[n // 2]
-        return sum(1 for r in self._feedback if r.final_score > median)
-
     def feedback_min_max_ratio(self) -> float:
         """Return min/max ratio of feedback scores.
 
@@ -1690,17 +1674,6 @@ class OntologyLearningAdapter:
             else:
                 current = 0
         return best
-
-    def feedback_score_range(self) -> float:
-        """Return max - min of feedback scores.
-
-        Returns:
-            Float; 0.0 when fewer than 2 records.
-        """
-        if len(self._feedback) < 2:
-            return 0.0
-        scores = [r.final_score for r in self._feedback]
-        return max(scores) - min(scores)
 
     def feedback_weighted_mean(self, weights: "list | None" = None) -> float:
         """Return a positionally weighted mean of feedback scores.

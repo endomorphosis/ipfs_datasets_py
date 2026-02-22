@@ -250,22 +250,31 @@ class TestEntityAvgPropertyCount:
 class TestSelfLoopCount:
     def test_empty_returns_zero(self):
         v = _make_validator()
-        assert v.self_loop_count(_FakeOntology([])) == 0
+        assert v.self_loop_count({"relationships": []}) == 0
 
     def test_no_self_loops(self):
         v = _make_validator()
-        rels = [_FakeRel("a", "b"), _FakeRel("b", "c")]
-        assert v.self_loop_count(_FakeOntology(rels)) == 0
+        ont = {"relationships": [
+            {"source_id": "a", "target_id": "b", "type": "r"},
+            {"source_id": "b", "target_id": "c", "type": "r"},
+        ]}
+        assert v.self_loop_count(ont) == 0
 
     def test_one_self_loop(self):
         v = _make_validator()
-        rels = [_FakeRel("a", "a"), _FakeRel("b", "c")]
-        assert v.self_loop_count(_FakeOntology(rels)) == 1
+        ont = {"relationships": [
+            {"source_id": "a", "target_id": "a", "type": "r"},
+            {"source_id": "b", "target_id": "c", "type": "r"},
+        ]}
+        assert v.self_loop_count(ont) == 1
 
     def test_multiple_self_loops(self):
         v = _make_validator()
-        rels = [_FakeRel("a", "a"), _FakeRel("b", "b")]
-        assert v.self_loop_count(_FakeOntology(rels)) == 2
+        ont = {"relationships": [
+            {"source_id": "a", "target_id": "a", "type": "r"},
+            {"source_id": "b", "target_id": "b", "type": "r"},
+        ]}
+        assert v.self_loop_count(ont) == 2
 
 
 # ── LogicValidator.node_count ─────────────────────────────────────────────────

@@ -59,6 +59,16 @@ class TestOntologyPipelineE2E:
         ontology = generator.generate_ontology(SAMPLE_TEXT, ctx)
         assert len(ontology["entities"]) > 0
 
+    def test_multi_paragraph_text_extracts_multiple_entities(self, generator, ctx):
+        """Multi-paragraph input should extract several entities."""
+        multi_paragraph = (
+            "Alice joined Contoso as a project manager in 2021.\n\n"
+            "Bob leads the Engineering team at Contoso and supervises Alice.\n\n"
+            "The Apollo product belongs to the Research division and supports clients."
+        )
+        ontology = generator.generate_ontology(multi_paragraph, ctx)
+        assert len(ontology["entities"]) > 3
+
     def test_generator_produces_relationships(self, generator, ctx):
         ontology = generator.generate_ontology(SAMPLE_TEXT, ctx)
         assert len(ontology["relationships"]) > 0

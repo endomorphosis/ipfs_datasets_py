@@ -291,13 +291,19 @@ class TestFeedbackLongestPositiveStreak:
 # ── OntologyLearningAdapter.feedback_score_range ─────────────────────────────
 
 class TestFeedbackScoreRange:
-    def test_single_returns_zero(self):
+    def test_empty_returns_zero_tuple(self):
+        a = _make_adapter()
+        assert a.feedback_score_range() == (0.0, 0.0)
+
+    def test_single_returns_same_min_max(self):
         a = _make_adapter()
         _push_feedback(a, 0.5)
-        assert a.feedback_score_range() == pytest.approx(0.0)
+        assert a.feedback_score_range() == pytest.approx((0.5, 0.5))
 
-    def test_computes_range(self):
+    def test_computes_min_and_max(self):
         a = _make_adapter()
         _push_feedback(a, 0.3)
         _push_feedback(a, 0.8)
-        assert a.feedback_score_range() == pytest.approx(0.5)
+        lo, hi = a.feedback_score_range()
+        assert lo == pytest.approx(0.3)
+        assert hi == pytest.approx(0.8)
