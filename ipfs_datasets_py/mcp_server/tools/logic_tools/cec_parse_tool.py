@@ -11,6 +11,7 @@ cec_validate_formula
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any, Dict, Optional
 
@@ -28,6 +29,19 @@ except Exception as _e:
 
 def _unavailable(tool: str) -> Dict[str, Any]:
     return {"success": False, "error": f"{tool}: LogicProcessor not available."}
+
+
+def _run_async(coro):
+    """Run a coroutine synchronously, handling already-running event loops."""
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                return pool.submit(asyncio.run, coro).result()
+        return loop.run_until_complete(coro)
+    except RuntimeError:
+        return asyncio.run(coro)
 
 
 async def cec_parse(
@@ -71,4 +85,26 @@ async def cec_validate_formula(formula: str) -> Dict[str, Any]:
     return await _PROCESSOR.validate_formula(formula_str=formula, logic_system="dcec")
 
 
-__all__ = ["cec_parse", "cec_validate_formula"]
+def _parse_dcec_sync(text: str, language: str = "en", domain: str = "general") -> Dict[str, Any]:
+    """Sync wrapper for parse_dcec (backward-compat for tests calling without await)."""
+    if not _AVAILABLE:
+        return _unavailable("parse_dcec")
+    if not text:
+        return {"success": False, "error": "'text' is required.", "formula": None}
+    return _run_async(cec_parse(text, language=language, domain=domain))
+
+
+def _validate_dcec_formula_sync(formula: str) -> Dict[str, Any]:
+    """Sync wrapper for validate_dcec_formula (backward-compat for tests calling without await)."""
+    if not _AVAILABLE:
+        return _unavailable("validate_dcec_formula")
+    if not formula:
+        return {"success": False, "valid": False, "errors": ["'formula' is required."], "warnings": []}
+    return _run_async(cec_validate_formula(formula))
+
+
+__all__ = ["cec_parse", "cec_validate_formula", "parse_dcec", "validate_dcec_formula"]
+
+# Backward-compat aliases — sync wrappers for code that calls without await
+parse_dcec = _parse_dcec_sync
+validate_dcec_formula = _validate_dcec_formula_sync

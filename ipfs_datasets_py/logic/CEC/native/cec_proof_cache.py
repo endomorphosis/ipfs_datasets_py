@@ -265,26 +265,29 @@ class CachedTheoremProver(BaseTheoremProver):
             cache_key = f"{formula_str}|{axioms_str}"
             
             # Try to get from cache (unified cache API)
+            # ProofCache.get() returns cached.result (the stored object directly)
             cached = self.cache.get(
                 formula=cache_key,
                 axioms=axioms,
                 prover_name="cec_native"
             )
             
-            if cached and cached.result:
-                # The cached.result is our CECCachedProofResult object
-                if isinstance(cached.result, CECCachedProofResult):
+            if cached is not None:
+                # ProofCache.get() returns the value passed to set(result=...) directly
+                if isinstance(cached, CECCachedProofResult):
+                    return cached
+                # Fallback: if it was wrapped, unwrap
+                if hasattr(cached, 'result') and isinstance(cached.result, CECCachedProofResult):
                     return cached.result
-                # Fallback: try to reconstruct from unified cache format
-                elif isinstance(cached.result, dict):
+                # Dict fallback
+                if isinstance(cached, dict):
                     return CECCachedProofResult(
-                        is_proved=cached.result.get('is_proved', False),
-                        result=ProofResult(cached.result.get('result', 'unknown')),
-                        execution_time=cached.result.get('execution_time', 0.0),
-                        proof_steps=cached.result.get('proof_steps', 0),
-                        inference_rules_used=cached.result.get('inference_rules_used', []),
-                        error_message=cached.result.get('error_message'),
-                        timestamp=cached.timestamp
+                        is_proved=cached.get('is_proved', False),
+                        result=ProofResult(cached.get('result', 'unknown')),
+                        execution_time=cached.get('execution_time', 0.0),
+                        proof_steps=cached.get('proof_steps', 0),
+                        inference_rules_used=cached.get('inference_rules_used', []),
+                        error_message=cached.get('error_message'),
                     )
             return None
         except Exception as e:

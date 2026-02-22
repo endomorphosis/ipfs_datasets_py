@@ -11,6 +11,7 @@ cec_formula_complexity
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any, Dict
 
@@ -65,4 +66,40 @@ async def cec_formula_complexity(formula: str) -> Dict[str, Any]:
     return await _PROCESSOR.get_formula_complexity(formula_str=formula)
 
 
-__all__ = ["cec_analyze_formula", "cec_formula_complexity"]
+__all__ = ["cec_analyze_formula", "cec_formula_complexity", "analyze_formula", "formula_complexity"]
+
+
+def _run_async(coro):
+    """Run a coroutine synchronously, handling already-running event loops."""
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                return pool.submit(asyncio.run, coro).result()
+        return loop.run_until_complete(coro)
+    except RuntimeError:
+        return asyncio.run(coro)
+
+
+def _analyze_formula_sync(formula: str) -> Dict[str, Any]:
+    """Sync wrapper for analyze_formula (backward-compat for tests calling without await)."""
+    if not _AVAILABLE:
+        return _unavailable("analyze_formula")
+    if not formula:
+        return {"success": False, "error": "'formula' is required."}
+    return _run_async(cec_analyze_formula(formula))
+
+
+def _formula_complexity_sync(formula: str) -> Dict[str, Any]:
+    """Sync wrapper for formula_complexity (backward-compat for tests calling without await)."""
+    if not _AVAILABLE:
+        return _unavailable("formula_complexity")
+    if not formula:
+        return {"success": False, "error": "'formula' is required."}
+    return _run_async(cec_formula_complexity(formula))
+
+
+# Backward-compat aliases — sync wrappers
+analyze_formula = _analyze_formula_sync
+formula_complexity = _formula_complexity_sync

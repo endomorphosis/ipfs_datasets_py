@@ -78,6 +78,10 @@ def parse_expression_to_token(
     # Step 2: Clean whitespace and validate
     expr = strip_whitespace(expr)
     
+    # Pre-process: convert "not X" (prefix 'not' without parens) to "not(X)"
+    import re as _re
+    expr = _re.sub(r'\bnot\s+([^\s()]+)', r'not(\1)', expr)
+    
     if not check_parens(expr):
         raise DCECParsingError(f"Unbalanced parentheses in: {expr}")
     
@@ -207,20 +211,26 @@ def token_to_formula(
     elif func_name == "b":  # Belief
         if len(token.args) >= 2:
             formula = _arg_to_formula(token.args[-1], namespace, variables)
+            agent_arg = token.args[0]
+            agent_term = FunctionTerm(Function(str(agent_arg), [], Sort("agent")), [])
             if formula:
-                return CognitiveFormula(CognitiveOperator.BELIEVES, formula)
+                return CognitiveFormula(CognitiveOperator.BELIEF, agent_term, formula)
     
     elif func_name == "k":  # Knowledge
         if len(token.args) >= 2:
             formula = _arg_to_formula(token.args[-1], namespace, variables)
+            agent_arg = token.args[0]
+            agent_term = FunctionTerm(Function(str(agent_arg), [], Sort("agent")), [])
             if formula:
-                return CognitiveFormula(CognitiveOperator.KNOWS, formula)
+                return CognitiveFormula(CognitiveOperator.KNOWLEDGE, agent_term, formula)
     
     elif func_name == "i":  # Intention
         if len(token.args) >= 2:
             formula = _arg_to_formula(token.args[-1], namespace, variables)
+            agent_arg = token.args[0]
+            agent_term = FunctionTerm(Function(str(agent_arg), [], Sort("agent")), [])
             if formula:
-                return CognitiveFormula(CognitiveOperator.INTENDS, formula)
+                return CognitiveFormula(CognitiveOperator.INTENTION, agent_term, formula)
     
     # Temporal operators
     elif func_name in ["always", "box", "□"]:

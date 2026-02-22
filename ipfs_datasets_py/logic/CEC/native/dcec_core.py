@@ -88,6 +88,10 @@ class DeonticOperator(Enum):
     LIBERTY = "L"            # L(φ) - φ is a liberty/privilege
     POWER = "POW"            # POW(φ) - power to bring about φ
     IMMUNITY = "IMM"         # IMM(φ) - immunity from φ
+    # Backward-compat aliases
+    OBLIGATORY = "O"
+    PERMITTED = "P"
+    FORBIDDEN = "F"
 
 
 class CognitiveOperator(Enum):
@@ -147,6 +151,9 @@ class CognitiveOperator(Enum):
     INTENTION = "I"          # I(agent, φ) - agent intends φ
     DESIRE = "D"             # D(agent, φ) - agent desires φ
     GOAL = "G"               # G(agent, φ) - agent has goal φ
+    # Backward-compat aliases
+    BELIEVES = "B"
+    KNOWS = "K"
 
 
 class LogicalConnective(Enum):
@@ -234,6 +241,8 @@ class LogicalConnective(Enum):
     BICONDITIONAL = "↔"
     EXISTS = "∃"
     FORALL = "∀"
+    # Backward-compat aliases
+    IFF = "↔"
 
 
 class TemporalOperator(Enum):
@@ -1279,6 +1288,11 @@ class ConnectiveFormula(Formula):
     
     def __str__(self) -> str:
         return self.to_string()
+
+    @property
+    def operator(self) -> 'LogicalConnective':
+        """Backward-compat alias for .connective."""
+        return self.connective
 
 
 @dataclass
