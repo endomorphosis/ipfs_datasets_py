@@ -6184,6 +6184,39 @@ class OntologyGenerator:
         entities = result.entities or []
         return sum(getattr(e, "confidence", 0.0) or 0.0 for e in entities)
 
+    def entity_id_list(self, result: "EntityExtractionResult") -> list:
+        """Return a sorted list of all entity IDs.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Sorted list of entity ID strings; empty list when no entities.
+        """
+        return sorted(e.id for e in (result.entities or []))
+
+    def relationship_source_ids(self, result: "EntityExtractionResult") -> set:
+        """Return the set of source entity IDs from all relationships.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Set of source ID strings.
+        """
+        return {getattr(r, "source_id", None) for r in (result.relationships or []) if getattr(r, "source_id", None)}
+
+    def relationship_target_ids(self, result: "EntityExtractionResult") -> set:
+        """Return the set of target entity IDs from all relationships.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Set of target ID strings.
+        """
+        return {getattr(r, "target_id", None) for r in (result.relationships or []) if getattr(r, "target_id", None)}
+
 
 __all__ = [
     'OntologyGenerator',

@@ -2926,6 +2926,26 @@ class LogicValidator:
         """
         return len(ontology.get("relationships", []))
 
+    def hub_nodes(self, ontology: dict, min_degree: int = 3) -> list:
+        """Return nodes whose combined degree (in + out) is >= min_degree.
+
+        Args:
+            ontology: Dict with optional ``relationships`` list.
+            min_degree: Minimum combined degree to qualify as a hub. Defaults to 3.
+
+        Returns:
+            Sorted list of node ID strings; empty list when no relationships.
+        """
+        degree: dict = {}
+        for rel in ontology.get("relationships", []):
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src:
+                degree[src] = degree.get(src, 0) + 1
+            if tgt:
+                degree[tgt] = degree.get(tgt, 0) + 1
+        return sorted(node for node, deg in degree.items() if deg >= min_degree)
+
 
 # Export public API
 __all__ = [

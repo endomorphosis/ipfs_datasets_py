@@ -1798,3 +1798,15 @@ class OntologyPipeline:
         if not self._run_history:
             return 0.0
         return max(r.score.overall for r in self._run_history)
+
+    def run_score_count_above_mean(self) -> int:
+        """Return the count of run scores above the mean score.
+
+        Returns:
+            Integer count; 0 when no runs.
+        """
+        if not self._run_history:
+            return 0
+        scores = [r.score.overall for r in self._run_history]
+        mean = sum(scores) / len(scores)
+        return sum(1 for s in scores if s > mean)

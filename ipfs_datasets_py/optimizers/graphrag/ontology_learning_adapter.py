@@ -1869,3 +1869,22 @@ class OntologyLearningAdapter:
             else:
                 current = 0
         return max_streak
+
+    def feedback_trimmed_mean(self, trim: float = 0.1) -> float:
+        """Return the mean after trimming the top and bottom *trim* fraction of scores.
+
+        Args:
+            trim: Fraction to trim from each end. Defaults to 0.1 (10%).
+
+        Returns:
+            Float trimmed mean; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        vals = sorted(r.final_score for r in self._feedback)
+        n = len(vals)
+        cut = int(n * trim)
+        trimmed = vals[cut: n - cut] if cut > 0 else vals
+        if not trimmed:
+            return sum(vals) / n
+        return sum(trimmed) / len(trimmed)

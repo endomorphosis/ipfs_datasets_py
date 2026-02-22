@@ -3894,6 +3894,64 @@ class OntologyOptimizer:
         return self.history_percentile_rank(last)
 
 
+    def score_z_score(self) -> float:
+        """Return the z-score of the most recent average_score relative to history.
+
+        z = (last - mean) / std
+
+        Returns:
+            Float z-score; 0.0 when history has fewer than 2 entries or std = 0.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        vals = [e.average_score for e in self._history]
+        mean = sum(vals) / len(vals)
+        variance = sum((v - mean) ** 2 for v in vals) / len(vals)
+        std = variance ** 0.5
+        if std == 0:
+            return 0.0
+        return (vals[-1] - mean) / std
+
+    def score_mad(self) -> float:
+        """Return the median absolute deviation (MAD) of history scores.
+
+        MAD = median(|x_i - median(x)|)
+
+        Returns:
+            Float MAD; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        vals = sorted(e.average_score for e in self._history)
+        n = len(vals)
+        if n % 2 == 0:
+            median = (vals[n // 2 - 1] + vals[n // 2]) / 2.0
+        else:
+            median = vals[n // 2]
+        deviations = sorted(abs(v - median) for v in vals)
+        if n % 2 == 0:
+            return (deviations[n // 2 - 1] + deviations[n // 2]) / 2.0
+        return deviations[n // 2]
+
+    def history_quantile(self, q: float = 0.25) -> float:
+        """Return the q-th quantile of history scores (linear interpolation).
+
+        Args:
+            q: Quantile in [0, 1]. Defaults to 0.25.
+
+        Returns:
+            Float quantile; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        vals = sorted(e.average_score for e in self._history)
+        n = len(vals)
+        idx = q * (n - 1)
+        lo, hi = int(idx), min(int(idx) + 1, n - 1)
+        frac = idx - lo
+        return vals[lo] + frac * (vals[hi] - vals[lo])
+
+
 # Export public API
 __all__ = [
     'OntologyOptimizer',
