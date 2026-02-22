@@ -3490,6 +3490,22 @@ class OntologyGenerator:
         
         return ontology
 
+    def __call__(
+        self,
+        data: Any,
+        context: OntologyGenerationContext,
+    ) -> Dict[str, Any]:
+        """Shorthand for :meth:`generate_ontology`.
+
+        Args:
+            data: Input data to generate ontology from.
+            context: Context with generation configuration.
+
+        Returns:
+            Ontology dictionary produced by :meth:`generate_ontology`.
+        """
+        return self.generate_ontology(data, context)
+
     def generate_ontology_rich(
         self,
         data: Any,
@@ -5747,6 +5763,122 @@ class OntologyGenerator:
         fourth_moment = sum(((s - mean) / std) ** 4 for s in all_scores) / n
         
         return fourth_moment - 3.0  # Excess kurtosis
+
+    def score_ewma(
+        self,
+        results: List[Any],
+        alpha: float = 0.3
+    ) -> float:
+        """Calculate exponentially weighted moving average of confidence scores.
+
+        The EWMA gives more weight to recent results while incorporating historical
+        data with exponentially decreasing weights. This is useful for tracking
+        trends in extraction quality over time.
+
+        Formula: EWMA(t) = α * score(t) + (1-α) * EWMA(t-1)
+
+        Args:
+            results: List of ``EntityExtractionResult`` instances in chronological order.
+            alpha: Smoothing factor (0 < α <= 1). Higher values give more weight to
+                recent observations. Common values: 0.1 (slow), 0.3 (moderate), 0.5 (fast).
+
+        Returns:
+            Float EWMA value; 0.0 when no results with entities.
+
+        Example:
+            >>> results = [result1, result2, result3, result4]  # chronological
+            >>> ewma = generator.score_ewma(results, alpha=0.3)
+            >>> if ewma < 0.7:
+            ...     print("Quality trending downward, investigate")
+
+        Note:
+            Results should be in chronological order for meaningful EWMA calculation.
+            The method uses mean confidence per result as the score.
+        """
+        if not results:
+            return 0.0
+
+        # Clamp alpha to valid range
+        alpha = max(0.0, min(1.0, alpha))
+        if alpha == 0.0:
+            return 0.0
+
+        # Calculate mean confidence for each result
+        scores = []
+        for result in results:
+            entities = getattr(result, 'entities', []) or []
+            if entities:
+                mean_conf = sum(e.confidence for e in entities) / len(entities)
+                scores.append(mean_conf)
+
+        if not scores:
+            return 0.0
+
+        # Calculate EWMA
+        ewma = scores[0]  # Initialize with first score
+        for score in scores[1:]:
+            ewma = alpha * score + (1 - alpha) * ewma
+
+        return ewma
+
+    def score_ewma_series(
+        self,
+        results: List[Any],
+        alpha: float = 0.3
+    ) -> List[float]:
+        """Calculate EWMA series showing trend over time.
+
+        Returns the full EWMA series, one value per result, showing how the
+        weighted average evolves. Useful for visualization and trend analysis.
+
+        Args:
+            results: List of ``EntityExtractionResult`` instances in chronological order.
+            alpha: Smoothing factor (0 < α <= 1).
+
+        Returns:
+            List of EWMA values, one per result. Empty list if no valid scores.
+
+        Example:
+            >>> results = [result1, result2, result3, result4]
+            >>> ewma_series = generator.score_ewma_series(results, alpha=0.3)
+            >>> # Plot ewma_series to visualize quality trend
+            >>> import matplotlib.pyplot as plt
+            >>> plt.plot(ewma_series)
+            >>> plt.ylabel('EWMA Confidence')
+            >>> plt.xlabel('Time')
+        """
+        if not results:
+            return []
+
+        # Clamp alpha to valid range
+        alpha = max(0.0, min(1.0, alpha))
+        if alpha == 0.0:
+            return []
+
+        # Calculate mean confidence for each result
+        scores = []
+        for result in results:
+            entities = getattr(result, 'entities', []) or []
+            if entities:
+                mean_conf = sum(e.confidence for e in entities) / len(entities)
+                scores.append(mean_conf)
+            else:
+                # No entities in this result, use previous EWMA or 0.0
+                if scores:
+                    scores.append(scores[-1] if hasattr(scores[-1], '__float__') else 0.0)
+                else:
+                    scores.append(0.0)
+
+        if not scores:
+            return []
+
+        # Calculate EWMA series
+        ewma_series = [scores[0]]
+        for score in scores[1:]:
+            ewma = alpha * score + (1 - alpha) * ewma_series[-1]
+            ewma_series.append(ewma)
+
+        return ewma_series
 
     def entity_relation_ratio(self, result: Any) -> float:
         """Return the ratio of entity count to relationship count.

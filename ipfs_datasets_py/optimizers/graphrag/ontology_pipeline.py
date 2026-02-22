@@ -159,7 +159,9 @@ class OntologyPipeline:
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
             OntologyGenerationContext,
         )
+        import time
 
+        start_time = time.time()
         ctx = OntologyGenerationContext(
             data_source=data_source,
             data_type=data_type,
@@ -221,6 +223,28 @@ class OntologyPipeline:
             },
         )
         self._run_history.append(result)
+        try:
+            import json as _json
+            from datetime import datetime as _datetime
+
+            duration_ms = (time.time() - start_time) * 1000.0
+            payload = {
+                "event": "ontology_pipeline_run",
+                "run_index": len(self._run_history),
+                "domain": self.domain,
+                "data_source": data_source,
+                "data_type": data_type,
+                "refine": refine,
+                "entity_count": len(ontology.get("entities", [])),
+                "relationship_count": len(ontology.get("relationships", [])),
+                "score": getattr(score, "overall", None),
+                "actions_count": len(actions_applied),
+                "duration_ms": duration_ms,
+                "timestamp": _datetime.now().isoformat(),
+            }
+            self._log.info("PIPELINE_RUN: %s", _json.dumps(payload))
+        except Exception as exc:  # pragma: no cover - logging must be best-effort
+            self._log.debug("Pipeline JSON logging failed: %s", exc)
         return result
 
     def run_batch(

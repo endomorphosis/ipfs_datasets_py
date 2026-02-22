@@ -79,8 +79,10 @@ Use this as the always-on randomizer. Keep 3-5 items active, one per track. When
 - [x] (P1) [tests] Fix `test_end_to_end_pipeline.py` for ExtractionConfig dataclass configs (see Tests track)
   - Done 2026-02-21: moved ExtractionConfig usage into OntologyGenerationContext; generator no longer receives config dict.
 - [ ] (P2) [perf] Profile `OntologyGenerator._extract_rule_based()` hot paths and capture top-3 bottlenecks (see Performance track)
-- [ ] (P2) [obs] Emit structured per-run JSON log in `OntologyPipeline.run()` (score/domain/duration)
+- [x] (P2) [obs] Emit structured per-run JSON log in `OntologyPipeline.run()` (score/domain/duration)
+  - Done 2026-02-21: added PIPELINE_RUN JSON log with duration, counts, and score.
 - [ ] (P3) [docs] Write module-level docstrings for `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py`
+- [ ] (P2) [api] Add `OntologyGenerator.__call__` shorthand for `generate_ontology`
 
 **Rotation rules**
 - Never keep two active picks in the same track.
