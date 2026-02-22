@@ -4120,8 +4120,34 @@ class LogicValidator:
 
         return result
 
+    def radius_approx(self, ontology: dict) -> int:
+        """Return the radius of the directed graph using BFS eccentricities.
 
-# Export public API
+        The radius is the **minimum** eccentricity across all nodes that can
+        reach at least one other node.  A node with eccentricity 0 (no
+        reachable neighbours) is excluded from the minimum, because 0 would
+        trivially dominate.
+
+        Args:
+            ontology: Dict with ``"entities"`` and ``"relationships"`` lists.
+                Each relationship must have ``"source"`` and ``"target"`` keys.
+
+        Returns:
+            Minimum positive eccentricity as a non-negative integer.
+            Returns ``0`` when the graph has fewer than 2 nodes or when no
+            node can reach any other node.
+
+        Example::
+
+            >>> validator.radius_approx(
+            ...     {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+            ...      "relationships": [{"source": "A", "target": "B"},
+            ...                        {"source": "B", "target": "C"}]})
+            1   # A reaches B in 1 step; B reaches C in 1 step; min ecc = 1
+        """
+        eccs = self.eccentricity_distribution(ontology)
+        positive = [e for e in eccs if e > 0]
+        return min(positive) if positive else 0
 __all__ = [
     'LogicValidator',
     'ValidationResult',

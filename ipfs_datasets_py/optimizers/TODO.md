@@ -1879,11 +1879,30 @@ Implementation notes:
 Testing: 40 tests in test_batch_215_features.py; 36 pass (4 stale smoke tests fail in this env
   due to pre-existing numpy import issue in ontology_generator/__init__, same as batch 214).
 
-## Batch 216+ Backlog
+## Batch 216 — Done ✅ (2026-02-22)
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_bimodality_coefficient()` — Pearson BC (skewness² + 1)/(kurtosis + 3)
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_coefficient_of_variation(score)` — std/mean of 6 dims
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_mode(result)` — most common confidence bucket
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_spike_count(threshold)` — count sudden score jumps
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_range()` — max - min of run scores
-- [ ] (P2) [graphrag] `LogicValidator.radius_approx(ontology)` — min eccentricity of reachable nodes
+- [x] (P2) [graphrag] `OntologyOptimizer.score_bimodality_coefficient()` — already existed at line 4029 (stale)
+- [x] (P2) [graphrag] `OntologyCritic.dimension_coefficient_of_variation(score)` — already existed at lines 3728+4288 (stale)
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_mode(result)` — already existed at line 6766 (stale)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_spike_count(threshold)` — count consecutive |delta| > threshold
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_range()` — already existed at line 1616 (stale)
+- [x] (P2) [graphrag] `LogicValidator.radius_approx(ontology)` — min positive eccentricity via eccentricity_distribution
+
+Implementation notes:
+- score_bimodality_coefficient: stale — already at line 4029.
+- dimension_coefficient_of_variation: stale — already at lines 3728+4288 (was B204).
+- entity_confidence_mode: stale — already at line 6766.
+- feedback_spike_count: walks consecutive pairs; spike when |s[i]-s[i-1]| > threshold; 0 for <2 entries.
+- run_score_range: stale — already at line 1616.
+- radius_approx: delegates to eccentricity_distribution(); filters eccs > 0; returns min; 0 when no reachable.
+
+Testing: 38 tests in test_batch_216_features.py; all passing.
+
+## Batch 217+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_bimodality_ratio()` — ratio of bimodality_dip to score_mad
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_harmonic_mean(score)` — harmonic mean of 6 dimension values
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_cv(result)` — coefficient of variation of confidences
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_peak_score()` — max score ever observed in feedback
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_coefficient_of_variation()` — CV of run scores
+- [ ] (P2) [graphrag] `LogicValidator.periphery_size(ontology)` — count nodes with eccentricity == diameter

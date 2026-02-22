@@ -2401,3 +2401,32 @@ class OntologyLearningAdapter:
         if total_w == 0.0:
             return 0.0
         return sum(w * s for w, s in zip(raw_weights, scores)) / total_w
+
+    def feedback_spike_count(self, threshold: float = 0.1) -> int:
+        """Count consecutive feedback pairs where the absolute score jump exceeds *threshold*.
+
+        A "spike" is a step *i* where ``|scores[i] - scores[i-1]| > threshold``.
+        Both upward and downward sudden changes are counted.
+
+        Args:
+            threshold: Minimum absolute change to qualify as a spike. Default ``0.1``.
+
+        Returns:
+            Non-negative integer count; ``0`` when fewer than 2 feedback records.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.3, actions={})
+            >>> adapter.apply_feedback(final_score=0.8, actions={})  # +0.5 spike
+            >>> adapter.apply_feedback(final_score=0.7, actions={})  # -0.1, not spike
+            >>> adapter.feedback_spike_count(threshold=0.2)
+            1
+        """
+        if len(self._feedback) < 2:
+            return 0
+        scores = [r.final_score for r in self._feedback]
+        count = 0
+        for i in range(1, len(scores)):
+            if abs(scores[i] - scores[i - 1]) > threshold:
+                count += 1
+        return count
