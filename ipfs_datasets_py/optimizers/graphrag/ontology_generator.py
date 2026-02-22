@@ -3703,6 +3703,213 @@ class OntologyGenerator:
         )
         result.metadata["elapsed_ms"] = round((_time.perf_counter() - _t0) * 1000, 3)
         return result
+
+    def generate_with_feedback(
+        self,
+        data: Any,
+        context: OntologyGenerationContext,
+        feedback: Optional[Dict[str, Any]] = None,
+        critic: Optional["OntologyCritic"] = None,
+    ) -> Dict[str, Any]:
+        """
+        Generate ontology with iterative feedback incorporation.
+
+        Generates an initial ontology, optionally evaluates it with a critic,
+        applies feedback suggestions, and returns the refined ontology.
+        Useful for interactive refinement or feedback-loop architectures.
+
+        Args:
+            data: Input data to generate ontology from.
+            context: Context with generation configuration.
+            feedback: Optional feedback dict with suggested modifications:
+                - 'entities_to_remove': List of entity IDs to remove
+                - 'entities_to_merge': List of (id1, id2) tuples to merge
+                - 'relationships_to_remove': List of relationship IDs to remove
+                - 'relationships_to_add': List of relationship dicts to add
+                - 'type_corrections': Dict mapping entity ID → corrected type
+                - 'confidence_floor': Minimum confidence to keep entities
+            critic: Optional :class:`OntologyCritic` for evaluation. If provided,
+                ontology is evaluated and score is stored in metadata.
+
+        Returns:
+            Refined ontology dict with feedback applied. Metadata includes
+            'feedback_applied' flag and score if critic was used.
+
+        Example:
+            >>> ontology = generator.generate_with_feedback(
+            ...     text_data,
+            ...     context,
+            ...     feedback={'confidence_floor': 0.7}  # Keep only high-confidence
+            ... )
+            >>> # Use refined_ontology...
+        """
+        import logging as _logging
+
+        logger = self._log or _logging.getLogger(__name__)
+        logger.info(f"Generating ontology with feedback for {context.data_source}")
+
+        # Step 1: Generate initial ontology
+        ontology = self.generate_ontology(data, context)
+        feedback_applied = False
+
+        # Step 2: Apply feedback modifications if provided
+        if feedback:
+            feedback_applied = self._apply_feedback_to_ontology(ontology, feedback)
+
+        # Step 3: Optionally evaluate with critic
+        critic_score = None
+        if critic is not None:
+            try:
+                from ipfs_datasets_py.optimizers.graphrag.ontology_critic import (
+                    CriticScore,
+                )
+
+                critic_score = critic.evaluate_ontology(ontology, context, source_data=data)
+                ontology["metadata"]["critic_score"] = {
+                    "overall": critic_score.overall,
+                    "completeness": critic_score.completeness,
+                    "consistency": critic_score.consistency,
+                    "clarity": critic_score.clarity,
+                    "granularity": critic_score.granularity,
+                    "relationship_coherence": critic_score.relationship_coherence,
+                    "domain_alignment": critic_score.domain_alignment,
+                }
+            except Exception as e:
+                logger.warning(f"Critic evaluation failed: {e}")
+
+        # Step 4: Update metadata
+        ontology["metadata"]["feedback_applied"] = feedback_applied
+        if feedback:
+            ontology["metadata"]["feedback_keys"] = list(feedback.keys())
+
+        logger.info(
+            f"Ontology generation complete: {len(ontology['entities'])} entities, "
+            f"{len(ontology['relationships'])} relationships"
+        )
+        return ontology
+
+    def _apply_feedback_to_ontology(
+        self,
+        ontology: Dict[str, Any],
+        feedback: Dict[str, Any],
+    ) -> bool:
+        """
+        Apply feedback modifications to ontology in-place.
+
+        Args:
+            ontology: Ontology dict to modify (modified in-place).
+            feedback: Feedback dict with modification requests.
+
+        Returns:
+            bool: True if any modifications were applied.
+
+        Side effects:
+            Modifies 'entities' and 'relationships' lists in ontology.
+        """
+        import logging as _logging
+
+        logger = _logging.getLogger(__name__)
+        modified = False
+
+        entities = ontology.get("entities", [])
+        relationships = ontology.get("relationships", [])
+
+        # Create ID → index mappings for fast lookup
+        entity_id_to_idx = {e.get("id"): i for i, e in enumerate(entities)}
+        rel_id_to_idx = {r.get("id"): i for i, r in enumerate(relationships)}
+
+        # 1) Apply confidence floor filter
+        if "confidence_floor" in feedback:
+            floor = float(feedback["confidence_floor"])
+            original_count = len(entities)
+            entities = [e for e in entities if e.get("confidence", 0) >= floor]
+            if len(entities) < original_count:
+                logger.info(
+                    f"Filtered {original_count - len(entities)} entities below "
+                    f"confidence floor {floor}"
+                )
+                ontology["entities"] = entities
+                # Rebuild ID → index mapping
+                entity_id_to_idx = {e.get("id"): i for i, e in enumerate(entities)}
+                modified = True
+
+        # 2) Remove specific entities
+        if "entities_to_remove" in feedback:
+            for entity_id in feedback["entities_to_remove"]:
+                if entity_id in entity_id_to_idx:
+                    idx = entity_id_to_idx[entity_id]
+                    entities.pop(idx)
+                    # Rebuild mapping
+                    entity_id_to_idx = {e.get("id"): i for i, e in enumerate(entities)}
+                    logger.info(f"Removed entity {entity_id}")
+                    modified = True
+
+        # 3) Apply type corrections
+        if "type_corrections" in feedback:
+            for entity_id, new_type in feedback["type_corrections"].items():
+                if entity_id in entity_id_to_idx:
+                    idx = entity_id_to_idx[entity_id]
+                    old_type = entities[idx].get("type")
+                    entities[idx]["type"] = str(new_type)
+                    logger.info(f"Corrected entity {entity_id} type: {old_type} → {new_type}")
+                    modified = True
+
+        # 4) Merge entities (keep first, discard second)
+        if "entities_to_merge" in feedback:
+            merged_pairs = []
+            for id1, id2 in feedback["entities_to_merge"]:
+                if id1 in entity_id_to_idx and id2 in entity_id_to_idx:
+                    idx1, idx2 = entity_id_to_idx[id1], entity_id_to_idx[id2]
+                    # Keep entity at idx1, discard idx2
+                    entities.pop(idx2)
+                    # Update mappings and relationships: redirect id2 → id1
+                    entity_id_to_idx = {e.get("id"): i for i, e in enumerate(entities)}
+                    for rel in relationships:
+                        if rel.get("source_id") == id2:
+                            rel["source_id"] = id1
+                        if rel.get("target_id") == id2:
+                            rel["target_id"] = id1
+                    logger.info(f"Merged entities {id2} into {id1}")
+                    merged_pairs.append((id1, id2))
+                    modified = True
+
+        # 5) Remove specific relationships
+        if "relationships_to_remove" in feedback:
+            for rel_id in feedback["relationships_to_remove"]:
+                if rel_id in rel_id_to_idx:
+                    idx = rel_id_to_idx[rel_id]
+                    relationships.pop(idx)
+                    # Rebuild mapping
+                    rel_id_to_idx = {r.get("id"): i for i, r in enumerate(relationships)}
+                    logger.info(f"Removed relationship {rel_id}")
+                    modified = True
+
+        # 6) Add new relationships
+        if "relationships_to_add" in feedback:
+            import uuid
+
+            for rel_dict in feedback["relationships_to_add"]:
+                # Ensure required fields
+                if (
+                    rel_dict.get("source_id")
+                    and rel_dict.get("target_id")
+                    and rel_dict.get("type")
+                ):
+                    # Generate ID if missing
+                    if "id" not in rel_dict:
+                        rel_dict["id"] = f"rel_{uuid.uuid4().hex[:8]}"
+                    relationships.append(rel_dict)
+                    logger.info(
+                        f"Added relationship {rel_dict['id']}: "
+                        f"{rel_dict['source_id']} → {rel_dict['target_id']}"
+                    )
+                    modified = True
+
+        # Update ontology with modified lists
+        ontology["entities"] = entities
+        ontology["relationships"] = relationships
+
+        return modified
     
     def _extract_rule_based(
         self,

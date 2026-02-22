@@ -2107,7 +2107,12 @@ class OntologyPipeline:
     # Batch 204: Pipeline run history analysis methods                   #
     # ------------------------------------------------------------------ #
 
-    def run_total_entity_count(self) -> int run_total_entity_count Total entities across all runs."""
+    def run_total_entity_count(self) -> int:
+        """Sum total entities across all runs.
+
+        Returns:
+            Total number of entities extracted across all pipeline runs.
+        """
         return sum(len(r.entities) for r in self._run_history)
 
     def run_total_relationship_count(self) -> int:
@@ -2195,7 +2200,7 @@ class OntologyPipeline:
         mean_score = sum(scores) / len(scores)
         if mean_score == 0.0:
             return 0.0
-        std_dev = self run_score_std_dev()
+        std_dev = self.run_score_std_dev()
         return std_dev / mean_score
 
     def run_has_improving_trend(self, window: int = 3) -> bool:
