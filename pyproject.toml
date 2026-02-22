@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "ipfs_datasets_py"
+version = "0.2.0"
+description = "IPFS-native decentralized AI data platform"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.12"
+
+# Core dependencies — numpy is always installed automatically.
+# Version bounds mirror requirements.txt to keep all installation paths
+# (pip install ., pip install -r requirements.txt, pip install ipfs_datasets_py)
+# consistent. The python_version markers future-proof the bounds: numpy 1.x is
+# used for Python < 3.14 and numpy 2.x for Python >= 3.14 (even though only
+# Python 3.12+ is currently supported, keeping both lines ensures the dep spec
+# remains valid when Python 3.14 support is added).
+dependencies = [
+    "numpy>=1.21.0,<2.0.0; python_version < '3.14'",
+    "numpy>=2.0.0; python_version >= '3.14'",
+]
+
+[project.optional-dependencies]
+# Knowledge-graph extras (numpy already in base deps)
+knowledge_graphs = [
+    "spacy>=3.0.0",
+    "networkx>=2.8.0",
+    "transformers>=4.30.0",
+]
+
+[tool.setuptools]
+packages = {find = {}}
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

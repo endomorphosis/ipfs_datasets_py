@@ -5,6 +5,42 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.10] - 2026-02-22
+
+### Changed — numpy as Default Dependency (Session 55)
+
+**numpy promoted from optional to default (always-installed) dependency.**
+
+#### `setup.py`
+- `install_requires`: replaced bare `'numpy'` with versioned markers matching
+  `requirements.txt`:
+  - `"numpy>=1.21.0,<2.0.0; python_version < '3.14'"`
+  - `"numpy>=2.0.0; python_version >= '3.14'"`
+- `extras_require['knowledge_graphs']`: removed duplicate `'numpy>=1.21.0'` entry
+  (numpy is now in base `install_requires`).
+
+#### `pyproject.toml` (new file)
+- Created minimal PEP 517/518 build configuration:
+  - `[build-system]`: setuptools>=68 + wheel
+  - `[project] dependencies`: same numpy version markers as setup.py / requirements.txt
+  - `[project.optional-dependencies] knowledge_graphs`: spacy, networkx, transformers
+    (numpy omitted since it is in base deps)
+  - `[tool.pytest.ini_options]`: asyncio_mode = "auto"
+
+#### `requirements.txt`
+- Already had correct versioned numpy entries — no change needed.
+
+#### Tests
+- `test_master_status_session55.py`: 13 verification tests in 4 classes
+  - `TestSetupPyNumpyDep`: install_requires version bounds + no-dup in extras
+  - `TestPyprojectTomlNumpyDep`: file exists, numpy version bounds, build-system
+  - `TestRequirementsTxtNumpyDep`: numpy version bounds
+  - `TestNumpyVersionConsistency`: all three files share the same lower bound; numpy importable
+
+**Result: 3,627 pass, 64 skip, 0 fail** (env with networkx+numpy; same 207 missed lines).
+
+---
+
 ## [3.22.9] - 2026-02-22
 
 ### Fixed — Numpy Skip Guards for Sessions 52/53 (Session 54)

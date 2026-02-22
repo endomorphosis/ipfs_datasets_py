@@ -104,7 +104,8 @@ setup(
         'ipfs_model_manager_py',
         'ipfs_faiss_py',
         'transformers',
-        'numpy',
+        "numpy>=1.21.0,<2.0.0; python_version < '3.14'",
+        "numpy>=2.0.0; python_version >= '3.14'",
         'urllib3',
         'requests',
         'boto3',
@@ -175,7 +176,6 @@ setup(
             'spacy>=3.0.0',
             # After installing spacy, download the NLP model:
             #   python -m spacy download en_core_web_sm
-            'numpy>=1.21.0',           # Required for cross-document vector similarity
             'transformers>=4.30.0',    # Optional: transformer-based NER/relation extraction
             'openai>=1.0.0',           # Optional: LLM-enhanced cross-document reasoning
             'anthropic>=0.20.0',       # Optional: Anthropic LLM for reasoning

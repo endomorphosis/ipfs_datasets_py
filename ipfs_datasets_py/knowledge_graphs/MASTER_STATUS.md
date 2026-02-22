@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.22.9  
+**Version:** 3.22.10  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-22 (session 54)  
-**Last Major Release:** v3.22.9 (session 54: numpy skip guards in sessions 52/53; 3,490 passing, 77 skipped, 0 failing in base env)
+**Last Updated:** 2026-02-22 (session 55)  
+**Last Major Release:** v3.22.10 (session 55: numpy promoted to default dep; pyproject.toml created; 3,627 passing in numpy env)
 
 ---
 
@@ -18,9 +18,9 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | **98% base / 99%+ full** | Session 54: 3,490 pass, 77 skip, **0 fail** (base env); 207 missed lines |
-| **Documentation** | ✅ Up to Date | Reflects v3.22.9 structure |
-| **Known Issues** | None | 0 failures; all skips intentional (libipld/spaCy/numpy/matplotlib absent when not installed) |
+| **Test Coverage** | **98% base / 99%+ full** | Session 55: 3,627 pass, 64 skip, **0 fail** (numpy env); 207 missed lines |
+| **Documentation** | ✅ Up to Date | Reflects v3.22.10 structure |
+| **Known Issues** | None | 0 failures; all skips intentional (libipld/spaCy/matplotlib absent when not installed) |
 | **Next Milestone** | v4.0 (2027+) | Remaining missed lines: 207 (mostly spaCy/rdflib/matplotlib optional-dep paths) — see IMPROVEMENT_TODO.md |
 
 ---

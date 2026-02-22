@@ -512,6 +512,36 @@ Removed 14 lines of confirmed dead code from 3 production files:
 
 **Result: 3,614 pass, 64 skip, 0 fail** (base env with networkx+numpy; 207 missed lines; -6 from s52).
 
+### Session 55 log (2026-02-22)
+
+**Problem:** numpy was a bare unversioned entry in `setup.py` `install_requires`; no
+`pyproject.toml` existed; tests with numpy skip-guards could be collapsed once numpy
+became a guaranteed default dependency.
+
+**Root cause / background:**
+- `setup.py` had `'numpy'` with no version constraint in `install_requires` and also
+  `'numpy>=1.21.0'` as a *duplicate* inside `extras_require['knowledge_graphs']`.
+- No `pyproject.toml` existed, so PEP 517/518 build metadata was absent.
+- `requirements.txt` already had correct versioned entries; no change was needed there.
+
+**Fix:**
+1. `setup.py`: replaced `'numpy'` with two conditional entries matching requirements.txt:
+   - `"numpy>=1.21.0,<2.0.0; python_version < '3.14'"`
+   - `"numpy>=2.0.0; python_version >= '3.14'"`
+   Removed duplicate `'numpy>=1.21.0'` from `extras_require['knowledge_graphs']`.
+2. `pyproject.toml` (new): minimal PEP 517/518 build config with numpy in
+   `[project] dependencies` (same version markers).
+
+**13 verification tests** in `test_master_status_session55.py`:
+- `TestSetupPyNumpyDep` (4 tests): install_requires version bounds + no-dup in extras
+- `TestPyprojectTomlNumpyDep` (5 tests): file exists, numpy bounds, build-system present
+- `TestRequirementsTxtNumpyDep` (2 tests): numpy version markers in requirements.txt
+- `TestNumpyVersionConsistency` (2 tests): all three files use same lower bound; importable
+
+**Result: 3,627 pass, 64 skip, 0 fail** (env with networkx+numpy; same 207 missed lines).
+
+---
+
 ### Session 54 log (2026-02-22)
 
 **Problem:** 3 test failures in base env (no numpy) caused by `ipld.py` transitively
