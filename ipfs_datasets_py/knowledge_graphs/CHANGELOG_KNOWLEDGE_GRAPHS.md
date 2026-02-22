@@ -5,6 +5,32 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.7] - 2026-02-22
+
+### Tests — ImportError Except Branches (Session 52)
+
+**17 new tests** in `test_master_status_session52.py`. No production code changes.
+
+**Coverage improvement: 229→213 missed lines (16 new lines covered)**
+
+- `reasoning/types.py:24-26` — `numpy` ImportError except: `np=None`, `_NpNdarray=None` (3 lines, now 100%)
+- `lineage/core.py:18-20` — `networkx` ImportError except: `NETWORKX_AVAILABLE=False`, `nx=None` (3 lines, now 100%)
+- `neo4j_compat/driver.py:35-38` — `router_deps` ImportError except: `HAVE_DEPS=False`, stubs set (4 lines, now 100%)
+- `reasoning/cross_document.py:31-32` — numpy ImportError except: `np=None` (2 lines, now 99%)
+- `reasoning/cross_document.py:64-66` — optimizer ImportError except: `UnifiedGraphRAGQueryOptimizer=None` (3 lines, now 99%)
+- `ipld.py:98` — `HAVE_IPLD_CAR=True` when `ipld_car` mock available via `sys.modules` (1 line, now 99%)
+
+**Key technique**: `_reload_with_absent_dep(module_name, absent_deps)` helper reloads a module
+with specified deps blocked in `sys.modules` (set to `None`). Critically, also saves/restores the
+**parent package attribute** (e.g., `reasoning.cross_document`) to prevent state leakage into
+other tests that import the module via `import pkg.submod as m` pattern.
+
+**Files changed:**
+- `tests/unit/knowledge_graphs/test_master_status_session52.py` — new file, 17 tests
+- `ipfs_datasets_py/knowledge_graphs/MASTER_STATUS.md` — version 3.22.6→3.22.7
+- `ipfs_datasets_py/knowledge_graphs/IMPROVEMENT_TODO.md` — session 52 log
+- `ipfs_datasets_py/knowledge_graphs/CHANGELOG_KNOWLEDGE_GRAPHS.md` — this entry
+
 ## [3.22.6] - 2026-02-22
 
 ### Tests — BFS Guard + ImportError Exception Coverage (Session 51)

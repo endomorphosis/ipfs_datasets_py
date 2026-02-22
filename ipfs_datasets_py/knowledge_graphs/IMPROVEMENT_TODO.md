@@ -433,3 +433,35 @@ Covered 3 previously-uncovered areas:
 - `ipld.py` lines 98, 754, 1123: 3 lines, dead code
 
 **Result: 3,582 pass, 64 skip, 0 fail** (base env).
+
+### Session 52 log (2026-02-22)
+**17 new tests** in `test_master_status_session52.py`. No production code changes.
+
+Covered 6 previously-missed ImportError except branches using a `_reload_with_absent_dep()` helper
+that reloads a module with optional deps blocked via `sys.modules[dep] = None`. The helper also
+saves and restores the **parent package attribute** (e.g. `reasoning.cross_document` on the
+`reasoning` package object) to prevent state leakage — critical because `helpers.py` uses
+`import ipfs_datasets_py.knowledge_graphs.reasoning.cross_document as _parent` at call-time,
+which accesses the package attribute rather than `sys.modules`.
+
+Branches covered (16 lines total):
+1. **`reasoning/types.py:24-26`** — numpy ImportError: `np=None`, `_NpNdarray=None` → now **100%**
+2. **`lineage/core.py:18-20`** — networkx ImportError: `NETWORKX_AVAILABLE=False`, `nx=None` → now **100%**
+3. **`neo4j_compat/driver.py:35-38`** — router_deps ImportError: `HAVE_DEPS=False` stubs → now **100%**
+4. **`reasoning/cross_document.py:31-32`** — numpy ImportError: `np=None`
+5. **`reasoning/cross_document.py:64-66`** — optimizer ImportError: `UnifiedGraphRAGQueryOptimizer=None`
+6. **`ipld.py:98`** — `HAVE_IPLD_CAR=True` when mock `ipld_car` injected into `sys.modules`
+
+**Remaining 213 missed lines** (updated from 229):
+- `extractor.py`: 108 lines, spaCy NLP model required
+- `extraction/graph.py`: 45 lines, rdflib required
+- `lineage/visualization.py`: 39 lines, matplotlib/plotly required
+- `migration/formats.py`: 10 lines, ImportError excepts (libipld/ipld_car)
+- `core/ir_executor.py:435-442`: 4 lines, dead code (Record._values is tuple)
+- `cypher/compiler.py:186,213`: 2 lines, dead code (f"_n{i}" always truthy)
+- `ipld.py:754,1123`: 2 lines, dead code (source_result always found; depth never > max_hops)
+- `extraction/srl.py:402`: 1 line, spaCy dependency
+- `extraction/_entity_helpers.py:117`: 1 line, dead code
+- `reasoning/cross_document.py:199`: 1 line, dead code (zero-norm impossible after empty-tokens guard)
+
+**Result: 3,599 pass, 64 skip, 0 fail** (base env with networkx+numpy; 213 missed lines).
