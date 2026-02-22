@@ -411,11 +411,16 @@ Phase 2 and Phase 5 are both complete.  Update status checkboxes.
 
 | Metric | Baseline (2026-02-22) | Target | Achieved |
 |--------|----------------------|--------|---------|
-| Tests passing | 1457 | 1500+ | **1572** (session 41: +38 tool_metadata, +77 validators) |
+| Tests passing | 1457 | 1500+ | **1617** (s41: +115, s42: +45) |
 | monitoring.py coverage | ~75% | 85%+ | **80%** ✅ (session 40) |
 | enterprise_api.py coverage | ~66% | 80%+ | **80%** ✅ (session 40) |
 | tool_metadata.py coverage | 0% | 85%+ | **100%** ✅ (session 41) |
 | validators.py coverage | 0% | 75%+ | **94%** ✅ (session 41) |
+| logger.py coverage | 0% | 100% | **100%** ✅ (session 42) |
+| mcp_interfaces.py coverage | 0% | 95%+ | **100%** ✅ (session 42) |
+| exceptions.py coverage | 78% | 100% | **100%** ✅ (session 42) |
+| configs.py coverage | 48% | 90%+ | **100%** ✅ (session 42) |
+| trio_bridge.py coverage | 0% | 85%+ | **100%** ✅ (session 42) |
 | docs/api/tool-reference.md categories | ~4/51 | 51/51 | **52 sections** ✅ |
 | Stub tool READMEs (≤50 lines) | 15 | improved | ✅ (all have tables/usage/status) |
 | Empty TODO.md files | 6 | 0 | **0** ✅ |
