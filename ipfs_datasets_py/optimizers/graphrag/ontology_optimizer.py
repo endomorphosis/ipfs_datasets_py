@@ -3824,6 +3824,43 @@ class OntologyOptimizer:
             return 0.0
         return (scores[-1] - mean) / std
 
+    def history_trimmed_mean(self, trim_fraction: float = 0.1) -> float:
+        """Return trimmed mean of history scores, ignoring extremes.
+
+        The trim removes a fraction of scores from both ends of the sorted list.
+
+        Args:
+            trim_fraction: Fraction in [0, 0.5) to trim from each tail. Defaults to 0.1.
+
+        Returns:
+            Float trimmed mean; 0.0 when no history recorded.
+        
+        Raises:
+            ValueError: If trim_fraction not in [0.0, 0.5).
+        
+        Example:
+            >>> opt = OntologyOptimizer()
+            >>> opt._history = [OptEntry(avg_score=0.5), OptEntry(avg_score=0.9), OptEntry(avg_score=0.6)]
+            >>> opt.history_trimmed_mean(trim_fraction=0.2)
+            0.7
+        """
+        if not self._history:
+            return 0.0
+        if trim_fraction < 0.0 or trim_fraction >= 0.5:
+            raise ValueError("trim_fraction must be in [0.0, 0.5).")
+        
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        k = int(n * trim_fraction)
+        
+        # If no trimming occurs or trimming would remove too much, use full mean
+        if k == 0 or k * 2 >= n:
+            return sum(scores) / n
+        
+        # Trim k elements from each tail
+        trimmed = scores[k:n - k]
+        return sum(trimmed) / len(trimmed)
+
     def history_decay_sum(self, decay: float = 0.9) -> float:
         """Return exponentially decayed sum of average_score (oldest gets most decay).
 

@@ -2232,6 +2232,42 @@ class OntologyCritic(BaseCritic):
         dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
         return {d: round(target - getattr(score, d), 6) for d in dims}
 
+    def dimension_z_scores(self, score: "CriticScore") -> Dict[str, float]:
+        """Return z-scores for each dimension relative to their history/baseline.
+
+        This method requires that the critic has historical context or configuration
+        of baseline/mean/std for each dimension. For now, it returns normalized
+        distance scores based on the current score's dimensions.
+
+        Args:
+            score: A :class:`CriticScore` to analyze.
+
+        Returns:
+            Dict mapping dimension name → z-score (float). Each z-score expresses
+            how far a dimension is from "center" (0.5 nominal), measured in
+            units of 0.2 (representing 1 std dev zone).
+
+        Example:
+            >>> critic = OntologyCritic()
+            >>> score = CriticScore(completeness=0.7, consistency=0.5, ...)
+            >>> z_scores = critic.dimension_z_scores(score)
+            >>> z_scores['completeness']
+            1.0
+        """
+        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
+        nominal = 0.5  # nominal center (0 to 1 scale)
+        std_dev = 0.2  # approximate std dev zone
+        
+        z_scores = {}
+        for dim in dims:
+            val = getattr(score, dim, 0.5)
+            if std_dev > 0:
+                z_scores[dim] = round((val - nominal) / std_dev, 4)
+            else:
+                z_scores[dim] = 0.0
+        
+        return z_scores
+
     def worst_score(self, scores: List["CriticScore"]) -> Optional["CriticScore"]:
         """Return the :class:`CriticScore` with the lowest ``overall`` value.
 

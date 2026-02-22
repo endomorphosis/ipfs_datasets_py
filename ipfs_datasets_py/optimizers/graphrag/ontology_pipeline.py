@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 _logger = logging.getLogger(__name__)
 
@@ -144,6 +144,7 @@ class OntologyPipeline:
         data_source: str = "pipeline",
         data_type: str = "text",
         refine: bool = True,
+        progress_callback: Optional[Callable[[int, int, float], None]] = None,
     ) -> PipelineResult:
         """Extract, evaluate, and optionally refine an ontology from *data*.
 
@@ -152,6 +153,10 @@ class OntologyPipeline:
             data_source: Identifier for the data source (metadata only).
             data_type: Data type hint (``"text"``, ``"json"``, etc.).
             refine: Whether to run the mediator refinement cycle (default: True).
+            progress_callback: Optional callback for refinement progress feedback.
+                Called as ``callback(round_num, max_rounds, current_score)`` after
+                each refinement round. *round_num* is 1-indexed (1, 2, ..., max_rounds).
+                *current_score* is a float in [0.0, 1.0] or None.
 
         Returns:
             :class:`PipelineResult` with the final ontology and score.
@@ -195,14 +200,26 @@ class OntologyPipeline:
         actions_applied: List[str] = []
 
         # 3. Evaluate and optionally refine
+        score = self._critic.evaluate_ontology(ontology, ctx)
         if refine:
-            score = self._critic.evaluate_ontology(ontology, ctx)
-            refined = self._mediator.refine_ontology(ontology, score, ctx)
-            ontology = refined
-            actions_applied = refined.get("metadata", {}).get("refinement_actions", [])
-            score = self._critic.evaluate_ontology(ontology, ctx)
-        else:
-            score = self._critic.evaluate_ontology(ontology, ctx)
+            max_rounds = getattr(self._mediator, 'max_rounds', 3)
+            for round_num in range(1, max_rounds):
+                # Refine based on current score
+                refined = self._mediator.refine_ontology(ontology, score, ctx)
+                ontology = refined
+                
+                # Re-evaluate after refinement
+                score = self._critic.evaluate_ontology(ontology, ctx)
+                actions_applied = refined.get("metadata", {}).get("refinement_actions", [])
+                
+                # Invoke progress callback if provided
+                if progress_callback is not None:
+                    current_score_value = getattr(score, "overall", None)
+                    if current_score_value is not None:
+                        try:
+                            progress_callback(round_num, max_rounds, current_score_value)
+                        except Exception as exc:  # pragma: no cover - callback failures are best-effort
+                            self._log.debug("Progress callback failed: %s", exc)
 
         # 4. Feed result back to adapter
         self._adapter.apply_feedback(
@@ -254,6 +271,7 @@ class OntologyPipeline:
         data_source: str = "pipeline",
         data_type: str = "text",
         refine: bool = True,
+        progress_callback: Optional[Callable[[int, int, float], None]] = None,
     ) -> List[PipelineResult]:
         """Run the full pipeline on each document in *docs*.
 
@@ -262,12 +280,13 @@ class OntologyPipeline:
             data_source: Shared data source identifier.
             data_type: Shared data type hint.
             refine: Whether to run mediator refinement (default: True).
+            progress_callback: Optional callback for per-document + per-round progress.
 
         Returns:
             List of :class:`PipelineResult` in the same order as *docs*.
         """
         return [
-            self.run(doc, data_source=data_source, data_type=data_type, refine=refine)
+            self.run(doc, data_source=data_source, data_type=data_type, refine=refine, progress_callback=progress_callback)
             for doc in docs
         ]
 

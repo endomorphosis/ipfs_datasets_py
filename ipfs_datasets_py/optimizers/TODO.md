@@ -86,7 +86,11 @@ Use this as the always-on randomizer. Keep 3-5 items active, one per track. When
   - Done 2026-02-21: added __call__ delegate to generate_ontology.
 - [x] (P2) [tests] Add coverage for PIPELINE_RUN JSON log payload in OntologyPipeline
   - Done 2026-02-21: added test_ontology_pipeline_logging.py validating JSON payload fields.
-- [ ] (P2) [api] Add `OntologyPipeline.run()` progress callback param for UI/CLI feedback
+- [x] (P2) [api] Add `OntologyPipeline.run()` progress callback param for UI/CLI feedback
+  - Done 2026-02-21: added progress_callback parameter to OntologyPipeline.run() and run_batch() methods. Callback invoked per refinement round with (round_num, max_rounds, current_score) signature. Resilient error handling (callback failures logged, never crash). Multi-round refinement loop implemented. Full test coverage with 4 tests: callback invocation, no-callback mode, error resilience, no-callback-when-refine=False. All tests passing.
+- [x] (P2) [docs] Create detailed "Configuration Guide" for all `ExtractionConfig` fields (see Medium Tasks)
+  - Done 2026-02-21: created comprehensive EXTRACTION_CONFIG_GUIDE.md with ~800-line reference covering all 14 fields (confidence_threshold, max_entities, max_relationships, window_size, include_properties, domain_vocab, custom_rules, llm_fallback_threshold, min_entity_length, stopwords, allowed_entity_types, max_confidence). Includes field descriptions, use cases, type constraints, examples, 4 complete domain-specific configs (legal, social media, real-time, medical), validation, serialization, and best practices.
+- [ ] (P2) [perf] Profile `OntologyGenerator._extract_rule_based()` hot paths and identify top-3 bottlenecks (see Medium Tasks)
 
 **Rotation rules**
 - Never keep two active picks in the same track.

@@ -5617,6 +5617,29 @@ class OntologyGenerator:
         """
         return {r.target_id for r in result.relationships if r.target_id}
 
+    def entity_id_list(self, result) -> list:
+        """Return a sorted list of all entity IDs in the extraction result.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Sorted list of unique entity ID strings.
+
+        Example:
+            >>> result = generator.extract_entities("Alice knows Bob. Charlie.")
+            >>> ids = generator.entity_id_list(result)
+            >>> ids
+            ['alice', 'bob', 'charlie']
+        """
+        seen = set()
+        unique_ids = []
+        for e in result.entities:
+            if e.id and e.id not in seen:
+                seen.add(e.id)
+                unique_ids.append(e.id)
+        return sorted(unique_ids)
+
     def confidence_quartiles(self, result: Any) -> dict:
         """Return Q1, median (Q2), and Q3 confidence quartiles for entities.
 
@@ -6030,6 +6053,50 @@ class OntologyGenerator:
         q1 = self.confidence_percentile(results, 25)
         q3 = self.confidence_percentile(results, 75)
         return q3 - q1
+
+    def confidence_coefficient_of_variation(self, results: List[Any]) -> float:
+        """Return coefficient of variation (CV) of confidence scores.
+
+        CV = std_dev / mean, normalized measure of dispersion as a percentage.
+        Useful for comparing variability across distributions with different means.
+
+        Args:
+            results: List of ``EntityExtractionResult`` instances.
+
+        Returns:
+            Float CV value (typically 0 to 1, can exceed 1 for highly variable data);
+            0.0 when no entities or all scores identical.
+
+        Interpretation:
+            - CV < 0.1: Very stable/consistent (low variability)
+            - CV 0.1-0.3: Moderate consistency
+            - CV > 0.5: High variability (inconsistent)
+
+        Example:
+            >>> results = [result1, result2, result3]
+            >>> cv = generator.confidence_coefficient_of_variation(results)
+            >>> if cv < 0.15:
+            ...     print("Very stable extraction quality")
+            >>> elif cv > 0.5:
+            ...     print("Inconsistent extraction, investigate issues")
+        """
+        scores = []
+        for result in results:
+            entities = result.entities if hasattr(result, 'entities') else []
+            if entities:
+                scores.extend(e.confidence for e in entities if hasattr(e, 'confidence'))
+        
+        if not scores or len(scores) < 2:
+            return 0.0
+        
+        mean = sum(scores) / len(scores)
+        if mean == 0.0:
+            return 0.0
+        
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        std_dev = variance ** 0.5
+        
+        return std_dev / mean
 
     def entity_relation_ratio(self, result: Any) -> float:
         """Return the ratio of entity count to relationship count.
@@ -6554,17 +6621,6 @@ class OntologyGenerator:
         """
         entities = result.entities or []
         return sum(getattr(e, "confidence", 0.0) or 0.0 for e in entities)
-
-    def entity_id_list(self, result: "EntityExtractionResult") -> list:
-        """Return a sorted list of all entity IDs.
-
-        Args:
-            result: EntityExtractionResult to inspect.
-
-        Returns:
-            Sorted list of entity ID strings; empty list when no entities.
-        """
-        return sorted(e.id for e in (result.entities or []))
 
     def relationship_source_ids(self, result: "EntityExtractionResult") -> set:
         """Return the set of source entity IDs from all relationships.
