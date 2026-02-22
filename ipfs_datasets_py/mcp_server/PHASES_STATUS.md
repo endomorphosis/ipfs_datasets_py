@@ -1,6 +1,6 @@
 # MCP Server Phases Status Report
 
-**Last Updated:** 2026-02-22 (Session 44 — __main__/investigation_mcp_client/simple_server/standalone_server/temporal_deontic all 80%+, +98 tests)  
+**Last Updated:** 2026-02-22 (Session 45 — Flask deprecation warnings added; asyncio references fixed; 16 new tests)  
 **Branch:** `copilot/create-improvement-refactoring-plan`
 **Master Plan:** [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)  
 **Next Steps:** [MASTER_IMPROVEMENT_PLAN_2026_v6.md](MASTER_IMPROVEMENT_PLAN_2026_v6.md)
@@ -283,7 +283,15 @@ Active improvement tasks are tracked in [MASTER_IMPROVEMENT_PLAN_2026_v6.md](MAS
 
 Completed v5 tasks tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROVEMENT_PLAN_2026_v5.md).
 
-**v6 Tasks — ALL COMPLETE ✅ (sessions 40-43):**
+**v6 Tasks — ALL COMPLETE ✅ (sessions 40-44); v7 Session 45 tasks below:**
+- ✅ `simple_server.py`: Flask import made conditional; `DeprecationWarning` on class/function use (session 45)
+- ✅ `standalone_server.py`: `DeprecationWarning` added to all entry points (session 45)
+- ✅ `__main__.py`: Flask fallback removed; `--http` emits `DeprecationWarning` (session 45)
+- ✅ `mcplusplus/executor.py`: misleading "Fallback to asyncio" comments replaced with "anyio fallback" (session 45)
+- ✅ `README.md`: 2 code examples updated `asyncio.run()` → `anyio.run()` (session 45)
+- ✅ `docs/architecture/DUAL_RUNTIME_ARCHITECTURE.md`: `asyncio.get_event_loop()` → `anyio.to_thread.run_sync()` (session 45)
+- ✅ Created `MASTER_IMPROVEMENT_PLAN_2026_v7.md` (phases M/N/O) — Flask removal, anyio validation, Docker refresh (session 45)
+- ✅ `test_deprecation_session45.py` — 16 tests all passing (session 45)
 - ✅ `monitoring.py` coverage: 63%→80% (Phase I) — `test_monitoring_session40.py` (44 tests)
 - ✅ `enterprise_api.py` coverage: 66%→80% (Phase I) — `test_enterprise_api_session40.py` (20 tests)
 - ✅ `tool_metadata.py` coverage: 0%→100% (Phase I) — `test_tool_metadata_session41.py` (38 tests)

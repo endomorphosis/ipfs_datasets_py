@@ -360,7 +360,7 @@ Or run the provided start script:
 ### Using the Python Client
 
 ```python
-import asyncio
+import anyio
 from ipfs_datasets_py.mcp_server.client import IPFSDatasetsMCPClient
 
 async def main():
@@ -385,8 +385,8 @@ async def main():
         "csv"
     )
 
-# Run the async function
-asyncio.run(main())
+# Run the async function (anyio works with both asyncio and trio backends)
+anyio.run(main)
 ```
 
 ### Using Enhanced P2P Capabilities 🆕
@@ -576,8 +576,8 @@ The server exposes the following tools:
 For advanced use cases, you can create and configure your own server instance:
 
 ```python
+import anyio
 from ipfs_datasets_py.mcp_server import IPFSDatasetsMCPServer
-import asyncio
 
 async def run_custom_server():
     # Create server instance
@@ -592,6 +592,6 @@ async def run_custom_server():
     # Start server
     await server.start(host="127.0.0.1", port=5000)
 
-# Run custom server
-asyncio.run(run_custom_server())
+# Run custom server (anyio works with both asyncio and trio backends)
+anyio.run(run_custom_server)
 ```

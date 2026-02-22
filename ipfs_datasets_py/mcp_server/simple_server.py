@@ -3,8 +3,34 @@
 """
 Simplified MCP Server implementation for IPFS Datasets Python.
 
-This module provides a simpler server implementation that doesn't rely on the
-modelcontextprotocol package, making it easier to test and integrate.
+.. deprecated::
+    This module is **deprecated** and will be removed in a future release.
+
+    The Flask-based HTTP server is **not the intended access method** for this
+    project.  All tool access should go through one of the three supported
+    interfaces:
+
+    1. **MCP stdio server** (recommended for AI assistants / VS Code):
+
+       .. code-block:: bash
+
+           python -m ipfs_datasets_py.mcp_server
+
+    2. **CLI tool** (recommended for shell users):
+
+       .. code-block:: bash
+
+           ipfs-datasets <command>
+
+    3. **Python package imports** (recommended for programmatic use):
+
+       .. code-block:: python
+
+           from ipfs_datasets_py import DatasetManager
+
+    If you need HTTP access, use the FastAPI service layer
+    (``ipfs_datasets_py.mcp_server.fastapi_service``) which is built on
+    anyio/uvicorn and integrates properly with the MCP+P2P stack.
 """
 from __future__ import annotations
 
@@ -12,11 +38,28 @@ import argparse
 import importlib
 import json
 import os
+import warnings
 from pathlib import Path
 import sys
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from flask import Flask, request, jsonify
+try:
+    from flask import Flask, request, jsonify
+    FLASK_AVAILABLE = True
+except ImportError:
+    FLASK_AVAILABLE = False
+
+    def Flask(*args, **kwargs):  # type: ignore[misc]
+        raise ImportError(
+            "Flask is not installed.  This module is deprecated — use "
+            "`python -m ipfs_datasets_py.mcp_server` (MCP stdio) instead."
+        )
+
+    def request(*args, **kwargs):  # type: ignore[misc]
+        raise ImportError("Flask is not installed.")
+
+    def jsonify(*args, **kwargs):  # type: ignore[misc]
+        raise ImportError("Flask is not installed.")
 
 from ipfs_datasets_py.utils.anyio_compat import run as run_anyio
 
@@ -101,8 +144,10 @@ class SimpleIPFSDatasetsMCPServer:
     """
     Simplified MCP Server for IPFS Datasets Python.
 
-    This class provides a simpler server implementation that uses Flask directly
-    and doesn't rely on the modelcontextprotocol package.
+    .. deprecated::
+        Use ``python -m ipfs_datasets_py.mcp_server`` (MCP stdio) or the
+        ``ipfs-datasets`` CLI tool instead of this Flask-based HTTP server.
+        See module docstring for full migration guide.
     """
 
     def __init__(self, server_configs: Optional[Configs] = None):
@@ -112,6 +157,19 @@ class SimpleIPFSDatasetsMCPServer:
         Args:
             server_configs: Optional configuration object. If not provided, the default configs will be used.
         """
+        warnings.warn(
+            "SimpleIPFSDatasetsMCPServer is deprecated.  Use "
+            "`python -m ipfs_datasets_py.mcp_server` (MCP stdio) or the "
+            "`ipfs-datasets` CLI instead of this Flask-based HTTP server.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if not FLASK_AVAILABLE:
+            raise ImportError(
+                "Flask is required for SimpleIPFSDatasetsMCPServer but is not installed. "
+                "Install it with `pip install flask` or — better — migrate to the MCP "
+                "stdio server: `python -m ipfs_datasets_py.mcp_server`."
+            )
         self.configs = server_configs or configs
 
         # Initialize Flask app
@@ -249,9 +307,20 @@ def start_simple_server(config_path: Optional[str] = None):
     """
     Start the MCP server.
 
+    .. deprecated::
+        Use ``python -m ipfs_datasets_py.mcp_server`` (MCP stdio) or the
+        ``ipfs-datasets`` CLI tool instead.
+
     Args:
         config_path: Optional path to a configuration file.
     """
+    warnings.warn(
+        "start_simple_server() is deprecated.  Use "
+        "`python -m ipfs_datasets_py.mcp_server` (MCP stdio) or the "
+        "`ipfs-datasets` CLI instead of this Flask-based HTTP server.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     from .configs import load_config_from_yaml
 
     # Load configuration
