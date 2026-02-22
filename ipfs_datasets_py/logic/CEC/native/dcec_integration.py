@@ -75,12 +75,20 @@ def parse_expression_to_token(
     expr = remove_comments(expression)
     expr = strip_comments(expr)
     
+    # Special-case: top-level "not X" prefix notation.
+    # Recursively parse the operand then wrap in a ParseToken("not", [operand]).
+    # This must be done BEFORE strip_whitespace because that converts "not a" → "not,a".
+    import re as _re
+    _raw = expression.strip() if expression else ""
+    _not_match = _re.match(r'^not\s+(.+)$', _raw, _re.DOTALL)
+    if _not_match:
+        sub_expr = _not_match.group(1).strip()
+        sub_token = parse_expression_to_token(sub_expr, namespace)
+        if sub_token is not None:
+            return ParseToken("not", [sub_token])
+
     # Step 2: Clean whitespace and validate
     expr = strip_whitespace(expr)
-    
-    # Pre-process: convert "not X" (prefix 'not' without parens) to "not(X)"
-    import re as _re
-    expr = _re.sub(r'\bnot\s+([^\s()]+)', r'not(\1)', expr)
     
     if not check_parens(expr):
         raise DCECParsingError(f"Unbalanced parentheses in: {expr}")
@@ -150,6 +158,15 @@ def token_to_formula(
         variables = {}
     
     func_name = token.func_name.lower()
+    
+    # Special case: "atomic" tokens wrap a single predicate name in parens.
+    # e.g. ParseToken("atomic", ["(a)"]) → AtomicFormula(Predicate("a", []), [])
+    if func_name == "atomic":
+        pred_strs = [a.strip("()") for a in token.args if isinstance(a, str)]
+        if pred_strs:
+            predicate = Predicate(pred_strs[0], [])
+            return AtomicFormula(predicate, [])
+        return None
     
     # Logical connectives
     if func_name == "and":
