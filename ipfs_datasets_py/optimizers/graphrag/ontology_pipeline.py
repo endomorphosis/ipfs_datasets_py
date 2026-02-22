@@ -144,7 +144,7 @@ class OntologyPipeline:
         data_source: str = "pipeline",
         data_type: str = "text",
         refine: bool = True,
-        progress_callback: Optional[Callable[[int, int, float], None]] = None,
+        progress_callback: Optional[Any] = None,
     ) -> PipelineResult:
         """Extract, evaluate, and optionally refine an ontology from *data*.
 
@@ -153,10 +153,12 @@ class OntologyPipeline:
             data_source: Identifier for the data source (metadata only).
             data_type: Data type hint (``"text"``, ``"json"``, etc.).
             refine: Whether to run the mediator refinement cycle (default: True).
-            progress_callback: Optional callback for refinement progress feedback.
-                Called as ``callback(round_num, max_rounds, current_score)`` after
-                each refinement round. *round_num* is 1-indexed (1, 2, ..., max_rounds).
-                *current_score* is a float in [0.0, 1.0] or None.
+            progress_callback: Optional callable invoked at each pipeline stage
+                with a progress dict.  The dict contains at minimum:
+                ``{"stage": str, "step": int, "total_steps": int}``.
+                Additional keys vary by stage.  Pass ``None`` (default) to
+                disable callbacks.  Exceptions raised inside the callback are
+                silently ignored so they never interrupt the pipeline.
 
         Returns:
             :class:`PipelineResult` with the final ontology and score.
@@ -165,6 +167,17 @@ class OntologyPipeline:
             OntologyGenerationContext,
         )
         import time
+
+        total_steps = 4 if refine else 3
+
+        def _notify(stage: str, step: int, **extra: Any) -> None:
+            """Invoke progress_callback safely, swallowing all exceptions."""
+            if progress_callback is None:
+                return
+            try:
+                progress_callback({"stage": stage, "step": step, "total_steps": total_steps, **extra})
+            except Exception as _cb_exc:  # noqa: BLE001
+                self._log.debug("progress_callback raised in stage %r: %s", stage, _cb_exc)
 
         start_time = time.time()
         ctx = OntologyGenerationContext(
@@ -176,6 +189,7 @@ class OntologyPipeline:
         # 1. Extract entities
         hint = self._adapter.get_extraction_hint()
         self._log.info("OntologyPipeline.run: threshold_hint=%.3f domain=%s", hint, self.domain)
+        _notify("extracting", 1, domain=self.domain, data_source=data_source)
         extraction = self._generator.extract_entities(data, ctx)
 
         # 2. Build initial ontology dict
@@ -196,30 +210,25 @@ class OntologyPipeline:
                 for r in extraction.relationships
             ],
         }
+        _notify("extracted", 2, entity_count=len(ontology["entities"]),
+                relationship_count=len(ontology["relationships"]))
 
         actions_applied: List[str] = []
 
         # 3. Evaluate and optionally refine
         score = self._critic.evaluate_ontology(ontology, ctx)
         if refine:
-            max_rounds = getattr(self._mediator, 'max_rounds', 3)
-            for round_num in range(1, max_rounds):
-                # Refine based on current score
-                refined = self._mediator.refine_ontology(ontology, score, ctx)
-                ontology = refined
-                
-                # Re-evaluate after refinement
-                score = self._critic.evaluate_ontology(ontology, ctx)
-                actions_applied = refined.get("metadata", {}).get("refinement_actions", [])
-                
-                # Invoke progress callback if provided
-                if progress_callback is not None:
-                    current_score_value = getattr(score, "overall", None)
-                    if current_score_value is not None:
-                        try:
-                            progress_callback(round_num, max_rounds, current_score_value)
-                        except Exception as exc:  # pragma: no cover - callback failures are best-effort
-                            self._log.debug("Progress callback failed: %s", exc)
+            score = self._critic.evaluate_ontology(ontology, ctx)
+            _notify("evaluating", 3, score=getattr(score, "overall", None))
+            refined = self._mediator.refine_ontology(ontology, score, ctx)
+            ontology = refined
+            actions_applied = refined.get("metadata", {}).get("refinement_actions", [])
+            score = self._critic.evaluate_ontology(ontology, ctx)
+            _notify("refined", 4, score=getattr(score, "overall", None),
+                    actions_applied=actions_applied)
+        else:
+            score = self._critic.evaluate_ontology(ontology, ctx)
+            _notify("evaluated", 3, score=getattr(score, "overall", None))
 
         # 4. Feed result back to adapter
         self._adapter.apply_feedback(

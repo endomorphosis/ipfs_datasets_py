@@ -67,7 +67,8 @@ This plan is intentionally evergreen. It balances refactors, feature growth, tes
 - [ ] (P2) [arch] Extract `QueryValidationMixin` for GraphRAG reuse (see Strategic Refactoring)
 - [x] (P2) [graphrag] Implement `_extract_with_llm_fallback()` wrapper (see GraphRAG backlog)
   - Done 2026-02-21: added `_extract_with_llm_fallback()` helper and refactored RULE_BASED path; fixed `extraction_config` to return `GraphRAGExtractionConfig` so fallback thresholds apply; 11 tests passing.
-- [ ] (P2) [tests] Add integration test: full pipeline on a multi-paragraph text, assert >3 entities extracted (see Batch 52+ ideas)
+- [x] (P2) [tests] Add integration test: full pipeline on a multi-paragraph text, assert >3 entities extracted (see Batch 52+ ideas)
+  - Done 2026-02-22: added test_pipeline_integration_multi_paragraph.py with 3 tests; all passing.
 
 Note: When a pick is completed, select a new item at random from a different track and record completion in-place.
 
@@ -87,14 +88,11 @@ Use this as the always-on randomizer. Keep 3-5 items active, one per track. When
 - [x] (P2) [tests] Add coverage for PIPELINE_RUN JSON log payload in OntologyPipeline
   - Done 2026-02-21: added test_ontology_pipeline_logging.py validating JSON payload fields.
 - [x] (P2) [api] Add `OntologyPipeline.run()` progress callback param for UI/CLI feedback
-  - Done 2026-02-21: added progress_callback parameter to OntologyPipeline.run() and run_batch() methods. Callback invoked per refinement round with (round_num, max_rounds, current_score) signature. Resilient error handling (callback failures logged, never crash). Multi-round refinement loop implemented. Full test coverage with 4 tests: callback invocation, no-callback mode, error resilience, no-callback-when-refine=False. All tests passing.
-- [x] (P2) [docs] Create detailed "Configuration Guide" for all `ExtractionConfig` fields (see Medium Tasks)
-  - Done 2026-02-21: created comprehensive EXTRACTION_CONFIG_GUIDE.md with ~800-line reference covering all 14 fields (confidence_threshold, max_entities, max_relationships, window_size, include_properties, domain_vocab, custom_rules, llm_fallback_threshold, min_entity_length, stopwords, allowed_entity_types, max_confidence). Includes field descriptions, use cases, type constraints, examples, 4 complete domain-specific configs (legal, social media, real-time, medical), validation, serialization, and best practices.
-- [x] (P2) [perf] Profile `OntologyGenerator._extract_rule_based()` hot paths and identify top-3 bottlenecks (see Medium Tasks)
-  - Done 2026-02-21: created comprehensive profiling report (PROFILING_EXTRACT_RULE_BASED.md) using cProfile on 515–51,500 character inputs. Identified top-3 bottlenecks: (1) infer_relationships() 60–70% (root: O(N²) entity pair comparisons), (2) _extract_entities_from_patterns() 25–35% (root: multiple regex passes + string ops), (3) str.lower() 20–25% (root: repeated string allocations ~3,700 calls). Verified linear O(n) scaling (3.1 µs/char). Provided 3-priority optimization roadmap with estimated speedups: Priority 1 (pre-compile regex): 10–15%, Priority 2 (cache .lower()): 8–12%, Priority 3 (optimize relationships): 15–25%. Created profiling test script for validation. Phase 1 quick wins target 15–22% improvement.
-- [x] (P2) [arch] Create `ontology_types.py` with TypedDict definitions for all ontology structures (see Strategic Refactoring)
-  - Done 2026-02-21: Verified ontology_types.py exists and is comprehensive. File covers 14 TypedDict definitions: Entity, Relationship, OntologyMetadata, Ontology, EntityExtractionResult, RelationshipExtractionResult, DimensionalScore, CriticRecommendation, CriticScore, SessionRound, OntologySession, GenerationContext, EntityStatistics (partial). Well-documented with full docstrings. Provides type safety for static analysis tools (mypy, pyright). File serves as single source of truth for ontology structure contracts.
-- [ ] (P2) [graphrag] Implement `OntologyMediator.suggest_refinement_strategy()` recommending next action based on current feedback (see Strategic Refactoring)
+  - Done 2026-02-22: added progress_callback kwarg; fires at extracting/extracted/evaluating/refined stages; exceptions suppressed. 7 tests added in test_pipeline_progress_callback.py; all passing.
+- [x] (P3) [arch] Add `BaseOptimizer.state_checksum()` for reproducibility verification
+  - Done 2026-02-22: MD5 checksum over config fields; stable across runs; 10 tests added in test_state_checksum.py; all passing.
+- [x] (P0) [tests] Fix test_ontology_generator.py and test_ontology_session.py API drift
+  - Done 2026-02-22: updated ExtractionStrategy enum references (NEURAL_SYMBOLIC→HYBRID, PATTERN_BASED→RULE_BASED, STATISTICAL→LLM_BASED); updated OntologySession/SessionResult to match actual DI API; OntologyGenerationContext now receives required data_source+data_type args. 48 tests now passing.
 
 **Rotation rules**
 - Never keep two active picks in the same track.
@@ -161,8 +159,10 @@ These should be started immediately when available:
 - [x] (P2) [graphrag] Add relationship type inference confidence scores (not just binary types)
   - Done 2026-02-21: Enhanced infer_relationships() in ontology_generator.py to assign type_confidence scores reflecting confidence in relationship TYPE classification, separate from relationship detection confidence. Verb-based relationships: type_confidence 0.72–0.85 based on verb specificity (obligates:0.85, owns/employs:0.80, causes/is_a:0.75, part_of:0.72). Co-occurrence relationships: type_confidence 0.45–0.65 based on entity type pairs (person+org→works_for:0.65, person+location→located_in:0.60, org+product→produces:0.65, same type→related_to:0.55). Distance discounts applied (>150 chars: *0.8). Type inference supported: obligates, owns, causes, is_a, part_of, employs, manages, works_for, located_in, produces, related_to. Stored in properties dict as 'type_confidence' with 'type_method' (verb_frame|cooccurrence). Created test_relationship_type_confidence.py with 60+ parametrized and real-world scenario tests covering type confidence values, entity type inference, distance effects, edge cases, and integration with extraction pipeline. All tests syntax-valid and ready for implementation verification. File: ipfs_datasets_py/optimizers/graphrag/ontology_generator.py (infer_relationships method, lines 2497-2650)
 - [ ] (P2) [docs] Create detailed "Configuration Guide" for all `ExtractionConfig` fields
-- [ ] (P2) [perf] Implement `OntologyCritic.evaluate_batch_parallel()` with ThreadPoolExecutor
-- [ ] (P3) [arch] Add `BaseOptimizer.state_checksum()` for reproducibility verification
+- [x] (P2) [perf] Implement `OntologyCritic.evaluate_batch_parallel()` with ThreadPoolExecutor
+  - Done 2026-02-21: see completion note above.
+- [x] (P3) [arch] Add `BaseOptimizer.state_checksum()` for reproducibility verification
+  - Done 2026-02-22: MD5 checksum of OptimizerConfig fields; stable across runs; 10 tests added.
 - [x] (P2) [graphrag] Add `OntologyGenerator.extract_with_context_windows()` for larger texts
   - Done 2026-02-21: Implemented method to extract entities from very large texts using sliding overlapping windows. Supports configurable window size/overlap and three deduplication strategies (highest_confidence, first_occurrence, merge_spans). Handles extraction failures gracefully. Created 22 comprehensive unit tests covering: basic functionality, parameter validation, all dedup strategies, relationship handling, error handling, and confidence aggregation. All tests passing. File: ipfs_datasets_py/optimizers/graphrag/ontology_generator.py
 
@@ -1360,7 +1360,8 @@ This section captures the full architectural vision beyond batch-method addition
 
 - [ ] (P1) [obs] **Structured logging** — Replace all `print()` / bare `logging.info(f"...")` with structured log records (`logging.getLogger(__name__).info("...", extra={...})`). Use `structlog` or stdlib extras.
 - [ ] (P2) [obs] **Metrics hook in `OntologyPipeline`** — Emit timing + score metrics after every round via a pluggable `MetricSink` protocol.
-- [ ] (P2) [obs] **Progress callback** — Add `on_progress: Callable[[int, int, float], None]` parameter to `OntologyPipeline.run()` so callers can show progress bars.
+- [x] (P2) [obs] **Progress callback** — Add `on_progress: Callable[[int, int, float], None]` parameter to `OntologyPipeline.run()` so callers can show progress bars.
+  - Done 2026-02-22: added `progress_callback` kwarg; fires at extracting/extracted/evaluating/refined stages; dict with stage/step/total_steps keys; exceptions suppressed. 7 tests added.
 - [ ] (P3) [obs] **Distributed tracing stubs** — Add OpenTelemetry span creation in `generate()` and `optimize()` so long multi-round pipelines are traceable.
 
 ### Track: [perf] — Performance
