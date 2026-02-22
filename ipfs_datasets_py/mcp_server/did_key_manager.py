@@ -307,6 +307,117 @@ class DIDKeyManager:
     # Info / repr
     # ------------------------------------------------------------------
 
+    async def sign_delegation_token(
+        self,
+        token: "Any",  # DelegationToken from ucan_delegation module
+        audience_did: Optional[str] = None,
+        lifetime_seconds: int = 86_400,
+    ) -> str:
+        """Sign a stub :class:`~ipfs_datasets_py.mcp_server.ucan_delegation.DelegationToken`
+        and return a real UCAN JWT string.
+
+        When ``py-ucan`` is available the returned string is a fully signed
+        Ed25519 JWT that can be verified by any UCAN-compliant verifier.
+        When ``py-ucan`` is not installed a lightweight base64 JSON stub is
+        returned (prefixed with ``"stub:"``); this is only safe for testing.
+
+        Parameters
+        ----------
+        token:
+            A :class:`~ipfs_datasets_py.mcp_server.ucan_delegation.DelegationToken`
+            whose ``issuer`` is assumed to be *our* DID (or will be overridden).
+        audience_did:
+            Override the audience DID.  Defaults to ``token.audience``.
+        lifetime_seconds:
+            Token lifetime for the signed JWT.  The stub always uses this value
+            as well (encoded in the JSON payload).
+
+        Returns
+        -------
+        str
+            A signed UCAN JWT (real when ``py-ucan`` is available) or a stub
+            base64 JSON string.
+        """
+        aud = audience_did or getattr(token, "audience", None) or self._did
+        # Build capability list from the stub token
+        caps: List[Tuple[str, str]] = [
+            (c.resource, c.ability)
+            for c in getattr(token, "capabilities", [])
+        ]
+
+        if _UCAN_AVAILABLE and self._keypair is not None:
+            # Use real py-ucan signing
+            return await self.mint_delegation(
+                audience_did=aud,
+                capabilities=caps,
+                lifetime_seconds=lifetime_seconds,
+            )
+
+        # Fallback: produce a deterministic stub JWT-like string
+        import base64
+        import json as _json
+
+        payload = {
+            "iss": self._did,
+            "aud": aud,
+            "caps": [{"with": c[0], "can": c[1]} for c in caps],
+            "exp": int(__import__("time").time()) + lifetime_seconds,
+            "cid": getattr(token, "cid", "stub"),
+        }
+        b64 = base64.urlsafe_b64encode(
+            _json.dumps(payload, separators=(",", ":")).encode()
+        ).rstrip(b"=").decode()
+        return f"stub:{b64}"
+
+    async def verify_signed_token(
+        self,
+        signed_token: str,
+        required_capabilities: Optional[Sequence[Tuple[str, str]]] = None,
+    ) -> bool:
+        """Verify a token returned by :meth:`sign_delegation_token`.
+
+        Returns *True* for real UCAN JWTs (delegated via ``py-ucan``) or for
+        stub tokens whose payload is structurally valid.  Capability checking
+        is only performed when ``required_capabilities`` is given and
+        ``py-ucan`` is available.
+        """
+        if signed_token.startswith("stub:"):
+            # Stub path — just check it decodes
+            import base64
+            import json as _json
+            try:
+                b64 = signed_token[5:] + "=="
+                _json.loads(base64.urlsafe_b64decode(b64).decode())
+                return True
+            except Exception:
+                return False
+
+        if not _UCAN_AVAILABLE or self._keypair is None:
+            return False
+
+        req_caps: List[Any] = []
+        if required_capabilities:
+            req_caps = [
+                _ucan_lib.RequiredCapability(
+                    capability=_ucan_lib.Capability(with_=res, can=ability),
+                    root_issuer=self._did,
+                )
+                for res, ability in required_capabilities
+            ]
+            result = await _ucan_lib.verify(
+                signed_token,
+                audience=self._did,
+                required_capabilities=req_caps,
+            )
+            return isinstance(result, _ucan_lib.VerifyResultOk)
+
+        # No capability check requested — just parse
+        try:
+            await _ucan_lib.verify(signed_token, audience=self._did, required_capabilities=[])
+            return True
+        except Exception:
+            return False
+
     def info(self) -> Dict[str, Any]:
         """Return a dict of public metadata about this key manager."""
         return {

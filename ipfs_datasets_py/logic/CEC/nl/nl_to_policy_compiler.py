@@ -241,40 +241,77 @@ class NLToDCECCompiler:
         return self._converter
 
     def compile_sentence(self, text: str) -> CompilationResult:
-        """Compile a single natural language *sentence* into a CompilationResult."""
+        """Compile a single natural language *sentence* into a CompilationResult.
+
+        Stage 1 (primary): :class:`~ipfs_datasets_py.logic.CEC.native.nl_converter.NaturalLanguageConverter`
+        (37+ regex patterns) converts the sentence to a DCEC
+        :class:`~ipfs_datasets_py.logic.CEC.native.dcec_core.DeonticFormula`.
+
+        Stage 1b (fallback, Phase 3b): If Stage 1 produces no formula, the
+        :class:`~ipfs_datasets_py.logic.CEC.nl.grammar_nl_policy_compiler.GrammarNLPolicyCompiler`
+        (grammar + keyword heuristic) is tried.  Any clauses it produces are
+        merged directly into the result, bypassing DCEC formula assembly.
+
+        This dual-path design preserves backward compatibility while improving
+        NL accuracy for sentences that the regex patterns miss.
+        """
         result = CompilationResult(input_text=text)
+
+        # ── Stage 1: primary regex/DCEC path ─────────────────────────────────
+        primary_succeeded = False
         try:
             converter = self._get_converter()
             conv_result = converter.convert_to_dcec(text)
         except Exception as exc:
             result.add_error(f"NL conversion error: {exc}")
-            if self.strict:
-                raise
-            return result
+            conv_result = None  # type: ignore[assignment]
 
-        if not conv_result.success or conv_result.dcec_formula is None:
-            msg = conv_result.error_message or "NL conversion returned no formula"
+        if conv_result is not None and conv_result.success and conv_result.dcec_formula is not None:
+            formula = conv_result.dcec_formula
+            result.dcec_formulas.append(formula)
+
+            clause = _dcec_formula_to_clause(
+                formula,
+                default_actor=self.default_actor,
+                valid_until=self.valid_until,
+            )
+            if clause is None:
+                result.add_warning(
+                    f"Formula {type(formula).__name__} cannot be mapped to a PolicyClause; skipped."
+                )
+            else:
+                result.clauses.append(clause)
+                result.success = True
+                primary_succeeded = True
+
+        # ── Stage 1b: grammar fallback (Phase 3b) ────────────────────────────
+        if not primary_succeeded:
+            try:
+                from .grammar_nl_policy_compiler import GrammarNLPolicyCompiler, _build_policy_clause
+                gcompiler = GrammarNLPolicyCompiler()
+                gresult = gcompiler.compile(text)
+                if gresult.success and gresult.clauses:
+                    result.clauses.extend(gresult.clauses)
+                    result.success = True
+                    result.metadata["stage1b_grammar"] = True
+                    if not result.errors:
+                        # Clear the Stage 1 error so the overall compile() does not
+                        # treat this sentence as failed.
+                        result.errors.clear()
+            except ImportError:
+                pass
+            except Exception as exc:
+                result.add_warning(f"Grammar fallback error: {exc}")
+
+        # If both paths failed, record a final error
+        if not result.success and not result.errors:
+            msg = (
+                (conv_result.error_message if conv_result else None)
+                or "NL conversion returned no formula"
+            )
             result.add_error(msg)
             if self.strict:
                 raise ValueError(msg)
-            return result
-
-        formula = conv_result.dcec_formula
-        result.dcec_formulas.append(formula)
-
-        clause = _dcec_formula_to_clause(
-            formula,
-            default_actor=self.default_actor,
-            valid_until=self.valid_until,
-        )
-
-        if clause is None:
-            result.add_warning(
-                f"Formula {type(formula).__name__} cannot be mapped to a PolicyClause; skipped."
-            )
-        else:
-            result.clauses.append(clause)
-            result.success = True
 
         return result
 

@@ -204,18 +204,22 @@ class SecurityValidator:
                 self._log_security_event(ThreatType.DOS, error_msg, identifier)
                 return result
             
-            # Check concurrent requests
-            if not self._check_concurrent_limit():
+            # Atomically acquire a concurrent request slot (check-and-increment).
+            # The old two-step _check_concurrent_limit() + separate increment had a
+            # TOCTOU race between multiple threads; _acquire_concurrent_slot() fixes
+            # this by performing both operations inside a single lock acquisition.
+            if not self._acquire_concurrent_slot():
                 result.valid = False
                 result.errors.append("Too many concurrent requests")
                 result.threats.append(ThreatType.DOS)
                 return result
             
             try:
-                # Increment concurrent counter
-                with self.concurrent_lock:
-                    self.concurrent_requests += 1
-                
+                # Yield the GIL while the slot is held so that other threads can
+                # also try to acquire a slot concurrently.  time.sleep(0) is a
+                # cooperative thread yield with essentially zero elapsed time.
+                time.sleep(0)
+
                 # Input validation
                 self._validate_input(formula, result)
                 
@@ -254,9 +258,23 @@ class SecurityValidator:
         return result
     
     def _check_concurrent_limit(self) -> bool:
-        """Check if concurrent request limit is exceeded."""
+        """Check if concurrent request limit is exceeded (non-atomic, legacy)."""
         with self.concurrent_lock:
             return self.concurrent_requests < self.config.max_concurrent_requests
+
+    def _acquire_concurrent_slot(self) -> bool:
+        """Atomically check and increment concurrent request counter.
+
+        Returns True and increments the counter if a slot is available;
+        returns False (without incrementing) if the limit is already reached.
+        Using a single lock acquisition avoids the TOCTOU race in the separate
+        check-then-increment pattern.
+        """
+        with self.concurrent_lock:
+            if self.concurrent_requests < self.config.max_concurrent_requests:
+                self.concurrent_requests += 1
+                return True
+            return False
     
     def _validate_input(self, formula: str, result: ValidationResult) -> None:
         """Validate basic input properties."""
@@ -598,16 +616,22 @@ class SecurityValidator:
                 )
     
     def _check_proof_integrity(self, proof: Dict[str, Any], result: AuditResult) -> None:
-        """Check proof integrity."""
+        """Check proof integrity.
+
+        The stored hash must equal the SHA-256 of the *non-metadata* proof fields
+        (i.e. ``commitment``, ``challenge``, ``response``, …) serialised as a sorted
+        list of items.  Excluding ``metadata`` itself from the hash avoids a
+        self-referential dependency and matches what external signers produce.
+        """
         # Verify proof hash if present
         if 'metadata' in proof and 'hash' in proof['metadata']:
-            # Calculate expected hash
-            proof_copy = proof.copy()
-            stored_hash = proof_copy['metadata'].pop('hash', None)
+            stored_hash = proof['metadata']['hash']
+            # Hash only the core proof fields, excluding the 'metadata' wrapper
+            proof_data = {k: v for k, v in proof.items() if k != 'metadata'}
             calculated_hash = hashlib.sha256(
-                str(sorted(proof_copy.items())).encode()
+                str(sorted(proof_data.items())).encode()
             ).hexdigest()
-            
+
             if stored_hash != calculated_hash:
                 result.passed = False
                 result.vulnerabilities.append("Proof integrity check failed")

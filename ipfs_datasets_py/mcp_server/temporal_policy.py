@@ -134,12 +134,33 @@ class PolicyEvaluator:
 
     def __init__(self) -> None:
         self._policies: Dict[str, PolicyObject] = {}
+        # Phase 6: decision memoization cache.
+        # Key: (policy_cid, intent_cid, actor) → DecisionObject
+        # Cache is invalidated (cleared) whenever a new policy is registered.
+        self._decision_cache: Dict[tuple, "DecisionObject"] = {}
 
     def register_policy(self, policy: PolicyObject) -> str:
-        """Register a policy and return its policy_cid."""
+        """Register a policy and return its policy_cid.
+
+        Registering a new policy invalidates the decision cache because
+        existing evaluations may no longer be valid.
+        """
         cid = policy.policy_cid
+        if cid not in self._policies:
+            # Only clear if this is a genuinely new policy to avoid
+            # unnecessary cache thrashing when re-registering the same policy.
+            self._decision_cache.clear()
         self._policies[cid] = policy
         return cid
+
+    def clear_cache(self) -> int:
+        """Explicitly clear the decision memoization cache.
+
+        Returns the number of entries that were cleared.
+        """
+        n = len(self._decision_cache)
+        self._decision_cache.clear()
+        return n
 
     def get_policy(self, policy_cid: str) -> Optional[PolicyObject]:
         return self._policies.get(policy_cid)
@@ -152,12 +173,40 @@ class PolicyEvaluator:
         at_time: Optional[float] = None,
         actor: Optional[str] = None,
         proofs: Optional[List[str]] = None,
+        use_cache: bool = True,
     ) -> DecisionObject:
         """
         Evaluate *intent* against the policy identified by *policy_cid*.
 
         Returns a :class:`DecisionObject` with allow/deny/allow_with_obligations.
+
+        Parameters
+        ----------
+        intent:
+            The :class:`IntentObject` to evaluate.
+        policy_cid:
+            Identifier of the registered policy to check against.
+        at_time:
+            Unix timestamp to use for temporal clause validity.  Defaults to
+            ``time.time()``.
+        actor:
+            Optional actor override (used for per-actor clause matching).
+        proofs:
+            Optional list of UCAN proof CIDs checked during delegation
+            verification.
+        use_cache:
+            When *True* (default), previously computed decisions for the same
+            ``(policy_cid, intent_cid, actor)`` triple are returned from the
+            memoization cache.  Pass *False* to force re-evaluation.
         """
+        # Phase 6: consult memoization cache first.
+        # We only cache when at_time is None (i.e. wall-clock time) because
+        # time-parameterised calls with an explicit timestamp are typically
+        # used for testing temporal edge cases and should always re-evaluate.
+        cache_key = (policy_cid, intent.cid, actor)
+        if use_cache and at_time is None and cache_key in self._decision_cache:
+            return self._decision_cache[cache_key]
+
         policy = self._policies.get(policy_cid)
         if policy is None:
             return DecisionObject(
@@ -214,7 +263,7 @@ class PolicyEvaluator:
                 ))
 
         decision = ALLOW_WITH_OBLIGATIONS if spawned else ALLOW
-        return DecisionObject(
+        result = DecisionObject(
             decision=decision,
             intent_cid=intent.cid,
             policy_cid=policy_cid,
@@ -223,6 +272,10 @@ class PolicyEvaluator:
             justification="Permission granted.",
             policy_version=policy.version,
         )
+        # Phase 6: store in memoization cache (only for wall-clock evaluations).
+        if use_cache and at_time is None:
+            self._decision_cache[cache_key] = result
+        return result
 
     @staticmethod
     def _clause_matches(

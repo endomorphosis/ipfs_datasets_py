@@ -119,6 +119,32 @@ class BridgeEvaluationResult:
 # ─── bridge ──────────────────────────────────────────────────────────────────
 
 
+@dataclass
+class SignedPolicyResult:
+    """Output of :meth:`UCANPolicyBridge.compile_and_sign`.
+
+    Attributes
+    ----------
+    compile_result:
+        The :class:`BridgeCompileResult` from Stage 1–3 of the pipeline.
+    signed_jwts:
+        List of signed UCAN JWT strings (one per permission/obligation token).
+        Each string is either a real Ed25519 JWT (when ``py-ucan`` is available
+        and a DID key is loaded) or a ``"stub:…"`` base64 JSON string.
+    signing_available:
+        ``True`` if :class:`~mcp_server.did_key_manager.DIDKeyManager` was
+        reachable.  ``False`` means no JWTs were produced.
+    """
+    compile_result: BridgeCompileResult
+    signed_jwts: List[str] = field(default_factory=list)
+    signing_available: bool = False
+
+    @property
+    def jwt_count(self) -> int:
+        """Number of signed JWTs produced."""
+        return len(self.signed_jwts)
+
+
 class UCANPolicyBridge:
     """Coordinates NL→Policy→UCAN compilation and evaluation.
 
@@ -317,6 +343,69 @@ class UCANPolicyBridge:
         if self._revocations is None:
             return False
         return self._revocations.is_revoked(cid)
+
+    async def compile_and_sign(
+        self,
+        nl_text: str,
+        *,
+        audience_did: str = "did:example:agent",
+        issuer_did: str = "did:example:root",
+        lifetime_seconds: int = 86_400,
+    ) -> "SignedPolicyResult":
+        """Compile NL text to policy + sign each permission token with a DID key.
+
+        Phase 2b of the NL→UCAN pipeline: after Stage 3 produces stub
+        :class:`~ipfs_datasets_py.mcp_server.ucan_delegation.DelegationToken`
+        objects, this method optionally calls
+        :meth:`~ipfs_datasets_py.mcp_server.did_key_manager.DIDKeyManager.sign_delegation_token`
+        to turn them into real (or stub-signed) UCAN JWTs.
+
+        Parameters
+        ----------
+        nl_text:
+            Natural-language policy text (e.g. *"Alice may read files"*).
+        audience_did:
+            DID of the agent receiving the delegations.
+        issuer_did:
+            DID of the issuing authority (used for stub tokens).
+        lifetime_seconds:
+            Token lifetime in seconds.
+
+        Returns
+        -------
+        SignedPolicyResult
+            Dataclass with ``.compile_result``, ``.signed_jwts`` list, and
+            ``.signing_available`` flag.
+        """
+        compile_result = self.compile_nl(
+            nl_text,
+            issuer_did=issuer_did,
+            audience_did=audience_did,
+        )
+        signed_jwts: List[str] = []
+        signing_available = False
+
+        try:
+            from ipfs_datasets_py.mcp_server.did_key_manager import get_did_key_manager
+            mgr = get_did_key_manager()
+            signing_available = True
+            for token in compile_result.delegation_tokens:
+                jwt = await mgr.sign_delegation_token(
+                    token,
+                    audience_did=audience_did,
+                    lifetime_seconds=lifetime_seconds,
+                )
+                signed_jwts.append(jwt)
+        except ImportError:
+            pass
+        except Exception as exc:
+            logger.debug("DIDKeyManager unavailable for signing: %s", exc)
+
+        return SignedPolicyResult(
+            compile_result=compile_result,
+            signed_jwts=signed_jwts,
+            signing_available=signing_available,
+        )
 
     # ── private helpers ───────────────────────────────────────────────────────
 

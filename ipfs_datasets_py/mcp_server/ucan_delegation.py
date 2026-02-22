@@ -227,21 +227,43 @@ class DelegationEvaluator:
 
     def __init__(self) -> None:
         self._tokens: Dict[str, DelegationToken] = {}
+        # Phase 6: chain assembly cache.
+        # Key: leaf_cid → DelegationChain (root-first).
+        # Invalidated when a new token is added.
+        self._chain_cache: Dict[str, "DelegationChain"] = {}
 
     def add_token(self, token: DelegationToken) -> str:
-        """Store *token* and return its CID."""
+        """Store *token* and return its CID.
+
+        Adding a new token invalidates the chain cache because existing chains
+        may now be extendable.
+        """
         cid = token.cid
+        if cid not in self._tokens:
+            # Clear chain cache on new tokens to avoid stale chain references.
+            self._chain_cache.clear()
         self._tokens[cid] = token
         return cid
 
     def get_token(self, cid: str) -> Optional[DelegationToken]:
         return self._tokens.get(cid)
 
-    def build_chain(self, leaf_cid: str) -> DelegationChain:
+    def build_chain(self, leaf_cid: str, *, use_cache: bool = True) -> DelegationChain:
         """Follow ``proof_cid`` links to build the full delegation chain.
 
         The chain is returned in root-first order (root → ... → leaf).
+
+        Parameters
+        ----------
+        leaf_cid:
+            CID of the leaf (innermost) token to start chain assembly from.
+        use_cache:
+            When *True* (default) the assembled chain is stored in an in-memory
+            cache keyed by *leaf_cid* and reused on subsequent identical calls.
         """
+        if use_cache and leaf_cid in self._chain_cache:
+            return self._chain_cache[leaf_cid]
+
         chain_tokens: List[DelegationToken] = []
         current_cid: Optional[str] = leaf_cid
         visited: set = set()
@@ -259,7 +281,10 @@ class DelegationEvaluator:
 
         # Reverse to get root-first order
         chain_tokens.reverse()
-        return DelegationChain(tokens=chain_tokens)
+        chain = DelegationChain(tokens=chain_tokens)
+        if use_cache:
+            self._chain_cache[leaf_cid] = chain
+        return chain
 
     def can_invoke(
         self,
@@ -361,6 +386,73 @@ class RevocationList:
     def to_list(self) -> List[str]:
         """Return a sorted list of revoked CIDs."""
         return sorted(self._revoked)
+
+    def save(self, path: str) -> None:
+        """Persist the revocation list to a JSON file.
+
+        If ``ipfs_datasets_py.mcp_server.secrets_vault`` is available and
+        *path* ends in ``.enc``, the file is written via the global
+        :class:`~ipfs_datasets_py.mcp_server.secrets_vault.SecretsVault` so
+        that the content is encrypted at rest.  Otherwise it is written as
+        plain JSON with ``0o600`` permissions.
+
+        Parameters
+        ----------
+        path:
+            Destination file path.
+        """
+        import json as _json
+        import os as _os
+
+        data = {"revoked": self.to_list(), "count": len(self._revoked)}
+
+        if path.endswith(".enc"):
+            # Encrypted path via SecretsVault
+            try:
+                from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+                vault = get_secrets_vault()
+                vault.set("__revocation_list__", _json.dumps(data))
+                # Also write a plaintext marker so the path exists
+                with open(path, "w", encoding="utf-8") as fh:
+                    fh.write("vault-backed")
+                _os.chmod(path, 0o600)
+                return
+            except ImportError:
+                pass  # Fall through to plaintext
+
+        with open(path, "w", encoding="utf-8") as fh:
+            _json.dump(data, fh)
+        _os.chmod(path, 0o600)
+
+    def load(self, path: str) -> int:
+        """Load a revocation list from a JSON file previously written by :meth:`save`.
+
+        Returns the number of CIDs loaded.
+        """
+        import json as _json
+        import os as _os
+
+        if not _os.path.isfile(path):
+            return 0
+
+        if path.endswith(".enc"):
+            try:
+                from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+                vault = get_secrets_vault()
+                raw = vault.get("__revocation_list__")
+                if raw is None:
+                    return 0
+                data = _json.loads(raw)
+            except (ImportError, Exception):
+                return 0
+        else:
+            with open(path, encoding="utf-8") as fh:
+                data = _json.load(fh)
+
+        cids: List[str] = data.get("revoked", [])
+        for cid in cids:
+            self._revoked.add(cid)
+        return len(cids)
 
     def __len__(self) -> int:
         return len(self._revoked)
