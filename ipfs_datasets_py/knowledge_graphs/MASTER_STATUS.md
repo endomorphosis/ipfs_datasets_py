@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.22.13  
+**Version:** 3.22.14  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-22 (session 58)  
-**Last Major Release:** v3.22.13 (session 58: srl.py dead code removed → 100%; multiformats added to ipld extras; 3,757 passing)
+**Last Updated:** 2026-02-22 (session 59)  
+**Last Major Release:** v3.22.14 (session 59: doc consistency — ROADMAP.md v3.22.14; missing CHANGELOG sections v3.22.5/v3.22.7/v3.22.11 added; release table complete)
 
 ---
 
@@ -19,7 +19,7 @@
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
 | **Test Coverage** | **99% base / 99.99%+ full** | Session 58: 3,757 pass, 2 skip, **0 fail** (full dep env); 1 missed line |
-| **Documentation** | ✅ Up to Date | Reflects v3.22.13 structure |
+| **Documentation** | ✅ Up to Date | Reflects v3.22.14 structure |
 | **Known Issues** | None | 0 failures; all skips intentional (libipld/spaCy absent when not installed) |
 | **Next Milestone** | v4.0 (2027+) | 1 missed line: `_entity_helpers.py:117` (intentional defensive guard) — 99.99% coverage |
 

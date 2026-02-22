@@ -1,8 +1,8 @@
 # Knowledge Graphs - Development Roadmap
 
 **Last Updated:** 2026-02-22  
-**Current Version:** 3.22.3  
-**Status:** Production Ready (99% test coverage)
+**Current Version:** 3.22.14  
+**Status:** Production Ready (99.99% test coverage)
 
 ---
 
@@ -429,6 +429,20 @@ We follow [Semantic Versioning](https://semver.org/):
 | 2.5.0 | November 2026 | ✅ Cancelled (delivered in 2.0.0/2.1.0) | Advanced Extraction |
 | 3.0.0 | February 2027 | ✅ Cancelled (delivered in 2.0.0/2.1.0) | Advanced Reasoning |
 | 3.22.0 | 2026-02-22 | ✅ Released | Comprehensive coverage push: 3,553 tests passing, 55 skipped; 99%+ coverage across all modules; anyio async-context bug fixes; spaCy/matplotlib/rdflib optional-dep skip guards |
+| 3.22.1 | 2026-02-22 | ✅ Released | rdflib optional-dep skip guards (session46); ROADMAP.md updated to v3.22.0 |
+| 3.22.2 | 2026-02-22 | ✅ Released | Bug fix: RDF boolean serialization order (bool before int) in export_to_rdf (session47); extraction/graph.py 100% |
+| 3.22.3 | 2026-02-22 | ✅ Released | Final coverage push: migration/formats.py 100%; expression_evaluator 100%; ontology/reasoning 100% (session48); 3,626 tests, 141 missed lines |
+| 3.22.4 | 2026-02-22 | ✅ Released | numpy skip guards: importorskip in session41+42 (session49); 3,569 pass, 64 skip (base env) |
+| 3.22.5 | 2026-02-22 | ✅ Released | numpy-via-networkx skip guards (session50): fixed 7 test failures when networkx installed but numpy absent |
+| 3.22.6 | 2026-02-22 | ✅ Released | 13 new tests: hybrid_search.py 100%; CAR ImportError branches; entity_helpers dead code documented (session51) |
+| 3.22.7 | 2026-02-22 | ✅ Released | 17 new tests: ImportError except branches in 5 modules (reasoning/types, lineage/core, neo4j_compat/driver, cross_document, ipld) (session52) |
+| 3.22.8 | 2026-02-22 | ✅ Released | 14 lines dead code removed (compiler.py, ir_executor.py, ipld.py); 15 invariant tests (session53) |
+| 3.22.9 | 2026-02-22 | ✅ Released | numpy skip guards for sessions 52+53 tests (session54); 3,490 pass, 77 skip |
+| 3.22.10 | 2026-02-22 | ✅ Released | numpy promoted to default dep in setup.py + new pyproject.toml (session55) |
+| 3.22.11 | 2026-02-22 | ✅ Released | 9 lines dead code removed (cross_document.py, ir_executor.py); both files now 100% (session56) |
+| 3.22.12 | 2026-02-22 | ✅ Released | scipy/matplotlib/plotly/rdflib added to knowledge_graphs extras; visualization.py 100% + graph.py 100% (session57) |
+| 3.22.13 | 2026-02-22 | ✅ Released | srl.py 2 dead lines removed → 100%; multiformats added to ipld extras; 1 missed line total (session58) |
+| 3.22.14 | 2026-02-22 | ✅ Released | Doc consistency fixes: ROADMAP.md v3.22.14; missing CHANGELOG sections added; release table complete (session59) |
 | 4.0 | 2027+ | 📋 Future | TBD based on feedback |
 
 ---

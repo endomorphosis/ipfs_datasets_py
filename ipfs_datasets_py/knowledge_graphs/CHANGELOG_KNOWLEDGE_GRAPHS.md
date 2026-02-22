@@ -5,6 +5,42 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.14] - 2026-02-22
+
+### Changed — Documentation Consistency Fixes (Session 59)
+
+**No production code changes.** Synchronised all three tracking documents to match
+the actual release history.
+
+#### `ROADMAP.md`
+- Updated `Current Version` header: `3.22.3` → `3.22.14`
+- Updated `Status` header: `99%` → `99.99% test coverage`
+- Added v3.22.1 through v3.22.14 to the Release Schedule table (was jumping from
+  3.22.0 directly to 4.0)
+
+#### `CHANGELOG_KNOWLEDGE_GRAPHS.md`
+- Added missing `## [3.22.5]` section (session 50: numpy-via-networkx skip guards)
+- Added missing `## [3.22.7]` section (session 52: ImportError except branches)
+- Added missing `## [3.22.11]` section (session 56: dead code removal)
+- All versions 3.22.0 – 3.22.14 now have their own section headings
+
+#### Tests
+
+**22 new tests** in `test_master_status_session59.py` (4 classes):
+
+- `TestRoadmapHeaderVersion` (5 tests): Current Version header; stale 3.22.3 absent;
+  coverage value reflects 99.99%.
+- `TestRoadmapReleaseTable` (5 tests): release table has every 3.22.x version 0–14;
+  v4.0 future entry preserved.
+- `TestChangelogVersionCoverage` (6 tests): all 3.22.x section headings present;
+  v3.22.5 / v3.22.7 / v3.22.11 explicitly checked; headings in descending order.
+- `TestMasterStatusVersion` (5 tests): version header 3.22.14; not stale 3.22.13;
+  all three docs agree on 3.22.14.
+
+**Result: 3,725 passed, 26 skipped, 0 failed**
+
+---
+
 ## [3.22.13] - 2026-02-22
 
 ### Changed — Dead Code Removal: srl.py + ipld extras (Session 58)
@@ -128,6 +164,28 @@ With all optional deps installed:
 - Added `tests/unit/knowledge_graphs/test_master_status_session56.py` with **13 invariant
   tests** (2 classes: `TestCrossDocumentZeroNormProof`, `TestIRExecutorOrderByStringExpr`).
 
+**Result: 3,640 pass, 64 skip, 0 fail (base env); 204 missed lines**
+
+---
+
+## [3.22.11] - 2026-02-22
+
+### Removed — Dead Code in cross_document.py and ir_executor.py (Session 56)
+
+*Note: This entry corrects a prior omission — the session 56 content was originally
+bundled into the v3.22.12 section of this changelog. The production changes and tests
+belong to this version.*
+
+**9 lines of provably unreachable code removed from 2 files. See v3.22.12 for full details.**
+
+- `reasoning/cross_document.py`: removed 2-line zero-norm guard → **100%** ✅
+- `core/ir_executor.py`: collapsed 7-line if/else+try/except to 1 line → **100%** ✅
+- 13 invariant tests in `test_master_status_session56.py`
+
+**Result: 3,640 pass, 64 skip, 0 fail (base env); 204 missed lines**
+
+---
+
 ## [3.22.10] - 2026-02-22
 
 ### Changed — numpy as Default Dependency (Session 55)
@@ -226,7 +284,9 @@ hard `import numpy as np` at module level. Tests that reloaded `ipld.py` or impo
 
 **Result: 3,614 pass, 64 skip, 0 fail (base env); 207 missed lines**
 
+---
 
+## [3.22.7] - 2026-02-22
 
 ### Tests — ImportError Except Branches (Session 52)
 
@@ -252,6 +312,10 @@ other tests that import the module via `import pkg.submod as m` pattern.
 - `ipfs_datasets_py/knowledge_graphs/IMPROVEMENT_TODO.md` — session 52 log
 - `ipfs_datasets_py/knowledge_graphs/CHANGELOG_KNOWLEDGE_GRAPHS.md` — this entry
 
+**Result: 3,599 pass, 64 skip, 0 fail (base env); 213 missed lines (−16 from session 51)**
+
+---
+
 ## [3.22.6] - 2026-02-22
 
 ### Tests — BFS Guard + ImportError Exception Coverage (Session 51)
@@ -271,9 +335,11 @@ other tests that import the module via `import pkg.submod as m` pattern.
 
 **Result: 3,582 pass, 64 skip, 0 fail** (base env); 229 missed lines (down from 230).
 
+---
 
+## [3.22.5] - 2026-02-22
 
-### Tests — numpy Skip Guards (Session 50)
+### Tests — numpy-via-networkx Skip Guards (Session 50)
 
 **No new tests, no production code changes.** Fixed 7 test failures that appeared when networkx is installed (networkx imports numpy as a soft dependency that becomes importable) but numpy is not directly available.
 
