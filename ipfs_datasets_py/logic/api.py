@@ -171,6 +171,28 @@ if _nl_ucan_ns:
 	BridgeCompileResult = _nl_ucan_ns["BridgeCompileResult"]
 	BridgeEvaluationResult = _nl_ucan_ns["BridgeEvaluationResult"]
 
+# BW133: Populate UCAN delegation + conflict detector into namespace (best-effort)
+_BW133_DELEGATION_AVAILABLE = False
+_BW133_CONFLICT_AVAILABLE = False
+try:
+	from ipfs_datasets_py.mcp_server.ucan_delegation import (  # type: ignore[import-not-found]
+		DelegationManager,
+		get_delegation_manager,
+	)
+	_BW133_DELEGATION_AVAILABLE = True
+except (ImportError, ModuleNotFoundError):
+	pass  # optional – mcp_server may be absent
+
+try:
+	from .CEC.nl.nl_policy_conflict_detector import (  # type: ignore[import-not-found]
+		NLPolicyConflictDetector,
+		PolicyConflict,
+		detect_conflicts,
+	)
+	_BW133_CONFLICT_AVAILABLE = True
+except (ImportError, ModuleNotFoundError):
+	pass  # optional
+
 
 __all__ = [
 	# FOL
@@ -262,3 +284,8 @@ __all__ = [
 	"BridgeCompileResult",
 	"BridgeEvaluationResult",
 ]
+# BW133: conditionally extend __all__ with symbols that loaded successfully
+if _BW133_DELEGATION_AVAILABLE:
+	__all__ += ["DelegationManager", "get_delegation_manager"]
+if _BW133_CONFLICT_AVAILABLE:
+	__all__ += ["NLPolicyConflictDetector", "PolicyConflict", "detect_conflicts"]

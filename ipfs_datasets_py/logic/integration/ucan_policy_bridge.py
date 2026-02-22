@@ -85,10 +85,17 @@ class BridgeCompileResult:
     leaf_token_cid: Optional[str] = None
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
+    conflicts: List[Any] = field(default_factory=list)
+    """Policy conflicts detected by :class:`~logic.CEC.nl.nl_policy_conflict_detector.NLPolicyConflictDetector`."""
 
     @property
     def delegation_count(self) -> int:
         return len(self.delegation_tokens)
+
+    @property
+    def conflict_count(self) -> int:
+        """Number of detected policy conflicts."""
+        return len(self.conflicts)
 
 
 @dataclass
@@ -247,6 +254,20 @@ class UCANPolicyBridge:
 
             if tokens:
                 result.leaf_token_cid = tokens[-1].cid
+
+        # BO125: Detect policy conflicts from compiled clauses
+        try:
+            from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import detect_conflicts
+            if compile_result.policy_result is not None:
+                policy = compile_result.policy_result.policy
+                if policy is not None and hasattr(policy, "clauses"):
+                    result.conflicts = detect_conflicts(policy.clauses)
+                    for conflict in result.conflicts:
+                        result.warnings.append(
+                            f"Policy conflict detected: {conflict.description}"
+                        )
+        except (ImportError, ModuleNotFoundError, AttributeError) as exc:
+            logger.debug("BO125 conflict detection unavailable: %s", exc)
 
         return result
 

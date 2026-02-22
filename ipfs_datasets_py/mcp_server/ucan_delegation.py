@@ -653,13 +653,18 @@ class DelegationManager:
         """Revoke an entire chain rooted at *root_cid*.
 
         Builds the chain from the store and revokes all constituent tokens.
-        Returns the number of tokens revoked.
+        If the chain is empty or cannot be built, *root_cid* itself is revoked.
+        Returns the number of tokens revoked (at least 1).
         """
         ev = self.get_evaluator()
         try:
             chain = ev.build_chain(root_cid)
-            self._revocation.revoke_chain(chain)
-            return len(chain.tokens)
+            if chain.tokens:
+                self._revocation.revoke_chain(chain)
+                return len(chain.tokens)
+            # Empty chain — unknown root_cid; still revoke it directly
+            self._revocation.revoke(root_cid)
+            return 1
         except (KeyError, ValueError, RuntimeError) as exc:
             logger.warning("revoke_chain(%s): could not build chain, revoking root only: %s", root_cid, exc)
             self._revocation.revoke(root_cid)
@@ -705,6 +710,43 @@ class DelegationManager:
             revocation_list=self._revocation,
             at_time=at_time,
         )
+
+    def can_invoke_audited(
+        self,
+        principal: str,
+        resource: str,
+        ability: str,
+        *,
+        leaf_cid: str,
+        at_time: Optional[float] = None,
+        audit_log: Optional[Any] = None,
+        policy_cid: str = "delegation",
+        intent_cid: str = "intent",
+    ) -> Tuple[bool, str]:
+        """Check whether *principal* can invoke *ability* on *resource*.
+
+        Like :meth:`can_invoke` but additionally records the decision to
+        *audit_log* (a :class:`~policy_audit_log.PolicyAuditLog`) when provided.
+
+        Returns (allowed: bool, reason: str).
+        """
+        allowed, reason = self.can_invoke(
+            principal, resource, ability,
+            leaf_cid=leaf_cid, at_time=at_time,
+        )
+        if audit_log is not None:
+            try:
+                decision_str = "allow" if allowed else "deny"
+                audit_log.record(
+                    policy_cid=policy_cid,
+                    intent_cid=intent_cid,
+                    decision=decision_str,
+                    tool=ability,
+                    actor=principal,
+                )
+            except (TypeError, AttributeError, ValueError) as exc:  # pragma: no cover
+                logger.warning("can_invoke_audited: audit record failed: %s", exc)
+        return allowed, reason
 
     # ------------------------------------------------------------------
     # Persistence

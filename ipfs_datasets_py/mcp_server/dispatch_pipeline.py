@@ -421,3 +421,34 @@ def make_full_pipeline(
         for n in stage_names
     ]
     return DispatchPipeline(stages=stages, metrics_recorder=metrics_recorder)
+
+
+def make_delegation_stage(manager: Any) -> "PipelineStage":
+    """BS129: Create a :class:`PipelineStage` backed by a :class:`~ucan_delegation.DelegationManager`.
+
+    The stage checks whether the requesting actor (``intent["actor"]``) can invoke
+    the requested tool (``intent["tool"]``) via the delegation chain identified by
+    ``intent.get("leaf_cid", "default")``.
+
+    Parameters
+    ----------
+    manager:
+        A :class:`~ucan_delegation.DelegationManager` instance.
+
+    Returns
+    -------
+    :class:`PipelineStage` with name ``"delegation"``.
+    """
+    def _delegation_handler(intent: Dict[str, Any]) -> Dict[str, Any]:
+        actor = intent.get("actor", "")
+        tool = intent.get("tool", "")
+        leaf_cid = intent.get("leaf_cid", "default")
+        try:
+            allowed, reason = manager.can_invoke(
+                actor, tool, "tools/invoke", leaf_cid=leaf_cid
+            )
+            return {"allowed": allowed, "reason": reason}
+        except Exception as exc:
+            return {"allowed": False, "reason": f"delegation error: {exc}"}
+
+    return PipelineStage(name="delegation", handler=_delegation_handler)
