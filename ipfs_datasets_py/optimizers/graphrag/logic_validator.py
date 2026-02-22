@@ -3407,6 +3407,132 @@ class LogicValidator:
                 count += 1
         return count
 
+    # ------------------------------------------------------------------ #
+    # Batch 203: Cache and validation result analysis methods            #
+    # ------------------------------------------------------------------ #
+
+    def cache_size(self) -> int:
+        """Get number of cached validation results.
+
+        Returns:
+            Number of entries in validation cache, or 0 if caching disabled.
+        """
+        if self._cache is None:
+            return 0
+        return len(self._cache)
+
+    def cache_hit_ratio(self, total_checks: int) -> float:
+        """Calculate approximate cache hit ratio.
+
+        Args:
+            total_checks: Total number of validation checks performed.
+
+        Returns:
+            Ratio of cached validations (cache_size / total_checks).
+            Returns 0.0 if total_checks is 0 or caching disabled.
+        """
+        if total_checks == 0 or self._cache is None:
+            return 0.0
+        return self.cache_size() / total_checks
+
+    def result_has_contradictions(self, result: ValidationResult) -> bool:
+        """Check if validation result contains contradictions.
+
+        Args:
+            result: ValidationResult to analyze.
+
+        Returns:
+            True if result has contradictions list with items.
+        """
+        return len(result.contradictions) > 0
+
+    def result_contradiction_count(self, result: ValidationResult) -> int:
+        """Count contradictions in validation result.
+
+        Args:
+            result: ValidationResult to analyze.
+
+        Returns:
+            Number of contradictions detected.
+        """
+        return len(result.contradictions)
+
+    def result_proof_count(self, result: ValidationResult) -> int:
+        """Count proofs in validation result.
+
+        Args:
+            result: ValidationResult to analyze.
+
+        Returns:
+            Number of consistency proofs generated.
+        """
+        return len(result.proofs)
+
+    def result_invalid_entity_count(self, result: ValidationResult) -> int:
+        """Count invalid entities in validation result.
+
+        Args:
+            result: ValidationResult to analyze.
+
+        Returns:
+            Number of entities involved in validation errors.
+        """
+        return len(result.invalid_entity_ids)
+
+    def result_is_high_confidence(self, result: ValidationResult, threshold: float = 0.8) -> bool:
+        """Check if validation result has high confidence.
+
+        Args:
+            result: ValidationResult to analyze.
+            threshold: Minimum confidence for "high" classification (default 0.8).
+
+        Returns:
+            True if confidence >= threshold.
+        """
+        return result.confidence >= threshold
+
+    def result_processing_speed(self, result: ValidationResult, formula_count: int) -> float:
+        """Calculate processing speed (formulas per millisecond).
+
+        Args:
+            result: ValidationResult with time_ms attribute.
+            formula_count: Number of formulas validated.
+
+        Returns:
+            Speed as formulas/ms. Returns 0.0 if time_ms is 0.
+        """
+        if result.time_ms == 0.0:
+            return 0.0
+        return formula_count / result.time_ms
+
+    def result_consistency_ratio(self, results: list) -> float:
+        """Calculate ratio of consistent results.
+
+        Args:
+            results: List of ValidationResult objects.
+
+        Returns:
+            Ratio of consistent results (0.0-1.0). Returns 0.0 if empty list.
+        """
+        if not results:
+            return 0.0
+        consistent_count = sum(1 for r in results if r.is_consistent)
+        return consistent_count / len(results)
+
+    def average_validation_time(self, results: list) -> float:
+        """Calculate average validation time across results.
+
+        Args:
+            results: List of ValidationResult objects.
+
+        Returns:
+            Mean time_ms across all results, or 0.0 if empty list.
+        """
+        if not results:
+            return 0.0
+        total_time = sum(r.time_ms for r in results)
+        return total_time / len(results)
+
 
 # Export public API
 __all__ = [

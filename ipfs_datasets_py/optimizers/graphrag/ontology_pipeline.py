@@ -2102,3 +2102,114 @@ class OntologyPipeline:
         if n % 2 == 0:
             return (scores[mid - 1] + scores[mid]) / 2
         return float(scores[mid])
+
+    # ------------------------------------------------------------------ #
+    # Batch 204: Pipeline run history analysis methods                   #
+    # ------------------------------------------------------------------ #
+
+    def run_total_entity_count(self) -> int run_total_entity_count Total entities across all runs."""
+        return sum(len(r.entities) for r in self._run_history)
+
+    def run_total_relationship_count(self) -> int:
+        """Sum total relationships across all runs.
+
+        Returns:
+            Total number of relationships extracted across all pipeline runs.
+        """
+        return sum(len(r.relationships) for r in self._run_history)
+
+    def run_average_entity_count(self) -> float:
+        """Calculate average entities per run.
+
+        Returns:
+            Mean entity count, or 0.0 if no runs.
+        """
+        if not self._run_history:
+            return 0.0
+        return self.run_total_entity_count() / len(self._run_history)
+
+    def run_average_relationship_count(self) -> float:
+        """Calculate average relationships per run.
+
+        Returns:
+            Mean relationship count, or 0.0 if no runs.
+        """
+        if not self._run_history:
+            return 0.0
+        return self.run_total_relationship_count() / len(self._run_history)
+
+    def run_action_frequency(self) -> dict:
+        """Count frequency of each refinement action across all runs.
+
+        Returns:
+            Dict mapping action names to counts (e.g., {'merge_entities': 5}).
+        """
+        action_counts: dict = {}
+        for r in self._run_history:
+            for action in r.actions_applied:
+                action_counts[action] = action_counts.get(action, 0) + 1
+        return action_counts
+
+    def run_most_common_action(self) -> str:
+        """Identify the most frequently applied refinement action.
+
+        Returns:
+            Name of most common action, or 'none' if no actions recorded.
+        """
+        freq = self.run_action_frequency()
+        if not freq:
+            return 'none'
+        return max(freq.items(), key=lambda x: x[1])[0]
+
+    def run_score_variance(self) -> float:
+        """Calculate variance of scores across all runs.
+
+        Returns:
+            Score variance, or 0.0 if fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        mean_score = sum(scores) / len(scores)
+        variance = sum((s - mean_score) ** 2 for s in scores) / len(scores)
+        return variance
+
+    def run_score_std_dev(self) -> float:
+        """Calculate standard deviation of scores across all runs.
+
+        Returns:
+            Score standard deviation, or 0.0 if fewer than 2 runs.
+        """
+        variance = self.run_score_variance()
+        return variance ** 0.5
+
+    def run_score_coefficient_of_variation(self) -> float:
+        """Calculate coefficient of variation (CV) for run scores.
+
+        Returns:
+            CV ratio (std_dev / mean), or 0.0 if mean is 0 or <2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        mean_score = sum(scores) / len(scores)
+        if mean_score == 0.0:
+            return 0.0
+        std_dev = self run_score_std_dev()
+        return std_dev / mean_score
+
+    def run_has_improving_trend(self, window: int = 3) -> bool:
+        """Check if recent runs show improving scores.
+
+        Args:
+            window: Number of recent runs to analyze (default: 3).
+
+        Returns:
+            True if last run's score > first run's score in window.
+        """
+        if len(self._run_history) < 2:
+            return False
+        recent = self._run_history[-window:]
+        if len(recent) < 2:
+            return False
+        return recent[-1].score.overall > recent[0].score.overall
