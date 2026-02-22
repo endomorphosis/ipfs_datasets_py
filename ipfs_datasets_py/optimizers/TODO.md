@@ -1711,14 +1711,36 @@ Implementation notes:
 
 Testing: 48 new tests in test_batch_207_features.py; all passing.
 
-## Batch 208+ Backlog
+## Batch 208 — Done ✅ (2026-02-22)
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_trend_slope()` — linear regression slope of history scores
-- [ ] (P2) [graphrag] `OntologyOptimizer.history_variance()` — variance of all history scores
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_variance(score)` — variance of the 6 dimension values
-- [ ] (P2) [graphrag] `OntologyGenerator.relationship_type_count(result)` — number of distinct relationship types
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_trend_slope()` — linear regression slope of feedback scores
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_variance()` — variance of run score distribution
-- [ ] (P2) [graphrag] `OntologyPipeline.last_improving_run()` — index of last run that improved on previous
-- [ ] (P2) [graphrag] `LogicValidator.closeness_centrality_approx(ontology)` — approximate closeness centrality
-- [ ] (P2) [graphrag] `LogicValidator.reciprocal_edge_count(ontology)` — count of bidirectional edge pairs
+- [x] (P2) [graphrag] `OntologyOptimizer.score_trend_slope()` — OLS linear regression slope of history scores
+- [x] (P2) [graphrag] `OntologyOptimizer.history_variance()` — already existed in source
+- [x] (P2) [graphrag] `OntologyCritic.score_dimension_variance(score)` — variance of 6 CriticScore dimension values (single-score overload)
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_type_count(result)` — count of distinct relationship types (delegates to relationship_type_counts)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_trend_slope()` — already existed in source
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_variance()` — already existed in source
+- [x] (P2) [graphrag] `OntologyPipeline.last_improving_run()` — 0-based index of last improving run (-1 if none)
+- [x] (P2) [graphrag] `LogicValidator.closeness_centrality_approx(ontology)` — BFS-based undirected closeness centrality
+- [x] (P2) [graphrag] `LogicValidator.reciprocal_edge_count(ontology)` — count of a↔b bidirectional pairs
+
+Implementation notes:
+- score_trend_slope: OLS slope = cov(x,y)/var(x) over index positions; 0.0 for <2 entries or zero x-variance.
+- score_dimension_variance: population variance of _DIMENSIONS values in a single CriticScore.
+- relationship_type_count: len(relationship_type_counts(result)) — always a non-negative int.
+- last_improving_run: scans all pairs forward and tracks last index where score[i] > score[i-1]; -1 if none.
+- closeness_centrality_approx: undirected BFS from each node; C(u) = reachable / total_dist.
+- reciprocal_edge_count: counts (a,b) pairs where both (a,b) and (b,a) exist; each pair counted once.
+
+Testing: 48 new tests in test_batch_208_features.py; all passing.
+
+## Batch 209+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_trend_intercept()` — OLS intercept of history scores
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_z_scores()` — list of z-scores for each history entry
+- [ ] (P2) [graphrag] `OntologyCritic.top_two_dimensions(score)` — names of the two highest-scoring dimensions
+- [ ] (P2) [graphrag] `OntologyGenerator.avg_relationship_confidence(result)` — mean confidence across relationships
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_trend_intercept()` — OLS intercept of feedback scores
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_trend_slope()` — OLS slope of run score series
+- [ ] (P2) [graphrag] `OntologyPipeline.improving_run_ratio()` — fraction of runs that improved on previous
+- [ ] (P2) [graphrag] `LogicValidator.self_loop_count(ontology)` — count of edges where source==target
+- [ ] (P2) [graphrag] `LogicValidator.isolated_node_count(ontology)` — nodes with no edges in entity list

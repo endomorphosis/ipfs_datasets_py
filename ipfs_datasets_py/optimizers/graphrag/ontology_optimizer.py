@@ -4884,6 +4884,29 @@ class OntologyOptimizer:
         """
         return self.score_gini_coefficient()
 
+    def score_trend_slope(self) -> float:
+        """Return the linear regression slope of history ``average_score`` values.
+
+        Uses ordinary least squares over the index positions (0, 1, 2, …).
+
+        Returns:
+            Float slope; positive means improving trend, negative means
+            declining.  ``0.0`` when fewer than 2 history entries or when
+            x-variance is zero.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        xs = list(range(n))
+        x_mean = sum(xs) / n
+        y_mean = sum(scores) / n
+        num = sum((x - x_mean) * (y - y_mean) for x, y in zip(xs, scores))
+        den = sum((x - x_mean) ** 2 for x in xs)
+        if den == 0.0:
+            return 0.0
+        return num / den
+
 
 # Export public API
 __all__ = [

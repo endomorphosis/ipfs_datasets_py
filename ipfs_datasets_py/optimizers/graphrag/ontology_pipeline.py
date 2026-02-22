@@ -2373,3 +2373,19 @@ class OntologyPipeline:
             if scores[i] > scores[i - 1]:
                 return i
         return -1
+
+    def last_improving_run(self) -> int:
+        """Return the 0-based index of the last run that improved on the previous.
+
+        Returns:
+            Non-negative integer index; ``-1`` when fewer than 2 runs or no
+            run improved on its predecessor.
+        """
+        if len(self._run_history) < 2:
+            return -1
+        scores = [r.score.overall for r in self._run_history]
+        result = -1
+        for i in range(1, len(scores)):
+            if scores[i] > scores[i - 1]:
+                result = i
+        return result

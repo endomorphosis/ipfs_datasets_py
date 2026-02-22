@@ -3694,6 +3694,89 @@ class LogicValidator:
         max_deg = max(degree.values())
         return sum(1 for d in degree.values() if d == max_deg)
 
+    def closeness_centrality_approx(self, ontology: dict) -> dict:
+        """Return approximate closeness centrality for each node.
+
+        Uses a BFS-based shortest-path approximation. For each node, the
+        closeness centrality is:
+        ``C(u) = (n - 1) / sum_of_shortest_path_lengths_from_u``
+        where n is the number of reachable nodes (excluding u itself).
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Dict of ``{node_id: centrality}``; empty dict when fewer than
+            2 nodes or no relationships.
+        """
+        from collections import deque
+
+        relationships = ontology.get("relationships", []) or []
+        if not relationships:
+            return {}
+
+        # Build adjacency (directed → treat as undirected for BFS)
+        adj: dict[str, set] = {}
+        for rel in relationships:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src and tgt:
+                adj.setdefault(src, set()).add(tgt)
+                adj.setdefault(tgt, set()).add(src)
+
+        nodes = list(adj.keys())
+        if len(nodes) < 2:
+            return {n: 0.0 for n in nodes}
+
+        centrality: dict[str, float] = {}
+        for start in nodes:
+            visited = {start: 0}
+            queue: deque[str] = deque([start])
+            total_dist = 0
+            reachable = 0
+            while queue:
+                node = queue.popleft()
+                for neighbour in adj.get(node, set()):
+                    if neighbour not in visited:
+                        visited[neighbour] = visited[node] + 1
+                        total_dist += visited[neighbour]
+                        reachable += 1
+                        queue.append(neighbour)
+            if reachable == 0 or total_dist == 0:
+                centrality[start] = 0.0
+            else:
+                centrality[start] = reachable / total_dist
+        return centrality
+
+    def reciprocal_edge_count(self, ontology: dict) -> int:
+        """Return the count of bidirectional edge pairs.
+
+        A bidirectional pair exists when both ``a → b`` and ``b → a``
+        are present in the relationship graph.  Each pair is counted once.
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Non-negative integer count of reciprocal pairs.
+        """
+        relationships = ontology.get("relationships", []) or []
+        if not relationships:
+            return 0
+        edges: set[tuple[str, str]] = set()
+        for rel in relationships:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src and tgt:
+                edges.add((src, tgt))
+        count = 0
+        seen: set[tuple[str, str]] = set()
+        for src, tgt in edges:
+            if (tgt, src) in edges and (tgt, src) not in seen:
+                count += 1
+                seen.add((src, tgt))
+        return count
+
 
 # Export public API
 __all__ = [

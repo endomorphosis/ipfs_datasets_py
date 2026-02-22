@@ -4362,6 +4362,25 @@ class OntologyCritic(BaseCritic):
         weighted = sum((i + 1) * v for i, v in enumerate(vals))
         return (2 * weighted - (n + 1) * total) / (n * total)
 
+    def score_dimension_variance(self, score: "CriticScore") -> float:
+        """Return the population variance of the 6 evaluation dimension values.
+
+        This is a convenience overload of :meth:`dimension_variance` that
+        accepts a single :class:`CriticScore` instead of a list.
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Float population variance; ``0.0`` when all values are equal.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        n = len(vals)
+        if n < 2:
+            return 0.0
+        mean_val = sum(vals) / n
+        return sum((v - mean_val) ** 2 for v in vals) / n
+
 
 # Export public API
 __all__ = [

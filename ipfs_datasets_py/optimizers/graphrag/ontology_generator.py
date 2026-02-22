@@ -7872,6 +7872,17 @@ class OntologyGenerator:
         weighted = sum((i + 1) * v for i, v in enumerate(vals))
         return (2 * weighted - (n + 1) * total) / (n * total)
 
+    def relationship_type_count(self, result: "EntityExtractionResult") -> int:
+        """Return the number of distinct relationship types in *result*.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Non-negative integer count of unique relationship type strings.
+        """
+        return len(self.relationship_type_counts(result))
+
 
 __all__ = [
     'OntologyGenerator',
