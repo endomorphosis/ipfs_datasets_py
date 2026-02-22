@@ -202,9 +202,9 @@ class TestMain:
         mock_bc.assert_called_once_with(level=logging.DEBUG)
 
     def test_main_http_import_error_fallback(self, capsys):
-        """--http with ImportError from start_server falls back to SimpleIPFSDatasetsMCPServer."""
+        """--http with ImportError from start_server prints migration guidance and exits."""
         import ipfs_datasets_py.mcp_server as mcp_pkg
-        mock_simple_server = MagicMock()
+        import warnings
         with patch.object(sys, "argv", ["__main__", "--http"]):
             with patch.object(
                 mcp_pkg, "start_server",
@@ -212,18 +212,13 @@ class TestMain:
             ):
                 with patch.object(mcp_pkg, "start_stdio_server", MagicMock(), create=True):
                     with patch.object(mcp_pkg, "configs", MagicMock(), create=True):
-                        with patch(
-                            "ipfs_datasets_py.mcp_server.simple_server.SimpleIPFSDatasetsMCPServer",
-                            return_value=mock_simple_server,
-                        ):
-                            with patch(
-                                "ipfs_datasets_py.mcp_server.configs.load_config_from_yaml",
-                                return_value=MagicMock(host="127.0.0.1", port=8000),
-                            ):
+                        with warnings.catch_warnings(record=True):
+                            warnings.simplefilter("always")
+                            with pytest.raises(SystemExit):
                                 main_mod.main()
-        # Should have called run() on the fallback server
-        mock_simple_server.register_tools.assert_called_once()
-        mock_simple_server.run.assert_called_once()
+        # Migration message should have been printed
+        captured = capsys.readouterr()
+        assert "HTTP server failed" in captured.out or "ipfs_datasets_py.mcp_server" in captured.out
 
 
 # ===========================================================================
