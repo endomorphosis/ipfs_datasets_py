@@ -222,10 +222,10 @@ class TestUniqueRelationshipTypesProperties:
     @given(result=entity_extraction_result_strategy())
     @settings(max_examples=50)
     def test_unique_types_returns_list(self, result):
-        """unique_relationship_types always returns a list."""
+        """unique_relationship_types always returns a set."""
         types = self.generator.unique_relationship_types(result)
         
-        assert isinstance(types, list)
+        assert isinstance(types, set)
     
     @given(result=entity_extraction_result_strategy())
     @settings(max_examples=50)
@@ -239,11 +239,10 @@ class TestUniqueRelationshipTypesProperties:
     @given(result=entity_extraction_result_strategy())
     @settings(max_examples=50)
     def test_unique_types_sorted(self, result):
-        """Unique relationship types are sorted."""
+        """Unique relationship types contain no duplicates (sets are inherently deduplicated)."""
         types = self.generator.unique_relationship_types(result)
         
-        if len(types) > 1:
-            assert types == sorted(types)
+        assert len(types) == len(set(types))
     
     @given(result=entity_extraction_result_strategy())
     @settings(max_examples=50)

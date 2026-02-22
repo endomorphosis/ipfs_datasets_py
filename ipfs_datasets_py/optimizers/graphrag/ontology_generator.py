@@ -865,12 +865,8 @@ class OntologyGenerationContext:
             self.extraction_strategy = ExtractionStrategy(self.extraction_strategy)
         # Support both old ExtractionConfig and new GraphRAGExtractionConfig
         if isinstance(self.config, dict):
-            # Use GraphRAGExtractionConfig when available (new preferred way)
-            self.config = GraphRAGExtractionConfig.from_dict(self.config)
-        elif isinstance(self.config, ExtractionConfig) and not isinstance(self.config, GraphRAGExtractionConfig):
-            # Convert old ExtractionConfig to new GraphRAGExtractionConfig
-            # by passing through dict conversion
-            self.config = GraphRAGExtractionConfig.from_dict(self.config.to_dict())
+            # Normalise dict config to typed ExtractionConfig
+            self.config = ExtractionConfig.from_dict(self.config)
 
     @property
     def extraction_config(self) -> ExtractionConfig:
@@ -1680,6 +1676,10 @@ class EntityExtractionResult:
     def filter_by_type(self, etype: str, case_sensitive: bool = False) -> "EntityExtractionResult":
         """Return a new result keeping only entities whose ``type`` matches *etype*.
 
+        Relationships that reference removed entities (i.e., those whose
+        ``source_id`` or ``target_id`` no longer exists in the kept entity set)
+        are also pruned from the result.
+
         Args:
             etype: Entity type string to keep.
             case_sensitive: If ``False`` (default), comparison is
@@ -1687,7 +1687,7 @@ class EntityExtractionResult:
 
         Returns:
             New :class:`EntityExtractionResult` with matching entities and
-            the original relationships list.
+            pruned relationships.
 
         Example:
             >>> filtered = result.filter_by_type("ORG")
@@ -1699,9 +1699,14 @@ class EntityExtractionResult:
         else:
             needle = etype.lower()
             kept = [e for e in self.entities if e.type.lower() == needle]
+        kept_ids = {e.id for e in kept}
+        pruned_rels = [
+            r for r in self.relationships
+            if r.source_id in kept_ids and r.target_id in kept_ids
+        ]
         return EntityExtractionResult(
             entities=kept,
-            relationships=list(self.relationships),
+            relationships=pruned_rels,
             confidence=self.confidence,
             metadata=dict(self.metadata),
         )
@@ -5363,23 +5368,22 @@ class OntologyGenerator:
         unique = list(seen.values())
         return _dc.replace(result, entities=unique)
 
-    def unique_relationship_types(self, result: "EntityExtractionResult") -> List[str]:
-        """Return the list of distinct relationship types in *result*.
+    def unique_relationship_types(self, result: "EntityExtractionResult") -> set:
+        """Return the set of distinct relationship types in *result*.
 
         Args:
             result: :class:`EntityExtractionResult` with relationships.
 
         Returns:
-            Sorted list of unique relationship ``type`` strings;
-            ``[]`` when there are no relationships.
+            Set of unique relationship ``type`` strings;
+            ``set()`` when there are no relationships.
 
         Example:
             >>> types = gen.unique_relationship_types(result)
-            >>> types
-            ['causes', 'is_a', 'part_of']
+            >>> types == {'causes', 'is_a', 'part_of'}
+            True
         """
-        unique_types = {r.type for r in result.relationships}
-        return sorted(unique_types)
+        return {r.type for r in result.relationships}
 
     def filter_low_confidence(
         self,

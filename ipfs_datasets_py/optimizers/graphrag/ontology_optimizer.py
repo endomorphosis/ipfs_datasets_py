@@ -3824,13 +3824,14 @@ class OntologyOptimizer:
             return 0.0
         return (scores[-1] - mean) / std
 
-    def history_trimmed_mean(self, trim_fraction: float = 0.1) -> float:
+    def history_trimmed_mean(self, trim_fraction: float = 0.1, trim: Optional[float] = None) -> float:
         """Return trimmed mean of history scores, ignoring extremes.
 
         The trim removes a fraction of scores from both ends of the sorted list.
 
         Args:
             trim_fraction: Fraction in [0, 0.5) to trim from each tail. Defaults to 0.1.
+            trim: Alias for ``trim_fraction`` (takes precedence if provided).
 
         Returns:
             Float trimmed mean; 0.0 when no history recorded.
@@ -3844,6 +3845,8 @@ class OntologyOptimizer:
             >>> opt.history_trimmed_mean(trim_fraction=0.2)
             0.7
         """
+        if trim is not None:
+            trim_fraction = trim
         if not self._history:
             return 0.0
         if trim_fraction < 0.0 or trim_fraction >= 0.5:
@@ -4527,6 +4530,7 @@ class OntologyOptimizer:
         except IndexError:
             return 0.0
 
+    @property
     def history_length(self) -> int:
         """Return the number of entries in the history.
 

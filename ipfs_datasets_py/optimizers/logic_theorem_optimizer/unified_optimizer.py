@@ -30,6 +30,8 @@ import logging as _logging
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
+_logger = logging.getLogger(__name__)
+
 from ..common.base_optimizer import (
     BaseOptimizer,
     OptimizerConfig,

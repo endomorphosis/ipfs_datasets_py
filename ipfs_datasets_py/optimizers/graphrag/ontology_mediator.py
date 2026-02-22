@@ -2252,6 +2252,7 @@ class OntologyMediator:
         Returns:
             Number of consecutive stagnant rounds at the end, or 0.
         """
+        _float_tolerance = 1e-12  # guard against IEEE 754 rounding errors
         if len(self._history) < 2:
             return 0
         
@@ -2261,7 +2262,7 @@ class OntologyMediator:
                 self._history[i].get("score", 0.0) 
                 - self._history[i-1].get("score", 0.0)
             )
-            if delta < threshold:
+            if delta <= threshold + _float_tolerance:
                 stagnation_count += 1
             else:
                 break
