@@ -137,7 +137,8 @@ class TestDocVersionAgreement:
     def test_master_status_version_is_3_22_19(self):
         """MASTER_STATUS.md should declare version 3.22.19 or later."""
         text = MASTER_STATUS.read_text(encoding="utf-8")
-        assert any(v in text for v in ("**Version:** 3.22.19", "**Version:** 3.22.20")), (
+        assert any(v in text for v in ("**Version:** 3.22.19", "**Version:** 3.22.20",
+                                       "**Version:** 3.22.21", "**Version:** 3.22.22")), (
             "MASTER_STATUS.md version header should be 3.22.19 or later"
         )
 
@@ -151,6 +152,7 @@ class TestDocVersionAgreement:
     def test_roadmap_current_version_is_3_22_19(self):
         """ROADMAP.md Current Version header should be 3.22.19 or later."""
         text = ROADMAP.read_text(encoding="utf-8")
-        assert any(v in text for v in ("**Current Version:** 3.22.19", "**Current Version:** 3.22.20")), (
+        assert any(v in text for v in ("**Current Version:** 3.22.19", "**Current Version:** 3.22.20",
+                                       "**Current Version:** 3.22.21", "**Current Version:** 3.22.22")), (
             "ROADMAP.md Current Version header should be 3.22.19 or later"
         )

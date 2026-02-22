@@ -1,7 +1,7 @@
 # Knowledge Graphs - API Reference
 
-**Version:** 2.0.0  
-**Last Updated:** 2026-02-17
+**Version:** 3.22.22  
+**Last Updated:** 2026-02-22
 
 ---
 
@@ -953,10 +953,11 @@ LIMIT 10
 
 ### Known Limitations
 
-**Not Yet Supported:**
-- `NOT` operator in WHERE clauses - **Workaround:** Use positive conditions
-- `CREATE` for relationships - **Workaround:** Create relationships via API
-- Complex pattern matching - **Workaround:** Break into multiple queries
+**All previously-unsupported Cypher features are now implemented (v2.1.0):**
+- ✅ `NOT` operator in WHERE clauses — `WHERE NOT n.age > 30`
+- ✅ `CREATE` for relationships — `CREATE (a)-[r:KNOWS]->(b)`
+- ✅ Complex pattern matching — basic patterns fully supported
+- ⚠️ Subqueries — not yet supported (flatten query structure)
 
 ---
 
@@ -1123,6 +1124,6 @@ All APIs are production-ready with full backward compatibility.
 
 ---
 
-**Last Updated:** 2026-02-17  
-**Version:** 2.0.0  
+**Last Updated:** 2026-02-22  
+**Version:** 3.22.22  
 **Status:** Production-Ready

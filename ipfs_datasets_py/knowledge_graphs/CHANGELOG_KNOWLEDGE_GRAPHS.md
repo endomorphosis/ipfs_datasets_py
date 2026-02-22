@@ -5,6 +5,17 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.22] - 2026-02-22
+
+### Fixed — Stale "Not Supported" tables in cypher/README + core/README + docs/ (Session 68)
+
+**Documentation-only changes.**
+
+- `cypher/README.md`: `❌ Not Supported` table replaced with `✅ Implemented in v2.1.0` — NOT/CREATE/MERGE/DELETE all fully implemented; `Last Updated: 2026-02-17` → `2026-02-22`
+- `core/README.md`: `Test Coverage: ~80%` → `100%`; `Phase 5: (Planned)` → `📋 Deferred to v4.0+`; `Version: 2.0.0` → `3.22.22`
+- `docs/knowledge_graphs/MIGRATION_GUIDE.md`: Cypher `⚠️ Unsupported` table → `✅ All features implemented`; GraphML/GEXF/Pajek `Not implemented` → `✅ Implemented`; stale workaround section replaced with code example; extraction `Planned` table → `✅ Delivered`; version/date updated
+- `docs/knowledge_graphs/API_REFERENCE.md`: `Known Limitations` NOT/CREATE bullets removed; `✅ implemented (v2.1.0)` note added; version/date updated
+
 ## [3.22.21] - 2026-02-22
 
 ### Fixed — Stale TEST_STATUS/TEST_GUIDE metrics + archive/README + MASTER_REFACTORING_PLAN (Session 67)

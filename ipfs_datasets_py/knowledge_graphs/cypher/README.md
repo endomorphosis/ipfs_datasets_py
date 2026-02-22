@@ -242,16 +242,17 @@ for record in result:
 | Multiple MATCH | Limited | Use joins in application code |
 | Subqueries | Not supported | Flatten query structure |
 
-### ❌ Not Supported
+### ✅ Implemented in v2.1.0
 
-| Feature | Status | Alternative |
-|---------|--------|-------------|
-| `NOT` operator | Not implemented | Use positive conditions |
-| `CREATE` relationships | Not implemented | Use Python API |
-| `MERGE` | Not implemented | Use CREATE + deduplication |
-| `DELETE` | Not implemented | Use Python API |
+| Feature | Status | Notes |
+|---------|--------|-------|
+| `NOT` operator | ✅ Implemented | `WHERE NOT n.age > 30`, negated comparisons |
+| `CREATE` relationships | ✅ Implemented | `CREATE (a)-[r:KNOWS]->(b)` with properties |
+| `MERGE` | ✅ Implemented | Match-or-create + `ON CREATE SET` / `ON MATCH SET` |
+| `DELETE` | ✅ Implemented | `DELETE n`, `DETACH DELETE n` |
+| `REMOVE` | ✅ Implemented | `REMOVE n.prop`, `REMOVE n:Label` |
 
-**See [MIGRATION_GUIDE.md](/docs/knowledge_graphs/MIGRATION_GUIDE.md#cypher-language-support) for workarounds.**
+**See [DEFERRED_FEATURES.md](../DEFERRED_FEATURES.md) for implementation history.**
 
 ---
 
@@ -366,5 +367,5 @@ pytest tests/unit/knowledge_graphs/test_cypher*.py -v
 
 ---
 
-**Last Updated:** 2026-02-17  
+**Last Updated:** 2026-02-22  
 **Status:** Production-Ready
