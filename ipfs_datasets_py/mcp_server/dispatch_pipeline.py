@@ -46,7 +46,7 @@ import json
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 from .cid_artifacts import DecisionObject, ReceiptObject, EventNode, artifact_cid
 
@@ -643,3 +643,116 @@ def make_full_pipeline(
             nl_ucan_gate=nl_ucan_gate,
         )
     )
+
+
+# ---------------------------------------------------------------------------
+# Pipeline metrics recorder (session 56)
+# ---------------------------------------------------------------------------
+
+class PipelineMetricsRecorder:
+    """Feed :class:`DispatchPipeline` stage denials into *monitoring*.
+
+    Attaches to a :class:`DispatchPipeline` and records every stage denial as
+    a failed tool execution in the :class:`~monitoring.EnhancedMetricsCollector`
+    so that pipeline-level access-control events appear in the monitoring
+    dashboard alongside ordinary tool latency metrics.
+
+    Args:
+        pipeline: The :class:`DispatchPipeline` to instrument.
+        collector: An optional :class:`~monitoring.EnhancedMetricsCollector`.
+            If *None*, the global singleton from
+            :func:`~monitoring.get_metrics_collector` is used when available.
+    """
+
+    def __init__(
+        self,
+        pipeline: "DispatchPipeline",
+        collector: Any = None,
+    ) -> None:
+        self._pipeline = pipeline
+        self._collector = collector
+        self._denial_counts: Dict[str, int] = {}
+        self._allow_counts: Dict[str, int] = {}
+
+    # ------------------------------------------------------------------
+
+    def _get_collector(self) -> Any:
+        """Return *collector*, falling back to the global singleton."""
+        if self._collector is not None:
+            return self._collector
+        try:
+            from .monitoring import get_metrics_collector  # noqa: PLC0415
+            return get_metrics_collector()
+        except Exception:
+            return None
+
+    def record(self, intent: "PipelineIntent", result: "PipelineResult") -> None:
+        """Record a pipeline decision into the metrics collector.
+
+        Args:
+            intent: The evaluated :class:`PipelineIntent`.
+            result: The :class:`PipelineResult` returned by
+                :meth:`DispatchPipeline.check`.
+        """
+        tool_name = intent.tool_name
+        passed = result.allowed
+
+        if passed:
+            self._allow_counts[tool_name] = self._allow_counts.get(tool_name, 0) + 1
+        else:
+            self._denial_counts[tool_name] = self._denial_counts.get(tool_name, 0) + 1
+
+        collector = self._get_collector()
+        if collector is None:
+            return
+
+        # Represent each pipeline decision as a 0 ms tool execution (it has
+        # no meaningful latency overhead) with success=passed.
+        try:
+            collector.track_tool_execution(
+                tool_name=f"pipeline:{tool_name}",
+                execution_time_ms=0.0,
+                success=passed,
+            )
+        except Exception:
+            pass
+
+    # ------------------------------------------------------------------
+
+    def check_and_record(self, intent: "PipelineIntent") -> "PipelineResult":
+        """Run :meth:`DispatchPipeline.check` and record the result.
+
+        This is a convenience wrapper that calls
+        :meth:`DispatchPipeline.check` and immediately feeds the result to
+        :meth:`record`.
+
+        Args:
+            intent: The :class:`PipelineIntent` to evaluate.
+
+        Returns:
+            The :class:`PipelineResult` (unchanged).
+        """
+        result = self._pipeline.check(intent)
+        self.record(intent, result)
+        return result
+
+    # ------------------------------------------------------------------
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Return a summary of pipeline decisions.
+
+        Returns:
+            dict with ``allow_counts``, ``denial_counts``, and
+            ``total_denials`` / ``total_allows``.
+        """
+        return {
+            "allow_counts": dict(self._allow_counts),
+            "denial_counts": dict(self._denial_counts),
+            "total_allows": sum(self._allow_counts.values()),
+            "total_denials": sum(self._denial_counts.values()),
+        }
+
+    def reset(self) -> None:
+        """Reset all counters."""
+        self._allow_counts.clear()
+        self._denial_counts.clear()

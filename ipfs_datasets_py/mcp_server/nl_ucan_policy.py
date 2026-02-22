@@ -781,6 +781,157 @@ class UCANPolicyGate:
 # Convenience function
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Persistent policy store (session 56)
+# ---------------------------------------------------------------------------
+
+class FilePolicyStore:
+    """File-backed :class:`PolicyRegistry` that persists policies across restarts.
+
+    Policies are serialised as a JSON file mapping name → {nl_policy, description}.
+    On :meth:`load`, each entry is recompiled (ensuring the CID matches the
+    stored source) and registered into *registry*.
+
+    Args:
+        path: Filesystem path for the JSON policy file.
+        registry: The :class:`PolicyRegistry` to populate on load and write to
+            on save.  Defaults to the global singleton.
+    """
+
+    def __init__(self, path: str, registry: Optional["PolicyRegistry"] = None) -> None:
+        self.path = path
+        self._registry = registry if registry is not None else get_policy_registry()
+
+    # ------------------------------------------------------------------
+
+    def save(self) -> None:
+        """Persist the current registry to *path* as JSON.
+
+        Creates parent directories if necessary.  Each entry stores the raw
+        NL text and an optional description so the policy can be fully
+        reconstructed on :meth:`load`.
+        """
+        import os
+        data: Dict[str, Any] = {}
+        for name in self._registry.list_names():
+            compiled = self._registry._compiled.get(name)
+            source = self._registry._sources.get(name)
+            if compiled and source:
+                data[name] = {
+                    "nl_policy": source.text,
+                    "description": compiled.policy.description,
+                    "source_cid": source.source_cid,
+                }
+        parent = os.path.dirname(self.path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        with open(self.path, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, indent=2)
+        logger.debug("Saved %d policies to %s", len(data), self.path)
+
+    def load(self) -> int:
+        """Load and register policies from *path*.
+
+        Policies whose stored ``source_cid`` does not match the freshly
+        computed CID of their NL text are recompiled transparently (the
+        mismatch is logged at DEBUG level).  Missing or unreadable files
+        return 0 without raising.
+
+        Returns:
+            The number of policies successfully loaded.
+        """
+        try:
+            with open(self.path, encoding="utf-8") as fh:
+                data: Dict[str, Any] = json.load(fh)
+        except FileNotFoundError:
+            logger.debug("Policy store file not found: %s", self.path)
+            return 0
+        except (OSError, json.JSONDecodeError) as exc:
+            logger.warning("Could not read policy store %s: %s", self.path, exc)
+            return 0
+
+        loaded = 0
+        for name, entry in data.items():
+            nl_policy: str = entry.get("nl_policy", "")
+            description: str = entry.get("description", "")
+            stored_cid: str = entry.get("source_cid", "")
+            if not nl_policy:
+                continue
+            # Validate CID to detect file tampering / external edits.
+            fresh_cid = _make_policy_cid(nl_policy)
+            if stored_cid and stored_cid != fresh_cid:
+                logger.debug(
+                    "Policy %r CID mismatch (stored %s, computed %s) — recompiling",
+                    name,
+                    stored_cid,
+                    fresh_cid,
+                )
+            self._registry.register(name, nl_policy, description=description)
+            loaded += 1
+        logger.debug("Loaded %d policies from %s", loaded, self.path)
+        return loaded
+
+
+# ---------------------------------------------------------------------------
+# Async policy registration (session 56)
+# ---------------------------------------------------------------------------
+
+class AsyncPolicyRegistrar:
+    """Register multiple NL policies concurrently using *anyio* task groups.
+
+    Compilation of each NL policy runs in a separate thread (via
+    :func:`anyio.to_thread.run_sync`) so I/O-bound or LLM-backed compilers
+    don't block the event loop.
+
+    Args:
+        registry: The :class:`PolicyRegistry` to register compiled policies
+            into.  Defaults to the global singleton.
+    """
+
+    def __init__(self, registry: Optional["PolicyRegistry"] = None) -> None:
+        self._registry = registry if registry is not None else get_policy_registry()
+
+    async def register_many(
+        self,
+        policies: Dict[str, str],
+        *,
+        descriptions: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, CompiledUCANPolicy]:
+        """Register *policies* concurrently.
+
+        Args:
+            policies: Mapping of policy name → NL policy text.
+            descriptions: Optional mapping of policy name → description.
+
+        Returns:
+            Mapping of policy name → :class:`CompiledUCANPolicy`.
+        """
+        try:
+            import anyio
+        except ImportError:
+            # Synchronous fallback when anyio is unavailable.
+            results: Dict[str, CompiledUCANPolicy] = {}
+            for name, nl_policy in policies.items():
+                desc = (descriptions or {}).get(name, "")
+                results[name] = self._registry.register(name, nl_policy, description=desc)
+            return results
+
+        results_map: Dict[str, CompiledUCANPolicy] = {}
+
+        async def _compile_one(name: str, nl_policy: str, desc: str) -> None:
+            compiled = await anyio.to_thread.run_sync(
+                lambda: self._registry.register(name, nl_policy, description=desc)
+            )
+            results_map[name] = compiled
+
+        async with anyio.create_task_group() as tg:
+            for name, nl_policy in policies.items():
+                desc = (descriptions or {}).get(name, "")
+                tg.start_soon(_compile_one, name, nl_policy, desc)
+
+        return results_map
+
+
 def compile_nl_policy(
     nl_policy: str,
     *,

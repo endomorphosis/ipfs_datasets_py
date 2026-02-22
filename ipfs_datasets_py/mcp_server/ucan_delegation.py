@@ -19,10 +19,13 @@ Key concepts
 
 from __future__ import annotations
 
+import logging
 import time
 import warnings
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "Capability",
@@ -351,3 +354,141 @@ class InvocationContext:
             "policy_cid": self.policy_cid,
             "context_cids": self.context_cids,
         }
+
+
+# ---------------------------------------------------------------------------
+# DID key manager integration (session 56)
+# ---------------------------------------------------------------------------
+
+@dataclass
+class DIDSignedDelegation:
+    """A :class:`Delegation` signed with a DID:key Ed25519 private key.
+
+    This bridges :mod:`ucan_delegation` (the in-process delegation chain) with
+    :mod:`did_key_manager` (the Ed25519 key material), allowing delegations to
+    carry a verifiable signature that can be checked without trusting the
+    source.
+
+    Args:
+        delegation: The underlying :class:`Delegation`.
+        signature: Hex-encoded Ed25519 signature over the delegation's
+            canonical JSON representation.
+        signer_did: The DID:key of the signing key (``"did:key:z6Mk..."``)
+        verified: Whether :func:`verify_delegation_signature` has already
+            confirmed the signature.
+    """
+
+    delegation: Delegation
+    signature: str
+    signer_did: str
+    verified: bool = False
+
+    def to_dict(self) -> Dict:
+        d = self.delegation.to_dict()
+        d["signature"] = self.signature
+        d["signer_did"] = self.signer_did
+        d["verified"] = self.verified
+        return d
+
+
+def sign_delegation(delegation: Delegation, *, key_manager: Any = None) -> "DIDSignedDelegation":
+    """Sign *delegation* using an Ed25519 key from *key_manager*.
+
+    When :mod:`did_key_manager` is available and a *key_manager* is provided
+    (or the global singleton exists), the delegation's canonical JSON is
+    signed with the manager's Ed25519 private key and the DID:key is stored
+    in the returned :class:`DIDSignedDelegation`.
+
+    When the key manager is unavailable (or raises), the function returns a
+    :class:`DIDSignedDelegation` with an empty signature and a sentinel DID
+    ``"did:key:unsigned"``.
+
+    Args:
+        delegation: The :class:`Delegation` to sign.
+        key_manager: An optional :class:`~did_key_manager.DIDKeyManager`
+            instance.  If *None*, the global singleton is tried.
+
+    Returns:
+        A :class:`DIDSignedDelegation` wrapping *delegation*.
+    """
+    import json
+
+    payload = json.dumps(delegation.to_dict(), sort_keys=True).encode()
+
+    mgr = key_manager
+    if mgr is None:
+        try:
+            from .did_key_manager import get_default_manager  # noqa: PLC0415
+            mgr = get_default_manager()
+        except Exception:
+            pass
+
+    if mgr is None:
+        return DIDSignedDelegation(
+            delegation=delegation,
+            signature="",
+            signer_did="did:key:unsigned",
+            verified=False,
+        )
+
+    try:
+        sig_bytes: bytes = mgr.sign(payload)
+        return DIDSignedDelegation(
+            delegation=delegation,
+            signature=sig_bytes.hex(),
+            signer_did=getattr(mgr, "did", "did:key:unknown"),
+            verified=False,
+        )
+    except Exception as exc:
+        logger.warning("sign_delegation failed: %s", exc)
+        return DIDSignedDelegation(
+            delegation=delegation,
+            signature="",
+            signer_did="did:key:unsigned",
+            verified=False,
+        )
+
+
+def verify_delegation_signature(
+    signed: "DIDSignedDelegation",
+    *,
+    key_manager: Any = None,
+) -> bool:
+    """Verify the Ed25519 signature on *signed*.
+
+    Re-derives the canonical JSON payload of the wrapped delegation and checks
+    it against ``signed.signature`` using the key manager's ``verify``
+    method.  Returns ``False`` on any error (missing manager, bad sig, etc.).
+
+    Args:
+        signed: A :class:`DIDSignedDelegation` to verify.
+        key_manager: Optional :class:`~did_key_manager.DIDKeyManager`.
+
+    Returns:
+        ``True`` if the signature is valid; ``False`` otherwise.
+    """
+    import json
+
+    if not signed.signature:
+        return False
+
+    payload = json.dumps(signed.delegation.to_dict(), sort_keys=True).encode()
+
+    mgr = key_manager
+    if mgr is None:
+        try:
+            from .did_key_manager import get_default_manager  # noqa: PLC0415
+            mgr = get_default_manager()
+        except Exception:
+            pass
+
+    if mgr is None:
+        return False
+
+    try:
+        sig_bytes = bytes.fromhex(signed.signature)
+        ok: bool = mgr.verify(payload, sig_bytes)
+        return bool(ok)
+    except Exception as exc:
+        logger.warning("verify_delegation_signature failed: %s", exc)
+        return False

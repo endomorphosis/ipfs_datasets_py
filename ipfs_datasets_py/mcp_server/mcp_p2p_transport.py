@@ -36,10 +36,13 @@ References
 from __future__ import annotations
 
 import json
+import logging
 import struct
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Normative constants
@@ -538,3 +541,100 @@ class PubSubBus:
     def __repr__(self) -> str:  # pragma: no cover
         topics = list(self._subscribers)
         return f"PubSubBus(topics={topics!r})"
+
+
+# ---------------------------------------------------------------------------
+# PubSubBus ↔ P2PServiceManager bridge (session 56)
+# ---------------------------------------------------------------------------
+
+class PubSubBridge:
+    """Bridge between :class:`PubSubBus` and a :class:`P2PServiceManager`.
+
+    When the P2P service starts it can call :meth:`connect` to wire the
+    in-process :class:`PubSubBus` to the real libp2p announcement hooks.
+    Published events are forwarded to the service manager's
+    :meth:`~P2PServiceManager.announce_capability` method (if present).
+
+    This class is intentionally agnostic about the concrete type of
+    *service_manager* so it works with stubs and mocks in tests.
+
+    Args:
+        bus: The :class:`PubSubBus` to bridge.  Defaults to the module-level
+            ``_GLOBAL_BUS`` singleton.
+    """
+
+    def __init__(self, bus: Optional["PubSubBus"] = None) -> None:
+        self._bus = bus
+        self._service_manager: Any = None
+        self._connected = False
+
+    # ------------------------------------------------------------------
+
+    def connect(self, service_manager: Any) -> None:
+        """Wire the bus to *service_manager*.
+
+        Registers a handler on every canonical topic that forwards each
+        published event to ``service_manager.announce_capability(topic,
+        payload)`` (if the method exists) and logs the rest.
+
+        Args:
+            service_manager: A :class:`~p2p_service_manager.P2PServiceManager`
+                instance (or any object with an optional
+                ``announce_capability`` method).
+        """
+        if self._connected:
+            logger.warning("PubSubBridge already connected; ignoring duplicate connect()")
+            return
+        self._service_manager = service_manager
+        bus = self._bus or _get_global_bus()
+
+        for event_type in PubSubEventType:
+            topic = event_type.value
+            # Each handler receives (topic_key, payload) from PubSubBus.publish().
+            def _make_handler() -> Any:
+                def _handler(topic_key: str, payload: Any) -> None:
+                    if hasattr(service_manager, "announce_capability"):
+                        try:
+                            service_manager.announce_capability(topic_key, payload)
+                        except Exception as exc:  # pragma: no cover
+                            logger.warning("announce_capability(%s) failed: %s", topic_key, exc)
+                    else:
+                        logger.debug("PubSubBridge forwarding %s: %s", topic_key, payload)
+                return _handler
+            bus.subscribe(topic, _make_handler())
+
+        self._connected = True
+        logger.info("PubSubBridge connected to P2PServiceManager")
+
+    def disconnect(self) -> None:
+        """Remove all bridge handlers and detach from the service manager."""
+        if not self._connected:
+            return
+        bus = self._bus or _get_global_bus()
+        for event_type in PubSubEventType:
+            bus.clear(event_type.value)
+        self._service_manager = None
+        self._connected = False
+        logger.info("PubSubBridge disconnected")
+
+    @property
+    def is_connected(self) -> bool:
+        """``True`` while the bridge is wired to a service manager."""
+        return self._connected
+
+
+# Module-level global bus singleton (lazy-init)
+_GLOBAL_BUS: Optional["PubSubBus"] = None
+
+
+def _get_global_bus() -> "PubSubBus":
+    """Return (or create) the module-level :class:`PubSubBus` singleton."""
+    global _GLOBAL_BUS
+    if _GLOBAL_BUS is None:
+        _GLOBAL_BUS = PubSubBus()
+    return _GLOBAL_BUS
+
+
+def get_global_bus() -> "PubSubBus":
+    """Public accessor for the module-level :class:`PubSubBus` singleton."""
+    return _get_global_bus()
