@@ -25,6 +25,7 @@ import importlib.util
 import pytest
 
 _rdflib_available = bool(importlib.util.find_spec("rdflib"))
+_numpy_available = bool(importlib.util.find_spec("numpy"))
 
 
 # ---------------------------------------------------------------------------
@@ -859,6 +860,7 @@ class TestCrossDocumentReasonerMissedPaths:
     # Lines 31-32: numpy import-failure guard is dead code when numpy installed;
     # verify the fallback flag is False (np is available)
     # -----------------------------------------------------------------------
+    @pytest.mark.skipif(not _numpy_available, reason="numpy not installed")
     def test_numpy_available_flag(self):
         """GIVEN numpy is installed
         WHEN cross_document module is imported

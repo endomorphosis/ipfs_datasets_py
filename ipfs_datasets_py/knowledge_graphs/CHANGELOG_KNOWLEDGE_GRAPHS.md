@@ -5,6 +5,36 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.5] - 2026-02-22
+
+### Tests — numpy Skip Guards (Session 50)
+
+**No new tests, no production code changes.** Fixed 7 test failures that appeared when networkx is installed (networkx imports numpy as a soft dependency that becomes importable) but numpy is not directly available.
+
+**Files changed:**
+- `tests/unit/knowledge_graphs/test_master_status_session16.py`
+- `tests/unit/knowledge_graphs/test_master_status_session21.py`
+- `tests/unit/knowledge_graphs/test_master_status_session33.py`
+
+**Problem 1 (session16, 3 tests):** `TestLineageVisualizerPlotly` tests mock `plotly.graph_objs` (go) but `render_plotly()` also calls `nx.spring_layout()` which requires numpy. The tests called the real `nx.spring_layout` and crashed.
+
+**Fix:** Added `patch("networkx.spring_layout", return_value={node: (x, y)})` to `test_render_plotly_with_mocked_plotly`, `test_render_plotly_with_output_path`, and `test_visualize_lineage_plotly_renderer`.
+
+**Problem 2 (session21, 3 tests):** `TestCrossDocumentReasonerUncoveredPaths` has 3 tests with `import numpy as np` inside the method body. These tests pass when numpy is available but crash with `ModuleNotFoundError` when numpy is absent.
+
+**Fix:** Added `_numpy_available` flag and `_skip_no_numpy` mark at module level; applied `@_skip_no_numpy` to the 3 individual numpy-dependent methods only (9 other tests in the class still run without numpy).
+
+**Problem 3 (session33, 1 test):** `test_numpy_available_flag` in `TestCrossDocumentReasonerMissedPaths` similarly uses `import numpy as np_real` inline.
+
+**Fix:** Added `_numpy_available = bool(importlib.util.find_spec("numpy"))` to the module-level constants (alongside the existing `_rdflib_available`) and applied `@pytest.mark.skipif(not _numpy_available, reason="numpy not installed")` to that one method.
+
+**Verification:**
+- Without numpy: 7 previously-failing tests now skip cleanly
+- With numpy: all 7 tests continue to pass
+- Full suite (base env, networkx installed, numpy absent): **3,448 passed, 74 skipped, 0 failed**
+
+---
+
 ## [3.22.4] - 2026-02-22
 
 ### Tests — numpy Skip Guards (Session 49)

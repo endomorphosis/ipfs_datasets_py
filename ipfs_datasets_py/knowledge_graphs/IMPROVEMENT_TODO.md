@@ -395,3 +395,13 @@ Fixed 4 rdflib-dependent test failures in session33 and session37 test files. Ad
 
 ### Session 49 log (2026-02-22)
 **Test infrastructure hardening — no new tests, no production code changes.** Fixed collection errors in `test_master_status_session41.py` and `test_master_status_session42.py`: both files had `import numpy as np` at module level (before `import pytest`), causing a `ModuleNotFoundError` collection error in environments without numpy. Fixed by moving `import pytest` to before the numpy import and replacing `import numpy as np` with `np = pytest.importorskip("numpy")`. This ensures those 91 tests skip cleanly (instead of crashing collection) when numpy is absent, consistent with the `pytest.importorskip` pattern used throughout the test suite for other optional deps. Updated MASTER_STATUS.md (version 3.22.2→3.22.3, test count 3626/7→3569/64/0 in base env), IMPROVEMENT_TODO.md (this entry), CHANGELOG_KNOWLEDGE_GRAPHS.md (v3.22.4 entry). **Result: 3,569 pass, 64 skip, 0 fail** (base env); **3,626 pass, 7 skip, 0 fail** (with all optional deps including numpy).
+
+### Session 50 log (2026-02-22)
+**Test infrastructure hardening — no new tests, no production code changes.** Fixed 7 remaining test failures in environments where numpy and networkx are installed but numpy is absent (numpy installed by networkx as a dependency at test-run time but not importable from test code).
+
+**Root causes:**
+1. **Session16 (3 tests)**: `TestLineageVisualizerPlotly` — `render_plotly()` calls `nx.spring_layout()` internally, which requires numpy. Tests mocked plotly but not `nx.spring_layout`. **Fix**: added `patch("networkx.spring_layout", return_value={node: (x, y), ...})` to each of the 3 failing tests so no actual numpy array generation occurs.
+2. **Session21 (3 tests)**: `TestCrossDocumentReasonerUncoveredPaths` — 3 tests have `import numpy as np` inside method body. When numpy is absent this raises `ModuleNotFoundError` inside the test (not at collection time). **Fix**: added `_skip_no_numpy = pytest.mark.skipif(not _numpy_available, ...)` at module level and applied `@_skip_no_numpy` to the 3 individual numpy-dependent test methods (not the entire class — 9 other tests in the class don't need numpy and keep running).
+3. **Session33 (1 test)**: `test_numpy_available_flag` — similarly uses `import numpy as np_real` inline. **Fix**: added `@pytest.mark.skipif(not _numpy_available, reason="numpy not installed")` to that single method.
+
+**Result: 3,448 pass, 74 skip, 0 fail** (base env with networkx but without numpy).
