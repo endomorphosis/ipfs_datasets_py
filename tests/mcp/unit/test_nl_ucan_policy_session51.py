@@ -26,7 +26,7 @@ from ipfs_datasets_py.mcp_server.nl_ucan_policy import (
     PolicyRegistry,
     UCANPolicyGate,
     _fallback_parse_nl_policy,
-    _sha256_text,
+    _make_policy_cid,
     compile_nl_policy,
     get_policy_registry,
 )
@@ -42,24 +42,23 @@ def _make_intent(tool: str = "repo.status") -> IntentObject:
 
 
 # ---------------------------------------------------------------------------
-# _sha256_text
+# _make_policy_cid
 # ---------------------------------------------------------------------------
 
-class TestSha256Text:
+class TestMakePolicyCid:
     def test_deterministic(self):
-        assert _sha256_text("hello") == _sha256_text("hello")
+        assert _make_policy_cid("hello") == _make_policy_cid("hello")
 
-    def test_different_text_different_hash(self):
-        assert _sha256_text("hello") != _sha256_text("world")
+    def test_different_text_different_cid(self):
+        assert _make_policy_cid("hello") != _make_policy_cid("world")
 
-    def test_length_64_hex(self):
-        h = _sha256_text("test")
-        assert len(h) == 64
-        assert all(c in "0123456789abcdef" for c in h)
+    def test_returns_bafy_prefix(self):
+        cid = _make_policy_cid("test policy text")
+        assert cid.startswith("bafy"), f"Expected 'bafy' prefix, got: {cid!r}"
 
-    def test_empty_string_still_hashes(self):
-        h = _sha256_text("")
-        assert len(h) == 64
+    def test_empty_string_still_produces_cid(self):
+        cid = _make_policy_cid("")
+        assert cid.startswith("bafy")
 
 
 # ---------------------------------------------------------------------------
@@ -67,17 +66,17 @@ class TestSha256Text:
 # ---------------------------------------------------------------------------
 
 class TestNLPolicySource:
-    def test_source_hash_set_at_init(self):
+    def test_source_cid_set_at_init(self):
         src = NLPolicySource("only admin may call tools")
-        assert src.source_hash == _sha256_text("only admin may call tools")
+        assert src.source_cid == _make_policy_cid("only admin may call tools")
 
-    def test_hash_matches_same(self):
+    def test_cid_matches_same(self):
         src = NLPolicySource("text")
-        assert src.hash_matches(src.source_hash)
+        assert src.cid_matches(src.source_cid)
 
-    def test_hash_matches_different(self):
+    def test_cid_matches_different(self):
         src = NLPolicySource("text")
-        assert not src.hash_matches("deadbeef" * 8)
+        assert not src.cid_matches("bafy-wrong-cid-value")
 
     def test_text_stored(self):
         src = NLPolicySource("hello world")
@@ -194,11 +193,11 @@ class TestCompiledUCANPolicy:
     def _make_compiled(self):
         clause = PolicyClause(clause_type="permission", actor="admin", action="*")
         policy = PolicyObject(clauses=[clause])
-        return CompiledUCANPolicy(policy=policy, source_hash="abc123")
+        return CompiledUCANPolicy(policy=policy, source_cid="bafyreiabc123")
 
     def test_fields_accessible(self):
         c = self._make_compiled()
-        assert c.source_hash == "abc123"
+        assert c.source_cid == "bafyreiabc123"
         assert isinstance(c.compiled_at, str)
         assert c.compiler_version == "v1"
         assert c.metadata == {}
@@ -207,13 +206,13 @@ class TestCompiledUCANPolicy:
         c = self._make_compiled()
         d = c.to_dict()
         assert "policy" in d
-        assert d["source_hash"] == "abc123"
+        assert d["source_cid"] == "bafyreiabc123"
         assert "compiled_at" in d
         assert d["compiler_version"] == "v1"
 
     def test_is_stale_with_no_clauses(self):
         policy = PolicyObject(clauses=[])
-        c = CompiledUCANPolicy(policy=policy, source_hash="x")
+        c = CompiledUCANPolicy(policy=policy, source_cid="bafyreix")
         assert c.is_stale
 
     def test_is_not_stale_with_clauses(self):
@@ -235,11 +234,11 @@ class TestNLUCANPolicyCompiler:
         assert isinstance(result, CompiledUCANPolicy)
         assert result.policy.description == "admin policy"
 
-    def test_source_hash_stored(self):
+    def test_source_cid_stored(self):
         text = "alice may read_data"
         c = self._compiler()
         result = c.compile(text)
-        assert result.source_hash == _sha256_text(text)
+        assert result.source_cid == _make_policy_cid(text)
 
     def test_clause_extracted(self):
         c = self._compiler()
@@ -304,7 +303,7 @@ class TestNLUCANPolicyCompiler:
         result, was_recompiled = c.recompile_if_stale(source, compiled)
         assert was_recompiled
         assert result is not compiled
-        assert result.source_hash == _sha256_text(modified)
+        assert result.source_cid == _make_policy_cid(modified)
 
 
 # ---------------------------------------------------------------------------
@@ -368,15 +367,15 @@ class TestPolicyRegistry:
         compiler = NLUCANPolicyCompiler(use_logic_module=False)
         r = PolicyRegistry(compiler=compiler)
         r.register("p1", "alice may read_data")
-        # Manually corrupt the stored source_hash to force mismatch
+        # Manually corrupt the stored source_cid to force mismatch
         r._compiled["p1"] = CompiledUCANPolicy(
             policy=r._compiled["p1"].policy,
-            source_hash="00000000" * 8,  # wrong hash
+            source_cid="bafy-wrong-cid-that-does-not-match",
         )
         # get() should detect mismatch and recompile
         fresh = r.get("p1")
         assert fresh is not None
-        assert fresh.source_hash == r._sources["p1"].source_hash
+        assert fresh.source_cid == r._sources["p1"].source_cid
 
 
 # ---------------------------------------------------------------------------
@@ -520,10 +519,10 @@ class TestCompileNlPolicy:
         )
         assert result.policy.description == "read access"
 
-    def test_source_hash_correct(self):
+    def test_source_cid_correct(self):
         text = "alice may read_data"
         result = compile_nl_policy(text, use_logic_module=False)
-        assert result.source_hash == _sha256_text(text)
+        assert result.source_cid == _make_policy_cid(text)
 
 
 # ---------------------------------------------------------------------------

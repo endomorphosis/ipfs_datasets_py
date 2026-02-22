@@ -8,10 +8,11 @@ Design principles
 1. **Open by default** — with no registered policies every intent is allowed.
 2. **Opt-in** — users choose to attach an NL policy to a gate instance; tools
    not covered by any registered policy remain open.
-3. **Hash-validated recompilation** — each compiled policy stores a SHA-256
-   digest of its source NL text. At evaluation time the gate re-hashes the
-   stored source and, if the digest differs (source was mutated), recompiles
-   before evaluating.
+3. **CID-validated recompilation** — each compiled policy stores a multiformats
+   CIDv1 (dag-cbor, sha2-256, base32) of its source NL text, making the
+   identifier suitable for storage and retrieval on the IPFS network.  At
+   evaluation time the gate re-derives the CID of the stored source and, if it
+   differs (source was mutated), recompiles before evaluating.
 4. **Logic module integration** — compilation uses the
    :class:`~ipfs_datasets_py.logic.deontic.converter.DeonticConverter` when the
    ``ipfs_datasets_py.logic`` package is available. A pure-Python fallback
@@ -52,6 +53,20 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
+# ---------------------------------------------------------------------------
+# Multiformats CID support
+# ---------------------------------------------------------------------------
+# multiformats is listed as a project dependency (see ``setup.py`` and
+# ``pyproject.toml``), so it will normally be available.  A graceful
+# fallback is provided for restricted environments or early import cycles.
+
+try:
+    from multiformats import CID as _CID
+    from multiformats import multihash as _multihash
+    _MULTIFORMATS_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    _MULTIFORMATS_AVAILABLE = False
+
 from .cid_artifacts import DecisionObject, IntentObject, artifact_cid
 from .temporal_policy import (
     PolicyClause,
@@ -67,9 +82,40 @@ logger = logging.getLogger(__name__)
 # Utilities
 # ---------------------------------------------------------------------------
 
-def _sha256_text(text: str) -> str:
-    """Return the SHA-256 hex digest of *text* (UTF-8 encoded)."""
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+def _make_policy_cid(text: str) -> str:
+    """Return a CIDv1 content identifier for *text* (UTF-8 encoded).
+
+    When the ``multiformats`` package is available this produces a proper
+    CIDv1 using the *dag-cbor* codec and *sha2-256* hash function,
+    base32-encoded — the familiar ``"bafy…"`` form used internally by IPFS.
+    The resulting CID can be used as a content-addressed key when pinning
+    the policy source to the IPFS network.
+
+    When ``multiformats`` is absent (unusual in a full install) a fallback
+    identifier of the form ``"bafy-sha2-256-<hex>"`` is returned.
+
+    .. warning::
+        The fallback identifier is **not** a valid IPFS CID — it will be
+        rejected by IPFS tooling and should not be passed to any IPFS API.
+        Its sole purpose is to allow equality-based freshness checks to work
+        correctly in environments where ``multiformats`` is not installed.
+        Users who need IPFS storage must install ``multiformats``
+        (``pip install multiformats``).
+
+    Args:
+        text: The policy source text to content-address.
+
+    Returns:
+        A stable, content-derived CID string.  When ``multiformats`` is
+        available the CID is valid and can be stored on the IPFS network.
+    """
+    raw = text.encode("utf-8")
+    digest = hashlib.sha256(raw).digest()
+    if _MULTIFORMATS_AVAILABLE:
+        mh = _multihash.wrap(digest, "sha2-256")
+        return str(_CID("base32", 1, "dag-cbor", mh))
+    # Fallback: content-derived identifier with recognisable IPFS-style prefix
+    return "bafy-sha2-256-" + digest.hex()
 
 
 # ---------------------------------------------------------------------------
@@ -78,22 +124,25 @@ def _sha256_text(text: str) -> str:
 
 @dataclass
 class NLPolicySource:
-    """Stores an NL policy string together with its content hash.
+    """Stores an NL policy string together with its content CID.
 
     Attributes:
         text: The raw natural-language policy text.
-        source_hash: SHA-256 hex digest of *text* (computed at construction).
+        source_cid: CIDv1 (dag-cbor, sha2-256, base32) of *text*, computed at
+            construction.  This is a proper multiformats CID that can be used
+            as a content-addressed key when storing the policy on the IPFS
+            network.
     """
 
     text: str
-    source_hash: str = field(init=False)
+    source_cid: str = field(init=False)
 
     def __post_init__(self) -> None:
-        self.source_hash = _sha256_text(self.text)
+        self.source_cid = _make_policy_cid(self.text)
 
-    def hash_matches(self, candidate_hash: str) -> bool:
-        """Return ``True`` if *candidate_hash* matches the stored source hash."""
-        return self.source_hash == candidate_hash
+    def cid_matches(self, candidate_cid: str) -> bool:
+        """Return ``True`` if *candidate_cid* matches the stored source CID."""
+        return self.source_cid == candidate_cid
 
 
 @dataclass
@@ -103,15 +152,16 @@ class CompiledUCANPolicy:
     Attributes:
         policy: The :class:`~temporal_policy.PolicyObject` produced by
             the compiler.
-        source_hash: SHA-256 digest of the NL text used during compilation.
-            Used to detect stale compilations.
+        source_cid: CIDv1 (dag-cbor, sha2-256) of the NL text used during
+            compilation.  Suitable for storage on the IPFS network and used
+            to detect stale compilations via CID comparison.
         compiled_at: ISO-8601 UTC timestamp of when compilation completed.
         compiler_version: Version tag of the compiler that produced this policy.
         metadata: Freeform compilation metadata (clause counts, strategy, …).
     """
 
     policy: PolicyObject
-    source_hash: str
+    source_cid: str
     compiled_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
@@ -127,7 +177,7 @@ class CompiledUCANPolicy:
         """Serialise to a plain dict (for storage / CID computation)."""
         return {
             "policy": self.policy.to_dict(),
-            "source_hash": self.source_hash,
+            "source_cid": self.source_cid,
             "compiled_at": self.compiled_at,
             "compiler_version": self.compiler_version,
             "metadata": self.metadata,
@@ -393,7 +443,7 @@ class NLUCANPolicyCompiler:
         if not nl_policy or not nl_policy.strip():
             raise ValueError("nl_policy must be a non-empty string")
 
-        source_hash = _sha256_text(nl_policy)
+        source_cid = _make_policy_cid(nl_policy)
         clauses = self._compile_to_clauses(nl_policy)
 
         if not clauses:
@@ -413,7 +463,7 @@ class NLUCANPolicyCompiler:
 
         return CompiledUCANPolicy(
             policy=policy,
-            source_hash=source_hash,
+            source_cid=source_cid,
             compiler_version=self._version,
             metadata={
                 "clause_count": len(clauses),
@@ -439,14 +489,14 @@ class NLUCANPolicyCompiler:
         Returns:
             A ``(CompiledUCANPolicy, bool)`` tuple.
         """
-        if source.source_hash == compiled.source_hash:
+        if source.source_cid == compiled.source_cid:
             return compiled, False
 
         logger.info(
-            "Policy source hash mismatch — recompiling. "
+            "Policy source CID mismatch — recompiling. "
             "old=%s new=%s",
-            compiled.source_hash[:12],
-            source.source_hash[:12],
+            compiled.source_cid[:12],
+            source.source_cid[:12],
         )
         fresh = self.compile(source.text, description=compiled.policy.description)
         return fresh, True
