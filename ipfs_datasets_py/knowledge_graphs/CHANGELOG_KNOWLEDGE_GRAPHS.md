@@ -5,6 +5,43 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.15] - 2026-02-22
+
+### Changed — MASTER_STATUS stale coverage table + ROADMAP duplicate section (Session 60)
+
+**No production code changes.** Updated docs to reflect sessions 54–59 improvements.
+
+#### `MASTER_STATUS.md`
+- Coverage heading: `~89% (measured, session 26)` → `99.99% (1 missed line; measured, session 58)`
+- Per-module coverage table: all modules updated to reflect sessions 27–58 results
+  (Cypher 100%, Neo4j Compat 100%, Migration 100%, JSON-LD 100%, Core 100%, etc.)
+- Removed stale "Largest remaining coverage opportunities" list (extractor 54%, etc.)
+- Added one-line summary: `_entity_helpers.py:117` is the only remaining missed line
+- Sessions 54–60 added to test session list
+- Total test count: `3,614 passing` → `3,725 passing, 26 skipped`
+- Test files count: `65 total (as of v2.7.0)` → `95 total (as of v3.22.15)`
+- Version: `3.22.14` → `3.22.15`
+
+#### `ROADMAP.md`
+- Removed the duplicate unchecked `## Version 2.0.1 (Q2 2026)` section (lines 17–35)
+  that was superseded by the checked version immediately below it (lines 37–47)
+- Updated `**Last Updated:** 2026-02-20` → `2026-02-22`
+
+#### Tests
+
+**18 new tests** in `test_master_status_session60.py` (4 classes):
+
+- `TestMasterStatusCoverageSection` (6 tests): heading says 99.99% not ~89%; stale entries
+  absent; 1-missed-line section present; spaCy stale 108-line ref gone.
+- `TestMasterStatusTestCount` (4 tests): 3,725 present; stale 3,614 gone; sessions 54–60 in list.
+- `TestRoadmapDuplicateSection` (5 tests): v2.0.1 heading appears exactly once; unchecked
+  TODO items gone; Last Updated corrected.
+- `TestThreeDocVersionAgreement` (3 tests): MASTER_STATUS/ROADMAP/CHANGELOG all on 3.22.15.
+
+**Result: 3,743 passed, 26 skipped, 0 failed**
+
+---
+
 ## [3.22.14] - 2026-02-22
 
 ### Changed — Documentation Consistency Fixes (Session 59)

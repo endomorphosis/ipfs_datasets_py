@@ -212,12 +212,13 @@ class TestMasterStatusVersion:
         )
 
     def test_master_status_version_header_line(self):
-        """The '**Version:**' line should say 3.22.14."""
+        """The '**Version:**' line should say 3.22.14 or later."""
         content = _read(_MASTER)
         version_lines = [l for l in content.splitlines() if l.startswith("**Version:**")]
         assert version_lines, "MASTER_STATUS.md must have a **Version:** line"
-        assert "3.22.14" in version_lines[0], (
-            f"**Version:** line should be 3.22.14, got: {version_lines[0]}"
+        # Accept 3.22.14 (set in session 59) or 3.22.15+ (advanced in subsequent sessions)
+        assert "3.22.14" in version_lines[0] or "3.22.15" in version_lines[0], (
+            f"**Version:** line should be 3.22.14 or later, got: {version_lines[0]}"
         )
 
     def test_master_status_not_stale_3_22_13(self):

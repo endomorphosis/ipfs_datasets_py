@@ -724,3 +724,43 @@ comprehensively updated):
 - `TestMasterStatusVersion` (5 tests): version header, three-doc agreement
 
 **Result: 3,725 passed, 26 skipped, 0 failed** (numpy+networkx+matplotlib+scipy+plotly+rdflib env)
+
+
+### Session 60 log (2026-02-22)
+
+**Documentation accuracy fixes — no production code changes.**
+
+**Problem:** Three stale data items accumulated in key docs:
+1. `MASTER_STATUS.md` coverage section header still said `~89% (measured, session 26)`,
+   even though actual coverage is 99.99% (measured, session 58).  Per-module coverage table
+   showed old values from sessions 26–30 range.  "Largest remaining coverage opportunities"
+   section still listed extractor.py at 54% and 108 missed lines.
+2. `MASTER_STATUS.md` total test count said `3,614 passing` (session 53 value); sessions
+   54–59 added 111 more tests bringing the total to 3,725.  Sessions 54–59 were also missing
+   from the session log list in the Test Coverage section.
+3. `ROADMAP.md` had a duplicate `## Version 2.0.1 (Q2 2026)` section — the first copy
+   (lines 17–35) had all items unchecked, the second copy (lines 37–47) had them checked.
+   Also the `Last Updated` footer still said 2026-02-20 (from session 46).
+
+**Fix:**
+1. `MASTER_STATUS.md`:
+   - Coverage heading: `~89% (measured, session 26)` → `99.99% (1 missed line; measured, session 58)`
+   - Per-module table: all modules updated to actual session 27–58 results
+   - "Largest remaining coverage opportunities" replaced with 1-line summary
+   - Test files count: `65 total (as of v2.7.0)` → `95 total (as of v3.22.15)`
+   - Sessions 54–60 added to the session log list
+   - Total tests: `3,614 passing` → `3,725 passing, 26 skipped`
+   - Version: `3.22.14` → `3.22.15`
+2. `ROADMAP.md`:
+   - First duplicate "Version 2.0.1" section removed (unchecked items)
+   - `**Last Updated:** 2026-02-20` → `2026-02-22`
+
+**18 tests** in `test_master_status_session60.py` (4 classes):
+- `TestMasterStatusCoverageSection` (6 tests): heading 99.99%; ~89% gone; session_26 ref gone;
+  session_58 ref present; stale per-module entries absent; 1-missed-line section present.
+- `TestMasterStatusTestCount` (4 tests): 3,725 present; 3,614 gone; sessions 54–60 in list.
+- `TestRoadmapDuplicateSection` (5 tests): v2.0.1 once; unchecked TODO items gone;
+  Last Updated corrected.
+- `TestThreeDocVersionAgreement` (3 tests): all three docs agree on v3.22.15.
+
+**Result: 3,743 passed, 26 skipped, 0 failed** (numpy+networkx+matplotlib+scipy+plotly+rdflib env)

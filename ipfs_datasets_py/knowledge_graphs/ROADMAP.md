@@ -20,26 +20,6 @@ This roadmap outlines planned features and improvements for the knowledge_graphs
 **Focus:** Production hardening and test coverage
 
 ### Planned Work
-- [ ] Increase migration module test coverage from 40% to 70%+
-- [ ] Add comprehensive error handling tests
-- [ ] Fix any bugs discovered in production deployments
-- [ ] Performance profiling and optimization for large graphs (>100k nodes)
-- [ ] Memory usage optimization for batch operations
-
-### Success Criteria
-- Migration module test coverage ≥70%
-- No known critical bugs
-- Performance benchmarks documented
-- Memory usage optimized for production workloads
-
----
-
-## Version 2.0.1 (Q2 2026) - Bug Fixes & Polish
-
-**Target Release:** May 2026  
-**Focus:** Production hardening and test coverage
-
-### Planned Work
 - [x] Increase migration module test coverage from 40% to 70%+ ✅ Done in v2.1.0
 - [x] Add comprehensive error handling tests ✅ Done
 - Performance profiling and optimization for large graphs (>100k nodes)
@@ -443,6 +423,7 @@ We follow [Semantic Versioning](https://semver.org/):
 | 3.22.12 | 2026-02-22 | ✅ Released | scipy/matplotlib/plotly/rdflib added to knowledge_graphs extras; visualization.py 100% + graph.py 100% (session57) |
 | 3.22.13 | 2026-02-22 | ✅ Released | srl.py 2 dead lines removed → 100%; multiformats added to ipld extras; 1 missed line total (session58) |
 | 3.22.14 | 2026-02-22 | ✅ Released | Doc consistency fixes: ROADMAP.md v3.22.14; missing CHANGELOG sections added; release table complete (session59) |
+| 3.22.15 | 2026-02-22 | ✅ Released | MASTER_STATUS stale coverage table updated (99.99%); duplicate ROADMAP v2.0.1 section removed; sessions 47–59 added to session list; 15 doc integrity tests (session60) |
 | 4.0 | 2027+ | 📋 Future | TBD based on feedback |
 
 ---
@@ -480,6 +461,6 @@ We value your feedback! Please share thoughts on:
 
 ---
 
-**Last Updated:** 2026-02-20  
+**Last Updated:** 2026-02-22  
 **Next Review:** Q3 2026  
 **Maintained By:** Knowledge Graphs Team
