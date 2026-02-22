@@ -2430,3 +2430,43 @@ class OntologyPipeline:
         for s in scores[1:]:
             ewma = alpha * s + (1.0 - alpha) * ewma
         return ewma
+
+    def run_score_autocorrelation(self, lag: int = 1) -> float:
+        """Return the autocorrelation of run scores at the given *lag*.
+
+        Uses the biased (population) estimator: both the cross-covariance
+        ``C(h)`` and the variance ``C(0)`` are divided by ``n``, so the
+        common factor cancels and the result simplifies to::
+
+            ρ(h) = Σ_{i=h}^{n-1} (x_i − μ)(x_{i-h} − μ)
+                   ─────────────────────────────────────────
+                   Σ_{i=0}^{n-1} (x_i − μ)²
+
+        This guarantees the result is always in ``[-1, 1]``.
+
+        Args:
+            lag: Number of positions to shift the series.  Must be ≥ 1.
+                Default ``1``.
+
+        Returns:
+            Float autocorrelation; ``0.0`` when fewer than ``lag + 1``
+            runs exist or the series has zero variance.
+
+        Example::
+
+            >>> acf = pipeline.run_score_autocorrelation(lag=1)
+            >>> -1.0 <= acf <= 1.0
+        """
+        if len(self._run_history) <= lag:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        n = len(scores)
+        mean = sum(scores) / n
+        variance = sum((s - mean) ** 2 for s in scores) / n
+        if variance == 0.0:
+            return 0.0
+        cov = sum(
+            (scores[i] - mean) * (scores[i - lag] - mean)
+            for i in range(lag, n)
+        ) / n
+        return cov / variance

@@ -4963,6 +4963,36 @@ class OntologyOptimizer:
         mean = sum(scores) / len(scores)
         return sum(abs(s - mean) for s in scores) / len(scores)
 
+    def score_zscore_outliers(self, threshold: float = 2.0) -> list:
+        """Return the indices of history scores whose |z-score| exceeds *threshold*.
+
+        Uses population standard deviation.  Scores with ``|z| > threshold``
+        are considered outliers.
+
+        Args:
+            threshold: Minimum absolute z-score to count as an outlier.
+                Default ``2.0``.
+
+        Returns:
+            List of integer indices (0-based) into the history score list.
+            Empty list when history has fewer than 2 entries or standard
+            deviation is zero.
+
+        Example::
+
+            >>> opt.score_zscore_outliers(threshold=2.0)
+            [0, 4]
+        """
+        if len(self._history) < 2:
+            return []
+        scores = [e.average_score for e in self._history]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        if variance == 0.0:
+            return []
+        std = variance ** 0.5
+        return [i for i, s in enumerate(scores) if abs((s - mean) / std) > threshold]
+
 
 # Export public API
 __all__ = [

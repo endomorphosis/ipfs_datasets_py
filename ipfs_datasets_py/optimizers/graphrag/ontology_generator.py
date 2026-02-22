@@ -7934,6 +7934,46 @@ class OntologyGenerator:
         rel_count = len(getattr(result, "relationships", []) or [])
         return rel_count / (n * (n - 1))
 
+    def entity_confidence_weighted_mean(
+        self,
+        result: "EntityExtractionResult",
+        weights: "Dict[str, float] | None" = None,
+    ) -> float:
+        """Return the type-weighted mean confidence of all entities.
+
+        Each entity's confidence is multiplied by the weight associated with
+        its type.  If a type has no entry in *weights* a default weight of
+        ``1.0`` is used.  When *weights* is ``None`` all types get weight
+        ``1.0`` (equivalent to a plain arithmetic mean).
+
+        Args:
+            result: :class:`EntityExtractionResult` to analyse.
+            weights: Optional mapping of entity-type string → float weight.
+                Missing types default to ``1.0``.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when there are no entities.
+
+        Example::
+
+            >>> wm = generator.entity_confidence_weighted_mean(result, {"Person": 2.0})
+            >>> 0.0 <= wm <= 1.0
+        """
+        entities = getattr(result, "entities", []) or []
+        if not entities:
+            return 0.0
+        if weights is None:
+            weights = {}
+        total_w = 0.0
+        weighted_sum = 0.0
+        for e in entities:
+            w = weights.get(getattr(e, "type", ""), 1.0)
+            total_w += w
+            weighted_sum += w * getattr(e, "confidence", 0.0)
+        if total_w == 0.0:
+            return 0.0
+        return weighted_sum / total_w
+
 
 __all__ = [
     'OntologyGenerator',

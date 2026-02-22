@@ -2369,3 +2369,35 @@ class OntologyLearningAdapter:
         idx = int(p / 100.0 * n)
         idx = max(0, min(idx, n - 1))
         return scores[idx]
+
+    def feedback_decay_mean(self, decay: float = 0.9) -> float:
+        """Return the exponentially decayed mean of feedback final scores.
+
+        Recent feedback entries are weighted more heavily.  The weight for
+        the *i*-th entry (0 = oldest) is ``decay ** (n - 1 - i)`` where
+        *n* is the total number of feedback records.  Weights are normalised
+        so they sum to 1.
+
+        Args:
+            decay: Decay factor in (0, 1].  Higher values give more weight
+                to recent entries.  Default ``0.9``.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when feedback is empty.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.4, actions={})
+            >>> adapter.apply_feedback(final_score=0.8, actions={})
+            >>> dm = adapter.feedback_decay_mean(decay=0.9)
+            >>> dm > 0.4  # recent high score pulls mean up
+        """
+        if not self._feedback:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        n = len(scores)
+        raw_weights = [decay ** (n - 1 - i) for i in range(n)]
+        total_w = sum(raw_weights)
+        if total_w == 0.0:
+            return 0.0
+        return sum(w * s for w, s in zip(raw_weights, scores)) / total_w

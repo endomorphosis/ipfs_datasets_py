@@ -4453,6 +4453,36 @@ class OntologyCritic(BaseCritic):
         vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
         return max(vals) - min(vals)
 
+    def dimension_weighted_std(self, score: "CriticScore") -> float:
+        """Return the weighted population standard deviation of the six dimensions.
+
+        Uses the module-level :data:`DIMENSION_WEIGHTS` as the probability
+        weights.  The weighted mean ``μ_w = Σ(w_i * v_i)`` and weighted
+        variance ``σ²_w = Σ(w_i * (v_i - μ_w)²)`` are computed with
+        weights normalised to sum to 1.
+
+        Args:
+            score: A :class:`CriticScore` instance.
+
+        Returns:
+            Float ≥ 0; ``0.0`` when all dimensions are equal.
+
+        Example::
+
+            >>> wstd = critic.dimension_weighted_std(score)
+            >>> wstd >= 0.0
+        """
+        dims = self._DIMENSIONS
+        vals = [getattr(score, d, 0.0) for d in dims]
+        weights = [DIMENSION_WEIGHTS.get(d, 0.0) for d in dims]
+        total_w = sum(weights)
+        if total_w == 0.0:
+            return 0.0
+        norm_w = [w / total_w for w in weights]
+        wmean = sum(w * v for w, v in zip(norm_w, vals))
+        wvar = sum(w * (v - wmean) ** 2 for w, v in zip(norm_w, vals))
+        return wvar ** 0.5
+
 
 # Export public API
 __all__ = [

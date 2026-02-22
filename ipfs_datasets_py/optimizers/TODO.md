@@ -1819,11 +1819,31 @@ Implementation notes:
 
 Testing: 8+6+8+7+8+8 = 45 + 6 smoke = 51 tests; 73 total in test_batch_211_212_features.py; all passing.
 
-## Batch 213+ Backlog
+## Batch 213 — Done ✅ (2026-02-22)
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_zscore_outliers(threshold)` — indices of scores with |z|>threshold
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_weighted_std(score)` — weighted std using dimension_weights
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_weighted_mean(result, weights)` — weighted mean by type
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_decay_mean(decay)` — exponentially decayed mean
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_autocorrelation(lag)` — autocorrelation of run scores
-- [ ] (P2) [graphrag] `LogicValidator.clustering_coefficient_approx(ontology)` — undirected clustering coefficient
+- [x] (P2) [graphrag] `OntologyOptimizer.score_zscore_outliers(threshold)` — indices of scores with |z|>threshold
+- [x] (P2) [graphrag] `OntologyCritic.dimension_weighted_std(score)` — weighted std using DIMENSION_WEIGHTS
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_weighted_mean(result, weights)` — weighted mean by type
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_decay_mean(decay)` — exponentially decayed mean
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_autocorrelation(lag)` — autocorrelation of run scores
+- [x] (P2) [graphrag] `LogicValidator.clustering_coefficient_approx(ontology)` — undirected clustering coefficient
+
+Implementation notes:
+- score_zscore_outliers: uses population std; returns [] when n<2 or std=0; strict |z|>threshold.
+  Note: for k identical values + 1 extreme outlier, max z = sqrt(k); threshold must be < sqrt(k-1).
+- dimension_weighted_std: normalises DIMENSION_WEIGHTS to sum=1; 0.0 when all dims equal.
+- entity_confidence_weighted_mean: missing types default to weight 1.0; 0.0 when no entities.
+- feedback_decay_mean: weight[i] = decay^(n-1-i); decay=1.0 is arithmetic mean.
+- run_score_autocorrelation: population formula; 0.0 when n ≤ lag or variance=0.
+- clustering_coefficient_approx: undirected BFS triangle counting; 0.0 when no node has degree ≥ 2.
+
+Testing: 49 tests in test_batch_213_features.py; all passing.
+
+## Batch 214+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_bimodality_dip()` — simple dip statistic (max|hist_i - uniform_i|)
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_entropy(score)` — Shannon entropy of 6 dimension values
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_trimmed_mean(result, trim_pct)` — trimmed mean of confidences
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_range()` — max − min of feedback final scores
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_percentile(p)` — p-th percentile of run scores
+- [ ] (P2) [graphrag] `LogicValidator.diameter_approx(ontology)` — approximate graph diameter via BFS

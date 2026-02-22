@@ -3926,6 +3926,75 @@ class LogicValidator:
                 seen[key] = True
         return multi
 
+    def clustering_coefficient_approx(self, ontology: dict) -> float:
+        """Return the approximate average undirected clustering coefficient.
+
+        For each node *v* with degree ≥ 2, the local clustering coefficient
+        is the fraction of pairs among *v*'s neighbours that are themselves
+        connected (in either direction).  The returned value is the mean
+        over all nodes that have degree ≥ 2.
+
+        Edges are treated as **undirected**: both ``source→target`` and
+        ``target→source`` contribute to the neighbourhood.
+
+        Args:
+            ontology: Dict with ``"entities"`` and ``"relationships"``
+                (or ``"edges"``) lists.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when no node has degree ≥ 2.
+
+        Example::
+
+            >>> # Triangle: A-B, B-C, A-C
+            >>> cc = validator.clustering_coefficient_approx(ontology)
+            >>> cc == 1.0
+        """
+        entities = ontology.get("entities", [])
+        if not isinstance(entities, list):
+            return 0.0
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if not isinstance(rels, list):
+            return 0.0
+
+        # Build undirected adjacency sets
+        adj: dict[str, set] = {}
+        for e in entities:
+            node_id = (e.get("id") or e.get("name", "")) if isinstance(e, dict) else str(e)
+            if node_id:
+                adj.setdefault(node_id, set())
+
+        edge_set: set[tuple] = set()
+        for r in rels:
+            if not isinstance(r, dict):
+                continue
+            src = r.get("source")
+            tgt = r.get("target")
+            if not src or not tgt or src == tgt:
+                continue
+            adj.setdefault(src, set()).add(tgt)
+            adj.setdefault(tgt, set()).add(src)
+            edge_set.add((min(src, tgt), max(src, tgt)))
+
+        coeffs = []
+        for node, neighbours in adj.items():
+            k = len(neighbours)
+            if k < 2:
+                continue
+            # Count edges among neighbours
+            triangle_edges = sum(
+                1
+                for nb in neighbours
+                for nb2 in neighbours
+                if nb < nb2 and (min(nb, nb2), max(nb, nb2)) in edge_set
+            )
+            possible = k * (k - 1) // 2
+            coeffs.append(triangle_edges / possible)
+
+        if not coeffs:
+            return 0.0
+        return sum(coeffs) / len(coeffs)
+
 
 # Export public API
 __all__ = [
