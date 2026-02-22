@@ -155,6 +155,38 @@ from .visualization import (
 
 from .ontology_learning_adapter import OntologyLearningAdapter, FeedbackRecord
 
+# Type definitions (for static type checking and IDE support)
+from .ontology_types import (
+    # Ontology structures
+    Entity as EntityType,
+    Relationship as RelationshipType,
+    OntologyMetadata,
+    Ontology,
+    # Extraction results
+    EntityExtractionResult as EntityExtractionResultType,
+    RelationshipExtractionResult,
+    # Critique types
+    DimensionalScore,
+    CriticRecommendation,
+    CriticScore as CriticScoreType,
+    # Session and context
+    SessionRound,
+    OntologySession as OntologySessionType,
+    GenerationContext,
+    # Statistics
+    EntityStatistics,
+    RelationshipStatistics,
+    OntologyStatistics,
+    PerformanceMetrics,
+    QualityMetrics,
+    # Pipeline types
+    PipelineStageResult,
+    RefinementCycleResult,
+    # Configuration
+    ExtractionConfigDict,
+    OptimizerConfig,
+)
+
 # Export public API
 __all__ = [
     # Generator
@@ -205,6 +237,28 @@ __all__ = [
     # Learning Adapter
     'OntologyLearningAdapter',
     'FeedbackRecord',
+    # Type Definitions (for static type checking)
+    'EntityType',
+    'RelationshipType',
+    'OntologyMetadata',
+    'Ontology',
+    'EntityExtractionResultType',
+    'RelationshipExtractionResult',
+    'DimensionalScore',
+    'CriticRecommendation',
+    'CriticScoreType',
+    'SessionRound',
+    'OntologySessionType',
+    'GenerationContext',
+    'EntityStatistics',
+    'RelationshipStatistics',
+    'OntologyStatistics',
+    'PerformanceMetrics',
+    'QualityMetrics',
+    'PipelineStageResult',
+    'RefinementCycleResult',
+    'ExtractionConfigDict',
+    'OptimizerConfig',
 ]
 
 __version__ = '0.1.0'
