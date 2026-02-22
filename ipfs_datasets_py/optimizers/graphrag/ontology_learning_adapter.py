@@ -1582,3 +1582,38 @@ class OntologyLearningAdapter:
         if not self._feedback:
             return 0.0
         return sum(1 for r in self._feedback if r.final_score >= threshold) / len(self._feedback)
+
+    def feedback_consecutive_positive(self, threshold: float = 0.5) -> int:
+        """Return the length of the current trailing streak of positive feedback.
+
+        A feedback record is "positive" when ``final_score >= threshold``.
+
+        Args:
+            threshold: Minimum score for "positive" (default 0.5).
+
+        Returns:
+            Integer count; 0 when no positive trailing streak.
+        """
+        count = 0
+        for r in reversed(self._feedback):
+            if r.final_score >= threshold:
+                count += 1
+            else:
+                break
+        return count
+
+    def feedback_gini(self) -> float:
+        """Return the Gini coefficient of feedback scores.
+
+        Returns:
+            Float in [0, 1); 0.0 when fewer than 2 feedback records.
+        """
+        scores = sorted(r.final_score for r in self._feedback)
+        n = len(scores)
+        if n < 2:
+            return 0.0
+        total = sum(scores)
+        if total == 0.0:
+            return 0.0
+        numer = sum((i + 1) * v for i, v in enumerate(scores))
+        return (2 * numer / (n * total)) - (n + 1) / n

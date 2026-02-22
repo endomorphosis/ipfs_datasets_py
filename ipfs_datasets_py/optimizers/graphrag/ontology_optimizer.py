@@ -3241,6 +3241,37 @@ class OntologyOptimizer:
         mid = n // 2
         return _var(scores[mid:]) - _var(scores[:mid])
 
+    def score_above_mean_fraction(self) -> float:
+        """Return fraction of history entries whose score is above the mean.
+
+        Returns:
+            Float in [0, 1]; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        mean = sum(scores) / len(scores)
+        return sum(1 for s in scores if s > mean) / len(scores)
+
+    def history_gini(self) -> float:
+        """Return the Gini coefficient of history scores as a disparity measure.
+
+        A value of 0 means perfect equality (all scores equal); 1 means
+        maximum inequality.
+
+        Returns:
+            Float in [0, 1); 0.0 when fewer than 2 history entries.
+        """
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        if n < 2:
+            return 0.0
+        total = sum(scores)
+        if total == 0.0:
+            return 0.0
+        numer = sum((i + 1) * v for i, v in enumerate(scores))
+        return (2 * numer / (n * total)) - (n + 1) / n
+
 
 # Export public API
 __all__ = [

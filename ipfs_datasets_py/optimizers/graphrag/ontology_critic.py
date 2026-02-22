@@ -3718,6 +3718,39 @@ class OntologyCritic(BaseCritic):
         vals = [max(getattr(score, d, 0.0), epsilon) for d in self._DIMENSIONS]
         return len(vals) / sum(1.0 / v for v in vals)
 
+    def dimension_geometric_mean(self, score: "CriticScore") -> float:  # type: ignore[name-defined]
+        """Return the geometric mean of the six dimension values.
+
+        Dimensions with value 0 are replaced by a small epsilon.
+
+        Args:
+            score: ``CriticScore`` to inspect.
+
+        Returns:
+            Float in (0, 1].
+        """
+        epsilon = 1e-9
+        vals = [max(getattr(score, d, 0.0), epsilon) for d in self._DIMENSIONS]
+        product = 1.0
+        for v in vals:
+            product *= v
+        return product ** (1.0 / len(vals))
+
+    def dimensions_below_count(self, score: "CriticScore", threshold: float = 0.3) -> int:  # type: ignore[name-defined]
+        """Return the number of dimensions below *threshold*.
+
+        Args:
+            score: ``CriticScore`` to inspect.
+            threshold: Maximum value to consider "below" (default 0.3).
+
+        Returns:
+            Integer count in range [0, 6].
+        """
+        return sum(
+            1 for d in self._DIMENSIONS
+            if getattr(score, d, 0.0) < threshold
+        )
+
 
 # Export public API
 __all__ = [

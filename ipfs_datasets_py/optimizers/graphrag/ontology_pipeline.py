@@ -1530,3 +1530,26 @@ class OntologyPipeline:
             return 0.0
         variance = sum((v - mean) ** 2 for v in scores) / n
         return (variance ** 0.5) / mean
+
+    def run_score_range(self) -> tuple:
+        """Return (min, max) tuple of run overall scores.
+
+        Returns:
+            Tuple ``(lo, hi)``; ``(0.0, 0.0)`` when no runs.
+        """
+        if not self._run_history:
+            return (0.0, 0.0)
+        scores = [r.score.overall for r in self._run_history]
+        return (min(scores), max(scores))
+
+    def run_score_above_mean_fraction(self) -> float:
+        """Return fraction of runs whose score is above the mean.
+
+        Returns:
+            Float in [0, 1]; 0.0 when no runs.
+        """
+        if not self._run_history:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        mean = sum(scores) / len(scores)
+        return sum(1 for s in scores if s > mean) / len(scores)

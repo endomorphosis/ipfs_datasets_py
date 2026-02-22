@@ -2843,6 +2843,58 @@ class LogicValidator:
                         stack.extend(adj[n] - visited)
         return count
 
+    def average_in_degree(self, ontology: Any) -> float:
+        """Return the average in-degree of nodes in the relationship graph.
+
+        Args:
+            ontology: Ontology with ``relationships`` list.
+
+        Returns:
+            Float; 0.0 when no relationships.
+        """
+        rels = getattr(ontology, "relationships", [])
+        if not rels:
+            return 0.0
+        from collections import Counter as _Counter
+        in_deg = _Counter(getattr(r, "target_id", None) for r in rels if getattr(r, "target_id", None))
+        nodes: set = set()
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src:
+                nodes.add(src)
+            if tgt:
+                nodes.add(tgt)
+        if not nodes:
+            return 0.0
+        return sum(in_deg.values()) / len(nodes)
+
+    def average_out_degree(self, ontology: Any) -> float:
+        """Return the average out-degree of nodes in the relationship graph.
+
+        Args:
+            ontology: Ontology with ``relationships`` list.
+
+        Returns:
+            Float; 0.0 when no relationships.
+        """
+        rels = getattr(ontology, "relationships", [])
+        if not rels:
+            return 0.0
+        from collections import Counter as _Counter
+        out_deg = _Counter(getattr(r, "source_id", None) for r in rels if getattr(r, "source_id", None))
+        nodes: set = set()
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src:
+                nodes.add(src)
+            if tgt:
+                nodes.add(tgt)
+        if not nodes:
+            return 0.0
+        return sum(out_deg.values()) / len(nodes)
+
 
 # Export public API
 __all__ = [
