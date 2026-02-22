@@ -198,6 +198,12 @@ setup(
             'cryptography>=41.0.0',
             'keyring>=24.0.0',
         ],
+        # UCAN / DID-key: decentralised capability-based auth + secret signing
+        'ucan': [
+            'py-ucan>=1.0.0',
+            'cryptography>=41.0.0',
+            'base58>=2.1.1',
+        ],
         'audit': [
             'elasticsearch>=8.0.0',
             'cryptography>=41.0.0',
@@ -353,6 +359,9 @@ setup(
             # Security/Audit
             'cryptography>=41.0.0',
             'keyring>=24.0.0',
+            # UCAN / DID-key
+            'py-ucan>=1.0.0',
+            'base58>=2.1.1',
             # Provenance
             'plotly>=5.9.0',
             'dash>=2.6.0',

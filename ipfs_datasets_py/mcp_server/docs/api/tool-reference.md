@@ -525,6 +525,169 @@ Thin wrappers forwarding to the web-archiving canonical engines.
 
 ---
 
+## Phase G/H Additions (v6.0)
+
+> The following APIs were added in **v6.0** as part of phases G (coverage hardening)
+> and H (integration / scenario tests).
+
+### CircuitBreaker
+
+Located in `hierarchical_tool_manager.py`.
+
+Prevents cascading failures when a downstream tool or service becomes
+unreliable.  Transitions: **CLOSED** → **OPEN** (on repeated failures) →
+**HALF_OPEN** (probe after recovery window) → **CLOSED** (on probe success).
+
+```python
+from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import CircuitBreaker
+
+breaker = CircuitBreaker(
+    name="my_service",
+    failure_threshold=5,   # trips after 5 consecutive failures
+    recovery_timeout=30.0, # seconds before probing again
+)
+
+result = await breaker.call(my_async_func, arg1, arg2)
+print(breaker.state)   # "closed", "open", or "half_open"
+print(breaker.info())  # {"name": ..., "state": ..., "failure_count": ..., ...}
+breaker.reset()        # force back to CLOSED
+```
+
+**`CircuitBreaker.call(func, *args, **kwargs)`**
+- Raises `CircuitBreakerOpenError` when the circuit is OPEN.
+- Passes `KeyboardInterrupt` / `SystemExit` through unchanged.
+- On failure increments the internal counter; on success resets it.
+
+---
+
+### dispatch_parallel (v6.0 — adaptive batching)
+
+`HierarchicalToolManager.dispatch_parallel` now accepts a `max_concurrent`
+parameter for **adaptive batch sizing**.
+
+```python
+results = await manager.dispatch_parallel(
+    calls=[
+        {"category": "dataset_tools", "tool": "load_dataset", "params": {"source": "squad"}},
+        {"category": "graph_tools",   "tool": "query_knowledge_graph"},
+        # ... many more ...
+    ],
+    max_concurrent=4,   # process at most 4 calls at a time
+    return_exceptions=True,
+)
+```
+
+**Parameters (v6.0 additions):**
+- `max_concurrent` (`int | None`, default `None`): When set, calls are
+  processed in windows of this size rather than all at once.  Useful when
+  the call list is very large or when downstream services have rate limits.
+  When `None` (default) all calls run concurrently (original behaviour).
+
+---
+
+### Enterprise API — JWT Authentication
+
+`AuthenticationManager` (in `enterprise_api.py`) now supports **token
+revocation** to support logout and token-rotation workflows.
+
+```python
+from ipfs_datasets_py.mcp_server.enterprise_api import AuthenticationManager
+
+auth = AuthenticationManager(secret_key="super-secret")
+token = auth.create_access_token("demo")
+
+# Verify (returns user dict or None)
+user_data = auth.verify_token(token)
+
+# Revoke (returns True on success, False if token is unparseable)
+revoked = auth.revoke_token(token)
+
+# Subsequent verify calls return None for revoked tokens
+assert auth.verify_token(token) is None
+assert auth.is_token_revoked(token) is True
+```
+
+**New methods:**
+
+| Method | Returns | Description |
+|---|---|---|
+| `revoke_token(token)` | `bool` | Add token to the revocation list |
+| `is_token_revoked(token)` | `bool` | Check if token has been revoked |
+
+> **Production note:** The in-memory revocation store (`_revoked_tokens` set)
+> is lost on process restart.  In production replace it with a Redis or
+> database-backed store.
+
+---
+
+### Monitoring — Enhanced Metrics (v6.0)
+
+`EnhancedMetricsCollector` coverage was extended to 80%+ in v6.0.
+
+Key paths now covered include:
+- `_start_monitoring` / `start_monitoring` async startup
+- `track_request` context manager with exception propagation
+- `_check_health` with `HealthCheckError` and `ImportError` handling
+- `_check_alerts` (response-time threshold alert)
+- `get_tool_latency_percentiles` (P50/P90/P99)
+- `get_performance_trends` (time-windowed statistics)
+- `shutdown` method (graceful teardown)
+- `P2PMetricsCollector.get_dashboard_data` cache hit path
+
+---
+
+## Ecosystem Integrations (v6.0)
+
+### gRPC Transport Adapter
+
+`grpc_transport.py` — wraps `HierarchicalToolManager` behind a gRPC service.
+
+```python
+from ipfs_datasets_py.mcp_server.grpc_transport import GRPCTransportAdapter
+
+adapter = GRPCTransportAdapter(manager, port=50051)
+await adapter.start()   # requires grpcio
+info = adapter.get_info()
+# {"transport": "grpc", "host": "[::]", "port": 50051, ...}
+await adapter.stop()
+```
+
+### Prometheus Exporter
+
+`prometheus_exporter.py` — bridges the metrics collector to Prometheus.
+
+```python
+from ipfs_datasets_py.mcp_server.prometheus_exporter import PrometheusExporter
+
+exporter = PrometheusExporter(collector=get_metrics_collector(), port=9090)
+exporter.start_http_server()   # requires prometheus-client
+exporter.record_tool_call("dataset_tools", "load_dataset", "success", 0.042)
+exporter.update()              # sync latest metrics
+info = exporter.get_info()
+```
+
+Metrics exposed: `mcp_tool_calls_total`, `mcp_tool_latency_seconds`,
+`mcp_active_connections`, `mcp_error_rate`, `mcp_cache_hits_total`,
+`mcp_cache_misses_total`, `mcp_system_cpu_usage_percent`,
+`mcp_system_memory_usage_percent`, `mcp_uptime_seconds`.
+
+### OpenTelemetry Tracing
+
+`otel_tracing.py` — distributed tracing for tool dispatches.
+
+```python
+from ipfs_datasets_py.mcp_server.otel_tracing import configure_tracing, MCPTracer
+
+configure_tracing(service_name="my-mcp-server", otlp_endpoint="http://localhost:4317")
+
+tracer = MCPTracer()
+with tracer.start_dispatch_span("dataset_tools", "load_dataset", {"source": "squad"}) as span:
+    result = await manager.dispatch("dataset_tools", "load_dataset", {"source": "squad"})
+    tracer.set_span_ok(span, result)
+```
+
+---
+
 *This reference is auto-generated from tool docstrings and the
 `THIN_TOOL_ARCHITECTURE.md` design document.  See individual source files
 under `ipfs_datasets_py/mcp_server/tools/` for full parameter details.*

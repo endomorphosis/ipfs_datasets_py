@@ -122,6 +122,8 @@ class AuthenticationManager:
         self.secret_key = secret_key or os.getenv("JWT_SECRET_KEY", "dev-secret-key-change-in-production")
         self.algorithm = "HS256"
         self.access_token_expire_minutes = 30
+        # Revoked token store (in-memory; use Redis in production).
+        self._revoked_tokens: set = set()
         # In production, load from database
         self.users_db = {
             "demo": User(
@@ -140,8 +142,48 @@ class AuthenticationManager:
             )
         }
     
+    # ------------------------------------------------------------------
+    # Token revocation
+    # ------------------------------------------------------------------
+
+    def revoke_token(self, token: str) -> bool:
+        """Add *token* to the revocation list.
+
+        The token is decoded without expiry enforcement so already-expired
+        tokens can still be explicitly revoked (belt-and-suspenders defence).
+
+        Args:
+            token: JWT token string to revoke.
+
+        Returns:
+            ``True`` if the token was successfully decoded and added to the
+            revocation list; ``False`` if it could not be decoded at all.
+        """
+        try:
+            jwt.decode(
+                token,
+                self.secret_key,
+                algorithms=[self.algorithm],
+                options={"verify_exp": False},
+            )
+            self._revoked_tokens.add(token)
+            return True
+        except jwt.PyJWTError:
+            return False
+
+    def is_token_revoked(self, token: str) -> bool:
+        """Return ``True`` if *token* is in the revocation list."""
+        return token in self._revoked_tokens
+
+    # ------------------------------------------------------------------
+
     async def authenticate(self, token: str) -> User:
         """Authenticate user from JWT token"""
+        if self.is_token_revoked(token):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has been revoked",
+            )
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             username = payload.get("sub")
@@ -180,8 +222,10 @@ class AuthenticationManager:
             token: JWT token string
             
         Returns:
-            User data dict if valid, None if invalid
+            User data dict if valid, None if invalid or revoked
         """
+        if self.is_token_revoked(token):
+            return None
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             username = payload.get("sub")

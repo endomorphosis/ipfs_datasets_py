@@ -632,6 +632,95 @@ class HierarchicalToolManager:
             "tools": tools
         }
     
+    async def get_tool_schema_cid(self, category: str, tool: str) -> str:
+        """Return a CID for the given tool's schema (Profile A: MCP-IDL alignment).
+
+        Computes a sha256-based content identifier from the canonical JSON
+        representation of the tool's schema.  The CID is deterministic,
+        enabling schema-addressed caching and validation.
+
+        Args:
+            category: Name of the category.
+            tool: Name of the tool.
+
+        Returns:
+            A ``sha256:<hex>`` CID string.
+
+        Raises:
+            ValueError: If the category or tool is not found.
+            ImportError: If ``interface_descriptor`` is unavailable.
+        """
+        from .interface_descriptor import compute_cid, _canonicalize  # Profile A
+
+        result = await self.get_tool_schema(category, tool)
+        if result.get("status") == "error":
+            raise ValueError(result["error"])
+        schema = result.get("schema", result)
+        return compute_cid(_canonicalize(schema))
+
+    async def dispatch_with_trace(
+        self,
+        category: str,
+        tool: str,
+        params: Optional[Dict[str, Any]] = None,
+        *,
+        interface_cid: Optional[str] = None,
+        policy_cid: Optional[str] = None,
+        parents: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Dispatch a tool and attach a CID-native execution trace (Profile B).
+
+        Wraps :meth:`dispatch` with an
+        :class:`~ipfs_datasets_py.mcp_server.cid_artifacts.ExecutionEnvelope`
+        appended to the result under the ``_trace`` key.
+
+        Args:
+            category: Name of the category.
+            tool: Name of the tool.
+            params: Tool parameters.
+            interface_cid: Optional interface CID (Profile A).
+            policy_cid: Optional policy CID (Profile D).
+            parents: Optional list of parent event CIDs (causal chain).
+
+        Returns:
+            The dispatch result dict with a ``_trace`` key containing the
+            :class:`ExecutionEnvelope` as a plain dict.
+        """
+        try:
+            from .cid_artifacts import (
+                ExecutionEnvelope, IntentObject, ReceiptObject, artifact_cid,
+            )
+        except ImportError:
+            return await self.dispatch(category, tool, params)
+
+        if params is None:
+            params = {}
+
+        intent = IntentObject(
+            tool=f"{category}/{tool}",
+            input_cid=artifact_cid(params),
+            interface_cid=interface_cid,
+            constraints_policy_cid=policy_cid,
+        )
+        envelope = ExecutionEnvelope(
+            interface_cid=interface_cid,
+            input_cid=intent.input_cid,
+            intent_cid=intent.cid,
+            policy_cid=policy_cid,
+            parents=parents or [],
+        )
+
+        result = await self.dispatch(category, tool, params)
+
+        if isinstance(result, dict):
+            output_cid = artifact_cid(result)
+            receipt = ReceiptObject(intent_cid=intent.cid, output_cid=output_cid)
+            envelope.output_cid = output_cid
+            envelope.receipt_cid = receipt.cid
+            result["_trace"] = envelope.to_dict()
+
+        return result
+
     async def get_tool_schema(self, category: str, tool: str) -> Dict[str, Any]:
         """Get the full schema for a specific tool.
         
@@ -843,6 +932,7 @@ class HierarchicalToolManager:
         calls: List[Dict[str, Any]],
         *,
         return_exceptions: bool = True,
+        max_concurrent: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Dispatch multiple tool calls concurrently.
 
@@ -861,6 +951,11 @@ class HierarchicalToolManager:
                 individual calls are captured and returned as error dicts
                 rather than propagated.  Set to ``False`` to let the first
                 exception cancel all remaining tasks.
+            max_concurrent: Maximum number of tasks to run concurrently.
+                When ``None`` (default) all tasks are dispatched at once.
+                When set to a positive integer, calls are processed in
+                batches of that size (adaptive batch sizing).  Useful for
+                throttling resource consumption when *calls* is very large.
 
         Returns:
             List of result dicts in the same order as *calls*.
@@ -871,6 +966,9 @@ class HierarchicalToolManager:
                 {"category": "dataset_tools", "tool": "load_dataset", "params": {"source": "squad"}},
                 {"category": "graph_tools",   "tool": "query_knowledge_graph"},
             ])
+
+            # Limit to 4 concurrent calls:
+            results = await manager.dispatch_parallel(calls, max_concurrent=4)
         """
         if not calls:
             return []
@@ -897,9 +995,18 @@ class HierarchicalToolManager:
                 else:
                     raise
 
-        async with anyio.create_task_group() as tg:
-            for i, call in enumerate(calls):
-                tg.start_soon(_run_one, i, call)
+        if max_concurrent is None or max_concurrent >= n:
+            # All calls at once (original behaviour).
+            async with anyio.create_task_group() as tg:
+                for i, call in enumerate(calls):
+                    tg.start_soon(_run_one, i, call)
+        else:
+            # Adaptive batching: process in windows of *max_concurrent*.
+            for batch_start in range(0, n, max_concurrent):
+                batch = calls[batch_start: batch_start + max_concurrent]
+                async with anyio.create_task_group() as tg:
+                    for j, call in enumerate(batch):
+                        tg.start_soon(_run_one, batch_start + j, call)
 
         # Cast — every slot is filled by _run_one before task group exits.
         return results  # type: ignore[return-value]

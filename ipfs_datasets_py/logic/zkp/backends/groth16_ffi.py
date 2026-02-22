@@ -396,6 +396,83 @@ class Groth16Backend(ZKPBackend):
             size_bytes=len(proof_hex),
         )
     
+    def setup(self, version: int = 1, *, seed: Optional[int] = None) -> dict:
+        """Run trusted setup (generate proving/verifying keys) for a circuit version.
+
+        Calls ``groth16 setup --version <N>`` and returns the parsed manifest dict.
+        The manifest includes ``proving_key_path``, ``verifying_key_path``, and
+        SHA-256 hashes for integrity checking.
+
+        Args:
+            version: Circuit version to set up (1 or 2).
+            seed: Optional deterministic seed (``--seed <u64>``).
+
+        Returns:
+            dict: Parsed setup manifest from the Rust binary.
+
+        Raises:
+            RuntimeError: If the binary is not available or setup fails.
+        """
+        if not self.binary_path:
+            raise RuntimeError(
+                "Groth16 binary not available. "
+                "Please install Rust and compile groth16_backend."
+            )
+        if not isinstance(version, int) or version < 1:
+            raise ValueError("version must be a positive integer")
+
+        cmd = [self.binary_path, "setup", "--version", str(version)]
+        if seed is not None:
+            if not isinstance(seed, int) or seed < 0 or seed >= 2**64:
+                raise ValueError("seed must be a non-negative u64")
+            cmd.extend(["--seed", str(seed)])
+
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                timeout=self.timeout_seconds,
+            )
+        except subprocess.TimeoutExpired:
+            raise TimeoutError(f"Groth16 setup timeout after {self.timeout_seconds}s")
+
+        stdout_text = result.stdout.decode(errors="replace").strip() if result.stdout else ""
+        stderr_text = result.stderr.decode(errors="replace").strip() if result.stderr else ""
+
+        if result.returncode != 0:
+            parsed = _parse_validated_error_envelope(stdout_text)
+            if parsed is not None:
+                code, message = parsed
+                raise RuntimeError(f"Groth16 setup failed [{code}]: {message}")
+            raise RuntimeError(
+                f"Groth16 setup failed (exit={result.returncode}): {stderr_text or stdout_text}"
+            )
+
+        try:
+            manifest = json.loads(stdout_text)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON from groth16 setup: {e}") from e
+
+        logger.info(
+            "Groth16 setup v%d complete; pk=%s vk=%s",
+            version,
+            manifest.get("proving_key_path", "?"),
+            manifest.get("verifying_key_path", "?"),
+        )
+        return manifest
+
+    def artifacts_exist(self, version: int = 1) -> bool:
+        """Return True if the proving and verifying keys for *version* already exist."""
+        if not self.binary_path:
+            return False
+        # binary is at: .../processors/groth16_backend/target/release/groth16
+        # parents[2]  = .../processors/groth16_backend
+        crate_dir = Path(self.binary_path).resolve().parents[2]
+        artifacts_dir = crate_dir / "artifacts" / f"v{version}"
+        pk = artifacts_dir / "proving_key.bin"
+        vk = artifacts_dir / "verifying_key.bin"
+        return pk.exists() and vk.exists()
+
     def get_backend_info(self) -> dict:
         """Get backend information."""
         return {

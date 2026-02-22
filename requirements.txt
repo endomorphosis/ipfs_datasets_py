@@ -122,6 +122,10 @@ keyring
 passlib
 uvicorn
 psutil
+# UCAN / DID-key: decentralised capability-based auth and project-secret signing
+py-ucan>=1.0.0
+base58>=2.1.1
+cryptography>=41.0.0
 
 # Web scraping and archiving tools
 cdx-toolkit>=0.9.37  # Common Crawl CDX access

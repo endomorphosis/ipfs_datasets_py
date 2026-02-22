@@ -65,6 +65,14 @@ ipfs = [
     "multiformats>=0.2.1",
 ]
 
+# UCAN / DID-key: decentralised capability-based auth, delegation minting, and
+# project-secret signing with Ed25519 DID:key pairs.
+ucan = [
+    "py-ucan>=1.0.0",
+    "cryptography>=41.0.0",
+    "base58>=2.1.1",
+]
+
 # Vector and embedding capabilities
 embeddings = [
     "faiss-cpu>=1.7.4,<2.0.0",
@@ -126,7 +134,7 @@ dev = [
 
 # All optional features
 all = [
-    "ipfs_datasets_py[ipfs,embeddings,api,databases,documents,visualization,llm,dev]"
+    "ipfs_datasets_py[ipfs,embeddings,api,databases,documents,visualization,llm,dev,ucan]"
 ]
 
 [project.urls]
