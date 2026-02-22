@@ -236,8 +236,8 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 | Metric | Value | Target |
 |--------|-------|--------|
 | Overall Progress | **100% ✅ COMPLETE** | 100% |
-| Test Functions | **1004 passing, 16 skipped, 0 failing** → **1383 passing, 29 skipped, 0 failing** (session 38; +13 skipped = hypothesis/trio tests now visible after deps installed) |
-| Own Tests Passing | **1383 ✅** (was 853 before v5 sessions) | 500+ ✅ |
+| Test Functions | **1004 passing, 16 skipped, 0 failing** → **1457 passing, 29 skipped, 0 failing** (session 39; tool_registry 73%→85%+, monitoring 65%→75%+) |
+| Own Tests Passing | **1457 ✅** (was 853 before v5 sessions) | 500+ ✅ |
 | Test Coverage | **85-90%** | 80%+ ✅ |
 | Bare Exceptions (all files) | **0** ✅ | 0 |
 | Missing Return Types (core) | **0** ✅ | 0 |
