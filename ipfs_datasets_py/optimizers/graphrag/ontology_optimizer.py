@@ -3680,6 +3680,60 @@ class OntologyOptimizer:
         return self.history_last()
 
 
+    def history_streak_above(self, threshold: float = 0.7) -> int:
+        """Return the length of the current streak of entries scoring above threshold.
+
+        This counts from the END of history backward (most recent streak).
+
+        Args:
+            threshold: Exclusive lower bound. Defaults to 0.7.
+
+        Returns:
+            Integer streak length; 0 when no entries exceed threshold.
+        """
+        streak = 0
+        for entry in reversed(self._history):
+            if entry.average_score > threshold:
+                streak += 1
+            else:
+                break
+        return streak
+
+    def score_volatility(self) -> float:
+        """Return the standard deviation of consecutive deltas in history.
+
+        A high value indicates erratic score behaviour.
+
+        Returns:
+            Float standard deviation of deltas; 0.0 when fewer than 3 entries.
+        """
+        if len(self._history) < 3:
+            return 0.0
+        deltas = [
+            self._history[i + 1].average_score - self._history[i].average_score
+            for i in range(len(self._history) - 1)
+        ]
+        n = len(deltas)
+        mean = sum(deltas) / n
+        variance = sum((d - mean) ** 2 for d in deltas) / n
+        return variance ** 0.5
+
+    def history_percentile_rank(self, value: float) -> float:
+        """Return the percentile rank of *value* within history scores.
+
+        Args:
+            value: Score to rank against history.
+
+        Returns:
+            Float in [0, 100]; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        n = len(self._history)
+        below = sum(1 for e in self._history if e.average_score < value)
+        return (below / n) * 100.0
+
+
 # Export public API
 __all__ = [
     'OntologyOptimizer',

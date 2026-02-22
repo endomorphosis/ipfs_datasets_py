@@ -1627,6 +1627,28 @@ class OntologyMediator:
             return ""
         return min(self._action_counts, key=lambda a: self._action_counts[a])
 
+    def action_diversity_score(self) -> float:
+        """Return a diversity score based on the entropy of action distribution.
+
+        Returns a value in [0, 1] where 1 = perfectly uniform distribution.
+
+        Returns:
+            Float diversity; 0.0 when no actions or only one unique action.
+        """
+        import math
+        total = sum(self._action_counts.values())
+        if total == 0 or len(self._action_counts) <= 1:
+            return 0.0
+        max_entropy = math.log(len(self._action_counts))
+        if max_entropy == 0:
+            return 0.0
+        entropy = -sum(
+            (cnt / total) * math.log(cnt / total)
+            for cnt in self._action_counts.values()
+            if cnt > 0
+        )
+        return entropy / max_entropy
+
 
 # Export public API
 __all__ = [

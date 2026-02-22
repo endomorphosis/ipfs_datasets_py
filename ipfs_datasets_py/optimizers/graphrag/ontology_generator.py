@@ -6022,6 +6022,35 @@ class OntologyGenerator:
             return 0.0
         return min(getattr(r, "confidence", 0.0) or 0.0 for r in rels)
 
+    def entity_avg_text_length(self, result: "EntityExtractionResult") -> float:
+        """Return the mean character length of entity text strings.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float mean text length; 0.0 when no entities.
+        """
+        entities = result.entities or []
+        if not entities:
+            return 0.0
+        return sum(len(getattr(e, "text", "") or "") for e in entities) / len(entities)
+
+    def relationship_confidence_range(self, result: "EntityExtractionResult") -> float:
+        """Return the range (max - min) of relationship confidence values.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float range; 0.0 when fewer than 2 relationships.
+        """
+        rels = result.relationships or []
+        if len(rels) < 2:
+            return 0.0
+        confs = [getattr(r, "confidence", 0.0) or 0.0 for r in rels]
+        return max(confs) - min(confs)
+
 
 __all__ = [
     'OntologyGenerator',
