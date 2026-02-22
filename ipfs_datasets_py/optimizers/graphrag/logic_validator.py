@@ -3565,6 +3565,31 @@ class LogicValidator:
         total_time = sum(r.time_ms for r in results)
         return total_time / len(results)
 
+    def most_connected_node(self, ontology: dict) -> str:
+        """Return the node with the highest total degree (in + out) in the ontology.
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Entity ID string of the most-connected node; empty string when the
+            ontology has no relationships.
+        """
+        relationships = ontology.get("relationships", []) or []
+        if not relationships:
+            return ""
+        degree: dict = {}
+        for rel in relationships:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src:
+                degree[src] = degree.get(src, 0) + 1
+            if tgt:
+                degree[tgt] = degree.get(tgt, 0) + 1
+        if not degree:
+            return ""
+        return max(degree.items(), key=lambda x: x[1])[0]
+
 
 # Export public API
 __all__ = [

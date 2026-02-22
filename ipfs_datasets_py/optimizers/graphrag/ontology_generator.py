@@ -7749,6 +7749,64 @@ class OntologyGenerator:
             yield chunk
             await asyncio.sleep(0)  # Yield control to event loop
 
+    def entity_confidence_geometric_mean(self, result: "EntityExtractionResult") -> float:
+        """Return the geometric mean of entity confidence scores.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Float geometric mean; ``0.0`` when no entities or any confidence is
+            zero.
+        """
+        entities = getattr(result, "entities", []) or []
+        if not entities:
+            return 0.0
+        confs = [getattr(e, "confidence", 0.0) for e in entities]
+        if any(c <= 0.0 for c in confs):
+            return 0.0
+        product = 1.0
+        for c in confs:
+            product *= c
+        return product ** (1.0 / len(confs))
+
+    def entity_confidence_harmonic_mean(self, result: "EntityExtractionResult") -> float:
+        """Return the harmonic mean of entity confidence scores.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Float harmonic mean; ``0.0`` when no entities or any confidence is
+            zero.
+        """
+        entities = getattr(result, "entities", []) or []
+        if not entities:
+            return 0.0
+        confs = [getattr(e, "confidence", 0.0) for e in entities]
+        if any(c <= 0.0 for c in confs):
+            return 0.0
+        return len(confs) / sum(1.0 / c for c in confs)
+
+    def relationship_confidence_iqr(self, result: "EntityExtractionResult") -> float:
+        """Return the IQR of relationship confidence scores.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Float IQR (Q3 − Q1) of relationship confidences; ``0.0`` when
+            fewer than 4 relationships are present.
+        """
+        relationships = getattr(result, "relationships", []) or []
+        if len(relationships) < 4:
+            return 0.0
+        confs = sorted(getattr(r, "confidence", 0.0) for r in relationships)
+        n = len(confs)
+        q1_idx = n // 4
+        q3_idx = (3 * n) // 4
+        return confs[q3_idx] - confs[q1_idx]
+
 
 __all__ = [
     'OntologyGenerator',

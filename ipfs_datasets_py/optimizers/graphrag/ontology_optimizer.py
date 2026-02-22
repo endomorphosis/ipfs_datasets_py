@@ -4771,6 +4771,45 @@ class OntologyOptimizer:
             return 0.0
         return self._history[-1].average_score / mean
 
+    def score_iqr(self) -> float:
+        """Return the interquartile range (IQR) of history ``average_score`` values.
+
+        IQR is the difference between the 75th and 25th percentile.
+
+        Returns:
+            Float IQR; ``0.0`` when fewer than 4 history entries.
+        """
+        if len(self._history) < 4:
+            return 0.0
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        q1_idx = n // 4
+        q3_idx = (3 * n) // 4
+        return scores[q3_idx] - scores[q1_idx]
+
+    def history_rolling_std(self, window: int = 3) -> list:
+        """Return a list of rolling standard deviations over ``window``-sized windows.
+
+        Args:
+            window: Window size (must be >= 2).
+
+        Returns:
+            List of float std-dev values; one per valid window.  Empty list
+            when history has fewer than ``window`` entries.
+        """
+        if window < 2:
+            window = 2
+        scores = [e.average_score for e in self._history]
+        if len(scores) < window:
+            return []
+        result = []
+        for i in range(len(scores) - window + 1):
+            chunk = scores[i:i + window]
+            mean = sum(chunk) / window
+            variance = sum((v - mean) ** 2 for v in chunk) / window
+            result.append(variance ** 0.5)
+        return result
+
 
 # Export public API
 __all__ = [

@@ -2220,3 +2220,17 @@ class OntologyLearningAdapter:
         """
         return self.feedback_coefficient_of_variation()
 
+    def feedback_iqr(self) -> float:
+        """Return the interquartile range (IQR) of feedback ``final_score`` values.
+
+        Returns:
+            Float IQR (Q3 − Q1); ``0.0`` when fewer than 4 feedback records.
+        """
+        if len(self._feedback) < 4:
+            return 0.0
+        scores = sorted(r.final_score for r in self._feedback)
+        n = len(scores)
+        q1_idx = n // 4
+        q3_idx = (3 * n) // 4
+        return scores[q3_idx] - scores[q1_idx]
+

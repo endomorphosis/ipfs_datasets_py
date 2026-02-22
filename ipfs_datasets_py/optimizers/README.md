@@ -305,6 +305,101 @@ See `examples/agentic/` for practical examples:
 - `validation_example.py` - Validation at all levels
 - `README.md` - Comprehensive examples guide
 
+## GraphRAG Ontology Pipeline — Quick Start
+
+The GraphRAG sub-package (`optimizers/graphrag/`) implements a **generate → critique → refine**
+loop for knowledge-graph ontologies.  Below is the minimum code needed to produce a scored
+ontology from raw text.
+
+```python
+from ipfs_datasets_py.optimizers.graphrag import (
+    OntologyGenerator,
+    OntologyCritic,
+    OntologyMediator,
+    OntologyPipeline,
+    OntologyGenerationContext,
+    DataType,
+    ExtractionStrategy,
+)
+
+# ── 1. Create shared objects ─────────────────────────────────────────────────
+generator = OntologyGenerator()
+critic     = OntologyCritic()
+mediator   = OntologyMediator(generator=generator, critic=critic)
+
+# ── 2. Describe the task ─────────────────────────────────────────────────────
+context = OntologyGenerationContext(
+    data_source="employment_contract.txt",
+    data_type=DataType.TEXT,
+    domain="legal",
+    extraction_strategy=ExtractionStrategy.RULE_BASED,
+)
+
+# ── 3. One-shot generation + scoring ─────────────────────────────────────────
+text = "Alice is an employee of Acme Corp. She must complete annual training."
+result = generator.generate_ontology(text, context)          # EntityExtractionResult
+score  = critic.evaluate_ontology(result, context, text)     # CriticScore
+print(f"entities={len(result.entities)}  score={score.overall:.2f}")
+
+# ── 4. Iterative refinement via mediator (up to 5 rounds) ───────────────────
+mediator.max_rounds = 5
+refined_ontology = mediator.run_refinement_cycle(text, context)
+final_score       = mediator.get_last_score()
+print(f"Final overall={final_score.overall:.2f}  rounds={mediator.current_round}")
+
+# ── 5. Pipeline for multi-run tracking ───────────────────────────────────────
+pipeline = OntologyPipeline(generator=generator, critic=critic)
+pipeline.run(text, context)
+print(f"Best run: {pipeline.first_score():.2f} → {pipeline.run_score_mean():.2f} avg")
+```
+
+### Class Diagram (core GraphRAG classes)
+
+```
+OntologyGenerationContext
+  │ data_source, data_type, domain, extraction_strategy
+  │
+  ▼
+OntologyGenerator ──► EntityExtractionResult
+  │  generate_ontology()        entities: [Entity]
+  │  extract_entities()         relationships: [Relationship]
+  │  filter_by_confidence()
+  │
+  ▼
+OntologyCritic ──────► CriticScore
+  │  evaluate_ontology()         completeness, consistency,
+  │  evaluate_batch_parallel()   clarity, granularity,
+  │  suggest_improvements()      relationship_coherence,
+  │                               domain_alignment, overall
+  ▼
+OntologyMediator
+  │  refine_ontology()  (single round)
+  │  run_refinement_cycle()  (iterative)
+  │  retry_last_round()
+  │
+  ▼
+OntologyOptimizer ───► OptimizationReport
+  │  optimize()                   average_score, history
+  │  score_iqr(), score_ewma()
+  │  history_rolling_std()
+  │
+  ▼
+OntologyPipeline
+     run()  (orchestrates all stages)
+     best_score_improvement()
+     rounds_without_improvement()
+```
+
+### Key Extraction Config fields
+
+| Field | Default | Description |
+|-------|---------|-------------|
+| `confidence_threshold` | `0.5` | Minimum entity confidence to keep |
+| `max_entities` | `100` | Maximum entities per extraction |
+| `max_relationships` | `200` | Maximum relationships per extraction |
+| `window_size` | `512` | Character window for sliding extraction |
+| `llm_fallback_threshold` | `0.3` | Confidence below which LLM fallback activates |
+
 ## Architecture Documentation
 
 - **ARCHITECTURE_UNIFIED.md** - Unified optimizer architecture

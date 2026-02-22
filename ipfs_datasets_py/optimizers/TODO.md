@@ -1478,8 +1478,8 @@ This section captures the full architectural vision beyond batch-method addition
 - [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_min()` — minimum feedback score
 - [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_max()` — maximum feedback score
 - [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_cumulative_sum()` — running sum of scores
-- [ ] (P1) [tests] **Fix `test_end_to_end_pipeline.py`** — Handle `ExtractionConfig` being passed as `ipfs_accelerate_config`; add `.get()` compat shim
-- [ ] (P1) [docs] **`README.md` for `optimizers/`** — Quick-start, class diagram, example pipeline code
+- [x] (P1) [tests] **Fix `test_end_to_end_pipeline.py`** — tests passing as of 2026-02-22 (22/22)
+- [x] (P1) [docs] **`README.md` for `optimizers/`** — Quick-start, class diagram, example pipeline code added 2026-02-22
 
 ## Batches 176–185 Completed
 
@@ -1494,18 +1494,18 @@ This section captures the full architectural vision beyond batch-method addition
 - [x] Batch 184: history_cross_mean_count, score_recent_max, score_recent_min, bottom_dimension, score_above_threshold_count, entity_property_count, entity_types_set, run_score_geometric_mean, best_run_index, feedback_min_max_ratio, feedback_count
 - [x] Batch 185: history_std_ratio, score_turning_points, dimension_balance_score, score_percentile_rank, entity_confidence_iqr, avg_entity_confidence, run_score_harmonic_mean, worst_run_index, feedback_longest_positive_streak, feedback_score_range
 
-## Batch 186+ Backlog
+## Batch 186+ Backlog (all completed in Batches 186–197)
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.history_momentum_score()` — weighted sum of recent improvements
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_signed_sum()` — sum of signed deltas
-- [ ] (P2) [graphrag] `OntologyCritic.score_classification(score)` — "excellent"/"good"/"fair"/"poor" bucket
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_rank_order(score)` — list of dims sorted by value desc
-- [ ] (P2) [graphrag] `OntologyGenerator.relationship_bidirectionality_rate(result)` — fraction of bidirectional pairs
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_text_length_mean(result)` — mean len of entity text strings
-- [ ] (P2) [graphrag] `LogicValidator.avg_path_length(ontology)` — average shortest-path length (BFS)
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_delta_sum()` — sum of consecutive score deltas
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_weighted_mean(weights)` — positionally weighted mean
-- [ ] (P2) [graphrag] `OntologyMediator.unique_action_count()` — number of distinct actions used
+- [x] (P2) [graphrag] `OntologyOptimizer.history_momentum_score()` — weighted sum of recent improvements
+- [x] (P2) [graphrag] `OntologyOptimizer.score_signed_sum()` — sum of signed deltas
+- [x] (P2) [graphrag] `OntologyCritic.score_classification(score)` — "excellent"/"good"/"fair"/"poor" bucket
+- [x] (P2) [graphrag] `OntologyCritic.dimension_rank_order(score)` — list of dims sorted by value desc
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_bidirectionality_rate(result)` — fraction of bidirectional pairs
+- [x] (P2) [graphrag] `OntologyGenerator.entity_text_length_mean(result)` — mean len of entity text strings
+- [x] (P2) [graphrag] `LogicValidator.avg_path_length(ontology)` — average shortest-path length (BFS) — done in Batch 202 as alias
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_delta_sum()` — sum of consecutive score deltas
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_weighted_mean(weights)` — positionally weighted mean
+- [x] (P2) [graphrag] `OntologyMediator.unique_action_count()` — number of distinct actions used
 
 ## Batches 186–197 Completed
 
@@ -1612,3 +1612,44 @@ Testing (50 new tests in test_batch_202_features.py):
 Also marked 22 stale [ ] TODO entries as [x] (methods verified to already exist in source files).
 
 Testing: 51 new tests in test_batch_203_features.py; all passing.
+
+---
+
+## Batch 204 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_iqr()` — interquartile range of history average_score values
+- [x] (P2) [graphrag] `OntologyOptimizer.history_rolling_std(window)` — rolling std-dev of scores over a sliding window
+- [x] (P2) [graphrag] `OntologyCritic.dimension_iqr(score)` — IQR of the 6 evaluation dimension values in a CriticScore
+- [x] (P2) [graphrag] `OntologyCritic.dimension_coefficient_of_variation(score)` — CV (std/mean) of dimension values
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_geometric_mean(result)` — geometric mean of entity confidences
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_harmonic_mean(result)` — harmonic mean of entity confidences
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_confidence_iqr(result)` — IQR of relationship confidence scores
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_iqr()` — IQR of feedback final_score values
+- [x] (P2) [graphrag] `OntologyPipeline.best_score_improvement()` — maximum single-step score improvement across runs
+- [x] (P2) [graphrag] `OntologyPipeline.rounds_without_improvement()` — trailing run count with no score improvement
+- [x] (P2) [graphrag] `LogicValidator.most_connected_node(ontology)` — node with the highest total degree
+
+Implementation notes:
+- score_iqr / feedback_iqr / relationship_confidence_iqr / dimension_iqr: IQR using integer index
+  (q1=scores[n//4], q3=scores[(3*n)//4]); returns 0.0 when fewer than 4 entries.
+- history_rolling_std: window clamped to min 2; returns empty list when history < window.
+- entity_confidence_geometric_mean / harmonic_mean: return 0.0 if any confidence ≤ 0 or no entities.
+- best_score_improvement: max positive delta between consecutive runs; 0.0 if none improves.
+- rounds_without_improvement: counts trailing runs from end where score ≤ previous run.
+- most_connected_node: sum of in-degree + out-degree per node; empty string if no relationships.
+
+Testing: 68 new tests in test_batch_204_features.py; all passing.
+
+## Batch 205+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_skewness()` — skewness of history score distribution
+- [ ] (P2) [graphrag] `OntologyOptimizer.history_rolling_mean(window)` — rolling mean over a sliding window
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_skewness(score)` — skewness of dimension value distribution
+- [ ] (P2) [graphrag] `OntologyCritic.weakest_dimension(score)` — dimension with lowest value (alias for dimension_min if it exists)
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_kurtosis(result)` — excess kurtosis of entity confidences
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_text_length_std(result)` — std-dev of entity text lengths
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_rolling_mean(window)` — rolling mean of feedback scores
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_skewness()` — skewness of run score distribution
+- [ ] (P2) [graphrag] `OntologyPipeline.worst_score_decline()` — maximum single-step score decline across runs
+- [ ] (P2) [graphrag] `LogicValidator.avg_in_degree(ontology)` — average in-degree across nodes
+- [ ] (P2) [graphrag] `LogicValidator.avg_out_degree(ontology)` — average out-degree across nodes

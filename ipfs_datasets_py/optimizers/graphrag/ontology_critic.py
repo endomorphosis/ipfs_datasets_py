@@ -4267,6 +4267,42 @@ class OntologyCritic(BaseCritic):
         weak_count = len(getattr(score, "weaknesses", [])) + 1  # +1 to avoid division by zero
         return rec_count / weak_count
 
+    def dimension_iqr(self, score: "CriticScore") -> float:
+        """Return the interquartile range (IQR) of dimension values in a score.
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Float IQR (Q3 - Q1) across the 6 evaluation dimensions;
+            ``0.0`` when fewer than 4 dimension values are available.
+        """
+        vals = sorted(getattr(score, d, 0.0) for d in self._DIMENSIONS)
+        if len(vals) < 4:
+            return 0.0
+        n = len(vals)
+        q1_idx = n // 4
+        q3_idx = (3 * n) // 4
+        return vals[q3_idx] - vals[q1_idx]
+
+    def dimension_coefficient_of_variation(self, score: "CriticScore") -> float:
+        """Return the coefficient of variation (std / mean) of dimension values.
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Float CV; ``0.0`` when mean is zero or no dimensions exist.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        if not vals:
+            return 0.0
+        mean_val = sum(vals) / len(vals)
+        if mean_val == 0.0:
+            return 0.0
+        variance = sum((v - mean_val) ** 2 for v in vals) / len(vals)
+        return variance ** 0.5 / mean_val
+
 
 # Export public API
 __all__ = [

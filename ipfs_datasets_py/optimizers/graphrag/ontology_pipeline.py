@@ -2240,3 +2240,41 @@ class OntologyPipeline:
         if len(recent) < 2:
             return False
         return recent[-1].score.overall > recent[0].score.overall
+
+    def best_score_improvement(self) -> float:
+        """Return the maximum single-step score improvement across all runs.
+
+        Computes the largest positive delta between consecutive run scores.
+
+        Returns:
+            Float maximum improvement; ``0.0`` when fewer than 2 runs or no
+            run improved on the previous.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        max_improvement = 0.0
+        for i in range(1, len(scores)):
+            delta = scores[i] - scores[i - 1]
+            if delta > max_improvement:
+                max_improvement = delta
+        return max_improvement
+
+    def rounds_without_improvement(self) -> int:
+        """Return the number of consecutive runs at the end with no score improvement.
+
+        Counts trailing runs where the score did not exceed the previous run.
+
+        Returns:
+            Non-negative integer count.
+        """
+        if len(self._run_history) < 2:
+            return 0
+        scores = [r.score.overall for r in self._run_history]
+        count = 0
+        for i in range(len(scores) - 1, 0, -1):
+            if scores[i] <= scores[i - 1]:
+                count += 1
+            else:
+                break
+        return count
