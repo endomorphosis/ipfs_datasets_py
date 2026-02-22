@@ -301,6 +301,40 @@ class InterfaceRepository:
         return len(self._store)
 
 
+# ─── budget-aware toolset slice (spec §7) ────────────────────────────────────
+
+
+def toolset_slice(
+    cids: List[str],
+    budget: Optional[int] = None,
+    sort_fn: Optional[Any] = None,
+) -> List[str]:
+    """Return a budget-bounded slice of interface CIDs.
+
+    Args:
+        cids:    Ordered list of interface CID strings (most-preferred first).
+        budget:  Maximum number of CIDs to return.  ``None`` means no limit.
+        sort_fn: Optional callable ``(cid: str) -> comparable`` used to
+                 re-rank *cids* before slicing.  The list is sorted in
+                 *ascending* order of the key (lowest key = most preferred).
+
+    Returns:
+        A new list of at most *budget* CIDs, optionally reranked.
+
+    Example::
+
+        repo = get_interface_repository()
+        scored = repo.select("embedding search", budget=None)
+        top3 = toolset_slice(scored, budget=3)
+    """
+    result = list(cids)
+    if sort_fn is not None:
+        result.sort(key=sort_fn)
+    if budget is not None:
+        result = result[:budget]
+    return result
+
+
 # ─── module-level singleton ───────────────────────────────────────────────────
 
 _global_repo: Optional[InterfaceRepository] = None
