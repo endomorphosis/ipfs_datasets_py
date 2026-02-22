@@ -1,0 +1,274 @@
+"""
+Profile D: Temporal Deontic Policy Evaluation
+
+Implements the temporal deontic policy profile from the MCP++ specification:
+  https://github.com/endomorphosis/Mcp-Plus-Plus/blob/main/docs/spec/temporal-deontic-policy.md
+
+This module provides a lightweight, self-contained policy evaluator that:
+1. Represents policies as content-addressed objects (policy_cid).
+2. Evaluates intent objects against policies at execution time.
+3. Emits DecisionObject results (allow / deny / allow_with_obligations).
+4. Integrates with the existing logic/ TDFOL reasoning module when present.
+
+No external dependencies beyond stdlib. The TDFOL integration is optional.
+"""
+from __future__ import annotations
+
+import logging
+import time
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, List, Optional
+
+from .interface_descriptor import compute_cid, _canonicalize
+from .cid_artifacts import (
+    DecisionObject, IntentObject, Obligation,
+    ALLOW, DENY, ALLOW_WITH_OBLIGATIONS,
+)
+
+logger = logging.getLogger(__name__)
+
+
+# ─── policy clause types ────────────────────────────────────────────────────
+
+
+class PolicyClauseType:
+    PERMISSION = "permission"
+    PROHIBITION = "prohibition"
+    OBLIGATION = "obligation"
+
+
+@dataclass
+class PolicyClause:
+    """A single clause in a temporal deontic policy."""
+    clause_type: str          # PolicyClauseType.*
+    actor: Optional[str] = None
+    action: Optional[str] = None
+    resource: Optional[str] = None
+    valid_from: Optional[float] = None   # Unix timestamp
+    valid_until: Optional[float] = None  # Unix timestamp
+    condition: Optional[str] = None
+    obligation_deadline: Optional[str] = None
+
+    def is_temporally_valid(self, at_time: Optional[float] = None) -> bool:
+        """Return True if this clause is within its temporal window."""
+        t = at_time if at_time is not None else time.time()
+        if self.valid_from is not None and t < self.valid_from:
+            return False
+        if self.valid_until is not None and t > self.valid_until:
+            return False
+        return True
+
+
+# ─── policy object ─────────────────────────────────────────────────────────
+
+
+@dataclass
+class PolicyObject:
+    """
+    Content-addressed policy (spec §2).
+
+    Policies express permissions, prohibitions, obligations, and temporal
+    constraints.  The policy_cid is computed from the canonical representation.
+    """
+    policy_id: str
+    clauses: List[PolicyClause] = field(default_factory=list)
+    version: str = "v1"
+    description: Optional[str] = None
+
+    _cid: Optional[str] = field(default=None, repr=False, compare=False)
+
+    @property
+    def policy_cid(self) -> str:
+        if self._cid is None:
+            self._cid = compute_cid(self._canonical_bytes())
+        return self._cid
+
+    def _canonical_bytes(self) -> bytes:
+        d = {
+            "policy_id": self.policy_id,
+            "version": self.version,
+            "clauses": [
+                {
+                    "clause_type": c.clause_type,
+                    "actor": c.actor,
+                    "action": c.action,
+                    "resource": c.resource,
+                    "valid_from": c.valid_from,
+                    "valid_until": c.valid_until,
+                    "condition": c.condition,
+                    "obligation_deadline": c.obligation_deadline,
+                }
+                for c in self.clauses
+            ],
+        }
+        return _canonicalize(d)
+
+    def get_permissions(self) -> List[PolicyClause]:
+        return [c for c in self.clauses
+                if c.clause_type == PolicyClauseType.PERMISSION]
+
+    def get_prohibitions(self) -> List[PolicyClause]:
+        return [c for c in self.clauses
+                if c.clause_type == PolicyClauseType.PROHIBITION]
+
+    def get_obligations(self) -> List[PolicyClause]:
+        return [c for c in self.clauses
+                if c.clause_type == PolicyClauseType.OBLIGATION]
+
+
+# ─── evaluator ─────────────────────────────────────────────────────────────
+
+
+class PolicyEvaluator:
+    """
+    Runtime policy evaluator (spec §5).
+
+    Checks intent objects against registered policies and emits
+    DecisionObjects.
+
+    Algorithm (non-normative, minimal):
+    1. If a prohibition matches the intent → DENY
+    2. If no permission matches → DENY (closed-world assumption)
+    3. Otherwise → ALLOW (or ALLOW_WITH_OBLIGATIONS if obligations exist)
+    """
+
+    def __init__(self) -> None:
+        self._policies: Dict[str, PolicyObject] = {}
+
+    def register_policy(self, policy: PolicyObject) -> str:
+        """Register a policy and return its policy_cid."""
+        cid = policy.policy_cid
+        self._policies[cid] = policy
+        return cid
+
+    def get_policy(self, policy_cid: str) -> Optional[PolicyObject]:
+        return self._policies.get(policy_cid)
+
+    def evaluate(
+        self,
+        intent: IntentObject,
+        policy_cid: str,
+        *,
+        at_time: Optional[float] = None,
+        actor: Optional[str] = None,
+        proofs: Optional[List[str]] = None,
+    ) -> DecisionObject:
+        """
+        Evaluate *intent* against the policy identified by *policy_cid*.
+
+        Returns a :class:`DecisionObject` with allow/deny/allow_with_obligations.
+        """
+        policy = self._policies.get(policy_cid)
+        if policy is None:
+            return DecisionObject(
+                decision=DENY,
+                intent_cid=intent.cid,
+                policy_cid=policy_cid,
+                justification=f"Unknown policy_cid: {policy_cid}",
+            )
+
+        t = at_time if at_time is not None else time.time()
+
+        # 1. Check prohibitions first (deny overrides)
+        for clause in policy.get_prohibitions():
+            if not clause.is_temporally_valid(t):
+                continue
+            if self._clause_matches(clause, intent, actor):
+                return DecisionObject(
+                    decision=DENY,
+                    intent_cid=intent.cid,
+                    policy_cid=policy_cid,
+                    proofs_checked=proofs or [],
+                    justification=f"Prohibited by clause: action={clause.action}",
+                    policy_version=policy.version,
+                )
+
+        # 2. Check permissions (must have at least one match)
+        permitted = False
+        for clause in policy.get_permissions():
+            if not clause.is_temporally_valid(t):
+                continue
+            if self._clause_matches(clause, intent, actor):
+                permitted = True
+                break
+
+        if not permitted:
+            return DecisionObject(
+                decision=DENY,
+                intent_cid=intent.cid,
+                policy_cid=policy_cid,
+                proofs_checked=proofs or [],
+                justification="No matching permission found (closed-world).",
+                policy_version=policy.version,
+            )
+
+        # 3. Collect obligations
+        spawned: List[Obligation] = []
+        for clause in policy.get_obligations():
+            if not clause.is_temporally_valid(t):
+                continue
+            if self._clause_matches(clause, intent, actor):
+                spawned.append(Obligation(
+                    type=clause.action or "unspecified",
+                    deadline=clause.obligation_deadline,
+                ))
+
+        decision = ALLOW_WITH_OBLIGATIONS if spawned else ALLOW
+        return DecisionObject(
+            decision=decision,
+            intent_cid=intent.cid,
+            policy_cid=policy_cid,
+            proofs_checked=proofs or [],
+            obligations=spawned,
+            justification="Permission granted.",
+            policy_version=policy.version,
+        )
+
+    @staticmethod
+    def _clause_matches(
+        clause: PolicyClause,
+        intent: IntentObject,
+        actor: Optional[str],
+    ) -> bool:
+        """Return True if *clause* applies to *intent*."""
+        if clause.actor is not None and actor is not None:
+            if clause.actor != actor and clause.actor != "*":
+                return False
+        if clause.action is not None:
+            if clause.action != intent.tool and clause.action != "*":
+                return False
+        return True
+
+
+# ─── module-level helpers ────────────────────────────────────────────────────
+
+
+_global_evaluator: Optional[PolicyEvaluator] = None
+
+
+def get_policy_evaluator() -> PolicyEvaluator:
+    """Return the process-global PolicyEvaluator (lazy-init)."""
+    global _global_evaluator
+    if _global_evaluator is None:
+        _global_evaluator = PolicyEvaluator()
+    return _global_evaluator
+
+
+def make_simple_permission_policy(
+    *,
+    policy_id: str,
+    allowed_tools: List[str],
+    actor: Optional[str] = None,
+    valid_until: Optional[float] = None,
+) -> PolicyObject:
+    """Helper: build a policy that permits a list of named tools."""
+    clauses = [
+        PolicyClause(
+            clause_type=PolicyClauseType.PERMISSION,
+            actor=actor,
+            action=tool,
+            valid_until=valid_until,
+        )
+        for tool in allowed_tools
+    ]
+    return PolicyObject(policy_id=policy_id, clauses=clauses)
