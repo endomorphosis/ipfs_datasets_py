@@ -3126,6 +3126,28 @@ class OntologyCritic(BaseCritic):
             return 0.0
         return sum(1 for s in scores if s.overall > threshold) / len(scores)
 
+    def failing_scores(self, scores: list, threshold: float = 0.6) -> list:
+        """Return only scores that do NOT pass *threshold*.
+
+        Scores are considered "failing" if their ``overall`` value is
+        **not greater than** *threshold* (i.e., ``overall <= threshold``).
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+            threshold: Passing threshold (default 0.6).  Scores with
+                ``overall <= threshold`` are included in the result.
+
+        Returns:
+            List of :class:`CriticScore` objects where ``overall <= threshold``,
+            in the original order.  Empty list if no scores fail or if
+            *scores* is empty.
+
+        Example:
+            >>> failing = critic.failing_scores(all_scores, threshold=0.7)
+            >>> print(f"Found {len(failing)} scores below 0.7")
+        """
+        return [s for s in scores if s.overall <= threshold]
+
     def score_spread(self, scores: list) -> float:
         """Return the range (max - min) of ``overall`` values.
 

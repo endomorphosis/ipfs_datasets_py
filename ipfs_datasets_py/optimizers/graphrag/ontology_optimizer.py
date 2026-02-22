@@ -4511,6 +4511,184 @@ class OntologyOptimizer:
         log_sum = sum(__import__("math").log(s) for s in positives)
         return __import__("math").exp(log_sum / len(positives))
 
+    def score_at_index(self, index: int) -> float:
+        """Get the score at a specific index in history.
+
+        Args:
+            index: Position in history list (0-indexed). Supports negative indexing.
+
+        Returns:
+            Average score at the given index, or 0.0 if index out of bounds.
+        """
+        if not self._history:
+            return 0.0
+        try:
+            return self._history[index].average_score
+        except IndexError:
+            return 0.0
+
+    def history_length(self) -> int:
+        """Return the number of entries in the history.
+
+        Returns:
+            Number of history entries (>= 0).
+        """
+        return len(self._history)
+
+    def score_recent_variance(self, n: int = 5) -> float:
+        """Calculate variance of the last N scores.
+
+        Args:
+            n: Number of recent entries to consider.
+
+        Returns:
+            Variance of last N scores, or 0.0 if fewer than N entries.
+        """
+        if n < 1:
+            return 0.0
+        recent = [e.average_score for e in self._history[-n:]]
+        if len(recent) < 2:
+            return 0.0
+        mean = sum(recent) / len(recent)
+        variance = sum((x - mean) ** 2 for x in recent) / len(recent)
+        return variance
+
+    def score_recent_mean(self, n: int = 5) -> float:
+        """Calculate mean of the last N scores.
+
+        Args:
+            n: Number of recent entries to consider.
+
+        Returns:
+            Mean of last N scores (or all if fewer than N), or 0.0 if empty.
+        """
+        if n < 1 or not self._history:
+            return 0.0
+        recent = [e.average_score for e in self._history[-n:]]
+        return sum(recent) / len(recent) if recent else 0.0
+
+    def has_regressed(self, threshold: float = 0.01) -> bool:
+        """Check if current score has regressed vs best score.
+
+        Args:
+            threshold: Minimum absolute drop to count as regression.
+
+        Returns:
+            True if last score < best score - threshold, else False.
+        """
+        if len(self._history) < 2:
+            return False
+        best = max(e.average_score for e in self._history)
+        last = self._history[-1].average_score
+        return (best - last) >= threshold
+
+    def improvement_ratio(self) -> float:
+        """Calculate percentage improvement from first to best score.
+
+        Returns improvement as fraction (0.0 to inf). First score of 0 returns 0.0.
+
+        Returns:
+            Improvement ratio (best - first) / first, or 0.0 if undefined.
+        """
+        if not self._history or len(self._history) < 2:
+            return 0.0
+        first = self._history[0].average_score
+        if first <= 0:
+            return 0.0
+        best = max(e.average_score for e in self._history)
+        return (best - first) / first
+
+    def score_recovery_time(self, threshold: float = 0.7) -> int:
+        """Count rounds needed to recover above threshold after dropping below.
+
+        Finds first below-threshold score, then counts rounds to get back above.
+
+        Returns:
+            Number of rounds to recover, or -1 if never dropped or never recovered.
+        """
+        if not self._history:
+            return -1
+        
+        # Find first drop below threshold
+        drop_idx = -1
+        for i, entry in enumerate(self._history):
+            if entry.average_score < threshold:
+                drop_idx = i
+                break
+        
+        if drop_idx == -1:
+            return -1  # Never dropped below threshold
+        
+        # Find recovery after drop
+        for i in range(drop_idx + 1, len(self._history)):
+            if self._history[i].average_score >= threshold:
+                return i - drop_idx
+        
+        return -1  # Never recovered
+
+    def score_below_baseline(self, baseline: float = 0.5) -> int:
+        """Count entries with score below a baseline value.
+
+        Args:
+            baseline: Threshold score value.
+
+        Returns:
+            Count of history entries below baseline.
+        """
+        return sum(1 for e in self._history if e.average_score < baseline)
+
+    def moving_median(self, window: int = 5) -> float:
+        """Calculate median of the last N scores.
+
+        Args:
+            window: Window size for median calculation.
+
+        Returns:
+            Median of last N scores, or 0.0 if empty/insufficient data.
+        """
+        if window < 1 or not self._history:
+            return 0.0
+        recent = sorted([e.average_score for e in self._history[-window:]])
+        if not recent:
+            return 0.0
+        n = len(recent)
+        if n % 2 == 1:
+            return recent[n // 2]
+        return (recent[n // 2 - 1] + recent[n // 2]) / 2.0
+
+    def trend_reversal_count(self) -> int:
+        """Count the number of trend reversals in the score history.
+
+        A reversal occurs when improving→declining or declining→improving.
+
+        Returns:
+            Number of trend reversals (>= 0).
+        """
+        if len(self._history) < 3:
+            return 0
+        
+        reversals = 0
+        improving = None
+        
+        for i in range(1, len(self._history)):
+            current = self._history[i].average_score
+            previous = self._history[i-1].average_score
+            delta = current - previous
+            
+            if delta > 1e-6:  # Improving
+                current_trend = True
+            elif delta < -1e-6:  # Declining
+                current_trend = False
+            else:  # Flat
+                continue
+            
+            if improving is not None and improving != current_trend:
+                reversals += 1
+            
+            improving = current_trend
+        
+        return reversals
+
 
 # Export public API
 __all__ = [

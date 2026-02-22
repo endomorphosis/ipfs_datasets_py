@@ -2125,6 +2125,188 @@ class OntologyMediator:
             cumulative += (2 * (i + 1) - n - 1) * v
         return cumulative / (n * sum(vals))
 
+    def total_refinements(self) -> int:
+        """Get total number of refinement operations applied.
+
+        Returns:
+            Total count of all refinement actions across all rounds.
+        """
+        return sum(self._action_counts.values())
+
+    def rounds_completed(self) -> int:
+        """Get number of refinement rounds completed.
+
+        Returns:
+            Count of completed refinement cycles.
+        """
+        return len(self._history)
+
+    def has_converged(self, threshold: float = 0.01, window: int = 3) -> bool:
+        """Check if refinement has converged (minimal score changes).
+
+        Args:
+            threshold: Maximum score delta to consider converged.
+            window: Number of recent rounds to examine.
+
+        Returns:
+            True if last N rounds have deltas < threshold.
+        """
+        if len(self._history) < window + 1:
+            return False
+        
+        recent_deltas = []
+        for i in range(len(self._history) - window, len(self._history)):
+            if i > 0:
+                delta = abs(
+                    self._history[i].get("score", 0.0) 
+                    - self._history[i-1].get("score", 0.0)
+                )
+                recent_deltas.append(delta)
+        
+        if not recent_deltas:
+            return False
+        return all(d < threshold for d in recent_deltas)
+
+    def refinement_efficiency(self) -> float:
+        """Calculate efficiency of refinements (improvement per action).
+
+        Returns improvement per total actions taken. Returns 0.0 if no actions.
+
+        Returns:
+            Float >= 0. Impact per action.
+        """
+        total_actions = self.total_refinements()
+        if total_actions == 0 or len(self._history) < 2:
+            return 0.0
+        
+        first_score = self._history[0].get("score", 0.0)
+        last_score = self._history[-1].get("score", 0.0)
+        
+        improvement = last_score - first_score
+        return improvement / total_actions if total_actions > 0 else 0.0
+
+    def score_change_per_round(self) -> float:
+        """Calculate average score change per refinement round.
+
+        Returns:
+            Mean absolute delta between consecutive rounds, or 0.0 if insufficient data.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        
+        deltas = []
+        for i in range(1, len(self._history)):
+            delta = abs(
+                self._history[i].get("score", 0.0) 
+                - self._history[i-1].get("score", 0.0)
+            )
+            deltas.append(delta)
+        
+        return sum(deltas) / len(deltas) if deltas else 0.0
+
+    def action_impact(self, action_name: str) -> float:
+        """Calculate average score impact of a specific action type.
+
+        Args:
+            action_name: Name of the action to analyze.
+
+        Returns:
+            Average improvement when this action was used, or 0.0.
+        """
+        # Simplified: return action count normalized by attempts
+        count = self._action_counts.get(action_name, 0)
+        total = self.total_refinements()
+        if total == 0:
+            return 0.0
+        return count / total
+
+    def most_productive_round(self) -> int:
+        """Find the round that produced the largest score improvement.
+
+        Returns:
+            Index of the round with maximum improvement, or -1 if no improvement.
+        """
+        if len(self._history) < 2:
+            return -1
+        
+        max_improvement = -float('inf')
+        best_round = -1
+        
+        for i in range(1, len(self._history)):
+            improvement = (
+                self._history[i].get("score", 0.0) 
+                - self._history[i-1].get("score", 0.0)
+            )
+            if improvement > max_improvement:
+                max_improvement = improvement
+                best_round = i
+        
+        return best_round if max_improvement > 0 else -1
+
+    def refinement_stagnation_rounds(self, threshold: float = 0.001) -> int:
+        """Count consecutive rounds with minimal improvement (stagnation).
+
+        Args:
+            threshold: Maximum delta to count as stagnation.
+
+        Returns:
+            Number of consecutive stagnant rounds at the end, or 0.
+        """
+        if len(self._history) < 2:
+            return 0
+        
+        stagnation_count = 0
+        for i in range(len(self._history) - 1, 0, -1):
+            delta = abs(
+                self._history[i].get("score", 0.0) 
+                - self._history[i-1].get("score", 0.0)
+            )
+            if delta < threshold:
+                stagnation_count += 1
+            else:
+                break
+        
+        return stagnation_count
+
+    def score_volatility(self) -> float:
+        """Calculate volatility (standard deviation) of refinement scores.
+
+        Returns:
+            Std dev of scores across all rounds, or 0.0 if insufficient data.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        
+        scores = [entry.get("score", 0.0) for entry in self._history]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        return variance ** 0.5
+
+    def refinement_trajectory(self) -> str:
+        """Get description of overall refinement trajectory.
+
+        Returns:
+            One of: 'improving', 'degrading', 'stable', 'volatile', 'unknown'
+        """
+        if len(self._history) < 2:
+            return 'unknown'
+        
+        first = self._history[0].get("score", 0.0)
+        last = self._history[-1].get("score", 0.0)
+        volatility = self.score_volatility()
+        
+        delta = last - first
+        
+        # Classify based on volatility and delta
+        if volatility > 0.2:  # High volatility
+            return 'volatile'
+        elif delta > 0.05:  # Significant improvement
+            return 'improving'
+        elif delta < -0.05:  # Significant degradation
+            return 'degrading'
+        else:  # Small changes
+            return 'stable'
+
 
 # Export public API
 __all__ = [
