@@ -39,6 +39,16 @@ def _get_from_keyring(service: str, name: str) -> Optional[str]:
     return value
 
 
+def _get_from_vault(name: str) -> Optional[str]:
+    """Return *name* from the DID-key secrets vault, or *None* on any error."""
+    try:
+        from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+        vault = get_secrets_vault()
+        return vault.get(name)
+    except Exception:
+        return None
+
+
 def _first_env(*names: str) -> Optional[str]:
     for name in names:
         value = os.environ.get(name)
@@ -156,6 +166,7 @@ def autoconfigure_engine_env(
     defaults: EngineEnvDefaults | None = None,
     keyring_service: str = "ipfs_datasets_py",
     allow_keyring: bool = True,
+    allow_vault: bool = True,
 ) -> Dict[str, str]:
     """Populate missing engine env vars from existing auth sources.
 
@@ -164,8 +175,9 @@ def autoconfigure_engine_env(
     Precedence for values:
     1) Existing target env var (never overwritten)
     2) Related "common" env var (e.g. OPENAI_API_KEY)
-    3) OS keyring value (if enabled)
-    4) Default model names (for model vars only)
+    3) DID-key secrets vault (if enabled and available)
+    4) OS keyring value (if enabled)
+    5) Default model names (for model vars only)
     """
 
     d = defaults or EngineEnvDefaults()
@@ -189,10 +201,16 @@ def autoconfigure_engine_env(
             return None
         return _get_from_keyring(keyring_service, name)
 
+    def vault_or_none(name: str) -> Optional[str]:
+        if not allow_vault:
+            return None
+        return _get_from_vault(name)
+
     # Keys
     discovered_openai_key = (
         _first_env("OPENAI_API_KEY", "OPENAI_KEY", "OPENAI_TOKEN")
         or _secret_from_file_env("OPENAI_API_KEY_FILE", "OPENAI_KEY_FILE")
+        or vault_or_none("OPENAI_API_KEY")
         or keyring_or_none("OPENAI_API_KEY")
         or _openai_key_from_common_files()
     )
@@ -201,10 +219,10 @@ def autoconfigure_engine_env(
     set_if_missing("OPENAI_API_KEY", discovered_openai_key)
     openai_key = _first_env("OPENAI_API_KEY", "OPENAI_KEY")
 
-    wolfram_key = _first_env("WOLFRAMALPHA_API_KEY")
-    perplexity_key = _first_env("PERPLEXITY_API_KEY")
-    pinecone_key = _first_env("PINECONE_API_KEY")
-    apilayer_key = _first_env("APILAYER_API_KEY")
+    wolfram_key = _first_env("WOLFRAMALPHA_API_KEY") or vault_or_none("WOLFRAMALPHA_API_KEY")
+    perplexity_key = _first_env("PERPLEXITY_API_KEY") or vault_or_none("PERPLEXITY_API_KEY")
+    pinecone_key = _first_env("PINECONE_API_KEY") or vault_or_none("PINECONE_API_KEY")
+    apilayer_key = _first_env("APILAYER_API_KEY") or vault_or_none("APILAYER_API_KEY")
 
     set_if_missing(
         "NEUROSYMBOLIC_ENGINE_API_KEY",
