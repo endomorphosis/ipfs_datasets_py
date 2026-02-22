@@ -75,9 +75,60 @@ Coverage gaps addressed in `test_validators_session40.py`:
 
 **Goal:** Add end-to-end scenario tests covering multi-tool pipeline interactions.
 
-- H43: Full `dispatch_parallel` workflow: submit 5 tools → collect results
-- H44: `CircuitBreaker` CLOSED → OPEN → HALF_OPEN lifecycle test
-- H45: GraphRAG + IPFS combined pipeline scenario
+### H43: dispatch_parallel workflow ✅ Complete
+
+**Coverage:** `hierarchical_tool_manager.py` lines 875-905 — `dispatch_parallel`
+
+Tests in `test_dispatch_parallel_session43.py` (11 tests):
+- Empty calls list fast-path
+- 5 concurrent sync tools → results in order
+- 5 concurrent async tools → results in order
+- Params forwarded correctly per slot
+- All fail → error dicts when `return_exceptions=True`
+- Mixed success/failure → correct slot assignment
+- Error dict contains category, tool, and error keys
+- Exception propagates when `return_exceptions=False` (patches `dispatch` directly)
+- Missing category captured as error dict
+- Call without `params` key defaults to `{}`
+
+### H44: CircuitBreaker CLOSED → OPEN → HALF_OPEN lifecycle ✅ Complete
+
+**Coverage:** `hierarchical_tool_manager.py` lines 79-191 — entire `CircuitBreaker` class
+
+Tests in `test_circuit_breaker_session44.py` (27 tests):
+- `__init__` defaults and custom params
+- `state` property: CLOSED, OPEN (unexpired), OPEN → HALF_OPEN auto-transition, HALF_OPEN
+- `is_open()`: False when CLOSED, True when OPEN, False when HALF_OPEN
+- `call()`: async success, sync success, OPEN rejection (no func invocation), async failure, sync failure, KeyboardInterrupt propagation, SystemExit propagation
+- CLOSED → OPEN: reaches threshold, stays CLOSED before threshold, failure count resets on success
+- Recovery: HALF_OPEN success → CLOSED, HALF_OPEN failure → OPEN, OPEN → HALF_OPEN time-based probe
+- `reset()`: returns to CLOSED with zeroed counters
+- `info()`: correct snapshot dict
+- Full lifecycle scenario: CLOSED → OPEN → HALF_OPEN → CLOSED
+- Full lifecycle (probe fails): CLOSED → OPEN → HALF_OPEN → OPEN
+
+### H45: GraphRAG + IPFS combined pipeline scenario ✅ Complete
+
+**Coverage:** `hierarchical_tool_manager.py` — additional lines 219, 260-265, 303, 317-319, 327, 360-383, 520-568, 571-603, 605-633, 635-666, 688-692, 927-952
+
+Tests in `test_graphrag_ipfs_pipeline_session45.py` (24 tests):
+- Five-stage pipeline (extract → build_graph → pin → query → search) all succeed
+- IPFS pin failure captured; other stages succeed
+- Two-stage pipeline: result from stage-1 fed into stage-2
+- `graceful_shutdown`: clears 3 categories, zero categories, status='ok'
+- `dispatch` rejected while `_shutting_down=True`
+- `ToolCategory.discover_tools`: ImportError, SyntaxError, generic Exception skipped
+- `discover_tools` with nonexistent path — early return, `_discovered` stays False
+- Schema cache hit path, miss path (builds + stores), second call hits cache
+- `clear_schema_cache` resets counters
+- `cache_info` returns hits/misses/size
+- `get_tool_schema` returns None for unknown tool
+- `lazy_register_category` — appears in list, loader triggered on first access, second access cached, missing returns None
+- `list_categories(include_count=True)` — includes `tool_count`
+- `list_tools` missing category → error dict
+- `get_tool_schema` missing category / tool → error dict; success path
+
+**Combined coverage uplift (H43–H45):** `hierarchical_tool_manager.py` **62% → 88%** (+26pp)
 
 ---
 
@@ -125,9 +176,9 @@ Coverage gaps addressed in `test_validators_session40.py`:
 | G40   | monitoring | ✅ Complete | +40 | 63% → 80%+ |
 | G40   | enterprise_api | ✅ Complete | +20 | 66% → 80%+ |
 | G41   | validators | ✅ Complete | +38 | 75% → 90%+ |
-| H43   | integration | ⬜ Pending | — | — |
-| H44   | circuit_breaker | ⬜ Pending | — | — |
-| H45   | graphrag_ipfs | ⬜ Pending | — | — |
+| H43   | dispatch_parallel | ✅ Complete | +11 | hierarchical_tool_manager 62% → 88% |
+| H44   | circuit_breaker | ✅ Complete | +27 | (included in H43–H45 total) |
+| H45   | graphrag_ipfs | ✅ Complete | +24 | (included in H43–H45 total) |
 | I46   | docs | ⬜ Pending | — | — |
 | I47   | cookbook | ⬜ Pending | — | — |
 | J48   | fuzzing | ⬜ Pending | — | — |
