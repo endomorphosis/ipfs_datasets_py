@@ -6172,6 +6172,18 @@ class OntologyGenerator:
             return 0.0
         return sum(getattr(r, "weight", 0.0) or 0.0 for r in rels) / len(rels)
 
+    def entity_confidence_sum(self, result: "EntityExtractionResult") -> float:
+        """Return the sum of confidence scores across all entities.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float sum; 0.0 when no entities.
+        """
+        entities = result.entities or []
+        return sum(getattr(e, "confidence", 0.0) or 0.0 for e in entities)
+
 
 __all__ = [
     'OntologyGenerator',

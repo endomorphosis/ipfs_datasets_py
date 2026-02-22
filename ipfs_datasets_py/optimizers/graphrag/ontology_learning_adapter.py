@@ -1850,3 +1850,22 @@ class OntologyLearningAdapter:
         vals = [r.final_score for r in self._feedback]
         mean = sum(vals) / n
         return sum((v - mean) ** 2 for v in vals) / n
+
+    def feedback_longest_negative_streak(self, threshold: float = 0.4) -> int:
+        """Return the length of the longest consecutive streak of feedback scores below threshold.
+
+        Args:
+            threshold: Exclusive upper bound. Defaults to 0.4.
+
+        Returns:
+            Integer length of longest negative streak; 0 when no feedback or none below threshold.
+        """
+        max_streak = 0
+        current = 0
+        for r in self._feedback:
+            if r.final_score < threshold:
+                current += 1
+                max_streak = max(max_streak, current)
+            else:
+                current = 0
+        return max_streak

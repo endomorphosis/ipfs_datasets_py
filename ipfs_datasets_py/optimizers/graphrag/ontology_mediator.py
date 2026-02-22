@@ -1679,6 +1679,14 @@ class OntologyMediator:
         rounds = len(getattr(self, "_round_history", None) or []) or 1
         return total / rounds
 
+    def action_names(self) -> list:
+        """Return a sorted list of all action names recorded.
+
+        Returns:
+            List of string action names; empty list when no actions.
+        """
+        return sorted(self._action_counts.keys())
+
 
 # Export public API
 __all__ = [

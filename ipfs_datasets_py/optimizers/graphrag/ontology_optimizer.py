@@ -3855,6 +3855,45 @@ class OntologyOptimizer:
         return variance ** 0.5 / mean
 
 
+    def history_above_threshold_rate(self, threshold: float = 0.7) -> float:
+        """Return the fraction of history entries scoring above threshold.
+
+        Args:
+            threshold: Exclusive lower bound. Defaults to 0.7.
+
+        Returns:
+            Float in [0, 1]; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        return sum(1 for e in self._history if e.average_score > threshold) / len(self._history)
+
+    def history_improving_fraction(self) -> float:
+        """Return the fraction of consecutive pairs where score improved.
+
+        Returns:
+            Float in [0, 1]; 0.0 when fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        improvements = sum(
+            1 for i in range(len(self._history) - 1)
+            if self._history[i + 1].average_score > self._history[i].average_score
+        )
+        return improvements / (len(self._history) - 1)
+
+    def score_percentile_of_last(self) -> float:
+        """Return the percentile rank of the last score within history.
+
+        Returns:
+            Float in [0, 100]; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        last = self._history[-1].average_score
+        return self.history_percentile_rank(last)
+
+
 # Export public API
 __all__ = [
     'OntologyOptimizer',

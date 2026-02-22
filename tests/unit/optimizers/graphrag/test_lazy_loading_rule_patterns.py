@@ -7,10 +7,24 @@ and startup performance.
 """
 
 import pytest
+from dataclasses import dataclass, field
 from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
     OntologyGenerator,
     Entity,
+    ExtractionConfig,
 )
+from ipfs_datasets_py.optimizers.graphrag import (
+    ExtractionStrategy,
+)
+
+
+@dataclass
+class MockOntologyGenerationContext:
+    """Mock context for testing."""
+    extraction_strategy: ExtractionStrategy = ExtractionStrategy.RULE_BASED
+    extraction_config: ExtractionConfig = field(default_factory=lambda: ExtractionConfig())
+    max_entities_per_document: int = 1000
+    max_relationships_per_document: int = 5000
 
 
 class TestLazyLoadingVerbPatterns:
@@ -79,13 +93,14 @@ class TestLazyLoadingVerbPatterns:
             Entity(id="e1", text="Alice", type="person"),
             Entity(id="e2", text="Company", type="organization"),
         ]
-        data = "Alice owns Company successfully."
+        text = "Alice owns Company successfully."
+        context = MockOntologyGenerationContext()
         
         # Reset cache to verify it gets loaded
         OntologyGenerator._verb_patterns_cache = None
         
         # This should trigger lazy loading
-        relationships = generator.infer_relationships(entities, data)
+        relationships = generator.infer_relationships(entities, context, text)
         
         # Cache should now be populated
         assert OntologyGenerator._verb_patterns_cache is not None
@@ -184,13 +199,14 @@ class TestLazyLoadingTypeInferenceRules:
             Entity(id="e2", text="Company", type="organization"),
         ]
         # Use explicit co-occurrence text (no verb pattern match)
-        data = "Alice and Company work together in this text."
+        text = "Alice and Company work together in this text."
+        context = MockOntologyGenerationContext()
         
         # Reset cache to verify it gets loaded
         OntologyGenerator._type_inference_rules_cache = None
         
         # This should trigger lazy loading via co-occurrence inference
-        relationships = generator.infer_relationships(entities, data)
+        relationships = generator.infer_relationships(entities, context, text)
         
         # Cache should now be populated
         assert OntologyGenerator._type_inference_rules_cache is not None
@@ -238,14 +254,15 @@ class TestLazyLoadingIntegration:
             Entity(id="e1", text="Alice", type="person"),
             Entity(id="e2", text="Bob", type="person"),
         ]
+        context = MockOntologyGenerationContext()
         
         # First inference call
-        generator.infer_relationships(entities, "Alice knows Bob.")
+        generator.infer_relationships(entities, context, "Alice knows Bob.")
         first_patterns = OntologyGenerator._verb_patterns_cache
         first_rules = OntologyGenerator._type_inference_rules_cache
         
         # Second inference call
-        generator.infer_relationships(entities, "Alice meets Bob.")
+        generator.infer_relationships(entities, context, "Alice meets Bob.")
         second_patterns = OntologyGenerator._verb_patterns_cache
         second_rules = OntologyGenerator._type_inference_rules_cache
         
@@ -260,9 +277,10 @@ class TestLazyLoadingIntegration:
             Entity(id="e1", text="Alice", type="person"),
             Entity(id="e2", text="Company", type="organization"),
         ]
-        data = "Alice owns Company and manages Company successfully."
+        text = "Alice owns Company and manages Company successfully."
+        context = MockOntologyGenerationContext()
         
-        relationships = generator.infer_relationships(entities, data)
+        relationships = generator.infer_relationships(entities, context, text)
         
         # Should still infer relationships correctly
         assert len(relationships) > 0

@@ -4043,6 +4043,20 @@ class OntologyCritic(BaseCritic):
         """
         return sum(getattr(score, d, 0.0) for d in self._DIMENSIONS)
 
+    def score_diff_from_mean(self, score: "CriticScore") -> float:
+        """Return the difference between overall score and dimension mean.
+
+        Args:
+            score: CriticScore with an ``overall`` attribute.
+
+        Returns:
+            Float difference (overall - dimension_mean); 0.0 when no overall.
+        """
+        overall = getattr(score, "overall", None)
+        if overall is None:
+            return 0.0
+        return overall - self.dimension_mean(score)
+
 
 # Export public API
 __all__ = [
