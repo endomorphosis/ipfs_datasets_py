@@ -511,3 +511,23 @@ Removed 14 lines of confirmed dead code from 3 production files:
 - `reasoning/cross_document.py:199`: 1 line, defensive zero-norm guard (dead: empty-tokens pre-checked)
 
 **Result: 3,614 pass, 64 skip, 0 fail** (base env with networkx+numpy; 207 missed lines; -6 from s52).
+
+### Session 54 log (2026-02-22)
+
+**Problem:** 3 test failures in base env (no numpy) caused by `ipld.py` transitively
+importing `ipfs_datasets_py.vector_stores.ipld`, which hard-imports `numpy as np` at
+module level.
+
+**Root cause:**
+- `tests/unit/knowledge_graphs/test_master_status_session52.py::TestIpldCarAvailable`
+  calls `_reload_with_mock_dep("ipfs_datasets_py.knowledge_graphs.ipld", ...)`, which
+  reloads `ipld.py`. That module imports `vector_stores/ipld.py`, which fails without
+  numpy.
+- `tests/unit/knowledge_graphs/test_master_status_session53.py::TestGetConnectedEntitiesDepthInvariant::test_get_connected_entities_returns_correct_neighbors`
+  imports `IPLDKnowledgeGraph` from `ipld.py`, same transitive failure.
+
+**Fix:** Added `_numpy_available` + `_skip_no_numpy` marks (consistent with sessions
+40/41/50 pattern) to the 3 affected test methods.  No production code changed.
+
+**Result: 3,490 pass, 77 skip, 0 fail** (base env without numpy/scipy/matplotlib; same
+207 missed lines as session 53).

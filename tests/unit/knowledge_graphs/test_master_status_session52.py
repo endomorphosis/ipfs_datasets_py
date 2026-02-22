@@ -15,11 +15,17 @@ All reloads are isolated: we save/restore sys.modules so normal tests are unaffe
 
 import sys
 import importlib
+import importlib.util
 import pytest
 from unittest.mock import MagicMock
 
 # Sentinel — distinct from None (which is a valid sys.modules value)
 _MISSING = object()
+
+_numpy_available = bool(importlib.util.find_spec("numpy"))
+_skip_no_numpy = pytest.mark.skipif(
+    not _numpy_available, reason="numpy not installed"
+)
 
 
 # ---------------------------------------------------------------------------
@@ -313,6 +319,7 @@ class TestIpldCarAvailable:
     THEN HAVE_IPLD_CAR=True (line 98 is executed)
     """
 
+    @_skip_no_numpy
     def test_have_ipld_car_true_when_mock_available(self):
         """GIVEN mock ipld_car in sys.modules WHEN ipld.py loaded THEN HAVE_IPLD_CAR=True."""
         mock_ipld_car = MagicMock()
@@ -323,6 +330,7 @@ class TestIpldCarAvailable:
         )
         assert fresh.HAVE_IPLD_CAR is True
 
+    @_skip_no_numpy
     def test_ipld_car_attribute_set_when_available(self):
         """GIVEN mock ipld_car WHEN ipld.py loaded THEN ipld_car attr is the mock."""
         mock_ipld_car = MagicMock()

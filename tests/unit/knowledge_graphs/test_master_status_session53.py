@@ -21,8 +21,14 @@ Dead code removed:
 Tests here prove the invariants that make each block unreachable.
 """
 
+import importlib.util
 import pytest
 from unittest.mock import MagicMock, patch
+
+_numpy_available = bool(importlib.util.find_spec("numpy"))
+_skip_no_numpy = pytest.mark.skipif(
+    not _numpy_available, reason="numpy not installed"
+)
 
 # ---------------------------------------------------------------------------
 # 1. compiler.py: variable = element.variable or f"_n{i}" is always truthy
@@ -291,6 +297,7 @@ class TestGetConnectedEntitiesDepthInvariant:
                 f"max_hops={max_hops}: max_seen={max_seen}"
             )
 
+    @_skip_no_numpy
     def test_get_connected_entities_returns_correct_neighbors(self):
         """
         GIVEN a simple linear chain A-B-C-D

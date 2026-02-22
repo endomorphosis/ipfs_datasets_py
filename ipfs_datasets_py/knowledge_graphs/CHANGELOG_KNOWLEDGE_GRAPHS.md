@@ -5,6 +5,29 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.9] - 2026-02-22
+
+### Fixed — Numpy Skip Guards for Sessions 52/53 (Session 54)
+
+**3 test failures fixed by adding `_skip_no_numpy` marks (no production code changed).**
+
+**Root cause:** `ipld.py` imports `ipfs_datasets_py.vector_stores.ipld`, which has a
+hard `import numpy as np` at module level. Tests that reloaded `ipld.py` or imported
+`IPLDKnowledgeGraph` from it would fail in environments without numpy installed.
+
+#### Tests updated:
+- `test_master_status_session52.py::TestIpldCarAvailable::test_have_ipld_car_true_when_mock_available`
+- `test_master_status_session52.py::TestIpldCarAvailable::test_ipld_car_attribute_set_when_available`
+- `test_master_status_session53.py::TestGetConnectedEntitiesDepthInvariant::test_get_connected_entities_returns_correct_neighbors`
+
+**Pattern used:** `_numpy_available = bool(importlib.util.find_spec("numpy"))` +
+`_skip_no_numpy = pytest.mark.skipif(not _numpy_available, reason="numpy not installed")`
+— consistent with sessions 40/41/50.
+
+**Result: 3,490 pass, 77 skip, 0 fail** (base env without numpy).
+
+---
+
 ## [3.22.8] - 2026-02-22
 
 ### Changed — Dead Code Cleanup + Invariant Tests (Session 53)
