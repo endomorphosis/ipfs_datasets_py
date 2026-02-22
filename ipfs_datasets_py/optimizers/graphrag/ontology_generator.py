@@ -7974,6 +7974,43 @@ class OntologyGenerator:
             return 0.0
         return weighted_sum / total_w
 
+    def entity_confidence_trimmed_mean(self, result, trim_pct: float = 10.0) -> float:
+        """Return the trimmed mean of entity confidence values.
+
+        Sorts the confidence values, removes the lowest and highest
+        ``trim_pct`` percent, and returns the arithmetic mean of the
+        remaining values.
+
+        Args:
+            result: :class:`EntityExtractionResult` to analyse.
+            trim_pct: Percentage to trim from *each* tail.  Must be in
+                ``[0.0, 50.0)``.  Default ``10.0``.
+
+        Returns:
+            Float in ``[0, 1]``; ``0.0`` when there are no entities or no
+            values remain after trimming.
+
+        Raises:
+            ValueError: When *trim_pct* is outside ``[0.0, 50.0)``.
+
+        Example::
+
+            >>> tm = generator.entity_confidence_trimmed_mean(result, trim_pct=10.0)
+            >>> 0.0 <= tm <= 1.0
+        """
+        if trim_pct < 0.0 or trim_pct >= 50.0:
+            raise ValueError("trim_pct must be in [0.0, 50.0).")
+        entities = getattr(result, "entities", []) or []
+        if not entities:
+            return 0.0
+        confidences = sorted(getattr(e, "confidence", 0.0) for e in entities)
+        n = len(confidences)
+        k = int(n * trim_pct / 100.0)
+        trimmed = confidences[k: n - k] if (k < n and n - 2 * k > 0) else confidences
+        if not trimmed:
+            return 0.0
+        return sum(trimmed) / len(trimmed)
+
 
 __all__ = [
     'OntologyGenerator',

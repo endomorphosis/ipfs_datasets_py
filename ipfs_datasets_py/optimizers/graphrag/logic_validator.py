@@ -3995,6 +3995,67 @@ class LogicValidator:
             return 0.0
         return sum(coeffs) / len(coeffs)
 
+    def diameter_approx(self, ontology: dict) -> int:
+        """Return the approximate diameter of the directed graph via BFS.
+
+        Performs a BFS from every node and returns the maximum shortest-path
+        distance observed.  Only directed edges are followed.  Self-loops are
+        ignored.
+
+        Args:
+            ontology: Dict with ``"entities"`` and ``"relationships"`` lists.
+                Each relationship must have ``"source"`` and ``"target"`` keys.
+
+        Returns:
+            Non-negative integer; ``0`` when the graph has fewer than 2 nodes
+            or all nodes are mutually unreachable.
+
+        Example::
+
+            >>> d = validator.diameter_approx({"entities": [...], "relationships": [...]})
+            >>> d >= 0
+        """
+        from collections import deque
+        entities = ontology.get("entities", []) or []
+        rels = ontology.get("relationships", []) or []
+
+        nodes: set = set()
+        for e in entities:
+            node_id = (e.get("id") or e.get("name", "")) if isinstance(e, dict) else str(e)
+            if node_id:
+                nodes.add(node_id)
+
+        adj: dict = {}
+        for r in rels:
+            if not isinstance(r, dict):
+                continue
+            src = r.get("source")
+            tgt = r.get("target")
+            if not src or not tgt or src == tgt:
+                continue
+            nodes.add(src)
+            nodes.add(tgt)
+            adj.setdefault(src, []).append(tgt)
+            adj.setdefault(tgt, [])
+
+        if len(nodes) < 2:
+            return 0
+
+        max_dist = 0
+        for start in nodes:
+            dist: dict = {start: 0}
+            queue: deque = deque([start])
+            while queue:
+                node = queue.popleft()
+                for nb in adj.get(node, []):
+                    if nb not in dist:
+                        dist[nb] = dist[node] + 1
+                        if dist[nb] > max_dist:
+                            max_dist = dist[nb]
+                        queue.append(nb)
+
+        return max_dist
+
 
 # Export public API
 __all__ = [

@@ -1839,11 +1839,32 @@ Implementation notes:
 
 Testing: 49 tests in test_batch_213_features.py; all passing.
 
-## Batch 214+ Backlog
+## Batch 214 — Done ✅ (2026-02-22)
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_bimodality_dip()` — simple dip statistic (max|hist_i - uniform_i|)
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_entropy(score)` — Shannon entropy of 6 dimension values
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_trimmed_mean(result, trim_pct)` — trimmed mean of confidences
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_range()` — max − min of feedback final scores
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_percentile(p)` — p-th percentile of run scores
-- [ ] (P2) [graphrag] `LogicValidator.diameter_approx(ontology)` — approximate graph diameter via BFS
+- [x] (P2) [graphrag] `OntologyOptimizer.score_bimodality_dip()` — max |bin_freq − uniform_freq| across 10 bins
+- [x] (P2) [graphrag] `OntologyCritic.dimension_entropy(score)` — already existed in source (stale)
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_trimmed_mean(result, trim_pct)` — trim both tails then mean
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_range()` — already existed in source (stale)
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_percentile(p)` — already existed in source (stale)
+- [x] (P2) [graphrag] `LogicValidator.diameter_approx(ontology)` — BFS-based directed graph diameter
+
+Implementation notes:
+- score_bimodality_dip: 10-bin discretization of [0,1]; uniform_freq=0.1; returns max |freq_i − 0.1|.
+  0.0 for fewer than 2 entries; bimodal distributions have higher dip than uniform (dip=0.0).
+- dimension_entropy: already existed at line 3527 — stale backlog item.
+- entity_confidence_trimmed_mean: sorts confidences; k=int(n*trim_pct/100); trims [k : n-k];
+  raises ValueError when trim_pct not in [0.0, 50.0); 0.0 when no entities or empty after trim.
+- feedback_range: already existed at line 1219 — stale backlog item.
+- run_score_percentile: already existed at line 1474 — stale backlog item.
+- diameter_approx: BFS from every node; follows directed edges; returns max dist found; 0 for <2 nodes.
+
+Testing: 48 tests in test_batch_214_features.py; all passing.
+
+## Batch 215+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_bimodality_index()` — bimodality based on second histogram moment (var ratio)
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_percentile_rank(score, dim)` — rank of given dimension among all dims
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_avg_text_length(result)` — mean character length of entity text
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_last_n_mean(n)` — mean of last n feedback scores
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_iqr()` — IQR of run overall scores
+- [ ] (P2) [graphrag] `LogicValidator.eccentricity_distribution(ontology)` — list of per-node eccentricities

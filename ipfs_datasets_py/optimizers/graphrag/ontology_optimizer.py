@@ -4993,6 +4993,34 @@ class OntologyOptimizer:
         std = variance ** 0.5
         return [i for i, s in enumerate(scores) if abs((s - mean) / std) > threshold]
 
+    def score_bimodality_dip(self) -> float:
+        """Return a simple dip statistic for the history ``average_score`` distribution.
+
+        Discretises scores into 10 equal bins in ``[0, 1]`` and returns the
+        maximum absolute difference between any bin's relative frequency and
+        the uniform frequency (``1 / 10``).  A large dip indicates the
+        distribution deviates strongly from uniform (e.g. is bimodal).
+
+        Returns:
+            Float in ``[0, 1]``; ``0.0`` when history has fewer than 2 entries.
+
+        Example::
+
+            >>> dip = opt.score_bimodality_dip()
+            >>> 0.0 <= dip <= 1.0
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        num_bins = 10
+        bins = [0] * num_bins
+        for s in scores:
+            idx = min(int(s * num_bins), num_bins - 1)
+            bins[idx] += 1
+        n = len(scores)
+        uniform_freq = 1.0 / num_bins
+        return max(abs(count / n - uniform_freq) for count in bins)
+
 
 # Export public API
 __all__ = [
