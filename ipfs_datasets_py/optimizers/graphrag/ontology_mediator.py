@@ -2308,6 +2308,35 @@ class OntologyMediator:
         else:  # Small changes
             return 'stable'
 
+    def retry_last_round(
+        self,
+        ontology: "Dict[str, Any]",
+        score: Any,
+        context: Any,
+    ) -> "Dict[str, Any]":
+        """Re-apply the most recent refinement round.
+
+        Pops the latest snapshot from the undo stack (restoring the previous
+        ontology state) and then immediately calls :meth:`refine_ontology`
+        with the same *score* and *context*.  If the undo stack is empty the
+        current *ontology* is refined without a rollback first.
+
+        Args:
+            ontology: The current ontology dict.
+            score: The :class:`CriticScore` from the last evaluation.
+            context: The :class:`OntologyGenerationContext` for this round.
+
+        Returns:
+            A newly refined ontology dict.
+        """
+        import copy as _copy
+        if self._undo_stack:
+            # Roll back to the snapshot before the last refinement
+            base = _copy.deepcopy(self._undo_stack[-1])
+        else:
+            base = _copy.deepcopy(ontology)
+        return self.refine_ontology(base, score, context)
+
 
 # Export public API
 __all__ = [

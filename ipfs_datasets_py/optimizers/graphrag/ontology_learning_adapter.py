@@ -2182,3 +2182,41 @@ class OntologyLearningAdapter:
         if any(s <= 0.0 for s in scores):
             return 0.0
         return len(scores) / sum(1.0 / s for s in scores)
+
+    def feedback_std(self) -> float:
+        """Return the standard deviation of all feedback ``final_score`` values.
+
+        Returns:
+            Float std-dev; ``0.0`` when fewer than 2 feedback records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        return variance ** 0.5
+
+    def feedback_coefficient_of_variation(self) -> float:
+        """Return the coefficient of variation (std / mean) of feedback scores.
+
+        Returns:
+            Float CV; ``0.0`` when no feedback or mean is zero.
+        """
+        if not self._feedback:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        if mean == 0.0:
+            return 0.0
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        return variance ** 0.5 / mean
+
+    def feedback_relative_std(self) -> float:
+        """Alias for :meth:`feedback_coefficient_of_variation`.
+
+        Returns:
+            Float CV of feedback scores; ``0.0`` when no feedback or mean is
+            zero.
+        """
+        return self.feedback_coefficient_of_variation()
+

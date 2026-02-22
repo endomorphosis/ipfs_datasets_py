@@ -4725,6 +4725,52 @@ class OntologyOptimizer:
             return 0.0
         return len(scores) / sum(1.0 / s for s in scores)
 
+    def score_coefficient_of_variation(self) -> float:
+        """Return the coefficient of variation (std / mean) of history scores.
+
+        Returns:
+            Float CV; ``0.0`` when history is empty or mean is zero.
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        mean = sum(scores) / len(scores)
+        if mean == 0.0:
+            return 0.0
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        return variance ** 0.5 / mean
+
+    def score_relative_improvement(self) -> float:
+        """Return the relative improvement from first to last score.
+
+        Defined as ``(last - first) / first`` when ``first > 0``.
+
+        Returns:
+            Float; ``0.0`` when history has fewer than 2 entries or
+            the first score is zero.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        first = self._history[0].average_score
+        last = self._history[-1].average_score
+        if first == 0.0:
+            return 0.0
+        return (last - first) / first
+
+    def score_to_mean_ratio(self) -> float:
+        """Return the ratio of the latest score to the history mean.
+
+        Returns:
+            Float ratio; ``0.0`` when history is empty or mean is zero.
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        mean = sum(scores) / len(scores)
+        if mean == 0.0:
+            return 0.0
+        return self._history[-1].average_score / mean
+
 
 # Export public API
 __all__ = [

@@ -5404,6 +5404,38 @@ class OntologyGenerator:
         kept = [e for e in result.entities if e.confidence >= threshold]
         return _dc.replace(result, entities=kept)
 
+    def apply_config(
+        self,
+        result: "EntityExtractionResult",
+        config: "ExtractionConfig",
+    ) -> "EntityExtractionResult":
+        """Re-filter *result* by applying the constraints in *config*.
+
+        Applies :attr:`ExtractionConfig.confidence_threshold` to remove
+        low-confidence entities from *result* and returns a new
+        :class:`EntityExtractionResult`.  Any relationships whose source or
+        target entity was removed are also pruned.
+
+        Args:
+            result: The extraction result to filter.
+            config: An :class:`ExtractionConfig` whose
+                ``confidence_threshold`` is used as the minimum confidence.
+
+        Returns:
+            A new :class:`EntityExtractionResult` with only entities (and
+            their relationships) that satisfy the config threshold.
+        """
+        import dataclasses as _dc
+        threshold = getattr(config, "confidence_threshold", 0.0)
+        kept_entities = [e for e in result.entities if e.confidence >= threshold]
+        kept_ids = {getattr(e, "id", None) for e in kept_entities}
+        kept_rels = [
+            r for r in result.relationships
+            if getattr(r, "source_id", None) in kept_ids
+            and getattr(r, "target_id", None) in kept_ids
+        ]
+        return _dc.replace(result, entities=kept_entities, relationships=kept_rels)
+
     def confidence_histogram(self, result, bins: int = 5) -> dict:
         """Return a bucket-count histogram of entity confidence scores.
 

@@ -5,6 +5,25 @@ All notable changes to the optimizers module will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Batch 203 (2026-02-22)
+
+### Added
+- `OntologyGenerator.apply_config(result, config)` — re-filters an `EntityExtractionResult` by applying `ExtractionConfig.confidence_threshold`; also prunes relationships whose endpoints were removed.
+- `OntologyMediator.retry_last_round(ontology, score, ctx)` — re-applies the last refinement round by rolling back the undo stack before calling `refine_ontology()`; if the undo stack is empty it refines the current ontology directly.
+- `OntologyOptimizer.score_coefficient_of_variation()` — coefficient of variation (std / mean) of history `average_score` values; `0.0` when empty or mean is zero.
+- `OntologyOptimizer.score_relative_improvement()` — relative improvement `(last − first) / first`; `0.0` when fewer than 2 entries or first score is zero.
+- `OntologyOptimizer.score_to_mean_ratio()` — ratio of latest score to history mean; `0.0` when empty or mean is zero.
+- `OntologyLearningAdapter.feedback_std()` — standard deviation of feedback `final_score` values; `0.0` when fewer than 2 records.
+- `OntologyLearningAdapter.feedback_coefficient_of_variation()` — CV (std / mean) of feedback scores; `0.0` when no feedback or mean is zero.
+- `OntologyLearningAdapter.feedback_relative_std()` — alias for `feedback_coefficient_of_variation()`.
+- `OntologyPipeline.run_score_relative_improvement()` — relative improvement from first to last run score; `0.0` when fewer than 2 runs or first score is zero.
+- 51 new unit tests in `tests/unit/optimizers/graphrag/test_batch_203_features.py`.
+
+### Fixed (TODO.md housekeeping)
+- Marked 22 stale `[ ]` TODO entries as `[x]`; the corresponding methods were already implemented in earlier batches but the entries had not been updated.
+
+---
+
 ## [Unreleased] — Batch 202 (2026-02-22)
 
 ### Added

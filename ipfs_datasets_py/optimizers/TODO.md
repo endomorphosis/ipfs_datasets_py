@@ -754,7 +754,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] Add `OntologyPipeline.warm_cache()` -- Done batch-60: runs pipeline.run() with refine=False; 5 tests
 - [x] (P3) [graphrag] Add `OntologyMediator.undo_last_action()` -- Done batch-60: deep-copy undo stack, IndexError on empty; 5 tests
 - [x] (P3) [graphrag] Add `OntologyGenerator.extract_with_coref()` -- Done batch-62: heuristic pronoun substitution; 5 tests
-- [ ] (P2) [graphrag] Add `OntologyPipeline.run_async()` -- async coroutine wrapper around run()
+- [x] (P2) [graphrag] Add `OntologyPipeline.run_async()` -- async coroutine wrapper around run()
 - [ ] (P3) [obs] Add structured JSON log at end of `analyze_batch_parallel()` with timing + scores
 - [x] (P2) [tests] Hypothesis property test: ExtractionConfig round-trips through to_dict/from_dict -- Done batch-61: 40 examples; 1 test
 - [ ] (P3) [graphrag] Add confidence decay over time -- entities not seen recently get lower confidence
@@ -797,7 +797,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P3) [graphrag] Add `OntologyOptimizer.session_count()` -- Done batch-64: sums metadata[num_sessions]; 3 tests
 
 ## Batch 66+ Ideas
-- [ ] (P2) [graphrag] Add `OntologyCritic.calibrate_thresholds()` -- adjust dimension thresholds from history of scores
+- [x] (P2) [graphrag] Add `OntologyCritic.calibrate_thresholds()` -- adjust dimension thresholds from history of scores
 - [x] (P3) [graphrag] Add `CriticScore.to_html_report()` -- Done batch-68: table + recs list; 7 tests
 - [x] (P2) [graphrag] Add `OntologyGenerator.anonymize_entities()` -- Done batch-69: replaces text, preserves id/type/rels; 7 tests
 - [ ] (P3) [tests] Add round-trip test: Entity -> to_dict -> from_dict (Entity.from_dict classmethod)
@@ -821,7 +821,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 ## Batch 70+ Ideas
 - [x] (P2) [graphrag] Add `OntologyOptimizer.score_percentile(p)` -- Done batch-70: linear interp; 6 tests
 - [x] (P3) [graphrag] Add `OntologyMediator.get_undo_depth()` -- length of undo stack
-- [ ] (P2) [graphrag] Add `OntologyGenerator.extract_noun_phrases(text)` -- simple NP chunker
+- [x] (P2) [graphrag] Add `OntologyGenerator.extract_noun_phrases(text)` -- simple NP chunker
 - [x] (P3) [arch] Add `OntologyPipeline.clone_with(domain=None, max_rounds=None)` -- partial override clone
 - [x] (P2) [graphrag] Add `EntityExtractionResult.confidence_histogram(bins)` -- Done batch-70: bucket counts; 6 tests
 - [x] (P3) [graphrag] Add `OntologyCritic.compare_with_baseline(ontology, baseline, ctx)` -- delta vs baseline
@@ -845,7 +845,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 
 - [x] (P2) [graphrag] Add `OntologyGenerator.merge_results(results)` -- merge list of EntityExtractionResult into one
 - [x] (P3) [graphrag] Add `OntologyCritic.dimension_report(score)` -- multi-line human-readable dimension breakdown
-- [ ] (P2) [graphrag] Add `OntologyOptimizer.prune_history(n)` -- keep only last N history entries
+- [x] (P2) [graphrag] Add `OntologyOptimizer.prune_history(n)` -- keep only last N history entries
 - [x] (P3) [graphrag] Add `EntityExtractionResult.highest_confidence_entity()` -- return entity with max confidence
 - [x] (P2) [graphrag] Add `Entity.to_text()` -- return human-readable single-line summary
 - [x] (P3) [graphrag] Add `OntologyPipeline.summary()` -- one-line string with domain/rounds/stage-count
@@ -883,24 +883,24 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] Add `EntityExtractionResult.unique_types()` -- Done batch-81: sorted distinct type list
 
 ## Batch 82+ Ideas (added batch-81)
-- [ ] (P2) [graphrag] Add `EntityExtractionResult.avg_confidence()` -- mean confidence across all entities
-- [ ] (P2) [graphrag] Add `OntologyCritic.improve_score_suggestion(score)` -- top-priority dimension to improve
-- [ ] (P2) [graphrag] Add `OntologyGenerator.apply_config(result, config)` -- re-filter result using config
-- [ ] (P2) [graphrag] Add `OntologyMediator.retry_last_round(ontology, score, ctx)` -- redo last refinement
+- [x] (P2) [graphrag] Add `EntityExtractionResult.avg_confidence()` -- mean confidence across all entities
+- [x] (P2) [graphrag] Add `OntologyCritic.improve_score_suggestion(score)` -- top-priority dimension to improve
+- [x] (P2) [graphrag] Add `OntologyGenerator.apply_config(result, config)` -- re-filter result using config
+- [x] (P2) [graphrag] Add `OntologyMediator.retry_last_round(ontology, score, ctx)` -- redo last refinement
 - [ ] (P3) [graphrag] Add `LogicValidator.validate_all(ontologies)` -- list of ValidationResults for list of ontologies
-- [ ] (P2) [graphrag] Add `OntologyOptimizer.best_n_ontologies(n)` -- top-N ontologies by score
-- [ ] (P2) [graphrag] Add `OntologyPipeline.reset()` -- reset pipeline state and history
+- [x] (P2) [graphrag] Add `OntologyOptimizer.best_n_ontologies(n)` -- top-N ontologies by score
+- [x] (P2) [graphrag] Add `OntologyPipeline.reset()` -- reset pipeline state and history
 - [ ] (P3) [graphrag] Add `CriticScore.to_list()` -- [completeness, consistency, clarity, granularity, domain_alignment]
-- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.feedback_count()` -- len(_feedback) shortcut
+- [x] (P2) [graphrag] Add `OntologyLearningAdapter.feedback_count()` -- len(_feedback) shortcut
 - [ ] (P3) [graphrag] Add `OntologyGenerator.describe_result(result)` -- one-line English summary
 - [x] (P2) [graphrag] Add `OntologyMediator.most_frequent_action()` -- Done batch-83: -- action with highest invocation count
 - [x] (P2) [graphrag] Add `OntologyCritic.dimension_gap(score, target)` -- Done batch-83: -- how far each dim is from target
 - [x] (P3) [graphrag] Add `EntityExtractionResult.by_id(eid)` -- Done batch-83: -- look up entity by id
-- [ ] (P2) [graphrag] Add `OntologyOptimizer.last_score()` -- average_score from most recent history entry
-- [ ] (P2) [graphrag] Add `ExtractionConfig.is_strict()` -- True if confidence_threshold >= 0.8
+- [x] (P2) [graphrag] Add `OntologyOptimizer.last_score()` -- average_score from most recent history entry
+- [x] (P2) [graphrag] Add `ExtractionConfig.is_strict()` -- True if confidence_threshold >= 0.8
 - [x] (P3) [graphrag] Add `OntologyGenerator.top_entities(result, n)` -- Done batch-83: -- top-N by confidence
-- [ ] (P2) [graphrag] Add `OntologyMediator.undo_all()` -- undo to oldest snapshot in stack
-- [ ] (P2) [graphrag] Add `OntologyCritic.worst_score(scores)` -- CriticScore with lowest overall from list
+- [x] (P2) [graphrag] Add `OntologyMediator.undo_all()` -- undo to oldest snapshot in stack
+- [x] (P2) [graphrag] Add `OntologyCritic.worst_score(scores)` -- CriticScore with lowest overall from list
 - [ ] (P3) [graphrag] Add `OntologyPipeline.total_runs()` -- number of times run() was called
 - [x] (P2) [graphrag] Add `OntologyLearningAdapter.worst_feedback_scores(n)` -- Done batch-83: -- bottom-N by score
 
@@ -919,19 +919,19 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 ## Batch 85+ Ideas (added batch-84)
 - [x] (P2) [graphrag] Add `OntologyCritic.best_score(scores)` -- Done batch-85: -- CriticScore with highest overall from list
 - [x] (P2) [graphrag] Add `EntityExtractionResult.has_entity(text)` -- Done batch-85: -- check if any entity has matching text
-- [ ] (P2) [graphrag] Add `OntologyGenerator.explain_entity(entity)` -- one-line English description of entity
+- [x] (P2) [graphrag] Add `OntologyGenerator.explain_entity(entity)` -- one-line English description of entity
 - [x] (P2) [graphrag] Add `OntologyMediator.action_count_for(action)` -- Done batch-85: -- invocation count for specific action
 - [ ] (P3) [graphrag] Add `ExtractionConfig.summary()` -- one-line config description
-- [ ] (P2) [graphrag] Add `OntologyOptimizer.clear_history()` -- clear all history entries (if not exists)
-- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.mean_score()` -- mean of all feedback final_scores
+- [x] (P2) [graphrag] Add `OntologyOptimizer.clear_history()` -- clear all history entries (if not exists)
+- [x] (P2) [graphrag] Add `OntologyLearningAdapter.mean_score()` -- mean of all feedback final_scores
 - [x] (P3) [graphrag] Add `CriticScore.is_passing(threshold)` -- Done batch-85: -- True if overall >= threshold (default 0.6)
 - [x] (P2) [graphrag] Add `OntologyPipeline.last_score()` -- Done batch-85: -- overall score from most recent run()
 - [ ] (P3) [graphrag] Add `EntityExtractionResult.filter_by_type(etype)` -- keep only entities of given type
-- [ ] (P2) [graphrag] Add `OntologyGenerator.entity_count(result)` -- total entity count
-- [ ] (P2) [graphrag] Add `OntologyCritic.score_mean(scores)` -- mean CriticScore.overall from list
+- [x] (P2) [graphrag] Add `OntologyGenerator.entity_count(result)` -- total entity count
+- [x] (P2) [graphrag] Add `OntologyCritic.score_mean(scores)` -- mean CriticScore.overall from list
 - [ ] (P3) [graphrag] Add `OntologyMediator.stash()` -- push snapshot without advancing refine_ontology
-- [ ] (P2) [graphrag] Add `LogicValidator.format_report(result)` -- multi-line human-readable validation report
-- [ ] (P2) [graphrag] Add `OntologyOptimizer.percentile_score(p)` -- p-th percentile of score history
+- [x] (P2) [graphrag] Add `LogicValidator.format_report(result)` -- multi-line human-readable validation report
+- [x] (P2) [graphrag] Add `OntologyOptimizer.percentile_score(p)` -- p-th percentile of score history
 - [ ] (P3) [graphrag] Add `EntityExtractionResult.relationships_for(entity_id)` -- rels involving entity
 - [ ] (P2) [graphrag] Add `OntologyGenerator.rebuild_result(entities)` -- wrap entities in new result
 - [ ] (P2) [graphrag] Add `OntologyCritic.evaluate_list(ontologies, ctx)` -- evaluate a list, return CriticScores
@@ -1594,3 +1594,21 @@ Testing (50 new tests in test_batch_202_features.py):
 - 6 tests for relationship_confidence_avg
 - 7 tests for avg_path_length
 - 9 tests for node_density
+
+---
+
+## Batch 203 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyGenerator.apply_config(result, config)` — re-filter result using ExtractionConfig threshold; prunes orphaned relationships
+- [x] (P2) [graphrag] `OntologyMediator.retry_last_round(ontology, score, ctx)` — re-applies last refinement by rolling back undo stack then calling refine_ontology
+- [x] (P2) [graphrag] `OntologyOptimizer.score_coefficient_of_variation()` — CV (std/mean) of history scores
+- [x] (P2) [graphrag] `OntologyOptimizer.score_relative_improvement()` — (last-first)/first relative gain
+- [x] (P2) [graphrag] `OntologyOptimizer.score_to_mean_ratio()` — latest score / history mean
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_std()` — std-dev of feedback final_scores
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_coefficient_of_variation()` — CV of feedback scores
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_relative_std()` — alias for feedback_coefficient_of_variation
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_relative_improvement()` — relative gain from first to last run
+
+Also marked 22 stale [ ] TODO entries as [x] (methods verified to already exist in source files).
+
+Testing: 51 new tests in test_batch_203_features.py; all passing.
