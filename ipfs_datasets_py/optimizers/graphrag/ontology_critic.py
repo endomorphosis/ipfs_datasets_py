@@ -4325,6 +4325,21 @@ class OntologyCritic(BaseCritic):
         std = variance ** 0.5
         return sum((v - mean_val) ** 3 for v in vals) / (n * std ** 3)
 
+    def dimensions_above_mean(self, score: "CriticScore") -> int:
+        """Return the number of dimension values strictly above the collective mean.
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Non-negative integer count in ``[0, len(_DIMENSIONS)]``.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        if not vals:
+            return 0
+        mean_val = sum(vals) / len(vals)
+        return sum(1 for v in vals if v > mean_val)
+
 
 # Export public API
 __all__ = [

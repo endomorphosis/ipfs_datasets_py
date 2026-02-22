@@ -2316,3 +2316,25 @@ class OntologyPipeline:
             if delta > max_decline:
                 max_decline = delta
         return max_decline
+
+    def consecutive_declines(self) -> int:
+        """Return the maximum number of consecutive declining runs.
+
+        A decline is where a run's score is strictly less than the previous run.
+
+        Returns:
+            Non-negative integer; ``0`` when fewer than 2 runs or no decline.
+        """
+        if len(self._run_history) < 2:
+            return 0
+        scores = [r.score.overall for r in self._run_history]
+        max_streak = 0
+        current_streak = 0
+        for i in range(1, len(scores)):
+            if scores[i] < scores[i - 1]:
+                current_streak += 1
+                if current_streak > max_streak:
+                    max_streak = current_streak
+            else:
+                current_streak = 0
+        return max_streak

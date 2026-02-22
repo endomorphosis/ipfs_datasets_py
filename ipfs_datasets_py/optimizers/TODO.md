@@ -1667,15 +1667,37 @@ Implementation notes:
 
 Testing: 58 new tests in test_batch_205_features.py; all passing.
 
-## Batch 206+ Backlog
+## Batch 206 — Done ✅ (2026-02-22)
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_entropy()` — Shannon entropy of discretised history scores
-- [ ] (P2) [graphrag] `OntologyOptimizer.history_above_percentile(p)` — count of scores above p-th percentile
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_entropy(score)` — Shannon entropy of dimension values
-- [ ] (P2) [graphrag] `OntologyCritic.dimensions_above_mean(score)` — number of dimensions above their collective mean
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_range(result)` — max - min confidence (if not already present)
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_count_by_type(result)` — dict of type→count
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_rolling_std(window)` — rolling std-dev of feedback scores
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_kurtosis()` — excess kurtosis of run score distribution
-- [ ] (P2) [graphrag] `OntologyPipeline.consecutive_declines()` — max consecutive declining runs
-- [ ] (P2) [graphrag] `LogicValidator.avg_degree(ontology)` — average total degree per node
+- [x] (P2) [graphrag] `OntologyOptimizer.score_entropy()` — Shannon entropy of discretised history scores
+- [x] (P2) [graphrag] `OntologyOptimizer.history_above_percentile(p)` — count of scores above p-th percentile
+- [x] (P2) [graphrag] `OntologyCritic.dimension_entropy(score)` — already existed in source
+- [x] (P2) [graphrag] `OntologyCritic.dimensions_above_mean(score)` — number of dimensions above their collective mean
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_range(result)` — already existed in source
+- [x] (P2) [graphrag] `OntologyGenerator.entity_count_by_type(result)` — already existed in source
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_rolling_std(window)` — rolling std-dev of feedback scores
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_kurtosis()` — already existed in source
+- [x] (P2) [graphrag] `OntologyPipeline.consecutive_declines()` — max consecutive declining runs
+- [x] (P2) [graphrag] `LogicValidator.avg_degree(ontology)` — average total degree per node
+
+Implementation notes:
+- score_entropy: discretises scores into 10 bins in [0,1]; returns Shannon entropy in bits.
+- history_above_percentile(p): threshold = sorted_scores[int(p/100*n)]; returns count strictly above.
+- dimensions_above_mean: counts dimension values strictly above their collective mean.
+- feedback_rolling_std: window clamped to ≥2; population std-dev per window; empty when len<window.
+- consecutive_declines: max streak of strictly decreasing consecutive runs.
+- avg_degree: sum of all in+out degrees / node count; 0.0 when no relationships.
+
+Testing: 43 new tests in test_batch_206_features.py; all passing.
+
+## Batch 207+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_gini()` — Gini coefficient of history score distribution
+- [ ] (P2) [graphrag] `OntologyOptimizer.history_percentile(p)` — p-th percentile of all history scores
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_gini(score)` — Gini coefficient of dimension values
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_gini(result)` — Gini coefficient of entity confidences
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_gini()` — Gini coefficient of feedback scores
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_gini()` — Gini coefficient of run score distribution
+- [ ] (P2) [graphrag] `OntologyPipeline.first_improving_run()` — index of first run that improved on the previous
+- [ ] (P2) [graphrag] `LogicValidator.degree_centrality(ontology)` — dict of node→degree_centrality
+- [ ] (P2) [graphrag] `LogicValidator.max_degree_node_count(ontology)` — count of nodes at maximum degree

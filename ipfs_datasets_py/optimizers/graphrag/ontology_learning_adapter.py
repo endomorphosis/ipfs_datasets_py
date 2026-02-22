@@ -2254,3 +2254,26 @@ class OntologyLearningAdapter:
             for i in range(len(scores) - window + 1)
         ]
 
+    def feedback_rolling_std(self, window: int = 3) -> list:
+        """Return a list of rolling standard deviations over ``window``-sized windows.
+
+        Args:
+            window: Window size (must be >= 2; clamped to 2 if smaller).
+
+        Returns:
+            List of float population std-dev values; one per valid window.
+            Empty list when feedback has fewer than ``window`` entries.
+        """
+        if window < 2:
+            window = 2
+        scores = [r.final_score for r in self._feedback]
+        if len(scores) < window:
+            return []
+        result = []
+        for i in range(len(scores) - window + 1):
+            chunk = scores[i:i + window]
+            mean = sum(chunk) / window
+            variance = sum((v - mean) ** 2 for v in chunk) / window
+            result.append(variance ** 0.5)
+        return result
+

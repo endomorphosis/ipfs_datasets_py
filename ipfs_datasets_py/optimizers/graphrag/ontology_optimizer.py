@@ -44,6 +44,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import time
 import csv
 from io import StringIO
@@ -4830,6 +4831,48 @@ class OntologyOptimizer:
             return 0.0
         std = variance ** 0.5
         return sum((s - mean) ** 3 for s in scores) / (n * std ** 3)
+
+    def score_entropy(self) -> float:
+        """Return the Shannon entropy of history ``average_score`` values.
+
+        Discretises scores into 10 equal bins in [0, 1] and computes
+        ``H = -sum(p * log2(p))`` over non-empty bins.
+
+        Returns:
+            Float entropy in bits; ``0.0`` when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        bins = [0] * 10
+        for s in scores:
+            idx = min(int(s * 10), 9)
+            bins[idx] += 1
+        n = len(scores)
+        entropy = 0.0
+        for count in bins:
+            if count > 0:
+                p = count / n
+                entropy -= p * math.log2(p)
+        return entropy
+
+    def history_above_percentile(self, p: float = 75.0) -> int:
+        """Return the count of history entries with score above the ``p``-th percentile.
+
+        Args:
+            p: Percentile in [0, 100].  Default ``75``.
+
+        Returns:
+            Non-negative integer count; ``0`` when history is empty.
+        """
+        if not self._history:
+            return 0
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        idx = int(p / 100 * n)
+        idx = min(idx, n - 1)
+        threshold = scores[idx]
+        return sum(1 for e in self._history if e.average_score > threshold)
 
 
 # Export public API

@@ -3616,6 +3616,30 @@ class LogicValidator:
         """
         return self.average_out_degree(ontology)
 
+    def avg_degree(self, ontology: dict) -> float:
+        """Return the average total degree (in-degree + out-degree) per node.
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Float average total degree; ``0.0`` when no relationships exist.
+        """
+        relationships = ontology.get("relationships", []) or []
+        if not relationships:
+            return 0.0
+        degree: dict = {}
+        for rel in relationships:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src:
+                degree[src] = degree.get(src, 0) + 1
+            if tgt:
+                degree[tgt] = degree.get(tgt, 0) + 1
+        if not degree:
+            return 0.0
+        return sum(degree.values()) / len(degree)
+
 
 # Export public API
 __all__ = [
