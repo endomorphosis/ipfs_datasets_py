@@ -3513,6 +3513,46 @@ class OntologyOptimizer:
         return num / (di * ds)
 
 
+    def history_weighted_mean(self, weights: list | None = None) -> float:
+        """Return weighted mean of average_score over history.
+
+        Args:
+            weights: List of floats same length as history. If None, uses
+                     linearly increasing weights (more recent = higher weight).
+
+        Returns:
+            Weighted mean; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        n = len(self._history)
+        if weights is None:
+            weights = [float(i + 1) for i in range(n)]
+        if len(weights) != n:
+            weights = weights[:n] if len(weights) > n else weights + [1.0] * (n - len(weights))
+        total_w = sum(weights)
+        if total_w == 0:
+            return 0.0
+        return sum(w * e.average_score for w, e in zip(weights, self._history)) / total_w
+
+    def score_consecutive_above(self, threshold: float = 0.7) -> int:
+        """Return the length of the trailing streak of entries scoring above threshold.
+
+        Args:
+            threshold: Score threshold (exclusive). Defaults to 0.7.
+
+        Returns:
+            Integer count of consecutive recent entries with average_score > threshold.
+        """
+        count = 0
+        for entry in reversed(self._history):
+            if entry.average_score > threshold:
+                count += 1
+            else:
+                break
+        return count
+
+
 # Export public API
 __all__ = [
     'OntologyOptimizer',

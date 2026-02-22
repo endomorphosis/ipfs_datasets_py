@@ -1754,3 +1754,22 @@ class OntologyLearningAdapter:
             return 0
         scores = [r.final_score for r in self._feedback]
         return sum(1 for i in range(1, len(scores)) if scores[i] < scores[i - 1])
+
+    def feedback_trend_slope(self) -> float:
+        """Return the linear regression slope of final_score over feedback records.
+
+        Uses ordinary least squares. Positive slope = improving trend.
+
+        Returns:
+            Float slope; 0.0 when fewer than 2 records.
+        """
+        n = len(self._feedback)
+        if n < 2:
+            return 0.0
+        xs = list(range(n))
+        ys = [r.final_score for r in self._feedback]
+        mean_x = sum(xs) / n
+        mean_y = sum(ys) / n
+        num = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))
+        den = sum((x - mean_x) ** 2 for x in xs)
+        return num / den if den else 0.0

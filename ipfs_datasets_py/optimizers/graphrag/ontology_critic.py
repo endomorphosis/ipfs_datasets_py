@@ -3930,6 +3930,25 @@ class OntologyCritic(BaseCritic):
         """
         return sum((getattr(score1, d, 0.0) - getattr(score2, d, 0.0)) ** 2 for d in self._DIMENSIONS) ** 0.5
 
+    def dimension_percentile(self, score: "CriticScore", p: float = 50.0) -> float:
+        """Return the p-th percentile of dimension values in a CriticScore.
+
+        Args:
+            score: CriticScore object to inspect.
+            p: Percentile in [0, 100]. Defaults to 50 (median).
+
+        Returns:
+            Float p-th percentile of dimension scores.
+        """
+        vals = sorted(getattr(score, d, 0.0) for d in self._DIMENSIONS)
+        n = len(vals)
+        if n == 0:
+            return 0.0
+        idx = (p / 100.0) * (n - 1)
+        lo, hi = int(idx), min(int(idx) + 1, n - 1)
+        frac = idx - lo
+        return vals[lo] + frac * (vals[hi] - vals[lo])
+
 
 # Export public API
 __all__ = [

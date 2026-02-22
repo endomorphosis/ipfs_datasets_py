@@ -2915,6 +2915,17 @@ class LogicValidator:
                 nodes.add(tgt)
         return len(nodes)
 
+    def edge_count(self, ontology: dict) -> int:
+        """Return the total number of relationships (edges) in the ontology.
+
+        Args:
+            ontology: Dict with optional ``relationships`` list.
+
+        Returns:
+            Integer count of relationship entries.
+        """
+        return len(ontology.get("relationships", []))
+
 
 # Export public API
 __all__ = [

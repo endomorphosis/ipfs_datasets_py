@@ -5908,6 +5908,34 @@ class OntologyGenerator:
             return 0.0
         return sum(len(getattr(e, "properties", {}) or {}) for e in entities) / len(entities)
 
+    def entity_min_confidence(self, result: "EntityExtractionResult") -> float:
+        """Return the minimum confidence score across all entities.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Minimum confidence; 0.0 when no entities.
+        """
+        entities = result.entities or []
+        if not entities:
+            return 0.0
+        return min(getattr(e, "confidence", 0.0) or 0.0 for e in entities)
+
+    def entity_max_confidence(self, result: "EntityExtractionResult") -> float:
+        """Return the maximum confidence score across all entities.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Maximum confidence; 0.0 when no entities.
+        """
+        entities = result.entities or []
+        if not entities:
+            return 0.0
+        return max(getattr(e, "confidence", 0.0) or 0.0 for e in entities)
+
 
 __all__ = [
     'OntologyGenerator',

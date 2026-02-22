@@ -1711,3 +1711,13 @@ class OntologyPipeline:
         if slope < -0.005:
             return "declining"
         return "stable"
+
+    def run_score_first(self) -> float:
+        """Return the score from the very first run in history.
+
+        Returns:
+            Float score of the first run; 0.0 when no runs recorded.
+        """
+        if not self._run_history:
+            return 0.0
+        return self._run_history[0].score.overall

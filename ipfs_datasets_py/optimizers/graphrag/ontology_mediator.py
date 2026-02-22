@@ -1593,6 +1593,20 @@ class OntologyMediator:
         """
         return sum(self._action_counts.values())
 
+    def action_ratio(self, action: str) -> float:
+        """Return the fraction of total actions attributed to a given action.
+
+        Args:
+            action: Name of the action to query.
+
+        Returns:
+            Float in [0, 1]; 0.0 when no actions or action not found.
+        """
+        total = sum(self._action_counts.values())
+        if total == 0:
+            return 0.0
+        return self._action_counts.get(action, 0) / total
+
 
 # Export public API
 __all__ = [
