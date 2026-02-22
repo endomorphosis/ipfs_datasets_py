@@ -325,3 +325,25 @@ class PolicyEvaluator:
             obligations=obligations,
             evaluator_dids=[evaluator_did] if evaluator_did else [],
         )
+
+
+# ---------------------------------------------------------------------------
+# PolicyRegistry — thin re-export shim for backward compatibility
+# ---------------------------------------------------------------------------
+# The full implementation lives in nl_ucan_policy.PolicyRegistry.
+# This import is deferred to avoid circular dependencies at load time.
+
+def get_policy_registry() -> "PolicyRegistry":
+    """Return the global :class:`~nl_ucan_policy.PolicyRegistry` singleton.
+
+    This is a convenience re-export so callers can obtain the registry from
+    either ``temporal_policy`` or ``nl_ucan_policy``.
+
+    Returns:
+        The singleton :class:`~nl_ucan_policy.PolicyRegistry` instance.
+    """
+    from .nl_ucan_policy import (  # noqa: PLC0415
+        PolicyRegistry,
+        get_policy_registry as _get,
+    )
+    return _get()
