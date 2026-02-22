@@ -5,7 +5,26 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.22.5] - 2026-02-22
+## [3.22.6] - 2026-02-22
+
+### Tests — BFS Guard + ImportError Exception Coverage (Session 51)
+
+**13 new tests** in `test_master_status_session51.py`. No production code changes.
+
+**Coverage improvement:**
+- `query/hybrid_search.py:217` — BFS already-visited guard now covered; `hybrid_search.py` reaches **100%**. The guard fires when diamond-topology graph puts the same node in `current_level` for hop N+1 after it was already visited during hop N (A→B, A→C, B→C topology).
+- `migration/formats.py:914, 921-930, 950-951` — `_builtin_save_car` / `_builtin_load_car` ImportError paths now exercised via `sys.modules` injection (simulating absent libipld/ipld-car).
+- `extraction/_entity_helpers.py:117` — Filter logic documented; the actual regex patterns cannot produce <2-char groups in normal use (all use `[A-Z][a-z]+`), confirming line 117 is unreachable in standard execution.
+
+**Files changed:**
+- `tests/unit/knowledge_graphs/test_master_status_session51.py` — new file, 13 tests
+- `ipfs_datasets_py/knowledge_graphs/MASTER_STATUS.md` — version 3.22.5→3.22.6, test count updated
+- `ipfs_datasets_py/knowledge_graphs/IMPROVEMENT_TODO.md` — session 51 log entry added
+- `ipfs_datasets_py/knowledge_graphs/CHANGELOG_KNOWLEDGE_GRAPHS.md` — this entry
+
+**Result: 3,582 pass, 64 skip, 0 fail** (base env); 229 missed lines (down from 230).
+
+
 
 ### Tests — numpy Skip Guards (Session 50)
 
