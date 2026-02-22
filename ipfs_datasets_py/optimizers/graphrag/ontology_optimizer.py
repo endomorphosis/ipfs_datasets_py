@@ -3824,13 +3824,14 @@ class OntologyOptimizer:
             return 0.0
         return (scores[-1] - mean) / std
 
-    def history_trimmed_mean(self, trim_fraction: float = 0.1) -> float:
+    def history_trimmed_mean(self, trim_fraction: float = 0.1, trim: Optional[float] = None) -> float:
         """Return trimmed mean of history scores, ignoring extremes.
 
         The trim removes a fraction of scores from both ends of the sorted list.
 
         Args:
             trim_fraction: Fraction in [0, 0.5) to trim from each tail. Defaults to 0.1.
+            trim: Alias for ``trim_fraction`` (takes precedence if provided).
 
         Returns:
             Float trimmed mean; 0.0 when no history recorded.
@@ -3844,6 +3845,8 @@ class OntologyOptimizer:
             >>> opt.history_trimmed_mean(trim_fraction=0.2)
             0.7
         """
+        if trim is not None:
+            trim_fraction = trim
         if not self._history:
             return 0.0
         if trim_fraction < 0.0 or trim_fraction >= 0.5:
@@ -4527,6 +4530,7 @@ class OntologyOptimizer:
         except IndexError:
             return 0.0
 
+    @property
     def history_length(self) -> int:
         """Return the number of entries in the history.
 
@@ -4688,6 +4692,84 @@ class OntologyOptimizer:
             improving = current_trend
         
         return reversals
+
+
+    def score_geometric_mean(self) -> float:
+        """Return the geometric mean of all history ``average_score`` values.
+
+        Returns:
+            Float geometric mean in [0, 1]; ``0.0`` when any score is zero or
+            when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        if any(s <= 0.0 for s in scores):
+            return 0.0
+        product = 1.0
+        for s in scores:
+            product *= s
+        return product ** (1.0 / len(scores))
+
+    def score_harmonic_mean(self) -> float:
+        """Return the harmonic mean of all history ``average_score`` values.
+
+        Returns:
+            Float harmonic mean; ``0.0`` when any score is zero or history
+            is empty.
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        if any(s <= 0.0 for s in scores):
+            return 0.0
+        return len(scores) / sum(1.0 / s for s in scores)
+
+    def score_coefficient_of_variation(self) -> float:
+        """Return the coefficient of variation (std / mean) of history scores.
+
+        Returns:
+            Float CV; ``0.0`` when history is empty or mean is zero.
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        mean = sum(scores) / len(scores)
+        if mean == 0.0:
+            return 0.0
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        return variance ** 0.5 / mean
+
+    def score_relative_improvement(self) -> float:
+        """Return the relative improvement from first to last score.
+
+        Defined as ``(last - first) / first`` when ``first > 0``.
+
+        Returns:
+            Float; ``0.0`` when history has fewer than 2 entries or
+            the first score is zero.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        first = self._history[0].average_score
+        last = self._history[-1].average_score
+        if first == 0.0:
+            return 0.0
+        return (last - first) / first
+
+    def score_to_mean_ratio(self) -> float:
+        """Return the ratio of the latest score to the history mean.
+
+        Returns:
+            Float ratio; ``0.0`` when history is empty or mean is zero.
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        mean = sum(scores) / len(scores)
+        if mean == 0.0:
+            return 0.0
+        return self._history[-1].average_score / mean
 
 
 # Export public API

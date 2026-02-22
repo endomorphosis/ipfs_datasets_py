@@ -865,12 +865,8 @@ class OntologyGenerationContext:
             self.extraction_strategy = ExtractionStrategy(self.extraction_strategy)
         # Support both old ExtractionConfig and new GraphRAGExtractionConfig
         if isinstance(self.config, dict):
-            # Use GraphRAGExtractionConfig when available (new preferred way)
-            self.config = GraphRAGExtractionConfig.from_dict(self.config)
-        elif isinstance(self.config, ExtractionConfig) and not isinstance(self.config, GraphRAGExtractionConfig):
-            # Convert old ExtractionConfig to new GraphRAGExtractionConfig
-            # by passing through dict conversion
-            self.config = GraphRAGExtractionConfig.from_dict(self.config.to_dict())
+            # Normalise dict config to typed ExtractionConfig
+            self.config = ExtractionConfig.from_dict(self.config)
 
     @property
     def extraction_config(self) -> ExtractionConfig:
@@ -1680,6 +1676,10 @@ class EntityExtractionResult:
     def filter_by_type(self, etype: str, case_sensitive: bool = False) -> "EntityExtractionResult":
         """Return a new result keeping only entities whose ``type`` matches *etype*.
 
+        Relationships that reference removed entities (i.e., those whose
+        ``source_id`` or ``target_id`` no longer exists in the kept entity set)
+        are also pruned from the result.
+
         Args:
             etype: Entity type string to keep.
             case_sensitive: If ``False`` (default), comparison is
@@ -1687,7 +1687,7 @@ class EntityExtractionResult:
 
         Returns:
             New :class:`EntityExtractionResult` with matching entities and
-            the original relationships list.
+            pruned relationships.
 
         Example:
             >>> filtered = result.filter_by_type("ORG")
@@ -1699,9 +1699,14 @@ class EntityExtractionResult:
         else:
             needle = etype.lower()
             kept = [e for e in self.entities if e.type.lower() == needle]
+        kept_ids = {e.id for e in kept}
+        pruned_rels = [
+            r for r in self.relationships
+            if r.source_id in kept_ids and r.target_id in kept_ids
+        ]
         return EntityExtractionResult(
             entities=kept,
-            relationships=list(self.relationships),
+            relationships=pruned_rels,
             confidence=self.confidence,
             metadata=dict(self.metadata),
         )
@@ -5570,23 +5575,22 @@ class OntologyGenerator:
         unique = list(seen.values())
         return _dc.replace(result, entities=unique)
 
-    def unique_relationship_types(self, result: "EntityExtractionResult") -> List[str]:
-        """Return the list of distinct relationship types in *result*.
+    def unique_relationship_types(self, result: "EntityExtractionResult") -> set:
+        """Return the set of distinct relationship types in *result*.
 
         Args:
             result: :class:`EntityExtractionResult` with relationships.
 
         Returns:
-            Sorted list of unique relationship ``type`` strings;
-            ``[]`` when there are no relationships.
+            Set of unique relationship ``type`` strings;
+            ``set()`` when there are no relationships.
 
         Example:
             >>> types = gen.unique_relationship_types(result)
-            >>> types
-            ['causes', 'is_a', 'part_of']
+            >>> types == {'causes', 'is_a', 'part_of'}
+            True
         """
-        unique_types = {r.type for r in result.relationships}
-        return sorted(unique_types)
+        return {r.type for r in result.relationships}
 
     def filter_low_confidence(
         self,
@@ -5606,6 +5610,38 @@ class OntologyGenerator:
         import dataclasses as _dc
         kept = [e for e in result.entities if e.confidence >= threshold]
         return _dc.replace(result, entities=kept)
+
+    def apply_config(
+        self,
+        result: "EntityExtractionResult",
+        config: "ExtractionConfig",
+    ) -> "EntityExtractionResult":
+        """Re-filter *result* by applying the constraints in *config*.
+
+        Applies :attr:`ExtractionConfig.confidence_threshold` to remove
+        low-confidence entities from *result* and returns a new
+        :class:`EntityExtractionResult`.  Any relationships whose source or
+        target entity was removed are also pruned.
+
+        Args:
+            result: The extraction result to filter.
+            config: An :class:`ExtractionConfig` whose
+                ``confidence_threshold`` is used as the minimum confidence.
+
+        Returns:
+            A new :class:`EntityExtractionResult` with only entities (and
+            their relationships) that satisfy the config threshold.
+        """
+        import dataclasses as _dc
+        threshold = getattr(config, "confidence_threshold", 0.0)
+        kept_entities = [e for e in result.entities if e.confidence >= threshold]
+        kept_ids = {getattr(e, "id", None) for e in kept_entities}
+        kept_rels = [
+            r for r in result.relationships
+            if getattr(r, "source_id", None) in kept_ids
+            and getattr(r, "target_id", None) in kept_ids
+        ]
+        return _dc.replace(result, entities=kept_entities, relationships=kept_rels)
 
     def confidence_histogram(self, result, bins: int = 5) -> dict:
         """Return a bucket-count histogram of entity confidence scores.
@@ -6046,6 +6082,19 @@ class OntologyGenerator:
         if not rels:
             return 0.0
         return sum(getattr(r, "confidence", 1.0) for r in rels) / len(rels)
+
+    def relationship_confidence_avg(self, result: Any) -> float:
+        """Alias for :meth:`relationship_confidence_mean`.
+
+        Returns the mean confidence of all relationships in *result*.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float mean; 0.0 when no relationships are present.
+        """
+        return self.relationship_confidence_mean(result)
 
     def entities_above_confidence(self, result: Any, threshold: float = 0.7) -> list:
         """Return entities whose confidence exceeds *threshold*.

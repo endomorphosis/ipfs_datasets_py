@@ -2151,3 +2151,72 @@ class OntologyLearningAdapter:
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
         std = variance ** 0.5
         return float(max(0.0, 1.0 - std / 0.5))
+
+    def feedback_geometric_mean(self) -> float:
+        """Return the geometric mean of all feedback ``final_score`` values.
+
+        Returns:
+            Float geometric mean in [0, 1]; ``0.0`` when any score is zero or
+            when no feedback is recorded.
+        """
+        if not self._feedback:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        if any(s <= 0.0 for s in scores):
+            return 0.0
+        product = 1.0
+        for s in scores:
+            product *= s
+        return product ** (1.0 / len(scores))
+
+    def feedback_harmonic_mean(self) -> float:
+        """Return the harmonic mean of all feedback ``final_score`` values.
+
+        Returns:
+            Float harmonic mean; ``0.0`` when any score is zero or when no
+            feedback is recorded.
+        """
+        if not self._feedback:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        if any(s <= 0.0 for s in scores):
+            return 0.0
+        return len(scores) / sum(1.0 / s for s in scores)
+
+    def feedback_std(self) -> float:
+        """Return the standard deviation of all feedback ``final_score`` values.
+
+        Returns:
+            Float std-dev; ``0.0`` when fewer than 2 feedback records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        return variance ** 0.5
+
+    def feedback_coefficient_of_variation(self) -> float:
+        """Return the coefficient of variation (std / mean) of feedback scores.
+
+        Returns:
+            Float CV; ``0.0`` when no feedback or mean is zero.
+        """
+        if not self._feedback:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        if mean == 0.0:
+            return 0.0
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        return variance ** 0.5 / mean
+
+    def feedback_relative_std(self) -> float:
+        """Alias for :meth:`feedback_coefficient_of_variation`.
+
+        Returns:
+            Float CV of feedback scores; ``0.0`` when no feedback or mean is
+            zero.
+        """
+        return self.feedback_coefficient_of_variation()
+

@@ -226,6 +226,13 @@ class OntologyPipeline:
             score = self._critic.evaluate_ontology(ontology, ctx)
             _notify("refined", 4, score=getattr(score, "overall", None),
                     actions_applied=actions_applied)
+            # Also invoke callback with positional (round_num, max_rounds, score) signature
+            if progress_callback is not None:
+                try:
+                    _max_rounds = getattr(self._mediator, "max_rounds", 1)
+                    progress_callback(1, _max_rounds, float(getattr(score, "overall", 0.0)))
+                except Exception as _cb_exc:  # noqa: BLE001
+                    self._log.debug("progress_callback (positional) raised: %s", _cb_exc)
         else:
             score = self._critic.evaluate_ontology(ontology, ctx)
             _notify("evaluated", 3, score=getattr(score, "overall", None))
@@ -2103,6 +2110,21 @@ class OntologyPipeline:
             return (scores[mid - 1] + scores[mid]) / 2
         return float(scores[mid])
 
+    def run_score_relative_improvement(self) -> float:
+        """Return the relative improvement from first to last run score.
+
+        Defined as ``(last - first) / first`` when ``first > 0``.
+
+        Returns:
+            Float; ``0.0`` when fewer than 2 runs or the first score is zero.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        first = self._run_history[0].score.overall
+        last = self._run_history[-1].score.overall
+        if first == 0.0:
+            return 0.0
+        return (last - first) / first
     # ------------------------------------------------------------------ #
     # Batch 204: Pipeline run history analysis methods                   #
     # ------------------------------------------------------------------ #

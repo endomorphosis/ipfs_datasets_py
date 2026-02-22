@@ -2394,6 +2394,7 @@ class OntologyMediator:
         Returns:
             Number of consecutive stagnant rounds at the end, or 0.
         """
+        _float_tolerance = 1e-12  # guard against IEEE 754 rounding errors
         if len(self._history) < 2:
             return 0
         
@@ -2403,7 +2404,7 @@ class OntologyMediator:
                 self._history[i].get("score", 0.0) 
                 - self._history[i-1].get("score", 0.0)
             )
-            if delta < threshold:
+            if delta <= threshold + _float_tolerance:
                 stagnation_count += 1
             else:
                 break
@@ -2448,6 +2449,35 @@ class OntologyMediator:
             return 'degrading'
         else:  # Small changes
             return 'stable'
+
+    def retry_last_round(
+        self,
+        ontology: "Dict[str, Any]",
+        score: Any,
+        context: Any,
+    ) -> "Dict[str, Any]":
+        """Re-apply the most recent refinement round.
+
+        Pops the latest snapshot from the undo stack (restoring the previous
+        ontology state) and then immediately calls :meth:`refine_ontology`
+        with the same *score* and *context*.  If the undo stack is empty the
+        current *ontology* is refined without a rollback first.
+
+        Args:
+            ontology: The current ontology dict.
+            score: The :class:`CriticScore` from the last evaluation.
+            context: The :class:`OntologyGenerationContext` for this round.
+
+        Returns:
+            A newly refined ontology dict.
+        """
+        import copy as _copy
+        if self._undo_stack:
+            # Roll back to the snapshot before the last refinement
+            base = _copy.deepcopy(self._undo_stack[-1])
+        else:
+            base = _copy.deepcopy(ontology)
+        return self.refine_ontology(base, score, context)
 
 
 # Export public API

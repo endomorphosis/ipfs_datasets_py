@@ -66,7 +66,7 @@ class TestScoreAtIndex:
 
 
 class TestHistoryLength:
-    """Test history_length() method."""
+    """Test history_length property."""
 
     def test_history_length_positive(self):
         """Test history length with multiple entries."""
@@ -76,19 +76,19 @@ class TestHistoryLength:
             OptimizationReport(average_score=0.7, trend="stable"),
             OptimizationReport(average_score=0.6, trend="stable"),
         ]
-        assert optimizer.history_length() == 3
+        assert optimizer.history_length == 3
 
     def test_history_length_single(self):
         """Test history length with single entry."""
         optimizer = OntologyOptimizer()
         optimizer._history = [OptimizationReport(average_score=0.5, trend="stable")]
-        assert optimizer.history_length() == 1
+        assert optimizer.history_length == 1
 
     def test_history_length_empty(self):
         """Test history length when empty."""
         optimizer = OntologyOptimizer()
         optimizer._history = []
-        assert optimizer.history_length() == 0
+        assert optimizer.history_length == 0
 
 
 class TestScoreRecentVariance:
@@ -458,7 +458,7 @@ class TestBatch200Integration:
         assert 0.75 <= mean <= 0.85
         
         # Length should be 5
-        assert optimizer.history_length() == 5
+        assert optimizer.history_length == 5
         
         # Recent scores should reflect improvement
         assert not optimizer.has_regressed(threshold=0.2)
