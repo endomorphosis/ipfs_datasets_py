@@ -5241,6 +5241,29 @@ class OntologyOptimizer:
         variance = sum((s - mean) ** 2 for s in scores) / n
         return variance / (rng ** 2)
 
+    def score_entropy_ratio(self) -> float:
+        """Return the normalised Shannon entropy of history scores.
+
+        Divides the raw entropy (in bits, from 10 equal bins in ``[0, 1]``)
+        by the maximum possible entropy ``log2(10) ≈ 3.32`` (all 10 bins
+        equally occupied).  The result lies in ``[0.0, 1.0]`` where
+        ``0.0`` means all scores fall in a single bin (minimal diversity)
+        and ``1.0`` means scores are perfectly uniformly distributed across
+        all 10 bins.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when the history is empty.
+
+        Example::
+
+            >>> opt.score_entropy_ratio()
+            0.0  # empty history
+        """
+        raw = self.score_entropy()
+        if raw == 0.0:
+            return 0.0
+        return raw / math.log2(10)
+
 
 # Export public API
 __all__ = [

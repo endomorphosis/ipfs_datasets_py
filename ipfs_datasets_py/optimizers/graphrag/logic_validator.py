@@ -4385,6 +4385,30 @@ class LogicValidator:
             return 0.0
         return sizes[0] / total
 
+    def avg_scc_size(self, ontology: Any) -> float:
+        """Return the mean size of strongly-connected components.
+
+        Delegates to :meth:`strongly_connected_component_sizes` and
+        computes the arithmetic mean.  Each node belongs to exactly one SCC,
+        so the sum of SCC sizes always equals the total node count.
+
+        Args:
+            ontology: Ontology object or dict with ``entities`` and
+                ``relationships`` fields.
+
+        Returns:
+            Float mean SCC size; ``0.0`` when the ontology has no entities.
+
+        Example::
+
+            >>> lv.avg_scc_size({"entities": [], "relationships": []})
+            0.0
+        """
+        sizes = self.strongly_connected_component_sizes(ontology)
+        if not sizes:
+            return 0.0
+        return sum(sizes) / len(sizes)
+
 
 __all__ = [
     'LogicValidator',

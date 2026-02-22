@@ -2571,3 +2571,26 @@ class OntologyPipeline:
         td = [sd[i + 1] - sd[i] for i in range(len(sd) - 1)]
         return sum(td) / len(td)
 
+    def run_score_velocity_max(self) -> float:
+        """Return the maximum first derivative of run overall scores.
+
+        Computes the first differences ``scores[i+1] - scores[i]`` across all
+        consecutive runs and returns the **maximum** value.  A large positive
+        value indicates the biggest single-step improvement; a negative value
+        means every consecutive transition was a decline.
+
+        Returns:
+            Float; ``0.0`` when fewer than 2 runs are recorded.
+
+        Example::
+
+            >>> pipeline.run_score_velocity_max()
+            0.0  # fewer than 2 runs
+        """
+        n = len(self._run_history)
+        if n < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        fd = [scores[i + 1] - scores[i] for i in range(n - 1)]
+        return max(fd)
+

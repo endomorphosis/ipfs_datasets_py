@@ -2037,9 +2037,30 @@ Completed items:
 
 ## Batch 225+ Backlog
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_entropy_ratio()` — entropy / max_entropy; normalized to [0,1]; 0.0 when history empty
-- [ ] (P2) [graphrag] `OntologyCritic.score_dimension_gini_coefficient(score)` — Gini coefficient of 6 dim values; 0.0 for uniform
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_std(result)` — population std dev of entity confidence; 0.0 for empty/uniform
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_plateau_count(epsilon)` — count consecutive pairs where |delta| <= epsilon; 0 for <2
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_velocity_max()` — max first derivative (steepest one-step improvement); 0.0 for <2 runs
-- [ ] (P2) [graphrag] `LogicValidator.avg_scc_size(ontology)` — mean SCC size; 0.0 for empty
+- [x] (P2) [graphrag] `OntologyOptimizer.score_entropy_ratio()` — entropy / max_entropy; normalized to [0,1]; 0.0 when history empty
+- [x] (P2) [graphrag] `OntologyCritic.score_dimension_gini_coefficient(score)` — Gini coefficient of 6 dim values; 0.0 for uniform
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_std(result)` — STALE (already exists at lines 5921+6801)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_plateau_count(epsilon)` — count consecutive pairs where |delta| <= epsilon; 0 for <2
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_velocity_max()` — max first derivative (steepest one-step improvement); 0.0 for <2 runs
+- [x] (P2) [graphrag] `LogicValidator.avg_scc_size(ontology)` — mean SCC size; 0.0 for empty
+
+### Batch 225 Completion Notes (2026-02-22)
+
+5 genuinely new methods implemented; `entity_confidence_std` was stale.
+
+- `OntologyOptimizer.score_entropy_ratio()` — `score_entropy() / log2(10)`; 0.0 for empty history; 1.0 for perfectly uniform (10 bins)
+- `OntologyCritic.score_dimension_gini_coefficient(score)` — alias for `dimension_gini(score)`; sorted-list Gini formula; 0.0 for uniform/zero dims
+- `OntologyLearningAdapter.feedback_plateau_count(epsilon=0.01)` — count consecutive pairs with `|delta| <= epsilon`; 0 for <2; different from `feedback_plateau_length` (which finds longest run)
+- `OntologyPipeline.run_score_velocity_max()` — `max(fd)` where `fd[i] = scores[i+1]-scores[i]`; 0.0 for <2 runs
+- `LogicValidator.avg_scc_size(ontology)` — `sum(sizes)/len(sizes)` via `strongly_connected_component_sizes()`; 0.0 for empty graph
+
+51 tests in `test_batch_225_features.py` — all passing.
+
+## Batch 226+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_entropy_rate()` — mean entropy change per step (entropy of differences); 0.0 for <2 entries
+- [ ] (P2) [graphrag] `OntologyCritic.score_dimension_max_z(score)` — max absolute z-score across 6 dims; 0.0 for uniform
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_skewness(result)` — population skewness of entity confidence; 0.0 for <3 entities or zero variance
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_plateau_fraction()` — flat pairs / total pairs; 0.0 for <2 entries
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_velocity_min()` — min first derivative (steepest one-step decline); 0.0 for <2 runs
+- [ ] (P2) [graphrag] `LogicValidator.scc_singleton_fraction(ontology)` — fraction of SCCs with size==1; 0.0 for empty

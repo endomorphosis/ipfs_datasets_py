@@ -2605,3 +2605,33 @@ class OntologyLearningAdapter:
             else:
                 current = 0
         return best
+
+    def feedback_plateau_count(self, epsilon: float = 0.01) -> int:
+        """Return the number of consecutive flat transitions in feedback scores.
+
+        A *flat transition* is a consecutive pair ``(scores[i-1], scores[i])``
+        where ``|scores[i] - scores[i-1]| <= epsilon``.  Unlike
+        :meth:`feedback_plateau_length` (which finds the longest run), this
+        method simply counts every individual flat pair.
+
+        Args:
+            epsilon: Maximum absolute difference to consider a transition flat.
+                Defaults to ``0.01``.
+
+        Returns:
+            Non-negative integer count; ``0`` when fewer than 2 feedback
+            records or when no pair satisfies ``|delta| <= epsilon``.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.5, actions={})
+            >>> adapter.apply_feedback(final_score=0.5, actions={})  # flat
+            >>> adapter.apply_feedback(final_score=0.9, actions={})  # not flat
+            >>> adapter.apply_feedback(final_score=0.9, actions={})  # flat
+            >>> adapter.feedback_plateau_count()
+            2  # two flat consecutive pairs
+        """
+        if len(self._feedback) < 2:
+            return 0
+        scores = [r.final_score for r in self._feedback]
+        return sum(1 for i in range(1, len(scores)) if abs(scores[i] - scores[i - 1]) <= epsilon)

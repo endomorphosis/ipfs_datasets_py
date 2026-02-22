@@ -4655,6 +4655,33 @@ class OntologyCritic(BaseCritic):
             return 0.0
         return (hi - lo) / (hi + lo)
 
+    def score_dimension_gini_coefficient(self, score: "CriticScore") -> float:
+        """Return the Gini coefficient of the 6 CriticScore dimension values.
+
+        This is an alias for :meth:`dimension_gini` provided for API
+        consistency with the ``score_*`` naming convention.
+
+        Uses the sorted-list formula:
+        ``G = (2 * sum(i * x_i) − (n+1) * sum(x_i)) / (n * sum(x_i))``
+        where ``x_i`` are the sorted dimension values (1-indexed).
+
+        Args:
+            score: A :class:`CriticScore` instance to evaluate.
+
+        Returns:
+            Float Gini coefficient in ``[0.0, 1.0]``; ``0.0`` when all
+            six dimension values are equal or the total is zero.
+
+        Example::
+
+            >>> s = CriticScore(completeness=0.0, consistency=1.0,
+            ...                  clarity=0.0, granularity=0.0,
+            ...                  relationship_coherence=0.0, domain_alignment=0.0)
+            >>> critic.score_dimension_gini_coefficient(s)
+            0.833...  # high inequality: one dimension dominates
+        """
+        return self.dimension_gini(score)
+
 
 # Export public API
 __all__ = [
