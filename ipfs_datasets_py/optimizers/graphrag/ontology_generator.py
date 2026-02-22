@@ -6420,6 +6420,46 @@ class OntologyGenerator:
                 entropy -= p * math.log(p)
         return entropy
 
+    def entity_with_longest_text(self, result: "EntityExtractionResult"):
+        """Return the entity with the longest text field.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            The Entity object with the most characters in its text; None when empty.
+        """
+        entities = result.entities or []
+        if not entities:
+            return None
+        return max(entities, key=lambda e: len(getattr(e, "text", "") or ""))
+
+    def relationship_weight_entropy(self, result: "EntityExtractionResult") -> float:
+        """Return the Shannon entropy of relationship weights (bucketed in 0.1 bins).
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float entropy in nats; 0.0 when no relationships.
+        """
+        import math as _math
+        rels = result.relationships or []
+        if not rels:
+            return 0.0
+        n = len(rels)
+        buckets: dict = {}
+        for r in rels:
+            w = float(getattr(r, "weight", 1.0) or 1.0)
+            bucket = min(int(w * 10), 9)
+            buckets[bucket] = buckets.get(bucket, 0) + 1
+        entropy = 0.0
+        for count in buckets.values():
+            p = count / n
+            if p > 0:
+                entropy -= p * _math.log(p)
+        return entropy
+
 
 __all__ = [
     'OntologyGenerator',

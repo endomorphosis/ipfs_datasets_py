@@ -4165,6 +4165,36 @@ class OntologyOptimizer:
             return 0.0
         return self._history[-1].average_score - baseline
 
+    def score_mean_above_baseline(self, baseline: float = 0.5) -> float:
+        """Return the mean of all history scores that are strictly above *baseline*.
+
+        Args:
+            baseline: Threshold to filter scores. Defaults to 0.5.
+
+        Returns:
+            Float mean; 0.0 when no scores above baseline.
+        """
+        above = [e.average_score for e in self._history if e.average_score > baseline]
+        return sum(above) / len(above) if above else 0.0
+
+    def history_volatility_ratio(self) -> float:
+        """Return the ratio of score std to score mean (coefficient of variation).
+
+        Same as ``history_coefficient_of_variation`` but computed from scratch
+        as a documentation alias.
+
+        Returns:
+            Float CV; 0.0 when fewer than 2 entries or mean == 0.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        vals = [e.average_score for e in self._history]
+        mean = sum(vals) / len(vals)
+        if mean == 0:
+            return 0.0
+        var = sum((v - mean) ** 2 for v in vals) / len(vals)
+        return (var ** 0.5) / mean
+
 
 # Export public API
 __all__ = [

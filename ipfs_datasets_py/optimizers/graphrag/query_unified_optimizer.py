@@ -460,7 +460,8 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         Returns:
             Dict: Optimized query parameters
         """
-        optimized_query = query.copy()
+        # Validate query parameters first
+        optimized_query = self._validate_query_parameters(query.copy())
         
         # Ensure traversal section exists
         if "traversal" not in optimized_query:
@@ -742,7 +743,8 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         Returns:
             Dict: Optimized query parameters
         """
-        optimized_query = query.copy()
+        # Validate query parameters first
+        optimized_query = self._validate_query_parameters(query.copy())
         
         # IPLD-specific optimizations leverage the content-addressed nature
         if "traversal" not in optimized_query:
