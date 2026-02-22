@@ -4264,6 +4264,55 @@ class LogicValidator:
                 has_incoming.add(tgt)
         return sum(1 for nid in all_ids if nid not in has_incoming)
 
+    def sink_count(self, ontology: Any) -> int:
+        """Count the number of *sink* nodes (out-degree zero) in the graph.
+
+        A sink node is one that has no outgoing edges — it is a terminal
+        point in the directed graph.  Isolated nodes (no edges at all) are
+        also counted as sinks.
+
+        Args:
+            ontology: Object with ``entities`` and ``relationships`` lists.
+                Each relationship must have ``source_id`` and ``target_id``
+                attributes (or the ``"source"``/``"target"`` dict keys are
+                also accepted as fallbacks).
+
+        Returns:
+            Non-negative integer count of sink nodes; ``0`` when there are
+            no entities.
+
+        Example::
+
+            >>> validator.sink_count(
+            ...     {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+            ...      "relationships": [{"source_id": "A", "target_id": "B"},
+            ...                        {"source_id": "A", "target_id": "C"}]})
+            2  # B and C have out-degree 0; A has two outgoing edges
+        """
+        entities = getattr(ontology, "entities", None)
+        if entities is None:
+            entities = ontology.get("entities", []) if isinstance(ontology, dict) else []
+        if not entities:
+            return 0
+        rels = getattr(ontology, "relationships", None)
+        if rels is None:
+            rels = ontology.get("relationships", []) if isinstance(ontology, dict) else []
+        # Collect all node IDs
+        all_ids: set[str] = set()
+        for e in entities:
+            eid = getattr(e, "id", None) or (e.get("id") if isinstance(e, dict) else None)
+            if eid:
+                all_ids.add(eid)
+        # Collect IDs that appear as sources (have outgoing edges)
+        has_outgoing: set[str] = set()
+        for r in rels:
+            src = getattr(r, "source_id", None) or (r.get("source_id") if isinstance(r, dict) else None)
+            if src is None:
+                src = getattr(r, "source", None) or (r.get("source") if isinstance(r, dict) else None)
+            if src:
+                has_outgoing.add(src)
+        return sum(1 for nid in all_ids if nid not in has_outgoing)
+
 
 __all__ = [
     'LogicValidator',

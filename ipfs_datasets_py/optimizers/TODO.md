@@ -1951,11 +1951,33 @@ Testing: 38 tests in test_batch_217_features.py; all passing.
 - 2 stale backlog items marked [x] (dimension_min, relationship_avg_confidence already existed)
 - 44 tests in `test_batch_219_features.py` — all passing
 
-## Batch 220+ Backlog
+## Batch 220 — DONE (2026-02-22)
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_geometric_mean()` — geometric mean of history scores
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_max(score)` — name of the highest-scoring dimension
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_sum(result)` — sum of entity confidences
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_iqr_ratio()` — IQR / mean of feedback scores
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_geometric_mean()` — geometric mean of run scores
-- [ ] (P2) [graphrag] `LogicValidator.sink_count(ontology)` — number of nodes with out-degree 0
+New methods:
+- `OntologyLearningAdapter.feedback_iqr_ratio()` — IQR/mean; 0.0 for <4 entries, zero IQR, or zero mean
+- `LogicValidator.sink_count(ontology)` — count nodes with out-degree 0; supports object+dict-style; set[str] annotations
+
+Stale items marked [x] (already existed):
+- `OntologyOptimizer.score_geometric_mean()` (line 4698)
+- `OntologyCritic.dimension_max(score)` (line 3642)
+- `OntologyGenerator.entity_confidence_sum(result)` (line 7029)
+- `OntologyPipeline.run_score_geometric_mean()` (line 1664)
+
+32 tests in `test_batch_220_features.py` — all passing
+
+Completed stale items:
+- [x] (P2) [graphrag] `OntologyOptimizer.score_geometric_mean()` — already existed
+- [x] (P2) [graphrag] `OntologyCritic.dimension_max(score)` — already existed
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_sum(result)` — already existed
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_iqr_ratio()` — implemented in Batch 220
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_geometric_mean()` — already existed
+- [x] (P2) [graphrag] `LogicValidator.sink_count(ontology)` — implemented in Batch 220
+
+## Batch 221+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_wmd()` — wasserstein-inspired distance between score history halves
+- [ ] (P2) [graphrag] `OntologyCritic.score_dimension_entropy(score)` — Shannon entropy of 6-dim distribution
+- [ ] (P2) [graphrag] `OntologyGenerator.relationship_avg_length(result)` — average length of relationship text fields
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_positive_rate()` — fraction of feedback with final_score > 0.5
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_positive_rate()` — fraction of run overall scores > 0.5
+- [ ] (P2) [graphrag] `LogicValidator.isolated_node_count(ontology)` — count nodes with both in-degree and out-degree 0

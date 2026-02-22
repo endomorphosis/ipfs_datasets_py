@@ -2499,3 +2499,36 @@ class OntologyLearningAdapter:
         if denom == 0.0:
             return 0.0
         return (peak - valley) / denom
+
+    def feedback_iqr_ratio(self) -> float:
+        """Return the IQR-to-mean ratio of feedback ``final_score`` values.
+
+        Computed as ``IQR / mean`` where IQR is the interquartile range
+        (Q3 − Q1) and mean is the arithmetic mean of all feedback scores.
+        This is a robust, scale-free measure of dispersion relative to
+        central tendency — analogous to the coefficient of variation but
+        resistant to extreme outliers.
+
+        Returns:
+            Float ``IQR / mean``; ``0.0`` when fewer than 4 feedback records,
+            when the mean is zero, or when IQR is zero.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.2, actions={})
+            >>> adapter.apply_feedback(final_score=0.4, actions={})
+            >>> adapter.apply_feedback(final_score=0.6, actions={})
+            >>> adapter.apply_feedback(final_score=0.8, actions={})
+            >>> adapter.feedback_iqr_ratio()  # IQR=0.4, mean=0.5 → 0.8
+            0.8
+        """
+        if len(self._feedback) < 4:
+            return 0.0
+        iqr = self.feedback_iqr()
+        if iqr == 0.0:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        if mean == 0.0:
+            return 0.0
+        return iqr / mean
