@@ -345,6 +345,126 @@ class ComplianceChecker:
         logger.debug("Loaded %d compliance rules from %s", loaded, path)
         return loaded
 
+    def reload(self, path: str) -> int:
+        """Reload rule configuration from *path*, replacing current rules.
+
+        Equivalent to calling :meth:`load` on a fresh instance and then copying
+        the results back.  This preserves any rules that were not persisted (they
+        are lost) but allows hot-reloading dynamically added rules from disk.
+
+        Returns:
+            Number of rule IDs reloaded (same as :meth:`load`).
+        """
+        self._rules.clear()
+        self._rule_order.clear()
+        self._deny_list.clear()
+        return self.load(path)
+
+    def save_encrypted(self, path: str, password: str) -> None:
+        """Persist rule configuration encrypted with AES-256-GCM.
+
+        Derives a 32-byte key from *password* via ``SHA-256``.  The nonce
+        (12 bytes, ``os.urandom``) is prepended to the ciphertext.  Falls back
+        to plain :meth:`save` with a ``UserWarning`` when the ``cryptography``
+        package is not installed.
+
+        Args:
+            path: Filesystem path for the encrypted rule file.
+            password: Encryption password (bytes or str; str is UTF-8 encoded).
+        """
+        try:
+            from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+            import hashlib
+        except ImportError:
+            import warnings
+            warnings.warn(
+                "cryptography package not installed; falling back to plain save()",
+                UserWarning,
+                stacklevel=2,
+            )
+            self.save(path)
+            return
+
+        parent = os.path.dirname(path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+
+        pw_bytes = password.encode() if isinstance(password, str) else password
+        key = hashlib.sha256(pw_bytes).digest()
+        nonce = os.urandom(12)
+        data: Dict[str, Any] = {
+            "rule_order": list(self._rule_order),
+            "deny_list": sorted(self._deny_list),
+        }
+        plaintext = json.dumps(data).encode()
+        aesgcm = AESGCM(key)
+        ciphertext = aesgcm.encrypt(nonce, plaintext, None)
+        with open(path, "wb") as fh:
+            fh.write(nonce + ciphertext)
+        logger.debug("Saved %d compliance rules (encrypted) to %s", len(self._rule_order), path)
+
+    def load_encrypted(self, path: str, password: str) -> int:
+        """Load encrypted rule configuration from *path*.
+
+        Decrypts using AES-256-GCM (key derived via SHA-256 of *password*) and
+        delegates the decoded JSON to :meth:`load`'s rule-wiring logic.  Falls
+        back to plain :meth:`load` with a ``UserWarning`` when ``cryptography``
+        is not installed.
+
+        Returns 0 on decryption failure, missing file, or any other error
+        without raising.
+
+        Returns:
+            Number of rule IDs loaded.
+        """
+        try:
+            from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+            from cryptography.exceptions import InvalidTag
+            import hashlib
+        except ImportError:
+            import warnings
+            warnings.warn(
+                "cryptography package not installed; falling back to plain load()",
+                UserWarning,
+                stacklevel=2,
+            )
+            return self.load(path)
+
+        if not os.path.exists(path):
+            logger.debug("Encrypted compliance rule file not found: %s", path)
+            return 0
+
+        _MIN_ENCRYPTED_FILE_SIZE = 13  # 12-byte nonce + at least 1 ciphertext byte
+        try:
+            with open(path, "rb") as fh:
+                raw = fh.read()
+            if len(raw) < _MIN_ENCRYPTED_FILE_SIZE:
+                logger.warning("Encrypted compliance file too short: %s", path)
+                return 0
+            nonce, ciphertext = raw[:12], raw[12:]
+            pw_bytes = password.encode() if isinstance(password, str) else password
+            key = hashlib.sha256(pw_bytes).digest()
+            aesgcm = AESGCM(key)
+            plaintext = aesgcm.decrypt(nonce, ciphertext, None)
+            data = json.loads(plaintext.decode())
+        except (InvalidTag, Exception) as exc:
+            logger.warning("Could not decrypt compliance rules from %s: %s", path, exc)
+            return 0
+
+        # Re-use the JSON deserialization logic from load()
+        import io
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tf:
+            json.dump(data, tf)
+            tmp_path = tf.name
+        try:
+            return self.load(tmp_path)
+        finally:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+
     # ------------------------------------------------------------------
     # Intent field extraction
     # ------------------------------------------------------------------

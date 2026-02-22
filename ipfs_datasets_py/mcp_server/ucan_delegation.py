@@ -182,8 +182,17 @@ class DelegationEvaluator:
     4. At least one delegation in the chain has the requested capability.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, max_chain_depth: int = 0) -> None:
+        """Initialise a :class:`DelegationEvaluator`.
+
+        Args:
+            max_chain_depth: Maximum allowed length of a delegation chain
+                (number of hops from root to leaf, inclusive).  ``0`` means
+                unlimited.  When a chain exceeds this limit,
+                :meth:`build_chain` raises ``ValueError``.
+        """
         self._store: Dict[str, Delegation] = {}
+        self._max_chain_depth: int = max_chain_depth
 
     # ------------------------------------------------------------------
     # Store management
@@ -244,6 +253,14 @@ class DelegationEvaluator:
 
         # chain is [leaf, ..., root]; reverse to root-first
         chain.reverse()
+
+        # Enforce max_chain_depth (0 = unlimited)
+        if self._max_chain_depth > 0 and len(chain) > self._max_chain_depth:
+            raise ValueError(
+                f"Delegation chain length {len(chain)} exceeds max_chain_depth "
+                f"{self._max_chain_depth}"
+            )
+
         return chain
 
     # ------------------------------------------------------------------
@@ -951,11 +968,12 @@ class DelegationManager:
             a temporary-directory path.
     """
 
-    def __init__(self, path: Optional[str] = None) -> None:
+    def __init__(self, path: Optional[str] = None, max_chain_depth: int = 0) -> None:
         _default_path = _tempfile.gettempdir() + "/mcp_delegations.json"
         self._store = DelegationStore(path or _default_path)
         self._revocation = RevocationList()
         self._evaluator: Optional[DelegationEvaluator] = None
+        self._max_chain_depth: int = max_chain_depth
 
     # ------------------------------------------------------------------
     # Delegation management
@@ -995,6 +1013,7 @@ class DelegationManager:
         """
         if self._evaluator is None:
             self._evaluator = self._store.to_evaluator()
+            self._evaluator._max_chain_depth = self._max_chain_depth
         return self._evaluator
 
     def can_invoke(self, leaf_cid: str, tool: str, actor: str) -> Tuple[bool, str]:
@@ -1115,7 +1134,10 @@ class DelegationManager:
 _default_delegation_manager: Optional[DelegationManager] = None
 
 
-def get_delegation_manager(path: Optional[str] = None) -> DelegationManager:
+def get_delegation_manager(
+    path: Optional[str] = None,
+    max_chain_depth: int = 0,
+) -> DelegationManager:
     """Return the process-global :class:`DelegationManager` singleton.
 
     Creates the singleton on first call.
@@ -1123,13 +1145,15 @@ def get_delegation_manager(path: Optional[str] = None) -> DelegationManager:
     Args:
         path: Optional path passed to :class:`DelegationManager` on first
             creation.  Ignored on subsequent calls.
+        max_chain_depth: Maximum delegation chain depth (0 = unlimited).
+            Applied on first creation; ignored on subsequent calls.
 
     Returns:
         The global :class:`DelegationManager` instance.
     """
     global _default_delegation_manager
     if _default_delegation_manager is None:
-        _default_delegation_manager = DelegationManager(path)
+        _default_delegation_manager = DelegationManager(path, max_chain_depth=max_chain_depth)
     return _default_delegation_manager
 
 
