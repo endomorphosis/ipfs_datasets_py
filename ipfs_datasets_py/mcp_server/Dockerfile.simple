@@ -45,13 +45,9 @@ ENV PYTHONPATH="/app:$PYTHONPATH"
 EXPOSE 8000
 EXPOSE 8080
 
-# Create health check script
-RUN echo '#!/bin/bash\ncurl -f http://localhost:8000/health || python -c "import requests; requests.get(\"http://localhost:8000\")" || exit 1' > /health_check.sh \
-    && chmod +x /health_check.sh
-
-# Health check
+# Health check (process-based; start_services.sh now uses stdio mode, no HTTP endpoint)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD /health_check.sh
+    CMD python -c "import ipfs_datasets_py.mcp_server; print('ok')" || exit 1
 
 # Start both MCP server and dashboard
 COPY ipfs_datasets_py/mcp_server/start_services.sh /start_services.sh

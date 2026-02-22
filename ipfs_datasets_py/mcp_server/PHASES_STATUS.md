@@ -1,6 +1,6 @@
 # MCP Server Phases Status Report
 
-**Last Updated:** 2026-02-22 (Session 45 — Flask deprecation warnings added; asyncio references fixed; 16 new tests)  
+**Last Updated:** 2026-02-22 (Session 46 — Phase N2 CI check added; Phase N3 docs updated; Phase M1 external callers warned; Phase O1-O3 Docker/start_services.sh Flask-free)  
 **Branch:** `copilot/create-improvement-refactoring-plan`
 **Master Plan:** [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)  
 **Next Steps:** [MASTER_IMPROVEMENT_PLAN_2026_v6.md](MASTER_IMPROVEMENT_PLAN_2026_v6.md)
@@ -292,6 +292,13 @@ Completed v5 tasks tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROV
 - ✅ `docs/architecture/DUAL_RUNTIME_ARCHITECTURE.md`: `asyncio.get_event_loop()` → `anyio.to_thread.run_sync()` (session 45)
 - ✅ Created `MASTER_IMPROVEMENT_PLAN_2026_v7.md` (phases M/N/O) — Flask removal, anyio validation, Docker refresh (session 45)
 - ✅ `test_deprecation_session45.py` — 16 tests all passing (session 45)
+- ✅ **Phase N2**: `test_no_asyncio_session46.py` — 4 AST-based CI regression tests (no asyncio in mcp_server production code) (session 46)
+- ✅ **Phase N3**: Legal dataset tool markdown guides updated `asyncio.run()` → `anyio.run()`: PLAYWRIGHT_SETUP.md, CRON_SETUP_GUIDE.md, COURTLISTENER_API_GUIDE.md (session 46)
+- ✅ **Phase N3**: `docs/adr/ADR-002-dual-runtime.md` updated to anyio-first wording (session 46)
+- ✅ **Phase M1**: `scripts/cli/integrated_cli.py` + `scripts/cli/comprehensive_distributed_cli.py` warn on `SimpleIPFSDatasetsMCPServer` import (session 46)
+- ✅ **Phase M2/O1**: `Dockerfile.standalone` rewritten — no Flask, stdio CMD, process-based HEALTHCHECK (session 46)
+- ✅ **Phase O2**: `start_services.sh` — removed `--http` flag; stdio mode default (session 46)
+- ✅ **Phase O3**: `Dockerfile.simple` — removed HTTP HEALTHCHECK, replaced with process-based check (session 46)
 - ✅ `monitoring.py` coverage: 63%→80% (Phase I) — `test_monitoring_session40.py` (44 tests)
 - ✅ `enterprise_api.py` coverage: 66%→80% (Phase I) — `test_enterprise_api_session40.py` (20 tests)
 - ✅ `tool_metadata.py` coverage: 0%→100% (Phase I) — `test_tool_metadata_session41.py` (38 tests)

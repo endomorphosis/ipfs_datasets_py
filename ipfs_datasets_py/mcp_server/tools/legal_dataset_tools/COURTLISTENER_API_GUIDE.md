@@ -220,7 +220,7 @@ Full list: https://www.courtlistener.com/api/rest-info/#court-codes
 ### Simple Test Script
 
 ```python
-import asyncio
+import anyio
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import search_recap_documents
 
 async def test_connection():
@@ -248,7 +248,7 @@ async def test_connection():
         return False
 
 # Run test
-success = asyncio.run(test_connection())
+success = anyio.run(test_connection)
 ```
 
 ### Command Line Test

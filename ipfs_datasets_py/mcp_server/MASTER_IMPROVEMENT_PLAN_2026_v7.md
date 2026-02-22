@@ -104,7 +104,7 @@ anyio/uvicorn — not Flask.
 
 ### 2.3 Tests Added ✅
 
-`tests/mcp/unit/test_deprecation_session45.py` — 13 tests:
+`tests/mcp/unit/test_deprecation_session45.py` — 16 tests:
 - `simple_server.SimpleIPFSDatasetsMCPServer` emits `DeprecationWarning`
 - `simple_server.start_simple_server()` emits `DeprecationWarning`
 - `standalone_server.MinimalMCPServer` emits `DeprecationWarning`
@@ -117,13 +117,64 @@ anyio/uvicorn — not Flask.
 
 ---
 
-## 3. Phase M: Flask Removal
+## 3. Session 46 Completed Work ✅
+
+### 3.1 Phase N2 — CI Check for asyncio Regressions ✅
+
+`tests/mcp/unit/test_no_asyncio_session46.py` — 4 tests (AST-based, no execution needed):
+- `test_no_asyncio_imports_in_mcp_server_production_code` — scans every `.py` in mcp_server
+- `test_mcp_root_exists` — sanity check for path configuration
+- `test_at_least_one_py_file_scanned` — guards against misconfigured root path
+- `test_anyio_present_in_mcp_server` — confirms anyio is actually used
+
+### 3.2 Phase N3 — Documentation asyncio→anyio ✅
+
+| File | Lines changed |
+|------|---------------|
+| `tools/legal_dataset_tools/PLAYWRIGHT_SETUP.md` | `import asyncio` × 2 → `import anyio`; `asyncio.run(verify())` → `anyio.run(verify)`; `asyncio.run(test_dc())` → `anyio.run(test_dc)` |
+| `tools/legal_dataset_tools/CRON_SETUP_GUIDE.md` | `import asyncio` → `import anyio`; `asyncio.run(main())` → `anyio.run(main)` |
+| `tools/legal_dataset_tools/COURTLISTENER_API_GUIDE.md` | `import asyncio` → `import anyio`; `asyncio.run(test_connection())` → `anyio.run(test_connection)` |
+| `docs/adr/ADR-002-dual-runtime.md` | "asyncio event loop" → "anyio's asyncio backend"; "FastAPI routes continue to use asyncio" → "FastAPI routes run via anyio's asyncio backend"; Negative consequence improved: "must avoid asyncio.sleep only" → explicit list of banned primitives |
+
+### 3.3 Phase M1 — External Callers Warned ✅
+
+| File | Change |
+|------|--------|
+| `scripts/cli/integrated_cli.py` | Added `warnings.warn(DeprecationWarning)` before `SimpleIPFSDatasetsMCPServer` import |
+| `scripts/cli/comprehensive_distributed_cli.py` | Added `warnings.warn(DeprecationWarning)` before `SimpleIPFSDatasetsMCPServer` import |
+
+### 3.4 Phase M2 / O1 — `Dockerfile.standalone` Rewritten ✅
+
+Removed: `flask>=3.0.0`, `standalone_server.py` copy, HTTP HEALTHCHECK, port 8000/8080 EXPOSEs  
+Added: `anyio>=4.0.0`, full mcp_server package copy, process-based HEALTHCHECK  
+New CMD: `python -m ipfs_datasets_py.mcp_server` (stdio mode)
+
+### 3.5 Phase O2 — `start_services.sh` Fixed ✅
+
+Removed `--host 0.0.0.0 --port 8000 --http` arguments from the MCP server startup line.  
+Stdio mode is now the default.  Comment updated with explanation.
+
+### 3.6 Phase O3 — `Dockerfile.simple` HEALTHCHECK Updated ✅
+
+Removed HTTP-based health check (`curl -f http://localhost:8000/health`).  
+New HEALTHCHECK: `python -c "import ipfs_datasets_py.mcp_server; print('ok')"` (process-based).
+
+---
+
+## 4. Phase M: Flask Removal
 
 **Goal:** Fully remove Flask from the MCP server codebase (not just deprecate).
 
-### M1 — Replace `simple_server.py` with MCP-native equivalent
+### M1 — Warn external callers of `SimpleIPFSDatasetsMCPServer` ✅ (Session 46)
 
-**Status:** 🔴 Pending
+**Status:** ✅ Complete
+
+`scripts/cli/integrated_cli.py` and `scripts/cli/comprehensive_distributed_cli.py`
+both emit `DeprecationWarning` before importing `SimpleIPFSDatasetsMCPServer`.
+
+### M2 — Replace `simple_server.py` with MCP-native equivalent
+
+**Status:** 🟡 In Progress — warnings added; deletion pending
 
 `simple_server.py` currently provides HTTP routes (`/`, `/tools`, `/tools/<name>`)
 using Flask.  The replacement is the MCP stdio server (`server.py`) plus the CLI
@@ -131,36 +182,20 @@ tool.  Once all consumers are migrated, `simple_server.py` should be deleted or
 reduced to an import-shim that immediately raises `DeprecationWarning`.
 
 **Acceptance criteria:**
-- [ ] No caller outside `simple_server.py` itself imports `SimpleIPFSDatasetsMCPServer`
-- [ ] `Dockerfile.simple` updated to use `python -m ipfs_datasets_py.mcp_server`
-- [ ] `start_simple_server.sh` updated or removed
-- [ ] File marked for deletion with `# TODO: remove in v2.0` comment
-
-### M2 — Replace `standalone_server.py` with MCP stdio + health file
-
-**Status:** 🔴 Pending
-
-`standalone_server.py` is used by `Dockerfile.standalone` for Docker deployments.
-The replacement strategy:
-
-1. Use `python -m ipfs_datasets_py.mcp_server` as the Docker CMD
-2. For Docker health checks, create a simple `/health` file on disk that the
-   `HEALTHCHECK` CMD checks with `test -f /tmp/healthy`
-3. Or, use the lightweight FastAPI service layer instead of Flask
-
-**Acceptance criteria:**
-- [ ] `Dockerfile.standalone` no longer references `standalone_server.py`
-- [ ] `standalone_server.py` reduced to a one-line shim or deleted
+- [x] No caller outside `simple_server.py` itself imports `SimpleIPFSDatasetsMCPServer` **without** a `DeprecationWarning`
+- [ ] `Dockerfile.simple` updated to use `python -m ipfs_datasets_py.mcp_server` ← remaining
+- [ ] `start_simple_server.sh` updated or removed ← remaining
+- [ ] File marked for deletion with `# TODO: remove in v2.0` comment ← remaining
 
 ### M3 — Remove Flask from `requirements-docker.txt`
 
 **Status:** 🔴 Pending
 
-Once M1 and M2 are done, `flask` can be removed from `requirements-docker.txt`.
+Once M2 is fully done, `flask` can be removed from `requirements-docker.txt`.
 
 ---
 
-## 4. Phase N: anyio Migration Validation
+## 5. Phase N: anyio Migration Validation
 
 **Goal:** Audit and validate that no production Python file in `mcp_server/` uses
 `import asyncio` or calls `asyncio.*` directly.
@@ -169,109 +204,81 @@ Once M1 and M2 are done, `flask` can be removed from `requirements-docker.txt`.
 
 The grep-based check in session 45 confirmed **zero** `import asyncio` or
 `asyncio.` calls in any `.py` file (excluding test files and markdown/backups).
-The only occurrences were:
-
-- Comments in `executor.py` (fixed in session 45)
-- Markdown code examples (fixed in session 45)
-- `.backup` file (not part of build)
 
 **Status:** ✅ Complete
 
-### N2 — Add CI check for asyncio regressions
+### N2 — CI check for asyncio regressions ✅ (Session 46)
 
-**Status:** 🔴 Pending
+**Status:** ✅ Complete
 
-Add a `pytest` fixture or CI step that verifies no production file imports asyncio:
+`tests/mcp/unit/test_no_asyncio_session46.py` — 4 AST-based tests confirm no production
+file in `mcp_server/` imports `asyncio`.  Any future regression will cause this test
+to fail immediately.
 
-```python
-# tests/mcp/unit/test_no_asyncio_session45.py
-import ast, pathlib
+### N3 — Documentation audit ✅ (Session 46)
 
-def test_no_asyncio_imports_in_production_code():
-    """No production mcp_server .py file should import asyncio directly."""
-    mcp_root = pathlib.Path("ipfs_datasets_py/mcp_server")
-    violations = []
-    for py_file in mcp_root.rglob("*.py"):
-        if "test_" in py_file.name or "__pycache__" in str(py_file):
-            continue
-        src = py_file.read_text(errors="replace")
-        try:
-            tree = ast.parse(src)
-        except SyntaxError:
-            continue
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.Import, ast.ImportFrom)):
-                names = [a.name for a in getattr(node, "names", [])]
-                module = getattr(node, "module", "") or ""
-                if "asyncio" in names or module.startswith("asyncio"):
-                    violations.append(f"{py_file}:{node.lineno}")
-    assert violations == [], f"asyncio imports found: {violations}"
-```
+**Status:** ✅ Complete
 
-### N3 — Documentation audit
-
-**Status:** ✅ Partially complete (session 45)
-
-- [x] `README.md` code examples updated
-- [x] `DUAL_RUNTIME_ARCHITECTURE.md` code example updated
-- [ ] `tools/legal_dataset_tools/` markdown guides (CRON_SETUP_GUIDE.md, PLAYWRIGHT_SETUP.md, COURTLISTENER_API_GUIDE.md) — still show `asyncio.run()` — update to `anyio.run()`
-- [ ] `docs/adr/ADR-002-dual-runtime.md` — note says "developers must avoid `asyncio.sleep` only" — rephrase
+- [x] `README.md` code examples updated (session 45)
+- [x] `DUAL_RUNTIME_ARCHITECTURE.md` code example updated (session 45)
+- [x] `tools/legal_dataset_tools/PLAYWRIGHT_SETUP.md` — `asyncio.run()` × 2 → `anyio.run()` (session 46)
+- [x] `tools/legal_dataset_tools/CRON_SETUP_GUIDE.md` — `asyncio.run()` → `anyio.run()` (session 46)
+- [x] `tools/legal_dataset_tools/COURTLISTENER_API_GUIDE.md` — `asyncio.run()` → `anyio.run()` (session 46)
+- [x] `docs/adr/ADR-002-dual-runtime.md` — wording updated to use anyio-first language (session 46)
 
 ---
 
-## 5. Phase O: Docker Image Refresh
+## 6. Phase O: Docker Image Refresh
 
 **Goal:** Update Docker images to use the MCP stdio server instead of Flask.
 
-### O1 — Update `Dockerfile.standalone`
+### O1 — `Dockerfile.standalone` rewritten ✅ (Session 46)
+
+**Status:** ✅ Complete
+
+Removed `flask>=3.0.0`; removed `standalone_server.py`; process-based HEALTHCHECK;
+CMD is now `python -m ipfs_datasets_py.mcp_server`.
+
+### O2 — `start_services.sh` fixed ✅ (Session 46)
+
+**Status:** ✅ Complete
+
+Removed `--host 0.0.0.0 --port 8000 --http` flags.  MCP server runs in stdio mode.
+
+### O3 — `Dockerfile.simple` HEALTHCHECK updated ✅ (Session 46)
+
+**Status:** ✅ Complete
+
+Removed HTTP-based health check (`curl -f http://localhost:8000/health`).  
+New HEALTHCHECK: `python -c "import ipfs_datasets_py.mcp_server; print('ok')"` (process-based).
+
+### O4 — Remove Flask from `requirements-docker.txt` 🔴 Pending
 
 **Status:** 🔴 Pending
 
-Current `Dockerfile.standalone` installs Flask and runs `standalone_server.py`.
-Replace with:
-
-```dockerfile
-# Install minimal Python dependencies (no Flask needed)
-RUN pip install mcp>=1.2.0 anyio>=4.0.0
-
-# Run MCP stdio server
-CMD ["python", "-m", "ipfs_datasets_py.mcp_server"]
-```
-
-For health checks, use a process-based check:
-```dockerfile
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD python -c "import ipfs_datasets_py; print('ok')" || exit 1
-```
-
-### O2 — Update `start_services.sh`
-
-**Status:** 🔴 Pending
-
-`start_services.sh` passes `--http` to the MCP server (now deprecated).
-Update to use stdio mode (or remove `--http` flag).
-
-### O3 — Update `Dockerfile.simple`
-
-**Status:** 🔴 Pending
-
-`Dockerfile.simple` uses `start_services.sh` which uses `--http`.  Update the
-CMD to use stdio mode directly.
+Once `simple_server.py` itself is deleted or fully migrated, remove `flask` from
+`requirements-docker.txt`.
 
 ---
 
 ## 6. Success Metrics
 
-| Metric | Session 44 Baseline | Session 45 | Phase M Target | Phase N Target |
-|--------|--------------------|----|---|---|
-| Tests passing | 1816 | 1829+ | 1829+ | 1829+ |
-| Flask imports in `.py` files | 2 hard + 1 conditional | 1 conditional (guarded) + deprecation warnings | 0 | 0 |
-| `asyncio.run()` in `.py` source | 0 | 0 ✅ | 0 | 0 |
-| `asyncio.*` comments (misleading) | 3 | 0 ✅ | 0 | 0 |
-| `asyncio.run()` in doc code blocks | 2 | 0 ✅ | 0 | 0 |
-| DeprecationWarnings on Flask classes | 0 | 5 ✅ | 5+ | — |
-| Flask fallback in `__main__.py` | present | removed ✅ | — | — |
-| Docker images using Flask | 2 | 2 | 0 | — |
+| Metric | Session 44 Baseline | Session 45 | Session 46 | Phase M Target | Phase N Target |
+|--------|--------------------|----|---|---|---|
+| Tests passing | 1816 | 1829+ | 1833 ✅ | 1833+ | 1833+ |
+| Flask imports in `.py` files | 2 hard + 1 conditional | 1 conditional (guarded) + deprecation warnings | 1 conditional + deprecation warnings + external caller warnings ✅ | 0 | 0 |
+| `asyncio.run()` in `.py` source | 0 | 0 ✅ | 0 ✅ | 0 | 0 |
+| `asyncio.*` comments (misleading) | 3 | 0 ✅ | 0 ✅ | 0 | 0 |
+| `asyncio.run()` in doc code blocks | 2 | 0 ✅ | 0 ✅ | 0 | 0 |
+| `asyncio.run()` in tool guide docs | 4 | 4 | 0 ✅ (N3 complete) | 0 | 0 |
+| `asyncio` wording in ADR-002 | stale | stale | updated ✅ | — | ✅ |
+| DeprecationWarnings on Flask classes | 0 | 5 ✅ | 5 ✅ | 5+ | — |
+| Flask fallback in `__main__.py` | present | removed ✅ | removed ✅ | — | — |
+| External callers warned | 0 | 0 | 2 ✅ (M1) | 2 | — |
+| `Dockerfile.standalone` uses Flask | yes | yes | no ✅ (M2/O1) | no | — |
+| `start_services.sh` --http flag | yes | yes | removed ✅ (O2) | no | — |
+| `Dockerfile.simple` HTTP healthcheck | yes | yes | removed ✅ (O3) | no | — |
+| CI asyncio regression check | none | none | ✅ `test_no_asyncio_session46.py` (N2) | ✅ | ✅ |
 
 ---
 
