@@ -5,6 +5,40 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.3] - 2026-02-22
+
+### Tests — Final Coverage Push (Session 48)
+
+**16 new tests** in `test_master_status_session48.py`. No production code changes.
+
+**New optional deps installed (unlocks more coverage):** `libipld`, `ipld-car`, `dag-cbor`, `multiformats`
+- `migration/formats.py` now **100%** — CAR format save/load paths now exercised by existing property-based tests.
+
+**New test groups:**
+
+1. **`cypher/compiler.py:261`** — `_compile_node_pattern` anonymous variable fallback (`_anon{N}`) when both `node.variable` and `default_var` are `None`/empty string (5 tests):
+   - Anon variable is generated and registered in `compiler.variables`
+   - `ScanLabel` op emitted with auto-generated variable
+   - `ScanAll` op emitted when no labels provided
+   - Multiple consecutive anon nodes get unique `_anon0`, `_anon1` variables
+   - Empty-string `node.variable` also triggers anon generation
+
+2. **`core/expression_evaluator.py:153-163`** — `reverse` and `size` fallback string handlers (8 tests):
+   - These handlers run when the function names are temporarily absent from `FUNCTION_REGISTRY`
+   - `reverse`: reverses string / returns `None` for non-string / returns `None` for empty args
+   - `size`: returns `len()` for strings / lists / tuples; returns `None` for empty args; returns `None` for non-sequence types
+
+3. **`ontology/reasoning.py:828`** — BFS transitive closure cycle guard `if mid in visited: continue` (3 tests):
+   - Triggered by A→B→C→B cycle: B is popped from the BFS queue a second time; line 828 fires and skips it
+   - BFS terminates cleanly for longer cycles (A→B→C→D→B)
+   - No duplicate inferred relationships added despite cycle
+
+**Coverage impact:** `expression_evaluator.py` 97%→**100%**; `ontology/reasoning.py` 99%→**100%**; `migration/formats.py` 98%→**100%**; `compiler.py` misses reduced from 3→2; overall **99%** (159→141 missed lines).
+
+**Result:** 3,626 passing, 7 skipped, 0 failing (with all optional deps installed).
+
+---
+
 ## [3.22.2] - 2026-02-22
 
 ### Bug Fix — RDF Boolean Serialization Order (Session 47)

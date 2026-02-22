@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.22.1  
+**Version:** 3.22.2  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-22 (session 47)  
-**Last Major Release:** v3.22.1 (session 47: 1 production bug fix; **3,591 passing, 26 skipped, 0 failing** with matplotlib+scipy+plotly+rdflib installed; 3,553 passing / 55 skipped in minimal base env; fixes: `extraction/graph.py` boolean RDF serialization bug — `case bool()` now checked BEFORE `case int()` in entity match block; `elif isinstance(value, bool)` now checked BEFORE `elif isinstance(value, int)` in relationship block; 9 new tests in session47; coverage: `extraction/graph.py` 80%→**100%**, overall 98%→**99%**)
+**Last Updated:** 2026-02-22 (session 48)  
+**Last Major Release:** v3.22.2 (session 48: 16 new tests; **3,626 passing, 7 skipped, 0 failing** with all optional deps installed (libipld, ipld-car, dag-cbor, multiformats, matplotlib, scipy, plotly, rdflib, networkx, numpy); covers `compiler.py:261`, `expression_evaluator.py:153-163`, `ontology/reasoning.py:828`; `migration/formats.py` now 100%; overall 99%, 141 missed lines)
 
 ---
 
@@ -18,10 +18,10 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | **99% overall** | Session 47: 3,591 pass, 26 skipped, **0 fail** (with optional deps); 3,553/55/0 in base env. `extraction/graph.py` now 100% |
-| **Documentation** | ✅ Up to Date | Reflects v3.22.1 structure |
-| **Known Issues** | None | 0 failures; all skips intentional (libipld/spaCy absent) |
-| **Next Milestone** | v4.0 (2027+) | Remaining 159 missed lines are spaCy/libipld-dependent or unreachable ImportError blocks |
+| **Test Coverage** | **99% overall** | Session 48: 3,626 pass, 7 skipped, **0 fail** (with all optional deps); `migration/formats.py` now 100%, `expression_evaluator.py` now 100%, `ontology/reasoning.py` now 100% |
+| **Documentation** | ✅ Up to Date | Reflects v3.22.2 structure |
+| **Known Issues** | None | 0 failures; all skips intentional (libipld/spaCy absent when not installed) |
+| **Next Milestone** | v4.0 (2027+) | Remaining 141 missed lines are: spaCy-only (108), dead code (33) — see IMPROVEMENT_TODO.md |
 
 ---
 
