@@ -28,3 +28,11 @@ def __getattr__(name: str) -> Any:
     if name in __all__:
         return importlib.import_module(f"{__name__}.{name}")
     raise AttributeError(name)
+
+# --- Engine modules (moved from mcp_server/tools/mcplusplus) ---
+try:
+    from .peer_engine import PeerEngine
+    from .taskqueue_engine import TaskQueueEngine
+    from .workflow_engine import WorkflowEngine
+except ImportError:
+    pass

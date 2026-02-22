@@ -19,7 +19,7 @@ class TestTaskQueueEngineUnavailable:
     """TaskQueueEngine graceful degradation when MCP++ is not available."""
 
     def setup_method(self) -> None:
-        from ipfs_datasets_py.mcp_server.tools.mcplusplus.taskqueue_engine import TaskQueueEngine
+        from ipfs_datasets_py.p2p_networking.taskqueue_engine import TaskQueueEngine
         self.engine = TaskQueueEngine()
 
     def _run(self, coro):  # type: ignore[no-untyped-def]
@@ -101,11 +101,11 @@ class TestTaskQueueEngineMocked:
 
     def test_submit_success_path(self) -> None:
         wrapper = self._make_wrapper(submit_task={"task_id": "t1", "status": "queued", "queue_position": 3})
-        import ipfs_datasets_py.mcp_server.tools.mcplusplus.taskqueue_engine as mod
+        import ipfs_datasets_py.p2p_networking.taskqueue_engine as mod
         with patch.object(mod, "MCPLUSPLUS_AVAILABLE", True), \
              patch.object(mod, "task_queue", MagicMock()), \
              patch.object(mod, "create_task_queue_wrapper", return_value=wrapper):
-            from ipfs_datasets_py.mcp_server.tools.mcplusplus.taskqueue_engine import TaskQueueEngine
+            from ipfs_datasets_py.p2p_networking.taskqueue_engine import TaskQueueEngine
             engine = TaskQueueEngine()
             result = self._run(engine.submit("t1", "download", {"url": "x"}))
         assert result["success"] is True
@@ -115,11 +115,11 @@ class TestTaskQueueEngineMocked:
 
     def test_get_status_success_path(self) -> None:
         wrapper = self._make_wrapper(get_task_status={"status": "running", "progress": 50})
-        import ipfs_datasets_py.mcp_server.tools.mcplusplus.taskqueue_engine as mod
+        import ipfs_datasets_py.p2p_networking.taskqueue_engine as mod
         with patch.object(mod, "MCPLUSPLUS_AVAILABLE", True), \
              patch.object(mod, "task_queue", MagicMock()), \
              patch.object(mod, "create_task_queue_wrapper", return_value=wrapper):
-            from ipfs_datasets_py.mcp_server.tools.mcplusplus.taskqueue_engine import TaskQueueEngine
+            from ipfs_datasets_py.p2p_networking.taskqueue_engine import TaskQueueEngine
             engine = TaskQueueEngine()
             result = self._run(engine.get_status("t1"))
         assert result["success"] is True
@@ -129,11 +129,11 @@ class TestTaskQueueEngineMocked:
     def test_get_stats_success_path(self) -> None:
         wrapper = self._make_wrapper(get_queue_stats={"queued_count": 5, "running_count": 2,
                                                        "completed_count": 100, "failed_count": 3})
-        import ipfs_datasets_py.mcp_server.tools.mcplusplus.taskqueue_engine as mod
+        import ipfs_datasets_py.p2p_networking.taskqueue_engine as mod
         with patch.object(mod, "MCPLUSPLUS_AVAILABLE", True), \
              patch.object(mod, "task_queue", MagicMock()), \
              patch.object(mod, "create_task_queue_wrapper", return_value=wrapper):
-            from ipfs_datasets_py.mcp_server.tools.mcplusplus.taskqueue_engine import TaskQueueEngine
+            from ipfs_datasets_py.p2p_networking.taskqueue_engine import TaskQueueEngine
             engine = TaskQueueEngine()
             result = self._run(engine.get_stats())
         assert result["success"] is True
@@ -149,7 +149,7 @@ class TestPeerEngineUnavailable:
     """PeerEngine graceful degradation when MCP++ is not available."""
 
     def setup_method(self) -> None:
-        from ipfs_datasets_py.mcp_server.tools.mcplusplus.peer_engine import PeerEngine
+        from ipfs_datasets_py.p2p_networking.peer_engine import PeerEngine
         self.engine = PeerEngine()
 
     def _run(self, coro):  # type: ignore[no-untyped-def]
@@ -188,10 +188,10 @@ class TestPeerEngineMocked:
 
     def test_discover_with_registry(self) -> None:
         mock_registry = MagicMock()
-        import ipfs_datasets_py.mcp_server.tools.mcplusplus.peer_engine as mod
+        import ipfs_datasets_py.p2p_networking.peer_engine as mod
         with patch.object(mod, "MCPLUSPLUS_AVAILABLE", True), \
              patch.object(mod, "get_peer_registry", AsyncMock(return_value=mock_registry)):
-            from ipfs_datasets_py.mcp_server.tools.mcplusplus.peer_engine import PeerEngine
+            from ipfs_datasets_py.p2p_networking.peer_engine import PeerEngine
             engine = PeerEngine()
             result = self._run(engine.discover(max_peers=2))
         assert result["success"] is True
@@ -200,10 +200,10 @@ class TestPeerEngineMocked:
 
     def test_connect_with_registry(self) -> None:
         mock_registry = MagicMock()
-        import ipfs_datasets_py.mcp_server.tools.mcplusplus.peer_engine as mod
+        import ipfs_datasets_py.p2p_networking.peer_engine as mod
         with patch.object(mod, "MCPLUSPLUS_AVAILABLE", True), \
              patch.object(mod, "get_peer_registry", AsyncMock(return_value=mock_registry)):
-            from ipfs_datasets_py.mcp_server.tools.mcplusplus.peer_engine import PeerEngine
+            from ipfs_datasets_py.p2p_networking.peer_engine import PeerEngine
             engine = PeerEngine()
             result = self._run(engine.connect("QmPeer1", "/ip4/1.2.3.4/tcp/4001"))
         assert result["success"] is True
@@ -218,7 +218,7 @@ class TestWorkflowEngineUnavailable:
     """WorkflowEngine graceful degradation when MCP++ is not available."""
 
     def setup_method(self) -> None:
-        from ipfs_datasets_py.mcp_server.tools.mcplusplus.workflow_engine import WorkflowEngine
+        from ipfs_datasets_py.p2p_networking.workflow_engine import WorkflowEngine
         self.engine = WorkflowEngine()
 
     def _run(self, coro):  # type: ignore[no-untyped-def]
@@ -233,9 +233,9 @@ class TestWorkflowEngineUnavailable:
         assert result["success"] is False
 
     def test_submit_local_fallback_when_unavailable(self) -> None:
-        import ipfs_datasets_py.mcp_server.tools.mcplusplus.workflow_engine as mod
+        import ipfs_datasets_py.p2p_networking.workflow_engine as mod
         with patch.object(mod, "MCPLUSPLUS_AVAILABLE", False):
-            from ipfs_datasets_py.mcp_server.tools.mcplusplus.workflow_engine import WorkflowEngine
+            from ipfs_datasets_py.p2p_networking.workflow_engine import WorkflowEngine
             engine = WorkflowEngine()
             result = self._run(engine.submit("wf1", "Test", [{"step_id": "s1", "action": "do"}]))
         # Graceful degradation: falls back to local execution

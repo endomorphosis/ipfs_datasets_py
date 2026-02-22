@@ -1,6 +1,14 @@
 # Bluebook Citation Validator - Software Architecture Document (SAD)
 ## Explained Like You're a Smart Kid
 
+> **⚠️ Legacy Location Notice**  
+> The core Bluebook Citation Validator package has moved to:
+> `ipfs_datasets_py/processors/legal_scrapers/bluebook_citation_validator/`  
+> The MCP tool wrapper is at:
+> `ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/bluebook_citation_validator_tool.py`  
+> This directory (`lizardperson_argparse_programs/`) contains the original argparse CLI program
+> which is preserved for reference. New development should target the core package above.
+
 ## 1. What Are We Actually Building?
 
 ### The Simple Problem

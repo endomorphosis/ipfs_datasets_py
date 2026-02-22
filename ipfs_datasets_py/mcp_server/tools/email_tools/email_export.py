@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 # Import Email processor
 try:
-    from ipfs_datasets_py.data_transformation.multimedia.email_processor import create_email_processor
+    from ipfs_datasets_py.processors.multimedia.email_processor import create_email_processor
     EMAIL_AVAILABLE = True
 except ImportError:
     EMAIL_AVAILABLE = False

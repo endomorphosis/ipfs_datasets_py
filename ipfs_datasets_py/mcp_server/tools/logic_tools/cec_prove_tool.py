@@ -90,11 +90,11 @@ def prove_dcec(formula: str = "", goal: str = "",
                timeout_ms: int = 0) -> Dict[str, Any]:
     """Sync wrapper around cec_prove for backward compatibility.
     Accepts both 'formula' (positional) and 'goal' keyword."""
-    import asyncio
+    import anyio as _anyio_local
     actual_goal = goal or formula
     actual_timeout = timeout if not timeout_ms else max(1, timeout_ms // 1000)
-    result = asyncio.get_event_loop().run_until_complete(
-        cec_prove(goal=actual_goal, axioms=axioms, strategy=strategy, timeout=actual_timeout)
+    result = _anyio_local.run(
+        lambda: cec_prove(goal=actual_goal, axioms=axioms, strategy=strategy, timeout=actual_timeout)
     )
     result.setdefault("execution_time", result.get("elapsed_ms", 0) / 1000)
     return result
@@ -102,8 +102,8 @@ def prove_dcec(formula: str = "", goal: str = "",
 
 def check_theorem(formula: str) -> Dict[str, Any]:
     """Sync wrapper around cec_check_theorem for backward compatibility."""
-    import asyncio
-    result = asyncio.get_event_loop().run_until_complete(cec_check_theorem(formula=formula))
+    import anyio as _anyio_local
+    result = _anyio_local.run(lambda: cec_check_theorem(formula=formula))
     result.setdefault("is_theorem", result.get("proved", False))
     return result
 
@@ -145,7 +145,6 @@ TOOLS: Dict[str, Any] = {
 # OOP wrapper classes expected by test_mcp_cec_prove_parse_analysis.py
 # ---------------------------------------------------------------------------
 
-import asyncio as _asyncio
 import time as _time
 
 

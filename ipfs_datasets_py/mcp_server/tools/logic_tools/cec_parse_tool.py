@@ -77,10 +77,8 @@ __all__ = ["cec_parse", "cec_validate_formula",
 
 def parse_dcec(text: str, language: str = "en", domain: str = "general") -> Dict[str, Any]:
     """Sync wrapper around cec_parse for backward compatibility."""
-    import asyncio
-    result = asyncio.get_event_loop().run_until_complete(
-        cec_parse(text=text, language=language, domain=domain)
-    )
+    import anyio as _al
+    result = _al.run(lambda: cec_parse(text=text, language=language, domain=domain))
     # When language='auto', add language_detected key
     if language == "auto" and result.get("success") is not False:
         result.setdefault("language_detected", result.get("language_used", "en"))
@@ -91,8 +89,8 @@ def parse_dcec(text: str, language: str = "en", domain: str = "general") -> Dict
 
 def validate_formula(formula: str) -> Dict[str, Any]:
     """Sync wrapper around cec_validate_formula for backward compatibility."""
-    import asyncio
-    return asyncio.get_event_loop().run_until_complete(cec_validate_formula(formula=formula))
+    import anyio as _al
+    return _al.run(lambda: cec_validate_formula(formula=formula))
 
 
 def translate_dcec(formula: str, target_format: str = "json") -> Dict[str, Any]:
@@ -125,7 +123,6 @@ TOOLS: Dict[str, Any] = {
 # OOP wrapper classes expected by test_mcp_cec_prove_parse_analysis.py
 # ---------------------------------------------------------------------------
 
-import asyncio as _asyncio
 import time as _time
 
 

@@ -4,7 +4,12 @@ import anyio
 import inspect
 import time
 import logging
-import psutil
+try:
+    import psutil
+    HAVE_PSUTIL = True
+except ImportError:  # pragma: no cover
+    psutil = None  # type: ignore[assignment]
+    HAVE_PSUTIL = False
 import threading
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional, Callable, Union, AsyncGenerator
@@ -183,6 +188,24 @@ class EnhancedMetricsCollector:
     async def _collect_system_metrics(self) -> None:
         """Collect system performance metrics."""
         try:
+            if not HAVE_PSUTIL:
+                # Fallback when psutil is not installed
+                cpu_percent = 0.0
+                snapshot = PerformanceSnapshot(
+                    timestamp=datetime.utcnow(),
+                    cpu_percent=0.0,
+                    memory_percent=0.0,
+                    memory_used_mb=0.0,
+                    disk_percent=0.0,
+                    active_connections=len(self.active_requests),
+                    request_rate=self._calculate_request_rate(),
+                    error_rate=self._calculate_error_rate(),
+                    avg_response_time_ms=self._calculate_avg_response_time()
+                )
+                with self._lock:
+                    self.performance_snapshots.append(snapshot)
+                return
+
             # CPU and memory
             cpu_percent = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
@@ -773,9 +796,79 @@ class EnhancedMetricsCollector:
                     }
                     for name, check in self.health_checks.items()
                 },
-                'recent_alerts': list(self.alerts)[-10:] if self.alerts else []
+                'recent_alerts': list(self.alerts)[-10:] if self.alerts else [],
+                'tool_latency_percentiles': {
+                    tool: self._compute_percentiles(
+                        list(self.tool_metrics['execution_times'][tool])
+                    )
+                    for tool in self.tool_metrics['call_counts'].keys()
+                },
             }
-    
+
+    # ------------------------------------------------------------------
+    # Phase C3: per-tool latency histogram  (public + internal helper)
+    # ------------------------------------------------------------------
+
+    def _compute_percentiles(self, times: list) -> Dict[str, float]:
+        """Return p50/p95/p99 latency percentiles from a list of durations (ms).
+
+        Must be called while ``self._lock`` is **already held** (or from a
+        context that doesn't need the lock, e.g. ``get_tool_latency_percentiles``
+        which acquires the lock externally).
+
+        Args:
+            times: List of execution times in milliseconds (unsorted).
+
+        Returns:
+            Dict with keys ``p50``, ``p95``, ``p99``, ``min``, ``max``,
+            ``count`` — all values in milliseconds, all ``0.0`` when fewer
+            than 2 samples are available.
+        """
+        n = len(times)
+        if n < 2:
+            return {"p50": 0.0, "p95": 0.0, "p99": 0.0, "min": 0.0, "max": 0.0, "count": n}
+        s = sorted(times)
+
+        def _pct(pct: float) -> float:
+            idx = (pct / 100.0) * (n - 1)
+            lo, hi = int(idx), min(int(idx) + 1, n - 1)
+            return s[lo] + (idx - lo) * (s[hi] - s[lo])
+
+        return {
+            "p50": _pct(50),
+            "p95": _pct(95),
+            "p99": _pct(99),
+            "min": s[0],
+            "max": s[-1],
+            "count": n,
+        }
+
+    def get_tool_latency_percentiles(self, tool_name: str) -> Dict[str, float]:
+        """Return p50/p95/p99 latency percentiles for a specific tool.
+
+        Uses the buffered execution-time history (up to the last 100 samples).
+        Returns all-zero dict if fewer than 2 samples are available.
+
+        Args:
+            tool_name: Exact tool name as recorded via ``track_tool_execution()``.
+
+        Returns:
+            Dict with keys ``p50``, ``p95``, ``p99``, ``min``, ``max``, ``count``
+            (all values in milliseconds).
+
+        Example::
+
+            >>> collector = EnhancedMetricsCollector()
+            >>> for t in [10, 20, 30, 40, 50, 200]:
+            ...     collector.track_tool_execution("my_tool", t, True)
+            >>> p = collector.get_tool_latency_percentiles("my_tool")
+            >>> p["p50"]   # 35.0
+            >>> p["p99"]   # ~198.0
+        """
+        with self._lock:
+            times = list(self.tool_metrics["execution_times"].get(tool_name, []))
+        return self._compute_percentiles(times)
+
     def get_performance_trends(self, hours: int = 1) -> Dict[str, List[Dict[str, Any]]]:
         """Retrieve time-series performance trends for specified historical period.
         

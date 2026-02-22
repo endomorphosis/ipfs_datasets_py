@@ -1,16 +1,18 @@
 """
-Tests for thick tool engines extracted during refactoring.
+Tests for thick tool engines — now living in canonical ipfs_datasets_py package.
 
 Tests cover:
-- TDFOLPerformanceEngine (tdfol_performance_engine.py)
-- DataIngestionEngine (data_ingestion_engine.py)
-- GeospatialAnalysisEngine (geospatial_analysis_engine.py)
-- MockVectorStoreService / _AwaitableDict (vector_store_engine.py)
-- Session helpers / MockSessionManager (session_engine.py)
-- Storage types / MockStorageManager (storage_engine.py)
+- TDFOLPerformanceEngine (ipfs_datasets_py.logic.TDFOL.tdfol_performance_engine)
+- DataIngestionEngine (ipfs_datasets_py.processors.investigation.data_ingestion_engine)
+- GeospatialAnalysisEngine (ipfs_datasets_py.processors.investigation.geospatial_analysis_engine)
+- MockVectorStoreService / _AwaitableDict (ipfs_datasets_py.vector_stores.vector_store_engine)
+- Session helpers / MockSessionManager (ipfs_datasets_py.sessions.session_engine)
+- Storage types / MockStorageManager (ipfs_datasets_py.storage.storage_engine)
+
+After Phase E refactoring, all engine classes live in ipfs_datasets_py package modules.
+The mcp_server/tools/*_engine.py files are now thin re-export shims.
 """
 import importlib.util
-import os
 import sys
 from pathlib import Path
 
@@ -32,30 +34,30 @@ def _load_module(relative_path: str, module_name: str):
 
 
 # ---------------------------------------------------------------------------
-# Load engine modules directly (avoids broken __init__.py in sub-packages)
+# Load engine modules from canonical package locations (Phase E migration)
 # ---------------------------------------------------------------------------
 _tdfol_eng = _load_module(
-    "mcp_server/tools/dashboard_tools/tdfol_performance_engine.py",
+    "logic/TDFOL/tdfol_performance_engine.py",
     "_tdfol_eng",
 )
 _di_eng = _load_module(
-    "mcp_server/tools/investigation_tools/data_ingestion_engine.py",
+    "processors/investigation/data_ingestion_engine.py",
     "_di_eng",
 )
 _geo_eng = _load_module(
-    "mcp_server/tools/investigation_tools/geospatial_analysis_engine.py",
+    "processors/investigation/geospatial_analysis_engine.py",
     "_geo_eng",
 )
 _vs_eng = _load_module(
-    "mcp_server/tools/vector_store_tools/vector_store_engine.py",
+    "vector_stores/vector_store_engine.py",
     "_vs_eng",
 )
 _sess_eng = _load_module(
-    "mcp_server/tools/session_tools/session_engine.py",
+    "sessions/session_engine.py",
     "_sess_eng",
 )
 _stor_eng = _load_module(
-    "mcp_server/tools/storage_tools/storage_engine.py",
+    "storage/storage_engine.py",
     "_stor_eng",
 )
 
@@ -382,7 +384,7 @@ class TestStorageEngine:
 # ---------------------------------------------------------------------------
 
 _cs_eng = _load_module(
-    "mcp_server/tools/development_tools/codebase_search_engine.py",
+    "processors/development/codebase_search_engine.py",
     "_cs_eng",
 )
 CodebaseSearchEngine = _cs_eng.CodebaseSearchEngine
@@ -445,7 +447,7 @@ class TestCodebaseSearchEngine:
 # ---------------------------------------------------------------------------
 
 _vsm_eng = _load_module(
-    "mcp_server/tools/vector_tools/vector_store_management_engine.py",
+    "vector_stores/management_engine.py",
     "_vsm_eng",
 )
 VectorStoreManager = _vsm_eng.VectorStoreManager

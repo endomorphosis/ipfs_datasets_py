@@ -1,8 +1,8 @@
 """
-Authentication tools for MCP server.
+Authentication tools for MCP server (thin wrapper).
 
-This module provides tools for user authentication, token validation,
-and session management operations.
+Business logic (MockAuthService) lives in
+``ipfs_datasets_py.processors.auth.auth_engine``.
 """
 
 import anyio
@@ -12,72 +12,8 @@ from typing import Dict, List, Any, Optional, Union
 
 logger = logging.getLogger(__name__)
 
-# Mock authentication service for testing
-class MockAuthService:
-    """Mock authentication service for testing purposes."""
-    
-    def __init__(self):
-        self.users = {
-            "admin": {"password": "admin123", "role": "admin", "permissions": ["read", "write", "delete", "manage"]},
-            "user": {"password": "user123", "role": "user", "permissions": ["read", "write"]},
-            "guest": {"password": "guest123", "role": "guest", "permissions": ["read"]}
-        }
-        self.tokens = {}
-    
-    async def authenticate(self, username: str, password: str) -> Dict[str, Any]:
-        """Authenticate user credentials."""
-        user = self.users.get(username)
-        if user and user["password"] == password:
-            token = f"mock_token_{username}_{int(datetime.now().timestamp())}"
-            self.tokens[token] = {
-                "username": username,
-                "role": user["role"],
-                "permissions": user["permissions"],
-                "expires_at": datetime.now() + timedelta(hours=1)
-            }
-            return {
-                "success": True,
-                "username": username,
-                "access_token": token,
-                "token_type": "bearer",
-                "role": user["role"],
-                "expires_in": 3600
-            }
-        return {"success": False, "error": "Invalid credentials"}
-    
-    async def validate_token(self, token: str, required_permission: Optional[str] = None) -> Dict[str, Any]:
-        """Validate JWT token and check permissions."""
-        token_data = self.tokens.get(token)
-        if not token_data:
-            return {"valid": False, "error": "Invalid token"}
-        
-        if datetime.now() > token_data["expires_at"]:
-            return {"valid": False, "error": "Token expired"}
-        
-        result = {
-            "valid": True,
-            "username": token_data["username"],
-            "role": token_data["role"],
-            "permissions": token_data["permissions"],
-            "expires_at": token_data["expires_at"]
-        }
-        
-        if required_permission:
-            result["has_required_permission"] = required_permission in token_data["permissions"]
-        
-        return result
-    
-    async def get_user_from_token(self, token: str) -> Dict[str, Any]:
-        """Get user information from token."""
-        token_data = self.tokens.get(token)
-        if not token_data:
-            raise ValueError("Invalid token")
-        
-        return {
-            "username": token_data["username"],
-            "role": token_data["role"],
-            "permissions": token_data["permissions"]
-        }
+# Import MockAuthService from canonical package location
+from ipfs_datasets_py.processors.auth.auth_engine import MockAuthService  # noqa: F401
 
 # Global mock auth service instance
 _mock_auth_service = MockAuthService()

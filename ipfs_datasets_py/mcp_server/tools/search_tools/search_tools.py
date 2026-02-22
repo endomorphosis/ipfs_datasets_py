@@ -1,9 +1,15 @@
 # src/mcp_server/tools/search_tools.py
+"""
+Search tools (thin MCP wrappers).
+
+All search logic lives in ipfs_datasets_py.search.search_tools_api.
+Each function below is a minimal async wrapper that unpacks MCP-style
+parameters and delegates straight to the canonical implementation.
+"""
+from __future__ import annotations
 
 import logging
-from typing import Dict, Any, List, Optional, Union
-from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
-from ipfs_datasets_py.mcp_server.validators import validator
+from typing import Any, Dict, List, Optional, Union
 
 from ipfs_datasets_py.search.search_tools_api import (
     faceted_search_from_parameters,
@@ -13,234 +19,148 @@ from ipfs_datasets_py.search.search_tools_api import (
 
 logger = logging.getLogger(__name__)
 
-class SemanticSearchTool(ClaudeMCPTool):
+# ---------------------------------------------------------------------------
+# Thin standalone wrappers (no ClaudeMCPTool class needed)
+# ---------------------------------------------------------------------------
+
+async def semantic_search(
+    query: str,
+    model: str = "sentence-transformers/all-MiniLM-L6-v2",
+    top_k: int = 5,
+    collection: str = "default",
+    filters: Optional[Dict[str, Any]] = None,
+    vector_service: Any = None,
+) -> Dict[str, Any]:
+    """Perform semantic search on vector embeddings.
+
+    Args:
+        query: Search query text.
+        model: Embedding model identifier.
+        top_k: Maximum number of results.
+        collection: Collection name to search.
+        filters: Optional metadata filters.
+        vector_service: Optional vector service instance.
+
+    Returns:
+        Dict with search results.
     """
-    Tool for performing semantic search on LAION embeddings.
+    try:
+        return await semantic_search_from_parameters(
+            vector_service=vector_service,
+            query=query,
+            model=model,
+            top_k=top_k,
+            collection=collection,
+            filters=filters or {},
+        )
+    except Exception as exc:
+        logger.error("semantic_search failed: %s", exc)
+        raise
+
+
+async def similarity_search(
+    embedding: List[float],
+    top_k: int = 10,
+    threshold: float = 0.5,
+    collection: str = "default",
+    vector_service: Any = None,
+) -> Dict[str, Any]:
+    """Find similar embeddings based on a reference vector.
+
+    Args:
+        embedding: Reference embedding vector.
+        top_k: Maximum number of results.
+        threshold: Minimum similarity threshold (0-1).
+        collection: Collection name to search.
+        vector_service: Optional vector service instance.
+
+    Returns:
+        Dict with similarity search results.
     """
-    
-    def __init__(self, vector_service):
-        super().__init__()
-        if vector_service is None:
-            raise ValueError("Vector service cannot be None")
-            
-        self.vector_service = vector_service
-        self.name = "semantic_search"
-        self.description = "Performs semantic search on LAION embeddings using vector similarity."
-        self.input_schema = {
-            "type": "object",
-            "properties": {
-                "query": {
-                    "type": "string", 
-                    "description": "The search query text.",
-                    "minLength": 1,
-                    "maxLength": 1000
-                },
-                "model": {
-                    "type": "string", 
-                    "description": "The embedding model to use for search.",
-                    "default": "sentence-transformers/all-MiniLM-L6-v2"
-                },
-                "top_k": {
-                    "type": "integer", 
-                    "description": "Number of top results to return.",
-                    "default": 5,
-                    "minimum": 1,
-                    "maximum": 100
-                },
-                "collection": {
-                    "type": "string",
-                    "description": "Collection name to search in.",
-                    "default": "default"
-                },
-                "filters": {
-                    "type": "object",
-                    "description": "Optional metadata filters for search.",
-                    "default": {}
-                }
-            },
-            "required": ["query"]
-        }
-        self.category = "search"
-        self.tags = ["semantic", "vector", "similarity"]
-        self.vector_service = vector_service
-
-    async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Execute semantic search on LAION embeddings.
-        """
-        try:
-            # Validate parameters against the input schema
-            validator.validate_json_schema(parameters, self.input_schema, "parameters")
-
-            query = parameters["query"]
-            model = parameters.get("model", "sentence-transformers/all-MiniLM-L6-v2")
-            top_k = parameters.get("top_k", 5)
-            collection = parameters.get("collection", "default")
-            filters = parameters.get("filters", {})
-
-            return await semantic_search_from_parameters(
-                vector_service=self.vector_service,
-                query=query,
-                model=model,
-                top_k=top_k,
-                collection=collection,
-                filters=filters,
-            )
-            
-        except Exception as e:
-            logger.error(f"Semantic search failed: {e}")
-            raise
+    try:
+        return await similarity_search_from_parameters(
+            vector_service=vector_service,
+            embedding=embedding,
+            top_k=top_k,
+            threshold=threshold,
+            collection=collection,
+        )
+    except Exception as exc:
+        logger.error("similarity_search failed: %s", exc)
+        raise
 
 
-class SimilaritySearchTool(ClaudeMCPTool):
+async def faceted_search(
+    query: str = "",
+    facets: Optional[Dict[str, List[str]]] = None,
+    aggregations: Optional[List[str]] = None,
+    top_k: int = 20,
+    collection: str = "default",
+    vector_service: Any = None,
+) -> Dict[str, Any]:
+    """Perform faceted search with metadata filtering.
+
+    Args:
+        query: Optional search query text.
+        facets: Facet filters keyed by field name.
+        aggregations: Fields to aggregate on.
+        top_k: Maximum number of results.
+        collection: Collection name to search.
+        vector_service: Optional vector service instance.
+
+    Returns:
+        Dict with faceted search results.
     """
-    Tool for finding similar embeddings based on a reference embedding.
-    """
-    
-    def __init__(self, vector_service):
-        super().__init__()
-        if vector_service is None:
-            raise ValueError("Vector service cannot be None")
-            
-        self.name = "similarity_search"
-        self.description = "Finds similar embeddings based on a reference embedding vector."
-        self.input_schema = {
-            "type": "object",
-            "properties": {
-                "embedding": {
-                    "type": "array",
-                    "items": {"type": "number"},
-                    "description": "Reference embedding vector for similarity search.",
-                    "minItems": 1
-                },
-                "top_k": {
-                    "type": "integer",
-                    "description": "Number of similar embeddings to return.",
-                    "default": 10,
-                    "minimum": 1,
-                    "maximum": 100
-                },
-                "threshold": {
-                    "type": "number",
-                    "description": "Minimum similarity threshold (0-1).",
-                    "default": 0.5,
-                    "minimum": 0.0,
-                    "maximum": 1.0
-                },
-                "collection": {
-                    "type": "string",
-                    "description": "Collection name to search in.",
-                    "default": "default"
-                }
-            },
-            "required": ["embedding"]
-        }
-        self.category = "search"
-        self.tags = ["similarity", "vector", "nearest_neighbors"]
+    try:
+        return await faceted_search_from_parameters(
+            vector_service=vector_service,
+            query=query,
+            facets=facets or {},
+            aggregations=aggregations or [],
+            top_k=top_k,
+            collection=collection,
+        )
+    except Exception as exc:
+        logger.error("faceted_search failed: %s", exc)
+        raise
+
+
+# ---------------------------------------------------------------------------
+# Backward-compatible class aliases (kept so existing code that instantiates
+# these classes still imports without error; they wrap the standalone fns)
+# ---------------------------------------------------------------------------
+
+class SemanticSearchTool:  # noqa: E302
+    """Thin compatibility shim — wraps semantic_search()."""
+
+    name = "semantic_search"
+
+    def __init__(self, vector_service=None):
         self.vector_service = vector_service
 
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Execute similarity search based on embedding vector.
-        """
-        try:
-            # Validate parameters against the input schema
-            validator.validate_json_schema(parameters, self.input_schema, "parameters")
-
-            embedding = parameters["embedding"]
-            top_k = parameters.get("top_k", 10)
-            threshold = parameters.get("threshold", 0.5)
-            collection = parameters.get("collection", "default")
-
-            return await similarity_search_from_parameters(
-                vector_service=self.vector_service,
-                embedding=embedding,
-                top_k=top_k,
-                threshold=threshold,
-                collection=collection,
-            )
-            
-        except Exception as e:
-            logger.error(f"Similarity search failed: {e}")
-            raise
+        return await semantic_search(vector_service=self.vector_service, **parameters)
 
 
-class FacetedSearchTool(ClaudeMCPTool):
-    """
-    Tool for performing faceted search with metadata filtering.
-    """
-    
-    def __init__(self, vector_service):
-        super().__init__()
-        if vector_service is None:
-            raise ValueError("Vector service cannot be None")
-            
-        self.name = "faceted_search"
-        self.description = "Performs faceted search with metadata filters and aggregations."
-        self.input_schema = {
-            "type": "object",
-            "properties": {
-                "query": {
-                    "type": "string",
-                    "description": "Search query text.",
-                    "default": ""
-                },
-                "facets": {
-                    "type": "object",
-                    "description": "Facet filters to apply.",
-                    "additionalProperties": {
-                        "type": "array",
-                        "items": {"type": "string"}
-                    }
-                },
-                "aggregations": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Fields to aggregate on.",
-                    "default": []
-                },
-                "top_k": {
-                    "type": "integer",
-                    "description": "Number of results to return.",
-                    "default": 20,
-                    "minimum": 1,
-                    "maximum": 100
-                },
-                "collection": {
-                    "type": "string",
-                    "description": "Collection name to search in.",
-                    "default": "default"
-                }
-            },
-            "required": []
-        }
-        self.category = "search"
-        self.tags = ["faceted", "filtering", "aggregation"]
+class SimilaritySearchTool:
+    """Thin compatibility shim — wraps similarity_search()."""
+
+    name = "similarity_search"
+
+    def __init__(self, vector_service=None):
         self.vector_service = vector_service
 
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Execute faceted search with filtering and aggregations.
-        """
-        try:
-            # Validate parameters against the input schema
-            validator.validate_json_schema(parameters, self.input_schema, "parameters")
+        return await similarity_search(vector_service=self.vector_service, **parameters)
 
-            query = parameters.get("query", "")
-            facets = parameters.get("facets", {})
-            aggregations = parameters.get("aggregations", [])
-            top_k = parameters.get("top_k", 20)
-            collection = parameters.get("collection", "default")
 
-            return await faceted_search_from_parameters(
-                vector_service=self.vector_service,
-                query=query,
-                facets=facets,
-                aggregations=aggregations,
-                top_k=top_k,
-                collection=collection,
-            )
-            
-        except Exception as e:
-            logger.error(f"Faceted search failed: {e}")
-            raise
+class FacetedSearchTool:
+    """Thin compatibility shim — wraps faceted_search()."""
+
+    name = "faceted_search"
+
+    def __init__(self, vector_service=None):
+        self.vector_service = vector_service
+
+    async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        return await faceted_search(vector_service=self.vector_service, **parameters)

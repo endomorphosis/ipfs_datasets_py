@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # Import Discord wrapper
 try:
-    from ipfs_datasets_py.data_transformation.multimedia.discord_wrapper import create_discord_wrapper
+    from ipfs_datasets_py.processors.multimedia.discord_wrapper import create_discord_wrapper
     DISCORD_AVAILABLE = True
 except ImportError:
     DISCORD_AVAILABLE = False

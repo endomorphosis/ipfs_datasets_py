@@ -13,3 +13,9 @@ Components:
 from .ucan import *
 
 __all__ = ['ucan']
+
+# Auth engine (moved from mcp_server/tools)
+try:
+    from .auth_engine import MockAuthService
+except ImportError:
+    pass

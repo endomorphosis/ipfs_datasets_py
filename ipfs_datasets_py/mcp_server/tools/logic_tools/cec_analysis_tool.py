@@ -196,7 +196,6 @@ TOOLS: Dict[str, Any] = {
 # OOP wrapper classes expected by test_mcp_cec_prove_parse_analysis.py
 # ---------------------------------------------------------------------------
 
-import asyncio as _asyncio
 import time as _time
 
 

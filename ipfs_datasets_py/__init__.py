@@ -1014,6 +1014,89 @@ def __getattr__(name: str):
         HAVE_LOAD_DATASET = False
         return None
 
+    # -----------------------------------------------------------------------
+    # Phase E+F canonical package modules (lazy on first access)
+    # These were extracted from mcp_server/tools/ to canonical package
+    # locations so they can be imported directly as package members.
+    # -----------------------------------------------------------------------
+
+    _CANONICAL_MODULE_MAP: dict = {
+        # Maps attribute name → (relative_module_path, class_or_function_name).
+        # When code accesses `ipfs_datasets_py.<name>` and the name is not yet in
+        # globals, __getattr__ fires, looks up the tuple here, imports it from the
+        # canonical ipfs_datasets_py package module (not from mcp_server/tools/),
+        # caches it in globals, and returns it.  Only names added during Phase E+F
+        # extraction appear here; names already exported via the module-level try/
+        # except blocks (e.g. finance dashboard) are NOT listed here.
+        # sessions package
+        "MockSessionManager": (".sessions.session_engine", "MockSessionManager"),
+        # tasks package
+        "BackgroundTask": (".tasks.background_task_engine", "MockBackgroundTask"),
+        "MockBackgroundTask": (".tasks.background_task_engine", "MockBackgroundTask"),
+        "MockTaskManager": (".tasks.background_task_engine", "MockTaskManager"),
+        "TaskStatus": (".tasks.background_task_engine", "TaskStatus"),
+        "TaskType": (".tasks.background_task_engine", "TaskType"),
+        # storage package
+        "StorageBackend": (".storage.storage_engine", "StorageBackend"),
+        "MockStorageService": (".storage.storage_engine", "MockStorageService"),
+        # rate_limiting package
+        "MockRateLimiter": (".rate_limiting.rate_limiting_engine", "MockRateLimiter"),
+        "RateLimitConfig": (".rate_limiting.rate_limiting_engine", "RateLimitConfig"),
+        "RateLimitStrategy": (".rate_limiting.rate_limiting_engine", "RateLimitStrategy"),
+        # caching package
+        "MockCacheService": (".caching.cache_engine", "MockCacheService"),
+        "CacheType": (".caching.cache_engine", "CacheType"),
+        "CacheStrategy": (".caching.cache_engine", "CacheStrategy"),
+        "CacheEntry": (".caching.cache_engine", "CacheEntry"),
+        "CacheStats": (".caching.cache_engine", "CacheStats"),
+        # admin package
+        "MockAdminService": (".admin.admin_engine", "MockAdminService"),
+        "ServiceStatus": (".admin.admin_engine", "ServiceStatus"),
+        "MaintenanceMode": (".admin.admin_engine", "MaintenanceMode"),
+        # ipfs_cluster package
+        "MockIPFSClusterService": (".ipfs_cluster.cluster_engine", "MockIPFSClusterService"),
+        # processors/auth
+        "MockAuthService": (".processors.auth.auth_engine", "MockAuthService"),
+        # processors/development
+        "TestGeneratorCore": (".processors.development.test_generator_engine", "TestGeneratorCore"),
+        "TestGeneratorConfig": (".processors.development.test_generator_engine", "TestGeneratorConfig"),
+        "generate_test_file": (".processors.development.test_generator_engine", "generate_test_file"),
+        # processors/discord
+        "discord_analyze_channel": (".processors.discord.discord_analysis_engine", "discord_analyze_channel"),
+        "discord_export_channel": (".processors.discord.discord_export_engine", "discord_export_channel"),
+        # web_archiving engines
+        "SerpStackSearchAPI": (".web_archiving.serpstack_engine", "SerpStackSearchAPI"),
+        "OpenVerseSearchAPI": (".web_archiving.openverse_engine", "OpenVerseSearchAPI"),
+        "GitHubRepositoryScraper": (".web_archiving.github_repository_engine", "GitHubRepositoryScraper"),
+        # processors/legal_scrapers engines
+        "ClinicalTrialsScraper": (".scrapers.medical.clinical_trials_engine", "ClinicalTrialsScraper"),
+        "PubMedScraper": (".scrapers.medical.pubmed_engine", "PubMedScraper"),
+        "AIDatasetBuilder": (".scrapers.medical.ai_dataset_builder_engine", "AIDatasetBuilder"),
+        "USPTOPatentScraper": (".processors.legal_scrapers.patent_engine", "USPTOPatentScraper"),
+        "PatentDatasetBuilder": (".processors.legal_scrapers.patent_engine", "PatentDatasetBuilder"),
+        "MunicipalScraperFallbacks": (".processors.legal_scrapers.municipal_scraper_engine", "MunicipalScraperFallbacks"),
+        "StateLawsUpdateScheduler": (".processors.legal_scrapers.state_laws_scheduler_engine", "StateLawsUpdateScheduler"),
+        "IncrementalUpdateTracker": (".processors.legal_scrapers.incremental_updates_engine", "IncrementalUpdateTracker"),
+        "FederalRegisterVerifier": (".processors.legal_scrapers.federal_register_verifier", "FederalRegisterVerifier"),
+        "USCodeVerifier": (".processors.legal_scrapers.us_code_verifier", "USCodeVerifier"),
+    }
+
+    if name in _CANONICAL_MODULE_MAP:
+        if _MINIMAL_IMPORTS:
+            globals()[name] = None
+            return None
+        module_path, attr_name = _CANONICAL_MODULE_MAP[name]
+        try:
+            import importlib as _importlib
+            _mod = _importlib.import_module(module_path, package=__name__)
+            _val = getattr(_mod, attr_name)
+            globals()[name] = _val
+            return _val
+        except Exception as _exc:
+            globals()[name] = None
+            _optional_import_notice(f"Canonical module {module_path}.{attr_name} unavailable: {_exc}")
+            return None
+
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 # Define base exports that should always be available
@@ -1195,16 +1278,58 @@ except AttributeError:
 # Finance Dashboard Tools - Phase 7 Enhancement
 try:
     if (not _MINIMAL_IMPORTS) and _ENABLE_FINANCE_DASHBOARD_IMPORTS:
-        # Core package modules (MCP/CLI wrappers should depend on these)
+        # Core package modules — canonical locations (Phase E+F migration)
         from .knowledge_graphs import finance_graphrag as graphrag_news_analyzer
-        from .mcp_server.tools.finance_data_tools import stock_scrapers
-        from .mcp_server.tools.finance_data_tools import news_scrapers
-        from .mcp_server.tools.finance_data_tools import finance_theorems
-        from .mcp_server.tools.finance_data_tools import embedding_correlation
+        # Finance scrapers: canonical package engines (not mcp_server.tools shims)
+        from .processors.finance.stock_scraper_engine import (
+            StockDataScraper,
+            StockDataPoint,
+            CorporateAction,
+            YahooFinanceScraper,
+        )
+        from .processors.finance.news_scraper_engine import (
+            NewsScraperBase,
+            NewsArticle,
+            APNewsScraper,
+            ReutersScraper,
+            BloombergScraper,
+        )
+        from .processors.finance.finance_theorems_engine import (
+            FinancialTheoremLibrary,
+            FinancialTheorem,
+            FinancialEventType,
+            TheoremApplication,
+        )
+        from .processors.development.software_theorems_engine import (
+            SOFTWARE_THEOREMS,
+            list_software_theorems,
+            validate_against_theorem,
+            apply_theorem_actions,
+        )
+        from .web_archiving.github_repository_engine import (
+            GitHubRepositoryScraper,
+            scrape_github_repository,
+            analyze_repository_health,
+        )
+        # Standalone MCP functions still live in tools/ shims because they wrap
+        # async calls with anyio.run() and perform MCP-specific error handling.
+        # The *classes* above come from canonical engines; these *functions* remain
+        # in the tools/ layer for backward compatibility with existing callers.
+        from .mcp_server.tools.finance_data_tools import stock_scrapers as _stock_scrapers
+        from .mcp_server.tools.finance_data_tools import news_scrapers as _news_scrapers
+        from .mcp_server.tools.finance_data_tools import finance_theorems as _finance_theorems
+        fetch_stock_data = _stock_scrapers.fetch_stock_data
+        fetch_financial_news = _news_scrapers.fetch_financial_news
+        list_financial_theorems = _finance_theorems.list_financial_theorems
 
-        # Software Engineering Tools
+        # Embedding analysis (still in tools/ shim — kept for compat)
+        from .mcp_server.tools.finance_data_tools import embedding_correlation
+        VectorEmbeddingAnalyzer = embedding_correlation.VectorEmbeddingAnalyzer
+        GraphRAGNewsAnalyzer = graphrag_news_analyzer.GraphRAGNewsAnalyzer
+        analyze_executive_performance = graphrag_news_analyzer.analyze_executive_performance
+
+        # Software Engineering Tool Functions (canonical SE tools still in tools/)
         from .mcp_server.tools.software_engineering_tools import (
-            github_repository_scraper,
             github_actions_analyzer,
             systemd_log_parser,
             kubernetes_log_analyzer,
@@ -1213,24 +1338,7 @@ try:
             gpu_provisioning_predictor,
             error_pattern_detector,
             auto_healing_coordinator,
-            software_theorems,
         )
-
-        # Expose key classes
-        StockDataScraper = stock_scrapers.StockDataScraper
-        NewsScraperBase = news_scrapers.NewsScraperBase
-        FinancialTheoremLibrary = finance_theorems.FinancialTheoremLibrary
-        GraphRAGNewsAnalyzer = graphrag_news_analyzer.GraphRAGNewsAnalyzer
-        VectorEmbeddingAnalyzer = embedding_correlation.VectorEmbeddingAnalyzer
-
-        # Expose MCP tool functions
-        fetch_stock_data = stock_scrapers.fetch_stock_data
-        fetch_financial_news = news_scrapers.fetch_financial_news
-        list_financial_theorems = finance_theorems.list_financial_theorems
-        analyze_executive_performance = graphrag_news_analyzer.analyze_executive_performance
-
-        # Software Engineering Tool Functions
-        scrape_github_repository = github_repository_scraper.scrape_github_repository
         analyze_github_actions = github_actions_analyzer.analyze_github_actions
         parse_systemd_logs = systemd_log_parser.parse_systemd_logs
         parse_kubernetes_logs = kubernetes_log_analyzer.parse_kubernetes_logs
@@ -1240,8 +1348,6 @@ try:
         predict_gpu_needs = gpu_provisioning_predictor.predict_gpu_needs
         detect_error_patterns = error_pattern_detector.detect_error_patterns
         coordinate_auto_healing = auto_healing_coordinator.coordinate_auto_healing
-        list_software_theorems = software_theorems.list_software_theorems
-        validate_against_theorem = software_theorems.validate_against_theorem
 
         HAVE_SOFTWARE_ENGINEERING_TOOLS = True
         HAVE_FINANCE_TOOLS = True
