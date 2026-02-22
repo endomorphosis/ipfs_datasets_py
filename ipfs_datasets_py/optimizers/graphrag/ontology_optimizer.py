@@ -5066,6 +5066,31 @@ class OntologyOptimizer:
         within_var = (var_lower * len(lower) + var_upper * len(upper)) / n
         return max(0.0, 1.0 - within_var / total_var)
 
+    def score_bimodality_ratio(self) -> float:
+        """Return the ratio of the bimodality dip to the mean absolute deviation.
+
+        This combines two bimodality indicators: :meth:`score_bimodality_dip`
+        (how non-uniform the bin distribution is) divided by
+        :meth:`score_mad` (the spread of individual scores).  A large value
+        means the distribution is both non-uniform *and* spread out — a strong
+        bimodality signal.
+
+        Returns:
+            Non-negative float; ``0.0`` when history has fewer than 2 entries
+            or when :meth:`score_mad` is zero (all scores identical).
+
+        Example::
+
+            >>> opt.score_bimodality_ratio()
+            0.0  # single entry or all scores identical
+        """
+        if len(self._history) < 2:
+            return 0.0
+        mad = self.score_mad()
+        if mad == 0.0:
+            return 0.0
+        return self.score_bimodality_dip() / mad
+
 
 # Export public API
 __all__ = [

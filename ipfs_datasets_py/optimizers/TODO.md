@@ -1898,11 +1898,30 @@ Implementation notes:
 
 Testing: 38 tests in test_batch_216_features.py; all passing.
 
-## Batch 217+ Backlog
+## Batch 217 — Done ✅ (2026-02-22)
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_bimodality_ratio()` — ratio of bimodality_dip to score_mad
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_harmonic_mean(score)` — harmonic mean of 6 dimension values
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_cv(result)` — coefficient of variation of confidences
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_peak_score()` — max score ever observed in feedback
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_coefficient_of_variation()` — CV of run scores
-- [ ] (P2) [graphrag] `LogicValidator.periphery_size(ontology)` — count nodes with eccentricity == diameter
+- [x] (P2) [graphrag] `OntologyOptimizer.score_bimodality_ratio()` — ratio of bimodality_dip to score_mad
+- [x] (P2) [graphrag] `OntologyCritic.dimension_harmonic_mean(score)` — already existed at line 3763 (stale)
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_cv(result)` — already existed at line 7431 (stale)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_peak_score()` — max score ever observed in feedback
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_coefficient_of_variation()` — already existed at line 1600 (stale)
+- [x] (P2) [graphrag] `LogicValidator.periphery_size(ontology)` — count nodes with eccentricity == diameter
+
+Implementation notes:
+- score_bimodality_ratio: delegates to score_bimodality_dip()/score_mad(); 0.0 when <2 entries or mad=0.
+- dimension_harmonic_mean: stale — already at line 3763.
+- entity_confidence_cv: stale — already at line 7431.
+- feedback_peak_score: max(r.final_score for r in self._feedback); 0.0 for empty.
+- run_score_coefficient_of_variation: stale — already at line 1600.
+- periphery_size: delegates to eccentricity_distribution(); counts eccs == diameter; 0 when no positive eccs.
+
+Testing: 38 tests in test_batch_217_features.py; all passing.
+
+## Batch 218+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_harmonic_mean()` — harmonic mean of history scores
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_geometric_mean(score)` — geometric mean of 6 dimension values
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_range(result)` — max − min confidence
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_valley_score()` — min score ever observed in feedback
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_harmonic_mean()` — harmonic mean of run scores
+- [ ] (P2) [graphrag] `LogicValidator.center_size(ontology)` — count nodes with eccentricity == radius

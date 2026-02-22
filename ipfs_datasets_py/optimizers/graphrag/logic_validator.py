@@ -4148,6 +4148,40 @@ class LogicValidator:
         eccs = self.eccentricity_distribution(ontology)
         positive = [e for e in eccs if e > 0]
         return min(positive) if positive else 0
+
+    def periphery_size(self, ontology: dict) -> int:
+        """Count the number of nodes in the *periphery* of the directed graph.
+
+        The periphery consists of all nodes whose eccentricity equals the
+        graph's diameter.  Nodes with eccentricity ``0`` (unable to reach any
+        other node) are excluded.
+
+        Args:
+            ontology: Dict with ``"entities"`` and ``"relationships"`` lists.
+                Each relationship must have ``"source"`` and ``"target"`` keys.
+
+        Returns:
+            Non-negative integer; ``0`` when the graph has fewer than 2 nodes,
+            when no node can reach any other, or when the diameter is 0.
+
+        Example::
+
+            >>> validator.periphery_size(
+            ...     {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+            ...      "relationships": [{"source": "A", "target": "B"},
+            ...                        {"source": "A", "target": "C"}]})
+            1  # A has eccentricity 1 (reaches B, C in 1 hop); B and C have
+               # eccentricity 0 (no outbound edges); diameter=1; periphery={A}
+        """
+        eccs = self.eccentricity_distribution(ontology)
+        positive = [e for e in eccs if e > 0]
+        if not positive:
+            return 0
+        diameter = max(positive)
+        if diameter == 0:
+            return 0
+        return sum(1 for e in eccs if e == diameter)
+
 __all__ = [
     'LogicValidator',
     'ValidationResult',

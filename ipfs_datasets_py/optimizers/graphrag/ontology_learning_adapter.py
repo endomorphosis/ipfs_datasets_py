@@ -2430,3 +2430,22 @@ class OntologyLearningAdapter:
             if abs(scores[i] - scores[i - 1]) > threshold:
                 count += 1
         return count
+
+    def feedback_peak_score(self) -> float:
+        """Return the maximum ``final_score`` ever observed in feedback records.
+
+        Returns:
+            Maximum ``final_score`` as a float, or ``0.0`` when there are no
+            feedback records.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.4, actions={})
+            >>> adapter.apply_feedback(final_score=0.9, actions={})
+            >>> adapter.apply_feedback(final_score=0.6, actions={})
+            >>> adapter.feedback_peak_score()
+            0.9
+        """
+        if not self._feedback:
+            return 0.0
+        return max(r.final_score for r in self._feedback)
