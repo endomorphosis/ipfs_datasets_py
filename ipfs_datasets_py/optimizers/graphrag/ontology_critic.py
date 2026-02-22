@@ -4303,6 +4303,28 @@ class OntologyCritic(BaseCritic):
         variance = sum((v - mean_val) ** 2 for v in vals) / len(vals)
         return variance ** 0.5 / mean_val
 
+    def dimension_skewness(self, score: "CriticScore") -> float:
+        """Return the skewness of the 6 evaluation dimension values.
+
+        Uses population skewness: ``(1/n) * sum((x - mean)^3) / std^3``.
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Float skewness; ``0.0`` when standard deviation is zero.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        n = len(vals)
+        if n < 3:
+            return 0.0
+        mean_val = sum(vals) / n
+        variance = sum((v - mean_val) ** 2 for v in vals) / n
+        if variance == 0.0:
+            return 0.0
+        std = variance ** 0.5
+        return sum((v - mean_val) ** 3 for v in vals) / (n * std ** 3)
+
 
 # Export public API
 __all__ = [

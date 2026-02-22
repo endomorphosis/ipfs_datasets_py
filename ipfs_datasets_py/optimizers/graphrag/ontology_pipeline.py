@@ -2278,3 +2278,41 @@ class OntologyPipeline:
             else:
                 break
         return count
+
+    def run_score_skewness(self) -> float:
+        """Return the skewness of run ``score.overall`` values.
+
+        Uses population skewness: ``(1/n) * sum((x - mean)^3) / std^3``.
+
+        Returns:
+            Float skewness; ``0.0`` when fewer than 3 runs or std is zero.
+        """
+        if len(self._run_history) < 3:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        n = len(scores)
+        mean = sum(scores) / n
+        variance = sum((s - mean) ** 2 for s in scores) / n
+        if variance == 0.0:
+            return 0.0
+        std = variance ** 0.5
+        return sum((s - mean) ** 3 for s in scores) / (n * std ** 3)
+
+    def worst_score_decline(self) -> float:
+        """Return the maximum single-step score decline across all runs.
+
+        Computes the largest negative delta (most negative consecutive change)
+        and returns its absolute value.
+
+        Returns:
+            Float; ``0.0`` when fewer than 2 runs or no run declined.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        max_decline = 0.0
+        for i in range(1, len(scores)):
+            delta = scores[i - 1] - scores[i]  # positive when declining
+            if delta > max_decline:
+                max_decline = delta
+        return max_decline

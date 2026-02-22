@@ -2234,3 +2234,23 @@ class OntologyLearningAdapter:
         q3_idx = (3 * n) // 4
         return scores[q3_idx] - scores[q1_idx]
 
+    def feedback_rolling_mean(self, window: int = 3) -> list:
+        """Return a list of rolling means over ``window``-sized windows of feedback scores.
+
+        Args:
+            window: Window size (must be >= 1; clamped to 1 if smaller).
+
+        Returns:
+            List of float mean values; one per valid window.  Empty list when
+            feedback has fewer than ``window`` entries.
+        """
+        if window < 1:
+            window = 1
+        scores = [r.final_score for r in self._feedback]
+        if len(scores) < window:
+            return []
+        return [
+            sum(scores[i:i + window]) / window
+            for i in range(len(scores) - window + 1)
+        ]
+

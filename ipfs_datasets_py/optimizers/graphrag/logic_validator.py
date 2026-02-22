@@ -3590,6 +3590,32 @@ class LogicValidator:
             return ""
         return max(degree.items(), key=lambda x: x[1])[0]
 
+    def avg_in_degree(self, ontology: dict) -> float:
+        """Return the average in-degree across all nodes in the ontology.
+
+        Alias for :meth:`average_in_degree`.
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Float average in-degree; ``0.0`` when no entities exist.
+        """
+        return self.average_in_degree(ontology)
+
+    def avg_out_degree(self, ontology: dict) -> float:
+        """Return the average out-degree across all nodes in the ontology.
+
+        Alias for :meth:`average_out_degree`.
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Float average out-degree; ``0.0`` when no entities exist.
+        """
+        return self.average_out_degree(ontology)
+
 
 # Export public API
 __all__ = [

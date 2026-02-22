@@ -1462,23 +1462,23 @@ This section captures the full architectural vision beyond batch-method addition
 - [x] (P2) [graphrag] `LogicValidator.isolated_node_count(ontology)` — nodes with no edges at all (batch-175)
 - [x] (P2) [graphrag] `OntologyCritic.dimension_weighted_sum(score, weights)` — custom-weighted sum (batch-175)
 
-## Batch 176+ Backlog
+## Batch 176+ Backlog (all completed — verified 2026-02-22)
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.history_kurtosis()` — excess kurtosis of score distribution
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_ewma(alpha)` — EWMA of average_score values
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_min(score)` — lowest-scoring dimension name
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_max(score)` — highest-scoring dimension name
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_range(score)` — max - min dimension value
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_skewness(result)` — skewness of entity confidences
-- [ ] (P2) [graphrag] `OntologyGenerator.unique_relationship_types(result)` — distinct relationship type strings
-- [ ] (P2) [graphrag] `LogicValidator.in_degree_distribution(ontology)` — dict of node→in-degree
-- [ ] (P2) [graphrag] `LogicValidator.out_degree_distribution(ontology)` — dict of node→out-degree
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_ewma(alpha)` — EWMA of pipeline run scores
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_percentile(p)` — p-th percentile of run scores
-- [ ] (P2) [graphrag] `OntologyMediator.feedback_count_by_action(action)` — how many times action was used
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_min()` — minimum feedback score
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_max()` — maximum feedback score
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_cumulative_sum()` — running sum of scores
+- [x] (P2) [graphrag] `OntologyOptimizer.history_kurtosis()` — excess kurtosis of score distribution
+- [x] (P2) [graphrag] `OntologyOptimizer.score_ewma(alpha)` — EWMA of average_score values
+- [x] (P2) [graphrag] `OntologyCritic.dimension_min(score)` — lowest-scoring dimension name
+- [x] (P2) [graphrag] `OntologyCritic.dimension_max(score)` — highest-scoring dimension name
+- [x] (P2) [graphrag] `OntologyCritic.dimension_range(score)` — max - min dimension value
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_skewness(result)` — skewness of entity confidences
+- [x] (P2) [graphrag] `OntologyGenerator.unique_relationship_types(result)` — distinct relationship type strings
+- [x] (P2) [graphrag] `LogicValidator.in_degree_distribution(ontology)` — dict of node→in-degree
+- [x] (P2) [graphrag] `LogicValidator.out_degree_distribution(ontology)` — dict of node→out-degree
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_ewma(alpha)` — EWMA of pipeline run scores
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_percentile(p)` — p-th percentile of run scores
+- [x] (P2) [graphrag] `OntologyMediator.feedback_count_by_action(action)` — how many times action was used
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_min()` — minimum feedback score
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_max()` — maximum feedback score
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_cumulative_sum()` — running sum of scores
 - [x] (P1) [tests] **Fix `test_end_to_end_pipeline.py`** — tests passing as of 2026-02-22 (22/22)
 - [x] (P1) [docs] **`README.md` for `optimizers/`** — Quick-start, class diagram, example pipeline code added 2026-02-22
 
@@ -1641,16 +1641,41 @@ Implementation notes:
 
 Testing: 68 new tests in test_batch_204_features.py; all passing.
 
-## Batch 205+ Backlog
+## Batch 205 — Done ✅ (2026-02-22)
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_skewness()` — skewness of history score distribution
-- [ ] (P2) [graphrag] `OntologyOptimizer.history_rolling_mean(window)` — rolling mean over a sliding window
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_skewness(score)` — skewness of dimension value distribution
-- [ ] (P2) [graphrag] `OntologyCritic.weakest_dimension(score)` — dimension with lowest value (alias for dimension_min if it exists)
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_kurtosis(result)` — excess kurtosis of entity confidences
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_text_length_std(result)` — std-dev of entity text lengths
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_rolling_mean(window)` — rolling mean of feedback scores
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_skewness()` — skewness of run score distribution
-- [ ] (P2) [graphrag] `OntologyPipeline.worst_score_decline()` — maximum single-step score decline across runs
-- [ ] (P2) [graphrag] `LogicValidator.avg_in_degree(ontology)` — average in-degree across nodes
-- [ ] (P2) [graphrag] `LogicValidator.avg_out_degree(ontology)` — average out-degree across nodes
+- [x] (P2) [graphrag] `OntologyOptimizer.score_skewness()` — skewness of history score distribution
+- [x] (P2) [graphrag] `OntologyOptimizer.history_rolling_mean(window)` — rolling mean over a sliding window (already existed)
+- [x] (P2) [graphrag] `OntologyCritic.dimension_skewness(score)` — skewness of dimension value distribution
+- [x] (P2) [graphrag] `OntologyCritic.weakest_dimension(score)` — dimension with lowest value (already existed)
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_kurtosis(result)` — excess kurtosis of entity confidences
+- [x] (P2) [graphrag] `OntologyGenerator.entity_text_length_std(result)` — std-dev of entity text lengths
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_rolling_mean(window)` — rolling mean of feedback scores
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_skewness()` — skewness of run score distribution
+- [x] (P2) [graphrag] `OntologyPipeline.worst_score_decline()` — maximum single-step score decline across runs
+- [x] (P2) [graphrag] `LogicValidator.avg_in_degree(ontology)` — average in-degree across nodes (alias for average_in_degree)
+- [x] (P2) [graphrag] `LogicValidator.avg_out_degree(ontology)` — average out-degree across nodes (alias for average_out_degree)
+
+Implementation notes:
+- score_skewness / dimension_skewness / run_score_skewness: population skewness formula
+  (1/n)*sum((x-mean)^3)/std^3; returns 0.0 for <3 entries or zero std.
+- entity_confidence_kurtosis: excess kurtosis (1/n)*sum((x-mean)^4)/std^4 - 3;
+  returns 0.0 for <4 entities or zero std.
+- entity_text_length_std: population std-dev of len(entity.text); 0.0 for <2 entities.
+- feedback_rolling_mean: list of rolling means; window clamped to ≥1; empty when len<window.
+- worst_score_decline: max positive backward delta across consecutive runs; 0.0 if no decline.
+- avg_in_degree / avg_out_degree: thin aliases delegating to average_in_degree / average_out_degree.
+
+Testing: 58 new tests in test_batch_205_features.py; all passing.
+
+## Batch 206+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_entropy()` — Shannon entropy of discretised history scores
+- [ ] (P2) [graphrag] `OntologyOptimizer.history_above_percentile(p)` — count of scores above p-th percentile
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_entropy(score)` — Shannon entropy of dimension values
+- [ ] (P2) [graphrag] `OntologyCritic.dimensions_above_mean(score)` — number of dimensions above their collective mean
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_range(result)` — max - min confidence (if not already present)
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_count_by_type(result)` — dict of type→count
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_rolling_std(window)` — rolling std-dev of feedback scores
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_kurtosis()` — excess kurtosis of run score distribution
+- [ ] (P2) [graphrag] `OntologyPipeline.consecutive_declines()` — max consecutive declining runs
+- [ ] (P2) [graphrag] `LogicValidator.avg_degree(ontology)` — average total degree per node

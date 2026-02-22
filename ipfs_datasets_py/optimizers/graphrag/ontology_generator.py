@@ -7807,6 +7807,48 @@ class OntologyGenerator:
         q3_idx = (3 * n) // 4
         return confs[q3_idx] - confs[q1_idx]
 
+    def entity_confidence_kurtosis(self, result: "EntityExtractionResult") -> float:
+        """Return the excess kurtosis of entity confidence scores.
+
+        Excess kurtosis = ``(1/n) * sum((x - mean)^4) / std^4 - 3``.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Float excess kurtosis; ``0.0`` when fewer than 4 entities or
+            standard deviation is zero.
+        """
+        entities = getattr(result, "entities", []) or []
+        if len(entities) < 4:
+            return 0.0
+        confs = [getattr(e, "confidence", 0.0) for e in entities]
+        n = len(confs)
+        mean = sum(confs) / n
+        variance = sum((c - mean) ** 2 for c in confs) / n
+        if variance == 0.0:
+            return 0.0
+        std4 = variance ** 2
+        return sum((c - mean) ** 4 for c in confs) / (n * std4) - 3.0
+
+    def entity_text_length_std(self, result: "EntityExtractionResult") -> float:
+        """Return the standard deviation of entity text lengths.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Float std-dev; ``0.0`` when fewer than 2 entities.
+        """
+        entities = getattr(result, "entities", []) or []
+        if len(entities) < 2:
+            return 0.0
+        lengths = [len(getattr(e, "text", "") or "") for e in entities]
+        n = len(lengths)
+        mean = sum(lengths) / n
+        variance = sum((l - mean) ** 2 for l in lengths) / n
+        return variance ** 0.5
+
 
 __all__ = [
     'OntologyGenerator',
