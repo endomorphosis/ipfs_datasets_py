@@ -2389,3 +2389,19 @@ class OntologyPipeline:
             if scores[i] > scores[i - 1]:
                 result = i
         return result
+
+    def improving_run_ratio(self) -> float:
+        """Return the fraction of runs that improved on the previous run.
+
+        A run at index i "improves" when ``score[i] > score[i-1]``.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        improvements = sum(
+            1 for i in range(1, len(scores)) if scores[i] > scores[i - 1]
+        )
+        return improvements / (len(scores) - 1)

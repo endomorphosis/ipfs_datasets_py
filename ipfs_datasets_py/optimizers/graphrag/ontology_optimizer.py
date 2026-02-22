@@ -4907,6 +4907,29 @@ class OntologyOptimizer:
             return 0.0
         return num / den
 
+    def score_trend_intercept(self) -> float:
+        """Return the OLS intercept of history ``average_score`` values.
+
+        Computed as ``y_mean - slope * x_mean`` where *x* are index positions.
+
+        Returns:
+            Float intercept; ``0.0`` when fewer than 2 history entries or
+            x-variance is zero.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        xs = list(range(n))
+        x_mean = sum(xs) / n
+        y_mean = sum(scores) / n
+        num = sum((x - x_mean) * (y - y_mean) for x, y in zip(xs, scores))
+        den = sum((x - x_mean) ** 2 for x in xs)
+        if den == 0.0:
+            return 0.0
+        slope = num / den
+        return y_mean - slope * x_mean
+
 
 # Export public API
 __all__ = [

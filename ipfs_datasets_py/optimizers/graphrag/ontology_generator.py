@@ -7883,6 +7883,21 @@ class OntologyGenerator:
         """
         return len(self.relationship_type_counts(result))
 
+    def avg_relationship_confidence(self, result: "EntityExtractionResult") -> float:
+        """Return the mean confidence score across all relationships.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Float mean confidence; ``0.0`` when no relationships exist.
+        """
+        rels = getattr(result, "relationships", []) or []
+        if not rels:
+            return 0.0
+        confs = [getattr(r, "confidence", 1.0) for r in rels]
+        return sum(confs) / len(confs)
+
 
 __all__ = [
     'OntologyGenerator',

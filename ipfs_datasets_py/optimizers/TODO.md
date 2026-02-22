@@ -1733,14 +1733,34 @@ Implementation notes:
 
 Testing: 48 new tests in test_batch_208_features.py; all passing.
 
-## Batch 209+ Backlog
+## Batch 209 — Done ✅ (2026-02-22)
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_trend_intercept()` — OLS intercept of history scores
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_z_scores()` — list of z-scores for each history entry
-- [ ] (P2) [graphrag] `OntologyCritic.top_two_dimensions(score)` — names of the two highest-scoring dimensions
-- [ ] (P2) [graphrag] `OntologyGenerator.avg_relationship_confidence(result)` — mean confidence across relationships
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_trend_intercept()` — OLS intercept of feedback scores
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_trend_slope()` — OLS slope of run score series
-- [ ] (P2) [graphrag] `OntologyPipeline.improving_run_ratio()` — fraction of runs that improved on previous
-- [ ] (P2) [graphrag] `LogicValidator.self_loop_count(ontology)` — count of edges where source==target
-- [ ] (P2) [graphrag] `LogicValidator.isolated_node_count(ontology)` — nodes with no edges in entity list
+- [x] (P2) [graphrag] `OntologyOptimizer.score_trend_intercept()` — OLS intercept of history scores (y_mean - slope*x_mean)
+- [x] (P2) [graphrag] `OntologyOptimizer.score_z_scores()` — already existed in source
+- [x] (P2) [graphrag] `OntologyCritic.top_two_dimensions(score)` — sorted _DIMENSIONS[:2] by value descending
+- [x] (P2) [graphrag] `OntologyGenerator.avg_relationship_confidence(result)` — mean of r.confidence for all rels
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_trend_intercept()` — OLS intercept of feedback scores
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_trend_slope()` — already existed in source
+- [x] (P2) [graphrag] `OntologyPipeline.improving_run_ratio()` — improvements / (n_runs - 1)
+- [x] (P2) [graphrag] `LogicValidator.self_loop_count(ontology)` — already existed in source
+- [x] (P2) [graphrag] `LogicValidator.isolated_node_count(ontology)` — already existed in source
+
+Implementation notes:
+- score_trend_intercept / feedback_trend_intercept: y_mean - slope * x_mean; 0.0 for <2 entries.
+- top_two_dimensions: returns tuple of 2 dimension names, highest first.
+- avg_relationship_confidence: sum(r.confidence)/len(rels); 0.0 when no rels.
+- improving_run_ratio: improvements / (n-1) where improvement = score[i] > score[i-1]; 0.0 for <2 runs.
+
+Testing: 39 new tests in test_batch_209_features.py; all passing.
+
+## Batch 210+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.history_range()` — max - min of history scores
+- [ ] (P2) [graphrag] `OntologyOptimizer.above_target_rate(target)` — fraction of history scores above target
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_trend_slope(score, prev_score)` — per-dimension OLS slope between two scores
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_type_count(result)` — count of distinct entity types
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_above_mean_ratio()` — fraction of scores above their mean
+- [ ] (P2) [graphrag] `OntologyPipeline.best_run_index()` — index of the run with the highest overall score
+- [ ] (P2) [graphrag] `OntologyPipeline.worst_run_index()` — index of the run with the lowest overall score
+- [ ] (P2) [graphrag] `LogicValidator.betweenness_centrality_approx(ontology)` — approximate betweenness centrality
+- [ ] (P2) [graphrag] `LogicValidator.leaf_node_count(ontology)` — count of nodes with out-degree zero

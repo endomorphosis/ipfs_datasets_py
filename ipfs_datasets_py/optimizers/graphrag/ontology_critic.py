@@ -4381,6 +4381,24 @@ class OntologyCritic(BaseCritic):
         mean_val = sum(vals) / n
         return sum((v - mean_val) ** 2 for v in vals) / n
 
+    def top_two_dimensions(self, score: "CriticScore") -> tuple:
+        """Return the names of the two highest-scoring evaluation dimensions.
+
+        Args:
+            score: CriticScore to inspect.
+
+        Returns:
+            Tuple of two dimension name strings, ordered highest first.
+            Returns a tuple of one name if only one dimension exists, or an
+            empty tuple if no dimensions are present.
+        """
+        ranked = sorted(
+            self._DIMENSIONS,
+            key=lambda d: getattr(score, d, 0.0),
+            reverse=True,
+        )
+        return tuple(ranked[:2])
+
 
 # Export public API
 __all__ = [

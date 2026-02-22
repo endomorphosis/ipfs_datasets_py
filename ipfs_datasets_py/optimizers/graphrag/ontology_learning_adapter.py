@@ -2277,3 +2277,26 @@ class OntologyLearningAdapter:
             result.append(variance ** 0.5)
         return result
 
+    def feedback_trend_intercept(self) -> float:
+        """Return the OLS intercept of feedback ``final_score`` values.
+
+        Computed as ``y_mean - slope * x_mean`` over index positions.
+
+        Returns:
+            Float intercept; ``0.0`` when fewer than 2 feedback records or
+            x-variance is zero.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        n = len(scores)
+        xs = list(range(n))
+        x_mean = sum(xs) / n
+        y_mean = sum(scores) / n
+        num = sum((x - x_mean) * (y - y_mean) for x, y in zip(xs, scores))
+        den = sum((x - x_mean) ** 2 for x in xs)
+        if den == 0.0:
+            return 0.0
+        slope = num / den
+        return y_mean - slope * x_mean
+
