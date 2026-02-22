@@ -2314,3 +2314,58 @@ class OntologyLearningAdapter:
         mean = sum(scores) / len(scores)
         above = sum(1 for s in scores if s > mean)
         return above / len(scores)
+
+    def feedback_z_scores(self) -> list:
+        """Return the z-score for each feedback record's *final_score*.
+
+        Z-scores are calculated using the population mean and standard
+        deviation of all feedback records.
+
+        Returns:
+            List of floats (one per record).  Returns an empty list when
+            fewer than 2 records exist.  Returns ``[0.0, …]`` when the
+            population standard deviation is zero (all scores identical).
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.7, actions={})
+            >>> adapter.apply_feedback(final_score=0.9, actions={})
+            >>> zs = adapter.feedback_z_scores()
+            >>> len(zs) == 2 and abs(zs[0] + zs[1]) < 1e-9  # sum ≈ 0
+        """
+        if len(self._feedback) < 2:
+            return []
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        if variance == 0.0:
+            return [0.0] * len(scores)
+        std = variance ** 0.5
+        return [(s - mean) / std for s in scores]
+
+    def feedback_percentile(self, p: float) -> float:
+        """Return the *p*-th percentile of feedback final scores.
+
+        Uses nearest-rank method: index = ``floor(p / 100 * n)``, clamped
+        to ``[0, n-1]``.
+
+        Args:
+            p: Percentile in [0, 100].
+
+        Returns:
+            Float score at the requested percentile; ``0.0`` when feedback
+            is empty.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.5, actions={})
+            >>> adapter.apply_feedback(final_score=0.8, actions={})
+            >>> adapter.feedback_percentile(50)  # median-ish
+        """
+        if not self._feedback:
+            return 0.0
+        scores = sorted(r.final_score for r in self._feedback)
+        n = len(scores)
+        idx = int(p / 100.0 * n)
+        idx = max(0, min(idx, n - 1))
+        return scores[idx]

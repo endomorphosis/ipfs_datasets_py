@@ -4416,6 +4416,43 @@ class OntologyCritic(BaseCritic):
             for d in self._DIMENSIONS
         }
 
+    def min_max_dimension_ratio(self, score: "CriticScore") -> float:
+        """Return the ratio of the minimum dimension value to the maximum.
+
+        Args:
+            score: A :class:`CriticScore` instance.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when the maximum dimension value is zero.
+
+        Example::
+
+            >>> ratio = critic.min_max_dimension_ratio(score)
+            >>> 0.0 <= ratio <= 1.0
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        max_val = max(vals)
+        if max_val == 0.0:
+            return 0.0
+        return min(vals) / max_val
+
+    def dimension_range(self, score: "CriticScore") -> float:
+        """Return the range (max − min) of the six dimension values.
+
+        Args:
+            score: A :class:`CriticScore` instance.
+
+        Returns:
+            Float ≥ 0; ``0.0`` when all six dimensions are equal.
+
+        Example::
+
+            >>> rng = critic.dimension_range(score)
+            >>> rng >= 0.0
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        return max(vals) - min(vals)
+
 
 # Export public API
 __all__ = [

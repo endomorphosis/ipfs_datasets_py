@@ -4944,6 +4944,25 @@ class OntologyOptimizer:
         count = sum(1 for e in self._history if e.average_score > target)
         return count / len(self._history)
 
+    def score_mad(self) -> float:
+        """Return the Mean Absolute Deviation (MAD) of history scores.
+
+        MAD measures the average absolute distance of each score from the
+        mean, and is less sensitive to outliers than variance.
+
+        Returns:
+            Float ≥ 0; ``0.0`` when history is empty or all scores are equal.
+
+        Example::
+
+            >>> opt.score_mad()  # non-negative
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        mean = sum(scores) / len(scores)
+        return sum(abs(s - mean) for s in scores) / len(scores)
+
 
 # Export public API
 __all__ = [

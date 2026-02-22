@@ -2405,3 +2405,28 @@ class OntologyPipeline:
             1 for i in range(1, len(scores)) if scores[i] > scores[i - 1]
         )
         return improvements / (len(scores) - 1)
+
+    def run_score_ewma(self, alpha: float = 0.3) -> float:
+        """Return the Exponential Weighted Moving Average (EWMA) of run scores.
+
+        Uses the standard recurrence: ``ewma[t] = alpha * score[t] + (1 - alpha) * ewma[t-1]``
+        with the first run score as the initial value.
+
+        Args:
+            alpha: Smoothing factor in (0, 1].  Default ``0.3``.
+
+        Returns:
+            Float EWMA of all run scores; ``0.0`` when no runs exist.
+
+        Example::
+
+            >>> ewma = pipeline.run_score_ewma(alpha=0.2)
+            >>> isinstance(ewma, float)
+        """
+        if not self._run_history:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        ewma = scores[0]
+        for s in scores[1:]:
+            ewma = alpha * s + (1.0 - alpha) * ewma
+        return ewma

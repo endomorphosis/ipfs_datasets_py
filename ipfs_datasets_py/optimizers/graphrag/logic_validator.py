@@ -3850,6 +3850,82 @@ class LogicValidator:
             betweenness = {nd: v / norm for nd, v in betweenness.items()}
         return betweenness
 
+    def edge_density(self, ontology: Any) -> float:
+        """Return the directed edge density of the ontology graph.
+
+        Density is defined as the number of directed edges divided by the
+        maximum possible directed edges for *n* nodes: ``n × (n − 1)``.
+
+        Args:
+            ontology: Ontology dict with ``entities`` and ``relationships``
+                (or ``edges``) keys.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when fewer than 2 entities.
+
+        Example::
+
+            >>> ent = [{"id": "e1"}, {"id": "e2"}, {"id": "e3"}]
+            >>> rel = [{"source": "e1", "target": "e2", "id": "r1"}]
+            >>> validator.edge_density({"entities": ent, "relationships": rel})
+            # 1 / (3*2) ≈ 0.167
+        """
+        entities = ontology.get("entities", [])
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if not isinstance(rels, list):
+            rels = []
+        n = len(entities)
+        if n < 2:
+            return 0.0
+        max_edges = n * (n - 1)
+        edge_count = sum(
+            1 for r in rels
+            if isinstance(r, dict) and r.get("source") and r.get("target")
+        )
+        return edge_count / max_edges
+
+    def multi_edge_count(self, ontology: Any) -> int:
+        """Return the number of duplicate directed edges (multi-edges).
+
+        A multi-edge is a second (or further) directed relationship that
+        shares the same ``source`` and ``target`` as an earlier one.
+
+        Args:
+            ontology: Ontology dict with ``relationships`` (or ``edges``) key.
+
+        Returns:
+            Non-negative integer count of extra edges beyond the first for
+            each ``(source, target)`` pair.
+
+        Example::
+
+            >>> rels = [
+            ...     {"id": "r1", "source": "A", "target": "B"},
+            ...     {"id": "r2", "source": "A", "target": "B"},  # duplicate
+            ...     {"id": "r3", "source": "A", "target": "C"},
+            ... ]
+            >>> validator.multi_edge_count({"entities": [], "relationships": rels})
+            1
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if not isinstance(rels, list):
+            return 0
+        seen: dict = {}
+        multi = 0
+        for r in rels:
+            if not isinstance(r, dict):
+                continue
+            src = r.get("source")
+            tgt = r.get("target")
+            if not src or not tgt:
+                continue
+            key = (src, tgt)
+            if key in seen:
+                multi += 1
+            else:
+                seen[key] = True
+        return multi
+
 
 # Export public API
 __all__ = [

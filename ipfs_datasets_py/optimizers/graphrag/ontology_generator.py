@@ -7910,6 +7910,30 @@ class OntologyGenerator:
         entities = getattr(result, "entities", []) or []
         return len({getattr(e, "type", "") for e in entities if getattr(e, "type", "")})
 
+    def relationship_density(self, result: "EntityExtractionResult") -> float:
+        """Return the directed relationship density of *result*.
+
+        Density is defined as the number of relationships divided by the
+        maximum possible directed relationships for *n* entities:
+        ``n × (n − 1)``.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when fewer than 2 entities.
+
+        Example::
+
+            >>> rd = generator.relationship_density(result)
+            >>> 0.0 <= rd <= 1.0
+        """
+        n = len(getattr(result, "entities", []) or [])
+        if n < 2:
+            return 0.0
+        rel_count = len(getattr(result, "relationships", []) or [])
+        return rel_count / (n * (n - 1))
+
 
 __all__ = [
     'OntologyGenerator',
