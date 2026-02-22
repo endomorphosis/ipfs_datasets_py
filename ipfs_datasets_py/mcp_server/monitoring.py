@@ -155,7 +155,7 @@ class EnhancedMetricsCollector:
                 await self._check_alerts()
                 await anyio.sleep(30)  # Collect every 30 seconds
                 
-            except anyio.get_cancelled_exc_class()():
+            except anyio.get_cancelled_exc_class():
                 break
             except MetricsCollectionError as e:
                 logger.error(f"Metrics collection error in monitoring loop: {e}")
@@ -174,7 +174,7 @@ class EnhancedMetricsCollector:
                 await self._cleanup_old_data()
                 await anyio.sleep(3600)  # Cleanup every hour
                 
-            except anyio.get_cancelled_exc_class()():
+            except anyio.get_cancelled_exc_class():
                 break
             except MonitoringError:
                 raise
@@ -999,14 +999,14 @@ class EnhancedMetricsCollector:
             self.monitoring_task.cancel()
             try:
                 await self.monitoring_task
-            except anyio.get_cancelled_exc_class()():
+            except anyio.get_cancelled_exc_class():
                 pass
         
         if self.cleanup_task:
             self.cleanup_task.cancel()
             try:
                 await self.cleanup_task
-            except anyio.get_cancelled_exc_class()():
+            except anyio.get_cancelled_exc_class():
                 pass
 
 class P2PMetricsCollector:
