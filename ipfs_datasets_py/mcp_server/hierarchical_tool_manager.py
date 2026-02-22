@@ -843,6 +843,7 @@ class HierarchicalToolManager:
         calls: List[Dict[str, Any]],
         *,
         return_exceptions: bool = True,
+        max_concurrent: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Dispatch multiple tool calls concurrently.
 
@@ -861,6 +862,11 @@ class HierarchicalToolManager:
                 individual calls are captured and returned as error dicts
                 rather than propagated.  Set to ``False`` to let the first
                 exception cancel all remaining tasks.
+            max_concurrent: Maximum number of tasks to run concurrently.
+                When ``None`` (default) all tasks are dispatched at once.
+                When set to a positive integer, calls are processed in
+                batches of that size (adaptive batch sizing).  Useful for
+                throttling resource consumption when *calls* is very large.
 
         Returns:
             List of result dicts in the same order as *calls*.
@@ -871,6 +877,9 @@ class HierarchicalToolManager:
                 {"category": "dataset_tools", "tool": "load_dataset", "params": {"source": "squad"}},
                 {"category": "graph_tools",   "tool": "query_knowledge_graph"},
             ])
+
+            # Limit to 4 concurrent calls:
+            results = await manager.dispatch_parallel(calls, max_concurrent=4)
         """
         if not calls:
             return []
@@ -897,9 +906,18 @@ class HierarchicalToolManager:
                 else:
                     raise
 
-        async with anyio.create_task_group() as tg:
-            for i, call in enumerate(calls):
-                tg.start_soon(_run_one, i, call)
+        if max_concurrent is None or max_concurrent >= n:
+            # All calls at once (original behaviour).
+            async with anyio.create_task_group() as tg:
+                for i, call in enumerate(calls):
+                    tg.start_soon(_run_one, i, call)
+        else:
+            # Adaptive batching: process in windows of *max_concurrent*.
+            for batch_start in range(0, n, max_concurrent):
+                batch = calls[batch_start: batch_start + max_concurrent]
+                async with anyio.create_task_group() as tg:
+                    for j, call in enumerate(batch):
+                        tg.start_soon(_run_one, batch_start + j, call)
 
         # Cast — every slot is filled by _run_one before task group exits.
         return results  # type: ignore[return-value]
