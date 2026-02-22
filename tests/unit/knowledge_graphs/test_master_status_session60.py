@@ -163,7 +163,7 @@ class TestThreeDocVersionAgreement:
         """MASTER_STATUS.md version header must be 3.22.15 or later."""
         text = _read(_MASTER_STATUS)
         assert any(f"**Version:** {v}" in text for v in (
-            "3.22.15", "3.22.16", "3.22.17", "3.22.18", "3.22.19"
+            "3.22.15", "3.22.16", "3.22.17", "3.22.18", "3.22.19", "3.22.20"
         )), \
             "MASTER_STATUS.md **Version:** should be 3.22.15 or later"
 

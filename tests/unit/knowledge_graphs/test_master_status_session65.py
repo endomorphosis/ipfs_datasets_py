@@ -63,8 +63,10 @@ class TestMasterStatusDocRef:
         """Documentation row should reference v3.22.18 or later."""
         text = self._read()
         # Check any recent version is there
-        assert any(v in text for v in ("v3.22.18", "v3.22.19", "Reflects v3.22.18", "Reflects v3.22.19")), (
-            "Documentation row should reference current version v3.22.18 or v3.22.19"
+        assert any(v in text for v in ("v3.22.18", "v3.22.19", "v3.22.20",
+                                       "Reflects v3.22.18", "Reflects v3.22.19",
+                                       "Reflects v3.22.20")), (
+            "Documentation row should reference current version v3.22.18 or later"
         )
 
     def test_stale_v3_22_15_documentation_row_gone(self):
@@ -74,10 +76,10 @@ class TestMasterStatusDocRef:
         )
 
     def test_test_files_count_102(self):
-        """Test file count should be 102 (as of v3.22.18)."""
+        """Test file count should be 102 or higher (as of v3.22.18+)."""
         text = self._read()
-        assert "102 total" in text, (
-            "Test files count should show 102 total (sessions 59-64 added 6 files)"
+        assert "102 total" in text or "103 total" in text, (
+            "Test files count should show 102+ total"
         )
 
     def test_stale_95_total_gone(self):
@@ -90,9 +92,10 @@ class TestMasterStatusDocRef:
         )
 
     def test_as_of_v3_22_18_present(self):
-        """'as of v3.22.18' should appear near the test file count."""
-        assert "as of v3.22.18" in self._read(), (
-            "'as of v3.22.18' annotation missing from test files count"
+        """'as of v3.22.18' or later should appear near the test file count."""
+        text = self._read()
+        assert "as of v3.22.18" in text or "as of v3.22.20" in text, (
+            "'as of v3.22.18' or later annotation missing from test files count"
         )
 
 
@@ -105,7 +108,7 @@ class TestMasterRefactoringPlanSession65:
     def test_version_is_3_22_18_or_later(self):
         """Version should be 3.22.18 or later (not stale 3.22.17)."""
         text = self._read()
-        assert any(v in text for v in ("**Version:** 3.22.18", "**Version:** 3.22.19")), (
+        assert any(v in text for v in ("**Version:** 3.22.18", "**Version:** 3.22.19", "**Version:** 3.22.20")), (
             "MASTER_REFACTORING_PLAN version should be 3.22.18 or later"
         )
 
@@ -132,10 +135,10 @@ class TestDocVersionAgreement:
     """MASTER_STATUS, CHANGELOG, ROADMAP, and REFACTORING_PLAN all agree on current version."""
 
     def test_master_status_version_is_3_22_19(self):
-        """MASTER_STATUS.md should declare version 3.22.19."""
+        """MASTER_STATUS.md should declare version 3.22.19 or later."""
         text = MASTER_STATUS.read_text(encoding="utf-8")
-        assert "**Version:** 3.22.19" in text, (
-            f"MASTER_STATUS.md version header should be 3.22.19"
+        assert any(v in text for v in ("**Version:** 3.22.19", "**Version:** 3.22.20")), (
+            "MASTER_STATUS.md version header should be 3.22.19 or later"
         )
 
     def test_changelog_has_3_22_19_section(self):
@@ -146,8 +149,8 @@ class TestDocVersionAgreement:
         )
 
     def test_roadmap_current_version_is_3_22_19(self):
-        """ROADMAP.md Current Version header should be 3.22.19."""
+        """ROADMAP.md Current Version header should be 3.22.19 or later."""
         text = ROADMAP.read_text(encoding="utf-8")
-        assert "**Current Version:** 3.22.19" in text, (
-            "ROADMAP.md Current Version header should be 3.22.19"
+        assert any(v in text for v in ("**Current Version:** 3.22.19", "**Current Version:** 3.22.20")), (
+            "ROADMAP.md Current Version header should be 3.22.19 or later"
         )

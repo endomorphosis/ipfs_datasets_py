@@ -966,3 +966,33 @@ All session59 (21 tests) and session60 (18 tests) tests continue to pass:
 - `TestDocVersionAgreement` (3 tests): MASTER_STATUS/CHANGELOG/ROADMAP/REFACTORING_PLAN all agree on v3.22.19
 
 **Result: 3,841 passed, 26 skipped, 0 failed** (numpy+networkx+matplotlib+scipy+plotly+rdflib env)
+
+### Session 66 log (2026-02-22)
+
+**Historical doc banners + DOCUMENTATION_GUIDE tier classification fixes — doc-only.**
+
+**Problem:** 4 analysis documents from 2026-02-18 had no "historical record" notices,
+leaving readers unsure whether their metrics (75%, 116+ tests) and open `[ ]` action items
+were still valid. `EXECUTIVE_SUMMARY_FINAL_2026_02_18.md` and `REFACTORING_COMPLETE_2026_02_18.md`
+were not even listed in `DOCUMENTATION_GUIDE.md`, and `COMPREHENSIVE_ANALYSIS_2026_02_18.md`
+was listed as "Priority: MEDIUM — Prioritized action items" despite all items being done.
+
+**Changes:**
+1. `COMPREHENSIVE_ANALYSIS_2026_02_18.md`: `⚠️ Historical Document` banner added; footer
+   "Proceed with Phase 1" → "All action items complete as of v3.22.19"; stale "Next Review:
+   After Phase 1 & 2 completion (3-4 hours from now)" → "Completed"
+2. `EXECUTIVE_SUMMARY_FINAL_2026_02_18.md`: `⚠️ Historical Document` banner added;
+   all 9 stale `[ ]` items ticked `[x]` with completion notes (v3.22.x milestones)
+3. `REFACTORING_COMPLETE_2026_02_18.md`: `⚠️ Historical Document` banner added
+4. `DOCUMENTATION_GUIDE.md`:
+   - Item 7 (`COMPREHENSIVE_ANALYSIS`): `**NEW**` tag removed; description → "Historical reference"
+   - Tier 6 section: `EXECUTIVE_SUMMARY_FINAL_2026_02_18.md` + `REFACTORING_COMPLETE_2026_02_18.md` added
+
+**15 tests** in `test_master_status_session66.py` (5 classes):
+- `TestComprehensiveAnalysisHistoricalBanner` (5 tests): banner present; stale footer gone; completion noted
+- `TestExecutiveSummaryHistoricalBanner` (5 tests): banner present; all [ ] items → [x]
+- `TestRefactoringCompleteHistoricalBanner` (3 tests): banner present; MASTER_STATUS ref present
+- `TestDocumentationGuideUpdated` (5 tests): **NEW** tag gone; item-7 says "historical"; both missing docs in Tier 6
+- `TestVersionAgreement` (3 tests): MASTER_STATUS/CHANGELOG/ROADMAP all agree on v3.22.20
+
+**Result: 3,856 passed, 26 skipped, 0 failed** (numpy+networkx+matplotlib+scipy+plotly+rdflib env)

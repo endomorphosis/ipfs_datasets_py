@@ -51,9 +51,12 @@ class TestDocumentationGuideVersion:
             "DOCUMENTATION_GUIDE.md must contain Last Updated: 2026-02-22"
 
     def test_stale_date_2026_02_18_absent(self):
-        """Stale date 2026-02-18 should no longer appear (replaced by 2026-02-22)."""
-        assert "2026-02-18" not in self.content, \
-            "Stale date 2026-02-18 must be removed from DOCUMENTATION_GUIDE.md"
+        """Stale 'Last Updated: 2026-02-18' header should no longer appear (replaced by 2026-02-22).
+        Note: '2026-02-18' may appear in historical document file-name references in Tier 6,
+        which is correct. Only the header last-updated date must be gone.
+        """
+        assert "**Last Updated:** 2026-02-18" not in self.content, \
+            "Stale '**Last Updated:** 2026-02-18' header must be removed from DOCUMENTATION_GUIDE.md"
 
     def test_next_review_not_stale_q2_2026(self):
         """'Next Review: Q2 2026' should be replaced with a non-time-bound statement."""

@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.22.19  
+**Version:** 3.22.20  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-22 (session 65)  
-**Last Major Release:** v3.22.19 (session 65: cross_document.py stale docstring "see TODO at line 542" fixed; MASTER_STATUS Documentation row v3.22.15→v3.22.18; test files count 95→102; MASTER_REFACTORING_PLAN version 3.22.17→3.22.18 + sessions 63-64 entries added; 16 doc+code integrity tests)
+**Last Updated:** 2026-02-22 (session 66)  
+**Last Major Release:** v3.22.20 (session 66: historical banners added to COMPREHENSIVE_ANALYSIS/EXECUTIVE_SUMMARY_FINAL/REFACTORING_COMPLETE 2026-02-18 docs; EXECUTIVE_SUMMARY stale [ ] items ticked [x]; DOCUMENTATION_GUIDE: item-7 **NEW** tag removed, EXECUTIVE_SUMMARY_FINAL+REFACTORING_COMPLETE added to Tier 6; 15 doc integrity tests)
 
 ---
 
@@ -174,7 +174,7 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 **Remaining 1 missed line (99.99% coverage):**
 - `extraction/_entity_helpers.py:117` — intentional defensive guard (all regex patterns produce ≥2-char groups; kept for safety)
 
-### Test Files: 102 total (as of v3.22.18)
+### Test Files: 103 total (as of v3.22.20)
 
 **Unit Tests:** tests/unit/knowledge_graphs/
 - test_extraction.py, test_extraction_package.py, test_advanced_extractor.py
@@ -254,9 +254,10 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - session62: **Stale metadata fixed in DOCUMENTATION_GUIDE.md, DEFERRED_FEATURES.md, and IMPROVEMENT_TODO.md.** DOCUMENTATION_GUIDE.md: Version 1.0→3.22.16; Last Updated 2026-02-18→2026-02-22; duplicate MASTER_STATUS.md entry (items 4+5 identical) removed; renumbered items 5–24 → 5–23; "Next Review: Q2 2026" → "After each major release or quarterly". DEFERRED_FEATURES.md: Last Updated 2026-02-20→2026-02-22; removed stale v2.5.0 ref from Next Review. IMPROVEMENT_TODO.md: scope path `ipfs_datasets_py/ipfs_datasets_py/knowledge_graphs/` → `ipfs_datasets_py/knowledge_graphs/`; Note-on-pathing updated. 18 doc integrity tests. **Result: 3,782 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 - session63: **Stale "Status: Planned" items in ROADMAP.md fixed** (3 items inside CANCELLED v2.2.0/v2.5.0 sections: Migration Performance→Delivered v2.1.0; spaCy Dep Parsing→Delivered v2.1.0; Confidence Scoring→Deferred to v4.0+). **MASTER_REFACTORING_PLAN_2026.md updated**: v1.0→3.22.17; Last Updated 2026-02-20→2026-02-22; §1 snapshot updated (99.99%, 3,782+ tests, 95+ test files); sessions 59-62 coverage-push + doc-consistency work added to §2 Completed Work Summary; §3.3.2 Extraction Validation Split: 🟡 Deferred→📋 Deferred to v4.0+. 15 doc integrity tests. **Result: 3,797 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 - session64: **QUICKSTART.md API errors fixed** (5 inaccuracies causing AttributeError/TypeError at runtime): `rel.source`→`rel.source_id`, `rel.target`→`rel.target_id`; removed non-existent `backend.add_knowledge_graph(kg)` (query example now uses `GraphEngine` directly); `engine.execute()`→`engine.execute_cypher()`; `for row in results:`→`for row in result.items:`; `backend.store(kg)`→`backend.store(kg.to_dict())` + `backend.retrieve_json(cid)` (returns dict, not KG); `HybridSearch`→`HybridSearchEngine`; `top_k=5`→`k=5`; removed `combine_strategy="weighted"`; `result.entity.name`→`result.node_id`. **MASTER_STATUS.md Feature Completeness Matrix** updated: all stale 40–85% per-feature coverage %s → current 99–100%. 19 doc+API integrity tests. **Result: 3,816 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
+- session66: **Historical doc banners + DOCUMENTATION_GUIDE tier classification.** `COMPREHENSIVE_ANALYSIS_2026_02_18.md`: historical notice banner added; "Proceed with Phase 1" footer → "all action items complete as of v3.22.19"; "After Phase 1 & 2 completion" next-review → "Completed". `EXECUTIVE_SUMMARY_FINAL_2026_02_18.md`: historical banner added; all stale `[ ]` items (short/medium/long-term) ticked `[x]` with completion notes. `REFACTORING_COMPLETE_2026_02_18.md`: historical banner added. `DOCUMENTATION_GUIDE.md`: item-7 `**NEW**` tag removed; description updated to "Historical reference"; `EXECUTIVE_SUMMARY_FINAL_2026_02_18.md` + `REFACTORING_COMPLETE_2026_02_18.md` added to Tier 6 section. 15 doc integrity tests. **Result: 3,856 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 - session65: **Stale docstring + doc reference fixes.** `reasoning/cross_document.py:655`: removed stale "see TODO at line 542" (line 542 is plain implementation code, not a TODO); note updated to describe current heuristic approach. `MASTER_STATUS.md`: `Documentation` row updated from `Reflects v3.22.15` → `v3.22.18`; `Test Files: 95 total (as of v3.22.15)` → `102 total (as of v3.22.18)` (sessions 59–64 added 6 files). `MASTER_REFACTORING_PLAN_2026.md`: version `3.22.17`→`3.22.18`; sessions 63–64 "API Accuracy" work section added. 16 doc+code integrity tests. **Result: 3,841 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 
-**Total Tests:** 3,841 passing, 26 skipped (optional dep guards), 0 failing
+**Total Tests:** 3,856 passing, 26 skipped (optional dep guards), 0 failing
 **Pass Rate:** 100% (excluding optional dependency skips)
 **Coverage:** 99.99% (1 missed line: `_entity_helpers.py:117` — intentional defensive guard)
 

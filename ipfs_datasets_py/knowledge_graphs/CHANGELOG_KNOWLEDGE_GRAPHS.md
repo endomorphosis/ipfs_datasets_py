@@ -5,6 +5,31 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.20] - 2026-02-22
+
+### Fixed — Historical doc banners + DOCUMENTATION_GUIDE tier classification (Session 66)
+
+**Documentation-only changes.**
+
+#### `COMPREHENSIVE_ANALYSIS_2026_02_18.md`
+- Added `⚠️ Historical Document` banner referencing current MASTER_STATUS.md
+- Footer "Next Action: Proceed with Phase 1" → "All action items complete as of v3.22.19"
+- "Next Review: After Phase 1 & 2 completion (3-4 hours from now)" → "Completed"
+
+#### `EXECUTIVE_SUMMARY_FINAL_2026_02_18.md`
+- Added `⚠️ Historical Document` banner
+- All stale `[ ]` items ticked `[x]` with completion notes (v3.22.x milestones)
+- Status note updated to "All recommended next steps now complete (v3.22.19)"
+
+#### `REFACTORING_COMPLETE_2026_02_18.md`
+- Added `⚠️ Historical Document` banner with current metrics link
+
+#### `DOCUMENTATION_GUIDE.md`
+- Item 7 (COMPREHENSIVE_ANALYSIS): removed stale `**NEW**` tag; description updated to
+  "Historical reference — do not modify"
+- Tier 6 section: `EXECUTIVE_SUMMARY_FINAL_2026_02_18.md` and
+  `REFACTORING_COMPLETE_2026_02_18.md` now listed explicitly (were missing)
+
 ## [3.22.19] - 2026-02-22
 
 ### Fixed — Stale docstring + doc reference fixes (Session 65)

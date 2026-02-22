@@ -1,5 +1,10 @@
 # Knowledge Graphs Documentation Refactoring - COMPLETE
 
+> ⚠️ **Historical Document (v1.0, 2026-02-18)**  
+> This document records the documentation refactoring completed in session 4 (2026-02-18).
+> It is preserved as a historical record. See [MASTER_STATUS.md](./MASTER_STATUS.md)
+> for the current state of the module (v3.22.20, 99.99% coverage, 3,856+ tests).
+
 **Date:** 2026-02-18  
 **Status:** ✅ COMPLETE  
 **Total Time:** 4.5 hours  
