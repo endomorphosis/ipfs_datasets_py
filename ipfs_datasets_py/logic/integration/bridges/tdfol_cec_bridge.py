@@ -82,25 +82,26 @@ class TDFOLCECBridge(BaseProverBridge):
         """Load CEC inference rules."""
         if not self.cec_available:
             return []
-
+        
+        # Get all inference rule classes from native inference_rules module
         import inspect
-        rules: List[Any] = []
-
+        rules = []
+        
         try:
-            # Import InferenceRule base and search for subclasses in prover_core
-            from ...CEC.native.prover_core import InferenceRule  # noqa: F401
-
-            for attr_name in dir(prover_core):
-                try:
-                    cls = getattr(prover_core, attr_name)
-                    if (inspect.isclass(cls) and issubclass(cls, InferenceRule)
-                            and cls is not InferenceRule):
-                        rules.append(cls())
-                except Exception as ex:
-                    logger.debug(f"Could not instantiate {attr_name}: {ex}")
+            from ...CEC.native import inference_rules as _ir_module
+            members = inspect.getmembers(_ir_module, inspect.isclass)
+            
+            for name, cls in members:
+                if 'Rule' in name and name != 'InferenceRule':
+                    try:
+                        # Instantiate the rule
+                        rule_instance = cls()
+                        rules.append(rule_instance)
+                    except Exception as e:
+                        logger.debug(f"Could not instantiate {name}: {e}")
         except Exception as e:
             logger.warning(f"Failed to load CEC rules: {e}")
-
+        
         return rules
     
     def to_target_format(self, formula: Formula) -> str:
@@ -266,6 +267,7 @@ class TDFOLCECBridge(BaseProverBridge):
                 proof_steps = []
                 for i, cec_step in enumerate(cec_result.proof_tree.steps):
                     step = ProofStep(
+                        step_number=i + 1,
                         formula=goal,  # Simplified - could convert each step
                         rule_name=cec_step.rule,
                         premises=cec_step.premises,

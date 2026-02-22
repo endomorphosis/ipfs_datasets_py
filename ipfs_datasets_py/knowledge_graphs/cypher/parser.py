@@ -35,6 +35,12 @@ from .ast import (
     CreateClause,
     DeleteClause,
     SetClause,
+    MergeClause,
+    RemoveClause,
+    UnwindClause,
+    WithClause,
+    ForeachClause,
+    CallSubquery,
     PatternNode,
     NodePattern,
     RelationshipPattern,
@@ -212,6 +218,18 @@ class CypherParser:
                 clauses.append(self._parse_delete())
             elif self._match(TokenType.SET):
                 clauses.append(self._parse_set())
+            elif self._match(TokenType.UNWIND):
+                clauses.append(self._parse_unwind())
+            elif self._match(TokenType.WITH):
+                clauses.append(self._parse_with())
+            elif self._match(TokenType.MERGE):
+                clauses.append(self._parse_merge())
+            elif self._match(TokenType.REMOVE):
+                clauses.append(self._parse_remove())
+            elif self._match(TokenType.FOREACH):
+                clauses.append(self._parse_foreach())
+            elif self._match(TokenType.CALL):
+                clauses.append(self._parse_call_subquery())
             elif self._match(TokenType.SEMICOLON):
                 self._advance()  # Skip semicolons
             else:
@@ -378,7 +396,280 @@ class CypherParser:
         self._expect(TokenType.WHERE)
         expression = self._parse_expression()
         return WhereClause(expression=expression)
-    
+
+    def _parse_unwind(self) -> UnwindClause:
+        """Parse UNWIND clause.
+
+        Grammar::
+
+            UNWIND expression AS variable
+        """
+        self._expect(TokenType.UNWIND)
+        expression = self._parse_expression()
+        # Consume AS keyword
+        if self._match(TokenType.AS):
+            self._advance()
+        variable_token = self._expect(TokenType.IDENTIFIER)
+        return UnwindClause(expression=expression, variable=variable_token.value)
+
+    def _parse_with(self) -> WithClause:
+        """Parse WITH clause.
+
+        Grammar::
+
+            WITH [DISTINCT] items [ORDER BY ...] [SKIP n] [LIMIT n] [WHERE expr]
+
+        Semantically identical to RETURN but passes results forward rather
+        than returning them to the client.
+        """
+        self._expect(TokenType.WITH)
+
+        distinct = False
+        if self._match(TokenType.DISTINCT):
+            self._advance()
+            distinct = True
+
+        items = self._parse_return_items()
+
+        order_by = None
+        if self._match(TokenType.ORDER):
+            order_by = self._parse_order_by()
+
+        skip = None
+        if self._match(TokenType.SKIP):
+            self._advance()
+            skip_token = self._expect(TokenType.NUMBER)
+            skip = int(skip_token.value)
+
+        limit = None
+        if self._match(TokenType.LIMIT):
+            self._advance()
+            limit_token = self._expect(TokenType.NUMBER)
+            limit = int(limit_token.value)
+
+        where = None
+        if self._match(TokenType.WHERE):
+            where = self._parse_where()
+
+        return WithClause(
+            items=items,
+            where=where,
+            distinct=distinct,
+            order_by=order_by,
+            skip=skip,
+            limit=limit,
+        )
+
+    def _parse_merge(self) -> MergeClause:
+        """Parse MERGE clause.
+
+        Grammar::
+
+            MERGE pattern
+            [ON CREATE SET property_expr = value, ...]
+            [ON MATCH SET property_expr = value, ...]
+
+        Semantics: if the pattern already exists in the graph, use it (and
+        optionally apply ON MATCH SET); otherwise create it (and optionally
+        apply ON CREATE SET).
+        """
+        self._expect(TokenType.MERGE)
+
+        # Parse the pattern(s) to match or create
+        patterns = self._parse_patterns()
+
+        on_create_set: list = []
+        on_match_set: list = []
+
+        # Parse optional ON CREATE SET / ON MATCH SET
+        # "ON" is not a reserved keyword so it arrives as IDENTIFIER
+        while (
+            self._match(TokenType.IDENTIFIER)
+            and self.current_token is not None
+            and self.current_token.value.upper() == "ON"
+        ):
+            self._advance()  # consume ON (IDENTIFIER)
+            if self._match(TokenType.CREATE):
+                self._advance()  # consume CREATE
+                self._expect(TokenType.SET)
+                on_create_set.extend(self._parse_set_items())
+            elif self._match(TokenType.MATCH):
+                self._advance()  # consume MATCH
+                self._expect(TokenType.SET)
+                on_match_set.extend(self._parse_set_items())
+            else:
+                break
+
+        return MergeClause(
+            patterns=patterns,
+            on_create_set=on_create_set,
+            on_match_set=on_match_set,
+        )
+
+    def _parse_set_items(self) -> list:
+        """Parse a list of ``property = value`` SET items.
+
+        Returns a list of ``(property_expr, value_expr)`` tuples, the same
+        format used by :class:`SetClause`.
+        """
+        items = []
+        prop_expr = self._parse_postfix()
+        self._expect(TokenType.EQ)
+        value_expr = self._parse_expression()
+        items.append((prop_expr, value_expr))
+        while self._match(TokenType.COMMA):
+            self._advance()
+            prop_expr = self._parse_postfix()
+            self._expect(TokenType.EQ)
+            value_expr = self._parse_expression()
+            items.append((prop_expr, value_expr))
+        return items
+
+    def _parse_remove(self) -> RemoveClause:
+        """Parse REMOVE clause.
+
+        Grammar::
+
+            REMOVE item [, item]*
+
+        where ``item`` is one of::
+
+            variable.property   -- remove a property
+            variable:Label      -- remove a label
+
+        Returns a :class:`RemoveClause` with a list of remove-item dicts.
+        """
+        self._expect(TokenType.REMOVE)
+
+        items = []
+
+        def _parse_one_item() -> dict:
+            var_token = self._expect(TokenType.IDENTIFIER)
+            var_name = var_token.value
+            if self._match(TokenType.DOT):
+                # REMOVE n.property
+                self._advance()  # consume '.'
+                prop_token = self._expect(TokenType.IDENTIFIER)
+                return {"type": "property", "variable": var_name, "property": prop_token.value}
+            elif self._match(TokenType.COLON):
+                # REMOVE n:Label
+                self._advance()  # consume ':'
+                label_token = self._expect(TokenType.IDENTIFIER)
+                return {"type": "label", "variable": var_name, "label": label_token.value}
+            else:
+                raise CypherParseError(
+                    f"Expected '.' or ':' after variable '{var_name}' in REMOVE",
+                    self._current(),
+                )
+
+        items.append(_parse_one_item())
+        while self._match(TokenType.COMMA):
+            self._advance()
+            items.append(_parse_one_item())
+
+        return RemoveClause(items=items)
+
+    def _parse_foreach(self) -> ForeachClause:
+        """Parse FOREACH clause.
+
+        Grammar::
+
+            FOREACH (variable IN expression | clause*)
+
+        Example::
+
+            FOREACH (x IN [1, 2, 3] | CREATE (:Number {value: x}))
+        """
+        self._expect(TokenType.FOREACH)
+        self._expect(TokenType.LPAREN)
+        # Loop variable
+        var_token = self._expect(TokenType.IDENTIFIER)
+        variable = var_token.value
+        # IN keyword (lexed as IDENTIFIER because it's also used in expressions)
+        if self._match(TokenType.IN):
+            self._advance()
+        elif self._match(TokenType.IDENTIFIER) and self._current().value.upper() == "IN":
+            self._advance()
+        else:
+            raise CypherParseError("Expected 'IN' after FOREACH variable", self._current())
+        # List expression
+        expression = self._parse_expression()
+        # Pipe separator
+        self._expect(TokenType.PIPE)
+        # Body: one or more mutation clauses
+        body: List = []
+        while not self._match(TokenType.RPAREN) and not self._match(TokenType.EOF):
+            if self._match(TokenType.CREATE):
+                body.append(self._parse_create())
+            elif self._match(TokenType.SET):
+                body.append(self._parse_set())
+            elif self._match(TokenType.MERGE):
+                body.append(self._parse_merge())
+            elif self._match(TokenType.DELETE):
+                body.append(self._parse_delete())
+            elif self._match(TokenType.REMOVE):
+                body.append(self._parse_remove())
+            else:
+                break
+        self._expect(TokenType.RPAREN)
+        return ForeachClause(variable=variable, expression=expression, body=body)
+
+    def _parse_call_subquery(self) -> CallSubquery:
+        """Parse CALL { … } subquery clause.
+
+        Grammar::
+
+            CALL { inner_query } [YIELD item [AS alias] [, …]]
+
+        Example::
+
+            CALL { MATCH (n:Person) RETURN n.name AS name }
+            CALL { MATCH (n) RETURN count(n) AS total } YIELD total
+        """
+        self._expect(TokenType.CALL)
+        self._expect(TokenType.LBRACE)
+        # Parse the inner query body; save outer parser state
+        inner_tokens: List[Token] = []
+        depth = 1
+        while not self._match(TokenType.EOF):
+            tok = self._current()
+            if tok.type == TokenType.LBRACE:
+                depth += 1
+                inner_tokens.append(tok)
+                self._advance()
+            elif tok.type == TokenType.RBRACE:
+                depth -= 1
+                if depth == 0:
+                    self._advance()  # consume closing '}'
+                    break
+                inner_tokens.append(tok)
+                self._advance()
+            else:
+                inner_tokens.append(tok)
+                self._advance()
+        # Parse inner query using a fresh parser instance
+        inner_parser = CypherParser()
+        inner_parser.tokens = inner_tokens + [Token(TokenType.EOF, "", 0, 0)]
+        inner_parser.pos = 0
+        inner_parser.current_token = inner_parser.tokens[0] if inner_parser.tokens else None
+        inner_query = inner_parser._parse_query()
+        # Optional YIELD clause
+        yield_items: List[Dict[str, Any]] = []
+        if self._match(TokenType.YIELD):
+            self._advance()
+            while True:
+                name_tok = self._expect(TokenType.IDENTIFIER)
+                alias = name_tok.value
+                if self._match(TokenType.AS):
+                    self._advance()
+                    alias_tok = self._expect(TokenType.IDENTIFIER)
+                    alias = alias_tok.value
+                yield_items.append({"name": name_tok.value, "alias": alias})
+                if not self._match(TokenType.COMMA):
+                    break
+                self._advance()
+        return CallSubquery(body=inner_query, yield_items=yield_items)
+
     def _parse_return(self) -> ReturnClause:
         """Parse RETURN clause."""
         self._expect(TokenType.RETURN)
@@ -513,7 +804,7 @@ class CypherParser:
     def _parse_set_item(self) -> tuple:
         """Parse single SET item: property = expression."""
         # Parse property (variable.property)
-        prop = self._parse_expression()
+        prop = self._parse_postfix()
         
         self._expect(TokenType.EQ)
         
@@ -527,11 +818,11 @@ class CypherParser:
         return self._parse_or()
     
     def _parse_or(self) -> ExpressionNode:
-        """Parse OR expressions."""
+        """Parse OR and XOR expressions."""
         left = self._parse_and()
         
-        while self._match(TokenType.OR):
-            op = self._advance().value
+        while self._match(TokenType.OR, TokenType.XOR):
+            op = self._advance().value.upper()
             right = self._parse_and()
             left = BinaryOpNode(operator=op, left=left, right=right)
         
@@ -598,6 +889,17 @@ class CypherParser:
                 self._advance()  # Consume WITH
                 right = self._parse_additive()
                 left = BinaryOpNode(operator="ENDS WITH", left=left, right=right)
+
+            # IS NULL / IS NOT NULL operators
+            elif self._match(TokenType.IS):
+                self._advance()  # Consume IS
+                if self._match(TokenType.NOT):
+                    self._advance()  # Consume NOT
+                    self._expect(TokenType.NULL)
+                    left = UnaryOpNode(operator="IS NOT NULL", operand=left)
+                else:
+                    self._expect(TokenType.NULL)
+                    left = UnaryOpNode(operator="IS NULL", operand=left)
             
             else:
                 break

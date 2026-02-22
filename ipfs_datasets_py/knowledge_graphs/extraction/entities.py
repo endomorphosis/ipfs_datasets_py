@@ -53,6 +53,7 @@ class Entity:
     properties: Optional[Dict[str, Any]] = field(default_factory=dict)
     confidence: float = DEFAULT_CONFIDENCE
     source_text: Optional[str] = None
+    extraction_method: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert the entity to a dictionary representation.

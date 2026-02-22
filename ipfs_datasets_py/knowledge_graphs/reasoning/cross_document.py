@@ -1,0 +1,880 @@
+"""
+Cross-Document Reasoning for GraphRAG.
+
+This module enhances the GraphRAG system with advanced cross-document reasoning capabilities,
+enabling the system to connect information across multiple documents through shared entities
+and generate comprehensive answers with explanations.
+
+Key features:
+- Entity-mediated connections between documents
+- Information relation analysis (complementary, contradictory, etc.)
+- Knowledge gap identification
+- Transitive relationship discovery
+- Multi-level reasoning (basic, moderate, deep)
+- Answer synthesis with confidence scoring
+- Detailed reasoning traces
+
+The cross-document reasoning leverages the query optimization from
+optimizers/graphrag/query_optimizer
+to efficiently traverse entity relationships and find relevant connections.
+"""
+from __future__ import annotations
+
+import logging
+import math
+import os
+import re
+from typing import Dict, List, Any, Optional, Tuple
+from collections import Counter
+try:
+    import numpy as np
+except ImportError:
+    np = None  # type: ignore[assignment]
+import uuid
+
+from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import (
+    LLMReasoningTracer,
+    ReasoningNodeType,
+)
+from ipfs_datasets_py.knowledge_graphs.reasoning.types import (
+    InformationRelationType,
+    DocumentNode,
+    EntityMediatedConnection,
+    CrossDocReasoning,
+)
+from ipfs_datasets_py.knowledge_graphs.reasoning.helpers import ReasoningHelpersMixin
+
+_UNIFIED_OPT_IMPORT_ERROR: Optional[BaseException] = None
+
+
+class _MissingUnifiedGraphRAGQueryOptimizer:
+    def __init__(self, import_error: Optional[BaseException] = None):
+        self._import_error = import_error
+
+    def __getattr__(self, name: str) -> Any:
+        raise ImportError(
+            "UnifiedGraphRAGQueryOptimizer is unavailable; install optional GraphRAG dependencies to enable query optimization."
+        ) from self._import_error
+
+
+try:
+    from ipfs_datasets_py.optimizers.graphrag.query_optimizer import (
+        UnifiedGraphRAGQueryOptimizer,
+    )
+except ImportError as e:
+    UnifiedGraphRAGQueryOptimizer = None
+    _UNIFIED_OPT_IMPORT_ERROR = e
+
+try:
+    from ipfs_datasets_py.ml.llm.llm_router import LLMRouter
+except ImportError:
+    LLMRouter = None
+
+try:
+    import openai  # type: ignore
+except ImportError:
+    openai = None
+
+try:
+    import anthropic  # type: ignore
+except ImportError:
+    anthropic = None
+
+
+logger = logging.getLogger(__name__)
+
+
+class CrossDocumentReasoner(ReasoningHelpersMixin):
+    """
+    Implements cross-document reasoning for GraphRAG.
+
+    This class provides the capability to reason across multiple documents
+    by finding entity-mediated connections and generating synthesized answers
+    based on connected information.
+    """
+
+    def __init__(
+        self,
+        query_optimizer: Optional[Any] = None,
+        reasoning_tracer: Optional[LLMReasoningTracer] = None,
+        llm_service: Optional[Any] = None,
+        min_connection_strength: float = 0.6,
+        max_reasoning_depth: int = 3,
+        enable_contradictions: bool = True,
+        entity_match_threshold: float = 0.85,
+        relation_similarity_threshold: float = 0.8,
+        relation_supporting_strength: float = 0.85,
+        relation_elaborating_strength: float = 0.75,
+        relation_complementary_strength: float = 0.7,
+    ):
+        """
+        Initialize the cross-document reasoner.
+
+        Args:
+            query_optimizer: RAG query optimizer for efficient graph traversal
+            reasoning_tracer: Tracer for recording reasoning steps
+            llm_service: Optional LLM router/service from ipfs_datasets_py.ml.llm
+            min_connection_strength: Minimum strength for entity-mediated connections
+            max_reasoning_depth: Maximum depth for reasoning processes
+            enable_contradictions: Whether to look for contradicting information
+            entity_match_threshold: Threshold for matching entities across documents
+            relation_similarity_threshold: Similarity score above which two documents
+                are classified as SUPPORTING each other (default 0.8).
+            relation_supporting_strength: Connection strength assigned to SUPPORTING
+                relations (default 0.85).
+            relation_elaborating_strength: Connection strength assigned to ELABORATING
+                relations (chronological order; default 0.75).
+            relation_complementary_strength: Connection strength assigned to
+                COMPLEMENTARY relations (default fallback; default 0.7).
+        """
+        if query_optimizer is not None:
+            self.query_optimizer = query_optimizer
+        elif UnifiedGraphRAGQueryOptimizer is not None:
+            self.query_optimizer = UnifiedGraphRAGQueryOptimizer()
+        else:
+            self.query_optimizer = _MissingUnifiedGraphRAGQueryOptimizer(_UNIFIED_OPT_IMPORT_ERROR)
+        self.reasoning_tracer = reasoning_tracer or LLMReasoningTracer()
+        self.llm_service = llm_service  # Typically an LLMRouter instance
+        self._default_llm_router: Optional[Any] = None
+        self.min_connection_strength = min_connection_strength
+        self.max_reasoning_depth = max_reasoning_depth
+        self.enable_contradictions = enable_contradictions
+        self.entity_match_threshold = entity_match_threshold
+        self.relation_similarity_threshold = relation_similarity_threshold
+        self.relation_supporting_strength = relation_supporting_strength
+        self.relation_elaborating_strength = relation_elaborating_strength
+        self.relation_complementary_strength = relation_complementary_strength
+
+        # Statistics
+        self.total_queries = 0
+        self.successful_queries = 0
+        self.avg_document_count = 0
+        self.avg_connection_count = 0
+        self.avg_confidence = 0.0
+
+    def _compute_document_similarity(self, source_doc: DocumentNode, target_doc: DocumentNode) -> float:
+        """Compute a similarity score between two documents.
+
+        Preference order:
+        1) Cosine similarity over dense vectors if both documents have embeddings.
+        2) Bag-of-words cosine similarity over token counts as a lightweight fallback.
+
+        Returns:
+            Similarity in [0.0, 1.0].
+        """
+        if source_doc.vector is not None and target_doc.vector is not None and np is not None:
+            try:
+                a = np.asarray(source_doc.vector, dtype=float)
+                b = np.asarray(target_doc.vector, dtype=float)
+                if a.shape == b.shape and a.size > 0:
+                    denom = float(np.linalg.norm(a) * np.linalg.norm(b))
+                    if denom > 0:
+                        sim = float(np.dot(a, b) / denom)
+                        return max(0.0, min(1.0, sim))
+            except (TypeError, ValueError, AttributeError, FloatingPointError,
+                    np.linalg.LinAlgError):
+                pass
+
+        def tokenize(text: str) -> List[str]:
+            tokens = re.findall(r"[a-z0-9]+", (text or "").lower())
+            stop = {
+                "the", "a", "an", "and", "or", "but", "if", "then", "else",
+                "of", "to", "in", "on", "for", "with", "by", "from", "as",
+                "is", "are", "was", "were", "be", "been", "being",
+            }
+            return [t for t in tokens if len(t) >= 3 and t not in stop]
+
+        src_tokens = tokenize(source_doc.content)
+        tgt_tokens = tokenize(target_doc.content)
+        if not src_tokens or not tgt_tokens:
+            return 0.0
+
+        src_counts = Counter(src_tokens)
+        tgt_counts = Counter(tgt_tokens)
+        common = set(src_counts) & set(tgt_counts)
+        dot = sum(src_counts[t] * tgt_counts[t] for t in common)
+        norm_src = math.sqrt(sum(v * v for v in src_counts.values()))
+        norm_tgt = math.sqrt(sum(v * v for v in tgt_counts.values()))
+        if norm_src == 0.0 or norm_tgt == 0.0:
+            return 0.0
+        sim = dot / (norm_src * norm_tgt)
+        return max(0.0, min(1.0, float(sim)))
+
+    def reason_across_documents(
+        self,
+        query: str,
+        query_embedding: Optional[np.ndarray] = None,
+        input_documents: Optional[List[Dict[str, Any]]] = None,
+        documents: Optional[List[Any]] = None,
+        vector_store: Optional[Any] = None,
+        knowledge_graph: Optional[Any] = None,
+        reasoning_depth: str = "moderate",
+        max_documents: int = 10,
+        min_relevance: float = 0.6,
+        max_hops: int = 2,
+        return_trace: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Perform cross-document reasoning to answer a query.
+
+        This method connects information across multiple documents through
+        shared entities, identifies complementary or contradictory information,
+        and generates a synthesized answer with confidence scores.
+
+        Args:
+            query: Natural language query
+            query_embedding: Query embedding vector (optional, will be computed if not provided)
+            input_documents: Optional list of documents to start with
+            vector_store: Vector store for similarity search
+            knowledge_graph: Knowledge graph for entity and relationship information
+            reasoning_depth: Depth of reasoning ("basic", "moderate", or "deep")
+            max_documents: Maximum number of documents to consider
+            min_relevance: Minimum relevance score for documents
+            max_hops: Maximum hops for graph traversal
+            return_trace: Whether to return the full reasoning trace
+
+        Returns:
+            Dict containing:
+                - answer: Synthesized answer to the query
+                - documents: List of relevant documents used
+                - entity_connections: List of entity-mediated connections
+                - confidence: Confidence score
+                - reasoning_trace: Optional reasoning trace
+        """
+        self.total_queries += 1
+
+        # Backwards-compatible alias: some callers/tests pass `documents=`.
+        # If they pass `DocumentNode` objects, we keep them as-is and can return
+        # the richer `CrossDocReasoning` object.
+        return_reasoning_object = bool(documents) and isinstance(documents[0], DocumentNode)
+        if input_documents is None and documents is not None and not return_reasoning_object:
+            input_documents = documents
+
+        # Create a unique ID for this reasoning process
+        reasoning_id = str(uuid.uuid4())
+
+        # Start a new reasoning trace
+        trace = self.reasoning_tracer.create_trace(
+            query=query,
+            metadata={
+                "trace_type": "cross_document_reasoning",
+                "reasoning_depth": reasoning_depth,
+                "max_documents": max_documents,
+                "min_relevance": min_relevance,
+                "max_hops": max_hops,
+            },
+        )
+        trace_id = trace.trace_id
+
+        # Initialize cross-document reasoning object
+        cross_doc_reasoning = CrossDocReasoning(
+            id=reasoning_id,
+            query=query,
+            query_embedding=query_embedding,
+            reasoning_depth=reasoning_depth,
+            reasoning_trace_id=trace_id
+        )
+
+        # Step 1: Find relevant documents (either from input or by vector search)
+        trace.add_node(
+            node_type=ReasoningNodeType.QUERY,
+            content=query,
+            metadata={"reasoning_step": "document_retrieval"}
+        )
+
+        if return_reasoning_object:
+            documents = list(documents)
+        else:
+            documents = self._get_relevant_documents(
+                query=query,
+                query_embedding=query_embedding,
+                input_documents=input_documents,
+                vector_store=vector_store,
+                max_documents=max_documents,
+                min_relevance=min_relevance,
+            )
+
+        # Add documents to reasoning object
+        cross_doc_reasoning.documents = documents
+
+        # Add document nodes to the reasoning trace
+        for doc in documents:
+            trace.add_node(
+                node_type=ReasoningNodeType.DOCUMENT,
+                content=doc.content[:200] + "..." if len(doc.content) > 200 else doc.content,
+                metadata={
+                    "document_id": doc.id,
+                    "source": doc.source,
+                    "relevance_score": doc.relevance_score,
+                    "entities": doc.entities
+                }
+            )
+
+        # Step 2: Identify entities and extract entity-mediated connections
+        trace.add_node(
+            node_type=ReasoningNodeType.INFERENCE,
+            content="Identifying entity-mediated connections between documents",
+            metadata={"reasoning_step": "entity_connection_discovery"}
+        )
+
+        entity_connections = self._find_entity_connections(
+            documents=documents,
+            knowledge_graph=knowledge_graph,
+            max_hops=max_hops
+        )
+
+        # Add entity connections to reasoning object
+        cross_doc_reasoning.entity_connections = entity_connections
+
+        # Add connection nodes to the reasoning trace
+        for conn in entity_connections:
+            trace.add_node(
+                node_type=ReasoningNodeType.RELATIONSHIP,
+                content=f"Connection through entity '{conn.entity_name}' ({conn.entity_type})",
+                metadata={
+                    "entity_id": conn.entity_id,
+                    "source_doc_id": conn.source_doc_id,
+                    "target_doc_id": conn.target_doc_id,
+                    "relation_type": conn.relation_type.value,
+                    "connection_strength": conn.connection_strength
+                }
+            )
+
+        # Step 3: Generate traversal paths for reasoning
+        trace.add_node(
+            node_type=ReasoningNodeType.INFERENCE,
+            content="Generating traversal paths for reasoning",
+            metadata={"reasoning_step": "traversal_path_generation"}
+        )
+
+        traversal_paths = self._generate_traversal_paths(
+            documents=documents,
+            entity_connections=entity_connections,
+            reasoning_depth=reasoning_depth
+        )
+
+        # Add traversal paths to reasoning object
+        cross_doc_reasoning.traversal_paths = traversal_paths
+
+        # Step 4: Synthesize answer based on connected information
+        trace.add_node(
+            node_type=ReasoningNodeType.INFERENCE,
+            content="Synthesizing answer from connected information",
+            metadata={"reasoning_step": "answer_synthesis"}
+        )
+
+        answer, confidence = self._synthesize_answer(
+            query=query,
+            documents=documents,
+            entity_connections=entity_connections,
+            traversal_paths=traversal_paths,
+            reasoning_depth=reasoning_depth
+        )
+
+        # Add answer to reasoning object
+        cross_doc_reasoning.answer = answer
+        cross_doc_reasoning.confidence = confidence
+
+        # Add conclusion to the reasoning trace
+        trace.add_node(
+            node_type=ReasoningNodeType.CONCLUSION,
+            content=answer,
+            metadata={
+                "confidence": confidence,
+                "reasoning_depth": reasoning_depth,
+                "document_count": len(documents),
+                "connection_count": len(entity_connections)
+            }
+        )
+
+        # Update statistics
+        self.successful_queries += 1
+        self.avg_document_count = ((self.avg_document_count * (self.successful_queries - 1)) +
+                                 len(documents)) / self.successful_queries
+        self.avg_connection_count = ((self.avg_connection_count * (self.successful_queries - 1)) +
+                                   len(entity_connections)) / self.successful_queries
+        self.avg_confidence = ((self.avg_confidence * (self.successful_queries - 1)) +
+                             confidence) / self.successful_queries
+
+        # Prepare and return the result
+        result = {
+            "answer": answer,
+            "documents": [{"id": doc.id, "source": doc.source, "relevance": doc.relevance_score}
+                         for doc in documents],
+            "entity_connections": [{"entity": conn.entity_name,
+                                   "type": conn.entity_type,
+                                   "relation": conn.relation_type.value,
+                                   "strength": conn.connection_strength}
+                                  for conn in entity_connections],
+            "confidence": confidence
+        }
+
+        if return_trace:
+            result["reasoning_trace"] = trace.to_dict()
+
+        if return_reasoning_object:
+            return cross_doc_reasoning
+
+        return result
+
+    def _get_relevant_documents(
+        self,
+        query: str,
+        query_embedding: Optional[np.ndarray],
+        input_documents: Optional[List[Dict[str, Any]]],
+        vector_store: Optional[Any],
+        max_documents: int = 10,
+        min_relevance: float = 0.6
+    ) -> List[DocumentNode]:
+        """
+        Get relevant documents for the query.
+
+        Args:
+            query: The query string
+            query_embedding: The query embedding vector
+            input_documents: Optional input documents
+            vector_store: Vector store for similarity search
+            max_documents: Maximum number of documents to return
+            min_relevance: Minimum relevance score
+
+        Returns:
+            List of DocumentNode objects
+        """
+        documents = []
+
+        # If input documents are provided, use them
+        if input_documents:
+            for i, doc in enumerate(input_documents):
+                # Get relevance score (provided or default high value)
+                relevance = doc.get("relevance_score", 0.9 - (i * 0.05))
+
+                if relevance >= min_relevance and len(documents) < max_documents:
+                    documents.append(DocumentNode(
+                        id=doc.get("id", str(uuid.uuid4())),
+                        content=doc.get("content", ""),
+                        source=doc.get("source", "unknown"),
+                        metadata=doc.get("metadata", {}),
+                        vector=doc.get("vector", None),
+                        relevance_score=relevance,
+                        entities=doc.get("entities", [])
+                    ))
+
+        # If we need more documents and have a vector store, use it
+        if len(documents) < max_documents and vector_store:
+            # Ensure we have a query embedding
+            if query_embedding is None and hasattr(vector_store, "embed_query"):
+                query_embedding = vector_store.embed_query(query)
+
+            if query_embedding is not None:
+                # Get documents from vector store
+                vector_results = vector_store.search(
+                    query_vector=query_embedding,
+                    top_k=max_documents - len(documents),
+                    min_score=min_relevance
+                )
+
+                for result in vector_results:
+                    # Convert to DocumentNode
+                    doc_node = DocumentNode(
+                        id=result.id,
+                        content=result.metadata.get("content", ""),
+                        source=result.metadata.get("source", "vector_store"),
+                        metadata=result.metadata,
+                        vector=result.vector if hasattr(result, "vector") else None,
+                        relevance_score=result.score,
+                        entities=result.metadata.get("entities", [])
+                    )
+                    documents.append(doc_node)
+
+        # Sort by relevance score
+        documents.sort(key=lambda x: x.relevance_score, reverse=True)
+
+        return documents[:max_documents]
+
+    def find_entity_connections(
+        self,
+        documents: List[DocumentNode],
+        knowledge_graph: Optional[Any] = None,
+        max_hops: int = 2,
+    ) -> List[EntityMediatedConnection]:
+        """Public wrapper for finding entity-mediated connections.
+
+        This is a stable entry-point used by tests and integrations.
+        """
+        return self._find_entity_connections(
+            documents=documents,
+            knowledge_graph=knowledge_graph,
+            max_hops=max_hops,
+        )
+
+    def _find_entity_connections(
+        self,
+        documents: List[DocumentNode],
+        knowledge_graph: Optional[Any],
+        max_hops: int = 2
+    ) -> List[EntityMediatedConnection]:
+        """
+        Find entity-mediated connections between documents.
+
+        Args:
+            documents: List of documents
+            knowledge_graph: Knowledge graph for entity information
+            max_hops: Maximum number of hops for graph traversal
+
+        Returns:
+            List of EntityMediatedConnection objects
+        """
+        connections = []
+
+        # If we have a knowledge graph, use it for more sophisticated connections
+        if knowledge_graph:
+            # Get all entities from the documents
+            all_entities = {}
+            for doc in documents:
+                for entity_id in doc.entities:
+                    if entity_id not in all_entities:
+                        all_entities[entity_id] = []
+                    all_entities[entity_id].append(doc.id)
+
+            # For entities that appear in multiple documents, create connections
+            for entity_id, doc_ids in all_entities.items():
+                if len(doc_ids) > 1:
+                    # Get entity information from knowledge graph
+                    entity_info = knowledge_graph.get_entity(entity_id)
+
+                    if entity_info:
+                        entity_name = entity_info.get("name", "Unknown Entity")
+                        entity_type = entity_info.get("type", "unknown")
+
+                        # Create connections between all pairs of documents with this entity
+                        for i in range(len(doc_ids)):
+                            for j in range(i+1, len(doc_ids)):
+                                # Determine relation type based on entity and documents
+                                relation_type, strength = self._determine_relation(
+                                    entity_id=entity_id,
+                                    source_doc_id=doc_ids[i],
+                                    target_doc_id=doc_ids[j],
+                                    documents=documents,
+                                    knowledge_graph=knowledge_graph
+                                )
+
+                                if strength >= self.min_connection_strength:
+                                    connections.append(EntityMediatedConnection(
+                                        entity_id=entity_id,
+                                        entity_name=entity_name,
+                                        entity_type=entity_type,
+                                        source_doc_id=doc_ids[i],
+                                        target_doc_id=doc_ids[j],
+                                        relation_type=relation_type,
+                                        connection_strength=strength
+                                    ))
+
+            # Multi-hop connections for indirect reasoning
+            # v3.0.0: Implemented multi-hop graph traversal
+            if max_hops > 1 and knowledge_graph:
+                try:
+                    indirect_connections = self._find_multi_hop_connections(
+                        documents, max_hops, knowledge_graph
+                    )
+                    connections.extend(indirect_connections)
+                except Exception as e:
+                    logger.warning(f"Multi-hop traversal failed ({type(e).__name__}): {e}. Using direct connections only.")
+        else:
+            # Without a knowledge graph, use simpler heuristics
+            # For example, look for matching entity names in the entities lists
+            for i, doc1 in enumerate(documents):
+                for j in range(i+1, len(documents)):
+                    doc2 = documents[j]
+
+                    # Find common entities based on string matching
+                    common_entities = set(doc1.entities).intersection(set(doc2.entities))
+
+                    for entity_id in common_entities:
+                        # Simple heuristic: for now assume a complementary relation
+                        relation_type = InformationRelationType.COMPLEMENTARY
+                        strength = 0.7  # Default moderate strength
+
+                        connections.append(EntityMediatedConnection(
+                            entity_id=entity_id,
+                            entity_name=entity_id,  # Use ID as name without a knowledge graph
+                            entity_type="unknown",
+                            source_doc_id=doc1.id,
+                            target_doc_id=doc2.id,
+                            relation_type=relation_type,
+                            connection_strength=strength
+                        ))
+
+        return connections
+
+    def _determine_relation(
+        self,
+        entity_id: str,
+        source_doc_id: str,
+        target_doc_id: str,
+        documents: List[DocumentNode],
+        knowledge_graph: Any
+    ) -> Tuple[InformationRelationType, float]:
+        """
+        Determine the relation type between two documents regarding a shared entity.
+
+        This method analyzes how two documents are related through a common entity by examining:
+        1. Semantic similarity between documents
+        2. Chronological order (if publication dates available)
+        3. Entity context in each document
+        4. Relationship patterns in the knowledge graph
+
+        The algorithm uses heuristics to classify relationships as SUPPORTING, ELABORATING,
+        CONTRADICTING, or COMPLEMENTARY, with an associated confidence score.
+
+        Args:
+            entity_id: The shared entity ID connecting both documents
+            source_doc_id: The source document ID
+            target_doc_id: The target document ID
+            documents: Complete list of documents being analyzed
+            knowledge_graph: Knowledge graph containing entity and relationship data
+
+        Returns:
+            Tuple of (relation_type, connection_strength) where:
+            - relation_type: InformationRelationType enum value
+            - connection_strength: Float between 0.0 and 1.0 indicating confidence
+
+        Example:
+            >>> # Two papers discussing "machine learning"
+            >>> relation, strength = self._determine_relation(
+            ...     entity_id="ml_entity_123",
+            ...     source_doc_id="paper_2020",
+            ...     target_doc_id="paper_2022",
+            ...     documents=all_papers,
+            ...     knowledge_graph=kg
+            ... )
+            >>> print(f"Relation: {relation}, Strength: {strength}")
+            Relation: ELABORATING, Strength: 0.75
+
+        Note:
+            Future versions will use LLM-based analysis for more sophisticated
+            relationship determination (see TODO at line 542).
+        """
+        # Find the documents
+        source_doc = next((d for d in documents if d.id == source_doc_id), None)
+        target_doc = next((d for d in documents if d.id == target_doc_id), None)
+
+        if not source_doc or not target_doc:
+            return InformationRelationType.UNCLEAR, 0.5
+
+        # Relation determination implementation planned
+        # Current: Simple heuristics based on similarity and chronology
+        # Future Enhancement: Use LLM or ML model for sophisticated analysis
+        # For now, use simple heuristics
+
+        # 1. Check if the documents have semantic similarity
+        doc_similarity = self._compute_document_similarity(source_doc, target_doc)
+
+        # 2. Check if one document was published after the other (if timestamp available)
+        source_date = source_doc.metadata.get("published_date")
+        target_date = target_doc.metadata.get("published_date")
+        chronological = False
+        if source_date and target_date and source_date < target_date:
+            chronological = True
+
+        # 3. Look at entity context in each document
+        # This would typically involve looking at the text surrounding the entity mentions
+
+        # 4. Determine relation type based on these factors
+        if chronological:
+            # Later document might elaborate on or contradict earlier one
+            relation_type = InformationRelationType.ELABORATING
+            strength = self.relation_elaborating_strength
+        elif doc_similarity > self.relation_similarity_threshold:
+            # Very similar documents likely supporting each other
+            relation_type = InformationRelationType.SUPPORTING
+            strength = self.relation_supporting_strength
+        else:
+            # Default to complementary for different documents
+            relation_type = InformationRelationType.COMPLEMENTARY
+            strength = self.relation_complementary_strength
+
+        return relation_type, strength
+
+
+    def _synthesize_answer(
+        self,
+        query: str,
+        documents: List[DocumentNode],
+        entity_connections: List[EntityMediatedConnection],
+        traversal_paths: List[List[str]],
+        reasoning_depth: str
+    ) -> Tuple[str, float]:
+        """
+        Synthesize an answer based on connected information.
+
+        Args:
+            query: The query string
+            documents: List of documents
+            entity_connections: List of entity-mediated connections
+            traversal_paths: List of document traversal paths
+            reasoning_depth: Reasoning depth
+
+        Returns:
+            Tuple of (answer, confidence)
+        """
+        # In a real implementation, this would use an LLM to generate the answer
+        # For now, we'll create a mock implementation
+
+        # Extract document content for relevant documents
+        doc_content = {}
+        for doc in documents:
+            doc_content[doc.id] = doc.content
+
+        # If we have an LLM service, use it to generate the answer
+        router = self._get_llm_router()
+        if router:
+            # Build prompt with documents and connections
+            prompt = f"Question: {query}\n\n"
+            prompt += "Relevant documents:\n"
+
+            for i, doc in enumerate(documents[:5]):  # Include top 5 most relevant docs
+                prompt += f"Document {i+1} ({doc.source}):\n{doc.content[:500]}...\n\n"
+
+            prompt += "Entity-mediated connections between documents:\n"
+            for conn in entity_connections[:5]:  # Include top 5 connections
+                prompt += f"- Documents {conn.source_doc_id} and {conn.target_doc_id} are connected through entity '{conn.entity_name}' with a {conn.relation_type.value} relationship\n"
+
+            prompt += "\nBased on these documents and their connections, please answer the original question."
+
+            # LLM-based reasoning using API
+            # v3.0.0: Integrated LLM API support (OpenAI, Anthropic, local models)
+            try:
+                answer, confidence = self._generate_llm_answer(prompt, query, router)
+            except Exception as e:
+                logger.warning(f"LLM generation failed ({type(e).__name__}): {e}. Using fallback method.")
+                answer = f"Based on the information in the documents, I can provide the following answer to '{query}'..."
+                confidence = 0.75
+        else:
+            # Provide a generic answer for the mock implementation
+            answer = f"Based on the analysis of {len(documents)} documents with {len(entity_connections)} entity-mediated connections, " + \
+                     f"the answer to '{query}' involves information connected through entities like " + \
+                     ", ".join([conn.entity_name for conn in entity_connections[:3]])
+            confidence = 0.6
+
+        return answer, confidence
+
+    def get_statistics(self) -> Dict[str, Any]:
+        """
+        Get statistics about cross-document reasoning.
+
+        Returns:
+            Dict with statistics
+        """
+        return {
+            "total_queries": self.total_queries,
+            "successful_queries": self.successful_queries,
+            "success_rate": self.successful_queries / self.total_queries if self.total_queries > 0 else 0,
+            "avg_document_count": self.avg_document_count,
+            "avg_connection_count": self.avg_connection_count,
+            "avg_confidence": self.avg_confidence
+        }
+
+    def explain_reasoning(self, reasoning_id: str) -> Dict[str, Any]:
+        """
+        Generate an explanation of the reasoning process.
+
+        Args:
+            reasoning_id: ID of the reasoning process
+
+        Returns:
+            Dict with explanation
+        """
+        # Explanation generation planned for future release
+        # Current: Returns structured explanation with basic steps
+        # Future Enhancement: Generate detailed NLG explanations
+        # This would use the reasoning trace to generate a step-by-step explanation
+
+        return {
+            "reasoning_id": reasoning_id,
+            "explanation": "Reasoning explanation would be generated here",
+            "steps": [
+                "Identified relevant documents based on query",
+                "Found entity connections between documents",
+                "Analyzed information relationships",
+                "Generated synthetic answer"
+            ]
+        }
+
+
+def _example_usage():
+    """Example usage of the cross-document reasoner (internal demo)."""
+    from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import LLMReasoningTracer
+    from ipfs_datasets_py.optimizers.graphrag.query_optimizer import UnifiedGraphRAGQueryOptimizer
+
+    # Initialize components
+    reasoning_tracer = LLMReasoningTracer()
+    query_optimizer = UnifiedGraphRAGQueryOptimizer()
+
+    # Initialize cross-document reasoner
+    reasoner = CrossDocumentReasoner(
+        query_optimizer=query_optimizer,
+        reasoning_tracer=reasoning_tracer
+    )
+
+    # Sample documents for testing
+    sample_documents = [
+        {
+            "id": "doc1",
+            "content": "IPFS is a peer-to-peer hypermedia protocol that makes the web faster, safer, and more open.",
+            "source": "IPFS Documentation",
+            "metadata": {"published_date": "2020-01-01"},
+            "relevance_score": 0.95,
+            "entities": ["IPFS", "peer-to-peer", "protocol", "web"]
+        },
+        {
+            "id": "doc2",
+            "content": "IPFS uses content addressing to uniquely identify each file in a global namespace connecting all computing devices.",
+            "source": "IPFS Website",
+            "metadata": {"published_date": "2021-03-15"},
+            "relevance_score": 0.90,
+            "entities": ["IPFS", "content addressing", "file", "namespace"]
+        },
+        {
+            "id": "doc3",
+            "content": "Content addressing is a technique where content is identified by its cryptographic hash rather than by its location.",
+            "source": "Distributed Systems Book",
+            "metadata": {"published_date": "2019-05-20"},
+            "relevance_score": 0.85,
+            "entities": ["content addressing", "cryptographic hash", "location"]
+        }
+    ]
+
+    # Perform cross-document reasoning
+    result = reasoner.reason_across_documents(
+        query="How does IPFS use content addressing?",
+        input_documents=sample_documents,
+        reasoning_depth="moderate",
+        return_trace=True
+    )
+
+    # Print result
+    print("Cross-Document Reasoning Result:")
+    print(f"Answer: {result['answer']}")
+    print(f"Confidence: {result['confidence']}")
+    print("\nRelevant Documents:")
+    for doc in result["documents"]:
+        print(f"- {doc['id']} ({doc['source']}): Relevance {doc['relevance']:.2f}")
+    print("\nEntity Connections:")
+    for conn in result["entity_connections"]:
+        print(f"- {conn['entity']} ({conn['type']}): {conn['relation']} connection with strength {conn['strength']:.2f}")
+
+    # Get reasoning explanation
+    if "reasoning_trace" in result:
+        print("\nReasoning Trace:")
+        for step in result["reasoning_trace"]["steps"]:
+            print(f"- {step['content']}")
+
+    # Get statistics
+    stats = reasoner.get_statistics()
+    print("\nReasoner Statistics:")
+    for key, value in stats.items():
+        print(f"- {key}: {value}")
+
+
+if __name__ == "__main__":
+    _example_usage()

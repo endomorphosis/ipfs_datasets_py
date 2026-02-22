@@ -76,7 +76,8 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
         use_transformers: bool = False,
         relation_patterns: Optional[List[Dict[str, Any]]] = None,
         min_confidence: float = 0.5,
-        use_tracer: bool = True
+        use_tracer: bool = True,
+        use_srl: bool = False,
     ):
         """
         Initialize the knowledge graph extractor.
@@ -87,11 +88,17 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
             relation_patterns (List[Dict], optional): Custom relation extraction patterns
             min_confidence (float): Minimum confidence threshold for extraction
             use_tracer (bool): Whether to use the WikipediaKnowledgeGraphTracer
+            use_srl (bool): Whether to run Semantic Role Labeling to enrich
+                the knowledge graph with event-centric triples.  When *True*
+                an :class:`~extraction.srl.SRLExtractor` is initialised and
+                its results merged into every call to
+                :meth:`extract_knowledge_graph`.
         """
         self.use_spacy = use_spacy
         self.use_transformers = use_transformers
         self.min_confidence = min_confidence
         self.use_tracer = use_tracer
+        self.use_srl = use_srl
 
         # Initialize the Wikipedia knowledge graph tracer if enabled
         self.tracer = WikipediaKnowledgeGraphTracer() if use_tracer else None
@@ -135,6 +142,12 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                 )
                 self.use_transformers = False
 
+        # Initialize SRL extractor if requested
+        self.srl_extractor = None
+        if use_srl:
+            from .srl import SRLExtractor
+            self.srl_extractor = SRLExtractor(nlp=self.nlp)
+
         # Initialize relation patterns
         self.relation_patterns = relation_patterns or _default_relation_patterns()
 
@@ -161,14 +174,14 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                 entity_type = _map_spacy_entity_type(ent.label_)
 
                 # Skip entities with low confidence
-                if ent._.get("confidence", 1.0) < self.min_confidence:
+                if getattr(ent._, "confidence", 1.0) < self.min_confidence:
                     continue
 
                 # Create entity
                 entity = Entity(
                     entity_type=entity_type,
                     name=ent.text,
-                    confidence=ent._.get("confidence", 0.8),
+                    confidence=getattr(ent._, "confidence", 0.8),
                     source_text=text[max(0, ent.start_char - 20):min(len(text), ent.end_char + 20)]
                 )
 
@@ -296,10 +309,6 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
             return relationships
         
         try:
-            # Try REBEL-style triplet extraction if available
-            # REBEL outputs triplets in format: (subject, relation, object)
-            from transformers import pipeline
-            
             # Check if we have a triplet extraction model
             if hasattr(self.re_model, 'task') and 'text2text' in str(self.re_model.task):
                 # REBEL-style generation model
@@ -834,10 +843,118 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
             kg.entity_relationships[rel.source_id].add(rel.relationship_id)
             kg.entity_relationships[rel.target_id].add(rel.relationship_id)
 
+        # SRL enrichment: merge event-centric triples when use_srl=True
+        if self.use_srl and self.srl_extractor is not None:
+            try:
+                self._merge_srl_into_kg(kg, text, entities)
+            except (AttributeError, ValueError, TypeError, RuntimeError) as exc:
+                logger.warning("SRL enrichment failed: %s", exc)
+
         # Restore original confidence threshold
         self.min_confidence = original_confidence
 
         return kg
+
+    def _merge_srl_into_kg(
+        self,
+        kg: KnowledgeGraph,
+        text: str,
+        entities: List["Entity"],
+    ) -> None:
+        """Merge SRL-extracted triples into *kg*.
+
+        For each :class:`~.srl.SRLFrame`, any Agent–Patient pair that matches
+        known entities is connected by a new :class:`~.relationships.Relationship`
+        with ``relationship_type = frame.predicate`` and
+        ``extraction_method = "srl"``.  Unknown argument spans are optionally
+        added as new entities when they look like proper nouns.
+
+        Args:
+            kg:       Target :class:`KnowledgeGraph` (mutated in-place).
+            text:     Original source text.
+            entities: Already-extracted entity list (used for name lookup).
+        """
+        frames = self.srl_extractor.extract_srl(text)
+        if not frames:
+            return
+
+        # Build a case-insensitive name → entity lookup
+        name_map: Dict[str, "Entity"] = {
+            e.name.lower(): e for e in entities
+        }
+
+        for frame in frames:
+            agents = frame.get_roles("Agent")
+            patients = frame.get_roles("Patient")
+            if not agents and not patients:
+                continue
+
+            # Prefer first agent; fall back to any role as a source
+            src_entity = None
+            for role_arg in (agents or frame.arguments[:1]):
+                src_entity = name_map.get(role_arg.text.lower())
+                if src_entity:
+                    break
+
+            # Prefer first patient; fall back to second argument
+            tgt_entity = None
+            for role_arg in (patients or frame.arguments[1:2]):
+                tgt_entity = name_map.get(role_arg.text.lower())
+                if tgt_entity:
+                    break
+
+            if src_entity is None or tgt_entity is None:
+                continue
+            if src_entity.entity_id == tgt_entity.entity_id:
+                continue
+
+            rel_type = frame.predicate or "srl_relation"
+            # Avoid duplicates
+            existing_key = (src_entity.entity_id, tgt_entity.entity_id, rel_type)
+            if any(
+                (r.source_id, r.target_id, r.relationship_type) == existing_key
+                for r in kg.relationships.values()
+            ):
+                continue
+
+            rel = Relationship(
+                relationship_type=rel_type,
+                source_entity=src_entity,
+                target_entity=tgt_entity,
+                confidence=frame.confidence * 0.9,
+                source_text=frame.sentence,
+                properties={"extraction_method": "srl", "srl_source": frame.source},
+            )
+            kg.relationships[rel.relationship_id] = rel
+            kg.relationship_types[rel.relationship_type].add(rel.relationship_id)
+            kg.entity_relationships[rel.source_id].add(rel.relationship_id)
+            kg.entity_relationships[rel.target_id].add(rel.relationship_id)
+
+    def extract_srl_knowledge_graph(self, text: str) -> KnowledgeGraph:
+        """Extract an event-centric knowledge graph using Semantic Role Labeling.
+
+        Unlike :meth:`extract_knowledge_graph` (which blends multiple extraction
+        strategies), this method uses **only** the SRL extractor and returns a
+        purely event-centric graph: one *Event* node per predicate frame,
+        connected to argument nodes via typed role relationships
+        (``hasAgent``, ``hasPatient``, etc.).
+
+        Initialises a temporary :class:`~.srl.SRLExtractor` if
+        :attr:`srl_extractor` is ``None``.
+
+        Args:
+            text: Input text.
+
+        Returns:
+            :class:`~.graph.KnowledgeGraph` with event-centric nodes and
+            typed role relationships.
+        """
+        from .srl import SRLExtractor
+
+        extractor = self.srl_extractor or SRLExtractor(nlp=self.nlp)
+        frames = extractor.extract_srl(text)
+        return extractor.to_knowledge_graph(frames)
+
 
     def extract_enhanced_knowledge_graph(self, text: str, use_chunking: bool = True,
                                    extraction_temperature: float = 0.7, structure_temperature: float = 0.5) -> KnowledgeGraph:

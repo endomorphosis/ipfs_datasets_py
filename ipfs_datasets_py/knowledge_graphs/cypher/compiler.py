@@ -30,7 +30,13 @@ from .ast import (
     CreateClause,
     DeleteClause,
     SetClause,
+    MergeClause,
+    RemoveClause,
     UnionClause,
+    UnwindClause,
+    WithClause,
+    ForeachClause,
+    CallSubquery,
     PatternNode,
     NodePattern,
     RelationshipPattern,
@@ -127,6 +133,18 @@ class CypherCompiler:
             self._compile_set(clause)
         elif isinstance(clause, UnionClause):
             self._compile_union(clause)
+        elif isinstance(clause, UnwindClause):
+            self._compile_unwind(clause)
+        elif isinstance(clause, WithClause):
+            self._compile_with(clause)
+        elif isinstance(clause, MergeClause):
+            self._compile_merge(clause)
+        elif isinstance(clause, RemoveClause):
+            self._compile_remove(clause)
+        elif isinstance(clause, ForeachClause):
+            self._compile_foreach(clause)
+        elif isinstance(clause, CallSubquery):
+            self._compile_call_subquery(clause)
         else:
             raise CypherCompileError(f"Unknown clause type: {type(clause)}")
     
@@ -346,12 +364,24 @@ class CypherCompiler:
     def _compile_where_expression(self, expr: Any) -> None:
         """Compile WHERE expression into filter operations."""
         if isinstance(expr, BinaryOpNode):
-            if expr.operator.upper() in ('AND', 'OR'):
+            op_upper = expr.operator.upper()
+            if op_upper in ('AND', 'OR'):
                 # Logical operators - compile both sides
                 self._compile_where_expression(expr.left)
-                if expr.operator.upper() == 'AND':
+                if op_upper == 'AND':
                     self._compile_where_expression(expr.right)
                 # OR would need more complex handling
+            elif op_upper == 'XOR':
+                # XOR: compile as a full expression filter (both sides need evaluation)
+                op = {
+                    "op": "Filter",
+                    "expression": {
+                        "op": "XOR",
+                        "left": self._compile_expression(expr.left),
+                        "right": self._compile_expression(expr.right),
+                    }
+                }
+                self.operations.append(op)
             else:
                 # Comparison operator - can be complex expression
                 left_info = self._analyze_expression(expr.left)
@@ -381,7 +411,8 @@ class CypherCompiler:
                     self.operations.append(op)
         
         elif isinstance(expr, UnaryOpNode):
-            if expr.operator.upper() == 'NOT':
+            op_upper = expr.operator.upper()
+            if op_upper == 'NOT':
                 # NOT operation - compile as negated filter
                 operand = expr.operand
                 
@@ -434,6 +465,17 @@ class CypherCompiler:
                         }
                     }
                     self.operations.append(op)
+            elif op_upper in ("IS NULL", "IS NOT NULL"):
+                # IS NULL / IS NOT NULL — compile as a Filter with the
+                # unary op wrapped around the operand expression.
+                op = {
+                    "op": "Filter",
+                    "expression": {
+                        "op": op_upper,
+                        "operand": self._compile_expression(expr.operand),
+                    }
+                }
+                self.operations.append(op)
     
     def _compile_return(self, ret: ReturnClause) -> None:
         """
@@ -672,7 +714,205 @@ class CypherCompiler:
             "all": union_clause.all  # True for UNION ALL, False for UNION
         }
         self.operations.append(op)
-    
+
+    def _compile_unwind(self, unwind: UnwindClause) -> None:
+        """Compile UNWIND clause.
+
+        Generates an ``Unwind`` IR operation that expands a list expression
+        into individual rows, binding each element to ``unwind.variable``.
+
+        IR emitted::
+
+            {"op": "Unwind", "expression": <compiled-expr>, "variable": "<var>"}
+        """
+        op = {
+            "op": "Unwind",
+            "expression": self._compile_expression(unwind.expression),
+            "variable": unwind.variable,
+        }
+        self.operations.append(op)
+
+    def _compile_with(self, with_clause: WithClause) -> None:
+        """Compile WITH clause.
+
+        A WITH clause is semantically a RETURN-then-continue: it projects
+        columns and (optionally) filters them before the next query part.
+
+        IR emitted:
+
+        * ``{"op": "WithProject", ...}`` — like Project but writes rows to
+          *bindings* instead of *final_results*, so subsequent Filter/Project
+          ops can see the projected names (e.g. ``age`` rather than ``n.age``).
+        * Optional ``{"op": "Filter", ...}`` from the WHERE clause.
+        """
+        # Compile WITH items — compile expressions the same way as RETURN
+        items = []
+        for item in with_clause.items:
+            expr = self._compile_expression(item.expression) if item.expression is not None else None
+            alias = item.alias if item.alias else self._expression_to_string(item.expression)
+            items.append({"expression": expr, "alias": alias})
+
+        op: Dict[str, Any] = {
+            "op": "WithProject",
+            "items": items,
+            "distinct": with_clause.distinct,
+        }
+        if with_clause.skip is not None:
+            op["skip"] = with_clause.skip
+        if with_clause.limit is not None:
+            op["limit"] = with_clause.limit
+        self.operations.append(op)
+
+        # Apply WHERE if present (operates on the projected bindings)
+        if with_clause.where is not None:
+            self._compile_where(with_clause.where)
+
+    def _compile_merge(self, merge: MergeClause) -> None:
+        """Compile MERGE clause.
+
+        Emits a ``Merge`` IR operation.  The executor handles
+        match-or-create semantics: it first tries to MATCH the patterns and,
+        if no existing nodes are found, CREATEs them.
+
+        Optionally, ON CREATE SET / ON MATCH SET actions are applied after
+        the match-or-create decision.
+
+        IR emitted::
+
+            {
+              "op": "Merge",
+              "match_ops":     [...],  # ScanLabel / Filter ops (as if MATCH)
+              "create_ops":    [...],  # CreateNode / CreateRelationship ops
+              "on_create_set": [{"property": "n.age", "value": 30}, ...],
+              "on_match_set":  [{"property": "n.updated", "value": ...}]
+            }
+        """
+        # Build MATCH part: same ops as _compile_match would produce
+        saved_ops = self.operations
+        self.operations = []
+        match_clause = MatchClause(patterns=merge.patterns, optional=False, where=None)
+        self._compile_match(match_clause)
+        match_ops = self.operations
+
+        # Build CREATE part: same ops as _compile_create would produce
+        self.operations = []
+        create_clause = CreateClause(patterns=merge.patterns)
+        self._compile_create(create_clause)
+        create_ops = self.operations
+
+        self.operations = saved_ops
+
+        op = {
+            "op": "Merge",
+            "match_ops": match_ops,
+            "create_ops": create_ops,
+            "on_create_set": self._compile_merge_set_items(merge.on_create_set),
+            "on_match_set": self._compile_merge_set_items(merge.on_match_set),
+        }
+        self.operations.append(op)
+
+    def _compile_merge_set_items(self, items: list) -> list:
+        """Compile ON CREATE SET / ON MATCH SET item lists for MERGE.
+
+        Args:
+            items: List of ``(property_expr, value_expr)`` tuples.
+
+        Returns:
+            List of ``{"property": str, "value": compiled_value}`` dicts.
+        """
+        result = []
+        for prop_expr, val_expr in items:
+            prop_str = self._expression_to_string(prop_expr) if prop_expr is not None else ""
+            val = self._compile_expression(val_expr) if val_expr is not None else None
+            result.append({"property": prop_str, "value": val})
+        return result
+
+    def _compile_remove(self, remove: RemoveClause) -> None:
+        """Compile REMOVE clause.
+
+        Emits individual ``RemoveProperty`` or ``RemoveLabel`` IR operations
+        for each item in the REMOVE clause.
+
+        IR emitted (per item)::
+
+            {"op": "RemoveProperty", "variable": "n", "property": "age"}
+            {"op": "RemoveLabel",    "variable": "n", "label": "Employee"}
+        """
+        for item in remove.items:
+            if item.get("type") == "property":
+                self.operations.append({
+                    "op": "RemoveProperty",
+                    "variable": item["variable"],
+                    "property": item["property"],
+                })
+            elif item.get("type") == "label":
+                self.operations.append({
+                    "op": "RemoveLabel",
+                    "variable": item["variable"],
+                    "label": item["label"],
+                })
+
+    def _compile_foreach(self, foreach: ForeachClause) -> None:
+        """Compile FOREACH clause.
+
+        Emits a ``Foreach`` IR operation.  The executor iterates the list
+        expression, binds each element to ``foreach.variable``, and applies the
+        body mutation operations to each element.
+
+        IR emitted::
+
+            {
+              "op": "Foreach",
+              "variable":   "<var>",
+              "expression": <compiled-expr>,
+              "body_ops":   [<compiled mutation ops>]
+            }
+        """
+        # Compile body clauses into a sub-program
+        saved_ops = self.operations
+        self.operations = []
+        for clause in foreach.body:
+            self._compile_clause(clause)
+        body_ops = self.operations
+        self.operations = saved_ops
+
+        self.operations.append({
+            "op": "Foreach",
+            "variable": foreach.variable,
+            "expression": self._compile_expression(foreach.expression),
+            "body_ops": body_ops,
+        })
+
+    def _compile_call_subquery(self, call: CallSubquery) -> None:
+        """Compile CALL { … } subquery clause.
+
+        Emits a ``CallSubquery`` IR operation.  The executor runs the inner
+        query against the same graph engine, then merges its results (as
+        bindings) into the outer query's binding set.
+
+        IR emitted::
+
+            {
+              "op":          "CallSubquery",
+              "inner_ops":   [<compiled inner query ops>],
+              "yield_items": [{"name": "...", "alias": "..."}]
+            }
+        """
+        # Compile inner query body
+        saved_ops = self.operations
+        self.operations = []
+        if call.body is not None:
+            for clause in call.body.clauses:
+                self._compile_clause(clause)
+        inner_ops = self.operations
+        self.operations = saved_ops
+
+        self.operations.append({
+            "op": "CallSubquery",
+            "inner_ops": inner_ops,
+            "yield_items": list(call.yield_items),
+        })
+
     def _compile_expression(self, expr) -> Any:
         """
         Compile expression to a value.

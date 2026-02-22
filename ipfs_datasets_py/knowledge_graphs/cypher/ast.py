@@ -25,8 +25,12 @@ class ASTNodeType(Enum):
     CREATE = auto()
     MERGE = auto()
     DELETE = auto()
+    REMOVE = auto()
     SET = auto()
     WITH = auto()
+    UNWIND = auto()
+    FOREACH = auto()
+    CALL_SUBQUERY = auto()
     
     # Patterns
     PATTERN = auto()
@@ -245,6 +249,190 @@ class UnionClause(ASTNode):
     def __post_init__(self):
         if not hasattr(self, 'node_type') or self.node_type is None:
             self.node_type = ASTNodeType.SET  # Placeholder, can add UNION to enum later
+
+
+@dataclass
+class UnwindClause(ASTNode):
+    """
+    Represents an UNWIND clause.
+
+    Unwinds a list into individual rows, one row per list element.
+
+    Example::
+
+        UNWIND [1, 2, 3] AS x RETURN x
+        UNWIND n.tags AS tag RETURN tag
+
+    Attributes:
+        expression: The list expression to unwind.
+        variable: The variable name to bind each element to.
+    """
+
+    expression: Any = None
+    variable: str = ""
+
+    def __post_init__(self):
+        if not hasattr(self, "node_type") or self.node_type is None:
+            self.node_type = ASTNodeType.UNWIND
+
+
+@dataclass
+class WithClause(ASTNode):
+    """
+    Represents a WITH clause.
+
+    Projects results to the next query part, optionally with filtering.
+    Semantically similar to RETURN but passes results to the next clause
+    instead of the client.
+
+    Example::
+
+        MATCH (n:Person)
+        WITH n.name AS name, n.age AS age
+        WHERE age > 30
+        RETURN name
+
+    Attributes:
+        items: List of :class:`ReturnItem` projections (same as RETURN).
+        where: Optional WHERE clause applied after projection.
+        distinct: Whether to apply DISTINCT.
+        order_by: Optional ORDER BY clause.
+        skip: Optional SKIP expression.
+        limit: Optional LIMIT expression.
+    """
+
+    items: List[Any] = field(default_factory=list)
+    where: Optional[Any] = None
+    distinct: bool = False
+    order_by: Optional[Any] = None
+    skip: Optional[Any] = None
+    limit: Optional[Any] = None
+
+    def __post_init__(self):
+        if not hasattr(self, "node_type") or self.node_type is None:
+            self.node_type = ASTNodeType.WITH
+
+
+@dataclass
+class MergeClause(ASTNode):
+    """
+    Represents a MERGE clause.
+
+    MERGE attempts to match an existing pattern; if no match is found it
+    creates the pattern (match-or-create / upsert semantics).  Optionally
+    the caller can specify ``ON CREATE SET`` and/or ``ON MATCH SET`` actions
+    to be executed depending on whether the node/relationship was newly
+    created or already existed.
+
+    Example::
+
+        MERGE (n:Person {name: 'Alice'})
+        ON CREATE SET n.created = timestamp()
+        ON MATCH SET n.updated = timestamp()
+
+    Attributes:
+        patterns: Graph patterns to match or create.
+        on_create_set: List of ``(property_expr, value_expr)`` pairs applied
+            only when the node/relationship is newly created.
+        on_match_set: List of ``(property_expr, value_expr)`` pairs applied
+            only when an existing match is found.
+    """
+
+    patterns: List[Any] = field(default_factory=list)
+    on_create_set: List[Any] = field(default_factory=list)
+    on_match_set: List[Any] = field(default_factory=list)
+
+    def __post_init__(self):
+        if not hasattr(self, "node_type") or self.node_type is None:
+            self.node_type = ASTNodeType.MERGE
+
+
+@dataclass
+class RemoveClause(ASTNode):
+    """
+    Represents a REMOVE clause.
+
+    Removes properties or labels from nodes/relationships.
+
+    Supported forms::
+
+        REMOVE n.property          -- remove a single property
+        REMOVE n:Label             -- remove a label from a node
+
+    Attributes:
+        items: List of remove items.  Each item is a dict with:
+            - ``{"type": "property", "variable": "n", "property": "age"}``
+            - ``{"type": "label",    "variable": "n", "label": "Employee"}``
+    """
+
+    items: List[Any] = field(default_factory=list)
+
+    def __post_init__(self):
+        if not hasattr(self, "node_type") or self.node_type is None:
+            self.node_type = ASTNodeType.REMOVE
+
+
+@dataclass
+class ForeachClause(ASTNode):
+    """
+    Represents a FOREACH clause.
+
+    Iterates a list expression and applies mutation clauses to each element.
+
+    Grammar::
+
+        FOREACH (variable IN expression | clause*)
+
+    Example::
+
+        FOREACH (x IN [1, 2, 3] | CREATE (:Number {value: x}))
+        FOREACH (n IN nodes | SET n.visited = true)
+
+    Attributes:
+        variable: The loop variable name (``x``, ``n``, …).
+        expression: The list expression to iterate over.
+        body: List of mutation clause AST nodes (CREATE, SET, MERGE, DELETE, REMOVE).
+    """
+
+    variable: str = ""
+    expression: Any = None  # ExpressionNode
+    body: List[Any] = field(default_factory=list)  # List of clause AST nodes
+
+    def __post_init__(self):
+        if not hasattr(self, "node_type") or self.node_type is None:
+            self.node_type = ASTNodeType.FOREACH
+
+
+@dataclass
+class CallSubquery(ASTNode):
+    """
+    Represents a CALL { … } subquery clause.
+
+    Executes an inner Cypher query and merges its results into the outer
+    query's bindings.  Optionally, the subquery's projected columns can be
+    aliased via a YIELD clause.
+
+    Grammar::
+
+        CALL { inner_query } [YIELD col [AS alias] [, …]]
+
+    Example::
+
+        CALL { MATCH (n:Person) RETURN n.name AS name }
+        CALL { MATCH (n) RETURN count(n) AS total } YIELD total
+
+    Attributes:
+        body: The inner ``QueryNode``.
+        yield_items: Optional list of ``{"name": str, "alias": str}`` dicts for
+            YIELD renaming.  Empty list means expose all projected columns.
+    """
+
+    body: Any = None  # QueryNode for the inner query
+    yield_items: List[Dict[str, Any]] = field(default_factory=list)
+
+    def __post_init__(self):
+        if not hasattr(self, "node_type") or self.node_type is None:
+            self.node_type = ASTNodeType.CALL_SUBQUERY
 
 
 # Pattern nodes

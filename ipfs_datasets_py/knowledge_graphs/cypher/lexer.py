@@ -53,6 +53,7 @@ class TokenType(Enum):
     UNWIND = auto()
     CALL = auto()
     YIELD = auto()
+    FOREACH = auto()
     CASE = auto()
     WHEN = auto()
     THEN = auto()
@@ -164,6 +165,7 @@ class CypherLexer:
         'UNWIND': TokenType.UNWIND,
         'CALL': TokenType.CALL,
         'YIELD': TokenType.YIELD,
+        'FOREACH': TokenType.FOREACH,
         'CASE': TokenType.CASE,
         'WHEN': TokenType.WHEN,
         'THEN': TokenType.THEN,

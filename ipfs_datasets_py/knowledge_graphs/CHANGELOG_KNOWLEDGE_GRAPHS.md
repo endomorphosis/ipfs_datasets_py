@@ -5,6 +5,65 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-02-20
+
+### Cypher Feature Completion + Folder Refactoring
+
+This release completes all Cypher clause features, restructures the module folder to permanent canonical subpackage locations, and adds three new MCP tools.
+
+### Added
+
+#### Cypher Clauses (All Clauses Now Complete)
+- **FOREACH clause**: `FOREACH (variable IN list | clause*)` — iterate a list and apply mutation clauses (CREATE, SET, MERGE, DELETE, REMOVE) to each element.
+- **CALL subquery**: `CALL { inner_query } [YIELD ...]` — execute an inner query and merge its results into the outer query's bindings. Supports YIELD aliasing.
+- Lexer: `FOREACH` added to `TokenType` enum and `KEYWORDS` dictionary
+- AST: `ForeachClause(variable, expression, body)` and `CallSubquery(body, yield_items)` dataclasses
+- Parser: `_parse_foreach()` and `_parse_call_subquery()` methods
+- Compiler: `_compile_foreach()` and `_compile_call_subquery()` methods
+- IR executor: `Foreach` and `CallSubquery` op handlers
+
+#### New `reasoning/` Subpackage
+- `reasoning/__init__.py` — re-exports all public names from sub-modules
+- `reasoning/cross_document.py` — canonical home for `CrossDocumentReasoner`
+- `reasoning/helpers.py` — canonical home for `ReasoningHelpersMixin`
+- `reasoning/types.py` — canonical home for `InformationRelationType`, `DocumentNode`, etc.
+- `reasoning/README.md` — subpackage documentation
+
+#### New MCP Graph Tools
+- `mcp_server/tools/graph_tools/graph_srl_extract.py` — SRL extraction tool
+- `mcp_server/tools/graph_tools/graph_ontology_materialize.py` — OWL/RDFS inference tool
+- `mcp_server/tools/graph_tools/graph_distributed_execute.py` — distributed Cypher tool
+
+#### KnowledgeGraphManager Extensions
+- `extract_srl(text, return_triples, return_temporal_graph)` — SRL extraction
+- `ontology_materialize(graph_name, schema, check_consistency, explain)` — ontology inference
+- `distributed_execute(query, num_partitions, partition_strategy, parallel, explain)` — distributed query
+
+#### Folder Restructuring (Permanent Locations)
+- `cross_document_reasoning.py` → `reasoning/cross_document.py`
+- `_reasoning_helpers.py` → `reasoning/helpers.py`
+- `cross_document_types.py` → `reasoning/types.py`
+- `cross_document_lineage.py` → `lineage/cross_document.py`
+- `cross_document_lineage_enhanced.py` → `lineage/cross_document_enhanced.py`
+- `query_knowledge_graph.py` → `query/knowledge_graph.py`
+- `sparql_query_templates.py` → `query/sparql_templates.py`
+- `finance_graphrag.py` → `extraction/finance_graphrag.py`
+
+### Changed
+- All root-level moved files replaced with `DeprecationWarning` shims (100% backward compatible)
+- `query/__init__.py` updated with `knowledge_graph` and `sparql_templates` exports
+- `extraction/__init__.py` updated with `finance_graphrag` exports
+- `lineage/__init__.py` updated with `cross_document` and `cross_document_enhanced` exports
+- `graph_tools/__init__.py` updated with 3 new MCP tool exports
+- All READMEs (module root, query/, extraction/, lineage/) updated for v2.1.0
+
+### Tests
+- 32 new tests in `tests/unit/knowledge_graphs/test_foreach_call_mcp.py`
+- 26 pass, 6 skipped (anyio not installed in CI)
+- Total: 1075+ passing (up from 1067)
+
+---
+
 ## [2.0.0] - 2026-02-17
 
 ### Major Refactoring and Documentation Update

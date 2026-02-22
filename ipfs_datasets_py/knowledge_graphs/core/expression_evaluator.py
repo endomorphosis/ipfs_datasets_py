@@ -59,6 +59,10 @@ def apply_operator(left: Any, operator: str, right: Any) -> bool:
                 return left.endswith(right)
             return False
 
+        # XOR (exclusive-or) — both operands treated as boolean
+        elif operator == "XOR":
+            return bool(left) ^ bool(right)
+
         logger.warning("Unknown operator: %s", operator)
         return False
 
@@ -318,6 +322,35 @@ def evaluate_compiled_expression(expr: Any, binding: Dict[str, Any]) -> Any:
             return binding.get(expr["var"])
 
         if "op" in expr:
+            # Unary operator (e.g. NOT, IS NULL, IS NOT NULL)
+            if "operand" in expr and "left" not in expr:
+                operand = evaluate_compiled_expression(expr["operand"], binding)
+                op = expr["op"].upper()
+                if op == "NOT":
+                    return not bool(operand)
+                if op in ("-", "MINUS"):
+                    return -operand
+                if op == "IS NULL":
+                    return operand is None
+                if op == "IS NOT NULL":
+                    return operand is not None
+                return operand
+            op_upper = expr["op"].upper()
+            # Short-circuit logical operators
+            if op_upper == "AND":
+                left = evaluate_compiled_expression(expr["left"], binding)
+                if not left:
+                    return False
+                return bool(evaluate_compiled_expression(expr["right"], binding))
+            if op_upper == "OR":
+                left = evaluate_compiled_expression(expr["left"], binding)
+                if left:
+                    return True
+                return bool(evaluate_compiled_expression(expr["right"], binding))
+            if op_upper == "XOR":
+                left = evaluate_compiled_expression(expr["left"], binding)
+                right = evaluate_compiled_expression(expr["right"], binding)
+                return bool(left) ^ bool(right)
             left = evaluate_compiled_expression(expr["left"], binding)
             right = evaluate_compiled_expression(expr["right"], binding)
             return apply_operator(left, expr["op"], right)

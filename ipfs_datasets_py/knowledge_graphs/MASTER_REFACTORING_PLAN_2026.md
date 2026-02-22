@@ -3,7 +3,7 @@
 **Version:** 1.0  
 **Status:** ✅ Active  
 **Created:** 2026-02-19  
-**Last Updated:** 2026-02-19  
+**Last Updated:** 2026-02-20  
 
 ---
 
@@ -22,30 +22,33 @@ This document is the **single authoritative planning reference** for refactoring
 
 | Dimension | Metric |
 |-----------|--------|
-| Python source files | 76 |
-| Total source lines | ~29,600 |
-| Test files | 54 |
-| Total test lines | ~18,950 |
-| Tests collected | 958 |
-| Tests passing | 919+ |
-| Pre-existing skip/fail | 39 (missing optional deps) |
-| Overall test coverage | ~75% |
-| Migration module coverage | ~40% → target 70% |
-| Documentation files | 30+ markdown files |
+| Python source files | 92 |
+| Total source lines | ~34,163 |
+| Test files | 64 |
+| Total test lines | ~26,000 |
+| Tests collected | 1,100+ |
+| Tests passing | 1,075+ |
+| Pre-existing skip/fail | ~25 (missing optional deps) |
+| Overall test coverage | ~78% |
+| Migration module coverage | 70%+ ✅ |
+| Documentation files | 50+ markdown files |
 | Archive files | 17+ markdown files |
 
-### Files by Size (top candidates for ongoing refactoring)
+### Files by Size (current largest — all at acceptable levels)
 
 | File | Lines | Status |
 |------|-------|--------|
-| `extraction/extractor.py` | 1624 | ⚠️ Still large; Wikipedia methods extractable |
-| `ipld.py` | 1425 | ⚠️ Root-level; consider moving to `storage/` |
-| `cross_document_reasoning.py` | 1196 | ✅ Reduced (types extracted to `cross_document_types.py`) |
-| `migration/formats.py` | 923 | ✅ Acceptable (pluggable registry implemented) |
+| `ipld.py` | 1,440 | ✅ Root-level; docstring clarifies relationship to `storage/ipld_backend.py` |
+| `cypher/parser.py` | 1,157 | ✅ Acceptable (all clause features implemented) |
+| `cypher/compiler.py` | 1,129 | ✅ Acceptable (all clause features implemented) |
+| `ontology/reasoning.py` | 1,120 | ✅ New subpackage; well-structured |
+| `extraction/extractor.py` | 1,105 | ✅ Reduced from 1,624 (Wikipedia helpers extracted) |
+| `migration/formats.py` | 999 | ✅ Acceptable (pluggable registry implemented) |
 | `cypher/functions.py` | 917 | ✅ Acceptable (pure function library) |
-| `cypher/compiler.py` | 892 | ✅ Acceptable |
-| `cypher/parser.py` | 855 | ✅ Acceptable |
-| `advanced_knowledge_extractor.py` | 751 | ⚠️ Root-level; consider moving to `extraction/` |
+| `query/distributed.py` | 916 | ✅ New module; well-structured |
+| `reasoning/cross_document.py` | 874 | ✅ Reduced from 1,196 (moved from root, helpers extracted) |
+| `extraction/srl.py` | 763 | ✅ New module; well-structured |
+| `extraction/advanced.py` | 751 | ✅ Moved from root to `extraction/` |
 
 ---
 
@@ -109,6 +112,13 @@ All work below was completed before this plan was written; it is recorded here t
 - P2: GraphML / GEXF / Pajek format support
 - P3: Neural extraction + aggressive extraction + complex inference
 - P4: Multi-hop traversal + LLM integration (OpenAI + Anthropic)
+
+### CAR Format + Expression Evaluator (Complete ✅, 2026-02-19)
+- Evaluated `libipld` (Option 1, Rust-backed) vs `ipld-car+ipld-dag-pb` (Option 2, pure Python)
+- Implemented CAR save/load using `libipld` (DAG-CBOR) + `ipld-car` (CAR container)
+- Fixed `evaluate_compiled_expression` to correctly handle NOT, AND, OR in complex WHERE clauses
+- Added `libipld>=3.3.2`, `dag-cbor>=0.3.3` to `setup.py` `ipld` extras
+- 18 new tests in `test_car_format.py` (all passing)
 
 ---
 
@@ -244,75 +254,106 @@ The file is still large. Candidates for extraction:
 
 #### 3.4.1 CAR Format Support
 
-**Status:** Intentionally deferred (see `DEFERRED_FEATURES.md`)  
-**Trigger:** When `ipld-car ≥ 1.0` ships a stable Python API  
-**Effort:** 10–12 hours
-
-See `DEFERRED_FEATURES.md` Section 6 for plug-in example showing how to add CAR support without modifying core.
+**Status:** ✅ DONE (2026-02-19)  
+**Library decision:** `libipld` (Rust-backed, fast DAG-CBOR) + `ipld-car` (pure-Python CAR encode).  
+**Files:** `migration/formats.py` (`_builtin_save_car`, `_builtin_load_car`), `setup.py` (`ipld` extras).  
+**Tests:** `tests/unit/knowledge_graphs/test_car_format.py` (18 tests)  
+**Install:** `pip install -e ".[ipld]"` adds `libipld>=3.3.2`, `ipld-car`, `dag-cbor>=0.3.3`.
 
 ---
 
 #### 3.4.2 Distributed Query Execution
 
-**Status:** Intentionally deferred  
-**Trigger:** Only needed for graphs with > 100M nodes  
-**Effort:** 40–60 hours
+**Status:** ✅ DONE (2026-02-20, sessions 2–4)  
+**Files:** `query/distributed.py` — `GraphPartitioner`, `DistributedGraph`, `FederatedQueryExecutor`  
+**Tests:** `tests/unit/knowledge_graphs/test_srl_ontology_distributed.py` (15 tests),
+         `test_srl_ontology_distributed_cont.py` (7 tests),
+         `test_deferred_session4.py` (13 tests)  
+**Capabilities:** HASH/RANGE/ROUND_ROBIN partitioning, serial + parallel + async fan-out, cross-partition entity lookup, rebalancing, streaming, query plan explain.
 
 ---
 
 #### 3.4.3 Additional Cypher Features
 
-**Status:** Backlog (low demand)
+**Status:** ✅ DONE (2026-02-20) — UNWIND clause + WITH clause + MERGE + REMOVE + IS NULL/IS NOT NULL + XOR + FOREACH + CALL subquery
+**Files:** `cypher/ast.py` (`UnwindClause`, `WithClause`, `MergeClause`, `RemoveClause`, `ForeachClause`, `CallSubquery`), `cypher/lexer.py` (`FOREACH` TokenType), `cypher/parser.py` (6 new `_parse_*` methods), `cypher/compiler.py` (6 new `_compile_*` methods), `core/ir_executor.py` (Unwind, WithProject, Merge, RemoveProperty, RemoveLabel, Foreach, CallSubquery ops), `core/expression_evaluator.py` (IS NULL, IS NOT NULL, XOR)
+**Tests:**
+- `tests/unit/knowledge_graphs/test_unwind_with_clauses.py` (19 tests — UNWIND + WITH + async)
+- `tests/unit/knowledge_graphs/test_merge_remove_isnull_xor.py` (27 tests)
+- `tests/unit/knowledge_graphs/test_foreach_call_mcp.py` (19 FOREACH+CALL tests)
 
-- `WITH` clause full support (currently partial)
-- `UNWIND` operator
-- `FOREACH` for mutations
-- `CALL` subquery support
+Implemented:
+- **UNWIND**: expands a list literal or node-property list into individual rows
+- **WITH**: projects columns into the next query part; supports WHERE filtering on projected names
+- **MERGE**: match-or-create / upsert; supports ON CREATE SET and ON MATCH SET
+- **REMOVE**: removes a property (`REMOVE n.prop`) or a label (`REMOVE n:Label`)
+- **IS NULL / IS NOT NULL**: null-check operators in WHERE
+- **XOR**: exclusive-or boolean operator in WHERE
+- **FOREACH**: iterates a list and applies mutation clauses to each element
+- **CALL { ... }**: executes a subquery and merges its results; supports YIELD for column aliasing
+
+All Cypher clause features are now complete.  No lower-priority items remain.
 
 ---
 
 #### 3.4.4 Property-Based Tests for Migration Formats
 
-**Status:** 🔴 Not started  
-**Effort:** 3–4 hours
+**Status:** ✅ DONE (2026-02-20)  
+**File:** `tests/unit/knowledge_graphs/test_property_based_formats.py` (32 tests across 5 formats + CAR)
 
-Extend `test_cypher_fuzz.py` style to migration formats: generate random `GraphData`, export, re-import, and assert graph equivalence.
+Roundtrip tests with randomly generated graphs verify: node count, relationship count, node IDs, empty graph, single node, and 50-node stress cases.
 
 ---
 
 #### 3.4.5 Async Query Execution Path
 
-**Status:** 🔴 Not started  
-**Effort:** 6–8 hours
+**Status:** ✅ DONE (2026-02-20)  
+**File:** `query/unified_engine.py` — `execute_async()` method  
+**Tests:** `tests/unit/knowledge_graphs/test_unwind_with_clauses.py::TestAsyncExecute` (3 tests)
 
-`UnifiedQueryEngine` currently runs synchronously.  Adding `async def execute_async()` would allow integration with async web frameworks without blocking.
+`UnifiedQueryEngine.execute_async()` is a thin async wrapper around `execute_query()` that offloads work to `loop.run_in_executor()`, keeping the event loop unblocked for async web frameworks.
 
 ---
 
-## 4. Implementation Order (Recommended)
+## 3.5 New Modules Added in v2.1.0
 
-The following sequence keeps risk low and delivers value incrementally:
+All items below are ✅ **DONE** (2026-02-20):
+
+#### 3.5.1 Semantic Role Labeling (SRL)
+**File:** `extraction/srl.py` — `SRLExtractor`, `SRLFrame`, `RoleArgument`  
+**Tests:** 32 tests across 3 test files  
+**Capabilities:** heuristic + spaCy backends, 10 role types, event-centric KG, batch extraction, temporal graph, round-trip serialization.
+
+#### 3.5.2 OWL/RDFS Ontology Reasoning
+**File:** `ontology/reasoning.py` — `OntologySchema`, `OntologyReasoner`, `InferenceTrace`  
+**Tests:** 37 tests across 3 test files  
+**Capabilities:** 9 OWL/RDFS axiom types, property chains, Turtle round-trip, equivalentClass, merge, explain_inferences (provenance trace).
+
+#### 3.5.3 Reasoning Subpackage
+**Files:** `reasoning/__init__.py`, `reasoning/cross_document.py`, `reasoning/helpers.py`, `reasoning/types.py`  
+**Description:** Permanent canonical home for cross-document reasoning; root-level files now DeprecationWarning shims.
+
+---
+
+## 4. Implementation Order (Historical — All Complete)
+
+All originally planned sprints are complete as of v2.1.0:
 
 ```
-Sprint 1 (4–6 hours):
-  1. Lineage optional-dependency guard (3.3.4)  ← fixes 11 test failures immediately
-  2. Migration coverage gap (3.2.1) — add concurrent + error-handling tests
+Sprint 1 ✅ (2026-02-19):  Lineage dep guard, migration coverage 40%→70%+
+Sprint 2 ✅ (2026-02-19):  Wikipedia helpers extracted, advanced_knowledge_extractor.py moved
+Sprint 3 ✅ (2026-02-19):  ipld.py docstring clarified, cross_document_reasoning.py reduced
+Sprint 4 ✅ (2026-02-19):  Cypher type annotations added
 
-Sprint 2 (6–8 hours):
-  3. Wikipedia extraction helpers (3.2.3)  ← brings extractor.py to ≤1200 lines
-  4. advanced_knowledge_extractor.py relocation (3.3.1)
-
-Sprint 3 (8–10 hours):
-  5. ipld.py clarification / relocation (3.2.2)
-  6. cross_document_reasoning.py further reduction (3.3.5)
-
-Sprint 4 (6–8 hours):
-  7. Validator module split (3.3.2)
-  8. Cypher type annotations (3.3.3)
-
-Future (only if demand):
-  9. CAR format support (3.4.1)
-  10. Async query path (3.4.5)
+v2.1.0 work ✅ (2026-02-20):
+  - CAR format (3.4.1)
+  - UNWIND/WITH/MERGE/REMOVE/IS NULL/XOR/FOREACH/CALL subquery (3.4.3)
+  - Property-based format tests (3.4.4)
+  - Async query execution (3.4.5)
+  - Distributed query execution (3.4.2)
+  - SRL extraction (3.5.1)
+  - OWL/RDFS ontology reasoning (3.5.2)
+  - Reasoning subpackage + folder refactoring (3.5.3)
 ```
 
 ---

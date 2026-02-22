@@ -7,7 +7,7 @@ and integrates all 6 core features for legal/deontic logic conversion.
 
 from __future__ import annotations
 
-import anyio
+import asyncio
 import logging
 import time
 from datetime import datetime
@@ -399,8 +399,9 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
             ConversionResult with deontic formula
         """
         # Run synchronous convert in thread pool to avoid blocking
+        loop = asyncio.get_event_loop()
         use_cache = kwargs.get("use_cache", True)
-        return await anyio.to_thread.run_sync(lambda: self.convert(text, use_cache=use_cache))
+        return await loop.run_in_executor(None, lambda: self.convert(text, use_cache=use_cache))
     
     def get_stats(self) -> Dict[str, Any]:
         """Get conversion statistics."""
@@ -432,11 +433,35 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
             return self.monitoring.get_stats()
         return {}
 
-    def to_deontic(self, text: str, **kwargs):
-        """Alias for convert() — convert text to deontic FOL formula string."""
-        result = self.convert(text, **kwargs)
-        if hasattr(result, 'output') and hasattr(result.output, 'to_fol_string'):
-            return result.output.to_fol_string()
-        if hasattr(result, 'output'):
-            return str(result.output)
-        return result
+    def to_deontic(self, text: str) -> str:
+        """
+        Convert legal/normative text to deontic logic formula string.
+
+        Convenience wrapper that returns a deontic formula as a plain string
+        using pattern matching as a lightweight fallback.
+
+        Args:
+            text: Legal/normative text to convert
+
+        Returns:
+            Deontic formula as a string (e.g. "O(pay_taxes)")
+        """
+        import re as _re
+        text_lower = text.lower()
+        # Obligation: "must", "shall", "obligatory", "required"
+        if _re.search(r'\b(must|shall|obligator|obliged|required)\b', text_lower):
+            action = _re.sub(r'\b(it\s+is\s+obligatory\s+that|must|shall|is\s+obliged\s+to|is\s+required\s+to)\b', '', text_lower).strip()
+            action = action.replace(' ', '_')
+            return f"O({action})"
+        # Permission: "may", "is permitted", "allowed"
+        if _re.search(r'\b(may|permitted|allowed|can)\b', text_lower):
+            action = _re.sub(r'\b(may|is\s+permitted\s+to|is\s+allowed\s+to|can)\b', '', text_lower).strip()
+            action = action.replace(' ', '_')
+            return f"P({action})"
+        # Prohibition: "must not", "shall not", "forbidden"
+        if _re.search(r'\b(must\s+not|shall\s+not|forbidden|prohibited)\b', text_lower):
+            action = _re.sub(r'\b(must\s+not|shall\s+not|is\s+forbidden\s+to|is\s+prohibited\s+from)\b', '', text_lower).strip()
+            action = action.replace(' ', '_')
+            return f"F({action})"
+        # Default: obligation
+        return f"Obligation({text.replace(' ', '_')})"

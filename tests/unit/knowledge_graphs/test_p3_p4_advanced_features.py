@@ -311,7 +311,7 @@ class TestLLMIntegration:
         # Should return fallback answer without errors
     
     @patch.dict('os.environ', {'OPENAI_API_KEY': 'test_key'})
-    @patch('ipfs_datasets_py.knowledge_graphs.cross_document_reasoning.openai')
+    @patch('ipfs_datasets_py.knowledge_graphs.reasoning.cross_document.openai')
     def test_llm_with_openai(self, mock_openai):
         """
         GIVEN: OpenAI API key and mocked client
@@ -340,8 +340,8 @@ class TestLLMIntegration:
         mock_client.chat.completions.create.assert_called_once()
 
     @patch.dict('os.environ', {'OPENAI_API_KEY': 'test_key'})
-    @patch('ipfs_datasets_py.knowledge_graphs.cross_document_reasoning.LLMRouter')
-    @patch('ipfs_datasets_py.knowledge_graphs.cross_document_reasoning.openai')
+    @patch('ipfs_datasets_py.knowledge_graphs.reasoning.cross_document.LLMRouter')
+    @patch('ipfs_datasets_py.knowledge_graphs.reasoning.cross_document.openai')
     def test_llm_does_not_use_router_when_openai_available(self, mock_openai, mock_router_cls):
         """
         GIVEN: OpenAI API key and a working OpenAI client
@@ -363,7 +363,7 @@ class TestLLMIntegration:
         mock_router_cls.assert_not_called()
     
     @patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test_key'})
-    @patch('ipfs_datasets_py.knowledge_graphs.cross_document_reasoning.anthropic')
+    @patch('ipfs_datasets_py.knowledge_graphs.reasoning.cross_document.anthropic')
     def test_llm_with_anthropic(self, mock_anthropic):
         """
         GIVEN: Anthropic API key and mocked client
@@ -384,7 +384,7 @@ class TestLLMIntegration:
         query = "What is it?"
         
         # WHEN
-        with patch('ipfs_datasets_py.knowledge_graphs.cross_document_reasoning.openai', side_effect=ImportError):
+        with patch('ipfs_datasets_py.knowledge_graphs.reasoning.cross_document.openai', side_effect=ImportError):
             answer, confidence = reasoner._generate_llm_answer(prompt, query)
         
         # THEN

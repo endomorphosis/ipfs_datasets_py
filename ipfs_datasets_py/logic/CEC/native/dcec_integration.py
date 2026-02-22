@@ -86,6 +86,18 @@ def parse_expression_to_token(
     expr = remove_comments(expression)
     expr = strip_comments(expr)
     
+    # Special-case: top-level "not X" prefix notation.
+    # Recursively parse the operand then wrap in a ParseToken("not", [operand]).
+    # This must be done BEFORE strip_whitespace because that converts "not a" → "not,a".
+    import re as _re
+    _raw = expression.strip() if expression else ""
+    _not_match = _re.match(r'^not\s+(.+)$', _raw, _re.DOTALL)
+    if _not_match:
+        sub_expr = _not_match.group(1).strip()
+        sub_token = parse_expression_to_token(sub_expr, namespace)
+        if sub_token is not None:
+            return ParseToken("not", [sub_token])
+
     # Step 2: Clean whitespace and validate
     expr = strip_whitespace(expr)
     
@@ -159,6 +171,15 @@ def token_to_formula(
     # Strip leading/trailing parens from function name (parser artifacts)
     func_name = token.func_name.strip("()").lower()
     
+    # Special case: "atomic" tokens wrap a single predicate name in parens.
+    # e.g. ParseToken("atomic", ["(a)"]) → AtomicFormula(Predicate("a", []), [])
+    if func_name == "atomic":
+        pred_strs = [a.strip("()") for a in token.args if isinstance(a, str)]
+        if pred_strs:
+            predicate = Predicate(pred_strs[0], [])
+            return AtomicFormula(predicate, [])
+        return None
+    
     # Logical connectives
     if func_name == "and":
         if len(token.args) == 2:
@@ -229,6 +250,8 @@ def token_to_formula(
             agent_str = token.args[0] if len(token.args) >= 2 else "agent"
             agent_term = _make_agent_term(str(agent_str), variables)
             formula = _arg_to_formula(token.args[-1], namespace, variables)
+            agent_arg = token.args[0]
+            agent_term = FunctionTerm(Function(str(agent_arg), [], Sort("agent")), [])
             if formula:
                 return CognitiveFormula(CognitiveOperator.BELIEF, agent_term, formula)
     
@@ -237,6 +260,8 @@ def token_to_formula(
             agent_str = token.args[0] if len(token.args) >= 2 else "agent"
             agent_term = _make_agent_term(str(agent_str), variables)
             formula = _arg_to_formula(token.args[-1], namespace, variables)
+            agent_arg = token.args[0]
+            agent_term = FunctionTerm(Function(str(agent_arg), [], Sort("agent")), [])
             if formula:
                 return CognitiveFormula(CognitiveOperator.KNOWLEDGE, agent_term, formula)
     
@@ -245,6 +270,8 @@ def token_to_formula(
             agent_str = token.args[0] if len(token.args) >= 2 else "agent"
             agent_term = _make_agent_term(str(agent_str), variables)
             formula = _arg_to_formula(token.args[-1], namespace, variables)
+            agent_arg = token.args[0]
+            agent_term = FunctionTerm(Function(str(agent_arg), [], Sort("agent")), [])
             if formula:
                 return CognitiveFormula(CognitiveOperator.INTENTION, agent_term, formula)
     

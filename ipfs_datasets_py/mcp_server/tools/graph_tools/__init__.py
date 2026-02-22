@@ -16,6 +16,9 @@ from .graph_transaction_commit import graph_transaction_commit
 from .graph_transaction_rollback import graph_transaction_rollback
 from .graph_index_create import graph_index_create
 from .graph_constraint_add import graph_constraint_add
+from .graph_srl_extract import graph_srl_extract
+from .graph_ontology_materialize import graph_ontology_materialize
+from .graph_distributed_execute import graph_distributed_execute
 
 __all__ = [
     "query_knowledge_graph",
@@ -29,4 +32,7 @@ __all__ = [
     "graph_transaction_rollback",
     "graph_index_create",
     "graph_constraint_add",
+    "graph_srl_extract",
+    "graph_ontology_materialize",
+    "graph_distributed_execute",
 ]

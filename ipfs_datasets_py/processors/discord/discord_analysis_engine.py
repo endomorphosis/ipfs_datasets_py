@@ -271,23 +271,43 @@ async def discord_analyze_export(
         if base_dir_env:
             base_dir = Path(base_dir_env).resolve()
             
-            # Reject absolute paths when base_dir is configured
+            # Build the candidate path: absolute paths are used as-is, others are joined to base_dir
             if export_path_obj.is_absolute():
-                # Allow absolute paths if they resolve inside base_dir
-                resolved_export = export_path_obj.resolve()
-                try:
-                    resolved_export.relative_to(base_dir)
-                except ValueError:
-                    return {
-                        "status": "error",
-                        "error": f"Absolute export paths must be within {base_dir}",
-                        "export_path": export_path,
-                    }
-                export_file = resolved_export
+                candidate_path = export_path_obj
             else:
-                # Build the full path relative to the base directory
-                export_file = (base_dir / export_path_obj).resolve()
+                candidate_path = base_dir / export_path_obj
+
+            resolved_export = candidate_path.resolve()
+            try:
+                # Ensure the resolved path is within the configured base directory
+                resolved_export.relative_to(base_dir)
+            except ValueError:
+                return {
+                    "status": "error",
+                    "error": f"Export path must be within {base_dir}",
+                    "export_path": export_path,
+                }
+            export_file = resolved_export
         else:
+            # When no base directory is configured, only allow simple filenames
+            # to avoid arbitrary filesystem access.
+            if export_path_obj.is_absolute():
+                return {
+                    "status": "error",
+                    "error": "Absolute export paths are not allowed when DISCORD_EXPORT_BASE_DIR is unset",
+                    "export_path": export_path,
+                }
+
+            # Reject paths containing directory separators (path traversal or nested dirs)
+            if os.sep in export_path or (os.altsep and os.altsep in export_path):
+                return {
+                    "status": "error",
+                    "error": "Directory components in export paths are not allowed when DISCORD_EXPORT_BASE_DIR is unset",
+                    "export_path": export_path,
+                }
+
+            # Use a resolved path relative to the current working directory
+            export_file = export_path_obj.resolve()
             # No base_dir configured: allow absolute paths directly
             if export_path_obj.is_absolute():
                 export_file = export_path_obj.resolve()

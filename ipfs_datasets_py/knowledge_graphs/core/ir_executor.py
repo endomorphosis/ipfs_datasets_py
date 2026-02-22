@@ -10,6 +10,7 @@ It is designed to be stateless; all per-execution state is local to the
 from __future__ import annotations
 
 import logging
+import itertools
 from typing import Any, Callable, Dict, List, Optional
 
 from ..neo4j_compat.result import Record
@@ -338,6 +339,54 @@ def execute_ir_operations(
 
             logger.debug("Project: %d results", len(final_results))
 
+        elif op_type == "WithProject":
+            # Like Project but writes projected rows to *bindings* so that
+            # a subsequent WHERE/Filter and final RETURN can reference the
+            # projected column names (e.g. `age` instead of `n.age`).
+            items = op.get("items", [])
+            new_bindings_wp: List[Dict[str, Any]] = []
+
+            if bindings:
+                for binding in bindings:
+                    row: Dict[str, Any] = {}
+                    for item in items:
+                        expr = item.get("expression")
+                        alias = item.get("alias", expr if isinstance(expr, str) else "result")
+                        row[alias] = evaluate_compiled_expression(expr, binding)
+                    new_bindings_wp.append(row)
+            else:
+                keys = list(result_set.keys())
+                for combo in itertools.product(*[result_set[k] for k in keys]):
+                    base = {keys[i]: combo[i] for i in range(len(keys))}
+                    row = {}
+                    for item in items:
+                        expr = item.get("expression")
+                        alias = item.get("alias", expr if isinstance(expr, str) else "result")
+                        row[alias] = evaluate_compiled_expression(expr, base)
+                    new_bindings_wp.append(row)
+
+            # Apply DISTINCT if requested
+            if op.get("distinct"):
+                seen_wp: set = set()
+                deduped: List[Dict[str, Any]] = []
+                for row in new_bindings_wp:
+                    key = tuple(sorted((k, str(v)) for k, v in row.items()))
+                    if key not in seen_wp:
+                        seen_wp.add(key)
+                        deduped.append(row)
+                new_bindings_wp = deduped
+
+            # Apply SKIP / LIMIT if requested
+            if op.get("skip") is not None:
+                new_bindings_wp = new_bindings_wp[op["skip"]:]
+            if op.get("limit") is not None:
+                new_bindings_wp = new_bindings_wp[: op["limit"]]
+
+            bindings = new_bindings_wp
+            result_set = {}  # consumed
+            final_results = []  # reset; will be populated by following Project
+            logger.debug("WithProject: %d bindings", len(bindings))
+
         elif op_type == "Limit":
             count = op.get("count")
             final_results = final_results[:count]
@@ -454,6 +503,262 @@ def execute_ir_operations(
                 for item in result_set[variable]:
                     graph_engine.update_node(item.id, {property_name: value})
                 logger.debug("SetProperty: updated %d nodes", len(result_set[variable]))
+
+        elif op_type == "RemoveProperty":
+            # REMOVE n.property — delete a single property from each matched node
+            variable = op.get("variable")
+            property_name = op.get("property")
+            if variable in result_set:
+                for item in result_set[variable]:
+                    node = graph_engine.get_node(item.id)
+                    if node and property_name in node._properties:
+                        del node._properties[property_name]
+                        logger.debug("RemoveProperty: removed %s from node %s", property_name, item.id)
+
+        elif op_type == "RemoveLabel":
+            # REMOVE n:Label — remove a label from each matched node
+            variable = op.get("variable")
+            label = op.get("label")
+            if variable in result_set:
+                for item in result_set[variable]:
+                    node = graph_engine.get_node(item.id)
+                    if node and label in node._labels:
+                        node._labels = frozenset(node._labels - {label})
+                        logger.debug("RemoveLabel: removed label %s from node %s", label, item.id)
+
+        elif op_type == "Merge":
+            # MERGE: match-or-create semantics
+            # Try to MATCH the pattern; if any nodes are found, use them
+            # (apply on_match_set); otherwise CREATE the pattern (apply
+            # on_create_set).
+            match_ops = op.get("match_ops", [])
+            create_ops = op.get("create_ops", [])
+            on_create_set = op.get("on_create_set", [])
+            on_match_set = op.get("on_match_set", [])
+
+            # ------------------------------------------------------------------
+            # Run the match sub-program on a fresh temporary result_set.
+            # Because match_ops typically end with ScanLabel+Filter (no Project),
+            # execute_ir_operations would return [] for final_results even when
+            # matches exist.  We detect matches by appending a sentinel Project
+            # that keeps all variables.
+            # ------------------------------------------------------------------
+            match_found = False
+            merged_result_set: Dict[str, Any] = {}
+
+            if match_ops:
+                # Find all variables produced by the match ops
+                match_vars: List[str] = []
+                for m_op in match_ops:
+                    for key in ("variable", "to_variable", "from_variable"):
+                        v = m_op.get(key)
+                        if v and v not in match_vars:
+                            match_vars.append(v)
+
+                probe_ops = list(match_ops) + [
+                    {
+                        "op": "Project",
+                        "items": [{"expression": {"var": v}, "alias": v} for v in match_vars],
+                        "distinct": False,
+                    }
+                ]
+                probe_results: List[Record] = execute_ir_operations(
+                    graph_engine=graph_engine,
+                    operations=probe_ops,
+                    parameters=parameters,
+                    resolve_value=resolve_value,
+                    apply_operator=apply_operator,
+                    evaluate_compiled_expression=evaluate_compiled_expression,
+                    evaluate_expression=evaluate_expression,
+                    compute_aggregation=compute_aggregation,
+                )
+                match_found = bool(probe_results)
+                if match_found:
+                    # Rebuild result_set from matched records
+                    for rec in probe_results:
+                        for v in match_vars:
+                            val = rec.get(v)
+                            if val is not None:
+                                merged_result_set.setdefault(v, []).append(val)
+
+            if match_found:
+                logger.debug("Merge: pattern matched, applying ON MATCH SET")
+                for key, vals in merged_result_set.items():
+                    result_set.setdefault(key, []).extend(vals)
+                # Apply ON MATCH SET
+                for set_item in on_match_set:
+                    parts = set_item["property"].split(".", 1)
+                    if len(parts) == 2:
+                        var_name, prop_name = parts
+                        val = resolve_value(set_item["value"], parameters)
+                        for node in result_set.get(var_name, []):
+                            if hasattr(node, "_properties"):
+                                node._properties[prop_name] = val
+            else:
+                # No match — execute CREATE ops
+                logger.debug("Merge: pattern not found, creating")
+                for create_op in create_ops:
+                    if create_op.get("op") == "CreateNode":
+                        c_var = create_op.get("variable")
+                        c_labels = create_op.get("labels", [])
+                        c_props = {
+                            k: resolve_value(v, parameters)
+                            for k, v in create_op.get("properties", {}).items()
+                        }
+                        node = graph_engine.create_node(labels=c_labels, properties=c_props)
+                        result_set[c_var] = [node]
+                        logger.debug("Merge(create): created node %s", node.id)
+                    elif create_op.get("op") == "CreateRelationship":
+                        c_var = create_op.get("variable")
+                        c_type = create_op.get("rel_type", "RELATED_TO")
+                        start_var = create_op.get("start_variable")
+                        end_var = create_op.get("end_variable")
+                        c_props = {
+                            k: resolve_value(v, parameters)
+                            for k, v in create_op.get("properties", {}).items()
+                        }
+                        start_nodes = result_set.get(start_var, [])
+                        end_nodes = result_set.get(end_var, [])
+                        if start_nodes and end_nodes:
+                            rel = graph_engine.create_relationship(
+                                start_id=start_nodes[0].id,
+                                end_id=end_nodes[0].id,
+                                rel_type=c_type,
+                                properties=c_props,
+                            )
+                            if rel:
+                                result_set[c_var] = [rel]
+                                logger.debug("Merge(create): created rel %s", rel.id)
+                # Apply ON CREATE SET
+                for set_item in on_create_set:
+                    parts = set_item["property"].split(".", 1)
+                    if len(parts) == 2:
+                        var_name, prop_name = parts
+                        val = resolve_value(set_item["value"], parameters)
+                        for node in result_set.get(var_name, []):
+                            if hasattr(node, "_properties"):
+                                node._properties[prop_name] = val
+
+        elif op_type == "Unwind":
+            # UNWIND <expr> AS <variable>
+            # Expands the list expression into individual bindings.
+            expr = op.get("expression")
+            unwind_var = op.get("variable")
+            # Evaluate the list expression against the current bindings
+            if bindings:
+                new_bindings: List[Dict[str, Any]] = []
+                for binding in bindings:
+                    lst = evaluate_compiled_expression(expr, binding)
+                    if isinstance(lst, (list, tuple)):
+                        for item in lst:
+                            new_binding = dict(binding)
+                            new_binding[unwind_var] = item
+                            new_bindings.append(new_binding)
+                    elif lst is not None:
+                        # Non-list: treat as single-element list
+                        new_binding = dict(binding)
+                        new_binding[unwind_var] = lst
+                        new_bindings.append(new_binding)
+                bindings = new_bindings
+            elif result_set:
+                # Convert result_set rows to bindings and unwind
+                new_bindings = []
+                # Build cross-product bindings from result_set
+                keys = list(result_set.keys())
+                for combo in itertools.product(*[result_set[k] for k in keys]):
+                    base = {keys[i]: combo[i] for i in range(len(keys))}
+                    lst = evaluate_compiled_expression(expr, base)
+                    if isinstance(lst, (list, tuple)):
+                        for item in lst:
+                            b = dict(base)
+                            b[unwind_var] = item
+                            new_bindings.append(b)
+                    elif lst is not None:
+                        b = dict(base)
+                        b[unwind_var] = lst
+                        new_bindings.append(b)
+                bindings = new_bindings
+                result_set = {}  # consumed
+            else:
+                # No bindings yet — evaluate against empty binding
+                lst = evaluate_compiled_expression(expr, {})
+                if isinstance(lst, (list, tuple)):
+                    bindings = [{unwind_var: item} for item in lst]
+                elif lst is not None:
+                    bindings = [{unwind_var: lst}]
+            logger.debug("Unwind: expanded to %d bindings", len(bindings))
+
+        elif op_type == "Foreach":
+            # FOREACH (variable IN expression | body_ops*)
+            # Evaluates the list expression, then for each element runs the
+            # body mutation ops with the loop variable bound to the element.
+            foreach_var = op.get("variable")
+            expr = op.get("expression")
+            body_ops = op.get("body_ops", [])
+
+            # Determine base bindings to iterate over
+            base_bindings = bindings if bindings else [{}]
+
+            for base_binding in base_bindings:
+                lst = evaluate_compiled_expression(expr, base_binding)
+                if not isinstance(lst, (list, tuple)):
+                    lst = [lst] if lst is not None else []
+                for element in lst:
+                    # Build an augmented binding with the loop variable
+                    loop_binding = dict(base_binding)
+                    loop_binding[foreach_var] = element
+                    # Copy loop binding into result_set for the body ops
+                    result_set[foreach_var] = [element]
+                    # Run each body mutation op; only mutation side-effects matter
+                    execute_ir_operations(
+                        graph_engine=graph_engine,
+                        operations=body_ops,
+                        parameters={**parameters, foreach_var: element},
+                        resolve_value=resolve_value,
+                        apply_operator=apply_operator,
+                        evaluate_compiled_expression=evaluate_compiled_expression,
+                        evaluate_expression=evaluate_expression,
+                        compute_aggregation=compute_aggregation,
+                    )
+            logger.debug("Foreach: iterated over loop variable '%s'", foreach_var)
+
+        elif op_type == "CallSubquery":
+            # CALL { inner_ops } [YIELD ...]
+            # Runs the inner query against the same graph engine and merges
+            # its results into the outer query's binding set.
+            inner_ops = op.get("inner_ops", [])
+            yield_items = op.get("yield_items", [])
+
+            inner_results = execute_ir_operations(
+                graph_engine=graph_engine,
+                operations=inner_ops,
+                parameters=parameters,
+                resolve_value=resolve_value,
+                apply_operator=apply_operator,
+                evaluate_compiled_expression=evaluate_compiled_expression,
+                evaluate_expression=evaluate_expression,
+                compute_aggregation=compute_aggregation,
+            )
+
+            # Build a name→alias mapping from YIELD (empty means expose all)
+            yield_map: Dict[str, str] = {}
+            if yield_items:
+                for yi in yield_items:
+                    yield_map[yi["name"]] = yi["alias"]
+
+            # Merge inner results into outer bindings
+            if inner_results:
+                new_bindings: List[Dict[str, Any]] = []
+                outer_base = bindings if bindings else [{}]
+                for outer in outer_base:
+                    for record in inner_results:
+                        merged = dict(outer)
+                        for key, val in record._data.items():  # type: ignore[attr-defined]
+                            alias = yield_map.get(key, key) if yield_map else key
+                            merged[alias] = val
+                        new_bindings.append(merged)
+                bindings = new_bindings
+            logger.debug("CallSubquery: merged %d inner results", len(inner_results))
 
     if union_parts:
         all_parts: List[Record] = []

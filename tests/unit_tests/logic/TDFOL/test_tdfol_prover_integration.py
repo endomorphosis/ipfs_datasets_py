@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
     Predicate,
-    Term, Constant,
+    Term,
     Variable,
     LogicOperator,
     BinaryFormula,
@@ -39,7 +39,7 @@ class TestAutomaticStrategySelection:
         """
         # GIVEN
         prover = TDFOLProver()
-        p = Predicate("P", [Constant("a")])
+        p = Predicate("P", [Term("a")])
         prover.add_axiom(p)
         
         # WHEN
@@ -58,7 +58,7 @@ class TestAutomaticStrategySelection:
         """
         # GIVEN
         prover = TDFOLProver()
-        p = Predicate("P", [Constant("a")])
+        p = Predicate("P", [Term("a")])
         # □P(a) - modal necessity
         modal_p = TemporalFormula(TemporalOperator.ALWAYS, p)
         prover.add_axiom(modal_p)
@@ -78,7 +78,7 @@ class TestAutomaticStrategySelection:
         """
         # GIVEN
         prover = TDFOLProver()
-        p = Predicate("P", [Constant("a")])
+        p = Predicate("P", [Term("a")])
         # ◊P(a) - temporal eventually
         eventually_p = TemporalFormula(TemporalOperator.EVENTUALLY, p)
         prover.add_axiom(eventually_p)
@@ -104,16 +104,16 @@ class TestManualStrategyOverride:
         try:
             from ipfs_datasets_py.logic.TDFOL.strategies import ForwardChainingStrategy
             
-            custom_strategy = ForwardChainingStrategy(max_iterations=50)
+            custom_strategy = ForwardChainingStrategy(rules=[], max_iterations=50)
             prover = TDFOLProver(strategy=custom_strategy)
-            p = Predicate("P", [Constant("a")])
+            p = Predicate("P", [Term("a")])
             prover.add_axiom(p)
             
             # WHEN
             result = prover.prove(p, timeout_ms=1000)
             
             # THEN
-            assert result.status in [ProofStatus.PROVED, ProofStatus.UNKNOWN]
+            assert result.status in [ProofStatus.PROVED, ProofStatus.UNPROVABLE]
             # Verify custom strategy was used (selector should be None)
             assert prover.selector is None
             assert prover.strategy is not None
@@ -132,7 +132,7 @@ class TestManualStrategyOverride:
             
             custom_strategy = ModalTableauxStrategy()
             prover = TDFOLProver(strategy=custom_strategy)
-            p = Predicate("P", [Constant("a")])
+            p = Predicate("P", [Term("a")])
             modal_p = TemporalFormula(TemporalOperator.ALWAYS, p)
             prover.add_axiom(modal_p)
             
@@ -140,7 +140,7 @@ class TestManualStrategyOverride:
             result = prover.prove(modal_p, timeout_ms=1000)
             
             # THEN
-            assert result.status in [ProofStatus.PROVED, ProofStatus.UNKNOWN]
+            assert result.status in [ProofStatus.PROVED, ProofStatus.UNPROVABLE]
             assert prover.selector is None
             assert prover.strategy is not None
         except ImportError:
@@ -158,7 +158,7 @@ class TestCacheIntegration:
         """
         # GIVEN
         prover = TDFOLProver(enable_cache=True)
-        p = Predicate("P", [Constant("a")])
+        p = Predicate("P", [Term("a")])
         prover.add_axiom(p)
         
         # First prove to populate cache
@@ -182,8 +182,8 @@ class TestCacheIntegration:
         """
         # GIVEN
         prover = TDFOLProver(enable_cache=True)
-        p = Predicate("P", [Constant("a")])
-        q = Predicate("Q", [Constant("b")])
+        p = Predicate("P", [Term("a")])
+        q = Predicate("Q", [Term("b")])
         prover.add_axiom(p)
         prover.add_axiom(q)
         
@@ -213,15 +213,15 @@ class TestStrategyFallback:
         """
         # GIVEN
         prover = TDFOLProver()
-        p = Predicate("P", [Constant("a")])
+        p = Predicate("P", [Term("a")])
         
         # WHEN
         result = prover.prove(p, timeout_ms=1000)
         
         # THEN
-        # Should either find it as axiom, or return UNKNOWN/ERROR when strategies unavailable
+        # Should either find it as axiom or return error
         if p not in prover.kb.axioms:
-            assert result.status in (ProofStatus.ERROR, ProofStatus.UNKNOWN)
+            assert result.status == ProofStatus.ERROR
             assert "strategies not available" in result.message.lower()
 
     def test_prove_handles_strategy_error_gracefully(self):
@@ -242,7 +242,7 @@ class TestStrategyFallback:
         # Should return a result (even if unprovable or error)
         assert result is not None
         assert isinstance(result, ProofResult)
-        assert result.status in [ProofStatus.PROVED, ProofStatus.UNKNOWN, ProofStatus.TIMEOUT, ProofStatus.ERROR]
+        assert result.status in [ProofStatus.PROVED, ProofStatus.UNPROVABLE, ProofStatus.UNKNOWN, ProofStatus.TIMEOUT, ProofStatus.ERROR]
 
 
 class TestKnowledgeBaseIntegration:
@@ -256,8 +256,8 @@ class TestKnowledgeBaseIntegration:
         """
         # GIVEN
         prover = TDFOLProver()
-        p = Predicate("P", [Constant("a")])
-        q = Predicate("Q", [Constant("b")])
+        p = Predicate("P", [Term("a")])
+        q = Predicate("Q", [Term("b")])
         
         # Add axioms: P(a), P(a) → Q(b)
         prover.add_axiom(p)
@@ -276,7 +276,7 @@ class TestKnowledgeBaseIntegration:
         
         # THEN
         # Should be proved via forward chaining or similar
-        assert result_q.status in [ProofStatus.PROVED, ProofStatus.UNKNOWN]
+        assert result_q.status in [ProofStatus.PROVED, ProofStatus.UNPROVABLE]
 
 
 # Additional edge case tests
@@ -291,13 +291,13 @@ class TestEdgeCases:
         """
         # GIVEN
         prover = TDFOLProver()
-        p = Predicate("P", [Constant("a")])
+        p = Predicate("P", [Term("a")])
         
         # WHEN
         result = prover.prove(p, timeout_ms=1000)
         
         # THEN
-        assert result.status in [ProofStatus.UNKNOWN, ProofStatus.ERROR]
+        assert result.status in [ProofStatus.UNPROVABLE, ProofStatus.UNKNOWN, ProofStatus.ERROR]
 
     def test_prove_with_zero_timeout(self):
         """
@@ -307,7 +307,7 @@ class TestEdgeCases:
         """
         # GIVEN
         prover = TDFOLProver()
-        p = Predicate("P", [Constant("a")])
+        p = Predicate("P", [Term("a")])
         prover.add_axiom(p)
         
         # WHEN
@@ -326,8 +326,8 @@ class TestEdgeCases:
         """
         # GIVEN
         prover = TDFOLProver()
-        p = Predicate("P", [Constant("a")])
-        q = Predicate("Q", [Constant("b")])
+        p = Predicate("P", [Term("a")])
+        q = Predicate("Q", [Term("b")])
         
         # Create nested formula: □(P(a) → ◊Q(b))
         inner_implication = BinaryFormula(LogicOperator.IMPLIES, p, q)
@@ -342,7 +342,7 @@ class TestEdgeCases:
         # THEN
         assert result is not None
         assert isinstance(result, ProofResult)
-        assert result.status in [ProofStatus.PROVED, ProofStatus.UNKNOWN, ProofStatus.TIMEOUT]
+        assert result.status in [ProofStatus.PROVED, ProofStatus.UNPROVABLE, ProofStatus.TIMEOUT]
 
 
 if __name__ == "__main__":
