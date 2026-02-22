@@ -3407,6 +3407,39 @@ class LogicValidator:
                 count += 1
         return count
 
+    def avg_path_length(self, ontology: dict) -> float:
+        """Alias for :meth:`average_path_length`.
+
+        Returns the mean shortest-path length between all reachable node pairs.
+
+        Args:
+            ontology: Dict with optional ``"entities"`` and ``"relationships"`` lists.
+
+        Returns:
+            Float mean; ``0.0`` when no reachable pairs exist.
+        """
+        return self.average_path_length(ontology)
+
+    def node_density(self, ontology: dict) -> float:
+        """Return the graph density: ratio of actual edges to maximum possible edges.
+
+        For a directed graph with *n* nodes the maximum possible edges is
+        ``n * (n - 1)``.  Returns ``0.0`` when fewer than 2 nodes are present.
+
+        Args:
+            ontology: Dict with optional ``"entities"`` and ``"relationships"`` lists.
+
+        Returns:
+            Float in [0.0, 1.0].
+        """
+        entities = ontology.get("entities", []) if ontology else []
+        relationships = ontology.get("relationships", []) if ontology else []
+        n = len(entities)
+        if n < 2:
+            return 0.0
+        max_edges = n * (n - 1)
+        return len(relationships) / max_edges
+
 
 # Export public API
 __all__ = [

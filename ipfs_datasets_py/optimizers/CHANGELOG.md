@@ -5,6 +5,24 @@ All notable changes to the optimizers module will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Batch 202 (2026-02-22)
+
+### Added
+- `OntologyOptimizer.score_geometric_mean()` — geometric mean of history `average_score` values; returns 0.0 if any score is zero or history is empty.
+- `OntologyOptimizer.score_harmonic_mean()` — harmonic mean of history `average_score` values; returns 0.0 if any score is zero or history is empty.
+- `OntologyLearningAdapter.feedback_geometric_mean()` — geometric mean of feedback `final_score` values.
+- `OntologyLearningAdapter.feedback_harmonic_mean()` — harmonic mean of feedback `final_score` values.
+- `OntologyGenerator.relationship_confidence_avg(result)` — alias for `relationship_confidence_mean()`; returns mean confidence of all relationships.
+- `LogicValidator.avg_path_length(ontology)` — alias for `average_path_length()`; returns mean BFS shortest-path length.
+- `LogicValidator.node_density(ontology)` — directed graph density: `|E| / (n * (n-1))`; 0.0 for fewer than 2 nodes.
+- 50 new unit tests in `tests/unit/optimizers/graphrag/test_batch_202_features.py`.
+
+### Fixed
+- Marked `ExtractionConfig.merge(other)` as done in TODO.md (method already existed at line 596).
+- Marked `OntologyGenerator.relationship_confidence_avg(result)` as done in TODO.md.
+
+---
+
 ## [Unreleased] — Batch 47
 
 ### Added

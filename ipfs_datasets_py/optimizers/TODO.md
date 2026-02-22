@@ -1401,12 +1401,12 @@ This section captures the full architectural vision beyond batch-method addition
 - [x] (P2) [graphrag] `LogicValidator.relationship_diversity(ontology)` — entropy of rel types (batch-167)
 - [x] (P2) [graphrag] `LogicValidator.entity_pair_count(ontology)` — unique source/target pairs (batch-167)
 - [x] (P2) [graphrag] `OntologyMediator.clear_feedback()` — reset feedback history (batch-168)
-- [ ] (P2) [graphrag] `ExtractionConfig.merge(other)` — merge two configs _(already exists at line 596)_
+- [x] (P2) [graphrag] `ExtractionConfig.merge(other)` — merge two configs _(already exists at line 596)_
 - [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_std(result)` — std-dev of confidences (batch-166)
 - [x] (P2) [graphrag] `OntologyOptimizer.score_gini_coefficient()` — Gini inequality measure (batch-170)
 - [x] (P2) [graphrag] `OntologyPipeline.score_histogram(bins)` — histogram dict (batch-169)
 - [x] (P2) [graphrag] `LogicValidator.graph_diameter(ontology)` — longest shortest path (batch-170)
-- [ ] (P2) [graphrag] `OntologyGenerator.relationship_confidence_avg(result)` — mean rel confidence if available
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_confidence_avg(result)` — mean rel confidence if available (batch-202)
 - [x] (P2) [graphrag] `OntologyCritic.dimension_correlation(scores_a, scores_b)` — Pearson r (batch-170)
 - [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_above_threshold_fraction(t)` — fraction above t (batch-167)
 - [x] (P2) [graphrag] `OntologyPipeline.run_moving_average(n)` — moving average of run scores (batch-168)
@@ -1564,3 +1564,33 @@ Testing Coverage:
 Bug Fixes in Implementation:
 - Removed duplicate entity_id_list implementation on line 6625
 - Fixed None ID handling in entity_id_list deduplication logic
+
+---
+
+## Batch 202 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_geometric_mean()` — geometric mean of history average_score values
+- [x] (P2) [graphrag] `OntologyOptimizer.score_harmonic_mean()` — harmonic mean of history average_score values
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_geometric_mean()` — geometric mean of feedback final_score values
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_harmonic_mean()` — harmonic mean of feedback final_score values
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_confidence_avg(result)` — alias for relationship_confidence_mean
+- [x] (P2) [graphrag] `LogicValidator.avg_path_length(ontology)` — alias for average_path_length
+- [x] (P2) [graphrag] `LogicValidator.node_density(ontology)` — edges / (n*(n-1)); directed graph density
+
+Implementation notes:
+- score_geometric_mean: product^(1/n) of history scores; returns 0.0 if any score is zero
+- score_harmonic_mean: n / sum(1/s) of history scores; returns 0.0 if any score is zero
+- feedback_geometric_mean: same pattern applied to OntologyLearningAdapter feedback records
+- feedback_harmonic_mean: same pattern applied to OntologyLearningAdapter feedback records
+- relationship_confidence_avg: thin alias delegating to relationship_confidence_mean (DRY)
+- avg_path_length: thin alias delegating to average_path_length (DRY)
+- node_density: directed graph density; 0.0 for < 2 nodes
+
+Testing (50 new tests in test_batch_202_features.py):
+- 7 tests for score_geometric_mean (empty, single, two-values, uniform, zero, AM-GM, return type)
+- 7 tests for score_harmonic_mean (empty, single, two-values, uniform, zero, HM≤GM≤AM, return type)
+- 7 tests for feedback_geometric_mean
+- 7 tests for feedback_harmonic_mean
+- 6 tests for relationship_confidence_avg
+- 7 tests for avg_path_length
+- 9 tests for node_density

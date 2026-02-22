@@ -4694,6 +4694,38 @@ class OntologyOptimizer:
         return reversals
 
 
+    def score_geometric_mean(self) -> float:
+        """Return the geometric mean of all history ``average_score`` values.
+
+        Returns:
+            Float geometric mean in [0, 1]; ``0.0`` when any score is zero or
+            when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        if any(s <= 0.0 for s in scores):
+            return 0.0
+        product = 1.0
+        for s in scores:
+            product *= s
+        return product ** (1.0 / len(scores))
+
+    def score_harmonic_mean(self) -> float:
+        """Return the harmonic mean of all history ``average_score`` values.
+
+        Returns:
+            Float harmonic mean; ``0.0`` when any score is zero or history
+            is empty.
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        if any(s <= 0.0 for s in scores):
+            return 0.0
+        return len(scores) / sum(1.0 / s for s in scores)
+
+
 # Export public API
 __all__ = [
     'OntologyOptimizer',
