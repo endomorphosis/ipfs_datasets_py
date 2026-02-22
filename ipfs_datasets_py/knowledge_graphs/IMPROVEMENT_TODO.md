@@ -1,8 +1,8 @@
 # Knowledge Graphs – Infinite Improvement Backlog (Living TODO)
 
-**Scope:** This backlog applies to the module at `ipfs_datasets_py/ipfs_datasets_py/knowledge_graphs/`.
+**Scope:** This backlog applies to the module at `ipfs_datasets_py/knowledge_graphs/`.
 
-**Note on pathing:** Some older references mention `ipfs_datasets_py/ipfs_datasets_py/logic/knowledge_graphs`, but in this checkout the knowledge graphs subsystem lives in `.../knowledge_graphs/` (not under `logic/`).
+**Note on pathing:** Some older references mention `ipfs_datasets_py/logic/knowledge_graphs`, but the knowledge graphs subsystem lives in `ipfs_datasets_py/knowledge_graphs/` (not under `logic/`).
 
 **Status snapshot (2026-02-18):** The module is already **production-ready** (see `MASTER_STATUS.md` and `COMPREHENSIVE_ANALYSIS_2026_02_18.md`). This document is a *comprehensive, ongoing* list of refactors + polish + hardening tasks to keep improving quality over time.
 
@@ -805,3 +805,46 @@ All session59 (21 tests) and session60 (18 tests) tests continue to pass:
 - session60's `assert "**Version:** 3.22.15" in text` → PASSES (MASTER_STATUS.md unchanged)
 
 **Result: 3,764 passed, 26 skipped, 0 failed** (numpy+networkx+matplotlib+scipy+plotly+rdflib env)
+
+### Session 62 log (2026-02-22)
+
+**Documentation accuracy fixes — no production code changes.**
+
+**Problem:** Three documentation files had stale metadata accumulated over sessions 1–61:
+1. `DOCUMENTATION_GUIDE.md` had `Version: 1.0` and `Last Updated: 2026-02-18` (from the initial
+   creation, never updated across 14+ sessions). It also had a duplicate `MASTER_STATUS.md` entry —
+   item 4 (⭐ annotated) and item 5 (plain) pointed to the same file with the same link.
+   The "Next Review: Q2 2026" was also stale (we're at Feb 2026 with Q2 approaching).
+2. `DEFERRED_FEATURES.md` had `Last Updated: 2026-02-20 (session 4)` and a "Next Review:
+   Q3 2026 (before v2.5.0 release)" that referenced the stale v2.5.0 milestone.
+3. `IMPROVEMENT_TODO.md` had a wrong `Scope:` path — `ipfs_datasets_py/ipfs_datasets_py/knowledge_graphs/`
+   (double prefix) instead of the actual path `ipfs_datasets_py/knowledge_graphs/`. The
+   "Note on pathing" also referenced the old wrong double-prefix.
+
+**Fix:**
+1. `DOCUMENTATION_GUIDE.md`:
+   - `**Version:** 1.0` → `3.22.16` (header + footer, 2 places)
+   - `**Last Updated:** 2026-02-18` → `2026-02-22` (header + footer, 2 places)
+   - Removed duplicate `MASTER_STATUS.md` entry (item 5 was a verbatim dup of item 4)
+   - Renumbered items 6–24 → 5–23 to close the gap
+   - Updated item 5 (`DEFERRED_FEATURES.md`) description: added "(all ✅ implemented as of v3.22.0)"
+   - `**Next Review:** Q2 2026` → `After each major release or quarterly`
+2. `DEFERRED_FEATURES.md`:
+   - `**Last Updated:** 2026-02-20 (session 4)` → `2026-02-22 (session 62)`
+   - `**Next Review:** Q3 2026 (before v2.5.0 release)` → `Q3 2026`
+3. `IMPROVEMENT_TODO.md`:
+   - Scope path: `ipfs_datasets_py/ipfs_datasets_py/knowledge_graphs/` → `ipfs_datasets_py/knowledge_graphs/`
+   - Note-on-pathing: removed double prefix from old wrong path reference
+
+**Backward compatibility:**
+- session59's `assert "3.22.14" in content` → PASSES (3.22.14 still in ROADMAP release table)
+- session60's `assert "3.22.15" in text` → PASSES (3.22.15 still in ROADMAP release table)
+- session61's version checks relaxed to accept `3.22.15 or 3.22.16` → PASSES
+
+**18 tests** in `test_master_status_session62.py` (4 classes):
+- `TestDocumentationGuideVersion` (5 tests): v3.22.16; stale 1.0 gone; 2026-02-22; stale Q2 2026 gone.
+- `TestDocumentationGuideDuplicateEntry` (5 tests): MASTER_STATUS listed once; item 23 exists; item 24 absent; dup description absent; DEFERRED_FEATURES description updated.
+- `TestDeferredFeaturesMetadata` (4 tests): 2026-02-22; stale session 4 ref gone; v2.5.0 ref gone; Q3 2026 present.
+- `TestImprovementTodoPath` (4 tests): correct path present; double-prefix absent; old pathing note fixed; logic subpath corrected.
+
+**Result: 3,782 passed, 26 skipped, 0 failed** (numpy+networkx+matplotlib+scipy+plotly+rdflib env)

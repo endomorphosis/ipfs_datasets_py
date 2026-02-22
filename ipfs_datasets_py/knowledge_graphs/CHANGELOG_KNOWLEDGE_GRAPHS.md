@@ -5,6 +5,36 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.16] - 2026-02-22
+
+### Changed — DOCUMENTATION_GUIDE.md + DEFERRED_FEATURES.md + IMPROVEMENT_TODO.md stale metadata (Session 62)
+
+**No production code changes.** Fixed stale version numbers, dates, and a wrong path reference
+across three documentation files.
+
+#### `DOCUMENTATION_GUIDE.md`
+- `**Version:** 1.0` → `3.22.16` (header + footer, 2 places)
+- `**Last Updated:** 2026-02-18` → `2026-02-22` (header + footer, 2 places)
+- Removed duplicate `MASTER_STATUS.md` entry (item 5 was identical to item 4 — only the ⭐ entry kept)
+- Items 6–24 renumbered to 5–23 (sequential after duplicate removal)
+- `**Next Review:** Q2 2026` → `After each major release or quarterly`
+- Item 5 `DEFERRED_FEATURES.md` description updated: "Intentionally incomplete features (all ✅ implemented as of v3.22.0)"
+
+#### `DEFERRED_FEATURES.md`
+- `**Last Updated:** 2026-02-20 (session 4)` → `2026-02-22 (session 62)`
+- `**Next Review:** Q3 2026 (before v2.5.0 release)` → `Q3 2026` (removed stale v2.5.0 ref)
+
+#### `IMPROVEMENT_TODO.md`
+- Scope path: `ipfs_datasets_py/ipfs_datasets_py/knowledge_graphs/` → `ipfs_datasets_py/knowledge_graphs/`
+- Note-on-pathing: removed double `ipfs_datasets_py/` prefix from old wrong path
+
+#### Tests
+- Added `test_master_status_session62.py` with 18 doc integrity tests:
+  - `TestDocumentationGuideVersion` (5 tests): v3.22.16; stale 1.0 gone; Last Updated 2026-02-22
+  - `TestDocumentationGuideDuplicateEntry` (5 tests): no duplicate MASTER_STATUS entries; items number correctly (item 23 present, item 24 absent; old item 5 dup gone)
+  - `TestDeferredFeaturesMetadata` (4 tests): session 62 date; stale v2.5.0 ref absent; Last Updated 2026-02-22
+  - `TestImprovementTodoPath` (4 tests): double-prefix path absent; correct path present; no old pathing pattern
+
 ## [3.22.15] - 2026-02-22
 
 ### Changed — Stale version/coverage numbers fixed (Session 61)

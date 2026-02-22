@@ -524,7 +524,7 @@ for partition_idx, record in executor.execute_cypher_streaming("MATCH (n) RETURN
 
 ---
 
-**Last Updated:** 2026-02-20 (session 4)  
-**Next Review:** Q3 2026 (before v2.5.0 release)  
+**Last Updated:** 2026-02-22 (session 62)  
+**Next Review:** Q3 2026  
 **Maintainer:** Knowledge Graphs Team
 

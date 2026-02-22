@@ -216,8 +216,8 @@ class TestMasterStatusVersion:
         content = _read(_MASTER)
         version_lines = [l for l in content.splitlines() if l.startswith("**Version:**")]
         assert version_lines, "MASTER_STATUS.md must have a **Version:** line"
-        # Accept 3.22.14 (set in session 59) or 3.22.15+ (advanced in subsequent sessions)
-        assert "3.22.14" in version_lines[0] or "3.22.15" in version_lines[0], (
+        # Accept 3.22.14 (set in session 59), 3.22.15 or 3.22.16+ (advanced in subsequent sessions)
+        assert "3.22.14" in version_lines[0] or "3.22.15" in version_lines[0] or "3.22.16" in version_lines[0], (
             f"**Version:** line should be 3.22.14 or later, got: {version_lines[0]}"
         )
 

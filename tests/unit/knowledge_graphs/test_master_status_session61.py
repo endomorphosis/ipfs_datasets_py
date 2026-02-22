@@ -161,10 +161,10 @@ class TestRoadmapCurrentVersionUpdate(unittest.TestCase):
         return ""
 
     def test_roadmap_current_version_header_is_3_22_15(self):
-        """ROADMAP.md 'Current Version' header line must say 3.22.15."""
+        """ROADMAP.md 'Current Version' header line must say 3.22.15 or later."""
         cv_line = self._current_version_line()
-        self.assertIn("3.22.15", cv_line,
-                      f"ROADMAP.md 'Current Version' should be 3.22.15; got: {cv_line!r}")
+        self.assertTrue("3.22.15" in cv_line or "3.22.16" in cv_line,
+                        f"ROADMAP.md 'Current Version' should be 3.22.15 or later; got: {cv_line!r}")
 
     def test_roadmap_current_version_not_still_3_22_14(self):
         """ROADMAP.md 'Current Version' header line must not still say 3.22.14."""
@@ -179,21 +179,22 @@ class TestRoadmapCurrentVersionUpdate(unittest.TestCase):
 
 
 class TestThreeDocVersionAgreement(unittest.TestCase):
-    """INDEX.md, README.md, and ROADMAP.md must all agree on v3.22.15."""
+    """INDEX.md, README.md, and ROADMAP.md must all agree on v3.22.15 or later."""
 
     def test_index_md_version_3_22_15(self):
-        """INDEX.md must contain '3.22.15'."""
+        """INDEX.md must contain '3.22.15' (set in session 61; may be higher in later sessions)."""
         self.assertIn("3.22.15", _read(_INDEX_PATH))
 
     def test_readme_md_version_3_22_15(self):
-        """README.md must contain '3.22.15'."""
+        """README.md must contain '3.22.15' (set in session 61; may be higher in later sessions)."""
         self.assertIn("3.22.15", _read(_README_PATH))
 
     def test_roadmap_current_version_3_22_15(self):
-        """ROADMAP.md 'Current Version' header must say 3.22.15."""
+        """ROADMAP.md 'Current Version' header must say 3.22.15 or later."""
         for line in _read(_ROADMAP_PATH).splitlines():
             if "Current Version" in line:
-                self.assertIn("3.22.15", line)
+                self.assertTrue("3.22.15" in line or "3.22.16" in line,
+                                f"ROADMAP.md 'Current Version' should be 3.22.15+; got: {line!r}")
                 return
         self.fail("ROADMAP.md has no 'Current Version' line")
 

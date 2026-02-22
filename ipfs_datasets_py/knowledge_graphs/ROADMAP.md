@@ -1,7 +1,7 @@
 # Knowledge Graphs - Development Roadmap
 
 **Last Updated:** 2026-02-22  
-**Current Version:** 3.22.15  
+**Current Version:** 3.22.16  
 **Status:** Production Ready (99.99% test coverage)
 
 ---
@@ -424,6 +424,7 @@ We follow [Semantic Versioning](https://semver.org/):
 | 3.22.13 | 2026-02-22 | ✅ Released | srl.py 2 dead lines removed → 100%; multiformats added to ipld extras; 1 missed line total (session58) |
 | 3.22.14 | 2026-02-22 | ✅ Released | Doc consistency fixes: ROADMAP.md v3.22.14; missing CHANGELOG sections added; release table complete (session59) |
 | 3.22.15 | 2026-02-22 | ✅ Released | MASTER_STATUS stale coverage table updated (99.99%); duplicate ROADMAP v2.0.1 section removed; sessions 47–59 added to session list; 15 doc integrity tests (session60) |
+| 3.22.16 | 2026-02-22 | ✅ Released | DOCUMENTATION_GUIDE.md v1.0→v3.22.16; duplicate MASTER_STATUS entry removed; DEFERRED_FEATURES+IMPROVEMENT_TODO stale paths/dates fixed; 18 doc integrity tests (session62) |
 | 4.0 | 2027+ | 📋 Future | TBD based on feedback |
 
 ---
