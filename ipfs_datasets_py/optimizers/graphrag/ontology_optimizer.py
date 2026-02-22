@@ -3444,6 +3444,38 @@ class OntologyOptimizer:
         return scores[-1] - scores[0]
 
 
+    def score_acceleration(self) -> float:
+        """Return the mean second derivative of scores (acceleration).
+
+        Positive means the rate of improvement is increasing; negative means
+        it is slowing.
+
+        Returns:
+            Float; 0.0 when fewer than 3 history entries.
+        """
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        if n < 3:
+            return 0.0
+        first_deriv = [scores[i + 1] - scores[i] for i in range(n - 1)]
+        second_deriv = [first_deriv[i + 1] - first_deriv[i] for i in range(len(first_deriv) - 1)]
+        return sum(second_deriv) / len(second_deriv)
+
+    def history_peak_count(self) -> int:
+        """Return the number of local maxima in score history.
+
+        A local maximum is a point where both neighbors are lower.
+
+        Returns:
+            Integer count; 0 when fewer than 3 entries.
+        """
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        if n < 3:
+            return 0
+        return sum(1 for i in range(1, n - 1) if scores[i] > scores[i - 1] and scores[i] > scores[i + 1])
+
+
 # Export public API
 __all__ = [
     'OntologyOptimizer',

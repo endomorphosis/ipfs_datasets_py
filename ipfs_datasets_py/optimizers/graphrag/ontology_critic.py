@@ -3864,9 +3864,44 @@ class OntologyCritic(BaseCritic):
         return sorted(self._DIMENSIONS, key=lambda d: getattr(score, d, 0.0), reverse=True)
 
 
+    def dimension_normalized_vector(self, score: "CriticScore") -> list:  # type: ignore[name-defined]
+        """Return dimension values normalized to a unit vector (L2).
+
+        Args:
+            score: ``CriticScore`` to normalize.
+
+        Returns:
+            List of 6 floats; all zeros when the vector magnitude is 0.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        magnitude = sum(v ** 2 for v in vals) ** 0.5
+        if magnitude == 0.0:
+            return [0.0] * len(vals)
+        return [v / magnitude for v in vals]
+
+    def score_above_median(self, score: "CriticScore", history: list) -> bool:  # type: ignore[name-defined]
+        """Return True if *score* overall is above the median of *history*.
+
+        Args:
+            score: ``CriticScore`` to test.
+            history: List of ``CriticScore`` objects.
+
+        Returns:
+            Bool; True when history is empty (no evidence of failure).
+        """
+        if not history:
+            return True
+        overalls = sorted(h.overall for h in history)
+        n = len(overalls)
+        if n % 2 == 0:
+            median = (overalls[n // 2 - 1] + overalls[n // 2]) / 2.0
+        else:
+            median = overalls[n // 2]
+        return score.overall > median
+
+
 # Export public API
 __all__ = [
-    'OntologyCritic',
     'CriticScore',
     'DIMENSION_WEIGHTS',
 ]
