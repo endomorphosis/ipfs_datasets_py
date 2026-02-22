@@ -19,14 +19,17 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_session import OntologySessio
 from ipfs_datasets_py.optimizers.graphrag.ontology_validator import OntologyValidator
 
 
-def create_test_context(domain: str = "general") -> OntologyGenerationContext:
+def create_test_context(
+    domain: str = "general",
+    config: ExtractionConfig | None = None,
+) -> OntologyGenerationContext:
     """Helper to create a test OntologyGenerationContext."""
     return OntologyGenerationContext(
         data_source="test_document",
         data_type=DataType.TEXT,
         domain=domain,
         extraction_strategy=ExtractionStrategy.HYBRID,
-        config=ExtractionConfig(),
+        config=config or ExtractionConfig(),
     )
 
 
@@ -35,9 +38,8 @@ class TestEndToEndPipelineGenerate:
     
     def test_generates_valid_ontology(self):
         """Generate stage produces valid ontology structure."""
-        config = ExtractionConfig(max_entities=20)
-        generator = OntologyGenerator(config.to_dict())
-        context = create_test_context()
+        generator = OntologyGenerator()
+        context = create_test_context(config=ExtractionConfig(max_entities=20))
         
         input_text = "Alice works with Bob at Acme. They collaborate on AI projects."
         ontology = generator.generate_ontology(input_text, context)
@@ -47,8 +49,7 @@ class TestEndToEndPipelineGenerate:
     
     def test_generate_with_empty_input(self):
         """Generate stage handles empty input gracefully."""
-        config = ExtractionConfig()
-        generator = OntologyGenerator(config.to_dict())
+        generator = OntologyGenerator()
         context = create_test_context()
         
         ontology = generator.generate_ontology("", context)
@@ -57,9 +58,8 @@ class TestEndToEndPipelineGenerate:
     
     def test_generate_respects_max_entities(self):
         """Generate stage respects max_entities limit."""
-        config = ExtractionConfig(max_entities=5)
-        generator = OntologyGenerator(config.to_dict())
-        context = create_test_context()
+        generator = OntologyGenerator()
+        context = create_test_context(config=ExtractionConfig(max_entities=5))
         
         input_text = "Person A, B, C, D, E, F, G work together on projects."
         ontology = generator.generate_ontology(input_text, context)
@@ -164,10 +164,9 @@ class TestEndToEndPipelineIntegration:
     
     def test_generate_and_evaluate(self):
         """Generate stage output works with evaluate stage."""
-        config = ExtractionConfig(max_entities=10)
-        generator = OntologyGenerator(config.to_dict())
+        generator = OntologyGenerator()
         critic = OntologyCritic()
-        context = create_test_context()
+        context = create_test_context(config=ExtractionConfig(max_entities=10))
         
         input_text = "Test document with entities and relationships."
         ontology = generator.generate_ontology(input_text, context)
@@ -203,10 +202,9 @@ class TestEndToEndPipelineIntegration:
     
     def test_full_three_stage_pipeline(self):
         """Full generate → evaluate → validate pipeline."""
-        config = ExtractionConfig(max_entities=15)
-        generator = OntologyGenerator(config.to_dict())
+        generator = OntologyGenerator()
         critic = OntologyCritic()
-        context = create_test_context()
+        context = create_test_context(config=ExtractionConfig(max_entities=15))
         validator = OntologyValidator()
         
         input_text = "Alice, Bob, and Charlie work at Example Corp on various projects."
@@ -294,8 +292,7 @@ class TestEndToEndPipelineErrorRecovery:
     
     def test_pipeline_continues_after_empty_generate(self):
         """Pipeline continues even if generate produces empty result."""
-        config = ExtractionConfig()
-        generator = OntologyGenerator(config.to_dict())
+        generator = OntologyGenerator()
         context = create_test_context()
         validator = OntologyValidator()
         
@@ -331,8 +328,7 @@ class TestEndToEndPipelineDataConsistency:
     
     def test_ontology_structure_preserved(self):
         """Ontology structure preserved through stages."""
-        config = ExtractionConfig()
-        generator = OntologyGenerator(config.to_dict())
+        generator = OntologyGenerator()
         context = create_test_context()
         
         input_text = "Test input text"
@@ -366,10 +362,9 @@ class TestEndToEndPipelineRealWorldScenario:
     
     def test_realistic_business_document(self):
         """Process realistic business document through pipeline."""
-        config = ExtractionConfig(max_entities=50)
-        generator = OntologyGenerator(config.to_dict())
+        generator = OntologyGenerator()
         critic = OntologyCritic()
-        context = create_test_context()
+        context = create_test_context(config=ExtractionConfig(max_entities=50))
         validator = OntologyValidator()
         
         document = """
@@ -397,10 +392,11 @@ class TestEndToEndPipelineRealWorldScenario:
 
     def test_large_document_pipeline(self):
         """Process a large multi-paragraph document end-to-end."""
-        config = ExtractionConfig(max_entities=120, max_relationships=300)
-        generator = OntologyGenerator(config.to_dict())
+        generator = OntologyGenerator()
         critic = OntologyCritic()
-        context = create_test_context()
+        context = create_test_context(
+            config=ExtractionConfig(max_entities=120, max_relationships=300)
+        )
         validator = OntologyValidator()
 
         document = """
@@ -451,8 +447,7 @@ class TestEndToEndPipelineRealWorldScenario:
     
     def test_multiple_entity_types(self):
         """Handle document with multiple entity types."""
-        config = ExtractionConfig()
-        generator = OntologyGenerator(config.to_dict())
+        generator = OntologyGenerator()
         context = create_test_context()
         
         document = "Alice Johnson works at Acme Corp in New York. She collaborates with Bob Smith."
