@@ -3797,6 +3797,41 @@ class OntologyCritic(BaseCritic):
         """
         return sum(1 for d in self._DIMENSIONS if getattr(score, d, 0.0) >= threshold)
 
+    def dimension_balance_score(self, score: "CriticScore") -> float:  # type: ignore[name-defined]
+        """Return a "balance" score in [0, 1].
+
+        Perfect balance (all dims equal) → 1.0; extreme imbalance → 0.0.
+        Computed as 1 - (std / 0.5) clipped to [0, 1], where 0.5 is the
+        maximum possible std for values in [0, 1].
+
+        Args:
+            score: ``CriticScore`` to inspect.
+
+        Returns:
+            Float in [0, 1].
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        n = len(vals)
+        mean = sum(vals) / n
+        std = (sum((v - mean) ** 2 for v in vals) / n) ** 0.5
+        return max(0.0, 1.0 - std / 0.5)
+
+    def score_percentile_rank(self, score: "CriticScore", history: list) -> float:  # type: ignore[name-defined]
+        """Return the percentile rank of *score* overall within *history*.
+
+        Args:
+            score: ``CriticScore`` to rank.
+            history: List of ``CriticScore`` objects to compare against.
+
+        Returns:
+            Float in [0, 100]; 0.0 when history is empty.
+        """
+        if not history:
+            return 0.0
+        overall = score.overall
+        below = sum(1 for h in history if h.overall < overall)
+        return 100.0 * below / len(history)
+
 
 # Export public API
 __all__ = [

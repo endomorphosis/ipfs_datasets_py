@@ -5767,6 +5767,42 @@ class OntologyGenerator:
         """
         return {getattr(e, "type", "") for e in (result.entities or [])}
 
+    def entity_confidence_iqr(self, result: Any) -> float:
+        """Return the IQR of entity confidence scores.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float; 0.0 when fewer than 4 entities.
+        """
+        entities = result.entities or []
+        if len(entities) < 4:
+            return 0.0
+        scores = sorted(getattr(e, "confidence", 0.5) for e in entities)
+        n = len(scores)
+
+        def _percentile(p: float) -> float:
+            idx = (p / 100.0) * (n - 1)
+            lo, hi = int(idx), min(int(idx) + 1, n - 1)
+            return scores[lo] + (scores[hi] - scores[lo]) * (idx - lo)
+
+        return _percentile(75.0) - _percentile(25.0)
+
+    def avg_entity_confidence(self, result: Any) -> float:
+        """Return the average confidence across all entities.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float; 0.0 when no entities.
+        """
+        entities = result.entities or []
+        if not entities:
+            return 0.0
+        return sum(getattr(e, "confidence", 0.5) for e in entities) / len(entities)
+
 
 __all__ = [
     'OntologyGenerator',

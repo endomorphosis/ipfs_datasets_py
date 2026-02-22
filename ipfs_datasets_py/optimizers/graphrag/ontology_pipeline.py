@@ -1605,3 +1605,28 @@ class OntologyPipeline:
         if not self._run_history:
             return -1
         return max(range(len(self._run_history)), key=lambda i: self._run_history[i].score.overall)
+
+    def run_score_harmonic_mean(self) -> float:
+        """Return the harmonic mean of run overall scores.
+
+        Scores of 0 are replaced by a small epsilon.
+
+        Returns:
+            Float; 0.0 when no runs.
+        """
+        if not self._run_history:
+            return 0.0
+        epsilon = 1e-9
+        scores = [max(r.score.overall, epsilon) for r in self._run_history]
+        n = len(scores)
+        return n / sum(1.0 / s for s in scores)
+
+    def worst_run_index(self) -> int:
+        """Return the index of the run with the lowest overall score.
+
+        Returns:
+            Integer index; -1 when no runs.
+        """
+        if not self._run_history:
+            return -1
+        return min(range(len(self._run_history)), key=lambda i: self._run_history[i].score.overall)

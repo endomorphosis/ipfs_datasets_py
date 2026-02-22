@@ -3367,6 +3367,48 @@ class OntologyOptimizer:
         return min(e.average_score for e in recent)
 
 
+    def history_std_ratio(self, window: int = 5) -> float:
+        """Return std(recent window) / std(full history) as a volatility ratio.
+
+        A value > 1 means recent scores are more volatile; < 1 means calmer.
+
+        Args:
+            window: Recent window size (default 5).
+
+        Returns:
+            Float; 0.0 when insufficient data.
+        """
+        scores = [e.average_score for e in self._history]
+        if len(scores) < 4:
+            return 0.0
+
+        def _std(vals: list) -> float:
+            if len(vals) < 2:
+                return 0.0
+            mean = sum(vals) / len(vals)
+            return (sum((v - mean) ** 2 for v in vals) / len(vals)) ** 0.5
+
+        global_std = _std(scores)
+        if global_std == 0.0:
+            return 0.0
+        return _std(scores[-window:]) / global_std
+
+    def score_turning_points(self) -> int:
+        """Return the count of local minima and maxima in score history.
+
+        A turning point is a position where consecutive differences change sign.
+
+        Returns:
+            Integer count; 0 when fewer than 3 entries.
+        """
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        if n < 3:
+            return 0
+        diffs = [scores[i + 1] - scores[i] for i in range(n - 1)]
+        return sum(1 for i in range(1, len(diffs)) if diffs[i - 1] * diffs[i] < 0)
+
+
 # Export public API
 __all__ = [
     'OntologyOptimizer',

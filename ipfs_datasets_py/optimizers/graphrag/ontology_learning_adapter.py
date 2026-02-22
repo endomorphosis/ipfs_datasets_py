@@ -1670,3 +1670,34 @@ class OntologyLearningAdapter:
             Integer count.
         """
         return len(self._feedback)
+
+    def feedback_longest_positive_streak(self, threshold: float = 0.5) -> int:
+        """Return the length of the longest consecutive positive streak.
+
+        Args:
+            threshold: Minimum score for "positive" (default 0.5).
+
+        Returns:
+            Integer count; 0 when no records.
+        """
+        if not self._feedback:
+            return 0
+        best = current = 0
+        for r in self._feedback:
+            if r.final_score >= threshold:
+                current += 1
+                best = max(best, current)
+            else:
+                current = 0
+        return best
+
+    def feedback_score_range(self) -> float:
+        """Return max - min of feedback scores.
+
+        Returns:
+            Float; 0.0 when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        return max(scores) - min(scores)
