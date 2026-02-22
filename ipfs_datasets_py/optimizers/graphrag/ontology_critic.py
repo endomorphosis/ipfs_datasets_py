@@ -4115,6 +4115,158 @@ class OntologyCritic(BaseCritic):
             return 0.0
         return overall - self.dimension_mean(score)
 
+    # ------------------------------------------------------------------ #
+    # Batch 202: Cache and score distribution analysis methods           #
+    # ------------------------------------------------------------------ #
+
+    def cache_hit_potential(self) -> float:
+        """Calculate potential benefit of caching (shared/instance).
+
+        Returns:
+            Ratio of shared cache size to maximum (0.0-1.0). Higher means
+            more cache utilization, approaching capacity limit.
+        """
+        return self.shared_cache_size() / max(self._SHARED_EVAL_CACHE_MAX, 1)
+
+    def score_dimension_variance(self, score: "CriticScore") -> float:
+        """Calculate variance across the six dimension scores.
+
+        Args:
+            score: CriticScore to analyze.
+
+        Returns:
+            Variance (spread) of dimension values. Low variance indicates
+            balanced quality; high variance shows uneven scores.
+        """
+        dims = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        if not dims:
+            return 0.0
+        mean_val = sum(dims) / len(dims)
+        variance = sum((v - mean_val) ** 2 for v in dims) / len(dims)
+        return variance
+
+    def dimension_range(self, score: "CriticScore") -> float:
+        """Get range (max - min) of dimension scores.
+
+        Args:
+            score: CriticScore to evaluate.
+
+        Returns:
+            Difference between highest and lowest dimension score.
+        """
+        dims = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        if not dims:
+            return 0.0
+        return max(dims) - min(dims)
+
+    def weakest_dimension(self, score: "CriticScore") -> str:
+        """Identify the dimension with lowest score.
+
+        Args:
+            score: CriticScore to analyze.
+
+        Returns:
+            Name of the weakest dimension (e.g., 'completeness'),
+            or 'unknown' if no dimensions available.
+        """
+        dims = [(d, getattr(score, d, 0.0)) for d in self._DIMENSIONS]
+        if not dims:
+            return 'unknown'
+        return min(dims, key=lambda x: x[1])[0]
+
+    def strongest_dimension(self, score: "CriticScore") -> str:
+        """Identify the dimension with highest score.
+
+        Args:
+            score: CriticScore to analyze.
+
+        Returns:
+            Name of the strongest dimension, or 'unknown' if unavailable.
+        """
+        dims = [(d, getattr(score, d, 0.0)) for d in self._DIMENSIONS]
+        if not dims:
+            return 'unknown'
+        return max(dims, key=lambda x: x[1])[0]
+
+    def score_balance_ratio(self, score: "CriticScore") -> float:
+        """Calculate balance ratio (min/max dimension score).
+
+        Args:
+            score: CriticScore to evaluate.
+
+        Returns:
+            Ratio of weakest to strongest dimension (0.0-1.0). Values near
+            1.0 indicate balanced quality; low values show imbalance.
+        """
+        dims = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        if not dims:
+            return 0.0
+        max_val = max(dims)
+        min_val = min(dims)
+        if max_val == 0.0:
+            return 0.0
+        return min_val / max_val
+
+    def dimensions_above_threshold(self, score: "CriticScore", threshold: float = 0.7) -> int:
+        """Count dimensions with scores above threshold.
+
+        Args:
+            score: CriticScore to analyze.
+            threshold: Minimum acceptable score (default 0.7).
+
+        Returns:
+            Number of dimensions meeting or exceeding threshold.
+        """
+        dims = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        return sum(1 for v in dims if v >= threshold)
+
+    def overall_vs_best_dimension(self, score: "CriticScore") -> float:
+        """Compare overall score to strongest dimension.
+
+        Args:
+            score: CriticScore with overall and dimension scores.
+
+        Returns:
+            Difference (overall - max_dimension). Positive values indicate
+            weighted aggregation boosts overall above individual dimensions.
+        """
+        overall = getattr(score, "overall", 0.0)
+        dims = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        if not dims:
+            return 0.0
+        return overall - max(dims)
+
+    def score_consistency_coefficient(self, score: "CriticScore") -> float:
+        """Calculate coefficient of variation (CV) for dimension scores.
+
+        Returns:
+            CV ratio (std_dev / mean). Low CV indicates consistent scores
+            across dimensions; high CV shows variability.
+        """
+        dims = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        if not dims:
+            return 0.0
+        mean_val = sum(dims) / len(dims)
+        if mean_val == 0.0:
+            return 0.0
+        variance = sum((v - mean_val) ** 2 for v in dims) / len(dims)
+        std_dev = variance ** 0.5
+        return std_dev / mean_val
+
+    def recommendation_density(self, score: "CriticScore") -> float:
+        """Calculate density of recommendations relative to weaknesses.
+
+        Args:
+            score: CriticScore with recommendations and weaknesses.
+
+        Returns:
+            Ratio (recommendations / (weaknesses + 1)). Higher values indicate
+            more actionable guidance per identified problem.
+        """
+        rec_count = len(getattr(score, "recommendations", []))
+        weak_count = len(getattr(score, "weaknesses", [])) + 1  # +1 to avoid division by zero
+        return rec_count / weak_count
+
 
 # Export public API
 __all__ = [

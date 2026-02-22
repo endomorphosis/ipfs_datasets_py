@@ -657,6 +657,148 @@ class OntologyMediator:
             self._action_entries.append({"action": action, "round": len(self._undo_stack)})
         return refined
 
+    def batch_apply_strategies(
+        self,
+        ontologies: List[Dict[str, Any]],
+        feedbacks: List[Any],
+        context: Any,
+        max_workers: Optional[int] = None,
+        track_changes: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        Apply refinement strategies to multiple ontologies in parallel.
+
+        Refines a batch of ontologies using corresponding critic feedback.
+        Useful for batch processing, sensitivity analysis, or comparing
+        alternative refinement paths.
+
+        Args:
+            ontologies: List of ontology dicts to refine.
+            feedbacks: List of critic feedback objects (same length as ontologies).
+            context: Generation context (shared for all refinements).
+            max_workers: Max parallel workers (default: CPU count). Pass 1 for serial.
+            track_changes: If True, compute per-ontology change statistics.
+
+        Returns:
+            Dict with keys:
+                - 'refined_ontologies': List of refined ontology dicts
+                - 'change_log': List of dicts tracking changes per ontology
+                - 'total_entities_added': Total entities added across batch
+                - 'total_relationships_added': Total relationships added
+                - 'success_count': Number of successful refinements
+                - 'error_count': Number of failures
+                - 'errors': List of error details if any occurred
+
+        Raises:
+            ValueError: If ontologies and feedbacks have different lengths.
+
+        Example:
+            >>> results = mediator.batch_apply_strategies(
+            ...     ontologies=[onto1, onto2, onto3],
+            ...     feedbacks=[score1, score2, score3],
+            ...     context=context,
+            ...     max_workers=4
+            ... )
+            >>> print(f"Refined {results['success_count']} ontologies")
+            >>> print(f"Added {results['total_entities_added']} entities")
+        """
+        import logging as _logging
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        if len(ontologies) != len(feedbacks):
+            raise ValueError(
+                f"Length mismatch: {len(ontologies)} ontologies vs "
+                f"{len(feedbacks)} feedbacks"
+            )
+
+        logger = self._log or _logging.getLogger(__name__)
+        logger.info(f"Batch applying strategies to {len(ontologies)} ontologies")
+
+        refined_ontologies = []
+        change_log = []
+        errors = []
+        success_count = 0
+        error_count = 0
+
+        def _refine_and_track(idx: int, ontology: Dict[str, Any], feedback: Any) -> tuple:
+            """Refine single ontology and track changes."""
+            try:
+                initial_entities = len(ontology.get("entities", []))
+                initial_relationships = len(ontology.get("relationships", []))
+
+                refined = self.refine_ontology(ontology, feedback, context)
+
+                final_entities = len(refined.get("entities", []))
+                final_relationships = len(refined.get("relationships", []))
+
+                changelog = {
+                    "ontology_idx": idx,
+                    "entities_added": final_entities - initial_entities,
+                    "relationships_added": final_relationships - initial_relationships,
+                    "initial_entity_count": initial_entities,
+                    "final_entity_count": final_entities,
+                    "success": True,
+                    "error": None,
+                }
+
+                return idx, refined, changelog, None
+            except Exception as e:
+                logger.error(f"Refinement failed for ontology {idx}: {e}")
+                error_detail = {
+                    "ontology_idx": idx,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                }
+                return idx, None, None, error_detail
+
+        # Execute refinements
+        worker_count = max_workers or 4
+        total_entities_added = 0
+        total_relationships_added = 0
+
+        with ThreadPoolExecutor(max_workers=worker_count) as executor:
+            futures = {
+                executor.submit(_refine_and_track, i, onto, fb): i
+                for i, (onto, fb) in enumerate(zip(ontologies, feedbacks))
+            }
+
+            # Collect results in order
+            refined_ontologies = [None] * len(ontologies)
+            for future in as_completed(futures):
+                idx, refined, changes, error = future.result()
+
+                if error:
+                    errors.append(error)
+                    error_count += 1
+                    refined_ontologies[idx] = None
+                else:
+                    refined_ontologies[idx] = refined
+                    if track_changes and changes:
+                        change_log.append(changes)
+                        total_entities_added += changes["entities_added"]
+                        total_relationships_added += changes["relationships_added"]
+                    success_count += 1
+
+        # Filter out None entries
+        refined_ontologies = [o for o in refined_ontologies if o is not None]
+
+        result = {
+            "refined_ontologies": refined_ontologies,
+            "change_log": change_log if track_changes else [],
+            "total_entities_added": total_entities_added,
+            "total_relationships_added": total_relationships_added,
+            "success_count": success_count,
+            "error_count": error_count,
+            "errors": errors,
+        }
+
+        logger.info(
+            f"Batch refinement complete: {success_count} succeeded, {error_count} failed. "
+            f"Added {total_entities_added} entities, {total_relationships_added} relationships."
+        )
+
+        return result
+
     def get_action_stats(self) -> Dict[str, int]:
         """Return cumulative per-action invocation counts across all :meth:`refine_ontology` calls.
 
