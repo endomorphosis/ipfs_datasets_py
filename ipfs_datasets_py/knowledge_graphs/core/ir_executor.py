@@ -430,16 +430,6 @@ def execute_ir_operations(
                             var_name, prop_name = expr.split(".", 1)
                             try:
                                 value = record.get(expr)
-                                if value is None and hasattr(record, "_values"):
-                                    obj = record._values.get(var_name)  # type: ignore[attr-defined]
-                                    if (
-                                        obj is not None
-                                        and hasattr(obj, "properties")
-                                        and prop_name in obj.properties
-                                    ):
-                                        value = obj.properties[prop_name]
-                                    elif obj is not None and hasattr(obj, prop_name):
-                                        value = getattr(obj, prop_name)
                             except (AttributeError, KeyError, TypeError):
                                 value = None
                         else:

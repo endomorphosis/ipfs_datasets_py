@@ -5,7 +5,46 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.22.7] - 2026-02-22
+## [3.22.8] - 2026-02-22
+
+### Changed — Dead Code Cleanup + Invariant Tests (Session 53)
+
+**Removed 14 lines of confirmed dead code from 3 files; 15 new invariant tests.**
+
+**Coverage improvement: 213→207 missed lines (−6 dead code lines removed from coverage tracking)**
+
+#### Dead code removed:
+
+1. **`cypher/compiler.py:185-186, 212-213`** (4 lines removed)
+   - `if not variable: variable = f"_anon{...}"` after `variable = element.variable or f"_n{i}"`
+   - `f"_n{i}"` is always truthy → the guard could never fire
+
+2. **`core/ir_executor.py:433-442`** (8 lines removed)
+   - `if value is None and hasattr(record, "_values"): obj = record._values.get(var_name) ...`
+   - `Record._values` is a `tuple` (not a dict), so `_values.get()` always raised `AttributeError`
+   - The entire block was unreachable before the `except (AttributeError, …)` clause caught it
+
+3. **`ipld.py:753-754`** (2 lines removed)
+   - `if not source_result: continue` in `vector_augmented_query`
+   - `source_result` is found by searching `graph_results` for an entity_id that was derived from
+     the same `graph_results` list — it can never be `None`
+
+4. **`ipld.py:1122-1123`** (2 lines removed)
+   - `if depth > max_hops: continue` in `_get_connected_entities` BFS
+   - Items are only enqueued when `depth < max_hops` → max queue depth = `max_hops` → guard unreachable
+
+**Files changed:**
+- `ipfs_datasets_py/knowledge_graphs/cypher/compiler.py` — removed 4 dead lines
+- `ipfs_datasets_py/knowledge_graphs/core/ir_executor.py` — removed 8 dead lines
+- `ipfs_datasets_py/knowledge_graphs/ipld.py` — removed 4 dead lines
+- `tests/unit/knowledge_graphs/test_master_status_session53.py` — new file, 15 tests
+- `ipfs_datasets_py/knowledge_graphs/MASTER_STATUS.md` — version 3.22.7→3.22.8
+- `ipfs_datasets_py/knowledge_graphs/IMPROVEMENT_TODO.md` — session 53 log
+- `ipfs_datasets_py/knowledge_graphs/CHANGELOG_KNOWLEDGE_GRAPHS.md` — this entry
+
+**Result: 3,614 pass, 64 skip, 0 fail (base env); 207 missed lines**
+
+
 
 ### Tests — ImportError Except Branches (Session 52)
 

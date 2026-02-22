@@ -750,9 +750,6 @@ class IPLDKnowledgeGraph:
                             None
                         )
 
-                        if not source_result:
-                            continue
-
                         # Get source's vector score
                         vector_score = source_result["vector_score"] * 0.8  # Discount for hop
 
@@ -1117,10 +1114,6 @@ class IPLDKnowledgeGraph:
 
         while queue:
             current_id, depth = queue.popleft()
-
-            # Stop if we've reached max hops
-            if depth > max_hops:
-                continue
 
             # Get relationships for this entity
             relationships = self.get_entity_relationships(

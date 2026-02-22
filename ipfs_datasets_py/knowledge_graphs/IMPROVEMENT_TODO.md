@@ -465,3 +465,49 @@ Branches covered (16 lines total):
 - `reasoning/cross_document.py:199`: 1 line, dead code (zero-norm impossible after empty-tokens guard)
 
 **Result: 3,599 pass, 64 skip, 0 fail** (base env with networkx+numpy; 213 missed lines).
+
+### Session 53 log (2026-02-22)
+**4 dead code removals + 15 invariant tests** in `test_master_status_session53.py`.
+
+Removed 14 lines of confirmed dead code from 3 production files:
+
+1. **`cypher/compiler.py:185-186, 212-213`** (4 lines) — Two `if not variable:` guards that followed
+   `variable = element.variable or f"_n{i}"`. Since `f"_n{i}"` is always truthy (an f-string with an
+   integer index always produces at least "_n0"), the guard `if not variable:` could never be True.
+   Removed the 2-line guard from both the first pass (line 185-186) and second pass (lines 212-213).
+
+2. **`core/ir_executor.py:433-442`** (8 lines) — `if value is None and hasattr(record, "_values"):` block
+   that attempted `record._values.get(var_name)` for ORDER BY dotted-expression sorting.
+   `Record._values` is always a `tuple` (see `neo4j_compat/result.py:34`), which has no `.get()` method.
+   Any call to `_values.get()` would raise `AttributeError`, immediately caught by the `except` clause
+   at line 443, making lines 435-442 unreachable. The except clause (lines 433-434) is retained as a
+   defensive guard.
+
+3. **`ipld.py:753-754`** (2 lines) — `if not source_result: continue` in `vector_augmented_query`.
+   `source_result` is found by iterating `graph_results` for an entity whose `.id` matches `entity_id`.
+   But `entity_id` is taken from `prev_hop_entities`, which is itself built from `result["entity"].id`
+   for each `result` in `graph_results`. Therefore every `entity_id` is guaranteed to be in
+   `graph_results`, making `source_result` always non-None.
+
+4. **`ipld.py:1122-1123`** (2 lines) — `if depth > max_hops: continue` in `_get_connected_entities`.
+   The BFS queue is only populated at line 1149 when `if depth < max_hops:`. This means the maximum
+   depth that can appear in the queue is `max_hops` (when `depth = max_hops-1` and we append
+   `depth+1 = max_hops`). Therefore `depth > max_hops` when dequeued can never be True.
+
+**15 invariant tests** document the reasoning for each removal:
+- `TestCompilerVariableInvariant`: 6 tests proving `f"_n{i}"` is always truthy
+- `TestRecordValuesTupleInvariant`: 4 tests proving `Record._values` is a tuple without `.get()`
+- `TestVectorAugmentedQuerySourceResultInvariant`: 2 tests proving `source_result` is always found
+- `TestGetConnectedEntitiesDepthInvariant`: 3 tests proving BFS depth invariant
+
+**Remaining 207 missed lines** (updated from 213):
+- `extractor.py`: 108 lines, spaCy NLP model required
+- `extraction/graph.py`: 45 lines, rdflib required
+- `lineage/visualization.py`: 39 lines, matplotlib/plotly required
+- `migration/formats.py`: 10 lines, libipld/ipld-car required (success paths)
+- `core/ir_executor.py:433-434`: 2 lines, defensive except clause (dead for Record objects)
+- `extraction/srl.py:402`: 1 line, spaCy dependency
+- `extraction/_entity_helpers.py:117`: 1 line, defensive guard (dead: patterns produce ≥2 chars)
+- `reasoning/cross_document.py:199`: 1 line, defensive zero-norm guard (dead: empty-tokens pre-checked)
+
+**Result: 3,614 pass, 64 skip, 0 fail** (base env with networkx+numpy; 207 missed lines; -6 from s52).

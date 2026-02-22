@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.22.7  
+**Version:** 3.22.8  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-22 (session 52)  
-**Last Major Release:** v3.22.7 (session 52: ImportError-except branches covered; 17 new tests; 3,599 passing, 64 skipped, 0 failing in base env)
+**Last Updated:** 2026-02-22 (session 53)  
+**Last Major Release:** v3.22.8 (session 53: dead-code removal in compiler/ir_executor/ipld; 15 new invariant tests; 3,614 passing, 64 skipped, 0 failing in base env)
 
 ---
 
@@ -18,10 +18,10 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | **98% base / 99%+ full** | Session 52: 3,599 pass, 64 skip, **0 fail** (base env); 213 missed lines |
-| **Documentation** | ✅ Up to Date | Reflects v3.22.7 structure |
+| **Test Coverage** | **98% base / 99%+ full** | Session 53: 3,614 pass, 64 skip, **0 fail** (base env); 207 missed lines |
+| **Documentation** | ✅ Up to Date | Reflects v3.22.8 structure |
 | **Known Issues** | None | 0 failures; all skips intentional (libipld/spaCy/numpy/matplotlib absent when not installed) |
-| **Next Milestone** | v4.0 (2027+) | Remaining missed lines: 213 (mostly spaCy/rdflib/matplotlib optional-dep paths) — see IMPROVEMENT_TODO.md |
+| **Next Milestone** | v4.0 (2027+) | Remaining missed lines: 207 (mostly spaCy/rdflib/matplotlib optional-dep paths) — see IMPROVEMENT_TODO.md |
 
 ---
 
@@ -240,8 +240,12 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - session47: 9 new tests covering `extraction/graph.py` lines 629+661 (bool RDF serialization bug + case_ fallback). Production fix: moved `case bool()` before `case int()` in entity match block; `elif isinstance(value, bool)` before `elif isinstance(value, int)` in relationship block. `extraction/graph.py` 80%→**100%**; overall 98%→**99%** (159 missed lines). 3,591 passed, 26 skipped, 0 failed (with matplotlib+scipy+plotly+rdflib). 3,553 pass, 55 skip, 0 fail (base env).
 - session48: 16 new tests covering `compiler.py:261` (anon var fallback), `expression_evaluator.py:153-163` (reverse/size fallback), `ontology/reasoning.py:828` (BFS cycle guard). Installed libipld+ipld-car+dag-cbor+multiformats → `migration/formats.py` **100%**. `expression_evaluator.py` **100%**, `ontology/reasoning.py` **100%**. Overall 99%, 141 missed lines. 3,626 passed, 7 skipped, 0 failed (with all optional deps).
 - session49: numpy skip guards added to sessions 41+42 (`import numpy as np` at module level → `np = pytest.importorskip("numpy")` after `import pytest`). This ensures clean skip (not collection error) in environments without numpy. 3,569 passed, 64 skipped, 0 failed (base env without matplotlib/plotly/scipy/rdflib/libipld).
+- session50: Fixed 7 numpy-via-networkx failures (session16: mock nx.spring_layout; session21: @_skip_no_numpy on 3 methods; session33: @pytest.mark.skipif numpy absent). 3,448 passed, 74 skipped (base env with networkx but without numpy).
+- session51: 13 new tests (hybrid_search.py:217 BFS guard, migration/formats.py ImportError excepts, _entity_helpers.py:117 dead code invariant). `hybrid_search.py` **100%**. 3,582 passed, 64 skipped, 0 failed.
+- session52: 17 new tests covering ImportError except branches in 5 modules (reasoning/types.py, lineage/core.py, neo4j_compat/driver.py, reasoning/cross_document.py, ipld.py). Used `_reload_with_absent_dep` / `_reload_with_mock_dep` helpers with `_MISSING` sentinel. 3,599 passed, 64 skipped, 0 failed; 213 missed lines.
+- session53: **Dead code cleanup** — removed 14 lines of confirmed dead code from 3 files: `cypher/compiler.py:185-186,212-213` (unreachable `if not variable:` after `f"_n{i}"` always-truthy); `core/ir_executor.py:433-442` (unreachable `_values.get()` block — `_values` is a tuple without `.get()`); `ipld.py:753-754` (source_result always found); `ipld.py:1122-1123` (BFS depth guard, depth never exceeds max_hops because only enqueued when depth < max_hops). 15 invariant tests added in session53. **Result: 3,614 passed, 64 skipped, 0 failed; 207 missed lines** (−6 vs s52).
 
-**Total Tests:** 3,569 passing, 64 skipped (optional deps absent in base env), 0 failing
+**Total Tests:** 3,614 passing, 64 skipped (optional deps absent in base env), 0 failing
 **Pass Rate:** 100% (excluding optional dependency skips)
 **With all optional deps:** 3,626 passing, 7 skipped, 0 failing
 
