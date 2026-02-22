@@ -903,8 +903,9 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] **Session 36:** `proof_tree_visualizer.py` 26%→97% (104 tests); `CEC/native/proof_optimization.py` 43%→95% (104 tests covering `ProofNode/OptimizationMetrics/ProofTreePruner/RedundancyEliminator/ParallelProofSearch/ProofOptimizer`)
 - [x] **Session 40:** `strategies/modal_tableaux.py` 73%→99% (36 tests: `_prove_with_shadowprover` all paths, `_select_modal_logic_type` D/S4/K, QuantifiedFormula/False in `_is_modal`); `strategies/cec_delegate.py` 86%→95% (36 tests: success + failure paths of `_try_load_cec_prover`, `can_handle=True`); `strategies/strategy_selector.py` 85%→97% (36 tests: ImportError warnings, prefer_low_cost, select_multiple no-applicable, add_strategy); `strategies/__init__.py` 65%→100%; `CEC/native/proof_strategies.py` 0%→94% (44 tests: ForwardChaining/BackwardChaining/BidirectionalSearch/HybridAdaptive all paths, get_strategy factory, ProofStrategy base methods)
 - [x] **Session 41:** `CEC/nl/base_parser.py` 48%→**100%** (31 tests: ParseResult all methods, BaseParser parse+validate+exception, `get_parser` all 7 branches); `CEC/native/nl_converter.py` 55%→**99%** (56 tests: PatternMatcher all convert paths, NLC all convert_from_dcec branches, statistics, factory functions). **Bug fix:** `base_parser.get_parser(Language.ENGLISH)` was broken due to `NLConverter` → `NaturalLanguageConverter` rename; fixed import and updated `parse_impl` to use `convert_to_dcec()` API.
+- [x] **Session 42:** `CEC/nl/french_parser.py` 84%→**100%** (35 tests: `_extract_agent` None path, `_create_simple_predicate` existing+ValueError paths, `_create_agent_variable` ValueError path, NOT connective branch, cognitive else-branch, `parse_impl` no-match+exception branches, confidence ConnectiveFormula bonus); `CEC/nl/german_parser.py` 85%→**100%**; `CEC/nl/spanish_parser.py` 87%→**100%**; `CEC/nl/domain_vocabularies/domain_vocab.py` 86%→**100%** (`get_all_terms` no-category, `get_vocabulary_terms` unknown domain + no language, `enhance_text` full body); `TDFOL/strategies/cec_delegate.py` 95%→**100%** (3 tests: `CECDelegateStrategy.__init__` when `InferenceEngine()` raises + skips when prover unavailable).
 
-**TDFOL/CEC suite total: 1,606 → 1,692 tests (+86 in session 41)**
+**TDFOL/CEC suite total: 1,692 → 1,730 tests (+38 in session 42)**
 
 ### 11.2 MCP B2 Test Suite (Sessions 37–39)
 
@@ -925,7 +926,11 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] `CEC/native/proof_strategies.py` — 0% → 94% ✅ (session 40)
 - [x] `CEC/nl/base_parser.py` 48% → 100% ✅ (session 41, + bug fix: `NLConverter` → `NaturalLanguageConverter`)
 - [x] `CEC/native/nl_converter.py` 55% → 99% ✅ (session 41)
-- [ ] `strategies/cec_delegate.py` 95% → 98% (lines 82-84: cec_engine init exception path)
+- [x] `strategies/cec_delegate.py` 95% → 100% ✅ (session 42: `CECDelegateStrategy.__init__` `InferenceEngine()` exception path)
+- [x] `CEC/nl/french_parser.py` 84% → 100% ✅ (session 42: all structural gaps: `_extract_agent` None, ValueError paths, NOT connective, cognitive else, parse_impl error branches)
+- [x] `CEC/nl/german_parser.py` 85% → 100% ✅ (session 42: same structural gaps as French)
+- [x] `CEC/nl/spanish_parser.py` 87% → 100% ✅ (session 42: same structural gaps)
+- [x] `CEC/nl/domain_vocabularies/domain_vocab.py` 86% → 100% ✅ (session 42: get_all_terms no-category, get_vocabulary_terms unknown+no-lang, enhance_text full body)
 - [ ] `CEC/native/proof_strategies.py` 94% → 98% (lines 45, 242-243, 254, 275-276, 333-334, 356-358: backward/bidirectional edge cases)
 
 **MCP B2 remaining:**
@@ -958,13 +963,12 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | Phase 8.2: MCP B2 testing sessions 37–39 | 2026-02-22 | 1,383 → 1,457 MCP tests; 53 categories |
 | Phase 8.3: TDFOL strategies + CEC proof_strategies session 40 | 2026-02-22 | 1,526 → 1,606 tests; modal_tableaux 73%→99%; proof_strategies 0%→94% |
 | Phase 8.4: CEC NL coverage session 41 | 2026-02-22 | 1,606 → 1,692 tests; base_parser 48%→100%; nl_converter 55%→99%; bug fix: `get_parser(ENGLISH)` |
+| Phase 8.5: CEC NL parsers + cec_delegate session 42 | 2026-02-22 | 1,692 → 1,730 tests; french/german/spanish 84-87%→100%; domain_vocab 86%→100%; cec_delegate 95%→100% |
 
 ### Near Term (Next 2–4 weeks)
 | Task | Phase | Effort | Priority |
 |------|-------|--------|---------|
 | Fix ~65 TDFOL NL test failures (requires spaCy) | 2.2 | 8h | 🔴 P1 |
-| `CEC/nl/french_parser.py` 84%→95%, `german_parser.py` 85%→95%, `spanish_parser.py` 87%→95% | 8.4 | 4h | 🟠 P1 |
-| TDFOL `strategies/cec_delegate.py` 95%→98% (lines 82-84) | 8.3 | 1h | 🟡 P2 |
 | `CEC/native/proof_strategies.py` 94%→98% (backward/bidirectional edge cases) | 8.3 | 2h | 🟡 P2 |
 | CI performance regression gates | 4.1 | 4h | 🟡 P2 |
 
@@ -1201,13 +1205,17 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | TDFOL strategies/base.py | 100% | 100% | 100%✅ |
 | TDFOL strategies/__init__.py | 100% | 90% | 100%✅ (session 40: ImportError pass blocks covered) |
 | TDFOL strategies/strategy_selector.py | 97% | 90% | 97%✅ (session 40: prefer_low_cost, select_multiple no-applicable, ImportError warnings) |
-| TDFOL strategies/cec_delegate.py | 95% | 90% | 95%✅ (session 40: _try_load_cec_prover success+failure paths, can_handle=True) |
+| TDFOL strategies/cec_delegate.py | 100% | 90% | 100%✅ (session 42: CECDelegateStrategy.__init__ InferenceEngine() exception path, lines 82-84) |
 | TDFOL strategies/modal_tableaux.py | 99% | 90% | 99%✅ (session 40: _prove_with_shadowprover all paths, _select_modal_logic_type D/S4/K) |
 | TDFOL proof_tree_visualizer.py | 97% | 90% | 97%✅ (session 36) |
 | CEC/native/proof_optimization.py | 95% | 85% | 95%✅ (session 36) |
 | CEC/native/proof_strategies.py | 94% | n/a | 94%✅ new coverage (session 40: ForwardChaining/BackwardChaining/Bidirectional/Hybrid, 44 tests) |
 | CEC/nl/base_parser.py | 100% | 80% | 100%✅ (session 41: ParseResult/BaseParser/get_parser all branches; bug fix: NLConverter→NaturalLanguageConverter) |
 | CEC/native/nl_converter.py | 99% | 80% | 99%✅ (session 41: PatternMatcher all paths, NLC all convert_from_dcec branches, statistics, factory functions) |
+| CEC/nl/french_parser.py | 100% | 90% | 100%✅ (session 42: _extract_agent None, _create_simple_predicate existing+ValueError, _create_agent_variable ValueError, NOT connective, cognitive else, parse_impl error branches) |
+| CEC/nl/german_parser.py | 100% | 90% | 100%✅ (session 42: same structural gaps as French covered) |
+| CEC/nl/spanish_parser.py | 100% | 90% | 100%✅ (session 42: same structural gaps; NOT connective already covered) |
+| CEC/nl/domain_vocabularies/domain_vocab.py | 100% | 90% | 100%✅ (session 42: get_all_terms no-category, get_vocabulary_terms unknown+no-lang, enhance_text full body) |
 | CEC/native/dcec_integration.py | 100% | 90% | 100%✅ (session 58: all 3 final failures fixed) |
 | TDFOL/tdfol_inference_rules.py | 100% | n/a | 100%✅ new module (session 55, 60 tests) |
 | TDFOL/tdfol_prover.py | 90%+ | n/a | 90%+✅ (session 56: 20/20 TestBasicProving passing) |
@@ -1217,14 +1225,14 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Phase Summary (Session 41 complete):**
+**Phase Summary (Session 42 complete):**
 - Phase 1–7: ✅ COMPLETE
-- Phase 8: 🔄 In Progress (TDFOL+CEC 1,692 tests; MCP B2 1,457 tests; 53 categories)
+- Phase 8: 🔄 In Progress (TDFOL+CEC 1,730 tests; MCP B2 1,457 tests; 53 categories)
 - Integration: ✅ 99% coverage (7,899 lines, 55 uncovered — dead code + symai-gated)
-- CEC NL: ✅ `base_parser.py` 48%→100%; `nl_converter.py` 55%→99%; bug fix `get_parser(ENGLISH)` 
+- CEC NL: ✅ All parsers at 100%: `base_parser.py`, `french_parser.py`, `german_parser.py`, `spanish_parser.py`, `domain_vocab.py`, `nl_converter.py` 99%
 - CEC: ✅ All 97 CEC integration tests passing; `proof_strategies.py` 0%→94%
-- TDFOL Strategies: ✅ modal_tableaux 73%→99%; cec_delegate 86%→95%; strategy_selector 85%→97%; __init__ 65%→100%
-- **Next session targets:** TDFOL NL test failures (~65 skipped, requires spaCy); `CEC/nl/french_parser.py` 84%→95%; `german_parser.py` 85%→95%; `spanish_parser.py` 87%→95%; `strategies/cec_delegate.py` 95%→98%; MCP B2 remaining categories
+- TDFOL Strategies: ✅ All strategy files at 95-100%: `cec_delegate.py` 100%, `modal_tableaux.py` 99%, `strategy_selector.py` 97%, `__init__.py` 100%
+- **Next session targets:** `CEC/native/proof_strategies.py` 94%→98% (backward/bidirectional edge cases); TDFOL NL test failures (~65 skipped, requires spaCy); MCP B2 remaining categories (~7 left); CI performance regression gates
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19 | **Last Updated:** 2026-02-22 (Sessions 36–58, 40–41)  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-22 (Sessions 36–58, 40–42)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
