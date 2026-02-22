@@ -4409,6 +4409,34 @@ class LogicValidator:
             return 0.0
         return sum(sizes) / len(sizes)
 
+    def scc_singleton_fraction(self, ontology: Any) -> float:
+        """Return the fraction of SCCs that contain exactly one node.
+
+        A *singleton* SCC is a strongly connected component with
+        ``size == 1``, i.e. a node that has no back-path to itself through
+        other nodes.  In a DAG every SCC is a singleton; a strongly
+        connected graph has exactly one non-singleton SCC containing all
+        nodes.
+
+        Args:
+            ontology: Ontology object or dict — same format accepted by
+                :meth:`strongly_connected_component_sizes`.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when the ontology has no
+            entities.
+
+        Example::
+
+            >>> lv.scc_singleton_fraction({"entities": [], "relationships": []})
+            0.0
+        """
+        sizes = self.strongly_connected_component_sizes(ontology)
+        if not sizes:
+            return 0.0
+        singletons = sum(1 for s in sizes if s == 1)
+        return singletons / len(sizes)
+
 
 __all__ = [
     'LogicValidator',

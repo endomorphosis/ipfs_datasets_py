@@ -5264,6 +5264,60 @@ class OntologyOptimizer:
             return 0.0
         return raw / math.log2(10)
 
+    def score_entropy_rate(self) -> float:
+        """Return the mean entropy change per step across history scores.
+
+        For each consecutive pair of history entries computes the absolute
+        difference in their per-step entropy contribution, then averages
+        those differences.  Concretely the *entropy contribution* of step
+        ``i`` is defined as ``-p_i * log2(p_i)`` where ``p_i`` is the bin
+        probability of that single score (i.e. ``1/n`` — all entries are
+        equally probable when the history is uniform, but the rate captures
+        how *positions* shift across bins).
+
+        In practice this is computed as::
+
+            entropy_rate = mean(|entropy(scores[:i+1]) - entropy(scores[:i])|
+                                for i in 1..n-1)
+
+        which measures how quickly the running entropy changes as new
+        observations are added.
+
+        Returns:
+            Float mean entropy change per step (bits); ``0.0`` when fewer
+            than 2 history entries are recorded.
+
+        Example::
+
+            >>> opt.score_entropy_rate()
+            0.0  # fewer than 2 history entries
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        n_total = len(scores)
+
+        def _entropy(subset: list) -> float:
+            n = len(subset)
+            if n == 0:
+                return 0.0
+            bins = [0] * 10
+            for s in subset:
+                bins[min(int(s * 10), 9)] += 1
+            h = 0.0
+            for count in bins:
+                if count > 0:
+                    p = count / n
+                    h -= p * math.log2(p)
+            return h
+
+        deltas = []
+        for i in range(1, n_total):
+            h_prev = _entropy(scores[:i])
+            h_curr = _entropy(scores[:i + 1])
+            deltas.append(abs(h_curr - h_prev))
+        return sum(deltas) / len(deltas)
+
 
 # Export public API
 __all__ = [

@@ -2635,3 +2635,33 @@ class OntologyLearningAdapter:
             return 0
         scores = [r.final_score for r in self._feedback]
         return sum(1 for i in range(1, len(scores)) if abs(scores[i] - scores[i - 1]) <= epsilon)
+
+    def feedback_plateau_fraction(self, epsilon: float = 0.01) -> float:
+        """Return the fraction of consecutive feedback pairs that are flat.
+
+        Divides :meth:`feedback_plateau_count` by the total number of
+        consecutive pairs ``(n - 1)``.  This gives a normalised view of
+        how *stagnant* the feedback stream is: ``0.0`` means every
+        transition was a meaningful change; ``1.0`` means every transition
+        was flat.
+
+        Args:
+            epsilon: Maximum absolute score difference to consider flat.
+                Defaults to ``0.01``.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when fewer than 2 feedback
+            records are recorded.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.5, actions={})
+            >>> adapter.apply_feedback(final_score=0.5, actions={})  # flat
+            >>> adapter.apply_feedback(final_score=0.9, actions={})  # not flat
+            >>> adapter.feedback_plateau_fraction()
+            0.5  # 1 flat pair out of 2 total pairs
+        """
+        n = len(self._feedback)
+        if n < 2:
+            return 0.0
+        return self.feedback_plateau_count(epsilon) / (n - 1)

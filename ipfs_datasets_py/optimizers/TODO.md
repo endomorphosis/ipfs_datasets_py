@@ -2058,9 +2058,30 @@ Completed items:
 
 ## Batch 226+ Backlog
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_entropy_rate()` — mean entropy change per step (entropy of differences); 0.0 for <2 entries
-- [ ] (P2) [graphrag] `OntologyCritic.score_dimension_max_z(score)` — max absolute z-score across 6 dims; 0.0 for uniform
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_skewness(result)` — population skewness of entity confidence; 0.0 for <3 entities or zero variance
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_plateau_fraction()` — flat pairs / total pairs; 0.0 for <2 entries
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_velocity_min()` — min first derivative (steepest one-step decline); 0.0 for <2 runs
-- [ ] (P2) [graphrag] `LogicValidator.scc_singleton_fraction(ontology)` — fraction of SCCs with size==1; 0.0 for empty
+- [x] (P2) [graphrag] `OntologyOptimizer.score_entropy_rate()` — mean entropy change per step (entropy of differences); 0.0 for <2 entries
+- [x] (P2) [graphrag] `OntologyCritic.score_dimension_max_z(score)` — max absolute z-score across 6 dims; 0.0 for uniform
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_skewness(result)` — STALE (already exists at line 6137)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_plateau_fraction()` — flat pairs / total pairs; 0.0 for <2 entries
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_velocity_min()` — min first derivative (steepest one-step decline); 0.0 for <2 runs
+- [x] (P2) [graphrag] `LogicValidator.scc_singleton_fraction(ontology)` — fraction of SCCs with size==1; 0.0 for empty
+
+### Batch 226 Completion Notes (2026-02-22)
+
+5 genuinely new methods implemented; `entity_confidence_skewness` was stale (line 6137).
+
+- `OntologyOptimizer.score_entropy_rate()` — mean of `|entropy(scores[:i+1]) - entropy(scores[:i])|`; 0.0 for <2 entries; non-negative always
+- `OntologyCritic.score_dimension_max_z(score)` — `max(|z_i|)` using population mean/std of 6 dims; 0.0 when all dims equal (zero variance)
+- `OntologyLearningAdapter.feedback_plateau_fraction(epsilon=0.01)` — `feedback_plateau_count / (n-1)`; 0.0 for <2 entries; 1.0 when all pairs are flat
+- `OntologyPipeline.run_score_velocity_min()` — `min(fd)` where `fd[i] = scores[i+1]-scores[i]`; 0.0 for <2 runs; symmetric with `run_score_velocity_max`
+- `LogicValidator.scc_singleton_fraction(ontology)` — `singletons / len(sccs)` via `strongly_connected_component_sizes()`; 0.0 empty; 1.0 for pure DAG
+
+52 tests in `test_batch_226_features.py` — all passing.
+
+## Batch 227+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_valley_density()` — fraction of history scores below mean; 0.0 for empty
+- [ ] (P2) [graphrag] `OntologyCritic.score_dimension_min_z(score)` — min absolute z-score across 6 dims; 0.0 for uniform
+- [ ] (P2) [graphrag] `OntologyGenerator.relationship_type_entropy(result)` — STALE CHECK (search before implementing)
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_above_mean_count()` — count entries strictly above the mean final_score
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_velocity_range()` — velocity_max - velocity_min; 0.0 for <2 runs
+- [ ] (P2) [graphrag] `LogicValidator.scc_non_singleton_fraction(ontology)` — 1 - scc_singleton_fraction; complement
