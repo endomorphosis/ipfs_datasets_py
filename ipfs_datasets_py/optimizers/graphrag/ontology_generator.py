@@ -283,6 +283,72 @@ class ExtractionConfig:
             ) from exc
         return _yaml.dump(self.to_dict(), default_flow_style=False, sort_keys=True)
 
+    def to_json(self) -> str:
+        """Serialise this config to a JSON string.
+
+        Uses the same dict representation as :meth:`to_dict`.  Provides
+        compact JSON serialization for storage, transmission, and APIs.
+
+        Returns:
+            JSON string representation (compact, no whitespace).
+
+        Example:
+            >>> json_str = config.to_json()
+            >>> config2 = ExtractionConfig.from_json(json_str)
+            >>> config == config2
+            True
+        """
+        import json as _json
+        return _json.dumps(self.to_dict(), separators=(',', ':'), sort_keys=True)
+
+    def to_json_pretty(self, indent: int = 2) -> str:
+        """Serialise this config to a formatted JSON string.
+
+        Uses the same dict representation as :meth:`to_dict`.  Provides
+        human-readable JSON with indentation for debugging and display.
+
+        Args:
+            indent: Number of spaces for indentation (default: 2).
+
+        Returns:
+            Formatted JSON string representation.
+
+        Example:
+            >>> json_str = config.to_json_pretty()
+            >>> print(json_str)
+            {
+              "confidence_threshold": 0.5,
+              ...
+            }
+        """
+        import json as _json
+        return _json.dumps(self.to_dict(), indent=indent, sort_keys=True)
+
+    @classmethod
+    def from_json(cls, json_str: str) -> "ExtractionConfig":
+        """Deserialise an :class:`ExtractionConfig` from a JSON string.
+
+        Args:
+            json_str: JSON string produced by :meth:`to_json` or 
+                :meth:`to_json_pretty` (or any JSON dict with matching keys).
+
+        Returns:
+            A new :class:`ExtractionConfig` instance.
+
+        Raises:
+            json.JSONDecodeError: If the JSON is malformed.
+
+        Example:
+            >>> config = ExtractionConfig(confidence_threshold=0.7)
+            >>> json_str = config.to_json()
+            >>> config2 = ExtractionConfig.from_json(json_str)
+            >>> config2.confidence_threshold
+            0.7
+        """
+        import json as _json
+        d = _json.loads(json_str)
+        return cls.from_dict(d)
+
     @classmethod
     def from_yaml(cls, yaml_str: str) -> "ExtractionConfig":
         """Deserialise an :class:`ExtractionConfig` from a YAML string.
@@ -2265,6 +2331,100 @@ class EntityExtractionResult:
         for r in self.relationships:
             counts[r.type] = counts.get(r.type, 0) + 1
         return dict(sorted(counts.items(), key=lambda x: -x[1]))
+
+    @property
+    def entity_count(self) -> int:
+        """Return the number of entities in this result.
+
+        This is a convenience property that returns ``len(self.entities)``.
+
+        Returns:
+            Integer count of entities.
+
+        Example:
+            >>> result.entity_count
+            5
+        """
+        return len(self.entities)
+
+    @property
+    def relationship_count(self) -> int:
+        """Return the number of relationships in this result.
+
+        This is a convenience property that returns ``len(self.relationships)``.
+
+        Returns:
+            Integer count of relationships.
+
+        Example:
+            >>> result.relationship_count
+            3
+        """
+        return len(self.relationships)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "EntityExtractionResult":
+        """Deserialize an EntityExtractionResult from a plain dict.
+
+        This is the inverse of :meth:`to_dict`. Given a dict with keys
+        ``entities``, ``relationships``, ``confidence``, ``metadata``, and
+        ``errors``, reconstructs a full result object.
+
+        Args:
+            data: Dict with required keys:
+
+            * ``"entities"`` -- list of entity dicts (each with ``id``, ``text``,
+              ``type``, ``confidence``, and optional ``properties``, ``source_span``).
+            * ``"relationships"`` -- list of relationship dicts (each with ``id``,
+              ``source_id``, ``target_id``, ``type``, ``confidence``, ``direction``,
+              and ``properties``).
+            * ``"confidence"`` -- overall confidence float.
+            * ``"metadata"`` -- dict (optional, defaults to ``{}``).
+            * ``"errors"`` -- list of error strings (optional, defaults to ``[]``).
+
+        Returns:
+            Reconstructed :class:`EntityExtractionResult`.
+
+        Example:
+            >>> d = result.to_dict()
+            >>> restored = EntityExtractionResult.from_dict(d)
+            >>> len(restored.entities) == len(result.entities)
+            True
+        """
+        # Reconstruct entities
+        entities = []
+        for ent_dict in data.get("entities", []):
+            ent = Entity(
+                id=ent_dict.get("id", ""),
+                text=ent_dict.get("text", ""),
+                type=ent_dict.get("type", "unknown"),
+                confidence=float(ent_dict.get("confidence", 1.0)),
+                properties=dict(ent_dict.get("properties", {})),
+                source_span=tuple(ent_dict["source_span"]) if ent_dict.get("source_span") else None,
+            )
+            entities.append(ent)
+
+        # Reconstruct relationships
+        relationships = []
+        for rel_dict in data.get("relationships", []):
+            rel = Relationship(
+                id=rel_dict.get("id", ""),
+                source_id=rel_dict.get("source_id", ""),
+                target_id=rel_dict.get("target_id", ""),
+                type=rel_dict.get("type", "unknown"),
+                confidence=float(rel_dict.get("confidence", 1.0)),
+                direction=rel_dict.get("direction", "unknown"),
+                properties=dict(rel_dict.get("properties", {})),
+            )
+            relationships.append(rel)
+
+        return cls(
+            entities=entities,
+            relationships=relationships,
+            confidence=float(data.get("confidence", 1.0)),
+            metadata=dict(data.get("metadata", {})),
+            errors=list(data.get("errors", [])),
+        )
 
 
 @dataclass
@@ -5617,6 +5777,29 @@ class OntologyGenerator:
         """
         return {r.target_id for r in result.relationships if r.target_id}
 
+    def entity_id_list(self, result) -> list:
+        """Return a sorted list of all entity IDs in the extraction result.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Sorted list of unique entity ID strings.
+
+        Example:
+            >>> result = generator.extract_entities("Alice knows Bob. Charlie.")
+            >>> ids = generator.entity_id_list(result)
+            >>> ids
+            ['alice', 'bob', 'charlie']
+        """
+        seen = set()
+        unique_ids = []
+        for e in result.entities:
+            if e.id and e.id not in seen:
+                seen.add(e.id)
+                unique_ids.append(e.id)
+        return sorted(unique_ids)
+
     def confidence_quartiles(self, result: Any) -> dict:
         """Return Q1, median (Q2), and Q3 confidence quartiles for entities.
 
@@ -6030,6 +6213,50 @@ class OntologyGenerator:
         q1 = self.confidence_percentile(results, 25)
         q3 = self.confidence_percentile(results, 75)
         return q3 - q1
+
+    def confidence_coefficient_of_variation(self, results: List[Any]) -> float:
+        """Return coefficient of variation (CV) of confidence scores.
+
+        CV = std_dev / mean, normalized measure of dispersion as a percentage.
+        Useful for comparing variability across distributions with different means.
+
+        Args:
+            results: List of ``EntityExtractionResult`` instances.
+
+        Returns:
+            Float CV value (typically 0 to 1, can exceed 1 for highly variable data);
+            0.0 when no entities or all scores identical.
+
+        Interpretation:
+            - CV < 0.1: Very stable/consistent (low variability)
+            - CV 0.1-0.3: Moderate consistency
+            - CV > 0.5: High variability (inconsistent)
+
+        Example:
+            >>> results = [result1, result2, result3]
+            >>> cv = generator.confidence_coefficient_of_variation(results)
+            >>> if cv < 0.15:
+            ...     print("Very stable extraction quality")
+            >>> elif cv > 0.5:
+            ...     print("Inconsistent extraction, investigate issues")
+        """
+        scores = []
+        for result in results:
+            entities = result.entities if hasattr(result, 'entities') else []
+            if entities:
+                scores.extend(e.confidence for e in entities if hasattr(e, 'confidence'))
+        
+        if not scores or len(scores) < 2:
+            return 0.0
+        
+        mean = sum(scores) / len(scores)
+        if mean == 0.0:
+            return 0.0
+        
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        std_dev = variance ** 0.5
+        
+        return std_dev / mean
 
     def entity_relation_ratio(self, result: Any) -> float:
         """Return the ratio of entity count to relationship count.
@@ -6554,17 +6781,6 @@ class OntologyGenerator:
         """
         entities = result.entities or []
         return sum(getattr(e, "confidence", 0.0) or 0.0 for e in entities)
-
-    def entity_id_list(self, result: "EntityExtractionResult") -> list:
-        """Return a sorted list of all entity IDs.
-
-        Args:
-            result: EntityExtractionResult to inspect.
-
-        Returns:
-            Sorted list of entity ID strings; empty list when no entities.
-        """
-        return sorted(e.id for e in (result.entities or []))
 
     def relationship_source_ids(self, result: "EntityExtractionResult") -> set:
         """Return the set of source entity IDs from all relationships.

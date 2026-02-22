@@ -2232,6 +2232,42 @@ class OntologyCritic(BaseCritic):
         dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
         return {d: round(target - getattr(score, d), 6) for d in dims}
 
+    def dimension_z_scores(self, score: "CriticScore") -> Dict[str, float]:
+        """Return z-scores for each dimension relative to their history/baseline.
+
+        This method requires that the critic has historical context or configuration
+        of baseline/mean/std for each dimension. For now, it returns normalized
+        distance scores based on the current score's dimensions.
+
+        Args:
+            score: A :class:`CriticScore` to analyze.
+
+        Returns:
+            Dict mapping dimension name → z-score (float). Each z-score expresses
+            how far a dimension is from "center" (0.5 nominal), measured in
+            units of 0.2 (representing 1 std dev zone).
+
+        Example:
+            >>> critic = OntologyCritic()
+            >>> score = CriticScore(completeness=0.7, consistency=0.5, ...)
+            >>> z_scores = critic.dimension_z_scores(score)
+            >>> z_scores['completeness']
+            1.0
+        """
+        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
+        nominal = 0.5  # nominal center (0 to 1 scale)
+        std_dev = 0.2  # approximate std dev zone
+        
+        z_scores = {}
+        for dim in dims:
+            val = getattr(score, dim, 0.5)
+            if std_dev > 0:
+                z_scores[dim] = round((val - nominal) / std_dev, 4)
+            else:
+                z_scores[dim] = 0.0
+        
+        return z_scores
+
     def worst_score(self, scores: List["CriticScore"]) -> Optional["CriticScore"]:
         """Return the :class:`CriticScore` with the lowest ``overall`` value.
 
@@ -3089,6 +3125,28 @@ class OntologyCritic(BaseCritic):
         if not scores:
             return 0.0
         return sum(1 for s in scores if s.overall > threshold) / len(scores)
+
+    def failing_scores(self, scores: list, threshold: float = 0.6) -> list:
+        """Return only scores that do NOT pass *threshold*.
+
+        Scores are considered "failing" if their ``overall`` value is
+        **not greater than** *threshold* (i.e., ``overall <= threshold``).
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+            threshold: Passing threshold (default 0.6).  Scores with
+                ``overall <= threshold`` are included in the result.
+
+        Returns:
+            List of :class:`CriticScore` objects where ``overall <= threshold``,
+            in the original order.  Empty list if no scores fail or if
+            *scores* is empty.
+
+        Example:
+            >>> failing = critic.failing_scores(all_scores, threshold=0.7)
+            >>> print(f"Found {len(failing)} scores below 0.7")
+        """
+        return [s for s in scores if s.overall <= threshold]
 
     def score_spread(self, scores: list) -> float:
         """Return the range (max - min) of ``overall`` values.

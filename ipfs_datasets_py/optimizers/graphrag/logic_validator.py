@@ -976,6 +976,60 @@ class LogicValidator:
         """
         return self.count_contradictions(ontology) == 0
 
+    def hub_nodes(self, ontology: Dict[str, Any], min_degree: int = 2) -> list:
+        """Return a list of entity IDs that act as hubs (high degree nodes).
+
+        A hub node is an entity that appears in many relationships, either
+        as source or target. This method identifies such nodes for network
+        analysis or simplification.
+
+        Args:
+            ontology: Ontology dict with 'entities' and 'relationships'.
+            min_degree: Minimum relationship count to be considered a hub
+                (defaults to 2, meaning at least 2 relationships).
+
+        Returns:
+            Sorted list of entity IDs with degree >= min_degree, sorted
+            by degree (descending). Each ID appears once.
+
+        Example:
+            >>> ontology = {
+            ...     "entities": [
+            ...         {"id": "alice", "text": "Alice"},
+            ...         {"id": "bob", "text": "Bob"},
+            ...         {"id": "charlie", "text": "Charlie"}
+            ...     ],
+            ...     "relationships": [
+            ...         {"source_id": "alice", "target_id": "bob", "type": "knows"},
+            ...         {"source_id": "alice", "target_id": "charlie", "type": "knows"},
+            ...         {"source_id": "bob", "target_id": "charlie", "type": "knows"}
+            ...     ]
+            ... }
+            >>> hubs = validator.hub_nodes(ontology, min_degree=2)
+            >>> hubs
+            ['alice', 'bob']
+        """
+        entities = ontology.get("entities", [])
+        relationships = ontology.get("relationships", [])
+        
+        # Count degree for each entity ID
+        degree = {}
+        for rel in relationships:
+            source_id = rel.get("source_id")
+            target_id = rel.get("target_id")
+            if source_id:
+                degree[source_id] = degree.get(source_id, 0) + 1
+            if target_id:
+                degree[target_id] = degree.get(target_id, 0) + 1
+        
+        # Filter hubs meeting minimum degree threshold
+        hubs = [eid for eid, deg in degree.items() if deg >= min_degree]
+        
+        # Sort by degree (descending), then alphabetically for tiebreak
+        hubs.sort(key=lambda eid: (-degree[eid], eid))
+        
+        return hubs
+
     def quick_check(self, ontology: Dict[str, Any]) -> bool:
         """Perform a fast consistency check on *ontology*.
 

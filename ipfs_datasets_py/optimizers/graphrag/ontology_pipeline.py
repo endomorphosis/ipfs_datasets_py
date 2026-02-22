@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 _logger = logging.getLogger(__name__)
 
@@ -216,6 +216,7 @@ class OntologyPipeline:
         actions_applied: List[str] = []
 
         # 3. Evaluate and optionally refine
+        score = self._critic.evaluate_ontology(ontology, ctx)
         if refine:
             score = self._critic.evaluate_ontology(ontology, ctx)
             _notify("evaluating", 3, score=getattr(score, "overall", None))
@@ -279,6 +280,7 @@ class OntologyPipeline:
         data_source: str = "pipeline",
         data_type: str = "text",
         refine: bool = True,
+        progress_callback: Optional[Callable[[int, int, float], None]] = None,
     ) -> List[PipelineResult]:
         """Run the full pipeline on each document in *docs*.
 
@@ -287,12 +289,13 @@ class OntologyPipeline:
             data_source: Shared data source identifier.
             data_type: Shared data type hint.
             refine: Whether to run mediator refinement (default: True).
+            progress_callback: Optional callback for per-document + per-round progress.
 
         Returns:
             List of :class:`PipelineResult` in the same order as *docs*.
         """
         return [
-            self.run(doc, data_source=data_source, data_type=data_type, refine=refine)
+            self.run(doc, data_source=data_source, data_type=data_type, refine=refine, progress_callback=progress_callback)
             for doc in docs
         ]
 
