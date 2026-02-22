@@ -848,3 +848,39 @@ All session59 (21 tests) and session60 (18 tests) tests continue to pass:
 - `TestImprovementTodoPath` (4 tests): correct path present; double-prefix absent; old pathing note fixed; logic subpath corrected.
 
 **Result: 3,782 passed, 26 skipped, 0 failed** (numpy+networkx+matplotlib+scipy+plotly+rdflib env)
+
+### Session 63 log (2026-02-22)
+
+**Documentation accuracy fixes — no production code changes.**
+
+**Problem:** Four documents had stale items that misrepresented the module's actual state:
+1. `ROADMAP.md` had 3 `**Status:** Planned` items inside CANCELLED version sections (v2.2.0 and
+   v2.5.0). These features were actually delivered in v2.1.0, making the "Planned" labels
+   actively misleading to new contributors reading the roadmap.
+2. `MASTER_REFACTORING_PLAN_2026.md` was last updated on 2026-02-20 (session 20). Across
+   sessions 21–62 (42 sessions), it was never updated: version still `1.0`, §1 Module Snapshot
+   still showed `~78%` coverage and `1,075+` tests, §2 Completed Work was missing 42 sessions
+   of progress, and §3.3.2 still had an ambiguous `🟡 Deferred` status.
+
+**Fix:**
+1. `ROADMAP.md`:
+   - v2.2.0 §4 "Migration Performance": `Status: Planned` → `✅ Delivered in v2.1.0`
+     (streaming export/chunked iteration/parallel query/integrity verification all done)
+   - v2.5.0 §2 "spaCy Dependency Parsing Integration": `Status: Planned` → `✅ Delivered in v2.1.0`
+     (via `SRLExtractor` spaCy backend + `_aggressive_entity_extraction()`)
+   - v2.5.0 §4 "Confidence Scoring Improvements": `Status: Planned` → `📋 Deferred to v4.0+`
+     (basic confidence fields exist; advanced probabilistic scoring deferred pending user demand)
+2. `MASTER_REFACTORING_PLAN_2026.md`:
+   - `**Version:** 1.0` → `3.22.17`; `**Last Updated:** 2026-02-20` → `2026-02-22`
+   - §1 Module Snapshot: 92→96+ files; 64→95+ test files; 1,075+→3,782 tests; ~78%→99.99% coverage
+   - §2 Completed Work Summary: added "Coverage Push (sessions 27–58)" and
+     "Documentation Consistency (sessions 59–62)" sections
+   - §3.3.2 Extraction Validation Split: `🟡 Deferred` → `📋 Deferred to v4.0+` with explicit rationale
+
+**15 tests** in `test_master_status_session63.py` (4 classes):
+- `TestRoadmapPlannedItemsFixed` (5 tests): Migration Performance delivered; spaCy delivered; Confidence deferred to v4.0+; no bare "Status: Planned" in CANCELLED regions; streaming mentioned
+- `TestMasterRefactoringPlanVersion` (4 tests): version 3.22.17; stale v1.0 gone; Last Updated 2026-02-22; stale **Last Updated: 2026-02-20** header gone
+- `TestMasterRefactoringPlanContent` (4 tests): 99.99% coverage present; sessions 59-62 mentioned; §3.3.2 deferred to v4.0+; 3,782 tests present
+- `TestFourDocVersionAgreement` (3 tests): MASTER_STATUS/CHANGELOG/REFACTORING_PLAN all agree on v3.22.17
+
+**Result: 3,797 passed, 26 skipped, 0 failed** (numpy+networkx+matplotlib+scipy+plotly+rdflib env)

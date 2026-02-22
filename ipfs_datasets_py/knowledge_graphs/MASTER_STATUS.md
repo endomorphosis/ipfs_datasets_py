@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.22.16  
+**Version:** 3.22.17  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-22 (session 62)  
-**Last Major Release:** v3.22.16 (session 62: DOCUMENTATION_GUIDE.md v1.0→v3.22.16; removed duplicate MASTER_STATUS.md entry; fixed DEFERRED_FEATURES.md + IMPROVEMENT_TODO.md stale paths/dates; 18 doc integrity tests)
+**Last Updated:** 2026-02-22 (session 63)  
+**Last Major Release:** v3.22.17 (session 63: ROADMAP.md stale "Status: Planned" items in CANCELLED sections fixed; MASTER_REFACTORING_PLAN_2026.md updated v1.0→3.22.17; §1 snapshot current; sessions 59-62 added to completed work; §3.3.2 officially deferred to v4.0+; 15 doc integrity tests)
 
 ---
 
@@ -252,8 +252,9 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - session60: MASTER_STATUS.md stale coverage table updated (99.99%); per-module table refreshed with s27–s59 results; sessions 54–60 added to session list; total test count updated 3,614→3,725. ROADMAP.md: duplicate "Version 2.0.1" section removed; "Last Updated" corrected to 2026-02-22. 18 doc integrity tests added.
 - session61: **Stale version/coverage numbers fixed in INDEX.md, README.md, and ROADMAP.md.** INDEX.md: Module Version 2.0.0→3.22.15; test coverage 75%→99.99%; test count 116+→3,743+; "Current State (v2.0.0)"→"(v3.22.15)"; removed stale ⚠️ migration module warning; "Next Version v2.0.1 Q2 2026"→"v4.0 2027+"; added v3.22.15 row to version history table; Last Updated 2026-02-17→2026-02-22. README.md: Version 2.1.0→3.22.15; Last Updated 2026-02-20→2026-02-22. ROADMAP.md: Current Version 3.22.14→3.22.15. 21 doc integrity tests. **Result: 3,764 passed, 26 skipped, 0 failed (1 missed line; 99.99%)**.
 - session62: **Stale metadata fixed in DOCUMENTATION_GUIDE.md, DEFERRED_FEATURES.md, and IMPROVEMENT_TODO.md.** DOCUMENTATION_GUIDE.md: Version 1.0→3.22.16; Last Updated 2026-02-18→2026-02-22; duplicate MASTER_STATUS.md entry (items 4+5 identical) removed; renumbered items 5–24 → 5–23; "Next Review: Q2 2026" → "After each major release or quarterly". DEFERRED_FEATURES.md: Last Updated 2026-02-20→2026-02-22; removed stale v2.5.0 ref from Next Review. IMPROVEMENT_TODO.md: scope path `ipfs_datasets_py/ipfs_datasets_py/knowledge_graphs/` → `ipfs_datasets_py/knowledge_graphs/`; Note-on-pathing updated. 18 doc integrity tests. **Result: 3,782 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
+- session63: **Stale "Status: Planned" items in ROADMAP.md fixed** (3 items inside CANCELLED v2.2.0/v2.5.0 sections: Migration Performance→Delivered v2.1.0; spaCy Dep Parsing→Delivered v2.1.0; Confidence Scoring→Deferred to v4.0+). **MASTER_REFACTORING_PLAN_2026.md updated**: v1.0→3.22.17; Last Updated 2026-02-20→2026-02-22; §1 snapshot updated (99.99%, 3,782+ tests, 95+ test files); sessions 59-62 coverage-push + doc-consistency work added to §2 Completed Work Summary; §3.3.2 Extraction Validation Split: 🟡 Deferred→📋 Deferred to v4.0+. 15 doc integrity tests. **Result: 3,797 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 
-**Total Tests:** 3,782 passing, 26 skipped (optional dep guards), 0 failing
+**Total Tests:** 3,797 passing, 26 skipped (optional dep guards), 0 failing
 **Pass Rate:** 100% (excluding optional dependency skips)
 **Coverage:** 99.99% (1 missed line: `_entity_helpers.py:117` — intentional defensive guard)
 

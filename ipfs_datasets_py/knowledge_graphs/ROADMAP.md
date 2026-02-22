@@ -1,7 +1,7 @@
 # Knowledge Graphs - Development Roadmap
 
 **Last Updated:** 2026-02-22  
-**Current Version:** 3.22.16  
+**Current Version:** 3.22.17  
 **Status:** Production Ready (99.99% test coverage)
 
 ---
@@ -99,15 +99,15 @@ All root-level modules moved to canonical subpackage locations. New `reasoning/`
 **Target:** Basic read support
 
 #### 4. Migration Performance
-**Status:** Planned  
+**Status:** ✅ Delivered in v2.1.0 (2026-02-19)  
 **Priority:** High  
 **Description:** Optimize large graph migrations
 
-**Improvements:**
-- Streaming import/export (reduce memory usage)
-- Parallel processing for large datasets
-- Progress tracking and resumable migrations
-- Validation and integrity checking
+**Delivered:**
+- Streaming import/export: `GraphData.export_streaming()`, `iter_nodes_chunked()`, `iter_relationships_chunked()` (chunk_size=500, 64KB write buffers)
+- Parallel processing: `FederatedQueryExecutor.execute_cypher_parallel()` in `query/distributed.py`
+- Validation and integrity checking: `IntegrityVerifier.verify_sample()` in `migration/`
+- Progress tracking and resumable migrations: 📋 deferred to v4.0+ (low priority)
 
 ### Success Criteria
 - GraphML, GEXF formats fully supported
@@ -141,17 +141,15 @@ All root-level modules moved to canonical subpackage locations. New `reasoning/`
 - Domain adaptation capability
 
 #### 2. spaCy Dependency Parsing Integration
-**Status:** Planned  
+**Status:** ✅ Delivered in v2.1.0 (2026-02-20)  
 **Priority:** Medium  
 **Description:** Leverage spaCy's dependency parser
 
-**Note:** spaCy is already installed but not actively used
-
-**Features:**
-- Subject-verb-object extraction
-- Compound noun handling
-- Improved entity resolution
-- Context-aware extraction
+**Delivered:**
+- Subject-verb-object extraction: `SRLExtractor` with `nlp=` spaCy model backend
+- Compound noun handling: `_aggressive_entity_extraction()` in `extraction/extractor.py`
+- Context-aware extraction: 10 semantic role types extracted via spaCy dep-parse
+- Improved entity resolution: SRL-based event-centric KG construction with entity deduplication
 
 #### 3. Semantic Role Labeling (SRL)
 **Status:** ✅ Delivered in v2.1.0 (2026-02-20)  
@@ -165,15 +163,17 @@ All root-level modules moved to canonical subpackage locations. New `reasoning/`
 - No AllenNLP dependency required — pure-Python heuristic backend always available
 
 #### 4. Confidence Scoring Improvements
-**Status:** Planned  
-**Priority:** High  
-**Description:** Enhanced confidence metrics
+**Status:** 📋 Deferred to v4.0+  
+**Priority:** Low (was High — reprioritised after v3.22.x improvements)  
+**Description:** Enhanced confidence metrics beyond current per-entity/per-relationship confidence fields
 
-**Features:**
+**Deferred features (v4.0+):**
 - Multi-source confidence aggregation
 - Probabilistic relationship scoring
 - Quality metrics for extracted graphs
 - Uncertainty quantification
+
+**Note:** Basic confidence scoring already exists on `KnowledgeGraphEntity.confidence` and `KnowledgeGraphRelationship.confidence` (0.0–1.0). Advanced probabilistic scoring deferred pending user demand.
 
 ### Success Criteria
 - Neural extraction option available
@@ -425,6 +425,7 @@ We follow [Semantic Versioning](https://semver.org/):
 | 3.22.14 | 2026-02-22 | ✅ Released | Doc consistency fixes: ROADMAP.md v3.22.14; missing CHANGELOG sections added; release table complete (session59) |
 | 3.22.15 | 2026-02-22 | ✅ Released | MASTER_STATUS stale coverage table updated (99.99%); duplicate ROADMAP v2.0.1 section removed; sessions 47–59 added to session list; 15 doc integrity tests (session60) |
 | 3.22.16 | 2026-02-22 | ✅ Released | DOCUMENTATION_GUIDE.md v1.0→v3.22.16; duplicate MASTER_STATUS entry removed; DEFERRED_FEATURES+IMPROVEMENT_TODO stale paths/dates fixed; 18 doc integrity tests (session62) |
+| 3.22.17 | 2026-02-22 | ✅ Released | ROADMAP stale "Status: Planned" items in CANCELLED sections fixed (Migration Performance+spaCy→Delivered; Confidence Scoring→Deferred v4.0+); MASTER_REFACTORING_PLAN v1.0→v3.22.17; snapshot/sessions 59-62/§3.3.2 updated; 15 doc tests (session63) |
 | 4.0 | 2027+ | 📋 Future | TBD based on feedback |
 
 ---

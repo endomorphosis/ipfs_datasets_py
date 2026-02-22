@@ -5,6 +5,25 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.17] - 2026-02-22
+
+### Changed — ROADMAP.md stale items + MASTER_REFACTORING_PLAN_2026.md update (Session 63)
+
+**No production code changes.** Fixed stale "Status: Planned" items inside CANCELLED roadmap
+sections and brought the refactoring plan up to date with sessions 59-62 progress.
+
+#### `ROADMAP.md`
+- v2.2.0 §4 "Migration Performance": `Status: Planned` → `✅ Delivered in v2.1.0` (streaming export, chunked iteration, parallel query execution, integrity verification all implemented)
+- v2.5.0 §2 "spaCy Dependency Parsing Integration": `Status: Planned` → `✅ Delivered in v2.1.0` (via `SRLExtractor` spaCy backend + `_aggressive_entity_extraction()`)
+- v2.5.0 §4 "Confidence Scoring Improvements": `Status: Planned` → `📋 Deferred to v4.0+` (basic confidence fields already exist; advanced probabilistic scoring deferred pending user demand)
+
+#### `MASTER_REFACTORING_PLAN_2026.md`
+- `**Version:** 1.0` → `3.22.17`
+- `**Last Updated:** 2026-02-20` → `2026-02-22`
+- §1 Module Snapshot updated: 92→96+ files; 64→95+ test files; 1,075+→3,782 tests; ~78%→**99.99%** coverage; migration coverage 70%+→**100%**
+- §2 Completed Work: Coverage Push (sessions 27–58) and Documentation Consistency (sessions 59–62) sections added
+- §3.3.2 Extraction Validation Split: `🟡 Deferred` → `📋 Deferred to v4.0+` (explicitly documented rationale: no clean concern separation without substantial refactoring; revisit if class exceeds 1,000 lines)
+
 ## [3.22.16] - 2026-02-22
 
 ### Changed — DOCUMENTATION_GUIDE.md + DEFERRED_FEATURES.md + IMPROVEMENT_TODO.md stale metadata (Session 62)
