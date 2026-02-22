@@ -1102,6 +1102,10 @@ class DelegationManager:
         Delegates to :meth:`RevocationList.revoke_chain` using the current
         :class:`DelegationEvaluator` (rebuilt if stale).
 
+        After revoking, publishes a ``RECEIPT_DISSEMINATE`` event to the
+        global :class:`~ipfs_datasets_py.mcp_server.mcp_p2p_transport.PubSubBus`
+        so that peer nodes can observe revocations in real time (Session 63).
+
         Args:
             root_cid: The CID of the root delegation to revoke.
 
@@ -1109,7 +1113,23 @@ class DelegationManager:
             Number of newly-revoked CIDs (0 if already revoked or missing).
         """
         evaluator = self.get_evaluator()
-        return self._revocation.revoke_chain(root_cid, evaluator)
+        count = self._revocation.revoke_chain(root_cid, evaluator)
+        # Publish a pubsub notification so peer nodes can observe revocations.
+        try:
+            from ipfs_datasets_py.mcp_server.mcp_p2p_transport import (  # noqa: PLC0415
+                get_global_bus,
+                PubSubEventType,
+            )
+            bus = get_global_bus()
+            bus.publish(
+                PubSubEventType.RECEIPT_DISSEMINATE,
+                {"type": "revocation", "root_cid": root_cid, "count": count},
+            )
+        except Exception as _exc:
+            logger.debug(
+                "DelegationManager.revoke_chain: pubsub notification failed: %s", _exc
+            )  # best-effort — never block revocation
+        return count
 
     # ------------------------------------------------------------------
     # Metrics

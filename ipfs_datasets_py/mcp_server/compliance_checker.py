@@ -257,6 +257,34 @@ class ComplianceChecker:
         """Return rule IDs in registration order."""
         return list(self._rule_order)
 
+    def merge(self, other: "ComplianceChecker") -> int:
+        """Merge rules and deny-list entries from *other* into this checker.
+
+        Rules that already exist in this checker are **not** overwritten.
+        The deny-list of *other* is unioned into this checker's deny-list.
+
+        This is useful for assembling composite rule sets from multiple
+        specialised checkers without reloading from disk.
+
+        Args:
+            other: Another :class:`ComplianceChecker` instance whose rules
+                and deny-list should be incorporated.
+
+        Returns:
+            The number of **newly-added** rules (rules that did not already
+            exist in this checker).
+        """
+        added = 0
+        for rule_id in other._rule_order:
+            if rule_id not in self._rules:
+                fn = other._rules.get(rule_id)
+                if fn is not None:
+                    self._rules[rule_id] = fn
+                    self._rule_order.append(rule_id)
+                    added += 1
+        self._deny_list.update(other._deny_list)
+        return added
+
     # ------------------------------------------------------------------
     # Persistence (Session 60)
     # ------------------------------------------------------------------

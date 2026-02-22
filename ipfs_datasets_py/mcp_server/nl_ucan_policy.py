@@ -785,12 +785,21 @@ class UCANPolicyGate:
 # Persistent policy store (session 56)
 # ---------------------------------------------------------------------------
 
+_POLICY_STORE_VERSION = "1"
+"""Schema version for :class:`FilePolicyStore` JSON files (Session 63)."""
+
+
 class FilePolicyStore:
     """File-backed :class:`PolicyRegistry` that persists policies across restarts.
 
     Policies are serialised as a JSON file mapping name → {nl_policy, description}.
     On :meth:`load`, each entry is recompiled (ensuring the CID matches the
     stored source) and registered into *registry*.
+
+    The top-level JSON object also carries a ``"version"`` field equal to
+    :data:`_POLICY_STORE_VERSION`.  If a loaded file carries a *different*
+    (non-empty) version string a :class:`UserWarning` is emitted so that
+    migration scripts can detect schema changes.
 
     Args:
         path: Filesystem path for the JSON policy file.
@@ -812,25 +821,37 @@ class FilePolicyStore:
         reconstructed on :meth:`load`.
         """
         import os
-        data: Dict[str, Any] = {}
+        policies: Dict[str, Any] = {}
         for name in self._registry.list_names():
             compiled = self._registry._compiled.get(name)
             source = self._registry._sources.get(name)
             if compiled and source:
-                data[name] = {
+                policies[name] = {
                     "nl_policy": source.text,
                     "description": compiled.policy.description,
                     "source_cid": source.source_cid,
                 }
+        data: Dict[str, Any] = {
+            "version": _POLICY_STORE_VERSION,
+            "policies": policies,
+        }
         parent = os.path.dirname(self.path)
         if parent:
             os.makedirs(parent, exist_ok=True)
         with open(self.path, "w", encoding="utf-8") as fh:
             json.dump(data, fh, indent=2)
-        logger.debug("Saved %d policies to %s", len(data), self.path)
+        logger.debug("Saved %d policies to %s", len(policies), self.path)
 
     def load(self) -> int:
         """Load and register policies from *path*.
+
+        The file is expected to be in the format written by :meth:`save`
+        (``{"version": "1", "policies": {...}}``).  For backward
+        compatibility, a top-level dict of policy entries *without* a
+        ``"version"`` key is also accepted.
+
+        If the file carries a **different, non-empty** ``"version"`` string a
+        :class:`UserWarning` is emitted — migration may be needed.
 
         Policies whose stored ``source_cid`` does not match the freshly
         computed CID of their NL text are recompiled transparently (the
@@ -842,13 +863,33 @@ class FilePolicyStore:
         """
         try:
             with open(self.path, encoding="utf-8") as fh:
-                data: Dict[str, Any] = json.load(fh)
+                raw: Dict[str, Any] = json.load(fh)
         except FileNotFoundError:
             logger.debug("Policy store file not found: %s", self.path)
             return 0
         except (OSError, json.JSONDecodeError) as exc:
             logger.warning("Could not read policy store %s: %s", self.path, exc)
             return 0
+
+        # Support both the new versioned format and the legacy flat format.
+        # Distinguish by checking that "policies" maps to a dict (not a
+        # policy-entry dict) so that a legacy file with a policy named
+        # "policies" is not misidentified as the new format.
+        policies_value = raw.get("policies")
+        if isinstance(policies_value, dict) and ("version" in raw or "policies" in raw):
+            file_version = raw.get("version", "")
+            if file_version and file_version != _POLICY_STORE_VERSION:
+                warnings.warn(
+                    f"Policy store file {self.path!r} was saved with version "
+                    f"{file_version!r} but current version is "
+                    f"{_POLICY_STORE_VERSION!r}. Policy migration may be needed.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+            data: Dict[str, Any] = policies_value
+        else:
+            # Legacy: the entire object is the policies dict.
+            data = raw
 
         loaded = 0
         for name, entry in data.items():
@@ -911,17 +952,21 @@ class FilePolicyStore:
         if parent:
             _os.makedirs(parent, exist_ok=True)
 
-        # Build the plain JSON that save() would write.
-        data: Dict[str, Any] = {}
+        # Build the versioned payload that save() would write.
+        policies: Dict[str, Any] = {}
         for name in self._registry.list_names():
             compiled = self._registry._compiled.get(name)
             source = self._registry._sources.get(name)
             if compiled and source:
-                data[name] = {
+                policies[name] = {
                     "nl_policy": source.text,
                     "description": compiled.policy.description,
                     "source_cid": source.source_cid,
                 }
+        data: Dict[str, Any] = {
+            "version": _POLICY_STORE_VERSION,
+            "policies": policies,
+        }
         plaintext = json.dumps(data, indent=2).encode()
 
         key = _hashlib.sha256(password.encode()).digest()
@@ -929,7 +974,7 @@ class FilePolicyStore:
         ciphertext = AESGCM(key).encrypt(nonce, plaintext, None)
         with open(enc_path, "wb") as fh:
             fh.write(nonce + ciphertext)
-        logger.debug("Saved %d policies encrypted to %s", len(data), enc_path)
+        logger.debug("Saved %d policies encrypted to %s", len(policies), enc_path)
 
     def load_encrypted(self, password: str) -> int:
         """Load policies from the encrypted companion file ``<self.path>.enc``.
@@ -1235,3 +1280,32 @@ class IPFSPolicyStore(FilePolicyStore):
         individual policies identified by their CID.
         """
         return super().load()
+
+    # ------------------------------------------------------------------
+    # Encrypted persistence (Session 63)
+    # ------------------------------------------------------------------
+
+    def save_encrypted(self, password: str) -> None:
+        """Persist the current registry to an encrypted companion file.
+
+        Delegates to :meth:`FilePolicyStore.save_encrypted`; IPFS pinning is
+        performed separately by :meth:`save`.  The encrypted file does **not**
+        interact with IPFS — encryption is strictly at-rest local storage.
+
+        Args:
+            password: Passphrase used to derive the AES-256-GCM key.
+        """
+        super().save_encrypted(password)
+
+    def load_encrypted(self, password: str) -> int:
+        """Load policies from the encrypted companion file.
+
+        Delegates to :meth:`FilePolicyStore.load_encrypted`.
+
+        Args:
+            password: Passphrase used to derive the AES-256-GCM key.
+
+        Returns:
+            Number of policies loaded (0 on missing file / wrong password).
+        """
+        return super().load_encrypted(password)
