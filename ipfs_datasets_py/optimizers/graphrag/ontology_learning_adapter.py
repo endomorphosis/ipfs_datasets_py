@@ -2471,3 +2471,31 @@ class OntologyLearningAdapter:
         if not self._feedback:
             return 0.0
         return min(r.final_score for r in self._feedback)
+
+    def feedback_range_ratio(self) -> float:
+        """Return the range ratio ``(peak - valley) / (peak + valley)`` of feedback scores.
+
+        This is the Quartile Coefficient of Dispersion analogue for the full
+        range of feedback ``final_score`` values.  A value near ``1.0``
+        indicates high spread relative to the magnitude; ``0.0`` means all
+        scores are identical (or there are no records).
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when there are no feedback
+            records or when ``peak + valley == 0``.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.2, actions={})
+            >>> adapter.apply_feedback(final_score=0.8, actions={})
+            >>> adapter.feedback_range_ratio()
+            0.6  # (0.8 - 0.2) / (0.8 + 0.2) = 0.6 / 1.0 = 0.6
+        """
+        if not self._feedback:
+            return 0.0
+        peak = self.feedback_peak_score()
+        valley = self.feedback_valley_score()
+        denom = peak + valley
+        if denom == 0.0:
+            return 0.0
+        return (peak - valley) / denom

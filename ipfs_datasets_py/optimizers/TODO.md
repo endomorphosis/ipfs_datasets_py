@@ -1939,9 +1939,23 @@ Testing: 38 tests in test_batch_217_features.py; all passing.
 
 ## Batch 219+ Backlog
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_quartile_dispersion()` — (Q3−Q1)/(Q3+Q1); 0.0 when Q3+Q1=0
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_min(score)` — minimum of the 6 dimension values
-- [ ] (P2) [graphrag] `OntologyGenerator.relationship_avg_confidence(result)` — mean confidence of relationships
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_range_ratio()` — (peak−valley)/(peak+valley); 0.0 when peak+valley=0
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_quartile_dispersion()` — QCD of run scores
-- [ ] (P2) [graphrag] `LogicValidator.source_count(ontology)` — number of nodes with in-degree 0
+- [x] (P2) [graphrag] `OntologyOptimizer.score_quartile_dispersion()` — (Q3−Q1)/(Q3+Q1); 0.0 when Q3+Q1=0
+- [x] (P2) [graphrag] `OntologyCritic.dimension_min(score)` — minimum of the 6 dimension values *(already existed)*
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_avg_confidence(result)` — mean confidence of relationships *(already existed)*
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_range_ratio()` — (peak−valley)/(peak+valley); 0.0 when peak+valley=0
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_quartile_dispersion()` — QCD of run scores
+- [x] (P2) [graphrag] `LogicValidator.source_count(ontology)` — number of nodes with in-degree 0
+
+### Batch 219 completion notes (2026-02-22)
+- 4 new methods: `score_quartile_dispersion`, `feedback_range_ratio`, `run_score_quartile_dispersion`, `source_count`
+- 2 stale backlog items marked [x] (dimension_min, relationship_avg_confidence already existed)
+- 44 tests in `test_batch_219_features.py` — all passing
+
+## Batch 220+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_geometric_mean()` — geometric mean of history scores
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_max(score)` — name of the highest-scoring dimension
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_sum(result)` — sum of entity confidences
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_iqr_ratio()` — IQR / mean of feedback scores
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_geometric_mean()` — geometric mean of run scores
+- [ ] (P2) [graphrag] `LogicValidator.sink_count(ontology)` — number of nodes with out-degree 0

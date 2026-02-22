@@ -5091,6 +5091,31 @@ class OntologyOptimizer:
             return 0.0
         return self.score_bimodality_dip() / mad
 
+    def score_quartile_dispersion(self) -> float:
+        """Return the Quartile Coefficient of Dispersion (QCD) of history scores.
+
+        QCD = (Q3 - Q1) / (Q3 + Q1).  Unlike the IQR, QCD is dimensionless
+        so it can be compared across series with different magnitudes.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when fewer than 4 entries or
+            when ``Q3 + Q1 == 0``.
+
+        Example::
+
+            >>> opt.score_quartile_dispersion()
+            0.0  # fewer than 4 entries
+        """
+        if len(self._history) < 4:
+            return 0.0
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        q1 = scores[n // 4]
+        q3 = scores[(3 * n) // 4]
+        if q3 + q1 == 0.0:
+            return 0.0
+        return (q3 - q1) / (q3 + q1)
+
 
 # Export public API
 __all__ = [

@@ -4214,6 +4214,57 @@ class LogicValidator:
             return 0
         return sum(1 for e in eccs if e == radius)
 
+    def source_count(self, ontology: Any) -> int:
+        """Count the number of *source* nodes (in-degree zero) in the graph.
+
+        A source node is one that has no incoming edges — it is a starting
+        point in the directed graph.  Isolated nodes (no edges at all) are
+        also counted as sources.
+
+        Args:
+            ontology: Object with ``entities`` and ``relationships`` lists.
+                Each relationship must have ``source_id`` and ``target_id``
+                attributes (or the ``"source"``/``"target"`` dict keys used by
+                the dict-style helpers are also accepted via
+                :meth:`in_degree_distribution`).
+
+        Returns:
+            Non-negative integer count of source nodes; ``0`` when there are
+            no entities.
+
+        Example::
+
+            >>> validator.source_count(
+            ...     {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+            ...      "relationships": [{"source_id": "A", "target_id": "B"},
+            ...                        {"source_id": "A", "target_id": "C"}]})
+            1  # only A has in-degree 0; B and C each receive one incoming edge
+        """
+        entities = getattr(ontology, "entities", None)
+        if entities is None:
+            entities = ontology.get("entities", []) if isinstance(ontology, dict) else []
+        if not entities:
+            return 0
+        rels = getattr(ontology, "relationships", None)
+        if rels is None:
+            rels = ontology.get("relationships", []) if isinstance(ontology, dict) else []
+        # Collect all node IDs
+        all_ids: set = set()
+        for e in entities:
+            eid = getattr(e, "id", None) or (e.get("id") if isinstance(e, dict) else None)
+            if eid:
+                all_ids.add(eid)
+        # Collect IDs that appear as targets (have incoming edges)
+        has_incoming: set = set()
+        for r in rels:
+            tgt = getattr(r, "target_id", None) or (r.get("target_id") if isinstance(r, dict) else None)
+            if tgt is None:
+                tgt = getattr(r, "target", None) or (r.get("target") if isinstance(r, dict) else None)
+            if tgt:
+                has_incoming.add(tgt)
+        return sum(1 for nid in all_ids if nid not in has_incoming)
+
+
 __all__ = [
     'LogicValidator',
     'ValidationResult',

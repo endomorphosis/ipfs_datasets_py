@@ -2470,3 +2470,28 @@ class OntologyPipeline:
             for i in range(lag, n)
         ) / n
         return cov / variance
+
+    def run_score_quartile_dispersion(self) -> float:
+        """Return the Quartile Coefficient of Dispersion (QCD) of run overall scores.
+
+        QCD = (Q3 - Q1) / (Q3 + Q1).  Unlike IQR, QCD is unit-free and can
+        be compared across pipelines with different score magnitudes.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when fewer than 4 runs or when
+            ``Q3 + Q1 == 0``.
+
+        Example::
+
+            >>> pipeline.run_score_quartile_dispersion()
+            0.0  # fewer than 4 runs
+        """
+        if len(self._run_history) < 4:
+            return 0.0
+        scores = sorted(r.score.overall for r in self._run_history)
+        n = len(scores)
+        q1 = scores[n // 4]
+        q3 = scores[(3 * n) // 4]
+        if q3 + q1 == 0.0:
+            return 0.0
+        return (q3 - q1) / (q3 + q1)
