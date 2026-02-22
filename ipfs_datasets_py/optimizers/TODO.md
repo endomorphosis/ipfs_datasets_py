@@ -83,6 +83,7 @@ Use this as the always-on randomizer. Keep 3-5 items active, one per track. When
 - [x] (P2) [obs] Emit structured per-run JSON log in `OntologyPipeline.run()` (score/domain/duration)
   - Done 2026-02-21: added PIPELINE_RUN JSON log with duration, counts, and score.
 - [ ] (P3) [docs] Write module-level docstrings for `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py`
+  - All three already have comprehensive module-level docstrings; `ontology_pipeline.py` also has one.
 - [x] (P2) [api] Add `OntologyGenerator.__call__` shorthand for `generate_ontology`
   - Done 2026-02-21: added __call__ delegate to generate_ontology.
 - [x] (P2) [tests] Add coverage for PIPELINE_RUN JSON log payload in OntologyPipeline
