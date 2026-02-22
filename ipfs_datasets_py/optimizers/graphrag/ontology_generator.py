@@ -5993,6 +5993,35 @@ class OntologyGenerator:
             return 0.0
         return sum(getattr(r, "confidence", 0.0) or 0.0 for r in rels) / len(rels)
 
+    def entity_confidence_range(self, result: "EntityExtractionResult") -> float:
+        """Return the range (max - min) of entity confidence values.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float range; 0.0 when fewer than 2 entities.
+        """
+        entities = result.entities or []
+        if len(entities) < 2:
+            return 0.0
+        confs = [getattr(e, "confidence", 0.0) or 0.0 for e in entities]
+        return max(confs) - min(confs)
+
+    def relationship_min_confidence(self, result: "EntityExtractionResult") -> float:
+        """Return the minimum confidence across all relationships.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float minimum; 0.0 when no relationships.
+        """
+        rels = result.relationships or []
+        if not rels:
+            return 0.0
+        return min(getattr(r, "confidence", 0.0) or 0.0 for r in rels)
+
 
 __all__ = [
     'OntologyGenerator',

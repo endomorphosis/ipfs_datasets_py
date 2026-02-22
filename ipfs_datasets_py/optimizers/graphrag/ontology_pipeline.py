@@ -1741,3 +1741,17 @@ class OntologyPipeline:
         if len(self._run_history) < 2:
             return 0.0
         return self._run_history[-1].score.overall - self._run_history[0].score.overall
+
+    def run_improvement_rate(self) -> float:
+        """Return the fraction of consecutive run pairs where score improved.
+
+        Returns:
+            Float in [0, 1]; 0.0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        improvements = sum(
+            1 for i in range(len(self._run_history) - 1)
+            if self._run_history[i + 1].score.overall > self._run_history[i].score.overall
+        )
+        return improvements / (len(self._run_history) - 1)

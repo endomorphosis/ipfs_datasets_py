@@ -3643,6 +3643,43 @@ class OntologyOptimizer:
         return sum(1 for e in self._history if e.average_score > rolling)
 
 
+    def history_first(self) -> float:
+        """Return the average_score of the first history entry.
+
+        Returns:
+            Float score; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        return self._history[0].average_score
+
+    def history_last(self) -> float:
+        """Return the average_score of the most recent history entry.
+
+        Returns:
+            Float score; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        return self._history[-1].average_score
+
+    def score_first(self) -> float:
+        """Alias for history_first — returns the first recorded average_score.
+
+        Returns:
+            Float score; 0.0 when history is empty.
+        """
+        return self.history_first()
+
+    def score_last(self) -> float:
+        """Alias for history_last — returns the most recent average_score.
+
+        Returns:
+            Float score; 0.0 when history is empty.
+        """
+        return self.history_last()
+
+
 # Export public API
 __all__ = [
     'OntologyOptimizer',

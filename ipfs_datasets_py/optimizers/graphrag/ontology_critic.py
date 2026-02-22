@@ -3974,6 +3974,18 @@ class OntologyCritic(BaseCritic):
             return 0.0
         return sum(getattr(score, d, 0.0) for d in self._DIMENSIONS) / len(self._DIMENSIONS)
 
+    def dimension_below_threshold(self, score: "CriticScore", threshold: float = 0.5) -> int:
+        """Count how many dimensions in a CriticScore fall below *threshold*.
+
+        Args:
+            score: CriticScore to evaluate.
+            threshold: Exclusive upper bound. Defaults to 0.5.
+
+        Returns:
+            Integer count of dimensions with value < threshold.
+        """
+        return sum(1 for d in self._DIMENSIONS if getattr(score, d, 0.0) < threshold)
+
 
 # Export public API
 __all__ = [
