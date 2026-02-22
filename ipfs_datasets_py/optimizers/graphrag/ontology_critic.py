@@ -4759,6 +4759,34 @@ class OntologyCritic(BaseCritic):
         std = variance ** 0.5
         return min(abs((v - mean) / std) for v in vals)
 
+    def score_dimension_mean_abs_deviation(self, score: "CriticScore") -> float:
+        """Return the Mean Absolute Deviation (MAD) of the six CriticScore dimensions.
+
+        Computes the average of ``|dim_value − mean_of_dims|`` across all six
+        dimensions (completeness, consistency, clarity, granularity,
+        relationship_coherence, domain_alignment).  This is the *feature-space*
+        MAD of a single :class:`CriticScore` instance, **not** the MAD of a
+        historical series.
+
+        Returns:
+            Float ≥ 0.0; ``0.0`` when all six dimension values are equal.
+
+        Example::
+
+            >>> s = CriticScore(completeness=0.5, consistency=0.5,
+            ...                  clarity=0.5, granularity=0.5,
+            ...                  relationship_coherence=0.5, domain_alignment=0.5)
+            >>> critic.score_dimension_mean_abs_deviation(s)
+            0.0  # all dims equal
+        """
+        dims = [
+            "completeness", "consistency", "clarity",
+            "granularity", "relationship_coherence", "domain_alignment",
+        ]
+        vals = [getattr(score, d, 0.0) for d in dims]
+        mean = sum(vals) / len(vals)
+        return sum(abs(v - mean) for v in vals) / len(vals)
+
 
 # Export public API
 __all__ = [

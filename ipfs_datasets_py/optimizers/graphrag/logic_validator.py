@@ -4464,6 +4464,35 @@ class LogicValidator:
         non_singletons = sum(1 for s in sizes if s > 1)
         return non_singletons / len(sizes)
 
+    def node_in_cycle_fraction(self, ontology: Any) -> float:
+        """Return the fraction of nodes that belong to a non-singleton SCC.
+
+        A node is "in a cycle" when it belongs to a strongly connected
+        component of size ≥ 2 (i.e. there is at least one cycle that passes
+        through it).  This method counts all such nodes and divides by the
+        total node count.
+
+        Args:
+            ontology: Ontology object or dict — same format accepted by
+                :meth:`strongly_connected_component_sizes`.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` for empty graphs or pure DAGs.
+
+        Example::
+
+            >>> lv.node_in_cycle_fraction({"entities": [], "relationships": []})
+            0.0
+        """
+        sizes = self.strongly_connected_component_sizes(ontology)
+        if not sizes:
+            return 0.0
+        total_nodes = sum(sizes)
+        if total_nodes == 0:
+            return 0.0
+        nodes_in_cycles = sum(s for s in sizes if s > 1)
+        return nodes_in_cycles / total_nodes
+
 
 __all__ = [
     'LogicValidator',

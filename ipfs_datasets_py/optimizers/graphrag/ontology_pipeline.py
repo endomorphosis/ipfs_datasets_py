@@ -2641,3 +2641,29 @@ class OntologyPipeline:
         fd = [scores[i + 1] - scores[i] for i in range(n - 1)]
         return max(fd) - min(fd)
 
+    def run_score_velocity_std(self) -> float:
+        """Return the population standard deviation of run-score first differences.
+
+        Computes the first differences ``fd[i] = scores[i+1] - scores[i]`` of
+        run overall scores and returns their population standard deviation.
+        A value of ``0.0`` means every step is the same size (constant velocity).
+        A larger value indicates that step sizes vary.
+
+        Returns:
+            Float ≥ 0.0; ``0.0`` when fewer than 2 runs are recorded (no first
+            differences exist).
+
+        Example::
+
+            >>> pipeline.run_score_velocity_std()
+            0.0  # fewer than 2 runs
+        """
+        n = len(self._run_history)
+        if n < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        fd = [scores[i + 1] - scores[i] for i in range(n - 1)]
+        mean_fd = sum(fd) / len(fd)
+        variance = sum((d - mean_fd) ** 2 for d in fd) / len(fd)
+        return variance ** 0.5
+

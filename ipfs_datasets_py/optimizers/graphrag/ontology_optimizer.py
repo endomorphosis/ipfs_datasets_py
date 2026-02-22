@@ -5342,6 +5342,28 @@ class OntologyOptimizer:
         below = sum(1 for s in scores if s < mean)
         return below / len(scores)
 
+    def score_above_target_count(self, target: float = 0.7) -> int:
+        """Return the number of history entries with score strictly above *target*.
+
+        Unlike :meth:`above_target_rate`, which returns a fraction, this method
+        returns the raw integer count.  Useful when an absolute count is
+        preferable to a relative frequency.
+
+        Args:
+            target: Score threshold.  Default ``0.7``.
+
+        Returns:
+            Integer ≥ 0; ``0`` when the history is empty.
+
+        Example::
+
+            >>> opt.score_above_target_count(target=0.7)
+            0  # empty history
+        """
+        if not self._history:
+            return 0
+        return sum(1 for e in self._history if e.average_score > target)
+
 
 # Export public API
 __all__ = [

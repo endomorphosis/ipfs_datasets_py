@@ -2099,11 +2099,25 @@ Key fix: `scc_non_singleton_fraction` counts SCCs with `size > 1` and divides by
 
 41 tests in `test_batch_227_features.py` — all passing.
 
-## Batch 228+ Backlog
+## Batch 228 — Completed 2026-02-22
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_above_target_count(target=0.7)` — count scores strictly above target; 0 for empty
-- [ ] (P2) [graphrag] `OntologyCritic.score_dimension_mean_abs_deviation(score)` — MAD of 6 CriticScore dims; 0.0 for uniform
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_type_ratio(result, type_name)` — fraction of entities with given type; 0.0 for empty
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_below_mean_count()` — count entries strictly below mean final_score; complement of feedback_above_mean_count
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_velocity_std()` — population std of first differences; 0.0 for <2 runs
-- [ ] (P2) [graphrag] `LogicValidator.node_in_cycle_fraction(ontology)` — fraction of nodes that belong to a non-singleton SCC; 0.0 for empty
+**New methods implemented:**
+- `OntologyOptimizer.score_above_target_count(target=0.7)` — raw count of history entries strictly above target; returns int; consistent with `above_target_rate`
+- `OntologyCritic.score_dimension_mean_abs_deviation(score)` — MAD of 6 CriticScore dims; mean |dim - mean_of_dims|; 0.0 for uniform/all-equal
+- `OntologyPipeline.run_score_velocity_std()` — population std of first-differences; 0.0 for <2 runs or constant steps
+- `LogicValidator.node_in_cycle_fraction(ontology)` — fraction of nodes in non-singleton SCCs; 0.0 for empty/pure DAG; ≥ scc_non_singleton_fraction
+
+**Stale (already implemented, marked [x]):**
+- [x] `OntologyGenerator.entity_type_ratio(result)` — exists at line 5796 but returns a dict of all types (different from the proposed `(result, type_name) → float` variant); method name taken, so variant is moot
+- [x] `OntologyLearningAdapter.feedback_below_mean_count()` — already implemented at line 1644
+
+45 tests in `test_batch_228_features.py` — all passing.
+
+## Batch 229+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_above_target_fraction(target=0.7)` — same as `above_target_rate`; alias; verify or implement
+- [ ] (P2) [graphrag] `OntologyCritic.score_dimension_energy(score)` — sum of squares of 6 dims; always non-negative; 0.0 for all-zero
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_entropy()` — Shannon entropy of bucketed confidence values; 0.0 for empty
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_trend_slope()` — least-squares slope of final_score over entry index; 0.0 for <2
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_velocity_skewness()` — population skewness of first differences; 0.0 for <3 runs
+- [ ] (P2) [graphrag] `LogicValidator.dag_fraction(ontology)` — fraction of nodes NOT in any cycle (complement of node_in_cycle_fraction); 0.0 for empty
