@@ -317,25 +317,30 @@ def get_parser(language: str) -> BaseParser:
     # For now, return a basic parser - will be replaced with actual implementations
     if language == Language.ENGLISH:
         # Import existing English parser from native module
-        from ..native.nl_converter import NLConverter
+        from ..native.nl_converter import NaturalLanguageConverter
         
         class EnglishParserAdapter(BaseParser):
             def __init__(self):
                 super().__init__("en")
-                self._converter = NLConverter()
+                self._converter = NaturalLanguageConverter()
             
             def parse_impl(self, text: str) -> ParseResult:
                 try:
-                    formula = self._converter.parse(text)
-                    return ParseResult(
-                        formula=formula,
-                        confidence=0.8,
-                        success=True
-                    )
+                    result = self._converter.convert_to_dcec(text)
+                    if result.success:
+                        return ParseResult(
+                            formula=result.dcec_formula,
+                            confidence=result.confidence,
+                            success=True
+                        )
+                    else:
+                        pr = ParseResult()
+                        pr.add_error(result.error_message or "Conversion failed")
+                        return pr
                 except Exception as e:
-                    result = ParseResult()
-                    result.add_error(str(e))
-                    return result
+                    pr = ParseResult()
+                    pr.add_error(str(e))
+                    return pr
         
         return EnglishParserAdapter()
     

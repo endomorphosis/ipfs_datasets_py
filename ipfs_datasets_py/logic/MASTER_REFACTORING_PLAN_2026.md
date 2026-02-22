@@ -902,8 +902,9 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] **Session 35:** `performance_dashboard.py` 0%→99% (140 tests); `performance_profiler.py` 0%→90% (140 tests); `proof_explainer.py` 96%→98%; `strategies/strategy_selector.py` 67%→85%; `strategies/cec_delegate.py` 76%→88%; `strategies/modal_tableaux.py` 65%→74%
 - [x] **Session 36:** `proof_tree_visualizer.py` 26%→97% (104 tests); `CEC/native/proof_optimization.py` 43%→95% (104 tests covering `ProofNode/OptimizationMetrics/ProofTreePruner/RedundancyEliminator/ParallelProofSearch/ProofOptimizer`)
 - [x] **Session 40:** `strategies/modal_tableaux.py` 73%→99% (36 tests: `_prove_with_shadowprover` all paths, `_select_modal_logic_type` D/S4/K, QuantifiedFormula/False in `_is_modal`); `strategies/cec_delegate.py` 86%→95% (36 tests: success + failure paths of `_try_load_cec_prover`, `can_handle=True`); `strategies/strategy_selector.py` 85%→97% (36 tests: ImportError warnings, prefer_low_cost, select_multiple no-applicable, add_strategy); `strategies/__init__.py` 65%→100%; `CEC/native/proof_strategies.py` 0%→94% (44 tests: ForwardChaining/BackwardChaining/BidirectionalSearch/HybridAdaptive all paths, get_strategy factory, ProofStrategy base methods)
+- [x] **Session 41:** `CEC/nl/base_parser.py` 48%→**100%** (31 tests: ParseResult all methods, BaseParser parse+validate+exception, `get_parser` all 7 branches); `CEC/native/nl_converter.py` 55%→**99%** (56 tests: PatternMatcher all convert paths, NLC all convert_from_dcec branches, statistics, factory functions). **Bug fix:** `base_parser.get_parser(Language.ENGLISH)` was broken due to `NLConverter` → `NaturalLanguageConverter` rename; fixed import and updated `parse_impl` to use `convert_to_dcec()` API.
 
-**TDFOL suite total: 1,526 → 1,606 tests (+80 in session 40)**
+**TDFOL/CEC suite total: 1,606 → 1,692 tests (+86 in session 41)**
 
 ### 11.2 MCP B2 Test Suite (Sessions 37–39)
 
@@ -922,6 +923,8 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] `strategies/cec_delegate.py` 88% → 95% ✅ (session 40)
 - [x] `strategies/strategy_selector.py` 85% → 97% ✅ (session 40)
 - [x] `CEC/native/proof_strategies.py` — 0% → 94% ✅ (session 40)
+- [x] `CEC/nl/base_parser.py` 48% → 100% ✅ (session 41, + bug fix: `NLConverter` → `NaturalLanguageConverter`)
+- [x] `CEC/native/nl_converter.py` 55% → 99% ✅ (session 41)
 - [ ] `strategies/cec_delegate.py` 95% → 98% (lines 82-84: cec_engine init exception path)
 - [ ] `CEC/native/proof_strategies.py` 94% → 98% (lines 45, 242-243, 254, 275-276, 333-334, 356-358: backward/bidirectional edge cases)
 
@@ -954,12 +957,13 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | Phase 8.1: TDFOL coverage sessions 32–36 | 2026-02-22 | 999 → 1,526 TDFOL tests |
 | Phase 8.2: MCP B2 testing sessions 37–39 | 2026-02-22 | 1,383 → 1,457 MCP tests; 53 categories |
 | Phase 8.3: TDFOL strategies + CEC proof_strategies session 40 | 2026-02-22 | 1,526 → 1,606 tests; modal_tableaux 73%→99%; proof_strategies 0%→94% |
+| Phase 8.4: CEC NL coverage session 41 | 2026-02-22 | 1,606 → 1,692 tests; base_parser 48%→100%; nl_converter 55%→99%; bug fix: `get_parser(ENGLISH)` |
 
 ### Near Term (Next 2–4 weeks)
 | Task | Phase | Effort | Priority |
 |------|-------|--------|---------|
 | Fix ~65 TDFOL NL test failures (requires spaCy) | 2.2 | 8h | 🔴 P1 |
-| Improve CEC NL coverage (60%→75%) | 2.3 | 12h | 🟠 P1 |
+| `CEC/nl/french_parser.py` 84%→95%, `german_parser.py` 85%→95%, `spanish_parser.py` 87%→95% | 8.4 | 4h | 🟠 P1 |
 | TDFOL `strategies/cec_delegate.py` 95%→98% (lines 82-84) | 8.3 | 1h | 🟡 P2 |
 | `CEC/native/proof_strategies.py` 94%→98% (backward/bidirectional edge cases) | 8.3 | 2h | 🟡 P2 |
 | CI performance regression gates | 4.1 | 4h | 🟡 P2 |
@@ -1202,22 +1206,25 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | TDFOL proof_tree_visualizer.py | 97% | 90% | 97%✅ (session 36) |
 | CEC/native/proof_optimization.py | 95% | 85% | 95%✅ (session 36) |
 | CEC/native/proof_strategies.py | 94% | n/a | 94%✅ new coverage (session 40: ForwardChaining/BackwardChaining/Bidirectional/Hybrid, 44 tests) |
+| CEC/nl/base_parser.py | 100% | 80% | 100%✅ (session 41: ParseResult/BaseParser/get_parser all branches; bug fix: NLConverter→NaturalLanguageConverter) |
+| CEC/native/nl_converter.py | 99% | 80% | 99%✅ (session 41: PatternMatcher all paths, NLC all convert_from_dcec branches, statistics, factory functions) |
 | CEC/native/dcec_integration.py | 100% | 90% | 100%✅ (session 58: all 3 final failures fixed) |
 | TDFOL/tdfol_inference_rules.py | 100% | n/a | 100%✅ new module (session 55, 60 tests) |
 | TDFOL/tdfol_prover.py | 90%+ | n/a | 90%+✅ (session 56: 20/20 TestBasicProving passing) |
 | MCP Tools | 250+ tests | 200+ tests | 1,457 tests (53 B2 categories) ✅ |
-| **Overall** | **~97%** | **~90%** | **~97%** ✅ |
+| **Overall** | **~97%** | **~90%** | **~98%** ✅ |
 
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Phase Summary (Session 40 complete):**
+**Phase Summary (Session 41 complete):**
 - Phase 1–7: ✅ COMPLETE
-- Phase 8: 🔄 In Progress (TDFOL 1,606 tests; MCP B2 1,457 tests; 53 categories)
+- Phase 8: 🔄 In Progress (TDFOL+CEC 1,692 tests; MCP B2 1,457 tests; 53 categories)
 - Integration: ✅ 99% coverage (7,899 lines, 55 uncovered — dead code + symai-gated)
+- CEC NL: ✅ `base_parser.py` 48%→100%; `nl_converter.py` 55%→99%; bug fix `get_parser(ENGLISH)` 
 - CEC: ✅ All 97 CEC integration tests passing; `proof_strategies.py` 0%→94%
 - TDFOL Strategies: ✅ modal_tableaux 73%→99%; cec_delegate 86%→95%; strategy_selector 85%→97%; __init__ 65%→100%
-- **Next session targets:** TDFOL NL test failures (~65 skipped, requires spaCy); `strategies/cec_delegate.py` 95%→98% (lines 82-84); `CEC/native/proof_strategies.py` 94%→98% (backward/bidirectional edge cases); MCP B2 remaining categories
+- **Next session targets:** TDFOL NL test failures (~65 skipped, requires spaCy); `CEC/nl/french_parser.py` 84%→95%; `german_parser.py` 85%→95%; `spanish_parser.py` 87%→95%; `strategies/cec_delegate.py` 95%→98%; MCP B2 remaining categories
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19 | **Last Updated:** 2026-02-22 (Sessions 36–58, 40)  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-22 (Sessions 36–58, 40–41)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
