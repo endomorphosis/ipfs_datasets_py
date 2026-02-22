@@ -3408,6 +3408,41 @@ class OntologyOptimizer:
         diffs = [scores[i + 1] - scores[i] for i in range(n - 1)]
         return sum(1 for i in range(1, len(diffs)) if diffs[i - 1] * diffs[i] < 0)
 
+    def history_momentum_score(self, window: int = 5, alpha: float = 0.5) -> float:
+        """Return a momentum score: exponentially weighted sum of recent deltas.
+
+        Positive means accelerating improvement; negative means decline.
+
+        Args:
+            window: Number of recent consecutive differences to include.
+            alpha: Decay factor applied to older differences (default 0.5).
+
+        Returns:
+            Float; 0.0 when fewer than 2 history entries.
+        """
+        scores = [e.average_score for e in self._history]
+        if len(scores) < 2:
+            return 0.0
+        diffs = [scores[i + 1] - scores[i] for i in range(len(scores) - 1)]
+        recent_diffs = diffs[-window:]
+        result = 0.0
+        for i, d in enumerate(reversed(recent_diffs)):
+            result += (alpha ** i) * d
+        return result
+
+    def score_signed_sum(self) -> float:
+        """Return the sum of consecutive signed deltas (score[i+1] - score[i]).
+
+        Equivalent to score_last - score_first.
+
+        Returns:
+            Float; 0.0 when fewer than 2 history entries.
+        """
+        scores = [e.average_score for e in self._history]
+        if len(scores) < 2:
+            return 0.0
+        return scores[-1] - scores[0]
+
 
 # Export public API
 __all__ = [

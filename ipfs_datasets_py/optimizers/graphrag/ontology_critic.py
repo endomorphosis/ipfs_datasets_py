@@ -3832,6 +3832,37 @@ class OntologyCritic(BaseCritic):
         below = sum(1 for h in history if h.overall < overall)
         return 100.0 * below / len(history)
 
+    def score_classification(self, score: "CriticScore") -> str:  # type: ignore[name-defined]
+        """Return a human-readable quality bucket for *score*.
+
+        Buckets: "excellent" (≥0.85), "good" (≥0.70), "fair" (≥0.50), "poor" (<0.50).
+
+        Args:
+            score: ``CriticScore`` to classify.
+
+        Returns:
+            String label.
+        """
+        o = score.overall
+        if o >= 0.85:
+            return "excellent"
+        if o >= 0.70:
+            return "good"
+        if o >= 0.50:
+            return "fair"
+        return "poor"
+
+    def dimension_rank_order(self, score: "CriticScore") -> list:  # type: ignore[name-defined]
+        """Return dimension names sorted from highest to lowest value.
+
+        Args:
+            score: ``CriticScore`` to inspect.
+
+        Returns:
+            List of 6 dimension name strings.
+        """
+        return sorted(self._DIMENSIONS, key=lambda d: getattr(score, d, 0.0), reverse=True)
+
 
 # Export public API
 __all__ = [

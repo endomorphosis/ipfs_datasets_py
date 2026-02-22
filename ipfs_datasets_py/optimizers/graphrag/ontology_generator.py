@@ -5803,6 +5803,45 @@ class OntologyGenerator:
             return 0.0
         return sum(getattr(e, "confidence", 0.5) for e in entities) / len(entities)
 
+    def relationship_bidirectionality_rate(self, result: Any) -> float:
+        """Return the fraction of entity pairs with edges in both directions.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float in [0, 1]; 0.0 when fewer than 2 relationships.
+        """
+        rels = result.relationships or []
+        if len(rels) < 2:
+            return 0.0
+        pairs: set = set()
+        bidir = 0
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src and tgt:
+                if (tgt, src) in pairs:
+                    bidir += 2
+                pairs.add((src, tgt))
+        if not pairs:
+            return 0.0
+        return bidir / len(pairs)
+
+    def entity_text_length_mean(self, result: Any) -> float:
+        """Return the mean length of entity text strings.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float; 0.0 when no entities.
+        """
+        entities = result.entities or []
+        if not entities:
+            return 0.0
+        return sum(len(getattr(e, "text", "") or "") for e in entities) / len(entities)
+
 
 __all__ = [
     'OntologyGenerator',

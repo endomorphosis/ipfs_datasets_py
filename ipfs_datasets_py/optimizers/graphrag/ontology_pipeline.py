@@ -1630,3 +1630,27 @@ class OntologyPipeline:
         if not self._run_history:
             return -1
         return min(range(len(self._run_history)), key=lambda i: self._run_history[i].score.overall)
+
+    def run_score_delta_sum(self) -> float:
+        """Return the sum of consecutive run-score deltas (last - first overall).
+
+        Returns:
+            Float; 0.0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        return scores[-1] - scores[0]
+
+    def run_score_improving_fraction(self) -> float:
+        """Return the fraction of consecutive pairs where score improved.
+
+        Returns:
+            Float in [0, 1]; 0.0 when fewer than 2 runs.
+        """
+        n = len(self._run_history)
+        if n < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        improving = sum(1 for i in range(1, n) if scores[i] > scores[i - 1])
+        return improving / (n - 1)

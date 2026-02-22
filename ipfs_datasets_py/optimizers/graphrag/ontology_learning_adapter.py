@@ -1701,3 +1701,37 @@ class OntologyLearningAdapter:
             return 0.0
         scores = [r.final_score for r in self._feedback]
         return max(scores) - min(scores)
+
+    def feedback_weighted_mean(self, weights: "list | None" = None) -> float:
+        """Return a positionally weighted mean of feedback scores.
+
+        Weights are applied in order (index 0 = oldest record).  If *weights*
+        is ``None``, later records are given higher weights (linear ramp).
+
+        Args:
+            weights: Optional list of non-negative floats (same length as
+                feedback). ``None`` uses a linear ramp ``[1, 2, …, n]``.
+
+        Returns:
+            Float; 0.0 when no feedback records.
+        """
+        if not self._feedback:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        n = len(scores)
+        if weights is None:
+            weights = [i + 1 for i in range(n)]
+        total_w = sum(weights)
+        if total_w == 0.0:
+            return 0.0
+        return sum(w * s for w, s in zip(weights, scores)) / total_w
+
+    def feedback_last_score(self) -> float:
+        """Return the most recent feedback score.
+
+        Returns:
+            Float; 0.0 when no feedback records.
+        """
+        if not self._feedback:
+            return 0.0
+        return self._feedback[-1].final_score
