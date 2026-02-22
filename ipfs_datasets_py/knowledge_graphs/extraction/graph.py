@@ -31,8 +31,9 @@ Example:
 Phase: Phase 3 Task 3.4 - KnowledgeGraph class extraction
 """
 
-from typing import Dict, List, Optional, Any, Tuple, Set, Union
+from typing import Callable, Dict, List, Optional, Any, Tuple, Set, Union
 from collections import defaultdict
+from dataclasses import dataclass, field
 import json
 
 from ipfs_datasets_py.knowledge_graphs.extraction.types import (
@@ -664,3 +665,281 @@ class KnowledgeGraph:
 
         # Serialize to requested format
         return g.serialize(format=format)
+
+    def diff(self, other: 'KnowledgeGraph') -> 'KnowledgeGraphDiff':
+        """Compute the structural difference between this graph and another.
+
+        Entities are matched by (entity_type, name) fingerprint; relationships
+        are matched by (relationship_type, source_fingerprint, target_fingerprint).
+
+        Args:
+            other (KnowledgeGraph): The graph to compare against.
+
+        Returns:
+            KnowledgeGraphDiff: The diff describing what was added, removed, and
+            modified when moving from *self* to *other*.
+
+        Example:
+            ```python
+            diff = kg1.diff(kg2)
+            if not diff.is_empty:
+                print(diff.summary())
+                kg1.apply_diff(diff)
+            ```
+        """
+        def _entity_fp(entity: Entity) -> Tuple[str, str]:
+            return (entity.entity_type or "", entity.name or "")
+
+        def _rel_fp(
+            rel: Relationship,
+            entity_map: Dict[str, Entity],
+        ) -> Tuple[str, Tuple[str, str], Tuple[str, str]]:
+            src = entity_map.get(rel.source_id or "")
+            tgt = entity_map.get(rel.target_id or "")
+            src_fp = _entity_fp(src) if src else ("", rel.source_id or "")
+            tgt_fp = _entity_fp(tgt) if tgt else ("", rel.target_id or "")
+            return (rel.relationship_type or "", src_fp, tgt_fp)
+
+        self_ent: Dict[Tuple[str, str], Entity] = {
+            _entity_fp(e): e for e in self.entities.values()
+        }
+        other_ent: Dict[Tuple[str, str], Entity] = {
+            _entity_fp(e): e for e in other.entities.values()
+        }
+
+        # Entities added (in other, not in self)
+        added_entities = [
+            e.to_dict() for fp, e in other_ent.items() if fp not in self_ent
+        ]
+        # Entities removed (in self, not in other)
+        removed_entity_ids = [
+            self_ent[fp].entity_id for fp in self_ent if fp not in other_ent
+        ]
+        # Entities modified (same fingerprint, different properties)
+        modified_entities: List[Dict[str, Any]] = []
+        for fp in self_ent:
+            if fp in other_ent:
+                se = self_ent[fp]
+                oe = other_ent[fp]
+                old_props = dict(se.properties or {})
+                new_props = dict(oe.properties or {})
+                if old_props != new_props:
+                    modified_entities.append({
+                        "entity_id": se.entity_id,
+                        "fingerprint": list(fp),
+                        "old_properties": old_props,
+                        "new_properties": new_props,
+                    })
+
+        self_rel: Dict = {
+            _rel_fp(r, self.entities): r for r in self.relationships.values()
+        }
+        other_rel: Dict = {
+            _rel_fp(r, other.entities): r for r in other.relationships.values()
+        }
+
+        # Relationships added (in other, not in self)
+        added_relationships = [
+            r.to_dict(include_entities=True)
+            for fp, r in other_rel.items()
+            if fp not in self_rel
+        ]
+        # Relationships removed (in self, not in other)
+        removed_relationship_ids = [
+            self_rel[fp].relationship_id for fp in self_rel if fp not in other_rel
+        ]
+
+        return KnowledgeGraphDiff(
+            added_entities=added_entities,
+            removed_entity_ids=removed_entity_ids,
+            added_relationships=added_relationships,
+            removed_relationship_ids=removed_relationship_ids,
+            modified_entities=modified_entities,
+        )
+
+    def apply_diff(self, diff: 'KnowledgeGraphDiff') -> None:
+        """Apply a diff to this graph in-place.
+
+        Removes entities/relationships listed in *diff.removed_entity_ids* and
+        *diff.removed_relationship_ids* (entity removal cascades to its relationships),
+        adds entities from *diff.added_entities*, applies property changes from
+        *diff.modified_entities*, and adds relationships from *diff.added_relationships*.
+
+        Args:
+            diff (KnowledgeGraphDiff): The diff to apply (as produced by
+                ``other_graph.diff(self)`` or ``self.diff(other_graph)``).
+
+        Example:
+            ```python
+            diff = original.diff(updated)
+            copy = KnowledgeGraph.from_dict(original.to_dict())
+            copy.apply_diff(diff)
+            ```
+        """
+        # 1. Remove entities (cascades to their relationships)
+        for eid in list(diff.removed_entity_ids):
+            if eid not in self.entities:
+                continue
+            entity = self.entities[eid]
+            self.entity_types[entity.entity_type].discard(eid)
+            self.entity_names[entity.name].discard(eid)
+            for rid in list(self.entity_relationships.get(eid, set())):
+                if rid in self.relationships:
+                    rel = self.relationships.pop(rid)
+                    self.relationship_types[rel.relationship_type].discard(rid)
+                    other_eid = rel.target_id if rel.source_id == eid else rel.source_id
+                    if other_eid and other_eid != eid:
+                        self.entity_relationships[other_eid].discard(rid)
+            self.entity_relationships.pop(eid, None)
+            del self.entities[eid]
+
+        # 2. Remove standalone relationships
+        for rid in list(diff.removed_relationship_ids):
+            if rid not in self.relationships:
+                continue
+            rel = self.relationships.pop(rid)
+            self.relationship_types[rel.relationship_type].discard(rid)
+            for eid in (rel.source_id, rel.target_id):
+                if eid:
+                    self.entity_relationships[eid].discard(rid)
+
+        # 3. Add new entities; track old_id → new entity_id mapping
+        entity_id_map: Dict[str, str] = {eid: eid for eid in self.entities}
+        for e_dict in diff.added_entities:
+            new_entity = self.add_entity(Entity.from_dict(e_dict))
+            entity_id_map[e_dict.get("entity_id", new_entity.entity_id)] = (
+                new_entity.entity_id
+            )
+
+        # 4. Apply property modifications
+        for mod in diff.modified_entities:
+            eid = mod.get("entity_id", "")
+            if eid in self.entities:
+                self.entities[eid].properties = dict(mod.get("new_properties") or {})
+
+        # 5. Add new relationships
+        for r_dict in diff.added_relationships:
+            src_data = r_dict.get("source")
+            tgt_data = r_dict.get("target")
+
+            def _resolve(data: Any) -> Optional[Entity]:
+                if isinstance(data, dict):
+                    mapped = entity_id_map.get(data.get("entity_id", ""), "")
+                    if mapped and mapped in self.entities:
+                        return self.entities[mapped]
+                    # Fallback: match by name + type
+                    for e in self.entities.values():
+                        if (
+                            e.entity_type == data.get("entity_type")
+                            and e.name == data.get("name")
+                        ):
+                            return e
+                elif isinstance(data, str):
+                    mapped = entity_id_map.get(data, data)
+                    return self.entities.get(mapped)
+                return None
+
+            src_entity = _resolve(src_data)
+            tgt_entity = _resolve(tgt_data)
+            if src_entity and tgt_entity:
+                self.add_relationship(
+                    r_dict.get("relationship_type", "related_to"),
+                    source=src_entity,
+                    target=tgt_entity,
+                    properties=dict(r_dict.get("properties") or {}),
+                    confidence=float(r_dict.get("confidence", 1.0)),
+                    bidirectional=bool(r_dict.get("bidirectional", False)),
+                )
+
+
+@dataclass
+class KnowledgeGraphDiff:
+    """Structural difference between two :class:`KnowledgeGraph` instances.
+
+    Produced by :meth:`KnowledgeGraph.diff`; consumed by
+    :meth:`KnowledgeGraph.apply_diff`.
+
+    Attributes:
+        added_entities: Full entity dicts for entities present in *other* but
+            not in *self* (matched by (entity_type, name) fingerprint).
+        removed_entity_ids: entity_id values for entities present in *self*
+            but not in *other*.
+        added_relationships: Full relationship dicts (include_entities=True)
+            for relationships present in *other* but not in *self*.
+        removed_relationship_ids: relationship_id values for relationships
+            present in *self* but not in *other*.
+        modified_entities: Per-entity change dicts with keys ``entity_id``,
+            ``fingerprint``, ``old_properties``, and ``new_properties``.
+
+    Example:
+        ```python
+        diff = kg1.diff(kg2)
+        print(diff.is_empty)        # True if no change
+        print(diff.summary())       # Human-readable summary
+        kg1.apply_diff(diff)        # Transform kg1 into kg2
+        ```
+    """
+
+    added_entities: List[Dict[str, Any]] = field(default_factory=list)
+    removed_entity_ids: List[str] = field(default_factory=list)
+    added_relationships: List[Dict[str, Any]] = field(default_factory=list)
+    removed_relationship_ids: List[str] = field(default_factory=list)
+    modified_entities: List[Dict[str, Any]] = field(default_factory=list)
+
+    @property
+    def is_empty(self) -> bool:
+        """Return True when no additions, removals, or modifications are present."""
+        return not (
+            self.added_entities
+            or self.removed_entity_ids
+            or self.added_relationships
+            or self.removed_relationship_ids
+            or self.modified_entities
+        )
+
+    def summary(self) -> str:
+        """Return a one-line human-readable summary of this diff.
+
+        Returns:
+            str: Summary string, e.g.
+                ``"+2 entities, -1 entity, +0 rels, -1 rel, ~3 modified"``.
+        """
+        return (
+            f"+{len(self.added_entities)} entities, "
+            f"-{len(self.removed_entity_ids)} entities, "
+            f"+{len(self.added_relationships)} rels, "
+            f"-{len(self.removed_relationship_ids)} rels, "
+            f"~{len(self.modified_entities)} modified"
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize this diff to a plain dictionary (JSON-safe).
+
+        Returns:
+            Dict: Serializable representation of the diff.
+        """
+        return {
+            "added_entities": self.added_entities,
+            "removed_entity_ids": self.removed_entity_ids,
+            "added_relationships": self.added_relationships,
+            "removed_relationship_ids": self.removed_relationship_ids,
+            "modified_entities": self.modified_entities,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'KnowledgeGraphDiff':
+        """Reconstruct a :class:`KnowledgeGraphDiff` from a serialized dict.
+
+        Args:
+            data (Dict): As produced by :meth:`to_dict`.
+
+        Returns:
+            KnowledgeGraphDiff: The reconstructed diff.
+        """
+        return cls(
+            added_entities=list(data.get("added_entities") or []),
+            removed_entity_ids=list(data.get("removed_entity_ids") or []),
+            added_relationships=list(data.get("added_relationships") or []),
+            removed_relationship_ids=list(data.get("removed_relationship_ids") or []),
+            modified_entities=list(data.get("modified_entities") or []),
+        )

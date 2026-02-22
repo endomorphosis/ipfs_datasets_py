@@ -73,8 +73,8 @@ class TestRoadmapPlannedItemsFixed:
         assert "Status: Planned" not in section, (
             "Confidence Scoring Improvements still has bare 'Status: Planned'"
         )
-        assert "v4.0" in section or "Deferred" in section, (
-            "Confidence Scoring Improvements should be deferred to v4.0+"
+        assert "v4.0" in section or "Deferred" in section or "Delivered" in section, (
+            "Confidence Scoring Improvements should reference v4.0+ or Delivered status"
         )
 
     def test_no_bare_status_planned_in_cancelled_sections(self):

@@ -151,9 +151,10 @@ class TestMasterRefactoringPlanUpdated:
     """MASTER_REFACTORING_PLAN_2026.md: stale session 63/95 test files/3782 counts fixed."""
 
     def test_section_1_session_updated(self):
-        """Section 1 Module Snapshot heading must say session 66."""
+        """Section 1 Module Snapshot heading must say session 66 or later."""
         content = _read(_REFACTORING_PLAN)
-        assert "session 66" in content, "MASTER_REFACTORING_PLAN_2026.md section 1 must say session 66"
+        assert any(f"session {n}" in content for n in range(66, 80)), \
+            "MASTER_REFACTORING_PLAN_2026.md section 1 must say session 66 or later"
 
     def test_section_1_old_session_gone(self):
         """Stale 'session 63)' heading (not multi-session refs) must be replaced."""
@@ -167,20 +168,23 @@ class TestMasterRefactoringPlanUpdated:
             "Stale 'session 63)' heading must be replaced in MASTER_REFACTORING_PLAN_2026.md"
 
     def test_test_count_updated(self):
-        """Test count must say 3,856+, not stale 3,782."""
+        """Test count must say 3,856+ or higher (not stale 3,782)."""
         content = _read(_REFACTORING_PLAN)
-        assert "3,856+" in content, "MASTER_REFACTORING_PLAN_2026.md must show 3,856+ tests"
+        assert any(f"{n}+" in content for n in ["3,856", "3,939", "3,971"]), \
+            "MASTER_REFACTORING_PLAN_2026.md must show 3,856+ or higher test count"
 
     def test_test_files_updated(self):
-        """Test files count must say 108+, not stale 95+."""
+        """Test files count must say 108+ or higher (not stale 95+)."""
         content = _read(_REFACTORING_PLAN)
-        assert "108+" in content, "MASTER_REFACTORING_PLAN_2026.md must show 108+ test files"
+        assert any(f"{n}+" in content for n in ["108", "110"]), \
+            "MASTER_REFACTORING_PLAN_2026.md must show 108+ or higher test files"
 
     def test_document_version_updated(self):
-        """Footer Document Version must say 3.22.21, not stale 1.0."""
+        """Footer Document Version must say 3.22.21 or later (not stale 1.0)."""
         content = _read(_REFACTORING_PLAN)
-        assert "Document Version:** 3.22.21" in content, \
-            "MASTER_REFACTORING_PLAN_2026.md Document Version must be 3.22.21"
+        assert any(f"Document Version:** {v}" in content
+                   for v in ["3.22.21", "3.22.22", "3.22.23", "3.22.24"]), \
+            "MASTER_REFACTORING_PLAN_2026.md Document Version must be 3.22.21 or later"
         assert "Document Version:** 1.0" not in content, \
             "Stale Document Version: 1.0 must be gone"
 

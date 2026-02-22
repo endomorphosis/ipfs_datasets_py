@@ -1115,3 +1115,29 @@ was listed as "Priority: MEDIUM — Prioritized action items" despite all items 
 - `TestVersionAgreement` (3 tests): MASTER_STATUS/CHANGELOG/ROADMAP all agree on v3.22.23
 
 **Result: 34 passed, 0 failed** ✅
+
+### Session 70 log (2026-02-22)
+
+**Production feature: Graph diff/patch. Doc snapshot fixes.**
+
+**Production changes:**
+1. `extraction/graph.py`: Added `KnowledgeGraphDiff` dataclass — `added_entities` (full entity dicts), `removed_entity_ids`, `added_relationships` (full rel dicts), `removed_relationship_ids`, `modified_entities`; `is_empty` property; `summary()`, `to_dict()`, `from_dict()`
+2. `extraction/graph.py`: Added `KnowledgeGraph.diff(other)` — entity matching by `(entity_type, name)` fingerprint; relationship matching by `(rel_type, src_fp, tgt_fp)` triple; modified_entities reported when same-fingerprint entities have differing properties
+3. `extraction/graph.py`: Added `KnowledgeGraph.apply_diff(diff)` — removes entities with relationship cascade; removes standalone relationships; adds entities (entity_id preserved); applies property modifications; adds relationships resolving source/target via entity_id_map or name+type fallback
+4. `extraction/__init__.py`: `KnowledgeGraphDiff` added to imports and `__all__`
+
+**Documentation fixes:**
+5. `MASTER_STATUS.md`: version 3.22.23→3.22.24; `Test Files: 103 total` → `110+ total`; session 70 entry; total tests 3,939→3,971
+6. `MASTER_REFACTORING_PLAN_2026.md`: snapshot `session 66`→`session 69`; `3,856+`→`3,939+`; `Document Version: 3.22.21`→`3.22.24`; `Version: 3.22.18`→`3.22.24`
+7. `DEFERRED_FEATURES.md`: §16 Graph Diff/Patch added (✅ Implemented v3.22.24); footer Last Updated → session 70
+8. `ROADMAP.md`: Current Version 3.22.23→3.22.24; 3.22.24 row added to release table
+9. `CHANGELOG_KNOWLEDGE_GRAPHS.md`: `## [3.22.24]` section added
+
+**32 tests** in `test_master_status_session70.py` (5 classes):
+- `TestKnowledgeGraphDiff` (8 tests): import; is_empty true/false; summary +entities/-entities/~modified; to_dict/from_dict roundtrip; from_dict empty
+- `TestKnowledgeGraphDiffComputation` (7 tests): identical-empty; added-entity; removed-entity; modified-props; added-rel; removed-rel; empty-vs-nonempty
+- `TestKnowledgeGraphApplyDiff` (9 tests): empty-no-change; adds-entities; removes-entities; cascade-rel; adds-rels; removes-rels; modifies-props; roundtrip; apply-to-empty
+- `TestDocIntegritySession70` (5 tests): MASTER_STATUS version 3.22.24; test-files 110+; session70 in log; REFACTORING_PLAN doc version; 3,856+ gone
+- `TestVersionAgreement` (3 tests): MASTER_STATUS/CHANGELOG/ROADMAP all agree on v3.22.24
+
+**Result: 32 passed, 0 failed** ✅

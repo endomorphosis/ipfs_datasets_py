@@ -5,6 +5,24 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.24] - 2026-02-22
+
+### Added — Graph diff/patch feature (Session 70)
+
+**Production code changes.**
+
+- `extraction/graph.py`: Added `KnowledgeGraphDiff` dataclass — structural diff between two `KnowledgeGraph` instances; fields: `added_entities` (full entity dicts), `removed_entity_ids`, `added_relationships` (full rel dicts), `removed_relationship_ids`, `modified_entities` (per-entity old/new property dicts); `is_empty` property; `summary()`, `to_dict()`, `from_dict()` methods
+- `extraction/graph.py`: Added `KnowledgeGraph.diff(other)` — computes structural diff from self to other; entities matched by `(entity_type, name)` fingerprint; relationships matched by `(relationship_type, source_fingerprint, target_fingerprint)` triple
+- `extraction/graph.py`: Added `KnowledgeGraph.apply_diff(diff)` — applies diff in-place; cascade-removes entities (including their relationships), removes standalone relationships, adds new entities, applies property modifications, adds new relationships
+- `extraction/__init__.py`: `KnowledgeGraphDiff` exported from `__all__`
+
+### Fixed — Documentation / stale snapshot data
+
+- `MASTER_STATUS.md`: version 3.22.23→3.22.24; `Test Files: 103 total` → `110+ total (as of v3.22.24)`; session 70 entry added to session log; total tests 3,939→3,971
+- `MASTER_REFACTORING_PLAN_2026.md`: snapshot updated — `session 66`→`session 69`, `3,856+`→`3,939+`, `Document Version: 3.22.21`→`3.22.24`, `Version: 3.22.18`→`3.22.24`
+- `DEFERRED_FEATURES.md`: §16 Graph Diff/Patch added (✅ Implemented v3.22.24); Last Updated session 69→70
+- `ROADMAP.md`: Current Version 3.22.23→3.22.24; 3.22.24 row added to release table
+
 ## [3.22.23] - 2026-02-22
 
 ### Added — Deferred v4.0+ features implemented (Session 69)

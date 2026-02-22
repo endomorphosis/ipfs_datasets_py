@@ -164,7 +164,8 @@ class TestRoadmapCurrentVersionUpdate(unittest.TestCase):
         """ROADMAP.md 'Current Version' header line must say 3.22.15 or later."""
         cv_line = self._current_version_line()
         self.assertTrue(
-            any(v in cv_line for v in ("3.22.15", "3.22.16", "3.22.17", "3.22.18", "3.22.19", "3.22.20")),
+            any(v in cv_line for v in ("3.22.15", "3.22.16", "3.22.17", "3.22.18", "3.22.19", "3.22.20",
+                                       "3.22.21", "3.22.22", "3.22.23", "3.22.24")),
             f"ROADMAP.md 'Current Version' should be 3.22.15 or later; got: {cv_line!r}"
         )
 
@@ -196,7 +197,8 @@ class TestThreeDocVersionAgreement(unittest.TestCase):
         for line in _read(_ROADMAP_PATH).splitlines():
             if "Current Version" in line:
                 self.assertTrue(
-                    any(v in line for v in ("3.22.15", "3.22.16", "3.22.17", "3.22.18", "3.22.19", "3.22.20")),
+                    any(v in line for v in ("3.22.15", "3.22.16", "3.22.17", "3.22.18", "3.22.19", "3.22.20",
+                                           "3.22.21", "3.22.22", "3.22.23", "3.22.24")),
                     f"ROADMAP.md 'Current Version' should be 3.22.15+; got: {line!r}"
                 )
                 return

@@ -549,6 +549,38 @@ nodes_written, rels_written = graph.export_streaming(
 
 ---
 
+### 16. Graph Diff/Patch
+
+**Status:** ✅ Implemented (v3.22.24 — 2026-02-22)
+**Location:** `extraction/graph.py` — `KnowledgeGraphDiff`, `KnowledgeGraph.diff()`,
+             `KnowledgeGraph.apply_diff()`
+**Implementation:**
+- `KnowledgeGraphDiff` dataclass (`added_entities`, `removed_entity_ids`,
+  `added_relationships`, `removed_relationship_ids`, `modified_entities`);
+  `is_empty` property; `summary()`, `to_dict()`, `from_dict()` methods
+- `KnowledgeGraph.diff(other)` — computes structural diff; entities matched by
+  (entity_type, name) fingerprint; relationships matched by
+  (relationship_type, source_fingerprint, target_fingerprint)
+- `KnowledgeGraph.apply_diff(diff)` — applies diff in-place: cascade-removes
+  entities (with their relationships), removes standalone relationships, adds
+  new entities, applies property modifications, adds new relationships
+
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph, KnowledgeGraphDiff
+
+diff = original_kg.diff(updated_kg)
+if not diff.is_empty:
+    print(diff.summary())          # "+1 entities, -0 entities, +2 rels, ..."
+    d = diff.to_dict()             # serialize to JSON-safe dict
+    restored = KnowledgeGraphDiff.from_dict(d)  # round-trip
+    original_kg.apply_diff(diff)   # transform original into updated in-place
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session70.py`
+
+---
+
 ## How to Use This Document
 
 ### For Users
@@ -587,7 +619,7 @@ nodes_written, rels_written = graph.export_streaming(
 
 ---
 
-**Last Updated:** 2026-02-22 (session 69)  
+**Last Updated:** 2026-02-22 (session 70)  
 **Next Review:** Q3 2026  
 **Maintainer:** Knowledge Graphs Team
 
