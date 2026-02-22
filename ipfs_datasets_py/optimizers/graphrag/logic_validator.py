@@ -4313,6 +4313,46 @@ class LogicValidator:
                 has_outgoing.add(src)
         return sum(1 for nid in all_ids if nid not in has_outgoing)
 
+    def strongly_connected_component_sizes(self, ontology: Any) -> list:
+        """Return a sorted list of SCC sizes using Kosaraju's algorithm.
+
+        Each element of the returned list is the *number of nodes* in one
+        strongly connected component, sorted in descending order.  This is
+        a compact summary of the SCC structure without exposing node IDs.
+
+        Args:
+            ontology: Ontology object or dict with optional ``"entities"``
+                and ``"relationships"`` (or ``"entities"`` / ``"relationships"``
+                as attributes).  Uses ``subject_id``/``source_id`` for source
+                and ``object_id``/``target_id`` for target.
+
+        Returns:
+            List of positive integers (SCC sizes) sorted descending; ``[]``
+            when the ontology has no entities.
+
+        Example::
+
+            >>> lv.strongly_connected_component_sizes({"entities": [], "relationships": []})
+            []
+        """
+        sccs = self.strongly_connected_components(
+            ontology if isinstance(ontology, dict) else {
+                "entities": [
+                    {"id": getattr(e, "id", None)}
+                    for e in (getattr(ontology, "entities", None) or [])
+                    if getattr(e, "id", None)
+                ],
+                "relationships": [
+                    {
+                        "source_id": getattr(r, "source_id", None),
+                        "target_id": getattr(r, "target_id", None),
+                    }
+                    for r in (getattr(ontology, "relationships", None) or [])
+                ],
+            }
+        )
+        return sorted((len(scc) for scc in sccs), reverse=True)
+
 
 __all__ = [
     'LogicValidator',

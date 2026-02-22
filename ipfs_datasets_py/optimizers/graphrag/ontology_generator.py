@@ -8069,6 +8069,35 @@ class OntologyGenerator:
                 degree[tgt] += 1
         return sum(degree.values()) / len(entities)
 
+    def entity_confidence_below_threshold(
+        self,
+        result: "EntityExtractionResult",
+        threshold: float = 0.5,
+    ) -> int:
+        """Count entities whose confidence score is strictly below *threshold*.
+
+        Args:
+            result: An :class:`EntityExtractionResult` (or any object with an
+                ``entities`` attribute).
+            threshold: Upper bound (exclusive) for the low-confidence test.
+                Default ``0.5``.
+
+        Returns:
+            Non-negative integer count; ``0`` when *result* has no entities.
+
+        Example::
+
+            >>> gen.entity_confidence_below_threshold(result, threshold=0.5)
+            0  # no entities
+        """
+        entities = getattr(result, "entities", []) or []
+        count = 0
+        for e in entities:
+            conf = getattr(e, "confidence", None)
+            if conf is not None and conf < threshold:
+                count += 1
+        return count
+
 
 __all__ = [
     'OntologyGenerator',

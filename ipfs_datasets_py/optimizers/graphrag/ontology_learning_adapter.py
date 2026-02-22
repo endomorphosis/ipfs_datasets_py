@@ -2532,3 +2532,38 @@ class OntologyLearningAdapter:
         if mean == 0.0:
             return 0.0
         return iqr / mean
+
+    def feedback_improvement_streaks(self) -> int:
+        """Return the length of the longest consecutive improvement run.
+
+        An improvement step is a consecutive pair where
+        ``scores[i] > scores[i-1]``.  The method returns the length of the
+        longest such run (number of improvement *steps* in the run).
+
+        Returns:
+            Non-negative integer; ``0`` when fewer than 2 feedback records or
+            when there are no improving steps.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.3, actions={})
+            >>> adapter.apply_feedback(final_score=0.5, actions={})
+            >>> adapter.apply_feedback(final_score=0.4, actions={})
+            >>> adapter.apply_feedback(final_score=0.7, actions={})
+            >>> adapter.apply_feedback(final_score=0.9, actions={})
+            >>> adapter.feedback_improvement_streaks()
+            2  # longest streak has two consecutive improvements: 0.4→0.7 and 0.7→0.9
+        """
+        if len(self._feedback) < 2:
+            return 0
+        scores = [r.final_score for r in self._feedback]
+        best = 0
+        current = 0
+        for i in range(1, len(scores)):
+            if scores[i] > scores[i - 1]:
+                current += 1
+                if current > best:
+                    best = current
+            else:
+                current = 0
+        return best

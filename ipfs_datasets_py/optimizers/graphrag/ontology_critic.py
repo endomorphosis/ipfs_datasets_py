@@ -4590,6 +4590,42 @@ class OntologyCritic(BaseCritic):
         m4 = sum((v - mean) ** 4 for v in vals) / n
         return m4 / (variance ** 2) - 3.0
 
+    def score_dimension_skewness(self, score: "CriticScore") -> float:
+        """Return the population skewness of the six CriticScore dimension values.
+
+        Uses the standard population skewness formula:
+        ``γ₁ = m₃ / σ³`` where ``m₃`` is the third central moment and
+        ``σ`` is the population standard deviation.
+
+        A positive value indicates a right-tailed distribution of dimension
+        scores (most dimensions are low, a few are high).  Negative indicates
+        left-tailed.
+
+        Args:
+            score: A :class:`CriticScore` instance to evaluate.
+
+        Returns:
+            Float; ``0.0`` when all six dimensions are equal (zero variance).
+
+        Example::
+
+            >>> s = CriticScore(completeness=0.0, consistency=0.0,
+            ...                  clarity=0.0, granularity=0.0,
+            ...                  relationship_coherence=0.0, domain_alignment=1.0)
+            >>> critic.score_dimension_skewness(s)  # right-skewed
+            2.449...
+        """
+        dims = self._DIMENSIONS
+        vals = [getattr(score, d, 0.0) for d in dims]
+        n = len(vals)  # always 6
+        mean = sum(vals) / n
+        variance = sum((v - mean) ** 2 for v in vals) / n
+        if variance == 0.0:
+            return 0.0
+        std = variance ** 0.5
+        m3 = sum((v - mean) ** 3 for v in vals) / n
+        return m3 / (std ** 3)
+
 
 # Export public API
 __all__ = [

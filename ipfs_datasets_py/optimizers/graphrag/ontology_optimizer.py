@@ -5186,6 +5186,31 @@ class OntologyOptimizer:
             return 0.0
         return sum(trimmed) / len(trimmed)
 
+    def score_range_ratio(self) -> float:
+        """Return the range ratio of history scores.
+
+        Computed as ``(max − min) / (max + min)``.  This dimensionless
+        measure indicates how wide the score distribution is relative to
+        its midpoint.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when the history is empty or
+            when ``max + min == 0``.
+
+        Example::
+
+            >>> opt.score_range_ratio()
+            0.0  # empty history
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        lo = min(scores)
+        hi = max(scores)
+        if hi + lo == 0.0:
+            return 0.0
+        return (hi - lo) / (hi + lo)
+
 
 # Export public API
 __all__ = [
