@@ -18,7 +18,8 @@ Key Features:
 import re
 import requests
 import logging
-from typing import Dict, List, Any, Optional, Tuple
+import math
+from typing import Callable, Dict, List, Any, Optional, Tuple
 
 # Import extraction package components
 from .entities import Entity
@@ -1101,5 +1102,174 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                 if rel.target_entity.entity_type == "entity":
                     rel.target_entity.entity_type = rule["target"]
         return kg
+
+    @staticmethod
+    def aggregate_confidence_scores(
+        scores: List[float],
+        method: str = "mean",
+        weights: Optional[List[float]] = None,
+    ) -> float:
+        """Aggregate multiple confidence scores from different extraction sources.
+
+        Implements the multi-source confidence aggregation feature deferred from
+        v2.5.0 roadmap (now delivered in v3.22.23).
+
+        Args:
+            scores: List of confidence scores in [0.0, 1.0].
+            method: Aggregation strategy. One of:
+                - ``"mean"`` (default): arithmetic mean.
+                - ``"min"``: most conservative (lowest score).
+                - ``"max"``: most optimistic (highest score).
+                - ``"harmonic_mean"``: harmonic mean; penalises very low scores.
+                - ``"weighted_mean"``: weighted arithmetic mean (requires *weights*).
+                - ``"probabilistic_and"``: product of scores — probability that all
+                  sources agree the extraction is correct.
+            weights: Per-score weights used only when *method* is ``"weighted_mean"``.
+                Must have the same length as *scores*.  If *None*, falls back to
+                ``"mean"``.
+
+        Returns:
+            Aggregated confidence in [0.0, 1.0], or ``0.0`` for an empty list.
+
+        Example::
+
+            scores = [0.9, 0.75, 0.85]
+            agg = KnowledgeGraphExtractor.aggregate_confidence_scores(scores)
+            # → 0.8333...
+
+            # Weighted — trust the first source more:
+            agg_w = KnowledgeGraphExtractor.aggregate_confidence_scores(
+                scores, method="weighted_mean", weights=[0.6, 0.2, 0.2]
+            )
+
+            # Conservative — only keep what all sources agree on:
+            agg_p = KnowledgeGraphExtractor.aggregate_confidence_scores(
+                scores, method="probabilistic_and"
+            )
+        """
+        if not scores:
+            return 0.0
+        n = len(scores)
+        if method == "mean":
+            return sum(scores) / n
+        if method == "min":
+            return min(scores)
+        if method == "max":
+            return max(scores)
+        if method == "harmonic_mean":
+            if any(s <= 0 for s in scores):
+                return 0.0
+            return n / sum(1.0 / s for s in scores)
+        if method == "weighted_mean":
+            if weights is None or len(weights) != n:
+                # Fall back to arithmetic mean when weights are missing/wrong length
+                return sum(scores) / n
+            total_weight = sum(weights)
+            if total_weight == 0:
+                return 0.0
+            return sum(s * w for s, w in zip(scores, weights)) / total_weight
+        if method == "probabilistic_and":
+            result = 1.0
+            for s in scores:
+                result *= s
+            return result
+        raise ValueError(
+            f"Unknown aggregation method {method!r}. "
+            "Use 'mean', 'min', 'max', 'harmonic_mean', 'weighted_mean', or 'probabilistic_and'."
+        )
+
+    @staticmethod
+    def compute_extraction_quality_metrics(kg: "KnowledgeGraph") -> Dict[str, Any]:
+        """Compute quality metrics for an extracted knowledge graph.
+
+        Provides the quality-metrics feature deferred from the v2.5.0 roadmap
+        (now delivered in v3.22.23).  All metrics are computed using only the
+        graph structure and entity/relationship confidence values — no external
+        dependencies are required.
+
+        Args:
+            kg: The knowledge graph to analyse.
+
+        Returns:
+            Dictionary with the following keys:
+
+            - ``entity_count`` (int): total entities.
+            - ``relationship_count`` (int): total relationships.
+            - ``relationship_density`` (float): relationships per entity (0.0 when
+              no entities).
+            - ``avg_entity_confidence`` (float): mean entity confidence.
+            - ``avg_relationship_confidence`` (float): mean relationship confidence.
+            - ``confidence_std`` (float): population standard deviation of all
+              confidence scores (entities + relationships combined).
+            - ``low_confidence_ratio`` (float): fraction of all nodes+rels with
+              confidence < 0.5.
+            - ``entity_type_diversity`` (int): number of distinct entity types.
+            - ``relationship_type_diversity`` (int): number of distinct relationship
+              types.
+            - ``isolated_entity_ratio`` (float): fraction of entities with no
+              incident relationships.
+
+        Example::
+
+            kg = extractor.extract_knowledge_graph("Alice works for Acme Corp.")
+            metrics = KnowledgeGraphExtractor.compute_extraction_quality_metrics(kg)
+            print(metrics["avg_entity_confidence"])   # e.g. 0.8
+            print(metrics["relationship_density"])    # e.g. 0.5
+        """
+        entities = list(kg.entities.values())
+        relationships = list(kg.relationships.values())
+        n_ent = len(entities)
+        n_rel = len(relationships)
+
+        # Confidence averages
+        ent_confs = [getattr(e, "confidence", 1.0) for e in entities]
+        rel_confs = [getattr(r, "confidence", 1.0) for r in relationships]
+        all_confs = ent_confs + rel_confs
+
+        avg_ent_conf = sum(ent_confs) / n_ent if n_ent else 0.0
+        avg_rel_conf = sum(rel_confs) / n_rel if n_rel else 0.0
+
+        if all_confs:
+            mean_all = sum(all_confs) / len(all_confs)
+            variance = sum((c - mean_all) ** 2 for c in all_confs) / len(all_confs)
+            conf_std = math.sqrt(variance)
+            low_conf = sum(1 for c in all_confs if c < 0.5) / len(all_confs)
+        else:
+            conf_std = 0.0
+            low_conf = 0.0
+
+        # Type diversity
+        entity_types = {getattr(e, "entity_type", "entity") for e in entities}
+        rel_types = {getattr(r, "relationship_type", "") for r in relationships}
+
+        # Isolated entity ratio
+        if n_ent:
+            connected = set()
+            for r in relationships:
+                src = getattr(r, "source_entity", None)
+                tgt = getattr(r, "target_entity", None)
+                if src is not None:
+                    connected.add(getattr(src, "entity_id", id(src)))
+                if tgt is not None:
+                    connected.add(getattr(tgt, "entity_id", id(tgt)))
+            isolated = sum(
+                1 for e in entities if getattr(e, "entity_id", id(e)) not in connected
+            )
+            isolated_ratio = isolated / n_ent
+        else:
+            isolated_ratio = 0.0
+
+        return {
+            "entity_count": n_ent,
+            "relationship_count": n_rel,
+            "relationship_density": n_rel / n_ent if n_ent else 0.0,
+            "avg_entity_confidence": avg_ent_conf,
+            "avg_relationship_confidence": avg_rel_conf,
+            "confidence_std": conf_std,
+            "low_confidence_ratio": low_conf,
+            "entity_type_diversity": len(entity_types),
+            "relationship_type_diversity": len(rel_types),
+            "isolated_entity_ratio": isolated_ratio,
+        }
 
 

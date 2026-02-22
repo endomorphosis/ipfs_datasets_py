@@ -138,7 +138,8 @@ class TestDocVersionAgreement:
         """MASTER_STATUS.md should declare version 3.22.19 or later."""
         text = MASTER_STATUS.read_text(encoding="utf-8")
         assert any(v in text for v in ("**Version:** 3.22.19", "**Version:** 3.22.20",
-                                       "**Version:** 3.22.21", "**Version:** 3.22.22")), (
+                                       "**Version:** 3.22.21", "**Version:** 3.22.22",
+                                       "**Version:** 3.22.23")), (
             "MASTER_STATUS.md version header should be 3.22.19 or later"
         )
 
@@ -153,6 +154,7 @@ class TestDocVersionAgreement:
         """ROADMAP.md Current Version header should be 3.22.19 or later."""
         text = ROADMAP.read_text(encoding="utf-8")
         assert any(v in text for v in ("**Current Version:** 3.22.19", "**Current Version:** 3.22.20",
-                                       "**Current Version:** 3.22.21", "**Current Version:** 3.22.22")), (
+                                       "**Current Version:** 3.22.21", "**Current Version:** 3.22.22",
+                                       "**Current Version:** 3.22.23")), (
             "ROADMAP.md Current Version header should be 3.22.19 or later"
         )

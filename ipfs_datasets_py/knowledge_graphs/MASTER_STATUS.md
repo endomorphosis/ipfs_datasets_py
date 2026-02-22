@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.22.22  
+**Version:** 3.22.23  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-22 (session 68)  
-**Last Major Release:** v3.22.22 (session 68: cypher/README.md ❌ Not Supported table → ✅ Implemented v2.1.0 for NOT/CREATE/MERGE/DELETE; core/README ~80%→100% + Phase5 Planned→v4.0+; docs/MIGRATION_GUIDE stale NOT/CREATE/MERGE/DELETE+GraphML/GEXF/Pajek+extraction "Not implemented"→✅ Implemented; API_REFERENCE Known Limitations NOT/CREATE bullets removed; version headers updated; 22 doc integrity tests)
+**Last Updated:** 2026-02-22 (session 69)  
+**Last Major Release:** v3.22.23 (session 69: deferred v4.0+ features implemented — aggregate_confidence_scores() 6-method confidence aggregation + compute_extraction_quality_metrics() quality metrics dict in extractor.py; export_streaming(progress_callback=...) progress tracking in formats.py; extraction/README Phase5 In Progress→Complete; DEFERRED_FEATURES.md updated with P5 section; 34 prod+doc tests)
 
 ---
 
@@ -258,8 +258,9 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - session65: **Stale docstring + doc reference fixes.** `reasoning/cross_document.py:655`: removed stale "see TODO at line 542" (line 542 is plain implementation code, not a TODO); note updated to describe current heuristic approach. `MASTER_STATUS.md`: `Documentation` row updated from `Reflects v3.22.15` → `v3.22.18`; `Test Files: 95 total (as of v3.22.15)` → `102 total (as of v3.22.18)` (sessions 59–64 added 6 files). `MASTER_REFACTORING_PLAN_2026.md`: version `3.22.17`→`3.22.18`; sessions 63–64 "API Accuracy" work section added. 16 doc+code integrity tests. **Result: 3,841 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 - session67: **Stale test infrastructure metrics fixed.** `tests/knowledge_graphs/TEST_STATUS.md`: Module Version 2.0.0→3.22.21; 75%→99.99%; 647+/47→3,856+/108+ tests; migration section ⚠️→✅; IMPLEMENTATION_STATUS.md broken link→MASTER_STATUS.md. `tests/knowledge_graphs/TEST_GUIDE.md`: same metric updates; removed stale "not yet implemented" notes for NOT and CREATE; fixed broken links. `archive/README.md`: ⭐ **NEW** tag removed; IMPLEMENTATION_STATUS.md link fixed; Last Updated 2026-02-22. `MASTER_REFACTORING_PLAN_2026.md`: Section 1 "session 63"→"session 66"; 3,782→3,856+; 95+→108+; Document Version 1.0→3.22.21; Q2→Q3 2026. DOCUMENTATION_GUIDE TEST_GUIDE.md TODO ticked [x]. 27 doc integrity tests. **Result: 3,883 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 - session68: **Stale "Not Supported" tables fixed across cypher/core READMEs and docs/.** `cypher/README.md`: ❌ Not Supported table → ✅ Implemented in v2.1.0 (NOT/CREATE/MERGE/DELETE/REMOVE); Last Updated 2026-02-17→2026-02-22. `core/README.md`: ~80%→100% test coverage; Phase 5 "(Planned)"→"Deferred to v4.0+"; Version 2.0.0→3.22.22. `docs/knowledge_graphs/MIGRATION_GUIDE.md`: NOT/CREATE/MERGE/DELETE workarounds→✅ Implemented; GraphML/GEXF/Pajek "Not implemented"→✅ Implemented; stale workaround code blocks replaced with working example; extraction Planned table→✅ Delivered; planned v2.5.0/v3.0.0 sections updated to Delivered; version 2.0.0→3.22.22. `docs/knowledge_graphs/API_REFERENCE.md`: NOT/CREATE "Not Yet Supported" bullets removed; version 2.0.0→3.22.22. 22 doc integrity tests. **Result: 3,905 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
+- session69: **Deferred v4.0+ features implemented.** `extraction/extractor.py`: `aggregate_confidence_scores(scores, method, weights)` (6 aggregation strategies: mean/min/max/harmonic_mean/weighted_mean/probabilistic_and) + `compute_extraction_quality_metrics(kg)` (10-key quality dict: density/confidence/type diversity/isolation). `migration/formats.py`: `export_streaming(progress_callback=...)` — optional callback invoked per chunk with `(nodes_written, total_nodes, rels_written, total_rels)`. `extraction/README.md`: Phase 5 "In Progress"→"Complete ✅". `DEFERRED_FEATURES.md`: P5 section added with 2 ✅ entries. `ROADMAP.md`: Confidence Scoring + Progress Tracking updated to ✅ Delivered. 34 prod+doc tests. **Result: 3,939 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 
-**Total Tests:** 3,905 passing, 26 skipped (optional dep guards), 0 failing
+**Total Tests:** 3,939 passing, 26 skipped (optional dep guards), 0 failing
 **Pass Rate:** 100% (excluding optional dependency skips)
 **Coverage:** 99.99% (1 missed line: `_entity_helpers.py:117` — intentional defensive guard)
 

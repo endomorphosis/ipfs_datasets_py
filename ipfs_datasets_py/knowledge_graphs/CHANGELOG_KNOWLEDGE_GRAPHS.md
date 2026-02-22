@@ -5,6 +5,22 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.23] - 2026-02-22
+
+### Added — Deferred v4.0+ features implemented (Session 69)
+
+**Production code changes.**
+
+- `extraction/extractor.py`: Added `KnowledgeGraphExtractor.aggregate_confidence_scores(scores, method='mean', weights=None)` static method — multi-source confidence aggregation supporting 6 strategies: `mean`, `min`, `max`, `harmonic_mean`, `weighted_mean`, `probabilistic_and`
+- `extraction/extractor.py`: Added `KnowledgeGraphExtractor.compute_extraction_quality_metrics(kg)` static method — returns 10-key metrics dict: entity/relationship counts + density, avg/std confidence, low-confidence ratio, type diversity, isolated entity ratio; no external deps
+- `migration/formats.py`: Added `progress_callback: Optional[Callable[[int, int, int, int], None]] = None` parameter to `GraphData.export_streaming()` — called after each chunk with `(nodes_written, total_nodes, rels_written, total_rels)` for progress tracking and resumable migrations
+
+### Fixed — Documentation
+
+- `extraction/README.md`: Phase 5 "Status: In Progress" → "Status: Complete ✅"; removed duplicate "Security audit and validation" line
+- `DEFERRED_FEATURES.md`: P5 section added with entries for Confidence Score Aggregation (✅ v3.22.23) and Migration Progress Tracking (✅ v3.22.23)
+- `ROADMAP.md`: Confidence Scoring Improvements `📋 Deferred` → `✅ Delivered in v3.22.23`; Progress Tracking deferred note → `✅ Delivered in v3.22.23`
+
 ## [3.22.22] - 2026-02-22
 
 ### Fixed — Stale "Not Supported" tables in cypher/README + core/README + docs/ (Session 68)

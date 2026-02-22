@@ -486,6 +486,69 @@ for partition_idx, record in executor.execute_cypher_streaming("MATCH (n) RETURN
 
 ---
 
+## P5: Delivered in v3.22.23 (formerly v4.0+ deferred)
+
+### 14. Confidence Score Aggregation
+
+**Status:** ✅ Implemented (v3.22.23 — 2026-02-22)
+**Location:** `extraction/extractor.py` — `KnowledgeGraphExtractor.aggregate_confidence_scores()`,
+             `KnowledgeGraphExtractor.compute_extraction_quality_metrics()`
+**Implementation:**
+- `aggregate_confidence_scores(scores, method='mean', weights=None)` — combines per-source
+  confidence scores using one of 6 strategies: `mean`, `min`, `max`, `harmonic_mean`,
+  `weighted_mean`, `probabilistic_and`
+- `compute_extraction_quality_metrics(kg)` — returns a 10-key metrics dict covering
+  entity/relationship counts, density, average/std/low-confidence ratios, type diversity,
+  and isolated entity ratio; no external dependencies required
+
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction.extractor import KnowledgeGraphExtractor
+
+# Aggregate multiple source confidences
+scores = [0.9, 0.75, 0.85]
+agg = KnowledgeGraphExtractor.aggregate_confidence_scores(scores)  # mean → 0.833
+conservative = KnowledgeGraphExtractor.aggregate_confidence_scores(scores, method="probabilistic_and")  # 0.574
+
+# Quality metrics for an extracted graph
+metrics = KnowledgeGraphExtractor.compute_extraction_quality_metrics(kg)
+print(metrics["relationship_density"])    # rels / entities
+print(metrics["low_confidence_ratio"])    # fraction with confidence < 0.5
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session69.py`
+
+---
+
+### 15. Migration Progress Tracking
+
+**Status:** ✅ Implemented (v3.22.23 — 2026-02-22)
+**Location:** `migration/formats.py` — `GraphData.export_streaming(progress_callback=...)`
+**Implementation:**
+- New optional `progress_callback: Callable[[int, int, int, int], None]` parameter added to
+  `GraphData.export_streaming()`
+- Callback signature: `(nodes_written, total_nodes, rels_written, total_rels)`
+- Called after each node chunk and each relationship chunk
+- Enables progress bars, logging, and resumable-migration checkpoints
+- Fully backward-compatible: existing callers without `progress_callback` are unaffected
+
+**Example (now works):**
+```python
+def on_progress(nw, nt, rw, rt):
+    pct = ((nw + rw) / (nt + rt) * 100) if (nt + rt) else 0
+    print(f"  {pct:.1f}%  nodes {nw}/{nt}  rels {rw}/{rt}")
+
+nodes_written, rels_written = graph.export_streaming(
+    "large_graph.jsonl",
+    chunk_size=1000,
+    progress_callback=on_progress,
+)
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session69.py`
+
+---
+
 ## How to Use This Document
 
 ### For Users
@@ -524,7 +587,7 @@ for partition_idx, record in executor.execute_cypher_streaming("MATCH (n) RETURN
 
 ---
 
-**Last Updated:** 2026-02-22 (session 62)  
+**Last Updated:** 2026-02-22 (session 69)  
 **Next Review:** Q3 2026  
 **Maintainer:** Knowledge Graphs Team
 

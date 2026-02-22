@@ -1,7 +1,7 @@
 # Knowledge Graphs - Development Roadmap
 
 **Last Updated:** 2026-02-22  
-**Current Version:** 3.22.22  
+**Current Version:** 3.22.23  
 **Status:** Production Ready (99.99% test coverage)
 
 ---
@@ -107,7 +107,7 @@ All root-level modules moved to canonical subpackage locations. New `reasoning/`
 - Streaming import/export: `GraphData.export_streaming()`, `iter_nodes_chunked()`, `iter_relationships_chunked()` (chunk_size=500, 64KB write buffers)
 - Parallel processing: `FederatedQueryExecutor.execute_cypher_parallel()` in `query/distributed.py`
 - Validation and integrity checking: `IntegrityVerifier.verify_sample()` in `migration/`
-- Progress tracking and resumable migrations: 📋 deferred to v4.0+ (low priority)
+- Progress tracking and resumable migrations: ✅ Delivered in v3.22.23 (`export_streaming(progress_callback=...)` parameter added)
 
 ### Success Criteria
 - GraphML, GEXF formats fully supported
@@ -163,17 +163,15 @@ All root-level modules moved to canonical subpackage locations. New `reasoning/`
 - No AllenNLP dependency required — pure-Python heuristic backend always available
 
 #### 4. Confidence Scoring Improvements
-**Status:** 📋 Deferred to v4.0+  
+**Status:** ✅ Delivered in v3.22.23  
 **Priority:** Low (was High — reprioritised after v3.22.x improvements)  
 **Description:** Enhanced confidence metrics beyond current per-entity/per-relationship confidence fields
 
-**Deferred features (v4.0+):**
-- Multi-source confidence aggregation
-- Probabilistic relationship scoring
-- Quality metrics for extracted graphs
-- Uncertainty quantification
+**Delivered in v3.22.23 (`extraction/extractor.py`):**
+- `KnowledgeGraphExtractor.aggregate_confidence_scores(scores, method, weights)` — multi-source confidence aggregation (mean / min / max / harmonic_mean / weighted_mean / probabilistic_and)
+- `KnowledgeGraphExtractor.compute_extraction_quality_metrics(kg)` — quality metrics dict: entity/relationship counts, density, average/std confidence, low-confidence ratio, type diversity, isolated entity ratio
 
-**Note:** Basic confidence scoring already exists on `KnowledgeGraphEntity.confidence` and `KnowledgeGraphRelationship.confidence` (0.0–1.0). Advanced probabilistic scoring deferred pending user demand.
+**Note:** Basic confidence scoring already exists on `KnowledgeGraphEntity.confidence` and `KnowledgeGraphRelationship.confidence` (0.0–1.0). Advanced probabilistic scoring delivered in v3.22.23.
 
 ### Success Criteria
 - Neural extraction option available
@@ -431,6 +429,7 @@ We follow [Semantic Versioning](https://semver.org/):
 | 3.22.20 | 2026-02-22 | ✅ Released | Historical banners added to COMPREHENSIVE_ANALYSIS/EXECUTIVE_SUMMARY_FINAL/REFACTORING_COMPLETE 2026-02-18 docs; EXECUTIVE_SUMMARY stale [ ]→[x]; DOCUMENTATION_GUIDE Tier 6 updated; 21 doc tests (session66) |
 | 3.22.21 | 2026-02-22 | ✅ Released | TEST_STATUS.md+TEST_GUIDE.md stale v2.0.0/75%/116+ metrics updated to v3.22.21/99.99%/3856+; archive/README.md **NEW** tag removed; MASTER_REFACTORING_PLAN session 63→66 + 3782→3856+ + Document Version 1.0→3.22.21; 19 doc tests (session67) |
 | 3.22.22 | 2026-02-22 | ✅ Released | cypher/README.md ❌ Not Supported table → ✅ Implemented (NOT/CREATE/MERGE/DELETE); core/README ~80%→100% + Phase5 v4.0+; MIGRATION_GUIDE+API_REFERENCE stale NOT/CREATE workarounds + GraphML/GEXF/Pajek "Not implemented" → ✅ Implemented; 22 doc tests (session68) |
+| 3.22.23 | 2026-02-22 | ✅ Released | Deferred v4.0+ features implemented: aggregate_confidence_scores() (6 methods) + compute_extraction_quality_metrics() in extractor.py; export_streaming(progress_callback=...) in formats.py; extraction/README Phase5 In Progress→Complete; DEFERRED_FEATURES.md updated; 34 prod+doc tests (session69) |
 | 4.0 | 2027+ | 📋 Future | TBD based on feedback |
 
 ---

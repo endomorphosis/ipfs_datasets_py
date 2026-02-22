@@ -1076,3 +1076,42 @@ was listed as "Priority: MEDIUM — Prioritized action items" despite all items 
 - `TestVersionAgreement` (3 tests): MASTER_STATUS/CHANGELOG/ROADMAP all agree on v3.22.22
 
 **Result: 22 passed, 0 failed** ✅
+
+---
+
+### Session 69 log (2026-02-22)
+
+**Deferred v4.0+ features implemented — production code changes.**
+
+**Features delivered:**
+1. `KnowledgeGraphExtractor.aggregate_confidence_scores(scores, method, weights)` in `extraction/extractor.py`:
+   - Supports 6 strategies: `mean` (default), `min`, `max`, `harmonic_mean`, `weighted_mean`, `probabilistic_and`
+   - `weighted_mean` falls back to `mean` when weights are None or wrong length
+   - `harmonic_mean` returns 0.0 when any score is zero (avoids divide-by-zero)
+   - Raises `ValueError` for unknown method names
+   - Returns `0.0` for empty score lists
+2. `KnowledgeGraphExtractor.compute_extraction_quality_metrics(kg)` in `extraction/extractor.py`:
+   - Returns 10-key dict: `entity_count`, `relationship_count`, `relationship_density`, `avg_entity_confidence`, `avg_relationship_confidence`, `confidence_std`, `low_confidence_ratio`, `entity_type_diversity`, `relationship_type_diversity`, `isolated_entity_ratio`
+   - No external dependencies required
+   - Uses `entity_id` attribute from entity objects for connectivity analysis
+3. `GraphData.export_streaming(progress_callback=...)` in `migration/formats.py`:
+   - New `progress_callback: Optional[Callable[[int, int, int, int], None]] = None` parameter
+   - Callback signature: `(nodes_written, total_nodes, rels_written, total_rels)`
+   - Called after each node chunk and after each relationship chunk
+   - `total_nodes` / `total_rels` captured once before iteration (stable totals)
+   - Fully backward-compatible: no breaking change to existing callers
+
+**Documentation fixes:**
+4. `extraction/README.md`: Phase 5 "Status: In Progress" → "Status: Complete ✅ (v3.22.23)"; removed duplicate "Security audit and validation" line
+5. `DEFERRED_FEATURES.md`: P5 section added with §14 Confidence Score Aggregation (✅ v3.22.23) + §15 Migration Progress Tracking (✅ v3.22.23); footer Last Updated → session 69
+6. `ROADMAP.md`: Confidence Scoring Improvements `📋 Deferred to v4.0+` → `✅ Delivered in v3.22.23`; Progress Tracking deferred note → `✅ Delivered in v3.22.23`; v3.22.23 row added to release table; Current Version bumped
+
+**34 tests** in `test_master_status_session69.py` (6 classes):
+- `TestAggregateConfidenceScores` (12 tests): empty→0.0; mean; min; max; harmonic; harmonic-zero; weighted; weighted-fallback; weighted-zero-weight; probabilistic_and; single-score-all-methods; unknown-method-ValueError
+- `TestComputeExtractionQualityMetrics` (11 tests): empty-graph; entity+rel-counts; density; avg-entity-conf; avg-rel-conf; std≥0; low-conf-ratio; type-diversity×2; isolated-ratio; all-keys-present
+- `TestExportStreamingProgressCallback` (5 tests): no-callback-still-works; callback-correct-totals; nodes-monotonic; final-call-all-written; chunk-count
+- `TestExtractionReadmePhase5Fixed` (3 tests): not-In-Progress; Complete-present; no-duplicate-line
+- `TestDeferredFeaturesUpdated` (2 tests): confidence-scoring-marked-implemented; progress-tracking-mentioned
+- `TestVersionAgreement` (3 tests): MASTER_STATUS/CHANGELOG/ROADMAP all agree on v3.22.23
+
+**Result: 34 passed, 0 failed** ✅
