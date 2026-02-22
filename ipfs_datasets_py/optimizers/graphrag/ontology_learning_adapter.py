@@ -1645,3 +1645,28 @@ class OntologyLearningAdapter:
         else:
             median = scores[n // 2]
         return sum(1 for r in self._feedback if r.final_score > median)
+
+    def feedback_min_max_ratio(self) -> float:
+        """Return min/max ratio of feedback scores.
+
+        Useful as a normalised spread indicator: value near 1.0 means tight
+        cluster; near 0.0 means wide spread.
+
+        Returns:
+            Float in [0, 1]; 0.0 when no records or max is 0.
+        """
+        if not self._feedback:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        mx = max(scores)
+        if mx == 0.0:
+            return 0.0
+        return min(scores) / mx
+
+    def feedback_count(self) -> int:
+        """Return the total number of feedback records.
+
+        Returns:
+            Integer count.
+        """
+        return len(self._feedback)

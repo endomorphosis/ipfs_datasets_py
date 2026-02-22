@@ -5742,6 +5742,31 @@ class OntologyGenerator:
         mean = sum(confs) / n
         return sum((c - mean) ** 2 for c in confs) / n
 
+    def entity_property_count(self, result: Any) -> int:
+        """Return the total count of all property key-value pairs across all entities.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Integer; 0 when no entities or no properties.
+        """
+        return sum(
+            len(getattr(e, "properties", {}) or {})
+            for e in (result.entities or [])
+        )
+
+    def entity_types_set(self, result: Any) -> set:
+        """Return the set of distinct entity type strings in *result*.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Set of strings; empty set when no entities.
+        """
+        return {getattr(e, "type", "") for e in (result.entities or [])}
+
 
 __all__ = [
     'OntologyGenerator',

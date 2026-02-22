@@ -1578,3 +1578,30 @@ class OntologyPipeline:
             Float; 0.0 when no runs.
         """
         return sum(r.score.overall for r in self._run_history)
+
+    def run_score_geometric_mean(self) -> float:
+        """Return the geometric mean of run overall scores.
+
+        Scores of 0 are replaced by a small epsilon.
+
+        Returns:
+            Float; 0.0 when no runs.
+        """
+        if not self._run_history:
+            return 0.0
+        epsilon = 1e-9
+        scores = [max(r.score.overall, epsilon) for r in self._run_history]
+        product = 1.0
+        for s in scores:
+            product *= s
+        return product ** (1.0 / len(scores))
+
+    def best_run_index(self) -> int:
+        """Return the index of the run with the highest overall score.
+
+        Returns:
+            Integer index; -1 when no runs.
+        """
+        if not self._run_history:
+            return -1
+        return max(range(len(self._run_history)), key=lambda i: self._run_history[i].score.overall)

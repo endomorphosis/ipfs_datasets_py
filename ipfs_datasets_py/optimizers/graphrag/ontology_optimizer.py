@@ -3318,6 +3318,54 @@ class OntologyOptimizer:
             return 0.0
         return num / (dx * dy)
 
+    def history_cross_mean_count(self) -> int:
+        """Return the number of times scores cross the historical mean.
+
+        A crossing occurs when consecutive entries straddle the mean from
+        above-to-below or below-to-above.
+
+        Returns:
+            Integer count; 0 when fewer than 2 history entries.
+        """
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        if n < 2:
+            return 0
+        mean = sum(scores) / n
+        count = 0
+        for i in range(1, n):
+            if (scores[i - 1] >= mean) != (scores[i] >= mean):
+                count += 1
+        return count
+
+    def score_recent_max(self, window: int = 5) -> float:
+        """Return the maximum score within the most recent *window* entries.
+
+        Args:
+            window: Number of most-recent entries to consider (default 5).
+
+        Returns:
+            Float; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        recent = self._history[-window:]
+        return max(e.average_score for e in recent)
+
+    def score_recent_min(self, window: int = 5) -> float:
+        """Return the minimum score within the most recent *window* entries.
+
+        Args:
+            window: Number of most-recent entries to consider (default 5).
+
+        Returns:
+            Float; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        recent = self._history[-window:]
+        return min(e.average_score for e in recent)
+
 
 # Export public API
 __all__ = [

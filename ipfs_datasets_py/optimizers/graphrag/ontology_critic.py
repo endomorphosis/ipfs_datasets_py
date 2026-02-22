@@ -3774,6 +3774,29 @@ class OntologyCritic(BaseCritic):
         """
         return max(self._DIMENSIONS, key=lambda d: getattr(score, d, 0.0))
 
+    def bottom_dimension(self, score: "CriticScore") -> str:  # type: ignore[name-defined]
+        """Return the name of the lowest-scoring dimension.
+
+        Args:
+            score: ``CriticScore`` to inspect.
+
+        Returns:
+            String dimension name.
+        """
+        return min(self._DIMENSIONS, key=lambda d: getattr(score, d, 0.0))
+
+    def score_above_threshold_count(self, score: "CriticScore", threshold: float = 0.7) -> int:  # type: ignore[name-defined]
+        """Return count of dimensions at or above *threshold*.
+
+        Args:
+            score: ``CriticScore`` to inspect.
+            threshold: Minimum acceptable value (default 0.7).
+
+        Returns:
+            Integer count in [0, 6].
+        """
+        return sum(1 for d in self._DIMENSIONS if getattr(score, d, 0.0) >= threshold)
+
 
 # Export public API
 __all__ = [
