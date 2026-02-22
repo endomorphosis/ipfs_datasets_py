@@ -4513,6 +4513,42 @@ class OntologyCritic(BaseCritic):
         all_vals = [getattr(score, d, 0.0) for d in dims]
         return sum(1 for v in all_vals if v <= dim_val) / len(all_vals)
 
+    def score_dimension_entropy(self, score: "CriticScore") -> float:
+        """Return the Shannon entropy of the six-dimension value distribution.
+
+        Each of the six CriticScore dimensions is treated as a probability
+        mass after normalising the values to sum to 1.  The entropy is
+        computed with natural logarithm (nats).
+
+        When all values are zero the method returns ``0.0``.  When a single
+        dimension holds all the mass (maximum concentration) the entropy is
+        also ``0.0``.  The maximum entropy (most uniform distribution) is
+        ``ln(6) ≈ 1.79``.
+
+        Args:
+            score: :class:`CriticScore` instance to analyse.
+
+        Returns:
+            Non-negative float (entropy in nats); ``0.0`` when the total
+            of all dimension values is zero.
+
+        Example::
+
+            >>> s = CriticScore(completeness=1/6, consistency=1/6,
+            ...                  clarity=1/6, granularity=1/6,
+            ...                  relationship_coherence=1/6, domain_alignment=1/6)
+            >>> critic.score_dimension_entropy(s)  # doctest: +ELLIPSIS
+            1.791...
+        """
+        import math
+        dims = self._DIMENSIONS
+        vals = [max(0.0, getattr(score, d, 0.0)) for d in dims]
+        total = sum(vals)
+        if total == 0.0:
+            return 0.0
+        probs = [v / total for v in vals]
+        return -sum(p * math.log(p) for p in probs if p > 0.0)
+
 
 # Export public API
 __all__ = [

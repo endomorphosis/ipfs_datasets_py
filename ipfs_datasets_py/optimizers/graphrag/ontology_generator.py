@@ -8011,6 +8011,29 @@ class OntologyGenerator:
             return 0.0
         return sum(trimmed) / len(trimmed)
 
+    def relationship_avg_length(self, result: "EntityExtractionResult") -> float:
+        """Return the average length of the relationship *type* text field.
+
+        Each relationship exposes a ``type`` string (e.g. ``'causes'``,
+        ``'owns'``).  This helper returns the mean character-count of those
+        strings across all relationships in *result*.
+
+        Args:
+            result: :class:`EntityExtractionResult` to analyse.
+
+        Returns:
+            Non-negative float; ``0.0`` when there are no relationships.
+
+        Example::
+
+            >>> avg = generator.relationship_avg_length(result)
+            >>> avg >= 0.0
+        """
+        rels = getattr(result, "relationships", []) or []
+        if not rels:
+            return 0.0
+        return sum(len(getattr(r, "type", "") or "") for r in rels) / len(rels)
+
 
 __all__ = [
     'OntologyGenerator',

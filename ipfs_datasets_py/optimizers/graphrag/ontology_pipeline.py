@@ -2495,3 +2495,23 @@ class OntologyPipeline:
         if q3 + q1 == 0.0:
             return 0.0
         return (q3 - q1) / (q3 + q1)
+
+    def run_score_positive_rate(self, threshold: float = 0.5) -> float:
+        """Return the fraction of run overall scores that exceed *threshold*.
+
+        Args:
+            threshold: Score value above which a run is considered positive.
+                Default ``0.5``.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when there are no runs.
+
+        Example::
+
+            >>> pipeline.run_score_positive_rate()
+            0.0  # no runs yet
+        """
+        if not self._run_history:
+            return 0.0
+        positive = sum(1 for r in self._run_history if r.score.overall > threshold)
+        return positive / len(self._run_history)

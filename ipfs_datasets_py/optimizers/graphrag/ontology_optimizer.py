@@ -5116,6 +5116,39 @@ class OntologyOptimizer:
             return 0.0
         return (q3 - q1) / (q3 + q1)
 
+    def score_wmd(self) -> float:
+        """Return a Wasserstein-inspired distance between the two halves of history.
+
+        The history scores are sorted and split into a lower half and an upper
+        half.  The Wasserstein-1 distance between these two equal-length
+        samples is computed as the mean of the absolute pairwise differences
+        after sorting both halves.
+
+        This gives an intuitive measure of how much the distribution of scores
+        has shifted from the first part of the optimisation run to the second.
+
+        Returns:
+            Non-negative float; ``0.0`` when fewer than 2 history entries or
+            when both halves are identical.
+
+        Example::
+
+            >>> opt.score_wmd()
+            0.0  # single entry
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        mid = n // 2
+        lower = scores[:mid]
+        # For even n: upper = scores[mid:]; for odd n: skip the median (middle
+        # element at index mid) so both halves have exactly mid elements.
+        upper = scores[mid:] if n % 2 == 0 else scores[mid + 1:]
+        if not lower or not upper:
+            return 0.0
+        return sum(abs(u - l) for u, l in zip(upper, lower)) / len(lower)
+
 
 # Export public API
 __all__ = [
