@@ -1531,3 +1531,21 @@ class OntologyLearningAdapter:
         if std == 0.0:
             return 0
         return sum(1 for s in scores if abs((s - mean) / std) > z_threshold)
+
+    def feedback_interquartile_range(self) -> float:
+        """Return the interquartile range (Q3 - Q1) of feedback scores.
+
+        Returns:
+            Float IQR; 0.0 when fewer than 4 feedback records.
+        """
+        if len(self._feedback) < 4:
+            return 0.0
+        scores = sorted(r.final_score for r in self._feedback)
+        n = len(scores)
+
+        def _percentile(p: float) -> float:
+            idx = (p / 100.0) * (n - 1)
+            lo, hi = int(idx), min(int(idx) + 1, n - 1)
+            return scores[lo] + (scores[hi] - scores[lo]) * (idx - lo)
+
+        return _percentile(75.0) - _percentile(25.0)

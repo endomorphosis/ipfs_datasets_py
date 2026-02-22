@@ -3667,6 +3667,26 @@ class OntologyCritic(BaseCritic):
             return "D"
         return "F"
 
+    def dimension_coefficient_of_variation(self, score: "CriticScore") -> float:
+        """Return the coefficient of variation (std / mean) of dimension values.
+
+        A low value indicates consistent dimension scores; a high value
+        indicates uneven performance across dimensions.
+
+        Args:
+            score: :class:`CriticScore` to evaluate.
+
+        Returns:
+            Float; 0.0 when mean is zero.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        n = len(vals)
+        mean = sum(vals) / n
+        if mean == 0.0:
+            return 0.0
+        variance = sum((v - mean) ** 2 for v in vals) / n
+        return (variance ** 0.5) / mean
+
 
 # Export public API
 __all__ = [

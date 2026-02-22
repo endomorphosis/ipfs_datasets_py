@@ -3153,6 +3153,39 @@ class OntologyOptimizer:
         improvements = sum(1 for i in range(1, len(scores)) if scores[i] > scores[i - 1])
         return improvements / (len(scores) - 1)
 
+    def history_percentile(self, p: float = 50.0) -> float:
+        """Return the *p*-th percentile of ``average_score`` values in history.
+
+        Uses linear interpolation.
+
+        Args:
+            p: Percentile in [0, 100].
+
+        Returns:
+            Float; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        if n == 1:
+            return scores[0]
+        idx = (p / 100.0) * (n - 1)
+        lo, hi = int(idx), min(int(idx) + 1, n - 1)
+        return scores[lo] + (scores[hi] - scores[lo]) * (idx - lo)
+
+    def score_below_percentile_count(self, p: float = 25.0) -> int:
+        """Return the number of history entries below the *p*-th percentile.
+
+        Args:
+            p: Percentile threshold in [0, 100].
+
+        Returns:
+            Integer count.
+        """
+        threshold = self.history_percentile(p)
+        return sum(1 for e in self._history if e.average_score < threshold)
+
 
 # Export public API
 __all__ = [

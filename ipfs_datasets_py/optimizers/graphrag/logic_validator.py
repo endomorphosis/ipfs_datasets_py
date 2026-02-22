@@ -2801,6 +2801,48 @@ class LogicValidator:
                 scc_count += 1
         return scc_count
 
+    def weakly_connected_count(self, ontology: Any) -> int:
+        """Return the number of weakly connected components in the directed graph.
+
+        A weakly connected component is a maximal set of nodes where every
+        pair is connected in the underlying undirected graph.
+
+        Args:
+            ontology: Ontology with ``relationships`` list.
+
+        Returns:
+            Integer count; 0 when no nodes are present.
+        """
+        rels = getattr(ontology, "relationships", [])
+        if not rels:
+            return 0
+        # Build undirected adjacency
+        from collections import defaultdict as _dd
+        adj: dict = _dd(set)
+        nodes: set = set()
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src and tgt:
+                adj[src].add(tgt)
+                adj[tgt].add(src)
+                nodes.add(src)
+                nodes.add(tgt)
+        if not nodes:
+            return 0
+        visited: set = set()
+        count = 0
+        for node in nodes:
+            if node not in visited:
+                count += 1
+                stack = [node]
+                while stack:
+                    n = stack.pop()
+                    if n not in visited:
+                        visited.add(n)
+                        stack.extend(adj[n] - visited)
+        return count
+
 
 # Export public API
 __all__ = [

@@ -1474,3 +1474,21 @@ class OntologyPipeline:
             else:
                 break
         return count
+
+    def run_score_iqr(self) -> float:
+        """Return the interquartile range (Q3 - Q1) of run overall scores.
+
+        Returns:
+            Float IQR; 0.0 when fewer than 4 runs.
+        """
+        if len(self._run_history) < 4:
+            return 0.0
+        scores = sorted(r.score.overall for r in self._run_history)
+        n = len(scores)
+
+        def _percentile(p: float) -> float:
+            idx = (p / 100.0) * (n - 1)
+            lo, hi = int(idx), min(int(idx) + 1, n - 1)
+            return scores[lo] + (scores[hi] - scores[lo]) * (idx - lo)
+
+        return _percentile(75.0) - _percentile(25.0)

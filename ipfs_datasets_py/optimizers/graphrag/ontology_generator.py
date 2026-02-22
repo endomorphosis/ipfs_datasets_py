@@ -2472,31 +2472,7 @@ class OntologyGenerator:
         )
         
         if context.extraction_strategy == ExtractionStrategy.RULE_BASED:
-            result = self._extract_rule_based(data, context)
-            # LLM fallback: if rule-based confidence is below threshold and a
-            # llm_backend is configured, retry with LLM-based extraction.
-            try:
-                cfg = context.extraction_config
-                llm_threshold = float(getattr(cfg, "llm_fallback_threshold", 0.0))
-            except (TypeError, ValueError, AttributeError):
-                llm_threshold = 0.0
-            if (
-                llm_threshold > 0.0
-                and self.llm_backend is not None
-                and result.confidence < llm_threshold
-            ):
-                self._log.info(
-                    "Rule-based confidence %.3f below fallback threshold %.3f; "
-                    "attempting LLM extraction.",
-                    result.confidence,
-                    llm_threshold,
-                )
-                try:
-                    llm_result = self._extract_llm_based(data, context)
-                    if llm_result.confidence >= result.confidence:
-                        result = llm_result
-                except Exception as exc:
-                    self._log.warning("LLM fallback extraction failed: %s", exc)
+            result = self._extract_with_llm_fallback(data, context)
             self._log.info(
                 "extract_entities complete: entity_count=%d strategy=%s confidence=%.3f",
                 len(result.entities),
@@ -2520,6 +2496,49 @@ class OntologyGenerator:
             context.extraction_strategy.value,
             result.confidence,
         )
+        return result
+
+    def _extract_with_llm_fallback(
+        self,
+        data: Any,
+        context: OntologyGenerationContext,
+    ) -> EntityExtractionResult:
+        """Run rule-based extraction with optional LLM fallback.
+
+        LLM fallback runs only when the rule-based confidence is below
+        ``ExtractionConfig.llm_fallback_threshold`` and ``llm_backend`` is set.
+        If the LLM result has worse confidence, the rule-based result is kept.
+
+        Args:
+            data: Input data to extract entities from.
+            context: Extraction context with configuration.
+
+        Returns:
+            The best available :class:`EntityExtractionResult`.
+        """
+        result = self._extract_rule_based(data, context)
+        try:
+            cfg = context.extraction_config
+            llm_threshold = float(getattr(cfg, "llm_fallback_threshold", 0.0))
+        except (TypeError, ValueError, AttributeError):
+            llm_threshold = 0.0
+        if (
+            llm_threshold > 0.0
+            and self.llm_backend is not None
+            and result.confidence < llm_threshold
+        ):
+            self._log.info(
+                "Rule-based confidence %.3f below fallback threshold %.3f; "
+                "attempting LLM extraction.",
+                result.confidence,
+                llm_threshold,
+            )
+            try:
+                llm_result = self._extract_llm_based(data, context)
+                if llm_result.confidence >= result.confidence:
+                    result = llm_result
+            except Exception as exc:
+                self._log.warning("LLM fallback extraction failed: %s", exc)
         return result
     
     def infer_relationships(
@@ -5628,6 +5647,30 @@ class OntologyGenerator:
         idx = (p / 100.0) * (n - 1)
         lo, hi = int(idx), min(int(idx) + 1, n - 1)
         return scores[lo] + (scores[hi] - scores[lo]) * (idx - lo)
+
+    def relationship_type_frequency(self, result: Any) -> dict:
+        """Return a dict mapping relationship types to their occurrence counts.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Dict ``{type_str: count_int}``; empty when no relationships.
+        """
+        from collections import Counter
+        rels = result.relationships or []
+        return dict(Counter(getattr(r, "type", "") for r in rels))
+
+    def entity_id_set(self, result: Any) -> set:
+        """Return the set of all entity IDs in *result*.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Set of strings; empty set when no entities.
+        """
+        return {e.id for e in (result.entities or []) if e.id}
 
 
 __all__ = [
