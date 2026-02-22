@@ -1795,7 +1795,26 @@ class P2PMetricsCollector:
         alerts.extend(self._check_peer_discovery_alerts())
         alerts.extend(self._check_workflow_alerts())
         alerts.extend(self._check_bootstrap_alerts())
+        # Session 60: surface delegation metrics into the P2P health dashboard
+        self._record_delegation_metrics()
         return alerts
+
+    def _record_delegation_metrics(self) -> None:
+        """Push DelegationManager gauges to the base collector.
+
+        Lazy-imports :mod:`ucan_delegation` so that ``monitoring.py`` does not
+        create a hard circular import at module load time.  All errors are
+        swallowed so that a missing or uninitialised delegation manager can
+        never break the health-check loop.
+        """
+        try:
+            from .ucan_delegation import (  # noqa: PLC0415
+                get_delegation_manager,
+                record_delegation_metrics,
+            )
+            record_delegation_metrics(get_delegation_manager(), self.base_collector)
+        except Exception as _exc:  # noqa: BLE001
+            logger.debug("P2PMetricsCollector delegation metrics unavailable: %s", _exc)
 
     def _check_peer_discovery_alerts(self) -> List[Dict[str, Any]]:
         """Check for peer discovery failure rate alerts (>30% threshold)."""

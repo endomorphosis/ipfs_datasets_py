@@ -38,11 +38,15 @@ The default checker includes these rules (all can be removed/replaced):
 from __future__ import annotations
 
 import json
+import logging
+import os
 import re
 import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "ComplianceStatus",
@@ -248,6 +252,98 @@ class ComplianceChecker:
     def list_rules(self) -> List[str]:
         """Return rule IDs in registration order."""
         return list(self._rule_order)
+
+    # ------------------------------------------------------------------
+    # Persistence (Session 60)
+    # ------------------------------------------------------------------
+
+    def save(self, path: str) -> None:
+        """Persist the ordered rule list to *path* as JSON.
+
+        Only the **rule IDs** (names) are persisted — not the callables.  On
+        :meth:`load` the rule names are used to look up matching built-in
+        rule implementations that already exist on this instance.  Custom rules
+        (added via :meth:`add_rule`) must be re-registered after :meth:`load`.
+
+        The deny list is also persisted so that the full default configuration
+        can be restored without re-specifying the blocked tools.
+
+        Creates parent directories if they do not exist.
+
+        Args:
+            path: Filesystem path for the JSON file.
+        """
+        parent = os.path.dirname(path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        data: Dict[str, Any] = {
+            "rule_order": list(self._rule_order),
+            "deny_list": sorted(self._deny_list),
+        }
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, indent=2)
+        logger.debug("Saved %d compliance rules to %s", len(self._rule_order), path)
+
+    def load(self, path: str) -> int:
+        """Load rule configuration from *path*.
+
+        Re-wires built-in rules whose IDs appear in the persisted
+        ``"rule_order"`` list against the bound rule methods on *self*.
+        Built-in rule IDs are: ``tool_name_convention``, ``intent_has_actor``,
+        ``actor_is_valid``, ``params_are_serializable``,
+        ``tool_not_in_deny_list``, ``rate_limit_ok``.
+
+        For any rule ID that is **not** a built-in, a no-op stub is registered
+        so that the rule slot is preserved in the order.  Callers should then
+        call :meth:`add_rule` with the real implementation.
+
+        Returns:
+            Number of rule IDs loaded (including stubs for unknown rules).
+        """
+        if not os.path.exists(path):
+            logger.debug("Compliance rule file not found: %s", path)
+            return 0
+        try:
+            with open(path, encoding="utf-8") as fh:
+                data = json.load(fh)
+        except Exception as exc:
+            logger.warning("Could not load compliance rules from %s: %s", path, exc)
+            return 0
+
+        # Restore deny list
+        deny_list = data.get("deny_list", [])
+        if isinstance(deny_list, list):
+            self._deny_list = set(str(d) for d in deny_list)
+
+        # Map built-in rule IDs to their bound methods
+        _builtin_map: Dict[str, ComplianceRuleFn] = {
+            "tool_name_convention": self._rule_tool_name_convention,
+            "intent_has_actor": self._rule_intent_has_actor,
+            "actor_is_valid": self._rule_actor_is_valid,
+            "params_are_serializable": self._rule_params_are_serializable,
+            "tool_not_in_deny_list": self._rule_tool_not_in_deny_list,
+            "rate_limit_ok": self._rule_rate_limit_ok,
+        }
+
+        rule_order = data.get("rule_order", [])
+        loaded = 0
+        for rule_id in rule_order:
+            if not isinstance(rule_id, str) or not rule_id:
+                continue
+            fn = _builtin_map.get(rule_id)
+            if fn is None:
+                # Stub: always COMPLIANT; real implementation must be re-added
+                _captured_id = rule_id
+                def _stub(_intent: Any, _rule_id: str = _captured_id) -> "ComplianceResult":
+                    return ComplianceResult(rule_id=_rule_id, status=ComplianceStatus.COMPLIANT)
+                fn = _stub
+            if rule_id not in self._rules:
+                self._rule_order.append(rule_id)
+            self._rules[rule_id] = fn
+            loaded += 1
+
+        logger.debug("Loaded %d compliance rules from %s", loaded, path)
+        return loaded
 
     # ------------------------------------------------------------------
     # Intent field extraction

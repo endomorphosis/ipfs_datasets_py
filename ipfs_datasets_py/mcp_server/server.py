@@ -557,6 +557,40 @@ class IPFSDatasetsMCPServer:
         """
         return self._server_delegation_manager
 
+    def revoke_delegation_chain(self, root_cid: str) -> int:
+        """Revoke every delegation in the chain rooted at *root_cid*.
+
+        Calls :meth:`~ucan_delegation.DelegationManager.revoke_chain` on the
+        server's :class:`~ucan_delegation.DelegationManager`, then persists
+        the updated state to disk.
+
+        Returns 0 if no delegation manager is initialised or if *root_cid* is
+        not found in the current chain.
+
+        Args:
+            root_cid: The CID of the root delegation whose entire chain should
+                be revoked.
+
+        Returns:
+            Number of newly-revoked CIDs.
+        """
+        mgr = self._server_delegation_manager
+        if mgr is None:
+            logger.debug("revoke_delegation_chain called but no DelegationManager initialised")
+            return 0
+        try:
+            count = mgr.revoke_chain(root_cid)
+            # Persist revocation state immediately after chain revocation
+            mgr.save()
+            logger.info(
+                "revoke_delegation_chain(%s): %d CID(s) revoked and persisted",
+                root_cid, count,
+            )
+            return count
+        except Exception as exc:
+            logger.warning("revoke_delegation_chain failed: %s", exc)
+            return 0
+
     async def validate_p2p_message(self, msg: dict) -> bool:
         """Optional hook used by the P2P service to validate messages.
 

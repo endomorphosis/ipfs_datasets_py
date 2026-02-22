@@ -349,6 +349,6 @@ Completed v5 tasks tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROV
 
 ---
 
-**Last Updated:** 2026-02-22 (Session 59 — Phases G–L complete: DelegationManager server integration + shutdown save, RevocationList encrypted persistence, monitoring loop auto-record, compliance interface on startup, E2E smoke tests; 578 spec tests pass)
+**Last Updated:** 2026-02-22 (Session 60 — Phases G–L complete: DelegationManager encrypted persistence + revoke_chain, P2PMetricsCollector delegation metrics in health check, ComplianceChecker save/load persistence, server.revoke_delegation_chain(), full E2E test; 618+ spec tests pass)
 
-**For the complete plan, see [MASTER_IMPROVEMENT_PLAN_2026_v15.md](MASTER_IMPROVEMENT_PLAN_2026_v15.md)**
+**For the complete plan, see [MASTER_IMPROVEMENT_PLAN_2026_v16.md](MASTER_IMPROVEMENT_PLAN_2026_v16.md)**

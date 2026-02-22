@@ -1031,6 +1031,68 @@ class DelegationManager:
         return n
 
     # ------------------------------------------------------------------
+    # Encrypted RevocationList persistence (Session 60)
+    # ------------------------------------------------------------------
+
+    def save_encrypted(self, password: str) -> None:
+        """Persist the revocation list to disk using AES-256-GCM encryption.
+
+        The revocation file is written to the same directory as the delegation
+        store, with the name ``<store_basename>.revoked.enc``.
+
+        Falls back to plain :meth:`RevocationList.save` with a
+        ``UserWarning`` when the ``cryptography`` package is not installed.
+
+        Args:
+            password: Encryption passphrase.  See
+                :meth:`~RevocationList.save_encrypted` for key derivation
+                details.
+        """
+        import os as _os
+        base = self._store.path
+        enc_path = _os.path.splitext(base)[0] + ".revoked.enc"
+        self._revocation.save_encrypted(enc_path, password)
+
+    def load_encrypted(self, password: str) -> int:
+        """Load the encrypted revocation list from disk.
+
+        Reads the companion ``<store_basename>.revoked.enc`` file.  Returns 0
+        (without raising) on any error.
+
+        Falls back to plain :meth:`RevocationList.load` with a
+        ``UserWarning`` when ``cryptography`` is not installed.
+
+        Args:
+            password: Decryption passphrase.
+
+        Returns:
+            Number of CIDs loaded into the revocation list.
+        """
+        import os as _os
+        base = self._store.path
+        enc_path = _os.path.splitext(base)[0] + ".revoked.enc"
+        return self._revocation.load_encrypted(enc_path, password)
+
+    # ------------------------------------------------------------------
+    # Chain-wide revocation (Session 60)
+    # ------------------------------------------------------------------
+
+    def revoke_chain(self, root_cid: str) -> int:
+        """Revoke every delegation in the chain rooted at *root_cid*.
+
+        Delegates to :meth:`RevocationList.revoke_chain` using the current
+        :class:`DelegationEvaluator` (rebuilt if stale).
+
+        Args:
+            root_cid: The CID of the root delegation to revoke.
+
+        Returns:
+            Number of newly-revoked CIDs (0 if already revoked or missing).
+        """
+        evaluator = self.get_evaluator()
+        return self._revocation.revoke_chain(root_cid, evaluator)
+
+    # ------------------------------------------------------------------
     # Metrics
     # ------------------------------------------------------------------
 
