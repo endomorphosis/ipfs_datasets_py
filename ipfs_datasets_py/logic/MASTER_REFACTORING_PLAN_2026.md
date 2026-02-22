@@ -1067,6 +1067,13 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | TDFOL nl/tdfol_nl_generator | 73% | 95% | 97%✅ (session 34: 67 tests; all non-spaCy branches covered) |
 | TDFOL nl/llm.py | 57% | 90% | 97%✅ (session 34: 67 tests; _extract/_estimate/convert/init/cache all covered) |
 | TDFOL nl/tdfol_nl_api.py | 51% | 90% | 98%✅ (session 34: 67 tests; NLParser paths + module functions covered) |
+| TDFOL performance_dashboard.py | 0% | 85% | 99%✅ (session 35: 140 tests; all public methods + global functions) |
+| TDFOL performance_profiler.py | 0% | 80% | 90%✅ (session 35: 140 tests; profile_function/memory/benchmark/identify_bottlenecks) |
+| TDFOL proof_explainer.py | 96% | 99% | 98% (session 35: ZKP/tableaux/compare_proofs/explain_inference_rule) |
+| TDFOL strategies/base.py | 100% | 100% | 100%✅ |
+| TDFOL strategies/strategy_selector.py | 67% | 90% | 85% (session 35: fallback/add_strategy/select_multiple) |
+| TDFOL strategies/cec_delegate.py | 76% | 90% | 88% (session 35: CEC=True paths + exception handling) |
+| TDFOL strategies/modal_tableaux.py | 65% | 90% | 74% (session 35: _prove_basic_modal/estimate_cost/traverse) |
 | NL Processing | 75% pass | 85% pass | 90% pass |
 | ZKP (simulation) | 80% pass | 85% pass | 85% pass |
 | MCP Tools | 167+ tests | 200+ tests | 250+ tests |
@@ -1075,12 +1082,12 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action (Session 34 complete):**
-- 1 new test file: `test_nl_session34.py` (67 tests)
-- tdfol_nl_generator 73%→97%; llm.py 57%→97%; tdfol_nl_api.py 51%→98%
-- TDFOL NL suite: 1215→1341 tests; overall logic: 6401→6468 passing
-- Remaining uncovered: import-time LLM_ROUTER_AVAILABLE=True (requires llm_router), utils.py 48% (requires multiformats)
-- **Next session targets:** TDFOL `strategies/` (62%), TDFOL `performance_dashboard.py` (0%), CEC `proof_state.py` (72%)
+**Next Action (Session 35 complete):**
+- 1 new test file: `test_dashboard_profiler_strategies_session35.py` (140 tests)
+- performance_dashboard 0%->99%; performance_profiler 0%->90%; proof_explainer 96%->98%
+- strategies/strategy_selector 67%->85%; strategies/cec_delegate 76%->88%; strategies/modal_tableaux 65%->74%
+- TDFOL suite: 1282->1422 tests (+140); overall logic: 6468->6608 passing
+- **Next session targets:** TDFOL `proof_tree_visualizer.py` (26%), CEC `proof_state.py` (72%), TDFOL `strategies/__init__` ImportError branches, `tdfol_optimization.py` coverage
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19 | **Last Updated:** 2026-02-21 (Session 34)  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-22 (Session 35)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
