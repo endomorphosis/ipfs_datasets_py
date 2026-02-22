@@ -5966,6 +5966,33 @@ class OntologyGenerator:
         weights = [getattr(r, "weight", 0.0) or 0.0 for r in rels]
         return max(weights)
 
+    def entity_count_with_confidence_above(self, result: "EntityExtractionResult", threshold: float = 0.7) -> int:
+        """Return count of entities whose confidence exceeds *threshold*.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+            threshold: Exclusive lower bound. Defaults to 0.7.
+
+        Returns:
+            Integer count.
+        """
+        entities = result.entities or []
+        return sum(1 for e in entities if (getattr(e, "confidence", 0.0) or 0.0) > threshold)
+
+    def relationship_avg_confidence(self, result: "EntityExtractionResult") -> float:
+        """Return the average confidence across all relationships.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float mean; 0.0 when no relationships.
+        """
+        rels = result.relationships or []
+        if not rels:
+            return 0.0
+        return sum(getattr(r, "confidence", 0.0) or 0.0 for r in rels) / len(rels)
+
 
 __all__ = [
     'OntologyGenerator',

@@ -1789,3 +1789,11 @@ class OntologyLearningAdapter:
         else:
             median = scores[n // 2]
         return sum(abs(s - median) for s in scores) / n
+
+    def feedback_score_sum(self) -> float:
+        """Return the sum of all final_score values in feedback.
+
+        Returns:
+            Float sum; 0.0 when no feedback.
+        """
+        return sum(r.final_score for r in self._feedback)

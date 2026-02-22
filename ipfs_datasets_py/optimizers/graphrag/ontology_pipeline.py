@@ -1731,3 +1731,13 @@ class OntologyPipeline:
         if not self._run_history:
             return 0.0
         return self._run_history[-1].score.overall
+
+    def run_score_delta(self) -> float:
+        """Return the difference between the last and first run scores.
+
+        Returns:
+            Float delta (last - first); 0.0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        return self._run_history[-1].score.overall - self._run_history[0].score.overall

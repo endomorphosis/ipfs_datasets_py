@@ -3588,6 +3588,61 @@ class OntologyOptimizer:
         return sum(e.average_score for e in recent) / len(recent)
 
 
+    def history_above_mean_count(self) -> int:
+        """Return the number of history entries with average_score above the mean.
+
+        Returns:
+            Integer count; 0 when history is empty.
+        """
+        if not self._history:
+            return 0
+        mean = sum(e.average_score for e in self._history) / len(self._history)
+        return sum(1 for e in self._history if e.average_score > mean)
+
+    def score_delta_mean(self) -> float:
+        """Return the mean of consecutive score differences (deltas) in history.
+
+        Returns:
+            Float mean delta; 0.0 when fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        deltas = [
+            self._history[i + 1].average_score - self._history[i].average_score
+            for i in range(len(self._history) - 1)
+        ]
+        return sum(deltas) / len(deltas)
+
+    def history_median(self) -> float:
+        """Return the median of average_score across all history entries.
+
+        Returns:
+            Float median; 0.0 when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        vals = sorted(e.average_score for e in self._history)
+        n = len(vals)
+        if n % 2 == 0:
+            return (vals[n // 2 - 1] + vals[n // 2]) / 2.0
+        return vals[n // 2]
+
+    def score_above_rolling_mean(self, window: int = 3) -> int:
+        """Return count of history entries above the rolling mean of the last *window* entries.
+
+        Args:
+            window: Window size for rolling mean. Defaults to 3.
+
+        Returns:
+            Integer count; 0 when history is empty.
+        """
+        if not self._history:
+            return 0
+        recent = self._history[-window:]
+        rolling = sum(e.average_score for e in recent) / len(recent)
+        return sum(1 for e in self._history if e.average_score > rolling)
+
+
 # Export public API
 __all__ = [
     'OntologyOptimizer',

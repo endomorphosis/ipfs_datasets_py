@@ -3961,6 +3961,19 @@ class OntologyCritic(BaseCritic):
         """
         return sum(1 for d in self._DIMENSIONS if getattr(score, d, 0.0) > threshold)
 
+    def dimension_mean(self, score: "CriticScore") -> float:
+        """Return the arithmetic mean of all dimension values in a CriticScore.
+
+        Args:
+            score: CriticScore to evaluate.
+
+        Returns:
+            Float mean; 0.0 when no dimensions.
+        """
+        if not self._DIMENSIONS:
+            return 0.0
+        return sum(getattr(score, d, 0.0) for d in self._DIMENSIONS) / len(self._DIMENSIONS)
+
 
 # Export public API
 __all__ = [
