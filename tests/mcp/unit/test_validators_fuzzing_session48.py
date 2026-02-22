@@ -29,6 +29,23 @@ try:
     HYPOTHESIS_AVAILABLE = True
 except ImportError:
     HYPOTHESIS_AVAILABLE = False
+    # Stub decorators so class bodies parse correctly without hypothesis installed
+    def given(*a, **kw):  # type: ignore[misc]
+        return lambda f: f
+    def settings(*a, **kw):  # type: ignore[misc]
+        return lambda f: f
+    def assume(cond):  # type: ignore[misc]
+        # Called in @given-decorated test bodies — stub must exist even when hypothesis absent
+        pass
+    class HealthCheck:  # type: ignore[misc]
+        too_slow = None
+    class _StStub:
+        """No-op stub for hypothesis.strategies when hypothesis is absent."""
+        def __getattr__(self, name):
+            def _noop(*a, **kw):
+                return None
+            return _noop
+    st = _StStub()  # type: ignore[assignment]
 
 pytestmark = pytest.mark.skipif(
     not HYPOTHESIS_AVAILABLE,
@@ -45,25 +62,30 @@ from ipfs_datasets_py.mcp_server.validators import EnhancedParameterValidator
 from ipfs_datasets_py.mcp_server.exceptions import ValidationError
 
 # ---------------------------------------------------------------------------
-# Shared strategy helpers
+# Shared strategy helpers (only available when hypothesis is installed)
 # ---------------------------------------------------------------------------
 
-_printable = st.text(
-    alphabet=string.printable,
-    min_size=0,
-    max_size=200,
-)
+if HYPOTHESIS_AVAILABLE:
+    _printable = st.text(
+        alphabet=string.printable,
+        min_size=0,
+        max_size=200,
+    )
 
-_short_alnum = st.text(
-    alphabet=string.ascii_letters + string.digits + "_-",
-    min_size=1,
-    max_size=50,
-)
+    _short_alnum = st.text(
+        alphabet=string.ascii_letters + string.digits + "_-",
+        min_size=1,
+        max_size=50,
+    )
 
-_any_text = st.one_of(
-    st.text(min_size=0, max_size=500),
-    st.binary(min_size=0, max_size=50).map(lambda b: b.decode("utf-8", errors="replace")),
-)
+    _any_text = st.one_of(
+        st.text(min_size=0, max_size=500),
+        st.binary(min_size=0, max_size=50).map(lambda b: b.decode("utf-8", errors="replace")),
+    )
+else:
+    _printable = None
+    _short_alnum = None
+    _any_text = None
 
 
 # ---------------------------------------------------------------------------
