@@ -651,8 +651,9 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
             Relation: ELABORATING, Strength: 0.75
 
         Note:
-            Future versions will use LLM-based analysis for more sophisticated
-            relationship determination (see TODO at line 542).
+            Future versions may use LLM-based analysis for more sophisticated
+            relationship determination. Current implementation uses heuristics
+            based on document similarity and chronology.
         """
         # Find the documents
         source_doc = next((d for d in documents if d.id == source_doc_id), None)

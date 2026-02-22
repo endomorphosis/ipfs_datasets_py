@@ -927,3 +927,42 @@ All session59 (21 tests) and session60 (18 tests) tests continue to pass:
 - `TestThreeDocVersionAgreement` (3 tests): MASTER_STATUS/ROADMAP/CHANGELOG all agree on v3.22.18.
 
 **Result: 3,816 passed, 26 skipped, 0 failed** (numpy+networkx+matplotlib+scipy+plotly+rdflib env)
+
+### Session 65 log (2026-02-22)
+
+**Stale docstring + doc reference fixes — one production docstring change, rest doc-only.**
+
+**Problem:** Three small but misleading stale references accumulated since session 60:
+1. `reasoning/cross_document.py:655` had a docstring note "Future versions will use LLM-based
+   analysis for more sophisticated relationship determination (see TODO at line 542)." The "TODO"
+   reference was stale — line 542 is plain implementation code with a comment explaining the
+   heuristic approach. The note itself was still accurate (LLM enhancement is a future option)
+   but the "see TODO at line 542" direction misleads readers into looking for a TODO that doesn't
+   exist.
+2. `MASTER_STATUS.md` line 22: `Documentation` row still said `Reflects v3.22.15 structure`
+   (from session 60) instead of `v3.22.18` (3 sessions behind).
+3. `MASTER_STATUS.md` line 177: `Test Files: 95 total (as of v3.22.15)` — sessions 59–64 added
+   6 new test files (test_master_status_session59 through session64), raising the count from
+   95 to 102.
+4. `MASTER_REFACTORING_PLAN_2026.md`: still at version `3.22.17` (from session 63) with no entry
+   for the session 63-64 work (roadmap/API accuracy fixes).
+
+**Fix:**
+1. `reasoning/cross_document.py:655-658`: Updated note from
+   `"...relationship determination (see TODO at line 542)."` →
+   `"...relationship determination. Current implementation uses heuristics based on document
+   similarity and chronology."` (more accurate, self-contained)
+2. `MASTER_STATUS.md`:
+   - `Reflects v3.22.15 structure` → `Reflects v3.22.18 structure`
+   - `Test Files: 95 total (as of v3.22.15)` → `102 total (as of v3.22.18)`
+3. `MASTER_REFACTORING_PLAN_2026.md`:
+   - `**Version:** 3.22.17` → `3.22.18`
+   - Added "API Accuracy (Complete ✅, sessions 63–64)" section to §2 Completed Work Summary
+
+**16 tests** in `test_master_status_session65.py` (4 classes):
+- `TestCrossDocumentDocstringFixed` (4 tests): stale "see TODO at line 542" absent; "heuristics" present; "similarity" present; "chronology" present
+- `TestMasterStatusDocRef` (5 tests): v3.22.18 in Documentation row; v3.22.15 gone from Documentation row; "102 total" present; "95 total" absent; "(as of v3.22.18)" present
+- `TestMasterRefactoringPlanSession65` (4 tests): version 3.22.18; session 63-64 API accuracy section present; QUICKSTART mentioned; sessions 63-64 mentioned
+- `TestDocVersionAgreement` (3 tests): MASTER_STATUS/CHANGELOG/ROADMAP/REFACTORING_PLAN all agree on v3.22.19
+
+**Result: 3,841 passed, 26 skipped, 0 failed** (numpy+networkx+matplotlib+scipy+plotly+rdflib env)

@@ -162,8 +162,9 @@ class TestThreeDocVersionAgreement:
     def test_master_status_version_is_3_22_15(self):
         """MASTER_STATUS.md version header must be 3.22.15 or later."""
         text = _read(_MASTER_STATUS)
-        assert ("**Version:** 3.22.15" in text or "**Version:** 3.22.16" in text
-                or "**Version:** 3.22.17" in text), \
+        assert any(f"**Version:** {v}" in text for v in (
+            "3.22.15", "3.22.16", "3.22.17", "3.22.18", "3.22.19"
+        )), \
             "MASTER_STATUS.md **Version:** should be 3.22.15 or later"
 
     def test_roadmap_release_table_has_3_22_15(self):

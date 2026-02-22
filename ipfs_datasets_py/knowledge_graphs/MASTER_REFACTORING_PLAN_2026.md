@@ -1,6 +1,6 @@
 # Knowledge Graphs Module – Master Refactoring Plan 2026
 
-**Version:** 3.22.17  
+**Version:** 3.22.18  
 **Status:** ✅ Active  
 **Created:** 2026-02-19  
 **Last Updated:** 2026-02-22  
@@ -134,6 +134,11 @@ All work below was completed before this plan was written; it is recorded here t
 - **Session 61**: INDEX.md v2.0.0→v3.22.15; stale migration warning removed; README.md v2.1.0→v3.22.15; ROADMAP current version header corrected
 - **Session 62**: DOCUMENTATION_GUIDE.md v1.0→v3.22.16; duplicate MASTER_STATUS entry removed; DEFERRED_FEATURES.md + IMPROVEMENT_TODO.md stale paths/dates fixed
 - Combined: 78 documentation integrity tests across sessions 59-62
+
+### API Accuracy (Complete ✅, sessions 63–64)
+- **Session 63**: ROADMAP.md 3 stale "Status: Planned" items fixed (Migration Performance→Delivered; spaCy→Delivered; Confidence Scoring→Deferred v4.0+); MASTER_REFACTORING_PLAN_2026.md v1.0→v3.22.17
+- **Session 64**: QUICKSTART.md 5 runtime-breaking API inaccuracies fixed (rel.source→rel.source_id; engine.execute→execute_cypher; result iter→result.items; store(kg)→store(kg.to_dict()); HybridSearch→HybridSearchEngine; top_k→k; result.entity.name→result.node_id); MASTER_STATUS feature coverage matrix updated 40-85%→99-100%
+- Combined: 34 API/doc integrity tests across sessions 63-64
 
 ---
 

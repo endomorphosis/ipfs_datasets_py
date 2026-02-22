@@ -5,6 +5,30 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.19] - 2026-02-22
+
+### Fixed — Stale docstring + doc reference fixes (Session 65)
+
+**One production code change (docstring only); doc-only otherwise.**
+
+#### `reasoning/cross_document.py` (docstring fix)
+- Removed stale "see TODO at line 542" reference from `_determine_document_relationship()`
+  docstring. Line 542 is plain implementation code, not a TODO comment. The heuristic
+  nature of the current approach is now described directly in the note.
+
+#### `MASTER_STATUS.md`
+- `Documentation` row: `Reflects v3.22.15 structure` → `Reflects v3.22.18 structure`
+- Test files count: `95 total (as of v3.22.15)` → `102 total (as of v3.22.18)` (sessions 59–64 added 6 new test files)
+
+#### `MASTER_REFACTORING_PLAN_2026.md`
+- Version bumped `3.22.17` → `3.22.18`
+- Added "API Accuracy (sessions 63–64)" section to §2 Completed Work Summary
+
+#### Tests
+- 16 new doc+code integrity tests in `test_master_status_session65.py`
+
+---
+
 ## [3.22.18] - 2026-02-22
 
 ### Fixed — QUICKSTART.md API inaccuracies + MASTER_STATUS feature coverage matrix (Session 64)
