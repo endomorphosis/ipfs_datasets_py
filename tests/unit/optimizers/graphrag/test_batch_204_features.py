@@ -531,7 +531,9 @@ class TestMostConnectedNode:
         assert self.validator.most_connected_node(ont) == "hub"
 
     def test_bidirectional_highest_degree(self):
-        # a↔b: a degree=2 (out+out), b degree=2 (out+in)
+        # a→b, b→a, a→c: a is source in 2 rels (→b, →c) and target in 1 rel (←b) = degree 3
+        # b is source in 1 rel (→a) and target in 1 rel (←a) = degree 2
+        # c is target in 1 rel = degree 1 → most connected = a
         ont = _make_ontology(("a", "b"), ("b", "a"), ("a", "c"))
         # a: source in 2 rels (→b, →c), target in 1 rel (←b): degree=3
         # b: source in 1 rel, target in 1 rel: degree=2
