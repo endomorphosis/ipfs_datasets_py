@@ -1,8 +1,8 @@
 # Knowledge Graphs Module
 
-**Version:** 2.1.0  
+**Version:** 3.22.15  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-20
+**Last Updated:** 2026-02-22
 
 ---
 

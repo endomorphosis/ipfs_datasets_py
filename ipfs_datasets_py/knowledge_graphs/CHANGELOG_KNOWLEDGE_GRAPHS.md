@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.22.15] - 2026-02-22
 
+### Changed — Stale version/coverage numbers fixed (Session 61)
+
+**No production code changes.** Updated INDEX.md, README.md, and ROADMAP.md to reflect
+the current state (v3.22.15, 99.99% coverage, 3,743+ tests).
+
+#### `INDEX.md`
+- `Module Version: 2.0.0` → `3.22.15` (header, stats table, footer)
+- `Test Coverage: 75% overall, 116+ tests` → `99.99%, 3,743+ tests`
+- `Current State (v2.0.0)` → `Current State (v3.22.15)` in Module Status section
+- `11/12 modules production-ready` → `12/12`
+- Removed stale `⚠️ Migration Module: Needs test coverage improvement (40% → 70%)`
+- `Next Version (v2.0.1 - Q2 2026)` section → `Next Version (v4.0 - 2027+)`
+- Added v3.22.0 and v3.22.15 rows to Version History table
+- `Last Updated: 2026-02-17` → `2026-02-22` (header + footer)
+
+#### `README.md`
+- `**Version:** 2.1.0` → `3.22.15`
+- `**Last Updated:** 2026-02-20` → `2026-02-22`
+
+#### `ROADMAP.md`
+- `**Current Version:** 3.22.14` → `3.22.15` (header only; 3.22.14 retained in release table)
+
+#### Tests
+- Added `test_master_status_session61.py` with 21 doc integrity tests:
+  - `TestIndexMdVersionUpdate` (3 tests): Module Version 3.22.15; stale v2.0.0 gone
+  - `TestIndexMdCoverageUpdate` (4 tests): 99.99%; 3,743+ tests; stale 75%/116+ gone
+  - `TestIndexMdModuleStatusSection` (5 tests): current state v3.22.15; stale warnings absent
+  - `TestReadmeMdVersionUpdate` (3 tests): version/last-updated checks
+  - `TestRoadmapCurrentVersionUpdate` (3 tests): 3.22.15 present; 3.22.14 in table (backward compat)
+  - `TestThreeDocVersionAgreement` (3 tests): INDEX/README/ROADMAP all on v3.22.15
+
 ### Changed — MASTER_STATUS stale coverage table + ROADMAP duplicate section (Session 60)
 
 **No production code changes.** Updated docs to reflect sessions 54–59 improvements.

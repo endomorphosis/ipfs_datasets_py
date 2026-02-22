@@ -1,7 +1,7 @@
 # Knowledge Graphs - Development Roadmap
 
 **Last Updated:** 2026-02-22  
-**Current Version:** 3.22.14  
+**Current Version:** 3.22.15  
 **Status:** Production Ready (99.99% test coverage)
 
 ---
