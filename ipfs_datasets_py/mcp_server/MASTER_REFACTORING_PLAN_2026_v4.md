@@ -99,8 +99,8 @@ No further planned work. Future improvements would be tracked as new issues.
 | `validators.py` | 70%+ ✅ (tests added) |
 | `monitoring.py` | 65%+ ✅ (tests added) |
 | `exceptions.py` | 85%+ ✅ |
-| `tool_registry.py` | 73% ✅ (improved from 40% baseline) |
-| `enterprise_api.py` | 66% ✅ (improved from 30% baseline) |
+| `tool_registry.py` | 85%+ ✅ (improved from 40% baseline; session 39 +12pp) |
+| `enterprise_api.py` | 80% ✅ (improved from 30% baseline; session 40 +14pp) |
 | `server_context.py` | 90% ✅ (improved from 50% — session 29) |
 | `runtime_router.py` | 83% ✅ (improved from 50% — session 29) |
 

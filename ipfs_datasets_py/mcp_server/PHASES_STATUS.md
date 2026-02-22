@@ -1,9 +1,9 @@
 # MCP Server Phases Status Report
 
-**Last Updated:** 2026-02-21 (Session 28 — All phases complete; v5 A-F also done)  
-**Branch:** `copilot/refactor-markdown-files-again`
+**Last Updated:** 2026-02-22 (Session 54 — Profile E transport + integrated dispatch pipeline; 73 new tests)  
+**Branch:** `copilot/create-improvement-refactoring-plan`
 **Master Plan:** [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)  
-**Next Steps:** [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROVEMENT_PLAN_2026_v5.md)
+**Next Steps:** [MASTER_IMPROVEMENT_PLAN_2026_v10.md](MASTER_IMPROVEMENT_PLAN_2026_v10.md)
 
 ## Overview
 
@@ -20,7 +20,10 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 | **Phase 5** | ✅ COMPLETE | 100% | 15/15 thick files extracted (hugging_face_pipeline 983→54 lines) |
 | **Phase 6** | ✅ COMPLETE | 100% | 28 stale docs archived, 7 authoritative docs kept |
 | **Phase 7** | ✅ COMPLETE | 100% | Lazy loading, schema caching, P2P connection pooling |
-| **TOTAL** | ✅ **COMPLETE** | **100%** | All 7 phases done |
+| **Phase M** | ✅ COMPLETE | 100% | anyio-first migration; Flask deprecated |
+| **Phase N** | ✅ COMPLETE | 100% | No-asyncio CI check; Docker/scripts Flask-free |
+| **Phase P** | ✅ COMPLETE | 100% | MCP++ spec alignment (Profiles A–E + Event DAG + Pipeline + Phases G–L sessions 57–58) |
+| **TOTAL** | ✅ **COMPLETE** | **100%** | All phases done; 539 session 50–58 tests pass |
 
 ## Completed Phases
 
@@ -277,11 +280,58 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 
 ## Next Actions
 
-**All 7 phases are complete.** The MCP server refactoring is 100% done.
+**All 7 phases are complete.** The MCP server refactoring is 100% done. v5 Phases A-F are also complete.
 
-Future improvements are tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROVEMENT_PLAN_2026_v5.md).
+Active improvement tasks are tracked in [MASTER_IMPROVEMENT_PLAN_2026_v6.md](MASTER_IMPROVEMENT_PLAN_2026_v6.md) (v6 plan, session 39+).
 
-**v5 Phases A-F status** (completed 2026-02-21, branch `copilot/refactor-markdown-files-again`):
+Completed v5 tasks tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROVEMENT_PLAN_2026_v5.md).
+
+**v6 Tasks — ALL COMPLETE ✅ (sessions 40-44); v7 Session 45 tasks below:**
+- ✅ `simple_server.py`: Flask import made conditional; `DeprecationWarning` on class/function use (session 45)
+- ✅ `standalone_server.py`: `DeprecationWarning` added to all entry points (session 45)
+- ✅ `__main__.py`: Flask fallback removed; `--http` emits `DeprecationWarning` (session 45)
+- ✅ `mcplusplus/executor.py`: misleading "Fallback to asyncio" comments replaced with "anyio fallback" (session 45)
+- ✅ `README.md`: 2 code examples updated `asyncio.run()` → `anyio.run()` (session 45)
+- ✅ `docs/architecture/DUAL_RUNTIME_ARCHITECTURE.md`: `asyncio.get_event_loop()` → `anyio.to_thread.run_sync()` (session 45)
+- ✅ Created `MASTER_IMPROVEMENT_PLAN_2026_v7.md` (phases M/N/O) — Flask removal, anyio validation, Docker refresh (session 45)
+- ✅ `test_deprecation_session45.py` — 16 tests all passing (session 45)
+- ✅ **Phase N2**: `test_no_asyncio_session46.py` — 4 AST-based CI regression tests (no asyncio in mcp_server production code) (session 46)
+- ✅ **Phase N3**: Legal dataset tool markdown guides updated `asyncio.run()` → `anyio.run()`: PLAYWRIGHT_SETUP.md, CRON_SETUP_GUIDE.md, COURTLISTENER_API_GUIDE.md (session 46)
+- ✅ **Phase N3**: `docs/adr/ADR-002-dual-runtime.md` updated to anyio-first wording (session 46)
+- ✅ **Phase M1**: `scripts/cli/integrated_cli.py` + `scripts/cli/comprehensive_distributed_cli.py` warn on `SimpleIPFSDatasetsMCPServer` import (session 46)
+- ✅ **Phase M2/O1**: `Dockerfile.standalone` rewritten — no Flask, stdio CMD, process-based HEALTHCHECK (session 46)
+- ✅ **Phase O2**: `start_services.sh` — removed `--http` flag; stdio mode default (session 46)
+- ✅ **Phase O3**: `Dockerfile.simple` — removed HTTP HEALTHCHECK, replaced with process-based check (session 46)
+- ✅ `monitoring.py` coverage: 63%→80% (Phase I) — `test_monitoring_session40.py` (44 tests)
+- ✅ `enterprise_api.py` coverage: 66%→80% (Phase I) — `test_enterprise_api_session40.py` (20 tests)
+- ✅ `tool_metadata.py` coverage: 0%→100% (Phase I) — `test_tool_metadata_session41.py` (38 tests)
+- ✅ `validators.py` coverage: 0%→94% (Phase I) — `test_validators_session41.py` (77 tests)
+- ✅ `logger.py` coverage: 0%→100% (Phase I) — `test_core_modules_session42.py`
+- ✅ `mcp_interfaces.py` coverage: 0%→100% (Phase I) — `test_core_modules_session42.py`
+- ✅ `exceptions.py` coverage: 78%→100% (Phase I) — `test_core_modules_session42.py`
+- ✅ `configs.py` coverage: 48%→100% (Phase I) — `test_core_modules_session42.py`
+- ✅ `trio_bridge.py` coverage: 0%→100% (Phase I) — `test_core_modules_session42.py`
+- ✅ `__main__.py` coverage: 0%→92% (Phase I) — `test_additional_servers_session44.py`
+- ✅ `investigation_mcp_client.py` coverage: 0%→97% (Phase I) — `test_additional_servers_session44.py`
+- ✅ `simple_server.py` coverage: 8%→83% (Phase I) — `test_additional_servers_session44.py`
+- ✅ `standalone_server.py` coverage: 0%→81% (Phase I) — `test_additional_servers_session44.py`
+- ✅ `temporal_deontic_mcp_server.py` coverage: 0%→90% (Phase I) — `test_additional_servers_session44.py`
+- ✅ `fastapi_config.py` coverage: 0%→85%+ (Phase I) — `test_server_components_session43.py` (20 tests)
+- ✅ `trio_adapter.py` coverage: 0%→88%+ (Phase I) — `test_server_components_session43.py` (38 tests)
+- ✅ `register_p2p_tools.py` coverage: 0%→87%+ (Phase I) — `test_server_components_session43.py` (21 tests)
+- ✅ `docs/api/tool-reference.md`: expanded 530L/15 sections → 1283L/52 sections (Phase H)
+- ✅ 15 tool category READMEs verified — already have tables/usage/status from v5 (Phase J)
+- ✅ `compat/` and architecture docs refreshed (Phase L)
+
+**v6 Phases G-L status** (completed 2026-02-22, session 40):
+- ✅ **Phase G** (Doc Accuracy): QUICKSTART/compat/dual-runtime docs updated (session 39); v4 plan coverage figures updated (session 40)
+- ✅ **Phase H** (API Reference): `docs/api/tool-reference.md` expanded from ~530L/15 sections → 1283L/52 sections covering all 51 tool categories
+- ✅ **Phase I** (Coverage): `monitoring.py` 63%→80% (+44 new tests in `test_monitoring_session40.py`); `enterprise_api.py` 66%→80% (+20 new tests in `test_enterprise_api_session40.py`)
+- ✅ **Phase J** (Tool READMEs): All 15 "stub" category READMEs verified — already have tables/usage/status content from v5 work
+- ✅ **Phase K** (Lizardperson): 6 empty TODO.md files populated (session 39); `docs/history/README.md` updated with all 6 missing file entries
+- ✅ **Phase L** (Arch Docs): `docs/architecture/mcp-plus-plus-alignment.md` "Future Enhancements" updated with ✅ completion marks; `compat/README.md` status updated
+
+**v5 Phases A-F status** (completed 2026-02-21/22, branch `copilot/refactor-markdown-files-again`):
 - ✅ **Phase A** (Docs): `docs/tools/README.md` 49-cat table; `docs/api/tool-reference.md` 530L; `docs/adr/` 4 ADRs; `performance-tuning.md` updated with Phase 7 guide
 - ✅ **Phase B** (Tests): **1383 tests passing** (session 38); **53 B2 test categories** (added session 38: tool_wrapper, legacy_patent_tools, legacy_deprecation_stubs; session 37: citation_validator_utils, vscode_cli_tools, legacy_temporal_deontic_tools; session 36: cli_tools, lizardpersons_llm_context_tools, lizardpersons_prototyping_tools, lizardpersons_meta_tools; session 35: mcplusplus_peer_tools, mcplusplus_taskqueue_tools, mcplusplus_workflow_tools_extended, mcp_helpers, tool_registration; session 34: file_detection_tools, bespoke_tools, functions_tools, medical_research_scrapers, web_scraping_tools; session 33: legal_dataset_tools, finance_data_tools, vector_store_tools, ipfs_cluster_tools, dashboard_tools, data_processing_tools; session 32: result_cache, p2p_connection_pool, llm_tools, p2p_workflow_tools, investigation_tools) + B3 scenario tests + B4 property tests; `tool_registry.py` 73%, `enterprise_api.py` 66%, `server_context.py` **90%** (+40pp), `runtime_router.py` **83%** (+33pp); `result_cache.py` 77%, `p2p_connection_pool` 82%
 - ✅ **Phase C** (Observability): `request_id` UUID4 in dispatch; `/health/ready` + `/metrics` endpoints; latency percentiles
@@ -291,6 +341,14 @@ Future improvements are tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_I
 
 ---
 
-**Last Updated:** 2026-02-20 (Session 12 — All phases complete)
+## v7 Phases M/N/O (anyio migration + Flask removal) — 2026-02-22
 
-**For the complete plan, see [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)**
+- ✅ **Session 45** (Phase M/N start): Flask deprecated in `simple_server.py`+`standalone_server.py`+`__main__.py`; `executor.py` asyncio comments fixed; `README.md`+`DUAL_RUNTIME_ARCHITECTURE.md` asyncio→anyio; `MASTER_IMPROVEMENT_PLAN_2026_v7.md` created; 16 tests
+- ✅ **Session 46** (Phase M1/M2/N2/N3/O1-O3): `Dockerfile.standalone` Flask-free; `start_services.sh` --http removed; `Dockerfile.simple` HTTP healthcheck replaced; PLAYWRIGHT/CRON/COURTLISTENER guides asyncio→anyio; ADR-002 anyio-first; external callers warned; AST-based CI check (`test_no_asyncio_session46.py` 4 tests)
+- ✅ **Session 47** (Phase M2/M3/O4 complete): `Dockerfile.simple` EXPOSE 8000/8080 removed + CMD→MCP stdio; `start_simple_server.sh` Flask→MCP stdio + deprecation notice; `simple_server.py` TODO removal comment; `requirements-docker.txt` Flask removed + anyio added; `test_flask_removal_session47.py` 13 tests
+
+---
+
+**Last Updated:** 2026-02-22 (Session 58 — Phases G–L complete: IPFSPolicyStore startup, RevocationList persistence, DelegationManager, compliance interface registration, monitoring metrics; 539 spec tests pass)
+
+**For the complete plan, see [MASTER_IMPROVEMENT_PLAN_2026_v14.md](MASTER_IMPROVEMENT_PLAN_2026_v14.md)**

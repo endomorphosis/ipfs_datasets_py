@@ -39,13 +39,24 @@ The integration provides a Model Context Protocol (MCP) server for IPFS Datasets
   - Setup script for easy installation
   - Server launcher script
 
-### Future Enhancements
-- Performance optimization for large datasets
-- Security and authentication enhancements
-- Additional tool implementations
-- Integration with more IPFS services
-- CI/CD pipeline for automated testing
-- Dashboard for monitoring server status
+### Future Enhancements (Now Complete ✅)
+
+These items listed as "future" at initial design time are now complete:
+
+- ✅ **Performance optimization for large datasets** — Lazy loading, schema caching, P2P connection
+  pooling (Phase 7, v4 plan)
+- ✅ **Security and authentication enhancements** — SECRET_KEY enforcement, bare-exception handling,
+  subprocess sanitization, error data redaction (Phase 1 Security, SECURITY.md)
+- ✅ **Additional tool implementations** — 344+ tool files across 51 categories (v4/v5 phases)
+- ✅ **Integration with more IPFS services** — IPFS cluster tools, P2P workflow tools, MCP++ integration
+- ✅ **CI/CD pipeline for automated testing** — GitHub Actions workflows with self-hosted runners
+  (see `.github/workflows/README.md`)
+- ✅ **Dashboard for monitoring server status** — `EnhancedMetricsCollector`, `P2PMetricsCollector`,
+  `AdvancedAnalyticsDashboard` (enterprise_api.py, monitoring.py)
+
+**Current status (2026-02-22):** No known open enhancements from this list. See
+[MASTER_IMPROVEMENT_PLAN_2026_v6.md](../../MASTER_IMPROVEMENT_PLAN_2026_v6.md) for the next
+round of improvements (coverage, API reference, tool README depth).
 
 ## Integration with IPFS Kit Python
 

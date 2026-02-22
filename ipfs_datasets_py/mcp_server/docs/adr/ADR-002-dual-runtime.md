@@ -10,11 +10,11 @@
 
 MCP tool functions are consumed in two contexts:
 
-1. **HTTP/REST** — FastAPI endpoint handlers that run inside an `asyncio` event loop.
+1. **HTTP/REST** — FastAPI endpoint handlers that run via anyio's asyncio backend.
 2. **Trio structured-concurrency** — The MCP++ workflow engine that uses `trio`
    nurseries for reliable task cancellation and structured concurrency.
 
-These runtimes have incompatible event-loop models.  `asyncio` coroutines cannot
+These runtimes have incompatible event-loop models.  Raw `asyncio` coroutines cannot
 run directly inside a Trio nursery, and vice versa.
 
 ## Decision
@@ -27,7 +27,7 @@ Adopt a **dual-runtime** approach using `anyio` as the compatibility shim:
   `RUNTIME_TRIO` metadata and dispatches accordingly.
 - A `trio_bridge.py` module provides `run_in_trio()` for tools explicitly marked
   with `runtime=RUNTIME_TRIO`.
-- FastAPI routes continue to use `asyncio`; the Trio runtime is started in a
+- FastAPI routes run via anyio's asyncio backend; the Trio runtime is started in a
   dedicated thread via `trio.from_thread.run_sync`.
 
 ## Consequences
@@ -39,7 +39,8 @@ Adopt a **dual-runtime** approach using `anyio` as the compatibility shim:
 
 ### Negative
 - `anyio` adds one dependency.
-- Developers must avoid runtime-specific primitives (e.g., `asyncio.sleep` only).
+- Developers must use anyio primitives (`anyio.sleep`, `anyio.open_file`, `TaskGroup`)
+  and avoid runtime-specific primitives (e.g., `asyncio.sleep`, `trio.sleep`).
 
 ### Neutral
 - `pytest-asyncio` is used for the test suite; both runtimes are tested.

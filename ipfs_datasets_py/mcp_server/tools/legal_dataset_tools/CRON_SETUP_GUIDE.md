@@ -162,7 +162,7 @@ curl -X DELETE http://localhost:8899/api/mcp/dataset/state_laws/schedules/daily_
 You can also use the scheduler programmatically in Python:
 
 ```python
-import asyncio
+import anyio
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
     create_schedule,
     list_schedules,
@@ -195,7 +195,7 @@ async def main():
     # Remove schedule
     await remove_schedule("daily_ca")
 
-asyncio.run(main())
+anyio.run(main)
 ```
 
 ## Troubleshooting

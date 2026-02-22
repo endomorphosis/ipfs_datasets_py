@@ -135,6 +135,13 @@ def execute_distributed_command(args):
     # Import heavy modules only when needed
     import anyio
     from ipfs_datasets_py.dataset_manager import DatasetManager
+    import warnings as _w
+    _w.warn(
+        "SimpleIPFSDatasetsMCPServer is deprecated. Use 'python -m ipfs_datasets_py.mcp_server' "
+        "or package imports instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     from ipfs_datasets_py.mcp_server import SimpleIPFSDatasetsMCPServer
     
     if command == "dataset":

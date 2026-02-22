@@ -9,15 +9,20 @@ These documents are archived for historical reference and to understand the evol
 ## Contents
 
 ### Phase Completion Summaries
-- **PHASE_1_PROGRESS.md** - Phase 1: P2P Import Layer
+- **PHASE_1_PROGRESS.md** - Phase 1: P2P Import Layer progress
+- **PHASE_1_COMPLETE_SUMMARY.md** - Phase 1 completion summary
+- **PHASE_1_2_SUMMARY.md** - Phase 1–2 combined summary
+- **PHASE_1_6_PROGRESS_REPORT.md** - Phase 1-6 roadmap and progress
 - **PHASE_2_3_PROGRESS.md** - Phase 2-3: P2P Tool Enhancement and Performance
+- **PHASE_2B_COMPLETE_SUMMARY.md** - Phase 2B (tool templates) completion
+- **PHASE_2C_6_IMPLEMENTATION_PLAN.md** - Phase 2C–6 plan
 - **PHASE_2_COMPLETE_SUMMARY.md** - Phase 2 completion summary
+- **PHASE_2_IMPLEMENTATION_PLAN.md** - Phase 2 implementation details
 - **PHASE_2_SESSION_SUMMARY.md** - Phase 2 session notes
 - **PHASE_3_4_IMPLEMENTATION_SUMMARY.md** - Phase 3-4 implementation details
 - **PHASE_3_4_FINAL_COMPLETION_SUMMARY.md** - Phase 3-4 final completion
 - **PHASE_3_PROGRESS_SUMMARY.md** - Phase 3 progress tracking
 - **PHASE_4_FINAL_REPORT.md** - Phase 4 final report
-- **PHASE_1_6_PROGRESS_REPORT.md** - Phase 1-6 roadmap and progress
 
 ### Refactoring Documentation (2026)
 - **MCP_SERVER_REFACTORING_PLAN_2026.md** - Comprehensive refactoring plan

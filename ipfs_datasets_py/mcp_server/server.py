@@ -415,7 +415,10 @@ class IPFSDatasetsMCPServer:
         self._initialize_error_reporting()
         self._initialize_mcp_server()
         self.tools = {}
+        self._dispatch_pipeline = None  # Optional[DispatchPipeline] — set via set_pipeline()
+        self._policy_store = None  # Optional[IPFSPolicyStore] — set via _initialize_policy_store()
         self._initialize_p2p_services()
+        self._initialize_policy_store()
 
     def _initialize_error_reporting(self) -> None:
         """Initialize global error reporting if available."""
@@ -463,6 +466,56 @@ class IPFSDatasetsMCPServer:
         except Exception as e:
             logger.warning(f"Unexpected error initializing P2P service: {e}", exc_info=True)
             self.p2p = None
+
+    def set_pipeline(self, pipeline: Any) -> None:  # Any → DispatchPipeline
+        """Attach an optional :class:`~dispatch_pipeline.DispatchPipeline` to this server.
+
+        When a pipeline is attached every ``tools_dispatch`` call passes through
+        ``pipeline.check(intent)`` before the actual tool is executed.  An
+        allowed result continues to the tool; a denied result returns an error
+        dict without dispatching.
+
+        The pipeline is **opt-in** — the server starts with ``_dispatch_pipeline
+        = None`` and passes all requests through unchecked until a caller
+        explicitly calls this method.
+
+        Args:
+            pipeline: A :class:`~dispatch_pipeline.DispatchPipeline` instance,
+                or ``None`` to detach the current pipeline.
+        """
+        self._dispatch_pipeline = pipeline
+
+    def get_pipeline(self) -> Any:  # Optional[DispatchPipeline]
+        """Return the attached pipeline, or ``None`` if none is set."""
+        return self._dispatch_pipeline
+
+    def _initialize_policy_store(self) -> None:
+        """Restore :class:`~nl_ucan_policy.IPFSPolicyStore` from env (Phase G).
+
+        When the ``IPFS_POLICY_STORE_PATH`` environment variable is set, loads
+        the policy store from that path and restores the global
+        :class:`~nl_ucan_policy.PolicyRegistry` on startup.
+
+        Failures (missing module, corrupt file, etc.) are logged as warnings
+        and do **not** prevent the server from starting.
+        """
+        path = os.environ.get("IPFS_POLICY_STORE_PATH", "").strip()
+        if not path:
+            return
+        try:
+            from .nl_ucan_policy import IPFSPolicyStore, get_policy_registry  # noqa: PLC0415
+            registry = get_policy_registry()
+            self._policy_store = IPFSPolicyStore(path, registry)
+            self._policy_store.load()
+            logger.info(
+                "IPFSPolicyStore loaded from %s (%d policies restored)",
+                path,
+                len(registry),
+            )
+        except ImportError as exc:
+            logger.debug("IPFSPolicyStore not available: %s", exc)
+        except Exception as exc:
+            logger.warning("IPFSPolicyStore initialization failed: %s", exc)
 
     async def validate_p2p_message(self, msg: dict) -> bool:
         """Optional hook used by the P2P service to validate messages.
@@ -536,12 +589,36 @@ class IPFSDatasetsMCPServer:
         self.tools["tools_dispatch"] = tools_dispatch
         
         logger.info("Hierarchical tool manager registered (4 meta-tools for 51 categories)")
-        
+
+        # MCP++ spec: register policy management tools (InterfaceRepository + PolicyRegistry)
+        try:
+            from .tools.logic_tools.policy_management_tool import (
+                policy_register,
+                policy_list,
+                policy_remove,
+                policy_evaluate,
+                interface_register,
+                interface_list,
+            )
+            for _name, _fn in [
+                ("policy_register", policy_register),
+                ("policy_list", policy_list),
+                ("policy_remove", policy_remove),
+                ("policy_evaluate", policy_evaluate),
+                ("interface_register", interface_register),
+                ("interface_list", interface_list),
+            ]:
+                self.mcp.add_tool(_fn, name=_name)
+                self.tools[_name] = _fn
+            logger.info("MCP++ policy management tools registered (6 tools)")
+        except ImportError as e:
+            logger.debug("Policy management tools not available: %s", e)
+
         # PHASE 2 WEEK 5: Removed flat tool registration to eliminate 99% overhead
         # All 373 tools are now discovered dynamically through the hierarchical system
         # P2P adapter has been updated to use hierarchical tools automatically
         # This reduces startup time from 2-3s to <1s and eliminates duplicate registrations
-        
+
         logger.info(f"Tool registration complete: {len(self.tools)} meta-tools registered")
         logger.info("All 373 individual tools available through hierarchical discovery")
 
