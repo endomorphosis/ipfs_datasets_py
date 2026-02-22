@@ -1,9 +1,9 @@
 # MCP Server Phases Status Report
 
-**Last Updated:** 2026-02-21 (Session 28 — All phases complete; v5 A-F also done)  
+**Last Updated:** 2026-02-22 (Session 39 — All phases complete; v5 A-F also done)  
 **Branch:** `copilot/refactor-markdown-files-again`
 **Master Plan:** [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)  
-**Next Steps:** [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROVEMENT_PLAN_2026_v5.md)
+**Next Steps:** [MASTER_IMPROVEMENT_PLAN_2026_v6.md](MASTER_IMPROVEMENT_PLAN_2026_v6.md)
 
 ## Overview
 
@@ -277,11 +277,20 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 
 ## Next Actions
 
-**All 7 phases are complete.** The MCP server refactoring is 100% done.
+**All 7 phases are complete.** The MCP server refactoring is 100% done. v5 Phases A-F are also complete.
 
-Future improvements are tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROVEMENT_PLAN_2026_v5.md).
+Active improvement tasks are tracked in [MASTER_IMPROVEMENT_PLAN_2026_v6.md](MASTER_IMPROVEMENT_PLAN_2026_v6.md) (v6 plan, session 39+).
 
-**v5 Phases A-F status** (completed 2026-02-21, branch `copilot/refactor-markdown-files-again`):
+Completed v5 tasks tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROVEMENT_PLAN_2026_v5.md).
+
+**v6 Open Tasks (priority order):**
+- 🔴 `monitoring.py` coverage: 75% → 85%+ (Phase I)
+- 🔴 `enterprise_api.py` coverage: 66% → 80%+ (Phase I)
+- 🟡 `docs/api/tool-reference.md`: extend from ~4 to 51 categories (Phase H)
+- 🟡 Upgrade 15 minimal-stub tool READMEs with parameter docs (Phase J)
+- 🟢 `compat/` and architecture doc final refresh (Phase L)
+
+**v5 Phases A-F status** (completed 2026-02-21/22, branch `copilot/refactor-markdown-files-again`):
 - ✅ **Phase A** (Docs): `docs/tools/README.md` 49-cat table; `docs/api/tool-reference.md` 530L; `docs/adr/` 4 ADRs; `performance-tuning.md` updated with Phase 7 guide
 - ✅ **Phase B** (Tests): **1383 tests passing** (session 38); **53 B2 test categories** (added session 38: tool_wrapper, legacy_patent_tools, legacy_deprecation_stubs; session 37: citation_validator_utils, vscode_cli_tools, legacy_temporal_deontic_tools; session 36: cli_tools, lizardpersons_llm_context_tools, lizardpersons_prototyping_tools, lizardpersons_meta_tools; session 35: mcplusplus_peer_tools, mcplusplus_taskqueue_tools, mcplusplus_workflow_tools_extended, mcp_helpers, tool_registration; session 34: file_detection_tools, bespoke_tools, functions_tools, medical_research_scrapers, web_scraping_tools; session 33: legal_dataset_tools, finance_data_tools, vector_store_tools, ipfs_cluster_tools, dashboard_tools, data_processing_tools; session 32: result_cache, p2p_connection_pool, llm_tools, p2p_workflow_tools, investigation_tools) + B3 scenario tests + B4 property tests; `tool_registry.py` 73%, `enterprise_api.py` 66%, `server_context.py` **90%** (+40pp), `runtime_router.py` **83%** (+33pp); `result_cache.py` 77%, `p2p_connection_pool` 82%
 - ✅ **Phase C** (Observability): `request_id` UUID4 in dispatch; `/health/ready` + `/metrics` endpoints; latency percentiles
@@ -291,6 +300,6 @@ Future improvements are tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_I
 
 ---
 
-**Last Updated:** 2026-02-20 (Session 12 — All phases complete)
+**Last Updated:** 2026-02-22 (Session 39 — All phases complete; v5 A-F done; tool_registry 85%+, monitoring 75%+)
 
 **For the complete plan, see [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)**
