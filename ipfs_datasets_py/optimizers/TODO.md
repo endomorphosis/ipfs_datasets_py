@@ -38,6 +38,34 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ---
 
+## Infinite Improvement Plan (v3)
+
+This plan is intentionally endless. It balances refactors, feature growth,
+test hardening, and documentation clarity while keeping progress measurable.
+
+### Track-by-track focus (rolling checklist)
+- [ ] (P1) [arch] Unify optimizer base class hierarchy (shared OptimizerConfig)
+- [ ] (P2) [api] Standardize context objects across GraphRAG/logic/agentic
+- [ ] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
+- [ ] (P2) [tests] Add property-based tests for Entity/CriticScore/FeedbackRecord
+- [ ] (P2) [perf] Profile OntologyGenerator.generate() on 10k-token input
+- [ ] (P2) [obs] Structured JSON logging for every pipeline run
+- [ ] (P2) [docs] Optimizers README with quick-start + class diagram
+
+### Random Workstream (keep 3-5 active, different tracks)
+
+Rotate these while also advancing the plan above. When one completes, replace it
+with a new item from a different track.
+
+**Active picks (rotate on completion)**
+- [ ] (P2) [docs] Write detailed ExtractionConfig configuration guide
+- [ ] (P2) [perf] Profile OntologyGenerator._extract_rule_based() hot paths
+- [ ] (P2) [arch] Extract QueryValidationMixin for GraphRAG reuse
+- [ ] (P2) [tests] Add integration test: generator -> critic -> mediator loop
+- [ ] (P2) [api] Standardize context objects across GraphRAG/logic/agentic
+
+---
+
 ## Comprehensive Improvement Plan (Rolling)
 
 This plan is intentionally evergreen. It balances refactors, feature growth, test hardening, and documentation quality while keeping delivery incremental and verifiable.
