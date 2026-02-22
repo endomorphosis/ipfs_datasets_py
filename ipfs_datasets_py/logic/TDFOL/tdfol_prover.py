@@ -516,3 +516,94 @@ class TDFOLProver:
     def add_theorem(self, formula: Formula, name: Optional[str] = None) -> None:
         """Add a theorem to the knowledge base."""
         self.kb.add_theorem(formula, name)
+
+    # ------------------------------------------------------------------ #
+    # Introspection helpers (used by TestAdditionalCoverage)               #
+    # ------------------------------------------------------------------ #
+
+    def _is_modal_formula(self, formula: Formula) -> bool:
+        """Return True if formula has any modal (temporal or deontic) operator."""
+        return isinstance(formula, (TemporalFormula, DeonticFormula, BinaryTemporalFormula))
+
+    def _has_deontic_operators(self, formula: Formula) -> bool:
+        """Return True if formula contains a deontic operator at any depth."""
+        if isinstance(formula, DeonticFormula):
+            return True
+        for attr in ('formula', 'left', 'right', 'operand'):
+            child = getattr(formula, attr, None)
+            if child is not None and self._has_deontic_operators(child):
+                return True
+        if hasattr(formula, 'formulas'):
+            for child in formula.formulas:
+                if self._has_deontic_operators(child):
+                    return True
+        return False
+
+    def _has_temporal_operators(self, formula: Formula) -> bool:
+        """Return True if formula contains a temporal operator at any depth."""
+        if isinstance(formula, (TemporalFormula, BinaryTemporalFormula)):
+            return True
+        for attr in ('formula', 'left', 'right', 'operand'):
+            child = getattr(formula, attr, None)
+            if child is not None and self._has_temporal_operators(child):
+                return True
+        if hasattr(formula, 'formulas'):
+            for child in formula.formulas:
+                if self._has_temporal_operators(child):
+                    return True
+        return False
+
+    def _has_nested_temporal(self, formula: Formula) -> bool:
+        """Return True if formula has temporal operators nested inside another temporal operator."""
+        if isinstance(formula, (TemporalFormula, BinaryTemporalFormula)):
+            inner = getattr(formula, 'formula', None) or getattr(formula, 'left', None)
+            if inner is not None and self._has_temporal_operators(inner):
+                return True
+        for attr in ('formula', 'left', 'right', 'operand'):
+            child = getattr(formula, attr, None)
+            if child is not None and self._has_nested_temporal(child):
+                return True
+        if hasattr(formula, 'formulas'):
+            for child in formula.formulas:
+                if self._has_nested_temporal(child):
+                    return True
+        return False
+
+    def _traverse_formula(self, formula: Formula, predicate, max_depth: int = 100, _depth: int = 0) -> bool:
+        """
+        Traverse formula tree depth-first; return True if predicate matches any node.
+        
+        Args:
+            formula: Root formula to traverse.
+            predicate: Callable(formula) -> bool.
+            max_depth: Maximum traversal depth (default 100).
+            _depth: Current recursion depth (internal).
+        """
+        if _depth > max_depth:
+            return False
+        if predicate(formula):
+            return True
+        for attr in ('formula', 'left', 'right', 'operand'):
+            child = getattr(formula, attr, None)
+            if child is not None and isinstance(child, Formula):
+                if self._traverse_formula(child, predicate, max_depth, _depth + 1):
+                    return True
+        if hasattr(formula, 'formulas'):
+            for child in formula.formulas:
+                if isinstance(child, Formula):
+                    if self._traverse_formula(child, predicate, max_depth, _depth + 1):
+                        return True
+        return False
+
+    def _cec_prove(self, formula: Formula, timeout_ms: int = 5000) -> 'ProofResult':
+        """
+        Attempt proof via CEC engine (stub – returns UNKNOWN when engine unavailable).
+        
+        Returns ProofResult with status UNKNOWN and method 'cec_prover'.
+        """
+        return ProofResult(
+            status=ProofStatus.UNKNOWN,
+            formula=formula,
+            method="cec_prover",
+            message="CEC prover not available or not implemented for this formula type.",
+        )

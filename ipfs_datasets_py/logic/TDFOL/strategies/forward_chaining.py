@@ -44,24 +44,26 @@ class ForwardChainingStrategy(ProverStrategy):
         >>> assert result.is_proved()
     """
     
-    def __init__(self, max_iterations: int = 100):
+    def __init__(self, max_iterations: int = 100, rules=None):
         """
         Initialize forward chaining strategy.
         
         Args:
             max_iterations: Maximum number of rule application iterations
+            rules: Optional list of inference rules (overrides auto-loaded rules)
         """
         super().__init__("Forward Chaining", StrategyType.FORWARD_CHAINING)
         self.max_iterations = max_iterations
-        self.tdfol_rules = []
+        self.tdfol_rules = rules if rules is not None else []
         
-        # Load TDFOL inference rules
-        try:
-            from ..inference_rules import get_all_tdfol_rules
-            self.tdfol_rules = get_all_tdfol_rules()
-            logger.debug(f"Loaded {len(self.tdfol_rules)} TDFOL rules for forward chaining")
-        except Exception as e:
-            logger.warning(f"Failed to load TDFOL rules: {e}")
+        if rules is None:
+            # Load TDFOL inference rules
+            try:
+                from ..inference_rules import get_all_tdfol_rules
+                self.tdfol_rules = get_all_tdfol_rules()
+                logger.debug(f"Loaded {len(self.tdfol_rules)} TDFOL rules for forward chaining")
+            except Exception as e:
+                logger.warning(f"Failed to load TDFOL rules: {e}")
     
     def can_handle(self, formula: Formula, kb: TDFOLKnowledgeBase) -> bool:
         """
@@ -102,12 +104,31 @@ class ForwardChainingStrategy(ProverStrategy):
         """
         start_time = time.time()
         
-        # Initialize derived set with axioms and theorems
-        derived: Set[Formula] = set(kb.axioms + kb.theorems)
+        # Initialize derived collection with axioms and theorems
+        # Use a list to avoid hash issues with TDFOL formulas that contain list attributes
+        all_formulas = list(kb.axioms) + list(kb.theorems)
+        derived_list: List[Formula] = list(all_formulas)
+        derived_strs: Set[str] = {str(f) for f in derived_list}
         proof_steps: List[ProofStep] = []
         
-        # Check if goal is already in derived set
-        if formula in derived:
+        def _in_derived(f: Formula) -> bool:
+            """Check membership using string representation (handles unhashable formulas)."""
+            try:
+                return f in derived_list or str(f) in derived_strs
+            except Exception:
+                return any(str(f) == str(x) for x in derived_list)
+        
+        def _add_to_derived(f: Formula) -> bool:
+            """Add formula to derived if not already present. Returns True if added."""
+            f_str = str(f)
+            if f_str not in derived_strs:
+                derived_list.append(f)
+                derived_strs.add(f_str)
+                return True
+            return False
+        
+        # Check if goal is already in derived
+        if _in_derived(formula):
             return ProofResult(
                 status=ProofStatus.PROVED,
                 formula=formula,
@@ -134,7 +155,7 @@ class ForwardChainingStrategy(ProverStrategy):
                 )
             
             # Check if goal is derived
-            if formula in derived:
+            if _in_derived(formula):
                 return ProofResult(
                     status=ProofStatus.PROVED,
                     formula=formula,
@@ -145,14 +166,15 @@ class ForwardChainingStrategy(ProverStrategy):
                 )
             
             # Apply all TDFOL rules to derive new formulas
-            new_formulas = self._apply_rules(derived, proof_steps)
+            new_formulas = self._apply_rules_list(derived_list, proof_steps)
             
             # No progress made - stop
             if not new_formulas:
                 break
             
-            # Add new formulas to derived set
-            derived.update(new_formulas)
+            # Add new formulas to derived collection
+            for f in new_formulas:
+                _add_to_derived(f)
         
         # Goal not derived
         return ProofResult(
@@ -179,7 +201,31 @@ class ForwardChainingStrategy(ProverStrategy):
         Returns:
             Set of newly derived formulas
         """
-        new_formulas: Set[Formula] = set()
+        return self._apply_rules_list(list(derived), proof_steps)
+
+    def _apply_rules_list(
+        self,
+        derived: List['Formula'],
+        proof_steps: List['ProofStep']
+    ) -> List['Formula']:
+        """
+        Apply all inference rules to derived formulas (list-based, hash-safe).
+        
+        Args:
+            derived: List of currently derived formulas
+            proof_steps: List to append proof steps to
+        
+        Returns:
+            List of newly derived formulas (without duplicates)
+        """
+        new_formulas: List[Formula] = []
+        derived_strs: Set[str] = {str(f) for f in derived}
+        
+        def _not_in_derived(f: Formula) -> bool:
+            try:
+                return str(f) not in derived_strs
+            except Exception:
+                return True
         
         # Try each formula with each rule
         for current_formula in list(derived):
@@ -189,8 +235,9 @@ class ForwardChainingStrategy(ProverStrategy):
                     if hasattr(rule, 'can_apply'):
                         if rule.can_apply(current_formula):
                             new_formula = rule.apply(current_formula)
-                            if new_formula not in derived:
-                                new_formulas.add(new_formula)
+                            if _not_in_derived(new_formula):
+                                new_formulas.append(new_formula)
+                                derived_strs.add(str(new_formula))
                                 proof_steps.append(ProofStep(
                                     formula=new_formula,
                                     justification=f"Applied {rule.name}",
@@ -206,8 +253,9 @@ class ForwardChainingStrategy(ProverStrategy):
                             if hasattr(rule, 'can_apply'):
                                 if rule.can_apply(current_formula, other_formula):
                                     new_formula = rule.apply(current_formula, other_formula)
-                                    if new_formula not in derived:
-                                        new_formulas.add(new_formula)
+                                    if _not_in_derived(new_formula):
+                                        new_formulas.append(new_formula)
+                                        derived_strs.add(str(new_formula))
                                         proof_steps.append(ProofStep(
                                             formula=new_formula,
                                             justification=f"Applied {rule.name}",
