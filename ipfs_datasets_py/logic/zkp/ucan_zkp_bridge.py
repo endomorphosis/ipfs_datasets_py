@@ -230,7 +230,9 @@ class ZKPToUCANBridge:
 
     This class:
 
-    1. Runs the (simulated) ZKP prover on a theorem string.
+    1. Runs the ZKP prover on a theorem string (real Groth16 when
+       ``IPFS_DATASETS_ENABLE_GROTH16=1`` and the binary is present,
+       otherwise simulated).
     2. Packages the proof as a ``ZKPCapabilityEvidence`` caveat.
     3. Wraps the caveat in a ``DelegationToken`` (via ``ucan_delegation``).
 
@@ -241,29 +243,71 @@ class ZKPToUCANBridge:
     Parameters
     ----------
     verifier_id:
-        Identifier embedded in caveat (default ``"simulated-zkp-v0.1"``).
+        Identifier embedded in caveat.  Defaults to the appropriate ID for
+        the active backend: ``"groth16-bn254-v0.1"`` when Groth16 is enabled,
+        ``"simulated-zkp-v0.1"`` otherwise.
     issuer_did:
         DID of the issuer.  Defaults to ``"did:key:issuer"`` (test mode).
+    auto_setup:
+        When ``True`` and Groth16 is enabled, call ``ensure_setup()``
+        automatically if artifacts are missing (default ``True``).
     """
 
     SIMULATED_VERIFIER_ID = "simulated-zkp-v0.1"
+    GROTH16_VERIFIER_ID = "groth16-bn254-v0.1"
     # Number of hex characters from proof_hash used as UCAN token nonce
     _PROOF_HASH_NONCE_LENGTH = 16
 
     def __init__(
         self,
-        verifier_id: str = SIMULATED_VERIFIER_ID,
+        verifier_id: Optional[str] = None,
         issuer_did: str = "did:key:issuer",
+        auto_setup: bool = True,
     ) -> None:
-        self._verifier_id = verifier_id
         self._issuer_did = issuer_did
+        self._auto_setup = auto_setup
+        self._groth16_enabled = self._check_groth16_enabled()
+        self._verifier_id = verifier_id or (
+            self.GROTH16_VERIFIER_ID if self._groth16_enabled else self.SIMULATED_VERIFIER_ID
+        )
         self._prover: Optional[Any] = None
+        self._groth16_backend: Optional[Any] = None
 
         if _ZKP_AVAILABLE:
             try:
-                self._prover = ZKPProver()
-            except Exception as exc:  # pragma: no cover
+                if self._groth16_enabled:
+                    self._prover = ZKPProver(backend="groth16")
+                    self._groth16_backend = self._prover.get_backend_instance()
+                    if auto_setup:
+                        self._auto_provision_setup()
+                else:
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", UserWarning)
+                        self._prover = ZKPProver()
+            except Exception as exc:
                 logger.warning("ZKPProver init failed: %s", exc)
+
+    @staticmethod
+    def _check_groth16_enabled() -> bool:
+        """Return True when IPFS_DATASETS_ENABLE_GROTH16=1 is set."""
+        import os as _os
+        return _os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "").strip() in {
+            "1", "true", "TRUE", "yes", "YES"
+        }
+
+    def _auto_provision_setup(self) -> None:
+        """Run ``ensure_setup`` for circuit v1 if artifacts are missing."""
+        if self._groth16_backend is None:
+            return
+        try:
+            result = self._groth16_backend.ensure_setup(version=1)
+            if result.get("status") != "already_exists":
+                logger.info("Groth16 setup provisioned: %s", result)
+        except Exception as exc:
+            logger.warning(
+                "Groth16 auto-setup failed (proving will fail until keys are present): %s",
+                exc,
+            )
 
     # ------------------------------------------------------------------
     # Public API
@@ -280,6 +324,10 @@ class ZKPToUCANBridge:
     ) -> BridgeResult:
         """
         Prove *theorem* then issue a UCAN delegation token to *actor*.
+
+        When ``IPFS_DATASETS_ENABLE_GROTH16=1`` and the Rust binary is available,
+        this generates a **real Groth16 BN254 zkSNARK proof**.  Otherwise it falls
+        back to the simulated backend and emits a ``UserWarning``.
 
         Parameters
         ----------
@@ -300,12 +348,13 @@ class ZKPToUCANBridge:
         -------
         BridgeResult
         """
-        warnings.warn(
-            "ZKPToUCANBridge uses SIMULATED ZKP proofs — NOT cryptographically secure. "
-            "For production use, implement real Groth16 zkSNARKs.",
-            UserWarning,
-            stacklevel=2,
-        )
+        if not self._groth16_enabled:
+            warnings.warn(
+                "ZKPToUCANBridge uses SIMULATED ZKP proofs — NOT cryptographically secure. "
+                "Set IPFS_DATASETS_ENABLE_GROTH16=1 and compile the Rust backend for real proofs.",
+                UserWarning,
+                stacklevel=2,
+            )
 
         result = BridgeResult(theorem=theorem, actor=actor, resource=resource, ability=ability)
 
@@ -454,18 +503,29 @@ class ZKPToUCANBridge:
         private_axioms: List[str],
         result: BridgeResult,
     ) -> Optional[Any]:
-        """Generate a ZKP proof, populating result.error on failure."""
+        """Generate a ZKP proof, populating result.error on failure.
+
+        Uses real Groth16 when ``IPFS_DATASETS_ENABLE_GROTH16=1``; falls back
+        to simulated backend otherwise.
+        """
         if not _ZKP_AVAILABLE or self._prover is None:
             result.warnings.append("ZKP module unavailable; using stub proof")
             return self._make_stub_proof(theorem)
 
+        suppress_backend = self._groth16_enabled  # Groth16 has no UserWarning
         try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", UserWarning)
+            if suppress_backend:
                 proof = self._prover.generate_proof(
                     theorem=theorem,
                     private_axioms=private_axioms,
                 )
+            else:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", UserWarning)
+                    proof = self._prover.generate_proof(
+                        theorem=theorem,
+                        private_axioms=private_axioms,
+                    )
             return proof
         except Exception as exc:
             result.error = f"ZKP proof generation failed: {exc}"
@@ -506,11 +566,27 @@ _default_bridge: Optional[ZKPToUCANBridge] = None
 
 
 def get_zkp_ucan_bridge(
-    verifier_id: str = ZKPToUCANBridge.SIMULATED_VERIFIER_ID,
+    verifier_id: Optional[str] = None,
     issuer_did: str = "did:key:issuer",
+    *,
+    reset: bool = False,
 ) -> ZKPToUCANBridge:
-    """Return the module-level singleton ZKPToUCANBridge."""
+    """Return the module-level singleton ZKPToUCANBridge.
+
+    Args:
+        verifier_id: Override the verifier ID embedded in ZKP caveats.  When
+            ``None`` (default), the bridge auto-selects based on the current
+            value of ``IPFS_DATASETS_ENABLE_GROTH16``.
+        issuer_did: DID of the issuer for generated delegation tokens.
+        reset: Force creation of a new singleton.  Useful after changing
+            ``IPFS_DATASETS_ENABLE_GROTH16`` at runtime.  Note: when
+            ``reset=True`` the new bridge uses the arguments supplied to *this*
+            call, not those used to create the original singleton.
+
+    Returns:
+        ZKPToUCANBridge singleton instance.
+    """
     global _default_bridge
-    if _default_bridge is None:
+    if _default_bridge is None or reset:
         _default_bridge = ZKPToUCANBridge(verifier_id=verifier_id, issuer_did=issuer_did)
     return _default_bridge
