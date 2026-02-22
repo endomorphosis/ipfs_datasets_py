@@ -1825,3 +1825,17 @@ class OntologyPipeline:
             return 0.0
         log_sum = sum(math.log(s) for s in scores)
         return math.exp(log_sum / len(scores))
+
+    def run_score_harmonic_mean(self) -> float:
+        """Return the harmonic mean of all run scores.
+
+        Returns:
+            Float harmonic mean; 0.0 when no runs or any score == 0.
+        """
+        if not self._run_history:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        if any(s == 0 for s in scores):
+            return 0.0
+        n = len(scores)
+        return n / sum(1.0 / s for s in scores)

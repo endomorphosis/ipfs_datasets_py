@@ -5667,17 +5667,6 @@ class OntologyGenerator:
             return 0.0
         return sum(((s - mean) / std) ** 3 for s in scores) / n
 
-    def unique_relationship_types(self, result: Any) -> set:
-        """Return the set of unique relationship type strings in *result*.
-
-        Args:
-            result: An ``EntityExtractionResult`` instance.
-
-        Returns:
-            Set of strings; empty set when no relationships.
-        """
-        return {getattr(r, "type", "") for r in (result.relationships or [])}
-
     def entity_relation_ratio(self, result: Any) -> float:
         """Return the ratio of entity count to relationship count.
 
@@ -6254,6 +6243,43 @@ class OntologyGenerator:
             idx = min(int(conf * bins), bins - 1)
             counts[idx] += 1
         return counts
+
+    def entity_avg_id_length(self, result: "EntityExtractionResult") -> float:
+        """Return the average character length of entity IDs.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float average length; 0.0 when no entities.
+        """
+        entities = result.entities or []
+        if not entities:
+            return 0.0
+        return sum(len(e.id) for e in entities) / len(entities)
+
+    def relationship_isolated_ids(self, result: "EntityExtractionResult") -> set:
+        """Return entity IDs that appear only once across all relationships.
+
+        An ID that appears exactly once (either as source or target) across all
+        relationships is considered isolated.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Set of isolated entity ID strings.
+        """
+        from collections import Counter
+        degree: Counter = Counter()
+        for r in result.relationships or []:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src:
+                degree[src] += 1
+            if tgt:
+                degree[tgt] += 1
+        return {node for node, cnt in degree.items() if cnt == 1}
 
 
 __all__ = [

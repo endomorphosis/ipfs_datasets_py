@@ -1699,6 +1699,14 @@ class OntologyMediator:
         items = sorted(self._action_counts.items(), key=lambda kv: kv[1], reverse=True)
         return items[:n]
 
+    def action_count_total(self) -> int:
+        """Return the total number of actions performed across all types.
+
+        Returns:
+            Integer sum of all action counts; 0 when no actions recorded.
+        """
+        return sum(self._action_counts.values())
+
 
 # Export public API
 __all__ = [

@@ -3992,6 +3992,56 @@ class OntologyOptimizer:
         bc = (skew ** 2 + 1) / kurt
         return float(max(0.0, min(1.0, bc)))
 
+    def score_below_threshold_rate(self, threshold: float = 0.5) -> float:
+        """Return the fraction of history scores strictly below *threshold*.
+
+        Args:
+            threshold: Score cutoff. Defaults to 0.5.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no history.
+        """
+        if not self._history:
+            return 0.0
+        count = sum(1 for e in self._history if e.average_score < threshold)
+        return count / len(self._history)
+
+    def history_plateau_count(self, tolerance: float = 0.01) -> int:
+        """Count runs of 2+ consecutive entries within *tolerance* of each other.
+
+        Each qualifying run of length L contributes (L - 1) to the count.
+
+        Args:
+            tolerance: Maximum absolute difference to consider a plateau. Defaults to 0.01.
+
+        Returns:
+            Integer count of plateau step pairs; 0 when fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0
+        count = 0
+        for a, b in zip(self._history, self._history[1:]):
+            if abs(a.average_score - b.average_score) <= tolerance:
+                count += 1
+        return count
+
+    def history_run_last_improvement(self) -> float:
+        """Return the index (0-based) of the last entry where the score improved.
+
+        An improvement is defined as score[i] > score[i-1].
+
+        Returns:
+            Float index of the last improvement; -1.0 when no improvement found or
+            fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return -1.0
+        last = -1
+        for i in range(1, len(self._history)):
+            if self._history[i].average_score > self._history[i - 1].average_score:
+                last = i
+        return float(last)
+
 
 # Export public API
 __all__ = [

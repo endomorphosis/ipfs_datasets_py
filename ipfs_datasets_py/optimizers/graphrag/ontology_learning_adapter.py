@@ -1900,3 +1900,27 @@ class OntologyLearningAdapter:
         from collections import Counter
         rounded = [round(r.final_score, 1) for r in self._feedback]
         return float(Counter(rounded).most_common(1)[0][0])
+
+    def feedback_plateau_length(self, tolerance: float = 0.05) -> int:
+        """Return the length of the longest plateau in feedback scores.
+
+        A plateau is a maximal run of consecutive scores within *tolerance*.
+
+        Args:
+            tolerance: Max absolute difference for consecutive scores. Defaults to 0.05.
+
+        Returns:
+            Integer length of the longest plateau; 0 when no feedback.
+        """
+        if not self._feedback:
+            return 0
+        vals = [r.final_score for r in self._feedback]
+        max_len = 1
+        cur_len = 1
+        for i in range(1, len(vals)):
+            if abs(vals[i] - vals[i - 1]) <= tolerance:
+                cur_len += 1
+                max_len = max(max_len, cur_len)
+            else:
+                cur_len = 1
+        return max_len
