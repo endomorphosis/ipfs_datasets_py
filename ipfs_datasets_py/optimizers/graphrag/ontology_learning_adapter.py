@@ -1735,3 +1735,27 @@ class OntologyLearningAdapter:
         if not self._feedback:
             return 0.0
         return self._feedback[-1].final_score
+
+    def feedback_acceleration(self) -> float:
+        """Return mean second derivative of feedback scores.
+
+        Returns:
+            Float; 0.0 when fewer than 3 records.
+        """
+        n = len(self._feedback)
+        if n < 3:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        fd = [scores[i + 1] - scores[i] for i in range(n - 1)]
+        sd = [fd[i + 1] - fd[i] for i in range(len(fd) - 1)]
+        return sum(sd) / len(sd)
+
+    def feedback_first_score(self) -> float:
+        """Return the first (oldest) feedback score.
+
+        Returns:
+            Float; 0.0 when no feedback records.
+        """
+        if not self._feedback:
+            return 0.0
+        return self._feedback[0].final_score

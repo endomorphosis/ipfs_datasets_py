@@ -5842,6 +5842,41 @@ class OntologyGenerator:
             return 0.0
         return sum(len(getattr(e, "text", "") or "") for e in entities) / len(entities)
 
+    def entity_confidence_mode(self, result: Any) -> float:
+        """Return the most common entity confidence (approximate bin mode).
+
+        Bins confidences into 10 equal bins in [0, 1] and returns the
+        midpoint of the most populated bin.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float; 0.5 when no entities.
+        """
+        entities = result.entities or []
+        if not entities:
+            return 0.5
+        bins = [0] * 10
+        for e in entities:
+            c = getattr(e, "confidence", 0.5)
+            idx = min(9, int(c * 10))
+            bins[idx] += 1
+        best_idx = bins.index(max(bins))
+        return (best_idx + 0.5) / 10.0
+
+    def relationship_types_count(self, result: Any) -> int:
+        """Return the number of distinct relationship types in *result*.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Integer; 0 when no relationships.
+        """
+        rels = result.relationships or []
+        return len({getattr(r, "type", "") for r in rels})
+
 
 __all__ = [
     'OntologyGenerator',

@@ -1654,3 +1654,31 @@ class OntologyPipeline:
         scores = [r.score.overall for r in self._run_history]
         improving = sum(1 for i in range(1, n) if scores[i] > scores[i - 1])
         return improving / (n - 1)
+
+    def run_score_acceleration(self) -> float:
+        """Return mean second derivative of run overall scores.
+
+        Positive means rate of improvement is increasing; negative means slowing.
+
+        Returns:
+            Float; 0.0 when fewer than 3 runs.
+        """
+        n = len(self._run_history)
+        if n < 3:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        fd = [scores[i + 1] - scores[i] for i in range(n - 1)]
+        sd = [fd[i + 1] - fd[i] for i in range(len(fd) - 1)]
+        return sum(sd) / len(sd)
+
+    def run_score_peak_count(self) -> int:
+        """Return the number of local maxima in run overall scores.
+
+        Returns:
+            Integer count; 0 when fewer than 3 runs.
+        """
+        n = len(self._run_history)
+        if n < 3:
+            return 0
+        scores = [r.score.overall for r in self._run_history]
+        return sum(1 for i in range(1, n - 1) if scores[i] > scores[i - 1] and scores[i] > scores[i + 1])
