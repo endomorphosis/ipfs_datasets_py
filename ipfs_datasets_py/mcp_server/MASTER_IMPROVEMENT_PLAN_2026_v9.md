@@ -26,10 +26,12 @@ MCP++ core design stance:
 |---------|---------------|--------|
 | Profile A — MCP-IDL (Interface Contracts) | `docs/spec/mcp-idl.md` | ✅ Session 50 |
 | Profile B — CID-Native Execution Artifacts | `docs/spec/cid-native-artifacts.md` | ✅ Session 50 |
-| Profile C — UCAN Capability Delegation | `docs/spec/ucan-delegation.md` | 🔲 Future |
+| Profile C — UCAN Capability Delegation | `docs/spec/ucan-delegation.md` | ✅ Session 53 |
 | Profile D — Temporal Deontic Policy | `docs/spec/temporal-deontic-policy.md` | ✅ Session 50 |
 | Event DAG, Concurrency, Ordering | `docs/spec/event-dag-ordering.md` | ✅ Session 50 |
-| Risk Scoring & Scheduling | `docs/spec/risk-scheduling.md` | 🔲 Future |
+| Risk Scoring & Scheduling | `docs/spec/risk-scheduling.md` | ✅ Session 53 |
+| Compliance Checking | (compliance rules) | ✅ Session 53 |
+| HTM Schema CID + Trace Dispatch | (HTM extensions) | ✅ Session 53 |
 | Profile E — P2P Transport Binding | `docs/spec/transport-mcp-p2p.md` | 🔲 Partial (p2p_service_manager.py) |
 
 ---
@@ -116,26 +118,56 @@ Implements the append-only, content-addressed execution history:
 
 ---
 
-### P5 — Profile C: UCAN Capability Delegation 🔲 FUTURE
+### P5 — Profile C: UCAN Capability Delegation ✅ COMPLETE (Session 53)
 
-**Target module:** `ipfs_datasets_py/mcp_server/ucan_delegation.py`
+**Module:** `ipfs_datasets_py/mcp_server/ucan_delegation.py`
 
-Implements capability token chains for delegable execution authority.
+Implements capability token chains for delegable execution authority:
 
-Blocked on: UCAN library selection and crypto primitive availability in the
-target deployment environment.  The `requires[]` field in `InterfaceDescriptor`
-and `proofs_checked[]` / `proof_cid` in artifacts already reserve the namespace.
+- `Capability(resource, ability)` — wildcard `"*"` on both dimensions
+- `Delegation(cid, issuer, audience, capabilities, expiry, proof_cid, signature)`
+- `DelegationEvaluator` — `build_chain(leaf_cid)` root-first traversal; `can_invoke()` with expiry + capability + actor checks; cycle detection
+- `InvocationContext(intent_cid, ucan_proofs, policy_cid, context_cids)` — spec invocation shape
+- Global singleton helpers: `get_delegation_evaluator()`, `add_delegation()`, `get_delegation()`
 
 ---
 
-### P6 — Risk Scoring and Scheduling 🔲 FUTURE
+### P6 — Risk Scoring and Scheduling ✅ COMPLETE (Session 53)
 
-**Target module:** `ipfs_datasets_py/mcp_server/risk_scheduler.py`
+**Module:** `ipfs_datasets_py/mcp_server/risk_scorer.py`
 
-Implements peer reputation and priority scheduling derived from the Event DAG:
-- Risk metrics from `decision_cid` violation history
-- Fibonacci-heap-inspired priority queue
-- Locality-sensitive grouping for neighbourhood consensus
+Lightweight risk scoring pipeline derived from tool + actor signals:
+
+- `RiskLevel` enum: NEGLIGIBLE / LOW / MEDIUM / HIGH / CRITICAL with `from_score()` thresholds
+- `RiskScore(level, score, factors, mitigation_hints)` — full audit trail
+- `RiskScoringPolicy(tool_risk_overrides, default_risk, actor_trust_levels, max_acceptable_risk)`
+- `RiskScorer.score_intent()` — combines base tool risk × actor trust attenuation + param complexity penalty
+- `is_acceptable()` / `score_and_gate()` — decision objects for dispatch gating
+- `make_default_risk_policy()` convenience
+
+---
+
+### P6b — Compliance Checking ✅ COMPLETE (Session 53)
+
+**Module:** `ipfs_datasets_py/mcp_server/compliance_checker.py`
+
+Rule-based compliance engine with 6 built-in rules:
+
+- `tool_name_convention` — enforces `^[a-z][a-z0-9_]*$`
+- `intent_has_actor` — warns when actor is absent
+- `actor_is_valid` — rejects actors with whitespace
+- `params_are_serializable` — warns on non-JSON params
+- `tool_not_in_deny_list` — configurable deny-list
+- `rate_limit_ok` — stub for future rate limiting
+
+---
+
+### P6c — HTM Schema CID + Trace Dispatch ✅ COMPLETE (Session 53)
+
+**HierarchicalToolManager additions:**
+
+- `get_tool_schema_cid(category, tool_name)` — CIDv1 (dag-cbor/sha2-256) of tool schema
+- `dispatch_with_trace(category, tool_name, params)` — result + execution trace dict with `tool_schema_cid`, `category`, `tool`, `dispatch_status`
 
 ---
 
@@ -158,8 +190,9 @@ Alignment gaps vs. `transport-mcp-p2p.md` spec:
 |---------|-------------|------------|
 | Session 45–49 | 86+33+13+… | ~200 |
 | **Session 50** | **91** | **~291** |
-
-All 91 new tests pass; 33 pre-existing session tests still pass.
+| **Session 51** | **67** | **~358** |
+| **Session 52** | **0** (refactor only) | **~358** |
+| **Session 53** | **96** | **~454** |
 
 ---
 
@@ -185,11 +218,11 @@ safe to import in any deployment context.
 
 ---
 
-## Next Steps (Session 51+)
+## Next Steps (Session 54+)
 
-1. **P5** — UCAN delegation stubs with pluggable verifier interface
-2. **P6** — Risk scorer reading from EventDAG  
-3. **P7** — Formal `mcp+p2p` transport ID documentation
-4. **Integration** — Wire `PolicyEvaluator` into `server.py` dispatch path
-5. **Exposure** — Register `InterfaceRepository` endpoints as MCP tools
-6. **Coverage** — Add more edge-case tests for temporal boundary conditions
+1. **P7** — Formal `mcp+p2p` transport ID documentation
+2. **Integration** — Wire `PolicyEvaluator` + `UCANPolicyGate` + `RiskScorer` + `ComplianceChecker` into `server.py` dispatch path
+3. **NL→UCAN** — Connect `nl_ucan_policy.py` `UCANPolicyGate` to use `ucan_delegation.py` `DelegationEvaluator` for richer chain-based authorization
+4. **Exposure** — Register `InterfaceRepository` endpoints as MCP tools
+5. **Coverage** — Add more edge-case tests for temporal boundary conditions
+6. **Risk from EventDAG** — Feed `event_dag.py` rollback/dispute counts into `risk_scorer.py` policy
