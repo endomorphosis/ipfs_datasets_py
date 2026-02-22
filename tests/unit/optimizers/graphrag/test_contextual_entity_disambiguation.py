@@ -19,7 +19,6 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
     ExtractionStrategy,
     OntologyGenerationContext,
     OntologyGenerator,
-    DataSource,
     DataType,
 )
 
@@ -96,7 +95,7 @@ class TestRelationshipTypeInference:
         """Test works_for relationship inferred from person+organization."""
         generator = OntologyGenerator(use_ipfs_accelerate=False)
         context = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
+            data_source="text",
             data_type=DataType.CONTRACT,
             domain="business",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
@@ -132,8 +131,8 @@ class TestRelationshipTypeInference:
         """Test located_in relationship inferred from person+location."""
         generator = OntologyGenerator(use_ipfs_accelerate=False)
         context = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.GENERAL,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="geography",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
@@ -155,8 +154,8 @@ class TestDistanceBasedConfidence:
         """Test entities within 50 chars get high confidence."""
         generator = OntologyGenerator(use_ipfs_accelerate=False)
         context = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.GENERAL,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="test",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
@@ -175,8 +174,8 @@ class TestDistanceBasedConfidence:
         """Test entities >150 chars apart get lower confidence."""
         generator = OntologyGenerator(use_ipfs_accelerate=False)
         context = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.GENERAL,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="test",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
@@ -198,8 +197,8 @@ class TestDistanceBasedConfidence:
         """Test confidence decays linearly with distance."""
         generator = OntologyGenerator(use_ipfs_accelerate=False)
         context = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.GENERAL,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="test",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
@@ -237,8 +236,8 @@ class TestAllowedEntityTypes:
         )
         
         context = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.GENERAL,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="business",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
             extraction_config=config,
@@ -266,8 +265,8 @@ class TestAllowedEntityTypes:
         )
         
         context = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.GENERAL,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="general",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
             extraction_config=config,
@@ -290,8 +289,8 @@ class TestContextualDisambiguation:
         
         # Context 1: Historical/political (likely person)
         context_person = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.GENERAL,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="history",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
@@ -301,8 +300,8 @@ class TestContextualDisambiguation:
         
         # Context 2: Geographic (likely location)
         context_location = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.GENERAL,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="geography",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
@@ -335,8 +334,8 @@ class TestContextualDisambiguation:
         
         # Legal domain
         context_legal = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.CONTRACT,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="legal",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
@@ -349,8 +348,8 @@ class TestContextualDisambiguation:
         
         # Business domain
         context_business = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.GENERAL,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="business",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
@@ -369,8 +368,8 @@ class TestEntityTypeValidation:
         """Test all extracted entities have valid type field."""
         generator = OntologyGenerator(use_ipfs_accelerate=False)
         context = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.GENERAL,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="test",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
@@ -401,8 +400,8 @@ class TestEntityTypeValidation:
         """Test relationship properties track source/target entity types."""
         generator = OntologyGenerator(use_ipfs_accelerate=False)
         context = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.GENERAL,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="test",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
@@ -429,8 +428,8 @@ class TestTypeInferenceEdgeCases:
         """Test entities with unknown/missing type get default 'related_to'."""
         generator = OntologyGenerator(use_ipfs_accelerate=False)
         context = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.GENERAL,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="test",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
@@ -453,8 +452,8 @@ class TestTypeInferenceEdgeCases:
         """Test single entity extracts zero relationships."""
         generator = OntologyGenerator(use_ipfs_accelerate=False)
         context = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.GENERAL,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="test",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
@@ -471,8 +470,8 @@ class TestTypeInferenceEdgeCases:
         """Test duplicate entity text with same type doesn't create spurious relationships."""
         generator = OntologyGenerator(use_ipfs_accelerate=False)
         context = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.GENERAL,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="test",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
@@ -497,8 +496,8 @@ class TestTypeInferenceIntegration:
         """Test complex text with multiple entities and types."""
         generator = OntologyGenerator(use_ipfs_accelerate=False)
         context = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.GENERAL,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="business",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
@@ -525,8 +524,8 @@ class TestTypeInferenceIntegration:
         """Test relationship properties include type confidence and method."""
         generator = OntologyGenerator(use_ipfs_accelerate=False)
         context = OntologyGenerationContext(
-            data_source=DataSource.TEXT,
-            data_type=DataType.GENERAL,
+            data_source="text",
+            data_type=DataType.TEXT,
             domain="test",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
