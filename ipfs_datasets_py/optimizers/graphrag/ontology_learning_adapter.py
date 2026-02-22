@@ -2220,3 +2220,350 @@ class OntologyLearningAdapter:
         """
         return self.feedback_coefficient_of_variation()
 
+    def feedback_iqr(self) -> float:
+        """Return the interquartile range (IQR) of feedback ``final_score`` values.
+
+        Returns:
+            Float IQR (Q3 − Q1); ``0.0`` when fewer than 4 feedback records.
+        """
+        if len(self._feedback) < 4:
+            return 0.0
+        scores = sorted(r.final_score for r in self._feedback)
+        n = len(scores)
+        q1_idx = n // 4
+        q3_idx = (3 * n) // 4
+        return scores[q3_idx] - scores[q1_idx]
+
+    def feedback_rolling_mean(self, window: int = 3) -> list:
+        """Return a list of rolling means over ``window``-sized windows of feedback scores.
+
+        Args:
+            window: Window size (must be >= 1; clamped to 1 if smaller).
+
+        Returns:
+            List of float mean values; one per valid window.  Empty list when
+            feedback has fewer than ``window`` entries.
+        """
+        if window < 1:
+            window = 1
+        scores = [r.final_score for r in self._feedback]
+        if len(scores) < window:
+            return []
+        return [
+            sum(scores[i:i + window]) / window
+            for i in range(len(scores) - window + 1)
+        ]
+
+    def feedback_rolling_std(self, window: int = 3) -> list:
+        """Return a list of rolling standard deviations over ``window``-sized windows.
+
+        Args:
+            window: Window size (must be >= 2; clamped to 2 if smaller).
+
+        Returns:
+            List of float population std-dev values; one per valid window.
+            Empty list when feedback has fewer than ``window`` entries.
+        """
+        if window < 2:
+            window = 2
+        scores = [r.final_score for r in self._feedback]
+        if len(scores) < window:
+            return []
+        result = []
+        for i in range(len(scores) - window + 1):
+            chunk = scores[i:i + window]
+            mean = sum(chunk) / window
+            variance = sum((v - mean) ** 2 for v in chunk) / window
+            result.append(variance ** 0.5)
+        return result
+
+    def feedback_trend_intercept(self) -> float:
+        """Return the OLS intercept of feedback ``final_score`` values.
+
+        Computed as ``y_mean - slope * x_mean`` over index positions.
+
+        Returns:
+            Float intercept; ``0.0`` when fewer than 2 feedback records or
+            x-variance is zero.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        n = len(scores)
+        xs = list(range(n))
+        x_mean = sum(xs) / n
+        y_mean = sum(scores) / n
+        num = sum((x - x_mean) * (y - y_mean) for x, y in zip(xs, scores))
+        den = sum((x - x_mean) ** 2 for x in xs)
+        if den == 0.0:
+            return 0.0
+        slope = num / den
+        return y_mean - slope * x_mean
+
+
+    def feedback_above_mean_ratio(self) -> float:
+        """Return the fraction of feedback scores strictly above their collective mean.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when feedback is empty or all scores
+            are equal (none strictly above mean).
+        """
+        if not self._feedback:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        above = sum(1 for s in scores if s > mean)
+        return above / len(scores)
+
+    def feedback_z_scores(self) -> list:
+        """Return the z-score for each feedback record's *final_score*.
+
+        Z-scores are calculated using the population mean and standard
+        deviation of all feedback records.
+
+        Returns:
+            List of floats (one per record).  Returns an empty list when
+            fewer than 2 records exist.  Returns ``[0.0, …]`` when the
+            population standard deviation is zero (all scores identical).
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.7, actions={})
+            >>> adapter.apply_feedback(final_score=0.9, actions={})
+            >>> zs = adapter.feedback_z_scores()
+            >>> len(zs) == 2 and abs(zs[0] + zs[1]) < 1e-9  # sum ≈ 0
+        """
+        if len(self._feedback) < 2:
+            return []
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        if variance == 0.0:
+            return [0.0] * len(scores)
+        std = variance ** 0.5
+        return [(s - mean) / std for s in scores]
+
+    def feedback_percentile(self, p: float) -> float:
+        """Return the *p*-th percentile of feedback final scores.
+
+        Uses nearest-rank method: index = ``floor(p / 100 * n)``, clamped
+        to ``[0, n-1]``.
+
+        Args:
+            p: Percentile in [0, 100].
+
+        Returns:
+            Float score at the requested percentile; ``0.0`` when feedback
+            is empty.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.5, actions={})
+            >>> adapter.apply_feedback(final_score=0.8, actions={})
+            >>> adapter.feedback_percentile(50)  # median-ish
+        """
+        if not self._feedback:
+            return 0.0
+        scores = sorted(r.final_score for r in self._feedback)
+        n = len(scores)
+        idx = int(p / 100.0 * n)
+        idx = max(0, min(idx, n - 1))
+        return scores[idx]
+
+    def feedback_decay_mean(self, decay: float = 0.9) -> float:
+        """Return the exponentially decayed mean of feedback final scores.
+
+        Recent feedback entries are weighted more heavily.  The weight for
+        the *i*-th entry (0 = oldest) is ``decay ** (n - 1 - i)`` where
+        *n* is the total number of feedback records.  Weights are normalised
+        so they sum to 1.
+
+        Args:
+            decay: Decay factor in (0, 1].  Higher values give more weight
+                to recent entries.  Default ``0.9``.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when feedback is empty.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.4, actions={})
+            >>> adapter.apply_feedback(final_score=0.8, actions={})
+            >>> dm = adapter.feedback_decay_mean(decay=0.9)
+            >>> dm > 0.4  # recent high score pulls mean up
+        """
+        if not self._feedback:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        n = len(scores)
+        raw_weights = [decay ** (n - 1 - i) for i in range(n)]
+        total_w = sum(raw_weights)
+        if total_w == 0.0:
+            return 0.0
+        return sum(w * s for w, s in zip(raw_weights, scores)) / total_w
+
+    def feedback_spike_count(self, threshold: float = 0.1) -> int:
+        """Count consecutive feedback pairs where the absolute score jump exceeds *threshold*.
+
+        A "spike" is a step *i* where ``|scores[i] - scores[i-1]| > threshold``.
+        Both upward and downward sudden changes are counted.
+
+        Args:
+            threshold: Minimum absolute change to qualify as a spike. Default ``0.1``.
+
+        Returns:
+            Non-negative integer count; ``0`` when fewer than 2 feedback records.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.3, actions={})
+            >>> adapter.apply_feedback(final_score=0.8, actions={})  # +0.5 spike
+            >>> adapter.apply_feedback(final_score=0.7, actions={})  # -0.1, not spike
+            >>> adapter.feedback_spike_count(threshold=0.2)
+            1
+        """
+        if len(self._feedback) < 2:
+            return 0
+        scores = [r.final_score for r in self._feedback]
+        count = 0
+        for i in range(1, len(scores)):
+            if abs(scores[i] - scores[i - 1]) > threshold:
+                count += 1
+        return count
+
+    def feedback_peak_score(self) -> float:
+        """Return the maximum ``final_score`` ever observed in feedback records.
+
+        Returns:
+            Maximum ``final_score`` as a float, or ``0.0`` when there are no
+            feedback records.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.4, actions={})
+            >>> adapter.apply_feedback(final_score=0.9, actions={})
+            >>> adapter.apply_feedback(final_score=0.6, actions={})
+            >>> adapter.feedback_peak_score()
+            0.9
+        """
+        if not self._feedback:
+            return 0.0
+        return max(r.final_score for r in self._feedback)
+
+    def feedback_valley_score(self) -> float:
+        """Return the minimum ``final_score`` ever observed in feedback records.
+
+        This is the symmetric counterpart of :meth:`feedback_peak_score` and
+        identifies the worst performing round recorded so far.
+
+        Returns:
+            Minimum ``final_score`` as a float, or ``0.0`` when there are no
+            feedback records.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.4, actions={})
+            >>> adapter.apply_feedback(final_score=0.9, actions={})
+            >>> adapter.apply_feedback(final_score=0.6, actions={})
+            >>> adapter.feedback_valley_score()
+            0.4
+        """
+        if not self._feedback:
+            return 0.0
+        return min(r.final_score for r in self._feedback)
+
+    def feedback_range_ratio(self) -> float:
+        """Return the range ratio ``(peak - valley) / (peak + valley)`` of feedback scores.
+
+        This is the Quartile Coefficient of Dispersion analogue for the full
+        range of feedback ``final_score`` values.  A value near ``1.0``
+        indicates high spread relative to the magnitude; ``0.0`` means all
+        scores are identical (or there are no records).
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when there are no feedback
+            records or when ``peak + valley == 0``.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.2, actions={})
+            >>> adapter.apply_feedback(final_score=0.8, actions={})
+            >>> adapter.feedback_range_ratio()
+            0.6  # (0.8 - 0.2) / (0.8 + 0.2) = 0.6 / 1.0 = 0.6
+        """
+        if not self._feedback:
+            return 0.0
+        peak = self.feedback_peak_score()
+        valley = self.feedback_valley_score()
+        denom = peak + valley
+        if denom == 0.0:
+            return 0.0
+        return (peak - valley) / denom
+
+    def feedback_iqr_ratio(self) -> float:
+        """Return the IQR-to-mean ratio of feedback ``final_score`` values.
+
+        Computed as ``IQR / mean`` where IQR is the interquartile range
+        (Q3 − Q1) and mean is the arithmetic mean of all feedback scores.
+        This is a robust, scale-free measure of dispersion relative to
+        central tendency — analogous to the coefficient of variation but
+        resistant to extreme outliers.
+
+        Returns:
+            Float ``IQR / mean``; ``0.0`` when fewer than 4 feedback records,
+            when the mean is zero, or when IQR is zero.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.2, actions={})
+            >>> adapter.apply_feedback(final_score=0.4, actions={})
+            >>> adapter.apply_feedback(final_score=0.6, actions={})
+            >>> adapter.apply_feedback(final_score=0.8, actions={})
+            >>> adapter.feedback_iqr_ratio()  # IQR=0.4, mean=0.5 → 0.8
+            0.8
+        """
+        if len(self._feedback) < 4:
+            return 0.0
+        iqr = self.feedback_iqr()
+        if iqr == 0.0:
+            return 0.0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        if mean == 0.0:
+            return 0.0
+        return iqr / mean
+
+    def feedback_improvement_streaks(self) -> int:
+        """Return the length of the longest consecutive improvement run.
+
+        An improvement step is a consecutive pair where
+        ``scores[i] > scores[i-1]``.  The method returns the length of the
+        longest such run (number of improvement *steps* in the run).
+
+        Returns:
+            Non-negative integer; ``0`` when fewer than 2 feedback records or
+            when there are no improving steps.
+
+        Example::
+
+            >>> adapter.apply_feedback(final_score=0.3, actions={})
+            >>> adapter.apply_feedback(final_score=0.5, actions={})
+            >>> adapter.apply_feedback(final_score=0.4, actions={})
+            >>> adapter.apply_feedback(final_score=0.7, actions={})
+            >>> adapter.apply_feedback(final_score=0.9, actions={})
+            >>> adapter.feedback_improvement_streaks()
+            2  # longest streak has two consecutive improvements: 0.4→0.7 and 0.7→0.9
+        """
+        if len(self._feedback) < 2:
+            return 0
+        scores = [r.final_score for r in self._feedback]
+        best = 0
+        current = 0
+        for i in range(1, len(scores)):
+            if scores[i] > scores[i - 1]:
+                current += 1
+                if current > best:
+                    best = current
+            else:
+                current = 0
+        return best

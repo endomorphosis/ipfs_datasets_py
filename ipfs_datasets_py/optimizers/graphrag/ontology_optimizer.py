@@ -44,6 +44,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import time
 import csv
 from io import StringIO
@@ -4770,6 +4771,445 @@ class OntologyOptimizer:
         if mean == 0.0:
             return 0.0
         return self._history[-1].average_score / mean
+
+    def score_iqr(self) -> float:
+        """Return the interquartile range (IQR) of history ``average_score`` values.
+
+        IQR is the difference between the 75th and 25th percentile.
+
+        Returns:
+            Float IQR; ``0.0`` when fewer than 4 history entries.
+        """
+        if len(self._history) < 4:
+            return 0.0
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        q1_idx = n // 4
+        q3_idx = (3 * n) // 4
+        return scores[q3_idx] - scores[q1_idx]
+
+    def history_rolling_std(self, window: int = 3) -> list:
+        """Return a list of rolling standard deviations over ``window``-sized windows.
+
+        Args:
+            window: Window size (must be >= 2).
+
+        Returns:
+            List of float std-dev values; one per valid window.  Empty list
+            when history has fewer than ``window`` entries.
+        """
+        if window < 2:
+            window = 2
+        scores = [e.average_score for e in self._history]
+        if len(scores) < window:
+            return []
+        result = []
+        for i in range(len(scores) - window + 1):
+            chunk = scores[i:i + window]
+            mean = sum(chunk) / window
+            variance = sum((v - mean) ** 2 for v in chunk) / window
+            result.append(variance ** 0.5)
+        return result
+
+    def score_skewness(self) -> float:
+        """Return the skewness of history ``average_score`` values.
+
+        Uses the population skewness formula:
+        ``(1/n) * sum((x - mean)^3) / std^3``.
+
+        Returns:
+            Float skewness; ``0.0`` when fewer than 3 history entries or
+            standard deviation is zero.
+        """
+        if len(self._history) < 3:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        mean = sum(scores) / n
+        variance = sum((s - mean) ** 2 for s in scores) / n
+        if variance == 0.0:
+            return 0.0
+        std = variance ** 0.5
+        return sum((s - mean) ** 3 for s in scores) / (n * std ** 3)
+
+    def score_entropy(self) -> float:
+        """Return the Shannon entropy of history ``average_score`` values.
+
+        Discretises scores into 10 equal bins in [0, 1] and computes
+        ``H = -sum(p * log2(p))`` over non-empty bins.
+
+        Returns:
+            Float entropy in bits; ``0.0`` when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        bins = [0] * 10
+        for s in scores:
+            idx = min(int(s * 10), 9)
+            bins[idx] += 1
+        n = len(scores)
+        entropy = 0.0
+        for count in bins:
+            if count > 0:
+                p = count / n
+                entropy -= p * math.log2(p)
+        return entropy
+
+    def history_above_percentile(self, p: float = 75.0) -> int:
+        """Return the count of history entries with score above the ``p``-th percentile.
+
+        Args:
+            p: Percentile in [0, 100].  Default ``75``.
+
+        Returns:
+            Non-negative integer count; ``0`` when history is empty.
+        """
+        if not self._history:
+            return 0
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        idx = int(p / 100 * n)
+        idx = min(idx, n - 1)
+        threshold = scores[idx]
+        return sum(1 for e in self._history if e.average_score > threshold)
+
+    def score_gini(self) -> float:
+        """Return the Gini coefficient of history ``average_score`` values.
+
+        Alias for :meth:`score_gini_coefficient`.
+
+        Returns:
+            Float Gini coefficient in [0, 1]; ``0.0`` when history is empty.
+        """
+        return self.score_gini_coefficient()
+
+    def score_trend_slope(self) -> float:
+        """Return the linear regression slope of history ``average_score`` values.
+
+        Uses ordinary least squares over the index positions (0, 1, 2, …).
+
+        Returns:
+            Float slope; positive means improving trend, negative means
+            declining.  ``0.0`` when fewer than 2 history entries or when
+            x-variance is zero.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        xs = list(range(n))
+        x_mean = sum(xs) / n
+        y_mean = sum(scores) / n
+        num = sum((x - x_mean) * (y - y_mean) for x, y in zip(xs, scores))
+        den = sum((x - x_mean) ** 2 for x in xs)
+        if den == 0.0:
+            return 0.0
+        return num / den
+
+    def score_trend_intercept(self) -> float:
+        """Return the OLS intercept of history ``average_score`` values.
+
+        Computed as ``y_mean - slope * x_mean`` where *x* are index positions.
+
+        Returns:
+            Float intercept; ``0.0`` when fewer than 2 history entries or
+            x-variance is zero.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        xs = list(range(n))
+        x_mean = sum(xs) / n
+        y_mean = sum(scores) / n
+        num = sum((x - x_mean) * (y - y_mean) for x, y in zip(xs, scores))
+        den = sum((x - x_mean) ** 2 for x in xs)
+        if den == 0.0:
+            return 0.0
+        slope = num / den
+        return y_mean - slope * x_mean
+
+    def above_target_rate(self, target: float = 0.7) -> float:
+        """Return the fraction of history entries with score strictly above *target*.
+
+        Args:
+            target: Score threshold.  Default ``0.7``.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when history is empty.
+        """
+        if not self._history:
+            return 0.0
+        count = sum(1 for e in self._history if e.average_score > target)
+        return count / len(self._history)
+
+    def score_mad(self) -> float:
+        """Return the Mean Absolute Deviation (MAD) of history scores.
+
+        MAD measures the average absolute distance of each score from the
+        mean, and is less sensitive to outliers than variance.
+
+        Returns:
+            Float ≥ 0; ``0.0`` when history is empty or all scores are equal.
+
+        Example::
+
+            >>> opt.score_mad()  # non-negative
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        mean = sum(scores) / len(scores)
+        return sum(abs(s - mean) for s in scores) / len(scores)
+
+    def score_zscore_outliers(self, threshold: float = 2.0) -> list:
+        """Return the indices of history scores whose |z-score| exceeds *threshold*.
+
+        Uses population standard deviation.  Scores with ``|z| > threshold``
+        are considered outliers.
+
+        Args:
+            threshold: Minimum absolute z-score to count as an outlier.
+                Default ``2.0``.
+
+        Returns:
+            List of integer indices (0-based) into the history score list.
+            Empty list when history has fewer than 2 entries or standard
+            deviation is zero.
+
+        Example::
+
+            >>> opt.score_zscore_outliers(threshold=2.0)
+            [0, 4]
+        """
+        if len(self._history) < 2:
+            return []
+        scores = [e.average_score for e in self._history]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        if variance == 0.0:
+            return []
+        std = variance ** 0.5
+        return [i for i, s in enumerate(scores) if abs((s - mean) / std) > threshold]
+
+    def score_bimodality_dip(self) -> float:
+        """Return a simple dip statistic for the history ``average_score`` distribution.
+
+        Discretises scores into 10 equal bins in ``[0, 1]`` and returns the
+        maximum absolute difference between any bin's relative frequency and
+        the uniform frequency (``1 / 10``).  A large dip indicates the
+        distribution deviates strongly from uniform (e.g. is bimodal).
+
+        Returns:
+            Float in ``[0, 1]``; ``0.0`` when history has fewer than 2 entries.
+
+        Example::
+
+            >>> dip = opt.score_bimodality_dip()
+            >>> 0.0 <= dip <= 1.0
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        num_bins = 10
+        bins = [0] * num_bins
+        for s in scores:
+            idx = min(int(s * num_bins), num_bins - 1)
+            bins[idx] += 1
+        n = len(scores)
+        uniform_freq = 1.0 / num_bins
+        return max(abs(count / n - uniform_freq) for count in bins)
+
+    def score_bimodality_index(self) -> float:
+        """Return a variance-ratio bimodality index for history ``average_score``.
+
+        Sorts all history scores and splits them into a lower and upper half
+        at the median.  The index is the fraction of total variance *explained*
+        by that median split (η²):
+
+        .. math::
+
+            \\text{index} = 1 - \\frac{\\text{within-split variance}}{\\text{total variance}}
+
+        A value close to **1.0** indicates the scores form two well-separated
+        clusters (strongly bimodal), while **0.0** means all scores are equal.
+        A uniformly spread distribution scores roughly 0.75.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when fewer than 2 entries or total
+            variance is zero.
+
+        Example::
+
+            >>> opt.score_bimodality_index()
+            0.0  # single entry or all identical scores
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        mean = sum(scores) / n
+        total_var = sum((s - mean) ** 2 for s in scores) / n
+        if total_var == 0.0:
+            return 0.0
+        mid = n // 2
+        lower = scores[:mid]
+        upper = scores[mid:]
+
+        def _var(xs: list) -> float:
+            m = sum(xs) / len(xs)
+            return sum((x - m) ** 2 for x in xs) / len(xs)
+
+        var_lower = _var(lower) if lower else 0.0
+        var_upper = _var(upper) if upper else 0.0
+        within_var = (var_lower * len(lower) + var_upper * len(upper)) / n
+        return max(0.0, 1.0 - within_var / total_var)
+
+    def score_bimodality_ratio(self) -> float:
+        """Return the ratio of the bimodality dip to the mean absolute deviation.
+
+        This combines two bimodality indicators: :meth:`score_bimodality_dip`
+        (how non-uniform the bin distribution is) divided by
+        :meth:`score_mad` (the spread of individual scores).  A large value
+        means the distribution is both non-uniform *and* spread out — a strong
+        bimodality signal.
+
+        Returns:
+            Non-negative float; ``0.0`` when history has fewer than 2 entries
+            or when :meth:`score_mad` is zero (all scores identical).
+
+        Example::
+
+            >>> opt.score_bimodality_ratio()
+            0.0  # single entry or all scores identical
+        """
+        if len(self._history) < 2:
+            return 0.0
+        mad = self.score_mad()
+        if mad == 0.0:
+            return 0.0
+        return self.score_bimodality_dip() / mad
+
+    def score_quartile_dispersion(self) -> float:
+        """Return the Quartile Coefficient of Dispersion (QCD) of history scores.
+
+        QCD = (Q3 - Q1) / (Q3 + Q1).  Unlike the IQR, QCD is dimensionless
+        so it can be compared across series with different magnitudes.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when fewer than 4 entries or
+            when ``Q3 + Q1 == 0``.
+
+        Example::
+
+            >>> opt.score_quartile_dispersion()
+            0.0  # fewer than 4 entries
+        """
+        if len(self._history) < 4:
+            return 0.0
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        q1 = scores[n // 4]
+        q3 = scores[(3 * n) // 4]
+        if q3 + q1 == 0.0:
+            return 0.0
+        return (q3 - q1) / (q3 + q1)
+
+    def score_wmd(self) -> float:
+        """Return a Wasserstein-inspired distance between the two halves of history.
+
+        The history scores are sorted and split into a lower half and an upper
+        half.  The Wasserstein-1 distance between these two equal-length
+        samples is computed as the mean of the absolute pairwise differences
+        after sorting both halves.
+
+        This gives an intuitive measure of how much the distribution of scores
+        has shifted from the first part of the optimisation run to the second.
+
+        Returns:
+            Non-negative float; ``0.0`` when fewer than 2 history entries or
+            when both halves are identical.
+
+        Example::
+
+            >>> opt.score_wmd()
+            0.0  # single entry
+        """
+        if len(self._history) < 2:
+            return 0.0
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        mid = n // 2
+        lower = scores[:mid]
+        # For even n: upper = scores[mid:]; for odd n: skip the median (middle
+        # element at index mid) so both halves have exactly mid elements.
+        upper = scores[mid:] if n % 2 == 0 else scores[mid + 1:]
+        if not lower or not upper:
+            return 0.0
+        return sum(abs(u - l) for u, l in zip(upper, lower)) / len(lower)
+
+    def score_trimmed_mean(self, trim_pct: float = 10.0) -> float:
+        """Return the trimmed mean of history scores.
+
+        Both the lowest *trim_pct* % and the highest *trim_pct* % of history
+        scores are discarded before computing the mean.  This reduces the
+        influence of extreme outliers.
+
+        Args:
+            trim_pct: Percentage of entries to trim from each tail.
+                Must be in ``[0.0, 50.0)``.  Default ``10.0``.
+
+        Returns:
+            Trimmed mean as a float; ``0.0`` when the history is empty or
+            after trimming leaves an empty list.
+
+        Raises:
+            ValueError: If *trim_pct* is outside ``[0.0, 50.0)``.
+
+        Example::
+
+            >>> opt.score_trimmed_mean()
+            0.0  # empty history
+        """
+        if not self._history:
+            return 0.0
+        if trim_pct < 0.0 or trim_pct >= 50.0:
+            raise ValueError(
+                f"trim_pct must be in [0.0, 50.0), got {trim_pct!r}"
+            )
+        scores = sorted(e.average_score for e in self._history)
+        n = len(scores)
+        k = int(n * trim_pct / 100.0)
+        trimmed = scores[k: n - k] if (k < n and n - 2 * k > 0) else scores
+        if not trimmed:
+            return 0.0
+        return sum(trimmed) / len(trimmed)
+
+    def score_range_ratio(self) -> float:
+        """Return the range ratio of history scores.
+
+        Computed as ``(max − min) / (max + min)``.  This dimensionless
+        measure indicates how wide the score distribution is relative to
+        its midpoint.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when the history is empty or
+            when ``max + min == 0``.
+
+        Example::
+
+            >>> opt.score_range_ratio()
+            0.0  # empty history
+        """
+        if not self._history:
+            return 0.0
+        scores = [e.average_score for e in self._history]
+        lo = min(scores)
+        hi = max(scores)
+        if hi + lo == 0.0:
+            return 0.0
+        return (hi - lo) / (hi + lo)
 
 
 # Export public API

@@ -4267,6 +4267,365 @@ class OntologyCritic(BaseCritic):
         weak_count = len(getattr(score, "weaknesses", [])) + 1  # +1 to avoid division by zero
         return rec_count / weak_count
 
+    def dimension_iqr(self, score: "CriticScore") -> float:
+        """Return the interquartile range (IQR) of dimension values in a score.
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Float IQR (Q3 - Q1) across the 6 evaluation dimensions;
+            ``0.0`` when fewer than 4 dimension values are available.
+        """
+        vals = sorted(getattr(score, d, 0.0) for d in self._DIMENSIONS)
+        if len(vals) < 4:
+            return 0.0
+        n = len(vals)
+        q1_idx = n // 4
+        q3_idx = (3 * n) // 4
+        return vals[q3_idx] - vals[q1_idx]
+
+    def dimension_coefficient_of_variation(self, score: "CriticScore") -> float:
+        """Return the coefficient of variation (std / mean) of dimension values.
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Float CV; ``0.0`` when mean is zero or no dimensions exist.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        if not vals:
+            return 0.0
+        mean_val = sum(vals) / len(vals)
+        if mean_val == 0.0:
+            return 0.0
+        variance = sum((v - mean_val) ** 2 for v in vals) / len(vals)
+        return variance ** 0.5 / mean_val
+
+    def dimension_skewness(self, score: "CriticScore") -> float:
+        """Return the skewness of the 6 evaluation dimension values.
+
+        Uses population skewness: ``(1/n) * sum((x - mean)^3) / std^3``.
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Float skewness; ``0.0`` when standard deviation is zero.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        n = len(vals)
+        if n < 3:
+            return 0.0
+        mean_val = sum(vals) / n
+        variance = sum((v - mean_val) ** 2 for v in vals) / n
+        if variance == 0.0:
+            return 0.0
+        std = variance ** 0.5
+        return sum((v - mean_val) ** 3 for v in vals) / (n * std ** 3)
+
+    def dimensions_above_mean(self, score: "CriticScore") -> int:
+        """Return the number of dimension values strictly above the collective mean.
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Non-negative integer count in ``[0, len(_DIMENSIONS)]``.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        if not vals:
+            return 0
+        mean_val = sum(vals) / len(vals)
+        return sum(1 for v in vals if v > mean_val)
+
+    def dimension_gini(self, score: "CriticScore") -> float:
+        """Return the Gini coefficient of the 6 evaluation dimension values.
+
+        Uses the sorted-list formula:
+        ``G = (2 * sum(i * x_i) - (n+1) * sum(x_i)) / (n * sum(x_i))``
+        where x_i are sorted values (1-indexed).
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Float Gini coefficient in [0, 1]; ``0.0`` when all values are
+            equal or sum is zero.
+        """
+        vals = sorted(getattr(score, d, 0.0) for d in self._DIMENSIONS)
+        n = len(vals)
+        total = sum(vals)
+        if total == 0.0:
+            return 0.0
+        weighted = sum((i + 1) * v for i, v in enumerate(vals))
+        return (2 * weighted - (n + 1) * total) / (n * total)
+
+    def score_dimension_variance(self, score: "CriticScore") -> float:
+        """Return the population variance of the 6 evaluation dimension values.
+
+        This is a convenience overload of :meth:`dimension_variance` that
+        accepts a single :class:`CriticScore` instead of a list.
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Float population variance; ``0.0`` when all values are equal.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        n = len(vals)
+        if n < 2:
+            return 0.0
+        mean_val = sum(vals) / n
+        return sum((v - mean_val) ** 2 for v in vals) / n
+
+    def top_two_dimensions(self, score: "CriticScore") -> tuple:
+        """Return the names of the two highest-scoring evaluation dimensions.
+
+        Args:
+            score: CriticScore to inspect.
+
+        Returns:
+            Tuple of two dimension name strings, ordered highest first.
+            Returns a tuple of one name if only one dimension exists, or an
+            empty tuple if no dimensions are present.
+        """
+        ranked = sorted(
+            self._DIMENSIONS,
+            key=lambda d: getattr(score, d, 0.0),
+            reverse=True,
+        )
+        return tuple(ranked[:2])
+
+    def dimension_trend_slope(self, score: "CriticScore", prev_score: "CriticScore") -> dict:
+        """Return per-dimension slope between two successive CriticScore objects.
+
+        For each dimension ``d``, slope = ``score.d - prev_score.d``.
+
+        Args:
+            score: The newer CriticScore.
+            prev_score: The older (reference) CriticScore.
+
+        Returns:
+            Dict mapping dimension name → float delta (positive = improving).
+        """
+        return {
+            d: getattr(score, d, 0.0) - getattr(prev_score, d, 0.0)
+            for d in self._DIMENSIONS
+        }
+
+    def min_max_dimension_ratio(self, score: "CriticScore") -> float:
+        """Return the ratio of the minimum dimension value to the maximum.
+
+        Args:
+            score: A :class:`CriticScore` instance.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when the maximum dimension value is zero.
+
+        Example::
+
+            >>> ratio = critic.min_max_dimension_ratio(score)
+            >>> 0.0 <= ratio <= 1.0
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        max_val = max(vals)
+        if max_val == 0.0:
+            return 0.0
+        return min(vals) / max_val
+
+    def dimension_range(self, score: "CriticScore") -> float:
+        """Return the range (max − min) of the six dimension values.
+
+        Args:
+            score: A :class:`CriticScore` instance.
+
+        Returns:
+            Float ≥ 0; ``0.0`` when all six dimensions are equal.
+
+        Example::
+
+            >>> rng = critic.dimension_range(score)
+            >>> rng >= 0.0
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        return max(vals) - min(vals)
+
+    def dimension_weighted_std(self, score: "CriticScore") -> float:
+        """Return the weighted population standard deviation of the six dimensions.
+
+        Uses the module-level :data:`DIMENSION_WEIGHTS` as the probability
+        weights.  The weighted mean ``μ_w = Σ(w_i * v_i)`` and weighted
+        variance ``σ²_w = Σ(w_i * (v_i - μ_w)²)`` are computed with
+        weights normalised to sum to 1.
+
+        Args:
+            score: A :class:`CriticScore` instance.
+
+        Returns:
+            Float ≥ 0; ``0.0`` when all dimensions are equal.
+
+        Example::
+
+            >>> wstd = critic.dimension_weighted_std(score)
+            >>> wstd >= 0.0
+        """
+        dims = self._DIMENSIONS
+        vals = [getattr(score, d, 0.0) for d in dims]
+        weights = [DIMENSION_WEIGHTS.get(d, 0.0) for d in dims]
+        total_w = sum(weights)
+        if total_w == 0.0:
+            return 0.0
+        norm_w = [w / total_w for w in weights]
+        wmean = sum(w * v for w, v in zip(norm_w, vals))
+        wvar = sum(w * (v - wmean) ** 2 for w, v in zip(norm_w, vals))
+        return wvar ** 0.5
+
+    def dimension_percentile_rank(self, score: "CriticScore", dim: str) -> float:
+        """Return the percentile rank of a named dimension within a CriticScore.
+
+        The percentile rank is the fraction of all six dimension values that
+        are **less than or equal to** the named dimension's value.
+
+        Args:
+            score: :class:`CriticScore` instance to inspect.
+            dim: Name of the dimension to rank (e.g. ``'completeness'``).
+                Must be one of the six standard dimensions.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when *dim* is not a valid
+            dimension name.
+
+        Example::
+
+            >>> s = CriticScore(completeness=1.0, consistency=0.5,
+            ...                  clarity=0.5, granularity=0.5,
+            ...                  relationship_coherence=0.5, domain_alignment=0.5)
+            >>> critic.dimension_percentile_rank(s, 'completeness')
+            1.0
+        """
+        dims = self._DIMENSIONS
+        if dim not in dims:
+            return 0.0
+        dim_val = getattr(score, dim, 0.0)
+        all_vals = [getattr(score, d, 0.0) for d in dims]
+        return sum(1 for v in all_vals if v <= dim_val) / len(all_vals)
+
+    def score_dimension_entropy(self, score: "CriticScore") -> float:
+        """Return the Shannon entropy of the six-dimension value distribution.
+
+        Each of the six CriticScore dimensions is treated as a probability
+        mass after normalising the values to sum to 1.  The entropy is
+        computed with natural logarithm (nats).
+
+        When all values are zero the method returns ``0.0``.  When a single
+        dimension holds all the mass (maximum concentration) the entropy is
+        also ``0.0``.  The maximum entropy (most uniform distribution) is
+        ``ln(6) ≈ 1.79``.
+
+        Args:
+            score: :class:`CriticScore` instance to analyse.
+
+        Returns:
+            Non-negative float (entropy in nats); ``0.0`` when the total
+            of all dimension values is zero.
+
+        Example::
+
+            >>> s = CriticScore(completeness=1/6, consistency=1/6,
+            ...                  clarity=1/6, granularity=1/6,
+            ...                  relationship_coherence=1/6, domain_alignment=1/6)
+            >>> critic.score_dimension_entropy(s)  # doctest: +ELLIPSIS
+            1.791...
+        """
+        import math
+        dims = self._DIMENSIONS
+        vals = [max(0.0, getattr(score, d, 0.0)) for d in dims]
+        total = sum(vals)
+        if total == 0.0:
+            return 0.0
+        probs = [v / total for v in vals]
+        return -sum(p * math.log(p) for p in probs if p > 0.0)
+
+    def score_dimension_kurtosis(self, score: "CriticScore") -> float:
+        """Return the population excess kurtosis of the six CriticScore dimensions.
+
+        The six dimension values are treated as a population.  Excess kurtosis
+        (also called *Fisher's* kurtosis) is defined as the fourth standardised
+        moment minus 3::
+
+            κ = (μ₄ / σ²²) − 3
+
+        where *μ₄* is the fourth central moment and *σ²* is the population
+        variance.
+
+        A value near 0 indicates a mesokurtic distribution (similar to
+        Normal), negative values indicate platykurtic (flatter), and
+        positive values indicate leptokurtic (more peaked / heavy-tailed).
+
+        Args:
+            score: :class:`CriticScore` instance to analyse.
+
+        Returns:
+            Excess kurtosis as a float; ``0.0`` when all six dimensions are
+            equal (zero variance).
+
+        Example::
+
+            >>> s = CriticScore(completeness=0.0, consistency=0.0,
+            ...                  clarity=0.0, granularity=0.0,
+            ...                  relationship_coherence=0.0, domain_alignment=1.0)
+            >>> critic.score_dimension_kurtosis(s)  # leptokurtic
+            5.0
+        """
+        dims = self._DIMENSIONS
+        vals = [getattr(score, d, 0.0) for d in dims]
+        n = len(vals)  # always 6
+        mean = sum(vals) / n
+        variance = sum((v - mean) ** 2 for v in vals) / n
+        if variance == 0.0:
+            return 0.0
+        m4 = sum((v - mean) ** 4 for v in vals) / n
+        return m4 / (variance ** 2) - 3.0
+
+    def score_dimension_skewness(self, score: "CriticScore") -> float:
+        """Return the population skewness of the six CriticScore dimension values.
+
+        Uses the standard population skewness formula:
+        ``γ₁ = m₃ / σ³`` where ``m₃`` is the third central moment and
+        ``σ`` is the population standard deviation.
+
+        A positive value indicates a right-tailed distribution of dimension
+        scores (most dimensions are low, a few are high).  Negative indicates
+        left-tailed.
+
+        Args:
+            score: A :class:`CriticScore` instance to evaluate.
+
+        Returns:
+            Float; ``0.0`` when all six dimensions are equal (zero variance).
+
+        Example::
+
+            >>> s = CriticScore(completeness=0.0, consistency=0.0,
+            ...                  clarity=0.0, granularity=0.0,
+            ...                  relationship_coherence=0.0, domain_alignment=1.0)
+            >>> critic.score_dimension_skewness(s)  # right-skewed
+            2.449...
+        """
+        dims = self._DIMENSIONS
+        vals = [getattr(score, d, 0.0) for d in dims]
+        n = len(vals)  # always 6
+        mean = sum(vals) / n
+        variance = sum((v - mean) ** 2 for v in vals) / n
+        if variance == 0.0:
+            return 0.0
+        std = variance ** 0.5
+        m3 = sum((v - mean) ** 3 for v in vals) / n
+        return m3 / (std ** 3)
+
 
 # Export public API
 __all__ = [

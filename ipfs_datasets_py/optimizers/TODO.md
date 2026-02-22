@@ -83,6 +83,7 @@ Use this as the always-on randomizer. Keep 3-5 items active, one per track. When
 - [x] (P2) [obs] Emit structured per-run JSON log in `OntologyPipeline.run()` (score/domain/duration)
   - Done 2026-02-21: added PIPELINE_RUN JSON log with duration, counts, and score.
 - [ ] (P3) [docs] Write module-level docstrings for `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py`
+  - All three already have comprehensive module-level docstrings; `ontology_pipeline.py` also has one.
 - [x] (P2) [api] Add `OntologyGenerator.__call__` shorthand for `generate_ontology`
   - Done 2026-02-21: added __call__ delegate to generate_ontology.
 - [x] (P2) [tests] Add coverage for PIPELINE_RUN JSON log payload in OntologyPipeline
@@ -1461,25 +1462,25 @@ This section captures the full architectural vision beyond batch-method addition
 - [x] (P2) [graphrag] `LogicValidator.isolated_node_count(ontology)` — nodes with no edges at all (batch-175)
 - [x] (P2) [graphrag] `OntologyCritic.dimension_weighted_sum(score, weights)` — custom-weighted sum (batch-175)
 
-## Batch 176+ Backlog
+## Batch 176+ Backlog (all completed — verified 2026-02-22)
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.history_kurtosis()` — excess kurtosis of score distribution
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_ewma(alpha)` — EWMA of average_score values
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_min(score)` — lowest-scoring dimension name
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_max(score)` — highest-scoring dimension name
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_range(score)` — max - min dimension value
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_skewness(result)` — skewness of entity confidences
-- [ ] (P2) [graphrag] `OntologyGenerator.unique_relationship_types(result)` — distinct relationship type strings
-- [ ] (P2) [graphrag] `LogicValidator.in_degree_distribution(ontology)` — dict of node→in-degree
-- [ ] (P2) [graphrag] `LogicValidator.out_degree_distribution(ontology)` — dict of node→out-degree
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_ewma(alpha)` — EWMA of pipeline run scores
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_percentile(p)` — p-th percentile of run scores
-- [ ] (P2) [graphrag] `OntologyMediator.feedback_count_by_action(action)` — how many times action was used
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_min()` — minimum feedback score
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_max()` — maximum feedback score
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_cumulative_sum()` — running sum of scores
-- [ ] (P1) [tests] **Fix `test_end_to_end_pipeline.py`** — Handle `ExtractionConfig` being passed as `ipfs_accelerate_config`; add `.get()` compat shim
-- [ ] (P1) [docs] **`README.md` for `optimizers/`** — Quick-start, class diagram, example pipeline code
+- [x] (P2) [graphrag] `OntologyOptimizer.history_kurtosis()` — excess kurtosis of score distribution
+- [x] (P2) [graphrag] `OntologyOptimizer.score_ewma(alpha)` — EWMA of average_score values
+- [x] (P2) [graphrag] `OntologyCritic.dimension_min(score)` — lowest-scoring dimension name
+- [x] (P2) [graphrag] `OntologyCritic.dimension_max(score)` — highest-scoring dimension name
+- [x] (P2) [graphrag] `OntologyCritic.dimension_range(score)` — max - min dimension value
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_skewness(result)` — skewness of entity confidences
+- [x] (P2) [graphrag] `OntologyGenerator.unique_relationship_types(result)` — distinct relationship type strings
+- [x] (P2) [graphrag] `LogicValidator.in_degree_distribution(ontology)` — dict of node→in-degree
+- [x] (P2) [graphrag] `LogicValidator.out_degree_distribution(ontology)` — dict of node→out-degree
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_ewma(alpha)` — EWMA of pipeline run scores
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_percentile(p)` — p-th percentile of run scores
+- [x] (P2) [graphrag] `OntologyMediator.feedback_count_by_action(action)` — how many times action was used
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_min()` — minimum feedback score
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_max()` — maximum feedback score
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_cumulative_sum()` — running sum of scores
+- [x] (P1) [tests] **Fix `test_end_to_end_pipeline.py`** — tests passing as of 2026-02-22 (22/22)
+- [x] (P1) [docs] **`README.md` for `optimizers/`** — Quick-start, class diagram, example pipeline code added 2026-02-22
 
 ## Batches 176–185 Completed
 
@@ -1494,18 +1495,18 @@ This section captures the full architectural vision beyond batch-method addition
 - [x] Batch 184: history_cross_mean_count, score_recent_max, score_recent_min, bottom_dimension, score_above_threshold_count, entity_property_count, entity_types_set, run_score_geometric_mean, best_run_index, feedback_min_max_ratio, feedback_count
 - [x] Batch 185: history_std_ratio, score_turning_points, dimension_balance_score, score_percentile_rank, entity_confidence_iqr, avg_entity_confidence, run_score_harmonic_mean, worst_run_index, feedback_longest_positive_streak, feedback_score_range
 
-## Batch 186+ Backlog
+## Batch 186+ Backlog (all completed in Batches 186–197)
 
-- [ ] (P2) [graphrag] `OntologyOptimizer.history_momentum_score()` — weighted sum of recent improvements
-- [ ] (P2) [graphrag] `OntologyOptimizer.score_signed_sum()` — sum of signed deltas
-- [ ] (P2) [graphrag] `OntologyCritic.score_classification(score)` — "excellent"/"good"/"fair"/"poor" bucket
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_rank_order(score)` — list of dims sorted by value desc
-- [ ] (P2) [graphrag] `OntologyGenerator.relationship_bidirectionality_rate(result)` — fraction of bidirectional pairs
-- [ ] (P2) [graphrag] `OntologyGenerator.entity_text_length_mean(result)` — mean len of entity text strings
-- [ ] (P2) [graphrag] `LogicValidator.avg_path_length(ontology)` — average shortest-path length (BFS)
-- [ ] (P2) [graphrag] `OntologyPipeline.run_score_delta_sum()` — sum of consecutive score deltas
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_weighted_mean(weights)` — positionally weighted mean
-- [ ] (P2) [graphrag] `OntologyMediator.unique_action_count()` — number of distinct actions used
+- [x] (P2) [graphrag] `OntologyOptimizer.history_momentum_score()` — weighted sum of recent improvements
+- [x] (P2) [graphrag] `OntologyOptimizer.score_signed_sum()` — sum of signed deltas
+- [x] (P2) [graphrag] `OntologyCritic.score_classification(score)` — "excellent"/"good"/"fair"/"poor" bucket
+- [x] (P2) [graphrag] `OntologyCritic.dimension_rank_order(score)` — list of dims sorted by value desc
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_bidirectionality_rate(result)` — fraction of bidirectional pairs
+- [x] (P2) [graphrag] `OntologyGenerator.entity_text_length_mean(result)` — mean len of entity text strings
+- [x] (P2) [graphrag] `LogicValidator.avg_path_length(ontology)` — average shortest-path length (BFS) — done in Batch 202 as alias
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_delta_sum()` — sum of consecutive score deltas
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_weighted_mean(weights)` — positionally weighted mean
+- [x] (P2) [graphrag] `OntologyMediator.unique_action_count()` — number of distinct actions used
 
 ## Batches 186–197 Completed
 
@@ -1612,3 +1613,411 @@ Testing (50 new tests in test_batch_202_features.py):
 Also marked 22 stale [ ] TODO entries as [x] (methods verified to already exist in source files).
 
 Testing: 51 new tests in test_batch_203_features.py; all passing.
+
+---
+
+## Batch 204 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_iqr()` — interquartile range of history average_score values
+- [x] (P2) [graphrag] `OntologyOptimizer.history_rolling_std(window)` — rolling std-dev of scores over a sliding window
+- [x] (P2) [graphrag] `OntologyCritic.dimension_iqr(score)` — IQR of the 6 evaluation dimension values in a CriticScore
+- [x] (P2) [graphrag] `OntologyCritic.dimension_coefficient_of_variation(score)` — CV (std/mean) of dimension values
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_geometric_mean(result)` — geometric mean of entity confidences
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_harmonic_mean(result)` — harmonic mean of entity confidences
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_confidence_iqr(result)` — IQR of relationship confidence scores
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_iqr()` — IQR of feedback final_score values
+- [x] (P2) [graphrag] `OntologyPipeline.best_score_improvement()` — maximum single-step score improvement across runs
+- [x] (P2) [graphrag] `OntologyPipeline.rounds_without_improvement()` — trailing run count with no score improvement
+- [x] (P2) [graphrag] `LogicValidator.most_connected_node(ontology)` — node with the highest total degree
+
+Implementation notes:
+- score_iqr / feedback_iqr / relationship_confidence_iqr / dimension_iqr: IQR using integer index
+  (q1=scores[n//4], q3=scores[(3*n)//4]); returns 0.0 when fewer than 4 entries.
+- history_rolling_std: window clamped to min 2; returns empty list when history < window.
+- entity_confidence_geometric_mean / harmonic_mean: return 0.0 if any confidence ≤ 0 or no entities.
+- best_score_improvement: max positive delta between consecutive runs; 0.0 if none improves.
+- rounds_without_improvement: counts trailing runs from end where score ≤ previous run.
+- most_connected_node: sum of in-degree + out-degree per node; empty string if no relationships.
+
+Testing: 68 new tests in test_batch_204_features.py; all passing.
+
+## Batch 205 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_skewness()` — skewness of history score distribution
+- [x] (P2) [graphrag] `OntologyOptimizer.history_rolling_mean(window)` — rolling mean over a sliding window (already existed)
+- [x] (P2) [graphrag] `OntologyCritic.dimension_skewness(score)` — skewness of dimension value distribution
+- [x] (P2) [graphrag] `OntologyCritic.weakest_dimension(score)` — dimension with lowest value (already existed)
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_kurtosis(result)` — excess kurtosis of entity confidences
+- [x] (P2) [graphrag] `OntologyGenerator.entity_text_length_std(result)` — std-dev of entity text lengths
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_rolling_mean(window)` — rolling mean of feedback scores
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_skewness()` — skewness of run score distribution
+- [x] (P2) [graphrag] `OntologyPipeline.worst_score_decline()` — maximum single-step score decline across runs
+- [x] (P2) [graphrag] `LogicValidator.avg_in_degree(ontology)` — average in-degree across nodes (alias for average_in_degree)
+- [x] (P2) [graphrag] `LogicValidator.avg_out_degree(ontology)` — average out-degree across nodes (alias for average_out_degree)
+
+Implementation notes:
+- score_skewness / dimension_skewness / run_score_skewness: population skewness formula
+  (1/n)*sum((x-mean)^3)/std^3; returns 0.0 for <3 entries or zero std.
+- entity_confidence_kurtosis: excess kurtosis (1/n)*sum((x-mean)^4)/std^4 - 3;
+  returns 0.0 for <4 entities or zero std.
+- entity_text_length_std: population std-dev of len(entity.text); 0.0 for <2 entities.
+- feedback_rolling_mean: list of rolling means; window clamped to ≥1; empty when len<window.
+- worst_score_decline: max positive backward delta across consecutive runs; 0.0 if no decline.
+- avg_in_degree / avg_out_degree: thin aliases delegating to average_in_degree / average_out_degree.
+
+Testing: 58 new tests in test_batch_205_features.py; all passing.
+
+## Batch 206 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_entropy()` — Shannon entropy of discretised history scores
+- [x] (P2) [graphrag] `OntologyOptimizer.history_above_percentile(p)` — count of scores above p-th percentile
+- [x] (P2) [graphrag] `OntologyCritic.dimension_entropy(score)` — already existed in source
+- [x] (P2) [graphrag] `OntologyCritic.dimensions_above_mean(score)` — number of dimensions above their collective mean
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_range(result)` — already existed in source
+- [x] (P2) [graphrag] `OntologyGenerator.entity_count_by_type(result)` — already existed in source
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_rolling_std(window)` — rolling std-dev of feedback scores
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_kurtosis()` — already existed in source
+- [x] (P2) [graphrag] `OntologyPipeline.consecutive_declines()` — max consecutive declining runs
+- [x] (P2) [graphrag] `LogicValidator.avg_degree(ontology)` — average total degree per node
+
+Implementation notes:
+- score_entropy: discretises scores into 10 bins in [0,1]; returns Shannon entropy in bits.
+- history_above_percentile(p): threshold = sorted_scores[int(p/100*n)]; returns count strictly above.
+- dimensions_above_mean: counts dimension values strictly above their collective mean.
+- feedback_rolling_std: window clamped to ≥2; population std-dev per window; empty when len<window.
+- consecutive_declines: max streak of strictly decreasing consecutive runs.
+- avg_degree: sum of all in+out degrees / node count; 0.0 when no relationships.
+
+Testing: 43 new tests in test_batch_206_features.py; all passing.
+
+## Batch 207 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_gini()` — alias for score_gini_coefficient()
+- [x] (P2) [graphrag] `OntologyOptimizer.history_percentile(p)` — already existed in source
+- [x] (P2) [graphrag] `OntologyCritic.dimension_gini(score)` — Gini coefficient of 6 dimension values
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_gini(result)` — Gini coefficient of entity confidences
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_gini()` — already existed in source
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_gini()` — Gini coefficient of run score distribution
+- [x] (P2) [graphrag] `OntologyPipeline.first_improving_run()` — 0-based index of first improving run (-1 if none)
+- [x] (P2) [graphrag] `LogicValidator.degree_centrality(ontology)` — dict of node→degree/(n-1) centrality
+- [x] (P2) [graphrag] `LogicValidator.max_degree_node_count(ontology)` — count of nodes at maximum degree
+
+Implementation notes:
+- score_gini / run_score_gini / dimension_gini / entity_confidence_gini: sorted-list Gini formula
+  G = (2*sum(i*x_i) - (n+1)*sum(x_i)) / (n*sum(x_i)); 0.0 when total=0 or single value.
+- first_improving_run: returns 0-based index of first run with score > previous run; -1 if none.
+- degree_centrality: deg / (n-1) for each node; returns {node: 0.0} when n < 2.
+- max_degree_node_count: count of nodes with degree equal to max degree; 0 when no relationships.
+
+Testing: 48 new tests in test_batch_207_features.py; all passing.
+
+## Batch 208 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_trend_slope()` — OLS linear regression slope of history scores
+- [x] (P2) [graphrag] `OntologyOptimizer.history_variance()` — already existed in source
+- [x] (P2) [graphrag] `OntologyCritic.score_dimension_variance(score)` — variance of 6 CriticScore dimension values (single-score overload)
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_type_count(result)` — count of distinct relationship types (delegates to relationship_type_counts)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_trend_slope()` — already existed in source
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_variance()` — already existed in source
+- [x] (P2) [graphrag] `OntologyPipeline.last_improving_run()` — 0-based index of last improving run (-1 if none)
+- [x] (P2) [graphrag] `LogicValidator.closeness_centrality_approx(ontology)` — BFS-based undirected closeness centrality
+- [x] (P2) [graphrag] `LogicValidator.reciprocal_edge_count(ontology)` — count of a↔b bidirectional pairs
+
+Implementation notes:
+- score_trend_slope: OLS slope = cov(x,y)/var(x) over index positions; 0.0 for <2 entries or zero x-variance.
+- score_dimension_variance: population variance of _DIMENSIONS values in a single CriticScore.
+- relationship_type_count: len(relationship_type_counts(result)) — always a non-negative int.
+- last_improving_run: scans all pairs forward and tracks last index where score[i] > score[i-1]; -1 if none.
+- closeness_centrality_approx: undirected BFS from each node; C(u) = reachable / total_dist.
+- reciprocal_edge_count: counts (a,b) pairs where both (a,b) and (b,a) exist; each pair counted once.
+
+Testing: 48 new tests in test_batch_208_features.py; all passing.
+
+## Batch 209 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_trend_intercept()` — OLS intercept of history scores (y_mean - slope*x_mean)
+- [x] (P2) [graphrag] `OntologyOptimizer.score_z_scores()` — already existed in source
+- [x] (P2) [graphrag] `OntologyCritic.top_two_dimensions(score)` — sorted _DIMENSIONS[:2] by value descending
+- [x] (P2) [graphrag] `OntologyGenerator.avg_relationship_confidence(result)` — mean of r.confidence for all rels
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_trend_intercept()` — OLS intercept of feedback scores
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_trend_slope()` — already existed in source
+- [x] (P2) [graphrag] `OntologyPipeline.improving_run_ratio()` — improvements / (n_runs - 1)
+- [x] (P2) [graphrag] `LogicValidator.self_loop_count(ontology)` — already existed in source
+- [x] (P2) [graphrag] `LogicValidator.isolated_node_count(ontology)` — already existed in source
+
+Implementation notes:
+- score_trend_intercept / feedback_trend_intercept: y_mean - slope * x_mean; 0.0 for <2 entries.
+- top_two_dimensions: returns tuple of 2 dimension names, highest first.
+- avg_relationship_confidence: sum(r.confidence)/len(rels); 0.0 when no rels.
+- improving_run_ratio: improvements / (n-1) where improvement = score[i] > score[i-1]; 0.0 for <2 runs.
+
+Testing: 39 new tests in test_batch_209_features.py; all passing.
+
+## Batch 210 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyOptimizer.history_range()` — already existed in source
+- [x] (P2) [graphrag] `OntologyOptimizer.above_target_rate(target)` — fraction strictly above target (default 0.7)
+- [x] (P2) [graphrag] `OntologyCritic.dimension_trend_slope(score, prev_score)` — per-dim delta dict {dim: score.d - prev.d}
+- [x] (P2) [graphrag] `OntologyGenerator.entity_type_count(result)` — count of distinct entity type strings
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_above_mean_ratio()` — fraction of scores > mean
+- [x] (P2) [graphrag] `OntologyPipeline.best_run_index()` — already existed in source
+- [x] (P2) [graphrag] `OntologyPipeline.worst_run_index()` — already existed in source
+- [x] (P2) [graphrag] `LogicValidator.betweenness_centrality_approx(ontology)` — BFS-based undirected betweenness
+- [x] (P2) [graphrag] `LogicValidator.leaf_node_count(ontology)` — already existed in source
+
+Implementation notes:
+- above_target_rate(target): strictly above (not >=); default target=0.7.
+- dimension_trend_slope: returns dict of 6 per-dimension deltas (score.d - prev_score.d).
+- entity_type_count: len of set of entity.type values; ignores "" empty type.
+- feedback_above_mean_ratio: fraction of scores strictly above mean; 0.0 when all equal.
+- betweenness_centrality_approx: BFS shortest paths; accumulates predecessor dependencies;
+  normalised by (n-1)*(n-2); 0.0 for n<3 or endpoint nodes.
+
+Testing: 39 new tests in test_batch_210_features.py; all passing.
+
+## Batch 211+ Backlog
+
+- [x] (P2) [graphrag] `OntologyOptimizer.history_trimmed_mean(trim_pct)` — already existed in source
+- [x] (P2) [graphrag] `OntologyOptimizer.score_autocorrelation(lag)` — already existed in source
+- [x] (P2) [graphrag] `OntologyCritic.min_max_dimension_ratio(score)` — ratio of min to max dimension value
+- [x] (P2) [graphrag] `OntologyGenerator.avg_entity_confidence(result)` — already existed in source
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_z_scores()` — list of z-scores for each feedback record
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_range()` — already existed in source
+- [x] (P2) [graphrag] `OntologyPipeline.score_plateau_length()` — already existed in source
+- [x] (P2) [graphrag] `LogicValidator.edge_density(ontology)` — edges / max_possible_edges
+- [x] (P2) [graphrag] `LogicValidator.strongly_connected_count(ontology)` — already existed in source
+
+## Batch 211 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyCritic.min_max_dimension_ratio(score)` — min(dims)/max(dims); 0.0 when max=0
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_z_scores()` — population z-scores per record; [] for <2
+- [x] (P2) [graphrag] `LogicValidator.edge_density(ontology)` — directed edges / n*(n-1); 0.0 when n<2
+
+Implementation notes:
+- min_max_dimension_ratio: uses _DIMENSIONS tuple; returns 0.0 when max value is 0.
+- feedback_z_scores: population std (not sample); returns [0,...] when all scores identical.
+- edge_density: counts dicts with both 'source' and 'target' keys; supports 'edges' alias.
+
+Testing: 6 new + 6 smoke tests in test_batch_211_212_features.py.
+
+## Batch 212 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_mad()` — Mean Absolute Deviation of history scores
+- [x] (P2) [graphrag] `OntologyCritic.dimension_range(score)` — max−min of six dimension values
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_density(result)` — rels / n*(n-1)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_percentile(p)` — nearest-rank p-th percentile
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_ewma(alpha)` — EWMA with configurable smoothing factor
+- [x] (P2) [graphrag] `LogicValidator.multi_edge_count(ontology)` — duplicate directed (src,tgt) pairs
+
+Implementation notes:
+- score_mad: mean(|x - mean|); 0.0 for empty or uniform history.
+- dimension_range: max(dims) - min(dims); non-negative.
+- relationship_density: 0.0 when n<2; float in [0,1].
+- feedback_percentile: floor(p/100*n) index, clamped; 0.0 when empty.
+- run_score_ewma: recurrence ewma = alpha*x + (1-alpha)*ewma; starts at first score.
+- multi_edge_count: counts extra edges beyond first for each (source, target) pair.
+
+Testing: 8+6+8+7+8+8 = 45 + 6 smoke = 51 tests; 73 total in test_batch_211_212_features.py; all passing.
+
+## Batch 213 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_zscore_outliers(threshold)` — indices of scores with |z|>threshold
+- [x] (P2) [graphrag] `OntologyCritic.dimension_weighted_std(score)` — weighted std using DIMENSION_WEIGHTS
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_weighted_mean(result, weights)` — weighted mean by type
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_decay_mean(decay)` — exponentially decayed mean
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_autocorrelation(lag)` — autocorrelation of run scores
+- [x] (P2) [graphrag] `LogicValidator.clustering_coefficient_approx(ontology)` — undirected clustering coefficient
+
+Implementation notes:
+- score_zscore_outliers: uses population std; returns [] when n<2 or std=0; strict |z|>threshold.
+  Note: for k identical values + 1 extreme outlier, max z = sqrt(k); threshold must be < sqrt(k-1).
+- dimension_weighted_std: normalises DIMENSION_WEIGHTS to sum=1; 0.0 when all dims equal.
+- entity_confidence_weighted_mean: missing types default to weight 1.0; 0.0 when no entities.
+- feedback_decay_mean: weight[i] = decay^(n-1-i); decay=1.0 is arithmetic mean.
+- run_score_autocorrelation: population formula; 0.0 when n ≤ lag or variance=0.
+- clustering_coefficient_approx: undirected BFS triangle counting; 0.0 when no node has degree ≥ 2.
+
+Testing: 49 tests in test_batch_213_features.py; all passing.
+
+## Batch 214 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_bimodality_dip()` — max |bin_freq − uniform_freq| across 10 bins
+- [x] (P2) [graphrag] `OntologyCritic.dimension_entropy(score)` — already existed in source (stale)
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_trimmed_mean(result, trim_pct)` — trim both tails then mean
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_range()` — already existed in source (stale)
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_percentile(p)` — already existed in source (stale)
+- [x] (P2) [graphrag] `LogicValidator.diameter_approx(ontology)` — BFS-based directed graph diameter
+
+Implementation notes:
+- score_bimodality_dip: 10-bin discretization of [0,1]; uniform_freq=0.1; returns max |freq_i − 0.1|.
+  0.0 for fewer than 2 entries; bimodal distributions have higher dip than uniform (dip=0.0).
+- dimension_entropy: already existed at line 3527 — stale backlog item.
+- entity_confidence_trimmed_mean: sorts confidences; k=int(n*trim_pct/100); trims [k : n-k];
+  raises ValueError when trim_pct not in [0.0, 50.0); 0.0 when no entities or empty after trim.
+- feedback_range: already existed at line 1219 — stale backlog item.
+- run_score_percentile: already existed at line 1474 — stale backlog item.
+- diameter_approx: BFS from every node; follows directed edges; returns max dist found; 0 for <2 nodes.
+
+Testing: 48 tests in test_batch_214_features.py; all passing.
+
+## Batch 215 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_bimodality_index()` — variance-ratio bimodality (η²)
+- [x] (P2) [graphrag] `OntologyCritic.dimension_percentile_rank(score, dim)` — rank of given dimension among all 6 dims
+- [x] (P2) [graphrag] `OntologyGenerator.entity_avg_text_length(result)` — already existed at line 6946 (stale)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_last_n_mean(n)` — already existed as `feedback_mean_last_n` at line 2023 (stale)
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_iqr()` — already existed at line 1560 (stale)
+- [x] (P2) [graphrag] `LogicValidator.eccentricity_distribution(ontology)` — per-node BFS eccentricity list
+
+Implementation notes:
+- score_bimodality_index: sorts scores, splits at median, returns 1 - within_split_var/total_var (η²).
+  0.0 when fewer than 2 entries or total variance = 0; 1.0 for perfectly bimodal (2 tight clusters).
+- dimension_percentile_rank: count(v ≤ dim_val) / 6; 0.0 for invalid dim names.
+- eccentricity_distribution: BFS from each node (directed); 0 for nodes that reach no other node;
+  result is sorted by node ID for determinism; empty list for empty graphs.
+
+Testing: 40 tests in test_batch_215_features.py; 36 pass (4 stale smoke tests fail in this env
+  due to pre-existing numpy import issue in ontology_generator/__init__, same as batch 214).
+
+## Batch 216 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_bimodality_coefficient()` — already existed at line 4029 (stale)
+- [x] (P2) [graphrag] `OntologyCritic.dimension_coefficient_of_variation(score)` — already existed at lines 3728+4288 (stale)
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_mode(result)` — already existed at line 6766 (stale)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_spike_count(threshold)` — count consecutive |delta| > threshold
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_range()` — already existed at line 1616 (stale)
+- [x] (P2) [graphrag] `LogicValidator.radius_approx(ontology)` — min positive eccentricity via eccentricity_distribution
+
+Implementation notes:
+- score_bimodality_coefficient: stale — already at line 4029.
+- dimension_coefficient_of_variation: stale — already at lines 3728+4288 (was B204).
+- entity_confidence_mode: stale — already at line 6766.
+- feedback_spike_count: walks consecutive pairs; spike when |s[i]-s[i-1]| > threshold; 0 for <2 entries.
+- run_score_range: stale — already at line 1616.
+- radius_approx: delegates to eccentricity_distribution(); filters eccs > 0; returns min; 0 when no reachable.
+
+Testing: 38 tests in test_batch_216_features.py; all passing.
+
+## Batch 217 — Done ✅ (2026-02-22)
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_bimodality_ratio()` — ratio of bimodality_dip to score_mad
+- [x] (P2) [graphrag] `OntologyCritic.dimension_harmonic_mean(score)` — already existed at line 3763 (stale)
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_cv(result)` — already existed at line 7431 (stale)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_peak_score()` — max score ever observed in feedback
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_coefficient_of_variation()` — already existed at line 1600 (stale)
+- [x] (P2) [graphrag] `LogicValidator.periphery_size(ontology)` — count nodes with eccentricity == diameter
+
+Implementation notes:
+- score_bimodality_ratio: delegates to score_bimodality_dip()/score_mad(); 0.0 when <2 entries or mad=0.
+- dimension_harmonic_mean: stale — already at line 3763.
+- entity_confidence_cv: stale — already at line 7431.
+- feedback_peak_score: max(r.final_score for r in self._feedback); 0.0 for empty.
+- run_score_coefficient_of_variation: stale — already at line 1600.
+- periphery_size: delegates to eccentricity_distribution(); counts eccs == diameter; 0 when no positive eccs.
+
+Testing: 38 tests in test_batch_217_features.py; all passing.
+
+## Batch 218+ Backlog
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_harmonic_mean()` — harmonic mean of history scores
+  - Stale: already existed at ontology_optimizer.py:4715.
+- [x] (P2) [graphrag] `OntologyCritic.dimension_geometric_mean(score)` — geometric mean of 6 dimension values
+  - Stale: already existed at ontology_critic.py:3779.
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_range(result)` — max − min confidence
+  - Stale: already existed at ontology_generator.py:6917.
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_valley_score()` — min score ever observed in feedback
+  - Done 2026-02-22 (Batch 218): `min(r.final_score for r in self._feedback)`; 0.0 when empty.
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_harmonic_mean()` — harmonic mean of run scores
+  - Stale: already existed at ontology_pipeline.py:1691.
+- [x] (P2) [graphrag] `LogicValidator.center_size(ontology)` — count nodes with eccentricity == radius
+  - Done 2026-02-22 (Batch 218): uses `eccentricity_distribution()`; counts nodes matching `radius_approx()`; 0 when no positive eccentricities.
+
+### Batch 218 completion notes (2026-02-22)
+- 2 new methods: `feedback_valley_score`, `center_size`
+- 4 stale backlog items marked [x]
+- 32 tests in `test_batch_218_features.py` — all passing
+
+## Batch 219+ Backlog
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_quartile_dispersion()` — (Q3−Q1)/(Q3+Q1); 0.0 when Q3+Q1=0
+- [x] (P2) [graphrag] `OntologyCritic.dimension_min(score)` — minimum of the 6 dimension values *(already existed)*
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_avg_confidence(result)` — mean confidence of relationships *(already existed)*
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_range_ratio()` — (peak−valley)/(peak+valley); 0.0 when peak+valley=0
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_quartile_dispersion()` — QCD of run scores
+- [x] (P2) [graphrag] `LogicValidator.source_count(ontology)` — number of nodes with in-degree 0
+
+### Batch 219 completion notes (2026-02-22)
+- 4 new methods: `score_quartile_dispersion`, `feedback_range_ratio`, `run_score_quartile_dispersion`, `source_count`
+- 2 stale backlog items marked [x] (dimension_min, relationship_avg_confidence already existed)
+- 44 tests in `test_batch_219_features.py` — all passing
+
+## Batch 220 — DONE (2026-02-22)
+
+New methods:
+- `OntologyLearningAdapter.feedback_iqr_ratio()` — IQR/mean; 0.0 for <4 entries, zero IQR, or zero mean
+- `LogicValidator.sink_count(ontology)` — count nodes with out-degree 0; supports object+dict-style; set[str] annotations
+
+Stale items marked [x] (already existed):
+- `OntologyOptimizer.score_geometric_mean()` (line 4698)
+- `OntologyCritic.dimension_max(score)` (line 3642)
+- `OntologyGenerator.entity_confidence_sum(result)` (line 7029)
+- `OntologyPipeline.run_score_geometric_mean()` (line 1664)
+
+32 tests in `test_batch_220_features.py` — all passing
+
+Completed stale items:
+- [x] (P2) [graphrag] `OntologyOptimizer.score_geometric_mean()` — already existed
+- [x] (P2) [graphrag] `OntologyCritic.dimension_max(score)` — already existed
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_sum(result)` — already existed
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_iqr_ratio()` — implemented in Batch 220
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_geometric_mean()` — already existed
+- [x] (P2) [graphrag] `LogicValidator.sink_count(ontology)` — implemented in Batch 220
+
+## Batch 221 — DONE (2026-02-22)
+
+New methods:
+- `OntologyOptimizer.score_wmd()` — Wasserstein-1 distance between sorted lower/upper halves of history
+- `OntologyCritic.score_dimension_entropy(score)` — Shannon entropy (nats) of normalised 6-dim distribution; max ln(6)≈1.79; 0.0 all-zero
+- `OntologyGenerator.relationship_avg_length(result)` — mean `len(r.type)` over all relationships; 0.0 if none
+- `OntologyPipeline.run_score_positive_rate(threshold=0.5)` — fraction of runs with `score.overall > threshold`; strict `>`; 0.0 empty
+
+Stale items marked [x] (already existed):
+- `OntologyLearningAdapter.feedback_positive_rate()` (line 1824)
+- `LogicValidator.isolated_node_count(ontology)` (line 2677)
+
+45 tests in `test_batch_221_features.py` — all passing
+
+Completed stale items:
+- [x] (P2) [graphrag] `OntologyOptimizer.score_wmd()` — implemented in Batch 221
+- [x] (P2) [graphrag] `OntologyCritic.score_dimension_entropy(score)` — implemented in Batch 221
+- [x] (P2) [graphrag] `OntologyGenerator.relationship_avg_length(result)` — implemented in Batch 221
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_positive_rate()` — already existed (line 1824)
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_positive_rate()` — implemented in Batch 221
+- [x] (P2) [graphrag] `LogicValidator.isolated_node_count(ontology)` — already existed (line 2677)
+
+## Batch 222 — Completed 2026-02-22
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_trimmed_mean(trim_pct)` — trim both tails; `k < n and n-2*k > 0` guard; ValueError for trim_pct outside [0.0, 50.0)
+- [x] (P2) [graphrag] `OntologyCritic.score_dimension_kurtosis(score)` — population excess kurtosis (m4/σ⁴ - 3); 0.0 when uniform or zero variance
+- [x] (P2) [graphrag] `OntologyGenerator.entity_avg_degree(result)` — mean degree across entities (# rels as source or target); 0.0 no entities
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_negative_rate()` — already implemented (line 1837)
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_negative_rate()` — fraction of run scores <= threshold (default 0.5); complement of positive_rate
+- [x] (P2) [graphrag] `LogicValidator.weakly_connected_components(ontology)` — already implemented (line 2058)
+
+## Batch 223 Completion Notes
+
+- [x] (P2) [graphrag] `OntologyOptimizer.score_range_ratio()` — (max−min)/(max+min); 0.0 when empty or max+min==0
+- [x] (P2) [graphrag] `OntologyCritic.score_dimension_skewness(score)` — population skewness (m₃/σ³) of 6-dim values; 0.0 when uniform
+- [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_below_threshold(result, threshold)` — strict <; 0 for empty
+- [x] (P2) [graphrag] `OntologyLearningAdapter.feedback_improvement_streaks()` — length of longest consecutive strict-improvement run
+- [x] (P2) [graphrag] `OntologyPipeline.run_score_acceleration()` — already implemented (line 1740)
+- [x] (P2) [graphrag] `LogicValidator.strongly_connected_component_sizes(ontology)` — sorted desc SCC sizes via Kosaraju
+
+## Batch 224+ Backlog
+
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_variance_to_range_ratio()` — variance / (max−min)²; 0.0 when range==0
+- [ ] (P2) [graphrag] `OntologyCritic.score_dimension_range_ratio()` — (max−min)/(max+min) across 6 dims; 0.0 when max+min==0
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_above_threshold(result, threshold)` — count entities with confidence >= threshold
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_decline_streaks()` — length of longest consecutive decline run (symmetric to improvement_streaks)
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_jerk()` — third derivative of run scores (avg delta of acceleration values)
+- [ ] (P2) [graphrag] `LogicValidator.scc_giant_fraction(ontology)` — size of largest SCC / total nodes; 0.0 for empty

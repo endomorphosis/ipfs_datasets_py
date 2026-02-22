@@ -7749,6 +7749,355 @@ class OntologyGenerator:
             yield chunk
             await asyncio.sleep(0)  # Yield control to event loop
 
+    def entity_confidence_geometric_mean(self, result: "EntityExtractionResult") -> float:
+        """Return the geometric mean of entity confidence scores.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Float geometric mean; ``0.0`` when no entities or any confidence is
+            zero.
+        """
+        entities = getattr(result, "entities", []) or []
+        if not entities:
+            return 0.0
+        confs = [getattr(e, "confidence", 0.0) for e in entities]
+        if any(c <= 0.0 for c in confs):
+            return 0.0
+        product = 1.0
+        for c in confs:
+            product *= c
+        return product ** (1.0 / len(confs))
+
+    def entity_confidence_harmonic_mean(self, result: "EntityExtractionResult") -> float:
+        """Return the harmonic mean of entity confidence scores.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Float harmonic mean; ``0.0`` when no entities or any confidence is
+            zero.
+        """
+        entities = getattr(result, "entities", []) or []
+        if not entities:
+            return 0.0
+        confs = [getattr(e, "confidence", 0.0) for e in entities]
+        if any(c <= 0.0 for c in confs):
+            return 0.0
+        return len(confs) / sum(1.0 / c for c in confs)
+
+    def relationship_confidence_iqr(self, result: "EntityExtractionResult") -> float:
+        """Return the IQR of relationship confidence scores.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Float IQR (Q3 − Q1) of relationship confidences; ``0.0`` when
+            fewer than 4 relationships are present.
+        """
+        relationships = getattr(result, "relationships", []) or []
+        if len(relationships) < 4:
+            return 0.0
+        confs = sorted(getattr(r, "confidence", 0.0) for r in relationships)
+        n = len(confs)
+        q1_idx = n // 4
+        q3_idx = (3 * n) // 4
+        return confs[q3_idx] - confs[q1_idx]
+
+    def entity_confidence_kurtosis(self, result: "EntityExtractionResult") -> float:
+        """Return the excess kurtosis of entity confidence scores.
+
+        Excess kurtosis = ``(1/n) * sum((x - mean)^4) / std^4 - 3``.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Float excess kurtosis; ``0.0`` when fewer than 4 entities or
+            standard deviation is zero.
+        """
+        entities = getattr(result, "entities", []) or []
+        if len(entities) < 4:
+            return 0.0
+        confs = [getattr(e, "confidence", 0.0) for e in entities]
+        n = len(confs)
+        mean = sum(confs) / n
+        variance = sum((c - mean) ** 2 for c in confs) / n
+        if variance == 0.0:
+            return 0.0
+        std4 = variance ** 2
+        return sum((c - mean) ** 4 for c in confs) / (n * std4) - 3.0
+
+    def entity_text_length_std(self, result: "EntityExtractionResult") -> float:
+        """Return the standard deviation of entity text lengths.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Float std-dev; ``0.0`` when fewer than 2 entities.
+        """
+        entities = getattr(result, "entities", []) or []
+        if len(entities) < 2:
+            return 0.0
+        lengths = [len(getattr(e, "text", "") or "") for e in entities]
+        n = len(lengths)
+        mean = sum(lengths) / n
+        variance = sum((l - mean) ** 2 for l in lengths) / n
+        return variance ** 0.5
+
+    def entity_confidence_gini(self, result: "EntityExtractionResult") -> float:
+        """Return the Gini coefficient of entity confidence scores.
+
+        Uses the sorted-list formula.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Float Gini coefficient in [0, 1]; ``0.0`` when no entities or
+            all confidences are equal.
+        """
+        entities = getattr(result, "entities", []) or []
+        if not entities:
+            return 0.0
+        vals = sorted(getattr(e, "confidence", 0.0) for e in entities)
+        n = len(vals)
+        total = sum(vals)
+        if total == 0.0:
+            return 0.0
+        weighted = sum((i + 1) * v for i, v in enumerate(vals))
+        return (2 * weighted - (n + 1) * total) / (n * total)
+
+    def relationship_type_count(self, result: "EntityExtractionResult") -> int:
+        """Return the number of distinct relationship types in *result*.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Non-negative integer count of unique relationship type strings.
+        """
+        return len(self.relationship_type_counts(result))
+
+    def avg_relationship_confidence(self, result: "EntityExtractionResult") -> float:
+        """Return the mean confidence score across all relationships.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Float mean confidence; ``0.0`` when no relationships exist.
+        """
+        rels = getattr(result, "relationships", []) or []
+        if not rels:
+            return 0.0
+        confs = [getattr(r, "confidence", 1.0) for r in rels]
+        return sum(confs) / len(confs)
+
+    def entity_type_count(self, result: "EntityExtractionResult") -> int:
+        """Return the number of distinct entity types in *result*.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Non-negative integer count of unique entity type strings.
+        """
+        entities = getattr(result, "entities", []) or []
+        return len({getattr(e, "type", "") for e in entities if getattr(e, "type", "")})
+
+    def relationship_density(self, result: "EntityExtractionResult") -> float:
+        """Return the directed relationship density of *result*.
+
+        Density is defined as the number of relationships divided by the
+        maximum possible directed relationships for *n* entities:
+        ``n × (n − 1)``.
+
+        Args:
+            result: EntityExtractionResult to analyse.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when fewer than 2 entities.
+
+        Example::
+
+            >>> rd = generator.relationship_density(result)
+            >>> 0.0 <= rd <= 1.0
+        """
+        n = len(getattr(result, "entities", []) or [])
+        if n < 2:
+            return 0.0
+        rel_count = len(getattr(result, "relationships", []) or [])
+        return rel_count / (n * (n - 1))
+
+    def entity_confidence_weighted_mean(
+        self,
+        result: "EntityExtractionResult",
+        weights: "Dict[str, float] | None" = None,
+    ) -> float:
+        """Return the type-weighted mean confidence of all entities.
+
+        Each entity's confidence is multiplied by the weight associated with
+        its type.  If a type has no entry in *weights* a default weight of
+        ``1.0`` is used.  When *weights* is ``None`` all types get weight
+        ``1.0`` (equivalent to a plain arithmetic mean).
+
+        Args:
+            result: :class:`EntityExtractionResult` to analyse.
+            weights: Optional mapping of entity-type string → float weight.
+                Missing types default to ``1.0``.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when there are no entities.
+
+        Example::
+
+            >>> wm = generator.entity_confidence_weighted_mean(result, {"Person": 2.0})
+            >>> 0.0 <= wm <= 1.0
+        """
+        entities = getattr(result, "entities", []) or []
+        if not entities:
+            return 0.0
+        if weights is None:
+            weights = {}
+        total_w = 0.0
+        weighted_sum = 0.0
+        for e in entities:
+            w = weights.get(getattr(e, "type", ""), 1.0)
+            total_w += w
+            weighted_sum += w * getattr(e, "confidence", 0.0)
+        if total_w == 0.0:
+            return 0.0
+        return weighted_sum / total_w
+
+    def entity_confidence_trimmed_mean(self, result, trim_pct: float = 10.0) -> float:
+        """Return the trimmed mean of entity confidence values.
+
+        Sorts the confidence values, removes the lowest and highest
+        ``trim_pct`` percent, and returns the arithmetic mean of the
+        remaining values.
+
+        Args:
+            result: :class:`EntityExtractionResult` to analyse.
+            trim_pct: Percentage to trim from *each* tail.  Must be in
+                ``[0.0, 50.0)``.  Default ``10.0``.
+
+        Returns:
+            Float in ``[0, 1]``; ``0.0`` when there are no entities or no
+            values remain after trimming.
+
+        Raises:
+            ValueError: When *trim_pct* is outside ``[0.0, 50.0)``.
+
+        Example::
+
+            >>> tm = generator.entity_confidence_trimmed_mean(result, trim_pct=10.0)
+            >>> 0.0 <= tm <= 1.0
+        """
+        if trim_pct < 0.0 or trim_pct >= 50.0:
+            raise ValueError("trim_pct must be in [0.0, 50.0).")
+        entities = getattr(result, "entities", []) or []
+        if not entities:
+            return 0.0
+        confidences = sorted(getattr(e, "confidence", 0.0) for e in entities)
+        n = len(confidences)
+        k = int(n * trim_pct / 100.0)
+        trimmed = confidences[k: n - k] if (k < n and n - 2 * k > 0) else confidences
+        if not trimmed:
+            return 0.0
+        return sum(trimmed) / len(trimmed)
+
+    def relationship_avg_length(self, result: "EntityExtractionResult") -> float:
+        """Return the average length of the relationship *type* text field.
+
+        Each relationship exposes a ``type`` string (e.g. ``'causes'``,
+        ``'owns'``).  This helper returns the mean character-count of those
+        strings across all relationships in *result*.
+
+        Args:
+            result: :class:`EntityExtractionResult` to analyse.
+
+        Returns:
+            Non-negative float; ``0.0`` when there are no relationships.
+
+        Example::
+
+            >>> avg = generator.relationship_avg_length(result)
+            >>> avg >= 0.0
+        """
+        rels = getattr(result, "relationships", []) or []
+        if not rels:
+            return 0.0
+        return sum(len(getattr(r, "type", "") or "") for r in rels) / len(rels)
+
+    def entity_avg_degree(self, result: "EntityExtractionResult") -> float:
+        """Return the average number of relationships per entity in *result*.
+
+        For each entity the *degree* is the number of relationships in which
+        it appears as either the source or the target.  This method returns
+        the mean degree across all entities.
+
+        An entity that appears in no relationships has degree 0.  Relationships
+        that reference entities not in ``result.entities`` are ignored.
+
+        Args:
+            result: :class:`EntityExtractionResult` to analyse.
+
+        Returns:
+            Non-negative float; ``0.0`` when there are no entities.
+
+        Example::
+
+            >>> gen.entity_avg_degree(result)
+            0.0  # no entities
+        """
+        entities = getattr(result, "entities", []) or []
+        rels = getattr(result, "relationships", []) or []
+        if not entities:
+            return 0.0
+        degree: dict = {e.id: 0 for e in entities}
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src in degree:
+                degree[src] += 1
+            if tgt in degree:
+                degree[tgt] += 1
+        return sum(degree.values()) / len(entities)
+
+    def entity_confidence_below_threshold(
+        self,
+        result: "EntityExtractionResult",
+        threshold: float = 0.5,
+    ) -> int:
+        """Count entities whose confidence score is strictly below *threshold*.
+
+        Args:
+            result: An :class:`EntityExtractionResult` (or any object with an
+                ``entities`` attribute).
+            threshold: Upper bound (exclusive) for the low-confidence test.
+                Default ``0.5``.
+
+        Returns:
+            Non-negative integer count; ``0`` when *result* has no entities.
+
+        Example::
+
+            >>> gen.entity_confidence_below_threshold(result, threshold=0.5)
+            0  # no entities
+        """
+        entities = getattr(result, "entities", []) or []
+        count = 0
+        for e in entities:
+            conf = getattr(e, "confidence", None)
+            if conf is not None and conf < threshold:
+                count += 1
+        return count
+
 
 __all__ = [
     'OntologyGenerator',

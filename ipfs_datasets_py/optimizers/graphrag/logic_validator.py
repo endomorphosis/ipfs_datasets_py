@@ -3565,8 +3565,795 @@ class LogicValidator:
         total_time = sum(r.time_ms for r in results)
         return total_time / len(results)
 
+    def most_connected_node(self, ontology: dict) -> str:
+        """Return the node with the highest total degree (in + out) in the ontology.
 
-# Export public API
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Entity ID string of the most-connected node; empty string when the
+            ontology has no relationships.
+        """
+        relationships = ontology.get("relationships", []) or []
+        if not relationships:
+            return ""
+        degree: dict = {}
+        for rel in relationships:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src:
+                degree[src] = degree.get(src, 0) + 1
+            if tgt:
+                degree[tgt] = degree.get(tgt, 0) + 1
+        if not degree:
+            return ""
+        return max(degree.items(), key=lambda x: x[1])[0]
+
+    def avg_in_degree(self, ontology: dict) -> float:
+        """Return the average in-degree across all nodes in the ontology.
+
+        Alias for :meth:`average_in_degree`.
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Float average in-degree; ``0.0`` when no entities exist.
+        """
+        return self.average_in_degree(ontology)
+
+    def avg_out_degree(self, ontology: dict) -> float:
+        """Return the average out-degree across all nodes in the ontology.
+
+        Alias for :meth:`average_out_degree`.
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Float average out-degree; ``0.0`` when no entities exist.
+        """
+        return self.average_out_degree(ontology)
+
+    def avg_degree(self, ontology: dict) -> float:
+        """Return the average total degree (in-degree + out-degree) per node.
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Float average total degree; ``0.0`` when no relationships exist.
+        """
+        relationships = ontology.get("relationships", []) or []
+        if not relationships:
+            return 0.0
+        degree: dict = {}
+        for rel in relationships:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src:
+                degree[src] = degree.get(src, 0) + 1
+            if tgt:
+                degree[tgt] = degree.get(tgt, 0) + 1
+        if not degree:
+            return 0.0
+        return sum(degree.values()) / len(degree)
+
+    def degree_centrality(self, ontology: dict) -> dict:
+        """Return a dict mapping each node to its degree centrality.
+
+        Degree centrality = ``total_degree(node) / (n_nodes - 1)`` where
+        ``n_nodes`` is the number of distinct nodes in the relationship graph.
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Dict of ``{node_id: centrality}``; empty dict when fewer than
+            2 nodes or no relationships.
+        """
+        relationships = ontology.get("relationships", []) or []
+        if not relationships:
+            return {}
+        degree: dict = {}
+        for rel in relationships:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src:
+                degree[src] = degree.get(src, 0) + 1
+            if tgt:
+                degree[tgt] = degree.get(tgt, 0) + 1
+        n = len(degree)
+        if n < 2:
+            return {node: 0.0 for node in degree}
+        return {node: deg / (n - 1) for node, deg in degree.items()}
+
+    def max_degree_node_count(self, ontology: dict) -> int:
+        """Return the count of nodes that share the maximum total degree.
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Non-negative integer; ``0`` when no relationships exist.
+        """
+        relationships = ontology.get("relationships", []) or []
+        if not relationships:
+            return 0
+        degree: dict = {}
+        for rel in relationships:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src:
+                degree[src] = degree.get(src, 0) + 1
+            if tgt:
+                degree[tgt] = degree.get(tgt, 0) + 1
+        if not degree:
+            return 0
+        max_deg = max(degree.values())
+        return sum(1 for d in degree.values() if d == max_deg)
+
+    def closeness_centrality_approx(self, ontology: dict) -> dict:
+        """Return approximate closeness centrality for each node.
+
+        Uses a BFS-based shortest-path approximation. For each node, the
+        closeness centrality is:
+        ``C(u) = (n - 1) / sum_of_shortest_path_lengths_from_u``
+        where n is the number of reachable nodes (excluding u itself).
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Dict of ``{node_id: centrality}``; empty dict when fewer than
+            2 nodes or no relationships.
+        """
+        from collections import deque
+
+        relationships = ontology.get("relationships", []) or []
+        if not relationships:
+            return {}
+
+        # Build adjacency (directed → treat as undirected for BFS)
+        adj: dict[str, set] = {}
+        for rel in relationships:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src and tgt:
+                adj.setdefault(src, set()).add(tgt)
+                adj.setdefault(tgt, set()).add(src)
+
+        nodes = list(adj.keys())
+        if len(nodes) < 2:
+            return {n: 0.0 for n in nodes}
+
+        centrality: dict[str, float] = {}
+        for start in nodes:
+            visited = {start: 0}
+            queue: deque[str] = deque([start])
+            total_dist = 0
+            reachable = 0
+            while queue:
+                node = queue.popleft()
+                for neighbour in adj.get(node, set()):
+                    if neighbour not in visited:
+                        visited[neighbour] = visited[node] + 1
+                        total_dist += visited[neighbour]
+                        reachable += 1
+                        queue.append(neighbour)
+            if reachable == 0 or total_dist == 0:
+                centrality[start] = 0.0
+            else:
+                centrality[start] = reachable / total_dist
+        return centrality
+
+    def reciprocal_edge_count(self, ontology: dict) -> int:
+        """Return the count of bidirectional edge pairs.
+
+        A bidirectional pair exists when both ``a → b`` and ``b → a``
+        are present in the relationship graph.  Each pair is counted once.
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Non-negative integer count of reciprocal pairs.
+        """
+        relationships = ontology.get("relationships", []) or []
+        if not relationships:
+            return 0
+        edges: set[tuple[str, str]] = set()
+        for rel in relationships:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src and tgt:
+                edges.add((src, tgt))
+        count = 0
+        seen: set[tuple[str, str]] = set()
+        for src, tgt in edges:
+            if (tgt, src) in edges and (tgt, src) not in seen:
+                count += 1
+                seen.add((src, tgt))
+        return count
+
+    def betweenness_centrality_approx(self, ontology: dict) -> dict:
+        """Return approximate betweenness centrality for each node.
+
+        Uses a BFS-based shortest-path approach: for each source node *s*,
+        for each target node *t*, find the shortest path and increment the
+        betweenness of each intermediate node by 1.  The result is normalised
+        by ``(n-1)*(n-2)`` (un-directed convention) where *n* is the number
+        of nodes.
+
+        Args:
+            ontology: Dict with ``entities`` and ``relationships`` lists.
+
+        Returns:
+            Dict of ``{node_id: centrality}``; empty dict when fewer than
+            3 nodes or no relationships.
+        """
+        from collections import deque
+
+        relationships = ontology.get("relationships", []) or []
+        if not relationships:
+            return {}
+
+        # Build undirected adjacency
+        adj: dict[str, set] = {}
+        for rel in relationships:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src and tgt:
+                adj.setdefault(src, set()).add(tgt)
+                adj.setdefault(tgt, set()).add(src)
+
+        nodes = list(adj.keys())
+        n = len(nodes)
+        if n < 3:
+            return {nd: 0.0 for nd in nodes}
+
+        betweenness: dict[str, float] = {nd: 0.0 for nd in nodes}
+
+        for source in nodes:
+            # BFS to find shortest paths from source
+            dist: dict[str, int] = {source: 0}
+            predecessors: dict[str, list] = {nd: [] for nd in nodes}
+            sigma: dict[str, int] = {nd: 0 for nd in nodes}
+            sigma[source] = 1
+            queue: deque[str] = deque([source])
+            ordered: list[str] = []
+
+            while queue:
+                node = queue.popleft()
+                ordered.append(node)
+                for nb in adj.get(node, set()):
+                    if nb not in dist:
+                        dist[nb] = dist[node] + 1
+                        queue.append(nb)
+                    if dist[nb] == dist[node] + 1:
+                        sigma[nb] += sigma[node]
+                        predecessors[nb].append(node)
+
+            # Accumulate dependencies
+            delta: dict[str, float] = {nd: 0.0 for nd in nodes}
+            for node in reversed(ordered):
+                for pred in predecessors[node]:
+                    if sigma[node] > 0:
+                        delta[pred] += (sigma[pred] / sigma[node]) * (1 + delta[node])
+                if node != source:
+                    betweenness[node] += delta[node]
+
+        # Normalise (undirected: divide by (n-1)*(n-2))
+        norm = (n - 1) * (n - 2)
+        if norm > 0:
+            betweenness = {nd: v / norm for nd, v in betweenness.items()}
+        return betweenness
+
+    def edge_density(self, ontology: Any) -> float:
+        """Return the directed edge density of the ontology graph.
+
+        Density is defined as the number of directed edges divided by the
+        maximum possible directed edges for *n* nodes: ``n × (n − 1)``.
+
+        Args:
+            ontology: Ontology dict with ``entities`` and ``relationships``
+                (or ``edges``) keys.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when fewer than 2 entities.
+
+        Example::
+
+            >>> ent = [{"id": "e1"}, {"id": "e2"}, {"id": "e3"}]
+            >>> rel = [{"source": "e1", "target": "e2", "id": "r1"}]
+            >>> validator.edge_density({"entities": ent, "relationships": rel})
+            # 1 / (3*2) ≈ 0.167
+        """
+        entities = ontology.get("entities", [])
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if not isinstance(rels, list):
+            rels = []
+        n = len(entities)
+        if n < 2:
+            return 0.0
+        max_edges = n * (n - 1)
+        edge_count = sum(
+            1 for r in rels
+            if isinstance(r, dict) and r.get("source") and r.get("target")
+        )
+        return edge_count / max_edges
+
+    def multi_edge_count(self, ontology: Any) -> int:
+        """Return the number of duplicate directed edges (multi-edges).
+
+        A multi-edge is a second (or further) directed relationship that
+        shares the same ``source`` and ``target`` as an earlier one.
+
+        Args:
+            ontology: Ontology dict with ``relationships`` (or ``edges``) key.
+
+        Returns:
+            Non-negative integer count of extra edges beyond the first for
+            each ``(source, target)`` pair.
+
+        Example::
+
+            >>> rels = [
+            ...     {"id": "r1", "source": "A", "target": "B"},
+            ...     {"id": "r2", "source": "A", "target": "B"},  # duplicate
+            ...     {"id": "r3", "source": "A", "target": "C"},
+            ... ]
+            >>> validator.multi_edge_count({"entities": [], "relationships": rels})
+            1
+        """
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if not isinstance(rels, list):
+            return 0
+        seen: dict = {}
+        multi = 0
+        for r in rels:
+            if not isinstance(r, dict):
+                continue
+            src = r.get("source")
+            tgt = r.get("target")
+            if not src or not tgt:
+                continue
+            key = (src, tgt)
+            if key in seen:
+                multi += 1
+            else:
+                seen[key] = True
+        return multi
+
+    def clustering_coefficient_approx(self, ontology: dict) -> float:
+        """Return the approximate average undirected clustering coefficient.
+
+        For each node *v* with degree ≥ 2, the local clustering coefficient
+        is the fraction of pairs among *v*'s neighbours that are themselves
+        connected (in either direction).  The returned value is the mean
+        over all nodes that have degree ≥ 2.
+
+        Edges are treated as **undirected**: both ``source→target`` and
+        ``target→source`` contribute to the neighbourhood.
+
+        Args:
+            ontology: Dict with ``"entities"`` and ``"relationships"``
+                (or ``"edges"``) lists.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when no node has degree ≥ 2.
+
+        Example::
+
+            >>> # Triangle: A-B, B-C, A-C
+            >>> cc = validator.clustering_coefficient_approx(ontology)
+            >>> cc == 1.0
+        """
+        entities = ontology.get("entities", [])
+        if not isinstance(entities, list):
+            return 0.0
+        rels = ontology.get("relationships", ontology.get("edges", []))
+        if not isinstance(rels, list):
+            return 0.0
+
+        # Build undirected adjacency sets
+        adj: dict[str, set] = {}
+        for e in entities:
+            node_id = (e.get("id") or e.get("name", "")) if isinstance(e, dict) else str(e)
+            if node_id:
+                adj.setdefault(node_id, set())
+
+        edge_set: set[tuple] = set()
+        for r in rels:
+            if not isinstance(r, dict):
+                continue
+            src = r.get("source")
+            tgt = r.get("target")
+            if not src or not tgt or src == tgt:
+                continue
+            adj.setdefault(src, set()).add(tgt)
+            adj.setdefault(tgt, set()).add(src)
+            edge_set.add((min(src, tgt), max(src, tgt)))
+
+        coeffs = []
+        for node, neighbours in adj.items():
+            k = len(neighbours)
+            if k < 2:
+                continue
+            # Count edges among neighbours
+            triangle_edges = sum(
+                1
+                for nb in neighbours
+                for nb2 in neighbours
+                if nb < nb2 and (min(nb, nb2), max(nb, nb2)) in edge_set
+            )
+            possible = k * (k - 1) // 2
+            coeffs.append(triangle_edges / possible)
+
+        if not coeffs:
+            return 0.0
+        return sum(coeffs) / len(coeffs)
+
+    def diameter_approx(self, ontology: dict) -> int:
+        """Return the approximate diameter of the directed graph via BFS.
+
+        Performs a BFS from every node and returns the maximum shortest-path
+        distance observed.  Only directed edges are followed.  Self-loops are
+        ignored.
+
+        Args:
+            ontology: Dict with ``"entities"`` and ``"relationships"`` lists.
+                Each relationship must have ``"source"`` and ``"target"`` keys.
+
+        Returns:
+            Non-negative integer; ``0`` when the graph has fewer than 2 nodes
+            or all nodes are mutually unreachable.
+
+        Example::
+
+            >>> d = validator.diameter_approx({"entities": [...], "relationships": [...]})
+            >>> d >= 0
+        """
+        from collections import deque
+        entities = ontology.get("entities", []) or []
+        rels = ontology.get("relationships", []) or []
+
+        nodes: set = set()
+        for e in entities:
+            node_id = (e.get("id") or e.get("name", "")) if isinstance(e, dict) else str(e)
+            if node_id:
+                nodes.add(node_id)
+
+        adj: dict = {}
+        for r in rels:
+            if not isinstance(r, dict):
+                continue
+            src = r.get("source")
+            tgt = r.get("target")
+            if not src or not tgt or src == tgt:
+                continue
+            nodes.add(src)
+            nodes.add(tgt)
+            adj.setdefault(src, []).append(tgt)
+            adj.setdefault(tgt, [])
+
+        if len(nodes) < 2:
+            return 0
+
+        max_dist = 0
+        for start in nodes:
+            dist: dict = {start: 0}
+            queue: deque = deque([start])
+            while queue:
+                node = queue.popleft()
+                for nb in adj.get(node, []):
+                    if nb not in dist:
+                        dist[nb] = dist[node] + 1
+                        if dist[nb] > max_dist:
+                            max_dist = dist[nb]
+                        queue.append(nb)
+
+        return max_dist
+
+    def eccentricity_distribution(self, ontology: dict) -> list:
+        """Return the eccentricity of every node in the directed graph.
+
+        The eccentricity of a node is the maximum shortest-path distance from
+        that node to any other node it can reach via directed edges.  Nodes
+        that cannot reach any other node have eccentricity **0**.
+
+        Args:
+            ontology: Dict with ``"entities"`` and ``"relationships"`` lists.
+                Each relationship must have ``"source"`` and ``"target"`` keys.
+
+        Returns:
+            List of non-negative integers, one per node in deterministic
+            (sorted) order; empty list when the graph has no nodes.
+
+        Example::
+
+            >>> dist = validator.eccentricity_distribution(
+            ...     {"entities": [{"id": "A"}, {"id": "B"}],
+            ...      "relationships": [{"source": "A", "target": "B"}]})
+            >>> dist  # A reaches B in 1 hop; B reaches nothing
+            [1, 0]
+        """
+        from collections import deque
+        entities = ontology.get("entities", []) or []
+        rels = ontology.get("relationships", []) or []
+
+        nodes: set = set()
+        for e in entities:
+            node_id = (e.get("id") or e.get("name", "")) if isinstance(e, dict) else str(e)
+            if node_id:
+                nodes.add(node_id)
+
+        adj: dict = {}
+        for r in rels:
+            if not isinstance(r, dict):
+                continue
+            src = r.get("source")
+            tgt = r.get("target")
+            if not src or not tgt or src == tgt:
+                continue
+            nodes.add(src)
+            nodes.add(tgt)
+            adj.setdefault(src, []).append(tgt)
+            adj.setdefault(tgt, [])
+
+        if not nodes:
+            return []
+
+        result = []
+        for start in sorted(nodes):
+            dist: dict = {start: 0}
+            queue: deque = deque([start])
+            while queue:
+                node = queue.popleft()
+                for nb in adj.get(node, []):
+                    if nb not in dist:
+                        dist[nb] = dist[node] + 1
+                        queue.append(nb)
+            max_dist = max(dist.values()) if len(dist) > 1 else 0
+            result.append(max_dist)
+
+        return result
+
+    def radius_approx(self, ontology: dict) -> int:
+        """Return the radius of the directed graph using BFS eccentricities.
+
+        The radius is the **minimum** eccentricity across all nodes that can
+        reach at least one other node.  A node with eccentricity 0 (no
+        reachable neighbours) is excluded from the minimum, because 0 would
+        trivially dominate.
+
+        Args:
+            ontology: Dict with ``"entities"`` and ``"relationships"`` lists.
+                Each relationship must have ``"source"`` and ``"target"`` keys.
+
+        Returns:
+            Minimum positive eccentricity as a non-negative integer.
+            Returns ``0`` when the graph has fewer than 2 nodes or when no
+            node can reach any other node.
+
+        Example::
+
+            >>> validator.radius_approx(
+            ...     {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+            ...      "relationships": [{"source": "A", "target": "B"},
+            ...                        {"source": "B", "target": "C"}]})
+            1   # A reaches B in 1 step; B reaches C in 1 step; min ecc = 1
+        """
+        eccs = self.eccentricity_distribution(ontology)
+        positive = [e for e in eccs if e > 0]
+        return min(positive) if positive else 0
+
+    def periphery_size(self, ontology: dict) -> int:
+        """Count the number of nodes in the *periphery* of the directed graph.
+
+        The periphery consists of all nodes whose eccentricity equals the
+        graph's diameter.  Nodes with eccentricity ``0`` (unable to reach any
+        other node) are excluded.
+
+        Args:
+            ontology: Dict with ``"entities"`` and ``"relationships"`` lists.
+                Each relationship must have ``"source"`` and ``"target"`` keys.
+
+        Returns:
+            Non-negative integer; ``0`` when the graph has fewer than 2 nodes,
+            when no node can reach any other, or when the diameter is 0.
+
+        Example::
+
+            >>> validator.periphery_size(
+            ...     {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+            ...      "relationships": [{"source": "A", "target": "B"},
+            ...                        {"source": "A", "target": "C"}]})
+            1  # A has eccentricity 1 (reaches B, C in 1 hop); B and C have
+               # eccentricity 0 (no outbound edges); diameter=1; periphery={A}
+        """
+        eccs = self.eccentricity_distribution(ontology)
+        positive = [e for e in eccs if e > 0]
+        if not positive:
+            return 0
+        diameter = max(positive)
+        if diameter == 0:
+            return 0
+        return sum(1 for e in eccs if e == diameter)
+
+    def center_size(self, ontology: dict) -> int:
+        """Count the number of nodes in the *center* of the directed graph.
+
+        The center consists of all nodes whose eccentricity equals the graph's
+        radius.  Nodes with eccentricity ``0`` (unable to reach any other node)
+        are excluded, as they would trivially dominate.
+
+        Args:
+            ontology: Dict with ``"entities"`` and ``"relationships"`` lists.
+                Each relationship must have ``"source"`` and ``"target"`` keys.
+
+        Returns:
+            Non-negative integer; ``0`` when the graph has fewer than 2 nodes,
+            when no node can reach any other, or when the radius is 0.
+
+        Example::
+
+            >>> validator.center_size(
+            ...     {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+            ...      "relationships": [{"source": "A", "target": "B"},
+            ...                        {"source": "B", "target": "C"}]})
+            1  # A→B→C: ecc(A)=2, ecc(B)=1, ecc(C)=0; radius=1; center={B}
+        """
+        eccs = self.eccentricity_distribution(ontology)
+        positive = [e for e in eccs if e > 0]
+        if not positive:
+            return 0
+        radius = min(positive)
+        if radius == 0:
+            return 0
+        return sum(1 for e in eccs if e == radius)
+
+    def source_count(self, ontology: Any) -> int:
+        """Count the number of *source* nodes (in-degree zero) in the graph.
+
+        A source node is one that has no incoming edges — it is a starting
+        point in the directed graph.  Isolated nodes (no edges at all) are
+        also counted as sources.
+
+        Args:
+            ontology: Object with ``entities`` and ``relationships`` lists.
+                Each relationship must have ``source_id`` and ``target_id``
+                attributes (or the ``"source"``/``"target"`` dict keys used by
+                the dict-style helpers are also accepted via
+                :meth:`in_degree_distribution`).
+
+        Returns:
+            Non-negative integer count of source nodes; ``0`` when there are
+            no entities.
+
+        Example::
+
+            >>> validator.source_count(
+            ...     {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+            ...      "relationships": [{"source_id": "A", "target_id": "B"},
+            ...                        {"source_id": "A", "target_id": "C"}]})
+            1  # only A has in-degree 0; B and C each receive one incoming edge
+        """
+        entities = getattr(ontology, "entities", None)
+        if entities is None:
+            entities = ontology.get("entities", []) if isinstance(ontology, dict) else []
+        if not entities:
+            return 0
+        rels = getattr(ontology, "relationships", None)
+        if rels is None:
+            rels = ontology.get("relationships", []) if isinstance(ontology, dict) else []
+        # Collect all node IDs
+        all_ids: set = set()
+        for e in entities:
+            eid = getattr(e, "id", None) or (e.get("id") if isinstance(e, dict) else None)
+            if eid:
+                all_ids.add(eid)
+        # Collect IDs that appear as targets (have incoming edges)
+        has_incoming: set = set()
+        for r in rels:
+            tgt = getattr(r, "target_id", None) or (r.get("target_id") if isinstance(r, dict) else None)
+            if tgt is None:
+                tgt = getattr(r, "target", None) or (r.get("target") if isinstance(r, dict) else None)
+            if tgt:
+                has_incoming.add(tgt)
+        return sum(1 for nid in all_ids if nid not in has_incoming)
+
+    def sink_count(self, ontology: Any) -> int:
+        """Count the number of *sink* nodes (out-degree zero) in the graph.
+
+        A sink node is one that has no outgoing edges — it is a terminal
+        point in the directed graph.  Isolated nodes (no edges at all) are
+        also counted as sinks.
+
+        Args:
+            ontology: Object with ``entities`` and ``relationships`` lists.
+                Each relationship must have ``source_id`` and ``target_id``
+                attributes (or the ``"source"``/``"target"`` dict keys are
+                also accepted as fallbacks).
+
+        Returns:
+            Non-negative integer count of sink nodes; ``0`` when there are
+            no entities.
+
+        Example::
+
+            >>> validator.sink_count(
+            ...     {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+            ...      "relationships": [{"source_id": "A", "target_id": "B"},
+            ...                        {"source_id": "A", "target_id": "C"}]})
+            2  # B and C have out-degree 0; A has two outgoing edges
+        """
+        entities = getattr(ontology, "entities", None)
+        if entities is None:
+            entities = ontology.get("entities", []) if isinstance(ontology, dict) else []
+        if not entities:
+            return 0
+        rels = getattr(ontology, "relationships", None)
+        if rels is None:
+            rels = ontology.get("relationships", []) if isinstance(ontology, dict) else []
+        # Collect all node IDs
+        all_ids: set[str] = set()
+        for e in entities:
+            eid = getattr(e, "id", None) or (e.get("id") if isinstance(e, dict) else None)
+            if eid:
+                all_ids.add(eid)
+        # Collect IDs that appear as sources (have outgoing edges)
+        has_outgoing: set[str] = set()
+        for r in rels:
+            src = getattr(r, "source_id", None) or (r.get("source_id") if isinstance(r, dict) else None)
+            if src is None:
+                src = getattr(r, "source", None) or (r.get("source") if isinstance(r, dict) else None)
+            if src:
+                has_outgoing.add(src)
+        return sum(1 for nid in all_ids if nid not in has_outgoing)
+
+    def strongly_connected_component_sizes(self, ontology: Any) -> list:
+        """Return a sorted list of SCC sizes using Kosaraju's algorithm.
+
+        Each element of the returned list is the *number of nodes* in one
+        strongly connected component, sorted in descending order.  This is
+        a compact summary of the SCC structure without exposing node IDs.
+
+        Args:
+            ontology: Ontology object or dict with optional ``"entities"``
+                and ``"relationships"`` (or ``"entities"`` / ``"relationships"``
+                as attributes).  Uses ``subject_id``/``source_id`` for source
+                and ``object_id``/``target_id`` for target.
+
+        Returns:
+            List of positive integers (SCC sizes) sorted descending; ``[]``
+            when the ontology has no entities.
+
+        Example::
+
+            >>> lv.strongly_connected_component_sizes({"entities": [], "relationships": []})
+            []
+        """
+        sccs = self.strongly_connected_components(
+            ontology if isinstance(ontology, dict) else {
+                "entities": [
+                    {"id": getattr(e, "id", None)}
+                    for e in (getattr(ontology, "entities", None) or [])
+                    if getattr(e, "id", None)
+                ],
+                "relationships": [
+                    {
+                        "source_id": getattr(r, "source_id", None),
+                        "target_id": getattr(r, "target_id", None),
+                    }
+                    for r in (getattr(ontology, "relationships", None) or [])
+                ],
+            }
+        )
+        return sorted((len(scc) for scc in sccs), reverse=True)
+
+
 __all__ = [
     'LogicValidator',
     'ValidationResult',

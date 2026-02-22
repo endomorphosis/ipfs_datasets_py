@@ -2240,3 +2240,304 @@ class OntologyPipeline:
         if len(recent) < 2:
             return False
         return recent[-1].score.overall > recent[0].score.overall
+
+    def best_score_improvement(self) -> float:
+        """Return the maximum single-step score improvement across all runs.
+
+        Computes the largest positive delta between consecutive run scores.
+
+        Returns:
+            Float maximum improvement; ``0.0`` when fewer than 2 runs or no
+            run improved on the previous.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        max_improvement = 0.0
+        for i in range(1, len(scores)):
+            delta = scores[i] - scores[i - 1]
+            if delta > max_improvement:
+                max_improvement = delta
+        return max_improvement
+
+    def rounds_without_improvement(self) -> int:
+        """Return the number of consecutive runs at the end with no score improvement.
+
+        Counts trailing runs where the score did not exceed the previous run.
+
+        Returns:
+            Non-negative integer count.
+        """
+        if len(self._run_history) < 2:
+            return 0
+        scores = [r.score.overall for r in self._run_history]
+        count = 0
+        for i in range(len(scores) - 1, 0, -1):
+            if scores[i] <= scores[i - 1]:
+                count += 1
+            else:
+                break
+        return count
+
+    def run_score_skewness(self) -> float:
+        """Return the skewness of run ``score.overall`` values.
+
+        Uses population skewness: ``(1/n) * sum((x - mean)^3) / std^3``.
+
+        Returns:
+            Float skewness; ``0.0`` when fewer than 3 runs or std is zero.
+        """
+        if len(self._run_history) < 3:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        n = len(scores)
+        mean = sum(scores) / n
+        variance = sum((s - mean) ** 2 for s in scores) / n
+        if variance == 0.0:
+            return 0.0
+        std = variance ** 0.5
+        return sum((s - mean) ** 3 for s in scores) / (n * std ** 3)
+
+    def worst_score_decline(self) -> float:
+        """Return the maximum single-step score decline across all runs.
+
+        Computes the largest negative delta (most negative consecutive change)
+        and returns its absolute value.
+
+        Returns:
+            Float; ``0.0`` when fewer than 2 runs or no run declined.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        max_decline = 0.0
+        for i in range(1, len(scores)):
+            delta = scores[i - 1] - scores[i]  # positive when declining
+            if delta > max_decline:
+                max_decline = delta
+        return max_decline
+
+    def consecutive_declines(self) -> int:
+        """Return the maximum number of consecutive declining runs.
+
+        A decline is where a run's score is strictly less than the previous run.
+
+        Returns:
+            Non-negative integer; ``0`` when fewer than 2 runs or no decline.
+        """
+        if len(self._run_history) < 2:
+            return 0
+        scores = [r.score.overall for r in self._run_history]
+        max_streak = 0
+        current_streak = 0
+        for i in range(1, len(scores)):
+            if scores[i] < scores[i - 1]:
+                current_streak += 1
+                if current_streak > max_streak:
+                    max_streak = current_streak
+            else:
+                current_streak = 0
+        return max_streak
+
+    def run_score_gini(self) -> float:
+        """Return the Gini coefficient of run ``score.overall`` values.
+
+        Uses the sorted-list formula:
+        ``G = (2 * sum(i * x_i) - (n+1) * sum(x_i)) / (n * sum(x_i))``
+
+        Returns:
+            Float Gini in [0, 1]; ``0.0`` when fewer than 2 runs or all
+            scores are equal.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        vals = sorted(r.score.overall for r in self._run_history)
+        n = len(vals)
+        total = sum(vals)
+        if total == 0.0:
+            return 0.0
+        weighted = sum((i + 1) * v for i, v in enumerate(vals))
+        return (2 * weighted - (n + 1) * total) / (n * total)
+
+    def first_improving_run(self) -> int:
+        """Return the 0-based index of the first run that improved on the previous.
+
+        Returns:
+            Non-negative integer index; ``-1`` when fewer than 2 runs or no
+            run improved on its predecessor.
+        """
+        if len(self._run_history) < 2:
+            return -1
+        scores = [r.score.overall for r in self._run_history]
+        for i in range(1, len(scores)):
+            if scores[i] > scores[i - 1]:
+                return i
+        return -1
+
+    def last_improving_run(self) -> int:
+        """Return the 0-based index of the last run that improved on the previous.
+
+        Returns:
+            Non-negative integer index; ``-1`` when fewer than 2 runs or no
+            run improved on its predecessor.
+        """
+        if len(self._run_history) < 2:
+            return -1
+        scores = [r.score.overall for r in self._run_history]
+        result = -1
+        for i in range(1, len(scores)):
+            if scores[i] > scores[i - 1]:
+                result = i
+        return result
+
+    def improving_run_ratio(self) -> float:
+        """Return the fraction of runs that improved on the previous run.
+
+        A run at index i "improves" when ``score[i] > score[i-1]``.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        improvements = sum(
+            1 for i in range(1, len(scores)) if scores[i] > scores[i - 1]
+        )
+        return improvements / (len(scores) - 1)
+
+    def run_score_ewma(self, alpha: float = 0.3) -> float:
+        """Return the Exponential Weighted Moving Average (EWMA) of run scores.
+
+        Uses the standard recurrence: ``ewma[t] = alpha * score[t] + (1 - alpha) * ewma[t-1]``
+        with the first run score as the initial value.
+
+        Args:
+            alpha: Smoothing factor in (0, 1].  Default ``0.3``.
+
+        Returns:
+            Float EWMA of all run scores; ``0.0`` when no runs exist.
+
+        Example::
+
+            >>> ewma = pipeline.run_score_ewma(alpha=0.2)
+            >>> isinstance(ewma, float)
+        """
+        if not self._run_history:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        ewma = scores[0]
+        for s in scores[1:]:
+            ewma = alpha * s + (1.0 - alpha) * ewma
+        return ewma
+
+    def run_score_autocorrelation(self, lag: int = 1) -> float:
+        """Return the autocorrelation of run scores at the given *lag*.
+
+        Uses the biased (population) estimator: both the cross-covariance
+        ``C(h)`` and the variance ``C(0)`` are divided by ``n``, so the
+        common factor cancels and the result simplifies to::
+
+            ρ(h) = Σ_{i=h}^{n-1} (x_i − μ)(x_{i-h} − μ)
+                   ─────────────────────────────────────────
+                   Σ_{i=0}^{n-1} (x_i − μ)²
+
+        This guarantees the result is always in ``[-1, 1]``.
+
+        Args:
+            lag: Number of positions to shift the series.  Must be ≥ 1.
+                Default ``1``.
+
+        Returns:
+            Float autocorrelation; ``0.0`` when fewer than ``lag + 1``
+            runs exist or the series has zero variance.
+
+        Example::
+
+            >>> acf = pipeline.run_score_autocorrelation(lag=1)
+            >>> -1.0 <= acf <= 1.0
+        """
+        if len(self._run_history) <= lag:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        n = len(scores)
+        mean = sum(scores) / n
+        variance = sum((s - mean) ** 2 for s in scores) / n
+        if variance == 0.0:
+            return 0.0
+        cov = sum(
+            (scores[i] - mean) * (scores[i - lag] - mean)
+            for i in range(lag, n)
+        ) / n
+        return cov / variance
+
+    def run_score_quartile_dispersion(self) -> float:
+        """Return the Quartile Coefficient of Dispersion (QCD) of run overall scores.
+
+        QCD = (Q3 - Q1) / (Q3 + Q1).  Unlike IQR, QCD is unit-free and can
+        be compared across pipelines with different score magnitudes.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when fewer than 4 runs or when
+            ``Q3 + Q1 == 0``.
+
+        Example::
+
+            >>> pipeline.run_score_quartile_dispersion()
+            0.0  # fewer than 4 runs
+        """
+        if len(self._run_history) < 4:
+            return 0.0
+        scores = sorted(r.score.overall for r in self._run_history)
+        n = len(scores)
+        q1 = scores[n // 4]
+        q3 = scores[(3 * n) // 4]
+        if q3 + q1 == 0.0:
+            return 0.0
+        return (q3 - q1) / (q3 + q1)
+
+    def run_score_positive_rate(self, threshold: float = 0.5) -> float:
+        """Return the fraction of run overall scores that exceed *threshold*.
+
+        Args:
+            threshold: Score value above which a run is considered positive.
+                Default ``0.5``.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when there are no runs.
+
+        Example::
+
+            >>> pipeline.run_score_positive_rate()
+            0.0  # no runs yet
+        """
+        if not self._run_history:
+            return 0.0
+        positive = sum(1 for r in self._run_history if r.score.overall > threshold)
+        return positive / len(self._run_history)
+
+    def run_score_negative_rate(self, threshold: float = 0.5) -> float:
+        """Return the fraction of run overall scores at or below *threshold*.
+
+        This is the exact complement of :meth:`run_score_positive_rate` when
+        both use the same *threshold*: ``negative_rate + positive_rate == 1.0``
+        always, because the positive rate uses strict ``>`` and this method
+        uses ``<=``, so every run score falls into exactly one category.
+
+        Args:
+            threshold: Score value at or below which a run is considered
+                negative.  Default ``0.5``.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when there are no runs.
+
+        Example::
+
+            >>> pipeline.run_score_negative_rate()
+            0.0  # no runs yet
+        """
+        if not self._run_history:
+            return 0.0
+        negative = sum(1 for r in self._run_history if r.score.overall <= threshold)
+        return negative / len(self._run_history)
+
