@@ -5,6 +5,37 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.11] - 2026-02-22
+
+### Removed — Dead Code in cross_document.py and ir_executor.py (Session 56)
+
+**9 lines of provably unreachable code removed from 2 files.**
+
+#### `reasoning/cross_document.py`
+
+- Removed `if norm_src == 0.0 or norm_tgt == 0.0: return 0.0` guard (2 lines).
+  This guard was unreachable: the preceding `if not src_tokens or not tgt_tokens`
+  check ensures both token lists are non-empty, so `Counter` values are always ≥ 1
+  and both L2 norms are always strictly positive.
+- A clarifying comment was added in place of the removed guard.
+- **`reasoning/cross_document.py` is now at 100% coverage.**
+
+#### `core/ir_executor.py`
+
+- Removed the `if "." in expr:` / `else:` branching inside `OrderBy make_sort_key`
+  (7 lines total):
+  - The `var_name, prop_name = expr.split(".", 1)` assignment — those variables were
+    never used in the function body.
+  - The `try: record.get(expr) / except (AttributeError, KeyError, TypeError): value = None`
+    wrapper — `Record.get()` delegates to `dict.get()` and never raises.
+  - Both branches performed exactly `value = record.get(expr)`, so they collapsed to
+    a single statement.
+- **`core/ir_executor.py` is now at 100% coverage.**
+
+### Tests
+- Added `tests/unit/knowledge_graphs/test_master_status_session56.py` with **13 invariant
+  tests** (2 classes: `TestCrossDocumentZeroNormProof`, `TestIRExecutorOrderByStringExpr`).
+
 ## [3.22.10] - 2026-02-22
 
 ### Changed — numpy as Default Dependency (Session 55)

@@ -561,3 +561,43 @@ module level.
 
 **Result: 3,490 pass, 77 skip, 0 fail** (base env without numpy/scipy/matplotlib; same
 207 missed lines as session 53).
+
+### Session 56 log (2026-02-22)
+
+**Problem:** Two small dead-code blocks remained in the coverage report after sessions
+53–55. Both guards were provably unreachable.
+
+**Removed blocks:**
+
+1. **`reasoning/cross_document.py:198-199`** (2 lines) — `if norm_src == 0.0 or norm_tgt == 0.0: return 0.0`.
+   The earlier `if not src_tokens or not tgt_tokens: return 0.0` guard (lines 192-193)
+   guarantees both token lists are non-empty before the Counter/norm calculation runs.
+   A `Counter` of a non-empty list always has all values ≥ 1, so both L2 norms are
+   strictly positive.  The zero-norm guard was mathematically unreachable.
+   → **`reasoning/cross_document.py` now 100%** ✅
+
+2. **`core/ir_executor.py:428-436`** (7 lines, previously reported as lines 429-435) —
+   the `if "." in expr:` branch inside `make_sort_key`.  Both the if and else branches
+   executed `value = record.get(expr)`.  The if-branch additionally:
+   - assigned `var_name, prop_name = expr.split(".", 1)` — values never read below
+   - wrapped `record.get(expr)` in `try/except (AttributeError, KeyError, TypeError)` —
+     `Record.get()` never raises (delegates to `dict.get()`).
+   Collapsed to a single `value = record.get(expr)` call.
+   → **`core/ir_executor.py` now 100%** ✅
+
+**13 invariant tests** in `test_master_status_session56.py`:
+- `TestCrossDocumentZeroNormProof` (8 tests): Counter norm invariants + end-to-end
+  `_compute_document_similarity` with overlapping and stopword-only content.
+- `TestIRExecutorOrderByStringExpr` (5 tests): `Record.get()` never raises; OrderBy
+  with dotted and non-dotted string expressions works via `execute_ir_operations`.
+
+**Remaining 204 missed lines** (down from 207):
+- `extraction/extractor.py`: 108 lines, spaCy NLP model required
+- `extraction/graph.py`: 45 lines, rdflib required
+- `lineage/visualization.py`: 39 lines, matplotlib/plotly required
+- `migration/formats.py`: 10 lines, libipld/ipld-car success paths (deps required)
+- `extraction/_entity_helpers.py:117`: 1 line, defensive guard kept for
+  future pattern additions
+- `extraction/srl.py:402`: 1 line, spaCy npadvmod dependency tag
+
+**Result: 3,640 pass, 64 skip, 0 fail** (numpy+networkx env; 204 missed lines).

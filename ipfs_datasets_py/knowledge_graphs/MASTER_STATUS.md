@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.22.10  
+**Version:** 3.22.11  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-22 (session 55)  
-**Last Major Release:** v3.22.10 (session 55: numpy promoted to default dep; pyproject.toml created; 3,627 passing in numpy env)
+**Last Updated:** 2026-02-22 (session 56)  
+**Last Major Release:** v3.22.11 (session 56: 9 lines dead code removed from cross_document.py + ir_executor.py; both at 100%; 3,640 passing)
 
 ---
 
@@ -18,10 +18,10 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | **98% base / 99%+ full** | Session 55: 3,627 pass, 64 skip, **0 fail** (numpy env); 207 missed lines |
-| **Documentation** | ✅ Up to Date | Reflects v3.22.10 structure |
+| **Test Coverage** | **98% base / 99%+ full** | Session 56: 3,640 pass, 64 skip, **0 fail** (numpy env); 204 missed lines |
+| **Documentation** | ✅ Up to Date | Reflects v3.22.11 structure |
 | **Known Issues** | None | 0 failures; all skips intentional (libipld/spaCy/matplotlib absent when not installed) |
-| **Next Milestone** | v4.0 (2027+) | Remaining missed lines: 207 (mostly spaCy/rdflib/matplotlib optional-dep paths) — see IMPROVEMENT_TODO.md |
+| **Next Milestone** | v4.0 (2027+) | Remaining missed lines: 204 (spaCy/rdflib/matplotlib optional-dep paths) — see IMPROVEMENT_TODO.md |
 
 ---
 

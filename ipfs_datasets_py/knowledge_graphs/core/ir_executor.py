@@ -426,14 +426,10 @@ def execute_ir_operations(
                                         binding[var_name] = val
                             value = evaluate_compiled_expression(expr, binding)
                     elif isinstance(expr, str):
-                        if "." in expr:
-                            var_name, prop_name = expr.split(".", 1)
-                            try:
-                                value = record.get(expr)
-                            except (AttributeError, KeyError, TypeError):
-                                value = None
-                        else:
-                            value = record.get(expr)
+                        # Both branches did the same: record.get(expr).
+                        # var_name/prop_name from a "." split were never used below,
+                        # and Record.get() never raises — no try/except needed.
+                        value = record.get(expr)
                     else:
                         value = None
 
