@@ -338,6 +338,14 @@ Completed v5 tasks tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROV
 
 ---
 
-**Last Updated:** 2026-02-22 (Session 39 — All phases complete; v5 A-F done; tool_registry 85%+, monitoring 75%+)
+## v7 Phases M/N/O (anyio migration + Flask removal) — 2026-02-22
+
+- ✅ **Session 45** (Phase M/N start): Flask deprecated in `simple_server.py`+`standalone_server.py`+`__main__.py`; `executor.py` asyncio comments fixed; `README.md`+`DUAL_RUNTIME_ARCHITECTURE.md` asyncio→anyio; `MASTER_IMPROVEMENT_PLAN_2026_v7.md` created; 16 tests
+- ✅ **Session 46** (Phase M1/M2/N2/N3/O1-O3): `Dockerfile.standalone` Flask-free; `start_services.sh` --http removed; `Dockerfile.simple` HTTP healthcheck replaced; PLAYWRIGHT/CRON/COURTLISTENER guides asyncio→anyio; ADR-002 anyio-first; external callers warned; AST-based CI check (`test_no_asyncio_session46.py` 4 tests)
+- ✅ **Session 47** (Phase M2/M3/O4 complete): `Dockerfile.simple` EXPOSE 8000/8080 removed + CMD→MCP stdio; `start_simple_server.sh` Flask→MCP stdio + deprecation notice; `simple_server.py` TODO removal comment; `requirements-docker.txt` Flask removed + anyio added; `test_flask_removal_session47.py` 13 tests
+
+---
+
+**Last Updated:** 2026-02-22 (Session 47 — All v7 phases M/N/O complete)
 
 **For the complete plan, see [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)**

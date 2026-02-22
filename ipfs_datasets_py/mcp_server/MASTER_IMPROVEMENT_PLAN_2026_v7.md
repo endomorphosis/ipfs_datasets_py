@@ -174,24 +174,25 @@ both emit `DeprecationWarning` before importing `SimpleIPFSDatasetsMCPServer`.
 
 ### M2 — Replace `simple_server.py` with MCP-native equivalent
 
-**Status:** 🟡 In Progress — warnings added; deletion pending
+**Status:** ✅ Complete (Session 47)
 
-`simple_server.py` currently provides HTTP routes (`/`, `/tools`, `/tools/<name>`)
-using Flask.  The replacement is the MCP stdio server (`server.py`) plus the CLI
-tool.  Once all consumers are migrated, `simple_server.py` should be deleted or
-reduced to an import-shim that immediately raises `DeprecationWarning`.
+`simple_server.py` now has a `# TODO: remove in v2.0` comment at the top.
+`start_simple_server.sh` updated: Flask invocation replaced with
+`python -m ipfs_datasets_py.mcp_server`; migration notice added.
+`Dockerfile.simple` updated: `EXPOSE 8000` / `EXPOSE 8080` removed; CMD now uses
+`python -m ipfs_datasets_py.mcp_server`.
 
 **Acceptance criteria:**
 - [x] No caller outside `simple_server.py` itself imports `SimpleIPFSDatasetsMCPServer` **without** a `DeprecationWarning`
-- [ ] `Dockerfile.simple` updated to use `python -m ipfs_datasets_py.mcp_server` ← remaining
-- [ ] `start_simple_server.sh` updated or removed ← remaining
-- [ ] File marked for deletion with `# TODO: remove in v2.0` comment ← remaining
+- [x] `Dockerfile.simple` updated to use `python -m ipfs_datasets_py.mcp_server` ✅ (Session 47)
+- [x] `start_simple_server.sh` updated to use MCP stdio mode ✅ (Session 47)
+- [x] File marked for deletion with `# TODO: remove in v2.0` comment ✅ (Session 47)
 
 ### M3 — Remove Flask from `requirements-docker.txt`
 
-**Status:** 🔴 Pending
+**Status:** ✅ Complete (Session 47)
 
-Once M2 is fully done, `flask` can be removed from `requirements-docker.txt`.
+`Flask>=3.1.1` removed; replaced by `anyio>=4.0.0`.
 
 ---
 
@@ -252,33 +253,61 @@ Removed `--host 0.0.0.0 --port 8000 --http` flags.  MCP server runs in stdio mod
 Removed HTTP-based health check (`curl -f http://localhost:8000/health`).  
 New HEALTHCHECK: `python -c "import ipfs_datasets_py.mcp_server; print('ok')"` (process-based).
 
-### O4 — Remove Flask from `requirements-docker.txt` 🔴 Pending
+### O4 — Remove Flask from `requirements-docker.txt` ✅ (Session 47)
 
-**Status:** 🔴 Pending
+**Status:** ✅ Complete
 
-Once `simple_server.py` itself is deleted or fully migrated, remove `flask` from
-`requirements-docker.txt`.
+`Flask>=3.1.1` removed from `requirements-docker.txt`; replaced by `anyio>=4.0.0`.
+`Dockerfile.simple` EXPOSE 8000/8080 removed; CMD updated to use MCP stdio.
+`start_simple_server.sh` updated to use `python -m ipfs_datasets_py.mcp_server`.
+
+---
+
+## 7. Session 47 Completed Work ✅
+
+### 7.1 Phase M2 — `simple_server.py` Marked for Deletion ✅
+
+- Added `# TODO: remove in v2.0` comment at top of `simple_server.py`
+- `start_simple_server.sh`: Flask invocation replaced with `python -m ipfs_datasets_py.mcp_server`; deprecation notice added
+
+### 7.2 Phase M3/O4 — Flask Removed from Docker Requirements ✅
+
+- `requirements-docker.txt`: `Flask>=3.1.1` → `anyio>=4.0.0`
+- `Dockerfile.simple`: `EXPOSE 8000` / `EXPOSE 8080` removed; CMD updated to `["python", "-m", "ipfs_datasets_py.mcp_server"]`
+
+### 7.3 Tests Added ✅
+
+`tests/mcp/unit/test_flask_removal_session47.py` — 13 tests:
+- `requirements-docker.txt` has no Flask, has anyio ✅
+- `Dockerfile.simple` no EXPOSE 8000/8080, uses MCP stdio CMD ✅
+- `Dockerfile.simple` has process-based HEALTHCHECK ✅
+- `start_simple_server.sh` uses MCP stdio, has deprecation notice ✅
+- `simple_server.py` has TODO removal comment + deprecation docstring ✅
 
 ---
 
 ## 6. Success Metrics
 
-| Metric | Session 44 Baseline | Session 45 | Session 46 | Phase M Target | Phase N Target |
-|--------|--------------------|----|---|---|---|
-| Tests passing | 1816 | 1829+ | 1833 ✅ | 1833+ | 1833+ |
-| Flask imports in `.py` files | 2 hard + 1 conditional | 1 conditional (guarded) + deprecation warnings | 1 conditional + deprecation warnings + external caller warnings ✅ | 0 | 0 |
-| `asyncio.run()` in `.py` source | 0 | 0 ✅ | 0 ✅ | 0 | 0 |
-| `asyncio.*` comments (misleading) | 3 | 0 ✅ | 0 ✅ | 0 | 0 |
-| `asyncio.run()` in doc code blocks | 2 | 0 ✅ | 0 ✅ | 0 | 0 |
-| `asyncio.run()` in tool guide docs | 4 | 4 | 0 ✅ (N3 complete) | 0 | 0 |
-| `asyncio` wording in ADR-002 | stale | stale | updated ✅ | — | ✅ |
-| DeprecationWarnings on Flask classes | 0 | 5 ✅ | 5 ✅ | 5+ | — |
-| Flask fallback in `__main__.py` | present | removed ✅ | removed ✅ | — | — |
-| External callers warned | 0 | 0 | 2 ✅ (M1) | 2 | — |
-| `Dockerfile.standalone` uses Flask | yes | yes | no ✅ (M2/O1) | no | — |
-| `start_services.sh` --http flag | yes | yes | removed ✅ (O2) | no | — |
-| `Dockerfile.simple` HTTP healthcheck | yes | yes | removed ✅ (O3) | no | — |
-| CI asyncio regression check | none | none | ✅ `test_no_asyncio_session46.py` (N2) | ✅ | ✅ |
+| Metric | Session 44 Baseline | Session 45 | Session 46 | Session 47 | Phase M Target | Phase N Target |
+|--------|--------------------|----|---|---|---|---|
+| Tests passing | 1816 | 1829+ | 1833 ✅ | 1846 ✅ | 1833+ | 1833+ |
+| Flask imports in `.py` files | 2 hard + 1 conditional | 1 conditional (guarded) + deprecation warnings | 1 conditional + deprecation warnings + external caller warnings ✅ | 1 conditional + deprecation warnings + TODO comment ✅ | 0 | 0 |
+| `asyncio.run()` in `.py` source | 0 | 0 ✅ | 0 ✅ | 0 ✅ | 0 | 0 |
+| `asyncio.*` comments (misleading) | 3 | 0 ✅ | 0 ✅ | 0 ✅ | 0 | 0 |
+| `asyncio.run()` in doc code blocks | 2 | 0 ✅ | 0 ✅ | 0 ✅ | 0 | 0 |
+| `asyncio.run()` in tool guide docs | 4 | 4 | 0 ✅ (N3 complete) | 0 ✅ | 0 | 0 |
+| `asyncio` wording in ADR-002 | stale | stale | updated ✅ | updated ✅ | — | ✅ |
+| DeprecationWarnings on Flask classes | 0 | 5 ✅ | 5 ✅ | 5 ✅ | 5+ | — |
+| Flask fallback in `__main__.py` | present | removed ✅ | removed ✅ | removed ✅ | — | — |
+| External callers warned | 0 | 0 | 2 ✅ (M1) | 2 ✅ | 2 | — |
+| `Dockerfile.standalone` uses Flask | yes | yes | no ✅ (M2/O1) | no ✅ | no | — |
+| `start_services.sh` --http flag | yes | yes | removed ✅ (O2) | removed ✅ | no | — |
+| `Dockerfile.simple` HTTP healthcheck | yes | yes | removed ✅ (O3) | removed ✅ | no | — |
+| `Dockerfile.simple` HTTP EXPOSE | yes | yes | yes | no ✅ (M2/O4) | no | — |
+| `start_simple_server.sh` uses Flask | yes | yes | yes | no ✅ (M2) | no | — |
+| `simple_server.py` TODO comment | no | no | no | ✅ (M2) | ✅ | — |
+| `Flask` in `requirements-docker.txt` | yes | yes | yes | no ✅ (M3/O4) | no | — |
+| CI asyncio regression check | none | none | ✅ `test_no_asyncio_session46.py` (N2) | ✅ | ✅ | ✅ |
 
 ---
 

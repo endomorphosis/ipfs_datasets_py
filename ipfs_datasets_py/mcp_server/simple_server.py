@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# TODO: remove in v2.0 — this file will be deleted once all callers are migrated
+#       to `python -m ipfs_datasets_py.mcp_server` or `ipfs-datasets` CLI.
 """
 Simplified MCP Server implementation for IPFS Datasets Python.
 
