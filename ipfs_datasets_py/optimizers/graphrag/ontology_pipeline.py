@@ -1861,3 +1861,22 @@ class OntologyPipeline:
             return 0
         last = self._run_history[-1].score.overall
         return sum(1 for r in self._run_history[:-1] if r.score.overall < last)
+
+    def run_score_trend_slope(self) -> float:
+        """Return the linear trend slope of run scores over time.
+
+        Uses ordinary least squares to compute slope = cov(t, s) / var(t).
+
+        Returns:
+            Float slope; 0.0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        n = len(scores)
+        t_vals = list(range(n))
+        t_mean = (n - 1) / 2.0
+        s_mean = sum(scores) / n
+        cov = sum((t - t_mean) * (s - s_mean) for t, s in zip(t_vals, scores))
+        var_t = sum((t - t_mean) ** 2 for t in t_vals)
+        return cov / var_t if var_t != 0 else 0.0

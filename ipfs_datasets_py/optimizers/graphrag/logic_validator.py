@@ -3021,6 +3021,26 @@ class LogicValidator:
                 targets.add(tgt)
         return sorted(sources & targets)
 
+    def leaf_nodes(self, ontology: dict) -> list:
+        """Return nodes that appear only as targets (no outgoing relationships).
+
+        Args:
+            ontology: Dict with optional ``relationships`` list.
+
+        Returns:
+            Sorted list of leaf node ID strings.
+        """
+        sources: set = set()
+        targets: set = set()
+        for rel in ontology.get("relationships", []):
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src:
+                sources.add(src)
+            if tgt:
+                targets.add(tgt)
+        return sorted(targets - sources)
+
 
 # Export public API
 __all__ = [

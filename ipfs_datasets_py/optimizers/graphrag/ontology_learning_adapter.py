@@ -1956,3 +1956,17 @@ class OntologyLearningAdapter:
             return 0
         above = [r.final_score >= threshold for r in self._feedback]
         return sum(1 for i in range(1, len(above)) if above[i] != above[i - 1])
+
+    def feedback_best_k_mean(self, k: int = 3) -> float:
+        """Return the mean of the top *k* feedback scores.
+
+        Args:
+            k: Number of top records to average. Defaults to 3.
+
+        Returns:
+            Float mean; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        top_k = sorted((r.final_score for r in self._feedback), reverse=True)[:k]
+        return sum(top_k) / len(top_k)

@@ -4106,6 +4106,31 @@ class OntologyOptimizer:
             if self._history[i].average_score > self._history[i - 1].average_score
         )
 
+    def score_trailing_mean(self, n: int = 5) -> float:
+        """Return the mean of the last *n* history scores.
+
+        Args:
+            n: Number of trailing entries to average. Defaults to 5.
+
+        Returns:
+            Float mean; 0.0 when no history.
+        """
+        if not self._history:
+            return 0.0
+        tail = self._history[-n:]
+        return sum(e.average_score for e in tail) / len(tail)
+
+    def history_mean_last_n(self, n: int = 3) -> float:
+        """Return the mean of the last *n* entries (alias with explicit param name).
+
+        Args:
+            n: Number of trailing entries. Defaults to 3.
+
+        Returns:
+            Float mean; 0.0 when no history.
+        """
+        return self.score_trailing_mean(n=n)
+
 
 # Export public API
 __all__ = [

@@ -1721,6 +1721,18 @@ class OntologyMediator:
             return 0.0
         return len(self._action_counts) / total
 
+    def action_max_consecutive(self) -> int:
+        """Return the maximum count for any single action type.
+
+        This reflects the "most dominant" single action in the action record.
+
+        Returns:
+            Integer maximum; 0 when no actions.
+        """
+        if not self._action_counts:
+            return 0
+        return max(self._action_counts.values())
+
 
 # Export public API
 __all__ = [

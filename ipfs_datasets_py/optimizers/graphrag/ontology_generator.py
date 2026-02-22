@@ -6363,6 +6363,37 @@ class OntologyGenerator:
                     edges.add((src, tgt))
         return pairs
 
+    def entity_text_word_count_avg(self, result: "EntityExtractionResult") -> float:
+        """Return the average word count in entity text fields.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float average word count; 0.0 when no entities.
+        """
+        entities = result.entities or []
+        if not entities:
+            return 0.0
+        counts = [len((getattr(e, "text", "") or "").split()) for e in entities]
+        return sum(counts) / len(counts)
+
+    def relationship_symmetry_ratio(self, result: "EntityExtractionResult") -> float:
+        """Return the fraction of relationships that have a reverse counterpart.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no relationships.
+        """
+        rels = result.relationships or []
+        if not rels:
+            return 0.0
+        edge_set = {(getattr(r, "source_id", None), getattr(r, "target_id", None)) for r in rels}
+        symmetric = sum(1 for (src, tgt) in edge_set if (tgt, src) in edge_set)
+        return symmetric / len(edge_set)
+
 
 __all__ = [
     'OntologyGenerator',
