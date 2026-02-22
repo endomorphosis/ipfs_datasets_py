@@ -901,8 +901,9 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] **Session 34:** `nl/tdfol_nl_generator.py` 73%→97% (67 tests); `nl/llm.py` 57%→97% (67 tests); `nl/tdfol_nl_api.py` 51%→98% (67 tests)
 - [x] **Session 35:** `performance_dashboard.py` 0%→99% (140 tests); `performance_profiler.py` 0%→90% (140 tests); `proof_explainer.py` 96%→98%; `strategies/strategy_selector.py` 67%→85%; `strategies/cec_delegate.py` 76%→88%; `strategies/modal_tableaux.py` 65%→74%
 - [x] **Session 36:** `proof_tree_visualizer.py` 26%→97% (104 tests); `CEC/native/proof_optimization.py` 43%→95% (104 tests covering `ProofNode/OptimizationMetrics/ProofTreePruner/RedundancyEliminator/ParallelProofSearch/ProofOptimizer`)
+- [x] **Session 40:** `strategies/modal_tableaux.py` 73%→99% (36 tests: `_prove_with_shadowprover` all paths, `_select_modal_logic_type` D/S4/K, QuantifiedFormula/False in `_is_modal`); `strategies/cec_delegate.py` 86%→95% (36 tests: success + failure paths of `_try_load_cec_prover`, `can_handle=True`); `strategies/strategy_selector.py` 85%→97% (36 tests: ImportError warnings, prefer_low_cost, select_multiple no-applicable, add_strategy); `strategies/__init__.py` 65%→100%; `CEC/native/proof_strategies.py` 0%→94% (44 tests: ForwardChaining/BackwardChaining/BidirectionalSearch/HybridAdaptive all paths, get_strategy factory, ProofStrategy base methods)
 
-**TDFOL suite total: 999 → 1,526 tests (+527 across sessions 32–36)**
+**TDFOL suite total: 1,526 → 1,606 tests (+80 in session 40)**
 
 ### 11.2 MCP B2 Test Suite (Sessions 37–39)
 
@@ -917,10 +918,12 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ### 11.3 Remaining Work
 
 **TDFOL remaining coverage targets:**
-- [ ] `strategies/modal_tableaux.py` 74% → 95% (deontic operator branches + `_prove_with_shadowprover`)
-- [ ] `strategies/cec_delegate.py` 88% → 98% (CEC=True paths + edge exceptions)
-- [ ] `strategies/strategy_selector.py` 85% → 97% (fallback/`add_strategy`/`select_multiple`)
-- [ ] `CEC/proof_strategies.py` — coverage from 0% baseline
+- [x] `strategies/modal_tableaux.py` 74% → 99% ✅ (session 40)
+- [x] `strategies/cec_delegate.py` 88% → 95% ✅ (session 40)
+- [x] `strategies/strategy_selector.py` 85% → 97% ✅ (session 40)
+- [x] `CEC/native/proof_strategies.py` — 0% → 94% ✅ (session 40)
+- [ ] `strategies/cec_delegate.py` 95% → 98% (lines 82-84: cec_engine init exception path)
+- [ ] `CEC/native/proof_strategies.py` 94% → 98% (lines 45, 242-243, 254, 275-276, 333-334, 356-358: backward/bidirectional edge cases)
 
 **MCP B2 remaining:**
 - [ ] Additional B2 categories (currently at 53 of ~60 estimated)
@@ -950,14 +953,15 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | Phase 7: Cross-module bug fixes | 2026-02-22 | Sessions 52–58; dcec/tdfol_prover/cec_proof_cache fixed |
 | Phase 8.1: TDFOL coverage sessions 32–36 | 2026-02-22 | 999 → 1,526 TDFOL tests |
 | Phase 8.2: MCP B2 testing sessions 37–39 | 2026-02-22 | 1,383 → 1,457 MCP tests; 53 categories |
+| Phase 8.3: TDFOL strategies + CEC proof_strategies session 40 | 2026-02-22 | 1,526 → 1,606 tests; modal_tableaux 73%→99%; proof_strategies 0%→94% |
 
 ### Near Term (Next 2–4 weeks)
 | Task | Phase | Effort | Priority |
 |------|-------|--------|---------|
 | Fix ~65 TDFOL NL test failures (requires spaCy) | 2.2 | 8h | 🔴 P1 |
 | Improve CEC NL coverage (60%→75%) | 2.3 | 12h | 🟠 P1 |
-| TDFOL `strategies/modal_tableaux.py` 74%→95% | 8.3 | 4h | 🟠 P1 |
-| TDFOL `strategies/cec_delegate.py` 88%→98% | 8.3 | 3h | 🟠 P1 |
+| TDFOL `strategies/cec_delegate.py` 95%→98% (lines 82-84) | 8.3 | 1h | 🟡 P2 |
+| `CEC/native/proof_strategies.py` 94%→98% (backward/bidirectional edge cases) | 8.3 | 2h | 🟡 P2 |
 | CI performance regression gates | 4.1 | 4h | 🟡 P2 |
 
 ### Medium Term (Weeks 4–8)
@@ -1061,9 +1065,11 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] `TDFOL proof_tree_visualizer.py` — 26%→97% (session 36)
 - [x] `CEC/native/proof_optimization.py` — 43%→95% (session 36)
 - [x] MCP B2 suite: 53 categories, 1,457 tests (sessions 32–39)
-- [ ] `TDFOL strategies/modal_tableaux.py` — 74% → 95%
-- [ ] `TDFOL strategies/cec_delegate.py` — 88% → 98%
-- [ ] `TDFOL strategies/strategy_selector.py` — 85% → 97%
+- [x] `TDFOL strategies/modal_tableaux.py` — 73% → 99% ✅ (session 40)
+- [x] `TDFOL strategies/cec_delegate.py` — 86% → 95% ✅ (session 40)
+- [x] `TDFOL strategies/strategy_selector.py` — 85% → 97% ✅ (session 40)
+- [x] `TDFOL strategies/__init__.py` — 65% → 100% ✅ (session 40)
+- [x] `CEC/native/proof_strategies.py` — 0% → 94% ✅ (session 40, 44 tests)
 - [ ] TDFOL NL test failures (~65 skipped) — requires spaCy
 
 ---
@@ -1189,11 +1195,13 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | TDFOL performance_profiler.py | 90% | 80% | 90%✅ (session 35) |
 | TDFOL proof_explainer.py | 98% | 99% | 98% (ZKP/tableaux/compare_proofs still gated) |
 | TDFOL strategies/base.py | 100% | 100% | 100%✅ |
-| TDFOL strategies/strategy_selector.py | 85% | 90% | 85% (fallback/add_strategy/select_multiple pending) |
-| TDFOL strategies/cec_delegate.py | 88% | 90% | 88% (CEC=True paths + exception handling pending) |
-| TDFOL strategies/modal_tableaux.py | 74% | 90% | 74% (pending session: _prove_basic_modal/estimate_cost) |
+| TDFOL strategies/__init__.py | 100% | 90% | 100%✅ (session 40: ImportError pass blocks covered) |
+| TDFOL strategies/strategy_selector.py | 97% | 90% | 97%✅ (session 40: prefer_low_cost, select_multiple no-applicable, ImportError warnings) |
+| TDFOL strategies/cec_delegate.py | 95% | 90% | 95%✅ (session 40: _try_load_cec_prover success+failure paths, can_handle=True) |
+| TDFOL strategies/modal_tableaux.py | 99% | 90% | 99%✅ (session 40: _prove_with_shadowprover all paths, _select_modal_logic_type D/S4/K) |
 | TDFOL proof_tree_visualizer.py | 97% | 90% | 97%✅ (session 36) |
 | CEC/native/proof_optimization.py | 95% | 85% | 95%✅ (session 36) |
+| CEC/native/proof_strategies.py | 94% | n/a | 94%✅ new coverage (session 40: ForwardChaining/BackwardChaining/Bidirectional/Hybrid, 44 tests) |
 | CEC/native/dcec_integration.py | 100% | 90% | 100%✅ (session 58: all 3 final failures fixed) |
 | TDFOL/tdfol_inference_rules.py | 100% | n/a | 100%✅ new module (session 55, 60 tests) |
 | TDFOL/tdfol_prover.py | 90%+ | n/a | 90%+✅ (session 56: 20/20 TestBasicProving passing) |
@@ -1203,13 +1211,13 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Phase Summary (Session 58 complete):**
+**Phase Summary (Session 40 complete):**
 - Phase 1–7: ✅ COMPLETE
-- Phase 8: 🔄 In Progress (TDFOL 1,526 tests; MCP B2 1,457 tests; 53 categories)
+- Phase 8: 🔄 In Progress (TDFOL 1,606 tests; MCP B2 1,457 tests; 53 categories)
 - Integration: ✅ 99% coverage (7,899 lines, 55 uncovered — dead code + symai-gated)
-- CEC: ✅ All 97 CEC integration tests passing (dcec_integration 100%, dcec_core 100%)
-- TDFOL Prover: ✅ 20/20 TestBasicProving passing; 6 helper methods added
-- **Next session targets:** TDFOL `strategies/modal_tableaux.py` (74%→95%), `strategies/cec_delegate.py` (88%→98%), `strategies/strategy_selector.py` (85%→97%), `CEC/proof_strategies.py` coverage, MCP B2 remaining categories
+- CEC: ✅ All 97 CEC integration tests passing; `proof_strategies.py` 0%→94%
+- TDFOL Strategies: ✅ modal_tableaux 73%→99%; cec_delegate 86%→95%; strategy_selector 85%→97%; __init__ 65%→100%
+- **Next session targets:** TDFOL NL test failures (~65 skipped, requires spaCy); `strategies/cec_delegate.py` 95%→98% (lines 82-84); `CEC/native/proof_strategies.py` 94%→98% (backward/bidirectional edge cases); MCP B2 remaining categories
 **Review Schedule:** After each phase completion, update this document  
-**Created:** 2026-02-19 | **Last Updated:** 2026-02-22 (Sessions 36–58)  
+**Created:** 2026-02-19 | **Last Updated:** 2026-02-22 (Sessions 36–58, 40)  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
