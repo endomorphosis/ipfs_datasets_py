@@ -4195,6 +4195,266 @@ class OntologyOptimizer:
         var = sum((v - mean) ** 2 for v in vals) / len(vals)
         return (var ** 0.5) / mean
 
+    def score_relative_to_best(self) -> float:
+        """Return the latest score as a fraction of the all-time best score.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no history or best == 0.
+        """
+        if not self._history:
+            return 0.0
+        vals = [e.average_score for e in self._history]
+        best = max(vals)
+        if best == 0:
+            return 0.0
+        return vals[-1] / best
+
+    def history_decline_rate(self, threshold: float = 0.5) -> float:
+        """Return the fraction of consecutive steps where the score declined.
+
+        A step is a "decline" when score[i] < score[i-1].
+
+        Args:
+            threshold: Unused parameter kept for API symmetry.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        n = len(self._history) - 1
+        declines = sum(
+            1
+            for i in range(1, len(self._history))
+            if self._history[i].average_score < self._history[i - 1].average_score
+        )
+        return declines / n
+
+    def score_rebound_count(self) -> int:
+        """Count rebounds: steps where score went down then back up.
+
+        A rebound is when score[i-1] > score[i] and score[i] < score[i+1].
+
+        Returns:
+            Integer count; 0 when fewer than 3 entries.
+        """
+        if len(self._history) < 3:
+            return 0
+        count = 0
+        vals = [e.average_score for e in self._history]
+        for i in range(1, len(vals) - 1):
+            if vals[i] < vals[i - 1] and vals[i] < vals[i + 1]:
+                count += 1
+        return count
+
+    def history_zscore_last(self) -> float:
+        """Return the z-score of the last entry relative to the full history.
+
+        Uses population std (divides by N).
+
+        Returns:
+            Float z-score; 0.0 when fewer than 2 entries or std == 0.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        vals = [e.average_score for e in self._history]
+        mean = sum(vals) / len(vals)
+        var = sum((v - mean) ** 2 for v in vals) / len(vals)
+        std = var ** 0.5
+        if std == 0:
+            return 0.0
+        return (vals[-1] - mean) / std
+
+    def history_top_k_mean(self, k: int = 3) -> float:
+        """Return the mean of the top *k* history scores.
+
+        Args:
+            k: Number of top scores to average. Defaults to 3.
+
+        Returns:
+            Float mean; 0.0 when no history.
+        """
+        if not self._history:
+            return 0.0
+        top_k = sorted((e.average_score for e in self._history), reverse=True)[:k]
+        return sum(top_k) / len(top_k)
+
+    def score_second_derivative(self) -> float:
+        """Return the second derivative (acceleration) of the score at the last entry.
+
+        Computed as: score[-1] - 2*score[-2] + score[-3].
+
+        Returns:
+            Float second derivative; 0.0 when fewer than 3 entries.
+        """
+        if len(self._history) < 3:
+            return 0.0
+        a, b, c = (
+            self._history[-3].average_score,
+            self._history[-2].average_score,
+            self._history[-1].average_score,
+        )
+        return c - 2 * b + a
+
+    def history_rank_of_last(self) -> int:
+        """Return the rank (1-based) of the last score in descending order.
+
+        A rank of 1 means the last score is the highest.
+
+        Returns:
+            Integer rank; 0 when no history.
+        """
+        if not self._history:
+            return 0
+        vals = [e.average_score for e in self._history]
+        sorted_desc = sorted(vals, reverse=True)
+        last = vals[-1]
+        # Find the position (1-based) of the last score in sorted list
+        for i, v in enumerate(sorted_desc):
+            if v == last:
+                return i + 1
+        return len(vals)
+
+    def score_nearest_neighbor_delta(self) -> float:
+        """Return the absolute difference between the last two history scores.
+
+        Returns:
+            Float absolute delta; 0.0 when fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        return abs(self._history[-1].average_score - self._history[-2].average_score)
+
+    def score_half_life_estimate(self) -> float:
+        """Estimate the number of steps for the score to increase by half of the remaining gap to 1.0.
+
+        Uses the average improvement rate: steps = 0.5 / avg_improvement.
+        Returns inf when no improvement (flat or declining history).
+
+        Returns:
+            Float; 0.0 when fewer than 2 entries; float('inf') when avg_improvement <= 0.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        improvements = [
+            self._history[i].average_score - self._history[i - 1].average_score
+            for i in range(1, len(self._history))
+        ]
+        avg_improvement = sum(improvements) / len(improvements)
+        if avg_improvement <= 0:
+            return float("inf")
+        return 0.5 / avg_improvement
+
+    def history_increasing_fraction(self) -> float:
+        """Return the fraction of consecutive steps where the score increased.
+
+        Args:
+            (none)
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        n = len(self._history) - 1
+        increasing = sum(
+            1
+            for i in range(1, len(self._history))
+            if self._history[i].average_score > self._history[i - 1].average_score
+        )
+        return increasing / n
+
+    def score_gain_rate(self) -> float:
+        """Return the net gain per step as (last - first) / (n - 1).
+
+        Returns:
+            Float; 0.0 when fewer than 2 entries.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        first = self._history[0].average_score
+        last = self._history[-1].average_score
+        return (last - first) / (len(self._history) - 1)
+
+    def history_weight_by_recency(self) -> float:
+        """Return a recency-weighted mean using linearly increasing weights.
+
+        The most-recent entry receives weight *n*, the oldest receives weight 1.
+
+        Returns:
+            Float; 0.0 when no history.
+        """
+        if not self._history:
+            return 0.0
+        n = len(self._history)
+        total_weight = n * (n + 1) / 2
+        weighted_sum = sum(
+            (i + 1) * entry.average_score
+            for i, entry in enumerate(self._history)
+        )
+        return weighted_sum / total_weight
+
+    def score_mean_top_k(self, k: int = 3) -> float:
+        """Return the mean of the top-*k* history scores.
+
+        Args:
+            k: Number of top entries to average. Defaults to 3.
+
+        Returns:
+            Float; 0.0 when no history.
+        """
+        if not self._history:
+            return 0.0
+        scores = sorted((e.average_score for e in self._history), reverse=True)
+        top = scores[:k]
+        return sum(top) / len(top)
+
+    def history_last_n_range(self, n: int = 5) -> float:
+        """Return the range (max − min) of the last *n* history scores.
+
+        Args:
+            n: Window size. Defaults to 5.
+
+        Returns:
+            Float; 0.0 when no history.
+        """
+        if not self._history:
+            return 0.0
+        window = [e.average_score for e in self._history[-n:]]
+        return max(window) - min(window)
+
+    def score_trimmed_range(self, trim: float = 0.1) -> float:
+        """Return the range after trimming *trim* fraction from each tail.
+
+        Args:
+            trim: Fraction to trim from each end. Defaults to 0.1 (10%).
+
+        Returns:
+            Float; 0.0 when fewer than 3 entries.
+        """
+        scores = sorted(e.average_score for e in self._history)
+        if len(scores) < 3:
+            return 0.0
+        cut = max(1, int(len(scores) * trim))
+        trimmed = scores[cut:-cut]
+        if not trimmed:
+            return 0.0
+        return max(trimmed) - min(trimmed)
+
+    def history_geometric_mean(self) -> float:
+        """Return the geometric mean of history scores.
+
+        Only positive scores are included. Returns 0.0 when no positive scores.
+
+        Returns:
+            Float >= 0.0.
+        """
+        positives = [e.average_score for e in self._history if e.average_score > 0]
+        if not positives:
+            return 0.0
+        log_sum = sum(__import__("math").log(s) for s in positives)
+        return __import__("math").exp(log_sum / len(positives))
+
 
 # Export public API
 __all__ = [

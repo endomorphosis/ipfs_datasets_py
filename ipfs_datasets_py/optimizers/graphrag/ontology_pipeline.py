@@ -1898,3 +1898,132 @@ class OntologyPipeline:
         mean = sum(tail) / len(tail)
         var = sum((s - mean) ** 2 for s in tail) / len(tail)
         return var ** 0.5
+
+    def run_improvement_fraction(self) -> float:
+        """Return the fraction of runs where the score improved over the previous run.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        improved = sum(1 for i in range(1, len(scores)) if scores[i] > scores[i - 1])
+        return improved / (len(scores) - 1)
+
+    def run_score_ema(self, alpha: float = 0.3) -> float:
+        """Return the exponential moving average of run scores.
+
+        Uses forward EMA: ema[0] = scores[0]; ema[i] = alpha * score[i] + (1-alpha) * ema[i-1].
+
+        Args:
+            alpha: Smoothing factor in (0, 1]. Defaults to 0.3.
+
+        Returns:
+            Float EMA; 0.0 when no runs.
+        """
+        if not self._run_history:
+            return 0.0
+        ema = self._run_history[0].score.overall
+        for r in self._run_history[1:]:
+            ema = alpha * r.score.overall + (1 - alpha) * ema
+        return ema
+
+    def run_score_above_mean_count(self) -> int:
+        """Return the count of run scores strictly above the overall mean.
+
+        Returns:
+            Integer count; 0 when no runs.
+        """
+        if not self._run_history:
+            return 0
+        scores = [r.score.overall for r in self._run_history]
+        mean = sum(scores) / len(scores)
+        return sum(1 for s in scores if s > mean)
+
+    def run_score_oscillation(self) -> int:
+        """Count oscillations in run scores: sign changes of consecutive deltas.
+
+        An oscillation is when consecutive runs go up then down or down then up.
+
+        Returns:
+            Integer count; 0 when fewer than 3 runs.
+        """
+        if len(self._run_history) < 3:
+            return 0
+        scores = [r.score.overall for r in self._run_history]
+        deltas = [scores[i] - scores[i - 1] for i in range(1, len(scores))]
+        count = 0
+        for i in range(1, len(deltas)):
+            if (deltas[i] > 0) != (deltas[i - 1] > 0):
+                count += 1
+        return count
+
+    def run_score_max_run(self) -> int:
+        """Return the length of the longest run of consecutive improvements.
+
+        Returns:
+            Integer length of the longest improving streak; 0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0
+        scores = [r.score.overall for r in self._run_history]
+        max_run = 0
+        cur = 0
+        for i in range(1, len(scores)):
+            if scores[i] > scores[i - 1]:
+                cur += 1
+                max_run = max(max_run, cur)
+            else:
+                cur = 0
+        return max_run
+
+    def run_best_to_current_ratio(self) -> float:
+        """Return the ratio of the best-ever score to the current (last) score.
+
+        Returns:
+            Float >= 1.0; 0.0 when no runs or current score == 0.
+        """
+        if not self._run_history:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        current = scores[-1]
+        if current == 0:
+            return 0.0
+        return max(scores) / current
+
+    def run_first_to_last_delta(self) -> float:
+        """Return the score change from the first run to the last run.
+
+        Returns:
+            Float; 0.0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        return self._run_history[-1].score.overall - self._run_history[0].score.overall
+
+    def run_above_target_count(self, target: float = 0.7) -> int:
+        """Return the count of runs whose score is at or above *target*.
+
+        Args:
+            target: Score cutoff. Defaults to 0.7.
+
+        Returns:
+            Non-negative integer.
+        """
+        return sum(1 for r in self._run_history if r.score.overall >= target)
+
+    def run_median_score(self) -> float:
+        """Return the median score across all runs.
+
+        Returns:
+            Float; 0.0 when no runs.
+        """
+        if not self._run_history:
+            return 0.0
+        scores = sorted(r.score.overall for r in self._run_history)
+        n = len(scores)
+        mid = n // 2
+        if n % 2 == 0:
+            return (scores[mid - 1] + scores[mid]) / 2
+        return float(scores[mid])

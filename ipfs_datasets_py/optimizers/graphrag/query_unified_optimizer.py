@@ -240,49 +240,58 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         Returns:
             Dict: Query with validated parameters
         """
-        validated = query.copy()
+        # Deep copy to avoid mutating input
+        validated = copy.deepcopy(query)
         
         # Validate max_vector_results (1-1000, default 5)
-        validated["max_vector_results"] = self.validate_numeric_range(
-            validated, "max_vector_results", 
-            min_val=1, max_val=1000, default=5
+        validated["max_vector_results"] = self.validate_numeric_param(
+            value=validated.get("max_vector_results"),
+            param_name="max_vector_results",
+            min_value=1,
+            max_value=1000,
+            default=5
         )
         
         # Validate min_similarity (0.0-1.0, default 0.5)
-        validated["min_similarity"] = self.validate_numeric_range(
-            validated, "min_similarity",
-            min_val=0.0, max_val=1.0, default=0.5
+        validated["min_similarity"] = self.validate_numeric_param(
+            value=validated.get("min_similarity"),
+            param_name="min_similarity",
+            min_value=0.0,
+            max_value=1.0,
+            default=0.5
         )
         
-        # Ensure traversal section exists with defaults
-        validated = self.ensure_nested_dict(
-            validated, "traversal", default_value={}
-        )
+        # Ensure traversal section exists
+        if "traversal" not in validated or not isinstance(validated["traversal"], dict):
+            validated["traversal"] = {}
         
         # Validate traversal.max_depth (1-10, default 2)
-        if isinstance(validated.get("traversal"), dict):
-            validated["traversal"]["max_depth"] = self.validate_numeric_range(
-                validated["traversal"], "max_depth",
-                min_val=1, max_val=10, default=2
+        validated["traversal"]["max_depth"] = self.validate_numeric_param(
+            value=validated["traversal"].get("max_depth"),
+            param_name="traversal.max_depth",
+            min_value=1,
+            max_value=10,
+            default=2
+        )
+        
+        # Validate edge_types as list if present
+        if "edge_types" in validated["traversal"]:
+            validated["traversal"]["edge_types"] = self.validate_list_param(
+                value=validated["traversal"]["edge_types"],
+                param_name="traversal.edge_types",
+                element_type=str,
+                default=None,
+                allow_none=True
             )
-            
-            # Validate edge_types as list if present
-            if "edge_types" in validated["traversal"]:
-                edge_types = validated["traversal"]["edge_types"]
-                if edge_types is not None:
-                    validated["traversal"]["edge_types"] = self.validate_list_filter(
-                        validated["traversal"], "edge_types",
-                        allowed_values=None,  # Accept any edge types
-                        default=None
-                    )
         
         # Validate priority parameter if present
         if "priority" in validated:
-            validated["priority"] = self.validate_string_enum(
-                validated, "priority",
-                allowed_values=["low", "normal", "high", "critical"],
-                default="normal"
-            )
+            priority_val = validated["priority"]
+            if priority_val not in ["low", "normal", "high", "critical"]:
+                self._log_validation_warning(
+                    f"Invalid priority '{priority_val}', using default 'normal'"
+                )
+                validated["priority"] = "normal"
         
         return validated
     

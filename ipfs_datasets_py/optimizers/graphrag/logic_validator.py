@@ -3078,6 +3078,281 @@ class LogicValidator:
                 count += 1
         return count
 
+    def max_path_length_estimate(self, ontology: dict) -> int:
+        """Estimate the maximum path length using the longest chain heuristic.
+
+        Performs a simplified BFS from each root node and returns the maximum
+        depth reached. Uses only directed edges; cycles are broken by a visited set.
+
+        Args:
+            ontology: Dict with optional ``relationships`` list.
+
+        Returns:
+            Integer maximum depth; 0 when no relationships.
+        """
+        from collections import deque, defaultdict
+        rels = ontology.get("relationships", [])
+        if not rels:
+            return 0
+        adj: dict = defaultdict(list)
+        all_nodes: set = set()
+        for rel in rels:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src and tgt:
+                adj[src].append(tgt)
+                all_nodes.add(src)
+                all_nodes.add(tgt)
+        targets = {tgt for nbrs in adj.values() for tgt in nbrs}
+        roots = all_nodes - targets or all_nodes
+        max_depth = 0
+        for root in roots:
+            queue: deque = deque([(root, 0, {root})])
+            while queue:
+                node, depth, visited = queue.popleft()
+                max_depth = max(max_depth, depth)
+                for nbr in adj.get(node, []):
+                    if nbr not in visited:
+                        queue.append((nbr, depth + 1, visited | {nbr}))
+        return max_depth
+
+    def connected_components_count(self, ontology: dict) -> int:
+        """Count the number of weakly connected components in the relationship graph.
+
+        Treats all edges as undirected for component detection.
+
+        Args:
+            ontology: Dict with optional ``relationships`` list.
+
+        Returns:
+            Integer count; 0 when no nodes.
+        """
+        adj: dict = {}
+        for rel in ontology.get("relationships", []):
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src and tgt:
+                adj.setdefault(src, set()).add(tgt)
+                adj.setdefault(tgt, set()).add(src)
+        if not adj:
+            return 0
+        visited: set = set()
+        components = 0
+        for start in adj:
+            if start not in visited:
+                components += 1
+                stack = [start]
+                while stack:
+                    node = stack.pop()
+                    if node not in visited:
+                        visited.add(node)
+                        stack.extend(adj.get(node, set()) - visited)
+        return components
+
+    def cycle_count_estimate(self, ontology: dict) -> int:
+        """Estimate the number of cycles using Euler's formula: E - V + C.
+
+        For directed graphs, cycles ≥ E - V + C where C is connected components.
+        This is a lower-bound estimate.
+
+        Args:
+            ontology: Dict with optional ``relationships`` list.
+
+        Returns:
+            Integer estimate of cycles; 0 when no relationships or result < 0.
+        """
+        rels = ontology.get("relationships", [])
+        if not rels:
+            return 0
+        nodes: set = set()
+        for rel in rels:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src:
+                nodes.add(src)
+            if tgt:
+                nodes.add(tgt)
+        v = len(nodes)
+        e = len(rels)
+        c = self.connected_components_count(ontology)
+        return max(0, e - v + c)
+
+    def acyclic_check(self, ontology: dict) -> bool:
+        """Return True if the directed relationship graph is acyclic (a DAG).
+
+        Uses DFS cycle detection with a "currently in stack" set.
+
+        Args:
+            ontology: Dict with optional ``relationships`` list.
+
+        Returns:
+            True when the graph has no directed cycles; False otherwise.
+        """
+        from collections import defaultdict
+        adj: dict = defaultdict(list)
+        for rel in ontology.get("relationships", []):
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src and tgt:
+                adj[src].append(tgt)
+        all_nodes = set(adj.keys())
+        for v in list(adj.values()):
+            all_nodes.update(v)
+
+        visited: set = set()
+        in_stack: set = set()
+
+        def dfs(node):
+            visited.add(node)
+            in_stack.add(node)
+            for nbr in adj.get(node, []):
+                if nbr not in visited:
+                    if not dfs(nbr):
+                        return False
+                elif nbr in in_stack:
+                    return False
+            in_stack.discard(node)
+            return True
+
+        for node in all_nodes:
+            if node not in visited:
+                if not dfs(node):
+                    return False
+        return True
+
+    def has_disconnected_subgraphs(self, ontology: dict) -> bool:
+        """Return True if the relationship graph has more than one connected component.
+
+        Args:
+            ontology: Dict with optional ``relationships`` list.
+
+        Returns:
+            True when 2+ weakly connected components exist; False otherwise.
+        """
+        return self.connected_components_count(ontology) > 1
+
+    def density_comparison(self, ontology: dict) -> dict:
+        """Compare the actual edge density to the maximum possible density.
+
+        For a directed graph with V nodes, max edges = V*(V-1).
+        Actual density = E / (V*(V-1)) where E is the number of relationships.
+
+        Args:
+            ontology: Dict with optional ``relationships`` list.
+
+        Returns:
+            Dict with keys 'actual_density' (float), 'max_density' (float = 1.0),
+            'edges' (int), 'nodes' (int); all zero when no relationships.
+        """
+        rels = ontology.get("relationships", [])
+        if not rels:
+            return {"actual_density": 0.0, "max_density": 1.0, "edges": 0, "nodes": 0}
+        nodes: set = set()
+        for rel in rels:
+            src = rel.get("source") or rel.get("source_id", "")
+            tgt = rel.get("target") or rel.get("target_id", "")
+            if src:
+                nodes.add(src)
+            if tgt:
+                nodes.add(tgt)
+        v = len(nodes)
+        e = len(rels)
+        max_edges = v * (v - 1)
+        density = e / max_edges if max_edges > 0 else 0.0
+        return {"actual_density": density, "max_density": 1.0, "edges": e, "nodes": v}
+
+    def articulation_point_count(self, ontology: dict) -> int:
+        """Return a rough count of articulation-point candidates.
+
+        An articulation point (cut vertex) is a node whose removal would
+        disconnect the graph.  Here we identify nodes that are the sole
+        connector between two or more otherwise-disconnected node clusters
+        by counting nodes with degree >= 2 whose neighbour sets are disjoint.
+
+        This is a lightweight heuristic, not a full Tarjan algorithm.
+
+        Args:
+            ontology: Dict optionally containing ``"relationships"`` list with
+                ``"source"`` and ``"target"`` string keys.
+
+        Returns:
+            Non-negative integer count.
+        """
+        import collections
+        rels = ontology.get("relationships", []) if ontology else []
+        adj: dict = collections.defaultdict(set)
+        for rel in rels:
+            src = rel.get("source") if isinstance(rel, dict) else getattr(rel, "source", None)
+            tgt = rel.get("target") if isinstance(rel, dict) else getattr(rel, "target", None)
+            if src and tgt:
+                adj[src].add(tgt)
+                adj[tgt].add(src)
+        count = 0
+        for node, neighbours in adj.items():
+            if len(neighbours) < 2:
+                continue
+            # Check if any two neighbours are also directly connected
+            neighbour_list = list(neighbours)
+            all_connected = any(
+                neighbour_list[j] in adj.get(neighbour_list[i], set())
+                for i in range(len(neighbour_list))
+                for j in range(i + 1, len(neighbour_list))
+            )
+            if not all_connected:
+                count += 1
+        return count
+
+    def redundancy_score(self, ontology: dict) -> float:
+        """Return the fraction of relationships that are duplicates.
+
+        A duplicate is a (source, target) pair that appears more than once.
+
+        Args:
+            ontology: Dict optionally containing ``"relationships"`` list.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when fewer than 2 relationships.
+        """
+        rels = ontology.get("relationships", []) if ontology else []
+        if len(rels) < 2:
+            return 0.0
+        pairs: dict = {}
+        for rel in rels:
+            src = rel.get("source") if isinstance(rel, dict) else getattr(rel, "source", None)
+            tgt = rel.get("target") if isinstance(rel, dict) else getattr(rel, "target", None)
+            key = (src, tgt)
+            pairs[key] = pairs.get(key, 0) + 1
+        duplicates = sum(v - 1 for v in pairs.values() if v > 1)
+        return duplicates / len(rels)
+
+    def singleton_entity_count(self, ontology: dict) -> int:
+        """Return the number of entities that appear in no relationships.
+
+        Args:
+            ontology: Dict optionally containing ``"entities"`` (list of dicts
+                with an ``"id"`` key) and ``"relationships"`` (list of dicts
+                with ``"source"`` and ``"target"`` keys).
+
+        Returns:
+            Non-negative integer.
+        """
+        entities = ontology.get("entities", []) if ontology else []
+        rels = ontology.get("relationships", []) if ontology else []
+        connected: set = set()
+        for rel in rels:
+            src = rel.get("source") if isinstance(rel, dict) else getattr(rel, "source", None)
+            tgt = rel.get("target") if isinstance(rel, dict) else getattr(rel, "target", None)
+            if src:
+                connected.add(src)
+            if tgt:
+                connected.add(tgt)
+        count = 0
+        for ent in entities:
+            eid = ent.get("id") if isinstance(ent, dict) else getattr(ent, "id", None)
+            if eid not in connected:
+                count += 1
+        return count
+
 
 # Export public API
 __all__ = [

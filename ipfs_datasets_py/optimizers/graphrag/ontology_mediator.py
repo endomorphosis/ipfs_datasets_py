@@ -1748,6 +1748,162 @@ class OntologyMediator:
         candidates = sorted(k for k, v in self._action_counts.items() if v == min_count)
         return candidates[0]
 
+    def action_round_with_most(self) -> str:
+        """Return the action type that was performed the most times.
+
+        When multiple types share the maximum count the lexicographically
+        last name is returned (to differ from action_least_recent).
+
+        Returns:
+            String action name; empty string when no actions.
+        """
+        if not self._action_counts:
+            return ""
+        max_count = max(self._action_counts.values())
+        candidates = sorted(k for k, v in self._action_counts.items() if v == max_count)
+        return candidates[-1]
+
+    def action_pct_of_total(self, action_name: str) -> float:
+        """Return the fraction of total actions that *action_name* accounts for.
+
+        Args:
+            action_name: Name of the action type to query.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when action not found or no actions.
+        """
+        total = sum(self._action_counts.values())
+        if total == 0 or action_name not in self._action_counts:
+            return 0.0
+        return self._action_counts[action_name] / total
+
+    def action_entropy_normalized(self) -> float:
+        """Return the normalized Shannon entropy of the action distribution.
+
+        Normalized entropy = H / log(n_types), where H is the raw Shannon entropy.
+        Returns 1.0 when all types are equally frequent; 0.0 with a single type.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no actions or only one type.
+        """
+        import math
+        total = sum(self._action_counts.values())
+        n_types = len(self._action_counts)
+        if total == 0 or n_types <= 1:
+            return 0.0
+        entropy = 0.0
+        for count in self._action_counts.values():
+            p = count / total
+            if p > 0:
+                entropy -= p * math.log(p)
+        max_entropy = math.log(n_types)
+        return entropy / max_entropy if max_entropy > 0 else 0.0
+
+    def action_balance_score(self) -> float:
+        """Return a balance score measuring how evenly actions are distributed.
+
+        Computed as (min_count / max_count); 1.0 = perfectly balanced.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no actions or max == 0.
+        """
+        if not self._action_counts:
+            return 0.0
+        max_c = max(self._action_counts.values())
+        if max_c == 0:
+            return 0.0
+        min_c = min(self._action_counts.values())
+        return min_c / max_c
+
+    def action_uniformity_index(self) -> float:
+        """Return a uniformity index: 1 - (std / mean) of action counts, clipped to [0,1].
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no actions or only one type; 1.0 when perfectly uniform.
+        """
+        if not self._action_counts:
+            return 0.0
+        vals = list(self._action_counts.values())
+        n = len(vals)
+        if n == 1:
+            return 1.0
+        mean = sum(vals) / n
+        if mean == 0:
+            return 0.0
+        var = sum((v - mean) ** 2 for v in vals) / n
+        cv = (var ** 0.5) / mean
+        return float(max(0.0, min(1.0, 1.0 - cv)))
+
+    def action_peak_fraction(self) -> float:
+        """Return the fraction of total actions performed by the most-frequent type.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no actions.
+        """
+        total = sum(self._action_counts.values())
+        if total == 0:
+            return 0.0
+        return max(self._action_counts.values()) / total
+
+    def action_concentration_ratio(self, top_k: int = 3) -> float:
+        """Return the share of total actions held by the top-*k* action types.
+
+        Args:
+            top_k: Number of leading action types to include. Defaults to 3.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no actions.
+        """
+        total = sum(self._action_counts.values())
+        if total == 0:
+            return 0.0
+        sorted_counts = sorted(self._action_counts.values(), reverse=True)
+        top_sum = sum(sorted_counts[:top_k])
+        return top_sum / total
+
+    def action_last_n_most_common(self, n: int = 5) -> str:
+        """Return the name of the most-common action among the last *n* recorded.
+
+        If `_action_log` is available it is used; otherwise the method falls
+        back to the overall `_action_counts` dict.
+
+        Args:
+            n: Window size. Defaults to 5.
+
+        Returns:
+            String action name, or empty string when no actions.
+        """
+        # Prefer a chronological log if one exists
+        log = getattr(self, "_action_log", None)
+        if log:
+            window = log[-n:]
+            counts: dict = {}
+            for name in window:
+                counts[name] = counts.get(name, 0) + 1
+            return max(counts, key=lambda k: counts[k]) if counts else ""
+        # Fallback to cumulative counts
+        if not self._action_counts:
+            return ""
+        return max(self._action_counts, key=lambda k: self._action_counts[k])
+
+    def action_gini_coefficient(self) -> float:
+        """Return the Gini coefficient of action count distribution.
+
+        A coefficient of 0 means all action types are equally frequent; 1 means
+        all actions are of one type.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no actions or a single type.
+        """
+        vals = sorted(self._action_counts.values())
+        n = len(vals)
+        if n == 0 or sum(vals) == 0:
+            return 0.0
+        cumulative = 0.0
+        for i, v in enumerate(vals):
+            cumulative += (2 * (i + 1) - n - 1) * v
+        return cumulative / (n * sum(vals))
+
 
 # Export public API
 __all__ = [

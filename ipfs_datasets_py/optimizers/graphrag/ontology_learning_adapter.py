@@ -1984,3 +1984,147 @@ class OntologyLearningAdapter:
             return 0.0
         bottom_k = sorted(r.final_score for r in self._feedback)[:k]
         return sum(bottom_k) / len(bottom_k)
+
+    def feedback_above_own_mean_count(self) -> int:
+        """Return the count of feedback records with score above the overall mean.
+
+        Returns:
+            Integer count; 0 when no feedback.
+        """
+        if not self._feedback:
+            return 0
+        vals = [r.final_score for r in self._feedback]
+        mean = sum(vals) / len(vals)
+        return sum(1 for v in vals if v > mean)
+
+    def feedback_mean_last_n(self, n: int = 5) -> float:
+        """Return the mean feedback score of the last *n* records.
+
+        Args:
+            n: Number of most-recent records. Defaults to 5.
+
+        Returns:
+            Float mean; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        tail = self._feedback[-n:]
+        return sum(r.final_score for r in tail) / len(tail)
+
+    def feedback_std_last_n(self, n: int = 5) -> float:
+        """Return the std of the last *n* feedback scores.
+
+        Args:
+            n: Number of most-recent records to examine. Defaults to 5.
+
+        Returns:
+            Float std; 0.0 when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        tail = [r.final_score for r in self._feedback[-n:]]
+        if len(tail) < 2:
+            return 0.0
+        mean = sum(tail) / len(tail)
+        var = sum((v - mean) ** 2 for v in tail) / len(tail)
+        return var ** 0.5
+
+    def feedback_recovery_count(self, threshold: float = 0.5) -> int:
+        """Count recoveries: steps where score was below then above *threshold*.
+
+        Args:
+            threshold: Crossing threshold. Defaults to 0.5.
+
+        Returns:
+            Integer count of below→above transitions.
+        """
+        if len(self._feedback) < 2:
+            return 0
+        count = 0
+        above = [r.final_score >= threshold for r in self._feedback]
+        for i in range(1, len(above)):
+            if not above[i - 1] and above[i]:
+                count += 1
+        return count
+
+    def feedback_z_score_last(self) -> float:
+        """Return the z-score of the last feedback score relative to the full history.
+
+        Uses population std (divides by N).
+
+        Returns:
+            Float z-score; 0.0 when fewer than 2 records or std == 0.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        vals = [r.final_score for r in self._feedback]
+        mean = sum(vals) / len(vals)
+        var = sum((v - mean) ** 2 for v in vals) / len(vals)
+        std = var ** 0.5
+        if std == 0:
+            return 0.0
+        return (vals[-1] - mean) / std
+
+    def feedback_half_above_threshold(self, threshold: float = 0.5) -> bool:
+        """Return True if at least half of feedback records are at or above *threshold*.
+
+        Args:
+            threshold: Score cutoff. Defaults to 0.5.
+
+        Returns:
+            Boolean; False when no feedback.
+        """
+        if not self._feedback:
+            return False
+        above = sum(1 for r in self._feedback if r.final_score >= threshold)
+        return above >= len(self._feedback) / 2
+
+    def feedback_positive_fraction_last_n(self, n: int = 5, threshold: float = 0.5) -> float:
+        """Return the fraction of the last *n* feedback records at or above *threshold*.
+
+        Args:
+            n: Window size. Defaults to 5.
+            threshold: Score cutoff. Defaults to 0.5.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no feedback.
+        """
+        if not self._feedback:
+            return 0.0
+        window = self._feedback[-n:]
+        above = sum(1 for r in window if r.final_score >= threshold)
+        return above / len(window)
+
+    def feedback_mean_change(self) -> float:
+        """Return the mean step-by-step change in feedback scores.
+
+        Computes (score[i] - score[i-1]) for each consecutive pair and returns
+        the mean of those deltas.
+
+        Returns:
+            Float; 0.0 when fewer than 2 feedback records.
+        """
+        if len(self._feedback) < 2:
+            return 0.0
+        deltas = [
+            self._feedback[i].final_score - self._feedback[i - 1].final_score
+            for i in range(1, len(self._feedback))
+        ]
+        return sum(deltas) / len(deltas)
+
+    def feedback_consistency_score(self) -> float:
+        """Return a consistency score in [0.0, 1.0] based on feedback variance.
+
+        Defined as 1.0 - (std / max_std) where max_std is 0.5 (the max standard
+        deviation for values in [0, 1]).  Returns 1.0 when fewer than 2 records.
+
+        Returns:
+            Float in [0.0, 1.0].
+        """
+        if len(self._feedback) < 2:
+            return 1.0
+        scores = [r.final_score for r in self._feedback]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        std = variance ** 0.5
+        return float(max(0.0, 1.0 - std / 0.5))

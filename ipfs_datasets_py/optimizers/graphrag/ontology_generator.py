@@ -6460,6 +6460,278 @@ class OntologyGenerator:
                 entropy -= p * _math.log(p)
         return entropy
 
+    def entity_property_value_types(self, result: "EntityExtractionResult") -> set:
+        """Return the set of Python type names of all property values across entities.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Set of type name strings (e.g. {'str', 'int'}); empty set when no properties.
+        """
+        type_names: set = set()
+        for e in result.entities or []:
+            for v in (getattr(e, "properties", None) or {}).values():
+                type_names.add(type(v).__name__)
+        return type_names
+
+    def relationship_types_sorted(self, result: "EntityExtractionResult") -> list:
+        """Return a sorted list of unique relationship type strings.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Sorted list of unique type strings; empty list when no relationships.
+        """
+        types = {str(getattr(r, "type", "") or "") for r in result.relationships or []}
+        return sorted(t for t in types if t)
+
+    def entity_diversity_score(self, result: "EntityExtractionResult") -> float:
+        """Return a diversity score for entity types: unique_types / total_entities.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no entities.
+        """
+        entities = result.entities or []
+        if not entities:
+            return 0.0
+        unique_types = len({e.type for e in entities if e.type})
+        return unique_types / len(entities)
+
+    def relationship_density_by_type(self, result: "EntityExtractionResult") -> dict:
+        """Return a dict of {type: fraction_of_all_relationships} for each relationship type.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Dict of {type_str: float}; empty dict when no relationships.
+        """
+        rels = result.relationships or []
+        if not rels:
+            return {}
+        n = len(rels)
+        counts: dict = {}
+        for r in rels:
+            t = str(getattr(r, "type", "") or "")
+            counts[t] = counts.get(t, 0) + 1
+        return {t: c / n for t, c in counts.items()}
+
+    def entity_id_prefix_groups(self, result: "EntityExtractionResult", prefix_len: int = 1) -> dict:
+        """Group entities by the first *prefix_len* characters of their ID.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+            prefix_len: Number of leading characters to use as prefix key. Defaults to 1.
+
+        Returns:
+            Dict of {prefix: list_of_entity_ids}; empty dict when no entities.
+        """
+        groups: dict = {}
+        for e in result.entities or []:
+            prefix = e.id[:prefix_len] if len(e.id) >= prefix_len else e.id
+            groups.setdefault(prefix, []).append(e.id)
+        return groups
+
+    def relationship_cross_type_count(self, result: "EntityExtractionResult") -> int:
+        """Count relationships that connect entities of different types.
+
+        Requires entity type information to be accessible via a lookup on the
+        source/target IDs from the entities in the same result.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Integer count of cross-type relationships; 0 when no type info available.
+        """
+        entity_types = {e.id: e.type for e in (result.entities or [])}
+        count = 0
+        for r in result.relationships or []:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src and tgt and src in entity_types and tgt in entity_types:
+                if entity_types[src] != entity_types[tgt]:
+                    count += 1
+        return count
+
+    def entity_multi_property_count(self, result: "EntityExtractionResult") -> int:
+        """Return the count of entities that have more than one property.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Integer count; 0 when no entities or no multi-property entities.
+        """
+        return sum(
+            1
+            for e in (result.entities or [])
+            if len(getattr(e, "properties", None) or {}) > 1
+        )
+
+    def relationship_avg_id_pair_length(self, result: "EntityExtractionResult") -> float:
+        """Return the average combined length of (source_id + target_id) per relationship.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float average length; 0.0 when no relationships.
+        """
+        rels = result.relationships or []
+        if not rels:
+            return 0.0
+        lengths = [
+            len(str(getattr(r, "source_id", "") or "")) + len(str(getattr(r, "target_id", "") or ""))
+            for r in rels
+        ]
+        return sum(lengths) / len(lengths)
+
+    def entity_confidence_cv(self, result: "EntityExtractionResult") -> float:
+        """Return the coefficient of variation (std/mean) of entity confidence values.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float CV; 0.0 when fewer than 2 entities or mean == 0.
+        """
+        entities = result.entities or []
+        if len(entities) < 2:
+            return 0.0
+        vals = [float(getattr(e, "confidence", 0.0) or 0.0) for e in entities]
+        mean = sum(vals) / len(vals)
+        if mean == 0:
+            return 0.0
+        var = sum((v - mean) ** 2 for v in vals) / len(vals)
+        return (var ** 0.5) / mean
+
+    def relationship_unique_endpoints(self, result: "EntityExtractionResult") -> int:
+        """Return the count of unique node IDs that appear in any relationship.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Integer count; 0 when no relationships.
+        """
+        endpoints: set = set()
+        for r in result.relationships or []:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src:
+                endpoints.add(src)
+            if tgt:
+                endpoints.add(tgt)
+        return len(endpoints)
+
+    def entity_with_highest_confidence(self, result) -> object:
+        """Return the entity with the highest confidence, or None.
+
+        Args:
+            result: EntityExtractionResult.
+
+        Returns:
+            The Entity with max confidence, or None when result is empty.
+        """
+        if not result.entities:
+            return None
+        return max(result.entities, key=lambda e: e.confidence)
+
+    def relationship_source_degree_distribution(self, result) -> dict:
+        """Return a dict mapping each source_id to how many relationships it starts.
+
+        Args:
+            result: EntityExtractionResult.
+
+        Returns:
+            Dict[str, int]; empty dict when no relationships.
+        """
+        counts: dict = {}
+        for r in result.relationships:
+            src = getattr(r, "source_id", None)
+            if src is not None:
+                counts[src] = counts.get(src, 0) + 1
+        return counts
+
+    def entity_confidence_below_mean_count(self, result) -> int:
+        """Return how many entities have confidence below the mean.
+
+        Args:
+            result: EntityExtractionResult.
+
+        Returns:
+            Non-negative integer; 0 when fewer than 2 entities.
+        """
+        if len(result.entities) < 2:
+            return 0
+        scores = [e.confidence for e in result.entities]
+        mean = sum(scores) / len(scores)
+        return sum(1 for s in scores if s < mean)
+
+    def relationship_self_loop_ids(self, result) -> list:
+        """Return the IDs of relationships where source == target.
+
+        Args:
+            result: EntityExtractionResult.
+
+        Returns:
+            List of source_id strings (may be empty).
+        """
+        return [
+            getattr(r, "source_id", None)
+            for r in result.relationships
+            if getattr(r, "source_id", None) is not None
+            and getattr(r, "source_id", None) == getattr(r, "target_id", None)
+        ]
+
+    def entity_text_length_median(self, result) -> float:
+        """Return the median text length (characters) across all entities.
+
+        Args:
+            result: EntityExtractionResult.
+
+        Returns:
+            Float; 0.0 when no entities.
+        """
+        if not result.entities:
+            return 0.0
+        lengths = sorted(len(e.text or "") for e in result.entities)
+        n = len(lengths)
+        mid = n // 2
+        if n % 2 == 0:
+            return (lengths[mid - 1] + lengths[mid]) / 2
+        return float(lengths[mid])
+
+    def relationship_type_entropy(self, result) -> float:
+        """Return the Shannon entropy of relationship type distribution.
+
+        Args:
+            result: EntityExtractionResult.
+
+        Returns:
+            Float >= 0.0; 0.0 when fewer than 2 relationships.
+        """
+        import math
+        if len(result.relationships) < 2:
+            return 0.0
+        counts: dict = {}
+        for r in result.relationships:
+            t = getattr(r, "type", None) or "unknown"
+            counts[t] = counts.get(t, 0) + 1
+        total = sum(counts.values())
+        entropy = 0.0
+        for c in counts.values():
+            p = c / total
+            if p > 0:
+                entropy -= p * math.log2(p)
+        return entropy
+
 
 __all__ = [
     'OntologyGenerator',
