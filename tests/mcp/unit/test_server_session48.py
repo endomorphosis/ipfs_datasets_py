@@ -123,8 +123,42 @@ from ipfs_datasets_py.mcp_server.server import (  # noqa: E402
 # ===========================================================================
 
 
+class _FakeTextContent:
+    """Minimal TextContent stub that records constructor kwargs."""
+
+    def __init__(self, type="text", text=""):
+        self.type = type
+        self.text = text
+
+
+class _FakeCallToolResult:
+    """Minimal CallToolResult stub that records constructor kwargs."""
+
+    def __init__(self, isError=False, content=None):
+        self.isError = isError
+        self.content = content or []
+
+
 class TestReturnHelpers:
-    """Utility helpers in server.py."""
+    """Utility helpers in server.py.
+
+    server.py binds TextContent/CallToolResult at import time.  When another
+    test file has already imported the module the names may resolve to
+    MagicMocks.  We patch at the module level for the duration of this class
+    so the assertions on .type/.text/.isError work deterministically.
+    """
+
+    @classmethod
+    def setup_class(cls):
+        cls._orig_tc = server_mod.TextContent  # type: ignore[attr-defined]
+        cls._orig_cr = server_mod.CallToolResult  # type: ignore[attr-defined]
+        server_mod.TextContent = _FakeTextContent  # type: ignore[attr-defined]
+        server_mod.CallToolResult = _FakeCallToolResult  # type: ignore[attr-defined]
+
+    @classmethod
+    def teardown_class(cls):
+        server_mod.TextContent = cls._orig_tc  # type: ignore[attr-defined]
+        server_mod.CallToolResult = cls._orig_cr  # type: ignore[attr-defined]
 
     def test_return_text_content_basic(self):
         result = return_text_content("hello", "label")

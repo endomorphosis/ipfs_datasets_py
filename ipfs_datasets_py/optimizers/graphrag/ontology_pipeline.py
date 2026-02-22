@@ -324,10 +324,8 @@ class OntologyPipeline:
         Example:
             >>> result = await pipeline.run_async("Alice works at ACME.")
         """
-        import asyncio
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
+        import anyio
+        return await anyio.to_thread.run_sync(
             lambda: self.run(data, data_source=data_source, data_type=data_type, refine=refine),
         )
 
