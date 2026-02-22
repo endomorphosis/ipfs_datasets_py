@@ -424,3 +424,42 @@ class BaseOptimizer(ABC):
                 str(e),
             )
             raise
+
+    def state_checksum(self) -> str:
+        """Compute a checksum of the optimizer's current configuration state.
+
+        Provides a stable, reproducible fingerprint of the optimizer's
+        configuration parameters. Useful for verifying that two optimizer
+        instances have identical settings, caching optimization results,
+        and audit logging.
+
+        The checksum is computed from :class:`OptimizerConfig` fields only
+        (not runtime state such as iteration counts or timestamps), so it
+        remains stable across optimizer restarts with the same configuration.
+
+        Returns:
+            Hexadecimal MD5 digest string (32 characters) representing the
+            current configuration state.
+
+        Example:
+            >>> optimizer_a = MyOptimizer(config=OptimizerConfig(max_iterations=5))
+            >>> optimizer_b = MyOptimizer(config=OptimizerConfig(max_iterations=5))
+            >>> assert optimizer_a.state_checksum() == optimizer_b.state_checksum()
+            >>> optimizer_c = MyOptimizer(config=OptimizerConfig(max_iterations=10))
+            >>> assert optimizer_a.state_checksum() != optimizer_c.state_checksum()
+        """
+        import hashlib
+        import json
+
+        state: Dict[str, Any] = {
+            "strategy": self.config.strategy.value,
+            "max_iterations": self.config.max_iterations,
+            "target_score": self.config.target_score,
+            "learning_rate": self.config.learning_rate,
+            "convergence_threshold": self.config.convergence_threshold,
+            "early_stopping": self.config.early_stopping,
+            "validation_enabled": self.config.validation_enabled,
+            "metrics_enabled": self.config.metrics_enabled,
+        }
+        serialized = json.dumps(state, sort_keys=True)
+        return hashlib.md5(serialized.encode()).hexdigest()
