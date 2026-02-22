@@ -1778,3 +1778,23 @@ class OntologyPipeline:
         mean = sum(scores) / len(scores)
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
         return variance ** 0.5
+
+    def run_score_min(self) -> float:
+        """Return the minimum score across all run history.
+
+        Returns:
+            Float minimum; 0.0 when no runs.
+        """
+        if not self._run_history:
+            return 0.0
+        return min(r.score.overall for r in self._run_history)
+
+    def run_score_max(self) -> float:
+        """Return the maximum score across all run history.
+
+        Returns:
+            Float maximum; 0.0 when no runs.
+        """
+        if not self._run_history:
+            return 0.0
+        return max(r.score.overall for r in self._run_history)

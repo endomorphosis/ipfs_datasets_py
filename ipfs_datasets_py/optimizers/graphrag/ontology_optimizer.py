@@ -3822,6 +3822,39 @@ class OntologyOptimizer:
         return sum(e.average_score * (decay ** i) for i, e in enumerate(entries))
 
 
+    def score_delta_std(self) -> float:
+        """Return the standard deviation of consecutive score deltas.
+
+        Returns:
+            Float std dev of deltas; 0.0 when fewer than 3 entries.
+        """
+        if len(self._history) < 3:
+            return 0.0
+        deltas = [
+            self._history[i + 1].average_score - self._history[i].average_score
+            for i in range(len(self._history) - 1)
+        ]
+        n = len(deltas)
+        mean = sum(deltas) / n
+        variance = sum((d - mean) ** 2 for d in deltas) / n
+        return variance ** 0.5
+
+    def history_coefficient_of_variation(self) -> float:
+        """Return the coefficient of variation (std / mean) of history scores.
+
+        Returns:
+            Float CV; 0.0 when history is empty or mean is 0.
+        """
+        if not self._history:
+            return 0.0
+        vals = [e.average_score for e in self._history]
+        mean = sum(vals) / len(vals)
+        if mean == 0:
+            return 0.0
+        variance = sum((v - mean) ** 2 for v in vals) / len(vals)
+        return variance ** 0.5 / mean
+
+
 # Export public API
 __all__ = [
     'OntologyOptimizer',

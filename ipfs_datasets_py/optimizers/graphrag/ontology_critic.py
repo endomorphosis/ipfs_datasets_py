@@ -4032,6 +4032,17 @@ class OntologyCritic(BaseCritic):
         ranked = sorted(self._DIMENSIONS, key=lambda d: getattr(score, d, 0.0))
         return ranked[:k]
 
+    def dimension_sum(self, score: "CriticScore") -> float:
+        """Return the sum of all dimension values in a CriticScore.
+
+        Args:
+            score: CriticScore to evaluate.
+
+        Returns:
+            Float sum of all 6 dimension values.
+        """
+        return sum(getattr(score, d, 0.0) for d in self._DIMENSIONS)
+
 
 # Export public API
 __all__ = [

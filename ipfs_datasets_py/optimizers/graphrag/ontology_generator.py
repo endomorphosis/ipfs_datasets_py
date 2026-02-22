@@ -6158,6 +6158,20 @@ class OntologyGenerator:
         rels = result.relationships or []
         return len({getattr(r, "type", None) for r in rels if getattr(r, "type", None)})
 
+    def relationship_avg_weight(self, result: "EntityExtractionResult") -> float:
+        """Return the average weight across all relationships.
+
+        Args:
+            result: EntityExtractionResult to inspect.
+
+        Returns:
+            Float mean weight; 0.0 when no relationships or no weight attribute.
+        """
+        rels = result.relationships or []
+        if not rels:
+            return 0.0
+        return sum(getattr(r, "weight", 0.0) or 0.0 for r in rels) / len(rels)
+
 
 __all__ = [
     'OntologyGenerator',

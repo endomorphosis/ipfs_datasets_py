@@ -1837,3 +1837,16 @@ class OntologyLearningAdapter:
             return 0.0
         entries = list(reversed(self._feedback))
         return sum(r.final_score * (decay ** i) for i, r in enumerate(entries))
+
+    def feedback_variance(self) -> float:
+        """Return the variance of final_score values across all feedback.
+
+        Returns:
+            Float variance; 0.0 when fewer than 2 records.
+        """
+        n = len(self._feedback)
+        if n < 2:
+            return 0.0
+        vals = [r.final_score for r in self._feedback]
+        mean = sum(vals) / n
+        return sum((v - mean) ** 2 for v in vals) / n
