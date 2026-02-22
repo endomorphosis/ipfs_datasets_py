@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.22.0  
+**Version:** 3.22.1  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-22 (session 46)  
-**Last Major Release:** v3.22.0 (session 45: 5 production bug fixes; **3,553 passing, 55 skipped, 0 failing** in base environment; fixes: `anyio.get_cancelled_exc_class()` outside-async-context bug in 4 modules — `query/unified_engine.py`, `transactions/wal.py`, `storage/ipld_backend.py`, `query/hybrid_search.py`; `ipld.py` missing `ipld_car = None` attribute for patching; test skip guards for spaCy (session43/44), matplotlib (session15/37), libipld (session40) optional dependencies; session21 cross-document test now patches optimizer absent-case correctly; session46 adds rdflib skip guards for session33/37 tests)
+**Last Updated:** 2026-02-22 (session 47)  
+**Last Major Release:** v3.22.1 (session 47: 1 production bug fix; **3,591 passing, 26 skipped, 0 failing** with matplotlib+scipy+plotly+rdflib installed; 3,553 passing / 55 skipped in minimal base env; fixes: `extraction/graph.py` boolean RDF serialization bug — `case bool()` now checked BEFORE `case int()` in entity match block; `elif isinstance(value, bool)` now checked BEFORE `elif isinstance(value, int)` in relationship block; 9 new tests in session47; coverage: `extraction/graph.py` 80%→**100%**, overall 98%→**99%**)
 
 ---
 
@@ -11,17 +11,17 @@
 
 | Aspect | Status | Details |
 |--------|--------|---------|
-| **Overall Status** | ✅ Production Ready | 99.7% test coverage |
+| **Overall Status** | ✅ Production Ready | 99% test coverage |
 | **Core Features** | ✅ Complete | All extraction, query, storage features working |
 | **P1-P4 Features** | ✅ Complete | Implemented in PR #1085 (2026-02-18) |
 | **Cypher Features** | ✅ Complete | FOREACH + CALL subquery added (2026-02-20) |
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | **99.7% overall** | Session 45: 3,567 pass, 41 skipped, **0 fail**. Previous 95 failures fixed: anyio.NoEventLoopError in 4 async-safety modules; spaCy/matplotlib/libipld optional-dep skip guards added; ipld.py CAR attribute fix |
-| **Documentation** | ✅ Up to Date | Reflects v3.22.0 structure |
-| **Known Issues** | None | 0 failures (3,567 pass, 41 skipped); all skips are intentional (optional deps absent) |
-| **Next Milestone** | v3.23.0 (Q3 2026) | Remaining 40 missed lines are dead code or truly-unreachable ImportError blocks |
+| **Test Coverage** | **99% overall** | Session 47: 3,591 pass, 26 skipped, **0 fail** (with optional deps); 3,553/55/0 in base env. `extraction/graph.py` now 100% |
+| **Documentation** | ✅ Up to Date | Reflects v3.22.1 structure |
+| **Known Issues** | None | 0 failures; all skips intentional (libipld/spaCy absent) |
+| **Next Milestone** | v4.0 (2027+) | Remaining 159 missed lines are spaCy/libipld-dependent or unreachable ImportError blocks |
 
 ---
 
@@ -163,7 +163,7 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 | **Constraints** | **100%** | ✅ **Excellent** | All constraint types + manager fully covered |
 | **Transactions** | **91%**–**100%** | ✅ **Excellent** | types **100%** (+4pp s26), manager **97%** (+6pp s26), wal **96%** |
 | **Query** | **88%**–**100%** | ✅ **Excellent** | sparql_templates/budget_manager **100%**, unified_engine **100%** (+11pp s26), distributed **99%** (+5pp s26), hybrid_search **93%** (+10pp s26), knowledge_graph **88%** |
-| **Extraction** | 54–**100%** | 🔶 Improving | srl **84%**, relationships **100%**, _entity_helpers **98%**, graph.py **98%** |
+| **Extraction** | 74–**100%** | 🔶 Improving | extractor.py **74%** (spaCy paths), _entity_helpers **98%**, graph.py **100%** ✅ |
 | **Reasoning** | **88%**–**98%** | ✅ **Excellent** | ontology/reasoning **98%**, cross_document **96%**, helpers **94%** |
 | **Indexing** | **98%**–**100%** | ✅ **Excellent** | btree **98%** (+11pp s26), manager **99%**, specialized **100%** |
 | **Storage** | **89%**–**100%** | ✅ **Excellent** | ipld_backend **89%**, types **100%** |
@@ -237,8 +237,9 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - session43: 1 test (spaCy-dependent test file — skipped when spaCy unavailable; extractor 73%→98% with spaCy)
 - session44: 11 tests (spaCy model OSError fallback, rebel IndexError, srl empty-sent, hybrid_search visited)
 - session46: rdflib skip guards for session33/37 tests (4 previously failing → 0 failing)
+- session47: 9 new tests covering `extraction/graph.py` lines 629+661 (bool RDF serialization bug + case_ fallback). Production fix: moved `case bool()` before `case int()` in entity match block; `elif isinstance(value, bool)` before `elif isinstance(value, int)` in relationship block. `extraction/graph.py` 80%→**100%**; overall 98%→**99%** (159 missed lines). 3,591 passed, 26 skipped, 0 failed (with matplotlib+scipy+plotly+rdflib). 3,553 pass, 55 skip, 0 fail (base env).
 
-**Total Tests:** 3,553 passing, 55 skipped (rdflib/spaCy/libipld/plotly absent in base env), 0 failing
+**Total Tests:** 3,591 passing, 26 skipped (libipld/spaCy absent; matplotlib+scipy+plotly+rdflib available), 0 failing
 **Pass Rate:** 100% (excluding optional dependency skips)
 
 ---

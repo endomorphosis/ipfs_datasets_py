@@ -621,12 +621,12 @@ class KnowledgeGraph:
                 match value:
                     case str():
                         g.add((entity_uri, KG[key], Literal(value)))
+                    case bool():
+                        g.add((entity_uri, KG[key], Literal(value, datatype=XSD.boolean)))
                     case int():
                         g.add((entity_uri, KG[key], Literal(value, datatype=XSD.integer)))
                     case float():
                         g.add((entity_uri, KG[key], Literal(value, datatype=XSD.float)))
-                    case bool():
-                        g.add((entity_uri, KG[key], Literal(value, datatype=XSD.boolean)))
                     case _:
                         g.add((entity_uri, KG[key], Literal(str(value))))
 
@@ -653,12 +653,12 @@ class KnowledgeGraph:
                 for key, value in rel.properties.items():
                     if isinstance(value, str):
                         g.add((rel_uri, KG[key], Literal(value)))
+                    elif isinstance(value, bool):
+                        g.add((rel_uri, KG[key], Literal(value, datatype=XSD.boolean)))
                     elif isinstance(value, int):
                         g.add((rel_uri, KG[key], Literal(value, datatype=XSD.integer)))
                     elif isinstance(value, float):
                         g.add((rel_uri, KG[key], Literal(value, datatype=XSD.float)))
-                    elif isinstance(value, bool):
-                        g.add((rel_uri, KG[key], Literal(value, datatype=XSD.boolean)))
                     else:
                         g.add((rel_uri, KG[key], Literal(str(value))))
 

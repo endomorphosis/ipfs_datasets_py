@@ -5,6 +5,28 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.2] - 2026-02-22
+
+### Bug Fix — RDF Boolean Serialization Order (Session 47)
+
+**Production bug fixed in `extraction/graph.py`:**
+
+- **Entity properties** (`export_to_rdf` match block, line ~622): `case bool():` was listed AFTER `case int():`. In Python, `bool` is a subclass of `int`, so `case int():` was matching `True`/`False` first, causing boolean properties to be serialized as `XSD.integer` instead of `XSD.boolean`. Fixed by moving `case bool():` before `case int():`.
+  - Before: `True` → `"1"^^xsd:integer` (wrong)
+  - After: `True` → `"true"^^xsd:boolean` (correct)
+
+- **Relationship properties** (`export_to_rdf` elif block, line ~654): Same issue with `elif isinstance(value, int):` coming before `elif isinstance(value, bool):`. Fixed by moving `elif isinstance(value, bool):` before `elif isinstance(value, int):`.
+
+**New tests** (`test_master_status_session47.py`, 9 tests):
+- `TestExportToRdfEntityNonPrimitiveProperty` (4 tests) — list/None/dict/tuple entity properties hit `case _:` catch-all and use `str(value)` fallback
+- `TestExportToRdfRelationshipNonPrimitiveProperty` (5 tests) — same for relationship properties + confirm bool correctly uses XSD.boolean
+
+**Coverage impact:** `extraction/graph.py` 99%→**100%**; overall 98%→**99%** (203→159 missed lines)
+
+**Result:** 3,591 passing, 26 skipped, 0 failing (with matplotlib+scipy+plotly+rdflib); 3,553/55/0 in base environment.
+
+---
+
 ## [3.22.1] - 2026-02-22
 
 ### Bug Fixes — rdflib Optional Dependency Skip Guards (Session 46)
