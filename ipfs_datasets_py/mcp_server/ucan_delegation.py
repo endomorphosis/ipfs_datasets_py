@@ -629,6 +629,119 @@ class RevocationList:
         logger.debug("Loaded %d new revoked CIDs from %s", count, path)
         return count
 
+    # ------------------------------------------------------------------
+    # Phase H (session 59) — Encrypted persistence
+    # ------------------------------------------------------------------
+
+    def save_encrypted(self, path: str, password: str) -> None:
+        """Persist revoked CIDs encrypted with AES-256-GCM (Phase H).
+
+        Uses ``cryptography.hazmat`` AESGCM with a 32-byte key derived from
+        *password* via SHA-256 (key = ``SHA-256(password.encode())``).
+        Falls back to plain-text :meth:`save` with a ``UserWarning`` when the
+        ``cryptography`` package is not installed.
+
+        The file format is ``<12-byte nonce> || <ciphertext>`` (raw bytes).
+        An adjacent ``.json`` fallback is NOT written — this method always
+        writes a single binary file.
+
+        Args:
+            path: Destination file path (binary).
+            password: Plain-text password used to derive the AES key.
+        """
+        import hashlib as _hashlib
+        import json as _json
+        import os as _os
+
+        try:
+            from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # type: ignore
+        except ImportError:
+            warnings.warn(
+                "cryptography package not installed; falling back to plain-text save.",
+                UserWarning,
+                stacklevel=2,
+            )
+            self.save(path)
+            return
+
+        parent = _os.path.dirname(path)
+        if parent:
+            _os.makedirs(parent, exist_ok=True)
+
+        key = _hashlib.sha256(password.encode()).digest()  # 32 bytes
+        nonce = _os.urandom(12)
+        plaintext = _json.dumps({"revoked": self.to_list()}).encode()
+        ciphertext = AESGCM(key).encrypt(nonce, plaintext, b"")
+        with open(path, "wb") as fh:
+            fh.write(nonce + ciphertext)
+        logger.debug("Saved %d revoked CIDs (encrypted) to %s", len(self._revoked), path)
+
+    def load_encrypted(self, path: str, password: str) -> int:
+        """Load revoked CIDs from an encrypted file (Phase H).
+
+        Uses the same AES-256-GCM scheme as :meth:`save_encrypted`.
+        Falls back to :meth:`load` (plain JSON) when the ``cryptography``
+        package is not installed.
+
+        Missing or unreadable/corrupt files return 0 without raising.
+
+        Args:
+            path: Source file path (binary).
+            password: Plain-text password used to derive the AES key.
+
+        Returns:
+            Number of **newly** loaded CIDs.
+        """
+        import hashlib as _hashlib
+        import json as _json
+
+        try:
+            from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # type: ignore
+        except ImportError:
+            warnings.warn(
+                "cryptography package not installed; falling back to plain-text load.",
+                UserWarning,
+                stacklevel=2,
+            )
+            return self.load(path)
+
+        try:
+            with open(path, "rb") as fh:
+                raw = fh.read()
+        except FileNotFoundError:
+            logger.debug("Encrypted revocation file not found: %s", path)
+            return 0
+        except OSError as exc:
+            logger.warning("Could not read encrypted revocation file %s: %s", path, exc)
+            return 0
+
+        if len(raw) < 12:
+            logger.warning("Encrypted revocation file too short: %s", path)
+            return 0
+
+        key = _hashlib.sha256(password.encode()).digest()
+        nonce, ciphertext = raw[:12], raw[12:]
+        try:
+            plaintext = AESGCM(key).decrypt(nonce, ciphertext, b"")
+        except Exception as exc:
+            logger.warning("Decryption failed for %s: %s", path, exc)
+            return 0
+
+        try:
+            data = _json.loads(plaintext)
+        except (ValueError, UnicodeDecodeError) as exc:
+            logger.warning("Corrupt decrypted revocation data in %s: %s", path, exc)
+            return 0
+
+        revoked = data.get("revoked", [])
+        count = 0
+        for cid in revoked:
+            if isinstance(cid, str) and cid not in self._revoked:
+                self._revoked.add(cid)
+                count += 1
+        logger.debug("Loaded %d new revoked CIDs (encrypted) from %s", count, path)
+        return count
+
 
 def can_invoke_with_revocation(
     leaf_cid: str,

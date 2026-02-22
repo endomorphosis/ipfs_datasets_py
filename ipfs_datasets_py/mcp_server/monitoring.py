@@ -153,6 +153,15 @@ class EnhancedMetricsCollector:
                 await self._collect_system_metrics()
                 await self._check_health()
                 await self._check_alerts()
+                # Phase I (session 59): surface delegation metrics every 30 s
+                try:
+                    from .ucan_delegation import (  # noqa: PLC0415
+                        get_delegation_manager,
+                        record_delegation_metrics,
+                    )
+                    record_delegation_metrics(get_delegation_manager(), self)
+                except Exception as _dm_exc:
+                    logger.debug("delegation metrics unavailable: %s", _dm_exc)
                 await anyio.sleep(30)  # Collect every 30 seconds
                 
             except anyio.get_cancelled_exc_class()():
