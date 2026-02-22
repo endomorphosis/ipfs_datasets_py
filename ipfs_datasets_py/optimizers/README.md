@@ -317,6 +317,10 @@ See `examples/agentic/` for practical examples:
 - **CODE_EXAMPLES.md** - Comprehensive code examples for public methods
 - **COMMON_PITFALLS.md** - Troubleshooting guide with solutions
 
+## Task Guides
+
+- **TASK_GUIDE_ENTITY_EXTRACTION.md** - Practical steps for improving entity extraction quality
+
 ## Backlog
 
 - See `TODO.md` for the living refactor/feature backlog and inline TODO inventory.

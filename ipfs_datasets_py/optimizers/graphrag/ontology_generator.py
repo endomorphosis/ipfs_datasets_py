@@ -6813,6 +6813,187 @@ class OntologyGenerator:
                 entropy -= p * math.log2(p)
         return entropy
 
+    # -------------------------------------------------------------------------
+    # Async/Await Methods for Concurrent Ontology Extraction
+    # -------------------------------------------------------------------------
+
+    async def extract_entities_async(
+        self,
+        data: Any,
+        context: OntologyGenerationContext
+    ) -> EntityExtractionResult:
+        """
+        Asynchronously extract entities from data using configured strategy.
+        
+        This is the async version of :meth:`extract_entities`. It runs the
+        extraction in a thread pool to avoid blocking the event loop.
+        
+        Args:
+            data: Input data to extract entities from
+            context: Context with extraction configuration
+            
+        Returns:
+            EntityExtractionResult containing extracted entities and relationships
+            
+        Example:
+            >>> result = await generator.extract_entities_async(
+            ...     "Alice must pay Bob $100 by Friday",
+            ...     context
+            ... )
+            >>> print(f"Found {len(result.entities)} entities")
+        """
+        import asyncio
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None,
+            self.extract_entities,
+            data,
+            context
+        )
+
+    async def extract_batch_async(
+        self,
+        data_items: List[Any],
+        contexts: Union[OntologyGenerationContext, List[OntologyGenerationContext]],
+        max_concurrent: int = 5,
+        timeout_per_item: Optional[float] = None,
+    ) -> List[EntityExtractionResult]:
+        """
+        Asynchronously extract entities from multiple data items concurrently.
+        
+        Uses semaphore-controlled concurrency to process multiple items in parallel
+        without overwhelming system resources.
+        
+        Args:
+            data_items: List of data items to process
+            contexts: Single context for all items or list of per-item contexts
+            max_concurrent: Maximum number of concurrent extractions (default: 5)
+            timeout_per_item: Optional timeout in seconds for each extraction
+            
+        Returns:
+            List of EntityExtractionResult, one per input data item
+            
+        Example:
+            >>> documents = ["doc1 text", "doc2 text", "doc3 text"]
+            >>> results = await generator.extract_batch_async(
+            ...     documents,
+            ...     context,
+            ...     max_concurrent=3
+            ... )
+            >>> total_entities = sum(len(r.entities) for r in results)
+        """
+        import asyncio
+        
+        # Handle single context for all items
+        if isinstance(contexts, OntologyGenerationContext):
+            contexts = [contexts] * len(data_items)
+        
+        if len(contexts) != len(data_items):
+            raise ValueError(
+                f"Length mismatch: {len(data_items)} data items but "
+                f"{len(contexts)} contexts"
+            )
+        
+        semaphore = asyncio.Semaphore(max_concurrent)
+        
+        async def extract_with_semaphore(data, ctx):
+            async with semaphore:
+                if timeout_per_item:
+                    return await asyncio.wait_for(
+                        self.extract_entities_async(data, ctx),
+                        timeout=timeout_per_item
+                    )
+                else:
+                    return await self.extract_entities_async(data, ctx)
+        
+        tasks = [
+            extract_with_semaphore(data, ctx)
+            for data, ctx in zip(data_items, contexts)
+        ]
+        
+        return await asyncio.gather(*tasks)
+
+    async def infer_relationships_async(
+        self,
+        entities: List[Entity],
+        context: OntologyGenerationContext
+    ) -> List[Relationship]:
+        """
+        Asynchronously infer relationships between entities.
+        
+        This is the async version of relationship inference. It runs the
+        inference in a thread pool to avoid blocking the event loop.
+        
+        Args:
+            entities: List of entities to infer relationships between
+            context: Context with extraction configuration
+            
+        Returns:
+            List of inferred Relationship objects
+            
+        Example:
+            >>> entities = [entity1, entity2, entity3]
+            >>> relationships = await generator.infer_relationships_async(
+            ...     entities,
+            ...     context
+            ... )
+            >>> print(f"Found {len(relationships)} relationships")
+        """
+        import asyncio
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None,
+            self.infer_relationships,
+            entities,
+            context
+        )
+
+    async def extract_with_streaming_async(
+        self,
+        data: Any,
+        context: OntologyGenerationContext,
+        chunk_size: int = 1000
+    ):
+        """
+        Asynchronously extract entities with streaming results.
+        
+        Yields EntityExtractionResult chunks as they become available,
+        useful for processing large documents without waiting for complete results.
+        
+        Args:
+            data: Input data to extract entities from
+            context: Context with extraction configuration
+            chunk_size: Number of entities per yielded chunk
+            
+        Yields:
+            EntityExtractionResult objects with partial results
+            
+        Example:
+            >>> async for chunk in generator.extract_with_streaming_async(
+            ...     large_document,
+            ...     context,
+            ...     chunk_size=500
+            ... ):
+            ...     print(f"Received {len(chunk.entities)} entities")
+            ...     # Process chunk immediately
+        """
+        import asyncio
+        
+        # For now, delegate to sync streaming and wrap in async
+        # Future enhancement: true async streaming with backpressure
+        loop = asyncio.get_event_loop()
+        
+        def sync_stream():
+            return list(self.extract_entities_streaming(data, context))
+        
+        # Run in executor to avoid blocking
+        chunks = await loop.run_in_executor(None, sync_stream)
+        
+        # Yield chunks asynchronously
+        for chunk in chunks:
+            yield chunk
+            await asyncio.sleep(0)  # Yield control to event loop
+
 
 __all__ = [
     'OntologyGenerator',

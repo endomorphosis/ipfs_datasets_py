@@ -71,6 +71,21 @@ This plan is intentionally evergreen. It balances refactors, feature growth, tes
 
 Note: When a pick is completed, select a new item at random from a different track and record completion in-place.
 
+### Random Work Rotation (Auto-Generate, Keep Infinite)
+
+Use this as the always-on randomizer. Keep 3-5 items active, one per track. When one closes, roll a new item from a different track and append it here.
+
+**Current random picks (rotate on completion)**
+- [ ] (P1) [tests] Fix `test_end_to_end_pipeline.py` for ExtractionConfig dataclass configs (see Tests track)
+- [ ] (P2) [perf] Profile `OntologyGenerator._extract_rule_based()` hot paths and capture top-3 bottlenecks (see Performance track)
+- [ ] (P2) [obs] Emit structured per-run JSON log in `OntologyPipeline.run()` (score/domain/duration)
+- [ ] (P3) [docs] Write module-level docstrings for `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py`
+
+**Rotation rules**
+- Never keep two active picks in the same track.
+- Avoid picking items already present in the Immediate Execution Queue.
+- Log completion with date + short note in-place.
+
 ---
 ---
 
