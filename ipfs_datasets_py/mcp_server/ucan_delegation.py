@@ -35,15 +35,19 @@ __all__ = [
     "add_delegation",
     "get_delegation",
     "get_delegation_evaluator",
-    # Phase H
+    # Phase H (session 57)
     "RevocationList",
     "can_invoke_with_revocation",
-    # Phase I
+    # Phase I (session 57)
     "DelegationStore",
     # Session 56
     "DIDSignedDelegation",
     "sign_delegation",
     "verify_delegation_signature",
+    # Session 58
+    "DelegationManager",
+    "get_delegation_manager",
+    "record_delegation_metrics",
 ]
 
 
@@ -574,6 +578,57 @@ class RevocationList:
     def __contains__(self, cid: str) -> bool:
         return cid in self._revoked
 
+    def save(self, path: str) -> None:
+        """Persist revoked CIDs to a JSON file at *path*.
+
+        Creates parent directories if necessary.
+
+        Args:
+            path: Filesystem path for the JSON revocation file.
+        """
+        import json as _json
+        import os as _os
+
+        parent = _os.path.dirname(path)
+        if parent:
+            _os.makedirs(parent, exist_ok=True)
+        data: Dict[str, Any] = {"revoked": self.to_list()}
+        with open(path, "w", encoding="utf-8") as fh:
+            _json.dump(data, fh, indent=2)
+        logger.debug("Saved %d revoked CIDs to %s", len(self._revoked), path)
+
+    def load(self, path: str) -> int:
+        """Load revoked CIDs from a JSON file at *path*.
+
+        Missing or unreadable files return 0 without raising.
+
+        Args:
+            path: Filesystem path of the JSON revocation file.
+
+        Returns:
+            Number of **newly** loaded CIDs (already-present CIDs are skipped).
+        """
+        import json as _json
+
+        try:
+            with open(path, encoding="utf-8") as fh:
+                data = _json.load(fh)
+        except FileNotFoundError:
+            logger.debug("Revocation list file not found: %s", path)
+            return 0
+        except (OSError, ValueError) as exc:
+            logger.warning("Could not read revocation list %s: %s", path, exc)
+            return 0
+
+        revoked = data.get("revoked", [])
+        count = 0
+        for cid in revoked:
+            if isinstance(cid, str) and cid not in self._revoked:
+                self._revoked.add(cid)
+                count += 1
+        logger.debug("Loaded %d new revoked CIDs from %s", count, path)
+        return count
+
 
 def can_invoke_with_revocation(
     leaf_cid: str,
@@ -748,3 +803,191 @@ class DelegationStore:
         for delegation in self._store.values():
             ev.add(delegation)
         return ev
+
+
+# ---------------------------------------------------------------------------
+# Session 58 — DelegationManager (bundles Store + RevocationList + Evaluator)
+# ---------------------------------------------------------------------------
+
+import tempfile as _tempfile
+
+
+class DelegationManager:
+    """Bundles :class:`DelegationStore`, :class:`RevocationList`, and
+    :class:`DelegationEvaluator` into a single convenience object.
+
+    Provides a complete delegation lifecycle:
+
+    - **Persisting** delegation chains (:class:`DelegationStore`)
+    - **Revoking** individual or chain-wide CIDs (:class:`RevocationList`)
+    - **Evaluating** capability invocations (:class:`DelegationEvaluator`)
+
+    The :func:`get_delegation_manager` factory provides a process-global
+    singleton.
+
+    Usage::
+
+        mgr = get_delegation_manager()
+        mgr.add(delegation)
+        mgr.revoke("compromised-cid")
+        ok, reason = mgr.can_invoke("leaf-cid", "some_tool", "alice")
+        mgr.save()
+
+    Args:
+        path: Filesystem path for the JSON delegation file.  Defaults to
+            a temporary-directory path.
+    """
+
+    def __init__(self, path: Optional[str] = None) -> None:
+        _default_path = _tempfile.gettempdir() + "/mcp_delegations.json"
+        self._store = DelegationStore(path or _default_path)
+        self._revocation = RevocationList()
+        self._evaluator: Optional[DelegationEvaluator] = None
+
+    # ------------------------------------------------------------------
+    # Delegation management
+    # ------------------------------------------------------------------
+
+    def add(self, delegation: Delegation) -> None:
+        """Add a delegation; invalidates the cached evaluator."""
+        self._store.add(delegation)
+        self._evaluator = None  # invalidate on mutation
+
+    def remove(self, cid: str) -> bool:
+        """Remove a delegation by CID; return *True* if it existed."""
+        result = self._store.remove(cid)
+        self._evaluator = None
+        return result
+
+    # ------------------------------------------------------------------
+    # Revocation
+    # ------------------------------------------------------------------
+
+    def revoke(self, cid: str) -> None:
+        """Revoke a single delegation CID."""
+        self._revocation.revoke(cid)
+
+    def is_revoked(self, cid: str) -> bool:
+        """Return *True* if *cid* has been revoked."""
+        return self._revocation.is_revoked(cid)
+
+    # ------------------------------------------------------------------
+    # Evaluation
+    # ------------------------------------------------------------------
+
+    def get_evaluator(self) -> DelegationEvaluator:
+        """Return a :class:`DelegationEvaluator` populated from the store.
+
+        The evaluator is cached and re-created only when the store changes.
+        """
+        if self._evaluator is None:
+            self._evaluator = self._store.to_evaluator()
+        return self._evaluator
+
+    def can_invoke(self, leaf_cid: str, tool: str, actor: str) -> Tuple[bool, str]:
+        """Check whether *actor* can invoke *tool* via *leaf_cid*.
+
+        Delegates to :func:`can_invoke_with_revocation` using the current
+        evaluator and revocation list.
+
+        Returns:
+            ``(authorized, reason)`` tuple.
+        """
+        return can_invoke_with_revocation(
+            leaf_cid, tool, actor,
+            evaluator=self.get_evaluator(),
+            revocation_list=self._revocation,
+        )
+
+    # ------------------------------------------------------------------
+    # Persistence
+    # ------------------------------------------------------------------
+
+    def save(self) -> None:
+        """Persist the delegation store to disk."""
+        self._store.save()
+
+    def load(self) -> int:
+        """Load delegations from disk; invalidates the evaluator cache.
+
+        Returns:
+            Number of delegations loaded.
+        """
+        n = self._store.load()
+        self._evaluator = None
+        return n
+
+    # ------------------------------------------------------------------
+    # Metrics
+    # ------------------------------------------------------------------
+
+    def get_metrics(self) -> Dict[str, int]:
+        """Return a dict of delegation-related metrics.
+
+        Returns:
+            ``{"delegation_count": int, "revoked_cid_count": int}``
+        """
+        return {
+            "delegation_count": len(self._store),
+            "revoked_cid_count": len(self._revocation),
+        }
+
+    def __len__(self) -> int:
+        return len(self._store)
+
+
+# Global singleton
+_default_delegation_manager: Optional[DelegationManager] = None
+
+
+def get_delegation_manager(path: Optional[str] = None) -> DelegationManager:
+    """Return the process-global :class:`DelegationManager` singleton.
+
+    Creates the singleton on first call.
+
+    Args:
+        path: Optional path passed to :class:`DelegationManager` on first
+            creation.  Ignored on subsequent calls.
+
+    Returns:
+        The global :class:`DelegationManager` instance.
+    """
+    global _default_delegation_manager
+    if _default_delegation_manager is None:
+        _default_delegation_manager = DelegationManager(path)
+    return _default_delegation_manager
+
+
+# ---------------------------------------------------------------------------
+# Session 58 — Monitoring integration (Phase K)
+# ---------------------------------------------------------------------------
+
+
+def record_delegation_metrics(manager: "DelegationManager", collector: Any) -> None:
+    """Surface :class:`DelegationManager` metrics via *collector*.
+
+    Calls :meth:`set_gauge` on *collector* with two metrics:
+
+    - ``mcp_revoked_cids_total`` — number of CIDs in the revocation list.
+    - ``mcp_delegation_store_depth`` — number of stored delegations.
+
+    All collector errors are swallowed with a warning so that metric
+    recording never crashes the server.
+
+    Args:
+        manager: A :class:`DelegationManager` instance.
+        collector: An :class:`~monitoring.EnhancedMetricsCollector`-compatible
+            object; only :meth:`set_gauge` is called.
+    """
+    try:
+        metrics = manager.get_metrics()
+        collector.set_gauge(
+            "mcp_revoked_cids_total",
+            float(metrics["revoked_cid_count"]),
+        )
+        collector.set_gauge(
+            "mcp_delegation_store_depth",
+            float(metrics["delegation_count"]),
+        )
+    except Exception as exc:
+        logger.warning("record_delegation_metrics failed: %s", exc)

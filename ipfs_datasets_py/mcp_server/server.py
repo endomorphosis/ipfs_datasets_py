@@ -416,7 +416,9 @@ class IPFSDatasetsMCPServer:
         self._initialize_mcp_server()
         self.tools = {}
         self._dispatch_pipeline = None  # Optional[DispatchPipeline] — set via set_pipeline()
+        self._policy_store = None  # Optional[IPFSPolicyStore] — set via _initialize_policy_store()
         self._initialize_p2p_services()
+        self._initialize_policy_store()
 
     def _initialize_error_reporting(self) -> None:
         """Initialize global error reporting if available."""
@@ -486,6 +488,34 @@ class IPFSDatasetsMCPServer:
     def get_pipeline(self) -> Any:  # Optional[DispatchPipeline]
         """Return the attached pipeline, or ``None`` if none is set."""
         return self._dispatch_pipeline
+
+    def _initialize_policy_store(self) -> None:
+        """Restore :class:`~nl_ucan_policy.IPFSPolicyStore` from env (Phase G).
+
+        When the ``IPFS_POLICY_STORE_PATH`` environment variable is set, loads
+        the policy store from that path and restores the global
+        :class:`~nl_ucan_policy.PolicyRegistry` on startup.
+
+        Failures (missing module, corrupt file, etc.) are logged as warnings
+        and do **not** prevent the server from starting.
+        """
+        path = os.environ.get("IPFS_POLICY_STORE_PATH", "").strip()
+        if not path:
+            return
+        try:
+            from .nl_ucan_policy import IPFSPolicyStore, get_policy_registry  # noqa: PLC0415
+            registry = get_policy_registry()
+            self._policy_store = IPFSPolicyStore(path, registry)
+            self._policy_store.load()
+            logger.info(
+                "IPFSPolicyStore loaded from %s (%d policies restored)",
+                path,
+                len(registry),
+            )
+        except ImportError as exc:
+            logger.debug("IPFSPolicyStore not available: %s", exc)
+        except Exception as exc:
+            logger.warning("IPFSPolicyStore initialization failed: %s", exc)
 
     async def validate_p2p_message(self, msg: dict) -> bool:
         """Optional hook used by the P2P service to validate messages.

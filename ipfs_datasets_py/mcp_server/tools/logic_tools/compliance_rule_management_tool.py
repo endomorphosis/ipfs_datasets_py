@@ -23,6 +23,7 @@ __all__ = [
     "compliance_list_rules",
     "compliance_remove_rule",
     "compliance_check_intent",
+    "compliance_register_interface",
 ]
 
 
@@ -158,3 +159,48 @@ async def compliance_check_intent(
     }
     report = checker.check_compliance(intent)
     return report.to_dict()
+
+
+async def compliance_register_interface() -> Dict[str, Any]:
+    """Register the global ComplianceChecker as a named Interface Descriptor.
+
+    Creates an :class:`~interface_descriptor.InterfaceDescriptor` whose
+    :class:`~interface_descriptor.MethodSignature` entries correspond to the
+    currently-registered compliance rule IDs, then registers it in the
+    module-level :class:`~policy_management_tool.InterfaceRepository` singleton.
+
+    This makes the compliance checker **discoverable** by MCP clients via the
+    ``interface_list`` tool without requiring direct Python access.
+
+    Returns:
+        Dict with ``interface_cid``, ``rule_count``, ``status``.
+    """
+    try:
+        from ipfs_datasets_py.mcp_server.interface_descriptor import (  # noqa: PLC0415
+            InterfaceDescriptor,
+            MethodSignature,
+        )
+        from ipfs_datasets_py.mcp_server.tools.logic_tools.policy_management_tool import (  # noqa: PLC0415
+            _get_interface_repo,
+        )
+
+        checker = _get_checker()
+        methods = [
+            MethodSignature(name=rule_id)
+            for rule_id in checker.list_rules()
+        ]
+        descriptor = InterfaceDescriptor(
+            name="compliance_checker",
+            namespace="mcp.compliance",
+            version="1.0.0",
+            methods=methods,
+        )
+        repo = _get_interface_repo()
+        cid = repo.register(descriptor)
+        return {
+            "status": "registered",
+            "interface_cid": cid,
+            "rule_count": len(methods),
+        }
+    except Exception as exc:
+        return {"status": "error", "interface_cid": None, "error": str(exc)}
