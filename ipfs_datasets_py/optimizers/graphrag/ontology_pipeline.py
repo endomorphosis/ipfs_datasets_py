@@ -176,8 +176,8 @@ class OntologyPipeline:
                 return
             try:
                 progress_callback({"stage": stage, "step": step, "total_steps": total_steps, **extra})
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception as _cb_exc:  # noqa: BLE001
+                self._log.debug("progress_callback raised in stage %r: %s", stage, _cb_exc)
 
         start_time = time.time()
         ctx = OntologyGenerationContext(
