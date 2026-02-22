@@ -5567,6 +5567,50 @@ class OntologyGenerator:
         """
         return {r.target_id for r in result.relationships if r.target_id}
 
+    def relationship_source_ids(self, result) -> List[str]:
+        """Return sorted list of unique source entity IDs across all relationships.
+
+        Unlike :meth:`relationship_source_set`, this returns a deterministically
+        sorted list (alphabetically by ID) instead of a set, useful for
+        reproducible outputs and testing.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Sorted list of source entity ID strings.
+
+        Example:
+            >>> result = generator.extract_entities("Alice knows Bob. Bob knows Alice.")
+            >>> source_ids = generator.relationship_source_ids(result)
+            >>> source_ids
+            ['alice', 'bob']
+        """
+        source_set = {r.source_id for r in result.relationships if r.source_id}
+        return sorted(source_set)
+
+    def relationship_target_ids(self, result) -> List[str]:
+        """Return sorted list of unique target entity IDs across all relationships.
+
+        Unlike :meth:`relationship_target_set`, this returns a deterministically
+        sorted list (alphabetically by ID) instead of a set, useful for
+        reproducible outputs and testing.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Sorted list of target entity ID strings.
+
+        Example:
+            >>> result = generator.extract_entities("Alice knows Bob. Bob knows Alice.")
+            >>> target_ids = generator.relationship_target_ids(result)
+            >>> target_ids
+            ['alice', 'bob']
+        """
+        target_set = {r.target_id for r in result.relationships if r.target_id}
+        return sorted(target_set)
+
     def confidence_quartiles(self, result: Any) -> dict:
         """Return Q1, median (Q2), and Q3 confidence quartiles for entities.
 
