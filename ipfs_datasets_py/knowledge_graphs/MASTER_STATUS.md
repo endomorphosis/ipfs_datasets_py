@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.22.2  
+**Version:** 3.22.3  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-22 (session 48)  
-**Last Major Release:** v3.22.2 (session 48: 16 new tests; **3,626 passing, 7 skipped, 0 failing** with all optional deps installed (libipld, ipld-car, dag-cbor, multiformats, matplotlib, scipy, plotly, rdflib, networkx, numpy); covers `compiler.py:261`, `expression_evaluator.py:153-163`, `ontology/reasoning.py:828`; `migration/formats.py` now 100%; overall 99%, 141 missed lines)
+**Last Updated:** 2026-02-22 (session 49)  
+**Last Major Release:** v3.22.3 (session 49: numpy skip guards in sessions 41+42; 3,569 passing, 64 skipped, 0 failing in base env; 3,626 passing, 7 skipped, 0 failing with all optional deps)
 
 ---
 
@@ -18,9 +18,9 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | **99% overall** | Session 48: 3,626 pass, 7 skipped, **0 fail** (with all optional deps); `migration/formats.py` now 100%, `expression_evaluator.py` now 100%, `ontology/reasoning.py` now 100% |
-| **Documentation** | ✅ Up to Date | Reflects v3.22.2 structure |
-| **Known Issues** | None | 0 failures; all skips intentional (libipld/spaCy absent when not installed) |
+| **Test Coverage** | **99% overall** | Session 49: 3,569 pass, 64 skip, **0 fail** (base env); 3,626/7/0 with all optional deps; numpy skip guards added to session41+42 |
+| **Documentation** | ✅ Up to Date | Reflects v3.22.3 structure |
+| **Known Issues** | None | 0 failures; all skips intentional (libipld/spaCy/numpy/matplotlib absent when not installed) |
 | **Next Milestone** | v4.0 (2027+) | Remaining 141 missed lines are: spaCy-only (108), dead code (33) — see IMPROVEMENT_TODO.md |
 
 ---
@@ -238,9 +238,12 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - session44: 11 tests (spaCy model OSError fallback, rebel IndexError, srl empty-sent, hybrid_search visited)
 - session46: rdflib skip guards for session33/37 tests (4 previously failing → 0 failing)
 - session47: 9 new tests covering `extraction/graph.py` lines 629+661 (bool RDF serialization bug + case_ fallback). Production fix: moved `case bool()` before `case int()` in entity match block; `elif isinstance(value, bool)` before `elif isinstance(value, int)` in relationship block. `extraction/graph.py` 80%→**100%**; overall 98%→**99%** (159 missed lines). 3,591 passed, 26 skipped, 0 failed (with matplotlib+scipy+plotly+rdflib). 3,553 pass, 55 skip, 0 fail (base env).
+- session48: 16 new tests covering `compiler.py:261` (anon var fallback), `expression_evaluator.py:153-163` (reverse/size fallback), `ontology/reasoning.py:828` (BFS cycle guard). Installed libipld+ipld-car+dag-cbor+multiformats → `migration/formats.py` **100%**. `expression_evaluator.py` **100%**, `ontology/reasoning.py` **100%**. Overall 99%, 141 missed lines. 3,626 passed, 7 skipped, 0 failed (with all optional deps).
+- session49: numpy skip guards added to sessions 41+42 (`import numpy as np` at module level → `np = pytest.importorskip("numpy")` after `import pytest`). This ensures clean skip (not collection error) in environments without numpy. 3,569 passed, 64 skipped, 0 failed (base env without matplotlib/plotly/scipy/rdflib/libipld).
 
-**Total Tests:** 3,591 passing, 26 skipped (libipld/spaCy absent; matplotlib+scipy+plotly+rdflib available), 0 failing
+**Total Tests:** 3,569 passing, 64 skipped (optional deps absent in base env), 0 failing
 **Pass Rate:** 100% (excluding optional dependency skips)
+**With all optional deps:** 3,626 passing, 7 skipped, 0 failing
 
 ---
 

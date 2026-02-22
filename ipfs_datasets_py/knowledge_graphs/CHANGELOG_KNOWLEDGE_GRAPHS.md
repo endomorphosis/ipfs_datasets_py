@@ -5,6 +5,32 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.4] - 2026-02-22
+
+### Tests — numpy Skip Guards (Session 49)
+
+**No new tests, no production code changes.** Fixed collection errors in two test files.
+
+**Files changed:**
+- `tests/unit/knowledge_graphs/test_master_status_session41.py`
+- `tests/unit/knowledge_graphs/test_master_status_session42.py`
+
+**Problem:** Both files had `import numpy as np` at module level (before `import pytest`), which caused a `ModuleNotFoundError` collection error — not a graceful skip — in environments without numpy installed.
+
+**Fix:** In both files:
+1. Moved `import pytest` before the numpy import
+2. Replaced `import numpy as np` with `np = pytest.importorskip("numpy")`
+
+This is consistent with the `pytest.importorskip` pattern used throughout the KG test suite for other optional dependencies (`spacy`, `rdflib`, `matplotlib`, `libipld`).
+
+**Verification:**
+- With numpy installed: all 91 tests in sessions 41+42 still pass
+- Without numpy: sessions 41+42 are skipped cleanly (no collection error)
+- Full suite (base env): **3,569 passed, 64 skipped, 0 failed**
+- Full suite (all optional deps): **3,626 passed, 7 skipped, 0 failed**
+
+---
+
 ## [3.22.3] - 2026-02-22
 
 ### Tests — Final Coverage Push (Session 48)

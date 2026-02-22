@@ -1,8 +1,8 @@
 # Knowledge Graphs - Development Roadmap
 
 **Last Updated:** 2026-02-22  
-**Current Version:** 3.22.0  
-**Status:** Production Ready (99.7% test coverage)
+**Current Version:** 3.22.3  
+**Status:** Production Ready (99% test coverage)
 
 ---
 
@@ -317,6 +317,47 @@ All tests that require optional deps now have proper `@pytest.mark.skipif` guard
 - 3,553 tests passing, 55 cleanly skipped, 0 failing
 - All async cancellation bugs fixed
 - All optional-dep tests properly guarded
+
+---
+
+## Version 3.22.2 (2026-02-22) - ✅ RELEASED
+
+**Released:** 2026-02-22  
+**Focus:** Production bug fixes (sessions 47–48) + final coverage push
+
+### Delivered Features
+
+#### 1. RDF Boolean Serialization Bug Fix (Session 47) ✅
+`extraction/graph.py` `export_to_rdf()` now correctly serializes boolean values as `XSD.boolean` instead of `XSD.integer`. Root cause: Python's `bool` is a subclass of `int`, so `case int():` matched `True`/`False` before `case bool():` could. Fixed by reordering both the `match` block and the `elif` chain.
+
+#### 2. Final Coverage Push (Sessions 47–48) ✅
+- `extraction/graph.py`: 80% → **100%**
+- `core/expression_evaluator.py`: 97% → **100%**
+- `ontology/reasoning.py`: 99% → **100%**
+- `migration/formats.py`: 98% → **100%** (via libipld+ipld-car+dag-cbor+multiformats)
+- `cypher/compiler.py`: 3 → 2 missed lines
+- **Overall: 99%, 141 missed lines** (108 spaCy-only, 33 dead code)
+
+### Success Criteria — All Met ✅
+- 3,626 tests passing, 7 skipped, 0 failing (with all optional deps)
+- `extraction/graph.py` boolean serialization bug fixed
+- All 100%-target modules achieved
+
+---
+
+## Version 3.22.3 (2026-02-22) - ✅ RELEASED
+
+**Released:** 2026-02-22  
+**Focus:** Test infrastructure hardening (session 49)
+
+### Delivered
+
+#### 1. numpy Skip Guards (Session 49) ✅
+`test_master_status_session41.py` and `test_master_status_session42.py` had `import numpy as np` at module level, causing collection errors (not graceful skips) in environments without numpy. Fixed by replacing with `np = pytest.importorskip("numpy")`.
+
+### Result
+- Base env (without numpy/matplotlib/rdflib/etc): **3,569 passed, 64 skipped, 0 failed**
+- Full env (all optional deps installed): **3,626 passed, 7 skipped, 0 failed**
 
 ---
 

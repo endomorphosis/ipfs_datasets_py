@@ -22,8 +22,8 @@ import os
 import json
 import warnings
 import importlib
-import numpy as np
 import pytest
+np = pytest.importorskip("numpy")
 from unittest.mock import MagicMock, patch
 
 
