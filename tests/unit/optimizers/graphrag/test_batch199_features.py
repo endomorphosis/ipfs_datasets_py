@@ -450,7 +450,7 @@ class TestHubNodes:
 )
 @settings(max_examples=50)
 def test_history_trimmed_mean_in_range(scores):
-    """Trimmed mean should be between min and max scores."""
+    """Trimmed mean should be between min and max scores (within floating point tolerance)."""
     opt = OntologyOptimizer()
     opt._history = [
         OptimizationReport(average_score=s, trend="stable")
@@ -458,7 +458,8 @@ def test_history_trimmed_mean_in_range(scores):
     ]
     
     trimmed = opt.history_trimmed_mean(trim_fraction=0.1)
-    assert min(scores) <= trimmed <= max(scores)
+    # Account for floating point precision in comparisons
+    assert min(scores) - 1e-9 <= trimmed <= max(scores) + 1e-9
 
 
 @given(

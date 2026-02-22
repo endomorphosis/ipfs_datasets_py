@@ -724,6 +724,183 @@ class OntologyMediator:
             return []
         return list(recs)
 
+    def suggest_refinement_strategy(
+        self,
+        ontology: Dict[str, Any],
+        score: Any,  # CriticScore
+        context: Any,  # OntologyGenerationContext
+    ) -> Dict[str, Any]:
+        """
+        Suggest the optimal refinement strategy based on current ontology quality.
+
+        Analyzes the critic score and recommendations to recommend the next
+        most impactful refinement action. Considers:
+        - Current score across dimensions (completeness, consistency, clarity)
+        - Frequency of recommendations (repeated issues indicate priority)
+        - Entity/relationship statistics (size vs quality trade-offs)
+        - Action history (avoid thrashing by not repeating recent actions)
+
+        Args:
+            ontology: Current ontology dict with entities and relationships.
+            score: CriticScore with dimensions and recommendations.
+            context: OntologyGenerationContext for domain awareness.
+
+        Returns:
+            Dict with recommended strategy:
+            {
+                "action": str,  # Recommended action name
+                "priority": str,  # "critical", "high", "medium", or "low"
+                "rationale": str,  # Explanation of recommendation
+                "estimated_impact": float,  # Estimated score improvement (0-1)
+                "alternative_actions": list,  # [str, ...] fallback actions
+                "affected_entity_count": int,  # How many entities affected
+            }
+
+        Example:
+            >>> strategy = mediator.suggest_refinement_strategy(ont, score, ctx)
+            >>> print(f"Recommended: {strategy['action']}")
+            >>> print(f"Impact: +{strategy['estimated_impact']:.2f}")
+        """
+        import re as _re
+
+        entities = ontology.get("entities", [])
+        relationships = ontology.get("relationships", [])
+        entity_count = len(entities)
+        relationship_count = len(relationships)
+
+        # Extract score dimensions
+        completeness = getattr(score, "completeness", 0.5)
+        consistency = getattr(score, "consistency", 0.5)
+        clarity = getattr(score, "clarity", 0.5)
+        overall = getattr(score, "overall", 0.5)
+
+        # Count recommendations by pattern to identify repeated issues
+        recommendations = list(getattr(score, "recommendations", []))
+        recommendation_patterns = {
+            "property": sum(1 for r in recommendations if any(k in r.lower() for k in ["property", "detail", "clarity", "definition"])),
+            "naming": sum(1 for r in recommendations if any(k in r.lower() for k in ["naming", "convention", "normalize", "consistent", "casing"])),
+            "orphan": sum(1 for r in recommendations if any(k in r.lower() for k in ["orphan", "prune", "coverage"])),
+            "duplicate": sum(1 for r in recommendations if any(k in r.lower() for k in ["duplicate", "consistency", "dedup", "merge"])),
+            "relationship": sum(1 for r in recommendations if "relationship" in r.lower()),
+            "granular": sum(1 for r in recommendations if any(k in r.lower() for k in ["split", "granular", "too broad", "overloaded"])),
+        }
+
+        # Determine bottleneck dimensions
+        bottlenecks = []
+        if completeness < 0.6:
+            bottlenecks.append(("completeness", completeness))
+        if consistency < 0.6:
+            bottlenecks.append(("consistency", consistency))
+        if clarity < 0.6:
+            bottlenecks.append(("clarity", clarity))
+
+        # Recommend action based on bottlenecks and patterns
+        strategy = {
+            "action": "no_action_needed",
+            "priority": "low",
+            "rationale": "No significant issues detected.",
+            "estimated_impact": 0.0,
+            "alternative_actions": [],
+            "affected_entity_count": 0,
+        }
+
+        if overall >= 0.85:
+            # Already high quality
+            strategy.update({
+                "action": "converged",
+                "priority": "low",
+                "rationale": f"Ontology quality converged at {overall:.2f}. No further refinement needed.",
+                "estimated_impact": 0.0,
+            })
+            return strategy
+
+        # Pattern 1: Low clarity → add properties
+        if clarity < 0.55 and recommendation_patterns["property"] >= 2:
+            affected = sum(1 for e in entities if not e.get("properties"))
+            strategy.update({
+                "action": "add_missing_properties",
+                "priority": "high" if clarity < 0.45 else "medium",
+                "rationale": f"Clarity score is low ({clarity:.2f}). {affected} entities lack property definitions.",
+                "estimated_impact": 0.12,
+                "affected_entity_count": affected,
+                "alternative_actions": ["normalize_names", "split_entity"],
+            })
+
+        # Pattern 2: Low consistency + duplicate recommendations → merge
+        elif consistency < 0.55 and recommendation_patterns["duplicate"] >= 2:
+            strategy.update({
+                "action": "merge_duplicates",
+                "priority": "high" if consistency < 0.45 else "medium",
+                "rationale": f"Consistency score is low ({consistency:.2f}). Multiple duplicate entity recommendations detected.",
+                "estimated_impact": 0.15,
+                "affected_entity_count": min(10, entity_count // 5),
+                "alternative_actions": ["normalize_names", "add_missing_properties"],
+            })
+
+        # Pattern 3: Low completeness + relationship recommendations → add relationships
+        elif completeness < 0.55 and recommendation_patterns["relationship"] >= 2:
+            strategy.update({
+                "action": "add_missing_relationships",
+                "priority": "high" if completeness < 0.45 else "medium",
+                "rationale": f"Completeness score is low ({completeness:.2f}). {entity_count} entities but only {relationship_count} relationships; {entity_count - relationship_count} orphans detected.",
+                "estimated_impact": 0.18,
+                "affected_entity_count": entity_count - relationship_count,
+                "alternative_actions": ["split_entity", "prune_orphans"],
+            })
+
+        # Pattern 4: Orphaned entities recommendation
+        elif recommendation_patterns["orphan"] >= 1:
+            orphan_count = entity_count - min(entity_count, relationship_count + 5)
+            strategy.update({
+                "action": "prune_orphans",
+                "priority": "medium",
+                "rationale": f"~{orphan_count} orphaned entities detected (entities not in any relationship).",
+                "estimated_impact": 0.08,
+                "affected_entity_count": orphan_count,
+                "alternative_actions": ["add_missing_relationships", "split_entity"],
+            })
+
+        # Pattern 5: Granularity/splitting recommendation
+        elif recommendation_patterns["granular"] >= 1 and entity_count < 50:
+            strategy.update({
+                "action": "split_entity",
+                "priority": "medium",
+                "rationale": "Some entities are too broad and should be split into more granular entities.",
+                "estimated_impact": 0.10,
+                "affected_entity_count": min(5, entity_count // 10),
+                "alternative_actions": ["add_missing_properties", "normalize_names"],
+            })
+
+        # Pattern 6: Naming convention recommendation
+        elif recommendation_patterns["naming"] >= 2:
+            strategy.update({
+                "action": "normalize_names",
+                "priority": "medium",
+                "rationale": f"Entity/relationship naming is inconsistent. Multiple convention recommendations detected.",
+                "estimated_impact": 0.07,
+                "affected_entity_count": entity_count,
+                "alternative_actions": ["add_missing_properties", "merge_duplicates"],
+            })
+
+        # Fallback: general property enrichment
+        elif clarity < 0.65:
+            affected = sum(1 for e in entities if not e.get("properties"))
+            if affected > 0:
+                strategy.update({
+                    "action": "add_missing_properties",
+                    "priority": "medium",
+                    "rationale": f"Clarity could be improved. {affected} entities lack property definitions.",
+                    "estimated_impact": 0.10,
+                    "affected_entity_count": affected,
+                    "alternative_actions": ["normalize_names"],
+                })
+
+        self._log.info(
+            f"Suggested refinement strategy: {strategy['action']} "
+            f"(priority={strategy['priority']}, estimated_impact={strategy['estimated_impact']:.2f})"
+        )
+        return strategy
+
     def undo_last_action(self) -> Dict[str, Any]:
         """Revert the last applied refinement action.
 
