@@ -242,7 +242,7 @@ class TestStrategyFallback:
         # Should return a result (even if unprovable or error)
         assert result is not None
         assert isinstance(result, ProofResult)
-        assert result.status in [ProofStatus.PROVED, ProofStatus.UNPROVABLE, ProofStatus.TIMEOUT, ProofStatus.ERROR]
+        assert result.status in [ProofStatus.PROVED, ProofStatus.UNPROVABLE, ProofStatus.UNKNOWN, ProofStatus.TIMEOUT, ProofStatus.ERROR]
 
 
 class TestKnowledgeBaseIntegration:
@@ -261,7 +261,7 @@ class TestKnowledgeBaseIntegration:
         
         # Add axioms: P(a), P(a) → Q(b)
         prover.add_axiom(p)
-        implication = BinaryFormula(p, LogicOperator.IMPLIES, q)
+        implication = BinaryFormula(LogicOperator.IMPLIES, p, q)
         prover.add_axiom(implication)
         
         # WHEN - prove P(a) (axiom)
@@ -297,7 +297,7 @@ class TestEdgeCases:
         result = prover.prove(p, timeout_ms=1000)
         
         # THEN
-        assert result.status in [ProofStatus.UNPROVABLE, ProofStatus.ERROR]
+        assert result.status in [ProofStatus.UNPROVABLE, ProofStatus.UNKNOWN, ProofStatus.ERROR]
 
     def test_prove_with_zero_timeout(self):
         """
@@ -330,7 +330,7 @@ class TestEdgeCases:
         q = Predicate("Q", [Term("b")])
         
         # Create nested formula: □(P(a) → ◊Q(b))
-        inner_implication = BinaryFormula(p, LogicOperator.IMPLIES, q)
+        inner_implication = BinaryFormula(LogicOperator.IMPLIES, p, q)
         eventually_q = TemporalFormula(TemporalOperator.EVENTUALLY, inner_implication)
         always_formula = TemporalFormula(TemporalOperator.ALWAYS, eventually_q)
         

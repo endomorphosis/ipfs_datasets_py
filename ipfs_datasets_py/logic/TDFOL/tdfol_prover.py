@@ -444,10 +444,21 @@ class TDFOLProver:
         """
         import time
         start_time = time.time()
-        
+
+        # Guard: None is not a valid formula
+        if goal is None:
+            return ProofResult(
+                status=ProofStatus.ERROR,
+                formula=None,
+                method="validation",
+                message="Cannot prove None: goal formula must not be None"
+            )
+
         # Check cache first (O(1) lookup)
+        # Cache key includes both axioms AND theorems to avoid cross-KB collisions
+        _kb_context = list(self.kb.axioms) + list(self.kb.theorems)
         if self.proof_cache is not None:
-            cached_result = self.proof_cache.get(goal, list(self.kb.axioms))
+            cached_result = self.proof_cache.get(goal, _kb_context)
             if cached_result is not None:
                 logger.debug(f"Cache hit for formula: {goal}")
                 return cached_result
@@ -463,7 +474,7 @@ class TDFOLProver:
             )
             # Cache the result
             if self.proof_cache is not None:
-                self.proof_cache.set(goal, result, list(self.kb.axioms))
+                self.proof_cache.set(goal, result, _kb_context)
             return result
         
         if goal in self.kb.theorems:
@@ -476,7 +487,7 @@ class TDFOLProver:
             )
             # Cache the result
             if self.proof_cache is not None:
-                self.proof_cache.set(goal, result, list(self.kb.axioms))
+                self.proof_cache.set(goal, result, _kb_context)
             return result
         
         # Use strategy pattern if available
@@ -496,7 +507,7 @@ class TDFOLProver:
             
             # Cache successful proof
             if result.is_proved() and self.proof_cache is not None:
-                self.proof_cache.set(goal, result, list(self.kb.axioms))
+                self.proof_cache.set(goal, result, _kb_context)
             
             return result
         

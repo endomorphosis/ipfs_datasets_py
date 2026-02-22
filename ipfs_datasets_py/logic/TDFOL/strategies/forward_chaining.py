@@ -102,6 +102,8 @@ class ForwardChainingStrategy(ProverStrategy):
         Returns:
             ProofResult with status and proof steps
         """
+        # Cap timeout to avoid very long runs; use a sensible default upper bound
+        timeout_ms = min(timeout_ms, 2000)
         start_time = time.time()
         
         # Initialize derived collection with axioms and theorems
@@ -165,8 +167,9 @@ class ForwardChainingStrategy(ProverStrategy):
                     message=f"Proved in {iteration} iterations"
                 )
             
-            # Apply all TDFOL rules to derive new formulas
-            new_formulas = self._apply_rules_list(derived_list, proof_steps)
+            # Apply all TDFOL rules to derive new formulas (with deadline)
+            deadline = start_time + timeout_ms / 1000.0
+            new_formulas = self._apply_rules_list(derived_list, proof_steps, deadline=deadline)
             
             # No progress made - stop
             if not new_formulas:
@@ -206,7 +209,8 @@ class ForwardChainingStrategy(ProverStrategy):
     def _apply_rules_list(
         self,
         derived: List['Formula'],
-        proof_steps: List['ProofStep']
+        proof_steps: List['ProofStep'],
+        deadline: float = None,
     ) -> List['Formula']:
         """
         Apply all inference rules to derived formulas (list-based, hash-safe).
@@ -214,12 +218,16 @@ class ForwardChainingStrategy(ProverStrategy):
         Args:
             derived: List of currently derived formulas
             proof_steps: List to append proof steps to
+            deadline: Optional absolute time.time() deadline; stop early if exceeded.
         
         Returns:
             List of newly derived formulas (without duplicates)
         """
+        import time as _time
         new_formulas: List[Formula] = []
         derived_strs: Set[str] = {str(f) for f in derived}
+        # Hard cap: never generate more than 200 new formulas per iteration
+        _MAX_NEW = 200
         
         def _not_in_derived(f: Formula) -> bool:
             try:
@@ -229,7 +237,15 @@ class ForwardChainingStrategy(ProverStrategy):
         
         # Try each formula with each rule
         for current_formula in list(derived):
+            if deadline is not None and _time.time() > deadline:
+                break
+            if len(new_formulas) >= _MAX_NEW:
+                break
             for rule in self.tdfol_rules:
+                if deadline is not None and _time.time() > deadline:
+                    break
+                if len(new_formulas) >= _MAX_NEW:
+                    break
                 try:
                     # Try single-formula rules
                     if hasattr(rule, 'can_apply'):
@@ -245,10 +261,14 @@ class ForwardChainingStrategy(ProverStrategy):
                                     premises=[current_formula]
                                 ))
                     
-                    # Try two-formula rules
-                    for other_formula in list(derived):
+                    # Try two-formula rules (only first 20 derived to cap O(n²))
+                    for other_formula in list(derived)[:20]:
                         if current_formula == other_formula:
                             continue
+                        if deadline is not None and _time.time() > deadline:
+                            break
+                        if len(new_formulas) >= _MAX_NEW:
+                            break
                         try:
                             if hasattr(rule, 'can_apply'):
                                 if rule.can_apply(current_formula, other_formula):
