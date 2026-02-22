@@ -1682,3 +1682,32 @@ class OntologyPipeline:
             return 0
         scores = [r.score.overall for r in self._run_history]
         return sum(1 for i in range(1, n - 1) if scores[i] > scores[i - 1] and scores[i] > scores[i + 1])
+
+    def run_score_trend_direction(self) -> str:
+        """Return "improving", "declining", or "stable" based on recent runs.
+
+        Uses the last 5 run scores (or all if fewer) and checks if the
+        linear trend slope is positive, negative, or near zero.
+
+        Returns:
+            String label.
+        """
+        n = len(self._run_history)
+        if n < 2:
+            return "stable"
+        recent = self._run_history[-5:]
+        scores = [r.score.overall for r in recent]
+        m = len(scores)
+        indices = list(range(m))
+        mx = sum(indices) / m
+        my = sum(scores) / m
+        num = sum((i - mx) * (s - my) for i, s in zip(indices, scores))
+        di = sum((i - mx) ** 2 for i in indices)
+        if di == 0.0:
+            return "stable"
+        slope = num / di
+        if slope > 0.005:
+            return "improving"
+        if slope < -0.005:
+            return "declining"
+        return "stable"

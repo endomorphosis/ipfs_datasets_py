@@ -1759,3 +1759,25 @@ class OntologyLearningAdapter:
         if not self._feedback:
             return 0.0
         return self._feedback[0].final_score
+
+    def feedback_improvement_count(self) -> int:
+        """Return the number of consecutive pairs where feedback improved.
+
+        Returns:
+            Integer; 0 when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0
+        scores = [r.final_score for r in self._feedback]
+        return sum(1 for i in range(1, len(scores)) if scores[i] > scores[i - 1])
+
+    def feedback_decline_count(self) -> int:
+        """Return the number of consecutive pairs where feedback declined.
+
+        Returns:
+            Integer; 0 when fewer than 2 records.
+        """
+        if len(self._feedback) < 2:
+            return 0
+        scores = [r.final_score for r in self._feedback]
+        return sum(1 for i in range(1, len(scores)) if scores[i] < scores[i - 1])

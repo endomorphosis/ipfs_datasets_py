@@ -5877,6 +5877,37 @@ class OntologyGenerator:
         rels = result.relationships or []
         return len({getattr(r, "type", "") for r in rels})
 
+    def entity_confidence_std(self, result: Any) -> float:
+        """Return the standard deviation of entity confidence scores.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float; 0.0 when fewer than 2 entities.
+        """
+        entities = result.entities or []
+        n = len(entities)
+        if n < 2:
+            return 0.0
+        confs = [getattr(e, "confidence", 0.5) for e in entities]
+        mean = sum(confs) / n
+        return (sum((c - mean) ** 2 for c in confs) / n) ** 0.5
+
+    def entity_avg_property_count(self, result: Any) -> float:
+        """Return the average number of properties per entity.
+
+        Args:
+            result: An ``EntityExtractionResult`` instance.
+
+        Returns:
+            Float; 0.0 when no entities.
+        """
+        entities = result.entities or []
+        if not entities:
+            return 0.0
+        return sum(len(getattr(e, "properties", {}) or {}) for e in entities) / len(entities)
+
 
 __all__ = [
     'OntologyGenerator',

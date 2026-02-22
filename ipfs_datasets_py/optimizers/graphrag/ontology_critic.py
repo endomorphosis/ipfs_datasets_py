@@ -3899,9 +3899,41 @@ class OntologyCritic(BaseCritic):
             median = overalls[n // 2]
         return score.overall > median
 
+    def dimension_cosine_similarity(self, score1: "CriticScore", score2: "CriticScore") -> float:  # type: ignore[name-defined]
+        """Return cosine similarity between two CriticScore dimension vectors.
+
+        Args:
+            score1: First ``CriticScore``.
+            score2: Second ``CriticScore``.
+
+        Returns:
+            Float in [-1, 1]; 0.0 when either vector is zero.
+        """
+        v1 = [getattr(score1, d, 0.0) for d in self._DIMENSIONS]
+        v2 = [getattr(score2, d, 0.0) for d in self._DIMENSIONS]
+        dot = sum(a * b for a, b in zip(v1, v2))
+        mag1 = sum(a ** 2 for a in v1) ** 0.5
+        mag2 = sum(b ** 2 for b in v2) ** 0.5
+        if mag1 == 0.0 or mag2 == 0.0:
+            return 0.0
+        return dot / (mag1 * mag2)
+
+    def score_distance(self, score1: "CriticScore", score2: "CriticScore") -> float:  # type: ignore[name-defined]
+        """Return Euclidean distance between two CriticScore dimension vectors.
+
+        Args:
+            score1: First ``CriticScore``.
+            score2: Second ``CriticScore``.
+
+        Returns:
+            Float; 0.0 when scores are identical.
+        """
+        return sum((getattr(score1, d, 0.0) - getattr(score2, d, 0.0)) ** 2 for d in self._DIMENSIONS) ** 0.5
+
 
 # Export public API
 __all__ = [
+    'OntologyCritic',
     'CriticScore',
     'DIMENSION_WEIGHTS',
 ]

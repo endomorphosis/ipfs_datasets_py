@@ -2895,6 +2895,42 @@ class LogicValidator:
             return 0.0
         return sum(out_deg.values()) / len(nodes)
 
+    def self_loop_count(self, ontology: Any) -> int:
+        """Return the number of self-referential edges (source_id == target_id).
+
+        Args:
+            ontology: Ontology with ``relationships`` list.
+
+        Returns:
+            Integer count; 0 when no relationships.
+        """
+        rels = getattr(ontology, "relationships", [])
+        return sum(
+            1 for r in rels
+            if getattr(r, "source_id", None) == getattr(r, "target_id", None)
+            and getattr(r, "source_id", None) is not None
+        )
+
+    def node_count(self, ontology: Any) -> int:
+        """Return the total number of unique nodes in the relationship graph.
+
+        Args:
+            ontology: Ontology with ``relationships`` list.
+
+        Returns:
+            Integer count; 0 when no relationships.
+        """
+        rels = getattr(ontology, "relationships", [])
+        nodes: set = set()
+        for r in rels:
+            src = getattr(r, "source_id", None)
+            tgt = getattr(r, "target_id", None)
+            if src:
+                nodes.add(src)
+            if tgt:
+                nodes.add(tgt)
+        return len(nodes)
+
 
 # Export public API
 __all__ = [

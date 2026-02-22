@@ -3476,6 +3476,43 @@ class OntologyOptimizer:
         return sum(1 for i in range(1, n - 1) if scores[i] > scores[i - 1] and scores[i] > scores[i + 1])
 
 
+    def history_valley_count(self) -> int:
+        """Return the number of local minima in score history.
+
+        A local minimum is a point where both neighbors are strictly higher.
+
+        Returns:
+            Integer count; 0 when fewer than 3 entries.
+        """
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        if n < 3:
+            return 0
+        return sum(1 for i in range(1, n - 1) if scores[i] < scores[i - 1] and scores[i] < scores[i + 1])
+
+    def score_trend_correlation(self) -> float:
+        """Return Pearson correlation between time index and history scores.
+
+        Positive → improving trend; negative → declining; near 0 → flat.
+
+        Returns:
+            Float in [-1, 1]; 0.0 when fewer than 2 history entries.
+        """
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        if n < 2:
+            return 0.0
+        indices = list(range(n))
+        mx = sum(indices) / n
+        my = sum(scores) / n
+        num = sum((i - mx) * (s - my) for i, s in zip(indices, scores))
+        di = sum((i - mx) ** 2 for i in indices) ** 0.5
+        ds = sum((s - my) ** 2 for s in scores) ** 0.5
+        if di == 0.0 or ds == 0.0:
+            return 0.0
+        return num / (di * ds)
+
+
 # Export public API
 __all__ = [
     'OntologyOptimizer',
