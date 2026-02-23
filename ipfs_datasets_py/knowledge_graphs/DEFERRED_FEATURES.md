@@ -1011,7 +1011,7 @@ ids, matrix = adapter.export_node_features_array()  # → numpy / PyTorch
 
 ### §24 — Zero-Knowledge Proof Support
 
-**Status:** ✅ Implemented in v3.22.30
+**Status:** ✅ Implemented in v3.22.30 (simulation) + v3.22.31 (logic backend integration)
 **Module:** `query/zkp.py`
 **Classes:** `KGZKProver`, `KGZKVerifier`
 
@@ -1026,7 +1026,12 @@ without revealing underlying entity IDs, names, or relationship details:
   - `prove_path_exists(start_type, end_type, max_hops)` — prove connectivity without revealing path
   - `prove_query_answer_count(min_count, query_type)` — prove count ≥ N without revealing results
   - `batch_prove(requests)` — parallel proof generation
+  - **`from_logic_prover(kg, logic_prover)`** *(v3.22.31)* — factory wiring to `logic.zkp.ZKPProver`
+  - **`uses_logic_backend`** property — `True` when logic prover is attached
+  - **`get_backend_info()`** — returns backend name, security level
 - `KGZKVerifier.verify_statement(stmt)` — structural verification (replay protection via nullifiers)
+  - **`from_logic_verifier(logic_verifier)`** *(v3.22.31)* — factory wiring to `logic.zkp.ZKPVerifier`
+  - Enhanced verification of embedded `public_inputs["logic_proof_data"]` when logic verifier present
 
 ```python
 from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
@@ -1047,9 +1052,38 @@ results = prover.batch_prove(requests)
 assert verifier.verify_batch(results) == [True, True]
 ```
 
-⚠️ **Note:** This implementation generates **simulated** proofs using SHA-256
-commitments. For production cryptographic proofs, use `logic/zkp/ZKPProver`
-which integrates Groth16 (implemented in Session 60+).
+#### Groth16 Backend Integration (v3.22.31)
+
+Connect the KG prover to the `ipfs_datasets_py.logic.zkp` simulation
+(or production Groth16 when `processors/groth16_backend` Rust binary is compiled):
+
+```python
+import warnings; warnings.filterwarnings("ignore")   # suppress simulation warnings
+
+from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
+from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
+
+logic_prover   = ZKPProver()      # simulated; swap for ZKPProver(backend="groth16") when binary ready
+logic_verifier = ZKPVerifier()
+
+prover   = KGZKProver.from_logic_prover(kg, logic_prover)
+verifier = KGZKVerifier.from_logic_verifier(logic_verifier)
+
+assert prover.uses_logic_backend                             # True
+print(prover.get_backend_info())                             # {"backend": "simulated", "security_level": 128, ...}
+
+stmt = prover.prove_entity_exists("person", "Alice")
+assert "logic_proof_data" in stmt.public_inputs              # embedded ZKPProof
+assert verifier.verify_statement(stmt)                       # structural + logic-layer verification
+```
+
+**Production path:** when `ipfs_datasets_py/processors/groth16_backend` Rust binary is compiled
+(`cargo build --release`), replace `ZKPProver()` with `ZKPProver(backend="groth16")` — the KG
+layer automatically benefits without further changes.
+
+⚠️ **Note:** Both `logic/zkp/ZKPProver` and `query/zkp/KGZKProver` generate **simulated** proofs
+using SHA-256 hash commitments. They are NOT cryptographically secure. The interface is
+intentionally compatible with a future production-grade Groth16 backend.
 
 ---
 
@@ -1062,7 +1096,7 @@ which integrates Groth16 (implemented in Session 60+).
 
 ---
 
-**Last Updated:** 2026-02-23 (session 76)
+**Last Updated:** 2026-02-23 (session 77)
 **Next Review:** Q3 2026
 **Maintainer:** Knowledge Graphs Team
 

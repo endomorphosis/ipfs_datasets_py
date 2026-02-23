@@ -5,6 +5,37 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.31] - 2026-02-23
+
+### Added — ZKP Logic Backend Integration (Session 77)
+
+**Production code changes.**
+
+- `query/zkp.py` — `KGZKProver.from_logic_prover(kg, logic_prover, prover_id='default')`:
+  factory that wires the KG prover to `ipfs_datasets_py.logic.zkp.ZKPProver`
+- `query/zkp.py` — `KGZKProver.uses_logic_backend` property (`True` when logic prover attached)
+- `query/zkp.py` — `KGZKProver.get_backend_info()` → `dict` with name/backend/security_level/uses_logic_backend
+- `query/zkp.py` — `prove_entity_exists()` + `prove_path_exists()` embed serialised `ZKPProof`
+  in `KGProofStatement.public_inputs["logic_proof_data"]` + `"logic_theorem"` when logic prover is present
+- `query/zkp.py` — `KGZKVerifier.from_logic_verifier(logic_verifier, seen_nullifiers=None)` factory
+- `query/zkp.py` — `KGZKVerifier.verify_statement()` re-verifies embedded `logic_proof_data` via
+  `ZKPProof.from_dict()` + `logic_verifier.verify_proof()` when both are present
+
+### Documentation
+
+- `DEFERRED_FEATURES.md §24` — new "Groth16 Backend Integration (v3.22.31)" subsection:
+  explains `from_logic_prover`/`from_logic_verifier` factories with usage example;
+  documents production path via `processors/groth16_backend` Rust binary
+- `MASTER_STATUS.md` — v3.22.30→3.22.31; session 77 log entry
+
+### Tests
+
+- `tests/unit/knowledge_graphs/test_master_status_session77.py` — 28 tests:
+  standalone mode (no regression), from_logic_prover factory, logic_proof_data embedding,
+  from_logic_verifier factory + enhanced verification, doc-integrity, version agreement
+
+---
+
 ## [3.22.30] - 2026-02-23
 
 ### Added — Deferred v4.0+ GNN Integration + ZKP Support (Session 76)

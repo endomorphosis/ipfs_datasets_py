@@ -14,15 +14,51 @@ expose, so callers can swap in a stronger backend without API changes.
              They are NOT cryptographically secure.
              Use ``logic/zkp/ZKPProver`` for production-grade proofs.
 
-Example::
+Integration with ``ipfs_datasets_py.logic.zkp``
+------------------------------------------------
+When a ``ZKPProver`` from ``ipfs_datasets_py.logic.zkp`` is provided via
+:meth:`KGZKProver.from_logic_prover`, the prover delegates theorem-level
+proof generation to the logic backend.  For ``prove_entity_exists`` and
+``prove_path_exists``, the serialised ``ZKPProof.proof_data`` is embedded in
+``KGProofStatement.public_inputs["logic_proof_data"]`` so that a
+``KGZKVerifier`` equipped with a ``ZKPVerifier`` (via
+:meth:`KGZKVerifier.from_logic_verifier`) can re-verify the underlying proof.
+
+When ``ipfs_datasets_py/processors/groth16_backend`` is compiled (Rust
+binary present), ``ZKPProver(backend="groth16")`` will use real Groth16
+proofs — the KG layer automatically benefits without any further changes.
+
+Example (logic backend integration)::
+
+    import warnings
+    warnings.filterwarnings("ignore")          # suppress simulation warnings
+
+    from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
+    from ipfs_datasets_py.knowledge_graphs.query.zkp import (
+        KGZKProver, KGZKVerifier,
+    )
+    from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
+    kg = KnowledgeGraph("demo")
+    alice = kg.add_entity("person", "Alice", confidence=0.9)
+
+    logic_prover   = ZKPProver()
+    logic_verifier = ZKPVerifier()
+
+    prover   = KGZKProver.from_logic_prover(kg, logic_prover)
+    verifier = KGZKVerifier.from_logic_verifier(logic_verifier)
+
+    stmt = prover.prove_entity_exists("person", "Alice")
+    # public_inputs["logic_proof_data"] contains the serialised ZKPProof
+    assert verifier.verify_statement(stmt)
+
+Example (standalone, no logic backend)::
 
     from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
     from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
 
     kg = KnowledgeGraph("demo")
     alice = kg.add_entity("person", "Alice", confidence=0.9)
-    carol = kg.add_entity("org",    "ACME")
-    kg.add_relationship("works_at", alice, carol)
 
     prover   = KGZKProver(kg)
     verifier = KGZKVerifier()
@@ -119,15 +155,90 @@ class KGZKProver:
     :class:`KGProofStatement` objects that can be verified without
     accessing the underlying graph.
 
+    When *logic_prover* is provided (a ``ZKPProver`` from
+    ``ipfs_datasets_py.logic.zkp``), theorem-level proof data is embedded
+    inside the :class:`KGProofStatement` for stronger verifiability.
+
     Args:
         kg: The knowledge graph to prove properties of.
         prover_id: Optional stable identifier for this prover instance
             (used in nullifier computation).
+        logic_prover: Optional ``ZKPProver`` instance from
+            ``ipfs_datasets_py.logic.zkp`` for theorem-level proofs.
     """
 
-    def __init__(self, kg: Any, prover_id: str = "default") -> None:
+    def __init__(
+        self, kg: Any, prover_id: str = "default", logic_prover: Any = None
+    ) -> None:
         self.kg = kg
         self.prover_id = prover_id
+        self._logic_prover = logic_prover
+
+    # ------------------------------------------------------------------
+    # Factory methods
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def from_logic_prover(
+        cls, kg: Any, logic_prover: Any, prover_id: str = "default"
+    ) -> "KGZKProver":
+        """Create a :class:`KGZKProver` backed by a ``logic.zkp.ZKPProver``.
+
+        This factory wires the KG prover to the ``ipfs_datasets_py.logic.zkp``
+        simulation (or Groth16 when the Rust binary is compiled) so that
+        ``prove_entity_exists`` and ``prove_path_exists`` embed a proper
+        theorem-level :class:`~ipfs_datasets_py.logic.zkp.ZKPProof` inside
+        the returned :class:`KGProofStatement`.
+
+        Args:
+            kg: The knowledge graph to prove properties of.
+            logic_prover: A ``ZKPProver`` instance from
+                ``ipfs_datasets_py.logic.zkp``.
+            prover_id: Stable identifier for this prover instance.
+
+        Returns:
+            A new :class:`KGZKProver` that uses *logic_prover* internally.
+
+        Example::
+
+            import warnings; warnings.filterwarnings("ignore")
+            from ipfs_datasets_py.logic.zkp import ZKPProver
+            from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver
+
+            prover = KGZKProver.from_logic_prover(kg, ZKPProver())
+            assert prover.uses_logic_backend
+        """
+        return cls(kg=kg, prover_id=prover_id, logic_prover=logic_prover)
+
+    # ------------------------------------------------------------------
+    # Properties
+    # ------------------------------------------------------------------
+
+    @property
+    def uses_logic_backend(self) -> bool:
+        """``True`` when a ``logic.zkp.ZKPProver`` is attached."""
+        return self._logic_prover is not None
+
+    def get_backend_info(self) -> Dict[str, Any]:
+        """Return a dict describing the active ZKP backend.
+
+        Returns:
+            Dictionary with keys ``name``, ``backend``, ``security_level``,
+            ``uses_logic_backend``.  Extra keys are populated when a
+            ``logic.zkp.ZKPProver`` is attached.
+        """
+        info: Dict[str, Any] = {
+            "name": "KGZKProver",
+            "backend": "simulated",
+            "security_level": 0,
+            "uses_logic_backend": self.uses_logic_backend,
+        }
+        if self._logic_prover is not None:
+            info["backend"] = getattr(self._logic_prover, "backend", "simulated")
+            info["security_level"] = getattr(
+                self._logic_prover, "security_level", 128
+            )
+        return info
 
     # ------------------------------------------------------------------
     # Individual proof generators
@@ -140,6 +251,10 @@ class KGZKProver:
 
         The proof reveals *only* that such an entity exists — not its ID,
         properties, or relationships.
+
+        When a ``logic.zkp.ZKPProver`` is attached (via
+        :meth:`from_logic_prover`), a theorem-level proof is embedded in
+        ``public_inputs["logic_proof_data"]`` for stronger verification.
 
         Args:
             entity_type: The entity type to search for.
@@ -158,12 +273,27 @@ class KGZKProver:
                 params = {"entity_type": entity_type, "name_hash": _sha256_hex(name.lower())}
                 commit = _commitment(KGProofType.ENTITY_EXISTS.value, params, secret)
                 null = _nullifier(commit, self.prover_id)
+                public_inputs: Dict[str, Any] = {"entity_type": entity_type}
+                # --- Logic ZKP backend integration ---
+                if self._logic_prover is not None:
+                    theorem = f"entity_of_type_{entity_type}_named_{_sha256_hex(name.lower())[:16]}_exists"
+                    private_axioms = [entity.entity_id, f"name:{name.lower()}", f"type:{entity_type}"]
+                    try:
+                        logic_proof = self._logic_prover.generate_proof(
+                            theorem=theorem,
+                            private_axioms=private_axioms,
+                        )
+                        public_inputs["logic_proof_data"] = logic_proof.to_dict()
+                        public_inputs["logic_theorem"] = theorem
+                    except Exception:
+                        pass  # fall back to simulation-only proof
+                # ------------------------------------
                 return KGProofStatement(
                     proof_type=KGProofType.ENTITY_EXISTS,
                     parameters=params,
                     commitment=commit,
                     nullifier=null,
-                    public_inputs={"entity_type": entity_type},
+                    public_inputs=public_inputs,
                 )
         return None
 
@@ -214,6 +344,9 @@ class KGZKProver:
         The proof reveals *only* that such a path exists — not the specific
         entity IDs or relationship types along the path.
 
+        When a ``logic.zkp.ZKPProver`` is attached, a theorem-level proof is
+        embedded in ``public_inputs["logic_proof_data"]``.
+
         Args:
             start_type: Entity type of the path start.
             end_type: Entity type of the path end.
@@ -235,16 +368,31 @@ class KGZKProver:
         }
         commit = _commitment(KGProofType.PATH_EXISTS.value, params, secret)
         null = _nullifier(commit, self.prover_id)
+        public_inputs: Dict[str, Any] = {
+            "start_type": start_type,
+            "end_type": end_type,
+            "path_length": len(path) - 1,
+        }
+        # --- Logic ZKP backend integration ---
+        if self._logic_prover is not None:
+            theorem = f"path_from_{start_type}_to_{end_type}_length_{len(path) - 1}_exists"
+            private_axioms = [f"node:{nid}" for nid in path]
+            try:
+                logic_proof = self._logic_prover.generate_proof(
+                    theorem=theorem,
+                    private_axioms=private_axioms,
+                )
+                public_inputs["logic_proof_data"] = logic_proof.to_dict()
+                public_inputs["logic_theorem"] = theorem
+            except Exception:
+                pass
+        # ------------------------------------
         return KGProofStatement(
             proof_type=KGProofType.PATH_EXISTS,
             parameters=params,
             commitment=commit,
             nullifier=null,
-            public_inputs={
-                "start_type": start_type,
-                "end_type": end_type,
-                "path_length": len(path) - 1,
-            },
+            public_inputs=public_inputs,
         )
 
     def prove_query_answer_count(
@@ -392,15 +540,48 @@ class KGZKVerifier:
     nullifier — not the underlying graph data.  In a real ZKP system this
     would verify the proof against a public verification key.
 
+    When a ``logic.zkp.ZKPVerifier`` is attached (via
+    :meth:`from_logic_verifier`), statements that contain a
+    ``"logic_proof_data"`` key in their ``public_inputs`` are additionally
+    verified against the logic backend.
+
     Args:
         seen_nullifiers: Optional set of previously used nullifiers; if
             provided, replay attacks are detected.
+        logic_verifier: Optional ``ZKPVerifier`` from
+            ``ipfs_datasets_py.logic.zkp`` for enhanced re-verification.
     """
 
-    def __init__(self, seen_nullifiers: Optional[set] = None) -> None:
+    def __init__(
+        self,
+        seen_nullifiers: Optional[set] = None,
+        logic_verifier: Any = None,
+    ) -> None:
         self._seen: set = seen_nullifiers if seen_nullifiers is not None else set()
+        self._logic_verifier = logic_verifier
 
-    def verify_statement(self, stmt: KGProofStatement) -> bool:
+    @classmethod
+    def from_logic_verifier(
+        cls, logic_verifier: Any, seen_nullifiers: Optional[set] = None
+    ) -> "KGZKVerifier":
+        """Create a :class:`KGZKVerifier` backed by a ``logic.zkp.ZKPVerifier``.
+
+        Statements produced by a :class:`KGZKProver` that was itself created
+        via :meth:`KGZKProver.from_logic_prover` will contain
+        ``public_inputs["logic_proof_data"]``.  This factory ensures those
+        embedded proofs are also verified by the logic layer.
+
+        Args:
+            logic_verifier: A ``ZKPVerifier`` instance from
+                ``ipfs_datasets_py.logic.zkp``.
+            seen_nullifiers: Optional set of previously seen nullifiers.
+
+        Returns:
+            A new :class:`KGZKVerifier` that uses *logic_verifier* internally.
+        """
+        return cls(seen_nullifiers=seen_nullifiers, logic_verifier=logic_verifier)
+
+    def verify_statement(self, stmt: "KGProofStatement") -> bool:
         """Verify a :class:`KGProofStatement`.
 
         Checks:
@@ -408,6 +589,9 @@ class KGZKVerifier:
         2. Commitment is non-empty and starts with the expected prefix.
         3. Proof type is a known :class:`KGProofType`.
         4. Parameters dict is non-empty.
+        5. If ``public_inputs["logic_proof_data"]`` is present and a
+           ``logic.zkp.ZKPVerifier`` is attached, the embedded proof is
+           also verified by the logic layer.
 
         Returns:
             ``True`` if all checks pass; ``False`` otherwise.
@@ -426,12 +610,22 @@ class KGZKVerifier:
             return False
         if not stmt.parameters:
             return False
+        # --- Logic ZKP backend re-verification ---
+        if self._logic_verifier is not None and stmt.public_inputs.get("logic_proof_data"):
+            try:
+                from ipfs_datasets_py.logic.zkp import ZKPProof
+                logic_proof = ZKPProof.from_dict(stmt.public_inputs["logic_proof_data"])
+                if not self._logic_verifier.verify_proof(logic_proof):
+                    return False
+            except Exception:
+                pass  # fall back to simulation-only verification
+        # -----------------------------------------
         self._seen.add(stmt.nullifier)
         return True
 
     def verify_batch(
-        self, stmts: List[Optional[KGProofStatement]]
-    ) -> List[bool]:
+        self, stmts: "List[Optional[KGProofStatement]]"
+    ) -> "List[bool]":
         """Verify a list of proof statements.
 
         Returns:

@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.22.30  
+**Version:** 3.22.31  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-23 (session 74)  
-**Last Major Release:** v3.22.30 (session 76: deferred v4.0+ GNN integration — `query/gnn.py` with `GraphNeuralNetworkAdapter` (pure-Python; GRAPH_CONV/SAGE/ATTENTION; node embeddings, link prediction, similar-entity search, numpy/PyTorch export) + ZKP support — `query/zkp.py` with `KGZKProver`/`KGZKVerifier` (4 proof types; SHA-256 commitments; nullifier replay protection); DEFERRED_FEATURES P11 §23+§24; ROADMAP both "Graph neural networks" and "Zero-knowledge proof support" → ✅ Delivered; 55 tests)
+**Last Updated:** 2026-02-23 (session 77)  
+**Last Major Release:** v3.22.31 (session 77: ZKP backend integration — `query/zkp.py`: `KGZKProver.from_logic_prover()` + `KGZKVerifier.from_logic_verifier()` factories connect KG ZKP layer to `ipfs_datasets_py.logic.zkp.ZKPProver`/`ZKPVerifier`; embedded `logic_proof_data` in `KGProofStatement.public_inputs`; `uses_logic_backend` property + `get_backend_info()`; `DEFERRED_FEATURES.md §24` updated with Groth16 integration path; 28 tests)
 
 ---
 
@@ -19,7 +19,7 @@
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
 | **Test Coverage** | **99.99% (1 missed line)** | Session 58: 3,759 pass, 2 skip, **0 fail** (full dep env); 1 missed line |
-| **Documentation** | ✅ Up to Date | Reflects v3.22.30 structure |
+| **Documentation** | ✅ Up to Date | Reflects v3.22.31 structure |
 | **Known Issues** | None | 0 failures; all skips intentional (libipld/spaCy absent when not installed) |
 | **Next Milestone** | v4.0 (2027+) | 1 missed line: `_entity_helpers.py:117` (intentional defensive guard) — 99.99% coverage |
 
@@ -174,7 +174,7 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 **Remaining 1 missed line (99.99% coverage):**
 - `extraction/_entity_helpers.py:117` — intentional defensive guard (all regex patterns produce ≥2-char groups; kept for safety)
 
-### Test Files: 115+ total (as of v3.22.30)
+### Test Files: 115+ total (as of v3.22.31)
 
 **Unit Tests:** tests/unit/knowledge_graphs/
 - test_extraction.py, test_extraction_package.py, test_advanced_extractor.py
@@ -265,8 +265,9 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - session73: **Deferred v4.0+ advanced visualization tools.** `extraction/visualization.py`: `KnowledgeGraphVisualizer` class with 4 pure-Python (no-dep) output formats: `to_dot(graph_name,directed)` — Graphviz DOT language; `to_mermaid(direction,max_entities)` — Mermaid.js graph notation; `to_d3_json(max_nodes)` — D3.js force-directed graph JSON (`{"nodes":[...], "links":[...]}`); `to_ascii(root_entity_id,max_depth)` — ASCII tree (rooted DFS or flat roster). Convenience methods added to `KnowledgeGraph`: `to_dot(**kw)`, `to_mermaid(**kw)`, `to_d3_json(**kw)`, `to_ascii(**kw)` (lazy-import, no circular deps). `extraction/__init__.py`: `KnowledgeGraphVisualizer` exported in `__all__`. `DEFERRED_FEATURES.md`: P8 section — §20 Advanced Visualization Tools ✅. `ROADMAP.md`: v4.0+ "Advanced visualization tools" → ✅ Delivered v3.22.27; v3.22.27 row added. MASTER_STATUS v3.22.26→v3.22.27; test-files 111+→112+. 47 tests. **Result: 4,082+ passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 - session74: **Deferred v4.0+ federated knowledge graphs.** `query/federation.py`: `FederatedKnowledgeGraph` (registry of independent KGs; `add_graph(kg,name)`; `resolve_entities(strategy)` — cross-graph entity matching by TYPE_AND_NAME/EXACT_NAME/PROPERTY_MATCH; `get_entity_cluster(fp)`; `query_entity(name,entity_type)`; `execute_across(query_fn)` — apply callable across all graphs with error capture; `to_merged_graph(strategy,merged_name)` — deduplicate entities + merge properties + remap relationships); `EntityResolutionStrategy(str,Enum)` (3 values); `EntityMatch` dataclass; `FederationQueryResult` dataclass. `query/__init__.py`: 4 new symbols exported. `DEFERRED_FEATURES.md`: P9 §21 Federated Knowledge Graphs ✅ v3.22.28. `ROADMAP.md`: "Federated knowledge graphs" → ✅ Delivered v3.22.28; v3.22.28 row added. MASTER_STATUS v3.22.27→v3.22.28; test-files 112+→113+. 42 tests. **Result: 4,082+42=4,124+ passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 - session76: **Deferred v4.0+ GNN integration + ZKP support.** `query/gnn.py`: `GNNLayerType` (GRAPH_CONV/GRAPH_SAGE/GRAPH_ATTENTION); `GNNConfig` (embedding_dim/num_layers/layer_type/normalize/activation); `NodeEmbedding` dataclass; `GraphNeuralNetworkAdapter` — `extract_node_features()` (entity-type one-hot + confidence + in/out degree), `message_passing()` (neighbour aggregation, configurable iterations), `compute_embeddings()` (full forward pass, cached), `link_prediction_score()` (cosine similarity), `find_similar_entities()` (ranked), `to_adjacency_dict()`, `export_node_features_array()` (for numpy/PyTorch/JAX). `query/zkp.py`: `KGProofType` (ENTITY_EXISTS/ENTITY_PROPERTY/PATH_EXISTS/QUERY_ANSWER_COUNT); `KGProofStatement` dataclass (SHA-256 commitments + nullifiers); `KGZKProver` (prove_entity_exists/property/path/count; batch_prove); `KGZKVerifier` (replay protection via nullifier set; verify_batch). `query/__init__.py`: 8 new symbols exported. `DEFERRED_FEATURES.md`: P11 §23+§24 ✅ v3.22.30. `ROADMAP.md`: both GNN and ZKP → ✅ Delivered v3.22.30; v3.22.30 row added. MASTER_STATUS v3.22.29→v3.22.30; test-files 114+→115+. 55 tests. **Result: 4,169+55=4,219+ passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
+- session77: **ZKP logic backend integration.** `query/zkp.py`: `KGZKProver.from_logic_prover(kg, logic_prover)` factory — wires KG prover to `ipfs_datasets_py.logic.zkp.ZKPProver`; `uses_logic_backend` property; `get_backend_info()`; `prove_entity_exists()` + `prove_path_exists()` embed `ZKPProof` data in `KGProofStatement.public_inputs["logic_proof_data"]` when logic prover attached. `KGZKVerifier.from_logic_verifier(logic_verifier)` — re-verifies embedded proofs via logic layer; relay-protection still active. `DEFERRED_FEATURES.md §24` updated with "Groth16 Backend Integration" subsection + production path doc. 28 tests. **Result: 4,219+28=4,247+ passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 
-**Total Tests:** 4,219 passing, 26 skipped (optional dep guards), 0 failing
+**Total Tests:** 4,247 passing, 26 skipped (optional dep guards), 0 failing
 **Pass Rate:** 100% (excluding optional dependency skips)
 **Coverage:** 99.99% (1 missed line: `_entity_helpers.py:117` — intentional defensive guard)
 
