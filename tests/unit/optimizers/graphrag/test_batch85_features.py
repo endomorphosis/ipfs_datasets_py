@@ -1,4 +1,4 @@
-"""Batch 85: best_score, has_entity, action_count_for, is_passing, last_score."""
+"""Batch 85: best_score, has_entity, action_count_for, is_passing, last_score, run_ids."""
 
 from __future__ import annotations
 
@@ -226,3 +226,26 @@ class TestPipelineLastScore:
         p.run("Alice.")
         p.run("Bob.")
         assert p.last_score() == pytest.approx(p.history[-1].score.overall)
+
+
+# ---------------------------------------------------------------------------
+# OntologyPipeline.run_ids
+# ---------------------------------------------------------------------------
+
+
+class TestPipelineRunIds:
+    def test_empty_before_runs(self):
+        p = OntologyPipeline()
+        assert p.run_ids() == []
+
+    def test_returns_zero_based_indices(self):
+        p = OntologyPipeline()
+        p.run("Alice.")
+        p.run("Bob.")
+        assert p.run_ids() == [0, 1]
+
+    def test_length_matches_total_runs(self):
+        p = OntologyPipeline()
+        p.run("Alice.")
+        p.run("Bob.")
+        assert len(p.run_ids()) == p.total_runs()

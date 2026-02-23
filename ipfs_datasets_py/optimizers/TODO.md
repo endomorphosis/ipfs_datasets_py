@@ -1275,7 +1275,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [graphrag] `OntologyCritic.dimension_rankings(score)` — ordered list of dim names best→worst
 - [ ] (P2) [graphrag] `OntologyCritic.weakest_scores(scores, n)` — bottom-N by overall
 - [ ] (P2) [graphrag] `OntologyPipeline.top_n_runs(n)` — top N run results by score
-- [ ] (P2) [graphrag] `OntologyPipeline.run_ids()` — list of run identifiers (indices or ids)
+- [x] (P2) [graphrag] `OntologyPipeline.run_ids()` — list of run identifiers (indices or ids) (Done 2026-02-22; ipfs_datasets_py/optimizers/graphrag/ontology_pipeline.py; tests/unit/optimizers/graphrag/test_batch85_features.py)
 - [ ] (P2) [graphrag] `OntologyMediator.apply_action_bulk(actions)` — apply list of (action, args) pairs
 - [x] (P2) [graphrag] `OntologyMediator.action_count_for(action)` — already done, skip; try `actions_never_applied()` — action names with count == 0 (Done 2026-02-22; ipfs_datasets_py/optimizers/graphrag/ontology_mediator.py; tests/unit/optimizers/graphrag/test_batch85_features.py)
 - [ ] (P2) [graphrag] `OntologyLearningAdapter.score_range()` — (min, max) tuple of recorded scores

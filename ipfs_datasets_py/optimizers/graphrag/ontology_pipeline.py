@@ -630,6 +630,21 @@ class OntologyPipeline:
         """
         return list(self._run_history)
 
+    def run_ids(self) -> list[int]:
+        """Return stable identifiers for all recorded runs.
+
+        The pipeline currently identifies runs by their 0-based index into
+        :meth:`history`.
+
+        Returns:
+            List of integers ``[0, 1, ..., total_runs-1]``.
+
+        Example:
+            >>> pipeline.run_ids()
+            []
+        """
+        return list(range(len(self._run_history)))
+
     def total_runs(self) -> int:
         """Return the total number of times :meth:`run` has been called.
 
