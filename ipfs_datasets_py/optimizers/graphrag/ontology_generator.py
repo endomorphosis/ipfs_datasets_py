@@ -45,6 +45,7 @@ from __future__ import annotations
 
 import functools
 import logging
+import weakref
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 from enum import Enum
@@ -2749,8 +2750,10 @@ class OntologyGenerator:
             self._accelerate_available = False
         
         # OPTIMIZATION: Cache for _resolve_rule_config results
-        # Keyed by id(ext_config) to handle non-hashable config objects
+        # Uses id() as key with manual cleanup to avoid id() collisions
+        # The cache maps object id to (config_ref, result) tuple to detect GC
         self._resolve_rule_config_cache: dict = {}
+        self._resolve_rule_config_refs: dict = {}  # Map id -> weakref for GC detection
     
     def extract_entities(
         self,
@@ -4103,10 +4106,20 @@ class OntologyGenerator:
         # OPTIMIZATION: Cache config parsing results by config object identity
         # This avoids recomputing stopwords.lower(), allowed_types, etc. when
         # the same ext_config object is used multiple times in a session.
-        config_key = id(ext_config) if ext_config is not None else None
+        # Uses weakref to detect when objects are GC'd and avoid id() collisions
         
-        if config_key in self._resolve_rule_config_cache:
-            return self._resolve_rule_config_cache[config_key]
+        if ext_config is not None:
+            config_id = id(ext_config)
+            
+            # Check if we have a cached result for this config object
+            if config_id in self._resolve_rule_config_cache:
+                # Verify the weakref is still valid (object not GC'd)
+                cache_ref, result = self._resolve_rule_config_cache[config_id]
+                if cache_ref() is ext_config:
+                    return result
+                # Object was GC'd and replaced, invalidate cache
+                del self._resolve_rule_config_cache[config_id]
+                del self._resolve_rule_config_refs[config_id]
         
         try:
             min_len = int(getattr(ext_config, "min_entity_length", 2)) if ext_config is not None else 2
@@ -4130,9 +4143,16 @@ class OntologyGenerator:
 
         result = (min_len, stopwords, allowed_types, max_confidence)
         
-        # Cache the result (with a limit to prevent unbounded growth)
-        if len(self._resolve_rule_config_cache) < 32:
-            self._resolve_rule_config_cache[config_key] = result
+        # Cache the result with a weakref for GC detection
+        if ext_config is not None:
+            config_id = id(ext_config)
+            try:
+                config_ref = weakref.ref(ext_config)
+                self._resolve_rule_config_cache[config_id] = (config_ref, result)
+                self._resolve_rule_config_refs[config_id] = config_ref
+            except TypeError:
+                # Some objects can't be weakly referenced, skip caching
+                pass
         
         return result
 

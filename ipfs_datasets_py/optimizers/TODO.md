@@ -1,6 +1,6 @@
 # Optimizers: Infinite TODO / Improvement Plan
 
-_Last updated: 2026-02-21_
+_Last updated: 2026-02-22_
 
 This is the living, “infinite” backlog for refactoring and completing work across `ipfs_datasets_py/optimizers/`.
 
@@ -36,6 +36,55 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 - `[obs]` logging/metrics/telemetry
 - `[docs]` documentation accuracy
 
+### Infinite backlog mechanics (keep this list infinite)
+- Maintain **two lanes** at all times: (1) the comprehensive plan (below) and (2) the random workstream.
+- Keep **3-5 active random picks**, one per track, and rotate on completion.
+- For every completed item, **add one new item** of the same track (or adjacent track) to keep backlog growth.
+- If an item blocks, add a **blocker sub-item** and move the parent to the next rotation cycle.
+- Prefer **small, verifiable tasks** with clear DoD over large vague tasks.
+
+---
+
+## Comprehensive Refactor + Improvement Roadmap (Evergreen)
+
+This is the long-term refactor plan for the optimizers module. It is deliberately complete and should grow over time.
+
+### Architecture & Core API
+- [ ] (P1) [arch] Define a single `OptimizerConfig` base with shared serialization helpers
+- [ ] (P1) [api] Standardize context objects (GraphRAG/logic/agentic) to dataclasses with typed fields
+- [ ] (P2) [arch] Align BaseOptimizer lifecycle hooks (validate -> generate -> critique -> optimize) across all optimizers
+- [ ] (P2) [arch] Consolidate shared error handling into `common/exceptions.py` helpers
+- [ ] (P2) [api] Introduce `ontology_types.py` TypedDicts for all ontology structures
+
+### GraphRAG
+- [ ] (P1) [graphrag] Add LLM extraction path gated by feature flag and config
+- [ ] (P2) [graphrag] Split `ontology_critic.py` into sub-modules by dimension
+- [ ] (P2) [graphrag] Implement embedding-based entity deduplication
+- [ ] (P2) [graphrag] Add multi-language detection + extraction routing
+- [ ] (P3) [graphrag] Provide interactive REPL mode for CLI
+
+### Logic Theorem Optimizer
+- [ ] (P2) [logic] Formalize LogicSession contracts (typed configs + result schema)
+- [ ] (P2) [logic] Introduce deterministic test fixtures for prover integration
+- [ ] (P3) [logic] Add proof trace serialization format for debugging
+
+### Agentic Optimizers
+- [ ] (P2) [agentic] Replace `**kwargs` with typed parameters across agentic adapters
+- [ ] (P2) [agentic] Reconcile docs vs actual files (tests/paths/examples)
+- [ ] (P3) [agentic] Add minimal smoke tests for agentic pipelines
+
+### Testing & Quality
+- [ ] (P1) [tests] Expand end-to-end pipeline tests to cover failure recovery paths
+- [ ] (P2) [tests] Add factory fixtures for ontology creation in `conftest.py`
+- [ ] (P2) [tests] Add schema regression tests for JSON round-trips
+- [ ] (P3) [tests] Add hypothesis tests for confidence thresholds + ordering constraints
+
+### Observability & Performance
+- [ ] (P2) [obs] Standardize JSON log payloads across optimizers (schema + version)
+- [ ] (P2) [perf] Add profiling hooks for hot-path methods (generator/critic/mediator)
+- [ ] (P3) [obs] Add optional OpenTelemetry spans for pipelines
+- [ ] (P3) [perf] Add micro-benchmarks for ontology extraction strategies
+
 ---
 
 ## Infinite Improvement Plan (v3)
@@ -62,7 +111,7 @@ with a new item from a different track.
 - [ ] (P2) [perf] Profile OntologyGenerator._extract_rule_based() hot paths
 - [ ] (P2) [arch] Extract QueryValidationMixin for GraphRAG reuse
 - [ ] (P2) [tests] Add integration test: generator -> critic -> mediator loop
-- [ ] (P2) [api] Standardize context objects across GraphRAG/logic/agentic
+- [ ] (P2) [agentic] Reconcile docs claiming phases/tests exist with actual files
 
 ---
 
