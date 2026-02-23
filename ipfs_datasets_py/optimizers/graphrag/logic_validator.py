@@ -1067,6 +1067,27 @@ class LogicValidator:
         """
         return self.is_consistent(ontology)
 
+    def validate_ontology(self, ontology: Dict[str, Any]) -> "ValidationResult":
+        """Validate *ontology* and return a structured :class:`ValidationResult`.
+
+        This is the public validation entrypoint used by helper APIs like
+        :meth:`validate_and_report`.
+
+        Implementation notes:
+        - Always runs the basic structural validation first to catch issues like
+          dangling relationship references and to populate ``invalid_entity_ids``.
+        - If the ontology passes the structural check and TDFOL is available,
+          a deeper :meth:`check_consistency` run is performed.
+        """
+        basic = self._basic_consistency_check(ontology)
+        if not basic.is_consistent:
+            return basic
+
+        if not self._tdfol_available:
+            return basic
+
+        return self.check_consistency(ontology)
+
     def validate_all(self, ontologies: List[Dict[str, Any]]) -> List["ValidationResult"]:
         """Validate a list of ontologies and return their results.
 
@@ -1169,7 +1190,7 @@ class LogicValidator:
             >>> "CONSISTENT" in report
             True
         """
-        result = self.check_consistency(ontology)
+        result = self.validate_ontology(ontology)
         return self.format_report(result)
 
     def format_report(self, result: "ValidationResult") -> str:

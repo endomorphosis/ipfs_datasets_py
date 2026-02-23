@@ -163,6 +163,33 @@ class TestSampleEntities:
 # ---------------------------------------------------------------------------
 
 
+class TestValidateOntology:
+    def setup_method(self):
+        self.v = LogicValidator(use_cache=False)
+
+    def test_returns_validation_result(self):
+        result = self.v.validate_ontology({"entities": [], "relationships": []})
+        assert hasattr(result, "is_consistent")
+        assert hasattr(result, "invalid_entity_ids")
+
+    def test_populates_invalid_entity_ids_for_dangling_relationships(self):
+        ontology = {
+            "entities": [],
+            "relationships": [
+                {
+                    "id": "r1",
+                    "source_id": "MISSING",
+                    "target_id": "GHOST",
+                    "type": "t",
+                }
+            ],
+        }
+        result = self.v.validate_ontology(ontology)
+        assert result.is_consistent is False
+        assert "MISSING" in result.invalid_entity_ids
+        assert "GHOST" in result.invalid_entity_ids
+
+
 class TestValidateAndReport:
     def setup_method(self):
         self.v = LogicValidator()

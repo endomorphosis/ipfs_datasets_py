@@ -2829,6 +2829,18 @@ class OntologyGenerator:
                 context.extraction_strategy.value,
                 result.confidence,
             )
+            import json as _json
+            payload = {
+                "event": "extract_entities",
+                "strategy": context.extraction_strategy.value,
+                "entity_count": len(result.entities),
+                "relationship_count": len(result.relationships),
+                "confidence": result.confidence,
+            }
+            self._log.info(
+                "EXTRACT_ENTITIES: %s",
+                _json.dumps(payload, separators=(",", ":"), sort_keys=True),
+            )
             return result
         elif context.extraction_strategy == ExtractionStrategy.LLM_BASED:
             result = self._extract_llm_based(data, context)
@@ -2845,6 +2857,18 @@ class OntologyGenerator:
             len(result.entities),
             context.extraction_strategy.value,
             result.confidence,
+        )
+        import json as _json
+        payload = {
+            "event": "extract_entities",
+            "strategy": context.extraction_strategy.value,
+            "entity_count": len(result.entities),
+            "relationship_count": len(result.relationships),
+            "confidence": result.confidence,
+        }
+        self._log.info(
+            "EXTRACT_ENTITIES: %s",
+            _json.dumps(payload, separators=(",", ":"), sort_keys=True),
         )
         return result
 

@@ -409,6 +409,40 @@ for obligation in result.obligations:
     print(f"Party: {obligation.party}")
     print(f"Action: {obligation.action}")
     print(f"Deadline: {obligation.deadline}")
+
+```
+
+### Refinement Feedback Schema
+
+GraphRAG refinement agents return structured feedback dictionaries that match
+the schema used by `OntologyGenerator.generate_with_feedback()`:
+
+- `entities_to_remove`: list of entity IDs to drop
+- `entities_to_merge`: list of `[id1, id2]` pairs to merge
+- `relationships_to_remove`: list of relationship IDs to drop
+- `relationships_to_add`: list of relationship dicts (source_id, target_id, type)
+- `type_corrections`: map of `entity_id -> new_type`
+- `confidence_floor`: float threshold to filter low-confidence entities
+
+The refinement agent scaffolding can validate this schema and optionally enforce
+strict requirements (for example, relationship dicts must include
+`source_id`, `target_id`, and `type`).
+
+```python
+from ipfs_datasets_py.optimizers.graphrag import OntologyRefinementAgent
+
+def backend(prompt: str):
+    return {
+        "relationships_to_add": [
+            {"source_id": "e1", "target_id": "e2", "type": "employs"}
+        ],
+        "confidence_floor": 0.65,
+    }
+
+# Strict validation removes malformed feedback keys and types.
+agent = OntologyRefinementAgent(backend, strict_validation=True)
+feedback = agent.propose_feedback(ontology={}, score=None, context=None)
+print(feedback)
 ```
 
 ---
