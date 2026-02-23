@@ -229,6 +229,14 @@ class LogicTheoremOptimizer(BaseOptimizer):
                 statement_count = 0
 
             duration_ms = duration_s * 1000.0
+            artifact = result.get("artifact")
+            if hasattr(artifact, "statements"):
+                statement_count = len(artifact.statements or [])
+            elif isinstance(artifact, dict):
+                statement_count = len(artifact.get("statements") or [])
+            else:
+                statement_count = 0
+
             payload = {
                 "event": "logic_theorem_optimizer_run_session",
                 "session_id": context.session_id,

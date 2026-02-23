@@ -14,6 +14,7 @@ Stale smoke-tests for already-implemented methods
 * ``OntologyPipeline.run_score_acceleration()``
 """
 
+import importlib.machinery
 import math
 import sys
 import types
@@ -23,9 +24,17 @@ import pytest
 # ---------------------------------------------------------------------------
 # Minimal module stubs so heavy optional deps don't block import
 # ---------------------------------------------------------------------------
+def _install_stub_module(name: str) -> None:
+    module = sys.modules.get(name)
+    if module is None:
+        module = types.ModuleType(name)
+        sys.modules[name] = module
+    if getattr(module, "__spec__", None) is None:
+        module.__spec__ = importlib.machinery.ModuleSpec(name, loader=None)
+
+
 for _mod in ("torch", "transformers"):
-    if _mod not in sys.modules:
-        sys.modules[_mod] = types.ModuleType(_mod)
+    _install_stub_module(_mod)
 
 from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer  # noqa: E402
 from ipfs_datasets_py.optimizers.graphrag.ontology_critic import (  # noqa: E402

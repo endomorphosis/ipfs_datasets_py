@@ -17,9 +17,9 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Generator, Mapping, Optional
 
-from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
+from .structured_logging import with_schema
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -84,13 +84,18 @@ def get_profiling_config() -> ProfilingConfig:
     return _GLOBAL_CONFIG
 
 
-def enable_profiling(*, memory: bool = False, min_duration_ms: float = 0.0) -> None:
+def enable_profiling(
+    *,
+    memory: bool = False,
+    min_duration_ms: float = 0.0,
+    emit_logs: bool = True,
+) -> None:
     set_profiling_config(
         ProfilingConfig(
             enabled=True,
             memory_profiling=bool(memory),
             min_duration_ms=float(min_duration_ms),
-            emit_logs=True,
+            emit_logs=bool(emit_logs),
         )
     )
 
@@ -125,9 +130,9 @@ def _emit_profiling_log(result: ProfileResult, *, config: ProfilingConfig) -> No
 
     try:
         enriched = with_schema(payload)
-        _logger.info("PROFILING: %s", json.dumps(enriched, default=str))
+        logger.info("PROFILING: %s", json.dumps(enriched, default=str))
     except Exception as exc:  # pragma: no cover
-        _logger.debug("Failed to emit profiling log: %s", exc)
+        logger.debug("Failed to emit profiling log: %s", exc)
 
 
 @contextlib.contextmanager

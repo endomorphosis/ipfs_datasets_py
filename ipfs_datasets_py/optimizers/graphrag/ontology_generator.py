@@ -2830,6 +2830,7 @@ class OntologyGenerator:
                 result.confidence,
             )
             import json as _json
+            from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
             payload = {
                 "event": "extract_entities",
                 "strategy": context.extraction_strategy.value,
@@ -2839,7 +2840,7 @@ class OntologyGenerator:
             }
             self._log.info(
                 "EXTRACT_ENTITIES: %s",
-                _json.dumps(payload, separators=(",", ":"), sort_keys=True),
+                _json.dumps(with_schema(payload), separators=(",", ":"), sort_keys=True),
             )
             return result
         elif context.extraction_strategy == ExtractionStrategy.LLM_BASED:
@@ -2859,6 +2860,7 @@ class OntologyGenerator:
             result.confidence,
         )
         import json as _json
+        from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
         payload = {
             "event": "extract_entities",
             "strategy": context.extraction_strategy.value,
@@ -2868,7 +2870,7 @@ class OntologyGenerator:
         }
         self._log.info(
             "EXTRACT_ENTITIES: %s",
-            _json.dumps(payload, separators=(",", ":"), sort_keys=True),
+            _json.dumps(with_schema(payload), separators=(",", ":"), sort_keys=True),
         )
         return result
 
@@ -4123,6 +4125,34 @@ class OntologyGenerator:
 
         return modified
     
+    def _promote_person_entities(self, text: str, entities: list["Entity"]) -> list["Entity"]:
+        """Upgrade generic Concept entities to Person based on nearby verbs."""
+        import re as _re
+
+        if not text or not entities:
+            return entities
+
+        verbs = (
+            "works", "met", "lives", "joined", "said", "filed", "visited",
+            "leads", "manages", "hired", "sued",
+        )
+        verb_group = "|".join(verbs)
+        text_lower = text.lower()
+
+        for ent in entities:
+            if getattr(ent, "type", "").lower() != "concept":
+                continue
+            name = getattr(ent, "text", "") or ""
+            if not name or " " in name.strip():
+                continue
+            name_lower = name.strip().lower()
+            if _re.search(rf"\b{name_lower}\b\s+(?:{verb_group})\b", text_lower):
+                ent.type = "Person"
+                continue
+            if _re.search(rf"\b(?:{verb_group})\b\s+\b{name_lower}\b", text_lower):
+                ent.type = "Person"
+        return entities
+
     def _extract_rule_based(
         self,
         data: Any,
@@ -4162,6 +4192,7 @@ class OntologyGenerator:
             _stop,
             _max_conf,
         )
+        entities = self._promote_person_entities(text, entities)
         extraction_time_ms = (time.time() - t2) * 1000
 
         # Timing: Relationship inference

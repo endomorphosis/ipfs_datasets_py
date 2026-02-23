@@ -240,7 +240,7 @@ class TestAllowedEntityTypes:
             data_type=DataType.TEXT,
             domain="business",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
-            extraction_config=config,
+            config=config,
         )
         
         text = "Alice works at Acme Corp in San Francisco."

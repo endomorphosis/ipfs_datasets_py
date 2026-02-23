@@ -6,77 +6,12 @@ handling for the optional pandas dependency.
 """
 
 import pytest
-from dataclasses import dataclass, field
-from typing import List, Dict, Any
 
-
-# Mock the Entity and Relationship classes for testing
-@dataclass
-class Entity:
-    """Mock Entity class for testing."""
-    id: str
-    text: str
-    type: str
-    confidence: float
-    properties: Dict[str, Any] = field(default_factory=dict)
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'text': self.text,
-            'type': self.type,
-            'confidence': self.confidence,
-            'properties': self.properties,
-        }
-
-
-@dataclass
-class Relationship:
-    """Mock Relationship class for testing."""
-    id: str
-    source_id: str
-    target_id: str
-    type: str
-    confidence: float
-    direction: str = "forward"
-    properties: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class EntityExtractionResult:
-    """Mock EntityExtractionResult class with to_dataframe() method."""
-    entities: List[Entity]
-    relationships: List[Relationship]
-    confidence: float
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    errors: List[str] = field(default_factory=list)
-
-    def to_dataframe(self):
-        """Convert extracted entities to a :class:`pandas.DataFrame`.
-
-        Returns:
-            A ``pandas.DataFrame`` with one row per entity and columns:
-            ``id``, ``text``, ``type``, ``confidence``.
-
-        Raises:
-            ImportError: If ``pandas`` is not installed.
-        """
-        try:
-            import pandas as _pd
-        except ImportError as exc:
-            raise ImportError(
-                "pandas is required for to_dataframe(); install with: pip install pandas"
-            ) from exc
-        rows = [
-            {
-                "id": e.id,
-                "text": e.text,
-                "type": e.type,
-                "confidence": e.confidence,
-            }
-            for e in self.entities
-        ]
-        return _pd.DataFrame(rows, columns=["id", "text", "type", "confidence"])
+from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
+    Entity,
+    Relationship,
+    EntityExtractionResult,
+)
 
 
 class TestEntityExtractionResultToDataFrame:
@@ -164,8 +99,8 @@ class TestEntityExtractionResultToDataFrame:
         
         result = EntityExtractionResult(
             entities=[
-                Entity(id="e1", text="Entity1", type="Type1", confidence=0.9),
-                Entity(id="e2", text="Entity2", type="Type2", confidence=0.8),
+                Entity(id="e1", type="Type1", text="Entity1", confidence=0.9),
+                Entity(id="e2", type="Type2", text="Entity2", confidence=0.8),
             ],
             relationships=[],
             confidence=0.85,

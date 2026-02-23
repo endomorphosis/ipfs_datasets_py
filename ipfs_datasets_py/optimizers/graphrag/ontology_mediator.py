@@ -669,6 +669,7 @@ class OntologyMediator:
             self._action_entries.append({"action": action, "round": len(self._undo_stack)})
         return refined
 
+    @profile_method("ontology_mediator.batch_apply_strategies")
     def batch_apply_strategies(
         self,
         ontologies: List[Dict[str, Any]],
@@ -1561,6 +1562,7 @@ class OntologyMediator:
             raise IndexError("undo stack is empty — no action to undo")
         return self._undo_stack.pop()
 
+    @profile_method("ontology_mediator.run_refinement_cycle")
     def run_refinement_cycle(
         self,
         data: Any,
@@ -1979,6 +1981,54 @@ class OntologyMediator:
             Count of action types with at least one invocation.
         """
         return sum(1 for v in self._action_counts.values() if v > 0)
+
+    def action_sequence_entropy(self) -> float:
+        """Compute Shannon entropy of the action sequence as categorical symbols.
+
+        Shannon entropy measures the unpredictability/randomness of the action
+        sequence. Higher entropy indicates more diverse action usage; lower
+        entropy indicates repetitive patterns.
+
+        The entropy is computed as:
+            H = -Σ(p_i * log2(p_i))
+        where p_i is the probability (frequency) of action type i.
+
+        Returns:
+            Shannon entropy in bits. Returns ``0.0`` when no actions recorded
+            or when only one action type used (no uncertainty). Range is
+            [0, log2(n)] where n is the number of distinct action types.
+
+        Example:
+            >>> mediator = OntologyMediator(generator, critic)
+            >>> # After running refinements with 3 action types evenly distributed
+            >>> entropy = mediator.action_sequence_entropy()
+            >>> print(f"Action entropy: {entropy:.2f} bits")
+            Action entropy: 1.58 bits  # log2(3) for uniform distribution
+            >>> 
+            >>> # With highly repetitive actions (one dominant type)
+            >>> # entropy approaches 0.0
+        """
+        import math as _math
+
+        # Extract action names from _action_entries: [(action_name, round_idx), ...]
+        action_names = [entry[0] for entry in self._action_entries if entry]
+        
+        if not action_names:
+            return 0.0
+
+        # Count frequency of each action type
+        from collections import Counter
+        action_counts = Counter(action_names)
+        total = len(action_names)
+
+        # Compute Shannon entropy: H = -Σ(p_i * log2(p_i))
+        entropy = 0.0
+        for count in action_counts.values():
+            if count > 0:
+                p = count / total
+                entropy -= p * _math.log2(p)
+
+        return entropy
 
     def most_used_action(self) -> "str | None":
         """Return the action name with the highest recorded count.

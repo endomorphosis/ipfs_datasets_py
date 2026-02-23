@@ -36,6 +36,11 @@ class SemanticMergeSuggestion:
                 f"score={self.similarity_score:.3f}, reason={self.reason})")
 
 
+
+# Backwards-compat alias for older test imports
+SemanticSemanticMergeSuggestion = SemanticMergeSuggestion
+
+
 class SemanticEntityDeduplicator:
     """Semantic entity deduplication using embedding vectors.
     

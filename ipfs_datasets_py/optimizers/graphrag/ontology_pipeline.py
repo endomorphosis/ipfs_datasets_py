@@ -311,13 +311,17 @@ class OntologyPipeline:
             import json as _json
             from datetime import datetime as _datetime
 
+            from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
+
             duration_ms = (time.time() - start_time) * 1000.0
             payload = {
                 "event": "ontology_pipeline_run",
                 "run_index": len(self._run_history),
                 "domain": self.domain,
                 "data_source": data_source,
-                "data_type": data_type,
+                "data_type": data_type
+                if isinstance(data_type, str)
+                else getattr(data_type, "value", str(data_type)),
                 "refine": refine,
                 "entity_count": len(ontology.get("entities", [])),
                 "relationship_count": len(ontology.get("relationships", [])),
@@ -326,7 +330,7 @@ class OntologyPipeline:
                 "duration_ms": duration_ms,
                 "timestamp": _datetime.now().isoformat(),
             }
-            self._log.info("PIPELINE_RUN: %s", _json.dumps(payload))
+            self._log.info("PIPELINE_RUN: %s", _json.dumps(with_schema(payload), default=str))
         except Exception as exc:  # pragma: no cover - logging must be best-effort
             self._log.debug("Pipeline JSON logging failed: %s", exc)
         return result
@@ -775,7 +779,53 @@ class OntologyPipeline:
             >>> len(results) == 2
             True
         """
-        return [self.run(text, **kwargs) for text in texts]
+        import time
+
+        start_time = time.time()
+        results = [self.run(text, **kwargs) for text in texts]
+
+        data_source = kwargs.get("data_source", "pipeline")
+        data_type = kwargs.get("data_type", "text")
+        refine = kwargs.get("refine", True)
+
+        try:
+            import json as _json
+            from datetime import datetime as _datetime
+
+            from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
+
+            scores: List[float] = []
+            for res in results:
+                score = getattr(res, "score", None)
+                overall = getattr(score, "overall", None)
+                if isinstance(overall, (int, float)):
+                    scores.append(float(overall))
+
+            duration_ms = (time.time() - start_time) * 1000.0
+            payload = {
+                "event": "ontology_pipeline_batch",
+                "domain": self.domain,
+                "data_source": data_source,
+                "data_type": data_type
+                if isinstance(data_type, str)
+                else getattr(data_type, "value", str(data_type)),
+                "refine": refine,
+                "doc_count": len(texts),
+                "duration_ms": duration_ms,
+                "timestamp": _datetime.now().isoformat(),
+                "mean_score": (sum(scores) / len(scores)) if scores else None,
+                "min_score": min(scores) if scores else None,
+                "max_score": max(scores) if scores else None,
+            }
+
+            self._log.info(
+                "PIPELINE_BATCH: %s",
+                _json.dumps(with_schema(payload), default=str),
+            )
+        except Exception as exc:  # pragma: no cover - logging must be best-effort
+            self._log.debug("Pipeline batch JSON logging failed: %s", exc)
+
+        return results
 
     def reset(self) -> int:
         """Clear the run history and reset internal mediator state.

@@ -14,6 +14,21 @@ to benefit from:
 - Distributed processing support
 - Consistent interfaces and patterns
 
+Unified OptimizerConfig
+---------------------------
+BaseOptimizer now uses the unified OptimizerConfig (from optimizer_config.py)
+internally, providing consistent configuration across all optimizer types.
+For backward compatibility, the deprecated OptimizerConfig in base_optimizer.py
+is maintained and automatically converted to the unified format via config_adapter.
+
+New code should use:
+    >>> from ipfs_datasets_py.optimizers.common.optimizer_config import OptimizerConfig
+    >>> config = OptimizerConfig(domain='legal', max_rounds=5)
+
+Legacy code can continue using the old interface:
+    >>> from ipfs_datasets_py.optimizers.common import OptimizerConfig
+    >>> config = OptimizerConfig(strategy=OptimizationStrategy.SGD, max_iterations=10)
+
 Unified Extraction Contexts
 ---------------------------
 To standardize configuration across optimizer types, this framework provides
@@ -41,6 +56,14 @@ from .base_optimizer import (
     OptimizerConfig,
     OptimizationContext,
     OptimizationStrategy,
+)
+
+from .optimizer_config import (
+    OptimizerConfig as UnifiedOptimizerConfig,
+)
+
+from .config_adapter import (
+    convert_to_unified_config,
 )
 
 from .base_critic import (
@@ -109,6 +132,9 @@ __all__ = [
     "OptimizerConfig",
     "OptimizationContext",
     "OptimizationStrategy",
+    # Unified configuration (new)
+    "UnifiedOptimizerConfig",
+    "convert_to_unified_config",
     # Critic
     "BaseCritic",
     "CriticResult",
