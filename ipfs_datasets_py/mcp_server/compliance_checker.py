@@ -413,7 +413,8 @@ class ComplianceChecker:
     def save_encrypted(self, path: str, password: str) -> None:
         """Persist rule configuration encrypted with AES-256-GCM.
 
-        Derives a 32-byte key from *password* via ``SHA-256``.  The nonce
+        Derives a 32-byte key from *password* via a password-based key
+        derivation function (PBKDF2-HMAC-SHA256). The nonce
         (12 bytes, ``os.urandom``) is prepended to the ciphertext.  Falls back
         to plain :meth:`save` with a ``UserWarning`` when the ``cryptography``
         package is not installed.
@@ -440,7 +441,10 @@ class ComplianceChecker:
             os.makedirs(parent, exist_ok=True)
 
         pw_bytes = password.encode() if isinstance(password, str) else password
-        key = hashlib.sha256(pw_bytes).digest()
+        # Derive a 32-byte key using PBKDF2-HMAC-SHA256 for computationally
+        # expensive password hashing suitable for key derivation.
+        kdf_salt = b"ipfs_datasets_py.mcp_server.compliance_checker.save_encrypted"
+        key = hashlib.pbkdf2_hmac("sha256", pw_bytes, kdf_salt, 100_000, dklen=32)
         nonce = os.urandom(12)
         data: Dict[str, Any] = {
             "version": _COMPLIANCE_RULE_VERSION,
