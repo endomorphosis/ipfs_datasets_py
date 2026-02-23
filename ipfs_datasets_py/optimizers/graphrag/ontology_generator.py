@@ -7568,6 +7568,100 @@ class OntologyGenerator:
                 entropy -= p * math.log2(p)
         return entropy
 
+    def describe_result(self, result: Any) -> str:
+        """Return a one-line English summary of the extraction result.
+        
+        Args:
+            result: EntityExtractionResult instance.
+        
+        Returns:
+            Human-readable summary string.
+            
+        Example:
+            >>> print(generator.describe_result(result))
+            "42 entities (5 types), 68 relationships, confidence 0.87"
+        """
+        entities = result.entities or []
+        relationships = result.relationships or []
+        types = {getattr(e, "type", None) for e in entities if getattr(e, "type", None)}
+        confidence = getattr(result, "confidence", 0.0)
+        
+        return (
+            f"{len(entities)} entities ({len(types)} types), "
+            f"{len(relationships)} relationships, "
+            f"confidence {confidence:.2f}"
+        )
+
+    def relationship_confidence_bounds(self, result: Any) -> tuple:
+        """Return (min, max) confidence scores across all relationships.
+        
+        Args:
+            result: EntityExtractionResult instance.
+        
+        Returns:
+            Tuple of (min_confidence, max_confidence); (0.0, 0.0) when no relationships.
+            
+        Example:
+            >>> min_conf, max_conf = generator.relationship_confidence_bounds(result)
+            >>> print(f"Relationship confidence range: {min_conf:.2f} to {max_conf:.2f}")
+        """
+        rels = result.relationships or []
+        if not rels:
+            return (0.0, 0.0)
+        
+        confidences = [getattr(r, "confidence", 0.0) for r in rels]
+        return (min(confidences), max(confidences))
+
+    def is_result_empty(self, result: Any) -> bool:
+        """Check if result contains no entities and no relationships.
+        
+        Args:
+            result: EntityExtractionResult instance.
+        
+        Returns:
+            True if both entities and relationships are empty.
+            
+        Example:
+            >>> if generator.is_result_empty(result):
+            ...     print("No information extracted")
+        """
+        entities = result.entities or []
+        relationships = result.relationships or []
+        return len(entities) == 0 and len(relationships) == 0
+
+    def result_summary_dict(self, result: Any) -> dict:
+        """Return a structured dictionary summarizing the extraction result.
+        
+        Args:
+            result: EntityExtractionResult instance.
+        
+        Returns:
+            Dictionary with keys: entity_count, relationship_count, unique_types, 
+            mean_confidence, min_confidence, max_confidence, has_errors.
+            
+        Example:
+            >>> summary = generator.result_summary_dict(result)
+            >>> print(summary)
+            {'entity_count': 42, 'relationship_count': 68, ...}
+        """
+        entities = result.entities or []
+        relationships = result.relationships or []
+        errors = getattr(result, "errors", []) or []
+        
+        entity_confs = [getattr(e, "confidence", 0.0) for e in entities]
+        types = {getattr(e, "type", None) for e in entities if getattr(e, "type", None)}
+        
+        return {
+            "entity_count": len(entities),
+            "relationship_count": len(relationships),
+            "unique_types": len(types),
+            "mean_confidence": sum(entity_confs) / len(entity_confs) if entity_confs else 0.0,
+            "min_confidence": min(entity_confs) if entity_confs else 0.0,
+            "max_confidence": max(entity_confs) if entity_confs else 0.0,
+            "has_errors": len(errors) > 0,
+            "error_count": len(errors),
+        }
+
     # -------------------------------------------------------------------------
     # Async/Await Methods for Concurrent Ontology Extraction
     # -------------------------------------------------------------------------
