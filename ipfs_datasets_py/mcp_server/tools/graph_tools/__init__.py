@@ -27,6 +27,8 @@ from .graph_provenance_verify import graph_provenance_verify
 from .graph_gnn_embed import graph_gnn_embed
 from .graph_zkp_prove import graph_zkp_prove
 from .graph_federate_query import graph_federate_query
+from .graph_analytics import graph_analytics
+from .graph_link_predict import graph_link_predict
 
 __all__ = [
     "query_knowledge_graph",
@@ -51,4 +53,6 @@ __all__ = [
     "graph_gnn_embed",
     "graph_zkp_prove",
     "graph_federate_query",
+    "graph_analytics",
+    "graph_link_predict",
 ]

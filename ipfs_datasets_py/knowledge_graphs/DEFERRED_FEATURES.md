@@ -688,6 +688,36 @@ assert kg.list_snapshots() == ["before_merge"]
 
 ---
 
+## P15: Delivered in v3.22.38 (KG analytics and link prediction MCP tools)
+
+### 32. Graph Analytics MCP Tool
+
+**Status:** ✅ Implemented (v3.22.38 — 2026-02-23)
+**Location:** `mcp_server/tools/graph_tools/graph_analytics.py` + `core_operations/knowledge_graph_manager.KnowledgeGraphManager.analytics()`
+**Implementation:**
+- `graph_analytics(kg_data, include_completion_analysis, include_quality_metrics, include_topology, max_completion_suggestions)` — comprehensive analytics
+- Quality metrics via `KnowledgeGraphExtractor.compute_extraction_quality_metrics()`
+- KG completion analysis via `KnowledgeGraphCompleter.find_missing_relationships()` + `find_isolated_entities()`
+- Topology stats: entity/relationship type distributions, degree stats, source-only + sink-only counts
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session84.py`
+
+---
+
+### 33. Graph Link Prediction MCP Tool
+
+**Status:** ✅ Implemented (v3.22.38 — 2026-02-23)
+**Location:** `mcp_server/tools/graph_tools/graph_link_predict.py` + `core_operations/knowledge_graph_manager.KnowledgeGraphManager.link_predict()`
+**Implementation:**
+- `graph_link_predict(entity_a_id, entity_b_id, kg_data, layer_type, top_candidates, top_k)` — GNN link prediction
+- Delegates to `GraphNeuralNetworkAdapter.link_prediction_score()` (cosine similarity of node embeddings)
+- Optional top-k ranking: cosine similarity for each candidate vs. entity_a embedding
+- Returns `score ∈ [-1, 1]` + `prediction ("likely" ≥ 0.5, "unlikely" otherwise)` + `top_predictions`
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session84.py`
+
+---
+
 ## P14: Delivered in v3.22.37 (MCP tools for GNN, ZKP, and Federation)
 
 ### 29. GNN Embed MCP Tool

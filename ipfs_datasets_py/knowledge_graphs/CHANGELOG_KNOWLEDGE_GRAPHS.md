@@ -5,6 +5,33 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.38] - 2026-02-23
+
+### Added — 2 new MCP server tools for KG analytics and link prediction (Session 84) — 42 tests
+
+**`mcp_server/tools/graph_tools/graph_analytics.py`** (new MCP tool):
+- `graph_analytics(kg_data, include_completion_analysis, include_quality_metrics, include_topology, max_completion_suggestions)` — comprehensive KG analytics
+- Quality metrics via `KnowledgeGraphExtractor.compute_extraction_quality_metrics()`
+- KG completion via `KnowledgeGraphCompleter` (missing relationships, isolated entities)
+- Topology: entity/relationship type distributions + degree statistics
+- Returns `status / entity_count / relationship_count / quality_metrics / missing_relationships / isolated_entities / topology`
+
+**`mcp_server/tools/graph_tools/graph_link_predict.py`** (new MCP tool):
+- `graph_link_predict(entity_a_id, entity_b_id, kg_data, layer_type, top_candidates, top_k)` — GNN link prediction
+- Delegates to `GraphNeuralNetworkAdapter.link_prediction_score()`
+- Optional top-k ranked candidates via cosine similarity
+- Returns `status / score / prediction ("likely"/"unlikely") / top_predictions`
+
+**`core_operations/knowledge_graph_manager.py`** (updated):
+- Added `analytics()` — full analytics pipeline
+- Added `link_predict()` — link prediction with optional top-k ranking
+
+**`mcp_server/tools/graph_tools/__init__.py`** (updated):
+- 22 → 24 tools; `graph_analytics` and `graph_link_predict` added to `__all__`
+
+**`mcp_server/tools/graph_tools/README.md`** (updated):
+- 2 new rows for session 84 tools
+
 ## [3.22.37] - 2026-02-23
 
 ### Added — 3 new MCP server tools for GNN, ZKP, and Federation (Session 83) — 48 tests

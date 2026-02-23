@@ -1387,3 +1387,222 @@ class KnowledgeGraphManager:
                 "entity_matches": [],
                 "query_hits": [],
             }
+
+    async def analytics(
+        self,
+        kg_data: Optional[Dict[str, Any]] = None,
+        include_completion_analysis: bool = True,
+        include_quality_metrics: bool = True,
+        include_topology: bool = True,
+        max_completion_suggestions: int = 20,
+    ) -> Dict[str, Any]:
+        """
+        Compute comprehensive analytics for a knowledge graph.
+
+        Args:
+            kg_data: Optional serialised KG dict.
+            include_completion_analysis: Run KG completion analysis.
+            include_quality_metrics: Compute quality metrics.
+            include_topology: Compute topology statistics.
+            max_completion_suggestions: Max missing-relationship suggestions.
+
+        Returns:
+            Dict with status, entity_count, relationship_count,
+            quality_metrics, missing_relationships, isolated_entities,
+            has_completion_suggestions, and topology.
+        """
+        try:
+            from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
+                KnowledgeGraph,
+            )
+            from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
+                KnowledgeGraphExtractor,
+            )
+
+            if kg_data:
+                kg = KnowledgeGraph.from_dict(kg_data)
+            else:
+                kg = KnowledgeGraph("analytics_temp")
+
+            result: Dict[str, Any] = {
+                "status": "success",
+                "entity_count": len(kg.entities),
+                "relationship_count": len(kg.relationships),
+            }
+
+            if include_quality_metrics:
+                result["quality_metrics"] = KnowledgeGraphExtractor.compute_extraction_quality_metrics(kg)
+
+            if include_completion_analysis:
+                from ipfs_datasets_py.knowledge_graphs.query.completion import (
+                    KnowledgeGraphCompleter,
+                )
+                completer = KnowledgeGraphCompleter(kg)
+                suggestions = completer.find_missing_relationships(
+                    min_score=0.3,
+                    max_suggestions=max_completion_suggestions,
+                )
+                result["missing_relationships"] = [
+                    {
+                        "source_id": s.source_id,
+                        "target_id": s.target_id,
+                        "rel_type": s.rel_type,
+                        "score": s.score,
+                        "reason": s.reason.value,
+                    }
+                    for s in suggestions
+                ]
+                result["isolated_entities"] = completer.find_isolated_entities()
+                result["has_completion_suggestions"] = len(suggestions) > 0
+
+            if include_topology:
+                # Entity type distribution
+                etype_counts: Dict[str, int] = {}
+                for e in kg.entities.values():
+                    etype_counts[e.entity_type] = etype_counts.get(e.entity_type, 0) + 1
+
+                # Relationship type distribution
+                rtype_counts: Dict[str, int] = {}
+                for r in kg.relationships.values():
+                    rtype_counts[r.relationship_type] = rtype_counts.get(r.relationship_type, 0) + 1
+
+                # Degree statistics
+                out_degree: Dict[str, int] = {}
+                in_degree: Dict[str, int] = {}
+                for r in kg.relationships.values():
+                    out_degree[r.source_id] = out_degree.get(r.source_id, 0) + 1
+                    in_degree[r.target_id] = in_degree.get(r.target_id, 0) + 1
+
+                degrees = [
+                    out_degree.get(eid, 0) + in_degree.get(eid, 0)
+                    for eid in kg.entities
+                ]
+                total_degree = sum(degrees)
+                n = len(degrees)
+                avg_degree = total_degree / n if n else 0.0
+                min_degree = min(degrees) if degrees else 0
+                max_degree = max(degrees) if degrees else 0
+
+                result["topology"] = {
+                    "entity_type_distribution": etype_counts,
+                    "relationship_type_distribution": rtype_counts,
+                    "degree_stats": {
+                        "min": min_degree,
+                        "max": max_degree,
+                        "avg": avg_degree,
+                    },
+                    "source_only_entities": sum(
+                        1 for eid in kg.entities if in_degree.get(eid, 0) == 0
+                    ),
+                    "sink_only_entities": sum(
+                        1 for eid in kg.entities if out_degree.get(eid, 0) == 0
+                    ),
+                }
+
+            return result
+        except Exception as e:
+            self.logger.error("Analytics failed: %s", e)
+            return {
+                "status": "error",
+                "message": str(e),
+                "entity_count": 0,
+                "relationship_count": 0,
+            }
+
+    async def link_predict(
+        self,
+        entity_a_id: str,
+        entity_b_id: str,
+        kg_data: Optional[Dict[str, Any]] = None,
+        layer_type: str = "graph_sage",
+        embedding_dim: int = 64,
+        num_layers: int = 2,
+        top_candidates: Optional[List[str]] = None,
+        top_k: int = 5,
+    ) -> Dict[str, Any]:
+        """
+        Compute a GNN-based link-prediction score between two entities.
+
+        Args:
+            entity_a_id: ID of the first entity.
+            entity_b_id: ID of the second entity.
+            kg_data: Optional serialised KG dict.
+            layer_type: GNN message-passing layer type.
+            embedding_dim: Embedding dimensionality.
+            num_layers: Number of message-passing iterations.
+            top_candidates: Optional entity IDs to rank against entity_a_id.
+            top_k: Max ranked predictions to return.
+
+        Returns:
+            Dict with status, entity_a_id, entity_b_id, score, prediction,
+            layer_type, embedding_dim, and optionally top_predictions.
+        """
+        try:
+            from ipfs_datasets_py.knowledge_graphs.extraction.graph import (
+                KnowledgeGraph,
+            )
+            from ipfs_datasets_py.knowledge_graphs.query.gnn import (
+                GraphNeuralNetworkAdapter,
+                GNNConfig,
+                GNNLayerType,
+            )
+
+            if kg_data:
+                kg = KnowledgeGraph.from_dict(kg_data)
+            else:
+                kg = KnowledgeGraph("link_predict_temp")
+
+            try:
+                layer = GNNLayerType(layer_type)
+            except ValueError:
+                layer = GNNLayerType.GRAPH_SAGE
+
+            config = GNNConfig(
+                embedding_dim=embedding_dim,
+                num_layers=num_layers,
+                layer_type=layer,
+            )
+            adapter = GraphNeuralNetworkAdapter(kg, config)
+            score = adapter.link_prediction_score(entity_a_id, entity_b_id)
+            prediction = "likely" if score >= 0.5 else "unlikely"
+
+            result: Dict[str, Any] = {
+                "status": "success",
+                "entity_a_id": entity_a_id,
+                "entity_b_id": entity_b_id,
+                "score": score,
+                "prediction": prediction,
+                "layer_type": layer_type,
+                "embedding_dim": embedding_dim,
+            }
+
+            if top_candidates:
+                embeddings = adapter.compute_embeddings()
+                if entity_a_id in embeddings:
+                    from ipfs_datasets_py.knowledge_graphs.query.gnn import (
+                        _cosine_similarity,
+                    )
+                    query_vec = embeddings[entity_a_id].features
+                    ranked = []
+                    for cid in top_candidates:
+                        if cid in embeddings and cid != entity_a_id:
+                            s = _cosine_similarity(
+                                query_vec, embeddings[cid].features
+                            )
+                            ranked.append({"entity_id": cid, "score": s})
+                    ranked.sort(key=lambda x: x["score"], reverse=True)
+                    result["top_predictions"] = ranked[:top_k]
+                else:
+                    result["top_predictions"] = []
+
+            return result
+        except Exception as e:
+            self.logger.error("Link predict failed: %s", e)
+            return {
+                "status": "error",
+                "message": str(e),
+                "entity_a_id": entity_a_id,
+                "entity_b_id": entity_b_id,
+                "score": 0.0,
+                "prediction": "unknown",
+            }

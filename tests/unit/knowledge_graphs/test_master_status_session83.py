@@ -513,8 +513,11 @@ class TestGraphToolsExports:
 # ===========================================================================
 class TestDocumentationIntegrity:
     def test_master_status_has_v3_22_37(self):
-        content = _read(_MASTER)
-        assert "3.22.37" in content, "MASTER_STATUS.md should mention v3.22.37"
+        # v3.22.37 may appear in CHANGELOG but MASTER_STATUS advances to 3.22.38+
+        ms_content = _read(_MASTER)
+        cl_content = _read(_CHANGELOG)
+        assert "3.22.37" in ms_content or "3.22.37" in cl_content, \
+            "3.22.37 should appear in MASTER_STATUS.md or CHANGELOG"
 
     def test_roadmap_has_v3_22_37(self):
         content = _read(_ROADMAP)

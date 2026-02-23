@@ -30,6 +30,8 @@ The underlying graph engine supports Neo4j, in-memory, and IPLD-backed backends.
 | `graph_gnn_embed.py` | `graph_gnn_embed()` | Compute GNN node embeddings (GRAPH_CONV / SAGE / ATTENTION) *(new v3.22.37)* |
 | `graph_zkp_prove.py` | `graph_zkp_prove()` | Generate zero-knowledge proofs for KG assertions *(new v3.22.37)* |
 | `graph_federate_query.py` | `graph_federate_query()` | Query across federated knowledge graphs *(new v3.22.37)* |
+| `graph_analytics.py` | `graph_analytics()` | Comprehensive KG analytics: quality metrics, completion, topology *(new v3.22.38)* |
+| `graph_link_predict.py` | `graph_link_predict()` | GNN link-prediction score between two entities *(new v3.22.38)* |
 
 ## Usage
 
