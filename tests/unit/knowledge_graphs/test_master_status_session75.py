@@ -469,7 +469,7 @@ class TestVersionAgreement:
 
     def test_master_status_version(self):
         v = self._extract_top_version(_read("MASTER_STATUS.md"))
-        assert v in ("3.22.29",), f"MASTER_STATUS version is {v!r}"
+        assert v >= "3.22.29", f"MASTER_STATUS version is {v!r}"
 
     def test_changelog_has_version(self):
         assert "3.22.29" in _read("CHANGELOG_KNOWLEDGE_GRAPHS.md")

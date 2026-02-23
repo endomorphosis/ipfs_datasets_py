@@ -1207,3 +1207,29 @@ was listed as "Priority: MEDIUM — Prioritized action items" despite all items 
 - `TestVersionAgreement` (3 tests): MASTER_STATUS/CHANGELOG/ROADMAP agree on v3.22.26
 
 **Result: 32 passed, 0 failed** ✅
+
+
+### Session 78 (2026-02-23, v3.22.32)
+
+**Goal:** Create `query/groth16_bridge.py` — direct bridge from KG ZKP layer to `processors/groth16_backend`.
+
+**Changes:**
+1. `query/groth16_bridge.py` (new): `groth16_binary_available(binary_path=None)` (probe Rust binary via env overrides + canonical paths) + `groth16_enabled()` (check `IPFS_DATASETS_ENABLE_GROTH16`) + `Groth16KGConfig` dataclass + `KGEntityFormula` (6 static methods: entity_exists_theorem/axioms, path_theorem/axioms, property_theorem/axioms) + `create_groth16_kg_prover(kg, config)` (factory with simulation fallback) + `create_groth16_kg_verifier(seen_nullifiers, config)` + `describe_groth16_status(binary_path)`
+2. `query/__init__.py`: 7 new symbols exported + added to `__all__`
+3. `DEFERRED_FEATURES.md §24`: "Direct Groth16 Bridge (v3.22.32)" subsection with usage examples
+4. `MASTER_STATUS.md`: v3.22.31→v3.22.32; session 78 entry; 4,247→4,297 tests
+5. `ROADMAP.md`: v3.22.32 row added; Current Version 3.22.31→3.22.32
+6. `CHANGELOG_KNOWLEDGE_GRAPHS.md`: ## [3.22.32] section added
+
+**50 tests** in `test_master_status_session78.py` (9 classes):
+- `TestGroth16AvailabilityHelpers` (7): groth16_enabled/binary_available behaviour
+- `TestGroth16KGConfig` (6): defaults, custom config
+- `TestKGEntityFormula` (11): theorem/axiom content for entity/path/property
+- `TestCreateGroth16KGProver` (4): returns KGZKProver; fallback; can prove; env set
+- `TestCreateGroth16KGVerifier` (3): returns KGZKVerifier; nullifiers; fallback attr
+- `TestDescribeGroth16Status` (7): keys; enabled; production_ready; backend; config_class; env_var
+- `TestQueryModuleExports` (3): importable; in __all__; KGEntityFormula is class
+- `TestDocIntegritySession78` (6): DEFERRED section; create_groth16_kg_prover; KGEntityFormula; MASTER_STATUS; CHANGELOG; ROADMAP versions
+- `TestVersionAgreement` (3): MASTER_STATUS/CHANGELOG/ROADMAP agree on v3.22.32
+
+**Result: 50 passed, 0 failed** ✅

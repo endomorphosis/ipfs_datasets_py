@@ -122,6 +122,16 @@ from .zkp import (
     KGProofType,
 )
 
+from .groth16_bridge import (
+    groth16_binary_available,
+    groth16_enabled,
+    Groth16KGConfig,
+    KGEntityFormula,
+    create_groth16_kg_prover,
+    create_groth16_kg_verifier,
+    describe_groth16_status,
+)
+
 __all__ = [
     'UnifiedQueryEngine',
     'HybridSearchEngine',
@@ -170,4 +180,12 @@ __all__ = [
     'KGZKVerifier',
     'KGProofStatement',
     'KGProofType',
+    # Groth16 Bridge (v3.22.32 — direct KG↔Groth16 integration)
+    'groth16_binary_available',
+    'groth16_enabled',
+    'Groth16KGConfig',
+    'KGEntityFormula',
+    'create_groth16_kg_prover',
+    'create_groth16_kg_verifier',
+    'describe_groth16_status',
 ]

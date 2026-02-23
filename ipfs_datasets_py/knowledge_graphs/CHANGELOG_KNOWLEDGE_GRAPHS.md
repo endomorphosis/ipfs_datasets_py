@@ -5,6 +5,46 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.32] - 2026-02-23
+
+### Added — Groth16 Bridge Module (Session 78)
+
+**Production code changes.**
+
+- `query/groth16_bridge.py` (new module) — direct bridge from the KG ZKP layer to
+  `processors/groth16_backend` via `logic/zkp/backends/groth16.py`:
+  - `groth16_binary_available(binary_path=None) → bool` — probes compiled Rust binary
+    presence via env overrides (`IPFS_DATASETS_GROTH16_BINARY`, `GROTH16_BINARY`) then
+    canonical release-build paths; no subprocess calls.
+  - `groth16_enabled() → bool` — checks `IPFS_DATASETS_ENABLE_GROTH16` opt-in env var.
+  - `Groth16KGConfig` dataclass — `circuit_version` / `ruleset_id` / `timeout_seconds` /
+    `binary_path` / `enable_groth16`; defaults: version=2, ruleset=TDFOL_v1, timeout=30s.
+  - `KGEntityFormula` — 6 static methods providing canonical KG↔TDFOL_v1 mapping:
+    `entity_exists_theorem` / `entity_exists_axioms` / `path_theorem` / `path_axioms` /
+    `property_theorem` / `property_axioms`.  Entity ID stays in private axioms (never in theorem).
+  - `create_groth16_kg_prover(kg, config=None) → KGZKProver` — factory backed by
+    `ZKPProver(backend="groth16")`; sets `IPFS_DATASETS_ENABLE_GROTH16=1` when `config.enable_groth16`;
+    gracefully falls back to simulation mode when binary absent / backend disabled;
+    attaches `_groth16_fallback` sentinel attribute.
+  - `create_groth16_kg_verifier(seen_nullifiers=None, config=None) → KGZKVerifier` — verifier factory.
+  - `describe_groth16_status(binary_path=None) → Dict` — full diagnostic dict:
+    `enabled / binary_available / binary_path / backend / production_ready / security_note /
+    setup_command / env_var / config_class`.
+- `query/__init__.py` — 7 new symbols exported: `groth16_binary_available`, `groth16_enabled`,
+  `Groth16KGConfig`, `KGEntityFormula`, `create_groth16_kg_prover`, `create_groth16_kg_verifier`,
+  `describe_groth16_status`.
+- `DEFERRED_FEATURES.md §24` — "Direct Groth16 Bridge (v3.22.32)" sub-section added with full
+  usage examples and production path instructions.
+
+**Test coverage.**
+
+- `tests/unit/knowledge_graphs/test_master_status_session78.py` — 50 tests across 9 classes:
+  `TestGroth16AvailabilityHelpers` (7), `TestGroth16KGConfig` (6), `TestKGEntityFormula` (11),
+  `TestCreateGroth16KGProver` (4), `TestCreateGroth16KGVerifier` (3), `TestDescribeGroth16Status` (7),
+  `TestQueryModuleExports` (3), `TestDocIntegritySession78` (6), `TestVersionAgreement` (3).
+
+---
+
 ## [3.22.31] - 2026-02-23
 
 ### Added — ZKP Logic Backend Integration (Session 77)

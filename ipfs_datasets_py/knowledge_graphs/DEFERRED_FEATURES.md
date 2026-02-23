@@ -1052,7 +1052,7 @@ results = prover.batch_prove(requests)
 assert verifier.verify_batch(results) == [True, True]
 ```
 
-#### Groth16 Backend Integration (v3.22.31)
+#### Groth16 Backend Integration (v3.22.31, session 77)
 
 Connect the KG prover to the `ipfs_datasets_py.logic.zkp` simulation
 (or production Groth16 when `processors/groth16_backend` Rust binary is compiled):
@@ -1085,6 +1085,59 @@ layer automatically benefits without further changes.
 using SHA-256 hash commitments. They are NOT cryptographically secure. The interface is
 intentionally compatible with a future production-grade Groth16 backend.
 
+#### Direct Groth16 Bridge (v3.22.32)
+
+**Module:** `query/groth16_bridge.py`  
+**Status:** ✅ Implemented in v3.22.32
+
+Provides a direct bridge from the KG ZKP layer to `processors/groth16_backend` via
+`logic/zkp/backends/groth16.py`. Includes:
+
+- `groth16_binary_available(binary_path=None) → bool` — probe Rust binary presence (no subprocess)
+- `groth16_enabled() → bool` — check `IPFS_DATASETS_ENABLE_GROTH16` env opt-in
+- `Groth16KGConfig` — circuit_version / ruleset_id / timeout / binary_path / enable_groth16
+- `KGEntityFormula` — static methods mapping KG concepts to TDFOL_v1 theorems + private axioms:
+  - `entity_exists_theorem(type, name)` / `entity_exists_axioms(id, type, name, confidence)`
+  - `path_theorem(start_type, end_type, max_hops)` / `path_axioms(node_ids, rel_types)`
+  - `property_theorem(entity_id, key)` / `property_axioms(entity_id, key, value_hash)`
+- `create_groth16_kg_prover(kg, config) → KGZKProver` — factory backed by `ZKPProver(backend="groth16")`; auto-fallback to simulation when binary absent
+- `create_groth16_kg_verifier(seen_nullifiers, config) → KGZKVerifier` — verifier factory
+- `describe_groth16_status(binary_path) → Dict` — diagnostic dict (enabled/binary_available/backend/production_ready/security_note)
+
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+from ipfs_datasets_py.knowledge_graphs.query.groth16_bridge import (
+    Groth16KGConfig, KGEntityFormula,
+    create_groth16_kg_prover, create_groth16_kg_verifier,
+    describe_groth16_status,
+)
+
+kg = KnowledgeGraph("example")
+kg.add_entity("person", "Alice", confidence=0.95)
+
+# Inspect the theorem/axiom mapping
+theorem = KGEntityFormula.entity_exists_theorem("person", "Alice")
+axioms  = KGEntityFormula.entity_exists_axioms("e-001", "person", "Alice", 0.95)
+
+# Create prover/verifier (auto-fallback to simulation when binary absent)
+prover   = create_groth16_kg_prover(kg)
+verifier = create_groth16_kg_verifier()
+stmt = prover.prove_entity_exists("person", "Alice")
+assert verifier.verify_statement(stmt)
+
+# Diagnostics
+status = describe_groth16_status()
+print(status["backend"])           # "simulated" or "groth16"
+print(status["binary_available"])  # True / False (False in CI)
+print(status["production_ready"])  # True only when enabled AND binary compiled
+```
+
+**Production path:** set `IPFS_DATASETS_ENABLE_GROTH16=1` **and** compile the Rust binary:
+```bash
+cd processors/groth16_backend && cargo build --release
+```
+Then use `Groth16KGConfig(enable_groth16=True)` in `create_groth16_kg_prover()`.
+
 ---
 
 ## See Also
@@ -1096,7 +1149,7 @@ intentionally compatible with a future production-grade Groth16 backend.
 
 ---
 
-**Last Updated:** 2026-02-23 (session 77)
+**Last Updated:** 2026-02-23 (session 78)
 **Next Review:** Q3 2026
 **Maintainer:** Knowledge Graphs Team
 

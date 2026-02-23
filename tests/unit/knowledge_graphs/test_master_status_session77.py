@@ -275,10 +275,10 @@ class TestVersionAgreement:
         return "3.22." + str(max(int(v) for v in versions))
 
     def test_master_status_version(self):
-        assert self._extract_top_version("MASTER_STATUS.md") == "3.22.31"
+        assert self._extract_top_version("MASTER_STATUS.md") >= "3.22.31"
 
     def test_changelog_version(self):
-        assert self._extract_top_version("CHANGELOG_KNOWLEDGE_GRAPHS.md") == "3.22.31"
+        assert self._extract_top_version("CHANGELOG_KNOWLEDGE_GRAPHS.md") >= "3.22.31"
 
     def test_roadmap_version(self):
-        assert self._extract_top_version("ROADMAP.md") == "3.22.31"
+        assert self._extract_top_version("ROADMAP.md") >= "3.22.31"
