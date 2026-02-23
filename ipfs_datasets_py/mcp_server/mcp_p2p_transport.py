@@ -847,6 +847,24 @@ class PubSubBus:
         # Sort each SID list and drop empty topics
         return {k: sorted(v) for k, v in result.items() if v}
 
+    def total_subscriptions(self) -> int:
+        """Return the total number of active subscription registrations.
+
+        Unlike :meth:`handler_count` (which counts *unique* handlers),
+        this method counts every SID in ``_sid_map`` — so a single handler
+        subscribed to three topics contributes 3::
+
+            def cb(t, p): pass
+            bus.subscribe("a", cb)
+            bus.subscribe("b", cb)
+            assert bus.total_subscriptions() == 2  # two SIDs
+            assert bus.handler_count() == 1         # one unique handler
+
+        Returns:
+            Non-negative integer — ``len(_sid_map)``.
+        """
+        return len(self._sid_map)
+
     async def publish_async(
         self,
         topic: Union[str, "PubSubEventType"],

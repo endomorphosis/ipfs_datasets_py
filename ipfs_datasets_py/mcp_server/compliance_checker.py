@@ -1056,6 +1056,29 @@ class ComplianceChecker:
         return [_os.path.basename(p) for p in ComplianceChecker.list_bak_files(path)]
 
     @staticmethod
+    def newest_backup_name(path: str) -> Optional[str]:
+        """Return the *file name* (basename) of the newest backup, or ``None``.
+
+        Convenience wrapper that combines :meth:`newest_backup_path` with
+        ``os.path.basename``, returning only the file name portion so it is
+        safe to expose in logs and dashboards without leaking the full path::
+
+            name = ComplianceChecker.newest_backup_name("/data/rules.enc")
+            if name is not None:
+                log.info("Most recent backup: %s", name)
+
+        Args:
+            path: Base file path (without ``.bak`` suffix).
+
+        Returns:
+            File name string (e.g. ``"rules.enc.bak"``), or ``None`` when
+            no backup exists.
+        """
+        import os as _os
+        newest = ComplianceChecker.newest_backup_path(path)
+        return _os.path.basename(newest) if newest is not None else None
+
+    @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:
         if isinstance(intent, dict):
             return intent.get(field, default)
