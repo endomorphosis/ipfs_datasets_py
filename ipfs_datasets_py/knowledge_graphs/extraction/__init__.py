@@ -71,7 +71,7 @@ from .types import (
 # Import core classes (Task 3.3 - Entity & Relationship, Task 3.4 - KnowledgeGraph)
 from .entities import Entity
 from .relationships import Relationship
-from .graph import KnowledgeGraph, KnowledgeGraphDiff
+from .graph import KnowledgeGraph, KnowledgeGraphDiff, GraphEventType, GraphEvent
 
 # Extractor imports (Task 3.5a - KnowledgeGraphExtractor, Task 3.5b - WithValidation)
 from .extractor import KnowledgeGraphExtractor
@@ -141,6 +141,8 @@ __all__ = [
     'Relationship',
     'KnowledgeGraph',  # Task 3.4 ✅
     'KnowledgeGraphDiff',  # Session 70 — graph diff/patch ✅
+    'GraphEventType',  # Session 71 — graph event subscriptions ✅
+    'GraphEvent',  # Session 71 — graph event subscriptions ✅
     'KnowledgeGraphExtractor',  # Task 3.5a ✅
     'KnowledgeGraphExtractorWithValidation',  # Task 3.5b ✅
     # Advanced extractor (Workstream I — relocated from package root)

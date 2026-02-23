@@ -34,7 +34,9 @@ Phase: Phase 3 Task 3.4 - KnowledgeGraph class extraction
 from typing import Callable, Dict, List, Optional, Any, Tuple, Set, Union
 from collections import defaultdict
 from dataclasses import dataclass, field
+from enum import Enum
 import json
+import time
 
 from ipfs_datasets_py.knowledge_graphs.extraction.types import (
     EntityID,
@@ -45,6 +47,38 @@ from ipfs_datasets_py.knowledge_graphs.extraction.types import (
 )
 from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
 from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
+
+
+class GraphEventType(str, Enum):
+    """Event types emitted by :class:`KnowledgeGraph` mutations.
+
+    Implements the *real-time graph streaming* feature (v4.0+ roadmap).
+    Attach a subscriber via :meth:`KnowledgeGraph.subscribe` to observe
+    every structural change to the graph in real time.
+    """
+    ENTITY_ADDED = "entity_added"
+    ENTITY_REMOVED = "entity_removed"
+    ENTITY_MODIFIED = "entity_modified"
+    RELATIONSHIP_ADDED = "relationship_added"
+    RELATIONSHIP_REMOVED = "relationship_removed"
+
+
+@dataclass
+class GraphEvent:
+    """A single event emitted by a :class:`KnowledgeGraph` mutation.
+
+    Attributes:
+        event_type: The type of structural change that occurred.
+        timestamp: Unix timestamp (``time.time()``) when the event was emitted.
+        entity_id: ID of the affected entity (if applicable).
+        relationship_id: ID of the affected relationship (if applicable).
+        data: Optional dict with additional context (e.g. entity_type, name).
+    """
+    event_type: GraphEventType
+    timestamp: float
+    entity_id: Optional[str] = None
+    relationship_id: Optional[str] = None
+    data: Optional[Dict[str, Any]] = None
 
 
 class KnowledgeGraph:
@@ -87,6 +121,181 @@ class KnowledgeGraph:
         self.entity_names: Dict[str, Set[str]] = defaultdict(set)
         self.relationship_types: Dict[str, Set[str]] = defaultdict(set)
         self.entity_relationships: Dict[str, Set[str]] = defaultdict(set)
+
+        # Event subscriptions (real-time graph streaming — v4.0+ roadmap)
+        self._event_subscribers: Dict[int, Callable[[GraphEvent], None]] = {}
+        self._next_subscriber_id: int = 0
+
+        # Named snapshots (temporal graph versioning — v4.0+ roadmap)
+        self._snapshots: Dict[str, Any] = {}
+
+    # ------------------------------------------------------------------
+    # Event subscription API (real-time graph streaming — v4.0+ roadmap)
+    # ------------------------------------------------------------------
+
+    def subscribe(self, callback: Callable[[GraphEvent], None]) -> int:
+        """Register a callback to receive :class:`GraphEvent` notifications.
+
+        The callback is invoked synchronously after every structural mutation
+        (entity/relationship add/remove/modify).  Exceptions raised inside the
+        callback are silently suppressed so that a faulty subscriber never
+        disrupts graph operations.
+
+        Args:
+            callback: A callable that accepts a single :class:`GraphEvent`
+                argument.
+
+        Returns:
+            int: A handler ID that can be passed to :meth:`unsubscribe` to
+                remove the subscription.
+
+        Example::
+
+            events = []
+            hid = kg.subscribe(events.append)
+            kg.add_entity("person", "Alice")
+            # events[0].event_type == GraphEventType.ENTITY_ADDED
+            kg.unsubscribe(hid)
+        """
+        handler_id = self._next_subscriber_id
+        self._event_subscribers[handler_id] = callback
+        self._next_subscriber_id += 1
+        return handler_id
+
+    def unsubscribe(self, handler_id: int) -> bool:
+        """Remove a previously registered event subscriber.
+
+        Args:
+            handler_id (int): The ID returned by :meth:`subscribe`.
+
+        Returns:
+            bool: ``True`` if the subscriber existed and was removed,
+                ``False`` if the ID was not found.
+        """
+        if handler_id in self._event_subscribers:
+            del self._event_subscribers[handler_id]
+            return True
+        return False
+
+    def _emit_event(self, event: GraphEvent) -> None:
+        """Emit *event* to all registered subscribers.
+
+        Exceptions raised by subscribers are silently ignored.
+
+        Args:
+            event (GraphEvent): The event to emit.
+        """
+        for cb in list(self._event_subscribers.values()):
+            try:
+                cb(event)
+            except Exception:  # noqa: BLE001
+                pass
+
+    # ------------------------------------------------------------------
+    # Snapshot API (temporal graph versioning — v4.0+ roadmap)
+    # ------------------------------------------------------------------
+
+    def snapshot(self, name: Optional[str] = None) -> str:
+        """Capture a named snapshot of the current graph state.
+
+        The snapshot stores a serialized copy of all entities and
+        relationships.  It can later be restored with
+        :meth:`restore_snapshot`.
+
+        Args:
+            name (str, optional): A human-readable name for the snapshot.
+                Defaults to a short UUID slug (``snap_<8 chars>``).
+
+        Returns:
+            str: The snapshot name (useful when *name* was not provided).
+
+        Example::
+
+            snap_name = kg.snapshot("before_merge")
+            kg.add_entity("org", "Acme Corp")
+            kg.restore_snapshot("before_merge")  # reverts the add
+        """
+        if name is None:
+            name = f"snap_{str(uuid.uuid4())[:8]}"
+        self._snapshots[name] = {
+            "entities": [e.to_dict() for e in self.entities.values()],
+            "relationships": [r.to_dict(include_entities=False) for r in self.relationships.values()],
+        }
+        return name
+
+    def get_snapshot(self, name: str) -> Optional[Dict[str, Any]]:
+        """Return a copy of a previously captured snapshot dict.
+
+        Args:
+            name (str): Snapshot name as returned by :meth:`snapshot`.
+
+        Returns:
+            Optional[Dict]: A shallow copy of the snapshot payload
+                (``{"entities": [...], "relationships": [...]}``) or
+                ``None`` if no snapshot with *name* exists.
+        """
+        snap = self._snapshots.get(name)
+        if snap is None:
+            return None
+        return {"entities": list(snap["entities"]), "relationships": list(snap["relationships"])}
+
+    def list_snapshots(self) -> List[str]:
+        """Return a sorted list of all snapshot names.
+
+        Returns:
+            List[str]: Snapshot names in lexicographical order.
+        """
+        return sorted(self._snapshots.keys())
+
+    def restore_snapshot(self, name: str) -> bool:
+        """Restore the graph to a previously captured snapshot state.
+
+        All current entities, relationships, and index data are replaced
+        with the snapshot contents.  Registered event subscribers are
+        **not** notified during restore (the graph state is replaced
+        atomically from the caller's perspective).
+
+        Args:
+            name (str): Snapshot name as returned by :meth:`snapshot`.
+
+        Returns:
+            bool: ``True`` if the snapshot was found and applied,
+                ``False`` if *name* does not match any stored snapshot.
+
+        Example::
+
+            snap = kg.snapshot()
+            kg.add_entity("person", "Temporary")
+            assert kg.restore_snapshot(snap)
+            assert not kg.get_entities_by_name("Temporary")
+        """
+        snap = self._snapshots.get(name)
+        if snap is None:
+            return False
+
+        # Replace internal state
+        self.entities = {}
+        self.relationships = {}
+        self.entity_types = defaultdict(set)
+        self.entity_names = defaultdict(set)
+        self.relationship_types = defaultdict(set)
+        self.entity_relationships = defaultdict(set)
+
+        for e_dict in snap["entities"]:
+            entity = Entity.from_dict(e_dict)
+            self.entities[entity.entity_id] = entity
+            self.entity_types[entity.entity_type].add(entity.entity_id)
+            self.entity_names[entity.name].add(entity.entity_id)
+
+        for r_dict in snap["relationships"]:
+            rel = Relationship.from_dict(r_dict, entity_map=self.entities)
+            if rel.source_entity and rel.target_entity:
+                self.relationships[rel.relationship_id] = rel
+                self.relationship_types[rel.relationship_type].add(rel.relationship_id)
+                self.entity_relationships[rel.source_id].add(rel.relationship_id)
+                self.entity_relationships[rel.target_id].add(rel.relationship_id)
+
+        return True
 
     def add_entity(
         self,
@@ -157,6 +366,14 @@ class KnowledgeGraph:
         # Update indexes
         self.entity_types[entity.entity_type].add(entity.entity_id)
         self.entity_names[entity.name].add(entity.entity_id)
+
+        # Emit event
+        self._emit_event(GraphEvent(
+            event_type=GraphEventType.ENTITY_ADDED,
+            timestamp=time.time(),
+            entity_id=entity.entity_id,
+            data={"entity_type": entity.entity_type, "name": entity.name},
+        ))
 
         return entity
 
@@ -247,6 +464,14 @@ class KnowledgeGraph:
         
         self.entity_relationships[source_id].add(relationship.relationship_id)
         self.entity_relationships[target_id].add(relationship.relationship_id)
+
+        # Emit event
+        self._emit_event(GraphEvent(
+            event_type=GraphEventType.RELATIONSHIP_ADDED,
+            timestamp=time.time(),
+            relationship_id=relationship.relationship_id,
+            data={"relationship_type": relationship.relationship_type},
+        ))
 
         return relationship
 
@@ -790,8 +1015,18 @@ class KnowledgeGraph:
                     other_eid = rel.target_id if rel.source_id == eid else rel.source_id
                     if other_eid and other_eid != eid:
                         self.entity_relationships[other_eid].discard(rid)
+                    self._emit_event(GraphEvent(
+                        event_type=GraphEventType.RELATIONSHIP_REMOVED,
+                        timestamp=time.time(),
+                        relationship_id=rid,
+                    ))
             self.entity_relationships.pop(eid, None)
             del self.entities[eid]
+            self._emit_event(GraphEvent(
+                event_type=GraphEventType.ENTITY_REMOVED,
+                timestamp=time.time(),
+                entity_id=eid,
+            ))
 
         # 2. Remove standalone relationships
         for rid in list(diff.removed_relationship_ids):
@@ -802,6 +1037,11 @@ class KnowledgeGraph:
             for eid in (rel.source_id, rel.target_id):
                 if eid:
                     self.entity_relationships[eid].discard(rid)
+            self._emit_event(GraphEvent(
+                event_type=GraphEventType.RELATIONSHIP_REMOVED,
+                timestamp=time.time(),
+                relationship_id=rid,
+            ))
 
         # 3. Add new entities; track old_id → new entity_id mapping
         entity_id_map: Dict[str, str] = {eid: eid for eid in self.entities}
@@ -816,6 +1056,12 @@ class KnowledgeGraph:
             eid = mod.get("entity_id", "")
             if eid in self.entities:
                 self.entities[eid].properties = dict(mod.get("new_properties") or {})
+                self._emit_event(GraphEvent(
+                    event_type=GraphEventType.ENTITY_MODIFIED,
+                    timestamp=time.time(),
+                    entity_id=eid,
+                    data={"properties": self.entities[eid].properties},
+                ))
 
         # 5. Add new relationships
         for r_dict in diff.added_relationships:

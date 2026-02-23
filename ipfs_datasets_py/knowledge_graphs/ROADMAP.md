@@ -1,7 +1,7 @@
 # Knowledge Graphs - Development Roadmap
 
 **Last Updated:** 2026-02-22  
-**Current Version:** 3.22.24  
+**Current Version:** 3.22.25  
 **Status:** Production Ready (99.99% test coverage)
 
 ---
@@ -342,8 +342,8 @@ All tests that require optional deps now have proper `@pytest.mark.skipif` guard
 ## Long-Term Vision (v4.0+)
 
 ### Potential Features
-- Real-time graph streaming
-- Temporal graph databases
+- ✅ Real-time graph streaming — **Delivered in v3.22.25** (`GraphEventType` + `KnowledgeGraph.subscribe()`)
+- ✅ Temporal graph databases (snapshots) — **Delivered in v3.22.25** (`KnowledgeGraph.snapshot()` / `restore_snapshot()`)
 - Graph neural networks integration
 - Advanced visualization tools
 - GraphQL API support
@@ -431,6 +431,7 @@ We follow [Semantic Versioning](https://semver.org/):
 | 3.22.22 | 2026-02-22 | ✅ Released | cypher/README.md ❌ Not Supported table → ✅ Implemented (NOT/CREATE/MERGE/DELETE); core/README ~80%→100% + Phase5 v4.0+; MIGRATION_GUIDE+API_REFERENCE stale NOT/CREATE workarounds + GraphML/GEXF/Pajek "Not implemented" → ✅ Implemented; 22 doc tests (session68) |
 | 3.22.23 | 2026-02-22 | ✅ Released | Deferred v4.0+ features implemented: aggregate_confidence_scores() (6 methods) + compute_extraction_quality_metrics() in extractor.py; export_streaming(progress_callback=...) in formats.py; extraction/README Phase5 In Progress→Complete; DEFERRED_FEATURES.md updated; 34 prod+doc tests (session69) |
 | 3.22.24 | 2026-02-22 | ✅ Released | Graph diff/patch feature: KnowledgeGraphDiff dataclass + KnowledgeGraph.diff() + apply_diff() in extraction/graph.py; entity matching by (type,name) fingerprint; cascade-remove on entity deletion; DEFERRED_FEATURES §16 added; MASTER_STATUS test-files 103→110+; REFACTORING_PLAN snapshot updated (session69→session70, 3856+→3939+); 32 tests (session70) |
+| 3.22.25 | 2026-02-22 | ✅ Released | Deferred v4.0+ features: GraphEventType + GraphEvent + KnowledgeGraph.subscribe()/unsubscribe()/_emit_event() (real-time graph streaming); KnowledgeGraph.snapshot()/get_snapshot()/list_snapshots()/restore_snapshot() (temporal graph versioning); DEFERRED_FEATURES §17+§18; MASTER_STATUS v3.22.24→v3.22.25; 38 tests (session71) |
 | 4.0 | 2027+ | 📋 Future | TBD based on feedback |
 
 ---

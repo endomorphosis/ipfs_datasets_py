@@ -5,6 +5,28 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.25] - 2026-02-22
+
+### Added — Deferred v4.0+ features: graph event subscriptions + KG snapshots (Session 71)
+
+**Production code changes.**
+
+- `extraction/graph.py`: Added `GraphEventType(str, Enum)` with 5 event types: `entity_added`, `entity_removed`, `entity_modified`, `relationship_added`, `relationship_removed`
+- `extraction/graph.py`: Added `GraphEvent` dataclass — `event_type`, `timestamp`, `entity_id`, `relationship_id`, `data`
+- `extraction/graph.py`: Added `KnowledgeGraph.subscribe(callback) → int` — registers observer callback, returns handler ID; `unsubscribe(handler_id) → bool` — removes observer; `_emit_event(event)` — fan-out to all subscribers; exceptions in subscribers silently suppressed
+- `extraction/graph.py`: Wired `_emit_event()` into `add_entity()` (ENTITY_ADDED), `add_relationship()` (RELATIONSHIP_ADDED), and all 5 mutation types in `apply_diff()` (ENTITY_REMOVED, RELATIONSHIP_REMOVED, ENTITY_ADDED, RELATIONSHIP_ADDED, ENTITY_MODIFIED)
+- `extraction/graph.py`: Added `KnowledgeGraph.snapshot(name=None) → str` — serializes current entities+relationships; auto-names if omitted
+- `extraction/graph.py`: Added `KnowledgeGraph.get_snapshot(name) → Optional[Dict]` — returns copy of stored payload; `None` if not found
+- `extraction/graph.py`: Added `KnowledgeGraph.list_snapshots() → List[str]` — sorted snapshot names
+- `extraction/graph.py`: Added `KnowledgeGraph.restore_snapshot(name) → bool` — fully rebuilds entities, relationships, and indexes from snapshot; event subscribers not notified during restore
+- `extraction/__init__.py`: `GraphEventType` and `GraphEvent` exported from `__all__`
+
+### Fixed — Documentation
+
+- `MASTER_STATUS.md`: version 3.22.24→3.22.25; Documentation row `v3.22.18`→`v3.22.25`; session 71 entry added; total tests 3,971→4,009
+- `DEFERRED_FEATURES.md`: §17 Graph Event Subscriptions + §18 KG Snapshots added (both ✅ Implemented v3.22.25)
+- `ROADMAP.md`: Current Version 3.22.24→3.22.25; v4.0+ "Real-time graph streaming" + "Temporal graph databases" marked ✅ Delivered; 3.22.25 row added
+
 ## [3.22.24] - 2026-02-22
 
 ### Added — Graph diff/patch feature (Session 70)

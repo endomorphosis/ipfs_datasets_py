@@ -581,6 +581,84 @@ if not diff.is_empty:
 
 ---
 
+## P6: Delivered in v3.22.25 (formerly v4.0+ "Real-time streaming" and "Temporal graph databases")
+
+### 17. Graph Event Subscriptions
+
+**Status:** ✅ Implemented (v3.22.25 — 2026-02-22)
+**Location:** `extraction/graph.py` — `GraphEventType`, `GraphEvent`,
+             `KnowledgeGraph.subscribe()`, `KnowledgeGraph.unsubscribe()`,
+             `KnowledgeGraph._emit_event()`
+**Implementation:**
+- `GraphEventType(str, Enum)` with 5 event types: `entity_added`, `entity_removed`,
+  `entity_modified`, `relationship_added`, `relationship_removed`
+- `GraphEvent` dataclass: `event_type`, `timestamp`, `entity_id`, `relationship_id`, `data`
+- `KnowledgeGraph.subscribe(callback) -> int` — registers observer, returns handler ID
+- `KnowledgeGraph.unsubscribe(handler_id) -> bool` — removes observer (returns True/False)
+- `KnowledgeGraph._emit_event(event)` — fan-out to all subscribers; exceptions in subscribers
+  are silently suppressed so a faulty subscriber never disrupts graph operations
+- Wired into `add_entity()`, `add_relationship()`, and `apply_diff()` (all five event types)
+- Fully backward-compatible: subscribers default to empty dict; no performance overhead
+  when no subscribers are registered
+
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph, GraphEventType
+
+events = []
+kg = KnowledgeGraph("example")
+hid = kg.subscribe(events.append)
+
+e1 = kg.add_entity("person", "Alice")   # fires ENTITY_ADDED
+e2 = kg.add_entity("person", "Bob")    # fires ENTITY_ADDED
+kg.add_relationship("knows", e1, e2)   # fires RELATIONSHIP_ADDED
+
+assert events[0].event_type == GraphEventType.ENTITY_ADDED
+assert events[0].entity_id == e1.entity_id
+
+kg.unsubscribe(hid)   # clean up
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session71.py`
+
+---
+
+### 18. KnowledgeGraph Named Snapshots
+
+**Status:** ✅ Implemented (v3.22.25 — 2026-02-22)
+**Location:** `extraction/graph.py` — `KnowledgeGraph.snapshot()`,
+             `KnowledgeGraph.get_snapshot()`, `KnowledgeGraph.list_snapshots()`,
+             `KnowledgeGraph.restore_snapshot()`
+**Implementation:**
+- `snapshot(name=None) -> str` — serializes current entities+relationships to a named
+  snapshot dict; auto-generates a `snap_<8-char-uuid>` name when none provided; returns name
+- `get_snapshot(name) -> Optional[Dict]` — returns a shallow copy of the snapshot payload
+  (`{"entities": [...], "relationships": [...]}`); `None` if not found
+- `list_snapshots() -> List[str]` — sorted list of all stored snapshot names
+- `restore_snapshot(name) -> bool` — fully rebuilds entities, relationships, and all four
+  index dicts from the stored snapshot; returns `False` when name is unknown; event
+  subscribers are NOT notified during restore (atomic state replacement)
+
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
+kg = KnowledgeGraph("versioned")
+kg.add_entity("person", "Alice")
+snap = kg.snapshot("before_merge")   # "before_merge"
+
+kg.add_entity("org", "Acme Corp")
+assert len(kg.entities) == 2
+
+kg.restore_snapshot("before_merge")  # reverts addition
+assert len(kg.entities) == 1
+assert kg.list_snapshots() == ["before_merge"]
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session71.py`
+
+---
+
 ## How to Use This Document
 
 ### For Users

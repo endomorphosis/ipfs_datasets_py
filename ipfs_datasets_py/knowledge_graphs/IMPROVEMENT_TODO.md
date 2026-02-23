@@ -1141,3 +1141,29 @@ was listed as "Priority: MEDIUM — Prioritized action items" despite all items 
 - `TestVersionAgreement` (3 tests): MASTER_STATUS/CHANGELOG/ROADMAP all agree on v3.22.24
 
 **Result: 32 passed, 0 failed** ✅
+
+---
+
+### Session 71 (2026-02-22, v3.22.25)
+
+**Goal:** Implement deferred v4.0+ features — graph event subscriptions (real-time streaming) and KG snapshots (temporal versioning).
+
+**Changes:**
+1. `extraction/graph.py`: `GraphEventType(str, Enum)` (5 event types) + `GraphEvent` dataclass + `KnowledgeGraph.subscribe(callback)→int` / `unsubscribe(handler_id)→bool` / `_emit_event(event)` wired into all 5 mutation paths
+2. `extraction/graph.py`: `KnowledgeGraph.snapshot(name)` / `get_snapshot(name)` / `list_snapshots()` / `restore_snapshot(name)` — named-snapshot temporal versioning
+3. `extraction/__init__.py`: `GraphEventType` + `GraphEvent` exported
+4. `MASTER_STATUS.md`: v3.22.24→v3.22.25; Documentation `v3.22.18`→`v3.22.25`; session 71 entry; 3,971→4,009 tests
+5. `DEFERRED_FEATURES.md`: §17 Graph Event Subscriptions + §18 KG Snapshots added
+6. `ROADMAP.md`: v3.22.24→v3.22.25; 3.22.25 row added; v4.0+ items marked ✅ Delivered
+7. `CHANGELOG_KNOWLEDGE_GRAPHS.md`: ## [3.22.25] Added section
+
+**38 tests** in `test_master_status_session71.py` (6 classes):
+- `TestGraphEventClasses` (5 tests): importable; enum values; GraphEvent fields; str-enum comparison
+- `TestSubscribeUnsubscribe` (6 tests): returns-int; unique-ids; returns-true/false; removes-subscriber; multiple
+- `TestEventFiring` (8 tests): entity-added event; data dict; timestamp; rel-added; diff-entity-removed; diff-entity-added; diff-entity-modified; faulty-subscriber
+- `TestSnapshotAPI` (12 tests): returns-name; auto-name; empty-list; sorted; get-copy; missing-none; restore-true; restore-false; reverts-adds; reverts-removals; rels-preserved; indexes-rebuilt
+- `TestDeferredFeaturesDoc` (2 tests): event-subscriptions-entry; snapshots-entry
+- `TestRoadmapDoc` (2 tests): v3.22.25 row; streaming delivered
+- `TestVersionAgreement` (3 tests): MASTER_STATUS/CHANGELOG/ROADMAP agree on v3.22.25
+
+**Result: 38 passed, 0 failed** ✅
