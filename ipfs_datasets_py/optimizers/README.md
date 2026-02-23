@@ -46,6 +46,26 @@ optimizers/
     └── ...                     # Additional GraphRAG components
 ```
 
+  ## Architecture Diagram
+
+  ```mermaid
+  flowchart LR
+    subgraph Optimizers
+      Agentic[Agentic Optimizers]
+      Logic[Logic Theorem Optimizers]
+      GraphRAG[GraphRAG Optimizers]
+      Common[Common Infrastructure]
+    end
+
+    Common --> Agentic
+    Common --> Logic
+    Common --> GraphRAG
+
+    Agentic -->|Change control| GitHub[GitHub/patch workflows]
+    GraphRAG -->|Generate/Evaluate/Refine| Ontology[Ontology artifacts]
+    Logic -->|Prove/Validate| Proofs[Theorem proofs]
+  ```
+
 ## Quick Start
 
 ### Agentic Optimizer CLI

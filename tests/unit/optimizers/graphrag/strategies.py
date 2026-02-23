@@ -150,3 +150,44 @@ def valid_entity(draw) -> "Entity":  # type: ignore[return]
         properties=properties,
         source_span=source_span,
     )
+
+
+@st.composite
+def valid_critic_score(draw) -> "CriticScore":  # type: ignore[return]
+    """Generate a valid :class:`CriticScore` instance.
+
+    Returns:
+        A randomly-generated CriticScore instance with dimensions in [0.0, 1.0].
+    """
+    from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
+    dim = st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False)
+    completeness = draw(dim)
+    consistency = draw(dim)
+    clarity = draw(dim)
+    granularity = draw(dim)
+    relationship_coherence = draw(dim)
+    domain_alignment = draw(dim)
+
+    word = st.text(
+        alphabet=st.characters(whitelist_categories=("L", "Nd", "Pc")),
+        min_size=1,
+        max_size=20,
+    )
+    strengths = draw(st.lists(word, min_size=0, max_size=5))
+    weaknesses = draw(st.lists(word, min_size=0, max_size=5))
+    recommendations = draw(st.lists(word, min_size=0, max_size=5))
+    metadata = draw(st.dictionaries(keys=word, values=word, min_size=0, max_size=5))
+
+    return CriticScore(
+        completeness=completeness,
+        consistency=consistency,
+        clarity=clarity,
+        granularity=granularity,
+        relationship_coherence=relationship_coherence,
+        domain_alignment=domain_alignment,
+        strengths=strengths,
+        weaknesses=weaknesses,
+        recommendations=recommendations,
+        metadata=metadata,
+    )
