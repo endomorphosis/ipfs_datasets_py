@@ -1,9 +1,13 @@
-"""Tests for structured logging emitted by OntologyGenerator.extract_entities()."""
+"""Tests for structured logging emitted by OntologyGenerator.extract_entities().
+
+Note: In this repo's pytest logging configuration, INFO logs show up in captured
+stderr but are not consistently available via caplog.records.
+"""
 
 from __future__ import annotations
 
 import json
-import logging
+import re
 
 from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
     ExtractionStrategy,
@@ -12,7 +16,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
 )
 
 
-def test_extract_entities_emits_structured_json_log(caplog):
+def test_extract_entities_emits_structured_json_log(capsys):
     gen = OntologyGenerator()
     ctx = OntologyGenerationContext(
         data_source="test",
@@ -21,14 +25,14 @@ def test_extract_entities_emits_structured_json_log(caplog):
         extraction_strategy=ExtractionStrategy.RULE_BASED,
     )
 
-    with caplog.at_level(logging.INFO):
-        result = gen.extract_entities("Alice met Bob.", ctx)
+    result = gen.extract_entities("Alice met Bob.", ctx)
 
-    messages = [record.getMessage() for record in caplog.records]
-    structured = [m for m in messages if m.startswith("EXTRACT_ENTITIES: ")]
-    assert structured, "Expected an EXTRACT_ENTITIES structured log line"
+    captured = capsys.readouterr()
+    assert "EXTRACT_ENTITIES: " in captured.err
 
-    payload = json.loads(structured[-1].split("EXTRACT_ENTITIES: ", 1)[1])
+    matches = re.findall(r"EXTRACT_ENTITIES: (\{.*\})", captured.err)
+    assert matches, "Expected an EXTRACT_ENTITIES JSON payload in stderr"
+    payload = json.loads(matches[-1])
     assert payload["event"] == "extract_entities"
     assert payload["strategy"] == ExtractionStrategy.RULE_BASED.value
     assert payload["entity_count"] == len(result.entities)
