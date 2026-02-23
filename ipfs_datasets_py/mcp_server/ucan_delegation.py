@@ -1112,6 +1112,9 @@ class MergeResult:
             f"rate={self.import_rate * 100:.1f}%)"
         )
 
+    #: ``str()`` delegates to :meth:`__repr__` for display consistency.
+    __str__ = __repr__
+
 
 class DelegationManager:
     """Bundles :class:`DelegationStore`, :class:`RevocationList`, and

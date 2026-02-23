@@ -1324,6 +1324,9 @@ class IPFSReloadResult(NamedTuple):
             f"rate={self.success_rate * 100:.1f}%)"
         )
 
+    #: ``str()`` delegates to :meth:`__repr__` for display consistency.
+    __str__ = __repr__
+
 
 class IPFSPolicyStore(FilePolicyStore):
     """IPFS-backed :class:`PolicyRegistry` store (Phase G).

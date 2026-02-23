@@ -716,6 +716,25 @@ class PubSubBus:
             if handler in handlers
         )
 
+    def handler_count(self) -> int:
+        """Return the number of *unique* handlers across all topics.
+
+        A handler subscribed to multiple topics is counted only once::
+
+            def cb(t, p): pass
+            bus.subscribe("a", cb)
+            bus.subscribe("b", cb)
+            assert bus.handler_count() == 1  # cb appears twice but is 1 unique
+
+        Returns:
+            Non-negative integer — 0 when no handlers are registered.
+        """
+        seen: set = set()
+        for handlers in self._subscribers.values():
+            for h in handlers:
+                seen.add(id(h))
+        return len(seen)
+
     async def publish_async(
         self,
         topic: Union[str, "PubSubEventType"],
