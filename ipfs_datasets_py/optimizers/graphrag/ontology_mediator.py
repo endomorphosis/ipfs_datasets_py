@@ -284,6 +284,16 @@ class OntologyMediator:
         >>> else:
         ...     print("Did not converge within max rounds")
     """
+
+    KNOWN_REFINEMENT_ACTION_TYPES: tuple[str, ...] = (
+        "add_missing_properties",
+        "normalize_names",
+        "prune_orphans",
+        "merge_duplicates",
+        "add_missing_relationships",
+        "split_entity",
+        "rename_entity",
+    )
     
     def __init__(
         self,
@@ -1218,6 +1228,23 @@ class OntologyMediator:
             []
         """
         return sorted(self._action_counts.keys())
+
+    def actions_never_applied(self) -> list[str]:
+        """Return known refinement action types that have never been applied.
+
+        This is computed relative to :attr:`KNOWN_REFINEMENT_ACTION_TYPES`.
+
+        Returns:
+            Sorted list of action name strings where :meth:`action_count_for`
+            returns ``0``.
+
+        Example:
+            >>> mediator.actions_never_applied()
+            ['add_missing_properties', 'add_missing_relationships', ...]
+        """
+        return sorted(
+            [a for a in self.KNOWN_REFINEMENT_ACTION_TYPES if self.action_count_for(a) == 0]
+        )
 
     def total_action_count(self) -> int:
         """Return the total count of all action invocations.

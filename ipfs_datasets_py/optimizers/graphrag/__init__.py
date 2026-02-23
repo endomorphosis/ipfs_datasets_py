@@ -174,6 +174,11 @@ from .exceptions import (
     SessionError,
 )
 
+from .schema_validator import (
+    validate_ontology_schema,
+    OntologySchemaError,
+)
+
 # Type definitions (for static type checking and IDE support)
 from .ontology_types import (
     # Ontology structures

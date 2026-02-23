@@ -149,6 +149,29 @@ class TestActionCountFor:
 
 
 # ---------------------------------------------------------------------------
+# OntologyMediator.actions_never_applied
+# ---------------------------------------------------------------------------
+
+
+class TestActionsNeverApplied:
+    def test_new_mediator_returns_all_known_actions(self):
+        med = _make_mediator()
+        assert med.actions_never_applied() == sorted(med.KNOWN_REFINEMENT_ACTION_TYPES)
+
+    def test_excludes_actions_that_have_counts(self):
+        med = _make_mediator()
+        med.apply_action_bulk(["normalize_names", "split_entity", "normalize_names"])
+        never = med.actions_never_applied()
+        assert "normalize_names" not in never
+        assert "split_entity" not in never
+
+        for a in med.KNOWN_REFINEMENT_ACTION_TYPES:
+            if a in {"normalize_names", "split_entity"}:
+                continue
+            assert a in never
+
+
+# ---------------------------------------------------------------------------
 # CriticScore.is_passing
 # ---------------------------------------------------------------------------
 

@@ -2891,6 +2891,89 @@ class OntologyGenerator:
                 self._log.warning("LLM fallback extraction failed: %s", exc)
         return result
     
+    def _extract_context_window(
+        self,
+        text: str,
+        pos1: int,
+        pos2: int,
+        window_size: int = 100
+    ) -> str:
+        """Extract text context window around two positions.
+        
+        Args:
+            text: Full text.
+            pos1: Position of first entity.
+            pos2: Position of second entity.
+            window_size: Characters to include on each side.
+            
+        Returns:
+            Context window string containing both positions.
+        """
+        start = max(0, min(pos1, pos2) - window_size)
+        end = min(len(text), max(pos1, pos2) + window_size)
+        return text[start:end]
+    
+    def _infer_type_from_context(
+        self,
+        context_window: str,
+        e1_text: str,
+        e2_text: str,
+        e1_type: str,
+        e2_type: str,
+    ) -> tuple[str, float]:
+        """Infer relationship type from context window using keyword patterns.
+        
+        Args:
+            context_window: Text window containing both entities.
+            e1_text: First entity text.
+            e2_text: Second entity text.
+            e1_type: First entity type.
+            e2_type: Second entity type.
+            
+        Returns:
+            Tuple of (relationship_type, type_confidence)
+        """
+        import re
+        
+        window_lower = context_window.lower()
+        
+        # Directional patterns (source → target)
+        directional_patterns = [
+            (re.compile(r'\b(employs?|hired?|recruits?)\b'), 'employs', 0.75),
+            (re.compile(r'\b(manages?|supervises?|oversees?)\b'), 'manages', 0.75),
+            (re.compile(r'\b(owns?|possesses?)\b'), 'owns', 0.70),
+            (re.compile(r'\b(creates?|produces?|manufactures?)\b'), 'produces', 0.70),
+            (re.compile(r'\b(founded?|established?|started?)\b'), 'founded', 0.72),
+            (re.compile(r'\b(leads?|directs?|heads?)\b'), 'leads', 0.68),
+        ]
+        
+        # Bidirectional patterns (undirected relationship)
+        bidirectional_patterns = [
+            (re.compile(r'\b(partners?\s+with|collabor\w+\s+with)\b'), 'partners_with', 0.70),
+            (re.compile(r'\b(compet\w+\s+with|rivals?)\b'), 'competes_with', 0.68),
+            (re.compile(r'\b(located\s+in|based\s+in)\b'), 'located_in', 0.72),
+            (re.compile(r'\b(member\s+of|belongs\s+to)\b'), 'member_of', 0.75),
+        ]
+        
+        # Check directional patterns first
+        for pattern, rel_type, confidence in directional_patterns:
+            if pattern.search(window_lower):
+                return (rel_type, confidence)
+        
+        # Check bidirectional patterns
+        for pattern, rel_type, confidence in bidirectional_patterns:
+            if pattern.search(window_lower):
+                return (rel_type, confidence)
+        
+        # Fall back to entity type-based inference
+        type_inference_rules = self._get_type_inference_rules()
+        for rule in type_inference_rules:
+            if rule['condition'](e1_type, e2_type):
+                return (rule['type'], rule['base_confidence'] * 0.9)  # Slight discount
+        
+        # Default fallback
+        return ('related_to', 0.45)
+    
     def infer_relationships(
         self,
         entities: List[Entity],
@@ -2999,26 +3082,19 @@ class OntologyGenerator:
                         # Extra penalty for distant entities (>100 chars apart)
                         confidence = max(0.2, 0.4 - (distance - 100) / 500.0)
                     
-                    # Infer relationship type from entity types and proximity
-                    # Type confidence based on entity type compatibility and distance
+                    # Extract context window for improved type inference
                     e1_type = getattr(e1, 'type', 'unknown').lower()
                     e2_type = getattr(e2, 'type', 'unknown').lower()
                     
-                    # Use lazy-loaded type inference rules (cached at class level)
-                    inferred_type = 'related_to'  # Default
-                    type_confidence = 0.50  # Lower base confidence for heuristic inference
-                    
-                    # Apply entity type-based inference rules
-                    type_inference_rules = self._get_type_inference_rules()
-                    for rule in type_inference_rules:
-                        if rule['condition'](e1_type, e2_type):
-                            inferred_type = rule['type']
-                            # Apply distance-based confidence thresholding
-                            if distance < rule['distance_threshold']:
-                                type_confidence = rule['base_confidence']
-                            else:
-                                type_confidence = rule['base_confidence'] - 0.15
-                            break
+                    # Use context window to infer relationship type with higher accuracy
+                    context_window = self._extract_context_window(text, pos1, pos2, window_size=100)
+                    inferred_type, type_confidence = self._infer_type_from_context(
+                        context_window,
+                        e1.text,
+                        e2.text,
+                        e1_type,
+                        e2_type,
+                    )
                     
                     # Discount confidence for very distant co-occurrences
                     if distance > 150:
@@ -3033,7 +3109,7 @@ class OntologyGenerator:
                         direction='undirected',
                         properties={
                             'type_confidence': type_confidence,
-                            'type_method': 'cooccurrence',
+                            'type_method': 'context_window',
                             'source_entity_type': e1_type,
                             'target_entity_type': e2_type,
                         },
