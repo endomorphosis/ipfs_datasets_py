@@ -4502,11 +4502,48 @@ class OntologyGenerator:
         """
         # Smart merge: dedup by id, merge properties, track provenance.
         import copy as _copy
+        import time as _time
 
         merged = _copy.deepcopy(base)
         merged.setdefault('entities', [])
         merged.setdefault('relationships', [])
         merged.setdefault('metadata', {})
+
+        # Confidence decay: entities not re-observed in the extension decay over time.
+        # Use an overridable current_time from extension metadata to support deterministic tests.
+        meta = extension.get('metadata', {}) if isinstance(extension.get('metadata', {}), dict) else {}
+        current_time = meta.get('current_time')
+        try:
+            current_time = float(current_time) if current_time is not None else _time.time()
+        except (TypeError, ValueError):
+            current_time = _time.time()
+
+        ext_entity_ids: set[str] = {
+            e.get('id')
+            for e in extension.get('entities', [])
+            if isinstance(e, dict) and isinstance(e.get('id'), str) and e.get('id')
+        }
+        for ent in merged.get('entities', []):
+            if not isinstance(ent, dict):
+                continue
+            eid = ent.get('id')
+            if not isinstance(eid, str) or not eid or eid in ext_entity_ids:
+                continue
+            last_seen = ent.get('last_seen')
+            confidence = ent.get('confidence')
+            if last_seen is None or confidence is None:
+                continue
+            try:
+                last_seen_f = float(last_seen)
+                confidence_f = float(confidence)
+            except (TypeError, ValueError):
+                continue
+
+            elapsed_days = max(0.0, float(current_time) - last_seen_f) / 86400.0
+            half_life_days = 30.0
+            min_confidence = 0.1
+            decay_factor = 0.5 ** (elapsed_days / half_life_days)
+            ent['confidence'] = max(min_confidence, confidence_f * decay_factor)
 
         # --- entity merge ---
         existing_entity_ids: dict[str, dict] = {
@@ -4521,6 +4558,7 @@ class OntologyGenerator:
                 new_ent = _copy.deepcopy(ent)
                 new_ent.setdefault('provenance', [])
                 new_ent['provenance'].append(extension.get('metadata', {}).get('source', 'extension'))
+                new_ent['last_seen'] = float(current_time)
                 merged['entities'].append(new_ent)
                 existing_entity_ids[eid] = new_ent
             else:
@@ -4541,6 +4579,7 @@ class OntologyGenerator:
                 if ext_conf > base_conf:
                     base_ent['confidence'] = ext_conf
                     base_ent['type'] = ext_type  # adopt extension's type when more confident
+                base_ent['last_seen'] = float(current_time)
                 base_ent.setdefault('provenance', [])
                 base_ent['provenance'].append(extension.get('metadata', {}).get('source', 'extension'))
 

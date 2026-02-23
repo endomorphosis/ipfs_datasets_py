@@ -58,8 +58,17 @@ from ipfs_datasets_py.optimizers.common.backend_selection import resolve_backend
 from ipfs_datasets_py.optimizers.graphrag.ontology_critic_completeness import (
     evaluate_completeness,
 )
+from ipfs_datasets_py.optimizers.graphrag.ontology_critic_clarity import (
+    evaluate_clarity,
+)
 from ipfs_datasets_py.optimizers.graphrag.ontology_critic_consistency import (
     evaluate_consistency,
+)
+from ipfs_datasets_py.optimizers.graphrag.ontology_critic_domain_alignment import (
+    evaluate_domain_alignment,
+)
+from ipfs_datasets_py.optimizers.graphrag.ontology_critic_granularity import (
+    evaluate_granularity,
 )
 from ipfs_datasets_py.optimizers.graphrag.ontology_critic_connectivity import (
     evaluate_relationship_coherence,
@@ -616,6 +625,21 @@ class OntologyCritic(BaseCritic):
         else:
             self._llm_available = False
 
+    @staticmethod
+    def _compute_eval_cache_key(ontology: Dict[str, Any]) -> Optional[str]:
+        """Return a stable cache key for an ontology dict.
+
+        Returns ``None`` when the ontology cannot be serialized reliably.
+        """
+        import hashlib as _hashlib
+        import json as _json
+
+        try:
+            payload = _json.dumps(ontology, sort_keys=True, default=str).encode()
+        except (TypeError, ValueError, OverflowError):
+            return None
+        return _hashlib.sha256(payload).hexdigest()
+
     # ------------------------------------------------------------------ #
     # Class-level shared cache helpers                                     #
     # ------------------------------------------------------------------ #
@@ -814,16 +838,11 @@ class OntologyCritic(BaseCritic):
         context: Any,
         source_data: Optional[Any] = None,
     ) -> CriticScore:
-        import hashlib as _hashlib
-        import json as _json
-
         # LRU-style cache keyed on ontology content hash (skipped when source_data provided)
         if source_data is None:
-            try:
-                _cache_key = _hashlib.sha256(
-                    _json.dumps(ontology, sort_keys=True, default=str).encode()
-                ).hexdigest()
-                # Check instance-local cache first, then shared class-level cache
+            _cache_key = self._compute_eval_cache_key(ontology)
+            # Check instance-local cache first, then shared class-level cache
+            if _cache_key is not None:
                 if not hasattr(self, '_eval_cache'):
                     self._eval_cache: dict = {}
                 if _cache_key in self._eval_cache:
@@ -834,8 +853,6 @@ class OntologyCritic(BaseCritic):
                     cached = OntologyCritic._SHARED_EVAL_CACHE[_cache_key]
                     self._eval_cache[_cache_key] = cached
                     return cached
-            except (TypeError, ValueError, OverflowError):
-                _cache_key = None
         else:
             _cache_key = None
 
@@ -1008,10 +1025,47 @@ class OntologyCritic(BaseCritic):
 
         total = len(ontologies)
         scores: List[Optional[CriticScore]] = [None] * total
+        pending: List[tuple] = []
+        duplicate_map: Dict[str, List[int]] = {}
+
+        # Pre-fill cache hits and dedupe repeated ontologies (cache only when source_data is None).
+        if source_data is None:
+            if not hasattr(self, '_eval_cache'):
+                self._eval_cache = {}
+            for idx, ontology in enumerate(ontologies):
+                cache_key = self._compute_eval_cache_key(ontology)
+                if cache_key is None:
+                    pending.append((idx, ontology, None))
+                    continue
+                if cache_key in self._eval_cache:
+                    scores[idx] = self._eval_cache[cache_key]
+                elif cache_key in OntologyCritic._SHARED_EVAL_CACHE:
+                    cached = OntologyCritic._SHARED_EVAL_CACHE[cache_key]
+                    self._eval_cache[cache_key] = cached
+                    scores[idx] = cached
+                elif cache_key in duplicate_map:
+                    duplicate_map[cache_key].append(idx)
+                else:
+                    duplicate_map[cache_key] = [idx]
+                    pending.append((idx, ontology, cache_key))
+
+            # Invoke progress callbacks for cached results
+            if progress_callback is not None:
+                for idx, score in enumerate(scores):
+                    if score is None:
+                        continue
+                    try:
+                        progress_callback(idx, total, score)
+                    except Exception as e:
+                        self._log.warning(
+                            f"Progress callback failed at index {idx}: {e}"
+                        )
+        else:
+            pending = [(idx, ontology, None) for idx, ontology in enumerate(ontologies)]
 
         def _evaluate_with_index(idx_ontology_pair: tuple) -> tuple:
-            """Evaluate single ontology and return (index, score) pair."""
-            idx, ontology = idx_ontology_pair
+            """Evaluate single ontology and return (index, score, cache_key) pair."""
+            idx, ontology, cache_key = idx_ontology_pair
             try:
                 score = self.evaluate_ontology(
                     ontology, context, source_data=source_data
@@ -1023,19 +1077,29 @@ class OntologyCritic(BaseCritic):
                         self._log.warning(
                             f"Progress callback failed at index {idx}: {e}"
                         )
-                return (idx, score)
+                return (idx, score, cache_key)
             except Exception as e:
                 self._log.error(f"Evaluation failed for ontology {idx}: {e}")
-                return (idx, None)
+                return (idx, None, cache_key)
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             results = executor.map(
                 _evaluate_with_index,
-                enumerate(ontologies),
+                pending,
             )
-            for idx, score in results:
+            for idx, score, cache_key in results:
                 if score is not None:
                     scores[idx] = score
+                    if cache_key is not None:
+                        for dup_idx in duplicate_map.get(cache_key, [])[1:]:
+                            scores[dup_idx] = score
+                            if progress_callback is not None:
+                                try:
+                                    progress_callback(dup_idx, total, score)
+                                except Exception as e:
+                                    self._log.warning(
+                                        f"Progress callback failed at index {dup_idx}: {e}"
+                                    )
 
         # Filter out any None values (failed evaluations)
         valid_scores = [s for s in scores if s is not None]
@@ -1570,138 +1634,24 @@ class OntologyCritic(BaseCritic):
         ontology: Dict[str, Any],
         context: Any
     ) -> float:
-        """
-        Evaluate clarity of entity definitions and naming conventions.
-
-        Scores based on:
-        - property completeness (entities with >= 1 property)
-        - naming convention consistency (camelCase / snake_case / PascalCase)
-        - non-empty text field
-        - short-name penalty (entity texts < 3 chars suggest poor extraction)
-        - confidence coverage (entities with explicit confidence > 0)
-        """
-        import re as _re
-
-        entities = ontology.get('entities', [])
-
-        if not entities:
-            return 0.0
-
-        # Sub-score 1: property completeness (entities with >= 1 property)
-        with_props = sum(1 for e in entities if isinstance(e, dict) and e.get('properties'))
-        prop_score = with_props / len(entities)
-
-        # Sub-score 2: naming convention consistency (all camelCase OR all snake_case)
-        names = [e.get('text', '') or e.get('id', '') for e in entities if isinstance(e, dict)]
-        camel = sum(1 for n in names if _re.match(r'^[a-z][a-zA-Z0-9]*$', n))
-        snake = sum(1 for n in names if _re.match(r'^[a-z][a-z0-9_]*$', n))
-        pascal = sum(1 for n in names if _re.match(r'^[A-Z][a-zA-Z0-9]*$', n))
-        dominant = max(camel, snake, pascal)
-        naming_score = dominant / max(len(names), 1)
-
-        # Sub-score 3: non-empty text field
-        with_text = sum(1 for e in entities if isinstance(e, dict) and e.get('text'))
-        text_score = with_text / len(entities)
-
-        # Sub-score 4: short-name penalty -- texts with < 3 chars suggest noisy extraction
-        short_names = sum(
-            1 for e in entities
-            if isinstance(e, dict) and len((e.get('text') or e.get('id') or '').strip()) < 3
-        )
-        short_penalty = short_names / len(entities)
-
-        # Sub-score 5: confidence coverage -- fraction with explicit confidence > 0
-        with_confidence = sum(
-            1 for e in entities
-            if isinstance(e, dict) and isinstance(e.get('confidence'), (int, float)) and e['confidence'] > 0
-        )
-        confidence_score = with_confidence / len(entities)
-
-        score = (
-            prop_score * 0.3
-            + naming_score * 0.2
-            + text_score * 0.2
-            + confidence_score * 0.2
-            - short_penalty * 0.1
-        )
-        return round(min(max(score, 0.0), 1.0), 4)
+        """Evaluate clarity of entity definitions and naming conventions."""
+        return evaluate_clarity(ontology, context)
 
     def _evaluate_granularity(
         self,
         ontology: Dict[str, Any],
         context: Any
     ) -> float:
-        """
-        Evaluate appropriateness of detail level.
-        
-        Scores based on average properties-per-entity and relationship-to-entity ratio.
-        """
-        entities = ontology.get('entities', [])
-        relationships = ontology.get('relationships', [])
-
-        if not entities:
-            return 0.0
-
-        # Target: ~3 properties per entity is "good granularity"
-        target_props = 3.0
-        prop_counts = [
-            len(e.get('properties', {}))
-            for e in entities if isinstance(e, dict)
-        ]
-        avg_props = sum(prop_counts) / max(len(prop_counts), 1)
-        prop_score = min(avg_props / target_props, 1.0)
-
-        # Target: ~1.5 relationships per entity
-        target_rels = 1.5
-        rel_ratio = len(relationships) / max(len(entities), 1)
-        rel_score = min(rel_ratio / target_rels, 1.0)
-
-        # Penalty for entities with zero properties (too coarse)
-        no_props = sum(1 for c in prop_counts if c == 0)
-        coarseness_penalty = no_props / max(len(entities), 1) * 0.3
-
-        score = prop_score * 0.45 + rel_score * 0.4 - coarseness_penalty
-        return round(min(max(score, 0.0), 1.0), 4)
+        """Evaluate appropriateness of detail level."""
+        return evaluate_granularity(ontology, context)
 
     def _evaluate_domain_alignment(
         self,
         ontology: Dict[str, Any],
         context: Any
     ) -> float:
-        """
-        Evaluate how well entity types and relationship types align with domain vocabulary.
-        """
-        _DOMAIN_VOCAB: dict[str, set[str]] = {
-            'legal': {'obligation', 'party', 'contract', 'clause', 'breach', 'liability', 'penalty', 'jurisdiction', 'provision', 'agreement'},
-            'medical': {'patient', 'diagnosis', 'treatment', 'symptom', 'medication', 'procedure', 'physician', 'condition', 'dosage', 'outcome'},
-            'technical': {'component', 'service', 'api', 'endpoint', 'module', 'interface', 'dependency', 'version', 'protocol', 'event'},
-            'financial': {'asset', 'liability', 'transaction', 'account', 'balance', 'payment', 'interest', 'principal', 'collateral', 'risk'},
-            'general': {'person', 'organization', 'location', 'date', 'event', 'concept', 'action', 'property', 'relation', 'category'},
-        }
-
-        domain = (getattr(context, 'domain', None) or ontology.get('domain', 'general')).lower()
-        vocab = _DOMAIN_VOCAB.get(domain, _DOMAIN_VOCAB['general'])
-
-        entities = ontology.get('entities', [])
-        relationships = ontology.get('relationships', [])
-
-        if not entities:
-            return 0.5
-
-        # Check what fraction of entity types / rel types are in domain vocab
-        ent_types = [e.get('type', '').lower() for e in entities if isinstance(e, dict)]
-        rel_types = [r.get('type', '').lower() for r in relationships if isinstance(r, dict)]
-        all_terms = ent_types + rel_types
-
-        if not all_terms:
-            return 0.5
-
-        hits = sum(
-            1 for t in all_terms
-            if any(v in t or t in v for v in vocab)
-        )
-        score = hits / len(all_terms)
-        return round(min(max(score, 0.0), 1.0), 4)
+        """Evaluate how well entity types and relationship types align with domain vocabulary."""
+        return evaluate_domain_alignment(ontology, context)
 
     def _evaluate_provenance(
         self,

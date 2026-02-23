@@ -366,3 +366,96 @@ def test_score_distribution_across_100_samples():
     overalls = [s.overall for s in scores]
     # Allow for small variance since random ontologies with consistent structure have similar scores
     assert max(overalls) - min(overalls) > 0.01  # At least 1% range
+
+
+def test_score_distribution_across_1000_samples():
+    """
+    GIVEN: OntologyCritic and 1000 randomly sized ontologies
+    WHEN: Evaluating all ontologies
+    THEN: Score distribution shows reasonable statistical properties
+    """
+    import statistics
+    
+    critic = OntologyCritic()
+    context = OntologyGenerationContext(
+        domain="general",
+        data_source="test",
+        data_type="text",
+    )
+
+    scores = []
+    dimension_scores = {
+        "completeness": [],
+        "consistency": [],
+        "clarity": [],
+        "granularity": [],
+        "relationship_coherence": [],
+        "domain_alignment": [],
+    }
+    
+    for i in range(1000):
+        # Create varied ontologies: 5-50 entities, 2-40 relationships
+        num_entities = 5 + (i % 46)
+        num_rels = 2 + (i % 39)
+        
+        entities = [
+            {
+                "id": f"e{j}",
+                "text": f"Entity {j}",
+                "type": ["Person", "Organization", "Location", "Concept"][j % 4],
+                "confidence": 0.6 + (j % 4) * 0.1,
+            }
+            for j in range(num_entities)
+        ]
+        
+        relationships = [
+            {
+                "id": f"r{j}",
+                "source_id": f"e{j % num_entities}",
+                "target_id": f"e{(j + 1) % num_entities}",
+                "type": ["related_to", "works_for", "located_in", "part_of"][j % 4],
+                "confidence": 0.6 + (j % 3) * 0.1,
+            }
+            for j in range(num_rels)
+        ]
+
+        ontology = {
+            "entities": entities,
+            "relationships": relationships,
+            "metadata": {"domain": "general"},
+        }
+
+        score = critic.evaluate_ontology(ontology, context)
+        scores.append(score.overall)
+        
+        # Track dimension scores
+        dimension_scores["completeness"].append(score.completeness)
+        dimension_scores["consistency"].append(score.consistency)
+        dimension_scores["clarity"].append(score.clarity)
+        dimension_scores["granularity"].append(score.granularity)
+        dimension_scores["relationship_coherence"].append(score.relationship_coherence)
+        dimension_scores["domain_alignment"].append(score.domain_alignment)
+
+    # Statistical analysis
+    assert len(scores) == 1000, "Should have 1000 scores"
+    
+    mean_score = statistics.mean(scores)
+    std_score = statistics.stdev(scores)
+    min_score = min(scores)
+    max_score = max(scores)
+    
+    # Score distribution properties
+    assert 0.3 <= mean_score <= 0.9, f"Mean score {mean_score:.3f} should be reasonable"
+    assert std_score > 0.01, f"Std dev {std_score:.3f} should show variance"
+    assert 0.0 <= min_score <= 1.0, "Min score in valid range"
+    assert 0.0 <= max_score <= 1.0, "Max score in valid range"
+    assert max_score > min_score + 0.05, "Should have meaningful score range"
+    
+    # Validate dimension scores are in valid range
+    # Note: Some dimensions may have low/zero variance depending on ontology similarity
+    for dim, dim_scores in dimension_scores.items():
+        assert all(0.0 <= s <= 1.0 for s in dim_scores), f"{dim} scores must be in [0, 1]"
+        
+    # At least some dimensions should show variance
+    variances = [statistics.stdev(scores) for scores in dimension_scores.values()]
+    assert sum(v > 0.01 for v in variances) >= 2, "At least 2 dimensions should show notable variance"

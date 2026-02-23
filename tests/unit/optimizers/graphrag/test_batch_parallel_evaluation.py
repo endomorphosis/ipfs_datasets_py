@@ -213,6 +213,21 @@ class TestEvaluateBatchParallel:
             assert hasattr(score, "overall")
             assert hasattr(score, "completeness")
 
+    def test_parallel_uses_shared_cache_across_instances(self, context, sample_ontologies):
+        """Parallel evaluation should populate and reuse the shared cache."""
+        OntologyCritic.clear_shared_cache()
+
+        critic_a = OntologyCritic()
+        critic_a.evaluate_batch_parallel(sample_ontologies, context, max_workers=2)
+        cache_size = OntologyCritic.shared_cache_size()
+
+        assert cache_size > 0
+
+        critic_b = OntologyCritic()
+        critic_b.evaluate_batch_parallel(sample_ontologies, context, max_workers=2)
+
+        assert OntologyCritic.shared_cache_size() == cache_size
+
 
 class TestLatencyComparison:
     """Compare latency of parallel vs sequential evaluation."""

@@ -338,6 +338,59 @@ class TestEntityConfidenceDecay:
 class TestConfidenceDecayIntegration:
     """Integration tests for confidence decay in real workflows."""
 
+    def test_merge_applies_decay_to_unseen_entities(self):
+        """_merge_ontologies should decay base entities not re-observed in extension."""
+        from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator
+
+        gen = OntologyGenerator()
+        t0 = 1_000_000.0
+        current_time = t0 + (30 * 86400)
+
+        base = {
+            "entities": [
+                {
+                    "id": "e_seen",
+                    "type": "Person",
+                    "text": "Alice",
+                    "confidence": 0.8,
+                    "last_seen": t0,
+                },
+                {
+                    "id": "e_unseen",
+                    "type": "Person",
+                    "text": "Bob",
+                    "confidence": 0.9,
+                    "last_seen": t0,
+                },
+            ],
+            "relationships": [],
+            "metadata": {"source": "base"},
+        }
+
+        extension = {
+            "entities": [
+                {
+                    "id": "e_seen",
+                    "type": "Person",
+                    "text": "Alice",
+                    "confidence": 0.8,
+                }
+            ],
+            "relationships": [],
+            "metadata": {"source": "doc1", "current_time": current_time},
+        }
+
+        merged = gen._merge_ontologies(base, extension)
+        ents = {e["id"]: e for e in merged["entities"] if isinstance(e, dict) and "id" in e}
+
+        assert ents["e_seen"]["last_seen"] == pytest.approx(current_time, abs=1e-6)
+        assert ents["e_unseen"]["last_seen"] == pytest.approx(t0, abs=1e-6)
+
+        # Unseen entity should decay by one half-life (30 days): 0.9 -> 0.45
+        assert ents["e_unseen"]["confidence"] == pytest.approx(0.45, abs=0.01)
+        # Seen entity should not be decayed
+        assert ents["e_seen"]["confidence"] == pytest.approx(0.8, abs=1e-6)
+
     def test_decay_chain_multiple_applications(self):
         """Applying decay multiple times with same last_seen compounds from original timestamp."""
         current_time = time.time()

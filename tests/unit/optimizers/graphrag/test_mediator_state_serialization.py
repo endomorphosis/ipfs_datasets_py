@@ -9,6 +9,14 @@ Note: Uses centralized factory fixtures from conftest.py to reduce duplication.
 
 import json
 import pytest
+from ipfs_datasets_py.optimizers.graphrag import (
+    OntologyMediator,
+    OntologyGenerationContext,
+    OntologyGenerator,
+    OntologyCritic,
+    DataType,
+    ExtractionStrategy,
+)
 from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import MediatorState
 from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
 
@@ -379,3 +387,31 @@ def test_mediator_state_roundtrip_preserves_base_session_metrics(sample_ontology
     assert restored.best_score == pytest.approx(original_best, abs=0.01)
     # Trend is a property computed from rounds, should match
     assert restored.trend == original_trend
+
+
+def test_run_refinement_cycle_state_roundtrip():
+    """run_refinement_cycle() state should round-trip through dict serialization."""
+    mediator = OntologyMediator(
+        generator=OntologyGenerator(),
+        critic=OntologyCritic(use_llm=False),
+        max_rounds=2,
+    )
+    context = OntologyGenerationContext(
+        data_source="test",
+        data_type=DataType.TEXT,
+        domain="legal",
+        extraction_strategy=ExtractionStrategy.RULE_BASED,
+    )
+
+    state = mediator.run_refinement_cycle(
+        data="Alice works for Acme Corp.",
+        context=context,
+    )
+
+    state_dict = state.to_dict()
+    restored = MediatorState.from_dict(state_dict)
+
+    assert restored.current_round == state.current_round
+    assert restored.current_ontology == state.current_ontology
+    assert len(restored.refinement_history) == len(state.refinement_history)
+    assert len(restored.critic_scores) == len(state.critic_scores)

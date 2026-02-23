@@ -94,6 +94,12 @@ from .exceptions import (
     RefinementError,
     ConfigurationError,
 )
+from .refinement_control_loop import (
+    RefinementControlLoop,
+    ControlLoopConfig,
+    RefinementIteration,
+    BatchRefinementController,
+)
 
 __all__ = [
     # Base classes
@@ -171,4 +177,9 @@ __all__ = [
     "ProvingError",
     "RefinementError",
     "ConfigurationError",
+    # Refinement Control
+    "RefinementControlLoop",
+    "ControlLoopConfig",
+    "RefinementIteration",
+    "BatchRefinementController",
 ]
