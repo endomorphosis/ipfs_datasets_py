@@ -1142,6 +1142,22 @@ class MergeResult:
         """
         return self.added_count
 
+    def __iter__(self):
+        """Iterate over ``(field, value)`` pairs for this result.
+
+        Yields the three core fields in a stable order, enabling easy packing
+        into a plain dict::
+
+            d = dict(result)
+            # {"added_count": 3, "conflict_count": 1, "revocations_copied": 0}
+
+        Yields:
+            Two-element tuples ``(field_name, value)`` for each field.
+        """
+        yield ("added_count", self.added_count)
+        yield ("conflict_count", self.conflict_count)
+        yield ("revocations_copied", self.revocations_copied)
+
 
 class DelegationManager:
     """Bundles :class:`DelegationStore`, :class:`RevocationList`, and

@@ -970,6 +970,99 @@ class ComplianceChecker:
         return files[-1] if files else None
 
     @staticmethod
+    def backup_summary(path: str) -> dict:
+        """Return a dict summarising the backup state for *path*.
+
+        Collects the most useful backup metrics into a single call so that
+        callers do not need to invoke several static methods individually::
+
+            summary = ComplianceChecker.backup_summary("/data/rules.enc")
+            # {
+            #     "count": 2,
+            #     "newest": "/data/rules.enc.bak",
+            #     "oldest": "/data/rules.enc.bak.1",
+            #     "newest_age": 1708690123.4,   # Unix mtime of newest .bak
+            #     "oldest_age": 1708690056.7,   # Unix mtime of oldest .bak
+            # }
+
+        When no backups exist all path/mtime fields are ``None``::
+
+            summary = ComplianceChecker.backup_summary("/data/no-backups.enc")
+            # {"count": 0, "newest": None, "oldest": None,
+            #  "newest_age": None, "oldest_age": None}
+
+        Note:
+            ``newest_age`` and ``oldest_age`` are Unix modification-time
+            timestamps (``os.path.getmtime``), consistent with
+            :meth:`backup_age` and :meth:`oldest_backup_age`.  They are
+            **not** elapsed ages in seconds.
+
+        Args:
+            path: Base file path (without ``.bak`` suffix).
+
+        Returns:
+            Dict with keys ``count`` (int), ``newest`` (str or None),
+            ``oldest`` (str or None), ``newest_age`` (float mtime or None),
+            and ``oldest_age`` (float mtime or None).
+        """
+        import os as _os
+        files = ComplianceChecker.list_bak_files(path)
+        count = len(files)
+        if count == 0:
+            return {
+                "count": 0,
+                "newest": None,
+                "oldest": None,
+                "newest_age": None,
+                "oldest_age": None,
+            }
+        newest = files[0]
+        oldest = files[-1]
+        try:
+            newest_age: Optional[float] = float(_os.path.getmtime(newest))
+        except OSError:
+            newest_age = None
+        try:
+            oldest_age: Optional[float] = float(_os.path.getmtime(oldest))
+        except OSError:
+            oldest_age = None
+        return {
+            "count": count,
+            "newest": newest,
+            "oldest": oldest,
+            "newest_age": newest_age,
+            "oldest_age": oldest_age,
+        }
+        import os as _os
+        files = ComplianceChecker.list_bak_files(path)
+        count = len(files)
+        if count == 0:
+            return {
+                "count": 0,
+                "newest": None,
+                "oldest": None,
+                "newest_age": None,
+                "oldest_age": None,
+            }
+        newest = files[0]
+        oldest = files[-1]
+        try:
+            newest_age: Optional[float] = float(_os.path.getmtime(newest))
+        except OSError:
+            newest_age = None
+        try:
+            oldest_age: Optional[float] = float(_os.path.getmtime(oldest))
+        except OSError:
+            oldest_age = None
+        return {
+            "count": count,
+            "newest": newest,
+            "oldest": oldest,
+            "newest_age": newest_age,
+            "oldest_age": oldest_age,
+        }
+
+    @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:
         if isinstance(intent, dict):
             return intent.get(field, default)

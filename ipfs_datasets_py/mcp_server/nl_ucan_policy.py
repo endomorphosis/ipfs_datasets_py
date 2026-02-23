@@ -1356,6 +1356,26 @@ class IPFSReloadResult(NamedTuple):
         """
         return self.count
 
+    def iter_failed(self):
+        """Yield ``(name, error)`` pairs for all failed pin operations.
+
+        Iterates :attr:`pin_results` and yields an entry for every policy
+        whose CID is ``None``, pairing the policy name with the human-readable
+        error reason from :attr:`pin_errors` (falling back to
+        ``"unknown error"`` when no error detail was captured)::
+
+            for name, reason in result.iter_failed():
+                log.error("Pin failed for %s: %s", name, reason)
+
+        Yields:
+            Two-element ``(str, str)`` tuples — policy name and error reason.
+            Nothing is yielded when all pins succeeded.
+        """
+        errors = self.pin_errors or {}
+        for name, cid in self.pin_results.items():
+            if cid is None:
+                yield (name, errors.get(name, "unknown error"))
+
 
 class IPFSPolicyStore(FilePolicyStore):
     """IPFS-backed :class:`PolicyRegistry` store (Phase G).

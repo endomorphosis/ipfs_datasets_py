@@ -803,6 +803,28 @@ class PubSubBus:
 
         return replaced
 
+    def subscriber_ids(self, topic: Union[str, "PubSubEventType"]) -> List[int]:
+        """Return a sorted list of subscription IDs (SIDs) for *topic*.
+
+        Queries ``_sid_map`` for every SID registered against the given topic
+        key, enabling targeted :meth:`unsubscribe_by_id` calls::
+
+            sids = bus.subscriber_ids("receipts")
+            for sid in sids:
+                bus.unsubscribe_by_id(sid)
+
+        Args:
+            topic: Topic string or :class:`PubSubEventType` enum member.
+
+        Returns:
+            Sorted list of integer SIDs subscribed to *topic*.  Empty list
+            when no subscriptions exist for that topic.
+        """
+        key = topic.value if hasattr(topic, "value") else str(topic)
+        return sorted(
+            sid for sid, (k, _h) in self._sid_map.items() if k == key
+        )
+
     async def publish_async(
         self,
         topic: Union[str, "PubSubEventType"],
