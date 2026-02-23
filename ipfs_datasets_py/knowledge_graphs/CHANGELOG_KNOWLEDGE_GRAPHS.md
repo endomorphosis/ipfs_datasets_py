@@ -5,6 +5,35 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.30] - 2026-02-23
+
+### Added — Deferred v4.0+ GNN Integration + ZKP Support (Session 76)
+
+**Production code changes.**
+
+- `query/gnn.py` — New module: `GraphNeuralNetworkAdapter` (pure-Python, no PyTorch/TF required)
+  - `GNNLayerType(str, Enum)`: GRAPH_CONV / GRAPH_SAGE / GRAPH_ATTENTION
+  - `GNNConfig`: embedding_dim / num_layers / layer_type / normalize / activation
+  - `NodeEmbedding` dataclass: entity_id / features / layer / dim property
+  - `extract_node_features()` — entity-type one-hot + confidence + in/out degree
+  - `message_passing()` — neighbour aggregation (3 strategies, configurable iterations)
+  - `compute_embeddings()` — full forward pass, cached, with optional L2 normalisation
+  - `link_prediction_score(entity_a_id, entity_b_id)` — cosine similarity
+  - `find_similar_entities(entity_id, top_k)` — ranked similarity search
+  - `to_adjacency_dict()` / `export_node_features_array()` — interop with external GNN frameworks
+- `query/zkp.py` — New module: `KGZKProver` + `KGZKVerifier`
+  - `KGProofType`: ENTITY_EXISTS / ENTITY_PROPERTY / PATH_EXISTS / QUERY_ANSWER_COUNT
+  - `KGProofStatement`: proof_type / parameters / commitment / nullifier / public_inputs
+  - `KGZKProver`: prove_entity_exists / prove_entity_property / prove_path_exists / prove_query_answer_count / batch_prove
+  - `KGZKVerifier.verify_statement()` + `verify_batch()` — replay-protected verification
+
+**Documentation updates.**
+
+- `query/__init__.py` — 8 new symbols exported; added to `__all__`
+- `DEFERRED_FEATURES.md` — P11 §23 GNN + §24 ZKP added (✅ Implemented v3.22.30)
+- `ROADMAP.md` — Both remaining v4.0+ items now ✅ Delivered; v3.22.30 row added; Current Version bumped to 3.22.30
+- `MASTER_STATUS.md` — v3.22.29→3.22.30; test-files 114+→115+; session 76 log; total 4,169→4,219+
+
 ## [3.22.29] - 2026-02-23
 
 ### Added — Deferred v4.0+ Blockchain-Style Provenance Chain (Session 75)

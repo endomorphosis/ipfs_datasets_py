@@ -968,6 +968,91 @@ assert is_valid
 
 ---
 
+## P11 — Session 76 Delivered (v3.22.30)
+
+### §23 — Graph Neural Networks Integration
+
+**Status:** ✅ Implemented in v3.22.30
+**Module:** `query/gnn.py`
+**Class:** `GraphNeuralNetworkAdapter`
+
+Provides a pure-Python (no PyTorch / TensorFlow required) GNN implementation:
+
+- `GNNLayerType`: GRAPH_CONV, GRAPH_SAGE, GRAPH_ATTENTION
+- `GNNConfig`: embedding_dim / num_layers / layer_type / normalize / activation
+- `NodeEmbedding`: entity_id / features / layer
+- `GraphNeuralNetworkAdapter`:
+  - `extract_node_features()` — entity-type one-hot + confidence + in/out degree
+  - `message_passing(features, num_iterations)` — neighbour aggregation
+  - `compute_embeddings()` — full forward pass (cached)
+  - `link_prediction_score(entity_a_id, entity_b_id)` — cosine similarity
+  - `find_similar_entities(entity_id, top_k)` — ranked similarity search
+  - `to_adjacency_dict()` — export topology to external GNN frameworks
+  - `export_node_features_array()` — (ids, feature_matrix) for numpy / PyTorch
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query.gnn import (
+    GraphNeuralNetworkAdapter, GNNConfig, GNNLayerType,
+)
+kg = KnowledgeGraph("demo")
+alice = kg.add_entity("person", "Alice", confidence=0.9)
+bob   = kg.add_entity("person", "Bob",   confidence=0.8)
+carol = kg.add_entity("org",    "ACME")
+kg.add_relationship("works_at", alice, carol)
+kg.add_relationship("knows",    alice, bob)
+
+adapter = GraphNeuralNetworkAdapter(kg, GNNConfig(num_layers=2, normalize=True))
+score = adapter.link_prediction_score(alice, bob)   # cosine similarity
+similar = adapter.find_similar_entities(alice, top_k=2)
+ids, matrix = adapter.export_node_features_array()  # → numpy / PyTorch
+```
+
+---
+
+### §24 — Zero-Knowledge Proof Support
+
+**Status:** ✅ Implemented in v3.22.30
+**Module:** `query/zkp.py`
+**Classes:** `KGZKProver`, `KGZKVerifier`
+
+Enables privacy-preserving query proofs — prove a *property* of the graph
+without revealing underlying entity IDs, names, or relationship details:
+
+- `KGProofType`: ENTITY_EXISTS / ENTITY_PROPERTY / PATH_EXISTS / QUERY_ANSWER_COUNT
+- `KGProofStatement`: proof_type / parameters / commitment / nullifier / public_inputs
+- `KGZKProver`:
+  - `prove_entity_exists(entity_type, name)` — prove ∃ entity without exposing ID
+  - `prove_entity_property(entity_id, property_key, value_hash)` — prove property value without revealing it
+  - `prove_path_exists(start_type, end_type, max_hops)` — prove connectivity without revealing path
+  - `prove_query_answer_count(min_count, query_type)` — prove count ≥ N without revealing results
+  - `batch_prove(requests)` — parallel proof generation
+- `KGZKVerifier.verify_statement(stmt)` — structural verification (replay protection via nullifiers)
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
+
+prover   = KGZKProver(kg)
+verifier = KGZKVerifier()
+
+stmt = prover.prove_entity_exists("person", "Alice")
+assert stmt is not None
+assert verifier.verify_statement(stmt)    # True — without seeing Alice's entity_id
+
+# Batch proving
+requests = [
+    {"type": "entity_exists", "entity_type": "person", "name": "Alice"},
+    {"type": "query_answer_count", "min_count": 2, "query_type": "entity"},
+]
+results = prover.batch_prove(requests)
+assert verifier.verify_batch(results) == [True, True]
+```
+
+⚠️ **Note:** This implementation generates **simulated** proofs using SHA-256
+commitments. For production cryptographic proofs, use `logic/zkp/ZKPProver`
+which integrates Groth16 (implemented in Session 60+).
+
+---
+
 ## See Also
 
 - [ROADMAP.md](ROADMAP.md) - Complete development timeline
@@ -977,7 +1062,7 @@ assert is_valid
 
 ---
 
-**Last Updated:** 2026-02-23 (session 75)
+**Last Updated:** 2026-02-23 (session 76)
 **Next Review:** Q3 2026
 **Maintainer:** Knowledge Graphs Team
 

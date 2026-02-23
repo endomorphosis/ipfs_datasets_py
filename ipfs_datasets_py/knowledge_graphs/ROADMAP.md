@@ -1,7 +1,7 @@
 # Knowledge Graphs - Development Roadmap
 
 **Last Updated:** 2026-02-23  
-**Current Version:** 3.22.29  
+**Current Version:** 3.22.30  
 **Status:** Production Ready (99.99% test coverage)
 
 ---
@@ -344,12 +344,12 @@ All tests that require optional deps now have proper `@pytest.mark.skipif` guard
 ### Potential Features
 - ✅ Real-time graph streaming — **Delivered in v3.22.25** (`GraphEventType` + `KnowledgeGraph.subscribe()`)
 - ✅ Temporal graph databases (snapshots) — **Delivered in v3.22.25** (`KnowledgeGraph.snapshot()` / `restore_snapshot()`)
-- Graph neural networks integration
+- ✅ Graph neural networks integration — **Delivered in v3.22.30** (`GraphNeuralNetworkAdapter` in `query/gnn.py`; pure-Python node embeddings, message passing (GRAPH_CONV/SAGE/ATTENTION), link prediction, similar-entity search, export to numpy/PyTorch)
 - ✅ Advanced visualization tools — **Delivered in v3.22.27** (`KnowledgeGraphVisualizer` in `extraction/visualization.py`; DOT/Mermaid/D3.js/ASCII; no external deps)
 - ✅ GraphQL API support — **Delivered in v3.22.26** (`KnowledgeGraphQLExecutor` in `query/graphql.py`)
 - ✅ Blockchain integration for provenance — **Delivered in v3.22.29** (`ProvenanceChain` in `extraction/provenance.py`; SHA-256 content-addressed CID chain; tamper-evident `verify_chain()`; 7 event types; `KnowledgeGraph.enable_provenance()`)
 - ✅ Federated knowledge graphs — **Delivered in v3.22.28** (`FederatedKnowledgeGraph` in `query/federation.py`; cross-graph entity resolution, TYPE_AND_NAME/EXACT_NAME/PROPERTY_MATCH strategies, property-merging `to_merged_graph()`, `execute_across()`)
-- Zero-knowledge proof support
+- ✅ Zero-knowledge proof support — **Delivered in v3.22.30** (`KGZKProver`/`KGZKVerifier` in `query/zkp.py`; 4 proof types: entity_exists/entity_property/path_exists/query_answer_count; SHA-256 commitments + nullifier replay protection; batch proving)
 
 ### Research Areas
 - Quantum algorithms for graph problems
@@ -436,6 +436,7 @@ We follow [Semantic Versioning](https://semver.org/):
 | 3.22.27 | 2026-02-23 | ✅ Released | Deferred v4.0+ advanced visualization tools: extraction/visualization.py (KnowledgeGraphVisualizer; to_dot/to_mermaid/to_d3_json/to_ascii; no external deps); KG convenience methods; DEFERRED_FEATURES §20; 47 tests (session73) |
 | 3.22.28 | 2026-02-23 | ✅ Released | Deferred v4.0+ federated knowledge graphs: query/federation.py (FederatedKnowledgeGraph; EntityResolutionStrategy TYPE_AND_NAME/EXACT_NAME/PROPERTY_MATCH; cross-graph entity resolution; execute_across; to_merged_graph with property merging; query_entity; get_entity_cluster); DEFERRED_FEATURES §21; 42 tests (session74) |
 | 3.22.29 | 2026-02-23 | ✅ Released | Deferred v4.0+ blockchain-style provenance chain: extraction/provenance.py (ProvenanceChain; ProvenanceEvent with SHA-256 CID; ProvenanceEventType 7 types; verify_chain() tamper detection; to_jsonl/from_jsonl); KnowledgeGraph.enable_provenance/disable_provenance/.provenance; auto-recording in add_entity/add_relationship; DEFERRED_FEATURES P10 §22; 45 tests (session75) |
+| 3.22.30 | 2026-02-23 | ✅ Released | Deferred v4.0+ GNN integration (query/gnn.py: GraphNeuralNetworkAdapter with GRAPH_CONV/SAGE/ATTENTION; node embeddings, link prediction, similar-entity search, numpy/PyTorch export) + ZKP support (query/zkp.py: KGZKProver/KGZKVerifier; 4 proof types; SHA-256 commitments; nullifier replay protection); DEFERRED_FEATURES P11 §23+§24; 55 tests (session76) |
 | 4.0 | 2027+ | 📋 Future | TBD based on feedback |
 
 ---

@@ -108,6 +108,20 @@ from .federation import (
     FederationQueryResult,
 )
 
+from .gnn import (
+    GraphNeuralNetworkAdapter,
+    GNNConfig,
+    GNNLayerType,
+    NodeEmbedding,
+)
+
+from .zkp import (
+    KGZKProver,
+    KGZKVerifier,
+    KGProofStatement,
+    KGProofType,
+)
+
 __all__ = [
     'UnifiedQueryEngine',
     'HybridSearchEngine',
@@ -146,4 +160,14 @@ __all__ = [
     'EntityResolutionStrategy',
     'EntityMatch',
     'FederationQueryResult',
+    # Graph Neural Networks (v4.0+ roadmap — delivered v3.22.30)
+    'GraphNeuralNetworkAdapter',
+    'GNNConfig',
+    'GNNLayerType',
+    'NodeEmbedding',
+    # Zero-Knowledge Proofs (v4.0+ roadmap — delivered v3.22.30)
+    'KGZKProver',
+    'KGZKVerifier',
+    'KGProofStatement',
+    'KGProofType',
 ]
