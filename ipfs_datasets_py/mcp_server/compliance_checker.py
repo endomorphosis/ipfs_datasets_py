@@ -86,6 +86,22 @@ class ComplianceMergeResult(NamedTuple):
     def __bool__(self) -> bool:
         return self.added > 0
 
+    def to_dict(self) -> "Dict[str, Any]":
+        """EU209: Serialise to a plain dict with all four fields.
+
+        Returns
+        -------
+        dict
+            ``{"added": int, "skipped_protected": int,
+            "skipped_duplicate": int, "total": int}``
+        """
+        return {
+            "added": self.added,
+            "skipped_protected": self.skipped_protected,
+            "skipped_duplicate": self.skipped_duplicate,
+            "total": self.total,
+        }
+
 
 @dataclass
 class ComplianceResult:

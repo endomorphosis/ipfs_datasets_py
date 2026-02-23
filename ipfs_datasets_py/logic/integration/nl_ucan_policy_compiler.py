@@ -429,8 +429,10 @@ class NLUCANPolicyCompiler:
         self,
         sentences_list: List[List[str]],
         policy_ids: Optional[List[Optional[str]]] = None,
+        *,
+        fail_fast: bool = False,
     ) -> "List[Tuple[NLUCANCompilerResult, str]]":
-        """EJ198: Compile multiple policy sets and return (result, explain) tuples.
+        """EJ198/FB216: Compile multiple policy sets and return (result, explain) tuples.
 
         Convenience variant of :meth:`compile_batch` that pairs each
         :class:`NLUCANCompilerResult` with its human-readable explanation
@@ -443,6 +445,11 @@ class NLUCANPolicyCompiler:
         policy_ids:
             Optional per-policy-set identifiers (forwarded to
             :meth:`compile_batch`).
+        fail_fast:
+            When ``True``, forwards the flag to :meth:`compile_batch` so
+            compilation stops at the first policy set that produces errors
+            (FB216).  The returned list may be shorter than
+            *sentences_list*.  Default is ``False``.
 
         Returns
         -------
@@ -450,7 +457,7 @@ class NLUCANPolicyCompiler:
             Tuples of ``(result, explain_string)`` in the same order as
             *sentences_list*.  Empty when *sentences_list* is empty.
         """
-        results = self.compile_batch(sentences_list, policy_ids=policy_ids)
+        results = self.compile_batch(sentences_list, policy_ids=policy_ids, fail_fast=fail_fast)
         return [(r, r.explain()) for r in results]
 
 

@@ -465,6 +465,28 @@ class I18NConflictReport:
             return 0.0
         return self.total_conflicts / n
 
+    def least_conflicted_language(self) -> Optional[str]:
+        """EV210: Return the language with the lowest (non-zero) conflict count.
+
+        Returns ``None`` when no language has any conflicts.  When all
+        populated languages have the same count, returns the first in
+        :attr:`by_language` insertion order.
+
+        Returns
+        -------
+        str or None
+            ISO 639-1 language code with the fewest conflicts among
+            languages that have at least one, or ``None``.
+        """
+        best: Optional[str] = None
+        best_count: Optional[int] = None
+        for lang, conflicts in self.by_language.items():
+            n = len(conflicts)
+            if n > 0 and (best_count is None or n < best_count):
+                best = lang
+                best_count = n
+        return best
+
 
 def detect_all_languages(text: str) -> "I18NConflictReport":
     """CT156/DJ172/DN176/DO177/ED192/EM201: Run full-clause conflict detection across all supported languages.
