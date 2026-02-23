@@ -19,6 +19,11 @@ from .graph_constraint_add import graph_constraint_add
 from .graph_srl_extract import graph_srl_extract
 from .graph_ontology_materialize import graph_ontology_materialize
 from .graph_distributed_execute import graph_distributed_execute
+from .graph_graphql_query import graph_graphql_query
+from .graph_visualize import graph_visualize
+from .graph_complete_suggestions import graph_complete_suggestions
+from .graph_explain import graph_explain
+from .graph_provenance_verify import graph_provenance_verify
 
 __all__ = [
     "query_knowledge_graph",
@@ -35,4 +40,9 @@ __all__ = [
     "graph_srl_extract",
     "graph_ontology_materialize",
     "graph_distributed_execute",
+    "graph_graphql_query",
+    "graph_visualize",
+    "graph_complete_suggestions",
+    "graph_explain",
+    "graph_provenance_verify",
 ]

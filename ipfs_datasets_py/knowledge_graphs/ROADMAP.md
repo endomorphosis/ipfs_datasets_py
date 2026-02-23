@@ -1,7 +1,7 @@
 # Knowledge Graphs - Development Roadmap
 
 **Last Updated:** 2026-02-23  
-**Current Version:** 3.22.34  
+**Current Version:** 3.22.35  
 **Status:** Production Ready (99.99% test coverage)
 
 ---
@@ -437,6 +437,7 @@ We follow [Semantic Versioning](https://semver.org/):
 | 3.22.28 | 2026-02-23 | ✅ Released | Deferred v4.0+ federated knowledge graphs: query/federation.py (FederatedKnowledgeGraph; EntityResolutionStrategy TYPE_AND_NAME/EXACT_NAME/PROPERTY_MATCH; cross-graph entity resolution; execute_across; to_merged_graph with property merging; query_entity; get_entity_cluster); DEFERRED_FEATURES §21; 42 tests (session74) |
 | 3.22.29 | 2026-02-23 | ✅ Released | Deferred v4.0+ blockchain-style provenance chain: extraction/provenance.py (ProvenanceChain; ProvenanceEvent with SHA-256 CID; ProvenanceEventType 7 types; verify_chain() tamper detection; to_jsonl/from_jsonl); KnowledgeGraph.enable_provenance/disable_provenance/.provenance; auto-recording in add_entity/add_relationship; DEFERRED_FEATURES P10 §22; 45 tests (session75) |
 | 3.22.30 | 2026-02-23 | ✅ Released | Deferred v4.0+ GNN integration (query/gnn.py: GraphNeuralNetworkAdapter with GRAPH_CONV/SAGE/ATTENTION; node embeddings, link prediction, similar-entity search, numpy/PyTorch export) + ZKP support (query/zkp.py: KGZKProver/KGZKVerifier; 4 proof types; SHA-256 commitments; nullifier replay protection); DEFERRED_FEATURES P11 §23+§24; 55 tests (session76) |
+| 3.22.35 | 2026-02-23 | ✅ Released | 5 new MCP tools for query/extraction features (graph_graphql_query, graph_visualize, graph_complete_suggestions, graph_explain, graph_provenance_verify); 5 new KnowledgeGraphManager methods; graph_tools/__init__.py+README.md updated; 42 tests (session81) |
 | 3.22.34 | 2026-02-23 | ✅ Released | ROADMAP Research Areas: Knowledge Graph Completion (query/completion.py: KnowledgeGraphCompleter; 6 structural patterns: triadic closure/common neighbour/symmetric/transitive/inverse/type-compat; CompletionSuggestion+CompletionReason) + Explainable AI (query/explanation.py: QueryExplainer; explain_entity/relationship/path/why_connected/entity_importance_score; SURFACE/STANDARD/DEEP depth; EntityExplanation/RelationshipExplanation/PathExplanation); DEFERRED_FEATURES P12 §25+§26; 52 tests (session80) |
 | 3.22.33 | 2026-02-23 | ✅ Released | Comprehensive documentation update: query/README.md v2.1.0→v3.22.33 (5 new module sections + Advanced Query Features + Recent Additions table); docs/knowledge_graphs/API_REFERENCE.md v3.22.22→v3.22.33 (Advanced Extraction APIs + Advanced Query APIs sections with examples); docs/knowledge_graphs/USER_GUIDE.md v2.0.0→v3.22.33 (§11 Future Roadmap→Delivered Features table with 15 items all ✅); 46 doc tests (session79) |
 | 3.22.32 | 2026-02-23 | ✅ Released | Groth16 Bridge: query/groth16_bridge.py (groth16_binary_available+groth16_enabled+Groth16KGConfig+KGEntityFormula+create_groth16_kg_prover+create_groth16_kg_verifier+describe_groth16_status); direct KG↔TDFOL_v1 theorem/axiom mapping; binary availability probe; 7 query/__init__.py exports; DEFERRED_FEATURES §24 Direct Groth16 Bridge subsection; 50 tests (session78) |

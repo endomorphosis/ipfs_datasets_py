@@ -5,7 +5,47 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.22.34] - 2026-02-23
+## [3.22.35] - 2026-02-23
+
+### Added — 5 new MCP server tools for query/extraction features (Session 81) — 42 tests
+
+**`mcp_server/tools/graph_tools/graph_graphql_query.py`** (new MCP tool):
+- `graph_graphql_query(query, kg_data=None)` — execute a GraphQL query against a KG
+- Delegates to `KnowledgeGraphManager.graphql_query()` → `KnowledgeGraphQLExecutor`
+- Returns `status / data / entity_count / query_length`
+
+**`mcp_server/tools/graph_tools/graph_visualize.py`** (new MCP tool):
+- `graph_visualize(format, kg_data, max_entities, directed, graph_name)` — export KG as visualization
+- Formats: `"dot"` / `"mermaid"` / `"d3_json"` / `"ascii"` (no external deps)
+- Returns `status / format / output / entity_count / relationship_count`
+
+**`mcp_server/tools/graph_tools/graph_complete_suggestions.py`** (new MCP tool):
+- `graph_complete_suggestions(kg_data, min_score, max_suggestions, entity_id, rel_type)` — suggest missing relationships
+- Delegates to `KnowledgeGraphCompleter` (6 structural patterns)
+- Returns `status / suggestion_count / suggestions / isolated_entity_count`
+
+**`mcp_server/tools/graph_tools/graph_explain.py`** (new MCP tool):
+- `graph_explain(explain_type, entity_id, start_entity_id, end_entity_id, relationship_id, depth, max_hops, kg_data)` — explainable-AI explanations
+- Types: `"entity"` / `"relationship"` / `"path"` / `"why_connected"`
+- Returns `status / explain_type / explanation / narrative`
+
+**`mcp_server/tools/graph_tools/graph_provenance_verify.py`** (new MCP tool):
+- `graph_provenance_verify(provenance_jsonl, kg_data)` — verify provenance chain integrity
+- Delegates to `ProvenanceChain.verify_chain()` (SHA-256 CID chain tamper-detection)
+- Returns `status / valid / event_count / errors / latest_cid / depth`
+
+**`core_operations/knowledge_graph_manager.py`** — 5 new methods:
+- `graphql_query(query, kg_data)` — delegate to `KnowledgeGraphQLExecutor`
+- `visualize(format, kg_data, max_entities, directed, graph_name)` — delegate to `KnowledgeGraphVisualizer`
+- `suggest_completions(kg_data, min_score, max_suggestions, entity_id, rel_type)` — delegate to `KnowledgeGraphCompleter`
+- `explain_entity(explain_type, entity_id, ...)` — delegate to `QueryExplainer`
+- `verify_provenance(provenance_jsonl, kg_data)` — delegate to `ProvenanceChain`
+
+**`mcp_server/tools/graph_tools/__init__.py`** — 5 new symbols added to `__all__`
+
+**`mcp_server/tools/graph_tools/README.md`** — tool count updated (11→19); new tool rows + Status table rows
+
+
 
 ### Added — ROADMAP Research Areas: Knowledge Graph Completion + Explainable AI (Session 80) — 52 tests
 

@@ -19,6 +19,14 @@ The underlying graph engine supports Neo4j, in-memory, and IPLD-backed backends.
 | `graph_transaction_commit.py` | `graph_transaction_commit()` | Commit an open transaction |
 | `graph_transaction_rollback.py` | `graph_transaction_rollback()` | Roll back an open transaction |
 | `query_knowledge_graph.py` | `query_knowledge_graph()` | Natural-language knowledge graph query |
+| `graph_srl_extract.py` | `graph_srl_extract()` | Extract Semantic Role Labeling (SRL) frames from text |
+| `graph_ontology_materialize.py` | `graph_ontology_materialize()` | Materialize OWL/RDFS inferred facts |
+| `graph_distributed_execute.py` | `graph_distributed_execute()` | Execute Cypher across distributed (partitioned) graph shards |
+| `graph_graphql_query.py` | `graph_graphql_query()` | Execute a GraphQL query against the knowledge graph *(new v3.22.35)* |
+| `graph_visualize.py` | `graph_visualize()` | Export graph as DOT / Mermaid / D3 JSON / ASCII *(new v3.22.35)* |
+| `graph_complete_suggestions.py` | `graph_complete_suggestions()` | Suggest missing relationships (KG completion) *(new v3.22.35)* |
+| `graph_explain.py` | `graph_explain()` | Explainable-AI explanations for entities, relationships, and paths *(new v3.22.35)* |
+| `graph_provenance_verify.py` | `graph_provenance_verify()` | Verify integrity of the provenance chain *(new v3.22.35)* |
 
 ## Usage
 
@@ -132,3 +140,11 @@ All business logic delegates to:
 | `graph_constraint_add` | ✅ Production ready |
 | Transaction tools | ✅ Production ready |
 | `query_knowledge_graph` | ✅ Production ready |
+| `graph_srl_extract` | ✅ Production ready |
+| `graph_ontology_materialize` | ✅ Production ready |
+| `graph_distributed_execute` | ✅ Production ready |
+| `graph_graphql_query` | ✅ Production ready (v3.22.35) |
+| `graph_visualize` | ✅ Production ready (v3.22.35) |
+| `graph_complete_suggestions` | ✅ Production ready (v3.22.35) |
+| `graph_explain` | ✅ Production ready (v3.22.35) |
+| `graph_provenance_verify` | ✅ Production ready (v3.22.35) |

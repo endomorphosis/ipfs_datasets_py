@@ -732,3 +732,283 @@ class KnowledgeGraphManager:
         except Exception as e:
             self.logger.error("Distributed execute failed: %s", e)
             return {"status": "error", "message": str(e), "query": query}
+
+    async def graphql_query(
+        self,
+        query: str,
+        kg_data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Execute a GraphQL query against a knowledge graph.
+
+        Args:
+            query: GraphQL query string.
+            kg_data: Optional serialised KG dict.
+
+        Returns:
+            Dict with status, data, entity_count, query_length.
+        """
+        try:
+            from ipfs_datasets_py.knowledge_graphs.query.graphql import (
+                KnowledgeGraphQLExecutor,
+            )
+            from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
+            if kg_data:
+                kg = KnowledgeGraph.from_dict(kg_data)
+            else:
+                kg = KnowledgeGraph(name="graphql_target")
+
+            executor = KnowledgeGraphQLExecutor(kg)
+            data = executor.execute(query)
+            return {
+                "status": "success",
+                "data": data,
+                "entity_count": len(kg.entities),
+                "query_length": len(query),
+            }
+        except Exception as e:
+            self.logger.error("GraphQL query failed: %s", e)
+            return {"status": "error", "message": str(e), "query_length": len(query)}
+
+    async def visualize(
+        self,
+        format: str = "dot",
+        kg_data: Optional[Dict[str, Any]] = None,
+        max_entities: Optional[int] = None,
+        directed: bool = True,
+        graph_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Export a knowledge graph as a visualization format string.
+
+        Args:
+            format: One of ``"dot"``, ``"mermaid"``, ``"d3_json"``, ``"ascii"``.
+            kg_data: Optional serialised KG dict.
+            max_entities: Cap on entity count in output.
+            directed: Emit directed graph (DOT/Mermaid).
+            graph_name: Optional name for the DOT digraph identifier.
+
+        Returns:
+            Dict with status, format, output, entity_count, relationship_count.
+        """
+        try:
+            from ipfs_datasets_py.knowledge_graphs.extraction.visualization import (
+                KnowledgeGraphVisualizer,
+            )
+            from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
+            if kg_data:
+                kg = KnowledgeGraph.from_dict(kg_data)
+            else:
+                kg = KnowledgeGraph(name="viz_target")
+
+            viz = KnowledgeGraphVisualizer(kg)
+            fmt = format.lower()
+            if fmt == "dot":
+                output = viz.to_dot(graph_name=graph_name, directed=directed)
+            elif fmt == "mermaid":
+                output = viz.to_mermaid(max_entities=max_entities)
+            elif fmt in ("d3_json", "d3"):
+                output = viz.to_d3_json(max_nodes=max_entities)
+            elif fmt == "ascii":
+                output = viz.to_ascii()
+            else:
+                output = viz.to_dot(graph_name=graph_name, directed=directed)
+                fmt = "dot"
+
+            return {
+                "status": "success",
+                "format": fmt,
+                "output": output,
+                "entity_count": len(kg.entities),
+                "relationship_count": len(kg.relationships),
+            }
+        except Exception as e:
+            self.logger.error("Visualize failed: %s", e)
+            return {"status": "error", "message": str(e), "format": format}
+
+    async def suggest_completions(
+        self,
+        kg_data: Optional[Dict[str, Any]] = None,
+        min_score: float = 0.3,
+        max_suggestions: int = 20,
+        entity_id: Optional[str] = None,
+        rel_type: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Suggest missing relationships in a knowledge graph.
+
+        Args:
+            kg_data: Optional serialised KG dict.
+            min_score: Minimum confidence score (0.0–1.0).
+            max_suggestions: Maximum suggestions to return.
+            entity_id: Filter suggestions by source entity.
+            rel_type: Filter suggestions by relationship type.
+
+        Returns:
+            Dict with status, suggestion_count, suggestions, isolated_entity_count.
+        """
+        try:
+            from ipfs_datasets_py.knowledge_graphs.query.completion import (
+                KnowledgeGraphCompleter,
+            )
+            from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
+            if kg_data:
+                kg = KnowledgeGraph.from_dict(kg_data)
+            else:
+                kg = KnowledgeGraph(name="completion_target")
+
+            completer = KnowledgeGraphCompleter(kg)
+            suggestions = completer.find_missing_relationships(
+                entity_id=entity_id,
+                rel_type=rel_type,
+                min_score=min_score,
+                max_suggestions=max_suggestions,
+            )
+            isolated = completer.find_isolated_entities()
+            return {
+                "status": "success",
+                "suggestion_count": len(suggestions),
+                "suggestions": [s.to_dict() for s in suggestions],
+                "isolated_entity_count": len(isolated),
+            }
+        except Exception as e:
+            self.logger.error("Suggest completions failed: %s", e)
+            return {"status": "error", "message": str(e), "min_score": min_score}
+
+    async def explain_entity(
+        self,
+        explain_type: str = "entity",
+        entity_id: Optional[str] = None,
+        start_entity_id: Optional[str] = None,
+        end_entity_id: Optional[str] = None,
+        relationship_id: Optional[str] = None,
+        depth: str = "standard",
+        max_hops: int = 4,
+        kg_data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Produce a structured explanation for a KG element.
+
+        Args:
+            explain_type: One of ``"entity"``, ``"relationship"``,
+                ``"path"``, ``"why_connected"``.
+            entity_id: Entity to explain.
+            start_entity_id: Source entity for path/why_connected.
+            end_entity_id: Target entity for path/why_connected.
+            relationship_id: Relationship to explain.
+            depth: ``"surface"``, ``"standard"``, or ``"deep"``.
+            max_hops: Maximum BFS depth for path explanations.
+            kg_data: Optional serialised KG dict.
+
+        Returns:
+            Dict with status, explain_type, explanation, narrative.
+        """
+        try:
+            from ipfs_datasets_py.knowledge_graphs.query.explanation import (
+                QueryExplainer,
+                ExplanationDepth,
+            )
+            from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
+            if kg_data:
+                kg = KnowledgeGraph.from_dict(kg_data)
+            else:
+                kg = KnowledgeGraph(name="explanation_target")
+
+            depth_map = {
+                "surface": ExplanationDepth.SURFACE,
+                "standard": ExplanationDepth.STANDARD,
+                "deep": ExplanationDepth.DEEP,
+            }
+            exp_depth = depth_map.get(depth.lower(), ExplanationDepth.STANDARD)
+
+            explainer = QueryExplainer(kg)
+            exp_type = explain_type.lower()
+
+            if exp_type == "entity" and entity_id:
+                exp = explainer.explain_entity(entity_id, depth=exp_depth)
+                return {
+                    "status": "success",
+                    "explain_type": exp_type,
+                    "explanation": exp.to_dict(),
+                    "narrative": exp.narrative,
+                }
+            elif exp_type == "relationship" and relationship_id:
+                exp = explainer.explain_relationship(relationship_id, depth=exp_depth)
+                return {
+                    "status": "success",
+                    "explain_type": exp_type,
+                    "explanation": exp.to_dict(),
+                    "narrative": exp.narrative,
+                }
+            elif exp_type == "path" and start_entity_id and end_entity_id:
+                exp = explainer.explain_path(start_entity_id, end_entity_id, max_hops=max_hops)
+                return {
+                    "status": "success",
+                    "explain_type": exp_type,
+                    "explanation": exp.to_dict(),
+                    "narrative": exp.narrative,
+                }
+            elif exp_type == "why_connected" and start_entity_id and end_entity_id:
+                narrative = explainer.why_connected(start_entity_id, end_entity_id)
+                return {
+                    "status": "success",
+                    "explain_type": exp_type,
+                    "explanation": {"narrative": narrative},
+                    "narrative": narrative,
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": f"explain_type={exp_type!r} requires matching ID parameter(s)",
+                    "explain_type": exp_type,
+                }
+        except Exception as e:
+            self.logger.error("Explain failed: %s", e)
+            return {"status": "error", "message": str(e), "explain_type": explain_type}
+
+    async def verify_provenance(
+        self,
+        provenance_jsonl: Optional[str] = None,
+        kg_data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Verify the integrity of a knowledge-graph provenance chain.
+
+        Args:
+            provenance_jsonl: Optional JSONL string of provenance events.
+            kg_data: Optional serialised KG dict.
+
+        Returns:
+            Dict with status, valid, event_count, errors, latest_cid, depth.
+        """
+        try:
+            from ipfs_datasets_py.knowledge_graphs.extraction.provenance import (
+                ProvenanceChain,
+            )
+
+            if provenance_jsonl:
+                chain = ProvenanceChain.from_jsonl(provenance_jsonl)
+            else:
+                chain = ProvenanceChain()
+
+            valid, errors = chain.verify_chain()
+            return {
+                "status": "success",
+                "valid": valid,
+                "event_count": chain.depth,
+                "errors": errors,
+                "latest_cid": chain.latest_cid,
+                "depth": chain.depth,
+            }
+        except Exception as e:
+            self.logger.error("Verify provenance failed: %s", e)
+            return {
+                "status": "error",
+                "message": str(e),
+                "valid": False,
+                "errors": [str(e)],
+            }
