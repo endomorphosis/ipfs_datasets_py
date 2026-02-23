@@ -113,7 +113,7 @@ class TestDescribeResult:
         assert isinstance(description, str)
 
 
-class TestRelationshipConfidenceRange:
+class TestRelationshipConfidenceBounds:
     """Tests for OntologyGenerator.relationship_confidence_bounds() method."""
 
     def test_range_sample_result(self, generator, sample_result):

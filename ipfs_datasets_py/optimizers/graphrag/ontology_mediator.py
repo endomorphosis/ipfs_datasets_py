@@ -1788,6 +1788,24 @@ class OntologyMediator:
         """
         return len(self._action_counts)
 
+    def feedback_age(self, idx: int) -> int:
+        """Return how many rounds/refinements ago the feedback at index was recorded.
+        
+        Args:
+            idx: Index into feedback history (0 = oldest, -1 = newest).
+        
+        Returns:
+            Integer age in refinement steps (0 = just added, 1 = one round ago, etc.).
+            Returns -1 if index is out of bounds or no feedback exists.
+        """
+        history = getattr(self, '_feedback_history', None) or getattr(self, '_feedback', None) or []
+        if not history or idx < -len(history) or idx >= len(history):
+            return -1
+        # Convert negative index to positive
+        actual_idx = idx if idx >= 0 else len(history) + idx
+        # Age is distance from the end (newest is age 0)
+        return len(history) - 1 - actual_idx
+
     def clear_feedback(self) -> int:
         """Clear all recorded feedback history and return how many were removed.
 

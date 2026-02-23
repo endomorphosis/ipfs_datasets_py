@@ -2149,3 +2149,56 @@ Key fix: `scc_non_singleton_fraction` counts SCCs with `size > 1` and divides by
 - [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_trend_slope()` — least-squares slope of final_score over entry index; 0.0 for <2
 - [ ] (P2) [graphrag] `OntologyPipeline.run_score_velocity_skewness()` — population skewness of first differences; 0.0 for <3 runs
 - [ ] (P2) [graphrag] `LogicValidator.dag_fraction(ontology)` — fraction of nodes NOT in any cycle (complement of node_in_cycle_fraction); 0.0 for empty
+
+---
+
+## Batch 225 — Done ✅ (2026-02-22)
+
+Helper methods for EntityExtractionResult introspection and summarization.
+
+- [x] (P3) [graphrag] `OntologyGenerator.describe_result(result)` — one-line English summary string
+- [x] (P3) [graphrag] `OntologyGenerator.relationship_confidence_bounds(result)` — (min_conf, max_conf) tuple
+- [x] (P3) [graphrag] `OntologyGenerator.is_result_empty(result)` — boolean check for no entities and no relationships
+- [x] (P3) [graphrag] `OntologyGenerator.result_summary_dict(result)` — structured dict with entity_count, relationship_count, unique_types, mean/min/max confidence, error status
+
+Implementation details:
+- `describe_result`: Returns "<N> entities (M types), <K> relationships, confidence <F>"
+- `relationship_confidence_bounds`: Returns (0.0, 0.0) when no relationships
+- `is_result_empty`: True only when both entities and relationships lists are empty
+- `result_summary_dict`: 8-key dictionary covering counts, types, confidence range, and error tracking
+
+Testing: 23 unit tests in test_batch_225_result_helpers.py (5 + 6 + 5 + 7); all passing.
+
+
+---
+
+## Batch 226 —  Done ✅ (2026-02-22)
+
+Todo audit and implementation of final missing method from P2/P3 graphrag backlog.
+
+### Audit Results
+- Conducted comprehensive audit of all 21 P2/P3 [graphrag] methods listed in TODO
+- Found: 20/21 methods already implemented in code but marked [ ] in TODO
+- Missing: Only `OntologyMediator.feedback_age(idx)` was truly unimplemented
+
+### Completion
+- [x] Implemented `OntologyMediator.feedback_age(idx)` — returns age of feedback record (how many refinement rounds ago it was added)
+  - Implementation: Computes distance from end of feedback history (newest=0, oldest=n-1)
+  - Handles negative indexing and bounds checking; returns -1 for out-of-bounds
+  - Added at line ~1792 in ontology_mediator.py before clear_feedback()
+
+### TODO Synchronization
+- [x] Updated 20 existing but unmarked method completions in TODO (changed [ ] → [x])
+  - All marked "(verified 2026-02-22)" indicating code audit confirmation
+  - Includes P2 (15 items) and P3 (5 items) methods across 7 classes:
+    - OntologyOptimizer: history_skewness, score_plateau_length, score_gini_coefficient
+    - OntologyCritic: dimension_std, dimension_improvement_mask, dimension_correlation
+    - OntologyLearningAdapter: feedback_decay_sum, feedback_count_below
+    - OntologyGenerator: max_confidence_entity, min_confidence_entity, entity_confidence_std, relationship_confidence_avg
+    - OntologyPipeline: best_k_scores, worst_k_scores, score_histogram
+    - LogicValidator: relationship_diversity, entity_pair_count, graph_diameter
+    - OntologyMediator: feedback_age (newly implemented), clear_feedback
+
+### Key Finding
+The TODO.md was significantly out of sync with actual implementation (~95% of listed methods were already coded). This batch addressed that discrepancy through systematic verification and implementation.
+
