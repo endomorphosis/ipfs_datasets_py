@@ -693,6 +693,29 @@ class PubSubBus:
         """
         return {k: len(v) for k, v in self._subscribers.items() if v}
 
+    def handler_topics(self, handler: Any) -> List[str]:
+        """Return the list of topic keys on which *handler* is registered.
+
+        Useful for introspection and debugging — lets callers ask "which
+        topics is this callback listening to?" without iterating manually::
+
+            def my_cb(topic, payload): ...
+            bus.subscribe("receipts", my_cb)
+            bus.subscribe("audit", my_cb)
+            assert bus.handler_topics(my_cb) == ["audit", "receipts"]
+
+        Args:
+            handler: The callable originally passed to :meth:`subscribe`.
+
+        Returns:
+            Sorted list of topic key strings.  Empty list if *handler* is not
+            subscribed to any topic.
+        """
+        return sorted(
+            k for k, handlers in self._subscribers.items()
+            if handler in handlers
+        )
+
     async def publish_async(
         self,
         topic: Union[str, "PubSubEventType"],

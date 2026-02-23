@@ -863,6 +863,34 @@ class ComplianceChecker:
         return len(ComplianceChecker.list_bak_files(path))
 
     @staticmethod
+    def backup_age(path: str) -> Optional[float]:
+        """Return the age in seconds of the most-recent backup file.
+
+        Uses :func:`os.path.getmtime` on the primary ``.bak`` file.  If no
+        backup exists, returns ``None``::
+
+            age = ComplianceChecker.backup_age("/data/rules.enc")
+            if age is not None:
+                print(f"Most recent backup is {age:.0f}s old")
+            else:
+                print("No backup exists")
+
+        Args:
+            path: Base file path (without ``.bak`` suffix).
+
+        Returns:
+            Age in seconds since last modification (``float``), or ``None``
+            if no backup files exist.
+        """
+        files = ComplianceChecker.list_bak_files(path)
+        if not files:
+            return None
+        try:
+            return float(os.path.getmtime(files[0]))
+        except OSError:
+            return None
+
+    @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:
         if isinstance(intent, dict):
             return intent.get(field, default)

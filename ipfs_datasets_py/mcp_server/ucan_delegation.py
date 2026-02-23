@@ -1096,6 +1096,22 @@ class MergeResult:
             revocations_copied=int(d.get("revocations_copied", 0)),
         )
 
+    def __repr__(self) -> str:
+        """Human-friendly representation of this :class:`MergeResult`.
+
+        Format::
+
+            MergeResult(added=3, conflicts=1, rate=75.0%)
+
+        The ``rate`` field is :attr:`import_rate` expressed as a percentage
+        (1 decimal place).
+        """
+        return (
+            f"MergeResult(added={self.added_count}, "
+            f"conflicts={self.conflict_count}, "
+            f"rate={self.import_rate * 100:.1f}%)"
+        )
+
 
 class DelegationManager:
     """Bundles :class:`DelegationStore`, :class:`RevocationList`, and

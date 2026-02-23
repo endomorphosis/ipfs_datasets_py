@@ -1308,6 +1308,22 @@ class IPFSReloadResult(NamedTuple):
             pin_results[f"failed_{i}"] = None
         return cls(count=count, pin_results=pin_results)
 
+    def __repr__(self) -> str:
+        """Human-friendly representation mirroring :meth:`summarize`.
+
+        Format::
+
+            IPFSReloadResult(3/4 pinned, rate=75.0%)
+
+        The ``rate`` field is :attr:`success_rate` expressed as a percentage
+        (1 decimal place).
+        """
+        succeeded = self.count - self.total_failed
+        return (
+            f"IPFSReloadResult({succeeded}/{self.count} pinned, "
+            f"rate={self.success_rate * 100:.1f}%)"
+        )
+
 
 class IPFSPolicyStore(FilePolicyStore):
     """IPFS-backed :class:`PolicyRegistry` store (Phase G).
