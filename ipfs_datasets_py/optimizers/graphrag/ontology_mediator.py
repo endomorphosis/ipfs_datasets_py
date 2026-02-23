@@ -1303,24 +1303,44 @@ class OntologyMediator:
         return n
 
     def apply_action_bulk(self, actions: list) -> int:
-        """Increment action counts for each action name in *actions*.
+        """Increment action counts for each action entry in *actions*.
 
         This is a convenience method for registering multiple actions at once
         without calling :meth:`get_action_stats` or manual dict surgery.
 
         Args:
-            actions: Sequence of action name strings to record.
+            actions: Sequence of action entries to record. Each entry may be:
+                - ``str`` action name
+                - 2-tuple/list ``(action_name, args)`` (args ignored)
+                - ``dict`` with an ``"action"`` key
 
         Returns:
-            Total number of actions recorded (len of input).
+            Total number of action entries recorded.
 
         Example:
-            >>> mediator.apply_action_bulk(["add_entity", "add_entity", "remove_rel"])
-            3
+            >>> mediator.apply_action_bulk(["add_entity", ("remove_rel", {"id": "r1"})])
+            2
         """
-        for action in actions:
+        recorded = 0
+        for entry in actions:
+            action: Optional[str] = None
+
+            if isinstance(entry, str):
+                action = entry
+            elif isinstance(entry, dict):
+                maybe = entry.get("action")
+                action = maybe if isinstance(maybe, str) else None
+            elif isinstance(entry, (tuple, list)) and entry:
+                maybe = entry[0]
+                action = maybe if isinstance(maybe, str) else None
+
+            if not action:
+                raise ValueError(f"Invalid action entry: {entry!r}")
+
             self._action_counts[action] = self._action_counts.get(action, 0) + 1
-        return len(actions)
+            recorded += 1
+
+        return recorded
 
     def clear_recommendation_history(self) -> int:
         """Clear the recommendation phrase frequency table.
