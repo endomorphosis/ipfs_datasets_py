@@ -479,6 +479,38 @@ _HI_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     ],
 }
 
+# GL252: Polish deontic keywords (inline — always available).
+_PL_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
+    "permission": [
+        "może", "wolno", "jest dozwolone", "ma prawo", "jest uprawniony",
+        "jest dopuszczalne", "jest możliwe",
+    ],
+    "prohibition": [
+        "nie może", "jest zabronione", "jest zakazane", "nie wolno", "jest niedozwolone",
+        "jest wykluczone", "jest niedopuszczalne",
+    ],
+    "obligation": [
+        "musi", "jest zobowiązany", "jest wymagane", "należy", "powinien",
+        "jest obowiązkowe", "trzeba",
+    ],
+}
+
+# GM253: Vietnamese deontic keywords (inline — always available).
+_VI_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
+    "permission": [
+        "có thể", "được phép", "có quyền", "được", "có thể làm",
+        "được phép làm", "có đặc quyền",
+    ],
+    "prohibition": [
+        "không được", "bị cấm", "không được phép", "cấm", "không được làm",
+        "bị nghiêm cấm", "không cho phép",
+    ],
+    "obligation": [
+        "phải", "cần phải", "có nghĩa vụ", "bắt buộc", "cần",
+        "có trách nhiệm", "phải làm",
+    ],
+}
+
 # EM201: Chinese (Simplified) deontic keywords (inline — always available).
 _ZH_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
@@ -500,7 +532,9 @@ def _load_i18n_keywords(language: str) -> Dict[str, List[str]]:
     """Load deontic keywords for *language*.
 
     Supports ``"en"``, ``"nl"``, ``"it"``, ``"ja"``, ``"zh"``,
-    ``"fr"``, ``"es"``, ``"de"``, and ``"pt"``.
+    ``"fr"``, ``"es"``, ``"de"``, ``"pt"``, ``"ko"``, ``"ar"``,
+    ``"sv"``, ``"ru"``, ``"el"``, ``"tr"``, ``"hi"``, ``"pl"``,
+    and ``"vi"``.
     """
     if language == "en":  # DC165: inline English keywords
         return _EN_DEONTIC_KEYWORDS
@@ -526,6 +560,10 @@ def _load_i18n_keywords(language: str) -> Dict[str, List[str]]:
         return _TR_DEONTIC_KEYWORDS
     if language == "hi":  # GC243: inline Hindi keywords
         return _HI_DEONTIC_KEYWORDS
+    if language == "pl":  # GL252: inline Polish keywords
+        return _PL_DEONTIC_KEYWORDS
+    if language == "vi":  # GM253: inline Vietnamese keywords
+        return _VI_DEONTIC_KEYWORDS
     loader_path = _I18N_KEYWORD_LOADERS.get(language)
     if loader_path is None:
         return {}

@@ -536,7 +536,7 @@ def detect_all_languages(text: str) -> "I18NConflictReport":
         Report with per-language conflict lists (empty list when no conflict
         or when the parser module is unavailable).
     """
-    _SUPPORTED_LANGS = ("fr", "es", "de", "en", "pt", "nl", "it", "ja", "zh", "ko", "ar", "sv", "ru", "el", "tr", "hi")  # FK225/FL226/FU235/FV236/GA241/GB242/GC243
+    _SUPPORTED_LANGS = ("fr", "es", "de", "en", "pt", "nl", "it", "ja", "zh", "ko", "ar", "sv", "ru", "el", "tr", "hi", "pl", "vi")  # FK225/FL226/FU235/FV236/GA241/GB242/GC243/GL252/GM253
     report = I18NConflictReport()
     try:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (  # noqa: F401
