@@ -190,7 +190,15 @@ class LogicTheoremOptimizer(BaseOptimizer):
         """
         import time as _time
         t0 = _time.monotonic()
-        result = super().run_session(input_data, context)
+        try:
+            result = super().run_session(input_data, context)
+        except Exception as exc:
+            result = {
+                'artifact': None,
+                'score': 0.0,
+                'iterations': 0,
+                'valid': False,
+            }
         duration_s = _time.monotonic() - t0
 
         # Emit structured JSON log for observability
@@ -199,6 +207,14 @@ class LogicTheoremOptimizer(BaseOptimizer):
             from datetime import datetime as _datetime
 
             duration_ms = duration_s * 1000.0
+            artifact = result.get("artifact")
+            if hasattr(artifact, "statements"):
+                statement_count = len(artifact.statements or [])
+            elif isinstance(artifact, dict):
+                statement_count = len(artifact.get("statements") or [])
+            else:
+                statement_count = 0
+
             payload = {
                 "event": "logic_theorem_optimizer_run_session",
                 "session_id": context.session_id,
@@ -208,7 +224,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
                 "score": round(result.get("score", 0.0), 6),
                 "valid": result.get("valid", False),
                 "iterations": result.get("iterations", 0),
-                "statement_count": len(result.get("artifact", {}).get("statements", [])) if "artifact" in result else 0,
+                "statement_count": statement_count,
                 "duration_ms": round(duration_ms, 2),
                 "timestamp": _datetime.now().isoformat(),
             }
