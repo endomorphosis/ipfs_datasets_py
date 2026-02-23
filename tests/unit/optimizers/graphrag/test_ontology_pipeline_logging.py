@@ -1,29 +1,45 @@
 """Tests for structured pipeline run logging."""
+
 from __future__ import annotations
 
 import json
 import logging
+import re
 
 from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
 
 
-def test_pipeline_run_emits_json_log(caplog):
+def _extract_json_payloads(captured: str, marker: str) -> list[dict]:
+    payloads: list[dict] = []
+    for match in re.finditer(rf"{re.escape(marker)}\s*(\{{.*\}})", captured):
+        try:
+            payloads.append(json.loads(match.group(1)))
+        except json.JSONDecodeError:
+            continue
+    return payloads
+
+
+def _extract_json_payload(captured: str, marker: str) -> dict:
+    payloads = _extract_json_payloads(captured, marker)
+    assert payloads, f"Expected {marker} JSON payload in captured output"
+    return payloads[0]
+
+
+def test_pipeline_run_emits_json_log(caplog, capsys):
     """Pipeline run should emit structured JSON log payload."""
     pipeline = OntologyPipeline(domain="general", use_llm=False, max_rounds=1)
-    logger_name = "ipfs_datasets_py.optimizers.graphrag.ontology_pipeline"
 
-    with caplog.at_level(logging.INFO, logger=logger_name):
+    # Capture globally; scoping to a single logger can miss INFO logs depending
+    # on handler configuration.
+    with caplog.at_level(logging.INFO):
         result = pipeline.run("Alice works at Acme.", data_source="test", refine=False)
 
-    json_logs = [
-        record for record in caplog.records if "PIPELINE_RUN:" in record.message
-    ]
-    assert json_logs, "Expected at least one PIPELINE_RUN log entry"
-
-    payload_str = json_logs[0].message.replace("PIPELINE_RUN: ", "")
-    payload = json.loads(payload_str)
+    captured = (caplog.text or "") + "\n" + capsys.readouterr().err
+    payload = _extract_json_payload(captured, "PIPELINE_RUN:")
 
     assert payload["event"] == "ontology_pipeline_run"
+    assert payload["schema"] == "ipfs_datasets_py.optimizer_log"
+    assert payload["schema_version"] == 1
     assert payload["domain"] == "general"
     assert payload["data_source"] == "test"
     assert payload["data_type"] == "text"
@@ -35,3 +51,41 @@ def test_pipeline_run_emits_json_log(caplog):
         assert 0.0 <= payload["score"] <= 1.0
 
     assert result is not None
+
+
+def test_pipeline_batch_emits_json_log(caplog, capsys):
+    """Pipeline batch run should emit structured JSON log payload."""
+    pipeline = OntologyPipeline(domain="general", use_llm=False, max_rounds=1)
+
+    docs = ["Alice works at Acme.", "Bob manages the NY office."]
+
+    with caplog.at_level(logging.INFO):
+        results = pipeline.run_batch(docs, data_source="batch", refine=False)
+
+    captured = (caplog.text or "") + "\n" + capsys.readouterr().err
+
+    payloads = _extract_json_payloads(captured, "PIPELINE_BATCH:")
+    payload = next(
+        (p for p in payloads if p.get("event") == "ontology_pipeline_batch" and "domain" in p),
+        None,
+    )
+    assert payload is not None, "Expected at least one full PIPELINE_BATCH payload with domain"
+
+    assert payload["event"] == "ontology_pipeline_batch"
+    assert payload["schema"] == "ipfs_datasets_py.optimizer_log"
+    assert payload["schema_version"] == 1
+    assert payload["domain"] == "general"
+    assert payload["data_source"] == "batch"
+    assert payload["data_type"] == "text"
+    assert payload["refine"] is False
+    assert payload["doc_count"] == 2
+    assert payload["duration_ms"] >= 0.0
+
+    if payload["mean_score"] is not None:
+        assert 0.0 <= payload["mean_score"] <= 1.0
+    if payload["min_score"] is not None:
+        assert 0.0 <= payload["min_score"] <= 1.0
+    if payload["max_score"] is not None:
+        assert 0.0 <= payload["max_score"] <= 1.0
+
+    assert len(results) == 2

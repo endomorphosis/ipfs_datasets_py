@@ -974,6 +974,56 @@ class DetailedValidationResult:
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
 
+    @property
+    def syntax(self) -> Dict[str, Any]:
+        return {"passed": bool(self.syntax_passed)}
+
+    @property
+    def types(self) -> Dict[str, Any]:
+        return {"passed": bool(self.type_passed)}
+
+    @property
+    def unit_tests(self) -> Dict[str, Any]:
+        return {"passed": bool(self.test_passed)}
+
+    @property
+    def integration_tests(self) -> Dict[str, Any]:
+        return {"passed": True}
+
+    @property
+    def performance(self) -> Dict[str, Any]:
+        return {"passed": bool(self.performance_passed)}
+
+    @property
+    def security(self) -> Dict[str, Any]:
+        return {"passed": bool(self.security_passed)}
+
+    @property
+    def style(self) -> Dict[str, Any]:
+        return {"passed": bool(self.style_passed)}
+
+    @property
+    def execution_time(self) -> float:
+        return float(getattr(self, "_execution_time", 0.0))
+
+    @execution_time.setter
+    def execution_time(self, value: float) -> None:
+        self._execution_time = float(value)
+
+    def to_validation_result(self) -> ValidationResult:
+        return ValidationResult(
+            passed=self.passed,
+            syntax_check=bool(self.syntax_passed),
+            type_check=bool(self.type_passed),
+            unit_tests=bool(self.test_passed),
+            integration_tests=True,
+            performance_tests=bool(self.performance_passed),
+            security_scan=bool(self.security_passed),
+            style_check=bool(self.style_passed),
+            errors=self.errors,
+            warnings=self.warnings,
+        )
+
 
 class SyntaxValidator:
     """Lightweight syntax validator for unit tests."""

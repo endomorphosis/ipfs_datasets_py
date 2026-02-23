@@ -8,7 +8,7 @@ import pytest
 import numpy as np
 from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import (
     SemanticEntityDeduplicator,
-    SemanticSemanticMergeSuggestion,
+    SemanticMergeSuggestion,
 )
 
 
