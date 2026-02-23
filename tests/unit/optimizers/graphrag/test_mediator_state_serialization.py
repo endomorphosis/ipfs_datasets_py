@@ -3,6 +3,8 @@ Tests for MediatorState serialization round-trip (to_dict/from_dict/to_json/from
 
 Validates that MediatorState can be fully serialized and restored while
 preserving all refinement history, critic scores, and session metadata.
+
+Note: Uses centralized factory fixtures from conftest.py to reduce duplication.
 """
 
 import json
@@ -12,29 +14,26 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
 
 
 @pytest.fixture
-def sample_ontology():
-    """Sample ontology for testing."""
-    return {
-        "entities": [
-            {"id": "e1", "text": "Alice", "type": "Person"},
-            {"id": "e2", "text": "Acme Corp", "type": "Organization"},
-        ],
-        "relationships": [
-            {"source_id": "e1", "target_id": "e2", "type": "works_for"},
-        ],
-        "metadata": {"domain": "business"},
-    }
+def sample_ontology(ontology_dict_factory):
+    """Sample ontology for testing - uses ontology_dict_factory from conftest.py."""
+    return ontology_dict_factory(
+        entity_count=2,
+        relationship_count=1,
+        domain="business",
+        entity_types=["Person", "Organization"],
+    )
 
 
 @pytest.fixture
-def sample_critic_score():
-    """Sample CriticScore for testing."""
-    return CriticScore(
+def sample_critic_score(critic_score_factory):
+    """Sample CriticScore for testing - uses critic_score_factory from conftest.py."""
+    return critic_score_factory(
         completeness=0.85,
         consistency=0.90,
         clarity=0.75,
         granularity=0.80,
-        relationship_coherence=0.88, domain_alignment=0.88,
+        relationship_coherence=0.88,
+        domain_alignment=0.88,
         strengths=["good coverage", "clear names"],
         weaknesses=["missing properties"],
         recommendations=["add entity properties", "infer more relationships"],

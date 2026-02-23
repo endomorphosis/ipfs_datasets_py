@@ -1090,7 +1090,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [graphrag] `EntityExtractionResult.top_entities(n)` — top N entities by confidence
 - [ ] (P2) [graphrag] `EntityExtractionResult.entities_of_type(etype)` — alias for filter_by_type
 - [ ] (P3) [graphrag] `EntityExtractionResult.confidence_stats()` — dict with mean/min/max/std of confidences
-- [ ] (P3) [graphrag] `EntityExtractionResult.validate()` — returns list of validation errors (dangling refs, etc.)
+- [x] (P3) [graphrag] `EntityExtractionResult.validate()` — returns list of validation errors (dangling refs, etc.) (Done 2026-02-23; `optimizers/graphrag/ontology_generator.py` + `tests/unit/optimizers/graphrag/test_entity_extraction_result_validate.py`)
 
 #### ExtractionConfig helpers
 - [ ] (P2) [graphrag] `ExtractionConfig.from_dict(d)` — classmethod deserializer

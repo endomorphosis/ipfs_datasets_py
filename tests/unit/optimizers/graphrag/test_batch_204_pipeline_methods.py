@@ -12,6 +12,8 @@ Tests new methods for pipeline run history analysis:
 - run_score_std_dev: Calculate score standard deviation
 - run_score_coefficient_of_variation: Calculate CV
 - run_has_improving_trend: Detect improving score trend
+
+Uses centralized factory fixtures from conftest.py.
 """
 
 import pytest
@@ -23,34 +25,50 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import (
 
 
 @pytest.fixture
-def pipeline():
-    """Create a test OntologyPipeline instance."""
-    return OntologyPipeline(domain="test", use_llm=False)
+def pipeline(ontology_pipeline_factory):
+    """Create a test OntologyPipeline instance - uses ontology_pipeline_factory."""
+    return ontology_pipeline_factory(domain="test", use_llm=False)
 
 
-@pytest.fixture
-def mock_score():
-    """Create a mock CriticScore."""
-    score = Mock()
-    score.overall = 0.75
-    return score
-
-
-def create_result(entity_count=5, rel_count=10, score_val=0.75, actions=None):
-    """Helper to create PipelineResult with test data."""
-    score = Mock()
-    score.overall = score_val
+@pytest.fixture  
+def create_result(ontology_dict_factory, critic_score_factory):
+    """Factory for creating PipelineResult instances."""
+    from unittest.mock import Mock
     
-    entities = [{"id": f"e{i}", "text": f"Entity {i}"} for i in range(entity_count)]
-    relationships = [{"id": f"r{i}", "source_id": f"e{i}", "target_id": f"e{i+1}"} for i in range(rel_count)]
+    def _create_result(
+        entity_count=5,
+        rel_count=None,
+        relationship_count=None,
+        score_val=0.75,
+        actions=None,
+    ):
+        """Create PipelineResult with test data."""
+        # Handle aliases
+        if relationship_count is None and rel_count is not None:
+            relationship_count = rel_count
+        elif relationship_count is None:
+            relationship_count = 3
+        
+        ontology = ontology_dict_factory(
+            entity_count=entity_count,
+            relationship_count=relationship_count,
+        )
+        
+        #Create mock score
+        score = Mock()
+        score.overall = score_val
+        
+        # Mock PipelineResult 
+        result = Mock()
+        result.ontology = ontology
+        result.score = score
+        result.entities = ontology["entities"]
+        result.relationships = ontology["relationships"]
+        result.actions_applied = actions or []
+        
+        return result
     
-    return PipelineResult(
-        ontology={"entities": entities, "relationships": relationships},
-        score=score,
-        entities=entities,
-        relationships=relationships,
-        actions_applied=actions or [],
-    )
+    return _create_result
 
 
 class TestRunTotalEntityCount:

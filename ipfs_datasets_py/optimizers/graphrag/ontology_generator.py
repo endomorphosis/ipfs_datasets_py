@@ -1473,6 +1473,70 @@ class EntityExtractionResult:
             "errors": list(self.errors),
         }
 
+    def validate(self) -> List[str]:
+        """Validate basic structural invariants of this extraction result.
+
+        This is a lightweight, non-throwing validator intended for unit tests
+        and defensive checks. It reports issues such as:
+
+        - Duplicate entity IDs
+        - Empty/whitespace-only entity text
+        - Entity/relationship confidence outside [0, 1]
+        - Relationships that reference missing entities
+        - Self-loop relationships (source_id == target_id)
+
+        Returns:
+            List of human-readable validation error strings. Empty list means
+            the result is structurally valid.
+        """
+        errors: List[str] = []
+
+        # Entities
+        seen_entity_ids: set[str] = set()
+        for ent in self.entities:
+            if ent.id in seen_entity_ids:
+                errors.append(f"Duplicate entity id: {ent.id}")
+            seen_entity_ids.add(ent.id)
+
+            if not str(ent.text).strip():
+                errors.append(f"Empty entity text for id: {ent.id}")
+
+            try:
+                conf = float(ent.confidence)
+            except (TypeError, ValueError):
+                errors.append(f"Non-numeric entity confidence for id: {ent.id}")
+            else:
+                if conf < 0.0 or conf > 1.0:
+                    errors.append(f"Entity confidence out of range for id: {ent.id}: {conf}")
+
+        # Relationships
+        seen_rel_ids: set[str] = set()
+        for rel in self.relationships:
+            if rel.id in seen_rel_ids:
+                errors.append(f"Duplicate relationship id: {rel.id}")
+            seen_rel_ids.add(rel.id)
+
+            if rel.source_id == rel.target_id:
+                errors.append(f"Self-loop relationship: {rel.id} ({rel.source_id} -> {rel.target_id})")
+
+            if rel.source_id not in seen_entity_ids:
+                errors.append(f"Relationship {rel.id} references missing source entity: {rel.source_id}")
+            if rel.target_id not in seen_entity_ids:
+                errors.append(f"Relationship {rel.id} references missing target entity: {rel.target_id}")
+
+            try:
+                rconf = float(rel.confidence)
+            except (TypeError, ValueError):
+                errors.append(f"Non-numeric relationship confidence for id: {rel.id}")
+            else:
+                if rconf < 0.0 or rconf > 1.0:
+                    errors.append(f"Relationship confidence out of range for id: {rel.id}: {rconf}")
+
+            if not str(rel.type).strip():
+                errors.append(f"Empty relationship type for id: {rel.id}")
+
+        return errors
+
     def entity_type_counts(self) -> Dict[str, int]:
         """Return a frequency count of entity types in this result.
 
@@ -2683,6 +2747,10 @@ class OntologyGenerator:
                 self.use_ipfs_accelerate = False
         else:
             self._accelerate_available = False
+        
+        # OPTIMIZATION: Cache for _resolve_rule_config results
+        # Keyed by id(ext_config) to handle non-hashable config objects
+        self._resolve_rule_config_cache: dict = {}
     
     def extract_entities(
         self,
@@ -4032,6 +4100,14 @@ class OntologyGenerator:
         self,
         ext_config: Any,
     ) -> tuple[int, set[str], set[str], float]:
+        # OPTIMIZATION: Cache config parsing results by config object identity
+        # This avoids recomputing stopwords.lower(), allowed_types, etc. when
+        # the same ext_config object is used multiple times in a session.
+        config_key = id(ext_config) if ext_config is not None else None
+        
+        if config_key in self._resolve_rule_config_cache:
+            return self._resolve_rule_config_cache[config_key]
+        
         try:
             min_len = int(getattr(ext_config, "min_entity_length", 2)) if ext_config is not None else 2
         except (TypeError, ValueError):
@@ -4052,7 +4128,13 @@ class OntologyGenerator:
         except (TypeError, ValueError, AttributeError):
             max_confidence = 1.0
 
-        return min_len, stopwords, allowed_types, max_confidence
+        result = (min_len, stopwords, allowed_types, max_confidence)
+        
+        # Cache the result (with a limit to prevent unbounded growth)
+        if len(self._resolve_rule_config_cache) < 32:
+            self._resolve_rule_config_cache[config_key] = result
+        
+        return result
 
     @staticmethod
     @functools.lru_cache(maxsize=64)
