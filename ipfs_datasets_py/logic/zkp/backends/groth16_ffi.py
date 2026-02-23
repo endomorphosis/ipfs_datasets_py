@@ -418,8 +418,8 @@ class Groth16Backend(ZKPBackend):
                 "Groth16 binary not available. "
                 "Please install Rust and compile groth16_backend."
             )
-        if not isinstance(version, int) or version < 1:
-            raise ValueError("version must be a positive integer")
+        if not isinstance(version, int) or version < 1 or version > 2:
+            raise ValueError("version must be 1 or 2")
 
         cmd = [self.binary_path, "setup", "--version", str(version)]
         if seed is not None:
