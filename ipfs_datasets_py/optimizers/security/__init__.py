@@ -1,23 +1,7 @@
 """Security components for complaint generator optimizers."""
 
-from ipfs_datasets_py.optimizers.security.input_validation import (
-    InputValidator,
-    EntityValidator,
-    RelationshipValidator,
-    ValidationError,
-    ValidationLevel,
-    ValidationResult,
-)
-
-from ipfs_datasets_py.optimizers.security.rate_limiter import (
-    TokenBucket,
-    TokenBucketRateLimiter,
-    PerEndpointRateLimiter,
-    RateLimitConfig,
-    RateLimitTier,
-    RateLimitExceeded,
-    RateLimitMiddleware,
-)
+# Import modules to make them available without causing circular imports
+# Use lazy imports or direct module imports instead of importing specific classes
 
 __all__ = [
     # Input validation
@@ -36,3 +20,15 @@ __all__ = [
     "RateLimitExceeded",
     "RateLimitMiddleware",
 ]
+
+def __getattr__(name):
+    """Lazy import to avoid circular import issues."""
+    if name in ["InputValidator", "EntityValidator", "RelationshipValidator", 
+                "ValidationError", "ValidationLevel", "ValidationResult"]:
+        from ipfs_datasets_py.optimizers.security import input_validation
+        return getattr(input_validation, name)
+    elif name in ["TokenBucket", "TokenBucketRateLimiter", "PerEndpointRateLimiter",
+                  "RateLimitConfig", "RateLimitTier", "RateLimitExceeded", "RateLimitMiddleware"]:
+        from ipfs_datasets_py.optimizers.security import rate_limiter
+        return getattr(rate_limiter, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

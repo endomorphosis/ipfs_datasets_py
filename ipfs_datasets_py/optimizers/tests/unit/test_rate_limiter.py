@@ -49,7 +49,7 @@ class TestTokenBucket:
         """Test consumption fails when insufficient tokens."""
         bucket = TokenBucket(capacity=10.0, tokens=3.0, refill_rate=1.0)
         assert bucket.consume(5) == False
-        assert bucket.tokens == 3.0  # Tokens unchanged
+        assert bucket.tokens == pytest.approx(3.0, abs=0.01)  # Tokens unchanged (allow minor refill)
     
     def test_bucket_refill(self):
         """Test token refill over time."""

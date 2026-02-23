@@ -31,7 +31,7 @@ class TestLogicTheoremOptimizerStructuredLogging:
         caplog.set_level(logging.INFO)
         
         optimizer = LogicTheoremOptimizer(
-            config=OptimizerConfig(max_rounds=1, target_score=0.5),
+            config=OptimizerConfig(max_iterations=1, target_score=0.5),
             extraction_mode=ExtractionMode.FOL,
             use_provers=['z3'],
         )
@@ -87,7 +87,7 @@ class TestLogicTheoremOptimizerStructuredLogging:
         caplog.set_level(logging.DEBUG)
         
         optimizer = LogicTheoremOptimizer(
-            config=OptimizerConfig(max_rounds=1),
+            config=OptimizerConfig(max_iterations=1),
             extraction_mode=ExtractionMode.FOL,
         )
         
@@ -117,7 +117,7 @@ class TestLogicTheoremOptimizerStructuredLogging:
         caplog.set_level(logging.INFO)
         
         optimizer = LogicTheoremOptimizer(
-            config=OptimizerConfig(max_rounds=1),
+            config=OptimizerConfig(max_iterations=1),
             extraction_mode=ExtractionMode.FOL,
         )
         
@@ -219,8 +219,8 @@ class TestLogicOptimizerStructuredLogging:
         mock_result.critic_score.weaknesses = []
         mock_result.success = True
         
-        # Patch with_schema to fail
-        with patch("ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_optimizer.with_schema", side_effect=RuntimeError("Schema error")):
+        # Patch with_schema to fail (it's imported inside the function)
+        with patch("ipfs_datasets_py.optimizers.common.structured_logging.with_schema", side_effect=RuntimeError("Schema error")):
             report = optimizer_logic.analyze_batch([mock_result])
         
         # Optimizer should still return a report
@@ -287,7 +287,7 @@ class TestStructuredLoggingSchema:
         
         # Test LogicTheoremOptimizer
         optimizer = LogicTheoremOptimizer(
-            config=OptimizerConfig(max_rounds=1),
+            config=OptimizerConfig(max_iterations=1),
             extraction_mode=ExtractionMode.FOL,
         )
         

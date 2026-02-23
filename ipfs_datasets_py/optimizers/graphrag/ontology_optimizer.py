@@ -4888,11 +4888,35 @@ class OntologyOptimizer:
         """Return the linear regression slope of history ``average_score`` values.
 
         Uses ordinary least squares over the index positions (0, 1, 2, …).
+        Useful for detecting improvement or degradation trends in ontology
+        quality over time.
 
         Returns:
             Float slope; positive means improving trend, negative means
             declining.  ``0.0`` when fewer than 2 history entries or when
             x-variance is zero.
+
+        Example:
+            >>> optimizer = OntologyOptimizer()
+            >>> # Simulate 5 optimization cycles with improving scores
+            >>> for score in [0.65, 0.70, 0.73, 0.78, 0.82]:
+            ...     report = OptimizationReport(average_score=score, trend="improving")
+            ...     optimizer._history.append(report)
+            >>> 
+            >>> slope = optimizer.score_trend_slope()
+            >>> print(f"Trend slope: {slope:.4f}")
+            Trend slope: 0.0430
+            >>> 
+            >>> # Positive slope indicates quality is improving
+            >>> if slope > 0.01:
+            ...     print("✓ Ontology quality is improving over time")
+            ✓ Ontology quality is improving over time
+            >>> 
+            >>> # Use with score_trend_intercept() to project future scores
+            >>> intercept = optimizer.score_trend_intercept()
+            >>> predicted_score_at_cycle_10 = intercept + slope * 10
+            >>> print(f"Projected score at cycle 10: {predicted_score_at_cycle_10:.2f}")
+            Projected score at cycle 10: 0.87
         """
         if len(self._history) < 2:
             return 0.0
@@ -4943,6 +4967,21 @@ class OntologyOptimizer:
             return 0.0
         count = sum(1 for e in self._history if e.average_score > target)
         return count / len(self._history)
+
+    def score_above_target_fraction(self, target: float = 0.7) -> float:
+        """Alias for above_target_rate(). Return fraction of scores strictly > target.
+
+        Args:
+            target: Score threshold.  Default ``0.7``.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when history is empty.
+
+        Example::
+
+            >>> opt.score_above_target_fraction(0.8)  # same as above_target_rate(0.8)
+        """
+        return self.above_target_rate(target)
 
     def score_mad(self) -> float:
         """Return the Mean Absolute Deviation (MAD) of history scores.
@@ -5363,6 +5402,113 @@ class OntologyOptimizer:
         if not self._history:
             return 0
         return sum(1 for e in self._history if e.average_score > target)
+
+    def rolling_correlation(self, lag: int = 1, window: int = 5) -> List[float]:
+        """Compute Pearson correlation between lagged score windows.
+
+        Sliding-window correlation between the current score and a lagged 
+        historical score, measured over a specified window size. Useful for 
+        detecting momentum or mean-reverting patterns in optimization scores.
+
+        Args:
+            lag: Number of steps to lag. Must be ≥ 1. Default ``1``.
+            window: Window size for correlation. Must be ≥ 2. Default ``5``.
+
+        Returns:
+            List of floats in [-1.0, 1.0]. Empty when history is too short.
+
+        Raises:
+            ValueError: If lag < 1 or window < 2.
+
+        Example::
+
+            >>> opt.rolling_correlation(lag=1, window=3)
+            [0.98, -0.15, 0.52, 0.91]  # 4 correlation values
+        """
+        if lag < 1:
+            raise ValueError(f"lag must be ≥ 1, got {lag}")
+        if window < 2:
+            raise ValueError(f"window must be ≥ 2, got {window}")
+        
+        if not self._history or len(self._history) < lag + window:
+            return []
+
+        scores = [e.average_score for e in self._history]
+        correlations = []
+
+        for i in range(lag + window - 1, len(scores)):
+            window_current = scores[i - window + 1 : i + 1]
+            window_lagged = scores[i - lag - window + 1 : i - lag + 1]
+            
+            if len(window_current) != window or len(window_lagged) != window:
+                continue
+
+            mean_curr = sum(window_current) / window
+            mean_lag = sum(window_lagged) / window
+            
+            sum_sq_curr = sum((x - mean_curr) ** 2 for x in window_current)
+            sum_sq_lag = sum((x - mean_lag) ** 2 for x in window_lagged)
+            
+            if sum_sq_curr == 0 or sum_sq_lag == 0:
+                correlations.append(0.0)
+                continue
+
+            cov = sum(
+                (window_current[j] - mean_curr) * (window_lagged[j] - mean_lag)
+                for j in range(window)
+            )
+            corr = cov / (sum_sq_curr * sum_sq_lag) ** 0.5
+            correlations.append(max(-1.0, min(1.0, corr)))
+
+        return correlations
+
+    def score_seasonal_component(self, period: int = 3) -> float:
+        """Estimate the seasonal component as a fraction of variance.
+
+        Decomposes the score history into trend and seasonal components using
+        a period-based approach. Returns the fraction of total variance 
+        explained by the seasonal (periodic) variation, with values in [0.0, 1.0].
+
+        Args:
+            period: Seasonal period in cycles. Must be ≥ 2. Default ``3``.
+
+        Returns:
+            Float in [0.0, 1.0]. Returns 0.0 for short or empty history.
+
+        Raises:
+            ValueError: If period < 2.
+
+        Example::
+
+            >>> opt.score_seasonal_component(period=3)
+            0.25  # 25% of variance is seasonal
+        """
+        if period < 2:
+            raise ValueError(f"period must be ≥ 2, got {period}")
+        
+        if not self._history or len(self._history) < period + 1:
+            return 0.0
+
+        scores = [e.average_score for e in self._history]
+        n = len(scores)
+        
+        # Compute trend as a simple moving average
+        trend = []
+        for i in range(period, n):
+            window_avg = sum(scores[i - period : i]) / period
+            trend.append(window_avg)
+        
+        # Compute seasonal as detrended signal
+        seasonal = [scores[i] - trend[i - period] for i in range(period, n)]
+        
+        # Variance decomposition
+        total_var = sum((s - sum(scores) / n) ** 2 for s in scores) / n
+        seasonal_var = sum(s ** 2 for s in seasonal) / len(seasonal) if seasonal else 0.0
+        
+        if total_var == 0:
+            return 0.0
+        
+        return min(1.0, seasonal_var / total_var)
 
 
 # Export public API

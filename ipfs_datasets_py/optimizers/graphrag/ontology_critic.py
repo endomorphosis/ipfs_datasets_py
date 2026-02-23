@@ -4268,6 +4268,31 @@ class OntologyCritic(BaseCritic):
         probs = [v / total for v in vals]
         return -sum(p * math.log(p) for p in probs if p > 0.0)
 
+    def score_dimension_energy(self, score: "CriticScore") -> float:
+        """Return the L2 energy (norm squared) of the six CriticScore dimensions.
+
+        L2 energy is computed as the sum of squares of all six dimension values.
+        This metric measures how concentrated the values are - higher energy
+        indicates more concentrated or higher magnitude distributions.
+
+        Args:
+            score: :class:`CriticScore` instance to analyse.
+
+        Returns:
+            Non-negative float (L2 energy); ``0.0`` when all dimensions are zero.
+
+        Example::
+
+            >>> s = CriticScore(completeness=0.6, consistency=0.4,
+            ...                  clarity=0.2, granularity=0.1,
+            ...                  relationship_coherence=0.1, domain_alignment=0.0)
+            >>> critic.score_dimension_energy(s)  # doctest: +ELLIPSIS
+            0.58
+        """
+        dims = self._DIMENSIONS
+        vals = [max(0.0, getattr(score, d, 0.0)) for d in dims]
+        return sum(v * v for v in vals)
+
     def score_dimension_kurtosis(self, score: "CriticScore") -> float:
         """Return the population excess kurtosis of the six CriticScore dimensions.
 
