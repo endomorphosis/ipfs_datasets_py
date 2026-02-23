@@ -535,6 +535,8 @@ class PubSubBus:
         self,
         topic: Union[str, "PubSubEventType"],
         payload: Dict[str, Any],
+        *,
+        timeout_seconds: float = 5.0,
     ) -> int:
         """Async variant of :meth:`publish`.
 
@@ -543,9 +545,14 @@ class PubSubBus:
         synchronous :meth:`publish` (with a ``UserWarning``) when *anyio* is
         not installed.
 
+        Each handler is cancelled after *timeout_seconds* via
+        ``anyio.move_on_after()`` if it does not complete in time.
+
         Args:
             topic: A :class:`PubSubEventType` value or raw topic string.
             payload: JSON-serialisable event payload.
+            timeout_seconds: Maximum seconds to wait for each handler.
+                Defaults to ``5.0``.  Set to ``0`` to use no timeout.
 
         Returns:
             The number of handlers notified.
@@ -568,15 +575,23 @@ class PubSubBus:
         results: Dict[int, bool] = {}
 
         async def _call(idx: int, h: Any) -> None:
+            results[idx] = False  # default covers timeout (move_on_after exits silently)
             try:
-                result = h(key, payload)
-                # Support both sync and async handlers.
-                if hasattr(result, "__await__"):
-                    await result
-                results[idx] = True
+                if timeout_seconds > 0:
+                    with anyio.move_on_after(timeout_seconds):
+                        result = h(key, payload)
+                        # Support both sync and async handlers.
+                        if hasattr(result, "__await__"):
+                            await result
+                        results[idx] = True
+                else:
+                    result = h(key, payload)
+                    if hasattr(result, "__await__"):
+                        await result
+                    results[idx] = True
             except Exception as exc:  # pragma: no cover
                 logger.debug("publish_async handler %d raised: %s", idx, exc)
-                results[idx] = False
+                # results[idx] stays False (set as default above)
 
         async with anyio.create_task_group() as tg:
             for i, handler in enumerate(handlers):

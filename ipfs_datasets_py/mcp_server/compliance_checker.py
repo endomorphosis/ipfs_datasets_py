@@ -526,9 +526,88 @@ class ComplianceChecker:
             except OSError:
                 pass
 
-    # ------------------------------------------------------------------
-    # Intent field extraction
-    # ------------------------------------------------------------------
+    def migrate_encrypted(
+        self,
+        path: str,
+        old_password: str,
+        new_password: str,
+    ) -> bool:
+        """Re-encrypt *path* with *new_password*, bumping the version field.
+
+        Reads the file encrypted with *old_password*, updates the
+        ``"version"`` field to the current :data:`_COMPLIANCE_RULE_VERSION`,
+        and writes it back encrypted with *new_password*.
+
+        Useful for password rotation and migrating files saved by older
+        versions of the compliance checker.
+
+        Args:
+            path: Path to the existing encrypted compliance rule file.
+            old_password: The password used when the file was originally saved.
+            new_password: The new password to encrypt the file with.
+
+        Returns:
+            ``True`` on success; ``False`` on any failure (wrong old password,
+            missing file, ``cryptography`` package absent, etc.).
+        """
+        try:
+            from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+            from cryptography.exceptions import InvalidTag
+            import hashlib
+        except ImportError:
+            import warnings
+            warnings.warn(
+                "cryptography package not installed; migrate_encrypted() cannot proceed",
+                UserWarning,
+                stacklevel=2,
+            )
+            return False
+
+        if not os.path.exists(path):
+            logger.debug("migrate_encrypted: file not found: %s", path)
+            return False
+
+        _MIN_SIZE = 13  # 12-byte nonce + at least 1 ciphertext byte
+        try:
+            with open(path, "rb") as fh:
+                raw = fh.read()
+            if len(raw) < _MIN_SIZE:
+                logger.warning("migrate_encrypted: file too short: %s", path)
+                return False
+            nonce, ciphertext = raw[:12], raw[12:]
+            old_pw = old_password.encode() if isinstance(old_password, str) else old_password
+            old_key = hashlib.sha256(old_pw).digest()
+            aesgcm_old = AESGCM(old_key)
+            plaintext = aesgcm_old.decrypt(nonce, ciphertext, None)
+            data = json.loads(plaintext.decode())
+        except InvalidTag:
+            logger.warning("migrate_encrypted: wrong old password for %s", path)
+            return False
+        except Exception as exc:
+            logger.warning("migrate_encrypted: failed to decrypt %s: %s", path, exc)
+            return False
+
+        # Bump version to current
+        data["version"] = _COMPLIANCE_RULE_VERSION
+
+        # Re-encrypt with new password
+        new_pw = new_password.encode() if isinstance(new_password, str) else new_password
+        new_key = hashlib.sha256(new_pw).digest()
+        new_nonce = os.urandom(12)
+        new_plaintext = json.dumps(data).encode()
+        aesgcm_new = AESGCM(new_key)
+        new_ciphertext = aesgcm_new.encrypt(new_nonce, new_plaintext, None)
+
+        parent = os.path.dirname(path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+
+        with open(path, "wb") as fh:
+            fh.write(new_nonce + new_ciphertext)
+        logger.debug("migrate_encrypted: re-encrypted %s with new password", path)
+        return True
+
+
 
     @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:

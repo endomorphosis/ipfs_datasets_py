@@ -1278,14 +1278,21 @@ class IPFSPolicyStore(FilePolicyStore):
         """Return the IPFS CID for *name*, or *None* if not yet pinned."""
         return self._cid_map.get(name)
 
-    def save(self) -> None:
+    def save(self) -> Dict[str, Optional[str]]:  # type: ignore[override]
         """Persist policies to file *and* pin all policies to IPFS.
 
         IPFS pin failures are logged but do not prevent the file save.
+
+        Returns:
+            A mapping of policy name → IPFS CID (or ``None`` when pinning
+            failed for that policy).  The dict includes an entry for every
+            policy currently in the registry.
         """
         super().save()
+        results: Dict[str, Optional[str]] = {}
         for name in self._registry.list_names():
-            self.pin_policy(name)
+            results[name] = self.pin_policy(name)
+        return results
 
     def reload(self) -> int:
         """Hot-reload policies from disk and re-pin to IPFS.

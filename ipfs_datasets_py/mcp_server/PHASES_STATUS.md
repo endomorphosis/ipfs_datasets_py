@@ -348,9 +348,10 @@ Completed v5 tasks tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROV
 - ✅ **Session 47** (Phase M2/M3/O4 complete): `Dockerfile.simple` EXPOSE 8000/8080 removed + CMD→MCP stdio; `start_simple_server.sh` Flask→MCP stdio + deprecation notice; `simple_server.py` TODO removal comment; `requirements-docker.txt` Flask removed + anyio added; `test_flask_removal_session47.py` 13 tests
 - ✅ **Session 64** (v19 Next Steps): `FilePolicyStore.reload()` hot-reload; `DelegationManager.merge(other)` delegation merge (no revocation copy); `ComplianceChecker.save_encrypted` adds `"version"` field to encrypted payload; `PubSubBus.publish_async()` async variant with anyio / sync fallback; session 56 test format compatibility fixed; 32 new session 64 tests, 788+ spec tests pass
 - ✅ **Session 65** (v20 Next Steps): `IPFSPolicyStore.reload()` override re-pins policies after hot-reload; `DelegationManager.merge(other, copy_revocations=False)` adds optional kwarg to copy revocations; `PubSubBus.publish_async()` logs handler exceptions at `DEBUG` level (named `exc`); `ComplianceChecker.load_encrypted` verifies `"version"` field in decrypted payload; 33 new session 65 tests, 821+ spec tests pass
+- ✅ **Session 66** (v21 Next Steps): `DelegationManager.merge(skip_revocations=None)` selective revocation copy; `IPFSPolicyStore.save()` returns `Dict[str, Optional[str]]` batch-pin results; `PubSubBus.publish_async(timeout_seconds=5.0)` per-handler timeout via `anyio.move_on_after()`; `ComplianceChecker.migrate_encrypted(path, old_password, new_password)` re-encryption with version bump; 42 new session 66 tests, 863+ spec tests pass
 
 ---
 
-**Last Updated:** 2026-02-22 (Session 65 — v20 Next Steps: IPFSPolicyStore.reload() re-pins; DelegationManager.merge(copy_revocations=...); publish_async DEBUG logging; ComplianceChecker.load_encrypted version check; 33 new session 65 tests, 821+ spec tests pass)
+**Last Updated:** 2026-02-23 (Session 66 — v21 Next Steps: DelegationManager.merge skip_revocations; IPFSPolicyStore.save() batch-pin dict; publish_async timeout; ComplianceChecker.migrate_encrypted; 42 new session 66 tests, 863+ spec tests pass)
 
-**For the complete plan, see [MASTER_IMPROVEMENT_PLAN_2026_v21.md](MASTER_IMPROVEMENT_PLAN_2026_v21.md)**
+**For the complete plan, see [MASTER_IMPROVEMENT_PLAN_2026_v22.md](MASTER_IMPROVEMENT_PLAN_2026_v22.md)**

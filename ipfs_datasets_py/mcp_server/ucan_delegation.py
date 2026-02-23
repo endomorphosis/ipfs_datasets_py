@@ -1153,6 +1153,7 @@ class DelegationManager:
         other: "DelegationManager",
         *,
         copy_revocations: bool = False,
+        skip_revocations: Optional[Set[str]] = None,
     ) -> int:
         """Merge delegation entries from *other* into this manager.
 
@@ -1168,6 +1169,10 @@ class DelegationManager:
             other: The source :class:`DelegationManager` to copy from.
             copy_revocations: When *True*, all CIDs revoked in *other*'s
                 :class:`RevocationList` are also revoked in *self*.
+            skip_revocations: Optional set of CIDs to **exclude** from the
+                revocation copy.  Only used when *copy_revocations* is *True*.
+                Allows callers to opt in to almost-all revocations while
+                selectively preserving specific CIDs.
 
         Returns:
             Number of newly-added delegations.
@@ -1183,8 +1188,10 @@ class DelegationManager:
         if added:
             self._evaluator = None  # invalidate on mutation
         if copy_revocations:
+            excluded: Set[str] = set(skip_revocations) if skip_revocations is not None else set()
             for cid in other._revocation.to_list():
-                self._revocation.revoke(cid)
+                if cid not in excluded:
+                    self._revocation.revoke(cid)
         return added
 
     def __len__(self) -> int:
