@@ -256,4 +256,4 @@ context = OntologyGenerationContext(
 - **API Reference**: See [API_REFERENCE_GRAPHRAG.md](../../docs/API_REFERENCE_GRAPHRAG.md) for complete API docs
 - **Configuration**: See [EXTRACTION_CONFIG_GUIDE.md](../../docs/EXTRACTION_CONFIG_GUIDE.md) for ExtractionConfig details
 - **Selection Guide**: See [SELECTION_GUIDE.md](SELECTION_GUIDE.md) to choose between GraphRAG/Logic/Agentic optimizers
-- **Examples**: Check `ipfs_datasets_py/optimizers/tests/unit/graphrag/` for working test examples
+- **Examples**: Check `tests/unit/optimizers/graphrag/` for working test examples

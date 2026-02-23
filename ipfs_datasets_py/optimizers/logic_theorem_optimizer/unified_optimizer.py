@@ -191,6 +191,30 @@ class LogicTheoremOptimizer(BaseOptimizer):
         result = super().run_session(input_data, context)
         duration_s = _time.monotonic() - t0
 
+        # Emit structured JSON log for observability
+        try:
+            import json as _json
+            from datetime import datetime as _datetime
+            from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
+
+            duration_ms = duration_s * 1000.0
+            payload = {
+                "event": "logic_theorem_optimizer_run_session",
+                "session_id": context.session_id,
+                "domain": context.domain or self.domain,
+                "extraction_mode": self.extraction_mode.value,
+                "provers": list(self.prover_adapter.use_provers),
+                "score": round(result.get("score", 0.0), 6),
+                "valid": result.get("valid", False),
+                "iterations": result.get("iterations", 0),
+                "statement_count": len(result.get("artifact", {}).get("statements", [])) if "artifact" in result else 0,
+                "duration_ms": round(duration_ms, 2),
+                "timestamp": _datetime.now().isoformat(),
+            }
+            self._log.info("LOGIC_SESSION_RUN: %s", _json.dumps(with_schema(payload), default=str))
+        except Exception as exc:  # pragma: no cover - logging must be best-effort
+            self._log.debug("Logic session JSON logging failed: %s", exc)
+
         if self._learning_metrics is not None:
             feedback = result.get("metrics", {}).get("feedback", [])
             try:

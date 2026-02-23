@@ -127,7 +127,7 @@ class LogicOptimizer:
         # Check convergence
         convergence = self._check_convergence(avg_score, trend)
         
-        return OptimizationReport(
+        report = OptimizationReport(
             average_score=avg_score,
             trend=trend,
             recommendations=recommendations,
@@ -135,6 +135,30 @@ class LogicOptimizer:
             convergence_status=convergence,
             metrics=dimension_metrics
         )
+        
+        # Emit structured JSON log for observability
+        try:
+            import json as _json
+            from datetime import datetime as _datetime
+            from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
+
+            payload = {
+                "event": "logic_optimizer_analyze_batch",
+                "batch_index": len(self.batch_history),
+                "session_count": len(session_results),
+                "average_score": round(avg_score, 6),
+                "trend": trend,
+                "convergence_status": convergence,
+                "recommendation_count": len(recommendations),
+                "insight_count": len(insights),
+                "dimension_count": len(dimension_metrics),
+                "timestamp": _datetime.now().isoformat(),
+            }
+            logger.info("LOGIC_BATCH_ANALYSIS: %s", _json.dumps(with_schema(payload), default=str))
+        except Exception as exc:  # pragma: no cover - logging must be best-effort
+            logger.debug("Logic batch analysis JSON logging failed: %s", exc)
+        
+        return report
     
     def analyze_trends(
         self,
