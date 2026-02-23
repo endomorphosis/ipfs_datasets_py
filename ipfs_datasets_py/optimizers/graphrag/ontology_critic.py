@@ -51,7 +51,7 @@ from __future__ import annotations
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from ipfs_datasets_py.optimizers.common.base_critic import BaseCritic, CriticResult
 from ipfs_datasets_py.optimizers.common.backend_selection import resolve_backend_settings
@@ -786,6 +786,7 @@ class OntologyCritic(BaseCritic):
         context: Any,  # OntologyGenerationContext
         source_data: Optional[Any] = None,
         timeout: Optional[float] = None,
+        on_evaluation_complete: Optional[Callable[[CriticScore], None]] = None,
     ) -> CriticScore:
         """
         Evaluate ontology across all quality dimensions.
@@ -801,6 +802,9 @@ class OntologyCritic(BaseCritic):
             timeout: Optional wall-clock timeout in seconds.  If the evaluation
                 takes longer than *timeout* seconds, a :exc:`TimeoutError` is
                 raised.  ``None`` (default) means no timeout.
+            on_evaluation_complete: Optional callback invoked with the
+                :class:`CriticScore` immediately before returning.  Use this
+                for dashboard updates, logging, or real-time monitoring.
             
         Returns:
             CriticScore with evaluation results and recommendations
@@ -830,13 +834,14 @@ class OntologyCritic(BaseCritic):
                     raise TimeoutError(
                         f"evaluate_ontology() exceeded timeout of {timeout}s"
                     )
-        return self._evaluate_ontology_impl(ontology, context, source_data)
+        return self._evaluate_ontology_impl(ontology, context, source_data, on_evaluation_complete)
 
     def _evaluate_ontology_impl(
         self,
         ontology: Dict[str, Any],
         context: Any,
         source_data: Optional[Any] = None,
+        on_evaluation_complete: Optional[Callable[[CriticScore], None]] = None,
     ) -> CriticScore:
         import time as _time
         _start_ms = _time.perf_counter() * 1000.0
@@ -929,7 +934,14 @@ class OntologyCritic(BaseCritic):
             self._eval_cache[_cache_key] = score
             if len(OntologyCritic._SHARED_EVAL_CACHE) >= OntologyCritic._SHARED_EVAL_CACHE_MAX:
                 OntologyCritic._SHARED_EVAL_CACHE.clear()
-            OntologyCritic._SHARED_EVAL_CACHE[_cache_key] = score
+            OntologyCritic._SHARED_EVAL_CACHE[_cache_key] = score        
+        # Invoke completion callback for dashboard updates, logging, etc.
+        if on_evaluation_complete is not None:
+            try:
+                on_evaluation_complete(score)
+            except Exception as _e:
+                self._log.warning(f"on_evaluation_complete callback raised: {_e}")
+        
         return score
 
     def evaluate_batch(

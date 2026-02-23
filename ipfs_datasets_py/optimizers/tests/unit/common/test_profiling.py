@@ -158,7 +158,7 @@ class TestProfileSection:
         
         # Verify schema
         assert payload["schema"] == "ipfs_datasets_py.optimizer_log"
-        assert payload["schema_version"] == 1
+        assert payload["schema_version"] == 2
         assert payload["event"] == "profiling_result"
         assert payload["section_name"] == "test_operation"
         assert payload["duration_ms"] >= 9.0

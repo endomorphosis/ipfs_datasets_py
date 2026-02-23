@@ -4983,6 +4983,48 @@ class OntologyOptimizer:
         """
         return self.above_target_rate(target)
 
+    def score_momentum(self, window: int = 5) -> float:
+        """Return rolling average of score first differences over last *window* entries.
+
+        Computes the mean of the most recent ``window`` score deltas (velocity).
+        A positive momentum indicates increasing scores; negative indicates
+        decreasing scores.  Momentum gives a smoothed estimate of recent
+        directional trend, less sensitive to single-step noise than raw velocity.
+
+        Args:
+            window: Size of rolling window for averaging deltas.  Default ``5``.
+                Must be ≥ 1.
+
+        Returns:
+            Float momentum (positive = upward trend, negative = downward trend,
+            ~0 = flat); ``0.0`` when fewer than 2 history entries (need at least
+            one delta) or when ``window`` < 1.
+
+        Example::
+
+            >>> # History scores: 0.3, 0.4, 0.5, 0.6, 0.7, 0.8
+            >>> # Deltas: 0.1, 0.1, 0.1, 0.1, 0.1 (last 5)
+            >>> opt.score_momentum(window=5)
+            0.1  # consistent upward momentum
+
+            >>> # Recent stagnation: 0.3, 0.5, 0.7, 0.75, 0.76
+            >>> # Deltas: 0.2, 0.2, 0.05, 0.01 (last 4)
+            >>> opt.score_momentum(window=4)
+            0.115  # decelerating positive momentum
+        """
+        if len(self._history) < 2 or window < 1:
+            return 0.0
+
+        scores = [e.average_score for e in self._history]
+        # Compute first differences (velocities)
+        deltas = [scores[i + 1] - scores[i] for i in range(len(scores) - 1)]
+        
+        # Take last 'window' deltas
+        recent_deltas = deltas[-window:]
+        
+        return sum(recent_deltas) / len(recent_deltas)
+
+
     def score_mad(self) -> float:
         """Return the Mean Absolute Deviation (MAD) of history scores.
 
