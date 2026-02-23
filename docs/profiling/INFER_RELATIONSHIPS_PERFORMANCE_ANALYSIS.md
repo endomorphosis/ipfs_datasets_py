@@ -24,6 +24,35 @@ Profiling reveals that `infer_relationships()` exhibits **O(n²)** scaling behav
 
 ---
 
+## Post-Optimization Benchmark (2026-02-22)
+
+After introducing cached lowercasing, entity position pre-computation, and
+regex compilation in related paths, a re-run of the profiling script shows
+string operations still dominate.
+
+**Environment:** `/home/barberb/complaint-generator/.venv/bin/python`
+
+**Run (100 entities):**
+
+- Relationships: 449
+- Elapsed: 0.0160s
+- Throughput: 27,980.71 rels/sec
+
+**Top functions by total time:**
+
+- `str.lower`: 11,298 calls, 0.006s
+- `str.find`: 5,052 calls, 0.004s
+
+**Notes:**
+
+- The cached path reduced repeated `.lower()`/`.find()` in the co-occurrence
+    loop, but verb-frame matching and other call sites still account for most
+    of the `lower`/`find` volume.
+- Next step: reduce verb-frame normalization cost and cache `m.group()`
+    lowercasing when feasible.
+
+---
+
 ## Profiling Data
 
 ### Methodology
