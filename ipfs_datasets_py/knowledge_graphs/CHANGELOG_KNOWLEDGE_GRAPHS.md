@@ -5,6 +5,33 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.28] - 2026-02-23
+
+### Added — Deferred v4.0+ Federated Knowledge Graphs (Session 74)
+
+**Production code changes.**
+
+- **`query/federation.py`** — New module implementing cross-graph federation:
+  - `FederatedKnowledgeGraph` — registry of independent `KnowledgeGraph` instances with full federation operations:
+    - `add_graph(kg, name=None) → int` — register a graph, get its index
+    - `get_graph(index) → KnowledgeGraph` / `list_graphs() → List[Tuple[int, str]]` / `num_graphs` property
+    - `resolve_entities(strategy=TYPE_AND_NAME) → List[EntityMatch]` — cross-graph entity matching
+    - `get_entity_cluster(fingerprint, strategy) → List[Tuple[int, str]]` — all occurrences of an entity
+    - `query_entity(name=None, entity_type=None) → List[Tuple[int, Entity]]` — search across all graphs
+    - `execute_across(query_fn) → FederationQueryResult` — apply callable to all graphs, capture errors
+    - `to_merged_graph(strategy, merged_name) → KnowledgeGraph` — deduplicate entities, merge properties, remap relationships
+  - `EntityResolutionStrategy(str, Enum)` — three strategies: `EXACT_NAME`, `TYPE_AND_NAME` (default), `PROPERTY_MATCH`
+  - `EntityMatch` dataclass — `entity_a_id / entity_b_id / kg_a_index / kg_b_index / score / strategy`
+  - `FederationQueryResult` dataclass — `per_graph_results / merged_entities / total_matches / query_errors`
+- **`query/__init__.py`** — 4 new symbols exported (`FederatedKnowledgeGraph`, `EntityResolutionStrategy`, `EntityMatch`, `FederationQueryResult`) and added to `__all__`
+
+**Documentation changes.**
+- `DEFERRED_FEATURES.md`: P9 §21 Federated Knowledge Graphs ✅ Implemented v3.22.28 with full usage examples
+- `ROADMAP.md`: "Federated knowledge graphs" → ✅ Delivered v3.22.28; v3.22.28 row added
+- `MASTER_STATUS.md`: v3.22.27→v3.22.28; session 74 entry; test-files 112+→113+; 4,082→4,124 tests
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session74.py` — 42 tests across 9 classes
+
 ## [3.22.27] - 2026-02-23
 
 ### Added — Deferred v4.0+ Advanced Visualization Tools (Session 73)

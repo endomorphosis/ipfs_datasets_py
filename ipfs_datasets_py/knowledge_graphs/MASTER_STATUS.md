@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.22.27  
+**Version:** 3.22.28  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-23 (session 73)  
-**Last Major Release:** v3.22.27 (session 73: deferred v4.0+ advanced visualization tools — `extraction/visualization.py` with `KnowledgeGraphVisualizer`; DOT/Mermaid/D3.js/ASCII output; no external deps; convenience methods on `KnowledgeGraph`; DEFERRED_FEATURES §20; 47 tests)
+**Last Updated:** 2026-02-23 (session 74)  
+**Last Major Release:** v3.22.28 (session 74: deferred v4.0+ federated knowledge graphs — `query/federation.py` with `FederatedKnowledgeGraph`; cross-graph entity resolution with `TYPE_AND_NAME`/`EXACT_NAME`/`PROPERTY_MATCH` strategies; `execute_across()`; `to_merged_graph()` with property merging; `query_entity()`; `get_entity_cluster()`; DEFERRED_FEATURES §21; 42 tests)
 
 ---
 
@@ -19,7 +19,7 @@
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
 | **Test Coverage** | **99.99% (1 missed line)** | Session 58: 3,759 pass, 2 skip, **0 fail** (full dep env); 1 missed line |
-| **Documentation** | ✅ Up to Date | Reflects v3.22.27 structure |
+| **Documentation** | ✅ Up to Date | Reflects v3.22.28 structure |
 | **Known Issues** | None | 0 failures; all skips intentional (libipld/spaCy absent when not installed) |
 | **Next Milestone** | v4.0 (2027+) | 1 missed line: `_entity_helpers.py:117` (intentional defensive guard) — 99.99% coverage |
 
@@ -174,7 +174,7 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 **Remaining 1 missed line (99.99% coverage):**
 - `extraction/_entity_helpers.py:117` — intentional defensive guard (all regex patterns produce ≥2-char groups; kept for safety)
 
-### Test Files: 112+ total (as of v3.22.27)
+### Test Files: 113+ total (as of v3.22.28)
 
 **Unit Tests:** tests/unit/knowledge_graphs/
 - test_extraction.py, test_extraction_package.py, test_advanced_extractor.py
@@ -263,8 +263,9 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - session71: **Deferred v4.0+ features: graph event subscriptions + KG snapshots.** `extraction/graph.py`: `GraphEventType(str, Enum)` (5 types: entity_added/removed/modified + relationship_added/removed); `GraphEvent` dataclass; `KnowledgeGraph.subscribe(callback)→int` / `unsubscribe(handler_id)→bool` / `_emit_event(event)` — wired into `add_entity()`, `add_relationship()`, all 5 mutation types in `apply_diff()`; faulty subscribers silently suppressed. `KnowledgeGraph.snapshot(name)→str` / `get_snapshot(name)` / `list_snapshots()` / `restore_snapshot(name)→bool`. `extraction/__init__.py`: `GraphEventType` + `GraphEvent` exported. `DEFERRED_FEATURES.md`: §17 Graph Event Subscriptions + §18 KG Snapshots ✅. `ROADMAP.md`: v4.0+ "Real-time graph streaming" + "Temporal graph databases" → ✅ Delivered. `MASTER_STATUS.md`: v3.22.24→v3.22.25; Documentation row v3.22.18→v3.22.25. 38 tests. **Result: 4,009 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 - session72: **Deferred v4.0+ GraphQL API support.** `query/graphql.py`: `GraphQLParser` (recursive-descent; supports entity queries, argument filters, nested fields, aliases, string/int/float/bool/null values); `KnowledgeGraphQLExecutor(kg)` (entity selection by type, equality argument filters, field projection for id/name/type/confidence/properties, single-level relationship traversal, alias support; response envelope follows GraphQL-over-HTTP spec; errors captured without raising). `query/__init__.py`: all 5 new symbols exported + added to `__all__`. `DEFERRED_FEATURES.md`: §19 GraphQL API Support ✅ Implemented v3.22.26. `ROADMAP.md`: v4.0+ "GraphQL API support" → ✅ Delivered v3.22.26. MASTER_STATUS v3.22.25→v3.22.26; test-files 110+→111+. 32 tests. **Result: 4,041 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 - session73: **Deferred v4.0+ advanced visualization tools.** `extraction/visualization.py`: `KnowledgeGraphVisualizer` class with 4 pure-Python (no-dep) output formats: `to_dot(graph_name,directed)` — Graphviz DOT language; `to_mermaid(direction,max_entities)` — Mermaid.js graph notation; `to_d3_json(max_nodes)` — D3.js force-directed graph JSON (`{"nodes":[...], "links":[...]}`); `to_ascii(root_entity_id,max_depth)` — ASCII tree (rooted DFS or flat roster). Convenience methods added to `KnowledgeGraph`: `to_dot(**kw)`, `to_mermaid(**kw)`, `to_d3_json(**kw)`, `to_ascii(**kw)` (lazy-import, no circular deps). `extraction/__init__.py`: `KnowledgeGraphVisualizer` exported in `__all__`. `DEFERRED_FEATURES.md`: P8 section — §20 Advanced Visualization Tools ✅. `ROADMAP.md`: v4.0+ "Advanced visualization tools" → ✅ Delivered v3.22.27; v3.22.27 row added. MASTER_STATUS v3.22.26→v3.22.27; test-files 111+→112+. 47 tests. **Result: 4,082+ passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
+- session74: **Deferred v4.0+ federated knowledge graphs.** `query/federation.py`: `FederatedKnowledgeGraph` (registry of independent KGs; `add_graph(kg,name)`; `resolve_entities(strategy)` — cross-graph entity matching by TYPE_AND_NAME/EXACT_NAME/PROPERTY_MATCH; `get_entity_cluster(fp)`; `query_entity(name,entity_type)`; `execute_across(query_fn)` — apply callable across all graphs with error capture; `to_merged_graph(strategy,merged_name)` — deduplicate entities + merge properties + remap relationships); `EntityResolutionStrategy(str,Enum)` (3 values); `EntityMatch` dataclass; `FederationQueryResult` dataclass. `query/__init__.py`: 4 new symbols exported. `DEFERRED_FEATURES.md`: P9 §21 Federated Knowledge Graphs ✅ v3.22.28. `ROADMAP.md`: "Federated knowledge graphs" → ✅ Delivered v3.22.28; v3.22.28 row added. MASTER_STATUS v3.22.27→v3.22.28; test-files 112+→113+. 42 tests. **Result: 4,082+42=4,124+ passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 
-**Total Tests:** 4,082 passing, 26 skipped (optional dep guards), 0 failing
+**Total Tests:** 4,124 passing, 26 skipped (optional dep guards), 0 failing
 **Pass Rate:** 100% (excluding optional dependency skips)
 **Coverage:** 99.99% (1 missed line: `_entity_helpers.py:117` — intentional defensive guard)
 

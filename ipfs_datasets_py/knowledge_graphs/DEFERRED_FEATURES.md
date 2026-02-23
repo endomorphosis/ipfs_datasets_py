@@ -833,6 +833,78 @@ d3_limited = kg.to_d3_json(max_nodes=2)
 
 ---
 
+## P9: Delivered in v3.22.28 (formerly v4.0+ "Federated knowledge graphs")
+
+### 21. Federated Knowledge Graphs
+
+**Status:** ✅ Implemented (v3.22.28 — 2026-02-23)
+
+Multi-graph federation with cross-graph entity resolution, unified query
+execution, and property-merging graph consolidation.
+
+**New module:** `query/federation.py`
+
+**New classes:**
+
+| Class | Description |
+|-------|-------------|
+| `FederatedKnowledgeGraph` | Registry of independent KG instances with federation operations |
+| `EntityResolutionStrategy` | Enum: `EXACT_NAME` / `TYPE_AND_NAME` / `PROPERTY_MATCH` |
+| `EntityMatch` | Dataclass representing a matched entity pair across two graphs |
+| `FederationQueryResult` | Aggregated result from `execute_across()` |
+
+**Usage:**
+```python
+from ipfs_datasets_py.knowledge_graphs.query.federation import (
+    FederatedKnowledgeGraph, EntityResolutionStrategy
+)
+from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
+# Build two independent graphs
+kg_hr = KnowledgeGraph(name="hr")
+alice_hr = kg_hr.add_entity("person", "Alice", properties={"dept": "eng"})
+bob = kg_hr.add_entity("person", "Bob")
+kg_hr.add_relationship("manages", alice_hr, bob)
+
+kg_crm = KnowledgeGraph(name="crm")
+alice_crm = kg_crm.add_entity("person", "Alice", properties={"region": "west"})
+acme = kg_crm.add_entity("company", "Acme")
+kg_crm.add_relationship("works_at", alice_crm, acme)
+
+# Register with federation
+fed = FederatedKnowledgeGraph()
+fed.add_graph(kg_hr, name="hr")
+fed.add_graph(kg_crm, name="crm")
+
+# Cross-graph entity resolution
+matches = fed.resolve_entities(EntityResolutionStrategy.TYPE_AND_NAME)
+# [EntityMatch(entity_a_id=..., entity_b_id=..., kg_a_index=0, kg_b_index=1, score=1.0)]
+
+# Find entity across all graphs
+hits = fed.query_entity(name="Alice")
+# [(0, <alice_hr Entity>), (1, <alice_crm Entity>)]
+
+# Get all occurrences by fingerprint
+cluster = fed.get_entity_cluster("person:alice")
+# [(0, <alice_hr entity_id>), (1, <alice_crm entity_id>)]
+
+# Run a query function across all graphs
+result = fed.execute_across(lambda kg: kg.get_entities_by_type("person"))
+# result.per_graph_results: {0: [<alice_hr>, <bob>], 1: [<alice_crm>]}
+# result.total_matches: 3
+
+# Merge all graphs (Alice deduplicated, properties merged)
+merged = fed.to_merged_graph()
+# merged.entities: 3 (Alice w/ dept+region, Bob, Acme)
+# merged.relationships: 2 (manages, works_at)
+alice_merged = merged.get_entities_by_name("Alice")[0]
+# alice_merged.properties: {'dept': 'eng', 'region': 'west'}  (both merged)
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session74.py`
+
+---
+
 ## See Also
 
 - [ROADMAP.md](ROADMAP.md) - Complete development timeline
@@ -842,7 +914,7 @@ d3_limited = kg.to_d3_json(max_nodes=2)
 
 ---
 
-**Last Updated:** 2026-02-23 (session 73)  
-**Next Review:** Q3 2026  
+**Last Updated:** 2026-02-23 (session 74)
+**Next Review:** Q3 2026
 **Maintainer:** Knowledge Graphs Team
 

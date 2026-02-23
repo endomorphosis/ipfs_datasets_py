@@ -101,6 +101,13 @@ from .graphql import (
     KnowledgeGraphQLExecutor,
 )
 
+from .federation import (
+    FederatedKnowledgeGraph,
+    EntityResolutionStrategy,
+    EntityMatch,
+    FederationQueryResult,
+)
+
 __all__ = [
     'UnifiedQueryEngine',
     'HybridSearchEngine',
@@ -134,4 +141,9 @@ __all__ = [
     'GraphQLDocument',
     'GraphQLParser',
     'KnowledgeGraphQLExecutor',
+    # Federated Knowledge Graphs (v4.0+ roadmap — delivered v3.22.28)
+    'FederatedKnowledgeGraph',
+    'EntityResolutionStrategy',
+    'EntityMatch',
+    'FederationQueryResult',
 ]

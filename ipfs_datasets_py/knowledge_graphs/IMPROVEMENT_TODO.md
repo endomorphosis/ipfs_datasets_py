@@ -30,6 +30,7 @@
 
 ## Session log (most recent first)
 
+- **Session 74 (2026-02-23):** Implemented deferred v4.0+ Federated Knowledge Graphs — `query/federation.py` (`FederatedKnowledgeGraph` with `resolve_entities`/`execute_across`/`to_merged_graph`/`query_entity`/`get_entity_cluster`; `EntityResolutionStrategy`/`EntityMatch`/`FederationQueryResult`); DEFERRED_FEATURES P9 §21; 42 tests. v3.22.27→v3.22.28.
 - **Session 73 (2026-02-23):** Implemented deferred v4.0+ Advanced Visualization Tools — `extraction/visualization.py` (`KnowledgeGraphVisualizer` with `to_dot`/`to_mermaid`/`to_d3_json`/`to_ascii`; pure Python, no external deps); convenience methods on `KnowledgeGraph`; DEFERRED_FEATURES §20; 41 tests. v3.22.26→v3.22.27.
 - **Session 72 (2026-02-23):** Implemented deferred v4.0+ GraphQL API support — `query/graphql.py` (`GraphQLParser` + `KnowledgeGraphQLExecutor`); DEFERRED_FEATURES §19; 43 tests. v3.22.25→v3.22.26.
 - **Session 71 (2026-02-22):** Implemented deferred v4.0+ graph event subscriptions (`GraphEventType`/`GraphEvent`/`subscribe`/`unsubscribe`) + KG snapshots (`snapshot`/`restore_snapshot`); DEFERRED_FEATURES §17+§18; 38 tests. v3.22.24→v3.22.25.

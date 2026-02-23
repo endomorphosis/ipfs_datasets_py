@@ -1,7 +1,7 @@
 # Knowledge Graphs - Development Roadmap
 
 **Last Updated:** 2026-02-23  
-**Current Version:** 3.22.27  
+**Current Version:** 3.22.28  
 **Status:** Production Ready (99.99% test coverage)
 
 ---
@@ -348,7 +348,7 @@ All tests that require optional deps now have proper `@pytest.mark.skipif` guard
 - ✅ Advanced visualization tools — **Delivered in v3.22.27** (`KnowledgeGraphVisualizer` in `extraction/visualization.py`; DOT/Mermaid/D3.js/ASCII; no external deps)
 - ✅ GraphQL API support — **Delivered in v3.22.26** (`KnowledgeGraphQLExecutor` in `query/graphql.py`)
 - Blockchain integration for provenance
-- Federated knowledge graphs
+- ✅ Federated knowledge graphs — **Delivered in v3.22.28** (`FederatedKnowledgeGraph` in `query/federation.py`; cross-graph entity resolution, TYPE_AND_NAME/EXACT_NAME/PROPERTY_MATCH strategies, property-merging `to_merged_graph()`, `execute_across()`)
 - Zero-knowledge proof support
 
 ### Research Areas
@@ -434,6 +434,7 @@ We follow [Semantic Versioning](https://semver.org/):
 | 3.22.25 | 2026-02-22 | ✅ Released | Deferred v4.0+ features: GraphEventType + GraphEvent + KnowledgeGraph.subscribe()/unsubscribe()/_emit_event() (real-time graph streaming); KnowledgeGraph.snapshot()/get_snapshot()/list_snapshots()/restore_snapshot() (temporal graph versioning); DEFERRED_FEATURES §17+§18; MASTER_STATUS v3.22.24→v3.22.25; 38 tests (session71) |
 | 3.22.26 | 2026-02-23 | ✅ Released | Deferred v4.0+ GraphQL API support: query/graphql.py (GraphQLParser + KnowledgeGraphQLExecutor; entity selection, argument filters, field projection, relationship traversal, aliases); DEFERRED_FEATURES §19; ROADMAP GraphQL delivered; 32 tests (session72) |
 | 3.22.27 | 2026-02-23 | ✅ Released | Deferred v4.0+ advanced visualization tools: extraction/visualization.py (KnowledgeGraphVisualizer; to_dot/to_mermaid/to_d3_json/to_ascii; no external deps); KG convenience methods; DEFERRED_FEATURES §20; 47 tests (session73) |
+| 3.22.28 | 2026-02-23 | ✅ Released | Deferred v4.0+ federated knowledge graphs: query/federation.py (FederatedKnowledgeGraph; EntityResolutionStrategy TYPE_AND_NAME/EXACT_NAME/PROPERTY_MATCH; cross-graph entity resolution; execute_across; to_merged_graph with property merging; query_entity; get_entity_cluster); DEFERRED_FEATURES §21; 42 tests (session74) |
 | 4.0 | 2027+ | 📋 Future | TBD based on feedback |
 
 ---
