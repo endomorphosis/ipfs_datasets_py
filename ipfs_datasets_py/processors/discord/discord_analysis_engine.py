@@ -258,7 +258,7 @@ async def discord_analyze_export(
         base_dir_env = os.environ.get("DISCORD_EXPORT_BASE_DIR")
         
         # Validate the user-provided export_path before using it
-        if not export_path or not isinstance(export_path, str):
+        if not export_path or not isinstance(export_path, str) or not export_path.strip():
             return {
                 "status": "error",
                 "error": "Invalid export path",
@@ -306,15 +306,20 @@ async def discord_analyze_export(
                     "export_path": export_path,
                 }
 
-            # Use a resolved path relative to the current working directory
-            export_file = export_path_obj.resolve()
-            # No base_dir configured: allow absolute paths directly
-            if export_path_obj.is_absolute():
-                export_file = export_path_obj.resolve()
-            else:
-                # Relative path: resolve from current directory
-                export_file = Path.cwd() / export_path_obj
-                export_file = export_file.resolve()
+            # Use a dedicated exports directory under the current working directory
+            safe_base_dir = (Path.cwd() / "discord_exports").resolve()
+            safe_base_dir.mkdir(parents=True, exist_ok=True)
+            candidate_path = (safe_base_dir / export_path_obj.name).resolve()
+            try:
+                # Ensure the resolved path is within the safe base directory
+                candidate_path.relative_to(safe_base_dir)
+            except ValueError:
+                return {
+                    "status": "error",
+                    "error": f"Export path must be within {safe_base_dir}",
+                    "export_path": export_path,
+                }
+            export_file = candidate_path
 
         # Ensure the resolved path is within the allowed base directory (if configured)
         if base_dir_env:
