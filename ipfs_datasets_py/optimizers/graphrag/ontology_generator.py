@@ -2830,6 +2830,7 @@ class OntologyGenerator:
                 result.confidence,
             )
             import json as _json
+            from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
             payload = {
                 "event": "extract_entities",
                 "strategy": context.extraction_strategy.value,
@@ -2839,7 +2840,7 @@ class OntologyGenerator:
             }
             self._log.info(
                 "EXTRACT_ENTITIES: %s",
-                _json.dumps(payload, separators=(",", ":"), sort_keys=True),
+                _json.dumps(with_schema(payload), separators=(",", ":"), sort_keys=True),
             )
             return result
         elif context.extraction_strategy == ExtractionStrategy.LLM_BASED:
@@ -2859,6 +2860,7 @@ class OntologyGenerator:
             result.confidence,
         )
         import json as _json
+        from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
         payload = {
             "event": "extract_entities",
             "strategy": context.extraction_strategy.value,
@@ -2868,7 +2870,7 @@ class OntologyGenerator:
         }
         self._log.info(
             "EXTRACT_ENTITIES: %s",
-            _json.dumps(payload, separators=(",", ":"), sort_keys=True),
+            _json.dumps(with_schema(payload), separators=(",", ":"), sort_keys=True),
         )
         return result
 

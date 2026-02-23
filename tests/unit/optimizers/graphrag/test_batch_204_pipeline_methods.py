@@ -74,16 +74,16 @@ def create_result(ontology_dict_factory, critic_score_factory):
 class TestRunTotalEntityCount:
     """Test run_total_entity_count() method."""
 
-    def test_total_entity_count_empty(self, pipeline):
+    def test_total_entity_count_empty(self, pipeline, create_result):
         """Test with no runs."""
         assert pipeline.run_total_entity_count() == 0
 
-    def test_total_entity_count_single_run(self, pipeline):
+    def test_total_entity_count_single_run(self, pipeline, create_result):
         """Test with single run."""
         pipeline._run_history = [create_result(entity_count=10)]
         assert pipeline.run_total_entity_count() == 10
 
-    def test_total_entity_count_multiple_runs(self, pipeline):
+    def test_total_entity_count_multiple_runs(self, pipeline, create_result):
         """Test with multiple runs."""
         pipeline._run_history = [
             create_result(entity_count=5),
@@ -97,16 +97,16 @@ class TestRunTotalEntityCount:
 class TestRunTotalRelationshipCount:
     """Test run_total_relationship_count() method."""
 
-    def test_total_rel_count_empty(self, pipeline):
+    def test_total_rel_count_empty(self, pipeline, create_result):
         """Test with no runs."""
         assert pipeline.run_total_relationship_count() == 0
 
-    def test_total_rel_count_single_run(self, pipeline):
+    def test_total_rel_count_single_run(self, pipeline, create_result):
         """Test with single run."""
         pipeline._run_history = [create_result(rel_count=15)]
         assert pipeline.run_total_relationship_count() == 15
 
-    def test_total_rel_count_multiple_runs(self, pipeline):
+    def test_total_rel_count_multiple_runs(self, pipeline, create_result):
         """Test with multiple runs."""
         pipeline._run_history = [
             create_result(rel_count=10),
@@ -120,16 +120,16 @@ class TestRunTotalRelationshipCount:
 class TestRunAverageEntityCount:
     """Test run_average_entity_count() method."""
 
-    def test_average_entity_count_empty(self, pipeline):
+    def test_average_entity_count_empty(self, pipeline, create_result):
         """Test with no runs."""
         assert pipeline.run_average_entity_count() == 0.0
 
-    def test_average_entity_count_single_run(self, pipeline):
+    def test_average_entity_count_single_run(self, pipeline, create_result):
         """Test with single run."""
         pipeline._run_history = [create_result(entity_count=10)]
         assert abs(pipeline.run_average_entity_count() - 10.0) < 0.01
 
-    def test_average_entity_count_multiple_runs(self, pipeline):
+    def test_average_entity_count_multiple_runs(self, pipeline, create_result):
         """Test with multiple runs."""
         pipeline._run_history = [
             create_result(entity_count=5),
@@ -143,16 +143,16 @@ class TestRunAverageEntityCount:
 class TestRunAverageRelationshipCount:
     """Test run_average_relationship_count() method."""
 
-    def test_average_rel_count_empty(self, pipeline):
+    def test_average_rel_count_empty(self, pipeline, create_result):
         """Test with no runs."""
         assert pipeline.run_average_relationship_count() == 0.0
 
-    def test_average_rel_count_single_run(self, pipeline):
+    def test_average_rel_count_single_run(self, pipeline, create_result):
         """Test with single run."""
         pipeline._run_history = [create_result(rel_count=20)]
         assert abs(pipeline.run_average_relationship_count() - 20.0) < 0.01
 
-    def test_average_rel_count_multiple_runs(self, pipeline):
+    def test_average_rel_count_multiple_runs(self, pipeline, create_result):
         """Test with multiple runs."""
         pipeline._run_history = [
             create_result(rel_count=10),
@@ -166,17 +166,17 @@ class TestRunAverageRelationshipCount:
 class TestRunActionFrequency:
     """Test run_action_frequency() method."""
 
-    def test_action_frequency_empty(self, pipeline):
+    def test_action_frequency_empty(self, pipeline, create_result):
         """Test with no runs."""
         assert pipeline.run_action_frequency() == {}
 
-    def test_action_frequency_single_run(self, pipeline):
+    def test_action_frequency_single_run(self, pipeline, create_result):
         """Test with single run."""
         pipeline._run_history = [create_result(actions=["merge_entities", "add_relationship"])]
         freq = pipeline.run_action_frequency()
         assert freq == {"merge_entities": 1, "add_relationship": 1}
 
-    def test_action_frequency_multiple_runs(self, pipeline):
+    def test_action_frequency_multiple_runs(self, pipeline, create_result):
         """Test with multiple runs."""
         pipeline._run_history = [
             create_result(actions=["merge_entities", "add_relationship"]),
@@ -194,11 +194,11 @@ class TestRunActionFrequency:
 class TestRunMostCommonAction:
     """Test run_most_common_action() method."""
 
-    def test_most_common_action_empty(self, pipeline):
+    def test_most_common_action_empty(self, pipeline, create_result):
         """Test with no runs."""
         assert pipeline.run_most_common_action() == "none"
 
-    def test_most_common_action_single_action(self, pipeline):
+    def test_most_common_action_single_action(self, pipeline, create_result):
         """Test with single action type."""
         pipeline._run_history = [
             create_result(actions=["merge_entities"]),
@@ -206,7 +206,7 @@ class TestRunMostCommonAction:
         ]
         assert pipeline.run_most_common_action() == "merge_entities"
 
-    def test_most_common_action_multiple_types(self, pipeline):
+    def test_most_common_action_multiple_types(self, pipeline, create_result):
         """Test with multiple action types."""
         pipeline._run_history = [
             create_result(actions=["merge_entities", "add_relationship"]),
@@ -220,16 +220,16 @@ class TestRunMostCommonAction:
 class TestRunScoreVariance:
     """Test run_score_variance() method."""
 
-    def test_variance_empty(self, pipeline):
+    def test_variance_empty(self, pipeline, create_result):
         """Test with no runs."""
         assert pipeline.run_score_variance() == 0.0
 
-    def test_variance_single_run(self, pipeline):
+    def test_variance_single_run(self, pipeline, create_result):
         """Test with single run."""
         pipeline._run_history = [create_result(score_val=0.75)]
         assert pipeline.run_score_variance() == 0.0
 
-    def test_variance_identical_scores(self, pipeline):
+    def test_variance_identical_scores(self, pipeline, create_result):
         """Test with identical scores."""
         pipeline._run_history = [
             create_result(score_val=0.75),
@@ -238,7 +238,7 @@ class TestRunScoreVariance:
         ]
         assert pipeline.run_score_variance() == 0.0
 
-    def test_variance_varied_scores(self, pipeline):
+    def test_variance_varied_scores(self, pipeline, create_result):
         """Test with varied scores."""
         pipeline._run_history = [
             create_result(score_val=0.5),
@@ -254,16 +254,16 @@ class TestRunScoreVariance:
 class TestRunScoreStdDev:
     """Test run_score_std_dev() method."""
 
-    def test_std_dev_empty(self, pipeline):
+    def test_std_dev_empty(self, pipeline, create_result):
         """Test with no runs."""
         assert pipeline.run_score_std_dev() == 0.0
 
-    def test_std_dev_single_run(self, pipeline):
+    def test_std_dev_single_run(self, pipeline, create_result):
         """Test with single run."""
         pipeline._run_history = [create_result(score_val=0.75)]
         assert pipeline.run_score_std_dev() == 0.0
 
-    def test_std_dev_varied_scores(self, pipeline):
+    def test_std_dev_varied_scores(self, pipeline, create_result):
         """Test with varied scores."""
         pipeline._run_history = [
             create_result(score_val=0.5),
@@ -278,16 +278,16 @@ class TestRunScoreStdDev:
 class TestRunScoreCoefficientOfVariation:
     """Test run_score_coefficient_of_variation() method."""
 
-    def test_cv_empty(self, pipeline):
+    def test_cv_empty(self, pipeline, create_result):
         """Test with no runs."""
         assert pipeline.run_score_coefficient_of_variation() == 0.0
 
-    def test_cv_single_run(self, pipeline):
+    def test_cv_single_run(self, pipeline, create_result):
         """Test with single run."""
         pipeline._run_history = [create_result(score_val=0.75)]
         assert pipeline.run_score_coefficient_of_variation() == 0.0
 
-    def test_cv_identical_scores(self, pipeline):
+    def test_cv_identical_scores(self, pipeline, create_result):
         """Test with identical scores (std_dev = 0)."""
         pipeline._run_history = [
             create_result(score_val=0.75),
@@ -295,7 +295,7 @@ class TestRunScoreCoefficientOfVariation:
         ]
         assert pipeline.run_score_coefficient_of_variation() == 0.0
 
-    def test_cv_varied_scores(self, pipeline):
+    def test_cv_varied_scores(self, pipeline, create_result):
         """Test with varied scores."""
         pipeline._run_history = [
             create_result(score_val=0.5),
@@ -306,7 +306,7 @@ class TestRunScoreCoefficientOfVariation:
         cv = pipeline.run_score_coefficient_of_variation()
         assert abs(cv - 0.233) < 0.01
 
-    def test_cv_zero_mean(self, pipeline):
+    def test_cv_zero_mean(self, pipeline, create_result):
         """Test CV when mean is zero."""
         pipeline._run_history = [
             create_result(score_val=0.0),
@@ -318,16 +318,16 @@ class TestRunScoreCoefficientOfVariation:
 class TestRunHasImprovingTrend:
     """Test run_has_improving_trend() method."""
 
-    def test_improving_trend_empty(self, pipeline):
+    def test_improving_trend_empty(self, pipeline, create_result):
         """Test with no runs."""
         assert pipeline.run_has_improving_trend() is False
 
-    def test_improving_trend_single_run(self, pipeline):
+    def test_improving_trend_single_run(self, pipeline, create_result):
         """Test with single run."""
         pipeline._run_history = [create_result(score_val=0.75)]
         assert pipeline.run_has_improving_trend() is False
 
-    def test_improving_trend_true(self, pipeline):
+    def test_improving_trend_true(self, pipeline, create_result):
         """Test with improving scores."""
         pipeline._run_history = [
             create_result(score_val=0.5),
@@ -338,7 +338,7 @@ class TestRunHasImprovingTrend:
         # Window of 3: last 3 runs are [0.6, 0.7, 0.8], 0.8 > 0.6
         assert pipeline.run_has_improving_trend(window=3) is True
 
-    def test_improving_trend_false(self, pipeline):
+    def test_improving_trend_false(self, pipeline, create_result):
         """Test with degrading scores."""
         pipeline._run_history = [
             create_result(score_val=0.8),
@@ -348,7 +348,7 @@ class TestRunHasImprovingTrend:
         # 0.6 < 0.8
         assert pipeline.run_has_improving_trend(window=3) is False
 
-    def test_improving_trend_stable(self, pipeline):
+    def test_improving_trend_stable(self, pipeline, create_result):
         """Test with stable scores."""
         pipeline._run_history = [
             create_result(score_val=0.75),
@@ -361,7 +361,7 @@ class TestRunHasImprovingTrend:
 class TestBatch204Integration:
     """Integration tests combining multiple Batch 204 methods."""
 
-    def test_comprehensive_run_analysis(self, pipeline):
+    def test_comprehensive_run_analysis(self, pipeline, create_result):
         """Test complete analysis workflow."""
         pipeline._run_history = [
             create_result(entity_count=10, rel_count=20, score_val=0.6, actions=["merge_entities"]),

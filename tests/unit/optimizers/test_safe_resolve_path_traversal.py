@@ -8,6 +8,7 @@ from __future__ import annotations
 import pytest
 
 from ipfs_datasets_py.optimizers.graphrag.cli_wrapper import _safe_resolve
+from ipfs_datasets_py.optimizers.graphrag.exceptions import PathResolutionError
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.cli_wrapper import (
     _safe_resolve as _logic_safe_resolve,
 )
@@ -24,7 +25,7 @@ class TestSafeResolveGraphRAG:
         "/dev/null",
     ])
     def test_forbidden_path_raises_value_error(self, path):
-        with pytest.raises(ValueError, match="restricted area"):
+        with pytest.raises(PathResolutionError, match="restricted area"):
             _safe_resolve(path)
 
     def test_safe_path_returns_resolved(self, tmp_path):
@@ -34,7 +35,7 @@ class TestSafeResolveGraphRAG:
         assert result == p.resolve()
 
     def test_must_exist_true_raises_on_missing(self, tmp_path):
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(PathResolutionError):
             _safe_resolve(str(tmp_path / "nonexistent.json"), must_exist=True)
 
     def test_must_exist_false_does_not_raise_on_missing(self, tmp_path):

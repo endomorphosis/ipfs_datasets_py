@@ -66,6 +66,54 @@ class OntologyValidator:
                 considering names as similar. Default 0.75 (75% similar).
         """
         self.min_name_similarity = min_name_similarity
+
+    def validate_basic_schema(self, ontology: Dict[str, Any]) -> bool:
+        """Validate top-level ontology structure.
+
+        Checks that ontology is a dict with ``entities`` and ``relationships``
+        keys, and that both values are lists. It does not validate entity fields.
+
+        Args:
+            ontology: Ontology dict to validate.
+
+        Returns:
+            True when the schema is structurally valid.
+
+        Raises:
+            OntologyValidationError: If structure is invalid.
+        """
+        from .exceptions import OntologyValidationError
+
+        if ontology is None or not isinstance(ontology, dict):
+            raise OntologyValidationError("ontology must be a dictionary")
+        if "entities" not in ontology or "relationships" not in ontology:
+            raise OntologyValidationError("Missing required keys: entities, relationships")
+        if not isinstance(ontology.get("entities"), list):
+            raise OntologyValidationError("ontology['entities'] must be a list")
+        if not isinstance(ontology.get("relationships"), list):
+            raise OntologyValidationError("ontology['relationships'] must be a list")
+        return True
+
+    def validate_ontology(
+        self,
+        ontology: Dict[str, Any],
+        strict: bool = False,
+    ) -> Any:
+        """Run full ontology validation and return a ValidationResult.
+
+        Delegates to ``ontology_validation.validate_ontology`` after confirming
+        the basic schema. Invalid top-level structures are returned as a
+        ValidationResult with errors populated.
+        """
+        from .ontology_validation import ValidationResult, validate_ontology as _validate
+        from .exceptions import OntologyValidationError
+
+        try:
+            self.validate_basic_schema(ontology)
+        except OntologyValidationError as exc:
+            return ValidationResult(errors=[str(exc)])
+
+        return _validate(ontology, strict=strict)
     
     def suggest_entity_merges(
         self,

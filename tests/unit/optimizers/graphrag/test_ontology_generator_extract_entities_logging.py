@@ -7,6 +7,7 @@ stderr but are not consistently available via caplog.records.
 from __future__ import annotations
 
 import json
+import logging
 import re
 
 from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
@@ -16,7 +17,8 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
 )
 
 
-def test_extract_entities_emits_structured_json_log(capsys):
+def test_extract_entities_emits_structured_json_log(capsys, caplog):
+    caplog.set_level(logging.INFO)
     gen = OntologyGenerator()
     ctx = OntologyGenerationContext(
         data_source="test",
@@ -28,11 +30,17 @@ def test_extract_entities_emits_structured_json_log(capsys):
     result = gen.extract_entities("Alice met Bob.", ctx)
 
     captured = capsys.readouterr()
-    assert "EXTRACT_ENTITIES: " in captured.err
+    payload = None
+    for record in caplog.records:
+        message = record.getMessage()
+        if "EXTRACT_ENTITIES: " in message:
+            payload = json.loads(message.split("EXTRACT_ENTITIES: ", 1)[1])
+            break
 
-    matches = re.findall(r"EXTRACT_ENTITIES: (\{.*\})", captured.err)
-    assert matches, "Expected an EXTRACT_ENTITIES JSON payload in stderr"
-    payload = json.loads(matches[-1])
+    if payload is None:
+        matches = re.findall(r"EXTRACT_ENTITIES: (\{.*\})", captured.err)
+        assert matches, "Expected an EXTRACT_ENTITIES JSON payload in logs"
+        payload = json.loads(matches[-1])
     assert payload["event"] == "extract_entities"
     assert payload["strategy"] == ExtractionStrategy.RULE_BASED.value
     assert payload["entity_count"] == len(result.entities)
