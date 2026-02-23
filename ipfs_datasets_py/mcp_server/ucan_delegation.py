@@ -1115,6 +1115,20 @@ class MergeResult:
     #: ``str()`` delegates to :meth:`__repr__` for display consistency.
     __str__ = __repr__
 
+    def __bool__(self) -> bool:
+        """``True`` when at least one delegation was successfully added.
+
+        Allows concise conditional use::
+
+            result = manager.merge(other)
+            if result:
+                log.info("Merge added %d delegations", result.added_count)
+
+        Returns:
+            ``True`` if :attr:`added_count` > 0, ``False`` otherwise.
+        """
+        return self.added_count > 0
+
 
 class DelegationManager:
     """Bundles :class:`DelegationStore`, :class:`RevocationList`, and

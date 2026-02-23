@@ -1327,6 +1327,21 @@ class IPFSReloadResult(NamedTuple):
     #: ``str()`` delegates to :meth:`__repr__` for display consistency.
     __str__ = __repr__
 
+    def __bool__(self) -> bool:
+        """``True`` when all policies were pinned without error.
+
+        Equivalent to :attr:`all_succeeded`.  Allows concise conditional
+        use::
+
+            result = store.reload()
+            if not result:
+                alert(result.failure_details)
+
+        Returns:
+            ``True`` if :attr:`total_failed` == 0, ``False`` otherwise.
+        """
+        return self.all_succeeded
+
 
 class IPFSPolicyStore(FilePolicyStore):
     """IPFS-backed :class:`PolicyRegistry` store (Phase G).

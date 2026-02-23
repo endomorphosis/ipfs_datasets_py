@@ -735,6 +735,24 @@ class PubSubBus:
                 seen.add(id(h))
         return len(seen)
 
+    def topic_handler_map(self) -> Dict[str, List]:
+        """Return a shallow-copy snapshot of the subscriber registry.
+
+        Each key is a topic string; the value is a *copy* of the list of
+        handlers currently subscribed to that topic.  Modifying the returned
+        dict or its lists does not affect the live registry::
+
+            m = bus.topic_handler_map()
+            m["receipts"].clear()          # does NOT unsubscribe handlers
+            assert bus.subscription_count("receipts") > 0  # still registered
+
+        Only topics with at least one handler are included.
+
+        Returns:
+            ``Dict[str, List]`` — ``{topic: [handler, ...]}`` (shallow copy).
+        """
+        return {k: list(v) for k, v in self._subscribers.items() if v}
+
     async def publish_async(
         self,
         topic: Union[str, "PubSubEventType"],

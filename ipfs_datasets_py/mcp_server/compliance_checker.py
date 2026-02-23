@@ -918,6 +918,31 @@ class ComplianceChecker:
             return None
 
     @staticmethod
+    def newest_backup_path(path: str) -> Optional[str]:
+        """Return the path of the *newest* (primary) backup file.
+
+        Returns the first item from :meth:`list_bak_files`, which is the
+        ``.bak`` file (most recently written).  Returns ``None`` when no
+        backup exists::
+
+            bak = ComplianceChecker.newest_backup_path("/data/rules.enc")
+            if bak is not None:
+                ComplianceChecker.restore_from_bak("/data/rules.enc")
+
+        This is the complement of :meth:`oldest_backup_age` — while that
+        method returns the *mtime* of the oldest backup, this method returns
+        the *path* of the newest backup.
+
+        Args:
+            path: Base file path (without ``.bak`` suffix).
+
+        Returns:
+            Path string of the primary ``.bak`` file, or ``None``.
+        """
+        files = ComplianceChecker.list_bak_files(path)
+        return files[0] if files else None
+
+    @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:
         if isinstance(intent, dict):
             return intent.get(field, default)
