@@ -5,6 +5,39 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.37] - 2026-02-23
+
+### Added — 3 new MCP server tools for GNN, ZKP, and Federation (Session 83) — 48 tests
+
+**`mcp_server/tools/graph_tools/graph_gnn_embed.py`** (new MCP tool):
+- `graph_gnn_embed(kg_data, entity_ids, top_k_similar, layer_type, embedding_dim, num_layers)` — compute GNN node embeddings
+- Delegates to `KnowledgeGraphManager.gnn_embed()` → `GraphNeuralNetworkAdapter`
+- Supports layer types: `"graph_conv"` / `"graph_sage"` / `"graph_attention"`
+- Returns `status / entity_count / embedding_dim / layer_type / embeddings / similar`
+
+**`mcp_server/tools/graph_tools/graph_zkp_prove.py`** (new MCP tool):
+- `graph_zkp_prove(proof_type, entity_type, entity_name, ...)` — generate ZK proofs
+- Proof types: `entity_exists` / `entity_property` / `path_exists` / `query_answer_count`
+- Optional `build_tdfol_witness=True` to also generate TDFOL_v1 witness dict
+- Returns `status / proof_type / proof / valid / tdfol_witness`
+
+**`mcp_server/tools/graph_tools/graph_federate_query.py`** (new MCP tool):
+- `graph_federate_query(graphs, query_entity_name, resolution_strategy, merge, ...)` — query across federated KGs
+- Delegates to `KnowledgeGraphManager.federate_query()` → `FederatedKnowledgeGraph`
+- Strategies: `"type_and_name"` / `"exact_name"` / `"property_match"`
+- Returns `status / graph_count / entity_matches / query_hits / merged_entity_count`
+
+**`core_operations/knowledge_graph_manager.py`** (updated):
+- Added `gnn_embed()` — compute GNN embeddings + similar entities
+- Added `zkp_prove()` — generate ZK proofs with optional TDFOL_v1 witness
+- Added `federate_query()` — cross-graph entity resolution and query
+
+**`mcp_server/tools/graph_tools/__init__.py`** (updated):
+- 19 → 22 tools; `graph_gnn_embed`, `graph_zkp_prove`, `graph_federate_query` added to `__all__`
+
+**`mcp_server/tools/graph_tools/README.md`** (updated):
+- 3 new rows for session 83 tools
+
 ## [3.22.36] - 2026-02-23
 
 ### Added — TDFOL_v1 Witness Builder for Groth16 backend (Session 82) — 50 tests

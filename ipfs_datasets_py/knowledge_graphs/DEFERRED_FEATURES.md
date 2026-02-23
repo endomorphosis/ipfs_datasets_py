@@ -688,9 +688,48 @@ assert kg.list_snapshots() == ["before_merge"]
 
 ---
 
-## P13: Delivered in v3.22.36 (TDFOL_v1 Witness Builder for Groth16 backend)
+## P14: Delivered in v3.22.37 (MCP tools for GNN, ZKP, and Federation)
 
-### 27. TDFOL_v1 Atom Encoder
+### 29. GNN Embed MCP Tool
+
+**Status:** ✅ Implemented (v3.22.37 — 2026-02-23)
+**Location:** `mcp_server/tools/graph_tools/graph_gnn_embed.py` + `core_operations/knowledge_graph_manager.KnowledgeGraphManager.gnn_embed()`
+**Implementation:**
+- `graph_gnn_embed(kg_data, entity_ids, top_k_similar, layer_type, embedding_dim, num_layers)` — compute GNN node embeddings via `GraphNeuralNetworkAdapter`
+- Layer types: `GRAPH_CONV` / `GRAPH_SAGE` *(default)* / `GRAPH_ATTENTION`
+- Returns per-entity embedding vectors + optional top-*k* similar entities
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session83.py`
+
+---
+
+### 30. ZKP Prove MCP Tool
+
+**Status:** ✅ Implemented (v3.22.37 — 2026-02-23)
+**Location:** `mcp_server/tools/graph_tools/graph_zkp_prove.py` + `core_operations/knowledge_graph_manager.KnowledgeGraphManager.zkp_prove()`
+**Implementation:**
+- `graph_zkp_prove(proof_type, ..., build_tdfol_witness, circuit_version)` — generate ZK proofs
+- Proof types: `entity_exists` / `entity_property` / `path_exists` / `query_answer_count`
+- Optional `build_tdfol_witness=True` produces TDFOL_v1 witness dict for Groth16 Rust backend
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session83.py`
+
+---
+
+### 31. Federate Query MCP Tool
+
+**Status:** ✅ Implemented (v3.22.37 — 2026-02-23)
+**Location:** `mcp_server/tools/graph_tools/graph_federate_query.py` + `core_operations/knowledge_graph_manager.KnowledgeGraphManager.federate_query()`
+**Implementation:**
+- `graph_federate_query(graphs, query_entity_name, resolution_strategy, merge, ...)` — cross-graph entity resolution and query
+- Strategies: `"type_and_name"` *(default)* / `"exact_name"` / `"property_match"`
+- Returns entity matches, query hits (name-based lookup), and optional merged graph counts
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session83.py`
+
+---
+
+## P13: Delivered in v3.22.36 (TDFOL_v1 Witness Builder for Groth16 backend)
 
 **Status:** ✅ Implemented (v3.22.36 — 2026-02-23)
 **Location:** `query/groth16_kg_witness.py` — `KGAtomEncoder`

@@ -27,6 +27,9 @@ The underlying graph engine supports Neo4j, in-memory, and IPLD-backed backends.
 | `graph_complete_suggestions.py` | `graph_complete_suggestions()` | Suggest missing relationships (KG completion) *(new v3.22.35)* |
 | `graph_explain.py` | `graph_explain()` | Explainable-AI explanations for entities, relationships, and paths *(new v3.22.35)* |
 | `graph_provenance_verify.py` | `graph_provenance_verify()` | Verify integrity of the provenance chain *(new v3.22.35)* |
+| `graph_gnn_embed.py` | `graph_gnn_embed()` | Compute GNN node embeddings (GRAPH_CONV / SAGE / ATTENTION) *(new v3.22.37)* |
+| `graph_zkp_prove.py` | `graph_zkp_prove()` | Generate zero-knowledge proofs for KG assertions *(new v3.22.37)* |
+| `graph_federate_query.py` | `graph_federate_query()` | Query across federated knowledge graphs *(new v3.22.37)* |
 
 ## Usage
 

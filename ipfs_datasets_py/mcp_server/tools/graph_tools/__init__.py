@@ -24,6 +24,9 @@ from .graph_visualize import graph_visualize
 from .graph_complete_suggestions import graph_complete_suggestions
 from .graph_explain import graph_explain
 from .graph_provenance_verify import graph_provenance_verify
+from .graph_gnn_embed import graph_gnn_embed
+from .graph_zkp_prove import graph_zkp_prove
+from .graph_federate_query import graph_federate_query
 
 __all__ = [
     "query_knowledge_graph",
@@ -45,4 +48,7 @@ __all__ = [
     "graph_complete_suggestions",
     "graph_explain",
     "graph_provenance_verify",
+    "graph_gnn_embed",
+    "graph_zkp_prove",
+    "graph_federate_query",
 ]

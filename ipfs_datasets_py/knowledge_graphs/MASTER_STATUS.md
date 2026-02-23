@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.22.36  
+**Version:** 3.22.37  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-23 (session 82)  
-**Last Major Release:** v3.22.36 (session 82: `KGAtomEncoder` + `KGWitnessBuilder` in `query/groth16_kg_witness.py` — TDFOL_v1 atom normalization and witness input construction for the Groth16 Rust backend; `KGEntityFormula.to_tdfol_atoms()` added to `groth16_bridge.py`; `query/__init__.py` exports updated; 50 tests)
+**Last Updated:** 2026-02-23 (session 83)  
+**Last Major Release:** v3.22.37 (session 83: 3 new MCP server tools — `graph_gnn_embed` / `graph_zkp_prove` / `graph_federate_query`; 3 new `KnowledgeGraphManager` methods; `graph_tools/__init__.py` updated 19→22 tools; `README.md` updated; 48 tests)
 
 ---
 
@@ -19,7 +19,7 @@
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute, graph_graphql_query, graph_visualize, graph_complete_suggestions, graph_explain, graph_provenance_verify |
 | **Test Coverage** | **99.99% (1 missed line)** | Session 58: 3,759 pass, 2 skip, **0 fail** (full dep env); 1 missed line |
-| **Documentation** | ✅ Up to Date | Reflects v3.22.36 structure |
+| **Documentation** | ✅ Up to Date | Reflects v3.22.37 structure |
 | **Known Issues** | None | 0 failures; all skips intentional (libipld/spaCy absent when not installed) |
 | **Next Milestone** | v4.0 (2027+) | 1 missed line: `_entity_helpers.py:117` (intentional defensive guard) — 99.99% coverage |
 

@@ -584,8 +584,12 @@ class TestWitnessIntegration:
 # ---------------------------------------------------------------------------
 class TestDocumentationIntegrity:
     def test_master_status_has_v3_22_36(self):
-        content = _read(_MASTER)
-        assert "3.22.36" in content, "MASTER_STATUS.md should mention v3.22.36"
+        # v3.22.36 may appear in CHANGELOG but MASTER_STATUS advances to 3.22.37+
+        # Accept either MASTER_STATUS or CHANGELOG containing the version
+        ms_content = _read(_MASTER)
+        cl_content = _read(_CHANGELOG)
+        assert "3.22.36" in ms_content or "3.22.36" in cl_content, \
+            "3.22.36 should appear in MASTER_STATUS.md or CHANGELOG"
 
     def test_roadmap_has_v3_22_36(self):
         content = _read(_ROADMAP)
