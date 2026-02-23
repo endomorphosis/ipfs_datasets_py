@@ -51,6 +51,7 @@ from typing import Any, Dict, List, Optional
 import uuid
 
 from ipfs_datasets_py.optimizers.common.base_session import BaseSession
+from ipfs_datasets_py.optimizers.common.profiling_decorators import profile_method
 
 logger = logging.getLogger(__name__)
 
@@ -439,6 +440,7 @@ class OntologyMediator:
 
         return " ".join(lines)
     
+    @profile_method("ontology_mediator.refine_ontology")
     def refine_ontology(
         self,
         ontology: Dict[str, Any],

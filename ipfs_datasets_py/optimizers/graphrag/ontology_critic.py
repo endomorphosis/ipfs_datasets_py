@@ -838,6 +838,9 @@ class OntologyCritic(BaseCritic):
         context: Any,
         source_data: Optional[Any] = None,
     ) -> CriticScore:
+        import time as _time
+        _start_ms = _time.perf_counter() * 1000.0
+        
         # LRU-style cache keyed on ontology content hash (skipped when source_data provided)
         if source_data is None:
             _cache_key = self._compute_eval_cache_key(ontology)
@@ -847,11 +850,16 @@ class OntologyCritic(BaseCritic):
                     self._eval_cache: dict = {}
                 if _cache_key in self._eval_cache:
                     self._log.debug("OntologyCritic instance cache hit")
-                    return self._eval_cache[_cache_key]
+                    _cached = self._eval_cache[_cache_key]
+                    # Update timing for cached result
+                    _cached.metadata['timing_ms'] = round((_time.perf_counter() * 1000.0) - _start_ms, 2)
+                    return _cached
                 if _cache_key in OntologyCritic._SHARED_EVAL_CACHE:
                     self._log.debug("OntologyCritic shared cache hit")
                     cached = OntologyCritic._SHARED_EVAL_CACHE[_cache_key]
                     self._eval_cache[_cache_key] = cached
+                    # Update timing for cached result
+                    cached.metadata['timing_ms'] = round((_time.perf_counter() * 1000.0) - _start_ms, 2)
                     return cached
         else:
             _cache_key = None
@@ -909,6 +917,7 @@ class OntologyCritic(BaseCritic):
                 'entity_type_counts': _ent_type_counts,
                 'entity_type_fractions': _ent_type_fractions,
                 'provenance_score': self._evaluate_provenance(ontology),
+                'timing_ms': round((_time.perf_counter() * 1000.0) - _start_ms, 2),
             }
         )
         

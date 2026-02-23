@@ -19,6 +19,18 @@ __all__ = [
     "RateLimitTier",
     "RateLimitExceeded",
     "RateLimitMiddleware",
+    # Authentication
+    "JWTAuthenticator",
+    "APIKeyAuthenticator",
+    "AuthenticationMiddleware",
+    "TokenPayload",
+    "AuthConfig",
+    "TokenBlacklist",
+    "PasswordHasher",
+    "TokenType",
+    "AuthenticationError",
+    "InvalidTokenError",
+    "InsufficientPermissionsError",
 ]
 
 def __getattr__(name):
@@ -31,4 +43,9 @@ def __getattr__(name):
                   "RateLimitConfig", "RateLimitTier", "RateLimitExceeded", "RateLimitMiddleware"]:
         from ipfs_datasets_py.optimizers.security import rate_limiter
         return getattr(rate_limiter, name)
+    elif name in ["JWTAuthenticator", "APIKeyAuthenticator", "AuthenticationMiddleware",
+                  "TokenPayload", "AuthConfig", "TokenBlacklist", "PasswordHasher",
+                  "TokenType", "AuthenticationError", "InvalidTokenError", "InsufficientPermissionsError"]:
+        from ipfs_datasets_py.optimizers.security import authentication
+        return getattr(authentication, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

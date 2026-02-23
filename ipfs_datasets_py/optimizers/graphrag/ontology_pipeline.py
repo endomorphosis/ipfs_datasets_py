@@ -2768,3 +2768,47 @@ class OntologyPipeline:
         variance = sum((d - mean_fd) ** 2 for d in fd) / len(fd)
         return variance ** 0.5
 
+
+    def run_score_velocity_skewness(self) -> float:
+        """Return the population skewness of run-score first differences (velocity).
+
+        Computes first differences ``fd[i] = scores[i+1] - scores[i]`` and returns
+        their population skewness coefficient. Skewness measures asymmetry of the
+        distribution:
+          - ``0.0``: symmetric (normal-like)
+          - ``> 0``: right-skewed (long tail on positive side, more small steps)
+          - ``< 0``: left-skewed (long tail on negative side, more large steps)
+
+        Uses the formula:
+            skewness = (Σ((x - mean)³) / n) / std³
+
+        Returns:
+            Float skewness coefficient; ``0.0`` when fewer than 3 runs are recorded
+            (need at least 2 first differences for meaningful skewness).
+
+        Example::
+
+            >>> # Suppose we have scores: 0.3, 0.5, 0.7, 0.8
+            >>> # First differences: 0.2, 0.2, 0.1 (right-skewed; small final step)
+            >>> pipeline.run_score_velocity_skewness()  # doctest: +SKIP
+            0.71  # positive = right-skewed distribution of steps
+        """
+        n = len(self._run_history)
+        if n < 3:
+            return 0.0
+        
+        scores = [r.score.overall for r in self._run_history]
+        fd = [scores[i + 1] - scores[i] for i in range(n - 1)]
+        
+        # Compute mean and std
+        mean_fd = sum(fd) / len(fd)
+        variance = sum((d - mean_fd) ** 2 for d in fd) / len(fd)
+        std_fd = variance ** 0.5
+        
+        if std_fd == 0.0:
+            return 0.0  # no variance = no skewness
+        
+        # Compute third central moment
+        m3 = sum((d - mean_fd) ** 3 for d in fd) / len(fd)
+        
+        return m3 / (std_fd ** 3)

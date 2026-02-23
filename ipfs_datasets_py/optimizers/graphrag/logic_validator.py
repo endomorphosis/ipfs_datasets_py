@@ -4616,6 +4616,33 @@ class LogicValidator:
         return nodes_in_cycles / total_nodes
 
 
+    def dag_fraction(self, ontology: Any) -> float:
+        """Return the fraction of nodes NOT in any cycle (complement of node_in_cycle_fraction).
+
+        This is the proportion of nodes that belong to singleton strongly 
+        connected components (i.e., nodes not part of any cycle). For a pure 
+        DAG, this returns ``1.0`` since no nodes are in cycles.
+
+        Mathematically:
+            dag_fraction = 1 - node_in_cycle_fraction
+
+        Args:
+            ontology: Ontology object or dict — same format accepted by
+                :meth:`node_in_cycle_fraction`.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``1.0`` for empty graphs or pure DAGs;
+            ``0.0`` when all nodes are in cycles.
+
+        Example::
+
+            >>> lv.dag_fraction({"entities": [{"id": "e1"}, {"id": "e2"}],
+            ...                  "relationships": [{"from": "e1", "to": "e2"}]})
+            1.0  # pure DAG, no cycles
+        """
+        return 1.0 - self.node_in_cycle_fraction(ontology)
+
+
 __all__ = [
     'LogicValidator',
     'ValidationResult',
