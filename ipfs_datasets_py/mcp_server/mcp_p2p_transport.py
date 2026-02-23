@@ -825,6 +825,28 @@ class PubSubBus:
             sid for sid, (k, _h) in self._sid_map.items() if k == key
         )
 
+    def topic_sid_map(self) -> Dict[str, List[int]]:
+        """Return a mapping of topic key → sorted list of SIDs.
+
+        The SID-based analogue of :meth:`topic_handler_map`.  Useful for
+        auditing which subscriptions are active per topic without exposing
+        handler callables directly::
+
+            m = bus.topic_sid_map()
+            # {"receipts": [1, 3], "audit": [2]}
+
+        Only topics with at least one subscriber are included.
+
+        Returns:
+            ``Dict[str, List[int]]`` — ``{topic_key: sorted_sid_list}``.
+        """
+        result: Dict[str, List[int]] = {}
+        for sid, (k, _h) in self._sid_map.items():
+            result.setdefault(k, [])
+            result[k].append(sid)
+        # Sort each SID list and drop empty topics
+        return {k: sorted(v) for k, v in result.items() if v}
+
     async def publish_async(
         self,
         topic: Union[str, "PubSubEventType"],

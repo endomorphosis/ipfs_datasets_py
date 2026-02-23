@@ -1033,34 +1033,27 @@ class ComplianceChecker:
             "newest_age": newest_age,
             "oldest_age": oldest_age,
         }
+
+    @staticmethod
+    def backup_names(path: str) -> List[str]:
+        """Return the *file names* (not full paths) of existing backup files.
+
+        Convenience wrapper around :meth:`list_bak_files` that strips the
+        directory component from each path, making the result safe to expose
+        in log messages and UI dashboards without leaking absolute paths::
+
+            names = ComplianceChecker.backup_names("/data/rules.enc")
+            # ["rules.enc.bak", "rules.enc.bak.1"]
+
+        Args:
+            path: Base file path (without ``.bak`` suffix).
+
+        Returns:
+            List of file name strings (same order as :meth:`list_bak_files`,
+            newest first).  Empty list when no backups exist.
+        """
         import os as _os
-        files = ComplianceChecker.list_bak_files(path)
-        count = len(files)
-        if count == 0:
-            return {
-                "count": 0,
-                "newest": None,
-                "oldest": None,
-                "newest_age": None,
-                "oldest_age": None,
-            }
-        newest = files[0]
-        oldest = files[-1]
-        try:
-            newest_age: Optional[float] = float(_os.path.getmtime(newest))
-        except OSError:
-            newest_age = None
-        try:
-            oldest_age: Optional[float] = float(_os.path.getmtime(oldest))
-        except OSError:
-            oldest_age = None
-        return {
-            "count": count,
-            "newest": newest,
-            "oldest": oldest,
-            "newest_age": newest_age,
-            "oldest_age": oldest_age,
-        }
+        return [_os.path.basename(p) for p in ComplianceChecker.list_bak_files(path)]
 
     @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:

@@ -1158,6 +1158,43 @@ class MergeResult:
         yield ("conflict_count", self.conflict_count)
         yield ("revocations_copied", self.revocations_copied)
 
+    def keys(self) -> list:
+        """Return the list of field names for this result.
+
+        Mirrors ``dict.keys()`` to allow use in ``dict``-protocol consumers
+        that call ``keys()`` before iterating::
+
+            assert list(result.keys()) == ["added_count", "conflict_count", "revocations_copied"]
+
+        Returns:
+            A plain list of the three field name strings in stable order.
+        """
+        return ["added_count", "conflict_count", "revocations_copied"]
+
+    def __getitem__(self, key: str):
+        """Support subscript access for mapping-protocol compatibility.
+
+        Allows ``result["added_count"]`` and enables ``dict(result)`` to work
+        via the full mapping protocol (keys + subscript)::
+
+            d = dict(result)
+            # {"added_count": 3, "conflict_count": 1, "revocations_copied": 0}
+
+        Args:
+            key: One of ``"added_count"``, ``"conflict_count"``, or
+                 ``"revocations_copied"``.
+
+        Raises:
+            KeyError: When *key* is not a recognised field name.
+        """
+        if key == "added_count":
+            return self.added_count
+        if key == "conflict_count":
+            return self.conflict_count
+        if key == "revocations_copied":
+            return self.revocations_copied
+        raise KeyError(key)
+
 
 class DelegationManager:
     """Bundles :class:`DelegationStore`, :class:`RevocationList`, and
