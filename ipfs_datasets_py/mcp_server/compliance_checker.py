@@ -845,6 +845,24 @@ class ComplianceChecker:
         return bool(ComplianceChecker.list_bak_files(path))
 
     @staticmethod
+    def backup_count(path: str) -> int:
+        """Return the number of backup files that exist for *path*.
+
+        Equivalent to ``len(list_bak_files(path))`` but more readable when
+        only the count is needed::
+
+            n = ComplianceChecker.backup_count("/data/rules.enc")
+            print(f"{n} backups available")
+
+        Args:
+            path: Base file path (without ``.bak`` suffix).
+
+        Returns:
+            Number of backup files (``0`` when none exist).
+        """
+        return len(ComplianceChecker.list_bak_files(path))
+
+    @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:
         if isinstance(intent, dict):
             return intent.get(field, default)

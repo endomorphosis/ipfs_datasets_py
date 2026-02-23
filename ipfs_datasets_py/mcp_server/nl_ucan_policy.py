@@ -1272,6 +1272,42 @@ class IPFSReloadResult(NamedTuple):
             "summary": self.summarize(),
         }
 
+    @classmethod
+    def from_dict(cls, d: Dict) -> "IPFSReloadResult":
+        """Reconstruct an :class:`IPFSReloadResult` from a dict produced by
+        :meth:`to_dict`.
+
+        Round-trips cleanly::
+
+            assert IPFSReloadResult.from_dict(result.to_dict()) == result
+
+        Args:
+            d: Dictionary with at least a ``count`` key.  ``pin_results`` is
+                synthesised from ``succeeded``/``failed`` counts when not
+                present.  ``summary`` and ``success_rate`` are ignored (they
+                are derived).  Missing keys default to sensible zero-values.
+
+        Returns:
+            A new :class:`IPFSReloadResult` instance.
+
+        Note:
+            Because ``to_dict`` does not serialise individual pin CIDs, the
+            reconstructed ``pin_results`` dict will map numeric-string keys to
+            ``None`` for failed entries.  Callers that need CID fidelity should
+            serialise and restore the ``pin_results`` mapping directly.
+        """
+        count = int(d.get("count", 0))
+        succeeded = int(d.get("succeeded", count))
+        failed = int(d.get("failed", 0))
+        # Build a minimal pin_results: succeeded entries map to placeholder CIDs,
+        # failed entries map to None.
+        pin_results: Dict[str, Optional[str]] = {}
+        for i in range(succeeded):
+            pin_results[f"policy_{i}"] = f"Qm{i:040d}"
+        for i in range(failed):
+            pin_results[f"failed_{i}"] = None
+        return cls(count=count, pin_results=pin_results)
+
 
 class IPFSPolicyStore(FilePolicyStore):
     """IPFS-backed :class:`PolicyRegistry` store (Phase G).

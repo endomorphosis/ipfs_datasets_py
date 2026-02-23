@@ -678,6 +678,21 @@ class PubSubBus:
         self._sid_map.clear()
         return total
 
+    def snapshot(self) -> Dict[str, int]:
+        """Return a snapshot of current subscriber counts per topic.
+
+        Maps each active topic key to the number of handlers currently
+        subscribed.  Topics with zero subscribers are excluded.  Useful for
+        health-check endpoints and monitoring dashboards::
+
+            counts = bus.snapshot()
+            # {"receipt_disseminate": 2, "delegation_add": 1}
+
+        Returns:
+            Dict mapping topic key string → subscriber count (≥ 1).
+        """
+        return {k: len(v) for k, v in self._subscribers.items() if v}
+
     async def publish_async(
         self,
         topic: Union[str, "PubSubEventType"],

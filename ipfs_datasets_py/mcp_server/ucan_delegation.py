@@ -1074,6 +1074,28 @@ class MergeResult:
             "import_rate": self.import_rate,
         }
 
+    @classmethod
+    def from_dict(cls, d: Dict) -> "MergeResult":
+        """Reconstruct a :class:`MergeResult` from a dict produced by :meth:`to_dict`.
+
+        Round-trips cleanly::
+
+            assert MergeResult.from_dict(result.to_dict()) == result
+
+        Args:
+            d: Dictionary with keys ``added``, ``conflicts``, and
+                ``revocations_copied``.  The ``import_rate`` key is ignored
+                (it is a derived property).  Missing keys default to ``0``.
+
+        Returns:
+            A new :class:`MergeResult` instance.
+        """
+        return cls(
+            added_count=int(d.get("added", 0)),
+            conflict_count=int(d.get("conflicts", 0)),
+            revocations_copied=int(d.get("revocations_copied", 0)),
+        )
+
 
 class DelegationManager:
     """Bundles :class:`DelegationStore`, :class:`RevocationList`, and
