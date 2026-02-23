@@ -78,6 +78,11 @@ class ComplianceMergeResult(NamedTuple):
     def __hash__(self) -> int:  # type: ignore[override]
         return hash(tuple(self))
 
+    @property
+    def total(self) -> int:
+        """EK199: Total items processed = added + skipped_protected + skipped_duplicate."""
+        return self.added + self.skipped_protected + self.skipped_duplicate
+
     def __bool__(self) -> bool:
         return self.added > 0
 

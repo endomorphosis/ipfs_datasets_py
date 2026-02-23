@@ -883,6 +883,31 @@ class DelegationManager:
         """
         return self.get_metrics()["active_token_count"]
 
+    def active_tokens_by_resource(self, resource: str):
+        """EI197: Iterate over active tokens that grant access to *resource*.
+
+        Yields ``(cid, token)`` pairs from :meth:`active_tokens` where at
+        least one :class:`Capability` in the token has a matching *resource*
+        field.  Wildcard resources (``"*"``) in a capability match any
+        *resource* argument.
+
+        Parameters
+        ----------
+        resource:
+            The resource string to match against token capabilities.
+
+        Yields
+        ------
+        tuple of (str, DelegationToken)
+            Active ``(cid, token)`` pairs whose capability list covers
+            *resource*.
+        """
+        for cid, token in self.active_tokens():
+            for cap in token.capabilities:
+                if cap.resource == "*" or cap.resource == resource:
+                    yield cid, token
+                    break  # each token yielded at most once
+
     # ------------------------------------------------------------------
     # CQ153: Merge
     # ------------------------------------------------------------------

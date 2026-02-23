@@ -389,8 +389,10 @@ class NLUCANPolicyCompiler:
         self,
         sentences_list: List[List[str]],
         policy_ids: Optional[List[Optional[str]]] = None,
+        *,
+        fail_fast: bool = False,
     ) -> "List[NLUCANCompilerResult]":
-        """DZ188: Compile multiple policy sets in sequence.
+        """DZ188/EN202: Compile multiple policy sets in sequence.
 
         Parameters
         ----------
@@ -399,11 +401,17 @@ class NLUCANPolicyCompiler:
         policy_ids:
             Optional list of policy identifiers (one per policy set).
             ``None`` entries or a shorter list cause auto-generated IDs.
+        fail_fast:
+            When ``True``, compilation stops immediately after the first
+            policy set that produces any errors and the **partial** list is
+            returned (EN202).  The returned list may therefore be shorter
+            than *sentences_list*.  Default is ``False`` (compile all sets
+            regardless of errors).
 
         Returns
         -------
         list of :class:`NLUCANCompilerResult`
-            One result per policy set, in the same order as *sentences_list*.
+            One result per policy set compiled, in order.
             Empty when *sentences_list* is empty.
         """
         results: List[NLUCANCompilerResult] = []
@@ -411,8 +419,39 @@ class NLUCANPolicyCompiler:
             pid: Optional[str] = None
             if policy_ids is not None and i < len(policy_ids):
                 pid = policy_ids[i]
-            results.append(self.compile(sentences, policy_id=pid))
+            r = self.compile(sentences, policy_id=pid)
+            results.append(r)
+            if fail_fast and r.errors:  # EN202: stop on first error
+                break
         return results
+
+    def compile_batch_with_explain(
+        self,
+        sentences_list: List[List[str]],
+        policy_ids: Optional[List[Optional[str]]] = None,
+    ) -> "List[Tuple[NLUCANCompilerResult, str]]":
+        """EJ198: Compile multiple policy sets and return (result, explain) tuples.
+
+        Convenience variant of :meth:`compile_batch` that pairs each
+        :class:`NLUCANCompilerResult` with its human-readable explanation
+        string (as produced by :meth:`~NLUCANCompilerResult.explain`).
+
+        Parameters
+        ----------
+        sentences_list:
+            Each element is a list of sentences for one policy set.
+        policy_ids:
+            Optional per-policy-set identifiers (forwarded to
+            :meth:`compile_batch`).
+
+        Returns
+        -------
+        list of (NLUCANCompilerResult, str)
+            Tuples of ``(result, explain_string)`` in the same order as
+            *sentences_list*.  Empty when *sentences_list* is empty.
+        """
+        results = self.compile_batch(sentences_list, policy_ids=policy_ids)
+        return [(r, r.explain()) for r in results]
 
 
 # ── one-shot convenience wrapper ─────────────────────────────────────────────

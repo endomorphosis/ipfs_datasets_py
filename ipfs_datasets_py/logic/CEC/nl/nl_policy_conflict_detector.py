@@ -367,9 +367,29 @@ _JA_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     ],
 }
 
+# EM201: Chinese (Simplified) deontic keywords (inline — always available).
+_ZH_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
+    "permission": [
+        "可以", "允许", "有权", "可", "有资格",
+        "被允许", "被授权",
+    ],
+    "prohibition": [
+        "不得", "禁止", "不允许", "不可以", "不可",
+        "被禁止", "严禁",
+    ],
+    "obligation": [
+        "必须", "应当", "需要", "有义务", "应该",
+        "须", "有责任",
+    ],
+}
+
 
 def _load_i18n_keywords(language: str) -> Dict[str, List[str]]:
-    """Load deontic keywords for *language* (``"en"``, ``"nl"``, ``"it"``, ``"ja"``, ``"fr"``, ``"es"``, ``"de"``, or ``"pt"``)."""
+    """Load deontic keywords for *language*.
+
+    Supports ``"en"``, ``"nl"``, ``"it"``, ``"ja"``, ``"zh"``,
+    ``"fr"``, ``"es"``, ``"de"``, and ``"pt"``.
+    """
     if language == "en":  # DC165: inline English keywords
         return _EN_DEONTIC_KEYWORDS
     if language == "nl":  # DN176: inline Dutch keywords
@@ -378,6 +398,8 @@ def _load_i18n_keywords(language: str) -> Dict[str, List[str]]:
         return _IT_DEONTIC_KEYWORDS
     if language == "ja":  # ED192: inline Japanese keywords
         return _JA_DEONTIC_KEYWORDS
+    if language == "zh":  # EM201: inline Chinese keywords
+        return _ZH_DEONTIC_KEYWORDS
     loader_path = _I18N_KEYWORD_LOADERS.get(language)
     if loader_path is None:
         return {}
