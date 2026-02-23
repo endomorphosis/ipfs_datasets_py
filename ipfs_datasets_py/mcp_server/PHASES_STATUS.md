@@ -350,8 +350,10 @@ Completed v5 tasks tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROV
 - ✅ **Session 65** (v20 Next Steps): `IPFSPolicyStore.reload()` override re-pins policies after hot-reload; `DelegationManager.merge(other, copy_revocations=False)` adds optional kwarg to copy revocations; `PubSubBus.publish_async()` logs handler exceptions at `DEBUG` level (named `exc`); `ComplianceChecker.load_encrypted` verifies `"version"` field in decrypted payload; 33 new session 65 tests, 821+ spec tests pass
 - ✅ **Session 66** (v21 Next Steps): `DelegationManager.merge(skip_revocations=None)` selective revocation copy; `IPFSPolicyStore.save()` returns `Dict[str, Optional[str]]` batch-pin results; `PubSubBus.publish_async(timeout_seconds=5.0)` per-handler timeout via `anyio.move_on_after()`; `ComplianceChecker.migrate_encrypted(path, old_password, new_password)` re-encryption with version bump; 42 new session 66 tests, 863+ spec tests pass
 
+- ✅ **Session 67** (v22 Next Steps): `DelegationManager.merge(audit_log=None)` records each copied revocation CID in audit log; `IPFSPolicyStore.save(max_retries=1)` retries failed IPFS pins; `PubSubBus.publish_async()` returns `PublishAsyncResult(notified, timed_out)` namedtuple; `ComplianceChecker.migrate_encrypted()` creates atomic `.bak` backup before overwriting; 35 new session 67 tests, 898+ spec tests pass
+
 ---
 
-**Last Updated:** 2026-02-23 (Session 66 — v21 Next Steps: DelegationManager.merge skip_revocations; IPFSPolicyStore.save() batch-pin dict; publish_async timeout; ComplianceChecker.migrate_encrypted; 42 new session 66 tests, 863+ spec tests pass)
+**Last Updated:** 2026-02-23 (Session 67 — v22 Next Steps: DelegationManager.merge audit_log; IPFSPolicyStore.save max_retries; PublishAsyncResult namedtuple; ComplianceChecker.migrate_encrypted atomic backup; 35 new session 67 tests, 898+ spec tests pass)
 
-**For the complete plan, see [MASTER_IMPROVEMENT_PLAN_2026_v22.md](MASTER_IMPROVEMENT_PLAN_2026_v22.md)**
+**For the complete plan, see [MASTER_IMPROVEMENT_PLAN_2026_v23.md](MASTER_IMPROVEMENT_PLAN_2026_v23.md)**

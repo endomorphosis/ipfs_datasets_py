@@ -1154,6 +1154,7 @@ class DelegationManager:
         *,
         copy_revocations: bool = False,
         skip_revocations: Optional[Set[str]] = None,
+        audit_log: Any = None,
     ) -> int:
         """Merge delegation entries from *other* into this manager.
 
@@ -1173,6 +1174,10 @@ class DelegationManager:
                 revocation copy.  Only used when *copy_revocations* is *True*.
                 Allows callers to opt in to almost-all revocations while
                 selectively preserving specific CIDs.
+            audit_log: Optional object with an ``append(entry: dict)`` method.
+                When *copy_revocations* is *True* and this is provided, each
+                newly-copied revocation CID is recorded as
+                ``{"event": "revocation_copied", "cid": cid}``.
 
         Returns:
             Number of newly-added delegations.
@@ -1192,6 +1197,11 @@ class DelegationManager:
             for cid in other._revocation.to_list():
                 if cid not in excluded:
                     self._revocation.revoke(cid)
+                    if audit_log is not None:
+                        try:
+                            audit_log.append({"event": "revocation_copied", "cid": cid})
+                        except Exception as _exc:
+                            logger.debug("audit_log.append raised: %s", _exc)
         return added
 
     def __len__(self) -> int:

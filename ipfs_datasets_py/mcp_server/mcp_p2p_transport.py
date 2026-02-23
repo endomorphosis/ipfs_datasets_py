@@ -40,7 +40,7 @@ import logging
 import struct
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -453,6 +453,18 @@ class PubSubEventType(str, Enum):
     SCHEDULING_SIGNAL = MCP_P2P_PUBSUB_TOPICS["scheduling_signal"]
 
 
+class PublishAsyncResult(NamedTuple):
+    """Result of a :meth:`PubSubBus.publish_async` call.
+
+    Attributes:
+        notified: Number of handlers that completed successfully.
+        timed_out: Number of handlers that were cancelled due to timeout.
+    """
+
+    notified: int
+    timed_out: int
+
+
 class PubSubBus:
     """Lightweight in-process pubsub bus for MCP++ transport events.
 
@@ -537,7 +549,7 @@ class PubSubBus:
         payload: Dict[str, Any],
         *,
         timeout_seconds: float = 5.0,
-    ) -> int:
+    ) -> "PublishAsyncResult":
         """Async variant of :meth:`publish`.
 
         Invokes each handler concurrently inside an *anyio* task group so
@@ -555,7 +567,9 @@ class PubSubBus:
                 Defaults to ``5.0``.  Set to ``0`` to use no timeout.
 
         Returns:
-            The number of handlers notified.
+            A :class:`PublishAsyncResult` namedtuple with ``notified`` (count
+            of handlers that completed) and ``timed_out`` (count of handlers
+            cancelled by timeout).
         """
         try:
             import anyio  # noqa: PLC0415
@@ -567,23 +581,28 @@ class PubSubBus:
                 UserWarning,
                 stacklevel=2,
             )
-            return self.publish(topic, payload)
+            n = self.publish(topic, payload)
+            return PublishAsyncResult(notified=n, timed_out=0)
 
         key = str(topic)
         handlers = list(self._subscribers.get(key, []))
-        notified = 0
+        # Track per-handler outcome: True=notified, False=error/timeout
         results: Dict[int, bool] = {}
+        timed_out_flags: Dict[int, bool] = {}
 
         async def _call(idx: int, h: Any) -> None:
             results[idx] = False  # default covers timeout (move_on_after exits silently)
+            timed_out_flags[idx] = False
             try:
                 if timeout_seconds > 0:
-                    with anyio.move_on_after(timeout_seconds):
+                    with anyio.move_on_after(timeout_seconds) as cancel_scope:
                         result = h(key, payload)
                         # Support both sync and async handlers.
                         if hasattr(result, "__await__"):
                             await result
                         results[idx] = True
+                    if cancel_scope.cancelled_caught:
+                        timed_out_flags[idx] = True
                 else:
                     result = h(key, payload)
                     if hasattr(result, "__await__"):
@@ -598,7 +617,8 @@ class PubSubBus:
                 tg.start_soon(_call, i, handler)
 
         notified = sum(1 for v in results.values() if v)
-        return notified
+        timed_out = sum(1 for v in timed_out_flags.values() if v)
+        return PublishAsyncResult(notified=notified, timed_out=timed_out)
 
     def clear(self, topic: Optional[Union[str, "PubSubEventType"]] = None) -> None:
         """Clear all subscribers, optionally for a single *topic*."""

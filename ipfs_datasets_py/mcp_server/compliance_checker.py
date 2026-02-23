@@ -538,6 +538,10 @@ class ComplianceChecker:
         ``"version"`` field to the current :data:`_COMPLIANCE_RULE_VERSION`,
         and writes it back encrypted with *new_password*.
 
+        Atomically creates a ``<path>.bak`` backup of the original before
+        overwriting, and removes it only when the write succeeds.  On
+        failure the backup is left in place.
+
         Useful for password rotation and migrating files saved by older
         versions of the compliance checker.
 
@@ -602,8 +606,32 @@ class ComplianceChecker:
         if parent:
             os.makedirs(parent, exist_ok=True)
 
-        with open(path, "wb") as fh:
-            fh.write(new_nonce + new_ciphertext)
+        # Atomic backup: copy original to <path>.bak before overwriting.
+        bak_path = path + ".bak"
+        try:
+            import shutil
+            shutil.copy2(path, bak_path)
+            logger.debug("migrate_encrypted: backup written to %s", bak_path)
+        except Exception as exc:
+            logger.warning("migrate_encrypted: failed to create backup %s: %s", bak_path, exc)
+            # Proceed even if backup fails — caller may not care
+            bak_path = None  # type: ignore[assignment]
+
+        try:
+            with open(path, "wb") as fh:
+                fh.write(new_nonce + new_ciphertext)
+        except Exception as exc:
+            logger.warning("migrate_encrypted: failed to write %s: %s", path, exc)
+            return False
+
+        # Remove backup only on success
+        if bak_path is not None:
+            try:
+                os.unlink(bak_path)
+                logger.debug("migrate_encrypted: backup removed %s", bak_path)
+            except OSError as exc:
+                logger.debug("migrate_encrypted: could not remove backup %s: %s", bak_path, exc)
+
         logger.debug("migrate_encrypted: re-encrypted %s with new password", path)
         return True
 

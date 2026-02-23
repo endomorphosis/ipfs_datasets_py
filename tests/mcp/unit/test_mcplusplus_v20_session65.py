@@ -332,12 +332,14 @@ class TestPubSubBusPublishAsyncErrorLogging:
         try:
             import anyio
             count = asyncio.run(bus.publish_async(PubSubEventType.INTERFACE_ANNOUNCE, {}))
-            assert count == 2
+            notified = count.notified if hasattr(count, "notified") else count
+            assert notified == 2
         except ImportError:
             with warnings.catch_warnings(record=True):
                 warnings.simplefilter("always")
                 count = asyncio.run(bus.publish_async(PubSubEventType.INTERFACE_ANNOUNCE, {}))
-                assert count == 2
+                notified = count.notified if hasattr(count, "notified") else count
+                assert notified == 2
 
     def test_publish_async_is_coroutine_function(self):
         """publish_async must be a coroutine function."""

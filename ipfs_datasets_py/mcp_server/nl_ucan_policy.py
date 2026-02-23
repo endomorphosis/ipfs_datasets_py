@@ -1278,20 +1278,33 @@ class IPFSPolicyStore(FilePolicyStore):
         """Return the IPFS CID for *name*, or *None* if not yet pinned."""
         return self._cid_map.get(name)
 
-    def save(self) -> Dict[str, Optional[str]]:  # type: ignore[override]
+    def save(self, max_retries: int = 1) -> Dict[str, Optional[str]]:  # type: ignore[override]
         """Persist policies to file *and* pin all policies to IPFS.
 
         IPFS pin failures are logged but do not prevent the file save.
+        Failed pins are retried up to *max_retries* additional times before
+        recording ``None`` in the result dict.
+
+        Args:
+            max_retries: Number of additional attempts for failed pins.
+                Defaults to ``1`` (one initial attempt + one retry).  Set to
+                ``0`` for no retries (original behaviour).
 
         Returns:
-            A mapping of policy name → IPFS CID (or ``None`` when pinning
-            failed for that policy).  The dict includes an entry for every
+            A mapping of policy name → IPFS CID (or ``None`` when all
+            pin attempts failed).  The dict includes an entry for every
             policy currently in the registry.
         """
         super().save()
         results: Dict[str, Optional[str]] = {}
         for name in self._registry.list_names():
-            results[name] = self.pin_policy(name)
+            cid: Optional[str] = self.pin_policy(name)
+            attempts = 0
+            while cid is None and attempts < max_retries:
+                logger.debug("Retrying IPFS pin for policy %r (attempt %d)", name, attempts + 1)
+                cid = self.pin_policy(name)
+                attempts += 1
+            results[name] = cid
         return results
 
     def reload(self) -> int:

@@ -382,13 +382,15 @@ class TestPubSubBusPublishAsync(unittest.TestCase):
         received = []
         bus.subscribe(PubSubEventType.RECEIPT_DISSEMINATE, lambda t, p: received.append(p))
         n = self._run(bus.publish_async(PubSubEventType.RECEIPT_DISSEMINATE, {"x": 1}))
-        self.assertGreaterEqual(n, 1)
+        count = n.notified if hasattr(n, "notified") else n
+        self.assertGreaterEqual(count, 1)
         self.assertEqual(received[-1], {"x": 1})
 
     def test_publish_async_no_subscribers_returns_zero(self):
         bus = PubSubBus()
         n = self._run(bus.publish_async(PubSubEventType.RECEIPT_DISSEMINATE, {}))
-        self.assertEqual(n, 0)
+        count = n.notified if hasattr(n, "notified") else n
+        self.assertEqual(count, 0)
 
     def test_publish_async_multiple_handlers(self):
         bus = PubSubBus()
@@ -396,7 +398,8 @@ class TestPubSubBusPublishAsync(unittest.TestCase):
         bus.subscribe(PubSubEventType.INTERFACE_ANNOUNCE, lambda t, p: calls.append("h1"))
         bus.subscribe(PubSubEventType.INTERFACE_ANNOUNCE, lambda t, p: calls.append("h2"))
         n = self._run(bus.publish_async(PubSubEventType.INTERFACE_ANNOUNCE, {}))
-        self.assertGreaterEqual(n, 1)
+        count = n.notified if hasattr(n, "notified") else n
+        self.assertGreaterEqual(count, 1)
 
     def test_publish_async_fallback_without_anyio(self):
         """Without anyio, publish_async warns and falls back to sync publish()."""
@@ -430,7 +433,8 @@ class TestPubSubBusPublishAsync(unittest.TestCase):
         received = []
         bus.subscribe("custom.topic", lambda t, p: received.append((t, p)))
         n = self._run(bus.publish_async("custom.topic", {"key": "val"}))
-        self.assertGreaterEqual(n, 1)
+        count = n.notified if hasattr(n, "notified") else n
+        self.assertGreaterEqual(count, 1)
 
     def test_publish_async_payload_passed_correctly(self):
         bus = PubSubBus()
@@ -500,7 +504,8 @@ class TestE2ESession64(unittest.TestCase):
             PubSubEventType.RECEIPT_DISSEMINATE,
             {"type": "revocation", "root_cid": "cid-X", "count": 2},
         ))
-        self.assertGreaterEqual(n, 1)
+        count = n.notified if hasattr(n, "notified") else n
+        self.assertGreaterEqual(count, 1)
         matching = [e for e in events if e.get("type") == "revocation"]
         self.assertTrue(len(matching) >= 1)
         self.assertEqual(matching[0]["count"], 2)
