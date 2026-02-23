@@ -509,8 +509,10 @@ class PubSubBus:
 
     def __init__(self) -> None:
         self._subscribers: Dict[str, List[Any]] = {}
+        self._next_sid: int = 1
+        self._sid_map: Dict[int, Any] = {}  # sid -> (topic_key, handler)
 
-    def subscribe(self, topic: Union[str, "PubSubEventType"], handler: Any, *, priority: int = 0) -> None:
+    def subscribe(self, topic: Union[str, "PubSubEventType"], handler: Any, *, priority: int = 0) -> int:
         """Register *handler* to receive messages on *topic*.
 
         Args:
@@ -521,6 +523,11 @@ class PubSubBus:
                 :meth:`publish_async`.  Stored as ``handler.__mcp_priority__``
                 (only for this registration; existing attributes are not
                 overwritten if higher).
+
+        Returns:
+            An integer subscription ID that can be passed to
+            :meth:`unsubscribe_by_id` to remove this specific registration
+            without needing a reference to the handler callable.
         """
         key = str(topic)
         self._subscribers.setdefault(key, [])
@@ -535,6 +542,10 @@ class PubSubBus:
                 except (AttributeError, TypeError):
                     pass  # built-ins or other non-writable callables
             self._subscribers[key].append(handler)
+        sid = self._next_sid
+        self._next_sid += 1
+        self._sid_map[sid] = (key, handler)
+        return sid
 
     def unsubscribe(self, topic: Union[str, "PubSubEventType"], handler: Any) -> bool:
         """Remove *handler* from *topic*.
@@ -543,6 +554,29 @@ class PubSubBus:
             ``True`` if the handler was found and removed; ``False`` otherwise.
         """
         key = str(topic)
+        subs = self._subscribers.get(key, [])
+        if handler in subs:
+            subs.remove(handler)
+            return True
+        return False
+
+    def unsubscribe_by_id(self, sid: int) -> bool:
+        """Remove the subscription identified by *sid*.
+
+        *sid* is the integer returned by :meth:`subscribe`.  This allows
+        targeted removal without retaining a reference to the handler callable.
+
+        Args:
+            sid: Subscription ID previously returned by :meth:`subscribe`.
+
+        Returns:
+            ``True`` if the subscription was found and removed; ``False`` if
+            *sid* is unknown or the handler had already been removed.
+        """
+        entry = self._sid_map.pop(sid, None)
+        if entry is None:
+            return False
+        key, handler = entry
         subs = self._subscribers.get(key, [])
         if handler in subs:
             subs.remove(handler)
@@ -572,6 +606,202 @@ class PubSubBus:
     def topic_count(self, topic: Union[str, "PubSubEventType"]) -> int:
         """Return the number of subscribers for *topic*."""
         return len(self._subscribers.get(str(topic), []))
+
+    def subscription_count(self, topic: "Optional[Union[str, PubSubEventType]]" = None) -> int:
+        """Return the total number of active subscriptions.
+
+        Args:
+            topic: When provided, count only subscriptions for that specific
+                topic.  When ``None`` (default), count subscriptions across
+                **all** topics.  Each unique handler object registered on a
+                topic counts once per topic, not per :meth:`subscribe` call
+                (duplicate-handler registrations are deduplicated at subscribe
+                time).
+
+        Returns:
+            Total subscription count.
+        """
+        if topic is not None:
+            return len(self._subscribers.get(str(topic), []))
+        return sum(len(handlers) for handlers in self._subscribers.values())
+
+    def topics(self) -> List[str]:
+        """Return a sorted list of topic strings that have at least one subscriber.
+
+        Returns:
+            Sorted list of topic key strings.  Empty list when no subscriptions
+            exist.
+        """
+        return sorted(k for k, v in self._subscribers.items() if v)
+
+    def clear_topic(self, topic: Union[str, "PubSubEventType"]) -> int:
+        """Remove all subscribers for *topic* in a single bulk operation.
+
+        Removes every handler registered on the topic, cleans up their
+        corresponding ``_sid_map`` entries, and returns the number of handlers
+        removed.
+
+        Args:
+            topic: A :class:`PubSubEventType` value or raw topic string.
+
+        Returns:
+            Number of handlers removed.  ``0`` if the topic had no
+            subscribers or did not exist.
+        """
+        key = str(topic)
+        handlers = list(self._subscribers.pop(key, []))
+        # Remove corresponding sid_map entries for these handlers
+        stale_sids = [
+            sid for sid, (k, h) in self._sid_map.items()
+            if k == key and h in handlers
+        ]
+        for sid in stale_sids:
+            self._sid_map.pop(sid, None)
+        return len(handlers)
+
+    def clear_all(self) -> int:
+        """Remove every subscriber from every topic at once.
+
+        Clears :attr:`_subscribers` and :attr:`_sid_map` completely.  Returns
+        the total number of handlers removed across all topics.
+
+        Useful for test teardown and graceful shutdown::
+
+            removed = bus.clear_all()
+            assert bus.subscription_count() == 0
+
+        Returns:
+            Total handlers removed.
+        """
+        total = sum(len(v) for v in self._subscribers.values())
+        self._subscribers.clear()
+        self._sid_map.clear()
+        return total
+
+    def snapshot(self) -> Dict[str, int]:
+        """Return a snapshot of current subscriber counts per topic.
+
+        Maps each active topic key to the number of handlers currently
+        subscribed.  Topics with zero subscribers are excluded.  Useful for
+        health-check endpoints and monitoring dashboards::
+
+            counts = bus.snapshot()
+            # {"receipt_disseminate": 2, "delegation_add": 1}
+
+        Returns:
+            Dict mapping topic key string → subscriber count (≥ 1).
+        """
+        return {k: len(v) for k, v in self._subscribers.items() if v}
+
+    def handler_topics(self, handler: Any) -> List[str]:
+        """Return the list of topic keys on which *handler* is registered.
+
+        Useful for introspection and debugging — lets callers ask "which
+        topics is this callback listening to?" without iterating manually::
+
+            def my_cb(topic, payload): ...
+            bus.subscribe("receipts", my_cb)
+            bus.subscribe("audit", my_cb)
+            assert bus.handler_topics(my_cb) == ["audit", "receipts"]
+
+        Args:
+            handler: The callable originally passed to :meth:`subscribe`.
+
+        Returns:
+            Sorted list of topic key strings.  Empty list if *handler* is not
+            subscribed to any topic.
+        """
+        return sorted(
+            k for k, handlers in self._subscribers.items()
+            if handler in handlers
+        )
+
+    def handler_count(self) -> int:
+        """Return the number of *unique* handlers across all topics.
+
+        A handler subscribed to multiple topics is counted only once::
+
+            def cb(t, p): pass
+            bus.subscribe("a", cb)
+            bus.subscribe("b", cb)
+            assert bus.handler_count() == 1  # cb appears twice but is 1 unique
+
+        Returns:
+            Non-negative integer — 0 when no handlers are registered.
+        """
+        seen: set = set()
+        for handlers in self._subscribers.values():
+            for h in handlers:
+                seen.add(id(h))
+        return len(seen)
+
+    def topic_handler_map(self) -> Dict[str, List]:
+        """Return a shallow-copy snapshot of the subscriber registry.
+
+        Each key is a topic string; the value is a *copy* of the list of
+        handlers currently subscribed to that topic.  Modifying the returned
+        dict or its lists does not affect the live registry::
+
+            m = bus.topic_handler_map()
+            m["receipts"].clear()          # does NOT unsubscribe handlers
+            assert bus.subscription_count("receipts") > 0  # still registered
+
+        Only topics with at least one handler are included.
+
+        Returns:
+            ``Dict[str, List]`` — ``{topic: [handler, ...]}`` (shallow copy).
+        """
+        return {k: list(v) for k, v in self._subscribers.items() if v}
+
+    def resubscribe(
+        self,
+        old_handler: Any,
+        new_handler: Any,
+        topic: Optional[Union[str, "PubSubEventType"]] = None,
+    ) -> int:
+        """Replace a registered handler without disrupting subscription order.
+
+        Scans ``_subscribers`` for *old_handler* and replaces each occurrence
+        with *new_handler* in-place.  When ``topic`` is specified only that
+        topic is scanned; when ``topic=None`` all topics are scanned.
+
+        The ``__mcp_priority__`` attribute of *old_handler* is **not** copied
+        to *new_handler* — callers should set it on *new_handler* before
+        calling this method if priority must be preserved.
+
+        ``_sid_map`` is updated: any SID previously mapped to *old_handler* is
+        remapped to *new_handler*.
+
+        Args:
+            old_handler: The handler currently registered.
+            new_handler: The replacement handler.
+            topic: If given, only replace within that topic's handler list.
+                   If ``None``, replace across all topics.
+
+        Returns:
+            Number of replacements made (0 if *old_handler* was not found).
+        """
+        replaced = 0
+        keys: List[str]
+        if topic is not None:
+            key = topic.value if hasattr(topic, "value") else str(topic)
+            keys = [key]
+        else:
+            keys = list(self._subscribers.keys())
+
+        for key in keys:
+            handlers = self._subscribers.get(key, [])
+            for i, h in enumerate(handlers):
+                if h is old_handler:
+                    handlers[i] = new_handler
+                    replaced += 1
+
+        # Update sid_map
+        for sid, (k, h) in list(self._sid_map.items()):
+            if h is old_handler:
+                self._sid_map[sid] = (k, new_handler)
+
+        return replaced
 
     async def publish_async(
         self,

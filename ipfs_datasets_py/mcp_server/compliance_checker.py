@@ -700,6 +700,276 @@ class ComplianceChecker:
         return path + ".bak"
 
     @staticmethod
+    def rotate_bak(path: str, *, max_keep: int = 3) -> None:
+        """Rotate existing ``.bak`` files before creating a new backup.
+
+        Renames ``<path>.bak`` → ``<path>.bak.1``, ``<path>.bak.1`` →
+        ``<path>.bak.2``, … up to ``<path>.bak.<max_keep>``.  Files beyond
+        *max_keep* are deleted.  After rotation the slot ``<path>.bak`` is
+        free for a new backup.
+
+        If no ``<path>.bak`` exists the call is a no-op.
+
+        Args:
+            path: Base path (without the ``.bak`` suffix).
+            max_keep: Maximum number of numbered rotations to retain
+                (default 3).  Must be ≥ 1.
+        """
+        bak = path + ".bak"
+        if not os.path.exists(bak):
+            return
+        # Rotate from oldest to newest to avoid overwriting unexpired slots.
+        for i in range(max_keep, 0, -1):
+            src = bak if i == 1 else f"{bak}.{i - 1}"
+            dst = f"{bak}.{i}"
+            if i == max_keep:
+                # Evict the oldest slot if it exists.
+                try:
+                    if os.path.exists(dst):
+                        os.unlink(dst)
+                except OSError:
+                    pass
+            if os.path.exists(src):
+                try:
+                    os.rename(src, dst)
+                except OSError:
+                    pass
+
+    @staticmethod
+    def list_bak_files(path: str) -> List[str]:
+        """Return a sorted list of existing backup paths for *path*.
+
+        Checks for ``<path>.bak``, ``<path>.bak.1``, ``<path>.bak.2``, … and
+        returns every path that currently exists on the file system.  The list
+        is ordered from newest (``<path>.bak``) to oldest (highest number).
+
+        The numbered scan starts at ``<path>.bak.1`` and stops at the **first
+        missing slot** in the sequence, regardless of whether higher-numbered
+        files exist.  For example, if ``<path>.bak.1`` is absent but
+        ``<path>.bak.2`` exists, only ``<path>.bak`` (if present) is returned.
+        If ``<path>.bak`` does not exist the numbered scan is still performed,
+        so ``[path+".bak.1"]`` can be returned even when ``<path>.bak`` is
+        absent.
+
+        Args:
+            path: Base path (without the ``.bak`` suffix).
+
+        Returns:
+            List of existing backup file paths, e.g.
+            ``["/data/rules.enc.bak", "/data/rules.enc.bak.1"]``.  Empty list
+            when no backups exist.
+        """
+        bak = path + ".bak"
+        found: List[str] = []
+        if os.path.exists(bak):
+            found.append(bak)
+        i = 1
+        while True:
+            numbered = f"{bak}.{i}"
+            if os.path.exists(numbered):
+                found.append(numbered)
+                i += 1
+            else:
+                break
+        return found
+
+    @staticmethod
+    def purge_bak_files(path: str) -> int:
+        """Delete all backup files for *path* and return the count removed.
+
+        Calls :meth:`list_bak_files` to discover existing backups and
+        removes each one with :func:`os.unlink`.  Silently skips any file
+        that has already been removed between the listing and deletion
+        steps.
+
+        Args:
+            path: Base path (without the ``.bak`` suffix).
+
+        Returns:
+            Number of backup files successfully deleted.
+        """
+        removed = 0
+        for bak_file in ComplianceChecker.list_bak_files(path):
+            try:
+                os.unlink(bak_file)
+                removed += 1
+            except OSError:
+                pass
+        return removed
+
+    @staticmethod
+    def backup_and_save(path: str, content: str, *, max_keep: int = 3) -> bool:
+        """Rotate existing backups then write *content* to *path*.
+
+        Convenience wrapper that:
+
+        1. Calls :meth:`rotate_bak(path, max_keep=max_keep)` to shift any
+           existing ``.bak`` files before overwriting the live file.
+        2. Atomically writes *content* to *path* (write → flush → close).
+
+        Args:
+            path: Destination file path to write.
+            content: String content to write.
+            max_keep: Forwarded to :meth:`rotate_bak`; controls how many
+                numbered backup slots to keep (default 3).
+
+        Returns:
+            ``True`` on success; ``False`` if an :class:`OSError` occurs
+            during the write step.
+        """
+        ComplianceChecker.rotate_bak(path, max_keep=max_keep)
+        try:
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write(content)
+            return True
+        except OSError:
+            return False
+
+    @staticmethod
+    def backup_exists_any(path: str) -> bool:
+        """Return ``True`` when at least one backup file exists for *path*.
+
+        Convenience wrapper around :meth:`list_bak_files` for callers that
+        only need to know whether *any* backup is present::
+
+            if ComplianceChecker.backup_exists_any("/data/rules.enc"):
+                # safe to restore from backup
+                ComplianceChecker.restore_from_bak("/data/rules.enc")
+
+        Args:
+            path: Base file path (without ``.bak`` suffix).
+
+        Returns:
+            ``True`` if one or more backup files exist; ``False`` otherwise.
+        """
+        return bool(ComplianceChecker.list_bak_files(path))
+
+    @staticmethod
+    def backup_count(path: str) -> int:
+        """Return the number of backup files that exist for *path*.
+
+        Equivalent to ``len(list_bak_files(path))`` but more readable when
+        only the count is needed::
+
+            n = ComplianceChecker.backup_count("/data/rules.enc")
+            print(f"{n} backups available")
+
+        Args:
+            path: Base file path (without ``.bak`` suffix).
+
+        Returns:
+            Number of backup files (``0`` when none exist).
+        """
+        return len(ComplianceChecker.list_bak_files(path))
+
+    @staticmethod
+    def backup_age(path: str) -> Optional[float]:
+        """Return the age in seconds of the most-recent backup file.
+
+        Uses :func:`os.path.getmtime` on the primary ``.bak`` file.  If no
+        backup exists, returns ``None``::
+
+            age = ComplianceChecker.backup_age("/data/rules.enc")
+            if age is not None:
+                print(f"Most recent backup is {age:.0f}s old")
+            else:
+                print("No backup exists")
+
+        Args:
+            path: Base file path (without ``.bak`` suffix).
+
+        Returns:
+            Age in seconds since last modification (``float``), or ``None``
+            if no backup files exist.
+        """
+        files = ComplianceChecker.list_bak_files(path)
+        if not files:
+            return None
+        try:
+            return float(os.path.getmtime(files[0]))
+        except OSError:
+            return None
+
+    @staticmethod
+    def oldest_backup_age(path: str) -> Optional[float]:
+        """Return the mtime of the *oldest* backup file.
+
+        Uses :func:`os.path.getmtime` on the last item returned by
+        :meth:`list_bak_files` (highest-numbered ``.bak.N``).  Returns
+        ``None`` when no backup files exist or when ``getmtime`` raises
+        ``OSError``::
+
+            age = ComplianceChecker.oldest_backup_age("/data/rules.enc")
+            if age is not None and time.time() - age > 86400:
+                ComplianceChecker.purge_bak_files("/data/rules.enc")
+
+        Args:
+            path: Base file path (without ``.bak`` suffix).
+
+        Returns:
+            ``float`` mtime of the oldest backup, or ``None``.
+        """
+        files = ComplianceChecker.list_bak_files(path)
+        if not files:
+            return None
+        try:
+            return float(os.path.getmtime(files[-1]))
+        except OSError:
+            return None
+
+    @staticmethod
+    def newest_backup_path(path: str) -> Optional[str]:
+        """Return the path of the *newest* (primary) backup file.
+
+        Returns the first item from :meth:`list_bak_files`, which is the
+        ``.bak`` file (most recently written).  Returns ``None`` when no
+        backup exists::
+
+            bak = ComplianceChecker.newest_backup_path("/data/rules.enc")
+            if bak is not None:
+                ComplianceChecker.restore_from_bak("/data/rules.enc")
+
+        This is the complement of :meth:`oldest_backup_age` — while that
+        method returns the *mtime* of the oldest backup, this method returns
+        the *path* of the newest backup.
+
+        Args:
+            path: Base file path (without ``.bak`` suffix).
+
+        Returns:
+            Path string of the primary ``.bak`` file, or ``None``.
+        """
+        files = ComplianceChecker.list_bak_files(path)
+        return files[0] if files else None
+
+    @staticmethod
+    def oldest_backup_path(path: str) -> Optional[str]:
+        """Return the path of the *oldest* backup file.
+
+        Returns the last item from :meth:`list_bak_files`, which is the
+        ``.bak.N`` file with the highest index (oldest backup).  Returns
+        ``None`` when no backup exists::
+
+            old_bak = ComplianceChecker.oldest_backup_path("/data/rules.enc")
+            if old_bak is not None:
+                os.unlink(old_bak)  # targeted removal of oldest backup
+
+        This is the complement of :meth:`newest_backup_path` — while that
+        method returns the *path* of the newest backup (``path + ".bak"``),
+        this method returns the *path* of the oldest backup
+        (``path + ".bak.N"`` for largest N, or ``path + ".bak"`` when only
+        one backup exists).
+
+        Args:
+            path: Base file path (without ``.bak`` suffix).
+
+        Returns:
+            Path string of the oldest ``.bak`` file, or ``None``.
+        """
+        files = ComplianceChecker.list_bak_files(path)
+        return files[-1] if files else None
+
+    @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:
         if isinstance(intent, dict):
             return intent.get(field, default)

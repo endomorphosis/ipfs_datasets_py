@@ -50,6 +50,8 @@ __all__ = [
     "record_delegation_metrics",
     # Session 69
     "MergePlan",
+    # Session 71
+    "MergeResult",
 ]
 
 
@@ -968,6 +970,179 @@ class MergePlan:
         return len(self.would_skip_conflicts)
 
 
+@dataclass
+class MergeResult:
+    """Structured result returned by :meth:`DelegationManager.merge` when
+    ``dry_run=False``.
+
+    Replaces the bare ``int`` return type with a richer object that exposes
+    per-dimension counts, making callers resilient to future additions without
+    a breaking API change.
+
+    Attributes:
+        added_count: Number of delegations successfully added.
+        conflict_count: Number of delegations skipped because they were already
+            revoked in the destination manager.
+        revocations_copied: Number of revocation entries copied from the source
+            manager (non-zero only when ``copy_revocations=True``).
+    """
+
+    added_count: int = 0
+    conflict_count: int = 0
+    revocations_copied: int = 0
+
+    def __int__(self) -> int:
+        """Return :attr:`added_count` for backwards-compatible ``int()`` casts."""
+        return self.added_count
+
+    def __eq__(self, other: object) -> bool:  # type: ignore[override]
+        if isinstance(other, int):
+            return self.added_count == other
+        return super().__eq__(other)
+
+    def __lt__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return self.added_count < other
+        if isinstance(other, MergeResult):
+            return self.added_count < other.added_count
+        return NotImplemented  # type: ignore[return-value]
+
+    def __le__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return self.added_count <= other
+        if isinstance(other, MergeResult):
+            return self.added_count <= other.added_count
+        return NotImplemented  # type: ignore[return-value]
+
+    def __gt__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return self.added_count > other
+        if isinstance(other, MergeResult):
+            return self.added_count > other.added_count
+        return NotImplemented  # type: ignore[return-value]
+
+    def __ge__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return self.added_count >= other
+        if isinstance(other, MergeResult):
+            return self.added_count >= other.added_count
+        return NotImplemented  # type: ignore[return-value]
+
+    @property
+    def total(self) -> int:
+        """Total delegations seen: :attr:`added_count` + :attr:`conflict_count`.
+
+        Useful for computing the import fraction::
+
+            if result.total:
+                fraction = result.added_count / result.total
+        """
+        return self.added_count + self.conflict_count
+
+    @property
+    def import_rate(self) -> float:
+        """Fraction of source delegations successfully imported.
+
+        ``added_count / total`` with a zero-division guard: returns ``0.0``
+        when :attr:`total` is zero (empty source) rather than raising.
+
+        Examples::
+
+            result = dst.merge(src)
+            print(f"{result.import_rate:.0%} of delegations imported")
+        """
+        if self.total == 0:
+            return 0.0
+        return self.added_count / self.total
+
+    def to_dict(self) -> Dict:
+        """Serialise this result to a plain dictionary.
+
+        Returns a snapshot suitable for JSON serialisation, audit logs, or
+        monitoring APIs::
+
+            {"added": 3, "conflicts": 1, "revocations_copied": 0, "import_rate": 0.75}
+
+        Returns:
+            Dict with keys ``added``, ``conflicts``, ``revocations_copied``,
+            and ``import_rate``.
+        """
+        return {
+            "added": self.added_count,
+            "conflicts": self.conflict_count,
+            "revocations_copied": self.revocations_copied,
+            "import_rate": self.import_rate,
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict) -> "MergeResult":
+        """Reconstruct a :class:`MergeResult` from a dict produced by :meth:`to_dict`.
+
+        Round-trips cleanly::
+
+            assert MergeResult.from_dict(result.to_dict()) == result
+
+        Args:
+            d: Dictionary with keys ``added``, ``conflicts``, and
+                ``revocations_copied``.  The ``import_rate`` key is ignored
+                (it is a derived property).  Missing keys default to ``0``.
+
+        Returns:
+            A new :class:`MergeResult` instance.
+        """
+        return cls(
+            added_count=int(d.get("added", 0)),
+            conflict_count=int(d.get("conflicts", 0)),
+            revocations_copied=int(d.get("revocations_copied", 0)),
+        )
+
+    def __repr__(self) -> str:
+        """Human-friendly representation of this :class:`MergeResult`.
+
+        Format::
+
+            MergeResult(added=3, conflicts=1, rate=75.0%)
+
+        The ``rate`` field is :attr:`import_rate` expressed as a percentage
+        (1 decimal place).
+        """
+        return (
+            f"MergeResult(added={self.added_count}, "
+            f"conflicts={self.conflict_count}, "
+            f"rate={self.import_rate * 100:.1f}%)"
+        )
+
+    #: ``str()`` delegates to :meth:`__repr__` for display consistency.
+    __str__ = __repr__
+
+    def __bool__(self) -> bool:
+        """``True`` when at least one delegation was successfully added.
+
+        Allows concise conditional use::
+
+            result = manager.merge(other)
+            if result:
+                log.info("Merge added %d delegations", result.added_count)
+
+        Returns:
+            ``True`` if :attr:`added_count` > 0, ``False`` otherwise.
+        """
+        return self.added_count > 0
+
+    def __len__(self) -> int:
+        """Return the number of delegations added by this merge.
+
+        Allows ``len(result)`` to mirror :meth:`__int__` and enables use in
+        sum comprehensions::
+
+            total = sum(len(r) for r in results)
+
+        Returns:
+            :attr:`added_count` as an ``int``.
+        """
+        return self.added_count
+
+
 class DelegationManager:
     """Bundles :class:`DelegationStore`, :class:`RevocationList`, and
     :class:`DelegationEvaluator` into a single convenience object.
@@ -1182,7 +1357,7 @@ class DelegationManager:
         skip_revocations: Optional[Set[str]] = None,
         audit_log: Any = None,
         dry_run: bool = False,
-    ) -> "Union[int, MergePlan]":
+    ) -> "Union[MergeResult, MergePlan]":
         """Merge delegation entries from *other* into this manager.
 
         Only delegations whose CID is **not** already present in this
@@ -1209,10 +1384,11 @@ class DelegationManager:
                 :class:`MergePlan` with ``would_add`` and
                 ``would_skip_conflicts`` lists without mutating state.
                 When *False* (default), perform the merge normally and return
-                the count of newly-added delegations.
+                a :class:`MergeResult` describing what happened.
 
         Returns:
-            When *dry_run* is *False*: number of newly-added delegations.
+            When *dry_run* is *False*: a :class:`MergeResult` with
+            ``added_count``, ``conflict_count``, and ``revocations_copied``.
             When *dry_run* is *True*: a :class:`MergePlan` describing what
             *would* happen.
         """
@@ -1229,6 +1405,7 @@ class DelegationManager:
             return plan
 
         added = 0
+        conflicts = 0
         for cid in other._store.list_cids():
             if cid in revoked_in_self:
                 warnings.warn(
@@ -1236,6 +1413,7 @@ class DelegationManager:
                     UserWarning,
                     stacklevel=3,
                 )
+                conflicts += 1
                 continue
             if cid not in current_cids:
                 delegation = other._store.get(cid)
@@ -1249,17 +1427,23 @@ class DelegationManager:
                             logger.debug("audit_log.append (merge_add) raised: %s", _exc)
         if added:
             self._evaluator = None  # invalidate on mutation
+        revocations_copied = 0
         if copy_revocations:
             excluded: Set[str] = set(skip_revocations) if skip_revocations is not None else set()
             for cid in other._revocation.to_list():
                 if cid not in excluded:
                     self._revocation.revoke(cid)
+                    revocations_copied += 1
                     if audit_log is not None:
                         try:
                             audit_log.append({"event": "revocation_copied", "cid": cid})
                         except Exception as _exc:
                             logger.debug("audit_log.append raised: %s", _exc)
-        return added
+        return MergeResult(
+            added_count=added,
+            conflict_count=conflicts,
+            revocations_copied=revocations_copied,
+        )
 
     def __len__(self) -> int:
         return len(self._store)

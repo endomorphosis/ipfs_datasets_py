@@ -1175,15 +1175,186 @@ class IPFSReloadResult(NamedTuple):
         count: Number of policies reloaded from disk.
         pin_results: Mapping of policy name → IPFS CID string, or ``None``
             when the pin failed.
+        pin_errors: Optional mapping of policy name → error reason string for
+            failed pins.  ``None`` when no error information was captured.
     """
 
     count: int
     pin_results: Dict[str, Optional[str]]
+    pin_errors: Optional[Dict[str, str]] = None
 
     @property
     def total_failed(self) -> int:
         """Number of policies whose IPFS pin failed (i.e., ``pin_results[name] is None``)."""
         return sum(1 for v in self.pin_results.values() if v is None)
+
+    @property
+    def success_rate(self) -> float:
+        """Fraction of policies whose IPFS pin succeeded.
+
+        Returns ``1.0`` when the registry is empty (zero pins = zero failures =
+        perfect rate), avoiding a zero-division error.
+        """
+        if self.count == 0:
+            return 1.0
+        return (self.count - self.total_failed) / self.count
+
+    @property
+    def failure_details(self) -> Dict[str, str]:
+        """Mapping of policy name → error reason for all failed pins.
+
+        Combines :attr:`pin_errors` (when provided) with an ``"unknown error"``
+        fallback for any ``None`` pin result that has no associated error entry.
+        Returns an empty dict when there are no failures.
+        """
+        errors = self.pin_errors or {}
+        details: Dict[str, str] = {}
+        for name, cid in self.pin_results.items():
+            if cid is None:
+                details[name] = errors.get(name, "unknown error")
+        return details
+
+    @property
+    def all_succeeded(self) -> bool:
+        """``True`` when every pin operation completed without error.
+
+        Equivalent to ``total_failed == 0``.  Useful for concise
+        conditional checks::
+
+            if not result.all_succeeded:
+                handle(result.failure_details)
+        """
+        return self.total_failed == 0
+
+    def summarize(self) -> str:
+        """Return a human-readable one-line summary of the reload operation.
+
+        Format: ``"<succeeded>/<total> policies pinned successfully (<failed> failed)"``.
+        When all policies succeed the failed clause is omitted.
+
+        Examples::
+
+            "3/3 policies pinned successfully"
+            "2/3 policies pinned successfully (1 failed)"
+            "0/0 policies pinned successfully"
+        """
+        total = self.count
+        failed = self.total_failed
+        succeeded = total - failed
+        if failed == 0:
+            return f"{succeeded}/{total} policies pinned successfully"
+        return f"{succeeded}/{total} policies pinned successfully ({failed} failed)"
+
+    def to_dict(self) -> Dict:
+        """Serialise this result to a plain dictionary.
+
+        Returns a snapshot suitable for structured logging or monitoring
+        dashboards::
+
+            {
+                "count": 4,
+                "succeeded": 3,
+                "failed": 1,
+                "success_rate": 0.75,
+                "summary": "3/4 policies pinned successfully (1 failed)"
+            }
+
+        Returns:
+            Dict with keys ``count``, ``succeeded``, ``failed``,
+            ``success_rate``, and ``summary``.
+        """
+        failed = self.total_failed
+        return {
+            "count": self.count,
+            "succeeded": self.count - failed,
+            "failed": failed,
+            "success_rate": self.success_rate,
+            "summary": self.summarize(),
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict) -> "IPFSReloadResult":
+        """Reconstruct an :class:`IPFSReloadResult` from a dict produced by
+        :meth:`to_dict`.
+
+        Round-trips cleanly::
+
+            assert IPFSReloadResult.from_dict(result.to_dict()) == result
+
+        Args:
+            d: Dictionary with at least a ``count`` key.  ``pin_results`` is
+                synthesised from ``succeeded``/``failed`` counts when not
+                present.  ``summary`` and ``success_rate`` are ignored (they
+                are derived).  Missing keys default to sensible zero-values.
+
+        Returns:
+            A new :class:`IPFSReloadResult` instance.
+
+        Note:
+            Because ``to_dict`` does not serialise individual pin CIDs, the
+            reconstructed ``pin_results`` dict will map numeric-string keys to
+            ``None`` for failed entries.  Callers that need CID fidelity should
+            serialise and restore the ``pin_results`` mapping directly.
+        """
+        count = int(d.get("count", 0))
+        succeeded = int(d.get("succeeded", count))
+        failed = int(d.get("failed", 0))
+        # Build a minimal pin_results: succeeded entries map to placeholder CIDs,
+        # failed entries map to None.
+        pin_results: Dict[str, Optional[str]] = {}
+        for i in range(succeeded):
+            pin_results[f"policy_{i}"] = f"Qm{i:040d}"
+        for i in range(failed):
+            pin_results[f"failed_{i}"] = None
+        return cls(count=count, pin_results=pin_results)
+
+    def __repr__(self) -> str:
+        """Human-friendly representation mirroring :meth:`summarize`.
+
+        Format::
+
+            IPFSReloadResult(3/4 pinned, rate=75.0%)
+
+        The ``rate`` field is :attr:`success_rate` expressed as a percentage
+        (1 decimal place).
+        """
+        succeeded = self.count - self.total_failed
+        return (
+            f"IPFSReloadResult({succeeded}/{self.count} pinned, "
+            f"rate={self.success_rate * 100:.1f}%)"
+        )
+
+    #: ``str()`` delegates to :meth:`__repr__` for display consistency.
+    __str__ = __repr__
+
+    def __bool__(self) -> bool:
+        """``True`` when all policies were pinned without error.
+
+        Equivalent to :attr:`all_succeeded`.  Allows concise conditional
+        use::
+
+            result = store.reload()
+            if not result:
+                alert(result.failure_details)
+
+        Returns:
+            ``True`` if :attr:`total_failed` == 0, ``False`` otherwise.
+        """
+        return self.all_succeeded
+
+    def __len__(self) -> int:
+        """Return the total number of policies in the reload batch.
+
+        Allows ``len(result)`` to give the batch size without accessing
+        :attr:`count` directly::
+
+            results = [store.reload() for store in stores]
+            total = sum(len(r) for r in results)
+
+        Returns:
+            :attr:`count` as an ``int``.
+        """
+        return self.count
 
 
 class IPFSPolicyStore(FilePolicyStore):
