@@ -69,14 +69,15 @@ class ZKPProver:
             enable_caching: Cache generated proofs
             backend: Proof backend; only "simulated" is currently supported
         """
-        warnings.warn(
-            "ZKPProver generates SIMULATED proofs only. "
-            "NOT cryptographically secure. "
-            "Do not use in production systems requiring real zero-knowledge proofs. "
-            "See logic/zkp/PRODUCTION_UPGRADE_PATH.md for the upgrade path.",
-            UserWarning,
-            stacklevel=2,
-        )
+        if backend in {"simulated", "", "sim"}:
+            warnings.warn(
+                "ZKPProver generates SIMULATED proofs only. "
+                "NOT cryptographically secure. "
+                "Do not use in production systems requiring real zero-knowledge proofs. "
+                "See logic/zkp/PRODUCTION_UPGRADE_PATH.md for the upgrade path.",
+                UserWarning,
+                stacklevel=2,
+            )
         self.security_level = security_level
         self.enable_caching = enable_caching
         self.backend = backend
@@ -87,6 +88,10 @@ class ZKPProver:
             'cache_hits': 0,
             'total_proving_time': 0.0,
         }
+
+    def get_backend_instance(self):
+        """Return the underlying backend instance."""
+        return self._backend
     
     def generate_proof(
         self,

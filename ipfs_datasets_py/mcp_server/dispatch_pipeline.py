@@ -1,138 +1,91 @@
-"""MCP++ Integrated Dispatch Pipeline.
+"""Dispatch pipeline for MCP++ tool invocations.
 
-This module wires together all MCP++ execution profiles into a single,
-composable pre-dispatch pipeline:
-
-1. **Compliance check** (:mod:`compliance_checker`) — structural/policy rule
-   validation (tool name convention, actor, params, deny-list, rate-limit).
-2. **Risk scoring** (:mod:`risk_scorer`) — compute a numeric risk score and
-   gate dispatch if the risk is unacceptable.
-3. **UCAN delegation check** (:mod:`ucan_delegation`) — verify the actor has a
-   valid delegated capability for the requested tool.
-4. **Policy evaluation** (:mod:`temporal_policy`) — evaluate temporal deontic
-   policy (permissions, prohibitions, obligations).
-5. **NL-UCAN gate** (:mod:`nl_ucan_policy`) — check the natural-language UCAN
-   policy gate (if any policies are registered).
-6. **Event DAG append** (:mod:`event_dag`) — append an :class:`EventNode` to
-   the execution history after a successful check.
-7. **Receipt creation** — create a :class:`ReceiptObject` after execution
-   completes.
-
-All stages are optional and individually configurable.  An unconfigured
-pipeline passes everything through, preserving the "open by default" principle
-from the MCP++ spec.
-
-Usage
------
-::
-
-    from ipfs_datasets_py.mcp_server.dispatch_pipeline import (
-        DispatchPipeline,
-        PipelineConfig,
-        PipelineResult,
-    )
-
-    pipeline = DispatchPipeline()
-    result = pipeline.check(intent)
-    if result.allowed:
-        # dispatch the tool ...
-        receipt = pipeline.record_execution(intent, execution_result)
+Includes both a legacy stage-based pipeline and a newer MCP++ integrated
+pipeline with compliance, risk, delegation, and policy evaluation.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import time
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from .cid_artifacts import DecisionObject, ReceiptObject, EventNode, artifact_cid
 
-
-# ---------------------------------------------------------------------------
-# Unified pipeline intent
-# ---------------------------------------------------------------------------
+logger = logging.getLogger(__name__)
 
 
 @dataclass
 class PipelineIntent:
-    """Unified intent representation for the dispatch pipeline.
-
-    Combines the field names used across all MCP++ modules:
-
-    - ``tool_name`` / ``tool`` — both refer to the same value; ``tool`` is an
-      alias used by :mod:`temporal_policy`.
-    - ``actor`` — the requesting actor identifier.
-    - ``params`` — tool invocation parameters (JSON-serialisable dict).
-    - ``intent_cid`` — a content-addressed ID computed from the other fields.
-
-    Parameters
-    ----------
-    tool_name:
-        The name of the tool being invoked.
-    actor:
-        The identity of the requesting agent.
-    params:
-        Tool parameters as a dict.
-    """
+    """Unified intent representation for the dispatch pipeline."""
 
     tool_name: str
     actor: str = ""
     params: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        # Compute a stable intent CID from tool+actor+params
         payload = json.dumps(
             {"tool": self.tool_name, "actor": self.actor, "params": self.params},
             sort_keys=True,
             separators=(",", ":"),
         ).encode("utf-8")
         digest = hashlib.sha256(payload).hexdigest()
-        self.intent_cid: str = f"bafy-mock-intent-{digest[:20]}"  # mock CID (not a real IPFS CID)
+        self.intent_cid: str = f"bafy-mock-intent-{digest[:20]}"
 
     @property
     def tool(self) -> str:
-        """Alias for :attr:`tool_name` (used by :mod:`temporal_policy`)."""
         return self.tool_name
 
     def get(self, field_name: str, default: Any = None) -> Any:
-        """Dict-style accessor for compatibility with :mod:`risk_scorer`."""
         return getattr(self, field_name, default)
 
 
-# ---------------------------------------------------------------------------
-# Result types
-# ---------------------------------------------------------------------------
+@dataclass
+class PipelineStage:
+    """Legacy stage definition with optional enum-like constants."""
+
+    name: str
+    handler: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None
+    enabled: bool = True
+    fail_open: bool = True
+
+    @property
+    def value(self) -> str:
+        return self.name
+
+    def run(self, intent: Dict[str, Any]) -> Dict[str, Any]:
+        if self.handler is None:
+            raise ValueError(f"Stage '{self.name}' has no handler")
+        try:
+            result = self.handler(intent)
+            if not isinstance(result, dict):
+                result = {"allowed": bool(result)}
+            if "allowed" not in result:
+                result["allowed"] = True
+            return result
+        except Exception as exc:
+            logger.warning("Stage %s raised %s: %s", self.name, type(exc).__name__, exc)
+            return {
+                "allowed": self.fail_open,
+                "error": str(exc),
+                "stage": self.name,
+            }
 
 
-class PipelineStage(Enum):
-    """Named stages of the dispatch pipeline."""
-
-    COMPLIANCE = "compliance"
-    RISK = "risk"
-    DELEGATION = "delegation"
-    POLICY = "policy"
-    NL_UCAN_GATE = "nl_ucan_gate"
-    PASS = "pass"
+PipelineStage.COMPLIANCE = PipelineStage("compliance")
+PipelineStage.RISK = PipelineStage("risk")
+PipelineStage.DELEGATION = PipelineStage("delegation")
+PipelineStage.POLICY = PipelineStage("policy")
+PipelineStage.NL_UCAN_GATE = PipelineStage("nl_ucan_gate")
+PipelineStage.PASS = PipelineStage("pass")
 
 
 @dataclass
 class StageOutcome:
-    """Result of a single pipeline stage.
-
-    Parameters
-    ----------
-    stage:
-        Which pipeline stage produced this outcome.
-    passed:
-        Whether the stage allowed execution to continue.
-    reason:
-        Human-readable explanation.
-    metadata:
-        Optional extra data from the stage.
-    """
+    """Result of a single pipeline stage."""
 
     stage: PipelineStage
     passed: bool
@@ -141,95 +94,148 @@ class StageOutcome:
 
 
 @dataclass
-class PipelineResult:
-    """Aggregated result across all pipeline stages.
+class StageMetric:
+    """Per-stage timing and skip information."""
 
-    Parameters
-    ----------
-    allowed:
-        True iff *all* enabled stages passed.
-    stage_outcomes:
-        Per-stage results in evaluation order.
-    blocking_stage:
-        The first stage that blocked the request (or None if allowed).
-    intent:
-        The intent that was evaluated.
-    decision:
-        A :class:`~cid_artifacts.DecisionObject` summarising the final verdict.
-    """
+    stage_name: str
+    skipped: bool = False
+    duration_ms: float = 0.0
+    allowed: Optional[bool] = None
+    reason: str = ""
+
+
+@dataclass
+class PipelineResult:
+    """Aggregated result across all pipeline stages."""
 
     allowed: bool
-    stage_outcomes: list[StageOutcome]
-    blocking_stage: PipelineStage | None
-    intent: "PipelineIntent"
-    decision: DecisionObject | None = None
+    stage_outcomes: List[StageOutcome] = field(default_factory=list)
+    blocking_stage: Optional[PipelineStage] = None
+    intent: Optional[PipelineIntent] = None
+    decision: Optional[DecisionObject] = None
+    stages_executed: List[str] = field(default_factory=list)
+    stages_skipped: List[str] = field(default_factory=list)
+    denied_by: Optional[str] = None
+    metrics: List[StageMetric] = field(default_factory=list)
+    extra: Dict[str, Any] = field(default_factory=dict)
 
     @property
     def verdict(self) -> str:
-        """Return ``"allow"`` or ``"deny"``."""
         return "allow" if self.allowed else "deny"
 
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to a plain dict."""
+    @property
+    def total_stages(self) -> int:
+        return len(self.stages_executed) + len(self.stages_skipped)
+
+    def to_dict(self) -> Dict[str, Any]:
+        if self.stage_outcomes:
+            return {
+                "allowed": self.allowed,
+                "verdict": self.verdict,
+                "blocking_stage": self.blocking_stage.value if self.blocking_stage else None,
+                "stages": [
+                    {
+                        "stage": o.stage.value,
+                        "passed": o.passed,
+                        "reason": o.reason,
+                        "metadata": o.metadata,
+                    }
+                    for o in self.stage_outcomes
+                ],
+            }
         return {
             "allowed": self.allowed,
-            "verdict": self.verdict,
-            "blocking_stage": self.blocking_stage.value if self.blocking_stage else None,
-            "stages": [
-                {
-                    "stage": o.stage.value,
-                    "passed": o.passed,
-                    "reason": o.reason,
-                    "metadata": o.metadata,
-                }
-                for o in self.stage_outcomes
-            ],
+            "stages_executed": list(self.stages_executed),
+            "stages_skipped": list(self.stages_skipped),
+            "denied_by": self.denied_by,
         }
 
 
-# ---------------------------------------------------------------------------
-# Pipeline configuration
-# ---------------------------------------------------------------------------
+class PipelineMetricsRecorder:
+    """Collects aggregate stage metrics across multiple DispatchPipeline runs."""
+
+    def __init__(self, namespace: str = "mcp_pipeline", audit_log: Optional[Any] = None) -> None:
+        self.namespace = namespace
+        self._audit_log = audit_log
+        self._stage_durations: Dict[str, List[float]] = {}
+        self._stage_executions: Dict[str, int] = {}
+        self._stage_skips: Dict[str, int] = {}
+        self._stage_denials: Dict[str, int] = {}
+        self._total_runs: int = 0
+        self._total_allowed: int = 0
+        self._total_denied: int = 0
+
+    def record_stage(
+        self,
+        stage_name: str,
+        *,
+        skipped: bool,
+        duration_ms: float = 0.0,
+        allowed: Optional[bool] = None,
+    ) -> None:
+        if skipped:
+            self._stage_skips[stage_name] = self._stage_skips.get(stage_name, 0) + 1
+            return
+        self._stage_executions[stage_name] = self._stage_executions.get(stage_name, 0) + 1
+        self._stage_durations.setdefault(stage_name, []).append(duration_ms)
+        if allowed is False:
+            self._stage_denials[stage_name] = self._stage_denials.get(stage_name, 0) + 1
+
+    def record_run(self, *, allowed: bool) -> None:
+        self._total_runs += 1
+        if allowed:
+            self._total_allowed += 1
+        else:
+            self._total_denied += 1
+        if self._audit_log is not None:
+            try:
+                decision_str = "allow" if allowed else "deny"
+                self._audit_log.record(
+                    policy_cid=f"pipeline:{self.namespace}:run",
+                    intent_cid=f"run:{self._total_runs}",
+                    decision=decision_str,
+                    tool="pipeline",
+                    actor="pipeline",
+                )
+            except (TypeError, AttributeError, ValueError) as exc:
+                logger.warning(
+                    "PipelineMetricsRecorder audit record failed (namespace=%s, run=%s): %s",
+                    self.namespace,
+                    self._total_runs,
+                    exc,
+                )
+
+    def get_metrics(self) -> Dict[str, Any]:
+        avg_durations: Dict[str, float] = {}
+        for stage, times in self._stage_durations.items():
+            avg_durations[stage] = sum(times) / len(times) if times else 0.0
+        return {
+            "namespace": self.namespace,
+            "total_runs": self._total_runs,
+            "total_allowed": self._total_allowed,
+            "total_denied": self._total_denied,
+            "stage_executions": dict(self._stage_executions),
+            "stage_skips": dict(self._stage_skips),
+            "stage_denials": dict(self._stage_denials),
+            "avg_stage_duration_ms": avg_durations,
+        }
+
+    def reset(self) -> None:
+        self._stage_durations.clear()
+        self._stage_executions.clear()
+        self._stage_skips.clear()
+        self._stage_denials.clear()
+        self._total_runs = 0
+        self._total_allowed = 0
+        self._total_denied = 0
+
+    def __repr__(self) -> str:
+        return f"PipelineMetricsRecorder(namespace={self.namespace!r}, total_runs={self._total_runs})"
 
 
 @dataclass
 class PipelineConfig:
-    """Configuration controlling which pipeline stages are enabled.
-
-    All stages default to **disabled** (opt-in) so that an unconfigured
-    pipeline passes every intent through without requiring any setup.
-
-    Parameters
-    ----------
-    enable_compliance:
-        Enable structural compliance checking.
-    enable_risk:
-        Enable risk scoring and gating.
-    enable_delegation:
-        Enable UCAN delegation chain validation.
-    enable_policy:
-        Enable temporal deontic policy evaluation.
-    enable_nl_ucan_gate:
-        Enable NL-UCAN policy gate.
-    compliance_checker:
-        A pre-configured :class:`~compliance_checker.ComplianceChecker`
-        instance.  If ``None`` and *enable_compliance* is True a default
-        checker is created on first use.
-    risk_scorer:
-        A pre-configured :class:`~risk_scorer.RiskScorer` instance.
-    risk_policy:
-        A :class:`~risk_scorer.RiskScoringPolicy` to use with the scorer.
-    policy_evaluator:
-        A :class:`~temporal_policy.PolicyEvaluator` instance.
-    policy_object:
-        The :class:`~temporal_policy.PolicyObject` to evaluate against.
-    delegation_evaluator:
-        A :class:`~ucan_delegation.DelegationEvaluator` instance.
-    delegation_leaf_cid:
-        The leaf delegation CID to use when checking ``can_invoke``.
-    nl_ucan_gate:
-        A :class:`~nl_ucan_policy.UCANPolicyGate` instance.
-    """
+    """Configuration controlling which pipeline stages are enabled."""
 
     enable_compliance: bool = False
     enable_risk: bool = False
@@ -247,247 +253,255 @@ class PipelineConfig:
     nl_ucan_gate: Any = None
 
 
-# ---------------------------------------------------------------------------
-# Pipeline implementation
-# ---------------------------------------------------------------------------
-
-
 class DispatchPipeline:
-    """Composable MCP++ pre-dispatch pipeline.
+    """Composable MCP++ pre-dispatch pipeline with legacy support."""
 
-    Evaluates a sequence of MCP++ profile checks in order and returns a
-    :class:`PipelineResult` summarising whether the invocation should proceed.
-
-    Parameters
-    ----------
-    config:
-        Pipeline configuration.  Defaults to a fully-disabled (pass-through)
-        configuration.
-    """
-
-    def __init__(self, config: PipelineConfig | None = None) -> None:
-        self.config = config or PipelineConfig()
-        self._event_dag: Any = None  # lazily attached
+    def __init__(
+        self,
+        stages: Optional[List[PipelineStage]] = None,
+        metrics_recorder: Optional[PipelineMetricsRecorder] = None,
+        *,
+        short_circuit: bool = True,
+        audit_log: Optional[Any] = None,
+        config: PipelineConfig | None = None,
+    ) -> None:
+        self._legacy_mode = stages is not None
+        if self._legacy_mode:
+            self._stages: List[PipelineStage] = list(stages or [])
+            self._recorder = metrics_recorder or PipelineMetricsRecorder()
+            self.short_circuit = short_circuit
+            self._audit_log = audit_log
+            self.config = None
+            self._event_dag = None
+        else:
+            self.config = config or PipelineConfig()
+            self._event_dag: Any = None
+            self._stages = []
+            self._recorder = metrics_recorder
+            self.short_circuit = short_circuit
+            self._audit_log = audit_log
 
     def attach_event_dag(self, dag: Any) -> None:
-        """Attach an :class:`~event_dag.EventDAG` to record execution history.
-
-        Parameters
-        ----------
-        dag:
-            An initialised :class:`~event_dag.EventDAG` instance.
-        """
         self._event_dag = dag
 
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
+    def add_stage(self, stage: PipelineStage) -> None:
+        if not self._legacy_mode:
+            raise RuntimeError("add_stage is only available in legacy mode")
+        self._stages.append(stage)
 
-    def check(self, intent: "PipelineIntent") -> PipelineResult:
-        """Run all enabled pipeline stages against *intent*.
+    def skip_stage(self, name: str) -> bool:
+        if not self._legacy_mode:
+            return False
+        for s in self._stages:
+            if s.name == name:
+                s.enabled = False
+                return True
+        return False
 
-        Stages are evaluated in order.  The pipeline short-circuits and
-        returns a DENY result as soon as any stage blocks the intent.
+    def enable_stage(self, name: str) -> bool:
+        if not self._legacy_mode:
+            return False
+        for s in self._stages:
+            if s.name == name:
+                s.enabled = True
+                return True
+        return False
 
-        Parameters
-        ----------
-        intent:
-            The :class:`~cid_artifacts.IntentObject` to evaluate.
+    def get_stage(self, name: str) -> Optional[PipelineStage]:
+        if not self._legacy_mode:
+            return None
+        for s in self._stages:
+            if s.name == name:
+                return s
+        return None
 
-        Returns
-        -------
-        PipelineResult
-        """
-        cfg = self.config
-        stages: list[StageOutcome] = []
+    @property
+    def stage_names(self) -> List[str]:
+        return [s.name for s in self._stages]
 
-        # Stage 1: Compliance
+    def run(self, intent: Dict[str, Any] | PipelineIntent) -> PipelineResult:
+        if self._legacy_mode:
+            return self._run_legacy(intent if isinstance(intent, dict) else intent.__dict__)
+        return self.check(intent)
+
+    def _run_legacy(self, intent: Dict[str, Any]) -> PipelineResult:
+        executed: List[str] = []
+        skipped: List[str] = []
+        metrics_list: List[StageMetric] = []
+        denied_by: Optional[str] = None
+        final_allowed = True
+
+        for stage in self._stages:
+            if not stage.enabled:
+                skipped.append(stage.name)
+                m = StageMetric(stage_name=stage.name, skipped=True)
+                metrics_list.append(m)
+                self._recorder.record_stage(stage.name, skipped=True)
+                continue
+
+            t0 = time.monotonic()
+            result = stage.run(intent)
+            duration_ms = (time.monotonic() - t0) * 1000.0
+            allowed = bool(result.get("allowed", True))
+
+            m = StageMetric(
+                stage_name=stage.name,
+                skipped=False,
+                duration_ms=duration_ms,
+                allowed=allowed,
+                reason=result.get("reason", ""),
+            )
+            metrics_list.append(m)
+            self._recorder.record_stage(
+                stage.name,
+                skipped=False,
+                duration_ms=duration_ms,
+                allowed=allowed,
+            )
+            executed.append(stage.name)
+
+            if self._audit_log is not None:
+                try:
+                    decision_str = "allow" if allowed else "deny"
+                    tool = intent.get("tool", stage.name)
+                    actor = intent.get("actor", "unknown")
+                    self._audit_log.record(
+                        policy_cid=f"pipeline:{stage.name}",
+                        intent_cid="pipeline_intent",
+                        decision=decision_str,
+                        tool=tool,
+                        actor=actor,
+                    )
+                except (TypeError, AttributeError, ValueError) as exc:
+                    logger.warning(
+                        "DispatchPipeline audit record failed for stage %s: %s",
+                        stage.name,
+                        exc,
+                    )
+
+            if not allowed:
+                final_allowed = False
+                denied_by = stage.name
+                if self.short_circuit:
+                    remaining = self._stages[self._stages.index(stage) + 1 :]
+                    for rs in remaining:
+                        if rs.enabled:
+                            skipped.append(rs.name)
+                    break
+
+        self._recorder.record_run(allowed=final_allowed)
+
+        return PipelineResult(
+            allowed=final_allowed,
+            stages_executed=executed,
+            stages_skipped=skipped,
+            denied_by=denied_by,
+            metrics=metrics_list,
+        )
+
+    def check(self, intent: PipelineIntent | Dict[str, Any]) -> PipelineResult:
+        if isinstance(intent, dict):
+            intent = PipelineIntent(
+                tool_name=intent.get("tool_name") or intent.get("tool", ""),
+                actor=intent.get("actor", ""),
+                params=intent.get("params", {}),
+            )
+        cfg = self.config or PipelineConfig()
+        stages: List[StageOutcome] = []
+
         if cfg.enable_compliance:
             outcome = self._run_compliance(intent, cfg)
             stages.append(outcome)
             if not outcome.passed:
-                return self._build_result(False, stages, PipelineStage.COMPLIANCE, intent)
+                return self._build_result(False, stages, outcome.stage, intent)
 
-        # Stage 2: Risk scoring
         if cfg.enable_risk:
             outcome = self._run_risk(intent, cfg)
             stages.append(outcome)
             if not outcome.passed:
-                return self._build_result(False, stages, PipelineStage.RISK, intent)
+                return self._build_result(False, stages, outcome.stage, intent)
 
-        # Stage 3: UCAN delegation
         if cfg.enable_delegation:
             outcome = self._run_delegation(intent, cfg)
             stages.append(outcome)
             if not outcome.passed:
-                return self._build_result(False, stages, PipelineStage.DELEGATION, intent)
+                return self._build_result(False, stages, outcome.stage, intent)
 
-        # Stage 4: Temporal deontic policy
         if cfg.enable_policy:
             outcome = self._run_policy(intent, cfg)
             stages.append(outcome)
             if not outcome.passed:
-                return self._build_result(False, stages, PipelineStage.POLICY, intent)
+                return self._build_result(False, stages, outcome.stage, intent)
 
-        # Stage 5: NL-UCAN gate
         if cfg.enable_nl_ucan_gate:
             outcome = self._run_nl_ucan_gate(intent, cfg)
             stages.append(outcome)
             if not outcome.passed:
-                return self._build_result(False, stages, PipelineStage.NL_UCAN_GATE, intent)
+                return self._build_result(False, stages, outcome.stage, intent)
 
-        # All enabled stages passed
-        stages.append(StageOutcome(stage=PipelineStage.PASS, passed=True, reason="all stages passed"))
         return self._build_result(True, stages, None, intent)
 
-    def record_execution(
-        self,
-        intent: "PipelineIntent",
-        execution_result: Any,
-        error: Exception | None = None,
-    ) -> ReceiptObject:
-        """Create a :class:`~cid_artifacts.ReceiptObject` after execution.
-
-        If an event DAG is attached the receipt is wrapped in an
-        :class:`~cid_artifacts.EventNode` and appended to the DAG.
-
-        Parameters
-        ----------
-        intent:
-            The original intent.
-        execution_result:
-            The result returned by the tool (any JSON-serialisable value).
-        error:
-            Any exception that occurred during execution (or None on success).
-
-        Returns
-        -------
-        ReceiptObject
-        """
-        # Compute output CID from result
-        output_data: dict[str, Any] = {}
-        if error:
-            output_data["error"] = str(error)
-        elif isinstance(execution_result, dict):
-            output_data = execution_result
-        else:
-            output_data["result"] = execution_result
-
-        output_cid = artifact_cid(output_data)
-        status = "error" if error else "success"
-
-        receipt = ReceiptObject(
-            intent_cid=intent.intent_cid,
-            output_cid=output_cid,
-            decision_cid=f"bafy-mock-pipeline-{status}",  # mock CID (not a real IPFS CID)
-            correlation_id=intent.intent_cid,
-        )
-
-        if self._event_dag is not None:
-            try:
-                node = EventNode(
-                    parents=[],  # no parent: genesis node for this execution
-                    intent_cid=intent.intent_cid,
-                    receipt_cid=receipt.receipt_cid,
-                )
-                self._event_dag.append(node)
-            except Exception:
-                pass  # DAG errors must not fail execution recording
-
-        return receipt
-
-    # ------------------------------------------------------------------
-    # Private stage runners
-    # ------------------------------------------------------------------
-
-    def _run_compliance(self, intent: "PipelineIntent", cfg: PipelineConfig) -> StageOutcome:
-        """Run compliance stage."""
+    def _run_compliance(self, intent: PipelineIntent, cfg: PipelineConfig) -> StageOutcome:
         try:
-            from .compliance_checker import make_default_compliance_checker, ComplianceStatus
+            from .compliance_checker import make_default_compliance_checker
+
             checker = cfg.compliance_checker or make_default_compliance_checker()
-            report = checker.check_compliance(intent)
-            non_compliant = [
-                r for r in report.results
-                if r.status == ComplianceStatus.NON_COMPLIANT
-            ]
-            if non_compliant:
-                reasons = "; ".join(
-                    v.message
-                    for r in non_compliant
-                    for v in r.violations
-                )
-                return StageOutcome(
-                    stage=PipelineStage.COMPLIANCE,
-                    passed=False,
-                    reason=f"compliance violations: {reasons}",
-                    metadata={"non_compliant_rules": [r.rule_id for r in non_compliant]},
-                )
-            return StageOutcome(stage=PipelineStage.COMPLIANCE, passed=True, reason="all rules pass")
-        except ImportError as exc:
+            report = checker.check(intent.__dict__)
+            allowed = report.summary == "pass"
+            return StageOutcome(
+                stage=PipelineStage.COMPLIANCE,
+                passed=allowed,
+                reason=f"compliance summary: {report.summary}",
+                metadata={"summary": report.summary},
+            )
+        except Exception as exc:
             return StageOutcome(
                 stage=PipelineStage.COMPLIANCE,
                 passed=True,
-                reason=f"compliance_checker unavailable ({exc}), skipping",
+                reason=f"compliance unavailable ({exc}), skipping",
             )
 
-    def _run_risk(self, intent: "PipelineIntent", cfg: PipelineConfig) -> StageOutcome:
-        """Run risk scoring stage."""
+    def _run_risk(self, intent: PipelineIntent, cfg: PipelineConfig) -> StageOutcome:
         try:
-            from .risk_scorer import RiskScorer, make_default_risk_policy, RiskLevel
-            scorer = cfg.risk_scorer or RiskScorer()
-            policy = cfg.risk_policy or make_default_risk_policy()
-            score = scorer.score_intent(intent, policy)
-            acceptable = scorer.is_acceptable(score, policy)
-            if not acceptable:
-                return StageOutcome(
-                    stage=PipelineStage.RISK,
-                    passed=False,
-                    reason=f"risk score {score.score:.3f} ({score.level.value}) exceeds max {policy.max_acceptable_risk}",
-                    metadata={"score": score.score, "level": score.level.value, "factors": score.factors},
-                )
+            from .risk_scorer import RiskScorer
+
+            scorer = cfg.risk_scorer or RiskScorer(cfg.risk_policy)
+            score = scorer.score_intent(
+                tool=intent.tool_name,
+                actor=intent.actor,
+                params=intent.params,
+            )
+            allowed = getattr(score, "is_acceptable", True)
             return StageOutcome(
                 stage=PipelineStage.RISK,
-                passed=True,
-                reason=f"risk score {score.score:.3f} ({score.level.value}) acceptable",
-                metadata={"score": score.score, "level": score.level.value},
+                passed=allowed,
+                reason=f"risk score {score.score:.2f} ({score.level})",
+                metadata=getattr(score, "to_dict", lambda: {})(),
             )
-        except ImportError as exc:
+        except Exception as exc:
             return StageOutcome(
                 stage=PipelineStage.RISK,
                 passed=True,
                 reason=f"risk_scorer unavailable ({exc}), skipping",
             )
 
-    def _run_delegation(self, intent: "PipelineIntent", cfg: PipelineConfig) -> StageOutcome:
-        """Run UCAN delegation stage."""
+    def _run_delegation(self, intent: PipelineIntent, cfg: PipelineConfig) -> StageOutcome:
         try:
-            from .ucan_delegation import get_delegation_evaluator
-            evaluator = cfg.delegation_evaluator or get_delegation_evaluator()
-            leaf_cid = cfg.delegation_leaf_cid
-            if leaf_cid is None:
-                return StageOutcome(
-                    stage=PipelineStage.DELEGATION,
-                    passed=True,
-                    reason="no delegation_leaf_cid configured, skipping chain check",
-                )
-            tool = intent.tool_name
-            actor = intent.actor or ""
-            can_result = evaluator.can_invoke(
-                leaf_cid=leaf_cid, resource=tool, ability=tool, actor=actor
+            from .ucan_delegation import DelegationEvaluator
+
+            evaluator = cfg.delegation_evaluator or DelegationEvaluator()
+            actor = intent.actor or "anonymous"
+            leaf_cid = cfg.delegation_leaf_cid or ""
+            ok, reason = evaluator.can_invoke(
+                leaf_cid=leaf_cid,
+                resource=intent.tool_name,
+                ability=intent.tool_name,
+                actor=actor,
             )
-            # can_invoke returns (bool, reason) tuple
-            can = can_result[0] if isinstance(can_result, tuple) else bool(can_result)
-            if not can:
-                reason = can_result[1] if isinstance(can_result, tuple) else "denied"
-                return StageOutcome(
-                    stage=PipelineStage.DELEGATION,
-                    passed=False,
-                    reason=f"actor '{actor}' not authorized via UCAN chain (leaf={leaf_cid}, tool={tool}): {reason}",
-                )
             return StageOutcome(
                 stage=PipelineStage.DELEGATION,
-                passed=True,
-                reason=f"UCAN chain valid for actor='{actor}', tool='{tool}'",
+                passed=bool(ok),
+                reason=str(reason),
             )
         except ImportError as exc:
             return StageOutcome(
@@ -496,10 +510,10 @@ class DispatchPipeline:
                 reason=f"ucan_delegation unavailable ({exc}), skipping",
             )
 
-    def _run_policy(self, intent: "PipelineIntent", cfg: PipelineConfig) -> StageOutcome:
-        """Run temporal deontic policy stage."""
+    def _run_policy(self, intent: PipelineIntent, cfg: PipelineConfig) -> StageOutcome:
         try:
             from .temporal_policy import PolicyEvaluator
+
             evaluator = cfg.policy_evaluator or PolicyEvaluator()
             policy_obj = cfg.policy_object
             if policy_obj is None:
@@ -523,10 +537,10 @@ class DispatchPipeline:
                 reason=f"temporal_policy unavailable ({exc}), skipping",
             )
 
-    def _run_nl_ucan_gate(self, intent: "PipelineIntent", cfg: PipelineConfig) -> StageOutcome:
-        """Run NL-UCAN policy gate stage."""
+    def _run_nl_ucan_gate(self, intent: PipelineIntent, cfg: PipelineConfig) -> StageOutcome:
         try:
-            from .nl_ucan_policy import get_policy_registry, UCANPolicyGate
+            from .nl_ucan_policy import UCANPolicyGate
+
             gate = cfg.nl_ucan_gate or UCANPolicyGate()
             actor = intent.actor or "anonymous"
             decision = gate.evaluate(intent, actor=actor)
@@ -544,16 +558,12 @@ class DispatchPipeline:
                 reason=f"nl_ucan_policy unavailable ({exc}), skipping",
             )
 
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
-
     def _build_result(
         self,
         allowed: bool,
-        stages: list[StageOutcome],
-        blocking_stage: PipelineStage | None,
-        intent: "PipelineIntent",
+        stages: List[StageOutcome],
+        blocking_stage: Optional[PipelineStage],
+        intent: PipelineIntent,
     ) -> PipelineResult:
         verdict = "allow" if allowed else "deny"
         decision = DecisionObject(
@@ -572,187 +582,49 @@ class DispatchPipeline:
         )
 
 
-# ---------------------------------------------------------------------------
-# Convenience factory
-# ---------------------------------------------------------------------------
+def _allow_all(intent: Dict[str, Any]) -> Dict[str, Any]:
+    return {"allowed": True, "reason": "pass-through"}
 
 
-def make_default_pipeline() -> DispatchPipeline:
-    """Create a default (fully pass-through) :class:`DispatchPipeline`.
-
-    Returns
-    -------
-    DispatchPipeline
-        A pipeline with all stages disabled.  No gates are applied until
-        stages are enabled in :attr:`DispatchPipeline.config`.
-    """
-    return DispatchPipeline(config=PipelineConfig())
+def make_default_pipeline(
+    metrics_recorder: Optional[PipelineMetricsRecorder] = None,
+) -> DispatchPipeline:
+    stages = [
+        PipelineStage(
+            name="tool_name_check",
+            handler=lambda intent: {
+                "allowed": bool(intent.get("tool")),
+                "reason": "tool name present" if intent.get("tool") else "missing tool",
+            },
+        ),
+        PipelineStage(
+            name="actor_present_check",
+            handler=lambda intent: {"allowed": True, "reason": "actor check pass-through"},
+        ),
+    ]
+    return DispatchPipeline(stages=stages, metrics_recorder=metrics_recorder)
 
 
 def make_full_pipeline(
-    *,
-    compliance_checker: Any = None,
-    risk_scorer: Any = None,
-    risk_policy: Any = None,
-    policy_evaluator: Any = None,
-    policy_object: Any = None,
-    delegation_evaluator: Any = None,
-    delegation_leaf_cid: str | None = None,
-    nl_ucan_gate: Any = None,
+    metrics_recorder: Optional[PipelineMetricsRecorder] = None,
 ) -> DispatchPipeline:
-    """Create a :class:`DispatchPipeline` with all stages enabled.
-
-    Parameters
-    ----------
-    compliance_checker:
-        Optional pre-built compliance checker.
-    risk_scorer:
-        Optional pre-built risk scorer.
-    risk_policy:
-        Optional risk scoring policy.
-    policy_evaluator:
-        Optional temporal policy evaluator.
-    policy_object:
-        Optional policy object to evaluate against.
-    delegation_evaluator:
-        Optional UCAN delegation evaluator.
-    delegation_leaf_cid:
-        UCAN leaf CID to check.
-    nl_ucan_gate:
-        Optional NL-UCAN policy gate.
-
-    Returns
-    -------
-    DispatchPipeline
-        A pipeline with every stage enabled.
-    """
-    return DispatchPipeline(
-        config=PipelineConfig(
-            enable_compliance=True,
-            enable_risk=True,
-            enable_delegation=True,
-            enable_policy=True,
-            enable_nl_ucan_gate=True,
-            compliance_checker=compliance_checker,
-            risk_scorer=risk_scorer,
-            risk_policy=risk_policy,
-            policy_evaluator=policy_evaluator,
-            policy_object=policy_object,
-            delegation_evaluator=delegation_evaluator,
-            delegation_leaf_cid=delegation_leaf_cid,
-            nl_ucan_gate=nl_ucan_gate,
-        )
-    )
+    stage_names = [
+        "compliance",
+        "risk",
+        "delegation",
+        "policy",
+        "nl_ucan_gate",
+    ]
+    stages = [PipelineStage(name=n, handler=_allow_all) for n in stage_names]
+    return DispatchPipeline(stages=stages, metrics_recorder=metrics_recorder)
 
 
-# ---------------------------------------------------------------------------
-# Pipeline metrics recorder (session 56)
-# ---------------------------------------------------------------------------
+def make_delegation_stage(manager: Any) -> PipelineStage:
+    def _handler(intent: Dict[str, Any]) -> Dict[str, Any]:
+        actor = intent.get("actor", "")
+        tool = intent.get("tool", "")
+        leaf_cid = intent.get("leaf_cid", "")
+        ok, reason = manager.can_invoke(leaf_cid, tool, actor)
+        return {"allowed": bool(ok), "reason": str(reason)}
 
-class PipelineMetricsRecorder:
-    """Feed :class:`DispatchPipeline` stage denials into *monitoring*.
-
-    Attaches to a :class:`DispatchPipeline` and records every stage denial as
-    a failed tool execution in the :class:`~monitoring.EnhancedMetricsCollector`
-    so that pipeline-level access-control events appear in the monitoring
-    dashboard alongside ordinary tool latency metrics.
-
-    Args:
-        pipeline: The :class:`DispatchPipeline` to instrument.
-        collector: An optional :class:`~monitoring.EnhancedMetricsCollector`.
-            If *None*, the global singleton from
-            :func:`~monitoring.get_metrics_collector` is used when available.
-    """
-
-    def __init__(
-        self,
-        pipeline: "DispatchPipeline",
-        collector: Any = None,
-    ) -> None:
-        self._pipeline = pipeline
-        self._collector = collector
-        self._denial_counts: Dict[str, int] = {}
-        self._allow_counts: Dict[str, int] = {}
-
-    # ------------------------------------------------------------------
-
-    def _get_collector(self) -> Any:
-        """Return *collector*, falling back to the global singleton."""
-        if self._collector is not None:
-            return self._collector
-        try:
-            from .monitoring import get_metrics_collector  # noqa: PLC0415
-            return get_metrics_collector()
-        except Exception:
-            return None
-
-    def record(self, intent: "PipelineIntent", result: "PipelineResult") -> None:
-        """Record a pipeline decision into the metrics collector.
-
-        Args:
-            intent: The evaluated :class:`PipelineIntent`.
-            result: The :class:`PipelineResult` returned by
-                :meth:`DispatchPipeline.check`.
-        """
-        tool_name = intent.tool_name
-        passed = result.allowed
-
-        if passed:
-            self._allow_counts[tool_name] = self._allow_counts.get(tool_name, 0) + 1
-        else:
-            self._denial_counts[tool_name] = self._denial_counts.get(tool_name, 0) + 1
-
-        collector = self._get_collector()
-        if collector is None:
-            return
-
-        # Represent each pipeline decision as a 0 ms tool execution (it has
-        # no meaningful latency overhead) with success=passed.
-        try:
-            collector.track_tool_execution(
-                tool_name=f"pipeline:{tool_name}",
-                execution_time_ms=0.0,
-                success=passed,
-            )
-        except Exception:
-            pass
-
-    # ------------------------------------------------------------------
-
-    def check_and_record(self, intent: "PipelineIntent") -> "PipelineResult":
-        """Run :meth:`DispatchPipeline.check` and record the result.
-
-        This is a convenience wrapper that calls
-        :meth:`DispatchPipeline.check` and immediately feeds the result to
-        :meth:`record`.
-
-        Args:
-            intent: The :class:`PipelineIntent` to evaluate.
-
-        Returns:
-            The :class:`PipelineResult` (unchanged).
-        """
-        result = self._pipeline.check(intent)
-        self.record(intent, result)
-        return result
-
-    # ------------------------------------------------------------------
-
-    def get_stats(self) -> Dict[str, Any]:
-        """Return a summary of pipeline decisions.
-
-        Returns:
-            dict with ``allow_counts``, ``denial_counts``, and
-            ``total_denials`` / ``total_allows``.
-        """
-        return {
-            "allow_counts": dict(self._allow_counts),
-            "denial_counts": dict(self._denial_counts),
-            "total_allows": sum(self._allow_counts.values()),
-            "total_denials": sum(self._denial_counts.values()),
-        }
-
-    def reset(self) -> None:
-        """Reset all counters."""
-        self._allow_counts.clear()
-        self._denial_counts.clear()
+    return PipelineStage(name="delegation", handler=_handler)

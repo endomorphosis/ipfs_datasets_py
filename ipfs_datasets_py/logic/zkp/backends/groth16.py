@@ -137,6 +137,21 @@ class Groth16Backend:
     
 
     def setup(self, version: int = 1, *, seed: Optional[int] = None) -> dict[str, Any]:
+        """Run trusted setup for the given circuit version.
+
+        Wraps ``groth16_ffi.Groth16Backend.setup()``.  Requires
+        ``IPFS_DATASETS_ENABLE_GROTH16=1``.
+
+        Args:
+            version: Circuit version (1 or 2).
+            seed: Optional deterministic seed for reproducible keys.
+
+        Returns:
+            dict: Setup manifest with key paths and SHA-256 hashes.
+
+        Raises:
+            ZKPError: If backend is disabled or setup fails.
+        """
         if not self._enabled():
             raise ZKPError(
                 "Groth16 backend is disabled by default. "
@@ -149,5 +164,51 @@ class Groth16Backend:
         except Exception as e:
             raise ZKPError(f"Groth16 setup failed: {e}")
 
-    # NOTE: Circuit compilation / setup / key management remains out of scope for
-    # this adapter entrypoint. See GROTH16_IMPLEMENTATION_PLAN.md.
+    def ensure_setup(self, version: int = 1, *, seed: Optional[int] = None) -> dict[str, Any]:
+        """Ensure proving/verifying keys exist for *version*, running setup if necessary.
+
+        This is idempotent: if artifacts already exist the method returns an info
+        dict without re-running setup.
+
+        Args:
+            version: Circuit version to provision.
+            seed: Seed forwarded to ``setup()`` when keys are absent.
+
+        Returns:
+            dict: Either the fresh setup manifest or an info dict with
+            ``{"status": "already_exists", "version": N}``.
+
+        Raises:
+            ZKPError: If backend is disabled, binary is missing, or setup fails.
+        """
+        if not self._enabled():
+            raise ZKPError(
+                "Groth16 backend is disabled by default. "
+                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable auto-setup."
+            )
+
+        ffi = self._ffi()
+        if ffi.artifacts_exist(version):
+            return {"status": "already_exists", "version": version}
+        return self.setup(version, seed=seed)
+
+    def binary_available(self) -> bool:
+        """Return True if the Groth16 Rust binary is found on disk."""
+        return bool(self._ffi().binary_path)
+
+    def get_backend_info(self) -> dict[str, Any]:
+        """Return a human-readable info dict about this backend."""
+        ffi = self._ffi()
+        return {
+            "backend_id": self.backend_id,
+            "curve_id": self.curve_id,
+            "enabled": self._enabled(),
+            "binary_path": ffi.binary_path,
+            "binary_available": bool(ffi.binary_path),
+            "artifacts_v1_exist": ffi.artifacts_exist(1),
+            "artifacts_v2_exist": ffi.artifacts_exist(2),
+            "timeout_seconds": self.timeout_seconds,
+        }
+
+    # NOTE: Circuit compilation / setup / key management is handled via
+    # ensure_setup() / setup().  See GROTH16_INTEGRATION_PLAN_2026.md.

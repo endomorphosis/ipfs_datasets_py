@@ -1,18 +1,4 @@
-"""Profile A: MCP-IDL — CID-Addressed Interface Contracts.
-
-Implements the MCP++ Profile A specification from:
-https://github.com/endomorphosis/Mcp-Plus-Plus/blob/main/docs/spec/mcp-idl.md
-
-An Interface Descriptor is a canonical, content-addressed contract describing a
-tool/resource interface. Its CID is used for deterministic compatibility checks
-and runtime discovery without fragmentation.
-
-Profiles supported:
-- ``interfaces/list``   — list all known interface CIDs
-- ``interfaces/get``    — retrieve an Interface Descriptor by CID
-- ``interfaces/compat`` — check compatibility with a given interface CID
-- ``interfaces/select`` — toolset slicing under a context/token budget
-"""
+"""Profile A: MCP-IDL — CID-addressed interface contracts."""
 
 from __future__ import annotations
 
@@ -21,58 +7,52 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+__all__ = [
+    "_canonicalize",
+    "compute_cid",
+    "_canonical_cid",
+    "MethodSignature",
+    "CompatibilityInfo",
+    "InterfaceDescriptor",
+    "CompatVerdict",
+    "InterfaceRepository",
+    "toolset_slice",
+    "get_interface_repository",
+]
 
-# ---------------------------------------------------------------------------
-# Helper: canonical JSON → CID (SHA-256 hex, prefixed "bafy-mock-")
-# ---------------------------------------------------------------------------
+
+def _canonicalize(obj: Any) -> bytes:
+    return json.dumps(
+        obj, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+    ).encode("utf-8")
+
+
+def compute_cid(content: bytes, *, prefix: str = "sha256:") -> str:
+    digest = hashlib.sha256(content).hexdigest()
+    return f"{prefix}{digest}"
+
 
 def _canonical_cid(obj: Any) -> str:
-    """Compute a deterministic mock-CID for any JSON-serialisable object.
-
-    In production this should use DAG-JSON or DAG-CBOR canonicalisation and a
-    real multihash, but a stable SHA-256 hex is sufficient for the current
-    implementation stage.
-
-    Args:
-        obj: Any JSON-serialisable Python object.
-
-    Returns:
-        A stable, content-derived string identifier prefixed ``"bafy-mock-"``.
-    """
     canonical = json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     digest = hashlib.sha256(canonical.encode()).hexdigest()
     return f"bafy-mock-{digest[:32]}"
 
 
-# ---------------------------------------------------------------------------
-# Data classes
-# ---------------------------------------------------------------------------
-
 @dataclass
 class MethodSignature:
-    """A single method signature within an Interface Descriptor.
-
-    Attributes:
-        name: Stable method name.
-        input_schema: JSON Schema dict for input parameters.
-        output_schema: JSON Schema dict for the return value.
-        error_names: Names of errors this method may raise.
-    """
+    """A single method signature within an Interface Descriptor."""
 
     name: str
     input_schema: Dict[str, Any] = field(default_factory=dict)
     output_schema: Dict[str, Any] = field(default_factory=dict)
     error_names: List[str] = field(default_factory=list)
+    errors: List[str] = field(default_factory=list)
+    streaming: bool = False
 
 
 @dataclass
 class CompatibilityInfo:
-    """Compatibility metadata for an Interface Descriptor.
-
-    Attributes:
-        compatible_with: Interface CIDs this descriptor is backward-compatible with.
-        supersedes: Interface CIDs that this descriptor replaces.
-    """
+    """Compatibility metadata for an Interface Descriptor."""
 
     compatible_with: List[str] = field(default_factory=list)
     supersedes: List[str] = field(default_factory=list)
@@ -80,24 +60,7 @@ class CompatibilityInfo:
 
 @dataclass
 class InterfaceDescriptor:
-    """A canonical, content-addressed interface contract (Profile A).
-
-    Implements the normative "Interface Descriptor" shape from MCP++ MCP-IDL spec.
-
-    Required fields per spec:
-        name, namespace, version, methods, errors, requires, compatibility
-
-    Attributes:
-        name: Stable human identifier for the interface.
-        namespace: Grouping / ownership scope (e.g. ``"com.example.tools"``).
-        version: Semantic version string (e.g. ``"1.0.0"``).
-        methods: Method signatures exposed by this interface.
-        errors: Error type names surfaced by the interface.
-        requires: Capability/extension identifiers required at runtime.
-        compatibility: Compatibility metadata (supersedes / compatible_with).
-        semantic_tags: Optional stable tags for retrieval and tool selection.
-        resource_cost_hints: Optional runtime/token/network cost hints.
-    """
+    """A canonical, content-addressed interface contract (Profile A)."""
 
     name: str
     namespace: str
@@ -105,21 +68,27 @@ class InterfaceDescriptor:
     methods: List[MethodSignature] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
     requires: List[str] = field(default_factory=list)
-    compatibility: CompatibilityInfo = field(default_factory=CompatibilityInfo)
+    compatibility: CompatibilityInfo | Dict[str, List[str]] = field(default_factory=CompatibilityInfo)
     semantic_tags: List[str] = field(default_factory=list)
-    resource_cost_hints: Dict[str, Any] = field(default_factory=dict)
+    observability: Dict[str, bool] = field(default_factory=lambda: {"trace": False, "provenance": False})
+    interaction_patterns: Dict[str, bool] = field(default_factory=lambda: {"request_response": True, "event_streams": False})
+    resource_cost_hints: Optional[Dict[str, Any]] = None
 
-    # ------------------------------------------------------------------
-    # Derived / cached
-    # ------------------------------------------------------------------
+    _interface_cid: Optional[str] = field(default=None, repr=False, compare=False)
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Serialise to a plain dict suitable for JSON canonicalisation.
-
-        Returns:
-            Ordered dict representation of this descriptor.
-        """
+    def _compat_dict(self) -> Dict[str, List[str]]:
+        if isinstance(self.compatibility, CompatibilityInfo):
+            return {
+                "compatible_with": list(self.compatibility.compatible_with),
+                "supersedes": list(self.compatibility.supersedes),
+            }
         return {
+            "compatible_with": list(self.compatibility.get("compatible_with", [])),
+            "supersedes": list(self.compatibility.get("supersedes", [])),
+        }
+
+    def canonical_bytes(self) -> bytes:
+        d = {
             "name": self.name,
             "namespace": self.namespace,
             "version": self.version,
@@ -128,221 +97,201 @@ class InterfaceDescriptor:
                     "name": m.name,
                     "input_schema": m.input_schema,
                     "output_schema": m.output_schema,
-                    "error_names": m.error_names,
+                    "errors": sorted(m.errors or m.error_names),
+                    "streaming": m.streaming,
                 }
-                for m in self.methods
+                for m in sorted(self.methods, key=lambda x: x.name)
             ],
-            "errors": self.errors,
-            "requires": self.requires,
+            "errors": sorted(self.errors),
+            "requires": sorted(self.requires),
             "compatibility": {
-                "compatible_with": self.compatibility.compatible_with,
-                "supersedes": self.compatibility.supersedes,
+                "compatible_with": sorted(self._compat_dict().get("compatible_with", [])),
+                "supersedes": sorted(self._compat_dict().get("supersedes", [])),
             },
-            "semantic_tags": self.semantic_tags,
-            "resource_cost_hints": self.resource_cost_hints,
+            "semantic_tags": sorted(self.semantic_tags),
+            "observability": self.observability,
+            "interaction_patterns": self.interaction_patterns,
         }
+        return _canonicalize(d)
 
     @property
     def interface_cid(self) -> str:
-        """Content-addressed CID of this descriptor.
+        if self._interface_cid is None:
+            self._interface_cid = compute_cid(self.canonical_bytes())
+        return self._interface_cid
 
-        Returns:
-            Stable, deterministic CID string derived from canonical bytes.
-        """
-        return _canonical_cid(self.to_dict())
+    def to_dict(self) -> Dict[str, Any]:
+        d = json.loads(self.canonical_bytes())
+        d["interface_cid"] = self.interface_cid
+        if self.resource_cost_hints:
+            d["resource_cost_hints"] = self.resource_cost_hints
+        return d
 
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "InterfaceDescriptor":
+        methods = [
+            MethodSignature(
+                name=m["name"],
+                input_schema=m.get("input_schema", {}),
+                output_schema=m.get("output_schema", {}),
+                error_names=m.get("error_names", []) or m.get("errors", []),
+                errors=m.get("errors", []) or m.get("error_names", []),
+                streaming=m.get("streaming", False),
+            )
+            for m in data.get("methods", [])
+        ]
+        compat = data.get("compatibility", {"compatible_with": [], "supersedes": []})
+        if isinstance(compat, dict):
+            compat = CompatibilityInfo(
+                compatible_with=compat.get("compatible_with", []),
+                supersedes=compat.get("supersedes", []),
+            )
+        obj = cls(
+            name=data["name"],
+            namespace=data["namespace"],
+            version=data["version"],
+            methods=methods,
+            errors=data.get("errors", []),
+            requires=data.get("requires", []),
+            compatibility=compat,
+            semantic_tags=data.get("semantic_tags", []),
+            observability=data.get("observability", {"trace": False, "provenance": False}),
+            interaction_patterns=data.get(
+                "interaction_patterns",
+                {"request_response": True, "event_streams": False},
+            ),
+            resource_cost_hints=data.get("resource_cost_hints"),
+        )
+        return obj
 
-# ---------------------------------------------------------------------------
-# Compatibility verdict
-# ---------------------------------------------------------------------------
 
 @dataclass
 class CompatVerdict:
-    """Result of an ``interfaces/compat`` check.
-
-    Attributes:
-        compatible: Whether the queried interface is compatible with this repo.
-        reasons: Human-readable reasons for any incompatibility.
-        requires_missing: Capability identifiers absent from the local server.
-        suggested_alternatives: CIDs that may satisfy the requester's intent.
-    """
-
     compatible: bool
     reasons: List[str] = field(default_factory=list)
     requires_missing: List[str] = field(default_factory=list)
     suggested_alternatives: List[str] = field(default_factory=list)
 
 
-# ---------------------------------------------------------------------------
-# Interface Repository (Profile A APIs)
-# ---------------------------------------------------------------------------
+def check_compat(candidate: InterfaceDescriptor, required: InterfaceDescriptor) -> CompatVerdict:
+    reasons: List[str] = []
+    missing_requires: List[str] = []
+    required_methods = {m.name for m in required.methods}
+    candidate_methods = {m.name for m in candidate.methods}
+    missing = required_methods - candidate_methods
+    if missing:
+        reasons.append(f"Missing methods: {sorted(missing)}")
+    for req in required.requires:
+        if req not in candidate.requires:
+            missing_requires.append(req)
+            reasons.append(f"Missing capability requirement: {req}")
+    compatible = len(reasons) == 0
+    return CompatVerdict(
+        compatible=compatible,
+        reasons=reasons,
+        requires_missing=missing_requires,
+        suggested_alternatives=candidate._compat_dict().get("supersedes", []),
+    )
+
 
 class InterfaceRepository:
-    """Runtime-queryable registry of Interface Descriptors (Profile A).
-
-    Implements the three normative API endpoints from the MCP++ MCP-IDL spec:
-
-    - ``list()``                 → ``interfaces/list``
-    - ``get(interface_cid)``     → ``interfaces/get``
-    - ``check_compat(...)``      → ``interfaces/compat``
-
-    And the optional toolset-slicing endpoint:
-
-    - ``toolset_slice(...)``     → ``interfaces/select``
-
-    Attributes:
-        _store: Internal mapping from ``interface_cid`` to ``InterfaceDescriptor``.
-    """
+    """In-memory Interface Repository implementing MCP-IDL APIs."""
 
     def __init__(self) -> None:
-        """Initialise an empty Interface Repository."""
         self._store: Dict[str, InterfaceDescriptor] = {}
 
-    # ------------------------------------------------------------------
-    # Mutation
-    # ------------------------------------------------------------------
-
     def register(self, descriptor: InterfaceDescriptor) -> str:
-        """Register an Interface Descriptor and return its CID.
-
-        Args:
-            descriptor: The descriptor to register.
-
-        Returns:
-            The ``interface_cid`` under which the descriptor is stored.
-        """
         cid = descriptor.interface_cid
         self._store[cid] = descriptor
         return cid
 
-    # ------------------------------------------------------------------
-    # interfaces/list
-    # ------------------------------------------------------------------
-
     def list(self) -> List[str]:
-        """Return all known interface CIDs.
-
-        Returns:
-            List of ``interface_cid`` strings registered in this repository.
-        """
         return list(self._store.keys())
 
-    # ------------------------------------------------------------------
-    # interfaces/get
-    # ------------------------------------------------------------------
+    def get(self, interface_cid: str) -> Optional[Dict[str, Any]]:
+        desc = self._store.get(interface_cid)
+        return desc.to_dict() if desc else None
 
-    def get(self, interface_cid: str) -> Optional[InterfaceDescriptor]:
-        """Retrieve an Interface Descriptor by CID.
-
-        Args:
-            interface_cid: The CID to look up.
-
-        Returns:
-            The matching ``InterfaceDescriptor``, or ``None`` if not found.
-        """
-        return self._store.get(interface_cid)
-
-    # ------------------------------------------------------------------
-    # interfaces/compat
-    # ------------------------------------------------------------------
-
-    def check_compat(
+    def compat(
         self,
         interface_cid: str,
-        local_capabilities: Optional[List[str]] = None,
+        *,
+        required_cid: Optional[str] = None,
     ) -> CompatVerdict:
-        """Check whether a given interface CID is compatible with this server.
-
-        An interface is compatible when:
-        1. It is registered in this repository, OR its CID appears in the
-           ``compatibility.compatible_with`` list of a registered descriptor.
-        2. All ``requires`` capabilities are present in *local_capabilities*.
-
-        Args:
-            interface_cid: CID of the interface to check.
-            local_capabilities: Capabilities supported by the local server.
-
-        Returns:
-            A ``CompatVerdict`` describing compatibility status and reasons.
-        """
-        local_caps: List[str] = local_capabilities or []
-
-        # Direct match
-        if interface_cid in self._store:
-            descriptor = self._store[interface_cid]
-            missing = [r for r in descriptor.requires if r not in local_caps]
-            if missing:
-                return CompatVerdict(
-                    compatible=False,
-                    reasons=[f"Missing required capabilities: {missing}"],
-                    requires_missing=missing,
-                )
-            return CompatVerdict(compatible=True)
-
-        # Check via compatibility.compatible_with on registered descriptors
-        alternatives: List[str] = []
-        for cid, desc in self._store.items():
-            if interface_cid in desc.compatibility.compatible_with:
-                alternatives.append(cid)
-
-        if alternatives:
+        candidate = self._store.get(interface_cid)
+        if candidate is None:
             return CompatVerdict(
-                compatible=True,
-                reasons=["Compatible via registered superseding descriptor"],
-                suggested_alternatives=alternatives,
+                compatible=False,
+                reasons=[f"Unknown interface_cid: {interface_cid}"],
             )
+        if required_cid is None:
+            return CompatVerdict(compatible=True)
+        required = self._store.get(required_cid)
+        if required is None:
+            return CompatVerdict(
+                compatible=False,
+                reasons=[f"Unknown required interface_cid: {required_cid}"],
+            )
+        return check_compat(candidate, required)
 
-        # Not found at all
-        return CompatVerdict(
-            compatible=False,
-            reasons=[f"Interface CID {interface_cid!r} not found in repository"],
-            suggested_alternatives=list(self._store.keys())[:5],
-        )
-
-    # ------------------------------------------------------------------
-    # interfaces/select  (toolset slicing)
-    # ------------------------------------------------------------------
+    def select(self, task_hint: str, budget: Optional[int] = None) -> List[str]:
+        hint_words = set(task_hint.lower().split())
+        scored: List[tuple[int, str]] = []
+        for cid, desc in self._store.items():
+            overlap = sum(1 for tag in desc.semantic_tags if tag.lower() in hint_words)
+            if overlap > 0:
+                scored.append((overlap, cid))
+        scored.sort(key=lambda x: -x[0])
+        result = [cid for _, cid in scored]
+        if budget is not None:
+            result = result[:budget]
+        return result
 
     def toolset_slice(
         self,
-        semantic_tags: Optional[List[str]] = None,
+        *,
         budget: Optional[int] = None,
+        semantic_tags: Optional[List[str]] = None,
         required_capabilities: Optional[List[str]] = None,
     ) -> List[str]:
-        """Select a subset of interface CIDs that match constraints (Profile A).
-
-        This implements the optional ``interfaces/select`` endpoint for toolset
-        slicing under context/token budgets.
-
-        Args:
-            semantic_tags: If provided, only return interfaces whose
-                ``semantic_tags`` overlap with this list.
-            budget: Maximum number of interfaces to return. ``None`` means no cap.
-            required_capabilities: Only return interfaces whose ``requires``
-                list is a subset of *required_capabilities* (i.e. all requirements
-                are satisfied by the caller).
-
-        Returns:
-            List of ``interface_cid`` strings satisfying all constraints.
-        """
-        results: List[str] = []
-        for cid, desc in self._store.items():
-            # Tag filter
-            if semantic_tags:
-                if not any(t in desc.semantic_tags for t in semantic_tags):
-                    continue
-            # Capability filter
-            if required_capabilities is not None:
-                if any(r not in required_capabilities for r in desc.requires):
-                    continue
-            results.append(cid)
-            if budget is not None and len(results) >= budget:
-                break
-        return results
+        cids = list(self._store.keys())
+        if semantic_tags:
+            allowed = set(tag.lower() for tag in semantic_tags)
+            cids = [
+                cid
+                for cid in cids
+                if any(t.lower() in allowed for t in self._store[cid].semantic_tags)
+            ]
+        if required_capabilities is not None:
+            cids = [
+                cid
+                for cid in cids
+                if all(req in self._store[cid].requires for req in required_capabilities)
+            ]
+        return toolset_slice(cids, budget=budget)
 
     def __len__(self) -> int:
-        """Return the number of registered descriptors."""
         return len(self._store)
 
-    def __repr__(self) -> str:  # pragma: no cover
-        return f"InterfaceRepository({len(self._store)} descriptors)"
+
+def toolset_slice(
+    cids: List[str],
+    budget: Optional[int] = None,
+    sort_fn: Optional[Any] = None,
+) -> List[str]:
+    result = list(cids)
+    if sort_fn is not None:
+        result.sort(key=sort_fn)
+    if budget is not None:
+        result = result[:budget]
+    return result
+
+
+_global_repo: Optional[InterfaceRepository] = None
+
+
+def get_interface_repository() -> InterfaceRepository:
+    global _global_repo
+    if _global_repo is None:
+        _global_repo = InterfaceRepository()
+    return _global_repo

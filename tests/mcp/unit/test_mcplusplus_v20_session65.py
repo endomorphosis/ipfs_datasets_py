@@ -364,9 +364,20 @@ class TestComplianceCheckerLoadEncryptedVersionCheck:
             from cryptography.hazmat.primitives.ciphers.aead import AESGCM
         except ImportError:
             pytest.skip("cryptography not installed")
-        import hashlib
+        from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
         pw_bytes = password.encode()
-        key = hashlib.sha256(pw_bytes).digest()
+        # Use a password-based key derivation function instead of a single SHA-256 hash.
+        # A fixed salt is acceptable here because this helper is only used in tests and
+        # determinism is desirable for reproducibility.
+        salt = b"mcplusplus-compliance-test-salt"
+        kdf = Scrypt(
+            salt=salt,
+            length=32,
+            n=2**14,
+            r=8,
+            p=1,
+        )
+        key = kdf.derive(pw_bytes)
         nonce = os.urandom(12)
         data = {
             "version": version,

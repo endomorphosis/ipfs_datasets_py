@@ -1,191 +1,197 @@
-"""Profile B: CID-Native Execution Artifacts.
-
-Implements the MCP++ Profile B specification from:
-https://github.com/endomorphosis/Mcp-Plus-Plus/blob/main/docs/spec/cid-native-artifacts.md
-
-Every execution step produces a set of immutable, content-addressed (CID-native)
-artifacts that provide provenance, auditability, and replay capability:
-
-- ``IntentObject``      — "what I plan to do" (pre-execution)
-- ``DecisionObject``    — policy evaluation result
-- ``ReceiptObject``     — immutable execution outcome record
-- ``ExecutionEnvelope`` — wrapper around an MCP invocation referencing CIDs
-- ``EventNode``         — links the above into an append-only Event DAG
-
-The ``artifact_cid()`` helper converts any of these to a content-derived CID.
 """
+Profile B: CID-Native Execution Artifacts
 
+Implements the CID-native artifacts from the MCP++ specification:
+  https://github.com/endomorphosis/Mcp-Plus-Plus/blob/main/docs/spec/cid-native-artifacts.md
+
+Provides:
+- ExecutionEnvelope: wraps an MCP invocation with CID references
+- IntentObject: minimal CID'd "what I plan to do"
+- DecisionObject: CID'd policy evaluation result
+- ReceiptObject: immutable CID'd execution receipt/attestation
+- EventNode: DAG node linking intent/decision/receipt
+- artifact_cid(): convenience CID helper
+
+Backward-compatible: does not modify MCP JSON-RPC message formats.
+"""
 from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+import time
+from dataclasses import dataclass, field, asdict
 from typing import Any, Dict, List, Optional
 
-
-# ---------------------------------------------------------------------------
-# CID helper
-# ---------------------------------------------------------------------------
-
-def artifact_cid(obj: Any) -> str:
-    """Compute a deterministic mock-CID for any JSON-serialisable artifact.
-
-    Uses canonical JSON (sorted keys, no extra whitespace) → SHA-256 hex,
-    prefixed with ``"bafy-mock-"`` to make the placeholder origin obvious.
-
-    Args:
-        obj: Any JSON-serialisable Python value (dict, list, str, …).
-
-    Returns:
-        A stable, content-derived string identifier.
-
-    Example::
-
-        >>> artifact_cid({"tool": "repo.status", "input": {}})
-        'bafy-mock-...'
-    """
-    canonical = json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
-    digest = hashlib.sha256(canonical.encode()).hexdigest()
-    return f"bafy-mock-{digest[:32]}"
+# Re-use the same canonicalize/compute_cid from interface_descriptor
+from .interface_descriptor import _canonicalize, compute_cid
 
 
-def _utcnow() -> str:
-    """Return the current UTC time as an ISO-8601 string."""
-    return datetime.now(timezone.utc).isoformat()
+# ─── intent ──────────────────────────────────────────────────────────────────
 
-
-# ---------------------------------------------------------------------------
-# Intent Object (Profile B §4)
-# ---------------------------------------------------------------------------
 
 @dataclass
 class IntentObject:
-    """Immutable "what I plan to do" description used for policy evaluation.
-
-    An ``IntentObject`` is content-addressed to an ``intent_cid``.  It is
-    created *before* execution and referenced by the downstream decision,
-    receipt, and event artifacts.
-
-    Attributes:
-        interface_cid: CID of the Interface Descriptor for this tool.
-        tool: Stable tool / method name (e.g. ``"repo.status"``).
-        input_cid: CID of the canonicalised input parameters.
-        correlation_id: Ephemeral nonce or UUID for trace correlation.
-        constraints_policy_cid: Optional CID of the narrowed policy for this action.
-        expected_output_schema_cid: Optional CID of the expected output schema.
-        declared_side_effects: Capability strings or CIDs for declared side-effects.
     """
+    CID'd "what I plan to do" object (spec §4).
 
-    interface_cid: str
+    Required for policy evaluation and later replay.
+    """
     tool: str
-    input_cid: str
-    correlation_id: str = ""
+    input_cid: Optional[str] = None
+    interface_cid: Optional[str] = None
     constraints_policy_cid: Optional[str] = None
-    expected_output_schema_cid: Optional[str] = None
+    correlation_id: Optional[str] = None
     declared_side_effects: List[str] = field(default_factory=list)
+    expected_output_schema_cid: Optional[str] = None
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Serialise to a plain dict for canonicalisation / CID derivation."""
-        return {
-            "interface_cid": self.interface_cid,
+    _cid: Optional[str] = field(default=None, repr=False, compare=False)
+
+    @property
+    def cid(self) -> str:
+        if self._cid is None:
+            self._cid = compute_cid(self._canonical_bytes())
+        return self._cid
+
+    def _canonical_bytes(self) -> bytes:
+        d = {
             "tool": self.tool,
             "input_cid": self.input_cid,
-            "correlation_id": self.correlation_id,
+            "interface_cid": self.interface_cid,
             "constraints_policy_cid": self.constraints_policy_cid,
+            "correlation_id": self.correlation_id,
+            "declared_side_effects": sorted(self.declared_side_effects),
             "expected_output_schema_cid": self.expected_output_schema_cid,
+        }
+        return _canonicalize(d)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "intent_cid": self.cid,
+            "tool": self.tool,
+            "input_cid": self.input_cid,
+            "interface_cid": self.interface_cid,
+            "constraints_policy_cid": self.constraints_policy_cid,
+            "correlation_id": self.correlation_id,
             "declared_side_effects": self.declared_side_effects,
         }
 
-    @property
-    def intent_cid(self) -> str:
-        """Content-addressed CID of this intent object."""
-        return artifact_cid(self.to_dict())
+
+# ─── decision ────────────────────────────────────────────────────────────────
 
 
-# ---------------------------------------------------------------------------
-# Decision Object (Profile B §5)
-# ---------------------------------------------------------------------------
+ALLOW = "allow"
+DENY = "deny"
+ALLOW_WITH_OBLIGATIONS = "allow_with_obligations"
+
+
+@dataclass
+class Obligation:
+    """A spawned obligation from a policy decision."""
+    type: str
+    deadline: Optional[str] = None
+    details: Optional[Dict[str, Any]] = None
+
 
 @dataclass
 class DecisionObject:
-    """Result of policy evaluation at execution time.
-
-    A ``DecisionObject`` is produced by evaluators after verifying proofs and
-    evaluating policy against the intent.  It is content-addressed to a
-    ``decision_cid``.
-
-    Attributes:
-        decision: Verdict — one of ``"allow"``, ``"deny"``,
-            ``"allow_with_obligations"``.
-        intent_cid: CID of the ``IntentObject`` being evaluated.
-        policy_cid: CID of the policy used in this evaluation.
-        proofs_checked: CIDs of proofs/UCAN chains validated.
-        justification: Human-readable or structured explanation.
-        obligations: List of obligation dicts with ``type`` and ``deadline``.
-        policy_version: Version string of the policy language/schema.
-        evaluator_dids: DID strings of evaluating agents.
     """
+    CID'd policy evaluation result (spec §5).
 
-    decision: str  # "allow" | "deny" | "allow_with_obligations"
+    Produced by evaluators after verifying proofs and evaluating policy.
+    """
+    decision: str  # ALLOW | DENY | ALLOW_WITH_OBLIGATIONS
     intent_cid: str
-    policy_cid: str
+    policy_cid: Optional[str] = None
     proofs_checked: List[str] = field(default_factory=list)
-    justification: str = ""
-    obligations: List[Dict[str, Any]] = field(default_factory=list)
+    obligations: List[Obligation] = field(default_factory=list)
+    justification: Optional[str] = None
     policy_version: str = "v1"
-    evaluator_dids: List[str] = field(default_factory=list)
+    evaluation_witness_cid: Optional[str] = None
+
+    _cid: Optional[str] = field(default=None, repr=False, compare=False)
+
+    @property
+    def cid(self) -> str:
+        if self._cid is None:
+            self._cid = compute_cid(self._canonical_bytes())
+        return self._cid
+
+    def _canonical_bytes(self) -> bytes:
+        d = {
+            "decision": self.decision,
+            "intent_cid": self.intent_cid,
+            "policy_cid": self.policy_cid,
+            "proofs_checked": sorted(self.proofs_checked),
+            "obligations": [
+                {"type": o.type, "deadline": o.deadline}
+                for o in sorted(self.obligations, key=lambda x: x.type)
+            ],
+            "justification": self.justification,
+            "policy_version": self.policy_version,
+        }
+        return _canonicalize(d)
 
     def to_dict(self) -> Dict[str, Any]:
-        """Serialise to a plain dict for canonicalisation / CID derivation."""
         return {
+            "decision_cid": self.cid,
             "decision": self.decision,
             "intent_cid": self.intent_cid,
             "policy_cid": self.policy_cid,
             "proofs_checked": self.proofs_checked,
+            "obligations": [
+                {"type": o.type, "deadline": o.deadline}
+                for o in self.obligations
+            ],
             "justification": self.justification,
-            "obligations": self.obligations,
             "policy_version": self.policy_version,
-            "evaluator_dids": self.evaluator_dids,
         }
 
     @property
-    def decision_cid(self) -> str:
-        """Content-addressed CID of this decision object."""
-        return artifact_cid(self.to_dict())
+    def is_allowed(self) -> bool:
+        return self.decision in (ALLOW, ALLOW_WITH_OBLIGATIONS)
 
 
-# ---------------------------------------------------------------------------
-# Receipt Object (Profile B §6)
-# ---------------------------------------------------------------------------
+# ─── receipt ─────────────────────────────────────────────────────────────────
+
 
 @dataclass
 class ReceiptObject:
-    """Immutable execution outcome record suitable for audit and disputes.
-
-    A ``ReceiptObject`` is content-addressed to a ``receipt_cid``.
-
-    Attributes:
-        intent_cid: CID of the originating intent.
-        output_cid: CID of the canonicalised execution output.
-        decision_cid: CID of the policy decision that authorised execution.
-        observed_side_effects: CIDs or capability strings for actual side effects.
-        proofs_checked: CIDs of proofs validated during execution.
-        correlation_id: Trace correlation ID (carried from intent).
-        time_observed: ISO-8601 UTC timestamp of when execution completed.
     """
+    Immutable CID'd execution receipt (spec §6).
 
+    Audit substrate for disputes, rollbacks, and risk scoring.
+    """
     intent_cid: str
-    output_cid: str
-    decision_cid: str
+    output_cid: Optional[str] = None
+    decision_cid: Optional[str] = None
     observed_side_effects: List[str] = field(default_factory=list)
     proofs_checked: List[str] = field(default_factory=list)
-    correlation_id: str = ""
-    time_observed: str = field(default_factory=_utcnow)
+    correlation_id: Optional[str] = None
+    time_observed: Optional[str] = None
+
+    _cid: Optional[str] = field(default=None, repr=False, compare=False)
+
+    @property
+    def cid(self) -> str:
+        if self._cid is None:
+            self._cid = compute_cid(self._canonical_bytes())
+        return self._cid
+
+    def _canonical_bytes(self) -> bytes:
+        d = {
+            "intent_cid": self.intent_cid,
+            "output_cid": self.output_cid,
+            "decision_cid": self.decision_cid,
+            "observed_side_effects": sorted(self.observed_side_effects),
+            "proofs_checked": sorted(self.proofs_checked),
+            "correlation_id": self.correlation_id,
+            "time_observed": self.time_observed,
+        }
+        return _canonicalize(d)
 
     def to_dict(self) -> Dict[str, Any]:
-        """Serialise to a plain dict for canonicalisation / CID derivation."""
         return {
+            "receipt_cid": self.cid,
             "intent_cid": self.intent_cid,
             "output_cid": self.output_cid,
             "decision_cid": self.decision_cid,

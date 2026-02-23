@@ -1,7 +1,7 @@
 # Logic Module — Evergreen Refactor & Improvement Plan (Infinite TODO List)
 
 **Module:** `ipfs_datasets_py.logic`  
-**Last updated:** 2026-02-17  
+**Last updated:** 2026-02-22  
 **Purpose:** A single, durable improvement plan + never-ending backlog that is safe to execute incrementally without breaking downstream imports.
 
 This document is intentionally **never “done”**. It defines continuous loops (import hygiene, API stability, correctness, performance, and docs truth) and a queue of small refactor slices.
@@ -16,10 +16,12 @@ This document is intentionally **never “done”**. It defines continuous loops
 
 This plan is an index + prioritization layer over existing detail documents:
 
-- `IMPROVEMENT_TODO.md` — long-form backlog and acceptance criteria
-- `COMPREHENSIVE_REFACTORING_PLAN.md` — narrative refactor program and doc consolidation strategy
-- `PROJECT_STATUS.md` — current status snapshot (may need periodic verification)
+- `MASTER_REFACTORING_PLAN_2026.md` — authoritative plan (Phases 1–8; v22.0; updated 2026-02-22)
+- `PROJECT_STATUS.md` — current status snapshot (updated 2026-02-22)
 - `ARCHITECTURE.md`, `FEATURES.md`, `KNOWN_LIMITATIONS.md`, `MIGRATION_GUIDE.md`
+- `integration/CHANGELOG.md` — integration layer version history
+- `CEC/STATUS.md` — CEC implementation status (v2.0; updated 2026-02-22)
+- `TDFOL/STATUS_2026.md` — TDFOL implementation status (v3.0; updated 2026-02-22)
 
 ## Guardrails (Non-Negotiable)
 
