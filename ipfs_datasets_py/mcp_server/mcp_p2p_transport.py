@@ -753,6 +753,56 @@ class PubSubBus:
         """
         return {k: list(v) for k, v in self._subscribers.items() if v}
 
+    def resubscribe(
+        self,
+        old_handler: Any,
+        new_handler: Any,
+        topic: Optional[Union[str, "PubSubEventType"]] = None,
+    ) -> int:
+        """Replace a registered handler without disrupting subscription order.
+
+        Scans ``_subscribers`` for *old_handler* and replaces each occurrence
+        with *new_handler* in-place.  When ``topic`` is specified only that
+        topic is scanned; when ``topic=None`` all topics are scanned.
+
+        The ``__mcp_priority__`` attribute of *old_handler* is **not** copied
+        to *new_handler* — callers should set it on *new_handler* before
+        calling this method if priority must be preserved.
+
+        ``_sid_map`` is updated: any SID previously mapped to *old_handler* is
+        remapped to *new_handler*.
+
+        Args:
+            old_handler: The handler currently registered.
+            new_handler: The replacement handler.
+            topic: If given, only replace within that topic's handler list.
+                   If ``None``, replace across all topics.
+
+        Returns:
+            Number of replacements made (0 if *old_handler* was not found).
+        """
+        replaced = 0
+        keys: List[str]
+        if topic is not None:
+            key = topic.value if hasattr(topic, "value") else str(topic)
+            keys = [key]
+        else:
+            keys = list(self._subscribers.keys())
+
+        for key in keys:
+            handlers = self._subscribers.get(key, [])
+            for i, h in enumerate(handlers):
+                if h is old_handler:
+                    handlers[i] = new_handler
+                    replaced += 1
+
+        # Update sid_map
+        for sid, (k, h) in list(self._sid_map.items()):
+            if h is old_handler:
+                self._sid_map[sid] = (k, new_handler)
+
+        return replaced
+
     async def publish_async(
         self,
         topic: Union[str, "PubSubEventType"],

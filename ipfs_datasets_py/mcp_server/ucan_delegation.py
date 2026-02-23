@@ -1129,6 +1129,19 @@ class MergeResult:
         """
         return self.added_count > 0
 
+    def __len__(self) -> int:
+        """Return the number of delegations added by this merge.
+
+        Allows ``len(result)`` to mirror :meth:`__int__` and enables use in
+        sum comprehensions::
+
+            total = sum(len(r) for r in results)
+
+        Returns:
+            :attr:`added_count` as an ``int``.
+        """
+        return self.added_count
+
 
 class DelegationManager:
     """Bundles :class:`DelegationStore`, :class:`RevocationList`, and

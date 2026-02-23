@@ -1342,6 +1342,20 @@ class IPFSReloadResult(NamedTuple):
         """
         return self.all_succeeded
 
+    def __len__(self) -> int:
+        """Return the total number of policies in the reload batch.
+
+        Allows ``len(result)`` to give the batch size without accessing
+        :attr:`count` directly::
+
+            results = [store.reload() for store in stores]
+            total = sum(len(r) for r in results)
+
+        Returns:
+            :attr:`count` as an ``int``.
+        """
+        return self.count
+
 
 class IPFSPolicyStore(FilePolicyStore):
     """IPFS-backed :class:`PolicyRegistry` store (Phase G).

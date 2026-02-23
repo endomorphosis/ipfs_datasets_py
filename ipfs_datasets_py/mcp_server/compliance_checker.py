@@ -943,6 +943,33 @@ class ComplianceChecker:
         return files[0] if files else None
 
     @staticmethod
+    def oldest_backup_path(path: str) -> Optional[str]:
+        """Return the path of the *oldest* backup file.
+
+        Returns the last item from :meth:`list_bak_files`, which is the
+        ``.bak.N`` file with the highest index (oldest backup).  Returns
+        ``None`` when no backup exists::
+
+            old_bak = ComplianceChecker.oldest_backup_path("/data/rules.enc")
+            if old_bak is not None:
+                os.unlink(old_bak)  # targeted removal of oldest backup
+
+        This is the complement of :meth:`newest_backup_path` — while that
+        method returns the *path* of the newest backup (``path + ".bak"``),
+        this method returns the *path* of the oldest backup
+        (``path + ".bak.N"`` for largest N, or ``path + ".bak"`` when only
+        one backup exists).
+
+        Args:
+            path: Base file path (without ``.bak`` suffix).
+
+        Returns:
+            Path string of the oldest ``.bak`` file, or ``None``.
+        """
+        files = ComplianceChecker.list_bak_files(path)
+        return files[-1] if files else None
+
+    @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:
         if isinstance(intent, dict):
             return intent.get(field, default)
