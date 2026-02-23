@@ -268,6 +268,41 @@ class ComplianceChecker:
 
         return ComplianceReport(results=results, intent_snapshot=snapshot)
 
+    def diff(self, other: "ComplianceChecker") -> Dict[str, Any]:
+        """CR154: Compare *self* against *other* and return a diff summary.
+
+        The diff shows which rules are unique to each checker and which are
+        shared.  Rules are compared by ``rule_id``.
+
+        Returns
+        -------
+        dict with keys:
+
+        * ``added_rules`` — rule IDs present in *other* but not in *self*.
+        * ``removed_rules`` — rule IDs present in *self* but not in *other*.
+        * ``common_rules`` — rule IDs present in both checkers.
+        * ``changed_rules`` — rule IDs present in both but with differing
+          ``description`` or ``removable`` values.
+        """
+        self_ids = {r.rule_id: r for r in self._rules}
+        other_ids = {r.rule_id: r for r in other._rules}
+        added = sorted(set(other_ids) - set(self_ids))
+        removed = sorted(set(self_ids) - set(other_ids))
+        common = sorted(set(self_ids) & set(other_ids))
+        changed = [
+            rid for rid in common
+            if (
+                self_ids[rid].description != other_ids[rid].description
+                or self_ids[rid].removable != other_ids[rid].removable
+            )
+        ]
+        return {
+            "added_rules": added,
+            "removed_rules": removed,
+            "common_rules": common,
+            "changed_rules": changed,
+        }
+
     def __repr__(self) -> str:
         return f"ComplianceChecker(rules={len(self._rules)}, fail_fast={self.fail_fast})"
 

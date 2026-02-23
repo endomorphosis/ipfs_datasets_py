@@ -114,6 +114,58 @@ class NLUCANCompilerResult:
             return list(self.bridge_result.denials)
         return []
 
+    def explain(self) -> str:
+        """CW159: Return a human-readable explanation of this compilation result.
+
+        The explanation summarises what the pipeline produced: how many
+        sentences were processed, how many policy clauses and delegation tokens
+        were emitted, and any errors or warnings encountered.
+
+        Returns
+        -------
+        str
+            A multi-line explanation string.
+        """
+        lines: List[str] = []
+        status = "succeeded" if self.success else "failed"
+        lines.append(f"Compilation {status}.")
+        lines.append(f"Input: {len(self.input_sentences)} sentence(s).")
+
+        # Policy clauses
+        clauses = self.metadata.get("policy_clauses", 0)
+        if clauses:
+            lines.append(f"Policy clauses: {clauses}.")
+
+        # DCEC formulas
+        formulas = self.metadata.get("dcec_formulas", 0)
+        if formulas:
+            lines.append(f"DCEC formulas: {formulas}.")
+
+        # Delegation tokens
+        ucan_tokens = self.metadata.get("ucan_tokens", 0)
+        ucan_denials = self.metadata.get("ucan_denials", 0)
+        if ucan_tokens or ucan_denials:
+            lines.append(
+                f"Delegation tokens: {ucan_tokens} granted, "
+                f"{ucan_denials} denial(s) (prohibition → no token)."
+            )
+
+        # Delegation evaluator
+        if self.delegation_evaluator is not None:
+            lines.append("Delegation evaluator: ready.")
+
+        # Errors / warnings
+        if self.errors:
+            shown = self.errors[:3]
+            suffix = f" ... and {len(self.errors) - 3} more" if len(self.errors) > 3 else ""
+            lines.append(f"Errors ({len(self.errors)}): " + "; ".join(shown) + suffix)
+        if self.warnings:
+            shown_w = self.warnings[:3]
+            suffix_w = f" ... and {len(self.warnings) - 3} more" if len(self.warnings) > 3 else ""
+            lines.append(f"Warnings ({len(self.warnings)}): " + "; ".join(shown_w) + suffix_w)
+
+        return "\n".join(lines)
+
 
 class NLUCANPolicyCompiler:
     """

@@ -852,6 +852,67 @@ class DelegationManager:
     def __len__(self) -> int:
         return len(self._store)
 
+    # ------------------------------------------------------------------
+    # CQ153: Merge
+    # ------------------------------------------------------------------
+
+    def merge(self, other: "DelegationManager") -> int:
+        """CQ153: Copy non-duplicate delegation tokens from *other* into *self*.
+
+        Tokens whose CID is already present in this manager are skipped.
+        Revocations are **not** copied (use explicit revoke() calls for that).
+
+        Parameters
+        ----------
+        other:
+            Source :class:`DelegationManager`.
+
+        Returns
+        -------
+        int
+            Number of tokens actually added (0 if all were duplicates).
+        """
+        added = 0
+        for cid in other.list_cids():
+            if cid not in self._store:
+                token = other.get(cid)
+                if token is not None:
+                    self._store.add(token)
+                    added += 1
+        if added > 0:
+            self._evaluator = None  # invalidate
+            self._metrics_cache = None
+        return added
+
+    def merge_and_publish(self, other: "DelegationManager", pubsub: Any) -> int:
+        """CQ153: Merge tokens from *other*, then publish a receipt-dissemination event.
+
+        Calls :meth:`merge` and then ``pubsub.publish("receipt_disseminate",
+        {"type": "merge", "added": N, "total": M})``.
+
+        Parameters
+        ----------
+        other:
+            Source :class:`DelegationManager`.
+        pubsub:
+            Any object with a ``publish(topic: str, payload: dict) -> None``
+            method.  The topic ``"receipt_disseminate"`` is used.
+
+        Returns
+        -------
+        int
+            Number of tokens added (same as :meth:`merge`).
+        """
+        added = self.merge(other)
+        try:
+            pubsub.publish(
+                "receipt_disseminate",
+                {"type": "merge", "added": added, "total": len(self._store)},
+            )
+        except Exception as exc:  # pragma: no cover
+            logger.debug("merge_and_publish: pubsub.publish failed: %s", exc)
+        return added
+
     def __repr__(self) -> str:
         return (
             f"DelegationManager(tokens={len(self._store)}, "

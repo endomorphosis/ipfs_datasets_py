@@ -266,6 +266,79 @@ class PolicyAuditLog:
             self._entries.clear()
             return n
 
+    def export_jsonl(self, path: str) -> int:
+        """CS155: Export all in-memory entries to a JSONL file (overwrite).
+
+        Parameters
+        ----------
+        path:
+            Filesystem path for the output JSONL file.  Parent directories
+            are created automatically.
+
+        Returns
+        -------
+        int
+            Number of entries written.
+        """
+        out = Path(path)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        with self._lock:
+            entries = list(self._entries)
+        with out.open("w", encoding="utf-8") as fh:
+            for entry in entries:
+                fh.write(entry.to_json() + "\n")
+        return len(entries)
+
+    def import_jsonl(self, path: str) -> int:
+        """CS155: Import entries from a JSONL file into the in-memory buffer.
+
+        Lines that cannot be parsed as :class:`AuditEntry` JSON are skipped
+        with a DEBUG log.
+
+        Parameters
+        ----------
+        path:
+            Filesystem path of the JSONL file to read.
+
+        Returns
+        -------
+        int
+            Number of entries successfully imported.
+        """
+        imported = 0
+        src = Path(path)
+        if not src.exists():
+            logger.debug("import_jsonl: file not found: %s", path)
+            return 0
+        with src.open("r", encoding="utf-8") as fh:
+            for line_no, raw in enumerate(fh, start=1):
+                raw = raw.strip()
+                if not raw:
+                    continue
+                try:
+                    data = json.loads(raw)
+                    entry = AuditEntry(
+                        timestamp=float(data.get("timestamp", 0.0)),
+                        policy_cid=str(data.get("policy_cid", "")),
+                        intent_cid=str(data.get("intent_cid", "")),
+                        decision=str(data.get("decision", "unknown")),
+                        actor=data.get("actor"),
+                        tool=str(data.get("tool", "unknown")),
+                        justification=str(data.get("justification", "")),
+                        obligations=list(data.get("obligations", [])),
+                        extra=dict(data.get("extra", {})),
+                    )
+                    with self._lock:
+                        if self._max_entries > 0 and len(self._entries) >= self._max_entries:
+                            self._entries.pop(0)
+                        self._entries.append(entry)
+                        self._total_recorded += 1
+                        self._counters[entry.decision] = self._counters.get(entry.decision, 0) + 1
+                    imported += 1
+                except Exception as exc:
+                    logger.debug("import_jsonl: skipping line %d: %s", line_no, exc)
+        return imported
+
     def stats(self) -> Dict[str, Any]:
         """Return a summary dict suitable for metrics/monitoring endpoints."""
         counts = self.decision_counts()

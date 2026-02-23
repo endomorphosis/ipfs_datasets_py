@@ -382,3 +382,86 @@ try:
     __all__ += ["detect_i18n_clauses"]
 except (ImportError, ModuleNotFoundError):
     pass
+
+
+# ---------------------------------------------------------------------------
+# CT156: I18NConflictReport + detect_all_languages convenience
+# ---------------------------------------------------------------------------
+
+from dataclasses import dataclass as _dataclass, field as _field
+from typing import Dict as _Dict, List as _List
+
+
+@_dataclass
+class I18NConflictReport:
+    """CT156: Multi-language conflict detection report.
+
+    Collects :class:`~logic.CEC.nl.nl_policy_conflict_detector.PolicyConflict`
+    results for each language scanned by :func:`detect_all_languages`.
+
+    Attributes
+    ----------
+    by_language:
+        Mapping of ISO 639-1 language code → list of :class:`PolicyConflict`.
+    """
+
+    by_language: _Dict[str, _List[Any]] = _field(default_factory=dict)
+
+    @property
+    def total_conflicts(self) -> int:
+        """Total number of conflicts across all languages."""
+        return sum(len(v) for v in self.by_language.values())
+
+    @property
+    def languages_with_conflicts(self) -> _List[str]:
+        """Languages that produced at least one conflict."""
+        return sorted(lang for lang, conflicts in self.by_language.items() if conflicts)
+
+    def to_dict(self) -> Any:
+        """Return a plain-dict representation suitable for JSON serialisation."""
+        return {
+            lang: [c.to_dict() for c in conflicts]
+            for lang, conflicts in self.by_language.items()
+        }
+
+
+def detect_all_languages(text: str) -> "I18NConflictReport":
+    """CT156: Run full-clause conflict detection across all supported languages.
+
+    Calls :func:`~logic.CEC.nl.nl_policy_conflict_detector.detect_i18n_clauses`
+    for French (``"fr"``), Spanish (``"es"``), and German (``"de"``), and
+    returns a combined :class:`I18NConflictReport`.
+
+    Parameters
+    ----------
+    text:
+        Raw natural-language text to analyse.
+
+    Returns
+    -------
+    :class:`I18NConflictReport`
+        Report with per-language conflict lists (empty list when no conflict
+        or when the parser module is unavailable).
+    """
+    _SUPPORTED_LANGS = ("fr", "es", "de")
+    report = I18NConflictReport()
+    try:
+        from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (  # noqa: F401
+            detect_i18n_clauses as _detect_i18n_clauses,
+        )
+        _available = True
+    except (ImportError, ModuleNotFoundError):
+        _available = False
+    for lang in _SUPPORTED_LANGS:
+        if _available:
+            try:
+                report.by_language[lang] = _detect_i18n_clauses(text, lang)
+            except Exception:
+                report.by_language[lang] = []
+        else:
+            report.by_language[lang] = []
+    return report
+
+
+# CT156: extend __all__
+__all__ += ["I18NConflictReport", "detect_all_languages"]
