@@ -304,6 +304,22 @@ _I18N_KEYWORD_LOADERS: Dict[str, str] = {
     "pt": "ipfs_datasets_py.logic.CEC.nl.portuguese_parser:get_portuguese_deontic_keywords",  # DJ172
 }
 
+# DO177: Italian deontic keywords (inline — no separate parser module needed).
+_IT_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
+    "permission": [
+        "può", "puó", "è permesso", "è consentito", "è autorizzato",
+        "ha il diritto di", "è ammesso", "è lecito",
+    ],
+    "prohibition": [
+        "non può", "non puó", "è vietato", "è proibito", "non è consentito",
+        "non è permesso", "non è autorizzato", "è illecito",
+    ],
+    "obligation": [
+        "deve", "è obbligato", "è tenuto a", "è necessario", "ha l'obbligo di",
+        "è richiesto", "ha il dovere di",
+    ],
+}
+
 # DC165: English deontic keywords (inline — no separate parser module needed).
 _EN_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
@@ -337,11 +353,13 @@ _NL_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
 
 
 def _load_i18n_keywords(language: str) -> Dict[str, List[str]]:
-    """Load deontic keywords for *language* (``"en"``, ``"nl"``, ``"fr"``, ``"es"``, ``"de"``, or ``"pt"``)."""
+    """Load deontic keywords for *language* (``"en"``, ``"nl"``, ``"it"``, ``"fr"``, ``"es"``, ``"de"``, or ``"pt"``)."""
     if language == "en":  # DC165: inline English keywords
         return _EN_DEONTIC_KEYWORDS
     if language == "nl":  # DN176: inline Dutch keywords
         return _NL_DEONTIC_KEYWORDS
+    if language == "it":  # DO177: inline Italian keywords
+        return _IT_DEONTIC_KEYWORDS
     loader_path = _I18N_KEYWORD_LOADERS.get(language)
     if loader_path is None:
         return {}

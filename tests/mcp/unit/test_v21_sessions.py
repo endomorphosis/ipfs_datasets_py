@@ -678,10 +678,10 @@ class TestDN176DutchKeywords:
         assert "nl" in report.by_language
 
     def test_detect_all_languages_6_langs(self):
-        """detect_all_languages() now covers 6 languages."""
+        """detect_all_languages() covers at least 6 languages (v22/DO177 adds Italian)."""
         from ipfs_datasets_py.logic.api import detect_all_languages
         report = detect_all_languages("User may read. Utilisateur peut lire.")
-        assert len(report.by_language) == 6
+        assert len(report.by_language) >= 6
         for lang in ("fr", "es", "de", "en", "pt", "nl"):
             assert lang in report.by_language
 

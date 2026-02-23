@@ -10,6 +10,7 @@ so that it integrates transparently with ``detect_all_languages()`` and the
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
@@ -117,7 +118,12 @@ class PortugueseParser:
         self._keywords = _PT_DEONTIC_KEYWORDS
 
     def parse(self, text: str) -> List[PortugueseClause]:
-        """Parse *text* and return a list of :class:`PortugueseClause` objects.
+        """DP178: Parse *text* and return a list of :class:`PortugueseClause` objects.
+
+        Splits the input on sentence boundaries (``"."``, ``"!"``, ``"?"`` and
+        ``";"``) and scans each sentence fragment independently so that a
+        single input can yield multiple clauses (one per deontic type per
+        sentence).
 
         Parameters
         ----------
@@ -128,19 +134,25 @@ class PortugueseParser:
         -------
         list of :class:`PortugueseClause`
             Detected deontic clauses; empty list when none are found.
+            Multiple clauses may be returned when the text contains both
+            permissions and prohibitions in separate sentences.
         """
-        text_lower = text.lower()
+        # DP178: split on sentence boundaries to allow multi-clause extraction.
+        sentences = [s.strip() for s in re.split(r"[.!?;]+", text) if s.strip()]
+        if not sentences:
+            sentences = [text]
         clauses: List[PortugueseClause] = []
-        for deontic_type, keywords in self._keywords.items():
-            for kw in keywords:
-                if kw in text_lower:
-                    # Find the sentence (naive: use the whole text)
-                    clauses.append(
-                        PortugueseClause(
-                            text=text,
-                            deontic_type=deontic_type,
-                            matched_keyword=kw,
+        for sentence in sentences:
+            sentence_lower = sentence.lower()
+            for deontic_type, keywords in self._keywords.items():
+                for kw in keywords:
+                    if kw in sentence_lower:
+                        clauses.append(
+                            PortugueseClause(
+                                text=sentence,
+                                deontic_type=deontic_type,
+                                matched_keyword=kw,
+                            )
                         )
-                    )
-                    break  # one clause per deontic type per text
+                        break  # one clause per deontic type per sentence
         return clauses

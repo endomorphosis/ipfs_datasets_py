@@ -694,6 +694,7 @@ class DelegationManager:
     def revoke(self, cid: str) -> None:
         """Revoke a token by *cid*."""
         self._revocation.revoke(cid)
+        self._metrics_cache = None  # DV184: invalidate cache on revoke
 
     def revoke_chain(self, root_cid: str) -> int:
         """Revoke an entire chain rooted at *root_cid*.
@@ -839,6 +840,7 @@ class DelegationManager:
         result = {
             "token_count": len(self._store),
             "revoked_count": len(self._revocation),
+            "active_token_count": max(0, len(self._store) - len(self._revocation)),  # DV184
             "has_path": self._store._store_path is not None,
             "max_chain_depth": max_depth,
         }
@@ -924,14 +926,20 @@ class DelegationManager:
         return added
 
     async def merge_and_publish_async(self, other: "DelegationManager", pubsub: Any) -> int:
-        """DK173: Async variant of :meth:`merge_and_publish`.
+        """DK173/DQ179: Async variant of :meth:`merge_and_publish`.
 
         Merges tokens from *other* synchronously (thread-safe), then calls
         ``await pubsub.publish_async("receipt_disseminate", payload)`` when
         the pubsub has a ``publish_async`` coroutine, falling back to the
         synchronous ``publish`` if it does not.
 
-        The payload is identical to :meth:`merge_and_publish`.
+        DQ179: The topic string ``"receipt_disseminate"`` is the well-known
+        MCP+P2P pubsub topic key (see ``MCP_P2P_PUBSUB_TOPICS`` in
+        ``mcp_p2p_transport.py``).  The ``event_type`` field in the payload
+        is set to ``"RECEIPT_DISSEMINATE"`` for consumers that need to
+        distinguish event types.
+
+        The payload is otherwise identical to :meth:`merge_and_publish`.
 
         Parameters
         ----------
@@ -950,6 +958,7 @@ class DelegationManager:
         added = self.merge(other)
         payload = {
             "type": "merge",
+            "event_type": "RECEIPT_DISSEMINATE",  # DQ179: explicit event type
             "added": added,
             "total": len(self._store),
             "metrics": self.get_metrics(),

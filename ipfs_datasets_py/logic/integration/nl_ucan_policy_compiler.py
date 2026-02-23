@@ -350,8 +350,9 @@ class NLUCANPolicyCompiler:
         self,
         sentences: List[str],
         policy_id: Optional[str] = None,
+        max_lines: Optional[int] = None,
     ) -> "Iterator[str]":
-        """DI171: Compile *sentences* and yield the explanation as an iterator of lines.
+        """DI171/DT182: Compile *sentences* and yield the explanation as an iterator of lines.
 
         This is a lazy variant of :meth:`compile_explain` that compiles once
         and then yields the explanation string split on newlines.  Useful when
@@ -367,6 +368,9 @@ class NLUCANPolicyCompiler:
             Plain-English policy statements.
         policy_id:
             Override the instance-level ``policy_id``.
+        max_lines:
+            DT182: If provided, at most *max_lines* lines are yielded.  ``None``
+            (default) yields all lines.
 
         Yields
         ------
@@ -375,7 +379,10 @@ class NLUCANPolicyCompiler:
             newline per line).
         """
         result = self.compile(sentences, policy_id=policy_id)
-        for line in result.explain().splitlines():
+        lines = result.explain().splitlines()
+        for i, line in enumerate(lines):
+            if max_lines is not None and i >= max_lines:
+                break
             yield line
 
 

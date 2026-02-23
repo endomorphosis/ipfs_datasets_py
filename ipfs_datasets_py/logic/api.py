@@ -426,17 +426,17 @@ class I18NConflictReport:
 
 
 def detect_all_languages(text: str) -> "I18NConflictReport":
-    """CT156/DJ172/DN176: Run full-clause conflict detection across all supported languages.
+    """CT156/DJ172/DN176/DO177: Run full-clause conflict detection across all supported languages.
 
     Calls :func:`~logic.CEC.nl.nl_policy_conflict_detector.detect_i18n_clauses`
     for French (``"fr"``), Spanish (``"es"``), German (``"de"``),
-    English (``"en"``), Portuguese (``"pt"``), and Dutch (``"nl"``),
-    and returns a combined :class:`I18NConflictReport`.
+    English (``"en"``), Portuguese (``"pt"``), Dutch (``"nl"``), and
+    Italian (``"it"``), and returns a combined :class:`I18NConflictReport`.
 
-    The English and Dutch passes use inline deontic keywords (no separate
-    parser module is required) so they are always available.  Portuguese
-    requires ``portuguese_parser.py`` in the same package; an ``ImportError``
-    results in an empty list for that language slot.
+    English, Dutch, and Italian passes use inline deontic keywords (no
+    separate parser module is required) so they are always available.
+    Portuguese requires ``portuguese_parser.py``; an ``ImportError`` results
+    in an empty list for that language slot.
 
     Parameters
     ----------
@@ -449,7 +449,7 @@ def detect_all_languages(text: str) -> "I18NConflictReport":
         Report with per-language conflict lists (empty list when no conflict
         or when the parser module is unavailable).
     """
-    _SUPPORTED_LANGS = ("fr", "es", "de", "en", "pt", "nl")  # DJ172/DN176: pt + nl
+    _SUPPORTED_LANGS = ("fr", "es", "de", "en", "pt", "nl", "it")  # DO177: added "it"
     report = I18NConflictReport()
     try:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (  # noqa: F401
@@ -471,3 +471,39 @@ def detect_all_languages(text: str) -> "I18NConflictReport":
 
 # CT156: extend __all__
 __all__ += ["I18NConflictReport", "detect_all_languages"]
+
+# DW185: compile_explain_iter re-export
+_DW185_COMPILER_AVAILABLE = False
+try:
+    from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (  # type: ignore[import-not-found]
+        NLUCANPolicyCompiler as _NLUCANPolicyCompiler_dw185,
+    )
+    # compile_explain_iter is an instance method; expose a module-level wrapper
+    def compile_explain_iter(sentences: _List[str], policy_id: Optional[str] = None, max_lines: Optional[int] = None):  # type: ignore[misc]
+        """DW185: Module-level wrapper for :meth:`NLUCANPolicyCompiler.compile_explain_iter`.
+
+        Creates a fresh :class:`NLUCANPolicyCompiler` and delegates to its
+        ``compile_explain_iter`` method.  Returns a generator of explanation lines.
+
+        Parameters
+        ----------
+        sentences:
+            Plain-English policy statements.
+        policy_id:
+            Optional policy identifier override.
+        max_lines:
+            Optional limit on lines yielded (``None`` = all lines).
+
+        Yields
+        ------
+        str
+            Explanation lines.
+        """
+        compiler = _NLUCANPolicyCompiler_dw185()
+        yield from compiler.compile_explain_iter(sentences, policy_id=policy_id, max_lines=max_lines)
+    _DW185_COMPILER_AVAILABLE = True
+except (ImportError, ModuleNotFoundError):
+    pass
+
+if _DW185_COMPILER_AVAILABLE:
+    __all__ += ["compile_explain_iter"]

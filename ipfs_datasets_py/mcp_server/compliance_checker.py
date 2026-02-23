@@ -26,6 +26,7 @@ Usage::
 from __future__ import annotations
 
 import json
+import copy
 import logging
 import re
 from dataclasses import dataclass, field
@@ -269,7 +270,7 @@ class ComplianceChecker:
         return ComplianceReport(results=results, intent_snapshot=snapshot)
 
     def merge(self, other: "ComplianceChecker", *, include_protected_rules: bool = False) -> int:
-        """DA163/DH170: Copy rules from *other* that are not already present in *self*.
+        """DA163/DH170/DS181: Copy rules from *other* that are not already present in *self*.
 
         Rules are matched by ``rule_id``; rules whose ``rule_id`` already
         exists in *self* are silently skipped.  Order within *self* is
@@ -290,6 +291,10 @@ class ComplianceChecker:
             by merging).  Set to ``True`` to copy all rules regardless of
             the ``removable`` flag.
 
+            DS181: When copying rules, a shallow copy of each rule is stored
+            so that mutations to the source rule (e.g. description updates)
+            in *other* do not affect *self*.
+
         Returns
         -------
         int
@@ -302,7 +307,8 @@ class ComplianceChecker:
             if not include_protected_rules and not rule.removable:
                 continue
             if rule.rule_id not in existing_ids:
-                self._rules.append(rule)
+                # DS181: shallow copy so mutations in other don't affect self
+                self._rules.append(copy.copy(rule))
                 existing_ids.add(rule.rule_id)
                 added += 1
         return added
