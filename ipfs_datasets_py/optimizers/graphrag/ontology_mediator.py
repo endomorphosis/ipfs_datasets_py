@@ -1624,6 +1624,245 @@ class OntologyMediator:
         )
         
         return state
+
+    def run_agentic_refinement_cycle(
+        self,
+        data: Any,
+        context: Any,  # OntologyGenerationContext
+        max_rounds: Optional[int] = None,
+        min_improvement: float = 0.01,
+    ) -> MediatorState:
+        """
+        Run a refinement cycle that uses strategy recommendations to guide stopping.
+
+        This loop mirrors :meth:`run_refinement_cycle` but consults
+        :meth:`suggest_refinement_strategy` each round to decide whether to
+        continue. The recommended strategy is recorded in the refinement history
+        for traceability.
+
+        Args:
+            data: Source data for ontology generation.
+            context: Generation context with configuration.
+            max_rounds: Optional override for max rounds (defaults to mediator setting).
+            min_improvement: Minimum score improvement required to keep refining.
+
+        Returns:
+            Final MediatorState with complete refinement history.
+        """
+        import time
+
+        start_time = time.time()
+        round_limit = max_rounds or self.max_rounds
+        self._log.info(
+            "Starting agentic refinement cycle (max %d rounds)",
+            round_limit,
+        )
+
+        initial_ontology = self.generator.generate_ontology(data, context)
+        initial_score = self.critic.evaluate_ontology(initial_ontology, context, data)
+
+        state = MediatorState(
+            current_ontology=initial_ontology,
+            max_rounds=round_limit,
+            target_score=self.convergence_threshold,
+        )
+        state.add_round(initial_ontology, initial_score, "initial_generation")
+
+        self._log.info("Initial score: %.2f", initial_score.overall)
+
+        prev_score = initial_score
+        for round_num in range(1, round_limit):
+            strategy = self.suggest_refinement_strategy(
+                state.current_ontology,
+                prev_score,
+                context,
+            )
+
+            if (
+                strategy.get("action") in {"converged", "no_action_needed"}
+                and prev_score.overall >= self.convergence_threshold
+            ):
+                self._log.info(
+                    "Converged at round %d (score: %.2f)",
+                    round_num,
+                    prev_score.overall,
+                )
+                state.converged = True
+                break
+
+            if (
+                strategy.get("priority") == "low"
+                and round_num > 1
+                and state.get_score_trend() in {"stable", "insufficient_data"}
+            ):
+                self._log.info("Stopping: strategy priority low and score trend stable")
+                break
+
+            refined_ontology = self.refine_ontology(
+                state.current_ontology,
+                prev_score,
+                context,
+            )
+
+            refined_score = self.critic.evaluate_ontology(
+                refined_ontology,
+                context,
+                data,
+            )
+
+            state.add_round(
+                refined_ontology,
+                refined_score,
+                f"agentic_round_{round_num}:{strategy.get('action', 'unknown')}",
+            )
+            state.refinement_history[-1]["strategy"] = strategy
+
+            self._log.info(
+                "Round %d: score=%.2f (Δ=%+.2f)",
+                round_num,
+                refined_score.overall,
+                refined_score.overall - prev_score.overall,
+            )
+
+            if refined_score.overall >= self.convergence_threshold:
+                self._log.info(
+                    "Converged at round %d (score: %.2f)",
+                    round_num,
+                    refined_score.overall,
+                )
+                state.converged = True
+                break
+
+            if refined_score.overall < prev_score.overall - 0.1:
+                self._log.warning("Score degraded significantly, stopping refinement")
+                break
+
+            if (refined_score.overall - prev_score.overall) < min_improvement and round_num > 1:
+                self._log.info("Stopping: improvement below %.3f", min_improvement)
+                break
+
+            prev_score = refined_score
+
+        state.total_time_ms = (time.time() - start_time) * 1000
+        state.metadata["final_score"] = state.critic_scores[-1].overall
+        state.metadata["score_trend"] = state.get_score_trend()
+        state.metadata["improvement"] = (
+            state.critic_scores[-1].overall - state.critic_scores[0].overall
+        )
+
+        self._log.info(
+            "Agentic refinement complete: %d rounds, final score=%.2f, improvement=%+.2f",
+            state.current_round,
+            state.metadata["final_score"],
+            state.metadata["improvement"],
+        )
+
+        return state
+
+    def run_llm_refinement_cycle(
+        self,
+        data: Any,
+        context: Any,  # OntologyGenerationContext
+        agent: Any,
+        max_rounds: Optional[int] = None,
+        min_improvement: float = 0.01,
+    ) -> MediatorState:
+        """
+        Run a refinement cycle that uses an LLM agent to propose feedback.
+
+        The agent is expected to provide a structured feedback dict compatible
+        with OntologyGenerator.generate_with_feedback(). Each round uses the
+        agent's feedback to generate a refined ontology and re-evaluates it.
+
+        Args:
+            data: Source data for ontology generation.
+            context: Generation context with configuration.
+            agent: OntologyRefinementAgent (or compatible interface).
+            max_rounds: Optional override for max rounds.
+            min_improvement: Minimum score improvement required to keep refining.
+
+        Returns:
+            Final MediatorState with complete refinement history.
+        """
+        import time
+
+        start_time = time.time()
+        round_limit = max_rounds or self.max_rounds
+        self._log.info("Starting LLM refinement cycle (max %d rounds)", round_limit)
+
+        initial_ontology = self.generator.generate_ontology(data, context)
+        initial_score = self.critic.evaluate_ontology(initial_ontology, context, data)
+
+        state = MediatorState(
+            current_ontology=initial_ontology,
+            max_rounds=round_limit,
+            target_score=self.convergence_threshold,
+        )
+        state.add_round(initial_ontology, initial_score, "initial_generation")
+
+        prev_score = initial_score
+        for round_num in range(1, round_limit):
+            feedback = agent.propose_feedback(state.current_ontology, prev_score, context)
+            if not feedback:
+                self._log.info("No agent feedback provided; stopping refinement")
+                break
+
+            refined_ontology = self.generator.generate_with_feedback(
+                data,
+                context,
+                feedback=feedback,
+                critic=None,
+            )
+            refined_score = self.critic.evaluate_ontology(refined_ontology, context, data)
+
+            state.add_round(
+                refined_ontology,
+                refined_score,
+                f"llm_round_{round_num}",
+            )
+            state.refinement_history[-1]["agent_feedback"] = feedback
+
+            self._log.info(
+                "Round %d: score=%.2f (Δ=%+.2f)",
+                round_num,
+                refined_score.overall,
+                refined_score.overall - prev_score.overall,
+            )
+
+            if refined_score.overall >= self.convergence_threshold:
+                self._log.info(
+                    "Converged at round %d (score: %.2f)",
+                    round_num,
+                    refined_score.overall,
+                )
+                state.converged = True
+                break
+
+            if refined_score.overall < prev_score.overall - 0.1:
+                self._log.warning("Score degraded significantly, stopping refinement")
+                break
+
+            if (refined_score.overall - prev_score.overall) < min_improvement and round_num > 1:
+                self._log.info("Stopping: improvement below %.3f", min_improvement)
+                break
+
+            prev_score = refined_score
+
+        state.total_time_ms = (time.time() - start_time) * 1000
+        state.metadata["final_score"] = state.critic_scores[-1].overall
+        state.metadata["score_trend"] = state.get_score_trend()
+        state.metadata["improvement"] = (
+            state.critic_scores[-1].overall - state.critic_scores[0].overall
+        )
+
+        self._log.info(
+            "LLM refinement complete: %d rounds, final score=%.2f, improvement=%+.2f",
+            state.current_round,
+            state.metadata["final_score"],
+            state.metadata["improvement"],
+        )
+
+        return state
     
     def check_convergence(
         self,

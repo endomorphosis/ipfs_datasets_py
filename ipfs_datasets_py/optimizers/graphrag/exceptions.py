@@ -1,7 +1,8 @@
-"""Logic optimizer public API exports."""
+"""GraphRAG-specific exceptions built on the common optimizer hierarchy."""
 
-from .exceptions import (
-    LogicError,
+from __future__ import annotations
+
+from ..common.exceptions import (
     OptimizerError,
     ExtractionError,
     ValidationError,
@@ -10,8 +11,13 @@ from .exceptions import (
     ConfigurationError,
 )
 
+
+class GraphRAGError(OptimizerError):
+    """Base class for GraphRAG-specific exceptions."""
+
+
 __all__ = [
-    "LogicError",
+    "GraphRAGError",
     "OptimizerError",
     "ExtractionError",
     "ValidationError",

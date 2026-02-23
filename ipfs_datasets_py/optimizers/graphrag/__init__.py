@@ -155,6 +155,18 @@ from .visualization import (
 
 from .ontology_learning_adapter import OntologyLearningAdapter, FeedbackRecord
 
+from .ontology_refinement_agent import OntologyRefinementAgent
+
+from .exceptions import (
+    GraphRAGError,
+    OptimizerError,
+    ExtractionError,
+    ValidationError,
+    ProvingError,
+    RefinementError,
+    ConfigurationError,
+)
+
 # Type definitions (for static type checking and IDE support)
 from .ontology_types import (
     # Ontology structures
@@ -234,6 +246,16 @@ __all__ = [
     'OntologyVisualizer',
     'MetricsVisualizer',
     'GraphVisualization',
+    # Agent scaffolding
+    'OntologyRefinementAgent',
+    # Exceptions
+    'GraphRAGError',
+    'OptimizerError',
+    'ExtractionError',
+    'ValidationError',
+    'ProvingError',
+    'RefinementError',
+    'ConfigurationError',
     # Learning Adapter
     'OntologyLearningAdapter',
     'FeedbackRecord',

@@ -144,6 +144,8 @@ class OntologyPipeline:
         data_source: str = "pipeline",
         data_type: str = "text",
         refine: bool = True,
+        refine_mode: str = "rule_based",
+        refinement_agent: Optional[Any] = None,
         progress_callback: Optional[Any] = None,
     ) -> PipelineResult:
         """Extract, evaluate, and optionally refine an ontology from *data*.
@@ -153,6 +155,8 @@ class OntologyPipeline:
             data_source: Identifier for the data source (metadata only).
             data_type: Data type hint (``"text"``, ``"json"``, etc.).
             refine: Whether to run the mediator refinement cycle (default: True).
+            refine_mode: Refinement mode: "rule_based" (default), "agentic", or "llm".
+            refinement_agent: Optional agent used for refine_mode="llm".
             progress_callback: Optional callable invoked at each pipeline stage
                 with a progress dict.  The dict contains at minimum:
                 ``{"stage": str, "step": int, "total_steps": int}``.
@@ -220,10 +224,34 @@ class OntologyPipeline:
         if refine:
             score = self._critic.evaluate_ontology(ontology, ctx)
             _notify("evaluating", 3, score=getattr(score, "overall", None))
-            refined = self._mediator.refine_ontology(ontology, score, ctx)
-            ontology = refined
-            actions_applied = refined.get("metadata", {}).get("refinement_actions", [])
-            score = self._critic.evaluate_ontology(ontology, ctx)
+
+            if refine_mode == "agentic":
+                state = self._mediator.run_agentic_refinement_cycle(data, ctx)
+                ontology = state.current_ontology
+                score = state.critic_scores[-1]
+                actions_applied = [r.get("action") for r in state.refinement_history[1:]]
+            elif refine_mode == "llm":
+                if refinement_agent is None:
+                    self._log.warning("refine_mode=llm requires refinement_agent; falling back to rule_based")
+                    refined = self._mediator.refine_ontology(ontology, score, ctx)
+                    ontology = refined
+                    actions_applied = refined.get("metadata", {}).get("refinement_actions", [])
+                    score = self._critic.evaluate_ontology(ontology, ctx)
+                else:
+                    state = self._mediator.run_llm_refinement_cycle(
+                        data,
+                        ctx,
+                        agent=refinement_agent,
+                    )
+                    ontology = state.current_ontology
+                    score = state.critic_scores[-1]
+                    actions_applied = [r.get("action") for r in state.refinement_history[1:]]
+            else:
+                refined = self._mediator.refine_ontology(ontology, score, ctx)
+                ontology = refined
+                actions_applied = refined.get("metadata", {}).get("refinement_actions", [])
+                score = self._critic.evaluate_ontology(ontology, ctx)
+
             _notify("refined", 4, score=getattr(score, "overall", None),
                     actions_applied=actions_applied)
             # Also invoke callback with positional (round_num, max_rounds, score) signature

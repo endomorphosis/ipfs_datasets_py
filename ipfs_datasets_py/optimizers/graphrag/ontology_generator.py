@@ -192,6 +192,42 @@ class ExtractionConfig:
             max_confidence=float(_get("max_confidence", "1.0")),
         )
 
+    @classmethod
+    @functools.lru_cache(maxsize=16)
+    def _get_domain_rule_patterns(cls, domain: str) -> tuple[tuple[str, str], ...]:
+        """Return domain-specific rule patterns (lazy-loaded and cached).
+
+        Args:
+            domain: Domain string (e.g., "legal", "medical").
+
+        Returns:
+            Tuple of (regex_pattern, entity_type) pairs. Empty for unknown domains.
+        """
+        domain_norm = (domain or "general").lower().strip()
+        domain_patterns: dict[str, list[tuple[str, str]]] = {
+            "legal": [
+                (r"\b(?:plaintiff|defendant|claimant|respondent|petitioner)\b", "LegalParty"),
+                (r"\b(?:Article|Section|Clause|Schedule|Appendix)\s+\d+[\w.]*", "LegalReference"),
+                (r"\b(?:indemnif(?:y|ication)|warranty|waiver|covenant|arbitration)\b", "LegalConcept"),
+            ],
+            "medical": [
+                (r"\b(?:diagnosis|prognosis|symptom|syndrome|disorder|disease|condition)\b", "MedicalConcept"),
+                (r"\b\d+\s*(?:mg|mcg|ml|IU|units?)\b", "Dosage"),
+                (r"\b(?:patient|physician|surgeon|nurse|therapist|specialist)\b", "MedicalRole"),
+            ],
+            "technical": [
+                (r"\b(?:API|REST|HTTP|JSON|XML|SQL|NoSQL|GraphQL)\b", "Protocol"),
+                (r"\b(?:microservice|endpoint|middleware|container|pipeline|daemon)\b", "TechnicalComponent"),
+                (r"\bv?\d+\.\d+(?:\.\d+)*(?:-\w+)?\b", "Version"),
+            ],
+            "financial": [
+                (r"\b(?:asset|liability|equity|debit|credit|balance|principal|interest)\b", "FinancialConcept"),
+                (r"\b\d{1,3}(?:,\d{3})*(?:\.\d{2})?\s*(?:USD|EUR|GBP|JPY)?\b", "MonetaryValue"),
+                (r"\b(?:IBAN|SWIFT|BIC|routing\s+number)\b", "BankIdentifier"),
+            ],
+        }
+        return tuple(domain_patterns.get(domain_norm, []))
+
     def validate(self) -> None:
         """Validate field values; raise :class:`ValueError` on invalid combinations.
 
@@ -4071,30 +4107,8 @@ class OntologyGenerator:
             (r'\b[A-Z][A-Za-z]{3,}\b', 'Concept'),
         ]
 
-        domain_patterns: dict[str, list[tuple[str, str]]] = {
-            'legal': [
-                (r'\b(?:plaintiff|defendant|claimant|respondent|petitioner)\b', 'LegalParty'),
-                (r'\b(?:Article|Section|Clause|Schedule|Appendix)\s+\d+[\w.]*', 'LegalReference'),
-                (r'\b(?:indemnif(?:y|ication)|warranty|waiver|covenant|arbitration)\b', 'LegalConcept'),
-            ],
-            'medical': [
-                (r'\b(?:diagnosis|prognosis|symptom|syndrome|disorder|disease|condition)\b', 'MedicalConcept'),
-                (r'\b\d+\s*(?:mg|mcg|ml|IU|units?)\b', 'Dosage'),
-                (r'\b(?:patient|physician|surgeon|nurse|therapist|specialist)\b', 'MedicalRole'),
-            ],
-            'technical': [
-                (r'\b(?:API|REST|HTTP|JSON|XML|SQL|NoSQL|GraphQL)\b', 'Protocol'),
-                (r'\b(?:microservice|endpoint|middleware|container|pipeline|daemon)\b', 'TechnicalComponent'),
-                (r'\bv?\d+\.\d+(?:\.\d+)*(?:-\w+)?\b', 'Version'),
-            ],
-            'financial': [
-                (r'\b(?:asset|liability|equity|debit|credit|balance|principal|interest)\b', 'FinancialConcept'),
-                (r'\b\d{1,3}(?:,\d{3})*(?:\.\d{2})?\s*(?:USD|EUR|GBP|JPY)?\b', 'MonetaryValue'),
-                (r'\b(?:IBAN|SWIFT|BIC|routing\s+number)\b', 'BankIdentifier'),
-            ],
-        }
-
-        patterns = base_patterns + domain_patterns.get(domain, [])
+        domain_patterns = list(ExtractionConfig._get_domain_rule_patterns(domain))
+        patterns = base_patterns + domain_patterns
         if ext_config is not None and hasattr(ext_config, 'custom_rules') and ext_config.custom_rules:
             patterns = patterns[:-1] + list(ext_config.custom_rules) + [patterns[-1]]
         return patterns

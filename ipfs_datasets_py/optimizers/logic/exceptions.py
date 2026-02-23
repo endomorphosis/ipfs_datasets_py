@@ -1,7 +1,8 @@
-"""Logic optimizer public API exports."""
+"""Logic optimizer exceptions built on the common optimizer hierarchy."""
 
-from .exceptions import (
-    LogicError,
+from __future__ import annotations
+
+from ..common.exceptions import (
     OptimizerError,
     ExtractionError,
     ValidationError,
@@ -9,6 +10,11 @@ from .exceptions import (
     RefinementError,
     ConfigurationError,
 )
+
+
+class LogicError(OptimizerError):
+    """Base class for logic optimizer exceptions."""
+
 
 __all__ = [
     "LogicError",

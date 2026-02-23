@@ -54,7 +54,7 @@ This is the long-term refactor plan for the optimizers module. It is deliberatel
 - [ ] (P1) [api] Standardize context objects (GraphRAG/logic/agentic) to dataclasses with typed fields
 - [ ] (P2) [arch] Align BaseOptimizer lifecycle hooks (validate -> generate -> critique -> optimize) across all optimizers
 - [ ] (P2) [arch] Consolidate shared error handling into `common/exceptions.py` helpers
-- [ ] (P2) [api] Introduce `ontology_types.py` TypedDicts for all ontology structures
+- [x] (P2) [api] Introduce `ontology_types.py` TypedDicts for all ontology structures (Done 2026-02-22; ipfs_datasets_py/optimizers/graphrag/ontology_types.py)
 
 ### GraphRAG
 - [ ] (P1) [graphrag] Add LLM extraction path gated by feature flag and config
@@ -96,7 +96,7 @@ test hardening, and documentation clarity while keeping progress measurable.
 - [ ] (P1) [arch] Unify optimizer base class hierarchy (shared OptimizerConfig)
 - [ ] (P2) [api] Standardize context objects across GraphRAG/logic/agentic
 - [ ] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
-- [ ] (P2) [tests] Add property-based tests for Entity/CriticScore/FeedbackRecord
+- [x] (P2) [tests] Add property-based tests for Entity/CriticScore/FeedbackRecord (Done 2026-02-23; tests/unit/optimizers/graphrag/test_property_based_roundtrips.py; tests/unit/optimizers/graphrag/test_property_based_critic_score.py; tests/unit/optimizers/graphrag/test_property_based_learning_adapter_roundtrip.py)
 - [ ] (P2) [perf] Profile OntologyGenerator.generate() on 10k-token input
 - [ ] (P2) [obs] Structured JSON logging for every pipeline run
 - [ ] (P2) [docs] Optimizers README with quick-start + class diagram
@@ -107,9 +107,9 @@ Rotate these while also advancing the plan above. When one completes, replace it
 with a new item from a different track.
 
 **Active picks (rotate on completion)**
-- [ ] (P2) [docs] Write detailed ExtractionConfig configuration guide
-- [ ] (P2) [perf] Profile OntologyGenerator._extract_rule_based() hot paths
-- [ ] (P2) [arch] Extract QueryValidationMixin for GraphRAG reuse
+- [x] (P2) [docs] Write detailed ExtractionConfig configuration guide (Done 2026-02-23; EXTRACTION_CONFIG_GUIDE.md)
+- [x] (P2) [perf] Profile OntologyGenerator._extract_rule_based() hot paths (Done 2026-02-23; top hotspots: infer_relationships, _extract_entities_from_patterns, str.lower; scripts/profile_ontology_generator_rule_based.py; benchmarks/bench_ontology_generator_rule_based.py)
+- [x] (P2) [arch] Extract QueryValidationMixin for GraphRAG reuse (Done 2026-02-22; ipfs_datasets_py/optimizers/common/query_validation.py; used by ipfs_datasets_py/optimizers/graphrag/query_unified_optimizer.py)
 - [ ] (P2) [tests] Add integration test: generator -> critic -> mediator loop
 - [ ] (P2) [agentic] Reconcile docs claiming phases/tests exist with actual files
 
@@ -140,8 +140,8 @@ This plan is intentionally evergreen. It balances refactors, feature growth, tes
 - Provide examples that mirror real usage patterns.
 
 ### Random Work Rotation (Active Picks)
-- [ ] (P2) [docs] Configuration Guide for `ExtractionConfig` fields (see Medium Tasks)
-- [ ] (P2) [arch] Extract `QueryValidationMixin` for GraphRAG reuse (see Strategic Refactoring)
+- [x] (P2) [docs] Configuration Guide for `ExtractionConfig` fields (see Medium Tasks) (Done 2026-02-23; EXTRACTION_CONFIG_GUIDE.md)
+- [x] (P2) [arch] Extract `QueryValidationMixin` for GraphRAG reuse (see Strategic Refactoring) (Done 2026-02-22; ipfs_datasets_py/optimizers/common/query_validation.py; used by ipfs_datasets_py/optimizers/graphrag/query_unified_optimizer.py)
 - [x] (P2) [graphrag] Implement `_extract_with_llm_fallback()` wrapper (see GraphRAG backlog)
   - Done 2026-02-21: added `_extract_with_llm_fallback()` helper and refactored RULE_BASED path; fixed `extraction_config` to return `GraphRAGExtractionConfig` so fallback thresholds apply; 11 tests passing.
 - [x] (P2) [tests] Add integration test: full pipeline on a multi-paragraph text, assert >3 entities extracted (see Batch 52+ ideas)
@@ -156,7 +156,7 @@ Use this as the always-on randomizer. Keep 3-5 items active, one per track. When
 **Current random picks (rotate on completion)**
 - [x] (P1) [tests] Fix `test_end_to_end_pipeline.py` for ExtractionConfig dataclass configs (see Tests track)
   - Done 2026-02-21: moved ExtractionConfig usage into OntologyGenerationContext; generator no longer receives config dict.
-- [ ] (P2) [perf] Profile `OntologyGenerator._extract_rule_based()` hot paths and capture top-3 bottlenecks (see Performance track)
+- [x] (P2) [perf] Profile `OntologyGenerator._extract_rule_based()` hot paths and capture top-3 bottlenecks (see Performance track) (Done 2026-02-23; top hotspots: infer_relationships, _extract_entities_from_patterns, str.lower; scripts/profile_ontology_generator_rule_based.py)
 - [x] (P2) [obs] Emit structured per-run JSON log in `OntologyPipeline.run()` (score/domain/duration)
   - Done 2026-02-21: added PIPELINE_RUN JSON log with duration, counts, and score.
 - [ ] (P3) [docs] Write module-level docstrings for `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py`
@@ -245,12 +245,12 @@ These should be started immediately when available:
   - Done 2026-02-21: Implemented method to extract entities from very large texts using sliding overlapping windows. Supports configurable window size/overlap and three deduplication strategies (highest_confidence, first_occurrence, merge_spans). Handles extraction failures gracefully. Created 22 comprehensive unit tests covering: basic functionality, parameter validation, all dedup strategies, relationship handling, error handling, and confidence aggregation. All tests passing. File: ipfs_datasets_py/optimizers/graphrag/ontology_generator.py
 
 #### Strategic Refactoring (2-4 hours)
-- [ ] (P2) [arch] Extract `QueryValidationMixin` from query optimizer for reuse in GraphRAG
+- [x] (P2) [arch] Extract `QueryValidationMixin` from query optimizer for reuse in GraphRAG (Done 2026-02-22; ipfs_datasets_py/optimizers/common/query_validation.py; used by ipfs_datasets_py/optimizers/graphrag/query_unified_optimizer.py)
 - [ ] (P2) [arch] Unify exception hierarchy across `[graphrag]`, `[logic]`, `[agentic]` packages
-- [ ] (P2) [api] Create `ontology_types.py` with TypedDict definitions for all ontology structures
+- [x] (P2) [api] Create `ontology_types.py` with TypedDict definitions for all ontology structures (Done 2026-02-22; ipfs_datasets_py/optimizers/graphrag/ontology_types.py)
 - [ ] (P2) [tests] Migrate all mock ontology creation to factory fixtures in `conftest.py`
 - [ ] (P2) [graphrag] Split `ontology_critic.py` into `..._completeness.py`, `..._connectivity.py`, `..._consistency.py`
-- [ ] (P2) [perf] Implement lazy loading for domain-specific rule sets in `ExtractionConfig`
+- [x] (P2) [perf] Implement lazy loading for domain-specific rule sets in `ExtractionConfig` (Done 2026-02-22; ExtractionConfig._get_domain_rule_patterns + tests)
 - [ ] (P3) [arch] Create `ontology_serialization.py` with unified dict ↔ dataclass converters
 
 #### Complex Features (4+ hours)

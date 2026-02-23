@@ -14,6 +14,7 @@ from ...llm_router import generate_text as router_generate
 from .base import OptimizationMethod
 from .production_hardening import CircuitBreaker, RetryHandler
 from ..common.performance import LLMCache, get_global_cache
+from .exceptions import ExtractionError
 from ..common.backend_selection import detect_provider_from_environment
 
 
@@ -343,8 +344,9 @@ class OptimizerLLMRouter:
                 continue
         
         # All providers failed
-        raise RuntimeError(
-            f"All LLM providers failed. Last error: {last_error}"
+        raise ExtractionError(
+            "All LLM providers failed",
+            details={"last_error": str(last_error)},
         )
     
     def get_prompt_template(
