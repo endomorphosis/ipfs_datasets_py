@@ -7555,6 +7555,51 @@ class OntologyGenerator:
                 entropy -= p * math.log(p)
         return entropy
 
+    def entity_type_gini_coefficient(self, result: "EntityExtractionResult") -> float:
+        """Return the Gini coefficient of entity type counts.
+
+        Computes inequality of type frequencies. 0.0 means all types are
+        equally frequent; higher values indicate more concentration.
+
+        Args:
+            result: EntityExtractionResult to analyze.
+
+        Returns:
+            Float in [0.0, 1.0]; ``0.0`` when no entities or only one type.
+
+        Example::
+
+            >>> result = EntityExtractionResult(entities=[
+            ...     Entity(type="Person", ...),
+            ...     Entity(type="Person", ...),
+            ...     Entity(type="Organization", ...),
+            ... ])
+            >>> gen.entity_type_gini_coefficient(result)
+            0.1666...
+        """
+        entities = result.entities or []
+        if not entities:
+            return 0.0
+
+        type_counts = {}
+        for e in entities:
+            etype = getattr(e, "type", None) or "Unknown"
+            type_counts[etype] = type_counts.get(etype, 0) + 1
+
+        counts = list(type_counts.values())
+        n = len(counts)
+        if n <= 1:
+            return 0.0
+        mean = sum(counts) / n
+        if mean == 0.0:
+            return 0.0
+        total_diff = 0.0
+        for i in counts:
+            for j in counts:
+                total_diff += abs(i - j)
+        return total_diff / (2.0 * n * n * mean)
+
+
     def entity_with_longest_text(self, result: "EntityExtractionResult"):
         """Return the entity with the longest text field.
 
@@ -7636,6 +7681,39 @@ class OntologyGenerator:
             return 0.0
         unique_types = len({e.type for e in entities if e.type})
         return unique_types / len(entities)
+
+
+    def entity_type_diversity_index(self, result: "EntityExtractionResult") -> float:
+        """Return the Simpson diversity index over entity types.
+
+        Implements $D = 1 - \sum_i p_i^2$ where $p_i$ is the fraction of entities
+        of type $i$.
+
+        Returns:
+            Float in [0.0, 1.0]. For empty results or a single unique type, returns 0.0.
+        """
+        entities = getattr(result, "entities", None) or []
+        if not entities:
+            return 0.0
+
+        counts: dict[str, int] = {}
+        for e in entities:
+            t = getattr(e, "type", None)
+            if not t:
+                continue
+            t = str(t)
+            counts[t] = counts.get(t, 0) + 1
+
+        total = sum(counts.values())
+        if total <= 0 or len(counts) <= 1:
+            return 0.0
+
+        diversity = 1.0 - sum((c / total) ** 2 for c in counts.values())
+        if diversity < 0.0:
+            return 0.0
+        if diversity > 1.0:
+            return 1.0
+        return float(diversity)
 
     def relationship_density_by_type(self, result: "EntityExtractionResult") -> dict:
         """Return a dict of {type: fraction_of_all_relationships} for each relationship type.
