@@ -91,19 +91,21 @@ class OntologyValidator:
             List of MergeSuggestion objects sorted by similarity_score (descending)
         
         Raises:
-            ValueError: If ontology is invalid or threshold out of range
+            OntologyValidationError: If ontology is invalid or threshold out of range
         """
+        from .exceptions import OntologyValidationError
+        
         if not isinstance(ontology, dict):
-            raise ValueError("ontology must be a dictionary")
+            raise OntologyValidationError("ontology must be a dictionary")
         
         if not 0.0 <= threshold <= 1.0:
-            raise ValueError("threshold must be between 0.0 and 1.0")
+            raise OntologyValidationError("threshold must be between 0.0 and 1.0")
         
         entities = ontology.get("entities", [])
         relationships = ontology.get("relationships", [])
         
         if not isinstance(entities, list):
-            raise ValueError("ontology['entities'] must be a list")
+            raise OntologyValidationError("ontology['entities'] must be a list")
         
         # Find entity IDs that are involved in relationships
         entity_ids_in_relationships = self._get_entity_ids_in_relationships(relationships)

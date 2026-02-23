@@ -1,3 +1,67 @@
+"""Tests for GraphRAG CLI TDFOL output flag."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+
+def test_validate_writes_tdfol_output(tmp_path, monkeypatch) -> None:
+    from ipfs_datasets_py.optimizers.graphrag import cli_wrapper
+
+    ontology_path = tmp_path / "ontology.json"
+    ontology_path.write_text(
+        json.dumps(
+            {
+                "entities": [{"id": "e1", "type": "Thing", "text": "Alice"}],
+                "relationships": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    class _StubConsistency:
+        is_consistent = True
+        prover_used = "basic_structural"
+        contradictions = []
+
+        def to_dict(self):
+            return {
+                "is_consistent": True,
+                "prover_used": self.prover_used,
+                "contradictions": [],
+                "metadata": {},
+            }
+
+    class _StubValidator:
+        def check_consistency(self, ontology):
+            return _StubConsistency()
+
+        def ontology_to_tdfol(self, ontology):
+            return ["Thing(e1)"]
+
+    # Ensure deterministic behavior and avoid optional prover backends.
+    monkeypatch.setattr(cli_wrapper, "LogicValidator", lambda *a, **k: _StubValidator())
+
+    out_path = tmp_path / "tdfol.json"
+    rc = cli_wrapper.main(
+        [
+            "validate",
+            "--input",
+            str(ontology_path),
+            "--check-consistency",
+            "--tdfol-output",
+            str(out_path),
+        ]
+    )
+
+    assert rc == 0
+    assert out_path.exists()
+
+    payload = json.loads(out_path.read_text(encoding="utf-8"))
+    assert payload["source"] == str(ontology_path)
+    assert payload["formula_count"] == 1
+    assert payload["formulas"] == ["Thing(e1)"]
 """Tests for GraphRAG CLI --tdfol-output flag."""
 
 import json

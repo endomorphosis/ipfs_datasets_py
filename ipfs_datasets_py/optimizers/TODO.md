@@ -159,8 +159,8 @@ Use this as the always-on randomizer. Keep 3-5 items active, one per track. When
 - [x] (P2) [perf] Profile `OntologyGenerator._extract_rule_based()` hot paths and capture top-3 bottlenecks (see Performance track) (Done 2026-02-22; top hotspots: infer_relationships, _extract_entities_from_patterns, str.lower; scripts/profile_ontology_generator_rule_based.py)
 - [x] (P2) [obs] Emit structured per-run JSON log in `OntologyPipeline.run()` (score/domain/duration)
   - Done 2026-02-21: added PIPELINE_RUN JSON log with duration, counts, and score.
-- [ ] (P3) [docs] Write module-level docstrings for `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py`
-  - All three already have comprehensive module-level docstrings; `ontology_pipeline.py` also has one.
+- [x] (P3) [docs] Write module-level docstrings for `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py`
+  - Done 2026-02-22: All three already have comprehensive module-level docstrings; `ontology_pipeline.py` also has one.
 - [x] (P2) [api] Add `OntologyGenerator.__call__` shorthand for `generate_ontology`
   - Done 2026-02-21: added __call__ delegate to generate_ontology.
 - [x] (P2) [tests] Add coverage for PIPELINE_RUN JSON log payload in OntologyPipeline
@@ -251,7 +251,8 @@ These should be started immediately when available:
 - [ ] (P2) [tests] Migrate all mock ontology creation to factory fixtures in `conftest.py`
 - [ ] (P2) [graphrag] Split `ontology_critic.py` into `..._completeness.py`, `..._connectivity.py`, `..._consistency.py`
 - [x] (P2) [perf] Implement lazy loading for domain-specific rule sets in `ExtractionConfig` (Done 2026-02-22; ExtractionConfig._get_domain_rule_patterns + tests)
-- [ ] (P3) [arch] Create `ontology_serialization.py` with unified dict ↔ dataclass converters
+- [x] (P3) [arch] Create `ontology_serialization.py` with unified dict ↔ dataclass converters
+  - Done 2026-02-22: added graphrag/ontology_serialization.py (canonical public schema converters) and wired OntologyPipeline.run() to use it; tests in tests/unit/optimizers/graphrag/test_ontology_serialization.py.
 
 #### Complex Features (4+ hours)
 - [ ] (P2) [graphrag] Implement LLM-based relationship inference with fallback to heuristics
@@ -515,8 +516,10 @@ Execute these when no rotating work is in progress:
 - [x] (P2) [graphrag] Implement `_prove_consistency()` — Done: logic_validator.py _prove_consistency() passes formulas to ProverIntegrationAdapter — pass generated formulas to `logic_theorem_optimizer.ProverIntegrationAdapter`
 - [x] (P2) [graphrag] Implement `suggest_fixes()` — map contradiction types to fix templates (dangling ref → "remove or add entity", type conflict → "unify types")
   - Done 2026-02-20: pattern-matched contradictions to typed fix actions with confidence scores
-- [ ] (P3) [graphrag] Add TDFOL formula cache keyed on ontology hash to avoid re-proving unchanged ontologies
-- [ ] (P3) [graphrag] Expose `--tdfol-output` flag in GraphRAG CLI wrapper to dump generated formulas
+- [x] (P3) [graphrag] Add TDFOL formula cache keyed on ontology hash to avoid re-proving unchanged ontologies
+  - Done 2026-02-22: LogicValidator.ontology_to_tdfol() caches by sha256 hash when use_cache=True; tests/unit/optimizers/graphrag/test_export_and_cache.py covers cache hits + clear_tdfol_cache().
+- [x] (P3) [graphrag] Expose `--tdfol-output` flag in GraphRAG CLI wrapper to dump generated formulas
+  - Done 2026-02-22: flag implemented in graphrag/cli_wrapper.py validate; added tests/unit/optimizers/graphrag/test_cli_tdfol_output.py.
 
 ### F7 — Logic theorem optimizer: CLI prove command
 
@@ -1250,7 +1253,8 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [arch] Replace bare `except Exception:` catch-alls remaining after ca759612 sweep
 - [ ] (P2) [arch] Add circuit-breaker for LLM backend calls (retry + exponential backoff)
 - [ ] (P3) [arch] Remove deprecated `TheoremSession` / `LogicExtractor` after 2 minor versions
-- [ ] (P3) [arch] Add TDFOL formula cache keyed on ontology hash to avoid re-proving
+- [x] (P3) [arch] Add TDFOL formula cache keyed on ontology hash to avoid re-proving
+  - Done 2026-02-22: implemented in graphrag/logic_validator.py (use_cache=True) with unit coverage in tests/unit/optimizers/graphrag/test_export_and_cache.py.
 - [ ] (P3) [arch] Add `freeze()` method to `ExtractionConfig` that makes it immutable (frozen dataclass)
 
 

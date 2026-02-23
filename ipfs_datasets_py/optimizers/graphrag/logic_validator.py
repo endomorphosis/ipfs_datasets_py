@@ -235,8 +235,10 @@ class LogicValidator:
         """
         logger.info("Converting ontology to TDFOL formulas")
 
+        from .exceptions import OntologyValidationError
+        
         if not isinstance(ontology, dict):
-            raise ValueError("ontology must be a dict")
+            raise OntologyValidationError("ontology must be a dict")
 
         # Check TDFOL formula cache
         _cache_key: Optional[str] = None
@@ -251,9 +253,9 @@ class LogicValidator:
         relationships = ontology.get("relationships", [])
 
         if not isinstance(entities, list):
-            raise ValueError("ontology['entities'] must be a list")
+            raise OntologyValidationError("ontology['entities'] must be a list")
         if not isinstance(relationships, list):
-            raise ValueError("ontology['relationships'] must be a list")
+            raise OntologyValidationError("ontology['relationships'] must be a list")
 
         logger.info(
             f"Converting {len(entities)} entities and "

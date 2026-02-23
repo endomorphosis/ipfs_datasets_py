@@ -197,23 +197,11 @@ class OntologyPipeline:
         extraction = self._generator.extract_entities(data, ctx)
 
         # 2. Build initial ontology dict
-        ontology: Dict[str, Any] = {
-            "entities": [
-                {
-                    "id": e.id, "text": e.text, "type": e.type,
-                    "confidence": e.confidence,
-                    "properties": getattr(e, "properties", {}),
-                }
-                for e in extraction.entities
-            ],
-            "relationships": [
-                {
-                    "id": r.id, "source_id": r.source_id, "target_id": r.target_id,
-                    "type": r.type, "confidence": r.confidence,
-                }
-                for r in extraction.relationships
-            ],
-        }
+        from ipfs_datasets_py.optimizers.graphrag.ontology_serialization import (
+            ontology_from_extraction_result,
+        )
+
+        ontology: Dict[str, Any] = ontology_from_extraction_result(extraction)
         _notify("extracted", 2, entity_count=len(ontology["entities"]),
                 relationship_count=len(ontology["relationships"]))
 

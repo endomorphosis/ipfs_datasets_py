@@ -165,6 +165,13 @@ from .exceptions import (
     ProvingError,
     RefinementError,
     ConfigurationError,
+    # GraphRAG-specific
+    OntologyExtractionError,
+    OntologyValidationError,
+    LogicProvingError,
+    PathResolutionError,
+    QueryCacheError,
+    SessionError,
 )
 
 # Type definitions (for static type checking and IDE support)

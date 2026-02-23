@@ -19,26 +19,35 @@ def _safe_resolve(path_str: str, *, must_exist: bool = False) -> Path:
 
     Args:
         path_str: Raw path string from CLI args.
-        must_exist: If True, raise ``FileNotFoundError`` when the path does not exist.
+        must_exist: If True, raise ``PathResolutionError`` when the path does not exist.
 
     Returns:
         Resolved absolute :class:`~pathlib.Path`.
 
     Raises:
-        ValueError: If the resolved path escapes a safe root (e.g. ``/etc``, ``/proc``).
-        FileNotFoundError: If *must_exist* is True and the path does not exist.
+        PathResolutionError: If the resolved path escapes a safe root or doesn't exist.
     """
+    from .exceptions import PathResolutionError
+    
     resolved = Path(path_str).resolve()
     _FORBIDDEN_PREFIXES = (Path('/proc'), Path('/sys'), Path('/dev'), Path('/etc'))
     for forbidden in _FORBIDDEN_PREFIXES:
         try:
             resolved.relative_to(forbidden)
-            raise ValueError(f"Path '{path_str}' resolves into restricted area: {forbidden}")
+            raise PathResolutionError(
+                f"Path '{path_str}' resolves into restricted area: {forbidden}",
+                details={"path": path_str, "resolved": str(resolved), "forbidden": str(forbidden)}
+            )
         except ValueError as exc:
-            if 'restricted area' in str(exc):
-                raise
+            # relative_to raises ValueError when path is not relative to base
+            if 'restricted area' not in str(exc):
+                continue
+            raise
     if must_exist and not resolved.exists():
-        raise FileNotFoundError(f"Path not found: {resolved}")
+        raise PathResolutionError(
+            f"Path not found: {resolved}",
+            details={"path": path_str, "resolved": str(resolved)}
+        )
     return resolved
 
 try:
@@ -64,8 +73,10 @@ class GraphRAGOptimizerCLI:
     
     def __init__(self):
         """Initialize CLI."""
+        from .exceptions import ConfigurationError
         if not GRAPHRAG_AVAILABLE:
-            raise ImportError("GraphRAG Optimizer not available")
+            raise ConfigurationError("GraphRAG Optimizer not available (ImportError)")
+    
     
     def create_parser(self) -> argparse.ArgumentParser:
         """Create argument parser.
@@ -267,13 +278,15 @@ Examples:
 
         Expected keys: 'entities' and 'relationships'.
         """
+        from .exceptions import OntologyValidationError
+        
         obj = self._load_json(path)
         if not isinstance(obj, dict):
-            raise ValueError("Ontology JSON must be a JSON object")
+            raise OntologyValidationError("Ontology JSON must be a JSON object")
         if "entities" not in obj or "relationships" not in obj:
-            raise ValueError("Ontology JSON must include 'entities' and 'relationships'")
+            raise OntologyValidationError("Ontology JSON must include 'entities' and 'relationships'")
         if not isinstance(obj.get("entities"), list) or not isinstance(obj.get("relationships"), list):
-            raise ValueError("Ontology JSON 'entities' and 'relationships' must be lists")
+            raise OntologyValidationError("Ontology JSON 'entities' and 'relationships' must be lists")
         return obj
     
     def cmd_generate(self, args: argparse.Namespace) -> int:
@@ -415,7 +428,11 @@ Examples:
             result = session.run(data, context)
 
             if result.critic_score is None:
-                raise RuntimeError(result.metadata.get("error", "optimization session failed"))
+                from .exceptions import SessionError
+                raise SessionError(
+                    "Optimization session failed",
+                    details=result.metadata
+                )
 
             print("\n✅ Optimization complete")
             print(f"   Quality score: {result.critic_score.overall:.2f}")
@@ -470,7 +487,8 @@ Examples:
         
         try:
             if input_path.suffix.lower() != ".json":
-                raise ValueError("validate currently supports JSON ontology files only")
+                from .exceptions import ConfigurationError
+                raise ConfigurationError("validate currently supports JSON ontology files only")
 
             ontology = self._load_ontology_json(input_path)
             validator = LogicValidator()
