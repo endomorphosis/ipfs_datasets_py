@@ -367,6 +367,38 @@ _JA_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     ],
 }
 
+# FK225: Korean deontic keywords (inline — always available).
+_KO_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
+    "permission": [
+        "할 수 있다", "허용된다", "허가된다", "권한이 있다",
+        "가능하다", "인정된다", "할 권리가 있다",
+    ],
+    "prohibition": [
+        "할 수 없다", "금지된다", "허용되지 않는다", "해서는 안 된다",
+        "금지되어 있다", "불허된다", "하면 안 된다",
+    ],
+    "obligation": [
+        "해야 한다", "필수적이다", "의무가 있다", "해야만 한다",
+        "필요하다", "하여야 한다", "의무적이다",
+    ],
+}
+
+# FL226: Arabic deontic keywords (inline — always available).
+_AR_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
+    "permission": [
+        "يجوز", "مسموح", "مسموح به", "مخوّل", "له الحق في",
+        "يمكن", "مصرح به",
+    ],
+    "prohibition": [
+        "لا يجوز", "محظور", "ممنوع", "غير مسموح", "لا يُسمح",
+        "محظور عليه", "غير مصرح به",
+    ],
+    "obligation": [
+        "يجب", "ينبغي", "يتعين", "إلزامي", "واجب",
+        "ملزم بـ", "يتوجب",
+    ],
+}
+
 # EM201: Chinese (Simplified) deontic keywords (inline — always available).
 _ZH_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
@@ -400,6 +432,10 @@ def _load_i18n_keywords(language: str) -> Dict[str, List[str]]:
         return _JA_DEONTIC_KEYWORDS
     if language == "zh":  # EM201: inline Chinese keywords
         return _ZH_DEONTIC_KEYWORDS
+    if language == "ko":  # FK225: inline Korean keywords
+        return _KO_DEONTIC_KEYWORDS
+    if language == "ar":  # FL226: inline Arabic keywords
+        return _AR_DEONTIC_KEYWORDS
     loader_path = _I18N_KEYWORD_LOADERS.get(language)
     if loader_path is None:
         return {}

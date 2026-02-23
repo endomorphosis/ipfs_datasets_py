@@ -908,6 +908,27 @@ class DelegationManager:
                     yield cid, token
                     break  # each token yielded at most once
 
+    def active_tokens_by_actor(self, actor: str):
+        """FD218: Iterate over active tokens whose audience matches *actor*.
+
+        Yields ``(cid, token)`` pairs from :meth:`active_tokens` where
+        ``token.audience == actor``.  This lets callers quickly find all
+        delegations granted to a specific DID or principal.
+
+        Parameters
+        ----------
+        actor:
+            DID or principal string to match against ``token.audience``.
+
+        Yields
+        ------
+        tuple of (str, DelegationToken)
+            Active ``(cid, token)`` pairs delegated to *actor*.
+        """
+        for cid, token in self.active_tokens():
+            if token.audience == actor:
+                yield cid, token
+
     # ------------------------------------------------------------------
     # CQ153: Merge
     # ------------------------------------------------------------------

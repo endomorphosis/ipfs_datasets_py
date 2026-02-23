@@ -102,6 +102,30 @@ class ComplianceMergeResult(NamedTuple):
             "total": self.total,
         }
 
+    @classmethod
+    def from_dict(cls, d: "Dict[str, Any]") -> "ComplianceMergeResult":
+        """FE219: Reconstruct from a :meth:`to_dict` mapping.
+
+        Unknown keys are silently ignored.  Missing keys default to ``0``.
+        The ``"total"`` key is derived and not stored (it equals
+        ``added + skipped_protected + skipped_duplicate``).
+
+        Parameters
+        ----------
+        d:
+            Dict produced by :meth:`to_dict`.
+
+        Returns
+        -------
+        ComplianceMergeResult
+            Reconstructed instance.
+        """
+        return cls(
+            added=int(d.get("added", 0)),
+            skipped_protected=int(d.get("skipped_protected", 0)),
+            skipped_duplicate=int(d.get("skipped_duplicate", 0)),
+        )
+
 
 @dataclass
 class ComplianceResult:
