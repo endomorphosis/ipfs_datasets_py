@@ -2607,7 +2607,7 @@ def detect_graph_type(graph_processor) -> str:
             sample_entities = graph_processor.get_entities(limit=20)
         elif hasattr(graph_processor, 'list_entities'):
             sample_entities = graph_processor.list_entities(limit=20)
-    except Exception:
+    except (AttributeError, TypeError, ValueError):
         pass
 
     # Analyze entity types
@@ -2629,7 +2629,7 @@ def detect_graph_type(graph_processor) -> str:
             relationship_types = set(graph_processor.get_relationship_types())
         elif hasattr(graph_processor, 'list_relationship_types'):
             relationship_types = set(graph_processor.list_relationship_types())
-    except Exception:
+    except (AttributeError, TypeError, ValueError):
         pass
 
     # Wikipedia relationship indicators

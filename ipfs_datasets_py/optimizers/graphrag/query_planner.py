@@ -247,7 +247,7 @@ class GraphRAGQueryOptimizer:
                     # Sort and join edge types for consistency
                     edge_str = "_".join(sorted(str(edge) for edge in edge_types))
                     fallback_parts.append(f"edges{edge_str}")
-                except Exception:
+                except (TypeError, AttributeError, ValueError):
                     fallback_parts.append("edges_error")
             
             # Add vector summary if available
@@ -258,7 +258,7 @@ class GraphRAGQueryOptimizer:
                         fallback_parts.append(f"vshape{query_vector.shape}")
                     if hasattr(query_vector, '__len__'):
                         fallback_parts.append(f"vlen{len(query_vector)}")
-                except Exception:
+                except (TypeError, AttributeError, ValueError):
                     fallback_parts.append("vector_error")
             
             fallback_key = "fallback_" + "_".join(fallback_parts)

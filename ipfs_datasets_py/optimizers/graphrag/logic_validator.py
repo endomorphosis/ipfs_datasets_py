@@ -880,7 +880,7 @@ class LogicValidator:
                 result = self.check_consistency(mini_ont)
                 if result.is_consistent:
                     valid.append(ent)
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError):
                 pass  # skip entities that cause unexpected errors
         return valid
 
@@ -958,7 +958,7 @@ class LogicValidator:
         try:
             result = self.check_consistency(ontology)
             return len(result.contradictions)
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError):
             return 0
 
     def is_consistent(self, ontology: Dict[str, Any]) -> bool:
@@ -1109,7 +1109,7 @@ class LogicValidator:
         try:
             result = self.check_consistency(ontology)
             return len(result.invalid_entity_ids)
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError):
             return 0
 
     def validate_and_report(self, ontology: Dict[str, Any]) -> str:

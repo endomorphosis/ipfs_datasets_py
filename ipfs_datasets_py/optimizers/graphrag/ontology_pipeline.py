@@ -65,7 +65,7 @@ class PipelineResult:
                 from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
 
                 score_obj = CriticScore.from_dict(score_obj)
-            except Exception:
+            except (ImportError, AttributeError, TypeError, ValueError, KeyError):
                 pass
 
         return cls(
@@ -747,7 +747,7 @@ class OntologyPipeline:
         for i in range(n_texts):
             try:
                 self.run(f"warmup_{i}")
-            except Exception:
+            except (AttributeError, TypeError, ValueError, OSError):
                 pass
         self._run_history[:] = saved
 

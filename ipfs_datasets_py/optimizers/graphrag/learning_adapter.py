@@ -106,7 +106,7 @@ def check_learning_cycle(host: Any) -> None:
                             value=f"After {queries_since_last_learning} queries",
                             category="statistical_learning",
                         )
-                    except Exception:
+                    except (AttributeError, TypeError, RuntimeError):
                         pass
 
                 start_time = time.time()
@@ -130,7 +130,7 @@ def check_learning_cycle(host: Any) -> None:
                             duration=duration,
                             results=learning_results,
                         )
-                    except Exception:
+                    except (AttributeError, TypeError, RuntimeError):
                         pass
 
                 if hasattr(host, "metrics_collector") and host.metrics_collector is not None:
@@ -168,7 +168,7 @@ def check_learning_cycle(host: Any) -> None:
                                 f"Non-critical error in learning: {learning_results['error']}",
                                 is_critical=False,
                             )
-                    except Exception:
+                    except (AttributeError, TypeError, RuntimeError):
                         pass
             except Exception as exc:
                 error_msg = f"Error during learning cycle: {str(exc)}"
@@ -182,7 +182,7 @@ def check_learning_cycle(host: Any) -> None:
                             value=error_msg,
                             category="error",
                         )
-                    except Exception:
+                    except (AttributeError, TypeError, RuntimeError):
                         pass
 
                 host._last_learning_query_count = current_count
@@ -198,7 +198,7 @@ def check_learning_cycle(host: Any) -> None:
                     value=error_msg,
                     category="error",
                 )
-            except Exception:
+            except (AttributeError, TypeError, RuntimeError):
                 pass
 
 

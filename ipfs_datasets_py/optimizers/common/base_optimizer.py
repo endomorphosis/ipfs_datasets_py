@@ -259,7 +259,7 @@ class BaseOptimizer(ABC):
                         "target_score": self.config.target_score,
                     },
                 )
-            except Exception:
+            except (AttributeError, TypeError, RuntimeError):
                 pass  # Never let metrics break the optimization
 
         # Generate initial artifact

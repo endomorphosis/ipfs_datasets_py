@@ -212,7 +212,7 @@ class OntologyOptimizer:
                         span.set_attribute(key, value)
                     else:
                         span.set_attribute(key, str(value))
-        except Exception:
+        except (AttributeError, TypeError, RuntimeError, ImportError):
             # Tracing must never affect optimizer execution.
             return
 
@@ -426,7 +426,7 @@ class OntologyOptimizer:
                     parameters_adjusted={"trend": trend, "average_score": round(average_score, 6)},
                     execution_time=round(duration_s, 4),
                 )
-            except Exception:  # metrics must never block optimization
+            except (AttributeError, TypeError, RuntimeError):  # metrics must never block optimization
                 pass
 
         return report
@@ -593,7 +593,7 @@ class OntologyOptimizer:
                     parameters_adjusted={"trend": trend, "average_score": round(average_score, 6)},
                     execution_time=round(duration_s, 4),
                 )
-            except Exception:  # metrics must never block optimization
+            except (AttributeError, TypeError, RuntimeError):  # metrics must never block optimization
                 pass
 
         if json_log_path is not None:

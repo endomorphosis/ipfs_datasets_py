@@ -331,7 +331,7 @@ class QueryValidationMixin:
             # Invalid cache entry, remove it
             try:
                 del self.query_cache[cache_key]
-            except Exception:
+            except (KeyError, AttributeError, TypeError):
                 pass
             return False
         
@@ -343,7 +343,7 @@ class QueryValidationMixin:
             if not isinstance(timestamp, (int, float)):
                 try:
                     del self.query_cache[cache_key]
-                except Exception:
+                except (KeyError, AttributeError, TypeError):
                     pass
                 return False
             
@@ -352,7 +352,7 @@ class QueryValidationMixin:
             if time.time() - timestamp > cache_ttl:
                 try:
                     del self.query_cache[cache_key]
-                except Exception:
+                except (KeyError, AttributeError, TypeError):
                     pass
                 return False
         
