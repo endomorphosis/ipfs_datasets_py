@@ -431,6 +431,54 @@ _RU_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     ],
 }
 
+# GA241: Greek deontic keywords (inline — always available).
+_EL_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
+    "permission": [
+        "μπορεί", "επιτρέπεται", "έχει δικαίωμα", "δικαιούται", "δύναται",
+        "αποτελεί δικαίωμα", "έχει εξουσία",
+    ],
+    "prohibition": [
+        "απαγορεύεται", "δεν επιτρέπεται", "δεν μπορεί", "δεν δικαιούται",
+        "απαγορεύεται ρητά", "εμποδίζεται", "δεν δύναται",
+    ],
+    "obligation": [
+        "πρέπει", "οφείλει", "υποχρεούται", "απαιτείται", "είναι υποχρεωμένος",
+        "χρεωστεί", "έχει υποχρέωση",
+    ],
+}
+
+# GB242: Turkish deontic keywords (inline — always available).
+_TR_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
+    "permission": [
+        "yapabilir", "izinlidir", "hakkı vardır", "yetkilidir", "müsaade edilir",
+        "caizdir", "olanaklıdır",
+    ],
+    "prohibition": [
+        "yapamaz", "yasaktır", "yasaklanmıştır", "yasak", "izin verilmez",
+        "men edilir", "caiz değildir",
+    ],
+    "obligation": [
+        "zorundadır", "gereklidir", "mecburidir", "yükümlüdür", "yapması gerekir",
+        "şarttır", "zorunludur",
+    ],
+}
+
+# GC243: Hindi deontic keywords (inline — always available).
+_HI_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
+    "permission": [
+        "कर सकता है", "अनुमति है", "अधिकार है", "सकता है", "स्वतंत्र है",
+        "योग्य है", "जायज है",
+    ],
+    "prohibition": [
+        "नहीं कर सकता", "प्रतिबंधित है", "निषिद्ध है", "मना है", "वर्जित है",
+        "नहीं है अधिकार", "बंधित है",
+    ],
+    "obligation": [
+        "करना होगा", "आवश्यक है", "अनिवार्य है", "करना चाहिए", "बाध्य है",
+        "जरूरी है", "करना ज़रूरी है",
+    ],
+}
+
 # EM201: Chinese (Simplified) deontic keywords (inline — always available).
 _ZH_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
@@ -472,6 +520,12 @@ def _load_i18n_keywords(language: str) -> Dict[str, List[str]]:
         return _SV_DEONTIC_KEYWORDS
     if language == "ru":  # FV236: inline Russian keywords
         return _RU_DEONTIC_KEYWORDS
+    if language == "el":  # GA241: inline Greek keywords
+        return _EL_DEONTIC_KEYWORDS
+    if language == "tr":  # GB242: inline Turkish keywords
+        return _TR_DEONTIC_KEYWORDS
+    if language == "hi":  # GC243: inline Hindi keywords
+        return _HI_DEONTIC_KEYWORDS
     loader_path = _I18N_KEYWORD_LOADERS.get(language)
     if loader_path is None:
         return {}
