@@ -96,8 +96,8 @@ test hardening, and documentation clarity while keeping progress measurable.
 - [ ] (P1) [arch] Unify optimizer base class hierarchy (shared OptimizerConfig)
 - [ ] (P2) [api] Standardize context objects across GraphRAG/logic/agentic
 - [ ] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
-- [x] (P2) [tests] Add property-based tests for Entity/CriticScore/FeedbackRecord (Done 2026-02-23; tests/unit/optimizers/graphrag/test_property_based_roundtrips.py; tests/unit/optimizers/graphrag/test_property_based_critic_score.py; tests/unit/optimizers/graphrag/test_property_based_learning_adapter_roundtrip.py)
-- [ ] (P2) [perf] Profile OntologyGenerator.generate() on 10k-token input
+- [x] (P2) [tests] Add property-based tests for Entity/CriticScore/FeedbackRecord (Done 2026-02-22; tests/unit/optimizers/graphrag/test_property_based_roundtrips.py; tests/unit/optimizers/graphrag/test_property_based_critic_score.py; tests/unit/optimizers/graphrag/test_property_based_learning_adapter_roundtrip.py)
+- [x] (P2) [perf] Profile OntologyGenerator.generate() on 10k-token input (Done 2026-02-22; top hotspots: infer_relationships, _extract_entities_from_patterns, str.lower; scripts/profile_ontology_generator_generate.py; benchmarks/bench_ontology_generator_generate.py)
 - [ ] (P2) [obs] Structured JSON logging for every pipeline run
 - [ ] (P2) [docs] Optimizers README with quick-start + class diagram
 
@@ -107,10 +107,10 @@ Rotate these while also advancing the plan above. When one completes, replace it
 with a new item from a different track.
 
 **Active picks (rotate on completion)**
-- [x] (P2) [docs] Write detailed ExtractionConfig configuration guide (Done 2026-02-23; EXTRACTION_CONFIG_GUIDE.md)
-- [x] (P2) [perf] Profile OntologyGenerator._extract_rule_based() hot paths (Done 2026-02-23; top hotspots: infer_relationships, _extract_entities_from_patterns, str.lower; scripts/profile_ontology_generator_rule_based.py; benchmarks/bench_ontology_generator_rule_based.py)
+- [x] (P2) [docs] Write detailed ExtractionConfig configuration guide (Done 2026-02-22; EXTRACTION_CONFIG_GUIDE.md)
+- [x] (P2) [perf] Profile OntologyGenerator._extract_rule_based() hot paths (Done 2026-02-22; top hotspots: infer_relationships, _extract_entities_from_patterns, str.lower; scripts/profile_ontology_generator_rule_based.py; benchmarks/bench_ontology_generator_rule_based.py)
 - [x] (P2) [arch] Extract QueryValidationMixin for GraphRAG reuse (Done 2026-02-22; ipfs_datasets_py/optimizers/common/query_validation.py; used by ipfs_datasets_py/optimizers/graphrag/query_unified_optimizer.py)
-- [ ] (P2) [tests] Add integration test: generator -> critic -> mediator loop
+- [x] (P2) [tests] Add integration test: generator -> critic -> mediator loop (Done 2026-02-22; tests/unit/optimizers/graphrag/test_integration_generator_critic_mediator_loop.py)
 - [ ] (P2) [agentic] Reconcile docs claiming phases/tests exist with actual files
 
 ---
@@ -140,7 +140,7 @@ This plan is intentionally evergreen. It balances refactors, feature growth, tes
 - Provide examples that mirror real usage patterns.
 
 ### Random Work Rotation (Active Picks)
-- [x] (P2) [docs] Configuration Guide for `ExtractionConfig` fields (see Medium Tasks) (Done 2026-02-23; EXTRACTION_CONFIG_GUIDE.md)
+- [x] (P2) [docs] Configuration Guide for `ExtractionConfig` fields (see Medium Tasks) (Done 2026-02-22; EXTRACTION_CONFIG_GUIDE.md)
 - [x] (P2) [arch] Extract `QueryValidationMixin` for GraphRAG reuse (see Strategic Refactoring) (Done 2026-02-22; ipfs_datasets_py/optimizers/common/query_validation.py; used by ipfs_datasets_py/optimizers/graphrag/query_unified_optimizer.py)
 - [x] (P2) [graphrag] Implement `_extract_with_llm_fallback()` wrapper (see GraphRAG backlog)
   - Done 2026-02-21: added `_extract_with_llm_fallback()` helper and refactored RULE_BASED path; fixed `extraction_config` to return `GraphRAGExtractionConfig` so fallback thresholds apply; 11 tests passing.
@@ -156,7 +156,7 @@ Use this as the always-on randomizer. Keep 3-5 items active, one per track. When
 **Current random picks (rotate on completion)**
 - [x] (P1) [tests] Fix `test_end_to_end_pipeline.py` for ExtractionConfig dataclass configs (see Tests track)
   - Done 2026-02-21: moved ExtractionConfig usage into OntologyGenerationContext; generator no longer receives config dict.
-- [x] (P2) [perf] Profile `OntologyGenerator._extract_rule_based()` hot paths and capture top-3 bottlenecks (see Performance track) (Done 2026-02-23; top hotspots: infer_relationships, _extract_entities_from_patterns, str.lower; scripts/profile_ontology_generator_rule_based.py)
+- [x] (P2) [perf] Profile `OntologyGenerator._extract_rule_based()` hot paths and capture top-3 bottlenecks (see Performance track) (Done 2026-02-22; top hotspots: infer_relationships, _extract_entities_from_patterns, str.lower; scripts/profile_ontology_generator_rule_based.py)
 - [x] (P2) [obs] Emit structured per-run JSON log in `OntologyPipeline.run()` (score/domain/duration)
   - Done 2026-02-21: added PIPELINE_RUN JSON log with duration, counts, and score.
 - [ ] (P3) [docs] Write module-level docstrings for `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py`
@@ -1139,7 +1139,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [graphrag] `EntityExtractionResult.top_entities(n)` — top N entities by confidence
 - [ ] (P2) [graphrag] `EntityExtractionResult.entities_of_type(etype)` — alias for filter_by_type
 - [ ] (P3) [graphrag] `EntityExtractionResult.confidence_stats()` — dict with mean/min/max/std of confidences
-- [x] (P3) [graphrag] `EntityExtractionResult.validate()` — returns list of validation errors (dangling refs, etc.) (Done 2026-02-23; `optimizers/graphrag/ontology_generator.py` + `tests/unit/optimizers/graphrag/test_entity_extraction_result_validate.py`)
+- [x] (P3) [graphrag] `EntityExtractionResult.validate()` — returns list of validation errors (dangling refs, etc.) (Done 2026-02-22; `optimizers/graphrag/ontology_generator.py` + `tests/unit/optimizers/graphrag/test_entity_extraction_result_validate.py`)
 
 #### ExtractionConfig helpers
 - [ ] (P2) [graphrag] `ExtractionConfig.from_dict(d)` — classmethod deserializer
