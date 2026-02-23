@@ -968,7 +968,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] Add `OntologyCritic.improve_score_suggestion(score)` -- top-priority dimension to improve
 - [x] (P2) [graphrag] Add `OntologyGenerator.apply_config(result, config)` -- re-filter result using config
 - [x] (P2) [graphrag] Add `OntologyMediator.retry_last_round(ontology, score, ctx)` -- redo last refinement
-- [ ] (P3) [graphrag] Add `LogicValidator.validate_all(ontologies)` -- list of ValidationResults for list of ontologies
+- [x] (P3) [graphrag] Add `LogicValidator.validate_all(ontologies)` -- list of ValidationResults for list of ontologies (Done 2026-02-23; ipfs_datasets_py/optimizers/graphrag/logic_validator.py; tests/unit/optimizers/graphrag/test_batch82_features.py)
 - [x] (P2) [graphrag] Add `OntologyOptimizer.best_n_ontologies(n)` -- top-N ontologies by score
 - [x] (P2) [graphrag] Add `OntologyPipeline.reset()` -- reset pipeline state and history
 - [ ] (P3) [graphrag] Add `CriticScore.to_list()` -- [completeness, consistency, clarity, granularity, domain_alignment]
