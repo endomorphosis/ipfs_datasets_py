@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import pytest
 from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+from ipfs_datasets_py.optimizers.graphrag import ontology_critic_consistency as occ
 from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
     OntologyGenerationContext,
     ExtractionStrategy,
@@ -142,6 +143,27 @@ class TestConsistencyEvaluator:
         ontology_straight = {"entities": ents, "relationships": straight_rels}
         score_straight = critic._evaluate_consistency(ontology_straight, ctx)
         assert score_straight > score_cycle
+
+    def test_consistency_cycle_check_is_cached(self, critic, ctx):
+        occ._has_cycle_from_edges.cache_clear()
+        before = occ._has_cycle_from_edges.cache_info()
+
+        ents = _ents(3)
+        rels = _rels(
+            [
+                (ents[0]["id"], ents[1]["id"], "is_a"),
+                (ents[1]["id"], ents[2]["id"], "is_a"),
+            ]
+        )
+        ontology = {"entities": ents, "relationships": rels}
+
+        _ = critic._evaluate_consistency(ontology, ctx)
+        mid = occ._has_cycle_from_edges.cache_info()
+        _ = critic._evaluate_consistency(ontology, ctx)
+        after = occ._has_cycle_from_edges.cache_info()
+
+        assert mid.misses == before.misses + 1
+        assert after.hits == mid.hits + 1
 
     def test_score_in_range(self, critic, ctx):
         ents = _ents(5)

@@ -91,3 +91,12 @@ def test_sanitize_feedback_strict_drops_invalid_relationships():
     cleaned, errors = sanitize_feedback(payload, strict=True)
     assert cleaned == {}
     assert "relationships_to_add must be a list of dicts" in errors
+
+
+def test_agent_strict_validation_drops_invalid_feedback():
+    def _backend(prompt: str):
+        return {"relationships_to_add": [{"source_id": "e1", "target_id": "e2"}]}
+
+    agent = OntologyRefinementAgent(llm_backend=_backend, strict_validation=True)
+    feedback = agent.propose_feedback(ontology={}, score=None, context=None)
+    assert feedback == {}

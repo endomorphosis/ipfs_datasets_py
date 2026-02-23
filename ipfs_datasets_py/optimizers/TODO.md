@@ -74,8 +74,10 @@ This is the long-term refactor plan for the optimizers module. It is deliberatel
 - [ ] (P3) [agentic] Add minimal smoke tests for agentic pipelines
 - [x] (P2) [agentic] Add feedback schema validation for refinement agents
   - Done 2026-02-23: added feedback schema validation helpers and strict-mode support in graphrag/ontology_refinement_agent.py with tests.
-- [ ] (P3) [agentic] Add optional strict-mode toggle to RefinementAgent
-  - DoD: constructor flag to validate feedback with strict=True
+- [x] (P3) [agentic] Add optional strict-mode toggle to RefinementAgent
+  - Done 2026-02-23: strict_validation flag in OntologyRefinementAgent enables strict schema validation.
+- [ ] (P3) [agentic] Document refinement feedback schema in docs
+  - DoD: update docs/USAGE_EXAMPLES.md with feedback fields + strict mode
 
 ### Testing & Quality
 - [ ] (P1) [tests] Expand end-to-end pipeline tests to cover failure recovery paths
@@ -787,7 +789,8 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [graphrag] `OntologyMediator.refine_ontology()` — add `rename_entity` action (fix casing/normalisation)
 - [x] (P3) [graphrag] ✅ Add `OntologyCritic._evaluate_provenance()` dimension — Done 2026-02-23 (batch-57): checks entities have source spans
 - [ ] (P2) [tests] Add tests for `OntologyHarness.run()` with real generator + critic (no mocks)
-- [ ] (P3) [perf] Cache `OntologyCritic._evaluate_consistency()` DFS result keyed on relationship set hash
+- [x] (P3) [perf] Cache `OntologyCritic._evaluate_consistency()` DFS result keyed on relationship set hash
+  - Done 2026-02-23: verified existing cached hierarchy cycle detection (`functools.lru_cache`) in graphrag/ontology_critic_consistency.py; added coverage asserting cache hits in tests/unit/optimizers/graphrag/test_ontology_critic_dimensions.py
 - [x] (P2) [graphrag] `ExtractionConfig.max_confidence: float = 1.0` — Done batch 50: enforced in _extract_rule_based, to_dict/from_dict; 6 tests
 
 ## Batch 52+ ideas (added automatically)
