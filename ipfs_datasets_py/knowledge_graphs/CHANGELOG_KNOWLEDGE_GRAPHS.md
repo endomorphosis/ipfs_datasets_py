@@ -5,6 +5,45 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.34] - 2026-02-23
+
+### Added — ROADMAP Research Areas: Knowledge Graph Completion + Explainable AI (Session 80) — 52 tests
+
+**`query/completion.py`** (new module):
+- `KnowledgeGraphCompleter(kg)` — suggests missing relationships using 6 structural patterns
+- `CompletionReason(str, Enum)` — TRIADIC_CLOSURE / COMMON_NEIGHBOR / SYMMETRIC_RELATION / TRANSITIVE_RELATION / INVERSE_RELATION / TYPE_COMPATIBILITY
+- `CompletionSuggestion` dataclass — source_id / target_id / rel_type / score / reason / evidence + `to_dict()`
+- `find_missing_relationships(entity_id, rel_type, min_score, max_suggestions)` — sorted by score desc; all 6 patterns
+- `find_isolated_entities()` — entities with no incident relationships
+- `compute_completion_score(source_id, target_id, rel_type)` — aggregate score for specific triple
+- `explain_suggestion(suggestion)` — human-readable explanation string
+
+**`query/explanation.py`** (new module):
+- `QueryExplainer(kg)` — main entry point for all explanations
+- `ExplanationDepth(str, Enum)` — SURFACE / STANDARD / DEEP verbosity levels
+- `EntityExplanation` dataclass — entity_type / name / confidence / in+out degree / top neighbours / narrative + `to_dict()`
+- `RelationshipExplanation` dataclass — rel_type / source_name / target_name / symmetry_note / context_chains / narrative + `to_dict()`
+- `PathExplanation` dataclass — path_nodes / path_rels / hops / total_confidence / path_labels / narrative / reachable + `to_dict()`
+- `explain_entity(entity_id, depth)` — structured entity explanation
+- `explain_relationship(relationship_id, depth)` — structured relationship context
+- `explain_path(start_id, end_id, max_hops=4)` — BFS shortest-path explanation with confidence chain
+- `explain_query_result(entities, depth)` — batch entity explanations
+- `why_connected(entity_a_id, entity_b_id)` — natural-language connectivity explanation
+- `entity_importance_score(entity_id)` — degree-based centrality × confidence
+
+**`query/__init__.py`**:
+- 8 new symbols exported + added to `__all__`: `KnowledgeGraphCompleter` / `CompletionSuggestion` / `CompletionReason` / `QueryExplainer` / `EntityExplanation` / `RelationshipExplanation` / `PathExplanation` / `ExplanationDepth`
+
+**`DEFERRED_FEATURES.md`**:
+- P12 §25 Knowledge Graph Completion ✅ Implemented v3.22.34
+- P12 §26 Explainable AI over Knowledge Graphs ✅ Implemented v3.22.34
+
+**`ROADMAP.md`**:
+- Research Areas "Knowledge graph completion with AI" → ✅ Delivered v3.22.34
+- Research Areas "Explainable AI over knowledge graphs" → ✅ Delivered v3.22.34
+
+---
+
 ## [3.22.33] - 2026-02-23
 
 ### Changed — Comprehensive Documentation Update (Session 79) — 46 doc integrity tests

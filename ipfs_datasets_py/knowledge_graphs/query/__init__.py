@@ -131,6 +131,18 @@ from .groth16_bridge import (
     create_groth16_kg_verifier,
     describe_groth16_status,
 )
+from .completion import (
+    KnowledgeGraphCompleter,
+    CompletionSuggestion,
+    CompletionReason,
+)
+from .explanation import (
+    QueryExplainer,
+    EntityExplanation,
+    RelationshipExplanation,
+    PathExplanation,
+    ExplanationDepth,
+)
 
 __all__ = [
     'UnifiedQueryEngine',
@@ -188,4 +200,14 @@ __all__ = [
     'create_groth16_kg_prover',
     'create_groth16_kg_verifier',
     'describe_groth16_status',
+    # Knowledge Graph Completion (v3.22.34 — Research Area)
+    'KnowledgeGraphCompleter',
+    'CompletionSuggestion',
+    'CompletionReason',
+    # Explainable AI (v3.22.34 — Research Area)
+    'QueryExplainer',
+    'EntityExplanation',
+    'RelationshipExplanation',
+    'PathExplanation',
+    'ExplanationDepth',
 ]

@@ -1140,6 +1140,110 @@ Then use `Groth16KGConfig(enable_groth16=True)` in `create_groth16_kg_prover()`.
 
 ---
 
+## P12 — Session 80 Delivered (v3.22.34)
+
+### §25 — Knowledge Graph Completion
+
+**Status:** ✅ Implemented (v3.22.34, session 80)
+**Location:** `query/completion.py` — `KnowledgeGraphCompleter`
+**ROADMAP Research Area:** "Knowledge graph completion with AI"
+
+Suggests missing relationships in a KnowledgeGraph using six structural
+graph-analysis patterns — no external ML libraries required.
+
+**Pattern strategies:**
+
+| Strategy | Enum | Description |
+|---|---|---|
+| Triadic closure | `TRIADIC_CLOSURE` | A→B and B→C → suggest A→C |
+| Common neighbour | `COMMON_NEIGHBOR` | High Jaccard similarity → suggest link |
+| Symmetric relation | `SYMMETRIC_RELATION` | A→sym_type→B → suggest B→sym_type→A |
+| Transitive relation | `TRANSITIVE_RELATION` | A→R→B and B→R→C → suggest A→R→C |
+| Inverse relation | `INVERSE_RELATION` | A→parent_of→B → suggest B→child_of→A |
+| Type compatibility | `TYPE_COMPATIBILITY` | Same-type entities sharing many targets |
+
+**Usage:**
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query.completion import KnowledgeGraphCompleter
+
+completer = KnowledgeGraphCompleter(kg)
+suggestions = completer.find_missing_relationships(min_score=0.4)
+for s in suggestions:
+    print(completer.explain_suggestion(s))
+
+isolated = completer.find_isolated_entities()
+score = completer.compute_completion_score(source_id, target_id, "knows")
+```
+
+**Exported from `query/__init__.py`:**
+- `KnowledgeGraphCompleter`
+- `CompletionSuggestion` (dataclass with `to_dict()`)
+- `CompletionReason` (str enum, 6 values)
+
+---
+
+### §26 — Explainable AI over Knowledge Graphs
+
+**Status:** ✅ Implemented (v3.22.34, session 80)
+**Location:** `query/explanation.py` — `QueryExplainer`
+**ROADMAP Research Area:** "Explainable AI over knowledge graphs"
+
+Provides structured, human-readable explanations for entities, relationships,
+BFS paths, and batch query results in a KnowledgeGraph.
+
+**Components:**
+
+| Component | Description |
+|---|---|
+| `QueryExplainer` | Main entry point |
+| `EntityExplanation` | Per-entity explanation (type, confidence, in/out degree, narrative) |
+| `RelationshipExplanation` | Per-relationship context (symmetry, alternative paths) |
+| `PathExplanation` | BFS shortest path with confidence chain + narrative |
+| `ExplanationDepth` | SURFACE / STANDARD / DEEP verbosity |
+
+**Usage:**
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query.explanation import (
+    QueryExplainer, ExplanationDepth,
+)
+
+explainer = QueryExplainer(kg)
+
+# Explain a single entity
+exp = explainer.explain_entity(alice_id, depth=ExplanationDepth.DEEP)
+print(exp.narrative)
+# "Alice (person) — confidence 0.95; 3 relationships (2 outgoing, 1 incoming)."
+
+# Explain a relationship
+rel_exp = explainer.explain_relationship(rel_id)
+print(rel_exp.symmetry_note)
+
+# Shortest path
+path = explainer.explain_path(alice_id, charlie_id)
+print(path.narrative)
+# "Path (2 hops): Alice -[knows]→ Bob -[knows]→ Charlie (cumulative confidence: 0.90)"
+
+# Why are two entities connected?
+print(explainer.why_connected(alice_id, charlie_id))
+
+# Centrality score
+score = explainer.entity_importance_score(alice_id)
+
+# Batch explain query results
+explanations = explainer.explain_query_result([e1, e2, e3])
+```
+
+**Exported from `query/__init__.py`:**
+- `QueryExplainer`
+- `EntityExplanation`
+- `RelationshipExplanation`
+- `PathExplanation`
+- `ExplanationDepth`
+
+---
+
 ## See Also
 
 - [ROADMAP.md](ROADMAP.md) - Complete development timeline
@@ -1149,7 +1253,7 @@ Then use `Groth16KGConfig(enable_groth16=True)` in `create_groth16_kg_prover()`.
 
 ---
 
-**Last Updated:** 2026-02-23 (session 78)
+**Last Updated:** 2026-02-23 (session 80)
 **Next Review:** Q3 2026
 **Maintainer:** Knowledge Graphs Team
 
