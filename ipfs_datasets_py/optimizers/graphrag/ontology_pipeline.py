@@ -83,6 +83,35 @@ class PipelineResult:
 
         return json.dumps(self.to_dict(), separators=(",", ":"), sort_keys=True)
 
+    def export(self, format: str = "json", **kwargs: Any) -> str:
+        """Export this result to JSON or YAML.
+
+        Args:
+            format: Output format ("json" or "yaml").
+            **kwargs: Serializer kwargs forwarded to json.dumps or yaml.safe_dump.
+
+        Returns:
+            Serialized string in the requested format.
+
+        Raises:
+            ValueError: If an unsupported format is requested.
+            ImportError: If YAML export is requested but PyYAML is not installed.
+        """
+        fmt = format.lower()
+        if fmt == "json":
+            import json
+
+            return json.dumps(self.to_dict(), **kwargs)
+        if fmt == "yaml":
+            try:
+                import yaml
+            except ImportError as exc:
+                raise ImportError("PyYAML is required for YAML export") from exc
+
+            return yaml.safe_dump(self.to_dict(), **kwargs)
+
+        raise ValueError(f"Unsupported export format: {format}")
+
     @classmethod
     def from_json(cls, payload: str) -> "PipelineResult":
         """Deserialize a :class:`PipelineResult` from JSON."""
