@@ -14,10 +14,17 @@ from typing import Dict, Any
 # Test markers
 pytestmark = [pytest.mark.unit]
 
-# Detect whether the real `mcp` package is available (not a shadow module)
+# Detect whether the real `mcp` package is available (not a shadow/mock module)
 try:
     import mcp.types as _mcp_types  # noqa: F401
-    _MCP_PACKAGE_AVAILABLE = True
+    from mcp.types import TextContent as _TC  # noqa: F401
+    # Distinguish the real package from mock stubs injected by other test files:
+    # the real mcp.types.TextContent is a proper dataclass/class defined in the
+    # mcp package, not a MagicMock or a plain object().
+    _MCP_PACKAGE_AVAILABLE = (
+        isinstance(_TC, type)
+        and getattr(_TC, "__module__", "").startswith("mcp")
+    )
 except Exception:  # noqa: BLE001
     _MCP_PACKAGE_AVAILABLE = False
 

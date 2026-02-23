@@ -1,13 +1,15 @@
 #!/bin/bash
 # Start script for MCP server and dashboard in Docker
+# NOTE: The MCP server runs in stdio mode (not --http).
+#       HTTP access is available through the FastAPI service layer if needed.
 
 set -e
 
-echo "Starting IPFS Datasets MCP Server and Dashboard..."
+echo "Starting IPFS Datasets MCP Server..."
 
-# Start MCP server in background
-echo "Starting MCP server on port 8000..."
-python -m ipfs_datasets_py.mcp_server --host 0.0.0.0 --port 8000 --http &
+# Start MCP stdio server in background
+echo "Starting MCP stdio server..."
+python -m ipfs_datasets_py.mcp_server &
 MCP_PID=$!
 
 # Start MCP dashboard in background  

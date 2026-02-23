@@ -856,16 +856,26 @@ class _AsyncOptimizationValidator:
                 for name, validator in self.validators.items()
             }
             
-            # Use asyncio.gather to run all tasks concurrently
-            import asyncio
+            # Use anyio task group to run all tasks concurrently
+            import anyio
             task_names = list(tasks.keys())
             task_coros = list(tasks.values())
-            
+
+            results_list: list = [None] * len(task_coros)
+
+            async def _run_one(idx: int, coro) -> None:  # type: ignore[type-arg]
+                try:
+                    results_list[idx] = await coro
+                except Exception as task_err:
+                    results_list[idx] = {"passed": False, "errors": [str(task_err)]}
+
             try:
-                results_list = await asyncio.gather(*task_coros, return_exceptions=True)
+                async with anyio.create_task_group() as tg:
+                    for i, coro in enumerate(task_coros):
+                        tg.start_soon(_run_one, i, coro)
             except Exception as e:
-                # Fallback if asyncio.gather itself fails (rare - event loop issues)
-                self._log.warning(f"asyncio.gather failed, falling back to sequential: {e}")
+                # Fallback if task group itself fails (rare)
+                self._log.warning(f"anyio task group failed, falling back to sequential: {e}")
                 results_list = []
                 for coro in task_coros:
                     try:

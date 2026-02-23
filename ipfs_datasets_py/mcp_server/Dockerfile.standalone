@@ -1,4 +1,7 @@
 # Minimal MCP Server Docker Image - Standalone Version
+# NOTE: This Dockerfile previously ran standalone_server.py (Flask-based).
+#       It now uses the canonical MCP stdio server instead.
+#       For HTTP access, use the FastAPI service layer (fastapi_service.py).
 FROM python:3.10-slim
 
 # Set working directory
@@ -18,26 +21,30 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install minimal Python dependencies
+# Install minimal Python dependencies (no Flask required)
 RUN pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org \
-    flask>=3.0.0 \
-    requests>=2.25.0 \
-    mcp>=1.2.0
+    mcp>=1.2.0 \
+    anyio>=4.0.0 \
+    requests>=2.25.0
 
-# Copy standalone server
-COPY ipfs_datasets_py/mcp_server/standalone_server.py /app/
+# Copy mcp_server package
+COPY ipfs_datasets_py/mcp_server/ ./ipfs_datasets_py/mcp_server/
+COPY ipfs_datasets_py/__init__.py ./ipfs_datasets_py/
+COPY ipfs_datasets_py/auto_installer.py ./ipfs_datasets_py/
+COPY ipfs_datasets_py/_dependencies.py ./ipfs_datasets_py/
+COPY ipfs_datasets_py/config.py ./ipfs_datasets_py/
 
-# Expose ports
-EXPOSE 8000
-EXPOSE 8080
+# Add the app directory to Python path
+ENV PYTHONPATH="/app:$PYTHONPATH"
 
-# Health check
+# Health check (process-based, no HTTP server needed)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8000/health && curl -f http://localhost:8080/health || exit 1
+    CMD python -c "import ipfs_datasets_py.mcp_server; print('ok')" || exit 1
 
-# Start the standalone server (both MCP server and dashboard)
-CMD ["python", "standalone_server.py"]
+# Run MCP stdio server (canonical access method)
+CMD ["python", "-m", "ipfs_datasets_py.mcp_server"]
 
 # Usage (build from repository root):
-# 1. Build the image: docker build -f ipfs_datasets_py/mcp_server/Dockerfile.standalone -t ipfs-datasets-mcp-standalone .
-# 2. Run the container: docker run -p 8000:8000 -p 8080:8080 ipfs-datasets-mcp-standalone
+# 1. Build: docker build -f ipfs_datasets_py/mcp_server/Dockerfile.standalone -t ipfs-datasets-mcp-standalone .
+# 2. Run:   docker run ipfs-datasets-mcp-standalone
+# 3. Connect via MCP stdio protocol (VS Code, Claude Desktop, etc.)

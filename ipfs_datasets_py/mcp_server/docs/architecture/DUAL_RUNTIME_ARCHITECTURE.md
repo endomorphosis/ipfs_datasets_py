@@ -1,8 +1,8 @@
 # Dual-Runtime Architecture for MCP Server
 
 **Date:** 2026-02-18  
-**Version:** 1.0 DRAFT  
-**Status:** In Development  
+**Version:** 1.0 — COMPLETE  
+**Status:** ✅ Production  
 **Author:** GitHub Copilot Agent
 
 ## 🎯 Executive Summary
@@ -133,7 +133,7 @@ The RuntimeRouter is the heart of the dual-runtime architecture:
 ```python
 # ipfs_datasets_py/mcp_server/runtime_router.py
 
-import asyncio
+import anyio
 import trio
 from typing import Any, Callable, Optional
 from dataclasses import dataclass
@@ -276,16 +276,16 @@ class EnhancedRuntimeRouter:
         
     async def _execute_fastapi(self, tool_func: Callable, *args, **kwargs) -> Any:
         """
-        Execute tool in FastAPI runtime.
-        
-        Standard asyncio execution with thread pool support.
+        Execute tool in anyio/FastAPI runtime.
+
+        Standard anyio execution with thread pool support
+        (works with asyncio and trio backends).
         """
         if inspect.iscoroutinefunction(tool_func):
             return await tool_func(*args, **kwargs)
         else:
-            # Run sync function in thread pool
-            loop = asyncio.get_event_loop()
-            return await loop.run_in_executor(None, lambda: tool_func(*args, **kwargs))
+            # Run sync function in anyio thread pool
+            return await anyio.to_thread.run_sync(lambda: tool_func(*args, **kwargs))
 ```
 
 ### 2.3 Runtime Detection Logic

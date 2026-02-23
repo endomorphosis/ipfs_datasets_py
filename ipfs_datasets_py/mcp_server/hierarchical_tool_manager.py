@@ -908,6 +908,77 @@ class HierarchicalToolManager:
     # Phase F4: Graceful shutdown
     # ------------------------------------------------------------------
 
+    async def get_tool_schema_cid(self, category: str, tool_name: str) -> str:
+        """Return a CIDv1 for the JSON schema of *category*/*tool_name*.
+
+        Uses the ``multiformats`` library if available (dag-cbor + sha2-256,
+        base32 encoding → ``bafy…`` prefix).  Falls back to a deterministic
+        ``"bafy-schema-<sha256hex>"`` pseudo-CID for environments without
+        ``multiformats``.
+
+        Args:
+            category: Category containing the tool.
+            tool_name: Name of the tool.
+
+        Returns:
+            CID string (or pseudo-CID on fallback).
+        """
+        import hashlib
+        import json as _json
+
+        schema_result = await self.get_tool_schema(category, tool_name)
+        schema_bytes = _json.dumps(
+            schema_result, sort_keys=True, ensure_ascii=True
+        ).encode("utf-8")
+
+        try:
+            from multiformats import CID, multihash
+            import dag_cbor  # type: ignore[import]
+            encoded = dag_cbor.encode({"schema": schema_result})
+            mh = multihash.digest(encoded, "sha2-256")
+            cid = CID("base32", 1, "dag-cbor", mh)
+            return str(cid)
+        except Exception:
+            hex_digest = hashlib.sha256(schema_bytes).hexdigest()
+            return f"bafy-schema-{hex_digest}"
+
+    async def dispatch_with_trace(
+        self,
+        category: str,
+        tool_name: str,
+        params: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Dispatch to *tool_name* and attach an execution trace.
+
+        The returned dict contains:
+
+        * All fields from the normal :meth:`dispatch` result.
+        * A ``"trace"`` sub-dict with:
+          - ``tool_schema_cid`` — CID of the tool's schema (content-addressed).
+          - ``category`` / ``tool`` — echo of the request.
+          - ``dispatch_status`` — ``"ok"`` or ``"error"``.
+
+        Args:
+            category: Category containing the tool.
+            tool_name: Name of the tool.
+            params: Parameters to pass to the tool (optional).
+
+        Returns:
+            Dict with ``result`` and ``trace`` keys.
+        """
+        schema_cid = await self.get_tool_schema_cid(category, tool_name)
+        result = await self.dispatch(category, tool_name, params)
+        dispatch_status = "error" if result.get("status") == "error" else "ok"
+        return {
+            **result,
+            "trace": {
+                "tool_schema_cid": schema_cid,
+                "category": category,
+                "tool": tool_name,
+                "dispatch_status": dispatch_status,
+            },
+        }
+
     async def graceful_shutdown(self, timeout: float = 30.0) -> Dict[str, Any]:
         """Shut down the tool manager gracefully.
 
