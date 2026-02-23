@@ -1185,6 +1185,17 @@ class IPFSReloadResult(NamedTuple):
         """Number of policies whose IPFS pin failed (i.e., ``pin_results[name] is None``)."""
         return sum(1 for v in self.pin_results.values() if v is None)
 
+    @property
+    def success_rate(self) -> float:
+        """Fraction of policies whose IPFS pin succeeded.
+
+        Returns ``1.0`` when the registry is empty (zero pins = zero failures =
+        perfect rate), avoiding a zero-division error.
+        """
+        if self.count == 0:
+            return 1.0
+        return (self.count - self.total_failed) / self.count
+
 
 class IPFSPolicyStore(FilePolicyStore):
     """IPFS-backed :class:`PolicyRegistry` store (Phase G).

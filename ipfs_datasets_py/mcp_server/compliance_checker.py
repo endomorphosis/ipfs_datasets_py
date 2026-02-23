@@ -700,6 +700,42 @@ class ComplianceChecker:
         return path + ".bak"
 
     @staticmethod
+    def rotate_bak(path: str, *, max_keep: int = 3) -> None:
+        """Rotate existing ``.bak`` files before creating a new backup.
+
+        Renames ``<path>.bak`` → ``<path>.bak.1``, ``<path>.bak.1`` →
+        ``<path>.bak.2``, … up to ``<path>.bak.<max_keep>``.  Files beyond
+        *max_keep* are deleted.  After rotation the slot ``<path>.bak`` is
+        free for a new backup.
+
+        If no ``<path>.bak`` exists the call is a no-op.
+
+        Args:
+            path: Base path (without the ``.bak`` suffix).
+            max_keep: Maximum number of numbered rotations to retain
+                (default 3).  Must be ≥ 1.
+        """
+        bak = path + ".bak"
+        if not os.path.exists(bak):
+            return
+        # Rotate from oldest to newest to avoid overwriting unexpired slots.
+        for i in range(max_keep, 0, -1):
+            src = bak if i == 1 else f"{bak}.{i - 1}"
+            dst = f"{bak}.{i}"
+            if i == max_keep:
+                # Evict the oldest slot if it exists.
+                try:
+                    if os.path.exists(dst):
+                        os.unlink(dst)
+                except OSError:
+                    pass
+            if os.path.exists(src):
+                try:
+                    os.rename(src, dst)
+                except OSError:
+                    pass
+
+    @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:
         if isinstance(intent, dict):
             return intent.get(field, default)

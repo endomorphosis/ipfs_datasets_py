@@ -509,8 +509,10 @@ class PubSubBus:
 
     def __init__(self) -> None:
         self._subscribers: Dict[str, List[Any]] = {}
+        self._next_sid: int = 1
+        self._sid_map: Dict[int, Any] = {}  # sid -> (topic_key, handler)
 
-    def subscribe(self, topic: Union[str, "PubSubEventType"], handler: Any, *, priority: int = 0) -> None:
+    def subscribe(self, topic: Union[str, "PubSubEventType"], handler: Any, *, priority: int = 0) -> int:
         """Register *handler* to receive messages on *topic*.
 
         Args:
@@ -521,6 +523,11 @@ class PubSubBus:
                 :meth:`publish_async`.  Stored as ``handler.__mcp_priority__``
                 (only for this registration; existing attributes are not
                 overwritten if higher).
+
+        Returns:
+            An integer subscription ID that can be passed to
+            :meth:`unsubscribe_by_id` to remove this specific registration
+            without needing a reference to the handler callable.
         """
         key = str(topic)
         self._subscribers.setdefault(key, [])
@@ -535,6 +542,10 @@ class PubSubBus:
                 except (AttributeError, TypeError):
                     pass  # built-ins or other non-writable callables
             self._subscribers[key].append(handler)
+        sid = self._next_sid
+        self._next_sid += 1
+        self._sid_map[sid] = (key, handler)
+        return sid
 
     def unsubscribe(self, topic: Union[str, "PubSubEventType"], handler: Any) -> bool:
         """Remove *handler* from *topic*.
@@ -543,6 +554,29 @@ class PubSubBus:
             ``True`` if the handler was found and removed; ``False`` otherwise.
         """
         key = str(topic)
+        subs = self._subscribers.get(key, [])
+        if handler in subs:
+            subs.remove(handler)
+            return True
+        return False
+
+    def unsubscribe_by_id(self, sid: int) -> bool:
+        """Remove the subscription identified by *sid*.
+
+        *sid* is the integer returned by :meth:`subscribe`.  This allows
+        targeted removal without retaining a reference to the handler callable.
+
+        Args:
+            sid: Subscription ID previously returned by :meth:`subscribe`.
+
+        Returns:
+            ``True`` if the subscription was found and removed; ``False`` if
+            *sid* is unknown or the handler had already been removed.
+        """
+        entry = self._sid_map.pop(sid, None)
+        if entry is None:
+            return False
+        key, handler = entry
         subs = self._subscribers.get(key, [])
         if handler in subs:
             subs.remove(handler)

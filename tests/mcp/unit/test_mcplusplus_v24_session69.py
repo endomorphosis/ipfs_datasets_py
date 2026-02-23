@@ -95,11 +95,11 @@ class TestDelegationManagerMergeDryRun(unittest.TestCase):
         self.assertIn("bafytest-dry3", result.would_skip_conflicts)
 
     def test_dry_run_false_is_default(self):
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, MergeResult
         src = self._make_manager_with_delegation("bafytest-dry4")
         dst = DelegationManager()
         result = dst.merge(src)
-        self.assertIsInstance(result, int)
+        self.assertIsInstance(result, MergeResult)
         self.assertEqual(result, 1)
 
     def test_dry_run_existing_cid_not_in_would_add(self):
