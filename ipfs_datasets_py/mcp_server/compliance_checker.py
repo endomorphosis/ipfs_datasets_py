@@ -826,6 +826,25 @@ class ComplianceChecker:
             return False
 
     @staticmethod
+    def backup_exists_any(path: str) -> bool:
+        """Return ``True`` when at least one backup file exists for *path*.
+
+        Convenience wrapper around :meth:`list_bak_files` for callers that
+        only need to know whether *any* backup is present::
+
+            if ComplianceChecker.backup_exists_any("/data/rules.enc"):
+                # safe to restore from backup
+                ComplianceChecker.restore_from_bak("/data/rules.enc")
+
+        Args:
+            path: Base file path (without ``.bak`` suffix).
+
+        Returns:
+            ``True`` if one or more backup files exist; ``False`` otherwise.
+        """
+        return bool(ComplianceChecker.list_bak_files(path))
+
+    @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:
         if isinstance(intent, dict):
             return intent.get(field, default)

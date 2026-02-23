@@ -1055,6 +1055,25 @@ class MergeResult:
             return 0.0
         return self.added_count / self.total
 
+    def to_dict(self) -> Dict:
+        """Serialise this result to a plain dictionary.
+
+        Returns a snapshot suitable for JSON serialisation, audit logs, or
+        monitoring APIs::
+
+            {"added": 3, "conflicts": 1, "revocations_copied": 0, "import_rate": 0.75}
+
+        Returns:
+            Dict with keys ``added``, ``conflicts``, ``revocations_copied``,
+            and ``import_rate``.
+        """
+        return {
+            "added": self.added_count,
+            "conflicts": self.conflict_count,
+            "revocations_copied": self.revocations_copied,
+            "import_rate": self.import_rate,
+        }
+
 
 class DelegationManager:
     """Bundles :class:`DelegationStore`, :class:`RevocationList`, and

@@ -659,6 +659,25 @@ class PubSubBus:
             self._sid_map.pop(sid, None)
         return len(handlers)
 
+    def clear_all(self) -> int:
+        """Remove every subscriber from every topic at once.
+
+        Clears :attr:`_subscribers` and :attr:`_sid_map` completely.  Returns
+        the total number of handlers removed across all topics.
+
+        Useful for test teardown and graceful shutdown::
+
+            removed = bus.clear_all()
+            assert bus.subscription_count() == 0
+
+        Returns:
+            Total handlers removed.
+        """
+        total = sum(len(v) for v in self._subscribers.values())
+        self._subscribers.clear()
+        self._sid_map.clear()
+        return total
+
     async def publish_async(
         self,
         topic: Union[str, "PubSubEventType"],

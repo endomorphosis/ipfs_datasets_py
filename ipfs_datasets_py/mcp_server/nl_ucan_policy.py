@@ -1245,6 +1245,33 @@ class IPFSReloadResult(NamedTuple):
             return f"{succeeded}/{total} policies pinned successfully"
         return f"{succeeded}/{total} policies pinned successfully ({failed} failed)"
 
+    def to_dict(self) -> Dict:
+        """Serialise this result to a plain dictionary.
+
+        Returns a snapshot suitable for structured logging or monitoring
+        dashboards::
+
+            {
+                "count": 4,
+                "succeeded": 3,
+                "failed": 1,
+                "success_rate": 0.75,
+                "summary": "3/4 policies pinned successfully (1 failed)"
+            }
+
+        Returns:
+            Dict with keys ``count``, ``succeeded``, ``failed``,
+            ``success_rate``, and ``summary``.
+        """
+        failed = self.total_failed
+        return {
+            "count": self.count,
+            "succeeded": self.count - failed,
+            "failed": failed,
+            "success_rate": self.success_rate,
+            "summary": self.summarize(),
+        }
+
 
 class IPFSPolicyStore(FilePolicyStore):
     """IPFS-backed :class:`PolicyRegistry` store (Phase G).
