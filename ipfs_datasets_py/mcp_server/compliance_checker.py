@@ -1077,6 +1077,28 @@ class ComplianceChecker:
         return _os.path.basename(files[0]) if files else None
 
     @staticmethod
+    def oldest_backup_name(path: str) -> Optional[str]:
+        """Return the *file name* (basename) of the oldest backup, or ``None``.
+
+        Complement of :meth:`newest_backup_name`.  Returns the basename of
+        the highest-numbered (oldest) ``.bak`` file without exposing the
+        full directory path::
+
+            name = ComplianceChecker.oldest_backup_name("/data/rules.enc")
+            # "rules.enc.bak.2"  or  None when no backups exist
+
+        Args:
+            path: Base file path (without ``.bak`` suffix).
+
+        Returns:
+            Basename of the oldest backup file, or ``None`` when no backups
+            exist.
+        """
+        import os as _os
+        files = ComplianceChecker.list_bak_files(path)
+        return _os.path.basename(files[-1]) if files else None
+
+    @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:
         if isinstance(intent, dict):
             return intent.get(field, default)

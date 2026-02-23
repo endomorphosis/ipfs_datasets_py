@@ -1412,6 +1412,23 @@ class IPFSReloadResult(NamedTuple):
         for name, cid in self.pin_results.items():
             yield (name, cid)
 
+    def as_dict(self) -> dict:
+        """Return a flat ``{name: cid_or_none}`` dict for all pin entries.
+
+        A convenience accessor that exposes :attr:`pin_results` as a plain
+        ``dict`` without the NamedTuple wrapping, making it safe to pass to
+        JSON serialisers and other dict-consuming APIs::
+
+            d = result.as_dict()
+            # {"policy_a": "QmABC...", "policy_b": None, ...}
+
+        Equivalent to ``dict(result.iter_all())``, but more readable.
+
+        Returns:
+            ``Dict[str, str | None]`` — ``{policy_name: cid_or_none}``.
+        """
+        return dict(self.pin_results)
+
 
 class IPFSPolicyStore(FilePolicyStore):
     """IPFS-backed :class:`PolicyRegistry` store (Phase G).

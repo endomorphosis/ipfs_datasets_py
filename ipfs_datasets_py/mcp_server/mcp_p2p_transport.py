@@ -865,6 +865,27 @@ class PubSubBus:
         """
         return len(self._sid_map)
 
+    def topics_with_count(self) -> List[tuple]:
+        """Return ``(topic, count)`` tuples sorted by subscription count descending.
+
+        Useful for dashboards and monitoring that want to highlight the most
+        subscribed topics first::
+
+            for topic, count in bus.topics_with_count():
+                print(f"{topic}: {count} subscribers")
+            # receipts: 5
+            # audit:    2
+
+        Topics with equal counts appear in arbitrary order (dict insertion
+        order of ``_subscribers``).
+
+        Returns:
+            Sorted ``List[Tuple[str, int]]`` — highest count first.
+            Empty list when no subscriptions are active.
+        """
+        pairs = [(t, self.subscription_count(t)) for t in self.topics()]
+        return sorted(pairs, key=lambda tc: tc[1], reverse=True)
+
     async def publish_async(
         self,
         topic: Union[str, "PubSubEventType"],

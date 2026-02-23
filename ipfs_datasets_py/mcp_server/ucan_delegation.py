@@ -1211,6 +1211,27 @@ class MergeResult:
         """
         return [self.added_count, self.conflict_count, self.revocations_copied]
 
+    def items(self) -> list:
+        """Return a list of ``(key, value)`` tuples in :meth:`keys` order.
+
+        Provides explicit iteration over field-value pairs, completing the
+        standard mapping trio alongside :meth:`keys` and :meth:`values`::
+
+            for key, val in result.items():
+                print(f"{key} = {val}")
+            # added_count = 3
+            # conflict_count = 1
+            # revocations_copied = 0
+
+        This is equivalent to ``list(result)`` (which uses :meth:`__iter__`),
+        but is idiomatic for callers expecting a ``dict``-like ``.items()``
+        method.
+
+        Returns:
+            A plain list of three ``(str, int)`` tuples in stable order.
+        """
+        return list(self.__iter__())
+
 
 class DelegationManager:
     """Bundles :class:`DelegationStore`, :class:`RevocationList`, and
