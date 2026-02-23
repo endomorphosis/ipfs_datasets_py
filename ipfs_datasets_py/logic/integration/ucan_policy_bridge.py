@@ -449,6 +449,61 @@ class UCANPolicyBridge:
 
         return result
 
+    def evaluate_audited_with_manager(
+        self,
+        policy_cid: str,
+        *,
+        tool: str,
+        actor: Optional[str] = None,
+        leaf_cid: Optional[str] = None,
+        at_time: Optional[float] = None,
+        manager: Optional[Any] = None,
+        audit_log: Optional[Any] = None,
+        intent_cid: str = "bridge_intent",
+    ) -> "BridgeEvaluationResult":
+        """CK147: Evaluate *tool* access via :meth:`evaluate_with_manager` and write to *audit_log*.
+
+        This is a thin wrapper around :meth:`evaluate_with_manager` that additionally
+        records the decision to *audit_log* when provided.
+
+        Parameters
+        ----------
+        policy_cid, tool, actor, leaf_cid, at_time, manager:
+            Forwarded verbatim to :meth:`evaluate_with_manager`.
+        audit_log:
+            Optional :class:`~mcp_server.policy_audit_log.PolicyAuditLog` instance.
+            When provided, an :class:`~mcp_server.policy_audit_log.AuditEntry` is
+            recorded after evaluation.
+        intent_cid:
+            ``intent_cid`` field for the audit entry.
+
+        Returns
+        -------
+        BridgeEvaluationResult
+        """
+        result = self.evaluate_with_manager(
+            policy_cid,
+            tool=tool,
+            actor=actor,
+            leaf_cid=leaf_cid,
+            at_time=at_time,
+            manager=manager,
+        )
+
+        if audit_log is not None:
+            try:
+                audit_log.record(
+                    policy_cid=policy_cid,
+                    intent_cid=intent_cid,
+                    tool=tool,
+                    actor=actor or "unknown",
+                    decision=result.decision or "deny",
+                )
+            except (TypeError, AttributeError, ValueError) as exc:
+                logger.debug("evaluate_audited_with_manager: audit record failed: %s", exc)
+
+        return result
+
     # ── revocation helpers ────────────────────────────────────────────────────
 
     def revoke_token(self, cid: str) -> None:

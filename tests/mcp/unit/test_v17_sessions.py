@@ -506,7 +506,7 @@ class TestCH144DelegationAuditTool:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.delegation_audit_tool import (
             DELEGATION_AUDIT_TOOLS,
         )
-        assert len(DELEGATION_AUDIT_TOOLS) == 7
+        assert len(DELEGATION_AUDIT_TOOLS) >= 7  # CI145 added delegation_chain_ascii (v18)
 
     def test_all_tools_have_name_description_function(self):
         from ipfs_datasets_py.mcp_server.tools.logic_tools.delegation_audit_tool import (

@@ -399,3 +399,101 @@ def detect_i18n_conflicts(
         matched_permission_keywords=perm_hits,
         matched_prohibition_keywords=prohib_hits,
     )
+
+
+# ---------------------------------------------------------------------------
+# CJ146: detect_i18n_clauses — full FR/ES/DE clause compilation + conflict detection
+# ---------------------------------------------------------------------------
+
+def detect_i18n_clauses(
+    text: str,
+    language: str = "fr",
+) -> List["PolicyConflict"]:
+    """CJ146: Compile *text* in *language* to deontic clauses, then detect policy conflicts.
+
+    Unlike :func:`detect_i18n_conflicts` (lightweight keyword-scan only), this
+    function performs **full deontic clause compilation** using the appropriate
+    language parser (French / Spanish / German).  Each sentence is parsed into a
+    :class:`~logic.CEC.nl.base_parser.DeonticFormula`, converted to a minimal
+    clause object, and then fed to :class:`NLPolicyConflictDetector`.
+
+    Parameters
+    ----------
+    text:
+        Raw natural language text in the given *language*.
+    language:
+        ISO 639-1 language code.  Supported: ``"fr"``, ``"es"``, ``"de"``.
+
+    Returns
+    -------
+    List[:class:`PolicyConflict`]
+        Conflicts found in the compiled clauses.  An empty list is returned
+        when no conflicts are found, the *language* is unsupported, or the
+        language parser module is unavailable (ImportError).
+
+    Notes
+    -----
+    If the language parser is unavailable (ImportError) or clause compilation
+    fails, an empty list is returned and the error is logged at DEBUG level.
+    """
+    _LANG_PARSER_MAP = {
+        "fr": ("ipfs_datasets_py.logic.CEC.nl.french_parser", "FrenchParser"),
+        "es": ("ipfs_datasets_py.logic.CEC.nl.spanish_parser", "SpanishParser"),
+        "de": ("ipfs_datasets_py.logic.CEC.nl.german_parser", "GermanParser"),
+    }
+
+    module_path, class_name = _LANG_PARSER_MAP.get(language, (None, None))
+    if module_path is None:
+        logger.debug("detect_i18n_clauses: unsupported language %r", language)
+        return []
+
+    try:
+        import importlib
+        parser_mod = importlib.import_module(module_path)
+        parser_cls = getattr(parser_mod, class_name)
+        parser = parser_cls()
+    except (ImportError, AttributeError) as exc:
+        logger.debug("detect_i18n_clauses: parser unavailable for %r: %s", language, exc)
+        return []
+
+    # Parse text into DeonticFormulas, then convert to PolicyClauses
+    try:
+        sentences = [s.strip() for s in text.replace(";", ".").replace("!", ".").split(".") if s.strip()]
+        clauses: List[Any] = []
+        for sentence in sentences:
+            try:
+                formula = parser.parse(sentence)
+                if formula is not None:
+                    # Convert DeonticFormula → PolicyClause-like dict for conflict detection
+                    op = getattr(formula, "operator", None)
+                    if op is None:
+                        continue
+                    op_name = op.value.lower() if hasattr(op, "value") else str(op).lower()
+                    clause_type = {
+                        "permission": "permission",
+                        "obligation": "obligation",
+                        "prohibition": "prohibition",
+                    }.get(op_name)
+                    if clause_type is None:
+                        continue
+                    action = getattr(formula, "action", "*") or "*"
+                    resource = getattr(formula, "resource", "*") or "*"
+                    actor = getattr(formula, "subject", "*") or "*"
+
+                    # Build a minimal clause-compatible dict
+                    class _Clause:
+                        def __init__(self, ct: str, a: str, r: str, ac: str) -> None:
+                            self.clause_type = ct
+                            self.action = a
+                            self.resource = r
+                            self.actor = ac
+
+                    clauses.append(_Clause(clause_type, action, resource, actor))
+            except Exception as exc:
+                logger.debug("detect_i18n_clauses: parse error for sentence %r: %s", sentence, exc)
+
+        detector = NLPolicyConflictDetector()
+        return detector.detect(clauses)
+    except Exception as exc:
+        logger.debug("detect_i18n_clauses: detection failed: %s", exc)
+        return []

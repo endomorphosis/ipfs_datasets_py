@@ -304,3 +304,81 @@ if _BW133_CONFLICT_AVAILABLE:
 # CD140: i18n conflict symbols
 if _CD140_I18N_AVAILABLE:
 	__all__ += ["detect_i18n_conflicts", "I18NConflictResult"]
+
+# ---------------------------------------------------------------------------
+# CN150: evaluate_with_manager convenience wrapper
+# ---------------------------------------------------------------------------
+
+def evaluate_with_manager(
+    policy_cid: str,
+    tool: str,
+    *,
+    actor: Optional[str] = None,
+    leaf_cid: Optional[str] = None,
+    at_time: Optional[float] = None,
+    manager: Optional[Any] = None,
+    audit_log: Optional[Any] = None,
+) -> Optional[Any]:
+    """CN150: Module-level convenience wrapper for :meth:`UCANPolicyBridge.evaluate_audited_with_manager`.
+
+    Parameters
+    ----------
+    policy_cid:
+        CID of the policy to evaluate against.
+    tool:
+        The tool/action being requested.
+    actor:
+        Optional actor DID.
+    leaf_cid:
+        Optional leaf delegation token CID.
+    at_time:
+        Optional Unix timestamp for temporal evaluation.
+    manager:
+        Optional :class:`~mcp_server.ucan_delegation.DelegationManager`.
+    audit_log:
+        Optional :class:`~mcp_server.policy_audit_log.PolicyAuditLog`.
+
+    Returns
+    -------
+    :class:`~logic.integration.ucan_policy_bridge.BridgeEvaluationResult`, or
+    ``None`` if the bridge module is unavailable.
+    """
+    try:
+        from ipfs_datasets_py.logic.integration.ucan_policy_bridge import get_ucan_policy_bridge
+        bridge = get_ucan_policy_bridge()
+        return bridge.evaluate_audited_with_manager(
+            policy_cid,
+            tool=tool,
+            actor=actor,
+            leaf_cid=leaf_cid,
+            at_time=at_time,
+            manager=manager,
+            audit_log=audit_log,
+        )
+    except (ImportError, ModuleNotFoundError, AttributeError) as exc:
+        import logging as _logging
+        _logging.getLogger(__name__).debug("evaluate_with_manager: unavailable: %s", exc)
+        return None
+
+
+# CN150: conditionally extend __all__
+_CN150_BRIDGE_AVAILABLE = False
+try:
+    from ipfs_datasets_py.logic.integration.ucan_policy_bridge import (  # noqa: F811
+        UCANPolicyBridge as _UCANPolicyBridge,
+    )
+    _CN150_BRIDGE_AVAILABLE = True
+except (ImportError, ModuleNotFoundError):
+    pass
+
+# CN150: extend __all__ only if symbols are loadable
+if _CN150_BRIDGE_AVAILABLE:
+    __all__ += ["evaluate_with_manager"]
+# CJ146: detect_i18n_clauses
+try:
+    from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (  # noqa: F401
+        detect_i18n_clauses,
+    )
+    __all__ += ["detect_i18n_clauses"]
+except (ImportError, ModuleNotFoundError):
+    pass

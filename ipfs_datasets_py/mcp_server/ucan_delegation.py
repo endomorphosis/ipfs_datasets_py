@@ -658,6 +658,7 @@ class DelegationManager:
         self._store = DelegationStore(store_path=path)
         self._revocation = RevocationList()
         self._evaluator: Optional[DelegationEvaluator] = None  # lazy / cache
+        self._metrics_cache: Optional[Dict[str, Any]] = None  # CM149: memoize get_metrics
 
     # ------------------------------------------------------------------
     # Token lifecycle
@@ -667,6 +668,7 @@ class DelegationManager:
         """Add *token* and return its CID.  Invalidates the evaluator cache."""
         cid = self._store.add(token)
         self._evaluator = None  # invalidate cache
+        self._metrics_cache = None  # CM149: invalidate metrics cache
         return cid
 
     def remove(self, cid: str) -> bool:
@@ -674,6 +676,7 @@ class DelegationManager:
         result = self._store.remove(cid)
         if result:
             self._evaluator = None
+            self._metrics_cache = None  # CM149: invalidate metrics cache
         return result
 
     def get(self, cid: str) -> Optional[DelegationToken]:
@@ -803,6 +806,7 @@ class DelegationManager:
         """Load the store from disk.  Returns the number of tokens loaded."""
         count = self._store.load()
         self._evaluator = None  # invalidate cache
+        self._metrics_cache = None  # CM149: invalidate metrics cache
         return count
 
     # ------------------------------------------------------------------
@@ -810,12 +814,36 @@ class DelegationManager:
     # ------------------------------------------------------------------
 
     def get_metrics(self) -> Dict[str, Any]:
-        """Return a metrics snapshot."""
-        return {
+        """Return a metrics snapshot.
+
+        CM149: Extended to include ``max_chain_depth`` — the maximum chain
+        length observed across all stored delegation tokens (0 when empty).
+
+        The result is memoised and invalidated whenever tokens are added,
+        removed, or loaded, so repeated calls are O(1) after the first.
+        """
+        if self._metrics_cache is not None:
+            return dict(self._metrics_cache)
+        max_depth = 0
+        try:
+            evaluator = self.get_evaluator()
+            for cid in self._store.list_cids():
+                try:
+                    chain = evaluator.build_chain(cid)
+                    if len(chain) > max_depth:
+                        max_depth = len(chain)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        result = {
             "token_count": len(self._store),
             "revoked_count": len(self._revocation),
             "has_path": self._store._store_path is not None,
+            "max_chain_depth": max_depth,
         }
+        self._metrics_cache = result
+        return dict(result)
 
     # ------------------------------------------------------------------
     # Introspection
@@ -838,3 +866,45 @@ def get_delegation_manager() -> "DelegationManager":
         _global_manager = DelegationManager()
     return _global_manager
 
+
+
+# ---------------------------------------------------------------------------
+# CM149: record_delegation_metrics — publish DelegationManager metrics to Prometheus
+# ---------------------------------------------------------------------------
+
+def record_delegation_metrics(
+    manager: Optional["DelegationManager"],
+    collector: Any,
+) -> None:
+    """CM149: Record :class:`DelegationManager` metrics to a Prometheus *collector*.
+
+    Sets three gauges:
+
+    * ``mcp_revoked_cids_total`` — number of revoked CIDs
+    * ``mcp_delegation_store_depth`` — number of stored tokens
+    * ``mcp_delegation_chain_depth_max`` — maximum delegation chain depth observed
+
+    Parameters
+    ----------
+    manager:
+        A :class:`DelegationManager` instance, or ``None`` (no-op).
+    collector:
+        Any object with a ``set_gauge(name: str, value: float)`` method
+        (e.g. :class:`~mcp_server.monitoring.PrometheusExporter`).
+
+    Notes
+    -----
+    All exceptions are swallowed and logged at DEBUG level so that monitoring
+    failures cannot crash the calling server loop.
+    """
+    import logging as _logging
+    _log = _logging.getLogger(__name__)
+    if manager is None:
+        return
+    try:
+        metrics = manager.get_metrics()
+        collector.set_gauge("mcp_revoked_cids_total", float(metrics.get("revoked_count", 0)))
+        collector.set_gauge("mcp_delegation_store_depth", float(metrics.get("token_count", 0)))
+        collector.set_gauge("mcp_delegation_chain_depth_max", float(metrics.get("max_chain_depth", 0)))
+    except Exception as exc:
+        _log.debug("record_delegation_metrics: failed: %s", exc)

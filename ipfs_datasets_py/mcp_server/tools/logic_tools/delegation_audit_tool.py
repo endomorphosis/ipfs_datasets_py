@@ -238,6 +238,37 @@ def audit_log_stats(**kwargs: Any) -> Dict[str, Any]:
 # Tool registry for MCP server discovery
 # ---------------------------------------------------------------------------
 
+def delegation_chain_ascii(leaf_cid: str, **kwargs: Any) -> Dict[str, Any]:
+    """CI145: Return an ASCII tree visualisation of a UCAN delegation chain.
+
+    Parameters
+    ----------
+    leaf_cid:
+        CID of the leaf delegation token whose chain to render.
+
+    Returns
+    -------
+    dict with keys ``status``, ``leaf_cid``, ``ascii_tree``, ``chain_length``.
+    """
+    try:
+        mgr = _get_manager()
+        evaluator = mgr.get_evaluator()
+        try:
+            chain = evaluator.build_chain(leaf_cid)
+        except Exception as exc:
+            return {"status": "error", "error": f"chain build failed: {exc}"}
+        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationChain
+        dc = DelegationChain(tokens=chain)
+        return {
+            "status": "ok",
+            "leaf_cid": leaf_cid,
+            "ascii_tree": str(dc),
+            "chain_length": len(dc),
+        }
+    except Exception as exc:
+        return {"status": "error", "error": str(exc)}
+
+
 DELEGATION_AUDIT_TOOLS: List[Dict[str, Any]] = [
     {
         "name": "delegation_add_token",
@@ -263,6 +294,11 @@ DELEGATION_AUDIT_TOOLS: List[Dict[str, Any]] = [
         "name": "delegation_get_metrics",
         "description": "Return delegation manager metrics",
         "function": delegation_get_metrics,
+    },
+    {
+        "name": "delegation_chain_ascii",
+        "description": "Return an ASCII tree visualisation of a UCAN delegation chain",
+        "function": delegation_chain_ascii,
     },
     {
         "name": "audit_log_recent",
