@@ -1242,6 +1242,11 @@ class DelegationManager:
                 if delegation is not None:
                     self._store.add(delegation)
                     added += 1
+                    if audit_log is not None:
+                        try:
+                            audit_log.append({"event": "merge_add", "cid": cid})
+                        except Exception as _exc:
+                            logger.debug("audit_log.append (merge_add) raised: %s", _exc)
         if added:
             self._evaluator = None  # invalidate on mutation
         if copy_revocations:

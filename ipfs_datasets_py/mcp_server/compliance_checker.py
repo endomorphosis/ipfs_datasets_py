@@ -681,6 +681,21 @@ class ComplianceChecker:
         return os.path.exists(path + ".bak")
 
     @staticmethod
+    def bak_path(path: str) -> str:
+        """Return the expected ``.bak`` path for *path*.
+
+        Avoids magic string duplication in callers that need the backup path
+        for operations other than existence checking.
+
+        Args:
+            path: Base path (e.g., ``/data/rules.enc``).
+
+        Returns:
+            ``path + ".bak"`` (e.g., ``/data/rules.enc.bak``).
+        """
+        return path + ".bak"
+
+    @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:
         if isinstance(intent, dict):
             return intent.get(field, default)

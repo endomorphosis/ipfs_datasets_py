@@ -510,16 +510,30 @@ class PubSubBus:
     def __init__(self) -> None:
         self._subscribers: Dict[str, List[Any]] = {}
 
-    def subscribe(self, topic: Union[str, "PubSubEventType"], handler: Any) -> None:
+    def subscribe(self, topic: Union[str, "PubSubEventType"], handler: Any, *, priority: int = 0) -> None:
         """Register *handler* to receive messages on *topic*.
 
         Args:
             topic: A :class:`PubSubEventType` value or raw topic string.
             handler: Callable ``(topic: str, payload: dict) -> None``.
+            priority: Numeric priority for this handler.  Higher values cause
+                the handler to run before lower-priority handlers inside
+                :meth:`publish_async`.  Stored as ``handler.__mcp_priority__``
+                (only for this registration; existing attributes are not
+                overwritten if higher).
         """
         key = str(topic)
         self._subscribers.setdefault(key, [])
         if handler not in self._subscribers[key]:
+            # Store priority as a handler attribute so publish_async can sort.
+            # We only upgrade (never downgrade): if the handler has no priority
+            # yet (None sentinel), set it; if it already has one, only raise it.
+            existing = getattr(handler, "__mcp_priority__", None)
+            if existing is None or priority > existing:
+                try:
+                    handler.__mcp_priority__ = priority
+                except (AttributeError, TypeError):
+                    pass  # built-ins or other non-writable callables
             self._subscribers[key].append(handler)
 
     def unsubscribe(self, topic: Union[str, "PubSubEventType"], handler: Any) -> bool:

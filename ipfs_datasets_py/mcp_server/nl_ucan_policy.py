@@ -1180,6 +1180,11 @@ class IPFSReloadResult(NamedTuple):
     count: int
     pin_results: Dict[str, Optional[str]]
 
+    @property
+    def total_failed(self) -> int:
+        """Number of policies whose IPFS pin failed (i.e., ``pin_results[name] is None``)."""
+        return sum(1 for v in self.pin_results.values() if v is None)
+
 
 class IPFSPolicyStore(FilePolicyStore):
     """IPFS-backed :class:`PolicyRegistry` store (Phase G).
