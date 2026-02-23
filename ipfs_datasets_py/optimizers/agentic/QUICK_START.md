@@ -144,15 +144,15 @@ for cycle in range(5):
 
 ```bash
 # Optimize code file
-python -m ipfs_datasets_py.optimizers.agentic.cli_wrapper optimize \
-  --input mycode.py \
-  --strategy actor_critic \
-  --target-score 0.85
+python -m ipfs_datasets_py.optimizers.agentic.cli optimize \
+    --method actor_critic \
+    --target mycode.py \
+    --description "Improve code quality" \
+    --dry-run
 
 # Validate code
-python -m ipfs_datasets_py.optimizers.agentic.cli_wrapper validate \
-  --input mycode.py \
-  --level strict
+python -m ipfs_datasets_py.optimizers.agentic.cli validate mycode.py \
+    --level strict
 ```
 
 ## Logging & Monitoring

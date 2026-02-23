@@ -1,8 +1,8 @@
 # Knowledge Graphs Documentation Index
 
-**Last Updated:** 2026-02-18  
-**Module Version:** 2.0.0  
-**Status:** Production Ready ✅ (Comprehensive Review Complete)
+**Last Updated:** 2026-02-22  
+**Module Version:** 3.22.15  
+**Status:** Production Ready ✅ (99.99% coverage, 3,743+ tests)
 
 ---
 
@@ -141,18 +141,19 @@ Tracking status and planning:
 |------|------|---------|--------|
 | `extraction/README.md` | 11.5KB | Entity/relationship extraction | ✅ Complete |
 | `cypher/README.md` | 8.5KB | Cypher query language | ✅ Complete |
-| `query/README.md` | 11KB | Query execution engines | ✅ Complete |
+| `query/README.md` | ~11KB | Query execution engines (+ SPARQL, KG tools) | ✅ Complete |
 | `core/README.md` | 11.5KB | Core graph engine | ✅ Complete |
 | `storage/README.md` | 10KB | IPLD storage backend | ✅ Complete |
 | `neo4j_compat/README.md` | 12KB | Neo4j API compatibility | ✅ Complete |
 | `transactions/README.md` | 11KB | ACID transaction support | ✅ Complete |
 | `migration/README.md` | 10.8KB | Data migration tools | ✅ Complete |
-| `lineage/README.md` | 11.9KB | Cross-document tracking | ✅ Complete |
+| `lineage/README.md` | ~12KB | Cross-document tracking + lineage | ✅ Complete |
 | `indexing/README.md` | 12.8KB | Index management | ✅ Complete |
 | `jsonld/README.md` | 13.8KB | JSON-LD support | ✅ Complete |
 | `constraints/README.md` | 9KB | Graph constraints | ✅ Complete |
+| `reasoning/README.md` | ~2KB | Cross-document reasoning (new v2.1.0) | ✅ Complete |
 
-**Total Module Documentation:** 208KB across 17 files
+**Total Module Documentation:** 210KB+ across 18 files
 
 ### Archive (In archive/)
 
@@ -185,8 +186,12 @@ See [archive/README.md](./archive/README.md) for details.
 
 ### "I want to query knowledge graphs"
 → [query/README.md](./query/README.md) - Query engines  
-→ [cypher/README.md](./cypher/README.md) - Cypher language  
+→ [cypher/README.md](./cypher/README.md) - Cypher language (all clauses)  
 → [../../docs/knowledge_graphs/USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) - Query examples
+
+### "I want to do cross-document reasoning"
+→ [reasoning/README.md](./reasoning/README.md) - Cross-document reasoning subpackage  
+→ `ipfs_datasets_py.knowledge_graphs.reasoning.cross_document` — canonical import path
 
 ### "I want to migrate from Neo4j"
 → [../../docs/knowledge_graphs/MIGRATION_GUIDE.md](../../docs/knowledge_graphs/MIGRATION_GUIDE.md) - Migration guide  
@@ -211,31 +216,26 @@ See [archive/README.md](./archive/README.md) for details.
 
 | Metric | Value |
 |--------|-------|
-| **Module Version** | 2.0.0 |
+| **Module Version** | 3.22.15 |
 | **Total Documentation** | 260KB+ |
 | **Core Files** | 5 files (README, INDEX, STATUS, ROADMAP, CHANGELOG) |
 | **User Guides** | 5 files (127KB comprehensive docs) |
 | **Module READMEs** | 12 files (81KB subdirectory docs) |
 | **Code Examples** | 150+ across all documentation |
-| **Test Coverage** | 75% overall, 116+ tests |
+| **Test Coverage** | 99.99% overall, 3,743+ tests |
 
 ---
 
 ## 🔄 Module Status
 
-### Current State (v2.0.0)
-- ✅ **Implementation:** 100% complete (11/12 modules production-ready)
+### Current State (v3.22.15)
+- ✅ **Implementation:** 100% complete (12/12 modules production-ready)
 - ✅ **Documentation:** Comprehensive (260KB across 17 files)
-- ✅ **Testing:** Good coverage (75% overall, 116+ tests)
-- ⚠️ **Migration Module:** Needs test coverage improvement (40% → 70%)
+- ✅ **Testing:** 99.99% coverage (3,743+ tests, 0 failures)
+- ✅ **Migration Module:** 100% coverage (formats, ipfs_importer, neo4j_exporter all 100%)
 
-### Next Version (v2.0.1 - Q2 2026)
-- 📋 Increase migration module test coverage
-- 📋 Performance optimization for large graphs
-- 📋 Bug fixes from production use
-
-### Future Versions
-See [ROADMAP.md](./ROADMAP.md) for v2.1.0 through v3.0.0 plans.
+### Next Version (v4.0 - 2027+)
+See [ROADMAP.md](./ROADMAP.md) for long-term vision (real-time streaming, GNNs, GraphQL API, etc.).
 
 ---
 
@@ -296,6 +296,8 @@ See [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) for 40+ more exam
 |------|---------|---------|
 | 2026-02-17 | 2.0.0 | Updated for production release; archived historical docs |
 | 2026-02-17 | 1.0.0 | Initial creation after refactoring |
+| 2026-02-22 | 3.22.0 | Comprehensive coverage push (3,553 tests, 99%+) |
+| 2026-02-22 | 3.22.15 | INDEX.md stale items updated (v2.0.0→v3.22.15; 75%→99.99%; 116+→3,743+ tests) |
 
 ---
 
@@ -352,6 +354,6 @@ See [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) for 40+ more exam
 
 ---
 
-**Last Updated:** 2026-02-17  
-**Module Version:** 2.0.0  
+**Last Updated:** 2026-02-22  
+**Module Version:** 3.22.15  
 **Status:** Production Ready ✅

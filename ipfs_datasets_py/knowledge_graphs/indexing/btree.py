@@ -115,22 +115,25 @@ class BTreeNode:
         
         mid = full_child.max_keys // 2
         
-        # Move second half of keys to new child
-        new_child.keys = full_child.keys[mid + 1:]
-        full_child.keys = full_child.keys[:mid]
+        # Save the middle key before slicing the keys list
+        mid_key = full_child.keys[mid]
         
         if full_child.is_leaf:
-            # Move entries
+            # B+ tree leaf split: mid key stays in right (new) child so it remains
+            # reachable via the leaf layer. Search routes `key == separator` to
+            # the right child, so right child must own the mid key entry.
+            new_child.keys = full_child.keys[mid:]          # includes mid
+            full_child.keys = full_child.keys[:mid]         # excludes mid
             for key in new_child.keys:
-                new_child.entries[key] = full_child.entries[key]
-                del full_child.entries[key]
+                new_child.entries[key] = full_child.entries.pop(key)
         else:
-            # Move children
+            # Internal node split: mid key is promoted; it leaves neither child.
+            new_child.keys = full_child.keys[mid + 1:]
+            full_child.keys = full_child.keys[:mid]
             new_child.children = full_child.children[mid + 1:]
             full_child.children = full_child.children[:mid + 1]
         
         # Insert middle key into parent
-        mid_key = full_child.keys[mid] if full_child.is_leaf else full_child.keys[mid]
         self.keys.insert(index, mid_key)
         self.children.insert(index + 1, new_child)
     

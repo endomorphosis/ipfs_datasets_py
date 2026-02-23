@@ -18,7 +18,8 @@ Key Features:
 import re
 import requests
 import logging
-from typing import Dict, List, Any, Optional, Tuple
+import math
+from typing import Callable, Dict, List, Any, Optional, Tuple
 
 # Import extraction package components
 from .entities import Entity
@@ -76,7 +77,8 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
         use_transformers: bool = False,
         relation_patterns: Optional[List[Dict[str, Any]]] = None,
         min_confidence: float = 0.5,
-        use_tracer: bool = True
+        use_tracer: bool = True,
+        use_srl: bool = False,
     ):
         """
         Initialize the knowledge graph extractor.
@@ -87,11 +89,17 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
             relation_patterns (List[Dict], optional): Custom relation extraction patterns
             min_confidence (float): Minimum confidence threshold for extraction
             use_tracer (bool): Whether to use the WikipediaKnowledgeGraphTracer
+            use_srl (bool): Whether to run Semantic Role Labeling to enrich
+                the knowledge graph with event-centric triples.  When *True*
+                an :class:`~extraction.srl.SRLExtractor` is initialised and
+                its results merged into every call to
+                :meth:`extract_knowledge_graph`.
         """
         self.use_spacy = use_spacy
         self.use_transformers = use_transformers
         self.min_confidence = min_confidence
         self.use_tracer = use_tracer
+        self.use_srl = use_srl
 
         # Initialize the Wikipedia knowledge graph tracer if enabled
         self.tracer = WikipediaKnowledgeGraphTracer() if use_tracer else None
@@ -135,6 +143,12 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                 )
                 self.use_transformers = False
 
+        # Initialize SRL extractor if requested
+        self.srl_extractor = None
+        if use_srl:
+            from .srl import SRLExtractor
+            self.srl_extractor = SRLExtractor(nlp=self.nlp)
+
         # Initialize relation patterns
         self.relation_patterns = relation_patterns or _default_relation_patterns()
 
@@ -161,14 +175,14 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                 entity_type = _map_spacy_entity_type(ent.label_)
 
                 # Skip entities with low confidence
-                if ent._.get("confidence", 1.0) < self.min_confidence:
+                if getattr(ent._, "confidence", 1.0) < self.min_confidence:
                     continue
 
                 # Create entity
                 entity = Entity(
                     entity_type=entity_type,
                     name=ent.text,
-                    confidence=ent._.get("confidence", 0.8),
+                    confidence=getattr(ent._, "confidence", 0.8),
                     source_text=text[max(0, ent.start_char - 20):min(len(text), ent.end_char + 20)]
                 )
 
@@ -296,10 +310,6 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
             return relationships
         
         try:
-            # Try REBEL-style triplet extraction if available
-            # REBEL outputs triplets in format: (subject, relation, object)
-            from transformers import pipeline
-            
             # Check if we have a triplet extraction model
             if hasattr(self.re_model, 'task') and 'text2text' in str(self.re_model.task):
                 # REBEL-style generation model
@@ -834,10 +844,118 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
             kg.entity_relationships[rel.source_id].add(rel.relationship_id)
             kg.entity_relationships[rel.target_id].add(rel.relationship_id)
 
+        # SRL enrichment: merge event-centric triples when use_srl=True
+        if self.use_srl and self.srl_extractor is not None:
+            try:
+                self._merge_srl_into_kg(kg, text, entities)
+            except (AttributeError, ValueError, TypeError, RuntimeError) as exc:
+                logger.warning("SRL enrichment failed: %s", exc)
+
         # Restore original confidence threshold
         self.min_confidence = original_confidence
 
         return kg
+
+    def _merge_srl_into_kg(
+        self,
+        kg: KnowledgeGraph,
+        text: str,
+        entities: List["Entity"],
+    ) -> None:
+        """Merge SRL-extracted triples into *kg*.
+
+        For each :class:`~.srl.SRLFrame`, any Agent–Patient pair that matches
+        known entities is connected by a new :class:`~.relationships.Relationship`
+        with ``relationship_type = frame.predicate`` and
+        ``extraction_method = "srl"``.  Unknown argument spans are optionally
+        added as new entities when they look like proper nouns.
+
+        Args:
+            kg:       Target :class:`KnowledgeGraph` (mutated in-place).
+            text:     Original source text.
+            entities: Already-extracted entity list (used for name lookup).
+        """
+        frames = self.srl_extractor.extract_srl(text)
+        if not frames:
+            return
+
+        # Build a case-insensitive name → entity lookup
+        name_map: Dict[str, "Entity"] = {
+            e.name.lower(): e for e in entities
+        }
+
+        for frame in frames:
+            agents = frame.get_roles("Agent")
+            patients = frame.get_roles("Patient")
+            if not agents and not patients:
+                continue
+
+            # Prefer first agent; fall back to any role as a source
+            src_entity = None
+            for role_arg in (agents or frame.arguments[:1]):
+                src_entity = name_map.get(role_arg.text.lower())
+                if src_entity:
+                    break
+
+            # Prefer first patient; fall back to second argument
+            tgt_entity = None
+            for role_arg in (patients or frame.arguments[1:2]):
+                tgt_entity = name_map.get(role_arg.text.lower())
+                if tgt_entity:
+                    break
+
+            if src_entity is None or tgt_entity is None:
+                continue
+            if src_entity.entity_id == tgt_entity.entity_id:
+                continue
+
+            rel_type = frame.predicate or "srl_relation"
+            # Avoid duplicates
+            existing_key = (src_entity.entity_id, tgt_entity.entity_id, rel_type)
+            if any(
+                (r.source_id, r.target_id, r.relationship_type) == existing_key
+                for r in kg.relationships.values()
+            ):
+                continue
+
+            rel = Relationship(
+                relationship_type=rel_type,
+                source_entity=src_entity,
+                target_entity=tgt_entity,
+                confidence=frame.confidence * 0.9,
+                source_text=frame.sentence,
+                properties={"extraction_method": "srl", "srl_source": frame.source},
+            )
+            kg.relationships[rel.relationship_id] = rel
+            kg.relationship_types[rel.relationship_type].add(rel.relationship_id)
+            kg.entity_relationships[rel.source_id].add(rel.relationship_id)
+            kg.entity_relationships[rel.target_id].add(rel.relationship_id)
+
+    def extract_srl_knowledge_graph(self, text: str) -> KnowledgeGraph:
+        """Extract an event-centric knowledge graph using Semantic Role Labeling.
+
+        Unlike :meth:`extract_knowledge_graph` (which blends multiple extraction
+        strategies), this method uses **only** the SRL extractor and returns a
+        purely event-centric graph: one *Event* node per predicate frame,
+        connected to argument nodes via typed role relationships
+        (``hasAgent``, ``hasPatient``, etc.).
+
+        Initialises a temporary :class:`~.srl.SRLExtractor` if
+        :attr:`srl_extractor` is ``None``.
+
+        Args:
+            text: Input text.
+
+        Returns:
+            :class:`~.graph.KnowledgeGraph` with event-centric nodes and
+            typed role relationships.
+        """
+        from .srl import SRLExtractor
+
+        extractor = self.srl_extractor or SRLExtractor(nlp=self.nlp)
+        frames = extractor.extract_srl(text)
+        return extractor.to_knowledge_graph(frames)
+
 
     def extract_enhanced_knowledge_graph(self, text: str, use_chunking: bool = True,
                                    extraction_temperature: float = 0.7, structure_temperature: float = 0.5) -> KnowledgeGraph:
@@ -984,5 +1102,174 @@ class KnowledgeGraphExtractor(WikipediaExtractionMixin):
                 if rel.target_entity.entity_type == "entity":
                     rel.target_entity.entity_type = rule["target"]
         return kg
+
+    @staticmethod
+    def aggregate_confidence_scores(
+        scores: List[float],
+        method: str = "mean",
+        weights: Optional[List[float]] = None,
+    ) -> float:
+        """Aggregate multiple confidence scores from different extraction sources.
+
+        Implements the multi-source confidence aggregation feature deferred from
+        v2.5.0 roadmap (now delivered in v3.22.23).
+
+        Args:
+            scores: List of confidence scores in [0.0, 1.0].
+            method: Aggregation strategy. One of:
+                - ``"mean"`` (default): arithmetic mean.
+                - ``"min"``: most conservative (lowest score).
+                - ``"max"``: most optimistic (highest score).
+                - ``"harmonic_mean"``: harmonic mean; penalises very low scores.
+                - ``"weighted_mean"``: weighted arithmetic mean (requires *weights*).
+                - ``"probabilistic_and"``: product of scores — probability that all
+                  sources agree the extraction is correct.
+            weights: Per-score weights used only when *method* is ``"weighted_mean"``.
+                Must have the same length as *scores*.  If *None*, falls back to
+                ``"mean"``.
+
+        Returns:
+            Aggregated confidence in [0.0, 1.0], or ``0.0`` for an empty list.
+
+        Example::
+
+            scores = [0.9, 0.75, 0.85]
+            agg = KnowledgeGraphExtractor.aggregate_confidence_scores(scores)
+            # → 0.8333...
+
+            # Weighted — trust the first source more:
+            agg_w = KnowledgeGraphExtractor.aggregate_confidence_scores(
+                scores, method="weighted_mean", weights=[0.6, 0.2, 0.2]
+            )
+
+            # Conservative — only keep what all sources agree on:
+            agg_p = KnowledgeGraphExtractor.aggregate_confidence_scores(
+                scores, method="probabilistic_and"
+            )
+        """
+        if not scores:
+            return 0.0
+        n = len(scores)
+        if method == "mean":
+            return sum(scores) / n
+        if method == "min":
+            return min(scores)
+        if method == "max":
+            return max(scores)
+        if method == "harmonic_mean":
+            if any(s <= 0 for s in scores):
+                return 0.0
+            return n / sum(1.0 / s for s in scores)
+        if method == "weighted_mean":
+            if weights is None or len(weights) != n:
+                # Fall back to arithmetic mean when weights are missing/wrong length
+                return sum(scores) / n
+            total_weight = sum(weights)
+            if total_weight == 0:
+                return 0.0
+            return sum(s * w for s, w in zip(scores, weights)) / total_weight
+        if method == "probabilistic_and":
+            result = 1.0
+            for s in scores:
+                result *= s
+            return result
+        raise ValueError(
+            f"Unknown aggregation method {method!r}. "
+            "Use 'mean', 'min', 'max', 'harmonic_mean', 'weighted_mean', or 'probabilistic_and'."
+        )
+
+    @staticmethod
+    def compute_extraction_quality_metrics(kg: "KnowledgeGraph") -> Dict[str, Any]:
+        """Compute quality metrics for an extracted knowledge graph.
+
+        Provides the quality-metrics feature deferred from the v2.5.0 roadmap
+        (now delivered in v3.22.23).  All metrics are computed using only the
+        graph structure and entity/relationship confidence values — no external
+        dependencies are required.
+
+        Args:
+            kg: The knowledge graph to analyse.
+
+        Returns:
+            Dictionary with the following keys:
+
+            - ``entity_count`` (int): total entities.
+            - ``relationship_count`` (int): total relationships.
+            - ``relationship_density`` (float): relationships per entity (0.0 when
+              no entities).
+            - ``avg_entity_confidence`` (float): mean entity confidence.
+            - ``avg_relationship_confidence`` (float): mean relationship confidence.
+            - ``confidence_std`` (float): population standard deviation of all
+              confidence scores (entities + relationships combined).
+            - ``low_confidence_ratio`` (float): fraction of all nodes+rels with
+              confidence < 0.5.
+            - ``entity_type_diversity`` (int): number of distinct entity types.
+            - ``relationship_type_diversity`` (int): number of distinct relationship
+              types.
+            - ``isolated_entity_ratio`` (float): fraction of entities with no
+              incident relationships.
+
+        Example::
+
+            kg = extractor.extract_knowledge_graph("Alice works for Acme Corp.")
+            metrics = KnowledgeGraphExtractor.compute_extraction_quality_metrics(kg)
+            print(metrics["avg_entity_confidence"])   # e.g. 0.8
+            print(metrics["relationship_density"])    # e.g. 0.5
+        """
+        entities = list(kg.entities.values())
+        relationships = list(kg.relationships.values())
+        n_ent = len(entities)
+        n_rel = len(relationships)
+
+        # Confidence averages
+        ent_confs = [getattr(e, "confidence", 1.0) for e in entities]
+        rel_confs = [getattr(r, "confidence", 1.0) for r in relationships]
+        all_confs = ent_confs + rel_confs
+
+        avg_ent_conf = sum(ent_confs) / n_ent if n_ent else 0.0
+        avg_rel_conf = sum(rel_confs) / n_rel if n_rel else 0.0
+
+        if all_confs:
+            mean_all = sum(all_confs) / len(all_confs)
+            variance = sum((c - mean_all) ** 2 for c in all_confs) / len(all_confs)
+            conf_std = math.sqrt(variance)
+            low_conf = sum(1 for c in all_confs if c < 0.5) / len(all_confs)
+        else:
+            conf_std = 0.0
+            low_conf = 0.0
+
+        # Type diversity
+        entity_types = {getattr(e, "entity_type", "entity") for e in entities}
+        rel_types = {getattr(r, "relationship_type", "") for r in relationships}
+
+        # Isolated entity ratio
+        if n_ent:
+            connected = set()
+            for r in relationships:
+                src = getattr(r, "source_entity", None)
+                tgt = getattr(r, "target_entity", None)
+                if src is not None:
+                    connected.add(getattr(src, "entity_id", id(src)))
+                if tgt is not None:
+                    connected.add(getattr(tgt, "entity_id", id(tgt)))
+            isolated = sum(
+                1 for e in entities if getattr(e, "entity_id", id(e)) not in connected
+            )
+            isolated_ratio = isolated / n_ent
+        else:
+            isolated_ratio = 0.0
+
+        return {
+            "entity_count": n_ent,
+            "relationship_count": n_rel,
+            "relationship_density": n_rel / n_ent if n_ent else 0.0,
+            "avg_entity_confidence": avg_ent_conf,
+            "avg_relationship_confidence": avg_rel_conf,
+            "confidence_std": conf_std,
+            "low_confidence_ratio": low_conf,
+            "entity_type_diversity": len(entity_types),
+            "relationship_type_diversity": len(rel_types),
+            "isolated_entity_ratio": isolated_ratio,
+        }
 
 

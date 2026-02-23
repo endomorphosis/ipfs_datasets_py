@@ -1,36 +1,19 @@
 """
-Cross-Document Lineage Tracking Module with Enhanced Data Provenance.
+.. deprecated::
 
-⚠️ DEPRECATED: This module is deprecated. Please use the lineage/ package instead.
-
-Migration Guide:
-    OLD: from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import CrossDocumentLineageTracker
-    NEW: from ipfs_datasets_py.knowledge_graphs.lineage import LineageTracker
-
-    OLD: from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import LineageGraph
-    NEW: from ipfs_datasets_py.knowledge_graphs.lineage import LineageGraph
-
-See docs/knowledge_graphs/MIGRATION_GUIDE.md for complete migration instructions.
-
-This file will be removed in a future release.
+    This module has been relocated to
+    ``ipfs_datasets_py.knowledge_graphs.lineage.cross_document``.
+    Update your imports accordingly.
 """
-
 import warnings
-import sys
-
-# Issue deprecation warning when module is imported
 warnings.warn(
-    "cross_document_lineage module is deprecated. "
-    "Please use 'from ipfs_datasets_py.knowledge_graphs.lineage import ...' instead. "
-    "See docs/knowledge_graphs/MIGRATION_GUIDE.md for migration guide. "
-    "This module will be removed in a future release.",
+    "ipfs_datasets_py.knowledge_graphs.cross_document_lineage is deprecated. "
+    "Use ipfs_datasets_py.knowledge_graphs.lineage.cross_document instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
-
-# Re-export everything from the new lineage package for backward compatibility
-from ipfs_datasets_py.knowledge_graphs.lineage import (
-    # Types
+from ipfs_datasets_py.knowledge_graphs.lineage.cross_document import *  # noqa: F401, F403
+from ipfs_datasets_py.knowledge_graphs.lineage.cross_document import (  # noqa: F401
     LineageNode,
     LineageLink,
     LineageDomain,
@@ -38,45 +21,16 @@ from ipfs_datasets_py.knowledge_graphs.lineage import (
     LineageTransformationDetail,
     LineageVersion,
     LineageSubgraph,
-    # Core classes
     LineageGraph,
     LineageTracker,
-    # Enhanced classes
     SemanticAnalyzer,
     BoundaryDetector,
     ConfidenceScorer,
     EnhancedLineageTracker,
-    # Visualization
     LineageVisualizer,
-    # Metrics
     LineageMetrics,
     ImpactAnalyzer,
     DependencyAnalyzer,
+    CrossDocumentLineageTracker,
+    CrossDocumentLineageGraph,
 )
-
-# Deprecated aliases for backward compatibility
-CrossDocumentLineageTracker = LineageTracker
-CrossDocumentLineageGraph = LineageGraph
-
-__all__ = [
-    'LineageNode',
-    'LineageLink',
-    'LineageDomain',
-    'LineageBoundary',
-    'LineageTransformationDetail',
-    'LineageVersion',
-    'LineageSubgraph',
-    'LineageGraph',
-    'LineageTracker',
-    'SemanticAnalyzer',
-    'BoundaryDetector',
-    'ConfidenceScorer',
-    'EnhancedLineageTracker',
-    'LineageVisualizer',
-    'LineageMetrics',
-    'ImpactAnalyzer',
-    'DependencyAnalyzer',
-    # Deprecated aliases
-    'CrossDocumentLineageTracker',
-    'CrossDocumentLineageGraph',
-]

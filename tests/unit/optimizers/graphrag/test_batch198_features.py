@@ -9,7 +9,9 @@ Methods under test:
   - OntologyGenerator.relationship_target_ids(result)
   - LogicValidator.hub_nodes(ontology, min_degree)
   - OntologyPipeline.run_score_count_above_mean()
+    - OntologyPipeline.run_score_trimmed_mean(trim_fraction)
   - OntologyLearningAdapter.feedback_trimmed_mean(trim)
+    - OntologyMediator.action_entropy_change()
 """
 import pytest
 from unittest.mock import MagicMock
@@ -76,6 +78,11 @@ def _push_run(p, score_val):
 def _make_adapter():
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
     return OntologyLearningAdapter()
+
+
+def _make_mediator():
+    from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+    return OntologyMediator(generator=MagicMock(), critic=MagicMock())
 
 
 def _push_feedback(a, score):
@@ -285,6 +292,26 @@ class TestRunScoreCountAboveMean:
         assert p.run_score_count_above_mean() == 2
 
 
+# ── OntologyPipeline.run_score_trimmed_mean ─────────────────────────────────
+
+class TestRunScoreTrimmedMean:
+    def test_empty_returns_zero(self):
+        p = _make_pipeline()
+        assert p.run_score_trimmed_mean() == pytest.approx(0.0)
+
+    def test_single_returns_score(self):
+        p = _make_pipeline()
+        _push_run(p, 0.7)
+        assert p.run_score_trimmed_mean() == pytest.approx(0.7)
+
+    def test_trimmed_mean_drops_extremes(self):
+        p = _make_pipeline()
+        for v in [0.0, 0.5, 0.5, 0.5, 1.0]:
+            _push_run(p, v)
+        # trim 20% -> remove one from each end: [0.5, 0.5, 0.5]
+        assert p.run_score_trimmed_mean(trim_fraction=0.2) == pytest.approx(0.5)
+
+
 # ── OntologyLearningAdapter.feedback_trimmed_mean ────────────────────────────
 
 class TestFeedbackTrimmedMean:
@@ -311,3 +338,21 @@ class TestFeedbackTrimmedMean:
         result = a.feedback_trimmed_mean(trim=0.2)
         # trimmed: [0.5, 0.5, 0.5]
         assert result == pytest.approx(0.5)
+
+
+# ── OntologyMediator.action_entropy_change ──────────────────────────────────
+
+class TestActionEntropyChange:
+    def test_empty_history_returns_zero(self):
+        m = _make_mediator()
+        assert m.action_entropy_change() == pytest.approx(0.0)
+
+    def test_entropy_increases_with_more_diverse_actions(self):
+        m = _make_mediator()
+        m._feedback_history = [
+            {"actions": ["a", "a", "a"]},
+            {"actions": ["a"]},
+            {"actions": ["a", "b", "b", "b"]},
+            {"actions": ["b", "b"]},
+        ]
+        assert m.action_entropy_change() > 0.0

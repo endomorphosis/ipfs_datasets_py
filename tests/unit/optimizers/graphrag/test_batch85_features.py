@@ -1,4 +1,4 @@
-"""Batch 85: best_score, has_entity, action_count_for, is_passing, last_score."""
+"""Batch 85: best_score, has_entity, action_count_for, is_passing, last_score, run_ids."""
 
 from __future__ import annotations
 
@@ -149,6 +149,63 @@ class TestActionCountFor:
 
 
 # ---------------------------------------------------------------------------
+# OntologyMediator.actions_never_applied
+# ---------------------------------------------------------------------------
+
+
+class TestActionsNeverApplied:
+    def test_new_mediator_returns_all_known_actions(self):
+        med = _make_mediator()
+        assert med.actions_never_applied() == sorted(med.KNOWN_REFINEMENT_ACTION_TYPES)
+
+    def test_excludes_actions_that_have_counts(self):
+        med = _make_mediator()
+        med.apply_action_bulk(["normalize_names", "split_entity", "normalize_names"])
+        never = med.actions_never_applied()
+        assert "normalize_names" not in never
+        assert "split_entity" not in never
+
+        for a in med.KNOWN_REFINEMENT_ACTION_TYPES:
+            if a in {"normalize_names", "split_entity"}:
+                continue
+            assert a in never
+
+
+# ---------------------------------------------------------------------------
+# OntologyMediator.apply_action_bulk
+# ---------------------------------------------------------------------------
+
+
+class TestApplyActionBulk:
+    def test_accepts_action_name_strings(self):
+        med = _make_mediator()
+        n = med.apply_action_bulk(["add_entity", "add_entity", "remove_rel"])
+        assert n == 3
+        assert med.action_count_for("add_entity") == 2
+        assert med.action_count_for("remove_rel") == 1
+
+    def test_accepts_action_args_pairs(self):
+        med = _make_mediator()
+        n = med.apply_action_bulk([
+            ("add_entity", {"id": "e1"}),
+            ("add_entity", {"id": "e2"}),
+            ("remove_rel", {"id": "r1"}),
+        ])
+        assert n == 3
+        assert med.action_count_for("add_entity") == 2
+        assert med.action_count_for("remove_rel") == 1
+
+    def test_accepts_dict_entries(self):
+        med = _make_mediator()
+        n = med.apply_action_bulk([
+            {"action": "normalize_names", "args": {}},
+            {"action": "normalize_names"},
+        ])
+        assert n == 2
+        assert med.action_count_for("normalize_names") == 2
+
+
+# ---------------------------------------------------------------------------
 # CriticScore.is_passing
 # ---------------------------------------------------------------------------
 
@@ -203,3 +260,26 @@ class TestPipelineLastScore:
         p.run("Alice.")
         p.run("Bob.")
         assert p.last_score() == pytest.approx(p.history[-1].score.overall)
+
+
+# ---------------------------------------------------------------------------
+# OntologyPipeline.run_ids
+# ---------------------------------------------------------------------------
+
+
+class TestPipelineRunIds:
+    def test_empty_before_runs(self):
+        p = OntologyPipeline()
+        assert p.run_ids() == []
+
+    def test_returns_zero_based_indices(self):
+        p = OntologyPipeline()
+        p.run("Alice.")
+        p.run("Bob.")
+        assert p.run_ids() == [0, 1]
+
+    def test_length_matches_total_runs(self):
+        p = OntologyPipeline()
+        p.run("Alice.")
+        p.run("Bob.")
+        assert len(p.run_ids()) == p.total_runs()

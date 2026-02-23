@@ -1,40 +1,44 @@
 # Knowledge Graphs - Test Guide
 
-**Last Updated:** 2026-02-18  
+**Last Updated:** 2026-02-22  
 **Purpose:** Guide to testing the knowledge_graphs module
 
 ---
 
 ## Overview
 
-The knowledge_graphs module has **43 test files** covering **116+ tests** with an overall **75% coverage** rate. This guide helps developers understand what's tested, how to run tests, and where to add new tests.
+The knowledge_graphs module has **108+ test files** covering **3,856+ tests** with an overall **99.99% coverage** rate. This guide helps developers understand what's tested, how to run tests, and where to add new tests.
 
 ---
 
 ## Test Statistics
 
 ### Overall Coverage
-- **Total Test Files:** 43
-- **Total Tests:** 116+
-- **Pass Rate:** 94%+ (excluding intentional skips)
-- **Overall Coverage:** ~75%
+- **Total Test Files:** 108+
+- **Total Tests:** 3,856+
+- **Pass Rate:** 99.9%+ (excluding intentional skips)
+- **Overall Coverage:** 99.99%
 
 ### Coverage by Module
 
 | Module | Unit Tests | Integration Tests | Coverage | Status |
 |--------|------------|-------------------|----------|--------|
-| **Extraction** | 15 | 3 | 85% | ✅ Excellent |
-| **Cypher** | 12 | 3 | 80% | ✅ Good |
-| **Query** | 8 | 2 | 80% | ✅ Good |
-| **Core** | 10 | 2 | 75% | ✅ Good |
-| **Storage** | 6 | 2 | 70% | ✅ Good |
-| **Neo4j Compat** | 8 | 2 | 85% | ✅ Excellent |
-| **Transactions** | 7 | 2 | 75% | ✅ Good |
-| **Migration** | 27 | 3 | 40% | ⚠️ Needs improvement |
-| **Lineage** | 5 | 2 | 70% | ✅ Good |
-| **Indexing** | 6 | 1 | 75% | ✅ Good |
-| **JSON-LD** | 8 | 2 | 80% | ✅ Good |
-| **Constraints** | 4 | 1 | 70% | ✅ Good |
+| **Extraction** | 15+ | 3 | ~99% | ✅ Excellent |
+| **Cypher** | 20+ | 3 | 100% | ✅ Complete |
+| **Query** | 15+ | 2 | 100% | ✅ Complete |
+| **Core** | 15+ | 2 | 100% | ✅ Complete |
+| **Storage** | 10+ | 2 | ~99% | ✅ Excellent |
+| **Neo4j Compat** | 10+ | 2 | 100% | ✅ Complete |
+| **Transactions** | 10+ | 2 | 100% | ✅ Complete |
+| **Migration** | 30+ | 3 | 100% | ✅ Complete |
+| **Lineage** | 8+ | 2 | 100% | ✅ Complete |
+| **Indexing** | 8+ | 1 | 100% | ✅ Complete |
+| **JSON-LD** | 10+ | 2 | 100% | ✅ Complete |
+| **Constraints** | 6+ | 1 | 100% | ✅ Complete |
+| **Ontology** | 10+ | 2 | 100% | ✅ Complete |
+| **SRL** | 10+ | 1 | 100% | ✅ Complete |
+| **Reasoning** | 12+ | 2 | 100% | ✅ Complete |
+| **Distributed Query** | 8+ | 2 | 100% | ✅ Complete |
 
 ---
 
@@ -116,7 +120,7 @@ tests/
 
 ## Test Categories
 
-### 1. Extraction Tests (85% coverage)
+### 1. Extraction Tests (~99% coverage)
 
 **What's Tested:**
 - Entity extraction from text
@@ -146,7 +150,7 @@ def test_entity_extraction_basic():
 
 ---
 
-### 2. Cypher Tests (80% coverage)
+### 2. Cypher Tests (100% coverage)
 
 **What's Tested:**
 - Query compilation
@@ -157,8 +161,7 @@ def test_entity_extraction_basic():
 - Error handling
 
 **What's NOT Tested (Intentionally):**
-- NOT operator (not yet implemented - v2.1.0)
-- CREATE relationships (not yet implemented - v2.1.0)
+- spaCy-dependent extraction paths (skip when spaCy not installed)
 
 **Key Test Files:**
 - `tests/unit_tests/knowledge_graphs/test_cypher_compiler.py`
@@ -180,24 +183,17 @@ def test_cypher_match_where_return():
 
 ---
 
-### 3. Migration Tests (40% coverage) ⚠️
+### 3. Migration Tests (100% coverage) ✅
 
 **What's Tested:**
 - CSV import/export
 - JSON import/export
 - RDF import/export
-- Basic error handling
-
-**What's NOT Tested (Intentionally):**
-- GraphML format (not yet implemented - v2.2.0)
-- GEXF format (not yet implemented - v2.2.0)
-- Pajek format (not yet implemented - v2.2.0)
-- CAR format (not yet implemented - v2.2.0)
-
-**Coverage Gap Reason:**
-- Tests for unimplemented formats are intentionally skipped
-- Need more edge case tests for implemented formats
-- Need more error handling tests
+- GraphML format (implemented v2.1.0)
+- GEXF format (implemented v2.1.0)
+- Pajek format (implemented v2.1.0)
+- CAR format via libipld + ipld-car (implemented v2.1.0)
+- Error handling and edge cases
 
 **Key Test Files:**
 - `tests/unit_tests/knowledge_graphs/test_migration_csv.py`
@@ -233,7 +229,7 @@ def test_csv_export_import_roundtrip():
 
 ---
 
-### 4. Storage Tests (70% coverage)
+### 4. Storage Tests (~99% coverage)
 
 **What's Tested:**
 - IPLD backend operations (add, get, pin)
@@ -249,7 +245,7 @@ def test_csv_export_import_roundtrip():
 
 ---
 
-### 5. Neo4j Compatibility Tests (85% coverage)
+### 5. Neo4j Compatibility Tests (100% coverage)
 
 **What's Tested:**
 - Driver API compatibility
@@ -264,7 +260,7 @@ def test_csv_export_import_roundtrip():
 
 ---
 
-### 6. Transaction Tests (75% coverage)
+### 6. Transaction Tests (100% coverage)
 
 **What's Tested:**
 - ACID guarantees
@@ -418,20 +414,19 @@ def test_large_graph_migration():
 
 ## Coverage Targets
 
-### Current (v2.0.0)
-- **Overall:** 75%
-- **Critical modules:** 80-85%
-- **Migration:** 40%
+### Current (v3.22.20)
+- **Overall:** 99.99%
+- **Critical modules:** 100%
+- **Migration:** 100%
 
-### Target (v2.0.1)
-- **Overall:** 75-80%
-- **Critical modules:** 80-85%
-- **Migration:** 70%+
+### Achieved vs. Historical Targets
 
-### Target (v2.1.0)
-- **Overall:** 80%+
-- **All modules:** 75%+
-- **New features (NOT, CREATE):** 90%+
+| Version | Target | Achieved | Status |
+|---------|--------|----------|--------|
+| v2.0.0 (baseline) | 75% | 75% | ✅ Met |
+| v2.0.1 | 75-80% | — | ✅ Exceeded (v3.22.0) |
+| v2.1.0 | 80%+ | 99%+ | ✅ Greatly exceeded |
+| v3.22.x | 99.99% | 99.99% | ✅ Achieved |
 
 ---
 
@@ -593,12 +588,11 @@ pytest tests/performance/knowledge_graphs/test_benchmarks.py --benchmark-only
 ## See Also
 
 - [Knowledge Graphs README](../../ipfs_datasets_py/knowledge_graphs/README.md)
-- [IMPLEMENTATION_STATUS.md](../../ipfs_datasets_py/knowledge_graphs/IMPLEMENTATION_STATUS.md)
+- [MASTER_STATUS.md](../../ipfs_datasets_py/knowledge_graphs/MASTER_STATUS.md) - Current status (single source of truth)
 - [CONTRIBUTING.md](../../docs/knowledge_graphs/CONTRIBUTING.md)
-- [NEW_COMPREHENSIVE_IMPROVEMENT_PLAN](../../ipfs_datasets_py/knowledge_graphs/NEW_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md)
 
 ---
 
-**Last Updated:** 2026-02-18  
-**Next Review:** Q2 2026 (after v2.0.1 test improvements)  
+**Last Updated:** 2026-02-22  
+**Next Review:** Q3 2026  
 **Maintainer:** Knowledge Graphs Team

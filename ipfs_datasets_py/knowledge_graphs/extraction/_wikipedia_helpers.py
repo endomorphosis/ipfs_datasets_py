@@ -158,8 +158,8 @@ class WikipediaExtractionMixin:
                 if entity.entity_id != page_entity.entity_id:
                     rel = Relationship(
                         relationship_type="sourced_from",
-                        source=entity,
-                        target=page_entity,
+                        source_entity=entity,
+                        target_entity=page_entity,
                         confidence=1.0
                     )
 

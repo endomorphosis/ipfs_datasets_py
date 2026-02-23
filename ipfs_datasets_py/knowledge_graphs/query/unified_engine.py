@@ -52,10 +52,22 @@ Usage:
     )
 """
 
+import asyncio
 import logging
 import anyio
 from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, asdict
+
+
+def _cancelled_exc_class() -> type:
+    """Return the current async framework's cancellation exception class.
+
+    Falls back to asyncio.CancelledError when called outside an async context.
+    """
+    try:
+        return anyio.get_cancelled_exc_class()
+    except anyio.NoEventLoopError:
+        return asyncio.CancelledError
 
 from .budget_manager import BudgetManager, ExecutionBudgets, ExecutionCounters
 from .hybrid_search import HybridSearchEngine, HybridSearchResult
@@ -172,6 +184,7 @@ class UnifiedQueryEngine:
         
         # Lazy-load heavy components
         self._cypher_compiler = None
+        self._cypher_parser = None
         self._ir_executor = None
         self._graph_engine = None
         
@@ -188,6 +201,18 @@ class UnifiedQueryEngine:
                 logger.error(f"Failed to load Cypher compiler: {e}")
                 raise
         return self._cypher_compiler
+
+    @property
+    def cypher_parser(self):
+        """Lazy-load Cypher parser."""
+        if self._cypher_parser is None:
+            try:
+                from ipfs_datasets_py.knowledge_graphs.cypher import CypherParser
+                self._cypher_parser = CypherParser()
+            except ImportError as e:
+                logger.error(f"Failed to load Cypher parser: {e}")
+                raise
+        return self._cypher_parser
     
     @property
     def ir_executor(self):
@@ -280,7 +305,8 @@ class UnifiedQueryEngine:
         with self.budget_manager.track(budgets) as tracker:
             try:
                 # Compile Cypher to IR
-                ir = self.cypher_compiler.compile(query, params)
+                ast = self.cypher_parser.parse(query)
+                ir = self.cypher_compiler.compile(ast)
                 
                 # Execute IR
                 result = self.ir_executor.execute(ir, budgets=budgets)
@@ -307,7 +333,7 @@ class UnifiedQueryEngine:
                 ) from e
             except QueryError:
                 raise
-            except anyio.get_cancelled_exc_class():
+            except _cancelled_exc_class():
                 raise
             except Exception as e:
                 logger.error(f"Cypher query execution failed: {e}")
@@ -374,7 +400,7 @@ class UnifiedQueryEngine:
                 ) from e
             except QueryError:
                 raise
-            except anyio.get_cancelled_exc_class():
+            except _cancelled_exc_class():
                 raise
             except Exception as e:
                 logger.error(f"IR query execution failed: {e}")
@@ -453,7 +479,7 @@ class UnifiedQueryEngine:
                 ) from e
             except QueryError:
                 raise
-            except anyio.get_cancelled_exc_class():
+            except _cancelled_exc_class():
                 raise
             except Exception as e:
                 logger.error(f"Hybrid search execution failed: {e}")
@@ -535,7 +561,7 @@ class UnifiedQueryEngine:
                             'answer': "Reasoning unavailable - using search results only",
                             'error': str(e)
                         }
-                    except anyio.get_cancelled_exc_class():
+                    except _cancelled_exc_class():
                         raise
                     except Exception as e:
                         logger.error(f"Unexpected LLM reasoning error: {e}")
@@ -574,7 +600,7 @@ class UnifiedQueryEngine:
                     f"GraphRAG query timed out: {e}",
                     details={'question': question, 'depth': reasoning_depth}
                 ) from e
-            except anyio.get_cancelled_exc_class():
+            except _cancelled_exc_class():
                 raise
             except Exception as e:
                 logger.error(f"GraphRAG execution failed: {e}")
@@ -624,6 +650,52 @@ class UnifiedQueryEngine:
             'default_budgets_preset': self.default_budgets_preset,
             'hybrid_search_cache_size': len(self.hybrid_search._cache),
         }
+
+    async def execute_async(
+        self,
+        query: str,
+        params: Optional[Dict[str, Any]] = None,
+        budgets: Optional[ExecutionBudgets] = None,
+        query_type: str = 'auto',
+    ) -> QueryResult:
+        """Execute a query asynchronously.
+
+        This is a thin async wrapper around :meth:`execute_query`.  It allows
+        ``UnifiedQueryEngine`` to be used inside ``async``/``await`` code and
+        async web frameworks (FastAPI, aiohttp, etc.) **without blocking the
+        event loop**.
+
+        The actual query execution is synchronous (Python graph traversal is
+        CPU-bound, not I/O-bound).  The implementation delegates to
+        :func:`asyncio.get_event_loop().run_in_executor` to offload the work
+        to a thread-pool so the event loop remains unblocked.
+
+        Args:
+            query: Query string (Cypher, IR, or hybrid).
+            params: Query parameters (substituted into the query).
+            budgets: Execution budgets (uses engine defaults if ``None``).
+            query_type: ``'auto'`` (default), ``'cypher'``, ``'ir'``, or
+                ``'hybrid'``.
+
+        Returns:
+            :class:`QueryResult` with results and execution statistics.
+
+        Example::
+
+            import asyncio
+            from ipfs_datasets_py.knowledge_graphs.query import UnifiedQueryEngine
+
+            engine = UnifiedQueryEngine(backend=backend)
+            result = asyncio.run(
+                engine.execute_async("MATCH (p:Person) WHERE p.age > 30 RETURN p")
+            )
+        """
+        import asyncio
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            None,
+            lambda: self.execute_query(query, params, budgets, query_type),
+        )
 
 
 __all__ = [

@@ -1,6 +1,6 @@
 # Core Graph Database Engine
 
-**Version:** 2.0.0  
+**Version:** 3.22.22  
 **Package:** `ipfs_datasets_py.knowledge_graphs.core`
 
 ---
@@ -435,7 +435,7 @@ pytest tests/knowledge_graphs/test_core/ --cov=ipfs_datasets_py.knowledge_graphs
 
 ## Status
 
-**Test Coverage:** ~80%  
+**Test Coverage:** 100%  
 **Production Ready:** Yes  
 **Breaking Changes:** None in 2.x  
 
@@ -443,4 +443,4 @@ pytest tests/knowledge_graphs/test_core/ --cov=ipfs_datasets_py.knowledge_graphs
 - Phase 1: Query routing and execution ✅ Complete
 - Phase 2: Cypher integration ✅ Complete  
 - Phase 3: Transaction integration ✅ Complete
-- Phase 5: Advanced optimization (Planned)
+- Phase 5: Advanced optimization 📋 Deferred to v4.0+

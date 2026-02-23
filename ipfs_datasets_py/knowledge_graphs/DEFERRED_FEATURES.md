@@ -1,6 +1,6 @@
 # Knowledge Graphs - Deferred Features
 
-**Last Updated:** 2026-02-18  
+**Last Updated:** 2026-02-20  
 **Purpose:** Explicitly document features marked for future implementation
 
 ---
@@ -9,348 +9,653 @@
 
 This document clarifies which features in the knowledge_graphs module are **intentionally incomplete** with planned implementation in future versions. These are not bugs or oversights - they are deliberate deferrals based on prioritization and user feedback.
 
+Items marked ✅ have been **implemented** and are tracked here for historical reference.
+
 ---
 
-## P1: High Priority (v2.1.0 - Q2 2026)
+## P1: High Priority (v2.1.0)
 
 ### 1. Cypher NOT Operator
 
-**Status:** 🟡 Planned for v2.1.0  
-**Location:** `cypher/compiler.py`  
-**Current State:** Commented out implementation  
-**Reason for Deferral:** Needed to ship v1.0 quickly; workarounds exist
+**Status:** ✅ Implemented (v2.1.0 — 2026-02-19)  
+**Location:** `cypher/parser.py`, `cypher/compiler.py`, `core/expression_evaluator.py`  
+**Implementation:**
+- Parser: `_parse_not()` handles `NOT expr` AST nodes
+- Compiler: emits `UnaryOpNode(operator="NOT")` or negated simple operators (e.g. `>` → `<=`)
+- Evaluator: `evaluate_compiled_expression` handles `{"op": "NOT", "operand": ...}` plus short-circuit `AND`/`OR`
 
-**Impact:**
-- **Medium** - Affects query expressiveness
-- Workaround: Rewrite queries using positive logic
-
-**Example:**
-```cypher
--- Wanted:
-MATCH (p:Person)
-WHERE NOT p.age > 30
-RETURN p
-
--- Current workaround:
-MATCH (p:Person)
-WHERE p.age <= 30
-RETURN p
+**Example (now works):**
+```python
+executor.execute("MATCH (p:Person) WHERE NOT p.age > 30 RETURN p")
+executor.execute("MATCH (p:Person) WHERE NOT (p.age > 30 AND p.city = 'NYC') RETURN p")
 ```
 
-**Timeline:** v2.1.0 (June 2026)  
-**Effort:** 2-3 hours (implementation + tests)
+**Tests:** `tests/unit/knowledge_graphs/test_p1_deferred_features.py`
 
 ---
 
 ### 2. Cypher CREATE Relationships
 
-**Status:** 🟡 Planned for v2.1.0  
-**Location:** `cypher/compiler.py:510`  
-**Current State:** `pass` statement with TODO comment  
-**Reason for Deferral:** Basic graph construction works via Python API
+**Status:** ✅ Implemented (v2.1.0 — 2026-02-19)  
+**Location:** `cypher/compiler.py` — `_compile_create()`  
+**Implementation:**
+- `CreateNode` + `CreateRelationship` IR operations emitted for `CREATE (a)-[r:TYPE]->(b)` patterns
+- Handles left/right/undirected directions and relationship properties
 
-**Impact:**
-- **Medium** - Affects Neo4j API parity
-- Workaround: Use property graph API directly
-
-**Example:**
+**Example (now works):**
 ```cypher
--- Wanted:
 MATCH (a:Person {name: 'Alice'}), (b:Person {name: 'Bob'})
 CREATE (a)-[r:KNOWS]->(b)
 RETURN r
-
--- Current workaround (Python):
-graph.add_relationship(alice_node, bob_node, "KNOWS")
 ```
 
-**Timeline:** v2.1.0 (June 2026)  
-**Effort:** 3-4 hours (implementation + tests)
+**Tests:** `tests/unit/knowledge_graphs/test_p1_deferred_features.py`
 
 ---
 
-## P2: Medium Priority (v2.2.0 - Q3 2026)
+### 2b. Cypher MERGE Clause
+
+**Status:** ✅ Implemented (v2.1.0 — 2026-02-20)  
+**Location:** `cypher/ast.py` (`MergeClause`), `cypher/parser.py` (`_parse_merge`), `cypher/compiler.py` (`_compile_merge`), `core/ir_executor.py` (Merge handler)  
+**Implementation:**
+- Match-or-create: tries to MATCH the pattern first; if found, uses existing node(s); otherwise CREATEs them
+- ON CREATE SET: property assignments applied only when the node is newly created
+- ON MATCH SET: property assignments applied only when an existing node was matched
+- Idempotent: repeated MERGE with the same key never creates duplicates
+
+**Example (now works):**
+```cypher
+MERGE (n:Person {name: 'Alice'})
+MERGE (n:Person {name: 'Alice'})   -- no duplicate created
+MERGE (n:Person {name: 'Bob'})     -- creates Bob
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_merge_remove_isnull_xor.py`
+
+---
+
+### 2c. Cypher REMOVE Clause
+
+**Status:** ✅ Implemented (v2.1.0 — 2026-02-20)  
+**Location:** `cypher/ast.py` (`RemoveClause`), `cypher/parser.py` (`_parse_remove`), `cypher/compiler.py` (`_compile_remove`), `core/ir_executor.py` (RemoveProperty / RemoveLabel handlers)  
+**Implementation:**
+- `REMOVE n.property` → emits `RemoveProperty` IR op; deletes the key from the node's `_properties`
+- `REMOVE n:Label` → emits `RemoveLabel` IR op; removes the label from the node's `_labels` frozenset
+
+**Example (now works):**
+```cypher
+MATCH (n:Person) WHERE n.name = 'Alice' REMOVE n.email
+MATCH (n:Employee) REMOVE n:Employee
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_merge_remove_isnull_xor.py`
+
+---
+
+### 2d. IS NULL / IS NOT NULL Operators
+
+**Status:** ✅ Implemented (v2.1.0 — 2026-02-20)  
+**Location:** `cypher/parser.py` (`_parse_comparison`), `cypher/compiler.py` (`_compile_where_expression`), `core/expression_evaluator.py` (`evaluate_compiled_expression`)  
+**Implementation:**
+- Parser: `IS NULL` / `IS NOT NULL` produce `UnaryOpNode(operator="IS NULL"/"IS NOT NULL", operand=property_expr)`
+- Compiler: emits `Filter` with `{"op": "IS NULL", "operand": ...}`
+- Evaluator: `IS NULL` returns `operand is None`; `IS NOT NULL` returns `operand is not None`
+
+**Example (now works):**
+```cypher
+MATCH (p:Person) WHERE p.email IS NULL RETURN p.name     -- Bob (no email)
+MATCH (p:Person) WHERE p.email IS NOT NULL RETURN p.name -- Alice (has email)
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_merge_remove_isnull_xor.py`
+
+---
+
+### 2e. XOR Boolean Operator
+
+**Status:** ✅ Implemented (v2.1.0 — 2026-02-20)  
+**Location:** `cypher/parser.py` (`_parse_or` extended for `TokenType.XOR`), `cypher/compiler.py` (`_compile_where_expression` XOR branch), `core/expression_evaluator.py`  
+**Implementation:**
+- Parser: `_parse_or` now accepts OR **and** XOR tokens, producing `BinaryOpNode(operator="XOR",...)`
+- Compiler: XOR gets its own branch in `_compile_where_expression` (cannot use simple property-filter path; both operands need evaluation)
+- Evaluator: `apply_operator` and `evaluate_compiled_expression` both handle `XOR` as `bool(left) ^ bool(right)`
+
+**Example (now works):**
+```cypher
+MATCH (n:Item) WHERE n.a XOR n.b RETURN n  -- True XOR False = True
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_merge_remove_isnull_xor.py`
+
+---
+
+### 2f. Cypher FOREACH Clause
+
+**Status:** ✅ Implemented (v2.1.0 — 2026-02-20 session 5)
+**Location:** `cypher/lexer.py` (`FOREACH` TokenType), `cypher/ast.py` (`ForeachClause`),
+             `cypher/parser.py` (`_parse_foreach`), `cypher/compiler.py` (`_compile_foreach`),
+             `core/ir_executor.py` (Foreach op handler)
+**Implementation:**
+- Lexer: `FOREACH` keyword added to `TokenType` enum and `KEYWORDS` dict
+- AST: `ForeachClause(variable, expression, body)` dataclass with `FOREACH` node type
+- Parser: `_parse_foreach()` parses `FOREACH (variable IN list_expr | clause*)` grammar
+- Compiler: `_compile_foreach()` emits `{"op": "Foreach", "variable", "expression", "body_ops"}` IR
+- Executor: iterates list expression, runs `body_ops` sub-program with loop variable bound per element
+
+**Example (now works):**
+```cypher
+FOREACH (x IN [1, 2, 3] | CREATE (:Counter {value: x}))
+FOREACH (n IN relatedNodes | SET n.visited = true)
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_foreach_call_mcp.py` (10 FOREACH tests)
+
+---
+
+### 2g. Cypher CALL Subquery
+
+**Status:** ✅ Implemented (v2.1.0 — 2026-02-20 session 5)
+**Location:** `cypher/ast.py` (`CallSubquery`), `cypher/parser.py` (`_parse_call_subquery`),
+             `cypher/compiler.py` (`_compile_call_subquery`), `core/ir_executor.py` (CallSubquery handler)
+**Implementation:**
+- AST: `CallSubquery(body, yield_items)` dataclass with inner `QueryNode` body and optional YIELD declarations
+- Parser: `_parse_call_subquery()` collects inner token stream, re-parses via a fresh `CypherParser`, and
+  parses an optional `YIELD col [AS alias]` list
+- Compiler: `_compile_call_subquery()` compiles inner query into `inner_ops` and emits
+  `{"op": "CallSubquery", "inner_ops", "yield_items"}`
+- Executor: runs `inner_ops` recursively via `execute_ir_operations`, then merges inner records into
+  outer bindings (applying YIELD aliases where declared)
+
+**Example (now works):**
+```cypher
+CALL { MATCH (n:Person) RETURN n.name AS name }
+CALL { MATCH (n) RETURN count(n) AS total } YIELD total
+CALL { MATCH (n:Person) RETURN n.name AS nm } YIELD nm AS personName
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_foreach_call_mcp.py` (9 CALL tests)
+
+---
+
+## P2: Medium Priority (v2.2.0)
 
 ### 3. GraphML Format Support
 
-**Status:** 🔴 Not Implemented  
-**Location:** `migration/formats.py:171, :198`  
-**Current State:** Raises `NotImplementedError`  
-**Reason for Deferral:** Limited user demand; CSV/JSON work well
+**Status:** ✅ Implemented (v2.2.0 — 2026-02-19)  
+**Location:** `migration/formats.py` — `_save_to_graphml` / `_load_from_graphml`  
+**Implementation:** Full read/write support using `xml.etree.ElementTree`. Preserves node labels, properties, edge types.
 
-**Impact:**
-- **Low** - Affects migration from Gephi/yEd
-- Workaround: Export to CSV or JSON first
-
-**Example:**
-```python
-# Currently raises NotImplementedError
-save_to_file(graph, "output.graphml", format="graphml")
-
-# Workaround:
-save_to_file(graph, "output.csv", format="csv")
-```
-
-**Timeline:** v2.2.0 (August 2026)  
-**Effort:** 8-10 hours (parser + serializer + tests)
+**Tests:** `tests/unit/knowledge_graphs/test_p2_format_support.py`
 
 ---
 
 ### 4. GEXF Format Support
 
-**Status:** 🔴 Not Implemented  
-**Location:** `migration/formats.py:171, :198`  
-**Current State:** Raises `NotImplementedError`  
-**Reason for Deferral:** Similar to GraphML; limited demand
+**Status:** ✅ Implemented (v2.2.0 — 2026-02-19)  
+**Location:** `migration/formats.py` — `_save_to_gexf` / `_load_from_gexf`  
+**Implementation:** Full read/write support for GEXF 1.2draft. Preserves node attributes and edge types.
 
-**Impact:**
-- **Low** - Affects Gephi users
-- Workaround: Use CSV export instead
-
-**Timeline:** v2.2.0 (August 2026)  
-**Effort:** 6-8 hours (similar to GraphML)
+**Tests:** `tests/unit/knowledge_graphs/test_p2_format_support.py`
 
 ---
 
 ### 5. Pajek Format Support
 
-**Status:** 🔴 Not Implemented  
-**Location:** `migration/formats.py:171, :198`  
-**Current State:** Raises `NotImplementedError`  
-**Reason for Deferral:** Very limited use case
+**Status:** ✅ Implemented (v2.2.0 — 2026-02-19)  
+**Location:** `migration/formats.py` — `_save_to_pajek` / `_load_from_pajek`  
+**Implementation:** Read/write support for Pajek `.net` format (`*Vertices`, `*Arcs`, `*Edges` sections).
 
-**Impact:**
-- **Very Low** - Affects only Pajek users
-- Workaround: Convert via intermediate format
-
-**Timeline:** v2.2.0 (August 2026)  
-**Effort:** 4-6 hours (read-only initially)
+**Tests:** `tests/unit/knowledge_graphs/test_p2_format_support.py`
 
 ---
 
 ### 6. CAR Format Support
 
-**Status:** 🔴 Intentionally Deferred (P3 — No Change Planned Before v3.0)
+**Status:** ✅ Implemented (v2.1.0 — 2026-02-19)
 **Location:** `migration/formats.py` — `_builtin_save_car` / `_builtin_load_car`
-**Current State:** Raises `NotImplementedError` with an informative message.
-**Reason for Deferral:** The Python IPLD CAR ecosystem has two candidates:
-  - `ipld-car` (PyPI) — only 0.0.1 available; API unstable.
-  - `py-car` / `dag-cbor` + custom streaming — requires significant integration work.
+**Library decision:**
+- **Option 1 — `libipld` (v3.3.2, Rust-backed):** Fast DAG-CBOR encoding/decoding and
+  CAR decoding. No `encode_car` function. Used as primary decoder (faster, Rust extension).
+- **Option 2 — `ipld-car` (v0.0.1) + `ipld-dag-pb` (v0.0.1):** Pure-Python CAR
+  encode + decode, supports any codec. `ipld-dag-pb` not needed for graph data.
+- **Decision:** Use `libipld` for DAG-CBOR encoding + `ipld-car` for CAR file
+  creation. Decode prefers `libipld` (fast), falls back to `ipld-car` + `dag-cbor`.
 
-**Decision (2026-02-19):** Keep CAR deferred. Rationale:
-1. The existing format registry (`register_format`) makes it easy to add CAR support as a plugin without modifying this file.
-2. DAG-JSON and JSON-Lines cover all current IPFS-native use cases.
-3. Re-evaluate when `ipld-car` reaches v1.0 or a stable community library emerges.
-4. Any third party can add CAR support without a core change:
-   ```python
-   from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-       MigrationFormat, register_format,
-   )
-   def _save_car(graph, filepath): ...
-   def _load_car(filepath): ...
-   register_format(MigrationFormat.CAR, _save_car, _load_car)
-   ```
+**Install extras:** `pip install -e ".[ipld]"` (adds `libipld`, `ipld-car`, `dag-cbor`)
 
-**Impact:** Low — affects only workflows that specifically need `.car` files.
-**Workaround:** Use IPLD backend directly, or use DAG-JSON then convert with an external CAR tool (e.g., `car` CLI from `go-car`).
+**Usage:**
+```python
+from ipfs_datasets_py.knowledge_graphs.migration.formats import (
+    GraphData, MigrationFormat,
+)
+graph_data.save_to_file("graph.car", format=MigrationFormat.CAR)
+loaded = GraphData.load_from_file("graph.car", format=MigrationFormat.CAR)
+```
 
-**Timeline:** Not scheduled — revisit when ipld-car ≥ 1.0 is available on PyPI.
-**Effort when ready:** 8-12 hours (streaming CAR writer/reader + tests).
+**Tests:** `tests/unit/knowledge_graphs/test_car_format.py`
 
 ---
 
-## P3: Lower Priority (v2.5.0 - Q3-Q4 2026)
+## P3: Lower Priority (v2.5.0)
 
 ### 7. Neural Relationship Extraction
 
-**Status:** 📋 Future (v2.5.0)  
-**Location:** `extraction/extractor.py:733`  
-**Current State:** `pass` statement with TODO(future) comment  
-**Reason for Deferral:** Rule-based extraction works well; neural adds dependencies
-
-**Impact:**
-- **Low** - Current extraction is sufficient for most use cases
-- No workaround needed - feature is enhancement, not core
-
-**Details:**
-- Would use transformer models (REBEL, LUKE) for relationship extraction
-- Requires `transformers` library (heavy dependency)
-- Needs training data for fine-tuning
-- Waiting for production feedback to justify complexity
+**Status:** ✅ Implemented (v2.5.0 — 2026-02-19)  
+**Location:** `extraction/extractor.py` — `_neural_relationship_extraction()`, `_parse_rebel_output()`  
+**Implementation:**
+- Supports REBEL (text2text generation) and classification-based models (e.g. TACRED)
+- Activated with `KnowledgeGraphExtractor(use_transformers=True)`
+- Gracefully falls back to rule-based when model not available
+- REBEL output parser included (`_parse_rebel_output`)
 
 **Example:**
 ```python
-# Planned for v2.5.0:
-extractor = KnowledgeGraphExtractor(use_neural=True, model="facebook/rebel-large")
+extractor = KnowledgeGraphExtractor(use_transformers=True, re_model=loaded_pipeline)
 kg = extractor.extract_knowledge_graph(text)
-# Should improve relationship accuracy by 10-15%
 ```
 
-**Timeline:** v2.5.0 (November 2026)  
-**Effort:** 20-24 hours (model integration + evaluation + tests)
+**Tests:** `tests/unit/knowledge_graphs/test_p3_p4_advanced_features.py`
 
 ---
 
 ### 8. Aggressive Entity Extraction (spaCy Dependency Parsing)
 
-**Status:** 📋 Future (v2.5.0)  
-**Location:** `extraction/extractor.py:870`  
-**Current State:** `pass` statement with TODO(future) comment  
-**Reason for Deferral:** Standard extraction covers most use cases
+**Status:** ✅ Implemented (v2.5.0 — 2026-02-19)  
+**Location:** `extraction/extractor.py` — `_aggressive_entity_extraction()`  
+**Implementation:**
+- Uses spaCy dependency parser for compound nouns and SVO extraction
+- Activated with `KnowledgeGraphExtractor(use_spacy=True, aggressive_extraction=True)`
+- Gracefully returns empty list when spaCy model not loaded
 
-**Impact:**
-- **Low** - Enhancement for complex sentences
-- No workaround needed - current extraction works
-
-**Details:**
-- Would use spaCy's dependency parser for better entity extraction
-- spaCy is already installed but not fully utilized
-- Features compound noun handling, subject-verb-object extraction
-- Waiting for user feedback on current extraction quality
-
-**Example:**
-```python
-# Planned for v2.5.0:
-extractor = KnowledgeGraphExtractor(
-    aggressive_extraction=True,
-    use_dependency_parsing=True
-)
-# Should increase entity recall by 15-20%
-```
-
-**Timeline:** v2.5.0 (November 2026)  
-**Effort:** 16-20 hours (parser integration + tests + evaluation)
+**Tests:** `tests/unit/knowledge_graphs/test_p3_p4_advanced_features.py`
 
 ---
 
 ### 9. Semantic Role Labeling (SRL)
 
-**Status:** 📋 Research (v2.5.0)  
-**Location:** Not yet implemented  
-**Current State:** Not started  
-**Reason for Deferral:** Advanced feature; needs research
+**Status:** ✅ Implemented (v2.5.0 — 2026-02-20); deepened (2026-02-20 session 3); deepened again (2026-02-20 session 4)
+**Location:** `extraction/srl.py` — `SRLExtractor`, `SRLFrame`, `RoleArgument`;
+             `extraction/extractor.py` — `KnowledgeGraphExtractor`
+**Implementation:**
+- `SRLExtractor.extract_srl(text)` → list of `SRLFrame` objects (one per predicate)
+- Heuristic backend: pure-Python SVO + modifier extraction (no external deps)
+- spaCy backend: dependency-parse–based extraction when `nlp=` model is provided
+- Semantic roles: Agent, Patient, Theme, Instrument, Location, Time, Cause, Result, Recipient, Source
+- `SRLExtractor.to_knowledge_graph(frames)` → event-centric `KnowledgeGraph` (Event nodes + typed role relationships)
+- `SRLExtractor.extract_to_triples(text)` → `(subject, predicate, object)` tuples
+- Graceful fallback: always works even without spaCy or any ML model
+- **Integration** (session 3): `KnowledgeGraphExtractor(use_srl=True)` merges SRL triples into
+  every `extract_knowledge_graph()` call via `_merge_srl_into_kg()`
+- **Standalone** (session 3): `extractor.extract_srl_knowledge_graph(text)` returns a
+  pure event-centric KG without entity/relationship extraction
+- **`SRLFrame.from_dict(data)`** (session 4): classmethod to deserialize a frame dict;
+  completes the `to_dict` round-trip
+- **`SRLExtractor.extract_batch(texts)`** (session 4): convenience method for batch extraction
+  across a list of strings; returns one frame list per input, in order
+- **`SRLExtractor.build_temporal_graph(text)`** (session 4): extracts events and links them
+  with `PRECEDES` / `OVERLAPS` temporal relationships based on connector words (then, meanwhile,
+  subsequently, etc.) and sentence ordering
 
-**Impact:**
-- **Very Low** - Specialized use case
-- Not needed for core functionality
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+from ipfs_datasets_py.knowledge_graphs.extraction.extractor import KnowledgeGraphExtractor
 
-**Details:**
-- Would use AllenNLP for frame-semantic parsing
-- Enables event-centric knowledge graphs
-- Improves temporal relationship detection
-- Requires significant research and evaluation
+# Standalone SRL
+ext_srl = SRLExtractor()
+frames = ext_srl.extract_srl("Alice sent the report to Bob yesterday.")
+kg = ext_srl.to_knowledge_graph(frames)
 
-**Timeline:** v2.5.0 (November 2026) - Experimental  
-**Effort:** 30-40 hours (research + implementation + evaluation)
+# Integrated SRL enrichment
+ext = KnowledgeGraphExtractor(use_srl=True)
+kg2 = ext.extract_knowledge_graph("Alice sent Bob a report.")  # SRL triples merged
+kg3 = ext.extract_srl_knowledge_graph("Alice taught Bob.")     # event-centric only
+```
+
+# Batch extraction (session 4)
+ext_srl.extract_batch(["Alice sent a report.", "Bob replied."])
+
+# Temporal graph (session 4)
+tg = ext_srl.build_temporal_graph("Alice opened the door. Then Bob walked in.")
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_srl_ontology_distributed.py` (12 tests),
+           `tests/unit/knowledge_graphs/test_srl_ontology_distributed_cont.py` (7 tests),
+           `tests/unit/knowledge_graphs/test_deferred_session4.py` (13 SRL tests)
 
 ---
 
-## P4: Long-term (v3.0.0 - Q1 2027)
+## P4: Long-term (v3.0.0)
 
 ### 10. Multi-hop Graph Traversal
 
-**Status:** 📋 Future (v3.0.0)  
-**Location:** `cross_document_reasoning.py:~400-450`  
-**Current State:** Placeholder comments  
-**Reason for Deferral:** Single-hop traversal sufficient for v1.0/v2.0
+**Status:** ✅ Implemented (v3.0.0 — 2026-02-19)  
+**Location:** `_reasoning_helpers.py` — `ReasoningHelpersMixin._find_multi_hop_connections()`  
+**Implementation:**
+- BFS-based multi-hop entity path finder
+- Integrated into `CrossDocumentReasoner` via mixin inheritance
+- Activated when `max_hops > 1` in `find_entity_connections()`
+- DFS traversal path generation via `_generate_traversal_paths()`
 
-**Impact:**
-- **Medium** - Needed for advanced reasoning
-- Current: Single-hop queries work fine
-
-**Details:**
-- Would implement shortest path algorithms
-- All paths enumeration with filtering
-- Path ranking and scoring
-- Graph pattern matching (beyond Cypher)
-
-**Example:**
-```cypher
--- Planned for v3.0.0:
-MATCH path = (a:Person)-[*1..5]-(b:Person)
-WHERE a.name = 'Alice' AND b.name = 'Charlie'
-RETURN path, length(path)
-ORDER BY length(path)
-```
-
-**Timeline:** v3.0.0 (February 2027)  
-**Effort:** 40-50 hours (algorithms + optimization + tests)
+**Tests:** `tests/unit/knowledge_graphs/test_p3_p4_advanced_features.py`
 
 ---
 
 ### 11. LLM API Integration
 
-**Status:** 📋 Future (v3.0.0)  
-**Location:** `cross_document_reasoning.py:740`  
-**Current State:** Placeholder comments  
-**Reason for Deferral:** LLM APIs still evolving; waiting for stability
-
-**Impact:**
-- **Low to Medium** - Enhancement for natural language queries
-- Not core functionality
-
-**Details:**
-- Would integrate OpenAI, Anthropic, local models
-- Natural language to Cypher translation
-- Entity/relationship extraction enhancement
-- Graph question answering
-- Semantic similarity via embeddings
+**Status:** ✅ Implemented (v3.0.0 — 2026-02-19)  
+**Location:** `_reasoning_helpers.py` — `ReasoningHelpersMixin._generate_llm_answer()`, `_get_llm_router()`  
+**Implementation:**
+- Supports OpenAI, Anthropic, and local LLM models via `ipfs_datasets_py.ml.llm.LLMRouter`
+- Lazy router initialization in `_get_llm_router()`
+- Graceful fallback to heuristic answer generation when LLM unavailable
+- Used in `CrossDocumentReasoner._synthesize_answer()`
 
 **Example:**
 ```python
-# Planned for v3.0.0:
-engine = UnifiedQueryEngine(
-    backend=backend,
-    llm_provider="openai",
-    llm_model="gpt-4"
-)
-
-# Natural language query
-results = engine.natural_language_query(
-    "Who did Marie Curie collaborate with at the University of Paris?"
-)
+from ipfs_datasets_py.ml.llm.llm_router import LLMRouter
+router = LLMRouter(provider="openai", model="gpt-4")
+reasoner = CrossDocumentReasoner(llm_service=router)
+result = reasoner.reason_across_documents(documents, query="Who collaborated with Alice?")
 ```
 
-**Timeline:** v3.0.0 (February 2027)  
-**Effort:** 60-80 hours (multiple providers + evaluation + tests)
+**Tests:** `tests/unit/knowledge_graphs/test_p3_p4_advanced_features.py`
 
 ---
 
 ### 12. Inference Rules and Ontology Reasoning
 
-**Status:** 📋 Research (v3.0.0+)  
-**Location:** Not yet implemented  
-**Current State:** Not started  
-**Reason for Deferral:** Advanced feature requiring research
+**Status:** ✅ Implemented (v3.0.0 — 2026-02-20); deepened (session 3); deepened again (session 4)
+**Location:** `ontology/reasoning.py` — `OntologySchema`, `OntologyReasoner`, `ConsistencyViolation`, `InferenceTrace`
+**Implementation:**
+- `OntologySchema` builder: `add_subclass`, `add_subproperty`, `add_transitive`, `add_symmetric`, `add_inverse`, `add_domain`, `add_range`, `add_disjoint`
+- **OWL 2 property chains** (session 3): `add_property_chain(chain, result_property)` — declares
+  `owl:propertyChainAxiom`; materialized during the fixpoint loop
+- **Turtle serialization** (session 3): `to_turtle()` and `from_turtle(text)` — round-trip OWL/RDFS
+  declarations in Turtle format without needing `rdflib`
+- **`add_equivalent_class(a, b)`** (session 4): declares `owl:equivalentClass`; populates mutual
+  `subClassOf` entries so materialisation treats both as the same class; serialised in Turtle
+- **`merge(other)`** (session 4): returns a new `OntologySchema` that is the union of both schemas;
+  self takes precedence for single-value maps; neither input is modified
+- `OntologyReasoner.materialize(kg)` — runs a fixpoint loop applying all declared rules
+  - **subClassOf** — nodes gain inferred super-class types (stored in `entity.properties["inferred_types"]`)
+  - **subPropertyOf** — new relationships generated for each declared super-property
+  - **transitive** — BFS-based transitive closure
+  - **symmetric** — reverse relationships for symmetric properties
+  - **inverseOf** — inverse-direction relationships generated
+  - **domain** — source nodes of a property gain the declared domain class
+  - **range** — target nodes of a property gain the declared range class
+  - **propertyChainAxiom** (session 3) — multi-step chain inference
+- `OntologyReasoner.check_consistency(kg)` — detects disjoint class violations and negative assertion conflicts
+- **`OntologyReasoner.explain_inferences(kg)`** (session 4): dry-run materialize on a copy; returns
+  a list of `InferenceTrace` objects recording `rule`, `subject_id`, `predicate`, `object_id`,
+  `source_ids`, and a human-readable `description`; does **not** modify `kg`
 
-**Impact:**
-- **Low** - Specialized reasoning use cases
-- Not needed for most users
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema, OntologyReasoner, InferenceTrace
 
-**Details:**
-- OWL/RDFS reasoning
-- Custom inference rules
-- Consistency checking
-- Automated fact derivation
+schema = OntologySchema()
+schema.add_subclass("Employee", "Person")
+schema.add_transitive("isAncestorOf")
+schema.add_equivalent_class("Person", "Human")       # session 4
 
-**Timeline:** v3.0.0+ (Q1 2027 or later)  
-**Effort:** 80-100 hours (significant research + implementation)
+schema2 = OntologySchema()
+schema2.add_symmetric("isSiblingOf")
+combined = schema.merge(schema2)                       # session 4
+
+reasoner = OntologyReasoner(combined)
+kg2 = reasoner.materialize(kg)
+violations = reasoner.check_consistency(kg2)
+
+# Inference provenance (session 4)
+traces = reasoner.explain_inferences(kg)  # dry-run, kg unchanged
+for t in traces:
+    print(f"[{t.rule}] {t.description}")
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_srl_ontology_distributed.py` (11 tests),
+           `tests/unit/knowledge_graphs/test_srl_ontology_distributed_cont.py` (12 tests),
+           `tests/unit/knowledge_graphs/test_deferred_session4.py` (14 OWL tests)
 
 ---
 
 ### 13. Distributed Query Execution
 
-**Status:** 📋 Research (v3.0.0+)  
-**Location:** Not yet implemented  
-**Current State:** Not started  
-**Reason for Deferral:** Not needed for current scale targets
+**Status:** ✅ Implemented (v3.0.0 — 2026-02-20); deepened (session 3); deepened again (session 4)
+**Location:** `query/distributed.py` — `GraphPartitioner`, `DistributedGraph`, `FederatedQueryExecutor`
+**Implementation:**
+- `GraphPartitioner(num_partitions, strategy)` — partitions a `KnowledgeGraph` into N shards
+  - Strategies: `HASH` (SHA1 of node ID mod N), `RANGE` (sorted ID buckets), `ROUND_ROBIN`
+  - Cross-partition edges are copied to both source and target partitions by default
+- `DistributedGraph` — holds `N` partition `KnowledgeGraph` objects
+  - `get_partition_for_entity(entity_id)` — locate which partition holds an entity
+  - `to_merged_graph()` — re-merge all partitions into a single graph
+  - `get_partition_stats()` — per-partition node/edge counts
+  - **`rebalance(strategy)`** (session 4): returns a new `DistributedGraph` with nodes
+    redistributed using *strategy* (default `ROUND_ROBIN` for perfect balance); does not
+    mutate the original
+- `FederatedQueryExecutor(dist_graph)` — fan-out Cypher query execution
+  - `execute_cypher(query)` — serial fan-out, merge + deduplicate
+  - `execute_cypher_parallel(query, max_workers)` — thread-pool fan-out
+  - **`execute_cypher_async(query)`** (session 3) — asyncio-native wrapper
+  - **`lookup_entity(entity_id)`** (session 3) — cross-partition O(partitions) entity lookup
+  - **`lookup_entity_partition(entity_id)`** (session 3) — returns partition index or None
+  - **`explain_query(query)`** (session 4): returns a `QueryPlan` with per-partition node/edge
+    counts and estimated result rows; no actual execution
+  - **`execute_cypher_streaming(query)`** (session 4): generator yielding
+    `(partition_idx, record_dict)` tuples lazily; deduplication still applied across the stream
+  - Each partition gets its own in-memory `GraphEngine` populated from partition nodes/rels
+  - Deduplication uses SHA1 fingerprint of serialised record dicts
+- New dataclasses: `QueryPlan`, `PartitionQueryPlan` (exported from `query/__init__.py`)
 
-**Impact:**
-- **Low** - Only needed for massive graphs (100M+ nodes)
-- Current implementation handles up to 10M nodes efficiently
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.query.distributed import (
+    GraphPartitioner, FederatedQueryExecutor, PartitionStrategy,
+)
 
-**Timeline:** v3.0.0+ (Q1 2027 or later)  
-**Effort:** 100-120 hours (partitioning + federation + tests)
+dist = GraphPartitioner(num_partitions=4, strategy=PartitionStrategy.HASH).partition(kg)
+executor = FederatedQueryExecutor(dist)
+
+# Synchronous fan-out
+result = executor.execute_cypher("MATCH (n:Person) WHERE n.age > 30 RETURN n.name, n.age")
+
+# Async fan-out
+import asyncio
+result = asyncio.run(executor.execute_cypher_async("MATCH (n:Person) RETURN n"))
+
+# Cross-partition entity lookup
+entity = executor.lookup_entity(some_entity_id)
+
+# Rebalance partitions (session 4)
+balanced = dist.rebalance(PartitionStrategy.ROUND_ROBIN)
+
+# Query plan without execution (session 4)
+plan = executor.explain_query("MATCH (n:Person) RETURN n.name")
+print(plan.to_dict())
+
+# Streaming (session 4)
+for partition_idx, record in executor.execute_cypher_streaming("MATCH (n) RETURN n.name"):
+    print(partition_idx, record)
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_srl_ontology_distributed.py` (15 tests),
+           `tests/unit/knowledge_graphs/test_srl_ontology_distributed_cont.py` (7 tests),
+           `tests/unit/knowledge_graphs/test_deferred_session4.py` (13 distributed tests)
+
+---
+
+## P5: Delivered in v3.22.23 (formerly v4.0+ deferred)
+
+### 14. Confidence Score Aggregation
+
+**Status:** ✅ Implemented (v3.22.23 — 2026-02-22)
+**Location:** `extraction/extractor.py` — `KnowledgeGraphExtractor.aggregate_confidence_scores()`,
+             `KnowledgeGraphExtractor.compute_extraction_quality_metrics()`
+**Implementation:**
+- `aggregate_confidence_scores(scores, method='mean', weights=None)` — combines per-source
+  confidence scores using one of 6 strategies: `mean`, `min`, `max`, `harmonic_mean`,
+  `weighted_mean`, `probabilistic_and`
+- `compute_extraction_quality_metrics(kg)` — returns a 10-key metrics dict covering
+  entity/relationship counts, density, average/std/low-confidence ratios, type diversity,
+  and isolated entity ratio; no external dependencies required
+
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction.extractor import KnowledgeGraphExtractor
+
+# Aggregate multiple source confidences
+scores = [0.9, 0.75, 0.85]
+agg = KnowledgeGraphExtractor.aggregate_confidence_scores(scores)  # mean → 0.833
+conservative = KnowledgeGraphExtractor.aggregate_confidence_scores(scores, method="probabilistic_and")  # 0.574
+
+# Quality metrics for an extracted graph
+metrics = KnowledgeGraphExtractor.compute_extraction_quality_metrics(kg)
+print(metrics["relationship_density"])    # rels / entities
+print(metrics["low_confidence_ratio"])    # fraction with confidence < 0.5
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session69.py`
+
+---
+
+### 15. Migration Progress Tracking
+
+**Status:** ✅ Implemented (v3.22.23 — 2026-02-22)
+**Location:** `migration/formats.py` — `GraphData.export_streaming(progress_callback=...)`
+**Implementation:**
+- New optional `progress_callback: Callable[[int, int, int, int], None]` parameter added to
+  `GraphData.export_streaming()`
+- Callback signature: `(nodes_written, total_nodes, rels_written, total_rels)`
+- Called after each node chunk and each relationship chunk
+- Enables progress bars, logging, and resumable-migration checkpoints
+- Fully backward-compatible: existing callers without `progress_callback` are unaffected
+
+**Example (now works):**
+```python
+def on_progress(nw, nt, rw, rt):
+    pct = ((nw + rw) / (nt + rt) * 100) if (nt + rt) else 0
+    print(f"  {pct:.1f}%  nodes {nw}/{nt}  rels {rw}/{rt}")
+
+nodes_written, rels_written = graph.export_streaming(
+    "large_graph.jsonl",
+    chunk_size=1000,
+    progress_callback=on_progress,
+)
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session69.py`
+
+---
+
+### 16. Graph Diff/Patch
+
+**Status:** ✅ Implemented (v3.22.24 — 2026-02-22)
+**Location:** `extraction/graph.py` — `KnowledgeGraphDiff`, `KnowledgeGraph.diff()`,
+             `KnowledgeGraph.apply_diff()`
+**Implementation:**
+- `KnowledgeGraphDiff` dataclass (`added_entities`, `removed_entity_ids`,
+  `added_relationships`, `removed_relationship_ids`, `modified_entities`);
+  `is_empty` property; `summary()`, `to_dict()`, `from_dict()` methods
+- `KnowledgeGraph.diff(other)` — computes structural diff; entities matched by
+  (entity_type, name) fingerprint; relationships matched by
+  (relationship_type, source_fingerprint, target_fingerprint)
+- `KnowledgeGraph.apply_diff(diff)` — applies diff in-place: cascade-removes
+  entities (with their relationships), removes standalone relationships, adds
+  new entities, applies property modifications, adds new relationships
+
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph, KnowledgeGraphDiff
+
+diff = original_kg.diff(updated_kg)
+if not diff.is_empty:
+    print(diff.summary())          # "+1 entities, -0 entities, +2 rels, ..."
+    d = diff.to_dict()             # serialize to JSON-safe dict
+    restored = KnowledgeGraphDiff.from_dict(d)  # round-trip
+    original_kg.apply_diff(diff)   # transform original into updated in-place
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session70.py`
+
+---
+
+## P6: Delivered in v3.22.25 (formerly v4.0+ "Real-time streaming" and "Temporal graph databases")
+
+### 17. Graph Event Subscriptions
+
+**Status:** ✅ Implemented (v3.22.25 — 2026-02-22)
+**Location:** `extraction/graph.py` — `GraphEventType`, `GraphEvent`,
+             `KnowledgeGraph.subscribe()`, `KnowledgeGraph.unsubscribe()`,
+             `KnowledgeGraph._emit_event()`
+**Implementation:**
+- `GraphEventType(str, Enum)` with 5 event types: `entity_added`, `entity_removed`,
+  `entity_modified`, `relationship_added`, `relationship_removed`
+- `GraphEvent` dataclass: `event_type`, `timestamp`, `entity_id`, `relationship_id`, `data`
+- `KnowledgeGraph.subscribe(callback) -> int` — registers observer, returns handler ID
+- `KnowledgeGraph.unsubscribe(handler_id) -> bool` — removes observer (returns True/False)
+- `KnowledgeGraph._emit_event(event)` — fan-out to all subscribers; exceptions in subscribers
+  are silently suppressed so a faulty subscriber never disrupts graph operations
+- Wired into `add_entity()`, `add_relationship()`, and `apply_diff()` (all five event types)
+- Fully backward-compatible: subscribers default to empty dict; no performance overhead
+  when no subscribers are registered
+
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph, GraphEventType
+
+events = []
+kg = KnowledgeGraph("example")
+hid = kg.subscribe(events.append)
+
+e1 = kg.add_entity("person", "Alice")   # fires ENTITY_ADDED
+e2 = kg.add_entity("person", "Bob")    # fires ENTITY_ADDED
+kg.add_relationship("knows", e1, e2)   # fires RELATIONSHIP_ADDED
+
+assert events[0].event_type == GraphEventType.ENTITY_ADDED
+assert events[0].entity_id == e1.entity_id
+
+kg.unsubscribe(hid)   # clean up
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session71.py`
+
+---
+
+### 18. KnowledgeGraph Named Snapshots
+
+**Status:** ✅ Implemented (v3.22.25 — 2026-02-22)
+**Location:** `extraction/graph.py` — `KnowledgeGraph.snapshot()`,
+             `KnowledgeGraph.get_snapshot()`, `KnowledgeGraph.list_snapshots()`,
+             `KnowledgeGraph.restore_snapshot()`
+**Implementation:**
+- `snapshot(name=None) -> str` — serializes current entities+relationships to a named
+  snapshot dict; auto-generates a `snap_<8-char-uuid>` name when none provided; returns name
+- `get_snapshot(name) -> Optional[Dict]` — returns a shallow copy of the snapshot payload
+  (`{"entities": [...], "relationships": [...]}`); `None` if not found
+- `list_snapshots() -> List[str]` — sorted list of all stored snapshot names
+- `restore_snapshot(name) -> bool` — fully rebuilds entities, relationships, and all four
+  index dicts from the stored snapshot; returns `False` when name is unknown; event
+  subscribers are NOT notified during restore (atomic state replacement)
+
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
+kg = KnowledgeGraph("versioned")
+kg.add_entity("person", "Alice")
+snap = kg.snapshot("before_merge")   # "before_merge"
+
+kg.add_entity("org", "Acme Corp")
+assert len(kg.entities) == 2
+
+kg.restore_snapshot("before_merge")  # reverts addition
+assert len(kg.entities) == 1
+assert kg.list_snapshots() == ["before_merge"]
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session71.py`
 
 ---
 
@@ -383,6 +688,562 @@ results = engine.natural_language_query(
 
 ---
 
+## P7: Delivered in v3.22.26 (formerly v4.0+ "GraphQL API support")
+
+### 19. GraphQL API Support
+
+**Status:** ✅ Implemented (v3.22.26 — 2026-02-23)
+**Location:** `query/graphql.py` — `GraphQLParser`, `KnowledgeGraphQLExecutor`,
+             `GraphQLDocument`, `GraphQLField`, `GraphQLParseError`
+**Implementation:**
+- `GraphQLParser` — recursive-descent parser for a practical GraphQL subset
+  (entity queries, argument filters, field projection, nested relationships,
+  aliases, float/int/bool/null/string argument values)
+- `GraphQLDocument` / `GraphQLField` — lightweight AST nodes
+- `GraphQLParseError(ValueError)` — clear error type for parse failures
+- `KnowledgeGraphQLExecutor(kg)` — executes GraphQL against a `KnowledgeGraph`;
+  response follows the GraphQL-over-HTTP envelope `{"data": {...}}`
+  - Entity selection by type (top-level field name = entity type)
+  - Argument equality filters: `id`, `name`, `type`, or any property
+  - Field projection: `id / entity_id`, `type / entity_type`, `name`,
+    `confidence`, arbitrary `entity.properties` keys
+  - Relationship traversal: nested field name = outgoing relationship type
+  - Aliases: `myAlias: entityType { ... }`
+  - Errors captured in `"errors"` key; never throws
+- All symbols exported from `query/__init__.py` and `query.__all__`
+
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+from ipfs_datasets_py.knowledge_graphs.query import KnowledgeGraphQLExecutor
+
+kg = KnowledgeGraph("example")
+alice = kg.add_entity("person", "Alice", {"age": 30, "city": "NYC"})
+bob   = kg.add_entity("person", "Bob",   {"age": 25})
+kg.add_relationship("knows", alice, bob)
+
+exe = KnowledgeGraphQLExecutor(kg)
+result = exe.execute('''
+{
+    person(name: "Alice") {
+        id
+        name
+        age
+        city
+        knows { name age }
+    }
+}
+''')
+# {"data": {"person": [{"id": "...", "name": "Alice", "age": 30, "city": "NYC",
+#           "knows": [{"name": "Bob", "age": 25}]}]}}
+
+# Parse error → clean response envelope (no exception raised)
+err = exe.execute("{ unclosed {")
+# {"data": None, "errors": [{"message": "Unexpected EOF inside selection set"}]}
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session72.py`
+
+---
+
+## P8: Delivered in v3.22.27 (formerly v4.0+ "Advanced visualization tools")
+
+### 20. Advanced Visualization Tools
+
+**Status:** ✅ Implemented (v3.22.27 — 2026-02-23)
+**Location:** `extraction/visualization.py` — `KnowledgeGraphVisualizer`
+
+**Implementation:**
+- `KnowledgeGraphVisualizer(kg)` — pure-Python visualization exporter (no external
+  dependencies) for :class:`KnowledgeGraph` objects; four output formats:
+  - `to_dot(graph_name=None, directed=True) → str` — Graphviz DOT language
+    (``digraph`` / ``graph``; entity nodes as ellipses; relationship edges with labels)
+  - `to_mermaid(direction="LR", max_entities=None) → str` — Mermaid.js graph
+    notation compatible with GitHub Markdown, Notion, GitLab, Obsidian, and mermaid.live
+  - `to_d3_json(max_nodes=None) → dict` — D3.js force-directed graph JSON
+    (``{"nodes": [...], "links": [...]}``) ready for ``d3-force`` layouts
+  - `to_ascii(root_entity_id=None, max_depth=3) → str` — human-readable ASCII
+    tree; rooted DFS when *root_entity_id* given; flat entity roster otherwise
+- Internal helpers: `_escape_dot_label(text)`, `_escape_mermaid(text)` (not exported)
+- **Convenience methods** added to `KnowledgeGraph` (lazy-import, no circular deps):
+  `to_dot(**kw)`, `to_mermaid(**kw)`, `to_d3_json(**kw)`, `to_ascii(**kw)`
+- `KnowledgeGraphVisualizer` exported from `extraction/__init__.py` and `__all__`
+
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import (
+    KnowledgeGraph,
+    KnowledgeGraphVisualizer,
+)
+
+kg = KnowledgeGraph("social")
+alice = kg.add_entity("person", "Alice", {"age": 30})
+bob   = kg.add_entity("person", "Bob",   {"age": 25})
+acme  = kg.add_entity("org",    "Acme Corp")
+kg.add_relationship("knows",    alice, bob)
+kg.add_relationship("works_at", bob,   acme)
+
+vis = KnowledgeGraphVisualizer(kg)
+
+# --- Graphviz DOT (pipe to: dot -Tpng graph.dot -o graph.png) ---
+print(vis.to_dot())
+# digraph "social" {
+#   rankdir=LR;
+#   node [shape=ellipse fontname=Helvetica];
+#   "..." [label="Alice\n(person)"];
+#   "..." [label="Bob\n(person)"];
+#   "..." [label="Acme Corp\n(org)"];
+#   "..." -> "..." [label="knows"];
+#   "..." -> "..." [label="works_at"];
+# }
+
+# --- Mermaid.js (embed in ```mermaid ``` fenced code block) ---
+print(vis.to_mermaid())
+# graph LR
+#   e1["Alice\n(person)"]
+#   e2["Bob\n(person)"]
+#   e3["Acme Corp\n(org)"]
+#   e1 -->|"knows"| e2
+#   e2 -->|"works_at"| e3
+
+# --- ASCII tree ---
+print(vis.to_ascii())
+# social (3 entities, 2 relationships)
+# ├─ Alice (person)
+# │  └─[knows]→ Bob
+# ├─ Bob (person)
+# │  └─[works_at]→ Acme Corp
+# └─ Acme Corp (org)
+
+# --- D3.js JSON ---
+import json
+d3_data = vis.to_d3_json()
+print(json.dumps(d3_data, indent=2))
+# {"nodes": [{"id": "...", "name": "Alice", "type": "person", ...}, ...],
+#  "links": [{"source": "...", "target": "...", "type": "knows", ...}, ...]}
+
+# --- Convenience methods on KnowledgeGraph ---
+dot_src = kg.to_dot(directed=False)   # undirected graph { ... -- ... }
+mermaid_tb = kg.to_mermaid(direction="TB")
+ascii_rooted = kg.to_ascii(root_entity_id=alice.entity_id, max_depth=2)
+d3_limited = kg.to_d3_json(max_nodes=2)
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session73.py`
+
+---
+
+## P9: Delivered in v3.22.28 (formerly v4.0+ "Federated knowledge graphs")
+
+### 21. Federated Knowledge Graphs
+
+**Status:** ✅ Implemented (v3.22.28 — 2026-02-23)
+
+Multi-graph federation with cross-graph entity resolution, unified query
+execution, and property-merging graph consolidation.
+
+**New module:** `query/federation.py`
+
+**New classes:**
+
+| Class | Description |
+|-------|-------------|
+| `FederatedKnowledgeGraph` | Registry of independent KG instances with federation operations |
+| `EntityResolutionStrategy` | Enum: `EXACT_NAME` / `TYPE_AND_NAME` / `PROPERTY_MATCH` |
+| `EntityMatch` | Dataclass representing a matched entity pair across two graphs |
+| `FederationQueryResult` | Aggregated result from `execute_across()` |
+
+**Usage:**
+```python
+from ipfs_datasets_py.knowledge_graphs.query.federation import (
+    FederatedKnowledgeGraph, EntityResolutionStrategy
+)
+from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
+# Build two independent graphs
+kg_hr = KnowledgeGraph(name="hr")
+alice_hr = kg_hr.add_entity("person", "Alice", properties={"dept": "eng"})
+bob = kg_hr.add_entity("person", "Bob")
+kg_hr.add_relationship("manages", alice_hr, bob)
+
+kg_crm = KnowledgeGraph(name="crm")
+alice_crm = kg_crm.add_entity("person", "Alice", properties={"region": "west"})
+acme = kg_crm.add_entity("company", "Acme")
+kg_crm.add_relationship("works_at", alice_crm, acme)
+
+# Register with federation
+fed = FederatedKnowledgeGraph()
+fed.add_graph(kg_hr, name="hr")
+fed.add_graph(kg_crm, name="crm")
+
+# Cross-graph entity resolution
+matches = fed.resolve_entities(EntityResolutionStrategy.TYPE_AND_NAME)
+# [EntityMatch(entity_a_id=..., entity_b_id=..., kg_a_index=0, kg_b_index=1, score=1.0)]
+
+# Find entity across all graphs
+hits = fed.query_entity(name="Alice")
+# [(0, <alice_hr Entity>), (1, <alice_crm Entity>)]
+
+# Get all occurrences by fingerprint
+cluster = fed.get_entity_cluster("person:alice")
+# [(0, <alice_hr entity_id>), (1, <alice_crm entity_id>)]
+
+# Run a query function across all graphs
+result = fed.execute_across(lambda kg: kg.get_entities_by_type("person"))
+# result.per_graph_results: {0: [<alice_hr>, <bob>], 1: [<alice_crm>]}
+# result.total_matches: 3
+
+# Merge all graphs (Alice deduplicated, properties merged)
+merged = fed.to_merged_graph()
+# merged.entities: 3 (Alice w/ dept+region, Bob, Acme)
+# merged.relationships: 2 (manages, works_at)
+alice_merged = merged.get_entities_by_name("Alice")[0]
+# alice_merged.properties: {'dept': 'eng', 'region': 'west'}  (both merged)
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session74.py`
+
+---
+
+## P10: Delivered in v3.22.29 (formerly v4.0+ "Blockchain integration for provenance")
+
+### §22 Knowledge Graph Provenance Chain
+
+**Status:** ✅ Implemented in v3.22.29  
+**Module:** `ipfs_datasets_py/knowledge_graphs/extraction/provenance.py`  
+**Session:** 75
+
+**What was delivered:**
+- `ProvenanceEventType` enum (7 event types): `ENTITY_CREATED` / `ENTITY_MODIFIED` / `ENTITY_REMOVED` / `RELATIONSHIP_CREATED` / `RELATIONSHIP_REMOVED` / `GRAPH_SNAPSHOT` / `GRAPH_RESTORED`
+- `ProvenanceEvent` dataclass — SHA-256 content-addressed CID auto-computed in `__post_init__`; each event links to predecessor via `previous_cid` forming an immutable hash chain; `to_dict()` / `from_dict()`
+- `ProvenanceChain` class:
+  - `record_entity_created/modified/removed()` — entity mutation recording
+  - `record_relationship_created/removed()` — relationship mutation recording
+  - `record_graph_snapshot/restored()` — graph-level event recording
+  - `get_history(entity_id=None, relationship_id=None)` — O(1) indexed history lookup
+  - `verify_chain() → (bool, List[str])` — tamper detection (recomputes all CIDs + checks `previous_cid` links)
+  - `to_jsonl()` / `from_jsonl()` — JSONL serialisation/deserialisation
+  - `latest_cid` / `depth` properties
+- `KnowledgeGraph` integration:
+  - `enable_provenance() → ProvenanceChain` — attaches chain; wires auto-recording
+  - `disable_provenance()` — detaches chain
+  - `provenance` property — returns attached chain or `None`
+  - `add_entity()` / `add_relationship()` — automatically record events when provenance is enabled
+
+**Usage example:**
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
+kg = KnowledgeGraph("research")
+pchain = kg.enable_provenance()
+
+alice = kg.add_entity("person", "Alice", confidence=0.9)
+bob = kg.add_entity("person", "Bob", confidence=0.8)
+kg.add_relationship("knows", alice, bob)
+
+print(pchain.depth)       # 3
+print(pchain.latest_cid)  # e.g. "bafk3a9c..." (SHA-256 derived)
+
+# Per-entity history
+history = pchain.get_history(entity_id=alice.entity_id)
+# [ProvenanceEvent(ENTITY_CREATED, ..., cid="bafk..."), ...]
+
+# Tamper verification
+is_valid, errors = pchain.verify_chain()
+assert is_valid and errors == []
+
+# Serialise to JSONL
+jsonl = pchain.to_jsonl()
+# One JSON line per event
+
+# Restore
+from ipfs_datasets_py.knowledge_graphs.extraction import ProvenanceChain
+restored = ProvenanceChain.from_jsonl(jsonl)
+assert restored.depth == pchain.depth
+is_valid, _ = restored.verify_chain()
+assert is_valid
+```
+
+**Why "blockchain integration":** The SHA-256 hash chain mimics a single-party append-only ledger with the same tamper-detection properties as Merkle-based blockchains — without requiring an external blockchain node. It integrates naturally with the IPFS CID scheme (`bafk...`) already used throughout the repository.
+
+---
+
+## P11 — Session 76 Delivered (v3.22.30)
+
+### §23 — Graph Neural Networks Integration
+
+**Status:** ✅ Implemented in v3.22.30
+**Module:** `query/gnn.py`
+**Class:** `GraphNeuralNetworkAdapter`
+
+Provides a pure-Python (no PyTorch / TensorFlow required) GNN implementation:
+
+- `GNNLayerType`: GRAPH_CONV, GRAPH_SAGE, GRAPH_ATTENTION
+- `GNNConfig`: embedding_dim / num_layers / layer_type / normalize / activation
+- `NodeEmbedding`: entity_id / features / layer
+- `GraphNeuralNetworkAdapter`:
+  - `extract_node_features()` — entity-type one-hot + confidence + in/out degree
+  - `message_passing(features, num_iterations)` — neighbour aggregation
+  - `compute_embeddings()` — full forward pass (cached)
+  - `link_prediction_score(entity_a_id, entity_b_id)` — cosine similarity
+  - `find_similar_entities(entity_id, top_k)` — ranked similarity search
+  - `to_adjacency_dict()` — export topology to external GNN frameworks
+  - `export_node_features_array()` — (ids, feature_matrix) for numpy / PyTorch
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query.gnn import (
+    GraphNeuralNetworkAdapter, GNNConfig, GNNLayerType,
+)
+kg = KnowledgeGraph("demo")
+alice = kg.add_entity("person", "Alice", confidence=0.9)
+bob   = kg.add_entity("person", "Bob",   confidence=0.8)
+carol = kg.add_entity("org",    "ACME")
+kg.add_relationship("works_at", alice, carol)
+kg.add_relationship("knows",    alice, bob)
+
+adapter = GraphNeuralNetworkAdapter(kg, GNNConfig(num_layers=2, normalize=True))
+score = adapter.link_prediction_score(alice, bob)   # cosine similarity
+similar = adapter.find_similar_entities(alice, top_k=2)
+ids, matrix = adapter.export_node_features_array()  # → numpy / PyTorch
+```
+
+---
+
+### §24 — Zero-Knowledge Proof Support
+
+**Status:** ✅ Implemented in v3.22.30 (simulation) + v3.22.31 (logic backend integration)
+**Module:** `query/zkp.py`
+**Classes:** `KGZKProver`, `KGZKVerifier`
+
+Enables privacy-preserving query proofs — prove a *property* of the graph
+without revealing underlying entity IDs, names, or relationship details:
+
+- `KGProofType`: ENTITY_EXISTS / ENTITY_PROPERTY / PATH_EXISTS / QUERY_ANSWER_COUNT
+- `KGProofStatement`: proof_type / parameters / commitment / nullifier / public_inputs
+- `KGZKProver`:
+  - `prove_entity_exists(entity_type, name)` — prove ∃ entity without exposing ID
+  - `prove_entity_property(entity_id, property_key, value_hash)` — prove property value without revealing it
+  - `prove_path_exists(start_type, end_type, max_hops)` — prove connectivity without revealing path
+  - `prove_query_answer_count(min_count, query_type)` — prove count ≥ N without revealing results
+  - `batch_prove(requests)` — parallel proof generation
+  - **`from_logic_prover(kg, logic_prover)`** *(v3.22.31)* — factory wiring to `logic.zkp.ZKPProver`
+  - **`uses_logic_backend`** property — `True` when logic prover is attached
+  - **`get_backend_info()`** — returns backend name, security level
+- `KGZKVerifier.verify_statement(stmt)` — structural verification (replay protection via nullifiers)
+  - **`from_logic_verifier(logic_verifier)`** *(v3.22.31)* — factory wiring to `logic.zkp.ZKPVerifier`
+  - Enhanced verification of embedded `public_inputs["logic_proof_data"]` when logic verifier present
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
+
+prover   = KGZKProver(kg)
+verifier = KGZKVerifier()
+
+stmt = prover.prove_entity_exists("person", "Alice")
+assert stmt is not None
+assert verifier.verify_statement(stmt)    # True — without seeing Alice's entity_id
+
+# Batch proving
+requests = [
+    {"type": "entity_exists", "entity_type": "person", "name": "Alice"},
+    {"type": "query_answer_count", "min_count": 2, "query_type": "entity"},
+]
+results = prover.batch_prove(requests)
+assert verifier.verify_batch(results) == [True, True]
+```
+
+#### Groth16 Backend Integration (v3.22.31, session 77)
+
+Connect the KG prover to the `ipfs_datasets_py.logic.zkp` simulation
+(or production Groth16 when `processors/groth16_backend` Rust binary is compiled):
+
+```python
+import warnings; warnings.filterwarnings("ignore")   # suppress simulation warnings
+
+from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
+from ipfs_datasets_py.knowledge_graphs.query.zkp import KGZKProver, KGZKVerifier
+
+logic_prover   = ZKPProver()      # simulated; swap for ZKPProver(backend="groth16") when binary ready
+logic_verifier = ZKPVerifier()
+
+prover   = KGZKProver.from_logic_prover(kg, logic_prover)
+verifier = KGZKVerifier.from_logic_verifier(logic_verifier)
+
+assert prover.uses_logic_backend                             # True
+print(prover.get_backend_info())                             # {"backend": "simulated", "security_level": 128, ...}
+
+stmt = prover.prove_entity_exists("person", "Alice")
+assert "logic_proof_data" in stmt.public_inputs              # embedded ZKPProof
+assert verifier.verify_statement(stmt)                       # structural + logic-layer verification
+```
+
+**Production path:** when `ipfs_datasets_py/processors/groth16_backend` Rust binary is compiled
+(`cargo build --release`), replace `ZKPProver()` with `ZKPProver(backend="groth16")` — the KG
+layer automatically benefits without further changes.
+
+⚠️ **Note:** Both `logic/zkp/ZKPProver` and `query/zkp/KGZKProver` generate **simulated** proofs
+using SHA-256 hash commitments. They are NOT cryptographically secure. The interface is
+intentionally compatible with a future production-grade Groth16 backend.
+
+#### Direct Groth16 Bridge (v3.22.32)
+
+**Module:** `query/groth16_bridge.py`  
+**Status:** ✅ Implemented in v3.22.32
+
+Provides a direct bridge from the KG ZKP layer to `processors/groth16_backend` via
+`logic/zkp/backends/groth16.py`. Includes:
+
+- `groth16_binary_available(binary_path=None) → bool` — probe Rust binary presence (no subprocess)
+- `groth16_enabled() → bool` — check `IPFS_DATASETS_ENABLE_GROTH16` env opt-in
+- `Groth16KGConfig` — circuit_version / ruleset_id / timeout / binary_path / enable_groth16
+- `KGEntityFormula` — static methods mapping KG concepts to TDFOL_v1 theorems + private axioms:
+  - `entity_exists_theorem(type, name)` / `entity_exists_axioms(id, type, name, confidence)`
+  - `path_theorem(start_type, end_type, max_hops)` / `path_axioms(node_ids, rel_types)`
+  - `property_theorem(entity_id, key)` / `property_axioms(entity_id, key, value_hash)`
+- `create_groth16_kg_prover(kg, config) → KGZKProver` — factory backed by `ZKPProver(backend="groth16")`; auto-fallback to simulation when binary absent
+- `create_groth16_kg_verifier(seen_nullifiers, config) → KGZKVerifier` — verifier factory
+- `describe_groth16_status(binary_path) → Dict` — diagnostic dict (enabled/binary_available/backend/production_ready/security_note)
+
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+from ipfs_datasets_py.knowledge_graphs.query.groth16_bridge import (
+    Groth16KGConfig, KGEntityFormula,
+    create_groth16_kg_prover, create_groth16_kg_verifier,
+    describe_groth16_status,
+)
+
+kg = KnowledgeGraph("example")
+kg.add_entity("person", "Alice", confidence=0.95)
+
+# Inspect the theorem/axiom mapping
+theorem = KGEntityFormula.entity_exists_theorem("person", "Alice")
+axioms  = KGEntityFormula.entity_exists_axioms("e-001", "person", "Alice", 0.95)
+
+# Create prover/verifier (auto-fallback to simulation when binary absent)
+prover   = create_groth16_kg_prover(kg)
+verifier = create_groth16_kg_verifier()
+stmt = prover.prove_entity_exists("person", "Alice")
+assert verifier.verify_statement(stmt)
+
+# Diagnostics
+status = describe_groth16_status()
+print(status["backend"])           # "simulated" or "groth16"
+print(status["binary_available"])  # True / False (False in CI)
+print(status["production_ready"])  # True only when enabled AND binary compiled
+```
+
+**Production path:** set `IPFS_DATASETS_ENABLE_GROTH16=1` **and** compile the Rust binary:
+```bash
+cd processors/groth16_backend && cargo build --release
+```
+Then use `Groth16KGConfig(enable_groth16=True)` in `create_groth16_kg_prover()`.
+
+---
+
+## P12 — Session 80 Delivered (v3.22.34)
+
+### §25 — Knowledge Graph Completion
+
+**Status:** ✅ Implemented (v3.22.34, session 80)
+**Location:** `query/completion.py` — `KnowledgeGraphCompleter`
+**ROADMAP Research Area:** "Knowledge graph completion with AI"
+
+Suggests missing relationships in a KnowledgeGraph using six structural
+graph-analysis patterns — no external ML libraries required.
+
+**Pattern strategies:**
+
+| Strategy | Enum | Description |
+|---|---|---|
+| Triadic closure | `TRIADIC_CLOSURE` | A→B and B→C → suggest A→C |
+| Common neighbour | `COMMON_NEIGHBOR` | High Jaccard similarity → suggest link |
+| Symmetric relation | `SYMMETRIC_RELATION` | A→sym_type→B → suggest B→sym_type→A |
+| Transitive relation | `TRANSITIVE_RELATION` | A→R→B and B→R→C → suggest A→R→C |
+| Inverse relation | `INVERSE_RELATION` | A→parent_of→B → suggest B→child_of→A |
+| Type compatibility | `TYPE_COMPATIBILITY` | Same-type entities sharing many targets |
+
+**Usage:**
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query.completion import KnowledgeGraphCompleter
+
+completer = KnowledgeGraphCompleter(kg)
+suggestions = completer.find_missing_relationships(min_score=0.4)
+for s in suggestions:
+    print(completer.explain_suggestion(s))
+
+isolated = completer.find_isolated_entities()
+score = completer.compute_completion_score(source_id, target_id, "knows")
+```
+
+**Exported from `query/__init__.py`:**
+- `KnowledgeGraphCompleter`
+- `CompletionSuggestion` (dataclass with `to_dict()`)
+- `CompletionReason` (str enum, 6 values)
+
+---
+
+### §26 — Explainable AI over Knowledge Graphs
+
+**Status:** ✅ Implemented (v3.22.34, session 80)
+**Location:** `query/explanation.py` — `QueryExplainer`
+**ROADMAP Research Area:** "Explainable AI over knowledge graphs"
+
+Provides structured, human-readable explanations for entities, relationships,
+BFS paths, and batch query results in a KnowledgeGraph.
+
+**Components:**
+
+| Component | Description |
+|---|---|
+| `QueryExplainer` | Main entry point |
+| `EntityExplanation` | Per-entity explanation (type, confidence, in/out degree, narrative) |
+| `RelationshipExplanation` | Per-relationship context (symmetry, alternative paths) |
+| `PathExplanation` | BFS shortest path with confidence chain + narrative |
+| `ExplanationDepth` | SURFACE / STANDARD / DEEP verbosity |
+
+**Usage:**
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query.explanation import (
+    QueryExplainer, ExplanationDepth,
+)
+
+explainer = QueryExplainer(kg)
+
+# Explain a single entity
+exp = explainer.explain_entity(alice_id, depth=ExplanationDepth.DEEP)
+print(exp.narrative)
+# "Alice (person) — confidence 0.95; 3 relationships (2 outgoing, 1 incoming)."
+
+# Explain a relationship
+rel_exp = explainer.explain_relationship(rel_id)
+print(rel_exp.symmetry_note)
+
+# Shortest path
+path = explainer.explain_path(alice_id, charlie_id)
+print(path.narrative)
+# "Path (2 hops): Alice -[knows]→ Bob -[knows]→ Charlie (cumulative confidence: 0.90)"
+
+# Why are two entities connected?
+print(explainer.why_connected(alice_id, charlie_id))
+
+# Centrality score
+score = explainer.entity_importance_score(alice_id)
+
+# Batch explain query results
+explanations = explainer.explain_query_result([e1, e2, e3])
+```
+
+**Exported from `query/__init__.py`:**
+- `QueryExplainer`
+- `EntityExplanation`
+- `RelationshipExplanation`
+- `PathExplanation`
+- `ExplanationDepth`
+
+---
+
 ## See Also
 
 - [ROADMAP.md](ROADMAP.md) - Complete development timeline
@@ -392,6 +1253,7 @@ results = engine.natural_language_query(
 
 ---
 
-**Last Updated:** 2026-02-18  
-**Next Review:** Q2 2026 (after v2.1.0 release)  
+**Last Updated:** 2026-02-23 (session 80)
+**Next Review:** Q3 2026
 **Maintainer:** Knowledge Graphs Team
+

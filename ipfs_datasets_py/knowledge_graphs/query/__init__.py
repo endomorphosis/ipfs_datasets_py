@@ -64,9 +64,150 @@ Usage:
 from .unified_engine import UnifiedQueryEngine
 from .hybrid_search import HybridSearchEngine  
 from .budget_manager import BudgetManager
+from .distributed import (
+    GraphPartitioner,
+    DistributedGraph,
+    FederatedQueryExecutor,
+    FederatedQueryResult,
+    PartitionStats,
+    PartitionStrategy,
+    QueryPlan,
+    PartitionQueryPlan,
+)
+
+from .knowledge_graph import (
+    parse_ir_ops_from_query,
+    compile_ir,
+    query_knowledge_graph,
+)
+
+from .sparql_templates import (
+    build_entity_query,
+    build_entity_properties_query,
+    build_direct_relationship_query,
+    build_inverse_relationship_query,
+    build_entity_type_query,
+    build_path_relationship_query,
+    build_similar_entities_query,
+    build_property_stats_query,
+    build_property_validation_query,
+)
+
+from .graphql import (
+    GraphQLParseError,
+    GraphQLField,
+    GraphQLDocument,
+    GraphQLParser,
+    KnowledgeGraphQLExecutor,
+)
+
+from .federation import (
+    FederatedKnowledgeGraph,
+    EntityResolutionStrategy,
+    EntityMatch,
+    FederationQueryResult,
+)
+
+from .gnn import (
+    GraphNeuralNetworkAdapter,
+    GNNConfig,
+    GNNLayerType,
+    NodeEmbedding,
+)
+
+from .zkp import (
+    KGZKProver,
+    KGZKVerifier,
+    KGProofStatement,
+    KGProofType,
+)
+
+from .groth16_bridge import (
+    groth16_binary_available,
+    groth16_enabled,
+    Groth16KGConfig,
+    KGEntityFormula,
+    create_groth16_kg_prover,
+    create_groth16_kg_verifier,
+    describe_groth16_status,
+)
+from .completion import (
+    KnowledgeGraphCompleter,
+    CompletionSuggestion,
+    CompletionReason,
+)
+from .explanation import (
+    QueryExplainer,
+    EntityExplanation,
+    RelationshipExplanation,
+    PathExplanation,
+    ExplanationDepth,
+)
 
 __all__ = [
     'UnifiedQueryEngine',
     'HybridSearchEngine',
     'BudgetManager',
+    # Distributed query — Item 13 (v3.0.0)
+    'GraphPartitioner',
+    'DistributedGraph',
+    'FederatedQueryExecutor',
+    'FederatedQueryResult',
+    'PartitionStats',
+    'PartitionStrategy',
+    'QueryPlan',
+    'PartitionQueryPlan',
+    # Knowledge graph query API
+    'parse_ir_ops_from_query',
+    'compile_ir',
+    'query_knowledge_graph',
+    # SPARQL templates
+    'build_entity_query',
+    'build_entity_properties_query',
+    'build_direct_relationship_query',
+    'build_inverse_relationship_query',
+    'build_entity_type_query',
+    'build_path_relationship_query',
+    'build_similar_entities_query',
+    'build_property_stats_query',
+    'build_property_validation_query',
+    # GraphQL API (v4.0+ roadmap — delivered v3.22.26)
+    'GraphQLParseError',
+    'GraphQLField',
+    'GraphQLDocument',
+    'GraphQLParser',
+    'KnowledgeGraphQLExecutor',
+    # Federated Knowledge Graphs (v4.0+ roadmap — delivered v3.22.28)
+    'FederatedKnowledgeGraph',
+    'EntityResolutionStrategy',
+    'EntityMatch',
+    'FederationQueryResult',
+    # Graph Neural Networks (v4.0+ roadmap — delivered v3.22.30)
+    'GraphNeuralNetworkAdapter',
+    'GNNConfig',
+    'GNNLayerType',
+    'NodeEmbedding',
+    # Zero-Knowledge Proofs (v4.0+ roadmap — delivered v3.22.30)
+    'KGZKProver',
+    'KGZKVerifier',
+    'KGProofStatement',
+    'KGProofType',
+    # Groth16 Bridge (v3.22.32 — direct KG↔Groth16 integration)
+    'groth16_binary_available',
+    'groth16_enabled',
+    'Groth16KGConfig',
+    'KGEntityFormula',
+    'create_groth16_kg_prover',
+    'create_groth16_kg_verifier',
+    'describe_groth16_status',
+    # Knowledge Graph Completion (v3.22.34 — Research Area)
+    'KnowledgeGraphCompleter',
+    'CompletionSuggestion',
+    'CompletionReason',
+    # Explainable AI (v3.22.34 — Research Area)
+    'QueryExplainer',
+    'EntityExplanation',
+    'RelationshipExplanation',
+    'PathExplanation',
+    'ExplanationDepth',
 ]

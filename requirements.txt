@@ -59,6 +59,10 @@ jsonnet>=0.20.0; platform_system != 'Windows'  # Jsonnet data templating languag
 
 # PDF processing
 networkx>=3.1
+scipy>=1.7.0
+matplotlib>=3.5.0
+plotly>=5.9.0
+rdflib>=6.0.0
 pdfplumber>=0.11.7
 pytesseract>=0.3.13
 tiktoken>=0.6.0
@@ -122,10 +126,6 @@ keyring
 passlib
 uvicorn
 psutil
-# UCAN / DID-key: decentralised capability-based auth and project-secret signing
-py-ucan>=1.0.0
-base58>=2.1.1
-cryptography>=41.0.0
 
 # Web scraping and archiving tools
 cdx-toolkit>=0.9.37  # Common Crawl CDX access

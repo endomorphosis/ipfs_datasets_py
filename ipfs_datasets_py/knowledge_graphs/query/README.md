@@ -2,22 +2,50 @@
 
 Unified query engine for executing queries against knowledge graphs using multiple query languages and execution strategies.
 
+**Version:** 3.22.33 — Updated 2026-02-23
+
 ## Overview
 
 The query module provides a flexible, multi-backend query execution engine that supports:
-- **Cypher queries** - Neo4j-compatible graph pattern matching
-- **IR (Intermediate Representation) queries** - Graph traversal operations
-- **Hybrid search** - Combines graph queries with vector similarity search
-- **GraphRAG** - Retrieval-Augmented Generation with knowledge graphs
+- **Cypher queries** — Neo4j-compatible graph pattern matching (all clauses: MATCH, CREATE, MERGE, REMOVE, SET, UNWIND, WITH, FOREACH, CALL subquery)
+- **IR (Intermediate Representation) queries** — Graph traversal operations
+- **Hybrid search** — Combines graph queries with vector similarity search
+- **GraphRAG** — Retrieval-Augmented Generation with knowledge graphs
+- **Distributed query execution** — Fan-out queries across graph partitions
+- **SPARQL templates** — Wikidata and general SPARQL query helpers
+- **GraphQL API** — GraphQL query interface for entity selection and field projection (v3.22.26+)
+- **Federated knowledge graphs** — Cross-graph entity resolution and unified queries (v3.22.28+)
+- **Graph neural networks** — Node embeddings, link prediction, GNN message passing (v3.22.30+)
+- **Zero-knowledge proofs** — Privacy-preserving graph attestations with nullifier replay protection (v3.22.30+)
+- **Groth16 bridge** — Direct KG↔TDFOL theorem/axiom mapping via `processors/groth16_backend` (v3.22.32+)
+
+## Module Contents
+
+| File | Description |
+|------|-------------|
+| `unified_engine.py` | `UnifiedQueryEngine` — main query coordinator |
+| `hybrid_search.py` | Hybrid graph + vector similarity search |
+| `budget_manager.py` | Query cost and timeout management |
+| `distributed.py` | `GraphPartitioner` + `FederatedQueryExecutor` |
+| `knowledge_graph.py` | High-level `KnowledgeGraphQuerier` tool (moved from root) |
+| `sparql_templates.py` | Reusable Wikidata / SPARQL query templates (moved from root) |
+| `graphql.py` | `GraphQLParser` + `KnowledgeGraphQLExecutor` — GraphQL query support (v3.22.26+) |
+| `federation.py` | `FederatedKnowledgeGraph` — cross-graph entity resolution (v3.22.28+) |
+| `gnn.py` | `GraphNeuralNetworkAdapter` — node embeddings + GNN message passing (v3.22.30+) |
+| `zkp.py` | `KGZKProver` / `KGZKVerifier` — zero-knowledge graph proofs (v3.22.30+) |
+| `groth16_bridge.py` | `KGEntityFormula` + Groth16 factory functions — direct Groth16 bridge (v3.22.32+) |
 
 ## Key Features
 
-- **Multi-Language Support** - Execute Cypher, IR, or hybrid queries
+- **Multi-Language Support** - Execute Cypher, IR, hybrid, GraphQL, or ZKP queries
 - **Unified Interface** - Single entry point for all query types
 - **Budget Management** - Control computational costs of queries
 - **Timeout Handling** - Prevent long-running queries from blocking
 - **Error Recovery** - Graceful degradation and detailed error messages
 - **Query Optimization** - Automatic query planning and optimization
+- **Privacy-preserving queries** — ZKP-backed attestations with Groth16 backend support
+- **Cross-graph federation** — Unified entity resolution across independent knowledge graphs
+- **Neural embeddings** — GNN message passing for link prediction and entity similarity
 
 ## Core Classes
 
@@ -309,10 +337,103 @@ results = await asyncio.gather(*[
 - [Constraints Module](../constraints/README.md) - Constraint validation during queries
 - [Transactions Module](../transactions/README.md) - Transactional query execution
 
-## Future Enhancements
+## Advanced Query Features (v3.22.x)
 
-- **Query Optimization** - Cost-based query optimization
-- **Distributed Execution** - Query execution across multiple nodes
-- **Query Explain** - Detailed execution plans for debugging
-- **Result Streaming** - Stream large result sets
-- **GraphQL Support** - GraphQL query interface
+### GraphQL API (`graphql.py`)
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query import KnowledgeGraphQLExecutor
+
+executor = KnowledgeGraphQLExecutor(kg)
+result = executor.execute("""
+    { person(name: "Alice") { entity_id type confidence } }
+""")
+# Returns: {"data": {"person": [{"entity_id": "...", "type": "person", "confidence": 1.0}]}}
+```
+
+### Federated Knowledge Graphs (`federation.py`)
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query import FederatedKnowledgeGraph, EntityResolutionStrategy
+
+fed = FederatedKnowledgeGraph()
+fed.add_graph(kg1, "knowledge_base_1")
+fed.add_graph(kg2, "knowledge_base_2")
+
+# Cross-graph entity resolution
+matches = fed.resolve_entities(strategy=EntityResolutionStrategy.TYPE_AND_NAME)
+
+# Merge all graphs with deduplication
+merged = fed.to_merged_graph()
+```
+
+### Graph Neural Networks (`gnn.py`)
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query import GraphNeuralNetworkAdapter, GNNConfig
+
+config = GNNConfig(embedding_dim=64, num_layers=2)
+adapter = GraphNeuralNetworkAdapter(kg, config)
+
+# Compute node embeddings
+embeddings = adapter.compute_embeddings()
+
+# Link prediction between entities
+score = adapter.link_prediction_score(entity_a_id, entity_b_id)
+
+# Find similar entities
+similar = adapter.find_similar_entities(entity_id, top_k=5)
+
+# Export for PyTorch/numpy
+node_ids, feature_matrix = adapter.export_node_features_array()
+```
+
+### Zero-Knowledge Proofs (`zkp.py`)
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query import KGZKProver, KGZKVerifier
+
+prover = KGZKProver(kg)
+proof = prover.prove_entity_exists(entity_type="person", name="Alice")
+# Proves Alice exists without revealing entity_id
+
+verifier = KGZKVerifier()
+assert verifier.verify_statement(proof)
+
+# Connect to real logic.zkp backend
+from ipfs_datasets_py.logic.zkp import ZKPProver
+logic_prover = ZKPProver(backend="simulation")
+prover_with_backend = KGZKProver.from_logic_prover(kg, logic_prover)
+```
+
+### Groth16 Bridge (`groth16_bridge.py`)
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query import (
+    create_groth16_kg_prover, describe_groth16_status, KGEntityFormula
+)
+
+# Diagnostic
+status = describe_groth16_status()
+# {"enabled": False, "binary_available": False, "production_ready": False, ...}
+
+# TDFOL theorem/axiom mapping
+theorem = KGEntityFormula.entity_exists_theorem("person", "alice")
+# "exists person named alice"
+axioms = KGEntityFormula.entity_exists_axioms("secret-id", "person", "alice", 1.0)
+# 4 TDFOL axioms; entity_id is private witness
+
+# Create Groth16-backed prover (falls back to simulation when binary unavailable)
+prover = create_groth16_kg_prover(kg)
+```
+
+## Recent Additions (v3.22.x)
+
+| Version | Feature | Module |
+|---------|---------|--------|
+| v3.22.26 | GraphQL API | `graphql.py` |
+| v3.22.28 | Federated Knowledge Graphs | `federation.py` |
+| v3.22.30 | Graph Neural Networks | `gnn.py` |
+| v3.22.30 | Zero-Knowledge Proofs | `zkp.py` |
+| v3.22.31 | ZKP logic backend integration | `zkp.py` |
+| v3.22.32 | Groth16 bridge | `groth16_bridge.py` |

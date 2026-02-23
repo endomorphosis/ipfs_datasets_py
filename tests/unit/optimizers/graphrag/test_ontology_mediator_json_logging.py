@@ -2,6 +2,8 @@
 
 Verifies that refinement rounds are logged with structured JSON metrics
 for observability and debugging.
+
+Uses centralized factory fixtures from conftest.py.
 """
 
 import json
@@ -20,58 +22,37 @@ class TestOntologyMediatorJsonLogging:
     """Test structured JSON logging in refine_ontology()."""
 
     @pytest.fixture
-    def mediator(self):
-        """Create a mediator instance for testing."""
-        generator = OntologyGenerator()
-        critic = OntologyCritic(use_llm=False)
+    def mediator(self, ontology_generator_factory, ontology_critic_factory):
+        """Create a mediator instance for testing - uses factory fixtures."""
+        generator = ontology_generator_factory()
+        critic = ontology_critic_factory(use_llm=False)
         return OntologyMediator(generator=generator, critic=critic)
 
     @pytest.fixture
-    def sample_ontology(self):
-        """Create a sample ontology for testing."""
-        return {
-            "entities": [
-                {
-                    "id": "e1",
-                    "text": "Alice",
-                    "type": "Person",
-                    "confidence": 0.9,
-                    "properties": {},
-                },
-                {
-                    "id": "e2",
-                    "text": "Bob",
-                    "type": "Person",
-                    "confidence": 0.85,
-                    "properties": {},
-                },
-            ],
-            "relationships": [
-                {
-                    "source_id": "e1",
-                    "target_id": "e2",
-                    "type": "knows",
-                    "confidence": 0.8,
-                }
-            ],
-        }
+    def sample_ontology(self, ontology_dict_factory):
+        """Create a sample ontology for testing - uses ontology_dict_factory."""
+        return ontology_dict_factory(
+            entity_count=2,
+            relationship_count=1,
+            entity_types=["Person", "Person"],
+        )
 
     @pytest.fixture
-    def sample_feedback(self):
-        """Create sample critic feedback for testing."""
-        feedback = Mock()
-        feedback.overall = 0.75
-        feedback.completeness = 0.8
-        feedback.consistency = 0.7
-        feedback.clarity = 0.6
-        feedback.granularity = 0.75
-        feedback.relationship_coherence = 0.7
-        feedback.domain_alignment = 0.8
-        feedback.recommendations = [
-            "add missing entity properties",
-            "normalize entity types",
-        ]
-        return feedback
+    def sample_feedback(self, mock_feedback_factory):
+        """Create sample critic feedback for testing - uses mock_feedback_factory."""
+        return mock_feedback_factory(
+            overall=0.75,
+            completeness=0.8,
+            consistency=0.7,
+            clarity=0.6,
+            granularity=0.75,
+            relationship_coherence=0.7,
+            domain_alignment=0.8,
+            recommendations=[
+                "add missing entity properties",
+                "normalize entity types",
+            ],
+        )
 
     def test_refine_ontology_logs_structured_json(
         self, mediator, sample_ontology, sample_feedback, caplog

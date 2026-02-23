@@ -302,6 +302,23 @@ class TestPassingFeedbackFraction:
 
 
 # ---------------------------------------------------------------------------
+# OntologyLearningAdapter.above_threshold_fraction
+# ---------------------------------------------------------------------------
+
+
+class TestAboveThresholdFraction:
+    def test_alias_matches_passing_feedback_fraction(self):
+        a = _make_adapter()
+        for v in [0.9, 0.3, 0.7]:
+            a.apply_feedback(v)
+        assert a.above_threshold_fraction(0.6) == pytest.approx(a.passing_feedback_fraction(0.6))
+
+    def test_empty_returns_zero(self):
+        a = _make_adapter()
+        assert a.above_threshold_fraction(0.6) == pytest.approx(0.0)
+
+
+# ---------------------------------------------------------------------------
 # OntologyCritic.failing_scores
 # ---------------------------------------------------------------------------
 

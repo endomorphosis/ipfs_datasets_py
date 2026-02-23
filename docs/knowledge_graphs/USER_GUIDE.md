@@ -1,7 +1,7 @@
 # Knowledge Graphs - User Guide
 
-**Version:** 2.0.0  
-**Last Updated:** 2026-02-17
+**Version:** 3.22.33  
+**Last Updated:** 2026-02-23
 
 ---
 
@@ -1352,83 +1352,101 @@ kg = system.process_directory("documents/", "final_knowledge_graph.json")
 
 ---
 
-## 11. Future Roadmap
+## 11. Delivered Features (v3.22.x)
 
-### Planned Enhancements (v2.1-3.0)
+All features previously listed as "planned" in the v2.x roadmap have been implemented. The following table summarises what was delivered in the v3.22.x session series:
 
-The following features are planned for future releases based on user feedback and emerging requirements:
+### Previously Planned — Now Delivered ✅
 
-#### v2.1.0 - Enhanced Query Capabilities (Q2 2026)
+| Feature | Original Timeline | Delivered In |
+|---------|------------------|--------------|
+| NOT Operator in Cypher | Q2 2026 (v2.1.0) | ✅ v2.0.0 (session P1) |
+| Relationship CREATE in Cypher | Q2 2026 (v2.1.0) | ✅ v2.0.0 (session P1) |
+| Neural Relationship Extraction | Q3 2026 (v2.5.0) | ✅ v3.0.0 (session P3) |
+| spaCy Dependency Parsing (Aggressive) | Q3 2026 (v2.5.0) | ✅ v3.0.0 (session P3) |
+| Semantic Role Labeling (SRL) | Q4 2026 (v2.5.0) | ✅ v3.0.0 (session P3) |
+| Multi-Hop Graph Traversal | Q1 2027 (v3.0.0) | ✅ v3.0.0 (session P4) |
+| LLM API Integration | Q1 2027 (v3.0.0) | ✅ v3.0.0 (session P4) |
+| GraphQL API support | v4.0+ (long-term) | ✅ v3.22.26 (session 72) |
+| Advanced Visualization Tools | v4.0+ (long-term) | ✅ v3.22.27 (session 73) |
+| Federated Knowledge Graphs | v4.0+ (long-term) | ✅ v3.22.28 (session 74) |
+| Blockchain Integration for Provenance | v4.0+ (long-term) | ✅ v3.22.29 (session 75) |
+| Graph Neural Networks Integration | v4.0+ (long-term) | ✅ v3.22.30 (session 76) |
+| Zero-Knowledge Proof Support | v4.0+ (long-term) | ✅ v3.22.30–32 (sessions 76–78) |
+| Real-time Graph Streaming (Events) | v4.0+ (long-term) | ✅ v3.22.25 (session 71) |
+| Temporal Graph Databases (Snapshots) | v4.0+ (long-term) | ✅ v3.22.25 (session 71) |
 
-**1. NOT Operator Support in Cypher**
-- **Location:** `cypher/compiler.py:387`
-- **Description:** Full support for NOT operator in WHERE clauses
-- **Benefits:** More expressive query filtering
-- **Timeline:** Q2 2026
-- **Example:**
-  ```python
-  # Future capability
-  query = "MATCH (p:Person) WHERE NOT p.age > 30 RETURN p"
-  ```
+### New in v3.22.x — Quick Usage
 
-**2. Relationship Creation in Cypher**
-- **Location:** `cypher/compiler.py:510`
-- **Description:** CREATE clause support for dynamic relationship creation
-- **Benefits:** Graph modification capabilities via Cypher
-- **Timeline:** Q2 2026
-- **Example:**
-  ```python
-  # Future capability
-  query = "MATCH (a:Person), (b:Person) CREATE (a)-[:KNOWS]->(b)"
-  ```
+**Graph diff/patch (v3.22.24):**
+```python
+diff = kg1.diff(kg2)
+print(diff.summary())    # "Added 3 entities, removed 1 entity"
+kg1.apply_diff(diff)
+```
 
-#### v2.5.0 - Advanced Extraction (Q3-Q4 2026)
+**Graph events and subscriptions (v3.22.25):**
+```python
+handler_id = kg.subscribe(lambda e: print(e.event_type, e.entity_id))
+kg.add_entity(entity)   # fires ENTITY_ADDED
+kg.unsubscribe(handler_id)
+```
 
-**3. Neural Relationship Extraction**
-- **Location:** `extraction/extractor.py:733`
-- **Description:** Deep learning models for relationship extraction
-- **Benefits:** Higher precision on complex relationships
-- **Timeline:** Q3 2026
-- **Models:** BERT, RoBERTa, or custom transformers
+**KG named snapshots (v3.22.25):**
+```python
+snap = kg.snapshot("v1")
+# ... mutations ...
+kg.restore_snapshot("v1")
+```
 
-**4. Aggressive Extraction with spaCy Dependency Parsing**
-- **Location:** `extraction/extractor.py:870`
-- **Description:** Full dependency tree analysis for complex sentences
-- **Benefits:** Extract relationships from complex syntactic structures
-- **Timeline:** Q3 2026
+**GraphQL queries (v3.22.26):**
+```python
+from ipfs_datasets_py.knowledge_graphs.query import KnowledgeGraphQLExecutor
+result = KnowledgeGraphQLExecutor(kg).execute('{ person(name: "Alice") { type confidence } }')
+```
 
-**5. Semantic Role Labeling (SRL) for Relationship Inference**
-- **Location:** `extraction/extractor.py:893`
-- **Description:** Advanced SRL for implicit relationship discovery
-- **Benefits:** Understand agent, patient, theme roles
-- **Timeline:** Q4 2026
-- **Libraries:** AllenNLP, spaCy SRL extensions
+**Visualization (v3.22.27):**
+```python
+dot_src  = kg.to_dot()
+mermaid  = kg.to_mermaid()
+d3_data  = kg.to_d3_json()
+ascii    = kg.to_ascii()
+```
 
-#### v3.0.0 - Cross-Document Intelligence (Q1 2027)
+**Federated KGs (v3.22.28):**
+```python
+from ipfs_datasets_py.knowledge_graphs.query import FederatedKnowledgeGraph
+fed = FederatedKnowledgeGraph()
+fed.add_graph(kg1, "source_a"); fed.add_graph(kg2, "source_b")
+merged = fed.to_merged_graph()
+```
 
-**6. Multi-Hop Graph Traversal**
-- **Location:** `cross_document_reasoning.py:483`
-- **Description:** Indirect connection discovery across documents
-- **Benefits:** Find non-obvious relationships (friend-of-friend, transitive)
-- **Timeline:** Q1 2027
-- **Algorithms:** BFS, DFS, PageRank, community detection
+**Provenance chain (v3.22.29):**
+```python
+chain = kg.enable_provenance()
+kg.add_entity(entity)   # auto-records ENTITY_CREATED
+valid, errors = chain.verify_chain()
+```
 
-**7. LLM Integration for Advanced Reasoning**
-- **Location:** `cross_document_reasoning.py:686`
-- **Description:** Large Language Model API integration
-- **Benefits:** Advanced semantic understanding and reasoning
-- **Timeline:** Q1 2027
-- **Providers:** OpenAI, Anthropic, or local models (Llama, Mistral)
-- **Use Cases:**
-  - Complex query interpretation
-  - Semantic similarity beyond embeddings
-  - Natural language explanations
-  - Zero-shot entity/relationship classification
+**GNN embeddings (v3.22.30):**
+```python
+from ipfs_datasets_py.knowledge_graphs.query import GraphNeuralNetworkAdapter, GNNConfig
+adapter = GraphNeuralNetworkAdapter(kg, GNNConfig(embedding_dim=64))
+similar = adapter.find_similar_entities(entity_id, top_k=5)
+```
+
+**Zero-knowledge proofs (v3.22.30–32):**
+```python
+from ipfs_datasets_py.knowledge_graphs.query import KGZKProver, KGZKVerifier
+prover = KGZKProver(kg)
+proof  = prover.prove_entity_exists("person", "Alice")
+assert KGZKVerifier().verify_statement(proof)
+```
 
 ### Feature Request Process
 
 **How to Request a Feature:**
-1. Check existing roadmap above
+1. Check existing roadmap and delivered features above
 2. Open a GitHub issue with label `enhancement`
 3. Provide:
    - Use case description
@@ -1442,30 +1460,6 @@ The following features are planned for future releases based on user feedback an
 - Compatibility with existing API
 - Performance impact
 
-### Experimental Features
-
-Some features may be available as experimental APIs before full release:
-
-```python
-from ipfs_datasets_py.knowledge_graphs.experimental import (
-    NeuralExtractor,  # v2.5.0-alpha
-    SRLRelationshipExtractor,  # v2.5.0-alpha
-    LLMReasoningEngine,  # v3.0.0-alpha
-)
-
-# Enable experimental features at your own risk
-extractor = NeuralExtractor(model="roberta-base", experimental=True)
-```
-
-**Note:** Experimental APIs may change between versions without deprecation warnings.
-
-### Deprecation Policy
-
-- Features marked deprecated in v2.x will be removed in v3.0
-- Minimum 6-month deprecation notice
-- Migration guides provided for all breaking changes
-- See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for details
-
 ---
 
 ## Further Reading
@@ -1477,6 +1471,5 @@ extractor = NeuralExtractor(model="roberta-base", experimental=True)
 
 ---
 
-**Last Updated:** 2026-02-17  
-**Version:** 2.0.0  
-**Status:** Production-Ready
+**Last Updated:** 2026-02-23  
+**Version:** 3.22.33  

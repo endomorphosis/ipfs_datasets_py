@@ -284,6 +284,16 @@ class OntologyMediator:
         >>> else:
         ...     print("Did not converge within max rounds")
     """
+
+    KNOWN_REFINEMENT_ACTION_TYPES: tuple[str, ...] = (
+        "add_missing_properties",
+        "normalize_names",
+        "prune_orphans",
+        "merge_duplicates",
+        "add_missing_relationships",
+        "split_entity",
+        "rename_entity",
+    )
     
     def __init__(
         self,
@@ -657,6 +667,148 @@ class OntologyMediator:
             self._action_entries.append({"action": action, "round": len(self._undo_stack)})
         return refined
 
+    def batch_apply_strategies(
+        self,
+        ontologies: List[Dict[str, Any]],
+        feedbacks: List[Any],
+        context: Any,
+        max_workers: Optional[int] = None,
+        track_changes: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        Apply refinement strategies to multiple ontologies in parallel.
+
+        Refines a batch of ontologies using corresponding critic feedback.
+        Useful for batch processing, sensitivity analysis, or comparing
+        alternative refinement paths.
+
+        Args:
+            ontologies: List of ontology dicts to refine.
+            feedbacks: List of critic feedback objects (same length as ontologies).
+            context: Generation context (shared for all refinements).
+            max_workers: Max parallel workers (default: CPU count). Pass 1 for serial.
+            track_changes: If True, compute per-ontology change statistics.
+
+        Returns:
+            Dict with keys:
+                - 'refined_ontologies': List of refined ontology dicts
+                - 'change_log': List of dicts tracking changes per ontology
+                - 'total_entities_added': Total entities added across batch
+                - 'total_relationships_added': Total relationships added
+                - 'success_count': Number of successful refinements
+                - 'error_count': Number of failures
+                - 'errors': List of error details if any occurred
+
+        Raises:
+            ValueError: If ontologies and feedbacks have different lengths.
+
+        Example:
+            >>> results = mediator.batch_apply_strategies(
+            ...     ontologies=[onto1, onto2, onto3],
+            ...     feedbacks=[score1, score2, score3],
+            ...     context=context,
+            ...     max_workers=4
+            ... )
+            >>> print(f"Refined {results['success_count']} ontologies")
+            >>> print(f"Added {results['total_entities_added']} entities")
+        """
+        import logging as _logging
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        if len(ontologies) != len(feedbacks):
+            raise ValueError(
+                f"Length mismatch: {len(ontologies)} ontologies vs "
+                f"{len(feedbacks)} feedbacks"
+            )
+
+        logger = self._log or _logging.getLogger(__name__)
+        logger.info(f"Batch applying strategies to {len(ontologies)} ontologies")
+
+        refined_ontologies = []
+        change_log = []
+        errors = []
+        success_count = 0
+        error_count = 0
+
+        def _refine_and_track(idx: int, ontology: Dict[str, Any], feedback: Any) -> tuple:
+            """Refine single ontology and track changes."""
+            try:
+                initial_entities = len(ontology.get("entities", []))
+                initial_relationships = len(ontology.get("relationships", []))
+
+                refined = self.refine_ontology(ontology, feedback, context)
+
+                final_entities = len(refined.get("entities", []))
+                final_relationships = len(refined.get("relationships", []))
+
+                changelog = {
+                    "ontology_idx": idx,
+                    "entities_added": final_entities - initial_entities,
+                    "relationships_added": final_relationships - initial_relationships,
+                    "initial_entity_count": initial_entities,
+                    "final_entity_count": final_entities,
+                    "success": True,
+                    "error": None,
+                }
+
+                return idx, refined, changelog, None
+            except Exception as e:
+                logger.error(f"Refinement failed for ontology {idx}: {e}")
+                error_detail = {
+                    "ontology_idx": idx,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                }
+                return idx, None, None, error_detail
+
+        # Execute refinements
+        worker_count = max_workers or 4
+        total_entities_added = 0
+        total_relationships_added = 0
+
+        with ThreadPoolExecutor(max_workers=worker_count) as executor:
+            futures = {
+                executor.submit(_refine_and_track, i, onto, fb): i
+                for i, (onto, fb) in enumerate(zip(ontologies, feedbacks))
+            }
+
+            # Collect results in order
+            refined_ontologies = [None] * len(ontologies)
+            for future in as_completed(futures):
+                idx, refined, changes, error = future.result()
+
+                if error:
+                    errors.append(error)
+                    error_count += 1
+                    refined_ontologies[idx] = None
+                else:
+                    refined_ontologies[idx] = refined
+                    if track_changes and changes:
+                        change_log.append(changes)
+                        total_entities_added += changes["entities_added"]
+                        total_relationships_added += changes["relationships_added"]
+                    success_count += 1
+
+        # Filter out None entries
+        refined_ontologies = [o for o in refined_ontologies if o is not None]
+
+        result = {
+            "refined_ontologies": refined_ontologies,
+            "change_log": change_log if track_changes else [],
+            "total_entities_added": total_entities_added,
+            "total_relationships_added": total_relationships_added,
+            "success_count": success_count,
+            "error_count": error_count,
+            "errors": errors,
+        }
+
+        logger.info(
+            f"Batch refinement complete: {success_count} succeeded, {error_count} failed. "
+            f"Added {total_entities_added} entities, {total_relationships_added} relationships."
+        )
+
+        return result
+
     def get_action_stats(self) -> Dict[str, int]:
         """Return cumulative per-action invocation counts across all :meth:`refine_ontology` calls.
 
@@ -723,6 +875,183 @@ class OntologyMediator:
         if recs is None:
             return []
         return list(recs)
+
+    def suggest_refinement_strategy(
+        self,
+        ontology: Dict[str, Any],
+        score: Any,  # CriticScore
+        context: Any,  # OntologyGenerationContext
+    ) -> Dict[str, Any]:
+        """
+        Suggest the optimal refinement strategy based on current ontology quality.
+
+        Analyzes the critic score and recommendations to recommend the next
+        most impactful refinement action. Considers:
+        - Current score across dimensions (completeness, consistency, clarity)
+        - Frequency of recommendations (repeated issues indicate priority)
+        - Entity/relationship statistics (size vs quality trade-offs)
+        - Action history (avoid thrashing by not repeating recent actions)
+
+        Args:
+            ontology: Current ontology dict with entities and relationships.
+            score: CriticScore with dimensions and recommendations.
+            context: OntologyGenerationContext for domain awareness.
+
+        Returns:
+            Dict with recommended strategy:
+            {
+                "action": str,  # Recommended action name
+                "priority": str,  # "critical", "high", "medium", or "low"
+                "rationale": str,  # Explanation of recommendation
+                "estimated_impact": float,  # Estimated score improvement (0-1)
+                "alternative_actions": list,  # [str, ...] fallback actions
+                "affected_entity_count": int,  # How many entities affected
+            }
+
+        Example:
+            >>> strategy = mediator.suggest_refinement_strategy(ont, score, ctx)
+            >>> print(f"Recommended: {strategy['action']}")
+            >>> print(f"Impact: +{strategy['estimated_impact']:.2f}")
+        """
+        import re as _re
+
+        entities = ontology.get("entities", [])
+        relationships = ontology.get("relationships", [])
+        entity_count = len(entities)
+        relationship_count = len(relationships)
+
+        # Extract score dimensions
+        completeness = getattr(score, "completeness", 0.5)
+        consistency = getattr(score, "consistency", 0.5)
+        clarity = getattr(score, "clarity", 0.5)
+        overall = getattr(score, "overall", 0.5)
+
+        # Count recommendations by pattern to identify repeated issues
+        recommendations = list(getattr(score, "recommendations", []))
+        recommendation_patterns = {
+            "property": sum(1 for r in recommendations if any(k in r.lower() for k in ["property", "detail", "clarity", "definition"])),
+            "naming": sum(1 for r in recommendations if any(k in r.lower() for k in ["naming", "convention", "normalize", "consistent", "casing"])),
+            "orphan": sum(1 for r in recommendations if any(k in r.lower() for k in ["orphan", "prune", "coverage"])),
+            "duplicate": sum(1 for r in recommendations if any(k in r.lower() for k in ["duplicate", "consistency", "dedup", "merge"])),
+            "relationship": sum(1 for r in recommendations if "relationship" in r.lower()),
+            "granular": sum(1 for r in recommendations if any(k in r.lower() for k in ["split", "granular", "too broad", "overloaded"])),
+        }
+
+        # Determine bottleneck dimensions
+        bottlenecks = []
+        if completeness < 0.6:
+            bottlenecks.append(("completeness", completeness))
+        if consistency < 0.6:
+            bottlenecks.append(("consistency", consistency))
+        if clarity < 0.6:
+            bottlenecks.append(("clarity", clarity))
+
+        # Recommend action based on bottlenecks and patterns
+        strategy = {
+            "action": "no_action_needed",
+            "priority": "low",
+            "rationale": "No significant issues detected.",
+            "estimated_impact": 0.0,
+            "alternative_actions": [],
+            "affected_entity_count": 0,
+        }
+
+        if overall >= 0.85:
+            # Already high quality
+            strategy.update({
+                "action": "converged",
+                "priority": "low",
+                "rationale": f"Ontology quality converged at {overall:.2f}. No further refinement needed.",
+                "estimated_impact": 0.0,
+            })
+            return strategy
+
+        # Pattern 1: Low clarity → add properties
+        if clarity < 0.55 and recommendation_patterns["property"] >= 2:
+            affected = sum(1 for e in entities if not e.get("properties"))
+            strategy.update({
+                "action": "add_missing_properties",
+                "priority": "high" if clarity < 0.45 else "medium",
+                "rationale": f"Clarity score is low ({clarity:.2f}). {affected} entities lack property definitions.",
+                "estimated_impact": 0.12,
+                "affected_entity_count": affected,
+                "alternative_actions": ["normalize_names", "split_entity"],
+            })
+
+        # Pattern 2: Low consistency + duplicate recommendations → merge
+        elif consistency < 0.55 and recommendation_patterns["duplicate"] >= 2:
+            strategy.update({
+                "action": "merge_duplicates",
+                "priority": "high" if consistency < 0.45 else "medium",
+                "rationale": f"Consistency score is low ({consistency:.2f}). Multiple duplicate entity recommendations detected.",
+                "estimated_impact": 0.15,
+                "affected_entity_count": min(10, entity_count // 5),
+                "alternative_actions": ["normalize_names", "add_missing_properties"],
+            })
+
+        # Pattern 3: Low completeness + relationship recommendations → add relationships
+        elif completeness < 0.55 and recommendation_patterns["relationship"] >= 2:
+            strategy.update({
+                "action": "add_missing_relationships",
+                "priority": "high" if completeness < 0.45 else "medium",
+                "rationale": f"Completeness score is low ({completeness:.2f}). {entity_count} entities but only {relationship_count} relationships; {entity_count - relationship_count} orphans detected.",
+                "estimated_impact": 0.18,
+                "affected_entity_count": entity_count - relationship_count,
+                "alternative_actions": ["split_entity", "prune_orphans"],
+            })
+
+        # Pattern 4: Orphaned entities recommendation
+        elif recommendation_patterns["orphan"] >= 1:
+            orphan_count = entity_count - min(entity_count, relationship_count + 5)
+            strategy.update({
+                "action": "prune_orphans",
+                "priority": "medium",
+                "rationale": f"~{orphan_count} orphaned entities detected (entities not in any relationship).",
+                "estimated_impact": 0.08,
+                "affected_entity_count": orphan_count,
+                "alternative_actions": ["add_missing_relationships", "split_entity"],
+            })
+
+        # Pattern 5: Granularity/splitting recommendation
+        elif recommendation_patterns["granular"] >= 1 and entity_count < 50:
+            strategy.update({
+                "action": "split_entity",
+                "priority": "medium",
+                "rationale": "Some entities are too broad and should be split into more granular entities.",
+                "estimated_impact": 0.10,
+                "affected_entity_count": min(5, entity_count // 10),
+                "alternative_actions": ["add_missing_properties", "normalize_names"],
+            })
+
+        # Pattern 6: Naming convention recommendation
+        elif recommendation_patterns["naming"] >= 2:
+            strategy.update({
+                "action": "normalize_names",
+                "priority": "medium",
+                "rationale": f"Entity/relationship naming is inconsistent. Multiple convention recommendations detected.",
+                "estimated_impact": 0.07,
+                "affected_entity_count": entity_count,
+                "alternative_actions": ["add_missing_properties", "merge_duplicates"],
+            })
+
+        # Fallback: general property enrichment
+        elif clarity < 0.65:
+            affected = sum(1 for e in entities if not e.get("properties"))
+            if affected > 0:
+                strategy.update({
+                    "action": "add_missing_properties",
+                    "priority": "medium",
+                    "rationale": f"Clarity could be improved. {affected} entities lack property definitions.",
+                    "estimated_impact": 0.10,
+                    "affected_entity_count": affected,
+                    "alternative_actions": ["normalize_names"],
+                })
+
+        self._log.info(
+            f"Suggested refinement strategy: {strategy['action']} "
+            f"(priority={strategy['priority']}, estimated_impact={strategy['estimated_impact']:.2f})"
+        )
+        return strategy
 
     def undo_last_action(self) -> Dict[str, Any]:
         """Revert the last applied refinement action.
@@ -900,6 +1229,23 @@ class OntologyMediator:
         """
         return sorted(self._action_counts.keys())
 
+    def actions_never_applied(self) -> list[str]:
+        """Return known refinement action types that have never been applied.
+
+        This is computed relative to :attr:`KNOWN_REFINEMENT_ACTION_TYPES`.
+
+        Returns:
+            Sorted list of action name strings where :meth:`action_count_for`
+            returns ``0``.
+
+        Example:
+            >>> mediator.actions_never_applied()
+            ['add_missing_properties', 'add_missing_relationships', ...]
+        """
+        return sorted(
+            [a for a in self.KNOWN_REFINEMENT_ACTION_TYPES if self.action_count_for(a) == 0]
+        )
+
     def total_action_count(self) -> int:
         """Return the total count of all action invocations.
 
@@ -957,24 +1303,44 @@ class OntologyMediator:
         return n
 
     def apply_action_bulk(self, actions: list) -> int:
-        """Increment action counts for each action name in *actions*.
+        """Increment action counts for each action entry in *actions*.
 
         This is a convenience method for registering multiple actions at once
         without calling :meth:`get_action_stats` or manual dict surgery.
 
         Args:
-            actions: Sequence of action name strings to record.
+            actions: Sequence of action entries to record. Each entry may be:
+                - ``str`` action name
+                - 2-tuple/list ``(action_name, args)`` (args ignored)
+                - ``dict`` with an ``"action"`` key
 
         Returns:
-            Total number of actions recorded (len of input).
+            Total number of action entries recorded.
 
         Example:
-            >>> mediator.apply_action_bulk(["add_entity", "add_entity", "remove_rel"])
-            3
+            >>> mediator.apply_action_bulk(["add_entity", ("remove_rel", {"id": "r1"})])
+            2
         """
-        for action in actions:
+        recorded = 0
+        for entry in actions:
+            action: Optional[str] = None
+
+            if isinstance(entry, str):
+                action = entry
+            elif isinstance(entry, dict):
+                maybe = entry.get("action")
+                action = maybe if isinstance(maybe, str) else None
+            elif isinstance(entry, (tuple, list)) and entry:
+                maybe = entry[0]
+                action = maybe if isinstance(maybe, str) else None
+
+            if not action:
+                raise ValueError(f"Invalid action entry: {entry!r}")
+
             self._action_counts[action] = self._action_counts.get(action, 0) + 1
-        return len(actions)
+            recorded += 1
+
+        return recorded
 
     def clear_recommendation_history(self) -> int:
         """Clear the recommendation phrase frequency table.
@@ -1305,6 +1671,245 @@ class OntologyMediator:
         )
         
         return state
+
+    def run_agentic_refinement_cycle(
+        self,
+        data: Any,
+        context: Any,  # OntologyGenerationContext
+        max_rounds: Optional[int] = None,
+        min_improvement: float = 0.01,
+    ) -> MediatorState:
+        """
+        Run a refinement cycle that uses strategy recommendations to guide stopping.
+
+        This loop mirrors :meth:`run_refinement_cycle` but consults
+        :meth:`suggest_refinement_strategy` each round to decide whether to
+        continue. The recommended strategy is recorded in the refinement history
+        for traceability.
+
+        Args:
+            data: Source data for ontology generation.
+            context: Generation context with configuration.
+            max_rounds: Optional override for max rounds (defaults to mediator setting).
+            min_improvement: Minimum score improvement required to keep refining.
+
+        Returns:
+            Final MediatorState with complete refinement history.
+        """
+        import time
+
+        start_time = time.time()
+        round_limit = max_rounds or self.max_rounds
+        self._log.info(
+            "Starting agentic refinement cycle (max %d rounds)",
+            round_limit,
+        )
+
+        initial_ontology = self.generator.generate_ontology(data, context)
+        initial_score = self.critic.evaluate_ontology(initial_ontology, context, data)
+
+        state = MediatorState(
+            current_ontology=initial_ontology,
+            max_rounds=round_limit,
+            target_score=self.convergence_threshold,
+        )
+        state.add_round(initial_ontology, initial_score, "initial_generation")
+
+        self._log.info("Initial score: %.2f", initial_score.overall)
+
+        prev_score = initial_score
+        for round_num in range(1, round_limit):
+            strategy = self.suggest_refinement_strategy(
+                state.current_ontology,
+                prev_score,
+                context,
+            )
+
+            if (
+                strategy.get("action") in {"converged", "no_action_needed"}
+                and prev_score.overall >= self.convergence_threshold
+            ):
+                self._log.info(
+                    "Converged at round %d (score: %.2f)",
+                    round_num,
+                    prev_score.overall,
+                )
+                state.converged = True
+                break
+
+            if (
+                strategy.get("priority") == "low"
+                and round_num > 1
+                and state.get_score_trend() in {"stable", "insufficient_data"}
+            ):
+                self._log.info("Stopping: strategy priority low and score trend stable")
+                break
+
+            refined_ontology = self.refine_ontology(
+                state.current_ontology,
+                prev_score,
+                context,
+            )
+
+            refined_score = self.critic.evaluate_ontology(
+                refined_ontology,
+                context,
+                data,
+            )
+
+            state.add_round(
+                refined_ontology,
+                refined_score,
+                f"agentic_round_{round_num}:{strategy.get('action', 'unknown')}",
+            )
+            state.refinement_history[-1]["strategy"] = strategy
+
+            self._log.info(
+                "Round %d: score=%.2f (Δ=%+.2f)",
+                round_num,
+                refined_score.overall,
+                refined_score.overall - prev_score.overall,
+            )
+
+            if refined_score.overall >= self.convergence_threshold:
+                self._log.info(
+                    "Converged at round %d (score: %.2f)",
+                    round_num,
+                    refined_score.overall,
+                )
+                state.converged = True
+                break
+
+            if refined_score.overall < prev_score.overall - 0.1:
+                self._log.warning("Score degraded significantly, stopping refinement")
+                break
+
+            if (refined_score.overall - prev_score.overall) < min_improvement and round_num > 1:
+                self._log.info("Stopping: improvement below %.3f", min_improvement)
+                break
+
+            prev_score = refined_score
+
+        state.total_time_ms = (time.time() - start_time) * 1000
+        state.metadata["final_score"] = state.critic_scores[-1].overall
+        state.metadata["score_trend"] = state.get_score_trend()
+        state.metadata["improvement"] = (
+            state.critic_scores[-1].overall - state.critic_scores[0].overall
+        )
+
+        self._log.info(
+            "Agentic refinement complete: %d rounds, final score=%.2f, improvement=%+.2f",
+            state.current_round,
+            state.metadata["final_score"],
+            state.metadata["improvement"],
+        )
+
+        return state
+
+    def run_llm_refinement_cycle(
+        self,
+        data: Any,
+        context: Any,  # OntologyGenerationContext
+        agent: Any,
+        max_rounds: Optional[int] = None,
+        min_improvement: float = 0.01,
+    ) -> MediatorState:
+        """
+        Run a refinement cycle that uses an LLM agent to propose feedback.
+
+        The agent is expected to provide a structured feedback dict compatible
+        with OntologyGenerator.generate_with_feedback(). Each round uses the
+        agent's feedback to generate a refined ontology and re-evaluates it.
+
+        Args:
+            data: Source data for ontology generation.
+            context: Generation context with configuration.
+            agent: OntologyRefinementAgent (or compatible interface).
+            max_rounds: Optional override for max rounds.
+            min_improvement: Minimum score improvement required to keep refining.
+
+        Returns:
+            Final MediatorState with complete refinement history.
+        """
+        import time
+
+        start_time = time.time()
+        round_limit = max_rounds or self.max_rounds
+        self._log.info("Starting LLM refinement cycle (max %d rounds)", round_limit)
+
+        initial_ontology = self.generator.generate_ontology(data, context)
+        initial_score = self.critic.evaluate_ontology(initial_ontology, context, data)
+
+        state = MediatorState(
+            current_ontology=initial_ontology,
+            max_rounds=round_limit,
+            target_score=self.convergence_threshold,
+        )
+        state.add_round(initial_ontology, initial_score, "initial_generation")
+
+        prev_score = initial_score
+        for round_num in range(1, round_limit):
+            feedback = agent.propose_feedback(state.current_ontology, prev_score, context)
+            if not feedback:
+                self._log.info("No agent feedback provided; stopping refinement")
+                break
+
+            refined_ontology = self.generator.generate_with_feedback(
+                data,
+                context,
+                feedback=feedback,
+                critic=None,
+            )
+            refined_score = self.critic.evaluate_ontology(refined_ontology, context, data)
+
+            state.add_round(
+                refined_ontology,
+                refined_score,
+                f"llm_round_{round_num}",
+            )
+            state.refinement_history[-1]["agent_feedback"] = feedback
+
+            self._log.info(
+                "Round %d: score=%.2f (Δ=%+.2f)",
+                round_num,
+                refined_score.overall,
+                refined_score.overall - prev_score.overall,
+            )
+
+            if refined_score.overall >= self.convergence_threshold:
+                self._log.info(
+                    "Converged at round %d (score: %.2f)",
+                    round_num,
+                    refined_score.overall,
+                )
+                state.converged = True
+                break
+
+            if refined_score.overall < prev_score.overall - 0.1:
+                self._log.warning("Score degraded significantly, stopping refinement")
+                break
+
+            if (refined_score.overall - prev_score.overall) < min_improvement and round_num > 1:
+                self._log.info("Stopping: improvement below %.3f", min_improvement)
+                break
+
+            prev_score = refined_score
+
+        state.total_time_ms = (time.time() - start_time) * 1000
+        state.metadata["final_score"] = state.critic_scores[-1].overall
+        state.metadata["score_trend"] = state.get_score_trend()
+        state.metadata["improvement"] = (
+            state.critic_scores[-1].overall - state.critic_scores[0].overall
+        )
+
+        self._log.info(
+            "LLM refinement complete: %d rounds, final score=%.2f, improvement=%+.2f",
+            state.current_round,
+            state.metadata["final_score"],
+            state.metadata["improvement"],
+        )
+
+        return state
     
     def check_convergence(
         self,
@@ -1469,6 +2074,24 @@ class OntologyMediator:
         """
         return len(self._action_counts)
 
+    def feedback_age(self, idx: int) -> int:
+        """Return how many rounds/refinements ago the feedback at index was recorded.
+        
+        Args:
+            idx: Index into feedback history (0 = oldest, -1 = newest).
+        
+        Returns:
+            Integer age in refinement steps (0 = just added, 1 = one round ago, etc.).
+            Returns -1 if index is out of bounds or no feedback exists.
+        """
+        history = getattr(self, '_feedback_history', None) or getattr(self, '_feedback', None) or []
+        if not history or idx < -len(history) or idx >= len(history):
+            return -1
+        # Convert negative index to positive
+        actual_idx = idx if idx >= 0 else len(history) + idx
+        # Age is distance from the end (newest is age 0)
+        return len(history) - 1 - actual_idx
+
     def clear_feedback(self) -> int:
         """Clear all recorded feedback history and return how many were removed.
 
@@ -1584,6 +2207,50 @@ class OntologyMediator:
         if total == 0:
             return 0.0
         return -sum((c / total) * math.log(c / total) for c in counts)
+
+    def action_entropy_change(self) -> float:
+        """Return the change in action entropy over the feedback history.
+
+        Splits available feedback history into halves, computes action entropy
+        for each half, and returns ``entropy_second - entropy_first``.
+
+        Returns:
+            Float entropy delta; 0.0 when insufficient action history exists.
+        """
+        import math
+
+        history = (
+            getattr(self, "_feedback_history", None)
+            or getattr(self, "_feedback", None)
+            or []
+        )
+        if len(history) < 2:
+            return 0.0
+
+        def _extract_actions(entries: list) -> list:
+            actions = []
+            for entry in entries:
+                if isinstance(entry, dict):
+                    actions.extend(entry.get("actions", []))
+                else:
+                    actions.extend(getattr(entry, "action_types", []) or [])
+            return actions
+
+        def _entropy(action_list: list) -> float:
+            if not action_list:
+                return 0.0
+            counts: dict = {}
+            for action in action_list:
+                counts[action] = counts.get(action, 0) + 1
+            total = sum(counts.values())
+            if total == 0:
+                return 0.0
+            return -sum((c / total) * math.log(c / total) for c in counts.values())
+
+        mid = len(history) // 2
+        first_actions = _extract_actions(history[:mid])
+        second_actions = _extract_actions(history[mid:])
+        return _entropy(second_actions) - _entropy(first_actions)
 
     def total_action_count(self) -> int:
         """Return the total number of action invocations recorded.
@@ -1747,6 +2414,374 @@ class OntologyMediator:
         min_count = min(self._action_counts.values())
         candidates = sorted(k for k, v in self._action_counts.items() if v == min_count)
         return candidates[0]
+
+    def action_round_with_most(self) -> str:
+        """Return the action type that was performed the most times.
+
+        When multiple types share the maximum count the lexicographically
+        last name is returned (to differ from action_least_recent).
+
+        Returns:
+            String action name; empty string when no actions.
+        """
+        if not self._action_counts:
+            return ""
+        max_count = max(self._action_counts.values())
+        candidates = sorted(k for k, v in self._action_counts.items() if v == max_count)
+        return candidates[-1]
+
+    def action_pct_of_total(self, action_name: str) -> float:
+        """Return the fraction of total actions that *action_name* accounts for.
+
+        Args:
+            action_name: Name of the action type to query.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when action not found or no actions.
+        """
+        total = sum(self._action_counts.values())
+        if total == 0 or action_name not in self._action_counts:
+            return 0.0
+        return self._action_counts[action_name] / total
+
+    def action_entropy_normalized(self) -> float:
+        """Return the normalized Shannon entropy of the action distribution.
+
+        Normalized entropy = H / log(n_types), where H is the raw Shannon entropy.
+        Returns 1.0 when all types are equally frequent; 0.0 with a single type.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no actions or only one type.
+        """
+        import math
+        total = sum(self._action_counts.values())
+        n_types = len(self._action_counts)
+        if total == 0 or n_types <= 1:
+            return 0.0
+        entropy = 0.0
+        for count in self._action_counts.values():
+            p = count / total
+            if p > 0:
+                entropy -= p * math.log(p)
+        max_entropy = math.log(n_types)
+        return entropy / max_entropy if max_entropy > 0 else 0.0
+
+    def action_balance_score(self) -> float:
+        """Return a balance score measuring how evenly actions are distributed.
+
+        Computed as (min_count / max_count); 1.0 = perfectly balanced.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no actions or max == 0.
+        """
+        if not self._action_counts:
+            return 0.0
+        max_c = max(self._action_counts.values())
+        if max_c == 0:
+            return 0.0
+        min_c = min(self._action_counts.values())
+        return min_c / max_c
+
+    def action_uniformity_index(self) -> float:
+        """Return a uniformity index: 1 - (std / mean) of action counts, clipped to [0,1].
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no actions or only one type; 1.0 when perfectly uniform.
+        """
+        if not self._action_counts:
+            return 0.0
+        vals = list(self._action_counts.values())
+        n = len(vals)
+        if n == 1:
+            return 1.0
+        mean = sum(vals) / n
+        if mean == 0:
+            return 0.0
+        var = sum((v - mean) ** 2 for v in vals) / n
+        cv = (var ** 0.5) / mean
+        return float(max(0.0, min(1.0, 1.0 - cv)))
+
+    def action_peak_fraction(self) -> float:
+        """Return the fraction of total actions performed by the most-frequent type.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no actions.
+        """
+        total = sum(self._action_counts.values())
+        if total == 0:
+            return 0.0
+        return max(self._action_counts.values()) / total
+
+    def action_concentration_ratio(self, top_k: int = 3) -> float:
+        """Return the share of total actions held by the top-*k* action types.
+
+        Args:
+            top_k: Number of leading action types to include. Defaults to 3.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no actions.
+        """
+        total = sum(self._action_counts.values())
+        if total == 0:
+            return 0.0
+        sorted_counts = sorted(self._action_counts.values(), reverse=True)
+        top_sum = sum(sorted_counts[:top_k])
+        return top_sum / total
+
+    def action_last_n_most_common(self, n: int = 5) -> str:
+        """Return the name of the most-common action among the last *n* recorded.
+
+        If `_action_log` is available it is used; otherwise the method falls
+        back to the overall `_action_counts` dict.
+
+        Args:
+            n: Window size. Defaults to 5.
+
+        Returns:
+            String action name, or empty string when no actions.
+        """
+        # Prefer a chronological log if one exists
+        log = getattr(self, "_action_log", None)
+        if log:
+            window = log[-n:]
+            counts: dict = {}
+            for name in window:
+                counts[name] = counts.get(name, 0) + 1
+            return max(counts, key=lambda k: counts[k]) if counts else ""
+        # Fallback to cumulative counts
+        if not self._action_counts:
+            return ""
+        return max(self._action_counts, key=lambda k: self._action_counts[k])
+
+    def action_gini_coefficient(self) -> float:
+        """Return the Gini coefficient of action count distribution.
+
+        A coefficient of 0 means all action types are equally frequent; 1 means
+        all actions are of one type.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when no actions or a single type.
+        """
+        vals = sorted(self._action_counts.values())
+        n = len(vals)
+        if n == 0 or sum(vals) == 0:
+            return 0.0
+        cumulative = 0.0
+        for i, v in enumerate(vals):
+            cumulative += (2 * (i + 1) - n - 1) * v
+        return cumulative / (n * sum(vals))
+
+    def total_refinements(self) -> int:
+        """Get total number of refinement operations applied.
+
+        Returns:
+            Total count of all refinement actions across all rounds.
+        """
+        return sum(self._action_counts.values())
+
+    def rounds_completed(self) -> int:
+        """Get number of refinement rounds completed.
+
+        Returns:
+            Count of completed refinement cycles.
+        """
+        return len(self._history)
+
+    def has_converged(self, threshold: float = 0.01, window: int = 3) -> bool:
+        """Check if refinement has converged (minimal score changes).
+
+        Args:
+            threshold: Maximum score delta to consider converged.
+            window: Number of recent rounds to examine.
+
+        Returns:
+            True if last N rounds have deltas < threshold.
+        """
+        if len(self._history) < window + 1:
+            return False
+        
+        recent_deltas = []
+        for i in range(len(self._history) - window, len(self._history)):
+            if i > 0:
+                delta = abs(
+                    self._history[i].get("score", 0.0) 
+                    - self._history[i-1].get("score", 0.0)
+                )
+                recent_deltas.append(delta)
+        
+        if not recent_deltas:
+            return False
+        return all(d < threshold for d in recent_deltas)
+
+    def refinement_efficiency(self) -> float:
+        """Calculate efficiency of refinements (improvement per action).
+
+        Returns improvement per total actions taken. Returns 0.0 if no actions.
+
+        Returns:
+            Float >= 0. Impact per action.
+        """
+        total_actions = self.total_refinements()
+        if total_actions == 0 or len(self._history) < 2:
+            return 0.0
+        
+        first_score = self._history[0].get("score", 0.0)
+        last_score = self._history[-1].get("score", 0.0)
+        
+        improvement = last_score - first_score
+        return improvement / total_actions if total_actions > 0 else 0.0
+
+    def score_change_per_round(self) -> float:
+        """Calculate average score change per refinement round.
+
+        Returns:
+            Mean absolute delta between consecutive rounds, or 0.0 if insufficient data.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        
+        deltas = []
+        for i in range(1, len(self._history)):
+            delta = abs(
+                self._history[i].get("score", 0.0) 
+                - self._history[i-1].get("score", 0.0)
+            )
+            deltas.append(delta)
+        
+        return sum(deltas) / len(deltas) if deltas else 0.0
+
+    def action_impact(self, action_name: str) -> float:
+        """Calculate average score impact of a specific action type.
+
+        Args:
+            action_name: Name of the action to analyze.
+
+        Returns:
+            Average improvement when this action was used, or 0.0.
+        """
+        # Simplified: return action count normalized by attempts
+        count = self._action_counts.get(action_name, 0)
+        total = self.total_refinements()
+        if total == 0:
+            return 0.0
+        return count / total
+
+    def most_productive_round(self) -> int:
+        """Find the round that produced the largest score improvement.
+
+        Returns:
+            Index of the round with maximum improvement, or -1 if no improvement.
+        """
+        if len(self._history) < 2:
+            return -1
+        
+        max_improvement = -float('inf')
+        best_round = -1
+        
+        for i in range(1, len(self._history)):
+            improvement = (
+                self._history[i].get("score", 0.0) 
+                - self._history[i-1].get("score", 0.0)
+            )
+            if improvement > max_improvement:
+                max_improvement = improvement
+                best_round = i
+        
+        return best_round if max_improvement > 0 else -1
+
+    def refinement_stagnation_rounds(self, threshold: float = 0.001) -> int:
+        """Count consecutive rounds with minimal improvement (stagnation).
+
+        Args:
+            threshold: Maximum delta to count as stagnation.
+
+        Returns:
+            Number of consecutive stagnant rounds at the end, or 0.
+        """
+        _float_tolerance = 1e-12  # guard against IEEE 754 rounding errors
+        if len(self._history) < 2:
+            return 0
+        
+        stagnation_count = 0
+        for i in range(len(self._history) - 1, 0, -1):
+            delta = abs(
+                self._history[i].get("score", 0.0) 
+                - self._history[i-1].get("score", 0.0)
+            )
+            if delta <= threshold + _float_tolerance:
+                stagnation_count += 1
+            else:
+                break
+        
+        return stagnation_count
+
+    def score_volatility(self) -> float:
+        """Calculate volatility (standard deviation) of refinement scores.
+
+        Returns:
+            Std dev of scores across all rounds, or 0.0 if insufficient data.
+        """
+        if len(self._history) < 2:
+            return 0.0
+        
+        scores = [entry.get("score", 0.0) for entry in self._history]
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+        return variance ** 0.5
+
+    def refinement_trajectory(self) -> str:
+        """Get description of overall refinement trajectory.
+
+        Returns:
+            One of: 'improving', 'degrading', 'stable', 'volatile', 'unknown'
+        """
+        if len(self._history) < 2:
+            return 'unknown'
+        
+        first = self._history[0].get("score", 0.0)
+        last = self._history[-1].get("score", 0.0)
+        volatility = self.score_volatility()
+        
+        delta = last - first
+        
+        # Classify based on volatility and delta
+        if volatility > 0.2:  # High volatility
+            return 'volatile'
+        elif delta > 0.05:  # Significant improvement
+            return 'improving'
+        elif delta < -0.05:  # Significant degradation
+            return 'degrading'
+        else:  # Small changes
+            return 'stable'
+
+    def retry_last_round(
+        self,
+        ontology: "Dict[str, Any]",
+        score: Any,
+        context: Any,
+    ) -> "Dict[str, Any]":
+        """Re-apply the most recent refinement round.
+
+        Pops the latest snapshot from the undo stack (restoring the previous
+        ontology state) and then immediately calls :meth:`refine_ontology`
+        with the same *score* and *context*.  If the undo stack is empty the
+        current *ontology* is refined without a rollback first.
+
+        Args:
+            ontology: The current ontology dict.
+            score: The :class:`CriticScore` from the last evaluation.
+            context: The :class:`OntologyGenerationContext` for this round.
+
+        Returns:
+            A newly refined ontology dict.
+        """
+        import copy as _copy
+        if self._undo_stack:
+            # Roll back to the snapshot before the last refinement
+            base = _copy.deepcopy(self._undo_stack[-1])
+        else:
+            base = _copy.deepcopy(ontology)
+        return self.refine_ontology(base, score, context)
 
 
 # Export public API

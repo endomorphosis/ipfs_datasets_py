@@ -71,7 +71,9 @@ from .types import (
 # Import core classes (Task 3.3 - Entity & Relationship, Task 3.4 - KnowledgeGraph)
 from .entities import Entity
 from .relationships import Relationship
-from .graph import KnowledgeGraph
+from .graph import KnowledgeGraph, KnowledgeGraphDiff, GraphEventType, GraphEvent
+from .visualization import KnowledgeGraphVisualizer
+from .provenance import ProvenanceChain, ProvenanceEvent, ProvenanceEventType  # Session 75
 
 # Extractor imports (Task 3.5a - KnowledgeGraphExtractor, Task 3.5b - WithValidation)
 from .extractor import KnowledgeGraphExtractor
@@ -85,9 +87,39 @@ from .advanced import (
     RelationshipCandidate,
 )
 
+# SRL extractor — Item 9 (v2.5.0)
+from .srl import (
+    SRLExtractor,
+    SRLFrame,
+    RoleArgument,
+    ROLE_AGENT,
+    ROLE_PATIENT,
+    ROLE_THEME,
+    ROLE_INSTRUMENT,
+    ROLE_LOCATION,
+    ROLE_TIME,
+    ROLE_CAUSE,
+    ROLE_RESULT,
+    ROLE_RECIPIENT,
+    ROLE_SOURCE,
+)
+
 # Future imports (will be uncommented as modules are created):
 # from .validator import validate_with_sparql
 # from .wikipedia import extract_from_wikipedia
+
+# Finance GraphRAG (relocated from package root)
+from .finance_graphrag import (
+    ExecutiveProfile,
+    CompanyPerformance,
+    HypothesisTest,
+    GraphRAGNewsAnalyzer,
+    analyze_news_with_graphrag,
+    create_financial_knowledge_graph,
+    analyze_executive_performance,
+    extract_executive_profiles_from_archives,
+    GRAPHRAG_AVAILABLE,
+)
 
 
 __all__ = [
@@ -110,6 +142,13 @@ __all__ = [
     'Entity',
     'Relationship',
     'KnowledgeGraph',  # Task 3.4 ✅
+    'KnowledgeGraphDiff',  # Session 70 — graph diff/patch ✅
+    'GraphEventType',  # Session 71 — graph event subscriptions ✅
+    'GraphEvent',  # Session 71 — graph event subscriptions ✅
+    'KnowledgeGraphVisualizer',  # Session 73 — advanced visualization ✅
+    'ProvenanceChain',  # Session 75 — blockchain-style provenance ✅
+    'ProvenanceEvent',  # Session 75 — blockchain-style provenance ✅
+    'ProvenanceEventType',  # Session 75 — blockchain-style provenance ✅
     'KnowledgeGraphExtractor',  # Task 3.5a ✅
     'KnowledgeGraphExtractorWithValidation',  # Task 3.5b ✅
     # Advanced extractor (Workstream I — relocated from package root)
@@ -117,6 +156,30 @@ __all__ = [
     'ExtractionContext',
     'EntityCandidate',
     'RelationshipCandidate',
+    # SRL extractor — Item 9 (v2.5.0)
+    'SRLExtractor',
+    'SRLFrame',
+    'RoleArgument',
+    'ROLE_AGENT',
+    'ROLE_PATIENT',
+    'ROLE_THEME',
+    'ROLE_INSTRUMENT',
+    'ROLE_LOCATION',
+    'ROLE_TIME',
+    'ROLE_CAUSE',
+    'ROLE_RESULT',
+    'ROLE_RECIPIENT',
+    'ROLE_SOURCE',
+    # Finance GraphRAG
+    'ExecutiveProfile',
+    'CompanyPerformance',
+    'HypothesisTest',
+    'GraphRAGNewsAnalyzer',
+    'analyze_news_with_graphrag',
+    'create_financial_knowledge_graph',
+    'analyze_executive_performance',
+    'extract_executive_profiles_from_archives',
+    'GRAPHRAG_AVAILABLE',
 ]
 
 

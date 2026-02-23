@@ -259,7 +259,7 @@ class QueryMetricsCollector:
         if HAVE_PSUTIL and hasattr(psutil, "Process"):
             try:
                 memory_usage_bytes = int(psutil.Process().memory_info().rss)
-            except Exception:
+            except (OSError, AttributeError, ValueError):
                 memory_usage_bytes = 0
 
         status = "ok"

@@ -398,6 +398,29 @@ class TestDomainSpecificExtraction:
         assert "Person" in types or "Date" in types
 
 
+class TestDomainRulePatternsCache:
+    def test_domain_rule_patterns_cached(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
+        patterns1 = ExtractionConfig._get_domain_rule_patterns("legal")
+        patterns2 = ExtractionConfig._get_domain_rule_patterns("legal")
+
+        assert patterns1 is patterns2
+        assert isinstance(patterns1, tuple)
+        assert all(isinstance(item, tuple) for item in patterns1)
+
+    def test_custom_rules_do_not_mutate_cached_domain_rules(self, generator):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
+        before = ExtractionConfig._get_domain_rule_patterns("legal")
+        custom_cfg = ExtractionConfig(custom_rules=[(r"\bFooBar\b", "Custom")])
+        _ = generator._build_rule_patterns("legal", custom_cfg)
+        after = ExtractionConfig._get_domain_rule_patterns("legal")
+
+        assert before is after
+        assert (r"\bFooBar\b", "Custom") not in after
+
+
 class TestMergeEntitiesTypeConflict:
     def test_type_conflict_emits_warning(self, generator):
         base = {

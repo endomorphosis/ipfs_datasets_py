@@ -179,6 +179,41 @@ class TestEntityExtractionResultProperties:
         expected_count = sum(1 for e in result.entities if e.confidence == 1.0)
         assert len(filtered.entities) == expected_count
 
+    @given(result=valid_extraction_result())
+    @settings(
+        max_examples=50,
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+        deadline=None,
+    )
+    def test_entity_confidence_in_range(self, result: EntityExtractionResult):
+        """Entity confidences remain within [0.0, 1.0]."""
+        for entity in result.entities:
+            assert 0.0 <= entity.confidence <= 1.0
+
+    @given(result=valid_extraction_result())
+    @settings(
+        max_examples=50,
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+        deadline=None,
+    )
+    def test_relationships_reference_existing_entities(self, result: EntityExtractionResult):
+        """All relationships refer to entities present in the result."""
+        entity_ids = {e.id for e in result.entities}
+        for rel in result.relationships:
+            assert rel.source_id in entity_ids
+            assert rel.target_id in entity_ids
+
+    @given(result=valid_extraction_result())
+    @settings(
+        max_examples=50,
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+        deadline=None,
+    )
+    def test_relationship_confidence_in_range(self, result: EntityExtractionResult):
+        """Relationship confidences remain within [0.0, 1.0]."""
+        for rel in result.relationships:
+            assert 0.0 <= rel.confidence <= 1.0
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Property tests for OntologyGenerator.filter_by_confidence() stats

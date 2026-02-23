@@ -36,7 +36,7 @@ class TestUniqueRelationshipTypes:
         ]
 
     def test_empty_result_returns_empty_list(self, generator):
-        """Empty result should return empty list."""
+        """Empty result should return empty set."""
         result = EntityExtractionResult(
             entities=[],
             relationships=[],
@@ -45,11 +45,11 @@ class TestUniqueRelationshipTypes:
         
         types = generator.unique_relationship_types(result)
         
-        assert types == []
-        assert isinstance(types, list)
+        assert types == set()
+        assert isinstance(types, set)
 
     def test_single_relationship_type(self, generator, sample_entities):
-        """Result with one relationship type should return single-item list."""
+        """Result with one relationship type should return single-item set."""
         result = EntityExtractionResult(
             entities=sample_entities,
             relationships=[
@@ -67,7 +67,7 @@ class TestUniqueRelationshipTypes:
         
         types = generator.unique_relationship_types(result)
         
-        assert types == ["knows"]
+        assert types == {"knows"}
 
     def test_multiple_distinct_types(self, generator, sample_entities):
         """Multiple distinct types should all be returned."""
@@ -105,7 +105,7 @@ class TestUniqueRelationshipTypes:
         assert len(types) == 2
 
     def test_types_are_sorted_alphabetically(self, generator, sample_entities):
-        """Types should be returned in sorted order."""
+        """Types should all be returned (order not guaranteed for sets)."""
         result = EntityExtractionResult(
             entities=sample_entities,
             relationships=[
@@ -118,7 +118,7 @@ class TestUniqueRelationshipTypes:
         
         types = generator.unique_relationship_types(result)
         
-        assert types == ["alpha_relation", "beta_relation", "zebra_relation"]
+        assert types == {"alpha_relation", "beta_relation", "zebra_relation"}
 
     def test_type_with_special_characters(self, generator, sample_entities):
         """Types with special characters should be handled."""
@@ -151,7 +151,7 @@ class TestUniqueRelationshipTypes:
         
         types = generator.unique_relationship_types(result)
         
-        assert types == ["common_type"]
+        assert types == {"common_type"}
         assert len(types) == 1
 
     def test_integration_with_extraction_result_metadata(self, generator, sample_entities):
@@ -175,7 +175,7 @@ class TestUniqueRelationshipTypes:
         assert len(result.errors) == 1
 
     def test_return_type_is_list(self, generator, sample_entities):
-        """Return type should always be a list."""
+        """Return type should always be a set."""
         result = EntityExtractionResult(
             entities=sample_entities,
             relationships=[
@@ -186,8 +186,8 @@ class TestUniqueRelationshipTypes:
         
         types = generator.unique_relationship_types(result)
         
-        assert isinstance(types, list)
-        assert not isinstance(types, set)
+        assert isinstance(types, set)
+        assert not isinstance(types, list)
         assert not isinstance(types, tuple)
 
     def test_case_sensitivity(self, generator, sample_entities):

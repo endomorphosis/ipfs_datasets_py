@@ -4,6 +4,7 @@ import pytest
 
 @pytest.fixture
 def sample_ontology():
+    """Sample ontology for testing - specific data required by tests."""
     return {
         "entities": [
             {"id": "e1", "text": "Alice", "type": "Person"},

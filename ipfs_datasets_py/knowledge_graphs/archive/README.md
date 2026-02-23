@@ -44,7 +44,7 @@ Planning documents that have been superseded by newer plans or completed work. T
 
 **Superseded By (2026-02-18):**
 - **[MASTER_STATUS.md](../MASTER_STATUS.md)** ⭐ - Single source of truth for module status (includes feature matrix, implementation status)
-- **[COMPREHENSIVE_ANALYSIS_2026_02_18.md](../COMPREHENSIVE_ANALYSIS_2026_02_18.md)** ⭐ **NEW** - Latest comprehensive analysis
+- **[COMPREHENSIVE_ANALYSIS_2026_02_18.md](../COMPREHENSIVE_ANALYSIS_2026_02_18.md)** - Historical comprehensive analysis (⚠️ historical — see banner in file)
 - **[DOCUMENTATION_GUIDE.md](../DOCUMENTATION_GUIDE.md)** ⭐ - Documentation navigation guide
 - `DEFERRED_FEATURES.md` - Planned features documentation
 - `ROADMAP.md` - Future plans
@@ -89,11 +89,11 @@ The refactoring effort (2026-02-17) successfully addressed:
 
 For **current and active** documentation, see:
 
-### Active Core Files (2026-02-18)
-- **[MASTER_STATUS.md](../MASTER_STATUS.md)** ⭐ - Single source of truth (17KB)
-- **[COMPREHENSIVE_ANALYSIS_2026_02_18.md](../COMPREHENSIVE_ANALYSIS_2026_02_18.md)** ⭐ **NEW** - Latest comprehensive analysis (22KB)
-- **[DOCUMENTATION_GUIDE.md](../DOCUMENTATION_GUIDE.md)** ⭐ - Documentation guide (15KB)
-- [EXECUTIVE_SUMMARY_FINAL_2026_02_18.md](../EXECUTIVE_SUMMARY_FINAL_2026_02_18.md) - Executive summary
+### Active Core Files (2026-02-22)
+- **[MASTER_STATUS.md](../MASTER_STATUS.md)** ⭐ - Single source of truth
+- **[DOCUMENTATION_GUIDE.md](../DOCUMENTATION_GUIDE.md)** ⭐ - Documentation guide
+- [COMPREHENSIVE_ANALYSIS_2026_02_18.md](../COMPREHENSIVE_ANALYSIS_2026_02_18.md) - Historical analysis (⚠️ historical — see banner in file)
+- [EXECUTIVE_SUMMARY_FINAL_2026_02_18.md](../EXECUTIVE_SUMMARY_FINAL_2026_02_18.md) - Historical executive summary (⚠️ historical — see banner in file)
 - [P3_P4_IMPLEMENTATION_COMPLETE.md](../P3_P4_IMPLEMENTATION_COMPLETE.md) - P1-P4 implementation record
 - [README.md](../README.md) - Module overview
 - [QUICKSTART.md](../QUICKSTART.md) - 5-minute getting started guide
@@ -107,7 +107,7 @@ For **current and active** documentation, see:
 - [tests/knowledge_graphs/TEST_STATUS.md](../../../tests/knowledge_graphs/TEST_STATUS.md) - Test coverage status
 - [README.md](../README.md) - Module overview and quick start
 - [INDEX.md](../INDEX.md) - Documentation navigation hub
-- [IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md) - Current module status
+- [MASTER_STATUS.md](../MASTER_STATUS.md) - Current module status (⭐ single source of truth)
 - [ROADMAP.md](../ROADMAP.md) - Future development plans
 - [CHANGELOG_KNOWLEDGE_GRAPHS.md](../CHANGELOG_KNOWLEDGE_GRAPHS.md) - Version history
 
@@ -147,6 +147,6 @@ If you need clarification on:
 ---
 
 **Archive Created:** 2026-02-17  
-**Last Updated:** 2026-02-18  
+**Last Updated:** 2026-02-22  
 **Archive Purpose:** Historical reference and documentation consolidation  
 **Maintained:** Frozen (no updates to archived content)

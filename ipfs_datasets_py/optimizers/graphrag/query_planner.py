@@ -247,7 +247,7 @@ class GraphRAGQueryOptimizer:
                     # Sort and join edge types for consistency
                     edge_str = "_".join(sorted(str(edge) for edge in edge_types))
                     fallback_parts.append(f"edges{edge_str}")
-                except Exception:
+                except (TypeError, AttributeError, ValueError):
                     fallback_parts.append("edges_error")
             
             # Add vector summary if available
@@ -258,7 +258,7 @@ class GraphRAGQueryOptimizer:
                         fallback_parts.append(f"vshape{query_vector.shape}")
                     if hasattr(query_vector, '__len__'):
                         fallback_parts.append(f"vlen{len(query_vector)}")
-                except Exception:
+                except (TypeError, AttributeError, ValueError):
                     fallback_parts.append("vector_error")
             
             fallback_key = "fallback_" + "_".join(fallback_parts)
@@ -349,21 +349,32 @@ class GraphRAGQueryOptimizer:
             Any: Cached query result
             
         Raises:
-            KeyError: If the query is not in cache
+            QueryCacheError: If the query is not in cache or cache entry is invalid
         """
+        from .exceptions import QueryCacheError
+        
         try:
             # Verify the query is in cache
             if not self.is_in_cache(query_key):
-                raise KeyError(f"Query {query_key} not in cache or expired")
+                raise QueryCacheError(
+                    f"Query {query_key} not in cache or expired",
+                    details={"query_key": query_key}
+                )
                 
             # Get the cached result
             cache_entry = self.query_cache.get(query_key)
             if cache_entry is None:
-                raise KeyError(f"Query {query_key} missing from cache (race condition)")
+                raise QueryCacheError(
+                    f"Query {query_key} missing from cache (race condition)",
+                    details={"query_key": query_key}
+                )
                 
             # Validate cache entry structure
             if not isinstance(cache_entry, tuple) or len(cache_entry) != 2:
-                raise ValueError(f"Invalid cache entry format for query {query_key}")
+                raise QueryCacheError(
+                    f"Invalid cache entry format for query {query_key}",
+                    details={"query_key": query_key, "entry_type": type(cache_entry).__name__}
+                )
                 
             result, _ = cache_entry
             
@@ -384,30 +395,23 @@ class GraphRAGQueryOptimizer:
             # Return cached result
             return result
             
-        except (KeyError, ValueError) as e:
-            # Improve error reporting before re-raising expected exceptions
-            error_msg = f"Cache retrieval error ({e.__class__.__name__}) for query {query_key}: {str(e)}"
-            if hasattr(self, 'logger'):
-                self.logger.debug(error_msg)  # Use debug level for expected errors
-            elif hasattr(self, 'log_error'):
-                self.log_error(error_msg, "cache", level="debug")
-            raise  # Re-raise the original exception without modification
+        except QueryCacheError:
+            # Re-raise QueryCacheError as-is
+            raise
             
         except Exception as e:
-            # For unexpected errors, provide more context and better diagnostics
+            # For unexpected errors, convert to QueryCacheError with context
             error_msg = f"Unexpected error retrieving from cache: {str(e)}, query_key={query_key}"
             if hasattr(self, 'logger'):
                 self.logger.error(error_msg)
             elif hasattr(self, 'log_error'):
                 self.log_error(error_msg, "cache", level="error")
                 
-            # For debugging or development, you can add more diagnostics:
-            # import traceback
-            # if hasattr(self, 'logger'):
-            #     self.logger.error(f"Cache error traceback: {traceback.format_exc()}")
-                
-            # Convert unexpected errors to KeyError with meaningful message
-            raise KeyError(error_msg)
+            # Convert unexpected errors to QueryCacheError with meaningful message
+            raise QueryCacheError(
+                error_msg,
+                details={"query_key": query_key, "original_error": str(e)}
+            ) from e
         
     def add_to_cache(self, query_key: str, result: Any) -> None:
         """

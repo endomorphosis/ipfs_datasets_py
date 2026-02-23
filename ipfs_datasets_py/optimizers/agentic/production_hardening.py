@@ -16,6 +16,8 @@ from typing import Any, Callable, Dict, List, Optional
 import hashlib
 import logging
 
+from .exceptions import AgenticError
+
 logger = logging.getLogger(__name__)
 
 
@@ -221,7 +223,7 @@ class CircuitBreaker:
                     self.state = "HALF_OPEN"
                     logger.info("Circuit breaker half-open, trying request")
                 else:
-                    raise Exception("Circuit breaker is OPEN")
+                    raise AgenticError("Circuit breaker is OPEN")
         
         try:
             result = func(*args, **kwargs)

@@ -55,6 +55,15 @@ from typing import Any, Dict, List, Optional, Union
 
 from ipfs_datasets_py.optimizers.common.base_critic import BaseCritic, CriticResult
 from ipfs_datasets_py.optimizers.common.backend_selection import resolve_backend_settings
+from ipfs_datasets_py.optimizers.graphrag.ontology_critic_completeness import (
+    evaluate_completeness,
+)
+from ipfs_datasets_py.optimizers.graphrag.ontology_critic_consistency import (
+    evaluate_consistency,
+)
+from ipfs_datasets_py.optimizers.graphrag.ontology_critic_connectivity import (
+    evaluate_relationship_coherence,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1354,7 +1363,7 @@ class OntologyCritic(BaseCritic):
                     "consistency": score.consistency,
                     "score": score,
                 })
-            except Exception:  # pragma: no cover
+            except (AttributeError, TypeError, KeyError):  # pragma: no cover
                 scored.append({"index": idx, "overall": 0.0, "completeness": 0.0, "consistency": 0.0, "score": None})
         scored.sort(key=lambda d: -d["overall"])
         for rank, entry in enumerate(scored, start=1):
@@ -1545,137 +1554,16 @@ class OntologyCritic(BaseCritic):
         context: Any,
         source_data: Optional[Any]
     ) -> float:
-        """
-        Evaluate completeness of ontology.
-        
-        Assesses how well the ontology covers key concepts and relationships
-        in the domain and source data.
-
-        When *source_data* is a non-empty string, an extra sub-score measures
-        what fraction of extracted entity texts appear verbatim in the source.
-        """
-        entities = ontology.get('entities', [])
-        relationships = ontology.get('relationships', [])
-
-        if not entities:
-            return 0.0
-
-        # Sub-score 1: entity count (target >= 10 for "complete")
-        entity_count_score = min(len(entities) / 10.0, 1.0)
-
-        # Sub-score 2: relationship density (>= 1 rel per entity)
-        rel_density_score = min(len(relationships) / max(len(entities), 1), 1.0)
-
-        # Sub-score 3: entity-type diversity (at least 3 distinct types)
-        types = {e.get('type') for e in entities if isinstance(e, dict) and e.get('type')}
-        diversity_score = min(len(types) / 3.0, 1.0)
-
-        # Sub-score 4: orphan penalty (entities with no relationships)
-        entity_ids_in_rels: set = set()
-        for rel in relationships:
-            if isinstance(rel, dict):
-                entity_ids_in_rels.add(rel.get('source_id'))
-                entity_ids_in_rels.add(rel.get('target_id'))
-        entity_ids = {e.get('id') for e in entities if isinstance(e, dict)}
-        orphan_ratio = len(entity_ids - entity_ids_in_rels) / max(len(entity_ids), 1)
-        orphan_penalty = max(0.0, 1.0 - orphan_ratio)
-
-        # Sub-score 5 (optional): source coverage -- fraction of entity texts found in source
-        source_coverage_score: Optional[float] = None
-        if isinstance(source_data, str) and source_data:
-            src_lower = source_data.lower()
-            covered = sum(
-                1 for e in entities
-                if isinstance(e, dict)
-                and (e.get('text') or '').lower()
-                and (e.get('text') or '').lower() in src_lower
-            )
-            source_coverage_score = covered / len(entities)
-
-        if source_coverage_score is not None:
-            score = (
-                entity_count_score * 0.25
-                + rel_density_score * 0.25
-                + diversity_score * 0.15
-                + orphan_penalty * 0.15
-                + source_coverage_score * 0.20
-            )
-        else:
-            score = (
-                entity_count_score * 0.3
-                + rel_density_score * 0.3
-                + diversity_score * 0.2
-                + orphan_penalty * 0.2
-            )
-        return round(min(max(score, 0.0), 1.0), 4)
+        """Evaluate completeness of ontology."""
+        return evaluate_completeness(ontology, context, source_data)
 
     def _evaluate_consistency(
         self,
         ontology: Dict[str, Any],
         context: Any
     ) -> float:
-        """
-        Evaluate internal logical consistency.
-        
-        Checks for dangling references, duplicate IDs, and circular
-        is_a / part_of dependency chains.
-        """
-        entities = ontology.get('entities', [])
-        relationships = ontology.get('relationships', [])
-
-        entity_ids = {e.get('id') for e in entities if isinstance(e, dict) and e.get('id')}
-
-        # Penalty: dangling references
-        invalid_refs = 0
-        for rel in relationships:
-            if not isinstance(rel, dict):
-                continue
-            if rel.get('source_id') not in entity_ids:
-                invalid_refs += 1
-            if rel.get('target_id') not in entity_ids:
-                invalid_refs += 1
-
-        total_ref_slots = len(relationships) * 2
-        ref_score = 1.0 if total_ref_slots == 0 else max(0.0, 1.0 - invalid_refs / total_ref_slots)
-
-        # Penalty: duplicate entity IDs
-        all_ids = [e.get('id') for e in entities if isinstance(e, dict) and e.get('id')]
-        dup_ratio = (len(all_ids) - len(set(all_ids))) / max(len(all_ids), 1)
-        dup_score = 1.0 - dup_ratio
-
-        # Penalty: circular is_a / part_of chains (DFS cycle detection)
-        hierarchy_adj: dict[str, list[str]] = {}
-        for rel in relationships:
-            if not isinstance(rel, dict):
-                continue
-            if rel.get('type') in ('is_a', 'part_of'):
-                src = rel.get('source_id')
-                tgt = rel.get('target_id')
-                if src and tgt:
-                    hierarchy_adj.setdefault(src, []).append(tgt)
-
-        def _has_cycle(graph: dict) -> bool:
-            visited: set = set()
-            rec_stack: set = set()
-
-            def _dfs(node: str) -> bool:
-                visited.add(node)
-                rec_stack.add(node)
-                for nb in graph.get(node, []):
-                    if nb not in visited:
-                        if _dfs(nb):
-                            return True
-                    elif nb in rec_stack:
-                        return True
-                rec_stack.discard(node)
-                return False
-
-            return any(_dfs(n) for n in graph if n not in visited)
-
-        cycle_penalty = 0.15 if (hierarchy_adj and _has_cycle(hierarchy_adj)) else 0.0
-
-        score = ref_score * 0.5 + dup_score * 0.3 + (1.0 - cycle_penalty) * 0.2
-        return round(min(max(score, 0.0), 1.0), 4)
+        """Evaluate internal logical consistency."""
+        return evaluate_consistency(ontology, context)
 
     def _evaluate_clarity(
         self,
@@ -1851,127 +1739,8 @@ class OntologyCritic(BaseCritic):
         ontology: Dict[str, Any],
         context: Any
     ) -> float:
-        """
-        Evaluate the semantic coherence and quality of relationships.
-        
-        Checks for well-formed relationship types, appropriate directionality,
-        balanced relationship distribution, and semantic consistency.
-        
-        Sub-scores:
-        1. Type quality: Are relationship types meaningful and well-formed?
-        2. Directionality: Are relationships appropriately directional vs symmetric?
-        3. Distribution balance: Is there good variety in relationship types?
-        4. Semantic consistency: Do relationship types match entity types?
-        
-        Returns:
-            Float in [0, 1] indicating relationship coherence quality.
-        """
-        entities = ontology.get('entities', [])
-        relationships = ontology.get('relationships', [])
-
-        if not relationships:
-            # No relationships to evaluate
-            return 0.3 if entities else 0.5
-
-        # Sub-score 1: Type quality - check for meaningful relationship types
-        # Good types: 'has_part', 'causes', 'implements', 'manages'
-        # Poor types: generic ('relates_to'), empty, or single chars
-        rel_types = [r.get('type', '') for r in relationships if isinstance(r, dict)]
-        _GENERIC_RELS = {'relates_to', 'related_to', 'links', 'connected', 'associated', 'rel'}
-        _MEANINGFUL_PATTERNS = {
-            'has_', 'is_', 'contains_', 'performs_', 'implements_', 'manages_',
-            'causes_', 'affects_', 'depends_on', 'requires_', 'uses_', 'provides_'
-        }
-        
-        meaningful = sum(
-            1 for rt in rel_types
-            if rt and len(rt) > 3 and rt.lower() not in _GENERIC_RELS
-            and any(pattern in rt.lower() for pattern in _MEANINGFUL_PATTERNS)
-        )
-        specific_but_not_generic = sum(
-            1 for rt in rel_types
-            if rt and len(rt) > 3 and rt.lower() not in _GENERIC_RELS
-        )
-        type_quality_score = (
-            (meaningful / len(rel_types)) * 0.7 +
-            (specific_but_not_generic / len(rel_types)) * 0.3
-        ) if rel_types else 0.0
-
-        # Sub-score 2: Directionality - check for appropriate use of directed edges
-        # Asymmetric types should be directed: 'causes', 'is_part_of', 'manages'
-        # Symmetric types can be bidirectional: 'collaborates_with', 'similar_to'
-        _SYMMETRIC_PATTERNS = {'similar', 'collaborates', 'related', 'connected', 'associated'}
-        directed_count = sum(
-            1 for r in relationships
-            if isinstance(r, dict)
-            and r.get('source_id') != r.get('target_id')
-        )
-        directionality_score = directed_count / len(relationships) if relationships else 0.5
-
-        # Sub-score 3: Distribution balance - variety in relationship types
-        unique_types = set(rt for rt in rel_types if rt)
-        # Good: 3+ unique types for 10+ relationships
-        # Excellent: 5+ unique types for 20+ relationships
-        if len(relationships) < 5:
-            distribution_score = min(len(unique_types) / 2.0, 1.0)
-        elif len(relationships) < 10:
-            distribution_score = min(len(unique_types) / 3.0, 1.0)
-        else:
-            distribution_score = min(len(unique_types) / 5.0, 1.0)
-
-        # Sub-score 4: Semantic consistency - do relationships make sense for entity types?
-        # Check if relationship types align with connected entity types
-        # Example: 'manages' should connect Person/Organization entities, not Concept/Location
-        _TYPE_AFFINITY: Dict[str, set] = {
-            'manages': {'person', 'organization', 'manager', 'team', 'department'},
-            'located_in': {'location', 'place', 'address', 'city', 'region'},
-            'has_symptom': {'patient', 'person', 'condition', 'disease'},
-            'implements': {'component', 'module', 'service', 'interface', 'class'},
-            'part_of': {'component', 'organization', 'location', 'structure'},
-        }
-        
-        entity_type_map = {
-            e.get('id'): (e.get('type', '') or '').lower()
-            for e in entities if isinstance(e, dict) and e.get('id')
-        }
-        
-        coherent_relationships = 0
-        for rel in relationships:
-            if not isinstance(rel, dict):
-                continue
-            rel_type = (rel.get('type', '') or '').lower()
-            src_id = rel.get('source_id')
-            tgt_id = rel.get('target_id')
-            
-            if not rel_type or not src_id or not tgt_id:
-                continue
-                
-            # Check if this relationship type has expected entity type affinities
-            for pattern, expected_types in _TYPE_AFFINITY.items():
-                if pattern in rel_type:
-                    src_type = entity_type_map.get(src_id, '')
-                    tgt_type = entity_type_map.get(tgt_id, '')
-                    # At least one entity should match expected types
-                    if any(et in src_type or et in tgt_type for et in expected_types):
-                        coherent_relationships += 1
-                        break
-            else:
-                # No specific affinity rule - count as neutral (0.5)
-                coherent_relationships += 0.5
-        
-        semantic_consistency_score = (
-            coherent_relationships / len(relationships) if relationships else 0.5
-        )
-
-        # Weighted combination
-        overall = (
-            type_quality_score * 0.35 +
-            directionality_score * 0.20 +
-            distribution_score * 0.25 +
-            semantic_consistency_score * 0.20
-        )
-        
-        return round(min(max(overall, 0.0), 1.0), 4)
+        """Evaluate the semantic coherence and quality of relationships."""
+        return evaluate_relationship_coherence(ontology, context)
 
     def _identify_strengths(
         self,
@@ -2231,6 +2000,42 @@ class OntologyCritic(BaseCritic):
         """
         dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
         return {d: round(target - getattr(score, d), 6) for d in dims}
+
+    def dimension_z_scores(self, score: "CriticScore") -> Dict[str, float]:
+        """Return z-scores for each dimension relative to their history/baseline.
+
+        This method requires that the critic has historical context or configuration
+        of baseline/mean/std for each dimension. For now, it returns normalized
+        distance scores based on the current score's dimensions.
+
+        Args:
+            score: A :class:`CriticScore` to analyze.
+
+        Returns:
+            Dict mapping dimension name → z-score (float). Each z-score expresses
+            how far a dimension is from "center" (0.5 nominal), measured in
+            units of 0.2 (representing 1 std dev zone).
+
+        Example:
+            >>> critic = OntologyCritic()
+            >>> score = CriticScore(completeness=0.7, consistency=0.5, ...)
+            >>> z_scores = critic.dimension_z_scores(score)
+            >>> z_scores['completeness']
+            1.0
+        """
+        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
+        nominal = 0.5  # nominal center (0 to 1 scale)
+        std_dev = 0.2  # approximate std dev zone
+        
+        z_scores = {}
+        for dim in dims:
+            val = getattr(score, dim, 0.5)
+            if std_dev > 0:
+                z_scores[dim] = round((val - nominal) / std_dev, 4)
+            else:
+                z_scores[dim] = 0.0
+        
+        return z_scores
 
     def worst_score(self, scores: List["CriticScore"]) -> Optional["CriticScore"]:
         """Return the :class:`CriticScore` with the lowest ``overall`` value.
@@ -3089,6 +2894,28 @@ class OntologyCritic(BaseCritic):
         if not scores:
             return 0.0
         return sum(1 for s in scores if s.overall > threshold) / len(scores)
+
+    def failing_scores(self, scores: list, threshold: float = 0.6) -> list:
+        """Return only scores that do NOT pass *threshold*.
+
+        Scores are considered "failing" if their ``overall`` value is
+        **not greater than** *threshold* (i.e., ``overall <= threshold``).
+
+        Args:
+            scores: List of :class:`CriticScore` objects.
+            threshold: Passing threshold (default 0.6).  Scores with
+                ``overall <= threshold`` are included in the result.
+
+        Returns:
+            List of :class:`CriticScore` objects where ``overall <= threshold``,
+            in the original order.  Empty list if no scores fail or if
+            *scores* is empty.
+
+        Example:
+            >>> failing = critic.failing_scores(all_scores, threshold=0.7)
+            >>> print(f"Found {len(failing)} scores below 0.7")
+        """
+        return [s for s in scores if s.overall <= threshold]
 
     def score_spread(self, scores: list) -> float:
         """Return the range (max - min) of ``overall`` values.
@@ -4056,6 +3883,678 @@ class OntologyCritic(BaseCritic):
         if overall is None:
             return 0.0
         return overall - self.dimension_mean(score)
+
+    # ------------------------------------------------------------------ #
+    # Batch 202: Cache and score distribution analysis methods           #
+    # ------------------------------------------------------------------ #
+
+    def cache_hit_potential(self) -> float:
+        """Calculate potential benefit of caching (shared/instance).
+
+        Returns:
+            Ratio of shared cache size to maximum (0.0-1.0). Higher means
+            more cache utilization, approaching capacity limit.
+        """
+        return self.shared_cache_size() / max(self._SHARED_EVAL_CACHE_MAX, 1)
+
+    def score_dimension_variance(self, score: "CriticScore") -> float:
+        """Calculate variance across the six dimension scores.
+
+        Args:
+            score: CriticScore to analyze.
+
+        Returns:
+            Variance (spread) of dimension values. Low variance indicates
+            balanced quality; high variance shows uneven scores.
+        """
+        dims = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        if not dims:
+            return 0.0
+        mean_val = sum(dims) / len(dims)
+        variance = sum((v - mean_val) ** 2 for v in dims) / len(dims)
+        return variance
+
+    def dimension_range(self, score: "CriticScore") -> float:
+        """Get range (max - min) of dimension scores.
+
+        Args:
+            score: CriticScore to evaluate.
+
+        Returns:
+            Difference between highest and lowest dimension score.
+        """
+        dims = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        if not dims:
+            return 0.0
+        return max(dims) - min(dims)
+
+    def weakest_dimension(self, score: "CriticScore") -> str:
+        """Identify the dimension with lowest score.
+
+        Args:
+            score: CriticScore to analyze.
+
+        Returns:
+            Name of the weakest dimension (e.g., 'completeness'),
+            or 'unknown' if no dimensions available.
+        """
+        dims = [(d, getattr(score, d, 0.0)) for d in self._DIMENSIONS]
+        if not dims:
+            return 'unknown'
+        return min(dims, key=lambda x: x[1])[0]
+
+    def strongest_dimension(self, score: "CriticScore") -> str:
+        """Identify the dimension with highest score.
+
+        Args:
+            score: CriticScore to analyze.
+
+        Returns:
+            Name of the strongest dimension, or 'unknown' if unavailable.
+        """
+        dims = [(d, getattr(score, d, 0.0)) for d in self._DIMENSIONS]
+        if not dims:
+            return 'unknown'
+        return max(dims, key=lambda x: x[1])[0]
+
+    def score_balance_ratio(self, score: "CriticScore") -> float:
+        """Calculate balance ratio (min/max dimension score).
+
+        Args:
+            score: CriticScore to evaluate.
+
+        Returns:
+            Ratio of weakest to strongest dimension (0.0-1.0). Values near
+            1.0 indicate balanced quality; low values show imbalance.
+        """
+        dims = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        if not dims:
+            return 0.0
+        max_val = max(dims)
+        min_val = min(dims)
+        if max_val == 0.0:
+            return 0.0
+        return min_val / max_val
+
+    def dimensions_above_threshold(self, score: "CriticScore", threshold: float = 0.7) -> int:
+        """Count dimensions with scores above threshold.
+
+        Args:
+            score: CriticScore to analyze.
+            threshold: Minimum acceptable score (default 0.7).
+
+        Returns:
+            Number of dimensions meeting or exceeding threshold.
+        """
+        dims = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        return sum(1 for v in dims if v >= threshold)
+
+    def overall_vs_best_dimension(self, score: "CriticScore") -> float:
+        """Compare overall score to strongest dimension.
+
+        Args:
+            score: CriticScore with overall and dimension scores.
+
+        Returns:
+            Difference (overall - max_dimension). Positive values indicate
+            weighted aggregation boosts overall above individual dimensions.
+        """
+        overall = getattr(score, "overall", 0.0)
+        dims = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        if not dims:
+            return 0.0
+        return overall - max(dims)
+
+    def score_consistency_coefficient(self, score: "CriticScore") -> float:
+        """Calculate coefficient of variation (CV) for dimension scores.
+
+        Returns:
+            CV ratio (std_dev / mean). Low CV indicates consistent scores
+            across dimensions; high CV shows variability.
+        """
+        dims = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        if not dims:
+            return 0.0
+        mean_val = sum(dims) / len(dims)
+        if mean_val == 0.0:
+            return 0.0
+        variance = sum((v - mean_val) ** 2 for v in dims) / len(dims)
+        std_dev = variance ** 0.5
+        return std_dev / mean_val
+
+    def recommendation_density(self, score: "CriticScore") -> float:
+        """Calculate density of recommendations relative to weaknesses.
+
+        Args:
+            score: CriticScore with recommendations and weaknesses.
+
+        Returns:
+            Ratio (recommendations / (weaknesses + 1)). Higher values indicate
+            more actionable guidance per identified problem.
+        """
+        rec_count = len(getattr(score, "recommendations", []))
+        weak_count = len(getattr(score, "weaknesses", [])) + 1  # +1 to avoid division by zero
+        return rec_count / weak_count
+
+    def dimension_iqr(self, score: "CriticScore") -> float:
+        """Return the interquartile range (IQR) of dimension values in a score.
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Float IQR (Q3 - Q1) across the 6 evaluation dimensions;
+            ``0.0`` when fewer than 4 dimension values are available.
+        """
+        vals = sorted(getattr(score, d, 0.0) for d in self._DIMENSIONS)
+        if len(vals) < 4:
+            return 0.0
+        n = len(vals)
+        q1_idx = n // 4
+        q3_idx = (3 * n) // 4
+        return vals[q3_idx] - vals[q1_idx]
+
+    def dimension_coefficient_of_variation(self, score: "CriticScore") -> float:
+        """Return the coefficient of variation (std / mean) of dimension values.
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Float CV; ``0.0`` when mean is zero or no dimensions exist.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        if not vals:
+            return 0.0
+        mean_val = sum(vals) / len(vals)
+        if mean_val == 0.0:
+            return 0.0
+        variance = sum((v - mean_val) ** 2 for v in vals) / len(vals)
+        return variance ** 0.5 / mean_val
+
+    def dimension_skewness(self, score: "CriticScore") -> float:
+        """Return the skewness of the 6 evaluation dimension values.
+
+        Uses population skewness: ``(1/n) * sum((x - mean)^3) / std^3``.
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Float skewness; ``0.0`` when standard deviation is zero.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        n = len(vals)
+        if n < 3:
+            return 0.0
+        mean_val = sum(vals) / n
+        variance = sum((v - mean_val) ** 2 for v in vals) / n
+        if variance == 0.0:
+            return 0.0
+        std = variance ** 0.5
+        return sum((v - mean_val) ** 3 for v in vals) / (n * std ** 3)
+
+    def dimensions_above_mean(self, score: "CriticScore") -> int:
+        """Return the number of dimension values strictly above the collective mean.
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Non-negative integer count in ``[0, len(_DIMENSIONS)]``.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        if not vals:
+            return 0
+        mean_val = sum(vals) / len(vals)
+        return sum(1 for v in vals if v > mean_val)
+
+    def dimension_gini(self, score: "CriticScore") -> float:
+        """Return the Gini coefficient of the 6 evaluation dimension values.
+
+        Uses the sorted-list formula:
+        ``G = (2 * sum(i * x_i) - (n+1) * sum(x_i)) / (n * sum(x_i))``
+        where x_i are sorted values (1-indexed).
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Float Gini coefficient in [0, 1]; ``0.0`` when all values are
+            equal or sum is zero.
+        """
+        vals = sorted(getattr(score, d, 0.0) for d in self._DIMENSIONS)
+        n = len(vals)
+        total = sum(vals)
+        if total == 0.0:
+            return 0.0
+        weighted = sum((i + 1) * v for i, v in enumerate(vals))
+        return (2 * weighted - (n + 1) * total) / (n * total)
+
+    def score_dimension_variance(self, score: "CriticScore") -> float:
+        """Return the population variance of the 6 evaluation dimension values.
+
+        This is a convenience overload of :meth:`dimension_variance` that
+        accepts a single :class:`CriticScore` instead of a list.
+
+        Args:
+            score: CriticScore whose dimension values are analysed.
+
+        Returns:
+            Float population variance; ``0.0`` when all values are equal.
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        n = len(vals)
+        if n < 2:
+            return 0.0
+        mean_val = sum(vals) / n
+        return sum((v - mean_val) ** 2 for v in vals) / n
+
+    def top_two_dimensions(self, score: "CriticScore") -> tuple:
+        """Return the names of the two highest-scoring evaluation dimensions.
+
+        Args:
+            score: CriticScore to inspect.
+
+        Returns:
+            Tuple of two dimension name strings, ordered highest first.
+            Returns a tuple of one name if only one dimension exists, or an
+            empty tuple if no dimensions are present.
+        """
+        ranked = sorted(
+            self._DIMENSIONS,
+            key=lambda d: getattr(score, d, 0.0),
+            reverse=True,
+        )
+        return tuple(ranked[:2])
+
+    def dimension_trend_slope(self, score: "CriticScore", prev_score: "CriticScore") -> dict:
+        """Return per-dimension slope between two successive CriticScore objects.
+
+        For each dimension ``d``, slope = ``score.d - prev_score.d``.
+
+        Args:
+            score: The newer CriticScore.
+            prev_score: The older (reference) CriticScore.
+
+        Returns:
+            Dict mapping dimension name → float delta (positive = improving).
+        """
+        return {
+            d: getattr(score, d, 0.0) - getattr(prev_score, d, 0.0)
+            for d in self._DIMENSIONS
+        }
+
+    def min_max_dimension_ratio(self, score: "CriticScore") -> float:
+        """Return the ratio of the minimum dimension value to the maximum.
+
+        Args:
+            score: A :class:`CriticScore` instance.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when the maximum dimension value is zero.
+
+        Example::
+
+            >>> ratio = critic.min_max_dimension_ratio(score)
+            >>> 0.0 <= ratio <= 1.0
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        max_val = max(vals)
+        if max_val == 0.0:
+            return 0.0
+        return min(vals) / max_val
+
+    def dimension_range(self, score: "CriticScore") -> float:
+        """Return the range (max − min) of the six dimension values.
+
+        Args:
+            score: A :class:`CriticScore` instance.
+
+        Returns:
+            Float ≥ 0; ``0.0`` when all six dimensions are equal.
+
+        Example::
+
+            >>> rng = critic.dimension_range(score)
+            >>> rng >= 0.0
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        return max(vals) - min(vals)
+
+    def dimension_weighted_std(self, score: "CriticScore") -> float:
+        """Return the weighted population standard deviation of the six dimensions.
+
+        Uses the module-level :data:`DIMENSION_WEIGHTS` as the probability
+        weights.  The weighted mean ``μ_w = Σ(w_i * v_i)`` and weighted
+        variance ``σ²_w = Σ(w_i * (v_i - μ_w)²)`` are computed with
+        weights normalised to sum to 1.
+
+        Args:
+            score: A :class:`CriticScore` instance.
+
+        Returns:
+            Float ≥ 0; ``0.0`` when all dimensions are equal.
+
+        Example::
+
+            >>> wstd = critic.dimension_weighted_std(score)
+            >>> wstd >= 0.0
+        """
+        dims = self._DIMENSIONS
+        vals = [getattr(score, d, 0.0) for d in dims]
+        weights = [DIMENSION_WEIGHTS.get(d, 0.0) for d in dims]
+        total_w = sum(weights)
+        if total_w == 0.0:
+            return 0.0
+        norm_w = [w / total_w for w in weights]
+        wmean = sum(w * v for w, v in zip(norm_w, vals))
+        wvar = sum(w * (v - wmean) ** 2 for w, v in zip(norm_w, vals))
+        return wvar ** 0.5
+
+    def dimension_percentile_rank(self, score: "CriticScore", dim: str) -> float:
+        """Return the percentile rank of a named dimension within a CriticScore.
+
+        The percentile rank is the fraction of all six dimension values that
+        are **less than or equal to** the named dimension's value.
+
+        Args:
+            score: :class:`CriticScore` instance to inspect.
+            dim: Name of the dimension to rank (e.g. ``'completeness'``).
+                Must be one of the six standard dimensions.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when *dim* is not a valid
+            dimension name.
+
+        Example::
+
+            >>> s = CriticScore(completeness=1.0, consistency=0.5,
+            ...                  clarity=0.5, granularity=0.5,
+            ...                  relationship_coherence=0.5, domain_alignment=0.5)
+            >>> critic.dimension_percentile_rank(s, 'completeness')
+            1.0
+        """
+        dims = self._DIMENSIONS
+        if dim not in dims:
+            return 0.0
+        dim_val = getattr(score, dim, 0.0)
+        all_vals = [getattr(score, d, 0.0) for d in dims]
+        return sum(1 for v in all_vals if v <= dim_val) / len(all_vals)
+
+    def score_dimension_entropy(self, score: "CriticScore") -> float:
+        """Return the Shannon entropy of the six-dimension value distribution.
+
+        Each of the six CriticScore dimensions is treated as a probability
+        mass after normalising the values to sum to 1.  The entropy is
+        computed with natural logarithm (nats).
+
+        When all values are zero the method returns ``0.0``.  When a single
+        dimension holds all the mass (maximum concentration) the entropy is
+        also ``0.0``.  The maximum entropy (most uniform distribution) is
+        ``ln(6) ≈ 1.79``.
+
+        Args:
+            score: :class:`CriticScore` instance to analyse.
+
+        Returns:
+            Non-negative float (entropy in nats); ``0.0`` when the total
+            of all dimension values is zero.
+
+        Example::
+
+            >>> s = CriticScore(completeness=1/6, consistency=1/6,
+            ...                  clarity=1/6, granularity=1/6,
+            ...                  relationship_coherence=1/6, domain_alignment=1/6)
+            >>> critic.score_dimension_entropy(s)  # doctest: +ELLIPSIS
+            1.791...
+        """
+        import math
+        dims = self._DIMENSIONS
+        vals = [max(0.0, getattr(score, d, 0.0)) for d in dims]
+        total = sum(vals)
+        if total == 0.0:
+            return 0.0
+        probs = [v / total for v in vals]
+        return -sum(p * math.log(p) for p in probs if p > 0.0)
+
+    def score_dimension_kurtosis(self, score: "CriticScore") -> float:
+        """Return the population excess kurtosis of the six CriticScore dimensions.
+
+        The six dimension values are treated as a population.  Excess kurtosis
+        (also called *Fisher's* kurtosis) is defined as the fourth standardised
+        moment minus 3::
+
+            κ = (μ₄ / σ²²) − 3
+
+        where *μ₄* is the fourth central moment and *σ²* is the population
+        variance.
+
+        A value near 0 indicates a mesokurtic distribution (similar to
+        Normal), negative values indicate platykurtic (flatter), and
+        positive values indicate leptokurtic (more peaked / heavy-tailed).
+
+        Args:
+            score: :class:`CriticScore` instance to analyse.
+
+        Returns:
+            Excess kurtosis as a float; ``0.0`` when all six dimensions are
+            equal (zero variance).
+
+        Example::
+
+            >>> s = CriticScore(completeness=0.0, consistency=0.0,
+            ...                  clarity=0.0, granularity=0.0,
+            ...                  relationship_coherence=0.0, domain_alignment=1.0)
+            >>> critic.score_dimension_kurtosis(s)  # leptokurtic
+            5.0
+        """
+        dims = self._DIMENSIONS
+        vals = [getattr(score, d, 0.0) for d in dims]
+        n = len(vals)  # always 6
+        mean = sum(vals) / n
+        variance = sum((v - mean) ** 2 for v in vals) / n
+        if variance == 0.0:
+            return 0.0
+        m4 = sum((v - mean) ** 4 for v in vals) / n
+        return m4 / (variance ** 2) - 3.0
+
+    def score_dimension_skewness(self, score: "CriticScore") -> float:
+        """Return the population skewness of the six CriticScore dimension values.
+
+        Uses the standard population skewness formula:
+        ``γ₁ = m₃ / σ³`` where ``m₃`` is the third central moment and
+        ``σ`` is the population standard deviation.
+
+        A positive value indicates a right-tailed distribution of dimension
+        scores (most dimensions are low, a few are high).  Negative indicates
+        left-tailed.
+
+        Args:
+            score: A :class:`CriticScore` instance to evaluate.
+
+        Returns:
+            Float; ``0.0`` when all six dimensions are equal (zero variance).
+
+        Example::
+
+            >>> s = CriticScore(completeness=0.0, consistency=0.0,
+            ...                  clarity=0.0, granularity=0.0,
+            ...                  relationship_coherence=0.0, domain_alignment=1.0)
+            >>> critic.score_dimension_skewness(s)  # right-skewed
+            2.449...
+        """
+        dims = self._DIMENSIONS
+        vals = [getattr(score, d, 0.0) for d in dims]
+        n = len(vals)  # always 6
+        mean = sum(vals) / n
+        variance = sum((v - mean) ** 2 for v in vals) / n
+        if variance == 0.0:
+            return 0.0
+        std = variance ** 0.5
+        m3 = sum((v - mean) ** 3 for v in vals) / n
+        return m3 / (std ** 3)
+
+    def score_dimension_range_ratio(self, score: "CriticScore") -> float:
+        """Return the range ratio of the six CriticScore dimension values.
+
+        Computed as ``(max − min) / (max + min)`` across the six dimension
+        values.  Mirrors :meth:`OntologyOptimizer.score_range_ratio` but
+        operates on a single :class:`CriticScore` rather than the history.
+
+        Args:
+            score: A :class:`CriticScore` instance to evaluate.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when ``max + min == 0`` (all
+            dimension values are zero).
+
+        Example::
+
+            >>> s = CriticScore(completeness=0.2, consistency=0.8,
+            ...                  clarity=0.5, granularity=0.5,
+            ...                  relationship_coherence=0.5, domain_alignment=0.5)
+            >>> critic.score_dimension_range_ratio(s)
+            0.6  # (0.8 − 0.2) / (0.8 + 0.2)
+        """
+        vals = [getattr(score, d, 0.0) for d in self._DIMENSIONS]
+        lo = min(vals)
+        hi = max(vals)
+        if hi + lo == 0.0:
+            return 0.0
+        return (hi - lo) / (hi + lo)
+
+    def score_dimension_gini_coefficient(self, score: "CriticScore") -> float:
+        """Return the Gini coefficient of the 6 CriticScore dimension values.
+
+        This is an alias for :meth:`dimension_gini` provided for API
+        consistency with the ``score_*`` naming convention.
+
+        Uses the sorted-list formula:
+        ``G = (2 * sum(i * x_i) − (n+1) * sum(x_i)) / (n * sum(x_i))``
+        where ``x_i`` are the sorted dimension values (1-indexed).
+
+        Args:
+            score: A :class:`CriticScore` instance to evaluate.
+
+        Returns:
+            Float Gini coefficient in ``[0.0, 1.0]``; ``0.0`` when all
+            six dimension values are equal or the total is zero.
+
+        Example::
+
+            >>> s = CriticScore(completeness=0.0, consistency=1.0,
+            ...                  clarity=0.0, granularity=0.0,
+            ...                  relationship_coherence=0.0, domain_alignment=0.0)
+            >>> critic.score_dimension_gini_coefficient(s)
+            0.833...  # high inequality: one dimension dominates
+        """
+        return self.dimension_gini(score)
+
+    def score_dimension_max_z(self, score: "CriticScore") -> float:
+        """Return the maximum absolute z-score across the 6 CriticScore dimensions.
+
+        Each dimension value is z-scored relative to the distribution formed
+        by all 6 dimension values of the supplied ``score`` object.  The
+        z-scoring uses the **population** mean and standard deviation of
+        those 6 values.  The method then returns ``max(|z_i|)`` — the
+        dimension that deviates most strongly from the within-score average.
+
+        Args:
+            score: A :class:`CriticScore` instance to evaluate.
+
+        Returns:
+            Float ``max(|z_i|)`` for ``i`` in the 6 dimensions; ``0.0``
+            when all six dimension values are equal (zero variance).
+
+        Example::
+
+            >>> s = CriticScore(completeness=1.0, consistency=0.0,
+            ...                  clarity=0.0, granularity=0.0,
+            ...                  relationship_coherence=0.0, domain_alignment=0.0)
+            >>> critic.score_dimension_max_z(s)
+            2.236...  # sqrt(5) — one extreme outlier among 6 values
+        """
+        dims = [
+            "completeness", "consistency", "clarity",
+            "granularity", "relationship_coherence", "domain_alignment",
+        ]
+        vals = [getattr(score, d, 0.0) for d in dims]
+        n = len(vals)
+        mean = sum(vals) / n
+        variance = sum((v - mean) ** 2 for v in vals) / n
+        if variance == 0.0:
+            return 0.0
+        std = variance ** 0.5
+        return max(abs((v - mean) / std) for v in vals)
+
+    def score_dimension_min_z(self, score: "CriticScore") -> float:
+        """Return the minimum absolute z-score across the 6 CriticScore dimensions.
+
+        Each dimension value is z-scored relative to the distribution formed
+        by all 6 dimension values of the supplied ``score`` object.  The
+        z-scoring uses the **population** mean and standard deviation of those
+        6 values.  The method then returns ``min(|z_i|)`` — the dimension
+        that is closest to the within-score average.
+
+        This is the symmetric counterpart of
+        :meth:`score_dimension_max_z`:  ``min_z`` ≤ ``max_z`` always.
+
+        Args:
+            score: A :class:`CriticScore` instance to evaluate.
+
+        Returns:
+            Float ``min(|z_i|)`` for ``i`` in the 6 dimensions; ``0.0``
+            when all six dimension values are equal (zero variance).
+
+        Example::
+
+            >>> s = CriticScore(completeness=1.0, consistency=0.0,
+            ...                  clarity=0.0, granularity=0.0,
+            ...                  relationship_coherence=0.0, domain_alignment=0.0)
+            >>> critic.score_dimension_min_z(s)
+            0.0  # five dims at 0.0 have z=0 — closest to mean
+        """
+        dims = [
+            "completeness", "consistency", "clarity",
+            "granularity", "relationship_coherence", "domain_alignment",
+        ]
+        vals = [getattr(score, d, 0.0) for d in dims]
+        n = len(vals)
+        mean = sum(vals) / n
+        variance = sum((v - mean) ** 2 for v in vals) / n
+        if variance == 0.0:
+            return 0.0
+        std = variance ** 0.5
+        return min(abs((v - mean) / std) for v in vals)
+
+    def score_dimension_mean_abs_deviation(self, score: "CriticScore") -> float:
+        """Return the Mean Absolute Deviation (MAD) of the six CriticScore dimensions.
+
+        Computes the average of ``|dim_value − mean_of_dims|`` across all six
+        dimensions (completeness, consistency, clarity, granularity,
+        relationship_coherence, domain_alignment).  This is the *feature-space*
+        MAD of a single :class:`CriticScore` instance, **not** the MAD of a
+        historical series.
+
+        Returns:
+            Float ≥ 0.0; ``0.0`` when all six dimension values are equal.
+
+        Example::
+
+            >>> s = CriticScore(completeness=0.5, consistency=0.5,
+            ...                  clarity=0.5, granularity=0.5,
+            ...                  relationship_coherence=0.5, domain_alignment=0.5)
+            >>> critic.score_dimension_mean_abs_deviation(s)
+            0.0  # all dims equal
+        """
+        dims = [
+            "completeness", "consistency", "clarity",
+            "granularity", "relationship_coherence", "domain_alignment",
+        ]
+        vals = [getattr(score, d, 0.0) for d in dims]
+        mean = sum(vals) / len(vals)
+        return sum(abs(v - mean) for v in vals) / len(vals)
 
 
 # Export public API

@@ -1,24 +1,26 @@
 # Knowledge Graph Extraction Package
 
-## Status: Phase 3 - 63% Complete ✅
-
-This directory contains the modular refactoring of `knowledge_graph_extraction.py` (2,969 lines), split into focused, maintainable modules.
+**Version:** 2.1.0 — Updated 2026-02-20
 
 ## Current Structure
 
 ```
 extraction/
-├── __init__.py           # Public API exports ✅
-├── README.md             # This file ✅
-├── types.py              # Shared types and imports (89 lines) ✅
-├── entities.py           # Entity class (113 lines) ✅
-├── relationships.py      # Relationship class (227 lines) ✅
-├── graph.py              # KnowledgeGraph container (630 lines) ✅
-├── extractor.py          # KnowledgeGraphExtractor (1,581 lines) ✅
-└── validator.py          # KnowledgeGraphExtractorWithValidation (628 lines) ✅
+├── __init__.py           # Public API exports
+├── README.md             # This file
+├── types.py              # Shared types and imports
+├── entities.py           # Entity class
+├── relationships.py      # Relationship class
+├── graph.py              # KnowledgeGraph container
+├── extractor.py          # KnowledgeGraphExtractor
+├── advanced.py           # Advanced extraction modes
+├── srl.py                # Semantic Role Labeling (SRL) extractor
+├── validator.py          # KnowledgeGraphExtractorWithValidation
+├── finance_graphrag.py   # Finance-domain GraphRAG (moved from root)
+├── relation_patterns.py  # Relation pattern definitions
+├── _entity_helpers.py    # Entity extraction helpers (mixin)
+└── _wikipedia_helpers.py # Wikipedia extraction helpers (mixin)
 ```
-
-**Total Extracted:** 3,268 lines (all major components extracted!)
 
 ## Completed Phases
 
@@ -106,11 +108,10 @@ All Phase 3 tasks completed:
 - Migration guide for legacy to new APIs
 
 ### Phase 5: Production Readiness
-- **Status:** In Progress
-- End-to-end testing
-- Documentation consolidation
-- Security audit and validation
-- Security audit and validation
+- **Status:** Complete ✅ (v3.22.23)
+- End-to-end testing ✅
+- Documentation consolidation ✅
+- Security audit and validation ✅
 
 ## Testing
 

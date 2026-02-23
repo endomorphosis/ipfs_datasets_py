@@ -132,6 +132,13 @@ def execute_integrated_command(args):
         logger = logging.getLogger(__name__)
         
         # Import MCP and package components
+        import warnings
+        warnings.warn(
+            "SimpleIPFSDatasetsMCPServer is deprecated. Use 'python -m ipfs_datasets_py.mcp_server' "
+            "or 'ipfs-datasets' CLI instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         from ipfs_datasets_py.mcp_server.simple_server import SimpleIPFSDatasetsMCPServer
         from ipfs_datasets_py.mcp_server.tool_registry import ToolRegistry
         from ipfs_datasets_py.mcp_dashboard import MCPDashboard

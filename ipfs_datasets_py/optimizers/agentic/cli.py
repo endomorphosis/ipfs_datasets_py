@@ -35,7 +35,7 @@ from .production_hardening import (
 )
 
 
-class OptimizerCLI:
+class OptimizerArgparseCLI:
     """Command-line interface for agentic optimizer."""
     
     def __init__(self):
@@ -674,7 +674,7 @@ def main(args: Optional[List[str]] = None):
     Returns:
         Exit code
     """
-    cli = OptimizerCLI()
+    cli = OptimizerArgparseCLI()
     return cli.run(args)
 
 

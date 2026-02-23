@@ -85,6 +85,16 @@ from .production_hardening import (
     get_sandbox_executor,
 )
 
+from .exceptions import (
+    AgenticError,
+    OptimizerError,
+    ExtractionError,
+    ValidationError,
+    ProvingError,
+    RefinementError,
+    ConfigurationError,
+)
+
 __all__ = [
     # Base classes
     "AgenticOptimizer",
@@ -153,4 +163,12 @@ __all__ = [
     "get_security_config",
     "get_input_sanitizer",
     "get_sandbox_executor",
+    # Exceptions
+    "AgenticError",
+    "OptimizerError",
+    "ExtractionError",
+    "ValidationError",
+    "ProvingError",
+    "RefinementError",
+    "ConfigurationError",
 ]

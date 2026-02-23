@@ -5,6 +5,43 @@ All notable changes to the optimizers module will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Batch 203 (2026-02-22)
+
+### Added
+- `OntologyGenerator.apply_config(result, config)` — re-filters an `EntityExtractionResult` by applying `ExtractionConfig.confidence_threshold`; also prunes relationships whose endpoints were removed.
+- `OntologyMediator.retry_last_round(ontology, score, ctx)` — re-applies the last refinement round by rolling back the undo stack before calling `refine_ontology()`; if the undo stack is empty it refines the current ontology directly.
+- `OntologyOptimizer.score_coefficient_of_variation()` — coefficient of variation (std / mean) of history `average_score` values; `0.0` when empty or mean is zero.
+- `OntologyOptimizer.score_relative_improvement()` — relative improvement `(last − first) / first`; `0.0` when fewer than 2 entries or first score is zero.
+- `OntologyOptimizer.score_to_mean_ratio()` — ratio of latest score to history mean; `0.0` when empty or mean is zero.
+- `OntologyLearningAdapter.feedback_std()` — standard deviation of feedback `final_score` values; `0.0` when fewer than 2 records.
+- `OntologyLearningAdapter.feedback_coefficient_of_variation()` — CV (std / mean) of feedback scores; `0.0` when no feedback or mean is zero.
+- `OntologyLearningAdapter.feedback_relative_std()` — alias for `feedback_coefficient_of_variation()`.
+- `OntologyPipeline.run_score_relative_improvement()` — relative improvement from first to last run score; `0.0` when fewer than 2 runs or first score is zero.
+- 51 new unit tests in `tests/unit/optimizers/graphrag/test_batch_203_features.py`.
+
+### Fixed (TODO.md housekeeping)
+- Marked 22 stale `[ ]` TODO entries as `[x]`; the corresponding methods were already implemented in earlier batches but the entries had not been updated.
+
+---
+
+## [Unreleased] — Batch 202 (2026-02-22)
+
+### Added
+- `OntologyOptimizer.score_geometric_mean()` — geometric mean of history `average_score` values; returns 0.0 if any score is zero or history is empty.
+- `OntologyOptimizer.score_harmonic_mean()` — harmonic mean of history `average_score` values; returns 0.0 if any score is zero or history is empty.
+- `OntologyLearningAdapter.feedback_geometric_mean()` — geometric mean of feedback `final_score` values.
+- `OntologyLearningAdapter.feedback_harmonic_mean()` — harmonic mean of feedback `final_score` values.
+- `OntologyGenerator.relationship_confidence_avg(result)` — alias for `relationship_confidence_mean()`; returns mean confidence of all relationships.
+- `LogicValidator.avg_path_length(ontology)` — alias for `average_path_length()`; returns mean BFS shortest-path length.
+- `LogicValidator.node_density(ontology)` — directed graph density: `|E| / (n * (n-1))`; 0.0 for fewer than 2 nodes.
+- 50 new unit tests in `tests/unit/optimizers/graphrag/test_batch_202_features.py`.
+
+### Fixed
+- Marked `ExtractionConfig.merge(other)` as done in TODO.md (method already existed at line 596).
+- Marked `OntologyGenerator.relationship_confidence_avg(result)` as done in TODO.md.
+
+---
+
 ## [Unreleased] — Batch 47
 
 ### Added

@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 _logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ class PipelineResult:
                 from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
 
                 score_obj = CriticScore.from_dict(score_obj)
-            except Exception:
+            except (ImportError, AttributeError, TypeError, ValueError, KeyError):
                 pass
 
         return cls(
@@ -82,6 +82,35 @@ class PipelineResult:
         import json
 
         return json.dumps(self.to_dict(), separators=(",", ":"), sort_keys=True)
+
+    def export(self, format: str = "json", **kwargs: Any) -> str:
+        """Export this result to JSON or YAML.
+
+        Args:
+            format: Output format ("json" or "yaml").
+            **kwargs: Serializer kwargs forwarded to json.dumps or yaml.safe_dump.
+
+        Returns:
+            Serialized string in the requested format.
+
+        Raises:
+            ValueError: If an unsupported format is requested.
+            ImportError: If YAML export is requested but PyYAML is not installed.
+        """
+        fmt = format.lower()
+        if fmt == "json":
+            import json
+
+            return json.dumps(self.to_dict(), **kwargs)
+        if fmt == "yaml":
+            try:
+                import yaml
+            except ImportError as exc:
+                raise ImportError("PyYAML is required for YAML export") from exc
+
+            return yaml.safe_dump(self.to_dict(), **kwargs)
+
+        raise ValueError(f"Unsupported export format: {format}")
 
     @classmethod
     def from_json(cls, payload: str) -> "PipelineResult":
@@ -144,6 +173,9 @@ class OntologyPipeline:
         data_source: str = "pipeline",
         data_type: str = "text",
         refine: bool = True,
+        refine_mode: str = "rule_based",
+        refinement_agent: Optional[Any] = None,
+        progress_callback: Optional[Any] = None,
     ) -> PipelineResult:
         """Extract, evaluate, and optionally refine an ontology from *data*.
 
@@ -152,6 +184,14 @@ class OntologyPipeline:
             data_source: Identifier for the data source (metadata only).
             data_type: Data type hint (``"text"``, ``"json"``, etc.).
             refine: Whether to run the mediator refinement cycle (default: True).
+            refine_mode: Refinement mode: "rule_based" (default), "agentic", or "llm".
+            refinement_agent: Optional agent used for refine_mode="llm".
+            progress_callback: Optional callable invoked at each pipeline stage
+                with a progress dict.  The dict contains at minimum:
+                ``{"stage": str, "step": int, "total_steps": int}``.
+                Additional keys vary by stage.  Pass ``None`` (default) to
+                disable callbacks.  Exceptions raised inside the callback are
+                silently ignored so they never interrupt the pipeline.
 
         Returns:
             :class:`PipelineResult` with the final ontology and score.
@@ -159,7 +199,20 @@ class OntologyPipeline:
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
             OntologyGenerationContext,
         )
+        import time
 
+        total_steps = 4 if refine else 3
+
+        def _notify(stage: str, step: int, **extra: Any) -> None:
+            """Invoke progress_callback safely, swallowing all exceptions."""
+            if progress_callback is None:
+                return
+            try:
+                progress_callback({"stage": stage, "step": step, "total_steps": total_steps, **extra})
+            except Exception as _cb_exc:  # noqa: BLE001
+                self._log.debug("progress_callback raised in stage %r: %s", stage, _cb_exc)
+
+        start_time = time.time()
         ctx = OntologyGenerationContext(
             data_source=data_source,
             data_type=data_type,
@@ -169,38 +222,65 @@ class OntologyPipeline:
         # 1. Extract entities
         hint = self._adapter.get_extraction_hint()
         self._log.info("OntologyPipeline.run: threshold_hint=%.3f domain=%s", hint, self.domain)
+        _notify("extracting", 1, domain=self.domain, data_source=data_source)
         extraction = self._generator.extract_entities(data, ctx)
 
         # 2. Build initial ontology dict
-        ontology: Dict[str, Any] = {
-            "entities": [
-                {
-                    "id": e.id, "text": e.text, "type": e.type,
-                    "confidence": e.confidence,
-                    "properties": getattr(e, "properties", {}),
-                }
-                for e in extraction.entities
-            ],
-            "relationships": [
-                {
-                    "id": r.id, "source_id": r.source_id, "target_id": r.target_id,
-                    "type": r.type, "confidence": r.confidence,
-                }
-                for r in extraction.relationships
-            ],
-        }
+        from ipfs_datasets_py.optimizers.graphrag.ontology_serialization import (
+            ontology_from_extraction_result,
+        )
+
+        ontology: Dict[str, Any] = ontology_from_extraction_result(extraction)
+        _notify("extracted", 2, entity_count=len(ontology["entities"]),
+                relationship_count=len(ontology["relationships"]))
 
         actions_applied: List[str] = []
 
         # 3. Evaluate and optionally refine
+        score = self._critic.evaluate_ontology(ontology, ctx)
         if refine:
             score = self._critic.evaluate_ontology(ontology, ctx)
-            refined = self._mediator.refine_ontology(ontology, score, ctx)
-            ontology = refined
-            actions_applied = refined.get("metadata", {}).get("refinement_actions", [])
-            score = self._critic.evaluate_ontology(ontology, ctx)
+            _notify("evaluating", 3, score=getattr(score, "overall", None))
+
+            if refine_mode == "agentic":
+                state = self._mediator.run_agentic_refinement_cycle(data, ctx)
+                ontology = state.current_ontology
+                score = state.critic_scores[-1]
+                actions_applied = [r.get("action") for r in state.refinement_history[1:]]
+            elif refine_mode == "llm":
+                if refinement_agent is None:
+                    self._log.warning("refine_mode=llm requires refinement_agent; falling back to rule_based")
+                    refined = self._mediator.refine_ontology(ontology, score, ctx)
+                    ontology = refined
+                    actions_applied = refined.get("metadata", {}).get("refinement_actions", [])
+                    score = self._critic.evaluate_ontology(ontology, ctx)
+                else:
+                    state = self._mediator.run_llm_refinement_cycle(
+                        data,
+                        ctx,
+                        agent=refinement_agent,
+                    )
+                    ontology = state.current_ontology
+                    score = state.critic_scores[-1]
+                    actions_applied = [r.get("action") for r in state.refinement_history[1:]]
+            else:
+                refined = self._mediator.refine_ontology(ontology, score, ctx)
+                ontology = refined
+                actions_applied = refined.get("metadata", {}).get("refinement_actions", [])
+                score = self._critic.evaluate_ontology(ontology, ctx)
+
+            _notify("refined", 4, score=getattr(score, "overall", None),
+                    actions_applied=actions_applied)
+            # Also invoke callback with positional (round_num, max_rounds, score) signature
+            if progress_callback is not None:
+                try:
+                    _max_rounds = getattr(self._mediator, "max_rounds", 1)
+                    progress_callback(1, _max_rounds, float(getattr(score, "overall", 0.0)))
+                except Exception as _cb_exc:  # noqa: BLE001
+                    self._log.debug("progress_callback (positional) raised: %s", _cb_exc)
         else:
             score = self._critic.evaluate_ontology(ontology, ctx)
+            _notify("evaluated", 3, score=getattr(score, "overall", None))
 
         # 4. Feed result back to adapter
         self._adapter.apply_feedback(
@@ -221,6 +301,28 @@ class OntologyPipeline:
             },
         )
         self._run_history.append(result)
+        try:
+            import json as _json
+            from datetime import datetime as _datetime
+
+            duration_ms = (time.time() - start_time) * 1000.0
+            payload = {
+                "event": "ontology_pipeline_run",
+                "run_index": len(self._run_history),
+                "domain": self.domain,
+                "data_source": data_source,
+                "data_type": data_type,
+                "refine": refine,
+                "entity_count": len(ontology.get("entities", [])),
+                "relationship_count": len(ontology.get("relationships", [])),
+                "score": getattr(score, "overall", None),
+                "actions_count": len(actions_applied),
+                "duration_ms": duration_ms,
+                "timestamp": _datetime.now().isoformat(),
+            }
+            self._log.info("PIPELINE_RUN: %s", _json.dumps(payload))
+        except Exception as exc:  # pragma: no cover - logging must be best-effort
+            self._log.debug("Pipeline JSON logging failed: %s", exc)
         return result
 
     def run_batch(
@@ -230,6 +332,7 @@ class OntologyPipeline:
         data_source: str = "pipeline",
         data_type: str = "text",
         refine: bool = True,
+        progress_callback: Optional[Callable[[int, int, float], None]] = None,
     ) -> List[PipelineResult]:
         """Run the full pipeline on each document in *docs*.
 
@@ -238,12 +341,13 @@ class OntologyPipeline:
             data_source: Shared data source identifier.
             data_type: Shared data type hint.
             refine: Whether to run mediator refinement (default: True).
+            progress_callback: Optional callback for per-document + per-round progress.
 
         Returns:
             List of :class:`PipelineResult` in the same order as *docs*.
         """
         return [
-            self.run(doc, data_source=data_source, data_type=data_type, refine=refine)
+            self.run(doc, data_source=data_source, data_type=data_type, refine=refine, progress_callback=progress_callback)
             for doc in docs
         ]
 
@@ -324,10 +428,8 @@ class OntologyPipeline:
         Example:
             >>> result = await pipeline.run_async("Alice works at ACME.")
         """
-        import asyncio
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
+        import anyio
+        return await anyio.to_thread.run_sync(
             lambda: self.run(data, data_source=data_source, data_type=data_type, refine=refine),
         )
 
@@ -557,6 +659,21 @@ class OntologyPipeline:
         """
         return list(self._run_history)
 
+    def run_ids(self) -> list[int]:
+        """Return stable identifiers for all recorded runs.
+
+        The pipeline currently identifies runs by their 0-based index into
+        :meth:`history`.
+
+        Returns:
+            List of integers ``[0, 1, ..., total_runs-1]``.
+
+        Example:
+            >>> pipeline.run_ids()
+            []
+        """
+        return list(range(len(self._run_history)))
+
     def total_runs(self) -> int:
         """Return the total number of times :meth:`run` has been called.
 
@@ -690,7 +807,7 @@ class OntologyPipeline:
         for i in range(n_texts):
             try:
                 self.run(f"warmup_{i}")
-            except Exception:
+            except (AttributeError, TypeError, ValueError, OSError):
                 pass
         self._run_history[:] = saved
 
@@ -1431,6 +1548,29 @@ class OntologyPipeline:
         lo, hi = int(idx), min(int(idx) + 1, n - 1)
         return scores[lo] + (scores[hi] - scores[lo]) * (idx - lo)
 
+    def run_score_trimmed_mean(self, trim_fraction: float = 0.1) -> float:
+        """Return the trimmed mean of run overall scores.
+
+        The trim removes a fraction of scores from both ends of the sorted list.
+
+        Args:
+            trim_fraction: Fraction in [0, 0.5) to trim from each tail.
+
+        Returns:
+            Float trimmed mean; 0.0 when no runs recorded.
+        """
+        if not self._run_history:
+            return 0.0
+        if trim_fraction < 0.0 or trim_fraction >= 0.5:
+            raise ValueError("trim_fraction must be in [0.0, 0.5).")
+        scores = sorted(r.score.overall for r in self._run_history)
+        n = len(scores)
+        k = int(n * trim_fraction)
+        if k == 0 or k * 2 >= n:
+            return sum(scores) / n
+        trimmed = scores[k:n - k]
+        return sum(trimmed) / len(trimmed)
+
     def run_score_median(self) -> float:
         """Return the median of all run overall scores.
 
@@ -1898,3 +2038,690 @@ class OntologyPipeline:
         mean = sum(tail) / len(tail)
         var = sum((s - mean) ** 2 for s in tail) / len(tail)
         return var ** 0.5
+
+    def run_improvement_fraction(self) -> float:
+        """Return the fraction of runs where the score improved over the previous run.
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        improved = sum(1 for i in range(1, len(scores)) if scores[i] > scores[i - 1])
+        return improved / (len(scores) - 1)
+
+    def run_score_ema(self, alpha: float = 0.3) -> float:
+        """Return the exponential moving average of run scores.
+
+        Uses forward EMA: ema[0] = scores[0]; ema[i] = alpha * score[i] + (1-alpha) * ema[i-1].
+
+        Args:
+            alpha: Smoothing factor in (0, 1]. Defaults to 0.3.
+
+        Returns:
+            Float EMA; 0.0 when no runs.
+        """
+        if not self._run_history:
+            return 0.0
+        ema = self._run_history[0].score.overall
+        for r in self._run_history[1:]:
+            ema = alpha * r.score.overall + (1 - alpha) * ema
+        return ema
+
+    def run_score_above_mean_count(self) -> int:
+        """Return the count of run scores strictly above the overall mean.
+
+        Returns:
+            Integer count; 0 when no runs.
+        """
+        if not self._run_history:
+            return 0
+        scores = [r.score.overall for r in self._run_history]
+        mean = sum(scores) / len(scores)
+        return sum(1 for s in scores if s > mean)
+
+    def run_score_oscillation(self) -> int:
+        """Count oscillations in run scores: sign changes of consecutive deltas.
+
+        An oscillation is when consecutive runs go up then down or down then up.
+
+        Returns:
+            Integer count; 0 when fewer than 3 runs.
+        """
+        if len(self._run_history) < 3:
+            return 0
+        scores = [r.score.overall for r in self._run_history]
+        deltas = [scores[i] - scores[i - 1] for i in range(1, len(scores))]
+        count = 0
+        for i in range(1, len(deltas)):
+            if (deltas[i] > 0) != (deltas[i - 1] > 0):
+                count += 1
+        return count
+
+    def run_score_max_run(self) -> int:
+        """Return the length of the longest run of consecutive improvements.
+
+        Returns:
+            Integer length of the longest improving streak; 0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0
+        scores = [r.score.overall for r in self._run_history]
+        max_run = 0
+        cur = 0
+        for i in range(1, len(scores)):
+            if scores[i] > scores[i - 1]:
+                cur += 1
+                max_run = max(max_run, cur)
+            else:
+                cur = 0
+        return max_run
+
+    def run_best_to_current_ratio(self) -> float:
+        """Return the ratio of the best-ever score to the current (last) score.
+
+        Returns:
+            Float >= 1.0; 0.0 when no runs or current score == 0.
+        """
+        if not self._run_history:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        current = scores[-1]
+        if current == 0:
+            return 0.0
+        return max(scores) / current
+
+    def run_first_to_last_delta(self) -> float:
+        """Return the score change from the first run to the last run.
+
+        Returns:
+            Float; 0.0 when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        return self._run_history[-1].score.overall - self._run_history[0].score.overall
+
+    def run_above_target_count(self, target: float = 0.7) -> int:
+        """Return the count of runs whose score is at or above *target*.
+
+        Args:
+            target: Score cutoff. Defaults to 0.7.
+
+        Returns:
+            Non-negative integer.
+        """
+        return sum(1 for r in self._run_history if r.score.overall >= target)
+
+    def run_median_score(self) -> float:
+        """Return the median score across all runs.
+
+        Returns:
+            Float; 0.0 when no runs.
+        """
+        if not self._run_history:
+            return 0.0
+        scores = sorted(r.score.overall for r in self._run_history)
+        n = len(scores)
+        mid = n // 2
+        if n % 2 == 0:
+            return (scores[mid - 1] + scores[mid]) / 2
+        return float(scores[mid])
+
+    def run_score_relative_improvement(self) -> float:
+        """Return the relative improvement from first to last run score.
+
+        Defined as ``(last - first) / first`` when ``first > 0``.
+
+        Returns:
+            Float; ``0.0`` when fewer than 2 runs or the first score is zero.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        first = self._run_history[0].score.overall
+        last = self._run_history[-1].score.overall
+        if first == 0.0:
+            return 0.0
+        return (last - first) / first
+    # ------------------------------------------------------------------ #
+    # Batch 204: Pipeline run history analysis methods                   #
+    # ------------------------------------------------------------------ #
+
+    def run_total_entity_count(self) -> int:
+        """Sum total entities across all runs.
+
+        Returns:
+            Total number of entities extracted across all pipeline runs.
+        """
+        return sum(len(r.entities) for r in self._run_history)
+
+    def run_total_relationship_count(self) -> int:
+        """Sum total relationships across all runs.
+
+        Returns:
+            Total number of relationships extracted across all pipeline runs.
+        """
+        return sum(len(r.relationships) for r in self._run_history)
+
+    def run_average_entity_count(self) -> float:
+        """Calculate average entities per run.
+
+        Returns:
+            Mean entity count, or 0.0 if no runs.
+        """
+        if not self._run_history:
+            return 0.0
+        return self.run_total_entity_count() / len(self._run_history)
+
+    def run_average_relationship_count(self) -> float:
+        """Calculate average relationships per run.
+
+        Returns:
+            Mean relationship count, or 0.0 if no runs.
+        """
+        if not self._run_history:
+            return 0.0
+        return self.run_total_relationship_count() / len(self._run_history)
+
+    def run_action_frequency(self) -> dict:
+        """Count frequency of each refinement action across all runs.
+
+        Returns:
+            Dict mapping action names to counts (e.g., {'merge_entities': 5}).
+        """
+        action_counts: dict = {}
+        for r in self._run_history:
+            for action in r.actions_applied:
+                action_counts[action] = action_counts.get(action, 0) + 1
+        return action_counts
+
+    def run_most_common_action(self) -> str:
+        """Identify the most frequently applied refinement action.
+
+        Returns:
+            Name of most common action, or 'none' if no actions recorded.
+        """
+        freq = self.run_action_frequency()
+        if not freq:
+            return 'none'
+        return max(freq.items(), key=lambda x: x[1])[0]
+
+    def run_score_variance(self) -> float:
+        """Calculate variance of scores across all runs.
+
+        Returns:
+            Score variance, or 0.0 if fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        mean_score = sum(scores) / len(scores)
+        variance = sum((s - mean_score) ** 2 for s in scores) / len(scores)
+        return variance
+
+    def run_score_std_dev(self) -> float:
+        """Calculate standard deviation of scores across all runs.
+
+        Returns:
+            Score standard deviation, or 0.0 if fewer than 2 runs.
+        """
+        variance = self.run_score_variance()
+        return variance ** 0.5
+
+    def run_score_coefficient_of_variation(self) -> float:
+        """Calculate coefficient of variation (CV) for run scores.
+
+        Returns:
+            CV ratio (std_dev / mean), or 0.0 if mean is 0 or <2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        mean_score = sum(scores) / len(scores)
+        if mean_score == 0.0:
+            return 0.0
+        std_dev = self.run_score_std_dev()
+        return std_dev / mean_score
+
+    def run_has_improving_trend(self, window: int = 3) -> bool:
+        """Check if recent runs show improving scores.
+
+        Args:
+            window: Number of recent runs to analyze (default: 3).
+
+        Returns:
+            True if last run's score > first run's score in window.
+        """
+        if len(self._run_history) < 2:
+            return False
+        recent = self._run_history[-window:]
+        if len(recent) < 2:
+            return False
+        return recent[-1].score.overall > recent[0].score.overall
+
+    def best_score_improvement(self) -> float:
+        """Return the maximum single-step score improvement across all runs.
+
+        Computes the largest positive delta between consecutive run scores.
+
+        Returns:
+            Float maximum improvement; ``0.0`` when fewer than 2 runs or no
+            run improved on the previous.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        max_improvement = 0.0
+        for i in range(1, len(scores)):
+            delta = scores[i] - scores[i - 1]
+            if delta > max_improvement:
+                max_improvement = delta
+        return max_improvement
+
+    def rounds_without_improvement(self) -> int:
+        """Return the number of consecutive runs at the end with no score improvement.
+
+        Counts trailing runs where the score did not exceed the previous run.
+
+        Returns:
+            Non-negative integer count.
+        """
+        if len(self._run_history) < 2:
+            return 0
+        scores = [r.score.overall for r in self._run_history]
+        count = 0
+        for i in range(len(scores) - 1, 0, -1):
+            if scores[i] <= scores[i - 1]:
+                count += 1
+            else:
+                break
+        return count
+
+    def run_score_skewness(self) -> float:
+        """Return the skewness of run ``score.overall`` values.
+
+        Uses population skewness: ``(1/n) * sum((x - mean)^3) / std^3``.
+
+        Returns:
+            Float skewness; ``0.0`` when fewer than 3 runs or std is zero.
+        """
+        if len(self._run_history) < 3:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        n = len(scores)
+        mean = sum(scores) / n
+        variance = sum((s - mean) ** 2 for s in scores) / n
+        if variance == 0.0:
+            return 0.0
+        std = variance ** 0.5
+        return sum((s - mean) ** 3 for s in scores) / (n * std ** 3)
+
+    def worst_score_decline(self) -> float:
+        """Return the maximum single-step score decline across all runs.
+
+        Computes the largest negative delta (most negative consecutive change)
+        and returns its absolute value.
+
+        Returns:
+            Float; ``0.0`` when fewer than 2 runs or no run declined.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        max_decline = 0.0
+        for i in range(1, len(scores)):
+            delta = scores[i - 1] - scores[i]  # positive when declining
+            if delta > max_decline:
+                max_decline = delta
+        return max_decline
+
+    def consecutive_declines(self) -> int:
+        """Return the maximum number of consecutive declining runs.
+
+        A decline is where a run's score is strictly less than the previous run.
+
+        Returns:
+            Non-negative integer; ``0`` when fewer than 2 runs or no decline.
+        """
+        if len(self._run_history) < 2:
+            return 0
+        scores = [r.score.overall for r in self._run_history]
+        max_streak = 0
+        current_streak = 0
+        for i in range(1, len(scores)):
+            if scores[i] < scores[i - 1]:
+                current_streak += 1
+                if current_streak > max_streak:
+                    max_streak = current_streak
+            else:
+                current_streak = 0
+        return max_streak
+
+    def run_score_gini(self) -> float:
+        """Return the Gini coefficient of run ``score.overall`` values.
+
+        Uses the sorted-list formula:
+        ``G = (2 * sum(i * x_i) - (n+1) * sum(x_i)) / (n * sum(x_i))``
+
+        Returns:
+            Float Gini in [0, 1]; ``0.0`` when fewer than 2 runs or all
+            scores are equal.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        vals = sorted(r.score.overall for r in self._run_history)
+        n = len(vals)
+        total = sum(vals)
+        if total == 0.0:
+            return 0.0
+        weighted = sum((i + 1) * v for i, v in enumerate(vals))
+        return (2 * weighted - (n + 1) * total) / (n * total)
+
+    def first_improving_run(self) -> int:
+        """Return the 0-based index of the first run that improved on the previous.
+
+        Returns:
+            Non-negative integer index; ``-1`` when fewer than 2 runs or no
+            run improved on its predecessor.
+        """
+        if len(self._run_history) < 2:
+            return -1
+        scores = [r.score.overall for r in self._run_history]
+        for i in range(1, len(scores)):
+            if scores[i] > scores[i - 1]:
+                return i
+        return -1
+
+    def last_improving_run(self) -> int:
+        """Return the 0-based index of the last run that improved on the previous.
+
+        Returns:
+            Non-negative integer index; ``-1`` when fewer than 2 runs or no
+            run improved on its predecessor.
+        """
+        if len(self._run_history) < 2:
+            return -1
+        scores = [r.score.overall for r in self._run_history]
+        result = -1
+        for i in range(1, len(scores)):
+            if scores[i] > scores[i - 1]:
+                result = i
+        return result
+
+    def improving_run_ratio(self) -> float:
+        """Return the fraction of runs that improved on the previous run.
+
+        A run at index i "improves" when ``score[i] > score[i-1]``.
+
+        Returns:
+            Float in [0, 1]; ``0.0`` when fewer than 2 runs.
+        """
+        if len(self._run_history) < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        improvements = sum(
+            1 for i in range(1, len(scores)) if scores[i] > scores[i - 1]
+        )
+        return improvements / (len(scores) - 1)
+
+    def run_score_ewma(self, alpha: float = 0.3) -> float:
+        """Return the Exponential Weighted Moving Average (EWMA) of run scores.
+
+        Uses the standard recurrence: ``ewma[t] = alpha * score[t] + (1 - alpha) * ewma[t-1]``
+        with the first run score as the initial value.
+
+        Args:
+            alpha: Smoothing factor in (0, 1].  Default ``0.3``.
+
+        Returns:
+            Float EWMA of all run scores; ``0.0`` when no runs exist.
+
+        Example::
+
+            >>> ewma = pipeline.run_score_ewma(alpha=0.2)
+            >>> isinstance(ewma, float)
+        """
+        if not self._run_history:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        ewma = scores[0]
+        for s in scores[1:]:
+            ewma = alpha * s + (1.0 - alpha) * ewma
+        return ewma
+
+    def run_score_autocorrelation(self, lag: int = 1) -> float:
+        """Return the autocorrelation of run scores at the given *lag*.
+
+        Uses the biased (population) estimator: both the cross-covariance
+        ``C(h)`` and the variance ``C(0)`` are divided by ``n``, so the
+        common factor cancels and the result simplifies to::
+
+            ρ(h) = Σ_{i=h}^{n-1} (x_i − μ)(x_{i-h} − μ)
+                   ─────────────────────────────────────────
+                   Σ_{i=0}^{n-1} (x_i − μ)²
+
+        This guarantees the result is always in ``[-1, 1]``.
+
+        Args:
+            lag: Number of positions to shift the series.  Must be ≥ 1.
+                Default ``1``.
+
+        Returns:
+            Float autocorrelation; ``0.0`` when fewer than ``lag + 1``
+            runs exist or the series has zero variance.
+
+        Example::
+
+            >>> acf = pipeline.run_score_autocorrelation(lag=1)
+            >>> -1.0 <= acf <= 1.0
+        """
+        if len(self._run_history) <= lag:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        n = len(scores)
+        mean = sum(scores) / n
+        variance = sum((s - mean) ** 2 for s in scores) / n
+        if variance == 0.0:
+            return 0.0
+        cov = sum(
+            (scores[i] - mean) * (scores[i - lag] - mean)
+            for i in range(lag, n)
+        ) / n
+        return cov / variance
+
+    def run_score_quartile_dispersion(self) -> float:
+        """Return the Quartile Coefficient of Dispersion (QCD) of run overall scores.
+
+        QCD = (Q3 - Q1) / (Q3 + Q1).  Unlike IQR, QCD is unit-free and can
+        be compared across pipelines with different score magnitudes.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when fewer than 4 runs or when
+            ``Q3 + Q1 == 0``.
+
+        Example::
+
+            >>> pipeline.run_score_quartile_dispersion()
+            0.0  # fewer than 4 runs
+        """
+        if len(self._run_history) < 4:
+            return 0.0
+        scores = sorted(r.score.overall for r in self._run_history)
+        n = len(scores)
+        q1 = scores[n // 4]
+        q3 = scores[(3 * n) // 4]
+        if q3 + q1 == 0.0:
+            return 0.0
+        return (q3 - q1) / (q3 + q1)
+
+    def run_score_positive_rate(self, threshold: float = 0.5) -> float:
+        """Return the fraction of run overall scores that exceed *threshold*.
+
+        Args:
+            threshold: Score value above which a run is considered positive.
+                Default ``0.5``.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when there are no runs.
+
+        Example::
+
+            >>> pipeline.run_score_positive_rate()
+            0.0  # no runs yet
+        """
+        if not self._run_history:
+            return 0.0
+        positive = sum(1 for r in self._run_history if r.score.overall > threshold)
+        return positive / len(self._run_history)
+
+    def run_score_negative_rate(self, threshold: float = 0.5) -> float:
+        """Return the fraction of run overall scores at or below *threshold*.
+
+        This is the exact complement of :meth:`run_score_positive_rate` when
+        both use the same *threshold*: ``negative_rate + positive_rate == 1.0``
+        always, because the positive rate uses strict ``>`` and this method
+        uses ``<=``, so every run score falls into exactly one category.
+
+        Args:
+            threshold: Score value at or below which a run is considered
+                negative.  Default ``0.5``.
+
+        Returns:
+            Float in ``[0.0, 1.0]``; ``0.0`` when there are no runs.
+
+        Example::
+
+            >>> pipeline.run_score_negative_rate()
+            0.0  # no runs yet
+        """
+        if not self._run_history:
+            return 0.0
+        negative = sum(1 for r in self._run_history if r.score.overall <= threshold)
+        return negative / len(self._run_history)
+
+    def run_score_jerk(self) -> float:
+        """Return the mean third derivative of run overall scores.
+
+        The *jerk* is the rate of change of acceleration
+        (:meth:`run_score_acceleration`).  It is computed as the mean of
+        ``acceleration[i+1] − acceleration[i]`` across successive
+        acceleration values, which requires at least **4** run history
+        entries.
+
+        A positive jerk indicates the acceleration itself is increasing
+        (the improvement rate is speeding up); negative jerk indicates
+        the acceleration is decreasing.
+
+        Returns:
+            Float; ``0.0`` when fewer than 4 runs are recorded.
+
+        Example::
+
+            >>> pipeline.run_score_jerk()
+            0.0  # fewer than 4 runs
+        """
+        n = len(self._run_history)
+        if n < 4:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        fd = [scores[i + 1] - scores[i] for i in range(n - 1)]
+        sd = [fd[i + 1] - fd[i] for i in range(len(fd) - 1)]
+        td = [sd[i + 1] - sd[i] for i in range(len(sd) - 1)]
+        return sum(td) / len(td)
+
+    def run_score_velocity_max(self) -> float:
+        """Return the maximum first derivative of run overall scores.
+
+        Computes the first differences ``scores[i+1] - scores[i]`` across all
+        consecutive runs and returns the **maximum** value.  A large positive
+        value indicates the biggest single-step improvement; a negative value
+        means every consecutive transition was a decline.
+
+        Returns:
+            Float; ``0.0`` when fewer than 2 runs are recorded.
+
+        Example::
+
+            >>> pipeline.run_score_velocity_max()
+            0.0  # fewer than 2 runs
+        """
+        n = len(self._run_history)
+        if n < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        fd = [scores[i + 1] - scores[i] for i in range(n - 1)]
+        return max(fd)
+
+    def run_score_velocity_min(self) -> float:
+        """Return the minimum first derivative of run overall scores.
+
+        Computes the first differences ``scores[i+1] - scores[i]`` across
+        all consecutive runs and returns the **minimum** (most negative)
+        value.  A large negative value indicates the steepest single-step
+        decline; a positive value means every consecutive transition was an
+        improvement.
+
+        Returns:
+            Float; ``0.0`` when fewer than 2 runs are recorded.
+
+        Example::
+
+            >>> pipeline.run_score_velocity_min()
+            0.0  # fewer than 2 runs
+        """
+        n = len(self._run_history)
+        if n < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        fd = [scores[i + 1] - scores[i] for i in range(n - 1)]
+        return min(fd)
+
+    def run_score_velocity_range(self) -> float:
+        """Return the range of the first derivative of run overall scores.
+
+        Computes ``run_score_velocity_max() - run_score_velocity_min()``,
+        which measures the spread of single-step changes.  A large value
+        indicates high variability from run to run; a value near zero means
+        the speed of change is constant.
+
+        Returns:
+            Float; ``0.0`` when fewer than 2 runs are recorded.
+
+        Example::
+
+            >>> pipeline.run_score_velocity_range()
+            0.0  # fewer than 2 runs
+        """
+        n = len(self._run_history)
+        if n < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        fd = [scores[i + 1] - scores[i] for i in range(n - 1)]
+        return max(fd) - min(fd)
+
+    def run_score_velocity_std(self) -> float:
+        """Return the population standard deviation of run-score first differences.
+
+        Computes the first differences ``fd[i] = scores[i+1] - scores[i]`` of
+        run overall scores and returns their population standard deviation.
+        A value of ``0.0`` means every step is the same size (constant velocity).
+        A larger value indicates that step sizes vary.
+
+        Returns:
+            Float ≥ 0.0; ``0.0`` when fewer than 2 runs are recorded (no first
+            differences exist).
+
+        Example::
+
+            >>> pipeline.run_score_velocity_std()
+            0.0  # fewer than 2 runs
+        """
+        n = len(self._run_history)
+        if n < 2:
+            return 0.0
+        scores = [r.score.overall for r in self._run_history]
+        fd = [scores[i + 1] - scores[i] for i in range(n - 1)]
+        mean_fd = sum(fd) / len(fd)
+        variance = sum((d - mean_fd) ** 2 for d in fd) / len(fd)
+        return variance ** 0.5
+

@@ -104,7 +104,8 @@ setup(
         'ipfs_model_manager_py',
         'ipfs_faiss_py',
         'transformers',
-        'numpy',
+        "numpy>=1.21.0,<2.0.0; python_version < '3.14'",
+        "numpy>=2.0.0; python_version >= '3.14'",
         'urllib3',
         'requests',
         'boto3',
@@ -175,16 +176,22 @@ setup(
             'spacy>=3.0.0',
             # After installing spacy, download the NLP model:
             #   python -m spacy download en_core_web_sm
-            'numpy>=1.21.0',           # Required for cross-document vector similarity
             'transformers>=4.30.0',    # Optional: transformer-based NER/relation extraction
             'openai>=1.0.0',           # Optional: LLM-enhanced cross-document reasoning
             'anthropic>=0.20.0',       # Optional: Anthropic LLM for reasoning
             'networkx>=2.8.0',         # Required for lineage graph analytics
+            'scipy>=1.7.0',            # Required for kamada_kawai_layout (hierarchical viz)
+            'matplotlib>=3.5.0',       # Required for render_networkx visualization
+            'plotly>=5.9.0',           # Required for render_plotly interactive visualization
+            'rdflib>=6.0.0',           # Required for RDF export (export_to_rdf)
         ],
         # Optional but recommended dependencies
         'ipld': [
-            'ipld-car>=0.0.1',  # Only 0.0.1 available on PyPI
-            'ipld-dag-pb>=0.0.1',  # Only 0.0.1 available on PyPI
+            'libipld>=3.3.2',       # Rust-backed DAG-CBOR + CAR decode (primary)
+            'ipld-car>=0.0.1',      # Pure-Python CAR encode+decode (required for save)
+            'ipld-dag-pb>=0.0.1',   # DAG-PB codec (optional, for IPFS file-system nodes)
+            'dag-cbor>=0.3.3',      # DAG-CBOR codec (required by ipld-car)
+            'multiformats>=0.3.0',  # CID + multihash (required for CAR save path)
         ],
         'web_archive': [
             'archivenow==2020.7.18.12.19.44',
@@ -195,12 +202,6 @@ setup(
         'security': [
             'cryptography>=41.0.0',
             'keyring>=24.0.0',
-        ],
-        # UCAN / DID-key: decentralised capability-based auth + secret signing
-        'ucan': [
-            'py-ucan>=1.0.0',
-            'cryptography>=41.0.0',
-            'base58>=2.1.1',
         ],
         'audit': [
             'elasticsearch>=8.0.0',
@@ -357,9 +358,6 @@ setup(
             # Security/Audit
             'cryptography>=41.0.0',
             'keyring>=24.0.0',
-            # UCAN / DID-key
-            'py-ucan>=1.0.0',
-            'base58>=2.1.1',
             # Provenance
             'plotly>=5.9.0',
             'dash>=2.6.0',

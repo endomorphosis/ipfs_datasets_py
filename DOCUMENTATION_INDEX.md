@@ -30,6 +30,10 @@ Welcome to the comprehensive documentation for IPFS Datasets Python - a producti
 
 ## 🔧 Module Documentation
 
+### Optimizers
+- **[docs/USAGE_EXAMPLES.md](./docs/USAGE_EXAMPLES.md)** - Comprehensive usage examples for all optimizers
+- **[ipfs_datasets_py/optimizers/README.md](./ipfs_datasets_py/optimizers/README.md)** - Optimizer framework overview
+
 ### Logic & Theorem Proving
 - **[ipfs_datasets_py/logic/README.md](./ipfs_datasets_py/logic/README.md)** - Logic module overview
 - **[ipfs_datasets_py/logic/ARCHITECTURE.md](./ipfs_datasets_py/logic/ARCHITECTURE.md)** - Architecture with diagrams
