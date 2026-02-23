@@ -528,13 +528,46 @@ _ZH_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
 }
 
 
+# GV262: Thai deontic keywords (inline — always available).
+_TH_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
+    "permission": [
+        "สามารถ", "ได้รับอนุญาต", "มีสิทธิ์", "อนุญาต", "ได้รับอนุมัติ",
+        "ได้รับสิทธิ์", "มีสิทธิ",
+    ],
+    "prohibition": [
+        "ห้าม", "ไม่อนุญาต", "ไม่ได้รับอนุญาต", "ต้องห้าม", "ไม่สามารถ",
+        "ห้ามกระทำ", "ไม่ได้รับอนุมัติ",
+    ],
+    "obligation": [
+        "ต้อง", "จำเป็นต้อง", "มีหน้าที่", "มีภาระผูกพัน", "บังคับ",
+        "ต้องปฏิบัติ", "มีพันธะ",
+    ],
+}
+
+# GW263: Indonesian deontic keywords (inline — always available).
+_ID_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
+    "permission": [
+        "boleh", "diizinkan", "diperbolehkan", "berhak", "dapat",
+        "diperkenankan", "mendapat izin",
+    ],
+    "prohibition": [
+        "dilarang", "tidak boleh", "tidak diizinkan", "tidak diperbolehkan", "terlarang",
+        "tidak diperkenankan", "tidak dapat",
+    ],
+    "obligation": [
+        "harus", "wajib", "diwajibkan", "berkewajiban", "perlu",
+        "harus melakukan", "diwajibkan untuk",
+    ],
+}
+
+
 def _load_i18n_keywords(language: str) -> Dict[str, List[str]]:
     """Load deontic keywords for *language*.
 
     Supports ``"en"``, ``"nl"``, ``"it"``, ``"ja"``, ``"zh"``,
     ``"fr"``, ``"es"``, ``"de"``, ``"pt"``, ``"ko"``, ``"ar"``,
     ``"sv"``, ``"ru"``, ``"el"``, ``"tr"``, ``"hi"``, ``"pl"``,
-    and ``"vi"``.
+    ``"vi"``, ``"th"``, and ``"id"``.
     """
     if language == "en":  # DC165: inline English keywords
         return _EN_DEONTIC_KEYWORDS
@@ -564,6 +597,10 @@ def _load_i18n_keywords(language: str) -> Dict[str, List[str]]:
         return _PL_DEONTIC_KEYWORDS
     if language == "vi":  # GM253: inline Vietnamese keywords
         return _VI_DEONTIC_KEYWORDS
+    if language == "th":  # GV262: inline Thai keywords
+        return _TH_DEONTIC_KEYWORDS
+    if language == "id":  # GW263: inline Indonesian keywords
+        return _ID_DEONTIC_KEYWORDS
     loader_path = _I18N_KEYWORD_LOADERS.get(language)
     if loader_path is None:
         return {}
