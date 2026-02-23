@@ -51,6 +51,7 @@ from typing import Any, Dict, List, Optional
 import uuid
 
 from ipfs_datasets_py.optimizers.common.base_session import BaseSession
+from ipfs_datasets_py.optimizers.common.profiling_decorators import profile_method
 
 logger = logging.getLogger(__name__)
 
@@ -439,6 +440,7 @@ class OntologyMediator:
 
         return " ".join(lines)
     
+    @profile_method("ontology_mediator.refine_ontology")
     def refine_ontology(
         self,
         ontology: Dict[str, Any],
@@ -667,6 +669,7 @@ class OntologyMediator:
             self._action_entries.append({"action": action, "round": len(self._undo_stack)})
         return refined
 
+    @profile_method("ontology_mediator.batch_apply_strategies")
     def batch_apply_strategies(
         self,
         ontologies: List[Dict[str, Any]],
@@ -1342,148 +1345,6 @@ class OntologyMediator:
 
         return recorded
 
-    def batch_suggest_strategies(
-        self,
-        ontologies: List[Dict[str, Any]],
-        scores: List[Any],
-        context: Any,
-        max_workers: Optional[int] = None,
-    ) -> Dict[str, Any]:
-        """Suggest refinement strategies for multiple ontologies in parallel.
-
-        Args:
-            ontologies: List of ontology dicts to analyze.
-            scores: List of critic score objects (same length as ontologies).
-            context: Ontology generation context.
-            max_workers: Max parallel workers (default: CPU count). Pass 1 for serial.
-
-        Returns:
-            Dict with keys:
-                - "strategies": List of strategy dicts aligned to input order
-                - "success_count": Number of successful suggestions
-                - "error_count": Number of failures
-                - "errors": List of error details, if any
-
-        Raises:
-            ValueError: If ontologies and scores have different lengths.
-        """
-        import logging as _logging
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-
-        if len(ontologies) != len(scores):
-            raise ValueError(
-                f"Length mismatch: {len(ontologies)} ontologies vs {len(scores)} scores"
-            )
-
-        logger = self._log or _logging.getLogger(__name__)
-        strategies: List[Optional[Dict[str, Any]]] = [None] * len(ontologies)
-        errors: List[Dict[str, Any]] = []
-        success_count = 0
-        error_count = 0
-
-        def _suggest(idx: int, ontology: Dict[str, Any], score: Any) -> tuple:
-            return idx, self.suggest_refinement_strategy(ontology, score, context), None
-
-        if max_workers == 1:
-            for idx, (ontology, score) in enumerate(zip(ontologies, scores)):
-                try:
-                    strategies[idx] = self.suggest_refinement_strategy(ontology, score, context)
-                    success_count += 1
-                except Exception as exc:  # noqa: BLE001
-                    error_count += 1
-                    errors.append(
-                        {
-                            "ontology_idx": idx,
-                            "error": str(exc),
-                            "error_type": type(exc).__name__,
-                        }
-                    )
-            return {
-                "strategies": list(strategies),
-                "success_count": success_count,
-                "error_count": error_count,
-                "errors": errors,
-            }
-
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {
-                executor.submit(_suggest, idx, ontology, score): idx
-                for idx, (ontology, score) in enumerate(zip(ontologies, scores))
-            }
-
-            for future in as_completed(futures):
-                idx = futures[future]
-                try:
-                    _, strategy, _ = future.result()
-                    strategies[idx] = strategy
-                    success_count += 1
-                except Exception as exc:  # noqa: BLE001
-                    logger.error("Strategy suggestion failed for ontology %s: %s", idx, exc)
-                    error_count += 1
-                    errors.append(
-                        {
-                            "ontology_idx": idx,
-                            "error": str(exc),
-                            "error_type": type(exc).__name__,
-                        }
-                    )
-
-        return {
-            "strategies": list(strategies),
-            "success_count": success_count,
-            "error_count": error_count,
-            "errors": errors,
-        }
-
-    def compare_strategies(self, strategies: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Compare multiple refinement strategies and rank them.
-
-        Args:
-            strategies: List of strategy dicts produced by
-                :meth:`suggest_refinement_strategy`.
-
-        Returns:
-            Dict with keys:
-                - "best_strategy": Highest-ranked strategy or ``None`` when empty
-                - "ranked_strategies": Strategies sorted by score (desc)
-                - "summary": Aggregate stats (count, avg_impact, priority_counts)
-        """
-        if not strategies:
-            return {
-                "best_strategy": None,
-                "ranked_strategies": [],
-                "summary": {"count": 0, "avg_impact": 0.0, "priority_counts": {}},
-            }
-
-        priority_weight = {
-            "critical": 4,
-            "high": 3,
-            "medium": 2,
-            "low": 1,
-        }
-
-        def _score(strategy: Dict[str, Any]) -> float:
-            impact = float(strategy.get("estimated_impact", 0.0) or 0.0)
-            priority = str(strategy.get("priority", "low")).lower()
-            return impact + (priority_weight.get(priority, 1) * 0.01)
-
-        ranked = sorted(list(strategies), key=_score, reverse=True)
-        avg_impact = sum(float(s.get("estimated_impact", 0.0) or 0.0) for s in ranked) / len(ranked)
-        priority_counts: Dict[str, int] = {}
-        for s in ranked:
-            pr = str(s.get("priority", "low")).lower()
-            priority_counts[pr] = priority_counts.get(pr, 0) + 1
-
-        return {
-            "best_strategy": ranked[0],
-            "ranked_strategies": ranked,
-            "summary": {
-                "count": len(ranked),
-                "avg_impact": avg_impact,
-                "priority_counts": priority_counts,
-            },
-        }
-
     def clear_recommendation_history(self) -> int:
         """Clear the recommendation phrase frequency table.
 
@@ -1701,6 +1562,7 @@ class OntologyMediator:
             raise IndexError("undo stack is empty — no action to undo")
         return self._undo_stack.pop()
 
+    @profile_method("ontology_mediator.run_refinement_cycle")
     def run_refinement_cycle(
         self,
         data: Any,
@@ -2119,6 +1981,54 @@ class OntologyMediator:
             Count of action types with at least one invocation.
         """
         return sum(1 for v in self._action_counts.values() if v > 0)
+
+    def action_sequence_entropy(self) -> float:
+        """Compute Shannon entropy of the action sequence as categorical symbols.
+
+        Shannon entropy measures the unpredictability/randomness of the action
+        sequence. Higher entropy indicates more diverse action usage; lower
+        entropy indicates repetitive patterns.
+
+        The entropy is computed as:
+            H = -Σ(p_i * log2(p_i))
+        where p_i is the probability (frequency) of action type i.
+
+        Returns:
+            Shannon entropy in bits. Returns ``0.0`` when no actions recorded
+            or when only one action type used (no uncertainty). Range is
+            [0, log2(n)] where n is the number of distinct action types.
+
+        Example:
+            >>> mediator = OntologyMediator(generator, critic)
+            >>> # After running refinements with 3 action types evenly distributed
+            >>> entropy = mediator.action_sequence_entropy()
+            >>> print(f"Action entropy: {entropy:.2f} bits")
+            Action entropy: 1.58 bits  # log2(3) for uniform distribution
+            >>> 
+            >>> # With highly repetitive actions (one dominant type)
+            >>> # entropy approaches 0.0
+        """
+        import math as _math
+
+        # Extract action names from _action_entries: [(action_name, round_idx), ...]
+        action_names = [entry[0] for entry in self._action_entries if entry]
+        
+        if not action_names:
+            return 0.0
+
+        # Count frequency of each action type
+        from collections import Counter
+        action_counts = Counter(action_names)
+        total = len(action_names)
+
+        # Compute Shannon entropy: H = -Σ(p_i * log2(p_i))
+        entropy = 0.0
+        for count in action_counts.values():
+            if count > 0:
+                p = count / total
+                entropy -= p * _math.log2(p)
+
+        return entropy
 
     def most_used_action(self) -> "str | None":
         """Return the action name with the highest recorded count.

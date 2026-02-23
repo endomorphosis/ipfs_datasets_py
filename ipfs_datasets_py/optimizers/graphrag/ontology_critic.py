@@ -51,7 +51,7 @@ from __future__ import annotations
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from ipfs_datasets_py.optimizers.common.base_critic import BaseCritic, CriticResult
 from ipfs_datasets_py.optimizers.common.backend_selection import resolve_backend_settings
@@ -786,6 +786,7 @@ class OntologyCritic(BaseCritic):
         context: Any,  # OntologyGenerationContext
         source_data: Optional[Any] = None,
         timeout: Optional[float] = None,
+        on_evaluation_complete: Optional[Callable[[CriticScore], None]] = None,
     ) -> CriticScore:
         """
         Evaluate ontology across all quality dimensions.
@@ -801,6 +802,9 @@ class OntologyCritic(BaseCritic):
             timeout: Optional wall-clock timeout in seconds.  If the evaluation
                 takes longer than *timeout* seconds, a :exc:`TimeoutError` is
                 raised.  ``None`` (default) means no timeout.
+            on_evaluation_complete: Optional callback invoked with the
+                :class:`CriticScore` immediately before returning.  Use this
+                for dashboard updates, logging, or real-time monitoring.
             
         Returns:
             CriticScore with evaluation results and recommendations
@@ -830,14 +834,18 @@ class OntologyCritic(BaseCritic):
                     raise TimeoutError(
                         f"evaluate_ontology() exceeded timeout of {timeout}s"
                     )
-        return self._evaluate_ontology_impl(ontology, context, source_data)
+        return self._evaluate_ontology_impl(ontology, context, source_data, on_evaluation_complete)
 
     def _evaluate_ontology_impl(
         self,
         ontology: Dict[str, Any],
         context: Any,
         source_data: Optional[Any] = None,
+        on_evaluation_complete: Optional[Callable[[CriticScore], None]] = None,
     ) -> CriticScore:
+        import time as _time
+        _start_ms = _time.perf_counter() * 1000.0
+        
         # LRU-style cache keyed on ontology content hash (skipped when source_data provided)
         if source_data is None:
             _cache_key = self._compute_eval_cache_key(ontology)
@@ -847,11 +855,16 @@ class OntologyCritic(BaseCritic):
                     self._eval_cache: dict = {}
                 if _cache_key in self._eval_cache:
                     self._log.debug("OntologyCritic instance cache hit")
-                    return self._eval_cache[_cache_key]
+                    _cached = self._eval_cache[_cache_key]
+                    # Update timing for cached result
+                    _cached.metadata['timing_ms'] = round((_time.perf_counter() * 1000.0) - _start_ms, 2)
+                    return _cached
                 if _cache_key in OntologyCritic._SHARED_EVAL_CACHE:
                     self._log.debug("OntologyCritic shared cache hit")
                     cached = OntologyCritic._SHARED_EVAL_CACHE[_cache_key]
                     self._eval_cache[_cache_key] = cached
+                    # Update timing for cached result
+                    cached.metadata['timing_ms'] = round((_time.perf_counter() * 1000.0) - _start_ms, 2)
                     return cached
         else:
             _cache_key = None
@@ -909,6 +922,7 @@ class OntologyCritic(BaseCritic):
                 'entity_type_counts': _ent_type_counts,
                 'entity_type_fractions': _ent_type_fractions,
                 'provenance_score': self._evaluate_provenance(ontology),
+                'timing_ms': round((_time.perf_counter() * 1000.0) - _start_ms, 2),
             }
         )
         
@@ -920,7 +934,14 @@ class OntologyCritic(BaseCritic):
             self._eval_cache[_cache_key] = score
             if len(OntologyCritic._SHARED_EVAL_CACHE) >= OntologyCritic._SHARED_EVAL_CACHE_MAX:
                 OntologyCritic._SHARED_EVAL_CACHE.clear()
-            OntologyCritic._SHARED_EVAL_CACHE[_cache_key] = score
+            OntologyCritic._SHARED_EVAL_CACHE[_cache_key] = score        
+        # Invoke completion callback for dashboard updates, logging, etc.
+        if on_evaluation_complete is not None:
+            try:
+                on_evaluation_complete(score)
+            except Exception as _e:
+                self._log.warning(f"on_evaluation_complete callback raised: {_e}")
+        
         return score
 
     def evaluate_batch(
@@ -4267,6 +4288,31 @@ class OntologyCritic(BaseCritic):
             return 0.0
         probs = [v / total for v in vals]
         return -sum(p * math.log(p) for p in probs if p > 0.0)
+
+    def score_dimension_energy(self, score: "CriticScore") -> float:
+        """Return the L2 energy (norm squared) of the six CriticScore dimensions.
+
+        L2 energy is computed as the sum of squares of all six dimension values.
+        This metric measures how concentrated the values are - higher energy
+        indicates more concentrated or higher magnitude distributions.
+
+        Args:
+            score: :class:`CriticScore` instance to analyse.
+
+        Returns:
+            Non-negative float (L2 energy); ``0.0`` when all dimensions are zero.
+
+        Example::
+
+            >>> s = CriticScore(completeness=0.6, consistency=0.4,
+            ...                  clarity=0.2, granularity=0.1,
+            ...                  relationship_coherence=0.1, domain_alignment=0.0)
+            >>> critic.score_dimension_energy(s)  # doctest: +ELLIPSIS
+            0.58
+        """
+        dims = self._DIMENSIONS
+        vals = [max(0.0, getattr(score, d, 0.0)) for d in dims]
+        return sum(v * v for v in vals)
 
     def score_dimension_kurtosis(self, score: "CriticScore") -> float:
         """Return the population excess kurtosis of the six CriticScore dimensions.

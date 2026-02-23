@@ -10,12 +10,19 @@ from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import (
     SemanticEntityDeduplicator,
     SemanticMergeSuggestion,
 )
+from ipfs_datasets_py.optimizers.graphrag.ontology_validator import OntologyValidator
 
 
 @pytest.fixture
 def deduplicator():
     """Create SemanticEntityDeduplicator instance for testing."""
     return SemanticEntityDeduplicator()
+
+
+@pytest.fixture
+def validator():
+    """Create OntologyValidator instance for testing."""
+    return OntologyValidator()
 
 
 @pytest.fixture
@@ -418,7 +425,7 @@ class TestSemanticDeduplicationBatching:
 class TestSemanticVsStringBasedComparison:
     """Compare semantic and string-based deduplication."""
     
-    def test_semantic_finds_what_string_misses(self, deduplicator, mock_embedding_fn):
+    def test_semantic_finds_what_string_misses(self, deduplicator, validator, mock_embedding_fn):
         """GIVEN: Semantically similar but textually different entities
         WHEN: Both methods called
         THEN: Semantic method finds more duplicates

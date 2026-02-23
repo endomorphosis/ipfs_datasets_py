@@ -59,6 +59,55 @@ PROFILING_ENABLED = os.environ.get("OPTIMIZER_PROFILING", "0") == "1"
 F = TypeVar("F", bound=Callable[..., Any])
 
 
+def profile_method(
+    section_name: str,
+    *,
+    slow_threshold_s: float = 0.0,
+    log_level: int = logging.DEBUG,
+    enabled: Optional[bool] = None,
+) -> Callable[[F], F]:
+    """Decorator to time a method/function and log when profiling is enabled.
+
+    This is a small convenience wrapper used across GraphRAG modules.
+    It is a no-op unless profiling is enabled (via `OPTIMIZER_PROFILING=1`
+    or `enable_profiling()`).
+
+    Args:
+        section_name: Logical name for the section (stable across refactors).
+        slow_threshold_s: Only log timings at/above this duration.
+        log_level: Logging level to emit timing logs at.
+        enabled: Override global profiling flag (None = use global).
+
+    Returns:
+        Decorator that wraps a callable.
+    """
+
+    is_enabled = enabled if enabled is not None else PROFILING_ENABLED
+
+    def decorator(func: F) -> F:
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            if not is_enabled:
+                return func(*args, **kwargs)
+
+            start = time.perf_counter()
+            try:
+                return func(*args, **kwargs)
+            finally:
+                duration_s = time.perf_counter() - start
+                if duration_s >= slow_threshold_s:
+                    logger.log(
+                        log_level,
+                        "%s duration_ms=%.2f",
+                        section_name,
+                        duration_s * 1000.0,
+                    )
+
+        return wrapper  # type: ignore
+
+    return decorator
+
+
 def _get_memory_usage_mb() -> float:
     """Get current process memory usage in megabytes.
     
