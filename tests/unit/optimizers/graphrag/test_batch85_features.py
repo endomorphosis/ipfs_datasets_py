@@ -172,6 +172,40 @@ class TestActionsNeverApplied:
 
 
 # ---------------------------------------------------------------------------
+# OntologyMediator.apply_action_bulk
+# ---------------------------------------------------------------------------
+
+
+class TestApplyActionBulk:
+    def test_accepts_action_name_strings(self):
+        med = _make_mediator()
+        n = med.apply_action_bulk(["add_entity", "add_entity", "remove_rel"])
+        assert n == 3
+        assert med.action_count_for("add_entity") == 2
+        assert med.action_count_for("remove_rel") == 1
+
+    def test_accepts_action_args_pairs(self):
+        med = _make_mediator()
+        n = med.apply_action_bulk([
+            ("add_entity", {"id": "e1"}),
+            ("add_entity", {"id": "e2"}),
+            ("remove_rel", {"id": "r1"}),
+        ])
+        assert n == 3
+        assert med.action_count_for("add_entity") == 2
+        assert med.action_count_for("remove_rel") == 1
+
+    def test_accepts_dict_entries(self):
+        med = _make_mediator()
+        n = med.apply_action_bulk([
+            {"action": "normalize_names", "args": {}},
+            {"action": "normalize_names"},
+        ])
+        assert n == 2
+        assert med.action_count_for("normalize_names") == 2
+
+
+# ---------------------------------------------------------------------------
 # CriticScore.is_passing
 # ---------------------------------------------------------------------------
 
