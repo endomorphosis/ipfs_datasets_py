@@ -65,14 +65,14 @@ from .prover_core import (
 )
 from .cec_proof_cache import CachedTheoremProver, HAVE_CACHE
 
-# Import ZKP components (with graceful fallback)
+# Import the ZKP module itself (quiet). Accessing individual ZKP symbols is
+# intentionally deferred to runtime to avoid emitting simulation warnings at
+# import time (the zkp package warns on attribute access).
 try:
-    from ...zkp import ZKPProver, ZKPVerifier, ZKPProof
+    from ... import zkp as _zkp  # type: ignore
     HAVE_ZKP = True
 except ImportError:
-    ZKPProver = None  # type: ignore
-    ZKPVerifier = None  # type: ignore
-    ZKPProof = None  # type: ignore
+    _zkp = None  # type: ignore
     HAVE_ZKP = False
 
 logger = logging.getLogger(__name__)
@@ -325,8 +325,10 @@ class ZKPCECProver:
         # Initialize ZKP components if enabled
         if self.enable_zkp:
             try:
-                self.zkp_prover = ZKPProver(backend=zkp_backend)
-                self.zkp_verifier = ZKPVerifier(backend=zkp_backend)
+                if _zkp is None:
+                    raise ImportError("ZKP module unavailable")
+                self.zkp_prover = _zkp.ZKPProver(backend=zkp_backend)
+                self.zkp_verifier = _zkp.ZKPVerifier(backend=zkp_backend)
                 logger.info(f"ZKP enabled with backend: {zkp_backend}")
             except Exception as e:
                 logger.warning(f"Failed to initialize ZKP: {e}")

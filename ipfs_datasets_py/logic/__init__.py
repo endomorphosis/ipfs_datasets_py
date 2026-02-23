@@ -18,6 +18,22 @@ Use integration/ or module-specific imports instead.
 from __future__ import annotations
 import warnings
 
+
+# Beartype emits PEP585 deprecation warnings at import-time for some legacy
+# typing hints (e.g., ``typing.List[str]``). These warnings are not actionable
+# for typical users and break the “import must be quiet” contract enforced by
+# the superproject tests. We silence only this specific beartype category.
+try:  # pragma: no cover
+    from beartype.roar import BeartypeDecorHintPep585DeprecationWarning  # type: ignore
+except Exception:  # pragma: no cover
+    BeartypeDecorHintPep585DeprecationWarning = None  # type: ignore
+
+if BeartypeDecorHintPep585DeprecationWarning is not None:
+    warnings.filterwarnings(
+        "ignore",
+        category=BeartypeDecorHintPep585DeprecationWarning,  # type: ignore[arg-type]
+    )
+
 __all__ = ["api", "integrations", "tools", "integration", "cli"]
 
 
