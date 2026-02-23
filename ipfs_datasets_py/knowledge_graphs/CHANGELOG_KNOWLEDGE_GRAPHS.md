@@ -5,6 +5,29 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.26] - 2026-02-23
+
+### Added — Deferred v4.0+ GraphQL API support (Session 72)
+
+**Production code changes.**
+
+- **`query/graphql.py`** — New module implementing lightweight GraphQL query interface for KnowledgeGraph:
+  - `GraphQLParser`: recursive-descent parser for a practical GraphQL subset — entity queries, argument filters (`name`, `id`, `type`, or any property), field projection, nested relationship traversal, aliases, and string/int/float/bool/null argument values
+  - `GraphQLDocument` / `GraphQLField`: lightweight AST node dataclasses; `GraphQLField.is_leaf` property
+  - `GraphQLParseError(ValueError)`: clean error type for parse failures
+  - `KnowledgeGraphQLExecutor(kg)`: executes GraphQL queries against a `KnowledgeGraph`; response envelope follows the GraphQL-over-HTTP specification (`{"data": {...}}`); errors captured without raising; fully backward-compatible
+
+- **`query/__init__.py`**: exports `GraphQLParseError`, `GraphQLField`, `GraphQLDocument`, `GraphQLParser`, `KnowledgeGraphQLExecutor` from `query.__all__`
+
+**Documentation changes.**
+
+- `DEFERRED_FEATURES.md`: P7 section added — §19 GraphQL API Support (✅ Implemented v3.22.26) with full usage example
+- `ROADMAP.md`: v4.0+ "GraphQL API support" → ✅ Delivered in v3.22.26; v3.22.26 row added to release table
+- `MASTER_STATUS.md`: version 3.22.25→3.22.26; session 72 entry; test-files 110+→111+; total 4,009→4,041
+- `CHANGELOG_KNOWLEDGE_GRAPHS.md`: this section
+
+---
+
 ## [3.22.25] - 2026-02-22
 
 ### Added — Deferred v4.0+ features: graph event subscriptions + KG snapshots (Session 71)

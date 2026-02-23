@@ -1167,3 +1167,29 @@ was listed as "Priority: MEDIUM — Prioritized action items" despite all items 
 - `TestVersionAgreement` (3 tests): MASTER_STATUS/CHANGELOG/ROADMAP agree on v3.22.25
 
 **Result: 38 passed, 0 failed** ✅
+
+---
+
+### Session 72 (2026-02-23, v3.22.26)
+
+**Goal:** Implement deferred v4.0+ GraphQL API support.
+
+**Changes:**
+1. `query/graphql.py` (new): `GraphQLParser` (recursive-descent; entity queries, argument filters, field projection, nested fields, aliases, all scalar value types) + `GraphQLField` + `GraphQLDocument` dataclasses + `GraphQLParseError(ValueError)` + `KnowledgeGraphQLExecutor(kg)` (entity selection by type, equality argument filters for id/name/type/properties, field projection, single-level relationship traversal, aliases, error envelope)
+2. `query/__init__.py`: 5 new symbols exported + added to `__all__`
+3. `MASTER_STATUS.md`: v3.22.25→v3.22.26; session 72 entry; 4,009→4,041 tests; test-files 110+→111+
+4. `DEFERRED_FEATURES.md`: §19 GraphQL API Support ✅ Implemented v3.22.26 added (P7 section)
+5. `ROADMAP.md`: v4.0+ "GraphQL API support" → ✅ Delivered v3.22.26; v3.22.26 row added
+6. `CHANGELOG_KNOWLEDGE_GRAPHS.md`: ## [3.22.26] section added
+
+**32 tests** in `test_master_status_session72.py` (8 classes):
+- `TestGraphQLParser` (10 tests): simple; multiple-top-level; string/int/bool/null arguments; alias; query-keyword; nested fields; float arg
+- `TestGraphQLParseErrors` (4 tests): unclosed-brace; alias-error; invalid-arg-value; executor-error-envelope
+- `TestKGQLExecutorBasic` (8 tests): no-entities; all-matching-type; field-projection-name/id/type; no-sub-fields; data-key; multiple-top-level
+- `TestKGQLExecutorFilters` (5 tests): filter-by-name; filter-by-property; no-match; filter-by-id; arbitrary-property
+- `TestKGQLExecutorRelationships` (5 tests): single-relationship; no-outgoing; with-sub-fields; aliased-rel-field; default-rel-fields
+- `TestQueryModuleExports` (3 tests): import-all-5-symbols; in-__all__; is_leaf-property
+- `TestDocIntegritySession72` (5 tests): deferred-features-graphql; roadmap-graphql; roadmap-v3.22.26; master-status-version; changelog-3.22.26
+- `TestVersionAgreement` (3 tests): MASTER_STATUS/CHANGELOG/ROADMAP agree on v3.22.26
+
+**Result: 32 passed, 0 failed** ✅

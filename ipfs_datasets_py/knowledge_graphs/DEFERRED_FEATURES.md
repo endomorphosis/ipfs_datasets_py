@@ -688,6 +688,64 @@ assert kg.list_snapshots() == ["before_merge"]
 
 ---
 
+## P7: Delivered in v3.22.26 (formerly v4.0+ "GraphQL API support")
+
+### 19. GraphQL API Support
+
+**Status:** ✅ Implemented (v3.22.26 — 2026-02-23)
+**Location:** `query/graphql.py` — `GraphQLParser`, `KnowledgeGraphQLExecutor`,
+             `GraphQLDocument`, `GraphQLField`, `GraphQLParseError`
+**Implementation:**
+- `GraphQLParser` — recursive-descent parser for a practical GraphQL subset
+  (entity queries, argument filters, field projection, nested relationships,
+  aliases, float/int/bool/null/string argument values)
+- `GraphQLDocument` / `GraphQLField` — lightweight AST nodes
+- `GraphQLParseError(ValueError)` — clear error type for parse failures
+- `KnowledgeGraphQLExecutor(kg)` — executes GraphQL against a `KnowledgeGraph`;
+  response follows the GraphQL-over-HTTP envelope `{"data": {...}}`
+  - Entity selection by type (top-level field name = entity type)
+  - Argument equality filters: `id`, `name`, `type`, or any property
+  - Field projection: `id / entity_id`, `type / entity_type`, `name`,
+    `confidence`, arbitrary `entity.properties` keys
+  - Relationship traversal: nested field name = outgoing relationship type
+  - Aliases: `myAlias: entityType { ... }`
+  - Errors captured in `"errors"` key; never throws
+- All symbols exported from `query/__init__.py` and `query.__all__`
+
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+from ipfs_datasets_py.knowledge_graphs.query import KnowledgeGraphQLExecutor
+
+kg = KnowledgeGraph("example")
+alice = kg.add_entity("person", "Alice", {"age": 30, "city": "NYC"})
+bob   = kg.add_entity("person", "Bob",   {"age": 25})
+kg.add_relationship("knows", alice, bob)
+
+exe = KnowledgeGraphQLExecutor(kg)
+result = exe.execute('''
+{
+    person(name: "Alice") {
+        id
+        name
+        age
+        city
+        knows { name age }
+    }
+}
+''')
+# {"data": {"person": [{"id": "...", "name": "Alice", "age": 30, "city": "NYC",
+#           "knows": [{"name": "Bob", "age": 25}]}]}}
+
+# Parse error → clean response envelope (no exception raised)
+err = exe.execute("{ unclosed {")
+# {"data": None, "errors": [{"message": "Unexpected EOF inside selection set"}]}
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session72.py`
+
+---
+
 ## See Also
 
 - [ROADMAP.md](ROADMAP.md) - Complete development timeline
@@ -697,7 +755,7 @@ assert kg.list_snapshots() == ["before_merge"]
 
 ---
 
-**Last Updated:** 2026-02-22 (session 70)  
+**Last Updated:** 2026-02-23 (session 72)  
 **Next Review:** Q3 2026  
 **Maintainer:** Knowledge Graphs Team
 

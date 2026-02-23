@@ -93,6 +93,14 @@ from .sparql_templates import (
     build_property_validation_query,
 )
 
+from .graphql import (
+    GraphQLParseError,
+    GraphQLField,
+    GraphQLDocument,
+    GraphQLParser,
+    KnowledgeGraphQLExecutor,
+)
+
 __all__ = [
     'UnifiedQueryEngine',
     'HybridSearchEngine',
@@ -120,4 +128,10 @@ __all__ = [
     'build_similar_entities_query',
     'build_property_stats_query',
     'build_property_validation_query',
+    # GraphQL API (v4.0+ roadmap — delivered v3.22.26)
+    'GraphQLParseError',
+    'GraphQLField',
+    'GraphQLDocument',
+    'GraphQLParser',
+    'KnowledgeGraphQLExecutor',
 ]

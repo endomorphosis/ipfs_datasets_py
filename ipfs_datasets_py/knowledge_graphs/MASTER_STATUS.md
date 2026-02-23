@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.22.25  
+**Version:** 3.22.26  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-22 (session 71)  
-**Last Major Release:** v3.22.25 (session 71: deferred v4.0+ features — GraphEventType + GraphEvent + KnowledgeGraph.subscribe()/unsubscribe()/_emit_event() (real-time graph streaming) + KnowledgeGraph.snapshot()/get_snapshot()/list_snapshots()/restore_snapshot() (temporal graph versioning); DEFERRED_FEATURES §17+§18; 38 tests)
+**Last Updated:** 2026-02-23 (session 72)  
+**Last Major Release:** v3.22.26 (session 72: deferred v4.0+ GraphQL API support — `query/graphql.py` with `GraphQLParser` + `KnowledgeGraphQLExecutor`; entity selection, argument filters, field projection, relationship traversal, aliases; DEFERRED_FEATURES §19; 32 tests)
 
 ---
 
@@ -19,7 +19,7 @@
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
 | **Test Coverage** | **99.99% (1 missed line)** | Session 58: 3,759 pass, 2 skip, **0 fail** (full dep env); 1 missed line |
-| **Documentation** | ✅ Up to Date | Reflects v3.22.25 structure |
+| **Documentation** | ✅ Up to Date | Reflects v3.22.26 structure |
 | **Known Issues** | None | 0 failures; all skips intentional (libipld/spaCy absent when not installed) |
 | **Next Milestone** | v4.0 (2027+) | 1 missed line: `_entity_helpers.py:117` (intentional defensive guard) — 99.99% coverage |
 
@@ -174,7 +174,7 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 **Remaining 1 missed line (99.99% coverage):**
 - `extraction/_entity_helpers.py:117` — intentional defensive guard (all regex patterns produce ≥2-char groups; kept for safety)
 
-### Test Files: 110+ total (as of v3.22.24)
+### Test Files: 111+ total (as of v3.22.26)
 
 **Unit Tests:** tests/unit/knowledge_graphs/
 - test_extraction.py, test_extraction_package.py, test_advanced_extractor.py
@@ -261,8 +261,9 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - session69: **Deferred v4.0+ features implemented (v3.22.23).** `extraction/extractor.py`: `aggregate_confidence_scores(scores, method, weights)` (6 aggregation strategies: mean/min/max/harmonic_mean/weighted_mean/probabilistic_and) + `compute_extraction_quality_metrics(kg)` (10-key quality dict: density/confidence/type diversity/isolation). `migration/formats.py`: `export_streaming(progress_callback=...)` — optional callback invoked per chunk with `(nodes_written, total_nodes, rels_written, total_rels)`. `extraction/README.md`: Phase 5 "In Progress"→"Complete ✅". `DEFERRED_FEATURES.md`: P5 section added with 2 ✅ entries. `ROADMAP.md`: Confidence Scoring + Progress Tracking updated to ✅ Delivered. 34 prod+doc tests. **Result: 3,939 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 - session70: **Graph diff/patch feature implemented.** `extraction/graph.py`: `KnowledgeGraphDiff` dataclass (`added_entities`, `removed_entity_ids`, `added_relationships`, `removed_relationship_ids`, `modified_entities`; `is_empty` property; `summary()`, `to_dict()`, `from_dict()`); `KnowledgeGraph.diff(other)` (entity matching by (entity_type,name) fingerprint; rel matching by (rel_type,src_fp,tgt_fp)); `KnowledgeGraph.apply_diff(diff)` (cascade-removes entities+rels, adds entities, applies modifications, adds rels). `extraction/__init__.py`: `KnowledgeGraphDiff` exported. `DEFERRED_FEATURES.md`: §16 Graph Diff/Patch ✅. MASTER_STATUS test-files count 103→110+; snapshot updated. 32 tests. **Result: 3,971 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 - session71: **Deferred v4.0+ features: graph event subscriptions + KG snapshots.** `extraction/graph.py`: `GraphEventType(str, Enum)` (5 types: entity_added/removed/modified + relationship_added/removed); `GraphEvent` dataclass; `KnowledgeGraph.subscribe(callback)→int` / `unsubscribe(handler_id)→bool` / `_emit_event(event)` — wired into `add_entity()`, `add_relationship()`, all 5 mutation types in `apply_diff()`; faulty subscribers silently suppressed. `KnowledgeGraph.snapshot(name)→str` / `get_snapshot(name)` / `list_snapshots()` / `restore_snapshot(name)→bool`. `extraction/__init__.py`: `GraphEventType` + `GraphEvent` exported. `DEFERRED_FEATURES.md`: §17 Graph Event Subscriptions + §18 KG Snapshots ✅. `ROADMAP.md`: v4.0+ "Real-time graph streaming" + "Temporal graph databases" → ✅ Delivered. `MASTER_STATUS.md`: v3.22.24→v3.22.25; Documentation row v3.22.18→v3.22.25. 38 tests. **Result: 4,009 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
+- session72: **Deferred v4.0+ GraphQL API support.** `query/graphql.py`: `GraphQLParser` (recursive-descent; supports entity queries, argument filters, nested fields, aliases, string/int/float/bool/null values); `KnowledgeGraphQLExecutor(kg)` (entity selection by type, equality argument filters, field projection for id/name/type/confidence/properties, single-level relationship traversal, alias support; response envelope follows GraphQL-over-HTTP spec; errors captured without raising). `query/__init__.py`: all 5 new symbols exported + added to `__all__`. `DEFERRED_FEATURES.md`: §19 GraphQL API Support ✅ Implemented v3.22.26. `ROADMAP.md`: v4.0+ "GraphQL API support" → ✅ Delivered v3.22.26. MASTER_STATUS v3.22.25→v3.22.26; test-files 110+→111+. 32 tests. **Result: 4,041 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 
-**Total Tests:** 4,009 passing, 26 skipped (optional dep guards), 0 failing
+**Total Tests:** 4,041 passing, 26 skipped (optional dep guards), 0 failing
 **Pass Rate:** 100% (excluding optional dependency skips)
 **Coverage:** 99.99% (1 missed line: `_entity_helpers.py:117` — intentional defensive guard)
 
