@@ -52,10 +52,22 @@ Usage:
     )
 """
 
+import asyncio
 import logging
 import anyio
 from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, asdict
+
+
+def _cancelled_exc_class() -> type:
+    """Return the current async framework's cancellation exception class.
+
+    Falls back to asyncio.CancelledError when called outside an async context.
+    """
+    try:
+        return anyio.get_cancelled_exc_class()
+    except anyio.NoEventLoopError:
+        return asyncio.CancelledError
 
 from .budget_manager import BudgetManager, ExecutionBudgets, ExecutionCounters
 from .hybrid_search import HybridSearchEngine, HybridSearchResult
@@ -321,7 +333,7 @@ class UnifiedQueryEngine:
                 ) from e
             except QueryError:
                 raise
-            except anyio.get_cancelled_exc_class():
+            except _cancelled_exc_class():
                 raise
             except Exception as e:
                 logger.error(f"Cypher query execution failed: {e}")
@@ -388,7 +400,7 @@ class UnifiedQueryEngine:
                 ) from e
             except QueryError:
                 raise
-            except anyio.get_cancelled_exc_class():
+            except _cancelled_exc_class():
                 raise
             except Exception as e:
                 logger.error(f"IR query execution failed: {e}")
@@ -467,7 +479,7 @@ class UnifiedQueryEngine:
                 ) from e
             except QueryError:
                 raise
-            except anyio.get_cancelled_exc_class():
+            except _cancelled_exc_class():
                 raise
             except Exception as e:
                 logger.error(f"Hybrid search execution failed: {e}")
@@ -549,7 +561,7 @@ class UnifiedQueryEngine:
                             'answer': "Reasoning unavailable - using search results only",
                             'error': str(e)
                         }
-                    except anyio.get_cancelled_exc_class():
+                    except _cancelled_exc_class():
                         raise
                     except Exception as e:
                         logger.error(f"Unexpected LLM reasoning error: {e}")
@@ -588,7 +600,7 @@ class UnifiedQueryEngine:
                     f"GraphRAG query timed out: {e}",
                     details={'question': question, 'depth': reasoning_depth}
                 ) from e
-            except anyio.get_cancelled_exc_class():
+            except _cancelled_exc_class():
                 raise
             except Exception as e:
                 logger.error(f"GraphRAG execution failed: {e}")

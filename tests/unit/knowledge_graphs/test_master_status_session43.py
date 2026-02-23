@@ -27,6 +27,9 @@ All 32 tests pass, 0 regressions.
 """
 import unittest
 from unittest.mock import MagicMock, patch
+import pytest
+
+pytest.importorskip("spacy")
 
 
 # ---------------------------------------------------------------------------

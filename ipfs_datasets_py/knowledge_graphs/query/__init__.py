@@ -93,6 +93,57 @@ from .sparql_templates import (
     build_property_validation_query,
 )
 
+from .graphql import (
+    GraphQLParseError,
+    GraphQLField,
+    GraphQLDocument,
+    GraphQLParser,
+    KnowledgeGraphQLExecutor,
+)
+
+from .federation import (
+    FederatedKnowledgeGraph,
+    EntityResolutionStrategy,
+    EntityMatch,
+    FederationQueryResult,
+)
+
+from .gnn import (
+    GraphNeuralNetworkAdapter,
+    GNNConfig,
+    GNNLayerType,
+    NodeEmbedding,
+)
+
+from .zkp import (
+    KGZKProver,
+    KGZKVerifier,
+    KGProofStatement,
+    KGProofType,
+)
+
+from .groth16_bridge import (
+    groth16_binary_available,
+    groth16_enabled,
+    Groth16KGConfig,
+    KGEntityFormula,
+    create_groth16_kg_prover,
+    create_groth16_kg_verifier,
+    describe_groth16_status,
+)
+from .completion import (
+    KnowledgeGraphCompleter,
+    CompletionSuggestion,
+    CompletionReason,
+)
+from .explanation import (
+    QueryExplainer,
+    EntityExplanation,
+    RelationshipExplanation,
+    PathExplanation,
+    ExplanationDepth,
+)
+
 __all__ = [
     'UnifiedQueryEngine',
     'HybridSearchEngine',
@@ -120,4 +171,43 @@ __all__ = [
     'build_similar_entities_query',
     'build_property_stats_query',
     'build_property_validation_query',
+    # GraphQL API (v4.0+ roadmap — delivered v3.22.26)
+    'GraphQLParseError',
+    'GraphQLField',
+    'GraphQLDocument',
+    'GraphQLParser',
+    'KnowledgeGraphQLExecutor',
+    # Federated Knowledge Graphs (v4.0+ roadmap — delivered v3.22.28)
+    'FederatedKnowledgeGraph',
+    'EntityResolutionStrategy',
+    'EntityMatch',
+    'FederationQueryResult',
+    # Graph Neural Networks (v4.0+ roadmap — delivered v3.22.30)
+    'GraphNeuralNetworkAdapter',
+    'GNNConfig',
+    'GNNLayerType',
+    'NodeEmbedding',
+    # Zero-Knowledge Proofs (v4.0+ roadmap — delivered v3.22.30)
+    'KGZKProver',
+    'KGZKVerifier',
+    'KGProofStatement',
+    'KGProofType',
+    # Groth16 Bridge (v3.22.32 — direct KG↔Groth16 integration)
+    'groth16_binary_available',
+    'groth16_enabled',
+    'Groth16KGConfig',
+    'KGEntityFormula',
+    'create_groth16_kg_prover',
+    'create_groth16_kg_verifier',
+    'describe_groth16_status',
+    # Knowledge Graph Completion (v3.22.34 — Research Area)
+    'KnowledgeGraphCompleter',
+    'CompletionSuggestion',
+    'CompletionReason',
+    # Explainable AI (v3.22.34 — Research Area)
+    'QueryExplainer',
+    'EntityExplanation',
+    'RelationshipExplanation',
+    'PathExplanation',
+    'ExplanationDepth',
 ]

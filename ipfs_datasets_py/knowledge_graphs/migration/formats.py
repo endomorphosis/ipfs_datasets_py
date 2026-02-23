@@ -314,6 +314,7 @@ class GraphData:
         self,
         filepath: str,
         chunk_size: int = 500,
+        progress_callback: Optional[Callable[[int, int, int, int], None]] = None,
     ) -> Tuple[int, int]:
         """Export graph to JSON-Lines using chunked streaming (F2).
 
@@ -324,6 +325,9 @@ class GraphData:
         Args:
             filepath: Destination file path.
             chunk_size: Number of records to serialise per write call.
+            progress_callback: Optional callable invoked after each chunk with
+                ``(nodes_written, total_nodes, rels_written, total_rels)``.
+                Use this for progress bars or resumable-migration checkpoints.
 
         Returns:
             Tuple of (nodes_written, relationships_written).
@@ -331,9 +335,19 @@ class GraphData:
         Example::
 
             nodes_written, rels_written = graph.export_streaming("large_graph.jsonl")
+
+            # With progress tracking:
+            def on_progress(nw, nt, rw, rt):
+                print(f"nodes {nw}/{nt}  rels {rw}/{rt}")
+
+            nodes_written, rels_written = graph.export_streaming(
+                "large_graph.jsonl", progress_callback=on_progress
+            )
         """
         nodes_written = 0
         rels_written = 0
+        total_nodes = len(self.nodes)
+        total_rels = len(self.relationships)
 
         with open(filepath, "w", buffering=65536) as f:
             for chunk in self.iter_nodes_chunked(chunk_size):
@@ -343,6 +357,8 @@ class GraphData:
                 ]
                 f.write("\n".join(lines) + "\n")
                 nodes_written += len(chunk)
+                if progress_callback is not None:
+                    progress_callback(nodes_written, total_nodes, rels_written, total_rels)
 
             for chunk in self.iter_relationships_chunked(chunk_size):
                 lines = [
@@ -351,6 +367,8 @@ class GraphData:
                 ]
                 f.write("\n".join(lines) + "\n")
                 rels_written += len(chunk)
+                if progress_callback is not None:
+                    progress_callback(nodes_written, total_nodes, rels_written, total_rels)
 
             if self.schema:
                 f.write(

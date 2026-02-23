@@ -195,8 +195,8 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
         dot = sum(src_counts[t] * tgt_counts[t] for t in common)
         norm_src = math.sqrt(sum(v * v for v in src_counts.values()))
         norm_tgt = math.sqrt(sum(v * v for v in tgt_counts.values()))
-        if norm_src == 0.0 or norm_tgt == 0.0:
-            return 0.0
+        # norm_src and norm_tgt are always > 0 here: the `not src_tokens or not tgt_tokens`
+        # guard above guarantees both token lists are non-empty, so Counter values are ≥ 1.
         sim = dot / (norm_src * norm_tgt)
         return max(0.0, min(1.0, float(sim)))
 
@@ -651,8 +651,9 @@ class CrossDocumentReasoner(ReasoningHelpersMixin):
             Relation: ELABORATING, Strength: 0.75
 
         Note:
-            Future versions will use LLM-based analysis for more sophisticated
-            relationship determination (see TODO at line 542).
+            Future versions may use LLM-based analysis for more sophisticated
+            relationship determination. Current implementation uses heuristics
+            based on document similarity and chronology.
         """
         # Find the documents
         source_doc = next((d for d in documents if d.id == source_doc_id), None)

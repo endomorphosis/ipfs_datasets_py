@@ -1,9 +1,9 @@
 # Knowledge Graphs Module – Master Refactoring Plan 2026
 
-**Version:** 1.0  
+**Version:** 3.22.24  
 **Status:** ✅ Active  
 **Created:** 2026-02-19  
-**Last Updated:** 2026-02-20  
+**Last Updated:** 2026-02-22  
 
 ---
 
@@ -18,19 +18,19 @@ This document is the **single authoritative planning reference** for refactoring
 
 ---
 
-## 1. Module Snapshot (2026-02-19)
+## 1. Module Snapshot (2026-02-22, session 69)
 
 | Dimension | Metric |
 |-----------|--------|
-| Python source files | 92 |
-| Total source lines | ~34,163 |
-| Test files | 64 |
-| Total test lines | ~26,000 |
-| Tests collected | 1,100+ |
-| Tests passing | 1,075+ |
-| Pre-existing skip/fail | ~25 (missing optional deps) |
-| Overall test coverage | ~78% |
-| Migration module coverage | 70%+ ✅ |
+| Python source files | 96+ |
+| Total source lines | ~38,500 |
+| Test files | 110+ |
+| Total test lines | ~62,000 |
+| Tests collected | 3,939+ |
+| Tests passing | 3,939 (26 intentional optional-dep skips) |
+| Pre-existing skip/fail | 26 (optional-dep skips only) |
+| Overall test coverage | **99.99%** (1 missed line: `_entity_helpers.py:117`) |
+| Migration module coverage | **100%** ✅ |
 | Documentation files | 50+ markdown files |
 | Archive files | 17+ markdown files |
 
@@ -39,15 +39,15 @@ This document is the **single authoritative planning reference** for refactoring
 | File | Lines | Status |
 |------|-------|--------|
 | `ipld.py` | 1,440 | ✅ Root-level; docstring clarifies relationship to `storage/ipld_backend.py` |
-| `cypher/parser.py` | 1,157 | ✅ Acceptable (all clause features implemented) |
-| `cypher/compiler.py` | 1,129 | ✅ Acceptable (all clause features implemented) |
-| `ontology/reasoning.py` | 1,120 | ✅ New subpackage; well-structured |
-| `extraction/extractor.py` | 1,105 | ✅ Reduced from 1,624 (Wikipedia helpers extracted) |
-| `migration/formats.py` | 999 | ✅ Acceptable (pluggable registry implemented) |
+| `cypher/parser.py` | 1,157 | ✅ Acceptable (all clause features implemented; 100% coverage) |
+| `cypher/compiler.py` | 1,129 | ✅ Acceptable (all clause features implemented; 100% coverage) |
+| `ontology/reasoning.py` | 1,120 | ✅ New subpackage; well-structured; 100% coverage |
+| `extraction/extractor.py` | 1,105 | ✅ Reduced from 1,624 (Wikipedia helpers extracted; ~85% with spaCy) |
+| `migration/formats.py` | 999 | ✅ Acceptable (pluggable registry; 100% coverage) |
 | `cypher/functions.py` | 917 | ✅ Acceptable (pure function library) |
-| `query/distributed.py` | 916 | ✅ New module; well-structured |
-| `reasoning/cross_document.py` | 874 | ✅ Reduced from 1,196 (moved from root, helpers extracted) |
-| `extraction/srl.py` | 763 | ✅ New module; well-structured |
+| `query/distributed.py` | 916 | ✅ New module; well-structured; 100% coverage |
+| `reasoning/cross_document.py` | 874 | ✅ Reduced from 1,196 (moved from root, helpers extracted; 100% coverage) |
+| `extraction/srl.py` | 763 | ✅ New module; well-structured; **100% coverage** (s58) |
 | `extraction/advanced.py` | 751 | ✅ Moved from root to `extraction/` |
 
 ---
@@ -119,6 +119,26 @@ All work below was completed before this plan was written; it is recorded here t
 - Fixed `evaluate_compiled_expression` to correctly handle NOT, AND, OR in complex WHERE clauses
 - Added `libipld>=3.3.2`, `dag-cbor>=0.3.3` to `setup.py` `ipld` extras
 - 18 new tests in `test_car_format.py` (all passing)
+
+### Coverage Push (Complete ✅, sessions 27–58)
+- 62 coverage sessions (s27–s58) advancing coverage from ~78% to **99.99%** (1 missed line)
+- All 100%-target modules achieved: cypher/, core/, neo4j_compat/, migration/, jsonld/, reasoning/, constraints/, transactions/, indexing/, lineage/, storage/types, ipld.py
+- Dead code cleanups: 14 lines (s53) + 9 lines (s56) + 2 lines (s58) removed
+- Optional-dep skip guards added for all spaCy/numpy/matplotlib/scipy/plotly/rdflib/libipld paths
+- `multiformats>=0.3.0` added to `ipld` extras; `pyproject.toml` `ipld` section added
+- Total: **3,759 passed, 2 skipped, 0 failed** (full dep env; 1 missed line)
+
+### Documentation Consistency (Complete ✅, sessions 59–62)
+- **Session 59**: ROADMAP.md header 3.22.3→3.22.14; release table complete with v3.22.0–3.22.14 rows; CHANGELOG missing sections v3.22.5/v3.22.7/v3.22.11 added
+- **Session 60**: MASTER_STATUS.md stale ~89% coverage table → 99.99%; sessions 54–60 added; ROADMAP duplicate "v2.0.1" section removed
+- **Session 61**: INDEX.md v2.0.0→v3.22.15; stale migration warning removed; README.md v2.1.0→v3.22.15; ROADMAP current version header corrected
+- **Session 62**: DOCUMENTATION_GUIDE.md v1.0→v3.22.16; duplicate MASTER_STATUS entry removed; DEFERRED_FEATURES.md + IMPROVEMENT_TODO.md stale paths/dates fixed
+- Combined: 78 documentation integrity tests across sessions 59-62
+
+### API Accuracy (Complete ✅, sessions 63–64)
+- **Session 63**: ROADMAP.md 3 stale "Status: Planned" items fixed (Migration Performance→Delivered; spaCy→Delivered; Confidence Scoring→Deferred v4.0+); MASTER_REFACTORING_PLAN_2026.md v1.0→v3.22.17
+- **Session 64**: QUICKSTART.md 5 runtime-breaking API inaccuracies fixed (rel.source→rel.source_id; engine.execute→execute_cypher; result iter→result.items; store(kg)→store(kg.to_dict()); HybridSearch→HybridSearchEngine; top_k→k; result.entity.name→result.node_id); MASTER_STATUS feature coverage matrix updated 40-85%→99-100%
+- Combined: 34 API/doc integrity tests across sessions 63-64
 
 ---
 
@@ -202,7 +222,7 @@ This file contains `AdvancedKnowledgeExtractor` — logically part of the `extra
 
 #### 3.3.2 Extraction Validation Split
 
-**Status:** 🟡 Deferred — `extraction/validator.py` (670 lines) contains a single class (`KnowledgeGraphExtractorWithValidation`) not clearly separable into SPARQL/schema/metrics concerns without substantial refactoring. Marked for future review when concerns become clearer.  
+**Status:** 📋 Deferred to v4.0+ — `extraction/validator.py` (670 lines) contains a single class (`KnowledgeGraphExtractorWithValidation`) mixing SPARQL validation, schema validation, and coverage metrics concerns. Splitting into a `validation/` subpackage requires substantial refactoring with uncertain benefit given stable coverage. Revisit if the class grows beyond 1,000 lines or if clear module-level tests are blocked by the mixed structure.  
 **File:** `extraction/validator.py` (670 lines)  
 **Effort:** 3–4 hours  
 **Risk:** Low
@@ -406,12 +426,12 @@ An improvement item is **Done** when:
 
 ## 8. Contact and Review
 
-**Next scheduled review:** Q2 2026 (after v2.0.1 release)  
+**Next scheduled review:** Q3 2026  
 **Maintained by:** Knowledge Graphs Module Team  
 **Questions:** Open a GitHub issue with label `knowledge-graphs`  
 
 ---
 
-**Document Version:** 1.0  
+**Document Version:** 3.22.24  
 **Created:** 2026-02-19  
 **Status:** Active — supersedes no prior documents (this is the first consolidated plan)

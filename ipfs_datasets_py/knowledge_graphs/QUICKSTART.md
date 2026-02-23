@@ -41,8 +41,10 @@ for entity in kg.entities:
     print(f"  - {entity.name} ({entity.entity_type})")
 
 print(f"\nFound {len(kg.relationships)} relationships:")
-for rel in kg.relationships:
-    print(f"  - {rel.source} --[{rel.relationship_type}]--> {rel.target}")
+for rel in kg.relationships.values():
+    src = rel.source_entity.name if rel.source_entity else rel.source_id
+    tgt = rel.target_entity.name if rel.target_entity else rel.target_id
+    print(f"  - {src} --[{rel.relationship_type}]--> {tgt}")
 ```
 
 **Expected Output:**
@@ -67,23 +69,24 @@ Found 3 relationships:
 
 ```python
 from ipfs_datasets_py.knowledge_graphs.query import UnifiedQueryEngine
-from ipfs_datasets_py.knowledge_graphs.storage import IPLDBackend
+from ipfs_datasets_py.knowledge_graphs.core import GraphEngine
 
-# Set up storage and query engine
-backend = IPLDBackend()
-backend.add_knowledge_graph(kg)  # Add the graph from above
+# Set up an in-memory store and populate it from the extracted KG
+store = GraphEngine()
+for entity in kg.entities.values():
+    store.create_node(entity.entity_type, entity.name, properties=entity.properties or {})
 
-engine = UnifiedQueryEngine(backend=backend)
+engine = UnifiedQueryEngine(backend=store)
 
 # Query using Cypher
-results = engine.execute("""
+result = engine.execute_cypher("""
     MATCH (p:Person)-[r:WORKED_AT]->(o:Organization)
     WHERE p.name = 'Marie Curie'
     RETURN p.name, o.name
 """)
 
 print("Query results:")
-for row in results:
+for row in result.items:
     print(f"  {row['p.name']} worked at {row['o.name']}")
 ```
 
@@ -102,13 +105,13 @@ from ipfs_datasets_py.knowledge_graphs.storage import IPLDBackend
 
 # Store knowledge graph in IPFS
 backend = IPLDBackend()
-cid = backend.store(kg)
+cid = backend.store(kg.to_dict())
 
 print(f"Knowledge graph stored with CID: {cid}")
 
-# Retrieve later
-retrieved_kg = backend.retrieve(cid)
-print(f"Retrieved {len(retrieved_kg.entities)} entities")
+# Retrieve later (returns raw dict)
+data = backend.retrieve_json(cid)
+print(f"Retrieved graph with {len(data.get('entities', {}))} entities")
 ```
 
 ---
@@ -171,19 +174,18 @@ driver.close()
 
 ### Pattern 3: Hybrid Search
 ```python
-from ipfs_datasets_py.knowledge_graphs.query import HybridSearch
+from ipfs_datasets_py.knowledge_graphs.query import HybridSearchEngine
 
-searcher = HybridSearch(backend=backend)
+searcher = HybridSearchEngine(backend=backend)
 results = searcher.search(
     query="physicist who won Nobel Prize",
-    top_k=5,
-    combine_strategy="weighted",  # Combine vector and graph search
-    graph_weight=0.6,
-    vector_weight=0.4
+    k=5,
+    vector_weight=0.4,  # Weight for vector similarity
+    graph_weight=0.6,   # Weight for graph relevance
 )
 
 for result in results:
-    print(f"  - {result.entity.name} (score: {result.score:.3f})")
+    print(f"  - {result.node_id} (score: {result.score:.3f})")
 ```
 
 ---

@@ -19,6 +19,7 @@ import sys
 import tempfile
 import types
 from unittest.mock import MagicMock, call, patch
+import importlib
 
 import pytest
 
@@ -28,6 +29,13 @@ import pytest
 #     950-951 in formats.py)
 # ---------------------------------------------------------------------------
 
+_libipld_available = bool(importlib.util.find_spec("libipld"))
+_skip_no_libipld = pytest.mark.skipif(
+    not _libipld_available, reason="libipld not installed"
+)
+
+
+@_skip_no_libipld
 class TestBuiltinCarSaveLoad:
     """Test CAR format save/load with all real deps (libipld, ipld_car, multiformats)."""
 

@@ -5,11 +5,23 @@ Provides persistent transaction logging on IPLD for crash recovery
 and ACID guarantees.
 """
 
+import asyncio
 import anyio
 import json
 import logging
 from typing import Iterator, List, Optional, Dict, Any
 from datetime import datetime
+
+
+def _cancelled_exc_class() -> type:
+    """Return the current async framework's cancellation exception class.
+
+    Falls back to asyncio.CancelledError when called outside an async context.
+    """
+    try:
+        return anyio.get_cancelled_exc_class()
+    except anyio.NoEventLoopError:
+        return asyncio.CancelledError
 
 from .types import (
     WALEntry, Operation, TransactionState,
@@ -126,7 +138,7 @@ class WriteAheadLog:
                 f"Failed to append WAL entry due to storage error: {e}",
                 details={'txn_id': str(entry.txn_id)}
             ) from e
-        except anyio.get_cancelled_exc_class():
+        except _cancelled_exc_class():
             raise
         except Exception as e:
             logger.error(f"Failed to append WAL entry: {e}")
@@ -193,7 +205,7 @@ class WriteAheadLog:
                     f"Failed to deserialize WAL entry due to storage error: {e}",
                     details={'cid': str(current_cid)}
                 ) from e
-            except anyio.get_cancelled_exc_class():
+            except _cancelled_exc_class():
                 raise
             except Exception as e:
                 logger.error(f"Failed to read WAL entry {current_cid}: {e}")
@@ -255,7 +267,7 @@ class WriteAheadLog:
             raise
         except TransactionError:
             raise
-        except anyio.get_cancelled_exc_class():
+        except _cancelled_exc_class():
             raise
         except Exception as e:
             logger.error(f"Failed to compact WAL: {e}")
@@ -325,7 +337,7 @@ class WriteAheadLog:
             raise
         except TransactionError:
             raise
-        except anyio.get_cancelled_exc_class():
+        except _cancelled_exc_class():
             raise
         except Exception as e:
             logger.error(f"Failed to recover from WAL: {e}")
@@ -367,7 +379,7 @@ class WriteAheadLog:
         except DeserializationError as e:
             logger.warning(f"Deserialization error in transaction history (returning partial): {e}")
             return entries  # Return what we have so far
-        except anyio.get_cancelled_exc_class():
+        except _cancelled_exc_class():
             raise
         except Exception as e:
             logger.error(f"Failed to get transaction history: {e}")
@@ -435,7 +447,7 @@ class WriteAheadLog:
         except DeserializationError as e:
             logger.error(f"WAL verification failed (deserialization): {e}")
             return False
-        except anyio.get_cancelled_exc_class():
+        except _cancelled_exc_class():
             raise
         except Exception as e:
             logger.error(f"WAL verification failed: {e}")

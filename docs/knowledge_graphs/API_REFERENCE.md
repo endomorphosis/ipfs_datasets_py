@@ -1,19 +1,21 @@
 # Knowledge Graphs - API Reference
 
-**Version:** 2.0.0  
-**Last Updated:** 2026-02-17
+**Version:** 3.22.33  
+**Last Updated:** 2026-02-23
 
 ---
 
 ## Table of Contents
 
 1. [Extraction API](#extraction-api)
-2. [Query API](#query-api)
-3. [Storage API](#storage-api)
-4. [Transaction API](#transaction-api)
-5. [Cypher Language Reference](#cypher-language-reference)
-6. [Utility APIs](#utility-apis)
-7. [Compatibility APIs](#compatibility-apis)
+2. [Advanced Extraction APIs (v3.22.x)](#advanced-extraction-apis-v322x)
+3. [Query API](#query-api)
+4. [Advanced Query APIs (v3.22.x)](#advanced-query-apis-v322x)
+5. [Storage API](#storage-api)
+6. [Transaction API](#transaction-api)
+7. [Cypher Language Reference](#cypher-language-reference)
+8. [Utility APIs](#utility-apis)
+9. [Compatibility APIs](#compatibility-apis)
 
 ---
 
@@ -953,10 +955,11 @@ LIMIT 10
 
 ### Known Limitations
 
-**Not Yet Supported:**
-- `NOT` operator in WHERE clauses - **Workaround:** Use positive conditions
-- `CREATE` for relationships - **Workaround:** Create relationships via API
-- Complex pattern matching - **Workaround:** Break into multiple queries
+**All previously-unsupported Cypher features are now implemented (v2.1.0):**
+- ✅ `NOT` operator in WHERE clauses — `WHERE NOT n.age > 30`
+- ✅ `CREATE` for relationships — `CREATE (a)-[r:KNOWS]->(b)`
+- ✅ Complex pattern matching — basic patterns fully supported
+- ⚠️ Subqueries — not yet supported (flatten query structure)
 
 ---
 
@@ -1105,10 +1108,258 @@ except BudgetExceededError as e:
 
 ---
 
+## Advanced Extraction APIs (v3.22.x)
+
+The following APIs were added in sessions 69–78 to deliver the deferred v4.0+ features from the ROADMAP.
+
+### KnowledgeGraphDiff (v3.22.24+)
+
+Represents a structural difference between two `KnowledgeGraph` instances.
+
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphDiff
+
+diff = kg1.diff(kg2)
+# diff.added_entities: List[Entity]
+# diff.removed_entity_ids: List[str]
+# diff.added_relationships: List[Relationship]
+# diff.removed_relationship_ids: List[str]
+# diff.modified_entities: Dict[str, Dict[str, Any]]
+
+print(diff.summary())     # Human-readable summary
+print(diff.is_empty)      # True if graphs are identical
+
+kg1.apply_diff(diff)      # Apply patch in-place
+```
+
+### Graph Event Subscriptions (v3.22.25+)
+
+Real-time notifications on graph mutations.
+
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import GraphEventType, GraphEvent
+
+handler_id = kg.subscribe(lambda event: print(event.event_type, event.entity_id))
+kg.add_entity(entity)   # triggers ENTITY_ADDED event
+kg.unsubscribe(handler_id)
+```
+
+### KnowledgeGraph Named Snapshots (v3.22.25+)
+
+```python
+snap_name = kg.snapshot("before_import")   # returns name
+# ... mutations ...
+kg.restore_snapshot("before_import")       # restores entities + relationships
+names = kg.list_snapshots()                # ["before_import"]
+data = kg.get_snapshot("before_import")    # raw dict copy
+```
+
+### ProvenanceChain (v3.22.29+)
+
+Blockchain-style tamper-evident audit chain using SHA-256 CIDs.
+
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import ProvenanceChain, ProvenanceEventType
+
+chain = kg.enable_provenance()   # attaches chain; auto-records add_entity/add_relationship
+kg.add_entity(entity)           # auto-records ENTITY_CREATED event
+valid, errors = chain.verify_chain()   # tamper detection
+jsonl = chain.to_jsonl()        # serialise to JSONL
+chain2 = ProvenanceChain.from_jsonl(jsonl)  # round-trip
+```
+
+### KnowledgeGraphVisualizer (v3.22.27+)
+
+Export knowledge graphs to standard visualization formats — pure Python, no external deps.
+
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphVisualizer
+
+viz = KnowledgeGraphVisualizer(kg)
+dot_src = viz.to_dot()                    # Graphviz DOT
+mermaid = viz.to_mermaid(direction="LR") # Mermaid.js
+d3_data = viz.to_d3_json()               # D3.js force-directed
+ascii_tree = viz.to_ascii()             # ASCII tree
+
+# Or use KnowledgeGraph convenience methods directly:
+dot_src = kg.to_dot()
+mermaid  = kg.to_mermaid()
+```
+
+---
+
+## Advanced Query APIs (v3.22.x)
+
+### GraphQL API (v3.22.26+)
+
+Execute GraphQL queries against a `KnowledgeGraph`.
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query import KnowledgeGraphQLExecutor, GraphQLParser
+
+executor = KnowledgeGraphQLExecutor(kg)
+
+# Entity selection by type
+result = executor.execute("{ person { entity_id name confidence } }")
+# {"data": {"person": [{"entity_id": "...", "name": "Alice", "confidence": 1.0}]}}
+
+# Argument filters
+result = executor.execute('{ person(name: "Alice") { type } }')
+
+# Relationship traversal (single-level)
+result = executor.execute('{ person { knows { entity_id name } } }')
+
+# Aliases
+result = executor.execute("{ p: person { id: entity_id } }")
+```
+
+**Exported symbols:** `GraphQLParser`, `GraphQLDocument`, `GraphQLField`, `GraphQLParseError`, `KnowledgeGraphQLExecutor`
+
+---
+
+### Federated Knowledge Graphs (v3.22.28+)
+
+Cross-graph entity resolution and unified query execution.
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query import (
+    FederatedKnowledgeGraph, EntityResolutionStrategy, EntityMatch
+)
+
+fed = FederatedKnowledgeGraph()
+idx1 = fed.add_graph(kg1, "source_a")
+idx2 = fed.add_graph(kg2, "source_b")
+
+# Cross-graph entity matching
+matches: List[EntityMatch] = fed.resolve_entities(
+    strategy=EntityResolutionStrategy.TYPE_AND_NAME  # or EXACT_NAME / PROPERTY_MATCH
+)
+
+# Cluster all equivalent entities by fingerprint
+cluster = fed.get_entity_cluster(fingerprint="person|alice")
+
+# Search across all graphs
+hits = fed.query_entity(name="alice", entity_type="person")
+
+# Apply any function to all graphs
+result = fed.execute_across(lambda g: len(g.entities))
+
+# Merge all graphs with deduplication + property merging
+merged: KnowledgeGraph = fed.to_merged_graph()
+```
+
+**Exported symbols:** `FederatedKnowledgeGraph`, `EntityResolutionStrategy`, `EntityMatch`, `FederationQueryResult`
+
+---
+
+### Graph Neural Networks (v3.22.30+)
+
+Pure-Python GNN message passing; exports feature arrays for PyTorch/numpy.
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query import (
+    GraphNeuralNetworkAdapter, GNNConfig, GNNLayerType, NodeEmbedding
+)
+
+config = GNNConfig(embedding_dim=64, num_layers=2, layer_type=GNNLayerType.GRAPH_SAGE)
+adapter = GraphNeuralNetworkAdapter(kg, config)
+
+# Full forward pass: extract features → message passing → normalize
+embeddings: Dict[str, NodeEmbedding] = adapter.compute_embeddings()
+
+# Link prediction (cosine similarity of embeddings)
+score: float = adapter.link_prediction_score(entity_a_id, entity_b_id)
+
+# Find top-k similar entities
+similar: List[Tuple[str, float]] = adapter.find_similar_entities(entity_id, top_k=5)
+
+# Export for external ML frameworks
+node_ids, feature_matrix = adapter.export_node_features_array()
+adj_dict = adapter.to_adjacency_dict()
+```
+
+**Exported symbols:** `GraphNeuralNetworkAdapter`, `GNNConfig`, `GNNLayerType`, `NodeEmbedding`
+
+---
+
+### Zero-Knowledge Proofs (v3.22.30+)
+
+Privacy-preserving graph attestations. Structural proofs without revealing sensitive data.
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query import (
+    KGZKProver, KGZKVerifier, KGProofStatement, KGProofType
+)
+
+prover = KGZKProver(kg, prover_id="my-prover")
+
+# Prove entity exists without revealing entity_id
+proof: KGProofStatement = prover.prove_entity_exists("person", "Alice")
+
+# Prove graph property without revealing value
+proof2 = prover.prove_entity_property(entity_id, "email", value_hash)
+
+# Prove path connectivity without revealing route
+proof3 = prover.prove_path_exists("person", "organization", max_hops=3)
+
+# Batch proofs
+proofs = prover.batch_prove([
+    ("entity_exists", {"entity_type": "person", "name": "Alice"}),
+])
+
+# Verify (nullifier replay protection built-in)
+verifier = KGZKVerifier()
+assert verifier.verify_statement(proof)
+
+# Connect to logic.zkp backend (optional)
+from ipfs_datasets_py.logic.zkp import ZKPProver
+prover_with_backend = KGZKProver.from_logic_prover(kg, ZKPProver())
+verifier_with_backend = KGZKVerifier.from_logic_verifier(ZKPVerifier())
+```
+
+**Exported symbols:** `KGZKProver`, `KGZKVerifier`, `KGProofStatement`, `KGProofType`
+
+---
+
+### Groth16 Bridge (v3.22.32+)
+
+Direct bridge from KG ZKP layer to `processors/groth16_backend` Rust binary.
+
+```python
+from ipfs_datasets_py.knowledge_graphs.query import (
+    create_groth16_kg_prover, create_groth16_kg_verifier,
+    describe_groth16_status, groth16_binary_available, groth16_enabled,
+    KGEntityFormula, Groth16KGConfig
+)
+
+# Diagnostic
+status = describe_groth16_status()
+# {"enabled": bool, "binary_available": bool, "production_ready": bool, ...}
+
+# Check availability without subprocess
+available = groth16_binary_available()
+enabled = groth16_enabled()   # checks IPFS_DATASETS_ENABLE_GROTH16 env var
+
+# TDFOL theorem/axiom mapping (entity_id stays private)
+theorem = KGEntityFormula.entity_exists_theorem("person", "alice")
+axioms  = KGEntityFormula.entity_exists_axioms("secret-id", "person", "alice", 1.0)
+
+# Create backed prover (graceful simulation fallback when binary unavailable)
+config = Groth16KGConfig(circuit_version="v2", timeout_seconds=30)
+prover  = create_groth16_kg_prover(kg, config)
+verifier = create_groth16_kg_verifier(config=config)
+```
+
+**Exported symbols:** `groth16_binary_available`, `groth16_enabled`, `Groth16KGConfig`, `KGEntityFormula`, `create_groth16_kg_prover`, `create_groth16_kg_verifier`, `describe_groth16_status`
+
+---
+
 ## Version Information
 
 - **Extraction API:** v0.1.0
+- **Advanced Extraction APIs:** v3.22.25+ (events/snapshots), v3.22.24+ (diff/patch), v3.22.29+ (provenance), v3.22.27+ (visualization)
 - **Query API:** v1.0.0
+- **Advanced Query APIs:** v3.22.26+ (GraphQL), v3.22.28+ (federation), v3.22.30+ (GNN, ZKP), v3.22.32+ (Groth16)
 - **Storage API:** v1.0.0
 - **Transaction API:** v1.0.0
 
@@ -1123,6 +1374,6 @@ All APIs are production-ready with full backward compatibility.
 
 ---
 
-**Last Updated:** 2026-02-17  
-**Version:** 2.0.0  
+**Last Updated:** 2026-02-23  
+**Version:** 3.22.33  
 **Status:** Production-Ready

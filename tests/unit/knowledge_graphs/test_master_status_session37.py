@@ -23,8 +23,13 @@ Targets (744 missed → ~685 missed):
 
 import sys
 import importlib
+import importlib.util
 import warnings
 from unittest.mock import MagicMock, patch
+import pytest
+
+_matplotlib_available = bool(importlib.util.find_spec("matplotlib"))
+_rdflib_available = bool(importlib.util.find_spec("rdflib"))
 
 
 # ---------------------------------------------------------------------------
@@ -187,6 +192,7 @@ class TestLineageVisualizationImportError:
             sys.modules["matplotlib.pyplot"] = real_plt
         importlib.reload(viz_mod)
 
+    @pytest.mark.skipif(not _matplotlib_available, reason="matplotlib not installed")
     def test_render_networkx_ghost_node_gets_lightgray(self):
         """GIVEN node in _graph but not in _nodes WHEN render_networkx THEN lightgray color used."""
         import networkx as nx
@@ -364,6 +370,7 @@ class TestHybridSearchAlreadyVisited:
 # ---------------------------------------------------------------------------
 # 11. extraction/graph.py — boolean property XSD (629, 661)
 # ---------------------------------------------------------------------------
+@pytest.mark.skipif(not _rdflib_available, reason="rdflib not installed")
 class TestKnowledgeGraphExportBooleanProperty:
     def test_entity_bool_property_rdf_line_629(self):
         """GIVEN entity with bool property WHEN export_to_rdf THEN XSD.boolean triple added."""

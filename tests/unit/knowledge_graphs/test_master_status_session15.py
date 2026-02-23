@@ -18,8 +18,14 @@ import time
 import tempfile
 from typing import Any, Dict
 from unittest.mock import MagicMock, patch
+import importlib
 
 import pytest
+
+_matplotlib_available = bool(importlib.util.find_spec("matplotlib"))
+_skip_no_matplotlib = pytest.mark.skipif(
+    not _matplotlib_available, reason="matplotlib not installed"
+)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers / fixtures
@@ -71,6 +77,7 @@ def _make_wal(fail_store: bool = False, fail_retrieve: bool = False):
 # 1. lineage/visualization.py
 # ═════════════════════════════════════════════════════════════════════════════
 
+@_skip_no_matplotlib
 class TestLineageVisualizerRenderNetworkx:
     """Tests for LineageVisualizer.render_networkx with matplotlib available."""
 
@@ -182,6 +189,7 @@ class TestLineageVisualizerRenderPlotly:
 class TestVisualizeLinkageFunction:
     """Tests for the module-level visualize_lineage() function."""
 
+    @_skip_no_matplotlib
     def test_visualize_networkx_renderer(self):
         """GIVEN networkx renderer WHEN visualize_lineage THEN returns bytes."""
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker
@@ -198,6 +206,7 @@ class TestVisualizeLinkageFunction:
         with pytest.raises(ValueError, match="Unknown renderer"):
             visualize_lineage(tracker, renderer="d3js")
 
+    @_skip_no_matplotlib
     def test_visualize_with_output_path(self):
         """GIVEN output_path WHEN visualize_lineage(networkx) THEN saves file."""
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker

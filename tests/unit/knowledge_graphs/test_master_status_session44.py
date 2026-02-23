@@ -11,13 +11,19 @@ Missed targets:
   hybrid_search.py:205   continue when node already visited in expand_graph
 """
 from unittest.mock import MagicMock, patch, PropertyMock
+import importlib
 import pytest
+
+_spacy_available = bool(importlib.util.find_spec("spacy"))
+_skip_no_spacy = pytest.mark.skipif(not _spacy_available, reason="spacy not installed")
 
 
 # ===========================================================================
 # 1. extractor.py:119-123 – OSError during spacy.load; fallback to download
 # ===========================================================================
 
+
+@_skip_no_spacy
 class TestExtractorSpacyModelOSError:
     """GIVEN spacy is installed but the model is not downloaded,
     WHEN KnowledgeGraphExtractor(use_spacy=True) is constructed,
@@ -76,6 +82,7 @@ class TestExtractorSpacyModelOSError:
 # 2. extractor.py:178 – continue when ent._.confidence < min_confidence
 # ===========================================================================
 
+@_skip_no_spacy
 class TestExtractEntitiesLowConfidenceSkip:
     """GIVEN a spaCy Span extension 'confidence' set to a low value,
     WHEN extract_entities is called with min_confidence=0.9,

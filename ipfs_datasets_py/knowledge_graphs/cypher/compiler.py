@@ -182,8 +182,6 @@ class CypherCompiler:
             if isinstance(element, NodePattern):
                 # Determine the actual variable that will be used
                 variable = element.variable or f"_n{i}"
-                if not variable:
-                    variable = f"_anon{len(self.variables)}"
                 node_vars.append(variable)
             else:
                 node_vars.append(None)  # Placeholder for non-node elements
@@ -209,8 +207,6 @@ class CypherCompiler:
                     if is_target:
                         # Register the variable but don't generate ScanLabel
                         variable = element.variable or f"_n{i}"
-                        if not variable:
-                            variable = f"_anon{len(self.variables)}"
                         self.variables[variable] = "node"
                         # Store the target node info for the relationship compilation
                         # Labels will be passed to Expand/OptionalExpand
