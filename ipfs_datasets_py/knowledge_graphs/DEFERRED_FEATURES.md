@@ -746,6 +746,93 @@ err = exe.execute("{ unclosed {")
 
 ---
 
+## P8: Delivered in v3.22.27 (formerly v4.0+ "Advanced visualization tools")
+
+### 20. Advanced Visualization Tools
+
+**Status:** ✅ Implemented (v3.22.27 — 2026-02-23)
+**Location:** `extraction/visualization.py` — `KnowledgeGraphVisualizer`
+
+**Implementation:**
+- `KnowledgeGraphVisualizer(kg)` — pure-Python visualization exporter (no external
+  dependencies) for :class:`KnowledgeGraph` objects; four output formats:
+  - `to_dot(graph_name=None, directed=True) → str` — Graphviz DOT language
+    (``digraph`` / ``graph``; entity nodes as ellipses; relationship edges with labels)
+  - `to_mermaid(direction="LR", max_entities=None) → str` — Mermaid.js graph
+    notation compatible with GitHub Markdown, Notion, GitLab, Obsidian, and mermaid.live
+  - `to_d3_json(max_nodes=None) → dict` — D3.js force-directed graph JSON
+    (``{"nodes": [...], "links": [...]}``) ready for ``d3-force`` layouts
+  - `to_ascii(root_entity_id=None, max_depth=3) → str` — human-readable ASCII
+    tree; rooted DFS when *root_entity_id* given; flat entity roster otherwise
+- Internal helpers: `_escape_dot_label(text)`, `_escape_mermaid(text)` (not exported)
+- **Convenience methods** added to `KnowledgeGraph` (lazy-import, no circular deps):
+  `to_dot(**kw)`, `to_mermaid(**kw)`, `to_d3_json(**kw)`, `to_ascii(**kw)`
+- `KnowledgeGraphVisualizer` exported from `extraction/__init__.py` and `__all__`
+
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import (
+    KnowledgeGraph,
+    KnowledgeGraphVisualizer,
+)
+
+kg = KnowledgeGraph("social")
+alice = kg.add_entity("person", "Alice", {"age": 30})
+bob   = kg.add_entity("person", "Bob",   {"age": 25})
+acme  = kg.add_entity("org",    "Acme Corp")
+kg.add_relationship("knows",    alice, bob)
+kg.add_relationship("works_at", bob,   acme)
+
+vis = KnowledgeGraphVisualizer(kg)
+
+# --- Graphviz DOT (pipe to: dot -Tpng graph.dot -o graph.png) ---
+print(vis.to_dot())
+# digraph "social" {
+#   rankdir=LR;
+#   node [shape=ellipse fontname=Helvetica];
+#   "..." [label="Alice\n(person)"];
+#   "..." [label="Bob\n(person)"];
+#   "..." [label="Acme Corp\n(org)"];
+#   "..." -> "..." [label="knows"];
+#   "..." -> "..." [label="works_at"];
+# }
+
+# --- Mermaid.js (embed in ```mermaid ``` fenced code block) ---
+print(vis.to_mermaid())
+# graph LR
+#   e1["Alice\n(person)"]
+#   e2["Bob\n(person)"]
+#   e3["Acme Corp\n(org)"]
+#   e1 -->|"knows"| e2
+#   e2 -->|"works_at"| e3
+
+# --- ASCII tree ---
+print(vis.to_ascii())
+# social (3 entities, 2 relationships)
+# ├─ Alice (person)
+# │  └─[knows]→ Bob
+# ├─ Bob (person)
+# │  └─[works_at]→ Acme Corp
+# └─ Acme Corp (org)
+
+# --- D3.js JSON ---
+import json
+d3_data = vis.to_d3_json()
+print(json.dumps(d3_data, indent=2))
+# {"nodes": [{"id": "...", "name": "Alice", "type": "person", ...}, ...],
+#  "links": [{"source": "...", "target": "...", "type": "knows", ...}, ...]}
+
+# --- Convenience methods on KnowledgeGraph ---
+dot_src = kg.to_dot(directed=False)   # undirected graph { ... -- ... }
+mermaid_tb = kg.to_mermaid(direction="TB")
+ascii_rooted = kg.to_ascii(root_entity_id=alice.entity_id, max_depth=2)
+d3_limited = kg.to_d3_json(max_nodes=2)
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session73.py`
+
+---
+
 ## See Also
 
 - [ROADMAP.md](ROADMAP.md) - Complete development timeline
@@ -755,7 +842,7 @@ err = exe.execute("{ unclosed {")
 
 ---
 
-**Last Updated:** 2026-02-23 (session 72)  
+**Last Updated:** 2026-02-23 (session 73)  
 **Next Review:** Q3 2026  
 **Maintainer:** Knowledge Graphs Team
 

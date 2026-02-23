@@ -5,6 +5,33 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.27] - 2026-02-23
+
+### Added — Deferred v4.0+ Advanced Visualization Tools (Session 73)
+
+**Production code changes.**
+
+- **`extraction/visualization.py`** — New module implementing `KnowledgeGraphVisualizer`:
+  - `to_dot(graph_name=None, directed=True) → str` — Graphviz DOT language; entity nodes as ellipses with `name\n(type)` labels; relationship edges with type labels; proper DOT special-char escaping
+  - `to_mermaid(direction="LR", max_entities=None) → str` — Mermaid.js `graph LR` notation; compatible with GitHub Markdown, Notion, GitLab, Obsidian, and mermaid.live; optional entity count limit
+  - `to_d3_json(max_nodes=None) → dict` — D3.js force-directed graph JSON (`{"nodes": [...], "links": [...]}`) with node fields `id/name/type/confidence/properties` and link fields `source/target/type/confidence/properties`
+  - `to_ascii(root_entity_id=None, max_depth=3) → str` — ASCII-art tree; rooted depth-first traversal when `root_entity_id` given; flat entity roster with outgoing relationships otherwise
+  - No external dependencies; pure Python 3.12+
+
+- **`extraction/graph.py`**: 4 lazy-import convenience methods added to `KnowledgeGraph`:
+  - `to_dot(**kwargs)`, `to_mermaid(**kwargs)`, `to_d3_json(**kwargs)`, `to_ascii(**kwargs)` — each delegates to `KnowledgeGraphVisualizer(self).<method>(**kwargs)`; lazy import avoids circular dependency
+
+- **`extraction/__init__.py`**: `KnowledgeGraphVisualizer` exported in `__all__`
+
+**Documentation changes.**
+
+- `DEFERRED_FEATURES.md`: P8 section added — §20 Advanced Visualization Tools (✅ Implemented v3.22.27) with full usage example for all 4 formats
+- `ROADMAP.md`: v4.0+ "Advanced visualization tools" → ✅ Delivered in v3.22.27 (`KnowledgeGraphVisualizer` in `extraction/visualization.py`); v3.22.27 row added to release table; Current Version 3.22.26→3.22.27
+- `MASTER_STATUS.md`: version 3.22.26→3.22.27; session 73 entry; test-files 111+→112+; total 4,041→4,082
+- `CHANGELOG_KNOWLEDGE_GRAPHS.md`: this section
+
+---
+
 ## [3.22.26] - 2026-02-23
 
 ### Added — Deferred v4.0+ GraphQL API support (Session 72)

@@ -1064,7 +1064,7 @@ class KnowledgeGraph:
                 ))
 
         # 5. Add new relationships
-        for r_dict in diff.added_relationships:
+        for r_dict in list(diff.added_relationships):
             src_data = r_dict.get("source")
             tgt_data = r_dict.get("target")
 
@@ -1096,6 +1096,59 @@ class KnowledgeGraph:
                     confidence=float(r_dict.get("confidence", 1.0)),
                     bidirectional=bool(r_dict.get("bidirectional", False)),
                 )
+
+
+    # ------------------------------------------------------------------
+    # Visualization (v4.0+ roadmap — delivered v3.22.27)
+    # ------------------------------------------------------------------
+
+    def to_dot(self, **kwargs) -> str:
+        """Return a Graphviz DOT string.
+
+        Delegates to
+        :meth:`~extraction.visualization.KnowledgeGraphVisualizer.to_dot`.
+        Accepts the same keyword arguments.
+        """
+        from ipfs_datasets_py.knowledge_graphs.extraction.visualization import (
+            KnowledgeGraphVisualizer,
+        )
+        return KnowledgeGraphVisualizer(self).to_dot(**kwargs)
+
+    def to_mermaid(self, **kwargs) -> str:
+        """Return a Mermaid.js graph string.
+
+        Delegates to
+        :meth:`~extraction.visualization.KnowledgeGraphVisualizer.to_mermaid`.
+        Accepts the same keyword arguments.
+        """
+        from ipfs_datasets_py.knowledge_graphs.extraction.visualization import (
+            KnowledgeGraphVisualizer,
+        )
+        return KnowledgeGraphVisualizer(self).to_mermaid(**kwargs)
+
+    def to_d3_json(self, **kwargs) -> Dict[str, Any]:
+        """Return a D3.js force-graph dict.
+
+        Delegates to
+        :meth:`~extraction.visualization.KnowledgeGraphVisualizer.to_d3_json`.
+        Accepts the same keyword arguments.
+        """
+        from ipfs_datasets_py.knowledge_graphs.extraction.visualization import (
+            KnowledgeGraphVisualizer,
+        )
+        return KnowledgeGraphVisualizer(self).to_d3_json(**kwargs)
+
+    def to_ascii(self, **kwargs) -> str:
+        """Return an ASCII-art graph tree.
+
+        Delegates to
+        :meth:`~extraction.visualization.KnowledgeGraphVisualizer.to_ascii`.
+        Accepts the same keyword arguments.
+        """
+        from ipfs_datasets_py.knowledge_graphs.extraction.visualization import (
+            KnowledgeGraphVisualizer,
+        )
+        return KnowledgeGraphVisualizer(self).to_ascii(**kwargs)
 
 
 @dataclass

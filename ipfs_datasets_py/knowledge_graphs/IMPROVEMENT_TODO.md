@@ -28,6 +28,16 @@
 
 ---
 
+## Session log (most recent first)
+
+- **Session 73 (2026-02-23):** Implemented deferred v4.0+ Advanced Visualization Tools — `extraction/visualization.py` (`KnowledgeGraphVisualizer` with `to_dot`/`to_mermaid`/`to_d3_json`/`to_ascii`; pure Python, no external deps); convenience methods on `KnowledgeGraph`; DEFERRED_FEATURES §20; 41 tests. v3.22.26→v3.22.27.
+- **Session 72 (2026-02-23):** Implemented deferred v4.0+ GraphQL API support — `query/graphql.py` (`GraphQLParser` + `KnowledgeGraphQLExecutor`); DEFERRED_FEATURES §19; 43 tests. v3.22.25→v3.22.26.
+- **Session 71 (2026-02-22):** Implemented deferred v4.0+ graph event subscriptions (`GraphEventType`/`GraphEvent`/`subscribe`/`unsubscribe`) + KG snapshots (`snapshot`/`restore_snapshot`); DEFERRED_FEATURES §17+§18; 38 tests. v3.22.24→v3.22.25.
+- **Session 70 (2026-02-22):** Implemented deferred v4.0+ graph diff/patch (`KnowledgeGraphDiff`/`diff`/`apply_diff`); DEFERRED_FEATURES §16; 36 tests. v3.22.23→v3.22.24.
+- **Session 69 (2026-02-22):** Implemented deferred v4.0+ confidence aggregation + migration progress tracking; DEFERRED_FEATURES §14+§15; 36 tests. v3.22.22→v3.22.23.
+
+---
+
 ## Quick findings (actionable deltas)
 
 These are the highest-signal improvement opportunities found during a quick pass:
