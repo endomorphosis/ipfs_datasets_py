@@ -905,6 +905,69 @@ alice_merged = merged.get_entities_by_name("Alice")[0]
 
 ---
 
+## P10: Delivered in v3.22.29 (formerly v4.0+ "Blockchain integration for provenance")
+
+### §22 Knowledge Graph Provenance Chain
+
+**Status:** ✅ Implemented in v3.22.29  
+**Module:** `ipfs_datasets_py/knowledge_graphs/extraction/provenance.py`  
+**Session:** 75
+
+**What was delivered:**
+- `ProvenanceEventType` enum (7 event types): `ENTITY_CREATED` / `ENTITY_MODIFIED` / `ENTITY_REMOVED` / `RELATIONSHIP_CREATED` / `RELATIONSHIP_REMOVED` / `GRAPH_SNAPSHOT` / `GRAPH_RESTORED`
+- `ProvenanceEvent` dataclass — SHA-256 content-addressed CID auto-computed in `__post_init__`; each event links to predecessor via `previous_cid` forming an immutable hash chain; `to_dict()` / `from_dict()`
+- `ProvenanceChain` class:
+  - `record_entity_created/modified/removed()` — entity mutation recording
+  - `record_relationship_created/removed()` — relationship mutation recording
+  - `record_graph_snapshot/restored()` — graph-level event recording
+  - `get_history(entity_id=None, relationship_id=None)` — O(1) indexed history lookup
+  - `verify_chain() → (bool, List[str])` — tamper detection (recomputes all CIDs + checks `previous_cid` links)
+  - `to_jsonl()` / `from_jsonl()` — JSONL serialisation/deserialisation
+  - `latest_cid` / `depth` properties
+- `KnowledgeGraph` integration:
+  - `enable_provenance() → ProvenanceChain` — attaches chain; wires auto-recording
+  - `disable_provenance()` — detaches chain
+  - `provenance` property — returns attached chain or `None`
+  - `add_entity()` / `add_relationship()` — automatically record events when provenance is enabled
+
+**Usage example:**
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
+kg = KnowledgeGraph("research")
+pchain = kg.enable_provenance()
+
+alice = kg.add_entity("person", "Alice", confidence=0.9)
+bob = kg.add_entity("person", "Bob", confidence=0.8)
+kg.add_relationship("knows", alice, bob)
+
+print(pchain.depth)       # 3
+print(pchain.latest_cid)  # e.g. "bafk3a9c..." (SHA-256 derived)
+
+# Per-entity history
+history = pchain.get_history(entity_id=alice.entity_id)
+# [ProvenanceEvent(ENTITY_CREATED, ..., cid="bafk..."), ...]
+
+# Tamper verification
+is_valid, errors = pchain.verify_chain()
+assert is_valid and errors == []
+
+# Serialise to JSONL
+jsonl = pchain.to_jsonl()
+# One JSON line per event
+
+# Restore
+from ipfs_datasets_py.knowledge_graphs.extraction import ProvenanceChain
+restored = ProvenanceChain.from_jsonl(jsonl)
+assert restored.depth == pchain.depth
+is_valid, _ = restored.verify_chain()
+assert is_valid
+```
+
+**Why "blockchain integration":** The SHA-256 hash chain mimics a single-party append-only ledger with the same tamper-detection properties as Merkle-based blockchains — without requiring an external blockchain node. It integrates naturally with the IPFS CID scheme (`bafk...`) already used throughout the repository.
+
+---
+
 ## See Also
 
 - [ROADMAP.md](ROADMAP.md) - Complete development timeline
@@ -914,7 +977,7 @@ alice_merged = merged.get_entities_by_name("Alice")[0]
 
 ---
 
-**Last Updated:** 2026-02-23 (session 74)
+**Last Updated:** 2026-02-23 (session 75)
 **Next Review:** Q3 2026
 **Maintainer:** Knowledge Graphs Team
 

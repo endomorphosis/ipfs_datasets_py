@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.22.28  
+**Version:** 3.22.29  
 **Status:** ✅ Production Ready  
 **Last Updated:** 2026-02-23 (session 74)  
-**Last Major Release:** v3.22.28 (session 74: deferred v4.0+ federated knowledge graphs — `query/federation.py` with `FederatedKnowledgeGraph`; cross-graph entity resolution with `TYPE_AND_NAME`/`EXACT_NAME`/`PROPERTY_MATCH` strategies; `execute_across()`; `to_merged_graph()` with property merging; `query_entity()`; `get_entity_cluster()`; DEFERRED_FEATURES §21; 42 tests)
+**Last Major Release:** v3.22.29 (session 75: deferred v4.0+ blockchain-style provenance chain — `extraction/provenance.py` with `ProvenanceChain` (SHA-256 content-addressed CID chain, tamper-evident verify_chain, JSONL serialisation); 7 event types; KnowledgeGraph.enable_provenance()/disable_provenance()/.provenance; auto-recording in add_entity/add_relationship; DEFERRED_FEATURES P10 §22; ROADMAP "Blockchain integration for provenance" → ✅ Delivered; 45 tests)
 
 ---
 
@@ -19,7 +19,7 @@
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
 | **Test Coverage** | **99.99% (1 missed line)** | Session 58: 3,759 pass, 2 skip, **0 fail** (full dep env); 1 missed line |
-| **Documentation** | ✅ Up to Date | Reflects v3.22.28 structure |
+| **Documentation** | ✅ Up to Date | Reflects v3.22.29 structure |
 | **Known Issues** | None | 0 failures; all skips intentional (libipld/spaCy absent when not installed) |
 | **Next Milestone** | v4.0 (2027+) | 1 missed line: `_entity_helpers.py:117` (intentional defensive guard) — 99.99% coverage |
 
@@ -174,7 +174,7 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 **Remaining 1 missed line (99.99% coverage):**
 - `extraction/_entity_helpers.py:117` — intentional defensive guard (all regex patterns produce ≥2-char groups; kept for safety)
 
-### Test Files: 113+ total (as of v3.22.28)
+### Test Files: 114+ total (as of v3.22.29)
 
 **Unit Tests:** tests/unit/knowledge_graphs/
 - test_extraction.py, test_extraction_package.py, test_advanced_extractor.py
@@ -264,8 +264,9 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - session72: **Deferred v4.0+ GraphQL API support.** `query/graphql.py`: `GraphQLParser` (recursive-descent; supports entity queries, argument filters, nested fields, aliases, string/int/float/bool/null values); `KnowledgeGraphQLExecutor(kg)` (entity selection by type, equality argument filters, field projection for id/name/type/confidence/properties, single-level relationship traversal, alias support; response envelope follows GraphQL-over-HTTP spec; errors captured without raising). `query/__init__.py`: all 5 new symbols exported + added to `__all__`. `DEFERRED_FEATURES.md`: §19 GraphQL API Support ✅ Implemented v3.22.26. `ROADMAP.md`: v4.0+ "GraphQL API support" → ✅ Delivered v3.22.26. MASTER_STATUS v3.22.25→v3.22.26; test-files 110+→111+. 32 tests. **Result: 4,041 passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 - session73: **Deferred v4.0+ advanced visualization tools.** `extraction/visualization.py`: `KnowledgeGraphVisualizer` class with 4 pure-Python (no-dep) output formats: `to_dot(graph_name,directed)` — Graphviz DOT language; `to_mermaid(direction,max_entities)` — Mermaid.js graph notation; `to_d3_json(max_nodes)` — D3.js force-directed graph JSON (`{"nodes":[...], "links":[...]}`); `to_ascii(root_entity_id,max_depth)` — ASCII tree (rooted DFS or flat roster). Convenience methods added to `KnowledgeGraph`: `to_dot(**kw)`, `to_mermaid(**kw)`, `to_d3_json(**kw)`, `to_ascii(**kw)` (lazy-import, no circular deps). `extraction/__init__.py`: `KnowledgeGraphVisualizer` exported in `__all__`. `DEFERRED_FEATURES.md`: P8 section — §20 Advanced Visualization Tools ✅. `ROADMAP.md`: v4.0+ "Advanced visualization tools" → ✅ Delivered v3.22.27; v3.22.27 row added. MASTER_STATUS v3.22.26→v3.22.27; test-files 111+→112+. 47 tests. **Result: 4,082+ passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 - session74: **Deferred v4.0+ federated knowledge graphs.** `query/federation.py`: `FederatedKnowledgeGraph` (registry of independent KGs; `add_graph(kg,name)`; `resolve_entities(strategy)` — cross-graph entity matching by TYPE_AND_NAME/EXACT_NAME/PROPERTY_MATCH; `get_entity_cluster(fp)`; `query_entity(name,entity_type)`; `execute_across(query_fn)` — apply callable across all graphs with error capture; `to_merged_graph(strategy,merged_name)` — deduplicate entities + merge properties + remap relationships); `EntityResolutionStrategy(str,Enum)` (3 values); `EntityMatch` dataclass; `FederationQueryResult` dataclass. `query/__init__.py`: 4 new symbols exported. `DEFERRED_FEATURES.md`: P9 §21 Federated Knowledge Graphs ✅ v3.22.28. `ROADMAP.md`: "Federated knowledge graphs" → ✅ Delivered v3.22.28; v3.22.28 row added. MASTER_STATUS v3.22.27→v3.22.28; test-files 112+→113+. 42 tests. **Result: 4,082+42=4,124+ passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
+- session75: **Deferred v4.0+ blockchain-style provenance chain.** `extraction/provenance.py`: `ProvenanceEventType` (7 event types); `ProvenanceEvent` dataclass with SHA-256 content-addressed CID auto-computed in `__post_init__` (each event links predecessor via `previous_cid`); `ProvenanceChain` class with `record_entity_created/modified/removed()`, `record_relationship_created/removed()`, `record_graph_snapshot/restored()`, `get_history(entity_id,relationship_id)` O(1) indexed lookup, `verify_chain()→(bool,List[str])` tamper detection, `to_jsonl()/from_jsonl()`. `extraction/graph.py`: `KnowledgeGraph.enable_provenance()→ProvenanceChain`, `disable_provenance()`, `.provenance` property; auto-recording wired into `add_entity()` and `add_relationship()`. `extraction/__init__.py`: 3 symbols exported. `DEFERRED_FEATURES.md`: P10 §22 ✅ v3.22.29. `ROADMAP.md`: "Blockchain integration for provenance" → ✅ Delivered v3.22.29; v3.22.29 row added. MASTER_STATUS v3.22.28→v3.22.29; test-files 113+→114+. 45 tests. **Result: 4,124+45=4,169+ passed, 26 skipped, 0 failed; 1 missed line (99.99%)**.
 
-**Total Tests:** 4,124 passing, 26 skipped (optional dep guards), 0 failing
+**Total Tests:** 4,169 passing, 26 skipped (optional dep guards), 0 failing
 **Pass Rate:** 100% (excluding optional dependency skips)
 **Coverage:** 99.99% (1 missed line: `_entity_helpers.py:117` — intentional defensive guard)
 

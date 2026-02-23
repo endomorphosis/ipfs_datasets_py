@@ -73,6 +73,7 @@ from .entities import Entity
 from .relationships import Relationship
 from .graph import KnowledgeGraph, KnowledgeGraphDiff, GraphEventType, GraphEvent
 from .visualization import KnowledgeGraphVisualizer
+from .provenance import ProvenanceChain, ProvenanceEvent, ProvenanceEventType  # Session 75
 
 # Extractor imports (Task 3.5a - KnowledgeGraphExtractor, Task 3.5b - WithValidation)
 from .extractor import KnowledgeGraphExtractor
@@ -145,6 +146,9 @@ __all__ = [
     'GraphEventType',  # Session 71 — graph event subscriptions ✅
     'GraphEvent',  # Session 71 — graph event subscriptions ✅
     'KnowledgeGraphVisualizer',  # Session 73 — advanced visualization ✅
+    'ProvenanceChain',  # Session 75 — blockchain-style provenance ✅
+    'ProvenanceEvent',  # Session 75 — blockchain-style provenance ✅
+    'ProvenanceEventType',  # Session 75 — blockchain-style provenance ✅
     'KnowledgeGraphExtractor',  # Task 3.5a ✅
     'KnowledgeGraphExtractorWithValidation',  # Task 3.5b ✅
     # Advanced extractor (Workstream I — relocated from package root)

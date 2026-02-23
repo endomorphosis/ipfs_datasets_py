@@ -30,6 +30,7 @@
 
 ## Session log (most recent first)
 
+- **Session 75 (2026-02-23):** Implemented deferred v4.0+ blockchain-style provenance chain — `extraction/provenance.py` (`ProvenanceChain` with SHA-256 CID chain, tamper-evident `verify_chain()`, 7 event types, JSONL serialisation; `ProvenanceEvent`; `ProvenanceEventType`); `KnowledgeGraph.enable_provenance()/disable_provenance()/.provenance`; auto-recording in `add_entity()`/`add_relationship()`; DEFERRED_FEATURES P10 §22; 45 tests. v3.22.28→v3.22.29.
 - **Session 74 (2026-02-23):** Implemented deferred v4.0+ Federated Knowledge Graphs — `query/federation.py` (`FederatedKnowledgeGraph` with `resolve_entities`/`execute_across`/`to_merged_graph`/`query_entity`/`get_entity_cluster`; `EntityResolutionStrategy`/`EntityMatch`/`FederationQueryResult`); DEFERRED_FEATURES P9 §21; 42 tests. v3.22.27→v3.22.28.
 - **Session 73 (2026-02-23):** Implemented deferred v4.0+ Advanced Visualization Tools — `extraction/visualization.py` (`KnowledgeGraphVisualizer` with `to_dot`/`to_mermaid`/`to_d3_json`/`to_ascii`; pure Python, no external deps); convenience methods on `KnowledgeGraph`; DEFERRED_FEATURES §20; 41 tests. v3.22.26→v3.22.27.
 - **Session 72 (2026-02-23):** Implemented deferred v4.0+ GraphQL API support — `query/graphql.py` (`GraphQLParser` + `KnowledgeGraphQLExecutor`); DEFERRED_FEATURES §19; 43 tests. v3.22.25→v3.22.26.

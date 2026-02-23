@@ -129,6 +129,43 @@ class KnowledgeGraph:
         # Named snapshots (temporal graph versioning — v4.0+ roadmap)
         self._snapshots: Dict[str, Any] = {}
 
+        # Provenance chain (blockchain-style provenance — v4.0+ roadmap)
+        self._provenance_chain: Any = None  # Optional[ProvenanceChain]
+
+    # ------------------------------------------------------------------
+    # Provenance chain API (blockchain-style provenance — v4.0+ roadmap)
+    # ------------------------------------------------------------------
+
+    def enable_provenance(self) -> Any:
+        """Enable content-addressed provenance tracking for this graph.
+
+        Creates and attaches a :class:`ProvenanceChain` that automatically
+        records every entity and relationship mutation.
+
+        Returns:
+            ProvenanceChain: The newly attached (or existing) chain.
+
+        Example::
+
+            pchain = kg.enable_provenance()
+            kg.add_entity("person", "Alice")
+            is_valid, errors = pchain.verify_chain()
+            assert is_valid
+        """
+        from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+        if self._provenance_chain is None:
+            self._provenance_chain = ProvenanceChain()
+        return self._provenance_chain
+
+    def disable_provenance(self) -> None:
+        """Detach and discard the current provenance chain."""
+        self._provenance_chain = None
+
+    @property
+    def provenance(self) -> Any:
+        """The attached :class:`~ipfs_datasets_py.knowledge_graphs.extraction.provenance.ProvenanceChain`, or ``None``."""
+        return self._provenance_chain
+
     # ------------------------------------------------------------------
     # Event subscription API (real-time graph streaming — v4.0+ roadmap)
     # ------------------------------------------------------------------
@@ -375,6 +412,16 @@ class KnowledgeGraph:
             data={"entity_type": entity.entity_type, "name": entity.name},
         ))
 
+        # Record provenance
+        if self._provenance_chain is not None:
+            self._provenance_chain.record_entity_created(
+                entity.entity_id,
+                entity.entity_type,
+                entity.name,
+                entity.confidence,
+                getattr(entity, "properties", None),
+            )
+
         return entity
 
     def add_relationship(
@@ -472,6 +519,16 @@ class KnowledgeGraph:
             relationship_id=relationship.relationship_id,
             data={"relationship_type": relationship.relationship_type},
         ))
+
+        # Record provenance
+        if self._provenance_chain is not None:
+            self._provenance_chain.record_relationship_created(
+                relationship.relationship_id,
+                relationship.relationship_type,
+                source_id,
+                target_id,
+                relationship.confidence,
+            )
 
         return relationship
 

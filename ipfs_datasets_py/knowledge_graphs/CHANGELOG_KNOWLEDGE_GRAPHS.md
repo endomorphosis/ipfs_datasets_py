@@ -5,6 +5,30 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.29] - 2026-02-23
+
+### Added — Deferred v4.0+ Blockchain-Style Provenance Chain (Session 75)
+
+**Production code changes.**
+
+- `extraction/provenance.py` (new):
+  - `ProvenanceEventType(str, Enum)` with 7 event types: `ENTITY_CREATED`, `ENTITY_MODIFIED`, `ENTITY_REMOVED`, `RELATIONSHIP_CREATED`, `RELATIONSHIP_REMOVED`, `GRAPH_SNAPSHOT`, `GRAPH_RESTORED`
+  - `ProvenanceEvent` dataclass — SHA-256 content-addressed CID auto-computed in `__post_init__`; each event links to predecessor via `previous_cid` forming an immutable hash chain; `to_dict()` / `from_dict()`
+  - `ProvenanceChain` class — append-only, tamper-evident provenance log with entity/relationship indexes, `verify_chain()`, JSONL serialisation/deserialisation
+- `extraction/graph.py`:
+  - `KnowledgeGraph.enable_provenance()` — attaches a `ProvenanceChain`; returns chain
+  - `KnowledgeGraph.disable_provenance()` — detaches chain
+  - `KnowledgeGraph.provenance` property — returns attached chain or `None`
+  - `add_entity()` and `add_relationship()` — auto-record provenance events when chain is attached
+- `extraction/__init__.py`: `ProvenanceChain`, `ProvenanceEvent`, `ProvenanceEventType` exported in `__all__`
+- `DEFERRED_FEATURES.md`: P10 section with §22 Blockchain/Provenance Chain ✅ Implemented v3.22.29
+- `ROADMAP.md`: "Blockchain integration for provenance" → ✅ Delivered v3.22.29; v3.22.29 row added
+
+**Test changes (45 new tests):**
+- `tests/unit/knowledge_graphs/test_master_status_session75.py`: 45 tests across 8 classes
+
+---
+
 ## [3.22.28] - 2026-02-23
 
 ### Added — Deferred v4.0+ Federated Knowledge Graphs (Session 74)
