@@ -1307,19 +1307,29 @@ class IPFSPolicyStore(FilePolicyStore):
             results[name] = cid
         return results
 
-    def reload(self) -> int:
+    def reload(self, max_retries: int = 1) -> int:  # type: ignore[override]
         """Hot-reload policies from disk and re-pin to IPFS.
 
         Delegates to :meth:`FilePolicyStore.reload` (which clears the
         in-memory registry and re-reads from disk), then re-pins every
         reloaded policy to IPFS so the IPFS CID map stays current.
 
+        Args:
+            max_retries: Number of additional pin attempts when a pin fails.
+                Mirrors the *max_retries* parameter on :meth:`save`.
+                0 = no retry (single attempt); 1 = one retry (default).
+
         Returns:
             Number of policies reloaded.
         """
         count = super().reload()
         for name in self._registry.list_names():
-            self.pin_policy(name)
+            cid: Optional[str] = self.pin_policy(name)
+            attempts = 0
+            while cid is None and attempts < max_retries:
+                logger.debug("Retrying IPFS pin for policy %r (attempt %d)", name, attempts + 1)
+                cid = self.pin_policy(name)
+                attempts += 1
         return count
 
     def load(self) -> int:

@@ -351,9 +351,10 @@ Completed v5 tasks tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROV
 - ✅ **Session 66** (v21 Next Steps): `DelegationManager.merge(skip_revocations=None)` selective revocation copy; `IPFSPolicyStore.save()` returns `Dict[str, Optional[str]]` batch-pin results; `PubSubBus.publish_async(timeout_seconds=5.0)` per-handler timeout via `anyio.move_on_after()`; `ComplianceChecker.migrate_encrypted(path, old_password, new_password)` re-encryption with version bump; 42 new session 66 tests, 863+ spec tests pass
 
 - ✅ **Session 67** (v22 Next Steps): `DelegationManager.merge(audit_log=None)` records each copied revocation CID in audit log; `IPFSPolicyStore.save(max_retries=1)` retries failed IPFS pins; `PubSubBus.publish_async()` returns `PublishAsyncResult(notified, timed_out)` namedtuple; `ComplianceChecker.migrate_encrypted()` creates atomic `.bak` backup before overwriting; 35 new session 67 tests, 898+ spec tests pass
+- ✅ **Session 68** (v23 Next Steps): `DelegationManager.merge()` conflict detection — skips CIDs already revoked in self with `UserWarning`; `IPFSPolicyStore.reload(max_retries=1)` propagates retry param to re-pin phase; `PublishAsyncResult.__int__` + `__eq__` helpers for legacy int comparison; `ComplianceChecker.restore_from_bak(path)` restores encrypted file from `.bak` backup; 36 new session 68 tests, 934+ spec tests pass
 
 ---
 
-**Last Updated:** 2026-02-23 (Session 67 — v22 Next Steps: DelegationManager.merge audit_log; IPFSPolicyStore.save max_retries; PublishAsyncResult namedtuple; ComplianceChecker.migrate_encrypted atomic backup; 35 new session 67 tests, 898+ spec tests pass)
+**Last Updated:** 2026-02-23 (Session 68 — v23 Next Steps: merge conflict detection; reload max_retries; PublishAsyncResult int/eq helpers; restore_from_bak; 36 new tests, 934+ spec tests pass)
 
-**For the complete plan, see [MASTER_IMPROVEMENT_PLAN_2026_v23.md](MASTER_IMPROVEMENT_PLAN_2026_v23.md)**
+**For the complete plan, see [MASTER_IMPROVEMENT_PLAN_2026_v24.md](MASTER_IMPROVEMENT_PLAN_2026_v24.md)**

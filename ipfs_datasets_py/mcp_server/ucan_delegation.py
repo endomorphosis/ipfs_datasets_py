@@ -1184,7 +1184,15 @@ class DelegationManager:
         """
         added = 0
         current_cids = set(self._store.list_cids())
+        revoked_in_self = set(self._revocation.to_list())
         for cid in other._store.list_cids():
+            if cid in revoked_in_self:
+                warnings.warn(
+                    f"merge: skipping delegation {cid!r} — it is already revoked in this manager",
+                    UserWarning,
+                    stacklevel=3,
+                )
+                continue
             if cid not in current_cids:
                 delegation = other._store.get(cid)
                 if delegation is not None:

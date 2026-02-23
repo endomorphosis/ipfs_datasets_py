@@ -464,6 +464,22 @@ class PublishAsyncResult(NamedTuple):
     notified: int
     timed_out: int
 
+    def __int__(self) -> int:
+        """Return *notified* for backward-compatible int comparisons."""
+        return self.notified
+
+    def __eq__(self, other: object) -> bool:  # type: ignore[override]
+        """Compare with int or another :class:`PublishAsyncResult`.
+
+        ``result == 3`` compares against :attr:`notified`, so legacy callers
+        that used ``publish_async() == N`` continue to work.
+        """
+        if isinstance(other, int):
+            return self.notified == other
+        if isinstance(other, tuple):
+            return tuple.__eq__(self, other)
+        return NotImplemented
+
 
 class PubSubBus:
     """Lightweight in-process pubsub bus for MCP++ transport events.

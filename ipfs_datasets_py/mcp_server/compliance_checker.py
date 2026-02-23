@@ -41,6 +41,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -609,7 +610,6 @@ class ComplianceChecker:
         # Atomic backup: copy original to <path>.bak before overwriting.
         bak_path = path + ".bak"
         try:
-            import shutil
             shutil.copy2(path, bak_path)
             logger.debug("migrate_encrypted: backup written to %s", bak_path)
         except Exception as exc:
@@ -634,6 +634,34 @@ class ComplianceChecker:
 
         logger.debug("migrate_encrypted: re-encrypted %s with new password", path)
         return True
+
+    def restore_from_bak(self, path: str) -> bool:
+        """Restore an encrypted compliance rule file from its ``.bak`` backup.
+
+        If ``<path>.bak`` exists, copies it back to *path* (overwriting the
+        current file) and removes the backup.  Useful when a
+        :meth:`migrate_encrypted` call partially failed and left the original
+        file in a damaged state.
+
+        Args:
+            path: Path to the encrypted compliance rule file to restore.
+
+        Returns:
+            ``True`` if the backup was found and restored; ``False`` if no
+            backup exists or the copy failed.
+        """
+        bak_path = path + ".bak"
+        if not os.path.exists(bak_path):
+            logger.debug("restore_from_bak: no backup found at %s", bak_path)
+            return False
+        try:
+            shutil.copy2(bak_path, path)
+            os.unlink(bak_path)
+            logger.debug("restore_from_bak: restored %s from %s", path, bak_path)
+            return True
+        except Exception as exc:
+            logger.warning("restore_from_bak: failed to restore %s: %s", path, exc)
+            return False
 
 
 
