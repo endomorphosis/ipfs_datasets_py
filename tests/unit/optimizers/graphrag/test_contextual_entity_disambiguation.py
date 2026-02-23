@@ -542,7 +542,7 @@ class TestTypeInferenceIntegration:
                 # Should include type inference metadata
                 if 'type_method' in rel.properties:
                     assert rel.properties['type_method'] in [
-                        'verb_frame', 'cooccurrence', 'heuristic'
+                        'verb_frame', 'cooccurrence', 'heuristic', 'context_window'
                     ]
                 
                 if 'type_confidence' in rel.properties:
