@@ -268,6 +268,36 @@ class ComplianceChecker:
 
         return ComplianceReport(results=results, intent_snapshot=snapshot)
 
+    def merge(self, other: "ComplianceChecker") -> int:
+        """DA163: Copy rules from *other* that are not already present in *self*.
+
+        Rules are matched by ``rule_id``; rules whose ``rule_id`` already
+        exists in *self* are silently skipped.  Order within *self* is
+        preserved; new rules from *other* are appended in their original order.
+
+        This method is symmetric to :meth:`diff`: the rule IDs returned in
+        ``diff(other)["added_rules"]`` are exactly those that ``merge(other)``
+        would add.
+
+        Parameters
+        ----------
+        other:
+            Source :class:`ComplianceChecker` to merge from.
+
+        Returns
+        -------
+        int
+            Number of rules added (0 if all were already present).
+        """
+        existing_ids = {r.rule_id for r in self._rules}
+        added = 0
+        for rule in other._rules:
+            if rule.rule_id not in existing_ids:
+                self._rules.append(rule)
+                existing_ids.add(rule.rule_id)
+                added += 1
+        return added
+
     def diff(self, other: "ComplianceChecker") -> Dict[str, Any]:
         """CR154: Compare *self* against *other* and return a diff summary.
 

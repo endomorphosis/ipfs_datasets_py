@@ -429,8 +429,11 @@ def detect_all_languages(text: str) -> "I18NConflictReport":
     """CT156: Run full-clause conflict detection across all supported languages.
 
     Calls :func:`~logic.CEC.nl.nl_policy_conflict_detector.detect_i18n_clauses`
-    for French (``"fr"``), Spanish (``"es"``), and German (``"de"``), and
-    returns a combined :class:`I18NConflictReport`.
+    for French (``"fr"``), Spanish (``"es"``), German (``"de"``), and
+    English (``"en"``), and returns a combined :class:`I18NConflictReport`.
+
+    The English pass uses inline deontic keywords (no separate parser module
+    is required) so it is always available.
 
     Parameters
     ----------
@@ -443,7 +446,7 @@ def detect_all_languages(text: str) -> "I18NConflictReport":
         Report with per-language conflict lists (empty list when no conflict
         or when the parser module is unavailable).
     """
-    _SUPPORTED_LANGS = ("fr", "es", "de")
+    _SUPPORTED_LANGS = ("fr", "es", "de", "en")  # DC165: added "en"
     report = I18NConflictReport()
     try:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (  # noqa: F401

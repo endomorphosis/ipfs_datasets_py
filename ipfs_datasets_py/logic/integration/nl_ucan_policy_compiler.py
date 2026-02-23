@@ -41,7 +41,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -318,6 +318,33 @@ class NLUCANPolicyCompiler:
 
         overall.success = policy_result.success or bridge_result.success
         return overall
+
+    def compile_explain(
+        self,
+        sentences: List[str],
+        policy_id: Optional[str] = None,
+    ) -> "Tuple[NLUCANCompilerResult, str]":
+        """DB164: Compile *sentences* and return both the result and a human-readable explanation.
+
+        This is a convenience wrapper around :meth:`compile` followed by
+        :meth:`~NLUCANCompilerResult.explain`.  It saves one line of boilerplate
+        for callers who need both the structured result and a printable summary.
+
+        Parameters
+        ----------
+        sentences:
+            Plain-English policy statements.
+        policy_id:
+            Override the instance-level ``policy_id``.
+
+        Returns
+        -------
+        tuple of (:class:`NLUCANCompilerResult`, :class:`str`)
+            ``(result, explanation)`` where *explanation* is the same string as
+            ``result.explain()``.
+        """
+        result = self.compile(sentences, policy_id=policy_id)
+        return result, result.explain()
 
 
 # ── one-shot convenience wrapper ─────────────────────────────────────────────

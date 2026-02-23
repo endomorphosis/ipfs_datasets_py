@@ -885,10 +885,15 @@ class DelegationManager:
         return added
 
     def merge_and_publish(self, other: "DelegationManager", pubsub: Any) -> int:
-        """CQ153: Merge tokens from *other*, then publish a receipt-dissemination event.
+        """CQ153/CY161: Merge tokens from *other*, then publish a receipt-dissemination event.
 
         Calls :meth:`merge` and then ``pubsub.publish("receipt_disseminate",
-        {"type": "merge", "added": N, "total": M})``.
+        {"type": "merge", "added": N, "total": M, "metrics": {...}})``.
+
+        The ``"metrics"`` key contains the full snapshot from
+        :meth:`get_metrics` (``delegation_count``, ``revoked_cid_count``,
+        ``max_chain_depth``) so consumers can react to the current state
+        without an additional round-trip.
 
         Parameters
         ----------
@@ -907,7 +912,12 @@ class DelegationManager:
         try:
             pubsub.publish(
                 "receipt_disseminate",
-                {"type": "merge", "added": added, "total": len(self._store)},
+                {
+                    "type": "merge",
+                    "added": added,
+                    "total": len(self._store),
+                    "metrics": self.get_metrics(),  # CY161: full snapshot
+                },
             )
         except Exception as exc:  # pragma: no cover
             logger.debug("merge_and_publish: pubsub.publish failed: %s", exc)

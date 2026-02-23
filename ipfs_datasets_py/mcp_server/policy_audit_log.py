@@ -266,25 +266,31 @@ class PolicyAuditLog:
             self._entries.clear()
             return n
 
-    def export_jsonl(self, path: str) -> int:
-        """CS155: Export all in-memory entries to a JSONL file (overwrite).
+    def export_jsonl(self, path: str, *, metadata: Optional[Dict[str, Any]] = None) -> int:
+        """CS155/CZ162: Export all in-memory entries to a JSONL file (overwrite).
 
         Parameters
         ----------
         path:
             Filesystem path for the output JSONL file.  Parent directories
             are created automatically.
+        metadata:
+            Optional dict written as a header line ``{"__metadata__": ...}``
+            before the audit entries.  Useful for recording export context
+            (e.g. timestamp, source, version).
 
         Returns
         -------
         int
-            Number of entries written.
+            Number of audit entries written (metadata header not counted).
         """
         out = Path(path)
         out.parent.mkdir(parents=True, exist_ok=True)
         with self._lock:
             entries = list(self._entries)
         with out.open("w", encoding="utf-8") as fh:
+            if metadata is not None:
+                fh.write(json.dumps({"__metadata__": metadata}, separators=(",", ":")) + "\n")
             for entry in entries:
                 fh.write(entry.to_json() + "\n")
         return len(entries)

@@ -303,9 +303,26 @@ _I18N_KEYWORD_LOADERS: Dict[str, str] = {
     "de": "ipfs_datasets_py.logic.CEC.nl.german_parser:get_german_deontic_keywords",
 }
 
+# DC165: English deontic keywords (inline — no separate parser module needed).
+_EN_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
+    "permission": [
+        "may", "can", "is permitted", "is allowed", "is authorized",
+        "has the right to", "is entitled to",
+    ],
+    "prohibition": [
+        "must not", "cannot", "shall not", "is prohibited", "is forbidden",
+        "is not allowed", "is not permitted",
+    ],
+    "obligation": [
+        "must", "shall", "is required to", "is obligated to", "has to",
+    ],
+}
+
 
 def _load_i18n_keywords(language: str) -> Dict[str, List[str]]:
-    """Load deontic keywords for *language* (``"fr"``, ``"es"``, or ``"de"``)."""
+    """Load deontic keywords for *language* (``"en"``, ``"fr"``, ``"es"``, or ``"de"``)."""
+    if language == "en":  # DC165: inline English keywords
+        return _EN_DEONTIC_KEYWORDS
     loader_path = _I18N_KEYWORD_LOADERS.get(language)
     if loader_path is None:
         return {}
