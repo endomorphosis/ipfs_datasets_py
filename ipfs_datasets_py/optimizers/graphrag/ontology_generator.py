@@ -4198,7 +4198,7 @@ class OntologyGenerator:
         # Base patterns (domain-agnostic)
         base_patterns: list[tuple[str, str]] = [
             (r'\b(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*', 'Person'),
-            (r'\b[A-Z][A-Za-z&\s]*(?:LLC|Ltd|Inc|Corp|GmbH|PLC|Co\.)\b', 'Organization'),
+            (r'\b[A-Z][A-Za-z&]*(?:\s+[A-Z][A-Za-z&]*)*\s+(?:LLC|Ltd|Inc|Corp|GmbH|PLC|Co\.|Corporation)\b', 'Organization'),
             (r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', 'Date'),
             (r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b', 'Date'),
             (r'\b(?:USD|EUR|GBP)\s*[\d,]+(?:\.\d{2})?\b', 'MonetaryAmount'),
