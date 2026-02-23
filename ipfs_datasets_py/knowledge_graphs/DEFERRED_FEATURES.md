@@ -688,6 +688,91 @@ assert kg.list_snapshots() == ["before_merge"]
 
 ---
 
+## P13: Delivered in v3.22.36 (TDFOL_v1 Witness Builder for Groth16 backend)
+
+### 27. TDFOL_v1 Atom Encoder
+
+**Status:** ✅ Implemented (v3.22.36 — 2026-02-23)
+**Location:** `query/groth16_kg_witness.py` — `KGAtomEncoder`
+**Implementation:**
+- `KGAtomEncoder(max_length=64)` — normalizes arbitrary Knowledge Graph strings
+  (entity types, names, relationship types, entity IDs, property keys) to valid
+  single-word TDFOL_v1 atoms accepted by the Groth16 Rust backend in
+  `processors/groth16_backend`.
+- `normalize(s) -> str` — core normalizer: lower-case, replace invalid chars with
+  `_`, strip leading non-letters, truncate, fallback to `"entity"` for empty input.
+- Domain-specific encoders: `encode_entity_type`, `encode_name`,
+  `encode_relationship_type`, `encode_entity_id`, `encode_property_key`.
+- Compound atoms: `atom_for_entity(type, name)` → `"type_name"`;
+  `atom_for_entity_exists(type, name)` → `"type_name_exists"`;
+  `atom_for_path_exists(start, end)` → `"path_start_to_end_exists"`;
+  `atom_for_entity_property(id, key)` → `"id_has_key"`.
+
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.query.groth16_kg_witness import KGAtomEncoder
+
+enc = KGAtomEncoder()
+enc.encode_entity_type("Person")          # "person"
+enc.encode_name("Acme Corp")              # "acme_corp"
+enc.encode_name("Alice-Jane O'Brien")     # "alice_jane_o_brien"
+enc.atom_for_entity_exists("Person", "Alice")   # "person_alice_exists"
+enc.atom_for_path_exists("Person", "Org")       # "path_person_to_org_exists"
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session82.py`
+
+---
+
+### 28. TDFOL_v1 Witness Builder
+
+**Status:** ✅ Implemented (v3.22.36 — 2026-02-23)
+**Location:** `query/groth16_kg_witness.py` — `KGWitnessBuilder`
+**Implementation:**
+- `KGWitnessBuilder(circuit_version=1, ruleset_id="TDFOL_v1", encoder=None)` —
+  builds complete TDFOL_v1 witness input dicts compatible with the `WitnessInput`
+  struct in the Groth16 Rust backend (`processors/groth16_backend`).
+- `entity_exists(entity_type, name, entity_id, confidence) -> dict` — proves
+  existence of a named entity without revealing its ID.
+- `path_exists(path_ids, rel_types, start_type, end_type) -> dict` — proves a
+  graph path exists without revealing node IDs.
+- `entity_property(entity_id, property_key, value_hash) -> dict` — proves an
+  entity has a specific property value (via SHA-256 hash).
+- `query_answer_count(min_count, actual_count, query_type) -> dict` — proves the
+  result count meets a threshold.
+- All builders auto-compute `theorem_hash_hex` and `axioms_commitment_hex`.
+- Circuit v2 support: auto-generates `intermediate_steps` when not provided.
+
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.query.groth16_kg_witness import KGWitnessBuilder
+import json
+
+builder = KGWitnessBuilder()
+witness = builder.entity_exists("Person", "Alice", "eid_001", confidence=0.95)
+# witness["theorem"]        → "person_alice_exists"
+# witness["private_axioms"] → ["eid_001_is_person", "eid_001_has_name_alice", ...]
+# witness["theorem_hash_hex"] → 64-char hex SHA-256
+# witness is JSON-serializable and ready for the Groth16 binary
+
+# For the real Groth16 backend (when binary is compiled):
+# import os; os.environ["IPFS_DATASETS_ENABLE_GROTH16"] = "1"
+# from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import Groth16Backend
+# backend = Groth16Backend()
+# proof_json = backend.prove(json.dumps(witness))
+```
+
+**Also added:** `KGEntityFormula.to_tdfol_atoms(proof_type, entity_type,
+name_or_end_type, entity_id, confidence) -> dict` — returns valid TDFOL_v1
+atoms for entity_exists / path_exists / entity_property proof types, bridging
+the human-readable formula strings with the single-word atom requirement.
+
+**Tests:** `tests/unit/knowledge_graphs/test_master_status_session82.py`
+
+---
+
+---
+
 ## P7: Delivered in v3.22.26 (formerly v4.0+ "GraphQL API support")
 
 ### 19. GraphQL API Support

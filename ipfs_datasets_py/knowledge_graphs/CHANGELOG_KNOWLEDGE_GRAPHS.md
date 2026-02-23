@@ -5,6 +5,40 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.36] - 2026-02-23
+
+### Added — TDFOL_v1 Witness Builder for Groth16 backend (Session 82) — 50 tests
+
+**`query/groth16_kg_witness.py`** (new module):
+- `KGAtomEncoder(max_length=64)` — normalize arbitrary KG strings to valid
+  single-word TDFOL_v1 atoms required by the Groth16 Rust backend
+  (`processors/groth16_backend`). Core `normalize(s)` + domain-specific encoders:
+  `encode_entity_type`, `encode_name`, `encode_relationship_type`,
+  `encode_entity_id`, `encode_property_key`. Compound atoms:
+  `atom_for_entity`, `atom_for_entity_exists`, `atom_for_path_exists`,
+  `atom_for_entity_property`.
+- `KGWitnessBuilder(circuit_version=1, ruleset_id="TDFOL_v1")` — build complete
+  TDFOL_v1 witness input dicts compatible with `WitnessInput` struct:
+  - `entity_exists(entity_type, name, entity_id, confidence)` → witness proving a
+    named entity exists without revealing its ID
+  - `path_exists(path_ids, rel_types, start_type, end_type)` → witness proving a
+    path exists without revealing node IDs
+  - `entity_property(entity_id, property_key, value_hash)` → witness proving an
+    entity has a property (value hidden behind SHA-256 hash)
+  - `query_answer_count(min_count, actual_count, query_type)` → witness proving
+    result count ≥ threshold
+  - All builders auto-compute `theorem_hash_hex` and `axioms_commitment_hex`
+  - Circuit v2: auto-generates `intermediate_steps` when not provided
+
+**`query/groth16_bridge.py`** (updated):
+- `KGEntityFormula.to_tdfol_atoms(proof_type, entity_type, name_or_end_type,
+  entity_id, confidence) -> dict` (new classmethod) — returns valid TDFOL_v1
+  single-word atoms for `entity_exists` / `path_exists` / `entity_property`
+  proof types using `KGAtomEncoder` internally.
+
+**`query/__init__.py`** (updated):
+- `KGAtomEncoder` and `KGWitnessBuilder` exported + added to `__all__`.
+
 ## [3.22.35] - 2026-02-23
 
 ### Added — 5 new MCP server tools for query/extraction features (Session 81) — 42 tests

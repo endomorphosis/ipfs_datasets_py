@@ -131,6 +131,10 @@ from .groth16_bridge import (
     create_groth16_kg_verifier,
     describe_groth16_status,
 )
+from .groth16_kg_witness import (
+    KGAtomEncoder,
+    KGWitnessBuilder,
+)
 from .completion import (
     KnowledgeGraphCompleter,
     CompletionSuggestion,
@@ -200,6 +204,9 @@ __all__ = [
     'create_groth16_kg_prover',
     'create_groth16_kg_verifier',
     'describe_groth16_status',
+    # Groth16 KG Witness Builder (v3.22.36 — TDFOL_v1 witness construction)
+    'KGAtomEncoder',
+    'KGWitnessBuilder',
     # Knowledge Graph Completion (v3.22.34 — Research Area)
     'KnowledgeGraphCompleter',
     'CompletionSuggestion',

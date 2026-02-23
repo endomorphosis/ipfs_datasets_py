@@ -175,6 +175,13 @@ class KGEntityFormula:
     be valid Prolog or any specific formal language — the TDFOL_v1 circuit
     hashes the strings to derive commitments.
 
+    .. note::
+
+        The ``to_tdfol_atoms()`` class method (added in v3.22.36) returns
+        *valid single-word TDFOL_v1 atoms* from the same concept mappings, for
+        use with the Rust Groth16 binary.  For full witness construction use
+        :class:`~ipfs_datasets_py.knowledge_graphs.query.groth16_kg_witness.KGWitnessBuilder`.
+
     Example::
 
         theorem = KGEntityFormula.entity_exists_theorem("Person", "Alice")
@@ -182,6 +189,11 @@ class KGEntityFormula:
 
         axioms = KGEntityFormula.entity_exists_axioms("e-001", "Person", "Alice", 0.95)
         # ["e-001 is person", "e-001 has name alice", "e-001 confidence 0.95"]
+
+        # Single-word atom versions (v3.22.36):
+        atoms = KGEntityFormula.to_tdfol_atoms("entity_exists", "Person", "Alice", "e-001")
+        # atoms["theorem"] == "person_alice_exists"
+        # atoms["axioms"][0] == "e_001_is_person"
     """
 
     @staticmethod
@@ -258,6 +270,76 @@ class KGEntityFormula:
             f"{entity_id} has property {pk}",
             f"property {pk} committed {value_hash[:16]}",
         ]
+
+    @classmethod
+    def to_tdfol_atoms(
+        cls,
+        proof_type: str,
+        entity_type: str,
+        name_or_end_type: str,
+        entity_id: str = "",
+        confidence: float = 1.0,
+    ) -> Dict[str, Any]:
+        """Return TDFOL_v1 *single-word* atoms for a KG proof concept.
+
+        Unlike the other methods which return human-readable strings, this
+        method uses :class:`~ipfs_datasets_py.knowledge_graphs.query.groth16_kg_witness.KGAtomEncoder`
+        to produce valid TDFOL_v1 atoms suitable for direct submission to the
+        Groth16 Rust binary.
+
+        Args:
+            proof_type: One of ``"entity_exists"``, ``"path_exists"``,
+                ``"entity_property"``.
+            entity_type: Entity type (or path start-type for path proofs).
+            name_or_end_type: Entity name, or path end-type for path proofs.
+            entity_id: Private entity ID (encoded as axiom); optional for
+                path proofs.
+            confidence: Confidence score [0, 1].
+
+        Returns:
+            Dict with keys ``"proof_type"``, ``"theorem"`` (atom), and
+            ``"axioms"`` (list of atoms / implications).
+
+        Added in v3.22.36.
+        """
+        from .groth16_kg_witness import KGAtomEncoder
+        enc = KGAtomEncoder()
+
+        if proof_type == "entity_exists":
+            theorem = enc.atom_for_entity_exists(entity_type, name_or_end_type)
+            type_atom = enc.encode_entity_type(entity_type)
+            name_atom = enc.encode_name(name_or_end_type)
+            eid_atom = enc.encode_entity_id(entity_id) if entity_id else "unknown_entity"
+            conf_int = max(0, min(9999, int(round(confidence * 1000))))
+            axioms = [
+                f"{eid_atom}_is_{type_atom}",
+                f"{eid_atom}_has_name_{name_atom}",
+                f"conf_{conf_int:04d}",
+                f"{type_atom}_{name_atom}_exists",
+            ]
+        elif proof_type == "path_exists":
+            theorem = enc.atom_for_path_exists(entity_type, name_or_end_type)
+            axioms = [
+                f"path_from_{enc.encode_entity_type(entity_type)}",
+                f"path_to_{enc.encode_entity_type(name_or_end_type)}",
+            ]
+        elif proof_type == "entity_property":
+            theorem = enc.atom_for_entity_property(entity_id or entity_type, name_or_end_type)
+            eid_atom = enc.encode_entity_id(entity_id or entity_type)
+            pk_atom = enc.encode_property_key(name_or_end_type)
+            axioms = [
+                f"{eid_atom}_property_{pk_atom}",
+                f"{eid_atom}_has_{pk_atom}",
+            ]
+        else:
+            theorem = enc.normalize(proof_type) or "unknown_proof"
+            axioms = []
+
+        return {
+            "proof_type": proof_type,
+            "theorem": theorem,
+            "axioms": axioms,
+        }
 
 
 # ---------------------------------------------------------------------------
