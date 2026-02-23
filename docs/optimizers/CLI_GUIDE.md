@@ -50,6 +50,12 @@ pip install -e ".[graphrag]"   # GraphRAG optimizer
 
 **Focus:** Code optimization using AI-powered methods
 
+You can also invoke the agentic CLI directly:
+
+```bash
+python -m ipfs_datasets_py.optimizers.agentic.cli --help
+```
+
 ### Commands
 
 #### optimize
