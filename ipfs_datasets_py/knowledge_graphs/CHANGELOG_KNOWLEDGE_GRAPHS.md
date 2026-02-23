@@ -5,6 +5,44 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.33] - 2026-02-23
+
+### Changed — Comprehensive Documentation Update (Session 79) — 46 doc integrity tests
+
+**`query/README.md`** — version bump 2.1.0→3.22.33:
+- Module Contents table: 5 new rows added (graphql.py / federation.py / gnn.py / zkp.py / groth16_bridge.py)
+- Overview bullet points expanded with all new capabilities
+- Key Features: added privacy-preserving queries, cross-graph federation, neural embeddings
+- Stale "Future Enhancements" (listed GraphQL as a future item!) removed and replaced with:
+  - "Advanced Query Features" section — code examples for all 5 new query modules
+  - "Recent Additions (v3.22.x)" table — module / version / feature cross-reference
+
+**`docs/knowledge_graphs/API_REFERENCE.md`** — version bump 3.22.22→3.22.33:
+- New `## Advanced Extraction APIs (v3.22.x)` section with full usage examples for:
+  - `KnowledgeGraphDiff` (v3.22.24): diff + apply_diff + summary
+  - Graph Event Subscriptions (v3.22.25): subscribe/unsubscribe
+  - KG Named Snapshots (v3.22.25): snapshot/restore_snapshot
+  - `ProvenanceChain` (v3.22.29): enable_provenance + verify_chain + JSONL
+  - `KnowledgeGraphVisualizer` (v3.22.27): to_dot/to_mermaid/to_d3_json/to_ascii
+- New `## Advanced Query APIs (v3.22.x)` section with full usage examples + exported symbols for:
+  - GraphQL API (v3.22.26): `KnowledgeGraphQLExecutor`
+  - Federated Knowledge Graphs (v3.22.28): `FederatedKnowledgeGraph`
+  - Graph Neural Networks (v3.22.30): `GraphNeuralNetworkAdapter`
+  - Zero-Knowledge Proofs (v3.22.30): `KGZKProver`/`KGZKVerifier`
+  - Groth16 Bridge (v3.22.32): `create_groth16_kg_prover`/`KGEntityFormula`
+- Table of Contents updated with 2 new entries
+- Version Information section updated with all new API version ranges
+
+**`docs/knowledge_graphs/USER_GUIDE.md`** — version bump 2.0.0→3.22.33:
+- `§11 Future Roadmap` (which listed features as "planned for Q2-Q1 2027") replaced with `§11 Delivered Features (v3.22.x)`:
+  - 15-row delivery table: every planned feature shown as ✅ with delivery version
+  - Quick usage examples for all new v3.22.x features
+  - Feature Request Process section preserved
+- Stale "Experimental Features" block (referencing v2.5.0-alpha imports that don't work) removed
+- Header version/date updated
+
+---
+
 ## [3.22.32] - 2026-02-23
 
 ### Added — Groth16 Bridge Module (Session 78)
