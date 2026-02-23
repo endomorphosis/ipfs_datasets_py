@@ -399,6 +399,38 @@ _AR_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     ],
 }
 
+# FU235: Swedish deontic keywords (inline — always available).
+_SV_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
+    "permission": [
+        "får", "tillåts", "har rätt att", "är tillåtet", "kan",
+        "tillåten", "har tillstånd",
+    ],
+    "prohibition": [
+        "får inte", "är förbjudet", "inte tillåtet", "ej tillåtet",
+        "förbjuden", "inte får", "är otillåtet",
+    ],
+    "obligation": [
+        "måste", "ska", "är skyldig att", "är tvungen", "är pliktig",
+        "bör", "är obligatorisk",
+    ],
+}
+
+# FV236: Russian deontic keywords (inline — always available).
+_RU_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
+    "permission": [
+        "можно", "разрешено", "имеет право", "допускается", "вправе",
+        "разрешается", "позволено",
+    ],
+    "prohibition": [
+        "нельзя", "запрещено", "не разрешено", "не допускается",
+        "запрещается", "не вправе", "под запретом",
+    ],
+    "obligation": [
+        "должен", "обязан", "необходимо", "следует", "требуется",
+        "обязательно", "надлежит",
+    ],
+}
+
 # EM201: Chinese (Simplified) deontic keywords (inline — always available).
 _ZH_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
@@ -436,6 +468,10 @@ def _load_i18n_keywords(language: str) -> Dict[str, List[str]]:
         return _KO_DEONTIC_KEYWORDS
     if language == "ar":  # FL226: inline Arabic keywords
         return _AR_DEONTIC_KEYWORDS
+    if language == "sv":  # FU235: inline Swedish keywords
+        return _SV_DEONTIC_KEYWORDS
+    if language == "ru":  # FV236: inline Russian keywords
+        return _RU_DEONTIC_KEYWORDS
     loader_path = _I18N_KEYWORD_LOADERS.get(language)
     if loader_path is None:
         return {}

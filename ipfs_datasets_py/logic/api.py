@@ -509,19 +509,21 @@ class I18NConflictReport:
 
 
 def detect_all_languages(text: str) -> "I18NConflictReport":
-    """CT156/DJ172/DN176/DO177/ED192/EM201/FK225/FL226: Run full-clause conflict detection across all supported languages.
+    """CT156/DJ172/DN176/DO177/ED192/EM201/FK225/FL226/FU235/FV236: Run full-clause conflict detection across all supported languages.
 
     Calls :func:`~logic.CEC.nl.nl_policy_conflict_detector.detect_i18n_clauses`
     for French (``"fr"``), Spanish (``"es"``), German (``"de"``),
     English (``"en"``), Portuguese (``"pt"``), Dutch (``"nl"``),
     Italian (``"it"``), Japanese (``"ja"``), Chinese (``"zh"``),
-    Korean (``"ko"``), and Arabic (``"ar"``),
+    Korean (``"ko"``), Arabic (``"ar"``), Swedish (``"sv"``), and
+    Russian (``"ru"``),
     and returns a combined :class:`I18NConflictReport`.
 
-    English, Dutch, Italian, Japanese, Chinese, Korean, and Arabic passes use
-    inline deontic keywords (no separate parser module is required) so they
-    are always available.  Portuguese requires ``portuguese_parser.py``; an
-    ``ImportError`` results in an empty list for that language slot.
+    English, Dutch, Italian, Japanese, Chinese, Korean, Arabic, Swedish, and
+    Russian passes use inline deontic keywords (no separate parser module is
+    required) so they are always available.  Portuguese requires
+    ``portuguese_parser.py``; an ``ImportError`` results in an empty list for
+    that language slot.
 
     Parameters
     ----------
@@ -534,7 +536,7 @@ def detect_all_languages(text: str) -> "I18NConflictReport":
         Report with per-language conflict lists (empty list when no conflict
         or when the parser module is unavailable).
     """
-    _SUPPORTED_LANGS = ("fr", "es", "de", "en", "pt", "nl", "it", "ja", "zh", "ko", "ar")  # FK225/FL226: added "ko","ar"
+    _SUPPORTED_LANGS = ("fr", "es", "de", "en", "pt", "nl", "it", "ja", "zh", "ko", "ar", "sv", "ru")  # FK225/FL226/FU235/FV236
     report = I18NConflictReport()
     try:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (  # noqa: F401
