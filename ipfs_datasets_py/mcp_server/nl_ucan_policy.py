@@ -1175,10 +1175,13 @@ class IPFSReloadResult(NamedTuple):
         count: Number of policies reloaded from disk.
         pin_results: Mapping of policy name → IPFS CID string, or ``None``
             when the pin failed.
+        pin_errors: Optional mapping of policy name → error reason string for
+            failed pins.  ``None`` when no error information was captured.
     """
 
     count: int
     pin_results: Dict[str, Optional[str]]
+    pin_errors: Optional[Dict[str, str]] = None
 
     @property
     def total_failed(self) -> int:
@@ -1195,6 +1198,21 @@ class IPFSReloadResult(NamedTuple):
         if self.count == 0:
             return 1.0
         return (self.count - self.total_failed) / self.count
+
+    @property
+    def failure_details(self) -> Dict[str, str]:
+        """Mapping of policy name → error reason for all failed pins.
+
+        Combines :attr:`pin_errors` (when provided) with an ``"unknown error"``
+        fallback for any ``None`` pin result that has no associated error entry.
+        Returns an empty dict when there are no failures.
+        """
+        errors = self.pin_errors or {}
+        details: Dict[str, str] = {}
+        for name, cid in self.pin_results.items():
+            if cid is None:
+                details[name] = errors.get(name, "unknown error")
+        return details
 
 
 class IPFSPolicyStore(FilePolicyStore):

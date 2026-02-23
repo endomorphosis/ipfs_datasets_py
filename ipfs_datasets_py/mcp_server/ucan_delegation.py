@@ -1000,6 +1000,34 @@ class MergeResult:
             return self.added_count == other
         return super().__eq__(other)
 
+    def __lt__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return self.added_count < other
+        if isinstance(other, MergeResult):
+            return self.added_count < other.added_count
+        return NotImplemented  # type: ignore[return-value]
+
+    def __le__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return self.added_count <= other
+        if isinstance(other, MergeResult):
+            return self.added_count <= other.added_count
+        return NotImplemented  # type: ignore[return-value]
+
+    def __gt__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return self.added_count > other
+        if isinstance(other, MergeResult):
+            return self.added_count > other.added_count
+        return NotImplemented  # type: ignore[return-value]
+
+    def __ge__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return self.added_count >= other
+        if isinstance(other, MergeResult):
+            return self.added_count >= other.added_count
+        return NotImplemented  # type: ignore[return-value]
+
 
 class DelegationManager:
     """Bundles :class:`DelegationStore`, :class:`RevocationList`, and

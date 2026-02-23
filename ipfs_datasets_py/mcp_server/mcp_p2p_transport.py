@@ -607,6 +607,24 @@ class PubSubBus:
         """Return the number of subscribers for *topic*."""
         return len(self._subscribers.get(str(topic), []))
 
+    def subscription_count(self, topic: "Optional[Union[str, PubSubEventType]]" = None) -> int:
+        """Return the total number of active subscriptions.
+
+        Args:
+            topic: When provided, count only subscriptions for that specific
+                topic.  When ``None`` (default), count subscriptions across
+                **all** topics.  Each unique handler object registered on a
+                topic counts once per topic, not per :meth:`subscribe` call
+                (duplicate-handler registrations are deduplicated at subscribe
+                time).
+
+        Returns:
+            Total subscription count.
+        """
+        if topic is not None:
+            return len(self._subscribers.get(str(topic), []))
+        return sum(len(handlers) for handlers in self._subscribers.values())
+
     async def publish_async(
         self,
         topic: Union[str, "PubSubEventType"],

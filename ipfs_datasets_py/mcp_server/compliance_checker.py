@@ -736,6 +736,44 @@ class ComplianceChecker:
                     pass
 
     @staticmethod
+    def list_bak_files(path: str) -> List[str]:
+        """Return a sorted list of existing backup paths for *path*.
+
+        Checks for ``<path>.bak``, ``<path>.bak.1``, ``<path>.bak.2``, … and
+        returns every path that currently exists on the file system.  The list
+        is ordered from newest (``<path>.bak``) to oldest (highest number).
+
+        The numbered scan starts at ``<path>.bak.1`` and stops at the **first
+        missing slot** in the sequence, regardless of whether higher-numbered
+        files exist.  For example, if ``<path>.bak.1`` is absent but
+        ``<path>.bak.2`` exists, only ``<path>.bak`` (if present) is returned.
+        If ``<path>.bak`` does not exist the numbered scan is still performed,
+        so ``[path+".bak.1"]`` can be returned even when ``<path>.bak`` is
+        absent.
+
+        Args:
+            path: Base path (without the ``.bak`` suffix).
+
+        Returns:
+            List of existing backup file paths, e.g.
+            ``["/data/rules.enc.bak", "/data/rules.enc.bak.1"]``.  Empty list
+            when no backups exist.
+        """
+        bak = path + ".bak"
+        found: List[str] = []
+        if os.path.exists(bak):
+            found.append(bak)
+        i = 1
+        while True:
+            numbered = f"{bak}.{i}"
+            if os.path.exists(numbered):
+                found.append(numbered)
+                i += 1
+            else:
+                break
+        return found
+
+    @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:
         if isinstance(intent, dict):
             return intent.get(field, default)
