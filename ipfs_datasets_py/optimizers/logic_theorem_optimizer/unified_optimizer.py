@@ -32,6 +32,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 _logger = logging.getLogger(__name__)
 
+from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
+
 from ..common.base_optimizer import (
     BaseOptimizer,
     OptimizerConfig,
@@ -195,7 +197,6 @@ class LogicTheoremOptimizer(BaseOptimizer):
         try:
             import json as _json
             from datetime import datetime as _datetime
-            from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
 
             duration_ms = duration_s * 1000.0
             payload = {
