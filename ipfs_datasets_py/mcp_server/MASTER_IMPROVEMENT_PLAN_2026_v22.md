@@ -1,143 +1,176 @@
-# MASTER IMPROVEMENT PLAN 2026 — v22
+# Master Improvement Plan 2026 — v22: Session 66 (v21 Next Steps)
 
-**Branch:** `copilot/create-refactoring-plan-again`
-**Date:** 2026-02-23
-**Status:** ✅ v22 Complete — 54 new tests, **3,337 total**
-
----
-
-## 1. Session Summary (v22)
-
-| Session | Component | Change | Tests |
-|---------|-----------|--------|-------|
-| DO177 | `nl_policy_conflict_detector.py` | `_IT_DEONTIC_KEYWORDS` inline Italian + `_load_i18n_keywords("it")` + `detect_all_languages()` → 7 languages | 9 |
-| DP178 | `logic/CEC/nl/portuguese_parser.py` | `PortugueseParser.parse()` sentence-level splitting — multi-clause extraction via `re.split(r"[.!?;]+")` | 6 |
-| DQ179 | `ucan_delegation.py` | `merge_and_publish_async()` payload adds `"event_type": "RECEIPT_DISSEMINATE"` field | 3 |
-| DR180 | `policy_audit_log.py` | `import_jsonl()` max_entries ring-buffer clipping tests with large files | 3 |
-| DS181 | `compliance_checker.py` | `merge()` now uses `copy.copy(rule)` — deep copy prevents mutation leaks; `import copy` added | 5 |
-| DT182 | `nl_ucan_policy_compiler.py` | `compile_explain_iter(max_lines=None)` truncation parameter | 5 |
-| DU183 | `nl_policy_conflict_detector.py` | Dutch obligation keyword coverage tests | 4 |
-| DV184 | `ucan_delegation.py` | `get_metrics()` adds `active_token_count`; `revoke()` invalidates `_metrics_cache` | 5 |
-| DW185 | `logic/api.py` | `compile_explain_iter` module-level wrapper re-export; `_DW185_COMPILER_AVAILABLE` guard | 5 |
-| DX186 | `logic/api.py` + `nl_policy_conflict_detector.py` | Full E2E 7-language `detect_all_languages()` + `I18NConflictReport.to_dict()` | 9 |
+**Created:** 2026-02-23 (Session 66)  
+**Branch:** `copilot/create-improvement-refactoring-plan`  
+**Reference:** https://github.com/endomorphosis/Mcp-Plus-Plus  
+**Supersedes:** [MASTER_IMPROVEMENT_PLAN_2026_v21.md](MASTER_IMPROVEMENT_PLAN_2026_v21.md)
 
 ---
 
-## 2. Production Changes (v22)
+## Overview
 
-### `ipfs_datasets_py/logic/CEC/nl/nl_policy_conflict_detector.py`
+Session 66 implements all five "Next Steps" from the v21 plan:
 
-- **DO177** — `_IT_DEONTIC_KEYWORDS: Dict[str, List[str]]` Italian inline keyword
-  table (permission/prohibition/obligation), no external deps.  `_load_i18n_keywords("it")`
-  returns inline table (same pattern as `"en"` / `"nl"`).
+| # | Feature | Status |
+|---|---------|--------|
+| 1 | `DelegationManager.merge(skip_revocations=None)` — selective revocation copy | ✅ COMPLETE |
+| 2 | `IPFSPolicyStore.save()` → `Dict[str, Optional[str]]` batch-pin results | ✅ COMPLETE |
+| 3 | `PubSubBus.publish_async(timeout_seconds=5.0)` per-handler anyio timeout | ✅ COMPLETE |
+| 4 | `ComplianceChecker.migrate_encrypted(path, old_password, new_password)` | ✅ COMPLETE |
+| 5 | Session 66 E2E test (`test_mcplusplus_v21_session66.py`, 42 tests) | ✅ COMPLETE |
 
-### `ipfs_datasets_py/logic/CEC/nl/portuguese_parser.py`
-
-- **DP178** — `PortugueseParser.parse(text)` now splits on sentence boundaries
-  (`re.split(r"[.!?;]+")`) before scanning for deontic keywords.  Each
-  sentence can yield at most one clause per deontic type, so a two-sentence
-  input with one permission and one prohibition now produces two clauses.
-
-### `ipfs_datasets_py/mcp_server/ucan_delegation.py`
-
-- **DQ179** — `merge_and_publish_async()` payload now includes
-  `"event_type": "RECEIPT_DISSEMINATE"` in addition to the existing
-  `"type": "merge"` field.  Backward-compatible: existing receivers that
-  check `payload["type"]` are unaffected.
-- **DV184** — `DelegationManager.get_metrics()` extended with
-  `"active_token_count"` = `max(0, token_count - revoked_count)`.
-  `revoke(cid)` now clears `_metrics_cache` so subsequent `get_metrics()`
-  calls reflect the latest revocation.
-
-### `ipfs_datasets_py/mcp_server/compliance_checker.py`
-
-- **DS181** — `merge()` now stores `copy.copy(rule)` (shallow copy) so that
-  mutations to a source rule's `description` attribute in the other checker do
-  not affect the merged rule in self.  `import copy` added at the top of the
-  module.
-
-### `ipfs_datasets_py/logic/integration/nl_ucan_policy_compiler.py`
-
-- **DT182** — `compile_explain_iter(sentences, policy_id=None, max_lines=None)`
-  — new optional `max_lines` parameter.  When `max_lines` is not ``None``,
-  at most `max_lines` lines are yielded.  `max_lines=0` yields nothing.
-  Existing callers without `max_lines` are unaffected.
-
-### `ipfs_datasets_py/logic/api.py`
-
-- **DO177/DX186** — `detect_all_languages()` updated to 7 supported languages:
-  `("fr", "es", "de", "en", "pt", "nl", "it")`.  Italian uses inline table
-  (always available).
-- **DW185** — `compile_explain_iter(sentences, policy_id=None, max_lines=None)`
-  module-level wrapper added.  Creates a fresh `NLUCANPolicyCompiler` and
-  delegates to its instance method.  `_DW185_COMPILER_AVAILABLE` flag guards
-  import; conditionally added to `__all__`.
+**863+ total spec tests pass (sessions 50–66, 0 new failures).**
 
 ---
 
-## 3. Key Invariants (v22)
+## Item 1 — `DelegationManager.merge(skip_revocations=None)` ✅
 
-| Component | Invariant |
-|-----------|-----------|
-| `_IT_DEONTIC_KEYWORDS` (DO177) | Inline table for Italian — always available, no import |
-| `detect_all_languages()` (DO177) | Returns exactly 7 language keys: `{"fr","es","de","en","pt","nl","it"}` |
-| `PortugueseParser.parse()` (DP178) | Splits on `[.!?;]+`; two-sentence input → ≥2 clauses when both have deontic keywords |
-| `merge_and_publish_async()` (DQ179) | `"event_type": "RECEIPT_DISSEMINATE"` in payload; `"type": "merge"` still present |
-| `merge()` (DS181) | `copy.copy(rule)` — shallow copy; mutations to src don't affect dst |
-| `compile_explain_iter(max_lines=N)` (DT182) | Yields ≤N lines; N=0 → empty; N=None → all |
-| `get_metrics()["active_token_count"]` (DV184) | `max(0, token_count - revoked_count)` |
-| `revoke(cid)` (DV184) | Clears `_metrics_cache`; next `get_metrics()` recomputes |
-| `compile_explain_iter` in `api.__all__` (DW185) | Conditional on `_DW185_COMPILER_AVAILABLE` |
-| v21 backward compat | `test_detect_all_languages_6_langs` relaxed to `>= 6` (was `== 6`) |
+**File:** `ipfs_datasets_py/mcp_server/ucan_delegation.py`
 
----
+Added `skip_revocations: Optional[Set[str]] = None` keyword-only parameter:
 
-## 4. Test Coverage (v22)
+```python
+def merge(
+    self,
+    other: "DelegationManager",
+    *,
+    copy_revocations: bool = False,
+    skip_revocations: Optional[Set[str]] = None,
+) -> int:
+```
 
-| Test class | Session | Tests |
-|-----------|---------|-------|
-| `TestDO177ItalianKeywords` | DO177 | 9 |
-| `TestDP178PortugueseParserMultiClause` | DP178 | 6 |
-| `TestDQ179MergePublishAsyncEventType` | DQ179 | 3 |
-| `TestDR180ImportJsonlMaxEntriesLargeFile` | DR180 | 3 |
-| `TestDS181MergeDeepCopy` | DS181 | 5 |
-| `TestDT182CompileExplainIterMaxLines` | DT182 | 5 |
-| `TestDU183DutchObligationKeywords` | DU183 | 4 |
-| `TestDV184ActiveTokenCount` | DV184 | 5 |
-| `TestDW185CompileExplainIterReexport` | DW185 | 5 |
-| `TestDX186FullI18NE2E` | DX186 | 9 |
-| **v22 total** | | **54** |
+- When `copy_revocations=True` and `skip_revocations` is not None, CIDs in the skip set are **excluded** from the revocation copy.
+- Allows callers to opt in to almost-all revocations while selectively preserving specific CIDs (e.g. for graceful migration windows).
+- Source manager is never mutated.
+- Default `None` (or empty set) copies all revocations (preserves v65 behavior).
 
 ---
 
-## 5. Cumulative Totals
+## Item 2 — `IPFSPolicyStore.save()` → `Dict[str, Optional[str]]` ✅
 
-| Version | Tests added | Running total |
-|---------|------------|---------------|
-| v13 | 77 | 2,805 |
-| v14 | 114 | 2,884 |
-| v15 | 69 | 2,953 |
-| v16 | 63 | 3,016 |
-| v17 | 57 | 3,073 |
-| v18 | 39 | 3,112 |
-| v19 | 59 | 3,171 |
-| v20 | 61 | 3,232 |
-| v21 | 51 | 3,283 |
-| **v22** | **54** | **3,337** |
+**File:** `ipfs_datasets_py/mcp_server/nl_ucan_policy.py`
+
+Return type changed from `None` to `Dict[str, Optional[str]]`:
+
+```python
+def save(self) -> Dict[str, Optional[str]]:
+    super().save()
+    results: Dict[str, Optional[str]] = {}
+    for name in self._registry.list_names():
+        results[name] = self.pin_policy(name)
+    return results
+```
+
+- Each policy name maps to its IPFS CID string, or `None` if pinning failed.
+- Empty registry → empty dict `{}`.
+- File is always written (via `super().save()`) regardless of pin results.
+- Enables callers to know which policies were successfully pinned without re-checking the CID map.
 
 ---
 
-## 6. v23 Candidates
+## Item 3 — `PubSubBus.publish_async(timeout_seconds=5.0)` ✅
 
-| Session | Target | Effort | Priority |
-|---------|--------|--------|----------|
-| DY187 | `PortugueseParser` — add `get_clauses_by_type(deontic_type)` convenience method | Low | 🟢 Low |
-| DZ188 | `NLUCANPolicyCompiler` — `compile_batch(sentences_list)` for multiple policy sets | Med | 🟡 Med |
-| EA189 | `DelegationManager.active_tokens()` — iterator over non-revoked tokens | Med | 🔴 High |
-| EB190 | `PolicyAuditLog.clear()` — reset all entries + stats | Low | 🟡 Med |
-| EC191 | `ComplianceChecker.merge()` returns `MergeResult(added, skipped_protected, skipped_duplicate)` | Med | 🟡 Med |
-| ED192 | `detect_all_languages()` — add `"ja"` Japanese inline keywords (8th language) | Low | 🟢 Low |
-| EE193 | `compile_explain_iter` in `api.py` — `policy_id` parameter passthrough test | Low | 🟢 Low |
-| EF194 | `DelegationManager.active_token_count` property (cached) | Low | 🟡 Med |
-| EG195 | `I18NConflictReport.most_conflicted_language()` — returns language with most conflicts | Low | 🟡 Med |
-| EH196 | Full integration: `PortugueseParser` → `detect_i18n_clauses("pt")` → `NLPolicyConflictDetector` | Med | 🔴 High |
+**File:** `ipfs_datasets_py/mcp_server/mcp_p2p_transport.py`
+
+Added `timeout_seconds: float = 5.0` keyword-only parameter:
+
+```python
+async def publish_async(
+    self,
+    topic: Union[str, "PubSubEventType"],
+    payload: Dict[str, Any],
+    *,
+    timeout_seconds: float = 5.0,
+) -> int:
+```
+
+- Each handler is wrapped in `anyio.move_on_after(timeout_seconds)`.
+- When `timeout_seconds <= 0`, no timeout is applied (backward-compatible unlimited mode).
+- Timed-out handlers count as not-notified (result `False`).
+- Falls back to sync `publish()` with `UserWarning` when anyio is absent (unchanged).
+
+---
+
+## Item 4 — `ComplianceChecker.migrate_encrypted()` ✅
+
+**File:** `ipfs_datasets_py/mcp_server/compliance_checker.py`
+
+New method for password rotation and version migration:
+
+```python
+def migrate_encrypted(
+    self,
+    path: str,
+    old_password: str,
+    new_password: str,
+) -> bool:
+```
+
+- Decrypts `path` using `old_password` (AES-256-GCM with SHA-256 key derivation).
+- Bumps `"version"` field to `_COMPLIANCE_RULE_VERSION`.
+- Re-encrypts with `new_password` using a fresh random nonce.
+- Returns `True` on success; `False` on wrong password (`InvalidTag`), missing file, too-short file, or `cryptography` absent.
+- Emits `UserWarning` when `cryptography` is not installed.
+
+---
+
+## Item 5 — Session 66 E2E Test ✅
+
+**File:** `tests/mcp/unit/test_mcplusplus_v21_session66.py`
+
+42 tests across 5 sections:
+
+| Section | Tests |
+|---------|-------|
+| `TestDelegationManagerMergeSkipRevocations` | 9 |
+| `TestIPFSPolicyStoreSaveBatchPin` | 6 |
+| `TestPubSubBusPublishAsyncTimeout` | 7 |
+| `TestComplianceCheckerMigrateEncrypted` | 10 |
+| `TestE2ESession66` | 10 |
+
+All 42 pass with 0 failures.
+
+---
+
+## Cumulative MCP++ Status
+
+| Component | Module | Sessions |
+|-----------|--------|---------|
+| Profile A — MCP-IDL | `interface_descriptor.py` | 50 |
+| Profile B — CID-Native Artifacts | `cid_artifacts.py` | 50 |
+| Profile C — UCAN Delegation | `ucan_delegation.py` | 53, 56–66 |
+| Profile D — Temporal Deontic Policy | `temporal_policy.py` | 50 |
+| Profile E — P2P Transport | `mcp_p2p_transport.py` | 54, 55, 56, 64, 65, **66** |
+| Event DAG | `event_dag.py` | 50 |
+| Risk Scoring | `risk_scorer.py` | 53, 55 |
+| Compliance | `compliance_checker.py` | 53, 60, 61, 62, 63, 64, 65, **66** |
+| HTM Schema CID | `hierarchical_tool_manager.py` | 53 |
+| Integrated Pipeline | `dispatch_pipeline.py` | 54, 56 |
+| NL→UCAN Policy Gate | `nl_ucan_policy.py` | 51, 52, 56, 57, 62, 63, 64, 65, **66** |
+| Server pipeline gate | `server.py` | 55 |
+| Policy MCP tools | `policy_management_tool.py` | 55 |
+| Pubsub bus | `mcp_p2p_transport.py` | 55 |
+| **DelegationManager.merge(skip_revocations)** | `ucan_delegation.py` | **66** |
+| **IPFSPolicyStore.save() → batch-pin dict** | `nl_ucan_policy.py` | **66** |
+| **publish_async(timeout_seconds)** | `mcp_p2p_transport.py` | **66** |
+| **ComplianceChecker.migrate_encrypted** | `compliance_checker.py` | **66** |
+
+**863+ spec tests pass (sessions 50–66).**
+
+---
+
+## Next Steps (Session 67+)
+
+1. **`DelegationManager.merge()` audit log** — when `copy_revocations=True`, record
+   each newly-copied revocation in a `PolicyAuditLog` via `audit_log=None` kwarg.
+2. **`IPFSPolicyStore.save()` pin retry** — add `max_retries: int = 1` kwarg; retry
+   failed pins once before recording `None` in the result dict.
+3. **`PubSubBus.publish_async()` timeout report** — return a namedtuple
+   `PublishAsyncResult(notified, timed_out)` instead of a bare `int` so callers
+   can distinguish slow handlers from failed ones.
+4. **`ComplianceChecker.migrate_encrypted()` backup** — atomically create a
+   `<path>.bak` backup of the original before overwriting, and clean it up
+   only when the write succeeds.
+5. **Session 67 full E2E** — test the full pipeline: policy store save with
+   batch-pin dict → publish_async with timeout → delegation merge with skip +
+   audit → compliance encrypt/migrate/rotate → session 66 regression.

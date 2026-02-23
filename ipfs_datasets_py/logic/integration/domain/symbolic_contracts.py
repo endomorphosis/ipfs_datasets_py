@@ -13,47 +13,7 @@ try:
 except Exception:  # pragma: no cover
     def beartype(func):  # type: ignore
         return func
-try:
-    from pydantic import BaseModel, Field, field_validator, ConfigDict
-    PYDANTIC_AVAILABLE = True
-except ImportError:
-    PYDANTIC_AVAILABLE = False
-    # Minimal stubs so the rest of the module loads without pydantic installed
-    def ConfigDict(**kwargs):  # type: ignore
-        return kwargs
-
-    class BaseModel:  # type: ignore
-        """Minimal pydantic.BaseModel stub."""
-        model_config = None
-        _field_defaults: dict = {}
-
-        def __init__(self, **data):
-            # Apply str_strip_whitespace if configured
-            strip = (self.model_config or {}).get("str_strip_whitespace", False) if isinstance(self.model_config, dict) else False
-            for k, v in data.items():
-                if strip and isinstance(v, str):
-                    v = v.strip()
-                setattr(self, k, v)
-            # Apply defaults for fields not provided
-            for name in list(getattr(self.__class__, '__annotations__', {}).keys()):
-                if name not in data:
-                    cls_val = getattr(self.__class__, name, None)
-                    # If class attribute is a type/class (used as default_factory), call it
-                    if isinstance(cls_val, type):
-                        setattr(self, name, cls_val())
-                    elif cls_val is not None and not callable(cls_val):
-                        setattr(self, name, cls_val)
-                    # else leave unset (will use class attr, which may be fine)
-
-    def Field(default=None, default_factory=None, **kwargs):  # type: ignore
-        if default_factory is not None:
-            return default_factory
-        return default
-
-    def field_validator(*args, **kwargs):  # type: ignore
-        def decorator(func):
-            return func
-        return decorator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 import re
 import json
 
@@ -696,6 +656,18 @@ if SYMBOLIC_AI_AVAILABLE:
 
 else:
     # Fallback implementation without SymbolicAI
+    _FALLBACK_STOPWORDS = frozenset({
+        "the", "and", "but", "for", "nor", "yet", "all",
+        "every", "some", "each", "if", "then", "that",
+        "a", "an", "or", "is", "are", "was", "were",
+    })
+    _FALLBACK_CONTENT_WORDS = [
+        "is", "are", "has", "have", "can", "must", "should", "teaches",
+        "studies", "passes", "writes", "commits", "requires", "pays",
+        "flies", "graduates", "mortal", "human", "bird", "student",
+        "professor", "course", "book", "author", "famous",
+    ]
+
     class ContractedFOLConverter:
         """Fallback FOL converter without SymbolicAI contracts."""
         
@@ -707,35 +679,77 @@ else:
             try:
                 # Basic pattern-based conversion
                 text = input_data.text.lower()
-                output_format = getattr(input_data, 'output_format', 'symbolic')
+                output_format = getattr(input_data, "output_format", "symbolic")
                 
-                if "all " in text or "every " in text:
-                    formula_symbolic = f"∀x Statement(x)"
-                elif "some " in text:
-                    formula_symbolic = f"∃x Statement(x)"
-                else:
-                    formula_symbolic = f"Statement({text.replace(' ', '_')})"
-                
-                # Convert to requested format
+                # Detect quantifier type
+                has_universal = "all " in text or "every " in text or "each " in text
+                has_existential = "some " in text or "there exists" in text or "there is" in text
+
+                # Extract predicates: capitalised words from original text that are likely nouns/verbs
+                import re as _re
+                words = input_data.text.split()
+                predicates = []
+                for w in words:
+                    w_clean = _re.sub(r'[^A-Za-z]', '', w)
+                    if len(w_clean) >= 3 and w_clean[0].isupper():
+                        if w_clean.lower() not in _FALLBACK_STOPWORDS:
+                            predicates.append(w_clean)
+                # Also add content verbs from text
+                for vp in _FALLBACK_CONTENT_WORDS:
+                    if vp in text and vp.capitalize() not in predicates:
+                        predicates.append(vp.capitalize())
+                if not predicates:
+                    predicates = ["Statement"]
+
+                # Detect entities (proper nouns — a simple heuristic)
+                entities = []
+                for w in words:
+                    w_clean = _re.sub(r'[^A-Za-z]', '', w)
+                    if (len(w_clean) >= 2 and w_clean[0].isupper()
+                            and w_clean.lower() not in _FALLBACK_STOPWORDS
+                            and not any(w_clean == p for p in predicates)):
+                        entities.append(w_clean)
+
+                quantifiers = (["∀"] if has_universal else []) + (["∃"] if has_existential else [])
+
+                # Build formula based on format
                 if output_format == "prolog":
-                    formula = formula_symbolic.replace('∀', 'forall').replace('∃', 'exists').replace('→', ':-')
+                    pred = predicates[0] if predicates else "statement"
+                    if has_universal:
+                        formula = f"forall(X, {pred.lower()}(X))"
+                    elif has_existential:
+                        formula = f"exists(X, {pred.lower()}(X))"
+                    else:
+                        formula = f"{pred.lower()}(x)"
                 elif output_format == "tptp":
-                    formula = formula_symbolic.replace('∀', '!').replace('∃', '?').replace('→', '=>').replace('∧', '&')
-                    formula = f"fof(statement, axiom, {formula})."
+                    pred = predicates[0] if predicates else "Statement"
+                    if has_universal:
+                        formula = f"fof(axiom1, axiom, ! [X] : {pred}(X))"
+                    elif has_existential:
+                        formula = f"fof(axiom1, axiom, ? [X] : {pred}(X))"
+                    else:
+                        formula = f"fof(axiom1, axiom, {pred}(x))"
                 else:
-                    formula = formula_symbolic
+                    # symbolic (default)
+                    pred = predicates[0] if predicates else "Statement"
+                    if has_universal:
+                        formula = f"∀x {pred}(x)"
+                    elif has_existential:
+                        formula = f"∃x {pred}(x)"
+                    else:
+                        formula = f"{pred}({text.replace(' ', '_')})"
                 
                 meta: Dict[str, Any] = {"fallback": True}
-                if hasattr(input_data, "domain_predicates") and input_data.domain_predicates:
+                if getattr(input_data, "domain_predicates", None):
                     meta["domain_predicates"] = input_data.domain_predicates
 
                 return FOLOutput(
                     fol_formula=formula,
                     confidence=0.6,
                     logical_components={
-                        "quantifiers": ["∀"] if "∀" in formula else (["∃"] if "∃" in formula else []),
-                        "predicates": ["Statement"],
-                        "entities": [],
+                        "quantifiers": quantifiers,
+                        "predicates": predicates[:5],
+                        "entities": entities[:5],
                     },
                     reasoning_steps=["Used fallback conversion"],
                     warnings=["SymbolicAI not available - using basic conversion"],

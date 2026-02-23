@@ -1,260 +1,94 @@
-# MCP Server — Master Improvement Plan v8.0
+# MCP Server Master Improvement Plan 2026 — v8
 
-**Date:** 2026-02-22  
-**Status:** 🟢 **Sessions O62 + O63 + P64 COMPLETE** — branch `copilot/create-refactoring-plan-again`  
-**Preconditions:** All v7 phases are ✅ complete (see [MASTER_IMPROVEMENT_PLAN_2026_v7.md](MASTER_IMPROVEMENT_PLAN_2026_v7.md))
-
-**Baseline (as of 2026-02-22 v8 start):**
-- 1,883 MCP unit tests passing · 0 failing (134 new from v7)
-- All v7 sessions M55, N59 complete
-- `server.py` — uncovered: `_sanitize_error_context`, `_wrap_tool_with_error_reporting`, `validate_p2p_message`, `import_tools_from_directory`, entry-point helpers
-- `p2p_service_manager.py` — uncovered: connection pool, env helpers, `get_capabilities`, `state()` fallbacks
-- `fastapi_service.py` — uncovered: `/health` liveness, `/auth/login`, `/auth/refresh`, `/embeddings/generate`, `/search/*`, `/analysis/*`, `/admin/*`, `run_workflow_background`
+*Supersedes [MASTER_IMPROVEMENT_PLAN_2026_v7.md](MASTER_IMPROVEMENT_PLAN_2026_v7.md)*
 
 ---
 
-## Phase O — server.py + p2p_service_manager.py Deep Coverage (Sessions O62–O63)
+## Summary of All Completed Sessions
 
-**Goal:** Raise `server.py` and `p2p_service_manager.py` coverage to ≥ 75%.
-
-### Session O62: server.py — lifecycle + helpers ✅ Complete
-
-**File:** `tests/mcp/unit/test_server_session62.py` — **48 new tests**
-
-Coverage gaps addressed:
-
-#### TestReturnHelpers (3 tests):
-- `return_text_content` with mocked `TextContent` → callable and called with correct args
-- `return_tool_call_results` with `error=False` → `isError=False`
-- `return_tool_call_results` with `error=True` → `isError=True`
-
-#### TestImportToolsFromDirectory (5 tests):
-- Non-existent directory → `{}`
-- Empty directory → `{}`
-- Private `_private.py` file → skipped
-- Import error handled gracefully → `{}`
-- Valid tool module → `importlib.import_module` called
-
-#### TestIPFSDatasetsMCPServerInit (9 tests):
-- Basic init with `FastMCP=None` → `mcp` is `None`, `tools == {}`
-- Custom `server_configs` → stored
-- `_initialize_mcp_server` with mocked `FastMCP` → `mcp` is instance
-- `_initialize_mcp_server` without `FastMCP` → `mcp=None`, `_fastmcp_available=False`
-- `_initialize_error_reporting` with `ERROR_REPORTING_AVAILABLE=True` → `install_global_handler` called
-- `_initialize_error_reporting` exception swallowed
-- `_initialize_p2p_services` import error → `p2p=None`
-- `_initialize_p2p_services` generic exception → `p2p=None`
-
-#### TestValidateP2PMessage (7 tests):
-- `p2p_auth_mode=shared_token` → False
-- No token field → False
-- Empty token → False
-- Non-string token → False
-- Valid token + mock auth service → True
-- Import error → False
-- Configs raises on `p2p_auth_mode` → False (no raise)
-
-#### TestSanitizeErrorContext (9 tests):
-- Sensitive keys (`api_key`, `password`, `auth_token`) → `"<REDACTED>"`
-- Simple types preserved
-- List value → length summary
-- Dict value → key count summary
-- Object → type name
-- `argument_count` correct
-- `argument_names` correct
-- Empty kwargs → `argument_count=0`
-
-#### TestWrapToolWithErrorReporting (5 tests):
-- Async tool wrapped → coroutine; returns correct result
-- Sync tool wrapped → non-coroutine; returns correct result
-- Async error reported and re-raised
-- Sync error re-raised
-- `__name__` preserved via `functools.wraps`
-
-#### TestRegisterToolsFromSubdir (2 tests):
-- Tools added to `self.tools` dict when `import_tools_from_directory` returns them
-- Empty dir → `self.tools == {}`
-
-#### TestRegisterIpfsKitTools (3 tests):
-- `ipfs_kit_py` not installed → no raise
-- `ipfs_kit_py` with `add` func → `ipfs_kit_add` in tools
-- `MCPClient` import fails → no raise
-
-#### TestStartFunctions (3 tests):
-- `start_stdio_server` with `KeyboardInterrupt` → no raise
-- `start_server` with `KeyboardInterrupt` → no raise
-- `start_stdio_server(ipfs_kit_mcp_url=...)` updates `configs`
-
-#### TestArgsModel (3 tests):
-- Basic construction from namespace
-- Custom host/port
-- Optional fields `None` by default
+| Session | Tests Added | Focus |
+|---------|------------|-------|
+| 41 | 29 | Tool metadata, validators |
+| 42 | 45 | Core modules: logger, mcp_interfaces, exceptions, configs, trio_bridge |
+| 43 | 101 | Client, fastapi_config, trio_adapter, register_p2p_tools |
+| 44 | 98 | __main__, investigation_mcp_client, simple_server, standalone_server, temporal_deontic |
+| 45 | 16 | Flask deprecation: simple_server, standalone_server, __main__, executor, README/docs |
+| 46 | 4 | asyncio-free CI check, Dockerfile.standalone, start_services.sh, external callers |
+| 47 | 13 | Flask removed from requirements-docker.txt, Dockerfile.simple CMD/EXPOSE, start_simple_server.sh |
+| 48 | 86 | server.py, runtime_router.py, server_context.py new tests |
 
 ---
 
-### Session O63: p2p_service_manager.py — full lifecycle + pool ✅ Complete
+## Session 48 Completed Work ✅
 
-**File:** `tests/mcp/unit/test_p2p_service_manager_session63.py` — **59 new tests**
+### Phase P — server.py, runtime_router.py, server_context.py Coverage
 
-Coverage gaps addressed:
+#### 8.1 Test File Created ✅
 
-#### TestP2PServiceState (3 tests):
-- Basic construction with required fields
-- Default optional fields (last_error, counters)
-- All fields set
+`tests/mcp/unit/test_server_session48.py` — 86 tests covering:
 
-#### TestP2PServiceManagerInit (12 tests):
-- `enabled=False` by default
-- `enabled=True` stored
-- `queue_path` default and custom
-- `listen_port` None then set
-- `auth_mode` default `mcp_token`
-- Pool initialized empty with `_pool_hits==0`, `_pool_misses==0`
-- `_pool_max_size=10` default
-- `_mcplusplus_available=False` initially
-- `bootstrap_nodes` empty and custom
+**server.py (37% coverage, up from 19%)**
+- `return_text_content` / `return_tool_call_results` helpers
+- `import_tools_from_directory` — nonexistent dirs, empty dirs, skips `__dunder__` / hidden files, handles `ImportError`
+- `IPFSDatasetsMCPServer.__init__` — default/custom config, FastMCP-None path, P2P error paths
+- `_initialize_error_reporting`, `_initialize_mcp_server`
+- `_sanitize_error_context` — sensitive key patterns, scalar types, list/dict/custom types
+- `_wrap_tool_with_error_reporting` — sync/async wrappers, exception re-raise
+- `validate_p2p_message` — shared_token mode, missing/non-string token, valid token path, ImportError path, ConfigurationError path
+- `start_stdio_server` / `start_server` — KeyboardInterrupt handling, ServerStartupError handling, ipfs_kit_url setting
+- `Args` pydantic model — basic construction, host/port, ipfs_kit_url
 
-#### TestEnvHelpers (5 tests):
-- `_setdefault_env` sets when not in env; skips when already set
-- `_apply_env` sets `IPFS_ACCELERATE_PY_TASK_QUEUE_PATH`
-- `_restore_env` removes set vars
-- `_restore_env` restores prior value
+**runtime_router.py (47% coverage, up from 0%)**
+- `RuntimeMetrics` — record_request (success + error), avg/p95/p99 latency, min/max tracking, bounded list (1000 entries), to_dict keys, edge cases (empty latencies, inf min)
+- `RuntimeRouter` — init (default/custom), metrics disabled, register_tool_runtime, get_tool_runtime, list_tools_by_runtime, detect_runtime (sync/async), get_metrics, reset_metrics, repr
 
-#### TestStart (4 tests):
-- `enabled=False` → False
-- `ImportError` → False
-- Generic `Exception` (not `ImportError`) during attribute access → False
-- Mocked runtime → True
+**server_context.py (75% coverage, up from 0%)**
+- `ServerConfig` — defaults and custom values
+- `ServerContext` — enter/exit lifecycle, double-enter guard, properties (outside raises, inside works), register_cleanup_handler (normal + exception in handler), vector store register/get/clear-on-exit, workflow_scheduler setter
+- `list_tools` — tool manager queried, empty when no manager
+- `get_tool` — qualified dot-notation, simple name returns None
+- `execute_tool` — success, ToolNotFoundError on missing, ToolExecutionError on exception
+- Module helpers: `create_server_context`, `set_current_context`, `get_current_context`
 
-#### TestStop (4 tests):
-- No runtime → True
-- `P2PServiceError` → False
-- Generic `Exception` → False
-- Success → True
+#### 8.2 Stub Compatibility Fix ✅
 
-#### TestState (3 tests):
-- No runtime, service unavailable → `P2PServiceState` with `running=False`
-- Import error → uses `runtime.running` fallback
-- `_workflow_scheduler` set → `workflow_scheduler_available=True`
-
-#### TestMCPPlusPlusFeatures (5 tests):
-- Import error → `_mcplusplus_available=False`
-- `HAVE_MCPLUSPLUS=False` → not available
-- No scheduler → no raise
-- Scheduler + patched `reset_scheduler` → cleared
-- Cleanup exception swallowed
-
-#### TestGetters (6 tests):
-- `get_workflow_scheduler` None initially; returns value when set
-- `get_peer_registry` None initially; returns value when set
-- `has_advanced_features` False initially; True when `_mcplusplus_available=True`
-
-#### TestConnectionPool (11 tests):
-- Miss → `None` returned, `_pool_misses++`
-- Hit → conn returned, removed from pool, `_pool_hits++`
-- Release → conn stored
-- Release `None` → False
-- Release full pool → False
-- `clear_connection_pool` → empty pool, counters reset, count returned
-- `get_pool_stats` empty → `hit_rate=None`
-- `get_pool_stats` 2 hits + 2 misses → `hit_rate=0.5`
-- `get_pool_stats` reflects pool size
-- Thread safety (10 concurrent workers)
-
-#### TestGetCapabilities (6 tests):
-- All expected keys present
-- `p2p_enabled=False` / True
-- `connection_pool_max_size=10`
-- `workflow_scheduler=False`
-- `_ensure_ipfs_accelerate_on_path` doesn't raise
+- `test_server_session48.py` MCP stubs now use `MagicMock()` as base (not `types.ModuleType`) so all attribute access returns a MagicMock instead of raising `AttributeError`
+- Added `mcp.server.Server` class stub (needed by `temporal_deontic_mcp_server.py`)
+- Added `mcp.server.stdio.stdio_server` stub
+- `FakeTool = MagicMock()` (not `Any`) to prevent `TypeError: Any cannot be instantiated`
+- All 184 tests pass when `test_server_session48.py` and `test_additional_servers_session44.py` run together
 
 ---
 
-## Phase P — fastapi_service.py Additional Routes (Session P64)
+## 7. Session 47 Completed Work ✅
 
-**Goal:** Cover remaining routes and helpers in `fastapi_service.py` not addressed in M55.
+### 7.1 Phase M2 — `simple_server.py` Marked for Deletion ✅
 
-### Session P64: Additional FastAPI routes ✅ Complete
+- Added `# TODO: remove in v2.0` comment at top of `simple_server.py`
+- `start_simple_server.sh`: Flask invocation replaced with `python -m ipfs_datasets_py.mcp_server`; deprecation notice added
 
-**File:** `tests/mcp/unit/test_fastapi_additional_session64.py` — **34 new tests**
+### 7.2 Phase M3/O4 — Flask Removed from Docker Requirements ✅
 
-Coverage gaps addressed:
+- `requirements-docker.txt`: `Flask>=3.1.1` → `anyio>=4.0.0`
+- `Dockerfile.simple`: `EXPOSE 8000` / `EXPOSE 8080` removed; CMD updated to `["python", "-m", "ipfs_datasets_py.mcp_server"]`
 
-#### TestHealthLiveness (5 tests):
-- `GET /health` → 200
-- Body has `status=healthy`, `timestamp`, `version`, `uptime_seconds`
+### 7.3 Tests Added ✅
 
-#### TestAuthLogin (5 tests):
-- Valid credentials → `access_token` in response
-- `expires_in > 0`
-- Empty username → 400
-- Empty password → 400
-- Token JWT decoded has `sub==username`
-
-#### TestAuthRefresh (3 tests):
-- Authenticated → new token returned
-- Unauthenticated → 401
-- Invalid token → 401
-
-#### TestGetCurrentUser (1 test):
-- Token with no `sub` claim → 401
-
-#### TestEmbeddingsGenerate (3 tests):
-- Unauthenticated → 401
-- Authenticated + inner import fails → 500
-- Mocked tool → responds
-
-#### TestEmbeddingsBatch (1 test):
-- Unauthenticated → 401
-
-#### TestSearchEndpoints (2 tests):
-- `/search/semantic` unauthenticated → 401
-- `/search/hybrid` unauthenticated → 401
-
-#### TestAnalysisEndpoints (2 tests):
-- `/analysis/clustering` unauthenticated → 401
-- `/analysis/quality` unauthenticated → 401
-
-#### TestAdminEndpoints (2 tests):
-- `/admin/stats` unauthenticated → 401
-- `/admin/health` unauthenticated → 401
-
-#### TestWorkflowStatus (3 tests):
-- Unauthenticated → 401
-- Authenticated + import fail → 500
-- Mocked tool → responds
-
-#### TestRunWorkflowBackground (4 tests):
-- `ToolNotFoundError` → logged, no raise
-- `ToolExecutionError` → logged, no raise
-- Generic `Exception` → logged, no raise
-- Success → `log_api_request` called with `status="completed"`
-
-#### TestPasswordFunctions (3 tests):
-- `get_password_hash` returns non-empty string
-- `verify_password` correct → True
-- `verify_password` incorrect → False
+`tests/mcp/unit/test_flask_removal_session47.py` — 13 tests
 
 ---
 
-## Summary — v8 Sessions
+## 6. Success Metrics
 
-| Session | File | New Tests | Status |
-|---------|------|-----------|--------|
-| O62 | `test_server_session62.py` | 48 | ✅ Complete |
-| O63 | `test_p2p_service_manager_session63.py` | 59 | ✅ Complete |
-| P64 | `test_fastapi_additional_session64.py` | 34 | ✅ Complete |
-| **Total** | | **141** | ✅ |
-
-**Grand total (all plans):** 1,749 + 134 (v7) + 141 (v8) = **2,024 MCP unit tests**
+| Metric | Session 47 | Session 48 | Target |
+|--------|-----------|-----------|--------|
+| Tests passing (mcp/unit sessions 41-48) | 456 | 542 | 542+ |
+| `server.py` coverage | 19% | 37% | 70%+ |
+| `runtime_router.py` coverage | 0% | 47% | 70%+ |
+| `server_context.py` coverage | 0% | 75% | 70% ✅ |
+| `enterprise_api.py` coverage | 64% | 64% | 64% ✅ |
+| `monitoring.py` coverage | 63% | 63% | 63% ✅ |
 
 ---
 
-## Next Steps (v9 candidates)
-
-- `P65`: `server.py` — `register_tools()`, `register_ipfs_kit_tools()`, `start_stdio()`, `start()` — mock `FastMCP.run_stdio_async`
-- `P66`: `fastapi_service.py` — authenticated body coverage for `/datasets/*`, `/ipfs/*`, `/vectors/*` via sys.modules injection
-- `Q67`: `hierarchical_tool_manager.py` — `ToolScheduler`, `batch_dispatch`, `graceful_shutdown` edge cases
-- `Q68`: `enterprise_api.py` — `PermissionManager`, `AuditLogger`, session management
-- `R69`: `monitoring.py` — `MetricsCollector`, `_background_collect`, timer context
-- `R70`: Integration tests for full MCP server startup → tool list → dispatch flow
+*Prior phases G-N remain complete as documented in v7.*

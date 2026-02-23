@@ -72,27 +72,28 @@ def main():
                 print(f"Error with stdio server: {e}")
                 raise
         else:
-            # Use HTTP mode (legacy)
+            # HTTP mode is legacy; warn and prefer stdio
+            import warnings
+            warnings.warn(
+                "--http mode is deprecated.  The preferred access methods are: "
+                "(1) MCP stdio: `python -m ipfs_datasets_py.mcp_server`, "
+                "(2) CLI: `ipfs-datasets <command>`, "
+                "(3) Python imports: `from ipfs_datasets_py import ...`. "
+                "Flask-based HTTP servers have been removed from this project.",
+                DeprecationWarning,
+                stacklevel=1,
+            )
             try:
                 start_server(
                     host=args.host,
                     port=args.port
                 )
             except (ImportError, TypeError) as e:
-                # Fallback to simple server
-                print(f"Using simple server fallback (main server error: {e})")
-                from ipfs_datasets_py.mcp_server.simple_server import SimpleIPFSDatasetsMCPServer
-                from ipfs_datasets_py.mcp_server.configs import load_config_from_yaml
-
-                # Update configs for host/port
-                server_configs = load_config_from_yaml(args.config)
-                server_configs.host = args.host
-                server_configs.port = args.port
-
-                # Create and start server
-                server = SimpleIPFSDatasetsMCPServer(server_configs)
-                server.register_tools()
-                server.run(host=args.host, port=args.port)
+                print(
+                    f"HTTP server failed to start: {e}\n"
+                    "Use `python -m ipfs_datasets_py.mcp_server` instead."
+                )
+                raise
 
     except KeyboardInterrupt:
         print("\nServer stopped by user")

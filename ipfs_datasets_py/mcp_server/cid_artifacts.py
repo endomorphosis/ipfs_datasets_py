@@ -196,34 +196,51 @@ class ReceiptObject:
             "output_cid": self.output_cid,
             "decision_cid": self.decision_cid,
             "observed_side_effects": self.observed_side_effects,
+            "proofs_checked": self.proofs_checked,
             "correlation_id": self.correlation_id,
             "time_observed": self.time_observed,
         }
 
+    @property
+    def receipt_cid(self) -> str:
+        """Content-addressed CID of this receipt."""
+        return artifact_cid(self.to_dict())
 
-# ─── execution envelope ──────────────────────────────────────────────────────
 
+# ---------------------------------------------------------------------------
+# Execution Envelope (Profile B §5)
+# ---------------------------------------------------------------------------
 
 @dataclass
 class ExecutionEnvelope:
-    """
-    CID-native wrapper around an MCP invocation (Profile B: spec §2).
+    """CID-native wrapper around an MCP invocation (Profile B).
 
-    Carries CID references for audit, provenance, and policy evaluation
-    without changing the MCP JSON-RPC payload.
+    An ``ExecutionEnvelope`` bundles all pre-execution CIDs needed to form
+    a complete, auditable execution record.  Post-execution, add ``output_cid``
+    and ``receipt_cid``.
+
+    Attributes:
+        interface_cid: Interface Descriptor CID for the tool being called.
+        input_cid: CID of the canonicalised input parameters.
+        intent_cid: CID of the ``IntentObject`` for this invocation.
+        policy_cid: Optional CID of the active policy at invocation time.
+        proof_cid: Optional CID of the UCAN/proof bundle.
+        parents: CIDs of causally preceding event nodes.
+        output_cid: CID of the result (populated post-execution).
+        receipt_cid: CID of the ``ReceiptObject`` (populated post-execution).
     """
-    interface_cid: Optional[str] = None
-    input_cid: Optional[str] = None
-    intent_cid: Optional[str] = None
+
+    interface_cid: str
+    input_cid: str
+    intent_cid: str
     policy_cid: Optional[str] = None
     proof_cid: Optional[str] = None
     parents: List[str] = field(default_factory=list)
-
-    # Output fields (filled after execution)
     output_cid: Optional[str] = None
     receipt_cid: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialise to a plain dict."""
         return {
             "interface_cid": self.interface_cid,
             "input_cid": self.input_cid,
@@ -235,84 +252,65 @@ class ExecutionEnvelope:
             "receipt_cid": self.receipt_cid,
         }
 
-    def is_complete(self) -> bool:
-        """True if both output and receipt CIDs have been set."""
-        return self.output_cid is not None and self.receipt_cid is not None
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ExecutionEnvelope":
-        return cls(
-            interface_cid=data.get("interface_cid"),
-            input_cid=data.get("input_cid"),
-            intent_cid=data.get("intent_cid"),
-            policy_cid=data.get("policy_cid"),
-            proof_cid=data.get("proof_cid"),
-            parents=data.get("parents", []),
-            output_cid=data.get("output_cid"),
-            receipt_cid=data.get("receipt_cid"),
-        )
+    @property
+    def envelope_cid(self) -> str:
+        """Content-addressed CID of this execution envelope."""
+        return artifact_cid(self.to_dict())
 
 
-# ─── event node ──────────────────────────────────────────────────────────────
-
+# ---------------------------------------------------------------------------
+# Event Node (Profile B §7 + Event DAG spec)
+# ---------------------------------------------------------------------------
 
 @dataclass
 class EventNode:
-    """
-    Append-only DAG node (spec §7).
+    """A single node in the append-only Event DAG.
 
-    Each event CID commits to intent, interface, proofs, decision, outputs,
-    parents — enabling causal traversal, replay, and attribution.
+    Event nodes link intents, decisions, receipts, and outputs into a causal
+    graph suitable for provenance, replay, rollback, and audit.
+
+    Attributes:
+        parents: CIDs of causally preceding event nodes (empty for root events).
+        interface_cid: Interface Descriptor CID.
+        intent_cid: CID of the intent that triggered this event.
+        decision_cid: CID of the policy decision.
+        output_cid: CID of the execution output.
+        receipt_cid: CID of the execution receipt.
+        proof_cid: Optional CID of the proof bundle.
+        peer_did: Optional DID string of the executing peer.
+        timestamp_created: ISO-8601 UTC creation timestamp.
+        timestamp_observed: ISO-8601 UTC observation timestamp.
     """
-    intent_cid: str
+
     parents: List[str] = field(default_factory=list)
-    interface_cid: Optional[str] = None
+    interface_cid: str = ""
+    intent_cid: str = ""
+    decision_cid: str = ""
+    output_cid: str = ""
+    receipt_cid: str = ""
     proof_cid: Optional[str] = None
-    decision_cid: Optional[str] = None
-    output_cid: Optional[str] = None
-    receipt_cid: Optional[str] = None
     peer_did: Optional[str] = None
-    timestamp_created: Optional[str] = None
-
-    _cid: Optional[str] = field(default=None, repr=False, compare=False)
-
-    @property
-    def cid(self) -> str:
-        if self._cid is None:
-            self._cid = compute_cid(self._canonical_bytes())
-        return self._cid
-
-    def _canonical_bytes(self) -> bytes:
-        d = {
-            "intent_cid": self.intent_cid,
-            "parents": sorted(self.parents),
-            "interface_cid": self.interface_cid,
-            "proof_cid": self.proof_cid,
-            "decision_cid": self.decision_cid,
-            "output_cid": self.output_cid,
-            "receipt_cid": self.receipt_cid,
-            "peer_did": self.peer_did,
-            "timestamp_created": self.timestamp_created,
-        }
-        return _canonicalize(d)
+    timestamp_created: str = field(default_factory=_utcnow)
+    timestamp_observed: str = field(default_factory=_utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialise to a plain dict for canonicalisation / CID derivation."""
         return {
-            "event_cid": self.cid,
-            "intent_cid": self.intent_cid,
             "parents": self.parents,
             "interface_cid": self.interface_cid,
-            "proof_cid": self.proof_cid,
+            "intent_cid": self.intent_cid,
             "decision_cid": self.decision_cid,
             "output_cid": self.output_cid,
             "receipt_cid": self.receipt_cid,
+            "proof_cid": self.proof_cid,
             "peer_did": self.peer_did,
+            "timestamps": {
+                "created": self.timestamp_created,
+                "observed": self.timestamp_observed,
+            },
         }
 
-
-# ─── convenience ─────────────────────────────────────────────────────────────
-
-
-def artifact_cid(data: Any) -> str:
-    """Compute a CID from an arbitrary JSON-serialisable object."""
-    return compute_cid(_canonicalize(data))
+    @property
+    def event_cid(self) -> str:
+        """Content-addressed CID of this event node."""
+        return artifact_cid(self.to_dict())

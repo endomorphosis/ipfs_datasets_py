@@ -25,9 +25,9 @@ from ...TDFOL.tdfol_dcec_parser import parse_dcec
 from ...TDFOL.tdfol_prover import ProofResult
 
 # Integration imports
-from ..bridges.tdfol_cec_bridge import EnhancedTDFOLProver
-from ..bridges.tdfol_shadowprover_bridge import ModalAwareTDFOLProver
-from ..bridges.tdfol_grammar_bridge import NaturalLanguageTDFOLInterface
+from ..tdfol_cec_bridge import EnhancedTDFOLProver
+from ..tdfol_shadowprover_bridge import ModalAwareTDFOLProver
+from ..tdfol_grammar_bridge import NaturalLanguageTDFOLInterface
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +114,7 @@ class NeurosymbolicReasoner:
         
         # Check CEC availability
         try:
-            from ..bridges.tdfol_cec_bridge import TDFOLCECBridge
+            from .tdfol_cec_bridge import TDFOLCECBridge
             bridge = TDFOLCECBridge()
             if bridge.cec_available:
                 caps.cec_rules = len(bridge.cec_rules) if bridge.cec_rules else 87
@@ -125,7 +125,7 @@ class NeurosymbolicReasoner:
         
         # Check ShadowProver
         try:
-            from ..bridges.tdfol_shadowprover_bridge import TDFOLShadowProverBridge
+            from .tdfol_shadowprover_bridge import TDFOLShadowProverBridge
             bridge = TDFOLShadowProverBridge()
             caps.shadowprover_available = bridge.available
         except:

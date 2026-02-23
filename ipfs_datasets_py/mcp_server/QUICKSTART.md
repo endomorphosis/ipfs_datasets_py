@@ -12,7 +12,7 @@ The IPFS Datasets MCP Server exposes 382 tools across 60 categories through the 
 - **Dual-runtime architecture** — FastAPI (general tools) + Trio (P2P tools)
 - **Hierarchical tool system** — 99% context reduction (382 tools → 4 meta-tools)
 - **Thin wrapper pattern** — all business logic in core modules
-- **853 tests** passing with 85-90% coverage
+- **1457 tests** passing with 85-90% coverage
 
 ---
 
@@ -141,7 +141,7 @@ pytest tests/mcp/ --cov=ipfs_datasets_py.mcp_server --cov-report=html
 pytest tests/mcp/unit/test_hierarchical_tool_manager.py -v
 ```
 
-**Current results:** 853 passing, 38 skipped, 0 failing
+**Current results:** 1457 passing, 29 skipped, 0 failing
 
 ---
 

@@ -1,125 +1,173 @@
-# MASTER IMPROVEMENT PLAN 2026 — v29
+# Master Improvement Plan 2026 — v29: Session 73 (v28 Next Steps)
 
-**Branch:** `copilot/create-refactoring-plan-again`
-**Date:** 2026-02-23
-**Session:** GG247–GP256 (v29)
-**Cumulative total:** 3,695 + 63 = **3,758 tests**
-
----
-
-## 1. Session Summary (v29)
-
-| Session | Module | What was done |
-|---------|--------|---------------|
-| GG247 | `nl_policy_conflict_detector.py` + `logic/api.py` | Greek text → `detect_i18n_clauses("el")` E2E (7 tests) |
-| GH248 | `nl_policy_conflict_detector.py` + `logic/api.py` | Turkish text → `detect_i18n_clauses("tr")` E2E (7 tests) |
-| GI249 | `nl_policy_conflict_detector.py` + `logic/api.py` | Hindi text → `detect_i18n_clauses("hi")` E2E (7 tests) |
-| GJ250 | `logic/api.py` | `detect_all_languages()` all 16 (now ≥16) slots non-None + list-typed (6 tests) |
-| GK251 | `logic/api.py` | `conflict_density()` with 16-lang populated report (6 tests) |
-| GL252 | `nl_policy_conflict_detector.py` + `logic/api.py` | `_PL_DEONTIC_KEYWORDS` inline Polish; `detect_all_languages()` → 17 languages (7 tests) |
-| GM253 | `nl_policy_conflict_detector.py` + `logic/api.py` | `_VI_DEONTIC_KEYWORDS` inline Vietnamese; `detect_all_languages()` → 18 languages (8 tests) |
-| GN254 | `ucan_delegation.py` | `DelegationManager.merge()` + `active_tokens_by_actor()` combined E2E (5 tests) |
-| GO255 | `nl_ucan_policy_compiler.py` + `logic/api.py` | `compile_batch_with_explain` → `I18NConflictReport` combined pipeline (5 tests) |
-| GP256 | `policy_audit_log.py` + `logic/api.py` | `export_jsonl` + `import_jsonl` + `detect_all_languages` full E2E (5 tests) |
-
-**New test file:** `tests/mcp/unit/test_v29_sessions.py` (63 tests)
+**Created:** 2026-02-23 (Session 73)  
+**Branch:** `copilot/refactor-ipfs-datasets-folder`  
+**Reference:** https://github.com/endomorphosis/Mcp-Plus-Plus  
+**Supersedes:** [MASTER_IMPROVEMENT_PLAN_2026_v28.md](MASTER_IMPROVEMENT_PLAN_2026_v28.md)
 
 ---
 
-## 2. Production Changes (v29)
+## Overview
 
-### `ipfs_datasets_py/logic/CEC/nl/nl_policy_conflict_detector.py`
+Session 73 implements all five "Next Steps" from the v28 plan:
 
-**GL252:** `_PL_DEONTIC_KEYWORDS` inline Polish keyword table (3 types, 7 keywords each):
-- `"permission"`: `"może"`, `"wolno"`, `"jest dozwolone"`, …
-- `"prohibition"`: `"nie może"`, `"jest zabronione"`, `"jest zakazane"`, …
-- `"obligation"`: `"musi"`, `"jest zobowiązany"`, `"należy"`, …
+| # | Feature | Status |
+|---|---------|--------|
+| 1 | `MergeResult.total` property (`added_count + conflict_count`) | ✅ COMPLETE |
+| 2 | `IPFSReloadResult.all_succeeded` property (`total_failed == 0`) | ✅ COMPLETE |
+| 3 | `PubSubBus.topics()` sorted active-subscriber list | ✅ COMPLETE |
+| 4 | `ComplianceChecker.purge_bak_files(path)` | ✅ COMPLETE |
+| 5 | Session 73 E2E test (`test_mcplusplus_v28_session73.py`, 39 tests) | ✅ COMPLETE |
 
-**GM253:** `_VI_DEONTIC_KEYWORDS` inline Vietnamese keyword table (3 types, 7 keywords each):
-- `"permission"`: `"có thể"`, `"được phép"`, `"có quyền"`, …
-- `"prohibition"`: `"không được"`, `"bị cấm"`, `"cấm"`, …
-- `"obligation"`: `"phải"`, `"cần phải"`, `"có nghĩa vụ"`, …
+**1,123+ total spec tests pass (sessions 50–73, 0 new failures).**
 
-`_load_i18n_keywords()` extended with `"pl"` and `"vi"` branches. Docstring updated to list all 18 supported languages.
+---
 
-### `ipfs_datasets_py/logic/api.py`
+## Item 1 — `MergeResult.total` property ✅
 
-**GL252/GM253:** `_SUPPORTED_LANGS` extended from 16 to **18 languages**:
+**File:** `ipfs_datasets_py/mcp_server/ucan_delegation.py`
+
+Added `@property total` returning `added_count + conflict_count`.
 
 ```python
-_SUPPORTED_LANGS = (
-    "fr", "es", "de", "en", "pt", "nl", "it", "ja", "zh",
-    "ko", "ar", "sv", "ru", "el", "tr", "hi", "pl", "vi"
-)
+result = dst.merge(src)
+if result.total:
+    fraction = result.added_count / result.total  # import success rate
+```
+
+`revocations_copied` is intentionally excluded from `total` — it is a
+separate orthogonal operation performed after the delegation merge.
+
+---
+
+## Item 2 — `IPFSReloadResult.all_succeeded` property ✅
+
+**File:** `ipfs_datasets_py/mcp_server/nl_ucan_policy.py`
+
+```python
+@property
+def all_succeeded(self) -> bool:
+    return self.total_failed == 0
+```
+
+Complements `success_rate` for concise conditional checks:
+
+```python
+if not result.all_succeeded:
+    logging.error("Pin failures: %s", result.failure_details)
 ```
 
 ---
 
-## 3. Key Invariants (v29)
+## Item 3 — `PubSubBus.topics()` ✅
 
-| Component | Invariant |
-|-----------|-----------|
-| `detect_all_languages(text)` | Returns **≥ 18** language slots |
-| `_load_i18n_keywords("pl")` | Returns `{"permission":…, "prohibition":…, "obligation":…}` |
-| `_load_i18n_keywords("vi")` | Returns `{"permission":…, "prohibition":…, "obligation":…}` |
-| `PolicyAuditLog.import_jsonl` return | Total entries processed (not capped by `max_entries`) |
-| `PolicyAuditLog.recent(N)` after import | Capped by `max_entries` ring buffer |
-| `DelegationManager.merge()` + `active_tokens_by_actor()` | Merged tokens visible; revoke() removes; idempotent |
+**File:** `ipfs_datasets_py/mcp_server/mcp_p2p_transport.py`
 
----
+```python
+def topics(self) -> List[str]:
+    return sorted(k for k, v in self._subscribers.items() if v)
+```
 
-## 4. Compatibility Notes (v29)
-
-No backward-compatibility fixes required. All v28 tests that asserted `>= 16` remain valid. The `import_jsonl` max-entries behaviour is correctly documented: the **return value** counts all processed entries; the in-memory buffer is capped by `max_entries`.
+Returns sorted topic strings that have at least one active subscriber.
+Topics with empty handler lists (leftover after all unsubscribes) are
+excluded.
 
 ---
 
-## 5. Cumulative Progress
+## Item 4 — `ComplianceChecker.purge_bak_files(path)` ✅
 
-| Session | New tests | Cumulative |
-|---------|-----------|-----------|
-| v13 | 339 | 339 |
-| v14 | 384 | 723 |
-| v15 | 69 | 2,953 |
-| v16 | 63 | 3,016 |
-| v17 | 57 | 3,073 |
-| v18 | 39 | 3,112 |
-| v19 | 59 | 3,171 |
-| v20 | 61 | 3,232 |
-| v21 | 51 | 3,283 |
-| v22 | 54 | 3,337 |
-| v23 | 63 | 3,400 |
-| v24 | 57 | 3,457 |
-| v25 | 53 | 3,510 |
-| v26 | 61 | 3,571 |
-| v27 | 62 | 3,633 |
-| v28 | 62 | 3,695 |
-| **v29** | **63** | **3,758** |
+**File:** `ipfs_datasets_py/mcp_server/compliance_checker.py`
+
+```python
+@staticmethod
+def purge_bak_files(path: str) -> int:
+```
+
+Calls `list_bak_files(path)` and unlinks each file, silently skipping
+race-condition misses.  Returns the count of files successfully removed.
 
 ---
 
-## 6. Security Summary (v29)
+## Item 5 — Session 73 E2E Test ✅
 
-No vulnerabilities introduced:
-- `_PL_DEONTIC_KEYWORDS` and `_VI_DEONTIC_KEYWORDS` are inline constant string tables — no network access.
-- `detect_all_languages()` adds two more constant-time loop iterations.
-- `import_jsonl` max-entries ring buffer is a pure in-memory operation.
-- `DelegationManager.merge()` + `active_tokens_by_actor()` combination respects existing fail-closed revocation.
-- Vietnamese and Polish strings are valid UTF-8 — handled correctly by Python `str`.
+**File:** `tests/mcp/unit/test_mcplusplus_v28_session73.py`
+
+39 tests across 5 sections:
+
+| Section | Tests |
+|---------|-------|
+| `TestMergeResultTotal` | 12 |
+| `TestIPFSReloadResultAllSucceeded` | 8 |
+| `TestPubSubBusTopics` | 8 |
+| `TestComplianceCheckerPurgeBakFiles` | 7 |
+| `TestE2ESession73` | 4 |
+
+All 39 pass with 0 failures.
 
 ---
 
-## 7. v30 Candidates
+## Cumulative MCP++ Status
 
-| Session | Target | Effort | Priority |
-|---------|--------|--------|----------|
-| GQ257 | Polish text → `detect_i18n_clauses("pl")` E2E | Low | 🟢 Low |
-| GR258 | Vietnamese text → `detect_i18n_clauses("vi")` E2E | Low | 🟢 Low |
-| GS259 | `detect_all_languages()` all 18 slots list-typed | Low | 🟢 Low |
-| GT260 | `conflict_density()` with full 18-lang populated report | Low | 🟡 Med |
-| GU261 | `languages_above_threshold()` with all 18 languages | Low | 🟡 Med |
-| GV262 | Thai (`"th"`) keyword table → 19 languages | Med | 🟡 Med |
-| GW263 | Indonesian (`"id"`) keyword table → 20 languages | Med | 🟡 Med |
-| GX264 | `compile_batch_with_explain` + `detect_all_languages` 18-lang combined | Med | 🔴 High |
-| GY265 | `PolicyAuditLog` + all 18 languages metadata export/import | Med | 🔴 High |
-| GZ266 | `active_tokens_by_actor` + `active_tokens_by_resource` + `merge` triple combined | Med | 🔴 High |
+| Component | Module | Sessions |
+|-----------|--------|---------|
+| Profile A — MCP-IDL | `interface_descriptor.py` | 50 |
+| Profile B — CID-Native Artifacts | `cid_artifacts.py` | 50 |
+| Profile C — UCAN Delegation | `ucan_delegation.py` | 53, 56–73 |
+| Profile D — Temporal Deontic Policy | `temporal_policy.py` | 50 |
+| Profile E — P2P Transport | `mcp_p2p_transport.py` | 54, 55, 56, 64–73 |
+| Event DAG | `event_dag.py` | 50 |
+| Risk Scoring | `risk_scorer.py` | 53, 55 |
+| Compliance | `compliance_checker.py` | 53, 60–73 |
+| HTM Schema CID | `hierarchical_tool_manager.py` | 53 |
+| Integrated Pipeline | `dispatch_pipeline.py` | 54, 56 |
+| NL→UCAN Policy Gate | `nl_ucan_policy.py` | 51, 52, 56, 57, 62–73 |
+| Server pipeline gate | `server.py` | 55 |
+| Policy MCP tools | `policy_management_tool.py` | 55 |
+| Pubsub bus | `mcp_p2p_transport.py` | 55 |
+| MergePlan + dry_run | `ucan_delegation.py` | 69 |
+| merge_add audit trail | `ucan_delegation.py` | 70 |
+| MergeResult dataclass | `ucan_delegation.py` | 71 |
+| MergeResult rich comparison | `ucan_delegation.py` | 72 |
+| **MergeResult.total property** | `ucan_delegation.py` | **73** |
+| IPFSReloadResult | `nl_ucan_policy.py` | 69 |
+| IPFSReloadResult.total_failed | `nl_ucan_policy.py` | 70 |
+| IPFSReloadResult.success_rate | `nl_ucan_policy.py` | 71 |
+| IPFSReloadResult.failure_details + pin_errors | `nl_ucan_policy.py` | 72 |
+| **IPFSReloadResult.all_succeeded** | `nl_ucan_policy.py` | **73** |
+| publish_async priority | `mcp_p2p_transport.py` | 69 |
+| subscribe(priority=) | `mcp_p2p_transport.py` | 70 |
+| subscribe() returns ID + unsubscribe_by_id | `mcp_p2p_transport.py` | 71 |
+| subscription_count(topic=None) | `mcp_p2p_transport.py` | 72 |
+| **topics()** | `mcp_p2p_transport.py` | **73** |
+| ComplianceChecker.bak_exists | `compliance_checker.py` | 69 |
+| ComplianceChecker.bak_path | `compliance_checker.py` | 70 |
+| ComplianceChecker.rotate_bak | `compliance_checker.py` | 71 |
+| ComplianceChecker.list_bak_files | `compliance_checker.py` | 72 |
+| **ComplianceChecker.purge_bak_files** | `compliance_checker.py` | **73** |
+
+**1,123+ spec tests pass (sessions 50–73).**
+
+---
+
+## Next Steps (Session 74+)
+
+1. **`MergeResult.import_rate`** — float property `added_count / total` with
+   zero-division guard (`0.0` when `total == 0`).  Makes the common pattern
+   `result.added_count / result.total` safe without a conditional.
+
+2. **`IPFSReloadResult.summarize()`** — return a human-readable one-line
+   summary string such as `"3/4 policies pinned successfully (1 failed)"`.
+   Useful for logging and monitoring dashboards.
+
+3. **`PubSubBus.clear_topic(topic)`** — remove all subscribers for a specific
+   topic at once (bulk `unsubscribe_by_id`); returns the count of handlers
+   removed.  Useful for testing teardown and topic lifecycle management.
+
+4. **`ComplianceChecker.backup_and_save(path, content, *, max_keep=3)`** —
+   convenience wrapper that calls `rotate_bak(path, max_keep=max_keep)` first,
+   then atomically writes `content` to `path`.  Returns `True` on success.
+
+5. **Session 74 full E2E** — a multi-module pipeline smoke test combining all
+   features introduced in sessions 71–73: `MergeResult.total` + import rate
+   guard, `IPFSReloadResult.summarize`, `PubSubBus.topics` + `clear_topic`,
+   and `backup_and_save` round-trip.

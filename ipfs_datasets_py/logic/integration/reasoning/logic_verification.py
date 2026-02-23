@@ -41,7 +41,6 @@ from .logic_verification_utils import (
     parse_proof_steps,
     are_contradictory,
 )
-from ._logic_verifier_backends_mixin import LogicVerifierBackendsMixin
 
 if TYPE_CHECKING:
     from symai import Symbol
@@ -69,7 +68,7 @@ except (ImportError, SystemExit):
         pass
 
 
-class LogicVerifier(LogicVerifierBackendsMixin):
+class LogicVerifier:
     """Verify and reason about logical formulas using SymbolicAI."""
     
     def __init__(self, use_symbolic_ai: bool = True, fallback_enabled: bool = True):
@@ -120,17 +119,18 @@ class LogicVerifier(LogicVerifierBackendsMixin):
         logger.info(f"Added axiom: {axiom.name}")
         return True
     
-    @beartype
     def check_consistency(self, formulas: List[str]) -> ConsistencyCheck:
         """
         Check if a set of formulas is logically consistent.
         
         Args:
-            formulas: List of logical formulas to check
+            formulas: List of logical formulas to check (coerced to str if needed)
             
         Returns:
             ConsistencyCheck result
         """
+        # Coerce non-string items to strings for backward compatibility
+        formulas = [f.fol_formula if hasattr(f, 'fol_formula') else str(f) for f in formulas]
         if not formulas:
             return ConsistencyCheck(
                 is_consistent=True,
@@ -143,18 +143,116 @@ class LogicVerifier(LogicVerifierBackendsMixin):
         else:
             return self._check_consistency_fallback(formulas)
     
-    @beartype
+    def _check_consistency_symbolic(self, formulas: List[str]) -> ConsistencyCheck:
+        """Check consistency using SymbolicAI."""
+        try:
+            # Create a combined symbol representing all formulas
+            combined_formulas = " ∧ ".join(f"({formula})" for formula in formulas)
+            symbol = Symbol(combined_formulas, semantic=True)
+            
+            # Query for consistency
+            consistency_query = symbol.query(
+                "Are these logical formulas consistent with each other? "
+                "Can they all be true at the same time? "
+                "Respond with: consistent, inconsistent, or unknown"
+            )
+            
+            result_text = getattr(consistency_query, 'value', str(consistency_query)).lower()
+            
+            if "consistent" in result_text and "inconsistent" not in result_text:
+                is_consistent = True
+                confidence = 0.8
+                explanation = "SymbolicAI analysis indicates the formulas are consistent"
+            elif "inconsistent" in result_text:
+                is_consistent = False
+                confidence = 0.8
+                explanation = "SymbolicAI analysis indicates the formulas are inconsistent"
+                
+                # Try to find conflicting pairs
+                conflicting = self._find_conflicting_pairs_symbolic(formulas)
+            else:
+                # Non-committal model response: fall back to local checks.
+                if self.fallback_enabled:
+                    return self._check_consistency_fallback(formulas)
+                is_consistent = False
+                confidence = 0.5
+                explanation = "SymbolicAI could not determine consistency"
+                conflicting = []
+            
+            return ConsistencyCheck(
+                is_consistent=is_consistent,
+                conflicting_formulas=conflicting if not is_consistent else [],
+                confidence=confidence,
+                explanation=explanation,
+                method_used="symbolic_ai"
+            )
+            
+        except Exception as e:
+            logger.error(f"Error in symbolic consistency check: {e}")
+            return self._check_consistency_fallback(formulas)
+    
+    def _check_consistency_fallback(self, formulas: List[str]) -> ConsistencyCheck:
+        """Fallback consistency checking using basic pattern matching."""
+        conflicting_pairs = []
+        
+        # Simple pattern matching for obvious contradictions
+        for i, formula1 in enumerate(formulas):
+            for j, formula2 in enumerate(formulas[i+1:], i+1):
+                if are_contradictory(formula1, formula2):
+                    conflicting_pairs.append((formula1, formula2))
+        
+        is_consistent = len(conflicting_pairs) == 0
+        confidence = 0.6 if is_consistent else 0.8  # More confident about contradictions
+        
+        explanation = (
+            "Basic pattern matching found no obvious contradictions" if is_consistent else
+            f"Found {len(conflicting_pairs)} potential contradictions"
+        )
+        
+        return ConsistencyCheck(
+            is_consistent=is_consistent,
+            conflicting_formulas=conflicting_pairs,
+            confidence=confidence,
+            explanation=explanation,
+            method_used="pattern_matching"
+        )
+    
+    def _find_conflicting_pairs_symbolic(self, formulas: List[str]) -> List[Tuple[str, str]]:
+        """Find conflicting pairs using SymbolicAI."""
+        conflicting = []
+        
+        for i, formula1 in enumerate(formulas):
+            for j, formula2 in enumerate(formulas[i+1:], i+1):
+                # Check if the pair is contradictory
+                combined = Symbol(f"({formula1}) ∧ ({formula2})", semantic=True)
+                contradiction_query = combined.query(
+                    "Can these two logical statements both be true at the same time? "
+                    "Respond with: yes, no, or unknown"
+                )
+                
+                result = getattr(contradiction_query, 'value', str(contradiction_query)).lower()
+                if "no" in result:
+                    conflicting.append((formula1, formula2))
+        
+        return conflicting
+    
     def check_entailment(self, premises: List[str], conclusion: str) -> EntailmentResult:
         """
         Check if premises logically entail the conclusion.
         
         Args:
-            premises: List of premise formulas
+            premises: List of premise formulas (coerced to str if needed)
             conclusion: The conclusion formula
             
         Returns:
             EntailmentResult indicating whether entailment holds
         """
+        # Coerce non-string items for backward compatibility
+        premises = [p.fol_formula if hasattr(p, 'fol_formula') else str(p) for p in premises]
+        if hasattr(conclusion, 'fol_formula'):
+            conclusion = conclusion.fol_formula
+        elif not isinstance(conclusion, str):
+            conclusion = str(conclusion)
         if not premises:
             return EntailmentResult(
                 entails=False,
@@ -169,18 +267,98 @@ class LogicVerifier(LogicVerifierBackendsMixin):
         else:
             return self._check_entailment_fallback(premises, conclusion)
     
-    @beartype
+    def _check_entailment_symbolic(self, premises: List[str], conclusion: str) -> EntailmentResult:
+        """Check entailment using SymbolicAI."""
+        try:
+            # Create combined premises
+            combined_premises = " ∧ ".join(f"({p})" for p in premises)
+            entailment_formula = f"({combined_premises}) → ({conclusion})"
+            
+            symbol = Symbol(entailment_formula, semantic=True)
+            
+            # Query for entailment
+            entailment_query = symbol.query(
+                "Is this logical implication valid? "
+                "Do the premises logically entail the conclusion? "
+                "Respond with: yes, no, or unknown"
+            )
+            
+            result_text = getattr(entailment_query, 'value', str(entailment_query)).lower()
+            
+            if "yes" in result_text:
+                entails = True
+                confidence = 0.8
+                explanation = "SymbolicAI analysis confirms the entailment"
+            elif "no" in result_text:
+                entails = False
+                confidence = 0.8
+                explanation = "SymbolicAI analysis rejects the entailment"
+            else:
+                if self.fallback_enabled:
+                    return self._check_entailment_fallback(premises, conclusion)
+                entails = False
+                confidence = 0.5
+                explanation = "SymbolicAI could not determine entailment"
+            
+            return EntailmentResult(
+                entails=entails,
+                premises=premises,
+                conclusion=conclusion,
+                confidence=confidence,
+                explanation=explanation
+            )
+            
+        except Exception as e:
+            logger.error(f"Error in symbolic entailment check: {e}")
+            return self._check_entailment_fallback(premises, conclusion)
+    
+    def _check_entailment_fallback(self, premises: List[str], conclusion: str) -> EntailmentResult:
+        """Fallback entailment checking using basic rules."""
+        # Very basic entailment checking using known patterns
+        entails = False
+        confidence = 0.4
+        explanation = "Basic pattern matching used"
+        
+        # Check for simple modus ponens pattern
+        for premise in premises:
+            if "→" in premise and conclusion in premise:
+                # If premise is "P → Q" and conclusion is "Q", check if "P" is also a premise
+                parts = premise.split("→")
+                if len(parts) == 2:
+                    antecedent = parts[0].strip()
+                    consequent = parts[1].strip()
+                    
+                    if consequent == conclusion and antecedent in premises:
+                        entails = True
+                        confidence = 0.8
+                        explanation = "Modus ponens pattern detected"
+                        break
+        
+        return EntailmentResult(
+            entails=entails,
+            premises=premises,
+            conclusion=conclusion,
+            confidence=confidence,
+            explanation=explanation
+        )
+    
     def generate_proof(self, premises: List[str], conclusion: str) -> ProofResult:
         """
         Attempt to generate a proof from premises to conclusion.
         
         Args:
-            premises: List of premise formulas
+            premises: List of premise formulas (coerced to str if needed)
             conclusion: The conclusion to prove
             
         Returns:
             ProofResult with proof steps if successful
         """
+        # Coerce non-string items for backward compatibility
+        premises = [p.fol_formula if hasattr(p, 'fol_formula') else str(p) for p in premises]
+        if hasattr(conclusion, 'fol_formula'):
+            conclusion = conclusion.fol_formula
+        elif not isinstance(conclusion, str):
+            conclusion = str(conclusion)
         import time
         start_time = time.time()
         
@@ -203,6 +381,96 @@ class LogicVerifier(LogicVerifierBackendsMixin):
         
         return result
     
+    def _generate_proof_symbolic(self, premises: List[str], conclusion: str) -> ProofResult:
+        """Generate proof using SymbolicAI."""
+        try:
+            # Create a symbol representing the proof problem
+            premises_text = ", ".join(premises)
+            proof_prompt = f"Given premises: {premises_text}. Prove: {conclusion}"
+            
+            symbol = Symbol(proof_prompt, semantic=True)
+            
+            # Query for proof steps
+            proof_query = symbol.query(
+                "Generate a logical proof with step-by-step reasoning. "
+                "For each step, provide: step number, formula, and justification. "
+                "Format as: Step 1: [formula] (justification)"
+            )
+            
+            proof_text = getattr(proof_query, 'value', str(proof_query))
+            
+            # Parse the proof steps
+            steps = parse_proof_steps(proof_text)
+
+            # If we couldn't parse any steps (common for non-committal LLM responses),
+            # fall back to local proof heuristics.
+            if not steps and self.fallback_enabled:
+                return self._generate_proof_fallback(premises, conclusion)
+            
+            # Validate the proof
+            is_valid = len(steps) > 0 and steps[-1].formula == conclusion
+            confidence = 0.7 if is_valid else 0.3
+            
+            return ProofResult(
+                is_valid=is_valid,
+                conclusion=conclusion,
+                steps=steps,
+                confidence=confidence,
+                method_used="symbolic_ai"
+            )
+            
+        except Exception as e:
+            logger.error(f"Error in symbolic proof generation: {e}")
+            return self._generate_proof_fallback(premises, conclusion)
+    
+    def _generate_proof_fallback(self, premises: List[str], conclusion: str) -> ProofResult:
+        """Generate proof using fallback methods."""
+        steps = []
+        
+        # Add premises as initial steps
+        for i, premise in enumerate(premises):
+            steps.append(ProofStep(
+                step_number=i + 1,
+                formula=premise,
+                justification="Given premise",
+                rule_applied="premise"
+            ))
+        
+        # Try simple modus ponens
+        for premise in premises:
+            if "→" in premise:
+                parts = premise.split("→")
+                if len(parts) == 2:
+                    antecedent = parts[0].strip()
+                    consequent = parts[1].strip()
+                    
+                    if antecedent in premises and consequent == conclusion:
+                        steps.append(ProofStep(
+                            step_number=len(steps) + 1,
+                            formula=conclusion,
+                            justification=f"Modus ponens from '{antecedent}' and '{premise}'",
+                            rule_applied="modus_ponens",
+                            premises=[antecedent, premise]
+                        ))
+                        
+                        return ProofResult(
+                            is_valid=True,
+                            conclusion=conclusion,
+                            steps=steps,
+                            confidence=0.8,
+                            method_used="fallback_modus_ponens"
+                        )
+        
+        # If no proof found
+        return ProofResult(
+            is_valid=False,
+            conclusion=conclusion,
+            steps=steps,
+            confidence=0.1,
+            method_used="fallback_failed",
+            errors=["Could not generate proof with available fallback methods"]
+        )
+     
     @beartype
     def verify_formula_syntax(self, formula: str) -> Dict[str, Any]:
         """
@@ -412,37 +680,41 @@ class LogicVerifier(LogicVerifierBackendsMixin):
         }
 
     # ------------------------------------------------------------------
-    # Backward-compatibility aliases (private method names used by tests)
+    # Backward-compat private-method aliases
     # ------------------------------------------------------------------
 
     def _validate_formula_syntax(self, formula: str) -> bool:
-        """Alias for verify_formula_syntax(); returns True if valid."""
+        """Return True iff *formula* has valid syntax (backward-compat alias)."""
         result = self.verify_formula_syntax(formula)
-        return result.get("status") == "valid"
+        # verify_formula_syntax returns {'status': 'valid'|..., 'errors': [...], ...}
+        if result.get("valid") is not None:
+            return bool(result["valid"])
+        return result.get("status", "") == "valid"
 
     def _are_contradictory(self, formula1: str, formula2: str) -> bool:
-        """Delegate to the module-level are_contradictory() utility."""
+        """Return True iff *formula1* and *formula2* are contradictory (backward-compat)."""
         from .logic_verification_utils import are_contradictory
         return are_contradictory(formula1, formula2)
 
-    def verify_consistency(self, formulas):
-        """Alias for check_consistency()."""
+    def verify_consistency(self, formulas: List[str]) -> "ConsistencyCheck":
+        """Alias for check_consistency (backward compat)."""
         return self.check_consistency(formulas)
 
-    def validate_proof(self, steps):
-        """Validate a sequence of proof steps."""
-        results = []
-        for step in steps:
-            step_num = getattr(step, 'step_number', getattr(step, 'step_num', 0))
-            formula = getattr(step, 'formula', '')
-            validation = self.verify_formula_syntax(formula)
-            results.append({
-                'step': step_num,
-                'formula': formula,
-                'valid': validation.get('status') == 'valid',
-                'justification': getattr(step, 'justification', '')
-            })
-        return results
+    def validate_proof(self, steps: List["ProofStep"]) -> "ProofResult":
+        """Validate a sequence of proof steps.
+
+        Args:
+            steps: List of ProofStep objects representing a proof.
+
+        Returns:
+            ProofResult with is_valid and steps fields.
+        """
+        formula_list = [s.formula for s in steps]
+        result = self.generate_proof(
+            premises=formula_list[:-1] if len(formula_list) > 1 else formula_list,
+            conclusion=formula_list[-1] if formula_list else ""
+        )
+        return result
 
 
 # Import convenience functions from utils for backward compatibility

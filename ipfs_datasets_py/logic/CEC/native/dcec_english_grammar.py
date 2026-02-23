@@ -494,14 +494,26 @@ class DCECEnglishGrammar:
         
         elif sem_type == "deontic":
             op = semantic_value["operator"]
-            agent = semantic_value["agent"]["name"]
-            action = semantic_value["action"]["name"]
-            if op == "obligated":
-                return f"{agent} must {action}"
-            elif op == "forbidden":
-                return f"{agent} is forbidden to {action}"
-            elif op == "permitted":
-                return f"{agent} may {action}"
+            # Handle both old structure (agent/action) and new structure (formula)
+            if "formula" in semantic_value:
+                inner = self._linearize_boolean(semantic_value["formula"])
+                deontic_map = {
+                    "O": "It is obligatory that",
+                    "P": "It is permitted that",
+                    "F": "It is forbidden that",
+                }
+                prefix = deontic_map.get(str(op), f"[{op}]")
+                return f"{prefix} {inner}"
+            else:
+                agent = semantic_value.get("agent", {}).get("name", "?")
+                action = semantic_value.get("action", {}).get("name", "?")
+                if op == "obligated":
+                    return f"{agent} must {action}"
+                elif op == "forbidden":
+                    return f"{agent} is forbidden to {action}"
+                elif op == "permitted":
+                    return f"{agent} may {action}"
+                return f"[{op}] {agent} {action}"
         
         elif sem_type == "cognitive":
             op = semantic_value["operator"]
@@ -616,6 +628,23 @@ class DCECEnglishGrammar:
                     "operator": formula.connective,
                     "formula": self._formula_to_semantic(formula.formulas[0])
                 }
+        
+        # Handle TDFOL Predicate duck-typing (name + arguments attributes)
+        if hasattr(formula, 'name') and hasattr(formula, 'arguments') and not hasattr(formula, 'predicate'):
+            return {
+                "type": "atomic",
+                "predicate": formula.name,
+                "arguments": [{"name": str(a)} for a in formula.arguments]
+            }
+        
+        # Handle TDFOL DeonticFormula duck-typing (operator + formula attributes)
+        if hasattr(formula, 'operator') and hasattr(formula, 'formula'):
+            op_value = formula.operator.value if hasattr(formula.operator, 'value') else str(formula.operator)
+            return {
+                "type": "deontic",
+                "operator": op_value,
+                "formula": self._formula_to_semantic(formula.formula)
+            }
         
         # Add more conversions...
         return {"type": "unknown", "formula": str(formula)}

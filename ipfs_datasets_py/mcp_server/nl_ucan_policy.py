@@ -947,6 +947,7 @@ class FilePolicyStore:
             return
 
         import os as _os
+        import hashlib as _hashlib
 
         enc_path = self.path + ".enc"
         parent = _os.path.dirname(enc_path)

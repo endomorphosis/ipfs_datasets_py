@@ -1,149 +1,181 @@
-# Master Improvement Plan 2026 — v24
-> Branch: `copilot/create-refactoring-plan-again`  
-> Session date: 2026-02-23  
-> Supersedes: `MASTER_IMPROVEMENT_PLAN_2026_v23.md`
+# Master Improvement Plan 2026 — v24: Session 68 (v23 Next Steps)
+
+**Created:** 2026-02-23 (Session 68)  
+**Branch:** `copilot/create-improvement-refactoring-plan`  
+**Reference:** https://github.com/endomorphosis/Mcp-Plus-Plus  
+**Supersedes:** [MASTER_IMPROVEMENT_PLAN_2026_v23.md](MASTER_IMPROVEMENT_PLAN_2026_v23.md)
 
 ---
 
-## 1. Session Overview
+## Overview
 
-This session implements 10 backlog items (EI197–ER206) identified in v23's
-"v24 Candidates" table, advancing the logic-layer, delegation management,
-i18n conflict detection, and compiler facilities.
+Session 68 implements all five "Next Steps" from the v23 plan:
 
-| Session | Module | Description | Tests |
-|---------|--------|-------------|-------|
-| EI197 | `ucan_delegation.py` | `DelegationManager.active_tokens_by_resource(resource)` | 7 |
-| EJ198 | `nl_ucan_policy_compiler.py` | `compile_batch_with_explain()` | 6 |
-| EK199 | `compliance_checker.py` | `ComplianceMergeResult.total` property | 5 |
-| EL200 | `logic/api.py` | `I18NConflictReport.conflict_density()` | 5 |
-| EM201 | `nl_policy_conflict_detector.py` | `_ZH_DEONTIC_KEYWORDS` Chinese (9th lang) | 7 |
-| EN202 | `nl_ucan_policy_compiler.py` | `compile_batch(fail_fast=True)` | 6 |
-| EO203 | `ucan_delegation.py` | `active_token_count` multi-revoke caching tests | 5 |
-| EP204 | `nl_policy_conflict_detector.py` | Japanese text → `detect_i18n_clauses("ja")` | 6 |
-| EQ205 | `portuguese_parser.py` | `get_clauses_by_type` + `detect_i18n_clauses("pt")` | 5 |
-| ER206 | `policy_audit_log.py` | `clear()` + `export_jsonl()` round-trip tests | 5 |
-| **v24 total** | | | **57** |
+| # | Feature | Status |
+|---|---------|--------|
+| 1 | `DelegationManager.merge()` conflict detection (revoked CIDs skipped with `UserWarning`) | ✅ COMPLETE |
+| 2 | `IPFSPolicyStore.reload(max_retries=1)` — retry param propagated to re-pin phase | ✅ COMPLETE |
+| 3 | `PublishAsyncResult.__int__` + `__eq__` helpers for legacy int comparison | ✅ COMPLETE |
+| 4 | `ComplianceChecker.restore_from_bak(path)` — restore encrypted file from `.bak` backup | ✅ COMPLETE |
+| 5 | Session 68 E2E test (`test_mcplusplus_v23_session68.py`, 36 tests) | ✅ COMPLETE |
+
+**934+ total spec tests pass (sessions 50–68, 0 new failures).**
 
 ---
 
-## 2. Production Changes
+## Item 1 — `DelegationManager.merge()` conflict detection ✅
 
-### `ipfs_datasets_py/mcp_server/ucan_delegation.py`
+**File:** `ipfs_datasets_py/mcp_server/ucan_delegation.py`
 
-- **EI197** — `DelegationManager.active_tokens_by_resource(resource)`:
-  generator yielding `(cid, token)` pairs from `active_tokens()` where any
-  `Capability.resource == resource` or `== "*"`.  Each token yielded at most
-  once per call (breaks after first matching capability).
+Before adding each CID from `other._store`, the merge loop now checks whether that
+CID is already in `self._revocation`:
 
-### `ipfs_datasets_py/logic/integration/nl_ucan_policy_compiler.py`
+```python
+revoked_in_self = set(self._revocation.to_list())
+for cid in other._store.list_cids():
+    if cid in revoked_in_self:
+        warnings.warn(
+            f"merge: skipping delegation {cid!r} — it is already revoked in this manager",
+            UserWarning,
+            stacklevel=3,
+        )
+        continue
+    ...
+```
 
-- **EJ198** — `NLUCANPolicyCompiler.compile_batch_with_explain(sentences_list,
-  policy_ids=None)` → `List[Tuple[NLUCANCompilerResult, str]]`: delegates to
-  `compile_batch()` then pairs each result with `result.explain()`.
-
-- **EN202** — `compile_batch(*, fail_fast: bool = False)`: new keyword-only
-  flag; when `True`, iteration stops after the first result with non-empty
-  `errors`; partial list returned.
-
-### `ipfs_datasets_py/mcp_server/compliance_checker.py`
-
-- **EK199** — `ComplianceMergeResult.total` `@property` = `added +
-  skipped_protected + skipped_duplicate`.  Does not affect `int` equality
-  semantics (those use `added` only).
-
-### `ipfs_datasets_py/logic/api.py`
-
-- **EL200** — `I18NConflictReport.conflict_density()` method:
-  `total_conflicts / len(by_language)`;  `0.0` when empty.
-
-- **EM201** — `detect_all_languages()` docstring updated to mention `"zh"`;
-  `_SUPPORTED_LANGS` extended to 9 languages:
-  `("fr", "es", "de", "en", "pt", "nl", "it", "ja", "zh")`.
-
-### `ipfs_datasets_py/logic/CEC/nl/nl_policy_conflict_detector.py`
-
-- **EM201** — `_ZH_DEONTIC_KEYWORDS` inline Chinese deontic keyword table
-  (3 types; 7 keywords each).  `_load_i18n_keywords("zh")` returns it.
-  `_load_i18n_keywords` docstring updated to list `"zh"` as supported.
+- Emits one `UserWarning` per conflicted CID.
+- Conflicted CIDs are **never added** to `self._store`.
+- Non-conflicted CIDs are added as before.
+- Source manager is not mutated.
+- Backward compatible: callers that do not revoke anything see no change.
 
 ---
 
-## 3. Key Invariants (v24)
+## Item 2 — `IPFSPolicyStore.reload(max_retries=1)` ✅
 
-| Component | Invariant |
-|-----------|-----------|
-| `active_tokens_by_resource(r)` | Result ⊆ `active_tokens()`; each token at most once |
-| `compile_batch_with_explain` | `len == len(input)`; `t[1] == t[0].explain()` for each tuple |
-| `ComplianceMergeResult.total` | `== added + skipped_protected + skipped_duplicate` |
-| `conflict_density()` | `total_conflicts / len(by_language)`; `0.0` for empty |
-| `_ZH_DEONTIC_KEYWORDS` | Inline; 3 types; `_load_i18n_keywords("zh")` is it |
-| `detect_all_languages()` | 9 languages: `{"fr","es","de","en","pt","nl","it","ja","zh"}` |
-| `compile_batch(fail_fast=True)` | Stops after first result with errors |
-| `active_token_count` caching | Invalidated by every `revoke()` call |
+**File:** `ipfs_datasets_py/mcp_server/nl_ucan_policy.py`
 
----
+```python
+def reload(self, max_retries: int = 1) -> int:  # type: ignore[override]
+```
 
-## 4. Test Coverage (v24)
-
-| Test class | Session | Tests |
-|-----------|---------|-------|
-| `TestEI197ActiveTokensByResource` | EI197 | 7 |
-| `TestEJ198CompileBatchWithExplain` | EJ198 | 6 |
-| `TestEK199ComplianceMergeResultTotal` | EK199 | 5 |
-| `TestEL200ConflictDensity` | EL200 | 5 |
-| `TestEM201ChineseKeywords` | EM201 | 7 |
-| `TestEN202CompileBatchFailFast` | EN202 | 6 |
-| `TestEO203ActiveTokenCountCaching` | EO203 | 5 |
-| `TestEP204JapaneseIntegration` | EP204 | 6 |
-| `TestEQ205PortuguesePipelineCombined` | EQ205 | 5 |
-| `TestER206ClearExportRoundTrip` | ER206 | 5 |
-| **v24 total** | | **57** |
+- `max_retries=1` (default) matches the default in `save()`.
+- `max_retries=0` → single attempt (no retry).
+- Retry loop mirrors `save()`: `while cid is None and attempts < max_retries`.
+- `# type: ignore[override]` acknowledges the intentional signature widening.
 
 ---
 
-## 5. Cumulative Totals
+## Item 3 — `PublishAsyncResult.__int__` + `__eq__` ✅
 
-| Version | Tests added | Running total |
-|---------|------------|---------------|
-| v13 | 77 | 2,805 |
-| v14 | 114 | 2,884 |
-| v15 | 69 | 2,953 |
-| v16 | 63 | 3,016 |
-| v17 | 57 | 3,073 |
-| v18 | 39 | 3,112 |
-| v19 | 59 | 3,171 |
-| v20 | 61 | 3,232 |
-| v21 | 51 | 3,283 |
-| v22 | 54 | 3,337 |
-| v23 | 63 | 3,400 |
-| **v24** | **57** | **3,457** |
+**File:** `ipfs_datasets_py/mcp_server/mcp_p2p_transport.py`
 
----
+```python
+class PublishAsyncResult(NamedTuple):
+    notified: int
+    timed_out: int
 
-## 6. Security Summary (v24)
+    def __int__(self) -> int:
+        return self.notified
 
-No vulnerabilities introduced:
-- `active_tokens_by_resource` respects revocation list — fail-closed.
-- Chinese keywords are inline — no external fetching.
-- `compile_batch(fail_fast=True)` stops early on error — doesn't expose
-  more data on failure.
-- `conflict_density()` divides by language-slot count (never 0 in practice
-  since `detect_all_languages()` always populates all slots).
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return self.notified == other
+        if isinstance(other, tuple):
+            return tuple.__eq__(self, other)
+        return NotImplemented
+```
+
+- `int(result)` returns `notified`.
+- `result == 3` compares against `notified` — legacy callers continue to work.
+- `result == PublishAsyncResult(3, 1)` compares full tuple via `tuple.__eq__`.
+- Avoids `super()` in `NamedTuple` (Python 3.12 `__classcell__` restriction).
 
 ---
 
-## 7. v25 Candidates
+## Item 4 — `ComplianceChecker.restore_from_bak(path)` ✅
 
-| Session | Target | Effort | Priority |
-|---------|--------|--------|----------|
-| ES207 | `DelegationManager.active_tokens_by_resource("*")` edge case — wildcard matches all | Low | 🟢 Low |
-| ET208 | `compile_batch_with_explain` + `fail_fast=True` combined | Low | 🟢 Low |
-| EU209 | `ComplianceMergeResult.to_dict()` — {"added","skipped_protected","skipped_duplicate","total"} | Low | 🟢 Low |
-| EV210 | `I18NConflictReport.least_conflicted_language()` — complement of `most_conflicted_language()` | Low | 🟢 Low |
-| EW211 | `_ZH_DEONTIC_KEYWORDS` obligation keyword coverage test | Low | 🟢 Low |
-| EX212 | `compile_batch` `policy_ids` shorter than batches — auto-ID fills tail | Low | 🟡 Med |
-| EY213 | `active_tokens_by_resource` + revocation combined: resource match but revoked | Low | 🟢 Low |
-| EZ214 | `detect_all_languages` Chinese text → `by_language["zh"]` non-empty | Med | 🔴 High |
-| FA215 | `conflict_density()` with all 9 languages populated | Low | 🟡 Med |
-| FB216 | `NLUCANPolicyCompiler.compile_batch_with_explain` `fail_fast=True` variant | Low | 🟡 Med |
+**File:** `ipfs_datasets_py/mcp_server/compliance_checker.py`
+
+```python
+def restore_from_bak(self, path: str) -> bool:
+    bak_path = path + ".bak"
+    if not os.path.exists(bak_path):
+        return False
+    try:
+        shutil.copy2(bak_path, path)
+        os.unlink(bak_path)
+        return True
+    except Exception as exc:
+        logger.warning(...)
+        return False
+```
+
+- Returns `True` if backup exists and was successfully restored.
+- Returns `False` if no `.bak` file or copy fails.
+- Removes the `.bak` file only after successful restore.
+- Symmetric with the backup-creation logic in `migrate_encrypted()`.
+
+---
+
+## Item 5 — Session 68 E2E Test ✅
+
+**File:** `tests/mcp/unit/test_mcplusplus_v23_session68.py`
+
+36 tests across 5 sections:
+
+| Section | Tests |
+|---------|-------|
+| `TestDelegationManagerMergeConflictDetection` | 7 |
+| `TestIPFSPolicyStoreReloadMaxRetries` | 5 |
+| `TestPublishAsyncResultHelpers` | 9 |
+| `TestComplianceCheckerRestoreFromBak` | 6 |
+| `TestE2ESession68` | 9 |
+
+All 36 pass with 0 failures.
+
+---
+
+## Cumulative MCP++ Status
+
+| Component | Module | Sessions |
+|-----------|--------|---------|
+| Profile A — MCP-IDL | `interface_descriptor.py` | 50 |
+| Profile B — CID-Native Artifacts | `cid_artifacts.py` | 50 |
+| Profile C — UCAN Delegation | `ucan_delegation.py` | 53, 56–68 |
+| Profile D — Temporal Deontic Policy | `temporal_policy.py` | 50 |
+| Profile E — P2P Transport | `mcp_p2p_transport.py` | 54, 55, 56, 64, 65, 66, 67, **68** |
+| Event DAG | `event_dag.py` | 50 |
+| Risk Scoring | `risk_scorer.py` | 53, 55 |
+| Compliance | `compliance_checker.py` | 53, 60, 61, 62, 63, 64, 65, 66, 67, **68** |
+| HTM Schema CID | `hierarchical_tool_manager.py` | 53 |
+| Integrated Pipeline | `dispatch_pipeline.py` | 54, 56 |
+| NL→UCAN Policy Gate | `nl_ucan_policy.py` | 51, 52, 56, 57, 62, 63, 64, 65, 66, 67, **68** |
+| Server pipeline gate | `server.py` | 55 |
+| Policy MCP tools | `policy_management_tool.py` | 55 |
+| Pubsub bus | `mcp_p2p_transport.py` | 55 |
+| **DelegationManager.merge() conflict detection** | `ucan_delegation.py` | **68** |
+| **IPFSPolicyStore.reload(max_retries)** | `nl_ucan_policy.py` | **68** |
+| **PublishAsyncResult.__int__/__eq__** | `mcp_p2p_transport.py` | **68** |
+| **ComplianceChecker.restore_from_bak** | `compliance_checker.py` | **68** |
+
+**934+ spec tests pass (sessions 50–68).**
+
+---
+
+## Next Steps (Session 69+)
+
+1. **`DelegationManager.merge()` dry-run mode** — `dry_run=False` kwarg that
+   simulates the merge and returns a `MergePlan` (would_add, would_skip_conflicts)
+   without mutating state.
+2. **`IPFSPolicyStore.reload()` → `IPFSReloadResult`** — structured return type
+   `IPFSReloadResult(count, pin_results: Dict[str, Optional[str]])` so callers can
+   inspect which pins succeeded/failed after reload.
+3. **`PubSubBus.publish_async()` with priority ordering** — `priority: int = 0`
+   parameter; higher-priority handlers called first within the anyio task group.
+4. **`ComplianceChecker.bak_exists(path)`** — static helper that returns `True` if
+   `<path>.bak` exists, for callers that want to check before calling
+   `restore_from_bak()`.
+5. **Session 69 full E2E** — combined regression covering all session 60–68 features
+   with a single fixture that exercises the whole stack (policy store → delegation
+   manager → compliance → pubsub → monitoring).

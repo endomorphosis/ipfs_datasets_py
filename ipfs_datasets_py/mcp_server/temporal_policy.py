@@ -1,444 +1,349 @@
+"""Profile D: Temporal Deontic Policy Evaluation.
+
+Implements the MCP++ Profile D specification from:
+https://github.com/endomorphosis/Mcp-Plus-Plus/blob/main/docs/spec/temporal-deontic-policy.md
+
+Policies are content-addressed (``policy_cid``) and express:
+- **Permissions** — what is allowed
+- **Prohibitions** — what is forbidden
+- **Obligations** — what must be done (often with deadlines)
+- **Temporal constraints** — validity windows, deadlines, revocations
+
+At execution time, a ``PolicyEvaluator`` accepts an ``IntentObject`` (from
+``cid_artifacts``) plus a ``PolicyObject`` and returns a ``DecisionObject``.
+
+The ``make_simple_permission_policy()`` factory builds a minimal policy that
+grants a named actor permission to call a specific tool within a time window.
 """
-Profile D: Temporal Deontic Policy Evaluation
 
-Implements the temporal deontic policy profile from the MCP++ specification:
-  https://github.com/endomorphosis/Mcp-Plus-Plus/blob/main/docs/spec/temporal-deontic-policy.md
-
-This module provides a lightweight, self-contained policy evaluator that:
-1. Represents policies as content-addressed objects (policy_cid).
-2. Evaluates intent objects against policies at execution time.
-3. Emits DecisionObject results (allow / deny / allow_with_obligations).
-4. Integrates with the existing logic/ TDFOL reasoning module when present.
-
-No external dependencies beyond stdlib. The TDFOL integration is optional.
-"""
 from __future__ import annotations
 
-import logging
-import time
+import hashlib
+import json
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
-from .interface_descriptor import compute_cid, _canonicalize
-from .cid_artifacts import (
-    DecisionObject, IntentObject, Obligation,
-    ALLOW, DENY, ALLOW_WITH_OBLIGATIONS,
-)
-
-logger = logging.getLogger(__name__)
+from .cid_artifacts import DecisionObject, IntentObject, artifact_cid
 
 
-# ─── policy clause types ────────────────────────────────────────────────────
-
-
-class PolicyClauseType:
-    PERMISSION = "permission"
-    PROHIBITION = "prohibition"
-    OBLIGATION = "obligation"
-
+# ---------------------------------------------------------------------------
+# Policy representation
+# ---------------------------------------------------------------------------
 
 @dataclass
 class PolicyClause:
-    """A single clause in a temporal deontic policy."""
-    clause_type: str          # PolicyClauseType.*
-    actor: Optional[str] = None
-    action: Optional[str] = None
+    """A single deontic clause within a policy.
+
+    Each clause represents one normative statement of the form::
+
+        Permission / Prohibition / Obligation (actor, action, resource, time)
+
+    Attributes:
+        clause_type: One of ``"permission"``, ``"prohibition"``, ``"obligation"``.
+        actor: The agent / role the clause applies to.  ``"*"`` matches any actor.
+        action: The tool name / action name.  ``"*"`` matches any action.
+        resource: Optional resource identifier scoped by this clause.
+        valid_from: ISO-8601 UTC timestamp — clause is inactive before this.
+        valid_until: ISO-8601 UTC timestamp — clause expires after this.
+        obligation_deadline: For ``obligation`` clauses, the deadline by which
+            the obligated action must be completed.
+        metadata: Additional freeform key-value metadata.
+    """
+
+    clause_type: str  # "permission" | "prohibition" | "obligation"
+    actor: str = "*"
+    action: str = "*"
     resource: Optional[str] = None
-    valid_from: Optional[float] = None   # Unix timestamp
-    valid_until: Optional[float] = None  # Unix timestamp
-    condition: Optional[str] = None
+    valid_from: Optional[str] = None
+    valid_until: Optional[str] = None
     obligation_deadline: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def is_temporally_valid(self, at_time: Optional[float] = None) -> bool:
-        """Return True if this clause is within its temporal window."""
-        t = at_time if at_time is not None else time.time()
-        if self.valid_from is not None and t < self.valid_from:
-            return False
-        if self.valid_until is not None and t > self.valid_until:
-            return False
-        return True
-
-
-# ─── policy object ─────────────────────────────────────────────────────────
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialise to a plain dict."""
+        return {
+            "clause_type": self.clause_type,
+            "actor": self.actor,
+            "action": self.action,
+            "resource": self.resource,
+            "valid_from": self.valid_from,
+            "valid_until": self.valid_until,
+            "obligation_deadline": self.obligation_deadline,
+            "metadata": self.metadata,
+        }
 
 
 @dataclass
 class PolicyObject:
-    """
-    Content-addressed policy (spec §2).
+    """A content-addressed policy container (Profile D).
 
-    Policies express permissions, prohibitions, obligations, and temporal
-    constraints.  The policy_cid is computed from the canonical representation.
+    A ``PolicyObject`` bundles deontic clauses and is identified by its
+    ``policy_cid`` — the content-addressed hash of its canonical form.
+
+    Attributes:
+        clauses: List of deontic ``PolicyClause`` objects.
+        version: Policy schema/language version string.
+        description: Human-readable description of the policy intent.
     """
-    policy_id: str
+
     clauses: List[PolicyClause] = field(default_factory=list)
     version: str = "v1"
-    description: Optional[str] = None
+    description: str = ""
 
-    _cid: Optional[str] = field(default=None, repr=False, compare=False)
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialise to a plain dict for canonicalisation."""
+        return {
+            "clauses": [c.to_dict() for c in self.clauses],
+            "version": self.version,
+            "description": self.description,
+        }
 
     @property
     def policy_cid(self) -> str:
-        if self._cid is None:
-            self._cid = compute_cid(self._canonical_bytes())
-        return self._cid
-
-    def _canonical_bytes(self) -> bytes:
-        d = {
-            "policy_id": self.policy_id,
-            "version": self.version,
-            "clauses": [
-                {
-                    "clause_type": c.clause_type,
-                    "actor": c.actor,
-                    "action": c.action,
-                    "resource": c.resource,
-                    "valid_from": c.valid_from,
-                    "valid_until": c.valid_until,
-                    "condition": c.condition,
-                    "obligation_deadline": c.obligation_deadline,
-                }
-                for c in self.clauses
-            ],
-        }
-        return _canonicalize(d)
-
-    def get_permissions(self) -> List[PolicyClause]:
-        return [c for c in self.clauses
-                if c.clause_type == PolicyClauseType.PERMISSION]
-
-    def get_prohibitions(self) -> List[PolicyClause]:
-        return [c for c in self.clauses
-                if c.clause_type == PolicyClauseType.PROHIBITION]
-
-    def get_obligations(self) -> List[PolicyClause]:
-        return [c for c in self.clauses
-                if c.clause_type == PolicyClauseType.OBLIGATION]
+        """Content-addressed CID of this policy object."""
+        return artifact_cid(self.to_dict())
 
 
-# ─── evaluator ─────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# Factory helpers
+# ---------------------------------------------------------------------------
+
+def make_simple_permission_policy(
+    actor: str,
+    action: str,
+    *,
+    resource: Optional[str] = None,
+    valid_from: Optional[str] = None,
+    valid_until: Optional[str] = None,
+    description: str = "",
+) -> PolicyObject:
+    """Create a minimal permission policy for one actor + action.
+
+    This factory is suitable for testing and simple deployment scenarios.
+    It creates a single ``"permission"`` clause.
+
+    Args:
+        actor: Agent or role identifier (``"*"`` matches any).
+        action: Tool / method name being granted (``"*"`` matches any).
+        resource: Optional resource scope.
+        valid_from: ISO-8601 UTC start of the permission window.
+        valid_until: ISO-8601 UTC end of the permission window.
+        description: Human-readable description for the policy.
+
+    Returns:
+        A ``PolicyObject`` containing one permission clause.
+
+    Example::
+
+        policy = make_simple_permission_policy(
+            actor="did:key:abc123",
+            action="repo.status",
+            valid_until="2026-12-31T23:59:59Z",
+        )
+    """
+    clause = PolicyClause(
+        clause_type="permission",
+        actor=actor,
+        action=action,
+        resource=resource,
+        valid_from=valid_from,
+        valid_until=valid_until,
+    )
+    return PolicyObject(clauses=[clause], description=description or f"Allow {actor} to call {action}")
+
+
+# ---------------------------------------------------------------------------
+# Policy Evaluator
+# ---------------------------------------------------------------------------
+
+def _parse_iso(ts: Optional[str]) -> Optional[datetime]:
+    """Parse an ISO-8601 UTC timestamp string into a timezone-aware datetime.
+
+    Args:
+        ts: ISO-8601 string, or ``None``.
+
+    Returns:
+        A timezone-aware ``datetime`` object, or ``None`` if *ts* is falsy.
+    """
+    if not ts:
+        return None
+    try:
+        # Python 3.11+ handles Z suffix; handle manually for ≥3.7
+        ts_clean = ts.replace("Z", "+00:00")
+        return datetime.fromisoformat(ts_clean)
+    except ValueError:
+        return None
+
+
+def _clause_matches(
+    clause: PolicyClause,
+    actor: str,
+    action: str,
+    resource: Optional[str],
+    now: datetime,
+) -> bool:
+    """Return ``True`` when *clause* applies to the given execution context.
+
+    Args:
+        clause: The policy clause to test.
+        actor: The acting agent's identifier.
+        action: The tool/method name.
+        resource: Optional resource identifier.
+        now: The evaluation timestamp.
+
+    Returns:
+        Whether this clause applies in the current context.
+    """
+    # Actor check — wildcard matches any
+    if clause.actor != "*" and clause.actor != actor:
+        return False
+
+    # Action check — wildcard matches any
+    if clause.action != "*" and clause.action != action:
+        return False
+
+    # Resource check (optional — if clause has no resource, it's unconstrained)
+    if clause.resource is not None and resource is not None:
+        if clause.resource != resource:
+            return False
+
+    # Temporal validity
+    valid_from = _parse_iso(clause.valid_from)
+    if valid_from and now < valid_from:
+        return False
+
+    valid_until = _parse_iso(clause.valid_until)
+    if valid_until and now > valid_until:
+        return False
+
+    return True
 
 
 class PolicyEvaluator:
+    """Runtime policy evaluator (Profile D).
+
+    Evaluates an ``IntentObject`` against a ``PolicyObject`` and produces a
+    ``DecisionObject`` whose verdict is one of:
+
+    - ``"allow"`` — all matching clauses are permissions, no prohibitions
+    - ``"deny"`` — at least one prohibition clause matches
+    - ``"allow_with_obligations"`` — allowed but with outstanding obligations
+
+    Usage::
+
+        policy = make_simple_permission_policy("alice", "repo.status")
+        intent = IntentObject(
+            interface_cid="bafy-mock-...",
+            tool="repo.status",
+            input_cid="bafy-mock-...",
+        )
+        evaluator = PolicyEvaluator()
+        decision = evaluator.evaluate(intent, policy)
+        assert decision.decision == "allow"
     """
-    Runtime policy evaluator (spec §5).
-
-    Checks intent objects against registered policies and emits
-    DecisionObjects.
-
-    Algorithm (non-normative, minimal):
-    1. If a prohibition matches the intent → DENY
-    2. If no permission matches → DENY (closed-world assumption)
-    3. Otherwise → ALLOW (or ALLOW_WITH_OBLIGATIONS if obligations exist)
-    """
-
-    def __init__(self) -> None:
-        self._policies: Dict[str, PolicyObject] = {}
-        # Phase 6: decision memoization cache.
-        # Key: (policy_cid, intent_cid, actor) → DecisionObject
-        # Cache is invalidated (cleared) whenever a new policy is registered.
-        self._decision_cache: Dict[tuple, "DecisionObject"] = {}
-
-    def register_policy(self, policy: PolicyObject) -> str:
-        """Register a policy and return its policy_cid.
-
-        Registering a new policy invalidates the decision cache because
-        existing evaluations may no longer be valid.
-        """
-        cid = policy.policy_cid
-        if cid not in self._policies:
-            # Only clear if this is a genuinely new policy to avoid
-            # unnecessary cache thrashing when re-registering the same policy.
-            self._decision_cache.clear()
-        self._policies[cid] = policy
-        return cid
-
-    def clear_cache(self) -> int:
-        """Explicitly clear the decision memoization cache.
-
-        Returns the number of entries that were cleared.
-        """
-        n = len(self._decision_cache)
-        self._decision_cache.clear()
-        return n
-
-    def get_policy(self, policy_cid: str) -> Optional[PolicyObject]:
-        return self._policies.get(policy_cid)
 
     def evaluate(
         self,
         intent: IntentObject,
-        policy_cid: str,
+        policy: PolicyObject,
         *,
-        at_time: Optional[float] = None,
         actor: Optional[str] = None,
-        proofs: Optional[List[str]] = None,
-        use_cache: bool = True,
+        resource: Optional[str] = None,
+        now: Optional[datetime] = None,
+        proofs_checked: Optional[List[str]] = None,
+        evaluator_did: Optional[str] = None,
     ) -> DecisionObject:
+        """Evaluate an intent against a policy and produce a decision.
+
+        The algorithm is:
+        1. For each clause in *policy*, test whether it matches the intent.
+        2. If ANY matching clause is a **prohibition**, verdict is ``"deny"``.
+        3. If at least one matching clause is a **permission**, check obligations.
+        4. If obligation clauses match, verdict is ``"allow_with_obligations"``.
+        5. Otherwise verdict is ``"deny"`` (no explicit permission found).
+
+        Args:
+            intent: The ``IntentObject`` being evaluated.
+            policy: The ``PolicyObject`` containing deontic clauses.
+            actor: Override the actor identifier (defaults to ``"*"``).
+            resource: Optional resource scope for the action.
+            now: Evaluation timestamp (defaults to current UTC time).
+            proofs_checked: CIDs of proofs/UCAN chains validated before
+                calling this evaluator.
+            evaluator_did: DID of the evaluating agent.
+
+        Returns:
+            A ``DecisionObject`` with the verdict and any spawned obligations.
         """
-        Evaluate *intent* against the policy identified by *policy_cid*.
+        eval_time = now or datetime.now(timezone.utc)
+        effective_actor = actor or "*"
+        effective_resource = resource
 
-        Returns a :class:`DecisionObject` with allow/deny/allow_with_obligations.
+        has_permission = False
+        obligations: List[Dict[str, Any]] = []
+        denial_reasons: List[str] = []
 
-        Parameters
-        ----------
-        intent:
-            The :class:`IntentObject` to evaluate.
-        policy_cid:
-            Identifier of the registered policy to check against.
-        at_time:
-            Unix timestamp to use for temporal clause validity.  Defaults to
-            ``time.time()``.
-        actor:
-            Optional actor override (used for per-actor clause matching).
-        proofs:
-            Optional list of UCAN proof CIDs checked during delegation
-            verification.
-        use_cache:
-            When *True* (default), previously computed decisions for the same
-            ``(policy_cid, intent_cid, actor)`` triple are returned from the
-            memoization cache.  Pass *False* to force re-evaluation.
-        """
-        # Phase 6: consult memoization cache first.
-        # We only cache when at_time is None (i.e. wall-clock time) because
-        # time-parameterised calls with an explicit timestamp are typically
-        # used for testing temporal edge cases and should always re-evaluate.
-        cache_key = (policy_cid, intent.cid, actor)
-        if use_cache and at_time is None and cache_key in self._decision_cache:
-            return self._decision_cache[cache_key]
-
-        policy = self._policies.get(policy_cid)
-        if policy is None:
-            return DecisionObject(
-                decision=DENY,
-                intent_cid=intent.cid,
-                policy_cid=policy_cid,
-                justification=f"Unknown policy_cid: {policy_cid}",
-            )
-
-        t = at_time if at_time is not None else time.time()
-
-        # 1. Check prohibitions first (deny overrides)
-        for clause in policy.get_prohibitions():
-            if not clause.is_temporally_valid(t):
+        for clause in policy.clauses:
+            if not _clause_matches(clause, effective_actor, intent.tool, effective_resource, eval_time):
                 continue
-            if self._clause_matches(clause, intent, actor):
-                return DecisionObject(
-                    decision=DENY,
-                    intent_cid=intent.cid,
-                    policy_cid=policy_cid,
-                    proofs_checked=proofs or [],
-                    justification=f"Prohibited by clause: action={clause.action}",
-                    policy_version=policy.version,
-                )
 
-        # 2. Check permissions (must have at least one match)
-        permitted = False
-        for clause in policy.get_permissions():
-            if not clause.is_temporally_valid(t):
-                continue
-            if self._clause_matches(clause, intent, actor):
-                permitted = True
-                break
-
-        if not permitted:
-            return DecisionObject(
-                decision=DENY,
-                intent_cid=intent.cid,
-                policy_cid=policy_cid,
-                proofs_checked=proofs or [],
-                justification="No matching permission found (closed-world).",
-                policy_version=policy.version,
-            )
-
-        # 3. Collect obligations
-        spawned: List[Obligation] = []
-        for clause in policy.get_obligations():
-            if not clause.is_temporally_valid(t):
-                continue
-            if self._clause_matches(clause, intent, actor):
-                spawned.append(Obligation(
-                    type=clause.action or "unspecified",
-                    deadline=clause.obligation_deadline,
-                ))
-
-        decision = ALLOW_WITH_OBLIGATIONS if spawned else ALLOW
-        result = DecisionObject(
-            decision=decision,
-            intent_cid=intent.cid,
-            policy_cid=policy_cid,
-            proofs_checked=proofs or [],
-            obligations=spawned,
-            justification="Permission granted.",
-            policy_version=policy.version,
-        )
-        # Phase 6: store in memoization cache (only for wall-clock evaluations).
-        if use_cache and at_time is None:
-            self._decision_cache[cache_key] = result
-        return result
-
-    @staticmethod
-    def _clause_matches(
-        clause: PolicyClause,
-        intent: IntentObject,
-        actor: Optional[str],
-    ) -> bool:
-        """Return True if *clause* applies to *intent*."""
-        if clause.actor is not None and actor is not None:
-            if clause.actor != actor and clause.actor != "*":
-                return False
-        if clause.action is not None:
-            if clause.action != intent.tool and clause.action != "*":
-                return False
-        return True
-
-
-# ─── module-level helpers ────────────────────────────────────────────────────
-
-
-_global_evaluator: Optional[PolicyEvaluator] = None
-
-
-def get_policy_evaluator() -> PolicyEvaluator:
-    """Return the process-global PolicyEvaluator (lazy-init)."""
-    global _global_evaluator
-    if _global_evaluator is None:
-        _global_evaluator = PolicyEvaluator()
-    return _global_evaluator
-
-
-class PolicyRegistry:
-    """
-    Durable policy store with JSON persistence (Profile D: spec §2).
-
-    Wraps a :class:`PolicyEvaluator` and provides :meth:`save` / :meth:`load`
-    helpers for JSON-based persistence.  In a production deployment these would
-    serialize to IPFS CAR files; the JSON implementation here is intended for
-    development and testing.
-    """
-
-    def __init__(self, evaluator: Optional[PolicyEvaluator] = None) -> None:
-        self._evaluator = evaluator or PolicyEvaluator()
-        self._meta: Dict[str, str] = {}  # policy_cid → policy_id
-
-    @property
-    def evaluator(self) -> PolicyEvaluator:
-        return self._evaluator
-
-    def register(self, policy: "PolicyObject") -> str:
-        """Register a policy and return its policy_cid."""
-        cid = self._evaluator.register_policy(policy)
-        self._meta[cid] = policy.policy_id
-        return cid
-
-    def list_policies(self) -> List[Dict[str, str]]:
-        """Return a list of registered policies with id and cid."""
-        return [
-            {"policy_id": pid, "policy_cid": cid}
-            for cid, pid in self._meta.items()
-        ]
-
-    def evaluate(
-        self,
-        intent: "IntentObject",
-        policy_cid: str,
-        **kwargs: Any,
-    ) -> "DecisionObject":
-        """Delegate evaluation to the inner evaluator."""
-        return self._evaluator.evaluate(intent, policy_cid, **kwargs)
-
-    def save(self, path: str) -> None:
-        """Persist registered policies to a JSON file.
-
-        In production, replace with IPFS CAR serialisation.
-        """
-        import json as _json
-        records = []
-        for _cid, pol in self._evaluator._policies.items():
-            records.append({
-                "policy_id": pol.policy_id,
-                "version": pol.version,
-                "description": pol.description,
-                "clauses": [
+            if clause.clause_type == "prohibition":
+                denial_reasons.append(f"Prohibited: actor={effective_actor} action={intent.tool}")
+            elif clause.clause_type == "permission":
+                has_permission = True
+            elif clause.clause_type == "obligation":
+                obligations.append(
                     {
-                        "clause_type": c.clause_type,
-                        "actor": c.actor,
-                        "action": c.action,
-                        "resource": c.resource,
-                        "valid_from": c.valid_from,
-                        "valid_until": c.valid_until,
-                        "condition": c.condition,
-                        "obligation_deadline": c.obligation_deadline,
+                        "type": "obligation",
+                        "action": clause.action,
+                        "deadline": clause.obligation_deadline or "",
+                        "metadata": clause.metadata,
                     }
-                    for c in pol.clauses
-                ],
-            })
-        with open(path, "w") as f:
-            _json.dump(records, f, indent=2)
-
-    def load(self, path: str) -> int:
-        """Load policies from a JSON file.  Returns number of policies loaded.
-
-        In production, replace with IPFS CAR deserialisation.
-        """
-        import json as _json
-        with open(path) as f:
-            records = _json.load(f)
-        count = 0
-        for rec in records:
-            clauses = [
-                PolicyClause(
-                    clause_type=c["clause_type"],
-                    actor=c.get("actor"),
-                    action=c.get("action"),
-                    resource=c.get("resource"),
-                    valid_from=c.get("valid_from"),
-                    valid_until=c.get("valid_until"),
-                    condition=c.get("condition"),
-                    obligation_deadline=c.get("obligation_deadline"),
                 )
-                for c in rec.get("clauses", [])
-            ]
-            pol = PolicyObject(
-                policy_id=rec["policy_id"],
-                clauses=clauses,
-                version=rec.get("version", "v1"),
-                description=rec.get("description"),
-            )
-            self.register(pol)
-            count += 1
-        return count
 
+        # Build verdict
+        if denial_reasons:
+            verdict = "deny"
+            justification = "; ".join(denial_reasons)
+        elif has_permission and obligations:
+            verdict = "allow_with_obligations"
+            justification = f"Permitted with {len(obligations)} obligation(s)"
+        elif has_permission:
+            verdict = "allow"
+            justification = f"Explicit permission for actor={effective_actor} action={intent.tool}"
+        else:
+            verdict = "deny"
+            justification = f"No matching permission for actor={effective_actor} action={intent.tool}"
 
-# ─── module-level registry singleton ────────────────────────────────────────
-
-
-_global_registry: Optional[PolicyRegistry] = None
-
-
-def get_policy_registry() -> PolicyRegistry:
-    """Return the process-global PolicyRegistry (lazy-init)."""
-    global _global_registry
-    if _global_registry is None:
-        _global_registry = PolicyRegistry()
-    return _global_registry
-
-
-def make_simple_permission_policy(
-    *,
-    policy_id: str,
-    allowed_tools: List[str],
-    actor: Optional[str] = None,
-    valid_until: Optional[float] = None,
-) -> PolicyObject:
-    """Helper: build a policy that permits a list of named tools."""
-    clauses = [
-        PolicyClause(
-            clause_type=PolicyClauseType.PERMISSION,
-            actor=actor,
-            action=tool,
-            valid_until=valid_until,
+        return DecisionObject(
+            decision=verdict,
+            intent_cid=intent.intent_cid,
+            policy_cid=policy.policy_cid,
+            proofs_checked=proofs_checked or [],
+            justification=justification,
+            obligations=obligations,
+            evaluator_dids=[evaluator_did] if evaluator_did else [],
         )
-        for tool in allowed_tools
-    ]
-    return PolicyObject(policy_id=policy_id, clauses=clauses)
+
+
+# ---------------------------------------------------------------------------
+# PolicyRegistry — thin re-export shim for backward compatibility
+# ---------------------------------------------------------------------------
+# The full implementation lives in nl_ucan_policy.PolicyRegistry.
+# This import is deferred to avoid circular dependencies at load time.
+
+def get_policy_registry() -> "PolicyRegistry":
+    """Return the global :class:`~nl_ucan_policy.PolicyRegistry` singleton.
+
+    This is a convenience re-export so callers can obtain the registry from
+    either ``temporal_policy`` or ``nl_ucan_policy``.
+
+    Returns:
+        The singleton :class:`~nl_ucan_policy.PolicyRegistry` instance.
+    """
+    from .nl_ucan_policy import (  # noqa: PLC0415
+        PolicyRegistry,
+        get_policy_registry as _get,
+    )
+    return _get()

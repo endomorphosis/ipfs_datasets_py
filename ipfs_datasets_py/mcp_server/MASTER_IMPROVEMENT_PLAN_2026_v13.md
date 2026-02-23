@@ -1,257 +1,227 @@
-# MCP Server — Master Improvement Plan v13.0
+# Master Improvement Plan 2026 — v13: Phases G–L (Session 57)
 
-**Date:** 2026-02-22  
-**Status:** 🟢 **Sessions AO99 + AQ101 + AR102 + AS103 + AI93 + TDFOL-T1 + TDFOL-T2 COMPLETE**  
-**Branch:** `copilot/create-refactoring-plan-again`  
-**Spec alignment:** https://github.com/endomorphosis/Mcp-Plus-Plus/blob/main/docs/index.md  
-**Preconditions:** All v12 phases ✅ complete (see [MASTER_IMPROVEMENT_PLAN_2026_v12.md](MASTER_IMPROVEMENT_PLAN_2026_v12.md))
-
-**Baseline (as of 2026-02-22 v13 start):**
-- 2,728 MCP + logic unit tests passing · 0 failing
-- v16 (Groth16 ZKP Rust backend) wired, all 8 NL→UCAN phases complete
+**Created:** 2026-02-22 (Session 57)  
+**Branch:** `copilot/create-improvement-refactoring-plan`  
+**Reference:** https://github.com/endomorphosis/Mcp-Plus-Plus  
+**Supersedes:** [MASTER_IMPROVEMENT_PLAN_2026_v12.md](MASTER_IMPROVEMENT_PLAN_2026_v12.md)
 
 ---
 
-## MCP++ Specification Alignment — v13 additions
+## Overview
 
-All five execution profiles remain fully aligned:
+Session 57 implements all six remaining phases (G–L) from the v12 "Next Steps"
+list, completing the MCP++ integration layer:
 
-| Profile | Spec Chapter | Status | Implementation |
-|---------|-------------|--------|---------------|
-| A: MCP-IDL | `mcp-idl.md` | ✅ | `interface_descriptor.py` + `toolset_slice()` (AO99 ✅) |
-| B: CID-Native Artifacts | `cid-native-artifacts.md` | ✅ | `cid_artifacts.py` + `dispatch_with_trace()` |
-| C: UCAN Delegation | `ucan-delegation.md` | ✅ | `ucan_delegation.py` + `DelegationStore` + `RevocationList` |
-| D: Temporal Deontic Policy | `temporal-deontic-policy.md` | ✅ | `temporal_policy.py` + `PolicyRegistry` + caches |
-| E: P2P Transport | `transport-mcp-p2p.md` | ✅ | `mcplusplus/` + `mcp_p2p_transport.py` |
+| Phase | Name | Status |
+|-------|------|--------|
+| **G** | IPFS-backed policy store | ✅ COMPLETE |
+| **H** | `RevocationList` + `can_invoke_with_revocation()` | ✅ COMPLETE |
+| **I** | `DelegationStore` (persistent JSON) | ✅ COMPLETE |
+| **J** | Compliance rule plugins via MCP tool | ✅ COMPLETE |
+| **K** | End-to-end dispatch pipeline integration test | ✅ COMPLETE |
+| **L** | Documentation update (`v13.md` + `PHASES_STATUS.md`) | ✅ COMPLETE |
 
----
-
-## Phase AO99 — toolset_slice() budget enforcement (Session AO99)
-
-### Session AO99: interface_descriptor.toolset_slice() ✅ Complete
-
-**Production change:** Added `toolset_slice(cids, budget, sort_fn)` to
-`ipfs_datasets_py/mcp_server/interface_descriptor.py` (spec §7).
-
-**File:** `tests/mcp/unit/test_v13_sessions.py`
-
-Key design:
-- `toolset_slice(cids, budget=None, sort_fn=None)` — budget-bounded CID list slice
-- `sort_fn` receives each CID string → comparable key; sorted ascending (lowest = most preferred)
-- No budget → full list returned unchanged
-- Budget 0 → empty list
-- Stable when sort_fn is None (preserves input order)
-
-#### TestToolsetSlice (8 tests):
-- No budget returns full list unchanged
-- Budget truncates to correct length
-- Budget larger than list returns full list
-- Budget 0 returns empty list
-- sort_fn re-ranks before truncation
-- sort_fn=None preserves input order
-- Sort key breaks ties deterministically (stable sort)
-- Integration: `InterfaceRepository.select()` + `toolset_slice()` roundtrip
+**494 total spec tests pass (sessions 50–57, 0 failures).**
 
 ---
 
-## Phase AQ101 — gRPC transport conformance (Session AQ101)
+## Phase G — IPFS-backed Policy Store ✅
 
-### Session AQ101: grpc_transport.py deeper coverage ✅ Complete
+**File:** `ipfs_datasets_py/mcp_server/nl_ucan_policy.py`
 
-**File:** `tests/mcp/unit/test_v13_sessions.py`
+Added **`IPFSPolicyStore`** — extends `FilePolicyStore` with optional IPFS
+pinning via `ipfs_kit_py`:
 
-Covers the conformance checklist from the MCP++ spec §E.9:
+- `pin_policy(name)` — serialises the NL policy + CID metadata to JSON and
+  pins it via `client.add()`; returns the IPFS `"Hash"` CID or `None` when
+  IPFS is unavailable.
+- `retrieve_from_ipfs(ipfs_cid)` — fetches policy data from IPFS by CID via
+  `client.cat()`; returns the parsed dict or `None` on failure.
+- `get_ipfs_cid(name)` — returns the IPFS CID of the last successful pin for
+  *name*, or `None` if not yet pinned.
+- `save()` — calls `FilePolicyStore.save()` first (always writes to disk), then
+  calls `pin_policy()` for every registered policy.
+- `load()` — delegates to `FilePolicyStore.load()` (IPFS retrieval available
+  via `retrieve_from_ipfs()` for individual policies).
+- Graceful fallback: when `ipfs_kit_py` is not installed or the client raises,
+  all IPFS methods log a warning and return `None` without raising.
 
-#### TestGRPCToolRequestConformance (4 tests):
-- `params_json` defaults to `"{}"` (valid JSON)
-- `request_id` defaults to empty string
-- All slots present and settable
-- Serialization roundtrip: construct → JSON dump → reconstruct
-
-#### TestGRPCToolResponseConformance (4 tests):
-- `success=True` response has non-empty `result_json`
-- `success=False` response has non-empty `error`
-- `error` defaults to empty string when `success=True`
-- `request_id` echoed from request
-
-#### TestGRPCAdapterConformance (4 tests):
-- `handle_request` echoes `request_id` in response
-- `handle_request` with nested JSON params dispatches correctly
-- `handle_request` with empty params_json uses `{}`
-- `get_info()` has all required spec fields (`transport`, `host`, `port`, `max_workers`, `is_running`)
-
----
-
-## Phase AR102 — Prometheus exporter deeper coverage (Session AR102)
-
-### Session AR102: prometheus_exporter.py ✅ Complete
-
-**File:** `tests/mcp/unit/test_v13_sessions.py`
-
-Covers metric name conventions + cardinality limits + histogram bucket semantics:
-
-#### TestPrometheusMetricNames (4 tests):
-- Counter metric name ends with `_total` (Prometheus convention)
-- Gauge metric name does **not** end with `_total`
-- Histogram metric name ends with `_seconds` or `_bytes` (sizing convention)
-- Namespace prefix applied to all metric names
-
-#### TestPrometheusLabelCardinality (4 tests):
-- `record_tool_call` with many distinct tools doesn't raise
-- `record_tool_call` updates both success + error counters
-- `update()` called with high-cardinality snapshot does not raise
-- `get_info()` returns `namespace` field
-
-#### TestPrometheusHistogramBuckets (4 tests):
-- Default histogram buckets are present in `_make_histogram()`
-- Custom buckets accepted
-- Histogram observe does not raise (no-op or real)
-- `update()` with `execution_times` key reaches histogram.observe path
+```python
+store = IPFSPolicyStore("/var/lib/mcp/policies.json", registry,
+                        ipfs_client=my_client)
+store.save()              # writes JSON + pins to IPFS
+cid = store.get_ipfs_cid("admin_only")  # "Qm..." or "bafy..."
+store.retrieve_from_ipfs(cid)           # fetch back from IPFS
+```
 
 ---
 
-## Phase AS103 — OpenTelemetry tracing deeper coverage (Session AS103)
+## Phase H — RevocationList + can_invoke_with_revocation ✅
 
-### Session AS103: otel_tracing.py ✅ Complete
+**File:** `ipfs_datasets_py/mcp_server/ucan_delegation.py`
 
-**File:** `tests/mcp/unit/test_v13_sessions.py`
+Added **`RevocationList`**:
 
-Covers span attributes + context propagation + error recording:
+- `revoke(cid)` — adds *cid* to the revoked set (O(1) insert).
+- `is_revoked(cid)` — O(1) membership check.
+- `revoke_chain(root_cid, evaluator)` — calls
+  `DelegationEvaluator.build_chain(root_cid)` and revokes every delegation in
+  the resulting chain; returns the count of **newly** revoked CIDs.
+- `clear()` — removes all revocations.
+- `to_list()` — returns sorted list of revoked CIDs.
+- Supports `len()` and `in` operators.
 
-#### TestOTelSpanAttributes (4 tests):
-- `start_dispatch_span()` returns object with `set_attribute` callable
-- `_NoOpSpan.set_attribute()` does not raise
-- `_NoOpSpan.set_status()` does not raise
-- `_NoOpSpan.record_exception()` does not raise
+Added **`can_invoke_with_revocation()`**:
 
-#### TestOTelContextPropagation (3 tests):
-- `configure_tracing()` returns `False` when OTel unavailable (no crash)
-- `MCPTracer` constructed with custom `tracer_name` stores name
-- `get_info()` includes `otel_available` key with correct bool value
+```python
+ok, reason = can_invoke_with_revocation(
+    leaf_cid, tool, actor,
+    evaluator=ev,
+    revocation_list=revlist,
+)
+```
 
-#### TestOTelDecoratorErrorPath (3 tests):
-- `trace_tool_call` decorator re-raises exceptions from the wrapped function
-- Decorator works with sync-style async functions
-- `set_span_ok()` on no-op span with `None` result does not raise
-
----
-
-## Phase AI93 — fastapi /datasets/* routes (Session AI93)
-
-### Session AI93: fastapi_service.py /datasets/* + /ipfs/* + /vectors/* inner-module mocking ✅ Complete
-
-**File:** `tests/mcp/unit/test_v13_sessions.py`
-
-Key insight: all `/datasets/*`, `/ipfs/*`, and `/vectors/*` routes import from
-`.mcp_server.tools.*` which resolves to the double-path `ipfs_datasets_py.mcp_server.mcp_server.*`
-(non-existent), so they always return HTTP 500. Tests verify this behaviour and that
-auth is enforced.
-
-#### TestFastapiDatasetRoutes (5 tests):
-- `POST /datasets/load` without auth → 401
-- `POST /datasets/load` with auth → 500 (inner import fails)
-- `POST /datasets/process` with auth → 500
-- `POST /datasets/save` with auth → 500
-- `POST /datasets/convert` with auth → 500
-
-#### TestFastapiIPFSRoutes (3 tests):
-- `POST /ipfs/pin` without auth → 401
-- `POST /ipfs/pin` with auth → 500
-- `GET /ipfs/get/{cid}` with auth → 500
-
-#### TestFastapiVectorRoutes (2 tests):
-- `POST /vectors/create-index` with auth → 500
-- `POST /vectors/search` with auth → 500
+Checks every CID in the delegation chain against `revocation_list` before
+performing the standard capability check.  Returns `(False, "... revoked")`
+as soon as any revoked CID is found, without examining capabilities.
 
 ---
 
-## Phase TDFOL-T1 — modal_tableaux coverage (Session TDFOL-T1)
+## Phase I — DelegationStore ✅
 
-### Session TDFOL-T1: ModalTableauxStrategy additional coverage ✅ Complete
+**File:** `ipfs_datasets_py/mcp_server/ucan_delegation.py`
 
-**File:** `tests/unit_tests/logic/test_v13_tdfol_strategy_coverage.py`
+Added **`DelegationStore`** — persistent JSON store for `Delegation` objects:
 
-#### TestModalTableauxProveBasicModal (5 tests):
-- Formula in `kb.axioms` → `PROVED` status, proof step present
-- Formula in `kb.theorems` → `PROVED` status
-- Formula not in KB → `UNKNOWN` status
-- KB with empty axioms and theorems → `UNKNOWN`
-- Proof step justification = "Found in knowledge base"
+- `add(delegation)` / `get(cid)` / `remove(cid)` / `list_cids()` — in-memory
+  CRUD operations.
+- `save()` — serialises all delegations to a JSON file; creates parent
+  directories automatically.
+- `load()` — reconstructs `Delegation` objects from JSON; handles missing or
+  corrupt files without raising.
+- `to_evaluator()` — creates a `DelegationEvaluator` populated with all
+  stored delegations, ready for `can_invoke()` calls.
+- Supports `len()`.
 
-#### TestModalTableauxEstimateCost (5 tests):
-- Simple DeonticFormula → cost == 2.0 (base, no multipliers)
-- Nested temporal formula → cost >= 4.0 (× 2.0 multiplier)
-- Mixed deontic + temporal formula → cost >= 6.0 (× 2.0 × 1.5)
-- Simple temporal formula → cost == 2.0 (no nesting multiplier)
-- `estimate_cost()` always returns float
+```python
+store = DelegationStore("/var/lib/mcp/delegations.json")
+store.add(delegation)
+store.save()                # on shutdown
 
-#### TestModalTableauxGetPriority (2 tests):
-- `get_priority()` returns 80
-- Priority > `ForwardChainingStrategy().get_priority()` (modal is specialised)
-
-#### TestModalTableauxInternalHelpers (3 tests):
-- `_has_deontic_operators(DeonticFormula(...))` → True
-- `_has_temporal_operators(TemporalFormula(...))` → True
-- `_has_nested_temporal(UnaryFormula(TemporalFormula(...)))` — tests nested depth
+store2 = DelegationStore("/var/lib/mcp/delegations.json")
+store2.load()               # on startup
+ev = store2.to_evaluator()
+ev.can_invoke("leaf-cid", resource="tool", ability="tool", actor="alice")
+```
 
 ---
 
-## Phase TDFOL-T2 — strategy_selector coverage (Session TDFOL-T2)
+## Phase J — Compliance Rule Plugins via MCP Tool ✅
 
-### Session TDFOL-T2: StrategySelector additional coverage ✅ Complete
+**File:** `ipfs_datasets_py/mcp_server/tools/logic_tools/compliance_rule_management_tool.py` (new)
 
-**File:** `tests/unit_tests/logic/test_v13_tdfol_strategy_coverage.py`
+Four MCP tools that expose `ComplianceChecker` rule management at runtime
+without requiring a server restart:
 
-#### TestStrategySelectorAddStrategy (4 tests):
-- `add_strategy()` increases `len(strategies)` by 1
-- Re-sorted by priority after add (highest first invariant maintained)
-- Added strategy appears in `get_strategy_info()` output
-- Custom strategy with priority 999 becomes first in list
+| Tool | Description |
+|------|-------------|
+| `compliance_add_rule(rule_id, description, severity)` | Register a stub COMPLIANT rule |
+| `compliance_list_rules()` | List all rule IDs in registration order |
+| `compliance_remove_rule(rule_id)` | Remove a rule by ID |
+| `compliance_check_intent(tool_name, actor, params)` | Run a synthetic intent through the global checker |
 
-#### TestStrategySelectorSelectMultiple (4 tests):
-- `select_multiple(max_strategies=1)` returns list of length 1
-- `select_multiple(max_strategies=3)` returns at most 3
-- Returns strategies in priority order (highest first)
-- Formula not handled by any strategy → returns fallback list
-
-#### TestStrategySelectorFallback (2 tests):
-- Non-modal formula falls back to forward chaining (if available) or first strategy
-- `_get_fallback_strategy()` raises `ValueError` when `strategies=[]`
-
----
-
-## Summary — v13 Sessions
-
-| Session | Target | New Tests | Status |
-|---------|--------|-----------|--------|
-| AO99 | `toolset_slice()` budget enforcement | 8 | ✅ |
-| AQ101 | gRPC conformance (serialisation + params + info) | 12 | ✅ |
-| AR102 | Prometheus metric names + cardinality + histogram | 12 | ✅ |
-| AS103 | OTel span attributes + context + decorator | 10 | ✅ |
-| AI93 | fastapi `/datasets/*` + `/ipfs/*` + `/vectors/*` | 10 | ✅ |
-| TDFOL-T1 | `ModalTableauxStrategy` basic modal + cost | 15 | ✅ |
-| TDFOL-T2 | `StrategySelector` add + multiple + fallback | 10 | ✅ |
-| **Total** | | **77** | ✅ |
-
-**Production changes:**
-- `interface_descriptor.py`: +`toolset_slice()` (spec §7)
-
-**Grand total (all plans):**  
-2,728 (through v16) + 77 (v13) = **2,805 MCP + logic unit tests**
+Key design decisions:
+- Uses a module-level `_GLOBAL_CHECKER` singleton (lazy-init to
+  `make_default_compliance_checker()`).
+- `compliance_add_rule` raises `ValueError` for an empty `rule_id`.
+- The registered stub always returns `COMPLIANT`; operators wanting non-trivial
+  logic should use `ComplianceChecker.add_rule()` programmatically.
+- All 4 tools are `async def` for MCP protocol compatibility.
 
 ---
 
-## Next Steps (v14 candidates)
+## Phase K — End-to-end Dispatch Pipeline Integration Test ✅
 
-| Session | Target | Rationale | Spec alignment |
-|---------|--------|-----------|----------------|
-| AT104 | `dispatch_pipeline.py` — stage-skip metrics + PipelineMetricsRecorder | Pipeline observability | Profile E |
-| AU105 | `mcp_p2p_transport.py` — `TokenBucketRateLimiter` conformance | Rate-limit spec §E.5 | Profile E §5 |
-| AV106 | `compliance_checker.py` — custom rule registration + removal | Extensible compliance | Profile A §8 |
-| AW107 | `risk_scorer.py` — `RiskScorer.score_and_gate()` full round-trip | Risk gate integration | — |
-| AX108 | `policy_audit_log.py` — sink callable + JSONL file + stats | Audit log spec §8 | Phase 8 |
-| AY109 | `did_key_manager.py` — `rotate_key()` + delegation chain migration | Key rotation spec | Profile C |
-| AZ110 | `secrets_vault.py` — `.enc` path encrypted-at-rest round-trip | Phase 7 security | — |
-| BA111 | Logic `integration/cec_bridge.py` — 95%+ coverage | Logic integration | — |
-| BB112 | Groth16 phase 4b — circuit_version=2 trace + EVM verifier ABI | Real ZKP use case | ZKP §4 |
-| BC113 | `NLUCANPolicyCompiler` multi-language support (FR/DE/ES) | Multilingual deontic | — |
+**File:** `tests/mcp/unit/test_dispatch_pipeline_e2e_session57.py` (new, 63 tests)
+
+Exercises the full MCP++ dispatch pipeline across all new and existing
+components:
+
+| Test Class | Coverage |
+|------------|----------|
+| `TestIPFSPolicyStore` | Phase G (9 tests) |
+| `TestRevocationList` | Phase H: RevocationList (9 tests) |
+| `TestCanInvokeWithRevocation` | Phase H: can_invoke_with_revocation (5 tests) |
+| `TestDelegationStore` | Phase I (12 tests) |
+| `TestComplianceRuleManagementTool` | Phase J (7 tests) |
+| `TestDispatchPipelineEndToEnd` | Full pipeline integration (21 tests) |
+
+Integration scenarios covered:
+
+- NL policy → compile → `UCANPolicyGate.evaluate()`
+- `PipelineMetricsRecorder.check_and_record()` → `get_stats()` / `reset()`
+- `PubSubBridge.connect()` / `publish()` → `service_manager.announce_capability()`
+- `EventDAG.append()` → `frontier()`
+- `risk_score_from_dag()` with rollback/error `EventNode` fixtures
+- `DelegationStore` save → load → `to_evaluator()` → `can_invoke_with_revocation()`
+- Revocation blocks a previously valid chain
+
+---
+
+## Phase L — Documentation Update ✅
+
+- **`MASTER_IMPROVEMENT_PLAN_2026_v13.md`** (this file) — documents all 6
+  completed phases.
+- **`PHASES_STATUS.md`** — updated cumulative status table and last-updated
+  date.
+
+---
+
+## Cumulative MCP++ Status
+
+| Component | Module | Sessions |
+|-----------|--------|---------|
+| Profile A — MCP-IDL | `interface_descriptor.py` | 50 |
+| Profile B — CID-Native Artifacts | `cid_artifacts.py` | 50 |
+| Profile C — UCAN Delegation | `ucan_delegation.py` | 53, 56, **57** |
+| Profile D — Temporal Deontic Policy | `temporal_policy.py` | 50 |
+| Profile E — P2P Transport | `mcp_p2p_transport.py` | 54, 55, 56 |
+| Event DAG | `event_dag.py` | 50 |
+| Risk Scoring | `risk_scorer.py` | 53, 55 |
+| Compliance | `compliance_checker.py` | 53 |
+| HTM Schema CID | `hierarchical_tool_manager.py` | 53 |
+| Integrated Pipeline | `dispatch_pipeline.py` | 54, 56 |
+| NL→UCAN Policy Gate | `nl_ucan_policy.py` | 51, 52, 56, **57** |
+| Server pipeline gate | `server.py` | 55 |
+| Policy MCP tools | `policy_management_tool.py` | 55 |
+| Pubsub bus | `mcp_p2p_transport.py` | 55 |
+| Async policy registration | `nl_ucan_policy.py` | 56 |
+| Persistent policy store (file) | `nl_ucan_policy.py` | 56 |
+| **IPFS-backed policy store** | `nl_ucan_policy.py` | **57** |
+| PubSub ↔ P2P bridge | `mcp_p2p_transport.py` | 56 |
+| Pipeline metrics | `dispatch_pipeline.py` | 56 |
+| DID delegation signing | `ucan_delegation.py` | 56 |
+| **RevocationList** | `ucan_delegation.py` | **57** |
+| **can_invoke_with_revocation** | `ucan_delegation.py` | **57** |
+| **DelegationStore** | `ucan_delegation.py` | **57** |
+| **Compliance rule management tool** | `compliance_rule_management_tool.py` | **57** |
+
+**494 spec tests pass (sessions 50–57).**
+
+---
+
+## Next Steps (Session 58+)
+
+1. **Wire `IPFSPolicyStore` into server startup** — read `IPFS_POLICY_STORE_PATH`
+   env var and restore the policy registry on boot.
+2. **`RevocationList` persistence** — save/load revoked CIDs to the
+   `SecretsVault` (encrypted) or a plain JSON file.
+3. **`DelegationStore` + `RevocationList` as a `DelegationManager`** —
+   single class that bundles store + revocation + evaluator, with a global
+   singleton and `get_delegation_manager()` factory.
+4. **Compliance rule plugin registry MCP endpoint** — expose the global
+   checker as a named resource in the `InterfaceRepository` so clients can
+   discover available rules.
+5. **Monitoring integration** — surface `RevocationList.to_list()` length and
+   `DelegationStore` depth as monitoring metrics via
+   `EnhancedMetricsCollector`.

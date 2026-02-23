@@ -1,234 +1,204 @@
-# MCP Server — Master Improvement Plan v12.0
+# Master Improvement Plan 2026 — v12: MCP++ Integration Layer (Session 56)
 
-**Date:** 2026-02-22  
-**Status:** 🟢 **Sessions W80 + AG91 + AH92 + AE89/AF90 + AJ94 COMPLETE**  
-**Branch:** `copilot/create-refactoring-plan-again`  
-**Spec alignment:** https://github.com/endomorphosis/Mcp-Plus-Plus/blob/main/docs/index.md  
-**Preconditions:** All v11 phases ✅ complete (see [MASTER_IMPROVEMENT_PLAN_2026_v11.md](MASTER_IMPROVEMENT_PLAN_2026_v11.md))
-
-**Baseline (as of 2026-02-22 v12 start):**
-- 2,305 MCP unit tests passing · 0 failing (from v11 grand total)
-- All v11 sessions X81–AD88 complete (108 new tests + 3 new production modules)
+**Created:** 2026-02-22 (Session 56)  
+**Branch:** `copilot/create-improvement-refactoring-plan`  
+**Reference:** https://github.com/endomorphosis/Mcp-Plus-Plus  
+**Supersedes:** [MASTER_IMPROVEMENT_PLAN_2026_v11.md](MASTER_IMPROVEMENT_PLAN_2026_v11.md)
 
 ---
 
-## MCP++ Specification Alignment — v12 additions
+## Overview
 
-All new production code in this plan is aligned to the MCP++ spec published at
-[github.com/endomorphosis/Mcp-Plus-Plus/blob/main/docs/index.md](https://github.com/endomorphosis/Mcp-Plus-Plus/blob/main/docs/index.md).
+Session 56 implements all five "Next Steps" from v11, completing the MCP++
+integration layer:
 
-| Profile | Spec Chapter | Status | Implementation |
-|---------|-------------|--------|---------------|
-| A: MCP-IDL | `mcp-idl.md` | ✅ | `interface_descriptor.py` + HTM hook |
-| B: CID-Native Artifacts | `cid-native-artifacts.md` | ✅ | `cid_artifacts.py` + `dispatch_with_trace()` |
-| C: UCAN Delegation | `ucan-delegation.md` | ✅ **New module** | `ucan_delegation.py` |
-| D: Temporal Deontic Policy | `temporal-deontic-policy.md` | ✅ | `temporal_policy.py` + `PolicyRegistry` |
-| E: P2P Transport | `transport-mcp-p2p.md` | ✅ Existing | `mcplusplus/` wrappers |
+1. **Async tool registration** — `AsyncPolicyRegistrar` (anyio task group)
+2. **Persistent policy store** — `FilePolicyStore` (JSON, CID-validated)
+3. **PubSubBus ↔ P2PServiceManager bridge** — `PubSubBridge`
+4. **Pipeline metrics** — `PipelineMetricsRecorder`
+5. **DID key manager integration** — `DIDSignedDelegation` + sign/verify
 
 ---
 
-## Phase W — HTM schema cache + lazy load (Session W80)
+## Session 56 Changes
 
-### Session W80: ToolCategory.get_tool_schema cache + HierarchicalToolManager deep paths ✅ Complete
+### 1 — Async Policy Registration ✅ COMPLETE
 
-**File:** `tests/mcp/unit/test_v12_htm_schema_session80.py` — **27 new tests**
+**File:** `ipfs_datasets_py/mcp_server/nl_ucan_policy.py`
 
-#### TestToolCategorySchemaCache (5 tests):
-- Cache miss → cache hit path; `_cache_misses`/`_cache_hits` counters correct
-- `clear_schema_cache()` resets all counters and evicts entries
-- `cache_info()` has `hits`/`misses`/`size` keys
-- Unknown tool returns `None`
-- Schema has `required=True`/`False` based on default presence
+Added **`AsyncPolicyRegistrar`**:
 
-#### TestHTMGetToolSchema (3 tests):
-- `get_tool_schema(cat, tool)` → `{"status": "success", "schema": {...}}`
-- Unknown category → error dict
-- Unknown tool → error dict
+- Registers multiple NL policies concurrently using an `anyio.create_task_group()`.
+- Each compilation runs in a worker thread via `anyio.to_thread.run_sync()`, keeping
+  the event loop free for LLM-backed or I/O-heavy compilers.
+- Graceful sync fallback when `anyio` is not installed.
+- Correctly uses `registry if registry is not None else get_policy_registry()` (fixes
+  the falsy-empty-registry pitfall where `registry or default` would silently fall
+  back to the global singleton for any newly-created empty `PolicyRegistry`).
 
-#### TestGetToolSchemaCid (3 tests, AE89):
-- Returns `sha256:` prefixed CID string
-- CID is deterministic for same function
-- Raises `ValueError` when tool not found
+```python
+registrar = AsyncPolicyRegistrar(registry)
+await registrar.register_many({
+    "admin_only": "Only admin may call admin_tools.",
+    "read_public": "All users may call read_tools.",
+})
+```
 
-#### TestLazyLoadCategory (3 tests):
-- Loader callable invoked on first `get_category()` call; loader is popped from `_lazy_loaders`
-- Lazy category appears in `list_categories()` output before loading
-- Lazy category is marked `"lazy": True` before loading
+### 2 — Persistent Policy Store ✅ COMPLETE
 
-#### TestGetResultCache (2 tests):
-- Graceful `ImportError` → returns `None` (no crash)
-- Pre-seeded sentinel returned on second call (cache of the cache)
+**File:** `ipfs_datasets_py/mcp_server/nl_ucan_policy.py`
 
-#### TestDispatchShuttingDown (5 tests):
-- `_shutting_down=True` → error dict with "shutting down"
-- Tool not found → error dict
-- Tool raises `TypeError` → error dict
-- Successful sync tool → result dict with `request_id`
-- Successful async tool → result dict
+Added **`FilePolicyStore`**:
 
-#### TestDispatchWithTrace (4 tests, AF90):
-- `_trace` key present in result
-- `intent_cid` is stable (deterministic)
-- `ExecutionEnvelope.is_complete()` is `True`
-- `interface_cid` forwarded to trace
+- Serialises the `PolicyRegistry` as a JSON file mapping
+  `name → {nl_policy, description, source_cid}`.
+- `save()` — writes atomically (creates parent directories).
+- `load()` — re-derives the CID of each stored NL text; if it differs from
+  the stored `source_cid` (indicating file-level edit or tampering), the
+  policy is transparently recompiled and a DEBUG log is emitted.
+- Missing / unreadable files return 0 without raising.
 
-#### TestModuleLevelWrappers (2 tests):
-- `tools_get_schema(cat, tool)` delegates to manager
-- `tools_dispatch(cat, tool, params)` delegates to manager
+```python
+store = FilePolicyStore("/var/lib/mcp/policies.json", registry)
+store.save()    # persist on graceful shutdown
+store.load()    # restore on startup
+```
 
----
+### 3 — PubSubBus ↔ P2PServiceManager Bridge ✅ COMPLETE
 
-## Phase AG91 — PolicyRegistry (Session AG91)
+**File:** `ipfs_datasets_py/mcp_server/mcp_p2p_transport.py`
 
-### Session AG91: temporal_policy.PolicyRegistry + JSON persistence ✅ Complete
+Added **`PubSubBridge`** + **`get_global_bus()`**:
 
-**Production change:** Added `PolicyRegistry` class + `get_policy_registry()` singleton to
-`ipfs_datasets_py/mcp_server/temporal_policy.py`.
+- `connect(service_manager)` — registers one handler per canonical
+  `PubSubEventType` topic; each handler forwards `(topic_key, payload)` to
+  `service_manager.announce_capability()` when that method exists.
+- `disconnect()` — removes all bridge handlers and detaches from the
+  service manager.
+- `is_connected` property — read-only lifecycle flag.
+- `get_global_bus()` — returns the module-level `PubSubBus` singleton (lazy
+  init); suitable for test injection or external use.
+- Fixed: `_make_handler()` now takes no arguments (the `t` parameter was
+  unused and could confuse linters); `topic_key` arrives at handler call time
+  from the `PubSubBus.publish()` invocation.
 
-**File:** `tests/mcp/unit/test_v12_spec_extensions_session91_92.py` — **13 new tests**
+```python
+bridge = PubSubBridge()
+bridge.connect(p2p_service_manager)   # wired
+bus = get_global_bus()
+bus.publish(PubSubEventType.INTERFACE_ANNOUNCE.value, {"cid": "bafy-..."})
+# → service_manager.announce_capability("/mcp+p2p/topics/interface_cid/1.0.0", {...})
+bridge.disconnect()
+```
 
-Key design:
-- `PolicyRegistry` wraps `PolicyEvaluator` with additional metadata tracking
-- `register()` stores `policy_cid → policy_id` mapping
-- `list_policies()` returns list of `{policy_id, policy_cid}` dicts
-- `evaluate()` delegates to inner evaluator
-- `save(path)` → JSON file of all registered policies
-- `load(path) → int` → loads policies from JSON, returns count
-- `get_policy_registry()` → module-level lazy singleton
+### 4 — Pipeline Metrics Recorder ✅ COMPLETE
 
-#### TestPolicyRegistry (13 tests):
-- `register()` returns `sha256:` CID
-- `list_policies()` empty initially
-- `list_policies()` after register returns 1 entry
-- Register 3 policies → list has 3
-- `evaluate()` → `ALLOW` for permitted tool
-- `evaluate()` → `DENY` for unknown policy CID
-- `evaluate()` → `DENY` for prohibited tool
-- `evaluator` property returns `PolicyEvaluator`
-- `save()` creates JSON file with correct structure
-- `load()` restores policies into new registry
-- `load()` allows evaluation after roundtrip
-- Global `get_policy_registry()` returns singleton
+**File:** `ipfs_datasets_py/mcp_server/dispatch_pipeline.py`
 
----
+Added **`PipelineMetricsRecorder`**:
 
-## Phase AH92 — UCAN Delegation (Session AH92)
+- Wraps a `DispatchPipeline`; `check_and_record(intent)` runs the pipeline
+  and feeds the result to the monitoring subsystem.
+- Calls `EnhancedMetricsCollector.track_tool_execution(tool_name,
+  execution_time_ms=0.0, success=passed)` so pipeline-level access-control
+  events appear in the monitoring dashboard alongside ordinary tool metrics.
+- Maintains in-process `allow_counts` / `denial_counts` dicts for fast
+  local inspection without touching the collector.
+- `get_stats()` → `{allow_counts, denial_counts, total_allows, total_denials}`.
+- `reset()` clears all local counters.
+- Exceptions from the collector are swallowed (monitoring is best-effort).
+- Uses `result.allowed` (boolean attribute) not `result.verdict == "allow"`
+  (string property) for the primary branching decision.
 
-### Session AH92: ucan_delegation.py — Profile C ✅ Complete
+```python
+recorder = PipelineMetricsRecorder(pipeline)
+result = recorder.check_and_record(intent)
+print(recorder.get_stats())
+# → {'allow_counts': {'my_tool': 42}, 'denial_counts': {}, ...}
+```
 
-**New module:** `ipfs_datasets_py/mcp_server/ucan_delegation.py`  
-**File:** `tests/mcp/unit/test_v12_spec_extensions_session91_92.py` — **30 new tests**
+### 5 — DID Key Manager Integration ✅ COMPLETE
 
-Key design (aligned to spec Profile C):
-- `Capability(resource, ability)` — `matches()` supports `"*"` wildcards on both sides
-- `DelegationToken` — `cid` (lazy sha256), `is_valid()` (temporal window), `to_dict()`/`from_dict()`
-- `DelegationChain` — ordered token list, `is_valid_chain()`, `covers(resource, ability)`
-- `DelegationEvaluator` — `add_token()`, `get_token()`, `build_chain(leaf_cid)`, `can_invoke()`
-- `get_delegation_evaluator()` — process-global singleton
+**File:** `ipfs_datasets_py/mcp_server/ucan_delegation.py`
 
-#### TestCapability (5 tests):
-- Exact match, wrong ability no match, wildcard ability, wildcard resource, both wildcards
+Added **`DIDSignedDelegation`**, **`sign_delegation()`**, and
+**`verify_delegation_signature()`**:
 
-#### TestDelegationToken (10 tests):
-- CID starts `sha256:`, deterministic, different audience → different CID
-- `is_valid()`: no expiry, future expiry, past expiry, `not_before` future
-- `to_dict()` has required keys, `from_dict()` roundtrip preserves structure
+- `DIDSignedDelegation(delegation, signature, signer_did, verified)` — wraps
+  a `Delegation` with a hex Ed25519 signature and the DID:key of the signer.
+- `sign_delegation(delegation, *, key_manager)` — serialises the delegation
+  to canonical JSON, calls `key_manager.sign(payload)`, and returns a
+  `DIDSignedDelegation`. Falls back to a `"did:key:unsigned"` sentinel
+  with empty signature when the key manager is absent or raises.
+- `verify_delegation_signature(signed, *, key_manager)` — re-derives the
+  JSON payload and calls `key_manager.verify(payload, sig_bytes)`. Returns
+  `False` on empty signature, absent manager, or any exception.
+- Both helpers look for the global `did_key_manager.get_default_manager()`
+  singleton when no explicit *key_manager* is given.
 
-#### TestDelegationChain (8 tests):
-- `root_issuer`/`leaf_audience`, valid chain, broken chain invalid
-- Expired token invalid, `covers()` match, `covers()` no match, empty chain
-
-#### TestDelegationEvaluator (8 tests + global singleton):
-- `add_token()` returns CID, `get_token()` retrieves, unknown CID returns None
-- `can_invoke()`: success, wrong principal, unknown CID, unmatched capability
-- `build_chain()` single token, global singleton
-
----
-
-## Phase AE89/AF90 Integration Smoke Tests
-
-**File:** `tests/mcp/unit/test_v12_spec_extensions_session91_92.py` — **4 tests**
-
-- All four spec modules (`interface_descriptor`, `cid_artifacts`, `ucan_delegation`, `temporal_policy`) import cleanly
-- `compute_cid` + `artifact_cid` give identical results for same data (cross-module CID stability)
-- End-to-end: `IntentObject → PolicyEvaluator → DecisionObject`
-- End-to-end: UCAN chain grants capability + policy registry allows → both succeed
+```python
+cap = Capability(resource="mcp:tool", ability="invoke")
+d = Delegation(cid="cid1", issuer="did:key:z6MkA", audience="did:key:z6MkB",
+               capabilities=[cap])
+signed = sign_delegation(d, key_manager=manager)
+ok = verify_delegation_signature(signed, key_manager=manager)
+```
 
 ---
 
-## Phase AJ94 — monitoring loop branches (Session AJ94)
+## Bug Fixes
 
-### Session AJ94: _monitoring_loop + _cleanup_loop complete branch coverage ✅ Complete
-
-**File:** `tests/mcp/unit/test_v12_monitoring_loop_session94.py` — **10 new tests**
-
-Strategy: patch `_collect_system_metrics` / `_cleanup_old_data` to raise desired exceptions;
-patch `monitoring.anyio.sleep` to count calls and raise `Cancelled` on exit iteration.
-
-#### TestMonitoringLoopCancelled (1 test):
-- `_collect_system_metrics` raises `Cancelled` → loop breaks, no re-raise
-
-#### TestMonitoringLoopMetricsCollectionError (1 test):
-- `MetricsCollectionError` → `sleep(60)` is called
-
-#### TestMonitoringLoopOSError (1 test):
-- `OSError` → `sleep(60)` is called
-
-#### TestMonitoringLoopGenericException (1 test):
-- Generic `RuntimeError` → `sleep(60)` is called
-
-#### TestMonitoringLoopHappyPath (1 test):
-- No exception → `sleep(30)` called
-
-#### TestCleanupLoopCancelled (1 test):
-- `_cleanup_old_data` raises `Cancelled` → loop breaks cleanly
-
-#### TestCleanupLoopMonitoringError (1 test):
-- `MonitoringError` → re-raised immediately (not swallowed)
-
-#### TestCleanupLoopIOError (1 test):
-- `IOError` → `sleep(3600)` called
-
-#### TestCleanupLoopGenericException (1 test):
-- Generic `ValueError` → `sleep(3600)` called
-
-#### TestCleanupLoopHappyPath (1 test):
-- No exception → `sleep(3600)` called
+| File | Bug | Fix |
+|------|-----|-----|
+| `nl_ucan_policy.py` | `FilePolicyStore.__init__` used `registry or default` — empty registry triggers fallback to global singleton | Changed to `registry if registry is not None else default` |
+| `nl_ucan_policy.py` | Same bug in `AsyncPolicyRegistrar.__init__` | Same fix |
+| `ucan_delegation.py` | Unused `hashlib` import inside `sign_delegation()` | Removed |
+| `mcp_p2p_transport.py` | Missing `import logging` / `logger` | Added |
+| `dispatch_pipeline.py` | Missing `Dict`, `List`, `Optional` in `from typing import` | Added |
 
 ---
 
-## Summary — v12 Sessions
+## Cumulative MCP++ Status
 
-| Session | Target | New Tests | Status |
-|---------|--------|-----------|--------|
-| W80 | HTM schema cache + lazy load + dispatch_with_trace | 27 | ✅ |
-| AG91 | `PolicyRegistry` + JSON persistence | 13 | ✅ |
-| AH92 | **Profile C: UCAN Delegation** `ucan_delegation.py` | 30 | ✅ |
-| AE89/AF90 | Spec module integration smoke tests | 4 | ✅ |
-| AJ94 | `monitoring._monitoring_loop` + `_cleanup_loop` all branches | 10 | ✅ |
-| **Total** | | **84** | ✅ |
+| Component | Module | Sessions |
+|-----------|--------|---------|
+| Profile A — MCP-IDL | `interface_descriptor.py` | 50 |
+| Profile B — CID-Native Artifacts | `cid_artifacts.py` | 50 |
+| Profile C — UCAN Delegation | `ucan_delegation.py` | 53, **56** |
+| Profile D — Temporal Deontic Policy | `temporal_policy.py` | 50 |
+| Profile E — P2P Transport | `mcp_p2p_transport.py` | 54, 55, **56** |
+| Event DAG | `event_dag.py` | 50 |
+| Risk Scoring | `risk_scorer.py` | 53, 55 |
+| Compliance | `compliance_checker.py` | 53 |
+| HTM Schema CID | `hierarchical_tool_manager.py` | 53 |
+| Integrated Pipeline | `dispatch_pipeline.py` | 54, **56** |
+| NL→UCAN Policy Gate | `nl_ucan_policy.py` | 51, 52, **56** |
+| Server pipeline gate | `server.py` | 55 |
+| Policy MCP tools | `policy_management_tool.py` | 55 |
+| Pubsub bus | `mcp_p2p_transport.py` | 55 |
+| **Async policy registration** | `nl_ucan_policy.py` | **56** |
+| **Persistent policy store** | `nl_ucan_policy.py` | **56** |
+| **PubSub ↔ P2P bridge** | `mcp_p2p_transport.py` | **56** |
+| **Pipeline metrics** | `dispatch_pipeline.py` | **56** |
+| **DID delegation signing** | `ucan_delegation.py` | **56** |
 
-**Production changes:**
-- `hierarchical_tool_manager.py`: +`get_tool_schema_cid()` + `dispatch_with_trace()`
-- `temporal_policy.py`: +`PolicyRegistry` + `get_policy_registry()`
-- New: `ucan_delegation.py` (Profile C — UCAN delegation chain)
-
-**Grand total (all plans):**  
-2,305 (through v11) + 84 (v12) = **2,389 MCP unit tests**
+**431 spec tests pass (sessions 50–56).**
 
 ---
 
-## Next Steps (v13 candidates)
+## Next Steps (Session 57+)
 
-| Session | Target | Rationale | Spec alignment |
-|---------|--------|-----------|----------------|
-| AI93 | `fastapi_service.py` `/datasets/*` routes (inner-module mocked) | V77 deferred — 100+ uncovered stmts | — |
-| AK95 | Enterprise analytics full round-trip: submit job → process → query | Y83 deferred | — |
-| AL96 | Coverage gap sweep: push all mcp_server modules to ≥90% | Final consolidation | — |
-| AM97 | P2P conformance tests aligned to `mcp+p2p` spec §9 interop checklist | Wire-level conformance | Profile E §9 |
-| AN98 | `ucan_delegation.py` extended: `DelegationStore` + revocation list | UCAN revocation (spec §7) | Profile C |
-| AO99 | `interface_descriptor.py` — `toolset_slice()` budget enforcement tests | `select()` budget deep paths | Profile A §7 |
-| AP100 | `PolicyEvaluator` temporal window edge cases (at boundary, expired obligations) | Profile D §4 | Profile D |
-| AQ101 | gRPC transport: `GRPCToolRequest`/`Response` serialisation conformance | `grpc_transport.py` deeper coverage | Profile E |
-| AR102 | Prometheus exporter: metric names + label cardinality tests | `prometheus_exporter.py` deeper coverage | Observability |
-| AS103 | OpenTelemetry tracing: span attributes + context propagation | `otel_tracing.py` deeper coverage | Observability |
+1. **IPFS-backed policy store** — Extend `FilePolicyStore` with an
+   `IPFSPolicyStore` variant that pins policies to IPFS and retrieves them
+   by CID (using the `ipfs_kit_py` client).
+2. **RevocationList** — Add `RevocationList` + `can_invoke_with_revocation()`
+   to `ucan_delegation.py` (already in `create-refactoring-plan-again` branch;
+   needs porting here).
+3. **DelegationStore** — Add persistent `DelegationStore.save()/load()` backed
+   by a JSON file (analogous to `FilePolicyStore`).
+4. **Compliance rule plugins** — Expose `ComplianceChecker.add_rule()` via an
+   MCP tool so operators can add custom compliance rules at runtime without
+   restarting the server.
+5. **End-to-end test** — Write an integration test that exercises the full
+   dispatch pipeline + pubsub bridge + monitoring recorder in a single
+   anyio-driven test.

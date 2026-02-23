@@ -44,27 +44,26 @@ class ForwardChainingStrategy(ProverStrategy):
         >>> assert result.is_proved()
     """
     
-    def __init__(self, max_iterations: int = 100, max_derived: int = 500):
+    def __init__(self, max_iterations: int = 100, rules=None):
         """
         Initialize forward chaining strategy.
         
         Args:
             max_iterations: Maximum number of rule application iterations
-            max_derived: Maximum number of formulas in the derived set before
-                stopping (prevents exponential blowup with rule-rich KBs).
+            rules: Optional list of inference rules (overrides auto-loaded rules)
         """
         super().__init__("Forward Chaining", StrategyType.FORWARD_CHAINING)
         self.max_iterations = max_iterations
-        self.max_derived = max_derived
-        self.tdfol_rules = []
+        self.tdfol_rules = rules if rules is not None else []
         
-        # Load TDFOL inference rules
-        try:
-            from ..inference_rules import get_all_tdfol_rules
-            self.tdfol_rules = get_all_tdfol_rules()
-            logger.debug(f"Loaded {len(self.tdfol_rules)} TDFOL rules for forward chaining")
-        except Exception as e:
-            logger.warning(f"Failed to load TDFOL rules: {e}")
+        if rules is None:
+            # Load TDFOL inference rules
+            try:
+                from ..inference_rules import get_all_tdfol_rules
+                self.tdfol_rules = get_all_tdfol_rules()
+                logger.debug(f"Loaded {len(self.tdfol_rules)} TDFOL rules for forward chaining")
+            except Exception as e:
+                logger.warning(f"Failed to load TDFOL rules: {e}")
     
     def can_handle(self, formula: Formula, kb: TDFOLKnowledgeBase) -> bool:
         """
@@ -103,14 +102,35 @@ class ForwardChainingStrategy(ProverStrategy):
         Returns:
             ProofResult with status and proof steps
         """
+        # Cap timeout to avoid very long runs; use a sensible default upper bound
+        timeout_ms = min(timeout_ms, 2000)
         start_time = time.time()
         
-        # Initialize derived set with axioms and theorems
-        derived: Set[Formula] = set(kb.axioms + kb.theorems)
+        # Initialize derived collection with axioms and theorems
+        # Use a list to avoid hash issues with TDFOL formulas that contain list attributes
+        all_formulas = list(kb.axioms) + list(kb.theorems)
+        derived_list: List[Formula] = list(all_formulas)
+        derived_strs: Set[str] = {str(f) for f in derived_list}
         proof_steps: List[ProofStep] = []
         
-        # Check if goal is already in derived set
-        if formula in derived:
+        def _in_derived(f: Formula) -> bool:
+            """Check membership using string representation (handles unhashable formulas)."""
+            try:
+                return f in derived_list or str(f) in derived_strs
+            except Exception:
+                return any(str(f) == str(x) for x in derived_list)
+        
+        def _add_to_derived(f: Formula) -> bool:
+            """Add formula to derived if not already present. Returns True if added."""
+            f_str = str(f)
+            if f_str not in derived_strs:
+                derived_list.append(f)
+                derived_strs.add(f_str)
+                return True
+            return False
+        
+        # Check if goal is already in derived
+        if _in_derived(formula):
             return ProofResult(
                 status=ProofStatus.PROVED,
                 formula=formula,
@@ -121,9 +141,6 @@ class ForwardChainingStrategy(ProverStrategy):
                 time_ms=(time.time() - start_time) * 1000,
                 method=self.name
             )
-        
-        # frontier: formulas added in the last step (only these need new rule applications)
-        frontier: Set[Formula] = set(derived)
         
         # Iteratively apply rules until goal is derived or no progress
         for iteration in range(self.max_iterations):
@@ -139,19 +156,8 @@ class ForwardChainingStrategy(ProverStrategy):
                     message=f"Timeout after {iteration} iterations"
                 )
             
-            # Guard against combinatorial explosion
-            if len(derived) >= self.max_derived:
-                return ProofResult(
-                    status=ProofStatus.UNKNOWN,
-                    formula=formula,
-                    proof_steps=proof_steps,
-                    time_ms=elapsed_ms,
-                    method=self.name,
-                    message=f"Derived set exceeded {self.max_derived} formulas after {iteration} iterations"
-                )
-            
             # Check if goal is derived
-            if formula in derived:
+            if _in_derived(formula):
                 return ProofResult(
                     status=ProofStatus.PROVED,
                     formula=formula,
@@ -161,17 +167,17 @@ class ForwardChainingStrategy(ProverStrategy):
                     message=f"Proved in {iteration} iterations"
                 )
             
-            # Apply rules using frontier (new formulas from last step only)
-            # to avoid O(n²) blowup across all formula pairs.
-            new_formulas = self._apply_rules(frontier, derived, proof_steps)
+            # Apply all TDFOL rules to derive new formulas (with deadline)
+            deadline = start_time + timeout_ms / 1000.0
+            new_formulas = self._apply_rules_list(derived_list, proof_steps, deadline=deadline)
             
             # No progress made - stop
             if not new_formulas:
                 break
             
-            # Add new formulas to derived set; next frontier = only the new ones
-            derived.update(new_formulas)
-            frontier = new_formulas
+            # Add new formulas to derived collection
+            for f in new_formulas:
+                _add_to_derived(f)
         
         # Goal not derived
         return ProofResult(
@@ -185,43 +191,69 @@ class ForwardChainingStrategy(ProverStrategy):
     
     def _apply_rules(
         self,
-        frontier: Set[Formula],
         derived: Set[Formula],
         proof_steps: List[ProofStep]
     ) -> Set[Formula]:
         """
-        Apply all inference rules to the frontier formulas.
-        
-        Uses a frontier-based approach: only formulas added in the previous
-        step are tried as primary inputs. This avoids the O(n²) blowup that
-        occurs when iterating over all pairs of an ever-growing derived set.
-        
-        Single-formula rules are applied to every frontier formula.
-        Two-formula rules are applied between each frontier formula and each
-        formula in the full derived set (frontier ∪ already-known), ensuring
-        completeness while keeping the inner loop bounded by ``len(derived)``
-        (not ``len(derived)²``).
+        Apply all inference rules to derived formulas.
         
         Args:
-            frontier: Formulas added in the last iteration (new candidates)
-            derived: Complete set of currently known formulas
+            derived: Set of currently derived formulas
             proof_steps: List to append proof steps to
         
         Returns:
-            Set of newly derived formulas (not already in derived)
+            Set of newly derived formulas
         """
-        new_formulas: Set[Formula] = set()
+        return self._apply_rules_list(list(derived), proof_steps)
+
+    def _apply_rules_list(
+        self,
+        derived: List['Formula'],
+        proof_steps: List['ProofStep'],
+        deadline: float = None,
+    ) -> List['Formula']:
+        """
+        Apply all inference rules to derived formulas (list-based, hash-safe).
         
-        # Apply rules with each frontier formula as the primary input
-        for current_formula in list(frontier):
+        Args:
+            derived: List of currently derived formulas
+            proof_steps: List to append proof steps to
+            deadline: Optional absolute time.time() deadline; stop early if exceeded.
+        
+        Returns:
+            List of newly derived formulas (without duplicates)
+        """
+        import time as _time
+        new_formulas: List[Formula] = []
+        derived_strs: Set[str] = {str(f) for f in derived}
+        # Hard cap: never generate more than 200 new formulas per iteration
+        _MAX_NEW = 200
+        
+        def _not_in_derived(f: Formula) -> bool:
+            try:
+                return str(f) not in derived_strs
+            except Exception:
+                return True
+        
+        # Try each formula with each rule
+        for current_formula in list(derived):
+            if deadline is not None and _time.time() > deadline:
+                break
+            if len(new_formulas) >= _MAX_NEW:
+                break
             for rule in self.tdfol_rules:
+                if deadline is not None and _time.time() > deadline:
+                    break
+                if len(new_formulas) >= _MAX_NEW:
+                    break
                 try:
                     # Try single-formula rules
                     if hasattr(rule, 'can_apply'):
                         if rule.can_apply(current_formula):
                             new_formula = rule.apply(current_formula)
-                            if new_formula not in derived:
-                                new_formulas.add(new_formula)
+                            if _not_in_derived(new_formula):
+                                new_formulas.append(new_formula)
+                                derived_strs.add(str(new_formula))
                                 proof_steps.append(ProofStep(
                                     formula=new_formula,
                                     justification=f"Applied {rule.name}",
@@ -229,20 +261,21 @@ class ForwardChainingStrategy(ProverStrategy):
                                     premises=[current_formula]
                                 ))
                     
-                    # Two-formula rules: pair frontier formula with every known formula.
-                    # Using derived (not frontier×frontier) keeps this O(|frontier|×|derived|).
-                    # Identity check (`is`) is safe here because `derived` is a set of
-                    # frozen dataclasses; value-equality uniqueness means each distinct
-                    # logical formula appears exactly once as one Python object in the set.
-                    for other_formula in list(derived):
-                        if current_formula is other_formula:
+                    # Try two-formula rules (only first 20 derived to cap O(n²))
+                    for other_formula in list(derived)[:20]:
+                        if current_formula == other_formula:
                             continue
+                        if deadline is not None and _time.time() > deadline:
+                            break
+                        if len(new_formulas) >= _MAX_NEW:
+                            break
                         try:
                             if hasattr(rule, 'can_apply'):
                                 if rule.can_apply(current_formula, other_formula):
                                     new_formula = rule.apply(current_formula, other_formula)
-                                    if new_formula not in derived:
-                                        new_formulas.add(new_formula)
+                                    if _not_in_derived(new_formula):
+                                        new_formulas.append(new_formula)
+                                        derived_strs.add(str(new_formula))
                                         proof_steps.append(ProofStep(
                                             formula=new_formula,
                                             justification=f"Applied {rule.name}",
@@ -250,6 +283,7 @@ class ForwardChainingStrategy(ProverStrategy):
                                             premises=[current_formula, other_formula]
                                         ))
                         except (AttributeError, TypeError, ValueError):
+                            # Rule doesn't support two formulas or application failed
                             continue
                 
                 except (AttributeError, TypeError, ValueError) as e:

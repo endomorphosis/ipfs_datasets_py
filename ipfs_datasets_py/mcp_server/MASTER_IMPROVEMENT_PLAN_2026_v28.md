@@ -1,128 +1,176 @@
-# MASTER IMPROVEMENT PLAN 2026 — v28
+# Master Improvement Plan 2026 — v28: Session 72 (v27 Next Steps)
 
-**Branch:** `copilot/create-refactoring-plan-again`
-**Date:** 2026-02-23
-**Session:** FW237–GF246 (v28)
-**Cumulative total:** 3,633 + 62 = **3,695 tests**
-
----
-
-## 1. Session Summary (v28)
-
-| Session | Module | What was done |
-|---------|--------|---------------|
-| FW237 | `nl_policy_conflict_detector.py` + `logic/api.py` | Swedish text → `detect_i18n_clauses("sv")` + `detect_all_languages()` E2E (6 tests) |
-| FX238 | `nl_policy_conflict_detector.py` + `logic/api.py` | Russian text → `detect_i18n_clauses("ru")` + `detect_all_languages()` E2E (6 tests) |
-| FY239 | `logic/api.py` | `detect_all_languages()` all 13 original slots are list-typed (6 tests) |
-| FZ240 | `logic/api.py` | `conflict_density()` with synthetic 13-lang populated report (6 tests) |
-| GA241 | `nl_policy_conflict_detector.py` + `logic/api.py` | `_EL_DEONTIC_KEYWORDS` inline Greek; `detect_all_languages()` → 14 languages (7 tests) |
-| GB242 | `nl_policy_conflict_detector.py` + `logic/api.py` | `_TR_DEONTIC_KEYWORDS` inline Turkish; `detect_all_languages()` → 15 languages (7 tests) |
-| GC243 | `nl_policy_conflict_detector.py` + `logic/api.py` | `_HI_DEONTIC_KEYWORDS` inline Hindi; `detect_all_languages()` → 16 languages (7 tests) |
-| GD244 | `logic/api.py` | `languages_above_threshold(n)` with many slots populated (6 tests) |
-| GE245 | `ucan_delegation.py` | `active_tokens_by_actor()` + `revoke()` + `active_token_count` combined (6 tests) |
-| GF246 | `logic/api.py` + `nl_ucan_policy_compiler.py` | Full pipeline E2E: `detect_all_languages()` → `compile_batch()` (5 tests) |
-
-**New test file:** `tests/mcp/unit/test_v28_sessions.py` (62 tests)
+**Created:** 2026-02-23 (Session 72)  
+**Branch:** `copilot/refactor-ipfs-datasets-folder`  
+**Reference:** https://github.com/endomorphosis/Mcp-Plus-Plus  
+**Supersedes:** [MASTER_IMPROVEMENT_PLAN_2026_v27.md](MASTER_IMPROVEMENT_PLAN_2026_v27.md)
 
 ---
 
-## 2. Production Changes (v28)
+## Overview
 
-### `ipfs_datasets_py/logic/CEC/nl/nl_policy_conflict_detector.py`
+Session 72 implements all five "Next Steps" from the v27 plan:
 
-**GA241:** `_EL_DEONTIC_KEYWORDS` inline Greek keyword table (3 types, 7 keywords each):
-- `"permission"`: `"μπορεί"`, `"επιτρέπεται"`, …
-- `"prohibition"`: `"απαγορεύεται"`, `"δεν επιτρέπεται"`, …
-- `"obligation"`: `"πρέπει"`, `"υποχρεούται"`, …
+| # | Feature | Status |
+|---|---------|--------|
+| 1 | `MergeResult` rich comparison (`__lt__`, `__le__`, `__gt__`, `__ge__`) | ✅ COMPLETE |
+| 2 | `IPFSReloadResult.failure_details` + `pin_errors` NamedTuple field | ✅ COMPLETE |
+| 3 | `PubSubBus.subscription_count(topic=None)` | ✅ COMPLETE |
+| 4 | `ComplianceChecker.list_bak_files(path)` | ✅ COMPLETE |
+| 5 | Session 72 E2E test (`test_mcplusplus_v27_session72.py`, 43 tests) | ✅ COMPLETE |
 
-**GB242:** `_TR_DEONTIC_KEYWORDS` inline Turkish keyword table:
-- `"permission"`: `"yapabilir"`, `"izinlidir"`, …
-- `"prohibition"`: `"yapamaz"`, `"yasaktır"`, …
-- `"obligation"`: `"zorundadır"`, `"gereklidir"`, …
+**1,084+ total spec tests pass (sessions 50–72, 0 new failures).**
 
-**GC243:** `_HI_DEONTIC_KEYWORDS` inline Hindi keyword table:
-- `"permission"`: `"कर सकता है"`, `"अनुमति है"`, …
-- `"prohibition"`: `"नहीं कर सकता"`, `"प्रतिबंधित है"`, …
-- `"obligation"`: `"करना होगा"`, `"अनिवार्य है"`, …
+---
 
-`_load_i18n_keywords()` extended with `"el"`, `"tr"`, `"hi"` branches.
+## Item 1 — `MergeResult` rich comparison operators ✅
 
-### `ipfs_datasets_py/logic/api.py`
+**File:** `ipfs_datasets_py/mcp_server/ucan_delegation.py`
 
-**GA241/GB242/GC243:** `_SUPPORTED_LANGS` extended from 13 to **16 languages**:
+Added `__lt__`, `__le__`, `__gt__`, `__ge__` to the `MergeResult` dataclass.
+Each operator compares `added_count` against both `int` and `MergeResult`
+operands, returning `NotImplemented` for unknown types (standard Python
+protocol).
 
 ```python
-_SUPPORTED_LANGS = (
-    "fr", "es", "de", "en", "pt", "nl", "it", "ja", "zh",
-    "ko", "ar", "sv", "ru", "el", "tr", "hi"
-)
+result = dst.merge(src)
+assert result >= 1      # new: rich comparison against int
+assert result > MergeResult(added_count=0)  # new: against MergeResult
 ```
 
----
-
-## 3. Compatibility Fix (v28)
-
-`tests/mcp/unit/test_v27_sessions.py`: Three `== 13` assertions relaxed to `>= 13` to remain valid when `detect_all_languages()` returns 16 slots.
+Existing `__int__` and `__eq__` unchanged.
 
 ---
 
-## 4. Key Invariants (v28)
+## Item 2 — `IPFSReloadResult.failure_details` ✅
 
-| Component | Invariant |
-|-----------|-----------|
-| `detect_all_languages(text)` | Returns **≥ 16** language slots |
-| `_load_i18n_keywords("el")` | Returns `{"permission":…, "prohibition":…, "obligation":…}` |
-| `_load_i18n_keywords("tr")` | Returns `{"permission":…, "prohibition":…, "obligation":…}` |
-| `_load_i18n_keywords("hi")` | Returns `{"permission":…, "prohibition":…, "obligation":…}` |
-| `active_token_count` after `revoke(cid)` | Decreases by 1 |
-| `active_tokens_by_actor(A)` after `revoke(cid)` | cid not in results |
+**File:** `ipfs_datasets_py/mcp_server/nl_ucan_policy.py`
 
----
+`IPFSReloadResult` gains a third optional NamedTuple field:
 
-## 5. Cumulative Progress
+```python
+class IPFSReloadResult(NamedTuple):
+    count: int
+    pin_results: Dict[str, Optional[str]]
+    pin_errors: Optional[Dict[str, str]] = None  # new
+```
 
-| Session | New tests | Cumulative |
-|---------|-----------|-----------|
-| v13 | 339 | 339 |
-| v14 | 384 | 723 |
-| v15 | 69 | 2,953 |
-| v16 | 63 | 3,016 |
-| v17 | 57 | 3,073 |
-| v18 | 39 | 3,112 |
-| v19 | 59 | 3,171 |
-| v20 | 61 | 3,232 |
-| v21 | 51 | 3,283 |
-| v22 | 54 | 3,337 |
-| v23 | 63 | 3,400 |
-| v24 | 57 | 3,457 |
-| v25 | 53 | 3,510 |
-| v26 | 61 | 3,571 |
-| v27 | 62 | 3,633 |
-| **v28** | **62** | **3,695** |
+And a new `@property`:
+
+```python
+@property
+def failure_details(self) -> Dict[str, str]:
+    # Returns {name: error_reason} for all failed pins.
+    # Falls back to "unknown error" when pin_errors has no entry.
+```
+
+Callers that only pass `count` and `pin_results` are unaffected (default
+`pin_errors=None`).
 
 ---
 
-## 6. Security Summary (v28)
+## Item 3 — `PubSubBus.subscription_count(topic=None)` ✅
 
-No vulnerabilities introduced:
-- `_EL_DEONTIC_KEYWORDS`, `_TR_DEONTIC_KEYWORDS`, and `_HI_DEONTIC_KEYWORDS` are inline constant string tables — no network access.
-- `detect_all_languages()` adds three more constant-time loop iterations.
-- `active_tokens_by_actor()` + `revoke()` combination respects the existing fail-closed revocation logic.
-- All new tests are pure-Python — no file I/O beyond temporary files.
+**File:** `ipfs_datasets_py/mcp_server/mcp_p2p_transport.py`
+
+```python
+def subscription_count(
+    self,
+    topic: Optional[Union[str, PubSubEventType]] = None,
+) -> int:
+```
+
+When `topic=None` (default): sums handler counts across all topics.
+When `topic=<value>`: returns count for that specific topic (same as the
+existing `topic_count()` but with the canonical name for health-check use).
 
 ---
 
-## 7. v29 Candidates
+## Item 4 — `ComplianceChecker.list_bak_files(path)` ✅
 
-| Session | Target | Effort | Priority |
-|---------|--------|--------|----------|
-| GG247 | Greek text → `detect_i18n_clauses("el")` E2E | Low | 🟢 Low |
-| GH248 | Turkish text → `detect_i18n_clauses("tr")` E2E | Low | 🟢 Low |
-| GI249 | Hindi text → `detect_i18n_clauses("hi")` E2E | Low | 🟢 Low |
-| GJ250 | `detect_all_languages()` all 16 slots non-None / list | Low | 🟢 Low |
-| GK251 | `conflict_density()` with 16-lang populated report | Low | 🟡 Med |
-| GL252 | Polish (`"pl"`) keyword table → 17 languages | Med | 🟡 Med |
-| GM253 | Vietnamese (`"vi"`) keyword table → 18 languages | Med | 🟡 Med |
-| GN254 | `DelegationManager.merge()` + `active_tokens_by_actor()` combined E2E | Med | 🔴 High |
-| GO255 | `compile_batch_with_explain` → `I18NConflictReport` combined pipeline | Med | 🔴 High |
-| GP256 | `PolicyAuditLog.export_jsonl` + `import_jsonl` + `detect_all_languages` full E2E | Med | 🔴 High |
+**File:** `ipfs_datasets_py/mcp_server/compliance_checker.py`
+
+```python
+@staticmethod
+def list_bak_files(path: str) -> List[str]:
+```
+
+Returns `[path+".bak", path+".bak.1", path+".bak.2", …]` for all
+consecutively-numbered slots that exist.  Stops at the first gap.  Returns
+`[]` when no backups exist.
+
+---
+
+## Item 5 — Session 72 E2E Test ✅
+
+**File:** `tests/mcp/unit/test_mcplusplus_v27_session72.py`
+
+43 tests across 5 sections:
+
+| Section | Tests |
+|---------|-------|
+| `TestMergeResultRichComparison` | 18 |
+| `TestIPFSReloadResultFailureDetails` | 8 |
+| `TestPubSubBusSubscriptionCount` | 8 |
+| `TestComplianceCheckerListBakFiles` | 5 |
+| `TestE2ESession72` | 4 |
+
+All 43 pass with 0 failures.
+
+---
+
+## Cumulative MCP++ Status
+
+| Component | Module | Sessions |
+|-----------|--------|---------|
+| Profile A — MCP-IDL | `interface_descriptor.py` | 50 |
+| Profile B — CID-Native Artifacts | `cid_artifacts.py` | 50 |
+| Profile C — UCAN Delegation | `ucan_delegation.py` | 53, 56–72 |
+| Profile D — Temporal Deontic Policy | `temporal_policy.py` | 50 |
+| Profile E — P2P Transport | `mcp_p2p_transport.py` | 54, 55, 56, 64–72 |
+| Event DAG | `event_dag.py` | 50 |
+| Risk Scoring | `risk_scorer.py` | 53, 55 |
+| Compliance | `compliance_checker.py` | 53, 60–72 |
+| HTM Schema CID | `hierarchical_tool_manager.py` | 53 |
+| Integrated Pipeline | `dispatch_pipeline.py` | 54, 56 |
+| NL→UCAN Policy Gate | `nl_ucan_policy.py` | 51, 52, 56, 57, 62–72 |
+| Server pipeline gate | `server.py` | 55 |
+| Policy MCP tools | `policy_management_tool.py` | 55 |
+| Pubsub bus | `mcp_p2p_transport.py` | 55 |
+| MergePlan + dry_run | `ucan_delegation.py` | 69 |
+| merge_add audit trail | `ucan_delegation.py` | 70 |
+| MergeResult dataclass | `ucan_delegation.py` | 71 |
+| **MergeResult rich comparison** | `ucan_delegation.py` | **72** |
+| IPFSReloadResult | `nl_ucan_policy.py` | 69 |
+| IPFSReloadResult.total_failed | `nl_ucan_policy.py` | 70 |
+| IPFSReloadResult.success_rate | `nl_ucan_policy.py` | 71 |
+| **IPFSReloadResult.failure_details + pin_errors** | `nl_ucan_policy.py` | **72** |
+| publish_async priority | `mcp_p2p_transport.py` | 69 |
+| subscribe(priority=) | `mcp_p2p_transport.py` | 70 |
+| subscribe() returns ID + unsubscribe_by_id | `mcp_p2p_transport.py` | 71 |
+| **subscription_count(topic=None)** | `mcp_p2p_transport.py` | **72** |
+| ComplianceChecker.bak_exists | `compliance_checker.py` | 69 |
+| ComplianceChecker.bak_path | `compliance_checker.py` | 70 |
+| ComplianceChecker.rotate_bak | `compliance_checker.py` | 71 |
+| **ComplianceChecker.list_bak_files** | `compliance_checker.py` | **72** |
+
+**1,084+ spec tests pass (sessions 50–72).**
+
+---
+
+## Next Steps (Session 73+)
+
+1. **`MergeResult` total property** — `total = added_count + conflict_count`
+   convenience field so callers can gauge what fraction of source delegations
+   were actually imported (`added_count / result.total`).
+2. **`IPFSReloadResult.all_succeeded`** — `bool` property (`total_failed == 0`)
+   for quick conditional checks without needing to examine individual results.
+3. **`PubSubBus.topics()`** — return a sorted list of topic strings that have
+   at least one active subscriber, useful for introspection and health
+   monitoring.
+4. **`ComplianceChecker.purge_bak_files(path)`** — delete all backup files
+   returned by `list_bak_files(path)` in one call; returns the count of files
+   removed.
+5. **Session 73 full E2E** — combined regression covering sessions 69–72 with
+   a multi-step pipeline that exercises `DelegationManager` + `PubSubBus` +
+   `ComplianceChecker` + `IPFSReloadResult` together.

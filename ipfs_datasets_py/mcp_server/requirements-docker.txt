@@ -9,7 +9,7 @@ jsonschema>=4.0.0,<5.0.0
 
 # MCP server
 mcp>=1.2.0
-Flask>=3.1.1
+anyio>=4.0.0
 
 # Basic utilities
 tqdm>=4.60.0,<5.0.0

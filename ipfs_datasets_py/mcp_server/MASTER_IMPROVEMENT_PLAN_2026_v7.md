@@ -1,191 +1,315 @@
 # MCP Server — Master Improvement Plan v7.0
 
-**Date:** 2026-02-22  
-**Status:** 🟢 **Sessions M55 + N59 COMPLETE** — branch `copilot/create-refactoring-plan-again`  
-**Preconditions:** All v6 phases are ✅ complete (see [MASTER_IMPROVEMENT_PLAN_2026_v6.md](MASTER_IMPROVEMENT_PLAN_2026_v6.md))
-
-**Baseline (as of 2026-02-22 v7 start):**
-- 1,749 MCP unit tests passing · 0 failing
-- All v6 sessions G40–L54 complete (565 new tests, 15 sessions)
-- `fastapi_service.py` 635 stmts — existing coverage: ~40% (19 smoke tests)
-- `p2p_mcp_registry_adapter.py` 180 stmts — existing coverage: ~70% (26 tests)
+**Date:** 2026-02-22 (session 45)
+**Status:** 🟢 **Active** — Phases M, N, O in progress
+**Preconditions:** All v4, v5 A-F, and v6 G-L phases ✅ complete
+**Branch:** `copilot/create-improvement-refactoring-plan`
+**Previous Plans:** [v6](MASTER_IMPROVEMENT_PLAN_2026_v6.md) · [v5](MASTER_IMPROVEMENT_PLAN_2026_v5.md) · [v4](MASTER_REFACTORING_PLAN_2026_v4.md)
 
 ---
 
-## Phase M — fastapi_service.py Deep Coverage (Sessions M55–M56)
+## TL;DR
 
-**Goal:** Raise `fastapi_service.py` coverage from ~40% to ≥ 75%.
+All prior refactoring (v4) and improvement (v5 A-F, v6 G-L) phases are complete as of
+session 44.  This v7 plan is driven by two new architectural constraints identified
+in session 45:
 
-### Session M55: Core route coverage + helpers ✅ Complete
+1. **Use anyio everywhere instead of asyncio** — No `import asyncio` or `asyncio.*`
+   calls in production code; use anyio APIs throughout.
+2. **No Flask servers** — All tool access must go through the MCP+P2P server, the
+   `ipfs-datasets` CLI, or `ipfs_datasets_py` package imports.  Flask is not an
+   approved HTTP layer for this project.
 
-**File:** `tests/mcp/unit/test_fastapi_service_session55.py` — **91 new tests**
-
-Coverage gaps addressed:
-
-#### TestReadinessCheck (7 tests):
-- `/health/ready` returns 200 status
-- `checks.metrics_collector` and `checks.tool_manager` keys present
-- `uptime_seconds` key present
-- `categories` key within tool_manager check
-
-#### TestMetricsEndpoint (6 tests):
-- `/metrics` returns 200 with `text/plain` content-type
-- Response contains `# HELP` comment lines
-- Response contains `mcp_uptime_seconds`, `mcp_requests_total`, `process_cpu_percent` metrics
-
-#### TestFallbackPasswordContext (6 tests):
-- `hash()` returns deterministic 64-char hex string matching `hashlib.sha256`
-- `verify()` returns True for correct password, False for wrong password
-
-#### TestCreateAccessToken (4 tests):
-- Returns `str` containing correct `sub` claim and `exp` claim
-- Custom `expires_delta` results in future expiry ≥ 1 hour
-
-#### TestCheckRateLimitLogic (6 tests):
-- Endpoint not in `RATE_LIMITS` → no exception
-- First request increments counter to 1
-- At `requests` threshold → `HTTPException(429)` raised
-- `admin/*` wildcard pattern matched
-- Expired window resets counter to 1
-
-#### TestToolsEndpoints (8 tests):
-- Unauthenticated `/tools/list` → 401
-- Authenticated `/tools/list` → 200 with `tools`, `count`, `categories` keys
-- Unauthenticated `/tools/execute/tool` → 401
-- Unknown tool → 4xx/5xx
-- Mocked tool → 200 with `status=success`, `result`, `tool` keys
-
-#### TestHTTPExceptionHandlerFormat (4 tests):
-- Login with empty username triggers 400 with `error`, `status_code`, `timestamp` keys
-
-#### TestMCPServerErrorHandler (4 tests) — **direct function call**:
-- `MCPServerError` → 500
-- `ToolNotFoundError` → 404
-- `ConfigurationError` → 400
-- Response body has `error_type` key
-
-#### TestGeneralExceptionHandler (3 tests) — **direct function call**:
-- `ValueError` → 500 JSON with `error` and `timestamp` keys
-
-#### TestWorkflowEndpoints (5 tests):
-- Unauthenticated → 401
-- Authenticated + mocked inner module → 200 with `task_id`, `workflow_name`, `steps_count`
-
-#### TestDatasetEndpointsAuth (6 tests):
-- Unauthenticated `/datasets/load,process,save,convert` → 401
-- Authenticated → endpoint responds (200/404/500)
-
-#### TestIPFSEndpointsAuth (4 tests) + TestVectorEndpointsAuth (4 tests):
-- Unauthenticated → 401; authenticated → responds
-
-#### TestAuditAndCacheEndpointsAuth (6 tests):
-- Unauthenticated → 401; authenticated → responds
-
-#### TestLogApiRequest (3 tests):
-- `log_api_request` with success/error/input_size → no exception (audit module import failure gracefully swallowed)
-
-#### TestCustomOpenAPI (3 tests):
-- `custom_openapi()` returns dict with `openapi` key; result is cached on second call
-
-#### TestRunServers (4 tests):
-- `run_development_server()` and `run_production_server()` call `uvicorn.run`
-- `run_production_server` passes `workers` ≥ 1
-
-#### TestAdditionalRouteGuards (8 tests):
-- `/analysis/clustering`, `/analysis/quality`, `/admin/stats`, `/admin/health`,
-  `/embeddings/batch` — unauthenticated → 401; authenticated → endpoint responds
+**Current baseline (2026-02-22, session 44):**
+- **1816 tests passing** · 0 failing
+- All root-level mcp_server modules covered at 80%+
+- `simple_server.py` and `standalone_server.py` using Flask (deprecated as of session 45)
+- `executor.py` had misleading "asyncio" comments (fixed in session 45)
+- `README.md` and `DUAL_RUNTIME_ARCHITECTURE.md` had `asyncio.run()` examples (fixed)
 
 ---
 
-## Phase N — P2PMCPRegistryAdapter Deep Coverage (Session N59)
+## Table of Contents
 
-**Goal:** Raise `p2p_mcp_registry_adapter.py` from ~70% to ≥ 88%.
-
-### Session N59: Error paths + edge cases ✅ Complete
-
-**File:** `tests/mcp/unit/test_p2p_mcp_registry_adapter_session59.py` — **43 new tests**
-
-Coverage gaps addressed:
-
-#### TestGetToolManagerSafely (4 tests):
-- Returns manager on success
-- `sys.modules` injection of `None` → graceful None return
-- `ConfigurationError` re-raised
-- Generic `RuntimeError` → returns `None`
-
-#### TestDiscoverCategories (5 tests):
-- `in_async_context=True` early return → `[]`
-- Dict result with `categories` key → names extracted
-- Non-dict result → `[]`
-- Category with `category` key (not `name`) → included
-- Non-dict category entries (str, int) → skipped via `isinstance` check
-
-#### TestProcessCategoryTools (10 tests):
-- Tool with `name=None` → skipped
-- Two valid tools added to `out` dict
-- No `tools` key in result → early return
-- Non-dict result → early return
-- `ToolExecutionError` from `_build_tool_wrapper` → swallowed by outer `except Exception`
-- `ValueError` per-tool → swallowed with warning
-- `TypeError` per-tool → swallowed with warning
-- `ImportError` from `anyio_compat.run` → swallowed by outer `except (ImportError, ModuleNotFoundError)`
-- `ConfigurationError` from `anyio_compat.run` → re-raised by outer `except ConfigurationError: raise`
-- Tool descriptor has `hierarchical=True` and correct `category` in `runtime_metadata`
-
-#### TestGetHierarchicalTools (6 tests):
-- `manager=None` early return → `{}`
-- `P2PServiceError` re-raised
-- `ConfigurationError` in `_discover_categories` re-raised
-- Generic `RuntimeError` → swallowed → `{}`
-- `ModuleNotFoundError` in `_discover_categories` → `{}`
-- Two categories processed → both tools returned
-
-#### TestIsAsyncFunctionEdgeCases (6 tests):
-- async def → True, sync def → False
-- Non-callable integer → False
-- `inspect.iscoroutinefunction` raises `TypeError` → False
-- `inspect.iscoroutinefunction` raises `AttributeError` → False
-- `inspect.iscoroutinefunction` raises `RuntimeError` → False
-
-#### TestBuildToolWrapper (4 tests):
-- Wrapper is callable; has correct `__name__` and `__doc__`; is coroutine function
-
-#### TestDetectRuntimeEdgeCases (5 tests):
-- `fn.__module__` raises `AttributeError` → defaults to RUNTIME_FASTAPI
-- Module contains `trio` → RUNTIME_TRIO; contains `mcplusplus` → RUNTIME_TRIO
-- Explicit `_mcp_runtime='fastapi'` marker → RUNTIME_FASTAPI
-- Explicit `_mcp_runtime='trio'` marker → RUNTIME_TRIO
-
-#### TestToolsPropertyEdgeCases (3 tests):
-- `host.tools = None` → `{}`
-- Host has no `tools` attribute → `{}`
-- `host.tools` is a list → `{}`
+1. [Architectural Constraints](#1-architectural-constraints)
+2. [Session 45 Completed Work](#2-session-45-completed-work)
+3. [Phase M: Flask Removal](#3-phase-m-flask-removal)
+4. [Phase N: anyio Migration Validation](#4-phase-n-anyio-migration-validation)
+5. [Phase O: Docker Image Refresh](#5-phase-o-docker-image-refresh)
+6. [Success Metrics](#6-success-metrics)
 
 ---
 
-## Progress Tracking
+## 1. Architectural Constraints
 
-| Phase | Session | Status | Tests Added | Target |
-|-------|---------|--------|-------------|--------|
-| M55   | fastapi_service extended | ✅ Complete | +91 | `fastapi_service.py` 40%→75%+ |
-| N59   | p2p_mcp_registry_adapter deep | ✅ Complete | +43 | `p2p_mcp_registry_adapter.py` 70%→88%+ |
+### 1.1 anyio Instead of asyncio
 
-**Total new tests in v7:** 134 (91 + 43)  
-**Cumulative MCP tests:** 1,749 + 134 = **1,883** (target: 2,000+)
+The project uses **anyio** as its async abstraction layer to support both the
+asyncio and trio backends.  No production code should directly import `asyncio`
+or call `asyncio.*` functions.  Instead:
+
+| asyncio API | anyio equivalent |
+|---|---|
+| `asyncio.run(coro)` | `anyio.run(coro)` |
+| `asyncio.sleep(n)` | `await anyio.sleep(n)` |
+| `asyncio.gather(*coros)` | `anyio_compat.gather(coros)` |
+| `asyncio.get_event_loop().run_in_executor(…)` | `await anyio.to_thread.run_sync(fn)` |
+| `asyncio.Queue` | `anyio.create_memory_object_stream()` |
+| `asyncio.Lock` | `anyio.Lock()` |
+| `asyncio.Event` | `anyio.Event()` |
+| `asyncio.Semaphore(n)` | `anyio.Semaphore(n)` |
+| `asyncio.wait_for(coro, t)` | `with anyio.fail_after(t): await coro` |
+| `asyncio.create_task(coro)` | Nursery: `nursery.start_soon(coro)` |
+
+### 1.2 No Flask Servers
+
+All tool and data access must go through:
+
+1. **MCP stdio server** (recommended — for VS Code / AI assistants):
+   ```bash
+   python -m ipfs_datasets_py.mcp_server
+   ```
+2. **`ipfs-datasets` CLI** (for shell users):
+   ```bash
+   ipfs-datasets <command>
+   ```
+3. **Python package imports** (for programmatic use):
+   ```python
+   from ipfs_datasets_py import DatasetManager
+   ```
+
+If HTTP access is required (e.g. Docker health checks), use the **FastAPI service
+layer** (`ipfs_datasets_py.mcp_server.fastapi_service`) which is built on
+anyio/uvicorn — not Flask.
 
 ---
 
-## Remaining Opportunities (v8)
+## 2. Session 45 Completed Work
 
-| File | Stmts | Est. Current % | Est. Gap |
-|------|-------|----------------|----------|
-| `server.py` | 353 | ~60% | Routes, error handling, lifecycle |
-| `fastapi_service.py` | 635 | ~75% (after M55) | Remaining route bodies via sys.modules mocks |
-| `p2p_service_manager.py` | 227 | ~65% | `start()` success path, MCP++ features |
-| `monitoring.py` | 406 | ~80% | async loop, advanced metrics |
+### 2.1 Flask Deprecation Warnings Added ✅
 
-**Suggested v8 sessions:**
-- **O62**: `server.py` coverage (+40 tests — IPFSDatasetsMCPServer lifecycle, handle_tool, error paths)
-- **O63**: `p2p_service_manager.py` deeper coverage (+20 tests — MCP++ integration, acquire/release pool)
-- **P64**: `fastapi_service.py` remaining routes via `sys.modules` injection (+25 tests)
-- **P65**: Create `MASTER_IMPROVEMENT_PLAN_2026_v8.md`
+| File | Change |
+|------|--------|
+| `simple_server.py` | Hard `from flask import …` moved to conditional try/except; `DeprecationWarning` added to `SimpleIPFSDatasetsMCPServer.__init__()` and `start_simple_server()`; module docstring updated with migration guide |
+| `standalone_server.py` | `DeprecationWarning` added to `MinimalMCPServer.__init__()`, `MinimalMCPDashboard.__init__()`, and `main()` |
+| `__main__.py` | `--http` mode now emits `DeprecationWarning` and prints migration guidance; **Flask fallback removed** (the fallback that imported `SimpleIPFSDatasetsMCPServer` is gone) |
+
+### 2.2 asyncio References Fixed ✅
+
+| File | Change |
+|------|--------|
+| `mcplusplus/executor.py` | 3 comments "Fallback to asyncio" → "anyio fallback (works with asyncio and trio backends)" |
+| `README.md` | 2 code examples: `import asyncio` + `asyncio.run(main())` → `import anyio` + `anyio.run(main)` |
+| `docs/architecture/DUAL_RUNTIME_ARCHITECTURE.md` | Code example: `import asyncio` / `asyncio.get_event_loop()` → `import anyio` / `anyio.to_thread.run_sync()` |
+
+### 2.3 Tests Added ✅
+
+`tests/mcp/unit/test_deprecation_session45.py` — 16 tests:
+- `simple_server.SimpleIPFSDatasetsMCPServer` emits `DeprecationWarning`
+- `simple_server.start_simple_server()` emits `DeprecationWarning`
+- `standalone_server.MinimalMCPServer` emits `DeprecationWarning`
+- `standalone_server.MinimalMCPDashboard` emits `DeprecationWarning`
+- `standalone_server.main()` emits `DeprecationWarning`
+- Flask-absent path: `SimpleIPFSDatasetsMCPServer` raises `ImportError` with helpful message
+- `executor.py` comments contain "anyio" (no "asyncio" in non-comment code)
+- `README.md` no longer contains `asyncio.run(` in code blocks
+- `DUAL_RUNTIME_ARCHITECTURE.md` no longer contains `asyncio.get_event_loop()`
+
+---
+
+## 3. Session 46 Completed Work ✅
+
+### 3.1 Phase N2 — CI Check for asyncio Regressions ✅
+
+`tests/mcp/unit/test_no_asyncio_session46.py` — 4 tests (AST-based, no execution needed):
+- `test_no_asyncio_imports_in_mcp_server_production_code` — scans every `.py` in mcp_server
+- `test_mcp_root_exists` — sanity check for path configuration
+- `test_at_least_one_py_file_scanned` — guards against misconfigured root path
+- `test_anyio_present_in_mcp_server` — confirms anyio is actually used
+
+### 3.2 Phase N3 — Documentation asyncio→anyio ✅
+
+| File | Lines changed |
+|------|---------------|
+| `tools/legal_dataset_tools/PLAYWRIGHT_SETUP.md` | `import asyncio` × 2 → `import anyio`; `asyncio.run(verify())` → `anyio.run(verify)`; `asyncio.run(test_dc())` → `anyio.run(test_dc)` |
+| `tools/legal_dataset_tools/CRON_SETUP_GUIDE.md` | `import asyncio` → `import anyio`; `asyncio.run(main())` → `anyio.run(main)` |
+| `tools/legal_dataset_tools/COURTLISTENER_API_GUIDE.md` | `import asyncio` → `import anyio`; `asyncio.run(test_connection())` → `anyio.run(test_connection)` |
+| `docs/adr/ADR-002-dual-runtime.md` | "asyncio event loop" → "anyio's asyncio backend"; "FastAPI routes continue to use asyncio" → "FastAPI routes run via anyio's asyncio backend"; Negative consequence improved: "must avoid asyncio.sleep only" → explicit list of banned primitives |
+
+### 3.3 Phase M1 — External Callers Warned ✅
+
+| File | Change |
+|------|--------|
+| `scripts/cli/integrated_cli.py` | Added `warnings.warn(DeprecationWarning)` before `SimpleIPFSDatasetsMCPServer` import |
+| `scripts/cli/comprehensive_distributed_cli.py` | Added `warnings.warn(DeprecationWarning)` before `SimpleIPFSDatasetsMCPServer` import |
+
+### 3.4 Phase M2 / O1 — `Dockerfile.standalone` Rewritten ✅
+
+Removed: `flask>=3.0.0`, `standalone_server.py` copy, HTTP HEALTHCHECK, port 8000/8080 EXPOSEs  
+Added: `anyio>=4.0.0`, full mcp_server package copy, process-based HEALTHCHECK  
+New CMD: `python -m ipfs_datasets_py.mcp_server` (stdio mode)
+
+### 3.5 Phase O2 — `start_services.sh` Fixed ✅
+
+Removed `--host 0.0.0.0 --port 8000 --http` arguments from the MCP server startup line.  
+Stdio mode is now the default.  Comment updated with explanation.
+
+### 3.6 Phase O3 — `Dockerfile.simple` HEALTHCHECK Updated ✅
+
+Removed HTTP-based health check (`curl -f http://localhost:8000/health`).  
+New HEALTHCHECK: `python -c "import ipfs_datasets_py.mcp_server; print('ok')"` (process-based).
+
+---
+
+## 4. Phase M: Flask Removal
+
+**Goal:** Fully remove Flask from the MCP server codebase (not just deprecate).
+
+### M1 — Warn external callers of `SimpleIPFSDatasetsMCPServer` ✅ (Session 46)
+
+**Status:** ✅ Complete
+
+`scripts/cli/integrated_cli.py` and `scripts/cli/comprehensive_distributed_cli.py`
+both emit `DeprecationWarning` before importing `SimpleIPFSDatasetsMCPServer`.
+
+### M2 — Replace `simple_server.py` with MCP-native equivalent
+
+**Status:** ✅ Complete (Session 47)
+
+`simple_server.py` now has a `# TODO: remove in v2.0` comment at the top.
+`start_simple_server.sh` updated: Flask invocation replaced with
+`python -m ipfs_datasets_py.mcp_server`; migration notice added.
+`Dockerfile.simple` updated: `EXPOSE 8000` / `EXPOSE 8080` removed; CMD now uses
+`python -m ipfs_datasets_py.mcp_server`.
+
+**Acceptance criteria:**
+- [x] No caller outside `simple_server.py` itself imports `SimpleIPFSDatasetsMCPServer` **without** a `DeprecationWarning`
+- [x] `Dockerfile.simple` updated to use `python -m ipfs_datasets_py.mcp_server` ✅ (Session 47)
+- [x] `start_simple_server.sh` updated to use MCP stdio mode ✅ (Session 47)
+- [x] File marked for deletion with `# TODO: remove in v2.0` comment ✅ (Session 47)
+
+### M3 — Remove Flask from `requirements-docker.txt`
+
+**Status:** ✅ Complete (Session 47)
+
+`Flask>=3.1.1` removed; replaced by `anyio>=4.0.0`.
+
+---
+
+## 5. Phase N: anyio Migration Validation
+
+**Goal:** Audit and validate that no production Python file in `mcp_server/` uses
+`import asyncio` or calls `asyncio.*` directly.
+
+### N1 — Automated check (already passing)
+
+The grep-based check in session 45 confirmed **zero** `import asyncio` or
+`asyncio.` calls in any `.py` file (excluding test files and markdown/backups).
+
+**Status:** ✅ Complete
+
+### N2 — CI check for asyncio regressions ✅ (Session 46)
+
+**Status:** ✅ Complete
+
+`tests/mcp/unit/test_no_asyncio_session46.py` — 4 AST-based tests confirm no production
+file in `mcp_server/` imports `asyncio`.  Any future regression will cause this test
+to fail immediately.
+
+### N3 — Documentation audit ✅ (Session 46)
+
+**Status:** ✅ Complete
+
+- [x] `README.md` code examples updated (session 45)
+- [x] `DUAL_RUNTIME_ARCHITECTURE.md` code example updated (session 45)
+- [x] `tools/legal_dataset_tools/PLAYWRIGHT_SETUP.md` — `asyncio.run()` × 2 → `anyio.run()` (session 46)
+- [x] `tools/legal_dataset_tools/CRON_SETUP_GUIDE.md` — `asyncio.run()` → `anyio.run()` (session 46)
+- [x] `tools/legal_dataset_tools/COURTLISTENER_API_GUIDE.md` — `asyncio.run()` → `anyio.run()` (session 46)
+- [x] `docs/adr/ADR-002-dual-runtime.md` — wording updated to use anyio-first language (session 46)
+
+---
+
+## 6. Phase O: Docker Image Refresh
+
+**Goal:** Update Docker images to use the MCP stdio server instead of Flask.
+
+### O1 — `Dockerfile.standalone` rewritten ✅ (Session 46)
+
+**Status:** ✅ Complete
+
+Removed `flask>=3.0.0`; removed `standalone_server.py`; process-based HEALTHCHECK;
+CMD is now `python -m ipfs_datasets_py.mcp_server`.
+
+### O2 — `start_services.sh` fixed ✅ (Session 46)
+
+**Status:** ✅ Complete
+
+Removed `--host 0.0.0.0 --port 8000 --http` flags.  MCP server runs in stdio mode.
+
+### O3 — `Dockerfile.simple` HEALTHCHECK updated ✅ (Session 46)
+
+**Status:** ✅ Complete
+
+Removed HTTP-based health check (`curl -f http://localhost:8000/health`).  
+New HEALTHCHECK: `python -c "import ipfs_datasets_py.mcp_server; print('ok')"` (process-based).
+
+### O4 — Remove Flask from `requirements-docker.txt` ✅ (Session 47)
+
+**Status:** ✅ Complete
+
+`Flask>=3.1.1` removed from `requirements-docker.txt`; replaced by `anyio>=4.0.0`.
+`Dockerfile.simple` EXPOSE 8000/8080 removed; CMD updated to use MCP stdio.
+`start_simple_server.sh` updated to use `python -m ipfs_datasets_py.mcp_server`.
+
+---
+
+## 7. Session 47 Completed Work ✅
+
+### 7.1 Phase M2 — `simple_server.py` Marked for Deletion ✅
+
+- Added `# TODO: remove in v2.0` comment at top of `simple_server.py`
+- `start_simple_server.sh`: Flask invocation replaced with `python -m ipfs_datasets_py.mcp_server`; deprecation notice added
+
+### 7.2 Phase M3/O4 — Flask Removed from Docker Requirements ✅
+
+- `requirements-docker.txt`: `Flask>=3.1.1` → `anyio>=4.0.0`
+- `Dockerfile.simple`: `EXPOSE 8000` / `EXPOSE 8080` removed; CMD updated to `["python", "-m", "ipfs_datasets_py.mcp_server"]`
+
+### 7.3 Tests Added ✅
+
+`tests/mcp/unit/test_flask_removal_session47.py` — 13 tests:
+- `requirements-docker.txt` has no Flask, has anyio ✅
+- `Dockerfile.simple` no EXPOSE 8000/8080, uses MCP stdio CMD ✅
+- `Dockerfile.simple` has process-based HEALTHCHECK ✅
+- `start_simple_server.sh` uses MCP stdio, has deprecation notice ✅
+- `simple_server.py` has TODO removal comment + deprecation docstring ✅
+
+---
+
+## 6. Success Metrics
+
+| Metric | Session 44 Baseline | Session 45 | Session 46 | Session 47 | Phase M Target | Phase N Target |
+|--------|--------------------|----|---|---|---|---|
+| Tests passing | 1816 | 1829+ | 1833 ✅ | 1846 ✅ | 1833+ | 1833+ |
+| Flask imports in `.py` files | 2 hard + 1 conditional | 1 conditional (guarded) + deprecation warnings | 1 conditional + deprecation warnings + external caller warnings ✅ | 1 conditional + deprecation warnings + TODO comment ✅ | 0 | 0 |
+| `asyncio.run()` in `.py` source | 0 | 0 ✅ | 0 ✅ | 0 ✅ | 0 | 0 |
+| `asyncio.*` comments (misleading) | 3 | 0 ✅ | 0 ✅ | 0 ✅ | 0 | 0 |
+| `asyncio.run()` in doc code blocks | 2 | 0 ✅ | 0 ✅ | 0 ✅ | 0 | 0 |
+| `asyncio.run()` in tool guide docs | 4 | 4 | 0 ✅ (N3 complete) | 0 ✅ | 0 | 0 |
+| `asyncio` wording in ADR-002 | stale | stale | updated ✅ | updated ✅ | — | ✅ |
+| DeprecationWarnings on Flask classes | 0 | 5 ✅ | 5 ✅ | 5 ✅ | 5+ | — |
+| Flask fallback in `__main__.py` | present | removed ✅ | removed ✅ | removed ✅ | — | — |
+| External callers warned | 0 | 0 | 2 ✅ (M1) | 2 ✅ | 2 | — |
+| `Dockerfile.standalone` uses Flask | yes | yes | no ✅ (M2/O1) | no ✅ | no | — |
+| `start_services.sh` --http flag | yes | yes | removed ✅ (O2) | removed ✅ | no | — |
+| `Dockerfile.simple` HTTP healthcheck | yes | yes | removed ✅ (O3) | removed ✅ | no | — |
+| `Dockerfile.simple` HTTP EXPOSE | yes | yes | yes | no ✅ (M2/O4) | no | — |
+| `start_simple_server.sh` uses Flask | yes | yes | yes | no ✅ (M2) | no | — |
+| `simple_server.py` TODO comment | no | no | no | ✅ (M2) | ✅ | — |
+| `Flask` in `requirements-docker.txt` | yes | yes | yes | no ✅ (M3/O4) | no | — |
+| CI asyncio regression check | none | none | ✅ `test_no_asyncio_session46.py` (N2) | ✅ | ✅ | ✅ |
+
+---
+
+*This document supersedes [MASTER_IMPROVEMENT_PLAN_2026_v6.md](MASTER_IMPROVEMENT_PLAN_2026_v6.md)
+for active work.  Prior phases G-L remain complete.*

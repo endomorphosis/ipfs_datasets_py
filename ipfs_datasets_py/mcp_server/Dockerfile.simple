@@ -41,24 +41,13 @@ RUN touch ./ipfs_datasets_py/mcp_server/__init__.py
 # Add the app directory to Python path
 ENV PYTHONPATH="/app:$PYTHONPATH"
 
-# Expose port
-EXPOSE 8000
-EXPOSE 8080
-
-# Create health check script
-RUN echo '#!/bin/bash\ncurl -f http://localhost:8000/health || python -c "import requests; requests.get(\"http://localhost:8000\")" || exit 1' > /health_check.sh \
-    && chmod +x /health_check.sh
-
-# Health check
+# Health check (process-based; stdio mode has no HTTP endpoint)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD /health_check.sh
+    CMD python -c "import ipfs_datasets_py.mcp_server; print('ok')" || exit 1
 
-# Start both MCP server and dashboard
-COPY ipfs_datasets_py/mcp_server/start_services.sh /start_services.sh
-RUN chmod +x /start_services.sh
-
-CMD ["/start_services.sh"]
+# Run the MCP stdio server (recommended access method)
+CMD ["python", "-m", "ipfs_datasets_py.mcp_server"]
 
 # Usage (build from repository root):
-# 1. Build the image: docker build -f ipfs_datasets_py/mcp_server/Dockerfile.simple -t ipfs-datasets-mcp .
-# 2. Run the container: docker run -p 8000:8000 -p 8080:8080 ipfs-datasets-mcp
+# 1. Build: docker build -f ipfs_datasets_py/mcp_server/Dockerfile.simple -t ipfs-datasets-mcp .
+# 2. Run (stdio): docker run --rm -i ipfs-datasets-mcp

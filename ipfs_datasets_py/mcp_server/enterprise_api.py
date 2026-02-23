@@ -74,6 +74,11 @@ class SearchRequest(BaseModel):
     reasoning_depth: str = Field("moderate", description="Reasoning depth: shallow, moderate, deep")
 
 
+class DelegationRevokeRequest(BaseModel):
+    """Request model for revoking a delegation chain."""
+    root_cid: str = Field(..., description="Root CID of the delegation chain to revoke")
+
+
 class JobStatusResponse(BaseModel):
     """Response model for job status"""
     job_id: str
@@ -519,6 +524,7 @@ class EnterpriseGraphRAGAPI:
         self._setup_core_api_routes(app, get_current_user)
         self._setup_search_routes(app, get_current_user)
         self._setup_analytics_routes(app, get_current_user)
+        self._setup_delegation_routes(app, get_current_user)
     
     def _setup_health_and_auth_routes(self, app: FastAPI):
         """Setup health check and authentication routes"""
@@ -679,6 +685,52 @@ class EnterpriseGraphRAGAPI:
                 },
                 "performance_metrics": result.performance_metrics
             }
+
+    def _setup_delegation_routes(self, app: FastAPI, get_current_user) -> None:
+        """Setup delegation management routes (Session 61 — MCP++ Profile C)."""
+
+        @app.post("/delegations/revoke")
+        async def revoke_delegation(
+            request: DelegationRevokeRequest,
+            user: User = Depends(get_current_user),
+        ):
+            """Revoke a delegation chain by root CID.
+
+            Calls :meth:`~ipfs_datasets_py.mcp_server.ucan_delegation.DelegationManager.revoke_chain`
+            on the global :func:`~ipfs_datasets_py.mcp_server.ucan_delegation.get_delegation_manager`
+            singleton and persists the updated revocation list immediately.
+
+            Returns:
+                ``{"revoked_count": int}`` — number of newly-revoked CIDs.
+            """
+            try:
+                from ipfs_datasets_py.mcp_server.ucan_delegation import (
+                    get_delegation_manager,
+                )
+                mgr = get_delegation_manager()
+                count = mgr.revoke_chain(request.root_cid)
+                mgr.save()
+            except Exception as exc:
+                logger.warning("revoke_delegation failed: %s", exc)
+                count = 0
+            return {"root_cid": request.root_cid, "revoked_count": count}
+
+        @app.get("/delegations/metrics")
+        async def get_delegation_metrics(user: User = Depends(get_current_user)):
+            """Return current delegation store and revocation metrics.
+
+            Returns:
+                ``{"delegation_count": int, "revoked_cid_count": int}``
+            """
+            try:
+                from ipfs_datasets_py.mcp_server.ucan_delegation import (
+                    get_delegation_manager,
+                )
+                mgr = get_delegation_manager()
+                return mgr.get_metrics()
+            except Exception as exc:
+                logger.warning("get_delegation_metrics failed: %s", exc)
+                return {"delegation_count": 0, "revoked_cid_count": 0}
 
 
 class AdvancedAnalyticsDashboard:

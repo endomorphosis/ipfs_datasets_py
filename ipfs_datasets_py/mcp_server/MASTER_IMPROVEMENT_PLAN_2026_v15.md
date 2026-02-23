@@ -1,286 +1,243 @@
-# MCP Server — Master Improvement Plan v15.0
+# Master Improvement Plan 2026 — v15: Phases G–L (Session 59)
 
-**Date:** 2026-02-22  
-**Status:** 🟢 **Sessions BD114 + BE115 + BF116 + BG117 + BH118 + BL122 + BM123 + Transport-Fix COMPLETE**  
-**Branch:** `copilot/create-refactoring-plan-again`  
-**Spec alignment:** https://github.com/endomorphosis/Mcp-Plus-Plus/blob/main/docs/index.md  
-**Preconditions:** All v14 phases ✅ complete (see [MASTER_IMPROVEMENT_PLAN_2026_v14.md](MASTER_IMPROVEMENT_PLAN_2026_v14.md))
-
-**Baseline (as of 2026-02-22 v15 start):**
-- 2,884 MCP + logic unit tests passing · 0 failing
-- All v14 sessions AT104–BC113 complete
+**Created:** 2026-02-22 (Session 59)  
+**Branch:** `copilot/create-improvement-refactoring-plan`  
+**Reference:** https://github.com/endomorphosis/Mcp-Plus-Plus  
+**Supersedes:** [MASTER_IMPROVEMENT_PLAN_2026_v14.md](MASTER_IMPROVEMENT_PLAN_2026_v14.md)
 
 ---
 
-## Transport Clarification — gRPC vs MCP+P2P
+## Overview
 
-**User feedback:** "I noticed you are using gRPC transport, I thought we were using mcp+p2p for transport."
+Session 59 implements all five "Next Steps" from the v14 plan as six phases (G–L),
+completing the full DelegationManager server integration cycle:
 
-**Resolution (implemented in this session):**
+| Phase | Name | Status |
+|-------|------|--------|
+| **G** | `DelegationManager` ↔ server integration + graceful-shutdown `save()` | ✅ COMPLETE |
+| **H** | Encrypted `RevocationList` persistence (AES-256-GCM) | ✅ COMPLETE |
+| **I** | Monitoring loop auto-record delegation metrics every 30 s | ✅ COMPLETE |
+| **J** | `compliance_register_interface()` on server startup | ✅ COMPLETE |
+| **K** | E2E smoke test (39 tests) | ✅ COMPLETE |
+| **L** | Documentation update (`v15.md` + `PHASES_STATUS.md`) | ✅ COMPLETE |
 
-- **MCP+P2P is the canonical transport** — `mcp_p2p_transport.py` (Profile E, `/mcp+p2p/1.0.0`)
-- **gRPC is an optional secondary bridge** — `grpc_transport.py` was created as a "conformance stub" in AQ101; it is NOT used by any MCP++ pipeline stage
-- **Fix applied:** `grpc_transport.py` docstring updated with a prominent `IMPORTANT` note:
-  > The canonical MCP transport is MCP+P2P (Profile E).
-  > See `mcp_p2p_transport.py` for the primary transport implementation.
-  > This module provides an **optional, secondary** gRPC bridge adapter for deployments that also need gRPC connectivity (e.g., bridging to existing gRPC service meshes). It is **not** used by the MCP++ pipeline stages.
+**578 total spec tests pass (sessions 50–59, 0 failures).**
 
-### Transport Architecture
+---
 
+## Phase G — DelegationManager ↔ Server Integration ✅
+
+**File:** `ipfs_datasets_py/mcp_server/server.py`
+
+### New attribute and methods
+
+Added **`_server_delegation_manager = None`** attribute alongside
+`_dispatch_pipeline` and `_policy_store`.
+
+Added **`_initialize_delegation_manager()`** called from `__init__`:
+
+- Reads the `MCP_DELEGATION_STORE_PATH` environment variable.
+- Calls `get_delegation_manager(path or None)` to obtain the process-global
+  singleton.
+- When the path is set, loads existing delegations immediately via `.load()`.
+- Graceful: `ImportError` and all other exceptions are logged and do **not**
+  prevent the server from starting.
+
+Added **`get_server_delegation_manager()`** — exposes the delegation manager
+alongside `get_pipeline()` so callers don't need to import `ucan_delegation`
+directly.
+
+### Graceful-shutdown `save()`
+
+Both `start_stdio()` and `start()` `finally` blocks now call
+`_server_delegation_manager.save()` when the manager is set:
+
+```python
+# Phase G: persist delegation state on clean exit
+if self._server_delegation_manager is not None:
+    try:
+        self._server_delegation_manager.save()
+    except Exception as _exc:
+        logger.warning("DelegationManager.save() failed on shutdown: %s", _exc)
 ```
- MCP Client
-     │
-     ▼
- /mcp+p2p/1.0.0  ◄── canonical transport  (mcp_p2p_transport.py)
-     │
-     ├── TokenBucketRateLimiter
-     ├── LengthPrefixFramer (u32 big-endian)
-     ├── MCPMessage (JSON-RPC 2.0)
-     └── PubSubBus → MCP_P2P_PUBSUB_TOPICS
 
- gRPC (optional)  ◄── secondary bridge     (grpc_transport.py)
-     │
-     └── GRPCTransportAdapter → HierarchicalToolManager
-         (stub; not part of Profile E pipeline)
+```bash
+MCP_DELEGATION_STORE_PATH=/var/lib/mcp/delegations.json python -m ipfs_datasets_py.mcp_server
+# Server log: DelegationManager loaded from /var/lib/mcp/delegations.json (5 delegations, 0 revoked)
+# ...
+# Server log: DelegationManager state persisted on shutdown (start_stdio)
 ```
 
 ---
 
-## MCP++ Specification Alignment — v15 additions
+## Phase H — Encrypted RevocationList Persistence ✅
 
-| Profile | Spec Chapter | Status | Implementation |
-|---------|-------------|--------|---------------|
-| A: MCP-IDL | `mcp-idl.md` | ✅ | `interface_descriptor.py` |
-| B: CID-Native Artifacts | `cid-native-artifacts.md` | ✅ | `cid_artifacts.py` |
-| C: UCAN Delegation | `ucan-delegation.md` | ✅ | `ucan_delegation.py` + `DelegationManager` (BH118 ✅) |
-| D: Temporal Deontic Policy | `temporal-deontic-policy.md` | ✅ | `temporal_policy.py` |
-| E: P2P Transport | `transport-mcp-p2p.md` | ✅ | `mcp_p2p_transport.py` |
-| F: Dispatch Pipeline | pipeline §4 | ✅ | `dispatch_pipeline.py` |
-| G: Compliance | spec §8 | ✅ | `compliance_checker.py` |
-| H: Risk Gate | pipeline risk stage | ✅ | `risk_scorer.py` |
-| I: Observability | monitoring spec | ✅ **New** | `audit_metrics_bridge.py` (BG117 ✅) |
-| J: NL Conflict Detection | policy §5 | ✅ **New** | `logic/CEC/nl/nl_policy_conflict_detector.py` (BL122 ✅) |
+**File:** `ipfs_datasets_py/mcp_server/ucan_delegation.py`
 
----
+Added two new methods to `RevocationList`:
 
-## Phase BD114 — DispatchPipeline E2E + BE115 Compliance Integration
+### `save_encrypted(path, password)`
 
-### Session BD114/BE115: Full pipeline with real compliance + risk stage handlers ✅ Complete
+- Derives a 32-byte AES key from `password` via `SHA-256(password.encode())`.
+- Generates a random 12-byte nonce.
+- Encrypts `{"revoked": [...sorted CIDs...]}` JSON with `AESGCM`.
+- Writes `<12-byte nonce> || <ciphertext>` to *path*; creates parent dirs.
+- **Fallback**: when `cryptography` is not installed, emits a `UserWarning`
+  and calls plain `save()` instead.
 
-**Test file:** `tests/mcp/unit/test_v15_sessions.py`
+### `load_encrypted(path, password)`
 
-**Key design:**
-- `DispatchPipeline` with two real stage handlers:
-  1. **compliance stage**: calls `ComplianceChecker.check()`, returns `allowed=False` on failure
-  2. **risk stage**: calls `RiskScorer.score_and_gate()`, catches `RiskGateError`
-- `short_circuit=True` (default): after compliance denial, risk is skipped
-- `short_circuit=False`: risk still runs after compliance denial
-- Stage can be disabled mid-test via `pipeline.skip_stage("compliance")`
+- Reads and splits the binary file into nonce + ciphertext.
+- Decrypts; handles wrong password, missing file, too-short file, and corrupt
+  JSON — all return 0 without raising.
+- **Fallback**: when `cryptography` is not installed, calls plain `load()`.
 
-#### TestDispatchPipelineE2E (8 tests):
-- `test_valid_intent_passes_all_stages` — both stages executed, result.allowed=True
-- `test_invalid_tool_name_denied_by_compliance` — denied_by == "compliance"
-- `test_short_circuit_skips_risk_after_compliance_denial` — "risk" in stages_skipped
-- `test_no_short_circuit_runs_all_stages` — risk in stages_executed even after denial
-- `test_missing_actor_denied_by_compliance`
-- `test_metrics_recorded_per_stage` — total_runs == 2
-- `test_make_full_pipeline_allows_safe_intent`
-- `test_pipeline_stage_can_be_disabled`
+```python
+rl = RevocationList()
+rl.revoke("compromised-cid")
+rl.save_encrypted("/var/lib/mcp/revoked.bin", password="my-secret")
 
-#### TestCompliancePipelineIntegration (4 tests):
-- `test_custom_deny_rule_blocks_tool` — add_rule() + pipeline integration
-- `test_remove_custom_rule_unblocks`
-- `test_fail_fast_stops_at_first_failure`
-- `test_compliance_report_to_dict`
+rl2 = RevocationList()
+rl2.load_encrypted("/var/lib/mcp/revoked.bin", password="my-secret")
+assert rl2.is_revoked("compromised-cid")
+```
 
 ---
 
-## Phase BF116 — risk_scorer + mcp_p2p_transport Integration
+## Phase I — Monitoring Loop Auto-Record ✅
 
-### Session BF116: Rate-limit per risk level ✅ Complete
+**File:** `ipfs_datasets_py/mcp_server/monitoring.py`
 
-**Test file:** `tests/mcp/unit/test_v15_sessions.py`
+Added a lazy-import block inside `EnhancedMetricsCollector._monitoring_loop()`
+that calls `record_delegation_metrics()` on every 30-second iteration:
 
-**Key design:**
-- Low risk → high-capacity `TokenBucketRateLimiter(rate=100, capacity=100)`
-- High/Critical risk → tight `TokenBucketRateLimiter(rate=0.1, capacity=1)`
-- Risk gate blocks before rate limiter is reached for dangerous tools
+```python
+# Phase I (session 59): surface delegation metrics every 30 s
+try:
+    from .ucan_delegation import (
+        get_delegation_manager,
+        record_delegation_metrics,
+    )
+    record_delegation_metrics(get_delegation_manager(), self)
+except Exception as _dm_exc:
+    logger.debug("delegation metrics unavailable: %s", _dm_exc)
+```
 
-#### TestRiskRateLimiterIntegration (7 tests):
-- `test_low_risk_uses_high_capacity_limiter`
-- `test_high_risk_tool_gets_tight_limiter`
-- `test_rate_limit_exhaustion_denies_requests`
-- `test_risk_score_and_gate_raises_for_dangerous_tool`
-- `test_p2p_session_config_makes_limiter`
-- `test_risk_level_from_score_mapping` (all 7 thresholds)
-- `test_combined_pipeline_risk_rate_limit`
-
----
-
-## Phase BG117 — AuditMetricsBridge (audit → prometheus)
-
-### Session BG117: PolicyAuditLog → PrometheusExporter ✅ Complete
-
-**New production module:** `ipfs_datasets_py/mcp_server/audit_metrics_bridge.py`
-
-**Key design:**
-- `AuditMetricsBridge(audit_log, exporter, *, category="policy")`
-- `attach()` — sets `audit_log._sink = self._sink`
-- `detach()` — sets `audit_log._sink = None`
-- `_sink(entry)` — calls `exporter.record_tool_call(category, tool, status, latency_seconds=0.0)`
-- `forwarded_count` tracks total entries forwarded
-- `connect_audit_to_prometheus(audit, exporter)` — one-shot convenience
-
-#### TestAuditMetricsBridge (9 tests):
-- `test_bridge_attach_sets_sink`
-- `test_bridge_forwards_allow_to_exporter`
-- `test_bridge_forwards_deny_to_exporter`
-- `test_bridge_detach_removes_sink`
-- `test_after_detach_records_not_forwarded`
-- `test_connect_shorthand_returns_attached_bridge`
-- `test_get_info_has_expected_keys`
-- `test_multiple_records_counted`
-- `test_custom_category_label`
+- **Lazy import** — avoids a hard circular-import between `monitoring` and
+  `ucan_delegation` at module load time.
+- **Exception swallowed** — delegation metrics are informational; they must
+  never cause the monitoring loop to exit.
+- Gauges surfaced: `mcp_revoked_cids_total`, `mcp_delegation_store_depth`.
 
 ---
 
-## Phase BH118 — DelegationManager Full Lifecycle
+## Phase J — `compliance_register_interface()` on Server Startup ✅
 
-### Session BH118: DelegationManager add/invoke/revoke/metrics ✅ Complete
+**File:** `ipfs_datasets_py/mcp_server/server.py`
 
-**New production class:** `DelegationManager` in `ipfs_datasets_py/mcp_server/ucan_delegation.py`
+`register_tools()` now includes a new block that:
 
-**Key design:**
-- `DelegationManager(path=None)` — wraps `DelegationStore` + `DelegationEvaluator` + `RevocationList`
-- `add(token) → str` — adds token, invalidates evaluator cache
-- `remove(cid) → bool` — removes token, invalidates cache
-- `get(cid) → Optional[DelegationToken]`
-- `list_cids() → List[str]`
-- `revoke(cid)` — adds to `RevocationList`
-- `revoke_chain(root_cid) → int` — revokes entire chain, returns count revoked
-- `is_revoked(cid) → bool`
-- `get_evaluator() → DelegationEvaluator` — lazy-cached; rebuilt on add/remove
-- `can_invoke(principal, resource, ability, *, leaf_cid, at_time) → Tuple[bool, str]` — also checks revocation
-- `save() → str` — persist store; `load() → int` — reload
-- `get_metrics() → Dict[str, Any]` — token_count/revoked_count/has_path
-- `get_delegation_manager()` — process-global singleton
+1. Imports and registers 5 compliance rule management tools:
+   `compliance_add_rule`, `compliance_list_rules`,
+   `compliance_remove_rule`, `compliance_check_intent`,
+   `compliance_register_interface`.
 
-#### TestDelegationManagerLifecycle (14 tests):
-- `test_add_and_list`
-- `test_can_invoke_after_add`
-- `test_wrong_principal_denied`
-- `test_expired_token_denied`
-- `test_revoke_denies_subsequent_invoke`
-- `test_is_revoked`
-- `test_remove_removes_token`
-- `test_get_returns_token`
-- `test_get_metrics_keys`
-- `test_len`
-- `test_repr`
-- `test_singleton_factory`
-- `test_save_and_load`
-- `test_evaluator_cache_invalidated_on_add`
+2. **Awaits `compliance_register_interface()`** immediately so the compliance
+   checker descriptor is registered in the `InterfaceRepository` at startup
+   — MCP clients can discover it via `interface_list()` without a separate
+   call.
+
+```python
+# Auto-register the compliance interface descriptor so MCP clients can discover it
+try:
+    await compliance_register_interface()
+    logger.info("MCP++ compliance interface registered at startup")
+except Exception as _ci_exc:
+    logger.debug("compliance_register_interface() at startup failed: %s", _ci_exc)
+```
 
 ---
 
-## Phase BL122 — NLPolicyConflictDetector
+## Phase K — E2E Smoke Test ✅
 
-### Session BL122: Simultaneous permission + prohibition detection ✅ Complete
+**File:** `tests/mcp/unit/test_mcplusplus_v14_session59.py`
 
-**New production module:** `ipfs_datasets_py/logic/CEC/nl/nl_policy_conflict_detector.py`
+39 tests across 5 test classes:
 
-**Key design:**
-- `NLPolicyConflictDetector(wildcard="*")` — stateless detector
-- `detect(clauses) → List[PolicyConflict]`
-  - `"simultaneous_perm_prohib"` — same (action, resource) is both permitted and prohibited for overlapping actors
-  - `"multiple_obligations"` — same (action, resource, actor) has >1 obligation clause
-- `PolicyConflict` — conflict_type / action / resource / actors / clause_types / description / to_dict()
-- `detect_conflicts(clauses)` — module-level convenience
-- **Wildcard handling:** if either permission or prohibition side has actor="*", it conflicts with all specific actors
-
-#### TestNLPolicyConflictDetector (12 tests):
-- `test_no_conflict_when_only_permission`
-- `test_no_conflict_when_only_prohibition`
-- `test_detects_simultaneous_perm_prohib`
-- `test_no_conflict_for_different_actions`
-- `test_wildcard_actor_triggers_conflict`
-- `test_different_actors_no_conflict`
-- `test_detects_duplicate_obligations`
-- `test_single_obligation_no_conflict`
-- `test_conflict_to_dict_has_expected_keys`
-- `test_no_conflict_for_empty_clauses`
-- `test_detector_with_real_nl_output` (integration with NLUCANPolicyCompiler)
-- `test_description_is_human_readable`
+| Class | Tests | Scope |
+|-------|-------|-------|
+| `TestPhaseGDelegationManagerServerIntegration` | 9 | `_initialize_delegation_manager`, `get_server_delegation_manager`, source-level `save()` assertion |
+| `TestPhaseHEncryptedRevocationList` | 10 | `save_encrypted`/`load_encrypted` round-trip, wrong password, missing file, fallback |
+| `TestPhaseIMonitoringLoopAutoRecord` | 6 | Source inspection + live `record_delegation_metrics` |
+| `TestPhaseJComplianceInterfaceOnStartup` | 7 | Source inspection + idempotency + `interface_list` integration |
+| `TestPhaseKE2ESmoke` | 7 | Full lifecycle: delegation → revoke → metric → encrypted save/load → compliance CID in list |
 
 ---
 
-## Phase BM123 — CECBridge Coverage
+## Phase L — Documentation Update ✅
 
-### Session BM123: Statistics + formula hash + strategy selection ✅ Complete
-
-**Test file:** `tests/mcp/unit/test_v15_sessions.py`
-
-#### TestCECBridgeCoverage (8 tests):
-- `test_bridge_creates_without_dependencies`
-- `test_get_statistics_has_expected_keys`
-- `test_formula_hash_is_deterministic`
-- `test_formula_hash_distinct_for_different_formulas`
-- `test_select_strategy_returns_string`
-- `test_prove_string_formula_returns_result`
-- `test_prove_caches_result_when_proved`
-- `test_prove_no_cache_always_calls_prover`
-- `test_unified_proof_result_fields`
+- **`MASTER_IMPROVEMENT_PLAN_2026_v15.md`** (this file) — documents all 6
+  completed phases.
+- **`PHASES_STATUS.md`** — updated cumulative status table.
 
 ---
 
-## Transport Documentation (TestTransportDocumentation — 6 tests)
+## Cumulative MCP++ Status
 
-- `test_mcp_p2p_protocol_id_is_primary` — `/mcp+p2p/1.0.0`
-- `test_mcp_p2p_pubsub_topics_present` — all required topics present
-- `test_grpc_module_docstring_mentions_mcp_p2p_as_canonical`
-- `test_grpc_adapter_is_optional` — `is_running=False`, `GRPC_AVAILABLE` is bool
-- `test_grpc_start_raises_without_grpc_package` — `ImportError` with "grpcio" hint
-- `test_mcp_message_transport_uses_mcp_p2p_framing` — full LengthPrefixFramer round-trip
+| Component | Module | Sessions |
+|-----------|--------|---------|
+| Profile A — MCP-IDL | `interface_descriptor.py` | 50 |
+| Profile B — CID-Native Artifacts | `cid_artifacts.py` | 50 |
+| Profile C — UCAN Delegation | `ucan_delegation.py` | 53, 56, 57, **58, 59** |
+| Profile D — Temporal Deontic Policy | `temporal_policy.py` | 50 |
+| Profile E — P2P Transport | `mcp_p2p_transport.py` | 54, 55, 56 |
+| Event DAG | `event_dag.py` | 50 |
+| Risk Scoring | `risk_scorer.py` | 53, 55 |
+| Compliance | `compliance_checker.py` | 53 |
+| HTM Schema CID | `hierarchical_tool_manager.py` | 53 |
+| Integrated Pipeline | `dispatch_pipeline.py` | 54, 56 |
+| NL→UCAN Policy Gate | `nl_ucan_policy.py` | 51, 52, 56, 57 |
+| Server pipeline gate | `server.py` | 55 |
+| Policy MCP tools | `policy_management_tool.py` | 55 |
+| Pubsub bus | `mcp_p2p_transport.py` | 55 |
+| Async policy registration | `nl_ucan_policy.py` | 56 |
+| Persistent policy store (file) | `nl_ucan_policy.py` | 56 |
+| IPFS-backed policy store | `nl_ucan_policy.py` | 57 |
+| PubSub ↔ P2P bridge | `mcp_p2p_transport.py` | 56 |
+| Pipeline metrics | `dispatch_pipeline.py` | 56 |
+| DID delegation signing | `ucan_delegation.py` | 56 |
+| RevocationList | `ucan_delegation.py` | 57 |
+| can_invoke_with_revocation | `ucan_delegation.py` | 57 |
+| DelegationStore | `ucan_delegation.py` | 57 |
+| Compliance rule management tool | `compliance_rule_management_tool.py` | 57 |
+| IPFSPolicyStore server startup | `server.py` | 58 |
+| RevocationList persistence (plain) | `ucan_delegation.py` | 58 |
+| DelegationManager | `ucan_delegation.py` | 58 |
+| Compliance interface registration tool | `compliance_rule_management_tool.py` | 58 |
+| Monitoring delegation metrics | `ucan_delegation.py` | 58 |
+| **DelegationManager server integration** | `server.py` | **59** |
+| **RevocationList persistence (encrypted)** | `ucan_delegation.py` | **59** |
+| **Monitoring loop auto-record** | `monitoring.py` | **59** |
+| **Compliance interface on startup** | `server.py` | **59** |
+
+**578 spec tests pass (sessions 50–59).**
 
 ---
 
-## Summary — v15 Sessions
+## Next Steps (Session 60+)
 
-| Session | Target | New Tests | Production changes | Status |
-|---------|--------|-----------|-------------------|--------|
-| BD114/BE115 | Pipeline E2E + compliance integration | 12 | — | ✅ |
-| BF116 | Risk + P2P rate-limit integration | 7 | — | ✅ |
-| BG117 | `audit_metrics_bridge.py` | 9 | New module | ✅ |
-| BH118 | `DelegationManager` in `ucan_delegation.py` | 14 | New class | ✅ |
-| BL122 | `nl_policy_conflict_detector.py` | 12 | New module | ✅ |
-| BM123 | `cec_bridge.py` coverage | 9 | — | ✅ |
-| Transport | gRPC docstring fix + MCP+P2P tests | 6 | `grpc_transport.py` docstring | ✅ |
-| **Total** | | **69** | **2 new modules + 1 new class** | ✅ |
-
-**Production files added:**
-- `mcp_server/audit_metrics_bridge.py` — BG117: audit→prometheus bridge
-- `logic/CEC/nl/nl_policy_conflict_detector.py` — BL122: conflict detection
-
-**Production files modified:**
-- `mcp_server/ucan_delegation.py` — BH118: `DelegationManager` class + `get_delegation_manager()`
-- `mcp_server/grpc_transport.py` — Transport fix: docstring clarifying gRPC is optional secondary
-
-**Grand total (all plans):**  
-2,884 (through v14) + 69 (v15) = **2,953 MCP + logic unit tests** · 8 skip · 0 failing
-
----
-
-## Next Steps (v16 candidates)
-
-| Session | Target | Rationale | Priority |
-|---------|--------|-----------|----------|
-| BN124 | `DelegationManager.revoke_chain()` — multi-hop chain test | Test full chain revocation | 🔴 High |
-| BO125 | `NLPolicyConflictDetector` integration with `UCANPolicyBridge` | Surface conflicts in bridge | 🔴 High |
-| BP126 | `audit_metrics_bridge.py` + live Prometheus integration | Full observability smoke test | 🟡 Med |
-| BQ127 | `nl_policy_conflict_detector.py` — i18n conflict detection (French/German/Spanish) | Phase 3c multi-language | 🟡 Med |
-| BR128 | `DelegationManager` + `PolicyAuditLog` integration | Audit every can_invoke() call | 🟡 Med |
-| BS129 | `dispatch_pipeline.py` + `DelegationManager` stage | Delegation as a pipeline stage | 🟡 Med |
-| BT130 | `groth16_ffi.py` circuit_version=2 prove + verify | ZKP Phase 4b | 🟢 Low |
-| BU131 | `cec_bridge.py` Z3 mock path full coverage | BM123 follow-up | 🟢 Low |
-| BV132 | CI integration — GitHub Actions for logic + mcp tests | Continuous quality | 🟡 Med |
-| BW133 | `logic/api.py` DelegationManager + conflict detector exports | Blessed API completeness | 🟡 Med |
+1. **Encrypted RevocationList via DelegationManager** — Expose
+   `DelegationManager.save_encrypted(password)` / `load_encrypted(password)`
+   that delegate to `RevocationList.save_encrypted/load_encrypted`.
+2. **`record_delegation_metrics` in P2P health check** — Call
+   `record_delegation_metrics()` inside `P2PMetricsCollector._check_health()`
+   so delegation stats appear in the P2P health dashboard.
+3. **Compliance rule persistence** — Add `ComplianceChecker.save(path)` /
+   `load(path)` so dynamically-added rules survive restarts.
+4. **`DelegationManager.revoke_chain()` via server** — Add a server method
+   `revoke_delegation_chain(leaf_cid)` that calls
+   `RevocationList.revoke_chain()` against the server's manager.
+5. **Full end-to-end integration test** — Test that spans server startup
+   (env-var policy store + delegation store + compliance interface) → dispatch
+   pipeline check → monitoring gauge read → encrypted revocation → server
+   shutdown.

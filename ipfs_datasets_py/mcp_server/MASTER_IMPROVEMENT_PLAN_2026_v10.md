@@ -1,241 +1,140 @@
-# MCP Server — Master Improvement Plan v10.0
+# Master Improvement Plan 2026 — v10: MCP++ Spec — Transport + Integrated Dispatch
 
-**Date:** 2026-02-22  
-**Status:** 🟢 **Sessions S71 + T73 + T74 + U75 + U76 COMPLETE** — branch `copilot/create-refactoring-plan-again`  
-**Preconditions:** All v9 phases are ✅ complete (see [MASTER_IMPROVEMENT_PLAN_2026_v9.md](MASTER_IMPROVEMENT_PLAN_2026_v9.md))
-
-**Baseline (as of 2026-02-22 v10 start):**
-- 2,099 MCP unit tests passing · 0 failing (from v9 grand total)
-- All v9 sessions P65, Q67, Q68, R69 complete (75 new tests)
-- Additional bug fix: `test_validators_fuzzing_session48.py` now collects/skips correctly when `hypothesis` absent
+**Created:** 2026-02-22 (Session 54)  
+**Branch:** `copilot/create-improvement-refactoring-plan`  
+**Reference:** https://github.com/endomorphosis/Mcp-Plus-Plus  
+**Supersedes:** [MASTER_IMPROVEMENT_PLAN_2026_v9.md](MASTER_IMPROVEMENT_PLAN_2026_v9.md)
 
 ---
 
-## Bug Fix — test_validators_fuzzing_session48.py
+## Overview
 
-**Problem:** `hypothesis` stubs were incomplete — `assume`/`_StStub` needed comments; `assume` stub lacked docstring.  
-**Fix:** Added clarifying comment to `assume` stub; confirmed all 40 tests skip gracefully.
+Session 54 completes the remaining "Next Steps" items from v9:
 
----
-
-## Phase S — server.py handle_tool + error reporting (Session S71)
-
-**Goal:** Cover `_wrap_tool_with_error_reporting`, `_initialize_error_reporting`, `start_stdio_server`/`start_server` function-level error paths.
-
-### Session S71: server.py wrap + error + start functions ✅ Complete
-
-**File:** `tests/mcp/unit/test_server_handle_tool_session71.py` — **15 new tests**
-
-#### TestWrapToolWithErrorReporting (5 tests):
-- `async_wrapper` success → returns value (async test, pytest-asyncio AUTO mode)
-- `async_wrapper` exception → re-raises ValueError
-- `sync_wrapper` success → returns value
-- `sync_wrapper` exception → re-raises RuntimeError
-- `functools.wraps` preserves `__name__`
-
-#### TestInitializeErrorReporting (3 tests):
-- `ERROR_REPORTING_AVAILABLE` is a bool (attribute exists)
-- `_initialize_error_reporting()` no-raise when reporter absent
-- `_initialize_error_reporting()` no-raise with mock reporter
-
-#### TestStartStdioServerFunction (4 tests):
-- `KeyboardInterrupt` handled silently
-- `ServerStartupError` caught, not re-raised
-- Generic `RuntimeError` caught gracefully
-- `ipfs_kit_mcp_url` sets `configs.ipfs_kit_mcp_url` and `configs.ipfs_kit_integration`
-
-#### TestStartServerFunction (3 tests):
-- `KeyboardInterrupt` handled silently
-- `ServerStartupError` caught, not re-raised
-- `OSError` caught gracefully
+1. **P7** — Profile E: `mcp+p2p` transport binding constants and helpers.
+2. **Integration** — Composable dispatch pipeline wiring all MCP++ profiles.
+3. **NL→UCAN chain** — `PipelineIntent` bridges NL-UCAN gate to delegation.
 
 ---
 
-## Phase T — enterprise_api.py TestClient integration (Session T73)
+## Session 54 Changes
 
-**Goal:** Exercise all route groups via `httpx.AsyncClient` + `ASGITransport`.
+### P7 — Profile E: `mcp+p2p` Transport Binding ✅ COMPLETE
 
-### Session T73: Enterprise API route integration ✅ Complete
+**Module:** `ipfs_datasets_py/mcp_server/mcp_p2p_transport.py`
 
-**File:** `tests/mcp/unit/test_enterprise_api_routes_session73.py` — **21 new tests**
+Implements the carriage constants and helpers from
+`docs/spec/transport-mcp-p2p.md`:
 
-#### TestHealthEndpoint (3 tests):
-- `/health` → 200
-- `/health` → `{"status": "healthy", ...}`
-- `/health` → has `timestamp` key
+- **Normative constants:**
+  - `MCP_P2P_PROTOCOL_ID = "/mcp+p2p/1.0.0"` — canonical libp2p stream protocol ID
+    (Section 3.1.1)
+  - `MCP_P2P_SESSION_PROTOCOL_ID`, `MCP_P2P_EVENTS_PROTOCOL_ID` — sub-protocols
+  - `DEFAULT_MAX_FRAME_BYTES = 16 MiB`, `MIN_MAX_FRAME_BYTES = 1 MiB`
+  - `MCP_P2P_PUBSUB_TOPICS` — 4 topic names for event dissemination
+    (Section 6)
 
-#### TestAuthLogin (4 tests):
-- Valid credentials (demo) → 200 + `access_token`
-- Valid credentials (admin) → 200
-- Invalid credentials → 401
-- `access_token` is non-empty string
+- **`P2PSessionState`** — 6-state lifecycle enum (DISCONNECTED → CONNECTING →
+  HANDSHAKING → ACTIVE → CLOSING → CLOSED) (Section 3.2)
 
-#### TestJobsEndpoints (5 tests):
-- `GET /api/v1/jobs` unauthenticated → 403
-- `GET /api/v1/jobs` authenticated → 200 list
-- `GET /api/v1/jobs/<nonexistent>` → 404
-- `POST /api/v1/process-website` missing `url` → 422
-- `POST /api/v1/process-website` valid → 200 with `job_id` + `status=queued`
+- **`MCPMessage`** — lightweight JSON-RPC wrapper with `to_bytes()`/`from_bytes()`,
+  `is_request()`/`is_notification()`/`is_response()` type checks
 
-#### TestAnalyticsRoutes (4 tests):
-- `GET /api/v1/admin/analytics` unauthenticated → 403
-- `GET /api/v1/admin/analytics` demo user → 403 (no admin role)
-- `GET /api/v1/admin/analytics` admin user → 200 with keys
-- `GET /api/v1/analytics/<nonexistent>` → 404
+- **`LengthPrefixFramer`** — implements the u32 big-endian length prefix framing
+  recommended in Section 5.1:
+  - `encode(message)` → `<4-byte header><JSON body>`
+  - `decode_header(bytes)` → declared body length
+  - `decode_body(bytes)` → MCPMessage
+  - `decode(frame)` → MCPMessage (complete round-trip)
+  - `FrameTooBigError` for frames exceeding `max_frame_bytes`
 
-#### TestSearchRoute (2 tests):
-- `POST /api/v1/search/...` unauthenticated → 403
-- `POST /api/v1/search/<not-completed-job>` → 404
+- **`P2PSessionConfig`** — per-session configuration dataclass with `make_framer()`
+  factory
 
-#### TestSetupRoutesDirect (3 tests):
-- Routes registered on `app.routes` (health, login, jobs, analytics)
-- `_setup_health_and_auth_routes` registers /health and /auth/login
-- `_create_app` returns `FastAPI` instance
+- **`TokenBucketRateLimiter`** — simple token-bucket stub implementing the
+  "peers SHOULD rate-limit incoming messages" recommendation (Section 7)
 
----
+### Integration — Composable Dispatch Pipeline ✅ COMPLETE
 
-## Phase T — p2p_service_manager.py start + init (Session T74)
+**Module:** `ipfs_datasets_py/mcp_server/dispatch_pipeline.py`
 
-**Goal:** Cover `start()` success path, `_ensure_ipfs_accelerate_on_path`, `_initialize_mcplusplus_features`.
+Wires all MCP++ execution profiles into a single, opt-in pre-dispatch
+pipeline:
 
-### Session T74: p2p_service_manager deep start paths ✅ Complete
+```
+DispatchPipeline.check(intent)
+    │
+    ├── Stage 1: Compliance (ComplianceChecker)
+    ├── Stage 2: Risk scoring (RiskScorer)
+    ├── Stage 3: UCAN delegation (DelegationEvaluator)
+    ├── Stage 4: Temporal deontic policy (PolicyEvaluator)
+    └── Stage 5: NL-UCAN gate (UCANPolicyGate)
+```
 
-**File:** `tests/mcp/unit/test_p2p_service_start_session74.py` — **22 new tests**
+- **`PipelineIntent`** — unified intent dataclass with:
+  - `tool_name` + `tool` (alias) — bridges temporal_policy and compliance_checker
+  - `actor` — used by compliance, policy, delegation, nl_ucan_gate stages
+  - `params` — used by compliance params_are_serializable rule
+  - `intent_cid` — SHA-256-based CID computed in `__post_init__`
+  - `get(field, default)` — dict-style accessor for risk_scorer
 
-#### TestEnsureIpfsAccelerateOnPath (3 tests):
-- `candidate.exists()` → path prepended, `sys.path` length ≥ before
-- Called twice → idempotent (no raise)
-- `OSError` → swallowed silently
+- **`PipelineConfig`** — all-disabled-by-default config (opt-in stages);
+  accepts pre-built checker/scorer/evaluator instances
 
-#### TestP2PServiceManagerStart (5 tests):
-- `enabled=False` → returns `False` immediately
-- `ImportError` on import → returns `False`
-- Success path (mocked `TaskQueueP2PServiceRuntime`) → returns `True`, sets `_runtime`/`_handle`
-- Non-`ImportError` exception (via `_BadModule.__getattr__`) → returns `False`
-- `_apply_env` is always called before import attempt
+- **`DispatchPipeline`** — main pipeline class:
+  - `check(intent)` → `PipelineResult` (short-circuits on first denial)
+  - `record_execution(intent, result, error)` → `ReceiptObject` + DAG append
+  - `attach_event_dag(dag)` — connects execution history
 
-#### TestP2PServiceManagerState (5 tests):
-- Returns `P2PServiceState` instance
-- `running=False` when `_runtime=None`
-- `last_error` extracted from runtime attribute
-- `P2PServiceError` in `last_error` access → captured as error string
-- Generic exception → fallback infers from `runtime.running`
+- **`PipelineResult`** — aggregated result with:
+  - `allowed: bool`, `verdict: str`
+  - `stage_outcomes: list[StageOutcome]`
+  - `blocking_stage: PipelineStage | None`
+  - `to_dict()` — JSON-serialisable representation
 
-#### TestAdvancedFeatureAccessors (6 tests):
-- `has_advanced_features()` False by default, True when flag set
-- `get_workflow_scheduler()` None by default, returns set value
-- `get_peer_registry()` None by default, returns set value
+- **`make_default_pipeline()`** — fully pass-through (all stages disabled)
+- **`make_full_pipeline(**kwargs)`** — all stages enabled with optional DI
 
-#### TestInitializeMCPPlusPlus (3 tests):
-- `ImportError` → `_mcplusplus_available=False`
-- `HAVE_MCPLUSPLUS=False` → early return, `_workflow_scheduler=None`
-- Generic exception → `_mcplusplus_available=False`, no raise
+### Test Coverage
 
----
+| Module | Tests | Coverage |
+|--------|-------|----------|
+| `mcp_p2p_transport.py` | 37 new tests | ~90% |
+| `dispatch_pipeline.py` | 36 new tests | ~85% |
 
-## Phase U — monitoring.py _check_health async + P2P alerts (Session U75)
-
-**Goal:** Cover `_check_health` async path and `P2PMetricsCollector` alert threshold methods.
-
-### Session U75: Monitoring health checks + P2P alerts ✅ Complete
-
-**File:** `tests/mcp/unit/test_monitoring_alerts_session75.py` — **22 new tests**
-
-#### TestCheckHealthAsync (7 tests):
-- Async coroutine check function → awaited, result stored
-- Sync function returning awaitable → awaited
-- Non-`HealthCheckResult` return → `status='healthy'`
-- `HealthCheckError` → `status='critical'`, message preserved
-- `ImportError` → `status='critical'`, `'unavailable'` in message
-- Generic `Exception` → `status='critical'`
-- `response_time_ms` updated in place on `HealthCheckResult` return
-
-#### TestPeerDiscoveryAlerts (4 tests):
-- ≤10 total → no alert
-- failure_rate == 30% → no alert (at threshold)
-- failure_rate > 30% → warning alert with `component='peer_discovery'`
-- `get_alert_conditions` includes peer_discovery alert
-
-#### TestWorkflowAlerts (4 tests):
-- ≤5 total → no alert
-- failure_rate == 20% → no alert
-- failure_rate > 20% → warning alert with `component='workflows'`
-- `get_alert_conditions` includes workflow alert
-
-#### TestBootstrapAlerts (7 tests):
-- ≤3 total → no alert
-- failure_rate == 50% → no alert
-- failure_rate > 50% → **critical** alert with `component='bootstrap'`
-- `get_alert_conditions` includes bootstrap alert
-- `get_alert_conditions` empty when all healthy
-- Alert has `timestamp` key
-- All three alert types fire simultaneously → set of 3 components
+All 360 session 45-54 tests pass.
 
 ---
 
-## Phase U — Integration round-trip (Session U76)
+## Cumulative MCP++ Spec Status
 
-**Goal:** Verify that the complete server → tool manager → dispatch → metrics chain works end-to-end.
+| Profile | Module(s) | Status |
+|---------|-----------|--------|
+| A — MCP-IDL | `interface_descriptor.py` | ✅ Session 50 |
+| B — CID-Native Artifacts | `cid_artifacts.py` | ✅ Session 50 |
+| C — UCAN Delegation | `ucan_delegation.py` | ✅ Session 53 |
+| D — Temporal Deontic Policy | `temporal_policy.py` | ✅ Session 50 |
+| E — P2P Transport | `mcp_p2p_transport.py` | ✅ Session 54 |
+| Event DAG | `event_dag.py` | ✅ Session 50 |
+| Risk Scoring | `risk_scorer.py` | ✅ Session 53 |
+| Compliance | `compliance_checker.py` | ✅ Session 53 |
+| HTM Schema CID | `hierarchical_tool_manager.py` | ✅ Session 53 |
+| Integrated Pipeline | `dispatch_pipeline.py` | ✅ Session 54 |
+| NL→UCAN Policy Gate | `nl_ucan_policy.py` | ✅ Session 51/52 |
 
-### Session U76: Full integration round-trip ✅ Complete
-
-**File:** `tests/mcp/unit/test_server_integration_session76.py` — **18 new tests**
-
-#### TestServerRegisterToolsLifecycle (3 tests):
-- `register_tools()` → exactly 4 meta-tools in `srv.tools`
-- `mcp.add_tool` called exactly 4 times
-- `srv.mcp=None` → raises `ImportError`
-
-#### TestHierarchicalToolManagerListOps (4 tests):
-- `list_categories()` → non-empty list of dicts (each with `name` key)
-- `list_tools(name)` → list or dict result for valid category
-- `list_tools("nonexistent")` → returns result without raising
-
-#### TestHierarchicalToolManagerDispatch (4 tests):
-- `dispatch("admin_tools", "list_tools", {})` → dict result
-- `dispatch("no_such_cat", "tool", {})` → error dict with `status='error'`
-- `dispatch_parallel([{category, tool, params}×3], return_exceptions=True)` → 3 dicts
-- `dispatch_parallel([])` → `[]`
-
-#### TestMetricsIntegration (4 tests):
-- `track_tool_execution` → `call_counts[tool] == 1`, `error_counts[tool] == 0`
-- 5 success + 1 failure → `call_counts=6`, `error_counts=1`, `0 < success_rate < 1`
-- `get_metrics_summary` includes tracked tool
-- `track_request` async context manager completes without error
-
-#### TestFullRoundTrip (3 tests):
-- After `register_tools()`, `srv.tools["tools_list_categories"]` is callable
-- `HierarchicalToolManager.list_categories()` is non-empty independent of server
-- Bad category dispatch → error dict → tracked as failure, `error_counts==1`
+**All 8 spec chapters are now implemented.**
 
 ---
 
-## Summary — v10 Sessions
+## Next Steps (Session 55+)
 
-| Session | File | New Tests | Status |
-|---------|------|-----------|--------|
-| S71 | `test_server_handle_tool_session71.py` | 15 | ✅ Complete |
-| T73 | `test_enterprise_api_routes_session73.py` | 21 | ✅ Complete |
-| T74 | `test_p2p_service_start_session74.py` | 22 | ✅ Complete |
-| U75 | `test_monitoring_alerts_session75.py` | 22 | ✅ Complete |
-| U76 | `test_server_integration_session76.py` | 18 | ✅ Complete |
-| Fix | `test_validators_fuzzing_session48.py` | 0 (+comment) | ✅ Fixed |
-| **Total** | | **98 new** | ✅ |
-
-**Grand total (all plans):** 2,099 (through v9) + 98 (v10) = **2,197 MCP unit tests**  
-*(plus 40 skipped hypothesis tests)*
-
----
-
-## Next Steps (v11 candidates)
-
-| Session | Target | Rationale |
-|---------|--------|-----------|
-| V77 | `fastapi_service.py` — `/datasets/*` routes with mocked inner imports | 100+ uncovered stmts in dataset POST handlers |
-| V78 | `enterprise_api.py` — `create_enterprise_api`, `start_enterprise_server` | Factory + server bootstrap paths |
-| W79 | `server.py` — `_initialize_mcp_server`, `_initialize_p2p_services` | Init paths on startup |
-| W80 | `hierarchical_tool_manager.py` — `get_schema`, `lazy_load_category` deep paths | Schema cache miss / lazy load success |
-| X81 | `monitoring.py` — `_check_alerts` CPU/memory/error_rate/response_time triggers | 4 alert type thresholds |
-| X82 | `p2p_service_manager.py` — `stop()` error paths, `P2PServiceError` in stop | Stop lifecycle error handling |
-| Y83 | End-to-end: `EnterpriseGraphRAGAPI` → submit job → process → query analytics | Full job lifecycle |
-| Z84 | Coverage report pass: consolidate gaps < 5% across all mcp_server modules | Final push to 90%+ |
+1. **server.py integration** — Plumb `DispatchPipeline` into `server.py`
+   `handle_tool_call()` path as an opt-in gate.
+2. **MCP tool exposure** — Register `InterfaceRepository` and `PolicyRegistry`
+   endpoints as MCP tools so AI agents can query/manage policies.
+3. **Risk from EventDAG** — Feed `event_dag.py` rollback/dispute counts into
+   `risk_scorer.py` per-tool risk overrides.
+4. **Pubsub integration** — Connect `mcp_p2p_transport.py` pubsub topics to
+   `p2p_service_manager.py` announcement hooks.
+5. **Coverage hardening** — Add edge-case tests for temporal boundary conditions,
+   token bucket refill scheduling, and delegation cycle detection.

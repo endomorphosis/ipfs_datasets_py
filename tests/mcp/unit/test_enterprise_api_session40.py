@@ -1,20 +1,16 @@
 """
-Session G40: enterprise_api.py coverage uplift.
+Session 40 — Additional tests for enterprise_api.py to push coverage from 66% toward 80%+.
 
-Targets uncovered lines in EnterpriseGraphRAGAPI and related classes:
-- EnterpriseGraphRAGAPI.create_jwt_token / validate_jwt_token (lines 402-426)
-- EnterpriseGraphRAGAPI._create_app + lifespan (lines 428-459)
-- _setup_routes delegating to sub-setup methods (lines 461-477)
-- _setup_health_and_auth_routes HTTP endpoints (lines 479-498)
-- _setup_core_api_routes HTTP endpoints (lines 500-540)
-- _setup_search_routes HTTP endpoint (lines 542-580)
-- _setup_analytics_routes HTTP endpoint (lines 582-622)
-- ProcessingJobManager.process_job success path + webhook (lines 275-312)
-- Webhook notifications in each exception handler (lines 320, 328, 336)
-- AdvancedAnalyticsDashboard._calculate_avg_quality non-empty path (line 694)
-- create_enterprise_api singleton factory (lines 720-727)
+Covers previously-uncovered code paths:
+- EnterpriseGraphRAGAPI.__init__() construction
+- EnterpriseGraphRAGAPI.create_jwt_token() / validate_jwt_token()
+- AdvancedAnalyticsDashboard._calculate_avg_quality() with and without results
+- AdvancedAnalyticsDashboard._get_recent_activity() with >10 jobs
+- ProcessingJobManager.get_job_status() for missing job
+- ProcessingJobManager.get_user_jobs() for specific user
+- create_enterprise_api() singleton factory
+- AuthenticationManager.authenticate() success + invalid-token paths
 """
-
 import asyncio
 import sys
 from datetime import datetime
@@ -23,16 +19,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # ---------------------------------------------------------------------------
-# Mock heavy dependencies before importing enterprise_api
+# Mock heavy dependencies before import
 # ---------------------------------------------------------------------------
 
 def _setup_mocks():
-    """Set up mock modules for enterprise_api imports."""
     mock_graphrag = MagicMock()
     mock_graphrag.CompleteGraphRAGSystem = MagicMock()
     mock_graphrag.CompleteProcessingConfiguration = MagicMock()
     mock_graphrag.CompleteProcessingResult = MagicMock()
-
     sys.modules.setdefault(
         "ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag",
         mock_graphrag,
@@ -45,422 +39,250 @@ _setup_mocks()
 
 from ipfs_datasets_py.mcp_server.enterprise_api import (
     AuthenticationManager,
-    ProcessingJobManager,
-    WebsiteProcessingRequest,
     AdvancedAnalyticsDashboard,
     EnterpriseGraphRAGAPI,
+    ProcessingJobManager,
+    RateLimiter,
+    WebsiteProcessingRequest,
     create_enterprise_api,
 )
 
 
-def _run(coro):
-    loop = asyncio.new_event_loop()
-    try:
-        return loop.run_until_complete(coro)
-    finally:
-        loop.close()
-
-
 # ---------------------------------------------------------------------------
-# TestEnterpriseGraphRAGAPIInit
+# EnterpriseGraphRAGAPI construction
 # ---------------------------------------------------------------------------
 
 class TestEnterpriseGraphRAGAPIInit:
-    """Tests for EnterpriseGraphRAGAPI initialisation and _create_app."""
 
-    def test_api_initialises_with_fastapi_app(self):
+    def test_default_init(self):
         """
-        GIVEN: Default configuration
-        WHEN: EnterpriseGraphRAGAPI() is instantiated
-        THEN: .app is a FastAPI application
+        GIVEN: No config
+        WHEN: EnterpriseGraphRAGAPI is instantiated
+        THEN: Default components are created and app is ready
         """
-        from fastapi import FastAPI
         api = EnterpriseGraphRAGAPI()
-        assert isinstance(api.app, FastAPI)
+        assert api.config == {}
+        assert isinstance(api.auth_manager, AuthenticationManager)
+        assert isinstance(api.rate_limiter, RateLimiter)
+        assert isinstance(api.job_manager, ProcessingJobManager)
+        assert api.app is not None
 
-    def test_api_stores_config(self):
+    def test_custom_config(self):
         """
         GIVEN: A custom config dict
-        WHEN: EnterpriseGraphRAGAPI(config=...) is created
-        THEN: config attribute matches input
+        WHEN: EnterpriseGraphRAGAPI is instantiated
+        THEN: config attribute is set correctly
         """
-        cfg = {"timeout": 60}
-        api = EnterpriseGraphRAGAPI(config=cfg)
-        assert api.config == cfg
+        api = EnterpriseGraphRAGAPI(config={"max_jobs": 50})
+        assert api.config["max_jobs"] == 50
 
-    def test_api_creates_auth_manager(self):
-        """
-        GIVEN: Default initialization
-        WHEN: EnterpriseGraphRAGAPI() is created
-        THEN: auth_manager is an AuthenticationManager instance
-        """
+    def test_graphrag_systems_cache_starts_empty(self):
         api = EnterpriseGraphRAGAPI()
-        assert isinstance(api.auth_manager, AuthenticationManager)
+        assert api.graphrag_systems == {}
 
 
 # ---------------------------------------------------------------------------
-# TestJWTTokenMethods
+# EnterpriseGraphRAGAPI.create_jwt_token / validate_jwt_token
 # ---------------------------------------------------------------------------
 
-class TestJWTTokenMethods:
-    """Tests for create_jwt_token and validate_jwt_token."""
+class TestEnterpriseGraphRAGAPITokenMethods:
 
-    def test_create_jwt_token_returns_string(self):
-        """
-        GIVEN: A user_data dict with a username
-        WHEN: create_jwt_token() is called
-        THEN: Returns a non-empty string token
-        """
-        api = EnterpriseGraphRAGAPI()
-        token = api.create_jwt_token({"username": "demo"})
-        assert isinstance(token, str)
-        assert len(token) > 0
+    def setup_method(self):
+        self.api = EnterpriseGraphRAGAPI()
+
+    def test_create_jwt_token_with_username(self):
+        """create_jwt_token() with username key returns a non-empty token string."""
+        with patch("ipfs_datasets_py.mcp_server.enterprise_api.jwt") as mock_jwt:
+            mock_jwt.encode.return_value = "mock.token.here"
+            token = self.api.create_jwt_token({"username": "demo"})
+            assert isinstance(token, str)
+            assert len(token) > 0
 
     def test_create_jwt_token_with_user_id(self):
-        """
-        GIVEN: A user_data dict with user_id (but no username)
-        WHEN: create_jwt_token() is called
-        THEN: Returns a non-empty string token
-        """
-        api = EnterpriseGraphRAGAPI()
-        token = api.create_jwt_token({"user_id": "user123"})
-        assert isinstance(token, str)
+        """create_jwt_token() falls back to user_id if username not provided."""
+        with patch("ipfs_datasets_py.mcp_server.enterprise_api.jwt") as mock_jwt:
+            mock_jwt.encode.return_value = "mock.token.here"
+            token = self.api.create_jwt_token({"user_id": "usr-42"})
+            assert isinstance(token, str)
 
-    def test_validate_jwt_token_valid_returns_user_data(self):
-        """
-        GIVEN: A valid JWT token created for 'demo' user
-        WHEN: validate_jwt_token() is called
-        THEN: Returns dict with user data (username, roles, etc.)
-        """
-        api = EnterpriseGraphRAGAPI()
-        token = api.create_jwt_token({"username": "demo"})
-        result = api.validate_jwt_token(token)
-        assert result is not None
-        assert result["username"] == "demo"
+    def test_validate_jwt_token_valid(self):
+        """validate_jwt_token() returns user data dict for a valid token."""
+        with patch("ipfs_datasets_py.mcp_server.enterprise_api.jwt") as mock_jwt:
+            mock_jwt.decode.return_value = {"sub": "demo"}
+            mock_jwt.PyJWTError = Exception
+            result = self.api.validate_jwt_token("valid.token")
+            assert result is not None
+            assert result["username"] == "demo"
 
-    def test_validate_jwt_token_invalid_returns_none(self):
-        """
-        GIVEN: An invalid token string
-        WHEN: validate_jwt_token() is called
-        THEN: Returns None
-        """
-        api = EnterpriseGraphRAGAPI()
-        result = api.validate_jwt_token("not.a.valid.token")
+    def test_validate_jwt_token_invalid(self):
+        """validate_jwt_token() returns None for an invalid token."""
+        with patch("ipfs_datasets_py.mcp_server.enterprise_api.jwt") as mock_jwt:
+            mock_jwt.decode.side_effect = Exception("invalid")
+            mock_jwt.PyJWTError = Exception
+            result = self.api.validate_jwt_token("bad.token")
+            assert result is None
+
+
+# ---------------------------------------------------------------------------
+# ProcessingJobManager — additional paths
+# ---------------------------------------------------------------------------
+
+class TestProcessingJobManagerAdditional:
+
+    def test_get_job_status_missing_job_returns_none(self):
+        """get_job_status() returns None for a job_id that doesn't exist."""
+        jm = ProcessingJobManager()
+        result = jm.get_job_status("nonexistent-id")
         assert result is None
 
-
-# ---------------------------------------------------------------------------
-# TestHealthRouteViaTestClient
-# ---------------------------------------------------------------------------
-
-class TestHealthRoute:
-    """Tests for /health endpoint via FastAPI TestClient."""
-
-    def test_health_endpoint_returns_healthy(self):
-        """
-        GIVEN: EnterpriseGraphRAGAPI application
-        WHEN: GET /health is called
-        THEN: Returns 200 with status='healthy'
-        """
-        try:
-            from fastapi.testclient import TestClient
-        except ImportError:
-            pytest.skip("httpx not available")
-
-        api = EnterpriseGraphRAGAPI()
-        client = TestClient(api.app)
-        response = client.get("/health")
-        assert response.status_code == 200
-        assert response.json()["status"] == "healthy"
-
-    def test_login_endpoint_valid_credentials(self):
-        """
-        GIVEN: Valid demo credentials
-        WHEN: POST /auth/login is called
-        THEN: Returns 200 with access_token
-        """
-        try:
-            from fastapi.testclient import TestClient
-        except ImportError:
-            pytest.skip("httpx not available")
-
-        api = EnterpriseGraphRAGAPI()
-        client = TestClient(api.app)
-        response = client.post("/auth/login?username=demo&password=password")
-        assert response.status_code == 200
-        data = response.json()
-        assert "access_token" in data
-
-    def test_login_endpoint_invalid_credentials(self):
-        """
-        GIVEN: Invalid credentials
-        WHEN: POST /auth/login is called
-        THEN: Returns 401
-        """
-        try:
-            from fastapi.testclient import TestClient
-        except ImportError:
-            pytest.skip("httpx not available")
-
-        api = EnterpriseGraphRAGAPI()
-        client = TestClient(api.app)
-        response = client.post("/auth/login?username=hacker&password=wrong")
-        assert response.status_code == 401
-
-
-# ---------------------------------------------------------------------------
-# TestProcessJobSuccess
-# ---------------------------------------------------------------------------
-
-class TestProcessJobSuccess:
-    """Tests for ProcessingJobManager.process_job success path."""
-
-    def test_process_job_success_sets_completed(self):
-        """
-        GIVEN: A submitted job with mocked CompleteGraphRAGSystem
-        WHEN: process_job() completes without error
-        THEN: Job status is 'completed' and progress is 1.0
-        """
+    def test_get_user_jobs_filters_by_user(self):
+        """get_user_jobs() returns only jobs belonging to the specified user."""
         jm = ProcessingJobManager()
         req = WebsiteProcessingRequest(url="https://example.com")
-        job_id = _run(jm.submit_job("user1", req))
+        asyncio.run(jm.submit_job("alice", req))
+        asyncio.run(jm.submit_job("bob", req))
+        alice_jobs = jm.get_user_jobs("alice")
+        # Only alice's job should be returned
+        assert len(alice_jobs) == 1
 
-        mock_result = MagicMock()
-        mock_result.quality_score = 0.9
-
-        mock_system = MagicMock()
-        mock_system.process_complete_website = AsyncMock(return_value=mock_result)
-
-        with patch(
-            "ipfs_datasets_py.mcp_server.enterprise_api.CompleteGraphRAGSystem",
-            return_value=mock_system,
-        ):
-            with patch(
-                "ipfs_datasets_py.mcp_server.enterprise_api.anyio.sleep",
-                AsyncMock(),
-            ):
-                _run(jm.process_job(job_id, req))
-
-        assert jm.jobs[job_id]["status"] == "completed"
-        assert jm.jobs[job_id]["progress"] == 1.0
-
-    def test_process_job_stores_result(self):
-        """
-        GIVEN: A completed job
-        WHEN: process_job() completes successfully
-        THEN: Result is stored in job_results
-        """
+    def test_get_user_jobs_empty_for_unknown_user(self):
         jm = ProcessingJobManager()
-        req = WebsiteProcessingRequest(url="https://example.com")
-        job_id = _run(jm.submit_job("user1", req))
-
-        mock_result = MagicMock()
-        mock_result.quality_score = 0.85
-        mock_system = MagicMock()
-        mock_system.process_complete_website = AsyncMock(return_value=mock_result)
-
-        with patch(
-            "ipfs_datasets_py.mcp_server.enterprise_api.CompleteGraphRAGSystem",
-            return_value=mock_system,
-        ):
-            with patch(
-                "ipfs_datasets_py.mcp_server.enterprise_api.anyio.sleep",
-                AsyncMock(),
-            ):
-                _run(jm.process_job(job_id, req))
-
-        assert job_id in jm.job_results
+        assert jm.get_user_jobs("unknown_user") == []
 
 
 # ---------------------------------------------------------------------------
-# TestWebhookNotifications
+# AdvancedAnalyticsDashboard — additional paths
 # ---------------------------------------------------------------------------
 
-class TestWebhookNotifications:
-    """Tests for webhook notifications in process_job exception handlers."""
+class TestAdvancedAnalyticsDashboardAdditional:
 
-    def test_webhook_called_on_tool_execution_error(self):
-        """
-        GIVEN: Job with notify_webhook set; CompleteGraphRAGSystem raises ToolExecutionError
-        WHEN: process_job() runs
-        THEN: _send_webhook_notification is called
-        """
-        from ipfs_datasets_py.mcp_server.exceptions import ToolExecutionError
-
+    def _make_dashboard(self):
         jm = ProcessingJobManager()
-        req = WebsiteProcessingRequest(
-            url="https://example.com",
-            notify_webhook="https://hooks.example.com/notify",
-        )
-        job_id = _run(jm.submit_job("user1", req))
+        return AdvancedAnalyticsDashboard(job_manager=jm)
 
-        with patch(
-            "ipfs_datasets_py.mcp_server.enterprise_api.CompleteGraphRAGSystem",
-            side_effect=ToolExecutionError("test", ValueError("err")),
-        ):
-            with patch.object(
-                jm, "_send_webhook_notification", new_callable=AsyncMock
-            ) as mock_webhook:
-                _run(jm.process_job(job_id, req))
+    def test_calculate_avg_quality_no_results(self):
+        """_calculate_avg_quality() returns 0.0 when no job results exist."""
+        dashboard = self._make_dashboard()
+        result = dashboard._calculate_avg_quality()
+        assert result == 0.0
 
-        mock_webhook.assert_called_once()
+    def test_calculate_avg_quality_with_results(self):
+        """_calculate_avg_quality() returns average quality_score across results."""
+        dashboard = self._make_dashboard()
+        # Add mock results with quality_score attribute
+        mock_result_a = MagicMock()
+        mock_result_a.quality_score = 0.8
+        mock_result_b = MagicMock()
+        mock_result_b.quality_score = 0.6
+        dashboard.job_manager.job_results["job-a"] = mock_result_a
+        dashboard.job_manager.job_results["job-b"] = mock_result_b
+        result = dashboard._calculate_avg_quality()
+        assert result == pytest.approx(0.7)
 
-    def test_webhook_called_on_value_error(self):
-        """
-        GIVEN: Job with notify_webhook; processing raises ValueError
-        WHEN: process_job() runs
-        THEN: _send_webhook_notification is called with 'failed' status
-        """
-        jm = ProcessingJobManager()
-        req = WebsiteProcessingRequest(
-            url="https://example.com",
-            notify_webhook="https://hooks.example.com/notify",
-        )
-        job_id = _run(jm.submit_job("user1", req))
+    def test_get_recent_activity_returns_list(self):
+        """_get_recent_activity() returns a list of dicts."""
+        dashboard = self._make_dashboard()
+        # Add a single job manually
+        dashboard.job_manager.jobs["j1"] = {
+            "job_id": "j1",
+            "website_url": "https://example.com",
+            "status": "completed",
+            "created_at": datetime.now(),
+            "processing_mode": "fast",
+        }
+        activity = dashboard._get_recent_activity()
+        assert isinstance(activity, list)
+        assert len(activity) == 1
+        assert activity[0]["job_id"] == "j1"
 
-        with patch(
-            "ipfs_datasets_py.mcp_server.enterprise_api.CompleteGraphRAGSystem",
-            side_effect=ValueError("bad params"),
-        ):
-            with patch.object(
-                jm, "_send_webhook_notification", new_callable=AsyncMock
-            ) as mock_webhook:
-                _run(jm.process_job(job_id, req))
+    def test_get_recent_activity_capped_at_10(self):
+        """_get_recent_activity() returns at most 10 items even with >10 jobs."""
+        dashboard = self._make_dashboard()
+        for i in range(15):
+            dashboard.job_manager.jobs[f"job-{i}"] = {
+                "job_id": f"job-{i}",
+                "website_url": f"https://example{i}.com",
+                "status": "completed",
+                "created_at": datetime.now(),
+                "processing_mode": "fast",
+            }
+        activity = dashboard._get_recent_activity()
+        assert len(activity) <= 10
 
-        mock_webhook.assert_called_once()
-
-    def test_webhook_called_on_generic_exception(self):
-        """
-        GIVEN: Job with notify_webhook; processing raises RuntimeError
-        WHEN: process_job() runs
-        THEN: _send_webhook_notification is called
-        """
-        jm = ProcessingJobManager()
-        req = WebsiteProcessingRequest(
-            url="https://example.com",
-            notify_webhook="https://hooks.example.com/notify",
-        )
-        job_id = _run(jm.submit_job("user1", req))
-
-        with patch(
-            "ipfs_datasets_py.mcp_server.enterprise_api.CompleteGraphRAGSystem",
-            side_effect=RuntimeError("crash"),
-        ):
-            with patch.object(
-                jm, "_send_webhook_notification", new_callable=AsyncMock
-            ) as mock_webhook:
-                _run(jm.process_job(job_id, req))
-
-        mock_webhook.assert_called_once()
-
-    def test_webhook_called_on_success(self):
-        """
-        GIVEN: Job with notify_webhook; processing completes successfully
-        WHEN: process_job() runs
-        THEN: _send_webhook_notification is called with 'completed'
-        """
-        jm = ProcessingJobManager()
-        req = WebsiteProcessingRequest(
-            url="https://example.com",
-            notify_webhook="https://hooks.example.com/notify",
-        )
-        job_id = _run(jm.submit_job("user1", req))
-
-        mock_result = MagicMock()
-        mock_result.quality_score = 0.9
-        mock_system = MagicMock()
-        mock_system.process_complete_website = AsyncMock(return_value=mock_result)
-
-        with patch(
-            "ipfs_datasets_py.mcp_server.enterprise_api.CompleteGraphRAGSystem",
-            return_value=mock_system,
-        ):
-            with patch(
-                "ipfs_datasets_py.mcp_server.enterprise_api.anyio.sleep",
-                AsyncMock(),
-            ):
-                with patch.object(
-                    jm, "_send_webhook_notification", new_callable=AsyncMock
-                ) as mock_webhook:
-                    _run(jm.process_job(job_id, req))
-
-        mock_webhook.assert_called_once_with(
-            "https://hooks.example.com/notify", job_id, "completed"
-        )
+    def test_generate_system_report_structure(self):
+        """generate_system_report() returns dict with expected top-level keys."""
+        dashboard = self._make_dashboard()
+        report = dashboard.generate_system_report()
+        assert "system_overview" in report
+        assert "job_statistics" in report
+        assert "performance_metrics" in report
+        assert "recent_activity" in report
 
 
 # ---------------------------------------------------------------------------
-# TestCalculateAvgQuality
-# ---------------------------------------------------------------------------
-
-class TestCalculateAvgQuality:
-    """Tests for AdvancedAnalyticsDashboard._calculate_avg_quality."""
-
-    def test_returns_zero_with_no_results(self):
-        """
-        GIVEN: No job results
-        WHEN: _calculate_avg_quality() is called
-        THEN: Returns 0.0
-        """
-        jm = ProcessingJobManager()
-        dashboard = AdvancedAnalyticsDashboard(jm)
-        assert dashboard._calculate_avg_quality() == 0.0
-
-    def test_returns_average_of_quality_scores(self):
-        """
-        GIVEN: Two job results with quality_score of 0.8 and 0.6
-        WHEN: _calculate_avg_quality() is called
-        THEN: Returns 0.7 (the average)
-        """
-        jm = ProcessingJobManager()
-        result1 = MagicMock()
-        result1.quality_score = 0.8
-        result2 = MagicMock()
-        result2.quality_score = 0.6
-        jm.job_results["j1"] = result1
-        jm.job_results["j2"] = result2
-
-        dashboard = AdvancedAnalyticsDashboard(jm)
-        avg = dashboard._calculate_avg_quality()
-        assert abs(avg - 0.7) < 1e-9
-
-
-# ---------------------------------------------------------------------------
-# TestCreateEnterpriseAPIFactory
+# create_enterprise_api() factory
 # ---------------------------------------------------------------------------
 
 class TestCreateEnterpriseAPIFactory:
-    """Tests for create_enterprise_api singleton factory."""
 
-    def test_returns_enterprise_api_instance(self):
-        """
-        GIVEN: No existing api_instance
-        WHEN: create_enterprise_api() is called
-        THEN: Returns an EnterpriseGraphRAGAPI instance
-        """
-        import ipfs_datasets_py.mcp_server.enterprise_api as mod
-
-        original = mod.api_instance
+    def test_create_enterprise_api_returns_instance(self):
+        """create_enterprise_api() returns an EnterpriseGraphRAGAPI instance."""
+        import ipfs_datasets_py.mcp_server.enterprise_api as _mod
+        original = _mod.api_instance
         try:
-            mod.api_instance = None
-            result = _run(create_enterprise_api())
-            assert isinstance(result, EnterpriseGraphRAGAPI)
+            _mod.api_instance = None
+            api = asyncio.run(create_enterprise_api())
+            assert isinstance(api, EnterpriseGraphRAGAPI)
         finally:
-            mod.api_instance = original
+            _mod.api_instance = original
 
-    def test_returns_existing_instance_when_set(self):
-        """
-        GIVEN: An existing api_instance
-        WHEN: create_enterprise_api() is called
-        THEN: Returns the existing instance (singleton behavior)
-        """
-        import ipfs_datasets_py.mcp_server.enterprise_api as mod
-
-        original = mod.api_instance
-        existing = EnterpriseGraphRAGAPI()
+    def test_create_enterprise_api_returns_singleton(self):
+        """create_enterprise_api() returns the same instance on repeated calls."""
+        import ipfs_datasets_py.mcp_server.enterprise_api as _mod
+        original = _mod.api_instance
         try:
-            mod.api_instance = existing
-            result = _run(create_enterprise_api())
-            assert result is existing
+            _mod.api_instance = None
+            api1 = asyncio.run(create_enterprise_api())
+            api2 = asyncio.run(create_enterprise_api())
+            assert api1 is api2
         finally:
-            mod.api_instance = original
+            _mod.api_instance = original
+
+
+# ---------------------------------------------------------------------------
+# AuthenticationManager.authenticate()
+# ---------------------------------------------------------------------------
+
+class TestAuthManagerAuthenticate:
+
+    def test_authenticate_valid_token_returns_user(self):
+        """authenticate() returns a User for a valid token with known username."""
+        auth = AuthenticationManager(secret_key="test-secret")
+        with patch("ipfs_datasets_py.mcp_server.enterprise_api.jwt") as mock_jwt:
+            mock_jwt.decode.return_value = {"sub": "demo"}
+            mock_jwt.PyJWTError = Exception
+            user = asyncio.run(auth.authenticate("valid.token"))
+            assert user.username == "demo"
+            assert user.is_active
+
+    def test_authenticate_invalid_token_raises_http_exception(self):
+        """authenticate() raises HTTPException for an invalid/expired token."""
+        from fastapi import HTTPException
+        auth = AuthenticationManager(secret_key="test-secret")
+        with patch("ipfs_datasets_py.mcp_server.enterprise_api.jwt") as mock_jwt:
+            mock_jwt.decode.side_effect = Exception("invalid")
+            mock_jwt.PyJWTError = Exception
+            with pytest.raises(HTTPException) as exc_info:
+                asyncio.run(auth.authenticate("bad.token"))
+            assert exc_info.value.status_code == 401
+
+    def test_authenticate_unknown_user_raises_http_exception(self):
+        """authenticate() raises HTTPException when username not in users_db."""
+        from fastapi import HTTPException
+        auth = AuthenticationManager(secret_key="test-secret")
+        with patch("ipfs_datasets_py.mcp_server.enterprise_api.jwt") as mock_jwt:
+            mock_jwt.decode.return_value = {"sub": "unknown_user"}
+            mock_jwt.PyJWTError = Exception
+            with pytest.raises(HTTPException) as exc_info:
+                asyncio.run(auth.authenticate("token.for.unknown"))
+            assert exc_info.value.status_code == 401

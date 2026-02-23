@@ -122,8 +122,29 @@ class TDFOLNode(ABC):
 
 
 class Term(TDFOLNode):
-    """Abstract base class for terms."""
+    """Abstract base class for terms.
     
+    Can be called as ``Term(name)`` as a shorthand for creating a
+    :class:`Constant` — this enables backward-compatible usage from
+    older test code and external callers.
+    """
+
+    def __new__(cls, name: str = None, *args, **kwargs):
+        # Allow Term("name") as shorthand for Constant("name")
+        if cls is Term and name is not None:
+            # Defer to Constant — must be imported lazily to avoid circular
+            # definition order; Constant is defined below in the same module.
+            import sys as _sys
+            _mod = _sys.modules[__name__]
+            _Constant = getattr(_mod, 'Constant', None)
+            if _Constant is not None:
+                return _Constant.__new__(_Constant)
+        return super().__new__(cls)
+
+    def __init__(self, name: str = None, *args, **kwargs):
+        # When used as Term("name") → Constant, defer init to Constant.__init__
+        pass
+
     @abstractmethod
     def get_variables(self) -> Set[str]:
         """Get all variables in this term."""
@@ -264,6 +285,7 @@ class Predicate(Formula):
         """Return a new ``Predicate`` with *var* replaced by *term* in every argument."""
         new_args = tuple(arg.substitute(var, term) for arg in self.arguments)
         return Predicate(self.name, new_args)
+
 
 
 @dataclass(frozen=True)
@@ -534,6 +556,7 @@ class ProofStatus(Enum):
     UNKNOWN = "unknown"        # Could not determine truth value
     TIMEOUT = "timeout"        # Proof attempt exceeded timeout
     ERROR = "error"            # Error occurred during proving
+    UNPROVABLE = "unprovable"  # Formula is known to be unprovable (alias for UNKNOWN in practice)
 
 
 @dataclass

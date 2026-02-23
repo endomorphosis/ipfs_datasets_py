@@ -23,6 +23,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
     OntologyOptimizer,
     OptimizationReport,
 )
+from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator, ValidationResult
 
 
 # ---------------------------------------------------------------------------
@@ -131,6 +132,29 @@ class TestFeedbackCount:
     def test_returns_int(self):
         adapter = OntologyLearningAdapter()
         assert isinstance(adapter.feedback_count(), int)
+
+
+# ---------------------------------------------------------------------------
+# LogicValidator.validate_all
+# ---------------------------------------------------------------------------
+
+
+class TestLogicValidatorValidateAll:
+    def setup_method(self):
+        self.v = LogicValidator()
+
+    def test_empty_list_returns_empty(self):
+        assert self.v.validate_all([]) == []
+
+    def test_returns_validation_results_in_order(self):
+        ont1 = {"entities": [], "relationships": []}
+        ont2 = {"entities": [{"id": "e1", "text": "E1"}], "relationships": []}
+
+        results = self.v.validate_all([ont1, ont2])
+        assert len(results) == 2
+        assert all(isinstance(r, ValidationResult) for r in results)
+        assert results[0].is_consistent is True
+        assert results[1].is_consistent is True
 
     def test_decreases_after_reset(self):
         adapter = OntologyLearningAdapter()

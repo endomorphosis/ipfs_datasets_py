@@ -306,6 +306,24 @@ async def discord_analyze_export(
                     "export_path": export_path,
                 }
 
+            # Use a resolved path relative to the current working directory
+            export_file = export_path_obj.resolve()
+            # No base_dir configured: allow absolute paths directly
+            if export_path_obj.is_absolute():
+                return {
+                    "status": "error",
+                    "error": "Absolute export paths are not allowed when DISCORD_EXPORT_BASE_DIR is unset",
+                    "export_path": export_path,
+                }
+
+            # Reject paths containing directory separators (path traversal or nested dirs)
+            if os.sep in export_path or (os.altsep and os.altsep in export_path):
+                return {
+                    "status": "error",
+                    "error": "Directory components in export paths are not allowed when DISCORD_EXPORT_BASE_DIR is unset",
+                    "export_path": export_path,
+                }
+
             # Use a dedicated exports directory under the current working directory
             safe_base_dir = (Path.cwd() / "discord_exports").resolve()
             safe_base_dir.mkdir(parents=True, exist_ok=True)

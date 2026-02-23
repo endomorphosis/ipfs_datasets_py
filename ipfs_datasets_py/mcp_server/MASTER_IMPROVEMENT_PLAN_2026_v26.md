@@ -1,168 +1,155 @@
-# MASTER IMPROVEMENT PLAN 2026 — v26
+# Master Improvement Plan 2026 — v26: Session 70 (v25 Next Steps)
 
-**Branch:** `copilot/create-refactoring-plan-again`
-**Date:** 2026-02-23
-**Session:** FC217–FL226 (v26)
-**Cumulative total:** 3,510 + 61 = **3,571 tests**
-
----
-
-## 1. Session Summary (v26)
-
-| Session | Module | What was done |
-|---------|--------|---------------|
-| FC217 | `logic/api.py` | `I18NConflictReport.languages_above_threshold(n)` — sorted list of languages with > n conflicts (6 tests) |
-| FD218 | `ucan_delegation.py` | `DelegationManager.active_tokens_by_actor(actor)` — yields `(cid, token)` pairs filtered by `token.audience == actor` (6 tests) |
-| FE219 | `compliance_checker.py` | `ComplianceMergeResult.from_dict(d)` classmethod — reconstruct from `to_dict()` output; unknown keys silently ignored; missing keys → 0 (7 tests) |
-| FF220 | `nl_ucan_policy_compiler.py` | `compile_batch_with_explain` + shorter `policy_ids` combined test coverage (3 tests) |
-| FG221 | `logic/api.py` | `least_conflicted_language()` with real `detect_all_languages()` output (4 tests) |
-| FH222 | `nl_policy_conflict_detector.py` + `logic/api.py` | `detect_i18n_clauses` all 9 original languages round-trip (10 tests) |
-| FI223 | `ucan_delegation.py` | `DelegationManager.merge()` + `active_tokens_by_resource()` combined E2E (5 tests) |
-| FJ224 | `logic/api.py` | `conflict_density()` + `least_conflicted_language()` combined tests (6 tests) |
-| FK225 | `nl_policy_conflict_detector.py` + `logic/api.py` | `_KO_DEONTIC_KEYWORDS` Korean inline (3 types); `detect_all_languages()` → 10 languages (7 tests) |
-| FL226 | `nl_policy_conflict_detector.py` + `logic/api.py` | `_AR_DEONTIC_KEYWORDS` Arabic inline (3 types); `detect_all_languages()` → 11 languages (8 tests) |
-
-**New test file:** `tests/mcp/unit/test_v26_sessions.py` (61 tests)
+**Created:** 2026-02-23 (Session 70)  
+**Branch:** `copilot/create-improvement-refactoring-plan`  
+**Reference:** https://github.com/endomorphosis/Mcp-Plus-Plus  
+**Supersedes:** [MASTER_IMPROVEMENT_PLAN_2026_v25.md](MASTER_IMPROVEMENT_PLAN_2026_v25.md)
 
 ---
 
-## 2. Production Changes (v26)
+## Overview
 
-### `ipfs_datasets_py/logic/CEC/nl/nl_policy_conflict_detector.py`
+Session 70 implements all five "Next Steps" from the v25 plan:
 
-**FK225:** `_KO_DEONTIC_KEYWORDS` inline Korean keyword table (3 types, 7 keywords each):
-- `"permission"`: `"할 수 있다"`, `"허용된다"`, …
-- `"prohibition"`: `"할 수 없다"`, `"금지된다"`, …
-- `"obligation"`: `"해야 한다"`, `"필수적이다"`, …
-- `_load_i18n_keywords("ko")` returns this table
+| # | Feature | Status |
+|---|---------|--------|
+| 1 | `DelegationManager.merge()` audit trail for `merge_add` events | ✅ COMPLETE |
+| 2 | `IPFSReloadResult.total_failed` property | ✅ COMPLETE |
+| 3 | `PubSubBus.subscribe(priority=0)` — stores priority as `__mcp_priority__` | ✅ COMPLETE |
+| 4 | `ComplianceChecker.bak_path(path)` static helper | ✅ COMPLETE |
+| 5 | Session 70 E2E test (`test_mcplusplus_v25_session70.py`, 34 tests) | ✅ COMPLETE |
 
-**FL226:** `_AR_DEONTIC_KEYWORDS` inline Arabic keyword table (3 types, 7 keywords each):
-- `"permission"`: `"يجوز"`, `"مسموح"`, …
-- `"prohibition"`: `"لا يجوز"`, `"محظور"`, …
-- `"obligation"`: `"يجب"`, `"ينبغي"`, …
-- `_load_i18n_keywords("ar")` returns this table
+**1,005+ total spec tests pass (sessions 50–70, 0 new failures).**
 
-### `ipfs_datasets_py/logic/api.py`
+---
 
-**FC217:** `I18NConflictReport.languages_above_threshold(n)` method:
+## Item 1 — `DelegationManager.merge()` audit trail for `merge_add` ✅
+
+**File:** `ipfs_datasets_py/mcp_server/ucan_delegation.py`
+
+When `dry_run=False` and an `audit_log` is provided, each newly-added
+delegation emits:
 
 ```python
-def languages_above_threshold(self, n: int) -> List[str]:
-    return sorted(
-        lang for lang, conflicts in self.by_language.items()
-        if len(conflicts) > n
-    )
+audit_log.append({"event": "merge_add", "cid": cid})
 ```
 
-**FK225/FL226:** `detect_all_languages()` `_SUPPORTED_LANGS` extended from 9 to 11:
+This is symmetric to the existing `revocation_copied` audit entries.
+`audit_log.append()` exceptions are swallowed at DEBUG level — a broken
+audit sink never prevents the merge.  `dry_run=True` does **not** record
+audit entries.
+
+---
+
+## Item 2 — `IPFSReloadResult.total_failed` property ✅
+
+**File:** `ipfs_datasets_py/mcp_server/nl_ucan_policy.py`
 
 ```python
-_SUPPORTED_LANGS = ("fr", "es", "de", "en", "pt", "nl", "it", "ja", "zh", "ko", "ar")
+@property
+def total_failed(self) -> int:
+    return sum(1 for v in self.pin_results.values() if v is None)
 ```
 
-### `ipfs_datasets_py/mcp_server/ucan_delegation.py`
+Added to the `IPFSReloadResult(count, pin_results)` NamedTuple as a regular
+`@property`.  Callers no longer need to iterate `pin_results` manually.
 
-**FD218:** `DelegationManager.active_tokens_by_actor(actor)` generator:
+---
+
+## Item 3 — `PubSubBus.subscribe(priority=0)` ✅
+
+**File:** `ipfs_datasets_py/mcp_server/mcp_p2p_transport.py`
+
+`subscribe()` now accepts a keyword-only `priority: int = 0` parameter.
+The priority value is stored as `handler.__mcp_priority__` (only when the
+new value is higher than any existing attribute), making it available for
+`publish_async()` handler ordering without requiring callers to manually
+annotate their handler functions.
 
 ```python
-def active_tokens_by_actor(self, actor: str):
-    for cid, token in self.active_tokens():
-        if token.audience == actor:
-            yield cid, token
-```
-
-### `ipfs_datasets_py/mcp_server/compliance_checker.py`
-
-**FE219:** `ComplianceMergeResult.from_dict(d)` classmethod:
-
-```python
-@classmethod
-def from_dict(cls, d: Dict[str, Any]) -> "ComplianceMergeResult":
-    return cls(
-        added=int(d.get("added", 0)),
-        skipped_protected=int(d.get("skipped_protected", 0)),
-        skipped_duplicate=int(d.get("skipped_duplicate", 0)),
-    )
+bus.subscribe("topic", my_handler, priority=10)
+assert my_handler.__mcp_priority__ == 10
 ```
 
 ---
 
-## 3. Key Invariants (v26)
+## Item 4 — `ComplianceChecker.bak_path(path)` ✅
 
-| Component | Invariant |
-|-----------|-----------|
-| `languages_above_threshold(0)` | Equivalent to `languages_with_conflicts` (sorted) |
-| `languages_above_threshold(n)` for high n | Returns `[]` when no language exceeds threshold |
-| `active_tokens_by_actor(actor)` | Never yields revoked tokens |
-| `ComplianceMergeResult.from_dict(to_dict())` | Round-trip preserves `added`, `skipped_*`, and `total` |
-| `from_dict({})` | All fields default to `0` |
-| `from_dict({"added":5})` | `total == 5` |
-| `detect_all_languages(text)` | Has exactly 11 language slots: `fr/es/de/en/pt/nl/it/ja/zh/ko/ar` |
-| `_load_i18n_keywords("ko")` | Returns dict with `permission`, `prohibition`, `obligation` |
-| `_load_i18n_keywords("ar")` | Returns dict with `permission`, `prohibition`, `obligation` |
+**File:** `ipfs_datasets_py/mcp_server/compliance_checker.py`
 
----
+```python
+@staticmethod
+def bak_path(path: str) -> str:
+    return path + ".bak"
+```
 
-## 4. Test Coverage (v26)
-
-| Test class | Session | Tests |
-|-----------|---------|-------|
-| `TestFC217LanguagesAboveThreshold` | FC217 | 6 |
-| `TestFD218ActiveTokensByActor` | FD218 | 6 |
-| `TestFE219ComplianceMergeResultFromDict` | FE219 | 7 |
-| `TestFF220CompileBatchWithExplainShortPolicyIds` | FF220 | 3 |
-| `TestFG221LeastConflictedWithRealDetectAll` | FG221 | 4 |
-| `TestFH222DetectI18NClausesAllLanguages` | FH222 | 10 |
-| `TestFI223MergeAndActiveTokensByResource` | FI223 | 5 |
-| `TestFJ224ConflictDensityAndLeastConflicted` | FJ224 | 6 |
-| `TestFK225KoreanKeywords` | FK225 | 7 |
-| `TestFL226ArabicKeywords` | FL226 | 8 |
-| **v26 total** | | **61 (+ 1 skip)** |
+Complements `bak_exists()` and `restore_from_bak()`.  Avoids duplicating
+the `path + ".bak"` magic string in callers.
 
 ---
 
-## 5. Cumulative Totals
+## Item 5 — Session 70 E2E Test ✅
 
-| Version | Tests added | Running total |
-|---------|------------|---------------|
-| v13 | 77 | 2,805 |
-| v14 | 114 | 2,884 |
-| v15 | 69 | 2,953 |
-| v16 | 63 | 3,016 |
-| v17 | 57 | 3,073 |
-| v18 | 39 | 3,112 |
-| v19 | 59 | 3,171 |
-| v20 | 61 | 3,232 |
-| v21 | 51 | 3,283 |
-| v22 | 54 | 3,337 |
-| v23 | 63 | 3,400 |
-| v24 | 57 | 3,457 |
-| v25 | 53 | 3,510 |
-| **v26** | **61** | **3,571** |
+**File:** `tests/mcp/unit/test_mcplusplus_v25_session70.py`
+
+34 tests across 5 sections:
+
+| Section | Tests |
+|---------|-------|
+| `TestDelegationManagerMergeAuditTrail` | 8 |
+| `TestIPFSReloadResultTotalFailed` | 7 |
+| `TestPubSubBusSubscribePriority` | 7 |
+| `TestComplianceCheckerBakPath` | 7 |
+| `TestE2ESession70` | 5 |
+
+All 34 pass with 0 failures.
 
 ---
 
-## 6. Security Summary (v26)
+## Cumulative MCP++ Status
 
-No vulnerabilities introduced:
-- `languages_above_threshold()` is a pure iteration over existing data.
-- `active_tokens_by_actor()` respects revocation (fail-closed via `active_tokens()`).
-- `ComplianceMergeResult.from_dict()` uses `int()` coercion — no injection risk.
-- Korean/Arabic keywords are inline string tables — no network access.
+| Component | Module | Sessions |
+|-----------|--------|---------|
+| Profile A — MCP-IDL | `interface_descriptor.py` | 50 |
+| Profile B — CID-Native Artifacts | `cid_artifacts.py` | 50 |
+| Profile C — UCAN Delegation | `ucan_delegation.py` | 53, 56–70 |
+| Profile D — Temporal Deontic Policy | `temporal_policy.py` | 50 |
+| Profile E — P2P Transport | `mcp_p2p_transport.py` | 54, 55, 56, 64–70 |
+| Event DAG | `event_dag.py` | 50 |
+| Risk Scoring | `risk_scorer.py` | 53, 55 |
+| Compliance | `compliance_checker.py` | 53, 60–70 |
+| HTM Schema CID | `hierarchical_tool_manager.py` | 53 |
+| Integrated Pipeline | `dispatch_pipeline.py` | 54, 56 |
+| NL→UCAN Policy Gate | `nl_ucan_policy.py` | 51, 52, 56, 57, 62–70 |
+| Server pipeline gate | `server.py` | 55 |
+| Policy MCP tools | `policy_management_tool.py` | 55 |
+| Pubsub bus | `mcp_p2p_transport.py` | 55 |
+| MergePlan + dry_run | `ucan_delegation.py` | 69 |
+| **merge_add audit trail** | `ucan_delegation.py` | **70** |
+| IPFSReloadResult | `nl_ucan_policy.py` | 69 |
+| **IPFSReloadResult.total_failed** | `nl_ucan_policy.py` | **70** |
+| publish_async priority | `mcp_p2p_transport.py` | 69 |
+| **subscribe(priority=)** | `mcp_p2p_transport.py` | **70** |
+| ComplianceChecker.bak_exists | `compliance_checker.py` | 69 |
+| **ComplianceChecker.bak_path** | `compliance_checker.py` | **70** |
+
+**1,005+ spec tests pass (sessions 50–70).**
 
 ---
 
-## 7. v27 Candidates
+## Next Steps (Session 71+)
 
-| Session | Target | Effort | Priority |
-|---------|--------|--------|----------|
-| FM227 | `I18NConflictReport.languages_above_threshold(n)` + `conflict_density()` combined | Low | 🟢 Low |
-| FN228 | `DelegationManager.active_tokens_by_actor()` + `active_tokens_by_resource()` combined | Low | 🟢 Low |
-| FO229 | `ComplianceMergeResult.from_dict()` + `to_dict()` round-trip property test | Low | 🟢 Low |
-| FP230 | Korean text → `detect_all_languages(text)["ko"]` non-empty E2E | Low | 🟡 Med |
-| FQ231 | Arabic text → `detect_all_languages(text)["ar"]` non-empty E2E | Low | 🟡 Med |
-| FR232 | `detect_all_languages()` all 11 slots present + conflict_density() over 11 langs | Low | 🟡 Med |
-| FS233 | `languages_above_threshold(0)` == sorted `languages_with_conflicts` invariant test | Low | 🟢 Low |
-| FT234 | `active_tokens_by_actor()` combined with `merge_and_publish()` | Low | 🟡 Med |
-| FU235 | Swedish (`"sv"`) keyword table → 12 languages | Med | 🟡 Med |
-| FV236 | Russian (`"ru"`) keyword table → 13 languages | Med | 🟡 Med |
+1. **`DelegationManager.merge()` summary result** — return a `MergeResult`
+   dataclass (instead of bare `int`) containing `added_count`,
+   `conflict_count`, and `revocations_copied` for richer callers.
+2. **`IPFSReloadResult.success_rate`** — `(count - total_failed) / count`
+   with 0-division guard returning `1.0` for empty registries (0 pins = 0
+   failures = perfect rate).
+3. **`PubSubBus.subscribe()` returns subscription ID** — integer handle
+   allowing targeted `unsubscribe_by_id(sid)` without holding a reference
+   to the handler function.
+4. **`ComplianceChecker.rotate_bak(path)`** — rename existing `.bak` to
+   `.bak.1`, `.bak.2`, … (up to `max_keep=3`) before creating a new `.bak`.
+5. **Session 71 full E2E** — combined regression covering sessions 60–70
+   with cross-feature integration: `DelegationManager` + `PubSubBus` +
+   `ComplianceChecker` + `IPFSReloadResult` in a single end-to-end flow.

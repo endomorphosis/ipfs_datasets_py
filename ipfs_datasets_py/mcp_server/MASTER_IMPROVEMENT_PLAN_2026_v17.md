@@ -1,115 +1,231 @@
-# MASTER IMPROVEMENT PLAN 2026 — v17
-**Branch:** `copilot/create-refactoring-plan-again`
-**Date:** 2026-02-22
-**Status:** v17 complete — 3,073 tests total
+# Master Improvement Plan 2026 — v17: Session 61 (v16 Next Steps)
+
+**Created:** 2026-02-22 (Session 61)  
+**Branch:** `copilot/create-improvement-refactoring-plan`  
+**Reference:** https://github.com/endomorphosis/Mcp-Plus-Plus  
+**Supersedes:** [MASTER_IMPROVEMENT_PLAN_2026_v16.md](MASTER_IMPROVEMENT_PLAN_2026_v16.md)
 
 ---
 
-## Summary
+## Overview
 
-v17 completes all high-priority backlog items from the v16 "Next Steps" list
-(BX134–CH144).  Key deliverables:
+Session 61 implements all five "Next Steps" from the v16 plan:
 
-| # | Session | Description | Status |
-|---|---------|-------------|--------|
-| 1 | BX134 | `NLPolicyConflictDetector.detect_and_warn()` — emits UserWarning + PolicyAuditLog | ✅ |
-| 2 | BZ136 | `UCANPolicyBridge.evaluate_with_manager()` — full DelegationManager UCAN check | ✅ |
-| 3 | CA137 | `DispatchPipeline(audit_log=…)` — records every stage result | ✅ |
-| 4 | CB138 | `detect_i18n_conflicts()` + `I18NConflictResult` — FR/ES/DE keyword scan | ✅ |
-| 5 | CC139 | `DelegationChain.to_ascii_tree()` + `__str__` + `__len__` | ✅ |
-| 6 | CD140 | `logic/api.py` smoke tests — all `__all__` symbols load without error | ✅ |
-| 7 | CE141 | `PipelineMetricsRecorder(audit_log=…)` — summary entry per pipeline run | ✅ |
-| 8 | CH144 | 7 MCP tools for DelegationManager + PolicyAuditLog | ✅ |
+| # | Feature | Status |
+|---|---------|--------|
+| 1 | `enterprise_api.py` — `POST /delegations/revoke` + `GET /delegations/metrics` routes | ✅ COMPLETE |
+| 2 | `ComplianceChecker.reload(path)` — hot-reload rule config | ✅ COMPLETE |
+| 3 | `ComplianceChecker.save_encrypted/load_encrypted` — AES-256-GCM rule persistence | ✅ COMPLETE |
+| 4 | `DelegationEvaluator.max_chain_depth` — reject over-deep chains | ✅ COMPLETE |
+| 5 | Full server integration test (5 stores) | ✅ COMPLETE |
+
+**664 total spec tests pass (sessions 50–61, 0 new failures).**
 
 ---
 
-## Production Changes
+## Item 1 — Enterprise API Delegation Routes ✅
 
-### `logic/CEC/nl/nl_policy_conflict_detector.py`
+**File:** `ipfs_datasets_py/mcp_server/enterprise_api.py`
 
-- **BX134** — `NLPolicyConflictDetector.detect_and_warn(clauses, *, audit_log=None, policy_cid="nl_policy")`:
-  calls `detect()`, emits `UserWarning` per conflict, optionally records to `PolicyAuditLog`
-- **CB138** — `detect_i18n_conflicts(text, language="fr") -> I18NConflictResult`:
-  keyword-level simultaneous permission+prohibition scan; supports `"fr"`, `"es"`, `"de"`
-- **CB138** — `I18NConflictResult` dataclass: `language`, `has_permission`, `has_prohibition`,
-  `has_simultaneous_conflict`, `matched_permission_keywords`, `matched_prohibition_keywords`, `to_dict()`
-- **CB138** — `_I18N_KEYWORD_LOADERS` dispatch table + `_load_i18n_keywords(language)` loader
+### `DelegationRevokeRequest` Pydantic model
 
-### `mcp_server/ucan_delegation.py`
+```python
+class DelegationRevokeRequest(BaseModel):
+    root_cid: str = Field(..., description="Root CID of the delegation chain to revoke")
+```
 
-- **CC139** — `DelegationChain.to_ascii_tree() -> str`: multi-line ASCII tree of issuer→audience links;
-  empty chain returns `"(empty chain)"`; last row uses `└─`, middle rows use `├─`
-- **CC139** — `DelegationChain.__str__()` delegates to `to_ascii_tree()`
-- **CC139** — `DelegationChain.__len__()` returns `len(self.tokens)`
+### `_setup_delegation_routes(app, get_current_user)`
 
-### `logic/integration/ucan_policy_bridge.py`
+New helper registered in `_setup_routes()`:
 
-- **BZ136** — `UCANPolicyBridge.evaluate_with_manager(policy_cid, *, tool, actor, leaf_cid, at_time, manager)`:
-  uses `DelegationManager.is_revoked()` + `can_invoke()` instead of the bridge's internal
-  `DelegationStore`; `manager=None` falls back to standard `evaluate()`
+- **`POST /delegations/revoke`** — accepts `DelegationRevokeRequest`; calls
+  `get_delegation_manager().revoke_chain(root_cid)` then `.save()`; returns
+  `{"root_cid": str, "revoked_count": int}`; returns `revoked_count=0` on any
+  exception.
+- **`GET /delegations/metrics`** — calls `get_delegation_manager().get_metrics()`
+  and returns `{"delegation_count": int, "revoked_cid_count": int}`; returns
+  zeros on exception.
 
-### `mcp_server/dispatch_pipeline.py`
-
-- **CA137** — `DispatchPipeline.__init__(…, audit_log=None)`: records each executed stage result
-  to `PolicyAuditLog` via `audit_log.record(policy_cid="pipeline:<stage>", …)`
-- **CE141** — `PipelineMetricsRecorder.__init__(…, audit_log=None)`: writes summary audit entry
-  on every `record_run()` call with `policy_cid="pipeline:<namespace>:run"`
-
-### `logic/api.py`
-
-- **CD140 / CB138** — `_CD140_I18N_AVAILABLE` flag; conditional `__all__` extension for
-  `detect_i18n_conflicts`, `I18NConflictResult`
-
-### `mcp_server/tools/logic_tools/delegation_audit_tool.py` *(new file)*
-
-- **CH144** — 7 MCP tools:
-  `delegation_add_token`, `delegation_can_invoke`, `delegation_revoke`,
-  `delegation_revoke_chain`, `delegation_get_metrics`, `audit_log_recent`, `audit_log_stats`
-- `DELEGATION_AUDIT_TOOLS` registry list for MCP server discovery
+Both routes use lazy import of `get_delegation_manager` and are guarded with
+`except Exception` so delegation failures never crash the REST API.
 
 ---
 
-## Key Invariants (v17)
+## Item 2 — `ComplianceChecker.reload(path)` ✅
 
-| Component | Invariant |
-|-----------|-----------|
-| `detect_and_warn` | Emits one `UserWarning` per conflict; `audit_log` records have `decision="deny"`, `actor="conflict_detector"` |
-| `detect_i18n_conflicts` | Keyword scan only — no clause compilation; supports `"fr"`, `"es"`, `"de"` only |
-| `to_ascii_tree` | Single-token chain uses `└─` (no `├─`); empty chain → `"(empty chain)"` |
-| `evaluate_with_manager` | `manager=None` → exact same path as `evaluate()`; revocation check is first gate |
-| `DispatchPipeline audit_log` | Records stage results only for *executed* (non-skipped) stages |
-| `PipelineMetricsRecorder audit_log` | Writes one entry per `record_run()` call; `policy_cid` contains namespace |
-| `delegation_audit_tool` | All 7 tools return `{"status": "ok", …}` on success, `{"status": "error", "error": …}` on failure |
+**File:** `ipfs_datasets_py/mcp_server/compliance_checker.py`
 
----
+```python
+def reload(self, path: str) -> int:
+    self._rules.clear()
+    self._rule_order.clear()
+    self._deny_list.clear()
+    return self.load(path)
+```
 
-## Test Coverage
-
-| Test class | Session | Tests |
-|-----------|---------|-------|
-| `TestBX134DetectAndWarn` | BX134 | 5 |
-| `TestBZ136EvaluateWithManager` | BZ136 | 5 |
-| `TestCA137DispatchPipelineAudit` | CA137 | 6 |
-| `TestCB138I18NConflicts` | CB138 | 8 |
-| `TestCC139DelegationChainAscii` | CC139 | 10 |
-| `TestCD140ApiSmoke` | CD140 | 7 |
-| `TestCE141MetricsRecorderAudit` | CE141 | 6 |
-| `TestCH144DelegationAuditTool` | CH144 | 10 |
-| **Total v17** | | **57** |
-
-**Cumulative:** 3,016 (v16) + 57 (v17) = **3,073 tests** · 23 skip · 0 failing
+- Clears all existing state before calling `load(path)`.
+- Enables hot-reload: call `reload(path)` to replace the running checker's
+  rules from disk without creating a new instance.
+- Returns 0 on missing/corrupt file (same as `load()`).
 
 ---
 
-## v18 Candidates
+## Item 3 — `ComplianceChecker` Encrypted Persistence ✅
 
-| Session | Target | Effort | Priority |
-|---------|--------|--------|----------|
-| CI145 | `delegation_audit_tool` — `delegation_chain_ascii` tool returning chain viz | Low | 🟡 Med |
-| CJ146 | `NLPolicyConflictDetector.detect_i18n_clauses()` — full French/Spanish/German clause compilation + detect | High | 🔴 High |
-| CK147 | `UCANPolicyBridge.evaluate_with_manager()` + audit: `evaluate_audited_with_manager()` | Low | 🟡 Med |
-| CL148 | `FilePolicyStore` + `IPFSPolicyStore` — encrypted-at-rest policy bundles | Med | 🟡 Med |
-| CM149 | `DelegationManager` + Prometheus `mcp_delegation_chain_depth_max` gauge | Low | 🟡 Med |
-| CN150 | `logic/api.py` — `evaluate_with_manager` convenience wrapper | Low | 🟢 Low |
-| CO151 | TDFOL NL spaCy integration tests (skip-guarded) | Med | 🟡 Med |
-| CP152 | Groth16 Phase 4b — circuit_version=2 witness schema + trace | High | 🟢 Low |
+**File:** `ipfs_datasets_py/mcp_server/compliance_checker.py`
+
+### `save_encrypted(path, password)`
+
+- Derives 32-byte key from `SHA-256(password)`.
+- Generates a random 12-byte nonce via `os.urandom(12)`.
+- Encrypts `{"rule_order": [...], "deny_list": [...]}` JSON with AES-256-GCM.
+- Writes `<nonce 12 bytes> || <ciphertext>` to *path*.
+- Creates parent directories automatically.
+- Falls back to plain `save()` with `UserWarning` when `cryptography` absent.
+
+### `load_encrypted(path, password)`
+
+- Reads the binary file; splits nonce (first 12 bytes) and ciphertext.
+- Derives key the same way as `save_encrypted`.
+- Decrypts with AES-256-GCM; returns 0 on `InvalidTag` or any error.
+- Writes decrypted JSON to a `tempfile` and delegates to `load()`.
+- Falls back to plain `load()` with `UserWarning` when `cryptography` absent.
+
+```python
+checker = make_default_compliance_checker(deny_list={"blocked"})
+checker.save_encrypted("/var/lib/mcp/rules.enc", "my-secret")
+
+restored = ComplianceChecker()
+restored.load_encrypted("/var/lib/mcp/rules.enc", "my-secret")
+assert "blocked" in restored._deny_list
+```
+
+---
+
+## Item 4 — `DelegationEvaluator.max_chain_depth` ✅
+
+**File:** `ipfs_datasets_py/mcp_server/ucan_delegation.py`
+
+### `DelegationEvaluator.__init__(max_chain_depth=0)`
+
+- `max_chain_depth=0` means **unlimited** (existing behaviour preserved).
+- Stored as `self._max_chain_depth`.
+
+### `build_chain()` enforcement
+
+```python
+if self._max_chain_depth > 0 and len(chain) > self._max_chain_depth:
+    raise ValueError(
+        f"Delegation chain length {len(chain)} exceeds max_chain_depth "
+        f"{self._max_chain_depth}"
+    )
+```
+
+- Raised **after** chain is assembled — cycle and missing-link errors are still
+  detected first.
+
+### `DelegationManager` propagation
+
+- `DelegationManager.__init__(path=None, max_chain_depth=0)` — stores the limit.
+- `get_evaluator()` sets `evaluator._max_chain_depth = self._max_chain_depth`
+  whenever the evaluator is rebuilt.
+- `get_delegation_manager(path=None, max_chain_depth=0)` — passes `max_chain_depth`
+  through to `DelegationManager` on first creation.
+
+```python
+mgr = get_delegation_manager(max_chain_depth=5)
+# Build a chain of 6 — can_invoke will return (False, "...max_chain_depth...")
+ok, reason = mgr.can_invoke("leaf-cid", "tool", "alice")
+assert not ok
+assert "max_chain_depth" in reason
+```
+
+---
+
+## Item 5 — Full Server Integration Test (5 Stores) ✅
+
+**File:** `tests/mcp/unit/test_mcplusplus_v16_session61.py`
+
+46 tests across 6 sections:
+
+| Section | Tests | Scope |
+|---------|-------|-------|
+| `TestEnterpriseAPIDelegationRoutes` | 10 | Source inspection of enterprise_api.py routes |
+| `TestComplianceCheckerReload` | 5 | `reload()` behaviour: clears state, restores deny list, missing file |
+| `TestComplianceCheckerEncryptedPersistence` | 9 | `save_encrypted/load_encrypted` round-trip, wrong password, binary file, fallback |
+| `TestDelegationEvaluatorMaxChainDepth` | 7 | Chain within/at/over limit, unlimited depth, error message |
+| `TestDelegationManagerMaxChainDepth` | 4 | Manager init, evaluator propagation, singleton, can_invoke reject |
+| `TestFullServerIntegration5Stores` | 11 | Policy/delegation/encryption/compliance/interface round-trips |
+
+---
+
+## Cumulative MCP++ Status
+
+| Component | Module | Sessions |
+|-----------|--------|---------|
+| Profile A — MCP-IDL | `interface_descriptor.py` | 50 |
+| Profile B — CID-Native Artifacts | `cid_artifacts.py` | 50 |
+| Profile C — UCAN Delegation | `ucan_delegation.py` | 53, 56, 57, 58, 59, 60, **61** |
+| Profile D — Temporal Deontic Policy | `temporal_policy.py` | 50 |
+| Profile E — P2P Transport | `mcp_p2p_transport.py` | 54, 55, 56 |
+| Event DAG | `event_dag.py` | 50 |
+| Risk Scoring | `risk_scorer.py` | 53, 55 |
+| Compliance | `compliance_checker.py` | 53, 60, **61** |
+| HTM Schema CID | `hierarchical_tool_manager.py` | 53 |
+| Integrated Pipeline | `dispatch_pipeline.py` | 54, 56 |
+| NL→UCAN Policy Gate | `nl_ucan_policy.py` | 51, 52, 56, 57 |
+| Server pipeline gate | `server.py` | 55 |
+| Policy MCP tools | `policy_management_tool.py` | 55 |
+| Pubsub bus | `mcp_p2p_transport.py` | 55 |
+| Async policy registration | `nl_ucan_policy.py` | 56 |
+| Persistent policy store (file) | `nl_ucan_policy.py` | 56 |
+| IPFS-backed policy store | `nl_ucan_policy.py` | 57 |
+| PubSub ↔ P2P bridge | `mcp_p2p_transport.py` | 56 |
+| Pipeline metrics | `dispatch_pipeline.py` | 56 |
+| DID delegation signing | `ucan_delegation.py` | 56 |
+| RevocationList | `ucan_delegation.py` | 57 |
+| can_invoke_with_revocation | `ucan_delegation.py` | 57 |
+| DelegationStore | `ucan_delegation.py` | 57 |
+| Compliance rule management tool | `compliance_rule_management_tool.py` | 57 |
+| IPFSPolicyStore server startup | `server.py` | 58 |
+| RevocationList persistence (plain) | `ucan_delegation.py` | 58 |
+| DelegationManager | `ucan_delegation.py` | 58 |
+| Compliance interface registration tool | `compliance_rule_management_tool.py` | 58 |
+| Monitoring delegation metrics | `ucan_delegation.py` | 58 |
+| DelegationManager server integration | `server.py` | 59 |
+| RevocationList persistence (encrypted) | `ucan_delegation.py` | 59 |
+| Monitoring loop auto-record | `monitoring.py` | 59 |
+| Compliance interface on startup | `server.py` | 59 |
+| DelegationManager encrypted persistence | `ucan_delegation.py` | 60 |
+| DelegationManager.revoke_chain() | `ucan_delegation.py` | 60 |
+| P2PMetricsCollector delegation metrics | `monitoring.py` | 60 |
+| ComplianceChecker.save/load | `compliance_checker.py` | 60 |
+| server.revoke_delegation_chain() | `server.py` | 60 |
+| **Enterprise API delegation routes** | `enterprise_api.py` | **61** |
+| **ComplianceChecker.reload()** | `compliance_checker.py` | **61** |
+| **ComplianceChecker.save_encrypted/load_encrypted** | `compliance_checker.py` | **61** |
+| **DelegationEvaluator.max_chain_depth** | `ucan_delegation.py` | **61** |
+| **DelegationManager.max_chain_depth propagation** | `ucan_delegation.py` | **61** |
+
+**664+ spec tests pass (sessions 50–61).**
+
+---
+
+## Next Steps (Session 62+)
+
+1. **`DelegationEvaluator` chain depth in P2P health** — include `max_chain_depth`
+   and current max-observed depth in `P2PMetricsCollector._record_delegation_metrics()`
+   output so operators can tune the limit.
+2. **Compliance rule version control** — add `version: str` field to the
+   saved JSON and raise `UserWarning` when loading a file from a different
+   version, so rule migrations are detectable.
+3. **Enterprise API integration test** — add a `httpx.TestClient` round-trip
+   test for `POST /delegations/revoke` and `GET /delegations/metrics` that
+   mocks `get_delegation_manager()`.
+4. **`FilePolicyStore` encrypted variant** — add
+   `FilePolicyStore.save_encrypted / load_encrypted` mirroring the
+   `ComplianceChecker` and `RevocationList` patterns, so all three persistent
+   stores support encrypted at-rest storage.
+5. **Session 62 E2E scenario** — test that spans: policy store →
+   compliance rules (encrypted) → delegation chain (depth-limited) →
+   pipeline check → enterprise API revoke → monitoring gauge read.

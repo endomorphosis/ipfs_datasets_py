@@ -1,423 +1,589 @@
+"""Profile C: UCAN-style capability delegation chains.
+
+This module implements MCP++ Profile C (Capability Delegation) based on the
+UCAN (User Controlled Authorization Networks) model.  Delegation authority is
+explicit, delegable, and attenuated across multi-hop agent workflows.
+
+Reference: docs/spec/ucan-delegation.md
+
+Key concepts
+------------
+- **Capability** — what a principal ``can do`` (resource + ability).
+- **Delegation** — a signed grant from *issuer* to *audience* of a set of
+  capabilities, optionally bounded in time and linked to a proof bundle CID.
+- **DelegationEvaluator** — validates delegation chains at execution time:
+  existence, capability matching, expiry, chain length.
+- **InvocationContext** — collects the proof CIDs needed to verify a specific
+  tool invocation.
 """
-Profile C: UCAN Delegation (stub)
 
-Implements the delegation chain profile from the MCP++ specification:
-  https://github.com/endomorphosis/Mcp-Plus-Plus/blob/main/docs/spec/ucan-delegation.md
-
-This is a lightweight **stub** implementation that provides the delegation
-chain data model without external UCAN library dependencies.  It is
-intended for development, testing, and exploration.  A production deployment
-should use a full UCAN library (e.g. ``py-ucan``, ``ucan-core``).
-
-Key concepts (from the spec):
-- **Capability**: a ``(resource, ability)`` pair describing what is allowed.
-- **DelegationToken**: a signed unit granting an *audience* a set of
-  capabilities, optionally scoped by an expiry time and a proof chain.
-- **DelegationChain**: an ordered list of :class:`DelegationToken` objects
-  leading from the root issuer down to the requestor.
-- **DelegationEvaluator**: checks whether a *principal* holds a valid
-  delegation for a requested capability.
-
-No external dependencies beyond stdlib.
-"""
 from __future__ import annotations
 
-import time
 import logging
+import time
+import warnings
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
-
-from .interface_descriptor import _canonicalize, compute_cid
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "Capability",
+    "Delegation",
+    "DelegationEvaluator",
+    "InvocationContext",
+    "add_delegation",
+    "get_delegation",
+    "get_delegation_evaluator",
+    # Phase H (session 57)
+    "RevocationList",
+    "can_invoke_with_revocation",
+    # Phase I (session 57)
+    "DelegationStore",
+    # Session 56
+    "DIDSignedDelegation",
+    "sign_delegation",
+    "verify_delegation_signature",
+    # Session 58
+    "DelegationManager",
+    "get_delegation_manager",
+    "record_delegation_metrics",
+    # Session 69
+    "MergePlan",
+    # Session 71
+    "MergeResult",
+]
 
-# ─── data model ─────────────────────────────────────────────────────────────
 
+# ---------------------------------------------------------------------------
+# Capability
+# ---------------------------------------------------------------------------
 
 @dataclass
 class Capability:
-    """A single ``(resource, ability)`` capability pair."""
+    """Represents a single capability: a (resource, ability) pair.
+
+    Wildcards
+    ---------
+    Either ``resource`` or ``ability`` may be ``"*"`` to match any value
+    on that dimension.
+
+    Examples::
+
+        Capability("mcp://tool/load_dataset", "invoke")
+        Capability("*", "read")   # read any resource
+        Capability("mcp://tool/*", "*")  # any action on any mcp://tool/
+    """
+
     resource: str
-    ability: str  # e.g. "tools/invoke", "tools/list", "*"
+    ability: str
 
     def matches(self, resource: str, ability: str) -> bool:
-        """Return True if this capability covers *resource* / *ability*.
+        """Return True if this capability covers *resource*/*ability*.
 
-        Wildcard abilities (``"*"``) match any requested ability.
-        Wildcard resources (``"*"``) match any requested resource.
+        Both the stored values and the queried values are checked for
+        wildcard ``"*"``.
         """
-        resource_ok = self.resource == "*" or self.resource == resource
-        ability_ok = self.ability == "*" or self.ability == ability
+        resource_ok = (
+            self.resource == "*"
+            or resource == "*"
+            or self.resource == resource
+        )
+        ability_ok = (
+            self.ability == "*"
+            or ability == "*"
+            or self.ability == ability
+        )
         return resource_ok and ability_ok
 
+    def to_dict(self) -> Dict:
+        return {"resource": self.resource, "ability": self.ability}
+
+
+# ---------------------------------------------------------------------------
+# Delegation
+# ---------------------------------------------------------------------------
 
 @dataclass
-class DelegationToken:
-    """
-    A single UCAN delegation token (Profile C: spec §3).
+class Delegation:
+    """A delegation from *issuer* to *audience* of a set of capabilities.
 
-    Attributes:
-        issuer: DID of the issuer (grants capabilities).
-        audience: DID of the recipient (receives capabilities).
-        capabilities: List of capabilities being delegated.
-        expiry: Optional Unix timestamp after which the token is invalid.
-        proof_cid: CID of a parent token authorising this delegation.
-        not_before: Optional Unix timestamp before which token is inactive.
-        nonce: Optional nonce for replay protection.
+    Parameters
+    ----------
+    cid:
+        Content identifier of this delegation record (used as a primary key).
+    issuer:
+        DID / principal that is granting authority.
+    audience:
+        DID / principal that is receiving authority.
+    capabilities:
+        Non-empty list of :class:`Capability` objects granted.
+    expiry:
+        Unix timestamp (float) after which this delegation is invalid.
+        ``None`` means no expiry.
+    proof_cid:
+        CID of the parent delegation (i.e., the delegation that granted
+        authority to the issuer).  ``None`` for root delegations.
+    signature:
+        Opaque signature bytes.  In a full UCAN implementation this would be
+        a real cryptographic signature; here it is stored as-is for
+        future verification.
     """
+
+    cid: str
     issuer: str
     audience: str
-    capabilities: List[Capability] = field(default_factory=list)
+    capabilities: List[Capability]
     expiry: Optional[float] = None
     proof_cid: Optional[str] = None
-    not_before: Optional[float] = None
-    nonce: Optional[str] = None
+    signature: Optional[bytes] = None
 
-    _cid: Optional[str] = field(default=None, repr=False, compare=False)
-
-    @property
-    def cid(self) -> str:
-        """Lazily compute the token CID from its canonical bytes."""
-        if self._cid is None:
-            self._cid = compute_cid(self._canonical_bytes())
-        return self._cid
-
-    def _canonical_bytes(self) -> bytes:
-        d = {
-            "issuer": self.issuer,
-            "audience": self.audience,
-            "capabilities": [
-                {"resource": c.resource, "ability": c.ability}
-                for c in sorted(
-                    self.capabilities, key=lambda x: (x.resource, x.ability)
-                )
-            ],
-            "expiry": self.expiry,
-            "proof_cid": self.proof_cid,
-            "not_before": self.not_before,
-            "nonce": self.nonce,
-        }
-        return _canonicalize(d)
-
-    def is_valid(self, at_time: Optional[float] = None) -> bool:
-        """Return True if the token is within its temporal validity window."""
-        t = at_time if at_time is not None else time.time()
-        if self.not_before is not None and t < self.not_before:
+    def is_expired(self, now: Optional[float] = None) -> bool:
+        """Return True if this delegation has passed its expiry time."""
+        if self.expiry is None:
             return False
-        if self.expiry is not None and t > self.expiry:
-            return False
-        return True
+        t = now if now is not None else time.time()
+        return t > self.expiry
 
-    def to_dict(self) -> Dict[str, Any]:
+    def has_capability(self, resource: str, ability: str) -> bool:
+        """Return True if any capability in this delegation matches."""
+        return any(c.matches(resource, ability) for c in self.capabilities)
+
+    def to_dict(self) -> Dict:
         return {
-            "token_cid": self.cid,
+            "cid": self.cid,
             "issuer": self.issuer,
             "audience": self.audience,
-            "capabilities": [
-                {"resource": c.resource, "ability": c.ability}
-                for c in self.capabilities
-            ],
+            "capabilities": [c.to_dict() for c in self.capabilities],
             "expiry": self.expiry,
             "proof_cid": self.proof_cid,
-            "not_before": self.not_before,
         }
 
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DelegationToken":
-        capabilities = [
-            Capability(resource=c["resource"], ability=c["ability"])
-            for c in data.get("capabilities", [])
-        ]
-        return cls(
-            issuer=data["issuer"],
-            audience=data["audience"],
-            capabilities=capabilities,
-            expiry=data.get("expiry"),
-            proof_cid=data.get("proof_cid"),
-            not_before=data.get("not_before"),
-            nonce=data.get("nonce"),
-        )
 
-
-@dataclass
-class DelegationChain:
-    """
-    An ordered chain of :class:`DelegationToken` objects.
-
-    The chain begins at the root issuer and ends at the leaf token whose
-    audience is the requesting principal.  Each token's issuer must equal
-    the previous token's audience (unless it is the root).
-    """
-    tokens: List[DelegationToken] = field(default_factory=list)
-
-    def append(self, token: DelegationToken) -> None:
-        """Add *token* to the end of the chain."""
-        self.tokens.append(token)
-
-    @property
-    def root_issuer(self) -> Optional[str]:
-        """DID of the original capability issuer (first token's issuer)."""
-        return self.tokens[0].issuer if self.tokens else None
-
-    @property
-    def leaf_audience(self) -> Optional[str]:
-        """DID of the terminal recipient (last token's audience)."""
-        return self.tokens[-1].audience if self.tokens else None
-
-    def is_valid_chain(self, at_time: Optional[float] = None) -> Tuple[bool, str]:
-        """Validate structural and temporal integrity.
-
-        Checks:
-        1. All tokens are within their temporal window.
-        2. Each token's audience matches the next token's issuer.
-
-        Returns:
-            A ``(valid: bool, reason: str)`` tuple.
-        """
-        if not self.tokens:
-            return False, "Empty chain"
-
-        t = at_time if at_time is not None else time.time()
-
-        for i, token in enumerate(self.tokens):
-            if not token.is_valid(t):
-                return False, f"Token at index {i} is expired or not yet valid"
-            if i > 0:
-                prev = self.tokens[i - 1]
-                if prev.audience != token.issuer:
-                    return (
-                        False,
-                        f"Chain break at index {i}: expected issuer "
-                        f"'{prev.audience}', got '{token.issuer}'",
-                    )
-
-        return True, "valid"
-
-    def covers(
-        self,
-        resource: str,
-        ability: str,
-        at_time: Optional[float] = None,
-    ) -> bool:
-        """Return True if the chain grants *ability* on *resource*.
-
-        The chain must be structurally valid, AND at least one token in
-        the chain must carry a matching capability.
-        """
-        valid, _ = self.is_valid_chain(at_time)
-        if not valid:
-            return False
-        return any(
-            any(cap.matches(resource, ability) for cap in token.capabilities)
-            for token in self.tokens
-        )
-
-    # CC139 ── ASCII visualization ───────────────────────────────────────────
-
-    def to_ascii_tree(self) -> str:
-        """CC139: Return an ASCII-art tree showing the delegation chain.
-
-        Each row shows the token index, issuer→audience link, and capabilities.
-        An empty chain returns ``"(empty chain)"``.
-
-        Example output::
-
-            DelegationChain [3 tokens]
-            ├─[0] did:key:root → did:key:agent1  (caps: logic/*:invoke/*)
-            ├─[1] did:key:agent1 → did:key:agent2  (caps: logic/read:read/invoke)
-            └─[2] did:key:agent2 → did:key:leaf  (caps: *)
-
-        Returns
-        -------
-        str
-            Multi-line ASCII representation.
-        """
-        if not self.tokens:
-            return "(empty chain)"
-
-        num_tokens = len(self.tokens)
-        lines: List[str] = [f"DelegationChain [{num_tokens} token{'s' if num_tokens != 1 else ''}]"]
-        for i, tok in enumerate(self.tokens):
-            prefix = "└─" if i == num_tokens - 1 else "├─"
-            caps_str = ", ".join(
-                f"{c.resource}:{c.ability}" for c in tok.capabilities
-            ) or "(no caps)"
-            cid_short = tok.cid[:12] + "…" if len(tok.cid) > 12 else tok.cid
-            lines.append(
-                f"{prefix}[{i}] {tok.issuer} → {tok.audience}"
-                f"  (cid: {cid_short}, caps: {caps_str})"
-            )
-        return "\n".join(lines)
-
-    def __str__(self) -> str:  # CC139
-        return self.to_ascii_tree()
-
-    def __len__(self) -> int:
-        return len(self.tokens)
-
-
-# ─── evaluator ──────────────────────────────────────────────────────────────
-
+# ---------------------------------------------------------------------------
+# DelegationEvaluator
+# ---------------------------------------------------------------------------
 
 class DelegationEvaluator:
+    """Validates UCAN-style delegation chains at execution time.
+
+    The store maps ``cid → Delegation``.  Each :class:`Delegation` may have a
+    ``proof_cid`` pointing to its parent.
+
+    Chain traversal
+    ---------------
+    :meth:`build_chain` follows ``proof_cid`` links until it reaches a root
+    (``proof_cid is None``).  It returns the chain in *root-first* order
+    (i.e., the root delegation is at index 0).
+
+    Validation rules
+    ----------------
+    :meth:`can_invoke` checks:
+
+    1. The leaf delegation exists in the store.
+    2. Every delegation in the chain exists.
+    3. Every delegation in the chain is not expired.
+    4. At least one delegation in the chain has the requested capability.
     """
-    Checks whether a principal holds a valid delegation for a capability.
 
-    Tokens are indexed by their CID.  Chains are assembled on demand by
-    following ``proof_cid`` links from leaf to root.
-    """
+    def __init__(self, max_chain_depth: int = 0) -> None:
+        """Initialise a :class:`DelegationEvaluator`.
 
-    def __init__(self) -> None:
-        self._tokens: Dict[str, DelegationToken] = {}
-        # Phase 6: chain assembly cache.
-        # Key: leaf_cid → DelegationChain (root-first).
-        # Invalidated when a new token is added.
-        self._chain_cache: Dict[str, "DelegationChain"] = {}
-
-    def add_token(self, token: DelegationToken) -> str:
-        """Store *token* and return its CID.
-
-        Adding a new token invalidates the chain cache because existing chains
-        may now be extendable.
+        Args:
+            max_chain_depth: Maximum allowed length of a delegation chain
+                (number of hops from root to leaf, inclusive).  ``0`` means
+                unlimited.  When a chain exceeds this limit,
+                :meth:`build_chain` raises ``ValueError``.
         """
-        cid = token.cid
-        if cid not in self._tokens:
-            # Clear chain cache on new tokens to avoid stale chain references.
-            self._chain_cache.clear()
-        self._tokens[cid] = token
-        return cid
+        self._store: Dict[str, Delegation] = {}
+        self._max_chain_depth: int = max_chain_depth
 
-    def get_token(self, cid: str) -> Optional[DelegationToken]:
-        return self._tokens.get(cid)
+    # ------------------------------------------------------------------
+    # Store management
+    # ------------------------------------------------------------------
 
-    def build_chain(self, leaf_cid: str, *, use_cache: bool = True) -> DelegationChain:
-        """Follow ``proof_cid`` links to build the full delegation chain.
+    def add(self, delegation: Delegation) -> None:
+        """Add a delegation to the in-memory store."""
+        self._store[delegation.cid] = delegation
 
-        The chain is returned in root-first order (root → ... → leaf).
+    def get(self, cid: str) -> Optional[Delegation]:
+        """Retrieve a delegation by CID, or None."""
+        return self._store.get(cid)
+
+    def remove(self, cid: str) -> bool:
+        """Remove a delegation; return True if it existed."""
+        if cid in self._store:
+            del self._store[cid]
+            return True
+        return False
+
+    def list_cids(self) -> List[str]:
+        """Return all stored delegation CIDs."""
+        return list(self._store.keys())
+
+    # ------------------------------------------------------------------
+    # Chain building
+    # ------------------------------------------------------------------
+
+    def build_chain(self, leaf_cid: str) -> List[Delegation]:
+        """Build the delegation chain from *leaf_cid* back to the root.
+
+        Returns the chain in **root-first** order.  Raises ``KeyError`` if any
+        link in the chain is missing from the store.  Raises ``ValueError`` if
+        a cycle is detected.
+
+        Returns an empty list if *leaf_cid* is not in the store.
+        """
+        if leaf_cid not in self._store:
+            return []
+
+        chain: List[Delegation] = []
+        seen: set = set()
+        current_cid: Optional[str] = leaf_cid
+
+        while current_cid is not None:
+            if current_cid in seen:
+                raise ValueError(
+                    f"Cycle detected in delegation chain at CID '{current_cid}'"
+                )
+            seen.add(current_cid)
+            delegation = self._store.get(current_cid)
+            if delegation is None:
+                raise KeyError(
+                    f"Delegation '{current_cid}' not found in store"
+                )
+            chain.append(delegation)
+            current_cid = delegation.proof_cid
+
+        # chain is [leaf, ..., root]; reverse to root-first
+        chain.reverse()
+
+        # Enforce max_chain_depth (0 = unlimited)
+        if self._max_chain_depth > 0 and len(chain) > self._max_chain_depth:
+            raise ValueError(
+                f"Delegation chain length {len(chain)} exceeds max_chain_depth "
+                f"{self._max_chain_depth}"
+            )
+
+        return chain
+
+    # ------------------------------------------------------------------
+    # Validation
+    # ------------------------------------------------------------------
+
+    def is_expired(self, cid: str, now: Optional[float] = None) -> bool:
+        """Return True if the delegation at *cid* is expired (or missing)."""
+        d = self._store.get(cid)
+        if d is None:
+            return True
+        return d.is_expired(now=now)
+
+    def can_invoke(
+        self,
+        leaf_cid: str,
+        resource: str,
+        ability: str,
+        actor: Optional[str] = None,
+        now: Optional[float] = None,
+    ) -> Tuple[bool, str]:
+        """Check whether the leaf delegation authorises *resource*/*ability*.
 
         Parameters
         ----------
         leaf_cid:
-            CID of the leaf (innermost) token to start chain assembly from.
-        use_cache:
-            When *True* (default) the assembled chain is stored in an in-memory
-            cache keyed by *leaf_cid* and reused on subsequent identical calls.
+            CID of the most-derived delegation in the chain.
+        resource:
+            Resource identifier (e.g. ``"mcp://tool/load_dataset"``).
+        ability:
+            Action label (e.g. ``"invoke"``).
+        actor:
+            If provided, the leaf delegation's ``audience`` must match *actor*.
+        now:
+            Timestamp for expiry checks; defaults to ``time.time()``.
+
+        Returns
+        -------
+        (allowed: bool, reason: str)
         """
-        if use_cache and leaf_cid in self._chain_cache:
-            return self._chain_cache[leaf_cid]
+        if leaf_cid not in self._store:
+            return False, f"Delegation '{leaf_cid}' not found"
 
-        chain_tokens: List[DelegationToken] = []
-        current_cid: Optional[str] = leaf_cid
-        visited: set = set()
+        try:
+            chain = self.build_chain(leaf_cid)
+        except (KeyError, ValueError) as exc:
+            return False, str(exc)
 
-        while current_cid is not None:
-            if current_cid in visited:
-                logger.warning("Cycle detected in delegation chain at %s", current_cid)
-                break
-            visited.add(current_cid)
-            token = self._tokens.get(current_cid)
-            if token is None:
-                break
-            chain_tokens.append(token)
-            current_cid = token.proof_cid
+        if not chain:
+            return False, "Empty delegation chain"
 
-        # Reverse to get root-first order
-        chain_tokens.reverse()
-        chain = DelegationChain(tokens=chain_tokens)
-        if use_cache:
-            self._chain_cache[leaf_cid] = chain
-        return chain
-
-    def can_invoke(
-        self,
-        principal: str,
-        resource: str,
-        ability: str,
-        *,
-        leaf_cid: str,
-        at_time: Optional[float] = None,
-    ) -> Tuple[bool, str]:
-        """Check whether *principal* can invoke *ability* on *resource*.
-
-        Args:
-            principal: The DID of the requesting agent.
-            resource:  The resource being requested.
-            ability:   The ability being requested.
-            leaf_cid:  CID of the leaf delegation token held by *principal*.
-            at_time:   Optional evaluation time (default: now).
-
-        Returns:
-            A ``(allowed: bool, reason: str)`` tuple.
-        """
-        leaf = self._tokens.get(leaf_cid)
-        if leaf is None:
-            return False, f"Unknown token CID: {leaf_cid}"
-
-        if leaf.audience != principal:
-            return (
-                False,
-                f"Token audience '{leaf.audience}' does not match principal "
-                f"'{principal}'",
+        # Actor check on the leaf (last in root-first order)
+        leaf = chain[-1]
+        if actor is not None and leaf.audience != actor:
+            return False, (
+                f"Actor '{actor}' does not match leaf audience '{leaf.audience}'"
             )
 
-        chain = self.build_chain(leaf_cid)
-        valid, reason = chain.is_valid_chain(at_time)
-        if not valid:
-            return False, reason
+        # Expiry check across the whole chain
+        t = now if now is not None else time.time()
+        for d in chain:
+            if d.is_expired(now=t):
+                return False, f"Delegation '{d.cid}' has expired"
 
-        if not chain.covers(resource, ability, at_time):
-            return False, f"No capability covering resource='{resource}' ability='{ability}'"
+        # Capability check — at least one delegation must cover the request
+        for d in chain:
+            if d.has_capability(resource, ability):
+                return True, "authorized"
 
-        return True, "allowed"
-
-    def can_invoke_with_revocation(
-        self,
-        principal: str,
-        resource: str,
-        ability: str,
-        *,
-        leaf_cid: str,
-        revocation_list: Optional["RevocationList"] = None,
-        at_time: Optional[float] = None,
-    ) -> Tuple[bool, str]:
-        """Like :meth:`can_invoke` but also checks *revocation_list*.
-
-        If any token in the chain has been revoked the request is denied.
-        """
-        if revocation_list is not None:
-            chain = self.build_chain(leaf_cid)
-            for token in chain.tokens:
-                if revocation_list.is_revoked(token.cid):
-                    return False, f"Token {token.cid} has been revoked"
-
-        return self.can_invoke(
-            principal, resource, ability,
-            leaf_cid=leaf_cid, at_time=at_time,
+        return False, (
+            f"No delegation in chain grants '{ability}' on '{resource}'"
         )
 
 
-class RevocationList:
-    """Tracks revoked delegation token CIDs (spec Profile C §7).
+# ---------------------------------------------------------------------------
+# Global singleton
+# ---------------------------------------------------------------------------
 
-    Revoked tokens are permanently invalid regardless of their temporal window.
+_GLOBAL_EVALUATOR: Optional[DelegationEvaluator] = None
+
+
+def get_delegation_evaluator() -> DelegationEvaluator:
+    """Return the global :class:`DelegationEvaluator` singleton."""
+    global _GLOBAL_EVALUATOR
+    if _GLOBAL_EVALUATOR is None:
+        _GLOBAL_EVALUATOR = DelegationEvaluator()
+    return _GLOBAL_EVALUATOR
+
+
+def add_delegation(delegation: Delegation) -> None:
+    """Add *delegation* to the global evaluator store."""
+    get_delegation_evaluator().add(delegation)
+
+
+def get_delegation(cid: str) -> Optional[Delegation]:
+    """Retrieve a delegation from the global store by CID."""
+    return get_delegation_evaluator().get(cid)
+
+
+# ---------------------------------------------------------------------------
+# Invocation context
+# ---------------------------------------------------------------------------
+
+@dataclass
+class InvocationContext:
+    """Proof bundle gathered when a tool invocation is dispatched.
+
+    This bundles the identifiers specified in the spec's invocation shape:
+    ``intent_cid``, ``ucan_proofs``, ``policy_cid``, and ``context_cids``.
+    """
+
+    intent_cid: str
+    ucan_proofs: List[str] = field(default_factory=list)
+    policy_cid: Optional[str] = None
+    context_cids: List[str] = field(default_factory=list)
+
+    def to_dict(self) -> Dict:
+        return {
+            "intent_cid": self.intent_cid,
+            "ucan_proofs": self.ucan_proofs,
+            "policy_cid": self.policy_cid,
+            "context_cids": self.context_cids,
+        }
+
+
+# ---------------------------------------------------------------------------
+# DID key manager integration (session 56)
+# ---------------------------------------------------------------------------
+
+@dataclass
+class DIDSignedDelegation:
+    """A :class:`Delegation` signed with a DID:key Ed25519 private key.
+
+    This bridges :mod:`ucan_delegation` (the in-process delegation chain) with
+    :mod:`did_key_manager` (the Ed25519 key material), allowing delegations to
+    carry a verifiable signature that can be checked without trusting the
+    source.
+
+    Args:
+        delegation: The underlying :class:`Delegation`.
+        signature: Hex-encoded Ed25519 signature over the delegation's
+            canonical JSON representation.
+        signer_did: The DID:key of the signing key (``"did:key:z6Mk..."``)
+        verified: Whether :func:`verify_delegation_signature` has already
+            confirmed the signature.
+    """
+
+    delegation: Delegation
+    signature: str
+    signer_did: str
+    verified: bool = False
+
+    def to_dict(self) -> Dict:
+        d = self.delegation.to_dict()
+        d["signature"] = self.signature
+        d["signer_did"] = self.signer_did
+        d["verified"] = self.verified
+        return d
+
+
+def sign_delegation(delegation: Delegation, *, key_manager: Any = None) -> "DIDSignedDelegation":
+    """Sign *delegation* using an Ed25519 key from *key_manager*.
+
+    When :mod:`did_key_manager` is available and a *key_manager* is provided
+    (or the global singleton exists), the delegation's canonical JSON is
+    signed with the manager's Ed25519 private key and the DID:key is stored
+    in the returned :class:`DIDSignedDelegation`.
+
+    When the key manager is unavailable (or raises), the function returns a
+    :class:`DIDSignedDelegation` with an empty signature and a sentinel DID
+    ``"did:key:unsigned"``.
+
+    Args:
+        delegation: The :class:`Delegation` to sign.
+        key_manager: An optional :class:`~did_key_manager.DIDKeyManager`
+            instance.  If *None*, the global singleton is tried.
+
+    Returns:
+        A :class:`DIDSignedDelegation` wrapping *delegation*.
+    """
+    import json
+
+    payload = json.dumps(delegation.to_dict(), sort_keys=True).encode()
+
+    mgr = key_manager
+    if mgr is None:
+        try:
+            from .did_key_manager import get_default_manager  # noqa: PLC0415
+            mgr = get_default_manager()
+        except Exception:
+            pass
+
+    if mgr is None:
+        return DIDSignedDelegation(
+            delegation=delegation,
+            signature="",
+            signer_did="did:key:unsigned",
+            verified=False,
+        )
+
+    try:
+        sig_bytes: bytes = mgr.sign(payload)
+        return DIDSignedDelegation(
+            delegation=delegation,
+            signature=sig_bytes.hex(),
+            signer_did=getattr(mgr, "did", "did:key:unknown"),
+            verified=False,
+        )
+    except Exception as exc:
+        logger.warning("sign_delegation failed: %s", exc)
+        return DIDSignedDelegation(
+            delegation=delegation,
+            signature="",
+            signer_did="did:key:unsigned",
+            verified=False,
+        )
+
+
+def verify_delegation_signature(
+    signed: "DIDSignedDelegation",
+    *,
+    key_manager: Any = None,
+) -> bool:
+    """Verify the Ed25519 signature on *signed*.
+
+    Re-derives the canonical JSON payload of the wrapped delegation and checks
+    it against ``signed.signature`` using the key manager's ``verify``
+    method.  Returns ``False`` on any error (missing manager, bad sig, etc.).
+
+    Args:
+        signed: A :class:`DIDSignedDelegation` to verify.
+        key_manager: Optional :class:`~did_key_manager.DIDKeyManager`.
+
+    Returns:
+        ``True`` if the signature is valid; ``False`` otherwise.
+    """
+    import json
+
+    if not signed.signature:
+        return False
+
+    payload = json.dumps(signed.delegation.to_dict(), sort_keys=True).encode()
+
+    mgr = key_manager
+    if mgr is None:
+        try:
+            from .did_key_manager import get_default_manager  # noqa: PLC0415
+            mgr = get_default_manager()
+        except Exception:
+            pass
+
+    if mgr is None:
+        return False
+
+    try:
+        sig_bytes = bytes.fromhex(signed.signature)
+        ok: bool = mgr.verify(payload, sig_bytes)
+        return bool(ok)
+    except Exception as exc:
+        logger.warning("verify_delegation_signature failed: %s", exc)
+        return False
+
+
+# ---------------------------------------------------------------------------
+# Phase H — Revocation list (session 57)
+# ---------------------------------------------------------------------------
+
+class RevocationList:
+    """Tracks revoked delegation CIDs to prevent use in chain evaluation.
+
+    Revoked CIDs are stored in a ``set`` for O(1) lookup.  This is
+    intentionally a simple in-process store; persistence is the caller's
+    responsibility (e.g., save :meth:`to_list` to a secrets vault).
+
+    Usage::
+
+        revlist = RevocationList()
+        revlist.revoke("cid-compromised")
+        assert revlist.is_revoked("cid-compromised")
+
+        # Revoke an entire chain at once
+        revlist.revoke_chain("leaf-cid", evaluator)
     """
 
     def __init__(self) -> None:
         self._revoked: set[str] = set()
 
     def revoke(self, cid: str) -> None:
-        """Add *cid* to the revocation list."""
+        """Mark *cid* as revoked."""
         self._revoked.add(cid)
 
     def is_revoked(self, cid: str) -> bool:
-        """Return ``True`` if *cid* is on the revocation list."""
+        """Return *True* if *cid* has been revoked."""
         return cid in self._revoked
 
-    def revoke_chain(self, chain: "DelegationChain") -> None:
-        """Revoke every token CID in *chain*."""
-        for token in chain.tokens:
-            self._revoked.add(token.cid)
+    def revoke_chain(
+        self,
+        root_cid: str,
+        evaluator: "DelegationEvaluator",
+    ) -> int:
+        """Revoke *root_cid* and every delegation reachable from it.
+
+        Uses :meth:`DelegationEvaluator.build_chain` to follow ``proof_cid``
+        links.  CIDs already in the revocation list are counted but not
+        double-added.
+
+        Returns:
+            Number of **newly** revoked CIDs (≥ 0).
+        """
+        try:
+            chain = evaluator.build_chain(root_cid)
+        except Exception:
+            chain = []
+        count = 0
+        for delegation in chain:
+            if delegation.cid not in self._revoked:
+                self._revoked.add(delegation.cid)
+                count += 1
+        return count
 
     def clear(self) -> None:
         """Remove all revocations."""
@@ -427,298 +593,614 @@ class RevocationList:
         """Return a sorted list of revoked CIDs."""
         return sorted(self._revoked)
 
-    def save(self, path: str) -> None:
-        """Persist the revocation list to a JSON file.
-
-        If ``ipfs_datasets_py.mcp_server.secrets_vault`` is available and
-        *path* ends in ``.enc``, the file is written via the global
-        :class:`~ipfs_datasets_py.mcp_server.secrets_vault.SecretsVault` so
-        that the content is encrypted at rest.  Otherwise it is written as
-        plain JSON with ``0o600`` permissions.
-
-        Parameters
-        ----------
-        path:
-            Destination file path.
-        """
-        import json as _json
-        import os as _os
-
-        data = {"revoked": self.to_list(), "count": len(self._revoked)}
-
-        if path.endswith(".enc"):
-            # Encrypted path via SecretsVault
-            try:
-                from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
-                vault = get_secrets_vault()
-                vault.set("__revocation_list__", _json.dumps(data))
-                # Also write a plaintext marker so the path exists
-                with open(path, "w", encoding="utf-8") as fh:
-                    fh.write("vault-backed")
-                _os.chmod(path, 0o600)
-                return
-            except ImportError:
-                pass  # Fall through to plaintext
-
-        with open(path, "w", encoding="utf-8") as fh:
-            _json.dump(data, fh)
-        _os.chmod(path, 0o600)
-
-    def load(self, path: str) -> int:
-        """Load a revocation list from a JSON file previously written by :meth:`save`.
-
-        Returns the number of CIDs loaded.
-        """
-        import json as _json
-        import os as _os
-
-        if not _os.path.isfile(path):
-            return 0
-
-        if path.endswith(".enc"):
-            try:
-                from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
-                vault = get_secrets_vault()
-                raw = vault.get("__revocation_list__")
-                if raw is None:
-                    return 0
-                data = _json.loads(raw)
-            except (ImportError, Exception):
-                return 0
-        else:
-            with open(path, encoding="utf-8") as fh:
-                data = _json.load(fh)
-
-        cids: List[str] = data.get("revoked", [])
-        for cid in cids:
-            self._revoked.add(cid)
-        return len(cids)
-
     def __len__(self) -> int:
         return len(self._revoked)
 
-    def __contains__(self, cid: object) -> bool:
+    def __contains__(self, cid: str) -> bool:
         return cid in self._revoked
 
-    def __repr__(self) -> str:
-        return f"RevocationList({len(self._revoked)} revoked)"
+    def save(self, path: str) -> None:
+        """Persist revoked CIDs to a JSON file at *path*.
+
+        Creates parent directories if necessary.
+
+        Args:
+            path: Filesystem path for the JSON revocation file.
+        """
+        import json as _json
+        import os as _os
+
+        parent = _os.path.dirname(path)
+        if parent:
+            _os.makedirs(parent, exist_ok=True)
+        data: Dict[str, Any] = {"revoked": self.to_list()}
+        with open(path, "w", encoding="utf-8") as fh:
+            _json.dump(data, fh, indent=2)
+        logger.debug("Saved %d revoked CIDs to %s", len(self._revoked), path)
+
+    def load(self, path: str) -> int:
+        """Load revoked CIDs from a JSON file at *path*.
+
+        Missing or unreadable files return 0 without raising.
+
+        Args:
+            path: Filesystem path of the JSON revocation file.
+
+        Returns:
+            Number of **newly** loaded CIDs (already-present CIDs are skipped).
+        """
+        import json as _json
+
+        try:
+            with open(path, encoding="utf-8") as fh:
+                data = _json.load(fh)
+        except FileNotFoundError:
+            logger.debug("Revocation list file not found: %s", path)
+            return 0
+        except (OSError, ValueError) as exc:
+            logger.warning("Could not read revocation list %s: %s", path, exc)
+            return 0
+
+        revoked = data.get("revoked", [])
+        count = 0
+        for cid in revoked:
+            if isinstance(cid, str) and cid not in self._revoked:
+                self._revoked.add(cid)
+                count += 1
+        logger.debug("Loaded %d new revoked CIDs from %s", count, path)
+        return count
+
+    # ------------------------------------------------------------------
+    # Phase H (session 59) — Encrypted persistence
+    # ------------------------------------------------------------------
+
+    def save_encrypted(self, path: str, password: str) -> None:
+        """Persist revoked CIDs encrypted with AES-256-GCM (Phase H).
+
+        Uses ``cryptography.hazmat`` AESGCM with a 32-byte key derived from
+        *password* via SHA-256 (key = ``SHA-256(password.encode())``).
+        Falls back to plain-text :meth:`save` with a ``UserWarning`` when the
+        ``cryptography`` package is not installed.
+
+        The file format is ``<12-byte nonce> || <ciphertext>`` (raw bytes).
+        An adjacent ``.json`` fallback is NOT written — this method always
+        writes a single binary file.
+
+        Args:
+            path: Destination file path (binary).
+            password: Plain-text password used to derive the AES key.
+        """
+        import hashlib as _hashlib
+        import json as _json
+        import os as _os
+
+        try:
+            from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # type: ignore
+        except ImportError:
+            warnings.warn(
+                "cryptography package not installed; falling back to plain-text save.",
+                UserWarning,
+                stacklevel=2,
+            )
+            self.save(path)
+            return
+
+        parent = _os.path.dirname(path)
+        if parent:
+            _os.makedirs(parent, exist_ok=True)
+
+        key = _hashlib.sha256(password.encode()).digest()  # 32 bytes
+        nonce = _os.urandom(12)
+        plaintext = _json.dumps({"revoked": self.to_list()}).encode()
+        ciphertext = AESGCM(key).encrypt(nonce, plaintext, b"")
+        with open(path, "wb") as fh:
+            fh.write(nonce + ciphertext)
+        logger.debug("Saved %d revoked CIDs (encrypted) to %s", len(self._revoked), path)
+
+    def load_encrypted(self, path: str, password: str) -> int:
+        """Load revoked CIDs from an encrypted file (Phase H).
+
+        Uses the same AES-256-GCM scheme as :meth:`save_encrypted`.
+        Falls back to :meth:`load` (plain JSON) when the ``cryptography``
+        package is not installed.
+
+        Missing or unreadable/corrupt files return 0 without raising.
+
+        Args:
+            path: Source file path (binary).
+            password: Plain-text password used to derive the AES key.
+
+        Returns:
+            Number of **newly** loaded CIDs.
+        """
+        import hashlib as _hashlib
+        import json as _json
+
+        try:
+            from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # type: ignore
+        except ImportError:
+            warnings.warn(
+                "cryptography package not installed; falling back to plain-text load.",
+                UserWarning,
+                stacklevel=2,
+            )
+            return self.load(path)
+
+        try:
+            with open(path, "rb") as fh:
+                raw = fh.read()
+        except FileNotFoundError:
+            logger.debug("Encrypted revocation file not found: %s", path)
+            return 0
+        except OSError as exc:
+            logger.warning("Could not read encrypted revocation file %s: %s", path, exc)
+            return 0
+
+        if len(raw) < 12:
+            logger.warning("Encrypted revocation file too short: %s", path)
+            return 0
+
+        key = _hashlib.sha256(password.encode()).digest()
+        nonce, ciphertext = raw[:12], raw[12:]
+        try:
+            plaintext = AESGCM(key).decrypt(nonce, ciphertext, b"")
+        except Exception as exc:
+            logger.warning("Decryption failed for %s: %s", path, exc)
+            return 0
+
+        try:
+            data = _json.loads(plaintext)
+        except (ValueError, UnicodeDecodeError) as exc:
+            logger.warning("Corrupt decrypted revocation data in %s: %s", path, exc)
+            return 0
+
+        revoked = data.get("revoked", [])
+        count = 0
+        for cid in revoked:
+            if isinstance(cid, str) and cid not in self._revoked:
+                self._revoked.add(cid)
+                count += 1
+        logger.debug("Loaded %d new revoked CIDs (encrypted) from %s", count, path)
+        return count
 
 
-# ─── delegation store (spec §6) ──────────────────────────────────────────────
+def can_invoke_with_revocation(
+    leaf_cid: str,
+    tool: str,
+    actor: str,
+    *,
+    evaluator: Optional["DelegationEvaluator"] = None,
+    revocation_list: Optional["RevocationList"] = None,
+) -> Tuple[bool, str]:
+    """Check whether *actor* can invoke *tool* via *leaf_cid*, respecting revocations.
+
+    Like :meth:`DelegationEvaluator.can_invoke` but checks every CID in the
+    chain against *revocation_list* before performing the capability check.
+    This allows individual delegations to be revoked without rebuilding the
+    entire chain.
+
+    Args:
+        leaf_cid: The leaf delegation CID to check.
+        tool: The tool name / resource / ability to authorise.
+        actor: The actor requesting the invocation.
+        evaluator: :class:`DelegationEvaluator` to use.  Defaults to the
+            global singleton.
+        revocation_list: :class:`RevocationList` to check against.  If *None*,
+            no revocation check is performed.
+
+    Returns:
+        ``(authorized, reason)`` tuple.  *authorized* is ``True`` only when
+        the delegation chain is valid **and** no CID is revoked.
+    """
+    ev = evaluator if evaluator is not None else get_delegation_evaluator()
+
+    try:
+        chain = ev.build_chain(leaf_cid)
+    except Exception as exc:
+        return False, f"chain build failed: {exc}"
+
+    # Check revocations first.
+    if revocation_list is not None:
+        for delegation in chain:
+            if revocation_list.is_revoked(delegation.cid):
+                return False, f"delegation {delegation.cid!r} has been revoked"
+
+    return ev.can_invoke(leaf_cid, resource=tool, ability=tool, actor=actor)
 
 
-import json
-import os
-
+# ---------------------------------------------------------------------------
+# Phase I — Persistent delegation store (session 57)
+# ---------------------------------------------------------------------------
 
 class DelegationStore:
-    """Durable delegation token store with optional JSON persistence.
+    """Persistent store for :class:`Delegation` objects backed by a JSON file.
 
-    Provides add/get/remove operations and can serialise to/from a JSON file.
+    The in-memory store maps ``cid → Delegation``.  :meth:`save` serialises
+    all delegations to a JSON file; :meth:`load` reconstructs them.
+
+    Args:
+        path: Filesystem path for the JSON delegation file.
+
+    Usage::
+
+        store = DelegationStore("/var/lib/mcp/delegations.json")
+        store.add(delegation)
+        store.save()    # persist on shutdown
+
+        store2 = DelegationStore("/var/lib/mcp/delegations.json")
+        store2.load()   # restore on startup
+        ev = store2.to_evaluator()
     """
 
-    def __init__(self, store_path: Optional[str] = None) -> None:
-        """Initialise store, optionally loading from *store_path* if it exists."""
-        self._tokens: Dict[str, DelegationToken] = {}
-        self._store_path = store_path
-        if store_path and os.path.isfile(store_path):
-            try:
-                self.load(store_path)
-            except Exception as exc:
-                logger.warning("Could not load delegation store from %s: %s", store_path, exc)
+    def __init__(self, path: str) -> None:
+        self.path = path
+        self._store: Dict[str, Delegation] = {}
 
-    # ── CRUD ──────────────────────────────────────────────────────────────────
+    # ------------------------------------------------------------------
+    # In-memory operations
+    # ------------------------------------------------------------------
 
-    def add(self, token: DelegationToken) -> str:
-        """Store *token* and return its CID."""
-        cid = token.cid
-        self._tokens[cid] = token
-        return cid
+    def add(self, delegation: Delegation) -> None:
+        """Add *delegation* to the in-memory store."""
+        self._store[delegation.cid] = delegation
 
-    def get(self, cid: str) -> Optional[DelegationToken]:
-        """Return the token for *cid*, or ``None`` if not found."""
-        return self._tokens.get(cid)
+    def get(self, cid: str) -> Optional[Delegation]:
+        """Retrieve a delegation by CID; returns *None* if not found."""
+        return self._store.get(cid)
 
     def remove(self, cid: str) -> bool:
-        """Remove *cid* from the store.  Returns ``True`` if it existed."""
-        if cid in self._tokens:
-            del self._tokens[cid]
+        """Remove a delegation; return *True* if it existed."""
+        if cid in self._store:
+            del self._store[cid]
             return True
         return False
 
     def list_cids(self) -> List[str]:
-        """Return a sorted list of all stored CIDs."""
-        return sorted(self._tokens)
-
-    # ── persistence ───────────────────────────────────────────────────────────
-
-    def save(self, path: Optional[str] = None) -> str:
-        """Serialise all tokens to JSON.
-
-        Args:
-            path: File path to write.  Falls back to the path given at
-                  construction time.  If neither is set, raises ``ValueError``.
-
-        Returns:
-            The path that was written.
-        """
-        target = path or self._store_path
-        if not target:
-            raise ValueError("No store_path configured and no path given to save()")
-        records = {cid: tok.to_dict() for cid, tok in self._tokens.items()}
-        with open(target, "w", encoding="utf-8") as fh:
-            json.dump({"tokens": list(records.values())}, fh, indent=2)
-        try:
-            os.chmod(target, 0o600)
-        except OSError:
-            pass
-        return target
-
-    def load(self, path: Optional[str] = None) -> int:
-        """Load tokens from a JSON file.
-
-        Returns the number of tokens loaded.
-        """
-        target = path or self._store_path
-        if not target:
-            raise ValueError("No store_path configured and no path given to load()")
-        with open(target, encoding="utf-8") as fh:
-            data = json.load(fh)
-        loaded = 0
-        for record in data.get("tokens", []):
-            try:
-                tok = DelegationToken.from_dict(record)
-                self._tokens[tok.cid] = tok
-                loaded += 1
-            except Exception as exc:
-                logger.warning("Skipping malformed token record: %s", exc)
-        return loaded
-
-    # ── helpers ───────────────────────────────────────────────────────────────
-
-    def to_evaluator(self) -> DelegationEvaluator:
-        """Return a :class:`DelegationEvaluator` seeded with all stored tokens."""
-        ev = DelegationEvaluator()
-        for tok in self._tokens.values():
-            ev.add_token(tok)
-        return ev
-
-    # ── dunder ────────────────────────────────────────────────────────────────
+        """Return a sorted list of stored delegation CIDs."""
+        return sorted(self._store)
 
     def __len__(self) -> int:
-        return len(self._tokens)
+        return len(self._store)
 
-    def __contains__(self, cid: object) -> bool:
-        return cid in self._tokens
+    # ------------------------------------------------------------------
+    # Persistence
+    # ------------------------------------------------------------------
+
+    def save(self) -> None:
+        """Persist all delegations to *path* as JSON.
+
+        Creates parent directories if necessary.
+        """
+        import json as _json
+        import os
+
+        data: Dict[str, Any] = {
+            cid: d.to_dict() for cid, d in self._store.items()
+        }
+        parent = os.path.dirname(self.path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        with open(self.path, "w", encoding="utf-8") as fh:
+            _json.dump(data, fh, indent=2)
+        logger.debug("Saved %d delegations to %s", len(data), self.path)
+
+    def load(self) -> int:
+        """Load delegations from *path*.
+
+        Missing or unreadable files return 0 without raising.
+
+        Returns:
+            The number of delegations successfully loaded.
+        """
+        import json as _json
+
+        try:
+            with open(self.path, encoding="utf-8") as fh:
+                data: Dict[str, Any] = _json.load(fh)
+        except FileNotFoundError:
+            logger.debug("Delegation store file not found: %s", self.path)
+            return 0
+        except (OSError, ValueError) as exc:
+            logger.warning("Could not read delegation store %s: %s", self.path, exc)
+            return 0
+
+        loaded = 0
+        for cid, entry in data.items():
+            try:
+                caps = [
+                    Capability(resource=c["resource"], ability=c["ability"])
+                    for c in entry.get("capabilities", [])
+                ]
+                d = Delegation(
+                    cid=cid,
+                    issuer=entry.get("issuer", ""),
+                    audience=entry.get("audience", ""),
+                    capabilities=caps,
+                    expiry=entry.get("expiry"),
+                    proof_cid=entry.get("proof_cid"),
+                    signature=entry.get("signature", ""),
+                )
+                self._store[cid] = d
+                loaded += 1
+            except Exception as exc:
+                logger.warning("Skipping malformed delegation %r: %s", cid, exc)
+        logger.debug("Loaded %d delegations from %s", loaded, self.path)
+        return loaded
+
+    # ------------------------------------------------------------------
+    # Conversion
+    # ------------------------------------------------------------------
+
+    def to_evaluator(self) -> "DelegationEvaluator":
+        """Create a :class:`DelegationEvaluator` populated with all stored delegations."""
+        ev = DelegationEvaluator()
+        for delegation in self._store.values():
+            ev.add(delegation)
+        return ev
+
+
+# ---------------------------------------------------------------------------
+# Session 58 — DelegationManager (bundles Store + RevocationList + Evaluator)
+# ---------------------------------------------------------------------------
+
+import tempfile as _tempfile
+
+
+@dataclass
+class MergePlan:
+    """Simulated result of a :meth:`DelegationManager.merge` dry run.
+
+    Attributes:
+        would_add: CIDs that *would* be added to the destination manager.
+        would_skip_conflicts: CIDs that *would* be skipped because they are
+            already in the destination manager's revocation list.
+    """
+
+    would_add: List[str] = field(default_factory=list)
+    would_skip_conflicts: List[str] = field(default_factory=list)
+
+    @property
+    def add_count(self) -> int:
+        """Number of delegations that would be added."""
+        return len(self.would_add)
+
+    @property
+    def conflict_count(self) -> int:
+        """Number of delegations that would be skipped due to conflicts."""
+        return len(self.would_skip_conflicts)
+
+
+@dataclass
+class MergeResult:
+    """Structured result returned by :meth:`DelegationManager.merge` when
+    ``dry_run=False``.
+
+    Replaces the bare ``int`` return type with a richer object that exposes
+    per-dimension counts, making callers resilient to future additions without
+    a breaking API change.
+
+    Attributes:
+        added_count: Number of delegations successfully added.
+        conflict_count: Number of delegations skipped because they were already
+            revoked in the destination manager.
+        revocations_copied: Number of revocation entries copied from the source
+            manager (non-zero only when ``copy_revocations=True``).
+    """
+
+    added_count: int = 0
+    conflict_count: int = 0
+    revocations_copied: int = 0
+
+    def __int__(self) -> int:
+        """Return :attr:`added_count` for backwards-compatible ``int()`` casts."""
+        return self.added_count
+
+    def __eq__(self, other: object) -> bool:  # type: ignore[override]
+        if isinstance(other, int):
+            return self.added_count == other
+        return super().__eq__(other)
+
+    def __lt__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return self.added_count < other
+        if isinstance(other, MergeResult):
+            return self.added_count < other.added_count
+        return NotImplemented  # type: ignore[return-value]
+
+    def __le__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return self.added_count <= other
+        if isinstance(other, MergeResult):
+            return self.added_count <= other.added_count
+        return NotImplemented  # type: ignore[return-value]
+
+    def __gt__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return self.added_count > other
+        if isinstance(other, MergeResult):
+            return self.added_count > other.added_count
+        return NotImplemented  # type: ignore[return-value]
+
+    def __ge__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return self.added_count >= other
+        if isinstance(other, MergeResult):
+            return self.added_count >= other.added_count
+        return NotImplemented  # type: ignore[return-value]
+
+    @property
+    def total(self) -> int:
+        """Total delegations seen: :attr:`added_count` + :attr:`conflict_count`.
+
+        Useful for computing the import fraction::
+
+            if result.total:
+                fraction = result.added_count / result.total
+        """
+        return self.added_count + self.conflict_count
+
+    @property
+    def import_rate(self) -> float:
+        """Fraction of source delegations successfully imported.
+
+        ``added_count / total`` with a zero-division guard: returns ``0.0``
+        when :attr:`total` is zero (empty source) rather than raising.
+
+        Examples::
+
+            result = dst.merge(src)
+            print(f"{result.import_rate:.0%} of delegations imported")
+        """
+        if self.total == 0:
+            return 0.0
+        return self.added_count / self.total
+
+    def to_dict(self) -> Dict:
+        """Serialise this result to a plain dictionary.
+
+        Returns a snapshot suitable for JSON serialisation, audit logs, or
+        monitoring APIs::
+
+            {"added": 3, "conflicts": 1, "revocations_copied": 0, "import_rate": 0.75}
+
+        Returns:
+            Dict with keys ``added``, ``conflicts``, ``revocations_copied``,
+            and ``import_rate``.
+        """
+        return {
+            "added": self.added_count,
+            "conflicts": self.conflict_count,
+            "revocations_copied": self.revocations_copied,
+            "import_rate": self.import_rate,
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict) -> "MergeResult":
+        """Reconstruct a :class:`MergeResult` from a dict produced by :meth:`to_dict`.
+
+        Round-trips cleanly::
+
+            assert MergeResult.from_dict(result.to_dict()) == result
+
+        Args:
+            d: Dictionary with keys ``added``, ``conflicts``, and
+                ``revocations_copied``.  The ``import_rate`` key is ignored
+                (it is a derived property).  Missing keys default to ``0``.
+
+        Returns:
+            A new :class:`MergeResult` instance.
+        """
+        return cls(
+            added_count=int(d.get("added", 0)),
+            conflict_count=int(d.get("conflicts", 0)),
+            revocations_copied=int(d.get("revocations_copied", 0)),
+        )
 
     def __repr__(self) -> str:
-        return f"DelegationStore({len(self._tokens)} tokens, path={self._store_path!r})"
+        """Human-friendly representation of this :class:`MergeResult`.
 
+        Format::
 
-# ─── module-level singletons ─────────────────────────────────────────────────
+            MergeResult(added=3, conflicts=1, rate=75.0%)
 
+        The ``rate`` field is :attr:`import_rate` expressed as a percentage
+        (1 decimal place).
+        """
+        return (
+            f"MergeResult(added={self.added_count}, "
+            f"conflicts={self.conflict_count}, "
+            f"rate={self.import_rate * 100:.1f}%)"
+        )
 
-_global_evaluator: Optional[DelegationEvaluator] = None
-_global_store: Optional[DelegationStore] = None
-_global_manager: Optional["DelegationManager"] = None
+    #: ``str()`` delegates to :meth:`__repr__` for display consistency.
+    __str__ = __repr__
 
+    def __bool__(self) -> bool:
+        """``True`` when at least one delegation was successfully added.
 
-def get_delegation_evaluator() -> DelegationEvaluator:
-    """Return the process-global DelegationEvaluator (lazy-init)."""
-    global _global_evaluator
-    if _global_evaluator is None:
-        _global_evaluator = DelegationEvaluator()
-    return _global_evaluator
+        Allows concise conditional use::
 
+            result = manager.merge(other)
+            if result:
+                log.info("Merge added %d delegations", result.added_count)
 
-def get_delegation_store() -> DelegationStore:
-    """Return the process-global DelegationStore (lazy-init, no persistence)."""
-    global _global_store
-    if _global_store is None:
-        _global_store = DelegationStore()
-    return _global_store
+        Returns:
+            ``True`` if :attr:`added_count` > 0, ``False`` otherwise.
+        """
+        return self.added_count > 0
 
+    def __len__(self) -> int:
+        """Return the number of delegations added by this merge.
 
-# ─── DelegationManager (BH118) ───────────────────────────────────────────────
+        Allows ``len(result)`` to mirror :meth:`__int__` and enables use in
+        sum comprehensions::
+
+            total = sum(len(r) for r in results)
+
+        Returns:
+            :attr:`added_count` as an ``int``.
+        """
+        return self.added_count
 
 
 class DelegationManager:
-    """High-level facade that combines :class:`DelegationStore`,
-    :class:`DelegationEvaluator`, and :class:`RevocationList` into a single
-    lifecycle object with optional persistence.
+    """Bundles :class:`DelegationStore`, :class:`RevocationList`, and
+    :class:`DelegationEvaluator` into a single convenience object.
 
-    Parameters
-    ----------
-    path:
-        Optional path to store delegation tokens on disk.  When ``None``,
-        the manager works entirely in-memory.
+    Provides a complete delegation lifecycle:
+
+    - **Persisting** delegation chains (:class:`DelegationStore`)
+    - **Revoking** individual or chain-wide CIDs (:class:`RevocationList`)
+    - **Evaluating** capability invocations (:class:`DelegationEvaluator`)
+
+    The :func:`get_delegation_manager` factory provides a process-global
+    singleton.
+
+    Usage::
+
+        mgr = get_delegation_manager()
+        mgr.add(delegation)
+        mgr.revoke("compromised-cid")
+        ok, reason = mgr.can_invoke("leaf-cid", "some_tool", "alice")
+        mgr.save()
+
+    Args:
+        path: Filesystem path for the JSON delegation file.  Defaults to
+            a temporary-directory path.
     """
 
-    def __init__(self, path: Optional[str] = None) -> None:
-        self._store = DelegationStore(store_path=path)
+    def __init__(self, path: Optional[str] = None, max_chain_depth: int = 0) -> None:
+        _default_path = _tempfile.gettempdir() + "/mcp_delegations.json"
+        self._store = DelegationStore(path or _default_path)
         self._revocation = RevocationList()
-        self._evaluator: Optional[DelegationEvaluator] = None  # lazy / cache
-        self._metrics_cache: Optional[Dict[str, Any]] = None  # CM149: memoize get_metrics
+        self._evaluator: Optional[DelegationEvaluator] = None
+        self._max_chain_depth: int = max_chain_depth
 
     # ------------------------------------------------------------------
-    # Token lifecycle
+    # Delegation management
     # ------------------------------------------------------------------
 
-    def add(self, token: DelegationToken) -> str:
-        """Add *token* and return its CID.  Invalidates the evaluator cache."""
-        cid = self._store.add(token)
-        self._evaluator = None  # invalidate cache
-        self._metrics_cache = None  # CM149: invalidate metrics cache
-        return cid
+    def add(self, delegation: Delegation) -> None:
+        """Add a delegation; invalidates the cached evaluator."""
+        self._store.add(delegation)
+        self._evaluator = None  # invalidate on mutation
 
     def remove(self, cid: str) -> bool:
-        """Remove token by *cid*.  Invalidates the evaluator cache."""
+        """Remove a delegation by CID; return *True* if it existed."""
         result = self._store.remove(cid)
-        if result:
-            self._evaluator = None
-            self._metrics_cache = None  # CM149: invalidate metrics cache
+        self._evaluator = None
         return result
-
-    def get(self, cid: str) -> Optional[DelegationToken]:
-        """Return token by *cid* or ``None``."""
-        return self._store.get(cid)
-
-    def list_cids(self) -> List[str]:
-        """Return list of all token CIDs in the store."""
-        return self._store.list_cids()
 
     # ------------------------------------------------------------------
     # Revocation
     # ------------------------------------------------------------------
 
     def revoke(self, cid: str) -> None:
-        """Revoke a token by *cid*."""
+        """Revoke a single delegation CID."""
         self._revocation.revoke(cid)
-        self._metrics_cache = None  # DV184: invalidate cache on revoke
-
-    def revoke_chain(self, root_cid: str) -> int:
-        """Revoke an entire chain rooted at *root_cid*.
-
-        Builds the chain from the store and revokes all constituent tokens.
-        If the chain is empty or cannot be built, *root_cid* itself is revoked.
-        Returns the number of tokens revoked (at least 1).
-        """
-        ev = self.get_evaluator()
-        try:
-            chain = ev.build_chain(root_cid)
-            if chain.tokens:
-                self._revocation.revoke_chain(chain)
-                return len(chain.tokens)
-            # Empty chain — unknown root_cid; still revoke it directly
-            self._revocation.revoke(root_cid)
-            return 1
-        except (KeyError, ValueError, RuntimeError) as exc:
-            logger.warning("revoke_chain(%s): could not build chain, revoking root only: %s", root_cid, exc)
-            self._revocation.revoke(root_cid)
-            return 1
 
     def is_revoked(self, cid: str) -> bool:
-        """Return ``True`` if *cid* has been revoked."""
+        """Return *True* if *cid* has been revoked."""
         return self._revocation.is_revoked(cid)
 
     # ------------------------------------------------------------------
@@ -726,385 +1208,309 @@ class DelegationManager:
     # ------------------------------------------------------------------
 
     def get_evaluator(self) -> DelegationEvaluator:
-        """Return a :class:`DelegationEvaluator` (cached; rebuilt on add/remove)."""
+        """Return a :class:`DelegationEvaluator` populated from the store.
+
+        The evaluator is cached and re-created only when the store changes.
+        """
         if self._evaluator is None:
             self._evaluator = self._store.to_evaluator()
+            self._evaluator._max_chain_depth = self._max_chain_depth
         return self._evaluator
 
-    def can_invoke(
-        self,
-        principal: str,
-        resource: str,
-        ability: str,
-        *,
-        leaf_cid: str,
-        at_time: Optional[float] = None,
-    ) -> Tuple[bool, str]:
-        """Check whether *principal* can invoke *ability* on *resource*.
+    def can_invoke(self, leaf_cid: str, tool: str, actor: str) -> Tuple[bool, str]:
+        """Check whether *actor* can invoke *tool* via *leaf_cid*.
 
-        Also checks the revocation list before evaluating the chain.
+        Delegates to :func:`can_invoke_with_revocation` using the current
+        evaluator and revocation list.
 
-        Returns
-        -------
-        (allowed: bool, reason: str)
+        Returns:
+            ``(authorized, reason)`` tuple.
         """
-        ev = self.get_evaluator()
-        return ev.can_invoke_with_revocation(
-            principal,
-            resource,
-            ability,
-            leaf_cid=leaf_cid,
+        return can_invoke_with_revocation(
+            leaf_cid, tool, actor,
+            evaluator=self.get_evaluator(),
             revocation_list=self._revocation,
-            at_time=at_time,
         )
-
-    def can_invoke_audited(
-        self,
-        principal: str,
-        resource: str,
-        ability: str,
-        *,
-        leaf_cid: str,
-        at_time: Optional[float] = None,
-        audit_log: Optional[Any] = None,
-        policy_cid: str = "delegation",
-        intent_cid: str = "intent",
-    ) -> Tuple[bool, str]:
-        """Check whether *principal* can invoke *ability* on *resource*.
-
-        Like :meth:`can_invoke` but additionally records the decision to
-        *audit_log* (a :class:`~policy_audit_log.PolicyAuditLog`) when provided.
-
-        Returns (allowed: bool, reason: str).
-        """
-        allowed, reason = self.can_invoke(
-            principal, resource, ability,
-            leaf_cid=leaf_cid, at_time=at_time,
-        )
-        if audit_log is not None:
-            try:
-                decision_str = "allow" if allowed else "deny"
-                audit_log.record(
-                    policy_cid=policy_cid,
-                    intent_cid=intent_cid,
-                    decision=decision_str,
-                    tool=ability,
-                    actor=principal,
-                )
-            except (TypeError, AttributeError, ValueError) as exc:  # pragma: no cover
-                logger.warning("can_invoke_audited: audit record failed: %s", exc)
-        return allowed, reason
 
     # ------------------------------------------------------------------
     # Persistence
     # ------------------------------------------------------------------
 
-    def save(self) -> str:
-        """Persist the store to disk.  Returns the path written."""
-        return self._store.save()
+    def save(self) -> None:
+        """Persist the delegation store to disk."""
+        self._store.save()
 
     def load(self) -> int:
-        """Load the store from disk.  Returns the number of tokens loaded."""
-        count = self._store.load()
-        self._evaluator = None  # invalidate cache
-        self._metrics_cache = None  # CM149: invalidate metrics cache
+        """Load delegations from disk; invalidates the evaluator cache.
+
+        Returns:
+            Number of delegations loaded.
+        """
+        n = self._store.load()
+        self._evaluator = None
+        return n
+
+    # ------------------------------------------------------------------
+    # Encrypted RevocationList persistence (Session 60)
+    # ------------------------------------------------------------------
+
+    def save_encrypted(self, password: str) -> None:
+        """Persist the revocation list to disk using AES-256-GCM encryption.
+
+        The revocation file is written to the same directory as the delegation
+        store, with the name ``<store_basename>.revoked.enc``.
+
+        Falls back to plain :meth:`RevocationList.save` with a
+        ``UserWarning`` when the ``cryptography`` package is not installed.
+
+        Args:
+            password: Encryption passphrase.  See
+                :meth:`~RevocationList.save_encrypted` for key derivation
+                details.
+        """
+        import os as _os
+        base = self._store.path
+        enc_path = _os.path.splitext(base)[0] + ".revoked.enc"
+        self._revocation.save_encrypted(enc_path, password)
+
+    def load_encrypted(self, password: str) -> int:
+        """Load the encrypted revocation list from disk.
+
+        Reads the companion ``<store_basename>.revoked.enc`` file.  Returns 0
+        (without raising) on any error.
+
+        Falls back to plain :meth:`RevocationList.load` with a
+        ``UserWarning`` when ``cryptography`` is not installed.
+
+        Args:
+            password: Decryption passphrase.
+
+        Returns:
+            Number of CIDs loaded into the revocation list.
+        """
+        import os as _os
+        base = self._store.path
+        enc_path = _os.path.splitext(base)[0] + ".revoked.enc"
+        return self._revocation.load_encrypted(enc_path, password)
+
+    # ------------------------------------------------------------------
+    # Chain-wide revocation (Session 60)
+    # ------------------------------------------------------------------
+
+    def revoke_chain(self, root_cid: str) -> int:
+        """Revoke every delegation in the chain rooted at *root_cid*.
+
+        Delegates to :meth:`RevocationList.revoke_chain` using the current
+        :class:`DelegationEvaluator` (rebuilt if stale).
+
+        After revoking, publishes a ``RECEIPT_DISSEMINATE`` event to the
+        global :class:`~ipfs_datasets_py.mcp_server.mcp_p2p_transport.PubSubBus`
+        so that peer nodes can observe revocations in real time (Session 63).
+
+        Args:
+            root_cid: The CID of the root delegation to revoke.
+
+        Returns:
+            Number of newly-revoked CIDs (0 if already revoked or missing).
+        """
+        evaluator = self.get_evaluator()
+        count = self._revocation.revoke_chain(root_cid, evaluator)
+        # Publish a pubsub notification so peer nodes can observe revocations.
+        try:
+            from ipfs_datasets_py.mcp_server.mcp_p2p_transport import (  # noqa: PLC0415
+                get_global_bus,
+                PubSubEventType,
+            )
+            bus = get_global_bus()
+            bus.publish(
+                PubSubEventType.RECEIPT_DISSEMINATE,
+                {"type": "revocation", "root_cid": root_cid, "count": count},
+            )
+        except Exception as _exc:
+            logger.debug(
+                "DelegationManager.revoke_chain: pubsub notification failed: %s", _exc
+            )  # best-effort — never block revocation
         return count
 
     # ------------------------------------------------------------------
     # Metrics
     # ------------------------------------------------------------------
 
-    def get_metrics(self) -> Dict[str, Any]:
-        """Return a metrics snapshot.
+    def get_metrics(self) -> Dict[str, int]:
+        """Return a dict of delegation-related metrics.
 
-        CM149: Extended to include ``max_chain_depth`` — the maximum chain
-        length observed across all stored delegation tokens (0 when empty).
-
-        The result is memoised and invalidated whenever tokens are added,
-        removed, or loaded, so repeated calls are O(1) after the first.
+        Returns:
+            ``{"delegation_count": int, "revoked_cid_count": int,
+            "max_chain_depth": int}`` — ``max_chain_depth`` is 0 for unlimited.
         """
-        if self._metrics_cache is not None:
-            return dict(self._metrics_cache)
-        max_depth = 0
-        try:
-            evaluator = self.get_evaluator()
-            for cid in self._store.list_cids():
-                try:
-                    chain = evaluator.build_chain(cid)
-                    if len(chain) > max_depth:
-                        max_depth = len(chain)
-                except Exception:
-                    pass
-        except Exception:
-            pass
-        result = {
-            "token_count": len(self._store),
-            "revoked_count": len(self._revocation),
-            "active_token_count": max(0, len(self._store) - len(self._revocation)),  # DV184
-            "has_path": self._store._store_path is not None,
-            "max_chain_depth": max_depth,
+        return {
+            "delegation_count": len(self._store),
+            "revoked_cid_count": len(self._revocation),
+            "max_chain_depth": self._max_chain_depth,
         }
-        self._metrics_cache = result
-        return dict(result)
 
-    # ------------------------------------------------------------------
-    # Introspection
-    # ------------------------------------------------------------------
+    def merge(
+        self,
+        other: "DelegationManager",
+        *,
+        copy_revocations: bool = False,
+        skip_revocations: Optional[Set[str]] = None,
+        audit_log: Any = None,
+        dry_run: bool = False,
+    ) -> "Union[MergeResult, MergePlan]":
+        """Merge delegation entries from *other* into this manager.
+
+        Only delegations whose CID is **not** already present in this
+        manager are added.  The evaluator cache is invalidated after any
+        additions.
+
+        By default the revocation list is **not** copied because revocations
+        are security-sensitive — callers must explicitly opt in via
+        *copy_revocations* to import revocations from another manager.
+
+        Args:
+            other: The source :class:`DelegationManager` to copy from.
+            copy_revocations: When *True*, all CIDs revoked in *other*'s
+                :class:`RevocationList` are also revoked in *self*.
+            skip_revocations: Optional set of CIDs to **exclude** from the
+                revocation copy.  Only used when *copy_revocations* is *True*.
+                Allows callers to opt in to almost-all revocations while
+                selectively preserving specific CIDs.
+            audit_log: Optional object with an ``append(entry: dict)`` method.
+                When *copy_revocations* is *True* and this is provided, each
+                newly-copied revocation CID is recorded as
+                ``{"event": "revocation_copied", "cid": cid}``.
+            dry_run: When *True*, simulate the merge and return a
+                :class:`MergePlan` with ``would_add`` and
+                ``would_skip_conflicts`` lists without mutating state.
+                When *False* (default), perform the merge normally and return
+                a :class:`MergeResult` describing what happened.
+
+        Returns:
+            When *dry_run* is *False*: a :class:`MergeResult` with
+            ``added_count``, ``conflict_count``, and ``revocations_copied``.
+            When *dry_run* is *True*: a :class:`MergePlan` describing what
+            *would* happen.
+        """
+        current_cids = set(self._store.list_cids())
+        revoked_in_self = set(self._revocation.to_list())
+
+        if dry_run:
+            plan = MergePlan()
+            for cid in other._store.list_cids():
+                if cid in revoked_in_self:
+                    plan.would_skip_conflicts.append(cid)
+                elif cid not in current_cids:
+                    plan.would_add.append(cid)
+            return plan
+
+        added = 0
+        conflicts = 0
+        for cid in other._store.list_cids():
+            if cid in revoked_in_self:
+                warnings.warn(
+                    f"merge: skipping delegation {cid!r} — it is already revoked in this manager",
+                    UserWarning,
+                    stacklevel=3,
+                )
+                conflicts += 1
+                continue
+            if cid not in current_cids:
+                delegation = other._store.get(cid)
+                if delegation is not None:
+                    self._store.add(delegation)
+                    added += 1
+                    if audit_log is not None:
+                        try:
+                            audit_log.append({"event": "merge_add", "cid": cid})
+                        except Exception as _exc:
+                            logger.debug("audit_log.append (merge_add) raised: %s", _exc)
+        if added:
+            self._evaluator = None  # invalidate on mutation
+        revocations_copied = 0
+        if copy_revocations:
+            excluded: Set[str] = set(skip_revocations) if skip_revocations is not None else set()
+            for cid in other._revocation.to_list():
+                if cid not in excluded:
+                    self._revocation.revoke(cid)
+                    revocations_copied += 1
+                    if audit_log is not None:
+                        try:
+                            audit_log.append({"event": "revocation_copied", "cid": cid})
+                        except Exception as _exc:
+                            logger.debug("audit_log.append raised: %s", _exc)
+        return MergeResult(
+            added_count=added,
+            conflict_count=conflicts,
+            revocations_copied=revocations_copied,
+        )
 
     def __len__(self) -> int:
         return len(self._store)
 
-    def active_tokens(self):
-        """EA189: Iterate over non-revoked (active) delegation tokens.
 
-        Yields ``(cid, token)`` pairs for all tokens whose CID is not
-        present in the revocation list.  The iteration order follows
-        :meth:`DelegationStore.list_cids` (insertion order).
-
-        Yields
-        ------
-        tuple of (str, DelegationToken)
-            ``(cid, token)`` where *cid* is not revoked.
-        """
-        for cid in self._store.list_cids():
-            if not self._revocation.is_revoked(cid):
-                token = self._store.get(cid)
-                if token is not None:
-                    yield cid, token
-
-    @property
-    def active_token_count(self) -> int:
-        """EF194: Cached count of non-revoked (active) tokens.
-
-        Delegates to :meth:`get_metrics` so the value is always consistent
-        with the memoised metrics snapshot and is invalidated whenever
-        :meth:`add`, :meth:`remove`, :meth:`revoke`, or :meth:`load`
-        modifies the store.
-        """
-        return self.get_metrics()["active_token_count"]
-
-    def active_tokens_by_resource(self, resource: str):
-        """EI197: Iterate over active tokens that grant access to *resource*.
-
-        Yields ``(cid, token)`` pairs from :meth:`active_tokens` where at
-        least one :class:`Capability` in the token has a matching *resource*
-        field.  Wildcard resources (``"*"``) in a capability match any
-        *resource* argument.
-
-        Parameters
-        ----------
-        resource:
-            The resource string to match against token capabilities.
-
-        Yields
-        ------
-        tuple of (str, DelegationToken)
-            Active ``(cid, token)`` pairs whose capability list covers
-            *resource*.
-        """
-        for cid, token in self.active_tokens():
-            for cap in token.capabilities:
-                if cap.resource == "*" or cap.resource == resource:
-                    yield cid, token
-                    break  # each token yielded at most once
-
-    def active_tokens_by_actor(self, actor: str):
-        """FD218: Iterate over active tokens whose audience matches *actor*.
-
-        Yields ``(cid, token)`` pairs from :meth:`active_tokens` where
-        ``token.audience == actor``.  This lets callers quickly find all
-        delegations granted to a specific DID or principal.
-
-        Parameters
-        ----------
-        actor:
-            DID or principal string to match against ``token.audience``.
-
-        Yields
-        ------
-        tuple of (str, DelegationToken)
-            Active ``(cid, token)`` pairs delegated to *actor*.
-        """
-        for cid, token in self.active_tokens():
-            if token.audience == actor:
-                yield cid, token
-
-    # ------------------------------------------------------------------
-    # CQ153: Merge
-    # ------------------------------------------------------------------
-
-    def merge(self, other: "DelegationManager") -> int:
-        """CQ153: Copy non-duplicate delegation tokens from *other* into *self*.
-
-        Tokens whose CID is already present in this manager are skipped.
-        Revocations are **not** copied (use explicit revoke() calls for that).
-
-        Parameters
-        ----------
-        other:
-            Source :class:`DelegationManager`.
-
-        Returns
-        -------
-        int
-            Number of tokens actually added (0 if all were duplicates).
-        """
-        added = 0
-        for cid in other.list_cids():
-            if cid not in self._store:
-                token = other.get(cid)
-                if token is not None:
-                    self._store.add(token)
-                    added += 1
-        if added > 0:
-            self._evaluator = None  # invalidate
-            self._metrics_cache = None
-        return added
-
-    def merge_and_publish(self, other: "DelegationManager", pubsub: Any) -> int:
-        """CQ153/CY161: Merge tokens from *other*, then publish a receipt-dissemination event.
-
-        Calls :meth:`merge` and then ``pubsub.publish("receipt_disseminate",
-        {"type": "merge", "added": N, "total": M, "metrics": {...}})``.
-
-        The ``"metrics"`` key contains the full snapshot from
-        :meth:`get_metrics` (``delegation_count``, ``revoked_cid_count``,
-        ``max_chain_depth``) so consumers can react to the current state
-        without an additional round-trip.
-
-        Parameters
-        ----------
-        other:
-            Source :class:`DelegationManager`.
-        pubsub:
-            Any object with a ``publish(topic: str, payload: dict) -> None``
-            method.  The topic ``"receipt_disseminate"`` is used.
-
-        Returns
-        -------
-        int
-            Number of tokens added (same as :meth:`merge`).
-        """
-        added = self.merge(other)
-        try:
-            pubsub.publish(
-                "receipt_disseminate",
-                {
-                    "type": "merge",
-                    "added": added,
-                    "total": len(self._store),
-                    "metrics": self.get_metrics(),  # CY161: full snapshot
-                },
-            )
-        except Exception as exc:  # pragma: no cover
-            logger.debug("merge_and_publish: pubsub.publish failed: %s", exc)
-        return added
-
-    async def merge_and_publish_async(self, other: "DelegationManager", pubsub: Any) -> int:
-        """DK173/DQ179: Async variant of :meth:`merge_and_publish`.
-
-        Merges tokens from *other* synchronously (thread-safe), then calls
-        ``await pubsub.publish_async("receipt_disseminate", payload)`` when
-        the pubsub has a ``publish_async`` coroutine, falling back to the
-        synchronous ``publish`` if it does not.
-
-        DQ179: The topic string ``"receipt_disseminate"`` is the well-known
-        MCP+P2P pubsub topic key (see ``MCP_P2P_PUBSUB_TOPICS`` in
-        ``mcp_p2p_transport.py``).  The ``event_type`` field in the payload
-        is set to ``"RECEIPT_DISSEMINATE"`` for consumers that need to
-        distinguish event types.
-
-        The payload is otherwise identical to :meth:`merge_and_publish`.
-
-        Parameters
-        ----------
-        other:
-            Source :class:`DelegationManager`.
-        pubsub:
-            Any object with a ``publish_async(topic, payload)`` coroutine
-            **or** a synchronous ``publish(topic, payload)`` method as a
-            fallback.
-
-        Returns
-        -------
-        int
-            Number of tokens added (same as :meth:`merge`).
-        """
-        added = self.merge(other)
-        payload = {
-            "type": "merge",
-            "event_type": "RECEIPT_DISSEMINATE",  # DQ179: explicit event type
-            "added": added,
-            "total": len(self._store),
-            "metrics": self.get_metrics(),
-        }
-        try:
-            import inspect
-            publish_fn = getattr(pubsub, "publish_async", None)
-            if publish_fn is not None and inspect.iscoroutinefunction(publish_fn):
-                await publish_fn("receipt_disseminate", payload)
-            else:
-                # Fallback: synchronous publish
-                sync_fn = getattr(pubsub, "publish", None)
-                if sync_fn is not None:
-                    sync_fn("receipt_disseminate", payload)
-        except Exception as exc:
-            logger.debug("merge_and_publish_async: publish failed: %s", exc)
-        return added
-
-    def __repr__(self) -> str:
-        return (
-            f"DelegationManager(tokens={len(self._store)}, "
-            f"revoked={len(self._revocation)})"
-        )
+# Global singleton
+_default_delegation_manager: Optional[DelegationManager] = None
 
 
-def get_delegation_manager() -> "DelegationManager":
-    """Return the process-global :class:`DelegationManager` (lazy-init)."""
-    global _global_manager
-    if _global_manager is None:
-        _global_manager = DelegationManager()
-    return _global_manager
+def get_delegation_manager(
+    path: Optional[str] = None,
+    max_chain_depth: int = 0,
+) -> DelegationManager:
+    """Return the process-global :class:`DelegationManager` singleton.
 
+    Creates the singleton on first call.
 
+    Args:
+        path: Optional path passed to :class:`DelegationManager` on first
+            creation.  Ignored on subsequent calls.
+        max_chain_depth: Maximum delegation chain depth (0 = unlimited).
+            Applied on first creation; ignored on subsequent calls.
 
-# ---------------------------------------------------------------------------
-# CM149: record_delegation_metrics — publish DelegationManager metrics to Prometheus
-# ---------------------------------------------------------------------------
-
-def record_delegation_metrics(
-    manager: Optional["DelegationManager"],
-    collector: Any,
-) -> None:
-    """CM149: Record :class:`DelegationManager` metrics to a Prometheus *collector*.
-
-    Sets three gauges:
-
-    * ``mcp_revoked_cids_total`` — number of revoked CIDs
-    * ``mcp_delegation_store_depth`` — number of stored tokens
-    * ``mcp_delegation_chain_depth_max`` — maximum delegation chain depth observed
-
-    Parameters
-    ----------
-    manager:
-        A :class:`DelegationManager` instance, or ``None`` (no-op).
-    collector:
-        Any object with a ``set_gauge(name: str, value: float)`` method
-        (e.g. :class:`~mcp_server.monitoring.PrometheusExporter`).
-
-    Notes
-    -----
-    All exceptions are swallowed and logged at DEBUG level so that monitoring
-    failures cannot crash the calling server loop.
+    Returns:
+        The global :class:`DelegationManager` instance.
     """
-    import logging as _logging
-    _log = _logging.getLogger(__name__)
-    if manager is None:
-        return
+    global _default_delegation_manager
+    if _default_delegation_manager is None:
+        _default_delegation_manager = DelegationManager(path, max_chain_depth=max_chain_depth)
+    return _default_delegation_manager
+
+
+# ---------------------------------------------------------------------------
+# Session 58 — Monitoring integration (Phase K)
+# ---------------------------------------------------------------------------
+
+
+def record_delegation_metrics(manager: "DelegationManager", collector: Any) -> None:
+    """Surface :class:`DelegationManager` metrics via *collector*.
+
+    Calls :meth:`set_gauge` on *collector* with three metrics:
+
+    - ``mcp_revoked_cids_total`` — number of CIDs in the revocation list.
+    - ``mcp_delegation_store_depth`` — number of stored delegations.
+    - ``mcp_delegation_max_chain_depth`` — configured max chain depth (0 = unlimited).
+
+    All collector errors are swallowed with a warning so that metric
+    recording never crashes the server.
+
+    Args:
+        manager: A :class:`DelegationManager` instance.
+        collector: An :class:`~monitoring.EnhancedMetricsCollector`-compatible
+            object; only :meth:`set_gauge` is called.
+    """
     try:
         metrics = manager.get_metrics()
-        collector.set_gauge("mcp_revoked_cids_total", float(metrics.get("revoked_count", 0)))
-        collector.set_gauge("mcp_delegation_store_depth", float(metrics.get("token_count", 0)))
-        collector.set_gauge("mcp_delegation_chain_depth_max", float(metrics.get("max_chain_depth", 0)))
+        collector.set_gauge(
+            "mcp_revoked_cids_total",
+            float(metrics["revoked_cid_count"]),
+        )
+        collector.set_gauge(
+            "mcp_delegation_store_depth",
+            float(metrics["delegation_count"]),
+        )
+        collector.set_gauge(
+            "mcp_delegation_max_chain_depth",
+            float(metrics["max_chain_depth"]),
+        )
     except Exception as exc:
-        _log.debug("record_delegation_metrics: failed: %s", exc)
+        logger.warning("record_delegation_metrics failed: %s", exc)

@@ -117,7 +117,7 @@ class TDFOLShadowProverBridge(BaseProverBridge):
         if not self.is_available():
             raise ValueError("ShadowProver bridge not available")
         
-        return self.tdfol_to_modal_string(formula)
+        return self._tdfol_to_modal_format(formula)
     
     def from_target_format(self, target_result: Any) -> ProofResult:
         """
@@ -159,7 +159,7 @@ class TDFOLShadowProverBridge(BaseProverBridge):
         Returns:
             ProofResult with status and details
         """
-        return self.prove_modal_formula(formula)
+        return self.prove_modal(formula)
     
     def select_modal_logic(self, formula: Formula) -> ModalLogicType:
         """

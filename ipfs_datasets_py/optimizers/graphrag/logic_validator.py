@@ -1067,6 +1067,29 @@ class LogicValidator:
         """
         return self.is_consistent(ontology)
 
+    def validate_all(self, ontologies: List[Dict[str, Any]]) -> List["ValidationResult"]:
+        """Validate a list of ontologies and return their results.
+
+        This is a convenience wrapper around :meth:`check_consistency` for
+        batch use.
+
+        Args:
+            ontologies: List of ontology dicts.
+
+        Returns:
+            List of :class:`ValidationResult` objects in the same order as the
+            input.
+
+        Example:
+            >>> results = validator.validate_all([
+            ...     {"entities": [], "relationships": []},
+            ...     {"entities": [{"id": "e1"}], "relationships": []},
+            ... ])
+            >>> len(results)
+            2
+        """
+        return [self.check_consistency(ont) for ont in ontologies]
+
     def is_empty(self, ontology: Dict[str, Any]) -> bool:
         """Return ``True`` if *ontology* contains no entities and no relationships.
 

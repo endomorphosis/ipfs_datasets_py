@@ -20,6 +20,7 @@ Usage:
 """
 
 from typing import List, Optional, Dict
+from dataclasses import dataclass, field
 from ..native.dcec_core import (
     Formula,
     AtomicFormula,
@@ -220,3 +221,39 @@ def create_tptp_problem(
     lines.append(tptp_conjecture)
     
     return "\n".join(lines)
+
+
+@dataclass
+class TPTPFormula:
+    """A TPTP-formatted formula with metadata."""
+    formula: Formula
+    role: str = "conjecture"
+    name: str = "f1"
+    tptp_str: str = field(default="", init=False)
+
+    def __post_init__(self) -> None:
+        self.tptp_str = formula_to_tptp(self.formula, self.role, self.name)
+
+    def __str__(self) -> str:
+        return self.tptp_str
+
+
+class TPTPConverter:
+    """Converter for CEC formulas to TPTP format."""
+
+    def convert(self, formula: Formula, role: str = "conjecture", name: str = "f1") -> str:
+        """Convert a formula to TPTP string."""
+        return formula_to_tptp(formula, role, name)
+
+    def create_problem(
+        self,
+        conjecture: Formula,
+        axioms: Optional[List[Formula]] = None,
+        problem_name: str = "problem",
+    ) -> str:
+        """Create a complete TPTP problem string."""
+        return create_tptp_problem(conjecture, axioms, problem_name)
+
+    def convert_formula(self, formula: Formula) -> "TPTPFormula":
+        """Convert a formula to a TPTPFormula object."""
+        return TPTPFormula(formula)

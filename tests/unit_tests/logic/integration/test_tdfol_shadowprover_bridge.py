@@ -66,7 +66,7 @@ class TestTDFOLShadowProverBridge:
     def test_modal_logic_selection_deontic(self):
         """Test automatic modal logic selection for deontic formulas."""
         p = Predicate("P", ())
-        obligatory_p = DeonticFormula(DeonticOperator.OBLIGATORY, p)
+        obligatory_p = DeonticFormula(DeonticOperator.OBLIGATION, p)
         
         logic_type = self.bridge.select_modal_logic(obligatory_p)
         assert logic_type == ModalLogicType.D
@@ -146,7 +146,7 @@ class TestModalAwareTDFOLProver:
     def test_prove_deontic_formula(self):
         """Test proving deontic formula (should route to ShadowProver)."""
         p = Predicate("P", ())
-        obligatory_p = DeonticFormula(DeonticOperator.OBLIGATORY, p)
+        obligatory_p = DeonticFormula(DeonticOperator.OBLIGATION, p)
         
         self.prover.base_prover.kb.add_axiom(obligatory_p)
         
@@ -168,7 +168,7 @@ class TestModalAwareTDFOLProver:
     def test_has_deontic_operators_detection(self):
         """Test detection of deontic operators."""
         p = Predicate("P", ())
-        obligatory_p = DeonticFormula(DeonticOperator.OBLIGATORY, p)
+        obligatory_p = DeonticFormula(DeonticOperator.OBLIGATION, p)
         
         has_deontic = self.prover._has_deontic_operators(obligatory_p)
         assert has_deontic == True
@@ -244,8 +244,8 @@ class TestIntegrationScenarios:
         """Test deontic reasoning about obligations and permissions."""
         # If something is obligatory, it's permissible (D axiom)
         p = Predicate("Report", ())
-        obligatory_p = DeonticFormula(DeonticOperator.OBLIGATORY, p)
-        permitted_p = DeonticFormula(DeonticOperator.PERMISSIBLE, p)
+        obligatory_p = DeonticFormula(DeonticOperator.OBLIGATION, p)
+        permitted_p = DeonticFormula(DeonticOperator.PERMISSION, p)
         
         self.prover.base_prover.kb.add_axiom(obligatory_p)
         

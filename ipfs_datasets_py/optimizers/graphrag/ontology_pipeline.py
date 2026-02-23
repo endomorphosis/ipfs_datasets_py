@@ -157,6 +157,7 @@ class OntologyPipeline:
         )
         self._adapter = OntologyLearningAdapter(domain=domain)
         self._run_history: List["PipelineResult"] = []
+        self._last_refinement_state: Optional[Any] = None
 
     def __repr__(self) -> str:
         """Return a concise developer-readable summary of this pipeline."""
@@ -247,6 +248,7 @@ class OntologyPipeline:
                 ontology = state.current_ontology
                 score = state.critic_scores[-1]
                 actions_applied = [r.get("action") for r in state.refinement_history[1:]]
+                self._last_refinement_state = state
             elif refine_mode == "llm":
                 if refinement_agent is None:
                     self._log.warning("refine_mode=llm requires refinement_agent; falling back to rule_based")
@@ -254,6 +256,7 @@ class OntologyPipeline:
                     ontology = refined
                     actions_applied = refined.get("metadata", {}).get("refinement_actions", [])
                     score = self._critic.evaluate_ontology(ontology, ctx)
+                    self._last_refinement_state = None
                 else:
                     state = self._mediator.run_llm_refinement_cycle(
                         data,
@@ -263,11 +266,13 @@ class OntologyPipeline:
                     ontology = state.current_ontology
                     score = state.critic_scores[-1]
                     actions_applied = [r.get("action") for r in state.refinement_history[1:]]
+                    self._last_refinement_state = state
             else:
                 refined = self._mediator.refine_ontology(ontology, score, ctx)
                 ontology = refined
                 actions_applied = refined.get("metadata", {}).get("refinement_actions", [])
                 score = self._critic.evaluate_ontology(ontology, ctx)
+                self._last_refinement_state = None
 
             _notify("refined", 4, score=getattr(score, "overall", None),
                     actions_applied=actions_applied)
@@ -281,6 +286,7 @@ class OntologyPipeline:
         else:
             score = self._critic.evaluate_ontology(ontology, ctx)
             _notify("evaluated", 3, score=getattr(score, "overall", None))
+            self._last_refinement_state = None
 
         # 4. Feed result back to adapter
         self._adapter.apply_feedback(
@@ -658,6 +664,43 @@ class OntologyPipeline:
             True
         """
         return list(self._run_history)
+
+    def export_refinement_history(self, format: str = "dict") -> Any:
+        """Export the most recent refinement history.
+
+        If the last run used an agentic or LLM refinement cycle, the full
+        mediator history is returned. Otherwise, the history is derived from
+        the last run's ``actions_applied`` list.
+
+        Args:
+            format: Output format: "dict" (default) or "json".
+
+        Returns:
+            List of history entries or JSON string.
+
+        Raises:
+            ValueError: If an unsupported format is requested.
+        """
+        history: List[Dict[str, Any]] = []
+        state = getattr(self, "_last_refinement_state", None)
+        if state is not None and getattr(state, "refinement_history", None):
+            history = list(state.refinement_history)
+        elif self._run_history:
+            actions = self._run_history[-1].actions_applied
+            history = [
+                {"round": idx + 1, "action": action}
+                for idx, action in enumerate(actions)
+            ]
+
+        fmt = format.lower()
+        if fmt == "dict":
+            return history
+        if fmt == "json":
+            import json
+
+            return json.dumps(history, separators=(",", ":"), sort_keys=True)
+
+        raise ValueError(f"Unsupported export format: {format}")
 
     def run_ids(self) -> list[int]:
         """Return stable identifiers for all recorded runs.

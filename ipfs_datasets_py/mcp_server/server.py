@@ -415,7 +415,12 @@ class IPFSDatasetsMCPServer:
         self._initialize_error_reporting()
         self._initialize_mcp_server()
         self.tools = {}
+        self._dispatch_pipeline = None  # Optional[DispatchPipeline] — set via set_pipeline()
+        self._policy_store = None  # Optional[IPFSPolicyStore] — set via _initialize_policy_store()
+        self._server_delegation_manager = None  # Optional[DelegationManager] — Phase G
         self._initialize_p2p_services()
+        self._initialize_policy_store()
+        self._initialize_delegation_manager()
 
     def _initialize_error_reporting(self) -> None:
         """Initialize global error reporting if available."""
@@ -463,6 +468,128 @@ class IPFSDatasetsMCPServer:
         except Exception as e:
             logger.warning(f"Unexpected error initializing P2P service: {e}", exc_info=True)
             self.p2p = None
+
+    def set_pipeline(self, pipeline: Any) -> None:  # Any → DispatchPipeline
+        """Attach an optional :class:`~dispatch_pipeline.DispatchPipeline` to this server.
+
+        When a pipeline is attached every ``tools_dispatch`` call passes through
+        ``pipeline.check(intent)`` before the actual tool is executed.  An
+        allowed result continues to the tool; a denied result returns an error
+        dict without dispatching.
+
+        The pipeline is **opt-in** — the server starts with ``_dispatch_pipeline
+        = None`` and passes all requests through unchecked until a caller
+        explicitly calls this method.
+
+        Args:
+            pipeline: A :class:`~dispatch_pipeline.DispatchPipeline` instance,
+                or ``None`` to detach the current pipeline.
+        """
+        self._dispatch_pipeline = pipeline
+
+    def get_pipeline(self) -> Any:  # Optional[DispatchPipeline]
+        """Return the attached pipeline, or ``None`` if none is set."""
+        return self._dispatch_pipeline
+
+    def _initialize_policy_store(self) -> None:
+        """Restore :class:`~nl_ucan_policy.IPFSPolicyStore` from env (Phase G).
+
+        When the ``IPFS_POLICY_STORE_PATH`` environment variable is set, loads
+        the policy store from that path and restores the global
+        :class:`~nl_ucan_policy.PolicyRegistry` on startup.
+
+        Failures (missing module, corrupt file, etc.) are logged as warnings
+        and do **not** prevent the server from starting.
+        """
+        path = os.environ.get("IPFS_POLICY_STORE_PATH", "").strip()
+        if not path:
+            return
+        try:
+            from .nl_ucan_policy import IPFSPolicyStore, get_policy_registry  # noqa: PLC0415
+            registry = get_policy_registry()
+            self._policy_store = IPFSPolicyStore(path, registry)
+            self._policy_store.load()
+            logger.info(
+                "IPFSPolicyStore loaded from %s (%d policies restored)",
+                path,
+                len(registry),
+            )
+        except ImportError as exc:
+            logger.debug("IPFSPolicyStore not available: %s", exc)
+        except Exception as exc:
+            logger.warning("IPFSPolicyStore initialization failed: %s", exc)
+
+    def _initialize_delegation_manager(self) -> None:
+        """Initialise the process-global :class:`~ucan_delegation.DelegationManager` (Phase G).
+
+        Reads the ``MCP_DELEGATION_STORE_PATH`` environment variable.  When set,
+        a :class:`~ucan_delegation.DelegationManager` bound to that path is
+        created and stored on ``self._server_delegation_manager``.  The existing
+        delegations are loaded immediately.
+
+        Failures are logged as warnings and do **not** prevent the server from
+        starting.
+        """
+        path = os.environ.get("MCP_DELEGATION_STORE_PATH", "").strip()
+        try:
+            from .ucan_delegation import get_delegation_manager  # noqa: PLC0415
+            mgr = get_delegation_manager(path or None)
+            self._server_delegation_manager = mgr
+            if path:
+                mgr.load()
+                logger.info(
+                    "DelegationManager loaded from %s (%d delegations, %d revoked)",
+                    path,
+                    mgr.get_metrics()["delegation_count"],
+                    mgr.get_metrics()["revoked_cid_count"],
+                )
+        except ImportError as exc:
+            logger.debug("DelegationManager not available: %s", exc)
+        except Exception as exc:
+            logger.warning("DelegationManager initialization failed: %s", exc)
+
+    def get_server_delegation_manager(self) -> Any:
+        """Return the server's :class:`~ucan_delegation.DelegationManager`, or ``None``.
+
+        Exposed alongside :meth:`set_pipeline` / :meth:`get_pipeline` so callers
+        can interact with the delegation layer without importing
+        ``ucan_delegation`` directly.
+        """
+        return self._server_delegation_manager
+
+    def revoke_delegation_chain(self, root_cid: str) -> int:
+        """Revoke every delegation in the chain rooted at *root_cid*.
+
+        Calls :meth:`~ucan_delegation.DelegationManager.revoke_chain` on the
+        server's :class:`~ucan_delegation.DelegationManager`, then persists
+        the updated state to disk.
+
+        Returns 0 if no delegation manager is initialised or if *root_cid* is
+        not found in the current chain.
+
+        Args:
+            root_cid: The CID of the root delegation whose entire chain should
+                be revoked.
+
+        Returns:
+            Number of newly-revoked CIDs.
+        """
+        mgr = self._server_delegation_manager
+        if mgr is None:
+            logger.debug("revoke_delegation_chain called but no DelegationManager initialised")
+            return 0
+        try:
+            count = mgr.revoke_chain(root_cid)
+            # Persist revocation state immediately after chain revocation
+            mgr.save()
+            logger.info(
+                "revoke_delegation_chain(%s): %d CID(s) revoked and persisted",
+                root_cid, count,
+            )
+            return count
+        except Exception as exc:
+            logger.warning("revoke_delegation_chain failed: %s", exc)
+            return 0
 
     async def validate_p2p_message(self, msg: dict) -> bool:
         """Optional hook used by the P2P service to validate messages.
@@ -536,12 +663,64 @@ class IPFSDatasetsMCPServer:
         self.tools["tools_dispatch"] = tools_dispatch
         
         logger.info("Hierarchical tool manager registered (4 meta-tools for 51 categories)")
-        
+
+        # MCP++ spec: register policy management tools (InterfaceRepository + PolicyRegistry)
+        try:
+            from .tools.logic_tools.policy_management_tool import (
+                policy_register,
+                policy_list,
+                policy_remove,
+                policy_evaluate,
+                interface_register,
+                interface_list,
+            )
+            for _name, _fn in [
+                ("policy_register", policy_register),
+                ("policy_list", policy_list),
+                ("policy_remove", policy_remove),
+                ("policy_evaluate", policy_evaluate),
+                ("interface_register", interface_register),
+                ("interface_list", interface_list),
+            ]:
+                self.mcp.add_tool(_fn, name=_name)
+                self.tools[_name] = _fn
+            logger.info("MCP++ policy management tools registered (6 tools)")
+        except ImportError as e:
+            logger.debug("Policy management tools not available: %s", e)
+
+        # Phase J (session 59): register compliance rule management tools + auto-register interface
+        try:
+            from .tools.logic_tools.compliance_rule_management_tool import (  # noqa: PLC0415
+                compliance_add_rule,
+                compliance_list_rules,
+                compliance_remove_rule,
+                compliance_check_intent,
+                compliance_register_interface,
+            )
+            for _name, _fn in [
+                ("compliance_add_rule", compliance_add_rule),
+                ("compliance_list_rules", compliance_list_rules),
+                ("compliance_remove_rule", compliance_remove_rule),
+                ("compliance_check_intent", compliance_check_intent),
+                ("compliance_register_interface", compliance_register_interface),
+            ]:
+                self.mcp.add_tool(_fn, name=_name)
+                self.tools[_name] = _fn
+            # Auto-register the compliance interface descriptor so MCP clients can discover it
+            try:
+                await compliance_register_interface()
+                logger.info("MCP++ compliance interface registered at startup")
+            except Exception as _ci_exc:
+                logger.debug("compliance_register_interface() at startup failed: %s", _ci_exc)
+            logger.info("MCP++ compliance rule management tools registered (5 tools)")
+        except ImportError as e:
+            logger.debug("Compliance rule management tools not available: %s", e)
+
         # PHASE 2 WEEK 5: Removed flat tool registration to eliminate 99% overhead
         # All 373 tools are now discovered dynamically through the hierarchical system
         # P2P adapter has been updated to use hierarchical tools automatically
         # This reduces startup time from 2-3s to <1s and eliminates duplicate registrations
-        
+
         logger.info(f"Tool registration complete: {len(self.tools)} meta-tools registered")
         logger.info("All 373 individual tools available through hierarchical discovery")
 
@@ -813,6 +992,13 @@ class IPFSDatasetsMCPServer:
                     logger.warning(f"Error stopping P2P service: {e}")
                 except Exception as e:
                     logger.warning(f"Unexpected error stopping P2P service: {e}", exc_info=True)
+            # Phase G: persist delegation state on clean exit
+            if self._server_delegation_manager is not None:
+                try:
+                    self._server_delegation_manager.save()
+                    logger.info("DelegationManager state persisted on shutdown (start_stdio)")
+                except Exception as _exc:
+                    logger.warning("DelegationManager.save() failed on shutdown: %s", _exc)
 
     async def start(self, host: str = "0.0.0.0", port: int = 8000) -> None:
         """
@@ -859,6 +1045,13 @@ class IPFSDatasetsMCPServer:
                     logger.warning(f"Error stopping P2P service: {e}")
                 except Exception as e:
                     logger.warning(f"Unexpected error stopping P2P service: {e}", exc_info=True)
+            # Phase G: persist delegation state on clean exit
+            if self._server_delegation_manager is not None:
+                try:
+                    self._server_delegation_manager.save()
+                    logger.info("DelegationManager state persisted on shutdown (start)")
+                except Exception as _exc:
+                    logger.warning("DelegationManager.save() failed on shutdown: %s", _exc)
 
 
 def start_stdio_server(ipfs_kit_mcp_url: Optional[str] = None) -> None:

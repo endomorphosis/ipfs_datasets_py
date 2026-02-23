@@ -8,8 +8,8 @@ enabling semantic analysis and enhanced natural language to logic conversion.
 import hashlib
 import logging
 import re
-from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional, Union, Any, Tuple, TYPE_CHECKING
+from dataclasses import dataclass
 try:
     from beartype import beartype  # type: ignore
 except ImportError:  # pragma: no cover
@@ -45,7 +45,10 @@ except (ImportError, SystemExit):
 
 @dataclass 
 class LogicalComponents:
-    """Structure for holding extracted logical components."""
+    """Structure for holding extracted logical components.
+    
+    Also supports dict-style access for backward compatibility.
+    """
     quantifiers: List[str]
     predicates: List[str]
     entities: List[str]
@@ -53,19 +56,33 @@ class LogicalComponents:
     confidence: float
     raw_text: str
 
-    # Dict-like interface so tests can do `field in components` and `components[field]`
-    def __contains__(self, key: str) -> bool:
-        return hasattr(self, key)
+    # ------------------------------------------------------------------
+    # Dict-style backward-compat interface
+    # ------------------------------------------------------------------
+
+    def _as_dict(self) -> dict:
+        return {
+            "quantifiers": self.quantifiers,
+            "predicates": self.predicates,
+            "entities": self.entities,
+            "connectives": self.logical_connectives,
+            "confidence": self.confidence,
+        }
+
+    def __contains__(self, item: object) -> bool:
+        return item in self._as_dict()
 
     def __getitem__(self, key: str):
-        return getattr(self, key)
+        return self._as_dict()[key]
 
     def get(self, key: str, default=None):
-        return getattr(self, key, default)
+        return self._as_dict().get(key, default)
 
     def keys(self):
-        from dataclasses import fields
-        return [f.name for f in fields(self)]
+        return self._as_dict().keys()
+
+    def items(self):
+        return self._as_dict().items()
 
 
 @dataclass
@@ -160,10 +177,8 @@ class SymbolicFOLBridge:
             raise ValueError("Text cannot be empty")
         
         stripped = text.strip()
-        # Require meaningful content: either uppercase propositional variable or multi-char
-        alpha_count = sum(1 for c in stripped if c.isalpha())
-        is_prop_var = len(stripped) == 1 and stripped.isupper()
-        if not is_prop_var and alpha_count < 2:
+        # Reject purely numeric input or single-character lowercase (not a logic symbol)
+        if stripped.isdigit() or (len(stripped) == 1 and stripped.islower()):
             raise ValueError("Text cannot be empty")
         
         if not SYMBOLIC_AI_AVAILABLE:
@@ -183,7 +198,7 @@ class SymbolicFOLBridge:
             return None
     
     @beartype
-    def extract_logical_components(self, symbol: Symbol) -> 'LogicalComponents':
+    def extract_logical_components(self, symbol: Symbol) -> LogicalComponents:
         """
         Extract logical components from a semantic symbol.
         
@@ -191,7 +206,7 @@ class SymbolicFOLBridge:
             symbol: Symbol object to analyze
             
         Returns:
-            LogicalComponents object with extracted elements (also supports dict-like access)
+            LogicalComponents object with extracted elements
         """
         try:
             if SYMBOLIC_AI_AVAILABLE and hasattr(symbol, 'query'):
@@ -227,6 +242,9 @@ class SymbolicFOLBridge:
             else:
                 # Fallback to regex-based extraction
                 quantifiers, predicates, entities, connectives = self._fallback_extraction(symbol.value)
+                # Normalize quantifiers/predicates to lowercase for consistent comparison
+                quantifiers = [q.lower() for q in quantifiers]
+                predicates = [p.lower() for p in predicates]
                 confidence = 0.6  # Lower confidence for fallback
             
             return LogicalComponents(
@@ -242,6 +260,9 @@ class SymbolicFOLBridge:
             logger.error(f"Failed to extract logical components: {e}")
             # Return minimal components from fallback
             quantifiers, predicates, entities, connectives = self._fallback_extraction(symbol.value)
+            # Normalize quantifiers/predicates to lowercase for consistent comparison
+            quantifiers = [q.lower() for q in quantifiers]
+            predicates = [p.lower() for p in predicates]
             
             return LogicalComponents(
                 quantifiers=quantifiers,
@@ -265,48 +286,42 @@ class SymbolicFOLBridge:
     def _fallback_extraction(self, text: str) -> Tuple[List[str], List[str], List[str], List[str]]:
         """Fallback extraction using regex patterns."""
         # Simple regex patterns for logical components
-        quantifier_patterns = r'\b(all|every|each|some|exists?|for\s+all)\b'
-        # Broader predicate pattern: common verbs + verb-like words ending in s/ed/ing
+        quantifier_patterns = r'\b(all|every|each|some|exists?|for\s+all|there\s+(?:is|are))\b'
         predicate_patterns = (
-            r'\b(is|are|has|have|can|cannot|loves?|studies?|flies?|runs?'
-            r'|rains?|takes?|sleeps?|needs?|likes?|knows?|believes?'
-            r'|conducts?|melts?|conserves?|requires?|survive?|teaches?|writes?'
-            r'|will\s+\w+|must\s+\w+|should\s+\w+)\b'
+            r'\b(is|are|has|have|can|cannot|loves?|studies?|flies?|runs?|'
+            r'takes?|likes?|sleeps?|needs?|rains?|wants?|goes|came?|teaches?|'
+            r'writes?|reads?|uses?|makes?|sees?|knows?|works?|plays?|brings?|'
+            r'gives?|eats?|drinks?|swims?|sings?|lives?|dies?|gradu(?:ates?)?|'
+            r'excel(?:s)?|pass(?:es)?|fails?|belongs?|exists?|occurs?|'
+            r'prove(?:d|n)?|conducts?|conserves?|requires?|survives?)\b'
         )
-        # Entity pattern: capitalized words OR nouns after quantifiers/verbs
-        entity_patterns = r'\b([A-Z][a-z]+)\b'
-        # Also find nouns (words following quantifiers)
-        noun_after_quant = r'\b(?:all|every|each|some|exists?)\s+(\w+)\b'
         connective_patterns = r'\b(and|or|not|if|then|implies?|but|however)\b'
         
-        quantifiers = [q.lower() for q in re.findall(quantifier_patterns, text, re.IGNORECASE)]
-        predicates = [p.lower() for p in re.findall(predicate_patterns, text, re.IGNORECASE)]
-        entities = re.findall(entity_patterns, text)
-        # Add nouns after quantifiers as entities
-        nouns_after_quant = re.findall(noun_after_quant, text, re.IGNORECASE)
-        entities.extend([n.capitalize() for n in nouns_after_quant if n.capitalize() not in entities])
-        # Also find nouns after "is/are" predicates
-        nouns_after_verb = re.findall(r'\b(?:is|are|be|were)\s+([a-z][a-z]+)\b', text, re.IGNORECASE)
-        entities.extend([n.capitalize() for n in nouns_after_verb if n.capitalize() not in entities])
-        connectives = [c.lower() for c in re.findall(connective_patterns, text, re.IGNORECASE)]
+        quantifiers = re.findall(quantifier_patterns, text, re.IGNORECASE)
+        predicates = re.findall(predicate_patterns, text, re.IGNORECASE)
+        connectives = re.findall(connective_patterns, text, re.IGNORECASE)
         
-        # If no predicates found, extract any word that looks like a verb (fallback)
-        if not predicates:
-            # Look for words before "," or after "if/when/that" or simple verb heuristic
-            verb_fallback = re.findall(r'\b(\w+s|will \w+|can \w+)\b', text, re.IGNORECASE)
-            predicates = list(set(verb_fallback[:3]))  # Take first 3 as predicates
+        # Extract entities: nouns that are NOT quantifiers, predicates, or connectives
+        stop_words = set(['all', 'every', 'each', 'some', 'exists', 'exist', 'there', 'is',
+                          'are', 'has', 'have', 'can', 'cannot', 'and', 'or', 'not', 'if',
+                          'then', 'that', 'a', 'an', 'the', 'it', 'he', 'she', 'they',
+                          'be', 'been', 'being', 'do', 'does', 'did', 'will', 'would',
+                          'could', 'should', 'may', 'might', 'but', 'however', 'implies',
+                          'imply', 'for', 'of', 'in', 'on', 'at', 'to', 'from', 'with'])
+        words = re.findall(r'\b[a-zA-Z]{2,}\b', text)
+        entities = [w for w in words if w.lower() not in stop_words]
         
         return (
-            list(set(quantifiers)),
-            list(set(predicates)),
-            list(set(entities)),
-            list(set(connectives))
+            list(dict.fromkeys(quantifiers)),
+            list(dict.fromkeys(predicates)),
+            list(dict.fromkeys(entities)),
+            list(dict.fromkeys(connectives))
         )
 
     def _get_cache_key(
         self,
         text: str,
-        operation: str = "convert",
+        operation: str = "",
         extra: Optional[Dict[str, Any]] = None
     ) -> str:
         """Generate a stable cache key for a text + operation combination."""
@@ -337,7 +352,7 @@ class SymbolicFOLBridge:
         Returns:
             FOLConversionResult with formula and metadata
         """
-        # Check cache first (include format in cache key)
+        # Check cache first (include format in key)
         cache_key = f"{symbol.value}::{output_format}"
         if self.enable_caching and cache_key in self._cache:
             logger.debug(f"Using cached result for: {symbol.value[:50]}...")
@@ -431,50 +446,60 @@ class SymbolicFOLBridge:
     ) -> str:
         """Match logical patterns to generate FOL formulas."""
         text = components.raw_text.lower()
+        # Normalize for comparison
+        q_lower = [q.lower() for q in components.quantifiers]
+        p_lower = [p.lower() for p in components.predicates]
+        e_normalized = [e.lower() for e in components.entities]
         
         # Pattern 1: "All X are Y" -> ∀x (X(x) → Y(x))
-        if any(q in ['all', 'every', 'each'] for q in components.quantifiers):
-            if len(components.entities) >= 2:
-                x_entity = components.entities[0].lower()
-                y_entity = components.entities[1].lower()
+        if any(q in ['all', 'every', 'each'] for q in q_lower):
+            if len(e_normalized) >= 2:
+                x_entity = e_normalized[0]
+                y_entity = e_normalized[1]
                 formula = f"∀x ({x_entity.capitalize()}(x) → {y_entity.capitalize()}(x))"
                 reasoning_steps.append(f"Pattern: Universal quantification over {x_entity} → {y_entity}")
                 return formula
         
         # Pattern 2: "Some X are Y" -> ∃x (X(x) ∧ Y(x))
-        if any(q in ['some', 'exists', 'exist'] for q in components.quantifiers):
-            if len(components.entities) >= 2:
-                x_entity = components.entities[0].lower()
-                y_entity = components.entities[1].lower()
+        if any(q in ['some', 'exists', 'exist'] for q in q_lower):
+            if len(e_normalized) >= 2:
+                x_entity = e_normalized[0]
+                y_entity = e_normalized[1]
                 formula = f"∃x ({x_entity.capitalize()}(x) ∧ {y_entity.capitalize()}(x))"
                 reasoning_steps.append(f"Pattern: Existential quantification over {x_entity} ∧ {y_entity}")
                 return formula
         
         # Pattern 3: "X is Y" -> Y(X)
-        if 'is' in components.predicates or 'are' in components.predicates:
-            if len(components.entities) >= 2:
-                x_entity = components.entities[0]
-                y_entity = components.entities[1].lower()
-                formula = f"{y_entity.capitalize()}({x_entity})"
+        if 'is' in p_lower or 'are' in p_lower:
+            if len(e_normalized) >= 2:
+                x_entity = e_normalized[0]
+                y_entity = e_normalized[1]
+                formula = f"{y_entity.capitalize()}({x_entity.capitalize()})"
                 reasoning_steps.append(f"Pattern: Simple predication {y_entity}({x_entity})")
                 return formula
         
         # Pattern 4: "X can Y" -> CanY(X)
-        if 'can' in components.predicates:
-            if len(components.entities) >= 1:
-                x_entity = components.entities[0]
-                if len(components.predicates) > 1:
-                    action = [p for p in components.predicates if p != 'can'][0]
-                    formula = f"Can{action.capitalize()}({x_entity})"
-                    reasoning_steps.append(f"Pattern: Ability predicate Can{action}({x_entity})")
-                    return formula
+        if 'can' in p_lower:
+            if len(e_normalized) >= 1:
+                x_entity = e_normalized[0]
+                # Try to get action from other predicates or second entity
+                action_list = [p for p in p_lower if p != 'can']
+                if action_list:
+                    action = action_list[0]
+                elif len(e_normalized) >= 2:
+                    action = e_normalized[1]
+                else:
+                    action = 'act'
+                formula = f"Can{action.capitalize()}({x_entity.capitalize()})"
+                reasoning_steps.append(f"Pattern: Ability predicate Can{action}({x_entity})")
+                return formula
         
-        # Fallback: create simple predication
-        if components.entities and components.predicates:
-            entity = components.entities[0]
-            predicate = components.predicates[0]
-            formula = f"{predicate.capitalize()}({entity})"
-            reasoning_steps.append(f"Fallback pattern: simple predication {predicate}({entity})")
+        # Fallback: create simple predicate
+        if e_normalized and p_lower:
+            entity = e_normalized[0]
+            predicate = p_lower[0]
+            formula = f"{predicate.capitalize()}({entity.capitalize()})"
+            reasoning_steps.append(f"Fallback pattern: {predicate}({entity})")
             return formula
         
         reasoning_steps.append("No recognizable pattern found")
@@ -603,142 +628,134 @@ class SymbolicFOLBridge:
         self._cache.clear()
         logger.info("Conversion cache cleared")
 
-    # ------------------------------------------------------------------
-    # Convenience helpers expected by tests
-    # ------------------------------------------------------------------
+    def get_stats(self) -> Dict[str, Any]:
+        """Get statistics about the bridge usage (alias for get_statistics)."""
+        return self.get_statistics()
 
-    def _extract_quantifiers(self, text: str) -> List[str]:
-        """Extract quantifier symbols from text."""
-        result: List[str] = []
-        t = text.lower()
-        if any(w in t for w in ("all ", "every ", "each ")):
-            result.append("∀")
-        if any(w in t for w in ("some ", "exist ", "exists ", "there is", "there are")):
-            result.append("∃")
-        return result
+    def _extract_quantifiers(self, text: str) -> str:
+        """Extract quantifier symbols from text, returning FOL symbols."""
+        result = []
+        if re.search(r'\b(all|every|each|for\s+all)\b', text, re.IGNORECASE):
+            result.append('∀')
+        if re.search(r'\b(some|exists?|there\s+(is|are)|at\s+least\s+one)\b', text, re.IGNORECASE):
+            result.append('∃')
+        return ' '.join(result) if result else 'none'
 
     def _extract_predicates(self, text: str) -> List[str]:
-        """Extract predicate names from text (capitalised words followed by '(')."""
-        import re
-        return re.findall(r'\b([A-Z][A-Za-z0-9_]*)\s*\(', text)
+        """Extract predicate names (capitalized words followed by '(') from text."""
+        return re.findall(r'([A-Z][a-zA-Z]*)\s*\(', text)
 
     def _extract_entities(self, text: str) -> List[str]:
-        """Extract named entities (title-case words not followed by '(')."""
-        import re
-        candidates = re.findall(r'\b([A-Z][a-z]+)\b', text)
-        # Exclude words followed by '('
-        preds = set(self._extract_predicates(text))
-        return [c for c in candidates if c not in preds]
+        """Extract named entities (capitalized words not at sentence start) from text."""
+        words = re.findall(r'\b([A-Z][a-z]+)\b', text)
+        return list(dict.fromkeys(words))
 
-    def _extract_connectives(self, text: str) -> List[str]:
-        """Extract logical connective symbols from text."""
-        result: List[str] = []
-        t = text.lower()
-        if " and " in t:
-            result.append("∧")
-        if " or " in t:
-            result.append("∨")
-        if "if " in t and " then " in t:
-            result.append("→")
-        if " iff " in t or " if and only if " in t:
-            result.append("↔")
-        if t.startswith("not ") or " not " in t:
-            result.append("¬")
-        return result
+    def _extract_connectives(self, text: str) -> str:
+        """Extract logical connectives from text, returning FOL symbols."""
+        result = []
+        if re.search(r'\band\b', text, re.IGNORECASE):
+            result.append('∧')
+        if re.search(r'\bor\b', text, re.IGNORECASE):
+            result.append('∨')
+        if re.search(r'\b(if|implies?)\b.*\b(then)\b|\b(if)\b', text, re.IGNORECASE):
+            result.append('→')
+        if re.search(r'\b(iff|if\s+and\s+only\s+if)\b', text, re.IGNORECASE):
+            result.append('↔')
+        if re.search(r'\b(not|no)\b', text, re.IGNORECASE):
+            result.append('¬')
+        return ' '.join(result) if result else 'none'
 
     def _pattern_based_conversion(self, text: str) -> Optional[str]:
-        """Try pattern-based NL→FOL conversion. Returns None if no pattern matches."""
-        t = text.lower()
-        import re
-        # "All/Every X are Y"
-        m = re.match(r'\b(all|every|each)\s+(\w+)s?\s+(?:are|is)\s+(\w+)', t)
+        """Apply pattern-based conversion to FOL. Returns formula string or None."""
+        text_lower = text.lower()
+        # "All/Every X are Y" → ∀x (X(x) → Y(x))
+        m = re.match(r'(?:all|every)\s+(\w+)\s+are\s+(\w+)', text_lower)
         if m:
-            x, y = m.group(2).capitalize(), m.group(3).capitalize()
-            return f"∀x({x}(x) → {y}(x))"
-        # "Some X are Y"
-        m = re.match(r'\b(some|there (?:is|are))\s+(\w+)s?\s+(?:are|is|that (?:are|is))?\s*(\w+)', t)
+            s, p = m.group(1).capitalize(), m.group(2).capitalize()
+            return f"∀x ({s}(x) → {p}(x))"
+        # "Some X are Y" → ∃x (X(x) ∧ Y(x))
+        m = re.match(r'some\s+(\w+)\s+are\s+(\w+)', text_lower)
         if m:
-            x, y = m.group(2).capitalize(), m.group(3).capitalize()
-            return f"∃x({x}(x) ∧ {y}(x))"
+            s, p = m.group(1).capitalize(), m.group(2).capitalize()
+            return f"∃x ({s}(x) ∧ {p}(x))"
         return None
 
     def _semantic_conversion(self, text: str) -> str:
-        """Semantic conversion (uses SymbolicAI if available, else mock)."""
-        symbol = self.create_semantic_symbol(text)
-        if symbol is not None:
-            query_result = symbol.query("Convert to first-order logic formula")
-            if query_result:
-                return str(query_result)
-        # Fallback mock
+        """Perform semantic conversion to FOL (uses SymbolicAI if available)."""
+        if SYMBOLIC_AI_AVAILABLE:
+            try:
+                symbol = Symbol(text, semantic=True)
+                result = symbol.query(
+                    "Convert this natural language statement to a First-Order Logic formula. "
+                    "Return only the FOL formula using ∀, ∃, →, ∧, ∨, ¬ symbols."
+                )
+                return str(result)
+            except Exception as e:
+                logger.warning(f"Semantic conversion failed: {e}")
+        # Fallback: use pattern-based or simple formula
+        pattern_result = self._pattern_based_conversion(text)
+        if pattern_result:
+            return pattern_result
         return f"Statement({text.replace(' ', '_')})"
 
-    def convert_to_fol(self, text: str, output_format: str = "symbolic") -> 'FOLConversionResult':
-        """Convert natural language text to FOL formula."""
+    def convert_to_fol(self, text: str, output_format: str = "symbolic") -> FOLConversionResult:
+        """
+        Convert natural language text to FOL formula.
+
+        Args:
+            text: Natural language text to convert
+            output_format: Output format ("symbolic", "prolog", "tptp")
+
+        Returns:
+            FOLConversionResult with formula and metadata
+        """
         if not text or not text.strip():
             return FOLConversionResult(
                 fol_formula="",
-                components=LogicalComponents([], [], [], [], 0.0, text or ""),
+                components=LogicalComponents([], [], [], [], 0.0, text),
                 confidence=0.0,
                 reasoning_steps=[],
                 fallback_used=True,
-                errors=["Empty input text"]
+                errors=["Input text is empty"]
             )
 
-        cache_key = self._get_cache_key(text)
+        cache_key = self._get_cache_key(text, output_format)
         if self.enable_caching and cache_key in self._cache:
             return self._cache[cache_key]
 
-        # Try pattern-based first
+        reasoning_steps = [f"Processing: '{text}'"]
+
+        # Try pattern-based conversion first
         pattern_result = self._pattern_based_conversion(text)
-        if pattern_result is not None:
-            components = LogicalComponents(
-                quantifiers=self._extract_quantifiers(text),
-                predicates=self._extract_predicates(text),
-                entities=self._extract_entities(text),
-                logical_connectives=self._extract_connectives(text),
-                confidence=0.85,
-                raw_text=text
-            )
+        if pattern_result:
+            reasoning_steps.append("Pattern-based conversion succeeded")
+            if output_format == "prolog":
+                pattern_result = self._to_prolog_format(pattern_result)
+            elif output_format == "tptp":
+                pattern_result = self._to_tptp_format(pattern_result)
+            symbol = Symbol(text)
+            components = self.extract_logical_components(symbol)
             result = FOLConversionResult(
                 fol_formula=pattern_result,
                 components=components,
-                confidence=0.85,
-                reasoning_steps=[f"Pattern match: {pattern_result}"],
+                confidence=0.8,
+                reasoning_steps=reasoning_steps,
                 fallback_used=False
             )
         else:
-            # Semantic or fallback
-            semantic_str = self._semantic_conversion(text)
-            confidence = 0.6 if semantic_str and semantic_str != f"Statement({text.replace(' ', '_')})" else 0.4
-            if confidence < self.confidence_threshold and self.fallback_enabled:
-                result = self._fallback_conversion(text, output_format)
-                result.fallback_used = True
-            else:
-                components = LogicalComponents(
-                    quantifiers=self._extract_quantifiers(text),
-                    predicates=self._extract_predicates(text),
-                    entities=self._extract_entities(text),
-                    logical_connectives=self._extract_connectives(text),
-                    confidence=confidence,
-                    raw_text=text
-                )
-                result = FOLConversionResult(
-                    fol_formula=semantic_str,
-                    components=components,
-                    confidence=confidence,
-                    reasoning_steps=[f"Semantic conversion: {semantic_str}"],
-                    fallback_used=False
-                )
+            # Fall back to semantic conversion
+            reasoning_steps.append("Using semantic/fallback conversion")
+            formula = self._semantic_conversion(text)
+            symbol = Symbol(text)
+            components = self.extract_logical_components(symbol)
+            result = FOLConversionResult(
+                fol_formula=formula,
+                components=components,
+                confidence=0.5,
+                reasoning_steps=reasoning_steps,
+                fallback_used=True
+            )
 
         if self.enable_caching:
             self._cache[cache_key] = result
         return result
-
-    def get_stats(self) -> Dict[str, Any]:
-        """Return bridge usage statistics (alias for get_statistics)."""
-        return {
-            "symbolic_ai_available": SYMBOLIC_AI_AVAILABLE,
-            "fallback_available": self.fallback_available,
-            "cache_size": len(self._cache),
-            "confidence_threshold": self.confidence_threshold,
-        }

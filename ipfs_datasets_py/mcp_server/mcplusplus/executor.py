@@ -174,7 +174,7 @@ class StructuredConcurrencyExecutor:
                     self._nursery = None
                     self._semaphore = None
         else:
-            # Fallback to asyncio
+            # anyio fallback (works with asyncio and trio backends)
             self._semaphore = anyio.Semaphore(self.max_concurrent)
             self._active = True
             
@@ -225,7 +225,7 @@ class StructuredConcurrencyExecutor:
                 else:
                     result.success = True
             else:
-                # Use asyncio with timeout
+                # anyio fallback with timeout (works with asyncio and trio backends)
                 try:
                     with anyio.fail_after(timeout):
                         result.result = await tool_func(*args, **kwargs)
@@ -297,7 +297,7 @@ class StructuredConcurrencyExecutor:
             return [r[1] for r in results]
         
         else:
-            # Fallback to asyncio with gather
+            # anyio fallback with gather (works with asyncio and trio backends)
             async def run_task(tool_func, kwargs):
                 async with self._semaphore:
                     return await self.execute_single(

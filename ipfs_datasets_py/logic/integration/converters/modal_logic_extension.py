@@ -451,7 +451,7 @@ class AdvancedLogicConverter:
     def _convert_to_fol(self, text: str, classification: LogicClassification) -> ModalFormula:
         """Convert text to standard First-Order Logic."""
         # Use existing FOL conversion logic
-        from .symbolic_fol_bridge import SymbolicFOLBridge
+        from ..symbolic_fol_bridge import SymbolicFOLBridge
         
         bridge = SymbolicFOLBridge()
         symbol = bridge.create_semantic_symbol(text)

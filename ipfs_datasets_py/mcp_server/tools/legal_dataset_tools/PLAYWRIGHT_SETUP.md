@@ -38,7 +38,7 @@ brew install chromium
 
 ```python
 from playwright.async_api import async_playwright
-import asyncio
+import anyio
 
 async def verify():
     async with async_playwright() as p:
@@ -48,7 +48,7 @@ async def verify():
         print("Playwright is working!")
         await browser.close()
 
-asyncio.run(verify())
+anyio.run(verify)
 ```
 
 ## Usage in Scrapers
@@ -108,7 +108,7 @@ python3 test_all_states_with_parquet.py
 
 ```python
 from state_scrapers import get_scraper_for_state
-import asyncio
+import anyio
 
 async def test_dc():
     scraper = get_scraper_for_state("DC", "District of Columbia")
@@ -134,7 +134,7 @@ async def test_dc():
     for statute in statutes[:3]:
         print(f"  - {statute.official_cite}")
 
-asyncio.run(test_dc())
+anyio.run(test_dc)
 ```
 
 ## Performance Considerations

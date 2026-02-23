@@ -525,166 +525,756 @@ Thin wrappers forwarding to the web-archiving canonical engines.
 
 ---
 
-## Phase G/H Additions (v6.0)
+## Analysis Tools
 
-> The following APIs were added in **v6.0** as part of phases G (coverage hardening)
-> and H (integration / scenario tests).
+Statistical analysis and pattern detection over datasets.
 
-### CircuitBreaker
+### analyze_data
+**Parameters:**
+- `data_source` (str, required) — Dataset id or path.
+- `analysis_type` (str, optional) — `"statistics"` | `"patterns"` | `"comparison"` (default: `"statistics"`).
+- `columns` (list[str], optional) — Subset of columns to analyse.
+- `output_format` (str, optional) — `"json"` | `"html"` (default: `"json"`).
 
-Located in `hierarchical_tool_manager.py`.
+**Returns:** `{"status": "success", "result": {"mean": {...}, "std": {...}, ...}}`.
 
-Prevents cascading failures when a downstream tool or service becomes
-unreliable.  Transitions: **CLOSED** → **OPEN** (on repeated failures) →
-**HALF_OPEN** (probe after recovery window) → **CLOSED** (on probe success).
+### generate_statistics
+Compute descriptive statistics (mean, median, stddev, quartiles).
 
-```python
-from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import CircuitBreaker
+**Parameters:** `data_source` (str), `columns` (list[str], optional).
 
-breaker = CircuitBreaker(
-    name="my_service",
-    failure_threshold=5,   # trips after 5 consecutive failures
-    recovery_timeout=30.0, # seconds before probing again
-)
+**Returns:** `{"status": "success", "statistics": {...}}`.
 
-result = await breaker.call(my_async_func, arg1, arg2)
-print(breaker.state)   # "closed", "open", or "half_open"
-print(breaker.info())  # {"name": ..., "state": ..., "failure_count": ..., ...}
-breaker.reset()        # force back to CLOSED
-```
+### detect_patterns
+Identify repeating patterns, seasonality, or anomalies in a dataset.
 
-**`CircuitBreaker.call(func, *args, **kwargs)`**
-- Raises `CircuitBreakerOpenError` when the circuit is OPEN.
-- Passes `KeyboardInterrupt` / `SystemExit` through unchanged.
-- On failure increments the internal counter; on success resets it.
+**Parameters:** `data_source` (str), `pattern_type` (str, optional).
+
+**Returns:** `{"status": "success", "patterns": [...]}`.
 
 ---
 
-### dispatch_parallel (v6.0 — adaptive batching)
+## Auth Tools
 
-`HierarchicalToolManager.dispatch_parallel` now accepts a `max_concurrent`
-parameter for **adaptive batch sizing**.
+Authentication, token management, and user administration.
 
-```python
-results = await manager.dispatch_parallel(
-    calls=[
-        {"category": "dataset_tools", "tool": "load_dataset", "params": {"source": "squad"}},
-        {"category": "graph_tools",   "tool": "query_knowledge_graph"},
-        # ... many more ...
-    ],
-    max_concurrent=4,   # process at most 4 calls at a time
-    return_exceptions=True,
-)
-```
+### create_api_key
+Create a new API key for a user or service.
 
-**Parameters (v6.0 additions):**
-- `max_concurrent` (`int | None`, default `None`): When set, calls are
-  processed in windows of this size rather than all at once.  Useful when
-  the call list is very large or when downstream services have rate limits.
-  When `None` (default) all calls run concurrently (original behaviour).
+**Parameters:** `user_id` (str), `description` (str, optional), `expires_in_days` (int, optional).
 
----
+**Returns:** `{"api_key": "ak_...", "expires_at": "..."}`.
 
-### Enterprise API — JWT Authentication
+### validate_token
+Validate a JWT or API key and return the associated principal.
 
-`AuthenticationManager` (in `enterprise_api.py`) now supports **token
-revocation** to support logout and token-rotation workflows.
+**Parameters:** `token` (str), `token_type` (str, optional — `"jwt"` | `"api_key"`).
 
-```python
-from ipfs_datasets_py.mcp_server.enterprise_api import AuthenticationManager
+**Returns:** `{"valid": true, "user_id": "...", "roles": [...]}`.
 
-auth = AuthenticationManager(secret_key="super-secret")
-token = auth.create_access_token("demo")
+### revoke_token
+Revoke an active token.
 
-# Verify (returns user dict or None)
-user_data = auth.verify_token(token)
+**Parameters:** `token` (str).
 
-# Revoke (returns True on success, False if token is unparseable)
-revoked = auth.revoke_token(token)
-
-# Subsequent verify calls return None for revoked tokens
-assert auth.verify_token(token) is None
-assert auth.is_token_revoked(token) is True
-```
-
-**New methods:**
-
-| Method | Returns | Description |
-|---|---|---|
-| `revoke_token(token)` | `bool` | Add token to the revocation list |
-| `is_token_revoked(token)` | `bool` | Check if token has been revoked |
-
-> **Production note:** The in-memory revocation store (`_revoked_tokens` set)
-> is lost on process restart.  In production replace it with a Redis or
-> database-backed store.
+**Returns:** `{"status": "success"}`.
 
 ---
 
-### Monitoring — Enhanced Metrics (v6.0)
+## Background Task Tools
 
-`EnhancedMetricsCollector` coverage was extended to 80%+ in v6.0.
+Submit and monitor long-running asynchronous jobs.
 
-Key paths now covered include:
-- `_start_monitoring` / `start_monitoring` async startup
-- `track_request` context manager with exception propagation
-- `_check_health` with `HealthCheckError` and `ImportError` handling
-- `_check_alerts` (response-time threshold alert)
-- `get_tool_latency_percentiles` (P50/P90/P99)
-- `get_performance_trends` (time-windowed statistics)
-- `shutdown` method (graceful teardown)
-- `P2PMetricsCollector.get_dashboard_data` cache hit path
+### submit_background_task
+**Parameters:**
+- `task_type` (str, required) — Type identifier.
+- `payload` (dict, required) — Task-specific parameters.
+- `priority` (int, optional, default 5) — 1=highest, 10=lowest.
+
+**Returns:** `{"task_id": "uuid", "status": "queued"}`.
+
+### get_task_status
+**Parameters:** `task_id` (str, required).
+
+**Returns:** `{"task_id": "...", "status": "running|completed|failed", "progress": 0.0–1.0}`.
+
+### cancel_task
+**Parameters:** `task_id` (str, required).
+
+**Returns:** `{"status": "cancelled"}`.
 
 ---
 
-## Ecosystem Integrations (v6.0)
+## Cache Tools
 
-### gRPC Transport Adapter
+In-memory and distributed caching operations.
 
-`grpc_transport.py` — wraps `HierarchicalToolManager` behind a gRPC service.
+### cache_get
+**Parameters:** `key` (str), `namespace` (str, optional).
 
-```python
-from ipfs_datasets_py.mcp_server.grpc_transport import GRPCTransportAdapter
+**Returns:** `{"hit": true, "value": ...}` or `{"hit": false}`.
 
-adapter = GRPCTransportAdapter(manager, port=50051)
-await adapter.start()   # requires grpcio
-info = adapter.get_info()
-# {"transport": "grpc", "host": "[::]", "port": 50051, ...}
-await adapter.stop()
-```
+### cache_set
+**Parameters:** `key` (str), `value` (any), `ttl_seconds` (int, optional), `namespace` (str, optional).
 
-### Prometheus Exporter
+**Returns:** `{"status": "success"}`.
 
-`prometheus_exporter.py` — bridges the metrics collector to Prometheus.
+### cache_delete
+**Parameters:** `key` (str), `namespace` (str, optional).
 
-```python
-from ipfs_datasets_py.mcp_server.prometheus_exporter import PrometheusExporter
+**Returns:** `{"deleted": true}`.
 
-exporter = PrometheusExporter(collector=get_metrics_collector(), port=9090)
-exporter.start_http_server()   # requires prometheus-client
-exporter.record_tool_call("dataset_tools", "load_dataset", "success", 0.042)
-exporter.update()              # sync latest metrics
-info = exporter.get_info()
-```
+### cache_stats
+Returns hit/miss statistics for the named namespace.
 
-Metrics exposed: `mcp_tool_calls_total`, `mcp_tool_latency_seconds`,
-`mcp_active_connections`, `mcp_error_rate`, `mcp_cache_hits_total`,
-`mcp_cache_misses_total`, `mcp_system_cpu_usage_percent`,
-`mcp_system_memory_usage_percent`, `mcp_uptime_seconds`.
+**Parameters:** `namespace` (str, optional).
 
-### OpenTelemetry Tracing
+**Returns:** `{"hits": int, "misses": int, "hit_rate": float, "size_bytes": int}`.
 
-`otel_tracing.py` — distributed tracing for tool dispatches.
+---
 
-```python
-from ipfs_datasets_py.mcp_server.otel_tracing import configure_tracing, MCPTracer
+## CLI Tools
 
-configure_tracing(service_name="my-mcp-server", otlp_endpoint="http://localhost:4317")
+Execute shell commands and invoke CLI-based utilities from within the MCP server.
 
-tracer = MCPTracer()
-with tracer.start_dispatch_span("dataset_tools", "load_dataset", {"source": "squad"}) as span:
-    result = await manager.dispatch("dataset_tools", "load_dataset", {"source": "squad"})
-    tracer.set_span_ok(span, result)
-```
+### execute_command
+Execute a shell command in a sandboxed, controlled environment.
+
+**Parameters:**
+- `command` (list[str], required) — Command and arguments (no shell injection).
+- `timeout` (int, optional, default 30) — Seconds before timeout.
+- `capture_stderr` (bool, optional, default false).
+
+**Returns:** `{"status": "success", "exit_code": 0, "stdout": "...", "stderr": "..."}`.
+
+> ⚠️ For security, `execute_command` is a sandboxed stub in the current implementation. Sensitive operations are logged and rejected.
+
+---
+
+## Dashboard Tools
+
+Aggregated system and performance dashboards.
+
+### get_system_dashboard
+Returns a consolidated system dashboard snapshot (CPU, memory, request rate, error rate).
+
+**Returns:** `{"cpu_percent": float, "memory_percent": float, "request_rate": float, ...}`.
+
+### get_tool_performance_dashboard
+Returns per-tool performance statistics.
+
+**Returns:** `{"tools": {"tool_name": {"calls": int, "avg_ms": float, "error_rate": float}}}`.
+
+---
+
+## Data Processing Tools
+
+Text chunking, schema validation, format conversion, and data normalisation.
+
+### chunk_text
+Split text into fixed-size or sentence-aligned chunks for LLM ingestion.
+
+**Parameters:**
+- `text` (str, required).
+- `chunk_size` (int, optional, default 512) — Tokens per chunk.
+- `overlap` (int, optional, default 50).
+- `strategy` (str, optional) — `"sentence"` | `"paragraph"` | `"fixed"`.
+
+**Returns:** `{"chunks": ["...", "..."], "count": int}`.
+
+### transform_data
+Apply a named transformation pipeline to a dataset.
+
+**Parameters:** `dataset_id` (str), `pipeline` (list[str]).
+
+**Returns:** `{"status": "success", "dataset_id": "..."}`.
+
+### convert_format
+Convert a file between formats.
+
+**Parameters:** `input_path` (str), `output_format` (str), `output_path` (str, optional).
+
+**Returns:** `{"status": "success", "output_path": "..."}`.
+
+### validate_schema
+Validate a dataset against a JSON/Pydantic schema.
+
+**Parameters:** `data` (dict | list), `schema` (dict).
+
+**Returns:** `{"valid": true}` or `{"valid": false, "errors": [...]}`.
+
+---
+
+## Development Tools
+
+Code quality, linting, testing, and CI/CD integration tools.
+
+### lint_code
+Run flake8/ruff linting on a Python source file or directory.
+
+**Parameters:** `path` (str), `rules` (list[str], optional), `max_line_length` (int, optional, default 120).
+
+**Returns:** `{"issues": [...], "issue_count": int}`.
+
+### run_tests
+Execute pytest on a given path and return a pass/fail summary.
+
+**Parameters:** `test_path` (str), `markers` (str, optional), `verbose` (bool, optional).
+
+**Returns:** `{"passed": int, "failed": int, "errors": int, "output": "..."}`.
+
+### create_github_pr
+Create a GitHub pull request (requires `GITHUB_TOKEN` env var).
+
+**Parameters:** `title` (str), `body` (str), `head_branch` (str), `base_branch` (str, default `"main"`).
+
+**Returns:** `{"pr_url": "...", "pr_number": int}`.
+
+---
+
+## Embedding Tools
+
+Vector embedding generation for semantic search and similarity computation.
+
+### create_embeddings
+Generate a vector embedding for a text string.
+
+**Parameters:**
+- `text` (str | list[str], required) — Input text or batch.
+- `model` (str, optional, default `"all-MiniLM-L6-v2"`) — Hugging Face model id.
+- `normalize` (bool, optional, default true).
+
+**Returns:** `{"embeddings": [[float, ...]], "dimensions": int, "model": "..."}`.
+
+### batch_embeddings
+Generate embeddings for a large collection with automatic batching.
+
+**Parameters:** `texts` (list[str]), `batch_size` (int, optional, default 32), `model` (str, optional).
+
+**Returns:** `{"embeddings": [[...]], "count": int, "dimensions": int}`.
+
+### compute_similarity
+Compute cosine similarity between two embedding vectors.
+
+**Parameters:** `vec_a` (list[float]), `vec_b` (list[float]).
+
+**Returns:** `{"similarity": float}`.
+
+---
+
+## File Converter Tools
+
+Convert between common file formats (PDF, DOCX, HTML, Markdown, plain text).
+
+### convert_file
+**Parameters:** `input_path` (str), `output_format` (str), `output_path` (str, optional).
+
+**Returns:** `{"status": "success", "output_path": "..."}`.
+
+### extract_text
+Extract raw text from a binary document.
+
+**Parameters:** `file_path` (str).
+
+**Returns:** `{"text": "...", "page_count": int}`.
+
+---
+
+## File Detection Tools
+
+Detect file types, MIME types, and encoding information.
+
+### detect_file_type
+**Parameters:** `file_path` (str).
+
+**Returns:** `{"mime_type": "application/pdf", "extension": ".pdf", "encoding": "binary"}`.
+
+### analyze_detection_accuracy
+Validate detection accuracy across a test directory.
+
+**Parameters:** `directory` (str), `expected_types` (dict, optional).
+
+**Returns:** `{"total_files": int, "correct": int, "accuracy": float}`.
+
+---
+
+## Finance Data Tools
+
+Retrieve financial market data and apply quantitative finance theorems.
+
+### get_market_data
+**Parameters:** `symbol` (str), `period` (str, optional — `"1d"` | `"1mo"` | `"1y"`).
+
+**Returns:** `{"open": float, "close": float, "volume": int, ...}`.
+
+### apply_financial_theorem
+Apply a named quantitative theorem (e.g. Black-Scholes, CAPM) to market data.
+
+**Parameters:** `theorem_id` (str), `symbol` (str), `event_date` (str), `event_data` (dict).
+
+**Returns:** `{"result": float, "theorem": "...", "confidence": float}`.
+
+---
+
+## Functions
+
+Execute Python code snippets in a sandboxed environment.
+
+### execute_python_snippet
+**Parameters:**
+- `code` (str, required) — Python code to execute.
+- `timeout` (int, optional, default 10).
+- `allowed_imports` (list[str], optional).
+
+**Returns:** `{"status": "success", "stdout": "...", "stderr": "..."}`.
+
+> ⚠️ Execution is sandboxed. Dangerous operations are blocked.
+
+---
+
+## Geospatial Tools
+
+Geographic data processing: geocoding, distance, spatial queries.
+
+### geocode_address
+**Parameters:** `address` (str, required).
+
+**Returns:** `{"lat": float, "lon": float, "confidence": float, "formatted": "..."}`.
+
+### reverse_geocode
+**Parameters:** `lat` (float), `lon` (float).
+
+**Returns:** `{"address": "...", "city": "...", "country": "..."}`.
+
+### calculate_distance
+**Parameters:** `from_coords` (dict — `{lat, lon}`), `to_coords` (dict), `unit` (str — `"km"` | `"mi"`).
+
+**Returns:** `{"distance": float, "unit": "km"}`.
+
+---
+
+## Graph Tools
+
+Knowledge graph creation and querying.
+
+### graph_create
+Create a new named knowledge graph.
+
+**Parameters:** `name` (str), `backend` (str, optional — `"networkx"` | `"neo4j"`).
+
+**Returns:** `{"graph_id": "...", "status": "created"}`.
+
+### graph_add_entity
+**Parameters:** `graph_id` (str), `entity_id` (str), `entity_type` (str), `properties` (dict, optional).
+
+**Returns:** `{"status": "success"}`.
+
+### graph_add_relationship
+**Parameters:** `graph_id` (str), `source_id` (str), `target_id` (str), `relation_type` (str), `properties` (dict, optional).
+
+**Returns:** `{"status": "success"}`.
+
+### graph_query_cypher
+Run a Cypher-style query against the graph.
+
+**Parameters:** `graph_id` (str), `query` (str).
+
+**Returns:** `{"results": [{"nodes": [...], "edges": [...]}]}`.
+
+### graph_search_hybrid
+Hybrid keyword + vector search over graph entities.
+
+**Parameters:** `graph_id` (str), `query` (str), `top_k` (int, optional, default 10).
+
+**Returns:** `{"results": [{"entity": "...", "score": float}]}`.
+
+---
+
+## Index Management Tools
+
+Vector and search index lifecycle management.
+
+### create_index
+**Parameters:** `name` (str), `index_type` (str — `"hnsw"` | `"flat"` | `"ivf"`), `dimensions` (int), `metric` (str, optional — `"cosine"` | `"l2"`), `backend` (str, optional).
+
+**Returns:** `{"index_id": "...", "status": "created"}`.
+
+### delete_index
+**Parameters:** `name` (str), `backend` (str, optional).
+
+**Returns:** `{"deleted": true}`.
+
+### rebuild_index
+**Parameters:** `name` (str), `full_rebuild` (bool, optional, default false).
+
+**Returns:** `{"status": "success", "vectors": int}`.
+
+### get_index_stats
+**Parameters:** `name` (str).
+
+**Returns:** `{"vectors": int, "dimensions": int, "size_mb": float, "last_updated": "..."}`.
+
+---
+
+## IPFS Cluster Tools
+
+Multi-node IPFS cluster coordination.
+
+### cluster_pin
+Pin content across multiple cluster nodes.
+
+**Parameters:** `cid` (str), `replication_factor` (int, optional, default 2), `name` (str, optional).
+
+**Returns:** `{"cid": "...", "status": "pinned", "replicas": int}`.
+
+### cluster_status
+**Parameters:** `cid` (str).
+
+**Returns:** `{"cid": "...", "status": "pinned", "peers": [...]}`.
+
+### list_cluster_peers
+**Returns:** `{"peers": [{"id": "...", "name": "...", "status": "connected"}]}`.
+
+---
+
+## Investigation Tools
+
+Entity analysis, entity relationship investigation, and provenance tracking.
+
+### analyze_entities
+**Parameters:** `corpus_data` (list[dict]).
+
+**Returns:** `{"entities": [...], "relationships": [...]}`.
+
+### track_provenance
+**Parameters:** `corpus_data` (list[dict]), `entity_id` (str), `include_citations` (bool, optional).
+
+**Returns:** `{"provenance": [...]}`.
+
+---
+
+## Legal Dataset Tools
+
+Legal document scraping, processing, and citation.
+
+### scrape_recap_archive
+Scrape legal filings from CourtListener/RECAP.
+
+**Parameters:** `query` (dict — court, case_name, etc.).
+
+**Returns:** `{"results": [...], "count": int}`.
+
+### brave_legal_search
+Full-text legal search using Brave Search API.
+
+**Parameters:** `query` (str), `jurisdiction` (str, optional), `max_results` (int, optional).
+
+**Returns:** `{"results": [...]}`.
+
+### validate_bluebook_citation
+Validate a Bluebook legal citation against source document.
+
+**Parameters:** `citation` (str), `document_html` (str, optional).
+
+**Returns:** `{"valid": bool, "errors": [...], "suggestions": [...]}`.
+
+---
+
+## Logic Tools
+
+Temporal-deontic first-order logic (TDFOL) and theorem proving.
+
+### parse_formula
+Parse a TDFOL formula string into an AST.
+
+**Parameters:** `formula` (str), `syntax` (str, optional — `"tdfol"` | `"prolog"` | `"tptp"`).
+
+**Returns:** `{"ast": {...}, "valid": bool}`.
+
+### prove_theorem
+Attempt to prove a TDFOL theorem.
+
+**Parameters:** `hypothesis` (str), `axioms` (list[str]), `strategy` (str, optional).
+
+**Returns:** `{"proved": bool, "proof_tree": {...}, "steps": int}`.
+
+### check_consistency
+Check if a set of formulae is logically consistent.
+
+**Parameters:** `formulae` (list[str]).
+
+**Returns:** `{"consistent": bool}`.
+
+---
+
+## Media Tools
+
+FFmpeg-based video/audio processing and yt-dlp media downloading.
+
+### ffmpeg_convert
+Convert a media file to a different format.
+
+**Parameters:** `input_path` (str), `output_path` (str), `codec` (str, optional).
+
+**Returns:** `{"status": "success", "output_path": "..."}`.
+
+### ffmpeg_extract_audio
+Extract audio stream from a video file.
+
+**Parameters:** `input_path` (str), `output_path` (str), `audio_format` (str, optional — `"mp3"` | `"wav"`).
+
+**Returns:** `{"status": "success", "output_path": "..."}`.
+
+### yt_dlp_download
+Download a video/audio from a URL (1000+ supported platforms).
+
+**Parameters:** `url` (str), `output_dir` (str, optional), `format` (str, optional).
+
+**Returns:** `{"status": "success", "file_path": "...", "title": "..."}`.
+
+---
+
+## Medical Research Scrapers
+
+Biomedical literature retrieval and clinical trial data.
+
+### scrape_pubmed
+Retrieve PubMed abstracts for a query.
+
+**Parameters:** `query` (str), `max_results` (int, optional, default 20).
+
+**Returns:** `{"articles": [...], "count": int}`.
+
+### run_clinical_trials
+Retrieve clinical trial records from ClinicalTrials.gov.
+
+**Parameters:** `condition` (str), `status` (str, optional).
+
+**Returns:** `{"trials": [...]}`.
+
+---
+
+## PDF Tools
+
+PDF ingestion, text extraction, and GraphRAG relationship analysis.
+
+### pdf_to_text
+Extract text from a PDF file.
+
+**Parameters:** `file_path` (str), `page_range` (str, optional — e.g. `"1-10"`).
+
+**Returns:** `{"text": "...", "page_count": int, "metadata": {...}}`.
+
+### pdf_analyze_relationships
+Run GraphRAG entity-relationship analysis on a PDF.
+
+**Parameters:** `file_path` (str), `extract_tables` (bool, optional), `extract_images` (bool, optional).
+
+**Returns:** `{"entities": [...], "relationships": [...], "summary": "..."}`.
+
+### pdf_batch_process
+Process multiple PDFs in parallel.
+
+**Parameters:** `file_paths` (list[str]), `operations` (list[str], optional).
+
+**Returns:** `{"results": [...], "processed": int, "failed": int}`.
+
+---
+
+## P2P Workflow Tools
+
+Submit and monitor distributed peer-to-peer workflow execution.
+
+### submit_p2p_workflow
+**Parameters:** `workflow_type` (str), `params` (dict), `replication` (int, optional, default 1).
+
+**Returns:** `{"workflow_id": "...", "status": "queued"}`.
+
+### get_p2p_workflow_status
+**Parameters:** `workflow_id` (str).
+
+**Returns:** `{"status": "running|completed|failed", "progress": float}`.
+
+---
+
+## Rate Limiting Tools
+
+Token-bucket and sliding-window rate enforcement.
+
+### check_rate_limit
+**Parameters:** `client_id` (str), `action` (str), `tokens_required` (int, optional, default 1).
+
+**Returns:** `{"allowed": bool, "remaining_tokens": int, "reset_at": "..."}`.
+
+### consume_token
+Deduct tokens from a client's bucket.
+
+**Parameters:** `client_id` (str), `action` (str), `tokens` (int, optional, default 1).
+
+**Returns:** `{"status": "success", "remaining": int}`.
+
+---
+
+## Search Tools
+
+Semantic, keyword, and hybrid search over indexed datasets.
+
+### search
+General search entry point.
+
+**Parameters:** `query` (str), `index_name` (str), `search_type` (str — `"keyword"` | `"semantic"` | `"hybrid"`), `max_results` (int, optional, default 10).
+
+**Returns:** `{"results": [{"id": "...", "score": float, "text": "...", "metadata": {...}}]}`.
+
+### semantic_search
+Pure vector semantic search.
+
+**Parameters:** `query` (str), `index_name` (str), `top_k` (int, optional), `threshold` (float, optional).
+
+**Returns:** `{"results": [...]}`.
+
+### hybrid_search
+Combines keyword and semantic scores.
+
+**Parameters:** `query` (str), `index_name` (str), `vector_weight` (float, optional, default 0.5), `max_results` (int, optional).
+
+**Returns:** `{"results": [...]}`.
+
+---
+
+## Security Tools
+
+Access control and permission checking.
+
+### check_access_permission
+Check if a principal has permission to perform an action on a resource.
+
+**Parameters:**
+- `principal` (str, required) — User/service identifier.
+- `action` (str, required) — `"dataset.read"` | `"dataset.write"` | `"ipfs.pin"` | etc.
+- `resource` (str, required) — Resource identifier.
+- `context` (dict, optional) — Session/IP context.
+
+**Returns:** `{"allowed": bool, "reason": "...", "policy": "..."}`.
+
+---
+
+## Session Tools
+
+User session lifecycle management.
+
+### create_session
+**Parameters:** `user_id` (str), `metadata` (dict, optional).
+
+**Returns:** `{"session_id": "...", "expires_at": "..."}`.
+
+### validate_session
+**Parameters:** `session_id` (str).
+
+**Returns:** `{"valid": bool, "user_id": "...", "expires_at": "..."}`.
+
+### terminate_session
+**Parameters:** `session_id` (str).
+
+**Returns:** `{"terminated": true}`.
+
+---
+
+## Software Engineering Tools
+
+Code review, documentation generation, and project scaffolding.
+
+### code_review
+Run automated code review with pattern matching and best-practice checks.
+
+**Parameters:** `file_path` (str), `language` (str, optional), `rules` (list[str], optional).
+
+**Returns:** `{"issues": [...], "severity_summary": {"high": int, "medium": int, "low": int}}`.
+
+### generate_docstring
+Auto-generate docstrings for Python functions in a file.
+
+**Parameters:** `file_path` (str), `style` (str, optional — `"google"` | `"numpy"` | `"pep257"`).
+
+**Returns:** `{"updated_file": "...", "functions_documented": int}`.
+
+---
+
+## Sparse Embedding Tools
+
+Sparse vector representations for BM25-style retrieval.
+
+### create_sparse_embedding
+Generate a sparse TF-IDF or BM25 embedding.
+
+**Parameters:** `text` (str | list[str]), `model` (str, optional — `"bm25"` | `"tfidf"`).
+
+**Returns:** `{"indices": [int, ...], "values": [float, ...], "dimension": int}`.
+
+---
+
+## Vector Store Tools
+
+High-level CRUD operations over vector stores (FAISS, Qdrant, Elasticsearch).
+
+### vector_index
+Add a vector to a named store.
+
+**Parameters:** `store_name` (str), `vector_id` (str), `vector` (list[float]), `metadata` (dict, optional).
+
+**Returns:** `{"status": "success"}`.
+
+### vector_search
+ANN search in a named vector store.
+
+**Parameters:** `store_name` (str), `query_vector` (list[float]), `top_k` (int, optional, default 10).
+
+**Returns:** `{"results": [{"id": "...", "score": float, "metadata": {...}}]}`.
+
+### vector_delete
+**Parameters:** `store_name` (str), `vector_id` (str).
+
+**Returns:** `{"deleted": true}`.
+
+---
+
+## Web Scraping Tools
+
+General-purpose web scraping and page archiving.
+
+### scrape_url
+Fetch and parse a web page, returning structured content.
+
+**Parameters:** `url` (str), `extract_links` (bool, optional), `extract_images` (bool, optional).
+
+**Returns:** `{"html": "...", "text": "...", "title": "...", "links": [...]}`.
+
+### scrape_urls
+Bulk URL scraping with concurrency control.
+
+**Parameters:** `urls` (list[str]), `concurrency` (int, optional, default 5).
+
+**Returns:** `{"results": [...], "success_count": int, "failed": [...]}`.
+
+---
+
+## Workflow Tools
+
+Local (non-P2P) workflow orchestration and DAG execution.
+
+### create_workflow
+Define a named multi-step workflow.
+
+**Parameters:** `name` (str), `steps` (list[dict — {tool, params, depends_on}]).
+
+**Returns:** `{"workflow_id": "...", "step_count": int}`.
+
+### execute_workflow
+Run a previously defined workflow.
+
+**Parameters:** `workflow_id` (str), `inputs` (dict, optional).
+
+**Returns:** `{"status": "success", "results": {...}, "execution_time_ms": float}`.
 
 ---
 

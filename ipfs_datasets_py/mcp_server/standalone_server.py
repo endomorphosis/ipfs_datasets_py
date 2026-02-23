@@ -1,12 +1,30 @@
 #!/usr/bin/env python3
 """
 Minimal standalone MCP server for Docker deployment.
+
+.. deprecated::
+    This module is **deprecated**.  The Flask-based HTTP server is not the
+    intended access method for this project.  Use the MCP stdio server instead:
+
+    .. code-block:: bash
+
+        # Direct invocation (e.g. for Docker CMD)
+        python -m ipfs_datasets_py.mcp_server
+
+        # CLI access
+        ipfs-datasets <command>
+
+    For Docker health checks without Flask, add a lightweight
+    ``/health`` endpoint via the FastAPI service layer or use a simple
+    process-liveness check (e.g. ``kill -0 $PID``).
+
 This version doesn't rely on the complex ipfs_datasets_py package structure.
 """
 
 import anyio
 import json
 import logging
+import warnings
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
@@ -52,18 +70,31 @@ except ImportError:
     logger.info("Error reporting module not available")
 
 class MinimalMCPServer:
-    """Minimal MCP server for Docker deployment."""
-    
+    """
+    Minimal MCP server for Docker deployment.
+
+    .. deprecated::
+        Use ``python -m ipfs_datasets_py.mcp_server`` (MCP stdio) instead.
+        See module docstring for migration guide.
+    """
+
     def __init__(self, host: str = "0.0.0.0", port: int = 8000):
+        warnings.warn(
+            "MinimalMCPServer is deprecated.  Use "
+            "`python -m ipfs_datasets_py.mcp_server` (MCP stdio) instead of "
+            "this Flask-based HTTP server.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.host = host
         self.port = port
         self.app = Flask(__name__)
-        
+
         # Install error handlers if available
         if ERROR_REPORTING_AVAILABLE:
             install_error_handlers()
             logger.info("Error reporting handlers installed")
-        
+
         self.setup_routes()
         
     def setup_routes(self):
@@ -192,9 +223,22 @@ class MinimalMCPServer:
         self.app.run(host=self.host, port=self.port, debug=False)
 
 class MinimalMCPDashboard:
-    """Minimal MCP dashboard for Docker deployment."""
-    
+    """
+    Minimal MCP dashboard for Docker deployment.
+
+    .. deprecated::
+        Use ``python -m ipfs_datasets_py.mcp_server`` (MCP stdio) instead.
+        See module docstring for migration guide.
+    """
+
     def __init__(self, host: str = "0.0.0.0", port: int = 8080, mcp_server_url: str = "http://localhost:8000"):
+        warnings.warn(
+            "MinimalMCPDashboard is deprecated.  Use "
+            "`python -m ipfs_datasets_py.mcp_server` (MCP stdio) instead of "
+            "this Flask-based HTTP server.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.host = host
         self.port = port
         self.mcp_server_url = mcp_server_url
@@ -356,11 +400,24 @@ class MinimalMCPDashboard:
         self.app.run(host=self.host, port=self.port, debug=False)
 
 def main():
-    """Main entry point."""
+    """
+    Main entry point.
+
+    .. deprecated::
+        Use ``python -m ipfs_datasets_py.mcp_server`` (MCP stdio) instead.
+    """
     import sys
     import threading
     import time
-    
+
+    warnings.warn(
+        "standalone_server.main() is deprecated.  Use "
+        "`python -m ipfs_datasets_py.mcp_server` (MCP stdio) instead of "
+        "this Flask-based server.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     if len(sys.argv) > 1 and sys.argv[1] == '--dashboard-only':
         # Run dashboard only
         dashboard = MinimalMCPDashboard()
@@ -373,14 +430,14 @@ def main():
         # Run both server and dashboard
         server = MinimalMCPServer()
         dashboard = MinimalMCPDashboard()
-        
+
         # Start server in a thread
         server_thread = threading.Thread(target=server.run, daemon=True)
         server_thread.start()
-        
+
         # Give server time to start
         time.sleep(2)
-        
+
         # Start dashboard (blocks)
         dashboard.run()
 

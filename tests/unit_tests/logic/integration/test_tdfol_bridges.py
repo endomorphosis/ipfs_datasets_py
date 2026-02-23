@@ -340,7 +340,7 @@ class TestTDFOLShadowProverBridge:
         try:
             result = bridge.prove_modal(
                 formula,
-                modal_type=ModalLogicType.K
+                logic_type=ModalLogicType.K
             )
             assert result is not None
         except (NotImplementedError, AttributeError) as e:
