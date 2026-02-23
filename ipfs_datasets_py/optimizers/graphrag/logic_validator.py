@@ -188,6 +188,8 @@ class LogicValidator:
             self.prover_config = ProverConfig()
         self.use_cache = use_cache
         self._cache = {} if use_cache else None
+        self._incremental_cache = {} if use_cache else None
+        self._incremental_cache_stats = {"hits": 0, "misses": 0}
         
         # Try to import TDFOL infrastructure
         try:
@@ -398,8 +400,18 @@ class LogicValidator:
         """
         logger.info("Checking ontology consistency")
         
-        # Check cache if enabled (use namespaced key to avoid conflicts with ontology_to_tdfol)
-        if self.use_cache:
+        # Check incremental cache if enabled (ignores metadata ordering)
+        if self.use_cache and self._incremental_cache is not None:
+            incremental_key = self._get_incremental_cache_key(ontology)
+            cached = self._incremental_cache.get(incremental_key)
+            if cached is not None:
+                self._incremental_cache_stats["hits"] += 1
+                logger.info("Using incremental cached validation result")
+                return cached
+            self._incremental_cache_stats["misses"] += 1
+
+        # Check full cache if enabled (use namespaced key to avoid conflicts with ontology_to_tdfol)
+        if self.use_cache and self._cache is not None:
             cache_key = f"consistency:{self._get_cache_key(ontology)}"
             if cache_key in self._cache:
                 logger.info("Using cached validation result")
@@ -431,8 +443,12 @@ class LogicValidator:
         
         # Cache result if enabled (use namespaced key to avoid conflicts with ontology_to_tdfol)
         if self.use_cache:
-            cache_key = f"consistency:{self._get_cache_key(ontology)}"
-            self._cache[cache_key] = result
+            if self._cache is not None:
+                cache_key = f"consistency:{self._get_cache_key(ontology)}"
+                self._cache[cache_key] = result
+            if self._incremental_cache is not None:
+                incremental_key = self._get_incremental_cache_key(ontology)
+                self._incremental_cache[incremental_key] = result
         
         logger.info(
             f"Validation complete: consistent={result.is_consistent}, "
@@ -1284,6 +1300,24 @@ class LogicValidator:
         logger.debug("TDFOL cache cleared (%d entries removed)", n)
         return n
 
+    def clear_incremental_cache(self) -> int:
+        """Clear the incremental consistency cache.
+
+        Returns:
+            Number of entries cleared from the cache.
+        """
+        if self._incremental_cache is None:
+            return 0
+        n = len(self._incremental_cache)
+        self._incremental_cache.clear()
+        self._incremental_cache_stats = {"hits": 0, "misses": 0}
+        logger.debug("Incremental cache cleared (%d entries removed)", n)
+        return n
+
+    def incremental_cache_stats(self) -> Dict[str, int]:
+        """Return incremental cache hit/miss statistics."""
+        return dict(self._incremental_cache_stats)
+
     def _get_cache_key(self, ontology: Dict[str, Any]) -> str:
         """Generate cache key for ontology."""
         import hashlib
@@ -1292,6 +1326,48 @@ class LogicValidator:
         # Create deterministic representation
         ontology_str = json.dumps(ontology, sort_keys=True)
         return hashlib.sha256(ontology_str.encode()).hexdigest()
+
+    def _get_incremental_cache_key(self, ontology: Dict[str, Any]) -> str:
+        """Generate cache key based on structural ontology data.
+
+        Ignores metadata and ordering to maximize cache hits for repeated
+        ontologies with equivalent structure.
+        """
+        import hashlib
+        import json
+
+        entities = ontology.get("entities", [])
+        relationships = ontology.get("relationships", [])
+
+        entity_sig = []
+        for ent in entities:
+            if not isinstance(ent, dict):
+                continue
+            entity_sig.append(
+                (
+                    ent.get("id"),
+                    ent.get("type"),
+                    ent.get("text"),
+                )
+            )
+
+        rel_sig = []
+        for rel in relationships:
+            if not isinstance(rel, dict):
+                continue
+            rel_sig.append(
+                (
+                    rel.get("type"),
+                    rel.get("source_id"),
+                    rel.get("target_id"),
+                )
+            )
+
+        payload = {
+            "entities": sorted(entity_sig),
+            "relationships": sorted(rel_sig),
+        }
+        return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
 
     def all_entity_ids(self, ontology: Dict[str, Any]) -> List[str]:
         """Return a list of all entity ``id`` strings in *ontology*.
