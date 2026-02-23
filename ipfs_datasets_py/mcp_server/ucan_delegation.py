@@ -854,6 +854,35 @@ class DelegationManager:
     def __len__(self) -> int:
         return len(self._store)
 
+    def active_tokens(self):
+        """EA189: Iterate over non-revoked (active) delegation tokens.
+
+        Yields ``(cid, token)`` pairs for all tokens whose CID is not
+        present in the revocation list.  The iteration order follows
+        :meth:`DelegationStore.list_cids` (insertion order).
+
+        Yields
+        ------
+        tuple of (str, DelegationToken)
+            ``(cid, token)`` where *cid* is not revoked.
+        """
+        for cid in self._store.list_cids():
+            if not self._revocation.is_revoked(cid):
+                token = self._store.get(cid)
+                if token is not None:
+                    yield cid, token
+
+    @property
+    def active_token_count(self) -> int:
+        """EF194: Cached count of non-revoked (active) tokens.
+
+        Delegates to :meth:`get_metrics` so the value is always consistent
+        with the memoised metrics snapshot and is invalidated whenever
+        :meth:`add`, :meth:`remove`, :meth:`revoke`, or :meth:`load`
+        modifies the store.
+        """
+        return self.get_metrics()["active_token_count"]
+
     # ------------------------------------------------------------------
     # CQ153: Merge
     # ------------------------------------------------------------------

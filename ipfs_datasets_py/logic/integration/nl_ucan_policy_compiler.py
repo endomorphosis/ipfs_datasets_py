@@ -385,6 +385,35 @@ class NLUCANPolicyCompiler:
                 break
             yield line
 
+    def compile_batch(
+        self,
+        sentences_list: List[List[str]],
+        policy_ids: Optional[List[Optional[str]]] = None,
+    ) -> "List[NLUCANCompilerResult]":
+        """DZ188: Compile multiple policy sets in sequence.
+
+        Parameters
+        ----------
+        sentences_list:
+            Each element is a list of sentences for one policy set.
+        policy_ids:
+            Optional list of policy identifiers (one per policy set).
+            ``None`` entries or a shorter list cause auto-generated IDs.
+
+        Returns
+        -------
+        list of :class:`NLUCANCompilerResult`
+            One result per policy set, in the same order as *sentences_list*.
+            Empty when *sentences_list* is empty.
+        """
+        results: List[NLUCANCompilerResult] = []
+        for i, sentences in enumerate(sentences_list):
+            pid: Optional[str] = None
+            if policy_ids is not None and i < len(policy_ids):
+                pid = policy_ids[i]
+            results.append(self.compile(sentences, policy_id=pid))
+        return results
+
 
 # ── one-shot convenience wrapper ─────────────────────────────────────────────
 

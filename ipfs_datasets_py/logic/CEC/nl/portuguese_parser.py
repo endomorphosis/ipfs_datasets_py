@@ -156,3 +156,26 @@ class PortugueseParser:
                         )
                         break  # one clause per deontic type per sentence
         return clauses
+
+    def get_clauses_by_type(self, text: str, deontic_type: str) -> List[PortugueseClause]:
+        """DY187: Return only clauses of *deontic_type* from *text*.
+
+        Convenience wrapper around :meth:`parse` that filters results by
+        ``deontic_type``.  Valid values are ``"permission"``,
+        ``"prohibition"``, and ``"obligation"``.
+
+        Parameters
+        ----------
+        text:
+            Portuguese natural-language text to parse.
+        deontic_type:
+            Deontic type to keep (``"permission"``, ``"prohibition"``, or
+            ``"obligation"``).
+
+        Returns
+        -------
+        list of :class:`PortugueseClause`
+            Clauses whose ``deontic_type`` matches *deontic_type*; empty when
+            none found or when *deontic_type* is not a recognised type.
+        """
+        return [c for c in self.parse(text) if c.deontic_type == deontic_type]

@@ -424,17 +424,43 @@ class I18NConflictReport:
             for lang, conflicts in self.by_language.items()
         }
 
+    def most_conflicted_language(self) -> Optional[str]:
+        """EG195: Return the language with the highest conflict count.
+
+        Returns ``None`` when no conflicts have been detected across any
+        language (i.e. :attr:`total_conflicts` is 0).
+
+        When multiple languages share the same maximum count the one that
+        appears first in the :attr:`by_language` insertion order is
+        returned (deterministic for a fixed :func:`detect_all_languages`
+        call).
+
+        Returns
+        -------
+        str or None
+            ISO 639-1 language code with the most conflicts, or ``None``.
+        """
+        best: Optional[str] = None
+        best_count = 0
+        for lang, conflicts in self.by_language.items():
+            n = len(conflicts)
+            if n > best_count:
+                best = lang
+                best_count = n
+        return best
+
 
 def detect_all_languages(text: str) -> "I18NConflictReport":
-    """CT156/DJ172/DN176/DO177: Run full-clause conflict detection across all supported languages.
+    """CT156/DJ172/DN176/DO177/ED192: Run full-clause conflict detection across all supported languages.
 
     Calls :func:`~logic.CEC.nl.nl_policy_conflict_detector.detect_i18n_clauses`
     for French (``"fr"``), Spanish (``"es"``), German (``"de"``),
-    English (``"en"``), Portuguese (``"pt"``), Dutch (``"nl"``), and
-    Italian (``"it"``), and returns a combined :class:`I18NConflictReport`.
+    English (``"en"``), Portuguese (``"pt"``), Dutch (``"nl"``),
+    Italian (``"it"``), and Japanese (``"ja"``), and returns a combined
+    :class:`I18NConflictReport`.
 
-    English, Dutch, and Italian passes use inline deontic keywords (no
-    separate parser module is required) so they are always available.
+    English, Dutch, Italian, and Japanese passes use inline deontic keywords
+    (no separate parser module is required) so they are always available.
     Portuguese requires ``portuguese_parser.py``; an ``ImportError`` results
     in an empty list for that language slot.
 
@@ -449,7 +475,7 @@ def detect_all_languages(text: str) -> "I18NConflictReport":
         Report with per-language conflict lists (empty list when no conflict
         or when the parser module is unavailable).
     """
-    _SUPPORTED_LANGS = ("fr", "es", "de", "en", "pt", "nl", "it")  # DO177: added "it"
+    _SUPPORTED_LANGS = ("fr", "es", "de", "en", "pt", "nl", "it", "ja")  # ED192: added "ja"
     report = I18NConflictReport()
     try:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (  # noqa: F401

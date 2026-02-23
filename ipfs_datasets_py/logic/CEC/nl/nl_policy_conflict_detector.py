@@ -351,15 +351,33 @@ _NL_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     ],
 }
 
+# ED192: Japanese deontic keywords (inline — no external parser needed).
+_JA_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
+    "permission": [
+        "してもよい", "することができる", "許可される", "認められている",
+        "できる", "してよい", "可能である",
+    ],
+    "prohibition": [
+        "してはならない", "することを禁じる", "禁止されている", "禁止する",
+        "してはいけない", "禁止", "不可",
+    ],
+    "obligation": [
+        "しなければならない", "することが必要", "する義務がある", "する必要がある",
+        "しなければ", "義務がある", "必須である",
+    ],
+}
+
 
 def _load_i18n_keywords(language: str) -> Dict[str, List[str]]:
-    """Load deontic keywords for *language* (``"en"``, ``"nl"``, ``"it"``, ``"fr"``, ``"es"``, ``"de"``, or ``"pt"``)."""
+    """Load deontic keywords for *language* (``"en"``, ``"nl"``, ``"it"``, ``"ja"``, ``"fr"``, ``"es"``, ``"de"``, or ``"pt"``)."""
     if language == "en":  # DC165: inline English keywords
         return _EN_DEONTIC_KEYWORDS
     if language == "nl":  # DN176: inline Dutch keywords
         return _NL_DEONTIC_KEYWORDS
     if language == "it":  # DO177: inline Italian keywords
         return _IT_DEONTIC_KEYWORDS
+    if language == "ja":  # ED192: inline Japanese keywords
+        return _JA_DEONTIC_KEYWORDS
     loader_path = _I18N_KEYWORD_LOADERS.get(language)
     if loader_path is None:
         return {}

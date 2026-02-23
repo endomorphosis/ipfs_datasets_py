@@ -30,7 +30,7 @@ import copy
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, NamedTuple, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,48 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Data types
 # ---------------------------------------------------------------------------
+
+
+class ComplianceMergeResult(NamedTuple):
+    """EC191: Result of a :meth:`ComplianceChecker.merge` operation.
+
+    Backward-compatible with ``int`` comparisons via :meth:`__eq__` and
+    :meth:`__int__` (both use ``added``).
+
+    .. note::
+        The custom ``__eq__`` allows ``result == 2`` where *2* is an ``int``.
+        This means the hash-equality contract is intentionally relaxed: this
+        class should **not** be used as a dict key or set element alongside
+        plain integers.
+
+    Attributes
+    ----------
+    added:
+        Number of rules actually added.
+    skipped_protected:
+        Rules skipped because ``removable=False`` and
+        ``include_protected_rules=False``.
+    skipped_duplicate:
+        Rules skipped because their ``rule_id`` was already present.
+    """
+
+    added: int
+    skipped_protected: int
+    skipped_duplicate: int
+
+    def __int__(self) -> int:
+        return self.added
+
+    def __eq__(self, other: object) -> bool:  # type: ignore[override]
+        if isinstance(other, int):
+            return self.added == other
+        return tuple.__eq__(self, other)
+
+    def __hash__(self) -> int:  # type: ignore[override]
+        return hash(tuple(self))
+
+    def __bool__(self) -> bool:
+        return self.added > 0
 
 
 @dataclass
@@ -269,8 +311,8 @@ class ComplianceChecker:
 
         return ComplianceReport(results=results, intent_snapshot=snapshot)
 
-    def merge(self, other: "ComplianceChecker", *, include_protected_rules: bool = False) -> int:
-        """DA163/DH170/DS181: Copy rules from *other* that are not already present in *self*.
+    def merge(self, other: "ComplianceChecker", *, include_protected_rules: bool = False) -> "ComplianceMergeResult":
+        """DA163/DH170/DS181/EC191: Copy rules from *other* that are not already present in *self*.
 
         Rules are matched by ``rule_id``; rules whose ``rule_id`` already
         exists in *self* are silently skipped.  Order within *self* is
@@ -297,21 +339,32 @@ class ComplianceChecker:
 
         Returns
         -------
-        int
-            Number of rules added (0 if all were already present or skipped).
+        :class:`ComplianceMergeResult`
+            EC191: Named tuple with ``added``, ``skipped_protected``, and
+            ``skipped_duplicate`` counts.  Backward-compatible with ``int``
+            via ``__eq__`` and ``__int__`` (both use ``added``).
         """
         existing_ids = {r.rule_id for r in self._rules}
         added = 0
+        skipped_protected = 0
+        skipped_duplicate = 0
         for rule in other._rules:
             # DH170: skip non-removable (protected) rules unless explicitly requested
             if not include_protected_rules and not rule.removable:
+                skipped_protected += 1
                 continue
-            if rule.rule_id not in existing_ids:
-                # DS181: shallow copy so mutations in other don't affect self
-                self._rules.append(copy.copy(rule))
-                existing_ids.add(rule.rule_id)
-                added += 1
-        return added
+            if rule.rule_id in existing_ids:
+                skipped_duplicate += 1
+                continue
+            # DS181: shallow copy so mutations in other don't affect self
+            self._rules.append(copy.copy(rule))
+            existing_ids.add(rule.rule_id)
+            added += 1
+        return ComplianceMergeResult(
+            added=added,
+            skipped_protected=skipped_protected,
+            skipped_duplicate=skipped_duplicate,
+        )
 
     def diff(self, other: "ComplianceChecker") -> Dict[str, Any]:
         """CR154: Compare *self* against *other* and return a diff summary.
