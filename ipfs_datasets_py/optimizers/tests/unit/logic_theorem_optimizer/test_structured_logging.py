@@ -57,7 +57,7 @@ class TestLogicTheoremOptimizerStructuredLogging:
         
         # Verify schema metadata
         assert payload["schema"] == "ipfs_datasets_py.optimizer_log"
-        assert payload["schema_version"] == 1
+        assert payload["schema_version"] == DEFAULT_SCHEMA_VERSION
         
         # Verify event metadata
         assert payload["event"] == "logic_theorem_optimizer_run_session"
@@ -180,7 +180,7 @@ class TestLogicOptimizerStructuredLogging:
         
         # Verify schema metadata
         assert payload["schema"] == "ipfs_datasets_py.optimizer_log"
-        assert payload["schema_version"] == 1
+        assert payload["schema_version"] == DEFAULT_SCHEMA_VERSION
         
         # Verify event metadata
         assert payload["event"] == "logic_optimizer_analyze_batch"
@@ -328,4 +328,4 @@ class TestStructuredLoggingSchema:
         
         # All logs should use the same version
         assert len(versions) == 1
-        assert 1 in versions
+        assert DEFAULT_SCHEMA_VERSION in versions
