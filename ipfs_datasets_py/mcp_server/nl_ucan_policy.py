@@ -920,9 +920,9 @@ class FilePolicyStore:
         """Persist the current registry to an encrypted companion file.
 
         The encryption file path is ``<self.path>.enc`` (sibling of the plain
-        JSON file).  Uses AES-256-GCM with a 32-byte key derived from
-        ``SHA-256(password)`` and a random 12-byte nonce.  The file format is
-        ``<12-byte nonce> || <AES-GCM ciphertext>``.
+        JSON file).  Uses AES-256-GCM with a 32-byte key derived from the
+        passphrase via PBKDF2-HMAC-SHA256 and a random 12-byte nonce.  The
+        file format is ``<16-byte salt> || <12-byte nonce> || <AES-GCM ciphertext>``.
 
         Creates parent directories if necessary.
 
@@ -934,6 +934,8 @@ class FilePolicyStore:
         """
         try:
             from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+            from cryptography.hazmat.primitives import hashes
+            from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
         except ImportError:
             warnings.warn(
                 "cryptography package not installed; using plain save() instead of "
@@ -945,7 +947,6 @@ class FilePolicyStore:
             return
 
         import os as _os
-        import hashlib as _hashlib
 
         enc_path = self.path + ".enc"
         parent = _os.path.dirname(enc_path)
@@ -969,11 +970,19 @@ class FilePolicyStore:
         }
         plaintext = json.dumps(data, indent=2).encode()
 
-        key = _hashlib.sha256(password.encode()).digest()
+        # Derive a 32-byte AES key from the password using PBKDF2-HMAC-SHA256.
+        salt = _os.urandom(16)
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=100_000,
+        )
+        key = kdf.derive(password.encode())
         nonce = _os.urandom(12)
         ciphertext = AESGCM(key).encrypt(nonce, plaintext, None)
         with open(enc_path, "wb") as fh:
-            fh.write(nonce + ciphertext)
+            fh.write(salt + nonce + ciphertext)
         logger.debug("Saved %d policies encrypted to %s", len(policies), enc_path)
 
     def load_encrypted(self, password: str) -> int:
