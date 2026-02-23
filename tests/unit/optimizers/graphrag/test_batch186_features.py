@@ -206,7 +206,18 @@ class TestRelationshipBidirectionalityRate:
         gen = _make_generator()
         rels = [_make_relationship("a", "b"), _make_relationship("b", "a")]
         rate = gen.relationship_bidirectionality_rate(_make_result([], rels))
-        assert rate > 0
+        assert rate == pytest.approx(1.0)
+
+    def test_mixed_pairs(self):
+        gen = _make_generator()
+        # One bidirectional pair (a<->b) and one unidirectional pair (c->d)
+        rels = [
+            _make_relationship("a", "b"),
+            _make_relationship("b", "a"),
+            _make_relationship("c", "d"),
+        ]
+        rate = gen.relationship_bidirectionality_rate(_make_result([], rels))
+        assert rate == pytest.approx(0.5)
 
     def test_returns_float(self):
         gen = _make_generator()

@@ -6,6 +6,10 @@ Fast-track guides to get started with specific features quickly.
 
 Quick start guides in this directory provide rapid onboarding for specific features or components.
 
+- [Platform Install](PLATFORM_INSTALL.md)
+- [CLI Quick Start](cli_quick_start.md)
+- [GraphRAG Ontology Generation](graphrag_ontology_quick_start.md)
+
 ## Purpose
 
 Quick starts are designed to:
