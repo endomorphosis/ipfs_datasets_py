@@ -1278,8 +1278,8 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] `OntologyPipeline.run_ids()` — list of run identifiers (indices or ids) (Done 2026-02-22; ipfs_datasets_py/optimizers/graphrag/ontology_pipeline.py; tests/unit/optimizers/graphrag/test_batch85_features.py)
 - [ ] (P2) [graphrag] `OntologyMediator.apply_action_bulk(actions)` — apply list of (action, args) pairs
 - [x] (P2) [graphrag] `OntologyMediator.action_count_for(action)` — already done, skip; try `actions_never_applied()` — action names with count == 0 (Done 2026-02-22; ipfs_datasets_py/optimizers/graphrag/ontology_mediator.py; tests/unit/optimizers/graphrag/test_batch85_features.py)
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.score_range()` — (min, max) tuple of recorded scores
-- [ ] (P2) [graphrag] `OntologyLearningAdapter.above_threshold_fraction(threshold)` — alias for passing_feedback_fraction
+- [x] (P2) [graphrag] `OntologyLearningAdapter.score_range()` — (min, max) tuple of recorded scores (Done 2026-02-23; ipfs_datasets_py/optimizers/graphrag/ontology_learning_adapter.py; tests/unit/optimizers/graphrag/test_batch116_features.py)
+- [x] (P2) [graphrag] `OntologyLearningAdapter.above_threshold_fraction(threshold)` — alias for passing_feedback_fraction (Done 2026-02-23; ipfs_datasets_py/optimizers/graphrag/ontology_learning_adapter.py; tests/unit/optimizers/graphrag/test_batch108_features.py)
 - [ ] (P2) [graphrag] `LogicValidator.orphan_entities(ontology)` — entities with no relationships
 - [ ] (P2) [graphrag] `LogicValidator.hub_entities(ontology, min_degree)` — entities with >= min_degree relationships
 - [ ] (P3) [graphrag] `EntityExtractionResult.top_confidence_entity()` — entity with highest confidence

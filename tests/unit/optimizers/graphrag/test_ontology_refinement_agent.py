@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from ipfs_datasets_py.optimizers.graphrag.ontology_refinement_agent import OntologyRefinementAgent
+from ipfs_datasets_py.optimizers.graphrag.ontology_refinement_agent import (
+    OntologyRefinementAgent,
+    NoOpRefinementAgent,
+)
 
 
 def test_parse_feedback_dict_passthrough():
@@ -29,3 +32,18 @@ def test_propose_feedback_with_callable_backend():
 
     feedback = agent.propose_feedback(ontology, score, context=None)
     assert feedback == {"relationships_to_remove": ["r1"]}
+
+
+def test_noop_agent_returns_fixed_feedback_copy():
+    payload = {"confidence_floor": 0.6}
+    agent = NoOpRefinementAgent(feedback=payload)
+
+    feedback = agent.propose_feedback(ontology={}, score=None, context=None)
+    assert feedback == payload
+    assert feedback is not payload
+
+
+def test_noop_agent_defaults_to_empty_feedback():
+    agent = NoOpRefinementAgent()
+    feedback = agent.propose_feedback(ontology={}, score=None, context=None)
+    assert feedback == {}

@@ -830,6 +830,17 @@ class OntologyLearningAdapter:
         passing = sum(1 for r in self._feedback if r.final_score > threshold)
         return passing / len(self._feedback)
 
+    def above_threshold_fraction(self, threshold: float = 0.6) -> float:
+        """Alias for :meth:`passing_feedback_fraction`.
+
+        Args:
+            threshold: Minimum score (exclusive) to count as passing.
+
+        Returns:
+            Float in [0.0, 1.0]; ``0.0`` when no feedback is recorded.
+        """
+        return self.passing_feedback_fraction(threshold)
+
     def reset_and_load(self, records: list) -> int:
         """Clear all existing feedback and load *records* as the new history.
 
@@ -2362,6 +2373,8 @@ class OntologyLearningAdapter:
             >>> adapter.apply_feedback(final_score=0.8, actions={})
             >>> adapter.feedback_percentile(50)  # median-ish
         """
+        if not 0 <= p <= 100:
+            raise ValueError("p must be in [0, 100]")
         if not self._feedback:
             return 0.0
         scores = sorted(r.final_score for r in self._feedback)

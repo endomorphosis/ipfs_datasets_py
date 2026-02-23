@@ -89,3 +89,21 @@ class OntologyRefinementAgent:
             return {}
 
         return self.parse_feedback(response)
+
+
+class NoOpRefinementAgent:
+    """Deterministic refinement agent for tests and offline runs.
+
+    Returns a fixed feedback payload on every call to avoid nondeterminism.
+    """
+
+    def __init__(self, feedback: Optional[Dict[str, Any]] = None) -> None:
+        self._feedback = dict(feedback or {})
+
+    def propose_feedback(
+        self,
+        ontology: Dict[str, Any],
+        score: Any,
+        context: Any,
+    ) -> Dict[str, Any]:
+        return dict(self._feedback)

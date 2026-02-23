@@ -155,7 +155,7 @@ from .visualization import (
 
 from .ontology_learning_adapter import OntologyLearningAdapter, FeedbackRecord
 
-from .ontology_refinement_agent import OntologyRefinementAgent
+from .ontology_refinement_agent import OntologyRefinementAgent, NoOpRefinementAgent
 
 from .exceptions import (
     GraphRAGError,
@@ -260,6 +260,7 @@ __all__ = [
     'GraphVisualization',
     # Agent scaffolding
     'OntologyRefinementAgent',
+    'NoOpRefinementAgent',
     # Exceptions
     'GraphRAGError',
     'OptimizerError',
