@@ -182,6 +182,45 @@ class CriticRecommendation(TypedDict):
     estimated_impact: NotRequired[float]
 
 
+class RefinementAction(TypedDict):
+    """Record of a single refinement action in a mediator cycle.
+
+    Attributes:
+        round: Refinement round number (1-based).
+        ontology: Ontology snapshot for the round.
+        score: CriticScore or score-like payload for the round.
+        action: Short description of the action taken.
+    """
+    round: int
+    ontology: Dict[str, Any]
+    score: Any
+    action: str
+
+
+class ActionLogEntry(TypedDict):
+    """Lightweight action log entry for tracking refinement operations.
+
+    Attributes:
+        action: Short description of the action taken.
+        round: Round number when action was taken (0-based).
+    """
+    action: str
+    round: int
+
+
+class ActionSummaryEntry(TypedDict):
+    """Summary statistics for a refinement action.
+
+    Attributes:
+        action: Action name.
+        count: Number of times action was applied.
+        rank: 1-based rank (1 = most frequent).
+    """
+    action: str
+    count: int
+    rank: int
+
+
 class CriticScore(TypedDict):
     """Complete evaluation results from the ontology critic.
     

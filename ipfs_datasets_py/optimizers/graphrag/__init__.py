@@ -192,6 +192,9 @@ from .ontology_types import (
     # Critique types
     DimensionalScore,
     CriticRecommendation,
+    RefinementAction,
+    ActionLogEntry,
+    ActionSummaryEntry,
     CriticScore as CriticScoreType,
     # Session and context
     SessionRound,
@@ -281,6 +284,9 @@ __all__ = [
     'RelationshipExtractionResult',
     'DimensionalScore',
     'CriticRecommendation',
+    'RefinementAction',
+    'ActionLogEntry',
+    'ActionSummaryEntry',
     'CriticScoreType',
     'SessionRound',
     'OntologySessionType',

@@ -44,6 +44,12 @@ __all__ = [
     'TheoremSession',
     'SessionResult',
     'SessionConfig',
+    # Session Contracts (NEW - Formalized, typed, validated)
+    'LogicSessionConfig',
+    'LogicSessionResult',
+    'RoundResult',
+    'ExtractionMetrics',
+    'ConvergenceReason',
     # Harness (DEPRECATED - Use LogicTheoremOptimizer)
     'LogicHarness',
     'LogicPipelineHarness',
@@ -168,6 +174,20 @@ def __getattr__(name):
             return SessionResult
         else:
             return SessionConfig
+    elif name in ('LogicSessionConfig', 'LogicSessionResult', 'RoundResult', 'ExtractionMetrics', 'ConvergenceReason'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_session_contracts import (
+            LogicSessionConfig, LogicSessionResult, RoundResult, ExtractionMetrics, ConvergenceReason
+        )
+        if name == 'LogicSessionConfig':
+            return LogicSessionConfig
+        elif name == 'LogicSessionResult':
+            return LogicSessionResult
+        elif name == 'RoundResult':
+            return RoundResult
+        elif name == 'ExtractionMetrics':
+            return ExtractionMetrics
+        else:
+            return ConvergenceReason
     elif name == 'LogicHarness' or name == 'LogicPipelineHarness' or name == 'HarnessConfig' or name == 'HarnessResult':
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_harness import (
             LogicHarness, LogicPipelineHarness, HarnessConfig, HarnessResult

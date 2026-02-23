@@ -174,9 +174,11 @@ class TestEntityExtractionResultToDataFrame:
         df = result.to_dataframe()
         
         # Check data types
-        assert df["id"].dtype == object  # string
-        assert df["text"].dtype == object  # string
-        assert df["type"].dtype == object  # string
+        # Pandas may represent string columns as either `object` (legacy)
+        # or the newer nullable `StringDtype`, depending on version/options.
+        assert pandas.api.types.is_string_dtype(df["id"])  # string
+        assert pandas.api.types.is_string_dtype(df["text"])  # string
+        assert pandas.api.types.is_string_dtype(df["type"])  # string
         assert pandas.api.types.is_numeric_dtype(df["confidence"])  # numeric
 
     def test_to_dataframe_unicode_text(self):

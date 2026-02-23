@@ -32,6 +32,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 _logger = logging.getLogger(__name__)
 
+from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
+
 from ..common.base_optimizer import (
     BaseOptimizer,
     OptimizerConfig,
@@ -72,6 +74,14 @@ class StatementValidationResult:
     provers_used: List[str] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
     details: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "all_valid": self.all_valid,
+            "provers_used": list(self.provers_used),
+            "errors": list(self.errors),
+            "details": dict(self.details),
+        }
 
 
 class LogicTheoremOptimizer(BaseOptimizer):
@@ -179,6 +189,9 @@ class LogicTheoremOptimizer(BaseOptimizer):
         learning cycle in the :class:`OptimizerLearningMetricsCollector` when
         available.
 
+        This method is intentionally best-effort: extraction/validation errors
+        are captured into the returned result dict rather than raising.
+
         Args:
             input_data: Input text or data to extract logic from.
             context: Optimization context (session_id, domain, …).
@@ -187,15 +200,33 @@ class LogicTheoremOptimizer(BaseOptimizer):
             Result dict from :meth:`BaseOptimizer.run_session`.
         """
         import time as _time
+
         t0 = _time.monotonic()
-        result = super().run_session(input_data, context)
+        try:
+            result = super().run_session(input_data, context)
+        except Exception as exc:
+            result = {
+                "success": False,
+                "error": str(exc),
+                "score": 0.0,
+                "valid": False,
+                "iterations": 0,
+                "artifact": None,
+            }
         duration_s = _time.monotonic() - t0
 
-        # Emit structured JSON log for observability
+        # Emit structured JSON log for observability (best effort)
         try:
             import json as _json
             from datetime import datetime as _datetime
-            from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
+
+            artifact = result.get("artifact") if isinstance(result, dict) else None
+            if isinstance(artifact, dict):
+                statement_count = len(artifact.get("statements") or [])
+            elif artifact is not None and hasattr(artifact, "statements"):
+                statement_count = len(getattr(artifact, "statements") or [])
+            else:
+                statement_count = 0
 
             duration_ms = duration_s * 1000.0
             payload = {
@@ -204,15 +235,18 @@ class LogicTheoremOptimizer(BaseOptimizer):
                 "domain": context.domain or self.domain,
                 "extraction_mode": self.extraction_mode.value,
                 "provers": list(self.prover_adapter.use_provers),
-                "score": round(result.get("score", 0.0), 6),
-                "valid": result.get("valid", False),
-                "iterations": result.get("iterations", 0),
-                "statement_count": len(result.get("artifact", {}).get("statements", [])) if "artifact" in result else 0,
+                "score": round(float(result.get("score", 0.0)), 6),
+                "valid": bool(result.get("valid", False)),
+                "iterations": int(result.get("iterations", 0) or 0),
+                "statement_count": int(statement_count),
                 "duration_ms": round(duration_ms, 2),
                 "timestamp": _datetime.now().isoformat(),
             }
-            self._log.info("LOGIC_SESSION_RUN: %s", _json.dumps(with_schema(payload), default=str))
-        except Exception as exc:  # pragma: no cover - logging must be best-effort
+            self._log.info(
+                "LOGIC_SESSION_RUN: %s",
+                _json.dumps(with_schema(payload), default=str),
+            )
+        except Exception as exc:  # pragma: no cover
             self._log.debug("Logic session JSON logging failed: %s", exc)
 
         if self._learning_metrics is not None:
@@ -230,7 +264,6 @@ class LogicTheoremOptimizer(BaseOptimizer):
                     execution_time=round(duration_s, 4),
                 )
             except Exception as e:
-                # Metrics must never block optimization
                 _logger.warning(f"Metrics collection failed: {e}")
 
         return result
