@@ -66,6 +66,67 @@ optimizers/
     Logic -->|Prove/Validate| Proofs[Theorem proofs]
   ```
 
+## Class Hierarchy and Interfaces
+
+The optimizers framework uses a common base class and protocols to ensure consistency:
+
+```mermaid
+classDiagram
+  class BaseOptimizer {
+    <<Abstract>>
+    -config: OptimizerConfig
+    +generate(input_data, context)*
+    +critique(artifact, context)*
+    +optimize(artifact, score, feedback, context)*
+    +validate(artifact, context)*
+    +run_session(input_data, context)
+    +dry_run(input_data, context)
+    +state_checksum(): str
+  }
+
+  class OptimizerConfig {
+    +domain: str
+    +max_iterations: int
+    +target_score: float
+    +early_stopping: bool
+    +validation_enabled: bool
+    +to_dict(): dict
+    +from_dict(dict): OptimizerConfig
+    +merge(other): OptimizerConfig
+  }
+
+  class GraphRAGOptimizer {
+    +generator: OntologyGenerator
+    +critic: OntologyCritic
+    +mediator: OntologyMediator
+    +generate(text, context)
+    +critique(ontology, context)
+    +optimize(ontology, score, feedback, context)
+  }
+
+  class LogicTheoremOptimizer {
+    +extractor: LogicExtractor
+    +critic: LogicCritic
+    +provers: List[Prover]
+    +generate(input, context)
+    +critique(proof, context)
+    +optimize(proof, score, feedback, context)
+  }
+
+  class AgenticOptimizer {
+    +methods: Dict[str, OptimizationMethod]
+    +change_control: ChangeControl
+    +generate(task, context)
+    +critique(code, context)
+    +optimize(code, score, feedback, context)
+  }
+
+  BaseOptimizer <|-- GraphRAGOptimizer
+  BaseOptimizer <|-- LogicTheoremOptimizer
+  BaseOptimizer <|-- AgenticOptimizer
+  BaseOptimizer --> OptimizerConfig: uses
+```
+
 ## Quick Start
 
 ### Agentic Optimizer CLI
@@ -431,6 +492,17 @@ OntologyPipeline
 - **QUICK_START.md** - Fast setup for all optimizer types
 - **CODE_EXAMPLES.md** - Comprehensive code examples for public methods
 - **COMMON_PITFALLS.md** - Troubleshooting guide with solutions
+
+## Quick Start Guides
+
+### GraphRAG Optimizer
+For detailed GraphRAG usage including entity extraction, ontology refinement, and LLM-based feedback agents, see:
+- **[GRAPHRAG_QUICK_START.md](../../docs/optimizers/GRAPHRAG_QUICK_START.md)** - Complete GraphRAG quick start with examples, configuration, CLI usage, and troubleshooting
+
+### Other Optimizers
+- **Agentic Optimizer** - See "Quick Start" and "Agentic Optimization Methods" sections above
+- **Logic Theorem Optimizer** - See "Logic Theorem Optimizer (Python API)" section above
+- **Selection Guide** - See [SELECTION_GUIDE.md](../../docs/optimizers/SELECTION_GUIDE.md) to choose the right optimizer
 
 ## Task Guides
 

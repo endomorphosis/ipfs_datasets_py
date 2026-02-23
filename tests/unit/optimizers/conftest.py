@@ -628,3 +628,238 @@ def pipeline_result_factory(ontology_dict_factory, critic_score_factory):
         return result
     
     return _create
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TypedDict Fixtures (for ontology_types.py structures)
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.fixture
+def entity_typeddict_factory():
+    """Factory for creating Entity TypedDict instances (from ontology_types.py).
+    
+    These are plain dicts conforming to the Entity TypedDict schema, used for
+    JSON serialization and API contracts.
+    
+    Returns:
+        Callable that creates Entity TypedDict dicts.
+        
+    Example:
+        >>> entity = entity_typeddict_factory(id="e1", text="Alice")
+        >>> entities = [entity_typeddict_factory(id=f"e{i}") for i in range(5)]
+    """
+    def _create(
+        id: str = "e1",
+        text: str = "Alice",
+        type: str = "Person",
+        confidence: float = 0.85,
+        properties: Optional[Dict[str, Any]] = None,
+        context: Optional[str] = None,
+        source_span: Optional[tuple] = None,
+    ) -> Dict[str, Any]:
+        entity = {
+            "id": id,
+            "text": text,
+            "type": type,
+            "confidence": confidence,
+        }
+        if properties is not None:
+            entity["properties"] = properties
+        if context is not None:
+            entity["context"] = context
+        if source_span is not None:
+            entity["source_span"] = source_span
+        return entity
+    
+    return _create
+
+
+@pytest.fixture
+def relationship_typeddict_factory():
+    """Factory for creating Relationship TypedDict instances (from ontology_types.py).
+    
+    Returns:
+        Callable that creates Relationship TypedDict dicts.
+        
+    Example:
+        >>> rel = relationship_typeddict_factory(source_id="e1", target_id="e2")
+    """
+    def _create(
+        id: str = "r1",
+        source_id: str = "e1",
+        target_id: str = "e2",
+        type: str = "related_to",
+        confidence: float = 0.75,
+        properties: Optional[Dict[str, Any]] = None,
+        context: Optional[str] = None,
+        distance: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        relationship = {
+            "id": id,
+            "source_id": source_id,
+            "target_id": target_id,
+            "type": type,
+            "confidence": confidence,
+        }
+        if properties is not None:
+            relationship["properties"] = properties
+        if context is not None:
+            relationship["context"] = context
+        if distance is not None:
+            relationship["distance"] = distance
+        return relationship
+    
+    return _create
+
+
+@pytest.fixture
+def critic_score_typeddict_factory():
+    """Factory for creating CriticScore TypedDict instances (from ontology_types.py).
+    
+    Creates a dict conforming to the CriticScore TypedDict schema.
+    
+    Returns:
+        Callable that creates CriticScore TypedDict dicts.
+        
+    Example:
+        >>> score = critic_score_typeddict_factory()
+        >>> score = critic_score_typeddict_factory(overall=0.95, completeness=0.90)
+    """
+    def _create(
+        overall: float = 0.80,
+        completeness: Optional[float] = None,
+        consistency: Optional[float] = None,
+        clarity: Optional[float] = None,
+        granularity: Optional[float] = None,
+        domain_alignment: Optional[float] = None,
+        relationship_coherence: Optional[float] = None,
+        dimensions: Optional[List[Dict[str, Any]]] = None,
+        recommendations: Optional[List[str]] = None,
+        timestamp: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        score = {"overall": overall}
+        
+        if completeness is not None:
+            score["completeness"] = completeness
+        if consistency is not None:
+            score["consistency"] = consistency
+        if clarity is not None:
+            score["clarity"] = clarity
+        if granularity is not None:
+            score["granularity"] = granularity
+        if domain_alignment is not None:
+            score["domain_alignment"] = domain_alignment
+        if relationship_coherence is not None:
+            score["relationship_coherence"] = relationship_coherence
+        if dimensions is not None:
+            score["dimensions"] = dimensions
+        if recommendations is not None:
+            score["recommendations"] = recommendations
+        if timestamp is not None:
+            score["timestamp"] = timestamp
+        
+        return score
+    
+    return _create
+
+
+@pytest.fixture
+def ontology_session_typeddict_factory(ontology_dict_factory, critic_score_typeddict_factory):
+    """Factory for creating OntologySession TypedDict instances (from ontology_types.py).
+    
+    Returns:
+        Callable that creates OntologySession TypedDict dicts.
+        
+    Example:
+        >>> session = ontology_session_typeddict_factory(session_id="sess1")
+        >>> session = ontology_session_typeddict_factory(current_round=3, convergence_threshold=0.85)
+    """
+    def _create(
+        session_id: str = "sess1",
+        data_source: str = "test_data.txt",
+        domain: str = "general",
+        current_round: int = 1,
+        rounds: Optional[List[Dict[str, Any]]] = None,
+        critic_scores: Optional[List[Dict[str, Any]]] = None,
+        convergence_threshold: float = 0.85,
+        start_time_ms: Optional[int] = None,
+        end_time_ms: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        import time
+        
+        session = {
+            "session_id": session_id,
+            "data_source": data_source,
+            "domain": domain,
+            "current_round": current_round,
+            "convergence_threshold": convergence_threshold,
+        }
+        
+        if rounds is not None:
+            session["rounds"] = rounds
+        
+        if critic_scores is not None:
+            session["critic_scores"] = critic_scores
+        elif current_round > 1:
+            # Generate mock critic scores for each round
+            session["critic_scores"] = [
+                critic_score_typeddict_factory(overall=0.70 + (i * 0.05))
+                for i in range(current_round)
+            ]
+        
+        if start_time_ms is not None:
+            session["start_time_ms"] = start_time_ms
+        else:
+            session["start_time_ms"] = int(time.time() * 1000)
+        
+        if end_time_ms is not None:
+            session["end_time_ms"] = end_time_ms
+        
+        return session
+    
+    return _create
+
+
+@pytest.fixture
+def feedback_record_typeddict_factory():
+    """Factory for creating FeedbackRecord TypedDict instances (from ontology_types.py).
+    
+    Creates structured feedback for ontology refinement.
+    
+    Returns:
+        Callable that creates FeedbackRecord TypedDict dicts.
+        
+    Example:
+        >>> feedback = feedback_record_typeddict_factory()
+        >>> feedback = feedback_record_typeddict_factory(
+        ...     entities_to_remove=["e1", "e2"],
+        ...     entities_to_merge=[["e3", "e4"]]
+        ... )
+    """
+    def _create(
+        entities_to_remove: Optional[List[str]] = None,
+        entities_to_merge: Optional[List[List[str]]] = None,
+        relationships_to_remove: Optional[List[str]] = None,
+        relationships_to_add: Optional[List[Dict[str, Any]]] = None,
+        type_corrections: Optional[Dict[str, str]] = None,
+        confidence_floor: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        feedback = {}
+        
+        if entities_to_remove is not None:
+            feedback["entities_to_remove"] = entities_to_remove
+        if entities_to_merge is not None:
+            feedback["entities_to_merge"] = entities_to_merge
+        if relationships_to_remove is not None:
+            feedback["relationships_to_remove"] = relationships_to_remove
+        if relationships_to_add is not None:
+            feedback["relationships_to_add"] = relationships_to_add
+        if type_corrections is not None:
+            feedback["type_corrections"] = type_corrections
+        if confidence_floor is not None:
+            feedback["confidence_floor"] = confidence_floor
+        
+        return feedback
+    
+    return _create
