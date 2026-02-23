@@ -1395,21 +1395,22 @@ class IPFSReloadResult(NamedTuple):
                 yield (name, cid)
 
     def iter_all(self):
-        """Yield ``(name, cid_or_none)`` pairs for *all* pin entries.
+        """Yield ``(name, cid_or_none)`` pairs for *all* pin operations.
 
-        Iterates every entry in :attr:`pin_results` regardless of success or
-        failure.  Useful for unified reporting that must account for the full
-        batch::
+        Iterates :attr:`pin_results` unconditionally, yielding an entry for
+        every policy regardless of whether its pin succeeded or failed.
+        Useful for unified reporting and audit logs::
 
             for name, cid in result.iter_all():
                 status = "ok" if cid else "FAILED"
-                log.info("%s [%s] %s", status, name, cid or "(none)")
+                log.info("[%s] %s %s", status, name, cid or "—")
 
         Yields:
-            Two-element ``(str, str | None)`` tuples — policy name and CID
-            string (or ``None`` for failed pins).
+            Two-element tuples — ``(str, str)`` when the pin succeeded, or
+            ``(str, None)`` when it failed.
         """
-        yield from self.pin_results.items()
+        for name, cid in self.pin_results.items():
+            yield (name, cid)
 
 
 class IPFSPolicyStore(FilePolicyStore):

@@ -1199,15 +1199,15 @@ class MergeResult:
         """Return a list of field values in the same order as :meth:`keys`.
 
         Completes the ``dict``-protocol triad alongside :meth:`keys` and
-        :meth:`__iter__`, enabling callers to inspect raw values without
-        constructing a full dict::
+        :meth:`__iter__` (which yields ``(key, value)`` pairs)::
 
             assert result.values() == [result.added_count,
                                         result.conflict_count,
                                         result.revocations_copied]
 
         Returns:
-            A plain list of the three field values in stable order.
+            A plain list of the three field values in stable
+            ``[added_count, conflict_count, revocations_copied]`` order.
         """
         return [self.added_count, self.conflict_count, self.revocations_copied]
 

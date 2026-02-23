@@ -848,20 +848,20 @@ class PubSubBus:
         return {k: sorted(v) for k, v in result.items() if v}
 
     def total_subscriptions(self) -> int:
-        """Return the total number of active subscription registrations.
+        """Return the total number of active subscription IDs (SIDs).
 
-        Unlike :meth:`handler_count` (which counts *unique* handlers),
-        this method counts every SID in ``_sid_map`` — so a single handler
-        subscribed to three topics contributes 3::
+        Counts every entry in ``_sid_map``, so a single handler subscribed to
+        three topics is counted three times.  This is the registration-level
+        count, complementing :meth:`handler_count` which deduplicates by
+        handler identity::
 
-            def cb(t, p): pass
             bus.subscribe("a", cb)
             bus.subscribe("b", cb)
-            assert bus.total_subscriptions() == 2  # two SIDs
-            assert bus.handler_count() == 1         # one unique handler
+            assert bus.total_subscriptions() == 2  # 2 registrations
+            assert bus.handler_count() == 1        # 1 unique handler
 
         Returns:
-            Non-negative integer — ``len(_sid_map)``.
+            Non-negative integer — 0 when no subscriptions are active.
         """
         return len(self._sid_map)
 
