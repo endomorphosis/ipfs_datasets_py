@@ -296,10 +296,12 @@ class PolicyAuditLog:
         return len(entries)
 
     def import_jsonl(self, path: str) -> int:
-        """CS155: Import entries from a JSONL file into the in-memory buffer.
+        """CS155/DG169: Import entries from a JSONL file into the in-memory buffer.
 
         Lines that cannot be parsed as :class:`AuditEntry` JSON are skipped
-        with a DEBUG log.
+        with a DEBUG log.  Lines whose top-level key is ``"__metadata__"``
+        (written by :meth:`export_jsonl` when *metadata* is provided) are
+        also silently skipped and do **not** count towards the return value.
 
         Parameters
         ----------
@@ -309,7 +311,7 @@ class PolicyAuditLog:
         Returns
         -------
         int
-            Number of entries successfully imported.
+            Number of entries successfully imported (metadata lines excluded).
         """
         imported = 0
         src = Path(path)
@@ -323,6 +325,10 @@ class PolicyAuditLog:
                     continue
                 try:
                     data = json.loads(raw)
+                    # DG169: skip metadata header lines produced by export_jsonl(metadata=...)
+                    if "__metadata__" in data:
+                        logger.debug("import_jsonl: skipping metadata line %d", line_no)
+                        continue
                     entry = AuditEntry(
                         timestamp=float(data.get("timestamp", 0.0)),
                         policy_cid=str(data.get("policy_cid", "")),

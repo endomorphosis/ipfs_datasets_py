@@ -923,6 +923,51 @@ class DelegationManager:
             logger.debug("merge_and_publish: pubsub.publish failed: %s", exc)
         return added
 
+    async def merge_and_publish_async(self, other: "DelegationManager", pubsub: Any) -> int:
+        """DK173: Async variant of :meth:`merge_and_publish`.
+
+        Merges tokens from *other* synchronously (thread-safe), then calls
+        ``await pubsub.publish_async("receipt_disseminate", payload)`` when
+        the pubsub has a ``publish_async`` coroutine, falling back to the
+        synchronous ``publish`` if it does not.
+
+        The payload is identical to :meth:`merge_and_publish`.
+
+        Parameters
+        ----------
+        other:
+            Source :class:`DelegationManager`.
+        pubsub:
+            Any object with a ``publish_async(topic, payload)`` coroutine
+            **or** a synchronous ``publish(topic, payload)`` method as a
+            fallback.
+
+        Returns
+        -------
+        int
+            Number of tokens added (same as :meth:`merge`).
+        """
+        added = self.merge(other)
+        payload = {
+            "type": "merge",
+            "added": added,
+            "total": len(self._store),
+            "metrics": self.get_metrics(),
+        }
+        try:
+            import inspect
+            publish_fn = getattr(pubsub, "publish_async", None)
+            if publish_fn is not None and inspect.iscoroutinefunction(publish_fn):
+                await publish_fn("receipt_disseminate", payload)
+            else:
+                # Fallback: synchronous publish
+                sync_fn = getattr(pubsub, "publish", None)
+                if sync_fn is not None:
+                    sync_fn("receipt_disseminate", payload)
+        except Exception as exc:
+            logger.debug("merge_and_publish_async: publish failed: %s", exc)
+        return added
+
     def __repr__(self) -> str:
         return (
             f"DelegationManager(tokens={len(self._store)}, "

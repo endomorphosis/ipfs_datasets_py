@@ -268,8 +268,8 @@ class ComplianceChecker:
 
         return ComplianceReport(results=results, intent_snapshot=snapshot)
 
-    def merge(self, other: "ComplianceChecker") -> int:
-        """DA163: Copy rules from *other* that are not already present in *self*.
+    def merge(self, other: "ComplianceChecker", *, include_protected_rules: bool = False) -> int:
+        """DA163/DH170: Copy rules from *other* that are not already present in *self*.
 
         Rules are matched by ``rule_id``; rules whose ``rule_id`` already
         exists in *self* are silently skipped.  Order within *self* is
@@ -277,21 +277,30 @@ class ComplianceChecker:
 
         This method is symmetric to :meth:`diff`: the rule IDs returned in
         ``diff(other)["added_rules"]`` are exactly those that ``merge(other)``
-        would add.
+        would add (when ``include_protected_rules=False``).
 
         Parameters
         ----------
         other:
             Source :class:`ComplianceChecker` to merge from.
+        include_protected_rules:
+            DH170: When ``False`` (default), rules from *other* whose
+            ``removable`` attribute is ``False`` are **skipped** (they are
+            treated as built-in/protected rules and should not be propagated
+            by merging).  Set to ``True`` to copy all rules regardless of
+            the ``removable`` flag.
 
         Returns
         -------
         int
-            Number of rules added (0 if all were already present).
+            Number of rules added (0 if all were already present or skipped).
         """
         existing_ids = {r.rule_id for r in self._rules}
         added = 0
         for rule in other._rules:
+            # DH170: skip non-removable (protected) rules unless explicitly requested
+            if not include_protected_rules and not rule.removable:
+                continue
             if rule.rule_id not in existing_ids:
                 self._rules.append(rule)
                 existing_ids.add(rule.rule_id)

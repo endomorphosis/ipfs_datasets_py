@@ -41,7 +41,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -345,6 +345,38 @@ class NLUCANPolicyCompiler:
         """
         result = self.compile(sentences, policy_id=policy_id)
         return result, result.explain()
+
+    def compile_explain_iter(
+        self,
+        sentences: List[str],
+        policy_id: Optional[str] = None,
+    ) -> "Iterator[str]":
+        """DI171: Compile *sentences* and yield the explanation as an iterator of lines.
+
+        This is a lazy variant of :meth:`compile_explain` that compiles once
+        and then yields the explanation string split on newlines.  Useful when
+        callers want to process or print the explanation line-by-line without
+        constructing the full string in memory.
+
+        The result object is **not** returned — callers that need it should use
+        :meth:`compile_explain` instead.
+
+        Parameters
+        ----------
+        sentences:
+            Plain-English policy statements.
+        policy_id:
+            Override the instance-level ``policy_id``.
+
+        Yields
+        ------
+        str
+            Individual lines of the human-readable explanation (no trailing
+            newline per line).
+        """
+        result = self.compile(sentences, policy_id=policy_id)
+        for line in result.explain().splitlines():
+            yield line
 
 
 # ── one-shot convenience wrapper ─────────────────────────────────────────────
