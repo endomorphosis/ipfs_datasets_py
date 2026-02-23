@@ -1214,6 +1214,18 @@ class IPFSReloadResult(NamedTuple):
                 details[name] = errors.get(name, "unknown error")
         return details
 
+    @property
+    def all_succeeded(self) -> bool:
+        """``True`` when every pin operation completed without error.
+
+        Equivalent to ``total_failed == 0``.  Useful for concise
+        conditional checks::
+
+            if not result.all_succeeded:
+                handle(result.failure_details)
+        """
+        return self.total_failed == 0
+
 
 class IPFSPolicyStore(FilePolicyStore):
     """IPFS-backed :class:`PolicyRegistry` store (Phase G).

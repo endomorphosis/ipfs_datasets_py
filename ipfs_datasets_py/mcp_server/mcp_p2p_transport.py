@@ -625,6 +625,15 @@ class PubSubBus:
             return len(self._subscribers.get(str(topic), []))
         return sum(len(handlers) for handlers in self._subscribers.values())
 
+    def topics(self) -> List[str]:
+        """Return a sorted list of topic strings that have at least one subscriber.
+
+        Returns:
+            Sorted list of topic key strings.  Empty list when no subscriptions
+            exist.
+        """
+        return sorted(k for k, v in self._subscribers.items() if v)
+
     async def publish_async(
         self,
         topic: Union[str, "PubSubEventType"],

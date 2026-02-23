@@ -1028,6 +1028,17 @@ class MergeResult:
             return self.added_count >= other.added_count
         return NotImplemented  # type: ignore[return-value]
 
+    @property
+    def total(self) -> int:
+        """Total delegations seen: :attr:`added_count` + :attr:`conflict_count`.
+
+        Useful for computing the import fraction::
+
+            if result.total:
+                fraction = result.added_count / result.total
+        """
+        return self.added_count + self.conflict_count
+
 
 class DelegationManager:
     """Bundles :class:`DelegationStore`, :class:`RevocationList`, and

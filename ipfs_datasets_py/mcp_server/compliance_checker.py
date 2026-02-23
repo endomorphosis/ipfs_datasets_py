@@ -774,6 +774,30 @@ class ComplianceChecker:
         return found
 
     @staticmethod
+    def purge_bak_files(path: str) -> int:
+        """Delete all backup files for *path* and return the count removed.
+
+        Calls :meth:`list_bak_files` to discover existing backups and
+        removes each one with :func:`os.unlink`.  Silently skips any file
+        that has already been removed between the listing and deletion
+        steps.
+
+        Args:
+            path: Base path (without the ``.bak`` suffix).
+
+        Returns:
+            Number of backup files successfully deleted.
+        """
+        removed = 0
+        for bak_file in ComplianceChecker.list_bak_files(path):
+            try:
+                os.unlink(bak_file)
+                removed += 1
+            except OSError:
+                pass
+        return removed
+
+    @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:
         if isinstance(intent, dict):
             return intent.get(field, default)
