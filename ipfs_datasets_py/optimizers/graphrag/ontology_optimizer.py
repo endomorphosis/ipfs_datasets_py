@@ -3462,6 +3462,33 @@ class OntologyOptimizer:
         second_deriv = [first_deriv[i + 1] - first_deriv[i] for i in range(len(first_deriv) - 1)]
         return sum(second_deriv) / len(second_deriv)
 
+    def score_velocity_std(self) -> float:
+        """Return the population standard deviation of score velocities.
+
+        Velocities are consecutive score deltas (score[i+1] - score[i]).
+        Measures variability of step sizes across the history.
+
+        Returns:
+            Float standard deviation; ``0.0`` when fewer than 2 history entries
+            or when all velocities are equal.
+
+        Example::
+
+            >>> # Scores: 0.1, 0.2, 0.4 -> velocities: 0.1, 0.2
+            >>> opt.score_velocity_std()
+            0.05
+        """
+        scores = [e.average_score for e in self._history]
+        if len(scores) < 2:
+            return 0.0
+        diffs = [scores[i + 1] - scores[i] for i in range(len(scores) - 1)]
+        mean = sum(diffs) / len(diffs)
+        variance = sum((d - mean) ** 2 for d in diffs) / len(diffs)
+        if variance == 0.0:
+            return 0.0
+        return variance ** 0.5
+
+
     def history_peak_count(self) -> int:
         """Return the number of local maxima in score history.
 

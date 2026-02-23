@@ -4540,6 +4540,34 @@ class OntologyCritic(BaseCritic):
         mean = sum(vals) / len(vals)
         return sum(abs(v - mean) for v in vals) / len(vals)
 
+    def score_dimension_median_abs_deviation(self, score: "CriticScore") -> float:
+        """Return the Median Absolute Deviation (MAD) of the six CriticScore dimensions.
+
+        Computes the median of ``|dim_value − median_of_dims|`` across the six
+        dimensions. This is a robust spread estimate for a single
+        :class:`CriticScore` instance.
+
+        Returns:
+            Float ≥ 0.0; ``0.0`` when all six dimension values are equal.
+
+        Example::
+
+            >>> s = CriticScore(completeness=0.0, consistency=0.0,
+            ...                  clarity=0.0, granularity=1.0,
+            ...                  relationship_coherence=1.0, domain_alignment=1.0)
+            >>> critic.score_dimension_median_abs_deviation(s)
+            0.5
+        """
+        dims = [
+            "completeness", "consistency", "clarity",
+            "granularity", "relationship_coherence", "domain_alignment",
+        ]
+        vals = sorted(getattr(score, d, 0.0) for d in dims)
+        median = (vals[2] + vals[3]) / 2.0
+        deviations = sorted(abs(v - median) for v in vals)
+        return (deviations[2] + deviations[3]) / 2.0
+
+
 
 # Export public API
 __all__ = [
