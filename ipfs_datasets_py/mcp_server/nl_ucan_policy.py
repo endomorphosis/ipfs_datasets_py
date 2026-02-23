@@ -51,7 +51,7 @@ import re
 import warnings
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
 # ---------------------------------------------------------------------------
 # Multiformats CID support
@@ -1167,6 +1167,20 @@ def compile_nl_policy(
 # Phase G — IPFS-backed policy store (session 57)
 # ---------------------------------------------------------------------------
 
+
+class IPFSReloadResult(NamedTuple):
+    """Structured result of :meth:`IPFSPolicyStore.reload`.
+
+    Attributes:
+        count: Number of policies reloaded from disk.
+        pin_results: Mapping of policy name → IPFS CID string, or ``None``
+            when the pin failed.
+    """
+
+    count: int
+    pin_results: Dict[str, Optional[str]]
+
+
 class IPFSPolicyStore(FilePolicyStore):
     """IPFS-backed :class:`PolicyRegistry` store (Phase G).
 
@@ -1307,7 +1321,7 @@ class IPFSPolicyStore(FilePolicyStore):
             results[name] = cid
         return results
 
-    def reload(self, max_retries: int = 1) -> int:  # type: ignore[override]
+    def reload(self, max_retries: int = 1) -> "IPFSReloadResult":  # type: ignore[override]
         """Hot-reload policies from disk and re-pin to IPFS.
 
         Delegates to :meth:`FilePolicyStore.reload` (which clears the
@@ -1320,9 +1334,11 @@ class IPFSPolicyStore(FilePolicyStore):
                 0 = no retry (single attempt); 1 = one retry (default).
 
         Returns:
-            Number of policies reloaded.
+            An :class:`IPFSReloadResult` with ``count`` (number of policies
+            reloaded) and ``pin_results`` (name → CID or ``None``).
         """
         count = super().reload()
+        pin_results: Dict[str, Optional[str]] = {}
         for name in self._registry.list_names():
             cid: Optional[str] = self.pin_policy(name)
             attempts = 0
@@ -1330,7 +1346,8 @@ class IPFSPolicyStore(FilePolicyStore):
                 logger.debug("Retrying IPFS pin for policy %r (attempt %d)", name, attempts + 1)
                 cid = self.pin_policy(name)
                 attempts += 1
-        return count
+            pin_results[name] = cid
+        return IPFSReloadResult(count=count, pin_results=pin_results)
 
     def load(self) -> int:
         """Load policies from the local JSON cache.

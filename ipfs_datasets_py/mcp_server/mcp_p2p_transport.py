@@ -565,6 +565,7 @@ class PubSubBus:
         payload: Dict[str, Any],
         *,
         timeout_seconds: float = 5.0,
+        priority: int = 0,
     ) -> "PublishAsyncResult":
         """Async variant of :meth:`publish`.
 
@@ -576,11 +577,21 @@ class PubSubBus:
         Each handler is cancelled after *timeout_seconds* via
         ``anyio.move_on_after()`` if it does not complete in time.
 
+        Handlers are sorted by their ``__mcp_priority__`` attribute (descending)
+        before the task group is started; handlers without the attribute are
+        treated as priority 0.  Within the same priority bucket, subscription
+        order is preserved.
+
         Args:
             topic: A :class:`PubSubEventType` value or raw topic string.
             payload: JSON-serialisable event payload.
             timeout_seconds: Maximum seconds to wait for each handler.
                 Defaults to ``5.0``.  Set to ``0`` to use no timeout.
+            priority: Unused by the current implementation — reserved for
+                future use.  Handlers are sorted by their own
+                ``__mcp_priority__`` attribute (higher values = higher
+                priority); this parameter does **not** filter which handlers
+                are called.  Defaults to ``0``.
 
         Returns:
             A :class:`PublishAsyncResult` namedtuple with ``notified`` (count
@@ -601,7 +612,14 @@ class PubSubBus:
             return PublishAsyncResult(notified=n, timed_out=0)
 
         key = str(topic)
-        handlers = list(self._subscribers.get(key, []))
+        all_handlers = list(self._subscribers.get(key, []))
+        # Sort by handler priority: handlers with __mcp_priority__ >= priority
+        # are moved to the front.  Stable sort preserves insertion order within
+        # each bucket.
+        def _handler_priority(h: Any) -> int:
+            return getattr(h, "__mcp_priority__", 0)
+
+        handlers = sorted(all_handlers, key=_handler_priority, reverse=True)
         # Track per-handler outcome: True=notified, False=error/timeout
         results: Dict[int, bool] = {}
         timed_out_flags: Dict[int, bool] = {}

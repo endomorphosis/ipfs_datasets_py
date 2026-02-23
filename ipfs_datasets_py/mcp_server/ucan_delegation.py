@@ -23,7 +23,7 @@ import logging
 import time
 import warnings
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,8 @@ __all__ = [
     "DelegationManager",
     "get_delegation_manager",
     "record_delegation_metrics",
+    # Session 69
+    "MergePlan",
 ]
 
 
@@ -942,6 +944,30 @@ class DelegationStore:
 import tempfile as _tempfile
 
 
+@dataclass
+class MergePlan:
+    """Simulated result of a :meth:`DelegationManager.merge` dry run.
+
+    Attributes:
+        would_add: CIDs that *would* be added to the destination manager.
+        would_skip_conflicts: CIDs that *would* be skipped because they are
+            already in the destination manager's revocation list.
+    """
+
+    would_add: List[str] = field(default_factory=list)
+    would_skip_conflicts: List[str] = field(default_factory=list)
+
+    @property
+    def add_count(self) -> int:
+        """Number of delegations that would be added."""
+        return len(self.would_add)
+
+    @property
+    def conflict_count(self) -> int:
+        """Number of delegations that would be skipped due to conflicts."""
+        return len(self.would_skip_conflicts)
+
+
 class DelegationManager:
     """Bundles :class:`DelegationStore`, :class:`RevocationList`, and
     :class:`DelegationEvaluator` into a single convenience object.
@@ -1155,7 +1181,8 @@ class DelegationManager:
         copy_revocations: bool = False,
         skip_revocations: Optional[Set[str]] = None,
         audit_log: Any = None,
-    ) -> int:
+        dry_run: bool = False,
+    ) -> "Union[int, MergePlan]":
         """Merge delegation entries from *other* into this manager.
 
         Only delegations whose CID is **not** already present in this
@@ -1178,13 +1205,30 @@ class DelegationManager:
                 When *copy_revocations* is *True* and this is provided, each
                 newly-copied revocation CID is recorded as
                 ``{"event": "revocation_copied", "cid": cid}``.
+            dry_run: When *True*, simulate the merge and return a
+                :class:`MergePlan` with ``would_add`` and
+                ``would_skip_conflicts`` lists without mutating state.
+                When *False* (default), perform the merge normally and return
+                the count of newly-added delegations.
 
         Returns:
-            Number of newly-added delegations.
+            When *dry_run* is *False*: number of newly-added delegations.
+            When *dry_run* is *True*: a :class:`MergePlan` describing what
+            *would* happen.
         """
-        added = 0
         current_cids = set(self._store.list_cids())
         revoked_in_self = set(self._revocation.to_list())
+
+        if dry_run:
+            plan = MergePlan()
+            for cid in other._store.list_cids():
+                if cid in revoked_in_self:
+                    plan.would_skip_conflicts.append(cid)
+                elif cid not in current_cids:
+                    plan.would_add.append(cid)
+            return plan
+
+        added = 0
         for cid in other._store.list_cids():
             if cid in revoked_in_self:
                 warnings.warn(

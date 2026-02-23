@@ -663,7 +663,22 @@ class ComplianceChecker:
             logger.warning("restore_from_bak: failed to restore %s: %s", path, exc)
             return False
 
+    @staticmethod
+    def bak_exists(path: str) -> bool:
+        """Check whether a ``.bak`` backup file exists for *path*.
 
+        Callers can use this as a lightweight pre-check before calling
+        :meth:`restore_from_bak` to avoid the overhead of a failed restore
+        attempt.
+
+        Args:
+            path: Path to the encrypted compliance rule file (without the
+                ``.bak`` suffix).
+
+        Returns:
+            ``True`` if ``<path>.bak`` exists on the file system.
+        """
+        return os.path.exists(path + ".bak")
 
     @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:
