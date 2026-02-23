@@ -1226,6 +1226,25 @@ class IPFSReloadResult(NamedTuple):
         """
         return self.total_failed == 0
 
+    def summarize(self) -> str:
+        """Return a human-readable one-line summary of the reload operation.
+
+        Format: ``"<succeeded>/<total> policies pinned successfully (<failed> failed)"``.
+        When all policies succeed the failed clause is omitted.
+
+        Examples::
+
+            "3/3 policies pinned successfully"
+            "2/3 policies pinned successfully (1 failed)"
+            "0/0 policies pinned successfully"
+        """
+        total = self.count
+        failed = self.total_failed
+        succeeded = total - failed
+        if failed == 0:
+            return f"{succeeded}/{total} policies pinned successfully"
+        return f"{succeeded}/{total} policies pinned successfully ({failed} failed)"
+
 
 class IPFSPolicyStore(FilePolicyStore):
     """IPFS-backed :class:`PolicyRegistry` store (Phase G).

@@ -1039,6 +1039,22 @@ class MergeResult:
         """
         return self.added_count + self.conflict_count
 
+    @property
+    def import_rate(self) -> float:
+        """Fraction of source delegations successfully imported.
+
+        ``added_count / total`` with a zero-division guard: returns ``0.0``
+        when :attr:`total` is zero (empty source) rather than raising.
+
+        Examples::
+
+            result = dst.merge(src)
+            print(f"{result.import_rate:.0%} of delegations imported")
+        """
+        if self.total == 0:
+            return 0.0
+        return self.added_count / self.total
+
 
 class DelegationManager:
     """Bundles :class:`DelegationStore`, :class:`RevocationList`, and

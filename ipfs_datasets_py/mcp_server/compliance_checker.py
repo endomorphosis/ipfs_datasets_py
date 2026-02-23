@@ -798,6 +798,34 @@ class ComplianceChecker:
         return removed
 
     @staticmethod
+    def backup_and_save(path: str, content: str, *, max_keep: int = 3) -> bool:
+        """Rotate existing backups then write *content* to *path*.
+
+        Convenience wrapper that:
+
+        1. Calls :meth:`rotate_bak(path, max_keep=max_keep)` to shift any
+           existing ``.bak`` files before overwriting the live file.
+        2. Atomically writes *content* to *path* (write → flush → close).
+
+        Args:
+            path: Destination file path to write.
+            content: String content to write.
+            max_keep: Forwarded to :meth:`rotate_bak`; controls how many
+                numbered backup slots to keep (default 3).
+
+        Returns:
+            ``True`` on success; ``False`` if an :class:`OSError` occurs
+            during the write step.
+        """
+        ComplianceChecker.rotate_bak(path, max_keep=max_keep)
+        try:
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write(content)
+            return True
+        except OSError:
+            return False
+
+    @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:
         if isinstance(intent, dict):
             return intent.get(field, default)

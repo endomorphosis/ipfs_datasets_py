@@ -634,6 +634,31 @@ class PubSubBus:
         """
         return sorted(k for k, v in self._subscribers.items() if v)
 
+    def clear_topic(self, topic: Union[str, "PubSubEventType"]) -> int:
+        """Remove all subscribers for *topic* in a single bulk operation.
+
+        Removes every handler registered on the topic, cleans up their
+        corresponding ``_sid_map`` entries, and returns the number of handlers
+        removed.
+
+        Args:
+            topic: A :class:`PubSubEventType` value or raw topic string.
+
+        Returns:
+            Number of handlers removed.  ``0`` if the topic had no
+            subscribers or did not exist.
+        """
+        key = str(topic)
+        handlers = list(self._subscribers.pop(key, []))
+        # Remove corresponding sid_map entries for these handlers
+        stale_sids = [
+            sid for sid, (k, h) in self._sid_map.items()
+            if k == key and h in handlers
+        ]
+        for sid in stale_sids:
+            self._sid_map.pop(sid, None)
+        return len(handlers)
+
     async def publish_async(
         self,
         topic: Union[str, "PubSubEventType"],
