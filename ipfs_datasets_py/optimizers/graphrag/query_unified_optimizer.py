@@ -1298,7 +1298,7 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         # Determine graph type best-effort.
         try:
             graph_type = self.detect_graph_type(planned_query)
-        except Exception:
+        except (KeyError, TypeError, ValueError, AttributeError):
             graph_type = "general"
 
         optimizer = self._specific_optimizers.get(graph_type, self.base_optimizer)
@@ -1350,13 +1350,13 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
                                 "vector": float(opt_weights.get("vector", weights["vector"])),
                                 "graph": float(opt_weights.get("graph", weights["graph"])),
                             }
-            except Exception:
+            except (KeyError, TypeError, ValueError, AttributeError):
                 pass
 
         # Allocate budget with safe fallback.
         try:
             budget = self.budget_manager.allocate_budget(planned_query, priority)
-        except Exception:
+        except (AttributeError, TypeError, ValueError):
             budget = {}
 
         if not isinstance(budget, dict):
@@ -1377,7 +1377,7 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
                 caching["key"] = hashlib.sha256(
                     json.dumps(key_query, sort_keys=True, default=str).encode("utf-8")
                 ).hexdigest()
-            except Exception:
+            except (TypeError, ValueError):
                 pass
 
         statistics = {

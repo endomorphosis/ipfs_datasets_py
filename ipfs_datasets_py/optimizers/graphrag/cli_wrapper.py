@@ -384,7 +384,7 @@ Examples:
                     data_type = DataType.STRUCTURED
                     # Use empty source data; the base ontology is the optimization target.
                     data = ""
-                except Exception:
+                except (json.JSONDecodeError, OSError, ValueError, KeyError):
                     # Not an ontology JSON; treat as structured data input.
                     data_type = DataType.JSON
 
@@ -580,7 +580,7 @@ Examples:
             if ontology_path.suffix.lower() == ".json":
                 try:
                     graph_info = self._load_ontology_json(ontology_path)
-                except Exception:
+                except (json.JSONDecodeError, OSError, ValueError, KeyError):
                     # Best-effort: not all JSON files are ontology dicts.
                     graph_info = {}
 

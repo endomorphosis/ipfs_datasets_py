@@ -652,7 +652,7 @@ class OntologyPipelineHarness(BaseHarness):
     def _critique(self, artifact: Any, context: Any) -> CriticResult:
         try:
             return self.critic.evaluate(artifact, context)
-        except Exception:
+        except (AttributeError, TypeError):
             raw = self.critic.evaluate_ontology(artifact, context)
             return CriticResult(
                 score=raw.overall,

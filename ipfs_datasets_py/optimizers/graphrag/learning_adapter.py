@@ -72,7 +72,7 @@ def check_learning_cycle(host: Any) -> None:
                             value="Circuit breaker for learning reset after timeout period",
                             category="statistical_learning",
                         )
-                    except Exception:
+                    except (AttributeError, TypeError, RuntimeError):
                         pass
             else:
                 return
@@ -228,7 +228,7 @@ def increment_failure_counter(host: Any, error_message: str, is_critical: bool =
                     is_success=False,
                     error=error_message,
                 )
-        except Exception:
+        except (AttributeError, TypeError, RuntimeError):
             pass
     try:
         if not hasattr(host, "_learning_failure_count"):
@@ -279,7 +279,7 @@ def increment_failure_counter(host: Any, error_message: str, is_critical: bool =
                         ),
                         category="error",
                     )
-            except Exception:
+            except (AttributeError, TypeError, RuntimeError):
                 pass
     except Exception as exc:
         print(f"Error in failure counting mechanism: {str(exc)}")

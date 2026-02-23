@@ -1354,7 +1354,7 @@ class OntologyCritic(BaseCritic):
                     "consistency": score.consistency,
                     "score": score,
                 })
-            except Exception:  # pragma: no cover
+            except (AttributeError, TypeError, KeyError):  # pragma: no cover
                 scored.append({"index": idx, "overall": 0.0, "completeness": 0.0, "consistency": 0.0, "score": None})
         scored.sort(key=lambda d: -d["overall"])
         for rank, entry in enumerate(scored, start=1):

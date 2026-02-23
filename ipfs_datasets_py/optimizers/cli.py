@@ -145,21 +145,21 @@ See docs/optimizers/SELECTION_GUIDE.md for choosing the right optimizer.
         try:
             from ipfs_datasets_py.optimizers.agentic import __version__ as agentic_version
             print(f"Agentic Optimizer:       v{agentic_version} ✓")
-        except Exception:
+        except (ImportError, ModuleNotFoundError, AttributeError):
             print("Agentic Optimizer:       Not available")
         
         # Logic theorem optimizer version
         try:
             from ipfs_datasets_py.optimizers.logic_theorem_optimizer import __version__ as logic_version
             print(f"Logic Theorem Optimizer: v{logic_version} ✓")
-        except Exception:
+        except (ImportError, ModuleNotFoundError, AttributeError):
             print("Logic Theorem Optimizer: Not available")
         
         # GraphRAG optimizer version
         try:
             from ipfs_datasets_py.optimizers.graphrag import __version__ as graphrag_version
             print(f"GraphRAG Optimizer:      v{graphrag_version} ✓")
-        except Exception:
+        except (ImportError, ModuleNotFoundError, AttributeError):
             print("GraphRAG Optimizer:      Not available")
         
         print("=" * 50)
