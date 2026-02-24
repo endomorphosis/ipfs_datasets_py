@@ -356,6 +356,16 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
                 for _ in range(max(0, iterations)):
                     self._prometheus_metrics.record_round_completion(domain=context.domain)
                 self._prometheus_metrics.record_session_duration(execution_time)
+                self._prometheus_metrics.record_score_delta(
+                    score - initial_score,
+                    labels={
+                        "domain": context.domain,
+                        "strategy": self.config.strategy.value,
+                        "optimizer_type": self.__class__.__name__,
+                    },
+                )
+                if not valid:
+                    self._prometheus_metrics.record_error("validation_failed", context.domain)
             except Exception as exc:  # pragma: no cover - metrics must be non-fatal
                 _logger.debug("Prometheus metrics recording failed: %s", exc)
 

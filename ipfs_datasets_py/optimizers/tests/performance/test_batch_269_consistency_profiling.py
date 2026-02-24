@@ -8,7 +8,7 @@ import sys
 
 import pytest
 
-sys.path.insert(0, str(pathlib.Path(__file__).parents[5]))
+sys.path.insert(0, str(pathlib.Path(__file__).parents[4]))
 
 
 class TestConsistencyProfilingScript:

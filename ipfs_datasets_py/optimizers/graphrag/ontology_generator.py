@@ -3322,6 +3322,19 @@ class OntologyGenerator:
                         # Discount confidence for very distant co-occurrences
                         if distance > 150:
                             type_confidence *= 0.8
+
+                        llm_threshold = float(
+                            getattr(context.extraction_config, "llm_fallback_threshold", 0.0)
+                        )
+                        type_method = "context_window"
+                        if llm_threshold > 0.0 and type_confidence < llm_threshold:
+                            inferred_type, type_confidence, type_method = self._refine_relationship_type_with_llm(
+                                context_window=context_window,
+                                source_text=e1.text,
+                                target_text=e2.text,
+                                heuristic_type=inferred_type,
+                                heuristic_confidence=type_confidence,
+                            )
                         
                         relationships.append(Relationship(
                             id=_make_rel_id(),
@@ -3332,7 +3345,7 @@ class OntologyGenerator:
                             direction='undirected',
                             properties={
                                 'type_confidence': type_confidence,
-                                'type_method': 'context_window',
+                                'type_method': type_method,
                                 'source_entity_type': e1_type,
                                 'target_entity_type': e2_type,
                             },
@@ -3425,6 +3438,19 @@ class OntologyGenerator:
                 if distance > 150:
                     type_confidence *= 0.8
 
+                llm_threshold = float(
+                    getattr(context.extraction_config, "llm_fallback_threshold", 0.0)
+                )
+                type_method = "context_window"
+                if llm_threshold > 0.0 and type_confidence < llm_threshold:
+                    inferred_type, type_confidence, type_method = self._refine_relationship_type_with_llm(
+                        context_window=context_window,
+                        source_text=e1.text,
+                        target_text=e2.text,
+                        heuristic_type=inferred_type,
+                        heuristic_confidence=type_confidence,
+                    )
+
                 relationships.append(Relationship(
                     id=_make_rel_id(),
                     source_id=e1.id,
@@ -3434,7 +3460,7 @@ class OntologyGenerator:
                     direction='undirected',
                     properties={
                         'type_confidence': type_confidence,
-                        'type_method': 'context_window',
+                        'type_method': type_method,
                         'source_entity_type': e1_type,
                         'target_entity_type': e2_type,
                     },
@@ -4879,6 +4905,53 @@ class OntologyGenerator:
             confidence=confidence,
             metadata={"method": "llm_based"},
         )
+
+    def _refine_relationship_type_with_llm(
+        self,
+        context_window: str,
+        source_text: str,
+        target_text: str,
+        heuristic_type: str,
+        heuristic_confidence: float,
+    ) -> tuple[str, float, str]:
+        """Refine a heuristic relationship type using LLM output when available."""
+        import json as _json
+
+        if self.llm_backend is None:
+            return heuristic_type, heuristic_confidence, "context_window"
+
+        prompt = (
+            "Classify relationship type between SOURCE and TARGET from CONTEXT. "
+            "Return strict JSON: {\"relationship_type\": str, \"confidence\": float}.\n"
+            f"SOURCE: {source_text}\n"
+            f"TARGET: {target_text}\n"
+            f"HEURISTIC_TYPE: {heuristic_type}\n"
+            f"CONTEXT: {context_window}"
+        )
+
+        try:
+            raw = self._invoke_llm_extraction_backend(prompt)
+            payload = raw
+            if isinstance(raw, str):
+                payload = _json.loads(raw)
+            elif hasattr(raw, "text") and isinstance(getattr(raw, "text"), str):
+                payload = _json.loads(getattr(raw, "text"))
+            elif hasattr(raw, "content") and isinstance(getattr(raw, "content"), str):
+                payload = _json.loads(getattr(raw, "content"))
+
+            if not isinstance(payload, dict):
+                return heuristic_type, heuristic_confidence, "context_window"
+
+            llm_type = str(payload.get("relationship_type") or payload.get("type") or heuristic_type)
+            llm_conf = float(payload.get("confidence", 0.0))
+            llm_conf = max(0.0, min(1.0, llm_conf))
+
+            if llm_conf > heuristic_confidence:
+                return llm_type, llm_conf, "llm_refined"
+        except Exception as exc:
+            self._log.debug("LLM relationship refinement failed: %s", exc)
+
+        return heuristic_type, heuristic_confidence, "context_window"
     
     def _extract_hybrid(
         self,
@@ -9156,4 +9229,3 @@ __all__ = [
     'ExtractionStrategy',
     'DataType',
 ]
-

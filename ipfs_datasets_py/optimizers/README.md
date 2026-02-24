@@ -491,6 +491,7 @@ OntologyPipeline
 - **ARCHITECTURE_UNIFIED.md** - Unified optimizer architecture
 - **ARCHITECTURE_AGENTIC_OPTIMIZERS.md** - Agentic optimizer design
 - **ARCHITECTURE_DIAGRAMS.md** - Visual diagrams (Mermaid) for all optimizer types
+- **docs/OPTIMIZATION_LOOP_ARCHITECTURE.md** - ASCII architecture for generate -> critique -> optimize -> validate
 - **IMPLEMENTATION_PLAN.md** - Implementation roadmap
 - **USAGE_GUIDE.md** - Detailed usage guide
 - **GITHUB_INTEGRATION.md** - GitHub integration guide

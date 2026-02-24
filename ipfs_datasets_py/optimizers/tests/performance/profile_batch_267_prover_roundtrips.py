@@ -19,7 +19,7 @@ import sys
 import time
 from typing import Any, Dict, List, Optional
 
-sys.path.insert(0, str(pathlib.Path(__file__).parents[5]))
+sys.path.insert(0, str(pathlib.Path(__file__).parents[4]))
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prover_integration import (
     ProverIntegrationAdapter,

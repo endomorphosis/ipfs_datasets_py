@@ -45,6 +45,9 @@ knowledge_graphs = [
 [tool.setuptools]
 packages = {find = {}}
 
+[tool.setuptools.package-data]
+ipfs_datasets_py = ["py.typed"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]

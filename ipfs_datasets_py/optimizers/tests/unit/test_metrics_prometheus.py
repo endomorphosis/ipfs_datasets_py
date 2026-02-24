@@ -163,6 +163,14 @@ class TestPrometheusMetricsRecording:
         assert metrics.stage_durations[0].labels["stage"] == "extracting"
         assert metrics.stage_durations[1].labels["stage"] == "refining"
         assert metrics.stage_durations[1].labels["domain"] == "legal"
+
+    def test_record_score_delta(self):
+        """Test recording score delta values."""
+        metrics = PrometheusMetrics(enabled=True)
+        metrics.record_score_delta(0.22, labels={"domain": "legal"})
+        assert len(metrics.score_deltas) == 1
+        assert metrics.score_deltas[0].value == pytest.approx(0.22)
+        assert metrics.score_deltas[0].labels["domain"] == "legal"
     
     def test_disabled_metrics_no_recording(self):
         """Test that disabled metrics don't record anything."""
@@ -237,6 +245,14 @@ class TestPrometheusMetricsCollection:
         assert 'stage="extracting"' in output
         assert 'stage="refining"' in output
         assert 'domain="general"' in output
+
+    def test_collect_metrics_score_delta(self):
+        """Test score delta gauge in output."""
+        metrics = PrometheusMetrics(enabled=True)
+        metrics.record_score_delta(0.15)
+        output = metrics.collect_metrics()
+        assert "optimizer_score_delta" in output
+        assert "optimizer_score_delta 0.15" in output
     
     def test_collect_metrics_round_counter(self):
         """Test round counter in output."""

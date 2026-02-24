@@ -79,6 +79,7 @@ class PrometheusMetrics:
     CACHE_HITS_COUNTER = "optimizer_cache_hits_total"  # Cache hit count
     MEMORY_GAUGE = "optimizer_memory_usage_bytes"  # Peak memory
     STAGE_DURATION_HISTOGRAM = "optimizer_stage_duration_seconds"
+    SCORE_DELTA_GAUGE = "optimizer_score_delta"
     
     # Score histogram buckets (for quantiles)
     SCORE_BUCKETS = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
@@ -119,6 +120,7 @@ class PrometheusMetrics:
         self.cache_hits: List[MetricValue] = []
         self.memory_usage: List[MetricValue] = []
         self.stage_durations: List[MetricValue] = []
+        self.score_deltas: List[MetricValue] = []
         
         # Session tracking
         self.session_start: Optional[float] = None
@@ -255,6 +257,13 @@ class PrometheusMetrics:
 
         value = MetricValue(value=float(duration_seconds), labels=metric_labels)
         self.stage_durations.append(value)
+
+    def record_score_delta(self, delta: float, labels: Optional[Dict[str, str]] = None) -> None:
+        """Record score delta (final minus initial) for an optimization run."""
+        if not self.enabled:
+            return
+        value = MetricValue(value=float(delta), labels=labels or {})
+        self.score_deltas.append(value)
     
     def collect_metrics(self) -> str:
         """Collect metrics in Prometheus text format.
@@ -327,6 +336,14 @@ class PrometheusMetrics:
                     f'{self.STAGE_DURATION_HISTOGRAM}_count'
                     f'{{{label_str}}} {len(records)}'
                 )
+            lines.append("")
+
+        # Add score delta gauge
+        if self.score_deltas:
+            latest_delta = self.score_deltas[-1]
+            lines.append(f"# HELP {self.SCORE_DELTA_GAUGE} Score delta (final - initial)")
+            lines.append(f"# TYPE {self.SCORE_DELTA_GAUGE} gauge")
+            lines.append(f"{self.SCORE_DELTA_GAUGE} {latest_delta.value}")
             lines.append("")
         
         # Add error counter

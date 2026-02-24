@@ -1,0 +1,57 @@
+========================================================================
+BATCH 266: Query Optimizer Profile
+========================================================================
+
+Queries: 120
+Elapsed ms: 393.65
+Avg ms/query: 3.28
+Plans generated: 120
+
+         1240681 function calls (1040161 primitive calls) in 0.393 seconds
+
+   Ordered by: cumulative time
+   List reduced from 45 to 40 due to restriction <40>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      240    0.004    0.000    0.391    0.002 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/query_unified_optimizer.py:1274(optimize_query)
+200520/720    0.102    0.000    0.212    0.000 /usr/lib/python3.12/copy.py:118(deepcopy)
+ 1440/720    0.003    0.000    0.210    0.000 /usr/lib/python3.12/copy.py:217(_deepcopy_dict)
+      120    0.001    0.000    0.197    0.002 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/query_unified_optimizer.py:1406(get_execution_plan)
+     2160    0.038    0.000    0.194    0.000 /usr/lib/python3.12/copy.py:191(_deepcopy_list)
+      240    0.000    0.000    0.161    0.001 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/query_unified_optimizer.py:360(detect_graph_type)
+      480    0.001    0.000    0.161    0.000 {built-in method builtins.any}
+     1440    0.096    0.000    0.098    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/query_unified_optimizer.py:379(<genexpr>)
+      240    0.001    0.000    0.072    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/query_unified_optimizer.py:233(_validate_query_parameters)
+      960    0.061    0.000    0.062    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/query_unified_optimizer.py:375(<genexpr>)
+   411840    0.035    0.000    0.035    0.000 {method 'get' of 'dict' objects}
+   208440    0.014    0.000    0.014    0.000 {built-in method builtins.id}
+   192000    0.011    0.000    0.011    0.000 {method 'append' of 'list' objects}
+   196920    0.009    0.000    0.009    0.000 /usr/lib/python3.12/copy.py:172(_deepcopy_atomic)
+      480    0.001    0.000    0.005    0.000 /usr/lib/python3.12/json/__init__.py:183(dumps)
+      480    0.001    0.000    0.004    0.000 /usr/lib/python3.12/json/encoder.py:183(encode)
+     1920    0.003    0.000    0.003    0.000 {method 'lower' of 'str' objects}
+      240    0.000    0.000    0.003    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/query_planner.py:100(optimize_query)
+      480    0.003    0.000    0.003    0.000 /usr/lib/python3.12/json/encoder.py:205(iterencode)
+      240    0.001    0.000    0.003    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/query_budget.py:53(allocate_budget)
+      240    0.000    0.000    0.003    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/query_stats.py:60(record_query_pattern)
+     3600    0.002    0.000    0.002    0.000 /usr/lib/python3.12/copy.py:231(_keep_alive)
+      240    0.002    0.000    0.002    0.000 {built-in method numpy.array}
+      240    0.001    0.000    0.001    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/common/query_validation.py:122(validate_list_param)
+      240    0.000    0.000    0.001    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/query_budget.py:201(_estimate_complexity)
+     5520    0.001    0.000    0.001    0.000 {built-in method builtins.isinstance}
+     1680    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+      720    0.000    0.000    0.000    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/common/query_validation.py:55(validate_numeric_param)
+     2040    0.000    0.000    0.000    0.000 {method 'items' of 'dict' objects}
+      240    0.000    0.000    0.000    0.000 {built-in method _hashlib.openssl_sha256}
+      240    0.000    0.000    0.000    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/query_budget.py:235(_apply_historical_adjustment)
+      120    0.000    0.000    0.000    0.000 {built-in method builtins.sum}
+      240    0.000    0.000    0.000    0.000 {method 'hexdigest' of '_hashlib.HASH' objects}
+     1200    0.000    0.000    0.000    0.000 {method 'setdefault' of 'dict' objects}
+      240    0.000    0.000    0.000    0.000 /usr/lib/python3.12/logging/__init__.py:1529(info)
+      480    0.000    0.000    0.000    0.000 /usr/lib/python3.12/json/encoder.py:105(__init__)
+      480    0.000    0.000    0.000    0.000 {method 'join' of 'str' objects}
+      360    0.000    0.000    0.000    0.000 {method 'copy' of 'dict' objects}
+      240    0.000    0.000    0.000    0.000 {method 'encode' of 'str' objects}
+      480    0.000    0.000    0.000    0.000 /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/query_unified_optimizer.py:1561(<genexpr>)
+
+

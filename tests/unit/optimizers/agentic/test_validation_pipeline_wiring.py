@@ -127,6 +127,21 @@ def add(a: int, b: int) -> int:
         assert isinstance(result, DetailedValidationResult)
         assert result.syntax.get("passed", False) is True
 
+    def test_enhanced_parallel_failure_falls_back_in_sync_validate(self):
+        """Enhanced parallel execution failures should fall back to standard path."""
+        validator = OptimizationValidator(parallel=True)
+
+        code = "def foo():\n    return 1"
+
+        with patch(
+            "ipfs_datasets_py.optimizers.agentic.validation.PerformanceParallelValidator.run_async",
+            side_effect=RuntimeError("enhanced boom"),
+        ):
+            result = validator.validate(code)
+
+        assert isinstance(result, DetailedValidationResult)
+        assert result.syntax.get("passed", False) is True
+
     def test_sequential_validation_works(self):
         """Verify sequential validation executes without errors."""
         validator = OptimizationValidator(parallel=False)
@@ -275,3 +290,17 @@ if __name__ == "__main__":
         # Should complete relatively quickly
         assert elapsed < 5.0
         assert result.execution_time >= 0.0
+
+    @pytest.mark.asyncio
+    async def test_enhanced_parallel_failure_falls_back_in_async_validate(self):
+        """Async validate should also recover from enhanced parallel failures."""
+        validator = OptimizationValidator(parallel=True)
+
+        with patch(
+            "ipfs_datasets_py.optimizers.agentic.validation.PerformanceParallelValidator.run_async",
+            side_effect=RuntimeError("enhanced boom"),
+        ):
+            result = await validator.validate_async("x = 1")
+
+        assert isinstance(result, DetailedValidationResult)
+        assert result.syntax.get("passed", False) is True

@@ -53,11 +53,21 @@ It is intentionally infinite: finish work, add new work, repeat.
 ## Random Rotation Queue (Keep 5 Active)
 
 Active random picks (different tracks):
-- [ ] (P2) [perf] Profile `OntologyCritic._evaluate_consistency()` on large ontologies (>500 entities) and document bottlenecks + top fix.
+- [x] (P2) [perf] Profile `OntologyCritic._evaluate_consistency()` on large ontologies (>500 entities) and document bottlenecks + top fix.
+  - Done 2026-02-24: replaced recursive cycle detection with iterative Kahn-based detection, removed duplicate cycle pass, added deep-chain regression tests (`test_batch_270_consistency_cycle_scaling.py`), and documented results in `docs/optimizers/PERFORMANCE_TUNING_GUIDE.md`.
 - [ ] (P2) [obs] Add OpenTelemetry span hooks behind `OTEL_ENABLED` feature flag for pipeline/session boundaries.
-- [ ] (P2) [docs] Write "How to add a new optimizer" guide covering config, base classes, tests, docs, and CLI wiring.
+- [x] (P2) [docs] Write "How to add a new optimizer" guide covering config, base classes, tests, docs, and CLI wiring.
+  - Done 2026-02-24: added `docs/optimizers/HOW_TO_ADD_NEW_OPTIMIZER.md` and linked it from `DOCUMENTATION_INDEX.md` and `docs/optimizers/INTEGRATION_EXAMPLES.md`.
 - [ ] (P3) [logic] Add `--tdfol-output` flag in GraphRAG/logic CLI path to persist generated formulas for debugging.
 - [ ] (P3) [security] Design sandboxed subprocess policy for untrusted prover calls (timeout, resource caps, allowlist).
+- [x] (P2) [tests] Add serialization round-trip tests for refinement session state snapshots.
+  - Done 2026-02-24: added `test_batch_271_mediator_state_serialization.py` covering `MediatorState.to_dict()/from_dict()` round-trip and minimal payload restoration.
+- [x] (P2) [graphrag] Add confidence histogram/report helper for extraction results.
+  - Done 2026-02-24: verified helper methods and added regression coverage in `test_batch_272_confidence_histogram_helpers.py` for both `EntityExtractionResult.confidence_histogram()` and `OntologyGenerator.confidence_histogram()`.
+- [ ] (P2) [perf] Benchmark sentence-window impact on extraction quality vs runtime.
+- [x] (P2) [api] Add package-level `py.typed` marker and basic mypy smoke check for optimizer public imports.
+  - Done 2026-02-24: added `ipfs_datasets_py/py.typed`, packaged it via `pyproject.toml`, added `optimizers/tests/typecheck/mypy_public_imports_smoke.py`, and verified with `mypy --follow-imports=skip`.
+- [ ] (P2) [arch] Replace remaining broad `except Exception` catch-alls with typed exceptions in optimizer core paths.
 
 Rotation rules:
 - When one item completes, add a new `[ ]` pick from a track not already active.
@@ -81,13 +91,15 @@ Rotation rules:
 ### 3) GraphRAG Quality
 - [ ] (P2) [graphrag] Add semantic-similarity entity deduplication path behind feature flag and benchmark quality impact.
 - [ ] (P2) [graphrag] Add multilingual extraction support with language detection and test corpora.
-- [ ] (P2) [graphrag] Implement LLM-based relationship inference fallback and compare against heuristics.
+- [x] (P2) [graphrag] Implement LLM-based relationship inference fallback and compare against heuristics.
+  - Done 2026-02-24: low-confidence heuristic relationship types can be LLM-refined via backend JSON response; heuristics are retained on errors or lower-confidence LLM output.
 - [ ] (P3) [graphrag] Add ambiguity resolver for low-confidence critic outputs (rule+LLM assist mode).
 
 ### 4) Testing Strategy
 - [ ] (P1) [tests] Add parity tests before/after query optimizer split to prevent silent behavior drift.
 - [ ] (P2) [tests] Expand property-based testing for ontology stats and config invariants.
-- [ ] (P2) [tests] Add regression corpus for mixed-domain extraction with frozen expected invariants.
+- [x] (P2) [tests] Add regression corpus for mixed-domain extraction with frozen expected invariants.
+  - Done 2026-02-24: added frozen corpus fixture + invariant test in `tests/fixtures/graphrag/mixed_domain_corpus_invariants.json` and `tests/unit/graphrag/test_mixed_domain_regression_corpus.py`.
 - [ ] (P3) [tests] Run mutation testing against critic dimensions and close surviving mutants with targeted tests.
 
 ### 5) Performance and Scale
@@ -98,13 +110,15 @@ Rotation rules:
 
 ### 6) Observability and Operations
 - [ ] (P2) [obs] Standardize structured JSON log schema across all optimizer pipelines.
-- [ ] (P2) [obs] Ensure metrics include run duration, score deltas, failure counts, and stage timings.
+- [x] (P2) [obs] Ensure metrics include run duration, score deltas, failure counts, and stage timings.
+  - Done 2026-02-24: added `optimizer_score_delta` metric, wired duration/score-delta/validation-failure recording in `BaseOptimizer`, and stage timing histogram in pipeline metrics.
 - [ ] (P3) [obs] Add tracing spans for cross-optimizer workflows with low overhead defaults.
 - [ ] (P3) [obs] Add troubleshooting dashboard examples for performance and quality drift.
 
 ### 7) Documentation and Developer Experience
 - [ ] (P2) [docs] Keep docs/code drift audit as a recurring task each cycle.
-- [ ] (P2) [docs] Add architecture diagram for generate -> critique -> optimize -> validate loop.
+- [x] (P2) [docs] Add architecture diagram for generate -> critique -> optimize -> validate loop.
+  - Done 2026-02-24: added `docs/OPTIMIZATION_LOOP_ARCHITECTURE.md` and linked it from `optimizers/README.md`.
 - [ ] (P3) [docs] Add docs build configuration (Sphinx or MkDocs) with auto-generated API pages.
 - [ ] (P3) [docs] Maintain one-page quick references for GraphRAG, logic, and agentic workflows.
 
@@ -119,7 +133,8 @@ Rotation rules:
 Pull from this pool when replacing completed random items.
 
 - [ ] (P2) [tests] Add serialization round-trip tests for refinement session state snapshots.
-- [ ] (P2) [tests] Add fuzz tests for `OntologyMediator.run_refinement_cycle()` with random recommendation strings.
+- [x] (P2) [tests] Add fuzz tests for `OntologyMediator.run_refinement_cycle()` with random recommendation strings.
+  - Done 2026-02-24: added Hypothesis fuzz coverage in `tests/unit/graphrag/test_ontology_mediator_fuzz_recommendations.py`.
 - [ ] (P2) [perf] Benchmark sentence-window impact on extraction quality vs runtime.
 - [ ] (P2) [perf] Benchmark `LogicValidator.validate_ontology()` on 100-entity synthetic ontologies.
 - [ ] (P2) [graphrag] Add confidence histogram/report helper for extraction results.
@@ -152,4 +167,3 @@ Pull from this pool when replacing completed random items.
 - Relevant unit/integration tests added or updated.
 - Public behavior and migration notes documented when API changes.
 - TODO entry updated (`[ ]` -> `[x]`) with concrete completion note.
-
