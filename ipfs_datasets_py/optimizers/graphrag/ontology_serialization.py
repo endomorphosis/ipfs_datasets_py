@@ -289,7 +289,7 @@ class OntologySerializer:
             # Get type hints for better type resolution
             try:
                 type_hints = get_type_hints(dataclass_type)
-            except Exception:
+            except (NameError, TypeError, AttributeError, ImportError):
                 type_hints = {}
             
             # Build kwargs for dataclass instantiation

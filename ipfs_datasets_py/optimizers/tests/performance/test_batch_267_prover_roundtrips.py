@@ -11,6 +11,18 @@ import pytest
 sys.path.insert(0, str(pathlib.Path(__file__).parents[4]))
 
 
+def _load_profile_module():
+    """Load the profile module under test."""
+    spec = __import__("importlib.util").util.spec_from_file_location(
+        "profile_batch_267",
+        pathlib.Path(__file__).parent / "profile_batch_267_prover_roundtrips.py",
+    )
+    assert spec and spec.loader
+    module = __import__("importlib.util").util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 class TestProverRoundtripProfilingScript:
     """Verify profiling script structure and execution."""
 
@@ -26,12 +38,7 @@ class TestProverRoundtripProfilingScript:
         assert "ProverIntegrationAdapter" in content
 
     def test_profile_execution_writes_outputs(self, tmp_path):
-        spec = __import__("importlib.util").util.spec_from_file_location(
-            "profile_batch_267",
-            pathlib.Path(__file__).parent / "profile_batch_267_prover_roundtrips.py",
-        )
-        module = __import__("importlib.util").util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = _load_profile_module()
 
         metrics = module.profile_prover_roundtrips(
             statement_count=12,
@@ -51,18 +58,23 @@ class TestProverRoundtripProfilingScript:
         assert txt_file.exists(), "Profile .txt output should exist"
         assert txt_file.read_text(encoding="utf-8")
 
+    def test_rejects_invalid_inputs(self, tmp_path):
+        module = _load_profile_module()
+
+        with pytest.raises(ValueError, match="count must be >= 0"):
+            module.build_statements(-1)
+        with pytest.raises(ValueError, match="statement_count must be > 0"):
+            module.profile_prover_roundtrips(statement_count=0, output_dir=tmp_path)
+        with pytest.raises(ValueError, match="delay_ms must be >= 0"):
+            module.profile_prover_roundtrips(statement_count=1, delay_ms=-1.0, output_dir=tmp_path)
+
 
 @pytest.mark.llm
 class TestProverRoundtripProfilingSmoke:
     """Lightweight smoke checks for profiling metrics."""
 
     def test_profile_metrics_keys(self, tmp_path):
-        spec = __import__("importlib.util").util.spec_from_file_location(
-            "profile_batch_267",
-            pathlib.Path(__file__).parent / "profile_batch_267_prover_roundtrips.py",
-        )
-        module = __import__("importlib.util").util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = _load_profile_module()
 
         metrics = module.profile_prover_roundtrips(
             statement_count=8,

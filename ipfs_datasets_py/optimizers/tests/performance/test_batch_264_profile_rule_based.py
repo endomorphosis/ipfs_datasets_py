@@ -12,6 +12,18 @@ import pytest
 sys.path.insert(0, str(pathlib.Path(__file__).parents[5]))
 
 
+def _load_profile_module():
+    """Load the profile module under test."""
+    spec = __import__("importlib.util").util.spec_from_file_location(
+        "profile_batch_264",
+        pathlib.Path(__file__).parent / "profile_batch_264_extract_rule_based.py",
+    )
+    assert spec and spec.loader
+    module = __import__("importlib.util").util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 class TestRuleBasedProfilingScript:
     """Verify profiling script structure and execution."""
 
@@ -27,24 +39,14 @@ class TestRuleBasedProfilingScript:
         assert "_extract_rule_based" in content
 
     def test_generate_text_size(self):
-        spec = __import__("importlib.util").util.spec_from_file_location(
-            "profile_batch_264",
-            pathlib.Path(__file__).parent / "profile_batch_264_extract_rule_based.py",
-        )
-        module = __import__("importlib.util").util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = _load_profile_module()
 
         text = module.generate_legal_text(target_tokens=400)
         token_count = len(text.split())
         assert 300 <= token_count <= 520, f"Generated {token_count} tokens"
 
     def test_profile_execution_writes_outputs(self, tmp_path):
-        spec = __import__("importlib.util").util.spec_from_file_location(
-            "profile_batch_264",
-            pathlib.Path(__file__).parent / "profile_batch_264_extract_rule_based.py",
-        )
-        module = __import__("importlib.util").util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = _load_profile_module()
 
         metrics = module.profile_extract_rule_based(
             target_tokens=300,
@@ -62,18 +64,23 @@ class TestRuleBasedProfilingScript:
         assert txt_file.exists(), "Profile .txt output should exist"
         assert txt_file.read_text(encoding="utf-8")
 
+    def test_rejects_invalid_token_inputs(self, tmp_path):
+        module = _load_profile_module()
+
+        with pytest.raises(ValueError, match="target_tokens must be > 0"):
+            module.generate_legal_text(target_tokens=0)
+        with pytest.raises(ValueError, match="target_tokens must be > 0"):
+            module.profile_extract_rule_based(target_tokens=0, output_dir=tmp_path)
+        with pytest.raises(ValueError, match="warmup_tokens must be > 0"):
+            module.profile_extract_rule_based(target_tokens=100, warmup_tokens=0, output_dir=tmp_path)
+
 
 @pytest.mark.llm
 class TestRuleBasedProfilingSmoke:
     """Lightweight smoke checks for profiling metrics."""
 
     def test_profile_metrics_keys(self, tmp_path):
-        spec = __import__("importlib.util").util.spec_from_file_location(
-            "profile_batch_264",
-            pathlib.Path(__file__).parent / "profile_batch_264_extract_rule_based.py",
-        )
-        module = __import__("importlib.util").util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = _load_profile_module()
 
         metrics = module.profile_extract_rule_based(
             target_tokens=220,

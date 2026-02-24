@@ -146,7 +146,7 @@ class LogicCritic(BaseCritic):
                 default_timeout=5.0
             )
             logger.info(f"Initialized prover integration adapter with {len(self.prover_adapter.provers)} provers")
-        except Exception as e:
+        except (ImportError, AttributeError, RuntimeError, TypeError, ValueError) as e:
             logger.warning(f"Could not initialize prover adapter: {e}")
             self.prover_adapter = None
             # Fallback to legacy
@@ -308,7 +308,7 @@ class LogicCritic(BaseCritic):
                     is_valid = stmt.confidence > 0.6
                     details['prover_results'][prover_name] = is_valid
                     break
-                except Exception as e:
+                except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                     logger.debug(f"Prover {prover_name} failed: {e}")
             
             if is_valid:
@@ -367,7 +367,7 @@ class LogicCritic(BaseCritic):
                     'agreement_rate': result.agreement_rate
                 }
                 
-            except Exception as e:
+            except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                 logger.debug(f"Error verifying statement: {e}")
         
         score = valid_count / len(statements) if statements else 0.0

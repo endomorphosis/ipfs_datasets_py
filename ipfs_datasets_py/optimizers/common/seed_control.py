@@ -27,9 +27,8 @@ def apply_deterministic_seed(seed: Optional[int]) -> Dict[str, Any]:
 
         np.random.seed(seed)
         result["numpy_random"] = True
-    except Exception:
+    except ImportError:
         # NumPy is optional in many environments.
         pass
 
     return result
-

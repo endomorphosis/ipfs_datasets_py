@@ -374,12 +374,14 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         if "graph_type" in query:
             return query["graph_type"]
             
+        query_blob = str(query).lower()
+
         # Check for Wikipedia-specific signals
-        if any(kw in str(query).lower() for kw in ["wikipedia", "wikidata", "dbpedia"]):
+        if any(kw in query_blob for kw in ["wikipedia", "wikidata", "dbpedia"]):
             return "wikipedia"
             
         # Check for IPLD-specific signals
-        if any(kw in str(query).lower() for kw in ["ipld", "content-addressed", "cid", "dag", "ipfs"]):
+        if any(kw in query_blob for kw in ["ipld", "content-addressed", "cid", "dag", "ipfs"]):
             return "ipld"
         
         # Default to general

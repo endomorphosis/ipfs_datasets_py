@@ -686,7 +686,7 @@ class QueryMetricsCollector:
             
             # Return as string
             return json.dumps(metrics_list, indent=2)
-        except Exception as e:
+        except (TypeError, ValueError, OverflowError, OSError, RuntimeError, AttributeError) as e:
             # Handle serialization errors gracefully
             error_message = f"Error serializing metrics to JSON: {str(e)}"
             
@@ -740,7 +740,7 @@ class QueryMetricsCollector:
         if isinstance(obj, dict):
             try:
                 return {str(k): self._numpy_json_serializable(v) for k, v in obj.items()}
-            except Exception as e:
+            except (TypeError, ValueError, RuntimeError, AttributeError) as e:
                 # Handle any errors in dictionary processing
                 return {"error_processing_dict": str(e)}
             
@@ -748,7 +748,7 @@ class QueryMetricsCollector:
         if isinstance(obj, (list, tuple)):
             try:
                 return [self._numpy_json_serializable(item) for item in obj]
-            except Exception as e:
+            except (TypeError, ValueError, RuntimeError, AttributeError) as e:
                 # Fall back to string representation if iteration fails
                 return str(obj)
             
@@ -756,7 +756,7 @@ class QueryMetricsCollector:
         if isinstance(obj, set):
             try:
                 return [self._numpy_json_serializable(item) for item in obj]
-            except Exception as e:
+            except (TypeError, ValueError, RuntimeError, AttributeError) as e:
                 return list(str(item) for item in obj)
         
         # Handle datetime objects
@@ -806,7 +806,7 @@ class QueryMetricsCollector:
                                 "size": obj.size,
                                 "summary": f"<NumPy array: {shape_str}, {str(obj.dtype)}>"
                             }
-                except Exception as e:
+                except (TypeError, ValueError, RuntimeError, AttributeError) as e:
                     # Fallback for any array processing errors
                     try:
                         return {
@@ -881,7 +881,7 @@ class QueryMetricsCollector:
             # Write metrics to file
             with open(filepath, 'w') as f:
                 json.dump(serializable_metrics, f, indent=2)
-        except Exception as e:
+        except (TypeError, ValueError, OverflowError, OSError, RuntimeError, AttributeError) as e:
             # Handle serialization errors gracefully
             error_message = f"Error serializing metrics to JSON: {str(e)}"
             

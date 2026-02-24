@@ -135,6 +135,7 @@ classDiagram
 > - [Integration Examples](../../docs/optimizers/INTEGRATION_EXAMPLES.md) - Real-world use cases (FastAPI, Flask, CLI, batch processing)
 > - [Sandboxed Prover Policy](../../docs/optimizers/SANDBOXED_PROVER_POLICY.md) - Security baseline for untrusted external prover subprocesses
 > - [Troubleshooting Dashboards](../../docs/optimizers/TROUBLESHOOTING_DASHBOARDS.md) - Metrics/log panels for performance and quality drift triage
+> - [Alerting Examples](../../docs/optimizers/ALERTING_EXAMPLES.md) - Prometheus alert rules for score/error/latency regressions
 
 ### Agentic Optimizer CLI
 

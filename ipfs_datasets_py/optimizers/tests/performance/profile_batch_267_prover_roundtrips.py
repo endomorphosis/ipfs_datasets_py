@@ -42,6 +42,9 @@ class StubProver:
 
 def build_statements(count: int) -> List[str]:
     """Build a list of deterministic logical statements."""
+    if count < 0:
+        raise ValueError("count must be >= 0")
+
     base = [
         "forall x (P(x) -> Q(x))",
         "exists y (R(y) & S(y))",
@@ -71,6 +74,11 @@ def profile_prover_roundtrips(
     Returns:
         Dict with profiling metrics.
     """
+    if statement_count <= 0:
+        raise ValueError("statement_count must be > 0")
+    if delay_ms < 0:
+        raise ValueError("delay_ms must be >= 0")
+
     adapter = ProverIntegrationAdapter(use_provers=[], enable_cache=False)
     adapter.provers = {"stub": StubProver(delay_ms=delay_ms)}
 

@@ -42,6 +42,13 @@ def build_queries(
     Returns:
         List of query dicts.
     """
+    if count < 0:
+        raise ValueError("count must be >= 0")
+    if vector_size <= 0:
+        raise ValueError("vector_size must be > 0")
+    if max_depth <= 0:
+        raise ValueError("max_depth must be > 0")
+
     random.seed(42)
     queries: List[Dict[str, Any]] = []
     edge_pool = ["instance_of", "part_of", "created_by", "works_for", "located_in"]
@@ -83,6 +90,13 @@ def profile_query_optimizer(
     Returns:
         Dict with profiling metrics.
     """
+    if query_count <= 0:
+        raise ValueError("query_count must be > 0")
+    if vector_size <= 0:
+        raise ValueError("vector_size must be > 0")
+    if warmup_count < 0:
+        raise ValueError("warmup_count must be >= 0")
+
     optimizer = UnifiedGraphRAGQueryOptimizer()
 
     warmup_queries = build_queries(warmup_count, vector_size=64, max_depth=2)

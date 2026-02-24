@@ -205,6 +205,7 @@ class TestValidationEdgeCases:
         assert result["min_similarity"] == 0.8
         assert isinstance(result["min_similarity"], float)
         assert result["traversal"]["max_depth"] == 3
+        assert isinstance(result["traversal"]["max_depth"], (int, float))
 
     def test_optimize_query_does_not_mutate_input(self):
         """optimize_query should not mutate caller-provided query dict."""
@@ -222,7 +223,6 @@ class TestValidationEdgeCases:
         optimizer.optimize_query(query)
 
         assert query == original
-        assert isinstance(result["traversal"]["max_depth"], (int, float))
     
     def test_handles_edge_types_none(self):
         """Validation handles edge_types=None correctly."""

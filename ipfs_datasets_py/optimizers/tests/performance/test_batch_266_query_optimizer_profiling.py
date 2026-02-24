@@ -12,6 +12,18 @@ import pytest
 sys.path.insert(0, str(pathlib.Path(__file__).parents[4]))
 
 
+def _load_profile_module():
+    """Load the profile module under test."""
+    spec = __import__("importlib.util").util.spec_from_file_location(
+        "profile_batch_266",
+        pathlib.Path(__file__).parent / "profile_batch_266_query_optimizer.py",
+    )
+    assert spec and spec.loader
+    module = __import__("importlib.util").util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 class TestQueryOptimizerProfilingScript:
     """Verify profiling script structure and execution."""
 
@@ -27,12 +39,7 @@ class TestQueryOptimizerProfilingScript:
         assert "UnifiedGraphRAGQueryOptimizer" in content
 
     def test_profile_execution_writes_outputs(self, tmp_path):
-        spec = __import__("importlib.util").util.spec_from_file_location(
-            "profile_batch_266",
-            pathlib.Path(__file__).parent / "profile_batch_266_query_optimizer.py",
-        )
-        module = __import__("importlib.util").util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = _load_profile_module()
 
         metrics = module.profile_query_optimizer(
             query_count=12,
@@ -53,18 +60,33 @@ class TestQueryOptimizerProfilingScript:
         assert txt_file.exists(), "Profile .txt output should exist"
         assert txt_file.read_text(encoding="utf-8")
 
+    def test_build_queries_rejects_invalid_inputs(self):
+        module = _load_profile_module()
+
+        with pytest.raises(ValueError, match="count must be >= 0"):
+            module.build_queries(-1)
+        with pytest.raises(ValueError, match="vector_size must be > 0"):
+            module.build_queries(1, vector_size=0)
+        with pytest.raises(ValueError, match="max_depth must be > 0"):
+            module.build_queries(1, max_depth=0)
+
+    def test_profile_rejects_invalid_inputs(self, tmp_path):
+        module = _load_profile_module()
+
+        with pytest.raises(ValueError, match="query_count must be > 0"):
+            module.profile_query_optimizer(query_count=0, output_dir=tmp_path)
+        with pytest.raises(ValueError, match="vector_size must be > 0"):
+            module.profile_query_optimizer(query_count=1, vector_size=0, output_dir=tmp_path)
+        with pytest.raises(ValueError, match="warmup_count must be >= 0"):
+            module.profile_query_optimizer(query_count=1, warmup_count=-1, output_dir=tmp_path)
+
 
 @pytest.mark.llm
 class TestQueryOptimizerProfilingSmoke:
     """Lightweight smoke checks for profiling metrics."""
 
     def test_profile_metrics_keys(self, tmp_path):
-        spec = __import__("importlib.util").util.spec_from_file_location(
-            "profile_batch_266",
-            pathlib.Path(__file__).parent / "profile_batch_266_query_optimizer.py",
-        )
-        module = __import__("importlib.util").util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = _load_profile_module()
 
         metrics = module.profile_query_optimizer(
             query_count=8,

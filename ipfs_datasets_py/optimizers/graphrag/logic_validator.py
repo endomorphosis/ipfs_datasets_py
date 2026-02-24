@@ -37,6 +37,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from ..common.exceptions import OptimizerError
+
 logger = logging.getLogger(__name__)
 
 
@@ -429,7 +431,7 @@ class LogicValidator:
             try:
                 formulas = self.ontology_to_tdfol(ontology)
                 result = self._prove_consistency(formulas, ontology)
-            except Exception as e:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError, ImportError, OptimizerError) as e:
                 logger.error(f"TDFOL validation failed: {e}")
                 result = ValidationResult(
                     is_consistent=False,
@@ -795,7 +797,7 @@ class LogicValidator:
                 idx = futures[future]
                 try:
                     results[idx] = future.result()
-                except Exception as exc:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError, ImportError, OptimizerError) as exc:
                     results[idx] = ValidationResult(
                         is_consistent=False,
                         contradictions=[f"Validation error: {exc}"],
@@ -948,7 +950,7 @@ class LogicValidator:
                         f"consistency issue(s): {'; '.join(result.contradictions[:2])}"
                     ),
                 }
-        except Exception as exc:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError, ImportError, OptimizerError) as exc:
             return {
                 "entity_id": entity_id,
                 "is_valid": False,

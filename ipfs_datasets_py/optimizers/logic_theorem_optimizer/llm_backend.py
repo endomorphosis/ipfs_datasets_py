@@ -133,7 +133,7 @@ class LLMBackendAdapter:
             from ipfs_datasets_py.ml.accelerate_integration import AccelerateManager
             self.backends['accelerate'] = AccelerateBackend(AccelerateManager())
             logger.info("Initialized ipfs_accelerate_py backend")
-        except Exception as e:
+        except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as e:
             logger.warning(f"Could not initialize accelerate backend: {e}")
         
         # Always initialize mock backend
@@ -194,7 +194,7 @@ class LLMBackendAdapter:
             
             return response
             
-        except Exception as e:
+        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             self.stats['errors'] += 1
             logger.error(f"Generation error: {e}")
             
@@ -325,7 +325,7 @@ class AccelerateBackend:
                 metadata=result
             )
             
-        except Exception as e:
+        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             logger.error(f"Accelerate generation error: {e}")
             raise
     

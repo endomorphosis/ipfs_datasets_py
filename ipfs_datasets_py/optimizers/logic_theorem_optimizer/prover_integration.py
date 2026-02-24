@@ -152,7 +152,7 @@ class ProverIntegrationAdapter:
                     
             except ImportError as e:
                 logger.warning(f"Could not initialize {prover_name} prover: {e}")
-            except Exception as e:
+            except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Error initializing {prover_name} prover: {e}")
     
     def _init_cache(self) -> None:
@@ -265,7 +265,7 @@ class ProverIntegrationAdapter:
                 error_message="Verification timeout"
             )
             
-        except Exception as e:
+        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             self.stats['errors'] += 1
             logger.error(f"Error verifying with {prover_name}: {e}")
             return ProverVerificationResult(
@@ -421,7 +421,7 @@ class ProverIntegrationAdapter:
             cached = self.cache.get(formula_str, prover_name="aggregated")
             if cached:
                 return cached.result
-        except Exception as e:
+        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             logger.debug(f"Cache lookup error: {e}")
         
         return None
@@ -443,7 +443,7 @@ class ProverIntegrationAdapter:
         try:
             formula_str = statement.formula if hasattr(statement, 'formula') else str(statement)
             self.cache.set(formula_str, result, prover_name="aggregated")
-        except Exception as e:
+        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             logger.debug(f"Cache write error: {e}")
     
     def get_statistics(self) -> Dict[str, Any]:
@@ -474,5 +474,5 @@ class ProverIntegrationAdapter:
             if hasattr(prover, 'close'):
                 try:
                     prover.close()
-                except Exception as e:
+                except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                     logger.warning(f"Error closing {prover_name}: {e}")

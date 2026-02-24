@@ -968,7 +968,7 @@ class OntologyCritic(BaseCritic):
         if on_evaluation_complete is not None:
             try:
                 on_evaluation_complete(score)
-            except Exception as _e:
+            except (AttributeError, RuntimeError, TypeError, ValueError) as _e:
                 self._log.warning(f"on_evaluation_complete callback raised: {_e}")
         
         return score
@@ -1006,7 +1006,7 @@ class OntologyCritic(BaseCritic):
             if progress_callback is not None:
                 try:
                     progress_callback(idx, total, score)
-                except Exception as e:
+                except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                     # Never let a callback crash the batch
                     self._log.warning(f"Progress callback failed at index {idx}: {e}")
 
@@ -1106,7 +1106,7 @@ class OntologyCritic(BaseCritic):
                         continue
                     try:
                         progress_callback(idx, total, score)
-                    except Exception as e:
+                    except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                         self._log.warning(
                             f"Progress callback failed at index {idx}: {e}"
                         )
@@ -1123,12 +1123,12 @@ class OntologyCritic(BaseCritic):
                 if progress_callback is not None:
                     try:
                         progress_callback(idx, total, score)
-                    except Exception as e:
+                    except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                         self._log.warning(
                             f"Progress callback failed at index {idx}: {e}"
                         )
                 return (idx, score, cache_key)
-            except Exception as e:
+            except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                 self._log.error(f"Evaluation failed for ontology {idx}: {e}")
                 return (idx, None, cache_key)
 
@@ -1146,7 +1146,7 @@ class OntologyCritic(BaseCritic):
                             if progress_callback is not None:
                                 try:
                                     progress_callback(dup_idx, total, score)
-                                except Exception as e:
+                                except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                                     self._log.warning(
                                         f"Progress callback failed at index {dup_idx}: {e}"
                                     )
@@ -1431,7 +1431,7 @@ class OntologyCritic(BaseCritic):
                     f"completeness={score.completeness:.3f} "
                     f"consistency={score.consistency:.3f}"
                 )
-            except Exception as exc:  # pragma: no cover
+            except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover
                 line = f"[{i}] ERROR: {exc}"
             summaries.append(line)
         return summaries

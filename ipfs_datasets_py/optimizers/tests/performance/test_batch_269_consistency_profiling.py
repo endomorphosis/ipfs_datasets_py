@@ -11,6 +11,17 @@ import pytest
 sys.path.insert(0, str(pathlib.Path(__file__).parents[4]))
 
 
+def _load_profile_module():
+    spec = __import__("importlib.util").util.spec_from_file_location(
+        "profile_batch_269",
+        pathlib.Path(__file__).parent / "profile_batch_269_consistency_cycles.py",
+    )
+    module = __import__("importlib.util").util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
 class TestConsistencyProfilingScript:
     """Verify profiling script structure and execution."""
 
@@ -26,12 +37,7 @@ class TestConsistencyProfilingScript:
         assert "evaluate_consistency" in content
 
     def test_profile_execution_writes_outputs(self, tmp_path):
-        spec = __import__("importlib.util").util.spec_from_file_location(
-            "profile_batch_269",
-            pathlib.Path(__file__).parent / "profile_batch_269_consistency_cycles.py",
-        )
-        module = __import__("importlib.util").util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = _load_profile_module()
 
         metrics = module.profile_consistency(
             entity_count=120,
@@ -53,12 +59,7 @@ class TestConsistencyProfilingScript:
         assert txt_file.read_text(encoding="utf-8")
 
     def test_profile_rejects_zero_entity_count(self, tmp_path):
-        spec = __import__("importlib.util").util.spec_from_file_location(
-            "profile_batch_269",
-            pathlib.Path(__file__).parent / "profile_batch_269_consistency_cycles.py",
-        )
-        module = __import__("importlib.util").util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = _load_profile_module()
 
         with pytest.raises(ValueError, match="entity_count must be > 0"):
             module.profile_consistency(
@@ -69,12 +70,7 @@ class TestConsistencyProfilingScript:
             )
 
     def test_profile_rejects_negative_relationship_count(self, tmp_path):
-        spec = __import__("importlib.util").util.spec_from_file_location(
-            "profile_batch_269",
-            pathlib.Path(__file__).parent / "profile_batch_269_consistency_cycles.py",
-        )
-        module = __import__("importlib.util").util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = _load_profile_module()
 
         with pytest.raises(ValueError, match="relationship_count must be >= 0"):
             module.profile_consistency(
@@ -84,18 +80,41 @@ class TestConsistencyProfilingScript:
                 output_dir=tmp_path,
             )
 
+    def test_build_ontology_adds_cycle_edges_when_enabled(self):
+        module = _load_profile_module()
+
+        ontology = module.build_ontology(
+            entity_count=5,
+            relationship_count=2,
+            with_cycle=True,
+        )
+
+        assert len(ontology["entities"]) == 5
+        # Base relationships + injected 3-edge cycle
+        assert len(ontology["relationships"]) == 5
+        rel_ids = {rel["id"] for rel in ontology["relationships"]}
+        assert {"cycle_1", "cycle_2", "cycle_3"}.issubset(rel_ids)
+
+    def test_build_ontology_does_not_add_cycle_for_small_entity_count(self):
+        module = _load_profile_module()
+
+        ontology = module.build_ontology(
+            entity_count=2,
+            relationship_count=2,
+            with_cycle=True,
+        )
+
+        rel_ids = {rel["id"] for rel in ontology["relationships"]}
+        assert "cycle_1" not in rel_ids
+        assert len(ontology["relationships"]) == 2
+
 
 @pytest.mark.llm
 class TestConsistencyProfilingSmoke:
     """Lightweight smoke checks for profiling metrics."""
 
     def test_profile_metrics_keys(self, tmp_path):
-        spec = __import__("importlib.util").util.spec_from_file_location(
-            "profile_batch_269",
-            pathlib.Path(__file__).parent / "profile_batch_269_consistency_cycles.py",
-        )
-        module = __import__("importlib.util").util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = _load_profile_module()
 
         metrics = module.profile_consistency(
             entity_count=80,

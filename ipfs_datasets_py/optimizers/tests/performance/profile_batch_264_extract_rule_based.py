@@ -30,6 +30,9 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
 
 def generate_legal_text(target_tokens: int = 5000) -> str:
     """Generate a legal-style document with roughly target_tokens tokens."""
+    if target_tokens <= 0:
+        raise ValueError("target_tokens must be > 0")
+
     clauses = [
         "The parties agree to the terms of this Agreement and all obligations herein.",
         "Contractor shall provide services in a professional and timely manner.",
@@ -69,6 +72,11 @@ def profile_extract_rule_based(
     Returns:
         Dict with basic profiling metrics.
     """
+    if target_tokens <= 0:
+        raise ValueError("target_tokens must be > 0")
+    if warmup_tokens <= 0:
+        raise ValueError("warmup_tokens must be > 0")
+
     text = generate_legal_text(target_tokens=target_tokens)
     warmup_text = generate_legal_text(target_tokens=warmup_tokens)
 
