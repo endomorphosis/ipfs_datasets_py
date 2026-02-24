@@ -204,7 +204,14 @@ class CacheL2:
                 self._save_index(index)
                 
                 return value
-            except Exception:
+            except (
+                OSError,
+                EOFError,
+                pickle.PickleError,
+                AttributeError,
+                ValueError,
+                TypeError,
+            ):
                 self.metrics.misses += 1
                 return None
     
@@ -223,7 +230,13 @@ class CacheL2:
                     'access_count': 0
                 }
                 self._save_index(index)
-            except Exception:
+            except (
+                OSError,
+                pickle.PickleError,
+                AttributeError,
+                ValueError,
+                TypeError,
+            ):
                 pass
     
     def delete(self, key: str) -> bool:
@@ -238,7 +251,7 @@ class CacheL2:
                         del index[key]
                     self._save_index(index)
                     return True
-            except Exception:
+            except OSError:
                 pass
             return False
     
@@ -255,7 +268,7 @@ class CacheL2:
             try:
                 with open(self.index_path, 'r') as f:
                     return json.load(f)
-            except Exception:
+            except (OSError, json.JSONDecodeError, ValueError, TypeError):
                 return {}
         return {}
     
@@ -264,7 +277,7 @@ class CacheL2:
         try:
             with open(self.index_path, 'w') as f:
                 json.dump(index, f)
-        except Exception:
+        except (OSError, TypeError, ValueError):
             pass
 
 

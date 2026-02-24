@@ -232,7 +232,7 @@ def example_usage():
     try:
         llm_processor = GraphRAGLLMProcessor(query_optimizer=unified_optimizer)
         print("Successfully instantiated GraphRAGLLMProcessor with UnifiedGraphRAGQueryOptimizer.")
-    except Exception as e:
+    except (TypeError, ValueError, AttributeError, RuntimeError, ImportError) as e:
         print(f"Error instantiating GraphRAGLLMProcessor: {e}")
         # Continue with other parts of the example if possible
         llm_processor = None
@@ -279,7 +279,7 @@ def example_usage():
             # Note: The actual LLM call is likely mocked or requires setup.
             # This primarily demonstrates the flow of calling the method.
             print(f"Reasoning Result (conceptual/mocked): {json.dumps(reasoning_result, indent=2, default=str)}")
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, RuntimeError) as e:
             print(f"Error during conceptual call to synthesize_cross_document_reasoning: {e}")
             print("Note: This might be expected if LLM interface is not configured.")
         print("--- End Conceptual Call ---")
@@ -418,5 +418,5 @@ if __name__ == "__main__":
     # Run the integration test
     try:
         test_query_rewriter_integration()
-    except Exception as e:
+    except (AssertionError, TypeError, ValueError, AttributeError, RuntimeError) as e:
         print(f"Integration test failed: {e}")

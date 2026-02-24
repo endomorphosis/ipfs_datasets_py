@@ -250,7 +250,15 @@ class LogicHarness:
                     else:
                         logger.info(f"Session {idx} completed: score={result.critic_score.overall:.3f}")
                         
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    OSError,
+                    RuntimeError,
+                    TimeoutError,
+                ) as e:
                     logger.error(f"Session {idx} raised exception: {e}")
                     failed_count += 1
         
@@ -310,7 +318,15 @@ class LogicHarness:
                 result = session.run(data, context)
                 return result
                 
-            except Exception as e:
+            except (
+                ValueError,
+                TypeError,
+                AttributeError,
+                KeyError,
+                OSError,
+                RuntimeError,
+                TimeoutError,
+            ) as e:
                 last_exception = e
                 logger.warning(f"Session {session_id} attempt {attempt + 1} failed: {e}")
                 

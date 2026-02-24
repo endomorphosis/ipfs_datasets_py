@@ -145,6 +145,33 @@ class TestHarnessRunConcurrent:
         results = harness.run_concurrent(["Alice met Bob."], ctx)
         assert len(results) == 1
 
+    def test_run_single_wraps_runtime_error(self, harness_ctx, monkeypatch):
+        harness, ctx = harness_ctx
+
+        def _boom(_data, _context):
+            raise RuntimeError("run failed")
+
+        monkeypatch.setattr(harness, "run_and_report", _boom)
+
+        with pytest.raises(RuntimeError, match="OntologyHarness.run_single\\(\\) failed: run failed"):
+            harness.run_single("Alice", ctx)
+
+    def test_run_concurrent_returns_error_dict_for_failed_doc(self, harness_ctx, monkeypatch):
+        harness, ctx = harness_ctx
+
+        def _maybe_fail(data, _context):
+            if data == "bad":
+                raise RuntimeError("doc failure")
+            return {"best_score": 0.5, "rounds": 1, "converged": True, "best_ontology": {}, "session": object()}
+
+        monkeypatch.setattr(harness, "run_and_report", _maybe_fail)
+
+        results = harness.run_concurrent(["ok", "bad", "ok2"], ctx, max_workers=2)
+
+        assert len(results) == 3
+        assert results[1]["success"] is False
+        assert "doc failure" in results[1]["error"]
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # batch_extract() merge_provenance source tagging

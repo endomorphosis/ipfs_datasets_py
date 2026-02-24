@@ -208,7 +208,7 @@ class OntologyRefinementAgent:
             else:
                 self._log.warning("Unsupported LLM backend interface")
                 return {}
-        except Exception as exc:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError, ImportError) as exc:
             self._log.warning("LLM backend invocation failed: %s", exc)
             return {}
 

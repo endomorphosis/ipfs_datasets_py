@@ -45,6 +45,9 @@ def generate_large_legal_text(target_tokens: int = 10000) -> str:
     Returns:
         String with approximately target_tokens tokens
     """
+    if target_tokens <= 0:
+        raise ValueError("target_tokens must be > 0")
+
     # Base clause patterns (each ~100-150 tokens)
     clauses = [
         """The parties hereby agree that this Agreement constitutes the entire agreement 
@@ -165,12 +168,21 @@ def generate_large_legal_text(target_tokens: int = 10000) -> str:
     return "".join(text_parts)
 
 
-def profile_generate_ontology():
-    """Profile OntologyGenerator.generate_ontology() on 10k-token input."""
+def profile_generate_ontology(
+    target_tokens: int = 10000,
+    warmup_tokens: int = 1000,
+):
+    """Profile OntologyGenerator.generate_ontology() on large-token input."""
+    if target_tokens <= 0:
+        raise ValueError("target_tokens must be > 0")
+    if warmup_tokens <= 0:
+        raise ValueError("warmup_tokens must be > 0")
+    if warmup_tokens > target_tokens:
+        raise ValueError("warmup_tokens must be <= target_tokens")
     
     # Generate large text
     print("Generating 10k-token legal text...")
-    text = generate_large_legal_text(target_tokens=10000)
+    text = generate_large_legal_text(target_tokens=target_tokens)
     token_count = len(text.split())
     text_size_kb = len(text) / 1024
     
@@ -190,7 +202,7 @@ def profile_generate_ontology():
     # Warm-up run (not profiled)
     print("Performing warm-up run...")
     start_warmup = time.perf_counter()
-    _ = generator.generate_ontology(text[:1000], context)  # Small warmup
+    _ = generator.generate_ontology(text[:warmup_tokens], context)  # Small warmup
     warmup_time = time.perf_counter() - start_warmup
     print(f"Warm-up completed in {warmup_time:.3f}s")
     

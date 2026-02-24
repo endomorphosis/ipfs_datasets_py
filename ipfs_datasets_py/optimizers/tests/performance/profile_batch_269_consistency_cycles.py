@@ -36,6 +36,8 @@ def build_ontology(
         raise ValueError("entity_count must be > 0")
     if relationship_count < 0:
         raise ValueError("relationship_count must be >= 0")
+    if not isinstance(with_cycle, bool):
+        raise TypeError("with_cycle must be a bool")
 
     entities: List[Dict[str, Any]] = []
     for idx in range(entity_count):
@@ -95,6 +97,9 @@ def profile_consistency(
     Returns:
         Dict with profiling metrics.
     """
+    if not isinstance(with_cycle, bool):
+        raise TypeError("with_cycle must be a bool")
+
     ontology = build_ontology(
         entity_count,
         relationship_count,

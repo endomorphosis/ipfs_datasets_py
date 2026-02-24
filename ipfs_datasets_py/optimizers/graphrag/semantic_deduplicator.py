@@ -126,7 +126,7 @@ class SemanticEntityDeduplicator:
             if embeddings is None or len(embeddings) != len(texts):
                 raise RuntimeError("Embedding generation failed")
                 
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError, ImportError, OSError) as e:
             _logger.error(f"Failed to generate embeddings: {e}")
             raise RuntimeError(f"Embedding generation failed: {e}")
         
@@ -347,7 +347,7 @@ class SemanticEntityDeduplicator:
         
         try:
             model = SentenceTransformer(model_name)
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, RuntimeError, ImportError, OSError) as e:
             _logger.warning(f"Failed to load {model_name}: {e}. Trying fallback...")
             model = SentenceTransformer("paraphrase-MiniLM-L3-v2")
         

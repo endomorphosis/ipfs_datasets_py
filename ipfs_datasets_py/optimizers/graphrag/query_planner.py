@@ -232,7 +232,7 @@ class GraphRAGQueryOptimizer:
             params_str = str(sorted([(k, str(v)) for k, v in query_params.items()]))
             return hashlib.sha256(params_str.encode()).hexdigest()
             
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, RuntimeError, OverflowError) as e:
             # If anything goes wrong, create a more robust fallback key with all available parameters
             # Include as many parameters as possible to avoid incorrect cache hits
             fallback_parts = [
@@ -325,7 +325,7 @@ class GraphRAGQueryOptimizer:
                 
             return True
             
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError) as e:
             # If any error occurs, consider it a cache miss, but provide better diagnostics
             error_msg = f"Error checking cache: {str(e)}"
             if hasattr(self, 'logger'):
@@ -387,7 +387,7 @@ class GraphRAGQueryOptimizer:
                     # Do NOT record a query time for cached results to avoid
                     # inflating the query count incorrectly
                     # This was causing incorrect query counts in statistical learning
-                except Exception as stats_error:
+                except (AttributeError, TypeError, ValueError, RuntimeError, OSError) as stats_error:
                     # Log error but continue - stats are non-critical
                     if hasattr(self, 'logger'):
                         self.logger.warning(f"Error recording cache hit stats: {str(stats_error)}")
@@ -399,7 +399,7 @@ class GraphRAGQueryOptimizer:
             # Re-raise QueryCacheError as-is
             raise
             
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError) as e:
             # For unexpected errors, convert to QueryCacheError with context
             error_msg = f"Unexpected error retrieving from cache: {str(e)}, query_key={query_key}"
             if hasattr(self, 'logger'):
@@ -450,7 +450,7 @@ class GraphRAGQueryOptimizer:
                 
                 # Verify we can get a string representation
                 result_str = str(clean_result)[:50]  # Truncate for reasonable log message size
-            except Exception as serr:
+            except (AttributeError, TypeError, ValueError, RuntimeError, OSError) as serr:
                 # If we can't process the result safely, don't cache it
                 if hasattr(self, 'logger'):
                     self.logger.warning(f"Cannot serialize result for key {query_key}: {str(serr)}")
@@ -492,12 +492,12 @@ class GraphRAGQueryOptimizer:
                             if hasattr(self, 'logger'):
                                 self.logger.warning(f"Removed random cache entry (couldn't determine oldest)")
                                 
-                except Exception as e:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError) as e:
                     # If cache management fails, log and continue
                     if hasattr(self, 'logger'):
                         self.logger.warning(f"Error managing cache size: {str(e)}")
                     
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError) as e:
             # Log error with better diagnostics but don't fail the operation for cache issues
             error_msg = f"Error adding to cache: {str(e)}, key={query_key}"
             if hasattr(self, 'logger'):
@@ -572,7 +572,7 @@ class GraphRAGQueryOptimizer:
                             "last_5": result.flatten()[-5:].tolist() if result.size > 0 else []
                         }
                         return stats
-                except Exception as e:
+                except (AttributeError, TypeError, ValueError, RuntimeError, OSError) as e:
                     # Provide better fallback with error context
                     try:
                         return {

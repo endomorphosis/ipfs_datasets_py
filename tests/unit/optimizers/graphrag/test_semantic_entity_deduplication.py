@@ -394,6 +394,18 @@ class TestSemanticDeduplicationErrorHandling:
                 ontology, threshold=0.8, embedding_fn=mock_embedding_fn
             )
 
+    def test_embedding_function_failure_is_wrapped(self, deduplicator, simple_ontology):
+        """Embedding callback errors should be wrapped as RuntimeError."""
+        def failing_embedding_fn(_texts):
+            raise ValueError("vectorizer failed")
+
+        with pytest.raises(RuntimeError, match="Embedding generation failed: vectorizer failed"):
+            deduplicator.suggest_merges(
+                simple_ontology,
+                threshold=0.8,
+                embedding_fn=failing_embedding_fn,
+            )
+
 
 class TestSemanticDeduplicationBatching:
     """Test batch processing for embeddings."""

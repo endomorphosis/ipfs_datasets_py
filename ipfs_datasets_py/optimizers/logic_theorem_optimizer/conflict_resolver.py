@@ -456,7 +456,15 @@ class ConflictResolver:
                     self.resolution_history.append(resolution)
                 else:
                     unresolved.append(conflict)
-            except Exception as e:
+            except (
+                ValueError,
+                TypeError,
+                AttributeError,
+                KeyError,
+                IndexError,
+                ZeroDivisionError,
+                RuntimeError,
+            ) as e:
                 logger.warning(f"Failed to resolve conflict {conflict.conflict_id}: {e}")
                 unresolved.append(conflict)
         

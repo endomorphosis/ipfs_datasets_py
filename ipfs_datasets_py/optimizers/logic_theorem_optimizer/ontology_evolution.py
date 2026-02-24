@@ -487,7 +487,7 @@ class OntologyEvolution:
                     return True
             
             return False
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"Error applying update: {e}")
             return False
     

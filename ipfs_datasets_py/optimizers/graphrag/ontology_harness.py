@@ -667,7 +667,7 @@ class OntologyPipelineHarness(BaseHarness):
             refined = self.mediator.refine_ontology(artifact, critique.feedback)
         except RefinementError:
             raise
-        except Exception as exc:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError, ImportError, OptimizerError) as exc:
             self._log.warning("refine_ontology failed: %s", exc)
             refined = artifact
         self._last_ontology = refined
@@ -708,7 +708,7 @@ class OntologyPipelineHarness(BaseHarness):
         """
         try:
             return self.run_and_report(data, context)
-        except Exception as exc:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError, ImportError, OptimizerError) as exc:
             raise RuntimeError(
                 f"OntologyHarness.run_single() failed: {exc}"
             ) from exc
@@ -741,7 +741,7 @@ class OntologyPipelineHarness(BaseHarness):
         def _run(idx: int, doc: Any) -> tuple:
             try:
                 return idx, self.run_and_report(doc, context)
-            except Exception as exc:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError, ImportError, OptimizerError) as exc:
                 return idx, {"error": str(exc), "success": False}
 
         with ThreadPoolExecutor(max_workers=max(1, max_workers)) as pool:

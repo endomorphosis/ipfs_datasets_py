@@ -35,6 +35,18 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
 )
 
 
+def _load_profile_module():
+    """Load the profile module under test."""
+    spec = __import__('importlib.util').util.spec_from_file_location(
+        "profile_script",
+        pathlib.Path(__file__).parent / "profile_batch_262_generate_10k.py"
+    )
+    assert spec and spec.loader
+    module = __import__('importlib.util').util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 class TestProfilingScriptExecution:
     """Test that profiling script executes correctly."""
     
@@ -55,13 +67,7 @@ class TestProfilingScriptExecution:
     
     def test_large_text_generation(self):
         """Test that generate_large_legal_text() produces correct size."""
-        # Import function from profile script
-        spec = __import__('importlib.util').util.spec_from_file_location(
-            "profile_script",
-            pathlib.Path(__file__).parent / "profile_batch_262_generate_10k.py"
-        )
-        module = __import__('importlib.util').util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = _load_profile_module()
         
         text = module.generate_large_legal_text(target_tokens=1000)
         token_count = len(text.split())
@@ -70,6 +76,24 @@ class TestProfilingScriptExecution:
         assert 800 <= token_count <= 1200, f"Generated {token_count} tokens, expected ~1000"
         assert "Agreement" in text, "Should contain legal text"
         assert "parties" in text, "Should contain legal terminology"
+
+    def test_large_text_generation_rejects_invalid_target_tokens(self):
+        """Test that generate_large_legal_text() rejects non-positive token targets."""
+        module = _load_profile_module()
+
+        with pytest.raises(ValueError, match="target_tokens must be > 0"):
+            module.generate_large_legal_text(target_tokens=0)
+
+    def test_profile_generate_rejects_invalid_token_inputs(self):
+        """Test that profile_generate_ontology() validates token parameters."""
+        module = _load_profile_module()
+
+        with pytest.raises(ValueError, match="target_tokens must be > 0"):
+            module.profile_generate_ontology(target_tokens=0)
+        with pytest.raises(ValueError, match="warmup_tokens must be > 0"):
+            module.profile_generate_ontology(target_tokens=1000, warmup_tokens=0)
+        with pytest.raises(ValueError, match="warmup_tokens must be <= target_tokens"):
+            module.profile_generate_ontology(target_tokens=500, warmup_tokens=1000)
     
     def test_profiling_output_files_exist(self):
         """Verify profiling generated output files."""

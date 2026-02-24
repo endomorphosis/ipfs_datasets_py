@@ -80,6 +80,35 @@ class TestConsistencyProfilingScript:
                 output_dir=tmp_path,
             )
 
+    def test_build_ontology_rejects_zero_entity_count(self):
+        module = _load_profile_module()
+
+        with pytest.raises(ValueError, match="entity_count must be > 0"):
+            module.build_ontology(entity_count=0, relationship_count=1)
+
+    def test_build_ontology_rejects_negative_relationship_count(self):
+        module = _load_profile_module()
+
+        with pytest.raises(ValueError, match="relationship_count must be >= 0"):
+            module.build_ontology(entity_count=1, relationship_count=-1)
+
+    def test_build_ontology_rejects_non_boolean_with_cycle(self):
+        module = _load_profile_module()
+
+        with pytest.raises(TypeError, match="with_cycle must be a bool"):
+            module.build_ontology(entity_count=5, relationship_count=1, with_cycle="yes")
+
+    def test_profile_rejects_non_boolean_with_cycle(self, tmp_path):
+        module = _load_profile_module()
+
+        with pytest.raises(TypeError, match="with_cycle must be a bool"):
+            module.profile_consistency(
+                entity_count=5,
+                relationship_count=5,
+                with_cycle=1,
+                output_dir=tmp_path,
+            )
+
     def test_build_ontology_adds_cycle_edges_when_enabled(self):
         module = _load_profile_module()
 

@@ -36,6 +36,18 @@ def test_propose_feedback_with_callable_backend():
     assert feedback == {"relationships_to_remove": ["r1"]}
 
 
+def test_propose_feedback_backend_exception_returns_empty():
+    def _backend(_prompt: str):
+        raise ValueError("backend down")
+
+    agent = OntologyRefinementAgent(llm_backend=_backend)
+    ontology = {"entities": [], "relationships": []}
+    score = type("Score", (), {"recommendations": ["Retry later"]})()
+
+    feedback = agent.propose_feedback(ontology, score, context=None)
+    assert feedback == {}
+
+
 def test_noop_agent_returns_fixed_feedback_copy():
     payload = {"confidence_floor": 0.6}
     agent = NoOpRefinementAgent(feedback=payload)

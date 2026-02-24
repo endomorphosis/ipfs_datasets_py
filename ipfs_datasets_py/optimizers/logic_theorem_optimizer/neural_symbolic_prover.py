@@ -519,7 +519,7 @@ class NeuralSymbolicHybridProver:
                 llm_used=result.llm_used,
                 execution_time=time.time() - start_time
             )
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, RuntimeError) as e:
             logger.warning(f"Neural prover failed: {e}")
             return NeuralResult(
                 is_valid=False,
@@ -562,7 +562,7 @@ class NeuralSymbolicHybridProver:
                 prover_used=result.verified_by[0] if result.verified_by else None,
                 execution_time=time.time() - start_time
             )
-        except Exception as e:
+        except (ImportError, AttributeError, TypeError, ValueError, RuntimeError) as e:
             logger.warning(f"Symbolic prover failed: {e}")
             return SymbolicResult(
                 is_valid=False,

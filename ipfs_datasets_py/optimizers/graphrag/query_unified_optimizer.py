@@ -340,7 +340,7 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         if hasattr(self, 'budget_manager') and self.budget_manager is not None:
             try:
                 budget = self.budget_manager.allocate_budget(fallback_query, priority)
-            except Exception as e:
+            except (TypeError, ValueError, AttributeError, KeyError, RuntimeError) as e:
                 # Use default budget if budget_manager fails
                 pass
         
@@ -451,7 +451,7 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
                 self._traversal_stats["entity_frequency"][entity_id] += 1
                 self._traversal_stats["entity_connectivity"][entity_id] = total_connections
         
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, KeyError, ZeroDivisionError) as e:
             logging.warning(f"Error calculating entity importance for {entity_id}: {e}")
         
         # Cache the result
@@ -1675,7 +1675,7 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
                 json.dump(serializable_state, f, indent=2)
             
             return filepath
-        except Exception as e:
+        except (TypeError, ValueError, OSError, OverflowError, RecursionError) as e:
             # Handle serialization errors gracefully
             error_message = f"Error serializing learning state to JSON: {str(e)}"
         
@@ -1694,7 +1694,7 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
                 with open(filepath, 'w') as f:
                     json.dump(fallback_state, f, indent=2)
                 return filepath
-            except:
+            except (TypeError, ValueError, OSError):
                 # If that also fails, log error and return None
                 if hasattr(self, "metrics_collector") and self.metrics_collector is not None:
                     self.metrics_collector.record_additional_metric(
@@ -1749,7 +1749,7 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
             
             return True
         
-        except Exception as e:
+        except (OSError, json.JSONDecodeError, TypeError, ValueError, AttributeError) as e:
             # Handle load errors
             if hasattr(self, 'logger'):
                 self.logger.error(f"Error loading learning state: {str(e)}")
