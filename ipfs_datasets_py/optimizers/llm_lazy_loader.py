@@ -277,12 +277,6 @@ class LazyLLMBackend:
                 except Exception as e:
                     logger.warning("LLM backend method '%s' failed: %s", name, e)
                     raise RuntimeError(f"LLM backend error during {name}: {e}") from e
-                except Exception as e:
-                    # Circuit-breaker failed - log and re-raise as RuntimeError
-                    logger.error("LLM backend error during %s call: %s", name, e)
-                    raise RuntimeError(
-                        f"LLM backend error during {name}: {e}"
-                    ) from e
             return wrapped_method
         
         return attr
