@@ -767,7 +767,7 @@ class QueryMetricsCollector:
         if isinstance(obj, (bytes, bytearray)):
             try:
                 return obj.decode('utf-8', errors='replace')
-            except:
+            except (TypeError, ValueError, UnicodeError):
                 return str(obj)
                 
         # If numpy is available, handle numpy types
@@ -814,7 +814,7 @@ class QueryMetricsCollector:
                             "error": str(e),
                             "summary": str(obj)[:1000] if hasattr(obj, "__str__") else "<unprintable array>"
                         }
-                    except:
+                    except (TypeError, ValueError, AttributeError, RuntimeError):
                         return {"type": "ndarray", "error": "Unprocessable array"}
             
             # Handle numpy scalar types
@@ -831,7 +831,7 @@ class QueryMetricsCollector:
             elif isinstance(obj, (np.bytes_, np.void)):
                 try:
                     return obj.item().decode('utf-8', errors='replace')
-                except:
+                except (TypeError, ValueError, AttributeError, UnicodeError):
                     return str(obj)
             elif isinstance(obj, (np.datetime64, np.timedelta64)):
                 return str(obj)
@@ -844,7 +844,7 @@ class QueryMetricsCollector:
                     item_val = obj.item()
                     # Handle potential nested numpy types from item()
                     return self._numpy_json_serializable(item_val)
-                except:
+                except (TypeError, ValueError, AttributeError, RuntimeError):
                     return str(obj)
         
         # For other types that might cause problems, convert to string
@@ -856,7 +856,7 @@ class QueryMetricsCollector:
             # If normal serialization fails, convert to string
             try:
                 return str(obj)
-            except:
+            except (TypeError, ValueError, AttributeError, RuntimeError):
                 return "<unserializable object>"
     
     def _persist_metrics(self, metrics: Dict[str, Any]) -> None:
@@ -896,7 +896,7 @@ class QueryMetricsCollector:
             try:
                 with open(filepath, 'w') as f:
                     json.dump(fallback_metrics, f, indent=2)
-            except:
+            except (TypeError, ValueError, OSError):
                 # Last resort: just log the error
                 if hasattr(self, "_log") and self._log:
                     self._log.error(f"Failed to persist metrics: {error_message}")

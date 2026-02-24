@@ -71,7 +71,7 @@ class LoggingAuditor:
         try:
             with open(file_path, 'r') as f:
                 content = f.read()
-        except Exception as e:
+        except (OSError, UnicodeDecodeError, ValueError) as e:
             result.issues.append(f"Could not read file: {e}")
             return result
         

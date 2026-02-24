@@ -190,7 +190,7 @@ class LogicExtractor:
             from ipfs_datasets_py.optimizers.logic_theorem_optimizer.kg_integration import get_default_kg_integration
             self.kg_integration = get_default_kg_integration()
             logger.info("Knowledge graph integration initialized")
-        except Exception as e:
+        except (ImportError, AttributeError, TypeError, ValueError, OSError, RuntimeError) as e:
             logger.warning(f"Could not initialize KG integration: {e}")
             self.kg_integration = None
     
@@ -200,7 +200,7 @@ class LogicExtractor:
             from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_translation import UnifiedFormulaTranslator
             self.formula_translator = UnifiedFormulaTranslator()
             logger.info("Formula translator initialized")
-        except Exception as e:
+        except (ImportError, AttributeError, TypeError, ValueError, OSError, RuntimeError) as e:
             logger.warning(f"Could not initialize formula translator: {e}")
             self.formula_translator = None
     
@@ -210,7 +210,7 @@ class LogicExtractor:
             from ipfs_datasets_py.optimizers.logic_theorem_optimizer.rag_integration import RAGIntegration
             self.rag_integration = RAGIntegration()
             logger.info("RAG integration initialized")
-        except Exception as e:
+        except (ImportError, AttributeError, TypeError, ValueError, OSError, RuntimeError) as e:
             logger.warning(f"Could not initialize RAG integration: {e}")
             self.rag_integration = None
         
@@ -238,7 +238,7 @@ class LogicExtractor:
         try:
             # Determine the extraction mode if auto
             if context.extraction_mode == ExtractionMode.AUTO:
-                context.extraction_mode = self._determine_mode(context)
+                context.config.extraction_mode = self._determine_mode(context)
             
             # Phase 2.5: Get RAG context for enhanced extraction
             rag_context = None
@@ -250,7 +250,14 @@ class LogicExtractor:
                         num_examples=3
                     )
                     logger.info(f"RAG context retrieved (confidence: {rag_context.confidence:.2f})")
-                except Exception as e:
+                except (
+                    AttributeError,
+                    TypeError,
+                    ValueError,
+                    RuntimeError,
+                    OSError,
+                    TimeoutError,
+                ) as e:
                     logger.warning(f"Could not get RAG context: {e}")
             
             # Phase 2.4: Enrich context with KG information
@@ -311,7 +318,15 @@ class LogicExtractor:
             
             return result
             
-        except Exception as e:
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+            KeyError,
+            RuntimeError,
+            OSError,
+            TimeoutError,
+        ) as e:
             logger.error(f"Extraction failed: {e}")
             return ExtractionResult(
                 statements=[],
@@ -535,7 +550,15 @@ class LogicExtractor:
                 logger.info(f"Generated response using {response.backend} backend")
                 return response.text
                 
-            except Exception as e:
+            except (
+                ImportError,
+                AttributeError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+                OSError,
+                TimeoutError,
+            ) as e:
                 logger.warning(f"LLM backend error: {e}, using fallback")
         
         # Fallback mock response for testing

@@ -407,7 +407,7 @@ class QueryValidationMixin:
             key_str = "_".join(key_parts)
             return hashlib.sha256(key_str.encode()).hexdigest()
             
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, KeyError) as e:
             # Fallback to simple hash on error
             self._log_validation_warning(
                 f"Error generating cache key: {str(e)}, using fallback"
@@ -572,7 +572,7 @@ class QueryValidationMixin:
             # Test string representation
             str(result)
             return True
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError) as e:
             self._log_validation_warning(
                 f"Result cannot be serialized: {str(e)}"
             )
