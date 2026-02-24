@@ -103,6 +103,12 @@ from .ontology_critic import (
     DIMENSION_WEIGHTS,
 )
 
+from .score_analyzer import (
+    ScoreAnalyzer,
+    DimensionStats,
+    STANDARD_DIMENSIONS,
+)
+
 from .logic_validator import (
     LogicValidator,
     ValidationResult,
@@ -231,6 +237,9 @@ __all__ = [
     'CriticScore',
     'BackendConfig',
     'DIMENSION_WEIGHTS',
+    'ScoreAnalyzer',
+    'DimensionStats',
+    'STANDARD_DIMENSIONS',
     # Validator
     'LogicValidator',
     'ValidationResult',
