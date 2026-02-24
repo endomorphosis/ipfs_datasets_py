@@ -62,16 +62,26 @@ def context():
 
 
 @pytest.mark.parametrize("size", [10, 25, 50, 100])
+@pytest.mark.parametrize("prefilter", [True, False])
 @pytest.mark.benchmark(group="infer_relationships_scaling")
-def test_infer_relationships_scaling(benchmark, generator, context, size):
+def test_infer_relationships_scaling(benchmark, generator, context, size, prefilter):
     """
     Benchmark infer_relationships() across different entity count scales.
     
     Tests scaling from 10 to 100 entities to measure algorithm complexity
-    and identify performance bottlenecks at different scales.
+    and compare pre-filtered vs unfiltered type-pair evaluation.
     """
     entities, text = _case(size)
-    result = benchmark(lambda: generator.infer_relationships(entities, context, data=text))
+
+    if not prefilter:
+        original = generator._is_impossible_type_pair
+        generator._is_impossible_type_pair = lambda *_args, **_kwargs: False
+
+    try:
+        result = benchmark(lambda: generator.infer_relationships(entities, context, data=text))
+    finally:
+        if not prefilter:
+            generator._is_impossible_type_pair = original
     
     # Basic sanity check: should succeed
     assert result is not None

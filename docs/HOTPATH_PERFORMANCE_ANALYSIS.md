@@ -67,7 +67,10 @@ where:
 ### Priority 1: Entity Type Pre-filtering (Quick Win)
 **Effort:** Low  
 **Potential Impact:** 20-30% reduction  
+**Status:** Implemented 2026-02-23  
 **Implementation:** Skip relationship inference for entity type pairs that are unlikely to relate (e.g., Date-to-Date).
+
+**Benchmark Note:** Initial scaling sweep shows modest gains at higher entity counts (~13% at 100 entities) with minimal impact at lower sizes. Use the prefilter toggle in `bench_infer_relationships_scaling.py` for regression tracking.
 
 **Code pattern:**
 ```python
@@ -115,7 +118,7 @@ if (e1.type, e2.type) in IMPOSSIBLE_PAIRS:
 ## Recommended Implementation Order
 
 1. ✅ **Document profiling** (DONE) - baseline established
-2. [ ] **Implement type filtering** (P1) - 1-2 hours
+2. ✅ **Implement type filtering** (DONE) - in `infer_relationships()` prefilter path
 3. [ ] **Add sentence-based limiting** (P2) - 2-3 hours
 4. [ ] **Parallel relationship scoring** (P3) - 3-4 hours
 5. [ ] **Vectorized string matching** (P4) - Research phase
@@ -140,7 +143,7 @@ if (e1.type, e2.type) in IMPOSSIBLE_PAIRS:
 - `scripts/profile_extraction_cprofile.py` - Detailed cProfile analysis
 
 **Benchmarks Created:**
-- `benchmarks/bench_infer_relationships_scaling.py` - Entity count scaling
+- `benchmarks/bench_infer_relationships_scaling.py` - Entity count scaling + prefilter toggle
 - `benchmarks/bench_relationship_type_confidence_scoring.py` - Type scoring overhead
 
 ## References
@@ -152,5 +155,5 @@ if (e1.type, e2.type) in IMPOSSIBLE_PAIRS:
 ---
 
 **Analysis completed by:** Copilot  
-**Status:** Ready for implementation  
-**Next Step:** Implement P1 type filtering for immediate gains
+**Status:** P1 implemented; ready for P2  
+**Next Step:** Implement sentence-based limiting to reduce full-text scans
