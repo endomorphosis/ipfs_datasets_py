@@ -19,7 +19,7 @@ from .protocol import (
     Relationship as UnifiedRelationship,
     VectorStore,
 )
-from .registry import ProcessorRegistry, get_global_registry
+from .core.registry import ProcessorRegistry, get_global_registry
 from .input_detection import InputDetector, detect_input_type, classify_input
 from .universal_processor import UniversalProcessor, ProcessorConfig
 

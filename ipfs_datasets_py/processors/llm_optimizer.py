@@ -152,7 +152,7 @@ class _FallbackEmbeddingModel:
         return vectors
 
 
-from ipfs_datasets_py.processors.classify_with_llm import (
+from ipfs_datasets_py.processors.domains.ml.classify_with_llm import (
     classify_with_llm,
     ClassificationResult,
     CodexExecClient,

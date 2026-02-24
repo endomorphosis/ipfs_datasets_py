@@ -66,7 +66,7 @@ from pydantic import (
 from ipfs_datasets_py.processors.storage.ipld import IPLDStorage
 from ipfs_datasets_py.audit import AuditLogger
 from ipfs_datasets_py.monitoring import MonitoringSystem
-from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
+from ipfs_datasets_py.processors.specialized.pdf import PDFProcessor
 from ipfs_datasets_py.processors.llm_optimizer import LLMOptimizer
 from ipfs_datasets_py.processors.graphrag_integrator import GraphRAGIntegrator
 from ipfs_datasets_py.processors.infrastructure.monitoring import monitor

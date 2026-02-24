@@ -46,7 +46,7 @@ except ImportError:
 
 # Try to import PDF processing for summaries
 try:
-    from ..pdf_processing.llm_optimizer import LLMOptimizer
+    from ..llm_optimizer import LLMOptimizer
     HAVE_LLM = True
 except ImportError:
     HAVE_LLM = False

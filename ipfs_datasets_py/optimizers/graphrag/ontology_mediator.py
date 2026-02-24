@@ -1056,6 +1056,150 @@ class OntologyMediator:
         )
         return strategy
 
+    def batch_suggest_strategies(
+        self,
+        ontologies: List[Dict[str, Any]],
+        scores: List[Any],  # List[CriticScore]
+        context: Any,  # OntologyGenerationContext
+    ) -> List[Dict[str, Any]]:
+        """Suggest refinement strategies for a batch of ontologies.
+
+        Applies :meth:`suggest_refinement_strategy` to each (ontology, score)
+        pair and returns the list of recommended strategies in order.
+
+        Args:
+            ontologies: List of ontology dicts to evaluate.
+            scores: Corresponding list of :class:`CriticScore` objects
+                (must be same length as *ontologies*).
+            context: Shared :class:`OntologyGenerationContext`.
+
+        Returns:
+            List of strategy dicts in the same order as input. Each element
+            has ``"action"``, ``"priority"``, ``"rationale"``, etc.
+
+        Raises:
+            ValueError: If length of *scores* does not match *ontologies*.
+
+        Example:
+            >>> strategies = mediator.batch_suggest_strategies(
+            ...     [ont1, ont2, ont3],
+            ...     [score1, score2, score3],
+            ...     context
+            ... )
+            >>> for s in strategies:
+            ...     print(f"{s['action']}: {s['priority']}")
+        """
+        if len(ontologies) != len(scores):
+            raise ValueError(
+                f"Length mismatch: {len(ontologies)} ontologies but {len(scores)} scores"
+            )
+
+        strategies = []
+        for ont, score in zip(ontologies, scores):
+            strategy = self.suggest_refinement_strategy(ont, score, context)
+            strategies.append(strategy)
+
+        return strategies
+
+    def compare_strategies(
+        self,
+        ontologies: List[Dict[str, Any]],
+        scores: List[Any],  # List[CriticScore]
+        context: Any,  # OntologyGenerationContext
+    ) -> List[Dict[str, Any]]:
+        """Compare refinement strategies for multiple ontologies, ranked by impact.
+
+        Suggests a strategy for each ontology, then ranks them by estimated
+        effectiveness considering both quality scores and action impact.
+
+        Ranking criteria (in priority order):
+        1. Lower overall score → higher priority (more needs improvement)
+        2. Higher estimated impact → higher rank
+        3. Original index (stable sort)
+
+        Args:
+            ontologies: List of ontology dicts.
+            scores: Corresponding list of :class:`CriticScore` objects.
+            context: Shared :class:`OntologyGenerationContext`.
+
+        Returns:
+            List of comparison dicts, sorted by recommendation priority:
+
+            Each dict contains:
+            - ``"index"`` — original position in *ontologies* (0-based)
+            - ``"rank"`` — 1-based rank (1 = highest priority)
+            - ``"strategy"`` — the recommended strategy dict
+            - ``"priority_score"`` — composite score for sorting (0-1)
+
+        Raises:
+            ValueError: If length mismatch or empty inputs.
+
+        Example:
+            >>> ranked = mediator.compare_strategies(
+            ...     [ont1, ont2, ont3],
+            ...     [s1, s2, s3],
+            ...     context
+            ... )
+            >>> print(f"Most urgent: {ranked[0]['strategy']['action']}")
+        """
+        if len(ontologies) != len(scores):
+            raise ValueError(
+                f"Length mismatch: {len(ontologies)} ontologies but {len(scores)} scores"
+            )
+
+        if not ontologies:
+            return []
+
+        # Get strategies for each ontology
+        strategies = self.batch_suggest_strategies(ontologies, scores, context)
+
+        # Build comparison list with priority scores
+        comparison_list = []
+        for idx, (score, strategy) in enumerate(zip(scores, strategies)):
+            overall = getattr(score, "overall", 0.5)
+            impact = strategy.get("estimated_impact", 0.0)
+            
+            # Priority score: combine inverse of overall (lower score = higher priority)
+            # with estimated impact (higher impact = higher priority)
+            # Weighted: 70% based on improvement need, 30% based on impact
+            improvement_need = 1.0 - overall  # 0.0 (perfect) to 1.0 (terrible)
+            priority_score = (0.7 * improvement_need) + (0.3 * impact)
+            
+            # Map priority string to numeric for secondary sorting consistency
+            priority_map = {"critical": 4, "high": 3, "medium": 2, "low": 1}
+            priority_numeric = priority_map.get(strategy.get("priority", "low"), 1)
+            
+            comparison_list.append({
+                "index": idx,
+                "strategy": strategy,
+                "priority_score": priority_score,
+                "priority_numeric": priority_numeric,
+                "overall": overall,
+            })
+
+        # Sort by priority (highest priority first), then by index for stability
+        comparison_list.sort(
+            key=lambda x: (-x["priority_score"], -x["priority_numeric"], x["index"])
+        )
+
+        # Add rank and return in sorted order
+        result = []
+        for rank, item in enumerate(comparison_list, start=1):
+            result.append({
+                "index": item["index"],
+                "rank": rank,
+                "strategy": item["strategy"],
+                "priority_score": item["priority_score"],
+            })
+
+        self._log.info(
+            f"Compared {len(ontologies)} strategies: "
+            f"top priority is index {result[0]['index']} "
+            f"({result[0]['strategy']['action']})"
+        )
+
+        return result
+
     def undo_last_action(self) -> Dict[str, Any]:
         """Revert the last applied refinement action.
 

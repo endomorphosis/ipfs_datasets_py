@@ -24,10 +24,10 @@ from .protocol import (
     KnowledgeGraph,
     VectorStore
 )
-from .registry import ProcessorRegistry
+from .core.registry import ProcessorRegistry
 from .input_detection import InputDetector, classify_input
-from .caching import SmartCache
-from .error_handling import (
+from .infrastructure.caching import SmartCache
+from .infrastructure.error_handling import (
     ProcessorError,
     TransientError,
     RetryConfig,
@@ -35,7 +35,7 @@ from .error_handling import (
     CircuitBreaker,
     CircuitBreakerConfig
 )
-from .monitoring import HealthMonitor
+from .infrastructure.monitoring import HealthMonitor
 
 logger = logging.getLogger(__name__)
 

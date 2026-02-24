@@ -4830,11 +4830,9 @@ class OntologyOptimizer:
         """
         if len(self._history) < 4:
             return 0.0
-        scores = sorted(e.average_score for e in self._history)
-        n = len(scores)
-        q1_idx = n // 4
-        q3_idx = (3 * n) // 4
-        return scores[q3_idx] - scores[q1_idx]
+        q1 = self.score_percentile(25.0)
+        q3 = self.score_percentile(75.0)
+        return max(0.0, q3 - q1)
 
     def history_rolling_std(self, window: int = 3) -> list:
         """Return a list of rolling standard deviations over ``window``-sized windows.
@@ -5600,9 +5598,424 @@ class OntologyOptimizer:
         
         return min(1.0, seasonal_var / total_var)
 
+    def score_entropy(self) -> float:
+        """Return Shannon entropy of score distribution.
+
+        Entropy measures randomness/disorder in score history. Higher entropy means
+        scores are more uniformly distributed; lower entropy means dominated by few values.
+
+        Formula: H(X) = −Σ p_i · log₂(p_i), where p_i = count(score_i) / N
+
+        Returns:
+            Float ≥ 0.0; maximum entropy log₂(N) when all scores unique/uniform.
+
+        Example::
+
+            >>> # Scores: 0.1, 0.1, 0.1 (all same)
+            >>> opt.score_entropy()
+            0.0  # No randomness
+            
+            >>> # Scores: 0.1, 0.5, 0.9 (uniform random)
+            >>> opt.score_entropy()
+            1.585  # ~1.585 entropy (log₂(3))
+        """
+        scores = [e.average_score for e in self._history]
+        if not scores or len(scores) < 2:
+            return 0.0
+
+        # Round to reasonable precision to group near-equal scores
+        rounded = [round(s, 10) for s in scores]
+        unique = {}
+        for s in rounded:
+            unique[s] = unique.get(s, 0) + 1
+
+        n = len(rounded)
+        entropy = 0.0
+        import math as _math
+        for count in unique.values():
+            prob = count / n
+            if prob > 0 and prob < 1.0:
+                entropy -= prob * _math.log2(prob)
+
+        return max(0.0, entropy)
+
+    def score_concentration(self) -> float:
+        """Return Herfindahl concentration index of score distribution.
+
+        Concentration measures how much of the distribution is concentrated in few values.
+        Range [0, 1]: 0 = perfectly uniform, 1 = all mass in one value.
+
+        Formula: C = Σ (p_i)², where p_i = count(score_i) / N
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when uniform, 1.0 when all identical.
+
+        Example::
+
+            >>> # Scores: 0.5, 0.5, 0.5 (all same)
+            >>> opt.score_concentration()
+            1.0  # Perfect concentration
+            
+            >>> # Scores: 0.1, 0.2, 0.3, 0.4 (uniform)
+            >>> opt.score_concentration()
+            0.25  # = 4 * (0.25)²
+        """
+        scores = [e.average_score for e in self._history]
+        if not scores:
+            return 0.0
+        if len(scores) == 1:
+            return 1.0
+
+        # Round to reasonable precision
+        rounded = [round(s, 10) for s in scores]
+        unique = {}
+        for s in rounded:
+            unique[s] = unique.get(s, 0) + 1
+
+        n = len(rounded)
+        concentration = sum((count / n) ** 2 for count in unique.values())
+
+        return min(1.0, concentration)
+
+    def score_gini_index(self) -> float:
+        """Return Gini coefficient of score distribution.
+
+        Gini measures inequality in score values. Range [0, 1]:
+        0 = all scores identical (no inequality), 1 = maximum inequality.
+
+        Formula: G = Σ|s_i − s_j| / (2 * N² * mean)
+
+        Returns:
+            Float in [0.0, 1.0]; 0.0 when all identical, 1.0 max inequality.
+
+        Example::
+
+            >>> # Scores: 0.5, 0.5, 0.5 (uniform)
+            >>> opt.score_gini_index()
+            0.0  # No inequality
+            
+            >>> # Scores: 0.0, 0.0, 1.0 (unequal)
+            >>> opt.score_gini_index()
+            0.667  # High inequality
+        """
+        scores = [e.average_score for e in self._history]
+        if not scores or len(scores) < 2:
+            return 0.0
+
+        sorted_scores = sorted(scores)
+        n = len(sorted_scores)
+        mean_score = sum(sorted_scores) / n
+
+        if mean_score == 0.0:
+            return 0.0
+
+        # Gini: cumulative sum using sorted order
+        gini_sum = sum((2 * (i + 1) - n - 1) * s for i, s in enumerate(sorted_scores))
+        gini = gini_sum / (n * n * mean_score)
+
+        return min(1.0, max(0.0, gini))
+
+    def score_acceleration_trend(self) -> float:
+        """Return the ratio of recent acceleration to overall acceleration.
+
+        Measures whether the rate of improvement/degradation is accelerating
+        or decelerating relative to the historical average.
+
+        Formula:
+        - acceleration[i] = delta[i+1] - delta[i]  (second derivative)
+        - recent_accel = mean(acceleration[-3:])
+        - overall_accel = mean(acceleration[all])
+        - trend = recent_accel / overall_accel (clamped to [-2, 2])
+
+        Returns:
+            Float in [-2.0, 2.0]:
+            - > 0: recent acceleration higher than historical average
+            - < 0: recent acceleration lower than historical average
+            - 0.0: when fewer than 4 entries, all scores identical, or overall accel ≈ 0
+
+        Example::
+
+            >>> # Consistently improving scores
+            >>> # 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7 (first deriv = 0.1, 0.1, ...
+            >>> # accel = 0, 0, ... → trend ≈ 0
+            
+            >>> # Accelerating improvement: 0.1, 0.2, 0.4, 0.8, 1.5
+            >>> # first deriv = 0.1, 0.2, 0.4, 0.7 → accel = 0.1, 0.2, 0.3
+            >>> # recent_accel = avg(0.2, 0.3) > overall_accel → positive trend
+        """
+        scores = [e.average_score for e in self._history]
+        if len(scores) < 4:
+            return 0.0
+
+        # Compute first derivatives (deltas)
+        first_deriv = [scores[i + 1] - scores[i] for i in range(len(scores) - 1)]
+
+        # Compute second derivatives (accelerations)
+        second_deriv = [first_deriv[i + 1] - first_deriv[i] for i in range(len(first_deriv) - 1)]
+
+        if not second_deriv:
+            return 0.0
+
+        # Overall acceleration mean
+        overall_accel = sum(second_deriv) / len(second_deriv)
+
+        if abs(overall_accel) < 1e-9:
+            return 0.0
+
+        # Recent acceleration (last 3 or fewer)
+        recent_accel = sum(second_deriv[-3:]) / len(second_deriv[-3:]) if len(second_deriv) >= 3 else overall_accel
+
+        # Ratio, clamped to [-2, 2]
+        ratio = recent_accel / overall_accel
+        return max(-2.0, min(2.0, ratio))
+
+    def score_dimension_std(self) -> float:
+        """Return the standard deviation of score values across recent history.
+
+        Measures consistency/stability of scores in recent optimization cycles.
+        Useful for detecting if the optimizer is oscillating or converging.
+
+        Uses the last 5 entries (or fewer if history < 5).
+
+        Formula: std(scores[-5:])
+
+        Returns:
+            Float >= 0:
+            - 0.0: all recent scores identical or fewer than 2 entries
+            - Higher values: more variability in recent scores
+
+        Example::
+
+            >>> # Stable recent performance: 0.75, 0.76, 0.75, 0.76, 0.75
+            >>> opt.score_dimension_std()
+            0.0045  # Low variation
+            
+            >>> # Oscillating performance: 0.5, 0.8, 0.4, 0.9, 0.3
+            >>> opt.score_dimension_std()
+            0.25  # High variation
+        """
+        scores = [e.average_score for e in self._history]
+        if len(scores) < 2:
+            return 0.0
+
+        # Use last 5 entries (or all if < 5)
+        window_size = min(5, len(scores))
+        recent_scores = scores[-window_size:]
+
+        mean = sum(recent_scores) / len(recent_scores)
+        variance = sum((s - mean) ** 2 for s in recent_scores) / len(recent_scores)
+        return variance ** 0.5
+
+    def score_relationship_density(self) -> float:
+        """Return the signal-to-noise ratio in recent score trends.
+
+        Measures how "smooth" and "directed" the recent trend is, vs. random
+        oscillation. Higher values indicate clearer improvement/degradation signal.
+
+        Formula:
+        - first_deriv = [s[i+1] - s[i] for i in range(n-1)]
+        - trend_energy = |sum(first_deriv)|  (directional component)
+        - noise = sum(|d| for d in first_deriv)  (absolute total movement)
+        - density = trend_energy / noise  (signal-to-noise ratio)
+
+        Returns:
+            Float in [0.0, 1.0]:
+            - 1.0: perfect monotonic trend (all improvements or all declines)
+            - 0.0: oscillating (equal up and down movement)
+            - 0.5: mixed trend (some direction but also oscillation)
+
+        Example::
+
+            >>> # Strong monotonic improvement: 0.1, 0.2, 0.3, 0.4, 0.5
+            >>> # first_deriv = [0.1, 0.1, 0.1, 0.1]
+            >>> # trend_energy = 0.4, noise = 0.4 → density = 1.0
+            
+            >>> # Oscillating: 0.3, 0.1, 0.4, 0.2, 0.5
+            >>> # first_deriv = [-0.2, 0.3, -0.2, 0.3]
+            >>> # trend_energy = 0.2, noise = 1.0 → density = 0.2
+        """
+        scores = [e.average_score for e in self._history]
+        if len(scores) < 2:
+            return 0.0
+
+        # Compute first derivatives (deltas)
+        first_deriv = [scores[i + 1] - scores[i] for i in range(len(scores) - 1)]
+
+        # Trend energy: absolute value of sum (directional component)
+        trend_energy = abs(sum(first_deriv))
+
+        # Noise: sum of absolute values (total movement)
+        noise = sum(abs(d) for d in first_deriv)
+
+        if noise == 0.0:
+            return 0.0
+
+        # Signal-to-noise ratio, clamped to [0, 1]
+        density = trend_energy / noise
+        return max(0.0, min(1.0, density))
+
+    def score_drawdown_ratio(self) -> float:
+        """Return the ratio of current score to recent peak (drawdown measure).
+
+        Measures recovery from the most recent high point. Useful for detecting
+        if the optimizer is recovering from a performance dip.
+
+        Formula:
+        - peak = max(scores)
+        - current = scores[-1]
+        - drawdown = 1.0 - (current / peak)  if peak > 0
+        - returns: current / peak  (0 = at bottom, 1 = at peak)
+
+        Returns:
+            Float in [0.0, 1.0]:
+            - 1.0: at or near peak performance
+            - 0.5: at 50% of peak (50% drawdown)
+            - 0.0: at zero (or peak was zero)
+
+        Example::
+
+            >>> # Scores: 0.1, 0.5, 0.8, 0.6
+            >>> # peak = 0.8, current = 0.6 → ratio = 0.75 (25% drawdown)
+            
+            >>> # Scores: 0.5, 0.9, 0.3
+            >>> # peak = 0.9, current = 0.3 → ratio = 0.333 (67% drawdown)
+        """
+        scores = [e.average_score for e in self._history]
+        if not scores:
+            return 0.0
+
+        peak = max(scores)
+        if peak == 0.0:
+            return 0.0
+
+        current = scores[-1]
+        ratio = current / peak
+        return max(0.0, min(1.0, ratio))
+
+    def score_cycle_period(self) -> float:
+        """Return the estimated period of dominant cycle in score history.
+
+        Detects oscillating patterns and estimates their wavelength.
+        Uses autocorrelation to find dominant frequency.
+
+        Returns dominant cycle length (in steps). For example:
+        - 2.0 = every other step alternates
+        - 3.0 = pattern repeats every 3 steps
+        - 0.0 = no significant cycle or insufficient data
+
+        Formula:
+        - Computes autocorrelation at lags 2-N/2
+        - Returns lag with maximum absolute autocorrelation
+        - Normalized to period relative to history length
+
+        Returns:
+            Float in [0, history_length]:
+            - High values: long-period oscillations (slow cycles)
+            - Low values: high-frequency oscillations (fast cycles)
+            - 0.0: no detectable cycle, monotonic trend, or <4 entries
+
+        Example::
+
+            >>> # Regular oscillation: 0.5, 0.7, 0.5, 0.7, 0.5, 0.7
+            >>> opt.score_cycle_period()
+            2.0  # Pattern repeats every 2 steps
+            
+            >>> # Monotonic: 0.1, 0.2, 0.3, 0.4, 0.5
+            >>> opt.score_cycle_period()
+            0.0  # No cycle detected
+        """
+        scores = [e.average_score for e in self._history]
+        if len(scores) < 4:
+            return 0.0
+
+        # Compute mean and variance
+        mean = sum(scores) / len(scores)
+        variance = sum((s - mean) ** 2 for s in scores) / len(scores)
+
+        if variance == 0.0:
+            return 0.0
+
+        # Find lag with strongest autocorrelation
+        max_acorr = 0.0
+        best_lag = 0
+        max_lag = min(len(scores) // 2, 20)  # Limit search to reasonable range
+
+        for lag in range(2, max_lag + 1):
+            if lag >= len(scores):
+                break
+
+            # Autocorrelation at this lag
+            cov = sum((scores[i] - mean) * (scores[i - lag] - mean)
+                      for i in range(lag, len(scores))) / (len(scores) - lag)
+            acorr = abs(cov / variance)
+
+            if acorr > max_acorr:
+                max_acorr = acorr
+                best_lag = lag
+
+        # Return best_lag only if it's significant (acorr > 0.3)
+        if max_acorr > 0.3:
+            return float(best_lag)
+
+        return 0.0
+
+    def score_persistence(self) -> float:
+        """Return how long recent trends tend to persist (momentum persistence).
+
+        Measures whether positive changes tend to continue (autocorrelation of
+        first differences). High persistence = improvements tend to keep improving.
+
+        Formula:
+        - deltas = [s[i+1] - s[i] for i in range(n-1)]
+        - autocorr(deltas, lag=1) = correlation between delta[i] and delta[i+1]
+        - Returns: autocorr clamped to [0, 1]
+
+        Returns:
+            Float in [0.0, 1.0]:
+            - 1.0: perfect positive persistence (trends continue)
+            - 0.5: moderate persistence
+            - 0.0: no persistence (random changes) or <3 entries
+
+        Example::
+
+            >>> # Consistent improvement: 0.1, 0.2, 0.3, 0.4, 0.5
+            >>> # deltas = [0.1, 0.1, 0.1, 0.1] → autocorr ≈ 1.0
+            >>> opt.score_persistence()
+            1.0
+            
+            >>> # Random: 0.1, 0.9, 0.2, 0.8, 0.3
+            >>> # deltas = [0.8, -0.7, 0.6, -0.5] → autocorr ≈ 0.0
+            >>> opt.score_persistence()
+            0.0
+        """
+        scores = [e.average_score for e in self._history]
+        if len(scores) < 3:
+            return 0.0
+
+        # Compute deltas (first differences)
+        deltas = [scores[i + 1] - scores[i] for i in range(len(scores) - 1)]
+
+        if len(deltas) < 2:
+            return 0.0
+
+        # Autocorrelation of deltas at lag 1
+        mean_d = sum(deltas) / len(deltas)
+        variance_d = sum((d - mean_d) ** 2 for d in deltas) / len(deltas)
+
+        # Special case: zero variance (all deltas identical) = perfect persistence
+        if variance_d < 1e-9:
+            return 1.0
+
+        # Autocorrelation at lag 1
+        cov = sum((deltas[i] - mean_d) * (deltas[i - 1] - mean_d)
+                  for i in range(1, len(deltas))) / (len(deltas) - 1)
+        autocorr = cov / variance_d
+
+        # Clamp to [0, 1] (negative autocorr indicates persistence in opposite direction)
+        return max(0.0, min(1.0, autocorr))
+
 
 # Export public API
 __all__ = [
     'OntologyOptimizer',
-    'OptimizationReport',
-]
+    'OptimizationReport',]

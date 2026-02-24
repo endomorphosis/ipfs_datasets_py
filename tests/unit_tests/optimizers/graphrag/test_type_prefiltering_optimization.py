@@ -10,9 +10,10 @@ and type confidence scoring.
 
 import pytest
 from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-    OntologyGenerator,
+    DataType,
     Entity,
     OntologyGenerationContext,
+    OntologyGenerator,
 )
 
 
@@ -88,13 +89,14 @@ class TestTypePrefilteringOptimization:
         skip ~20-30% of pairs before type inference.
         """
         # Create a context with realistic data
+        data = ("The meeting on 2025-01-15 at New York with Alice from Acme Corp "
+            "and Bob from TechCorp happened on 2025-01-16 in San Francisco. "
+            "Two dates (2025-01-15, 2025-01-16) exist, two locations (New York, "
+            "San Francisco), and three people (Alice, Bob) plus two companies "
+            "(Acme Corp, TechCorp).")
         context = OntologyGenerationContext(
-            data="The meeting on 2025-01-15 at New York with Alice from Acme Corp "
-                 "and Bob from TechCorp happened on 2025-01-16 in San Francisco. "
-                 "Two dates (2025-01-15, 2025-01-16) exist, two locations (New York, "
-                 "San Francisco), and three people (Alice, Bob) plus two companies "
-                 "(Acme Corp, TechCorp).",
-            data_type="document",
+            data_source="test_doc",
+            data_type=DataType.TEXT,
             domain="business",
         )
 
@@ -111,7 +113,7 @@ class TestTypePrefilteringOptimization:
         ]
 
         # Infer relationships
-        relationships = generator.infer_relationships(entities, context, context.data)
+        relationships = generator.infer_relationships(entities, context, data)
 
         # With type filtering, Date-Date and Location-Location pairs are skipped
         # Maximum possible relationships: C(8,2) = 28
@@ -128,9 +130,10 @@ class TestTypePrefilteringOptimization:
         """
         End-to-end test: verify type filtering in full infer_relationships() call.
         """
+        data = "January 1st and February 1st are dates. New York and Boston are cities."
         context = OntologyGenerationContext(
-            data="January 1st and February 1st are dates. New York and Boston are cities.",
-            data_type="document",
+            data_source="test_doc",
+            data_type=DataType.TEXT,
             domain="general",
         )
 
@@ -143,7 +146,7 @@ class TestTypePrefilteringOptimization:
             Entity(id="p1", text="person", type="Person"),
         ]
 
-        relationships = generator.infer_relationships(entities, context, context.data)
+        relationships = generator.infer_relationships(entities, context, data)
 
         # Type filtering should prevent most pairs involving only dates/locations
         # from being evaluated; only person-centric relationships should exist
