@@ -88,6 +88,7 @@ if (e1.type, e2.type) in IMPOSSIBLE_PAIRS:
 ### Priority 2: Sentence-Based Limiting (Moderate)
 **Effort:** Moderate  
 **Potential Impact:** 35-45% reduction  
+**Status:** Implemented 2026-02-23 (config: `sentence_window`)  
 **Implementation:** Only search within +/- N sentences of entity mentions.
 
 **Rationale:** Relationships typically expressed within 1-3 sentences; searching entire document is wasteful.
@@ -119,7 +120,7 @@ if (e1.type, e2.type) in IMPOSSIBLE_PAIRS:
 
 1. ✅ **Document profiling** (DONE) - baseline established
 2. ✅ **Implement type filtering** (DONE) - in `infer_relationships()` prefilter path
-3. [ ] **Add sentence-based limiting** (P2) - 2-3 hours
+3. ✅ **Add sentence-based limiting** (DONE) - uses `ExtractionConfig.sentence_window`
 4. [ ] **Parallel relationship scoring** (P3) - 3-4 hours
 5. [ ] **Vectorized string matching** (P4) - Research phase
 

@@ -94,6 +94,7 @@ class ExtractionConfig:
         max_entities: Upper bound on extracted entities per run.  0 = unlimited.
         max_relationships: Upper bound on inferred relationships.  0 = unlimited.
         window_size: Co-occurrence window size for relationship inference.
+        sentence_window: Max sentence distance for co-occurrence inference.
         include_properties: Emit property predicates in the formula set.
         domain_vocab: Optional domain-specific vocabulary for entity typing.
         min_entity_length: Minimum character length for entity text; shorter
@@ -104,6 +105,7 @@ class ExtractionConfig:
     max_entities: int = 0
     max_relationships: int = 0
     window_size: int = 5
+    sentence_window: int = 0
     include_properties: bool = True
     domain_vocab: Dict[str, List[str]] = field(default_factory=dict)
     # Pluggable rule sets: list of (regex_pattern, entity_type) tuples
@@ -128,6 +130,7 @@ class ExtractionConfig:
             "max_entities": self.max_entities,
             "max_relationships": self.max_relationships,
             "window_size": self.window_size,
+            "sentence_window": self.sentence_window,
             "include_properties": self.include_properties,
             "domain_vocab": {k: list(v) for k, v in self.domain_vocab.items()},
             "custom_rules": list(self.custom_rules),
@@ -146,6 +149,7 @@ class ExtractionConfig:
             max_entities=int(d.get("max_entities", 0)),
             max_relationships=int(d.get("max_relationships", 0)),
             window_size=int(d.get("window_size", 5)),
+            sentence_window=int(d.get("sentence_window", 0)),
             include_properties=bool(d.get("include_properties", True)),
             domain_vocab=dict(d.get("domain_vocab", {})),
             custom_rules=list(d.get("custom_rules", [])),
@@ -186,6 +190,7 @@ class ExtractionConfig:
             max_entities=int(_get("max_entities", "0")),
             max_relationships=int(_get("max_relationships", "0")),
             window_size=int(_get("window_size", "5")),
+            sentence_window=int(_get("sentence_window", "0")),
             include_properties=_get("include_properties", "true").lower() == "true",
             llm_fallback_threshold=float(_get("llm_fallback_threshold", "0.0")),
             min_entity_length=int(_get("min_entity_length", "2")),
@@ -238,6 +243,7 @@ class ExtractionConfig:
         - ``max_entities`` and ``max_relationships`` must be ≥ 0
         - ``window_size`` must be ≥ 1
         - ``min_entity_length`` must be ≥ 1
+        - ``sentence_window`` must be ≥ 0
         - ``llm_fallback_threshold`` must be in [0, 1]
         """
         if not (0.0 <= self.confidence_threshold <= 1.0):
@@ -261,6 +267,10 @@ class ExtractionConfig:
             )
         if self.window_size < 1:
             raise ValueError(f"window_size must be >= 1; got {self.window_size}")
+        if self.sentence_window < 0:
+            raise ValueError(
+                f"sentence_window must be >= 0; got {self.sentence_window}"
+            )
         if self.min_entity_length < 1:
             raise ValueError(
                 f"min_entity_length must be >= 1; got {self.min_entity_length}"
@@ -2938,6 +2948,34 @@ class OntologyGenerator:
         start = max(0, min(pos1, pos2) - window_size)
         end = min(len(text), max(pos1, pos2) + window_size)
         return text[start:end]
+
+    def _get_sentence_spans(self, text: str) -> List[tuple[int, int]]:
+        """Return (start, end) spans for sentences in text.
+
+        Uses a simple punctuation-based split to avoid heavy NLP deps.
+        """
+        import re as _re
+
+        if not text:
+            return [(0, 0)]
+
+        spans: List[tuple[int, int]] = []
+        for match in _re.finditer(r"[^.!?]+[.!?]?", text):
+            start, end = match.span()
+            if start != end:
+                spans.append((start, end))
+
+        return spans or [(0, len(text))]
+
+    def _sentence_index(self, pos: int, spans: List[tuple[int, int]]) -> int:
+        """Return the index of the sentence span containing *pos*.
+
+        Returns -1 when no span matches.
+        """
+        for idx, (start, end) in enumerate(spans):
+            if start <= pos < end:
+                return idx
+        return -1
     
     
     
@@ -3075,6 +3113,10 @@ class OntologyGenerator:
 
         relationships = []
         text = str(data) if data is not None else ""
+        text_lower = text.lower()
+        sentence_window = getattr(context.extraction_config, "sentence_window", 0)
+        sentence_spans = self._get_sentence_spans(text) if sentence_window > 0 else []
+        entity_sentence_index: Dict[str, int] = {}
 
         # Use lazy-loaded verb-frame patterns (cached at class level)
         _VERB_PATTERNS = self._get_verb_patterns()
@@ -3134,15 +3176,30 @@ class OntologyGenerator:
         linked = {(r.source_id, r.target_id) for r in relationships}
         entity_list = list(entities)
         for i, e1 in enumerate(entity_list):
-            pos1 = text.lower().find(e1.text.lower())
+            pos1 = text_lower.find(e1.text.lower())
             if pos1 < 0:
                 continue
             for e2 in entity_list[i + 1:]:
                 if (e1.id, e2.id) in linked or (e2.id, e1.id) in linked:
                     continue
-                pos2 = text.lower().find(e2.text.lower())
+                pos2 = text_lower.find(e2.text.lower())
                 if pos2 < 0:
                     continue
+                if sentence_window > 0 and sentence_spans:
+                    if e1.id in entity_sentence_index:
+                        idx1 = entity_sentence_index[e1.id]
+                    else:
+                        idx1 = self._sentence_index(pos1, sentence_spans)
+                        entity_sentence_index[e1.id] = idx1
+
+                    if e2.id in entity_sentence_index:
+                        idx2 = entity_sentence_index[e2.id]
+                    else:
+                        idx2 = self._sentence_index(pos2, sentence_spans)
+                        entity_sentence_index[e2.id] = idx2
+
+                    if idx1 >= 0 and idx2 >= 0 and abs(idx1 - idx2) > sentence_window:
+                        continue
                 distance = abs(pos1 - pos2)
                 if distance <= 200:
                     # Steeper decay beyond 100 chars to reflect weaker association

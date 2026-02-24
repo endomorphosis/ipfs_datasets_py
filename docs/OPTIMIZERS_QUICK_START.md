@@ -110,6 +110,7 @@ config = ExtractionConfig(
     max_entities=500,            # Cap at 500 entities
     max_relationships=1000,      # Cap at 1000 relationships
     window_size=3,               # 3-word context window for relationships
+    sentence_window=2,           # Limit co-occurrence to +/- 2 sentences (0 disables)
     min_entity_length=2,         # Minimum 2-character entities
     domain_vocab=["legal", "entity", "obligation"],  # Domain-specific terms
 )

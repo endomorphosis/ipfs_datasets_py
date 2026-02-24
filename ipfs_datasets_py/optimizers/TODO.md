@@ -1187,6 +1187,12 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 
 - [ ] (P2) [perf] Add `@functools.lru_cache` to `ExtractionConfig.is_default()` (hashable dataclass)
 - [ ] (P2) [perf] Profile `OntologyGenerator._extract_rule_based()` for hot paths
+- [x] (P1) [perf] Implement entity type pre-filtering in `infer_relationships()`
+  - Done 2026-02-23: Added `_is_impossible_type_pair()` checks in co-occurrence path to skip semantically impossible pairs; added tests in tests/unit_tests/optimizers/graphrag/test_type_prefiltering_optimization.py.
+- [x] (P3) [perf] Add benchmark toggle to quantify pre-filtering impact
+  - Done 2026-02-23: Added prefilter on/off toggle in benchmarks/bench_infer_relationships_scaling.py. Initial delta at 100 entities: ~20.1ms (prefilter on) vs ~23.3ms (prefilter off).
+- [x] (P2) [perf] Add sentence-window limiting for co-occurrence inference
+  - Done 2026-02-23: Added `sentence_window` to ExtractionConfig and sentence-span filtering in OntologyGenerator.infer_relationships(); tests in tests/unit_tests/optimizers/graphrag/test_sentence_window_limiting.py.
 - [ ] (P3) [perf] Lazy-load LLM backend (skip import if `LLM_ENABLED=0`)
 - [ ] (P3) [perf] Batch entity deduplication using sorted merge vs O(n²) set ops
 

@@ -318,6 +318,7 @@ class TestConfigValidationIntegration:
             "max_relationships": 1000,
             "min_entity_length": 2,
             "window_size": 5,
+            "sentence_window": 2,
             "stopwords": ["the", "a", "an"],
             "allowed_entity_types": ["Person", "Organization", "Location"],
             "domain_vocab": {"legal": ["agreement", "contract"]},
@@ -327,6 +328,13 @@ class TestConfigValidationIntegration:
         is_valid, errors = schema.validate(config)
         assert is_valid is True
         assert len(errors) == 0
+
+    def test_sentence_window_invalid(self):
+        """Sentence window rejects negative values."""
+        schema = ExtractionConfigSchema()
+        is_valid, errors = schema.validate({"sentence_window": -1})
+        assert is_valid is False
+        assert "sentence_window" in errors
     
     def test_partial_config(self):
         """Partial config validates only included fields."""

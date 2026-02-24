@@ -173,6 +173,11 @@ class ExtractionConfigSchema:
         window = ValidationRuleSet("window_size", int)
         window.add_type_check(int).add_range(min_val=1)
         self.fields["window_size"] = window
+
+        # sentence_window: int >= 0 (0 disables sentence limiting)
+        sentence_window = ValidationRuleSet("sentence_window", int)
+        sentence_window.add_type_check(int).add_range(min_val=0)
+        self.fields["sentence_window"] = sentence_window
         
         # stopwords: List[str]
         stopwords = ValidationRuleSet("stopwords", list)
