@@ -47,12 +47,14 @@ import functools
 import json
 from abc import ABC, abstractmethod
 
+from ipfs_datasets_py.optimizers.graphrag.error_handling import GraphRAGException
+
 
 T = TypeVar('T')
 U = TypeVar('U')
 
 
-class TransformationError(Exception):
+class TransformationError(GraphRAGException):
     """Raised when data transformation fails."""
     pass
 

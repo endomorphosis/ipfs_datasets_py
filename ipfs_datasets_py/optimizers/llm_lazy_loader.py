@@ -21,11 +21,16 @@ import logging
 from typing import Any, Optional, Callable
 from functools import lru_cache
 
+from ipfs_datasets_py.optimizers.common.circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerOpen,
+)
+
 logger = logging.getLogger(__name__)
 
 
 class LazyLLMBackend:
-    """Lazy-loading wrapper for LLM backend.
+    """Lazy-loading wrapper for LLM backend with circuit-breaker resilience.
     
     Defers backend initialization until first access, reducing startup overhead
     when LLM features are disabled (llm_fallback_threshold=0).
@@ -34,22 +39,30 @@ class LazyLLMBackend:
         _backend: Cached backend instance (loaded on first access)
         _initialized: Whether backend has been loaded
         _disabled: Whether LLM is disabled via environment variable
+        _circuit_breaker: Circuit-breaker for backend calls (failure resilience)
     """
     
-    def __init__(self, backend_type: str = "auto", enabled: Optional[bool] = None):
-        """Initialize lazy loader.
+    def __init__(self, backend_type: str = "auto", enabled: Optional[bool] = None,
+                 circuit_breaker_enabled: bool = True,
+                 failure_threshold: int = 5,
+                 recovery_timeout: float = 60.0):
+        """Initialize lazy loader with optional circuit-breaker.
         
         Args:
             backend_type: Type of backend to load ("auto", "accelerate", "mock", "local")
             enabled: Explicitly enable/disable LLM. If None, check LLM_ENABLED env var.
                     Defaults to True if not specified.
+            circuit_breaker_enabled: Whether to enable circuit-breaker protection
+            failure_threshold: Number of failures before circuit opens
+            recovery_timeout: Seconds to wait before testing recovery
         """
         self._backend: Optional[Any] = None
         self._initialized: bool = False
         self._disabled: bool = False
         self._backend_type: str = backend_type
+        self._circuit_breaker_enabled: bool = circuit_breaker_enabled
         
-        # Check environment variable for explicit disable
+        # Check environment variable for explicit disable first
         env_enabled = os.environ.get("LLM_ENABLED", "").lower()
         if env_enabled in ("0", "false", "no", "off"):
             self._disabled = True
@@ -58,6 +71,16 @@ class LazyLLMBackend:
             self._disabled = True
         elif enabled is True:
             self._disabled = False
+        
+        # Only create circuit-breaker if LLM is enabled AND circuit breaker is requested
+        self._circuit_breaker: Optional[CircuitBreaker] = None
+        if not self._disabled and circuit_breaker_enabled:
+            self._circuit_breaker = CircuitBreaker(
+                name=f"llm_backend_{backend_type}",
+                failure_threshold=failure_threshold,
+                recovery_timeout=recovery_timeout,
+                expected_exception=Exception,
+            )
     
     def is_enabled(self) -> bool:
         """Check if LLM backend is enabled.
@@ -74,6 +97,37 @@ class LazyLLMBackend:
             True if backend has been lazy-loaded from disk.
         """
         return self._initialized
+    
+    def is_circuit_breaker_open(self) -> bool:
+        """Check if circuit-breaker is currently OPEN.
+        
+        Returns:
+            True if circuit is open (service temporarily unavailable), False otherwise.
+        """
+        if self._circuit_breaker is None:
+            return False
+        from ipfs_datasets_py.optimizers.common.circuit_breaker import CircuitState
+        return self._circuit_breaker.state == CircuitState.OPEN
+    
+    def get_circuit_breaker_metrics(self) -> Optional[dict]:
+        """Get circuit-breaker metrics if enabled.
+        
+        Returns:
+            Dict with success_rate, failure_rate, total_calls, etc., or None if disabled.
+        """
+        if self._circuit_breaker is None:
+            return None
+        
+        metrics = self._circuit_breaker.metrics()
+        return {
+            "success_rate": metrics.success_rate,
+            "failure_rate": metrics.failure_rate,
+            "total_calls": metrics.total_calls,
+            "successful_calls": metrics.successful_calls,
+            "failed_calls": metrics.failed_calls,
+            "rejected_calls": metrics.rejected_calls,
+            "state_changes": metrics.state_changes,
+        }
     
     @lru_cache(maxsize=1)
     def get_backend(self) -> Optional[Any]:
@@ -176,24 +230,62 @@ class LazyLLMBackend:
         return MockBackendClient()
     
     def __call__(self, *args, **kwargs) -> Any:
-        """Forward calls to underlying backend.
+        """Forward calls to underlying backend with circuit-breaker protection.
         
         Enables usage like: backend(prompt="...", model="gpt-4")
         """
         backend = self.get_backend()
         if backend is None:
             raise RuntimeError("LLM backend is disabled")
+        
+        # If circuit-breaker is enabled, protect the call
+        if self._circuit_breaker is not None:
+            try:
+                return self._circuit_breaker._execute(backend.__call__, args, kwargs)
+            except CircuitBreakerOpen as e:
+                logger.warning("Circuit-breaker is open: %s", e)
+                raise RuntimeError(f"LLM backend temporarily unavailable: {e}") from e
+            except Exception as e:
+                logger.warning("LLM backend call failed: %s", e)
+                raise RuntimeError(f"LLM backend error: {e}") from e
+        
         return backend(*args, **kwargs)
     
     def __getattr__(self, name: str) -> Any:
         """Forward attribute access to underlying backend.
         
         Enables usage like: backend.generate(...)
+        This returns the actual method/attribute, which preserves circuit-breaker
+        wrapping if needed during actual call time.
         """
         backend = self.get_backend()
         if backend is None:
             raise RuntimeError(f"LLM backend is disabled, cannot access {name}")
-        return getattr(backend, name)
+        
+        attr = getattr(backend, name)
+        
+        # Wrap method calls with circuit-breaker if it's a callable
+        if callable(attr) and self._circuit_breaker is not None:
+            def wrapped_method(*args, **kwargs) -> Any:
+                try:
+                    return self._circuit_breaker._execute(attr, args, kwargs)
+                except CircuitBreakerOpen as e:
+                    logger.warning("Circuit-breaker is open during %s call: %s", name, e)
+                    raise RuntimeError(
+                        f"LLM backend temporarily unavailable during {name}: {e}"
+                    ) from e
+                except Exception as e:
+                    logger.warning("LLM backend method '%s' failed: %s", name, e)
+                    raise RuntimeError(f"LLM backend error during {name}: {e}") from e
+                except Exception as e:
+                    # Circuit-breaker failed - log and re-raise as RuntimeError
+                    logger.error("LLM backend error during %s call: %s", name, e)
+                    raise RuntimeError(
+                        f"LLM backend error during {name}: {e}"
+                    ) from e
+            return wrapped_method
+        
+        return attr
 
 
 class MockBackendClient:
@@ -232,11 +324,15 @@ class LocalBackendClient:
 
 
 @lru_cache(maxsize=4)
-def get_global_llm_backend(backend_type: str = "auto") -> LazyLLMBackend:
-    """Get or create global LLM backend instance (singleton per type).
+def get_global_llm_backend(
+    backend_type: str = "auto",
+    circuit_breaker_enabled: bool = True
+) -> LazyLLMBackend:
+    """Get or create global LLM backend instance (singleton per type and config).
     
     Args:
         backend_type: Type of backend ("auto", "accelerate", "mock", "local")
+        circuit_breaker_enabled: Whether to enable circuit-breaker protection
         
     Returns:
         LazyLLMBackend instance.
@@ -244,8 +340,14 @@ def get_global_llm_backend(backend_type: str = "auto") -> LazyLLMBackend:
     Example:
         >>> backend = get_global_llm_backend()
         >>> result = backend.generate(prompt="What is AI?")
+        
+        # With circuit-breaker disabled for testing:
+        >>> backend = get_global_llm_backend(circuit_breaker_enabled=False)
     """
-    return LazyLLMBackend(backend_type=backend_type)
+    return LazyLLMBackend(
+        backend_type=backend_type,
+        circuit_breaker_enabled=circuit_breaker_enabled
+    )
 
 
 def disable_llm_backend():

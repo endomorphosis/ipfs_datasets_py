@@ -439,6 +439,7 @@ class LanguageRouter:
         
         # Apply confidence adjustments if needed
         notes = []
+        adjustments_applied = False
         if apply_confidence_adjustment and config.min_confidence_adjustment != 0.0:
             adjusted_entities = []
             for entity in entities:
@@ -449,6 +450,7 @@ class LanguageRouter:
                         entity_copy['confidence']
                     )
                     if entity_copy['confidence'] != original_conf:
+                        adjustments_applied = True
                         notes.append(
                             f"Confidence adjusted for {language_code}: "
                             f"{original_conf:.2f} → {entity_copy['confidence']:.2f}"
@@ -463,5 +465,5 @@ class LanguageRouter:
             language_confidence=language_confidence,
             original_language_code=language_code,
             language_processing_notes=notes,
-            confidence_adjustments_applied=apply_confidence_adjustment,
+            confidence_adjustments_applied=adjustments_applied,
         )

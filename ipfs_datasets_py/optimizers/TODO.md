@@ -215,7 +215,8 @@ These should be started immediately when available:
 - [ ] (P2) [graphrag] Split `ontology_critic.py` into `..._completeness.py`, `..._connectivity.py`, `..._consistency.py`
 - [x] (P2) [perf] Implement lazy loading for domain-specific rule sets in `ExtractionConfig`
   - Done 2026-02-23: Verified existing lazy-loading via lru_cache(maxsize=16) in _get_domain_rule_patterns(). Created comprehensive test suite (31 tests, all passing) validating: pattern caching behavior, domain pattern completeness/accuracy, cache hit/miss tracking, performance characteristics, immutability guarantees, regex validation, robustness to edge cases. Tests cover legal/medical/technical/financial domains. File: tests/unit/optimizers/graphrag/test_domain_rule_patterns_lazy_loading.py
-- [ ] (P3) [arch] Create `ontology_serialization.py` with unified dict ↔ dataclass converters
+- [x] (P3) [arch] Create `ontology_serialization.py` with unified dict ↔ dataclass converters
+  - Done (pre-existing): 395-line module with 27 passing tests covering dataclass↔dict conversion, nested structures, batch operations, JSON serialization, error handling, circular reference detection
 
 #### Complex Features (4+ hours)
 - [ ] (P2) [graphrag] Implement LLM-based relationship inference with fallback to heuristics
@@ -422,7 +423,8 @@ Execute these when no rotating work is in progress:
 - [ ] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
 - [x] (P2) [arch] All CLI commands exit with non-zero on failure — Done: all cmd_* return int, sys.exit(main())
 - [x] (P2) [arch] Add timeout support to `ProverIntegrationAdapter.validate_statement()` — Done: ProverIntegrationAdapter has default_timeout param and per-call timeout override
-- [ ] (P3) [arch] Add circuit-breaker for LLM backend calls (retry with exponential backoff)
+- [x] (P3) [arch] Add circuit-breaker for LLM backend calls (retry with exponential backoff)
+  - Done 2026-02-24: circuit_breaker.py with 3-state machine, integrated into LazyLLMBackend (37 tests + 20 integration tests)
 
 ### R6 — Deprecation cleanup
 
