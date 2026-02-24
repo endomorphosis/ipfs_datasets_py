@@ -14,15 +14,55 @@ import logging
 import os
 import sys
 import subprocess
+import json
+import base64
+import re
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Union, Literal
 
 logger = logging.getLogger(__name__)
 
-# Add the submodule to the Python path if not already there
-SUBMODULE_PATH = Path(__file__).parent / "common_crawl_search_engine"
-if SUBMODULE_PATH.exists() and str(SUBMODULE_PATH) not in sys.path:
-    sys.path.insert(0, str(SUBMODULE_PATH))
+def _discover_common_crawl_import_roots() -> List[Path]:
+    """Discover likely sys.path roots that contain `common_crawl_search_engine`."""
+    here = Path(__file__).resolve().parent
+    candidates: List[Path] = []
+
+    search_roots = [here, *here.parents]
+    seen: set[str] = set()
+
+    for root in search_roots:
+        # Layout: <root>/common_crawl_search_engine/__init__.py
+        direct_pkg = root / "common_crawl_search_engine" / "__init__.py"
+        if direct_pkg.exists():
+            key = str(root)
+            if key not in seen:
+                seen.add(key)
+                candidates.append(root)
+
+        # Layout: <root>/src/common_crawl_search_engine/__init__.py
+        src_pkg = root / "src" / "common_crawl_search_engine" / "__init__.py"
+        if src_pkg.exists():
+            src_root = root / "src"
+            key = str(src_root)
+            if key not in seen:
+                seen.add(key)
+                candidates.append(src_root)
+
+    return candidates
+
+
+def _ensure_common_crawl_import_path() -> Optional[Path]:
+    """Ensure a valid import root for `common_crawl_search_engine` is on sys.path."""
+    for root in _discover_common_crawl_import_roots():
+        root_str = str(root)
+        if root_str not in sys.path:
+            sys.path.insert(0, root_str)
+        try:
+            __import__("common_crawl_search_engine")
+            return root
+        except Exception:
+            continue
+    return None
 
 
 class CommonCrawlSearchEngine:
@@ -129,13 +169,16 @@ class CommonCrawlSearchEngine:
         
         # Import ccindex API (lazy import to avoid issues if submodule isn't initialized)
         try:
+            import_root = _ensure_common_crawl_import_path()
+            if import_root is None:
+                raise ImportError("common_crawl_search_engine package not found on discoverable paths")
             from common_crawl_search_engine.ccindex import api
             self.api = api
             self._available = True
-            logger.info("Common Crawl Search Engine initialized in local mode")
+            logger.info("Common Crawl Search Engine initialized in local mode (root=%s)", import_root)
         except ImportError as e:
             logger.warning(f"Common Crawl Search Engine not available in local mode: {e}")
-            logger.info("Make sure to initialize the submodule: git submodule update --init")
+            logger.info("Make sure common_crawl_search_engine sources are available (e.g., in src/common_crawl_search_engine)")
             self.api = None
             self._available = False
     
@@ -146,6 +189,9 @@ class CommonCrawlSearchEngine:
         
         try:
             # Import MCP client from submodule
+            import_root = _ensure_common_crawl_import_path()
+            if import_root is None:
+                raise ImportError("common_crawl_search_engine package not found on discoverable paths")
             from common_crawl_search_engine.mcp_client import CcindexMcpClient
             
             self.mcp_client = CcindexMcpClient(
@@ -249,9 +295,30 @@ class CommonCrawlSearchEngine:
         **kwargs
     ) -> List[Dict[str, Any]]:
         """Search using local package imports."""
-        # TODO: Call actual ccindex search API when available
-        logger.warning("Local search functionality not yet fully implemented - placeholder return")
-        return []
+        year = kwargs.get("year")
+        if year is None and collection:
+            match = re.search(r"(\d{4})", str(collection))
+            if match:
+                year = match.group(1)
+
+        parquet_root = kwargs.get("parquet_root")
+        year_db = kwargs.get("year_db")
+        collection_db = kwargs.get("collection_db")
+        max_parquet_files = int(kwargs.get("max_parquet_files", 200) or 200)
+        per_parquet_limit = int(kwargs.get("per_parquet_limit", 2000) or 2000)
+
+        result = self.api.search_domain_via_meta_indexes(
+            domain,
+            parquet_root=Path(parquet_root) if parquet_root else Path("/storage/ccindex_parquet"),
+            master_db=(self.master_db_path if self.master_db_path else Path("/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb")),
+            year_db=(Path(year_db) if year_db else None),
+            collection_db=(Path(collection_db) if collection_db else None),
+            year=(str(year) if year else None),
+            max_parquet_files=max_parquet_files,
+            max_matches=int(max_matches),
+            per_parquet_limit=per_parquet_limit,
+        )
+        return self._normalize_records(result.records)
     
     def _search_domain_remote(
         self,
@@ -262,19 +329,26 @@ class CommonCrawlSearchEngine:
     ) -> List[Dict[str, Any]]:
         """Search using remote MCP JSON-RPC client."""
         try:
-            # Call MCP tool for domain search
+            year = kwargs.get("year")
+            if year is None and collection:
+                match = re.search(r"(\d{4})", str(collection))
+                if match:
+                    year = match.group(1)
+
+            # Dashboard/MCP tool name is `search_domain_meta`.
             result = self.mcp_client.call_tool(
-                "search_domain",
+                "search_domain_meta",
                 {
                     "domain": domain,
-                    "max_matches": max_matches,
-                    "collection": collection
-                }
+                    "max_matches": int(max_matches),
+                    "year": (str(year) if year else None),
+                },
             )
-            
-            # Extract results from MCP response
+
             if isinstance(result, dict):
-                return result.get("results", [])
+                records = result.get("records", [])
+                if isinstance(records, list):
+                    return self._normalize_records(records)
             return []
         except Exception as e:
             logger.error(f"Remote search failed: {e}")
@@ -288,17 +362,27 @@ class CommonCrawlSearchEngine:
         **kwargs
     ) -> List[Dict[str, Any]]:
         """Search using CLI command."""
-        import json
-        
         cmd = [
             self.cli_command,
             "search", "meta",
             "--domain", domain,
             "--max-matches", str(max_matches)
         ]
-        
-        if collection:
-            cmd.extend(["--collection", collection])
+
+        year = kwargs.get("year")
+        if year is None and collection:
+            match = re.search(r"(\d{4})", str(collection))
+            if match:
+                year = match.group(1)
+        if year:
+            cmd.extend(["--year", str(year)])
+
+        if self.master_db_path:
+            cmd.extend(["--master-db", str(self.master_db_path)])
+
+        parquet_root = kwargs.get("parquet_root")
+        if parquet_root:
+            cmd.extend(["--parquet-root", str(parquet_root)])
         
         if self.ssh_host:
             cmd = ["ssh", self.ssh_host] + cmd
@@ -314,20 +398,59 @@ class CommonCrawlSearchEngine:
             if result.returncode != 0:
                 logger.error(f"CLI search failed: {result.stderr}")
                 return []
-            
-            # Parse JSON output
-            try:
-                data = json.loads(result.stdout)
-                return data if isinstance(data, list) else []
-            except json.JSONDecodeError:
-                logger.warning("Failed to parse CLI output as JSON")
-                return []
+
+            records: List[Dict[str, Any]] = []
+            for line in (result.stdout or "").splitlines():
+                text = line.strip()
+                if not text:
+                    continue
+                try:
+                    item = json.loads(text)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(item, dict):
+                    records.append(item)
+
+            return self._normalize_records(records)
         except subprocess.TimeoutExpired:
             logger.error("CLI search timed out")
             return []
         except Exception as e:
             logger.error(f"CLI search failed: {e}")
             raise
+
+    @staticmethod
+    def _normalize_records(records: Any) -> List[Dict[str, Any]]:
+        """Normalize records into a predictable list[dict] shape for callers."""
+        out: List[Dict[str, Any]] = []
+        if not isinstance(records, list):
+            return out
+
+        for item in records:
+            if not isinstance(item, dict):
+                continue
+            rec = dict(item)
+
+            url = str(rec.get("url") or rec.get("target_uri") or "").strip()
+            if url:
+                rec["url"] = url
+
+            if "warc_filename" not in rec and "filename" in rec:
+                rec["warc_filename"] = rec.get("filename")
+            if "warc_offset" not in rec and "offset" in rec:
+                rec["warc_offset"] = rec.get("offset")
+            if "warc_length" not in rec and "length" in rec:
+                rec["warc_length"] = rec.get("length")
+
+            timestamp = str(rec.get("timestamp") or "").strip()
+            if url and timestamp and "archive_url" not in rec and "wayback_url" not in rec:
+                wb = f"https://web.archive.org/web/{timestamp}/{url}"
+                rec["wayback_url"] = wb
+                rec["archive_url"] = wb
+
+            out.append(rec)
+
+        return out
     
     def fetch_warc_record(
         self,
@@ -357,8 +480,62 @@ class CommonCrawlSearchEngine:
         logger.info(f"Fetching WARC record: {warc_filename} @ {warc_offset}:{warc_length}")
         
         try:
-            # TODO: Call actual ccindex WARC fetch API when available
-            raise NotImplementedError("WARC fetch functionality not yet implemented")
+            if self.mode == "local":
+                fetch, _source, _local_path = self.api.fetch_warc_record(
+                    warc_filename=str(warc_filename),
+                    warc_offset=int(warc_offset),
+                    warc_length=int(warc_length),
+                    prefix=str(kwargs.get("prefix") or "https://data.commoncrawl.org/"),
+                    timeout_s=float(kwargs.get("timeout_s") or 30.0),
+                    max_bytes=int(kwargs.get("max_bytes") or 2_000_000),
+                    decode_gzip_text=False,
+                    max_preview_chars=0,
+                    cache_mode=str(kwargs.get("cache_mode") or "range"),
+                    full_warc_cache_dir=(Path(str(kwargs.get("full_warc_cache_dir"))) if kwargs.get("full_warc_cache_dir") else None),
+                )
+                if not fetch.ok or not fetch.raw_base64:
+                    raise RuntimeError(fetch.error or "empty WARC payload")
+                return base64.b64decode(fetch.raw_base64)
+
+            if self.mode == "remote":
+                result = self.mcp_client.call_tool(
+                    "fetch_warc_record",
+                    {
+                        "warc_filename": str(warc_filename),
+                        "warc_offset": int(warc_offset),
+                        "warc_length": int(warc_length),
+                        "max_bytes": int(kwargs.get("max_bytes") or 2_000_000),
+                    },
+                )
+                if isinstance(result, dict) and result.get("raw_base64"):
+                    return base64.b64decode(str(result.get("raw_base64")))
+                raise RuntimeError("remote fetch_warc_record did not include raw_base64")
+
+            cmd = [
+                self.cli_command,
+                "warc",
+                "fetch-record",
+                "--warc-filename",
+                str(warc_filename),
+                "--warc-offset",
+                str(int(warc_offset)),
+                "--warc-length",
+                str(int(warc_length)),
+                "--include-raw-base64",
+                "--no-http",
+            ]
+            if self.ssh_host:
+                cmd = ["ssh", self.ssh_host] + cmd
+
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            if result.returncode != 0:
+                raise RuntimeError(result.stderr.strip() or "CLI fetch-record failed")
+
+            payload = json.loads(result.stdout or "{}")
+            raw_b64 = payload.get("raw_base64") if isinstance(payload, dict) else None
+            if not raw_b64:
+                raise RuntimeError("CLI fetch-record returned no raw_base64")
+            return base64.b64decode(str(raw_b64))
         except Exception as e:
             logger.error(f"Error fetching WARC record: {e}")
             raise
@@ -378,11 +555,44 @@ class CommonCrawlSearchEngine:
         """
         if not self._available:
             raise RuntimeError("Common Crawl Search Engine is not available")
-        
+
         try:
-            # TODO: Call actual ccindex list collections API when available
-            logger.warning("List collections functionality not yet implemented - placeholder return")
-            return []
+            if self.mode == "local":
+                year = kwargs.get("year")
+                refs = self.api.list_collections(
+                    master_db=(self.master_db_path if self.master_db_path else Path("/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb")),
+                    year=(str(year) if year else None),
+                )
+                return [str(r.collection) for r in refs if getattr(r, "collection", None)]
+
+            if self.mode == "remote":
+                info = self.mcp_client.collinfo_list(prefer_cache=bool(kwargs.get("prefer_cache", True)))
+                collections = info.get("collections", []) if isinstance(info, dict) else []
+                out: List[str] = []
+                for item in collections:
+                    if not isinstance(item, dict):
+                        continue
+                    collection_name = str(item.get("id") or item.get("name") or "").strip()
+                    if collection_name:
+                        out.append(collection_name)
+                return out
+
+            cmd = [self.cli_command, "mcp", "call", "--tool", "cc_collinfo_list", "--args-json", "{}"]
+            if self.ssh_host:
+                cmd = ["ssh", self.ssh_host] + cmd
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            if result.returncode != 0:
+                return []
+            payload = json.loads(result.stdout or "{}")
+            collections = payload.get("collections", []) if isinstance(payload, dict) else []
+            out: List[str] = []
+            for item in collections:
+                if not isinstance(item, dict):
+                    continue
+                collection_name = str(item.get("id") or item.get("name") or "").strip()
+                if collection_name:
+                    out.append(collection_name)
+            return out
         except Exception as e:
             logger.error(f"Error listing collections: {e}")
             raise
@@ -403,10 +613,49 @@ class CommonCrawlSearchEngine:
         """
         if not self._available:
             raise RuntimeError("Common Crawl Search Engine is not available")
-        
+
         try:
-            # TODO: Call actual ccindex collection info API when available
-            logger.warning("Collection info functionality not yet implemented - placeholder return")
+            collection_s = str(collection).strip()
+            if not collection_s:
+                return {}
+
+            if self.mode == "local":
+                try:
+                    from common_crawl_search_engine.ccindex.orchestrator_manager import load_collinfo
+                    data = load_collinfo(prefer_cache=bool(kwargs.get("prefer_cache", True)))
+                    collections = data.get("collections", []) if isinstance(data, dict) else []
+                    for item in collections:
+                        if not isinstance(item, dict):
+                            continue
+                        if str(item.get("id") or item.get("name") or "").strip() == collection_s:
+                            return item
+                except Exception:
+                    pass
+
+                for ref in self.api.list_collections(
+                    master_db=(self.master_db_path if self.master_db_path else Path("/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb"))
+                ):
+                    if str(getattr(ref, "collection", "")).strip() == collection_s:
+                        return {
+                            "id": collection_s,
+                            "year": getattr(ref, "year", None),
+                            "collection_db_path": str(getattr(ref, "collection_db_path", "")),
+                        }
+                return {}
+
+            if self.mode == "remote":
+                info = self.mcp_client.collinfo_list(prefer_cache=bool(kwargs.get("prefer_cache", True)))
+                collections = info.get("collections", []) if isinstance(info, dict) else []
+                for item in collections:
+                    if not isinstance(item, dict):
+                        continue
+                    if str(item.get("id") or item.get("name") or "").strip() == collection_s:
+                        return item
+                return {}
+
+            names = self.list_collections(**kwargs)
+            if collection_s in names:
+                return {"id": collection_s}
             return {}
         except Exception as e:
             logger.error(f"Error getting collection info: {e}")
