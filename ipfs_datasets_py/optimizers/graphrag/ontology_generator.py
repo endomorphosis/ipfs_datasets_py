@@ -8131,7 +8131,7 @@ class OntologyGenerator:
     def entity_type_diversity_index(self, result: "EntityExtractionResult") -> float:
         """Return the Simpson diversity index over entity types.
 
-        Implements $D = 1 - \sum_i p_i^2$ where $p_i$ is the fraction of entities
+        Implements $D = 1 - \\sum_i p_i^2$ where $p_i$ is the fraction of entities
         of type $i$.
 
         Returns:

@@ -49,7 +49,8 @@ test hardening, and documentation clarity while keeping progress measurable.
 - [ ] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
 - [x] (P2) [tests] Add property-based tests for Entity/CriticScore/FeedbackRecord
   - Done 2026-02-23: test_ontology_types_properties.py with 19 passing property-based tests (Entity, Relationship, CriticScore, FeedbackRecord, collections). Uses Hypothesis strategies.
-- [ ] (P2) [perf] Profile OntologyGenerator.generate() on 10k-token input
+- [x] (P2) [perf] Profile OntologyGenerator.generate() on 10k-token input
+  - Done 2026-02-23: Batch 262 - Created profile_batch_262_generate_10k.py (390 LOC), test_batch_262_profiling.py (22/22 tests), PROFILING_BATCH_262_ANALYSIS.md. Identified key bottlenecks: regex operations (54% time), _promote_person_entities (70%), with optimization recommendations for 70-80% potential speedup.
 - [ ] (P2) [obs] Structured JSON logging for every pipeline run
 - [ ] (P2) [docs] Optimizers README with quick-start + class diagram
 

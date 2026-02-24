@@ -1,0 +1,139 @@
+================================================================================
+BATCH 262: OntologyGenerator.generate_ontology() Profile (10k tokens)
+================================================================================
+
+Input size: 10171 tokens (75.5 KB)
+Execution time: 164.95 ms
+Entities extracted: 66
+Relationships inferred: 52
+Throughput: 61662 tokens/sec
+Throughput: 400.1 entities/sec
+
+================================================================================
+TOP 30 FUNCTIONS BY CUMULATIVE TIME
+================================================================================
+
+         129393 function calls (124693 primitive calls) in 0.165 seconds
+
+   Ordered by: cumulative time
+   List reduced from 106 to 30 due to restriction <30>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.165    0.165 ontology_generator.py:4199(generate_ontology)
+        1    0.000    0.000    0.165    0.165 ontology_generator.py:2885(extract_entities)
+        1    0.000    0.000    0.165    0.165 ontology_generator.py:2968(_extract_with_llm_fallback)
+        1    0.000    0.000    0.165    0.165 ontology_generator.py:4547(_extract_rule_based)
+        1    0.000    0.000    0.115    0.115 ontology_generator.py:4519(_promote_person_entities)
+      122    0.000    0.000    0.115    0.001 __init__.py:174(search)
+      492    0.089    0.000    0.089    0.000 {method 'search' of 're.Pattern' objects}
+        1    0.015    0.015    0.038    0.038 ontology_generator.py:3166(infer_relationships)
+      499    0.001    0.000    0.026    0.000 __init__.py:280(_compile)
+       94    0.000    0.000    0.025    0.000 _compiler.py:745(compile)
+     2210    0.022    0.000    0.022    0.000 {method 'find' of 'str' objects}
+       94    0.000    0.000    0.014    0.000 _parser.py:969(parse)
+   188/94    0.001    0.000    0.014    0.000 _parser.py:452(_parse_sub)
+  1128/94    0.005    0.000    0.014    0.000 _parser.py:512(_parse)
+        1    0.011    0.011    0.012    0.012 ontology_generator.py:4716(_extract_entities_from_patterns)
+       94    0.000    0.000    0.010    0.000 _compiler.py:578(_code)
+  1222/94    0.004    0.000    0.007    0.000 _compiler.py:37(_compile)
+    13841    0.002    0.000    0.003    0.000 _parser.py:168(__getitem__)
+       94    0.000    0.000    0.002    0.000 _compiler.py:516(_compile_info)
+    26413    0.002    0.000    0.002    0.000 {method 'append' of 'list' objects}
+  1222/94    0.001    0.000    0.002    0.000 _parser.py:178(getwidth)
+     6697    0.001    0.000    0.002    0.000 _parser.py:261(get)
+     6603    0.001    0.000    0.002    0.000 _parser.py:176(append)
+    16277    0.001    0.000    0.001    0.000 {built-in method builtins.isinstance}
+9107/7791    0.001    0.000    0.001    0.000 {built-in method builtins.len}
+       37    0.000    0.000    0.001    0.000 ontology_generator.py:3105(_infer_type_from_context)
+     7919    0.001    0.000    0.001    0.000 _parser.py:240(__next)
+      188    0.000    0.000    0.001    0.000 enum.py:1561(__and__)
+     5647    0.001    0.000    0.001    0.000 {method 'lower' of 'str' objects}
+     1786    0.000    0.000    0.000    0.000 _parser.py:164(__len__)
+
+
+
+================================================================================
+TOP 30 FUNCTIONS BY TOTAL TIME
+================================================================================
+
+         129393 function calls (124693 primitive calls) in 0.165 seconds
+
+   Ordered by: internal time
+   List reduced from 106 to 30 due to restriction <30>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      492    0.089    0.000    0.089    0.000 {method 'search' of 're.Pattern' objects}
+     2210    0.022    0.000    0.022    0.000 {method 'find' of 'str' objects}
+        1    0.015    0.015    0.038    0.038 ontology_generator.py:3166(infer_relationships)
+        1    0.011    0.011    0.012    0.012 ontology_generator.py:4716(_extract_entities_from_patterns)
+  1128/94    0.005    0.000    0.014    0.000 _parser.py:512(_parse)
+  1222/94    0.004    0.000    0.007    0.000 _compiler.py:37(_compile)
+    26413    0.002    0.000    0.002    0.000 {method 'append' of 'list' objects}
+    13841    0.002    0.000    0.003    0.000 _parser.py:168(__getitem__)
+  1222/94    0.001    0.000    0.002    0.000 _parser.py:178(getwidth)
+     6697    0.001    0.000    0.002    0.000 _parser.py:261(get)
+    16277    0.001    0.000    0.001    0.000 {built-in method builtins.isinstance}
+     6603    0.001    0.000    0.002    0.000 _parser.py:176(append)
+   188/94    0.001    0.000    0.014    0.000 _parser.py:452(_parse_sub)
+9107/7791    0.001    0.000    0.001    0.000 {built-in method builtins.len}
+     7919    0.001    0.000    0.001    0.000 _parser.py:240(__next)
+      499    0.001    0.000    0.026    0.000 __init__.py:280(_compile)
+     5647    0.001    0.000    0.001    0.000 {method 'lower' of 'str' objects}
+     3563    0.000    0.000    0.000    0.000 {built-in method builtins.min}
+     5992    0.000    0.000    0.000    0.000 {built-in method builtins.ord}
+     1786    0.000    0.000    0.000    0.000 _parser.py:164(__len__)
+     1504    0.000    0.000    0.000    0.000 _parser.py:256(match)
+     2245    0.000    0.000    0.000    0.000 {method 'group' of 're.Match' objects}
+       94    0.000    0.000    0.002    0.000 _compiler.py:516(_compile_info)
+      188    0.000    0.000    0.001    0.000 enum.py:1561(__and__)
+       94    0.000    0.000    0.025    0.000 _compiler.py:745(compile)
+     1335    0.000    0.000    0.000    0.000 {built-in method builtins.max}
+      564    0.000    0.000    0.000    0.000 enum.py:1543(_get_value)
+       37    0.000    0.000    0.001    0.000 ontology_generator.py:3105(_infer_type_from_context)
+       94    0.000    0.000    0.014    0.000 _parser.py:969(parse)
+     2100    0.000    0.000    0.000    0.000 {method 'strip' of 'str' objects}
+
+
+
+================================================================================
+TOP 30 MOST CALLED FUNCTIONS
+================================================================================
+
+         129393 function calls (124693 primitive calls) in 0.165 seconds
+
+   Ordered by: call count
+   List reduced from 106 to 30 due to restriction <30>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    26413    0.002    0.000    0.002    0.000 {method 'append' of 'list' objects}
+    16277    0.001    0.000    0.001    0.000 {built-in method builtins.isinstance}
+    13841    0.002    0.000    0.003    0.000 _parser.py:168(__getitem__)
+9107/7791    0.001    0.000    0.001    0.000 {built-in method builtins.len}
+     7919    0.001    0.000    0.001    0.000 _parser.py:240(__next)
+     6697    0.001    0.000    0.002    0.000 _parser.py:261(get)
+     6603    0.001    0.000    0.002    0.000 _parser.py:176(append)
+     5992    0.000    0.000    0.000    0.000 {built-in method builtins.ord}
+     5647    0.001    0.000    0.001    0.000 {method 'lower' of 'str' objects}
+     3563    0.000    0.000    0.000    0.000 {built-in method builtins.min}
+     2245    0.000    0.000    0.000    0.000 {method 'group' of 're.Match' objects}
+     2210    0.022    0.000    0.022    0.000 {method 'find' of 'str' objects}
+     2144    0.000    0.000    0.000    0.000 {built-in method builtins.abs}
+     2100    0.000    0.000    0.000    0.000 {method 'strip' of 'str' objects}
+     1786    0.000    0.000    0.000    0.000 _parser.py:164(__len__)
+     1504    0.000    0.000    0.000    0.000 _parser.py:256(match)
+     1335    0.000    0.000    0.000    0.000 {built-in method builtins.max}
+     1316    0.000    0.000    0.000    0.000 _parser.py:113(__init__)
+  1222/94    0.004    0.000    0.007    0.000 _compiler.py:37(_compile)
+  1222/94    0.001    0.000    0.002    0.000 _parser.py:178(getwidth)
+  1128/94    0.005    0.000    0.014    0.000 _parser.py:512(_parse)
+     1004    0.000    0.000    0.000    0.000 {method 'get' of 'dict' objects}
+      587    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+      564    0.000    0.000    0.000    0.000 enum.py:1543(_get_value)
+      499    0.001    0.000    0.026    0.000 __init__.py:280(_compile)
+      492    0.089    0.000    0.089    0.000 {method 'search' of 're.Pattern' objects}
+      423    0.000    0.000    0.000    0.000 _parser.py:372(_escape)
+      376    0.000    0.000    0.000    0.000 _parser.py:293(tell)
+      370    0.000    0.000    0.000    0.000 __init__.py:226(compile)
+      227    0.000    0.000    0.000    0.000 ontology_generator.py:3063(_is_impossible_type_pair)
+
+

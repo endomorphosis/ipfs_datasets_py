@@ -233,30 +233,30 @@ class TestOntologyGeneratorSortedEntities:
     
     def test_sorted_entities_by_confidence(self, generator, sample_result):
         """sorted_entities sorts by confidence descending."""
-        sorted_result = generator.sorted_entities(sample_result, key="confidence")
+        sorted_entities = generator.sorted_entities(sample_result, key="confidence")
         
-        assert sorted_result.entities[0].confidence == 0.9  # Zebra
-        assert sorted_result.entities[1].confidence == 0.8  # Bob
-        assert sorted_result.entities[2].confidence == 0.6  # Alice
+        assert sorted_entities[0].confidence == 0.9  # Zebra
+        assert sorted_entities[1].confidence == 0.8  # Bob
+        assert sorted_entities[2].confidence == 0.6  # Alice
     
     def test_sorted_entities_by_text(self, generator, sample_result):
         """sorted_entities sorts by text alphabetically."""
-        sorted_result = generator.sorted_entities(sample_result, key="text")
+        sorted_entities = generator.sorted_entities(sample_result, key="text")
         
-        assert sorted_result.entities[0].text == "Alice"
-        assert sorted_result.entities[1].text == "Bob"
-        assert sorted_result.entities[2].text == "Zebra"
+        assert sorted_entities[0].text == "Alice"
+        assert sorted_entities[1].text == "Bob"
+        assert sorted_entities[2].text == "Zebra"
     
     def test_sorted_entities_by_type(self, generator, sample_result):
         """sorted_entities sorts by type alphabetically."""
-        sorted_result = generator.sorted_entities(sample_result, key="type")
+        sorted_entities = generator.sorted_entities(sample_result, key="type")
         
-        assert sorted_result.entities[0].type == "Animal"  # Zebra
-        assert sorted_result.entities[1].type == "Person"  # Alice or Bob
-        assert sorted_result.entities[2].type == "Person"
+        assert sorted_entities[0].type == "Animal"  # Zebra
+        assert sorted_entities[1].type == "Person"  # Alice or Bob
+        assert sorted_entities[2].type == "Person"
     
     def test_sorted_entities_preserves_relationships(self, generator):
-        """sorted_entities preserves relationships in result."""
+        """sorted_entities returns sorted list of entities."""
         from ipfs_datasets_py.optimizers.graphrag import Relationship
         entities = [
             Entity(id="e1", text="Alice", type="Person", confidence=0.8, properties={}),
@@ -268,24 +268,24 @@ class TestOntologyGeneratorSortedEntities:
         ]
         result = EntityExtractionResult(entities=entities, relationships=relationships, confidence=0.85)
         
-        sorted_result = generator.sorted_entities(result, key="confidence")
+        sorted_entities = generator.sorted_entities(result, key="confidence")
         
-        assert len(sorted_result.relationships) == 1
-        assert sorted_result.relationships[0].id == "r1"
+        assert len(sorted_entities) == 2
+        assert sorted_entities[0].id == "e2"  # Bob, higher confidence
     
     def test_sorted_entities_empty_result(self, generator):
         """sorted_entities handles empty result."""
         empty_result = EntityExtractionResult(entities=[], relationships=[], confidence=0.0)
-        sorted_result = generator.sorted_entities(empty_result, key="confidence")
+        sorted_entities = generator.sorted_entities(empty_result, key="confidence")
         
-        assert len(sorted_result.entities) == 0
+        assert len(sorted_entities) == 0
     
     def test_sorted_entities_returns_new_result(self, generator, sample_result):
-        """sorted_entities returns new EntityExtractionResult instance."""
-        sorted_result = generator.sorted_entities(sample_result, key="text")
+        """sorted_entities returns list of entities."""
+        sorted_entities = generator.sorted_entities(sample_result, key="text")
         
-        assert isinstance(sorted_result, EntityExtractionResult)
-        assert sorted_result is not sample_result  # New instance
+        assert isinstance(sorted_entities, list)
+        assert len(sorted_entities) == 3
 
 
 class TestOntologyMediatorLogSnapshot:
@@ -422,12 +422,12 @@ class TestBatch247Integration:
         result = generator.rebuild_result(entities)
         assert len(result.entities) == 3
         
-        # Sort by confidence
-        sorted_result = generator.sorted_entities(result, key="confidence")
-        assert sorted_result.entities[0].confidence == 0.9  # High first
+        # Sort by confidence (returns List[Entity])
+        sorted_entities = generator.sorted_entities(result, key="confidence")
+        assert sorted_entities[0].confidence == 0.9  # High first
         
-        # Analyze histogram
-        histogram = sorted_result.confidence_histogram(bins=3)
+        # Analyze histogram on original result
+        histogram = result.confidence_histogram(bins=3)
         assert sum(histogram) == 3  # All entities counted
     
     def test_adapter_variance_with_mediator_snapshots(self):
