@@ -184,9 +184,9 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         self._entity_importance_cache: Dict[str, float] = {}
         
         # Performance metrics for different traversal strategies
-            # Cache for graph type detection (keyed by tuple of significant query fields for fast lookup)
-            self._graph_type_cache: Dict[str, str] = {}
-            self._graph_type_cache_max_size = 50  # Simple size limit to prevent unbounded growth
+        # Cache for graph type detection (keyed by tuple of significant query fields for fast lookup)
+        self._graph_type_cache: Dict[str, str] = {}
+        self._graph_type_cache_max_size = 50  # Simple size limit to prevent unbounded growth
         
         self._strategy_performance = {
             "breadth_first": {"avg_time": 0.0, "relevance_score": 0.0, "count": 0},
