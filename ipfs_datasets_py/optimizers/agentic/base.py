@@ -8,11 +8,12 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-# Import unified extraction config from common module
+# Import unified configs from common module
 from ipfs_datasets_py.optimizers.common.extraction_contexts import (
     AgenticExtractionConfig,
     OptimizationMethod as UnifiedOptimizationMethod,
 )
+from ipfs_datasets_py.optimizers.common.optimizer_config import OptimizerConfig
 
 
 class ChangeControlMethod(Enum):
@@ -169,22 +170,34 @@ class AgenticOptimizer(ABC):
     This abstract class defines the interface that all optimization methods
     must implement. Each optimizer implements a specific optimization strategy
     (adversarial, actor-critic, test-driven, or chaos engineering).
+    Now uses the unified OptimizerConfig dataclass for consistent configuration
+    across all optimizer types (agentic, logic, graphrag).
     
     Attributes:
         agent_id: Unique identifier for this optimizer agent
         method: Optimization method this optimizer implements
         llm_router: LLM router for generating optimizations
         change_control: Change control method to use
-        config: Configuration dictionary
+        config: Configuration (OptimizerConfig dataclass or dict for backward compat)
     
     Example:
+        >>> from ipfs_datasets_py.optimizers.common import OptimizerConfig
         >>> from ipfs_datasets_py.optimizers.agentic import TestDrivenOptimizer
+        >>>
+        >>> # Using unified OptimizerConfig (recommended)
+        >>> config = OptimizerConfig(domain="legal", max_rounds=5, verbose=True)
         >>> optimizer = TestDrivenOptimizer(
         ...     agent_id="test-optimizer-1",
         ...     llm_router=router,
-        ...     change_control=ChangeControlMethod.PATCH
+        ...     config=config
         ... )
-        >>> result = optimizer.optimize(task)
+        >>>
+        >>> # Backward compatible dict config (deprecated)
+        >>> optimizer = TestDrivenOptimizer(
+        ...     agent_id="test-optimizer-1",
+        ...     llm_router=router,
+        ...     config={"domain": "legal", "max_rounds": 5}
+        ... )
     """
     
     def __init__(
@@ -192,7 +205,7 @@ class AgenticOptimizer(ABC):
         agent_id: str,
         llm_router: Any,
         change_control: ChangeControlMethod = ChangeControlMethod.PATCH,
-        config: Optional[Dict[str, Any]] = None,
+        config: Optional[Union[OptimizerConfig, Dict[str, Any]]] = None,
         logger: Optional[_logging.Logger] = None,
     ):
         """Initialize the optimizer.
@@ -201,15 +214,27 @@ class AgenticOptimizer(ABC):
             agent_id: Unique identifier for this agent
             llm_router: LLM router for text generation
             change_control: Change control method to use
-            config: Optional configuration dictionary
+            config: Configuration (OptimizerConfig dataclass or dict). If dict is passed,
+                   it will be normalized to OptimizerConfig for consistent interface.
             logger: Optional logger instance (defaults to module logger)
         """
         self.agent_id = agent_id
         self.method = self._get_method()
         self.llm_router = llm_router
         self.change_control = change_control
-        self.config = config or {}
-        self._log = logger or _logging.getLogger(__name__)
+        
+        # Normalize config to OptimizerConfig dataclass
+        if isinstance(config, OptimizerConfig):
+            self.config = config
+        elif isinstance(config, dict):
+            # Backward compatibility: accept dict and convert to OptimizerConfig
+            self.config = OptimizerConfig.from_dict(config)
+        elif config is None:
+            self.config = OptimizerConfig()
+        else:
+            raise TypeError(f"config must be OptimizerConfig or dict, got {type(config).__name__}")
+        
+        self._log = logger or self.config.logger or _logging.getLogger(__name__)
         
     @abstractmethod
     def _get_method(self) -> OptimizationMethod:
@@ -219,6 +244,54 @@ class AgenticOptimizer(ABC):
             OptimizationMethod enum value
         """
         pass
+    
+    def get_config_value(self, key: str, default: Any = None) -> Any:
+        """Get a configuration value with fallback to default.
+        
+        This helper method provides unified access to config values whether using
+        the new OptimizerConfig dataclass or legacy dict-based configs.
+        
+        Args:
+            key: Configuration key to retrieve
+            default: Default value if key not found
+            
+        Returns:
+            Configuration value or default
+            
+        Example:
+            >>> max_rounds = optimizer.get_config_value("max_rounds", 5)
+            >>> domain = optimizer.get_config_value("domain", "general")
+        """
+        if isinstance(self.config, OptimizerConfig):
+            return getattr(self.config, key, default)
+        return self.config.get(key, default)  # Legacy dict access
+    
+    @property
+    def domain(self) -> str:
+        """Get the optimization domain from config.
+        
+        Returns:
+            Domain string (e.g., 'legal', 'medical', 'general')
+        """
+        return self.config.domain if isinstance(self.config, OptimizerConfig) else self.config.get("domain", "general")
+    
+    @property
+    def max_rounds(self) -> int:
+        """Get maximum optimization rounds from config.
+        
+        Returns:
+            Maximum number of optimization rounds
+        """
+        return self.config.max_rounds if isinstance(self.config, OptimizerConfig) else self.config.get("max_rounds", 5)
+    
+    @property
+    def verbose(self) -> bool:
+        """Get verbose logging flag from config.
+        
+        Returns:
+            Whether verbose logging is enabled
+        """
+        return self.config.verbose if isinstance(self.config, OptimizerConfig) else self.config.get("verbose", False)
         
     @abstractmethod
     def optimize(self, task: OptimizationTask) -> OptimizationResult:

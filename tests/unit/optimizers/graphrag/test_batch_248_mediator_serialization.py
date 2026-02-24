@@ -61,10 +61,14 @@ def simple_critic_score():
     """Create a simple CriticScore for testing."""
     return CriticScore(
         completeness=0.8,
-        connectivity=0.7,
         consistency=0.9,
-        overall=0.8,
-        feedback=["Good structure"],
+        clarity=0.85,
+        granularity=0.82,
+        relationship_coherence=0.88,
+        domain_alignment=0.86,
+        strengths=["Good structure"],
+        weaknesses=[],
+        recommendations=["Consider adding more entities"],
         metadata={"test": True}
     )
 
@@ -95,10 +99,14 @@ def populated_state(simple_ontology, simple_critic_score):
         
         score = CriticScore(
             completeness=0.7 + i * 0.05,
-            connectivity=0.6 + i * 0.05,
             consistency=0.8 + i * 0.05,
-            overall=0.7 + i * 0.05,
-            feedback=[f"Round {i} feedback"],
+            clarity=0.65 + i * 0.05,
+            granularity=0.72 + i * 0.05,
+            relationship_coherence=0.75 + i * 0.05,
+            domain_alignment=0.78 + i * 0.05,
+            strengths=[f"Round {i} strength"],
+            weaknesses=[f"Round {i} weakness"],
+            recommendations=[f"Round {i} recommendation"],
         )
         
         state.add_round(modified_ontology, score, f"refinement_action_{i}")
@@ -180,10 +188,14 @@ class TestCriticScoreSerialization:
         state = MediatorState(current_ontology=simple_ontology)
         score = CriticScore(
             completeness=0.85,
-            connectivity=0.75,
             consistency=0.95,
-            overall=0.85,
-            feedback=["test feedback 1", "test feedback 2"],
+            clarity=0.75,
+            granularity=0.80,
+            relationship_coherence=0.82,
+            domain_alignment=0.88,
+            strengths=["test strength 1", "test strength 2"],
+            weaknesses=["test weakness"],
+            recommendations=["test recommendation 1", "test recommendation 2"],
             metadata={"key": "value"}
         )
         state.add_round(simple_ontology, score, "test_action")
@@ -193,25 +205,39 @@ class TestCriticScoreSerialization:
         
         restored_score = deserialized.critic_scores[0]
         assert restored_score.completeness == 0.85
-        assert restored_score.connectivity == 0.75
         assert restored_score.consistency == 0.95
-        assert restored_score.overall == 0.85
-        assert len(restored_score.feedback) == 2
+        assert restored_score.clarity == 0.75
+        assert restored_score.granularity == 0.80
+        assert restored_score.relationship_coherence == 0.82
+        assert restored_score.domain_alignment == 0.88
+        assert len(restored_score.strengths) == 2
+        assert len(restored_score.weaknesses) == 1
+        assert len(restored_score.recommendations) == 2
         assert restored_score.metadata["key"] == "value"
     
     def test_critic_score_feedback_list_preserved(self, simple_ontology):
-        """CriticScore feedback list is preserved."""
+        """CriticScore feedback lists are preserved."""
         state = MediatorState(current_ontology=simple_ontology)
         score = CriticScore(
-            completeness=0.8, connectivity=0.7, consistency=0.9, overall=0.8,
-            feedback=["feedback1", "feedback2", "feedback3"]
+            completeness=0.8,
+            consistency=0.9,
+            clarity=0.7,
+            granularity=0.75,
+            relationship_coherence=0.82,
+            domain_alignment=0.85,
+            strengths=["strength1", "strength2", "strength3"],
+            weaknesses=["weakness1", "weakness2"],
+            recommendations=["rec1", "rec2", "rec3", "rec4"]
         )
         state.add_round(simple_ontology, score, "action")
         
         serialized = state.to_dict()
         deserialized = MediatorState.from_dict(serialized)
         
-        assert deserialized.critic_scores[0].feedback == ["feedback1", "feedback2", "feedback3"]
+        restored_score = deserialized.critic_scores[0]
+        assert restored_score.strengths == ["strength1", "strength2", "strength3"]
+        assert restored_score.weaknesses == ["weakness1", "weakness2"]
+        assert restored_score.recommendations == ["rec1", "rec2", "rec3", "rec4"]
     
     def test_multiple_critic_scores_preserved(self, populated_state):
         """Multiple CriticScore objects are preserved in order."""
