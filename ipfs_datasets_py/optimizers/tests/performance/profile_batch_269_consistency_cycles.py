@@ -32,6 +32,11 @@ def build_ontology(
     with_cycle: bool = False,
 ) -> Dict[str, Any]:
     """Create a synthetic ontology with optional hierarchy cycles."""
+    if entity_count <= 0:
+        raise ValueError("entity_count must be > 0")
+    if relationship_count < 0:
+        raise ValueError("relationship_count must be >= 0")
+
     entities: List[Dict[str, Any]] = []
     for idx in range(entity_count):
         entities.append(

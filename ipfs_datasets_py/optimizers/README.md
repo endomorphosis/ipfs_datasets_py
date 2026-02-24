@@ -133,6 +133,8 @@ classDiagram
 > - [Performance Tuning Guide](../../docs/optimizers/PERFORMANCE_TUNING_GUIDE.md) - Optimize execution speed and resource usage
 > - [Troubleshooting Guide](../../docs/optimizers/TROUBLESHOOTING_GUIDE.md) - Common issues and solutions
 > - [Integration Examples](../../docs/optimizers/INTEGRATION_EXAMPLES.md) - Real-world use cases (FastAPI, Flask, CLI, batch processing)
+> - [Sandboxed Prover Policy](../../docs/optimizers/SANDBOXED_PROVER_POLICY.md) - Security baseline for untrusted external prover subprocesses
+> - [Troubleshooting Dashboards](../../docs/optimizers/TROUBLESHOOTING_DASHBOARDS.md) - Metrics/log panels for performance and quality drift triage
 
 ### Agentic Optimizer CLI
 

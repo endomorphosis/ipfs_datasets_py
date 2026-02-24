@@ -155,7 +155,13 @@ class LogicOptimizer:
                 "timestamp": _datetime.now().isoformat(),
             }
             logger.info("LOGIC_BATCH_ANALYSIS: %s", _json.dumps(with_schema(payload), default=str))
-        except Exception as exc:  # pragma: no cover - logging must be best-effort
+        except (
+            AttributeError,
+            ImportError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:  # pragma: no cover - logging must be best-effort
             logger.debug("Logic batch analysis JSON logging failed: %s", exc)
         
         return report

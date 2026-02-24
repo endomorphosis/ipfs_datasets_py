@@ -49,6 +49,12 @@ class DummyHost:
         return {}
 
 
+class QueryStatsValueError:
+    @property
+    def query_count(self) -> int:
+        raise ValueError("bad query count")
+
+
 def test_increment_failure_counter_trips_circuit_breaker() -> None:
     host = DummyHost()
 
@@ -89,3 +95,31 @@ def test_check_learning_cycle_skips_when_circuit_breaker_active() -> None:
     assert host._learning_circuit_breaker_tripped is True
     event_names = [event[0] for event in host.metrics_collector.events]
     assert "circuit_breaker_reset" not in event_names
+
+
+def test_check_learning_cycle_handles_invalid_query_count_type_error() -> None:
+    host = DummyHost()
+    host.query_stats = QueryStatsValueError()
+
+    check_learning_cycle(host)
+
+    assert host._learning_failure_count >= 1
+    event_names = [event[0] for event in host.metrics_collector.events]
+    assert "learning_failure" in event_names
+
+
+def test_check_learning_cycle_handles_learning_cycle_value_error() -> None:
+    host = DummyHost()
+    host.query_stats = DummyQueryStats(25)
+    host._learning_cycle = 5
+
+    def _raise_value_error(recent_queries_count):
+        raise ValueError("stats unavailable")
+
+    host._learn_from_query_statistics = _raise_value_error  # type: ignore[assignment]
+
+    check_learning_cycle(host)
+
+    assert host._learning_failure_count >= 1
+    event_names = [event[0] for event in host.metrics_collector.events]
+    assert "learning_cycle_error" in event_names

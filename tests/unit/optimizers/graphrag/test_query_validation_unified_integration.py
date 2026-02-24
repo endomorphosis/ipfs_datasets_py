@@ -4,6 +4,7 @@ Tests that the validation mixin properly sanitizes query parameters and provides
 safe defaults for the unified optimizer.
 """
 
+import copy
 import pytest
 import numpy as np
 from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import UnifiedGraphRAGQueryOptimizer
@@ -204,6 +205,23 @@ class TestValidationEdgeCases:
         assert result["min_similarity"] == 0.8
         assert isinstance(result["min_similarity"], float)
         assert result["traversal"]["max_depth"] == 3
+
+    def test_optimize_query_does_not_mutate_input(self):
+        """optimize_query should not mutate caller-provided query dict."""
+        optimizer = UnifiedGraphRAGQueryOptimizer()
+
+        query = {
+            "query_vector": [0.1, 0.2, 0.3],
+            "max_vector_results": 8,
+            "min_similarity": 0.4,
+            "edge_types": ["related_to"],
+            "max_traversal_depth": 4,
+        }
+        original = copy.deepcopy(query)
+
+        optimizer.optimize_query(query)
+
+        assert query == original
         assert isinstance(result["traversal"]["max_depth"], (int, float))
     
     def test_handles_edge_types_none(self):

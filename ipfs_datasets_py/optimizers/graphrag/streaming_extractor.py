@@ -176,7 +176,7 @@ class StreamingEntityExtractor:
                     f"{processing_time_ms:.2f}ms"
                 )
                 
-            except Exception as e:
+            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
                 self._log.error(
                     f"Error processing chunk {chunk_id} [{chunk_start}:{chunk_end}]: {e}"
                 )

@@ -363,6 +363,30 @@ class TestConflictResolution:
         
         assert len(conflicts) == 1
         assert conflicts[0]['type'] == 'relationship_type_conflict'
+
+    def test_incomplete_entities_do_not_create_spurious_conflicts(self):
+        """Entities missing text/type should be ignored for conflict detection."""
+        votes = [
+            AgentVote(agent_id='a1', entities=[{'text': None, 'type': 'PERSON', 'confidence': 0.9}]),
+            AgentVote(agent_id='a2', entities=[{'text': None, 'type': 'LOCATION', 'confidence': 0.8}]),
+            AgentVote(agent_id='a3', entities=[{'text': 'Alice', 'type': 'PERSON', 'confidence': 0.95}]),
+        ]
+
+        conflicts = ConflictResolver.find_conflicts(votes)
+
+        assert conflicts == []
+
+    def test_incomplete_relationships_do_not_create_spurious_conflicts(self):
+        """Relationships missing endpoints/type should be ignored for conflict detection."""
+        votes = [
+            AgentVote(agent_id='a1', relationships=[{'source_id': None, 'target_id': 'e2', 'type': 'WORKS_FOR'}]),
+            AgentVote(agent_id='a2', relationships=[{'source_id': None, 'target_id': 'e2', 'type': 'MANAGES'}]),
+            AgentVote(agent_id='a3', relationships=[{'source_id': 'e1', 'target_id': 'e2', 'type': 'WORKS_FOR'}]),
+        ]
+
+        conflicts = ConflictResolver.find_conflicts(votes)
+
+        assert conflicts == []
     
     def test_no_conflicts(self):
         """No conflicts when all agree."""

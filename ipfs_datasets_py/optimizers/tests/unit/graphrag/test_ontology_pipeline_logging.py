@@ -89,3 +89,46 @@ def test_pipeline_run_logging_failure_is_non_fatal(caplog) -> None:
     assert result is not None
     debug_msgs = [r.message for r in caplog.records if r.levelname == "DEBUG"]
     assert any("Pipeline JSON logging failed" in msg for msg in debug_msgs)
+
+
+def test_pipeline_run_records_otel_span_attributes_when_enabled() -> None:
+    class _FakeSpan:
+        def __init__(self) -> None:
+            self.attributes = {}
+
+        def set_attribute(self, key, value) -> None:
+            self.attributes[key] = value
+
+    class _FakeSpanCM:
+        def __init__(self, span: _FakeSpan) -> None:
+            self.span = span
+
+        def __enter__(self) -> _FakeSpan:
+            return self.span
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+    class _FakeTracer:
+        def __init__(self) -> None:
+            self.calls = []
+            self.last_span = None
+
+        def start_as_current_span(self, operation: str):
+            self.calls.append(operation)
+            self.last_span = _FakeSpan()
+            return _FakeSpanCM(self.last_span)
+
+    pipeline = _make_pipeline_with_mocks()
+    tracer = _FakeTracer()
+    pipeline._otel_enabled = True
+    pipeline._otel_tracer = tracer
+
+    result = pipeline.run("Alice signed contract", data_source="unit-test", data_type="text", refine=True)
+    assert result is not None
+    assert tracer.calls == ["graphrag.pipeline.run"]
+    assert tracer.last_span is not None
+    assert tracer.last_span.attributes["pipeline.data_source"] == "unit-test"
+    assert tracer.last_span.attributes["pipeline.refine"] is True
+    assert "pipeline.score" in tracer.last_span.attributes
+    assert "pipeline.duration_ms" in tracer.last_span.attributes

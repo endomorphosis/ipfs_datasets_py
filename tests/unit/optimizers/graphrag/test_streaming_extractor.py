@@ -216,6 +216,38 @@ class TestStreamingExtractorCallbacks:
         
         assert len(batches) >= 1
 
+    def test_progress_callback_exception_propagates(self):
+        """Verify callback exceptions are surfaced to caller."""
+        extractor = StreamingEntityExtractor(
+            extractor_func=MockExtractor.extract_simple,
+            chunk_size=20,
+        )
+
+        text = "Alice Bob Charlie Delta Echo Foxtrot"
+
+        def bad_callback(_chars_processed):
+            raise RuntimeError("callback failure")
+
+        with pytest.raises(RuntimeError, match="callback failure"):
+            list(extractor.extract_stream(text, progress_callback=bad_callback))
+
+
+class TestStreamingExtractorErrorHandling:
+    """Test extraction error handling behavior."""
+
+    def test_extractor_exception_propagates(self):
+        """Verify extractor function exceptions are re-raised."""
+        def bad_extractor(_text: str) -> list:
+            raise ValueError("extractor failed")
+
+        extractor = StreamingEntityExtractor(
+            extractor_func=bad_extractor,
+            chunk_size=50,
+        )
+
+        with pytest.raises(ValueError, match="extractor failed"):
+            list(extractor.extract_stream("Alice Bob Charlie"))
+
 
 class TestStreamingExtractorBatching:
     """Test batch accumulation and yielding."""

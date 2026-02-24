@@ -11,6 +11,8 @@ import datetime
 import time
 from typing import Any
 
+from ..common.exceptions import OptimizerError
+
 
 def apply_learning_hook(host: Any) -> None:
     """Best-effort: learn from recent query stats and adjust defaults."""
@@ -84,7 +86,7 @@ def check_learning_cycle(host: Any) -> None:
 
     try:
         current_count = host.query_stats.query_count
-    except Exception as exc:
+    except (AttributeError, TypeError, ValueError, RuntimeError, OptimizerError) as exc:
         print(f"Error retrieving query count: {str(exc)}")
         increment_failure_counter(host, "Failed to retrieve query count")
         return
@@ -170,7 +172,7 @@ def check_learning_cycle(host: Any) -> None:
                             )
                     except (AttributeError, TypeError, RuntimeError):
                         pass
-            except Exception as exc:
+            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError, OptimizerError) as exc:
                 error_msg = f"Error during learning cycle: {str(exc)}"
                 print(f"Statistical learning error: {error_msg}")
                 increment_failure_counter(host, error_msg)
@@ -186,7 +188,7 @@ def check_learning_cycle(host: Any) -> None:
                         pass
 
                 host._last_learning_query_count = current_count
-    except Exception as exc:
+    except (AttributeError, TypeError, ValueError, RuntimeError, KeyError, OptimizerError) as exc:
         error_msg = f"Error checking learning cycle: {str(exc)}"
         print(f"Learning cycle check error: {error_msg}")
         increment_failure_counter(host, error_msg)
@@ -281,5 +283,5 @@ def increment_failure_counter(host: Any, error_message: str, is_critical: bool =
                     )
             except (AttributeError, TypeError, RuntimeError):
                 pass
-    except Exception as exc:
+    except (AttributeError, TypeError, ValueError, RuntimeError, OverflowError, OSError) as exc:
         print(f"Error in failure counting mechanism: {str(exc)}")

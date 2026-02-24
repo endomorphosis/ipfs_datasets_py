@@ -240,8 +240,11 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         Returns:
             Dict: Query with validated parameters
         """
-        # Deep copy to avoid mutating input
-        validated = copy.deepcopy(query)
+        # Shallow copy + traversal copy keeps caller input immutable without full deepcopy cost.
+        validated = dict(query)
+        traversal = validated.get("traversal")
+        if isinstance(traversal, dict):
+            validated["traversal"] = dict(traversal)
         
         # Validate max_vector_results (1-1000, default 5)
         validated["max_vector_results"] = self.validate_numeric_param(
@@ -1281,11 +1284,8 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         if not isinstance(query, dict):
             raise ValueError("query must be a dict")
 
-        # Defensive copy to avoid mutating caller input.
-        planned_query: Dict[str, Any] = copy.deepcopy(query)
-        
         # Validate and sanitize query parameters using QueryValidationMixin
-        planned_query = self._validate_query_parameters(planned_query)
+        planned_query = self._validate_query_parameters(query)
 
         # Normalize traversal parameters into the nested `traversal` object.
         traversal = planned_query.setdefault("traversal", {})

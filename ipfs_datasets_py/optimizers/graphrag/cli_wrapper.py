@@ -10,8 +10,11 @@ Provides command-line interface for:
 import argparse
 import json
 import sys
+import traceback
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from .exceptions import ConfigurationError
 
 
 def _safe_resolve(path_str: str, *, must_exist: bool = False) -> Path:
@@ -361,9 +364,8 @@ Examples:
             
             return 0
             
-        except Exception as e:
+        except (ConfigurationError, OSError, ValueError, TypeError, RuntimeError, json.JSONDecodeError, KeyError) as e:
             print(f"❌ Error: {e}")
-            import traceback
             traceback.print_exc()
             return 1
     
@@ -465,9 +467,8 @@ Examples:
 
             return 0
 
-        except Exception as e:
+        except (ConfigurationError, OSError, ValueError, TypeError, RuntimeError, json.JSONDecodeError, KeyError) as e:
             print(f"❌ Error: {e}")
-            import traceback
             traceback.print_exc()
             return 1
     
@@ -489,7 +490,6 @@ Examples:
         
         try:
             if input_path.suffix.lower() != ".json":
-                from .exceptions import ConfigurationError
                 raise ConfigurationError("validate currently supports JSON ontology files only")
 
             ontology = self._load_ontology_json(input_path)
@@ -563,7 +563,7 @@ Examples:
                     with open(tdfol_path, "w") as f:
                         json.dump(tdfol_report, f, indent=2)
                     print(f"📐 TDFOL formulas saved to: {tdfol_path} ({len(formula_strings)} formulas)")
-                except Exception as e:
+                except (ConfigurationError, OSError, ValueError, TypeError, RuntimeError, AttributeError) as e:
                     print(f"⚠️  Failed to generate TDFOL formulas: {e}")
 
             # Exit code: 0 only if consistency check passed when run.
@@ -571,9 +571,8 @@ Examples:
                 return 0 if report["checks"]["consistency"]["is_consistent"] else 2
             return 0
 
-        except Exception as e:
+        except (ConfigurationError, OSError, ValueError, TypeError, RuntimeError, json.JSONDecodeError, KeyError) as e:
             print(f"❌ Error: {e}")
-            import traceback
             traceback.print_exc()
             return 1
     
@@ -667,9 +666,17 @@ Examples:
 
             return 0
 
-        except Exception as e:
+        except (
+            ImportError,
+            ConfigurationError,
+            OSError,
+            ValueError,
+            TypeError,
+            AttributeError,
+            RuntimeError,
+            KeyError,
+        ) as e:
             print(f"❌ Error: {e}")
-            import traceback
             traceback.print_exc()
             return 1
 
@@ -734,9 +741,17 @@ Examples:
                 print(f"\n📄 Saved to: {output_path}")
 
             return 0
-        except Exception as e:
+        except (
+            ImportError,
+            ConfigurationError,
+            OSError,
+            ValueError,
+            TypeError,
+            AttributeError,
+            RuntimeError,
+            KeyError,
+        ) as e:
             print(f"❌ Error: {e}")
-            import traceback
             traceback.print_exc()
             return 1
     
@@ -773,9 +788,16 @@ Examples:
         except KeyboardInterrupt:
             print("\n\nInterrupted by user")
             return 130
-        except Exception as e:
+        except (
+            ConfigurationError,
+            OSError,
+            ValueError,
+            TypeError,
+            AttributeError,
+            RuntimeError,
+            KeyError,
+        ) as e:
             print(f"❌ Error: {e}")
-            import traceback
             traceback.print_exc()
             return 1
 

@@ -77,3 +77,54 @@ def test_run_refinement_cycle_handles_random_recommendation_strings() -> None:
         assert len(state.critic_scores) >= 1
         assert state.current_ontology is not None
         assert state.total_time_ms >= 0.0
+
+
+def test_run_refinement_cycle_handles_extreme_recommendation_strings() -> None:
+    generator = Mock()
+    critic = Mock()
+
+    base_ontology = {
+        "entities": [{"id": "e1", "type": "Person", "text": "Alice", "confidence": 0.8}],
+        "relationships": [],
+        "metadata": {},
+    }
+    generator.generate_ontology.return_value = base_ontology
+
+    mediator = OntologyMediator(
+        generator=generator,
+        critic=critic,
+        max_rounds=2,
+        convergence_threshold=0.85,
+    )
+
+    context = OntologyGenerationContext(
+        data_source="unit-test",
+        data_type="text",
+        domain="general",
+    )
+
+    long_line = "X" * 4096
+    recommendations = [
+        "",
+        " ",
+        "\n\n\t",
+        "Use stricter relationship typing",
+        "normalize entities!!!???",
+        "slash/path/..//escape",
+        "quote'\"`$(){}[]",
+        "A,B,C;D:E|F&G",
+        long_line,
+        long_line + " tail",
+    ]
+    critic.evaluate_ontology.side_effect = [
+        _make_score(recommendations, overall=0.4),
+        _make_score(recommendations, overall=0.45),
+    ]
+
+    state = mediator.run_refinement_cycle("Alice text", context)
+
+    assert isinstance(state, MediatorState)
+    assert len(state.refinement_history) >= 1
+    assert len(state.critic_scores) >= 1
+    assert state.current_ontology is not None
+    assert state.total_time_ms >= 0.0

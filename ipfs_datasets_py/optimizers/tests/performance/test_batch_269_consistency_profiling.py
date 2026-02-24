@@ -52,6 +52,38 @@ class TestConsistencyProfilingScript:
         assert txt_file.exists(), "Profile .txt output should exist"
         assert txt_file.read_text(encoding="utf-8")
 
+    def test_profile_rejects_zero_entity_count(self, tmp_path):
+        spec = __import__("importlib.util").util.spec_from_file_location(
+            "profile_batch_269",
+            pathlib.Path(__file__).parent / "profile_batch_269_consistency_cycles.py",
+        )
+        module = __import__("importlib.util").util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with pytest.raises(ValueError, match="entity_count must be > 0"):
+            module.profile_consistency(
+                entity_count=0,
+                relationship_count=10,
+                with_cycle=False,
+                output_dir=tmp_path,
+            )
+
+    def test_profile_rejects_negative_relationship_count(self, tmp_path):
+        spec = __import__("importlib.util").util.spec_from_file_location(
+            "profile_batch_269",
+            pathlib.Path(__file__).parent / "profile_batch_269_consistency_cycles.py",
+        )
+        module = __import__("importlib.util").util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with pytest.raises(ValueError, match="relationship_count must be >= 0"):
+            module.profile_consistency(
+                entity_count=10,
+                relationship_count=-1,
+                with_cycle=False,
+                output_dir=tmp_path,
+            )
+
 
 @pytest.mark.llm
 class TestConsistencyProfilingSmoke:

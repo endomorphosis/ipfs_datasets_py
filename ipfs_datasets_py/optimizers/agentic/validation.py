@@ -9,6 +9,7 @@ import ast
 import anyio
 import logging
 import subprocess
+import sys
 import tempfile
 import time
 from abc import ABC, abstractmethod
@@ -478,7 +479,7 @@ class _AsyncPerformanceValidator(Validator):
             compile_start = time.time()
             completed = await anyio.to_thread.run_sync(
                 lambda: subprocess.run(
-                    ["python", "-m", "py_compile", str(temp_path)],
+                    [sys.executable, "-m", "py_compile", str(temp_path)],
                     capture_output=True,
                     timeout=10,
                 )

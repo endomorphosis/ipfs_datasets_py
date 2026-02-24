@@ -96,7 +96,7 @@ class TDFOLFormulaTranslator:
             )
             self.reasoner_available = True
             logger.info("Neurosymbolic reasoner initialized")
-        except Exception as e:
+        except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as e:
             logger.warning(f"Neurosymbolic reasoner not available: {e}")
             self.reasoner = None
             self.reasoner_available = False
@@ -140,7 +140,7 @@ class TDFOLFormulaTranslator:
                 metadata={'parser': 'neurosymbolic'}
             )
             
-        except Exception as e:
+        except (AttributeError, RuntimeError, TypeError, ValueError) as e:
             logger.error(f"TDFOL translation error: {e}")
             return TranslationResult(
                 formula=None,
@@ -202,7 +202,7 @@ class TDFOLFormulaTranslator:
             
             return formula
             
-        except Exception as e:
+        except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as e:
             logger.debug(f"Error creating obligation formula: {e}")
             return None
     
@@ -227,7 +227,7 @@ class TDFOLFormulaTranslator:
             
             return formula
             
-        except Exception as e:
+        except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as e:
             logger.debug(f"Error creating permission formula: {e}")
             return None
     
@@ -252,7 +252,7 @@ class TDFOLFormulaTranslator:
             
             return formula
             
-        except Exception as e:
+        except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as e:
             logger.debug(f"Error creating prohibition formula: {e}")
             return None
     
@@ -274,7 +274,7 @@ class TDFOLFormulaTranslator:
             
             return formula
             
-        except Exception as e:
+        except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as e:
             logger.debug(f"Error creating predicate: {e}")
             return None
     
@@ -299,7 +299,7 @@ class TDFOLFormulaTranslator:
             nl_text = self.reasoner.nl_interface.generate(formula)
             return nl_text
             
-        except Exception as e:
+        except (AttributeError, RuntimeError, TypeError, ValueError) as e:
             logger.debug(f"Error translating from TDFOL: {e}")
             return str(formula)
 
@@ -327,7 +327,7 @@ class CECFormulaTranslator:
             self.cec = CECFramework()
             self.cec_available = True
             logger.info("CEC framework initialized")
-        except Exception as e:
+        except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as e:
             logger.warning(f"CEC framework not available: {e}")
             self.cec = None
             self.cec_available = False
@@ -380,7 +380,7 @@ class CECFormulaTranslator:
                 metadata={'event_type': event_type}
             )
             
-        except Exception as e:
+        except (AttributeError, RuntimeError, TypeError, ValueError) as e:
             logger.error(f"CEC translation error: {e}")
             return TranslationResult(
                 formula=None,

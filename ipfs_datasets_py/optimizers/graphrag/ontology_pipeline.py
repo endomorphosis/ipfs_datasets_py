@@ -177,7 +177,7 @@ class OntologyPipeline:
         if self._otel_enabled and HAVE_OPENTELEMETRY and trace is not None:
             try:
                 self._otel_tracer = trace.get_tracer(__name__)
-            except Exception as exc:  # pragma: no cover - optional dependency
+            except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - optional dependency
                 self._log.debug("OpenTelemetry tracer unavailable: %s", exc)
         try:
             from ipfs_datasets_py.optimizers.common.metrics_prometheus import (
@@ -185,7 +185,7 @@ class OntologyPipeline:
             )
 
             self._prometheus_metrics = get_global_prometheus_metrics()
-        except Exception:  # pragma: no cover - optional metrics dependency
+        except ImportError:  # pragma: no cover - optional metrics dependency
             self._prometheus_metrics = None
 
     @contextmanager
@@ -197,7 +197,7 @@ class OntologyPipeline:
 
         try:
             span_cm = self._otel_tracer.start_as_current_span(operation)
-        except Exception as exc:  # pragma: no cover - optional dependency path
+        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - optional dependency path
             self._log.debug("Failed to create OpenTelemetry span %s: %s", operation, exc)
             yield None
             return
@@ -211,7 +211,7 @@ class OntologyPipeline:
                         span.set_attribute(key, value)
                     else:
                         span.set_attribute(key, str(value))
-                except Exception as exc:  # pragma: no cover - best effort
+                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - best effort
                     self._log.debug("Failed to set span attribute %s=%r: %s", key, value, exc)
             yield span
 
@@ -266,7 +266,7 @@ class OntologyPipeline:
                 return
             try:
                 progress_callback({"stage": stage, "step": step, "total_steps": total_steps, **extra})
-            except Exception as _cb_exc:  # noqa: BLE001
+            except (AttributeError, RuntimeError, TypeError, ValueError) as _cb_exc:
                 self._log.debug("progress_callback raised in stage %r: %s", stage, _cb_exc)
 
         with self._start_otel_span(
@@ -355,7 +355,7 @@ class OntologyPipeline:
                     try:
                         _max_rounds = getattr(self._mediator, "max_rounds", 1)
                         progress_callback(1, _max_rounds, float(getattr(score, "overall", 0.0)))
-                    except Exception as _cb_exc:  # noqa: BLE001
+                    except (AttributeError, RuntimeError, TypeError, ValueError) as _cb_exc:
                         self._log.debug("progress_callback (positional) raised: %s", _cb_exc)
                 stage_timings["refining"] = time.perf_counter() - refine_start
             else:
@@ -416,7 +416,13 @@ class OntologyPipeline:
                     "timestamp": _datetime.now().isoformat(),
                 }
                 self._log.info("PIPELINE_RUN: %s", _json.dumps(with_schema(payload), default=str))
-            except Exception as exc:  # pragma: no cover - logging must be best-effort
+            except (
+                AttributeError,
+                ImportError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as exc:  # pragma: no cover - logging must be best-effort
                 self._log.debug("Pipeline JSON logging failed: %s", exc)
 
             if _span is not None:
@@ -426,7 +432,7 @@ class OntologyPipeline:
                     _span.set_attribute("pipeline.actions_count", len(actions_applied))
                     _span.set_attribute("pipeline.score", float(getattr(score, "overall", 0.0)))
                     _span.set_attribute("pipeline.duration_ms", (time.time() - start_time) * 1000.0)
-                except Exception as exc:  # pragma: no cover - best effort
+                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - best effort
                     self._log.debug("Failed to set final pipeline span attributes: %s", exc)
 
             return result
@@ -918,7 +924,13 @@ class OntologyPipeline:
                 "PIPELINE_BATCH: %s",
                 _json.dumps(with_schema(payload), default=str),
             )
-        except Exception as exc:  # pragma: no cover - logging must be best-effort
+        except (
+            AttributeError,
+            ImportError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:  # pragma: no cover - logging must be best-effort
             self._log.debug("Pipeline batch JSON logging failed: %s", exc)
 
         return results

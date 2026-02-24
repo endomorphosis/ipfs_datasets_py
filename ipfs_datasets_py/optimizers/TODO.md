@@ -47,6 +47,7 @@ It is intentionally infinite: finish work, add new work, repeat.
 - [ ] (P1) [arch] Split `graphrag/query_optimizer.py` into focused modules (`query_planner.py`, `traversal_heuristics.py`, `learning_adapter.py`, `serialization.py`) with behavior parity tests.
 - [ ] (P1) [api] Add package typing marker (`py.typed`) and run strict type audit for optimizer public surface.
 - [ ] (P2) [arch] Replace remaining broad `except Exception` catch-alls with typed exceptions in optimizer core paths.
+  - Progress 2026-02-24: narrowed catch-all handlers to typed exception groups in `common/base_optimizer.py`, `graphrag/ontology_pipeline.py`, `graphrag/cli_wrapper.py` (all core commands + `run`), `graphrag/learning_adapter.py` (learning-cycle/failure-counter paths), `graphrag/streaming_extractor.py` (chunk loop error path), `logic_theorem_optimizer/cli_wrapper.py`, and `logic_theorem_optimizer/logic_optimizer.py`; remaining cleanup is still needed in other optimizer modules.
 - [x] (P2) [arch] Replace broad `except Exception` catch-alls in logic theorem optimizer CLI core commands.
   - Done 2026-02-24: narrowed catch-all blocks in `logic_theorem_optimizer/cli_wrapper.py` (`extract`, `prove`, `validate`, `optimize`, `run`) to typed exception groups; logic CLI prove/validate test suites remain green.
 - [ ] (P2) [agentic] Audit `agentic/` for `**kwargs`-heavy APIs and replace with typed optional parameters.
@@ -63,7 +64,8 @@ Active random picks (different tracks):
   - Done 2026-02-24: added `docs/optimizers/HOW_TO_ADD_NEW_OPTIMIZER.md` and linked it from `DOCUMENTATION_INDEX.md` and `docs/optimizers/INTEGRATION_EXAMPLES.md`.
 - [x] (P3) [logic] Add `--tdfol-output` flag in GraphRAG/logic CLI path to persist generated formulas for debugging.
   - Done 2026-02-24: added `--tdfol-output` to logic theorem optimizer `prove` command with JSON formula payload output and unit test coverage in `tests/unit/optimizers/logic_theorem_optimizer/test_cli_prove.py`.
-- [ ] (P3) [security] Design sandboxed subprocess policy for untrusted prover calls (timeout, resource caps, allowlist).
+- [x] (P3) [security] Design sandboxed subprocess policy for untrusted prover calls (timeout, resource caps, allowlist).
+  - Done 2026-02-24: added `docs/optimizers/SANDBOXED_PROVER_POLICY.md` with threat model, required controls (timeout/resource/filesystem/network/allowlist), rollout plan, and operational defaults.
 - [x] (P2) [tests] Add serialization round-trip tests for refinement session state snapshots.
   - Done 2026-02-24: added `test_batch_271_mediator_state_serialization.py` covering `MediatorState.to_dict()/from_dict()` round-trip and minimal payload restoration.
 - [x] (P2) [graphrag] Add confidence histogram/report helper for extraction results.
@@ -81,7 +83,10 @@ Active random picks (different tracks):
   - Done 2026-02-24: enforced `_safe_resolve()` for GraphRAG CLI output/ontology paths (`generate`, `optimize`, `validate`, `query`) and Logic CLI extract output path, with command-level restricted-path tests in `tests/unit/optimizers/test_safe_resolve_path_traversal.py`.
 - [x] (P2) [obs] Add OpenTelemetry span hooks behind `OTEL_ENABLED` feature flag for pipeline/session boundaries.
   - Done 2026-02-24: OpenTelemetry gating + span hooks exist in `common/base_optimizer.py` and `graphrag/ontology_pipeline.py`; verified by `test_base_optimizer_otel_integration.py` and `test_ontology_pipeline_otel_spans.py`.
-- [ ] (P2) [arch] Narrow broad exception handling in GraphRAG CLI core commands (`generate`, `validate`, `optimize`) to typed exception groups.
+- [x] (P2) [arch] Narrow broad exception handling in GraphRAG CLI core commands (`generate`, `validate`, `optimize`, `query`, `health`, `run`) to typed exception groups.
+  - Done 2026-02-24: replaced broad `except Exception` handlers in GraphRAG CLI core commands with typed exception groups (`ConfigurationError`, `ImportError`, `OSError`, `ValueError`, `TypeError`, `AttributeError`, `RuntimeError`, `json.JSONDecodeError`, `KeyError`) and tightened TDFOL-output fallback exception handling.
+- [x] (P3) [obs] Add troubleshooting dashboard examples for performance and quality drift.
+  - Done 2026-02-24: added `docs/optimizers/TROUBLESHOOTING_DASHBOARDS.md` with Prometheus/Loki panel examples and triage playbook; linked from `docs/optimizers/INTEGRATION_EXAMPLES.md` and `optimizers/README.md`.
 
 Rotation rules:
 - When one item completes, add a new `[ ]` pick from a track not already active.
@@ -128,7 +133,8 @@ Rotation rules:
 - [x] (P2) [obs] Ensure metrics include run duration, score deltas, failure counts, and stage timings.
   - Done 2026-02-24: added `optimizer_score_delta` metric, wired duration/score-delta/validation-failure recording in `BaseOptimizer`, and stage timing histogram in pipeline metrics.
 - [ ] (P3) [obs] Add tracing spans for cross-optimizer workflows with low overhead defaults.
-- [ ] (P3) [obs] Add troubleshooting dashboard examples for performance and quality drift.
+- [x] (P3) [obs] Add troubleshooting dashboard examples for performance and quality drift.
+  - Done 2026-02-24: see `docs/optimizers/TROUBLESHOOTING_DASHBOARDS.md`.
 
 ### 7) Documentation and Developer Experience
 - [ ] (P2) [docs] Keep docs/code drift audit as a recurring task each cycle.
@@ -149,7 +155,7 @@ Pull from this pool when replacing completed random items.
 
 - [ ] (P2) [tests] Add serialization round-trip tests for refinement session state snapshots.
 - [x] (P2) [tests] Add fuzz tests for `OntologyMediator.run_refinement_cycle()` with random recommendation strings.
-  - Done 2026-02-24: added Hypothesis fuzz coverage in `tests/unit/graphrag/test_ontology_mediator_fuzz_recommendations.py`.
+  - Done 2026-02-24: added randomized and extreme-string fuzz coverage in `tests/unit/graphrag/test_ontology_mediator_fuzz_recommendations.py`.
 - [ ] (P2) [perf] Benchmark sentence-window impact on extraction quality vs runtime.
 - [ ] (P2) [perf] Benchmark `LogicValidator.validate_ontology()` on 100-entity synthetic ontologies.
 - [ ] (P2) [graphrag] Add confidence histogram/report helper for extraction results.
@@ -224,7 +230,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P3) [graphrag] Benchmark rule-based extraction vs manual annotations for common domains
 - [ ] (P3) [graphrag] Add LLM-based fallback evaluator that rates quality when rule-based scores are ambiguous
 - [ ] (P3) [graphrag] Add TDFOL formula cache keyed on ontology hash to avoid re-proving unchanged ontologies
-- [ ] (P3) [graphrag] Expose `--tdfol-output` flag in GraphRAG CLI wrapper to dump generated formulas
+- [x] (P3) [graphrag] Expose `--tdfol-output` flag in GraphRAG CLI wrapper to dump generated formulas
+  - Done 2026-02-24: `graphrag/cli_wrapper.py` `validate` command exposes `--tdfol-output` and writes serialized formula bundles; covered by `tests/unit/optimizers/graphrag/test_cli_tdfol_output.py`.
 - [ ] (P3) [logic] Add interactive REPL mode to `logic-theorem-optimizer` CLI
 - [ ] (P3) [tests] Mutation testing pass on `graphrag/ontology_critic.py` dimension evaluators
 - [ ] (P3) [perf] Benchmark `OntologyGenerator.extract_entities()` on 10k-token documents
@@ -283,26 +290,38 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P2) [graphrag] Add `LogicValidator.contradiction_count(ontology)` -- alias for count_contradictions
 - [x] (P3) [graphrag] Add `OntologyCritic.dimension_scores(score)` -- dict of all 5 dim values
   - Done 2026-02-24: added missing `relationship_coherence` in `dimension_scores()` output and covered behavior in `test_batch_274_critic_dimension_and_range_helpers.py`.
-- [ ] (P2) [graphrag] Add `ExtractionConfig.with_threshold(t)` -- return copy with new threshold
-- [ ] (P2) [graphrag] Add `OntologyGenerator.filter_result_by_confidence(result, min_conf)` -- alias for strip_low_confidence with cleaner name
+- [x] (P2) [graphrag] Add `ExtractionConfig.with_threshold(t)` -- return copy with new threshold
+  - Done 2026-02-24: covered copy semantics and threshold override behavior in `tests/unit/graphrag/test_batch_276_helper_aliases_and_stats.py`.
+- [x] (P2) [graphrag] Add `OntologyGenerator.filter_result_by_confidence(result, min_conf)` -- alias for strip_low_confidence with cleaner name
+  - Done 2026-02-24: validated alias behavior and relationship pruning in `test_batch_276_helper_aliases_and_stats.py`.
 - [ ] (P3) [graphrag] Add `OntologyMediator.pending_recommendation()` -- top recommendation without consuming it
-- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.feedback_ids()` -- list of unique session_ids or feedback identifiers
+- [x] (P2) [graphrag] Add `OntologyLearningAdapter.feedback_ids()` -- list of unique session_ids or feedback identifiers
+  - Done 2026-02-24: tested generated identifiers for action-based and fallback records in `test_batch_276_helper_aliases_and_stats.py`.
 - [ ] (P2) [graphrag] Add `EntityExtractionResult.entity_texts()` -- list of all entity text values
-- [ ] (P2) [graphrag] Add `OntologyCritic.passes_all(scores, threshold)` -- True if all scores pass threshold
+- [x] (P2) [graphrag] Add `OntologyCritic.passes_all(scores, threshold)` -- True if all scores pass threshold
+  - Done 2026-02-24: added pass/fail threshold assertions for `passes_all()` in `test_batch_276_helper_aliases_and_stats.py`.
 - [ ] (P2) [graphrag] Add `OntologyOptimizer.latest_batch_size()` -- number of ontologies in last batch
-- [ ] (P3) [graphrag] Add `OntologyPipeline.has_run()` -- bool whether any runs have been made
-- [ ] (P2) [graphrag] Add `OntologyGenerator.entity_ids(result)` -- list of all entity IDs
-- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.feedback_summary_dict()` -- dict with count/mean/variance
-- [ ] (P2) [graphrag] Add `LogicValidator.is_empty(ontology)` -- True if no entities or relationships
-- [ ] (P2) [graphrag] `EntityExtractionResult.to_dict()` -- serialize result to plain dict
-- [ ] (P2) [graphrag] `EntityExtractionResult.entity_count` property -- len(self.entities)
+- [x] (P3) [graphrag] Add `OntologyPipeline.has_run()` -- bool whether any runs have been made
+  - Done 2026-02-24: validated run-history detection in `test_batch_276_helper_aliases_and_stats.py`.
+- [x] (P2) [graphrag] Add `OntologyGenerator.entity_ids(result)` -- list of all entity IDs
+  - Done 2026-02-24: covered ID extraction helper in `test_batch_276_helper_aliases_and_stats.py`.
+- [x] (P2) [graphrag] Add `OntologyLearningAdapter.feedback_summary_dict()` -- dict with count/mean/variance
+  - Done 2026-02-24: verified count/mean/variance summary output in `test_batch_276_helper_aliases_and_stats.py`.
+- [x] (P2) [graphrag] Add `LogicValidator.is_empty(ontology)` -- True if no entities or relationships
+  - Done 2026-02-24: added empty/non-empty ontology assertions in `test_batch_276_helper_aliases_and_stats.py`.
+- [x] (P2) [graphrag] `EntityExtractionResult.to_dict()` -- serialize result to plain dict
+  - Done 2026-02-24: verified serialization output and round-trip via `EntityExtractionResult.from_dict()` in `tests/unit/graphrag/test_batch_275_entity_extraction_result_serialization_helpers.py`.
+- [x] (P2) [graphrag] `EntityExtractionResult.entity_count` property -- len(self.entities)
+  - Done 2026-02-24: added coverage for `entity_count` and `relationship_count` properties in `test_batch_275_entity_extraction_result_serialization_helpers.py`.
 - [ ] (P2) [graphrag] `OntologyGenerator.group_entities_by_confidence_band(result, bands)` -- bucket entities into confidence ranges
 - [ ] (P2) [graphrag] `OntologyOptimizer.convergence_rate()` -- fraction of consecutive pairs with improvement < 0.01
 - [ ] (P2) [graphrag] `OntologyMediator.action_types()` -- sorted list of distinct action type strings seen
-- [ ] (P2) [graphrag] `OntologyCritic.all_pass(scores, threshold)` -- True if all score.overall > threshold (alias for passes_all, strict)
+- [x] (P2) [graphrag] `OntologyCritic.all_pass(scores, threshold)` -- True if all score.overall > threshold (alias for passes_all, strict)
+  - Done 2026-02-24: validated strict-threshold behavior in `test_batch_276_helper_aliases_and_stats.py`.
 - [ ] (P2) [graphrag] `LogicValidator.has_contradictions(ontology)` -- True if any contradictions found
 - [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_below(threshold)` -- list of records below threshold
-- [ ] (P2) [graphrag] `OntologyPipeline.average_run_score()` -- mean score.overall across all runs
+- [x] (P2) [graphrag] `OntologyPipeline.average_run_score()` -- mean score.overall across all runs
+  - Done 2026-02-24: covered mean-score helper on prepopulated run history in `test_batch_276_helper_aliases_and_stats.py`.
 - [ ] (P2) [graphrag] `OntologyGenerator.relationships_for_entity(result, eid)` -- rels where entity is source or target
 - [ ] (P3) [graphrag] `ExtractionConfig.to_dict()` -- serialize config to plain dict
 - [ ] (P3) [graphrag] `OntologyOptimizer.history_as_list()` -- list of average_score floats
@@ -313,13 +332,20 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P3) [graphrag] `OntologyLearningAdapter.feedback_above(threshold)` -- list of records above threshold
 - [ ] (P3) [graphrag] `OntologyMediator.clear_stash()` -- empty the stash stack
 - [ ] (P3) [graphrag] `LogicValidator.summary_dict(ontology)` -- {entity_count, relationship_count, has_contradictions}
-- [ ] (P2) [graphrag] `OntologyPipeline.score_at(index)` -- score.overall from _run_history[index]
-- [ ] (P2) [graphrag] `EntityExtractionResult.to_dict()` — full serialization to plain dict (entities, relationships, confidence, metadata)
-- [ ] (P2) [graphrag] `EntityExtractionResult.from_dict(d)` — classmethod deserializer (inverse of to_dict)
-- [ ] (P2) [graphrag] `EntityExtractionResult.entity_count` — `@property` len(self.entities)
-- [ ] (P2) [graphrag] `EntityExtractionResult.relationship_count` — `@property` len(self.relationships)
-- [ ] (P2) [graphrag] `EntityExtractionResult.is_empty()` — True if no entities AND no relationships
-- [ ] (P2) [graphrag] `EntityExtractionResult.has_relationships()` — True if relationships list is non-empty
+- [x] (P2) [graphrag] `OntologyPipeline.score_at(index)` -- score.overall from _run_history[index]
+  - Done 2026-02-24: added indexed score retrieval assertion in `test_batch_276_helper_aliases_and_stats.py`.
+- [x] (P2) [graphrag] `EntityExtractionResult.to_dict()` — full serialization to plain dict (entities, relationships, confidence, metadata)
+  - Done 2026-02-24: round-trip-tested `to_dict()/from_dict()` and metadata/errors preservation in `tests/unit/graphrag/test_batch_275_entity_extraction_result_serialization_helpers.py`.
+- [x] (P2) [graphrag] `EntityExtractionResult.from_dict(d)` — classmethod deserializer (inverse of to_dict)
+  - Done 2026-02-24: validated inverse behavior against representative entity+relationship payload in `test_batch_275_entity_extraction_result_serialization_helpers.py`.
+- [x] (P2) [graphrag] `EntityExtractionResult.entity_count` — `@property` len(self.entities)
+  - Done 2026-02-24: added assertions for entity count helper in `test_batch_275_entity_extraction_result_serialization_helpers.py`.
+- [x] (P2) [graphrag] `EntityExtractionResult.relationship_count` — `@property` len(self.relationships)
+  - Done 2026-02-24: added assertions for relationship count helper in `test_batch_275_entity_extraction_result_serialization_helpers.py`.
+- [x] (P2) [graphrag] `EntityExtractionResult.is_empty()` — True if no entities AND no relationships
+  - Done 2026-02-24: covered empty/non-empty result behavior in `test_batch_275_entity_extraction_result_serialization_helpers.py`.
+- [x] (P2) [graphrag] `EntityExtractionResult.has_relationships()` — True if relationships list is non-empty
+  - Done 2026-02-24: covered relationship-presence helper in `test_batch_275_entity_extraction_result_serialization_helpers.py`.
 - [ ] (P2) [graphrag] `EntityExtractionResult.top_entities(n)` — top N entities by confidence
 - [ ] (P2) [graphrag] `EntityExtractionResult.entities_of_type(etype)` — alias for filter_by_type
 - [ ] (P3) [graphrag] `EntityExtractionResult.confidence_stats()` — dict with mean/min/max/std of confidences

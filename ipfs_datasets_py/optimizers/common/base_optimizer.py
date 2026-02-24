@@ -145,7 +145,7 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
         if self._otel_enabled and HAVE_OPENTELEMETRY and trace is not None:
             try:
                 self._otel_tracer = trace.get_tracer(__name__)
-            except Exception as exc:  # pragma: no cover - optional tracing dependency
+            except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - optional tracing dependency
                 _logger.debug("OpenTelemetry tracer unavailable: %s", exc)
 
         # Optional Prometheus collector (enabled via ENABLE_PROMETHEUS env var).
@@ -153,7 +153,7 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
         try:
             from .metrics_prometheus import PrometheusMetrics
             self._prometheus_metrics = PrometheusMetrics()
-        except Exception as exc:  # pragma: no cover - optional dependency path
+        except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - optional dependency path
             _logger.debug("Prometheus metrics unavailable: %s", exc)
 
     @contextmanager
@@ -165,7 +165,7 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
 
         try:
             span_cm = self._otel_tracer.start_as_current_span(operation)
-        except Exception as exc:  # pragma: no cover - optional dependency path
+        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - optional dependency path
             _logger.debug("Failed to create OpenTelemetry span %s: %s", operation, exc)
             yield None
             return
@@ -179,7 +179,7 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
                         span.set_attribute(key, value)
                     else:
                         span.set_attribute(key, str(value))
-                except Exception as exc:  # pragma: no cover - best effort
+                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - best effort
                     _logger.debug("Failed to set span attribute %s=%r: %s", key, value, exc)
             yield span
         
@@ -337,19 +337,19 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
                     pass  # Never let metrics break the optimization
             try:
                 self.on_session_start(context, input_data)
-            except Exception as exc:  # pragma: no cover - hooks are best effort
+            except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - hooks are best effort
                 _logger.debug("on_session_start hook failed: %s", exc)
 
             # Generate initial artifact
             artifact = self.generate(input_data, context)
             try:
                 self.on_generate_complete(artifact, context)
-            except Exception as exc:  # pragma: no cover
+            except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover
                 _logger.debug("on_generate_complete hook failed: %s", exc)
             score, feedback = self.critique(artifact, context)
             try:
                 self.on_critique_complete(artifact, score, feedback, context)
-            except Exception as exc:  # pragma: no cover
+            except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover
                 _logger.debug("on_critique_complete hook failed: %s", exc)
 
             iterations = 0
@@ -373,13 +373,13 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
                 artifact = self.optimize(artifact, score, feedback, context)
                 try:
                     self.on_optimize_complete(artifact, score, feedback, iteration + 1, context)
-                except Exception as exc:  # pragma: no cover
+                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover
                     _logger.debug("on_optimize_complete hook failed: %s", exc)
                 prev_score = score
                 score, feedback = self.critique(artifact, context)
                 try:
                     self.on_critique_complete(artifact, score, feedback, context)
-                except Exception as exc:  # pragma: no cover
+                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover
                     _logger.debug("on_critique_complete hook failed: %s", exc)
 
             # Validate
@@ -388,7 +388,7 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
                 valid = self.validate(artifact, context)
                 try:
                     self.on_validate_complete(artifact, valid, context)
-                except Exception as exc:  # pragma: no cover
+                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover
                     _logger.debug("on_validate_complete hook failed: %s", exc)
 
             execution_time = (datetime.now() - start_time).total_seconds()
@@ -398,7 +398,7 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
             if self.metrics_collector is not None:
                 try:
                     self.metrics_collector.end_cycle(cycle_id, success=valid)
-                except Exception as e:
+                except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                     _logger.warning(f"Metrics collection end failed: {e}")
 
             # Record Prometheus-compatible metrics (best effort).
@@ -425,7 +425,7 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
                     )
                     if not valid:
                         self._prometheus_metrics.record_error("validation_failed", context.domain)
-                except Exception as exc:  # pragma: no cover - metrics must be non-fatal
+                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - metrics must be non-fatal
                     _logger.debug("Prometheus metrics recording failed: %s", exc)
 
             _logger.info(
@@ -465,12 +465,12 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
                     _span.set_attribute("optimizer.final_score", float(score))
                     _span.set_attribute("optimizer.valid", bool(valid))
                     _span.set_attribute("optimizer.execution_time_ms", execution_time_ms)
-                except Exception as exc:  # pragma: no cover - best effort
+                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - best effort
                     _logger.debug("Failed to set final span attributes: %s", exc)
 
             try:
                 self.on_session_complete(result, context)
-            except Exception as exc:  # pragma: no cover
+            except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover
                 _logger.debug("on_session_complete hook failed: %s", exc)
 
             return result
@@ -555,7 +555,7 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
                 'execution_time': execution_time,
                 'execution_time_ms': execution_time_ms,
             }
-        except Exception as e:
+        except (AttributeError, RuntimeError, TypeError, ValueError) as e:
             _logger.error(
                 "dry_run failed session_id=%s domain=%s error=%s",
                 context.session_id,

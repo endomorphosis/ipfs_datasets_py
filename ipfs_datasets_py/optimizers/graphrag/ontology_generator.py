@@ -3687,7 +3687,7 @@ class OntologyGenerator:
         def _extract(idx: int, doc: Any) -> tuple:
             try:
                 return idx, self.extract_entities(doc, context)
-            except Exception as exc:  # extraction must never crash the whole batch
+            except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # extraction must never crash the whole batch
                 empty = EntityExtractionResult(
                     entities=[],
                     relationships=[],
@@ -3909,7 +3909,7 @@ class OntologyGenerator:
             try:
                 result = self.extract_entities(window_text, context)
                 window_results.append(result)
-            except Exception as e:
+            except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                 self._log.warning(
                     f"Extraction failed for window {i} ({len(window_text)} chars): {e}"
                 )
@@ -4479,7 +4479,7 @@ class OntologyGenerator:
                     "relationship_coherence": critic_score.relationship_coherence,
                     "domain_alignment": critic_score.domain_alignment,
                 }
-            except Exception as e:
+            except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                 logger.warning(f"Critic evaluation failed: {e}")
 
         # Step 4: Update metadata
@@ -4891,7 +4891,7 @@ class OntologyGenerator:
                 parsed.relationships = self.infer_relationships(parsed.entities, context, data=data)
             parsed.metadata.setdefault("method", "llm_based")
             return parsed
-        except Exception as exc:
+        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
             self._log.warning("LLM extraction failed, falling back to rule-based: %s", exc)
             fallback = self._extract_rule_based(data, context)
             fallback.metadata["method"] = "llm_fallback_rule_based"
@@ -5680,7 +5680,7 @@ class OntologyGenerator:
                 idx = futures[future]
                 try:
                     ordered[idx] = future.result()
-                except Exception as exc:
+                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
                     ordered[idx] = EntityExtractionResult(
                         entities=[],
                         relationships=[],

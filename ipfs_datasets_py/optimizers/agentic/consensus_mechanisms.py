@@ -394,6 +394,9 @@ class ConflictResolver:
         for vote in votes:
             for entity in vote.entities:
                 text = entity.get('text')
+                entity_type = entity.get('type')
+                if text is None or entity_type is None:
+                    continue
                 entity_by_text[text].append({
                     'agent_id': vote.agent_id,
                     'entity': entity
@@ -415,6 +418,9 @@ class ConflictResolver:
             for rel in vote.relationships:
                 src = rel.get('source_id')
                 tgt = rel.get('target_id')
+                rel_type = rel.get('type')
+                if src is None or tgt is None or rel_type is None:
+                    continue
                 key = (src, tgt)
                 rel_by_endpoints[key].append({
                     'agent_id': vote.agent_id,
