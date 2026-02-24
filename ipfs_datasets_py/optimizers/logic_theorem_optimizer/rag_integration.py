@@ -90,7 +90,7 @@ class RAGIntegration:
             from ipfs_datasets_py.search.logic_integration import LogicEnhancedRAG
             self.rag_system = LogicEnhancedRAG(use_neural=True)
             logger.info("LogicEnhancedRAG system initialized")
-        except (ImportError, Exception) as e:
+        except (ImportError, AttributeError, RuntimeError, TypeError, ValueError) as e:
             logger.warning(f"LogicEnhancedRAG not available: {e}")
             self.rag_system = None
     
@@ -183,7 +183,7 @@ class RAGIntegration:
             # Calculate confidence
             context.confidence = result.confidence if hasattr(result, 'confidence') else 0.5
             
-        except Exception as e:
+        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             logger.error(f"Error retrieving from RAG: {e}")
             context.confidence = 0.0
         
@@ -420,7 +420,7 @@ class RAGIntegration:
                     f"Example: {input_text} -> {output_formula}",
                     f"example_{hashlib.md5(input_text.encode()).hexdigest()}"
                 )
-            except Exception as e:
+            except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Error storing extraction in RAG: {e}")
         
         # Also store in local cache for quick access

@@ -154,21 +154,21 @@ class KnowledgeGraphIntegration:
                 context.relationships = relationships
                 self.stats['entities_extracted'] += len(entities)
                 logger.debug(f"Extracted {len(entities)} entities, {len(relationships)} relationships")
-            except Exception as e:
+            except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                 logger.warning(f"Entity extraction error: {e}")
         
         # Get ontology constraints
         if self.kg:
             try:
                 context.ontology = self._extract_ontology_constraints()
-            except Exception as e:
+            except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                 logger.warning(f"Ontology extraction error: {e}")
         
         # Get relevant theorems
         if self.theorem_rag:
             try:
                 context.relevant_theorems = self._get_relevant_theorems(text)
-            except Exception as e:
+            except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                 logger.warning(f"Theorem retrieval error: {e}")
         
         return context
@@ -221,7 +221,7 @@ class KnowledgeGraphIntegration:
             
             return True
             
-        except Exception as e:
+        except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as e:
             logger.error(f"Error adding statement to KG: {e}")
             return False
     
@@ -259,7 +259,7 @@ class KnowledgeGraphIntegration:
             logger.info(f"Loaded ontology with {len(ontology_dict.get('entity_types', {}))} entity types")
             return True
             
-        except Exception as e:
+        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             logger.error(f"Error loading ontology: {e}")
             return False
     
@@ -283,7 +283,7 @@ class KnowledgeGraphIntegration:
         try:
             results = self.kg.query(query, limit=top_k)
             return results
-        except Exception as e:
+        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             logger.warning(f"KG query error: {e}")
             return []
     
@@ -343,7 +343,7 @@ class KnowledgeGraphIntegration:
             
             return theorems[:top_k]
             
-        except Exception as e:
+        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             logger.warning(f"Theorem retrieval error: {e}")
             return []
     

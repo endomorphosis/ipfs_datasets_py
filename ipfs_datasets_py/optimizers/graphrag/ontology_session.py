@@ -45,6 +45,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from ..common.exceptions import OptimizerError
+
 logger = logging.getLogger(__name__)
 
 
@@ -278,7 +280,7 @@ class OntologySession:
             
             return result
             
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError, ImportError, OptimizerError) as e:
             logger.error(f"Session failed: {e}", exc_info=True)
             
             # Return partial result on failure

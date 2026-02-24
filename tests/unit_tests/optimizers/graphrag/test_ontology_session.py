@@ -437,7 +437,7 @@ class TestSessionEdgeCases:
         THEN: Error is handled gracefully via partial result
         """
         # GIVEN
-        mock_components['mediator'].run_refinement_cycle.side_effect = Exception("Test error")
+        mock_components['mediator'].run_refinement_cycle.side_effect = RuntimeError("Test error")
         session = OntologySession(**mock_components)
         
         # WHEN

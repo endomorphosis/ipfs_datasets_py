@@ -2213,6 +2213,20 @@ class EntityExtractionResult:
             "std": _math.sqrt(variance),
         }
 
+    def top_entities(self, n: int = 10) -> List["Entity"]:
+        """Return the top *n* entities by confidence in descending order.
+
+        Args:
+            n: Maximum number of entities to return (default: 10).
+
+        Returns:
+            List of up to *n* :class:`Entity` objects sorted by descending
+            confidence. Returns an empty list when *n* <= 0.
+        """
+        if n <= 0:
+            return []
+        return sorted(self.entities, key=lambda e: e.confidence, reverse=True)[:n]
+
     def top_confidence_entity(self) -> Optional["Entity"]:
         """Return the entity with the highest confidence score.
 

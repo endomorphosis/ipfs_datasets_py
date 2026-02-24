@@ -47,7 +47,7 @@ It is intentionally infinite: finish work, add new work, repeat.
 - [ ] (P1) [arch] Split `graphrag/query_optimizer.py` into focused modules (`query_planner.py`, `traversal_heuristics.py`, `learning_adapter.py`, `serialization.py`) with behavior parity tests.
 - [ ] (P1) [api] Add package typing marker (`py.typed`) and run strict type audit for optimizer public surface.
 - [ ] (P2) [arch] Replace remaining broad `except Exception` catch-alls with typed exceptions in optimizer core paths.
-  - Progress 2026-02-24: narrowed catch-all handlers to typed exception groups in `common/base_optimizer.py`, `common/seed_control.py`, `graphrag/ontology_generator.py`, `graphrag/ontology_pipeline.py`, `graphrag/ontology_critic.py`, `graphrag/ontology_mediator.py`, `graphrag/cli_wrapper.py` (all core commands + `run`), `graphrag/learning_adapter.py` (learning-cycle/failure-counter paths), `graphrag/streaming_extractor.py` (chunk loop error path), `graphrag/query_metrics.py` (JSON export + numpy-serialization + persistence fallback paths), `graphrag/logic_validator.py` (`check_consistency`, `batch_validate`, `explain_entity` error paths), `graphrag/ontology_serialization.py` (type-hint resolution fallback path), `graphrag/data_transformers.py` (`Transformation.transform_batch` typed error handling), `logic_theorem_optimizer/cli_wrapper.py`, `logic_theorem_optimizer/logic_optimizer.py`, `logic_theorem_optimizer/formula_translation.py`, `logic_theorem_optimizer/llm_backend.py`, `logic_theorem_optimizer/prover_integration.py`, `logic_theorem_optimizer/logic_critic.py`, `logic_theorem_optimizer/unified_optimizer.py`, and `logic_theorem_optimizer/distributed_processor.py`; remaining cleanup is still needed in other optimizer modules.
+  - Progress 2026-02-24: narrowed catch-all handlers to typed exception groups in `common/base_optimizer.py`, `common/seed_control.py`, `graphrag/ontology_generator.py`, `graphrag/ontology_pipeline.py`, `graphrag/ontology_critic.py`, `graphrag/ontology_mediator.py`, `graphrag/cli_wrapper.py` (all core commands + `run`), `graphrag/learning_adapter.py` (learning-cycle/failure-counter paths), `graphrag/streaming_extractor.py` (chunk loop error path), `graphrag/query_metrics.py` (JSON export + numpy-serialization + persistence fallback paths), `graphrag/logic_validator.py` (`check_consistency`, `batch_validate`, `explain_entity` error paths), `graphrag/ontology_serialization.py` (type-hint resolution fallback path), `graphrag/data_transformers.py` (`Transformation.transform_batch` typed error handling), `graphrag/ontology_session.py` (`run` failure-return path), `graphrag/ontology_harness.py` (`run_single_session` and optimizer-analysis fallback error paths), `logic_theorem_optimizer/cli_wrapper.py`, `logic_theorem_optimizer/logic_optimizer.py`, `logic_theorem_optimizer/formula_translation.py`, `logic_theorem_optimizer/llm_backend.py`, `logic_theorem_optimizer/prover_integration.py`, `logic_theorem_optimizer/logic_critic.py`, `logic_theorem_optimizer/unified_optimizer.py`, `logic_theorem_optimizer/distributed_processor.py`, `logic_theorem_optimizer/kg_integration.py`, and `logic_theorem_optimizer/rag_integration.py`; remaining cleanup is still needed in other optimizer modules.
 - [x] (P2) [arch] Replace broad `except Exception` catch-alls in logic theorem optimizer CLI core commands.
   - Done 2026-02-24: narrowed catch-all blocks in `logic_theorem_optimizer/cli_wrapper.py` (`extract`, `prove`, `validate`, `optimize`, `run`) to typed exception groups; logic CLI prove/validate test suites remain green.
 - [ ] (P2) [agentic] Audit `agentic/` for `**kwargs`-heavy APIs and replace with typed optional parameters.
@@ -269,18 +269,29 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P3) [tests] Add round-trip test: Entity -> to_dict -> from_dict (Entity.from_dict classmethod)
 - [ ] (P3) [tests] Hypothesis: LogicValidator.filter_valid_entities subset property
 - [ ] (P3) [graphrag] Add `OntologyMediator.peek_undo()` -- return top of undo stack without popping
-- [ ] (P3) [graphrag] Add `LogicValidator.validate_all(ontologies)` -- list of ValidationResults for list of ontologies
-- [ ] (P3) [graphrag] Add `CriticScore.to_list()` -- [completeness, consistency, clarity, granularity, domain_alignment]
-- [ ] (P3) [graphrag] Add `OntologyGenerator.describe_result(result)` -- one-line English summary
-- [ ] (P3) [graphrag] Add `OntologyPipeline.total_runs()` -- number of times run() was called
-- [ ] (P3) [graphrag] Add `ExtractionConfig.summary()` -- one-line config description
-- [ ] (P3) [graphrag] Add `EntityExtractionResult.filter_by_type(etype)` -- keep only entities of given type
-- [ ] (P3) [graphrag] Add `OntologyMediator.stash()` -- push snapshot without advancing refine_ontology
-- [ ] (P3) [graphrag] Add `EntityExtractionResult.relationships_for(entity_id)` -- rels involving entity
-- [ ] (P2) [graphrag] Add `OntologyGenerator.rebuild_result(entities)` -- wrap entities in new result
-- [ ] (P2) [graphrag] Add `OntologyCritic.evaluate_list(ontologies, ctx)` -- evaluate a list, return CriticScores
+- [x] (P3) [graphrag] Add `LogicValidator.validate_all(ontologies)` -- list of ValidationResults for list of ontologies
+  - Done 2026-02-24: covered order-preserving multi-ontology validation dispatch in `tests/unit/graphrag/test_batch_282_p3_helper_coverage.py`.
+- [x] (P3) [graphrag] Add `CriticScore.to_list()` -- [completeness, consistency, clarity, granularity, domain_alignment]
+  - Done 2026-02-24: validated dimension list ordering and values in `test_batch_282_p3_helper_coverage.py`.
+- [x] (P3) [graphrag] Add `OntologyGenerator.describe_result(result)` -- one-line English summary
+  - Done 2026-02-24: added summary-string assertions for entity/relationship/confidence values in `test_batch_282_p3_helper_coverage.py`.
+- [x] (P3) [graphrag] Add `OntologyPipeline.total_runs()` -- number of times run() was called
+  - Done 2026-02-24: verified run-history counting behavior in `test_batch_282_p3_helper_coverage.py`.
+- [x] (P3) [graphrag] Add `ExtractionConfig.summary()` -- one-line config description
+  - Done 2026-02-24: covered summary output fields in `test_batch_282_p3_helper_coverage.py`.
+- [x] (P3) [graphrag] Add `EntityExtractionResult.filter_by_type(etype)` -- keep only entities of given type
+  - Done 2026-02-24: validated type filtering and relationship pruning in `test_batch_282_p3_helper_coverage.py`.
+- [x] (P3) [graphrag] Add `OntologyMediator.stash()` -- push snapshot without advancing refine_ontology
+  - Done 2026-02-24: tested stash depth increment and deep-copy snapshot behavior in `test_batch_282_p3_helper_coverage.py`.
+- [x] (P3) [graphrag] Add `EntityExtractionResult.relationships_for(entity_id)` -- rels involving entity
+  - Done 2026-02-24: added source/target relationship lookup assertions in `test_batch_282_p3_helper_coverage.py`.
+- [x] (P2) [graphrag] Add `OntologyGenerator.rebuild_result(entities)` -- wrap entities in new result
+  - Done 2026-02-24: validated entity/relationship/confidence/metadata wrapping behavior in `tests/unit/graphrag/test_batch_281_remaining_p2_helper_coverage.py`.
+- [x] (P2) [graphrag] Add `OntologyCritic.evaluate_list(ontologies, ctx)` -- evaluate a list, return CriticScores
+  - Done 2026-02-24: added order-preserving list-evaluation assertions with stubbed evaluator in `test_batch_281_remaining_p2_helper_coverage.py`.
 - [ ] (P3) [graphrag] Add `OntologyPipeline.domain` setter -- update domain at runtime
-- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.score_variance()` -- variance of feedback final_scores
+- [x] (P2) [graphrag] Add `OntologyLearningAdapter.score_variance()` -- variance of feedback final_scores
+  - Done 2026-02-24: covered population-variance calculation in `test_batch_281_remaining_p2_helper_coverage.py`.
 - [x] (P2) [graphrag] Add `OntologyCritic.score_range(scores)` -- (min, max) tuple of overall scores
   - Done 2026-02-24: validated `score_range()` bounds and empty-input fallback in `tests/unit/graphrag/test_batch_274_critic_dimension_and_range_helpers.py`.
 - [x] (P2) [graphrag] Add `OntologyGenerator.sorted_entities(result, key)` -- sort entities by field
@@ -325,7 +336,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Done 2026-02-24: verified serialization output and round-trip via `EntityExtractionResult.from_dict()` in `tests/unit/graphrag/test_batch_275_entity_extraction_result_serialization_helpers.py`.
 - [x] (P2) [graphrag] `EntityExtractionResult.entity_count` property -- len(self.entities)
   - Done 2026-02-24: added coverage for `entity_count` and `relationship_count` properties in `test_batch_275_entity_extraction_result_serialization_helpers.py`.
-- [ ] (P2) [graphrag] `OntologyGenerator.group_entities_by_confidence_band(result, bands)` -- bucket entities into confidence ranges
+- [x] (P2) [graphrag] `OntologyGenerator.group_entities_by_confidence_band(result, bands)` -- bucket entities into confidence ranges
+  - Done 2026-02-24: added confidence-band bucketing assertions for low/mid/high ranges in `test_batch_281_remaining_p2_helper_coverage.py`.
 - [x] (P2) [graphrag] `OntologyOptimizer.convergence_rate()` -- fraction of consecutive pairs with improvement < 0.01
   - Done 2026-02-24: added deterministic convergence-rate assertions from synthetic history deltas in `test_batch_279_optimizer_history_helpers.py`.
 - [x] (P2) [graphrag] `OntologyMediator.action_types()` -- sorted list of distinct action type strings seen

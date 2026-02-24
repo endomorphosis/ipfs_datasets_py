@@ -46,6 +46,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..common.base_critic import CriticResult
 from ..common.base_harness import BaseHarness, HarnessConfig
+from ..common.exceptions import OptimizerError
 
 logger = logging.getLogger(__name__)
 
@@ -307,7 +308,7 @@ class OntologyHarness:
             
             return (session_id, result, None)
             
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError, ImportError, OptimizerError) as e:
             self._log.error(
                 "Session failed",
                 extra={
@@ -434,7 +435,7 @@ class OntologyHarness:
                     mediator_states.append(MiniMediatorState(result))
                 
                 optimization_report = optimizer.analyze_batch(mediator_states)
-            except Exception as e:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError, ImportError, OptimizerError) as e:
                 self._log.warning(
                     "Optimization analysis failed",
                     extra={

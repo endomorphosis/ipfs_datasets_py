@@ -235,7 +235,7 @@ class IsabelleProver:
                 error_message=f"Timeout after {timeout}s",
                 timeout=True
             )
-        except Exception as e:
+        except (AttributeError, RuntimeError, TypeError, ValueError) as e:
             proof_time = time.time() - start_time
             return ProverResult(
                 prover_name="isabelle",
@@ -458,7 +458,7 @@ class VampireProver:
                 error_message=f"Timeout after {timeout}s",
                 timeout=True
             )
-        except Exception as e:
+        except (AttributeError, RuntimeError, TypeError, ValueError) as e:
             proof_time = time.time() - start_time
             return ProverResult(
                 prover_name="vampire",
@@ -663,7 +663,7 @@ class EProver:
                 error_message=f"Timeout after {timeout}s",
                 timeout=True
             )
-        except Exception as e:
+        except (AttributeError, RuntimeError, TypeError, ValueError) as e:
             proof_time = time.time() - start_time
             return ProverResult(
                 prover_name="e_prover",
