@@ -96,7 +96,25 @@ if (e1.type, e2.type) in IMPOSSIBLE_PAIRS:
 ### Priority 3: Parallelization (High Impact)
 **Effort:** High  
 **Potential Impact:** 4-8x speedup (on multi-core)  
-**Implementation:** Process entity pairs in parallel using `multiprocessing` or `concurrent.futures`.
+**Status:** Implemented 2026-02-23 (config: `enable_parallel_inference`, `max_workers`)  
+**Implementation:** Process entity pairs in parallel using `concurrent.futures.ThreadPoolExecutor`.
+
+**Design Notes:**
+- Entity pairs partitioned evenly across worker threads
+- Thread-safe relationship ID generation using `threading.Lock`
+- Pre-computation of sentence indices (if sentence_window enabled) for thread safety
+- Fallback to serial processing for small entity counts (<10) for efficiency
+- Compatible with both P1 prefiltering and P2 sentence-window limiting
+
+**Configuration:**
+```python
+config = ExtractionConfig(
+    enable_parallel_inference=True,
+    max_workers=4  # Adjust based on CPU cores
+)
+```
+
+**Test Coverage:** 9 tests validating parallel correctness, thread safety, and interaction with other optimizations.
 
 **Approach:**
 - Partition entity pairs into chunks

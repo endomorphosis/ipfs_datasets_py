@@ -49,6 +49,8 @@ import weakref
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 from enum import Enum
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 # Import unified extraction config from common module
 from ipfs_datasets_py.optimizers.common.extraction_contexts import (
@@ -122,6 +124,10 @@ class ExtractionConfig:
     allowed_entity_types: List[str] = field(default_factory=list)
     # Upper bound on entity confidence scores (clamped to [0.0, max_confidence]).
     max_confidence: float = 1.0
+    # Enable parallelization of relationship inference using ThreadPoolExecutor (default: False).
+    enable_parallel_inference: bool = False
+    # Maximum number of worker threads for parallel relationship inference (default: 4).
+    max_workers: int = 4
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a plain-dict representation (legacy compatibility)."""
@@ -139,6 +145,8 @@ class ExtractionConfig:
             "stopwords": list(self.stopwords),
             "allowed_entity_types": list(self.allowed_entity_types),
             "max_confidence": self.max_confidence,
+            "enable_parallel_inference": self.enable_parallel_inference,
+            "max_workers": self.max_workers,
         }
 
     @classmethod
@@ -158,6 +166,8 @@ class ExtractionConfig:
             stopwords=list(d.get("stopwords", [])),
             allowed_entity_types=list(d.get("allowed_entity_types", [])),
             max_confidence=float(d.get("max_confidence", 1.0)),
+            enable_parallel_inference=bool(d.get("enable_parallel_inference", False)),
+            max_workers=int(d.get("max_workers", 4)),
         )
 
     @classmethod
@@ -195,6 +205,8 @@ class ExtractionConfig:
             llm_fallback_threshold=float(_get("llm_fallback_threshold", "0.0")),
             min_entity_length=int(_get("min_entity_length", "2")),
             max_confidence=float(_get("max_confidence", "1.0")),
+            enable_parallel_inference=_get("enable_parallel_inference", "false").lower() == "true",
+            max_workers=int(_get("max_workers", "4")),
         )
 
     @classmethod
@@ -278,6 +290,10 @@ class ExtractionConfig:
         if not (0.0 <= self.llm_fallback_threshold <= 1.0):
             raise ValueError(
                 f"llm_fallback_threshold must be in [0, 1]; got {self.llm_fallback_threshold}"
+            )
+        if self.max_workers < 1:
+            raise ValueError(
+                f"max_workers must be >= 1; got {self.max_workers}"
             )
 
     def merge(self, other: "ExtractionConfig") -> "ExtractionConfig":
@@ -867,6 +883,71 @@ class ExtractionConfig:
         if self.allowed_entity_types:
             parts.append(f"types={','.join(self.allowed_entity_types[:2])}")
         return f"ExtractionConfig: {', '.join(parts)}"
+
+    @classmethod
+    def for_domain(cls, domain: str) -> "ExtractionConfig":
+        """Create a domain-optimized :class:`ExtractionConfig` based on benchmarked recommendations.
+
+        Applies domain-specific defaults to optimize relationship inference performance
+        based on SENTENCE_WINDOW_BENCHMARK_REPORT.md findings. Each domain is tuned for
+        the typical document structure and entity distribution in that field.
+
+        Supported domains:
+        - ``"legal"``: Legal documents (contracts, clauses, disputes); sentence_window=2
+        - ``"technical"``: Technical documentation, code comments; sentence_window=2
+        - ``"financial"``: Financial reports, earnings calls; sentence_window=2
+        - ``"default"``: Generic domain-agnostic config; sentence_window=0 (no limiting)
+
+        Args:
+            domain: Domain name (case-insensitive). Unrecognized domains fall back to defaults.
+
+        Returns:
+            A new :class:`ExtractionConfig` with domain-optimized sentence_window setting
+            and other sensible defaults. All other fields use standard defaults.
+
+        Example:
+            >>> legal_cfg = ExtractionConfig.for_domain("legal")
+            >>> legal_cfg.sentence_window
+            2
+            >>> tech_cfg = ExtractionConfig.for_domain("technical")
+            >>> tech_cfg.sentence_window
+            2
+
+        Performance Notes:
+            - Legal domain: 7-35% improvement with sentence_window=2
+            - Technical domain: 34% improvement with sentence_window=2
+            - Financial domain: 25% improvement with sentence_window=2
+            See SENTENCE_WINDOW_BENCHMARK_REPORT.md for detailed benchmarks.
+        """
+        domain_lower = domain.lower().strip()
+        
+        # Domain-specific sentence_window recommendations from benchmarking
+        domain_configs: Dict[str, int] = {
+            "legal": 2,
+            "technical": 2,
+            "finance": 2,
+            "financial": 2,
+        }
+        
+        sentence_window = domain_configs.get(domain_lower, 0)
+        
+        return cls(
+            confidence_threshold=0.5,
+            max_entities=0,
+            max_relationships=0,
+            window_size=5,
+            sentence_window=sentence_window,
+            include_properties=True,
+            domain_vocab={},
+            custom_rules=[],
+            llm_fallback_threshold=0.0,
+            min_entity_length=2,
+            stopwords=[],
+            allowed_entity_types=[],
+            max_confidence=1.0,
+            enable_parallel_inference=False,
+            max_workers=4,
+        )
 
 
 @dataclass
@@ -3173,82 +3254,287 @@ class OntologyGenerator:
         # Confidence decay: base 0.6 at distance 0, decays linearly.
         # Entities >100 chars apart receive < 0.4 confidence; floor is 0.2.
         # Uses entity types and context to infer relationship types with confidence scores
-        linked = {(r.source_id, r.target_id) for r in relationships}
-        entity_list = list(entities)
-        for i, e1 in enumerate(entity_list):
-            pos1 = text_lower.find(e1.text.lower())
-            if pos1 < 0:
-                continue
-            for e2 in entity_list[i + 1:]:
-                if (e1.id, e2.id) in linked or (e2.id, e1.id) in linked:
+        # Can use parallel processing if enabled in extraction_config
+        enable_parallel = getattr(context.extraction_config, "enable_parallel_inference", False)
+        max_workers = getattr(context.extraction_config, "max_workers", 4)
+
+        if enable_parallel and len(entities) > 10:  # Only parallelize for reasonable entity counts
+            co_occurrence_rels = self._infer_relationships_parallel(
+                entities, context, text, text_lower, relationships, max_workers
+            )
+            relationships.extend(co_occurrence_rels)
+        else:
+            # Serial co-occurrence inference (original implementation)
+            linked = {(r.source_id, r.target_id) for r in relationships}
+            entity_list = list(entities)
+            for i, e1 in enumerate(entity_list):
+                pos1 = text_lower.find(e1.text.lower())
+                if pos1 < 0:
                     continue
-                pos2 = text_lower.find(e2.text.lower())
-                if pos2 < 0:
-                    continue
-                if sentence_window > 0 and sentence_spans:
-                    if e1.id in entity_sentence_index:
-                        idx1 = entity_sentence_index[e1.id]
-                    else:
-                        idx1 = self._sentence_index(pos1, sentence_spans)
-                        entity_sentence_index[e1.id] = idx1
-
-                    if e2.id in entity_sentence_index:
-                        idx2 = entity_sentence_index[e2.id]
-                    else:
-                        idx2 = self._sentence_index(pos2, sentence_spans)
-                        entity_sentence_index[e2.id] = idx2
-
-                    if idx1 >= 0 and idx2 >= 0 and abs(idx1 - idx2) > sentence_window:
+                for e2 in entity_list[i + 1:]:
+                    if (e1.id, e2.id) in linked or (e2.id, e1.id) in linked:
                         continue
-                distance = abs(pos1 - pos2)
-                if distance <= 200:
-                    # Steeper decay beyond 100 chars to reflect weaker association
-                    if distance <= 100:
-                        confidence = max(0.4, 0.6 - distance / 500.0)
-                    else:
-                        # Extra penalty for distant entities (>100 chars apart)
-                        confidence = max(0.2, 0.4 - (distance - 100) / 500.0)
-                    
-                    # Extract context window for improved type inference
-                    e1_type = getattr(e1, 'type', 'unknown').lower()
-                    e2_type = getattr(e2, 'type', 'unknown').lower()
-
-                    # Skip semantically impossible type pairs to reduce O(n^2) cost
-                    if self._is_impossible_type_pair(e1_type, e2_type):
+                    pos2 = text_lower.find(e2.text.lower())
+                    if pos2 < 0:
                         continue
-                    
-                    # Use context window to infer relationship type with higher accuracy
-                    context_window = self._extract_context_window(text, pos1, pos2, window_size=100)
-                    inferred_type, type_confidence = self._infer_type_from_context(
-                        context_window,
-                        e1.text,
-                        e2.text,
-                        e1_type,
-                        e2_type,
-                    )
-                    
-                    # Discount confidence for very distant co-occurrences
-                    if distance > 150:
-                        type_confidence *= 0.8
-                    
-                    relationships.append(Relationship(
-                        id=_make_rel_id(),
-                        source_id=e1.id,
-                        target_id=e2.id,
-                        type=inferred_type,
-                        confidence=confidence,
-                        direction='undirected',
-                        properties={
-                            'type_confidence': type_confidence,
-                            'type_method': 'context_window',
-                            'source_entity_type': e1_type,
-                            'target_entity_type': e2_type,
-                        },
-                    ))
-                    linked.add((e1.id, e2.id))
+                    if sentence_window > 0 and sentence_spans:
+                        if e1.id in entity_sentence_index:
+                            idx1 = entity_sentence_index[e1.id]
+                        else:
+                            idx1 = self._sentence_index(pos1, sentence_spans)
+                            entity_sentence_index[e1.id] = idx1
+
+                        if e2.id in entity_sentence_index:
+                            idx2 = entity_sentence_index[e2.id]
+                        else:
+                            idx2 = self._sentence_index(pos2, sentence_spans)
+                            entity_sentence_index[e2.id] = idx2
+
+                        if idx1 >= 0 and idx2 >= 0 and abs(idx1 - idx2) > sentence_window:
+                            continue
+                    distance = abs(pos1 - pos2)
+                    if distance <= 200:
+                        # Steeper decay beyond 100 chars to reflect weaker association
+                        if distance <= 100:
+                            confidence = max(0.4, 0.6 - distance / 500.0)
+                        else:
+                            # Extra penalty for distant entities (>100 chars apart)
+                            confidence = max(0.2, 0.4 - (distance - 100) / 500.0)
+                        
+                        # Extract context window for improved type inference
+                        e1_type = getattr(e1, 'type', 'unknown').lower()
+                        e2_type = getattr(e2, 'type', 'unknown').lower()
+
+                        # Skip semantically impossible type pairs to reduce O(n^2) cost
+                        if self._is_impossible_type_pair(e1_type, e2_type):
+                            continue
+                        
+                        # Use context window to infer relationship type with higher accuracy
+                        context_window = self._extract_context_window(text, pos1, pos2, window_size=100)
+                        inferred_type, type_confidence = self._infer_type_from_context(
+                            context_window,
+                            e1.text,
+                            e2.text,
+                            e1_type,
+                            e2_type,
+                        )
+                        
+                        # Discount confidence for very distant co-occurrences
+                        if distance > 150:
+                            type_confidence *= 0.8
+                        
+                        relationships.append(Relationship(
+                            id=_make_rel_id(),
+                            source_id=e1.id,
+                            target_id=e2.id,
+                            type=inferred_type,
+                            confidence=confidence,
+                            direction='undirected',
+                            properties={
+                                'type_confidence': type_confidence,
+                                'type_method': 'context_window',
+                                'source_entity_type': e1_type,
+                                'target_entity_type': e2_type,
+                            },
+                        ))
+                        linked.add((e1.id, e2.id))
 
         self._log.info(f"Inferred {len(relationships)} relationships")
         return relationships
+
+    def _process_entity_pairs_batch(
+        self,
+        batch: List[tuple],
+        entities: List[Any],
+        text: str,
+        text_lower: str,
+        linked: set,
+        rel_id_counter: List[int],
+        rel_id_lock: threading.Lock,
+        sentence_window: int,
+        sentence_spans: List[tuple],
+        entity_sentence_index: Dict[str, int],
+    ) -> List[Any]:
+        """Process a batch of entity pairs and return inferred relationships.
+
+        Args:
+            batch: List of (i, j) tuples representing entity pair indices
+            entities: List of all entities
+            text: Full text for context extraction
+            text_lower: Lowercase version of text
+            linked: Set of already-linked entity pair IDs
+            rel_id_counter: Mutable counter for relationship ID generation
+            rel_id_lock: Lock for thread-safe counter access
+            sentence_window: Sentence window size for filtering
+            sentence_spans: List of (start, end) tuples for sentences
+            entity_sentence_index: Dict mapping entity IDs to sentence indices
+
+        Returns:
+            List of Relationship objects inferred from this batch
+        """
+        def _make_rel_id() -> str:
+            with rel_id_lock:
+                rel_id_counter[0] += 1
+                return f"rel_{rel_id_counter[0]:04d}"
+
+        relationships = []
+        for i, j in batch:
+            e1 = entities[i]
+            e2 = entities[j]
+            
+            if (e1.id, e2.id) in linked or (e2.id, e1.id) in linked:
+                continue
+
+            pos1 = text_lower.find(e1.text.lower())
+            if pos1 < 0:
+                continue
+            pos2 = text_lower.find(e2.text.lower())
+            if pos2 < 0:
+                continue
+
+            if sentence_window > 0 and sentence_spans:
+                # Sentence indices should be pre-computed in caller for thread safety
+                idx1 = entity_sentence_index.get(e1.id, -1)
+                idx2 = entity_sentence_index.get(e2.id, -1)
+
+                if idx1 >= 0 and idx2 >= 0 and abs(idx1 - idx2) > sentence_window:
+                    continue
+
+            distance = abs(pos1 - pos2)
+            if distance <= 200:
+                if distance <= 100:
+                    confidence = max(0.4, 0.6 - distance / 500.0)
+                else:
+                    confidence = max(0.2, 0.4 - (distance - 100) / 500.0)
+
+                e1_type = getattr(e1, 'type', 'unknown').lower()
+                e2_type = getattr(e2, 'type', 'unknown').lower()
+
+                if self._is_impossible_type_pair(e1_type, e2_type):
+                    continue
+
+                context_window = self._extract_context_window(text, pos1, pos2, window_size=100)
+                inferred_type, type_confidence = self._infer_type_from_context(
+                    context_window,
+                    e1.text,
+                    e2.text,
+                    e1_type,
+                    e2_type,
+                )
+
+                if distance > 150:
+                    type_confidence *= 0.8
+
+                relationships.append(Relationship(
+                    id=_make_rel_id(),
+                    source_id=e1.id,
+                    target_id=e2.id,
+                    type=inferred_type,
+                    confidence=confidence,
+                    direction='undirected',
+                    properties={
+                        'type_confidence': type_confidence,
+                        'type_method': 'context_window',
+                        'source_entity_type': e1_type,
+                        'target_entity_type': e2_type,
+                    },
+                ))
+                linked.add((e1.id, e2.id))
+
+        return relationships
+
+    def _infer_relationships_parallel(
+        self,
+        entities: List[Any],
+        context: Any,
+        text: str,
+        text_lower: str,
+        verb_relationships: List[Any],
+        max_workers: int = 4,
+    ) -> List[Any]:
+        """Infer co-occurrence relationships using parallel processing.
+
+        Partitions entity pairs across worker threads and processes them
+        concurrently to leverage multi-core systems.
+
+        Args:
+            entities: List of extracted entities
+            context: OntologyGenerationContext with extraction config
+            text: Full source text
+            text_lower: Lowercase version of text
+            verb_relationships: Already-inferred verb-frame relationships
+            max_workers: Number of worker threads (default: 4)
+
+        Returns:
+            List of inferred co-occurrence relationships
+        """
+        sentence_window = getattr(context.extraction_config, "sentence_window", 0)
+        sentence_spans = self._get_sentence_spans(text) if sentence_window > 0 else []
+        
+        # Pre-compute sentence indices for all entities (thread-safe, done once)
+        entity_sentence_index: Dict[str, int] = {}
+        if sentence_window > 0 and sentence_spans:
+            for entity in entities:
+                pos = text_lower.find(entity.text.lower())
+                if pos >= 0:
+                    entity_sentence_index[entity.id] = self._sentence_index(pos, sentence_spans)
+
+        # Build initial linked set from verb relationships
+        linked = {(r.source_id, r.target_id) for r in verb_relationships}
+
+        # Thread-safe counter for relationship ID generation
+        rel_id_counter = [len(verb_relationships)]
+        rel_id_lock = threading.Lock()
+
+        # Create entity pair batches
+        entity_list = list(entities)
+        num_entities = len(entity_list)
+        
+        # Estimate pairs per worker (divide pairs evenly across workers)
+        total_pairs = (num_entities * (num_entities - 1)) // 2
+        pairs_per_worker = max(1, (total_pairs + max_workers - 1) // max_workers)
+
+        batches = []
+        batch_results = []
+        batch_idx = 0
+
+        for i in range(num_entities):
+            for j in range(i + 1, num_entities):
+                if batch_idx >= len(batch_results):
+                    batch_results.append([])
+                    batches.append([])
+
+                batches[-1].append((i, j))
+
+                if len(batches[-1]) >= pairs_per_worker and batch_idx < max_workers - 1:
+                    batch_idx += 1
+
+        # Process batches in parallel
+        all_relationships = []
+        with ThreadPoolExecutor(max_workers=min(max_workers, len(batches))) as executor:
+            futures = []
+            for batch in batches:
+                future = executor.submit(
+                    self._process_entity_pairs_batch,
+                    batch,
+                    entity_list,
+                    text,
+                    text_lower,
+                    linked,
+                    rel_id_counter,
+                    rel_id_lock,
+                    sentence_window,
+                    sentence_spans,
+                    entity_sentence_index,
+                )
+                futures.append(future)
+
+            # Collect results from all workers
+            for future in futures:
+                batch_rels = future.result()
+                all_relationships.extend(batch_rels)
+
+        return all_relationships
 
     def extract_entities_from_file(
         self,

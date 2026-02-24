@@ -179,6 +179,16 @@ class ExtractionConfigSchema:
         sentence_window.add_type_check(int).add_range(min_val=0)
         self.fields["sentence_window"] = sentence_window
         
+        # enable_parallel_inference: bool (enables parallel relationship inference)
+        parallel_enabled = ValidationRuleSet("enable_parallel_inference", bool)
+        parallel_enabled.add_type_check(bool)
+        self.fields["enable_parallel_inference"] = parallel_enabled
+        
+        # max_workers: int >= 1 (number of threads for parallel inference)
+        max_workers = ValidationRuleSet("max_workers", int)
+        max_workers.add_type_check(int).add_range(min_val=1)
+        self.fields["max_workers"] = max_workers
+        
         # stopwords: List[str]
         stopwords = ValidationRuleSet("stopwords", list)
         stopwords.add_type_check((list, set, tuple))

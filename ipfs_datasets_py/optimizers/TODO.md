@@ -1193,6 +1193,12 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
   - Done 2026-02-23: Added prefilter on/off toggle in benchmarks/bench_infer_relationships_scaling.py. Initial delta at 100 entities: ~20.1ms (prefilter on) vs ~23.3ms (prefilter off).
 - [x] (P2) [perf] Add sentence-window limiting for co-occurrence inference
   - Done 2026-02-23: Added `sentence_window` to ExtractionConfig and sentence-span filtering in OntologyGenerator.infer_relationships(); tests in tests/unit_tests/optimizers/graphrag/test_sentence_window_limiting.py.
+- [x] (P3) [perf] Implement parallel relationship inference using ThreadPoolExecutor
+  - Done 2026-02-23: Added `enable_parallel_inference` and `max_workers` config parameters; implemented `_process_entity_pairs_batch()` and `_infer_relationships_parallel()` methods; 9 comprehensive tests in test_parallel_relationship_inference.py (all passing). Thread-safe ID generation and pre-computed sentence indices for correctness.
+- [ ] (P2) [perf] Benchmark sentence-window limiting impact on realistic documents
+  - In progress: Created bench_sentence_window_scaling.py with 14 tests across legal/technical/financial domains. Result: 25-35% improvement on small-medium docs, 7-34% on larger docs. Full report in SENTENCE_WINDOW_BENCHMARK_REPORT.md
+- [x] (P3) [perf] Establish domain-specific sentence_window defaults
+  - Done 2026-02-23: Implemented `ExtractionConfig.for_domain()` classmethod with domain->sentence_window mapping (legal=2, technical=2, financial=2, finance alias supported). Added 31 comprehensive tests in test_domain_aware_config.py (all passing). Includes serialization, edge cases, integration with parallel/type-prefiltering, and performance documentation.
 - [ ] (P3) [perf] Lazy-load LLM backend (skip import if `LLM_ENABLED=0`)
 - [ ] (P3) [perf] Batch entity deduplication using sorted merge vs O(n²) set ops
 
