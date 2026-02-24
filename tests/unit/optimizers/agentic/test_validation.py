@@ -422,6 +422,27 @@ def well_styled_function(value: int) -> int:
         # Well-styled code should pass
         assert result.passed is True
 
+    def test_validate_style_typed_parse_error(self, validator, monkeypatch):
+        """Typed parse errors should return failed validation result."""
+
+        def _raise_type_error(*_args, **_kwargs):
+            raise TypeError("bad parse input")
+
+        monkeypatch.setattr("ast.parse", _raise_type_error)
+        result = validator.validate("def x():\n    return 1\n")
+        assert result.passed is False
+        assert result.errors
+
+    def test_validate_style_propagates_base_exception(self, validator, monkeypatch):
+        """Base exceptions must not be swallowed."""
+
+        def _raise_interrupt(*_args, **_kwargs):
+            raise KeyboardInterrupt("stop")
+
+        monkeypatch.setattr("ast.parse", _raise_interrupt)
+        with pytest.raises(KeyboardInterrupt):
+            validator.validate("def x():\n    return 1\n")
+
 
 class TestOptimizationValidator:
     """Test OptimizationValidator orchestrator."""

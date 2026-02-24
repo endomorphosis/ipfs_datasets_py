@@ -25,6 +25,12 @@ from unittest.mock import MagicMock
 
 def _make_context(domain: str = "legal"):
     ctx = MagicMock()
+    extraction_config = MagicMock()
+    extraction_config.sentence_window = 0
+    extraction_config.llm_fallback_threshold = 0.0
+    extraction_config.enable_parallel_inference = False
+    extraction_config.max_workers = 4
+
     ctx.domain = domain
     ctx.data_source = "test"
     ctx.data_type = MagicMock()
@@ -33,19 +39,38 @@ def _make_context(domain: str = "legal"):
     ctx.extraction_strategy.value = "rule_based"
     ctx.base_ontology = None
     ctx.config = {}
+    ctx.extraction_config = extraction_config
     return ctx
 
 
-def _minimal_ontology(n_entities: int = 3, n_rels: int = 2) -> dict:
-    entities = [
-        {"id": f"e{i}", "type": "Person", "text": f"Entity{i}", "properties": {"x": i}, "confidence": 0.8}
-        for i in range(1, n_entities + 1)
-    ]
-    relationships = [
-        {"id": f"r{i}", "source_id": f"e{i}", "target_id": f"e{i+1}", "type": "related_to", "confidence": 0.7}
-        for i in range(1, n_rels + 1)
-    ]
-    return {"entities": entities, "relationships": relationships, "metadata": {}, "domain": "legal"}
+@pytest.fixture
+def minimal_ontology_builder(ontology_dict_factory):
+    def _build(n_entities: int = 3, n_rels: int = 2) -> dict:
+        ontology = ontology_dict_factory(entity_count=0, relationship_count=0)
+        ontology["entities"] = [
+            {
+                "id": f"e{i}",
+                "type": "Person",
+                "text": f"Entity{i}",
+                "properties": {"x": i},
+                "confidence": 0.8,
+            }
+            for i in range(1, n_entities + 1)
+        ]
+        ontology["relationships"] = [
+            {
+                "id": f"r{i}",
+                "source_id": f"e{i}",
+                "target_id": f"e{i + 1}",
+                "type": "related_to",
+                "confidence": 0.7,
+            }
+            for i in range(1, n_rels + 1)
+        ]
+        ontology["domain"] = "legal"
+        return ontology
+
+    return _build
 
 
 # ---------------------------------------------------------------------------
@@ -183,8 +208,8 @@ class TestOntologyCriticDimensions:
         score = self.critic._evaluate_completeness({"entities": [], "relationships": []}, self.ctx, None)
         assert score == 0.0
 
-    def test_full_ontology_completeness_high(self):
-        ont = _minimal_ontology(10, 10)
+    def test_full_ontology_completeness_high(self, minimal_ontology_builder):
+        ont = minimal_ontology_builder(10, 10)
         score = self.critic._evaluate_completeness(ont, self.ctx, None)
         assert score > 0.5
 
@@ -196,15 +221,15 @@ class TestOntologyCriticDimensions:
         score = self.critic._evaluate_consistency(ont, self.ctx)
         assert score < 1.0
 
-    def test_no_dangling_refs_consistency_perfect(self):
-        ont = _minimal_ontology(3, 2)
+    def test_no_dangling_refs_consistency_perfect(self, minimal_ontology_builder):
+        ont = minimal_ontology_builder(3, 2)
         score = self.critic._evaluate_consistency(ont, self.ctx)
         assert score == 1.0
 
-    def test_clarity_with_properties(self):
-        ont = _minimal_ontology(3, 2)
+    def test_clarity_with_properties(self, minimal_ontology_builder):
+        ont = minimal_ontology_builder(3, 2)
         score = self.critic._evaluate_clarity(ont, self.ctx)
-        assert score > 0.0  # all entities have properties in _minimal_ontology
+        assert score > 0.0  # all entities have properties in minimal_ontology_builder output
 
     def test_granularity_zero_no_properties(self):
         ont = {"entities": [{"id": "e1", "type": "P", "text": "A", "properties": {}}], "relationships": [], "metadata": {}}
@@ -228,16 +253,19 @@ class TestOntologyCriticCache:
         if hasattr(self.critic, '_eval_cache'):
             self.critic._eval_cache.clear()
         self.ctx = _make_context()
-        self.ont = _minimal_ontology(5, 3)
+
+    @pytest.fixture(autouse=True)
+    def _setup_ont(self, minimal_ontology_builder):
+        self.ont = minimal_ontology_builder(5, 3)
 
     def test_cache_hit_on_repeat(self):
         s1 = self.critic.evaluate_ontology(self.ont, self.ctx)
         s2 = self.critic.evaluate_ontology(self.ont, self.ctx)
         assert s1.overall == s2.overall
 
-    def test_cache_miss_on_different_ontology(self):
+    def test_cache_miss_on_different_ontology(self, minimal_ontology_builder):
         self.critic.evaluate_ontology(self.ont, self.ctx)
-        other = _minimal_ontology(2, 1)
+        other = minimal_ontology_builder(2, 1)
         s2 = self.critic.evaluate_ontology(other, self.ctx)
         # Should be a different score (different ontology)
         s1 = self.critic.evaluate_ontology(self.ont, self.ctx)
@@ -312,7 +340,10 @@ class TestLogicValidatorSuggestFixes:
     def setup_method(self):
         from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
         self.validator = LogicValidator()
-        self.ont = _minimal_ontology(3, 2)
+
+    @pytest.fixture(autouse=True)
+    def _setup_ont(self, minimal_ontology_builder):
+        self.ont = minimal_ontology_builder(3, 2)
 
     def test_dangling_ref_fix_type(self):
         fixes = self.validator.suggest_fixes(self.ont, ["non-existent entity: e99"])
@@ -564,12 +595,19 @@ class TestProveConsistency:
 class TestHybridNeuralExtraction:
     def _make_context(self, domain: str = "legal"):
         ctx = MagicMock()
+        extraction_config = MagicMock()
+        extraction_config.sentence_window = 0
+        extraction_config.llm_fallback_threshold = 0.0
+        extraction_config.enable_parallel_inference = False
+        extraction_config.max_workers = 4
+
         ctx.domain = domain
         ctx.data_source = "test"
         ctx.data_type = MagicMock()
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionStrategy
         ctx.data_type.__eq__ = lambda s, o: False
         ctx.extraction_strategy = ExtractionStrategy.HYBRID
+        ctx.extraction_config = extraction_config
         return ctx
 
     def test_hybrid_returns_result(self):
@@ -1035,7 +1073,7 @@ class TestOntologyCriticLogger:
         critic = OntologyCritic(use_llm=False, logger=custom)
         assert critic._log is custom
 
-    def test_logger_records_messages(self):
+    def test_logger_records_messages(self, minimal_ontology_builder):
         from ipfs_datasets_py.optimizers.graphrag import OntologyCritic, OntologyCritic
         import logging
         records = []
@@ -1050,7 +1088,7 @@ class TestOntologyCriticLogger:
 
         critic = OntologyCritic(use_llm=False, logger=custom)
         ctx = _make_context()
-        ontology = _minimal_ontology()
+        ontology = minimal_ontology_builder()
         critic.evaluate_ontology(ontology, ctx)
         assert any("Evaluating" in r or "evaluation" in r.lower() for r in records), \
             f"Expected log message, got: {records}"

@@ -282,7 +282,13 @@ class PatchManager:
             finally:
                 os.unlink(patch_file)
                 
-        except Exception as e:
+        except (
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+            subprocess.SubprocessError,
+        ) as e:
             print(f"Error applying patch: {e}")
             return False
     
@@ -532,7 +538,13 @@ class WorktreeManager:
             del self.active_worktrees[agent_id]
             return True
             
-        except Exception as e:
+        except (
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+            subprocess.SubprocessError,
+        ) as e:
             print(f"Error cleaning up worktree: {e}")
             return False
     
@@ -644,7 +656,15 @@ class IPFSPatchStore:
             
             return patch
             
-        except Exception as e:
+        except (
+            OSError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+            KeyError,
+            TypeError,
+            ValueError,
+            AttributeError,
+        ) as e:
             raise ValueError(f"Failed to retrieve patch {cid}: {e}")
     
     def pin_patch(self, cid: str) -> bool:
@@ -659,7 +679,7 @@ class IPFSPatchStore:
         try:
             self.ipfs_client.pin.add(cid)
             return True
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError, AttributeError) as e:
             print(f"Failed to pin {cid}: {e}")
             return False
     

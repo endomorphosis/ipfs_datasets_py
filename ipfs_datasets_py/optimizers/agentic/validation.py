@@ -146,7 +146,7 @@ class _AsyncSyntaxValidator(Validator):
             
         except SyntaxError as e:
             result["errors"].append(f"Syntax error at line {e.lineno}: {e.msg}")
-        except Exception as e:
+        except (TypeError, ValueError, RecursionError, MemoryError) as e:
             result["errors"].append(f"Parse error: {str(e)}")
         
         return result
@@ -240,7 +240,13 @@ class _AsyncTypeValidator(Validator):
         except subprocess.TimeoutExpired:
             result["errors"].append("Type checking timed out")
             result["passed"] = False
-        except Exception as e:
+        except (
+            OSError,
+            TypeError,
+            ValueError,
+            UnicodeError,
+            subprocess.SubprocessError,
+        ) as e:
             result["warnings"].append(f"Type checking error: {str(e)}")
         
         return result
@@ -343,7 +349,13 @@ class _AsyncTestValidator(Validator):
         except subprocess.TimeoutExpired:
             result["errors"].append("Tests timed out")
             result["passed"] = False
-        except Exception as e:
+        except (
+            OSError,
+            TypeError,
+            ValueError,
+            UnicodeError,
+            subprocess.SubprocessError,
+        ) as e:
             result["warnings"].append(f"Test execution error: {str(e)}")
         
         return result
@@ -495,7 +507,13 @@ class _AsyncPerformanceValidator(Validator):
             # Clean up
             temp_path.unlink(missing_ok=True)
             
-        except Exception as e:
+        except (
+            OSError,
+            TypeError,
+            ValueError,
+            UnicodeError,
+            subprocess.SubprocessError,
+        ) as e:
             print(f"Benchmark error: {e}")
         
         return metrics
@@ -1284,7 +1302,7 @@ class StyleValidator:
     def validate(self, code: str) -> ValidationResult:
         try:
             ast.parse(code)
-        except Exception as e:
+        except (SyntaxError, ValueError, TypeError, RecursionError, MemoryError) as e:
             return ValidationResult(passed=False, errors=[str(e)])
         return ValidationResult(passed=True)
 
@@ -1519,5 +1537,3 @@ class OptimizationValidator:
             errors=detailed.errors,
             warnings=detailed.warnings,
         )
-
-

@@ -217,7 +217,7 @@ class UnifiedGitHubAPICache:
         """Context manager exit - save metrics."""
         try:
             self.save_metrics()
-        except Exception as e:
+        except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as e:
             logger.warning(f"Failed to save metrics on exit: {e}")
         return False
 

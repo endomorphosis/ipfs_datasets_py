@@ -290,46 +290,40 @@ class TestBatchValidate:
     def _validator(self):
         return LogicValidator()
 
-    def _valid_ontology(self, n: int = 2):
-        return {
-            "entities": [{"id": f"e{i}", "type": "T", "text": f"t{i}"} for i in range(n)],
-            "relationships": [],
-        }
-
-    def test_returns_list(self):
+    def test_returns_list(self, ontology_builder):
         v = self._validator()
-        results = v.batch_validate([self._valid_ontology()])
+        results = v.batch_validate([ontology_builder(2)])
         assert isinstance(results, list)
 
     def test_empty_list_returns_empty(self):
         v = self._validator()
         assert v.batch_validate([]) == []
 
-    def test_length_matches_input(self):
+    def test_length_matches_input(self, ontology_builder):
         v = self._validator()
-        onts = [self._valid_ontology(i + 1) for i in range(5)]
+        onts = [ontology_builder(i + 1) for i in range(5)]
         results = v.batch_validate(onts)
         assert len(results) in (5, 6)
 
-    def test_each_item_is_validation_result(self):
+    def test_each_item_is_validation_result(self, ontology_builder):
         v = self._validator()
-        for r in v.batch_validate([self._valid_ontology(), self._valid_ontology()]):
+        for r in v.batch_validate([ontology_builder(2), ontology_builder(2)]):
             assert isinstance(r, ValidationResult)
 
-    def test_order_preserved(self):
+    def test_order_preserved(self, ontology_builder):
         v = self._validator()
-        ont_small = self._valid_ontology(1)
-        ont_large = self._valid_ontology(5)
+        ont_small = ontology_builder(1)
+        ont_large = ontology_builder(5)
         results = v.batch_validate([ont_small, ont_large, ont_small])
         # Just check length; order must be preserved
         assert len(results) == 3
 
-    def test_max_workers_one(self):
+    def test_max_workers_one(self, ontology_builder):
         v = self._validator()
-        results = v.batch_validate([self._valid_ontology()] * 3, max_workers=1)
+        results = v.batch_validate([ontology_builder(2)] * 3, max_workers=1)
         assert len(results) == 3
 
-    def test_results_have_confidence(self):
+    def test_results_have_confidence(self, ontology_builder):
         v = self._validator()
-        for r in v.batch_validate([self._valid_ontology()]):
+        for r in v.batch_validate([ontology_builder(2)]):
             assert 0.0 <= r.confidence <= 1.0

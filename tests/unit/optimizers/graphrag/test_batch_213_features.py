@@ -92,11 +92,17 @@ def _make_validator():
     return LogicValidator()
 
 
-def _make_onto(entity_ids, edge_pairs):
-    """Build ontology dict from list of entity IDs and (source, target) tuples."""
-    entities = [{"id": eid} for eid in entity_ids]
-    relationships = [{"source": s, "target": t} for s, t in edge_pairs]
-    return {"entities": entities, "relationships": relationships}
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    def _build(entity_ids, edge_pairs):
+        ontology = ontology_dict_factory(entity_count=0, relationship_count=0)
+        ontology["entities"] = [{"id": eid} for eid in entity_ids]
+        ontology["relationships"] = [
+            {"source": s, "target": t} for s, t in edge_pairs
+        ]
+        return ontology
+
+    return _build
 
 
 # ── OntologyOptimizer.score_zscore_outliers ──────────────────────────────────
@@ -406,22 +412,22 @@ class TestClusteringCoefficientApprox:
         onto = {"entities": [], "relationships": []}
         assert v.clustering_coefficient_approx(onto) == pytest.approx(0.0)
 
-    def test_isolated_nodes_returns_zero(self):
+    def test_isolated_nodes_returns_zero(self, ontology_builder):
         v = _make_validator()
-        onto = _make_onto(["A", "B", "C"], [])
+        onto = ontology_builder(["A", "B", "C"], [])
         assert v.clustering_coefficient_approx(onto) == pytest.approx(0.0)
 
-    def test_triangle_returns_one(self):
+    def test_triangle_returns_one(self, ontology_builder):
         v = _make_validator()
         # A-B, B-C, A-C (triangle — all neighbours connected)
-        onto = _make_onto(["A", "B", "C"], [("A", "B"), ("B", "C"), ("A", "C")])
+        onto = ontology_builder(["A", "B", "C"], [("A", "B"), ("B", "C"), ("A", "C")])
         result = v.clustering_coefficient_approx(onto)
         assert result == pytest.approx(1.0)
 
-    def test_star_graph_returns_zero(self):
+    def test_star_graph_returns_zero(self, ontology_builder):
         v = _make_validator()
         # Centre A connected to B, C, D but B/C/D not connected to each other
-        onto = _make_onto(
+        onto = ontology_builder(
             ["A", "B", "C", "D"],
             [("A", "B"), ("A", "C"), ("A", "D")],
         )
@@ -430,30 +436,30 @@ class TestClusteringCoefficientApprox:
         # edges among its neighbours
         assert result == pytest.approx(0.0)
 
-    def test_result_in_zero_one_range(self):
+    def test_result_in_zero_one_range(self, ontology_builder):
         v = _make_validator()
-        onto = _make_onto(
+        onto = ontology_builder(
             ["A", "B", "C", "D"],
             [("A", "B"), ("B", "C"), ("C", "D"), ("A", "C")],
         )
         result = v.clustering_coefficient_approx(onto)
         assert 0.0 <= result <= 1.0
 
-    def test_returns_float(self):
+    def test_returns_float(self, ontology_builder):
         v = _make_validator()
-        onto = _make_onto(["A", "B"], [("A", "B")])
+        onto = ontology_builder(["A", "B"], [("A", "B")])
         assert isinstance(v.clustering_coefficient_approx(onto), float)
 
-    def test_complete_graph_four_nodes_returns_one(self):
+    def test_complete_graph_four_nodes_returns_one(self, ontology_builder):
         v = _make_validator()
         nodes = ["A", "B", "C", "D"]
         edges = [(a, b) for a in nodes for b in nodes if a < b]
-        onto = _make_onto(nodes, edges)
+        onto = ontology_builder(nodes, edges)
         result = v.clustering_coefficient_approx(onto)
         assert result == pytest.approx(1.0)
 
-    def test_no_degree_two_nodes_returns_zero(self):
+    def test_no_degree_two_nodes_returns_zero(self, ontology_builder):
         v = _make_validator()
         # Path graph A-B (each has degree 1, no node has degree ≥ 2)
-        onto = _make_onto(["A", "B"], [("A", "B")])
+        onto = ontology_builder(["A", "B"], [("A", "B")])
         assert v.clustering_coefficient_approx(onto) == pytest.approx(0.0)

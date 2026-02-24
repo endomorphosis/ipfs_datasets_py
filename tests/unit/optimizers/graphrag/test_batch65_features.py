@@ -31,16 +31,17 @@ def _ctx(domain: str = "test") -> OntologyGenerationContext:
     return OntologyGenerationContext(data_source="test", data_type="text", domain=domain)
 
 
-def _small_ontology() -> dict:
-    return {
-        "entities": [
-            {"id": "e1", "type": "Person", "text": "Alice"},
-            {"id": "e2", "type": "Organization", "text": "ACME"},
-        ],
-        "relationships": [
-            {"source": "e1", "target": "e2", "type": "works_at"},
-        ],
-    }
+@pytest.fixture
+def small_ontology(ontology_dict_factory):
+    ontology = ontology_dict_factory(entity_count=0, relationship_count=0)
+    ontology["entities"] = [
+        {"id": "e1", "type": "Person", "text": "Alice"},
+        {"id": "e2", "type": "Organization", "text": "ACME"},
+    ]
+    ontology["relationships"] = [
+        {"source": "e1", "target": "e2", "type": "works_at"},
+    ]
+    return ontology
 
 
 def _critic() -> OntologyCritic:
@@ -60,25 +61,25 @@ def _generator() -> OntologyGenerator:
 # ---------------------------------------------------------------------------
 
 class TestEvaluateWithRubric:
-    def test_returns_critic_score(self):
-        score = _critic().evaluate_with_rubric(_small_ontology(), _ctx(), {"completeness": 1.0})
+    def test_returns_critic_score(self, small_ontology):
+        score = _critic().evaluate_with_rubric(small_ontology, _ctx(), {"completeness": 1.0})
         assert isinstance(score, CriticScore)
 
-    def test_rubric_overall_in_metadata(self):
-        score = _critic().evaluate_with_rubric(_small_ontology(), _ctx(), {"completeness": 1.0})
+    def test_rubric_overall_in_metadata(self, small_ontology):
+        score = _critic().evaluate_with_rubric(small_ontology, _ctx(), {"completeness": 1.0})
         assert "rubric_overall" in score.metadata
 
-    def test_overall_equals_single_dim(self):
+    def test_overall_equals_single_dim(self, small_ontology):
         critic = _critic()
-        ont = _small_ontology()
+        ont = small_ontology
         ctx = _ctx()
         base = critic.evaluate_ontology(ont, ctx)
         rubric_score = critic.evaluate_with_rubric(ont, ctx, {"completeness": 1.0})
         assert abs(rubric_score.metadata["rubric_overall"] - base.completeness) < 1e-4
 
-    def test_equal_weights_blend(self):
+    def test_equal_weights_blend(self, small_ontology):
         critic = _critic()
-        ont = _small_ontology()
+        ont = small_ontology
         ctx = _ctx()
         base = critic.evaluate_ontology(ont, ctx)
         rubric = {
@@ -89,38 +90,38 @@ class TestEvaluateWithRubric:
         expected = (base.completeness + base.consistency) / 2
         assert abs(score.metadata["rubric_overall"] - expected) < 1e-4
 
-    def test_unknown_keys_ignored(self):
+    def test_unknown_keys_ignored(self, small_ontology):
         critic = _critic()
-        base = critic.evaluate_ontology(_small_ontology(), _ctx())
+        base = critic.evaluate_ontology(small_ontology, _ctx())
         score = critic.evaluate_with_rubric(
-            _small_ontology(), _ctx(),
+            small_ontology, _ctx(),
             {"completeness": 1.0, "nonexistent_dim": 5.0}
         )
         assert abs(score.metadata["rubric_overall"] - base.completeness) < 1e-4
 
-    def test_empty_rubric_raises(self):
+    def test_empty_rubric_raises(self, small_ontology):
         with pytest.raises(ValueError):
-            _critic().evaluate_with_rubric(_small_ontology(), _ctx(), {})
+            _critic().evaluate_with_rubric(small_ontology, _ctx(), {})
 
-    def test_all_zero_weights_raises(self):
+    def test_all_zero_weights_raises(self, small_ontology):
         with pytest.raises(ValueError):
             _critic().evaluate_with_rubric(
-                _small_ontology(), _ctx(),
+                small_ontology, _ctx(),
                 {"completeness": 0.0, "consistency": 0.0}
             )
 
-    def test_rubric_overall_in_range(self):
+    def test_rubric_overall_in_range(self, small_ontology):
         score = _critic().evaluate_with_rubric(
-            _small_ontology(), _ctx(),
+            small_ontology, _ctx(),
             {"completeness": 0.3, "consistency": 0.4, "clarity": 0.3}
         )
         assert 0.0 <= score.metadata["rubric_overall"] <= 1.0
 
-    def test_other_dims_preserved(self):
+    def test_other_dims_preserved(self, small_ontology):
         critic = _critic()
-        base = critic.evaluate_ontology(_small_ontology(), _ctx())
+        base = critic.evaluate_ontology(small_ontology, _ctx())
         rubric_score = critic.evaluate_with_rubric(
-            _small_ontology(), _ctx(), {"completeness": 1.0}
+            small_ontology, _ctx(), {"completeness": 1.0}
         )
         assert rubric_score.consistency == base.consistency
         assert rubric_score.clarity == base.clarity

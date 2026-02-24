@@ -142,7 +142,7 @@ class OptimizerArgparseCLI:
             
             return 0
             
-        except Exception as e:
+        except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
             print(f"\n❌ Error: {str(e)}")
             return 1
     
@@ -249,7 +249,7 @@ class OptimizerArgparseCLI:
             print("   (Queue processing not yet implemented)")
             return 0
             
-        except Exception as e:
+        except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
             print(f"\n❌ Error: {str(e)}")
             return 1
     
@@ -338,7 +338,7 @@ class OptimizerArgparseCLI:
                 print("❌ Rollback failed")
                 return 1
                 
-        except Exception as e:
+        except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
             print(f"\n❌ Error: {str(e)}")
             return 1
     
@@ -504,7 +504,7 @@ class OptimizerArgparseCLI:
             
             return 0 if result.passed else 1
             
-        except Exception as e:
+        except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
             print(f"\n❌ Validation error: {str(e)}")
             return 1
     
@@ -658,7 +658,7 @@ class OptimizerArgparseCLI:
         except KeyboardInterrupt:
             print("\n\n⚠️  Interrupted by user")
             return 130
-        except Exception as e:
+        except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
             print(f"\n❌ Unexpected error: {str(e)}")
             import traceback
             traceback.print_exc()

@@ -388,6 +388,13 @@ Examples:
         print(f"   Cycles: {args.cycles}")
         print(f"   Target: {args.target}")
         print(f"   Parallel: {args.parallel}\n")
+
+        if not isinstance(args.cycles, int):
+            print("❌ Error: cycles must be an integer")
+            return 1
+        if args.cycles <= 0:
+            print("❌ Error: cycles must be greater than 0")
+            return 1
         
         input_path = _safe_resolve(args.input, must_exist=True)
         if not input_path.exists():

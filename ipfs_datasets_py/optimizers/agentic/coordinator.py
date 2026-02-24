@@ -453,7 +453,7 @@ class AgentCoordinator:
             state.last_activity = datetime.now()
             return result
             
-        except Exception as e:
+        except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as e:
             state.status = AgentStatus.ERROR
             state.failed_tasks.append(state.current_task.task_id)
             state.last_activity = datetime.now()

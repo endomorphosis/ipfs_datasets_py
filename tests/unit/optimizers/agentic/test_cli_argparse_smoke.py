@@ -71,3 +71,53 @@ def test_argparse_cli_config_show_masks_tokens(tmp_path: Path, monkeypatch: pyte
 
     assert code == 0
     assert any("github_token: ***" in line for line in captured)
+
+
+def test_argparse_cli_run_handles_typed_command_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    target = tmp_path / "sample.py"
+    target.write_text("print('ok')\n")
+    cli = OptimizerArgparseCLI()
+
+    def _raise_value_error(_args):
+        raise ValueError("bad input")
+
+    monkeypatch.setattr(cli, "cmd_optimize", _raise_value_error)
+    code = cli.run(
+        [
+            "optimize",
+            "--method",
+            "test_driven",
+            "--target",
+            str(target),
+            "--description",
+            "Smoke test",
+            "--dry-run",
+        ]
+    )
+    assert code == 1
+
+
+def test_argparse_cli_run_propagates_non_keyboard_base_exception(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    target = tmp_path / "sample.py"
+    target.write_text("print('ok')\n")
+    cli = OptimizerArgparseCLI()
+
+    def _raise_system_exit(_args):
+        raise SystemExit(2)
+
+    monkeypatch.setattr(cli, "cmd_optimize", _raise_system_exit)
+    with pytest.raises(SystemExit):
+        cli.run(
+            [
+                "optimize",
+                "--method",
+                "test_driven",
+                "--target",
+                str(target),
+                "--description",
+                "Smoke test",
+                "--dry-run",
+            ]
+        )
