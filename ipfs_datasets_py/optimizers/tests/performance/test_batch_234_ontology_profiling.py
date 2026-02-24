@@ -302,6 +302,36 @@ Response:
         return content[:10240]
 
 
+class TestDataGeneratorContracts:
+    """Contract checks for synthetic profiling fixtures."""
+
+    @pytest.mark.parametrize(
+        "builder,expected_markers",
+        [
+            (
+                TestDataGenerator.legal_document_10kb,
+                ["SERVICE AGREEMENT", "GOVERNING LAW"],
+            ),
+            (
+                TestDataGenerator.medical_document_10kb,
+                ["PATIENT CLINICAL NOTE", "CHIEF COMPLAINT"],
+            ),
+            (
+                TestDataGenerator.technical_document_10kb,
+                ["API REFERENCE DOCUMENTATION", "GET /entities"],
+            ),
+        ],
+    )
+    def test_domain_fixture_size_and_markers(self, builder, expected_markers):
+        """Each fixture should be bounded to ~10KB and include domain markers."""
+        text = builder()
+
+        assert isinstance(text, str)
+        assert len(text) == 10240
+        for marker in expected_markers:
+            assert marker in text
+
+
 # ============================================================================
 # Profiling Tests
 # ============================================================================

@@ -14,6 +14,7 @@ import anyio
 import functools
 import hashlib
 import json
+import logging
 import time
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
@@ -22,6 +23,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 import threading
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -403,7 +406,13 @@ class ParallelValidator:
                 results.append((True, result))
             except TimeoutError:
                 results.append((False, "Timeout"))
-            except Exception as e:
+            except (
+                ValueError,
+                TypeError,
+                AttributeError,
+                RuntimeError,
+                OSError,
+            ) as e:
                 results.append((False, str(e)))
 
         async with anyio.create_task_group() as tg:
@@ -432,7 +441,13 @@ class ParallelValidator:
             try:
                 result = validator(*args, **kwargs)
                 return (True, result)
-            except Exception as e:
+            except (
+                ValueError,
+                TypeError,
+                AttributeError,
+                RuntimeError,
+                OSError,
+            ) as e:
                 return (False, str(e))
         
         futures = [
@@ -445,7 +460,15 @@ class ParallelValidator:
             try:
                 result = future.result(timeout=self.timeout)
                 results.append(result)
-            except Exception as e:
+            except TimeoutError:
+                results.append((False, "Timeout"))
+            except (
+                ValueError,
+                TypeError,
+                AttributeError,
+                RuntimeError,
+                OSError,
+            ) as e:
                 results.append((False, str(e)))
         
         return results
@@ -514,7 +537,7 @@ def profile_optimizer(func: Callable) -> Callable:
             
             return result
         
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, RuntimeError, OSError) as e:
             duration = time.time() - start_time
             print(f"❌ {func.__name__}: {duration:.2f}s (failed: {e})")
             raise
@@ -565,7 +588,7 @@ class BatchFileProcessor:
                 try:
                     with open(path, "r") as f:
                         results.append(f.read())
-                except Exception as e:
+                except (OSError, UnicodeDecodeError) as e:
                     results.append(f"Error: {e}")
         
         return results
@@ -601,7 +624,7 @@ class BatchFileProcessor:
                     results.append(True)
                 except (OSError, UnicodeEncodeError) as e:
                     # File write failed - record failure
-                    _logger.debug(f"Failed to write cache file {path}: {e}")
+                    logger.debug(f"Failed to write cache file {path}: {e}")
                     results.append(False)
         
         return results

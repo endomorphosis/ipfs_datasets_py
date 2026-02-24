@@ -193,7 +193,15 @@ class BatchStrategyRecommender:
                 
                 self._processed_count += 1
                 
-            except Exception as e:
+            except (
+                ValueError,
+                TypeError,
+                AttributeError,
+                KeyError,
+                IndexError,
+                RuntimeError,
+                OSError,
+            ) as e:
                 logger.error(
                     f"Error recommending strategy for ontology {ontology_ref.ontology_id}: {e}"
                 )

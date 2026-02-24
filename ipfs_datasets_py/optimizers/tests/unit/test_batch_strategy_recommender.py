@@ -542,3 +542,40 @@ class TestIntegration:
         # Should have recommendations for different strategy types
         strategy_types = set(rec.strategy_type for rec in recommendations)
         assert len(strategy_types) > 1
+
+
+class TestExceptionHandling:
+    """Test typed exception handling during batch recommendation."""
+
+    def test_typed_runtime_error_is_recorded_as_failure(self, sample_ontologies, monkeypatch):
+        recommender = create_batch_recommender()
+
+        def _broken_single(*args, **kwargs):
+            raise RuntimeError("recommendation failed")
+
+        monkeypatch.setattr(
+            BatchStrategyRecommender,
+            "_recommend_for_single",
+            staticmethod(_broken_single),
+        )
+
+        recommendations, summary = recommender.recommend_strategies_batch(sample_ontologies)
+
+        assert recommendations == []
+        assert summary.failed == len(sample_ontologies)
+        assert summary.successful == 0
+
+    def test_keyboard_interrupt_propagates(self, sample_ontologies, monkeypatch):
+        recommender = create_batch_recommender()
+
+        def _interrupt_single(*args, **kwargs):
+            raise KeyboardInterrupt()
+
+        monkeypatch.setattr(
+            BatchStrategyRecommender,
+            "_recommend_for_single",
+            staticmethod(_interrupt_single),
+        )
+
+        with pytest.raises(KeyboardInterrupt):
+            recommender.recommend_strategies_batch(sample_ontologies)

@@ -952,6 +952,21 @@ class OntologyPipeline:
         self._mediator.reset_all_state()
         return n
 
+    def reset_to_initial(self) -> int:
+        """Reset the pipeline to its initial post-construction runtime state.
+
+        Clears run history, clears last refinement state, resets mediator
+        state, and clears learning-adapter feedback history.
+
+        Returns:
+            Number of run-history entries that were cleared.
+        """
+        cleared = self.reset()
+        self._last_refinement_state = None
+        if hasattr(self._adapter, "reset"):
+            self._adapter.reset()
+        return cleared
+
     def has_run(self) -> bool:
         """Return ``True`` if :meth:`run` has been called at least once.
 

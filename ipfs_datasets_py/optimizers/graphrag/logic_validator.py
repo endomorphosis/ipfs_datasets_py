@@ -1823,6 +1823,24 @@ class LogicValidator:
                     queue.append((neighbour, dist + 1))
         return -1
 
+    def max_path_length(
+        self,
+        ontology: Dict[str, Any],
+        source: str,
+        target: str,
+    ) -> int:
+        """Alias for :meth:`shortest_path_length`.
+
+        Args:
+            ontology: Ontology dict.
+            source: Source entity id.
+            target: Target entity id.
+
+        Returns:
+            Number of hops in the shortest path, or ``-1`` if unreachable.
+        """
+        return self.shortest_path_length(ontology, source, target)
+
     def reachable_from(self, ontology: Dict[str, Any], source: str) -> list:
         """Return all entity ids reachable from *source* via BFS.
 
