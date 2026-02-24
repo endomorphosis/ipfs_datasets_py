@@ -158,7 +158,7 @@ class PipelineJSONLogger:
         
         try:
             self.logger.log(level, json.dumps(payload, default=str))
-        except Exception as exc:
+        except (TypeError, ValueError, RuntimeError, OSError) as exc:
             self.logger.debug(f"JSON logging failed: {exc}")
     
     def start_run(
@@ -557,6 +557,6 @@ def start_pipeline_run(
     try:
         yield context
         logger.end_run(success=True)
-    except Exception as exc:
+    except (ValueError, TypeError, AttributeError, RuntimeError, OSError) as exc:
         logger.end_run(success=False, error=str(exc))
         raise

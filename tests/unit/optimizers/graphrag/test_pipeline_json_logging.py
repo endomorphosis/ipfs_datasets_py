@@ -320,6 +320,34 @@ class TestPipelineJSONLogger:
                 log_obj = json.loads(line)
                 assert "timestamp" in log_obj
 
+    def test_emit_log_falls_back_on_typed_logger_error(self):
+        """_emit_log should fallback to debug on typed logger failures."""
+        py_logger = logging.getLogger("test.pipeline_json_logger.typed_error")
+        py_logger.setLevel(logging.DEBUG)
+        py_logger.log = lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("sink error"))  # type: ignore[assignment]
+
+        debug_calls = []
+        py_logger.debug = lambda msg: debug_calls.append(msg)  # type: ignore[assignment]
+
+        json_logger = PipelineJSONLogger("test", logger=py_logger)
+        json_logger._emit_log("test.event", {"k": "v"})
+
+        assert len(debug_calls) == 1
+        assert "JSON logging failed" in debug_calls[0]
+
+    def test_emit_log_does_not_swallow_base_exception(self):
+        """_emit_log should not swallow BaseException subclasses."""
+        class AbortSignal(BaseException):
+            pass
+
+        py_logger = logging.getLogger("test.pipeline_json_logger.abort")
+        py_logger.log = lambda *args, **kwargs: (_ for _ in ()).throw(AbortSignal())  # type: ignore[assignment]
+
+        json_logger = PipelineJSONLogger("test", logger=py_logger)
+
+        with pytest.raises(AbortSignal):
+            json_logger._emit_log("test.event", {"k": "v"})
+
 
 class TestContextManager:
     """Test context manager for pipeline runs."""
@@ -354,6 +382,17 @@ class TestContextManager:
         # Should have pipeline.run.failed
         events = [json.loads(line).get("event") for line in lines if line]
         assert "pipeline.run.failed" in events
+
+    def test_context_manager_does_not_swallow_base_exception(self, logger_with_capture):
+        """Context manager should not swallow BaseException subclasses."""
+        class AbortSignal(BaseException):
+            pass
+
+        json_logger, _ = logger_with_capture
+
+        with pytest.raises(AbortSignal):
+            with start_pipeline_run(json_logger, "run_123", data_source="test"):
+                raise AbortSignal()
 
 
 class TestJSONLogStructure:
