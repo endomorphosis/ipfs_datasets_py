@@ -41,19 +41,24 @@ def _score_dict(c=0.8, co=0.7, cl=0.6, g=0.5, da=0.4):
     }
 
 
-def _ontology(n: int = 3, dangling: bool = False):
-    entities = [
-        {"id": f"e{i}", "type": "Person", "text": f"Name{i}", "properties": {}, "confidence": 0.8}
-        for i in range(n)
-    ]
-    relationships = [
-        {"id": "r1", "source_id": "e0", "target_id": "e1", "type": "knows", "confidence": 0.7},
-    ]
-    if dangling:
-        relationships.append(
-            {"id": "r2", "source_id": "e0", "target_id": "e_MISSING", "type": "related_to", "confidence": 0.6}
-        )
-    return {"entities": entities, "relationships": relationships, "metadata": {}, "domain": "test"}
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    def _build(n: int = 3, dangling: bool = False):
+        ontology = ontology_dict_factory(entity_count=n, relationship_count=1, domain="test", metadata={})
+        ontology["domain"] = "test"
+        if dangling:
+            ontology.setdefault("relationships", []).append(
+                {
+                    "id": "r_missing",
+                    "source_id": ontology["entities"][0]["id"],
+                    "target_id": "e_MISSING",
+                    "type": "related_to",
+                    "confidence": 0.6,
+                }
+            )
+        return ontology
+
+    return _build
 
 
 # ---------------------------------------------------------------------------
@@ -148,20 +153,20 @@ class TestPipelineClone:
 # ---------------------------------------------------------------------------
 
 class TestExplainContradictions:
-    def test_returns_list(self):
+    def test_returns_list(self, ontology_builder):
         v = LogicValidator()
-        result = v.explain_contradictions(_ontology())
+        result = v.explain_contradictions(ontology_builder())
         assert isinstance(result, list)
 
-    def test_consistent_ontology_returns_empty(self):
+    def test_consistent_ontology_returns_empty(self, ontology_builder):
         v = LogicValidator()
-        result = v.explain_contradictions(_ontology())
+        result = v.explain_contradictions(ontology_builder())
         # Consistent ontology may or may not have contradictions, just assert no crash
         assert isinstance(result, list)
 
-    def test_dangling_ref_produces_explanation(self):
+    def test_dangling_ref_produces_explanation(self, ontology_builder):
         v = LogicValidator()
-        result = v.explain_contradictions(_ontology(dangling=True))
+        result = v.explain_contradictions(ontology_builder(dangling=True))
         # There is at least one explanation (for the dangling reference)
         if result:
             for item in result:
@@ -169,21 +174,21 @@ class TestExplainContradictions:
                 assert "explanation" in item
                 assert "action" in item
 
-    def test_each_item_has_required_keys(self):
+    def test_each_item_has_required_keys(self, ontology_builder):
         v = LogicValidator()
         # Create an ontology with a known contradiction
-        ont = _ontology(dangling=True)
+        ont = ontology_builder(dangling=True)
         for item in v.explain_contradictions(ont):
             assert set(item.keys()) >= {"contradiction", "explanation", "action"}
 
-    def test_action_is_string(self):
+    def test_action_is_string(self, ontology_builder):
         v = LogicValidator()
-        for item in v.explain_contradictions(_ontology(dangling=True)):
+        for item in v.explain_contradictions(ontology_builder(dangling=True)):
             assert isinstance(item["action"], str)
 
-    def test_explanation_is_string(self):
+    def test_explanation_is_string(self, ontology_builder):
         v = LogicValidator()
-        for item in v.explain_contradictions(_ontology(dangling=True)):
+        for item in v.explain_contradictions(ontology_builder(dangling=True)):
             assert isinstance(item["explanation"], str)
 
 

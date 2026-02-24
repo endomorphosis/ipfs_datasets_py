@@ -95,11 +95,17 @@ def _make_validator():
     return LogicValidator()
 
 
-def _make_onto(entity_ids, edge_pairs):
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
     """Build ontology dict from list of entity IDs and (source, target) tuples."""
-    entities = [{"id": eid} for eid in entity_ids]
-    relationships = [{"source": s, "target": t} for s, t in edge_pairs]
-    return {"entities": entities, "relationships": relationships}
+
+    def _build(entity_ids, edge_pairs):
+        ontology = ontology_dict_factory(entity_count=0, relationship_count=0)
+        ontology["entities"] = [{"id": eid} for eid in entity_ids]
+        ontology["relationships"] = [{"source": s, "target": t} for s, t in edge_pairs]
+        return ontology
+
+    return _build
 
 
 # ── OntologyOptimizer.score_bimodality_dip ───────────────────────────────────
@@ -287,60 +293,59 @@ class TestEntityConfidenceTrimmedMean:
 # ── LogicValidator.diameter_approx ───────────────────────────────────────────
 
 class TestDiameterApprox:
-    def test_empty_graph_returns_zero(self):
+    def test_empty_graph_returns_zero(self, ontology_builder):
         v = _make_validator()
-        onto = _make_onto([], [])
+        onto = ontology_builder([], [])
         assert v.diameter_approx(onto) == 0
 
-    def test_single_node_returns_zero(self):
+    def test_single_node_returns_zero(self, ontology_builder):
         v = _make_validator()
-        onto = _make_onto(["A"], [])
+        onto = ontology_builder(["A"], [])
         assert v.diameter_approx(onto) == 0
 
-    def test_two_nodes_no_edges_returns_zero(self):
+    def test_two_nodes_no_edges_returns_zero(self, ontology_builder):
         v = _make_validator()
-        onto = _make_onto(["A", "B"], [])
+        onto = ontology_builder(["A", "B"], [])
         assert v.diameter_approx(onto) == 0
 
-    def test_single_edge_diameter_one(self):
+    def test_single_edge_diameter_one(self, ontology_builder):
         v = _make_validator()
-        onto = _make_onto(["A", "B"], [("A", "B")])
+        onto = ontology_builder(["A", "B"], [("A", "B")])
         assert v.diameter_approx(onto) == 1
 
-    def test_chain_of_three_diameter_two(self):
+    def test_chain_of_three_diameter_two(self, ontology_builder):
         # A→B→C: longest path = 2
         v = _make_validator()
-        onto = _make_onto(["A", "B", "C"], [("A", "B"), ("B", "C")])
+        onto = ontology_builder(["A", "B", "C"], [("A", "B"), ("B", "C")])
         assert v.diameter_approx(onto) == 2
 
-    def test_chain_of_four_diameter_three(self):
+    def test_chain_of_four_diameter_three(self, ontology_builder):
         v = _make_validator()
-        onto = _make_onto(["A", "B", "C", "D"],
-                          [("A", "B"), ("B", "C"), ("C", "D")])
+        onto = ontology_builder(["A", "B", "C", "D"], [("A", "B"), ("B", "C"), ("C", "D")])
         assert v.diameter_approx(onto) == 3
 
-    def test_directed_graph_not_symmetric(self):
+    def test_directed_graph_not_symmetric(self, ontology_builder):
         # A→B, B→C; from C there's no path to A → diameter still 2 (A→B→C)
         v = _make_validator()
-        onto = _make_onto(["A", "B", "C"], [("A", "B"), ("B", "C")])
+        onto = ontology_builder(["A", "B", "C"], [("A", "B"), ("B", "C")])
         assert v.diameter_approx(onto) == 2
 
-    def test_cycle_diameter_n_minus_one(self):
+    def test_cycle_diameter_n_minus_one(self, ontology_builder):
         # A→B→C→A: diameter 2 (any node can reach any other in at most 2 steps)
         v = _make_validator()
-        onto = _make_onto(["A", "B", "C"], [("A", "B"), ("B", "C"), ("C", "A")])
+        onto = ontology_builder(["A", "B", "C"], [("A", "B"), ("B", "C"), ("C", "A")])
         assert v.diameter_approx(onto) == 2
 
-    def test_disconnected_components_diameter_based_on_reachable(self):
+    def test_disconnected_components_diameter_based_on_reachable(self, ontology_builder):
         # A→B (component 1), C→D (component 2) → each has diameter 1
         v = _make_validator()
-        onto = _make_onto(["A", "B", "C", "D"], [("A", "B"), ("C", "D")])
+        onto = ontology_builder(["A", "B", "C", "D"], [("A", "B"), ("C", "D")])
         assert v.diameter_approx(onto) == 1
 
-    def test_fully_connected_dag(self):
+    def test_fully_connected_dag(self, ontology_builder):
         # A→B, A→C, B→D, C→D → longest path A→B→D or A→C→D = 2
         v = _make_validator()
-        onto = _make_onto(
+        onto = ontology_builder(
             ["A", "B", "C", "D"],
             [("A", "B"), ("A", "C"), ("B", "D"), ("C", "D")],
         )
@@ -354,26 +359,26 @@ class TestDiameterApprox:
                                    {"source": "A", "target": "B"}]}
         assert v.diameter_approx(onto) == 1
 
-    def test_star_graph_diameter_two(self):
+    def test_star_graph_diameter_two(self, ontology_builder):
         # Hub→A, Hub→B, Hub→C; no edges between leaves → diameter 1
         v = _make_validator()
-        onto = _make_onto(
+        onto = ontology_builder(
             ["Hub", "A", "B", "C"],
             [("Hub", "A"), ("Hub", "B"), ("Hub", "C")],
         )
         assert v.diameter_approx(onto) == 1
 
-    def test_long_chain_diameter_n_minus_one(self):
+    def test_long_chain_diameter_n_minus_one(self, ontology_builder):
         n = 6
         ids = [str(i) for i in range(n)]
         edges = [(ids[i], ids[i + 1]) for i in range(n - 1)]
         v = _make_validator()
-        onto = _make_onto(ids, edges)
+        onto = ontology_builder(ids, edges)
         assert v.diameter_approx(onto) == n - 1
 
-    def test_result_nonnegative(self):
+    def test_result_nonnegative(self, ontology_builder):
         v = _make_validator()
-        onto = _make_onto(["X", "Y"], [("X", "Y"), ("Y", "X")])
+        onto = ontology_builder(["X", "Y"], [("X", "Y"), ("Y", "X")])
         assert v.diameter_approx(onto) >= 0
 
     def test_edges_only_nodes_not_in_entities(self):

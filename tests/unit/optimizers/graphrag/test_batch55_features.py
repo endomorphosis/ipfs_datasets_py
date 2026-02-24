@@ -26,59 +26,73 @@ class TestEvaluateBatchProgressCallback:
         OntologyCritic.clear_shared_cache()
         return OntologyCritic(use_llm=False)
 
-    def _make_ontology(self, tag: str):
-        return {
-            "entities": [{"id": f"e1-{tag}", "text": f"Alice-{tag}",
-                          "type": "Person", "confidence": 0.9, "properties": {}}],
-            "relationships": [],
-        }
+    @pytest.fixture
+    def ontology_builder(self, ontology_dict_factory):
+        def _build(tag: str):
+            ontology = ontology_dict_factory(
+                entity_count=1,
+                relationship_count=0,
+                entity_types=["Person"],
+            )
+            ontology["entities"][0].update(
+                {
+                    "id": f"e1-{tag}",
+                    "text": f"Alice-{tag}",
+                    "type": "Person",
+                    "confidence": 0.9,
+                    "properties": {},
+                }
+            )
+            return ontology
+
+        return _build
 
     def _ctx(self):
         ctx = MagicMock()
         ctx.domain = "test"
         return ctx
 
-    def test_callback_invoked_once_per_ontology(self, critic):
+    def test_callback_invoked_once_per_ontology(self, critic, ontology_builder):
         cb = MagicMock()
-        ontologies = [self._make_ontology(str(i)) for i in range(3)]
+        ontologies = [ontology_builder(str(i)) for i in range(3)]
         critic.evaluate_batch(ontologies, self._ctx(), progress_callback=cb)
         assert cb.call_count == 3
 
-    def test_callback_receives_correct_index(self, critic):
+    def test_callback_receives_correct_index(self, critic, ontology_builder):
         indices = []
         def cb(idx, total, score):
             indices.append(idx)
-        ontologies = [self._make_ontology(str(i)) for i in range(4)]
+        ontologies = [ontology_builder(str(i)) for i in range(4)]
         critic.evaluate_batch(ontologies, self._ctx(), progress_callback=cb)
         assert indices == [0, 1, 2, 3]
 
-    def test_callback_receives_total(self, critic):
+    def test_callback_receives_total(self, critic, ontology_builder):
         totals = []
         def cb(idx, total, score):
             totals.append(total)
-        ontologies = [self._make_ontology(str(i)) for i in range(2)]
+        ontologies = [ontology_builder(str(i)) for i in range(2)]
         critic.evaluate_batch(ontologies, self._ctx(), progress_callback=cb)
         assert totals == [2, 2]
 
-    def test_callback_receives_critic_score(self, critic):
+    def test_callback_receives_critic_score(self, critic, ontology_builder):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
         scores_received = []
         def cb(idx, total, score):
             scores_received.append(score)
-        critic.evaluate_batch([self._make_ontology("x")], self._ctx(), progress_callback=cb)
+        critic.evaluate_batch([ontology_builder("x")], self._ctx(), progress_callback=cb)
         assert all(isinstance(s, CriticScore) for s in scores_received)
 
-    def test_no_callback_still_works(self, critic):
+    def test_no_callback_still_works(self, critic, ontology_builder):
         result = critic.evaluate_batch(
-            [self._make_ontology("y"), self._make_ontology("z")],
+            [ontology_builder("y"), ontology_builder("z")],
             self._ctx(),
         )
         assert result["count"] == 2
 
-    def test_crashing_callback_does_not_abort_batch(self, critic):
+    def test_crashing_callback_does_not_abort_batch(self, critic, ontology_builder):
         def bad_cb(idx, total, score):
             raise RuntimeError("oops")
-        ontologies = [self._make_ontology(str(i)) for i in range(3)]
+        ontologies = [ontology_builder(str(i)) for i in range(3)]
         result = critic.evaluate_batch(ontologies, self._ctx(), progress_callback=bad_cb)
         # Batch should still complete all 3 evaluations
         assert result["count"] == 3

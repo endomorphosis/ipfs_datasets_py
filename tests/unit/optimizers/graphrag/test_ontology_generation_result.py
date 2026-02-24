@@ -16,42 +16,53 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
 )
 
 
-def _make_ontology(
-    n_entities: int = 3,
-    n_rels: int = 2,
-    entity_types: list | None = None,
-    confidence: float = 0.8,
-) -> dict:
-    types = entity_types or ["Person", "Org", "Concept"]
-    entities = [
-        {
-            "id": f"e{i}",
-            "type": types[i % len(types)],
-            "text": f"Item{i}",
-            "confidence": confidence,
-        }
-        for i in range(n_entities)
-    ]
-    relationships = [
-        {
-            "id": f"r{i}",
-            "source_id": f"e{i}",
-            "target_id": f"e{(i + 1) % n_entities}",
-            "type": "related",
-            "confidence": 0.7,
-        }
-        for i in range(n_rels)
-    ]
-    return {"entities": entities, "relationships": relationships}
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    def _build(
+        n_entities: int = 3,
+        n_rels: int = 2,
+        entity_types: list | None = None,
+        confidence: float = 0.8,
+    ) -> dict:
+        types = entity_types or ["Person", "Org", "Concept"]
+        ontology = ontology_dict_factory(
+            entity_count=n_entities,
+            relationship_count=0,
+            entity_types=types,
+        )
+        ontology["entities"] = [
+            {
+                "id": f"e{i}",
+                "type": types[i % len(types)],
+                "text": f"Item{i}",
+                "confidence": confidence,
+            }
+            for i in range(n_entities)
+        ]
+        ontology["relationships"] = [
+            {
+                "id": f"r{i}",
+                "source_id": f"e{i}",
+                "target_id": f"e{(i + 1) % n_entities}",
+                "type": "related",
+                "confidence": 0.7,
+            }
+            for i in range(n_rels)
+        ]
+        return ontology
+
+    return _build
 
 
 class TestOntologyGenerationResultFromOntology:
-    def test_entity_count_correct(self):
-        result = OntologyGenerationResult.from_ontology(_make_ontology(n_entities=5))
+    def test_entity_count_correct(self, ontology_builder):
+        result = OntologyGenerationResult.from_ontology(ontology_builder(n_entities=5))
         assert result.entity_count == 5
 
-    def test_relationship_count_correct(self):
-        result = OntologyGenerationResult.from_ontology(_make_ontology(n_entities=4, n_rels=3))
+    def test_relationship_count_correct(self, ontology_builder):
+        result = OntologyGenerationResult.from_ontology(
+            ontology_builder(n_entities=4, n_rels=3)
+        )
         assert result.relationship_count == 3
 
     def test_entity_type_diversity_correct(self):
@@ -98,24 +109,24 @@ class TestOntologyGenerationResultFromOntology:
         assert result.mean_entity_confidence == 0.0
         assert result.mean_relationship_confidence == 0.0
 
-    def test_ontology_stored(self):
-        ontology = _make_ontology(n_entities=2)
+    def test_ontology_stored(self, ontology_builder):
+        ontology = ontology_builder(n_entities=2)
         result = OntologyGenerationResult.from_ontology(ontology)
         assert result.ontology is ontology
 
-    def test_extraction_strategy_stored(self):
+    def test_extraction_strategy_stored(self, ontology_builder):
         result = OntologyGenerationResult.from_ontology(
-            _make_ontology(), extraction_strategy="rule_based"
+            ontology_builder(), extraction_strategy="rule_based"
         )
         assert result.extraction_strategy == "rule_based"
 
-    def test_domain_stored(self):
-        result = OntologyGenerationResult.from_ontology(_make_ontology(), domain="legal")
+    def test_domain_stored(self, ontology_builder):
+        result = OntologyGenerationResult.from_ontology(ontology_builder(), domain="legal")
         assert result.domain == "legal"
 
-    def test_metadata_stored(self):
+    def test_metadata_stored(self, ontology_builder):
         result = OntologyGenerationResult.from_ontology(
-            _make_ontology(), metadata={"backend": "openai"}
+            ontology_builder(), metadata={"backend": "openai"}
         )
         assert result.metadata["backend"] == "openai"
 

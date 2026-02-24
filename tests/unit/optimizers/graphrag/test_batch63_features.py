@@ -42,18 +42,6 @@ def _score(**kwargs):
     return CriticScore(**defaults)
 
 
-def _ontology(n: int = 2):
-    return {
-        "entities": [
-            {"id": f"e{i}", "type": "Person", "text": f"Name{i}", "properties": {}, "confidence": 0.8}
-            for i in range(n)
-        ],
-        "relationships": [],
-        "metadata": {},
-        "domain": "test",
-    }
-
-
 def _make_mediator():
     gen = OntologyGenerator()
     critic = OntologyCritic(use_llm=False)
@@ -68,33 +56,38 @@ class TestEvaluateOntologyTimeout:
     def _critic(self):
         return OntologyCritic(use_llm=False)
 
-    def test_no_timeout_succeeds(self):
+    def test_no_timeout_succeeds(self, ontology_dict_factory):
         critic = self._critic()
-        score = critic.evaluate_ontology(_ontology(), _ctx())
+        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        score = critic.evaluate_ontology(ontology, _ctx())
         assert isinstance(score, CriticScore)
 
-    def test_large_timeout_succeeds(self):
+    def test_large_timeout_succeeds(self, ontology_dict_factory):
         critic = self._critic()
-        score = critic.evaluate_ontology(_ontology(), _ctx(), timeout=30.0)
+        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        score = critic.evaluate_ontology(ontology, _ctx(), timeout=30.0)
         assert isinstance(score, CriticScore)
 
-    def test_timeout_returns_critic_score_on_time(self):
+    def test_timeout_returns_critic_score_on_time(self, ontology_dict_factory):
         critic = self._critic()
-        score = critic.evaluate_ontology(_ontology(5), _ctx(), timeout=10.0)
+        ontology = ontology_dict_factory(entity_count=5, relationship_count=0, domain="test", metadata={})
+        score = critic.evaluate_ontology(ontology, _ctx(), timeout=10.0)
         assert 0.0 <= score.overall <= 1.0
 
-    def test_timeout_none_is_default_behavior(self):
+    def test_timeout_none_is_default_behavior(self, ontology_dict_factory):
         critic = self._critic()
-        score1 = critic.evaluate_ontology(_ontology(), _ctx(), timeout=None)
-        score2 = critic.evaluate_ontology(_ontology(), _ctx())
+        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        score1 = critic.evaluate_ontology(ontology, _ctx(), timeout=None)
+        score2 = critic.evaluate_ontology(ontology, _ctx())
         assert score1.completeness == pytest.approx(score2.completeness)
 
-    def test_very_small_timeout_raises_timeout_error(self):
+    def test_very_small_timeout_raises_timeout_error(self, ontology_dict_factory):
         """A 0.000001s timeout should fire on any non-trivial evaluation."""
         import unittest.mock as _mock
         import time
 
         critic = self._critic()
+        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
 
         # Patch _evaluate_ontology_impl to sleep briefly
         original_impl = critic._evaluate_ontology_impl
@@ -105,11 +98,12 @@ class TestEvaluateOntologyTimeout:
 
         with _mock.patch.object(critic, "_evaluate_ontology_impl", side_effect=slow_impl):
             with pytest.raises(TimeoutError):
-                critic.evaluate_ontology(_ontology(), _ctx(), timeout=0.05)
+                critic.evaluate_ontology(ontology, _ctx(), timeout=0.05)
 
-    def test_timeout_with_source_data(self):
+    def test_timeout_with_source_data(self, ontology_dict_factory):
         critic = self._critic()
-        score = critic.evaluate_ontology(_ontology(), _ctx(), source_data="test text", timeout=10.0)
+        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        score = critic.evaluate_ontology(ontology, _ctx(), source_data="test text", timeout=10.0)
         assert isinstance(score, CriticScore)
 
 

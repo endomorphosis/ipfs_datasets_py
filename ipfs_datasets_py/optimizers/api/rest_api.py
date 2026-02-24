@@ -540,7 +540,7 @@ class APIServer:
                 process = psutil.Process(os.getpid())
                 mem_info = process.memory_info()
                 current_mem_mb = mem_info.rss / (1024 * 1024)
-            except:
+            except (ImportError, AttributeError, OSError, RuntimeError, ValueError, TypeError):
                 current_mem_mb = 0.0
             
             return {

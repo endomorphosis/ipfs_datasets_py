@@ -218,7 +218,7 @@ class JWTAuthenticator:
             raise InvalidTokenError("Token has expired") from exc
         except PyJWTInvalidTokenError as exc:
             raise InvalidTokenError("Invalid token") from exc
-        except Exception as exc:
+        except (TypeError, ValueError, AttributeError) as exc:
             raise InvalidTokenError("Invalid token") from exc
 
         token_type = TokenType(claims.get("token_type", TokenType.ACCESS.value))
@@ -250,7 +250,12 @@ class JWTAuthenticator:
             # Decode without signature verification to extract exp.
             claims = jwt.decode(token, options={"verify_signature": False})
             expires_at = _claim_to_datetime(claims.get("exp"))
-        except Exception:
+        except (
+            PyJWTInvalidTokenError,
+            TypeError,
+            ValueError,
+            AttributeError,
+        ):
             expires_at = None
         self.blacklist.add(token, expires_at)
 
@@ -432,5 +437,5 @@ def _claim_to_datetime(value: Any) -> Optional[datetime]:
     # Best effort parse.
     try:
         return datetime.fromtimestamp(float(value), tz=timezone.utc)
-    except Exception:
+    except (TypeError, ValueError, OverflowError, OSError):
         return None

@@ -245,6 +245,35 @@ class TestInputValidator:
         result = validator.validate_path(outside_path, allowed_base=allowed_dir)
         assert not result.valid
         assert "must be within" in result.errors[0]
+
+    def test_validate_path_returns_error_on_typed_resolve_failure(self, monkeypatch):
+        """Typed path resolution failures should produce validation errors."""
+        validator = InputValidator()
+        real_resolve = Path.resolve
+
+        def _raise_oserror(self, *args, **kwargs):
+            if str(self) == "bad/path":
+                raise OSError("broken path")
+            return real_resolve(self, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "resolve", _raise_oserror)
+        result = validator.validate_path("bad/path")
+        assert not result.valid
+        assert "Invalid path" in result.errors[0]
+
+    def test_validate_path_propagates_base_exception(self, monkeypatch):
+        """Base exceptions must not be swallowed by path validation fallback."""
+        validator = InputValidator()
+        real_resolve = Path.resolve
+
+        def _raise_interrupt(self, *args, **kwargs):
+            if str(self) == "interrupt/path":
+                raise KeyboardInterrupt("stop")
+            return real_resolve(self, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "resolve", _raise_interrupt)
+        with pytest.raises(KeyboardInterrupt):
+            validator.validate_path("interrupt/path")
     
     def test_validate_entity_text_valid(self):
         """Test valid entity text."""

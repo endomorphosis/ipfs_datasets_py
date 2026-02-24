@@ -233,7 +233,7 @@ class InputValidator:
         # Convert to Path object for normalization
         try:
             path_obj = Path(path_str).resolve()
-        except Exception as e:
+        except (OSError, RuntimeError, ValueError) as e:
             errors.append(f"Invalid path: {e}")
             return ValidationResult(valid=False, errors=errors)
         

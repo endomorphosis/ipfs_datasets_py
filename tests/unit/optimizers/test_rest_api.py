@@ -507,7 +507,20 @@ class TestMemoryEndpoints:
         assert isinstance(data["current_memory_mb"], float)
         assert data["current_memory_mb"] >= 0
         assert data["object_count"] >= 0
-    
+
+    def test_memory_snapshot_typed_import_fallback(self, client, monkeypatch):
+        real_import = __import__
+
+        def _import(name, *args, **kwargs):
+            if name == "psutil":
+                raise ImportError("missing psutil")
+            return real_import(name, *args, **kwargs)
+
+        monkeypatch.setattr("builtins.__import__", _import)
+        response = client.get("/memory/snapshot")
+        assert response.status_code == 200
+        assert response.json()["current_memory_mb"] == 0.0
+
     def test_memory_hotspots_success(self, client):
         response = client.get("/memory/hotspots")
         assert response.status_code == 200

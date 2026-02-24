@@ -103,13 +103,6 @@ def _pipeline_with(scores: list[float]) -> OntologyPipeline:
     return pipeline
 
 
-def _ontology(*pairs, entities=None) -> dict:
-    rels = [{"source": s, "target": t, "type": "r", "id": f"r{i}"}
-            for i, (s, t) in enumerate(pairs)]
-    ent = entities or []
-    return {"entities": ent, "relationships": rels}
-
-
 # ===========================================================================
 # BATCH 211 — New methods
 # ===========================================================================

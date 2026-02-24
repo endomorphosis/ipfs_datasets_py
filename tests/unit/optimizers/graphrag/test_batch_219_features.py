@@ -52,20 +52,19 @@ def _make_pipeline(scores):
     return p
 
 
-def _make_ontology(entity_ids, rels):
-    """Build a simple object-based ontology fixture."""
-    class _E:
-        def __init__(self, i):
-            self.id = i
-    class _R:
-        def __init__(self, s, t):
-            self.source_id = s
-            self.target_id = t
-    class _Ont:
-        def __init__(self, eids, rs):
-            self.entities = [_E(i) for i in eids]
-            self.relationships = [_R(s, t) for s, t in rs]
-    return _Ont(entity_ids, rels)
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    """Build a simple dict ontology fixture using shared factory."""
+
+    def _build(entity_ids, rels):
+        ontology = ontology_dict_factory(entity_count=0, relationship_count=0)
+        ontology["entities"] = [{"id": i} for i in entity_ids]
+        ontology["relationships"] = [
+            {"source_id": s, "target_id": t} for s, t in rels
+        ]
+        return ontology
+
+    return _build
 
 
 # ---------------------------------------------------------------------------
@@ -233,50 +232,50 @@ class TestSourceCount:
         from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
         self.lv = LogicValidator()
 
-    def test_empty_ontology_returns_zero(self):
-        assert self.lv.source_count(_make_ontology([], [])) == 0
+    def test_empty_ontology_returns_zero(self, ontology_builder):
+        assert self.lv.source_count(ontology_builder([], [])) == 0
 
-    def test_single_isolated_node_is_source(self):
+    def test_single_isolated_node_is_source(self, ontology_builder):
         # one node, no edges → in-degree 0 → source
-        assert self.lv.source_count(_make_ontology(["A"], [])) == 1
+        assert self.lv.source_count(ontology_builder(["A"], [])) == 1
 
-    def test_two_isolated_nodes_both_sources(self):
-        assert self.lv.source_count(_make_ontology(["A", "B"], [])) == 2
+    def test_two_isolated_nodes_both_sources(self, ontology_builder):
+        assert self.lv.source_count(ontology_builder(["A", "B"], [])) == 2
 
-    def test_single_edge_one_source(self):
-        ont = _make_ontology(["A", "B"], [("A", "B")])
+    def test_single_edge_one_source(self, ontology_builder):
+        ont = ontology_builder(["A", "B"], [("A", "B")])
         assert self.lv.source_count(ont) == 1  # A has in-degree 0
 
-    def test_chain_only_first_is_source(self):
-        ont = _make_ontology(["A", "B", "C"], [("A", "B"), ("B", "C")])
+    def test_chain_only_first_is_source(self, ontology_builder):
+        ont = ontology_builder(["A", "B", "C"], [("A", "B"), ("B", "C")])
         assert self.lv.source_count(ont) == 1  # A only
 
-    def test_two_sources_one_common_sink(self):
+    def test_two_sources_one_common_sink(self, ontology_builder):
         # A→C, B→C: both A and B are sources
-        ont = _make_ontology(["A", "B", "C"], [("A", "C"), ("B", "C")])
+        ont = ontology_builder(["A", "B", "C"], [("A", "C"), ("B", "C")])
         assert self.lv.source_count(ont) == 2
 
-    def test_star_single_source(self):
+    def test_star_single_source(self, ontology_builder):
         # A→B, A→C, A→D
-        ont = _make_ontology(["A", "B", "C", "D"], [("A", "B"), ("A", "C"), ("A", "D")])
+        ont = ontology_builder(["A", "B", "C", "D"], [("A", "B"), ("A", "C"), ("A", "D")])
         assert self.lv.source_count(ont) == 1
 
-    def test_cycle_no_sources(self):
+    def test_cycle_no_sources(self, ontology_builder):
         # A→B→C→A: every node has in-degree ≥ 1
-        ont = _make_ontology(["A", "B", "C"], [("A", "B"), ("B", "C"), ("C", "A")])
+        ont = ontology_builder(["A", "B", "C"], [("A", "B"), ("B", "C"), ("C", "A")])
         assert self.lv.source_count(ont) == 0
 
-    def test_returns_int(self):
-        ont = _make_ontology(["A", "B"], [("A", "B")])
+    def test_returns_int(self, ontology_builder):
+        ont = ontology_builder(["A", "B"], [("A", "B")])
         assert isinstance(self.lv.source_count(ont), int)
 
-    def test_disconnected_subgraph(self):
+    def test_disconnected_subgraph(self, ontology_builder):
         # A→B (chain), C is isolated → 2 sources (A and C)
-        ont = _make_ontology(["A", "B", "C"], [("A", "B")])
+        ont = ontology_builder(["A", "B", "C"], [("A", "B")])
         assert self.lv.source_count(ont) == 2
 
-    def test_source_count_leq_entity_count(self):
-        ont = _make_ontology(["A", "B", "C", "D"], [("A", "B"), ("B", "C")])
+    def test_source_count_leq_entity_count(self, ontology_builder):
+        ont = ontology_builder(["A", "B", "C", "D"], [("A", "B"), ("B", "C")])
         assert self.lv.source_count(ont) <= 4
 
     def test_dict_style_ontology(self):

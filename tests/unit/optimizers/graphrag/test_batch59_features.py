@@ -37,21 +37,17 @@ def _score(c=0.8, co=0.7, cl=0.9, g=0.6, da=0.75):
     )
 
 
-def _ontology(n: int = 3):
-    return {
-        "entities": [
-            {"id": f"e{i}", "type": "Person", "text": f"Entity{i}", "properties": {}, "confidence": 0.8}
-            for i in range(n)
-        ],
-        "relationships": [],
-        "metadata": {},
-        "domain": "test",
-    }
-
-
 @pytest.fixture
 def ctx():
     return OntologyGenerationContext(data_source="test", data_type="text", domain="test")
+
+
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    def _build(n: int = 3):
+        return ontology_dict_factory(entity_count=n, relationship_count=0, domain="test", metadata={})
+
+    return _build
 
 
 # ---------------------------------------------------------------------------
@@ -144,44 +140,44 @@ class TestCompareBatch:
     def _make_critic(self):
         return OntologyCritic(backend_config={}, use_llm=False)
 
-    def test_returns_list_same_length(self, ctx):
+    def test_returns_list_same_length(self, ctx, ontology_builder):
         critic = self._make_critic()
-        onts = [_ontology(i + 1) for i in range(3)]
+        onts = [ontology_builder(i + 1) for i in range(3)]
         ranking = critic.compare_batch(onts, ctx)
         assert len(ranking) == 3
 
-    def test_rank_1_has_highest_overall(self, ctx):
+    def test_rank_1_has_highest_overall(self, ctx, ontology_builder):
         critic = self._make_critic()
-        onts = [_ontology(i + 1) for i in range(4)]
+        onts = [ontology_builder(i + 1) for i in range(4)]
         ranking = critic.compare_batch(onts, ctx)
         assert ranking[0]["rank"] == 1
         assert ranking[0]["overall"] >= ranking[-1]["overall"]
 
-    def test_ranks_are_sequential(self, ctx):
+    def test_ranks_are_sequential(self, ctx, ontology_builder):
         critic = self._make_critic()
-        onts = [_ontology(2) for _ in range(3)]
+        onts = [ontology_builder(2) for _ in range(3)]
         ranking = critic.compare_batch(onts, ctx)
         assert [r["rank"] for r in ranking] == [1, 2, 3]
 
-    def test_index_preserves_original_position(self, ctx):
+    def test_index_preserves_original_position(self, ctx, ontology_builder):
         critic = self._make_critic()
-        onts = [_ontology(i + 1) for i in range(3)]
+        onts = [ontology_builder(i + 1) for i in range(3)]
         ranking = critic.compare_batch(onts, ctx)
         indices = {r["index"] for r in ranking}
         assert indices == {0, 1, 2}
 
-    def test_score_object_is_critic_score(self, ctx):
+    def test_score_object_is_critic_score(self, ctx, ontology_builder):
         critic = self._make_critic()
-        ranking = critic.compare_batch([_ontology()], ctx)
+        ranking = critic.compare_batch([ontology_builder()], ctx)
         assert isinstance(ranking[0]["score"], CriticScore)
 
     def test_empty_list_returns_empty(self, ctx):
         critic = self._make_critic()
         assert critic.compare_batch([], ctx) == []
 
-    def test_single_item_rank_is_1(self, ctx):
+    def test_single_item_rank_is_1(self, ctx, ontology_builder):
         critic = self._make_critic()
-        ranking = critic.compare_batch([_ontology()], ctx)
+        ranking = critic.compare_batch([ontology_builder()], ctx)
         assert ranking[0]["rank"] == 1
 
 

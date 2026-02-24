@@ -90,19 +90,33 @@ def _make_adapter(scores):
     return la
 
 
-def _make_ontology(entity_ids, rels):
-    class _E:
-        def __init__(self, i):
-            self.id = i
-    class _R:
-        def __init__(self, s, t):
-            self.source_id = s
-            self.target_id = t
-    class _Ont:
-        def __init__(self, eids, rs):
-            self.entities = [_E(i) for i in eids]
-            self.relationships = [_R(s, t) for s, t in rs]
-    return _Ont(entity_ids, rels)
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    def _build(entity_ids, rels):
+        ontology = ontology_dict_factory(entity_count=0, relationship_count=0)
+        ontology["entities"] = [{"id": i} for i in entity_ids]
+        ontology["relationships"] = [
+            {"source_id": s, "target_id": t} for s, t in rels
+        ]
+        class _E:
+            def __init__(self, i):
+                self.id = i
+
+        class _R:
+            def __init__(self, s, t):
+                self.source_id = s
+                self.target_id = t
+
+        class _Ont:
+            def __init__(self, payload):
+                self.entities = [_E(e["id"]) for e in payload["entities"]]
+                self.relationships = [
+                    _R(r["source_id"], r["target_id"]) for r in payload["relationships"]
+                ]
+
+        return _Ont(ontology)
+
+    return _build
 
 
 def _make_validator():
@@ -364,27 +378,27 @@ class TestStaleSmoke:
         result = la.feedback_positive_rate()
         assert result == 0.0
 
-    def test_isolated_node_count_no_edges(self):
+    def test_isolated_node_count_no_edges(self, ontology_builder):
         """LogicValidator.isolated_node_count already exists."""
         validator = _make_validator()
-        ont = _make_ontology(["A", "B", "C"], [])
+        ont = ontology_builder(["A", "B", "C"], [])
         result = validator.isolated_node_count(ont)
         assert result == 3  # all nodes isolated
 
-    def test_isolated_node_count_chain(self):
+    def test_isolated_node_count_chain(self, ontology_builder):
         validator = _make_validator()
-        ont = _make_ontology(["A", "B", "C"], [("A", "B"), ("B", "C")])
+        ont = ontology_builder(["A", "B", "C"], [("A", "B"), ("B", "C")])
         result = validator.isolated_node_count(ont)
         assert result == 0  # all nodes have at least one edge
 
-    def test_isolated_node_count_returns_int(self):
+    def test_isolated_node_count_returns_int(self, ontology_builder):
         validator = _make_validator()
-        ont = _make_ontology(["A"], [])
+        ont = ontology_builder(["A"], [])
         assert isinstance(validator.isolated_node_count(ont), int)
 
-    def test_isolated_node_count_single_isolated(self):
+    def test_isolated_node_count_single_isolated(self, ontology_builder):
         validator = _make_validator()
         # A→B (connected), C (isolated)
-        ont = _make_ontology(["A", "B", "C"], [("A", "B")])
+        ont = ontology_builder(["A", "B", "C"], [("A", "B")])
         result = validator.isolated_node_count(ont)
         assert result == 1

@@ -90,17 +90,22 @@ def _make_pipeline():
 class _FakeRun:
     def __init__(self, score):
         self.overall_score = score
+        self.score = type("_Score", (), {"overall": score})()
 
 
 def _push_run(p, score):
     p._run_history.append(_FakeRun(score))
 
 
-def _ontology(entities, rels):
-    return {
-        "entities": [{"id": e} for e in entities],
-        "relationships": [{"source": s, "target": t} for s, t in rels],
-    }
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    def _build(entities, rels):
+        ontology = ontology_dict_factory(entity_count=0, relationship_count=0)
+        ontology["entities"] = [{"id": e} for e in entities]
+        ontology["relationships"] = [{"source": s, "target": t} for s, t in rels]
+        return ontology
+
+    return _build
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -274,39 +279,39 @@ class TestEccentricityDistribution:
         v = _make_validator()
         assert v.eccentricity_distribution({}) == []
 
-    def test_single_node_no_edges(self):
+    def test_single_node_no_edges(self, ontology_builder):
         v = _make_validator()
-        result = v.eccentricity_distribution(_ontology(["A"], []))
+        result = v.eccentricity_distribution(ontology_builder(["A"], []))
         assert result == [0]
 
-    def test_two_nodes_one_directed_edge(self):
+    def test_two_nodes_one_directed_edge(self, ontology_builder):
         v = _make_validator()
-        ont = _ontology(["A", "B"], [("A", "B")])
+        ont = ontology_builder(["A", "B"], [("A", "B")])
         result = v.eccentricity_distribution(ont)
         # sorted order: A, B
         assert result[0] == 1   # A→B: dist 1
         assert result[1] == 0   # B can reach no one
 
-    def test_linear_chain(self):
+    def test_linear_chain(self, ontology_builder):
         v = _make_validator()
-        ont = _ontology(["A", "B", "C"], [("A", "B"), ("B", "C")])
+        ont = ontology_builder(["A", "B", "C"], [("A", "B"), ("B", "C")])
         result = v.eccentricity_distribution(ont)
         # sorted: A, B, C
         assert result[0] == 2   # A→B→C
         assert result[1] == 1   # B→C
         assert result[2] == 0   # C can reach no one
 
-    def test_cycle_all_equal(self):
+    def test_cycle_all_equal(self, ontology_builder):
         v = _make_validator()
-        ont = _ontology(["A", "B", "C"], [("A", "B"), ("B", "C"), ("C", "A")])
+        ont = ontology_builder(["A", "B", "C"], [("A", "B"), ("B", "C"), ("C", "A")])
         result = v.eccentricity_distribution(ont)
         # In a 3-cycle, max dist from any node is 2
         assert len(result) == 3
         assert all(e == 2 for e in result)
 
-    def test_two_disconnected_nodes(self):
+    def test_two_disconnected_nodes(self, ontology_builder):
         v = _make_validator()
-        ont = _ontology(["A", "B"], [])
+        ont = ontology_builder(["A", "B"], [])
         result = v.eccentricity_distribution(ont)
         assert result == [0, 0]
 
@@ -319,23 +324,25 @@ class TestEccentricityDistribution:
         result = v.eccentricity_distribution(ont)
         assert result == [0]
 
-    def test_result_length_equals_node_count(self):
+    def test_result_length_equals_node_count(self, ontology_builder):
         v = _make_validator()
-        ont = _ontology(["A", "B", "C", "D"], [("A", "B"), ("C", "D")])
+        ont = ontology_builder(["A", "B", "C", "D"], [("A", "B"), ("C", "D")])
         result = v.eccentricity_distribution(ont)
         assert len(result) == 4
 
-    def test_all_nonnegative(self):
+    def test_all_nonnegative(self, ontology_builder):
         v = _make_validator()
-        ont = _ontology(["A", "B", "C"], [("A", "B"), ("A", "C")])
+        ont = ontology_builder(["A", "B", "C"], [("A", "B"), ("A", "C")])
         result = v.eccentricity_distribution(ont)
         assert all(e >= 0 for e in result)
 
-    def test_star_graph_center_has_highest_eccentricity_1(self):
+    def test_star_graph_center_has_highest_eccentricity_1(self, ontology_builder):
         v = _make_validator()
         # Center→4 leaves, no edges back
-        ont = _ontology(["C", "L1", "L2", "L3", "L4"],
-                        [("C", "L1"), ("C", "L2"), ("C", "L3"), ("C", "L4")])
+        ont = ontology_builder(
+            ["C", "L1", "L2", "L3", "L4"],
+            [("C", "L1"), ("C", "L2"), ("C", "L3"), ("C", "L4")],
+        )
         result = v.eccentricity_distribution(ont)
         # C reaches L1..L4 in 1 hop → ecc=1; leaves reach no one → ecc=0
         idx_C = sorted(["C", "L1", "L2", "L3", "L4"]).index("C")
@@ -344,15 +351,14 @@ class TestEccentricityDistribution:
             if node != "C":
                 assert result[i] == 0
 
-    def test_returns_list(self):
+    def test_returns_list(self, ontology_builder):
         v = _make_validator()
-        assert isinstance(v.eccentricity_distribution(_ontology(["A"], [])), list)
+        assert isinstance(v.eccentricity_distribution(ontology_builder(["A"], [])), list)
 
-    def test_diameter_equals_max_eccentricity(self):
+    def test_diameter_equals_max_eccentricity(self, ontology_builder):
         """diameter_approx should equal max of eccentricity_distribution."""
         v = _make_validator()
-        ont = _ontology(["A", "B", "C", "D"],
-                        [("A", "B"), ("B", "C"), ("C", "D")])
+        ont = ontology_builder(["A", "B", "C", "D"], [("A", "B"), ("B", "C"), ("C", "D")])
         ecc = v.eccentricity_distribution(ont)
         diam = v.diameter_approx(ont)
         assert max(ecc) == diam
@@ -367,9 +373,9 @@ class TestEccentricityDistribution:
         assert len(result) == 2
         assert sorted(result) == [0, 1]
 
-    def test_deterministic_sorted_order(self):
+    def test_deterministic_sorted_order(self, ontology_builder):
         v = _make_validator()
-        ont = _ontology(["B", "A", "C"], [("A", "B"), ("B", "C")])
+        ont = ontology_builder(["B", "A", "C"], [("A", "B"), ("B", "C")])
         result1 = v.eccentricity_distribution(ont)
         result2 = v.eccentricity_distribution(ont)
         assert result1 == result2

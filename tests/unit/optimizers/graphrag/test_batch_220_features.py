@@ -29,20 +29,19 @@ def _make_adapter(scores):
     return la
 
 
-def _make_ontology(entity_ids, rels):
-    """Build a simple object-based ontology fixture."""
-    class _E:
-        def __init__(self, i):
-            self.id = i
-    class _R:
-        def __init__(self, s, t):
-            self.source_id = s
-            self.target_id = t
-    class _Ont:
-        def __init__(self, eids, rs):
-            self.entities = [_E(i) for i in eids]
-            self.relationships = [_R(s, t) for s, t in rs]
-    return _Ont(entity_ids, rels)
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    """Build a simple dict ontology fixture using shared factory."""
+
+    def _build(entity_ids, rels):
+        ontology = ontology_dict_factory(entity_count=0, relationship_count=0)
+        ontology["entities"] = [{"id": i} for i in entity_ids]
+        ontology["relationships"] = [
+            {"source_id": s, "target_id": t} for s, t in rels
+        ]
+        return ontology
+
+    return _build
 
 
 def _make_validator():
@@ -187,55 +186,55 @@ class TestFeedbackIqrRatio:
 # ---------------------------------------------------------------------------
 
 class TestSinkCount:
-    def test_empty_returns_zero(self):
+    def test_empty_returns_zero(self, ontology_builder):
         v = _make_validator()
-        ont = _make_ontology([], [])
+        ont = ontology_builder([], [])
         assert v.sink_count(ont) == 0
 
-    def test_single_node_no_edges(self):
+    def test_single_node_no_edges(self, ontology_builder):
         v = _make_validator()
-        ont = _make_ontology(["A"], [])
+        ont = ontology_builder(["A"], [])
         # A has no outgoing edges → it is a sink
         assert v.sink_count(ont) == 1
 
-    def test_two_nodes_no_edges(self):
+    def test_two_nodes_no_edges(self, ontology_builder):
         v = _make_validator()
-        ont = _make_ontology(["A", "B"], [])
+        ont = ontology_builder(["A", "B"], [])
         assert v.sink_count(ont) == 2
 
-    def test_chain_one_sink(self):
+    def test_chain_one_sink(self, ontology_builder):
         # A → B → C : only C has no outgoing edge
         v = _make_validator()
-        ont = _make_ontology(["A", "B", "C"], [("A", "B"), ("B", "C")])
+        ont = ontology_builder(["A", "B", "C"], [("A", "B"), ("B", "C")])
         assert v.sink_count(ont) == 1
 
-    def test_star_one_source_multiple_sinks(self):
+    def test_star_one_source_multiple_sinks(self, ontology_builder):
         # A → B, A → C, A → D : A has out-degree 3; B, C, D are sinks
         v = _make_validator()
-        ont = _make_ontology(["A", "B", "C", "D"], [("A", "B"), ("A", "C"), ("A", "D")])
+        ont = ontology_builder(["A", "B", "C", "D"], [("A", "B"), ("A", "C"), ("A", "D")])
         assert v.sink_count(ont) == 3
 
-    def test_cycle_no_sinks(self):
+    def test_cycle_no_sinks(self, ontology_builder):
         # A → B → C → A : all nodes have out-degree 1 → no sinks
         v = _make_validator()
-        ont = _make_ontology(["A", "B", "C"], [("A", "B"), ("B", "C"), ("C", "A")])
+        ont = ontology_builder(["A", "B", "C"], [("A", "B"), ("B", "C"), ("C", "A")])
         assert v.sink_count(ont) == 0
 
-    def test_two_chains_two_sinks(self):
+    def test_two_chains_two_sinks(self, ontology_builder):
         # A → B, C → D : B and D are sinks
         v = _make_validator()
-        ont = _make_ontology(["A", "B", "C", "D"], [("A", "B"), ("C", "D")])
+        ont = ontology_builder(["A", "B", "C", "D"], [("A", "B"), ("C", "D")])
         assert v.sink_count(ont) == 2
 
-    def test_returns_int(self):
+    def test_returns_int(self, ontology_builder):
         v = _make_validator()
-        ont = _make_ontology(["A", "B"], [("A", "B")])
+        ont = ontology_builder(["A", "B"], [("A", "B")])
         assert isinstance(v.sink_count(ont), int)
 
-    def test_sink_plus_source_leq_nodes(self):
+    def test_sink_plus_source_leq_nodes(self, ontology_builder):
         # sink_count + source_count <= n always holds
         v = _make_validator()
-        ont = _make_ontology(["A", "B", "C", "D"], [("A", "B"), ("B", "C"), ("A", "D")])
+        ont = ontology_builder(["A", "B", "C", "D"], [("A", "B"), ("B", "C"), ("A", "D")])
         n = len(["A", "B", "C", "D"])
         assert v.sink_count(ont) + v.source_count(ont) <= n
 
@@ -249,25 +248,25 @@ class TestSinkCount:
         v = _make_validator()
         assert v.sink_count(ont) == 2  # Y and Z are sinks
 
-    def test_fully_connected_bidirectional_no_sinks(self):
+    def test_fully_connected_bidirectional_no_sinks(self, ontology_builder):
         # A→B and B→A: both have outgoing edges → no sinks
         v = _make_validator()
-        ont = _make_ontology(["A", "B"], [("A", "B"), ("B", "A")])
+        ont = ontology_builder(["A", "B"], [("A", "B"), ("B", "A")])
         assert v.sink_count(ont) == 0
 
-    def test_symmetric_with_source_count(self):
+    def test_symmetric_with_source_count(self, ontology_builder):
         # In a DAG with one source and one sink, source_count ≥ 1 and sink_count ≥ 1
         v = _make_validator()
         # A → B → C
-        ont = _make_ontology(["A", "B", "C"], [("A", "B"), ("B", "C")])
+        ont = ontology_builder(["A", "B", "C"], [("A", "B"), ("B", "C")])
         assert v.source_count(ont) == 1
         assert v.sink_count(ont) == 1
 
-    def test_geq_zero_large_graph(self):
+    def test_geq_zero_large_graph(self, ontology_builder):
         ids = [str(i) for i in range(10)]
         rels = [(str(i), str(i + 1)) for i in range(9)]
         v = _make_validator()
-        ont = _make_ontology(ids, rels)
+        ont = ontology_builder(ids, rels)
         assert v.sink_count(ont) >= 0
 
 

@@ -30,8 +30,25 @@ def _push_opt(o, avg):
     o._history.append(_FakeEntry(avg))
 
 
-def _ontology(entities, relationships):
-    return {"entities": entities, "relationships": relationships}
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    def _build(
+        entities=None,
+        relationships=None,
+    ):
+        if entities is None:
+            entities = []
+        ontology = ontology_dict_factory(
+            entity_count=0,
+            relationship_count=0,
+            domain="test",
+            metadata={},
+        )
+        ontology["entities"] = entities
+        ontology["relationships"] = relationships or []
+        return ontology
+
+    return _build
 
 
 # ---------------------------------------------------------------------------
@@ -43,16 +60,16 @@ class TestMaxInDegree:
         v = _make_validator()
         assert v.max_in_degree({"entities": [], "relationships": []}) is None
 
-    def test_no_relationships(self):
+    def test_no_relationships(self, ontology_builder):
         v = _make_validator()
-        ont = _ontology([{"id": "e1"}, {"id": "e2"}], [])
+        ont = ontology_builder([{"id": "e1"}, {"id": "e2"}], [])
         result = v.max_in_degree(ont)
         assert result is not None
         assert result["count"] == 0
 
-    def test_single_relationship(self):
+    def test_single_relationship(self, ontology_builder):
         v = _make_validator()
-        ont = _ontology(
+        ont = ontology_builder(
             [{"id": "a"}, {"id": "b"}],
             [{"source": "a", "target": "b", "type": "rel"}],
         )
@@ -60,9 +77,9 @@ class TestMaxInDegree:
         assert result["entity"] == "b"
         assert result["count"] == 1
 
-    def test_hub_entity(self):
+    def test_hub_entity(self, ontology_builder):
         v = _make_validator()
-        ont = _ontology(
+        ont = ontology_builder(
             [{"id": "hub"}, {"id": "x"}, {"id": "y"}, {"id": "z"}],
             [
                 {"source": "x", "target": "hub", "type": "rel"},
@@ -84,16 +101,16 @@ class TestMaxOutDegree:
         v = _make_validator()
         assert v.max_out_degree({"entities": [], "relationships": []}) is None
 
-    def test_no_relationships(self):
+    def test_no_relationships(self, ontology_builder):
         v = _make_validator()
-        ont = _ontology([{"id": "e1"}, {"id": "e2"}], [])
+        ont = ontology_builder([{"id": "e1"}, {"id": "e2"}], [])
         result = v.max_out_degree(ont)
         assert result is not None
         assert result["count"] == 0
 
-    def test_single_relationship(self):
+    def test_single_relationship(self, ontology_builder):
         v = _make_validator()
-        ont = _ontology(
+        ont = ontology_builder(
             [{"id": "a"}, {"id": "b"}],
             [{"source": "a", "target": "b", "type": "rel"}],
         )
@@ -101,9 +118,9 @@ class TestMaxOutDegree:
         assert result["entity"] == "a"
         assert result["count"] == 1
 
-    def test_hub_entity(self):
+    def test_hub_entity(self, ontology_builder):
         v = _make_validator()
-        ont = _ontology(
+        ont = ontology_builder(
             [{"id": "hub"}, {"id": "x"}, {"id": "y"}],
             [
                 {"source": "hub", "target": "x", "type": "rel"},

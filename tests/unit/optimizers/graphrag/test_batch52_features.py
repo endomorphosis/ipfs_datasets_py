@@ -27,12 +27,26 @@ class TestCriticSharedCache:
         yield
         OntologyCritic.clear_shared_cache()
 
-    def _make_ontology(self, tag: str = "a"):
-        return {
-            "entities": [{"id": "e1", "text": f"Alice-{tag}", "type": "Person",
-                          "confidence": 0.9, "properties": {}}],
-            "relationships": [],
-        }
+    @pytest.fixture
+    def ontology_builder(self, ontology_dict_factory):
+        def _build(tag: str = "a"):
+            ontology = ontology_dict_factory(
+                entity_count=1,
+                relationship_count=0,
+                entity_types=["Person"],
+            )
+            ontology["entities"][0].update(
+                {
+                    "id": "e1",
+                    "text": f"Alice-{tag}",
+                    "type": "Person",
+                    "confidence": 0.9,
+                    "properties": {},
+                }
+            )
+            return ontology
+
+        return _build
 
     def _make_ctx(self):
         ctx = MagicMock()
@@ -43,15 +57,15 @@ class TestCriticSharedCache:
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
         assert OntologyCritic.shared_cache_size() == 0
 
-    def test_evaluate_populates_shared_cache(self):
+    def test_evaluate_populates_shared_cache(self, ontology_builder):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
         c = OntologyCritic(use_llm=False)
-        c.evaluate_ontology(self._make_ontology(), self._make_ctx())
+        c.evaluate_ontology(ontology_builder(), self._make_ctx())
         assert OntologyCritic.shared_cache_size() == 1
 
-    def test_second_instance_hits_shared_cache(self):
+    def test_second_instance_hits_shared_cache(self, ontology_builder):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
-        ontology = self._make_ontology("x")
+        ontology = ontology_builder("x")
         ctx = self._make_ctx()
 
         # First instance evaluates and populates cache
@@ -64,41 +78,41 @@ class TestCriticSharedCache:
         score2 = c2.evaluate_ontology(ontology, ctx)
         assert score1 is score2  # same object — shared cache hit
 
-    def test_different_ontologies_cached_separately(self):
+    def test_different_ontologies_cached_separately(self, ontology_builder):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
         ctx = self._make_ctx()
         c = OntologyCritic(use_llm=False)
-        c.evaluate_ontology(self._make_ontology("a"), ctx)
-        c.evaluate_ontology(self._make_ontology("b"), ctx)
+        c.evaluate_ontology(ontology_builder("a"), ctx)
+        c.evaluate_ontology(ontology_builder("b"), ctx)
         assert OntologyCritic.shared_cache_size() == 2
 
-    def test_clear_shared_cache_resets_to_zero(self):
+    def test_clear_shared_cache_resets_to_zero(self, ontology_builder):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
         ctx = self._make_ctx()
         c = OntologyCritic(use_llm=False)
-        c.evaluate_ontology(self._make_ontology(), ctx)
+        c.evaluate_ontology(ontology_builder(), ctx)
         OntologyCritic.clear_shared_cache()
         assert OntologyCritic.shared_cache_size() == 0
 
-    def test_source_data_bypasses_shared_cache(self):
+    def test_source_data_bypasses_shared_cache(self, ontology_builder):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
         ctx = self._make_ctx()
-        ontology = self._make_ontology()
+        ontology = ontology_builder()
         c = OntologyCritic(use_llm=False)
         c.evaluate_ontology(ontology, ctx, source_data="some text")
         # source_data bypasses caching → no shared cache entry
         assert OntologyCritic.shared_cache_size() == 0
 
-    def test_shared_cache_max_cleared_on_overflow(self, monkeypatch):
+    def test_shared_cache_max_cleared_on_overflow(self, monkeypatch, ontology_builder):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
         monkeypatch.setattr(OntologyCritic, "_SHARED_EVAL_CACHE_MAX", 2)
         ctx = self._make_ctx()
         c = OntologyCritic(use_llm=False)
         # Fill to max (2 entries)
-        c.evaluate_ontology(self._make_ontology("m1"), ctx)
-        c.evaluate_ontology(self._make_ontology("m2"), ctx)
+        c.evaluate_ontology(ontology_builder("m1"), ctx)
+        c.evaluate_ontology(ontology_builder("m2"), ctx)
         # Third entry triggers clear + insert → size == 1
-        c.evaluate_ontology(self._make_ontology("m3"), ctx)
+        c.evaluate_ontology(ontology_builder("m3"), ctx)
         assert OntologyCritic.shared_cache_size() == 1
 
 

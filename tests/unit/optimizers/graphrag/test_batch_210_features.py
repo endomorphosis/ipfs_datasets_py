@@ -86,8 +86,20 @@ def _make_pipeline_with(scores: list[float]) -> OntologyPipeline:
     return pipeline
 
 
-def _make_ontology(*pairs) -> dict:
-    return {"relationships": [{"source": s, "target": t, "type": "r"} for s, t in pairs]}
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    def _build(*pairs) -> dict:
+        entities = list({s for s, _ in pairs} | {t for _, t in pairs})
+        ontology = ontology_dict_factory(
+            entity_count=len(entities),
+            relationship_count=0,
+            entity_types=["Concept"],
+        )
+        ontology["entities"] = [{"id": e, "text": e} for e in entities]
+        ontology["relationships"] = [{"source": s, "target": t, "type": "r"} for s, t in pairs]
+        return ontology
+
+    return _build
 
 
 # ---------------------------------------------------------------------------
@@ -281,43 +293,43 @@ class TestBetweennessCentralityApprox:
     def test_no_relationships_returns_empty(self):
         assert self.validator.betweenness_centrality_approx({"relationships": []}) == {}
 
-    def test_fewer_than_3_nodes_returns_zeros(self):
-        ont = _make_ontology(("a", "b"))
+    def test_fewer_than_3_nodes_returns_zeros(self, ontology_builder):
+        ont = ontology_builder(("a", "b"))
         result = self.validator.betweenness_centrality_approx(ont)
         for v in result.values():
             assert v == pytest.approx(0.0)
 
-    def test_chain_topology_intermediate_higher(self):
+    def test_chain_topology_intermediate_higher(self, ontology_builder):
         # a-b-c-d: b and c have betweenness > a and d
-        ont = _make_ontology(("a", "b"), ("b", "c"), ("c", "d"))
+        ont = ontology_builder(("a", "b"), ("b", "c"), ("c", "d"))
         result = self.validator.betweenness_centrality_approx(ont)
         assert result["b"] > result["a"]
         assert result["c"] > result["d"]
 
-    def test_endpoints_have_zero_betweenness(self):
+    def test_endpoints_have_zero_betweenness(self, ontology_builder):
         # In a chain a-b-c, a and c have no paths going through them
-        ont = _make_ontology(("a", "b"), ("b", "c"))
+        ont = ontology_builder(("a", "b"), ("b", "c"))
         result = self.validator.betweenness_centrality_approx(ont)
         assert result["a"] == pytest.approx(0.0)
         assert result["c"] == pytest.approx(0.0)
 
-    def test_intermediate_node_known_value(self):
+    def test_intermediate_node_known_value(self, ontology_builder):
         # a-b-c: only path a→c goes through b; betweenness(b) = 2/(n-1)(n-2)
         # n=3, norm=2*1=2, b gets 1 path → 1/2 = 0.5 (un-directed)
-        ont = _make_ontology(("a", "b"), ("b", "c"))
+        ont = ontology_builder(("a", "b"), ("b", "c"))
         result = self.validator.betweenness_centrality_approx(ont)
         # b is on 2 shortest paths (a→c and c→a); norm=2 → 2/2=1.0
         # Use a generous tolerance for the approximation
         assert result["b"] > 0.0
 
-    def test_values_non_negative(self):
-        ont = _make_ontology(("a", "b"), ("b", "c"), ("c", "d"))
+    def test_values_non_negative(self, ontology_builder):
+        ont = ontology_builder(("a", "b"), ("b", "c"), ("c", "d"))
         result = self.validator.betweenness_centrality_approx(ont)
         for v in result.values():
             assert v >= 0.0
 
-    def test_returns_dict_of_floats(self):
-        ont = _make_ontology(("a", "b"), ("b", "c"))
+    def test_returns_dict_of_floats(self, ontology_builder):
+        ont = ontology_builder(("a", "b"), ("b", "c"))
         result = self.validator.betweenness_centrality_approx(ont)
         assert isinstance(result, dict)
         for v in result.values():

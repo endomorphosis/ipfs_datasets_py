@@ -39,6 +39,7 @@ from ipfs_datasets_py.optimizers.security.authentication import (
     DEFAULT_REFRESH_TOKEN_EXPIRE_DAYS,
     DEFAULT_ALGORITHM,
     MIN_API_KEY_LENGTH,
+    _claim_to_datetime,
 )
 
 
@@ -407,6 +408,16 @@ class TestJWTAuthenticator:
         """Test verifying malformed token."""
         with pytest.raises(InvalidTokenError, match="Invalid token"):
             authenticator.verify_token("not.a.valid.jwt.token")
+
+    def test_verify_token_propagates_base_exception(self, authenticator, monkeypatch):
+        """Base exceptions from jwt.decode should not be swallowed."""
+
+        def _raise_interrupt(*args, **kwargs):
+            raise KeyboardInterrupt("stop")
+
+        monkeypatch.setattr("jwt.decode", _raise_interrupt)
+        with pytest.raises(KeyboardInterrupt):
+            authenticator.verify_token("token")
     
     def test_verify_token_blacklisted(self, authenticator):
         """Test verifying blacklisted token."""
@@ -441,6 +452,17 @@ class TestJWTAuthenticator:
         # Token should still be valid (not blacklisted)
         payload = authenticator.verify_token(token)
         assert payload.user_id == "user123"
+
+    def test_revoke_token_falls_back_to_none_expiry_on_typed_decode_error(self, authenticator, monkeypatch):
+        """Typed decode failures should still revoke token without expiry metadata."""
+
+        def _raise_type_error(*args, **kwargs):
+            raise TypeError("bad token payload")
+
+        monkeypatch.setattr("jwt.decode", _raise_type_error)
+        token = "invalid.token.payload"
+        authenticator.revoke_token(token)
+        assert authenticator.blacklist.is_blacklisted(token) is True
     
     def test_refresh_access_token(self, authenticator):
         """Test refreshing access token from refresh token."""
@@ -963,3 +985,22 @@ class TestAuthConfig:
         )
         
         assert config.allowed_origins == origins
+
+
+class TestAuthHelpers:
+    """Tests for internal datetime helper behavior."""
+
+    def test_claim_to_datetime_returns_none_on_typed_failure(self):
+        class _BadFloat:
+            def __float__(self):
+                raise TypeError("bad")
+
+        assert _claim_to_datetime(_BadFloat()) is None
+
+    def test_claim_to_datetime_propagates_base_exception(self):
+        class _InterruptFloat:
+            def __float__(self):
+                raise KeyboardInterrupt("stop")
+
+        with pytest.raises(KeyboardInterrupt):
+            _claim_to_datetime(_InterruptFloat())

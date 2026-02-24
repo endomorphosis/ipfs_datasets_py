@@ -400,14 +400,6 @@ class TestStaleFeedbackNegativeRate:
 class TestStaleWeaklyConnectedComponents:
     """Smoke test: weakly_connected_components was implemented before Batch 222."""
 
-    def _make_ontology(self, edges):
-        """Build a dict-style ontology with the given (src, tgt) edge pairs."""
-        nodes = sorted(set(n for e in edges for n in e))
-        return {
-            "entities": [{"id": n} for n in nodes],
-            "relationships": [{"source_id": s, "target_id": t} for s, t in edges],
-        }
-
     def test_empty_graph_returns_zero(self):
         validator = object.__new__(LogicValidator)
         ont = {"entities": [], "relationships": []}
@@ -415,18 +407,28 @@ class TestStaleWeaklyConnectedComponents:
         # Should return an integer or list
         assert isinstance(result, (int, list))
 
-    def test_single_connected_component(self):
+    def test_single_connected_component(self, ontology_dict_factory):
         validator = object.__new__(LogicValidator)
-        ont = self._make_ontology([("A", "B"), ("B", "C")])
+        ont = ontology_dict_factory(entity_count=0, relationship_count=0)
+        ont["entities"] = [{"id": "A"}, {"id": "B"}, {"id": "C"}]
+        ont["relationships"] = [
+            {"source_id": "A", "target_id": "B"},
+            {"source_id": "B", "target_id": "C"},
+        ]
         result = validator.weakly_connected_components(ont)
         if isinstance(result, int):
             assert result == 1
         else:
             assert len(result) == 1
 
-    def test_two_separate_components(self):
+    def test_two_separate_components(self, ontology_dict_factory):
         validator = object.__new__(LogicValidator)
-        ont = self._make_ontology([("A", "B"), ("C", "D")])
+        ont = ontology_dict_factory(entity_count=0, relationship_count=0)
+        ont["entities"] = [{"id": "A"}, {"id": "B"}, {"id": "C"}, {"id": "D"}]
+        ont["relationships"] = [
+            {"source_id": "A", "target_id": "B"},
+            {"source_id": "C", "target_id": "D"},
+        ]
         result = validator.weakly_connected_components(ont)
         if isinstance(result, int):
             assert result == 2

@@ -31,40 +31,63 @@ class TestEntityTypeCountsInMetadata:
         c.domain = "general"
         return c
 
-    def _make_ontology(self):
-        return {
-            "entities": [
-                {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.9},
-                {"id": "e2", "text": "Bob", "type": "Person", "confidence": 0.8},
-                {"id": "e3", "text": "Acme", "type": "Organization", "confidence": 0.85},
-            ],
-            "relationships": [
-                {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows", "confidence": 0.7},
-            ],
-        }
+    @pytest.fixture
+    def ontology_builder(self, ontology_dict_factory):
+        def _build():
+            ontology = ontology_dict_factory(
+                entity_count=3,
+                relationship_count=1,
+                entity_types=["Person", "Person", "Organization"],
+            )
+            ontology["entities"][0].update(
+                {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.9}
+            )
+            ontology["entities"][1].update(
+                {"id": "e2", "text": "Bob", "type": "Person", "confidence": 0.8}
+            )
+            ontology["entities"][2].update(
+                {
+                    "id": "e3",
+                    "text": "Acme",
+                    "type": "Organization",
+                    "confidence": 0.85,
+                }
+            )
+            ontology["relationships"][0].update(
+                {
+                    "id": "r1",
+                    "source_id": "e1",
+                    "target_id": "e2",
+                    "type": "knows",
+                    "confidence": 0.7,
+                }
+            )
+            return ontology
 
-    def test_metadata_has_entity_type_counts_key(self, critic, ctx):
-        score = critic.evaluate_ontology(self._make_ontology(), ctx)
+        return _build
+
+    def test_metadata_has_entity_type_counts_key(self, critic, ctx, ontology_builder):
+        score = critic.evaluate_ontology(ontology_builder(), ctx)
         assert "entity_type_counts" in score.metadata
 
-    def test_metadata_entity_type_counts_correct(self, critic, ctx):
-        score = critic.evaluate_ontology(self._make_ontology(), ctx)
+    def test_metadata_entity_type_counts_correct(self, critic, ctx, ontology_builder):
+        score = critic.evaluate_ontology(ontology_builder(), ctx)
         counts = score.metadata["entity_type_counts"]
         assert counts.get("Person") == 2
         assert counts.get("Organization") == 1
 
-    def test_metadata_has_entity_type_fractions_key(self, critic, ctx):
-        score = critic.evaluate_ontology(self._make_ontology(), ctx)
+    def test_metadata_has_entity_type_fractions_key(self, critic, ctx, ontology_builder):
+        score = critic.evaluate_ontology(ontology_builder(), ctx)
         assert "entity_type_fractions" in score.metadata
 
-    def test_metadata_entity_type_fractions_sum_to_one(self, critic, ctx):
-        score = critic.evaluate_ontology(self._make_ontology(), ctx)
+    def test_metadata_entity_type_fractions_sum_to_one(self, critic, ctx, ontology_builder):
+        score = critic.evaluate_ontology(ontology_builder(), ctx)
         fractions = score.metadata["entity_type_fractions"]
         total = sum(fractions.values())
         assert total == pytest.approx(1.0, abs=1e-4)
 
-    def test_metadata_entity_type_fractions_values_in_range(self, critic, ctx):
-        score = critic.evaluate_ontology(self._make_ontology(), ctx)
+    def test_metadata_entity_type_fractions_values_in_range(self, critic, ctx, ontology_builder):
+        score = critic.evaluate_ontology(ontology_builder(), ctx)
         fractions = score.metadata["entity_type_fractions"]
         for v in fractions.values():
             assert 0.0 <= v <= 1.0

@@ -366,6 +366,33 @@ class TestMetricsPersistence:
         assert len(collector2.parameter_adaptations) == 1
         assert "c1" in collector2.learning_cycles
 
+    def test_from_json_returns_empty_collector_on_typed_load_error(self):
+        """Type/shape decode failures should fall back to an empty collector."""
+        collector = OptimizerLearningMetricsCollector.from_json(None)
+        assert isinstance(collector, OptimizerLearningMetricsCollector)
+        assert collector.learning_cycles == {}
+
+    def test_from_json_propagates_base_exception(self, monkeypatch):
+        """Base exceptions must not be swallowed by fallback handling."""
+
+        def _raise_interrupt(*_args, **_kwargs):
+            raise KeyboardInterrupt("stop")
+
+        monkeypatch.setattr("json.loads", _raise_interrupt)
+        with pytest.raises(KeyboardInterrupt):
+            OptimizerLearningMetricsCollector.from_json("{}")
+
+    def test_save_learning_metrics_propagates_base_exception(self, monkeypatch, tmp_path):
+        """Base exceptions during persistence should propagate."""
+        collector = OptimizerLearningMetricsCollector(metrics_dir=str(tmp_path))
+
+        def _raise_interrupt():
+            raise KeyboardInterrupt("stop")
+
+        monkeypatch.setattr(collector, "to_json", _raise_interrupt)
+        with pytest.raises(KeyboardInterrupt):
+            collector._save_learning_metrics()
+
 
 class TestVisualization:
     """Test visualization methods (when dependencies available)."""

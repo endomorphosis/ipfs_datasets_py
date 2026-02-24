@@ -190,53 +190,30 @@ class TestOntologyCriticBenchmarks:
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
     
-    def _make_ontology(self, num_entities: int, num_relationships: int) -> Dict[str, Any]:
-        """Create a synthetic ontology for benchmarking."""
-        entities = [
-            {
-                "id": f"e{i}",
-                "text": f"Entity{i}",
-                "type": ["Person", "Organization", "Location"][i % 3],
-                "confidence": 0.8 + (i % 10) * 0.02,
-                "properties": {"prop1": f"value{i}"},
-            }
-            for i in range(num_entities)
-        ]
-        
-        relationships = [
-            {
-                "id": f"r{i}",
-                "source_id": f"e{i % num_entities}",
-                "target_id": f"e{(i + 1) % num_entities}",
-                "type": ["works_for", "located_in", "part_of"][i % 3],
-                "confidence": 0.7 + (i % 10) * 0.02,
-            }
-            for i in range(num_relationships)
-        ]
-        
-        return {"entities": entities, "relationships": relationships}
-    
-    def test_benchmark_evaluate_small_ontology(self, benchmark, critic, context):
+    def test_benchmark_evaluate_small_ontology(self, benchmark, critic, context, ontology_dict_factory):
         """Benchmark evaluation of small ontology (10 entities, 5 relationships)."""
-        ontology = self._make_ontology(10, 5)
+        ontology = ontology_dict_factory(entity_count=10, relationship_count=5)
         score = benchmark(critic.evaluate_ontology, ontology, context)
         assert 0.0 <= score.overall <= 1.0
     
-    def test_benchmark_evaluate_medium_ontology(self, benchmark, critic, context):
+    def test_benchmark_evaluate_medium_ontology(self, benchmark, critic, context, ontology_dict_factory):
         """Benchmark evaluation of medium ontology (50 entities, 75 relationships)."""
-        ontology = self._make_ontology(50, 75)
+        ontology = ontology_dict_factory(entity_count=50, relationship_count=75)
         score = benchmark(critic.evaluate_ontology, ontology, context)
         assert 0.0 <= score.overall <= 1.0
     
-    def test_benchmark_evaluate_large_ontology(self, benchmark, critic, context):
+    def test_benchmark_evaluate_large_ontology(self, benchmark, critic, context, ontology_dict_factory):
         """Benchmark evaluation of large ontology (200 entities, 500 relationships)."""
-        ontology = self._make_ontology(200, 500)
+        ontology = ontology_dict_factory(entity_count=200, relationship_count=500)
         score = benchmark(critic.evaluate_ontology, ontology, context)
         assert 0.0 <= score.overall <= 1.0
     
-    def test_benchmark_evaluate_batch(self, benchmark, critic, context):
+    def test_benchmark_evaluate_batch(self, benchmark, critic, context, ontology_dict_factory):
         """Benchmark batch evaluation of multiple ontologies."""
-        ontologies = [self._make_ontology(20, 30) for _ in range(10)]
+        ontologies = [
+            ontology_dict_factory(entity_count=20, relationship_count=30)
+            for _ in range(10)
+        ]
         
         result = benchmark(critic.evaluate_batch, ontologies, context)
         assert result["count"] == 10

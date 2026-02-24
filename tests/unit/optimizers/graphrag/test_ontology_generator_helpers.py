@@ -39,6 +39,41 @@ def _entity(eid: str, text: str, etype: str = "Concept") -> Entity:
     return Entity(id=eid, type=etype, text=text, confidence=0.8)
 
 
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    def _build(
+        entity_ids,
+        relationship_pairs=None,
+        source=None,
+        entity_type="Concept",
+        confidence=0.7,
+    ):
+        ontology = ontology_dict_factory(entity_count=0, relationship_count=0)
+        ontology["entities"] = [
+            {
+                "id": eid,
+                "type": entity_type,
+                "text": eid,
+                "confidence": confidence,
+                "properties": {},
+            }
+            for eid in entity_ids
+        ]
+        ontology["relationships"] = [
+            {
+                "source_id": s,
+                "target_id": t,
+                "type": "related_to",
+                "confidence": 0.5,
+            }
+            for s, t in (relationship_pairs or [])
+        ]
+        ontology["metadata"] = {"source": source} if source is not None else {}
+        return ontology
+
+    return _build
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # infer_relationships
 # ──────────────────────────────────────────────────────────────────────────────
@@ -70,7 +105,10 @@ class TestInferRelationships:
         assert "is_a" in types
 
     def test_co_occurrence_within_window(self, generator, ctx):
-        entities = [_entity("e1", "Alpha"), _entity("e2", "Beta")]
+        entities = [
+            _entity("e1", "Alpha", etype="Person"),
+            _entity("e2", "Beta", etype="Organization"),
+        ]
         # Place them close together (< 200 chars apart)
         text = "Alpha and Beta are close"
         rels = generator.infer_relationships(entities, ctx, text)
@@ -247,19 +285,8 @@ class TestExtractRuleBased:
 # ──────────────────────────────────────────────────────────────────────────────
 
 class TestMergeOntologies:
-    def _make_ontology(self, n_ents: int, n_rels: int = 0, source: str = "base") -> dict:
-        ents = [
-            {"id": f"e{i}", "type": "Concept", "text": f"entity{i}", "properties": {}}
-            for i in range(n_ents)
-        ]
-        rels = [
-            {"id": f"r{i}", "source_id": f"e{i}", "target_id": f"e{(i + 1) % n_ents}", "type": "related_to"}
-            for i in range(n_rels)
-        ] if n_ents > 0 else []
-        return {"entities": ents, "relationships": rels, "metadata": {"source": source}}
-
-    def test_non_overlapping_entities_are_all_present(self, generator):
-        base = self._make_ontology(3, source="base")
+    def test_non_overlapping_entities_are_all_present(self, generator, ontology_builder):
+        base = ontology_builder(["e0", "e1", "e2"], source="base")
         ext = {
             "entities": [{"id": "e99", "type": "X", "text": "new", "properties": {}}],
             "relationships": [],
@@ -308,8 +335,8 @@ class TestMergeOntologies:
         merged = generator._merge_ontologies(base, ext)
         assert len(merged["relationships"]) == 1
 
-    def test_merge_tracks_provenance(self, generator):
-        base = self._make_ontology(2, source="base")
+    def test_merge_tracks_provenance(self, generator, ontology_builder):
+        base = ontology_builder(["e0", "e1"], source="base")
         ext = {
             "entities": [{"id": "e99", "type": "X", "text": "new", "properties": {}}],
             "relationships": [],
@@ -319,20 +346,20 @@ class TestMergeOntologies:
         new_ent = next(e for e in merged["entities"] if e["id"] == "e99")
         assert "ext_source" in new_ent.get("provenance", [])
 
-    def test_merged_from_metadata_updated(self, generator):
-        base = self._make_ontology(2, source="source_a")
-        ext = self._make_ontology(2, source="source_b")
+    def test_merged_from_metadata_updated(self, generator, ontology_builder):
+        base = ontology_builder(["e0", "e1"], source="source_a")
+        ext = ontology_builder(["e0", "e1"], source="source_b")
         # Give ext unique ids
         for i, e in enumerate(ext["entities"]):
             e["id"] = f"ext_{i}"
         merged = generator._merge_ontologies(base, ext)
         assert "source_b" in merged["metadata"].get("merged_from", [])
 
-    def test_base_not_mutated(self, generator):
+    def test_base_not_mutated(self, generator, ontology_builder):
         import copy
-        base = self._make_ontology(2, source="base")
+        base = ontology_builder(["e0", "e1"], source="base")
         orig_base = copy.deepcopy(base)
-        ext = self._make_ontology(2, source="ext")
+        ext = ontology_builder(["e0", "e1"], source="ext")
         for i, e in enumerate(ext["entities"]):
             e["id"] = f"ext_{i}"
         generator._merge_ontologies(base, ext)
@@ -463,44 +490,33 @@ class TestMergeEntitiesTypeConflict:
 class TestMergeOntologiesIdempotent:
     """Merging an ontology with itself should be idempotent (same entity count)."""
 
-    def _make_ontology(self, entity_ids, relationship_pairs=None):
-        entities = [
-            {"id": eid, "type": "Concept", "text": eid, "confidence": 0.7}
-            for eid in entity_ids
-        ]
-        relationships = [
-            {"source_id": s, "target_id": t, "type": "relates_to", "confidence": 0.5}
-            for s, t in (relationship_pairs or [])
-        ]
-        return {"entities": entities, "relationships": relationships, "metadata": {}}
-
-    def test_merge_self_entity_count_unchanged(self, generator):
-        onto = self._make_ontology(["e1", "e2", "e3"])
+    def test_merge_self_entity_count_unchanged(self, generator, ontology_builder):
+        onto = ontology_builder(["e1", "e2", "e3"])
         merged = generator._merge_ontologies(onto, onto)
         assert len(merged["entities"]) == 3
 
-    def test_merge_self_relationship_count_unchanged(self, generator):
-        onto = self._make_ontology(
+    def test_merge_self_relationship_count_unchanged(self, generator, ontology_builder):
+        onto = ontology_builder(
             ["e1", "e2"],
             relationship_pairs=[("e1", "e2"), ("e2", "e1")]
         )
         merged = generator._merge_ontologies(onto, onto)
         assert len(merged["relationships"]) == 2
 
-    def test_merge_self_empty_ontology(self, generator):
-        onto = self._make_ontology([])
+    def test_merge_self_empty_ontology(self, generator, ontology_builder):
+        onto = ontology_builder([])
         merged = generator._merge_ontologies(onto, onto)
         assert merged["entities"] == []
         assert merged["relationships"] == []
 
-    def test_merge_self_single_entity(self, generator):
-        onto = self._make_ontology(["x"])
+    def test_merge_self_single_entity(self, generator, ontology_builder):
+        onto = ontology_builder(["x"])
         merged = generator._merge_ontologies(onto, onto)
         assert len(merged["entities"]) == 1
 
-    def test_merge_self_twice_still_idempotent(self, generator):
+    def test_merge_self_twice_still_idempotent(self, generator, ontology_builder):
         """Applying merge three times (merge, then merge again) stays stable."""
-        onto = self._make_ontology(["a", "b", "c"], [("a", "b"), ("b", "c")])
+        onto = ontology_builder(["a", "b", "c"], [("a", "b"), ("b", "c")])
         m1 = generator._merge_ontologies(onto, onto)
         m2 = generator._merge_ontologies(m1, onto)
         assert len(m2["entities"]) == 3
@@ -532,11 +548,14 @@ class TestRelationshipDirectionality:
 
     def test_cooccurrence_rel_is_undirected(self, generator, ctx):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity, DataType
-        e1 = Entity(id="e1", text="widget", type="Concept", confidence=0.9)
-        e2 = Entity(id="e2", text="gadget", type="Concept", confidence=0.9)
+        e1 = Entity(id="e1", text="widget", type="Person", confidence=0.9)
+        e2 = Entity(id="e2", text="gadget", type="Organization", confidence=0.9)
         # No verb pattern, only co-occurrence
         rels = generator.infer_relationships([e1, e2], ctx, data="widget and gadget are close")
-        co_rels = [r for r in rels if r.type == "related_to"]
+        co_rels = [
+            r for r in rels
+            if (getattr(r, "properties", {}) or {}).get("type_method") == "context_window"
+        ]
         assert len(co_rels) >= 1
         assert co_rels[0].direction == "undirected"
 
@@ -1009,4 +1028,3 @@ class TestExtractRuleBasedTiming:
         assert result.metadata["pattern_time_ms"] < 500.0
         assert result.metadata["extraction_time_ms"] < 500.0
         assert result.metadata["relationship_time_ms"] < 500.0
-

@@ -98,11 +98,23 @@ def _push_run(p, score):
     p._run_history.append(_FakeRun(score))
 
 
-def _ontology(entities, rels):
-    return {
-        "entities": [{"id": e} for e in entities],
-        "relationships": [{"source": s, "target": t} for s, t in rels],
-    }
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    def _build(entities, rels):
+        ontology = ontology_dict_factory(
+            entity_count=0,
+            relationship_count=0,
+            domain="test",
+            metadata={},
+        )
+        ontology["entities"] = [{"id": entity_id} for entity_id in entities]
+        ontology["relationships"] = [
+            {"source": source_id, "target": target_id}
+            for source_id, target_id in rels
+        ]
+        return ontology
+
+    return _build
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -206,69 +218,75 @@ class TestRadiusApprox:
         v = _make_validator()
         assert v.radius_approx({"entities": [], "relationships": []}) == 0
 
-    def test_single_node_returns_zero(self):
+    def test_single_node_returns_zero(self, ontology_builder):
         v = _make_validator()
-        assert v.radius_approx(_ontology(["A"], [])) == 0
+        assert v.radius_approx(ontology_builder(["A"], [])) == 0
 
-    def test_two_nodes_no_edges_returns_zero(self):
+    def test_two_nodes_no_edges_returns_zero(self, ontology_builder):
         v = _make_validator()
-        assert v.radius_approx(_ontology(["A", "B"], [])) == 0
+        assert v.radius_approx(ontology_builder(["A", "B"], [])) == 0
 
-    def test_linear_chain_a_to_b_radius_one(self):
+    def test_linear_chain_a_to_b_radius_one(self, ontology_builder):
         v = _make_validator()
         # A→B: eccentricities [1, 0]; min positive = 1
-        ont = _ontology(["A", "B"], [("A", "B")])
+        ont = ontology_builder(["A", "B"], [("A", "B")])
         assert v.radius_approx(ont) == 1
 
-    def test_linear_chain_three_nodes(self):
+    def test_linear_chain_three_nodes(self, ontology_builder):
         v = _make_validator()
         # A→B→C: eccs [2, 1, 0]; min positive = 1
-        ont = _ontology(["A", "B", "C"], [("A", "B"), ("B", "C")])
+        ont = ontology_builder(["A", "B", "C"], [("A", "B"), ("B", "C")])
         assert v.radius_approx(ont) == 1
 
-    def test_cycle_two_nodes_radius_one(self):
+    def test_cycle_two_nodes_radius_one(self, ontology_builder):
         v = _make_validator()
         # A→B, B→A: each reaches the other in 1; eccs [1,1]; radius = 1
-        ont = _ontology(["A", "B"], [("A", "B"), ("B", "A")])
+        ont = ontology_builder(["A", "B"], [("A", "B"), ("B", "A")])
         assert v.radius_approx(ont) == 1
 
-    def test_three_node_cycle_radius_one(self):
+    def test_three_node_cycle_radius_one(self, ontology_builder):
         v = _make_validator()
         # A→B→C→A: each can reach any other in ≤2 steps; eccs all 2; radius = 2
-        ont = _ontology(["A", "B", "C"], [("A", "B"), ("B", "C"), ("C", "A")])
+        ont = ontology_builder(["A", "B", "C"], [("A", "B"), ("B", "C"), ("C", "A")])
         result = v.radius_approx(ont)
         assert result == 2
 
-    def test_star_graph_center_has_low_eccentricity(self):
+    def test_star_graph_center_has_low_eccentricity(self, ontology_builder):
         v = _make_validator()
         # A→B, A→C, A→D: eccs [1, 0, 0, 0]; min positive = 1
-        ont = _ontology(["A", "B", "C", "D"],
-                        [("A", "B"), ("A", "C"), ("A", "D")])
+        ont = ontology_builder(
+            ["A", "B", "C", "D"],
+            [("A", "B"), ("A", "C"), ("A", "D")],
+        )
         assert v.radius_approx(ont) == 1
 
-    def test_disconnected_graph_ignores_isolated_nodes(self):
+    def test_disconnected_graph_ignores_isolated_nodes(self, ontology_builder):
         v = _make_validator()
         # A→B (connected), C isolated; eccs: A=1, B=0, C=0; min positive = 1
-        ont = _ontology(["A", "B", "C"], [("A", "B")])
+        ont = ontology_builder(["A", "B", "C"], [("A", "B")])
         assert v.radius_approx(ont) == 1
 
-    def test_returns_int(self):
+    def test_returns_int(self, ontology_builder):
         v = _make_validator()
-        result = v.radius_approx(_ontology(["A", "B"], [("A", "B")]))
+        result = v.radius_approx(ontology_builder(["A", "B"], [("A", "B")]))
         assert isinstance(result, int)
 
-    def test_two_separate_chains(self):
+    def test_two_separate_chains(self, ontology_builder):
         v = _make_validator()
         # A→B and C→D→E: eccs: A=1,B=0,C=2,D=1,E=0; min positive = 1
-        ont = _ontology(["A", "B", "C", "D", "E"],
-                        [("A", "B"), ("C", "D"), ("D", "E")])
+        ont = ontology_builder(
+            ["A", "B", "C", "D", "E"],
+            [("A", "B"), ("C", "D"), ("D", "E")],
+        )
         assert v.radius_approx(ont) == 1
 
-    def test_radius_leq_diameter(self):
+    def test_radius_leq_diameter(self, ontology_builder):
         v = _make_validator()
         # radius ≤ diameter by definition
-        ont = _ontology(["A", "B", "C", "D"],
-                        [("A", "B"), ("B", "C"), ("C", "D")])
+        ont = ontology_builder(
+            ["A", "B", "C", "D"],
+            [("A", "B"), ("B", "C"), ("C", "D")],
+        )
         radius = v.radius_approx(ont)
         diameter = v.diameter_approx(ont)
         assert radius <= diameter

@@ -86,8 +86,20 @@ def _make_pipeline_with(scores: list[float]) -> OntologyPipeline:
     return pipeline
 
 
-def _make_ontology(*pairs) -> dict:
-    return {"relationships": [{"source": s, "target": t, "type": "r"} for s, t in pairs]}
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    def _build(*pairs) -> dict:
+        entities = list({s for s, _ in pairs} | {t for _, t in pairs})
+        ontology = ontology_dict_factory(
+            entity_count=len(entities),
+            relationship_count=0,
+            entity_types=["Concept"],
+        )
+        ontology["entities"] = [{"id": e, "text": e} for e in entities]
+        ontology["relationships"] = [{"source": s, "target": t, "type": "r"} for s, t in pairs]
+        return ontology
+
+    return _build
 
 
 # ---------------------------------------------------------------------------
@@ -312,9 +324,9 @@ class TestExistingBatch209Methods:
         pipeline = _make_pipeline_with([0.2, 0.4, 0.6, 0.8])
         assert pipeline.run_score_trend_slope() > 0.0
 
-    def test_self_loop_count_no_loops(self):
+    def test_self_loop_count_no_loops(self, ontology_builder):
         validator = LogicValidator()
-        ont = _make_ontology(("a", "b"), ("b", "c"))
+        ont = ontology_builder(("a", "b"), ("b", "c"))
         # The validator's self_loop_count may use a different ontology format
         # — here we just check it's callable and returns a non-negative int
         try:
