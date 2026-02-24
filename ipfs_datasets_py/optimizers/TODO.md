@@ -116,7 +116,7 @@ Use this as the always-on randomizer. Keep 3-5 items active, one per track. When
 - [x] (P1) [tests] Fix `test_end_to_end_pipeline.py` for ExtractionConfig dataclass configs (see Tests track)
   - Done 2026-02-21: moved ExtractionConfig usage into OntologyGenerationContext; generator no longer receives config dict.
 - [x] (P2) [perf] Profile `OntologyGenerator._extract_rule_based()` hot paths and capture top-3 bottlenecks (see Performance track)
-  - Done 2026-02-23: added Batch 264 profiling script and tests in optimizers/tests/performance
+  - Done 2026-02-23: added Batch 264 profiling script/tests and PROFILING_BATCH_264_ANALYSIS.md
 - [x] (P2) [obs] Emit structured per-run JSON log in `OntologyPipeline.run()` (score/domain/duration)
   - Done 2026-02-21: added PIPELINE_RUN JSON log with duration, counts, and score.
 - [ ] (P3) [docs] Write module-level docstrings for `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py`
@@ -1192,7 +1192,8 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 ### Track: [perf] Performance (batch 150+)
 
 - [ ] (P2) [perf] Add `@functools.lru_cache` to `ExtractionConfig.is_default()` (hashable dataclass)
-- [ ] (P2) [perf] Profile `OntologyGenerator._extract_rule_based()` for hot paths
+- [x] (P2) [perf] Profile `OntologyGenerator._extract_rule_based()` for hot paths
+  - Done 2026-02-23: Batch 264 profiling script/tests and PROFILING_BATCH_264_ANALYSIS.md
 - [x] (P1) [perf] Implement entity type pre-filtering in `infer_relationships()`
   - Done 2026-02-23: Added `_is_impossible_type_pair()` checks in co-occurrence path to skip semantically impossible pairs; added tests in tests/unit_tests/optimizers/graphrag/test_type_prefiltering_optimization.py.
 - [x] (P3) [perf] Add benchmark toggle to quantify pre-filtering impact
