@@ -1,10 +1,4 @@
-"""Micro-benchmark smoke test for OntologyGenerator.generate_ontology().
-
-Produces a small timing table for before/after comparisons in documentation.
-Run manually (not collected as a test):
-
-    python -m ipfs_datasets_py.optimizers.tests.performance.perf_ontology_generate_smoke
-"""
+"""Smoke micro-benchmark for OntologyGenerator.generate_ontology()."""
 
 from __future__ import annotations
 
@@ -12,65 +6,55 @@ import statistics
 import time
 
 from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-    OntologyGenerationContext,
     OntologyGenerator,
+    OntologyGenerationContext,
+    ExtractionConfig,
+    ExtractionStrategy,
 )
 
 
-def _percentile(values: list[float], pct: float) -> float:
-    if not values:
-        return 0.0
-    ordered = sorted(values)
-    idx = int(round((len(ordered) - 1) * pct))
-    idx = max(0, min(idx, len(ordered) - 1))
-    return ordered[idx]
+TEXT = (
+    "The plaintiff agreed to the arbitration clause in Section 12.3. "
+    "The defendant accepted the warranty and indemnification terms. "
+    "The patient reported symptoms and the physician prescribed 5 mg dosage. "
+    "The API endpoint /v1/claims returns JSON to the web client."
+)
 
 
-def _benchmark_generate(iterations: int = 8) -> dict[str, float]:
-    generator = OntologyGenerator(use_ipfs_accelerate=False)
+def run(iterations: int = 10) -> dict:
+    generator = OntologyGenerator()
     context = OntologyGenerationContext(
         data_source="perf-smoke",
         data_type="text",
         domain="general",
-    )
-    text = (
-        "Acme Corp signed a contract with Beta LLC on January 5, 2026. "
-        "Dr. Chen reviewed the patient record under HIPAA guidance. "
-        "The backend API endpoint /v1/claims returns JSON for the web client. "
-        "AWS Lambda processed the batch payment queue for invoices."
+        extraction_strategy=ExtractionStrategy.RULE_BASED,
+        config=ExtractionConfig(confidence_threshold=0.0, llm_fallback_threshold=0.0),
     )
 
-    # Warmup run to stabilize caches.
-    generator.generate_ontology(text, context)
-
-    timings_ms: list[float] = []
+    timings = []
     for _ in range(iterations):
         start = time.perf_counter()
-        generator.generate_ontology(text, context)
-        elapsed_ms = (time.perf_counter() - start) * 1000.0
-        timings_ms.append(elapsed_ms)
+        generator.generate_ontology(TEXT, context)
+        timings.append(time.perf_counter() - start)
 
+    mean_ms = statistics.mean(timings) * 1000.0
+    p95_ms = statistics.quantiles(timings, n=20)[-1] * 1000.0
+    min_ms = min(timings) * 1000.0
+    max_ms = max(timings) * 1000.0
     return {
-        "runs": float(len(timings_ms)),
-        "mean_ms": statistics.mean(timings_ms),
-        "min_ms": min(timings_ms),
-        "max_ms": max(timings_ms),
-        "p95_ms": _percentile(timings_ms, 0.95),
+        "iterations": iterations,
+        "mean_ms": mean_ms,
+        "p95_ms": p95_ms,
+        "min_ms": min_ms,
+        "max_ms": max_ms,
     }
 
 
-def main() -> None:
-    stats = _benchmark_generate()
-    print("\nOntologyGenerator.generate_ontology() micro-benchmark (smoke)\n")
-    print("| Metric | Value |")
-    print("| --- | --- |")
-    print(f"| Runs | {int(stats['runs'])} |")
-    print(f"| Mean (ms) | {stats['mean_ms']:.2f} |")
-    print(f"| P95 (ms) | {stats['p95_ms']:.2f} |")
-    print(f"| Min (ms) | {stats['min_ms']:.2f} |")
-    print(f"| Max (ms) | {stats['max_ms']:.2f} |")
-    print("\nCopy the table into PERFORMANCE_TUNING_GUIDE.md for before/after tracking.")
-
-
 if __name__ == "__main__":
-    main()
+    results = run()
+    print("OntologyGenerator.generate_ontology() smoke benchmark")
+    print(f"iterations: {results['iterations']}")
+    print(f"mean_ms: {results['mean_ms']:.2f}")
+    print(f"p95_ms: {results['p95_ms']:.2f}")
+    print(f"min_ms: {results['min_ms']:.2f}")
+    print(f"max_ms: {results['max_ms']:.2f}")

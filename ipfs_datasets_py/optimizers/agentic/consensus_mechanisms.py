@@ -47,7 +47,7 @@ Usage Example:
     >>> consensus = manager.reach_consensus(votes)
 """
 
-from typing import Dict, List, Any, Optional, Set, Tuple
+from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 from abc import ABC, abstractmethod
@@ -311,6 +311,9 @@ class WeightedConsensus(ConsensusEngine):
         # Normalize weights
         if total_weight > 0:
             weights = {aid: w / total_weight for aid, w in weights.items()}
+        elif weights:
+            uniform_weight = 1.0 / len(weights)
+            weights = {aid: uniform_weight for aid in weights}
         
         # Weighted entity aggregation
         entity_weighted_votes = defaultdict(float)
@@ -480,7 +483,7 @@ class ConsensusMetrics:
     @staticmethod
     def calculate_entropy(
         votes: List[AgentVote],
-        consensus: ConsensusResult
+        consensus: Optional[ConsensusResult] = None
     ) -> float:
         """
         Calculate Shannon entropy of votes.
@@ -493,25 +496,36 @@ class ConsensusMetrics:
         if total_extractions == 0:
             return 0.0
         
-        # Extract frequencies
-        entity_frequencies = Counter()
+        # Build extraction frequencies across both entities and relationships.
+        # This produces a bounded normalized entropy regardless of how many
+        # extractions each vote contributes.
+        extraction_frequencies = Counter()
         for vote in votes:
             for entity in vote.entities:
-                key = (entity.get('text'), entity.get('type'))
-                entity_frequencies[key] += 1
+                key = ("entity", entity.get('text'), entity.get('type'))
+                extraction_frequencies[key] += 1
+            for rel in vote.relationships:
+                key = (
+                    "relationship",
+                    rel.get('source_id'),
+                    rel.get('target_id'),
+                    rel.get('type'),
+                )
+                extraction_frequencies[key] += 1
+
+        if not extraction_frequencies:
+            return 0.0
         
         # Calculate entropy
         entropy = 0.0
-        n_votes = len(votes)
-        
-        for count in entity_frequencies.values():
-            p = count / n_votes
+        for count in extraction_frequencies.values():
+            p = count / total_extractions
             if p > 0:
                 entropy -= p * math.log2(p)
         
-        # Normalize to 0-1
-        max_entropy = math.log2(n_votes) if n_votes > 1 else 1
-        normalized_entropy = entropy / max_entropy if max_entropy > 0 else 0
+        # Normalize to [0,1] using the maximum entropy for observed classes.
+        max_entropy = math.log2(len(extraction_frequencies)) if len(extraction_frequencies) > 1 else 0.0
+        normalized_entropy = entropy / max_entropy if max_entropy > 0 else 0.0
         
         return normalized_entropy
     
@@ -616,7 +630,7 @@ class ConsensusManager:
         conflicts = ConflictResolver.find_conflicts(votes)
         
         # Calculate entropy
-        entropy = ConsensusMetrics.calculate_entropy(votes, None)
+        entropy = ConsensusMetrics.calculate_entropy(votes)
         
         # Create result
         result = ConsensusResult(

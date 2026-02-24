@@ -46,14 +46,16 @@ test hardening, and documentation clarity while keeping progress measurable.
 ### Track-by-track focus (rolling checklist)
 - [x] (P1) [arch] Unify optimizer base class hierarchy (shared OptimizerConfig)
   - Done 2026-02-23: Batch 265 - Integrated OptimizerConfig dataclass with AgenticOptimizer. Now accepts Union[OptimizerConfig, Dict] with automatic normalization. Added helper methods (get_config_value, domain/max_rounds/verbose properties). Full backward compatibility maintained (dict configs auto-converted). 24/24 tests passing. Achieves consistent configuration across GraphRAG, logic, and agentic optimizers.
-- [ ] (P2) [api] Standardize context objects across GraphRAG/logic/agentic
+- [x] (P2) [api] Standardize context objects across GraphRAG/logic/agentic
+  - Done 2026-02-24: unified `common/extraction_contexts.py` is used across GraphRAG/logic/agentic; added round-trip + fallback tests in `tests/unit/common/test_extraction_contexts.py`.
 - [ ] (P2) [arch] Consolidate optimizer lifecycle hooks (init/validate/generate/critique/refine) into shared base mixins
 - [ ] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
 - [x] (P2) [tests] Add property-based tests for Entity/CriticScore/FeedbackRecord
   - Done 2026-02-23: test_ontology_types_properties.py with 19 passing property-based tests (Entity, Relationship, CriticScore, FeedbackRecord, collections). Uses Hypothesis strategies.
 - [x] (P2) [perf] Profile OntologyGenerator.generate() on 10k-token input
   - Done 2026-02-23: Batch 262 - Created profile_batch_262_generate_10k.py (390 LOC), test_batch_262_profiling.py (22/22 tests), PROFILING_BATCH_262_ANALYSIS.md. Identified key bottlenecks: regex operations (54% time), _promote_person_entities (70%), with optimization recommendations for 70-80% potential speedup.
-- [ ] (P2) [obs] Structured JSON logging for every pipeline run
+- [x] (P2) [obs] Structured JSON logging for every pipeline run
+  - Done 2026-02-24: `OntologyPipeline.run()` emits `PIPELINE_RUN` structured JSON payload; added tests in `tests/unit/graphrag/test_ontology_pipeline_logging.py`.
 - [x] (P2) [docs] Optimizers README with quick-start +  class diagram + comprehensive guides
   - Done 2026-02-23: Batch 263 - Created PERFORMANCE_TUNING_GUIDE.md (18KB), TROUBLESHOOTING_GUIDE.md (28KB), INTEGRATION_EXAMPLES.md (18KB, 8 real-world scenarios). Updated README.md with guide references. Comprehensive documentation for performance optimization (70-80% potential speedup), 30+ troubleshooting solutions, and production integration patterns (FastAPI, Flask, CLI, CI/CD, batch processing, streaming, multi-domain).
  - [ ] (P2) [tests] Add deterministic seed control for random samplers across optimizers (doc + test)
@@ -72,9 +74,12 @@ with a new item from a different track.
   - Done 2026-02-23: Added 6 TypedDict factory fixtures (entity, relationship, critic_score, ontology_session, feedback_record). Extends existing conftest.py by 213 lines.
 - [x] (P2) [perf] Implement lazy loading for domain-specific rule sets in `ExtractionConfig`
   - Done 2026-02-23: Verified existing lazy-loading via lru_cache(maxsize=16) in _get_domain_rule_patterns(). Created comprehensive test suite (31 tests, all passing).
-- [ ] (P2) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
-- [ ] (P2) [logic] Add canonical proof trace serialization (JSON) for logic optimizer output
-- [ ] (P3) [api] Provide `OptimizerResult` TypedDict for cross-optimizer return parity
+- [x] (P2) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
+  - Done 2026-02-24: BaseOptimizer now records score, iteration count (round completions), and session duration via PrometheusMetrics.
+- [x] (P2) [logic] Add canonical proof trace serialization (JSON) for logic optimizer output
+  - Done 2026-02-24: Added `logic_theorem_optimizer/proof_trace.py` with canonical serializers, JSON/file export helpers, package exports, and unit tests.
+- [x] (P3) [api] Provide `OptimizerResult` TypedDict for cross-optimizer return parity
+  - Done (verified 2026-02-24): implemented in `common/optimizer_result.py` and used by `common/base_optimizer.py`.
 - [x] (P2) [tests] Add distribution invariants for CriticScore batch results (link: tests/unit/test_batch_260_critic_score_distribution.py)
   - Done 2026-02-24: Added invariants for overall bounds, weighted sum equality, and batch mean consistency.
 - [x] (P2) [perf] Add micro-benchmark for `OntologyGenerator` regex + entity promotion hot paths (baseline + target ≥15% speedup)
@@ -107,7 +112,8 @@ This plan is intentionally evergreen. It balances refactors, feature growth, tes
 - Provide examples that mirror real usage patterns.
 
 ### Random Work Rotation (Active Picks)
-- [ ] (P2) [docs] Configuration Guide for `ExtractionConfig` fields (see Medium Tasks)
+- [x] (P2) [docs] Configuration Guide for `ExtractionConfig` fields (see Medium Tasks)
+  - Done (verified 2026-02-24): `docs/EXTRACTION_CONFIG_GUIDE.md` contains field-by-field defaults, ranges, and examples.
 - [x] (P2) [arch] Extract `QueryValidationMixin` for GraphRAG reuse (see Strategic Refactoring)
   - Done 2026-02-23: implemented in optimizers/common/query_validation.py and used by graphrag/query_unified_optimizer.py
 - [x] (P2) [graphrag] Implement `_extract_with_llm_fallback()` wrapper (see GraphRAG backlog)
@@ -140,7 +146,8 @@ Use this as the always-on randomizer. Keep 3-5 items active, one per track. When
   - Done 2026-02-22: MD5 checksum over config fields; stable across runs; 10 tests added in test_state_checksum.py; all passing.
 - [x] (P0) [tests] Fix test_ontology_generator.py and test_ontology_session.py API drift
   - Done 2026-02-22: updated ExtractionStrategy enum references (NEURAL_SYMBOLIC→HYBRID, PATTERN_BASED→RULE_BASED, STATISTICAL→LLM_BASED); updated OntologySession/SessionResult to match actual DI API; OntologyGenerationContext now receives required data_source+data_type args. 48 tests now passing.
-- [ ] (P2) [graphrag] Add golden-file tests for small domain-specific corpora (contracts, hr, healthcare)
+- [x] (P2) [graphrag] Add golden-file tests for small domain-specific corpora (contracts, hr, healthcare)
+  - Done 2026-02-24: added golden fixtures and rule-based normalization tests for contracts/hr/healthcare.
 - [x] (P2) [obs] Add per-stage timing histogram buckets for pipeline runs
   - Done 2026-02-24: added stage duration histogram support to PrometheusMetrics and recorded per-stage timings in OntologyPipeline with structured log payload.
 - [x] (P3) [docs] Add glossary of ontology terms with examples (entity, relation, feedback, critique)
@@ -150,7 +157,16 @@ Use this as the always-on randomizer. Keep 3-5 items active, one per track. When
 - [x] (P2) [tests] Add regression tests for `OntologyGenerator.generate()` on mixed-domain inputs (legal + medical + tech)
   - Done 2026-02-24: added test_generate_ontology_mixed_domain.py with mixed-domain text coverage.
 - [x] (P2) [perf] Add `perf_ontology_generate_smoke.py` micro-benchmark with before/after timing table in docs
-  - Done 2026-02-24: Added perf_ontology_generate_smoke.py and updated PERFORMANCE_TUNING_GUIDE.md with a timing table.
+  - Done 2026-02-24: added perf_ontology_generate_smoke.py and updated PERFORMANCE_TUNING_GUIDE.md with a timing table.
+- [x] (P2) [tests] Add coverage for `stage_durations_ms` in PIPELINE_RUN JSON payload
+  - Done 2026-02-24: updated test_ontology_pipeline_logging.py to assert stage timing fields.
+- [x] (P3) [docs] Add Glossary entry to DOCUMENTATION_INDEX
+  - Done 2026-02-24: linked optimizers/docs/GLOSSARY.md in documentation index.
+- [ ] (P2) [obs] Add Prometheus metrics scrape endpoint in REST API
+- [x] (P2) [graphrag] Add helper script to refresh golden fixtures with explicit normalization
+  - Done 2026-02-24: added generate_golden_fixtures.py with normalized output for contracts/hr/healthcare.
+- [x] (P3) [docs] Add “Golden Fixtures” section to optimizers README
+  - Done 2026-02-24: documented fixture refresh command in optimizers/README.md.
 
 **Rotation rules**
 - Never keep two active picks in the same track.
@@ -380,8 +396,8 @@ Execute these when no rotating work is in progress:
   - Done 2026-02-23: documented schema + strict mode in docs/USAGE_EXAMPLES.md.
 - [x] (P3) [agentic] Document OptimizerArgparseCLI entrypoint in CLI guide
   - Done 2026-02-23: added direct CLI entrypoint note in docs/optimizers/CLI_GUIDE.md.
-- [ ] (P3) [agentic] Add smoke test for OptimizerArgparseCLI config show
-  - DoD: config show returns 0 and prints masked token fields
+- [x] (P3) [agentic] Add smoke test for OptimizerArgparseCLI config show
+  - Done 2026-02-24: test_cli_argparse_smoke.py now asserts masked token/password output.
 
 ---
 
@@ -437,7 +453,8 @@ Execute these when no rotating work is in progress:
 - [x] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `LogicTheoremOptimizer.run_session()` — Done batch 24
 - [x] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `OntologyOptimizer` batch analysis — Done batch 23
 - [ ] (P3) [obs] Add OpenTelemetry span hooks (behind a feature flag) for distributed tracing
-- [ ] (P3) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
+- [x] (P3) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
+  - Done (verified 2026-02-24): Implemented centrally in `common/base_optimizer.py` so all BaseOptimizer subclasses emit consistent metrics.
 
 ### R5 — Error handling & resilience
 

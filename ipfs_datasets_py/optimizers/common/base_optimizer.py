@@ -121,6 +121,15 @@ class BaseOptimizer(ABC):
         self.llm_backend = llm_backend
         self.metrics_collector = metrics_collector
         self.metrics: List[Dict[str, Any]] = []
+        self._prometheus_metrics = None
+
+        # Optional Prometheus collector (enabled via ENABLE_PROMETHEUS env var).
+        # This is best-effort and must never break optimizer execution.
+        try:
+            from .metrics_prometheus import PrometheusMetrics
+            self._prometheus_metrics = PrometheusMetrics()
+        except Exception as exc:  # pragma: no cover - optional dependency path
+            _logger.debug("Prometheus metrics unavailable: %s", exc)
         
     @abstractmethod
     def generate(
@@ -304,6 +313,23 @@ class BaseOptimizer(ABC):
                 self.metrics_collector.end_cycle(cycle_id, success=valid)
             except Exception as e:
                 _logger.warning(f"Metrics collection end failed: {e}")
+
+        # Record Prometheus-compatible metrics (best effort).
+        if self._prometheus_metrics is not None:
+            try:
+                self._prometheus_metrics.record_score(
+                    score,
+                    labels={
+                        "domain": context.domain,
+                        "strategy": self.config.strategy.value,
+                        "optimizer_type": self.__class__.__name__,
+                    },
+                )
+                for _ in range(max(0, iterations)):
+                    self._prometheus_metrics.record_round_completion(domain=context.domain)
+                self._prometheus_metrics.record_session_duration(execution_time)
+            except Exception as exc:  # pragma: no cover - metrics must be non-fatal
+                _logger.debug("Prometheus metrics recording failed: %s", exc)
 
         _logger.info(
             "run_session completed session_id=%s domain=%s "

@@ -1,0 +1,144 @@
+{
+  "domain": "legal",
+  "name": "contracts",
+  "normalized": {
+    "entities": [
+      {
+        "text": "Section",
+        "type": "Concept"
+      },
+      {
+        "text": "arbitration",
+        "type": "LegalConcept"
+      },
+      {
+        "text": "indemnification",
+        "type": "LegalConcept"
+      },
+      {
+        "text": "warranty",
+        "type": "LegalConcept"
+      },
+      {
+        "text": "defendant",
+        "type": "LegalParty"
+      },
+      {
+        "text": "plaintiff",
+        "type": "LegalParty"
+      },
+      {
+        "text": "Section 12.3.",
+        "type": "LegalReference"
+      }
+    ],
+    "relationships": [
+      {
+        "source_text": "Section",
+        "target_text": "Section 12.3.",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Section",
+        "target_text": "arbitration",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Section",
+        "target_text": "defendant",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Section",
+        "target_text": "indemnification",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Section",
+        "target_text": "plaintiff",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Section",
+        "target_text": "warranty",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Section 12.3.",
+        "target_text": "arbitration",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Section 12.3.",
+        "target_text": "indemnification",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Section 12.3.",
+        "target_text": "warranty",
+        "type": "related_to"
+      },
+      {
+        "source_text": "arbitration",
+        "target_text": "indemnification",
+        "type": "related_to"
+      },
+      {
+        "source_text": "arbitration",
+        "target_text": "warranty",
+        "type": "related_to"
+      },
+      {
+        "source_text": "defendant",
+        "target_text": "Section 12.3.",
+        "type": "related_to"
+      },
+      {
+        "source_text": "defendant",
+        "target_text": "arbitration",
+        "type": "related_to"
+      },
+      {
+        "source_text": "defendant",
+        "target_text": "indemnification",
+        "type": "related_to"
+      },
+      {
+        "source_text": "defendant",
+        "target_text": "warranty",
+        "type": "related_to"
+      },
+      {
+        "source_text": "plaintiff",
+        "target_text": "Section 12.3.",
+        "type": "related_to"
+      },
+      {
+        "source_text": "plaintiff",
+        "target_text": "arbitration",
+        "type": "related_to"
+      },
+      {
+        "source_text": "plaintiff",
+        "target_text": "defendant",
+        "type": "related_to"
+      },
+      {
+        "source_text": "plaintiff",
+        "target_text": "indemnification",
+        "type": "related_to"
+      },
+      {
+        "source_text": "plaintiff",
+        "target_text": "warranty",
+        "type": "related_to"
+      },
+      {
+        "source_text": "warranty",
+        "target_text": "indemnification",
+        "type": "related_to"
+      }
+    ]
+  },
+  "text": "The plaintiff agreed to the arbitration clause in Section 12.3. The defendant accepted the warranty and indemnification terms."
+}

@@ -1,0 +1,57 @@
+{
+  "domain": "medical",
+  "name": "healthcare",
+  "normalized": {
+    "entities": [
+      {
+        "text": "5 mg",
+        "type": "Dosage"
+      },
+      {
+        "text": "disorder",
+        "type": "MedicalConcept"
+      },
+      {
+        "text": "patient",
+        "type": "MedicalRole"
+      },
+      {
+        "text": "physician",
+        "type": "MedicalRole"
+      }
+    ],
+    "relationships": [
+      {
+        "source_text": "5 mg",
+        "target_text": "patient",
+        "type": "related_to"
+      },
+      {
+        "source_text": "5 mg",
+        "target_text": "physician",
+        "type": "related_to"
+      },
+      {
+        "source_text": "disorder",
+        "target_text": "5 mg",
+        "type": "related_to"
+      },
+      {
+        "source_text": "disorder",
+        "target_text": "patient",
+        "type": "related_to"
+      },
+      {
+        "source_text": "disorder",
+        "target_text": "physician",
+        "type": "related_to"
+      },
+      {
+        "source_text": "patient",
+        "target_text": "physician",
+        "type": "related_to"
+      }
+    ]
+  },
+  "text": "The patient reported symptoms of a disorder. The physician prescribed 5 mg dosage."
+}

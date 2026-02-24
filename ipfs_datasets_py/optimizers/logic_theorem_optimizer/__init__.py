@@ -125,6 +125,12 @@ __all__ = [
     'CrossoverMethod',
     'MutationMethod',
     'EvolutionResult',
+    # Proof Trace Serialization
+    'serialize_aggregated_proof_trace',
+    'serialize_prover_result_trace',
+    'proof_trace_to_json',
+    'write_proof_trace_json',
+    'serialize_dataclass_like',
 ]
 
 __version__ = '0.1.0'
@@ -199,6 +205,27 @@ def __getattr__(name):
         # Import from BaseOptimizer (no longer duplicated in logic_optimizer)
         from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationStrategy
         return OptimizationStrategy
+    elif name in (
+        'serialize_aggregated_proof_trace',
+        'serialize_prover_result_trace',
+        'proof_trace_to_json',
+        'write_proof_trace_json',
+        'serialize_dataclass_like',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_trace import (
+            serialize_aggregated_proof_trace,
+            serialize_prover_result_trace,
+            proof_trace_to_json,
+            write_proof_trace_json,
+            serialize_dataclass_like,
+        )
+        return {
+            'serialize_aggregated_proof_trace': serialize_aggregated_proof_trace,
+            'serialize_prover_result_trace': serialize_prover_result_trace,
+            'proof_trace_to_json': proof_trace_to_json,
+            'write_proof_trace_json': write_proof_trace_json,
+            'serialize_dataclass_like': serialize_dataclass_like,
+        }[name]
     elif name == 'TheoremSession' or name == 'SessionResult' or name == 'SessionConfig':
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.theorem_session import (
             TheoremSession, SessionResult, SessionConfig

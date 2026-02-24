@@ -1,0 +1,95 @@
+{
+  "domain": "general",
+  "name": "hr",
+  "normalized": {
+    "entities": [
+      {
+        "text": "Benefits",
+        "type": "Concept"
+      },
+      {
+        "text": "Corp",
+        "type": "Concept"
+      },
+      {
+        "text": "Employee",
+        "type": "Concept"
+      },
+      {
+        "text": "Acme Corp",
+        "type": "Organization"
+      },
+      {
+        "text": "Acme",
+        "type": "Person"
+      },
+      {
+        "text": "Alice",
+        "type": "Person"
+      }
+    ],
+    "relationships": [
+      {
+        "source_text": "Acme",
+        "target_text": "Benefits",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Acme",
+        "target_text": "Corp",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Acme Corp",
+        "target_text": "Benefits",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Acme Corp",
+        "target_text": "Corp",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Acme Corp",
+        "target_text": "Employee",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Alice",
+        "target_text": "Acme",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Alice",
+        "target_text": "Benefits",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Alice",
+        "target_text": "Corp",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Employee",
+        "target_text": "Acme",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Employee",
+        "target_text": "Alice",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Acme Corp",
+        "target_text": "Acme",
+        "type": "works_for"
+      },
+      {
+        "source_text": "Acme Corp",
+        "target_text": "Alice",
+        "type": "works_for"
+      }
+    ]
+  },
+  "text": "Employee Alice joined Acme Corp as HR manager. Benefits include health insurance and PTO."
+}

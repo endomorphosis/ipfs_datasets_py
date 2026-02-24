@@ -42,6 +42,14 @@ def test_argparse_cli_validate_missing_file(tmp_path):
 def test_argparse_cli_config_show(tmp_path, monkeypatch):
     """Smoke test: config show displays configuration."""
     cli = OptimizerArgparseCLI()
+    cli.config_path = tmp_path / ".optimizer-config.json"
+    cli.config = {
+        "change_control": "patch",
+        "validation_level": "standard",
+        "max_agents": 3,
+        "github_token": "super-secret",
+        "admin_password": "dont-print-this",
+    }
     
     captured_lines = []
     def capture_print(*args_print, **kwargs):
@@ -55,3 +63,7 @@ def test_argparse_cli_config_show(tmp_path, monkeypatch):
     
     # Config show should print some configuration information
     assert len(captured_lines) > 0
+    # Sensitive values should be masked
+    joined = "\n".join(captured_lines)
+    assert "github_token: ***" in joined
+    assert "admin_password: ***" in joined

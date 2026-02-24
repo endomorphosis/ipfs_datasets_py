@@ -517,6 +517,15 @@ For detailed GraphRAG usage including entity extraction, ontology refinement, an
 - **[TROUBLESHOOTING_GUIDE.md](../../docs/optimizers/TROUBLESHOOTING_GUIDE.md)** - Solutions to common issues with GraphRAG optimizers
 - **[INTEGRATION_EXAMPLES.md](../../docs/optimizers/INTEGRATION_EXAMPLES.md)** - Real-world integration examples (FastAPI, Flask, CLI, CI/CD, batch processing)
 
+## Golden Fixtures
+
+Golden fixtures lock in rule-based extraction outputs for small domain corpora
+to catch regressions. To refresh the fixtures after intentional changes:
+
+```bash
+PYTHONPATH=ipfs_datasets_py python ipfs_datasets_py/optimizers/tests/fixtures/graphrag/generate_golden_fixtures.py
+```
+
 ## Backlog
 
 - See `TODO.md` for the living refactor/feature backlog and inline TODO inventory.

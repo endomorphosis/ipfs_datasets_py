@@ -47,6 +47,9 @@ def test_pipeline_run_emits_json_log(caplog, capsys):
     assert isinstance(payload["entity_count"], int)
     assert isinstance(payload["relationship_count"], int)
     assert payload["duration_ms"] >= 0.0
+    assert isinstance(payload.get("stage_durations_ms"), dict)
+    assert "extracting" in payload["stage_durations_ms"]
+    assert "evaluating" in payload["stage_durations_ms"]
     if payload["score"] is not None:
         assert 0.0 <= payload["score"] <= 1.0
 

@@ -34,6 +34,23 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+_GLOBAL_PROMETHEUS_METRICS: Optional["PrometheusMetrics"] = None
+
+
+def get_global_prometheus_metrics(enabled: Optional[bool] = None) -> "PrometheusMetrics":
+    """Return a shared PrometheusMetrics instance.
+
+    Args:
+        enabled: Optional override for enablement at first initialization.
+
+    Returns:
+        Singleton PrometheusMetrics instance.
+    """
+    global _GLOBAL_PROMETHEUS_METRICS
+    if _GLOBAL_PROMETHEUS_METRICS is None:
+        _GLOBAL_PROMETHEUS_METRICS = PrometheusMetrics(enabled=enabled)
+    return _GLOBAL_PROMETHEUS_METRICS
+
 
 @dataclass
 class MetricValue:

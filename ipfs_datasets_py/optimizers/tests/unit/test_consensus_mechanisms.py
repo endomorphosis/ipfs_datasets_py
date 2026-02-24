@@ -303,6 +303,25 @@ class TestWeightedConsensus:
         if len(entities) > 0:
             assert entities[0]['type'] == 'PERSON'
 
+    def test_zero_total_profile_weight_falls_back_to_uniform_weights(self):
+        """If all profile-derived weights are zero, engine should use uniform fallback."""
+        engine = WeightedConsensus()
+
+        profiles = {
+            'a1': AgentProfile('a1', reputation=0.0, accuracy=0.0),
+            'a2': AgentProfile('a2', reputation=0.0, accuracy=0.0),
+        }
+
+        votes = [
+            AgentVote(agent_id='a1', entities=[{'text': 'Alice', 'type': 'PERSON', 'confidence': 0.9}]),
+            AgentVote(agent_id='a2', entities=[]),
+        ]
+
+        entities, rels, agreement = engine.aggregate_votes(votes, profiles)
+
+        assert len(entities) == 1
+        assert entities[0]['text'] == 'Alice'
+
 
 # ============================================================================
 # Test Conflict Detection and Resolution
@@ -446,6 +465,36 @@ class TestConsensusMetrics:
         
         # Should be non-zero (higher entropy = more disagreement)
         assert entropy > 0
+
+    def test_entropy_includes_relationship_votes(self):
+        """Relationship-only disagreement should contribute to entropy."""
+        votes = [
+            AgentVote(agent_id='a1', relationships=[
+                {'source_id': 'e1', 'target_id': 'e2', 'type': 'WORKS_FOR', 'confidence': 0.9}
+            ]),
+            AgentVote(agent_id='a2', relationships=[
+                {'source_id': 'e1', 'target_id': 'e2', 'type': 'MANAGES', 'confidence': 0.9}
+            ]),
+        ]
+
+        entropy = ConsensusMetrics.calculate_entropy(votes, None)
+
+        assert entropy > 0
+
+    def test_entropy_is_bounded_between_zero_and_one(self):
+        """Normalized entropy should always stay in [0, 1]."""
+        votes = [
+            AgentVote(
+                agent_id=f'a{i}',
+                entities=[{'text': f'Entity{i}_{j}', 'type': 'PERSON', 'confidence': 0.8} for j in range(3)],
+                relationships=[{'source_id': f'e{j}', 'target_id': f'e{j+1}', 'type': f'R{i}_{j}', 'confidence': 0.7} for j in range(2)],
+            )
+            for i in range(5)
+        ]
+
+        entropy = ConsensusMetrics.calculate_entropy(votes, None)
+
+        assert 0.0 <= entropy <= 1.0
     
     def test_agreement_rate(self):
         """Calculate agreement rate."""
