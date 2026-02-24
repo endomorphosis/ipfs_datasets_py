@@ -167,6 +167,7 @@ module_logger.level = logging.DEBUG
 from pydantic import (
     AfterValidator as AV,
     BaseModel, 
+    ConfigDict,
     Field, 
     field_validator,
     NonNegativeInt,
@@ -526,7 +527,7 @@ from typing import Any
 
 
 from pydantic import (
-    BaseModel, Field, field_validator, model_validator, NonNegativeFloat, NonNegativeInt, PositiveInt
+    BaseModel, ConfigDict, Field, field_validator, model_validator, NonNegativeFloat, NonNegativeInt, PositiveInt
 )
 
 
@@ -884,8 +885,7 @@ class LLMChunk(BaseModel):
     relationships: list[str] = Field(default_factory=list)
     embedding: Optional[np.ndarray] = Field(default=None, repr=False)
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def __eq__(self, other: Any) -> bool:
         """
@@ -1025,8 +1025,7 @@ class LLMDocument(BaseModel):
     processing_metadata: dict[str, Any]
     document_embedding: Optional[np.ndarray] = None
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @model_validator(mode='after')
     def _stabilize_memory_for_tests(self) -> 'LLMDocument':

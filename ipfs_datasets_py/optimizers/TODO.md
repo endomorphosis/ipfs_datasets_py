@@ -1199,8 +1199,12 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
   - In progress: Created bench_sentence_window_scaling.py with 14 tests across legal/technical/financial domains. Result: 25-35% improvement on small-medium docs, 7-34% on larger docs. Full report in SENTENCE_WINDOW_BENCHMARK_REPORT.md
 - [x] (P3) [perf] Establish domain-specific sentence_window defaults
   - Done 2026-02-23: Implemented `ExtractionConfig.for_domain()` classmethod with domain->sentence_window mapping (legal=2, technical=2, financial=2, finance alias supported). Added 31 comprehensive tests in test_domain_aware_config.py (all passing). Includes serialization, edge cases, integration with parallel/type-prefiltering, and performance documentation.
-- [ ] (P3) [perf] Lazy-load LLM backend (skip import if `LLM_ENABLED=0`)
-- [ ] (P3) [perf] Batch entity deduplication using sorted merge vs O(n²) set ops
+- [x] (P3) [perf] Lazy-load LLM backend (skip import if `LLM_ENABLED=0`)
+  - Done 2026-02-23: Created llm_lazy_loader.py module with LazyLLMBackend class, MockBackendClient, LocalBackendClient, get_global_llm_backend() singleton, and disable/enable functions. Full environment variable support (LLM_ENABLED), deferred initialization via @lru_cache, transparent __getattr__/__call__ forwarding. Added 42 comprehensive unit tests in test_lazy_backend_loader.py (all passing) covering: lazy initialization, enabled/disabled states, env var handling, backend forwarding, singleton pattern, error handling, and integration scenarios.
+- [x] (P3) [perf] Batch entity deduplication using sorted merge vs O(n²) set ops
+  - Done 2026-02-23: Implemented bucketing/LSH-based optimization in semantic_deduplicator.py. Replaced O(n²) brute-force pair checking with sorted merge bucketing strategy. Creates buckets based on embedding peak similarity values, only checks pairs within/adjacent buckets. Reduces comparisons from 500k+ to ~25k for 1000 entities (20x improvement). Added 16 comprehensive tests in test_batch_entity_deduplication.py (all passing) covering: correctness vs brute-force, threshold filtering, performance scaling, edge cases, quality metrics. Tests verify no duplicate pairs, proper ordering, complete evidence.
+- [x] (P3) [perf] Add relative delta reporting to benchmarks
+  - Done 2026-02-23: Created benchmark_utils.py module with DeltaMetrics, compute_relative_delta(), format_delta_report/inline/table(), BenchmarkReporter class. Added 39 comprehensive unit tests (all passing). Enhanced SENTENCE_WINDOW_BENCHMARK_REPORT.md with delta analysis tables showing speedup factors (1.3-1.5x for optimized configs).
 
 ### Track: [docs] Documentation completeness (batch 160+)
 

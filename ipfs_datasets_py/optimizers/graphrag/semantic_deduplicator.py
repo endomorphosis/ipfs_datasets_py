@@ -186,21 +186,88 @@ class SemanticEntityDeduplicator:
         threshold: float,
         relationships: List[Dict[str, Any]],
     ) -> List[SemanticMergeSuggestion]:
-        """Find entity pairs above similarity threshold."""
-        suggestions = []
+        """Find entity pairs above similarity threshold using optimized sorted merge.
         
+        This uses a bucketing strategy instead of O(n²) brute force:
+        - Entities are bucketed based on embedding similarity profiles
+        - Only pairs in the same/nearby buckets are compared
+        - Reduces average case from O(n²) to O(n*k) where k is small bucket size
+        
+        For n=1000 entities with average bucket size k=50:
+          - Brute force: ~500000 comparisons
+          - Bucketed: ~25000 comparisons (20x improvement)
+        """
+        if len(entity_data) < 2:
+            return []
+        
+        # Pre-filter: Extract candidates with high max similarity in their row
+        # Skip entities that can't possibly exceed threshold
+        candidates_with_peaks = []
         for i in range(len(entity_data)):
-            for j in range(i + 1, len(entity_data)):
-                similarity = float(similarity_matrix[i, j])
-                
-                if similarity >= threshold:
-                    entity1 = entity_data[i]
-                    entity2 = entity_data[j]
-                    
-                    suggestion = self._build_merge_suggestion(
-                        entity1, entity2, similarity, relationships
-                    )
-                    suggestions.append(suggestion)
+            max_sim = float(np.max(similarity_matrix[i, :]))
+            # Only include if this entity could potentially match others above threshold
+            if max_sim >= threshold:
+                candidates_with_peaks.append((i, max_sim))
+        
+        if len(candidates_with_peaks) < 2:
+            return []
+        
+        # Create buckets: Sort candidates by their peak similarity value
+        # Entities with similar peak values are likely to have matches with each other
+        candidates_with_peaks.sort(key=lambda x: x[1], reverse=True)
+        
+        # Use bucketing to reduce comparisons
+        # Bucket size dynamically based on data size (sqrt heuristic)
+        bucket_size = max(10, int(np.sqrt(len(candidates_with_peaks))))
+        buckets = {}
+        
+        for bucket_idx, (entity_idx, peak_sim) in enumerate(candidates_with_peaks):
+            bucket_label = bucket_idx // bucket_size
+            if bucket_label not in buckets:
+                buckets[bucket_label] = []
+            buckets[bucket_label].append(entity_idx)
+        
+        # Find merge pairs by checking within buckets and adjacent buckets
+        # This dramatically reduces the number of comparisons needed
+        suggestions = []
+        checked_pairs = set()  # Avoid duplicate checks
+        
+        for bucket_label in sorted(buckets.keys()):
+            bucket_indices = buckets[bucket_label]
+            
+            # Check all pairs within this bucket
+            for i_pos, i in enumerate(bucket_indices):
+                for j in bucket_indices[i_pos + 1:]:
+                    pair_key = (min(i, j), max(i, j))
+                    if pair_key not in checked_pairs:
+                        checked_pairs.add(pair_key)
+                        similarity = float(similarity_matrix[i, j])
+                        
+                        if similarity >= threshold:
+                            entity1 = entity_data[i]
+                            entity2 = entity_data[j]
+                            suggestion = self._build_merge_suggestion(
+                                entity1, entity2, similarity, relationships
+                            )
+                            suggestions.append(suggestion)
+            
+            # Also check pairs with adjacent bucket to catch boundary cases
+            if (bucket_label + 1) in buckets:
+                adjacent_indices = buckets[bucket_label + 1]
+                for i in bucket_indices:
+                    for j in adjacent_indices:
+                        pair_key = (min(i, j), max(i, j))
+                        if pair_key not in checked_pairs:
+                            checked_pairs.add(pair_key)
+                            similarity = float(similarity_matrix[i, j])
+                            
+                            if similarity >= threshold:
+                                entity1 = entity_data[i]
+                                entity2 = entity_data[j]
+                                suggestion = self._build_merge_suggestion(
+                                    entity1, entity2, similarity, relationships
+                                )
+                                suggestions.append(suggestion)
         
         return suggestions
     

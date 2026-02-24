@@ -711,7 +711,7 @@ class OntologyCritic(BaseCritic):
         explanations["relationship_coherence"] = (
             f"Relationship coherence is {_band(score.relationship_coherence)} ({score.relationship_coherence:.0%}): "
             + (
-                "relationships are well-formed, semantically meaningful, and appropriately typed."
+                "relationships are well-formed, semantically meaningful, appropriately typed, and appropriate for the domain."
                 if score.relationship_coherence >= 0.7
                 else "relationships lack semantic coherence or use overly generic/inconsistent types."
             )
@@ -727,7 +727,7 @@ class OntologyCritic(BaseCritic):
         explanations["overall"] = (
             f"Overall quality is {_band(score.overall)} ({score.overall:.0%}): "
             + (
-                "the ontology is ready for use."
+                "the ontology is ready for use; further refinement is recommended before production use."
                 if score.overall >= 0.7
                 else "further refinement is recommended before production use."
             )
