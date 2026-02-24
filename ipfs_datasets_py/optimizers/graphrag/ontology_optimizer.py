@@ -1405,6 +1405,27 @@ class OntologyOptimizer:
         """
         return self.score_variance() ** 0.5
 
+    def score_peak_ratio(self) -> float:
+        """Return the fraction of history scores that are local maxima (peaks).
+
+        A score at index *i* is considered a peak if it is strictly greater than
+        its immediate neighbors (i-1 and i+1). Endpoints are never peaks.
+
+        Returns:
+            Float in [0.0, 1.0]. Returns 0.0 when history has fewer than 3
+            entries.
+        """
+        scores = [getattr(r, "average_score", 0.0) for r in (self._history or [])]
+        n = len(scores)
+        if n < 3:
+            return 0.0
+
+        peaks = 0
+        for i in range(1, n - 1):
+            if scores[i] > scores[i - 1] and scores[i] > scores[i + 1]:
+                peaks += 1
+        return float(peaks) / float(n)
+
     def recent_score_mean(self, n: int = 5) -> float:
         """Return the mean average_score over the most recent *n* history entries.
 

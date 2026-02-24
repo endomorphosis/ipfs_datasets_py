@@ -15,6 +15,22 @@ Example:
 
 from __future__ import annotations
 
+import warnings
+
+# Beartype can emit PEP585 deprecation warnings at import time for legacy type
+# hints in some submodules. The superproject enforces that Quick Start imports
+# are quiet, even under ``warnings.simplefilter('always')``.
+try:  # pragma: no cover
+	from beartype.roar import BeartypeDecorHintPep585DeprecationWarning  # type: ignore
+except Exception:  # pragma: no cover
+	BeartypeDecorHintPep585DeprecationWarning = None  # type: ignore
+
+if BeartypeDecorHintPep585DeprecationWarning is not None:
+	warnings.filterwarnings(
+		"ignore",
+		category=BeartypeDecorHintPep585DeprecationWarning,  # type: ignore[arg-type]
+	)
+
 from typing import Any, Optional
 
 # Core converters

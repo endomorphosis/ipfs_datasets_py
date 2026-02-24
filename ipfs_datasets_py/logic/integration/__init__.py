@@ -12,6 +12,21 @@ from __future__ import annotations
 
 import importlib
 import os
+import warnings
+
+# Silence beartype PEP585 deprecation warnings that can fire during import of
+# integration submodules. Tests may force ``warnings.simplefilter('always')``
+# after the parent package has already been imported.
+try:  # pragma: no cover
+    from beartype.roar import BeartypeDecorHintPep585DeprecationWarning  # type: ignore
+except Exception:  # pragma: no cover
+    BeartypeDecorHintPep585DeprecationWarning = None  # type: ignore
+
+if BeartypeDecorHintPep585DeprecationWarning is not None:
+    warnings.filterwarnings(
+        "ignore",
+        category=BeartypeDecorHintPep585DeprecationWarning,  # type: ignore[arg-type]
+    )
 
 __version__ = "0.2.0"
 __author__ = "IPFS Datasets Python Team"

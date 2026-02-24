@@ -16,7 +16,21 @@ from __future__ import annotations
 
 import logging
 import re
+import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union
+
+# Beartype can emit PEP585 deprecation warnings at import time for legacy type
+# hints in some logic submodules. Keep Quick Start imports quiet.
+try:  # pragma: no cover
+    from beartype.roar import BeartypeDecorHintPep585DeprecationWarning  # type: ignore
+except Exception:  # pragma: no cover
+    BeartypeDecorHintPep585DeprecationWarning = None  # type: ignore
+
+if BeartypeDecorHintPep585DeprecationWarning is not None:
+    warnings.filterwarnings(
+        "ignore",
+        category=BeartypeDecorHintPep585DeprecationWarning,  # type: ignore[arg-type]
+    )
 
 from .tdfol_core import (
     BinaryFormula,

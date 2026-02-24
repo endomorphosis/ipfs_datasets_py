@@ -734,6 +734,35 @@ class OntologyCritic(BaseCritic):
         )
         return explanations
 
+    def score_dimension_range(self, score: "CriticScore") -> float:
+        """Return the range (max - min) across the dimension scores.
+
+        Args:
+            score: A :class:`CriticScore` instance.
+
+        Returns:
+            Non-negative float. Returns 0.0 if there are no dimension values.
+        """
+        if hasattr(score, "to_list"):
+            values = list(score.to_list())
+        else:
+            values = [
+                float(getattr(score, k, 0.0) or 0.0)
+                for k in (
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                )
+            ]
+
+        if not values:
+            return 0.0
+        dimension_range = max(values) - min(values)
+        return float(dimension_range) if dimension_range >= 0.0 else 0.0
+
     # ------------------------------------------------------------------ #
     # BaseCritic interface                                                  #
     # ------------------------------------------------------------------ #
