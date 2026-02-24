@@ -12,7 +12,7 @@ import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 import hashlib
 import logging
 
@@ -214,8 +214,15 @@ class CircuitBreaker:
         self.state = "CLOSED"  # CLOSED, OPEN, HALF_OPEN
         self._lock = threading.Lock()
     
-    def call(self, func: Callable, *args, **kwargs) -> Any:
+    def call(
+        self,
+        func: Callable[..., Any],
+        call_args: Optional[Tuple[Any, ...]] = None,
+        call_kwargs: Optional[Dict[str, Any]] = None,
+    ) -> Any:
         """Call function with circuit breaker protection."""
+        call_args = call_args or ()
+        call_kwargs = call_kwargs or {}
         with self._lock:
             if self.state == "OPEN":
                 # Check if timeout has passed
@@ -226,7 +233,7 @@ class CircuitBreaker:
                     raise AgenticError("Circuit breaker is OPEN")
         
         try:
-            result = func(*args, **kwargs)
+            result = func(*call_args, **call_kwargs)
             
             # Success - reset failure count
             with self._lock:
@@ -267,17 +274,19 @@ class RetryHandler:
     
     def retry(
         self,
-        func: Callable,
-        *args,
-        retryable_exceptions: tuple = (Exception,),
-        **kwargs,
+        func: Callable[..., Any],
+        call_args: Optional[Tuple[Any, ...]] = None,
+        call_kwargs: Optional[Dict[str, Any]] = None,
+        retryable_exceptions: Tuple[type[BaseException], ...] = (Exception,),
     ) -> Any:
         """Retry function with exponential backoff."""
+        call_args = call_args or ()
+        call_kwargs = call_kwargs or {}
         last_exception = None
         
         for attempt in range(self.max_retries + 1):
             try:
-                return func(*args, **kwargs)
+                return func(*call_args, **call_kwargs)
                 
             except retryable_exceptions as e:
                 last_exception = e

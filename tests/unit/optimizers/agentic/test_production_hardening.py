@@ -498,6 +498,16 @@ class TestCircuitBreaker:
         # Should have some circuit open exceptions
         assert len(results) > 0
 
+    def test_circuit_breaker_forwards_typed_call_args_and_kwargs(self):
+        """Circuit breaker call should forward typed positional/keyword payloads."""
+        breaker = CircuitBreaker(failure_threshold=3)
+
+        def add(a: int, b: int, *, c: int = 0) -> int:
+            return a + b + c
+
+        result = breaker.call(add, call_args=(2, 3), call_kwargs={"c": 4})
+        assert result == 9
+
 
 class TestRetryHandler:
     """Test RetryHandler with exponential backoff."""
@@ -552,6 +562,16 @@ class TestRetryHandler:
         assert handler.base_delay * (2 ** 0) == 1.0
         assert handler.base_delay * (2 ** 1) == 2.0
         assert handler.base_delay * (2 ** 2) == 4.0
+
+    def test_retry_supports_typed_call_args_and_call_kwargs(self):
+        """Retry handler should support typed positional and keyword call payloads."""
+        handler = RetryHandler(max_retries=1, base_delay=0.01)
+
+        def add(a: int, b: int, *, c: int = 0) -> int:
+            return a + b + c
+
+        result = handler.retry(add, call_args=(2, 3), call_kwargs={"c": 4})
+        assert result == 9
 
 
 class TestResourceMonitor:

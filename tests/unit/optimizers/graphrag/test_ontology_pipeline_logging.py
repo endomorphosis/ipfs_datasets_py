@@ -7,6 +7,7 @@ import logging
 import re
 
 from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+from ipfs_datasets_py.optimizers.common.structured_logging import DEFAULT_SCHEMA_VERSION
 
 
 def _extract_json_payloads(captured: str, marker: str) -> list[dict]:
@@ -39,7 +40,7 @@ def test_pipeline_run_emits_json_log(caplog, capsys):
 
     assert payload["event"] == "ontology_pipeline_run"
     assert payload["schema"] == "ipfs_datasets_py.optimizer_log"
-    assert payload["schema_version"] == 1
+    assert payload["schema_version"] == DEFAULT_SCHEMA_VERSION
     assert payload["domain"] == "general"
     assert payload["data_source"] == "test"
     assert payload["data_type"] == "text"
@@ -76,7 +77,7 @@ def test_pipeline_batch_emits_json_log(caplog, capsys):
 
     assert payload["event"] == "ontology_pipeline_batch"
     assert payload["schema"] == "ipfs_datasets_py.optimizer_log"
-    assert payload["schema_version"] == 1
+    assert payload["schema_version"] == DEFAULT_SCHEMA_VERSION
     assert payload["domain"] == "general"
     assert payload["data_source"] == "batch"
     assert payload["data_type"] == "text"

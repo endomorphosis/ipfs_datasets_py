@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import pytest
 from unittest.mock import MagicMock
+import ipfs_datasets_py.optimizers.graphrag.tracing_instrumentation as ti
 from ipfs_datasets_py.optimizers.graphrag.tracing_instrumentation import (
     TracingConfig,
     TracingInstrumentation,
@@ -124,6 +125,57 @@ class TestTracingDecoration:
         result = sample_func(5)
         assert result == 10
 
+    def test_trace_method_records_typed_exception(self):
+        """Typed exceptions should be recorded on the active span."""
+        config = TracingConfig(enable_jaeger_exporter=False, enable_console_exporter=False)
+        instr = TracingInstrumentation(config)
+        instr.enabled = True
+
+        cm = MagicMock()
+        cm.__enter__.return_value = None
+        cm.__exit__.return_value = False
+        instr._tracer = MagicMock()
+        instr._tracer.start_as_current_span.return_value = cm
+
+        current_span = MagicMock()
+        ti.trace = MagicMock()
+        ti.trace.get_current_span.return_value = current_span
+
+        @instr.trace_method
+        def sample_fail():
+            raise RuntimeError("boom")
+
+        with pytest.raises(RuntimeError):
+            sample_fail()
+
+        current_span.record_exception.assert_called_once()
+        current_span.set_attribute.assert_called_with("error", True)
+
+    def test_trace_method_does_not_swallow_base_exception(self):
+        """BaseException subclasses should propagate untouched."""
+        config = TracingConfig(enable_jaeger_exporter=False, enable_console_exporter=False)
+        instr = TracingInstrumentation(config)
+        instr.enabled = True
+
+        cm = MagicMock()
+        cm.__enter__.return_value = None
+        cm.__exit__.return_value = False
+        instr._tracer = MagicMock()
+        instr._tracer.start_as_current_span.return_value = cm
+
+        current_span = MagicMock()
+        ti.trace = MagicMock()
+        ti.trace.get_current_span.return_value = current_span
+
+        @instr.trace_method
+        def sample_interrupt():
+            raise KeyboardInterrupt()
+
+        with pytest.raises(KeyboardInterrupt):
+            sample_interrupt()
+
+        current_span.record_exception.assert_not_called()
+
 
 class TestTracingWorkflow:
     """End-to-end tracing workflow tests."""
@@ -140,6 +192,32 @@ class TestTracingWorkflow:
         retrieved_tracer = get_tracer()
         assert retrieved_tracer is tracer
         assert retrieved_tracer.config.service_name == "test-service"
+
+    def test_generator_tracer_does_not_swallow_base_exception(self):
+        """Generator tracer wrapper should propagate BaseException."""
+        mock_span = MagicMock()
+        cm = MagicMock()
+        cm.__enter__.return_value = mock_span
+        cm.__exit__.return_value = False
+
+        fake_tracer = MagicMock()
+        fake_tracer.enabled = True
+        fake_tracer._tracer = MagicMock()
+        fake_tracer._tracer.start_as_current_span.return_value = cm
+
+        tracer = OntologyGeneratorTracer(fake_tracer)
+
+        class _Context:
+            domain = "test"
+
+        @tracer.trace_extract_entities
+        def failing_extract(self_arg, text, context):
+            raise KeyboardInterrupt()
+
+        with pytest.raises(KeyboardInterrupt):
+            failing_extract(object(), "hello", _Context())
+
+        mock_span.record_exception.assert_not_called()
 
 
 if __name__ == "__main__":

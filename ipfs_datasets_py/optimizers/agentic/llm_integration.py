@@ -311,10 +311,12 @@ class OptimizerLLMRouter:
                 def _make_llm_call():
                     return self._breakers[current_provider].call(
                         router_generate,
-                        prompt=prompt,
-                        max_tokens=max_tokens,
-                        temperature=temperature,
-                        **resolved_router_kwargs
+                        call_kwargs={
+                            "prompt": prompt,
+                            "max_tokens": max_tokens,
+                            "temperature": temperature,
+                            **resolved_router_kwargs,
+                        },
                     )
                 
                 response = self._retry_handler.retry(_make_llm_call)

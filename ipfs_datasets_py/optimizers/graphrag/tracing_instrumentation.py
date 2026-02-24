@@ -177,7 +177,7 @@ class TracingInstrumentation:
                 try:
                     result = func(*args, **kwargs)
                     return result
-                except Exception as e:
+                except (ValueError, TypeError, AttributeError, KeyError, RuntimeError, OSError) as e:
                     # Record exception in span
                     if self._tracer:
                         span = trace.get_current_span()
@@ -223,7 +223,7 @@ class OntologyGeneratorTracer:
                     elapsed_ms = (time.time() - start_time) * 1000
                     span.set_attribute("duration_ms", elapsed_ms)
                     return result
-                except Exception as e:
+                except (ValueError, TypeError, AttributeError, KeyError, RuntimeError, OSError) as e:
                     span.record_exception(e)
                     span.set_attribute("error", True)
                     raise
@@ -254,7 +254,7 @@ class OntologyGeneratorTracer:
                     span.set_attribute("duration_ms", elapsed_ms)
                     span.set_attribute("relationship_count", len(result) if result else 0)
                     return result
-                except Exception as e:
+                except (ValueError, TypeError, AttributeError, KeyError, RuntimeError, OSError) as e:
                     span.record_exception(e)
                     span.set_attribute("error", True)
                     raise
@@ -296,7 +296,7 @@ class OntologyCriticTracer:
                     if hasattr(score_result, "overall_score"):
                         span.set_attribute("overall_score", score_result.overall_score)
                     return score_result
-                except Exception as e:
+                except (ValueError, TypeError, AttributeError, KeyError, RuntimeError, OSError) as e:
                     span.record_exception(e)
                     span.set_attribute("error", True)
                     raise
@@ -325,7 +325,7 @@ class OntologyCriticTracer:
                     span.set_attribute("duration_ms", elapsed_ms)
                     span.set_attribute("completeness_score", score)
                     return score
-                except Exception as e:
+                except (ValueError, TypeError, AttributeError, KeyError, RuntimeError, OSError) as e:
                     span.record_exception(e)
                     span.set_attribute("error", True)
                     raise
@@ -369,7 +369,7 @@ class OntologyMediatorTracer:
                     if hasattr(strategy, "estimated_impact"):
                         span.set_attribute("estimated_impact", strategy.estimated_impact)
                     return strategy
-                except Exception as e:
+                except (ValueError, TypeError, AttributeError, KeyError, RuntimeError, OSError) as e:
                     span.record_exception(e)
                     span.set_attribute("error", True)
                     raise
