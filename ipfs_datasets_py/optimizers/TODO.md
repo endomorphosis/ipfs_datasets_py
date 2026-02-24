@@ -44,7 +44,8 @@ This plan is intentionally endless. It balances refactors, feature growth,
 test hardening, and documentation clarity while keeping progress measurable.
 
 ### Track-by-track focus (rolling checklist)
-- [ ] (P1) [arch] Unify optimizer base class hierarchy (shared OptimizerConfig)
+- [x] (P1) [arch] Unify optimizer base class hierarchy (shared OptimizerConfig)
+  - Done 2026-02-23: Batch 265 - Integrated OptimizerConfig dataclass with AgenticOptimizer. Now accepts Union[OptimizerConfig, Dict] with automatic normalization. Added helper methods (get_config_value, domain/max_rounds/verbose properties). Full backward compatibility maintained (dict configs auto-converted). 24/24 tests passing. Achieves consistent configuration across GraphRAG, logic, and agentic optimizers.
 - [ ] (P2) [api] Standardize context objects across GraphRAG/logic/agentic
 - [ ] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
 - [x] (P2) [tests] Add property-based tests for Entity/CriticScore/FeedbackRecord

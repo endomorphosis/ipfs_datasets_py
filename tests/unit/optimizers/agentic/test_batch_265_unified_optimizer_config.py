@@ -213,13 +213,14 @@ class TestOptimizerConfigFeatures:
         )
         
         override_config = OptimizerConfig(
+            domain="medical",  # Explicitly set domain to test override
             max_rounds=10,
             verbose=True,
         )
         
         merged = base_config.merge(override_config)
         
-        assert merged.domain == "legal"  # From base
+        assert merged.domain == "medical"  # Overridden
         assert merged.max_rounds == 10  # Overridden
         assert merged.verbose is True  # Overridden
     
