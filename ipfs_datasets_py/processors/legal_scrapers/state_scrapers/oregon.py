@@ -19,7 +19,7 @@ class OregonScraper(BaseStateScraper):
         """Return list of available codes/statutes for Oregon."""
         return [{
             "name": "Oregon Revised Statutes",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/bills_laws/ors/ors001.html",
             "type": "Code"
         }]
     
@@ -33,7 +33,14 @@ class OregonScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._generic_scrape(code_name, code_url, "Or. Rev. Stat.")
+        return await self._playwright_scrape(
+            code_name,
+            code_url,
+            "Or. Rev. Stat.",
+            wait_for_selector="a[href*='ors']",
+            timeout=45000,
+            max_sections=250,
+        )
 
 
 # Register this scraper with the registry
