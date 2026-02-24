@@ -254,7 +254,7 @@ class OptimizerLLMRouter:
         method: OptimizationMethod,
         max_tokens: int = 2000,
         temperature: float = 0.7,
-        **kwargs: Any,
+        router_kwargs: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Generate text using LLM router with caching.
         
@@ -263,7 +263,7 @@ class OptimizerLLMRouter:
             method: Optimization method (for provider selection)
             max_tokens: Maximum tokens to generate
             temperature: Sampling temperature
-            **kwargs: Additional router arguments
+            router_kwargs: Optional additional router arguments
             
         Returns:
             Generated text
@@ -271,13 +271,15 @@ class OptimizerLLMRouter:
         Raises:
             RuntimeError: If all providers fail
         """
+        resolved_router_kwargs = router_kwargs or {}
+
         # Check cache first (70-90% hit rate after warmup)
         if self.cache:
             cache_key_kwargs = {
                 "method": str(method),
                 "max_tokens": max_tokens,
                 "temperature": temperature,
-                **{k: str(v) for k, v in kwargs.items()}
+                **{k: str(v) for k, v in resolved_router_kwargs.items()}
             }
             cached_response = self.cache.get(prompt, **cache_key_kwargs)
             if cached_response is not None:
@@ -312,7 +314,7 @@ class OptimizerLLMRouter:
                         prompt=prompt,
                         max_tokens=max_tokens,
                         temperature=temperature,
-                        **kwargs
+                        **resolved_router_kwargs
                     )
                 
                 response = self._retry_handler.retry(_make_llm_call, max_retries=2)
@@ -323,7 +325,7 @@ class OptimizerLLMRouter:
                         "method": str(method),
                         "max_tokens": max_tokens,
                         "temperature": temperature,
-                        **{k: str(v) for k, v in kwargs.items()}
+                        **{k: str(v) for k, v in resolved_router_kwargs.items()}
                     }
                     self.cache.set(prompt, response, **cache_key_kwargs)
                 

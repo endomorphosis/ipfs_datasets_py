@@ -381,7 +381,14 @@ class PerformanceMetricsCollector:
             self._total_cache_hits = totals.get("cache_hits", 0)
             self._total_validations = totals.get("validations", 0)
             self._total_file_operations = totals.get("file_operations", 0)
-        except Exception as e:
+        except (
+            OSError,
+            json.JSONDecodeError,
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+        ) as e:
             print(f"Warning: Failed to load metrics from disk: {e}")
 
 

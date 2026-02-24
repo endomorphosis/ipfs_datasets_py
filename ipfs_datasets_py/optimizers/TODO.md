@@ -47,29 +47,52 @@ It is intentionally infinite: finish work, add new work, repeat.
 - [ ] (P1) [arch] Split `graphrag/query_optimizer.py` into focused modules (`query_planner.py`, `traversal_heuristics.py`, `learning_adapter.py`, `serialization.py`) with behavior parity tests.
 - [ ] (P1) [api] Add package typing marker (`py.typed`) and run strict type audit for optimizer public surface.
 - [ ] (P2) [arch] Replace remaining broad `except Exception` catch-alls with typed exceptions in optimizer core paths.
-  - Progress 2026-02-24: narrowed catch-all handlers to typed exception groups in `common/base_optimizer.py`, `common/seed_control.py`, `common/caching_layer.py`, `common/query_validation.py` (cache-key generation + cacheability-check fallback paths), `common/profiling.py` (psutil-availability, memory-probe, and profiling-log emission fallback paths), `common/structured_logging.py` (structured event logging fallback path), `common/profiling_decorators.py` (memory-probe fallback path), `common/batch_strategy_recommender.py` (per-ontology recommendation failure path), `common/performance.py` (parallel-validator, profiling decorator, and batch file read fallback paths), `graphrag/ontology_generator.py`, `graphrag/ontology_pipeline.py`, `graphrag/ontology_critic.py`, `graphrag/ontology_mediator.py`, `graphrag/cli_wrapper.py` (all core commands + `run`), `graphrag/learning_adapter.py` (learning-cycle/failure-counter paths), `graphrag/streaming_extractor.py` (chunk loop error path), `graphrag/query_metrics.py` (JSON export + numpy-serialization + persistence fallback paths, including prior bare fallback handlers), `graphrag/query_planner.py` (cache-key/cache-read/cache-write fallback paths), `graphrag/query_optimizer.py` (example/integration helper failure paths), `graphrag/query_unified_optimizer.py` (budget fallback, entity importance calculation, learning-state save/load error paths), `graphrag/logic_validator.py` (`check_consistency`, `batch_validate`, `explain_entity` error paths), `graphrag/ontology_serialization.py` (type-hint resolution fallback path), `graphrag/data_transformers.py` (`Transformation.transform_batch` typed error handling), `graphrag/ontology_session.py` (`run` failure-return path), `graphrag/ontology_harness.py` (`run_single_session`, optimizer-analysis fallback, pipeline `_optimize`, `run_single`, and `run_concurrent` error paths), `graphrag/semantic_deduplicator.py` (embedding generation + model-load fallback error paths), `graphrag/ontology_refinement_agent.py` (LLM backend invocation failure path), `logic_theorem_optimizer/cli_wrapper.py`, `logic_theorem_optimizer/logic_optimizer.py`, `logic_theorem_optimizer/formula_translation.py`, `logic_theorem_optimizer/llm_backend.py`, `logic_theorem_optimizer/prover_integration.py`, `logic_theorem_optimizer/logic_critic.py`, `logic_theorem_optimizer/unified_optimizer.py`, `logic_theorem_optimizer/distributed_processor.py`, `logic_theorem_optimizer/kg_integration.py`, `logic_theorem_optimizer/rag_integration.py`, `logic_theorem_optimizer/additional_provers.py`, `logic_theorem_optimizer/conflict_resolver.py`, `logic_theorem_optimizer/ontology_evolution.py`, `logic_theorem_optimizer/neural_symbolic_prover.py`, `logic_theorem_optimizer/logic_harness.py`, and `logic_theorem_optimizer/logic_extractor.py`; remaining cleanup is still needed in other optimizer modules.
+  - Progress 2026-02-24: narrowed catch-all handlers to typed exception groups in `common/base_optimizer.py`, `common/seed_control.py`, `common/caching_layer.py`, `common/query_validation.py` (cache-key generation + cacheability-check fallback paths), `common/profiling.py` (psutil-availability, memory-probe, and profiling-log emission fallback paths), `common/structured_logging.py` (structured event logging fallback path), `common/profiling_decorators.py` (memory-probe fallback path), `common/batch_strategy_recommender.py` (per-ontology recommendation failure path), `common/performance.py` (parallel-validator, profiling decorator, and batch file read fallback paths), `common/performance_monitor.py` (metrics-load persistence fallback path), `graphrag/ontology_generator.py`, `graphrag/ontology_pipeline.py`, `graphrag/ontology_critic.py`, `graphrag/ontology_mediator.py`, `graphrag/cli_wrapper.py` (all core commands + `run`), `graphrag/learning_adapter.py` (learning-cycle/failure-counter paths), `graphrag/streaming_extractor.py` (chunk loop error path), `graphrag/query_metrics.py` (JSON export + numpy-serialization + persistence fallback paths, including prior bare fallback handlers), `graphrag/query_planner.py` (cache-key/cache-read/cache-write fallback paths), `graphrag/query_optimizer.py` (example/integration helper failure paths), `graphrag/query_unified_optimizer.py` (budget fallback, entity importance calculation, learning-state save/load error paths), `graphrag/logic_validator.py` (`check_consistency`, `batch_validate`, `explain_entity` error paths), `graphrag/ontology_serialization.py` (type-hint resolution fallback path), `graphrag/data_transformers.py` (`Transformation.transform_batch` typed error handling), `graphrag/ontology_session.py` (`run` failure-return path), `graphrag/ontology_harness.py` (`run_single_session`, optimizer-analysis fallback, pipeline `_optimize`, `run_single`, and `run_concurrent` error paths), `graphrag/semantic_deduplicator.py` (embedding generation + model-load fallback error paths), `graphrag/ontology_refinement_agent.py` (LLM backend invocation failure path), `logic_theorem_optimizer/cli_wrapper.py`, `logic_theorem_optimizer/logic_optimizer.py`, `logic_theorem_optimizer/formula_translation.py`, `logic_theorem_optimizer/llm_backend.py`, `logic_theorem_optimizer/prover_integration.py`, `logic_theorem_optimizer/logic_critic.py`, `logic_theorem_optimizer/unified_optimizer.py`, `logic_theorem_optimizer/distributed_processor.py`, `logic_theorem_optimizer/kg_integration.py`, `logic_theorem_optimizer/rag_integration.py`, `logic_theorem_optimizer/additional_provers.py`, `logic_theorem_optimizer/conflict_resolver.py`, `logic_theorem_optimizer/ontology_evolution.py`, `logic_theorem_optimizer/neural_symbolic_prover.py`, `logic_theorem_optimizer/logic_harness.py`, and `logic_theorem_optimizer/logic_extractor.py`; remaining cleanup is still needed in other optimizer modules.
 - [x] (P2) [arch] Replace broad `except Exception` catch-alls in logic theorem optimizer CLI core commands.
   - Done 2026-02-24: narrowed catch-all blocks in `logic_theorem_optimizer/cli_wrapper.py` (`extract`, `prove`, `validate`, `optimize`, `run`) to typed exception groups; logic CLI prove/validate test suites remain green.
 - [ ] (P2) [agentic] Audit `agentic/` for `**kwargs`-heavy APIs and replace with typed optional parameters.
+  - Progress 2026-02-24: refactored `agentic/llm_integration.py::OptimizerLLMRouter.generate` from variadic `**kwargs` to typed `router_kwargs: Optional[Dict[str, Any]]`; added forwarding/cache-key coverage in `tests/unit/optimizers/agentic/test_llm_integration.py`.
 - [ ] (P2) [tests] Finish fixture-factory migration for ontology mocks in shared `conftest.py` and remove duplicate builders.
 
 ## Random Rotation Queue (Keep 5 Active)
 
 Active random picks (different tracks):
+- [x] (P2) [perf] Add benchmark variant comparing `generate_cache_key(..., include_class_name=True|False)` cost.
+  - Done 2026-02-24: extended `benchmarks/bench_query_validation_cache_key.py` to report both `include_class_name=True` and `False` timings per payload size.
+- [x] (P2) [obs] Add example Prometheus alert rule snippets for sustained `QMETRICS_FALLBACK_WRITE_ERROR` occurrences.
+  - Done 2026-02-24: added Prometheus alert rule snippets for `QMETRICS_FALLBACK_WRITE_ERROR` and `QMETRICS_SERIALIZATION_ERROR` in `docs/optimizers/TROUBLESHOOTING_DASHBOARDS.md`.
+- [x] (P2) [tests] Add negative-path test for `_create_fallback_plan` when custom budget manager raises `ValueError`.
+  - Done 2026-02-24: added `test_fallback_plan_uses_default_budget_on_value_error` in `test_query_budget_protocol.py`.
+- [x] (P2) [api] Add type-level smoke check that `BudgetManagerProtocol` methods are present on injected stubs used in tests.
+  - Done 2026-02-24: added `test_custom_budget_manager_stub_exposes_protocol_methods` in `test_query_budget_protocol.py`.
+- [x] (P2) [graphrag] Add `example_usage()` assertion coverage for consumption-report output structure.
+  - Done 2026-02-24: extended `test_example_usage_successful_reasoning_path` to assert `Consumption Report` output in `test_query_optimizer_example_usage.py`.
 - [x] (P2) [tests] Add deterministic regression tests for `query_unified_optimizer.save_learning_state/load_learning_state` fallback error paths.
   - Done 2026-02-24: added `tests/unit/optimizers/graphrag/test_query_unified_learning_state_fallbacks.py` covering save fallback serialization, double-failure metrics recording, invalid-JSON load handling, and successful state restoration.
 - [x] (P2) [obs] Add structured error codes to query metrics persistence failures and document them in troubleshooting docs.
   - Done 2026-02-24: added `QMETRICS_SERIALIZATION_ERROR` and `QMETRICS_FALLBACK_WRITE_ERROR` in `graphrag/query_metrics.py`, added persistence fallback tests in `test_query_metrics_persistence_error_codes.py`, and documented operator guidance in `docs/optimizers/TROUBLESHOOTING_DASHBOARDS.md`.
-- [ ] (P2) [perf] Add micro-benchmark for `QueryValidationMixin.generate_cache_key` on large nested query payloads.
+- [x] (P2) [perf] Add micro-benchmark for `QueryValidationMixin.generate_cache_key` on large nested query payloads.
+  - Done 2026-02-24: added `benchmarks/bench_query_validation_cache_key.py` with small/medium/large nested payload timing output (observed avg on this machine: small 0.0158ms, medium 0.1158ms, large 0.4109ms).
+- [x] (P2) [tests] Add micro-benchmark regression assertion threshold test for cache-key generation budget (<5ms for representative payload).
+  - Done 2026-02-24: added `TestPerformanceRegression.test_generate_cache_key_average_under_5ms_for_representative_payload` in `tests/unit/optimizers/common/test_query_validation.py`.
+- [x] (P2) [obs] Add dashboard/query examples for `QMETRICS_*` log filtering in troubleshooting docs.
+  - Done 2026-02-24: added Loki and ELK/KQL filter examples for `QMETRICS_SERIALIZATION_ERROR` and `QMETRICS_FALLBACK_WRITE_ERROR` in `docs/optimizers/TROUBLESHOOTING_DASHBOARDS.md`.
+- [x] (P2) [api] Add Protocol conformance test using custom budget-manager stub injected into `UnifiedGraphRAGQueryOptimizer`.
+  - Done 2026-02-24: added `test_unified_optimizer_accepts_custom_budget_manager_protocol` in `tests/unit/optimizers/graphrag/test_query_budget_protocol.py` validating custom protocol-based budget manager usage in fallback-plan allocation.
+- [x] (P2) [graphrag] Add unit test asserting `example_usage()` still returns success when budget manager `allocate_budget` raises and fallback plan is used.
+  - Done 2026-02-24: added `test_example_usage_survives_budget_allocate_failure_with_fallback` in `test_query_optimizer_example_usage.py` using a flaky budget manager and fallback plan path.
 - [x] (P2) [graphrag] Add focused unit tests for `query_optimizer.example_usage()` error/fallback branches using mocks.
   - Done 2026-02-24: added `tests/unit/optimizers/graphrag/test_query_optimizer_example_usage.py` covering LLM processor init failure and conceptual reasoning-call failure fallback branches with deterministic fakes.
 - [x] (P2) [api] Add typed `Protocol` for budget managers used by query planners/unified optimizer to reduce duck-typing drift.
   - Done 2026-02-24: added runtime-checkable `BudgetManagerProtocol` in `graphrag/query_budget.py`, updated `UnifiedGraphRAGQueryOptimizer` budget-manager typing to the protocol, and added conformance test `test_query_budget_protocol.py`.
-- [ ] (P2) [tests] Add explicit unit tests for `QMETRICS_*` constants in exported module namespace contract.
+- [x] (P2) [tests] Add explicit unit tests for `QMETRICS_*` constants in exported module namespace contract.
+  - Done 2026-02-24: added export-contract assertions for `QUERY_METRICS_PERSIST_SERIALIZATION_ERROR` and `QUERY_METRICS_PERSIST_FALLBACK_WRITE_ERROR` in `test_query_metrics_persistence_error_codes.py`.
 - [x] (P2) [docs] Add brief “metrics persistence error handling” section to `docs/optimizers/INTEGRATION_EXAMPLES.md`.
   - Done 2026-02-24: documented `QMETRICS_SERIALIZATION_ERROR` and `QMETRICS_FALLBACK_WRITE_ERROR` operator handling in `docs/optimizers/INTEGRATION_EXAMPLES.md`.
-- [ ] (P2) [arch] Replace broad `except Exception` catch in `common/batch_strategy_recommender.py` with typed exceptions + regression test.
-- [ ] (P2) [graphrag] Add `example_usage()` test coverage for successful conceptual reasoning return payload path.
+- [x] (P2) [arch] Replace broad `except Exception` catch in `common/batch_strategy_recommender.py` with typed exceptions + regression test.
+  - Done 2026-02-24: verified typed exception groups are in place in `common/batch_strategy_recommender.py` and added regression coverage in `tests/unit/optimizers/common/test_batch_strategy_recommender.py` for per-item failure capture and threshold skipping behavior.
+- [x] (P2) [graphrag] Add `example_usage()` test coverage for successful conceptual reasoning return payload path.
+  - Done 2026-02-24: extended `test_query_optimizer_example_usage.py` with a successful reasoning-path assertion (`Reasoning Result (conceptual/mocked)` output).
 - [x] (P2) [perf] Profile `OntologyCritic._evaluate_consistency()` on large ontologies (>500 entities) and document bottlenecks + top fix.
   - Done 2026-02-24: replaced recursive cycle detection with iterative Kahn-based detection, removed duplicate cycle pass, added deep-chain regression tests (`test_batch_270_consistency_cycle_scaling.py`), and documented results in `docs/optimizers/PERFORMANCE_TUNING_GUIDE.md`.
 - [x] (P2) [obs] Add OpenTelemetry span hooks behind `OTEL_ENABLED` feature flag for pipeline/session boundaries.
@@ -114,6 +137,8 @@ Active random picks (different tracks):
   - Done 2026-02-24: replaced per-ontology broad catch in `recommend_strategies_batch()` with typed exception groups and added regression checks for typed failure handling + interrupt propagation in `optimizers/tests/unit/test_batch_strategy_recommender.py`.
 - [x] (P2) [perf] Narrow broad exception handling in `common/performance.py` utility paths.
   - Done 2026-02-24: replaced broad catches in parallel validator, profiling decorator wrapper, and batch file read fallback paths with typed exception groups; added propagation/error regression checks in `tests/unit/optimizers/common/test_performance.py`.
+- [x] (P2) [obs] Narrow broad exception handling in `common/performance_monitor.py` persistence load path.
+  - Done 2026-02-24: replaced broad catch in `_load_from_disk()` with typed exception groups and added regression checks for invalid JSON fallback and interrupt propagation in `tests/unit/optimizers/common/test_performance_monitor_exceptions.py`.
 
 Rotation rules:
 - When one item completes, add a new `[ ]` pick from a track not already active.
@@ -283,7 +308,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P2) [graphrag] `OntologyCritic.evaluate_ontology()` — persist cache across instances via class-level `_SHARED_EVAL_CACHE`
 - [ ] (P2) [tests] Add round-trip test for `OntologyMediator.run_refinement_cycle()` state serialization
 - [ ] (P3) [tests] Snapshot tests: freeze known-good critic scores for a reference ontology
-- [ ] (P2) [api] Add `OntologyGenerator.batch_extract(docs, context)` for multi-doc parallel extraction
+- [x] (P2) [api] Add `OntologyGenerator.batch_extract(docs, context)` for multi-doc parallel extraction
+  - Done 2026-02-24: validated ordered batch output and per-document error fallback behavior in `test_batch_292_batch_extract_api.py`.
 - [ ] (P2) [docs] Add per-method doctest examples to all public `OntologyGenerator` methods
 - [ ] (P2) [docs] Add per-method doctest examples to all public `OntologyCritic` methods
 - [ ] (P2) [docs] Add doctest examples for every public method in ontology_generator.py
@@ -592,8 +618,10 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P3) [arch] **Event bus for optimizer lifecycle hooks** — Add a lightweight pub/sub system so tests and dashboards can observe `on_round_start/end`, `on_score_improve`, `on_converge`.
 - [ ] (P1) [api] **Add `py.typed` marker and check all public stubs** — Run `mypy --strict` on `ipfs_datasets_py/optimizers/` and fix all type errors in public surface. Mark package as typed.
 - [ ] (P1) [api] **Deprecate magic `dict` ontologies** — All public methods that accept `Dict[str, Any]` as an ontology should accept `OntologyResult` instead; keep backward-compat shim for 2 releases.
-- [ ] (P2) [api] **Version the optimizer public API** — Add `__version__` to `__init__.py` and document breaking changes in `CHANGELOG.md`.
-- [ ] (P2) [api] **`OntologyGenerator.__call__` shorthand** — Implement `__call__(self, text) -> OntologyResult` as a convenience for pipeline chaining.
+- [x] (P2) [api] **Version the optimizer public API** — Add `__version__` to `__init__.py` and document breaking changes in `CHANGELOG.md`.
+  - Done 2026-02-24: verified exported `optimizers.__version__` contract and changelog presence (`optimizers/CHANGELOG.md`) with regression coverage in `test_batch_291_api_surface_and_merge.py`.
+- [x] (P2) [api] **`OntologyGenerator.__call__` shorthand** — Implement `__call__(self, text) -> OntologyResult` as a convenience for pipeline chaining.
+  - Done 2026-02-24: validated `OntologyGenerator.__call__` delegates directly to `generate_ontology(...)` in `test_batch_291_api_surface_and_merge.py`.
 - [ ] (P3) [api] **Add `__repr__` / `__str__` to all major classes** — `OntologyOptimizer`, `OntologyPipeline`, `CriticScore`, `FeedbackRecord` all lack useful repr. Critical for debugging.
 - [x] (P2) [graphrag] `OntologyOptimizer.history_skewness()` — skewness of score distribution
   - Done 2026-02-24: validated positive skewness for right-tailed score history in `test_batch_289_remaining_p2_helper_stats.py`.
@@ -623,20 +651,27 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Done 2026-02-24: validated age semantics for oldest/newest and out-of-range feedback indices in `test_batch_289_remaining_p2_helper_stats.py`.
 - [x] (P2) [graphrag] `OntologyMediator.clear_feedback()` — reset feedback history
   - Done 2026-02-24: covered feedback-history clear count and empty-history post-condition in `test_batch_289_remaining_p2_helper_stats.py`.
-- [ ] (P2) [graphrag] `ExtractionConfig.merge(other)` — merge two configs, taking max/min of thresholds
+- [x] (P2) [graphrag] `ExtractionConfig.merge(other)` — merge two configs, taking max/min of thresholds
+  - Done 2026-02-24: added merge contract coverage for non-default override behavior in `test_batch_291_api_surface_and_merge.py`.
 - [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_std(result)` — std-dev of confidences
   - Done 2026-02-24: validated population std-dev of entity confidence values in `test_batch_289_remaining_p2_helper_stats.py`.
-- [ ] (P3) [graphrag] `OntologyOptimizer.score_gini_coefficient()` — inequality measure of score distribution
-- [ ] (P3) [graphrag] `OntologyCritic.dimension_correlation(scores_a, scores_b)` — Pearson r between two score series
-- [ ] (P3) [graphrag] `OntologyPipeline.score_histogram(bins)` — histogram of all run scores
-- [ ] (P3) [graphrag] `LogicValidator.graph_diameter(ontology)` — longest shortest path in the graph
-- [ ] (P3) [graphrag] `OntologyGenerator.relationship_confidence_avg(result)` — mean confidence of relationships
+- [x] (P3) [graphrag] `OntologyOptimizer.score_gini_coefficient()` — inequality measure of score distribution
+  - Done 2026-02-24: validated Gini coefficient behavior on an imbalanced score distribution in `test_batch_290_p3_metric_helpers.py`.
+- [x] (P3) [graphrag] `OntologyCritic.dimension_correlation(scores_a, scores_b)` — Pearson r between two score series
+  - Done 2026-02-24: covered near-perfect inverse Pearson correlation on completeness series in `test_batch_290_p3_metric_helpers.py`.
+- [x] (P3) [graphrag] `OntologyPipeline.score_histogram(bins)` — histogram of all run scores
+  - Done 2026-02-24: validated bucketed score counts across fixed-width bins in `test_batch_290_p3_metric_helpers.py`.
+- [x] (P3) [graphrag] `LogicValidator.graph_diameter(ontology)` — longest shortest path in the graph
+  - Done 2026-02-24: covered directed-graph diameter calculation on multi-hop topology in `test_batch_290_p3_metric_helpers.py`.
+- [x] (P3) [graphrag] `OntologyGenerator.relationship_confidence_avg(result)` — mean confidence of relationships
+  - Done 2026-02-24: validated alias mean-confidence output for relationship confidences in `test_batch_290_p3_metric_helpers.py`.
 - [ ] (P1) [tests] **Property-based tests with Hypothesis** — Add Hypothesis strategies for `Entity`, `CriticScore`, `FeedbackRecord` and use them in at least 5 property tests per class.
 - [ ] (P1) [tests] **Snapshot tests for `OntologyGenerator.generate()`** — Compare full pipeline output against JSON snapshots to catch regressions.
 - [ ] (P2) [tests] **Coverage enforcement** — Add `pytest-cov` with `--cov-fail-under=85` to CI. Currently no minimum enforced.
 - [ ] (P2) [tests] **Integration test: full round-trip** — `text → generate → validate → optimize → score` without mocking anything.
 - [ ] (P2) [tests] **Parametrize existing batch tests** — Convert repeated test classes into `@pytest.mark.parametrize` to reduce LOC by ~30%.
-- [ ] (P2) [tests] **Fix `test_end_to_end_pipeline.py`** — The externally-committed E2E tests fail because `OntologyGenerator.__init__` rejects `ExtractionConfig` objects. Fix the `ipfs_accelerate_config.get()` call to handle dataclass configs.
+- [x] (P2) [tests] **Fix `test_end_to_end_pipeline.py`** — The externally-committed E2E tests fail because `OntologyGenerator.__init__` rejects `ExtractionConfig` objects. Fix the `ipfs_accelerate_config.get()` call to handle dataclass configs.
+  - Done 2026-02-24: added explicit dataclass-config regression case in `tests/unit/optimizers/graphrag/test_end_to_end_pipeline.py` and re-ran full E2E suite (`25 passed` including new batch-extract tests).
 - [ ] (P3) [tests] **Mutation testing** — Run `mutmut` on `ontology_critic.py` and fix surviving mutants.
 - [ ] (P3) [tests] **Benchmark tests** — Add `pytest-benchmark` tests for `generate()`, `evaluate_ontology()`, `optimize()` to track performance over time.
 - [ ] (P1) [obs] **Structured logging** — Replace all `print()` / bare `logging.info(f"...")` with structured log records (`logging.getLogger(__name__).info("...", extra={...})`). Use `structlog` or stdlib extras.

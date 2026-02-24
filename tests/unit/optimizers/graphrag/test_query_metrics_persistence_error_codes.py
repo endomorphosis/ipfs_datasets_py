@@ -49,3 +49,12 @@ def test_persist_metrics_double_failure_logs_fallback_write_error_code(tmp_path,
 
     mock_logger.error.assert_called_once()
     assert QUERY_METRICS_PERSIST_FALLBACK_WRITE_ERROR in mock_logger.error.call_args.args[0]
+
+
+def test_query_metrics_error_code_constants_exported() -> None:
+    from ipfs_datasets_py.optimizers.graphrag import query_metrics
+
+    assert hasattr(query_metrics, "QUERY_METRICS_PERSIST_SERIALIZATION_ERROR")
+    assert hasattr(query_metrics, "QUERY_METRICS_PERSIST_FALLBACK_WRITE_ERROR")
+    assert query_metrics.QUERY_METRICS_PERSIST_SERIALIZATION_ERROR.startswith("QMETRICS_")
+    assert query_metrics.QUERY_METRICS_PERSIST_FALLBACK_WRITE_ERROR.startswith("QMETRICS_")

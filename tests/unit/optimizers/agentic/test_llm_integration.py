@@ -41,6 +41,44 @@ class TestOptimizerLLMRouter:
         )
         assert router.preferred_provider == LLMProvider.CLAUDE
 
+    def test_generate_passes_router_kwargs_to_backend(self):
+        """generate() should forward typed router_kwargs to router backend."""
+        router = OptimizerLLMRouter(enable_caching=False)
+        router._retry_handler.retry = lambda func, max_retries=2: func()
+
+        with patch(
+            "ipfs_datasets_py.optimizers.agentic.llm_integration.router_generate",
+            return_value="ok",
+        ) as mocked_generate:
+            response = router.generate(
+                prompt="test prompt",
+                method=OptimizationMethod.TEST_DRIVEN,
+                router_kwargs={"top_p": 0.1, "presence_penalty": 0.2},
+            )
+
+        assert response == "ok"
+        mocked_generate.assert_called_once()
+        call_kwargs = mocked_generate.call_args.kwargs
+        assert call_kwargs["top_p"] == 0.1
+        assert call_kwargs["presence_penalty"] == 0.2
+
+    def test_generate_cache_key_includes_router_kwargs(self):
+        """router_kwargs should participate in cache-key arguments."""
+        mock_cache = Mock()
+        mock_cache.get.return_value = "cached"
+
+        router = OptimizerLLMRouter(enable_caching=True, cache=mock_cache)
+        response = router.generate(
+            prompt="test prompt",
+            method=OptimizationMethod.TEST_DRIVEN,
+            router_kwargs={"top_p": 0.5},
+        )
+
+        assert response == "cached"
+        mock_cache.get.assert_called_once()
+        _, kwargs = mock_cache.get.call_args
+        assert kwargs["top_p"] == "0.5"
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

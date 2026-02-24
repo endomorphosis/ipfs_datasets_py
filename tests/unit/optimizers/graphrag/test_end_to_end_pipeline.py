@@ -68,6 +68,23 @@ class TestEndToEndPipelineGenerate:
             entities = ontology.get("entities", [])
             assert len(entities) <= 5 or entities == []
 
+    def test_generate_accepts_dataclass_extraction_config(self):
+        """Generation accepts dataclass config objects without conversion errors."""
+        generator = OntologyGenerator()
+        context = create_test_context(
+            config=ExtractionConfig(
+                confidence_threshold=0.6,
+                max_entities=8,
+            )
+        )
+
+        ontology = generator.generate_ontology(
+            "Alice and Bob collaborate at Acme.",
+            context,
+        )
+
+        assert ontology is None or isinstance(ontology, dict)
+
 
 class TestEndToEndPipelineEvaluate:
     """Test the evaluate stage of the pipeline."""

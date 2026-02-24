@@ -600,3 +600,32 @@ class TestIntegration:
         
         # Should clamp to maximum
         assert max_results == 100
+
+
+class TestPerformanceRegression:
+    """Performance regression guardrails for cache-key generation."""
+
+    def test_generate_cache_key_average_under_5ms_for_representative_payload(self):
+        optimizer = TestOptimizer()
+        payload = {
+            "query_text": "Find entity relationships",
+            "entity_filters": [{"name": f"entity-{i}", "weight": i / 100.0} for i in range(100)],
+            "traversal": {
+                "max_depth": 4,
+                "edge_types": [f"type_{i}" for i in range(20)],
+                "constraints": {
+                    "domains": ["business", "legal", "medical"],
+                    "thresholds": {f"k{i}": i for i in range(30)},
+                },
+            },
+        }
+
+        iterations = 200
+        durations_ms = []
+        for _ in range(iterations):
+            start = time.perf_counter()
+            optimizer.generate_cache_key(payload, include_class_name=True)
+            durations_ms.append((time.perf_counter() - start) * 1000.0)
+
+        avg_ms = sum(durations_ms) / len(durations_ms)
+        assert avg_ms < 5.0
