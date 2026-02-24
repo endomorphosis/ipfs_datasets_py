@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 from unittest.mock import MagicMock
-from optimizers.graphrag.tracing_instrumentation import (
+from ipfs_datasets_py.optimizers.graphrag.tracing_instrumentation import (
     TracingConfig,
     TracingInstrumentation,
     get_tracer,

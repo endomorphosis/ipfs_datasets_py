@@ -79,6 +79,26 @@ class TestOptimizerLLMRouter:
         _, kwargs = mock_cache.get.call_args
         assert kwargs["top_p"] == "0.5"
 
+    def test_generate_calls_retry_without_unexpected_kwargs(self):
+        """Regression: retry wrapper should not inject unrelated kwargs into callables."""
+        router = OptimizerLLMRouter(enable_caching=False)
+
+        mock_retry = Mock(side_effect=lambda func: func())
+        router._retry_handler.retry = mock_retry
+
+        with patch(
+            "ipfs_datasets_py.optimizers.agentic.llm_integration.router_generate",
+            return_value="ok",
+        ):
+            response = router.generate(
+                prompt="test prompt",
+                method=OptimizationMethod.TEST_DRIVEN,
+            )
+
+        assert response == "ok"
+        mock_retry.assert_called_once()
+        assert mock_retry.call_args.kwargs == {}
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

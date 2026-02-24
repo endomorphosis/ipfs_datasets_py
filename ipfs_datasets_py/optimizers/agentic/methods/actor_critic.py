@@ -842,7 +842,12 @@ class ActorCriticOptimizer(AgenticOptimizer):
             f"Propose an optimized version of the code.{policy_hint}\n"
         )
 
-        return str(self.llm_router.generate(prompt))
+        return str(
+            self.llm_router.generate(
+                prompt=prompt,
+                method=OptimizationMethod.ACTOR_CRITIC,
+            )
+        )
 
     def critic_evaluate(
         self,

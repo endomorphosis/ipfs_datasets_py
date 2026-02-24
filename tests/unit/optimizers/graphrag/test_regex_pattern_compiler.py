@@ -6,7 +6,7 @@ Validates that pre-compiled patterns work correctly and maintain caching behavio
 
 import pytest
 import re
-from ipfs_datasets_py.optimizers.graphrag.optimizations.regex_pattern_compiler import (
+from ipfs_datasets_py.optimizers.graphrag.regex_pattern_compiler import (
     RegexPatternCompiler,
     PrecompiledPattern,
 )

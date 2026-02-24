@@ -83,6 +83,12 @@ References:
     - GraphRAG Integration: GRAPHRAG_INTEGRATION_DETAILED.md
 """
 
+
+from .score_analyzer import ScoreAnalyzer, DimensionStats, STANDARD_DIMENSIONS
+from .ontology_comparator import OntologyComparator
+
+
+
 # Core components (scaffolding complete)
 from .ontology_generator import (
     OntologyGenerator,
@@ -314,7 +320,12 @@ __all__ = [
     'RefinementCycleResult',
     'ExtractionConfigDict',
     'OptimizerConfig',
+    'ScoreAnalyzer',
+    'DimensionStats',
+    'STANDARD_DIMENSIONS',
+    'OntologyComparator',
 ]
+
 
 __version__ = '0.1.0'
 __author__ = 'IPFS Datasets Team'

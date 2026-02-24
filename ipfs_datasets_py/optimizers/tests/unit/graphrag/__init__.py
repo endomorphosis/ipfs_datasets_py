@@ -1,1 +1,0 @@
-# GraphRAG optimizer unit tests

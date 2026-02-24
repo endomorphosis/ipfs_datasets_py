@@ -13,7 +13,7 @@ Expected improvement: 8-12% speedup from eliminating repeated .lower() calls
 
 import pytest
 import time
-from ipfs_datasets_py.optimizers.graphrag.optimizations.regex_pattern_compiler import (
+from ipfs_datasets_py.optimizers.graphrag.regex_pattern_compiler import (
     RegexPatternCompiler,
     PrecompiledPattern,
 )

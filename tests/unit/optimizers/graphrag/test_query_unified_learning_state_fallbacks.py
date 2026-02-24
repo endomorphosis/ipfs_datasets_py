@@ -12,6 +12,9 @@ def test_save_learning_state_serialization_error_writes_partial_state(tmp_path, 
     optimizer = UnifiedGraphRAGQueryOptimizer(metrics_dir=str(tmp_path))
     optimizer._learning_enabled = True
     optimizer._learning_cycle = 10
+    optimizer._numpy_json_serializable = lambda value: value
+    optimizer._learning_cycle = 10
+    optimizer._learning_cycle = 10
 
     def _raise_serialization_error(_value):
         raise TypeError("serialization failed")
@@ -114,3 +117,45 @@ def test_load_learning_state_success_restores_fields(tmp_path):
     assert optimizer._learning_parameters["alpha"] == 0.2
     assert optimizer._traversal_stats["paths_explored"] == ["n1...n2(2)"]
     assert optimizer._entity_importance_cache["e1"] == 0.75
+
+
+def test_save_learning_state_does_not_swallow_keyboard_interrupt(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import (
+        UnifiedGraphRAGQueryOptimizer,
+    )
+
+    optimizer = UnifiedGraphRAGQueryOptimizer(metrics_dir=str(tmp_path))
+    optimizer._learning_enabled = True
+    optimizer._learning_cycle = 10
+    optimizer._numpy_json_serializable = lambda value: value
+
+    monkeypatch.setattr(
+        "builtins.open",
+        lambda *args, **kwargs: (_ for _ in ()).throw(KeyboardInterrupt()),
+    )
+
+    import pytest
+
+    with pytest.raises(KeyboardInterrupt):
+        optimizer.save_learning_state(str(tmp_path / "learning_state.json"))
+
+
+def test_load_learning_state_does_not_swallow_keyboard_interrupt(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import (
+        UnifiedGraphRAGQueryOptimizer,
+    )
+
+    target = tmp_path / "learning_state.json"
+    target.write_text("{}", encoding="utf-8")
+    optimizer = UnifiedGraphRAGQueryOptimizer(metrics_dir=str(tmp_path))
+    optimizer.logger = Mock()
+
+    monkeypatch.setattr(
+        "builtins.open",
+        lambda *args, **kwargs: (_ for _ in ()).throw(KeyboardInterrupt()),
+    )
+
+    import pytest
+
+    with pytest.raises(KeyboardInterrupt):
+        optimizer.load_learning_state(str(target))

@@ -918,7 +918,10 @@ class ChaosOptimizer(AgenticOptimizer):
             f"{code}\n"
         )
         try:
-            raw = self.llm_router.generate(prompt)
+            raw = self.llm_router.generate(
+                prompt=prompt,
+                method=OptimizationMethod.CHAOS,
+            )
             extractor = getattr(self.llm_router, "extract_code", None)
             return extractor(raw) if callable(extractor) else str(raw)
         except Exception as e:

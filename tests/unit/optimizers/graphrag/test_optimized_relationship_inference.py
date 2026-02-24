@@ -5,7 +5,7 @@ Validates that optimizations produce correct results matching the original logic
 """
 
 import pytest
-from ipfs_datasets_py.optimizers.graphrag.optimizations.optimized_relationship_inference import (
+from ipfs_datasets_py.optimizers.graphrag.optimized_relationship_inference import (
     OptimizedRelationshipInference,
     EntityPosition,
 )

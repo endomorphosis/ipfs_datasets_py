@@ -78,3 +78,29 @@ def test_fallback_plan_uses_default_budget_on_value_error() -> None:
     assert plan["budget"]["graph_traversal_ms"] == 1000
     assert plan["budget"]["ranking_ms"] == 100
     assert plan["budget"]["max_nodes"] == 100
+
+
+def test_fallback_plan_does_not_swallow_base_exception() -> None:
+    from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import (
+        UnifiedGraphRAGQueryOptimizer,
+    )
+
+    class _AbortSignal(BaseException):
+        pass
+
+    class _InterruptingBudgetManager:
+        def allocate_budget(self, query, priority="normal"):
+            raise _AbortSignal()
+
+        def track_consumption(self, resource, amount):
+            return None
+
+        def get_current_consumption_report(self):
+            return {}
+
+    optimizer = UnifiedGraphRAGQueryOptimizer(budget_manager=_InterruptingBudgetManager())
+
+    import pytest
+
+    with pytest.raises(_AbortSignal):
+        optimizer._create_fallback_plan({"query_text": "x"}, priority="normal", error="forced")

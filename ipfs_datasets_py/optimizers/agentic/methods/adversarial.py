@@ -841,7 +841,10 @@ class AdversarialOptimizer(AgenticOptimizer):
                     "Produce an optimized version of the following code:\n"
                     f"{code}\n"
                 )
-                raw = self.llm_router.generate(prompt)
+                raw = self.llm_router.generate(
+                    prompt=prompt,
+                    method=OptimizationMethod.ADVERSARIAL,
+                )
 
                 extracted_code = getattr(self.llm_router, "extract_code", None)
                 extracted_desc = getattr(self.llm_router, "extract_description", None)

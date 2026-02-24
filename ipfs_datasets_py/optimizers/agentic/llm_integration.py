@@ -317,7 +317,7 @@ class OptimizerLLMRouter:
                         **resolved_router_kwargs
                     )
                 
-                response = self._retry_handler.retry(_make_llm_call, max_retries=2)
+                response = self._retry_handler.retry(_make_llm_call)
                 
                 # Store in cache
                 if self.cache:
@@ -336,7 +336,15 @@ class OptimizerLLMRouter:
                 
                 return response
                 
-            except Exception as e:
+            except (
+                ExtractionError,
+                ValueError,
+                TypeError,
+                AttributeError,
+                RuntimeError,
+                OSError,
+                TimeoutError,
+            ) as e:
                 last_error = e
                 if self.enable_tracking:
                     provider_name = PROVIDER_CAPABILITIES[current_provider].name

@@ -582,7 +582,7 @@ class GraphRAGQueryOptimizer:
                             "error": str(e),
                             "stringified": str(result)[:1000]  # Truncate to avoid massive strings
                         }
-                    except:
+                    except (AttributeError, TypeError, ValueError, RuntimeError, OSError):
                         return f"<NumPy array that could not be serialized>"
             
             # Handle numpy scalar types
@@ -597,7 +597,7 @@ class GraphRAGQueryOptimizer:
             elif isinstance(result, (np.bytes_, np.void)):
                 try:
                     return result.item().decode('utf-8', errors='replace')
-                except:
+                except (AttributeError, TypeError, ValueError, UnicodeError):
                     return str(result)
             elif isinstance(result, (np.datetime64, np.timedelta64)):
                 return str(result)
@@ -608,7 +608,7 @@ class GraphRAGQueryOptimizer:
             elif hasattr(result, 'item') and callable(result.item):
                 try:
                     return result.item()
-                except:
+                except (AttributeError, TypeError, ValueError, RuntimeError, OSError):
                     return str(result)
                     
         # For primitive types, return as is
@@ -618,7 +618,7 @@ class GraphRAGQueryOptimizer:
         # For complex objects, attempt to convert to string
         try:
             return str(result)
-        except:
+        except (AttributeError, TypeError, ValueError, RuntimeError):
             # If all else fails, use a placeholder to avoid cache failures
             return f"<Uncacheable object of type {type(result).__name__}>"
             
