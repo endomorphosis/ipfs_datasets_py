@@ -2881,6 +2881,73 @@ class OntologyGenerator:
         # The cache maps object id to (config_ref, result) tuple to detect GC
         self._resolve_rule_config_cache: dict = {}
         self._resolve_rule_config_refs: dict = {}  # Map id -> weakref for GC detection
+        self._language_router = None
+
+    def _get_language_router(self) -> Optional[Any]:
+        """Lazily initialize language router if dependency is available."""
+        if self._language_router is not None:
+            return self._language_router
+        try:
+            from ipfs_datasets_py.optimizers.graphrag.language_router import LanguageRouter
+
+            self._language_router = LanguageRouter()
+            return self._language_router
+        except ImportError as exc:
+            self._log.debug("LanguageRouter unavailable; using default language behavior: %s", exc)
+            return None
+
+    def _build_language_aware_context(
+        self,
+        data: Any,
+        context: OntologyGenerationContext,
+    ) -> tuple[OntologyGenerationContext, Dict[str, Any]]:
+        """Return context adjusted with language-specific config when available."""
+        text = str(data) if data is not None else ""
+        if not text.strip():
+            return context, {"language_aware": False, "reason": "empty_input"}
+
+        router = self._get_language_router()
+        if router is None:
+            return context, {"language_aware": False, "reason": "router_unavailable"}
+
+        try:
+            language_code, language_conf = router.detect_language_with_confidence(text)
+            language_cfg = router.get_language_config(language_code)
+            base_cfg = context.extraction_config
+
+            # Build an adjusted extraction config for this run only.
+            adjusted_cfg = ExtractionConfig.from_dict(base_cfg.to_dict())
+            adjusted_cfg.confidence_threshold = language_cfg.apply_confidence_adjustment(
+                adjusted_cfg.confidence_threshold
+            )
+            adjusted_cfg.stopwords = sorted(
+                set(adjusted_cfg.stopwords).union(language_cfg.stopwords)
+            )
+            merged_vocab = dict(adjusted_cfg.domain_vocab)
+            for key, values in language_cfg.domain_vocab.items():
+                merged_vocab[key] = sorted(set(merged_vocab.get(key, []) + list(values)))
+            adjusted_cfg.domain_vocab = merged_vocab
+
+            adjusted_context = OntologyGenerationContext(
+                data_source=context.data_source,
+                data_type=context.data_type.value if hasattr(context.data_type, "value") else str(context.data_type),
+                domain=context.domain,
+                base_ontology=context.base_ontology,
+                extraction_strategy=context.extraction_strategy.value
+                if hasattr(context.extraction_strategy, "value")
+                else str(context.extraction_strategy),
+                config=adjusted_cfg,
+            )
+            meta = {
+                "language_aware": True,
+                "detected_language": language_code,
+                "language_confidence": float(language_conf),
+                "confidence_threshold_adjusted": adjusted_cfg.confidence_threshold,
+            }
+            return adjusted_context, meta
+        except (AttributeError, KeyError, TypeError, ValueError, RuntimeError) as exc:
+            self._log.debug("Language-aware configuration failed; using default context: %s", exc)
+            return context, {"language_aware": False, "reason": "detection_failed"}
     
     def extract_entities(
         self,
@@ -2908,56 +2975,63 @@ class OntologyGenerator:
             ... )
             >>> print(f"Found {len(result.entities)} entities")
         """
+        context_for_run, language_meta = self._build_language_aware_context(data, context)
+
         self._log.info(
-            f"Extracting entities using {context.extraction_strategy.value} strategy"
+            "Extracting entities using %s strategy",
+            context_for_run.extraction_strategy.value,
         )
         
-        if context.extraction_strategy == ExtractionStrategy.RULE_BASED:
-            result = self._extract_with_llm_fallback(data, context)
+        if context_for_run.extraction_strategy == ExtractionStrategy.RULE_BASED:
+            result = self._extract_with_llm_fallback(data, context_for_run)
+            result.metadata.setdefault("language_metadata", language_meta)
             self._log.info(
                 "extract_entities complete: entity_count=%d strategy=%s confidence=%.3f",
                 len(result.entities),
-                context.extraction_strategy.value,
+                context_for_run.extraction_strategy.value,
                 result.confidence,
             )
             import json as _json
             from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
             payload = {
                 "event": "extract_entities",
-                "strategy": context.extraction_strategy.value,
+                "strategy": context_for_run.extraction_strategy.value,
                 "entity_count": len(result.entities),
                 "relationship_count": len(result.relationships),
                 "confidence": result.confidence,
+                "language_metadata": language_meta,
             }
             self._log.info(
                 "EXTRACT_ENTITIES: %s",
                 _json.dumps(with_schema(payload), separators=(",", ":"), sort_keys=True),
             )
             return result
-        elif context.extraction_strategy == ExtractionStrategy.LLM_BASED:
-            result = self._extract_llm_based(data, context)
-        elif context.extraction_strategy == ExtractionStrategy.HYBRID:
-            result = self._extract_hybrid(data, context)
-        elif context.extraction_strategy == ExtractionStrategy.NEURAL:
-            result = self._extract_neural(data, context)
+        elif context_for_run.extraction_strategy == ExtractionStrategy.LLM_BASED:
+            result = self._extract_llm_based(data, context_for_run)
+        elif context_for_run.extraction_strategy == ExtractionStrategy.HYBRID:
+            result = self._extract_hybrid(data, context_for_run)
+        elif context_for_run.extraction_strategy == ExtractionStrategy.NEURAL:
+            result = self._extract_neural(data, context_for_run)
         else:
             raise ValueError(
-                f"Unknown extraction strategy: {context.extraction_strategy}"
+                f"Unknown extraction strategy: {context_for_run.extraction_strategy}"
             )
+        result.metadata.setdefault("language_metadata", language_meta)
         self._log.info(
             "extract_entities complete: entity_count=%d strategy=%s confidence=%.3f",
             len(result.entities),
-            context.extraction_strategy.value,
+            context_for_run.extraction_strategy.value,
             result.confidence,
         )
         import json as _json
         from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
         payload = {
             "event": "extract_entities",
-            "strategy": context.extraction_strategy.value,
+            "strategy": context_for_run.extraction_strategy.value,
             "entity_count": len(result.entities),
             "relationship_count": len(result.relationships),
             "confidence": result.confidence,
+            "language_metadata": language_meta,
         }
         self._log.info(
             "EXTRACT_ENTITIES: %s",
@@ -3004,7 +3078,7 @@ class OntologyGenerator:
                 llm_result = self._extract_llm_based(data, context)
                 if llm_result.confidence >= result.confidence:
                     result = llm_result
-            except Exception as exc:
+            except (AttributeError, ImportError, KeyError, RuntimeError, TypeError, ValueError) as exc:
                 self._log.warning("LLM fallback extraction failed: %s", exc)
         return result
     
@@ -4948,7 +5022,14 @@ class OntologyGenerator:
 
             if llm_conf > heuristic_confidence:
                 return llm_type, llm_conf, "llm_refined"
-        except Exception as exc:
+        except (
+            AttributeError,
+            KeyError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+            _json.JSONDecodeError,
+        ) as exc:
             self._log.debug("LLM relationship refinement failed: %s", exc)
 
         return heuristic_type, heuristic_confidence, "context_window"

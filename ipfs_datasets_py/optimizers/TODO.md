@@ -47,6 +47,8 @@ It is intentionally infinite: finish work, add new work, repeat.
 - [ ] (P1) [arch] Split `graphrag/query_optimizer.py` into focused modules (`query_planner.py`, `traversal_heuristics.py`, `learning_adapter.py`, `serialization.py`) with behavior parity tests.
 - [ ] (P1) [api] Add package typing marker (`py.typed`) and run strict type audit for optimizer public surface.
 - [ ] (P2) [arch] Replace remaining broad `except Exception` catch-alls with typed exceptions in optimizer core paths.
+- [x] (P2) [arch] Replace broad `except Exception` catch-alls in logic theorem optimizer CLI core commands.
+  - Done 2026-02-24: narrowed catch-all blocks in `logic_theorem_optimizer/cli_wrapper.py` (`extract`, `prove`, `validate`, `optimize`, `run`) to typed exception groups; logic CLI prove/validate test suites remain green.
 - [ ] (P2) [agentic] Audit `agentic/` for `**kwargs`-heavy APIs and replace with typed optional parameters.
 - [ ] (P2) [tests] Finish fixture-factory migration for ontology mocks in shared `conftest.py` and remove duplicate builders.
 
@@ -55,19 +57,31 @@ It is intentionally infinite: finish work, add new work, repeat.
 Active random picks (different tracks):
 - [x] (P2) [perf] Profile `OntologyCritic._evaluate_consistency()` on large ontologies (>500 entities) and document bottlenecks + top fix.
   - Done 2026-02-24: replaced recursive cycle detection with iterative Kahn-based detection, removed duplicate cycle pass, added deep-chain regression tests (`test_batch_270_consistency_cycle_scaling.py`), and documented results in `docs/optimizers/PERFORMANCE_TUNING_GUIDE.md`.
-- [ ] (P2) [obs] Add OpenTelemetry span hooks behind `OTEL_ENABLED` feature flag for pipeline/session boundaries.
+- [x] (P2) [obs] Add OpenTelemetry span hooks behind `OTEL_ENABLED` feature flag for pipeline/session boundaries.
+  - Done 2026-02-24: added `OTEL_ENABLED`-gated boundary spans in `common/base_optimizer.py` (`optimizer.run_session`) and `graphrag/ontology_pipeline.py` (`graphrag.pipeline.run`) with attribute coverage for domain/session/score/duration plus unit tests in `tests/unit/common/test_base_optimizer_otel_integration.py` and `tests/unit/graphrag/test_ontology_pipeline_otel_spans.py`.
 - [x] (P2) [docs] Write "How to add a new optimizer" guide covering config, base classes, tests, docs, and CLI wiring.
   - Done 2026-02-24: added `docs/optimizers/HOW_TO_ADD_NEW_OPTIMIZER.md` and linked it from `DOCUMENTATION_INDEX.md` and `docs/optimizers/INTEGRATION_EXAMPLES.md`.
-- [ ] (P3) [logic] Add `--tdfol-output` flag in GraphRAG/logic CLI path to persist generated formulas for debugging.
+- [x] (P3) [logic] Add `--tdfol-output` flag in GraphRAG/logic CLI path to persist generated formulas for debugging.
+  - Done 2026-02-24: added `--tdfol-output` to logic theorem optimizer `prove` command with JSON formula payload output and unit test coverage in `tests/unit/optimizers/logic_theorem_optimizer/test_cli_prove.py`.
 - [ ] (P3) [security] Design sandboxed subprocess policy for untrusted prover calls (timeout, resource caps, allowlist).
 - [x] (P2) [tests] Add serialization round-trip tests for refinement session state snapshots.
   - Done 2026-02-24: added `test_batch_271_mediator_state_serialization.py` covering `MediatorState.to_dict()/from_dict()` round-trip and minimal payload restoration.
 - [x] (P2) [graphrag] Add confidence histogram/report helper for extraction results.
   - Done 2026-02-24: verified helper methods and added regression coverage in `test_batch_272_confidence_histogram_helpers.py` for both `EntityExtractionResult.confidence_histogram()` and `OntologyGenerator.confidence_histogram()`.
-- [ ] (P2) [perf] Benchmark sentence-window impact on extraction quality vs runtime.
+- [x] (P2) [perf] Benchmark sentence-window impact on extraction quality vs runtime.
+  - Done 2026-02-24: benchmark completed and documented in `docs/SENTENCE_WINDOW_BENCHMARK_REPORT.md` with domain-level latency deltas and recommendations; backed by benchmark suite `benchmarks/bench_sentence_window_scaling.py`.
 - [x] (P2) [api] Add package-level `py.typed` marker and basic mypy smoke check for optimizer public imports.
   - Done 2026-02-24: added `ipfs_datasets_py/py.typed`, packaged it via `pyproject.toml`, added `optimizers/tests/typecheck/mypy_public_imports_smoke.py`, and verified with `mypy --follow-imports=skip`.
 - [ ] (P2) [arch] Replace remaining broad `except Exception` catch-alls with typed exceptions in optimizer core paths.
+- [x] (P2) [tests] Add fuzz tests for `OntologyMediator.run_refinement_cycle()` with random recommendation strings.
+  - Done 2026-02-24: fuzz coverage present in `optimizers/tests/unit/graphrag/test_ontology_mediator_fuzz_recommendations.py`; verified passing.
+- [x] (P2) [obs] Add Prometheus metrics scrape endpoint in REST API (optimizers service path).
+  - Done 2026-02-24: `/metrics` endpoint is implemented in `optimizers/api/rest_api.py` and covered by enabled/disabled tests in `optimizers/tests/unit/test_rest_api.py`.
+- [x] (P2) [security] Validate and document restricted-path policy for logic/graphrag CLI file arguments.
+  - Done 2026-02-24: enforced `_safe_resolve()` for GraphRAG CLI output/ontology paths (`generate`, `optimize`, `validate`, `query`) and Logic CLI extract output path, with command-level restricted-path tests in `tests/unit/optimizers/test_safe_resolve_path_traversal.py`.
+- [x] (P2) [obs] Add OpenTelemetry span hooks behind `OTEL_ENABLED` feature flag for pipeline/session boundaries.
+  - Done 2026-02-24: OpenTelemetry gating + span hooks exist in `common/base_optimizer.py` and `graphrag/ontology_pipeline.py`; verified by `test_base_optimizer_otel_integration.py` and `test_ontology_pipeline_otel_spans.py`.
+- [ ] (P2) [arch] Narrow broad exception handling in GraphRAG CLI core commands (`generate`, `validate`, `optimize`) to typed exception groups.
 
 Rotation rules:
 - When one item completes, add a new `[ ]` pick from a track not already active.
@@ -90,7 +104,8 @@ Rotation rules:
 
 ### 3) GraphRAG Quality
 - [ ] (P2) [graphrag] Add semantic-similarity entity deduplication path behind feature flag and benchmark quality impact.
-- [ ] (P2) [graphrag] Add multilingual extraction support with language detection and test corpora.
+- [x] (P2) [graphrag] Add multilingual extraction support with language detection and test corpora.
+  - Done 2026-02-24: wired language-aware extraction context routing with per-language confidence/stopword/domain-vocab adjustments and metadata propagation; added integration tests in `tests/unit/graphrag/test_ontology_generator_multilingual.py`.
 - [x] (P2) [graphrag] Implement LLM-based relationship inference fallback and compare against heuristics.
   - Done 2026-02-24: low-confidence heuristic relationship types can be LLM-refined via backend JSON response; heuristics are retained on errors or lower-confidence LLM output.
 - [ ] (P3) [graphrag] Add ambiguity resolver for low-confidence critic outputs (rule+LLM assist mode).
@@ -138,7 +153,8 @@ Pull from this pool when replacing completed random items.
 - [ ] (P2) [perf] Benchmark sentence-window impact on extraction quality vs runtime.
 - [ ] (P2) [perf] Benchmark `LogicValidator.validate_ontology()` on 100-entity synthetic ontologies.
 - [ ] (P2) [graphrag] Add confidence histogram/report helper for extraction results.
-- [ ] (P2) [graphrag] Add score summary helper for critic batch output.
+- [x] (P2) [graphrag] Add score summary helper for critic batch output.
+  - Done 2026-02-24: validated `OntologyCritic.score_batch_summary()` behavior with deterministic stats and empty-input guard tests in `tests/unit/graphrag/test_batch_273_critic_score_summary_helper.py`.
 - [ ] (P3) [docs] Add per-method doctest examples for public GraphRAG methods.
 - [ ] (P3) [logic] Add REPL mode for theorem optimizer CLI.
 - [ ] (P3) [agentic] Add chaos test hooks for CPU/memory pressure simulation.
@@ -167,3 +183,322 @@ Pull from this pool when replacing completed random items.
 - Relevant unit/integration tests added or updated.
 - Public behavior and migration notes documented when API changes.
 - TODO entry updated (`[ ]` -> `[x]`) with concrete completion note.
+
+## Imported Unfinished Tasks (Source Sync)
+
+Source: https://raw.githubusercontent.com/endomorphosis/ipfs_datasets_py/fe076e64a85f5a0ca1e27f6378024d62fe2b5a31/ipfs_datasets_py/optimizers/TODO.md
+Imported on: 2026-02-24
+Selection rule: every line matching `- [ ] ...` in source commit (verbatim).
+Post-import cleanup: removed 6 canonical duplicates already present earlier in this file.
+
+- [ ] (P2) [arch] Consolidate optimizer lifecycle hooks (init/validate/generate/critique/refine) into shared base mixins
+- [ ] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
+- [ ] (P2) [obs] Add Prometheus metrics scrape endpoint in REST API
+- [ ] (P2) [tests] Migrate all mock ontology creation to factory fixtures in `conftest.py`
+- [ ] (P2) [graphrag] Implement LLM-based relationship inference with fallback to heuristics
+- [x] (P2) [graphrag] Add multi-language ontology support with language detection
+  - Done 2026-02-24: verified language router integration path and fallback metadata behavior in `test_ontology_generator_multilingual.py` (router unavailable and detection failure cases covered).
+- [ ] (P2) [tests] Build comprehensive benchmark suite for GraphRAG on standard datasets
+- [ ] (P2) [arch] Implement distributed ontology refinement (split-merge parallelism)
+- [ ] (P3) [graphrag] Add interactive REPL mode to GraphRAG CLI with autocomplete
+- [ ] (P2) [obs] Implement distributed tracing (OpenTelemetry) across all optimizers
+- [ ] (P2) [graphrag] Add semantic similarity-based entity deduplication using embeddings
+- [ ] (P2) [api] Standardize “context” objects across GraphRAG / logic / agentic (dataclasses with typed fields; avoid `Dict[str, Any]` sprawl).
+- [ ] (P3) [graphrag] Implement “intelligent fix suggestion” once validation errors are structured.
+- [ ] (P3) [graphrag] Implement full TDFOL proving (or clearly scope it to a specific prover/backend).
+- [ ] (P3) [graphrag] Implement LLM-based extraction via `ipfs_accelerate_py` behind a feature flag.
+- [ ] (P3) [graphrag] Implement hybrid/neural extraction strategies.
+- [ ] (P2) [agentic] Reconcile docs claiming phases/tests exist with what’s actually present (e.g., referenced test paths).
+- [ ] (P2) [arch] Extract `QueryPlanner` class (lines ~1–1000) into `graphrag/query_planner.py`
+- [ ] (P2) [arch] Extract `TraversalHeuristics` into `graphrag/traversal_heuristics.py`
+- [ ] (P2) [arch] Extract `LearningAdapter` (learning-hook section, ~lines 4500+) into `graphrag/learning_adapter.py`
+- [ ] (P2) [arch] Extract serialization helpers into `graphrag/serialization.py`
+- [ ] (P2) [tests] Add unit tests for each extracted module after split
+- [ ] (P3) [docs] Update module-level docstrings to reflect new file layout
+- [ ] (P2) [api] Audit all `**kwargs`-accepting methods in `agentic/` and replace with typed optional parameters
+- [ ] (P3) [api] Add `__slots__` to hot-path dataclasses for memory efficiency
+- [ ] (P3) [docs] Write architecture diagram for the `generate → critique → optimize → validate` loop
+- [ ] (P3) [obs] Add OpenTelemetry span hooks (behind a feature flag) for distributed tracing
+- [ ] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
+- [ ] (P3) [arch] Remove deprecated `TheoremSession` and `LogicExtractor` after 2 minor versions (add version gate)
+- [ ] (P3) [graphrag] Benchmark rule-based extraction vs manual annotations for common domains
+- [ ] (P3) [graphrag] Add LLM-based fallback evaluator that rates quality when rule-based scores are ambiguous
+- [ ] (P3) [graphrag] Add TDFOL formula cache keyed on ontology hash to avoid re-proving unchanged ontologies
+- [ ] (P3) [graphrag] Expose `--tdfol-output` flag in GraphRAG CLI wrapper to dump generated formulas
+- [ ] (P3) [logic] Add interactive REPL mode to `logic-theorem-optimizer` CLI
+- [ ] (P3) [tests] Mutation testing pass on `graphrag/ontology_critic.py` dimension evaluators
+- [ ] (P3) [perf] Benchmark `OntologyGenerator.extract_entities()` on 10k-token documents
+- [ ] (P3) [perf] Benchmark `LogicValidator.validate_ontology()` on 100-entity ontologies
+- [ ] (P3) [docs] Add Sphinx/MkDocs configuration and auto-generate API reference
+- [ ] (P3) [docs] Write a "How to add a new optimizer" guide covering all integration points
+- [ ] (P3) [arch] Add sandboxed subprocess execution for untrusted prover calls (seccomp profile)
+- [ ] (P3) [perf] Profile `graphrag/query_optimizer.py` under load — identify hotspots before the file split
+- [ ] (P3) [perf] Parallelize `OntologyOptimizer.analyze_batch()` across sessions using `concurrent.futures`
+- [ ] (P3) [perf] Profile `logic_theorem_optimizer` prover round-trips; add result cache keyed on formula hash
+- [ ] (P3) [perf] Profile `OntologyCritic._evaluate_consistency()` DFS cycle detection on large ontologies (>500 entities)
+- [ ] (P2) [agentic] ChangeController.create_change() — implement GitHub PR draft via github_control.py
+- [ ] (P2) [agentic] ChangeController.check_approval() — poll PR review status via GitHub API
+- [ ] (P3) [tests] Mutation testing pass on ontology_critic.py dimension evaluators (identify gaps)
+- [ ] (P2) [docs] Add type annotations to all remaining untyped methods in agentic/ (audit with mypy)
+- [ ] (P2) [graphrag] `OntologyLearningAdapter` — track successful extraction patterns and tune confidence thresholds
+- [ ] (P2) [agentic] Wire `ChangeController.create_change()` to actually create GitHub PR draft
+- [ ] (P3) [tests] Fuzz test `OntologyMediator.run_refinement_cycle()` with Hypothesis-generated random documents
+- [ ] (P3) [agentic] Add `ChaosOptimizer.inject_cpu_spike()` method for realistic CPU load testing
+- [ ] (P3) [agentic] Add `ChaosOptimizer.simulate_memory_pressure()` method for memory threshold testing
+- [ ] (P2) [graphrag] `OntologyCritic.evaluate_ontology()` — persist cache across instances via class-level `_SHARED_EVAL_CACHE`
+- [ ] (P2) [tests] Add round-trip test for `OntologyMediator.run_refinement_cycle()` state serialization
+- [ ] (P3) [tests] Snapshot tests: freeze known-good critic scores for a reference ontology
+- [ ] (P2) [api] Add `OntologyGenerator.batch_extract(docs, context)` for multi-doc parallel extraction
+- [ ] (P2) [docs] Add per-method doctest examples to all public `OntologyGenerator` methods
+- [ ] (P2) [docs] Add per-method doctest examples to all public `OntologyCritic` methods
+- [ ] (P2) [docs] Add doctest examples for every public method in ontology_generator.py
+- [ ] (P3) [graphrag] Add confidence decay over time -- entities not seen recently get lower confidence
+- [ ] (P3) [graphrag] Add `OntologyCritic.calibrate_thresholds()` -- adjust dimension thresholds from history
+- [ ] (P3) [tests] Property test: Entity.to_dict() round-trips through from_dict equivalent
+- [ ] (P3) [graphrag] Add `OntologyLearningAdapter.reset_feedback()` -- clear feedback history
+- [ ] (P2) [tests] Add fuzz test: refine_ontology with random recommendation strings
+- [ ] (P3) [tests] Add round-trip test: Entity -> to_dict -> from_dict (Entity.from_dict classmethod)
+- [ ] (P3) [tests] Hypothesis: LogicValidator.filter_valid_entities subset property
+- [ ] (P3) [graphrag] Add `OntologyMediator.peek_undo()` -- return top of undo stack without popping
+- [ ] (P3) [graphrag] Add `LogicValidator.validate_all(ontologies)` -- list of ValidationResults for list of ontologies
+- [ ] (P3) [graphrag] Add `CriticScore.to_list()` -- [completeness, consistency, clarity, granularity, domain_alignment]
+- [ ] (P3) [graphrag] Add `OntologyGenerator.describe_result(result)` -- one-line English summary
+- [ ] (P3) [graphrag] Add `OntologyPipeline.total_runs()` -- number of times run() was called
+- [ ] (P3) [graphrag] Add `ExtractionConfig.summary()` -- one-line config description
+- [ ] (P3) [graphrag] Add `EntityExtractionResult.filter_by_type(etype)` -- keep only entities of given type
+- [ ] (P3) [graphrag] Add `OntologyMediator.stash()` -- push snapshot without advancing refine_ontology
+- [ ] (P3) [graphrag] Add `EntityExtractionResult.relationships_for(entity_id)` -- rels involving entity
+- [ ] (P2) [graphrag] Add `OntologyGenerator.rebuild_result(entities)` -- wrap entities in new result
+- [ ] (P2) [graphrag] Add `OntologyCritic.evaluate_list(ontologies, ctx)` -- evaluate a list, return CriticScores
+- [ ] (P3) [graphrag] Add `OntologyPipeline.domain` setter -- update domain at runtime
+- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.score_variance()` -- variance of feedback final_scores
+- [x] (P2) [graphrag] Add `OntologyCritic.score_range(scores)` -- (min, max) tuple of overall scores
+  - Done 2026-02-24: validated `score_range()` bounds and empty-input fallback in `tests/unit/graphrag/test_batch_274_critic_dimension_and_range_helpers.py`.
+- [ ] (P2) [graphrag] Add `OntologyGenerator.sorted_entities(result, key)` -- sort entities by field
+- [ ] (P3) [graphrag] Add `OntologyLearningAdapter.clear_feedback()` -- clear all feedback records
+- [ ] (P2) [graphrag] Add `OntologyMediator.log_snapshot(label)` -- label current undo stack top
+- [ ] (P2) [graphrag] Add `EntityExtractionResult.confidence_histogram(bins)` -- bucket confidence values
+- [ ] (P3) [graphrag] Add `OntologyOptimizer.history_summary()` -- dict with min/max/mean/count
+- [ ] (P2) [graphrag] Add `OntologyPipeline.warmup(n_texts)` -- pre-warm pipeline with dummy texts
+- [ ] (P2) [graphrag] Add `LogicValidator.contradiction_count(ontology)` -- alias for count_contradictions
+- [x] (P3) [graphrag] Add `OntologyCritic.dimension_scores(score)` -- dict of all 5 dim values
+  - Done 2026-02-24: added missing `relationship_coherence` in `dimension_scores()` output and covered behavior in `test_batch_274_critic_dimension_and_range_helpers.py`.
+- [ ] (P2) [graphrag] Add `ExtractionConfig.with_threshold(t)` -- return copy with new threshold
+- [ ] (P2) [graphrag] Add `OntologyGenerator.filter_result_by_confidence(result, min_conf)` -- alias for strip_low_confidence with cleaner name
+- [ ] (P3) [graphrag] Add `OntologyMediator.pending_recommendation()` -- top recommendation without consuming it
+- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.feedback_ids()` -- list of unique session_ids or feedback identifiers
+- [ ] (P2) [graphrag] Add `EntityExtractionResult.entity_texts()` -- list of all entity text values
+- [ ] (P2) [graphrag] Add `OntologyCritic.passes_all(scores, threshold)` -- True if all scores pass threshold
+- [ ] (P2) [graphrag] Add `OntologyOptimizer.latest_batch_size()` -- number of ontologies in last batch
+- [ ] (P3) [graphrag] Add `OntologyPipeline.has_run()` -- bool whether any runs have been made
+- [ ] (P2) [graphrag] Add `OntologyGenerator.entity_ids(result)` -- list of all entity IDs
+- [ ] (P2) [graphrag] Add `OntologyLearningAdapter.feedback_summary_dict()` -- dict with count/mean/variance
+- [ ] (P2) [graphrag] Add `LogicValidator.is_empty(ontology)` -- True if no entities or relationships
+- [ ] (P2) [graphrag] `EntityExtractionResult.to_dict()` -- serialize result to plain dict
+- [ ] (P2) [graphrag] `EntityExtractionResult.entity_count` property -- len(self.entities)
+- [ ] (P2) [graphrag] `OntologyGenerator.group_entities_by_confidence_band(result, bands)` -- bucket entities into confidence ranges
+- [ ] (P2) [graphrag] `OntologyOptimizer.convergence_rate()` -- fraction of consecutive pairs with improvement < 0.01
+- [ ] (P2) [graphrag] `OntologyMediator.action_types()` -- sorted list of distinct action type strings seen
+- [ ] (P2) [graphrag] `OntologyCritic.all_pass(scores, threshold)` -- True if all score.overall > threshold (alias for passes_all, strict)
+- [ ] (P2) [graphrag] `LogicValidator.has_contradictions(ontology)` -- True if any contradictions found
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_below(threshold)` -- list of records below threshold
+- [ ] (P2) [graphrag] `OntologyPipeline.average_run_score()` -- mean score.overall across all runs
+- [ ] (P2) [graphrag] `OntologyGenerator.relationships_for_entity(result, eid)` -- rels where entity is source or target
+- [ ] (P3) [graphrag] `ExtractionConfig.to_dict()` -- serialize config to plain dict
+- [ ] (P3) [graphrag] `OntologyOptimizer.history_as_list()` -- list of average_score floats
+- [ ] (P3) [graphrag] `OntologyCritic.best_dimension(score)` -- name of highest-scoring dimension
+- [ ] (P3) [graphrag] `OntologyCritic.worst_dimension(score)` -- name of lowest-scoring dimension
+- [ ] (P3) [graphrag] `EntityExtractionResult.max_confidence()` -- highest entity confidence
+- [ ] (P3) [graphrag] `EntityExtractionResult.min_confidence()` -- lowest entity confidence
+- [ ] (P3) [graphrag] `OntologyLearningAdapter.feedback_above(threshold)` -- list of records above threshold
+- [ ] (P3) [graphrag] `OntologyMediator.clear_stash()` -- empty the stash stack
+- [ ] (P3) [graphrag] `LogicValidator.summary_dict(ontology)` -- {entity_count, relationship_count, has_contradictions}
+- [ ] (P2) [graphrag] `OntologyPipeline.score_at(index)` -- score.overall from _run_history[index]
+- [ ] (P2) [graphrag] `EntityExtractionResult.to_dict()` — full serialization to plain dict (entities, relationships, confidence, metadata)
+- [ ] (P2) [graphrag] `EntityExtractionResult.from_dict(d)` — classmethod deserializer (inverse of to_dict)
+- [ ] (P2) [graphrag] `EntityExtractionResult.entity_count` — `@property` len(self.entities)
+- [ ] (P2) [graphrag] `EntityExtractionResult.relationship_count` — `@property` len(self.relationships)
+- [ ] (P2) [graphrag] `EntityExtractionResult.is_empty()` — True if no entities AND no relationships
+- [ ] (P2) [graphrag] `EntityExtractionResult.has_relationships()` — True if relationships list is non-empty
+- [ ] (P2) [graphrag] `EntityExtractionResult.top_entities(n)` — top N entities by confidence
+- [ ] (P2) [graphrag] `EntityExtractionResult.entities_of_type(etype)` — alias for filter_by_type
+- [ ] (P3) [graphrag] `EntityExtractionResult.confidence_stats()` — dict with mean/min/max/std of confidences
+- [ ] (P2) [graphrag] `ExtractionConfig.clone()` — return a deep copy of self
+- [ ] (P2) [graphrag] `ExtractionConfig.diff(other)` — dict of fields that differ between self and other
+- [ ] (P2) [graphrag] `ExtractionConfig.is_strict()` — True if confidence_threshold >= 0.8
+- [ ] (P2) [graphrag] `OntologyGenerator.validate_result(result)` — return list of issues (empty entity text, negative confidence, etc.)
+- [ ] (P2) [graphrag] `OntologyGenerator.confidence_stats(result)` — dict with mean/min/max/std for entity confidence
+- [ ] (P2) [graphrag] `OntologyGenerator.clone_result(result)` — deep copy of EntityExtractionResult
+- [ ] (P2) [graphrag] `OntologyGenerator.add_entity(result, entity)` — return new result with entity appended
+- [ ] (P2) [graphrag] `OntologyGenerator.remove_entity(result, eid)` — return new result without entity; prune rels
+- [ ] (P3) [graphrag] `OntologyGenerator.type_diversity(result)` — count of distinct entity types
+- [ ] (P3) [graphrag] `OntologyGenerator.normalize_confidence(result)` — scale entity confidences to [0,1]
+- [ ] (P2) [graphrag] `OntologyCritic.failing_scores(scores, threshold)` — scores that don't pass threshold
+- [ ] (P2) [graphrag] `OntologyCritic.average_dimension(scores, dim)` — mean of one dimension across multiple CriticScores
+- [ ] (P2) [graphrag] `OntologyCritic.score_summary(scores)` — compact dict {count, mean, min, max, passing_fraction}
+- [ ] (P3) [graphrag] `OntologyCritic.percentile_overall(scores, p)` — p-th percentile of overall values
+- [ ] (P3) [graphrag] `OntologyCritic.normalize_scores(scores)` — shift all scores to [0,1] range
+- [ ] (P2) [graphrag] `OntologyOptimizer.trend_string()` — "improving"/"declining"/"flat"/"volatile" based on last 5 entries
+- [ ] (P2) [graphrag] `OntologyOptimizer.entries_above_score(threshold)` — list of history entries with average_score > threshold
+- [ ] (P2) [graphrag] `OntologyOptimizer.running_average(window)` — list of window-averaged scores
+- [ ] (P3) [graphrag] `OntologyOptimizer.score_iqr()` — interquartile range of history scores
+- [ ] (P3) [graphrag] `OntologyOptimizer.has_improved(baseline)` — True if any entry > baseline
+- [ ] (P2) [graphrag] `OntologyPipeline.score_variance()` — variance of run scores
+- [ ] (P2) [graphrag] `OntologyPipeline.score_stddev()` — std dev of run scores
+- [ ] (P2) [graphrag] `OntologyPipeline.passing_run_count(threshold)` — count of runs with score > threshold
+- [ ] (P2) [graphrag] `OntologyPipeline.run_summary()` — dict with count/mean/min/max/trend of run scores
+- [ ] (P3) [graphrag] `OntologyPipeline.is_stable(threshold, window)` — True if last N runs have low variance
+- [ ] (P2) [graphrag] `OntologyMediator.total_action_count()` — sum of all action counts
+- [ ] (P2) [graphrag] `OntologyMediator.top_actions(n)` — top N actions by count
+- [ ] (P2) [graphrag] `OntologyMediator.undo_depth()` — alias for snapshot_count / get_undo_depth
+- [ ] (P3) [graphrag] `OntologyMediator.most_frequent_action()` — action with highest count (or None)
+- [ ] (P3) [graphrag] `OntologyMediator.action_count_total()` — total number of individual action applications
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_score_stats()` — {count, mean, std, min, max} dict
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.recent_feedback(n)` — last N FeedbackRecord objects
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.has_feedback()` — True if any feedback recorded
+- [ ] (P3) [graphrag] `OntologyLearningAdapter.feedback_percentile(p)` — p-th percentile final_score
+- [ ] (P3) [graphrag] `OntologyLearningAdapter.passing_feedback_fraction(threshold)` — fraction above threshold
+- [ ] (P2) [graphrag] `LogicValidator.is_empty(ontology)` — True if entity_count == 0 AND relationship_count == 0
+- [ ] (P2) [graphrag] `LogicValidator.all_entity_ids(ontology)` — list of entity id strings
+- [ ] (P2) [graphrag] `LogicValidator.all_relationship_ids(ontology)` — list of relationship id strings
+- [ ] (P3) [graphrag] `LogicValidator.entity_type_set(ontology)` — set of distinct entity types
+- [ ] (P3) [graphrag] `LogicValidator.dangling_references(ontology)` — list of relationship endpoints not in entity_ids
+- [ ] (P2) [arch] Extract `QueryPlanner` class (~lines 1–1000 of query_optimizer) into `graphrag/query_planner.py`
+- [ ] (P2) [arch] Extract `LearningAdapter` (learning-hook section) into `graphrag/learning_adapter.py`
+- [ ] (P2) [api] Audit all `**kwargs`-accepting methods in `agentic/` and replace with typed optional params
+- [ ] (P2) [api] Standardize "context" objects across GraphRAG / logic / agentic (dataclasses with typed fields)
+- [ ] (P3) [api] Add `__eq__` and `__hash__` to `Entity`, `Relationship`, `CriticScore` for set membership
+- [ ] (P2) [tests] Add property-based tests (Hypothesis) for `Entity`, `ExtractionConfig`, `CriticScore`
+- [ ] (P2) [tests] Add round-trip tests: `entity.to_dict()` → `Entity(**d)` identity
+- [ ] (P2) [tests] Add mutation tests for `EntityExtractionResult.merge()`
+- [ ] (P2) [tests] Parametrize existing batch tests to reduce boilerplate
+- [ ] (P3) [tests] Add fuzz tests for `LogicValidator.check_consistency`
+- [ ] (P2) [obs] Wire `OntologyOptimizer` score history to `profile_time` decorator
+- [ ] (P2) [obs] Emit structured log entry (JSON) for each pipeline run with score/domain/duration
+- [ ] (P3) [obs] Add OpenTelemetry span hooks (behind `OTEL_ENABLED` env flag)
+- [ ] (P3) [obs] Expose Prometheus-compatible metrics for optimizer scores
+- [ ] (P2) [perf] Add `@functools.lru_cache` to `ExtractionConfig.is_default()` (hashable dataclass)
+- [ ] (P2) [perf] Benchmark sentence-window limiting impact on realistic documents
+- [ ] (P2) [docs] Write architecture diagram for the generate → critique → optimize → validate loop
+- [ ] (P2) [docs] Add `CONTRIBUTING.md` with PR guidelines and batch-commit conventions
+- [ ] (P3) [docs] Write module-level docstring for `ontology_pipeline.py` (currently minimal)
+- [ ] (P3) [docs] Add doctest examples for `ExtractionConfig.merge()`, `EntityExtractionResult.confidence_band()`
+- [ ] (P2) [arch] Replace bare `except Exception:` catch-alls remaining after ca759612 sweep
+- [ ] (P2) [arch] Add circuit-breaker for LLM backend calls (retry + exponential backoff)
+- [ ] (P3) [arch] Remove deprecated `TheoremSession` / `LogicExtractor` after 2 minor versions
+- [ ] (P3) [arch] Add TDFOL formula cache keyed on ontology hash to avoid re-proving
+- [ ] (P3) [arch] Add `freeze()` method to `ExtractionConfig` that makes it immutable (frozen dataclass)
+- [ ] (P2) [graphrag] `OntologyOptimizer.rolling_best(window)` — best entry within last N history entries
+- [ ] (P2) [graphrag] `OntologyOptimizer.plateau_count(tol)` — number of consecutive history pairs within tol of each other
+- [ ] (P2) [graphrag] `OntologyGenerator.split_result(result, n)` — split result into N balanced chunks
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_map(result)` — {entity_id: confidence} dict
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_rankings(score)` — ordered list of dim names best→worst
+- [ ] (P2) [graphrag] `OntologyCritic.weakest_scores(scores, n)` — bottom-N by overall
+- [ ] (P2) [graphrag] `OntologyPipeline.top_n_runs(n)` — top N run results by score
+- [ ] (P2) [graphrag] `OntologyPipeline.run_ids()` — list of run identifiers (indices or ids)
+- [ ] (P2) [graphrag] `OntologyMediator.apply_action_bulk(actions)` — apply list of (action, args) pairs
+- [ ] (P2) [graphrag] `OntologyMediator.action_count_for(action)` — already done, skip; try `actions_never_applied()` — action names with count == 0
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.score_range()` — (min, max) tuple of recorded scores
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.above_threshold_fraction(threshold)` — alias for passing_feedback_fraction
+- [ ] (P2) [graphrag] `LogicValidator.orphan_entities(ontology)` — entities with no relationships
+- [ ] (P2) [graphrag] `LogicValidator.hub_entities(ontology, min_degree)` — entities with >= min_degree relationships
+- [ ] (P3) [graphrag] `EntityExtractionResult.top_confidence_entity()` — entity with highest confidence
+- [ ] (P3) [graphrag] `EntityExtractionResult.entities_with_properties()` — entities that have non-empty properties dict
+- [ ] (P3) [graphrag] `OntologyGenerator.relationship_count(result)` — len(result.relationships)
+- [ ] (P3) [graphrag] `ExtractionConfig.relaxed()` — return copy with confidence_threshold -= 0.1 clamped to 0
+- [ ] (P3) [graphrag] `ExtractionConfig.tightened()` — return copy with confidence_threshold += 0.1 clamped to 1
+- [ ] (P2) [graphrag] `OntologyOptimizer.min_score/max_score` — convenience properties
+- [ ] (P2) [graphrag] `OntologyCritic.passing_rate(scores, threshold)` — fraction of scores passing threshold
+- [ ] (P2) [graphrag] `OntologyMediator.most_used_action/least_used_action` — action name strings
+- [ ] (P2) [graphrag] `OntologyPipeline.run_improvement/stabilization_index` — pipeline convergence metrics
+- [ ] (P2) [graphrag] `LogicValidator.unreachable_entities(ontology, source)` — BFS unreachable from source
+- [ ] (P2) [graphrag] `ExtractionConfig.describe()` — human-readable summary string
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.improvement_trend` — EMA-based trend indicator
+- [ ] (P2) [graphrag] `EntityExtractionResult.entity_ids` — property returning list of all entity ids
+- [ ] (P2) [graphrag] `OntologyGenerator.filter_low_confidence(result, threshold)` — remove entities below threshold
+- [ ] (P3) [graphrag] `LogicValidator.max_path_length(ontology, source, target)` — BFS shortest path
+- [ ] (P3) [graphrag] `OntologyPipeline.reset_to_initial` — clear history and restore defaults
+- [ ] (P3) [graphrag] `OntologyMediator.undo_stack_summary` — list of pending undo labels
+- [ ] (P1) [arch] **Unify optimizer base class hierarchy** — `BaseOptimizer`, `GraphRAGOptimizer`, `LogicTheoremOptimizer` all diverge in `__init__` signatures. Define a shared `OptimizerConfig` dataclass and wire it through all subclasses.
+- [ ] (P1) [arch] **Protocol/ABC for `generate/validate/optimize`** — Create an `IOptimizer` Protocol (PEP 544) so all optimizer types can be used interchangeably. Enforce at import time via `isinstance` or `runtime_checkable`.
+- [ ] (P2) [arch] **Remove circular import hazard** — `ontology_generator.py` imports from `ontology_critic.py` and vice versa in several code paths. Break the cycle with a shared `_types.py` module.
+- [ ] (P2) [arch] **Consolidate `ExtractionConfig` variants** — There are at least 3 near-identical `ExtractionConfig`-like objects across the module. Unify into one with optional fields.
+- [ ] (P3) [arch] **Introduce `OntologyResult` container** — Replace bare `dict` returns with a typed `OntologyResult` dataclass; provides `.entities`, `.relationships`, `.score`, `.metadata`.
+- [ ] (P3) [arch] **Event bus for optimizer lifecycle hooks** — Add a lightweight pub/sub system so tests and dashboards can observe `on_round_start/end`, `on_score_improve`, `on_converge`.
+- [ ] (P1) [api] **Add `py.typed` marker and check all public stubs** — Run `mypy --strict` on `ipfs_datasets_py/optimizers/` and fix all type errors in public surface. Mark package as typed.
+- [ ] (P1) [api] **Deprecate magic `dict` ontologies** — All public methods that accept `Dict[str, Any]` as an ontology should accept `OntologyResult` instead; keep backward-compat shim for 2 releases.
+- [ ] (P2) [api] **Version the optimizer public API** — Add `__version__` to `__init__.py` and document breaking changes in `CHANGELOG.md`.
+- [ ] (P2) [api] **`OntologyGenerator.__call__` shorthand** — Implement `__call__(self, text) -> OntologyResult` as a convenience for pipeline chaining.
+- [ ] (P3) [api] **Add `__repr__` / `__str__` to all major classes** — `OntologyOptimizer`, `OntologyPipeline`, `CriticScore`, `FeedbackRecord` all lack useful repr. Critical for debugging.
+- [ ] (P2) [graphrag] `OntologyOptimizer.history_skewness()` — skewness of score distribution
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_plateau_length()` — longest flat streak in history
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_std(score)` — std-dev across all dims
+- [ ] (P2) [graphrag] `OntologyCritic.dimension_improvement_mask(before, after)` — bool dict of which dims improved
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_decay_sum(decay)` — exponentially decayed score sum
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_count_below(threshold)` — count below threshold
+- [ ] (P2) [graphrag] `OntologyGenerator.max_confidence_entity(result)` — entity with highest confidence
+- [ ] (P2) [graphrag] `OntologyGenerator.min_confidence_entity(result)` — entity with lowest confidence
+- [ ] (P2) [graphrag] `OntologyPipeline.best_k_scores(k)` — top k overall scores across all runs
+- [ ] (P2) [graphrag] `OntologyPipeline.worst_k_scores(k)` — bottom k overall scores
+- [ ] (P2) [graphrag] `LogicValidator.relationship_diversity(ontology)` — entropy of relationship type distribution
+- [ ] (P2) [graphrag] `LogicValidator.entity_pair_count(ontology)` — count of unique (source, target) pairs
+- [ ] (P2) [graphrag] `OntologyMediator.feedback_age(idx)` — how many rounds ago feedback at index idx was recorded
+- [ ] (P2) [graphrag] `OntologyMediator.clear_feedback()` — reset feedback history
+- [ ] (P2) [graphrag] `ExtractionConfig.merge(other)` — merge two configs, taking max/min of thresholds
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_std(result)` — std-dev of confidences
+- [ ] (P3) [graphrag] `OntologyOptimizer.score_gini_coefficient()` — inequality measure of score distribution
+- [ ] (P3) [graphrag] `OntologyCritic.dimension_correlation(scores_a, scores_b)` — Pearson r between two score series
+- [ ] (P3) [graphrag] `OntologyPipeline.score_histogram(bins)` — histogram of all run scores
+- [ ] (P3) [graphrag] `LogicValidator.graph_diameter(ontology)` — longest shortest path in the graph
+- [ ] (P3) [graphrag] `OntologyGenerator.relationship_confidence_avg(result)` — mean confidence of relationships
+- [ ] (P1) [tests] **Property-based tests with Hypothesis** — Add Hypothesis strategies for `Entity`, `CriticScore`, `FeedbackRecord` and use them in at least 5 property tests per class.
+- [ ] (P1) [tests] **Snapshot tests for `OntologyGenerator.generate()`** — Compare full pipeline output against JSON snapshots to catch regressions.
+- [ ] (P2) [tests] **Coverage enforcement** — Add `pytest-cov` with `--cov-fail-under=85` to CI. Currently no minimum enforced.
+- [ ] (P2) [tests] **Integration test: full round-trip** — `text → generate → validate → optimize → score` without mocking anything.
+- [ ] (P2) [tests] **Parametrize existing batch tests** — Convert repeated test classes into `@pytest.mark.parametrize` to reduce LOC by ~30%.
+- [ ] (P2) [tests] **Fix `test_end_to_end_pipeline.py`** — The externally-committed E2E tests fail because `OntologyGenerator.__init__` rejects `ExtractionConfig` objects. Fix the `ipfs_accelerate_config.get()` call to handle dataclass configs.
+- [ ] (P3) [tests] **Mutation testing** — Run `mutmut` on `ontology_critic.py` and fix surviving mutants.
+- [ ] (P3) [tests] **Benchmark tests** — Add `pytest-benchmark` tests for `generate()`, `evaluate_ontology()`, `optimize()` to track performance over time.
+- [ ] (P1) [obs] **Structured logging** — Replace all `print()` / bare `logging.info(f"...")` with structured log records (`logging.getLogger(__name__).info("...", extra={...})`). Use `structlog` or stdlib extras.
+- [ ] (P2) [obs] **Metrics hook in `OntologyPipeline`** — Emit timing + score metrics after every round via a pluggable `MetricSink` protocol.
+- [ ] (P3) [obs] **Distributed tracing stubs** — Add OpenTelemetry span creation in `generate()` and `optimize()` so long multi-round pipelines are traceable.
+- [ ] (P1) [perf] **Profile `OntologyGenerator.generate()` on 10 kB input** — Identify top-3 hotspots, document findings, and implement at least one optimization (target ≥ 20% speedup).
+- [ ] (P2) [perf] **Lazy entity deduplication** — Defer deduplication to a post-pass rather than inline in every extraction loop.
+- [ ] (P2) [perf] **Cache compiled regex patterns** — Scan for `re.compile()` calls inside hot loops; move them to module-level constants.
+- [ ] (P3) [perf] **Async extraction support** — Add `async def generate_async(text)` wrappers so callers using asyncio can parallelize multiple extractions.
+- [ ] (P1) [docs] **Module-level docstrings** — `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py` all lack a module-level docstring explaining purpose, usage, and key classes.
+- [ ] (P2) [docs] **`README.md` for optimizers/** — Add a short `README.md` covering: what the optimizer does, quick-start code, and class diagram (ASCII or Mermaid).
+- [ ] (P2) [docs] **Deprecation notices** — Any method marked `# TODO: remove` needs a `@deprecated` decorator with migration path documented in docstring.
+- [ ] (P3) [docs] **API changelog** — Keep a running `CHANGELOG.md` in `optimizers/` noting added, changed, deprecated, removed items per batch.
+- [ ] (P2) [agentic] **Wire `LogicTheoremOptimizer` to use the same `FeedbackRecord` class** — Currently uses a different feedback struct; unify for cross-optimizer analytics.
+- [ ] (P2) [agentic] **Add `AgenticOptimizer.explain_action(action_name)` method** — Return a human-readable explanation of why the action was recommended.
+- [ ] (P3) [agentic] **Pluggable reward function** — Let callers inject a `reward_fn: Callable[[OntologyResult], float]` into the agentic loop.
+- [ ] (P2) [graphrag] `OntologyOptimizer.score_above_target_fraction(target=0.7)` — same as `above_target_rate`; alias; verify or implement
+- [ ] (P2) [graphrag] `OntologyCritic.score_dimension_energy(score)` — sum of squares of 6 dims; always non-negative; 0.0 for all-zero
+- [ ] (P2) [graphrag] `OntologyGenerator.entity_confidence_entropy()` — Shannon entropy of bucketed confidence values; 0.0 for empty
+- [ ] (P2) [graphrag] `OntologyLearningAdapter.feedback_trend_slope()` — least-squares slope of final_score over entry index; 0.0 for <2
+- [ ] (P2) [graphrag] `OntologyPipeline.run_score_velocity_skewness()` — population skewness of first differences; 0.0 for <3 runs
+- [ ] (P2) [graphrag] `LogicValidator.dag_fraction(ontology)` — fraction of nodes NOT in any cycle (complement of node_in_cycle_fraction); 0.0 for empty
+- [ ] Documentation: Configuration Guide, Quick-start, Architecture
+- [ ] Architecture: Unify base class hierarchy, cross-track exception hierarchy
+- [ ] Testing: Property-based tests (Hypothesis), snapshot tests
+- [ ] Observability: Prometheus metrics, structured JSON logging audit
+- [ ] Performance: Profile generate() hot paths, LLM backend lazy loading
+- [ ] (P2) `ExtractionConfig` Configuration Guide (1.0–1.5 hours)
+- [ ] (P3) GraphRAG Quick-Start Notebook (1.5–2 hours)
+- [ ] (P2) OntologyPipeline Architecture Diagram as ASCII (30–45 min)
+- [ ] (P1) Define `OptimizerConfig` dataclass (base for all options) (1.0 hours)
+- [ ] (P1) Wire `BaseOptimizer` to accept `OptimizerConfig` (45 min)
+- [ ] (P2) Define unified `IOptimizer` Protocol (30 min)
+- [ ] (P2) Property tests for `Entity` and `Relationship` (1.0 hours)
+- [ ] (P2) Property tests for `ExtractionConfig` (45 min)
+- [ ] (P2) Property tests for `CriticScore` statistical invariants (1.0 hours)
+- [ ] (P2) Structured JSON logging audit (1.0 hours)
+- [ ] (P2) Prometheus metrics hooks (1.0–1.5 hours)
+- [ ] (P2) Audit llm_integration.py for API key logging (30 min)
+- [ ] (P2) Profile `OntologyGenerator.generate()` on 10kB input (1.0 hours)
+- [ ] (P2) Optimize identified hotspot (1.0–1.5 hours)
+- [ ] (P2) Lazy-load domain-specific rule sets (45 min)
+- [ ] (P2) Audit existing exception usage (1.0 hours)
+- [ ] (P2) Define unified exception hierarchy (1.0 hours)
+- [ ] (P2) Migrate graphrag exceptions to new hierarchy (45 min)

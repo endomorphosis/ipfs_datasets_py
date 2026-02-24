@@ -5,10 +5,12 @@ Provides the common interface and workflow that all optimizers follow:
 """
 
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -17,6 +19,13 @@ from .optimizer_result import OptimizerResult
 from .seed_control import apply_deterministic_seed
 
 _logger = logging.getLogger(__name__)
+
+try:
+    from opentelemetry import trace
+    HAVE_OPENTELEMETRY = True
+except ImportError:  # pragma: no cover - optional dependency
+    trace = None  # type: ignore[assignment]
+    HAVE_OPENTELEMETRY = False
 
 
 class OptimizationStrategy(Enum):
@@ -125,7 +134,19 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
         self.metrics_collector = metrics_collector
         self.metrics: List[Dict[str, Any]] = []
         self._prometheus_metrics = None
+        self._otel_enabled = os.environ.get("OTEL_ENABLED", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        self._otel_tracer = None
         self._seed_status = apply_deterministic_seed(getattr(self.config, "seed", None))
+        if self._otel_enabled and HAVE_OPENTELEMETRY and trace is not None:
+            try:
+                self._otel_tracer = trace.get_tracer(__name__)
+            except Exception as exc:  # pragma: no cover - optional tracing dependency
+                _logger.debug("OpenTelemetry tracer unavailable: %s", exc)
 
         # Optional Prometheus collector (enabled via ENABLE_PROMETHEUS env var).
         # This is best-effort and must never break optimizer execution.
@@ -134,6 +155,33 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
             self._prometheus_metrics = PrometheusMetrics()
         except Exception as exc:  # pragma: no cover - optional dependency path
             _logger.debug("Prometheus metrics unavailable: %s", exc)
+
+    @contextmanager
+    def _start_otel_span(self, operation: str, attributes: Dict[str, Any]):
+        """Start a best-effort OpenTelemetry span or yield ``None`` when disabled."""
+        if not self._otel_enabled or self._otel_tracer is None:
+            yield None
+            return
+
+        try:
+            span_cm = self._otel_tracer.start_as_current_span(operation)
+        except Exception as exc:  # pragma: no cover - optional dependency path
+            _logger.debug("Failed to create OpenTelemetry span %s: %s", operation, exc)
+            yield None
+            return
+
+        with span_cm as span:
+            for key, value in attributes.items():
+                if value is None:
+                    continue
+                try:
+                    if isinstance(value, (str, bool, int, float)):
+                        span.set_attribute(key, value)
+                    else:
+                        span.set_attribute(key, str(value))
+                except Exception as exc:  # pragma: no cover - best effort
+                    _logger.debug("Failed to set span attribute %s=%r: %s", key, value, exc)
+            yield span
         
     @abstractmethod
     def generate(
@@ -259,153 +307,173 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
             - valid: Whether artifact passed validation
             - metrics: Performance metrics (if enabled)
         """
-        start_time = datetime.now()
-        cycle_id = context.session_id
+        with self._start_otel_span(
+            "optimizer.run_session",
+            {
+                "optimizer.session_id": context.session_id,
+                "optimizer.domain": context.domain,
+                "optimizer.type": self.__class__.__name__,
+                "optimizer.strategy": self.config.strategy.value,
+                "optimizer.max_iterations": self.config.max_iterations,
+                "optimizer.target_score": self.config.target_score,
+            },
+        ) as _span:
+            start_time = datetime.now()
+            cycle_id = context.session_id
 
-        # Start metrics cycle if collector is available
-        if self.metrics_collector is not None:
+            # Start metrics cycle if collector is available
+            if self.metrics_collector is not None:
+                try:
+                    self.metrics_collector.start_cycle(
+                        cycle_id,
+                        metadata={
+                            "domain": context.domain,
+                            "strategy": self.config.strategy.value,
+                            "max_iterations": self.config.max_iterations,
+                            "target_score": self.config.target_score,
+                        },
+                    )
+                except (AttributeError, TypeError, RuntimeError):
+                    pass  # Never let metrics break the optimization
             try:
-                self.metrics_collector.start_cycle(
-                    cycle_id,
-                    metadata={
-                        "domain": context.domain,
-                        "strategy": self.config.strategy.value,
-                        "max_iterations": self.config.max_iterations,
-                        "target_score": self.config.target_score,
-                    },
-                )
-            except (AttributeError, TypeError, RuntimeError):
-                pass  # Never let metrics break the optimization
-        try:
-            self.on_session_start(context, input_data)
-        except Exception as exc:  # pragma: no cover - hooks are best effort
-            _logger.debug("on_session_start hook failed: %s", exc)
+                self.on_session_start(context, input_data)
+            except Exception as exc:  # pragma: no cover - hooks are best effort
+                _logger.debug("on_session_start hook failed: %s", exc)
 
-        # Generate initial artifact
-        artifact = self.generate(input_data, context)
-        try:
-            self.on_generate_complete(artifact, context)
-        except Exception as exc:  # pragma: no cover
-            _logger.debug("on_generate_complete hook failed: %s", exc)
-        score, feedback = self.critique(artifact, context)
-        try:
-            self.on_critique_complete(artifact, score, feedback, context)
-        except Exception as exc:  # pragma: no cover
-            _logger.debug("on_critique_complete hook failed: %s", exc)
-        
-        iterations = 0
-        prev_score = score
-        initial_score = score
-        
-        # Optimization loop
-        for iteration in range(self.config.max_iterations):
-            iterations = iteration + 1
-            
-            # Check termination conditions
-            if score >= self.config.target_score:
-                break
-            
-            if self.config.early_stopping:
-                improvement = score - prev_score
-                if improvement < self.config.convergence_threshold:
-                    break
-            
-            # Optimize
-            artifact = self.optimize(artifact, score, feedback, context)
+            # Generate initial artifact
+            artifact = self.generate(input_data, context)
             try:
-                self.on_optimize_complete(artifact, score, feedback, iteration + 1, context)
+                self.on_generate_complete(artifact, context)
             except Exception as exc:  # pragma: no cover
-                _logger.debug("on_optimize_complete hook failed: %s", exc)
-            prev_score = score
+                _logger.debug("on_generate_complete hook failed: %s", exc)
             score, feedback = self.critique(artifact, context)
             try:
                 self.on_critique_complete(artifact, score, feedback, context)
             except Exception as exc:  # pragma: no cover
                 _logger.debug("on_critique_complete hook failed: %s", exc)
-        
-        # Validate
-        valid = True
-        if self.config.validation_enabled:
-            valid = self.validate(artifact, context)
-            try:
-                self.on_validate_complete(artifact, valid, context)
-            except Exception as exc:  # pragma: no cover
-                _logger.debug("on_validate_complete hook failed: %s", exc)
-        
-        execution_time = (datetime.now() - start_time).total_seconds()
-        execution_time_ms = execution_time * 1000.0
 
-        # End metrics cycle
-        if self.metrics_collector is not None:
-            try:
-                self.metrics_collector.end_cycle(cycle_id, success=valid)
-            except Exception as e:
-                _logger.warning(f"Metrics collection end failed: {e}")
+            iterations = 0
+            prev_score = score
+            initial_score = score
 
-        # Record Prometheus-compatible metrics (best effort).
-        if self._prometheus_metrics is not None:
-            try:
-                self._prometheus_metrics.record_score(
-                    score,
-                    labels={
-                        "domain": context.domain,
-                        "strategy": self.config.strategy.value,
-                        "optimizer_type": self.__class__.__name__,
-                    },
-                )
-                for _ in range(max(0, iterations)):
-                    self._prometheus_metrics.record_round_completion(domain=context.domain)
-                self._prometheus_metrics.record_session_duration(execution_time)
-                self._prometheus_metrics.record_score_delta(
-                    score - initial_score,
-                    labels={
-                        "domain": context.domain,
-                        "strategy": self.config.strategy.value,
-                        "optimizer_type": self.__class__.__name__,
-                    },
-                )
-                if not valid:
-                    self._prometheus_metrics.record_error("validation_failed", context.domain)
-            except Exception as exc:  # pragma: no cover - metrics must be non-fatal
-                _logger.debug("Prometheus metrics recording failed: %s", exc)
+            # Optimization loop
+            for iteration in range(self.config.max_iterations):
+                iterations = iteration + 1
 
-        _logger.info(
-            "run_session completed session_id=%s domain=%s "
-            "iterations=%d score=%.4f valid=%s execution_time_ms=%.1f",
-            context.session_id,
-            context.domain,
-            iterations,
-            score,
-            valid,
-            execution_time_ms,
-        )
-        
-        result: OptimizerResult = {
-            'artifact': artifact,
-            'score': score,
-            'iterations': iterations,
-            'valid': valid,
-            'execution_time': execution_time,
-            'execution_time_ms': execution_time_ms,
-        }
-        
-        if self.config.metrics_enabled:
-            result['metrics'] = {
-                'initial_score': initial_score,
-                'final_score': score,
-                'improvement': score - initial_score,
-                'score_delta': score - initial_score,
+                # Check termination conditions
+                if score >= self.config.target_score:
+                    break
+
+                if self.config.early_stopping:
+                    improvement = score - prev_score
+                    if improvement < self.config.convergence_threshold:
+                        break
+
+                # Optimize
+                artifact = self.optimize(artifact, score, feedback, context)
+                try:
+                    self.on_optimize_complete(artifact, score, feedback, iteration + 1, context)
+                except Exception as exc:  # pragma: no cover
+                    _logger.debug("on_optimize_complete hook failed: %s", exc)
+                prev_score = score
+                score, feedback = self.critique(artifact, context)
+                try:
+                    self.on_critique_complete(artifact, score, feedback, context)
+                except Exception as exc:  # pragma: no cover
+                    _logger.debug("on_critique_complete hook failed: %s", exc)
+
+            # Validate
+            valid = True
+            if self.config.validation_enabled:
+                valid = self.validate(artifact, context)
+                try:
+                    self.on_validate_complete(artifact, valid, context)
+                except Exception as exc:  # pragma: no cover
+                    _logger.debug("on_validate_complete hook failed: %s", exc)
+
+            execution_time = (datetime.now() - start_time).total_seconds()
+            execution_time_ms = execution_time * 1000.0
+
+            # End metrics cycle
+            if self.metrics_collector is not None:
+                try:
+                    self.metrics_collector.end_cycle(cycle_id, success=valid)
+                except Exception as e:
+                    _logger.warning(f"Metrics collection end failed: {e}")
+
+            # Record Prometheus-compatible metrics (best effort).
+            if self._prometheus_metrics is not None:
+                try:
+                    self._prometheus_metrics.record_score(
+                        score,
+                        labels={
+                            "domain": context.domain,
+                            "strategy": self.config.strategy.value,
+                            "optimizer_type": self.__class__.__name__,
+                        },
+                    )
+                    for _ in range(max(0, iterations)):
+                        self._prometheus_metrics.record_round_completion(domain=context.domain)
+                    self._prometheus_metrics.record_session_duration(execution_time)
+                    self._prometheus_metrics.record_score_delta(
+                        score - initial_score,
+                        labels={
+                            "domain": context.domain,
+                            "strategy": self.config.strategy.value,
+                            "optimizer_type": self.__class__.__name__,
+                        },
+                    )
+                    if not valid:
+                        self._prometheus_metrics.record_error("validation_failed", context.domain)
+                except Exception as exc:  # pragma: no cover - metrics must be non-fatal
+                    _logger.debug("Prometheus metrics recording failed: %s", exc)
+
+            _logger.info(
+                "run_session completed session_id=%s domain=%s "
+                "iterations=%d score=%.4f valid=%s execution_time_ms=%.1f",
+                context.session_id,
+                context.domain,
+                iterations,
+                score,
+                valid,
+                execution_time_ms,
+            )
+
+            result: OptimizerResult = {
+                'artifact': artifact,
+                'score': score,
                 'iterations': iterations,
+                'valid': valid,
                 'execution_time': execution_time,
                 'execution_time_ms': execution_time_ms,
             }
 
-        try:
-            self.on_session_complete(result, context)
-        except Exception as exc:  # pragma: no cover
-            _logger.debug("on_session_complete hook failed: %s", exc)
-        
-        return result
+            if self.config.metrics_enabled:
+                result['metrics'] = {
+                    'initial_score': initial_score,
+                    'final_score': score,
+                    'improvement': score - initial_score,
+                    'score_delta': score - initial_score,
+                    'iterations': iterations,
+                    'execution_time': execution_time,
+                    'execution_time_ms': execution_time_ms,
+                }
+
+            if _span is not None:
+                try:
+                    _span.set_attribute("optimizer.iterations", iterations)
+                    _span.set_attribute("optimizer.final_score", float(score))
+                    _span.set_attribute("optimizer.valid", bool(valid))
+                    _span.set_attribute("optimizer.execution_time_ms", execution_time_ms)
+                except Exception as exc:  # pragma: no cover - best effort
+                    _logger.debug("Failed to set final span attributes: %s", exc)
+
+            try:
+                self.on_session_complete(result, context)
+            except Exception as exc:  # pragma: no cover
+                _logger.debug("on_session_complete hook failed: %s", exc)
+
+            return result
     
     def get_capabilities(self) -> Dict[str, Any]:
         """Get optimizer capabilities.

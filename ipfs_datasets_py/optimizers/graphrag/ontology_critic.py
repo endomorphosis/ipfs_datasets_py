@@ -2115,7 +2115,8 @@ class OntologyCritic(BaseCritic):
 
         Returns:
             Dict with keys ``completeness``, ``consistency``, ``clarity``,
-            ``granularity``, ``domain_alignment``, and ``overall``.
+            ``granularity``, ``relationship_coherence``,
+            ``domain_alignment``, and ``overall``.
 
         Example:
             >>> d = critic.dimension_scores(score)
@@ -2127,6 +2128,7 @@ class OntologyCritic(BaseCritic):
             "consistency": score.consistency,
             "clarity": score.clarity,
             "granularity": score.granularity,
+            "relationship_coherence": score.relationship_coherence,
             "domain_alignment": score.domain_alignment,
             "overall": score.overall,
         }

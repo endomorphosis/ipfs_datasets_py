@@ -122,3 +122,23 @@ class TestCmdProve:
 
         code = cli.run(["prove", "--from-file", str(json_file)])
         assert code == 0
+
+    def test_prove_writes_tdfol_output_json(self, cli, tmp_path):
+        tdfol_path = tmp_path / "proof_tdfol.json"
+        code = cli.run([
+            "prove",
+            "--theorem", "A implies B",
+            "--goal", "B",
+            "--premises", "A",
+            "--tdfol-output", str(tdfol_path),
+        ])
+        assert code == 0
+        assert tdfol_path.exists()
+
+        payload = json.loads(tdfol_path.read_text())
+        assert payload["formalism"] == "tdfol"
+        assert payload["theorem"] == "A implies B"
+        assert payload["goal"] == "B"
+        assert payload["premises"] == ["A"]
+        assert payload["formula_count"] == len(payload["formula_strings"])
+        assert any(item.startswith("Goal: ") for item in payload["formula_strings"])

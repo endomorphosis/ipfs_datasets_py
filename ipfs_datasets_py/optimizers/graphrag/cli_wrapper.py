@@ -347,16 +347,17 @@ Examples:
             
             # Output results
             if args.output:
+                output_path = _safe_resolve(args.output)
                 output_data = {
                     'entities': ontology.get('entities', []),
                     'relationships': ontology.get('relationships', []),
                     'metadata': ontology.get('metadata', {}),
                     'quality_score': score.overall,
                 }
-                
-                with open(args.output, 'w') as f:
+
+                with open(output_path, 'w') as f:
                     json.dump(output_data, f, indent=2)
-                print(f"📄 Saved to: {args.output}")
+                print(f"📄 Saved to: {output_path}")
             
             return 0
             
@@ -441,7 +442,8 @@ Examples:
             print(f"   Rounds: {result.num_rounds}")
 
             if args.output:
-                with open(args.output, "w") as f:
+                output_path = _safe_resolve(args.output)
+                with open(output_path, "w") as f:
                     json.dump(
                         {
                             "ontology": result.ontology,
@@ -459,7 +461,7 @@ Examples:
                         f,
                         indent=2,
                     )
-                print(f"📄 Saved to: {args.output}")
+                print(f"📄 Saved to: {output_path}")
 
             return 0
 
@@ -541,13 +543,15 @@ Examples:
                 print("✅ Clarity:", f"{score.clarity:.2f}")
 
             if args.output:
-                with open(args.output, "w") as f:
+                output_path = _safe_resolve(args.output)
+                with open(output_path, "w") as f:
                     json.dump(report, f, indent=2)
-                print(f"\n📄 Report saved to: {args.output}")
+                print(f"\n📄 Report saved to: {output_path}")
 
             # Generate TDFOL formulas if requested
             if hasattr(args, 'tdfol_output') and args.tdfol_output:
                 try:
+                    tdfol_path = _safe_resolve(args.tdfol_output)
                     formulas = validator.ontology_to_tdfol(ontology)
                     # Convert formulas to strings for JSON serialization
                     formula_strings = [str(f) if not isinstance(f, str) else f for f in formulas]
@@ -556,9 +560,9 @@ Examples:
                         "formula_count": len(formula_strings),
                         "formulas": formula_strings,
                     }
-                    with open(args.tdfol_output, "w") as f:
+                    with open(tdfol_path, "w") as f:
                         json.dump(tdfol_report, f, indent=2)
-                    print(f"📐 TDFOL formulas saved to: {args.tdfol_output} ({len(formula_strings)} formulas)")
+                    print(f"📐 TDFOL formulas saved to: {tdfol_path} ({len(formula_strings)} formulas)")
                 except Exception as e:
                     print(f"⚠️  Failed to generate TDFOL formulas: {e}")
 
@@ -589,7 +593,7 @@ Examples:
         print()
 
         try:
-            ontology_path = Path(args.ontology)
+            ontology_path = _safe_resolve(args.ontology, must_exist=True)
             if not ontology_path.exists():
                 print(f"❌ Ontology file not found: {args.ontology}")
                 return 1
@@ -647,6 +651,7 @@ Examples:
                     print("  (no steps available)")
 
             if args.output:
+                output_path = _safe_resolve(args.output)
                 out = {
                     "ontology": str(ontology_path),
                     "query": args.query,
@@ -654,11 +659,11 @@ Examples:
                     "plan": plan,
                     "execution_plan": execution_plan,
                 }
-                with open(args.output, "w") as f:
+                with open(output_path, "w") as f:
                     json.dump(out, f, indent=2)
 
                 print()
-                print(f"📄 Saved to: {args.output}")
+                print(f"📄 Saved to: {output_path}")
 
             return 0
 

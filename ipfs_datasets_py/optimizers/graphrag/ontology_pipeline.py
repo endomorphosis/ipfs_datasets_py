@@ -18,11 +18,20 @@ Usage
 """
 from __future__ import annotations
 
+from contextlib import contextmanager
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
 _logger = logging.getLogger(__name__)
+
+try:
+    from opentelemetry import trace
+    HAVE_OPENTELEMETRY = True
+except ImportError:  # pragma: no cover - optional dependency
+    trace = None  # type: ignore[assignment]
+    HAVE_OPENTELEMETRY = False
 
 
 @dataclass
@@ -158,6 +167,18 @@ class OntologyPipeline:
         self._adapter = OntologyLearningAdapter(domain=domain)
         self._run_history: List["PipelineResult"] = []
         self._last_refinement_state: Optional[Any] = None
+        self._otel_enabled = os.environ.get("OTEL_ENABLED", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        self._otel_tracer = None
+        if self._otel_enabled and HAVE_OPENTELEMETRY and trace is not None:
+            try:
+                self._otel_tracer = trace.get_tracer(__name__)
+            except Exception as exc:  # pragma: no cover - optional dependency
+                self._log.debug("OpenTelemetry tracer unavailable: %s", exc)
         try:
             from ipfs_datasets_py.optimizers.common.metrics_prometheus import (
                 get_global_prometheus_metrics,
@@ -166,6 +187,33 @@ class OntologyPipeline:
             self._prometheus_metrics = get_global_prometheus_metrics()
         except Exception:  # pragma: no cover - optional metrics dependency
             self._prometheus_metrics = None
+
+    @contextmanager
+    def _start_otel_span(self, operation: str, attributes: Dict[str, Any]):
+        """Start a best-effort OpenTelemetry span or yield ``None``."""
+        if not self._otel_enabled or self._otel_tracer is None:
+            yield None
+            return
+
+        try:
+            span_cm = self._otel_tracer.start_as_current_span(operation)
+        except Exception as exc:  # pragma: no cover - optional dependency path
+            self._log.debug("Failed to create OpenTelemetry span %s: %s", operation, exc)
+            yield None
+            return
+
+        with span_cm as span:
+            for key, value in attributes.items():
+                if value is None:
+                    continue
+                try:
+                    if isinstance(value, (str, bool, int, float)):
+                        span.set_attribute(key, value)
+                    else:
+                        span.set_attribute(key, str(value))
+                except Exception as exc:  # pragma: no cover - best effort
+                    self._log.debug("Failed to set span attribute %s=%r: %s", key, value, exc)
+            yield span
 
     def __repr__(self) -> str:
         """Return a concise developer-readable summary of this pipeline."""
@@ -221,144 +269,167 @@ class OntologyPipeline:
             except Exception as _cb_exc:  # noqa: BLE001
                 self._log.debug("progress_callback raised in stage %r: %s", stage, _cb_exc)
 
-        start_time = time.time()
-        stage_timings: Dict[str, float] = {}
-        ctx = OntologyGenerationContext(
-            data_source=data_source,
-            data_type=data_type,
-            domain=self.domain,
-        )
+        with self._start_otel_span(
+            "graphrag.pipeline.run",
+            {
+                "pipeline.domain": self.domain,
+                "pipeline.data_source": data_source,
+                "pipeline.data_type": data_type
+                if isinstance(data_type, str)
+                else getattr(data_type, "value", str(data_type)),
+                "pipeline.refine": refine,
+                "pipeline.refine_mode": refine_mode,
+            },
+        ) as _span:
+            start_time = time.time()
+            stage_timings: Dict[str, float] = {}
+            ctx = OntologyGenerationContext(
+                data_source=data_source,
+                data_type=data_type,
+                domain=self.domain,
+            )
 
-        # 1. Extract entities
-        hint = self._adapter.get_extraction_hint()
-        self._log.info("OntologyPipeline.run: threshold_hint=%.3f domain=%s", hint, self.domain)
-        _notify("extracting", 1, domain=self.domain, data_source=data_source)
-        stage_start = time.perf_counter()
-        extraction = self._generator.extract_entities(data, ctx)
-        stage_timings["extracting"] = time.perf_counter() - stage_start
+            # 1. Extract entities
+            hint = self._adapter.get_extraction_hint()
+            self._log.info("OntologyPipeline.run: threshold_hint=%.3f domain=%s", hint, self.domain)
+            _notify("extracting", 1, domain=self.domain, data_source=data_source)
+            stage_start = time.perf_counter()
+            extraction = self._generator.extract_entities(data, ctx)
+            stage_timings["extracting"] = time.perf_counter() - stage_start
 
-        # 2. Build initial ontology dict
-        from ipfs_datasets_py.optimizers.graphrag.ontology_serialization import (
-            ontology_from_extraction_result,
-        )
+            # 2. Build initial ontology dict
+            from ipfs_datasets_py.optimizers.graphrag.ontology_serialization import (
+                ontology_from_extraction_result,
+            )
 
-        ontology: Dict[str, Any] = ontology_from_extraction_result(extraction)
-        _notify("extracted", 2, entity_count=len(ontology["entities"]),
-                relationship_count=len(ontology["relationships"]))
+            ontology: Dict[str, Any] = ontology_from_extraction_result(extraction)
+            _notify("extracted", 2, entity_count=len(ontology["entities"]),
+                    relationship_count=len(ontology["relationships"]))
 
-        actions_applied: List[str] = []
+            actions_applied: List[str] = []
 
-        # 3. Evaluate and optionally refine
-        stage_start = time.perf_counter()
-        score = self._critic.evaluate_ontology(ontology, ctx)
-        stage_timings["evaluating"] = time.perf_counter() - stage_start
-        if refine:
-            refine_start = time.perf_counter()
+            # 3. Evaluate and optionally refine
+            stage_start = time.perf_counter()
             score = self._critic.evaluate_ontology(ontology, ctx)
-            _notify("evaluating", 3, score=getattr(score, "overall", None))
+            stage_timings["evaluating"] = time.perf_counter() - stage_start
+            if refine:
+                refine_start = time.perf_counter()
+                score = self._critic.evaluate_ontology(ontology, ctx)
+                _notify("evaluating", 3, score=getattr(score, "overall", None))
 
-            if refine_mode == "agentic":
-                state = self._mediator.run_agentic_refinement_cycle(data, ctx)
-                ontology = state.current_ontology
-                score = state.critic_scores[-1]
-                actions_applied = [r.get("action") for r in state.refinement_history[1:]]
-                self._last_refinement_state = state
-            elif refine_mode == "llm":
-                if refinement_agent is None:
-                    self._log.warning("refine_mode=llm requires refinement_agent; falling back to rule_based")
+                if refine_mode == "agentic":
+                    state = self._mediator.run_agentic_refinement_cycle(data, ctx)
+                    ontology = state.current_ontology
+                    score = state.critic_scores[-1]
+                    actions_applied = [r.get("action") for r in state.refinement_history[1:]]
+                    self._last_refinement_state = state
+                elif refine_mode == "llm":
+                    if refinement_agent is None:
+                        self._log.warning("refine_mode=llm requires refinement_agent; falling back to rule_based")
+                        refined = self._mediator.refine_ontology(ontology, score, ctx)
+                        ontology = refined
+                        actions_applied = refined.get("metadata", {}).get("refinement_actions", [])
+                        score = self._critic.evaluate_ontology(ontology, ctx)
+                        self._last_refinement_state = None
+                    else:
+                        state = self._mediator.run_llm_refinement_cycle(
+                            data,
+                            ctx,
+                            agent=refinement_agent,
+                        )
+                        ontology = state.current_ontology
+                        score = state.critic_scores[-1]
+                        actions_applied = [r.get("action") for r in state.refinement_history[1:]]
+                        self._last_refinement_state = state
+                else:
                     refined = self._mediator.refine_ontology(ontology, score, ctx)
                     ontology = refined
                     actions_applied = refined.get("metadata", {}).get("refinement_actions", [])
                     score = self._critic.evaluate_ontology(ontology, ctx)
                     self._last_refinement_state = None
-                else:
-                    state = self._mediator.run_llm_refinement_cycle(
-                        data,
-                        ctx,
-                        agent=refinement_agent,
-                    )
-                    ontology = state.current_ontology
-                    score = state.critic_scores[-1]
-                    actions_applied = [r.get("action") for r in state.refinement_history[1:]]
-                    self._last_refinement_state = state
+
+                _notify("refined", 4, score=getattr(score, "overall", None),
+                        actions_applied=actions_applied)
+                # Also invoke callback with positional (round_num, max_rounds, score) signature
+                if progress_callback is not None:
+                    try:
+                        _max_rounds = getattr(self._mediator, "max_rounds", 1)
+                        progress_callback(1, _max_rounds, float(getattr(score, "overall", 0.0)))
+                    except Exception as _cb_exc:  # noqa: BLE001
+                        self._log.debug("progress_callback (positional) raised: %s", _cb_exc)
+                stage_timings["refining"] = time.perf_counter() - refine_start
             else:
-                refined = self._mediator.refine_ontology(ontology, score, ctx)
-                ontology = refined
-                actions_applied = refined.get("metadata", {}).get("refinement_actions", [])
                 score = self._critic.evaluate_ontology(ontology, ctx)
+                _notify("evaluated", 3, score=getattr(score, "overall", None))
                 self._last_refinement_state = None
+                stage_timings["refining"] = 0.0
 
-            _notify("refined", 4, score=getattr(score, "overall", None),
-                    actions_applied=actions_applied)
-            # Also invoke callback with positional (round_num, max_rounds, score) signature
-            if progress_callback is not None:
+            # 4. Feed result back to adapter
+            self._adapter.apply_feedback(
+                final_score=score.overall,
+                actions=[{"action": a} for a in actions_applied],
+            )
+
+            result = PipelineResult(
+                ontology=ontology,
+                score=score,
+                entities=ontology.get("entities", []),
+                relationships=ontology.get("relationships", []),
+                actions_applied=actions_applied,
+                metadata={
+                    "domain": self.domain,
+                    "adapter_threshold": self._adapter.get_extraction_hint(),
+                    "entity_count": len(ontology.get("entities", [])),
+                },
+            )
+            self._run_history.append(result)
+            if self._prometheus_metrics is not None and self._prometheus_metrics.enabled:
+                for stage_name, duration in stage_timings.items():
+                    self._prometheus_metrics.record_stage_duration(
+                        stage_name,
+                        duration,
+                        labels={"domain": self.domain, "pipeline": "graphrag"},
+                    )
+            try:
+                import json as _json
+                from datetime import datetime as _datetime
+
+                from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
+
+                duration_ms = (time.time() - start_time) * 1000.0
+                stage_durations_ms = {name: duration * 1000.0 for name, duration in stage_timings.items()}
+                payload = {
+                    "event": "ontology_pipeline_run",
+                    "run_index": len(self._run_history),
+                    "domain": self.domain,
+                    "data_source": data_source,
+                    "data_type": data_type
+                    if isinstance(data_type, str)
+                    else getattr(data_type, "value", str(data_type)),
+                    "refine": refine,
+                    "entity_count": len(ontology.get("entities", [])),
+                    "relationship_count": len(ontology.get("relationships", [])),
+                    "score": getattr(score, "overall", None),
+                    "actions_count": len(actions_applied),
+                    "duration_ms": duration_ms,
+                    "stage_durations_ms": stage_durations_ms,
+                    "timestamp": _datetime.now().isoformat(),
+                }
+                self._log.info("PIPELINE_RUN: %s", _json.dumps(with_schema(payload), default=str))
+            except Exception as exc:  # pragma: no cover - logging must be best-effort
+                self._log.debug("Pipeline JSON logging failed: %s", exc)
+
+            if _span is not None:
                 try:
-                    _max_rounds = getattr(self._mediator, "max_rounds", 1)
-                    progress_callback(1, _max_rounds, float(getattr(score, "overall", 0.0)))
-                except Exception as _cb_exc:  # noqa: BLE001
-                    self._log.debug("progress_callback (positional) raised: %s", _cb_exc)
-            stage_timings["refining"] = time.perf_counter() - refine_start
-        else:
-            score = self._critic.evaluate_ontology(ontology, ctx)
-            _notify("evaluated", 3, score=getattr(score, "overall", None))
-            self._last_refinement_state = None
-            stage_timings["refining"] = 0.0
+                    _span.set_attribute("pipeline.entity_count", len(ontology.get("entities", [])))
+                    _span.set_attribute("pipeline.relationship_count", len(ontology.get("relationships", [])))
+                    _span.set_attribute("pipeline.actions_count", len(actions_applied))
+                    _span.set_attribute("pipeline.score", float(getattr(score, "overall", 0.0)))
+                    _span.set_attribute("pipeline.duration_ms", (time.time() - start_time) * 1000.0)
+                except Exception as exc:  # pragma: no cover - best effort
+                    self._log.debug("Failed to set final pipeline span attributes: %s", exc)
 
-        # 4. Feed result back to adapter
-        self._adapter.apply_feedback(
-            final_score=score.overall,
-            actions=[{"action": a} for a in actions_applied],
-        )
-
-        result = PipelineResult(
-            ontology=ontology,
-            score=score,
-            entities=ontology.get("entities", []),
-            relationships=ontology.get("relationships", []),
-            actions_applied=actions_applied,
-            metadata={
-                "domain": self.domain,
-                "adapter_threshold": self._adapter.get_extraction_hint(),
-                "entity_count": len(ontology.get("entities", [])),
-            },
-        )
-        self._run_history.append(result)
-        if self._prometheus_metrics is not None and self._prometheus_metrics.enabled:
-            for stage_name, duration in stage_timings.items():
-                self._prometheus_metrics.record_stage_duration(
-                    stage_name,
-                    duration,
-                    labels={"domain": self.domain, "pipeline": "graphrag"},
-                )
-        try:
-            import json as _json
-            from datetime import datetime as _datetime
-
-            from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
-
-            duration_ms = (time.time() - start_time) * 1000.0
-            stage_durations_ms = {name: duration * 1000.0 for name, duration in stage_timings.items()}
-            payload = {
-                "event": "ontology_pipeline_run",
-                "run_index": len(self._run_history),
-                "domain": self.domain,
-                "data_source": data_source,
-                "data_type": data_type
-                if isinstance(data_type, str)
-                else getattr(data_type, "value", str(data_type)),
-                "refine": refine,
-                "entity_count": len(ontology.get("entities", [])),
-                "relationship_count": len(ontology.get("relationships", [])),
-                "score": getattr(score, "overall", None),
-                "actions_count": len(actions_applied),
-                "duration_ms": duration_ms,
-                "stage_durations_ms": stage_durations_ms,
-                "timestamp": _datetime.now().isoformat(),
-            }
-            self._log.info("PIPELINE_RUN: %s", _json.dumps(with_schema(payload), default=str))
-        except Exception as exc:  # pragma: no cover - logging must be best-effort
-            self._log.debug("Pipeline JSON logging failed: %s", exc)
-        return result
+            return result
 
     def run_batch(
         self,

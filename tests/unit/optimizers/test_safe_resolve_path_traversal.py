@@ -5,13 +5,18 @@ traversal even when the CLI accepts user-supplied paths.
 """
 from __future__ import annotations
 
+import json
+from types import SimpleNamespace
+
 import pytest
 
 from ipfs_datasets_py.optimizers.graphrag.cli_wrapper import _safe_resolve
 from ipfs_datasets_py.optimizers.graphrag.exceptions import PathResolutionError
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.cli_wrapper import (
+    LogicOptimizerCLI,
     _safe_resolve as _logic_safe_resolve,
 )
+from ipfs_datasets_py.optimizers.graphrag.cli_wrapper import GraphRAGOptimizerCLI
 
 
 class TestSafeResolveGraphRAG:
@@ -62,3 +67,46 @@ class TestSafeResolveLogic:
         p.write_text("{}")
         result = _logic_safe_resolve(str(p), must_exist=True)
         assert result == p.resolve()
+
+
+def test_graphrag_validate_restricted_output_path_returns_nonzero(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.graphrag import cli_wrapper as graphrag_cli_wrapper
+
+    ontology_path = tmp_path / "ontology.json"
+    ontology_path.write_text(
+        json.dumps({"entities": [{"id": "e1", "type": "Thing", "text": "Alice"}], "relationships": []}),
+        encoding="utf-8",
+    )
+
+    class _StubConsistency:
+        is_consistent = True
+        prover_used = "stub"
+        contradictions = []
+
+        def to_dict(self):
+            return {"is_consistent": True, "prover_used": self.prover_used, "contradictions": []}
+
+    class _StubValidator:
+        def check_consistency(self, ontology):
+            return _StubConsistency()
+
+    monkeypatch.setattr(graphrag_cli_wrapper, "LogicValidator", lambda *a, **k: _StubValidator())
+    cli = GraphRAGOptimizerCLI()
+    code = cli.run(["validate", "--input", str(ontology_path), "--output", "/etc/passwd"])
+    assert code == 1
+
+
+def test_logic_extract_restricted_output_path_returns_nonzero(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import cli_wrapper as logic_cli_wrapper
+
+    input_path = tmp_path / "text.txt"
+    input_path.write_text("All humans are mortal.", encoding="utf-8")
+
+    class _StubExtractor:
+        def extract(self, text, context):
+            return SimpleNamespace(formulas=["Human(x)->Mortal(x)"], confidence=0.9, metadata={})
+
+    monkeypatch.setattr(logic_cli_wrapper, "LogicExtractor", lambda *a, **k: _StubExtractor())
+    cli = LogicOptimizerCLI()
+    code = cli.run(["extract", "--input", str(input_path), "--output", "/etc/passwd"])
+    assert code == 1

@@ -218,6 +218,10 @@ Examples:
             '--output', '-o',
             help='Write proof result as JSON to this file path'
         )
+        prove_parser.add_argument(
+            '--tdfol-output',
+            help='Write TDFOL debug formulas as JSON to this file path'
+        )
         
         # validate command
         validate_parser = subparsers.add_parser(
@@ -337,9 +341,10 @@ Examples:
             }
             
             if args.output:
-                with open(args.output, 'w') as f:
+                output_path = _safe_resolve(args.output)
+                with open(output_path, 'w') as f:
                     json.dump(output_data, f, indent=2)
-                print(f"📄 Saved to: {args.output}")
+                print(f"📄 Saved to: {output_path}")
             else:
                 print("\n📋 Formulas:")
                 for i, formula in enumerate(result.formulas, 1):
@@ -347,7 +352,7 @@ Examples:
             
             return 0
             
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, AttributeError) as e:
             print(f"❌ Error: {e}")
             return 1
     
@@ -453,9 +458,35 @@ Examples:
                 output_path.write_text(_json.dumps(proof_data, indent=2))
                 print(f"   Saved to: {args.output}")
 
+            if getattr(args, 'tdfol_output', None):
+                import json as _json
+
+                premise_texts = list(args.premises or [])
+                # Use deterministic, dependency-free formula wrappers so this
+                # debug output is always available even without extra provers.
+                formula_strings: list[str] = [
+                    f"Premise({idx + 1}): {text}"
+                    for idx, text in enumerate(premise_texts)
+                ]
+                formula_strings.append(f"Theorem: {args.theorem}")
+                formula_strings.append(f"Goal: {args.goal}")
+
+                tdfol_report = {
+                    "formalism": "tdfol",
+                    "theorem": args.theorem,
+                    "premises": premise_texts,
+                    "goal": args.goal,
+                    "formula_count": len(formula_strings),
+                    "formula_strings": formula_strings,
+                }
+
+                tdfol_path = _safe_resolve(args.tdfol_output)
+                tdfol_path.write_text(_json.dumps(tdfol_report, indent=2))
+                print(f"   TDFOL debug formulas saved to: {args.tdfol_output}")
+
             return 0 if is_valid else 1
             
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, AttributeError, RuntimeError) as e:
             print(f"❌ Error: {e}")
             return 1
     
@@ -530,7 +561,7 @@ Examples:
                 print("❌ Validation: FAILED")
                 return 1
             
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, AttributeError, RuntimeError) as e:
             print(f"❌ Error: {e}")
             return 1
     
@@ -595,7 +626,7 @@ Examples:
             
             return 0
             
-        except Exception as e:
+        except (OSError, IOError, ValueError, TypeError, AttributeError, RuntimeError) as e:
             print(f"❌ Error: {e}")
             return 1
     
@@ -669,7 +700,7 @@ Examples:
         except KeyboardInterrupt:
             print("\n\nInterrupted by user")
             return 130
-        except Exception as e:
+        except (OSError, IOError, ValueError, RuntimeError) as e:
             print(f"❌ Error: {e}")
             import traceback
             traceback.print_exc()
