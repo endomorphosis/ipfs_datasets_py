@@ -2962,44 +2962,10 @@ class OntologyGenerator:
         Returns:
             True if the type pair is impossible and should be skipped
         """
-        # Pairs that are semantically impossible or highly unlikely
-        impossible_pairs = {
-            ('date', 'date'),
-            ('monetaryamount', 'monetaryamount'),
-            ('time', 'time'),
-            ('duration', 'duration'),
-            ('location', 'location'),
-            ('concept', 'concept'),
-        }
+        # Normalize to lowercase for comparison
+        e1_type = e1_type.lower() if isinstance(e1_type, str) else str(e1_type).lower()
+        e2_type = e2_type.lower() if isinstance(e2_type, str) else str(e2_type).lower()
         
-        # Self-relationships should be skipped (already handled in loop, but safe check)
-        if e1_type == e2_type and e1_type in {'date', 'location', 'time', 'concept', 'duration'}:
-            return True
-        
-        # Check if any impossible pair (order-independent)
-        pair_sorted = tuple(sorted([e1_type, e2_type]))
-        return pair_sorted in impossible_pairs
-    def _is_impossible_type_pair(self, e1_type: str, e2_type: str) -> bool:
-        """Check if a type pair is semantically impossible (optimization P1).
-        
-        Certain entity type combinations can never have meaningful relationships:
-        - Date-to-Date: temporal entities don't relate to each other
-        - MonetaryAmount-to-Location: measurements don't relate to places
-        - Concept-to-Concept: abstract concepts rarely relate
-        - MonetaryAmount-to-MonetaryAmount: measurements don't compose
-        
-        **Performance Impact**: This filter eliminates ~20-30% of unnecessary
-        type inference operations (checking impossible pairs contributes to the
-        O(n²) bottleneck). By short-circuiting early, we avoid calling
-        context window extraction and type confidence scoring.
-        
-        Args:
-            e1_type: Type of first entity (lowercased)
-            e2_type: Type of second entity (lowercased)
-            
-        Returns:
-            True if the type pair is impossible and should be skipped
-        """
         # Pairs that are semantically impossible or highly unlikely
         impossible_pairs = {
             ('date', 'date'),
