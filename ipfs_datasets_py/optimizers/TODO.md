@@ -59,11 +59,13 @@ Rotate these while also advancing the plan above. When one completes, replace it
 with a new item from a different track.
 
 **Active picks (rotate on completion)**
-- [ ] (P2) [docs] Create detailed "Configuration Guide" for all `ExtractionConfig` fields
+- [x] (P2) [docs] Create detailed "Configuration Guide" for all `ExtractionConfig` fields
+  - Done 2026-02-23: Created CONFIGURATION_REFERENCE.md
 - [ ] (P2) [arch] Extract `QueryValidationMixin` for GraphRAG reuse
 - [x] (P2) [tests] Migrate mock ontology creation to factory fixtures in `conftest.py`
   - Done 2026-02-23: Added 6 TypedDict factory fixtures (entity, relationship, critic_score, ontology_session, feedback_record). Extends existing conftest.py by 213 lines.
-- [ ] (P2) [perf] Implement lazy loading for domain-specific rule sets in `ExtractionConfig`
+- [x] (P2) [perf] Implement lazy loading for domain-specific rule sets in `ExtractionConfig`
+  - Done 2026-02-23: Verified existing lazy-loading via lru_cache(maxsize=16) in _get_domain_rule_patterns(). Created comprehensive test suite (31 tests, all passing).
 - [ ] (P2) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
 
 ---
@@ -204,7 +206,8 @@ These should be started immediately when available:
 - [ ] (P2) [api] Create `ontology_types.py` with TypedDict definitions for all ontology structures
 - [ ] (P2) [tests] Migrate all mock ontology creation to factory fixtures in `conftest.py`
 - [ ] (P2) [graphrag] Split `ontology_critic.py` into `..._completeness.py`, `..._connectivity.py`, `..._consistency.py`
-- [ ] (P2) [perf] Implement lazy loading for domain-specific rule sets in `ExtractionConfig`
+- [x] (P2) [perf] Implement lazy loading for domain-specific rule sets in `ExtractionConfig`
+  - Done 2026-02-23: Verified existing lazy-loading via lru_cache(maxsize=16) in _get_domain_rule_patterns(). Created comprehensive test suite (31 tests, all passing) validating: pattern caching behavior, domain pattern completeness/accuracy, cache hit/miss tracking, performance characteristics, immutability guarantees, regex validation, robustness to edge cases. Tests cover legal/medical/technical/financial domains. File: tests/unit/optimizers/graphrag/test_domain_rule_patterns_lazy_loading.py
 - [ ] (P3) [arch] Create `ontology_serialization.py` with unified dict ↔ dataclass converters
 
 #### Complex Features (4+ hours)
