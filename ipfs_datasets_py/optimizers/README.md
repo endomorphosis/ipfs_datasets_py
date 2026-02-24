@@ -497,6 +497,7 @@ OntologyPipeline
 - **QUICK_START.md** - Fast setup for all optimizer types
 - **CODE_EXAMPLES.md** - Comprehensive code examples for public methods
 - **COMMON_PITFALLS.md** - Troubleshooting guide with solutions
+- **docs/GLOSSARY.md** - Shared terminology for ontology, pipeline, and optimization concepts
 
 ## Quick Start Guides
 

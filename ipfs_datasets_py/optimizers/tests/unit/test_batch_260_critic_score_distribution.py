@@ -11,9 +11,12 @@ from __future__ import annotations
 
 import pytest
 import statistics
-from typing import List, Dict, Any
+from typing import List
 
-from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic, CriticScore
+from ipfs_datasets_py.optimizers.graphrag.ontology_critic import (
+    OntologyCritic,
+    DIMENSION_WEIGHTS,
+)
 from ipfs_datasets_py.optimizers.graphrag.ontology_types import (
     Entity,
     Relationship,
@@ -52,13 +55,17 @@ def create_sample_ontology(
     base_score: float = 0.7,
 ) -> Ontology:
     """Create a sample ontology for testing."""
+    # Keep confidence values inside [0, 1] while allowing callers to shape
+    # score distributions using base_score.
+    base = max(0.0, min(1.0, base_score))
+
     entities: List[Entity] = []
     for i in range(entity_count):
         entity: Entity = {
             "id": f"entity_{i}",
             "text": f"Entity {i}",
             "type": "TestType",
-            "confidence": 0.8 + (i % 3) * 0.05,
+            "confidence": max(0.0, min(1.0, base + (i % 3) * 0.05)),
         }
         entities.append(entity)
     
@@ -69,7 +76,7 @@ def create_sample_ontology(
             "source_id": f"entity_{i % entity_count}",
             "target_id": f"entity_{(i + 1) % entity_count}",
             "type": "relatedTo",
-            "confidence": 0.75 + (i % 2) * 0.1,
+            "confidence": max(0.0, min(1.0, base - 0.05 + (i % 2) * 0.1)),
         }
         relationships.append(rel)
     
@@ -86,6 +93,7 @@ def create_sample_ontology(
                 "complexity": "simple",
                 "entities_count": entity_count,
                 "relationships_count": relationship_count,
+                "base_score": base,
             },
         },
     }
@@ -477,6 +485,69 @@ class TestDimensionScoreDistribution:
             for scores in dimension_data.values()
         )
 
+
+# ============================================================================
+# Distribution Invariants (Batch 260 follow-up)
+# ============================================================================
+
+
+class TestCriticScoreDistributionInvariants:
+    """Validate distribution-level invariants for critic scores."""
+
+    def test_overall_between_min_max_dimensions(self, critic, context):
+        """Overall score should be between min/max dimension scores."""
+        for i in range(100):
+            ontology = create_sample_ontology(
+                entity_count=5 + (i % 25),
+                relationship_count=3 + (i % 15),
+            )
+            score = critic.evaluate_ontology(ontology, context)
+            dims = score.to_list()
+
+            assert len(dims) == 6
+            assert min(dims) <= score.overall <= max(dims)
+
+    def test_overall_matches_weighted_sum(self, critic, context):
+        """Overall score equals the weighted sum of dimensions."""
+        for i in range(100):
+            ontology = create_sample_ontology(
+                entity_count=8 + (i % 20),
+                relationship_count=4 + (i % 12),
+            )
+            score = critic.evaluate_ontology(ontology, context)
+            expected = (
+                DIMENSION_WEIGHTS["completeness"] * score.completeness
+                + DIMENSION_WEIGHTS["consistency"] * score.consistency
+                + DIMENSION_WEIGHTS["clarity"] * score.clarity
+                + DIMENSION_WEIGHTS["granularity"] * score.granularity
+                + DIMENSION_WEIGHTS["relationship_coherence"] * score.relationship_coherence
+                + DIMENSION_WEIGHTS["domain_alignment"] * score.domain_alignment
+            )
+
+            assert score.overall == pytest.approx(expected, rel=1e-12, abs=1e-12)
+
+    def test_batch_mean_overall_matches_weighted_mean_of_dimensions(self, critic, context):
+        """Mean overall equals weighted mean of dimension means across batch."""
+        scores = []
+        for i in range(200):
+            ontology = create_sample_ontology(
+                entity_count=6 + (i % 22),
+                relationship_count=2 + (i % 14),
+            )
+            scores.append(critic.evaluate_ontology(ontology, context))
+
+        overall_mean = statistics.mean(score.overall for score in scores)
+        mean_dims = {
+            "completeness": statistics.mean(score.completeness for score in scores),
+            "consistency": statistics.mean(score.consistency for score in scores),
+            "clarity": statistics.mean(score.clarity for score in scores),
+            "granularity": statistics.mean(score.granularity for score in scores),
+            "relationship_coherence": statistics.mean(score.relationship_coherence for score in scores),
+            "domain_alignment": statistics.mean(score.domain_alignment for score in scores),
+        }
+        weighted_mean = sum(DIMENSION_WEIGHTS[key] * mean_dims[key] for key in mean_dims)
+
+        assert overall_mean == pytest.approx(weighted_mean, rel=1e-12, abs=1e-12)
 
 # ============================================================================
 # Integration and Real-World Pattern Tests

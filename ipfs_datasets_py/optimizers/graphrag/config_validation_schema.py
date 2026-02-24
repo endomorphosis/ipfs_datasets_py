@@ -13,6 +13,8 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import re
 
+from ipfs_datasets_py.optimizers.common.exceptions import ConfigurationError
+
 
 # ============================================================================
 # Validation Rules
@@ -276,14 +278,14 @@ class ExtractionConfigSchema:
 # ============================================================================
 
 
-class ConfigValidationError(Exception):
+class ConfigValidationError(ConfigurationError):
     """Raised when configuration validation fails."""
     
     def __init__(self, field_name: str, errors: List[str]):
         self.field_name = field_name
         self.errors = errors
         message = f"Validation error in {field_name}: {'; '.join(errors)}"
-        super().__init__(message)
+        super().__init__(message, details={"field_name": field_name, "errors": list(errors)})
 
 
 class ConfigValidator:

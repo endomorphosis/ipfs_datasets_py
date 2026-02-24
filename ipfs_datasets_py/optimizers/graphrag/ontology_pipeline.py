@@ -158,6 +158,12 @@ class OntologyPipeline:
         self._adapter = OntologyLearningAdapter(domain=domain)
         self._run_history: List["PipelineResult"] = []
         self._last_refinement_state: Optional[Any] = None
+        try:
+            from ipfs_datasets_py.optimizers.common.metrics_prometheus import PrometheusMetrics
+
+            self._prometheus_metrics = PrometheusMetrics()
+        except Exception:  # pragma: no cover - optional metrics dependency
+            self._prometheus_metrics = None
 
     def __repr__(self) -> str:
         """Return a concise developer-readable summary of this pipeline."""
@@ -214,6 +220,7 @@ class OntologyPipeline:
                 self._log.debug("progress_callback raised in stage %r: %s", stage, _cb_exc)
 
         start_time = time.time()
+        stage_timings: Dict[str, float] = {}
         ctx = OntologyGenerationContext(
             data_source=data_source,
             data_type=data_type,
@@ -224,7 +231,9 @@ class OntologyPipeline:
         hint = self._adapter.get_extraction_hint()
         self._log.info("OntologyPipeline.run: threshold_hint=%.3f domain=%s", hint, self.domain)
         _notify("extracting", 1, domain=self.domain, data_source=data_source)
+        stage_start = time.perf_counter()
         extraction = self._generator.extract_entities(data, ctx)
+        stage_timings["extracting"] = time.perf_counter() - stage_start
 
         # 2. Build initial ontology dict
         from ipfs_datasets_py.optimizers.graphrag.ontology_serialization import (
@@ -238,8 +247,11 @@ class OntologyPipeline:
         actions_applied: List[str] = []
 
         # 3. Evaluate and optionally refine
+        stage_start = time.perf_counter()
         score = self._critic.evaluate_ontology(ontology, ctx)
+        stage_timings["evaluating"] = time.perf_counter() - stage_start
         if refine:
+            refine_start = time.perf_counter()
             score = self._critic.evaluate_ontology(ontology, ctx)
             _notify("evaluating", 3, score=getattr(score, "overall", None))
 
@@ -283,10 +295,12 @@ class OntologyPipeline:
                     progress_callback(1, _max_rounds, float(getattr(score, "overall", 0.0)))
                 except Exception as _cb_exc:  # noqa: BLE001
                     self._log.debug("progress_callback (positional) raised: %s", _cb_exc)
+            stage_timings["refining"] = time.perf_counter() - refine_start
         else:
             score = self._critic.evaluate_ontology(ontology, ctx)
             _notify("evaluated", 3, score=getattr(score, "overall", None))
             self._last_refinement_state = None
+            stage_timings["refining"] = 0.0
 
         # 4. Feed result back to adapter
         self._adapter.apply_feedback(
@@ -307,6 +321,13 @@ class OntologyPipeline:
             },
         )
         self._run_history.append(result)
+        if self._prometheus_metrics is not None and self._prometheus_metrics.enabled:
+            for stage_name, duration in stage_timings.items():
+                self._prometheus_metrics.record_stage_duration(
+                    stage_name,
+                    duration,
+                    labels={"domain": self.domain, "pipeline": "graphrag"},
+                )
         try:
             import json as _json
             from datetime import datetime as _datetime
@@ -314,6 +335,7 @@ class OntologyPipeline:
             from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
 
             duration_ms = (time.time() - start_time) * 1000.0
+            stage_durations_ms = {name: duration * 1000.0 for name, duration in stage_timings.items()}
             payload = {
                 "event": "ontology_pipeline_run",
                 "run_index": len(self._run_history),
@@ -328,6 +350,7 @@ class OntologyPipeline:
                 "score": getattr(score, "overall", None),
                 "actions_count": len(actions_applied),
                 "duration_ms": duration_ms,
+                "stage_durations_ms": stage_durations_ms,
                 "timestamp": _datetime.now().isoformat(),
             }
             self._log.info("PIPELINE_RUN: %s", _json.dumps(with_schema(payload), default=str))

@@ -1,6 +1,6 @@
 # Optimizers: Infinite TODO / Improvement Plan
 
-_Last updated: 2026-02-23_
+_Last updated: 2026-02-24_
 
 This is the living, “infinite” backlog for refactoring and completing work across `ipfs_datasets_py/optimizers/`.
 
@@ -47,6 +47,7 @@ test hardening, and documentation clarity while keeping progress measurable.
 - [x] (P1) [arch] Unify optimizer base class hierarchy (shared OptimizerConfig)
   - Done 2026-02-23: Batch 265 - Integrated OptimizerConfig dataclass with AgenticOptimizer. Now accepts Union[OptimizerConfig, Dict] with automatic normalization. Added helper methods (get_config_value, domain/max_rounds/verbose properties). Full backward compatibility maintained (dict configs auto-converted). 24/24 tests passing. Achieves consistent configuration across GraphRAG, logic, and agentic optimizers.
 - [ ] (P2) [api] Standardize context objects across GraphRAG/logic/agentic
+- [ ] (P2) [arch] Consolidate optimizer lifecycle hooks (init/validate/generate/critique/refine) into shared base mixins
 - [ ] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
 - [x] (P2) [tests] Add property-based tests for Entity/CriticScore/FeedbackRecord
   - Done 2026-02-23: test_ontology_types_properties.py with 19 passing property-based tests (Entity, Relationship, CriticScore, FeedbackRecord, collections). Uses Hypothesis strategies.
@@ -55,6 +56,7 @@ test hardening, and documentation clarity while keeping progress measurable.
 - [ ] (P2) [obs] Structured JSON logging for every pipeline run
 - [x] (P2) [docs] Optimizers README with quick-start +  class diagram + comprehensive guides
   - Done 2026-02-23: Batch 263 - Created PERFORMANCE_TUNING_GUIDE.md (18KB), TROUBLESHOOTING_GUIDE.md (28KB), INTEGRATION_EXAMPLES.md (18KB, 8 real-world scenarios). Updated README.md with guide references. Comprehensive documentation for performance optimization (70-80% potential speedup), 30+ troubleshooting solutions, and production integration patterns (FastAPI, Flask, CLI, CI/CD, batch processing, streaming, multi-domain).
+ - [ ] (P2) [tests] Add deterministic seed control for random samplers across optimizers (doc + test)
 
 ### Random Workstream (keep 3-5 active, different tracks)
 
@@ -71,6 +73,12 @@ with a new item from a different track.
 - [x] (P2) [perf] Implement lazy loading for domain-specific rule sets in `ExtractionConfig`
   - Done 2026-02-23: Verified existing lazy-loading via lru_cache(maxsize=16) in _get_domain_rule_patterns(). Created comprehensive test suite (31 tests, all passing).
 - [ ] (P2) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
+- [ ] (P2) [logic] Add canonical proof trace serialization (JSON) for logic optimizer output
+- [ ] (P3) [api] Provide `OptimizerResult` TypedDict for cross-optimizer return parity
+- [x] (P2) [tests] Add distribution invariants for CriticScore batch results (link: tests/unit/test_batch_260_critic_score_distribution.py)
+  - Done 2026-02-24: Added invariants for overall bounds, weighted sum equality, and batch mean consistency.
+- [x] (P2) [perf] Add micro-benchmark for `OntologyGenerator` regex + entity promotion hot paths (baseline + target ≥15% speedup)
+  - Done 2026-02-24: Added perf_ontology_regex_hotpaths.py and docs table in PERFORMANCE_TUNING_GUIDE.md.
 
 ---
 
@@ -120,8 +128,8 @@ Use this as the always-on randomizer. Keep 3-5 items active, one per track. When
   - Done 2026-02-23: added Batch 264 profiling script/tests and PROFILING_BATCH_264_ANALYSIS.md
 - [x] (P2) [obs] Emit structured per-run JSON log in `OntologyPipeline.run()` (score/domain/duration)
   - Done 2026-02-21: added PIPELINE_RUN JSON log with duration, counts, and score.
-- [ ] (P3) [docs] Write module-level docstrings for `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py`
-  - All three already have comprehensive module-level docstrings; `ontology_pipeline.py` also has one.
+- [x] (P3) [docs] Write module-level docstrings for `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py`
+  - Done (verified 2026-02-23): all three modules already include comprehensive module-level docstrings; `ontology_pipeline.py` also includes one.
 - [x] (P2) [api] Add `OntologyGenerator.__call__` shorthand for `generate_ontology`
   - Done 2026-02-21: added __call__ delegate to generate_ontology.
 - [x] (P2) [tests] Add coverage for PIPELINE_RUN JSON log payload in OntologyPipeline
@@ -132,6 +140,17 @@ Use this as the always-on randomizer. Keep 3-5 items active, one per track. When
   - Done 2026-02-22: MD5 checksum over config fields; stable across runs; 10 tests added in test_state_checksum.py; all passing.
 - [x] (P0) [tests] Fix test_ontology_generator.py and test_ontology_session.py API drift
   - Done 2026-02-22: updated ExtractionStrategy enum references (NEURAL_SYMBOLIC→HYBRID, PATTERN_BASED→RULE_BASED, STATISTICAL→LLM_BASED); updated OntologySession/SessionResult to match actual DI API; OntologyGenerationContext now receives required data_source+data_type args. 48 tests now passing.
+- [ ] (P2) [graphrag] Add golden-file tests for small domain-specific corpora (contracts, hr, healthcare)
+- [x] (P2) [obs] Add per-stage timing histogram buckets for pipeline runs
+  - Done 2026-02-24: added stage duration histogram support to PrometheusMetrics and recorded per-stage timings in OntologyPipeline with structured log payload.
+- [x] (P3) [docs] Add glossary of ontology terms with examples (entity, relation, feedback, critique)
+  - Done 2026-02-24: added optimizers/docs/GLOSSARY.md with core ontology and pipeline terminology.
+- [x] (P3) [api] Provide `OptimizerResult` TypedDict for cross-optimizer return parity
+  - Done 2026-02-24: added common/optimizer_result.py, exported in common/__init__.py, and updated BaseOptimizer run_session/dry_run signatures.
+- [x] (P2) [tests] Add regression tests for `OntologyGenerator.generate()` on mixed-domain inputs (legal + medical + tech)
+  - Done 2026-02-24: added test_generate_ontology_mixed_domain.py with mixed-domain text coverage.
+- [x] (P2) [perf] Add `perf_ontology_generate_smoke.py` micro-benchmark with before/after timing table in docs
+  - Done 2026-02-24: Added perf_ontology_generate_smoke.py and updated PERFORMANCE_TUNING_GUIDE.md with a timing table.
 
 **Rotation rules**
 - Never keep two active picks in the same track.
@@ -209,10 +228,14 @@ These should be started immediately when available:
 #### Strategic Refactoring (2-4 hours)
 - [x] (P2) [arch] Extract `QueryValidationMixin` from query optimizer for reuse in GraphRAG
   - Done 2026-02-23: implemented in optimizers/common/query_validation.py and used by graphrag/query_unified_optimizer.py
-- [ ] (P2) [arch] Unify exception hierarchy across `[graphrag]`, `[logic]`, `[agentic]` packages
-- [ ] (P2) [api] Create `ontology_types.py` with TypedDict definitions for all ontology structures
+- [x] (P2) [arch] Unify exception hierarchy across `[graphrag]`, `[logic]`, `[agentic]` packages
+  - Done 2026-02-23: Added `logic_theorem_optimizer/exceptions.py` to align theorem optimizer with shared `common.exceptions` base classes; updated `logic_theorem_optimizer/__init__.py` exports for lazy import compatibility; changed `graphrag/error_handling.py` so `GraphRAGException` now inherits `GraphRAGError` (and thus `OptimizerError`) for unified catch behavior. Added contract tests in `tests/unit/optimizers/test_unified_exception_hierarchy.py`.
+  - Follow-up 2026-02-23: Aligned `graphrag/config_validation_schema.py::ConfigValidationError` to inherit `ConfigurationError` and added tests in `tests/unit/optimizers/graphrag/test_config_validation_schema.py`.
+- [x] (P2) [api] Create `ontology_types.py` with TypedDict definitions for all ontology structures
+  - Done (verified 2026-02-23): `graphrag/ontology_types.py` defines comprehensive TypedDicts for entities, relationships, ontology/session/context/metrics structures and is exported from `graphrag/__init__.py`.
 - [ ] (P2) [tests] Migrate all mock ontology creation to factory fixtures in `conftest.py`
-- [ ] (P2) [graphrag] Split `ontology_critic.py` into `..._completeness.py`, `..._connectivity.py`, `..._consistency.py`
+- [x] (P2) [graphrag] Split `ontology_critic.py` into `..._completeness.py`, `..._connectivity.py`, `..._consistency.py`
+  - Done (verified 2026-02-23): extracted evaluator modules exist (`ontology_critic_completeness.py`, `ontology_critic_connectivity.py`, `ontology_critic_consistency.py`) and are imported/wired by `ontology_critic.py` alongside clarity/domain/granularity modules.
 - [x] (P2) [perf] Implement lazy loading for domain-specific rule sets in `ExtractionConfig`
   - Done 2026-02-23: Verified existing lazy-loading via lru_cache(maxsize=16) in _get_domain_rule_patterns(). Created comprehensive test suite (31 tests, all passing) validating: pattern caching behavior, domain pattern completeness/accuracy, cache hit/miss tracking, performance characteristics, immutability guarantees, regex validation, robustness to edge cases. Tests cover legal/medical/technical/financial domains. File: tests/unit/optimizers/graphrag/test_domain_rule_patterns_lazy_loading.py
 - [x] (P3) [arch] Create `ontology_serialization.py` with unified dict ↔ dataclass converters
@@ -510,8 +533,11 @@ Execute these when no rotating work is in progress:
 - [x] (P2) [agentic] `ChangeController.check_approval()` — Done: GitHubChangeController.check_approval() implemented
 - [x] (P2) [agentic] `ChangeController.apply_change()` — Done: GitHubChangeController.apply_change() implemented
 - [x] (P2) [agentic] `ChangeController.rollback_change()` — Done: GitHubChangeController.rollback_change() implemented
-- [ ] (P2) [agentic] `agentic/validation.py:85` — `validate()` stub; wire to a real validation pipeline
-- [ ] (P3) [agentic] Add integration test that exercises the full GitHub change-control flow against a mock
+- [x] (P2) [agentic] `agentic/validation.py:85` — `validate()` stub; wire to a real validation pipeline
+  - Done (verified 2026-02-23): `OptimizationValidator.validate()` delegates to `_AsyncOptimizationValidator` pipeline and is covered by `tests/unit/optimizers/agentic/test_validation_pipeline_wiring.py`.
+  - Follow-up 2026-02-23: fixed async subprocess handling warnings by replacing un-awaited `anyio.open_process` usage with `anyio.to_thread.run_sync(subprocess.run(...))` in validator implementations.
+- [x] (P3) [agentic] Add integration test that exercises the full GitHub change-control flow against a mock
+  - Done (verified 2026-02-23): `tests/unit/optimizers/agentic/test_github_change_control_flow.py` covers create → approval check → apply → rollback with mocked managers/status.
 
 ### F9 — `graphrag/ontology_optimizer.py` internal stubs
 
@@ -659,7 +685,8 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [arch] Wire MediatorState to extend BaseSession for unified session tracking
   - Done 2026-02-20: MediatorState extends BaseSession with session_id, rounds, and scoring metadata.
 - [x] (P2) [tests] Fuzz tests for _extract_rule_based() — Done batch 28 (9 edge-case tests: Unicode, binary, very long, regex special chars)
-- [ ] (P3) [perf] Benchmark _merge_ontologies() on 1000-entity ontologies
+- [x] (P3) [perf] Benchmark _merge_ontologies() on 1000-entity ontologies
+  - Done 2026-02-24: Created comprehensive benchmark suite with 11 benchmark tests + 3 correctness tests. Results: 10 entities=83.5µs, 100 entities=748µs, 1000 entities=9ms, 5000 entities=51ms. Tests cover various scenarios (empty base/extension, high/low dedup, confidence decay, batching). File: tests/unit_tests/optimizers/test_merge_ontologies_benchmark.py
 - [x] (P2) [graphrag] Add confidence decay for co-occurrence distance — Done batch 28 (steeper decay >100 chars, floor 0.2)
 - [x] (P2) [tests] Property-based test: _merge_ontologies is idempotent — Done batch 23 (5 idempotency tests)
 - [x] (P2) [graphrag] LLM-based extraction fallback — Done batch 33: ExtractionConfig.llm_fallback_threshold + OntologyGenerator.llm_backend param
@@ -2539,4 +2566,3 @@ If we maintain **1 batch per week** (7–8 methods each):
 - **Year 3+**: Focus shifts to: optimization, documentation, integration, security tools
 
 This keeps the module **perpetually fresh** without ever feeling "done."
-

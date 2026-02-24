@@ -56,6 +56,8 @@ from dataclasses import dataclass, field, asdict
 import functools
 import time
 
+from ipfs_datasets_py.optimizers.graphrag.exceptions import GraphRAGError
+
 
 logger = logging.getLogger(__name__)
 T = TypeVar('T')
@@ -109,7 +111,7 @@ class ErrorDetail:
         return json.dumps(self.to_dict())
 
 
-class GraphRAGException(Exception):
+class GraphRAGException(GraphRAGError):
     """Base exception for all GraphRAG operations.
     
     Attributes:

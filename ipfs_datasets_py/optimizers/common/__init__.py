@@ -101,6 +101,9 @@ from .performance import (
     get_global_cache,
 )
 
+from .optimizer_result import (
+    OptimizerResult,
+)
 from .performance_monitor import (
     OptimizationCycleMetrics,
     PerformanceMetricsCollector,
@@ -166,6 +169,8 @@ __all__ = [
     "PerformanceDashboard",
     "get_global_collector",
     "set_global_collector",
+    # Result types
+    "OptimizerResult",
     # Unified extraction contexts
     "BaseExtractionConfig",
     "GraphRAGExtractionConfig",

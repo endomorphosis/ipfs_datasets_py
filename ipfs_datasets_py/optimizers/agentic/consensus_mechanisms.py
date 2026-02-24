@@ -127,15 +127,16 @@ class ConsensusEngine(ABC):
 
 class MajorityConsensus(ConsensusEngine):
     """Simple majority voting (>50%)."""
-    
-    def aggregate_votes(
+
+    def _aggregate_with_threshold(
         self,
         votes: List[AgentVote],
-        agent_profiles: Dict[str, AgentProfile]
+        threshold: float,
     ) -> Tuple[List[Dict], List[Dict], float]:
-        """Majority voting consensus."""
-        threshold = len(votes) / 2 + 0.1  # >50%
-        
+        """Aggregate entities/relationships requiring at least *threshold* votes."""
+        if not votes:
+            return [], [], 0.0
+    
         # Aggregate entities
         entity_votes = defaultdict(list)
         for vote in votes:
@@ -178,8 +179,17 @@ class MajorityConsensus(ConsensusEngine):
         total_consensus = len(consensus_entities) + len(consensus_relationships)
         total_votes = sum(len(v.entities) + len(v.relationships) for v in votes)
         agreement_rate = total_consensus / total_votes if total_votes > 0 else 0.0
-        
+
         return consensus_entities, consensus_relationships, agreement_rate
+
+    def aggregate_votes(
+        self,
+        votes: List[AgentVote],
+        agent_profiles: Dict[str, AgentProfile]
+    ) -> Tuple[List[Dict], List[Dict], float]:
+        """Majority voting consensus."""
+        threshold = len(votes) / 2 + 0.1  # >50%
+        return self._aggregate_with_threshold(votes, threshold)
 
 
 class UnanimousConsensus(ConsensusEngine):
@@ -250,6 +260,30 @@ class UnanimousConsensus(ConsensusEngine):
         agreement_rate = total_consensus / total_possible if total_possible > 0 else 0.0
         
         return consensus_entities, consensus_relationships, agreement_rate
+
+
+class ThresholdConsensus(MajorityConsensus):
+    """Configurable threshold voting (fraction of agents)."""
+
+    def __init__(self, threshold_fraction: float = 0.6):
+        if not (0.0 < threshold_fraction <= 1.0):
+            raise ValueError("threshold_fraction must be in (0, 1]")
+        self.threshold_fraction = threshold_fraction
+
+    def aggregate_votes(
+        self,
+        votes: List[AgentVote],
+        agent_profiles: Dict[str, AgentProfile]
+    ) -> Tuple[List[Dict], List[Dict], float]:
+        threshold = len(votes) * self.threshold_fraction
+        return self._aggregate_with_threshold(votes, threshold)
+
+
+class QualifiedMajorityConsensus(ThresholdConsensus):
+    """Qualified majority voting requiring two-thirds agreement."""
+
+    def __init__(self):
+        super().__init__(threshold_fraction=2.0 / 3.0)
 
 
 class WeightedConsensus(ConsensusEngine):
@@ -521,7 +555,11 @@ class ConsensusMetrics:
 class ConsensusManager:
     """Orchestrate multi-agent consensus process."""
     
-    def __init__(self, strategy: ConsensusStrategy = ConsensusStrategy.WEIGHTED):
+    def __init__(
+        self,
+        strategy: ConsensusStrategy = ConsensusStrategy.WEIGHTED,
+        threshold_fraction: float = 0.6,
+    ):
         """
         Initialize consensus manager.
         
@@ -537,6 +575,10 @@ class ConsensusManager:
             self.engine = MajorityConsensus()
         elif strategy == ConsensusStrategy.UNANIMOUS:
             self.engine = UnanimousConsensus()
+        elif strategy == ConsensusStrategy.THRESHOLD:
+            self.engine = ThresholdConsensus(threshold_fraction=threshold_fraction)
+        elif strategy == ConsensusStrategy.QUALIFIED_MAJORITY:
+            self.engine = QualifiedMajorityConsensus()
         elif strategy == ConsensusStrategy.WEIGHTED:
             self.engine = WeightedConsensus()
         else:
@@ -610,6 +652,16 @@ class ConsensusManager:
         
         # Update accuracy
         profile.accuracy = profile.correct_extractions / profile.total_extractions
+
+        # Update confidence calibration from confidence error vs actual outcome.
+        # 1.0 means confidence aligned with correctness, 0.0 means maximally off.
+        confidence = max(0.0, min(1.0, confidence))
+        target = 1.0 if correct else 0.0
+        calibration_score = 1.0 - abs(confidence - target)
+        profile.confidence_calibration = (
+            (profile.confidence_calibration * (profile.votes_count - 1) + calibration_score)
+            / profile.votes_count
+        )
         
         # Update reputation (70% accuracy, 30% calibration)
         profile.reputation = 0.7 * profile.accuracy + 0.3 * profile.confidence_calibration

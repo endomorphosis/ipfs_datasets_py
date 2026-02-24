@@ -24,6 +24,14 @@ Integration:
 """
 
 __all__ = [
+    # Exceptions
+    'LogicTheoremOptimizerError',
+    'OptimizerError',
+    'ExtractionError',
+    'ValidationError',
+    'ProvingError',
+    'RefinementError',
+    'ConfigurationError',
     # Unified Optimizer (NEW - BaseOptimizer implementation)
     'LogicTheoremOptimizer',
     # Extractor
@@ -124,7 +132,34 @@ __version__ = '0.1.0'
 
 def __getattr__(name):
     """Lazy imports to avoid circular dependencies."""
-    if name == 'LogicTheoremOptimizer':
+    if name in (
+        'LogicTheoremOptimizerError',
+        'OptimizerError',
+        'ExtractionError',
+        'ValidationError',
+        'ProvingError',
+        'RefinementError',
+        'ConfigurationError',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.exceptions import (
+            LogicTheoremOptimizerError,
+            OptimizerError,
+            ExtractionError,
+            ValidationError,
+            ProvingError,
+            RefinementError,
+            ConfigurationError,
+        )
+        return {
+            'LogicTheoremOptimizerError': LogicTheoremOptimizerError,
+            'OptimizerError': OptimizerError,
+            'ExtractionError': ExtractionError,
+            'ValidationError': ValidationError,
+            'ProvingError': ProvingError,
+            'RefinementError': RefinementError,
+            'ConfigurationError': ConfigurationError,
+        }[name]
+    elif name == 'LogicTheoremOptimizer':
         # NEW: Unified optimizer using BaseOptimizer
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer import LogicTheoremOptimizer
         return LogicTheoremOptimizer

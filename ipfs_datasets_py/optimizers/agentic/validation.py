@@ -211,13 +211,18 @@ class _AsyncTypeValidator(Validator):
             if self.strict:
                 cmd.append("--strict")
             
-            async with anyio.open_process(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as proc:
-                with anyio.fail_after(30):
-                    stdout, stderr = await proc.communicate()
+            completed = await anyio.to_thread.run_sync(
+                lambda: subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    timeout=30,
+                )
+            )
+            stdout, stderr = completed.stdout, completed.stderr
             
             output = stdout.decode() + stderr.decode()
             
-            if proc.returncode != 0:
+            if completed.returncode != 0:
                 result["passed"] = False
                 # Parse mypy output
                 for line in output.split('\n'):
@@ -230,7 +235,7 @@ class _AsyncTypeValidator(Validator):
             # Clean up
             temp_path.unlink(missing_ok=True)
             
-        except TimeoutError:
+        except subprocess.TimeoutExpired:
             result["errors"].append("Type checking timed out")
             result["passed"] = False
         except Exception as e:
@@ -301,9 +306,14 @@ class _AsyncTestValidator(Validator):
         try:
             cmd = ["pytest", "-v", "--tb=short"] + [str(f) for f in test_files]
             
-            async with anyio.open_process(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as proc:
-                with anyio.fail_after(60):
-                    stdout, stderr = await proc.communicate()
+            completed = await anyio.to_thread.run_sync(
+                lambda: subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    timeout=60,
+                )
+            )
+            stdout, stderr = completed.stdout, completed.stderr
             
             output = stdout.decode() + stderr.decode()
             
@@ -323,12 +333,12 @@ class _AsyncTestValidator(Validator):
             
             result["tests_run"] = result["tests_passed"] + result["tests_failed"]
             
-            if proc.returncode != 0 and result["tests_failed"] > 0:
+            if completed.returncode != 0 and result["tests_failed"] > 0:
                 result["errors"].append(
                     f"{result['tests_failed']} test(s) failed"
                 )
             
-        except TimeoutError:
+        except subprocess.TimeoutExpired:
             result["errors"].append("Tests timed out")
             result["passed"] = False
         except Exception as e:
@@ -465,17 +475,17 @@ class _AsyncPerformanceValidator(Validator):
             
             # Compile benchmark
             compile_start = time.time()
-            async with anyio.open_process(
-                ["python", "-m", "py_compile", str(temp_path)],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            ) as proc:
-                with anyio.fail_after(10):
-                    await proc.communicate()
+            completed = await anyio.to_thread.run_sync(
+                lambda: subprocess.run(
+                    ["python", "-m", "py_compile", str(temp_path)],
+                    capture_output=True,
+                    timeout=10,
+                )
+            )
             metrics["compile_time"] = time.time() - compile_start
             
             # Execution benchmark (if no syntax errors)
-            if proc.returncode == 0:
+            if completed.returncode == 0:
                 exec_start = time.time()
                 # Simple execution test
                 metrics["execution_time"] = time.time() - exec_start

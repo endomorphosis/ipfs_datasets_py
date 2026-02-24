@@ -12,6 +12,8 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from .optimizer_result import OptimizerResult
+
 _logger = logging.getLogger(__name__)
 
 
@@ -223,7 +225,7 @@ class BaseOptimizer(ABC):
         self,
         input_data: Any,
         context: OptimizationContext,
-    ) -> Dict[str, Any]:
+    ) -> OptimizerResult:
         """Run complete optimization session.
         
         Executes the full optimization workflow:
@@ -314,7 +316,7 @@ class BaseOptimizer(ABC):
             execution_time_ms,
         )
         
-        result = {
+        result: OptimizerResult = {
             'artifact': artifact,
             'score': score,
             'iterations': iterations,
@@ -357,7 +359,7 @@ class BaseOptimizer(ABC):
         self,
         input_data: Any,
         context: OptimizationContext,
-    ) -> Dict[str, Any]:
+    ) -> OptimizerResult:
         """Validate optimization setup without full optimization.
         
         Performs a single optimization cycle (generate + critique + validate)

@@ -149,6 +149,18 @@ class TestPrometheusMetricsRecording:
         
         assert len(metrics.memory_usage) == 2
         assert metrics.memory_usage[0].value == 1024 * 1024
+
+    def test_record_stage_duration(self):
+        """Test recording stage durations."""
+        metrics = PrometheusMetrics(enabled=True)
+
+        metrics.record_stage_duration("extracting", 0.12)
+        metrics.record_stage_duration("refining", 0.55, labels={"domain": "legal"})
+
+        assert len(metrics.stage_durations) == 2
+        assert metrics.stage_durations[0].labels["stage"] == "extracting"
+        assert metrics.stage_durations[1].labels["stage"] == "refining"
+        assert metrics.stage_durations[1].labels["domain"] == "legal"
     
     def test_disabled_metrics_no_recording(self):
         """Test that disabled metrics don't record anything."""
@@ -208,6 +220,21 @@ class TestPrometheusMetricsCollection:
         assert 'le="0.5"' in output
         assert 'le="1.0"' in output
         assert f'optimizer_score_count 6' in output
+
+    def test_collect_metrics_stage_histogram(self):
+        """Test stage duration histogram in output."""
+        metrics = PrometheusMetrics(enabled=True)
+
+        metrics.record_stage_duration("extracting", 0.05, labels={"domain": "general"})
+        metrics.record_stage_duration("extracting", 0.12, labels={"domain": "general"})
+        metrics.record_stage_duration("refining", 0.8, labels={"domain": "legal"})
+
+        output = metrics.collect_metrics()
+
+        assert "optimizer_stage_duration_seconds_bucket" in output
+        assert 'stage="extracting"' in output
+        assert 'stage="refining"' in output
+        assert 'domain="general"' in output
     
     def test_collect_metrics_round_counter(self):
         """Test round counter in output."""

@@ -550,6 +550,33 @@ class TestConsensusManager:
         
         updated = consensus_manager.agent_profiles['agent1'].accuracy
         assert updated > initial
+
+    def test_confidence_calibration_tracks_confidence_quality(self, consensus_manager):
+        """Calibration should increase for well-calibrated confidence and decrease for poor calibration."""
+        profile = consensus_manager.agent_profiles['agent1']
+        initial_calibration = profile.confidence_calibration
+
+        consensus_manager.update_agent_reputation('agent1', correct=True, confidence=1.0)
+        after_well_calibrated = profile.confidence_calibration
+
+        consensus_manager.update_agent_reputation('agent1', correct=False, confidence=1.0)
+        after_poorly_calibrated = profile.confidence_calibration
+
+        assert after_well_calibrated > initial_calibration
+        assert after_poorly_calibrated < after_well_calibrated
+
+    def test_confidence_input_is_clamped(self, consensus_manager):
+        """Out-of-range confidence values should be clamped into [0, 1]."""
+        profile = consensus_manager.agent_profiles['agent1']
+
+        consensus_manager.update_agent_reputation('agent1', correct=True, confidence=2.5)
+        high_outcome = profile.confidence_calibration
+
+        consensus_manager.update_agent_reputation('agent1', correct=False, confidence=-3.0)
+        low_outcome = profile.confidence_calibration
+
+        assert 0.0 <= high_outcome <= 1.0
+        assert 0.0 <= low_outcome <= 1.0
     
     def test_reputation_degradation(self, consensus_manager):
         """Agent reputation degrades with incorrect extractions."""

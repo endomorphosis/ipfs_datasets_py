@@ -61,9 +61,25 @@ class PrometheusMetrics:
     ERRORS_COUNTER = "optimizer_errors_total"  # Total errors
     CACHE_HITS_COUNTER = "optimizer_cache_hits_total"  # Cache hit count
     MEMORY_GAUGE = "optimizer_memory_usage_bytes"  # Peak memory
+    STAGE_DURATION_HISTOGRAM = "optimizer_stage_duration_seconds"
     
     # Score histogram buckets (for quantiles)
     SCORE_BUCKETS = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    STAGE_DURATION_BUCKETS = [
+        0.001,
+        0.005,
+        0.01,
+        0.025,
+        0.05,
+        0.1,
+        0.25,
+        0.5,
+        1.0,
+        2.5,
+        5.0,
+        10.0,
+        30.0,
+    ]
     
     def __init__(self, enabled: Optional[bool] = None):
         """Initialize PrometheusMetrics.
@@ -85,6 +101,7 @@ class PrometheusMetrics:
         self.errors: List[MetricValue] = []
         self.cache_hits: List[MetricValue] = []
         self.memory_usage: List[MetricValue] = []
+        self.stage_durations: List[MetricValue] = []
         
         # Session tracking
         self.session_start: Optional[float] = None
@@ -194,6 +211,33 @@ class PrometheusMetrics:
         
         value = MetricValue(value=float(bytes_used))
         self.memory_usage.append(value)
+
+    def record_stage_duration(
+        self,
+        stage: str,
+        duration_seconds: float,
+        labels: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """Record pipeline stage duration in seconds.
+
+        Args:
+            stage: Stage name (extracting/evaluating/refining/etc.).
+            duration_seconds: Stage duration in seconds.
+            labels: Optional labels (domain, pipeline_type, etc.).
+        """
+        if not self.enabled:
+            return
+
+        if duration_seconds < 0.0:
+            logger.warning("Invalid stage duration %.6f; clamping to 0", duration_seconds)
+            duration_seconds = 0.0
+
+        metric_labels = {"stage": stage}
+        if labels:
+            metric_labels.update(labels)
+
+        value = MetricValue(value=float(duration_seconds), labels=metric_labels)
+        self.stage_durations.append(value)
     
     def collect_metrics(self) -> str:
         """Collect metrics in Prometheus text format.
@@ -236,6 +280,36 @@ class PrometheusMetrics:
             lines.append(f"# HELP {self.DURATION_GAUGE} Last session duration in seconds")
             lines.append(f"# TYPE {self.DURATION_GAUGE} gauge")
             lines.append(f"{self.DURATION_GAUGE} {latest_duration}")
+            lines.append("")
+
+        # Add stage duration histogram
+        if self.stage_durations:
+            lines.append(f"# HELP {self.STAGE_DURATION_HISTOGRAM} Pipeline stage duration histogram")
+            lines.append(f"# TYPE {self.STAGE_DURATION_HISTOGRAM} histogram")
+
+            grouped: Dict[tuple, List[MetricValue]] = {}
+            for record in self.stage_durations:
+                labels_tuple = tuple(sorted(record.labels.items()))
+                grouped.setdefault(labels_tuple, []).append(record)
+
+            for labels_tuple, records in grouped.items():
+                labels_dict = dict(labels_tuple)
+                label_str = ",".join(f'{k}="{v}"' for k, v in sorted(labels_dict.items()))
+                for bucket_threshold in self.STAGE_DURATION_BUCKETS:
+                    bucket_count = sum(1 for r in records if r.value <= bucket_threshold)
+                    lines.append(
+                        f'{self.STAGE_DURATION_HISTOGRAM}_bucket'
+                        f'{{{label_str},le="{bucket_threshold}"}} {bucket_count}'
+                    )
+                total_sum = sum(r.value for r in records)
+                lines.append(
+                    f'{self.STAGE_DURATION_HISTOGRAM}_sum'
+                    f'{{{label_str}}} {total_sum}'
+                )
+                lines.append(
+                    f'{self.STAGE_DURATION_HISTOGRAM}_count'
+                    f'{{{label_str}}} {len(records)}'
+                )
             lines.append("")
         
         # Add error counter
