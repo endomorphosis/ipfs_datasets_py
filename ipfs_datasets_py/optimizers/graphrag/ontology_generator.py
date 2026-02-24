@@ -3155,6 +3155,10 @@ class OntologyGenerator:
                     # Extract context window for improved type inference
                     e1_type = getattr(e1, 'type', 'unknown').lower()
                     e2_type = getattr(e2, 'type', 'unknown').lower()
+
+                    # Skip semantically impossible type pairs to reduce O(n^2) cost
+                    if self._is_impossible_type_pair(e1_type, e2_type):
+                        continue
                     
                     # Use context window to infer relationship type with higher accuracy
                     context_window = self._extract_context_window(text, pos1, pos2, window_size=100)
