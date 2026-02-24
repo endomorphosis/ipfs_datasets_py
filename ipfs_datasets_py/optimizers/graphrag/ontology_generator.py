@@ -4767,20 +4767,118 @@ class OntologyGenerator:
         Returns:
             Extraction result with entities and relationships
         """
-        # LLM-based extraction is gated behind ipfs_accelerate availability.
-        # When the backend is unavailable, fall back to rule-based extraction.
-
-        if not self.use_ipfs_accelerate or not self._accelerate_available:
+        # Prefer explicit llm_backend when provided. This supports direct
+        # dependency injection in tests and production wrappers, independent
+        # of accelerator availability.
+        if self.llm_backend is None and (not self.use_ipfs_accelerate or not self._accelerate_available):
             self._log.warning("LLM extraction not available, falling back to rule-based")
             return self._extract_rule_based(data, context)
 
-        # Accelerate is available — delegate to rule-based as a best-effort
-        # until full LLM inference is wired.  The result is tagged so callers
-        # can distinguish it from a pure rule-based run.
-        result = self._extract_rule_based(data, context)
-        result.metadata["method"] = "llm_based"
-        result.confidence = min(result.confidence * 1.05, 1.0)  # slight confidence boost
-        return result
+        text = str(data) if data is not None else ""
+        prompt = (
+            "Extract ontology entities and relationships from the input text. "
+            "Return JSON with keys: entities, relationships, confidence. "
+            "Each entity should include text, type, confidence. "
+            "Each relationship should include source_id, target_id, type, confidence.\n\n"
+            f"INPUT:\n{text}"
+        )
+
+        try:
+            raw_response = self._invoke_llm_extraction_backend(prompt)
+            parsed = self._parse_llm_extraction_response(raw_response)
+            # Ensure relationships exist even if model omitted them.
+            if not parsed.relationships and parsed.entities:
+                parsed.relationships = self.infer_relationships(parsed.entities, context, data=data)
+            parsed.metadata.setdefault("method", "llm_based")
+            return parsed
+        except Exception as exc:
+            self._log.warning("LLM extraction failed, falling back to rule-based: %s", exc)
+            fallback = self._extract_rule_based(data, context)
+            fallback.metadata["method"] = "llm_fallback_rule_based"
+            return fallback
+
+    def _invoke_llm_extraction_backend(self, prompt: str) -> Any:
+        """Invoke configured LLM backend and return raw response payload."""
+        backend = self.llm_backend
+        if backend is None:
+            raise RuntimeError("No llm_backend configured for LLM extraction")
+
+        if callable(backend):
+            return backend(prompt)
+        if hasattr(backend, "generate"):
+            return backend.generate(prompt)
+        if hasattr(backend, "complete"):
+            return backend.complete(prompt)
+
+        raise TypeError(f"Unsupported llm_backend type: {type(backend).__name__}")
+
+    def _parse_llm_extraction_response(self, response: Any) -> EntityExtractionResult:
+        """Parse backend response into EntityExtractionResult."""
+        import json as _json
+        import uuid as _uuid
+
+        payload = response
+        if isinstance(response, str):
+            payload = _json.loads(response)
+        elif hasattr(response, "text") and isinstance(getattr(response, "text"), str):
+            payload = _json.loads(getattr(response, "text"))
+        elif hasattr(response, "content") and isinstance(getattr(response, "content"), str):
+            payload = _json.loads(getattr(response, "content"))
+
+        if not isinstance(payload, dict):
+            raise ValueError("LLM extraction response must be a dict-like JSON object")
+
+        entities: List[Entity] = []
+        entity_id_map: Dict[str, str] = {}
+        for item in payload.get("entities", []) or []:
+            if not isinstance(item, dict):
+                continue
+            text = str(item.get("text", "")).strip()
+            if not text:
+                continue
+            ent_id = str(item.get("id") or f"e_{_uuid.uuid4().hex[:8]}")
+            entity = Entity(
+                id=ent_id,
+                type=str(item.get("type", "Concept")),
+                text=text,
+                confidence=float(item.get("confidence", 0.7)),
+                properties=dict(item.get("properties") or {}),
+            )
+            entities.append(entity)
+            entity_id_map[text.lower()] = ent_id
+
+        relationships: List[Relationship] = []
+        for item in payload.get("relationships", []) or []:
+            if not isinstance(item, dict):
+                continue
+            src = item.get("source_id")
+            tgt = item.get("target_id")
+            # Allow text-based source/target fallback from model output.
+            if not src and item.get("source_text"):
+                src = entity_id_map.get(str(item.get("source_text")).lower())
+            if not tgt and item.get("target_text"):
+                tgt = entity_id_map.get(str(item.get("target_text")).lower())
+            if not src or not tgt:
+                continue
+            relationships.append(
+                Relationship(
+                    id=str(item.get("id") or f"r_{_uuid.uuid4().hex[:8]}"),
+                    source_id=str(src),
+                    target_id=str(tgt),
+                    type=str(item.get("type", "relatedTo")),
+                    confidence=float(item.get("confidence", 0.7)),
+                    direction=str(item.get("direction", "unknown")),
+                )
+            )
+
+        confidence = float(payload.get("confidence", 0.75))
+        confidence = max(0.0, min(1.0, confidence))
+        return EntityExtractionResult(
+            entities=entities,
+            relationships=relationships,
+            confidence=confidence,
+            metadata={"method": "llm_based"},
+        )
     
     def _extract_hybrid(
         self,
@@ -9058,5 +9156,4 @@ __all__ = [
     'ExtractionStrategy',
     'DataType',
 ]
-
 

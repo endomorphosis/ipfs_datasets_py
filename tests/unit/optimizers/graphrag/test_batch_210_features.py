@@ -130,6 +130,22 @@ class TestAboveTargetRate:
 
 
 # ---------------------------------------------------------------------------
+# OntologyOptimizer.score_above_target_fraction (alias)
+# ---------------------------------------------------------------------------
+
+class TestScoreAboveTargetFraction:
+    def test_alias_matches_above_target_rate(self):
+        opt = _optimizer_with([0.2, 0.7, 0.8, 0.9])
+        assert opt.score_above_target_fraction(0.7) == pytest.approx(
+            opt.above_target_rate(0.7)
+        )
+
+    def test_alias_uses_default_target(self):
+        opt = _optimizer_with([0.6, 0.8])
+        assert opt.score_above_target_fraction() == pytest.approx(0.5)
+
+
+# ---------------------------------------------------------------------------
 # OntologyCritic.dimension_trend_slope
 # ---------------------------------------------------------------------------
 

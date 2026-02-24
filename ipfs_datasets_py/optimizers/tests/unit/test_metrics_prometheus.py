@@ -5,7 +5,9 @@ import pytest
 from ipfs_datasets_py.optimizers.common.metrics_prometheus import (
     PrometheusMetrics,
     MetricValue,
+    get_global_prometheus_metrics,
 )
+from ipfs_datasets_py.optimizers.common import metrics_prometheus as metrics_prometheus_module
 
 
 class TestPrometheusMetricsInit:
@@ -312,3 +314,15 @@ class TestPrometheusMetricsSummary:
         
         assert summary["scores_recorded"] == 0
         assert "avg_score" not in summary
+
+
+class TestPrometheusMetricsGlobal:
+    """Test shared/global Prometheus metrics instance."""
+
+    def test_global_metrics_returns_singleton(self):
+        """Subsequent calls should return the same collector instance."""
+        metrics_prometheus_module._GLOBAL_PROMETHEUS_METRICS = None
+        first = get_global_prometheus_metrics(enabled=True)
+        second = get_global_prometheus_metrics(enabled=False)
+
+        assert first is second

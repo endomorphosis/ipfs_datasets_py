@@ -832,35 +832,43 @@ class _AsyncOptimizationValidator:
         """
         # Use enhanced parallel validator if available (40-60% speedup)
         if self.parallel_validator:
-            # Create wrapper functions for sync execution
-            validator_funcs = []
-            validator_names = []
-            
-            for name, validator in self.validators.items():
-                validator_names.append(name)
-                # Create async wrapper
-                async def validate_wrapper(v=validator):
-                    return await v.validate(code, target_files, context)
-                validator_funcs.append(validate_wrapper)
-            
-            # Run with enhanced parallel validator
-            # Note: run_async returns List[Tuple[bool, Any]] where:
-            # - bool indicates success
-            # - Any is either the result dict or error message
-            results_list = await self.parallel_validator.run_async(validator_funcs)
-            
-            result_dict = {}
-            for name, (success, data) in zip(validator_names, results_list):
-                if success and isinstance(data, dict):
-                    result_dict[name] = data
-                else:
-                    # Error case: data is error message
-                    result_dict[name] = {
-                        "passed": False,
-                        "errors": [str(data)] if data else ["Unknown error"],
-                    }
-            
-            return result_dict
+            try:
+                # Create wrapper functions for sync execution
+                validator_funcs = []
+                validator_names = []
+
+                for name, validator in self.validators.items():
+                    validator_names.append(name)
+
+                    async def validate_wrapper(v=validator):
+                        return await v.validate(code, target_files, context)
+
+                    validator_funcs.append(validate_wrapper)
+
+                # Run with enhanced parallel validator
+                # Note: run_async returns List[Tuple[bool, Any]] where:
+                # - bool indicates success
+                # - Any is either the result dict or error message
+                results_list = await self.parallel_validator.run_async(validator_funcs)
+
+                result_dict = {}
+                for name, (success, data) in zip(validator_names, results_list):
+                    if success and isinstance(data, dict):
+                        result_dict[name] = data
+                    else:
+                        # Error case: data is error message
+                        result_dict[name] = {
+                            "passed": False,
+                            "errors": [str(data)] if data else ["Unknown error"],
+                        }
+
+                return result_dict
+            except Exception as e:
+                self._log.warning(
+                    "Enhanced parallel validation failed; falling back to standard path: %s",
+                    e,
+                )
+                # Fall through to standard asyncio/anyio path below.
         else:
             # Fall back to standard asyncio gathering
             tasks = {
@@ -902,6 +910,43 @@ class _AsyncOptimizationValidator:
                 }
                 for name, result in zip(task_names, results_list)
             }
+
+        # If enhanced mode failed, run standard path explicitly.
+        tasks = {
+            name: validator.validate(code, target_files, context)
+            for name, validator in self.validators.items()
+        }
+        task_names = list(tasks.keys())
+        task_coros = list(tasks.values())
+
+        results_list: list = [None] * len(task_coros)
+
+        async def _run_one(idx: int, coro) -> None:  # type: ignore[type-arg]
+            try:
+                results_list[idx] = await coro
+            except Exception as task_err:
+                results_list[idx] = {"passed": False, "errors": [str(task_err)]}
+
+        try:
+            async with anyio.create_task_group() as tg:
+                for i, coro in enumerate(task_coros):
+                    tg.start_soon(_run_one, i, coro)
+        except Exception as e:
+            self._log.warning("anyio task group failed, falling back to sequential: %s", e)
+            results_list = []
+            for coro in task_coros:
+                try:
+                    results_list.append(await coro)
+                except Exception as task_err:
+                    results_list.append({"passed": False, "errors": [str(task_err)]})
+
+        return {
+            name: result if isinstance(result, dict) else {
+                "passed": False,
+                "errors": [str(result)] if result else ["Unknown error"],
+            }
+            for name, result in zip(task_names, results_list)
+        }
     
     async def _validate_sequential(
         self,
@@ -1292,6 +1337,7 @@ class OptimizationValidator:
         baseline_metrics: Optional[Dict[str, float]] = None,
         optimized_metrics: Optional[Dict[str, float]] = None,
         parallel: Optional[bool] = None,
+        use_enhanced_parallel: Optional[bool] = None,
         timeout: Optional[int] = None,
         context: Optional[Dict[str, Any]] = None,
     ) -> DetailedValidationResult:
@@ -1326,11 +1372,17 @@ class OptimizationValidator:
         if optimized_metrics:
             val_context["optimized_metrics"] = optimized_metrics
         
+        enhanced_parallel = (
+            use_enhanced_parallel
+            if use_enhanced_parallel is not None
+            else True
+        )
+
         # Create a new async validator with specified level for this validation
         async_val = _AsyncOptimizationValidator(
             level=level,
             parallel=parallel,
-            use_enhanced_parallel=True,
+            use_enhanced_parallel=enhanced_parallel,
         )
         
         # Run async validation synchronously
@@ -1360,6 +1412,7 @@ class OptimizationValidator:
         baseline_metrics: Optional[Dict[str, float]] = None,
         optimized_metrics: Optional[Dict[str, float]] = None,
         parallel: Optional[bool] = None,
+        use_enhanced_parallel: Optional[bool] = None,
         timeout: Optional[int] = None,
         context: Optional[Dict[str, Any]] = None,
     ) -> DetailedValidationResult:
@@ -1392,11 +1445,17 @@ class OptimizationValidator:
         if optimized_metrics:
             val_context["optimized_metrics"] = optimized_metrics
         
+        enhanced_parallel = (
+            use_enhanced_parallel
+            if use_enhanced_parallel is not None
+            else True
+        )
+
         # Create async validator with specified level
         async_val = _AsyncOptimizationValidator(
             level=level,
             parallel=parallel,
-            use_enhanced_parallel=True,
+            use_enhanced_parallel=enhanced_parallel,
         )
         
         # Run async validation

@@ -226,7 +226,11 @@ class OntologyOptimizer:
     
     def analyze_batch(
         self,
-        session_results: List[Any]  # List[MediatorState or SessionResult]
+        session_results: List[Any],  # List[MediatorState or SessionResult]
+        use_parallel: Optional[bool] = None,
+        parallel_threshold: int = 50,
+        max_workers: int = 4,
+        json_log_path: Optional[str] = None,
     ) -> OptimizationReport:
         """
         Analyze single batch of ontology generation sessions.
@@ -236,7 +240,13 @@ class OntologyOptimizer:
         the next optimization cycle.
         
         Args:
-            session_results: List of session results to analyze
+            session_results: List of session results to analyze.
+            use_parallel: If True, route to ``analyze_batch_parallel``. If None,
+                enable parallel analysis when ``len(session_results)`` meets
+                ``parallel_threshold``.
+            parallel_threshold: Minimum batch size to auto-enable parallel mode.
+            max_workers: Maximum workers for parallel mode.
+            json_log_path: Optional JSON output path for parallel mode summary.
             
         Returns:
             OptimizationReport with analysis and recommendations
@@ -255,6 +265,16 @@ class OntologyOptimizer:
             ...     print(f"- {rec}")
         """
         operation_start = time.time()
+
+        if use_parallel is None:
+            use_parallel = len(session_results) >= parallel_threshold
+
+        if use_parallel:
+            return self.analyze_batch_parallel(
+                session_results,
+                max_workers=max_workers,
+                json_log_path=json_log_path,
+            )
 
         self._log.info(
             "Analyzing batch of sessions",

@@ -117,12 +117,12 @@ def add(a: int, b: int) -> int:
 
     def test_parallel_validation_falls_back_when_task_group_fails(self):
         """Task-group failures should trigger sequential fallback, not crash."""
-        validator = OptimizationValidator(parallel=True, use_enhanced_parallel=False)
+        validator = OptimizationValidator(parallel=True)
 
         code = "def foo():\n    return 1"
 
         with patch("anyio.create_task_group", side_effect=RuntimeError("boom")):
-            result = validator.validate(code)
+            result = validator.validate(code, use_enhanced_parallel=False)
 
         assert isinstance(result, DetailedValidationResult)
         assert result.syntax.get("passed", False) is True
