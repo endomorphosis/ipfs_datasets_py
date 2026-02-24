@@ -101,7 +101,7 @@ class InputSanitizer:
             
             return True
             
-        except Exception as e:
+        except (OSError, RuntimeError, ValueError) as e:
             logger.error(f"Error validating path {path}: {e}")
             return False
     
@@ -190,7 +190,7 @@ class SandboxExecutor:
             logger.warning(f"Code execution timeout after {timeout}s")
             return False, "", f"Execution timeout after {timeout}s"
         
-        except Exception as e:
+        except (subprocess.SubprocessError, OSError, ValueError) as e:
             logger.error(f"Sandbox execution error: {e}")
             return False, "", str(e)
 

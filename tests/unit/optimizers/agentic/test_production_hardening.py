@@ -157,6 +157,14 @@ class TestInputSanitizer:
             assert result is False
         finally:
             Path(large_file).unlink()
+
+    def test_validate_file_path_returns_false_on_resolve_oserror(self, sanitizer):
+        """Path resolution failures should be handled and return False."""
+        with patch(
+            "ipfs_datasets_py.optimizers.agentic.production_hardening.Path.resolve",
+            side_effect=OSError("resolve failed"),
+        ):
+            assert sanitizer.validate_file_path("any.py") is False
     
     # --- Code validation tests (XSS/injection/dangerous patterns) ---
     
@@ -393,6 +401,17 @@ print(f'Key: {key}')
                 os.environ['OPENAI_API_KEY'] = original_val
             else:
                 os.environ.pop('OPENAI_API_KEY', None)
+
+    def test_execute_code_handles_subprocess_oserror(self, executor):
+        """Subprocess launch failures should be captured as failed execution."""
+        with patch(
+            "ipfs_datasets_py.optimizers.agentic.production_hardening.subprocess.run",
+            side_effect=OSError("spawn failed"),
+        ):
+            success, stdout, stderr = executor.execute_code("print('ok')")
+        assert success is False
+        assert stdout == ""
+        assert "spawn failed" in stderr
 
 
 class TestCircuitBreaker:

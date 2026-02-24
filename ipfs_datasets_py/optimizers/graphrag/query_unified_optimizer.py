@@ -1055,8 +1055,10 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         Returns:
             bool: Whether this is a fact verification query
         """
+        query_blob = str(query).lower()
+
         # Check for fact verification signals
-        if "verification" in str(query).lower():
+        if "verification" in query_blob:
             return True
             
         # Check for source and target entities (common in fact verification)
@@ -1102,8 +1104,10 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         Returns:
             bool: Whether this is an exploratory query
         """
+        query_blob = str(query).lower()
+
         # Check for explicit exploration signals in query parameters
-        if any(term in str(query).lower() for term in ["exploration", "discover", "survey", "overview"]):
+        if any(term in query_blob for term in ["exploration", "discover", "survey", "overview"]):
             return True
             
         # Check for exploratory language in query text

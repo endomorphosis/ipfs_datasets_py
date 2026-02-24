@@ -327,7 +327,7 @@ class MemoryProfiler:
             current_memory_mb = mem_info.rss / MemoryUnit.MB.value
             peak_memory_mb = mem_info.rss / MemoryUnit.MB.value  # Peak is equivalent to current in psutil
             total_allocated_mb = mem_info.rss / MemoryUnit.MB.value
-        except (ImportError, Exception):
+        except (ImportError, AttributeError, OSError, RuntimeError):
             # Fallback if psutil not available
             current_memory_mb = 0.0
             peak_memory_mb = 0.0
@@ -376,7 +376,7 @@ class MemoryProfiler:
                 size = sys.getsizeof(obj)
                 obj_type = type(obj).__name__
                 objects.append((size, obj_type))
-            except Exception:
+            except (TypeError, ValueError, AttributeError, OSError, RuntimeError):
                 pass
         
         return sorted(objects, key=lambda x: x[0], reverse=True)[:limit]

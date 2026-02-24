@@ -1137,7 +1137,7 @@ class WikipediaQueryExpander:
                     }
                     for result in similar_topics
                 ]
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError, OSError) as e:
                 # Log error but continue with other expansions
                 if self.tracer:
                     self.tracer.log_error(f"Topic expansion error: {str(e)}", trace_id)

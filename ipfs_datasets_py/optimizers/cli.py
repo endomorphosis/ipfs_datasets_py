@@ -129,7 +129,7 @@ See docs/optimizers/SELECTION_GUIDE.md for choosing the right optimizer.
         except KeyboardInterrupt:
             print("\n\nInterrupted by user")
             return 130
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, RuntimeError, OSError, ImportError) as e:
             print(f"Error: {e}")
             if parsed_args.verbose:
                 import traceback
