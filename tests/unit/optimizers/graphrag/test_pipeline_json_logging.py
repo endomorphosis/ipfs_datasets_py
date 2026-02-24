@@ -123,6 +123,27 @@ class TestPipelineJSONLogger:
         assert ctx.domain == "legal"
         assert ctx.data_source == "test"
         assert logger._context == ctx
+
+    @pytest.mark.parametrize(
+        "kwargs,expected_exception",
+        [
+            ({"run_id": 123, "data_source": "test"}, TypeError),
+            ({"run_id": "   ", "data_source": "test"}, ValueError),
+            ({"run_id": "run_123", "data_source": None}, TypeError),
+            ({"run_id": "run_123", "data_source": ""}, ValueError),
+            ({"run_id": "run_123", "data_source": "test", "data_type": 7}, TypeError),
+            ({"run_id": "run_123", "data_source": "test", "data_type": "   "}, ValueError),
+            ({"run_id": "run_123", "data_source": "test", "refine": "yes"}, TypeError),
+            ({"run_id": "run_123", "data_source": "test", "max_workers": 1.5}, TypeError),
+            ({"run_id": "run_123", "data_source": "test", "max_workers": 0}, ValueError),
+        ],
+    )
+    def test_start_run_rejects_invalid_inputs(self, kwargs, expected_exception):
+        """start_run should enforce basic type and value contracts."""
+        logger = PipelineJSONLogger(domain="legal")
+
+        with pytest.raises(expected_exception):
+            logger.start_run(**kwargs)
     
     def test_end_run_clears_context(self):
         """end_run should clear the current context."""
@@ -207,6 +228,26 @@ class TestPipelineJSONLogger:
         assert "refinement.started" in events
         assert "refinement.round.completed" in events
         assert "refinement.completed" in events
+
+    @pytest.mark.parametrize(
+        "kwargs,expected_exception",
+        [
+            ({"round_num": "1", "max_rounds": 3, "score_before": 0.1, "score_after": 0.2, "actions_applied": []}, TypeError),
+            ({"round_num": 0, "max_rounds": 3, "score_before": 0.1, "score_after": 0.2, "actions_applied": []}, ValueError),
+            ({"round_num": 4, "max_rounds": 3, "score_before": 0.1, "score_after": 0.2, "actions_applied": []}, ValueError),
+            ({"round_num": 1, "max_rounds": 0, "score_before": 0.1, "score_after": 0.2, "actions_applied": []}, ValueError),
+            ({"round_num": 1, "max_rounds": 3, "score_before": "0.1", "score_after": 0.2, "actions_applied": []}, TypeError),
+            ({"round_num": 1, "max_rounds": 3, "score_before": 0.1, "score_after": True, "actions_applied": []}, TypeError),
+            ({"round_num": 1, "max_rounds": 3, "score_before": 0.1, "score_after": 0.2, "actions_applied": "fix"}, TypeError),
+            ({"round_num": 1, "max_rounds": 3, "score_before": 0.1, "score_after": 0.2, "actions_applied": ["fix", 2]}, TypeError),
+        ],
+    )
+    def test_refinement_round_rejects_invalid_inputs(self, logger_with_capture, kwargs, expected_exception):
+        """log_refinement_round should enforce argument contracts."""
+        json_logger, _ = logger_with_capture
+
+        with pytest.raises(expected_exception):
+            json_logger.log_refinement_round(**kwargs)
     
     def test_error_logging(self, logger_with_capture):
         """Logger should capture errors with context."""

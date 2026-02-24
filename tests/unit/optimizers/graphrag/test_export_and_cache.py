@@ -3,17 +3,17 @@ import pytest
 
 
 @pytest.fixture
-def sample_ontology():
-    """Sample ontology for testing - specific data required by tests."""
-    return {
-        "entities": [
-            {"id": "e1", "text": "Alice", "type": "Person"},
-            {"id": "e2", "text": "Wonderland", "type": "Place"},
-        ],
-        "relationships": [
-            {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "visits"},
-        ],
-    }
+def sample_ontology(ontology_dict_factory):
+    """Sample ontology for testing built from the shared fixture factory."""
+    ontology = ontology_dict_factory(
+        entity_count=2,
+        relationship_count=1,
+        entity_types=["Person", "Place"],
+    )
+    ontology["entities"][0]["text"] = "Alice"
+    ontology["entities"][1]["text"] = "Wonderland"
+    ontology["relationships"][0]["type"] = "visits"
+    return ontology
 
 
 # ── GraphML export ───────────────────────────────────────────────────────────

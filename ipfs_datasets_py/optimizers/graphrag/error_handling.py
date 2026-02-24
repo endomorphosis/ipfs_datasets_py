@@ -508,7 +508,7 @@ def safe_operation(
             if error_handler:
                 error_handler(e)
             return default
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError, OSError) as e:
             if log_errors:
                 logger.exception(f"Unexpected error in {func_name}: {e}")
             if error_handler:

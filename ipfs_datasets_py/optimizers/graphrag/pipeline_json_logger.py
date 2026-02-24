@@ -181,6 +181,25 @@ class PipelineJSONLogger:
         Returns:
             LogContext for the run
         """
+        if not isinstance(run_id, str):
+            raise TypeError("run_id must be a string")
+        if not run_id.strip():
+            raise ValueError("run_id must be a non-empty string")
+        if not isinstance(data_source, str):
+            raise TypeError("data_source must be a string")
+        if not data_source.strip():
+            raise ValueError("data_source must be a non-empty string")
+        if not isinstance(data_type, str):
+            raise TypeError("data_type must be a string")
+        if not data_type.strip():
+            raise ValueError("data_type must be a non-empty string")
+        if not isinstance(refine, bool):
+            raise TypeError("refine must be a bool")
+        if not isinstance(max_workers, int):
+            raise TypeError("max_workers must be an int")
+        if max_workers <= 0:
+            raise ValueError("max_workers must be greater than 0")
+
         self._context = LogContext(
             run_id=run_id,
             domain=self.domain,
@@ -378,6 +397,25 @@ class PipelineJSONLogger:
             score_after: Ontology score after refinement
             actions_applied: List of refinement actions applied
         """
+        if not isinstance(round_num, int):
+            raise TypeError("round_num must be an int")
+        if not isinstance(max_rounds, int):
+            raise TypeError("max_rounds must be an int")
+        if max_rounds <= 0:
+            raise ValueError("max_rounds must be greater than 0")
+        if round_num < 1:
+            raise ValueError("round_num must be at least 1")
+        if round_num > max_rounds:
+            raise ValueError("round_num must be less than or equal to max_rounds")
+        if isinstance(score_before, bool) or not isinstance(score_before, (int, float)):
+            raise TypeError("score_before must be a number")
+        if isinstance(score_after, bool) or not isinstance(score_after, (int, float)):
+            raise TypeError("score_after must be a number")
+        if not isinstance(actions_applied, list):
+            raise TypeError("actions_applied must be a list")
+        if not all(isinstance(action, str) for action in actions_applied):
+            raise TypeError("actions_applied must contain only strings")
+
         improvement = score_after - score_before
         
         self._emit_log(

@@ -22,20 +22,28 @@ def mediator():
 
 
 @pytest.fixture
-def test_ontology():
-    """Create a simple test ontology."""
-    return {
-        "entities": [
-            {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.9},
-            {"id": "e2", "text": "Bob", "type": "Person", "confidence": 0.85},
-            {"id": "e3", "text": "Acme Corp", "type": "Organization", "confidence": 0.8},
-            {"id": "e4", "text": "Project X", "type": "Project", "confidence": 0.7},
-        ],
-        "relationships": [
-            {"id": "r1", "source_id": "e1", "target_id": "e3", "type": "works_at", "confidence": 0.75},
-        ],
-        "metadata": {"domain": "general"},
-    }
+def test_ontology(ontology_dict_factory):
+    """Create a simple test ontology using the shared fixture factory."""
+    ontology = ontology_dict_factory(
+        entity_count=4,
+        relationship_count=1,
+        domain="general",
+        entity_types=["Person", "Person", "Organization", "Project"],
+    )
+
+    # Preserve prior fixture semantics used by these tests.
+    ontology["entities"][0]["text"] = "Alice"
+    ontology["entities"][1]["text"] = "Bob"
+    ontology["entities"][2]["text"] = "Acme Corp"
+    ontology["entities"][3]["text"] = "Project X"
+    ontology["entities"][0]["confidence"] = 0.9
+    ontology["entities"][1]["confidence"] = 0.85
+    ontology["entities"][2]["confidence"] = 0.8
+    ontology["entities"][3]["confidence"] = 0.7
+    ontology["relationships"][0]["type"] = "works_at"
+    ontology["relationships"][0]["confidence"] = 0.75
+
+    return ontology
 
 
 @pytest.fixture

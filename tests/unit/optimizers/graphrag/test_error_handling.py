@@ -386,6 +386,17 @@ class TestSafeOperation:
             result = decorated()
             assert result == "fallback"
 
+    def test_safe_operation_does_not_swallow_base_exception(self):
+        """BaseException subclasses should propagate from safe_operation."""
+        class AbortSignal(BaseException):
+            pass
+
+        func = Mock(side_effect=AbortSignal())
+        decorated = safe_operation(func, default="fallback")
+
+        with pytest.raises(AbortSignal):
+            decorated()
+
 
 class TestErrorDetail:
     """Tests for ErrorDetail serialization."""
