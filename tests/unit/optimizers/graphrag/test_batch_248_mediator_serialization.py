@@ -41,19 +41,23 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_critic import (
 # ============================================================================
 
 @pytest.fixture
-def simple_ontology():
-    """Create a simple ontology for testing."""
-    return {
-        "entities": [
-            {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.9},
-            {"id": "e2", "text": "Bob", "type": "Person", "confidence": 0.8},
-        ],
-        "relationships": [
-            {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows", "confidence": 0.7}
-        ],
-        "metadata": {"source": "test"},
-        "domain": "general",
-    }
+def simple_ontology(ontology_dict_factory):
+    """Create a simple ontology for testing via shared fixture factory."""
+    ontology = ontology_dict_factory(
+        entity_count=2,
+        relationship_count=1,
+        domain="general",
+        metadata={"source": "test"},
+        entity_types=["Person", "Person"],
+    )
+    ontology["entities"][0]["text"] = "Alice"
+    ontology["entities"][0]["confidence"] = 0.9
+    ontology["entities"][1]["text"] = "Bob"
+    ontology["entities"][1]["confidence"] = 0.8
+    ontology["relationships"][0]["type"] = "knows"
+    ontology["relationships"][0]["confidence"] = 0.7
+    ontology["domain"] = "general"
+    return ontology
 
 
 @pytest.fixture

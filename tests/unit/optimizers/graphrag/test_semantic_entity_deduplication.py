@@ -26,16 +26,23 @@ def validator():
 
 
 @pytest.fixture
-def simple_ontology():
-    """Create simple ontology for testing."""
-    return {
-        "entities": [
-            {"id": "e1", "text": "attorney", "type": "Profession", "confidence": 0.9},
-            {"id": "e2", "text": "lawyer", "type": "Profession", "confidence": 0.85},
-            {"id": "e3", "text": "doctor", "type": "Profession", "confidence": 0.9},
-        ],
-        "relationships": []
-    }
+def simple_ontology(ontology_dict_factory):
+    """Create simple ontology for testing via shared fixture factory."""
+    ontology = ontology_dict_factory(
+        entity_count=3,
+        relationship_count=0,
+        entity_types=["Profession", "Profession", "Profession"],
+    )
+    ontology["entities"][0]["id"] = "e1"
+    ontology["entities"][0]["text"] = "attorney"
+    ontology["entities"][0]["confidence"] = 0.9
+    ontology["entities"][1]["id"] = "e2"
+    ontology["entities"][1]["text"] = "lawyer"
+    ontology["entities"][1]["confidence"] = 0.85
+    ontology["entities"][2]["id"] = "e3"
+    ontology["entities"][2]["text"] = "doctor"
+    ontology["entities"][2]["confidence"] = 0.9
+    return ontology
 
 
 @pytest.fixture

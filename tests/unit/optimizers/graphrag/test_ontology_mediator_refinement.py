@@ -30,31 +30,37 @@ def _score(**recs) -> CriticScore:
     )
 
 
-def _ontology(n_ents: int = 4, n_rels: int = 0, with_props: bool = False):
-    ents = [
-        {
-            "id": f"e{i}",
-            "type": "Concept",
-            "text": f"entity{i}",
-            **({"properties": {"k": "v"}} if with_props else {}),
-        }
-        for i in range(n_ents)
-    ]
-    rels = [
-        {
-            "id": f"r{i}",
-            "source_id": f"e{i}",
-            "target_id": f"e{(i + 1) % n_ents}",
-            "type": "related_to",
-        }
-        for i in range(n_rels)
-    ]
-    return {"entities": ents, "relationships": rels, "metadata": {}}
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    """Create test ontologies via shared fixture factory."""
+
+    def _build(n_ents: int = 4, n_rels: int = 0, with_props: bool = False):
+        ontology = ontology_dict_factory(
+            entity_count=n_ents,
+            relationship_count=n_rels,
+            domain="general",
+            entity_types=["Concept"],
+        )
+        for idx, ent in enumerate(ontology["entities"]):
+            ent["id"] = f"e{idx}"
+            ent["text"] = f"entity{idx}"
+            if with_props:
+                ent["properties"] = {"k": "v"}
+            else:
+                ent.pop("properties", None)
+        for idx, rel in enumerate(ontology["relationships"]):
+            rel["id"] = f"r{idx}"
+            rel["source_id"] = f"e{idx}"
+            rel["target_id"] = f"e{(idx + 1) % max(n_ents, 1)}"
+            rel["type"] = "related_to"
+        return ontology
+
+    return _build
 
 
 class TestRefineOntologyActionDispatch:
-    def test_add_missing_properties_action(self, mediator):
-        ontology = _ontology(3)
+    def test_add_missing_properties_action(self, mediator, ontology_builder):
+        ontology = ontology_builder(3)
         score = _score(recommendations=["Improve clarity and add property definitions"])
         refined = mediator.refine_ontology(ontology, score, context=None)
         assert "add_missing_properties" in refined["metadata"]["refinement_actions"]
@@ -117,9 +123,9 @@ class TestRefineOntologyActionDispatch:
         assert "merge_duplicates" in refined["metadata"]["refinement_actions"]
         assert len(refined["entities"]) == 1
 
-    def test_add_missing_relationships_action(self, mediator):
+    def test_add_missing_relationships_action(self, mediator, ontology_builder):
         # All 4 entities are orphans (no relationships)
-        ontology = _ontology(4, n_rels=0)
+        ontology = ontology_builder(4, n_rels=0)
         score = _score(recommendations=["Add missing relationships for unlinked entities"])
         refined = mediator.refine_ontology(ontology, score, context=None)
         assert "add_missing_relationships" in refined["metadata"]["refinement_actions"]
@@ -147,28 +153,28 @@ class TestRefineOntologyActionDispatch:
         linked = {(r["source_id"], r["target_id"]) for r in new_rels}
         assert ("e2", "e3") in linked or ("e3", "e2") in linked
 
-    def test_no_matching_recommendation_no_action(self, mediator):
-        ontology = _ontology(2)
+    def test_no_matching_recommendation_no_action(self, mediator, ontology_builder):
+        ontology = ontology_builder(2)
         score = _score(recommendations=["Everything looks great"])
         refined = mediator.refine_ontology(ontology, score, context=None)
         assert refined["metadata"]["refinement_actions"] == []
 
-    def test_original_ontology_not_mutated(self, mediator):
+    def test_original_ontology_not_mutated(self, mediator, ontology_builder):
         import copy
-        ontology = _ontology(3)
+        ontology = ontology_builder(3)
         original = copy.deepcopy(ontology)
         score = _score(recommendations=["Improve clarity and add property definitions"])
         mediator.refine_ontology(ontology, score, context=None)
         assert ontology == original
 
-    def test_refinement_actions_recorded_in_metadata(self, mediator):
-        ontology = _ontology(3)
+    def test_refinement_actions_recorded_in_metadata(self, mediator, ontology_builder):
+        ontology = ontology_builder(3)
         score = _score(recommendations=["Improve clarity"])
         refined = mediator.refine_ontology(ontology, score, context=None)
         assert "refinement_actions" in refined["metadata"]
 
-    def test_empty_recommendations_no_action(self, mediator):
-        ontology = _ontology(3)
+    def test_empty_recommendations_no_action(self, mediator, ontology_builder):
+        ontology = ontology_builder(3)
         score = _score(recommendations=[])
         refined = mediator.refine_ontology(ontology, score, context=None)
         assert refined["metadata"]["refinement_actions"] == []
