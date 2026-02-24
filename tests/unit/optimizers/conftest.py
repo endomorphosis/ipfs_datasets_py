@@ -863,3 +863,219 @@ def feedback_record_typeddict_factory():
         return feedback
     
     return _create
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Specialized Ontology Patterns (for migration from local helpers)
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.fixture
+def random_ontology_factory():
+    """Factory for creating randomized ontologies with reproducible seeds.
+    
+    Replaces patterns like: generate_random_ontology(entity_count, rel_count, seed)
+    
+    Returns:
+        Callable that creates ontology dicts with random but reproducible content.
+        
+    Example:
+        >>> ont = random_ontology_factory(entity_count=10, seed=42)
+        >>> ont2 = random_ontology_factory(entity_count=10, seed=42)  # Same as ont
+    """
+    import random
+    
+    def _create(
+        entity_count: int = 5,
+        relationship_count: int = 3,
+        seed: int = 42,
+        domain: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        random.seed(seed)
+        
+        entity_types = ["Person", "Organization", "Location", "Concept", "Event", 
+                        "Date", "Product", "Document", "Law", "Contract"]
+        domains = ["legal", "medical", "technical", "general", "business"]
+        
+        entities = []
+        for i in range(entity_count):
+            ent_type = random.choice(entity_types)
+            entities.append({
+                "id": f"entity_{i}",
+                "text": f"Entity_{i}_{random.choice(['Alpha', 'Beta', 'Gamma', 'Delta'])}",
+                "type": ent_type,
+                "confidence": random.uniform(0.3, 0.99),
+            })
+        
+        relationships = []
+        rel_types = ["related_to", "depends_on", "mentions", "contains", "defined_by"]
+        for i in range(relationship_count):
+            if entity_count > 1:
+                source = random.choice(entities)["id"]
+                target = random.choice(entities)["id"]
+                
+                relationships.append({
+                    "id": f"rel_{i}",
+                    "source_id": source,
+                    "target_id": target,
+                    "type": random.choice(rel_types),
+                    "confidence": random.uniform(0.5, 0.95),
+                })
+        
+        ontology = {
+            "entities": entities,
+            "relationships": relationships,
+            "metadata": {
+                "source": f"test_seed_{seed}",
+                "domain": domain if domain else random.choice(domains),
+            }
+        }
+        
+        return ontology
+    
+    return _create
+
+
+@pytest.fixture
+def sparse_ontology_factory(ontology_dict_factory):
+    """Factory for creating ontologies with low relationship density.
+    
+    Replaces patterns like: sparse_ontology = {"entities": [...10...], "relationships": [... only 1 ...]}
+    
+    Returns:
+        Callable that creates ontologies with many entities but few relationships.
+        
+    Example:
+        >>> ont = sparse_ontology_factory(entity_count=20, relationship_count=2)
+        >>> density = len(ont["relationships"]) / len(ont["entities"])  # Very low density
+    """
+    def _create(
+        entity_count: int = 10,
+        relationship_count: int = 1,
+        domain: str = "general",
+    ) -> Dict[str, Any]:
+        return ontology_dict_factory(
+            entity_count=entity_count,
+            relationship_count=relationship_count,
+            domain=domain,
+            metadata={"density": "sparse", "relationship_ratio": relationship_count / entity_count}
+        )
+    
+    return _create
+
+
+@pytest.fixture
+def dense_ontology_factory(ontology_dict_factory):
+    """Factory for creating ontologies with high relationship density.
+    
+    Replaces patterns like: dense_ontology with 2x-3x relationships per entity.
+    
+    Returns:
+        Callable that creates ontologies with many relationships relative to entities.
+        
+    Example:
+        >>> ont = dense_ontology_factory(entity_count=10)  # Creates 20+ relationships
+        >>> density = len(ont["relationships"]) / len(ont["entities"])  # High density (>2.0)
+    """
+    def _create(
+        entity_count: int = 10,
+        density_factor: float = 2.5,
+        domain: str = "general",
+    ) -> Dict[str, Any]:
+        relationship_count = int(entity_count * density_factor)
+        return ontology_dict_factory(
+            entity_count=entity_count,
+            relationship_count=relationship_count,
+            domain=domain,
+            metadata={"density": "dense", "relationship_ratio": density_factor}
+        )
+    
+    return _create
+
+
+@pytest.fixture
+def domain_specific_ontology_factory(ontology_dict_factory):
+    """Factory for creating domain-specific ontologies (legal, medical, business).
+    
+    Replaces patterns like: _make_legal_ontology(), _make_medical_ontology()
+    
+    Returns:
+        Callable that creates ontologies with domain-specific entity types and relationships.
+        
+    Example:
+        >>> legal_ont = domain_specific_ontology_factory(domain="legal")
+        >>> medical_ont = domain_specific_ontology_factory(domain="medical", entity_count=15)
+    """
+    def _create(
+        domain: str = "legal",
+        entity_count: int = 10,
+        relationship_count: int = 8,
+    ) -> Dict[str, Any]:
+        # Domain-specific entity types
+        domain_types = {
+            "legal": ["Contract", "Clause", "Party", "Law", "Statute", "Case", "Precedent"],
+            "medical": ["Patient", "Diagnosis", "Treatment", "Symptom", "Medication", "Procedure", "Doctor"],
+            "business": ["Company", "Employee", "Product", "Service", "Transaction", "Department", "Asset"],
+            "technical": ["System", "Component", "Interface", "Protocol", "Service", "Database", "API"],
+        }
+        
+        types = domain_types.get(domain, ["Entity", "Concept", "Item"])
+        
+        return ontology_dict_factory(
+            entity_count=entity_count,
+            relationship_count=relationship_count,
+            domain=domain,
+            entity_types=types,
+            metadata={"domain_specific": True, "domain": domain}
+        )
+    
+    return _create
+
+
+@pytest.fixture
+def empty_ontology_factory():
+    """Factory for creating empty ontologies (0 entities, 0 relationships).
+    
+    Replaces patterns like: {"entities": [], "relationships": []}
+    
+    Returns:
+        Callable that creates empty ontology dicts.
+        
+    Example:
+        >>> ont = empty_ontology_factory()
+        >>> assert len(ont["entities"]) == 0
+    """
+    def _create(domain: str = "general") -> Dict[str, Any]:
+        return {
+            "entities": [],
+            "relationships": [],
+            "metadata": {"domain": domain, "empty": True}
+        }
+    
+    return _create
+
+
+@pytest.fixture
+def minimal_ontology_factory(ontology_dict_factory):
+    """Factory for creating minimal ontologies (1-3 entities, 0-2 relationships).
+    
+    Replaces patterns like: _minimal_ontology(n_entities=2, n_rels=1)
+    
+    Returns:
+        Callable that creates minimal ontology dicts for smoke tests.
+        
+    Example:
+        >>> ont = minimal_ontology_factory(entity_count=2, relationship_count=1)
+    """
+    def _create(
+        entity_count: int = 2,
+        relationship_count: int = 1,
+        domain: str = "general",
+    ) -> Dict[str, Any]:
+        return ontology_dict_factory(
+            entity_count=entity_count,
+            relationship_count=relationship_count,
+            domain=domain,
+        )
+    
+    return _create
