@@ -140,7 +140,7 @@ class AdvancedPerformanceOptimizer:
                 
                 time.sleep(self.monitoring_interval)
                 
-            except Exception as e:
+            except (RuntimeError, ValueError, TypeError, OSError, AttributeError) as e:
                 logger.error(f"Monitoring loop error: {e}")
                 time.sleep(self.monitoring_interval * 2)  # Back off on error
     
@@ -163,7 +163,7 @@ class AdvancedPerformanceOptimizer:
                     'bytes_sent': net_io.bytes_sent,
                     'bytes_recv': net_io.bytes_recv
                 }
-            except:
+            except (AttributeError, OSError, RuntimeError, ValueError, TypeError, psutil.Error):
                 network_io = {}
             
             return ResourceMetrics(
@@ -177,7 +177,7 @@ class AdvancedPerformanceOptimizer:
                 timestamp=datetime.now()
             )
             
-        except Exception as e:
+        except (AttributeError, OSError, RuntimeError, ValueError, TypeError, psutil.Error) as e:
             logger.error(f"Failed to collect resource metrics: {e}")
             # Return default metrics on error
             return ResourceMetrics()
@@ -729,7 +729,7 @@ class AdvancedPerformanceOptimizer:
             logger.info(f"Performance data exported to: {filepath}")
             return filepath
             
-        except Exception as e:
+        except (OSError, TypeError, ValueError, RuntimeError) as e:
             logger.error(f"Failed to export performance data: {e}")
             raise
 

@@ -167,6 +167,40 @@ class TestPipelineJSONLogger:
         
         # Should have at least 3 logs (start_run, extraction_started, extraction_completed)
         assert len(lines) >= 3
+
+    @pytest.mark.parametrize(
+        "kwargs,expected_exception",
+        [
+            ({"data_length": "100", "strategy": "rule_based"}, TypeError),
+            ({"data_length": -1, "strategy": "rule_based"}, ValueError),
+            ({"data_length": 100, "strategy": 1}, TypeError),
+            ({"data_length": 100, "strategy": "   "}, ValueError),
+        ],
+    )
+    def test_extraction_started_rejects_invalid_inputs(self, logger_with_capture, kwargs, expected_exception):
+        """log_extraction_started should enforce argument contracts."""
+        json_logger, _ = logger_with_capture
+
+        with pytest.raises(expected_exception):
+            json_logger.log_extraction_started(**kwargs)
+
+    @pytest.mark.parametrize(
+        "kwargs,expected_exception",
+        [
+            ({"entity_count": "10", "relationship_count": 5}, TypeError),
+            ({"entity_count": 10, "relationship_count": -1}, ValueError),
+            ({"entity_count": 10, "relationship_count": 5, "entity_types": []}, TypeError),
+            ({"entity_count": 10, "relationship_count": 5, "entity_types": {1: 2}}, TypeError),
+            ({"entity_count": 10, "relationship_count": 5, "entity_types": {"Person": "2"}}, TypeError),
+            ({"entity_count": 10, "relationship_count": 5, "entity_types": {"Person": -2}}, ValueError),
+        ],
+    )
+    def test_extraction_completed_rejects_invalid_inputs(self, logger_with_capture, kwargs, expected_exception):
+        """log_extraction_completed should enforce argument contracts."""
+        json_logger, _ = logger_with_capture
+
+        with pytest.raises(expected_exception):
+            json_logger.log_extraction_completed(**kwargs)
     
     def test_evaluation_logging(self, logger_with_capture):
         """Logger should capture evaluation lifecycle events."""
@@ -197,6 +231,39 @@ class TestPipelineJSONLogger:
                 break
         else:
             pytest.fail("evaluation.completed event not found")
+
+    @pytest.mark.parametrize(
+        "kwargs,expected_exception",
+        [
+            ({"parallel": "yes", "batch_size": 1}, TypeError),
+            ({"parallel": False, "batch_size": 0}, ValueError),
+            ({"parallel": False, "batch_size": 1.5}, TypeError),
+        ],
+    )
+    def test_evaluation_started_rejects_invalid_inputs(self, logger_with_capture, kwargs, expected_exception):
+        """log_evaluation_started should enforce argument contracts."""
+        json_logger, _ = logger_with_capture
+
+        with pytest.raises(expected_exception):
+            json_logger.log_evaluation_started(**kwargs)
+
+    @pytest.mark.parametrize(
+        "kwargs,expected_exception",
+        [
+            ({"score": "0.9", "cache_hit": False, "cache_size": 0}, TypeError),
+            ({"score": 0.9, "dimensions": [], "cache_hit": False, "cache_size": 0}, TypeError),
+            ({"score": 0.9, "dimensions": {1: 0.2}, "cache_hit": False, "cache_size": 0}, TypeError),
+            ({"score": 0.9, "dimensions": {"clarity": True}, "cache_hit": False, "cache_size": 0}, TypeError),
+            ({"score": 0.9, "cache_hit": "yes", "cache_size": 0}, TypeError),
+            ({"score": 0.9, "cache_hit": False, "cache_size": -1}, ValueError),
+        ],
+    )
+    def test_evaluation_completed_rejects_invalid_inputs(self, logger_with_capture, kwargs, expected_exception):
+        """log_evaluation_completed should enforce argument contracts."""
+        json_logger, _ = logger_with_capture
+
+        with pytest.raises(expected_exception):
+            json_logger.log_evaluation_completed(**kwargs)
     
     def test_refinement_logging(self, logger_with_capture):
         """Logger should capture refinement lifecycle events."""
@@ -232,6 +299,22 @@ class TestPipelineJSONLogger:
     @pytest.mark.parametrize(
         "kwargs,expected_exception",
         [
+            ({"mode": 1, "max_rounds": 1, "current_score": 0.1}, TypeError),
+            ({"mode": " ", "max_rounds": 1, "current_score": 0.1}, ValueError),
+            ({"mode": "rule_based", "max_rounds": 0, "current_score": 0.1}, ValueError),
+            ({"mode": "rule_based", "max_rounds": 2, "current_score": True}, TypeError),
+        ],
+    )
+    def test_refinement_started_rejects_invalid_inputs(self, logger_with_capture, kwargs, expected_exception):
+        """log_refinement_started should enforce argument contracts."""
+        json_logger, _ = logger_with_capture
+
+        with pytest.raises(expected_exception):
+            json_logger.log_refinement_started(**kwargs)
+
+    @pytest.mark.parametrize(
+        "kwargs,expected_exception",
+        [
             ({"round_num": "1", "max_rounds": 3, "score_before": 0.1, "score_after": 0.2, "actions_applied": []}, TypeError),
             ({"round_num": 0, "max_rounds": 3, "score_before": 0.1, "score_after": 0.2, "actions_applied": []}, ValueError),
             ({"round_num": 4, "max_rounds": 3, "score_before": 0.1, "score_after": 0.2, "actions_applied": []}, ValueError),
@@ -248,6 +331,22 @@ class TestPipelineJSONLogger:
 
         with pytest.raises(expected_exception):
             json_logger.log_refinement_round(**kwargs)
+
+    @pytest.mark.parametrize(
+        "kwargs,expected_exception",
+        [
+            ({"final_score": "0.9", "initial_score": 0.1, "rounds_completed": 1, "total_actions": 1}, TypeError),
+            ({"final_score": 0.9, "initial_score": False, "rounds_completed": 1, "total_actions": 1}, TypeError),
+            ({"final_score": 0.9, "initial_score": 0.1, "rounds_completed": -1, "total_actions": 1}, ValueError),
+            ({"final_score": 0.9, "initial_score": 0.1, "rounds_completed": 1, "total_actions": -1}, ValueError),
+        ],
+    )
+    def test_refinement_completed_rejects_invalid_inputs(self, logger_with_capture, kwargs, expected_exception):
+        """log_refinement_completed should enforce argument contracts."""
+        json_logger, _ = logger_with_capture
+
+        with pytest.raises(expected_exception):
+            json_logger.log_refinement_completed(**kwargs)
     
     def test_error_logging(self, logger_with_capture):
         """Logger should capture errors with context."""
@@ -301,6 +400,25 @@ class TestPipelineJSONLogger:
                 break
         else:
             pytest.fail("cache.statistics event not found")
+
+    @pytest.mark.parametrize(
+        "kwargs,expected_exception",
+        [
+            ({"cache_type": 1, "size": 1, "hit_count": 1, "miss_count": 0}, TypeError),
+            ({"cache_type": " ", "size": 1, "hit_count": 1, "miss_count": 0}, ValueError),
+            ({"cache_type": "shared", "size": -1, "hit_count": 1, "miss_count": 0}, ValueError),
+            ({"cache_type": "shared", "size": 1.5, "hit_count": 1, "miss_count": 0}, TypeError),
+            ({"cache_type": "shared", "size": 1, "hit_count": -1, "miss_count": 0}, ValueError),
+            ({"cache_type": "shared", "size": 1, "hit_count": 1, "miss_count": -1}, ValueError),
+            ({"cache_type": "shared", "size": 1, "hit_count": 1, "miss_count": 0, "eviction_count": -1}, ValueError),
+        ],
+    )
+    def test_cache_statistics_rejects_invalid_inputs(self, logger_with_capture, kwargs, expected_exception):
+        """log_cache_statistics should enforce argument contracts."""
+        json_logger, _ = logger_with_capture
+
+        with pytest.raises(expected_exception):
+            json_logger.log_cache_statistics(**kwargs)
     
     def test_batch_progress_logging(self, logger_with_capture):
         """Logger should capture batch progress."""
@@ -328,6 +446,25 @@ class TestPipelineJSONLogger:
                 break
         else:
             pytest.fail("batch.progress event not found")
+
+    @pytest.mark.parametrize(
+        "kwargs,expected_exception",
+        [
+            ({"batch_index": -1, "batch_total": 10, "items_completed": 1, "items_failed": 0, "current_score": 0.1}, ValueError),
+            ({"batch_index": 11, "batch_total": 10, "items_completed": 1, "items_failed": 0, "current_score": 0.1}, ValueError),
+            ({"batch_index": 0, "batch_total": 0, "items_completed": 1, "items_failed": 0, "current_score": 0.1}, ValueError),
+            ({"batch_index": "0", "batch_total": 10, "items_completed": 1, "items_failed": 0, "current_score": 0.1}, TypeError),
+            ({"batch_index": 0, "batch_total": 10, "items_completed": -1, "items_failed": 0, "current_score": 0.1}, ValueError),
+            ({"batch_index": 0, "batch_total": 10, "items_completed": 1, "items_failed": -1, "current_score": 0.1}, ValueError),
+            ({"batch_index": 0, "batch_total": 10, "items_completed": 1, "items_failed": 0, "current_score": True}, TypeError),
+        ],
+    )
+    def test_batch_progress_rejects_invalid_inputs(self, logger_with_capture, kwargs, expected_exception):
+        """log_batch_progress should enforce argument contracts."""
+        json_logger, _ = logger_with_capture
+
+        with pytest.raises(expected_exception):
+            json_logger.log_batch_progress(**kwargs)
     
     def test_json_schema_inclusion(self, logger_with_capture):
         """All logs should include schema metadata."""

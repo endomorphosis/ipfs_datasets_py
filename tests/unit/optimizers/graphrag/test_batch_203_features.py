@@ -89,11 +89,19 @@ def _make_mediator() -> OntologyMediator:
     return m
 
 
-def _make_ontology(n: int = 3) -> dict:
-    return {
-        "entities": [{"id": f"e{i}", "text": f"E{i}", "type": "Person"} for i in range(n)],
-        "relationships": [],
-    }
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    def _build(n: int = 3) -> dict:
+        ontology = ontology_dict_factory(
+            entity_count=n,
+            relationship_count=0,
+            entity_types=["Person"],
+        )
+        for i, entity in enumerate(ontology["entities"]):
+            entity.update({"id": f"e{i}", "text": f"E{i}", "type": "Person"})
+        return ontology
+
+    return _build
 
 
 def _make_mock_ctx() -> MagicMock:
@@ -194,37 +202,37 @@ class TestApplyConfig:
 # ---------------------------------------------------------------------------
 
 class TestRetryLastRound:
-    def test_empty_undo_stack_refines_current(self):
+    def test_empty_undo_stack_refines_current(self, ontology_builder):
         """With no undo stack, refines the ontology as-is."""
         mediator = _make_mediator()
-        ont = _make_ontology()
+        ont = ontology_builder()
         score = _make_critic_score(0.5)
         ctx = _make_mock_ctx()
         result = mediator.retry_last_round(ont, score, ctx)
         assert isinstance(result, dict)
 
-    def test_with_undo_stack_rolls_back(self):
+    def test_with_undo_stack_rolls_back(self, ontology_builder):
         """With a snapshot in the undo stack, the rollback is used."""
         mediator = _make_mediator()
         import copy
-        snapshot = _make_ontology(n=2)
+        snapshot = ontology_builder(n=2)
         mediator._undo_stack.append(copy.deepcopy(snapshot))
-        ont = _make_ontology(n=5)
+        ont = ontology_builder(n=5)
         score = _make_critic_score(0.4)
         ctx = _make_mock_ctx()
         result = mediator.retry_last_round(ont, score, ctx)
         assert isinstance(result, dict)
 
-    def test_returns_dict(self):
+    def test_returns_dict(self, ontology_builder):
         mediator = _make_mediator()
         result = mediator.retry_last_round(
-            _make_ontology(), _make_critic_score(0.6), _make_mock_ctx()
+            ontology_builder(), _make_critic_score(0.6), _make_mock_ctx()
         )
         assert isinstance(result, dict)
 
-    def test_does_not_mutate_original(self):
+    def test_does_not_mutate_original(self, ontology_builder):
         mediator = _make_mediator()
-        ont = _make_ontology(n=3)
+        ont = ontology_builder(n=3)
         original_len = len(ont["entities"])
         mediator.retry_last_round(ont, _make_critic_score(0.5), _make_mock_ctx())
         assert len(ont["entities"]) == original_len

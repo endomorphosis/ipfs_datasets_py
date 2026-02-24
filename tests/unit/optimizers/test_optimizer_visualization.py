@@ -184,6 +184,49 @@ class TestLiveOptimizerVisualization:
         # (May not update if visualizations fail gracefully)
         assert viz.last_update_time >= initial_time
 
+    def test_auto_update_loop_handles_typed_update_errors(self, temp_dirs, caplog):
+        """Typed runtime failures during auto-update should be logged and suppressed."""
+        metrics_dir, viz_dir = temp_dirs
+        viz = LiveOptimizerVisualization(
+            metrics_dir=metrics_dir,
+            visualization_dir=viz_dir,
+            visualization_interval=1,
+        )
+        viz.last_update_time = 0.0
+
+        def _fail_update():
+            viz._stop_auto_update.set()
+            raise RuntimeError("update failed")
+
+        viz.update_visualizations = _fail_update
+
+        with patch("ipfs_datasets_py.optimizers.optimizer_visualization_integration.time.sleep", return_value=None), \
+             patch("ipfs_datasets_py.optimizers.optimizer_visualization_integration.time.time", return_value=10.0), \
+             caplog.at_level("ERROR"):
+            viz._auto_update_loop()
+
+        assert "Error during auto-update" in caplog.text
+
+    def test_auto_update_loop_propagates_base_exceptions(self, temp_dirs):
+        """Base exceptions (e.g., KeyboardInterrupt) should not be swallowed."""
+        metrics_dir, viz_dir = temp_dirs
+        viz = LiveOptimizerVisualization(
+            metrics_dir=metrics_dir,
+            visualization_dir=viz_dir,
+            visualization_interval=1,
+        )
+        viz.last_update_time = 0.0
+
+        def _interrupt_update():
+            raise KeyboardInterrupt("stop")
+
+        viz.update_visualizations = _interrupt_update
+
+        with patch("ipfs_datasets_py.optimizers.optimizer_visualization_integration.time.sleep", return_value=None), \
+             patch("ipfs_datasets_py.optimizers.optimizer_visualization_integration.time.time", return_value=10.0):
+            with pytest.raises(KeyboardInterrupt):
+                viz._auto_update_loop()
+
     @patch('ipfs_datasets_py.optimizers.optimizer_visualization_integration.OptimizerLearningMetricsVisualizer')
     def test_update_visualizations(self, mock_visualizer_class, temp_dirs):
         """Test updating visualizations."""

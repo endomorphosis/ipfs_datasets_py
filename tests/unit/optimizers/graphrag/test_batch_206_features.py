@@ -80,10 +80,22 @@ def _make_pipeline_with(scores: list[float]) -> OntologyPipeline:
     return pipeline
 
 
-def _make_ontology(*pairs) -> dict:
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
     """Build a minimal dict ontology from (source, target) relationship pairs."""
-    rels = [{"source": s, "target": t, "type": "r"} for s, t in pairs]
-    return {"relationships": rels}
+
+    def _build(*pairs) -> dict:
+        entities = list({s for s, _ in pairs} | {t for _, t in pairs})
+        ontology = ontology_dict_factory(
+            entity_count=len(entities),
+            relationship_count=0,
+            entity_types=["Concept"],
+        )
+        ontology["entities"] = [{"id": e, "text": e} for e in entities]
+        ontology["relationships"] = [{"source": s, "target": t, "type": "r"} for s, t in pairs]
+        return ontology
+
+    return _build
 
 
 # ---------------------------------------------------------------------------
@@ -299,29 +311,29 @@ class TestAvgDegree:
     def test_no_relationships_returns_zero(self):
         assert self.validator.avg_degree({"relationships": []}) == 0.0
 
-    def test_single_edge_two_nodes(self):
+    def test_single_edge_two_nodes(self, ontology_builder):
         # a→b: a degree=1, b degree=1 → avg=1.0
-        ont = _make_ontology(("a", "b"))
+        ont = ontology_builder(("a", "b"))
         assert self.validator.avg_degree(ont) == pytest.approx(1.0)
 
-    def test_star_topology(self):
+    def test_star_topology(self, ontology_builder):
         # hub→x, hub→y, hub→z: hub=3, x=1, y=1, z=1 → sum=6, nodes=4 → avg=1.5
-        ont = _make_ontology(("hub", "x"), ("hub", "y"), ("hub", "z"))
+        ont = ontology_builder(("hub", "x"), ("hub", "y"), ("hub", "z"))
         assert self.validator.avg_degree(ont) == pytest.approx(1.5)
 
-    def test_non_negative(self):
-        ont = _make_ontology(("a", "b"), ("b", "c"))
+    def test_non_negative(self, ontology_builder):
+        ont = ontology_builder(("a", "b"), ("b", "c"))
         assert self.validator.avg_degree(ont) >= 0.0
 
-    def test_returns_float(self):
-        ont = _make_ontology(("x", "y"))
+    def test_returns_float(self, ontology_builder):
+        ont = ontology_builder(("x", "y"))
         assert isinstance(self.validator.avg_degree(ont), float)
 
-    def test_avg_degree_equals_2_times_edges_div_nodes(self):
+    def test_avg_degree_equals_2_times_edges_div_nodes(self, ontology_builder):
         # In an undirected view, avg_degree = 2*|E|/|V|
         # Here we count each edge endpoint; so sum_of_degrees = 2*|E|
         # With a→b, b→c, c→a: 3 edges, 3 nodes → sum_of_degrees=6 → avg=2.0
-        ont = _make_ontology(("a", "b"), ("b", "c"), ("c", "a"))
+        ont = ontology_builder(("a", "b"), ("b", "c"), ("c", "a"))
         assert self.validator.avg_degree(ont) == pytest.approx(2.0)
 
 

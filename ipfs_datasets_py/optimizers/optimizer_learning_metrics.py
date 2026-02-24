@@ -1166,7 +1166,7 @@ class OptimizerLearningMetricsCollector:
                 f.write(self.to_json())
 
             logger.debug(f"Learning metrics saved to {metrics_file}")
-        except Exception as e:
+        except (OSError, TypeError, ValueError) as e:
             logger.error(f"Error saving learning metrics: {str(e)}")
 
     def to_json(self):
@@ -1235,6 +1235,6 @@ class OptimizerLearningMetricsCollector:
             collector.learning_start_time = data.get("learning_start_time", time.time())
 
             return collector
-        except Exception as e:
+        except (json.JSONDecodeError, TypeError, ValueError, AttributeError) as e:
             logger.error(f"Error loading metrics from JSON: {str(e)}")
             return cls()

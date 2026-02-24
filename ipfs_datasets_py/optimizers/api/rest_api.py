@@ -383,7 +383,7 @@ class APIServer:
             """Create a new entity."""
             try:
                 return self.entity_store.create(entity)
-            except Exception as e:
+            except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Error creating entity: {e}")
                 raise HTTPException(status_code=400, detail=str(e))
         
@@ -421,7 +421,7 @@ class APIServer:
             """Create a new relationship."""
             try:
                 return self.relationship_store.create(relationship)
-            except Exception as e:
+            except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Error creating relationship: {e}")
                 raise HTTPException(status_code=400, detail=str(e))
         
@@ -491,7 +491,7 @@ class APIServer:
                     "strategies_applied": [request.strategy],
                     "timestamp": datetime.utcnow().isoformat()
                 }
-            except Exception as e:
+            except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Error reaching consensus: {e}")
                 raise HTTPException(status_code=400, detail=str(e))
         
@@ -526,7 +526,7 @@ class APIServer:
                     "recommendation": recommendation,
                     "timestamp": datetime.utcnow().isoformat()
                 }
-            except Exception as e:
+            except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Error comparing extractions: {e}")
                 raise HTTPException(status_code=400, detail=str(e))
         

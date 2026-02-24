@@ -31,6 +31,11 @@ def _safe_resolve(path_str: str, *, must_exist: bool = False) -> Path:
         PathResolutionError: If the resolved path escapes a safe root or doesn't exist.
     """
     from .exceptions import PathResolutionError
+
+    if not isinstance(path_str, str):
+        raise TypeError("path_str must be a string")
+    if not path_str.strip():
+        raise ValueError("path_str must be a non-empty string")
     
     resolved = Path(path_str).resolve()
     _FORBIDDEN_PREFIXES = (Path('/proc'), Path('/sys'), Path('/dev'), Path('/etc'))
@@ -592,6 +597,15 @@ Examples:
         print()
 
         try:
+            if not isinstance(args.ontology, str):
+                raise TypeError("ontology must be a string")
+            if not args.ontology.strip():
+                raise ValueError("ontology must be a non-empty string")
+            if not isinstance(args.query, str):
+                raise TypeError("query must be a string")
+            if not args.query.strip():
+                raise ValueError("query must be a non-empty string")
+
             ontology_path = _safe_resolve(args.ontology, must_exist=True)
             if not ontology_path.exists():
                 print(f"❌ Ontology file not found: {args.ontology}")
@@ -727,6 +741,11 @@ Examples:
         print("🩺 GraphRAG Query Optimizer Health")
 
         try:
+            if not isinstance(args.window, int):
+                raise TypeError("window must be an integer")
+            if args.window <= 0:
+                raise ValueError("window must be greater than 0")
+
             from ipfs_datasets_py.optimizers.graphrag.query_optimizer import QueryMetricsCollector
 
             collector = QueryMetricsCollector(track_resources=True)

@@ -245,7 +245,14 @@ class LazyLLMBackend:
             except CircuitBreakerOpen as e:
                 logger.warning("Circuit-breaker is open: %s", e)
                 raise RuntimeError(f"LLM backend temporarily unavailable: {e}") from e
-            except Exception as e:
+            except (
+                RuntimeError,
+                ValueError,
+                TypeError,
+                AttributeError,
+                OSError,
+                TimeoutError,
+            ) as e:
                 logger.warning("LLM backend call failed: %s", e)
                 raise RuntimeError(f"LLM backend error: {e}") from e
         
@@ -274,7 +281,14 @@ class LazyLLMBackend:
                     raise RuntimeError(
                         f"LLM backend temporarily unavailable during {name}: {e}"
                     ) from e
-                except Exception as e:
+                except (
+                    RuntimeError,
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    OSError,
+                    TimeoutError,
+                ) as e:
                     logger.warning("LLM backend method '%s' failed: %s", name, e)
                     raise RuntimeError(f"LLM backend error during {name}: {e}") from e
             return wrapped_method

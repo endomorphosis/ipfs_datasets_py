@@ -34,19 +34,6 @@ def _score(c=0.8, co=0.7, cl=0.6, g=0.5, da=0.4):
         recommendations=[],
     )
 
-
-def _ontology(n: int = 2):
-    return {
-        "entities": [
-            {"id": f"e{i}", "type": "Person", "text": f"Alice{i}", "properties": {}, "confidence": 0.8}
-            for i in range(n)
-        ],
-        "relationships": [],
-        "metadata": {},
-        "domain": "test",
-    }
-
-
 def _make_mediator():
     gen = OntologyGenerator()
     critic = OntologyCritic(use_llm=False)
@@ -114,18 +101,18 @@ class TestUndoLastAction:
         with pytest.raises(IndexError):
             mediator.undo_last_action()
 
-    def test_undo_returns_original_ontology(self):
+    def test_undo_returns_original_ontology(self, ontology_dict_factory):
         mediator = _make_mediator()
-        original = _ontology(2)
+        original = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
         score = _score()
         ctx = OntologyGenerationContext(data_source="test", data_type="text", domain="test")
         mediator.refine_ontology(original, score, ctx)
         restored = mediator.undo_last_action()
         assert restored["entities"] == original["entities"]
 
-    def test_undo_removes_from_stack(self):
+    def test_undo_removes_from_stack(self, ontology_dict_factory):
         mediator = _make_mediator()
-        original = _ontology(2)
+        original = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
         score = _score()
         ctx = OntologyGenerationContext(data_source="test", data_type="text", domain="test")
         mediator.refine_ontology(original, score, ctx)
@@ -133,10 +120,10 @@ class TestUndoLastAction:
         with pytest.raises(IndexError):
             mediator.undo_last_action()
 
-    def test_multiple_refines_multiple_undos(self):
+    def test_multiple_refines_multiple_undos(self, ontology_dict_factory):
         mediator = _make_mediator()
-        ont1 = _ontology(1)
-        ont2 = _ontology(2)
+        ont1 = ontology_dict_factory(entity_count=1, relationship_count=0, domain="test", metadata={})
+        ont2 = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
         score = _score()
         ctx = OntologyGenerationContext(data_source="test", data_type="text", domain="test")
         mediator.refine_ontology(ont1, score, ctx)
@@ -147,9 +134,9 @@ class TestUndoLastAction:
         with pytest.raises(IndexError):
             mediator.undo_last_action()
 
-    def test_undo_snapshot_is_deep_copy(self):
+    def test_undo_snapshot_is_deep_copy(self, ontology_dict_factory):
         mediator = _make_mediator()
-        original = _ontology(2)
+        original = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
         score = _score()
         ctx = OntologyGenerationContext(data_source="test", data_type="text", domain="test")
         mediator.refine_ontology(original, score, ctx)

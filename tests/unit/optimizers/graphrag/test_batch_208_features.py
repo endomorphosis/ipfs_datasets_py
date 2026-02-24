@@ -88,8 +88,20 @@ def _make_pipeline_with(scores: list[float]) -> OntologyPipeline:
     return pipeline
 
 
-def _make_ontology(*pairs) -> dict:
-    return {"relationships": [{"source": s, "target": t, "type": "r"} for s, t in pairs]}
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    def _build(*pairs) -> dict:
+        entities = list({s for s, _ in pairs} | {t for _, t in pairs})
+        ontology = ontology_dict_factory(
+            entity_count=len(entities),
+            relationship_count=0,
+            entity_types=["Concept"],
+        )
+        ontology["entities"] = [{"id": e, "text": e} for e in entities]
+        ontology["relationships"] = [{"source": s, "target": t, "type": "r"} for s, t in pairs]
+        return ontology
+
+    return _build
 
 
 # ---------------------------------------------------------------------------
@@ -266,33 +278,33 @@ class TestClosenessCentralityApprox:
     def test_no_relationships_returns_empty(self):
         assert self.validator.closeness_centrality_approx({"relationships": []}) == {}
 
-    def test_single_edge_returns_dict(self):
-        ont = _make_ontology(("a", "b"))
+    def test_single_edge_returns_dict(self, ontology_builder):
+        ont = ontology_builder(("a", "b"))
         result = self.validator.closeness_centrality_approx(ont)
         assert set(result.keys()) == {"a", "b"}
 
-    def test_centrality_non_negative(self):
-        ont = _make_ontology(("a", "b"), ("b", "c"), ("c", "a"))
+    def test_centrality_non_negative(self, ontology_builder):
+        ont = ontology_builder(("a", "b"), ("b", "c"), ("c", "a"))
         result = self.validator.closeness_centrality_approx(ont)
         for v in result.values():
             assert v >= 0.0
 
-    def test_hub_has_higher_centrality(self):
+    def test_hub_has_higher_centrality(self, ontology_builder):
         # hub connected to x, y, z; x/y/z only connected to hub
-        ont = _make_ontology(("hub", "x"), ("hub", "y"), ("hub", "z"))
+        ont = ontology_builder(("hub", "x"), ("hub", "y"), ("hub", "z"))
         result = self.validator.closeness_centrality_approx(ont)
         # hub reaches all 3 at distance 1 → C(hub)=3/3=1.0
         # x reaches hub at dist 1, y/z at dist 2 → C(x)=3/(1+2+2)=0.6
         assert result["hub"] > result["x"]
 
-    def test_hub_centrality_known_value(self):
+    def test_hub_centrality_known_value(self, ontology_builder):
         # hub→x, hub→y, hub→z (undirected view)
-        ont = _make_ontology(("hub", "x"), ("hub", "y"), ("hub", "z"))
+        ont = ontology_builder(("hub", "x"), ("hub", "y"), ("hub", "z"))
         result = self.validator.closeness_centrality_approx(ont)
         assert result["hub"] == pytest.approx(1.0)
 
-    def test_returns_dict_of_floats(self):
-        ont = _make_ontology(("a", "b"))
+    def test_returns_dict_of_floats(self, ontology_builder):
+        ont = ontology_builder(("a", "b"))
         result = self.validator.closeness_centrality_approx(ont)
         assert isinstance(result, dict)
         for v in result.values():
@@ -313,32 +325,32 @@ class TestReciprocalEdgeCount:
     def test_no_relationships_returns_zero(self):
         assert self.validator.reciprocal_edge_count({"relationships": []}) == 0
 
-    def test_no_reciprocal_edges(self):
+    def test_no_reciprocal_edges(self, ontology_builder):
         # a→b, b→c: no reverse edges
-        ont = _make_ontology(("a", "b"), ("b", "c"))
+        ont = ontology_builder(("a", "b"), ("b", "c"))
         assert self.validator.reciprocal_edge_count(ont) == 0
 
-    def test_single_reciprocal_pair(self):
+    def test_single_reciprocal_pair(self, ontology_builder):
         # a→b and b→a: 1 reciprocal pair
-        ont = _make_ontology(("a", "b"), ("b", "a"))
+        ont = ontology_builder(("a", "b"), ("b", "a"))
         assert self.validator.reciprocal_edge_count(ont) == 1
 
-    def test_two_reciprocal_pairs(self):
+    def test_two_reciprocal_pairs(self, ontology_builder):
         # a↔b and c↔d: 2 pairs
-        ont = _make_ontology(("a", "b"), ("b", "a"), ("c", "d"), ("d", "c"))
+        ont = ontology_builder(("a", "b"), ("b", "a"), ("c", "d"), ("d", "c"))
         assert self.validator.reciprocal_edge_count(ont) == 2
 
-    def test_mixed_graph(self):
+    def test_mixed_graph(self, ontology_builder):
         # a→b, b→a (1 pair), a→c (no pair)
-        ont = _make_ontology(("a", "b"), ("b", "a"), ("a", "c"))
+        ont = ontology_builder(("a", "b"), ("b", "a"), ("a", "c"))
         assert self.validator.reciprocal_edge_count(ont) == 1
 
-    def test_returns_int(self):
-        ont = _make_ontology(("x", "y"))
+    def test_returns_int(self, ontology_builder):
+        ont = ontology_builder(("x", "y"))
         assert isinstance(self.validator.reciprocal_edge_count(ont), int)
 
-    def test_non_negative(self):
-        ont = _make_ontology(("a", "b"), ("c", "d"))
+    def test_non_negative(self, ontology_builder):
+        ont = ontology_builder(("a", "b"), ("c", "d"))
         assert self.validator.reciprocal_edge_count(ont) >= 0
 
 

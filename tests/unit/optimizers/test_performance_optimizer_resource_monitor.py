@@ -33,3 +33,35 @@ async def test_monitor_resources_returns_expected_keys(monkeypatch):
     assert resources["disk_free_gb"] == 100.0
     assert resources["load_average"] == (1.0, 2.0, 3.0)
     assert isinstance(resources["timestamp"], str)
+
+
+@pytest.mark.anyio
+async def test_monitor_resources_returns_fallback_on_typed_runtime_error(monkeypatch):
+    from ipfs_datasets_py.optimizers import performance_optimizer
+
+    optimizer = performance_optimizer.WebsiteProcessingOptimizer()
+    monkeypatch.setattr(
+        optimizer.resource_monitor,
+        "get_current_resources",
+        lambda: (_ for _ in ()).throw(RuntimeError("monitor failed")),
+    )
+
+    resources = await optimizer.monitor_resources()
+    assert resources["cpu_percent"] == 0.0
+    assert resources["memory_percent"] == 0.0
+    assert resources["error"] == "monitor failed"
+
+
+@pytest.mark.anyio
+async def test_monitor_resources_does_not_swallow_keyboard_interrupt(monkeypatch):
+    from ipfs_datasets_py.optimizers import performance_optimizer
+
+    optimizer = performance_optimizer.WebsiteProcessingOptimizer()
+    monkeypatch.setattr(
+        optimizer.resource_monitor,
+        "get_current_resources",
+        lambda: (_ for _ in ()).throw(KeyboardInterrupt()),
+    )
+
+    with pytest.raises(KeyboardInterrupt):
+        await optimizer.monitor_resources()

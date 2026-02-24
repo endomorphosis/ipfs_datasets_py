@@ -257,7 +257,7 @@ class MetricsCollectorAdapter:
                     })
 
             return output_file
-        except Exception as e:
+        except (OSError, ValueError, TypeError, csv.Error) as e:
             logger.error(f"Error exporting metrics to CSV: {str(e)}")
             return None
 
@@ -310,7 +310,7 @@ class MetricsCollectorAdapter:
                         f.write(f"  {phase}: {avg_timing:.3f} seconds (avg)\n")
 
             return output_file
-        except Exception as e:
+        except (OSError, ValueError, TypeError) as e:
             logger.error(f"Error generating performance report: {str(e)}")
             return None
 
@@ -511,7 +511,7 @@ def enhance_optimizer_with_learning_metrics(optimizer, metrics_dir=None):
                         parameters_adjusted=parameters_adjusted,
                         execution_time=time.time() - start_time
                     )
-                except Exception as e:
+                except (AttributeError, KeyError, TypeError, ValueError) as e:
                     logger.error(f"Error recording learning cycle: {str(e)}")
 
             return result

@@ -85,8 +85,20 @@ def _make_pipeline_with(scores: list[float]) -> OntologyPipeline:
     return pipeline
 
 
-def _make_ontology(*pairs) -> dict:
-    return {"relationships": [{"source": s, "target": t, "type": "r"} for s, t in pairs]}
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    def _build(*pairs) -> dict:
+        entities = list({s for s, _ in pairs} | {t for _, t in pairs})
+        ontology = ontology_dict_factory(
+            entity_count=len(entities),
+            relationship_count=0,
+            entity_types=["Concept"],
+        )
+        ontology["entities"] = [{"id": e, "text": e} for e in entities]
+        ontology["relationships"] = [{"source": s, "target": t, "type": "r"} for s, t in pairs]
+        return ontology
+
+    return _build
 
 
 # ---------------------------------------------------------------------------
@@ -284,28 +296,28 @@ class TestDegreeCentrality:
     def test_no_relationships_returns_empty_dict(self):
         assert self.validator.degree_centrality({"relationships": []}) == {}
 
-    def test_single_edge_two_nodes(self):
+    def test_single_edge_two_nodes(self, ontology_builder):
         # a→b: a degree=1, b degree=1; n=2 → centrality = 1/(2-1) = 1.0
-        ont = _make_ontology(("a", "b"))
+        ont = ontology_builder(("a", "b"))
         result = self.validator.degree_centrality(ont)
         assert result["a"] == pytest.approx(1.0)
         assert result["b"] == pytest.approx(1.0)
 
-    def test_centrality_values_in_range(self):
-        ont = _make_ontology(("a", "b"), ("a", "c"), ("b", "c"))
+    def test_centrality_values_in_range(self, ontology_builder):
+        ont = ontology_builder(("a", "b"), ("a", "c"), ("b", "c"))
         result = self.validator.degree_centrality(ont)
         for v in result.values():
             assert 0.0 <= v <= 1.0
 
-    def test_hub_has_highest_centrality(self):
+    def test_hub_has_highest_centrality(self, ontology_builder):
         # hub→x, hub→y, hub→z: hub degree=3, x=y=z=1; n=4 → hub=3/3=1.0
-        ont = _make_ontology(("hub", "x"), ("hub", "y"), ("hub", "z"))
+        ont = ontology_builder(("hub", "x"), ("hub", "y"), ("hub", "z"))
         result = self.validator.degree_centrality(ont)
         assert result["hub"] == pytest.approx(1.0)
         assert result["x"] < result["hub"]
 
-    def test_returns_dict(self):
-        ont = _make_ontology(("x", "y"))
+    def test_returns_dict(self, ontology_builder):
+        ont = ontology_builder(("x", "y"))
         assert isinstance(self.validator.degree_centrality(ont), dict)
 
 
@@ -323,27 +335,27 @@ class TestMaxDegreeNodeCount:
     def test_no_relationships_returns_zero(self):
         assert self.validator.max_degree_node_count({"relationships": []}) == 0
 
-    def test_single_edge_two_max_nodes(self):
+    def test_single_edge_two_max_nodes(self, ontology_builder):
         # a→b: both have degree 1 → 2 nodes at max degree
-        ont = _make_ontology(("a", "b"))
+        ont = ontology_builder(("a", "b"))
         assert self.validator.max_degree_node_count(ont) == 2
 
-    def test_clear_single_max_node(self):
+    def test_clear_single_max_node(self, ontology_builder):
         # hub→x, hub→y, hub→z: hub degree=3, others 1 → 1 node at max
-        ont = _make_ontology(("hub", "x"), ("hub", "y"), ("hub", "z"))
+        ont = ontology_builder(("hub", "x"), ("hub", "y"), ("hub", "z"))
         assert self.validator.max_degree_node_count(ont) == 1
 
-    def test_all_same_degree(self):
+    def test_all_same_degree(self, ontology_builder):
         # a→b, b→a: both degree=2 → 2 nodes at max
-        ont = _make_ontology(("a", "b"), ("b", "a"))
+        ont = ontology_builder(("a", "b"), ("b", "a"))
         assert self.validator.max_degree_node_count(ont) == 2
 
-    def test_returns_int(self):
-        ont = _make_ontology(("x", "y"))
+    def test_returns_int(self, ontology_builder):
+        ont = ontology_builder(("x", "y"))
         assert isinstance(self.validator.max_degree_node_count(ont), int)
 
-    def test_non_negative(self):
-        ont = _make_ontology(("a", "b"), ("b", "c"))
+    def test_non_negative(self, ontology_builder):
+        ont = ontology_builder(("a", "b"), ("b", "c"))
         assert self.validator.max_degree_node_count(ont) >= 0
 
 

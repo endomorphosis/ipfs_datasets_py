@@ -449,7 +449,7 @@ class WebsiteProcessingOptimizer:
             
             return recommendations
             
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError) as e:
             logger.error(f"Failed to get optimization recommendations: {e}")
             return {
                 'strategy': 'balanced',
@@ -468,7 +468,7 @@ class WebsiteProcessingOptimizer:
         try:
             return await self.resource_monitor.get_current_resources()
             
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError) as e:
             logger.error(f"Resource monitoring failed: {e}")
             return {
                 'cpu_percent': 0.0,

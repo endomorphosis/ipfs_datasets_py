@@ -184,6 +184,10 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         self._entity_importance_cache: Dict[str, float] = {}
         
         # Performance metrics for different traversal strategies
+            # Cache for graph type detection (keyed by tuple of significant query fields for fast lookup)
+            self._graph_type_cache: Dict[str, str] = {}
+            self._graph_type_cache_max_size = 50  # Simple size limit to prevent unbounded growth
+        
         self._strategy_performance = {
             "breadth_first": {"avg_time": 0.0, "relevance_score": 0.0, "count": 0},
             "depth_first": {"avg_time": 0.0, "relevance_score": 0.0, "count": 0},
@@ -361,6 +365,41 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
             "traversal_strategy": "default",
             "fallback": True,
             "error": error
+            def _get_graph_type_cache_key(self, query: Dict[str, Any]) -> str:
+                """
+                Generate a deterministic cache key from query fields that influence graph type detection.
+        
+                Uses stable fields (graph_type if present, entity_ids, query_text prefix) to create
+                a compact key that varies only when the essential detection inputs change.
+        
+                Args:
+                    query: Query dict to generate key from
+            
+                Returns:
+                    str: Deterministic cache key
+                """
+                parts = []
+        
+                # Explicit graph_type is the highest priority - cache key doesn't change if it's present
+                if "graph_type" in query:
+                    parts.append(f"gt:{query['graph_type']}")
+        
+                # Entity IDs influence detection heuristics
+                entity_ids = query.get("entity_ids", [])
+                if entity_ids:
+                    # Sort for determinism
+                    entity_hash = hash(tuple(sorted(str(e) for e in entity_ids))) % (2**31)
+                    parts.append(f"ei:{entity_hash}")
+        
+                # Query text prefix influences keyword detection (Wikipedia, IPLD, etc.)
+                query_text = query.get("query", query.get("query_text", ""))
+                if query_text:
+                    # Use first 50 chars to capture detection keywords
+                    prefix_hash = hash(query_text[:50].lower()) % (2**31)
+                    parts.append(f"qt:{prefix_hash}")
+        
+                return "|".join(parts) if parts else "default"
+    
         }
     
     def detect_graph_type(self, query: Dict[str, Any]) -> str:
@@ -389,6 +428,43 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         
         # Default to general
         return "general"
+            def detect_graph_type(self, query: Dict[str, Any]) -> str:
+                """
+                Detect the graph type from the query parameters.
+        
+                Uses a cache to avoid repeated pattern matching for identical or similar queries.
+        
+                Args:
+                    query (Dict): Query parameters
+            
+                Returns:
+                    str: Detected graph type
+                """
+                # Check explicit graph_type first (no caching needed for this path)
+                if "graph_type" in query:
+                    return query["graph_type"]
+        
+                # Check cache before doing pattern matching
+                cache_key = self._get_graph_type_cache_key(query)
+                if cache_key in self._graph_type_cache:
+                    return self._graph_type_cache[cache_key]
+        
+                # Pattern matching for detection
+                query_blob = str(query).lower()
+        
+                # Detect graph type based on keywords
+                if any(kw in query_blob for kw in ["wikipedia", "wikidata", "dbpedia"]):
+                    detected_type = "wikipedia"
+                elif any(kw in query_blob for kw in ["ipld", "content-addressed", "cid", "dag", "ipfs"]):
+                    detected_type = "ipld"
+                else:
+                    detected_type = "general"
+        
+                # Cache the result (with simple size management)
+                if len(self._graph_type_cache) < self._graph_type_cache_max_size:
+                    self._graph_type_cache[cache_key] = detected_type
+        
+                return detected_type
         
     def calculate_entity_importance(self, entity_id: str, graph_processor: Any) -> float:
         """

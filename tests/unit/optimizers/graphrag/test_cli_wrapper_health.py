@@ -30,3 +30,25 @@ def test_cli_health_command_writes_output_file(tmp_path):
     assert payload["window_size"] == 10
     assert "memory_usage_bytes" in payload
     assert "error_rate_last_100" in payload
+
+
+def test_cli_health_command_rejects_zero_window(capsys):
+    from ipfs_datasets_py.optimizers.graphrag.cli_wrapper import GraphRAGOptimizerCLI
+
+    cli = GraphRAGOptimizerCLI()
+    code = cli.run(["health", "--window", "0"])
+
+    out = capsys.readouterr().out
+    assert code == 1
+    assert "window must be greater than 0" in out
+
+
+def test_cli_health_command_rejects_negative_window(capsys):
+    from ipfs_datasets_py.optimizers.graphrag.cli_wrapper import GraphRAGOptimizerCLI
+
+    cli = GraphRAGOptimizerCLI()
+    code = cli.run(["health", "--window", "-5"])
+
+    out = capsys.readouterr().out
+    assert code == 1
+    assert "window must be greater than 0" in out

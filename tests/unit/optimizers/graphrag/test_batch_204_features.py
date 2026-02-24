@@ -108,14 +108,24 @@ def _make_pipeline_with(scores: list[float]) -> OntologyPipeline:
     return pipeline
 
 
-def _make_ontology(*pairs) -> dict:
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
     """Build a minimal ontology dict from (source, target) relationship pairs."""
-    rels = [{"source": s, "target": t, "type": "related_to"} for s, t in pairs]
-    entities = list({s for s, _ in pairs} | {t for _, t in pairs})
-    return {
-        "entities": [{"id": e, "text": e} for e in entities],
-        "relationships": rels,
-    }
+
+    def _build(*pairs) -> dict:
+        entities = list({s for s, _ in pairs} | {t for _, t in pairs})
+        ontology = ontology_dict_factory(
+            entity_count=len(entities),
+            relationship_count=len(pairs),
+            entity_types=["Concept"],
+        )
+        ontology["entities"] = [{"id": e, "text": e} for e in entities]
+        ontology["relationships"] = [
+            {"source": s, "target": t, "type": "related_to"} for s, t in pairs
+        ]
+        return ontology
+
+    return _build
 
 
 # ---------------------------------------------------------------------------
@@ -137,9 +147,10 @@ class TestScoreIqr:
 
     def test_known_values(self):
         # scores sorted = [0.1, 0.3, 0.7, 0.9]
-        # n=4, q1_idx=4//4=1→0.3, q3_idx=(3*4)//4=3→0.9 → IQR=0.6
+        # score_percentile uses linear interpolation:
+        # q1 = 0.25, q3 = 0.75 -> IQR = 0.5
         opt = _optimizer_with([0.9, 0.1, 0.7, 0.3])
-        assert opt.score_iqr() == pytest.approx(0.6, abs=1e-9)
+        assert opt.score_iqr() == pytest.approx(0.5, abs=1e-9)
 
     def test_non_negative(self):
         opt = _optimizer_with([0.2, 0.8, 0.5, 0.6, 0.3, 0.9])
@@ -519,27 +530,27 @@ class TestMostConnectedNode:
         ont = {"entities": [{"id": "a"}], "relationships": []}
         assert self.validator.most_connected_node(ont) == ""
 
-    def test_single_relationship(self):
-        ont = _make_ontology(("a", "b"))
+    def test_single_relationship(self, ontology_builder):
+        ont = ontology_builder(("a", "b"))
         # a: degree 1 (source), b: degree 1 (target) — either valid
         result = self.validator.most_connected_node(ont)
         assert result in ("a", "b")
 
-    def test_clear_winner(self):
+    def test_clear_winner(self, ontology_builder):
         # "hub" has 3 connections; others have 1 each
-        ont = _make_ontology(("hub", "x"), ("hub", "y"), ("hub", "z"))
+        ont = ontology_builder(("hub", "x"), ("hub", "y"), ("hub", "z"))
         assert self.validator.most_connected_node(ont) == "hub"
 
-    def test_bidirectional_highest_degree(self):
+    def test_bidirectional_highest_degree(self, ontology_builder):
         # a→b, b→a, a→c: a is source in 2 rels (→b, →c) and target in 1 rel (←b) = degree 3
         # b is source in 1 rel (→a) and target in 1 rel (←a) = degree 2
         # c is target in 1 rel = degree 1 → most connected = a
-        ont = _make_ontology(("a", "b"), ("b", "a"), ("a", "c"))
+        ont = ontology_builder(("a", "b"), ("b", "a"), ("a", "c"))
         # a: source in 2 rels (→b, →c), target in 1 rel (←b): degree=3
         # b: source in 1 rel, target in 1 rel: degree=2
         assert self.validator.most_connected_node(ont) == "a"
 
-    def test_returns_string(self):
-        ont = _make_ontology(("x", "y"))
+    def test_returns_string(self, ontology_builder):
+        ont = ontology_builder(("x", "y"))
         result = self.validator.most_connected_node(ont)
         assert isinstance(result, str)

@@ -264,6 +264,15 @@ class PipelineJSONLogger:
             data_length: Length of input data in characters
             strategy: Extraction strategy being used
         """
+        if not isinstance(data_length, int):
+            raise TypeError("data_length must be an int")
+        if data_length < 0:
+            raise ValueError("data_length must be greater than or equal to 0")
+        if not isinstance(strategy, str):
+            raise TypeError("strategy must be a string")
+        if not strategy.strip():
+            raise ValueError("strategy must be a non-empty string")
+
         if self._context:
             self._context.mark_stage_start("extraction")
         
@@ -288,6 +297,24 @@ class PipelineJSONLogger:
             relationship_count: Number of relationships extracted
             entity_types: Count of entities by type
         """
+        if not isinstance(entity_count, int):
+            raise TypeError("entity_count must be an int")
+        if not isinstance(relationship_count, int):
+            raise TypeError("relationship_count must be an int")
+        if entity_count < 0:
+            raise ValueError("entity_count must be greater than or equal to 0")
+        if relationship_count < 0:
+            raise ValueError("relationship_count must be greater than or equal to 0")
+        if entity_types is not None:
+            if not isinstance(entity_types, dict):
+                raise TypeError("entity_types must be a dict")
+            if not all(isinstance(k, str) for k in entity_types):
+                raise TypeError("entity_types keys must be strings")
+            if not all(isinstance(v, int) for v in entity_types.values()):
+                raise TypeError("entity_types values must be ints")
+            if any(v < 0 for v in entity_types.values()):
+                raise ValueError("entity_types values must be greater than or equal to 0")
+
         if self._context:
             self._context.mark_stage_end("extraction")
             self._context.metrics["entity_count"] = entity_count
@@ -314,6 +341,13 @@ class PipelineJSONLogger:
             parallel: Whether parallel evaluation is being used
             batch_size: Size of batch being evaluated
         """
+        if not isinstance(parallel, bool):
+            raise TypeError("parallel must be a bool")
+        if not isinstance(batch_size, int):
+            raise TypeError("batch_size must be an int")
+        if batch_size <= 0:
+            raise ValueError("batch_size must be greater than 0")
+
         if self._context:
             self._context.mark_stage_start("evaluation")
         
@@ -340,6 +374,22 @@ class PipelineJSONLogger:
             cache_hit: Whether result came from cache
             cache_size: Size of evaluation cache
         """
+        if isinstance(score, bool) or not isinstance(score, (int, float)):
+            raise TypeError("score must be a number")
+        if dimensions is not None:
+            if not isinstance(dimensions, dict):
+                raise TypeError("dimensions must be a dict")
+            if not all(isinstance(k, str) for k in dimensions):
+                raise TypeError("dimensions keys must be strings")
+            if not all((not isinstance(v, bool)) and isinstance(v, (int, float)) for v in dimensions.values()):
+                raise TypeError("dimensions values must be numbers")
+        if not isinstance(cache_hit, bool):
+            raise TypeError("cache_hit must be a bool")
+        if not isinstance(cache_size, int):
+            raise TypeError("cache_size must be an int")
+        if cache_size < 0:
+            raise ValueError("cache_size must be greater than or equal to 0")
+
         if self._context:
             self._context.mark_stage_end("evaluation")
             self._context.metrics["overall_score"] = score
@@ -368,6 +418,17 @@ class PipelineJSONLogger:
             max_rounds: Maximum refinement rounds
             current_score: Current ontology score
         """
+        if not isinstance(mode, str):
+            raise TypeError("mode must be a string")
+        if not mode.strip():
+            raise ValueError("mode must be a non-empty string")
+        if not isinstance(max_rounds, int):
+            raise TypeError("max_rounds must be an int")
+        if max_rounds <= 0:
+            raise ValueError("max_rounds must be greater than 0")
+        if isinstance(current_score, bool) or not isinstance(current_score, (int, float)):
+            raise TypeError("current_score must be a number")
+
         if self._context:
             self._context.mark_stage_start("refinement")
         
@@ -446,6 +507,19 @@ class PipelineJSONLogger:
             rounds_completed: Number of rounds completed
             total_actions: Total refinement actions applied
         """
+        if isinstance(final_score, bool) or not isinstance(final_score, (int, float)):
+            raise TypeError("final_score must be a number")
+        if isinstance(initial_score, bool) or not isinstance(initial_score, (int, float)):
+            raise TypeError("initial_score must be a number")
+        if not isinstance(rounds_completed, int):
+            raise TypeError("rounds_completed must be an int")
+        if not isinstance(total_actions, int):
+            raise TypeError("total_actions must be an int")
+        if rounds_completed < 0:
+            raise ValueError("rounds_completed must be greater than or equal to 0")
+        if total_actions < 0:
+            raise ValueError("total_actions must be greater than or equal to 0")
+
         if self._context:
             self._context.mark_stage_end("refinement")
         
@@ -512,6 +586,27 @@ class PipelineJSONLogger:
             miss_count: Total cache misses
             eviction_count: Total cache evictions
         """
+        if not isinstance(cache_type, str):
+            raise TypeError("cache_type must be a string")
+        if not cache_type.strip():
+            raise ValueError("cache_type must be a non-empty string")
+        if not isinstance(size, int):
+            raise TypeError("size must be an int")
+        if not isinstance(hit_count, int):
+            raise TypeError("hit_count must be an int")
+        if not isinstance(miss_count, int):
+            raise TypeError("miss_count must be an int")
+        if not isinstance(eviction_count, int):
+            raise TypeError("eviction_count must be an int")
+        if size < 0:
+            raise ValueError("size must be greater than or equal to 0")
+        if hit_count < 0:
+            raise ValueError("hit_count must be greater than or equal to 0")
+        if miss_count < 0:
+            raise ValueError("miss_count must be greater than or equal to 0")
+        if eviction_count < 0:
+            raise ValueError("eviction_count must be greater than or equal to 0")
+
         hit_rate = hit_count / (hit_count + miss_count) if (hit_count + miss_count) > 0 else 0.0
         
         self._emit_log(
@@ -543,6 +638,27 @@ class PipelineJSONLogger:
             items_failed: Number of items that failed
             current_score: Current batch average score
         """
+        if not isinstance(batch_index, int):
+            raise TypeError("batch_index must be an int")
+        if not isinstance(batch_total, int):
+            raise TypeError("batch_total must be an int")
+        if not isinstance(items_completed, int):
+            raise TypeError("items_completed must be an int")
+        if not isinstance(items_failed, int):
+            raise TypeError("items_failed must be an int")
+        if isinstance(current_score, bool) or not isinstance(current_score, (int, float)):
+            raise TypeError("current_score must be a number")
+        if batch_index < 0:
+            raise ValueError("batch_index must be greater than or equal to 0")
+        if batch_total <= 0:
+            raise ValueError("batch_total must be greater than 0")
+        if batch_index > batch_total:
+            raise ValueError("batch_index must be less than or equal to batch_total")
+        if items_completed < 0:
+            raise ValueError("items_completed must be greater than or equal to 0")
+        if items_failed < 0:
+            raise ValueError("items_failed must be greater than or equal to 0")
+
         progress_pct = (batch_index / batch_total * 100) if batch_total > 0 else 0.0
         
         self._emit_log(

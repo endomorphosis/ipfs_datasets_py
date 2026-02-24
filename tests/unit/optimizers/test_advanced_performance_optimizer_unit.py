@@ -176,3 +176,22 @@ def test_emergency_memory_cleanup_reduces_state(optimizer):
 def test_get_performance_report_no_history(optimizer):
     report = optimizer.get_performance_report()
     assert report["error"] == "No processing history available"
+
+
+def test_collect_resource_metrics_returns_defaults_on_typed_error(optimizer, monkeypatch):
+    monkeypatch.setattr(apo.psutil, "cpu_percent", lambda interval=0.1: 10.0)
+    monkeypatch.setattr(apo.psutil, "virtual_memory", lambda: types.SimpleNamespace(percent=40.0, available=1, used=1))
+    monkeypatch.setattr(apo.psutil, "disk_usage", lambda path="/": types.SimpleNamespace(percent=30.0))
+    monkeypatch.setattr(apo.psutil, "Process", lambda: (_ for _ in ()).throw(RuntimeError("process unavailable")))
+
+    metrics = optimizer._collect_resource_metrics()
+    assert metrics.cpu_percent == 0.0
+    assert metrics.memory_percent == 0.0
+
+
+def test_collect_resource_metrics_does_not_swallow_keyboard_interrupt(optimizer, monkeypatch):
+    monkeypatch.setattr(apo.psutil, "cpu_percent", lambda interval=0.1: 10.0)
+    monkeypatch.setattr(apo.psutil, "virtual_memory", lambda: (_ for _ in ()).throw(KeyboardInterrupt()))
+
+    with pytest.raises(KeyboardInterrupt):
+        optimizer._collect_resource_metrics()

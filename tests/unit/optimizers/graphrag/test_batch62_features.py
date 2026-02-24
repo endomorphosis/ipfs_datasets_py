@@ -50,18 +50,6 @@ def _make_report(score, ontology=None):
     )
 
 
-def _ontology(n: int = 2):
-    return {
-        "entities": [
-            {"id": f"e{i}", "type": "Person", "text": f"Name{i}", "properties": {}}
-            for i in range(n)
-        ],
-        "relationships": [],
-        "metadata": {},
-        "domain": "test",
-    }
-
-
 # ---------------------------------------------------------------------------
 # OntologyPipeline.run_async
 # ---------------------------------------------------------------------------
@@ -113,43 +101,48 @@ class TestGetRecommendationStats:
         mediator = _make_mediator()
         assert mediator.get_recommendation_stats() == {}
 
-    def test_single_recommendation_tracked(self):
+    def test_single_recommendation_tracked(self, ontology_dict_factory):
         mediator = _make_mediator()
         score = _score(recommendations=["Add entity properties"])
-        mediator.refine_ontology(_ontology(), score, _ctx())
+        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        mediator.refine_ontology(ontology, score, _ctx())
         stats = mediator.get_recommendation_stats()
         assert "Add entity properties" in stats
         assert stats["Add entity properties"] == 1
 
-    def test_repeated_recommendation_counted(self):
+    def test_repeated_recommendation_counted(self, ontology_dict_factory):
         mediator = _make_mediator()
         score = _score(recommendations=["Fix naming conventions"])
-        mediator.refine_ontology(_ontology(), score, _ctx())
-        mediator.refine_ontology(_ontology(), score, _ctx())
+        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        mediator.refine_ontology(ontology, score, _ctx())
+        mediator.refine_ontology(ontology, score, _ctx())
         stats = mediator.get_recommendation_stats()
         assert stats["Fix naming conventions"] == 2
 
-    def test_multiple_unique_recommendations(self):
+    def test_multiple_unique_recommendations(self, ontology_dict_factory):
         mediator = _make_mediator()
         score = _score(recommendations=["Add properties", "Fix naming"])
-        mediator.refine_ontology(_ontology(), score, _ctx())
+        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        mediator.refine_ontology(ontology, score, _ctx())
         stats = mediator.get_recommendation_stats()
         assert "Add properties" in stats
         assert "Fix naming" in stats
 
-    def test_returns_copy(self):
+    def test_returns_copy(self, ontology_dict_factory):
         mediator = _make_mediator()
         score = _score(recommendations=["R1"])
-        mediator.refine_ontology(_ontology(), score, _ctx())
+        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        mediator.refine_ontology(ontology, score, _ctx())
         stats = mediator.get_recommendation_stats()
         stats["R1"] = 999
         # Internal state not mutated
         assert mediator.get_recommendation_stats()["R1"] == 1
 
-    def test_empty_recommendations_no_change(self):
+    def test_empty_recommendations_no_change(self, ontology_dict_factory):
         mediator = _make_mediator()
         score = _score(recommendations=[])
-        mediator.refine_ontology(_ontology(), score, _ctx())
+        ontology = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        mediator.refine_ontology(ontology, score, _ctx())
         assert mediator.get_recommendation_stats() == {}
 
 

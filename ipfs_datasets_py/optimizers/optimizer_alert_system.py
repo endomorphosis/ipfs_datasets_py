@@ -197,7 +197,13 @@ class LearningAlertSystem:
                         logger.info("No anomalies detected")
 
                     self.last_check_time = current_time
-                except Exception as e:
+                except (
+                    RuntimeError,
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    OSError,
+                ) as e:
                     logger.error(f"Error during anomaly detection: {e}")
 
     def check_anomalies(self) -> List[LearningAnomaly]:
@@ -276,7 +282,13 @@ class LearningAlertSystem:
         for handler in self.alert_handlers:
             try:
                 handler(anomaly)
-            except Exception as e:
+            except (
+                RuntimeError,
+                ValueError,
+                TypeError,
+                AttributeError,
+                OSError,
+            ) as e:
                 logger.error(f"Error in alert handler: {e}")
 
     def _save_anomaly_to_file(self, anomaly: LearningAnomaly):
@@ -294,7 +306,7 @@ class LearningAlertSystem:
                 json.dump(anomaly.to_dict(), f, indent=2)
 
             logger.info(f"Saved anomaly record to {filepath}")
-        except Exception as e:
+        except (OSError, TypeError, ValueError, AttributeError) as e:
             logger.error(f"Error saving anomaly record: {e}")
 
     def _detect_parameter_oscillations(self) -> List[LearningAnomaly]:

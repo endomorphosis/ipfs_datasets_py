@@ -185,7 +185,13 @@ class LiveOptimizerVisualization:
                     logger.info("Auto-updating visualizations")
                     self.update_visualizations()
                     self.last_update_time = current_time
-                except Exception as e:
+                except (
+                    RuntimeError,
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    OSError,
+                ) as e:
                     logger.error(f"Error during auto-update: {e}")
 
     def update_visualizations(self, create_dashboard: bool = True) -> Dict[str, str]:

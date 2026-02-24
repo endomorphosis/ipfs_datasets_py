@@ -57,20 +57,32 @@ def _make_result(
     return EntityExtractionResult(entities=entities, relationships=rels, confidence=0.8)
 
 
-def _make_ontology(n_entities: int = 3, n_rels: int = 2) -> dict:
-    entities = [{"id": f"e{i}"} for i in range(n_entities)]
-    rels = []
-    for i in range(n_rels):
-        src = f"e{i % n_entities}"
-        tgt = f"e{(i + 1) % n_entities}"
-        rels.append({
-            "id": f"r{i}",
-            "source_id": src,
-            "target_id": tgt,
-            "subject_id": src,
-            "object_id": tgt,
-        })
-    return {"entities": entities, "relationships": rels}
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    def _build(n_entities: int = 3, n_rels: int = 2) -> dict:
+        ontology = ontology_dict_factory(
+            entity_count=n_entities,
+            relationship_count=0,
+            entity_types=["Concept"],
+        )
+        ontology["entities"] = [{"id": f"e{i}"} for i in range(n_entities)]
+        rels = []
+        for i in range(n_rels):
+            src = f"e{i % n_entities}"
+            tgt = f"e{(i + 1) % n_entities}"
+            rels.append(
+                {
+                    "id": f"r{i}",
+                    "source_id": src,
+                    "target_id": tgt,
+                    "subject_id": src,
+                    "object_id": tgt,
+                }
+            )
+        ontology["relationships"] = rels
+        return ontology
+
+    return _build
 
 
 # ---------------------------------------------------------------------------
@@ -318,14 +330,14 @@ class TestAvgPathLength:
         ont = {"entities": [{"id": "e1"}], "relationships": []}
         assert self.validator.avg_path_length(ont) == 0.0
 
-    def test_direct_connection(self):
-        ont = _make_ontology(n_entities=2, n_rels=1)
+    def test_direct_connection(self, ontology_builder):
+        ont = ontology_builder(n_entities=2, n_rels=1)
         result = self.validator.avg_path_length(ont)
         assert result >= 0.0  # Should be a non-negative value
 
-    def test_matches_average_path_length(self):
+    def test_matches_average_path_length(self, ontology_builder):
         """avg_path_length must be identical to average_path_length."""
-        ont = _make_ontology(n_entities=4, n_rels=3)
+        ont = ontology_builder(n_entities=4, n_rels=3)
         assert (self.validator.avg_path_length(ont)
                 == self.validator.average_path_length(ont))
 
@@ -337,8 +349,8 @@ class TestAvgPathLength:
         result = self.validator.avg_path_length(ont)
         assert result == 0.0
 
-    def test_returns_float(self):
-        ont = _make_ontology(n_entities=3, n_rels=2)
+    def test_returns_float(self, ontology_builder):
+        ont = ontology_builder(n_entities=3, n_rels=2)
         assert isinstance(self.validator.avg_path_length(ont), float)
 
 
@@ -384,13 +396,13 @@ class TestNodeDensity:
     def test_none_ontology(self):
         assert self.validator.node_density(None) == 0.0
 
-    def test_density_in_range(self):
-        ont = _make_ontology(n_entities=5, n_rels=4)
+    def test_density_in_range(self, ontology_builder):
+        ont = ontology_builder(n_entities=5, n_rels=4)
         d = self.validator.node_density(ont)
         assert 0.0 <= d <= 1.0
 
-    def test_returns_float(self):
-        ont = _make_ontology(n_entities=3, n_rels=2)
+    def test_returns_float(self, ontology_builder):
+        ont = ontology_builder(n_entities=3, n_rels=2)
         assert isinstance(self.validator.node_density(ont), float)
 
     def test_more_edges_higher_density(self):

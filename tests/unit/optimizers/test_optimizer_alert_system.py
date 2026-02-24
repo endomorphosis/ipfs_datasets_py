@@ -287,6 +287,94 @@ class TestLearningAlertSystem:
         time.sleep(0.1)  # Give it time to stop
         assert not alert_system._monitoring_thread.is_alive()
 
+    def test_monitoring_loop_logs_typed_check_error(self, alert_system, caplog):
+        """Typed check failures in monitor loop should be logged and suppressed."""
+        alert_system.last_check_time = 0.0
+        alert_system.check_interval = 1
+
+        def _fail_check():
+            alert_system._stop_monitoring.set()
+            raise RuntimeError("check failed")
+
+        alert_system.check_anomalies = _fail_check
+
+        with patch(
+            "ipfs_datasets_py.optimizers.optimizer_alert_system.time.sleep",
+            return_value=None,
+        ), patch(
+            "ipfs_datasets_py.optimizers.optimizer_alert_system.time.time",
+            return_value=10.0,
+        ), caplog.at_level("ERROR"):
+            alert_system._monitoring_loop()
+
+        assert "Error during anomaly detection" in caplog.text
+
+    def test_monitoring_loop_propagates_base_exception(self, alert_system):
+        """Base exceptions from check path should not be swallowed."""
+        alert_system.last_check_time = 0.0
+        alert_system.check_interval = 1
+        alert_system.check_anomalies = lambda: (_ for _ in ()).throw(KeyboardInterrupt("stop"))
+
+        with patch(
+            "ipfs_datasets_py.optimizers.optimizer_alert_system.time.sleep",
+            return_value=None,
+        ), patch(
+            "ipfs_datasets_py.optimizers.optimizer_alert_system.time.time",
+            return_value=10.0,
+        ):
+            with pytest.raises(KeyboardInterrupt):
+                alert_system._monitoring_loop()
+
+    def test_handle_anomaly_logs_typed_handler_error(self, alert_system, caplog):
+        """Typed handler failures should be logged and non-fatal."""
+        called = []
+
+        def _bad_handler(_):
+            raise RuntimeError("handler failed")
+
+        def _good_handler(anomaly):
+            called.append(anomaly.id)
+
+        alert_system.alert_handlers = [_bad_handler, _good_handler]
+        anomaly = LearningAnomaly(
+            anomaly_type="test",
+            severity="warning",
+            description="handler failure path",
+        )
+        with caplog.at_level("ERROR"):
+            alert_system.handle_anomaly(anomaly)
+
+        assert "Error in alert handler" in caplog.text
+        assert anomaly.id in called
+
+    def test_handle_anomaly_does_not_swallow_handler_keyboard_interrupt(self, alert_system):
+        """Base exceptions from handlers should propagate."""
+        alert_system.alert_handlers = [
+            lambda _: (_ for _ in ()).throw(KeyboardInterrupt("stop"))
+        ]
+        anomaly = LearningAnomaly(
+            anomaly_type="test",
+            severity="warning",
+            description="interrupt path",
+        )
+        with pytest.raises(KeyboardInterrupt):
+            alert_system.handle_anomaly(anomaly)
+
+    def test_save_anomaly_to_file_logs_typed_write_error(self, alert_system, caplog):
+        """File write failures should be logged and suppressed."""
+        anomaly = LearningAnomaly(
+            anomaly_type="test",
+            severity="warning",
+            description="save error path",
+        )
+        with patch(
+            "ipfs_datasets_py.optimizers.optimizer_alert_system.open",
+            side_effect=OSError("disk full"),
+        ), caplog.at_level("ERROR"):
+            alert_system._save_anomaly_to_file(anomaly)
+
+        assert "Error saving anomaly record" in caplog.text
+
     def test_detect_parameter_oscillations(self, metrics_collector):
         """Test detection of parameter oscillations."""
         alert_system = LearningAlertSystem(metrics_collector=metrics_collector)

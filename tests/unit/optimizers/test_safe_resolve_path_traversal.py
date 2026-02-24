@@ -22,6 +22,15 @@ from ipfs_datasets_py.optimizers.graphrag.cli_wrapper import GraphRAGOptimizerCL
 class TestSafeResolveGraphRAG:
     """Tests for graphrag/cli_wrapper._safe_resolve()."""
 
+    def test_non_string_path_raises_type_error(self):
+        with pytest.raises(TypeError, match="path_str must be a string"):
+            _safe_resolve(None)  # type: ignore[arg-type]
+
+    @pytest.mark.parametrize("path", ["", "   "])
+    def test_empty_path_raises_value_error(self, path):
+        with pytest.raises(ValueError, match="path_str must be a non-empty string"):
+            _safe_resolve(path)
+
     @pytest.mark.parametrize("path", [
         "/etc/passwd",
         "/etc/../etc/passwd",
