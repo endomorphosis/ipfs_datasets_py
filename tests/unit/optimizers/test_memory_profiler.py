@@ -611,6 +611,38 @@ class TestEdgeCases:
         
         assert len(snapshots) == 6
 
+    def test_get_largest_objects_handles_typed_getsizeof_error(self, monkeypatch):
+        class _BadObject:
+            pass
+
+        monkeypatch.setattr(
+            "ipfs_datasets_py.optimizers.perf.memory_profiler.gc.get_objects",
+            lambda: [_BadObject()],
+        )
+        monkeypatch.setattr(
+            "ipfs_datasets_py.optimizers.perf.memory_profiler.sys.getsizeof",
+            lambda obj: (_ for _ in ()).throw(TypeError("bad size")),
+        )
+
+        largest = MemoryProfiler._get_largest_objects(limit=10)
+        assert largest == []
+
+    def test_get_largest_objects_does_not_swallow_base_exception(self, monkeypatch):
+        class _BadObject:
+            pass
+
+        monkeypatch.setattr(
+            "ipfs_datasets_py.optimizers.perf.memory_profiler.gc.get_objects",
+            lambda: [_BadObject()],
+        )
+        monkeypatch.setattr(
+            "ipfs_datasets_py.optimizers.perf.memory_profiler.sys.getsizeof",
+            lambda obj: (_ for _ in ()).throw(KeyboardInterrupt()),
+        )
+
+        with pytest.raises(KeyboardInterrupt):
+            MemoryProfiler._get_largest_objects(limit=10)
+
 
 class TestIntegrationWorkflow:
     """Integration tests for complete profiling workflows."""

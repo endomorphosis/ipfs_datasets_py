@@ -2,27 +2,30 @@
 
 from __future__ import annotations
 
+import pytest
+
 from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
 from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import MediatorState
 
 
-def _sample_ontology(suffix: str = "") -> dict:
-    return {
-        "entities": [
-            {
-                "id": f"entity_a{suffix}",
-                "text": "Alice",
-                "type": "Person",
-                "confidence": 0.9,
-            },
-            {
-                "id": f"entity_b{suffix}",
-                "text": "Acme Corp",
-                "type": "Organization",
-                "confidence": 0.88,
-            },
-        ],
-        "relationships": [
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    """Build a deterministic sample ontology from shared fixture factory."""
+
+    def _build(suffix: str = "") -> dict:
+        ontology = ontology_dict_factory(
+            entity_count=2,
+            relationship_count=1,
+            domain="business",
+            entity_types=["Person", "Organization"],
+        )
+        ontology["entities"][0].update(
+            {"id": f"entity_a{suffix}", "text": "Alice", "confidence": 0.9}
+        )
+        ontology["entities"][1].update(
+            {"id": f"entity_b{suffix}", "text": "Acme Corp", "confidence": 0.88}
+        )
+        ontology["relationships"][0].update(
             {
                 "id": f"rel_1{suffix}",
                 "source_id": f"entity_a{suffix}",
@@ -30,9 +33,10 @@ def _sample_ontology(suffix: str = "") -> dict:
                 "type": "works_for",
                 "confidence": 0.84,
             }
-        ],
-        "metadata": {"domain": "business"},
-    }
+        )
+        return ontology
+
+    return _build
 
 
 def _sample_score(base: float = 0.8) -> CriticScore:
@@ -50,17 +54,19 @@ def _sample_score(base: float = 0.8) -> CriticScore:
     )
 
 
-def test_mediator_state_round_trip_preserves_core_fields() -> None:
+def test_mediator_state_round_trip_preserves_core_fields(ontology_builder) -> None:
     state = MediatorState(
         session_id="mediator-test-001",
         domain="graphrag",
         max_rounds=5,
         target_score=0.9,
         convergence_threshold=0.02,
-        current_ontology=_sample_ontology("_0"),
+        current_ontology=ontology_builder("_0"),
     )
-    state.add_round(_sample_ontology("_1"), _sample_score(0.75), "initial_generation")
-    state.add_round(_sample_ontology("_2"), _sample_score(0.83), "add_missing_relationships")
+    state.add_round(ontology_builder("_1"), _sample_score(0.75), "initial_generation")
+    state.add_round(
+        ontology_builder("_2"), _sample_score(0.83), "add_missing_relationships"
+    )
     state.total_time_ms = 123.45
     state.converged = True
     state.metadata["final_score"] = state.critic_scores[-1].overall
@@ -85,8 +91,8 @@ def test_mediator_state_round_trip_preserves_core_fields() -> None:
     assert restored.current_ontology["entities"][0]["id"] == "entity_a_2"
 
 
-def test_mediator_state_from_dict_handles_minimal_payload() -> None:
-    restored = MediatorState.from_dict({"current_ontology": _sample_ontology()})
+def test_mediator_state_from_dict_handles_minimal_payload(ontology_builder) -> None:
+    restored = MediatorState.from_dict({"current_ontology": ontology_builder()})
 
     assert restored.domain == "graphrag"
     assert restored.max_rounds == 10

@@ -30,22 +30,36 @@ def ctx():
     )
 
 
-def _simple_ontology(n_entities: int = 3) -> dict:
-    entities = [
-        {"id": f"e{i}", "type": "Person", "text": f"Person{i}", "confidence": 0.8}
-        for i in range(n_entities)
-    ]
-    relationships = [
-        {
-            "id": f"r{i}",
-            "source": f"e{i}",
-            "target": f"e{(i + 1) % n_entities}",
-            "type": "knows",
-            "confidence": 0.7,
-        }
-        for i in range(n_entities)
-    ] if n_entities > 1 else []
-    return {"entities": entities, "relationships": relationships}
+@pytest.fixture
+def ontology_builder(ontology_dict_factory):
+    def _build(n_entities: int = 3) -> dict:
+        ontology = ontology_dict_factory(
+            entity_count=n_entities,
+            relationship_count=n_entities if n_entities > 1 else 0,
+            entity_types=["Person"],
+        )
+        for idx, entity in enumerate(ontology["entities"]):
+            entity.update(
+                {
+                    "id": f"e{idx}",
+                    "type": "Person",
+                    "text": f"Person{idx}",
+                    "confidence": 0.8,
+                }
+            )
+        for idx, rel in enumerate(ontology["relationships"]):
+            rel.update(
+                {
+                    "id": f"r{idx}",
+                    "source": f"e{idx}",
+                    "target": f"e{(idx + 1) % n_entities}",
+                    "type": "knows",
+                    "confidence": 0.7,
+                }
+            )
+        return ontology
+
+    return _build
 
 
 class TestEvaluateBatchEmpty:
@@ -65,61 +79,61 @@ class TestEvaluateBatchEmpty:
 
 
 class TestEvaluateBatchSingle:
-    def test_single_ontology_count_is_one(self, critic, ctx):
-        result = critic.evaluate_batch([_simple_ontology()], ctx)
+    def test_single_ontology_count_is_one(self, critic, ctx, ontology_builder):
+        result = critic.evaluate_batch([ontology_builder()], ctx)
         assert result["count"] == 1
 
-    def test_single_ontology_scores_list_length(self, critic, ctx):
-        result = critic.evaluate_batch([_simple_ontology()], ctx)
+    def test_single_ontology_scores_list_length(self, critic, ctx, ontology_builder):
+        result = critic.evaluate_batch([ontology_builder()], ctx)
         assert len(result["scores"]) == 1
 
-    def test_single_ontology_mean_equals_individual(self, critic, ctx):
-        ontology = _simple_ontology()
+    def test_single_ontology_mean_equals_individual(self, critic, ctx, ontology_builder):
+        ontology = ontology_builder()
         result = critic.evaluate_batch([ontology], ctx)
         individual = critic.evaluate_ontology(ontology, ctx)
         assert abs(result["mean_overall"] - individual.overall) < 1e-9
 
-    def test_single_min_equals_max(self, critic, ctx):
-        result = critic.evaluate_batch([_simple_ontology()], ctx)
+    def test_single_min_equals_max(self, critic, ctx, ontology_builder):
+        result = critic.evaluate_batch([ontology_builder()], ctx)
         assert result["min_overall"] == result["max_overall"]
 
 
 class TestEvaluateBatchMultiple:
-    def test_multiple_count_correct(self, critic, ctx):
-        ontologies = [_simple_ontology(i + 1) for i in range(4)]
+    def test_multiple_count_correct(self, critic, ctx, ontology_builder):
+        ontologies = [ontology_builder(i + 1) for i in range(4)]
         result = critic.evaluate_batch(ontologies, ctx)
         assert result["count"] == 4
 
-    def test_multiple_scores_list_length(self, critic, ctx):
-        ontologies = [_simple_ontology(i + 1) for i in range(3)]
+    def test_multiple_scores_list_length(self, critic, ctx, ontology_builder):
+        ontologies = [ontology_builder(i + 1) for i in range(3)]
         result = critic.evaluate_batch(ontologies, ctx)
         assert len(result["scores"]) == 3
 
-    def test_mean_within_min_max(self, critic, ctx):
-        ontologies = [_simple_ontology(i + 1) for i in range(5)]
+    def test_mean_within_min_max(self, critic, ctx, ontology_builder):
+        ontologies = [ontology_builder(i + 1) for i in range(5)]
         result = critic.evaluate_batch(ontologies, ctx)
         assert result["min_overall"] <= result["mean_overall"] <= result["max_overall"]
 
-    def test_min_is_global_minimum(self, critic, ctx):
-        ontologies = [_simple_ontology(i + 1) for i in range(5)]
+    def test_min_is_global_minimum(self, critic, ctx, ontology_builder):
+        ontologies = [ontology_builder(i + 1) for i in range(5)]
         result = critic.evaluate_batch(ontologies, ctx)
         computed_min = min(s.overall for s in result["scores"])
         assert abs(result["min_overall"] - computed_min) < 1e-9
 
-    def test_max_is_global_maximum(self, critic, ctx):
-        ontologies = [_simple_ontology(i + 1) for i in range(5)]
+    def test_max_is_global_maximum(self, critic, ctx, ontology_builder):
+        ontologies = [ontology_builder(i + 1) for i in range(5)]
         result = critic.evaluate_batch(ontologies, ctx)
         computed_max = max(s.overall for s in result["scores"])
         assert abs(result["max_overall"] - computed_max) < 1e-9
 
-    def test_mean_computed_correctly(self, critic, ctx):
-        ontologies = [_simple_ontology(i + 1) for i in range(4)]
+    def test_mean_computed_correctly(self, critic, ctx, ontology_builder):
+        ontologies = [ontology_builder(i + 1) for i in range(4)]
         result = critic.evaluate_batch(ontologies, ctx)
         overalls = [s.overall for s in result["scores"]]
         expected_mean = sum(overalls) / len(overalls)
         assert abs(result["mean_overall"] - expected_mean) < 1e-9
 
-    def test_result_has_expected_keys(self, critic, ctx):
-        result = critic.evaluate_batch([_simple_ontology()], ctx)
+    def test_result_has_expected_keys(self, critic, ctx, ontology_builder):
+        result = critic.evaluate_batch([ontology_builder()], ctx)
         for key in ("scores", "mean_overall", "min_overall", "max_overall", "count"):
             assert key in result
