@@ -241,7 +241,7 @@ class TestOntologyGeneratorSortedEntities:
     
     def test_sorted_entities_by_text(self, generator, sample_result):
         """sorted_entities sorts by text alphabetically."""
-        sorted_entities = generator.sorted_entities(sample_result, key="text")
+        sorted_entities = generator.sorted_entities(sample_result, key="text", reverse=False)
         
         assert sorted_entities[0].text == "Alice"
         assert sorted_entities[1].text == "Bob"
@@ -249,7 +249,7 @@ class TestOntologyGeneratorSortedEntities:
     
     def test_sorted_entities_by_type(self, generator, sample_result):
         """sorted_entities sorts by type alphabetically."""
-        sorted_entities = generator.sorted_entities(sample_result, key="type")
+        sorted_entities = generator.sorted_entities(sample_result, key="type", reverse=False)
         
         assert sorted_entities[0].type == "Animal"  # Zebra
         assert sorted_entities[1].type == "Person"  # Alice or Bob

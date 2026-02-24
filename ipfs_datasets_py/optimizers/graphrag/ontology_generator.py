@@ -1536,7 +1536,7 @@ class EntityExtractionResult:
             f"{len(self.relationships)} relationships, confidence={self.confidence:.2f}"
         )
 
-    def confidence_histogram(self, bins: int = 5) -> List[int]:
+    def confidence_histogram(self, bins: int = 10) -> List[int]:
         """Return a frequency histogram of entity confidence scores.
 
         Divides the [0, 1] range into *bins* equal-width buckets and counts how
@@ -1974,7 +1974,7 @@ class EntityExtractionResult:
         """
         return [e.text for e in self.entities]
 
-    def confidence_histogram(self, bins: int = 5) -> List[int]:
+    def confidence_histogram(self, bins: int = 10) -> List[int]:
         """Return a histogram of entity confidence values bucketed into *bins*.
 
         Args:

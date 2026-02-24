@@ -52,7 +52,8 @@ test hardening, and documentation clarity while keeping progress measurable.
 - [x] (P2) [perf] Profile OntologyGenerator.generate() on 10k-token input
   - Done 2026-02-23: Batch 262 - Created profile_batch_262_generate_10k.py (390 LOC), test_batch_262_profiling.py (22/22 tests), PROFILING_BATCH_262_ANALYSIS.md. Identified key bottlenecks: regex operations (54% time), _promote_person_entities (70%), with optimization recommendations for 70-80% potential speedup.
 - [ ] (P2) [obs] Structured JSON logging for every pipeline run
-- [ ] (P2) [docs] Optimizers README with quick-start + class diagram
+- [x] (P2) [docs] Optimizers README with quick-start +  class diagram + comprehensive guides
+  - Done 2026-02-23: Batch 263 - Created PERFORMANCE_TUNING_GUIDE.md (18KB), TROUBLESHOOTING_GUIDE.md (28KB), INTEGRATION_EXAMPLES.md (18KB, 8 real-world scenarios). Updated README.md with guide references. Comprehensive documentation for performance optimization (70-80% potential speedup), 30+ troubleshooting solutions, and production integration patterns (FastAPI, Flask, CLI, CI/CD, batch processing, streaming, multi-domain).
 
 ### Random Workstream (keep 3-5 active, different tracks)
 
@@ -62,7 +63,8 @@ with a new item from a different track.
 **Active picks (rotate on completion)**
 - [x] (P2) [docs] Create detailed "Configuration Guide" for all `ExtractionConfig` fields
   - Done 2026-02-23: Created CONFIGURATION_REFERENCE.md
-- [ ] (P2) [arch] Extract `QueryValidationMixin` for GraphRAG reuse
+- [x] (P2) [arch] Extract `QueryValidationMixin` for GraphRAG reuse
+  - Done 2026-02-23: implemented in optimizers/common/query_validation.py and used by graphrag/query_unified_optimizer.py
 - [x] (P2) [tests] Migrate mock ontology creation to factory fixtures in `conftest.py`
   - Done 2026-02-23: Added 6 TypedDict factory fixtures (entity, relationship, critic_score, ontology_session, feedback_record). Extends existing conftest.py by 213 lines.
 - [x] (P2) [perf] Implement lazy loading for domain-specific rule sets in `ExtractionConfig`
@@ -97,7 +99,8 @@ This plan is intentionally evergreen. It balances refactors, feature growth, tes
 
 ### Random Work Rotation (Active Picks)
 - [ ] (P2) [docs] Configuration Guide for `ExtractionConfig` fields (see Medium Tasks)
-- [ ] (P2) [arch] Extract `QueryValidationMixin` for GraphRAG reuse (see Strategic Refactoring)
+- [x] (P2) [arch] Extract `QueryValidationMixin` for GraphRAG reuse (see Strategic Refactoring)
+  - Done 2026-02-23: implemented in optimizers/common/query_validation.py and used by graphrag/query_unified_optimizer.py
 - [x] (P2) [graphrag] Implement `_extract_with_llm_fallback()` wrapper (see GraphRAG backlog)
   - Done 2026-02-21: added `_extract_with_llm_fallback()` helper and refactored RULE_BASED path; fixed `extraction_config` to return `GraphRAGExtractionConfig` so fallback thresholds apply; 11 tests passing.
 - [x] (P2) [tests] Add integration test: full pipeline on a multi-paragraph text, assert >3 entities extracted (see Batch 52+ ideas)
@@ -202,7 +205,8 @@ These should be started immediately when available:
   - Done 2026-02-21: Implemented method to extract entities from very large texts using sliding overlapping windows. Supports configurable window size/overlap and three deduplication strategies (highest_confidence, first_occurrence, merge_spans). Handles extraction failures gracefully. Created 22 comprehensive unit tests covering: basic functionality, parameter validation, all dedup strategies, relationship handling, error handling, and confidence aggregation. All tests passing. File: ipfs_datasets_py/optimizers/graphrag/ontology_generator.py
 
 #### Strategic Refactoring (2-4 hours)
-- [ ] (P2) [arch] Extract `QueryValidationMixin` from query optimizer for reuse in GraphRAG
+- [x] (P2) [arch] Extract `QueryValidationMixin` from query optimizer for reuse in GraphRAG
+  - Done 2026-02-23: implemented in optimizers/common/query_validation.py and used by graphrag/query_unified_optimizer.py
 - [ ] (P2) [arch] Unify exception hierarchy across `[graphrag]`, `[logic]`, `[agentic]` packages
 - [ ] (P2) [api] Create `ontology_types.py` with TypedDict definitions for all ontology structures
 - [ ] (P2) [tests] Migrate all mock ontology creation to factory fixtures in `conftest.py`
