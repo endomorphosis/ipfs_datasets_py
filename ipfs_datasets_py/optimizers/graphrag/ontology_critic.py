@@ -73,6 +73,9 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_critic_granularity import (
 from ipfs_datasets_py.optimizers.graphrag.ontology_critic_connectivity import (
     evaluate_relationship_coherence,
 )
+from ipfs_datasets_py.optimizers.graphrag.ontology_comparator import (
+    OntologyComparator,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1172,42 +1175,6 @@ class OntologyCritic(BaseCritic):
             "count": len(valid_scores),
         }
     
-    def compare_batch(
-        self,
-        ontologies: List[Dict[str, Any]],
-        context: Any,
-    ) -> List[Dict[str, Any]]:
-        """Rank a list of ontologies by their overall critic score.
-
-        Each ontology is evaluated with :meth:`evaluate_ontology` and the
-        results are returned sorted from highest to lowest overall score.
-
-        Args:
-            ontologies: List of ontology dicts to compare.
-            context: Shared evaluation context forwarded to each call.
-
-        Returns:
-            List of dicts, each containing:
-
-            * ``"index"`` - original position in *ontologies* (0-based).
-            * ``"rank"`` - 1-based rank (1 = best).
-            * ``"overall"`` - overall :class:`CriticScore` value.
-            * ``"score"`` - the full :class:`CriticScore` object.
-
-        Example:
-            >>> ranking = critic.compare_batch([ont_a, ont_b, ont_c], ctx)
-            >>> print(ranking[0]["rank"], ranking[0]["overall"])
-            1 0.87
-        """
-        scored = []
-        for idx, ontology in enumerate(ontologies):
-            score = self.evaluate_ontology(ontology, context)
-            scored.append({"index": idx, "overall": score.overall, "score": score})
-        scored.sort(key=lambda d: d["overall"], reverse=True)
-        for rank, item in enumerate(scored, start=1):
-            item["rank"] = rank
-        return scored
-
     def calibrate_thresholds(
         self,
         scores: List["CriticScore"],
@@ -1334,16 +1301,8 @@ class OntologyCritic(BaseCritic):
         if bins < 1:
             raise ValueError(f"bins must be >= 1; got {bins}")
 
-        _DIMS = ("completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment")
-        histogram: Dict[str, List[int]] = {}
-        for dim in _DIMS:
-            counts = [0] * bins
-            for s in scores:
-                val = max(0.0, min(1.0, getattr(s, dim)))
-                bucket = min(int(val * bins), bins - 1)
-                counts[bucket] += 1
-            histogram[dim] = counts
-        return histogram
+        comparator = OntologyComparator()
+        return comparator.histogram_by_dimension(scores, bins=bins)
 
     def compare_with_baseline(
         self,
@@ -1379,9 +1338,12 @@ class OntologyCritic(BaseCritic):
         """
         current = self.evaluate_ontology(ontology, context, source_data)
         baseline_score = self.evaluate_ontology(baseline, context, source_data)
-        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
-        dimension_deltas: Dict[str, float] = {
-            d: round(getattr(current, d) - getattr(baseline_score, d), 6) for d in dims
+
+        comparator = OntologyComparator()
+        comparison = comparator.compare_pair({}, current, {}, baseline_score)
+        dimension_deltas = {
+            dim: round(val, 6)
+            for dim, val in comparison.get("dimension_deltas", {}).items()
         }
         delta = round(current.overall - baseline_score.overall, 6)
         return {
@@ -1466,23 +1428,22 @@ class OntologyCritic(BaseCritic):
             >>> ranked[0]["rank"]
             1
         """
-        scored = []
-        for idx, ontology in enumerate(ontologies):
+        scores: List[Optional[CriticScore]] = []
+        for ontology in ontologies:
             try:
                 score = self.evaluate_ontology(ontology, context, source_data)
-                scored.append({
-                    "index": idx,
-                    "overall": score.overall,
-                    "completeness": score.completeness,
-                    "consistency": score.consistency,
-                    "score": score,
-                })
+                scores.append(score)
             except (AttributeError, TypeError, KeyError):  # pragma: no cover
-                scored.append({"index": idx, "overall": 0.0, "completeness": 0.0, "consistency": 0.0, "score": None})
-        scored.sort(key=lambda d: -d["overall"])
-        for rank, entry in enumerate(scored, start=1):
-            entry["rank"] = rank
-        return scored
+                scores.append(None)
+
+        comparator = OntologyComparator()
+        placeholders = [{} for _ in scores]
+        ranked = comparator.rank_batch(placeholders, scores)
+        for entry in ranked:
+            score = entry.get("score")
+            entry["completeness"] = getattr(score, "completeness", 0.0)
+            entry["consistency"] = getattr(score, "consistency", 0.0)
+        return ranked
 
     def weighted_overall(
         self,
@@ -1516,7 +1477,9 @@ class OntologyCritic(BaseCritic):
         total_weight = sum(effective.values())
         if total_weight == 0:
             raise ValueError("All dimension weights are zero — cannot compute weighted overall.")
-        return sum(getattr(score, d) * effective[d] / total_weight for d in dims)
+
+        comparator = OntologyComparator()
+        return comparator.reweight_score(score, effective)
 
     def evaluate_with_rubric(
         self,
@@ -1612,7 +1575,14 @@ class OntologyCritic(BaseCritic):
         regressions = []
         
         if score1 and score2:
-            dimensions = ['completeness', 'consistency', 'clarity', 'granularity', 'domain_alignment']
+            dimensions = [
+                'completeness',
+                'consistency',
+                'clarity',
+                'granularity',
+                'relationship_coherence',
+                'domain_alignment',
+            ]
             for dim in dimensions:
                 val1 = getattr(score1, dim)
                 val2 = getattr(score2, dim)

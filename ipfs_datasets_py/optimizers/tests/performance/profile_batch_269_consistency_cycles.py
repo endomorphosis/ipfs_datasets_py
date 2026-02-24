@@ -32,6 +32,10 @@ def build_ontology(
     with_cycle: bool = False,
 ) -> Dict[str, Any]:
     """Create a synthetic ontology with optional hierarchy cycles."""
+    if isinstance(entity_count, bool) or not isinstance(entity_count, int):
+        raise TypeError("entity_count must be an int")
+    if isinstance(relationship_count, bool) or not isinstance(relationship_count, int):
+        raise TypeError("relationship_count must be an int")
     if entity_count <= 0:
         raise ValueError("entity_count must be > 0")
     if relationship_count < 0:
@@ -97,6 +101,10 @@ def profile_consistency(
     Returns:
         Dict with profiling metrics.
     """
+    if isinstance(entity_count, bool) or not isinstance(entity_count, int):
+        raise TypeError("entity_count must be an int")
+    if isinstance(relationship_count, bool) or not isinstance(relationship_count, int):
+        raise TypeError("relationship_count must be an int")
     if not isinstance(with_cycle, bool):
         raise TypeError("with_cycle must be a bool")
 

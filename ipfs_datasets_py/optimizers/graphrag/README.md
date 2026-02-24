@@ -240,6 +240,31 @@ result = session.run(
     convergence_threshold=0.85
 )
 
+### Score Analysis and Comparison
+
+```python
+from ipfs_datasets_py.optimizers.graphrag import (
+    ScoreAnalyzer,
+    OntologyComparator,
+)
+
+analyzer = ScoreAnalyzer()
+comparator = OntologyComparator()
+
+# Analyze a batch of scores
+summary = analyzer.batch_dimension_stats(scores)
+print(summary["completeness"].overall_mean)
+
+# Compare and rank a batch
+ranked = comparator.rank_batch(ontologies, scores)
+best = ranked[0]
+print(best["rank"], best["overall"])
+
+# Detect trends across runs
+trend = comparator.detect_trend(scores)
+print(f"Trend: {trend}")
+```
+
 print(f"Final score: {result.final_score:.2f}")
 print(f"Validation: {'✅' if result.validation_result.is_consistent else '❌'}")
 print(f"Rounds: {len(result.refinement_history)}")

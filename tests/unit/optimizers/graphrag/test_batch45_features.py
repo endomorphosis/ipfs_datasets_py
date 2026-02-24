@@ -115,6 +115,7 @@ class TestCompareVersions:
         result = critic.compare_versions(v1, v2, ctx)
         assert "delta_overall" in result
         assert "delta_completeness" in result
+        assert "delta_relationship_coherence" in result
 
     def test_delta_overall_positive_for_richer_ontology(self, critic, ctx):
         v1 = {"entities": [self._ent("e1")], "relationships": []}
@@ -130,7 +131,12 @@ class TestCompareVersions:
         v2 = {"entities": [self._ent("e1")], "relationships": []}
         result = critic.compare_versions(v1, v2, ctx)
         # Same ontologies → deltas should all be zero
-        for key in ("delta_completeness", "delta_consistency", "delta_clarity"):
+        for key in (
+            "delta_completeness",
+            "delta_consistency",
+            "delta_clarity",
+            "delta_relationship_coherence",
+        ):
             assert abs(result[key]) < 1e-4
 
 

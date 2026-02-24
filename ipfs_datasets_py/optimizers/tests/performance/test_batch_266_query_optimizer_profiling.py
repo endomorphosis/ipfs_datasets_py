@@ -70,6 +70,16 @@ class TestQueryOptimizerProfilingScript:
         with pytest.raises(ValueError, match="max_depth must be > 0"):
             module.build_queries(1, max_depth=0)
 
+    def test_build_queries_rejects_invalid_types(self):
+        module = _load_profile_module()
+
+        with pytest.raises(TypeError, match="count must be an int"):
+            module.build_queries("3")
+        with pytest.raises(TypeError, match="vector_size must be an int"):
+            module.build_queries(1, vector_size=1.5)
+        with pytest.raises(TypeError, match="max_depth must be an int"):
+            module.build_queries(1, max_depth=True)
+
     def test_profile_rejects_invalid_inputs(self, tmp_path):
         module = _load_profile_module()
 
@@ -79,6 +89,16 @@ class TestQueryOptimizerProfilingScript:
             module.profile_query_optimizer(query_count=1, vector_size=0, output_dir=tmp_path)
         with pytest.raises(ValueError, match="warmup_count must be >= 0"):
             module.profile_query_optimizer(query_count=1, warmup_count=-1, output_dir=tmp_path)
+
+    def test_profile_rejects_invalid_types(self, tmp_path):
+        module = _load_profile_module()
+
+        with pytest.raises(TypeError, match="query_count must be an int"):
+            module.profile_query_optimizer(query_count=1.2, output_dir=tmp_path)
+        with pytest.raises(TypeError, match="vector_size must be an int"):
+            module.profile_query_optimizer(query_count=1, vector_size="64", output_dir=tmp_path)
+        with pytest.raises(TypeError, match="warmup_count must be an int"):
+            module.profile_query_optimizer(query_count=1, warmup_count=False, output_dir=tmp_path)
 
 
 @pytest.mark.llm

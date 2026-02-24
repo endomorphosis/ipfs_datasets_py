@@ -56,7 +56,8 @@ It is intentionally infinite: finish work, add new work, repeat.
 ## Random Rotation Queue (Keep 5 Active)
 
 Active random picks (different tracks):
-- [ ] (P2) [tests] Add deterministic regression tests for `query_unified_optimizer.save_learning_state/load_learning_state` fallback error paths.
+- [x] (P2) [tests] Add deterministic regression tests for `query_unified_optimizer.save_learning_state/load_learning_state` fallback error paths.
+  - Done 2026-02-24: added `tests/unit/optimizers/graphrag/test_query_unified_learning_state_fallbacks.py` covering save fallback serialization, double-failure metrics recording, invalid-JSON load handling, and successful state restoration.
 - [ ] (P2) [obs] Add structured error codes to query metrics persistence failures and document them in troubleshooting docs.
 - [ ] (P2) [perf] Add micro-benchmark for `QueryValidationMixin.generate_cache_key` on large nested query payloads.
 - [ ] (P2) [graphrag] Add focused unit tests for `query_optimizer.example_usage()` error/fallback branches using mocks.

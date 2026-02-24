@@ -42,6 +42,13 @@ def build_queries(
     Returns:
         List of query dicts.
     """
+    if isinstance(count, bool) or not isinstance(count, int):
+        raise TypeError("count must be an int")
+    if isinstance(vector_size, bool) or not isinstance(vector_size, int):
+        raise TypeError("vector_size must be an int")
+    if isinstance(max_depth, bool) or not isinstance(max_depth, int):
+        raise TypeError("max_depth must be an int")
+
     if count < 0:
         raise ValueError("count must be >= 0")
     if vector_size <= 0:
@@ -90,6 +97,13 @@ def profile_query_optimizer(
     Returns:
         Dict with profiling metrics.
     """
+    if isinstance(query_count, bool) or not isinstance(query_count, int):
+        raise TypeError("query_count must be an int")
+    if isinstance(vector_size, bool) or not isinstance(vector_size, int):
+        raise TypeError("vector_size must be an int")
+    if isinstance(warmup_count, bool) or not isinstance(warmup_count, int):
+        raise TypeError("warmup_count must be an int")
+
     if query_count <= 0:
         raise ValueError("query_count must be > 0")
     if vector_size <= 0:

@@ -42,6 +42,9 @@ class StubProver:
 
 def build_statements(count: int) -> List[str]:
     """Build a list of deterministic logical statements."""
+    if isinstance(count, bool) or not isinstance(count, int):
+        raise TypeError("count must be an int")
+
     if count < 0:
         raise ValueError("count must be >= 0")
 
@@ -74,6 +77,11 @@ def profile_prover_roundtrips(
     Returns:
         Dict with profiling metrics.
     """
+    if isinstance(statement_count, bool) or not isinstance(statement_count, int):
+        raise TypeError("statement_count must be an int")
+    if isinstance(delay_ms, bool) or not isinstance(delay_ms, (int, float)):
+        raise TypeError("delay_ms must be a number")
+
     if statement_count <= 0:
         raise ValueError("statement_count must be > 0")
     if delay_ms < 0:

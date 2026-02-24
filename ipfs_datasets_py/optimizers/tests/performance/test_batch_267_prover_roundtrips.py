@@ -68,6 +68,16 @@ class TestProverRoundtripProfilingScript:
         with pytest.raises(ValueError, match="delay_ms must be >= 0"):
             module.profile_prover_roundtrips(statement_count=1, delay_ms=-1.0, output_dir=tmp_path)
 
+    def test_rejects_invalid_types(self, tmp_path):
+        module = _load_profile_module()
+
+        with pytest.raises(TypeError, match="count must be an int"):
+            module.build_statements("3")
+        with pytest.raises(TypeError, match="statement_count must be an int"):
+            module.profile_prover_roundtrips(statement_count=2.5, output_dir=tmp_path)
+        with pytest.raises(TypeError, match="delay_ms must be a number"):
+            module.profile_prover_roundtrips(statement_count=1, delay_ms="0", output_dir=tmp_path)
+
 
 @pytest.mark.llm
 class TestProverRoundtripProfilingSmoke:

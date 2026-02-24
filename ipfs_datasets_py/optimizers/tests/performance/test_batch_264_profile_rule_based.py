@@ -73,6 +73,18 @@ class TestRuleBasedProfilingScript:
             module.profile_extract_rule_based(target_tokens=0, output_dir=tmp_path)
         with pytest.raises(ValueError, match="warmup_tokens must be > 0"):
             module.profile_extract_rule_based(target_tokens=100, warmup_tokens=0, output_dir=tmp_path)
+        with pytest.raises(ValueError, match="warmup_tokens must be <= target_tokens"):
+            module.profile_extract_rule_based(target_tokens=100, warmup_tokens=200, output_dir=tmp_path)
+
+    def test_rejects_invalid_token_types(self, tmp_path):
+        module = _load_profile_module()
+
+        with pytest.raises(TypeError, match="target_tokens must be an int"):
+            module.generate_legal_text(target_tokens=100.5)
+        with pytest.raises(TypeError, match="target_tokens must be an int"):
+            module.profile_extract_rule_based(target_tokens=True, output_dir=tmp_path)
+        with pytest.raises(TypeError, match="warmup_tokens must be an int"):
+            module.profile_extract_rule_based(target_tokens=100, warmup_tokens="10", output_dir=tmp_path)
 
 
 @pytest.mark.llm
