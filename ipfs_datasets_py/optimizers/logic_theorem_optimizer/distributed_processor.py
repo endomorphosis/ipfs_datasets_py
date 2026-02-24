@@ -363,7 +363,7 @@ class DistributedProcessor:
                     
                     logger.debug(f"Worker {worker_id} completed task {task_id}")
                     
-                except Exception as e:
+                except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
                     # Handle task failure
                     logger.warning(f"Worker {worker_id} failed task {task_id}: {e}")
                     
@@ -397,7 +397,7 @@ class DistributedProcessor:
             except Empty:
                 # No tasks available, continue
                 continue
-            except Exception as e:
+            except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Worker {worker_id} error: {e}")
                 worker.status = WorkerStatus.FAILED
     

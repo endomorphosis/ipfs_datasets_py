@@ -29,6 +29,7 @@ from ipfs_datasets_py.optimizers.graphrag.data_transformers import (
     ExtractionResultTransformer,
     dict_to_dataclass,
     dataclass_to_dict,
+    Transformation,
 )
 
 
@@ -507,6 +508,27 @@ class TestTransformationBatchErrors:
         
         assert len(results) == 2
         assert results == [2, 4]
+
+    class _IntTransformer(Transformation[int, int]):
+        def transform(self, data: int) -> int:
+            if data < 0:
+                raise ValueError("Negative value")
+            return data * 2
+
+    def test_transform_base_batch_skip_errors_true(self):
+        """Transformation.transform_batch should skip typed errors when requested."""
+        transformer = self._IntTransformer()
+
+        result = transformer.transform_batch([1, -1, 2], skip_errors=True)
+
+        assert result == [2, 4]
+
+    def test_transform_base_batch_skip_errors_false_raises(self):
+        """Transformation.transform_batch should wrap and raise when skip_errors=False."""
+        transformer = self._IntTransformer()
+
+        with pytest.raises(TransformationError, match="Transformation failed at item 1"):
+            transformer.transform_batch([1, -1, 2], skip_errors=False)
 
 
 if __name__ == '__main__':

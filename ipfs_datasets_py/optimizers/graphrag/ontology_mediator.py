@@ -659,7 +659,7 @@ class OntologyMediator:
             
             # Log as structured JSON
             self._log.info(f"REFINEMENT_ROUND: {_json.dumps(round_metrics)}")
-        except Exception as e:
+        except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as e:
             self._log.debug(f"Could not log structured metrics: {e}")
         
         self._log.info(f"Refinement complete. Actions applied: {actions_applied}")
@@ -755,7 +755,7 @@ class OntologyMediator:
                 }
 
                 return idx, refined, changelog, None
-            except Exception as e:
+            except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Refinement failed for ontology {idx}: {e}")
                 error_detail = {
                     "ontology_idx": idx,

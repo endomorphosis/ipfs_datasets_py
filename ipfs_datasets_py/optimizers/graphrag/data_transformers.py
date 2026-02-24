@@ -93,7 +93,7 @@ class Transformation(ABC, Generic[T, U]):
         for i, item in enumerate(data_items):
             try:
                 results.append(self.transform(item))
-            except Exception as e:
+            except (TransformationError, AttributeError, TypeError, ValueError, KeyError, RuntimeError) as e:
                 if skip_errors:
                     errors.append((i, item, str(e)))
                 else:

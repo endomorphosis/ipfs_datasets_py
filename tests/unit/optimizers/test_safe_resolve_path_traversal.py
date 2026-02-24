@@ -96,6 +96,100 @@ def test_graphrag_validate_restricted_output_path_returns_nonzero(tmp_path, monk
     assert code == 1
 
 
+def test_graphrag_generate_restricted_output_path_returns_nonzero(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.graphrag import cli_wrapper as graphrag_cli_wrapper
+
+    input_path = tmp_path / "input.txt"
+    input_path.write_text("Alice works at Acme.", encoding="utf-8")
+
+    class _StubGenerator:
+        def generate_ontology(self, data, context):
+            return {
+                "entities": [{"id": "e1", "type": "Thing", "text": "Alice"}],
+                "relationships": [],
+                "metadata": {"confidence": 0.9},
+            }
+
+    class _StubScore:
+        overall = 0.75
+
+    class _StubCritic:
+        def evaluate_ontology(self, ontology, context, source_data):
+            return _StubScore()
+
+    monkeypatch.setattr(graphrag_cli_wrapper, "OntologyGenerator", lambda *a, **k: _StubGenerator())
+    monkeypatch.setattr(graphrag_cli_wrapper, "OntologyCritic", lambda *a, **k: _StubCritic())
+
+    cli = GraphRAGOptimizerCLI()
+    code = cli.run(
+        [
+            "generate",
+            "--input",
+            str(input_path),
+            "--domain",
+            "general",
+            "--strategy",
+            "rule_based",
+            "--format",
+            "json",
+            "--output",
+            "/etc/passwd",
+        ]
+    )
+    assert code == 1
+
+
+def test_graphrag_optimize_restricted_output_path_returns_nonzero(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.graphrag import cli_wrapper as graphrag_cli_wrapper
+
+    input_path = tmp_path / "input.txt"
+    input_path.write_text("This agreement is between parties.", encoding="utf-8")
+
+    class _StubScore:
+        overall = 0.8
+
+        def to_dict(self):
+            return {"overall": self.overall}
+
+    class _StubResult:
+        critic_score = _StubScore()
+        validation_result = None
+        num_rounds = 1
+        converged = True
+        time_elapsed = 0.01
+        metadata = {}
+        ontology = {"entities": [], "relationships": []}
+
+    class _StubSession:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def run(self, data, context):
+            return _StubResult()
+
+    monkeypatch.setattr(graphrag_cli_wrapper, "OntologyGenerator", lambda *a, **k: object())
+    monkeypatch.setattr(graphrag_cli_wrapper, "OntologyMediator", lambda *a, **k: object())
+    monkeypatch.setattr(graphrag_cli_wrapper, "OntologyCritic", lambda *a, **k: object())
+    monkeypatch.setattr(graphrag_cli_wrapper, "LogicValidator", lambda *a, **k: object())
+    monkeypatch.setattr(graphrag_cli_wrapper, "OntologySession", _StubSession)
+
+    cli = GraphRAGOptimizerCLI()
+    code = cli.run(
+        [
+            "optimize",
+            "--input",
+            str(input_path),
+            "--cycles",
+            "1",
+            "--target",
+            "all",
+            "--output",
+            "/etc/passwd",
+        ]
+    )
+    assert code == 1
+
+
 def test_logic_extract_restricted_output_path_returns_nonzero(tmp_path, monkeypatch):
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import cli_wrapper as logic_cli_wrapper
 

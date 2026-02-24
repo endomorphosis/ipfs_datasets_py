@@ -204,7 +204,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
         t0 = _time.monotonic()
         try:
             result = super().run_session(input_data, context)
-        except Exception as exc:
+        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
             result = {
                 "success": False,
                 "error": str(exc),
@@ -254,7 +254,13 @@ class LogicTheoremOptimizer(BaseOptimizer):
                 "LOGIC_SESSION_RUN: %s",
                 _json.dumps(with_schema(payload), default=str),
             )
-        except Exception as exc:  # pragma: no cover
+        except (
+            AttributeError,
+            ImportError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:  # pragma: no cover
             self._log.debug("Logic session JSON logging failed: %s", exc)
 
         if self._learning_metrics is not None:
@@ -271,7 +277,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
                     },
                     execution_time=round(duration_s, 4),
                 )
-            except Exception as e:
+            except (AttributeError, RuntimeError, TypeError, ValueError) as e:
                 _logger.warning(f"Metrics collection failed: {e}")
 
         return result
@@ -376,7 +382,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             
             return result
             
-        except Exception as e:
+        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             self._log.error(f"Generation failed: {e}")
             raise RuntimeError(f"Failed to generate logical statements: {e}")
     
@@ -434,7 +440,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             
             return critic_score.overall, feedback
             
-        except Exception as e:
+        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             self._log.error(f"Critique failed: {e}")
             raise ValueError(f"Failed to critique artifact: {e}")
     
@@ -506,7 +512,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             
             return improved_result
             
-        except Exception as e:
+        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             self._log.error(f"Optimization failed: {e}")
             # Return original artifact rather than failing completely
             self._log.warning("Returning original artifact due to optimization failure")
@@ -556,7 +562,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             # Return True if at least 80% are valid (allow some tolerance)
             return valid_count >= (total_count * 0.8) if total_count > 0 else True
             
-        except Exception as e:
+        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             self._log.error(f"Validation failed: {e}")
             # On validation error, be conservative and return False
             return False
