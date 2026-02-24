@@ -57,6 +57,7 @@ from .base_optimizer import (
     OptimizationContext,
     OptimizationStrategy,
 )
+from .lifecycle_hooks import LifecycleHooksMixin
 
 from .optimizer_config import (
     OptimizerConfig as UnifiedOptimizerConfig,
@@ -128,10 +129,18 @@ from .backend_selection import (
     default_model_for_provider,
     resolve_backend_settings,
 )
+from .seed_control import (
+    apply_deterministic_seed,
+)
+
+from .metrics_prometheus import (
+    get_global_prometheus_metrics,
+)
 
 __all__ = [
     # Base classes
     "BaseOptimizer",
+    "LifecycleHooksMixin",
     "OptimizerConfig",
     "OptimizationContext",
     "OptimizationStrategy",
@@ -184,6 +193,9 @@ __all__ = [
     "detect_provider_from_environment",
     "default_model_for_provider",
     "resolve_backend_settings",
+    # Seed control
+    "apply_deterministic_seed",
+    "get_global_prometheus_metrics",
 ]
 
 __version__ = "0.1.0"

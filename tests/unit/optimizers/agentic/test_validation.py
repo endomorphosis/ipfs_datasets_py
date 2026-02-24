@@ -121,6 +121,12 @@ def test():
         assert len(undefined) > 0
         assert "undefined_variable" in undefined
 
+    def test_detect_undefined_names_invalid_code_returns_empty(self, validator):
+        """Invalid code should be handled gracefully without raising."""
+        undefined = validator.detect_undefined_names("def broken(: pass")
+
+        assert undefined == []
+
 
 class TestTypeValidator:
     """Test TypeValidator class."""

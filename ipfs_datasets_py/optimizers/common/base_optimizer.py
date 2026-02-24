@@ -12,7 +12,9 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from .lifecycle_hooks import LifecycleHooksMixin
 from .optimizer_result import OptimizerResult
+from .seed_control import apply_deterministic_seed
 
 _logger = logging.getLogger(__name__)
 
@@ -47,6 +49,7 @@ class OptimizerConfig:
     early_stopping: bool = True
     validation_enabled: bool = True
     metrics_enabled: bool = True
+    seed: Optional[int] = None
 
 
 @dataclass
@@ -69,7 +72,7 @@ class OptimizationContext:
     created_at: datetime = field(default_factory=datetime.now)
 
 
-class BaseOptimizer(ABC):
+class BaseOptimizer(LifecycleHooksMixin, ABC):
     """Base class for all optimizer types.
     
     This abstract class defines the common interface that all optimizers
@@ -122,6 +125,7 @@ class BaseOptimizer(ABC):
         self.metrics_collector = metrics_collector
         self.metrics: List[Dict[str, Any]] = []
         self._prometheus_metrics = None
+        self._seed_status = apply_deterministic_seed(getattr(self.config, "seed", None))
 
         # Optional Prometheus collector (enabled via ENABLE_PROMETHEUS env var).
         # This is best-effort and must never break optimizer execution.
@@ -272,10 +276,22 @@ class BaseOptimizer(ABC):
                 )
             except (AttributeError, TypeError, RuntimeError):
                 pass  # Never let metrics break the optimization
+        try:
+            self.on_session_start(context, input_data)
+        except Exception as exc:  # pragma: no cover - hooks are best effort
+            _logger.debug("on_session_start hook failed: %s", exc)
 
         # Generate initial artifact
         artifact = self.generate(input_data, context)
+        try:
+            self.on_generate_complete(artifact, context)
+        except Exception as exc:  # pragma: no cover
+            _logger.debug("on_generate_complete hook failed: %s", exc)
         score, feedback = self.critique(artifact, context)
+        try:
+            self.on_critique_complete(artifact, score, feedback, context)
+        except Exception as exc:  # pragma: no cover
+            _logger.debug("on_critique_complete hook failed: %s", exc)
         
         iterations = 0
         prev_score = score
@@ -296,13 +312,25 @@ class BaseOptimizer(ABC):
             
             # Optimize
             artifact = self.optimize(artifact, score, feedback, context)
+            try:
+                self.on_optimize_complete(artifact, score, feedback, iteration + 1, context)
+            except Exception as exc:  # pragma: no cover
+                _logger.debug("on_optimize_complete hook failed: %s", exc)
             prev_score = score
             score, feedback = self.critique(artifact, context)
+            try:
+                self.on_critique_complete(artifact, score, feedback, context)
+            except Exception as exc:  # pragma: no cover
+                _logger.debug("on_critique_complete hook failed: %s", exc)
         
         # Validate
         valid = True
         if self.config.validation_enabled:
             valid = self.validate(artifact, context)
+            try:
+                self.on_validate_complete(artifact, valid, context)
+            except Exception as exc:  # pragma: no cover
+                _logger.debug("on_validate_complete hook failed: %s", exc)
         
         execution_time = (datetime.now() - start_time).total_seconds()
         execution_time_ms = execution_time * 1000.0
@@ -361,6 +389,11 @@ class BaseOptimizer(ABC):
                 'execution_time': execution_time,
                 'execution_time_ms': execution_time_ms,
             }
+
+        try:
+            self.on_session_complete(result, context)
+        except Exception as exc:  # pragma: no cover
+            _logger.debug("on_session_complete hook failed: %s", exc)
         
         return result
     

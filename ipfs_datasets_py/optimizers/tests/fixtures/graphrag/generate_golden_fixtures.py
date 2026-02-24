@@ -95,6 +95,13 @@ def main() -> None:
                 "The physician prescribed 5 mg dosage."
             ),
         },
+        "technical": {
+            "domain": "technical",
+            "text": (
+                "The API exposes a REST endpoint returning JSON. "
+                "Service version v2.3.1 runs in a container."
+            ),
+        },
     }
 
     for name, case in cases.items():

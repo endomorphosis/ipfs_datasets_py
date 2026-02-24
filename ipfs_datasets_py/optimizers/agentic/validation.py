@@ -7,6 +7,7 @@ style checking.
 
 import ast
 import anyio
+import logging
 import subprocess
 import tempfile
 import time
@@ -738,6 +739,7 @@ class _AsyncOptimizationValidator:
         self.level = level
         self.parallel = parallel
         self.use_enhanced_parallel = use_enhanced_parallel
+        self._log = logging.getLogger(__name__)
         
         # Enhanced parallel validator for better performance
         if use_enhanced_parallel and parallel:
@@ -1037,6 +1039,10 @@ class DetailedValidationResult:
 
 class SyntaxValidator:
     """Lightweight syntax validator for unit tests."""
+
+    def __init__(self) -> None:
+        self._log = logging.getLogger(__name__)
+
     def validate(self, code: str) -> ValidationResult:
         errors: List[str] = []
         try:

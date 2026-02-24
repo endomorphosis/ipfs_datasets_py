@@ -48,7 +48,8 @@ test hardening, and documentation clarity while keeping progress measurable.
   - Done 2026-02-23: Batch 265 - Integrated OptimizerConfig dataclass with AgenticOptimizer. Now accepts Union[OptimizerConfig, Dict] with automatic normalization. Added helper methods (get_config_value, domain/max_rounds/verbose properties). Full backward compatibility maintained (dict configs auto-converted). 24/24 tests passing. Achieves consistent configuration across GraphRAG, logic, and agentic optimizers.
 - [x] (P2) [api] Standardize context objects across GraphRAG/logic/agentic
   - Done 2026-02-24: unified `common/extraction_contexts.py` is used across GraphRAG/logic/agentic; added round-trip + fallback tests in `tests/unit/common/test_extraction_contexts.py`.
-- [ ] (P2) [arch] Consolidate optimizer lifecycle hooks (init/validate/generate/critique/refine) into shared base mixins
+- [x] (P2) [arch] Consolidate optimizer lifecycle hooks (init/validate/generate/critique/refine) into shared base mixins
+  - Done 2026-02-24: added `common/lifecycle_hooks.py` mixin and wired hooks into `BaseOptimizer.run_session()` with non-fatal best-effort behavior.
 - [ ] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
 - [x] (P2) [tests] Add property-based tests for Entity/CriticScore/FeedbackRecord
   - Done 2026-02-23: test_ontology_types_properties.py with 19 passing property-based tests (Entity, Relationship, CriticScore, FeedbackRecord, collections). Uses Hypothesis strategies.
@@ -58,7 +59,8 @@ test hardening, and documentation clarity while keeping progress measurable.
   - Done 2026-02-24: `OntologyPipeline.run()` emits `PIPELINE_RUN` structured JSON payload; added tests in `tests/unit/graphrag/test_ontology_pipeline_logging.py`.
 - [x] (P2) [docs] Optimizers README with quick-start +  class diagram + comprehensive guides
   - Done 2026-02-23: Batch 263 - Created PERFORMANCE_TUNING_GUIDE.md (18KB), TROUBLESHOOTING_GUIDE.md (28KB), INTEGRATION_EXAMPLES.md (18KB, 8 real-world scenarios). Updated README.md with guide references. Comprehensive documentation for performance optimization (70-80% potential speedup), 30+ troubleshooting solutions, and production integration patterns (FastAPI, Flask, CLI, CI/CD, batch processing, streaming, multi-domain).
- - [ ] (P2) [tests] Add deterministic seed control for random samplers across optimizers (doc + test)
+ - [x] (P2) [tests] Add deterministic seed control for random samplers across optimizers (doc + test)
+   - Done 2026-02-24: added `common/seed_control.py`, wired seeding into BaseOptimizer and AgenticOptimizer init, added tests + common README note.
 
 ### Random Workstream (keep 3-5 active, different tracks)
 
@@ -162,11 +164,30 @@ Use this as the always-on randomizer. Keep 3-5 items active, one per track. When
   - Done 2026-02-24: updated test_ontology_pipeline_logging.py to assert stage timing fields.
 - [x] (P3) [docs] Add Glossary entry to DOCUMENTATION_INDEX
   - Done 2026-02-24: linked optimizers/docs/GLOSSARY.md in documentation index.
-- [ ] (P2) [obs] Add Prometheus metrics scrape endpoint in REST API
+- [x] (P2) [obs] Add Prometheus metrics scrape endpoint in REST API
+  - Done 2026-02-24: added `/metrics` endpoint and test coverage in test_rest_api.py.
 - [x] (P2) [graphrag] Add helper script to refresh golden fixtures with explicit normalization
   - Done 2026-02-24: added generate_golden_fixtures.py with normalized output for contracts/hr/healthcare.
 - [x] (P3) [docs] Add “Golden Fixtures” section to optimizers README
   - Done 2026-02-24: documented fixture refresh command in optimizers/README.md.
+- [x] (P2) [tests] Add `/metrics` endpoint coverage for disabled Prometheus mode
+  - Done 2026-02-24: added disabled-mode assertion in test_rest_api.py.
+- [x] (P3) [docs] Document `OptimizerResult` return shape in common/README
+  - Done 2026-02-24: added OptimizerResult section with field table in common/README.md.
+- [x] (P2) [graphrag] Add golden fixture for technical domain corpus (protocols, versions)
+  - Done 2026-02-24: added golden_technical.json and test coverage.
+- [x] (P3) [docs] Document REST API Prometheus metrics in optimizers README
+  - Done 2026-02-24: added REST API Metrics section with `/metrics` scrape example.
+- [x] (P3) [docs] Add Prometheus scrape note to Integration Examples
+  - Done 2026-02-24: added Prometheus Metrics Scrape section with `ENABLE_PROMETHEUS` example.
+- [x] (P3) [api] Export `get_global_prometheus_metrics` from common package
+  - Done 2026-02-24: added export in common/__init__.py for shared metrics access.
+- [x] (P2) [tests] Add test that Prometheus stage duration histogram includes stage labels
+  - Done 2026-02-24: test_metrics_prometheus.py asserts stage labels in histogram output.
+- [x] (P3) [docs] Add note about `get_global_prometheus_metrics()` in common metrics docs
+  - Done 2026-02-24: added Prometheus Metrics section to common/README.md.
+- [x] (P2) [perf] Add smoke benchmark result snapshot JSON (optional output file)
+  - Done 2026-02-24: perf_ontology_generate_smoke.py now supports --output JSON.
 
 **Rotation rules**
 - Never keep two active picks in the same track.

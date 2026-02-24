@@ -1,0 +1,129 @@
+{
+  "domain": "technical",
+  "name": "technical",
+  "normalized": {
+    "entities": [
+      {
+        "text": "JSON",
+        "type": "Concept"
+      },
+      {
+        "text": "REST",
+        "type": "Concept"
+      },
+      {
+        "text": "Service",
+        "type": "Concept"
+      },
+      {
+        "text": "API",
+        "type": "Protocol"
+      },
+      {
+        "text": "container",
+        "type": "TechnicalComponent"
+      },
+      {
+        "text": "endpoint",
+        "type": "TechnicalComponent"
+      },
+      {
+        "text": "v2.3.1",
+        "type": "Version"
+      }
+    ],
+    "relationships": [
+      {
+        "source_text": "API",
+        "target_text": "container",
+        "type": "related_to"
+      },
+      {
+        "source_text": "API",
+        "target_text": "endpoint",
+        "type": "related_to"
+      },
+      {
+        "source_text": "API",
+        "target_text": "v2.3.1",
+        "type": "related_to"
+      },
+      {
+        "source_text": "JSON",
+        "target_text": "API",
+        "type": "related_to"
+      },
+      {
+        "source_text": "JSON",
+        "target_text": "container",
+        "type": "related_to"
+      },
+      {
+        "source_text": "JSON",
+        "target_text": "endpoint",
+        "type": "related_to"
+      },
+      {
+        "source_text": "JSON",
+        "target_text": "v2.3.1",
+        "type": "related_to"
+      },
+      {
+        "source_text": "REST",
+        "target_text": "API",
+        "type": "related_to"
+      },
+      {
+        "source_text": "REST",
+        "target_text": "container",
+        "type": "related_to"
+      },
+      {
+        "source_text": "REST",
+        "target_text": "endpoint",
+        "type": "related_to"
+      },
+      {
+        "source_text": "REST",
+        "target_text": "v2.3.1",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Service",
+        "target_text": "API",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Service",
+        "target_text": "container",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Service",
+        "target_text": "endpoint",
+        "type": "related_to"
+      },
+      {
+        "source_text": "Service",
+        "target_text": "v2.3.1",
+        "type": "related_to"
+      },
+      {
+        "source_text": "container",
+        "target_text": "v2.3.1",
+        "type": "related_to"
+      },
+      {
+        "source_text": "endpoint",
+        "target_text": "container",
+        "type": "related_to"
+      },
+      {
+        "source_text": "endpoint",
+        "target_text": "v2.3.1",
+        "type": "related_to"
+      }
+    ]
+  },
+  "text": "The API exposes a REST endpoint returning JSON. Service version v2.3.1 runs in a container."
+}

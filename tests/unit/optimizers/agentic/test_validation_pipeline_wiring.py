@@ -115,6 +115,18 @@ def add(a: int, b: int) -> int:
         assert isinstance(result, DetailedValidationResult)
         assert result.execution_time >= 0.0
 
+    def test_parallel_validation_falls_back_when_task_group_fails(self):
+        """Task-group failures should trigger sequential fallback, not crash."""
+        validator = OptimizationValidator(parallel=True, use_enhanced_parallel=False)
+
+        code = "def foo():\n    return 1"
+
+        with patch("anyio.create_task_group", side_effect=RuntimeError("boom")):
+            result = validator.validate(code)
+
+        assert isinstance(result, DetailedValidationResult)
+        assert result.syntax.get("passed", False) is True
+
     def test_sequential_validation_works(self):
         """Verify sequential validation executes without errors."""
         validator = OptimizationValidator(parallel=False)

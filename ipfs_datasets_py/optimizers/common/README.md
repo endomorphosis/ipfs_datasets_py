@@ -48,6 +48,23 @@ optimizer = MyOptimizer(config=OptimizerConfig())
 result = optimizer.run_session(input_data, context)
 ```
 
+#### `OptimizerResult` Return Shape
+
+`BaseOptimizer.run_session()` and `BaseOptimizer.dry_run()` return a shared
+`OptimizerResult` TypedDict to keep return shapes consistent across optimizers.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `artifact` | `Any` | Final optimized artifact (or generated artifact for dry runs). |
+| `score` | `float` | Final quality score. |
+| `iterations` | `int` | Total optimization iterations performed. |
+| `valid` | `bool` | Whether the artifact passed validation. |
+| `execution_time` | `float` | Total run time in seconds. |
+| `execution_time_ms` | `float` | Total run time in milliseconds. |
+| `metrics` | `dict[str, Any]` | Optional performance metrics when enabled. |
+| `feedback` | `Any` | Optional feedback payload from critique. |
+| `metadata` | `dict[str, Any]` | Optional extra metadata. |
+
 ### BaseCritic
 
 Abstract base for all domain critics.  Returns a typed `CriticResult` with score,
@@ -137,6 +154,33 @@ print(session.best_score)
 ```
 
 `HarnessConfig` fields: `max_rounds`, `target_score`, `convergence_threshold`.
+
+### Prometheus Metrics
+
+Use the shared Prometheus collector to aggregate metrics across pipelines:
+
+```python
+from ipfs_datasets_py.optimizers.common.metrics_prometheus import (
+    get_global_prometheus_metrics,
+)
+
+metrics = get_global_prometheus_metrics()
+metrics.record_score(0.82)
+print(metrics.collect_metrics())
+```
+
+### Deterministic Seed Control
+
+For reproducible random sampling across optimizer runs, set `seed` in config.
+`BaseOptimizer` and `AgenticOptimizer` apply deterministic seeding for Python
+`random` (and NumPy if available) during initialization.
+
+```python
+from ipfs_datasets_py.optimizers.common import OptimizerConfig
+
+cfg = OptimizerConfig(seed=42)
+# Pass cfg into optimizer constructors to ensure reproducible sampling paths.
+```
 
 ### Exceptions
 

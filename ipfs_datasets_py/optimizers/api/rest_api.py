@@ -14,7 +14,7 @@ Features:
 - CORS support
 """
 
-from fastapi import FastAPI, HTTPException, Query, Path, Body, Depends
+from fastapi import FastAPI, HTTPException, Query, Path, Body, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, validator
 from typing import List, Optional, Dict, Any
@@ -365,6 +365,17 @@ class APIServer:
                 "timestamp": datetime.utcnow().isoformat(),
                 "version": self.version
             }
+
+        @self.app.get("/metrics", tags=["Metrics"])
+        def metrics():
+            """Prometheus scrape endpoint."""
+            from ipfs_datasets_py.optimizers.common.metrics_prometheus import (
+                get_global_prometheus_metrics,
+            )
+
+            metrics_collector = get_global_prometheus_metrics()
+            payload = metrics_collector.collect_metrics()
+            return Response(content=payload, media_type="text/plain")
         
         # Entity endpoints
         @self.app.post("/entities", response_model=EntityResponse, tags=["Entities"])

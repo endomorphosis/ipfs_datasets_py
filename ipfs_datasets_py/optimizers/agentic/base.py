@@ -14,6 +14,7 @@ from ipfs_datasets_py.optimizers.common.extraction_contexts import (
     OptimizationMethod as UnifiedOptimizationMethod,
 )
 from ipfs_datasets_py.optimizers.common.optimizer_config import OptimizerConfig
+from ipfs_datasets_py.optimizers.common.seed_control import apply_deterministic_seed
 
 
 class ChangeControlMethod(Enum):
@@ -235,6 +236,7 @@ class AgenticOptimizer(ABC):
             raise TypeError(f"config must be OptimizerConfig or dict, got {type(config).__name__}")
         
         self._log = logger or self.config.logger or _logging.getLogger(__name__)
+        self._seed_status = apply_deterministic_seed(self.config.seed)
         
     @abstractmethod
     def _get_method(self) -> OptimizationMethod:

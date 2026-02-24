@@ -526,6 +526,15 @@ to catch regressions. To refresh the fixtures after intentional changes:
 PYTHONPATH=ipfs_datasets_py python ipfs_datasets_py/optimizers/tests/fixtures/graphrag/generate_golden_fixtures.py
 ```
 
+## REST API Metrics
+
+Expose Prometheus-compatible metrics from the REST API by enabling collection:
+
+```bash
+export ENABLE_PROMETHEUS=true
+curl http://localhost:8000/metrics
+```
+
 ## Backlog
 
 - See `TODO.md` for the living refactor/feature backlog and inline TODO inventory.

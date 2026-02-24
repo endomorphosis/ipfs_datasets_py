@@ -29,6 +29,7 @@ from ipfs_datasets_py.optimizers.api.rest_api import (
     EntityType,
     RelationshipType,
 )
+from ipfs_datasets_py.optimizers.common import metrics_prometheus
 
 
 @pytest.fixture
@@ -83,6 +84,26 @@ class TestHealthEndpoint:
         response = client.get("/health")
         data = response.json()
         assert data["version"] == "1.0.0-test"
+
+
+class TestMetricsEndpoint:
+    """Tests for Prometheus metrics endpoint."""
+
+    def test_metrics_endpoint_enabled(self, client, monkeypatch):
+        monkeypatch.setenv("ENABLE_PROMETHEUS", "true")
+        metrics_prometheus._GLOBAL_PROMETHEUS_METRICS = None
+
+        response = client.get("/metrics")
+        assert response.status_code == 200
+        assert "optimizer_score" in response.text
+
+    def test_metrics_endpoint_disabled(self, client, monkeypatch):
+        monkeypatch.setenv("ENABLE_PROMETHEUS", "false")
+        metrics_prometheus._GLOBAL_PROMETHEUS_METRICS = None
+
+        response = client.get("/metrics")
+        assert response.status_code == 200
+        assert "disabled" in response.text.lower()
 
 
 class TestEntityEndpoints:

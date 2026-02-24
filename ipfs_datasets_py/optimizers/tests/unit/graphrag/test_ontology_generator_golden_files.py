@@ -87,3 +87,8 @@ def test_golden_hr():
 def test_golden_healthcare():
     payload = _load_fixture("healthcare")
     assert _run_case(payload) == payload["normalized"]
+
+
+def test_golden_technical():
+    payload = _load_fixture("technical")
+    assert _run_case(payload) == payload["normalized"]

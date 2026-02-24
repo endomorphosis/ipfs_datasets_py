@@ -159,9 +159,11 @@ class OntologyPipeline:
         self._run_history: List["PipelineResult"] = []
         self._last_refinement_state: Optional[Any] = None
         try:
-            from ipfs_datasets_py.optimizers.common.metrics_prometheus import PrometheusMetrics
+            from ipfs_datasets_py.optimizers.common.metrics_prometheus import (
+                get_global_prometheus_metrics,
+            )
 
-            self._prometheus_metrics = PrometheusMetrics()
+            self._prometheus_metrics = get_global_prometheus_metrics()
         except Exception:  # pragma: no cover - optional metrics dependency
             self._prometheus_metrics = None
 

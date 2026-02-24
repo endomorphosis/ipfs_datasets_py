@@ -73,7 +73,7 @@ def test_pipeline_run_emits_structured_json_log(caplog) -> None:
     assert payload["actions_count"] == 1
     assert "duration_ms" in payload
     assert "stage_durations_ms" in payload
-    assert {"extraction", "evaluation", "refining"} <= set(payload["stage_durations_ms"].keys())
+    assert {"extracting", "evaluating", "refining"} <= set(payload["stage_durations_ms"].keys())
 
 
 def test_pipeline_run_logging_failure_is_non_fatal(caplog) -> None:
