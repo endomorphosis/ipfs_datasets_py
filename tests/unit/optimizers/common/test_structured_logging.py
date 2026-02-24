@@ -235,3 +235,26 @@ class TestLogEvent:
         
         # Should still call logger.log (using default=str)
         assert logger.log.called
+
+    def test_falls_back_to_debug_for_typed_logger_failure(self):
+        """GIVEN: logger.log raises RuntimeError
+        WHEN: log_event called
+        THEN: Fallback debug logging is used
+        """
+        logger = MagicMock(spec=logging.Logger)
+        logger.log.side_effect = RuntimeError("sink unavailable")
+
+        log_event(logger, EventType.EXTRACTION_STARTED, {"k": "v"})
+
+        assert logger.debug.called
+
+    def test_does_not_swallow_keyboard_interrupt(self):
+        """GIVEN: logger.log raises KeyboardInterrupt
+        WHEN: log_event called
+        THEN: KeyboardInterrupt propagates
+        """
+        logger = MagicMock(spec=logging.Logger)
+        logger.log.side_effect = KeyboardInterrupt()
+
+        with pytest.raises(KeyboardInterrupt):
+            log_event(logger, EventType.EXTRACTION_STARTED, {"k": "v"})

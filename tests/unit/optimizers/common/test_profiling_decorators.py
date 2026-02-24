@@ -9,6 +9,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 
 from ipfs_datasets_py.optimizers.common.profiling_decorators import (
+    _get_memory_usage_mb,
     profile_memory,
     profile_time,
     profile_both,
@@ -149,6 +150,21 @@ class TestProfileMemory:
         # Should work silently without psutil
         assert result == "works"
         assert len(caplog.records) == 0
+
+    def test_get_memory_usage_returns_zero_on_typed_error(self):
+        """RuntimeError during memory probe should return 0.0."""
+        with patch("ipfs_datasets_py.optimizers.common.profiling_decorators.PSUTIL_AVAILABLE", True), \
+             patch("ipfs_datasets_py.optimizers.common.profiling_decorators.psutil.Process") as mock_process:
+            mock_process.side_effect = RuntimeError("probe failed")
+            assert _get_memory_usage_mb() == 0.0
+
+    def test_get_memory_usage_does_not_swallow_keyboard_interrupt(self):
+        """KeyboardInterrupt during memory probe should propagate."""
+        with patch("ipfs_datasets_py.optimizers.common.profiling_decorators.PSUTIL_AVAILABLE", True), \
+             patch("ipfs_datasets_py.optimizers.common.profiling_decorators.psutil.Process") as mock_process:
+            mock_process.side_effect = KeyboardInterrupt()
+            with pytest.raises(KeyboardInterrupt):
+                _get_memory_usage_mb()
 
 
 class TestProfileBoth:

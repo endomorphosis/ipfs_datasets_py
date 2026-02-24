@@ -152,7 +152,6 @@ def log_event(
     
     try:
         logger.log(level, json.dumps(payload, default=str))
-    except Exception as exc:
+    except (TypeError, ValueError, RuntimeError, OSError) as exc:
         # Fallback to simple logging if JSON serialization fails
         logger.debug(f"Structured logging failed for {event.value}: {exc}")
-

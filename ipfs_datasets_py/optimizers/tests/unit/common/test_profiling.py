@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import json
 import logging
 import time
@@ -41,6 +42,19 @@ class TestProfilingConfig:
         config = ProfilingConfig(memory_profiling=True)
         # Should not raise, just potentially disable memory profiling
         assert isinstance(config.memory_profiling, bool)
+
+    def test_config_does_not_swallow_keyboard_interrupt_on_psutil_import(self):
+        """KeyboardInterrupt during psutil import should propagate."""
+        original_import = builtins.__import__
+
+        def interrupting_import(name, *args, **kwargs):
+            if name == "psutil":
+                raise KeyboardInterrupt()
+            return original_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", side_effect=interrupting_import):
+            with pytest.raises(KeyboardInterrupt):
+                ProfilingConfig(memory_profiling=True)
     
     def test_set_and_get_global_config(self):
         """Can set and retrieve global profiling config."""
@@ -201,6 +215,15 @@ class TestProfileSection:
         # Should not raise, but may log at debug level
         debug_msgs = [r.message for r in caplog.records if r.levelname == "DEBUG"]
         assert any("Failed to emit profiling log" in msg for msg in debug_msgs)
+
+    def test_profile_section_does_not_swallow_keyboard_interrupt_in_log_emission(self):
+        """KeyboardInterrupt from log emission should propagate."""
+        config = ProfilingConfig(enabled=True, emit_logs=True)
+
+        with patch("ipfs_datasets_py.optimizers.common.profiling.with_schema", side_effect=KeyboardInterrupt()):
+            with pytest.raises(KeyboardInterrupt):
+                with profile_section("test", config=config):
+                    pass
 
 
 class TestProfileMethod:

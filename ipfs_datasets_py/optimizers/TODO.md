@@ -47,7 +47,7 @@ It is intentionally infinite: finish work, add new work, repeat.
 - [ ] (P1) [arch] Split `graphrag/query_optimizer.py` into focused modules (`query_planner.py`, `traversal_heuristics.py`, `learning_adapter.py`, `serialization.py`) with behavior parity tests.
 - [ ] (P1) [api] Add package typing marker (`py.typed`) and run strict type audit for optimizer public surface.
 - [ ] (P2) [arch] Replace remaining broad `except Exception` catch-alls with typed exceptions in optimizer core paths.
-  - Progress 2026-02-24: narrowed catch-all handlers to typed exception groups in `common/base_optimizer.py`, `common/seed_control.py`, `common/caching_layer.py`, `common/query_validation.py` (cache-key generation + cacheability-check fallback paths), `graphrag/ontology_generator.py`, `graphrag/ontology_pipeline.py`, `graphrag/ontology_critic.py`, `graphrag/ontology_mediator.py`, `graphrag/cli_wrapper.py` (all core commands + `run`), `graphrag/learning_adapter.py` (learning-cycle/failure-counter paths), `graphrag/streaming_extractor.py` (chunk loop error path), `graphrag/query_metrics.py` (JSON export + numpy-serialization + persistence fallback paths), `graphrag/query_planner.py` (cache-key/cache-read/cache-write fallback paths), `graphrag/query_optimizer.py` (example/integration helper failure paths), `graphrag/query_unified_optimizer.py` (budget fallback, entity importance calculation, learning-state save/load error paths), `graphrag/logic_validator.py` (`check_consistency`, `batch_validate`, `explain_entity` error paths), `graphrag/ontology_serialization.py` (type-hint resolution fallback path), `graphrag/data_transformers.py` (`Transformation.transform_batch` typed error handling), `graphrag/ontology_session.py` (`run` failure-return path), `graphrag/ontology_harness.py` (`run_single_session`, optimizer-analysis fallback, pipeline `_optimize`, `run_single`, and `run_concurrent` error paths), `graphrag/semantic_deduplicator.py` (embedding generation + model-load fallback error paths), `graphrag/ontology_refinement_agent.py` (LLM backend invocation failure path), `logic_theorem_optimizer/cli_wrapper.py`, `logic_theorem_optimizer/logic_optimizer.py`, `logic_theorem_optimizer/formula_translation.py`, `logic_theorem_optimizer/llm_backend.py`, `logic_theorem_optimizer/prover_integration.py`, `logic_theorem_optimizer/logic_critic.py`, `logic_theorem_optimizer/unified_optimizer.py`, `logic_theorem_optimizer/distributed_processor.py`, `logic_theorem_optimizer/kg_integration.py`, `logic_theorem_optimizer/rag_integration.py`, `logic_theorem_optimizer/additional_provers.py`, `logic_theorem_optimizer/conflict_resolver.py`, `logic_theorem_optimizer/ontology_evolution.py`, `logic_theorem_optimizer/neural_symbolic_prover.py`, `logic_theorem_optimizer/logic_harness.py`, and `logic_theorem_optimizer/logic_extractor.py`; remaining cleanup is still needed in other optimizer modules.
+  - Progress 2026-02-24: narrowed catch-all handlers to typed exception groups in `common/base_optimizer.py`, `common/seed_control.py`, `common/caching_layer.py`, `common/query_validation.py` (cache-key generation + cacheability-check fallback paths), `common/profiling.py` (psutil-availability, memory-probe, and profiling-log emission fallback paths), `common/structured_logging.py` (structured event logging fallback path), `graphrag/ontology_generator.py`, `graphrag/ontology_pipeline.py`, `graphrag/ontology_critic.py`, `graphrag/ontology_mediator.py`, `graphrag/cli_wrapper.py` (all core commands + `run`), `graphrag/learning_adapter.py` (learning-cycle/failure-counter paths), `graphrag/streaming_extractor.py` (chunk loop error path), `graphrag/query_metrics.py` (JSON export + numpy-serialization + persistence fallback paths, including prior bare fallback handlers), `graphrag/query_planner.py` (cache-key/cache-read/cache-write fallback paths), `graphrag/query_optimizer.py` (example/integration helper failure paths), `graphrag/query_unified_optimizer.py` (budget fallback, entity importance calculation, learning-state save/load error paths), `graphrag/logic_validator.py` (`check_consistency`, `batch_validate`, `explain_entity` error paths), `graphrag/ontology_serialization.py` (type-hint resolution fallback path), `graphrag/data_transformers.py` (`Transformation.transform_batch` typed error handling), `graphrag/ontology_session.py` (`run` failure-return path), `graphrag/ontology_harness.py` (`run_single_session`, optimizer-analysis fallback, pipeline `_optimize`, `run_single`, and `run_concurrent` error paths), `graphrag/semantic_deduplicator.py` (embedding generation + model-load fallback error paths), `graphrag/ontology_refinement_agent.py` (LLM backend invocation failure path), `logic_theorem_optimizer/cli_wrapper.py`, `logic_theorem_optimizer/logic_optimizer.py`, `logic_theorem_optimizer/formula_translation.py`, `logic_theorem_optimizer/llm_backend.py`, `logic_theorem_optimizer/prover_integration.py`, `logic_theorem_optimizer/logic_critic.py`, `logic_theorem_optimizer/unified_optimizer.py`, `logic_theorem_optimizer/distributed_processor.py`, `logic_theorem_optimizer/kg_integration.py`, `logic_theorem_optimizer/rag_integration.py`, `logic_theorem_optimizer/additional_provers.py`, `logic_theorem_optimizer/conflict_resolver.py`, `logic_theorem_optimizer/ontology_evolution.py`, `logic_theorem_optimizer/neural_symbolic_prover.py`, `logic_theorem_optimizer/logic_harness.py`, and `logic_theorem_optimizer/logic_extractor.py`; remaining cleanup is still needed in other optimizer modules.
 - [x] (P2) [arch] Replace broad `except Exception` catch-alls in logic theorem optimizer CLI core commands.
   - Done 2026-02-24: narrowed catch-all blocks in `logic_theorem_optimizer/cli_wrapper.py` (`extract`, `prove`, `validate`, `optimize`, `run`) to typed exception groups; logic CLI prove/validate test suites remain green.
 - [ ] (P2) [agentic] Audit `agentic/` for `**kwargs`-heavy APIs and replace with typed optional parameters.
@@ -88,6 +88,12 @@ Active random picks (different tracks):
   - Done 2026-02-24: replaced broad `except Exception` handlers in GraphRAG CLI core commands with typed exception groups (`ConfigurationError`, `ImportError`, `OSError`, `ValueError`, `TypeError`, `AttributeError`, `RuntimeError`, `json.JSONDecodeError`, `KeyError`) and tightened TDFOL-output fallback exception handling.
 - [x] (P3) [obs] Add troubleshooting dashboard examples for performance and quality drift.
   - Done 2026-02-24: added `docs/optimizers/TROUBLESHOOTING_DASHBOARDS.md` with Prometheus/Loki panel examples and triage playbook; linked from `docs/optimizers/INTEGRATION_EXAMPLES.md` and `optimizers/README.md`.
+- [x] (P3) [obs] Harden `common/logging_audit.py` file-read error path to typed exceptions.
+  - Done 2026-02-24: replaced broad catch in `common/logging_audit.py` with typed groups (`OSError`, `UnicodeDecodeError`, `ValueError`) and added regression coverage in `optimizers/tests/unit/common/test_logging_audit_exceptions.py`.
+- [x] (P2) [obs] Narrow broad exception handling in `common/profiling.py` fallback paths.
+  - Done 2026-02-24: replaced broad catches in profiling config/memory/log-emission fallbacks with typed groups and expanded regression coverage in `optimizers/tests/unit/common/test_profiling.py` for interrupt propagation.
+- [x] (P2) [obs] Narrow broad exception handling in `common/structured_logging.py` event logging fallback path.
+  - Done 2026-02-24: replaced broad catch in `log_event()` with typed exception groups and added regression checks for fallback logging and interrupt propagation in `tests/unit/optimizers/common/test_structured_logging.py`.
 
 Rotation rules:
 - When one item completes, add a new `[ ]` pick from a track not already active.
@@ -500,17 +506,22 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Done 2026-02-24: covered rolling-window best-entry selection and invalid-window guard in `test_batch_286_pipeline_optimizer_alias_helpers.py`.
 - [x] (P2) [graphrag] `OntologyOptimizer.plateau_count(tol)` — number of consecutive history pairs within tol of each other
   - Done 2026-02-24: validated plateau-pair counting across adjacent score deltas in `test_batch_286_pipeline_optimizer_alias_helpers.py`.
-- [ ] (P2) [graphrag] `OntologyGenerator.split_result(result, n)` — split result into N balanced chunks
+- [x] (P2) [graphrag] `OntologyGenerator.split_result(result, n)` — split result into N balanced chunks
+  - Done 2026-02-24: covered balanced chunk sizing, within-chunk relationship filtering, metadata propagation, and invalid-`n` guard in `test_batch_287_remaining_p2_helpers.py`.
 - [x] (P2) [graphrag] `OntologyGenerator.entity_confidence_map(result)` — {entity_id: confidence} dict
   - Done 2026-02-24: validated entity-id to confidence mapping in `test_batch_285_remaining_helper_coverage.py`.
-- [ ] (P2) [graphrag] `OntologyCritic.dimension_rankings(score)` — ordered list of dim names best→worst
-- [ ] (P2) [graphrag] `OntologyCritic.weakest_scores(scores, n)` — bottom-N by overall
+- [x] (P2) [graphrag] `OntologyCritic.dimension_rankings(score)` — ordered list of dim names best→worst
+  - Done 2026-02-24: validated deterministic best-to-worst ranking order across all dimensions in `test_batch_287_remaining_p2_helpers.py`.
+- [x] (P2) [graphrag] `OntologyCritic.weakest_scores(scores, n)` — bottom-N by overall
+  - Done 2026-02-24: covered ascending weakest-score selection with explicit `n` truncation in `test_batch_287_remaining_p2_helpers.py`.
 - [x] (P2) [graphrag] `OntologyPipeline.top_n_runs(n)` — top N run results by score
   - Done 2026-02-24: validated descending score ordering and top-N truncation in `test_batch_286_pipeline_optimizer_alias_helpers.py`.
 - [x] (P2) [graphrag] `OntologyPipeline.run_ids()` — list of run identifiers (indices or ids)
   - Done 2026-02-24: covered stable index id generation from run history in `test_batch_286_pipeline_optimizer_alias_helpers.py`.
-- [ ] (P2) [graphrag] `OntologyMediator.apply_action_bulk(actions)` — apply list of (action, args) pairs
-- [ ] (P2) [graphrag] `OntologyMediator.action_count_for(action)` — already done, skip; try `actions_never_applied()` — action names with count == 0
+- [x] (P2) [graphrag] `OntologyMediator.apply_action_bulk(actions)` — apply list of (action, args) pairs
+  - Done 2026-02-24: validated mixed-entry bulk action recording (`str`, tuple, dict) and count return value in `test_batch_287_remaining_p2_helpers.py`.
+- [x] (P2) [graphrag] `OntologyMediator.action_count_for(action)` / `actions_never_applied()` — per-action count and never-used action names
+  - Done 2026-02-24: covered direct action counts and known-action never-applied list semantics in `test_batch_287_remaining_p2_helpers.py`.
 - [x] (P2) [graphrag] `OntologyLearningAdapter.score_range()` — (min, max) tuple of recorded scores
   - Done 2026-02-24: validated min/max alias behavior over applied feedback scores in `test_batch_286_pipeline_optimizer_alias_helpers.py`.
 - [x] (P2) [graphrag] `OntologyLearningAdapter.above_threshold_fraction(threshold)` — alias for passing_feedback_fraction
@@ -537,11 +548,14 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Done 2026-02-24: validated most/least-used action name helpers after bulk action application in `test_batch_286_pipeline_optimizer_alias_helpers.py`.
 - [x] (P2) [graphrag] `OntologyPipeline.run_improvement/stabilization_index` — pipeline convergence metrics
   - Done 2026-02-24: covered first-to-last improvement and stabilization-index calculations in `test_batch_286_pipeline_optimizer_alias_helpers.py`.
-- [ ] (P2) [graphrag] `LogicValidator.unreachable_entities(ontology, source)` — BFS unreachable from source
-- [ ] (P2) [graphrag] `ExtractionConfig.describe()` — human-readable summary string
+- [x] (P2) [graphrag] `LogicValidator.unreachable_entities(ontology, source)` — BFS unreachable from source
+  - Done 2026-02-24: validated directed reachability output for disconnected graph nodes in `test_batch_287_remaining_p2_helpers.py`.
+- [x] (P2) [graphrag] `ExtractionConfig.describe()` — human-readable summary string
+  - Done 2026-02-24: covered describe-string content for threshold and max-entity fields in `test_batch_287_remaining_p2_helpers.py`.
 - [x] (P2) [graphrag] `OntologyLearningAdapter.improvement_trend` — EMA-based trend indicator
   - Done 2026-02-24: validated mean delta trend over the recent feedback window in `test_batch_286_pipeline_optimizer_alias_helpers.py`.
-- [ ] (P2) [graphrag] `EntityExtractionResult.entity_ids` — property returning list of all entity ids
+- [x] (P2) [graphrag] `EntityExtractionResult.entity_ids` — property returning list of all entity ids
+  - Done 2026-02-24: validated ordered entity-id property extraction in `test_batch_287_remaining_p2_helpers.py`.
 - [x] (P2) [graphrag] `OntologyGenerator.filter_low_confidence(result, threshold)` — remove entities below threshold
   - Done 2026-02-24: added threshold filter assertions for retained entities in `test_batch_285_remaining_helper_coverage.py`.
 - [ ] (P3) [graphrag] `LogicValidator.max_path_length(ontology, source, target)` — BFS shortest path

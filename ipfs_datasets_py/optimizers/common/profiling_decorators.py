@@ -58,6 +58,11 @@ PROFILING_ENABLED = os.environ.get("OPTIMIZER_PROFILING", "0") == "1"
 # Type variable for decorated functions
 F = TypeVar("F", bound=Callable[..., Any])
 
+if PSUTIL_AVAILABLE:
+    _MEMORY_PROBE_EXCEPTIONS = (AttributeError, OSError, RuntimeError, ValueError, psutil.Error)
+else:
+    _MEMORY_PROBE_EXCEPTIONS = (AttributeError, OSError, RuntimeError, ValueError)
+
 
 def profile_method(
     section_name: str,
@@ -121,7 +126,7 @@ def _get_memory_usage_mb() -> float:
         process = psutil.Process()
         mem_info = process.memory_info()
         return mem_info.rss / (1024 * 1024)  # Convert bytes to MB
-    except Exception as e:
+    except _MEMORY_PROBE_EXCEPTIONS as e:
         logger.debug(f"Failed to get memory usage: {e}")
         return 0.0
 

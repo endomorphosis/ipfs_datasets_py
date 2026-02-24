@@ -39,7 +39,7 @@ class ProfilingConfig:
             # Gracefully degrade if psutil isn't installed.
             try:
                 import psutil  # noqa: F401
-            except Exception:
+            except ImportError:
                 object.__setattr__(self, "memory_profiling", False)
 
 
@@ -112,7 +112,7 @@ def _get_memory_mb() -> float:
 
         proc = psutil.Process(os.getpid())
         return float(proc.memory_info().rss) / (1024.0 * 1024.0)
-    except Exception:
+    except (ImportError, AttributeError, OSError, RuntimeError):
         return 0.0
 
 
@@ -131,7 +131,7 @@ def _emit_profiling_log(result: ProfileResult, *, config: ProfilingConfig) -> No
     try:
         enriched = with_schema(payload)
         logger.info("PROFILING: %s", json.dumps(enriched, default=str))
-    except Exception as exc:  # pragma: no cover
+    except (TypeError, ValueError, RuntimeError) as exc:  # pragma: no cover
         logger.debug("Failed to emit profiling log: %s", exc)
 
 

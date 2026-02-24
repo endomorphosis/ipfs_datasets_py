@@ -134,7 +134,7 @@ class AsyncBatchProcessor:
                     if self.fail_fast:
                         raise
                         
-                except Exception as e:
+                except (TypeError, ValueError, AttributeError, RuntimeError) as e:
                     error_msg = f"{type(e).__name__}: {str(e)}"
                     errors[idx] = error_msg
                     results[idx] = fallback_value
@@ -209,7 +209,7 @@ class AsyncBatchProcessor:
                     results[idx] = result
                     successful += 1
                     
-                except Exception as e:
+                except (TypeError, ValueError, AttributeError, RuntimeError) as e:
                     error_msg = f"{type(e).__name__}: {str(e)}"
                     errors[idx] = error_msg
                     results[idx] = fallback_value
