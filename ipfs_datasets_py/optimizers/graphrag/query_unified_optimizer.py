@@ -114,7 +114,10 @@ from ipfs_datasets_py.optimizers.graphrag.query_metrics import QueryMetricsColle
 from ipfs_datasets_py.optimizers.graphrag.query_stats import GraphRAGQueryStats
 from ipfs_datasets_py.optimizers.graphrag.query_planner import GraphRAGQueryOptimizer
 from ipfs_datasets_py.optimizers.graphrag.query_rewriter import QueryRewriter
-from ipfs_datasets_py.optimizers.graphrag.query_budget import QueryBudgetManager
+from ipfs_datasets_py.optimizers.graphrag.query_budget import (
+    BudgetManagerProtocol,
+    QueryBudgetManager,
+)
 from ipfs_datasets_py.optimizers.graphrag.query_visualizer import QueryVisualizer
 from ipfs_datasets_py.optimizers.common.query_validation import QueryValidationMixin
 
@@ -139,7 +142,7 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
     
     def __init__(self, 
                  rewriter: Optional[QueryRewriter] = None,
-                 budget_manager: Optional[QueryBudgetManager] = None,
+                 budget_manager: Optional[BudgetManagerProtocol] = None,
                  base_optimizer: Optional[GraphRAGQueryOptimizer] = None,
                  graph_info: Optional[Dict[str, Any]] = None,
                  metrics_collector: Optional["QueryMetricsCollector"] = None,
@@ -150,7 +153,7 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         
         Args:
             rewriter (QueryRewriter, optional): Query rewriter
-            budget_manager (QueryBudgetManager, optional): Query budget manager
+            budget_manager (BudgetManagerProtocol, optional): Query budget manager
             base_optimizer (GraphRAGQueryOptimizer, optional): Base query optimizer
             graph_info (Dict, optional): Graph information for optimizations
             metrics_collector (QueryMetricsCollector, optional): Metrics collector for detailed metrics
@@ -168,7 +171,7 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         
         # Create rewriter with traversal statistics (pass stats reference)
         self.rewriter = rewriter or QueryRewriter(traversal_stats=self._traversal_stats)
-        self.budget_manager = budget_manager or QueryBudgetManager()
+        self.budget_manager: BudgetManagerProtocol = budget_manager or QueryBudgetManager()
         self.base_optimizer = base_optimizer or GraphRAGQueryOptimizer()
         self.graph_info = graph_info or {}
         self.query_stats = self.base_optimizer.query_stats

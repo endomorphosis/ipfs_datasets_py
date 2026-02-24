@@ -30,6 +30,9 @@ from typing import Dict, List, Any, Optional, Tuple, Iterator
 from collections import defaultdict, deque
 from contextlib import contextmanager
 
+QUERY_METRICS_PERSIST_SERIALIZATION_ERROR = "QMETRICS_SERIALIZATION_ERROR"
+QUERY_METRICS_PERSIST_FALLBACK_WRITE_ERROR = "QMETRICS_FALLBACK_WRITE_ERROR"
+
 # Optional dependencies with graceful fallbacks
 try:
     import numpy as np
@@ -887,6 +890,7 @@ class QueryMetricsCollector:
             
             # Create a simplified version with just error information
             fallback_metrics = {
+                "error_code": QUERY_METRICS_PERSIST_SERIALIZATION_ERROR,
                 "error": error_message,
                 "query_id": metrics.get("query_id", "unknown"),
                 "timestamp": datetime.datetime.now().isoformat()
@@ -899,4 +903,6 @@ class QueryMetricsCollector:
             except (TypeError, ValueError, OSError):
                 # Last resort: just log the error
                 if hasattr(self, "_log") and self._log:
-                    self._log.error(f"Failed to persist metrics: {error_message}")
+                    self._log.error(
+                        f"Failed to persist metrics [{QUERY_METRICS_PERSIST_FALLBACK_WRITE_ERROR}]: {error_message}"
+                    )

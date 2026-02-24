@@ -33,8 +33,11 @@ def _install_example_usage_fakes(monkeypatch, qo):
             self.last_query_id = None
 
         def get_execution_plan(self, query, priority="normal"):
+            safe_query = dict(query)
+            if "query_vector" in safe_query:
+                safe_query["query_vector"] = "[vector]"
             return {
-                "query": query,
+                "query": safe_query,
                 "priority": priority,
                 "optimization_applied": True,
                 "execution_steps": [],

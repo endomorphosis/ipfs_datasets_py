@@ -237,6 +237,10 @@ class TestCachedLLMCall:
 
 class TestParallelValidator:
     """Tests for ParallelValidator."""
+
+    class _AbortSignal(BaseException):
+        """Sentinel base-exception used to assert propagation behavior."""
+        pass
     
     def test_parallel_validator_sync(self):
         """Test parallel validation (sync)."""
@@ -300,6 +304,31 @@ class TestParallelValidator:
         assert results[0] == (True, "ok")
         assert results[1][0] is False
         
+        validator.shutdown()
+
+    def test_parallel_validator_sync_does_not_swallow_base_exception(self):
+        """BaseException in sync validator should propagate."""
+        validator = ParallelValidator()
+
+        def validate_interrupt(code):
+            raise self._AbortSignal()
+
+        with pytest.raises(self._AbortSignal):
+            validator.run_sync([validate_interrupt], "code")
+
+        validator.shutdown()
+
+    @pytest.mark.asyncio
+    async def test_parallel_validator_async_does_not_swallow_base_exception(self):
+        """BaseException in async validator should propagate."""
+        validator = ParallelValidator()
+
+        async def validate_interrupt(code):
+            raise self._AbortSignal()
+
+        with pytest.raises(BaseExceptionGroup):
+            await validator.run_async([validate_interrupt], "code")
+
         validator.shutdown()
 
 
@@ -375,6 +404,23 @@ class TestBatchFileProcessor:
             assert all(results)
             assert paths[0].read_text() == "content1"
             assert paths[1].read_text() == "content2"
+
+    class _AbortSignal(BaseException):
+        """Sentinel base-exception used to assert propagation behavior."""
+        pass
+
+    def test_batch_read_does_not_swallow_base_exception(self, monkeypatch):
+        """BaseException during read should propagate."""
+        processor = BatchFileProcessor(batch_size=1)
+        path = Path("/tmp/nonexistent-test-file.txt")
+
+        monkeypatch.setattr(
+            "builtins.open",
+            lambda *args, **kwargs: (_ for _ in ()).throw(self._AbortSignal()),
+        )
+
+        with pytest.raises(self._AbortSignal):
+            processor.read_batch([path])
 
 
 class TestGlobalCache:

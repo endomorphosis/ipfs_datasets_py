@@ -3,10 +3,27 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Protocol, runtime_checkable
 
 
 logger = logging.getLogger(__name__)
+
+
+@runtime_checkable
+class BudgetManagerProtocol(Protocol):
+    """Minimal protocol for query budget managers used by GraphRAG optimizers."""
+
+    def allocate_budget(self, query: Dict[str, Any], priority: str = "normal") -> Dict[str, float]:
+        """Allocate execution budget for a query."""
+        ...
+
+    def track_consumption(self, resource: str, amount: float) -> None:
+        """Track resource consumption during execution."""
+        ...
+
+    def get_current_consumption_report(self) -> Dict[str, Any]:
+        """Return current budget consumption report."""
+        ...
 
 
 class QueryBudgetManager:
