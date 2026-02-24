@@ -109,6 +109,10 @@ from .score_analyzer import (
     STANDARD_DIMENSIONS,
 )
 
+from .ontology_comparator import (
+    OntologyComparator,
+)
+
 from .logic_validator import (
     LogicValidator,
     ValidationResult,
@@ -240,6 +244,7 @@ __all__ = [
     'ScoreAnalyzer',
     'DimensionStats',
     'STANDARD_DIMENSIONS',
+    'OntologyComparator',
     # Validator
     'LogicValidator',
     'ValidationResult',
