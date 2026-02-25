@@ -142,8 +142,15 @@ class TestInputSanitizer:
         # Create a path with .. in it
         malicious_path = str(Path(temp_file).parent / '..' / 'etc' / 'passwd')
         result = sanitizer.validate_file_path(malicious_path)
-        # Should reject if '..' is in the resolved path string
-        # Note: actual rejection depends on implementation details
+        assert result is False
+
+    def test_validate_file_path_rejects_restricted_root(self, sanitizer):
+        """Resolved paths under restricted roots should be rejected."""
+        with patch(
+            "ipfs_datasets_py.optimizers.agentic.production_hardening.Path.resolve",
+            return_value=Path("/etc/secret.py"),
+        ):
+            assert sanitizer.validate_file_path("/tmp/anything.py") is False
     
     def test_validate_oversized_file(self, sanitizer):
         """Test rejecting oversized files."""

@@ -14,15 +14,21 @@ Supports:
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Iterator, List, Optional, Protocol, runtime_checkable, cast
+from typing import Any, Dict, Iterator, List, Optional, Protocol, cast, runtime_checkable
 from dataclasses import dataclass, replace
 from enum import Enum
 
 from ipfs_datasets_py.optimizers.common.backend_resilience import BackendCallPolicy, execute_with_resilience
 from ipfs_datasets_py.optimizers.common.circuit_breaker import CircuitBreaker
 from ipfs_datasets_py.optimizers.common.exceptions import CircuitBreakerOpenError, RetryableBackendError
+from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_error_text(error: Exception) -> str:
+    """Render exception text with sensitive fragments redacted."""
+    return cast(str, redact_sensitive(str(error)))
 
 
 @runtime_checkable
@@ -253,7 +259,7 @@ class LLMBackendAdapter:
             ValueError,
         ) as e:
             self.stats['errors'] += 1
-            logger.error(f"Generation error: {e}")
+            logger.error("Generation error: %s", _safe_error_text(e))
             
             # Try fallback to mock
             if self.active_backend != 'mock' and 'mock' in self.backends:

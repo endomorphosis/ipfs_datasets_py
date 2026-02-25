@@ -19,8 +19,14 @@ from enum import Enum
 from ipfs_datasets_py.optimizers.common.backend_resilience import BackendCallPolicy, execute_with_resilience
 from ipfs_datasets_py.optimizers.common.circuit_breaker import CircuitBreaker
 from ipfs_datasets_py.optimizers.common.exceptions import CircuitBreakerOpenError, RetryableBackendError
+from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_error_text(error: Exception) -> str:
+    """Render exception text with sensitive fragments redacted."""
+    return cast(str, redact_sensitive(str(error)))
 
 
 class FormulaFormalism(Enum):
@@ -190,13 +196,14 @@ class TDFOLFormulaTranslator:
             TypeError,
             ValueError,
         ) as e:
-            logger.error(f"TDFOL translation error: {e}")
+            safe_error = _safe_error_text(e)
+            logger.error("TDFOL translation error: %s", safe_error)
             return TranslationResult(
                 formula=None,
                 formalism=FormulaFormalism.TDFOL,
                 original_text=text,
                 success=False,
-                errors=[str(e)]
+                errors=[safe_error]
             )
     
     def _pattern_based_translation(self, text: str) -> Optional[Any]:
@@ -360,7 +367,7 @@ class TDFOLFormulaTranslator:
             TypeError,
             ValueError,
         ) as e:
-            logger.debug(f"Error translating from TDFOL: {e}")
+            logger.debug("Error translating from TDFOL: %s", _safe_error_text(e))
             return str(formula)
 
 
@@ -441,13 +448,14 @@ class CECFormulaTranslator:
             )
             
         except (AttributeError, RuntimeError, TypeError, ValueError) as e:
-            logger.error(f"CEC translation error: {e}")
+            safe_error = _safe_error_text(e)
+            logger.error("CEC translation error: %s", safe_error)
             return TranslationResult(
                 formula=None,
                 formalism=FormulaFormalism.CEC,
                 original_text=text,
                 success=False,
-                errors=[str(e)]
+                errors=[safe_error]
             )
 
 

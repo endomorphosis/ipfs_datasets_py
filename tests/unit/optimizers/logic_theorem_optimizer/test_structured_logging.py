@@ -42,6 +42,24 @@ def _assert_canonical_log_fields(payload: dict, *, component: str) -> None:
     assert payload["status"] == "completed"
 
 
+def _stub_base_run_session(
+    result: dict | None = None,
+):
+    """Patch BaseOptimizer.run_session for fast/deterministic log contract tests."""
+    if result is None:
+        result = {
+            "score": 0.81,
+            "valid": True,
+            "iterations": 1,
+            "artifact": {"statements": ["P -> Q", "P", "Q"]},
+            "metrics": {"feedback": []},
+        }
+    return patch(
+        "ipfs_datasets_py.optimizers.common.base_optimizer.BaseOptimizer.run_session",
+        return_value=result,
+    )
+
+
 
 class TestLogicTheoremOptimizerStructuredLogging:
     """Tests for LogicTheoremOptimizer.run_session() JSON logging."""
@@ -62,10 +80,11 @@ class TestLogicTheoremOptimizerStructuredLogging:
             domain="general",
         )
         
-        result = optimizer.run_session(
-            input_data="All humans are mortal. Socrates is human.",
-            context=context,
-        )
+        with _stub_base_run_session():
+            result = optimizer.run_session(
+                input_data="All humans are mortal. Socrates is human.",
+                context=context,
+            )
         
         # Find the LOGIC_SESSION_RUN log
         log_records = [r for r in caplog.records if "LOGIC_SESSION_RUN:" in r.message]
@@ -121,7 +140,13 @@ class TestLogicTheoremOptimizerStructuredLogging:
         )
         
         # Patch with_schema to fail
-        with patch("ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer.with_schema", side_effect=RuntimeError("Schema error")):
+        with (
+            _stub_base_run_session(),
+            patch(
+                "ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer.with_schema",
+                side_effect=RuntimeError("Schema error"),
+            ),
+        ):
             result = optimizer.run_session(
                 input_data="Test input",
                 context=context,
@@ -150,10 +175,19 @@ class TestLogicTheoremOptimizerStructuredLogging:
             domain="general",
         )
         
-        result = optimizer.run_session(
-            input_data="P implies Q. P. Therefore Q.",
-            context=context,
-        )
+        with _stub_base_run_session(
+            {
+                "score": 0.9,
+                "valid": True,
+                "iterations": 1,
+                "artifact": {"statements": ["P -> Q", "P", "Q", "R -> S"]},
+                "metrics": {"feedback": []},
+            }
+        ):
+            result = optimizer.run_session(
+                input_data="P implies Q. P. Therefore Q.",
+                context=context,
+            )
         
         # Parse the JSON log
         log_records = [r for r in caplog.records if "LOGIC_SESSION_RUN:" in r.message]
@@ -182,10 +216,11 @@ class TestLogicTheoremOptimizerStructuredLogging:
             domain="authorization=Bearer token1234567890",
         )
 
-        optimizer.run_session(
-            input_data="All humans are mortal. Socrates is human.",
-            context=context,
-        )
+        with _stub_base_run_session():
+            optimizer.run_session(
+                input_data="All humans are mortal. Socrates is human.",
+                context=context,
+            )
 
         log_records = [r for r in caplog.records if "LOGIC_SESSION_RUN:" in r.message]
         assert len(log_records) == 1
@@ -350,7 +385,8 @@ class TestStructuredLoggingSchema:
             domain="general",
         )
         
-        optimizer.run_session(input_data="Test", context=context)
+        with _stub_base_run_session():
+            optimizer.run_session(input_data="Test", context=context)
         
         # Test LogicOptimizer
         optimizer_logic = LogicOptimizer()

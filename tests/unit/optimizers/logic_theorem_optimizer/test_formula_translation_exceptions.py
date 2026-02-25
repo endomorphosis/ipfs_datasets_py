@@ -88,3 +88,24 @@ def test_translate_from_tdfol_uses_common_resilience_wrapper(monkeypatch) -> Non
 
     assert rendered == "rendered"
     assert captured["service_name"] == "tdfol_reasoner_nl_generate"
+
+
+def test_translate_to_tdfol_redacts_sensitive_error_text(caplog) -> None:
+    translator = TDFOLFormulaTranslator()
+    translator.reasoner_available = True
+    translator.reasoner = SimpleNamespace(
+        parse=lambda *_a, **_k: (_ for _ in ()).throw(
+            ValueError("api_key=sk-1234567890abcdef password=hunter2")
+        )
+    )
+
+    with caplog.at_level("ERROR"):
+        result = translator.translate_to_tdfol("All employees must complete training")
+
+    assert result.success is False
+    assert result.errors
+    assert "***REDACTED***" in result.errors[0]
+    assert "sk-1234567890abcdef" not in result.errors[0]
+    messages = " ".join(record.getMessage() for record in caplog.records)
+    assert "***REDACTED***" in messages
+    assert "hunter2" not in messages

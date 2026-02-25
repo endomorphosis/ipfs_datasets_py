@@ -61,36 +61,44 @@ class _FakeEntry:
 
 
 class TestBestEntry:
-    def test_none_when_empty(self):
-        assert OntologyOptimizer().best_entry() is None
-
-    def test_single(self):
+    @pytest.mark.parametrize(
+        "scores,expected",
+        [
+            ([], None),
+            ([0.7], 0.7),
+            ([0.3, 0.9, 0.5], 0.9),
+        ],
+    )
+    def test_best_entry_scenarios(self, scores, expected):
         opt = OntologyOptimizer()
-        e = _FakeEntry(0.7)
-        opt._history.append(e)
-        assert opt.best_entry() is e
-
-    def test_returns_highest(self):
-        opt = OntologyOptimizer()
-        entries = [_FakeEntry(0.3), _FakeEntry(0.9), _FakeEntry(0.5)]
+        entries = [_FakeEntry(score) for score in scores]
         opt._history.extend(entries)
-        assert opt.best_entry().average_score == pytest.approx(0.9)
+        best = opt.best_entry()
+        if expected is None:
+            assert best is None
+        else:
+            assert best is not None
+            assert best.average_score == pytest.approx(expected)
 
 
 class TestWorstEntry:
-    def test_none_when_empty(self):
-        assert OntologyOptimizer().worst_entry() is None
-
-    def test_single(self):
+    @pytest.mark.parametrize(
+        "scores,expected",
+        [
+            ([], None),
+            ([0.4], 0.4),
+            ([0.3, 0.9, 0.5], 0.3),
+        ],
+    )
+    def test_worst_entry_scenarios(self, scores, expected):
         opt = OntologyOptimizer()
-        e = _FakeEntry(0.4)
-        opt._history.append(e)
-        assert opt.worst_entry() is e
-
-    def test_returns_lowest(self):
-        opt = OntologyOptimizer()
-        opt._history.extend([_FakeEntry(0.3), _FakeEntry(0.9), _FakeEntry(0.5)])
-        assert opt.worst_entry().average_score == pytest.approx(0.3)
+        opt._history.extend([_FakeEntry(score) for score in scores])
+        worst = opt.worst_entry()
+        if expected is None:
+            assert worst is None
+        else:
+            assert worst is not None
+            assert worst.average_score == pytest.approx(expected)
 
 
 # ---------------------------------------------------------------------------
@@ -99,19 +107,19 @@ class TestWorstEntry:
 
 
 class TestFeedbackMean:
-    def test_empty(self):
-        assert OntologyLearningAdapter().feedback_mean() == pytest.approx(0.0)
-
-    def test_single(self):
+    @pytest.mark.parametrize(
+        "scores,expected",
+        [
+            ([], 0.0),
+            ([0.6], 0.6),
+            ([0.4, 0.8], 0.6),
+        ],
+    )
+    def test_feedback_mean_scenarios(self, scores, expected):
         a = OntologyLearningAdapter()
-        a.apply_feedback(0.6)
-        assert a.feedback_mean() == pytest.approx(0.6)
-
-    def test_mean_multiple(self):
-        a = OntologyLearningAdapter()
-        a.apply_feedback(0.4)
-        a.apply_feedback(0.8)
-        assert a.feedback_mean() == pytest.approx(0.6)
+        for score in scores:
+            a.apply_feedback(score)
+        assert a.feedback_mean() == pytest.approx(expected)
 
     def test_returns_float(self):
         assert isinstance(OntologyLearningAdapter().feedback_mean(), float)

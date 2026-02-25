@@ -120,3 +120,23 @@ def test_query_llm_uses_common_backend_resilience_wrapper(monkeypatch: pytest.Mo
     assert "Formula:" in response
     assert captured["service_name"] == "logic_extractor_llm"
     assert captured["breaker_name"] == "logic_extractor_llm"
+
+
+def test_query_llm_redacts_sensitive_error_text_in_logs(caplog: pytest.LogCaptureFixture) -> None:
+    extractor = _build_extractor()
+    context = _build_context()
+
+    class BrokenBackend:
+        def generate(self, request):
+            raise RuntimeError("api_key=sk-1234567890abcdef password=hunter2")
+
+    extractor.backend = BrokenBackend()
+
+    with caplog.at_level("WARNING"):
+        response = extractor._query_llm("prompt", context)
+
+    assert "Formula:" in response
+    messages = " ".join(record.getMessage() for record in caplog.records)
+    assert "***REDACTED***" in messages
+    assert "sk-1234567890abcdef" not in messages
+    assert "hunter2" not in messages

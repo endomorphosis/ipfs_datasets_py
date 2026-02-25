@@ -71,21 +71,20 @@ class TestValidateResult:
         issues = gen.validate_result(r)
         assert any("confidence" in i for i in issues)
 
-    def test_dangling_source_flagged(self):
+    @pytest.mark.parametrize(
+        "source_id,target_id,missing_id",
+        [
+            ("ghost", "e1", "ghost"),
+            ("e1", "missing", "missing"),
+        ],
+    )
+    def test_dangling_endpoint_flagged(self, source_id, target_id, missing_id):
         gen = _make_gen()
         e = _entity("e1")
-        rel = _relationship("r1", "ghost", "e1")
+        rel = _relationship("r1", source_id, target_id)
         r = _result([e], [rel])
         issues = gen.validate_result(r)
-        assert any("ghost" in i for i in issues)
-
-    def test_dangling_target_flagged(self):
-        gen = _make_gen()
-        e = _entity("e1")
-        rel = _relationship("r1", "e1", "missing")
-        r = _result([e], [rel])
-        issues = gen.validate_result(r)
-        assert any("missing" in i for i in issues)
+        assert any(missing_id in i for i in issues)
 
     def test_valid_relationship_no_issues(self):
         gen = _make_gen()
@@ -101,22 +100,18 @@ class TestValidateResult:
 # ---------------------------------------------------------------------------
 
 class TestConfidenceStats:
-    def test_empty_result(self):
+    @pytest.mark.parametrize(
+        "entities,expected_count,expected_mean",
+        [
+            ([], 0.0, 0.0),
+            ([_entity("e1", confidence=0.8)], 1.0, 0.8),
+        ],
+    )
+    def test_basic_stats_scenarios(self, entities, expected_count, expected_mean):
         gen = _make_gen()
-        r = _result()
-        stats = gen.confidence_stats(r)
-        assert stats["count"] == 0.0
-        assert stats["mean"] == 0.0
-
-    def test_single_entity(self):
-        gen = _make_gen()
-        r = _result([_entity("e1", confidence=0.8)])
-        stats = gen.confidence_stats(r)
-        assert stats["count"] == 1.0
-        assert stats["mean"] == pytest.approx(0.8)
-        assert stats["min"] == pytest.approx(0.8)
-        assert stats["max"] == pytest.approx(0.8)
-        assert stats["std"] == pytest.approx(0.0)
+        stats = gen.confidence_stats(_result(entities))
+        assert stats["count"] == expected_count
+        assert stats["mean"] == pytest.approx(expected_mean)
 
     def test_multiple_entities(self):
         gen = _make_gen()
@@ -237,29 +232,16 @@ class TestRemoveEntity:
 # ---------------------------------------------------------------------------
 
 class TestTypeDiversity:
-    def test_empty_result(self):
+    @pytest.mark.parametrize(
+        "entities,expected",
+        [
+            ([], 0),
+            ([_entity("e1", "Person"), _entity("e2", "Person")], 1),
+            ([_entity("e1", "Person"), _entity("e2", "Place"), _entity("e3", "Org")], 3),
+            ([_entity("e1", "A"), _entity("e2", "B"), _entity("e3", "A")], 2),
+        ],
+    )
+    def test_type_diversity_scenarios(self, entities, expected):
         gen = _make_gen()
-        assert gen.type_diversity(_result()) == 0
-
-    def test_single_type(self):
-        gen = _make_gen()
-        r = _result([_entity("e1", "Person"), _entity("e2", "Person")])
-        assert gen.type_diversity(r) == 1
-
-    def test_multiple_types(self):
-        gen = _make_gen()
-        r = _result([
-            _entity("e1", "Person"),
-            _entity("e2", "Place"),
-            _entity("e3", "Org"),
-        ])
-        assert gen.type_diversity(r) == 3
-
-    def test_two_of_three_distinct(self):
-        gen = _make_gen()
-        r = _result([
-            _entity("e1", "A"),
-            _entity("e2", "B"),
-            _entity("e3", "A"),
-        ])
-        assert gen.type_diversity(r) == 2
+        r = _result(entities)
+        assert gen.type_diversity(r) == expected

@@ -46,6 +46,23 @@ def test_argparse_cli_validate_missing_file(tmp_path: Path) -> None:
     assert code == 1
 
 
+def test_argparse_cli_validate_rejects_unsafe_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    target = tmp_path / "sample.py"
+    target.write_text("print('ok')\n")
+
+    cli = OptimizerArgparseCLI()
+    monkeypatch.setattr(cli._sanitizer, "validate_file_path", lambda _path: False)
+
+    code = cli.run([
+        "validate",
+        str(target),
+        "--level",
+        "basic",
+    ])
+
+    assert code == 1
+
+
 def test_argparse_cli_config_show_masks_tokens(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     config_path = tmp_path / ".optimizer-config.json"
     config_path.write_text(

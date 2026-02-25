@@ -73,8 +73,22 @@ class InputSanitizer:
     def validate_file_path(self, path: str) -> bool:
         """Validate file path is safe."""
         try:
+            raw_path = Path(path)
+            if ".." in raw_path.parts:
+                logger.warning(f"Path traversal attempt: {path}")
+                return False
+
             # Convert to absolute path and resolve symlinks
-            abs_path = Path(path).resolve()
+            abs_path = raw_path.resolve()
+
+            restricted_roots = (Path("/proc"), Path("/sys"), Path("/dev"), Path("/etc"))
+            for restricted in restricted_roots:
+                try:
+                    abs_path.relative_to(restricted)
+                    logger.warning(f"Path points to restricted area: {abs_path}")
+                    return False
+                except ValueError:
+                    continue
             
             # Check file exists
             if not abs_path.exists():
@@ -93,11 +107,6 @@ class InputSanitizer:
                 if size_mb > self.config.max_file_size_mb:
                     logger.warning(f"File too large: {size_mb:.1f}MB")
                     return False
-            
-            # Check for path traversal
-            if '..' in str(abs_path):
-                logger.warning(f"Path traversal attempt: {path}")
-                return False
             
             return True
             

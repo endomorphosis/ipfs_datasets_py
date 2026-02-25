@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 # Import unified extraction config from common module
+from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
 from ipfs_datasets_py.optimizers.common.backend_resilience import BackendCallPolicy, execute_with_resilience
 from ipfs_datasets_py.optimizers.common.circuit_breaker import CircuitBreaker
 from ipfs_datasets_py.optimizers.common.extraction_contexts import (
@@ -25,6 +26,11 @@ from ipfs_datasets_py.optimizers.common.extraction_contexts import (
 from ipfs_datasets_py.optimizers.common.exceptions import CircuitBreakerOpenError, RetryableBackendError
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_error_text(error: Exception) -> str:
+    """Render exception text with sensitive fragments redacted."""
+    return redact_sensitive(str(error))
 
 
 # Re-export ExtractionMode for backward compatibility
@@ -584,7 +590,7 @@ class LogicExtractor:
                 OSError,
                 TimeoutError,
             ) as e:
-                logger.warning(f"LLM backend error: {e}, using fallback")
+                logger.warning("LLM backend error: %s, using fallback", _safe_error_text(e))
         
         # Fallback mock response for testing
         logger.warning("Using mock LLM response")

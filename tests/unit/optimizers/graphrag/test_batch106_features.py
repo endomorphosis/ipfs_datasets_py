@@ -68,34 +68,41 @@ class TestMedianRunScore:
 
 
 class TestFeedbackMedian:
-    def test_empty(self):
-        assert OntologyLearningAdapter().feedback_median() == pytest.approx(0.0)
-
-    def test_odd(self):
+    @pytest.mark.parametrize(
+        "scores,expected",
+        [
+            ([], 0.0),
+            ([0.2, 0.9, 0.4], 0.4),
+            ([0.1, 0.3, 0.7, 0.9], 0.5),
+        ],
+    )
+    def test_feedback_median_scenarios(self, scores, expected):
         a = OntologyLearningAdapter()
-        for s in [0.2, 0.9, 0.4]:
+        for s in scores:
             a.apply_feedback(s)
-        assert a.feedback_median() == pytest.approx(0.4)
-
-    def test_even(self):
-        a = OntologyLearningAdapter()
-        for s in [0.1, 0.3, 0.7, 0.9]:
-            a.apply_feedback(s)
-        assert a.feedback_median() == pytest.approx(0.5)
+        assert a.feedback_median() == pytest.approx(expected)
 
     def test_float(self):
         assert isinstance(OntologyLearningAdapter().feedback_median(), float)
 
 
 class TestLastEntry:
-    def test_none_when_empty(self):
-        assert OntologyOptimizer().last_entry() is None
-
-    def test_returns_latest(self):
+    @pytest.mark.parametrize(
+        "history,expected_is_none,expected_score",
+        [
+            ([], True, None),
+            ([_Entry(0.1), _Entry(0.9)], False, 0.9),
+        ],
+    )
+    def test_last_entry_scenarios(self, history, expected_is_none, expected_score):
         o = OntologyOptimizer()
-        e1, e2 = _Entry(0.1), _Entry(0.9)
-        o._history.extend([e1, e2])
-        assert o.last_entry() is e2
+        o._history.extend(history)
+        last = o.last_entry()
+        if expected_is_none:
+            assert last is None
+        else:
+            assert last is not None
+            assert last.average_score == pytest.approx(expected_score)
 
     def test_matches_last_score(self):
         o = OntologyOptimizer()

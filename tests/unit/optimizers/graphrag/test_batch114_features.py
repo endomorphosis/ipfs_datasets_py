@@ -113,21 +113,18 @@ class TestRollingBest:
 # ---------------------------------------------------------------------------
 
 class TestPlateauCount:
-    def test_empty_returns_zero(self):
-        opt = _make_optimizer()
-        assert opt.plateau_count() == 0
-
-    def test_single_entry_returns_zero(self):
-        opt = _opt_with_history([0.5])
-        assert opt.plateau_count() == 0
-
-    def test_all_same_all_plateau(self):
-        opt = _opt_with_history([0.5, 0.5, 0.5, 0.5])
-        assert opt.plateau_count() == 3
-
-    def test_no_plateaus(self):
-        opt = _opt_with_history([0.1, 0.5, 0.9])
-        assert opt.plateau_count(tol=0.001) == 0
+    @pytest.mark.parametrize(
+        "scores,tol,expected",
+        [
+            ([], 0.005, 0),
+            ([0.5], 0.005, 0),
+            ([0.5, 0.5, 0.5, 0.5], 0.005, 3),
+            ([0.1, 0.5, 0.9], 0.001, 0),
+        ],
+    )
+    def test_plateau_count_scenarios(self, scores, tol, expected):
+        opt = _opt_with_history(scores)
+        assert opt.plateau_count(tol=tol) == expected
 
     def test_some_plateaus(self):
         opt = _opt_with_history([0.5, 0.501, 0.9])
@@ -166,23 +163,29 @@ class TestEntityConfidenceMap:
 # ---------------------------------------------------------------------------
 
 class TestTopConfidenceEntity:
-    def test_empty_returns_none(self):
-        r = _result()
-        assert r.top_confidence_entity() is None
-
-    def test_single_entity(self):
-        r = _result([_entity("e1", confidence=0.7)])
+    @pytest.mark.parametrize(
+        "entities,expected_id",
+        [
+            ([], None),
+            ([_entity("e1", confidence=0.7)], "e1"),
+            (
+                [
+                    _entity("e1", confidence=0.5),
+                    _entity("e2", confidence=0.9),
+                    _entity("e3", confidence=0.7),
+                ],
+                "e2",
+            ),
+        ],
+    )
+    def test_top_confidence_entity_scenarios(self, entities, expected_id):
+        r = _result(entities)
         top = r.top_confidence_entity()
-        assert top.id == "e1"
-
-    def test_multiple_entities(self):
-        r = _result([
-            _entity("e1", confidence=0.5),
-            _entity("e2", confidence=0.9),
-            _entity("e3", confidence=0.7),
-        ])
-        top = r.top_confidence_entity()
-        assert top.id == "e2"
+        if expected_id is None:
+            assert top is None
+        else:
+            assert top is not None
+            assert top.id == expected_id
 
 
 # ---------------------------------------------------------------------------
@@ -296,30 +299,38 @@ class TestOrphanEntities:
 # ---------------------------------------------------------------------------
 
 class TestHubEntities:
-    def test_empty(self):
+    @pytest.mark.parametrize(
+        "ontology,min_degree,expected",
+        [
+            ({}, 2, []),
+            (
+                {
+                    "entities": [{"id": "e1"}, {"id": "e2"}],
+                    "relationships": [{"source_id": "e1", "target_id": "e2"}],
+                },
+                2,
+                [],
+            ),
+            (
+                {
+                    "entities": [{"id": "hub"}, {"id": "e1"}, {"id": "e2"}],
+                    "relationships": [
+                        {"source_id": "hub", "target_id": "e1"},
+                        {"source_id": "hub", "target_id": "e2"},
+                    ],
+                },
+                2,
+                ["hub"],
+            ),
+        ],
+    )
+    def test_hub_entity_scenarios(self, ontology, min_degree, expected):
         v = _make_validator()
-        assert v.hub_entities({}) == []
-
-    def test_single_connection(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "e1"}, {"id": "e2"}],
-            "relationships": [{"source_id": "e1", "target_id": "e2"}],
-        }
-        # e1 has degree 1, e2 has degree 1; min_degree=2 → no hubs
-        assert v.hub_entities(ont, min_degree=2) == []
-
-    def test_hub_detected(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "hub"}, {"id": "e1"}, {"id": "e2"}],
-            "relationships": [
-                {"source_id": "hub", "target_id": "e1"},
-                {"source_id": "hub", "target_id": "e2"},
-            ],
-        }
-        hubs = v.hub_entities(ont, min_degree=2)
-        assert "hub" in hubs
+        hubs = v.hub_entities(ontology, min_degree=min_degree)
+        for item in expected:
+            assert item in hubs
+        if not expected:
+            assert hubs == []
 
     def test_min_degree_one_returns_all_connected(self):
         v = _make_validator()

@@ -136,3 +136,36 @@ def test_generate_batch_uses_common_backend_resilience_wrapper(monkeypatch: pyte
     assert len(responses) == 2
     assert captured["service_name"] == "logic_theorem_optimizer_backend_accelerate"
     assert captured["breaker_name"] == "logic_theorem_optimizer_backend_accelerate"
+
+
+def test_adapter_generate_redacts_sensitive_error_text_in_logs(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    adapter = LLMBackendAdapter(preferred_backend="mock", fallback_to_mock=True, enable_caching=False)
+    adapter.backends = {
+        "accelerate": _BrokenBackend(),
+        "mock": MockBackend(),
+    }
+    adapter.active_backend = "accelerate"
+
+    def _raise_retryable(operation, policy, *, circuit_breaker, sleep_fn=None):
+        raise RetryableBackendError(
+            "api_key=sk-1234567890abcdef",
+            service=policy.service_name,
+            details={"last_error": "password=hunter2"},
+        )
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.optimizers.logic_theorem_optimizer.llm_backend.execute_with_resilience",
+        _raise_retryable,
+    )
+
+    with caplog.at_level("ERROR"):
+        response = adapter.generate(LLMRequest(prompt="extract logic from data"))
+
+    assert response.backend == "mock"
+    messages = " ".join(record.getMessage() for record in caplog.records)
+    assert "***REDACTED***" in messages
+    assert "sk-1234567890abcdef" not in messages
+    assert "hunter2" not in messages
