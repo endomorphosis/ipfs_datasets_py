@@ -545,6 +545,36 @@ class CriticScore:
         import json
         return json.dumps(self.to_dict(), default=str, indent=None)
 
+    def __hash__(self) -> int:
+        """Compute hash based on dimension scores.
+        
+        Hash is based on the six dimension scores (completeness, consistency,
+        clarity, granularity, relationship_coherence, domain_alignment).
+        
+        Note: This assumes dimension scores are effectively immutable after
+        creation. Modifying dimension scores after using the object as a dict
+        key or in a set may lead to unexpected behavior.
+        
+        Returns:
+            Hash of dimension tuple.
+            
+        Example:
+            >>> scores = {CriticScore(completeness=0.8, consistency=0.9,
+            ...                       clarity=0.7, granularity=0.6,
+            ...                       relationship_coherence=0.82,
+            ...                       domain_alignment=0.88)}
+            >>> len(scores)
+            1
+        """
+        return hash((
+            self.completeness,
+            self.consistency,
+            self.clarity,
+            self.granularity,
+            self.relationship_coherence,
+            self.domain_alignment,
+        ))
+
 
 class OntologyCritic(BaseCritic):
     """

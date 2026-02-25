@@ -45,6 +45,7 @@ from __future__ import annotations
 
 import functools
 import logging
+import re
 import weakref
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
@@ -59,6 +60,24 @@ from ipfs_datasets_py.optimizers.common.extraction_contexts import (
 from ipfs_datasets_py.optimizers.common.backend_selection import resolve_backend_settings
 
 logger = logging.getLogger(__name__)
+
+# Precompiled relationship keyword patterns used by _infer_type_from_context().
+# Keeping these at module scope avoids recompiling regexes for every call.
+_DIRECTIONAL_RELATIONSHIP_PATTERNS: tuple[tuple[re.Pattern[str], str, float], ...] = (
+    (re.compile(r"\b(employs?|hired?|recruits?)\b"), "employs", 0.75),
+    (re.compile(r"\b(manages?|supervises?|oversees?)\b"), "manages", 0.75),
+    (re.compile(r"\b(owns?|possesses?)\b"), "owns", 0.70),
+    (re.compile(r"\b(creates?|produces?|manufactures?)\b"), "produces", 0.70),
+    (re.compile(r"\b(founded?|established?|started?)\b"), "founded", 0.72),
+    (re.compile(r"\b(leads?|directs?|heads?)\b"), "leads", 0.68),
+)
+
+_BIDIRECTIONAL_RELATIONSHIP_PATTERNS: tuple[tuple[re.Pattern[str], str, float], ...] = (
+    (re.compile(r"\b(partners?\s+with|collabor\w+\s+with)\b"), "partners_with", 0.70),
+    (re.compile(r"\b(compet\w+\s+with|rivals?)\b"), "competes_with", 0.68),
+    (re.compile(r"\b(located\s+in|based\s+in)\b"), "located_in", 0.72),
+    (re.compile(r"\b(member\s+of|belongs\s+to)\b"), "member_of", 0.75),
+)
 
 
 class ExtractionStrategy(Enum):
@@ -1185,6 +1204,52 @@ class Entity:
 
         return self.copy_with(confidence=new_confidence)
 
+    def __eq__(self, other: object) -> bool:
+        """Test equality based on all fields.
+        
+        Entities are considered equal if all fields match (id, type, text,
+        confidence, properties, source_span, last_seen).
+        
+        Args:
+            other: Object to compare to.
+            
+        Returns:
+            True if all fields are equal, False otherwise.
+            
+        Example:
+            >>> e1 = Entity(id="e1", type="Person", text="Alice")
+            >>> e2 = Entity(id="e1", type="Person", text="Alice")
+            >>> e1 == e2
+            True
+        """
+        if not isinstance(other, Entity):
+            return NotImplemented
+        return (
+            self.id == other.id
+            and self.type == other.type
+            and self.text == other.text
+            and self.confidence == other.confidence
+            and self.properties == other.properties
+            and self.source_span == other.source_span
+            and self.last_seen == other.last_seen
+        )
+
+    def __hash__(self) -> int:
+        """Compute hash based on immutable identifier.
+        
+        Hash is based only on the entity ID, allowing entities to be used in
+        sets/dicts while properties remain mutable.
+        
+        Returns:
+            Hash of entity ID.
+            
+        Example:
+            >>> entities = {Entity(id="e1", type="Person", text="Alice")}
+            >>> len(entities)
+            1
+        """
+        return hash(self.id)
+
 
 @dataclass(slots=True)
 class Relationship:
@@ -1267,6 +1332,52 @@ class Relationship:
         """
         import json as _json
         return _json.dumps(self.to_dict(), **kwargs)
+
+    def __eq__(self, other: object) -> bool:
+        """Test equality based on all fields.
+        
+        Relationships are considered equal if all fields match (id, source_id,
+        target_id, type, confidence, properties, direction).
+        
+        Args:
+            other: Object to compare to.
+            
+        Returns:
+            True if all fields are equal, False otherwise.
+            
+        Example:
+            >>> r1 = Relationship(id="r1", source_id="e1", target_id="e2", type="owns")
+            >>> r2 = Relationship(id="r1", source_id="e1", target_id="e2", type="owns")
+            >>> r1 == r2
+            True
+        """
+        if not isinstance(other, Relationship):
+            return NotImplemented
+        return (
+            self.id == other.id
+            and self.source_id == other.source_id
+            and self.target_id == other.target_id
+            and self.type == other.type
+            and self.confidence == other.confidence
+            and self.properties == other.properties
+            and self.direction == other.direction
+        )
+
+    def __hash__(self) -> int:
+        """Compute hash based on immutable identifier.
+        
+        Hash is based only on the relationship ID, allowing relationships to be
+        used in sets/dicts while properties remain mutable.
+        
+        Returns:
+            Hash of relationship ID.
+            
+        Example:
+            >>> rels = {Relationship(id="r1", source_id="e1", target_id="e2", type="owns")}
+            >>> len(rels)
+            1
+        """
+        return hash(self.id)
 
 
 @dataclass(slots=True)
@@ -1483,6 +1594,106 @@ class EntityExtractionResult:
             confidence=merged_confidence,
             metadata={**self.metadata, **other.metadata},
             errors=list(self.errors) + list(other.errors),
+        )
+
+    def apply_semantic_dedup(
+        self,
+        semantic_deduplicator,
+        threshold: float = 0.85,
+        max_suggestions: Optional[int] = None,
+    ) -> "EntityExtractionResult":
+        """Apply semantic deduplication to merge similar entities.
+
+        Uses embedding-based similarity to detect entities that should be merged
+        even when their text differs (e.g., "CEO" vs "Chief Executive Officer").
+
+        Args:
+            semantic_deduplicator: Instance of SemanticEntityDeduplicator
+            threshold: Minimum cosine similarity (0-1). Default 0.85.
+            max_suggestions: Optional limit on merge suggestions. Default None (all).
+
+        Returns:
+            A new :class:`EntityExtractionResult` with semantically similar
+            entities merged.
+
+        Example:
+            >>> from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import SemanticEntityDeduplicator
+            >>> dedup = SemanticEntityDeduplicator()
+            >>> deduped = result.apply_semantic_dedup(dedup, threshold=0.88)
+
+        Note:
+            Requires sentence-transformers to be installed. Set threshold higher
+            (0.90+) for stricter merging, lower (0.80-0.85) for more aggressive merging.
+        """
+        # Convert to ontology dict format for deduplicator
+        ontology_dict = {
+            "entities": [
+                {
+                    "id": e.id,
+                    "text": e.text,
+                    "type": e.type,
+                    "confidence": e.confidence,
+                    "properties": e.properties,
+                }
+                for e in self.entities
+            ],
+            "relationships": [
+                {
+                    "id": r.id,
+                    "source_id": r.source_id,
+                    "target_id": r.target_id,
+                    "type": r.type,
+                    "confidence": r.confidence,
+                }
+                for r in self.relationships
+            ],
+        }
+
+        # Get merge suggestions
+        suggestions = semantic_deduplicator.suggest_merges(
+            ontology_dict,
+            threshold=threshold,
+            max_suggestions=max_suggestions,
+        )
+
+        if not suggestions:
+            return self  # No merges needed
+
+        # Build merge map: entity_id -> canonical_id
+        merge_map: dict = {}
+        merged_ids: set = set()
+
+        for sugg in suggestions:
+            # Keep the first entity ID as canonical, merge the second into it
+            if sugg.entity1_id not in merged_ids and sugg.entity2_id not in merged_ids:
+                merge_map[sugg.entity2_id] = sugg.entity1_id
+                merged_ids.add(sugg.entity2_id)
+
+        # Build deduplicated entity list
+        kept_entities = [e for e in self.entities if e.id not in merged_ids]
+
+        # Remap relationships
+        import dataclasses as _dc
+        deduped_rels = []
+        kept_ids = {e.id for e in kept_entities}
+
+        for r in self.relationships:
+            src = merge_map.get(r.source_id, r.source_id)
+            tgt = merge_map.get(r.target_id, r.target_id)
+            if src in kept_ids and tgt in kept_ids and src != tgt:
+                deduped_rels.append(_dc.replace(r, source_id=src, target_id=tgt))
+
+        metadata = dict(self.metadata)
+        metadata["semantic_dedup_applied"] = True
+        metadata["semantic_dedup_merged_count"] = len(merged_ids)
+        metadata["semantic_dedup_threshold"] = threshold
+
+        return EntityExtractionResult(
+            entities=kept_entities,
+            relationships=deduped_rels,
+            confidence=self.confidence,
+            metadata=metadata,
+            errors=list(self.errors),
         )
 
     def to_csv(self) -> str:
@@ -2836,6 +3047,7 @@ class OntologyGenerator:
         use_ipfs_accelerate: bool = True,
         logger: Optional[Any] = None,
         llm_backend: Optional[Any] = None,
+        enable_semantic_dedup: bool = False,
     ):
         """
         Initialize the ontology generator.
@@ -2850,11 +3062,15 @@ class OntologyGenerator:
                 fallback.  If provided and ``ExtractionConfig.llm_fallback_threshold``
                 is > 0, rule-based results with confidence below the threshold will be
                 retried via :meth:`_extract_llm_based`.
+            enable_semantic_dedup: If True, use embedding-based semantic deduplication
+                in addition to text-based deduplication. Requires sentence-transformers.
+                Defaults to False. Can also be enabled via ENABLE_SEMANTIC_DEDUP env var.
                 
         Raises:
             ImportError: If ipfs_accelerate is required but not available
         """
         import logging as _logging
+        import os as _os
         self._log = logger or _logging.getLogger(__name__)
         self.ipfs_accelerate_config = ipfs_accelerate_config or {}
         resolved_backend = resolve_backend_settings(
@@ -2871,6 +3087,18 @@ class OntologyGenerator:
         self.ipfs_accelerate_config.setdefault("model", resolved_backend.model)
         self._accelerate_client = None
         self.llm_backend = llm_backend
+        
+        # Semantic deduplication support (feature-flagged)
+        self.enable_semantic_dedup = enable_semantic_dedup or _os.environ.get("ENABLE_SEMANTIC_DEDUP", "").lower() in ("1", "true", "yes")
+        self._semantic_deduplicator = None
+        if self.enable_semantic_dedup:
+            try:
+                from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import SemanticEntityDeduplicator
+                self._semantic_deduplicator = SemanticEntityDeduplicator()
+                self._log.info("Semantic deduplication enabled")
+            except ImportError as e:
+                self._log.warning(f"Semantic deduplication requested but dependencies unavailable: {e}")
+                self.enable_semantic_dedup = False
         
         if self.use_ipfs_accelerate:
             try:
@@ -3210,35 +3438,15 @@ class OntologyGenerator:
         Returns:
             Tuple of (relationship_type, type_confidence)
         """
-        import re
-        
         window_lower = context_window.lower()
-        
-        # Directional patterns (source → target)
-        directional_patterns = [
-            (re.compile(r'\b(employs?|hired?|recruits?)\b'), 'employs', 0.75),
-            (re.compile(r'\b(manages?|supervises?|oversees?)\b'), 'manages', 0.75),
-            (re.compile(r'\b(owns?|possesses?)\b'), 'owns', 0.70),
-            (re.compile(r'\b(creates?|produces?|manufactures?)\b'), 'produces', 0.70),
-            (re.compile(r'\b(founded?|established?|started?)\b'), 'founded', 0.72),
-            (re.compile(r'\b(leads?|directs?|heads?)\b'), 'leads', 0.68),
-        ]
-        
-        # Bidirectional patterns (undirected relationship)
-        bidirectional_patterns = [
-            (re.compile(r'\b(partners?\s+with|collabor\w+\s+with)\b'), 'partners_with', 0.70),
-            (re.compile(r'\b(compet\w+\s+with|rivals?)\b'), 'competes_with', 0.68),
-            (re.compile(r'\b(located\s+in|based\s+in)\b'), 'located_in', 0.72),
-            (re.compile(r'\b(member\s+of|belongs\s+to)\b'), 'member_of', 0.75),
-        ]
-        
+
         # Check directional patterns first
-        for pattern, rel_type, confidence in directional_patterns:
+        for pattern, rel_type, confidence in _DIRECTIONAL_RELATIONSHIP_PATTERNS:
             if pattern.search(window_lower):
                 return (rel_type, confidence)
         
         # Check bidirectional patterns
-        for pattern, rel_type, confidence in bidirectional_patterns:
+        for pattern, rel_type, confidence in _BIDIRECTIONAL_RELATIONSHIP_PATTERNS:
             if pattern.search(window_lower):
                 return (rel_type, confidence)
         
