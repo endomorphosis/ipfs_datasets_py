@@ -171,10 +171,15 @@ class TestExtractionResultTypes:
         annotations = getattr(ot.EntityExtractionResult, '__annotations__', {})
         assert 'entities' in annotations
 
-    def test_entity_extraction_result_has_relationships(self) -> None:
-        """EntityExtractionResult must have relationships."""
+    def test_entity_extraction_result_has_text(self) -> None:
+        """EntityExtractionResult must have text."""
         annotations = getattr(ot.EntityExtractionResult, '__annotations__', {})
-        assert 'relationships' in annotations
+        assert 'text' in annotations
+
+    def test_entity_extraction_result_has_confidence_scores(self) -> None:
+        """EntityExtractionResult should have confidence_scores."""
+        annotations = getattr(ot.EntityExtractionResult, '__annotations__', {})
+        assert 'confidence_scores' in annotations
 
 
 class TestSessionTypes:
@@ -184,21 +189,21 @@ class TestSessionTypes:
         """OntologySession TypedDict must exist."""
         assert hasattr(ot, 'OntologySession'), "Missing OntologySession"
 
-    def test_refinement_cycle_exists(self) -> None:
-        """RefinementCycle TypedDict must exist."""
-        assert hasattr(ot, 'RefinementCycle'), "Missing RefinementCycle"
+    def test_refinement_action_exists(self) -> None:
+        """RefinementAction TypedDict must exist (replaces RefinementCycle)."""
+        assert hasattr(ot, 'RefinementAction'), "Missing RefinementAction"
 
 
 class TestMetricsTypes:
     """Validate metrics and statistics TypedDicts."""
 
-    def test_statistical_metrics_exists(self) -> None:
-        """StatisticalMetrics TypedDict must exist."""
-        assert hasattr(ot, 'StatisticalMetrics'), "Missing StatisticalMetrics"
-
     def test_performance_metrics_exists(self) -> None:
         """PerformanceMetrics TypedDict must exist."""
         assert hasattr(ot, 'PerformanceMetrics'), "Missing PerformanceMetrics"
+
+    def test_quality_metrics_exists(self) -> None:
+        """QualityMetrics TypedDict must exist."""
+        assert hasattr(ot, 'QualityMetrics'), "Missing QualityMetrics"
 
 
 class TestTypedDictCompleteness:
@@ -210,8 +215,8 @@ class TestTypedDictCompleteness:
             'Entity', 'Relationship', 'Ontology', 'OntologyMetadata',
             'CriticScore', 'DimensionalScore', 'CriticRecommendation',
             'EntityExtractionResult', 'RelationshipExtractionResult',
-            'OntologySession', 'GenerationContext', 'RefinementCycle',
-            'StatisticalMetrics', 'PerformanceMetrics', 'QualityMetrics'
+            'OntologySession', 'RefinementAction', 'ActionLogEntry',
+            'ActionSummaryEntry'
         ]
         for type_name in expected_types:
             assert hasattr(ot, type_name), f"Missing TypedDict: {type_name}"

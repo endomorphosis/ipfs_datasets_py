@@ -51,6 +51,9 @@ from typing import Any, Dict, List, Optional
 import uuid
 
 from ipfs_datasets_py.optimizers.common.base_session import BaseSession
+from ipfs_datasets_py.optimizers.common.metrics_prometheus import (
+    get_global_prometheus_metrics,
+)
 from ipfs_datasets_py.optimizers.common.profiling_decorators import profile_method
 from ipfs_datasets_py.optimizers.graphrag.ontology_types import (
     Ontology,
@@ -338,11 +341,61 @@ class OntologyMediator:
         self._recommendation_counts: Dict[str, int] = {}
         # Ordered log of (action_name, round_index) entries for action_log()
         self._action_entries: list = []
+        self._prometheus_metrics: Optional[Any] = None
+
+        try:
+            self._prometheus_metrics = get_global_prometheus_metrics()
+        except (AttributeError, ImportError, RuntimeError, TypeError, ValueError):
+            self._prometheus_metrics = None
 
         self._log.info(
             f"Initialized mediator: max_rounds={max_rounds}, "
             f"threshold={convergence_threshold}"
         )
+
+    def _record_prometheus_round(
+        self,
+        score: float,
+        context: Any,
+    ) -> None:
+        """Best-effort Prometheus emission for one completed refinement round."""
+        metrics = self._prometheus_metrics
+        if metrics is None or not getattr(metrics, "enabled", False):
+            return
+
+        try:
+            labels = {
+                "optimizer_type": "ontology_mediator",
+                "domain": str(getattr(context, "domain", "unknown")),
+            }
+            metrics.record_score(float(score), labels=labels)
+            metrics.record_round_completion(domain=labels["domain"])
+        except (AttributeError, RuntimeError, TypeError, ValueError):
+            self._log.debug("Skipping Prometheus round metrics emission", exc_info=True)
+
+    def _record_prometheus_session_summary(
+        self,
+        state: MediatorState,
+    ) -> None:
+        """Best-effort Prometheus emission for final cycle summary metrics."""
+        metrics = self._prometheus_metrics
+        if metrics is None or not getattr(metrics, "enabled", False):
+            return
+
+        try:
+            metrics.record_session_duration(float(state.total_time_ms) / 1000.0)
+            if len(state.critic_scores) >= 2:
+                initial = float(state.critic_scores[0].overall)
+                final = float(state.critic_scores[-1].overall)
+                metrics.record_score_delta(
+                    final - initial,
+                    labels={
+                        "optimizer_type": "ontology_mediator",
+                        "domain": str(state.domain),
+                    },
+                )
+        except (AttributeError, RuntimeError, TypeError, ValueError):
+            self._log.debug("Skipping Prometheus session metrics emission", exc_info=True)
     
     def generate_prompt(
         self,
@@ -1087,7 +1140,8 @@ class OntologyMediator:
         ontologies: List[Dict[str, Any]],
         scores: List[Any],  # List[CriticScore]
         context: Any,  # OntologyGenerationContext
-    ) -> List[Dict[str, Any]]:
+        max_workers: int | None = None,
+    ) -> Dict[str, Any]:
         """Suggest refinement strategies for a batch of ontologies.
 
         Applies :meth:`suggest_refinement_strategy` to each (ontology, score)
@@ -1099,156 +1153,119 @@ class OntologyMediator:
                 (must be same length as *ontologies*).
             context: Shared :class:`OntologyGenerationContext`.
 
+        Args:
+            max_workers: Optional worker hint for future parallelization. This
+                implementation runs sequentially but accepts the argument for
+                API compatibility.
+
         Returns:
-            List of strategy dicts in the same order as input. Each element
-            has ``"action"``, ``"priority"``, ``"rationale"``, etc.
+            Dict containing strategy results and summary counts:
+            - ``"strategies"`` — list of strategy dicts (or None if failed)
+            - ``"success_count"`` — number of successful recommendations
+            - ``"error_count"`` — number of failures
+            - ``"errors"`` — list of error payloads
 
         Raises:
             ValueError: If length of *scores* does not match *ontologies*.
 
         Example:
-            >>> strategies = mediator.batch_suggest_strategies(
+            >>> result = mediator.batch_suggest_strategies(
             ...     [ont1, ont2, ont3],
             ...     [score1, score2, score3],
-            ...     context
+            ...     context,
+            ...     max_workers=1,
             ... )
-            >>> for s in strategies:
-            ...     print(f"{s['action']}: {s['priority']}")
+            >>> for s in result["strategies"]:
+            ...     if s:
+            ...         print(f"{s['action']}: {s['priority']}")
         """
         if len(ontologies) != len(scores):
             raise ValueError(
                 f"Length mismatch: {len(ontologies)} ontologies but {len(scores)} scores"
             )
 
-        strategies = []
-        for ont, score in zip(ontologies, scores):
-            strategy = self.suggest_refinement_strategy(ont, score, context)
-            strategies.append(strategy)
+        if max_workers is not None and max_workers < 1:
+            raise ValueError("max_workers must be >= 1")
 
-        return strategies
+        strategies: List[Dict[str, Any] | None] = []
+        errors: List[Dict[str, Any]] = []
 
-    def compare_strategies(
-        self,
-        ontologies: List[Dict[str, Any]],
-        scores: List[Any],  # List[CriticScore]
-        context: Any,  # OntologyGenerationContext
-    ) -> List[Dict[str, Any]]:
-        """Compare refinement strategies for multiple ontologies, ranked by impact.
+        for idx, (ont, score) in enumerate(zip(ontologies, scores)):
+            try:
+                strategy = self.suggest_refinement_strategy(ont, score, context)
+                strategies.append(strategy)
+            except (
+                ValueError,
+                TypeError,
+                AttributeError,
+                KeyError,
+                IndexError,
+                RuntimeError,
+            ) as exc:
+                strategies.append(None)
+                errors.append({
+                    "index": idx,
+                    "error": str(exc),
+                })
 
-        Suggests a strategy for each ontology, then ranks them by estimated
-        effectiveness considering both quality scores and action impact.
+        return {
+            "strategies": strategies,
+            "success_count": len(strategies) - len(errors),
+            "error_count": len(errors),
+            "errors": errors,
+        }
+
+    def compare_strategies(self, strategies: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Compare a list of refinement strategies and return the best pick.
 
         Ranking criteria (in priority order):
-        1. Lower overall score → higher priority (more needs improvement)
-        2. Higher estimated impact → higher rank
+        1. Priority label (critical > high > medium > low)
+        2. Higher estimated impact
         3. Original index (stable sort)
 
         Args:
-            ontologies: List of ontology dicts.
-            scores: Corresponding list of :class:`CriticScore` objects.
-            context: Shared :class:`OntologyGenerationContext`.
+            strategies: List of strategy dicts with ``priority`` and
+                ``estimated_impact`` fields.
 
         Returns:
-            List of comparison dicts, sorted by recommendation priority:
-
-            Each dict contains:
-            - ``"index"`` — original position in *ontologies* (0-based)
-            - ``"rank"`` — 1-based rank (1 = highest priority)
-            - ``"strategy"`` — the recommended strategy dict
-            - ``"priority_score"`` — composite score for sorting (0-1)
-
-        Raises:
-            ValueError: If length mismatch or empty inputs.
-
-        Example:
-            >>> ranked = mediator.compare_strategies(
-            ...     [ont1, ont2, ont3],
-            ...     [s1, s2, s3],
-            ...     context
-            ... )
-            >>> print(f"Most urgent: {ranked[0]['strategy']['action']}")
+            Dict with ``best_strategy``, ``ranked_strategies``, and ``summary``.
         """
-        if len(ontologies) != len(scores):
-            raise ValueError(
-                f"Length mismatch: {len(ontologies)} ontologies but {len(scores)} scores"
-            )
+        if not strategies:
+            return {
+                "best_strategy": None,
+                "ranked_strategies": [],
+                "summary": {"count": 0},
+            }
 
-        if not ontologies:
-            return []
-
-        # Get strategies for each ontology
-        strategies = self.batch_suggest_strategies(ontologies, scores, context)
-
-        # Build comparison list with priority scores
-        comparison_list = []
-        for idx, (score, strategy) in enumerate(zip(scores, strategies)):
-            overall = getattr(score, "overall", 0.5)
-            impact = strategy.get("estimated_impact", 0.0)
-            
-            # Priority score: combine inverse of overall (lower score = higher priority)
-            # with estimated impact (higher impact = higher priority)
-            # Weighted: 70% based on improvement need, 30% based on impact
-            improvement_need = 1.0 - overall  # 0.0 (perfect) to 1.0 (terrible)
-            priority_score = (0.7 * improvement_need) + (0.3 * impact)
-            
-            # Map priority string to numeric for secondary sorting consistency
-            priority_map = {"critical": 4, "high": 3, "medium": 2, "low": 1}
+        priority_map = {"critical": 4, "high": 3, "medium": 2, "low": 1}
+        ranked = []
+        for idx, strategy in enumerate(strategies):
             priority_numeric = priority_map.get(strategy.get("priority", "low"), 1)
-            
-            comparison_list.append({
+            impact = float(strategy.get("estimated_impact", 0.0))
+            ranked.append({
                 "index": idx,
                 "strategy": strategy,
-                "priority_score": priority_score,
                 "priority_numeric": priority_numeric,
-                "overall": overall,
+                "estimated_impact": impact,
             })
 
-        # Sort by priority (highest priority first), then by index for stability
-        comparison_list.sort(
-            key=lambda x: (-x["priority_score"], -x["priority_numeric"], x["index"])
+        ranked.sort(
+            key=lambda item: (
+                -item["priority_numeric"],
+                -item["estimated_impact"],
+                item["index"],
+            )
         )
 
-        # Add rank and return in sorted order
-        result = []
-        for rank, item in enumerate(comparison_list, start=1):
-            result.append({
-                "index": item["index"],
-                "rank": rank,
-                "strategy": item["strategy"],
-                "priority_score": item["priority_score"],
-            })
+        for rank, item in enumerate(ranked, start=1):
+            item["rank"] = rank
 
-        self._log.info(
-            f"Compared {len(ontologies)} strategies: "
-            f"top priority is index {result[0]['index']} "
-            f"({result[0]['strategy']['action']})"
-        )
-
-        return result
-
-    def undo_last_action(self) -> Dict[str, Any]:
-        """Revert the last applied refinement action.
-
-        Returns the ontology snapshot that was saved immediately *before* the
-        most-recent :meth:`refine_ontology` call.  The matching entry is removed
-        from the internal undo stack so successive calls step further back.
-
-        Returns:
-            The ontology dict as it was before the last refinement.
-
-        Raises:
-            IndexError: If there is nothing to undo (no refinements have been
-                applied yet).
-
-        Example:
-            >>> refined = mediator.refine_ontology(ontology, score, ctx)
-            >>> original = mediator.undo_last_action()
-            >>> original == ontology
-            True
-        """
-        if not self._undo_stack:
-            raise IndexError("Nothing to undo: no refinements have been applied")
-        return self._undo_stack.pop()
+        best_strategy = ranked[0]["strategy"]
+        return {
+            "best_strategy": best_strategy,
+            "ranked_strategies": ranked,
+            "summary": {"count": len(ranked)},
+        }
 
     def undo_all(self) -> Optional[Dict[str, Any]]:
         """Undo all refinements and return the oldest ontology snapshot.
@@ -1782,6 +1799,7 @@ class OntologyMediator:
             target_score=self.convergence_threshold,
         )
         state.add_round(initial_ontology, initial_score, "initial_generation")
+        self._record_prometheus_round(initial_score.overall, context)
         
         self._log.info(f"Initial score: {initial_score.overall:.2f}")
         
@@ -1816,6 +1834,7 @@ class OntologyMediator:
                 refined_score,
                 f"refinement_round_{round_num}"
             )
+            self._record_prometheus_round(refined_score.overall, context)
             
             self._log.info(
                 f"Round {round_num}: score={refined_score.overall:.2f} "
@@ -1837,6 +1856,7 @@ class OntologyMediator:
         state.metadata['improvement'] = (
             state.critic_scores[-1].overall - state.critic_scores[0].overall
         )
+        self._record_prometheus_session_summary(state)
         
         self._log.info(
             f"Refinement cycle complete: {state.current_round} rounds, "
@@ -1888,6 +1908,7 @@ class OntologyMediator:
             target_score=self.convergence_threshold,
         )
         state.add_round(initial_ontology, initial_score, "initial_generation")
+        self._record_prometheus_round(initial_score.overall, context)
 
         self._log.info("Initial score: %.2f", initial_score.overall)
 
@@ -1937,6 +1958,7 @@ class OntologyMediator:
                 f"agentic_round_{round_num}:{strategy.get('action', 'unknown')}",
             )
             state.refinement_history[-1]["strategy"] = strategy
+            self._record_prometheus_round(refined_score.overall, context)
 
             self._log.info(
                 "Round %d: score=%.2f (Δ=%+.2f)",
@@ -1970,6 +1992,7 @@ class OntologyMediator:
         state.metadata["improvement"] = (
             state.critic_scores[-1].overall - state.critic_scores[0].overall
         )
+        self._record_prometheus_session_summary(state)
 
         self._log.info(
             "Agentic refinement complete: %d rounds, final score=%.2f, improvement=%+.2f",

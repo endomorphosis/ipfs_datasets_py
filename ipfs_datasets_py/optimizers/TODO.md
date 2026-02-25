@@ -399,7 +399,8 @@ Execute these when no rotating work is in progress:
   - Done 2026-02-20: `OntologyPipelineHarness` now directly subclasses `BaseHarness` (removed wrapper composition), preserving `run_and_report` / `run_single` / `run_concurrent` APIs.
 - [x] (P2) [arch] Wire `LogicHarness` to extend `BaseHarness`
   - Done 2026-02-20: added `LogicPipelineHarness` as a `BaseHarness`-native adapter for extractor→critic loops while keeping deprecated `LogicHarness` behavior stable.
-- [ ] (P3) [docs] Write architecture diagram for the `generate → critique → optimize → validate` loop
+- [x] (P3) [docs] Write architecture diagram for the `generate → critique → optimize → validate` loop
+  - Done 2026-02-25: architecture documentation conformance suite validated (`tests/unit/optimizers/graphrag/test_batch_307_architecture_docs.py`, 25/25 passing) after robust test path resolution and quality-assertion hardening.
 
 ### R4 — Logging & observability consistency
 
@@ -695,7 +696,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 ## Batch 50+ Ideas (added batch 49)
 
 - [x] (P2) [graphrag] `OntologyGenerator.generate_ontology_rich()` elapsed_ms — Done batch 50: added to metadata; 4 tests
-- [ ] (P2) [graphrag] `OntologyCritic.evaluate_ontology()` — persist cache across instances via class-level `_SHARED_EVAL_CACHE`
+- [x] (P2) [graphrag] `OntologyCritic.evaluate_ontology()` — persist cache across instances via class-level `_SHARED_EVAL_CACHE` -- Done 2026-02-25: validated via test_batch52_features.py + test_critic_cache_persistence.py (29/29)
 - [x] (P3) [graphrag] ✅ Add `merge_provenance` tracking — which entities/rels came from which source doc
 - [x] (P2) [graphrag] `LogicValidator.validate_ontology()` — add `ValidationResult.invalid_entity_ids` list — Done 2026-02-23: validate_ontology wrapper added; tests updated
 - [x] (P3) [graphrag] `OntologyOptimizer.compare_history()` — Done batch 50: returns list of dicts with batch_from/to, score_from/to, delta, direction; 7 tests

@@ -188,8 +188,9 @@ class OptimizerLLMRouter:
             for provider in LLMProvider if provider != LLMProvider.AUTO
         }
         
-        # Production hardening: Retry handler with exponential backoff
-        self._retry_handler = RetryHandler(max_retries=3, base_delay=1.0, max_delay=30.0)
+        # Keep legacy retry wrapper for compatibility, but delegate retries to
+        # shared backend resilience policy to avoid stacked retry amplification.
+        self._retry_handler = RetryHandler(max_retries=0, base_delay=0.1, max_delay=0.1)
         self._resilience_breakers: Dict[LLMProvider, ResilienceCircuitBreaker[str]] = {
             provider: ResilienceCircuitBreaker[str](
                 name=f"agentic_llm_{provider.value}",
@@ -206,10 +207,10 @@ class OptimizerLLMRouter:
         return BackendCallPolicy(
             service_name=f"agentic_{provider.value}",
             timeout_seconds=30.0,
-            max_retries=0,
-            initial_backoff_seconds=0.0,
+            max_retries=2,
+            initial_backoff_seconds=0.1,
             backoff_multiplier=2.0,
-            max_backoff_seconds=0.0,
+            max_backoff_seconds=1.0,
             circuit_failure_threshold=3,
             circuit_recovery_timeout=30.0,
         )

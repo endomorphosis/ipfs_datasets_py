@@ -26,6 +26,21 @@ class TestLLMProvider:
 
 class TestOptimizerLLMRouter:
     """Test OptimizerLLMRouter class."""
+
+    def test_policy_for_provider_enables_retries_with_exponential_backoff(self):
+        """Backend resilience policy should include retry + exponential backoff."""
+        router = OptimizerLLMRouter(enable_caching=False)
+        policy = router._policy_for_provider(LLMProvider.GPT4)
+
+        assert policy.max_retries == 2
+        assert policy.initial_backoff_seconds == 0.1
+        assert policy.backoff_multiplier == 2.0
+        assert policy.max_backoff_seconds == 1.0
+
+    def test_init_uses_single_retry_layer(self):
+        """Legacy retry wrapper should be disabled to avoid stacked retries."""
+        router = OptimizerLLMRouter(enable_caching=False)
+        assert router._retry_handler.max_retries == 0
     
     def test_init_default(self):
         """Test default initialization."""
@@ -119,7 +134,10 @@ class TestOptimizerLLMRouter:
 
         assert response == "ok"
         mocked_resilience.assert_called()
-        assert mocked_resilience.call_args.args[1].service_name.startswith("agentic_")
+        policy = mocked_resilience.call_args.args[1]
+        assert policy.service_name.startswith("agentic_")
+        assert policy.max_retries == 2
+        assert policy.initial_backoff_seconds == 0.1
 
     def test_generate_redacts_secret_like_error_text_in_failure_details(self):
         """Failure details should not leak API keys/tokens."""
