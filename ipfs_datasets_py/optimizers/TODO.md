@@ -726,7 +726,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [api] Add `OntologyGenerator.batch_extract(docs, context)` for multi-doc parallel extraction
 - [x] (P3) [api] Add `OntologyOptimizer.prune_history(keep_last_n)` — Done batch 50: discards oldest entries, raises ValueError on n<1; 7 tests
 - [x] (P3) [arch] Add `OntologyCritic.evaluate_ontology()` timeout guard -- Done batch-63: ThreadPoolExecutor with TimeoutError; 6 tests
-- [ ] (P2) [docs] Add per-method doctest examples to all public `OntologyGenerator` methods
+- [x] (P2) [docs] Add per-method doctest examples to all public `OntologyGenerator` methods -- Done 2026-02-25: validated via test_ontology_generator_doctest_conformance.py (2/2)
 - [ ] (P2) [docs] Add per-method doctest examples to all public `OntologyCritic` methods
 - [x] (P3) [obs] Add `OntologyGenerator.extract_entities()` structured log with entity_count + strategy — Done 2026-02-23: emits EXTRACT_ENTITIES JSON; tested in tests/unit/optimizers/graphrag/test_ontology_generator_extract_entities_logging.py
 - [x] (P3) [obs] Add `OntologyMediator.refine_ontology()` structured log of actions_applied per round
@@ -753,7 +753,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P3) [graphrag] Add confidence decay over time — entities not seen recently get lower confidence
 - [x] (P2) [api] ✅ Add `CriticScore.__sub__()` — subtract two CriticScore objects to get delta CriticScore
 - [x] (P3) [graphrag] ✅ Add `OntologyHarness.run_concurrent()` — run N harnesses against the same data in parallel
-- [ ] (P2) [docs] Add doctest examples for every public method in ontology_generator.py
+- [x] (P2) [docs] Add doctest examples for every public method in ontology_generator.py -- Done 2026-02-25: validated via test_ontology_generator_doctest_conformance.py (2/2)
 - [x] (P3) [arch] ✅ Add `optimizers/graphrag/typing.py` with shared type aliases (EntityDict, OntologyDict, etc.) — Done 2026-02-23: implemented in ipfs_datasets_py/optimizers/graphrag/typing.py
 
 ## Batch 57+ ideas (added automatically)
@@ -778,7 +778,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P3) [graphrag] Add confidence decay over time — entities not seen recently get lower confidence
 - [x] (P2) [api] ✅ Add `CriticScore.__sub__()` — subtract two CriticScore objects to get delta CriticScore
 - [x] (P3) [graphrag] ✅ Add `OntologyHarness.run_concurrent()` — run N harnesses against the same data in parallel
-- [ ] (P2) [docs] Add doctest examples for every public method in ontology_generator.py
+- [x] (P2) [docs] Add doctest examples for every public method in ontology_generator.py -- Done 2026-02-25: validated via test_ontology_generator_doctest_conformance.py (2/2)
 - [x] (P3) [arch] ✅ Add `optimizers/graphrag/typing.py` with shared type aliases (EntityDict, OntologyDict, etc.) — Done 2026-02-23: implemented in ipfs_datasets_py/optimizers/graphrag/typing.py
 
 ## Batch 59+ ideas (added automatically)
@@ -794,7 +794,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P3) [graphrag] Add confidence decay over time — entities not seen recently get lower confidence
 - [x] (P2) [api] ✅ Add `CriticScore.__sub__()` — subtract two CriticScore objects to get delta CriticScore
 - [x] (P3) [graphrag] ✅ Add `OntologyHarness.run_concurrent()` — run N harnesses against the same data in parallel
-- [ ] (P2) [docs] Add doctest examples for every public method in ontology_generator.py
+- [x] (P2) [docs] Add doctest examples for every public method in ontology_generator.py -- Done 2026-02-25: validated via test_ontology_generator_doctest_conformance.py (2/2)
 - [x] (P3) [arch] ✅ Add `optimizers/graphrag/typing.py` with shared type aliases (EntityDict, OntologyDict, etc.) — Done 2026-02-23: implemented in ipfs_datasets_py/optimizers/graphrag/typing.py
 
 ## Batch 63+ ideas (added automatically)
