@@ -172,6 +172,17 @@ class TestInputSanitizer:
             side_effect=OSError("resolve failed"),
         ):
             assert sanitizer.validate_file_path("any.py") is False
+
+    def test_validate_file_path_redacts_sensitive_error_log(self, sanitizer, caplog):
+        """Resolve-path errors should redact sensitive fragments in logs."""
+        with patch(
+            "ipfs_datasets_py.optimizers.agentic.production_hardening.Path.resolve",
+            side_effect=OSError("resolve failed api_key=sk-secret123"),
+        ):
+            with caplog.at_level("ERROR"):
+                assert sanitizer.validate_file_path("any.py") is False
+        assert "api_key=***REDACTED***" in caplog.text
+        assert "sk-secret123" not in caplog.text
     
     # --- Code validation tests (XSS/injection/dangerous patterns) ---
     
@@ -413,12 +424,14 @@ print(f'Key: {key}')
         """Subprocess launch failures should be captured as failed execution."""
         with patch(
             "ipfs_datasets_py.optimizers.agentic.production_hardening.subprocess.run",
-            side_effect=OSError("spawn failed"),
+            side_effect=OSError("spawn failed password=hunter2"),
         ):
             success, stdout, stderr = executor.execute_code("print('ok')")
         assert success is False
         assert stdout == ""
         assert "spawn failed" in stderr
+        assert "password=***REDACTED***" in stderr
+        assert "hunter2" not in stderr
 
 
 class TestCircuitBreaker:

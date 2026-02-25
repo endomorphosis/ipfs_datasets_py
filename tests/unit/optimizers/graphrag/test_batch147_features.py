@@ -53,45 +53,53 @@ def _make_generator():
 # ---------------------------------------------------------------------------
 
 class TestTopImprovingDimension:
-    def test_single_improving_dim(self):
+    @pytest.mark.parametrize(
+        "before,after,predicate",
+        [
+            (
+                _make_score(completeness=0.2),
+                _make_score(completeness=0.9),
+                lambda dim: dim == "completeness",
+            ),
+            (
+                _make_score(),
+                _make_score(),
+                lambda dim: isinstance(dim, str),
+            ),
+            (
+                _make_score(clarity=0.1, consistency=0.3),
+                _make_score(clarity=0.8, consistency=0.4),
+                lambda dim: dim == "clarity",
+            ),
+            (
+                _make_score(
+                    completeness=0.9,
+                    domain_alignment=0.5,
+                    consistency=0.5,
+                    clarity=0.5,
+                    granularity=0.5,
+                    relationship_coherence=0.5,
+                ),
+                _make_score(
+                    completeness=0.1,
+                    domain_alignment=0.4,
+                    consistency=0.5,
+                    clarity=0.5,
+                    granularity=0.5,
+                    relationship_coherence=0.5,
+                ),
+                lambda dim: dim not in ("completeness",),
+            ),
+            (
+                _make_score(granularity=0.0),
+                _make_score(granularity=1.0),
+                lambda dim: dim == "granularity",
+            ),
+        ],
+    )
+    def test_top_improving_dimension_scenarios(self, before, after, predicate):
         critic = _make_critic()
-        before = _make_score(completeness=0.2)
-        after = _make_score(completeness=0.9)  # only completeness improves significantly
-        dim = critic.top_improving_dimension(before, after)
-        assert dim == "completeness"
-
-    def test_all_same_returns_first(self):
-        critic = _make_critic()
-        before = _make_score()
-        after = _make_score()  # identical
-        dim = critic.top_improving_dimension(before, after)
-        # all deltas are 0 — returns whichever is max (any is fine, just must be a string)
-        assert isinstance(dim, str)
-
-    def test_most_improved_is_returned(self):
-        critic = _make_critic()
-        before = _make_score(clarity=0.1, consistency=0.3)
-        after = _make_score(clarity=0.8, consistency=0.4)
-        # clarity delta = 0.7, consistency delta = 0.1
-        assert critic.top_improving_dimension(before, after) == "clarity"
-
-    def test_negative_deltas_returns_least_negative(self):
-        critic = _make_critic()
-        before = _make_score(completeness=0.9, domain_alignment=0.5,
-                             consistency=0.5, clarity=0.5, granularity=0.5, relationship_coherence=0.5)
-        after = _make_score(completeness=0.1, domain_alignment=0.4,
-                            consistency=0.5, clarity=0.5, granularity=0.5, relationship_coherence=0.5)
-        # completeness -0.8, domain_alignment -0.1, all others 0 → first 0-delta dim wins
-        # but domain_alignment (-0.1) < 0-delta dims — so a 0-delta dim is returned
-        dim = critic.top_improving_dimension(before, after)
-        # Any dim with delta=0 is acceptable (not completeness or domain_alignment)
-        assert dim not in ("completeness",)
-
-    def test_granularity_most_improved(self):
-        critic = _make_critic()
-        before = _make_score(granularity=0.0)
-        after = _make_score(granularity=1.0)
-        assert critic.top_improving_dimension(before, after) == "granularity"
+        assert predicate(critic.top_improving_dimension(before, after))
 
 
 # ---------------------------------------------------------------------------
@@ -99,29 +107,31 @@ class TestTopImprovingDimension:
 # ---------------------------------------------------------------------------
 
 class TestCompactResult:
-    def test_empty_entities_returns_empty(self):
+    @pytest.mark.parametrize(
+        "entities,predicate",
+        [
+            ([], lambda compacted: compacted.entities == []),
+            (
+                [_make_entity("e1", {"role": "subject"}), _make_entity("e2", {})],
+                lambda compacted: len(compacted.entities) == 1 and compacted.entities[0].id == "e1",
+            ),
+            (
+                [_make_entity("e0"), _make_entity("e1"), _make_entity("e2"), _make_entity("e3"), _make_entity("e4")],
+                lambda compacted: compacted.entities == [],
+            ),
+            (
+                [_make_entity("e1", None)],
+                lambda compacted: compacted.entities == [],
+            ),
+        ],
+    )
+    def test_compact_result_entity_scenarios(self, entities, predicate):
         gen = _make_generator()
-        result = _make_result([])
-        compacted = gen.compact_result(result)
-        assert compacted.entities == []
-
-    def test_keeps_entities_with_properties(self):
-        gen = _make_generator()
-        e1 = _make_entity("e1", {"role": "subject"})
-        e2 = _make_entity("e2", {})
-        result = _make_result([e1, e2])
-        compacted = gen.compact_result(result)
-        assert len(compacted.entities) == 1
-        assert compacted.entities[0].id == "e1"
-
-    def test_removes_empty_properties(self):
-        gen = _make_generator()
-        entities = [_make_entity(f"e{i}") for i in range(5)]  # all empty
         result = _make_result(entities)
         compacted = gen.compact_result(result)
-        assert compacted.entities == []
+        assert predicate(compacted)
 
-    def test_preserves_relationships(self):
+    def test_compact_result_preserves_relationships(self):
         gen = _make_generator()
         rel = MagicMock()
         e1 = _make_entity("e1", {"k": "v"})
@@ -129,7 +139,7 @@ class TestCompactResult:
         compacted = gen.compact_result(result)
         assert compacted.relationships == [rel]
 
-    def test_preserves_confidence_and_metadata(self):
+    def test_compact_result_preserves_confidence_and_metadata(self):
         gen = _make_generator()
         result = _make_result([], [])
         result.confidence = 0.75
@@ -137,11 +147,3 @@ class TestCompactResult:
         compacted = gen.compact_result(result)
         assert compacted.confidence == pytest.approx(0.75)
         assert compacted.metadata == {"src": "test"}
-
-    def test_none_properties_removed(self):
-        gen = _make_generator()
-        # Entity with properties=None-like falsy value
-        e = _make_entity("e1", None)
-        result = _make_result([e])
-        compacted = gen.compact_result(result)
-        assert compacted.entities == []

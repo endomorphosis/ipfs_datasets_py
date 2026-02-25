@@ -47,28 +47,22 @@ def _ont(num_entities=3, num_rels=2):
 # ---------------------------------------------------------------------------
 
 class TestWorstNFeedback:
-    def test_empty_returns_empty(self):
+    @pytest.mark.parametrize(
+        "scores,n,expected_len,expected_prefix",
+        [
+            ([], 3, 0, []),
+            ([0.8, 0.2, 0.5], 2, 2, [0.2, 0.5]),
+            ([0.4, 0.6], 10, 2, [0.4, 0.6]),
+            ([0.1, 0.2, 0.3, 0.4, 0.5], 3, 3, [0.1, 0.2, 0.3]),
+        ],
+    )
+    def test_worst_n_feedback_scenarios(self, scores, n, expected_len, expected_prefix):
         a = _make_adapter()
-        assert a.worst_n_feedback() == []
-
-    def test_returns_lowest_first(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.8, 0.2, 0.5)
-        result = a.worst_n_feedback(n=2)
-        assert len(result) == 2
-        assert result[0].final_score == pytest.approx(0.2)
-        assert result[1].final_score == pytest.approx(0.5)
-
-    def test_n_larger_than_records(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.4, 0.6)
-        assert len(a.worst_n_feedback(n=10)) == 2
-
-    def test_default_n_is_three(self):
-        a = _make_adapter()
-        for v in [0.1, 0.2, 0.3, 0.4, 0.5]:
-            _push_adapter(a, v)
-        assert len(a.worst_n_feedback()) == 3
+        _push_adapter(a, *scores)
+        result = a.worst_n_feedback(n=n)
+        assert len(result) == expected_len
+        for idx, expected in enumerate(expected_prefix):
+            assert result[idx].final_score == pytest.approx(expected)
 
 
 # ---------------------------------------------------------------------------
@@ -76,21 +70,18 @@ class TestWorstNFeedback:
 # ---------------------------------------------------------------------------
 
 class TestFeedbackScoreRange:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,expected",
+        [
+            ([], (0.0, 0.0)),
+            ([0.5], (0.5, 0.5)),
+            ([0.2, 0.8], (0.2, 0.8)),
+        ],
+    )
+    def test_feedback_score_range_scenarios(self, scores, expected):
         a = _make_adapter()
-        assert a.feedback_score_range() == (0.0, 0.0)
-
-    def test_single_returns_zero(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.5)
-        assert a.feedback_score_range() == (0.5, 0.5)
-
-    def test_known_range(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.2, 0.8)
-        lo, hi = a.feedback_score_range()
-        assert lo == pytest.approx(0.2)
-        assert hi == pytest.approx(0.8)
+        _push_adapter(a, *scores)
+        assert a.feedback_score_range() == pytest.approx(expected)
 
     def test_non_negative(self):
         a = _make_adapter()
@@ -105,18 +96,17 @@ class TestFeedbackScoreRange:
 # ---------------------------------------------------------------------------
 
 class TestEntityCount:
-    def test_empty_ontology(self):
+    @pytest.mark.parametrize(
+        "ontology,expected",
+        [
+            ({}, 0),
+            (_ont(num_entities=4, num_rels=0), 4),
+            ({"relationships": []}, 0),
+        ],
+    )
+    def test_entity_count_scenarios(self, ontology, expected):
         v = _make_validator()
-        assert v.entity_count({}) == 0
-
-    def test_with_entities(self):
-        v = _make_validator()
-        assert v.entity_count(_ont(num_entities=4, num_rels=0)) == 4
-
-    def test_no_entities_key(self):
-        v = _make_validator()
-        ont = {"relationships": []}
-        assert v.entity_count(ont) == 0
+        assert v.entity_count(ontology) == expected
 
     def test_returns_int(self):
         v = _make_validator()
@@ -128,18 +118,17 @@ class TestEntityCount:
 # ---------------------------------------------------------------------------
 
 class TestRelationshipCount:
-    def test_empty_ontology(self):
+    @pytest.mark.parametrize(
+        "ontology,expected",
+        [
+            ({}, 0),
+            (_ont(num_rels=3), 3),
+            ({"entities": [{"id": "e1"}]}, 0),
+        ],
+    )
+    def test_relationship_count_scenarios(self, ontology, expected):
         v = _make_validator()
-        assert v.relationship_count({}) == 0
-
-    def test_with_relationships(self):
-        v = _make_validator()
-        assert v.relationship_count(_ont(num_rels=3)) == 3
-
-    def test_no_relationships_key(self):
-        v = _make_validator()
-        ont = {"entities": [{"id": "e1"}]}
-        assert v.relationship_count(ont) == 0
+        assert v.relationship_count(ontology) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -147,19 +136,17 @@ class TestRelationshipCount:
 # ---------------------------------------------------------------------------
 
 class TestEntityToRelationshipRatio:
-    def test_no_relationships_returns_entity_count(self):
+    @pytest.mark.parametrize(
+        "ontology,expected",
+        [
+            (_ont(num_entities=5, num_rels=0), 5.0),
+            (_ont(num_entities=6, num_rels=3), 2.0),
+            ({}, 0.0),
+        ],
+    )
+    def test_entity_to_relationship_ratio_scenarios(self, ontology, expected):
         v = _make_validator()
-        ont = _ont(num_entities=5, num_rels=0)
-        assert v.entity_to_relationship_ratio(ont) == pytest.approx(5.0)
-
-    def test_known_ratio(self):
-        v = _make_validator()
-        ont = _ont(num_entities=6, num_rels=3)
-        assert v.entity_to_relationship_ratio(ont) == pytest.approx(2.0)
-
-    def test_empty_returns_zero(self):
-        v = _make_validator()
-        assert v.entity_to_relationship_ratio({}) == pytest.approx(0.0)
+        assert v.entity_to_relationship_ratio(ontology) == pytest.approx(expected)
 
     def test_returns_float(self):
         v = _make_validator()

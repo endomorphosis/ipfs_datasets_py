@@ -14,7 +14,7 @@ def test_persist_metrics_fallback_file_contains_structured_error_code(tmp_path, 
     collector = QueryMetricsCollector(metrics_dir=str(tmp_path), track_resources=False)
 
     def _raise_serialization_error(_value):
-        raise TypeError("bad payload")
+        raise TypeError("bad payload api_key=sk-secret123")
 
     monkeypatch.setattr(collector, "_numpy_json_serializable", _raise_serialization_error, raising=False)
 
@@ -25,6 +25,8 @@ def test_persist_metrics_fallback_file_contains_structured_error_code(tmp_path, 
     payload = json.loads(persisted[0].read_text(encoding="utf-8"))
     assert payload["error_code"] == QUERY_METRICS_PERSIST_SERIALIZATION_ERROR
     assert "Error serializing metrics to JSON" in payload["error"]
+    assert "api_key=***REDACTED***" in payload["error"]
+    assert "sk-secret123" not in payload["error"]
 
 
 def test_persist_metrics_double_failure_logs_fallback_write_error_code(tmp_path, monkeypatch):
@@ -37,7 +39,7 @@ def test_persist_metrics_double_failure_logs_fallback_write_error_code(tmp_path,
     collector = QueryMetricsCollector(metrics_dir=str(tmp_path), track_resources=False, logger=mock_logger)
 
     def _raise_serialization_error(_value):
-        raise TypeError("bad payload")
+        raise TypeError("bad payload password=hunter2")
 
     def _raise_open_error(*_args, **_kwargs):
         raise OSError("disk unavailable")
@@ -49,6 +51,25 @@ def test_persist_metrics_double_failure_logs_fallback_write_error_code(tmp_path,
 
     mock_logger.error.assert_called_once()
     assert QUERY_METRICS_PERSIST_FALLBACK_WRITE_ERROR in mock_logger.error.call_args.args[0]
+    assert "password=***REDACTED***" in mock_logger.error.call_args.args[0]
+    assert "hunter2" not in mock_logger.error.call_args.args[0]
+
+
+def test_export_metrics_json_fallback_redacts_sensitive_error(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.graphrag.query_metrics import QueryMetricsCollector
+
+    collector = QueryMetricsCollector(metrics_dir=str(tmp_path), track_resources=False)
+    collector.query_metrics.append({"query_id": "q1"})
+
+    def _raise_serialization_error(_value):
+        raise TypeError("serialize failed api_key=sk-exportsecret")
+
+    monkeypatch.setattr(collector, "_numpy_json_serializable", _raise_serialization_error, raising=False)
+
+    payload = json.loads(collector.export_metrics_json() or "{}")
+    assert "Error serializing metrics to JSON" in payload.get("error", "")
+    assert "api_key=***REDACTED***" in payload.get("error", "")
+    assert "sk-exportsecret" not in payload.get("error", "")
 
 
 def test_query_metrics_error_code_constants_exported() -> None:

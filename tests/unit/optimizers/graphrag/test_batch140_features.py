@@ -54,33 +54,21 @@ def _make_result(*entries):
 # ---------------------------------------------------------------------------
 
 class TestDomainCoverage:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "records,expected",
+        [
+            ([], 0.0),
+            ([(0.8, None), (0.7, None)], 1.0),
+            ([(0.2, None)], 0.0),
+            ([(0.8, "A"), (0.2, "B")], 0.5),
+            ([(0.8, "A"), (0.9, "B")], 1.0),
+        ],
+    )
+    def test_domain_coverage_scenarios(self, records, expected):
         a = _make_adapter()
-        assert a.domain_coverage() == pytest.approx(0.0)
-
-    def test_single_domain_all_above(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.8)
-        _push_adapter(a, 0.7)
-        assert a.domain_coverage() == pytest.approx(1.0)
-
-    def test_single_domain_all_below(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.2)
-        assert a.domain_coverage() == pytest.approx(0.0)
-
-    def test_two_domains_one_covered(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.8, domain="A")
-        _push_adapter(a, 0.2, domain="B")
-        cov = a.domain_coverage()
-        assert cov == pytest.approx(0.5)
-
-    def test_both_domains_covered(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.8, domain="A")
-        _push_adapter(a, 0.9, domain="B")
-        assert a.domain_coverage() == pytest.approx(1.0)
+        for score, domain in records:
+            _push_adapter(a, score, domain=domain)
+        assert a.domain_coverage() == pytest.approx(expected)
 
     def test_returns_float(self):
         a = _make_adapter()
@@ -93,26 +81,20 @@ class TestDomainCoverage:
 # ---------------------------------------------------------------------------
 
 class TestVolatility:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,expected",
+        [
+            ([], 0.0),
+            ([0.5], 0.0),
+            ([0.7, 0.7, 0.7, 0.7], 0.0),
+            ([0.0, 1.0, 0.0, 1.0], 1.0),
+        ],
+    )
+    def test_volatility_scenarios(self, scores, expected):
         a = _make_adapter()
-        assert a.volatility() == pytest.approx(0.0)
-
-    def test_single_record_returns_zero(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.5)
-        assert a.volatility() == pytest.approx(0.0)
-
-    def test_stable_scores_low_volatility(self):
-        a = _make_adapter()
-        for _ in range(4):
-            _push_adapter(a, 0.7)
-        assert a.volatility() == pytest.approx(0.0)
-
-    def test_alternating_scores_high_volatility(self):
-        a = _make_adapter()
-        for v in [0.0, 1.0, 0.0, 1.0]:
+        for v in scores:
             _push_adapter(a, v)
-        assert a.volatility() == pytest.approx(1.0)
+        assert a.volatility() == pytest.approx(expected)
 
     def test_returns_non_negative(self):
         a = _make_adapter()
@@ -126,26 +108,20 @@ class TestVolatility:
 # ---------------------------------------------------------------------------
 
 class TestConfidenceStd:
-    def test_empty_result(self):
+    @pytest.mark.parametrize(
+        "entries,expected",
+        [
+            ([], 0.0),
+            ([("T", 0.7)], 0.0),
+            # std = 0.5
+            ([("T", 0.0), ("T", 1.0)], 0.5),
+            ([("T", 0.6), ("T", 0.6), ("T", 0.6)], 0.0),
+        ],
+    )
+    def test_confidence_std_scenarios(self, entries, expected):
         g = _make_generator()
-        r = _make_result()
-        assert g.confidence_std(r) == pytest.approx(0.0)
-
-    def test_single_entity(self):
-        g = _make_generator()
-        r = _make_result(("T", 0.7))
-        assert g.confidence_std(r) == pytest.approx(0.0)
-
-    def test_known_std(self):
-        g = _make_generator()
-        r = _make_result(("T", 0.0), ("T", 1.0))
-        # std = 0.5
-        assert g.confidence_std(r) == pytest.approx(0.5)
-
-    def test_identical_scores(self):
-        g = _make_generator()
-        r = _make_result(("T", 0.6), ("T", 0.6), ("T", 0.6))
-        assert g.confidence_std(r) == pytest.approx(0.0)
+        r = _make_result(*entries)
+        assert g.confidence_std(r) == pytest.approx(expected)
 
     def test_returns_float(self):
         g = _make_generator()
@@ -158,23 +134,21 @@ class TestConfidenceStd:
 # ---------------------------------------------------------------------------
 
 class TestEntityTypeDistribution:
-    def test_empty_result(self):
+    @pytest.mark.parametrize(
+        "entries,expected",
+        [
+            ([], {}),
+            ([("Person", 0.8), ("Person", 0.7)], {"Person": 1.0}),
+            ([("Person", 0.8), ("Org", 0.7)], {"Person": 0.5, "Org": 0.5}),
+        ],
+    )
+    def test_entity_type_distribution_scenarios(self, entries, expected):
         g = _make_generator()
-        r = _make_result()
-        assert g.entity_type_distribution(r) == {}
-
-    def test_single_type(self):
-        g = _make_generator()
-        r = _make_result(("Person", 0.8), ("Person", 0.7))
+        r = _make_result(*entries)
         dist = g.entity_type_distribution(r)
-        assert dist == {"Person": pytest.approx(1.0)}
-
-    def test_two_types_equal(self):
-        g = _make_generator()
-        r = _make_result(("Person", 0.8), ("Org", 0.7))
-        dist = g.entity_type_distribution(r)
-        assert dist["Person"] == pytest.approx(0.5)
-        assert dist["Org"] == pytest.approx(0.5)
+        for key, value in expected.items():
+            assert dist[key] == pytest.approx(value)
+        assert set(dist.keys()) == set(expected.keys())
 
     def test_fractions_sum_to_one(self):
         g = _make_generator()

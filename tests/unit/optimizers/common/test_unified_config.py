@@ -2,6 +2,7 @@
 
 import pytest
 from types import SimpleNamespace
+from ipfs_datasets_py.optimizers.agentic.llm_integration import LLMProvider
 from ipfs_datasets_py.optimizers.common.unified_config import (
     DomainType,
     GraphRAGConfig,
@@ -14,7 +15,11 @@ from ipfs_datasets_py.optimizers.common.unified_config import (
     create_context,
     context_from_optimization_context,
     context_from_ontology_generation_context,
+    backend_config_from_constructor_kwargs,
     domain_type_from_value,
+    ensure_shared_backend_config,
+    ensure_shared_context_metadata,
+    supported_backend_config_source_aliases,
 )
 from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationContext
 
@@ -242,6 +247,10 @@ class TestContextAdapters:
         assert adapted.session_id == "s1"
         assert adapted.input_text == "sample text"
         assert adapted.metadata["source"] == "test"
+        assert adapted.metadata["session_id"] == "s1"
+        assert "data_source" in adapted.metadata
+        assert "data_type" in adapted.metadata
+        assert "trace_id" in adapted.metadata
 
     def test_context_from_ontology_generation_context(self):
         fake_context = SimpleNamespace(
@@ -251,6 +260,7 @@ class TestContextAdapters:
             extraction_strategy="hybrid",
             base_ontology={"entities": [], "relationships": []},
             config={"confidence_threshold": 0.7},
+            trace_id="trace-123",
         )
         adapted = context_from_ontology_generation_context(
             fake_context,
@@ -262,14 +272,169 @@ class TestContextAdapters:
         assert adapted.ontology_domain == "legal"
         assert adapted.metadata["data_source"] == "doc.txt"
         assert adapted.metadata["data_type"] == "text"
+        assert adapted.metadata["session_id"] == "g1"
+        assert adapted.metadata["trace_id"] == "trace-123"
         assert adapted.extraction_context == {"confidence_threshold": 0.7}
 
     def test_context_adapters_exported_from_common_namespace(self):
         from ipfs_datasets_py.optimizers import common
 
         assert hasattr(common, "domain_type_from_value")
+        assert hasattr(common, "ensure_shared_backend_config")
+        assert hasattr(common, "supported_backend_config_source_aliases")
+        assert hasattr(common, "ensure_shared_context_metadata")
         assert hasattr(common, "context_from_optimization_context")
         assert hasattr(common, "context_from_ontology_generation_context")
+
+    def test_ensure_shared_context_metadata_preserves_existing_values(self):
+        result = ensure_shared_context_metadata(
+            {"data_source": "already-set", "custom": 1},
+            session_id="s-1",
+            data_source="new-source",
+            data_type="text",
+            trace_id="t-1",
+        )
+        assert result["data_source"] == "already-set"
+        assert result["session_id"] == "s-1"
+        assert result["data_type"] == "text"
+        assert result["trace_id"] == "t-1"
+        assert result["custom"] == 1
+
+    def test_ensure_shared_backend_config_sets_default_shared_keys(self):
+        result = ensure_shared_backend_config(
+            {"provider": "existing-provider"},
+            provider="new-provider",
+            model="gpt-4",
+            use_llm=True,
+            timeout_seconds=30.0,
+            max_retries=2,
+            circuit_failure_threshold=5,
+        )
+        assert result["provider"] == "existing-provider"
+        assert result["model"] == "gpt-4"
+        assert result["use_llm"] is True
+        assert result["timeout_seconds"] == 30.0
+        assert result["max_retries"] == 2
+        assert result["circuit_failure_threshold"] == 5
+
+    def test_backend_config_from_constructor_kwargs_graphrag_generator(self):
+        result = backend_config_from_constructor_kwargs(
+            "graphrag.ontology_generator",
+            ipfs_accelerate_config={
+                "provider": "openai",
+                "model": "gpt-4",
+                "timeout_seconds": 18.0,
+                "max_retries": 3,
+                "circuit_failure_threshold": 6,
+            },
+            use_ipfs_accelerate=True,
+        )
+        assert result["provider"] == "openai"
+        assert result["model"] == "gpt-4"
+        assert result["use_llm"] is True
+        assert result["timeout_seconds"] == 18.0
+        assert result["max_retries"] == 3
+        assert result["circuit_failure_threshold"] == 6
+
+    def test_backend_config_from_constructor_kwargs_logic_unified_optimizer(self):
+        result = backend_config_from_constructor_kwargs(
+            "logic_theorem_optimizer.unified_optimizer",
+            llm_backend=object(),
+            llm_backend_config={"provider": "anthropic", "model": "claude-3"},
+        )
+        assert result["provider"] == "anthropic"
+        assert result["model"] == "claude-3"
+        assert result["use_llm"] is True
+        assert result["timeout_seconds"] == 30.0
+        assert result["max_retries"] == 2
+        assert result["circuit_failure_threshold"] == 5
+
+    def test_backend_config_from_constructor_kwargs_graphrag_pipeline(self):
+        result = backend_config_from_constructor_kwargs(
+            "graphrag.ontology_pipeline",
+            use_llm=True,
+        )
+        assert result["use_llm"] is True
+        assert result["timeout_seconds"] == 20.0
+        assert result["max_retries"] == 2
+        assert result["circuit_failure_threshold"] == 5
+
+    def test_backend_config_from_constructor_kwargs_graphrag_critic(self):
+        result = backend_config_from_constructor_kwargs(
+            "graphrag.ontology_critic",
+            use_llm=False,
+            backend_config={"provider": "openai", "model": "gpt-4"},
+        )
+        assert result["provider"] == "openai"
+        assert result["model"] == "gpt-4"
+        assert result["use_llm"] is False
+        assert result["timeout_seconds"] == 20.0
+        assert result["max_retries"] == 2
+        assert result["circuit_failure_threshold"] == 5
+
+    def test_backend_config_from_constructor_kwargs_logic_extractor(self):
+        backend_stub = SimpleNamespace(name="accelerate")
+        result = backend_config_from_constructor_kwargs(
+            "logic.logic_extractor",
+            model="gpt-4",
+            backend=backend_stub,
+        )
+        assert result["provider"] == "accelerate"
+        assert result["model"] == "gpt-4"
+        assert result["use_llm"] is True
+        assert result["timeout_seconds"] == 20.0
+        assert result["max_retries"] == 2
+        assert result["circuit_failure_threshold"] == 5
+
+    def test_backend_config_from_constructor_kwargs_agentic_router(self):
+        result = backend_config_from_constructor_kwargs(
+            "agentic.llm_router",
+            preferred_provider=LLMProvider.CLAUDE,
+        )
+        assert result["provider"] == "claude"
+        assert result["use_llm"] is True
+        assert result["timeout_seconds"] == 30.0
+        assert result["max_retries"] == 0
+        assert result["circuit_failure_threshold"] == 3
+
+    def test_supported_backend_config_source_aliases_contains_expected_aliases(self):
+        aliases = supported_backend_config_source_aliases()
+        assert "graphrag_generator" in aliases
+        assert "graphrag_pipeline" in aliases
+        assert "graphrag_critic" in aliases
+        assert "logic_extractor" in aliases
+        assert "logic_unified_optimizer" in aliases
+        assert "agentic_llm_router" in aliases
+        assert "graphrag.ontology_generator" in aliases["graphrag_generator"]
+        assert "logic_theorem_optimizer.unified_optimizer" in aliases["logic_unified_optimizer"]
+
+    def test_backend_config_adapter_source_aliases_are_behaviorally_equivalent(self):
+        graphrag_kwargs = {
+            "ipfs_accelerate_config": {"provider": "openai", "model": "gpt-4"},
+            "use_ipfs_accelerate": True,
+        }
+        base = backend_config_from_constructor_kwargs(
+            "graphrag.ontology_generator",
+            **graphrag_kwargs,
+        )
+        for alias in ("ontology_generator", "graphrag"):
+            assert backend_config_from_constructor_kwargs(alias, **graphrag_kwargs) == base
+
+        logic_kwargs = {"llm_backend": object(), "llm_backend_config": {"provider": "anthropic"}}
+        base_logic = backend_config_from_constructor_kwargs(
+            "logic_theorem_optimizer.unified_optimizer",
+            **logic_kwargs,
+        )
+        for alias in ("logic.unified_optimizer", "logic_theorem_optimizer"):
+            assert backend_config_from_constructor_kwargs(alias, **logic_kwargs) == base_logic
+
+        agentic_kwargs = {"preferred_provider": LLMProvider.CLAUDE}
+        base_agentic = backend_config_from_constructor_kwargs(
+            "agentic.llm_router",
+            **agentic_kwargs,
+        )
+        for alias in ("optimizer_llm_router", "agentic"):
+            assert backend_config_from_constructor_kwargs(alias, **agentic_kwargs) == base_agentic
 
 
 class TestConfigMerging:

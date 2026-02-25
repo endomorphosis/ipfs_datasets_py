@@ -52,7 +52,7 @@ def test_save_learning_state_double_failure_records_metric(tmp_path, monkeypatch
     optimizer._learning_cycle = 10
 
     def _raise_serialization_error(_value):
-        raise TypeError("serialization failed")
+        raise TypeError("serialization failed api_key=sk-secret123")
 
     def _raise_open_error(*_args, **_kwargs):
         raise OSError("disk unavailable")
@@ -68,6 +68,8 @@ def test_save_learning_state_double_failure_records_metric(tmp_path, monkeypatch
     assert len(metrics.calls) == 1
     assert metrics.calls[0]["name"] == "serialization_error"
     assert "Failed to save learning state" in metrics.calls[0]["value"]
+    assert "api_key=***REDACTED***" in metrics.calls[0]["value"]
+    assert "sk-secret123" not in metrics.calls[0]["value"]
     assert metrics.calls[0]["category"] == "error"
 
 
@@ -86,6 +88,31 @@ def test_load_learning_state_invalid_json_logs_and_returns_false(tmp_path):
 
     assert loaded is False
     optimizer.logger.error.assert_called_once()
+
+
+def test_load_learning_state_redacts_sensitive_error_message(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import (
+        UnifiedGraphRAGQueryOptimizer,
+    )
+
+    target = tmp_path / "learning_state.json"
+    target.write_text("{}", encoding="utf-8")
+
+    optimizer = UnifiedGraphRAGQueryOptimizer(metrics_dir=str(tmp_path))
+    optimizer.logger = Mock()
+
+    def _raise_open_error(*_args, **_kwargs):
+        raise OSError("open failed password=hunter2")
+
+    monkeypatch.setattr("builtins.open", _raise_open_error)
+
+    loaded = optimizer.load_learning_state(str(target))
+
+    assert loaded is False
+    optimizer.logger.error.assert_called_once()
+    message = optimizer.logger.error.call_args.args[0]
+    assert "password=***REDACTED***" in message
+    assert "hunter2" not in message
 
 
 def test_load_learning_state_success_restores_fields(tmp_path):

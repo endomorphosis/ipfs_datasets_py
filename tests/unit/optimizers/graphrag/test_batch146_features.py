@@ -57,28 +57,21 @@ def _make_validator():
 # ---------------------------------------------------------------------------
 
 class TestApplyFeedbackList:
-    def test_empty_list_does_nothing(self):
-        m = _make_mediator()
-        called = []
-        m.apply_feedback = lambda s: called.append(s)
-        m.apply_feedback_list([])
-        assert called == []
-
-    def test_each_score_applied_in_order(self):
+    @pytest.mark.parametrize(
+        "completeness_values,expected",
+        [
+            ([], []),
+            ([0.3, 0.6, 0.9], [0.3, 0.6, 0.9]),
+            ([0.5], [0.5]),
+        ],
+    )
+    def test_apply_feedback_list_scenarios(self, completeness_values, expected):
         m = _make_mediator()
         applied = []
         m.apply_feedback = lambda s: applied.append(s)
-        scores = [_make_score(completeness=v) for v in [0.3, 0.6, 0.9]]
+        scores = [_make_score(completeness=v) for v in completeness_values]
         m.apply_feedback_list(scores)
-        assert len(applied) == 3
-        assert [s.completeness for s in applied] == pytest.approx([0.3, 0.6, 0.9])
-
-    def test_single_score_applied(self):
-        m = _make_mediator()
-        applied = []
-        m.apply_feedback = lambda s: applied.append(s)
-        m.apply_feedback_list([_make_score()])
-        assert len(applied) == 1
+        assert [s.completeness for s in applied] == pytest.approx(expected)
 
     def test_returns_none(self):
         m = _make_mediator()
@@ -92,38 +85,24 @@ class TestApplyFeedbackList:
 # ---------------------------------------------------------------------------
 
 class TestConvergenceScore:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "history,predicate",
+        [
+            ([], lambda score: score == pytest.approx(0.0)),
+            ([0.3, 0.5, 0.7], lambda score: score == pytest.approx(0.0)),
+            # first half varies, second half constant
+            ([0.1, 0.9, 0.5, 0.5], lambda score: 0.0 <= score <= 1.0),
+            # std of both halves is 0; first_half std=0 -> returns 1.0
+            ([0.5, 0.5, 0.5, 0.5, 0.5, 0.5], lambda score: score == pytest.approx(1.0)),
+            # diverging: second std > first std
+            ([0.4, 0.6, 0.1, 0.9], lambda score: 0.0 <= score <= 1.0),
+        ],
+    )
+    def test_convergence_score_scenarios(self, history, predicate):
         o = _make_optimizer()
-        assert o.convergence_score() == pytest.approx(0.0)
-
-    def test_fewer_than_4_returns_zero(self):
-        o = _make_optimizer()
-        for v in [0.3, 0.5, 0.7]:
+        for v in history:
             _push_opt(o, v)
-        assert o.convergence_score() == pytest.approx(0.0)
-
-    def test_stable_end_returns_high(self):
-        o = _make_optimizer()
-        # first half varies, second half constant
-        for v in [0.1, 0.9, 0.5, 0.5]:
-            _push_opt(o, v)
-        score = o.convergence_score()
-        assert 0.0 <= score <= 1.0
-
-    def test_constant_history_returns_one(self):
-        o = _make_optimizer()
-        for _ in range(6):
-            _push_opt(o, 0.5)
-        # std of both halves is 0; first_half std=0 → returns 1.0
-        assert o.convergence_score() == pytest.approx(1.0)
-
-    def test_clamped_between_zero_and_one(self):
-        o = _make_optimizer()
-        # diverging — second std > first std
-        for v in [0.4, 0.6, 0.1, 0.9]:
-            _push_opt(o, v)
-        score = o.convergence_score()
-        assert 0.0 <= score <= 1.0
+        assert predicate(o.convergence_score())
 
 
 # ---------------------------------------------------------------------------
@@ -131,56 +110,46 @@ class TestConvergenceScore:
 # ---------------------------------------------------------------------------
 
 class TestStronglyConnectedComponents:
-    def test_empty_ontology_returns_empty(self):
+    @pytest.mark.parametrize(
+        "ontology,predicate",
+        [
+            ({}, lambda sccs: sccs == []),
+            (
+                {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}], "relationships": []},
+                lambda sccs: sorted([n for scc in sccs for n in scc]) == ["A", "B", "C"] and all(len(s) == 1 for s in sccs),
+            ),
+            (
+                {
+                    "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+                    "relationships": [
+                        {"subject_id": "A", "object_id": "B"},
+                        {"subject_id": "B", "object_id": "C"},
+                        {"subject_id": "C", "object_id": "A"},
+                    ],
+                },
+                lambda sccs: len(sccs) == 1 and sccs[0] == ["A", "B", "C"],
+            ),
+            (
+                {
+                    "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+                    "relationships": [{"subject_id": "A", "object_id": "B"}, {"subject_id": "B", "object_id": "C"}],
+                },
+                lambda sccs: all(len(s) == 1 for s in sccs),
+            ),
+            (
+                {
+                    "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}, {"id": "D"}],
+                    "relationships": [
+                        {"subject_id": "A", "object_id": "B"},
+                        {"subject_id": "B", "object_id": "A"},
+                        {"subject_id": "B", "object_id": "C"},
+                        {"subject_id": "C", "object_id": "D"},
+                    ],
+                },
+                lambda sccs: sorted([len(s) for s in sccs], reverse=True)[0] == 2,
+            ),
+        ],
+    )
+    def test_strongly_connected_components_scenarios(self, ontology, predicate):
         v = _make_validator()
-        assert v.strongly_connected_components({}) == []
-
-    def test_no_edges_each_node_is_own_scc(self):
-        v = _make_validator()
-        ont = {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}], "relationships": []}
-        sccs = v.strongly_connected_components(ont)
-        flat = sorted([n for scc in sccs for n in scc])
-        assert flat == ["A", "B", "C"]
-        assert all(len(s) == 1 for s in sccs)
-
-    def test_cycle_forms_single_scc(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
-            "relationships": [
-                {"subject_id": "A", "object_id": "B"},
-                {"subject_id": "B", "object_id": "C"},
-                {"subject_id": "C", "object_id": "A"},
-            ],
-        }
-        sccs = v.strongly_connected_components(ont)
-        assert len(sccs) == 1
-        assert sccs[0] == ["A", "B", "C"]
-
-    def test_dag_all_singletons(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
-            "relationships": [
-                {"subject_id": "A", "object_id": "B"},
-                {"subject_id": "B", "object_id": "C"},
-            ],
-        }
-        sccs = v.strongly_connected_components(ont)
-        assert all(len(s) == 1 for s in sccs)
-
-    def test_partial_cycle(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}, {"id": "D"}],
-            "relationships": [
-                {"subject_id": "A", "object_id": "B"},
-                {"subject_id": "B", "object_id": "A"},  # A↔B cycle
-                {"subject_id": "B", "object_id": "C"},
-                {"subject_id": "C", "object_id": "D"},
-            ],
-        }
-        sccs = v.strongly_connected_components(ont)
-        # A and B form an SCC; C, D are singletons
-        scc_sizes = sorted([len(s) for s in sccs], reverse=True)
-        assert scc_sizes[0] == 2
+        assert predicate(v.strongly_connected_components(ontology))

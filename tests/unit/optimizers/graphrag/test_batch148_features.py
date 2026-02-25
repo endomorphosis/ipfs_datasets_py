@@ -55,130 +55,92 @@ def _push_opt(o, avg):
 
 
 class TestBestNFeedback:
-    def test_empty_returns_empty(self):
+    @pytest.mark.parametrize(
+        "feedback_scores,n,expected_len,expected_top,predicate",
+        [
+            ([], 3, 0, None, None),
+            ([0.2, 0.8, 0.5, 0.9], 2, 2, 0.9, None),
+            ([0.3, 0.7, 0.5], 3, 3, 0.7, lambda scores: scores == sorted(scores, reverse=True)),
+            ([0.1, 0.9, 0.4], 1, 1, 0.9, None),
+            ([0.3, 0.6], 10, 2, 0.6, None),
+        ],
+    )
+    def test_best_n_feedback_scenarios(self, feedback_scores, n, expected_len, expected_top, predicate):
         a = _make_adapter()
-        assert a.best_n_feedback(3) == []
-
-    def test_returns_at_most_n(self):
-        a = _make_adapter()
-        for v in [0.2, 0.8, 0.5, 0.9]:
+        for v in feedback_scores:
             _push_feedback(a, v)
-        result = a.best_n_feedback(2)
-        assert len(result) == 2
-
-    def test_sorted_descending(self):
-        a = _make_adapter()
-        for v in [0.3, 0.7, 0.5]:
-            _push_feedback(a, v)
-        result = a.best_n_feedback(3)
-        scores = [r.final_score for r in result]
-        assert scores == sorted(scores, reverse=True)
-
-    def test_top_is_highest(self):
-        a = _make_adapter()
-        for v in [0.1, 0.9, 0.4]:
-            _push_feedback(a, v)
-        best = a.best_n_feedback(1)
-        assert len(best) == 1
-        assert best[0].final_score == pytest.approx(0.9)
-
-    def test_n_larger_than_records(self):
-        a = _make_adapter()
-        for v in [0.3, 0.6]:
-            _push_feedback(a, v)
-        result = a.best_n_feedback(10)
-        assert len(result) == 2
+        result = a.best_n_feedback(n)
+        assert len(result) == expected_len
+        if expected_top is not None and result:
+            assert result[0].final_score == pytest.approx(expected_top)
+        if predicate is not None:
+            scores = [r.final_score for r in result]
+            assert predicate(scores)
 
 
 class TestPipelineScoreRange:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,expected",
+        [
+            ([], 0.0),
+            ([0.5], 0.0),
+            ([0.2, 0.8, 0.5], 0.6),
+            ([0.7, 0.7, 0.7, 0.7], 0.0),
+        ],
+    )
+    def test_pipeline_score_range_scenarios(self, scores, expected):
         p = _make_pipeline()
-        assert p.pipeline_score_range() == pytest.approx(0.0)
-
-    def test_single_run_returns_zero(self):
-        p = _make_pipeline()
-        _push_run(p, 0.5)
-        assert p.pipeline_score_range() == pytest.approx(0.0)
-
-    def test_known_range(self):
-        p = _make_pipeline()
-        for v in [0.2, 0.8, 0.5]:
+        for v in scores:
             _push_run(p, v)
-        assert p.pipeline_score_range() == pytest.approx(0.6)
-
-    def test_identical_scores_returns_zero(self):
-        p = _make_pipeline()
-        for _ in range(4):
-            _push_run(p, 0.7)
-        assert p.pipeline_score_range() == pytest.approx(0.0)
+        assert p.pipeline_score_range() == pytest.approx(expected)
 
 
 class TestWeaklyConnectedComponents:
-    def test_empty_returns_empty(self):
+    @pytest.mark.parametrize(
+        "ontology,predicate",
+        [
+            ({}, lambda wccs: wccs == []),
+            (
+                {"entities": [{"id": "A"}, {"id": "B"}], "relationships": []},
+                lambda wccs: sorted([n for wcc in wccs for n in wcc]) == ["A", "B"] and all(len(w) == 1 for w in wccs),
+            ),
+            (
+                {
+                    "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+                    "relationships": [{"subject_id": "A", "object_id": "B"}, {"subject_id": "B", "object_id": "C"}],
+                },
+                lambda wccs: len(wccs) == 1 and wccs[0] == ["A", "B", "C"],
+            ),
+            (
+                {
+                    "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}, {"id": "D"}],
+                    "relationships": [{"subject_id": "A", "object_id": "B"}, {"subject_id": "C", "object_id": "D"}],
+                },
+                lambda wccs: len(wccs) == 2,
+            ),
+            (
+                {"entities": [{"id": "A"}, {"id": "B"}], "relationships": [{"subject_id": "B", "object_id": "A"}]},
+                lambda wccs: len(wccs) == 1,
+            ),
+        ],
+    )
+    def test_weakly_connected_components_scenarios(self, ontology, predicate):
         v = _make_validator()
-        assert v.weakly_connected_components({}) == []
-
-    def test_no_edges_each_is_singleton(self):
-        v = _make_validator()
-        ont = {"entities": [{"id": "A"}, {"id": "B"}], "relationships": []}
-        wccs = v.weakly_connected_components(ont)
-        assert sorted([n for wcc in wccs for n in wcc]) == ["A", "B"]
-        assert all(len(w) == 1 for w in wccs)
-
-    def test_connected_graph_single_wcc(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
-            "relationships": [
-                {"subject_id": "A", "object_id": "B"},
-                {"subject_id": "B", "object_id": "C"},
-            ],
-        }
-        wccs = v.weakly_connected_components(ont)
-        assert len(wccs) == 1
-        assert wccs[0] == ["A", "B", "C"]
-
-    def test_two_components(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}, {"id": "D"}],
-            "relationships": [
-                {"subject_id": "A", "object_id": "B"},
-                {"subject_id": "C", "object_id": "D"},
-            ],
-        }
-        wccs = v.weakly_connected_components(ont)
-        assert len(wccs) == 2
-
-    def test_undirected_treatment(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}, {"id": "B"}],
-            "relationships": [{"subject_id": "B", "object_id": "A"}],
-        }
-        wccs = v.weakly_connected_components(ont)
-        assert len(wccs) == 1
+        assert predicate(v.weakly_connected_components(ontology))
 
 
 class TestHistoryEntropy:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,predicate",
+        [
+            ([], lambda entropy: entropy == pytest.approx(0.0)),
+            ([0.5, 0.5, 0.5, 0.5], lambda entropy: entropy == pytest.approx(0.0)),
+            ([(i + 0.5) / 10.0 for i in range(10)], lambda entropy: entropy > 0.0),
+            ([0.1, 0.5, 0.9], lambda entropy: entropy >= 0.0),
+        ],
+    )
+    def test_history_entropy_scenarios(self, scores, predicate):
         o = _make_optimizer()
-        assert o.history_entropy() == pytest.approx(0.0)
-
-    def test_single_bin_returns_zero(self):
-        o = _make_optimizer()
-        for _ in range(4):
-            _push_opt(o, 0.5)
-        assert o.history_entropy() == pytest.approx(0.0)
-
-    def test_uniform_distribution_has_positive_entropy(self):
-        o = _make_optimizer()
-        for i in range(10):
-            _push_opt(o, (i + 0.5) / 10.0)
-        assert o.history_entropy() > 0.0
-
-    def test_returns_non_negative(self):
-        o = _make_optimizer()
-        for v in [0.1, 0.5, 0.9]:
+        for v in scores:
             _push_opt(o, v)
-        assert o.history_entropy() >= 0.0
+        assert predicate(o.history_entropy())

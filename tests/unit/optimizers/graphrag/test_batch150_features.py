@@ -63,32 +63,21 @@ def _make_validator():
 # ---------------------------------------------------------------------------
 
 class TestHistoryAutocorrelation:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,lag,predicate",
+        [
+            ([], 1, lambda value: value == pytest.approx(0.0)),
+            ([0.5], 1, lambda value: value == pytest.approx(0.0)),
+            ([0.6, 0.6, 0.6, 0.6, 0.6], 1, lambda value: value == pytest.approx(0.0)),
+            ([0.1, 0.2, 0.3, 0.4, 0.5], 1, lambda value: value > 0),
+            ([0.1, 0.9, 0.1, 0.9, 0.1], 1, lambda value: value < 0),
+        ],
+    )
+    def test_history_autocorrelation_scenarios(self, scores, lag, predicate):
         o = _make_optimizer()
-        assert o.history_autocorrelation() == pytest.approx(0.0)
-
-    def test_single_entry_returns_zero(self):
-        o = _make_optimizer()
-        _push_opt(o, 0.5)
-        assert o.history_autocorrelation() == pytest.approx(0.0)
-
-    def test_constant_returns_zero(self):
-        o = _make_optimizer()
-        for _ in range(5):
-            _push_opt(o, 0.6)
-        assert o.history_autocorrelation() == pytest.approx(0.0)
-
-    def test_trending_positive_autocorrelation(self):
-        o = _make_optimizer()
-        for v in [0.1, 0.2, 0.3, 0.4, 0.5]:
+        for v in scores:
             _push_opt(o, v)
-        assert o.history_autocorrelation(lag=1) > 0
-
-    def test_alternating_negative_autocorrelation(self):
-        o = _make_optimizer()
-        for v in [0.1, 0.9, 0.1, 0.9, 0.1]:
-            _push_opt(o, v)
-        assert o.history_autocorrelation(lag=1) < 0
+        assert predicate(o.history_autocorrelation(lag=lag))
 
 
 # ---------------------------------------------------------------------------
@@ -96,34 +85,22 @@ class TestHistoryAutocorrelation:
 # ---------------------------------------------------------------------------
 
 class TestFeedbackSkewness:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,predicate",
+        [
+            ([], lambda value: value == pytest.approx(0.0)),
+            ([0.4, 0.6], lambda value: value == pytest.approx(0.0)),
+            ([0.2, 0.5, 0.8], lambda value: abs(value) < 0.1),
+            # mostly low values with one high outlier -> right skew
+            ([0.1, 0.1, 0.1, 0.9], lambda value: value > 0),
+            ([0.5, 0.5, 0.5, 0.5], lambda value: value == pytest.approx(0.0)),
+        ],
+    )
+    def test_feedback_skewness_scenarios(self, scores, predicate):
         a = _make_adapter()
-        assert a.feedback_skewness() == pytest.approx(0.0)
-
-    def test_two_records_returns_zero(self):
-        a = _make_adapter()
-        _push_feedback(a, 0.4)
-        _push_feedback(a, 0.6)
-        assert a.feedback_skewness() == pytest.approx(0.0)
-
-    def test_symmetric_returns_near_zero(self):
-        a = _make_adapter()
-        for v in [0.2, 0.5, 0.8]:
+        for v in scores:
             _push_feedback(a, v)
-        assert abs(a.feedback_skewness()) < 0.1
-
-    def test_right_skewed_positive(self):
-        a = _make_adapter()
-        # mostly low values with one high outlier → right skew
-        for v in [0.1, 0.1, 0.1, 0.9]:
-            _push_feedback(a, v)
-        assert a.feedback_skewness() > 0
-
-    def test_zero_variance_returns_zero(self):
-        a = _make_adapter()
-        for _ in range(4):
-            _push_feedback(a, 0.5)
-        assert a.feedback_skewness() == pytest.approx(0.0)
+        assert predicate(a.feedback_skewness())
 
 
 # ---------------------------------------------------------------------------
@@ -131,37 +108,28 @@ class TestFeedbackSkewness:
 # ---------------------------------------------------------------------------
 
 class TestTopKEntitiesByConfidence:
-    def test_empty_result_returns_empty(self):
+    @pytest.mark.parametrize(
+        "entities,k,expected_len,predicate",
+        [
+            ([], 3, 0, None),
+            ([_make_entity(f"e{i}", confidence=i * 0.1) for i in range(5)], 2, 2, None),
+            (
+                [_make_entity(f"e{i}", confidence=i * 0.1) for i in range(4)],
+                3,
+                3,
+                lambda top: [e.confidence for e in top] == sorted([e.confidence for e in top], reverse=True),
+            ),
+            ([_make_entity("e1", 0.3), _make_entity("e2", 0.7)], 10, 2, None),
+            ([_make_entity("lo", 0.1), _make_entity("hi", 0.9)], 1, 1, lambda top: top[0].id == "hi"),
+        ],
+    )
+    def test_top_k_entities_by_confidence_scenarios(self, entities, k, expected_len, predicate):
         gen = _make_generator()
-        result = _make_result([])
-        assert gen.top_k_entities_by_confidence(result, 3) == []
-
-    def test_returns_at_most_k(self):
-        gen = _make_generator()
-        entities = [_make_entity(f"e{i}", confidence=i * 0.1) for i in range(5)]
         result = _make_result(entities)
-        assert len(gen.top_k_entities_by_confidence(result, 2)) == 2
-
-    def test_sorted_descending(self):
-        gen = _make_generator()
-        entities = [_make_entity(f"e{i}", confidence=i * 0.1) for i in range(4)]
-        result = _make_result(entities)
-        top = gen.top_k_entities_by_confidence(result, 3)
-        confs = [e.confidence for e in top]
-        assert confs == sorted(confs, reverse=True)
-
-    def test_k_larger_than_entities_returns_all(self):
-        gen = _make_generator()
-        entities = [_make_entity("e1", 0.3), _make_entity("e2", 0.7)]
-        result = _make_result(entities)
-        assert len(gen.top_k_entities_by_confidence(result, 10)) == 2
-
-    def test_top_1_is_highest(self):
-        gen = _make_generator()
-        entities = [_make_entity("lo", 0.1), _make_entity("hi", 0.9)]
-        result = _make_result(entities)
-        top = gen.top_k_entities_by_confidence(result, 1)
-        assert top[0].id == "hi"
+        top = gen.top_k_entities_by_confidence(result, k)
+        assert len(top) == expected_len
+        if predicate is not None:
+            assert predicate(top)
 
 
 # ---------------------------------------------------------------------------
@@ -169,45 +137,41 @@ class TestTopKEntitiesByConfidence:
 # ---------------------------------------------------------------------------
 
 class TestLongestPath:
-    def test_empty_ontology(self):
+    @pytest.mark.parametrize(
+        "ontology,source,expected",
+        [
+            ({}, "A", 0),
+            ({"entities": [{"id": "A"}, {"id": "B"}], "relationships": []}, "A", 0),
+            (
+                {
+                    "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+                    "relationships": [{"subject_id": "A", "object_id": "B"}, {"subject_id": "B", "object_id": "C"}],
+                },
+                "A",
+                2,
+            ),
+            (
+                {
+                    "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}, {"id": "D"}],
+                    "relationships": [
+                        {"subject_id": "A", "object_id": "B"},
+                        {"subject_id": "A", "object_id": "C"},
+                        {"subject_id": "C", "object_id": "D"},
+                    ],
+                },
+                "A",
+                2,
+            ),
+            (
+                {
+                    "entities": [{"id": "A"}, {"id": "B"}],
+                    "relationships": [{"subject_id": "A", "object_id": "B"}, {"subject_id": "B", "object_id": "A"}],
+                },
+                "A",
+                -1,
+            ),
+        ],
+    )
+    def test_longest_path_scenarios(self, ontology, source, expected):
         v = _make_validator()
-        assert v.longest_path({}, "A") == 0
-
-    def test_isolated_source(self):
-        v = _make_validator()
-        ont = {"entities": [{"id": "A"}, {"id": "B"}], "relationships": []}
-        assert v.longest_path(ont, "A") == 0
-
-    def test_simple_chain(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
-            "relationships": [
-                {"subject_id": "A", "object_id": "B"},
-                {"subject_id": "B", "object_id": "C"},
-            ],
-        }
-        assert v.longest_path(ont, "A") == 2
-
-    def test_branching_path(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}, {"id": "D"}],
-            "relationships": [
-                {"subject_id": "A", "object_id": "B"},
-                {"subject_id": "A", "object_id": "C"},
-                {"subject_id": "C", "object_id": "D"},  # longer branch
-            ],
-        }
-        assert v.longest_path(ont, "A") == 2
-
-    def test_cycle_returns_minus_one(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}, {"id": "B"}],
-            "relationships": [
-                {"subject_id": "A", "object_id": "B"},
-                {"subject_id": "B", "object_id": "A"},
-            ],
-        }
-        assert v.longest_path(ont, "A") == -1
+        assert v.longest_path(ontology, source) == expected

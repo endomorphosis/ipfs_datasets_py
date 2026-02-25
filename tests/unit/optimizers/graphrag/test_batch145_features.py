@@ -27,32 +27,34 @@ class TestDimensionCovariance:
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
         self.critic = OntologyCritic(use_llm=False)
 
-    def test_empty_returns_zero(self):
-        assert self.critic.dimension_covariance([], "completeness", "clarity") == pytest.approx(0.0)
-
-    def test_single_score_returns_zero(self):
-        s = _make_score()
-        assert self.critic.dimension_covariance([s], "completeness", "clarity") == pytest.approx(0.0)
-
-    def test_perfect_positive_covariance(self):
-        # both dimensions move together
-        s1 = _make_score(completeness=0.2, consistency=0.2)
-        s2 = _make_score(completeness=0.8, consistency=0.8)
-        cov = self.critic.dimension_covariance([s1, s2], "completeness", "consistency")
-        assert cov > 0
-
-    def test_negative_covariance(self):
-        s1 = _make_score(completeness=0.2, consistency=0.8)
-        s2 = _make_score(completeness=0.8, consistency=0.2)
-        cov = self.critic.dimension_covariance([s1, s2], "completeness", "consistency")
-        assert cov < 0
-
-    def test_zero_variance_returns_zero(self):
-        s1 = _make_score(completeness=0.5, consistency=0.5)
-        s2 = _make_score(completeness=0.5, consistency=0.7)
-        # completeness has zero variance → covariance is 0
-        cov = self.critic.dimension_covariance([s1, s2], "completeness", "consistency")
-        assert cov == pytest.approx(0.0)
+    @pytest.mark.parametrize(
+        "scores,dim_a,dim_b,predicate",
+        [
+            ([], "completeness", "clarity", lambda cov: cov == pytest.approx(0.0)),
+            ([_make_score()], "completeness", "clarity", lambda cov: cov == pytest.approx(0.0)),
+            # both dimensions move together
+            (
+                [_make_score(completeness=0.2, consistency=0.2), _make_score(completeness=0.8, consistency=0.8)],
+                "completeness",
+                "consistency",
+                lambda cov: cov > 0,
+            ),
+            (
+                [_make_score(completeness=0.2, consistency=0.8), _make_score(completeness=0.8, consistency=0.2)],
+                "completeness",
+                "consistency",
+                lambda cov: cov < 0,
+            ),
+            (
+                [_make_score(completeness=0.5, consistency=0.5), _make_score(completeness=0.5, consistency=0.7)],
+                "completeness",
+                "consistency",
+                lambda cov: cov == pytest.approx(0.0),
+            ),
+        ],
+    )
+    def test_dimension_covariance_scenarios(self, scores, dim_a, dim_b, predicate):
+        assert predicate(self.critic.dimension_covariance(scores, dim_a, dim_b))
 
     def test_invalid_dim_raises(self):
         s = _make_score()
@@ -70,55 +72,42 @@ def _make_validator():
 
 
 class TestUnreachableEntities:
-    def test_empty_ontology_returns_empty(self):
+    @pytest.mark.parametrize(
+        "ontology,source,predicate",
+        [
+            ({}, "A", lambda result: result == []),
+            (
+                {
+                    "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+                    "relationships": [{"subject_id": "A", "object_id": "B"}, {"subject_id": "A", "object_id": "C"}],
+                },
+                "A",
+                lambda result: result == [],
+            ),
+            (
+                {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}], "relationships": [{"subject_id": "A", "object_id": "B"}]},
+                "A",
+                lambda result: "C" in result,
+            ),
+            (
+                {"entities": [{"id": "A"}, {"id": "B"}], "relationships": []},
+                "A",
+                lambda result: "A" not in result,
+            ),
+            (
+                {
+                    "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+                    # B->A, not A->B
+                    "relationships": [{"subject_id": "B", "object_id": "A"}],
+                },
+                "A",
+                lambda result: "B" in result and "C" in result,
+            ),
+        ],
+    )
+    def test_unreachable_entities_scenarios(self, ontology, source, predicate):
         v = _make_validator()
-        result = v.unreachable_entities({}, "A")
-        assert result == []
-
-    def test_all_reachable_returns_empty(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
-            "relationships": [
-                {"subject_id": "A", "object_id": "B"},
-                {"subject_id": "A", "object_id": "C"},
-            ],
-        }
-        result = v.unreachable_entities(ont, "A")
-        assert result == []
-
-    def test_isolated_entity_is_unreachable(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
-            "relationships": [
-                {"subject_id": "A", "object_id": "B"},
-            ],
-        }
-        result = v.unreachable_entities(ont, "A")
-        assert "C" in result
-
-    def test_source_not_in_result(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}, {"id": "B"}],
-            "relationships": [],
-        }
-        result = v.unreachable_entities(ont, "A")
-        assert "A" not in result
-
-    def test_directed_unreachable(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
-            "relationships": [
-                {"subject_id": "B", "object_id": "A"},  # B→A, not A→B
-            ],
-        }
-        # From A, cannot reach B or C
-        result = v.unreachable_entities(ont, "A")
-        assert "B" in result
-        assert "C" in result
+        assert predicate(v.unreachable_entities(ontology, source))
 
     def test_returns_sorted_list(self):
         v = _make_validator()
@@ -147,35 +136,19 @@ def _push_feedback(a, score):
 
 
 class TestFeedbackZscore:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "feedback_scores,value,predicate",
+        [
+            ([], 0.5, lambda z: z == pytest.approx(0.0)),
+            ([0.5], 0.5, lambda z: z == pytest.approx(0.0)),
+            ([0.5, 0.5], 0.5, lambda z: z == pytest.approx(0.0)),
+            ([0.0, 1.0], 0.5, lambda z: z == pytest.approx(0.0)),
+            ([0.0, 0.5, 1.0], 0.9, lambda z: z > 0.0),
+            ([0.0, 0.5, 1.0], 0.1, lambda z: z < 0.0),
+        ],
+    )
+    def test_feedback_zscore_scenarios(self, feedback_scores, value, predicate):
         a = _make_adapter()
-        assert a.feedback_zscore(0.5) == pytest.approx(0.0)
-
-    def test_single_record_returns_zero(self):
-        a = _make_adapter()
-        _push_feedback(a, 0.5)
-        assert a.feedback_zscore(0.5) == pytest.approx(0.0)
-
-    def test_zero_std_returns_zero(self):
-        a = _make_adapter()
-        _push_feedback(a, 0.5)
-        _push_feedback(a, 0.5)
-        assert a.feedback_zscore(0.5) == pytest.approx(0.0)
-
-    def test_mean_value_returns_zero(self):
-        a = _make_adapter()
-        for v in [0.0, 1.0]:
-            _push_feedback(a, v)
-        assert a.feedback_zscore(0.5) == pytest.approx(0.0)
-
-    def test_above_mean_positive(self):
-        a = _make_adapter()
-        for v in [0.0, 0.5, 1.0]:
-            _push_feedback(a, v)
-        assert a.feedback_zscore(0.9) > 0.0
-
-    def test_below_mean_negative(self):
-        a = _make_adapter()
-        for v in [0.0, 0.5, 1.0]:
-            _push_feedback(a, v)
-        assert a.feedback_zscore(0.1) < 0.0
+        for s in feedback_scores:
+            _push_feedback(a, s)
+        assert predicate(a.feedback_zscore(value))

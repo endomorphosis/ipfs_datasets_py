@@ -96,9 +96,16 @@ def test_argparse_cli_run_handles_typed_command_error(tmp_path: Path, monkeypatc
     cli = OptimizerArgparseCLI()
 
     def _raise_value_error(_args):
-        raise ValueError("bad input")
+        raise ValueError("bad input api_key=sk-secret123")
 
     monkeypatch.setattr(cli, "cmd_optimize", _raise_value_error)
+    captured = []
+
+    def _capture(*values, **_kwargs):
+        captured.append(" ".join(str(value) for value in values))
+
+    monkeypatch.setattr("builtins.print", _capture)
+    monkeypatch.setattr("traceback.print_exc", lambda: None)
     code = cli.run(
         [
             "optimize",
@@ -112,6 +119,8 @@ def test_argparse_cli_run_handles_typed_command_error(tmp_path: Path, monkeypatc
         ]
     )
     assert code == 1
+    assert any("api_key=***REDACTED***" in line for line in captured)
+    assert not any("sk-secret123" in line for line in captured)
 
 
 def test_argparse_cli_run_propagates_non_keyboard_base_exception(

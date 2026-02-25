@@ -119,7 +119,13 @@ from ipfs_datasets_py.optimizers.graphrag.query_budget import (
     QueryBudgetManager,
 )
 from ipfs_datasets_py.optimizers.graphrag.query_visualizer import QueryVisualizer
+from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
 from ipfs_datasets_py.optimizers.common.query_validation import QueryValidationMixin
+
+
+def _safe_error_text(error: Exception) -> str:
+    """Return redacted exception text for logs and metrics."""
+    return redact_sensitive(str(error))
 
 
 class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
@@ -539,7 +545,10 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
                 self._traversal_stats["entity_connectivity"][entity_id] = total_connections
         
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError, OSError) as e:
-            logging.warning(f"Error calculating entity importance for {entity_id}: {e}")
+            logging.warning(
+                f"Error calculating entity importance for {entity_id}: "
+                f"{_safe_error_text(e)}"
+            )
         
         # Cache the result
         self._entity_importance_cache[entity_id] = importance
@@ -1883,7 +1892,10 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
             json.JSONDecodeError,
         ) as e:
             # Handle serialization errors gracefully
-            error_message = f"Error serializing learning state to JSON: {str(e)}"
+            error_message = (
+                "Error serializing learning state to JSON: "
+                f"{_safe_error_text(e)}"
+            )
         
             # Create a simplified version with just error information
             fallback_state = {
@@ -1967,7 +1979,9 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         ) as e:
             # Handle load errors
             if hasattr(self, 'logger'):
-                self.logger.error(f"Error loading learning state: {str(e)}")
+                self.logger.error(
+                    f"Error loading learning state: {_safe_error_text(e)}"
+                )
             return False
     
     def record_path_performance(self, 

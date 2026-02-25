@@ -13,6 +13,13 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
+
+
+def _safe_error_text(error: Exception) -> str:
+    """Render exception text with sensitive fragments redacted."""
+    return str(redact_sensitive(str(error)))
+
 
 def _safe_resolve(path_str: str, *, must_exist: bool = False) -> Path:
     """Resolve a user-supplied path, guarding against path-traversal.
@@ -113,7 +120,7 @@ except ImportError:
 class LogicOptimizerCLI:
     """Command-line interface for Logic Theorem Optimizer."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize CLI."""
         if not LOGIC_AVAILABLE:
             raise ImportError("Logic Theorem Optimizer not available")
@@ -353,7 +360,7 @@ Examples:
             return 0
             
         except (OSError, IOError, ValueError, TypeError, AttributeError) as e:
-            print(f"❌ Error: {e}")
+            print(f"❌ Error: {_safe_error_text(e)}")
             return 1
     
     def cmd_prove(self, args: argparse.Namespace) -> int:
@@ -377,7 +384,7 @@ Examples:
                 text = file_path.read_text()
                 if from_file.endswith(('.yaml', '.yml')):
                     try:
-                        import yaml as _yaml
+                        import yaml as _yaml  # type: ignore[import-untyped]
                         data = _yaml.safe_load(text)
                     except ImportError:
                         print("❌ PyYAML not installed. Install with: pip install pyyaml")
@@ -392,7 +399,7 @@ Examples:
                 args.premises = data.get('premises', args.premises or [])
                 args.goal = data.get('goal') or args.goal
             except (OSError, IOError, ValueError) as exc:
-                print(f"❌ Failed to load from file: {exc}")
+                print(f"❌ Failed to load from file: {_safe_error_text(exc)}")
                 return 1
 
         if not args.theorem or not args.goal:
@@ -487,7 +494,7 @@ Examples:
             return 0 if is_valid else 1
             
         except (OSError, IOError, ValueError, TypeError, AttributeError, RuntimeError) as e:
-            print(f"❌ Error: {e}")
+            print(f"❌ Error: {_safe_error_text(e)}")
             return 1
     
     def cmd_validate(self, args: argparse.Namespace) -> int:
@@ -505,6 +512,9 @@ Examples:
         # Resolve input path: either --input or --from-file
         raw_path = getattr(args, 'from_file', None) or getattr(args, 'input', None)
         print(f"✓ Validating: {raw_path}\n")
+        if not isinstance(raw_path, str) or not raw_path.strip():
+            print("❌ --input/--from-file is required")
+            return 1
 
         input_path = _safe_resolve(raw_path, must_exist=True)
         if not input_path.exists():
@@ -516,8 +526,8 @@ Examples:
             with open(input_path, 'r') as f:
                 if str(input_path).endswith(('.yaml', '.yml')):
                     try:
-                        import yaml  # type: ignore[import]
-                        logic_data = yaml.safe_load(f)
+                        import yaml as _yaml
+                        logic_data = _yaml.safe_load(f)
                     except ImportError:
                         print("❌ PyYAML is required for YAML input: pip install pyyaml")
                         return 1
@@ -562,7 +572,7 @@ Examples:
                 return 1
             
         except (OSError, IOError, ValueError, TypeError, AttributeError, RuntimeError) as e:
-            print(f"❌ Error: {e}")
+            print(f"❌ Error: {_safe_error_text(e)}")
             return 1
     
     def cmd_optimize(self, args: argparse.Namespace) -> int:
@@ -627,7 +637,7 @@ Examples:
             return 0
             
         except (OSError, IOError, ValueError, TypeError, AttributeError, RuntimeError) as e:
-            print(f"❌ Error: {e}")
+            print(f"❌ Error: {_safe_error_text(e)}")
             return 1
     
     def cmd_status(self, args: argparse.Namespace) -> int:
@@ -701,7 +711,7 @@ Examples:
             print("\n\nInterrupted by user")
             return 130
         except (OSError, IOError, ValueError, RuntimeError) as e:
-            print(f"❌ Error: {e}")
+            print(f"❌ Error: {_safe_error_text(e)}")
             import traceback
             traceback.print_exc()
             return 1

@@ -48,38 +48,25 @@ def _push_opt(o, avg):
 # ---------------------------------------------------------------------------
 
 class TestScoreEwma:
-    def test_empty_returns_empty(self):
+    @pytest.mark.parametrize(
+        "scores,alpha,expected_len,expected_idx,expected",
+        [
+            ([], 0.3, 0, None, None),
+            ([0.6], 0.3, 1, 0, 0.6),
+            ([0.3, 0.5, 0.7], 0.3, 3, None, None),
+            ([0.4, 0.8], 0.5, 2, 0, 0.4),
+            # ewma[1] = 0.5 * 1.0 + 0.5 * 0.0 = 0.5
+            ([0.0, 1.0], 0.5, 2, 1, 0.5),
+        ],
+    )
+    def test_score_ewma_scenarios(self, scores, alpha, expected_len, expected_idx, expected):
         p = _make_pipeline()
-        assert p.score_ewma() == []
-
-    def test_single_run_equal(self):
-        p = _make_pipeline()
-        _push_run(p, 0.6)
-        result = p.score_ewma()
-        assert len(result) == 1
-        assert result[0] == pytest.approx(0.6)
-
-    def test_same_length_as_history(self):
-        p = _make_pipeline()
-        for v in [0.3, 0.5, 0.7]:
+        for v in scores:
             _push_run(p, v)
-        result = p.score_ewma(alpha=0.3)
-        assert len(result) == 3
-
-    def test_first_element_is_first_score(self):
-        p = _make_pipeline()
-        _push_run(p, 0.4)
-        _push_run(p, 0.8)
-        result = p.score_ewma(alpha=0.5)
-        assert result[0] == pytest.approx(0.4)
-
-    def test_ewma_smooths_values(self):
-        p = _make_pipeline()
-        _push_run(p, 0.0)
-        _push_run(p, 1.0)
-        result = p.score_ewma(alpha=0.5)
-        # ewma[1] = 0.5 * 1.0 + 0.5 * 0.0 = 0.5
-        assert result[1] == pytest.approx(0.5)
+        result = p.score_ewma(alpha=alpha)
+        assert len(result) == expected_len
+        if expected_idx is not None:
+            assert result[expected_idx] == pytest.approx(expected)
 
 
 # ---------------------------------------------------------------------------
@@ -87,32 +74,21 @@ class TestScoreEwma:
 # ---------------------------------------------------------------------------
 
 class TestTrendSlope:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,predicate",
+        [
+            ([], lambda slope: slope == pytest.approx(0.0)),
+            ([0.5], lambda slope: slope == pytest.approx(0.0)),
+            ([0.1, 0.5, 0.9], lambda slope: slope > 0.0),
+            ([0.9, 0.5, 0.1], lambda slope: slope < 0.0),
+            ([0.5, 0.5, 0.5], lambda slope: slope == pytest.approx(0.0)),
+        ],
+    )
+    def test_trend_slope_scenarios(self, scores, predicate):
         p = _make_pipeline()
-        assert p.trend_slope() == pytest.approx(0.0)
-
-    def test_single_run_returns_zero(self):
-        p = _make_pipeline()
-        _push_run(p, 0.5)
-        assert p.trend_slope() == pytest.approx(0.0)
-
-    def test_positive_slope(self):
-        p = _make_pipeline()
-        for v in [0.1, 0.5, 0.9]:
+        for v in scores:
             _push_run(p, v)
-        assert p.trend_slope() > 0.0
-
-    def test_negative_slope(self):
-        p = _make_pipeline()
-        for v in [0.9, 0.5, 0.1]:
-            _push_run(p, v)
-        assert p.trend_slope() < 0.0
-
-    def test_flat_returns_zero(self):
-        p = _make_pipeline()
-        for _ in range(3):
-            _push_run(p, 0.5)
-        assert p.trend_slope() == pytest.approx(0.0)
+        assert predicate(p.trend_slope())
 
 
 # ---------------------------------------------------------------------------
@@ -120,20 +96,19 @@ class TestTrendSlope:
 # ---------------------------------------------------------------------------
 
 class TestMinScore:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,expected",
+        [
+            ([], 0.0),
+            ([0.3, 0.7, 0.5], 0.3),
+            ([0.8], 0.8),
+        ],
+    )
+    def test_min_score_scenarios(self, scores, expected):
         o = _make_optimizer()
-        assert o.min_score() == pytest.approx(0.0)
-
-    def test_known_min(self):
-        o = _make_optimizer()
-        for v in [0.3, 0.7, 0.5]:
+        for v in scores:
             _push_opt(o, v)
-        assert o.min_score() == pytest.approx(0.3)
-
-    def test_single_entry(self):
-        o = _make_optimizer()
-        _push_opt(o, 0.8)
-        assert o.min_score() == pytest.approx(0.8)
+        assert o.min_score() == pytest.approx(expected)
 
 
 # ---------------------------------------------------------------------------
@@ -141,20 +116,19 @@ class TestMinScore:
 # ---------------------------------------------------------------------------
 
 class TestMaxScore:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,expected",
+        [
+            ([], 0.0),
+            ([0.3, 0.9, 0.5], 0.9),
+            ([0.4], 0.4),
+        ],
+    )
+    def test_max_score_scenarios(self, scores, expected):
         o = _make_optimizer()
-        assert o.max_score() == pytest.approx(0.0)
-
-    def test_known_max(self):
-        o = _make_optimizer()
-        for v in [0.3, 0.9, 0.5]:
+        for v in scores:
             _push_opt(o, v)
-        assert o.max_score() == pytest.approx(0.9)
-
-    def test_single_entry(self):
-        o = _make_optimizer()
-        _push_opt(o, 0.4)
-        assert o.max_score() == pytest.approx(0.4)
+        assert o.max_score() == pytest.approx(expected)
 
 
 # ---------------------------------------------------------------------------
@@ -162,23 +136,17 @@ class TestMaxScore:
 # ---------------------------------------------------------------------------
 
 class TestOptimizerMedianScore:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,expected",
+        [
+            ([], 0.0),
+            ([0.2, 0.6, 0.9], 0.6),
+            ([0.2, 0.4, 0.6, 0.8], 0.5),
+            ([0.75], 0.75),
+        ],
+    )
+    def test_optimizer_median_score_scenarios(self, scores, expected):
         o = _make_optimizer()
-        assert o.median_score() == pytest.approx(0.0)
-
-    def test_odd_count(self):
-        o = _make_optimizer()
-        for v in [0.2, 0.6, 0.9]:
+        for v in scores:
             _push_opt(o, v)
-        assert o.median_score() == pytest.approx(0.6)
-
-    def test_even_count(self):
-        o = _make_optimizer()
-        for v in [0.2, 0.4, 0.6, 0.8]:
-            _push_opt(o, v)
-        assert o.median_score() == pytest.approx(0.5)
-
-    def test_single_entry(self):
-        o = _make_optimizer()
-        _push_opt(o, 0.75)
-        assert o.median_score() == pytest.approx(0.75)
+        assert o.median_score() == pytest.approx(expected)

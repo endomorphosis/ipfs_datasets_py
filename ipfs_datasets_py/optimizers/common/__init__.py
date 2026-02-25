@@ -154,6 +154,10 @@ from .unified_config import (
     AgenticContext,
     create_context,
     domain_type_from_value,
+    ensure_shared_context_metadata,
+    ensure_shared_backend_config,
+    supported_backend_config_source_aliases,
+    backend_config_from_constructor_kwargs,
     context_from_optimization_context,
     context_from_ontology_generation_context,
 )
@@ -233,6 +237,10 @@ __all__ = [
     "AgenticContext",
     "create_context",
     "domain_type_from_value",
+    "ensure_shared_context_metadata",
+    "ensure_shared_backend_config",
+    "supported_backend_config_source_aliases",
+    "backend_config_from_constructor_kwargs",
     "context_from_optimization_context",
     "context_from_ontology_generation_context",
 ]

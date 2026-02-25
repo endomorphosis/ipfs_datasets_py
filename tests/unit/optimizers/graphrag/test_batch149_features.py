@@ -59,30 +59,20 @@ def _make_validator():
 # ---------------------------------------------------------------------------
 
 class TestHistoryMode:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,predicate",
+        [
+            ([], lambda value: value == pytest.approx(0.0)),
+            ([0.55], lambda value: 0.0 < value <= 1.0),
+            ([0.75, 0.75, 0.75, 0.75, 0.75, 0.1], lambda value: value == pytest.approx(0.75)),
+            ([0.2, 0.5, 0.8], lambda value: 0.0 <= value <= 1.0),
+        ],
+    )
+    def test_history_mode_scenarios(self, scores, predicate):
         o = _make_optimizer()
-        assert o.history_mode() == pytest.approx(0.0)
-
-    def test_single_entry_bin_midpoint(self):
-        o = _make_optimizer()
-        _push_opt(o, 0.55)  # bin 5 → midpoint 0.55
-        result = o.history_mode()
-        assert 0.0 < result <= 1.0
-
-    def test_concentration_in_one_bin(self):
-        o = _make_optimizer()
-        for _ in range(5):
-            _push_opt(o, 0.75)  # all in bin 7 → midpoint 0.75
-        for _ in range(1):
-            _push_opt(o, 0.1)   # bin 1
-        result = o.history_mode()
-        assert result == pytest.approx(0.75)
-
-    def test_returns_float_in_zero_one(self):
-        o = _make_optimizer()
-        for v in [0.2, 0.5, 0.8]:
+        for v in scores:
             _push_opt(o, v)
-        assert 0.0 <= o.history_mode() <= 1.0
+        assert predicate(o.history_mode())
 
 
 # ---------------------------------------------------------------------------
@@ -90,31 +80,24 @@ class TestHistoryMode:
 # ---------------------------------------------------------------------------
 
 class TestFeedbackAboveMean:
-    def test_empty_returns_empty(self):
+    @pytest.mark.parametrize(
+        "scores,expected_len,predicate",
+        [
+            ([], 0, None),
+            ([0.7], 1, None),
+            # mean=0.5; above: 0.6, 0.8
+            ([0.2, 0.4, 0.6, 0.8], 2, lambda result: all(r.final_score > 0.5 for r in result)),
+            ([0.5, 0.5, 0.5, 0.5], 0, None),
+        ],
+    )
+    def test_feedback_above_mean_scenarios(self, scores, expected_len, predicate):
         a = _make_adapter()
-        assert a.feedback_above_mean() == []
-
-    def test_single_returns_all(self):
-        a = _make_adapter()
-        _push_feedback(a, 0.7)
-        result = a.feedback_above_mean()
-        assert len(result) == 1
-
-    def test_above_mean_count_correct(self):
-        a = _make_adapter()
-        for v in [0.2, 0.4, 0.6, 0.8]:
+        for v in scores:
             _push_feedback(a, v)
-        # mean = 0.5; above: 0.6, 0.8
         result = a.feedback_above_mean()
-        assert len(result) == 2
-        assert all(r.final_score > 0.5 for r in result)
-
-    def test_all_equal_returns_empty(self):
-        a = _make_adapter()
-        for _ in range(4):
-            _push_feedback(a, 0.5)
-        result = a.feedback_above_mean()
-        assert result == []
+        assert len(result) == expected_len
+        if predicate is not None:
+            assert predicate(result)
 
 
 # ---------------------------------------------------------------------------
@@ -122,28 +105,20 @@ class TestFeedbackAboveMean:
 # ---------------------------------------------------------------------------
 
 class TestScoreAtPercentile:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,percentile,predicate",
+        [
+            ([], 50, lambda value: value == pytest.approx(0.0)),
+            ([0.3, 0.7, 0.5], 0, lambda value: value == pytest.approx(0.3)),
+            ([0.3, 0.7, 0.5], 100, lambda value: value == pytest.approx(0.7)),
+            ([0.2, 0.4, 0.6, 0.8], 50, lambda value: 0.4 <= value <= 0.6),
+        ],
+    )
+    def test_score_at_percentile_scenarios(self, scores, percentile, predicate):
         p = _make_pipeline()
-        assert p.score_at_percentile(50) == pytest.approx(0.0)
-
-    def test_0th_percentile_is_min(self):
-        p = _make_pipeline()
-        for v in [0.3, 0.7, 0.5]:
+        for v in scores:
             _push_run(p, v)
-        assert p.score_at_percentile(0) == pytest.approx(0.3)
-
-    def test_100th_percentile_is_max(self):
-        p = _make_pipeline()
-        for v in [0.3, 0.7, 0.5]:
-            _push_run(p, v)
-        assert p.score_at_percentile(100) == pytest.approx(0.7)
-
-    def test_50th_percentile_of_sorted(self):
-        p = _make_pipeline()
-        for v in [0.2, 0.4, 0.6, 0.8]:
-            _push_run(p, v)
-        result = p.score_at_percentile(50)
-        assert 0.4 <= result <= 0.6
+        assert predicate(p.score_at_percentile(percentile))
 
     def test_invalid_percentile_raises(self):
         p = _make_pipeline()
@@ -159,29 +134,27 @@ class TestScoreAtPercentile:
 # ---------------------------------------------------------------------------
 
 class TestEntityDensity:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "ontology,expected",
+        [
+            ({}, 0.0),
+            ({"entities": [{"id": "A"}, {"id": "B"}], "relationships": []}, 0.0),
+            (
+                {
+                    "entities": [{"id": "A"}, {"id": "B"}],
+                    "relationships": [{"subject_id": "A", "object_id": "B"}, {"subject_id": "B", "object_id": "A"}],
+                },
+                1.0,
+            ),
+            (
+                {
+                    "entities": [{"id": "A"}],
+                    "relationships": [{"subject_id": "A", "object_id": "A"}, {"subject_id": "A", "object_id": "A"}],
+                },
+                2.0,
+            ),
+        ],
+    )
+    def test_entity_density_scenarios(self, ontology, expected):
         v = _make_validator()
-        assert v.entity_density({}) == pytest.approx(0.0)
-
-    def test_no_relationships(self):
-        v = _make_validator()
-        ont = {"entities": [{"id": "A"}, {"id": "B"}], "relationships": []}
-        assert v.entity_density(ont) == pytest.approx(0.0)
-
-    def test_equal_entities_and_relationships(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}, {"id": "B"}],
-            "relationships": [{"subject_id": "A", "object_id": "B"},
-                              {"subject_id": "B", "object_id": "A"}],
-        }
-        assert v.entity_density(ont) == pytest.approx(1.0)
-
-    def test_more_relationships_than_entities(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}],
-            "relationships": [{"subject_id": "A", "object_id": "A"},
-                              {"subject_id": "A", "object_id": "A"}],
-        }
-        assert v.entity_density(ont) == pytest.approx(2.0)
+        assert v.entity_density(ontology) == pytest.approx(expected)

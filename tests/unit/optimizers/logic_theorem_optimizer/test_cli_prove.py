@@ -142,3 +142,24 @@ class TestCmdProve:
         assert payload["premises"] == ["A"]
         assert payload["formula_count"] == len(payload["formula_strings"])
         assert any(item.startswith("Goal: ") for item in payload["formula_strings"])
+
+    def test_prove_redacts_sensitive_error_text(self, cli, monkeypatch, capsys):
+        mock_cls = MagicMock()
+        instance = MagicMock()
+        instance.validate_statements.side_effect = RuntimeError(
+            "api_key=sk-1234567890abcdef password=hunter2"
+        )
+        mock_cls.return_value = instance
+        monkeypatch.setattr(_cw, "LogicTheoremOptimizer", mock_cls)
+
+        code = cli.run([
+            "prove",
+            "--theorem", "P implies Q",
+            "--goal", "Q",
+        ])
+        assert code == 1
+
+        out = capsys.readouterr().out
+        assert "***REDACTED***" in out
+        assert "sk-1234567890abcdef" not in out
+        assert "hunter2" not in out

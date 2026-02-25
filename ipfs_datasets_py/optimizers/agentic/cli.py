@@ -15,6 +15,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
 
+from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
+
 from .base import (
     ChangeControlMethod,
     OptimizationMethod,
@@ -49,6 +51,11 @@ class OptimizerArgparseCLI:
         
         # Production hardening: Resource monitor for tracking
         self._monitor = ResourceMonitor()
+
+    @staticmethod
+    def _safe_error_text(error: Exception) -> str:
+        """Return redacted error text for CLI output."""
+        return redact_sensitive(str(error))
     
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration from file.
@@ -144,7 +151,7 @@ class OptimizerArgparseCLI:
             return 0
             
         except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
-            print(f"\n❌ Error: {str(e)}")
+            print(f"\n❌ Error: {self._safe_error_text(e)}")
             return 1
     
     def cmd_agents_list(self, args: argparse.Namespace) -> int:
@@ -251,7 +258,7 @@ class OptimizerArgparseCLI:
             return 0
             
         except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
-            print(f"\n❌ Error: {str(e)}")
+            print(f"\n❌ Error: {self._safe_error_text(e)}")
             return 1
     
     def cmd_stats(self, args: argparse.Namespace) -> int:
@@ -340,7 +347,7 @@ class OptimizerArgparseCLI:
                 return 1
                 
         except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
-            print(f"\n❌ Error: {str(e)}")
+            print(f"\n❌ Error: {self._safe_error_text(e)}")
             return 1
     
     def cmd_config(self, args: argparse.Namespace) -> int:
@@ -509,7 +516,7 @@ class OptimizerArgparseCLI:
             return 0 if result.passed else 1
             
         except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
-            print(f"\n❌ Validation error: {str(e)}")
+            print(f"\n❌ Validation error: {self._safe_error_text(e)}")
             return 1
     
     def _format_duration(self, seconds: float) -> str:
@@ -665,7 +672,7 @@ class OptimizerArgparseCLI:
             print("\n\n⚠️  Interrupted by user")
             return 130
         except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
-            print(f"\n❌ Unexpected error: {str(e)}")
+            print(f"\n❌ Unexpected error: {self._safe_error_text(e)}")
             import traceback
             traceback.print_exc()
             return 1

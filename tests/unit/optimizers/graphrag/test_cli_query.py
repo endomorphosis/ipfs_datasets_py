@@ -82,3 +82,24 @@ def test_cli_query_writes_plan_output(tmp_path):
     assert payload["optimized"] is True
     assert payload["plan"]["graph_type"] == "stub"
     assert len(payload["execution_plan"]["execution_steps"]) == 2
+
+
+def test_cli_run_redacts_sensitive_error_text(tmp_path, monkeypatch, capsys):
+    from ipfs_datasets_py.optimizers.graphrag.cli_wrapper import GraphRAGOptimizerCLI
+
+    ontology_path = tmp_path / "ontology.json"
+    ontology_path.write_text(json.dumps({"entities": [], "relationships": []}), encoding="utf-8")
+
+    cli = GraphRAGOptimizerCLI()
+
+    def _raise_value_error(_args):
+        raise ValueError("bad input api_key=sk-secret123")
+
+    monkeypatch.setattr(cli, "cmd_query", _raise_value_error)
+    code = cli.run(["query", "--ontology", str(ontology_path), "--query", "ok"])
+
+    captured = capsys.readouterr()
+    assert code == 1
+    assert "api_key=***REDACTED***" in captured.out
+    assert "sk-secret123" not in captured.out
+    assert "sk-secret123" not in captured.err

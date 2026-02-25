@@ -50,32 +50,21 @@ def _make_mediator():
 # ---------------------------------------------------------------------------
 
 class TestBestRunIndex:
-    def test_empty_returns_minus_one(self):
+    @pytest.mark.parametrize(
+        "scores,expected",
+        [
+            ([], -1),
+            ([0.6], 0),
+            ([0.3, 0.5, 0.9], 2),
+            ([0.9, 0.5, 0.3], 0),
+            ([0.3, 0.9, 0.5], 1),
+        ],
+    )
+    def test_best_run_index_scenarios(self, scores, expected):
         p = _make_pipeline()
-        assert p.best_run_index() == -1
-
-    def test_single_run_returns_zero(self):
-        p = _make_pipeline()
-        _push_run(p, 0.6)
-        assert p.best_run_index() == 0
-
-    def test_best_is_last(self):
-        p = _make_pipeline()
-        for v in [0.3, 0.5, 0.9]:
+        for v in scores:
             _push_run(p, v)
-        assert p.best_run_index() == 2
-
-    def test_best_is_first(self):
-        p = _make_pipeline()
-        for v in [0.9, 0.5, 0.3]:
-            _push_run(p, v)
-        assert p.best_run_index() == 0
-
-    def test_best_is_middle(self):
-        p = _make_pipeline()
-        for v in [0.3, 0.9, 0.5]:
-            _push_run(p, v)
-        assert p.best_run_index() == 1
+        assert p.best_run_index() == expected
 
 
 # ---------------------------------------------------------------------------
@@ -83,33 +72,22 @@ class TestBestRunIndex:
 # ---------------------------------------------------------------------------
 
 class TestScoreImprovementRate:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,expected",
+        [
+            ([], 0.0),
+            ([0.5], 0.0),
+            ([0.2, 0.8], 0.6),
+            ([0.8, 0.2], -0.6),
+            # (0.7 - 0.1) / 2 = 0.3
+            ([0.1, 0.4, 0.7], 0.3),
+        ],
+    )
+    def test_score_improvement_rate_scenarios(self, scores, expected):
         p = _make_pipeline()
-        assert p.score_improvement_rate() == pytest.approx(0.0)
-
-    def test_single_returns_zero(self):
-        p = _make_pipeline()
-        _push_run(p, 0.5)
-        assert p.score_improvement_rate() == pytest.approx(0.0)
-
-    def test_positive_improvement(self):
-        p = _make_pipeline()
-        _push_run(p, 0.2)
-        _push_run(p, 0.8)
-        assert p.score_improvement_rate() == pytest.approx(0.6)
-
-    def test_negative_improvement(self):
-        p = _make_pipeline()
-        _push_run(p, 0.8)
-        _push_run(p, 0.2)
-        assert p.score_improvement_rate() == pytest.approx(-0.6)
-
-    def test_three_steps_rate(self):
-        p = _make_pipeline()
-        for v in [0.1, 0.4, 0.7]:
+        for v in scores:
             _push_run(p, v)
-        # (0.7 - 0.1) / 2 = 0.3
-        assert p.score_improvement_rate() == pytest.approx(0.3)
+        assert p.score_improvement_rate() == pytest.approx(expected)
 
 
 # ---------------------------------------------------------------------------
@@ -117,33 +95,26 @@ class TestScoreImprovementRate:
 # ---------------------------------------------------------------------------
 
 class TestWindowAverage:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,window,expected",
+        [
+            ([], None, 0.0),
+            ([0.6], None, 0.6),
+            ([0.4, 0.6], 10, 0.5),
+            # window=2 -> last 2: [0.9, 0.9]
+            ([0.1, 0.9, 0.9], 2, 0.9),
+            ([0.2, 0.4, 0.6, 0.8, 1.0], None, 0.6),
+        ],
+    )
+    def test_window_average_scenarios(self, scores, window, expected):
         o = _make_optimizer()
-        assert o.window_average() == pytest.approx(0.0)
-
-    def test_single_entry(self):
-        o = _make_optimizer()
-        _push_opt(o, 0.6)
-        assert o.window_average() == pytest.approx(0.6)
-
-    def test_window_larger_than_history(self):
-        o = _make_optimizer()
-        for v in [0.4, 0.6]:
+        for v in scores:
             _push_opt(o, v)
-        assert o.window_average(window=10) == pytest.approx(0.5)
-
-    def test_window_trims_to_recent(self):
-        o = _make_optimizer()
-        for v in [0.1, 0.9, 0.9]:
-            _push_opt(o, v)
-        # window=2 → last 2: [0.9, 0.9]
-        assert o.window_average(window=2) == pytest.approx(0.9)
-
-    def test_default_window(self):
-        o = _make_optimizer()
-        for v in [0.2, 0.4, 0.6, 0.8, 1.0]:
-            _push_opt(o, v)
-        assert o.window_average() == pytest.approx(0.6)
+        if window is None:
+            result = o.window_average()
+        else:
+            result = o.window_average(window=window)
+        assert result == pytest.approx(expected)
 
 
 # ---------------------------------------------------------------------------

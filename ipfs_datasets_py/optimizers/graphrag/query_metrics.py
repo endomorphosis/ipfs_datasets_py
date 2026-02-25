@@ -30,8 +30,15 @@ from typing import Dict, List, Any, Optional, Tuple, Iterator
 from collections import defaultdict, deque
 from contextlib import contextmanager
 
+from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
+
 QUERY_METRICS_PERSIST_SERIALIZATION_ERROR = "QMETRICS_SERIALIZATION_ERROR"
 QUERY_METRICS_PERSIST_FALLBACK_WRITE_ERROR = "QMETRICS_FALLBACK_WRITE_ERROR"
+
+
+def _safe_error_text(error: Exception) -> str:
+    """Return redacted error text for metrics payloads and logs."""
+    return redact_sensitive(str(error))
 
 # Optional dependencies with graceful fallbacks
 try:
@@ -691,7 +698,10 @@ class QueryMetricsCollector:
             return json.dumps(metrics_list, indent=2)
         except (TypeError, ValueError, OverflowError, OSError, RuntimeError, AttributeError) as e:
             # Handle serialization errors gracefully
-            error_message = f"Error serializing metrics to JSON: {str(e)}"
+            error_message = (
+                "Error serializing metrics to JSON: "
+                f"{_safe_error_text(e)}"
+            )
             
             # Create a simplified version with just error information
             fallback_metrics = {
@@ -745,7 +755,7 @@ class QueryMetricsCollector:
                 return {str(k): self._numpy_json_serializable(v) for k, v in obj.items()}
             except (TypeError, ValueError, RuntimeError, AttributeError) as e:
                 # Handle any errors in dictionary processing
-                return {"error_processing_dict": str(e)}
+                return {"error_processing_dict": _safe_error_text(e)}
             
         # Recursively process lists and tuples
         if isinstance(obj, (list, tuple)):
@@ -814,7 +824,7 @@ class QueryMetricsCollector:
                     try:
                         return {
                             "type": "ndarray",
-                            "error": str(e),
+                            "error": _safe_error_text(e),
                             "summary": str(obj)[:1000] if hasattr(obj, "__str__") else "<unprintable array>"
                         }
                     except (TypeError, ValueError, AttributeError, RuntimeError):
@@ -886,7 +896,10 @@ class QueryMetricsCollector:
                 json.dump(serializable_metrics, f, indent=2)
         except (TypeError, ValueError, OverflowError, OSError, RuntimeError, AttributeError) as e:
             # Handle serialization errors gracefully
-            error_message = f"Error serializing metrics to JSON: {str(e)}"
+            error_message = (
+                "Error serializing metrics to JSON: "
+                f"{_safe_error_text(e)}"
+            )
             
             # Create a simplified version with just error information
             fallback_metrics = {

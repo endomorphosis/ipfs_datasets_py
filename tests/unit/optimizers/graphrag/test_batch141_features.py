@@ -47,32 +47,21 @@ def _push_opt(o, avg, trend="stable"):
 # ---------------------------------------------------------------------------
 
 class TestIsPlateau:
-    def test_empty_returns_false(self):
+    @pytest.mark.parametrize(
+        "scores,window,tolerance,expected",
+        [
+            ([], 5, 0.01, False),
+            ([0.5], 5, 0.01, False),
+            ([0.7, 0.7, 0.7, 0.7], 5, 0.01, True),
+            ([0.3, 0.9, 0.3, 0.9], 5, 0.01, False),
+            ([0.700, 0.705], 2, 0.01, True),
+        ],
+    )
+    def test_is_plateau_scenarios(self, scores, window, tolerance, expected):
         p = _make_pipeline()
-        assert p.is_plateau() is False
-
-    def test_single_run_returns_false(self):
-        p = _make_pipeline()
-        _push_run(p, 0.5)
-        assert p.is_plateau() is False
-
-    def test_stable_scores_plateau(self):
-        p = _make_pipeline()
-        for _ in range(4):
-            _push_run(p, 0.7)
-        assert p.is_plateau(tolerance=0.01) is True
-
-    def test_volatile_scores_not_plateau(self):
-        p = _make_pipeline()
-        for v in [0.3, 0.9, 0.3, 0.9]:
+        for v in scores:
             _push_run(p, v)
-        assert p.is_plateau(tolerance=0.01) is False
-
-    def test_within_tolerance(self):
-        p = _make_pipeline()
-        _push_run(p, 0.700)
-        _push_run(p, 0.705)
-        assert p.is_plateau(window=2, tolerance=0.01) is True
+        assert p.is_plateau(window=window, tolerance=tolerance) is expected
 
 
 # ---------------------------------------------------------------------------
@@ -80,26 +69,20 @@ class TestIsPlateau:
 # ---------------------------------------------------------------------------
 
 class TestPeakRunIndex:
-    def test_empty_returns_minus_one(self):
+    @pytest.mark.parametrize(
+        "scores,expected",
+        [
+            ([], -1),
+            ([0.6], 0),
+            ([0.3, 0.9, 0.5], 1),
+            ([0.1, 0.5, 0.8], 2),
+        ],
+    )
+    def test_peak_run_index_scenarios(self, scores, expected):
         p = _make_pipeline()
-        assert p.peak_run_index() == -1
-
-    def test_single_run_returns_zero(self):
-        p = _make_pipeline()
-        _push_run(p, 0.6)
-        assert p.peak_run_index() == 0
-
-    def test_peak_in_middle(self):
-        p = _make_pipeline()
-        for v in [0.3, 0.9, 0.5]:
+        for v in scores:
             _push_run(p, v)
-        assert p.peak_run_index() == 1
-
-    def test_peak_at_end(self):
-        p = _make_pipeline()
-        for v in [0.1, 0.5, 0.8]:
-            _push_run(p, v)
-        assert p.peak_run_index() == 2
+        assert p.peak_run_index() == expected
 
     def test_returns_int(self):
         p = _make_pipeline()
@@ -112,21 +95,19 @@ class TestPeakRunIndex:
 # ---------------------------------------------------------------------------
 
 class TestDominantTrend:
-    def test_empty_returns_stable(self):
+    @pytest.mark.parametrize(
+        "entries,expected",
+        [
+            ([], "stable"),
+            ([(0.5, "improving")], "improving"),
+            ([(0.5, "improving"), (0.6, "improving"), (0.4, "declining")], "improving"),
+        ],
+    )
+    def test_dominant_trend_scenarios(self, entries, expected):
         o = _make_optimizer()
-        assert o.dominant_trend() == "stable"
-
-    def test_single_entry(self):
-        o = _make_optimizer()
-        _push_opt(o, 0.5, "improving")
-        assert o.dominant_trend() == "improving"
-
-    def test_majority_wins(self):
-        o = _make_optimizer()
-        _push_opt(o, 0.5, "improving")
-        _push_opt(o, 0.6, "improving")
-        _push_opt(o, 0.4, "declining")
-        assert o.dominant_trend() == "improving"
+        for score, trend in entries:
+            _push_opt(o, score, trend)
+        assert o.dominant_trend() == expected
 
     def test_returns_string(self):
         o = _make_optimizer()
@@ -139,26 +120,20 @@ class TestDominantTrend:
 # ---------------------------------------------------------------------------
 
 class TestHistoryRange:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "values,expected",
+        [
+            ([], 0.0),
+            ([0.5], 0.0),
+            ([0.2, 0.8], 0.6),
+            ([0.5, 0.5, 0.5], 0.0),
+        ],
+    )
+    def test_history_range_scenarios(self, values, expected):
         o = _make_optimizer()
-        assert o.history_range() == pytest.approx(0.0)
-
-    def test_single_entry_returns_zero(self):
-        o = _make_optimizer()
-        _push_opt(o, 0.5)
-        assert o.history_range() == pytest.approx(0.0)
-
-    def test_known_range(self):
-        o = _make_optimizer()
-        _push_opt(o, 0.2)
-        _push_opt(o, 0.8)
-        assert o.history_range() == pytest.approx(0.6)
-
-    def test_all_same_range_zero(self):
-        o = _make_optimizer()
-        for _ in range(3):
-            _push_opt(o, 0.5)
-        assert o.history_range() == pytest.approx(0.0)
+        for v in values:
+            _push_opt(o, v)
+        assert o.history_range() == pytest.approx(expected)
 
     def test_non_negative(self):
         o = _make_optimizer()

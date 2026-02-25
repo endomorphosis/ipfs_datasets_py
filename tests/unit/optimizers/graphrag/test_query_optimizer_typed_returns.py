@@ -4,6 +4,7 @@ Validates that query optimizer methods return properly typed results
 matching their TypedDict contracts.
 """
 
+import logging
 import pytest
 from unittest.mock import Mock, MagicMock
 from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import UnifiedGraphRAGQueryOptimizer
@@ -184,6 +185,26 @@ class TestQueryOptimizerTypedReturns:
         # Check for traversal-strategy or cache-related fields
         keys = set(result.keys())
         assert any(k in keys for k in ["traversal", "strategy", "cache", "query"])
+
+    def test_calculate_entity_importance_redacts_sensitive_error_text(
+        self, optimizer, monkeypatch
+    ):
+        """Verify entity-importance warning paths redact secret-like values."""
+        graph_processor = Mock()
+        graph_processor.get_entity_info.side_effect = RuntimeError(
+            "backend failure api_key=sk-secret123"
+        )
+
+        warning_messages = []
+        monkeypatch.setattr(logging, "warning", warning_messages.append)
+
+        importance = optimizer.calculate_entity_importance("entity-1", graph_processor)
+
+        assert importance == 0.5
+        assert optimizer._entity_importance_cache["entity-1"] == 0.5
+        assert len(warning_messages) == 1
+        assert "api_key=***REDACTED***" in warning_messages[0]
+        assert "sk-secret123" not in warning_messages[0]
 
 
     def test_multiple_optimize_query_calls_consistent(self, optimizer):

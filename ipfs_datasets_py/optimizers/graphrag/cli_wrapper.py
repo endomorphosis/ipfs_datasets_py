@@ -10,9 +10,10 @@ Provides command-line interface for:
 import argparse
 import json
 import sys
-import traceback
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
 
 from .exceptions import ConfigurationError
 
@@ -84,6 +85,11 @@ class GraphRAGOptimizerCLI:
         from .exceptions import ConfigurationError
         if not GRAPHRAG_AVAILABLE:
             raise ConfigurationError("GraphRAG Optimizer not available (ImportError)")
+
+    @staticmethod
+    def _safe_error_text(error: Exception) -> str:
+        """Return redacted error text for user-facing CLI output."""
+        return redact_sensitive(str(error))
     
     
     def create_parser(self) -> argparse.ArgumentParser:
@@ -370,8 +376,7 @@ Examples:
             return 0
             
         except (ConfigurationError, OSError, ValueError, TypeError, RuntimeError, json.JSONDecodeError, KeyError) as e:
-            print(f"❌ Error: {e}")
-            traceback.print_exc()
+            print(f"❌ Error: {self._safe_error_text(e)}")
             return 1
     
     def cmd_optimize(self, args: argparse.Namespace) -> int:
@@ -480,8 +485,7 @@ Examples:
             return 0
 
         except (ConfigurationError, OSError, ValueError, TypeError, RuntimeError, json.JSONDecodeError, KeyError) as e:
-            print(f"❌ Error: {e}")
-            traceback.print_exc()
+            print(f"❌ Error: {self._safe_error_text(e)}")
             return 1
     
     def cmd_validate(self, args: argparse.Namespace) -> int:
@@ -576,7 +580,7 @@ Examples:
                         json.dump(tdfol_report, f, indent=2)
                     print(f"📐 TDFOL formulas saved to: {tdfol_path} ({len(formula_strings)} formulas)")
                 except (ConfigurationError, OSError, ValueError, TypeError, RuntimeError, AttributeError) as e:
-                    print(f"⚠️  Failed to generate TDFOL formulas: {e}")
+                    print(f"⚠️  Failed to generate TDFOL formulas: {self._safe_error_text(e)}")
 
             # Exit code: 0 only if consistency check passed when run.
             if "consistency" in report["checks"]:
@@ -584,8 +588,7 @@ Examples:
             return 0
 
         except (ConfigurationError, OSError, ValueError, TypeError, RuntimeError, json.JSONDecodeError, KeyError) as e:
-            print(f"❌ Error: {e}")
-            traceback.print_exc()
+            print(f"❌ Error: {self._safe_error_text(e)}")
             return 1
     
 
@@ -697,8 +700,7 @@ Examples:
             RuntimeError,
             KeyError,
         ) as e:
-            print(f"❌ Error: {e}")
-            traceback.print_exc()
+            print(f"❌ Error: {self._safe_error_text(e)}")
             return 1
 
     def cmd_status(self, args: argparse.Namespace) -> int:
@@ -777,8 +779,7 @@ Examples:
             RuntimeError,
             KeyError,
         ) as e:
-            print(f"❌ Error: {e}")
-            traceback.print_exc()
+            print(f"❌ Error: {self._safe_error_text(e)}")
             return 1
     
     def run(self, args: Optional[List[str]] = None) -> int:
@@ -823,8 +824,7 @@ Examples:
             RuntimeError,
             KeyError,
         ) as e:
-            print(f"❌ Error: {e}")
-            traceback.print_exc()
+            print(f"❌ Error: {self._safe_error_text(e)}")
             return 1
 
 

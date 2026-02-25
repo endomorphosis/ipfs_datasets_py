@@ -61,27 +61,20 @@ def _make_validator():
 # ---------------------------------------------------------------------------
 
 class TestHistoryStability:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,predicate",
+        [
+            ([], lambda result: result == pytest.approx(0.0)),
+            ([0.8], lambda result: 0.0 < result <= 1.0),
+            ([0.5, 0.5, 0.5, 0.5], lambda result: result == pytest.approx(1.0)),
+            ([0.0, 0.0, 0.0], lambda result: result == pytest.approx(0.0)),
+        ],
+    )
+    def test_history_stability_scenarios(self, scores, predicate):
         o = _make_optimizer()
-        assert o.history_stability() == pytest.approx(0.0)
-
-    def test_single_entry_stable(self):
-        o = _make_optimizer()
-        _push_opt(o, 0.8)
-        result = o.history_stability()
-        assert 0.0 < result <= 1.0
-
-    def test_constant_returns_one(self):
-        o = _make_optimizer()
-        for _ in range(4):
-            _push_opt(o, 0.5)
-        assert o.history_stability() == pytest.approx(1.0)
-
-    def test_zero_mean_returns_zero(self):
-        o = _make_optimizer()
-        for _ in range(3):
-            _push_opt(o, 0.0)
-        assert o.history_stability() == pytest.approx(0.0)
+        for v in scores:
+            _push_opt(o, v)
+        assert predicate(o.history_stability())
 
     def test_high_variance_less_stable(self):
         o1 = _make_optimizer()
@@ -100,36 +93,21 @@ class TestHistoryStability:
 # ---------------------------------------------------------------------------
 
 class TestFeedbackKurtosis:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,predicate",
+        [
+            ([], lambda value: value == pytest.approx(0.0)),
+            ([0.3, 0.5, 0.7], lambda value: value == pytest.approx(0.0)),
+            ([0.5, 0.5, 0.5, 0.5, 0.5], lambda value: value == pytest.approx(0.0)),
+            ([0.1, 0.3, 0.5, 0.7, 0.9], lambda value: isinstance(value, float)),
+            ([0.2, 0.4, 0.6, 0.8], lambda value: isinstance(value, float)),
+        ],
+    )
+    def test_feedback_kurtosis_scenarios(self, scores, predicate):
         a = _make_adapter()
-        assert a.feedback_kurtosis() == pytest.approx(0.0)
-
-    def test_fewer_than_four_returns_zero(self):
-        a = _make_adapter()
-        for v in [0.3, 0.5, 0.7]:
+        for v in scores:
             _push_feedback(a, v)
-        assert a.feedback_kurtosis() == pytest.approx(0.0)
-
-    def test_zero_variance_returns_zero(self):
-        a = _make_adapter()
-        for _ in range(5):
-            _push_feedback(a, 0.5)
-        assert a.feedback_kurtosis() == pytest.approx(0.0)
-
-    def test_uniform_returns_negative(self):
-        # Uniform distribution has excess kurtosis < 0
-        a = _make_adapter()
-        for v in [0.1, 0.3, 0.5, 0.7, 0.9]:
-            _push_feedback(a, v)
-        # Uniform-like — excess kurtosis should be negative
-        kurtosis = a.feedback_kurtosis()
-        assert isinstance(kurtosis, float)
-
-    def test_returns_float(self):
-        a = _make_adapter()
-        for v in [0.2, 0.4, 0.6, 0.8]:
-            _push_feedback(a, v)
-        assert isinstance(a.feedback_kurtosis(), float)
+        assert predicate(a.feedback_kurtosis())
 
 
 # ---------------------------------------------------------------------------
@@ -137,35 +115,40 @@ class TestFeedbackKurtosis:
 # ---------------------------------------------------------------------------
 
 class TestCriticDimensionRank:
-    def test_returns_all_dimensions(self):
+    @pytest.mark.parametrize(
+        "score,predicate",
+        [
+            (_make_score(), lambda rank: len(rank) == 6),
+            (_make_score(completeness=0.1, consistency=0.9), lambda rank: rank[0] == "completeness"),
+            (_make_score(domain_alignment=0.95), lambda rank: rank[-1] == "domain_alignment"),
+            (
+                _make_score(),
+                lambda rank: set(rank) == {
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                },
+            ),
+        ],
+    )
+    def test_critic_dimension_rank_scenarios(self, score, predicate):
         critic = _make_critic()
-        score = _make_score()
         rank = critic.critic_dimension_rank(score)
-        assert len(rank) == 6
+        assert predicate(rank)
 
-    def test_lowest_first(self):
+    def test_critic_dimension_rank_is_ascending(self):
         critic = _make_critic()
-        score = _make_score(completeness=0.1, consistency=0.9)
-        rank = critic.critic_dimension_rank(score)
-        assert rank[0] == "completeness"
-
-    def test_highest_last(self):
-        critic = _make_critic()
-        score = _make_score(domain_alignment=0.95)
-        rank = critic.critic_dimension_rank(score)
-        assert rank[-1] == "domain_alignment"
-
-    def test_equal_scores_all_dims_present(self):
-        critic = _make_critic()
-        score = _make_score()  # all 0.5
-        rank = critic.critic_dimension_rank(score)
-        assert set(rank) == {"completeness", "consistency", "clarity",
-                              "granularity", "relationship_coherence", "domain_alignment"}
-
-    def test_ascending_order(self):
-        critic = _make_critic()
-        score = _make_score(completeness=0.1, consistency=0.3, clarity=0.5,
-                            granularity=0.7, relationship_coherence=0.8, domain_alignment=0.9)
+        score = _make_score(
+            completeness=0.1,
+            consistency=0.3,
+            clarity=0.5,
+            granularity=0.7,
+            relationship_coherence=0.8,
+            domain_alignment=0.9,
+        )
         rank = critic.critic_dimension_rank(score)
         values = [getattr(score, d) for d in rank]
         assert values == sorted(values)
@@ -176,33 +159,25 @@ class TestCriticDimensionRank:
 # ---------------------------------------------------------------------------
 
 class TestRelationshipTypeDistribution:
-    def test_empty_ontology_returns_empty(self):
+    @pytest.mark.parametrize(
+        "ontology,predicate",
+        [
+            ({}, lambda dist: dist == {}),
+            ({"relationships": []}, lambda dist: dist == {}),
+            (
+                {"relationships": [{"type": "IS_A"}, {"type": "IS_A"}, {"type": "PART_OF"}]},
+                lambda dist: dist["IS_A"] == 2 and dist["PART_OF"] == 1,
+            ),
+            (
+                {"relationships": [{"subject_id": "A", "object_id": "B"}]},
+                lambda dist: dist.get("unknown", 0) == 1,
+            ),
+            (
+                {"relationships": [{"type": "X"}, {"type": "Y"}, {"type": "X"}]},
+                lambda dist: sum(dist.values()) == 3,
+            ),
+        ],
+    )
+    def test_relationship_type_distribution_scenarios(self, ontology, predicate):
         v = _make_validator()
-        assert v.relationship_type_distribution({}) == {}
-
-    def test_no_relationships_returns_empty(self):
-        v = _make_validator()
-        assert v.relationship_type_distribution({"relationships": []}) == {}
-
-    def test_counts_types(self):
-        v = _make_validator()
-        ont = {"relationships": [
-            {"type": "IS_A"}, {"type": "IS_A"}, {"type": "PART_OF"},
-        ]}
-        dist = v.relationship_type_distribution(ont)
-        assert dist["IS_A"] == 2
-        assert dist["PART_OF"] == 1
-
-    def test_unknown_type_grouped(self):
-        v = _make_validator()
-        ont = {"relationships": [{"subject_id": "A", "object_id": "B"}]}
-        dist = v.relationship_type_distribution(ont)
-        assert dist.get("unknown", 0) == 1
-
-    def test_mixed_types(self):
-        v = _make_validator()
-        ont = {"relationships": [
-            {"type": "X"}, {"type": "Y"}, {"type": "X"},
-        ]}
-        dist = v.relationship_type_distribution(ont)
-        assert sum(dist.values()) == 3
+        assert predicate(v.relationship_type_distribution(ontology))

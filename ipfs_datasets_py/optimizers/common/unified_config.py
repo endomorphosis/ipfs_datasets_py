@@ -7,7 +7,7 @@ and agentic domains while allowing domain-specific extensions.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, Optional, Set, Tuple
 
 
 class DomainType(Enum):
@@ -17,6 +17,37 @@ class DomainType(Enum):
     AGENTIC = "agentic"
     CODE = "code"
     HYBRID = "hybrid"
+
+
+_BACKEND_CONFIG_SOURCE_ALIASES: Dict[str, Tuple[str, ...]] = {
+    "graphrag_generator": (
+        "graphrag.ontology_generator",
+        "ontology_generator",
+        "graphrag",
+    ),
+    "graphrag_pipeline": (
+        "graphrag.ontology_pipeline",
+        "ontology_pipeline",
+    ),
+    "graphrag_critic": (
+        "graphrag.ontology_critic",
+        "ontology_critic",
+    ),
+    "logic_extractor": (
+        "logic.logic_extractor",
+        "logic_extractor",
+    ),
+    "logic_unified_optimizer": (
+        "logic.unified_optimizer",
+        "logic_theorem_optimizer",
+        "logic_theorem_optimizer.unified_optimizer",
+    ),
+    "agentic_llm_router": (
+        "agentic.llm_router",
+        "optimizer_llm_router",
+        "agentic",
+    ),
+}
 
 
 @dataclass
@@ -291,12 +322,175 @@ def domain_type_from_value(domain: Any) -> DomainType:
     return DomainType.HYBRID
 
 
+def ensure_shared_context_metadata(
+    metadata: Optional[Dict[str, Any]] = None,
+    *,
+    session_id: Optional[str] = None,
+    data_source: Optional[str] = None,
+    data_type: Optional[str] = None,
+    trace_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Normalize metadata to include shared context fields."""
+    normalized: Dict[str, Any] = dict(metadata or {})
+    normalized.setdefault("session_id", session_id)
+    normalized.setdefault("data_source", data_source)
+    normalized.setdefault("data_type", data_type)
+    normalized.setdefault("trace_id", trace_id)
+    return normalized
+
+
+def ensure_shared_backend_config(
+    config: Optional[Dict[str, Any]] = None,
+    *,
+    provider: Optional[str] = None,
+    model: Optional[str] = None,
+    use_llm: Optional[bool] = None,
+    timeout_seconds: Optional[float] = None,
+    max_retries: Optional[int] = None,
+    circuit_failure_threshold: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Normalize backend config to include shared minimum keys."""
+    normalized: Dict[str, Any] = dict(config or {})
+    normalized.setdefault("provider", provider)
+    normalized.setdefault("model", model)
+    normalized.setdefault("use_llm", use_llm)
+    normalized.setdefault("timeout_seconds", timeout_seconds)
+    normalized.setdefault("max_retries", max_retries)
+    normalized.setdefault("circuit_failure_threshold", circuit_failure_threshold)
+    return normalized
+
+
+def supported_backend_config_source_aliases() -> Dict[str, Tuple[str, ...]]:
+    """Return supported source aliases for backend config constructor adapters."""
+    return dict(_BACKEND_CONFIG_SOURCE_ALIASES)
+
+
+def backend_config_from_constructor_kwargs(
+    source: str,
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    """Map constructor kwargs into a normalized shared backend config."""
+    normalized_source = source.strip().lower()
+
+    if normalized_source in _BACKEND_CONFIG_SOURCE_ALIASES["graphrag_generator"]:
+        raw_cfg = kwargs.get("ipfs_accelerate_config")
+        cfg: Dict[str, Any] = dict(raw_cfg) if isinstance(raw_cfg, dict) else {}
+        return ensure_shared_backend_config(
+            cfg,
+            provider=str(cfg.get("provider")) if cfg.get("provider") is not None else None,
+            model=str(cfg.get("model")) if cfg.get("model") is not None else None,
+            use_llm=bool(kwargs.get("use_ipfs_accelerate", True)),
+            timeout_seconds=float(cfg["timeout_seconds"])
+            if isinstance(cfg.get("timeout_seconds"), (int, float))
+            else None,
+            max_retries=int(cfg["max_retries"])
+            if isinstance(cfg.get("max_retries"), int)
+            else None,
+            circuit_failure_threshold=int(cfg["circuit_failure_threshold"])
+            if isinstance(cfg.get("circuit_failure_threshold"), int)
+            else None,
+        )
+
+    if normalized_source in _BACKEND_CONFIG_SOURCE_ALIASES["graphrag_pipeline"]:
+        use_llm = bool(kwargs.get("use_llm", False))
+        return ensure_shared_backend_config(
+            {},
+            provider=None,
+            model=None,
+            use_llm=use_llm,
+            timeout_seconds=20.0 if use_llm else None,
+            max_retries=2 if use_llm else None,
+            circuit_failure_threshold=5 if use_llm else None,
+        )
+
+    if normalized_source in _BACKEND_CONFIG_SOURCE_ALIASES["graphrag_critic"]:
+        raw_cfg = kwargs.get("backend_config")
+        cfg = dict(raw_cfg) if isinstance(raw_cfg, dict) else {}
+        use_llm = bool(kwargs.get("use_llm", True))
+        return ensure_shared_backend_config(
+            cfg,
+            provider=str(cfg.get("provider")) if cfg.get("provider") is not None else None,
+            model=str(cfg.get("model")) if cfg.get("model") is not None else None,
+            use_llm=use_llm,
+            timeout_seconds=float(cfg["timeout_seconds"])
+            if isinstance(cfg.get("timeout_seconds"), (int, float))
+            else 20.0,
+            max_retries=int(cfg["max_retries"])
+            if isinstance(cfg.get("max_retries"), int)
+            else 2,
+            circuit_failure_threshold=int(cfg["circuit_failure_threshold"])
+            if isinstance(cfg.get("circuit_failure_threshold"), int)
+            else 5,
+        )
+
+    if normalized_source in _BACKEND_CONFIG_SOURCE_ALIASES["logic_extractor"]:
+        backend = kwargs.get("backend")
+        provider_name: Optional[str] = None
+        if backend is not None:
+            backend_name = getattr(backend, "name", None)
+            if backend_name is None:
+                backend_name = backend.__class__.__name__
+            provider_name = str(backend_name)
+        model = kwargs.get("model")
+        return ensure_shared_backend_config(
+            {},
+            provider=provider_name,
+            model=str(model) if model is not None else None,
+            use_llm=kwargs.get("backend") is not None,
+            timeout_seconds=20.0,
+            max_retries=2,
+            circuit_failure_threshold=5,
+        )
+
+    if normalized_source in _BACKEND_CONFIG_SOURCE_ALIASES["logic_unified_optimizer"]:
+        raw_cfg = kwargs.get("llm_backend_config")
+        cfg = dict(raw_cfg) if isinstance(raw_cfg, dict) else {}
+        return ensure_shared_backend_config(
+            cfg,
+            provider=str(cfg.get("provider")) if cfg.get("provider") is not None else None,
+            model=str(cfg.get("model")) if cfg.get("model") is not None else None,
+            use_llm=kwargs.get("llm_backend") is not None,
+            timeout_seconds=float(cfg["timeout_seconds"])
+            if isinstance(cfg.get("timeout_seconds"), (int, float))
+            else 30.0,
+            max_retries=int(cfg["max_retries"])
+            if isinstance(cfg.get("max_retries"), int)
+            else 2,
+            circuit_failure_threshold=int(cfg["circuit_failure_threshold"])
+            if isinstance(cfg.get("circuit_failure_threshold"), int)
+            else 5,
+        )
+
+    if normalized_source in _BACKEND_CONFIG_SOURCE_ALIASES["agentic_llm_router"]:
+        preferred = kwargs.get("preferred_provider")
+        provider: Optional[str] = None
+        if preferred is not None:
+            provider = str(getattr(preferred, "value", preferred))
+        return ensure_shared_backend_config(
+            {},
+            provider=provider,
+            model=None,
+            use_llm=True,
+            timeout_seconds=30.0,
+            max_retries=0,
+            circuit_failure_threshold=3,
+        )
+
+    return ensure_shared_backend_config({})
+
+
 def context_from_optimization_context(context: Any) -> BaseContext:
     """Adapt legacy ``OptimizationContext``-like objects into unified contexts."""
     session_id = str(getattr(context, "session_id", ""))
     domain_raw = getattr(context, "domain", DomainType.HYBRID)
     domain = domain_type_from_value(domain_raw)
-    metadata = dict(getattr(context, "metadata", {}) or {})
+    metadata = ensure_shared_context_metadata(
+        dict(getattr(context, "metadata", {}) or {}),
+        session_id=session_id or None,
+        data_source=getattr(context, "data_source", None),
+        data_type=getattr(context, "data_type", None),
+        trace_id=getattr(context, "trace_id", None),
+    )
     input_data = getattr(context, "input_data", None)
 
     if domain == DomainType.GRAPHRAG:
@@ -337,13 +531,17 @@ def context_from_ontology_generation_context(
     return GraphRAGContext(
         session_id=session_id,
         domain=DomainType.GRAPHRAG,
-        metadata={
-            "data_source": data_source,
-            "data_type": str(data_type) if data_type is not None else None,
-            "extraction_strategy": str(extraction_strategy)
-            if extraction_strategy is not None
-            else None,
-        },
+        metadata=ensure_shared_context_metadata(
+            {
+                "extraction_strategy": str(extraction_strategy)
+                if extraction_strategy is not None
+                else None,
+            },
+            session_id=session_id,
+            data_source=data_source,
+            data_type=str(data_type) if data_type is not None else None,
+            trace_id=getattr(context, "trace_id", None),
+        ),
         input_documents=base_ontology if isinstance(base_ontology, dict) else None,
         extraction_context=extraction_context,
         ontology_domain=domain,
@@ -363,6 +561,10 @@ __all__ = [
     "AgenticContext",
     "create_context",
     "domain_type_from_value",
+    "ensure_shared_context_metadata",
+    "ensure_shared_backend_config",
+    "supported_backend_config_source_aliases",
+    "backend_config_from_constructor_kwargs",
     "context_from_optimization_context",
     "context_from_ontology_generation_context",
 ]

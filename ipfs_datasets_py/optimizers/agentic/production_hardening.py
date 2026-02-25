@@ -16,9 +16,16 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import hashlib
 import logging
 
+from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
+
 from .exceptions import AgenticError
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_error_text(error: Exception) -> str:
+    """Return redacted error text for logs and user-facing error strings."""
+    return redact_sensitive(str(error))
 
 
 @dataclass
@@ -111,7 +118,11 @@ class InputSanitizer:
             return True
             
         except (OSError, RuntimeError, ValueError) as e:
-            logger.error(f"Error validating path {path}: {e}")
+            logger.error(
+                "Error validating path %s: %s",
+                redact_sensitive(path),
+                _safe_error_text(e),
+            )
             return False
     
     def validate_code(self, code: str) -> tuple[bool, List[str]]:
@@ -200,8 +211,9 @@ class SandboxExecutor:
             return False, "", f"Execution timeout after {timeout}s"
         
         except (subprocess.SubprocessError, OSError, ValueError) as e:
-            logger.error(f"Sandbox execution error: {e}")
-            return False, "", str(e)
+            safe_error = _safe_error_text(e)
+            logger.error(f"Sandbox execution error: {safe_error}")
+            return False, "", safe_error
 
 
 class CircuitBreaker:
@@ -309,12 +321,12 @@ class RetryHandler:
                     
                     logger.warning(
                         f"Attempt {attempt + 1}/{self.max_retries + 1} failed, "
-                        f"retrying in {delay:.1f}s: {e}"
+                        f"retrying in {delay:.1f}s: {_safe_error_text(e)}"
                     )
                     time.sleep(delay)
                 else:
                     logger.error(
-                        f"All {self.max_retries + 1} attempts failed: {e}"
+                        f"All {self.max_retries + 1} attempts failed: {_safe_error_text(e)}"
                     )
         
         raise last_exception
