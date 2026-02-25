@@ -384,11 +384,25 @@ class OntologyPipeline:
             )
             self._run_history.append(result)
             if self._prometheus_metrics is not None and self._prometheus_metrics.enabled:
+                metric_labels = {"domain": self.domain, "pipeline": "graphrag"}
+                self._prometheus_metrics.record_score(
+                    float(getattr(score, "overall", 0.0)),
+                    labels=metric_labels,
+                )
+                self._prometheus_metrics.record_round_completion(domain=self.domain)
+                if len(self._run_history) >= 2:
+                    previous_score = float(
+                        getattr(self._run_history[-2].score, "overall", 0.0)
+                    )
+                    self._prometheus_metrics.record_score_delta(
+                        float(getattr(score, "overall", 0.0)) - previous_score,
+                        labels=metric_labels,
+                    )
                 for stage_name, duration in stage_timings.items():
                     self._prometheus_metrics.record_stage_duration(
                         stage_name,
                         duration,
-                        labels={"domain": self.domain, "pipeline": "graphrag"},
+                        labels=metric_labels,
                     )
             try:
                 import json as _json
