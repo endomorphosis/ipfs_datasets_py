@@ -36,32 +36,32 @@ class TestSemanticDeduplicationIntegration:
         """When enable_semantic_dedup=True, deduplicator should initialize."""
         with patch.dict("sys.modules", {"ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator": Mock()}):
             mock_dedup_module = Mock()
-            mock_dedup_class = Mock()
             mock_instance = Mock()
-            mock_dedup_class.return_value = mock_instance
-            mock_dedup_module.SemanticEntityDeduplicator = mock_dedup_class
-            
+            mock_dedup_factory = Mock(return_value=mock_instance)
+            mock_dedup_module.create_semantic_deduplicator = mock_dedup_factory
+
             with patch.dict("sys.modules", {"ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator": mock_dedup_module}):
                 generator = OntologyGenerator(enable_semantic_dedup=True)
-                
+
                 assert generator.enable_semantic_dedup is True
                 assert generator._semantic_deduplicator is mock_instance
+                mock_dedup_factory.assert_called_once()
 
     def test_ontology_generator_semantic_dedup_enabled_by_env(self):
         """ENABLE_SEMANTIC_DEDUP env var should enable deduplication."""
         import os
         with patch.dict(os.environ, {"ENABLE_SEMANTIC_DEDUP": "true"}):
             mock_dedup_module = Mock()
-            mock_dedup_class = Mock()
             mock_instance = Mock()
-            mock_dedup_class.return_value = mock_instance
-            mock_dedup_module.SemanticEntityDeduplicator = mock_dedup_class
-            
+            mock_dedup_factory = Mock(return_value=mock_instance)
+            mock_dedup_module.create_semantic_deduplicator = mock_dedup_factory
+
             with patch.dict("sys.modules", {"ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator": mock_dedup_module}):
                 generator = OntologyGenerator()
-                
+
                 assert generator.enable_semantic_dedup is True
                 assert generator._semantic_deduplicator is mock_instance
+                mock_dedup_factory.assert_called_once()
 
     def test_ontology_generator_semantic_dedup_graceful_import_failure(self):
         """When dependencies unavailable, dedup should gracefully disable."""

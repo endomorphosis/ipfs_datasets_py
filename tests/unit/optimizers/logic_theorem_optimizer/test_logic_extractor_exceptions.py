@@ -136,7 +136,11 @@ def test_query_llm_redacts_sensitive_error_text_in_logs(caplog: pytest.LogCaptur
         response = extractor._query_llm("prompt", context)
 
     assert "Formula:" in response
-    messages = " ".join(record.getMessage() for record in caplog.records)
+    messages = " ".join(
+        record.getMessage()
+        for record in caplog.records
+        if record.name == "ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor"
+    )
     assert "***REDACTED***" in messages
     assert "sk-1234567890abcdef" not in messages
     assert "hunter2" not in messages

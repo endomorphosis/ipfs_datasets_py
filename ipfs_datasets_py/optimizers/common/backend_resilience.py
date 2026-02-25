@@ -13,6 +13,7 @@ from .exceptions import (
     OptimizerTimeoutError,
     RetryableBackendError,
 )
+from .log_redaction import redact_sensitive
 
 T = TypeVar("T")
 
@@ -72,6 +73,11 @@ def _backoff_seconds(policy: BackendCallPolicy, attempt: int) -> float:
     return min(delay, policy.max_backoff_seconds)
 
 
+def _safe_error_text(error: Exception) -> str:
+    """Render exception text with sensitive fragments redacted."""
+    return redact_sensitive(str(error))
+
+
 def execute_with_resilience(
     operation: Callable[[], T],
     policy: BackendCallPolicy,
@@ -105,7 +111,7 @@ def execute_with_resilience(
                 raise RetryableBackendError(
                     f"{policy.service_name} failed after {attempts} attempts",
                     service=policy.service_name,
-                    details={"attempts": attempts, "last_error": str(exc)},
+                    details={"attempts": attempts, "last_error": _safe_error_text(exc)},
                 ) from exc
             delay = _backoff_seconds(policy, attempt)
             if delay > 0.0:
@@ -122,4 +128,3 @@ __all__ = [
     "BackendCallPolicy",
     "execute_with_resilience",
 ]
-
