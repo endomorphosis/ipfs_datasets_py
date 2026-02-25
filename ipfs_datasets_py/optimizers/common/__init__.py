@@ -146,6 +146,17 @@ from .seed_control import (
 from .metrics_prometheus import (
     get_global_prometheus_metrics,
 )
+from .unified_config import (
+    DomainType,
+    BaseContext,
+    GraphRAGContext,
+    LogicContext,
+    AgenticContext,
+    create_context,
+    domain_type_from_value,
+    context_from_optimization_context,
+    context_from_ontology_generation_context,
+)
 
 __all__ = [
     # Base classes
@@ -214,6 +225,16 @@ __all__ = [
     # Seed control
     "apply_deterministic_seed",
     "get_global_prometheus_metrics",
+    # Unified context types/adapters
+    "DomainType",
+    "BaseContext",
+    "GraphRAGContext",
+    "LogicContext",
+    "AgenticContext",
+    "create_context",
+    "domain_type_from_value",
+    "context_from_optimization_context",
+    "context_from_ontology_generation_context",
 ]
 
 __version__ = "0.1.0"

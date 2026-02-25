@@ -629,7 +629,7 @@ class OntologyMediator:
         # Structured JSON logging for per-round metrics
         try:
             import json as _json
-            from datetime import datetime as _datetime
+            from datetime import datetime as _datetime, timezone as _timezone
             from ipfs_datasets_py.optimizers.common.structured_logging import (
                 redact_payload,
                 with_schema,
@@ -648,8 +648,15 @@ class OntologyMediator:
                     return default
             
             round_metrics = {
+                'timestamp': _datetime.now(_timezone.utc).isoformat(),
+                'level': 'INFO',
+                'message': 'Ontology mediator refinement round completed',
                 'event': 'ontology_refinement_round',
+                'module': __name__,
+                'component': 'ontology_mediator',
+                'optimizer_type': 'graphrag',
                 'optimizer_pipeline': 'graphrag',
+                'run_id': f"ontology-mediator-round-{round_number}",
                 'round': round_number,
                 'recommendations_count': len(feedback.recommendations),
                 'actions_applied': actions_applied,
@@ -667,7 +674,7 @@ class OntologyMediator:
                     'relationship_coherence': _safe_float(getattr(feedback, 'relationship_coherence', 0.0)),
                     'domain_alignment': _safe_float(getattr(feedback, 'domain_alignment', 0.0)),
                 },
-                'timestamp': _datetime.now().isoformat()
+                'status': 'success',
             }
             
             # Log as structured JSON

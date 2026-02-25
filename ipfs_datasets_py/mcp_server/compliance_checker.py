@@ -861,8 +861,16 @@ class ComplianceChecker:
 
     @staticmethod
     def rotate_bak(path: str, *, max_keep: int = 3) -> None:
+        """Rotate backup files for the given path.
+
+        Invokes lifecycle hooks:
+        - ``before_rotate``: Before rotation starts
+        - ``after_rotate``: After rotation completes
+        """
+        ComplianceChecker._invoke_hooks("before_rotate", path)
         bak = path + ".bak"
         if not os.path.exists(bak):
+            ComplianceChecker._invoke_hooks("after_rotate", path)
             return
         for i in range(max_keep, 0, -1):
             src = bak if i == 1 else f"{bak}.{i - 1}"
@@ -878,6 +886,7 @@ class ComplianceChecker:
                     os.rename(src, dst)
                 except OSError:
                     pass
+        ComplianceChecker._invoke_hooks("after_rotate", path)
 
     @staticmethod
     def list_bak_files(path: str) -> List[str]:
@@ -897,6 +906,16 @@ class ComplianceChecker:
 
     @staticmethod
     def purge_bak_files(path: str) -> int:
+        """Purge all backup files for the given path.
+
+        Invokes lifecycle hooks:
+        - ``before_purge``: Before purging starts
+        - ``after_purge``: After purging completes
+        
+        Returns:
+            Number of backup files removed.
+        """
+        ComplianceChecker._invoke_hooks("before_purge", path)
         removed = 0
         for bak_file in ComplianceChecker.list_bak_files(path):
             try:
@@ -904,6 +923,7 @@ class ComplianceChecker:
                 removed += 1
             except OSError:
                 pass
+        ComplianceChecker._invoke_hooks("after_purge", path)
         return removed
 
     @staticmethod

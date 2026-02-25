@@ -264,6 +264,13 @@ class TestContextAdapters:
         assert adapted.metadata["data_type"] == "text"
         assert adapted.extraction_context == {"confidence_threshold": 0.7}
 
+    def test_context_adapters_exported_from_common_namespace(self):
+        from ipfs_datasets_py.optimizers import common
+
+        assert hasattr(common, "domain_type_from_value")
+        assert hasattr(common, "context_from_optimization_context")
+        assert hasattr(common, "context_from_ontology_generation_context")
+
 
 class TestConfigMerging:
     """Test configuration merging capability."""

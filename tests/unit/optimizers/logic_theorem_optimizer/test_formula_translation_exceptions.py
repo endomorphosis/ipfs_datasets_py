@@ -43,3 +43,48 @@ def test_translate_to_cec_returns_failure_on_invalid_text_type() -> None:
     assert result.success is False
     assert result.formula is None
     assert result.errors
+
+
+def test_translate_to_tdfol_uses_common_resilience_wrapper(monkeypatch) -> None:
+    translator = TDFOLFormulaTranslator()
+    translator.reasoner_available = True
+    translator.reasoner = SimpleNamespace(parse=lambda *_a, **_k: "F(x)")
+    captured = {"service_name": None}
+
+    def _fake_resilience(operation, policy, *, circuit_breaker, sleep_fn=None):
+        captured["service_name"] = policy.service_name
+        return operation()
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_translation.execute_with_resilience",
+        _fake_resilience,
+    )
+
+    result = translator.translate_to_tdfol("All users must authenticate")
+
+    assert result.success is True
+    assert result.formula == "F(x)"
+    assert captured["service_name"] == "tdfol_reasoner_parse"
+
+
+def test_translate_from_tdfol_uses_common_resilience_wrapper(monkeypatch) -> None:
+    translator = TDFOLFormulaTranslator()
+    translator.reasoner_available = True
+    translator.reasoner = SimpleNamespace(
+        nl_interface=SimpleNamespace(generate=lambda _formula: "rendered")
+    )
+    captured = {"service_name": None}
+
+    def _fake_resilience(operation, policy, *, circuit_breaker, sleep_fn=None):
+        captured["service_name"] = policy.service_name
+        return operation()
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_translation.execute_with_resilience",
+        _fake_resilience,
+    )
+
+    rendered = translator.translate_from_tdfol({"f": "x"})
+
+    assert rendered == "rendered"
+    assert captured["service_name"] == "tdfol_reasoner_nl_generate"

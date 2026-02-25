@@ -77,8 +77,24 @@ class TestOntologyMediatorJsonLogging:
         except json.JSONDecodeError as e:
             pytest.fail(f"Could not parse JSON from log: {json_str}\n{e}")
 
+        for key in (
+            "timestamp",
+            "level",
+            "event",
+            "module",
+            "component",
+            "optimizer_type",
+            "run_id",
+            "schema_version",
+            "message",
+        ):
+            assert key in metrics
+
         # Verify expected fields are present
         assert metrics["event"] == "ontology_refinement_round"
+        assert metrics["level"] == "INFO"
+        assert metrics["component"] == "ontology_mediator"
+        assert metrics["optimizer_type"] == "graphrag"
         assert metrics["optimizer_pipeline"] == "graphrag"
         assert metrics["schema"] == "ipfs_datasets_py.optimizer_log"
         assert metrics["schema_version"] == DEFAULT_SCHEMA_VERSION

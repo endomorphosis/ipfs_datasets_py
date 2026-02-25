@@ -330,6 +330,28 @@ class EventNode:
             },
         }
 
+    def to_json(self, *, indent: Optional[int] = None) -> str:
+        """Serialize to JSON string with proper formatting.
+
+        Converts the event node to a JSON representation suitable for
+        storage, transmission, or logging. Uses :meth:`to_dict` for
+        the underlying structure and applies JSON encoding::
+
+            event = EventNode(intent_cid="bafyrei...")
+            json_str = event.to_json(indent=2)
+            # Returns formatted JSON string with 2-space indentation
+
+        Args:
+            indent: JSON indentation level. If None (default), produces
+                compact output with no extra whitespace. Use 2 or 4 for
+                human-readable formatting.
+
+        Returns:
+            JSON-encoded string representation of the event node.
+        """
+        import json  # noqa: PLC0415
+        return json.dumps(self.to_dict(), indent=indent)
+
     @property
     def event_cid(self) -> str:
         """Content-addressed CID of this event node."""

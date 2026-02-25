@@ -19,6 +19,7 @@ def test_core_backend_call_sites_use_shared_resilience_wrapper() -> None:
         "graphrag/ontology_refinement_agent.py": "execute_with_resilience(",
         "logic_theorem_optimizer/logic_extractor.py": "execute_with_resilience(",
         "logic_theorem_optimizer/llm_backend.py": "execute_with_resilience(",
+        "logic_theorem_optimizer/formula_translation.py": "execute_with_resilience(",
         "agentic/llm_integration.py": "execute_with_resilience(",
     }
 

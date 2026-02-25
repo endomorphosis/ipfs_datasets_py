@@ -204,19 +204,31 @@ class TestExtractionConfigMerge:
         assert isinstance(merged, ExtractionConfig)
         assert merged is not base
 
-    def test_override_confidence_threshold(self):
+    @pytest.mark.parametrize(
+        "base,override,checks",
+        [
+            (
+                {"confidence_threshold": 0.5},
+                {"confidence_threshold": 0.8},
+                {"confidence_threshold": 0.8},
+            ),
+            (
+                {"max_entities": 100},
+                {},  # max_entities stays default 0
+                {"max_entities": 100},
+            ),
+        ],
+    )
+    def test_merge_field_resolution(self, base, override, checks):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
-        base = ExtractionConfig(confidence_threshold=0.5)
-        override = ExtractionConfig(confidence_threshold=0.8)
-        merged = base.merge(override)
-        assert merged.confidence_threshold == 0.8
 
-    def test_base_value_kept_when_override_is_default(self):
-        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
-        base = ExtractionConfig(max_entities=100)
-        override = ExtractionConfig()  # max_entities stays default 0
-        merged = base.merge(override)
-        assert merged.max_entities == 100
+        merged = ExtractionConfig(**base).merge(ExtractionConfig(**override))
+        for field_name, expected in checks.items():
+            actual = getattr(merged, field_name)
+            if isinstance(expected, float):
+                assert actual == pytest.approx(expected)
+            else:
+                assert actual == expected
 
     def test_override_multiple_fields(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
@@ -292,39 +304,32 @@ class TestScoreTrendAndRolling:
             opt._history.append(r)
         return opt
 
-    def test_insufficient_data_with_zero_entries(self):
-        opt = self._make_optimizer_with_scores([])
-        assert opt.score_trend_summary() == "insufficient_data"
+    @pytest.mark.parametrize(
+        "scores,expected_trend",
+        [
+            ([], "insufficient_data"),
+            ([0.5], "insufficient_data"),
+            ([0.3, 0.35, 0.7, 0.75], "improving"),
+            ([0.8, 0.75, 0.4, 0.35], "degrading"),
+            ([0.5, 0.5, 0.5, 0.5], "stable"),
+        ],
+    )
+    def test_score_trend_summary_scenarios(self, scores, expected_trend):
+        opt = self._make_optimizer_with_scores(scores)
+        assert opt.score_trend_summary() == expected_trend
 
-    def test_insufficient_data_with_one_entry(self):
-        opt = self._make_optimizer_with_scores([0.5])
-        assert opt.score_trend_summary() == "insufficient_data"
-
-    def test_improving_trend(self):
-        opt = self._make_optimizer_with_scores([0.3, 0.35, 0.7, 0.75])
-        assert opt.score_trend_summary() == "improving"
-
-    def test_degrading_trend(self):
-        opt = self._make_optimizer_with_scores([0.8, 0.75, 0.4, 0.35])
-        assert opt.score_trend_summary() == "degrading"
-
-    def test_stable_trend(self):
-        opt = self._make_optimizer_with_scores([0.5, 0.5, 0.5, 0.5])
-        assert opt.score_trend_summary() == "stable"
-
-    def test_rolling_average_last_2(self):
-        opt = self._make_optimizer_with_scores([0.4, 0.6, 0.8, 1.0])
-        avg = opt.rolling_average_score(2)
-        assert abs(avg - 0.9) < 1e-9
-
-    def test_rolling_average_clamps_to_history_length(self):
-        opt = self._make_optimizer_with_scores([0.5, 0.7])
-        avg = opt.rolling_average_score(100)
-        assert abs(avg - 0.6) < 1e-9
-
-    def test_rolling_average_empty_history_returns_zero(self):
-        opt = self._make_optimizer_with_scores([])
-        assert opt.rolling_average_score(3) == 0.0
+    @pytest.mark.parametrize(
+        "scores,n,expected",
+        [
+            ([0.4, 0.6, 0.8, 1.0], 2, 0.9),
+            ([0.5, 0.7], 100, 0.6),
+            ([], 3, 0.0),
+        ],
+    )
+    def test_rolling_average_scenarios(self, scores, n, expected):
+        opt = self._make_optimizer_with_scores(scores)
+        avg = opt.rolling_average_score(n)
+        assert abs(avg - expected) < 1e-9
 
     def test_rolling_average_raises_on_n_less_than_one(self):
         opt = self._make_optimizer_with_scores([0.5])

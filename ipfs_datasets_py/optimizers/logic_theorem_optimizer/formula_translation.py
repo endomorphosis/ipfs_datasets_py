@@ -16,6 +16,10 @@ from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
 
+from ipfs_datasets_py.optimizers.common.backend_resilience import BackendCallPolicy, execute_with_resilience
+from ipfs_datasets_py.optimizers.common.circuit_breaker import CircuitBreaker
+from ipfs_datasets_py.optimizers.common.exceptions import CircuitBreakerOpenError, RetryableBackendError
+
 logger = logging.getLogger(__name__)
 
 
@@ -70,6 +74,38 @@ class TDFOLFormulaTranslator:
     
     def __init__(self):
         """Initialize the TDFOL translator."""
+        self._parse_policy = BackendCallPolicy(
+            service_name="tdfol_reasoner_parse",
+            timeout_seconds=20.0,
+            max_retries=1,
+            initial_backoff_seconds=0.1,
+            backoff_multiplier=2.0,
+            max_backoff_seconds=0.5,
+            circuit_failure_threshold=5,
+            circuit_recovery_timeout=60.0,
+        )
+        self._parse_circuit_breaker = CircuitBreaker(
+            name=self._parse_policy.service_name,
+            failure_threshold=self._parse_policy.circuit_failure_threshold,
+            recovery_timeout=self._parse_policy.circuit_recovery_timeout,
+            expected_exception=Exception,
+        )
+        self._nl_generate_policy = BackendCallPolicy(
+            service_name="tdfol_reasoner_nl_generate",
+            timeout_seconds=20.0,
+            max_retries=1,
+            initial_backoff_seconds=0.1,
+            backoff_multiplier=2.0,
+            max_backoff_seconds=0.5,
+            circuit_failure_threshold=5,
+            circuit_recovery_timeout=60.0,
+        )
+        self._nl_generate_circuit_breaker = CircuitBreaker(
+            name=self._nl_generate_policy.service_name,
+            failure_threshold=self._nl_generate_policy.circuit_failure_threshold,
+            recovery_timeout=self._nl_generate_policy.circuit_recovery_timeout,
+            expected_exception=Exception,
+        )
         self._init_parser()
         self._init_neurosymbolic()
         
@@ -126,7 +162,11 @@ class TDFOLFormulaTranslator:
         
         try:
             # Parse using neurosymbolic API
-            formula = self.reasoner.parse(text, format="auto")
+            formula = execute_with_resilience(
+                lambda: self.reasoner.parse(text, format="auto"),
+                self._parse_policy,
+                circuit_breaker=self._parse_circuit_breaker,
+            )
             
             if formula is None:
                 # Fallback to pattern-based translation
@@ -140,7 +180,14 @@ class TDFOLFormulaTranslator:
                 metadata={'parser': 'neurosymbolic'}
             )
             
-        except (AttributeError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            CircuitBreakerOpenError,
+            RetryableBackendError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             logger.error(f"TDFOL translation error: {e}")
             return TranslationResult(
                 formula=None,
@@ -296,10 +343,21 @@ class TDFOLFormulaTranslator:
         
         try:
             # Use natural language interface for generation
-            nl_text = self.reasoner.nl_interface.generate(formula)
+            nl_text = execute_with_resilience(
+                lambda: self.reasoner.nl_interface.generate(formula),
+                self._nl_generate_policy,
+                circuit_breaker=self._nl_generate_circuit_breaker,
+            )
             return nl_text
             
-        except (AttributeError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            CircuitBreakerOpenError,
+            RetryableBackendError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             logger.debug(f"Error translating from TDFOL: {e}")
             return str(formula)
 
