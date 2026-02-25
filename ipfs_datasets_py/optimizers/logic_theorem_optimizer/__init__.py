@@ -23,6 +23,8 @@ Integration:
 - Maintains knowledge graph ontology consistency
 """
 
+from __future__ import annotations
+
 __all__ = [
     # Exceptions
     'LogicTheoremOptimizerError',
@@ -136,6 +138,63 @@ __all__ = [
 __version__ = '0.1.0'
 
 
+_DEPRECATED_EXPORT_REMOVAL_POLICY = {
+    # Symbol: (deprecated_in, remove_in, migration_hint)
+    "TheoremSession": (
+        "0.2.0",
+        "0.4.0",
+        "Use LogicTheoremOptimizer from logic_theorem_optimizer.unified_optimizer.",
+    ),
+    "SessionConfig": (
+        "0.2.0",
+        "0.4.0",
+        "Use OptimizerConfig from ipfs_datasets_py.optimizers.common.base_optimizer.",
+    ),
+    "SessionResult": (
+        "0.2.0",
+        "0.4.0",
+        "Use standardized result dictionaries returned by LogicTheoremOptimizer.",
+    ),
+    # Kept for compatibility while unified optimizer adoption completes.
+    "LogicExtractor": (
+        "0.2.0",
+        "0.4.0",
+        "Use LogicTheoremOptimizer for end-to-end extraction/optimization workflows.",
+    ),
+}
+
+
+def _parse_semver(version: str) -> tuple[int, int, int]:
+    """Parse semantic version strings like ``X.Y.Z`` (suffixes ignored)."""
+    core = (version or "0.0.0").split("+", 1)[0].split("-", 1)[0]
+    parts = core.split(".")
+    padded = (parts + ["0", "0", "0"])[:3]
+    try:
+        return tuple(int(p) for p in padded)  # type: ignore[return-value]
+    except ValueError:
+        return (0, 0, 0)
+
+
+def _version_gte(left: str, right: str) -> bool:
+    """Return ``True`` when semantic version ``left`` is >= ``right``."""
+    return _parse_semver(left) >= _parse_semver(right)
+
+
+def _enforce_export_version_gate(name: str, current_version: str | None = None) -> None:
+    """Raise ImportError if a deprecated symbol has reached its removal version."""
+    policy = _DEPRECATED_EXPORT_REMOVAL_POLICY.get(name)
+    if policy is None:
+        return
+
+    deprecated_in, remove_in, migration_hint = policy
+    effective_version = current_version or __version__
+    if _version_gte(effective_version, remove_in):
+        raise ImportError(
+            f"{name} was deprecated in {deprecated_in} and removed in {remove_in}. "
+            f"Current version is {effective_version}. {migration_hint}"
+        )
+
+
 def __getattr__(name):
     """Lazy imports to avoid circular dependencies."""
     if name in (
@@ -170,6 +229,8 @@ def __getattr__(name):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer import LogicTheoremOptimizer
         return LogicTheoremOptimizer
     elif name in ('LogicExtractor', 'LogicExtractionContext', 'ExtractionResult', 'ExtractionMode', 'DataType'):
+        if name == 'LogicExtractor':
+            _enforce_export_version_gate(name)
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import (
             LogicExtractor, LogicExtractionContext, ExtractionResult, ExtractionMode, DataType
         )
@@ -227,6 +288,7 @@ def __getattr__(name):
             'serialize_dataclass_like': serialize_dataclass_like,
         }[name]
     elif name == 'TheoremSession' or name == 'SessionResult' or name == 'SessionConfig':
+        _enforce_export_version_gate(name)
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.theorem_session import (
             TheoremSession, SessionResult, SessionConfig
         )

@@ -48,16 +48,12 @@ test hardening, and documentation clarity while keeping progress measurable.
   - Done 2026-02-23: Batch 265 - Integrated OptimizerConfig dataclass with AgenticOptimizer. Now accepts Union[OptimizerConfig, Dict] with automatic normalization. Added helper methods (get_config_value, domain/max_rounds/verbose properties). Full backward compatibility maintained (dict configs auto-converted). 24/24 tests passing. Achieves consistent configuration across GraphRAG, logic, and agentic optimizers.
 - [x] (P2) [api] Standardize context objects across GraphRAG/logic/agentic
   - Done 2026-02-25: Batch 266 - Added unified context adapters and class-level conversion helpers. New functions in common/unified_config.py: context_from_logic_extraction_context() and context_from_agentic_optimization_task(); existing GraphRAG adapter reused. Added to_unified_context() methods on OntologyGenerationContext, LogicExtractionContext, and OptimizationTask for direct conversion to GraphRAGContext/LogicContext/AgenticContext. Added test_batch_266_context_standardization.py with 7/7 passing tests.
-- [x] (P2) [arch] Unify exception hierarchy across `[graphrag]`, `[logic]`, `[agentic]` packages
-  - Done 2026-02-25: Batch 271 - Added cross-package hierarchy conformance tests (common + agentic + logic + logic_theorem + graphrag) and fixed `OntologyValidator.suggest_entity_merges()` to raise `OntologyValidationError` instead of raw `ValueError` for invalid inputs. Validation: test_batch_271_exception_hierarchy_unification.py (7/7), graphrag/test_exception_hierarchy.py (16/16).
-- [x] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
-  - Done 2026-02-25: Batch 269 - Wired `OntologyGenerator` LLM extraction to use an active backend from either injected `llm_backend` or configured `ipfs_accelerate_config["client"]`/`ipfs_accelerate_py` client. Added support for `infer`/`run` backend methods in addition to callable/`generate`/`complete`, and ensured hybrid extraction uses available LLM backend paths consistently. Validation: test_ontology_generator_llm_extraction.py (7/7), test_llm_fallback_extraction.py (11/11).
+- [ ] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
 - [x] (P2) [tests] Add property-based tests for Entity/CriticScore/FeedbackRecord
   - Done 2026-02-23: test_ontology_types_properties.py with 19 passing property-based tests (Entity, Relationship, CriticScore, FeedbackRecord, collections). Uses Hypothesis strategies.
 - [x] (P2) [perf] Profile OntologyGenerator.generate() on 10k-token input
   - Done 2026-02-23: Batch 262 - Created profile_batch_262_generate_10k.py (390 LOC), test_batch_262_profiling.py (22/22 tests), PROFILING_BATCH_262_ANALYSIS.md. Identified key bottlenecks: regex operations (54% time), _promote_person_entities (70%), with optimization recommendations for 70-80% potential speedup.
-- [x] (P2) [obs] Structured JSON logging for every pipeline run
-  - Done 2026-02-25: Batch 268 - Added explicit structured run lifecycle events for `OntologyPipeline.run()` with `PIPELINE_RUN_START` at run entry and `PIPELINE_RUN` failure payloads on exceptions (while preserving existing success payloads). Added coverage in test_ontology_pipeline_logging.py for start-event and failure-event JSON schema/fields; suite now 5/5 passing.
+- [ ] (P2) [obs] Structured JSON logging for every pipeline run
 - [x] (P2) [docs] Optimizers README with quick-start +  class diagram + comprehensive guides
   - Done 2026-02-23: Batch 263 - Created PERFORMANCE_TUNING_GUIDE.md (18KB), TROUBLESHOOTING_GUIDE.md (28KB), INTEGRATION_EXAMPLES.md (18KB, 8 real-world scenarios). Updated README.md with guide references. Comprehensive documentation for performance optimization (70-80% potential speedup), 30+ troubleshooting solutions, and production integration patterns (FastAPI, Flask, CLI, CI/CD, batch processing, streaming, multi-domain).
 
@@ -67,16 +63,16 @@ Rotate these while also advancing the plan above. When one completes, replace it
 with a new item from a different track.
 
 **Active picks (rotate on completion)**
-- [x] (P3) [tests] test_cache_invalidation.py - Cache consistency during refinement
-  - Done 2026-02-25: Batch 274 - Verified existing cache invalidation coverage in both general and GraphRAG-specific suites. Validation: tests/unit/optimizers/test_cache_invalidation.py (29/29) and tests/unit/optimizers/graphrag/test_cache_invalidation.py (20/20).
-- [ ] (P3) [docs] Add per-method doctest examples to all public `OntologyGenerator` methods
-- [x] (P3) [arch] Add circuit-breaker for LLM backend calls (retry with exponential backoff)
-  - Done 2026-02-25: Batch 277 - Verified shared `BackendCallPolicy` + `execute_with_resilience` + `CircuitBreaker` wiring across GraphRAG, logic theorem optimizer, agentic LLM integration, and lazy loader backends, including typed error mapping (`RetryableBackendError`, `CircuitBreakerOpenError`) and exponential backoff defaults. Validation: test_backend_resilience.py (14/14), test_backend_resilience_conformance.py (7/7), test_circuit_breaker_logging.py (1/1), test_learning_adapter_circuit_breaker.py (5/5), test_backend_resilience_doc_conformance.py (3/3), test_llm_lazy_loader_exceptions.py (6/6).
-- [x] (P3) [tests] test_relationship_inference_accuracy.py - Validate relationship inference patterns
-  - Done 2026-02-25: Batch 275 - Fixed relationship inference consistency for co-occurrence metadata and employment phrase mapping (`started at`/`joined`/`works at` → `works_for` context inference). Validation: test_relationship_inference_accuracy.py (13/13), test_relationship_type_confidence.py (50/50), test_ontology_generator_helpers.py (90/90).
-- [x] (P3) [tests] test_contextual_entity_disambiguation.py - Test entity type disambiguation
-  - Done 2026-02-25: Batch 276 - Updated contextual disambiguation coverage to current `OntologyGenerationContext` config API and stabilized relationship assertions against extraction variability while preserving disambiguation/relationship integrity checks. Validation: test_contextual_entity_disambiguation.py (21/21).
-- [ ] (P3) [arch] Remove deprecated `TheoremSession` and `LogicExtractor` after 2 minor versions (add version gate)
+- [x] (P2) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
+  - Done 2026-02-25: Batch 280 - Verified Prometheus-compatible optimizer score/iteration instrumentation remains wired in shared collector and runtime hooks. Validation: tests/unit/optimizers/test_metrics_prometheus.py (28/28), tests/unit/optimizers/common/test_base_optimizer_prometheus_integration.py (2/2), tests/unit/optimizers/graphrag/test_batch_301_pipeline_prometheus_hooks.py (2/2).
+- [x] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
+  - Done 2026-02-25: Batch 269 - `OntologyGenerator` now resolves and uses injected or accelerate-backed LLM backends (`generate`/`complete`/`infer`/`run`) with fallback support. Validation: test_ontology_generator_llm_extraction.py (7/7), test_llm_fallback_extraction.py (11/11).
+- [x] (P2) [tests] Add round-trip test for `OntologyMediator.run_refinement_cycle()` state serialization
+  - Done 2026-02-25: Batch 270 - Added refinement-cycle state round-trip integrity test. Validation: test_batch_248_mediator_serialization.py (31/31).
+- [x] (P2) [arch] Unify exception hierarchy across `[graphrag]`, `[logic]`, `[agentic]` packages
+  - Done 2026-02-25: Batch 271 - Added hierarchy conformance tests and aligned invalid-input exception typing. Validation: test_batch_271_exception_hierarchy_unification.py (7/7), graphrag/test_exception_hierarchy.py (16/16).
+- [x] (P3) [docs] Add per-method doctest examples to all public `OntologyGenerator` methods
+  - Done 2026-02-25: Batch 278 - Added `docs/optimizers/ONTOLOGY_GENERATOR_DOCTEST_REFERENCE.md` and conformance guard `tests/unit/optimizers/test_ontology_generator_doctest_conformance.py`. Validation: doctest/doc conformance suites (9/9).
 
 ---
 
@@ -105,8 +101,7 @@ This plan is intentionally evergreen. It balances refactors, feature growth, tes
 - Provide examples that mirror real usage patterns.
 
 ### Random Work Rotation (Active Picks)
-- [x] (P2) [docs] Configuration Guide for `ExtractionConfig` fields (see Medium Tasks)
-  - Done 2026-02-23: Created CONFIGURATION_REFERENCE.md with comprehensive field-by-field documentation covering all 12 dataclass fields.
+- [ ] (P2) [docs] Configuration Guide for `ExtractionConfig` fields (see Medium Tasks)
 - [x] (P2) [arch] Extract `QueryValidationMixin` for GraphRAG reuse (see Strategic Refactoring)
   - Done 2026-02-23: implemented in optimizers/common/query_validation.py and used by graphrag/query_unified_optimizer.py
 - [x] (P2) [graphrag] Implement `_extract_with_llm_fallback()` wrapper (see GraphRAG backlog)
@@ -216,7 +211,12 @@ These should be started immediately when available:
 #### Strategic Refactoring (2-4 hours)
 - [x] (P2) [arch] Extract `QueryValidationMixin` from query optimizer for reuse in GraphRAG
   - Done 2026-02-23: implemented in optimizers/common/query_validation.py and used by graphrag/query_unified_optimizer.py
-- [ ] (P2) [arch] Unify exception hierarchy across `[graphrag]`, `[logic]`, `[agentic]` packages
+- [x] (P2) [arch] Unify exception hierarchy across `[graphrag]`, `[logic]`, `[agentic]` packages
+  - Done 2026-02-23: All three packages have unified exception hierarchies:
+    - `graphrag/exceptions.py`: GraphRAGError extends OptimizerError, with OntologyExtractionError, OntologyValidationError, LogicProvingError, PathResolutionError, QueryCacheError
+    - `logic/exceptions.py`: LogicError extends OptimizerError
+    - `agentic/exceptions.py`: AgenticError extends OptimizerError
+    - All import from `common.exceptions` and define package-specific exception classes with proper `__all__` exports
 - [x] (P2) [api] Create `ontology_types.py` with TypedDict definitions for all ontology structures
   - Done 2026-02-23: Created ontology_types.py with 14+ TypedDict definitions (Entity, Relationship, Ontology, CriticScore, SessionRound, OntologySession, PerformanceMetrics, QualityMetrics, etc.). 19 property-based tests passing.
 - [x] (P2) [tests] Migrate all mock ontology creation to factory fixtures in `conftest.py`
@@ -422,26 +422,27 @@ Execute these when no rotating work is in progress:
 - [x] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `LogicTheoremOptimizer.run_session()` — Done batch 24
 - [x] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `OntologyOptimizer` batch analysis — Done batch 23
 - [x] (P3) [obs] Add OpenTelemetry span hooks (behind a feature flag) for distributed tracing
-  - Done 2026-02-25: Batch 273 - Verified existing feature-flagged OTEL span hooks are active in base optimizer and ontology pipeline (`OTEL_ENABLED` gated tracer creation and span emission paths). Validation: test_base_optimizer_otel_integration.py (2/2), test_ontology_pipeline_otel_spans.py (2/2).
+  - Done 2026-02-25: Batch 273 - Verified feature-flagged OTEL hooks in base optimizer and ontology pipeline. Validation: test_base_optimizer_otel_integration.py (2/2), test_ontology_pipeline_otel_spans.py (2/2).
 - [x] (P3) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
-  - Done 2026-02-25: Batch 267 - Existing metrics collector integration and pipeline hooks verified via targeted Prometheus integration tests (4/4 passing across base + pipeline suites).
+  - Done 2026-02-25: Batch 280 - Prometheus metrics collector and hooks verified across common and GraphRAG pipeline paths. Validation: test_metrics_prometheus.py (28/28), test_base_optimizer_prometheus_integration.py (2/2), test_batch_301_pipeline_prometheus_hooks.py (2/2).
 
 ### R5 — Error handling & resilience
 
 - [x] (P2) [arch] Define typed exception hierarchy: `OptimizerError`, `ExtractionError`, `ValidationError`, `ProvingError`
   - Done 2026-02-20: common/exceptions.py with full hierarchy
 - [x] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
-  - Done 2026-02-25: Batch 272 - Replaced catch-all handlers in `learning_state.py`, `ontology_graphql.py`, `graphrag_repl.py`, and `kafka_ontology_stream.py` with specific exception tuples. Residual `except Exception` sites are intentionally kept at framework/wrapper boundaries (`common/exceptions.py` wrapping helper and pipeline/error-handling boundary wrappers). Validation: test_ontology_graphql.py (35/35), test_learning_state.py + test_query_unified_learning_state_fallbacks.py (38/38), test_graphrag_repl.py (25/25), test_kafka_ontology_stream.py (32/32).
+  - Done 2026-02-25: Batch 272 - Replaced broad catches in runtime modules (`learning_state.py`, `ontology_graphql.py`, `graphrag_repl.py`, `kafka_ontology_stream.py`) with typed exception tuples. Validation: test_ontology_graphql.py (35/35), test_learning_state.py + test_query_unified_learning_state_fallbacks.py (38/38), test_graphrag_repl.py (25/25), test_kafka_ontology_stream.py (32/32).
 - [x] (P2) [arch] All CLI commands exit with non-zero on failure — Done: all cmd_* return int, sys.exit(main())
 - [x] (P2) [arch] Add timeout support to `ProverIntegrationAdapter.validate_statement()` — Done: ProverIntegrationAdapter has default_timeout param and per-call timeout override
 - [x] (P3) [arch] Add circuit-breaker for LLM backend calls (retry with exponential backoff)
-  - Done 2026-02-25: Batch 277 - Circuit-breaker + retry/backoff behavior is implemented and conformance-covered across optimizer LLM backend call sites via shared resilience wrapper and policy defaults. Validation: test_backend_resilience.py (14/14), test_backend_resilience_conformance.py (7/7), test_backend_resilience_doc_conformance.py (3/3), test_llm_lazy_loader_exceptions.py (6/6), test_circuit_breaker_logging.py (1/1), test_learning_adapter_circuit_breaker.py (5/5).
+  - Done 2026-02-25: Batch 277 - Shared resilience policy + circuit-breaker wiring and typed fallback errors verified across optimizer LLM backends. Validation: resilience/circuit-breaker suites (36/36).
 
 ### R6 — Deprecation cleanup
 
 - [x] (P2) [arch] Add `DeprecationWarning` emission to `TheoremSession.__init__()` — Done: theorem_session.py emits DeprecationWarning and document migration path
 - [x] (P2) [arch] Add `DeprecationWarning` to deprecated imports — Done: TheoremSession already warns, logic_harness warns
-- [ ] (P3) [arch] Remove deprecated `TheoremSession` and `LogicExtractor` after 2 minor versions (add version gate)
+- [x] (P3) [arch] Remove deprecated `TheoremSession` and `LogicExtractor` after 2 minor versions (add version gate)
+  - Done 2026-02-25: Batch 279 - Added semantic-version export gates (removal at `0.4.0`) for deprecated logic-theorem exports with focused gate tests. Validation: test_deprecated_export_version_gate.py (11/11), test_theorem_session_smoke.py (1/1), test_logic_harness_exceptions.py (2/2).
 
 ---
 
