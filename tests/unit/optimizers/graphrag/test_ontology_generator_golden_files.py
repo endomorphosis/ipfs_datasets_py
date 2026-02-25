@@ -1,7 +1,7 @@
 """Golden-file tests for domain-specific ontology generation.
 
 To refresh fixtures, run:
-    PYTHONPATH=ipfs_datasets_py python ipfs_datasets_py/optimizers/tests/fixtures/graphrag/generate_golden_fixtures.py
+    PYTHONPATH=ipfs_datasets_py python ipfs_datasets_py/tests/fixtures/optimizers/graphrag/generate_golden_fixtures.py
 """
 
 import json
@@ -15,7 +15,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
 )
 
 
-FIXTURE_DIR = Path(__file__).resolve().parents[2] / "fixtures" / "graphrag"
+FIXTURE_DIR = Path(__file__).resolve().parents[3] / "fixtures" / "optimizers" / "graphrag"
 
 
 def _normalize(ontology):

@@ -32,52 +32,12 @@
       {
         "source_text": "Acme",
         "target_text": "Benefits",
-        "type": "related_to"
+        "type": "works_for"
       },
       {
         "source_text": "Acme",
         "target_text": "Corp",
-        "type": "related_to"
-      },
-      {
-        "source_text": "Acme Corp",
-        "target_text": "Benefits",
-        "type": "related_to"
-      },
-      {
-        "source_text": "Acme Corp",
-        "target_text": "Corp",
-        "type": "related_to"
-      },
-      {
-        "source_text": "Acme Corp",
-        "target_text": "Employee",
-        "type": "related_to"
-      },
-      {
-        "source_text": "Alice",
-        "target_text": "Acme",
-        "type": "related_to"
-      },
-      {
-        "source_text": "Alice",
-        "target_text": "Benefits",
-        "type": "related_to"
-      },
-      {
-        "source_text": "Alice",
-        "target_text": "Corp",
-        "type": "related_to"
-      },
-      {
-        "source_text": "Employee",
-        "target_text": "Acme",
-        "type": "related_to"
-      },
-      {
-        "source_text": "Employee",
-        "target_text": "Alice",
-        "type": "related_to"
+        "type": "works_for"
       },
       {
         "source_text": "Acme Corp",
@@ -86,6 +46,46 @@
       },
       {
         "source_text": "Acme Corp",
+        "target_text": "Alice",
+        "type": "works_for"
+      },
+      {
+        "source_text": "Acme Corp",
+        "target_text": "Benefits",
+        "type": "works_for"
+      },
+      {
+        "source_text": "Acme Corp",
+        "target_text": "Corp",
+        "type": "works_for"
+      },
+      {
+        "source_text": "Acme Corp",
+        "target_text": "Employee",
+        "type": "works_for"
+      },
+      {
+        "source_text": "Alice",
+        "target_text": "Acme",
+        "type": "works_for"
+      },
+      {
+        "source_text": "Alice",
+        "target_text": "Benefits",
+        "type": "works_for"
+      },
+      {
+        "source_text": "Alice",
+        "target_text": "Corp",
+        "type": "works_for"
+      },
+      {
+        "source_text": "Employee",
+        "target_text": "Acme",
+        "type": "works_for"
+      },
+      {
+        "source_text": "Employee",
         "target_text": "Alice",
         "type": "works_for"
       }

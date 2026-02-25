@@ -65,11 +65,17 @@ Rotate these while also advancing the plan above. When one completes, replace it
 with a new item from a different track.
 
 **Active picks (rotate on completion)**
-- [ ] (P2) [perf] Benchmark sentence-window limiting impact on realistic documents
-- [ ] (P2) [api] Audit all `**kwargs`-accepting methods in `agentic/` and replace with typed optional parameters
-- [ ] (P2) [tests] Add snapshot tests for `OntologyGenerator.generate()`
+- [x] (P2) [perf] Benchmark sentence-window limiting impact on realistic documents
+  - Done 2026-02-25: Benchmark artifacts and analysis already present in `docs/SENTENCE_WINDOW_BENCHMARK_REPORT.md` with domain-specific deltas and speedup factors (validated availability in repo).
+- [x] (P2) [api] Audit all `**kwargs`-accepting methods in `agentic/` and replace with typed optional parameters
+  - Done 2026-02-25: Confirmed no `**kwargs` signatures remain under `optimizers/agentic/`; regression guard passes in `tests/unit/optimizers/agentic/test_agentic_kwargs_audit.py` (1/1).
+- [x] (P2) [tests] Add snapshot tests for `OntologyGenerator.generate()`
+  - Done 2026-02-25: Fixed and validated golden snapshot suite in `tests/unit/optimizers/graphrag/test_ontology_generator_golden_files.py` (4/4), including fixture path correction and refreshed `golden_hr.json` normalization.
 - [ ] (P2) [arch] Add circuit-breaker for LLM backend calls (retry with exponential backoff)
 - [ ] (P2) [docs] Write architecture diagram for the `generate → critique → optimize → validate` loop
+- [ ] (P2) [obs] Implement distributed tracing (OpenTelemetry) across all optimizers
+- [ ] (P2) [graphrag] Add semantic similarity-based entity deduplication using embeddings
+- [ ] (P2) [docs] Add Sphinx/MkDocs configuration and auto-generate API reference
 
 ---
 
