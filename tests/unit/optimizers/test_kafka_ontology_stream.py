@@ -198,7 +198,9 @@ class TestKafkaOntologyProducer:
         assert len(producer.producer.sent_messages) == 1
         msg = producer.producer.sent_messages[0]
         assert msg["key"] == "doc1"
+        # Value is JSON-serialized string
         assert "Alice" in msg["value"]
+        assert "TechCorp" in msg["value"]
     
     def test_send_document_without_text_raises(self, kafka_config: KafkaConfig):
         """Test sending document without 'text' field raises."""
