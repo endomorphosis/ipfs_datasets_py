@@ -18,13 +18,17 @@ Comprehensive performance tuning guide. Includes:
 - Context window management
 - Latency reduction techniques
 
-## Coming Soon
+### [performance-profiling.md](./performance-profiling.md)
+Profiling and benchmarking guide for the MCP server's hot paths. Covers:
+- Profiling `dispatch_parallel` latency
+- Using pyinstrument, memray, pytest-benchmark
+- Interpreting and acting on profiling results
 
-- Installation guide
-- Configuration guide
-- Deployment guide (Docker, Kubernetes, systemd)
-- Troubleshooting guide
-- Security guide
+### [cookbook.md](./cookbook.md)
+Ready-to-run recipes for common tasks. Covers:
+- Parallel tool dispatch with `dispatch_parallel`
+- Adaptive batching and fail-fast patterns
+- Real-world usage examples
 
 ## Related Documentation
 

@@ -1,6 +1,6 @@
 # Tool Category Reference
 
-Navigation index for all **49+ tool categories** in the MCP server.  Each
+Navigation index for all **51 tool categories** in the MCP server.  Each
 category is a directory under `ipfs_datasets_py/mcp_server/tools/` that
 contains one or more thin async wrapper functions exposing business logic
 from canonical `ipfs_datasets_py.*` package modules.
