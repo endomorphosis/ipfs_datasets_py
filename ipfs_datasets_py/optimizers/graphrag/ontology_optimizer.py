@@ -55,7 +55,7 @@ from typing import Any, Dict, List, Optional, Sequence
 from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
 
 try:
-    from opentelemetry import trace
+    from opentelemetry import trace  # type: ignore[import-not-found]
     HAVE_OPENTELEMETRY = True
 except ImportError:  # pragma: no cover
     trace = None
@@ -2050,8 +2050,8 @@ class OntologyOptimizer:
             ImportError: If ``rdflib`` is not installed.
         """
         try:
-            from rdflib import Graph, Literal, Namespace, URIRef  # type: ignore[import]
-            from rdflib.namespace import RDF, RDFS, XSD  # type: ignore[import]
+            from rdflib import Graph, Literal, Namespace, URIRef  # type: ignore[import-not-found]
+            from rdflib.namespace import RDF, RDFS, XSD  # type: ignore[import-not-found]
         except ImportError as exc:  # pragma: no cover
             raise ImportError(
                 "rdflib is required for RDF export. Install with: pip install rdflib"

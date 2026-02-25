@@ -32,6 +32,19 @@ Notable primitive hotspot:
 
 - `re.Pattern.search` accounted for a large share of cumulative time in the sampled run.
 
+## Post-Optimization Re-Run
+
+After adding cached language detection in `OntologyGenerator._build_language_aware_context`:
+
+- Average latency: `4.0753 ms`
+- Median latency: `3.8996 ms`
+- p95 latency: `4.7131 ms`
+
+Observed improvement vs prior baseline run:
+
+- Average latency improved by roughly `49%` (8.04ms -> 4.08ms)
+- p95 latency improved by roughly `53%` (9.93ms -> 4.71ms)
+
 ## Follow-up Optimization Candidates
 
 - Short-circuit language detection for obviously monolingual ASCII-heavy text.

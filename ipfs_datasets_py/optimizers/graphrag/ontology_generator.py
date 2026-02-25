@@ -3169,6 +3169,9 @@ class OntologyGenerator:
         self._resolve_rule_config_cache: dict = {}
         self._resolve_rule_config_refs: dict = {}  # Map id -> weakref for GC detection
         self._language_router = None
+        self._language_detect_cache: dict[tuple[int, str], tuple[str, float]] = {}
+        self._language_detect_cache_order: list[tuple[int, str]] = []
+        self._language_detect_cache_max_size = 64
 
     def _get_language_router(self) -> Optional[Any]:
         """Lazily initialize language router if dependency is available."""
@@ -3182,6 +3185,21 @@ class OntologyGenerator:
         except ImportError as exc:
             self._log.debug("LanguageRouter unavailable; using default language behavior: %s", exc)
             return None
+
+    def _detect_language_with_cache(self, router: Any, text: str) -> tuple[str, float]:
+        """Detect language with a small per-instance LRU-style cache."""
+        key = (id(router), text)
+        cached = self._language_detect_cache.get(key)
+        if cached is not None:
+            return cached
+
+        detected = router.detect_language_with_confidence(text)
+        self._language_detect_cache[key] = detected
+        self._language_detect_cache_order.append(key)
+        if len(self._language_detect_cache_order) > self._language_detect_cache_max_size:
+            oldest_key = self._language_detect_cache_order.pop(0)
+            self._language_detect_cache.pop(oldest_key, None)
+        return detected
 
     def _build_language_aware_context(
         self,
@@ -3198,7 +3216,7 @@ class OntologyGenerator:
             return context, {"language_aware": False, "reason": "router_unavailable"}
 
         try:
-            language_code, language_conf = router.detect_language_with_confidence(text)
+            language_code, language_conf = self._detect_language_with_cache(router, text)
             language_cfg = router.get_language_config(language_code)
             base_cfg = context.extraction_config
 

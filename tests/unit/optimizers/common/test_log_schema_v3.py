@@ -41,6 +41,7 @@ def test_session_start_log_structure(caplog):
     assert log_data["schema"] == SCHEMA_NAME
     assert log_data["schema_version"] == SCHEMA_VERSION
     assert log_data["event"] == "session.started"
+    assert log_data["optimizer_pipeline"] == "common"
     assert "timestamp" in log_data
     
     # Context fields
@@ -288,7 +289,7 @@ def test_validate_complete_log_level_varies_by_result(caplog):
 def test_all_events_have_required_fields(caplog):
     """Verify all log functions produce logs with required schema fields."""
     logger = logging.getLogger("test")
-    required_fields = {"schema", "schema_version", "event", "timestamp"}
+    required_fields = {"schema", "schema_version", "event", "optimizer_pipeline", "timestamp"}
     
     log_functions = [
         (log_session_start, {"session_id": "t", "domain": "test"}),

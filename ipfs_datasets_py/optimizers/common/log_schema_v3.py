@@ -111,6 +111,7 @@ def _build_base_payload(
         "schema": SCHEMA_NAME,
         "schema_version": SCHEMA_VERSION,
         "event": event.value,
+        "optimizer_pipeline": "common",
         "timestamp": time.time(),
     }
     

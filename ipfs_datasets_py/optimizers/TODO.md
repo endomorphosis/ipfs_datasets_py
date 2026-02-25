@@ -344,6 +344,7 @@ Rotation rules:
   - Progress 2026-02-25: extended `optimizer_pipeline` tagging to GraphRAG legacy structured emitters in `graphrag/ontology_pipeline.py` (`PIPELINE_RUN`, `PIPELINE_BATCH`) and `graphrag/ontology_generator.py` (`EXTRACT_ENTITIES`); validated with `tests/unit/optimizers/graphrag/test_ontology_pipeline_logging.py` and `tests/unit/optimizers/graphrag/test_ontology_generator_extract_entities_logging.py` (`3 passed`).
   - Progress 2026-02-25: added `optimizer_pipeline: "common"` to profiling structured logs in `common/profiling.py::_emit_profiling_log` and updated schema assertion coverage in `tests/unit/optimizers/common/test_profiling.py` (`5 selected tests passed`).
   - Progress 2026-02-25: standardized `common/structured_logging.py::log_event` to emit `optimizer_pipeline` (default `"common"`, overrideable) and added coverage in `tests/unit/optimizers/common/test_structured_logging.py` (`19 passed`).
+  - Progress 2026-02-25: standardized schema-v3 helper payload base in `common/log_schema_v3.py::_build_base_payload` to emit `optimizer_pipeline: "common"` for all v3 events; updated schema-contract coverage in `tests/unit/optimizers/common/test_log_schema_v3.py` (`13 passed`).
   - Progress 2026-02-25: standardized `graphrag/ontology_optimizer.py::_emit_analyze_batch_summary` to emit schema-wrapped/redacted JSON with `optimizer_pipeline: "graphrag"` and added schema+redaction regression coverage in `tests/unit/optimizers/graphrag/test_ontology_optimizer_metrics.py` (`10 passed`).
   - Progress 2026-02-25: standardized `graphrag/ontology_mediator.py` round metrics logs (`REFINEMENT_ROUND`) to use `with_schema(...)`, `optimizer_pipeline: "graphrag"`, and shared payload redaction via `redact_payload(...)`; extended schema assertions in `tests/unit/optimizers/graphrag/test_ontology_mediator_json_logging.py` (`8 passed`).
 - [x] (P2) [obs] Ensure metrics include run duration, score deltas, failure counts, and stage timings.
@@ -920,7 +921,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P1) Wire `BaseOptimizer` to accept `OptimizerConfig` (45 min)
 - [x] (P2) Define unified `IOptimizer` Protocol (30 min)
   - Done 2026-02-25: verified existing unified optimizer protocol in `optimizers/common/protocols.py` and runtime conformance coverage in `tests/unit/optimizers/test_optimizer_protocols.py`.
-- [ ] (P2) Property tests for `Entity` and `Relationship` (1.0 hours)
+- [x] (P2) Property tests for `Entity` and `Relationship` (1.0 hours)
+  - Done 2026-02-25: added randomized property-style invariant tests in `tests/unit/optimizers/graphrag/test_batch_302_entity_relationship_property_loops.py` covering dict/json round-trip equality and hash/id invariants for both `Entity` and `Relationship`.
 - [ ] (P2) Property tests for `ExtractionConfig` (45 min)
 - [ ] (P2) Property tests for `CriticScore` statistical invariants (1.0 hours)
 - [ ] (P2) Structured JSON logging audit (1.0 hours)
@@ -930,7 +932,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Done 2026-02-25: audited `agentic/llm_integration.py` and added secret-redaction guard for failure details + regression test (`tests/unit/optimizers/agentic/test_llm_integration.py`) to prevent API key/token leakage in raised error metadata.
 - [x] (P2) Profile `OntologyGenerator.generate()` on 10kB input (1.0 hours)
   - Done 2026-02-25: added profiler script `benchmarks/profile_ontology_generator_generate_10kb.py` and captured baseline/hotspots in `docs/optimizers/ONTOLOGY_GENERATOR_10KB_PROFILE_REPORT.md` (avg `8.04ms`, p95 `9.93ms`; primary hotspots in extraction + language detection + regex search paths).
-- [ ] (P2) Optimize identified hotspot (1.0–1.5 hours)
+- [x] (P2) Optimize identified hotspot (1.0–1.5 hours)
+  - Done 2026-02-25: optimized repeated language-detection hotspot in `graphrag/ontology_generator.py` by adding per-instance cached detection in `_detect_language_with_cache()` and wiring `_build_language_aware_context()` through it; added regression coverage in `tests/unit/optimizers/graphrag/test_ontology_generator_multilingual.py` (`test_language_detection_result_is_cached_for_repeated_text`).
 - [x] (P2) Lazy-load domain-specific rule sets (45 min)
   - Done 2026-02-25: verified `ExtractionConfig._get_domain_rule_patterns()` lazy cached loader in `graphrag/ontology_generator.py` and reran dedicated cache/domain behavior suite `tests/unit/optimizers/graphrag/test_domain_rule_patterns_lazy_loading.py` (`31 passed`).
 - [ ] (P2) Audit existing exception usage (1.0 hours)
@@ -941,4 +944,5 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Done 2026-02-25: verified query planner behavior with `test_query_budget_protocol.py` + `test_query_optimizer_example_usage.py` (`9 passed`).
 - [ ] (P2) [graphrag] strict-mypy cleanup for `ontology_optimizer.py` (slice-by-slice)
   - Progress 2026-02-25: completed initial strict-typing slice (imports/fallbacks, metrics collector wiring, Counter generics, weakest-dimension numeric narrowing, typed score distribution helpers); file-local strict errors reduced to `82`.
-  - Progress 2026-02-25: regression-checked optimizer metric helpers via `tests/unit/optimizers/graphrag/test_ontology_optimizer_metrics.py` (`9 passed`).
+  - Progress 2026-02-25: regression-checked optimizer metric helpers via `tests/unit/optimizers/graphrag/test_ontology_optimizer_metrics.py` (`10 passed`).
+  - Progress 2026-02-25: narrowed strict-typing import diagnostics by switching optional imports to explicit `import-not-found` typing guards (`opentelemetry` and optional `rdflib` export path); file-local strict errors reduced from `77` to `74` (`mypy --strict --follow-imports=skip ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/ontology_optimizer.py`).

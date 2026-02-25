@@ -37,6 +37,16 @@ class _FakeRouter:
         return self.cfg
 
 
+class _CountingRouter(_FakeRouter):
+    def __init__(self) -> None:
+        super().__init__()
+        self.detect_calls = 0
+
+    def detect_language_with_confidence(self, _text: str) -> tuple[str, float]:
+        self.detect_calls += 1
+        return super().detect_language_with_confidence(_text)
+
+
 def test_build_language_aware_context_applies_adjustments_without_mutating_input() -> None:
     generator = OntologyGenerator(use_ipfs_accelerate=False)
     generator._get_language_router = lambda: _FakeRouter()  # type: ignore[method-assign]
@@ -126,3 +136,22 @@ def test_extract_entities_marks_language_detection_failure_in_metadata() -> None
 
     assert language_meta["language_aware"] is False
     assert language_meta["reason"] == "detection_failed"
+
+
+def test_language_detection_result_is_cached_for_repeated_text() -> None:
+    generator = OntologyGenerator(use_ipfs_accelerate=False)
+    router = _CountingRouter()
+    generator._language_router = router
+
+    context = OntologyGenerationContext(
+        data_source="unit-test",
+        data_type="text",
+        domain="general",
+        extraction_strategy=ExtractionStrategy.RULE_BASED,
+    )
+    text = "Alice signed a contract with Bob."
+
+    generator._build_language_aware_context(text, context)
+    generator._build_language_aware_context(text, context)
+
+    assert router.detect_calls == 1
