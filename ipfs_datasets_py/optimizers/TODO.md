@@ -53,7 +53,8 @@ test hardening, and documentation clarity while keeping progress measurable.
   - Done 2026-02-23: test_ontology_types_properties.py with 19 passing property-based tests (Entity, Relationship, CriticScore, FeedbackRecord, collections). Uses Hypothesis strategies.
 - [x] (P2) [perf] Profile OntologyGenerator.generate() on 10k-token input
   - Done 2026-02-23: Batch 262 - Created profile_batch_262_generate_10k.py (390 LOC), test_batch_262_profiling.py (22/22 tests), PROFILING_BATCH_262_ANALYSIS.md. Identified key bottlenecks: regex operations (54% time), _promote_person_entities (70%), with optimization recommendations for 70-80% potential speedup.
-- [ ] (P2) [obs] Structured JSON logging for every pipeline run
+- [x] (P2) [obs] Structured JSON logging for every pipeline run
+  - Done 2026-02-25: validated OntologyPipeline run structured logging via test_ontology_pipeline_logging.py (5/5 passing).
 - [x] (P2) [docs] Optimizers README with quick-start +  class diagram + comprehensive guides
   - Done 2026-02-23: Batch 263 - Created PERFORMANCE_TUNING_GUIDE.md (18KB), TROUBLESHOOTING_GUIDE.md (28KB), INTEGRATION_EXAMPLES.md (18KB, 8 real-world scenarios). Updated README.md with guide references. Comprehensive documentation for performance optimization (70-80% potential speedup), 30+ troubleshooting solutions, and production integration patterns (FastAPI, Flask, CLI, CI/CD, batch processing, streaming, multi-domain).
 
@@ -68,6 +69,14 @@ with a new item from a different track.
 - [x] (P2) [tests] Add round-trip test for `OntologyMediator.run_refinement_cycle()` state serialization -- Done 2026-02-25: revalidated via test_batch_265_mediator_roundtrip.py (15/15)
 - [x] (P2) [arch] Unify exception hierarchy across `[graphrag]`, `[logic]`, `[agentic]` packages -- Done 2026-02-25: revalidated via test_unified_exception_hierarchy.py + common/test_batch_271_exception_hierarchy_unification.py (11/11)
 - [x] (P3) [docs] Add per-method doctest examples to all public `OntologyGenerator` methods -- Done 2026-02-25: revalidated via test_ontology_generator_doctest_conformance.py (2/2)
+- [ ] (P2) [obs] Structured JSON logging for every pipeline run
+- [x] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
+  - Done 2026-02-25: replaced remaining non-intentional optimizer catch-all in `graphrag/ontology_pipeline.py` with explicit exception tuple; validated by `test_ontology_pipeline_logging.py` (`5 passed`). The only remaining broad catch is intentional in `common/exceptions.py:wrap_exceptions()` for typed exception wrapping.
+- [x] (P2) [graphrag] Add semantic-similarity dedup with embeddings fallback
+  - Done 2026-02-25: wired semantic dedup into `OntologyGenerator.extract_entities()` and added automatic fallback to deterministic text dedup when embedding-based dedup fails; covered by `test_semantic_dedup_integration.py` (`12 passed`).
+- [ ] (P3) [docs] Auto-generate API reference docs from type hints + docstrings
+- [x] (P3) [tests] Add stress test for `run_agentic_refinement_cycle()` convergence behavior
+  - Done 2026-02-25: added `test_batch_310_agentic_cycle_stress.py` covering round-limit termination and min-improvement early-stop behavior; validated with mediator agentic + semantic dedup suites (`15 passed`).
 
 ---
 
@@ -96,7 +105,8 @@ This plan is intentionally evergreen. It balances refactors, feature growth, tes
 - Provide examples that mirror real usage patterns.
 
 ### Random Work Rotation (Active Picks)
-- [ ] (P2) [docs] Configuration Guide for `ExtractionConfig` fields (see Medium Tasks)
+- [x] (P2) [docs] Configuration Guide for `ExtractionConfig` fields (see Medium Tasks)
+  - Done 2026-02-25: documented in docs/EXTRACTION_CONFIG_GUIDE.md with full field coverage and examples.
 - [x] (P2) [arch] Extract `QueryValidationMixin` for GraphRAG reuse (see Strategic Refactoring)
   - Done 2026-02-23: implemented in optimizers/common/query_validation.py and used by graphrag/query_unified_optimizer.py
 - [x] (P2) [graphrag] Implement `_extract_with_llm_fallback()` wrapper (see GraphRAG backlog)
@@ -117,8 +127,8 @@ Use this as the always-on randomizer. Keep 3-5 items active, one per track. When
   - Done 2026-02-23: added Batch 264 profiling script/tests and PROFILING_BATCH_264_ANALYSIS.md
 - [x] (P2) [obs] Emit structured per-run JSON log in `OntologyPipeline.run()` (score/domain/duration)
   - Done 2026-02-21: added PIPELINE_RUN JSON log with duration, counts, and score.
-- [ ] (P3) [docs] Write module-level docstrings for `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py`
-  - All three already have comprehensive module-level docstrings; `ontology_pipeline.py` also has one.
+- [x] (P3) [docs] Write module-level docstrings for `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py`
+  - Done 2026-02-25: confirmed comprehensive module docstrings present in all three modules (plus ontology_pipeline).
 - [x] (P2) [api] Add `OntologyGenerator.__call__` shorthand for `generate_ontology`
   - Done 2026-02-21: added __call__ delegate to generate_ontology.
 - [x] (P2) [tests] Add coverage for PIPELINE_RUN JSON log payload in OntologyPipeline
@@ -353,8 +363,8 @@ Execute these when no rotating work is in progress:
   - Done 2026-02-23: documented schema + strict mode in docs/USAGE_EXAMPLES.md.
 - [x] (P3) [agentic] Document OptimizerArgparseCLI entrypoint in CLI guide
   - Done 2026-02-23: added direct CLI entrypoint note in docs/optimizers/CLI_GUIDE.md.
-- [ ] (P3) [agentic] Add smoke test for OptimizerArgparseCLI config show
-  - DoD: config show returns 0 and prints masked token fields
+- [x] (P3) [agentic] Add smoke test for OptimizerArgparseCLI config show
+  - Done 2026-02-25: covered by `tests/unit/optimizers/agentic/test_cli_argparse_smoke.py::test_argparse_cli_config_show_masks_tokens` (config show returns 0 and token is masked as `***`).
 
 ---
 
@@ -410,7 +420,8 @@ Execute these when no rotating work is in progress:
 - [x] (P2) [obs] Add `execution_time_ms` to every result object that doesn't already have it — Done 2026-02-20: BaseOptimizer.run_session() result and metrics dict now include execution_time_ms
 - [x] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `LogicTheoremOptimizer.run_session()` — Done batch 24
 - [x] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `OntologyOptimizer` batch analysis — Done batch 23
-- [ ] (P3) [obs] Add OpenTelemetry span hooks (behind a feature flag) for distributed tracing
+- [x] (P3) [obs] Add OpenTelemetry span hooks (behind a feature flag) for distributed tracing
+  - Done 2026-02-25: added OTEL-gated spans (`initial_generation`, per-`round`, `summary`) to mediator standard/agentic cycles in `graphrag/ontology_mediator.py`; validated via `test_batch_309_mediator_otel_spans.py` + `test_batch_308_mediator_prometheus_metrics.py` (`4 passed`).
 - [x] (P3) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
   - Done 2026-02-25: mediator cycles now emit round score/iteration/session metrics in `graphrag/ontology_mediator.py`; validated with `test_batch_308_mediator_prometheus_metrics.py` plus mediator serialization regression run (`33 passed`).
 
