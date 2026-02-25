@@ -196,8 +196,15 @@ def compute_relationship_stats(ontology: Dict[str, Any]) -> RelationshipStats:
     if not isinstance(relationships, list):
         relationships = []
     
-    # Total count
-    entity_count = len(entities)
+    # Count UNIQUE entity IDs (to handle duplicate entity IDs robustly)
+    unique_entity_ids = set()
+    for entity in entities:
+        if isinstance(entity, dict):
+            ent_id = entity.get("id")
+            if ent_id:
+                unique_entity_ids.add(ent_id)
+    
+    entity_count = len(unique_entity_ids)
     rel_count = len(relationships)
     
     # Type distribution
@@ -211,9 +218,9 @@ def compute_relationship_stats(ontology: Dict[str, Any]) -> RelationshipStats:
     # Density (relationships / max_possible_relationships)
     # Max possible is entity_count * (entity_count - 1) for directed graph
     max_possible = entity_count * (entity_count - 1) if entity_count > 1 else 1
-    density = rel_count / max_possible
+    density = min(1.0, rel_count / max_possible)  # Clamp to 1.0 for safety
     
-    # Average relationships per entity
+    # Average relationships per entity (use unique entity count)
     avg_rel = rel_count / entity_count if entity_count > 0 else 0.0
     
     return RelationshipStats(
