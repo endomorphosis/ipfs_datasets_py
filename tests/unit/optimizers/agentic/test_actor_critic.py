@@ -130,6 +130,15 @@ class TestActorCriticOptimizer:
         optimizer = ActorCriticOptimizer(llm_router=mock_llm_router)
         assert optimizer.learning_rate == 0.1
         assert optimizer.exploration_rate == 0.2
+        assert optimizer.extra_init_options == {}
+
+    def test_init_accepts_typed_extra_options(self, mock_llm_router):
+        """Typed extra init options should be accepted and stored."""
+        optimizer = ActorCriticOptimizer(
+            llm_router=mock_llm_router,
+            extra_init_options={"source": "test", "seed": 7},
+        )
+        assert optimizer.extra_init_options == {"source": "test", "seed": 7}
     
     def test_load_policies_nonexistent(self, optimizer):
         """Test loading policies when file doesn't exist."""
@@ -359,6 +368,16 @@ class TestActorCriticOptimizer:
         assert isinstance(result, OptimizationResult)
         # Either failed or returned original
         assert result.success is False or result.optimized_code == code
+
+    def test_optimize_accepts_typed_extra_options(self, optimizer, sample_task):
+        """Typed extra optimize options should not affect result contract."""
+        result = optimizer.optimize(
+            task=sample_task,
+            code="def x(): return 1",
+            baseline_metrics={},
+            extra_optimize_options={"attempt": 1},
+        )
+        assert isinstance(result, OptimizationResult)
     
     def test_policy_persistence(self, optimizer, tmp_path):
         """Test that policies persist across optimizer instances."""

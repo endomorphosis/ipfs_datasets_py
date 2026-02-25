@@ -41,6 +41,73 @@ It is intentionally infinite: finish work, add new work, repeat.
 - `[docs]` docs and onboarding
 - `[security]` safety hardening
 
+## Comprehensive Refactor Program (Rolling)
+
+This is the execution plan for ongoing refactor + module improvement work.
+Keep this section small and current; treat older duplicate items below as archive context.
+
+### Phase 1: Contract Stabilization (P1)
+- Target: eliminate public API ambiguity and typing drift.
+- Scope:
+  - Query/Graphrag/Logic/Agentic entrypoint signatures.
+  - Shared context/config dataclass normalization.
+  - `mypy --strict` closure for optimizer public surfaces.
+- Exit criteria:
+  - No public entrypoint returns untyped ambiguous payloads.
+  - Strict typing green on priority modules touched this cycle.
+
+### Phase 2: GraphRAG Decomposition (P1/P2)
+- Target: split high-churn monoliths into composable modules with parity tests.
+- Scope:
+  - `query_optimizer.py` split (`query_planner.py`, `traversal_heuristics.py`, `learning_adapter.py`, `serialization.py`).
+  - Remove duplicate logic and circular import pressure.
+- Exit criteria:
+  - Behavior parity suites pass pre/post split.
+  - Module boundaries documented and import graph simplified.
+
+### Phase 3: Reliability + Security Guardrails (P1/P2)
+- Target: make failure behavior deterministic and safe.
+- Scope:
+  - External backend timeout/retry/circuit-breaker consistency.
+  - CLI/file-path safety checks and log redaction checks.
+  - Base-exception propagation guarantees in fallback paths.
+- Exit criteria:
+  - Typed fallback tests exist for all critical persistence/network paths.
+  - Security-related log leakage regression coverage is green.
+
+### Phase 4: Performance + Observability (P2)
+- Target: improve throughput while increasing diagnosability.
+- Scope:
+  - Benchmark/profiling baselines for extraction/validation/query paths.
+  - Structured JSON logging schema standardization.
+  - Prometheus + OTEL hooks for core run boundaries.
+- Exit criteria:
+  - Baseline snapshots versioned in docs.
+  - Structured log schema enforced in pipeline and optimizer emitters.
+
+### Phase 5: Docs + Developer Velocity (P2/P3)
+- Target: reduce ramp-up time and prevent docs/code drift.
+- Scope:
+  - Architecture diagrams, quick-starts, contributor workflow docs.
+  - Recurring docs/code drift audit per cycle.
+- Exit criteria:
+  - New optimizer onboarding path is runnable from docs only.
+  - Docs audit checklist completed each cycle.
+
+## Active Cycle Board (2026-02-25)
+- Strategic lane (in progress): (P1) [arch] Split `graphrag/query_optimizer.py` into focused modules with behavior parity tests.
+- Random lane pool (keep 5 active, one may be in-progress):
+  - [ ] (P2) [tests] Expand property-based testing for ontology stats and config invariants.
+    - Next action: add/enable Hypothesis-backed invariants for one GraphRAG stats module and one config module.
+  - [ ] (P2) [obs] Standardize structured JSON log schema across all optimizer pipelines.
+    - Next action: propagate canonical required fields to remaining structured emitters outside `ontology_pipeline`.
+  - [ ] (P2) [security] Add strict timeout + retry + circuit-breaker policy for all external backend calls.
+    - Next action: implement wrapper conformance test using the new policy inventory as baseline.
+  - [ ] (P2) [api] Standardize context/config dataclasses across GraphRAG/logic/agentic constructors.
+    - Next action: enumerate constructor signatures and identify shared minimum field set.
+  - [ ] (P2) [perf] Parallelize safe batch paths where deterministic ordering can be preserved.
+    - Next action: shortlist two candidate batch methods and define deterministic merge-order strategy.
+
 ## Current Strategic Queue
 
 ### P1/P2 Must-Do
@@ -166,7 +233,26 @@ It is intentionally infinite: finish work, add new work, repeat.
 
 ## Random Rotation Queue (Keep 5 Active)
 
-Active random picks (different tracks):
+### Current Active Random Picks (2026-02-25 cycle)
+- [ ] (P2) [tests] Expand property-based testing for ontology stats and config invariants.
+  - Progress 2026-02-25: selected as active random pick for this cycle; targeting one GraphRAG helper module + one config module first.
+  - Progress 2026-02-25: added Hypothesis-backed config invariants in `tests/unit/optimizers/graphrag/test_extraction_config_hypothesis_invariants.py` (round-trip stability + merge validity); module auto-skips when `hypothesis` is unavailable in the active test env.
+- [ ] (P2) [obs] Standardize structured JSON log schema across all optimizer pipelines.
+  - Progress 2026-02-25: selected as active random pick for this cycle; drafted canonical schema + checklist in `docs/optimizers/STRUCTURED_JSON_LOG_SCHEMA.md`.
+  - Progress 2026-02-25: updated `graphrag/ontology_pipeline.py` `PIPELINE_RUN` + `PIPELINE_BATCH` payloads to include canonical fields (`timestamp`, `level`, `module`, `component`, `optimizer_type`, `run_id`, `message`, `status`) and added regression key-contract assertions in `tests/unit/optimizers/graphrag/test_ontology_pipeline_logging.py` (`3 passed`).
+- [ ] (P2) [security] Add strict timeout + retry + circuit-breaker policy for all external backend calls.
+  - Progress 2026-02-25: selected as active random pick for this cycle; begin with call-site inventory and policy matrix.
+  - Progress 2026-02-25: added resilience coverage + gap matrix in `docs/optimizers/BACKEND_RESILIENCE_POLICY_INVENTORY.md` to drive remaining wrapper standardization and conformance testing.
+  - Progress 2026-02-25: added source-level conformance regression checks in `tests/unit/optimizers/common/test_backend_resilience_conformance.py` asserting shared wrapper usage on core backend call paths and retained circuit-breaker protection in lazy-loader path (`2 passed`).
+- [ ] (P2) [api] Standardize context/config dataclasses across GraphRAG/logic/agentic constructors.
+  - Progress 2026-02-25: selected as active random pick for this cycle; start with signature diff and shared dataclass baseline.
+  - Progress 2026-02-25: added constructor/signature baseline + proposed shared context/backend field set in `docs/optimizers/CONTEXT_CONFIG_CONSTRUCTOR_INVENTORY.md` to drive dataclass unification.
+  - Progress 2026-02-25: extended `common/unified_config.py` with legacy context adapters (`domain_type_from_value`, `context_from_optimization_context`, `context_from_ontology_generation_context`) and added regression coverage in `tests/unit/optimizers/common/test_unified_config.py` (`24 passed`).
+- [ ] (P2) [perf] Parallelize safe batch paths where deterministic ordering can be preserved.
+  - Progress 2026-02-25: selected as active random pick for this cycle; identify deterministic-safe candidates before implementation.
+  - Progress 2026-02-25: implemented optional deterministic parallel execution in `graphrag/ontology_pipeline.py::run_batch` via `parallel=True` + `max_workers` kwargs using `ThreadPoolExecutor.map` (order-preserving); added regression coverage in `tests/unit/optimizers/graphrag/test_ontology_batch_processing.py` for order preservation, kwarg isolation, and invalid worker validation (`30 passed` with `test_ontology_pipeline_logging.py`).
+
+### Recently Completed Random Picks
 - [x] (P2) [perf] Add benchmark variant comparing `generate_cache_key(..., include_class_name=True|False)` cost.
   - Done 2026-02-24: extended `benchmarks/bench_query_validation_cache_key.py` to report both `include_class_name=True` and `False` timings per payload size.
 - [x] (P2) [obs] Add example Prometheus alert rule snippets for sustained `QMETRICS_FALLBACK_WRITE_ERROR` occurrences.
@@ -372,6 +458,8 @@ Rotation rules:
   - Progress 2026-02-25: integrated shared resilience policy into logic extraction LLM calls (`logic_theorem_optimizer/logic_extractor.py::_query_llm`) using shared `BackendCallPolicy` + persistent circuit breaker around backend adapter generation calls; added wrapper assertion coverage in `tests/unit/optimizers/logic_theorem_optimizer/test_logic_extractor_exceptions.py` and revalidated fallback behavior (`19 passed` combined with refinement-agent suite).
   - Progress 2026-02-25: integrated shared resilience policy into GraphRAG LLM extraction backend invocation (`graphrag/ontology_generator.py::_invoke_llm_extraction_backend`) and updated fallback handlers for extraction + relationship-type refinement; added wrapper/fallback regression coverage in `tests/unit/optimizers/graphrag/test_ontology_generator_llm_extraction.py` and revalidated related resilience suites (`23 passed` combined run).
   - Progress 2026-02-25: integrated shared resilience policy into logic theorem backend adapter dispatch (`logic_theorem_optimizer/llm_backend.py::LLMBackendAdapter.generate`) with per-backend service naming + persistent circuit-breaker map; added wrapper/fallback regression coverage in `tests/unit/optimizers/logic_theorem_optimizer/test_llm_backend_exceptions.py` and revalidated extractor integration behavior (`10 passed` with `test_logic_extractor_exceptions.py`).
+  - Progress 2026-02-25: tightened `logic_theorem_optimizer/llm_backend.py` typing surface while extending resilience integration (typed backend protocols, typed cache/stat containers, stream-request immutability via `replace`, explicit `run_inference` payload coercion); strict typing slice now passes (`mypy --strict --follow-imports=skip .../llm_backend.py`) and backend exception suite includes non-mutation guard (`5 passed`).
+  - Progress 2026-02-25: extended shared resilience integration to batched backend dispatch in `logic_theorem_optimizer/llm_backend.py::generate_batch` via reusable per-backend policy/breaker helper; added batch wrapper assertion coverage in `tests/unit/optimizers/logic_theorem_optimizer/test_llm_backend_exceptions.py` and revalidated adapter+extractor exception suites (`12 passed` combined, strict mypy still clean for `llm_backend.py`).
 - [ ] (P2) [security] Add redaction checks in logs for credentials/tokens across optimizer modules.
   - Progress 2026-02-25: hardened `agentic/llm_integration.py` error propagation by redacting secret-like substrings (`api_key`, `token`, `sk-*`) before attaching provider failure details; added regression coverage in `tests/unit/optimizers/agentic/test_llm_integration.py`.
   - Progress 2026-02-25: added structured-log redaction checks in `common/structured_logging.py::log_event` by applying `redact_dict` on sensitive key/value maps and recursive string redaction for bearer/token patterns before JSON emission; expanded regression coverage in `tests/unit/optimizers/common/test_structured_logging.py` (`21 passed`).
@@ -462,7 +550,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P2) [arch] Extract serialization helpers into `graphrag/serialization.py`
 - [ ] (P2) [tests] Add unit tests for each extracted module after split
 - [ ] (P3) [docs] Update module-level docstrings to reflect new file layout
-- [ ] (P2) [api] Audit all `**kwargs`-accepting methods in `agentic/` and replace with typed optional parameters
+- [x] (P2) [api] Audit all `**kwargs`-accepting methods in `agentic/` and replace with typed optional parameters
+  - Done 2026-02-25: completed AST signature audit across `optimizers/agentic/**/*.py` and eliminated remaining variadic keyword APIs in `agentic/methods/actor_critic.py` by replacing `**_` with typed `extra_init_options` / `extra_optimize_options`; documented in `docs/optimizers/AGENTIC_KWARGS_AUDIT.md` and validated via `tests/unit/optimizers/agentic/test_actor_critic.py` (`23 passed`).
 - [ ] (P3) [api] Add `__slots__` to hot-path dataclasses for memory efficiency
 - [ ] (P3) [docs] Write architecture diagram for the `generate → critique → optimize → validate` loop
 - [ ] (P3) [obs] Add OpenTelemetry span hooks (behind a feature flag) for distributed tracing
@@ -720,7 +809,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Done 2026-02-24: added dangling endpoint detection assertion in `test_batch_283_bulk_helper_coverage.py`.
 - [ ] (P2) [arch] Extract `QueryPlanner` class (~lines 1–1000 of query_optimizer) into `graphrag/query_planner.py`
 - [ ] (P2) [arch] Extract `LearningAdapter` (learning-hook section) into `graphrag/learning_adapter.py`
-- [ ] (P2) [api] Audit all `**kwargs`-accepting methods in `agentic/` and replace with typed optional params
+- [x] (P2) [api] Audit all `**kwargs`-accepting methods in `agentic/` and replace with typed optional params
+  - Done 2026-02-25: consolidated duplicate tracking entry; `agentic/` no longer exposes `**kwargs` signatures in executable modules after `actor_critic` typed-option refactor and AST audit.
 - [ ] (P2) [api] Standardize "context" objects across GraphRAG / logic / agentic (dataclasses with typed fields)
 - [ ] (P3) [api] Add `__eq__` and `__hash__` to `Entity`, `Relationship`, `CriticScore` for set membership
 - [ ] (P2) [tests] Add property-based tests (Hypothesis) for `Entity`, `ExtractionConfig`, `CriticScore`
@@ -730,6 +820,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Done 2026-02-25: added focused mutation-style regression suite in `tests/unit/optimizers/graphrag/test_batch_304_entity_extraction_result_merge_mutations.py` (entity dedup within `other`, relationship-ID dedup within `other`, metadata collision precedence) and fixed merge dedup logic in `graphrag/ontology_generator.py` to update seen sets incrementally; validated alongside legacy merge coverage (`test_batch64_features.py`, `test_batch89_features.py`) (`60 passed`).
 - [ ] (P2) [tests] Parametrize existing batch tests to reduce boilerplate
   - Progress 2026-02-25: reduced duplicated keyboard-interrupt coverage in `tests/unit/optimizers/graphrag/test_query_unified_learning_state_fallbacks.py` by consolidating separate save/load tests into one `@pytest.mark.parametrize` test (`test_learning_state_io_does_not_swallow_keyboard_interrupt`); focused suite passes (`6 passed`).
+  - Progress 2026-02-25: refactored repetitive session-count and config-diff cases in `tests/unit/optimizers/graphrag/test_batch64_features.py` into parametrized scenarios (`test_session_count_scenarios`, `test_diff_reports_changed_fields`) while preserving behavior; batch-64 suite remains green (`33 passed`).
+  - Progress 2026-02-25: consolidated repeated merge/snapshot-count scenarios in `tests/unit/optimizers/graphrag/test_batch89_features.py` into parametrized tests (`test_entity_merge_scenarios`, `test_snapshot_count_tracks_stash_calls`); focused batch-89 suite remains green (`24 passed`).
 - [ ] (P3) [tests] Add fuzz tests for `LogicValidator.check_consistency`
 - [x] (P2) [obs] Wire `OntologyOptimizer` score history to `profile_time` decorator
   - Done 2026-02-25: wired `@profile_time(slow_threshold_s=0.0)` onto `OntologyOptimizer` history score helpers (`history_as_list`, `score_variance`, `score_stddev`, `score_range`) in `graphrag/ontology_optimizer.py` and added regression coverage in `tests/unit/optimizers/graphrag/test_ontology_optimizer_helpers.py` (`26 passed`).
@@ -878,6 +970,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Done 2026-02-25: verified existing unmocked end-to-end coverage in `tests/unit/optimizers/graphrag/test_ontology_pipeline_e2e.py` and `tests/unit/optimizers/graphrag/test_integration_generator_critic_mediator_loop.py` (`12 passed`).
 - [ ] (P2) [tests] **Parametrize existing batch tests** — Convert repeated test classes into `@pytest.mark.parametrize` to reduce LOC by ~30%.
   - Progress 2026-02-25: consolidated GraphRAG learning-state fallback interrupt tests into a single parametrized path in `tests/unit/optimizers/graphrag/test_query_unified_learning_state_fallbacks.py`; regression run (`6 passed`).
+  - Progress 2026-02-25: reduced duplicated scenario tests in `tests/unit/optimizers/graphrag/test_batch64_features.py` by converting session-count and extraction-config diff cases to parametrized variants; regression run (`33 passed`).
+  - Progress 2026-02-25: reduced duplicated scenario tests in `tests/unit/optimizers/graphrag/test_batch89_features.py` by converting entity-merge and snapshot-count cases to parametrized variants; regression run (`24 passed`).
 - [x] (P2) [tests] **Fix `test_end_to_end_pipeline.py`** — The externally-committed E2E tests fail because `OntologyGenerator.__init__` rejects `ExtractionConfig` objects. Fix the `ipfs_accelerate_config.get()` call to handle dataclass configs.
   - Done 2026-02-24: added explicit dataclass-config regression case in `tests/unit/optimizers/graphrag/test_end_to_end_pipeline.py` and re-ran full E2E suite (`25 passed` including new batch-extract tests).
 - [ ] (P3) [tests] **Mutation testing** — Run `mutmut` on `ontology_critic.py` and fix surviving mutants.

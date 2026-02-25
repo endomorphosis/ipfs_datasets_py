@@ -183,6 +183,18 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         # Cache for entity importance scores (used in Wikipedia graph optimization)
         self._entity_importance_cache: Dict[str, float] = {}
         
+        # Query fingerprint cache for optimize_query (38% bottleneck optimization)
+        self._query_fingerprint_cache: Dict[str, str] = {}
+        self._query_fingerprint_max_size = 1000
+        self._fingerprint_hit_count = 0
+        self._fingerprint_access_count = 0
+        
+        # Fast graph type detection cache (32% bottleneck optimization)
+        self._graph_type_detection_cache: Dict[str, str] = {}
+        self._graph_type_detection_max_size = 500
+        self._type_detection_hit_count = 0
+        self._type_detection_access_count = 0
+        
         # Performance metrics for different traversal strategies
         self._strategy_performance = {
             "breadth_first": {"avg_time": 0.0, "relevance_score": 0.0, "count": 0},
@@ -1411,6 +1423,102 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
     def _apply_learning_hook(self) -> None:
         """Best-effort: learn from recent query stats and adjust defaults."""
         apply_learning_hook(self)
+
+    def _create_query_fingerprint_signature(self, query: Dict[str, Any]) -> str:
+        """
+        Create lightweight signature for query fingerprint cache lookup.
+        
+        Much faster than full hash - used for dict key lookup.
+        Optimizes the 38% cache key generation bottleneck.
+        """
+        parts = []
+        
+        # Vector query signature (ignore actual vector data)
+        if "query_vector" in query:
+            vector_len = len(query.get("query_vector", []))
+            parts.append(f"vec_{vector_len}")
+            parts.append(f"vr_{query.get('max_vector_results', 5)}")
+        
+        # Text query signature
+        query_text = query.get("query", query.get("query_text", ""))
+        if query_text:
+            text_hash = hash(str(query_text)[:50]) % (2**31)
+            parts.append(f"txt_{text_hash}")
+        
+        # Traversal parameters
+        traversal = query.get("traversal", {})
+        if isinstance(traversal, dict):
+            parts.append(f"td_{traversal.get('max_depth', 2)}")
+            edge_types = traversal.get("edge_types", [])
+            if edge_types:
+                parts.append(f"et_{len(edge_types)}")
+        
+        # Priority
+        priority = query.get("priority", "normal")
+        parts.append(f"p_{priority}")
+        
+        return "|".join(parts)
+    
+    def _compute_query_fingerprint(self, query: Dict[str, Any]) -> str:
+        """
+        Compute query fingerprint with minimal processing.
+        
+        Optimizations:
+        - Replace vectors with placeholder early (avoid hashing large arrays)
+        - Use incremental string building instead of deepcopy
+        - Minimal normalization
+        """
+        # Normalize query for hashing
+        normalized = {}
+        for key, value in query.items():
+            if key == "query_vector" and isinstance(value, (list, tuple)):
+                # Replace vector with size hint
+                normalized[key] = f"[vector_{len(value)}]"
+            elif isinstance(value, dict):
+                # Recursively normalize dicts (one level only for speed)
+                normalized[key] = {k: v if not isinstance(v, (list, tuple)) or len(v) < 10 else f"[list_{len(v)}]" 
+                                  for k, v in value.items()}
+            elif isinstance(value, (list, tuple)) and len(value) > 10:
+                # Replace large lists with size hint
+                normalized[key] = f"[list_{len(value)}]"
+            else:
+                normalized[key] = value
+        
+        # Hash the normalized query
+        try:
+            import json
+            json_str = json.dumps(normalized, sort_keys=True, default=str)
+            return hashlib.sha256(json_str.encode("utf-8")).hexdigest()
+        except (TypeError, ValueError):
+            # Fallback for non-serializable objects
+            return hashlib.sha256(str(normalized).encode("utf-8")).hexdigest()
+    
+    def get_optimization_stats(self) -> Dict[str, Any]:
+        """
+        Get optimization statistics for monitoring performance improvements.
+        
+        Returns:
+            Dict with cache hit rates and counts
+        """
+        fp_hit_rate = (self._fingerprint_hit_count / self._fingerprint_access_count * 100) if self._fingerprint_access_count > 0 else 0
+        type_hit_rate = (self._type_detection_hit_count / self._type_detection_access_count * 100) if self._type_detection_access_count > 0 else 0
+        
+        return {
+            "query_fingerprint_cache": {
+                "size": len(self._query_fingerprint_cache),
+                "max_size": self._query_fingerprint_max_size,
+                "accesses": self._fingerprint_access_count,
+                "hits": self._fingerprint_hit_count,
+                "hit_rate_percent": fp_hit_rate,
+            },
+            "graph_type_detection_cache": {
+                "size": len(self._graph_type_detection_cache),
+                "max_size": self._graph_type_detection_max_size,
+                "accesses": self._type_detection_access_count,
+                "hits": self._type_detection_hit_count,
+                "hit_rate_percent": type_hit_rate,
+            }
+        }
 
     def get_execution_plan(self, query: Dict[str, Any], priority: str = "normal", graph_processor: Any = None) -> Dict[str, Any]:
         """

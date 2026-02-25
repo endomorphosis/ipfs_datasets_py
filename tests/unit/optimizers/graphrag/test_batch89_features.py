@@ -122,23 +122,25 @@ class TestScoreStd:
 
 
 class TestMerge:
-    def test_empty_merge(self):
-        r = _make_result()
-        merged = r.merge(_make_result())
-        assert merged.entities == []
-
-    def test_combines_entities(self):
-        r1 = _make_result(entities=[_make_entity("1", "A")])
-        r2 = _make_result(entities=[_make_entity("2", "B")])
-        merged = r1.merge(r2)
-        assert len(merged.entities) == 2
-
-    def test_deduplicates_by_id(self):
-        e = _make_entity("1", "A")
-        r1 = _make_result(entities=[e])
-        r2 = _make_result(entities=[_make_entity("2", "a")])  # same text lowercased
-        merged = r1.merge(r2)
-        assert len(merged.entities) == 1
+    @pytest.mark.parametrize(
+        "left,right,expected_entity_count",
+        [
+            (_make_result(), _make_result(), 0),
+            (
+                _make_result(entities=[_make_entity("1", "A")]),
+                _make_result(entities=[_make_entity("2", "B")]),
+                2,
+            ),
+            (
+                _make_result(entities=[_make_entity("1", "A")]),
+                _make_result(entities=[_make_entity("2", "a")]),  # same text lowercased
+                1,
+            ),
+        ],
+    )
+    def test_entity_merge_scenarios(self, left, right, expected_entity_count):
+        merged = left.merge(right)
+        assert len(merged.entities) == expected_entity_count
 
     def test_self_takes_priority(self):
         e1 = Entity(id="1", text="Alice", type="PERSON", confidence=0.9)
@@ -166,14 +168,18 @@ class TestMerge:
 
 
 class TestSnapshotCount:
-    def test_zero_initially(self):
+    @pytest.mark.parametrize(
+        "stash_calls,expected_count",
+        [
+            (0, 0),
+            (1, 1),
+        ],
+    )
+    def test_snapshot_count_tracks_stash_calls(self, stash_calls: int, expected_count: int):
         med = _make_mediator()
-        assert med.snapshot_count() == 0
-
-    def test_increments_after_stash(self):
-        med = _make_mediator()
-        med.stash({})
-        assert med.snapshot_count() == 1
+        for _ in range(stash_calls):
+            med.stash({})
+        assert med.snapshot_count() == expected_count
 
     def test_equals_get_undo_depth(self):
         med = _make_mediator()

@@ -220,10 +220,18 @@ class OntologyOptimizer:
 
     def _emit_analyze_batch_summary(self, payload: Dict[str, Any]) -> None:
         """Emit one structured JSON INFO log for ``analyze_batch`` observability."""
+        from datetime import datetime, timezone
+
         summary = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "level": "INFO",
+            "message": "Ontology optimizer batch analysis summary",
             "event": "ontology_optimizer.analyze_batch.summary",
+            "module": __name__,
+            "component": "ontology_optimizer",
+            "optimizer_type": "graphrag",
             "optimizer_pipeline": "graphrag",
-            "timestamp": time.time(),
+            "run_id": f"ontology-optimizer-batch-{int(time.time() * 1000)}",
             **payload,
         }
         self._log.info(

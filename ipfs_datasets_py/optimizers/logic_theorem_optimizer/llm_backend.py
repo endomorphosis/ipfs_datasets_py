@@ -14,7 +14,7 @@ Supports:
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Iterator
+from typing import Any, Dict, Iterator, List, Optional, Protocol, runtime_checkable, cast
 from dataclasses import dataclass, replace
 from enum import Enum
 
@@ -23,6 +23,30 @@ from ipfs_datasets_py.optimizers.common.circuit_breaker import CircuitBreaker
 from ipfs_datasets_py.optimizers.common.exceptions import CircuitBreakerOpenError, RetryableBackendError
 
 logger = logging.getLogger(__name__)
+
+
+@runtime_checkable
+class SupportsGenerate(Protocol):
+    """Protocol for backends that provide single-request generation."""
+
+    def generate(self, request: "LLMRequest") -> "LLMResponse":
+        """Generate a single response for the request."""
+
+
+@runtime_checkable
+class SupportsGenerateStream(Protocol):
+    """Protocol for backends that support streaming generation."""
+
+    def generate_stream(self, request: "LLMRequest") -> Iterator[str]:
+        """Yield streaming response chunks."""
+
+
+@runtime_checkable
+class SupportsGenerateBatch(Protocol):
+    """Protocol for backends that support batch generation."""
+
+    def generate_batch(self, requests: List["LLMRequest"]) -> List["LLMResponse"]:
+        """Generate responses for a batch of requests."""
 
 
 class LLMBackendType(Enum):
@@ -49,9 +73,9 @@ class LLMRequest:
     temperature: float = 0.7
     max_tokens: int = 1024
     stream: bool = False
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.metadata is None:
             self.metadata = {}
 
@@ -73,9 +97,9 @@ class LLMResponse:
     tokens_used: int = 0
     finish_reason: str = "stop"
     backend: str = "unknown"
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.metadata is None:
             self.metadata = {}
 
@@ -98,7 +122,7 @@ class LLMBackendAdapter:
         preferred_backend: Optional[str] = None,
         fallback_to_mock: bool = True,
         enable_caching: bool = True
-    ):
+    ) -> None:
         """Initialize the LLM backend adapter.
         
         Args:
@@ -122,7 +146,7 @@ class LLMBackendAdapter:
         self._backend_circuit_breakers: Dict[str, CircuitBreaker[LLMResponse]] = {}
         
         # Initialize backends
-        self.backends = {}
+        self.backends: Dict[str, SupportsGenerate] = {}
         self._init_backends()
         
         # Select active backend
@@ -130,10 +154,10 @@ class LLMBackendAdapter:
         logger.info(f"LLM backend adapter initialized with: {self.active_backend}")
         
         # Cache for responses
-        self.cache = {} if enable_caching else None
+        self.cache: Optional[Dict[str, LLMResponse]] = {} if enable_caching else None
         
         # Statistics
-        self.stats = {
+        self.stats: Dict[str, Any] = {
             'requests': 0,
             'cache_hits': 0,
             'cache_misses': 0,
@@ -198,24 +222,15 @@ class LLMBackendAdapter:
         try:
             backend_name = self.active_backend
             backend = self.backends[backend_name]
-            backend_policy = replace(
-                self._backend_call_policy,
-                service_name=f"{self._backend_call_policy.service_name}_{backend_name}",
-            )
-            circuit_breaker = self._backend_circuit_breakers.get(backend_name)
-            if circuit_breaker is None:
-                circuit_breaker = CircuitBreaker(
-                    name=backend_policy.service_name,
-                    failure_threshold=backend_policy.circuit_failure_threshold,
-                    recovery_timeout=backend_policy.circuit_recovery_timeout,
-                    expected_exception=Exception,
-                )
-                self._backend_circuit_breakers[backend_name] = circuit_breaker
+            backend_policy, circuit_breaker = self._policy_and_breaker_for_backend(backend_name)
 
-            response = execute_with_resilience(
-                lambda: backend.generate(request),
-                backend_policy,
-                circuit_breaker=circuit_breaker,
+            response = cast(
+                LLMResponse,
+                execute_with_resilience(
+                    lambda: backend.generate(request),
+                    backend_policy,
+                    circuit_breaker=circuit_breaker,
+                ),
             )
             response.backend = backend_name
             
@@ -246,6 +261,26 @@ class LLMBackendAdapter:
                 return self.backends['mock'].generate(request)
             
             raise
+
+    def _policy_and_breaker_for_backend(
+        self,
+        backend_name: str,
+    ) -> tuple[BackendCallPolicy, CircuitBreaker[LLMResponse]]:
+        """Return stable resilience policy + circuit breaker for a backend."""
+        backend_policy = replace(
+            self._backend_call_policy,
+            service_name=f"{self._backend_call_policy.service_name}_{backend_name}",
+        )
+        circuit_breaker = self._backend_circuit_breakers.get(backend_name)
+        if circuit_breaker is None:
+            circuit_breaker = CircuitBreaker(
+                name=backend_policy.service_name,
+                failure_threshold=backend_policy.circuit_failure_threshold,
+                recovery_timeout=backend_policy.circuit_recovery_timeout,
+                expected_exception=Exception,
+            )
+            self._backend_circuit_breakers[backend_name] = circuit_breaker
+        return backend_policy, circuit_breaker
     
     def generate_stream(
         self,
@@ -259,14 +294,14 @@ class LLMBackendAdapter:
         Yields:
             Text chunks
         """
-        request.stream = True
+        request = replace(request, stream=True)
         backend = self.backends[self.active_backend]
         
-        if hasattr(backend, 'generate_stream'):
+        if isinstance(backend, SupportsGenerateStream):
             yield from backend.generate_stream(request)
         else:
             # Fallback: return entire response
-            response = backend.generate(request)
+            response = self.generate(request)
             yield response.text
     
     def generate_batch(
@@ -283,8 +318,16 @@ class LLMBackendAdapter:
         """
         backend = self.backends[self.active_backend]
         
-        if hasattr(backend, 'generate_batch'):
-            responses = backend.generate_batch(requests)
+        if isinstance(backend, SupportsGenerateBatch):
+            backend_policy, circuit_breaker = self._policy_and_breaker_for_backend(self.active_backend)
+            responses = cast(
+                List[LLMResponse],
+                execute_with_resilience(
+                    lambda: backend.generate_batch(requests),
+                    backend_policy,
+                    circuit_breaker=circuit_breaker,
+                ),
+            )
         else:
             # Fallback: generate one by one
             responses = [self.generate(req) for req in requests]
@@ -328,7 +371,7 @@ class LLMBackendAdapter:
 class AccelerateBackend:
     """Backend using ipfs_accelerate_py."""
     
-    def __init__(self, manager):
+    def __init__(self, manager: Any) -> None:
         """Initialize accelerate backend.
         
         Args:
@@ -354,17 +397,20 @@ class AccelerateBackend:
                 temperature=request.temperature,
                 max_tokens=request.max_tokens
             )
+            if not isinstance(result, dict):
+                raise TypeError("run_inference() must return a dict payload")
+            payload = cast(Dict[str, Any], result)
             
             # Extract response
-            text = result.get('output', result.get('text', ''))
-            tokens = result.get('tokens_used', 0)
+            text = str(payload.get('output', payload.get('text', '')))
+            tokens = int(payload.get('tokens_used', 0))
             
             return LLMResponse(
                 text=text,
                 model=request.model,
                 tokens_used=tokens,
                 finish_reason="stop",
-                metadata=result
+                metadata=payload
             )
             
         except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:

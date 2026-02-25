@@ -775,7 +775,7 @@ class ActorCriticOptimizer(AgenticOptimizer):
         agent_id: str = "actor-critic",
         change_control: ChangeControlMethod = ChangeControlMethod.PATCH,
         config: Optional[Dict[str, Any]] = None,
-        **_: Any,
+        extra_init_options: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(
             agent_id=agent_id,
@@ -787,6 +787,8 @@ class ActorCriticOptimizer(AgenticOptimizer):
         self.learning_rate = learning_rate
         self.exploration_rate = exploration_rate
         self.policy_file = policy_file or f".actor_critic_policy_{agent_id}.json"
+        # Compatibility hook for callers that previously passed loose kwargs.
+        self.extra_init_options = dict(extra_init_options or {})
         self.policies: Dict[str, Policy] = {}
         self._success_counts: Dict[str, int] = {}
         self.load_policies()
@@ -961,8 +963,9 @@ class ActorCriticOptimizer(AgenticOptimizer):
         task: OptimizationTask,
         code: Optional[str] = None,
         baseline_metrics: Optional[Dict[str, Any]] = None,
-        **_: Any,
+        extra_optimize_options: Optional[Dict[str, Any]] = None,
     ) -> OptimizationResult:
+        _ = extra_optimize_options  # Reserved for forward-compatible options.
         baseline_metrics = baseline_metrics or {}
         original_code = code or ""
 

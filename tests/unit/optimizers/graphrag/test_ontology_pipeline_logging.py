@@ -26,6 +26,21 @@ def _extract_json_payload(captured: str, marker: str) -> dict:
     return payloads[0]
 
 
+def _assert_canonical_log_fields(payload: dict) -> None:
+    for key in (
+        "timestamp",
+        "level",
+        "event",
+        "module",
+        "component",
+        "optimizer_type",
+        "run_id",
+        "schema_version",
+        "message",
+    ):
+        assert key in payload
+
+
 def test_pipeline_run_emits_json_log(caplog, capsys):
     """Pipeline run should emit structured JSON log payload."""
     pipeline = OntologyPipeline(domain="general", use_llm=False, max_rounds=1)
@@ -37,8 +52,12 @@ def test_pipeline_run_emits_json_log(caplog, capsys):
 
     captured = (caplog.text or "") + "\n" + capsys.readouterr().err
     payload = _extract_json_payload(captured, "PIPELINE_RUN:")
+    _assert_canonical_log_fields(payload)
 
     assert payload["event"] == "ontology_pipeline_run"
+    assert payload["level"] == "INFO"
+    assert payload["component"] == "ontology_pipeline"
+    assert payload["optimizer_type"] == "graphrag"
     assert payload["optimizer_pipeline"] == "graphrag"
     assert payload["schema"] == "ipfs_datasets_py.optimizer_log"
     assert payload["schema_version"] == DEFAULT_SCHEMA_VERSION
@@ -75,8 +94,12 @@ def test_pipeline_batch_emits_json_log(caplog, capsys):
         None,
     )
     assert payload is not None, "Expected at least one full PIPELINE_BATCH payload with domain"
+    _assert_canonical_log_fields(payload)
 
     assert payload["event"] == "ontology_pipeline_batch"
+    assert payload["level"] == "INFO"
+    assert payload["component"] == "ontology_pipeline"
+    assert payload["optimizer_type"] == "graphrag"
     assert payload["optimizer_pipeline"] == "graphrag"
     assert payload["schema"] == "ipfs_datasets_py.optimizer_log"
     assert payload["schema_version"] == DEFAULT_SCHEMA_VERSION

@@ -270,6 +270,83 @@ def create_context(
         return BaseContext(session_id=session_id, domain=domain, **kwargs)
 
 
+def domain_type_from_value(domain: Any) -> DomainType:
+    """Best-effort normalize domain values to :class:`DomainType`."""
+    if isinstance(domain, DomainType):
+        return domain
+    if isinstance(domain, str):
+        normalized = domain.strip().lower()
+        mapping = {
+            "graphrag": DomainType.GRAPHRAG,
+            "graph": DomainType.GRAPHRAG,
+            "logic": DomainType.LOGIC,
+            "agentic": DomainType.AGENTIC,
+            "code": DomainType.CODE,
+            "hybrid": DomainType.HYBRID,
+        }
+        return mapping.get(normalized, DomainType.HYBRID)
+    return DomainType.HYBRID
+
+
+def context_from_optimization_context(context: Any) -> BaseContext:
+    """Adapt legacy ``OptimizationContext``-like objects into unified contexts."""
+    session_id = str(getattr(context, "session_id", ""))
+    domain_raw = getattr(context, "domain", DomainType.HYBRID)
+    domain = domain_type_from_value(domain_raw)
+    metadata = dict(getattr(context, "metadata", {}) or {})
+    input_data = getattr(context, "input_data", None)
+
+    if domain == DomainType.GRAPHRAG:
+        return GraphRAGContext(
+            session_id=session_id,
+            domain=domain,
+            metadata=metadata,
+            input_text=input_data if isinstance(input_data, str) else None,
+            input_documents=input_data if isinstance(input_data, dict) else None,
+            ontology_domain=str(domain_raw) if domain_raw is not None else None,
+        )
+    if domain == DomainType.LOGIC:
+        return LogicContext(session_id=session_id, domain=domain, metadata=metadata)
+    if domain == DomainType.AGENTIC:
+        return AgenticContext(session_id=session_id, domain=domain, metadata=metadata)
+    return BaseContext(session_id=session_id, domain=domain, metadata=metadata)
+
+
+def context_from_ontology_generation_context(
+    context: Any,
+    *,
+    session_id: str = "graphrag-session",
+) -> GraphRAGContext:
+    """Adapt ``OntologyGenerationContext``-like objects into ``GraphRAGContext``."""
+    data_source = getattr(context, "data_source", None)
+    data_type = getattr(context, "data_type", None)
+    domain = str(getattr(context, "domain", "graphrag"))
+    extraction_strategy = getattr(context, "extraction_strategy", None)
+    base_ontology = getattr(context, "base_ontology", None)
+    extraction_config = getattr(context, "config", None)
+    extraction_context: Optional[Dict[str, Any]] = None
+    if extraction_config is not None:
+        if hasattr(extraction_config, "to_dict"):
+            extraction_context = extraction_config.to_dict()
+        elif isinstance(extraction_config, dict):
+            extraction_context = dict(extraction_config)
+
+    return GraphRAGContext(
+        session_id=session_id,
+        domain=DomainType.GRAPHRAG,
+        metadata={
+            "data_source": data_source,
+            "data_type": str(data_type) if data_type is not None else None,
+            "extraction_strategy": str(extraction_strategy)
+            if extraction_strategy is not None
+            else None,
+        },
+        input_documents=base_ontology if isinstance(base_ontology, dict) else None,
+        extraction_context=extraction_context,
+        ontology_domain=domain,
+    )
+
+
 __all__ = [
     "DomainType",
     "BaseConfig",
@@ -282,4 +359,7 @@ __all__ = [
     "LogicContext",
     "AgenticContext",
     "create_context",
+    "domain_type_from_value",
+    "context_from_optimization_context",
+    "context_from_ontology_generation_context",
 ]

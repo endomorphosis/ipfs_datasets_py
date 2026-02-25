@@ -5,6 +5,7 @@ Validates batch processing behavior with various document configurations,
 error handling, progress tracking, and performance characteristics.
 """
 
+import time
 import pytest
 from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline, PipelineResult
 
@@ -241,6 +242,39 @@ class TestBatchProgressCallback:
         )
         
         assert len(results) == 2
+
+
+class TestBatchParallelExecution:
+    """Tests for optional deterministic parallel batch execution."""
+
+    def test_parallel_batch_preserves_input_order(self, pipeline, monkeypatch):
+        class _Score:
+            def __init__(self, overall: float = 0.5):
+                self.overall = overall
+
+        def fake_run(text, **kwargs):
+            # Intentionally make later items finish faster.
+            time.sleep(max(0.0, 0.02 - (len(text) * 0.003)))
+            return PipelineResult(
+                ontology={"entities": [{"id": text}], "relationships": []},
+                score=_Score(),
+                metadata={"text": text, "kwargs": kwargs},
+            )
+
+        monkeypatch.setattr(pipeline, "run", fake_run)
+
+        docs = ["aaa", "bbbbbb", "cc"]
+        results = pipeline.run_batch(docs, refine=False, parallel=True, max_workers=3)
+
+        assert [result.metadata["text"] for result in results] == docs
+        for result in results:
+            assert "parallel" not in result.metadata["kwargs"]
+            assert "max_workers" not in result.metadata["kwargs"]
+            assert result.metadata["kwargs"]["refine"] is False
+
+    def test_parallel_batch_rejects_invalid_max_workers(self, pipeline):
+        with pytest.raises(ValueError, match="max_workers must be >= 1"):
+            pipeline.run_batch(["doc"], parallel=True, max_workers=0)
 
 
 class TestBatchWithCacheWarming:

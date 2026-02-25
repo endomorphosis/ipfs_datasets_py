@@ -57,20 +57,18 @@ class TestScoreDelta:
         with pytest.raises(IndexError):
             opt.score_delta(0, 1)
 
-    def test_positive_delta(self):
+    @pytest.mark.parametrize(
+        "history,indices,expected",
+        [
+            ([_FakeEntry(0.3), _FakeEntry(0.8)], (0, 1), 0.5),
+            ([_FakeEntry(0.8), _FakeEntry(0.3)], (0, 1), -0.5),
+            ([_FakeEntry(0.7)], (0, 0), 0.0),
+        ],
+    )
+    def test_delta_scenarios(self, history, indices, expected):
         opt = OntologyOptimizer()
-        opt._history.extend([_FakeEntry(0.3), _FakeEntry(0.8)])
-        assert opt.score_delta(0, 1) == pytest.approx(0.5)
-
-    def test_negative_delta(self):
-        opt = OntologyOptimizer()
-        opt._history.extend([_FakeEntry(0.8), _FakeEntry(0.3)])
-        assert opt.score_delta(0, 1) == pytest.approx(-0.5)
-
-    def test_same_index_zero(self):
-        opt = OntologyOptimizer()
-        opt._history.append(_FakeEntry(0.7))
-        assert opt.score_delta(0, 0) == pytest.approx(0.0)
+        opt._history.extend(history)
+        assert opt.score_delta(*indices) == pytest.approx(expected)
 
     def test_returns_float(self):
         opt = OntologyOptimizer()
@@ -148,17 +146,24 @@ class TestConfigMerge:
         merged = a.merge(b)
         assert merged is not a and merged is not b
 
-    def test_other_overrides_non_default(self):
-        a = ExtractionConfig(max_entities=100)
-        b = ExtractionConfig(max_entities=50)
-        merged = a.merge(b)
-        assert merged.max_entities == 50
-
-    def test_self_preserved_when_other_default(self):
-        a = ExtractionConfig(confidence_threshold=0.9)
-        b = ExtractionConfig()
-        merged = a.merge(b)
-        assert merged.confidence_threshold == pytest.approx(0.9)
+    @pytest.mark.parametrize(
+        "base,override,assertion",
+        [
+            (
+                ExtractionConfig(max_entities=100),
+                ExtractionConfig(max_entities=50),
+                lambda merged: merged.max_entities == 50,
+            ),
+            (
+                ExtractionConfig(confidence_threshold=0.9),
+                ExtractionConfig(),
+                lambda merged: merged.confidence_threshold == pytest.approx(0.9),
+            ),
+        ],
+    )
+    def test_merge_field_resolution(self, base, override, assertion):
+        merged = base.merge(override)
+        assert assertion(merged)
 
     def test_returns_extraction_config(self):
         assert isinstance(ExtractionConfig().merge(ExtractionConfig()), ExtractionConfig)

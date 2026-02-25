@@ -18,6 +18,14 @@ class _BrokenBackend:
         raise ValueError("backend failure")
 
 
+class _BatchBackend:
+    def generate(self, request: LLMRequest):
+        return MockBackend().generate(request)
+
+    def generate_batch(self, requests):
+        return [MockBackend().generate(req) for req in requests]
+
+
 class _ManagerTypeError:
     def run_inference(self, **kwargs):
         raise TypeError("bad manager call")
@@ -92,3 +100,39 @@ def test_adapter_generate_falls_back_to_mock_on_retryable_backend_error(
 
     assert response.backend == "mock"
     assert adapter.stats["errors"] == 1
+
+
+def test_generate_stream_does_not_mutate_request_stream_flag() -> None:
+    adapter = LLMBackendAdapter(preferred_backend="mock", fallback_to_mock=True, enable_caching=False)
+    request = LLMRequest(prompt="stream test", stream=False)
+
+    chunks = list(adapter.generate_stream(request))
+
+    assert chunks
+    assert request.stream is False
+
+
+def test_generate_batch_uses_common_backend_resilience_wrapper(monkeypatch: pytest.MonkeyPatch) -> None:
+    adapter = LLMBackendAdapter(preferred_backend="mock", fallback_to_mock=True, enable_caching=False)
+    adapter.backends = {
+        "accelerate": _BatchBackend(),
+        "mock": MockBackend(),
+    }
+    adapter.active_backend = "accelerate"
+    captured = {"service_name": None, "breaker_name": None}
+
+    def _fake_resilience(operation, policy, *, circuit_breaker, sleep_fn=None):
+        captured["service_name"] = policy.service_name
+        captured["breaker_name"] = getattr(circuit_breaker, "name", None)
+        return operation()
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.optimizers.logic_theorem_optimizer.llm_backend.execute_with_resilience",
+        _fake_resilience,
+    )
+
+    responses = adapter.generate_batch([LLMRequest(prompt="a"), LLMRequest(prompt="b")])
+
+    assert len(responses) == 2
+    assert captured["service_name"] == "logic_theorem_optimizer_backend_accelerate"
+    assert captured["breaker_name"] == "logic_theorem_optimizer_backend_accelerate"

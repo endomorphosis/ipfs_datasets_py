@@ -1,6 +1,7 @@
 """Tests for unified configuration and context dataclasses."""
 
 import pytest
+from types import SimpleNamespace
 from ipfs_datasets_py.optimizers.common.unified_config import (
     DomainType,
     GraphRAGConfig,
@@ -11,7 +12,11 @@ from ipfs_datasets_py.optimizers.common.unified_config import (
     LogicContext,
     AgenticContext,
     create_context,
+    context_from_optimization_context,
+    context_from_ontology_generation_context,
+    domain_type_from_value,
 )
+from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationContext
 
 
 class TestDomainType:
@@ -214,6 +219,50 @@ class TestContextFactory:
         )
         from ipfs_datasets_py.optimizers.common.unified_config import BaseContext
         assert type(context).__name__ == "BaseContext"
+
+
+class TestContextAdapters:
+    """Test legacy-to-unified context adapters."""
+
+    def test_domain_type_from_value_normalizes_aliases(self):
+        assert domain_type_from_value("graph") == DomainType.GRAPHRAG
+        assert domain_type_from_value("logic") == DomainType.LOGIC
+        assert domain_type_from_value("unknown") == DomainType.HYBRID
+
+    def test_context_from_optimization_context_graphrag(self):
+        legacy = OptimizationContext(
+            session_id="s1",
+            input_data="sample text",
+            domain="graphrag",
+            metadata={"source": "test"},
+        )
+        adapted = context_from_optimization_context(legacy)
+
+        assert isinstance(adapted, GraphRAGContext)
+        assert adapted.session_id == "s1"
+        assert adapted.input_text == "sample text"
+        assert adapted.metadata["source"] == "test"
+
+    def test_context_from_ontology_generation_context(self):
+        fake_context = SimpleNamespace(
+            data_source="doc.txt",
+            data_type="text",
+            domain="legal",
+            extraction_strategy="hybrid",
+            base_ontology={"entities": [], "relationships": []},
+            config={"confidence_threshold": 0.7},
+        )
+        adapted = context_from_ontology_generation_context(
+            fake_context,
+            session_id="g1",
+        )
+
+        assert isinstance(adapted, GraphRAGContext)
+        assert adapted.session_id == "g1"
+        assert adapted.ontology_domain == "legal"
+        assert adapted.metadata["data_source"] == "doc.txt"
+        assert adapted.metadata["data_type"] == "text"
+        assert adapted.extraction_context == {"confidence_threshold": 0.7}
 
 
 class TestConfigMerging:

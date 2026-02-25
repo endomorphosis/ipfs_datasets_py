@@ -190,18 +190,27 @@ class TestSessionCount:
         opt = OntologyOptimizer()
         assert opt.session_count() == 0
 
-    def test_sums_num_sessions_from_metadata(self):
+    @pytest.mark.parametrize(
+        "history,expected",
+        [
+            ([_make_report(n_sessions=3), _make_report(n_sessions=5)], 8),
+            (
+                [
+                    OptimizationReport(
+                        average_score=0.7,
+                        trend="stable",
+                        improvement_rate=0.0,
+                        recommendations=[],
+                    )
+                ],
+                0,
+            ),
+        ],
+    )
+    def test_session_count_scenarios(self, history, expected):
         opt = OntologyOptimizer()
-        opt._history.append(_make_report(n_sessions=3))
-        opt._history.append(_make_report(n_sessions=5))
-        assert opt.session_count() == 8
-
-    def test_missing_metadata_treated_as_zero(self):
-        opt = OntologyOptimizer()
-        opt._history.append(OptimizationReport(
-            average_score=0.7, trend="stable", improvement_rate=0.0, recommendations=[]
-        ))
-        assert opt.session_count() == 0
+        opt._history.extend(history)
+        assert opt.session_count() == expected
 
 
 # ---------------------------------------------------------------------------
@@ -213,20 +222,31 @@ class TestExtractionConfigDiff:
         cfg = ExtractionConfig()
         assert cfg.diff(cfg) == {}
 
-    def test_single_field_diff(self):
-        cfg1 = ExtractionConfig(confidence_threshold=0.5)
-        cfg2 = ExtractionConfig(confidence_threshold=0.9)
+    @pytest.mark.parametrize(
+        "cfg1,cfg2,expected_keys",
+        [
+            (
+                ExtractionConfig(confidence_threshold=0.5),
+                ExtractionConfig(confidence_threshold=0.9),
+                {"confidence_threshold"},
+            ),
+            (
+                ExtractionConfig(confidence_threshold=0.5, max_entities=10),
+                ExtractionConfig(confidence_threshold=0.9, max_entities=50),
+                {"confidence_threshold", "max_entities"},
+            ),
+        ],
+    )
+    def test_diff_reports_changed_fields(self, cfg1, cfg2, expected_keys):
         diff = cfg1.diff(cfg2)
-        assert "confidence_threshold" in diff
-        assert diff["confidence_threshold"]["self"] == pytest.approx(0.5)
-        assert diff["confidence_threshold"]["other"] == pytest.approx(0.9)
-
-    def test_multiple_fields_diff(self):
-        cfg1 = ExtractionConfig(confidence_threshold=0.5, max_entities=10)
-        cfg2 = ExtractionConfig(confidence_threshold=0.9, max_entities=50)
-        diff = cfg1.diff(cfg2)
-        assert "confidence_threshold" in diff
-        assert "max_entities" in diff
+        assert expected_keys.issubset(diff.keys())
+        if "confidence_threshold" in expected_keys:
+            assert diff["confidence_threshold"]["self"] == pytest.approx(
+                cfg1.confidence_threshold
+            )
+            assert diff["confidence_threshold"]["other"] == pytest.approx(
+                cfg2.confidence_threshold
+            )
 
     def test_unchanged_fields_not_in_diff(self):
         cfg1 = ExtractionConfig(confidence_threshold=0.5)

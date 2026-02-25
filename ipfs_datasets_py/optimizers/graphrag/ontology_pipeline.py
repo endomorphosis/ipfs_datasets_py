@@ -432,15 +432,22 @@ class OntologyPipeline:
                     self._log.debug("metric_sink.emit_run_metrics failed: %s", exc)
             try:
                 import json as _json
-                from datetime import datetime as _datetime
+                from datetime import datetime as _datetime, timezone as _timezone
 
                 from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
 
                 duration_ms = (time.time() - start_time) * 1000.0
                 stage_durations_ms = {name: duration * 1000.0 for name, duration in stage_timings.items()}
                 payload = {
+                    "timestamp": _datetime.now(_timezone.utc).isoformat(),
+                    "level": "INFO",
+                    "message": "Ontology pipeline run completed",
                     "event": "ontology_pipeline_run",
+                    "module": __name__,
+                    "component": "ontology_pipeline",
+                    "optimizer_type": "graphrag",
                     "optimizer_pipeline": "graphrag",
+                    "run_id": f"pipeline-run-{len(self._run_history)}",
                     "run_index": len(self._run_history),
                     "domain": self.domain,
                     "data_source": data_source,
@@ -454,7 +461,7 @@ class OntologyPipeline:
                     "actions_count": len(actions_applied),
                     "duration_ms": duration_ms,
                     "stage_durations_ms": stage_durations_ms,
-                    "timestamp": _datetime.now().isoformat(),
+                    "status": "success",
                 }
                 self._log.info(
                     "PIPELINE_RUN: %s",
@@ -914,7 +921,9 @@ class OntologyPipeline:
         Args:
             texts: Sequence of raw text strings to process.
             **kwargs: Additional keyword arguments forwarded to each :meth:`run`
-                call (e.g. ``data_source``, ``threshold_hint``).
+                call (e.g. ``data_source``, ``threshold_hint``). Special keys:
+                ``parallel`` (bool, default ``False``) and ``max_workers`` (int)
+                are consumed by this method and are not forwarded to :meth:`run`.
 
         Returns:
             List of :class:`PipelineResult` objects in the same order as
@@ -928,7 +937,26 @@ class OntologyPipeline:
         import time
 
         start_time = time.time()
-        results = [self.run(text, **kwargs) for text in texts]
+        parallel = bool(kwargs.pop("parallel", False))
+        max_workers_raw = kwargs.pop("max_workers", None)
+        if max_workers_raw is None:
+            max_workers = None
+        elif isinstance(max_workers_raw, int):
+            max_workers = max_workers_raw
+        else:
+            raise ValueError("max_workers must be an integer when provided")
+        if max_workers is not None and max_workers < 1:
+            raise ValueError("max_workers must be >= 1")
+
+        if parallel and len(texts) > 1:
+            from concurrent.futures import ThreadPoolExecutor
+
+            worker_count = max_workers if max_workers is not None else min(32, len(texts))
+            with ThreadPoolExecutor(max_workers=worker_count) as executor:
+                # executor.map preserves input order while parallelizing execution.
+                results = list(executor.map(lambda text: self.run(text, **kwargs), texts))
+        else:
+            results = [self.run(text, **kwargs) for text in texts]
 
         data_source = kwargs.get("data_source", "pipeline")
         data_type = kwargs.get("data_type", "text")
@@ -936,7 +964,7 @@ class OntologyPipeline:
 
         try:
             import json as _json
-            from datetime import datetime as _datetime
+            from datetime import datetime as _datetime, timezone as _timezone
 
             from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
 
@@ -949,8 +977,15 @@ class OntologyPipeline:
 
             duration_ms = (time.time() - start_time) * 1000.0
             payload = {
+                "timestamp": _datetime.now(_timezone.utc).isoformat(),
+                "level": "INFO",
+                "message": "Ontology pipeline batch completed",
                 "event": "ontology_pipeline_batch",
+                "module": __name__,
+                "component": "ontology_pipeline",
+                "optimizer_type": "graphrag",
                 "optimizer_pipeline": "graphrag",
+                "run_id": f"pipeline-batch-{int(start_time * 1000)}",
                 "domain": self.domain,
                 "data_source": data_source,
                 "data_type": data_type
@@ -959,7 +994,7 @@ class OntologyPipeline:
                 "refine": refine,
                 "doc_count": len(texts),
                 "duration_ms": duration_ms,
-                "timestamp": _datetime.now().isoformat(),
+                "status": "success",
                 "mean_score": (sum(scores) / len(scores)) if scores else None,
                 "min_score": min(scores) if scores else None,
                 "max_score": max(scores) if scores else None,
