@@ -1,18 +1,19 @@
 # MCP Server Quick Start Guide
 
-**Date:** 2026-02-20  
-**Status:** ✅ Production Ready — All 7 refactoring phases complete  
+**Date:** 2026-02-25  
+**Status:** ✅ Production Ready — All phases complete, MCP++ v1–v39 alignment done  
 **Audience:** New contributors, developers integrating the MCP server
 
 ---
 
 ## 🎯 Overview
 
-The IPFS Datasets MCP Server exposes 382 tools across 60 categories through the Model Context Protocol. It features:
+The IPFS Datasets MCP Server exposes ~407 callable tool functions across 51 categories through the Model Context Protocol. It features:
 - **Dual-runtime architecture** — FastAPI (general tools) + Trio (P2P tools)
-- **Hierarchical tool system** — 99% context reduction (382 tools → 4 meta-tools)
+- **Hierarchical tool system** — 99% context reduction (~407 functions → 4 meta-tools)
 - **Thin wrapper pattern** — all business logic in core modules
-- **1457 tests** passing with 85-90% coverage
+- **MCP++ alignment** — UCAN delegation, event DAG provenance, P2P transport, compliance checking
+- **1,570+ tests** passing with 85-90% coverage
 
 ---
 
@@ -22,11 +23,11 @@ The IPFS Datasets MCP Server exposes 382 tools across 60 categories through the 
 |----------|---------|
 | [README.md](README.md) | Project overview and feature list |
 | [THIN_TOOL_ARCHITECTURE.md](THIN_TOOL_ARCHITECTURE.md) | Architecture principles (start here!) |
-| [PHASES_STATUS.md](PHASES_STATUS.md) | All 7 phases complete with metrics |
-| [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROVEMENT_PLAN_2026_v5.md) | Next-generation improvement areas |
+| [PHASES_STATUS.md](PHASES_STATUS.md) | All phases complete with metrics |
 | [SECURITY.md](SECURITY.md) | Security hardening details |
 | [docs/architecture/](docs/architecture/) | Dual-runtime and MCP++ design |
 | [docs/development/](docs/development/) | Tool development guide |
+| [docs/api/tool-reference.md](docs/api/tool-reference.md) | Complete API reference |
 
 ---
 
@@ -37,7 +38,7 @@ User
  │
  ▼
 HierarchicalToolManager   ← 4 meta-tools (list, schema, dispatch)
- │                            exposes all 382 tools lazily
+ │                            lazily exposes all 51 categories
  ▼
 RuntimeRouter             ← routes to correct async runtime
  ├── FastAPI Runtime  ──→  general tools (datasets, search, graph, …)
@@ -57,6 +58,10 @@ RuntimeRouter             ← routes to correct async runtime
 | `monitoring.py` | Metrics and observability | ~1,750 |
 | `validators.py` | Input validation | ~1,000 |
 | `exceptions.py` | 18 custom exception classes | ~250 |
+| `ucan_delegation.py` | UCAN delegation (MCP++) | ~800 |
+| `compliance_checker.py` | Compliance checking (MCP++) | ~600 |
+| `policy_audit_log.py` | Policy audit logging (MCP++) | ~400 |
+| `mcp_p2p_transport.py` | P2P transport bindings (MCP++) | ~500 |
 
 ---
 
@@ -141,7 +146,7 @@ pytest tests/mcp/ --cov=ipfs_datasets_py.mcp_server --cov-report=html
 pytest tests/mcp/unit/test_hierarchical_tool_manager.py -v
 ```
 
-**Current results:** 1457 passing, 29 skipped, 0 failing
+**Current results:** 1,570+ passing, 0 failing
 
 ---
 
@@ -241,7 +246,7 @@ This is expected when `ipfs_accelerate_py` is not installed. The server degrades
 
 ---
 
-**Guide Version:** 2.0  
-**Last Updated:** 2026-02-20  
+**Guide Version:** 3.0  
+**Last Updated:** 2026-02-25  
 **Status:** ✅ Production Ready
 

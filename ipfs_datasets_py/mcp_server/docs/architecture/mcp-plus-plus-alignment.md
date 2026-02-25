@@ -1,62 +1,152 @@
-# IPFS Datasets MCP Server Integration
+# IPFS Datasets MCP Server — MCP++ Alignment
 
-This document outlines the integration between Claude's Toolbox MCP server and IPFS Datasets Python.
+This document describes how the IPFS Datasets MCP Server aligns with the MCP++ specification
+for advanced peer-to-peer, delegation, and provenance features.
+
+**Last Updated:** 2026-02-25  
+**MCP++ Version:** v39 (sessions 1–84 complete)  
+**Status:** ✅ Full alignment achieved
+
+---
 
 ## Overview
 
-The integration provides a Model Context Protocol (MCP) server for IPFS Datasets Python, enabling AI agents like Claude to interact with IPFS datasets through standardized tools. The server exposes various IPFS Datasets functionality as tools that can be used by AI agents.
+MCP++ extends the base Model Context Protocol with:
+- **UCAN delegation** — decentralized capability-based access control
+- **Event DAG provenance** — content-addressed event lineage
+- **P2P transport bindings** — PubSub-based peer communication
+- **Compliance checking** — automated policy enforcement and backup management
+- **Policy audit logging** — immutable audit trail for policy decisions
+- **NL UCAN policy** — natural language to UCAN policy compilation
 
-## Implementation Status
+---
 
-### Completed
-- Core server implementation
-  - Server setup and configuration
-  - Tool registration system
-  - Integration with IPFS Kit Python (both direct and via MCP)
-  - Error handling and logging
-- Tool implementations
-  - Dataset tools: load_dataset, save_dataset, process_dataset, convert_dataset_format
-  - IPFS tools: pin_to_ipfs, get_from_ipfs
-  - Vector tools: create_vector_index, search_vector_index
-  - Graph tools: query_knowledge_graph
-  - Audit tools: record_audit_event, generate_audit_report
-  - Security tools: check_access_permission
-  - Provenance tools: record_provenance
-- Configuration system
-  - YAML configuration support
-  - Command-line arguments
-  - Programmatic configuration
-- Documentation
-  - README with usage examples
-  - Server configuration documentation
-  - API reference documentation
-- Examples and testing
-  - Basic MCP client example
-  - Comprehensive test script
-  - Interactive demo script
-  - Integration guide for Claude
-- Deployment
-  - Setup script for easy installation
-  - Server launcher script
+## Implemented Components
 
-### Future Enhancements (Now Complete ✅)
+### UCAN Delegation (`ucan_delegation.py`)
 
-These items listed as "future" at initial design time are now complete:
+Full UCAN delegation chain management with support for:
+- `DelegationToken` — individual UCAN tokens with expiry, nonce, audience, capabilities
+- `Capability` — `ability` + `resource` with wildcard (`*`) resource matching
+- `DelegationManager` — persistent delegation store with IPFS-backed reload
+- `MergeResult` — merge protocol with `keys()`, `values()`, `items()`, `__getitem__`, `__len__`
+- `IPFSReloadResult` — pin reload result with `iter_succeeded()`, `iter_all()`, `as_dict()`, `__len__`
 
-- ✅ **Performance optimization for large datasets** — Lazy loading, schema caching, P2P connection
-  pooling (Phase 7, v4 plan)
-- ✅ **Security and authentication enhancements** — SECRET_KEY enforcement, bare-exception handling,
-  subprocess sanitization, error data redaction (Phase 1 Security, SECURITY.md)
-- ✅ **Additional tool implementations** — 344+ tool files across 51 categories (v4/v5 phases)
-- ✅ **Integration with more IPFS services** — IPFS cluster tools, P2P workflow tools, MCP++ integration
-- ✅ **CI/CD pipeline for automated testing** — GitHub Actions workflows with self-hosted runners
-  (see `.github/workflows/README.md`)
-- ✅ **Dashboard for monitoring server status** — `EnhancedMetricsCollector`, `P2PMetricsCollector`,
-  `AdvancedAnalyticsDashboard` (enterprise_api.py, monitoring.py)
+Key operations (v1–v39 complete):
+```python
+mgr = DelegationManager()
+cid = mgr.add(token)                              # Add token → returns CID
+active = list(mgr.active_tokens_by_actor("alice")) # All tokens where audience == "alice"
+by_res = list(mgr.active_tokens_by_resource("*")) # Wildcard resource matching
+merge_result = mgr.merge(other_manager)           # Merge two stores
+mgr.revoke(cid)                                   # Revoke by CID
+```
 
-**Current status (2026-02-22):** No known open enhancements from this list. See
-[MASTER_IMPROVEMENT_PLAN_2026_v6.md](../../MASTER_IMPROVEMENT_PLAN_2026_v6.md) for the next
-round of improvements (coverage, API reference, tool README depth).
+### NL UCAN Policy Compiler (`nl_ucan_policy.py`)
+
+Natural language text → UCAN policy compilation:
+```python
+compiler = NLUCANPolicyCompiler()
+results = compiler.compile_batch(["Only Alice may read dataset X"])
+results_with_explain = compiler.compile_batch_with_explain(texts, fail_fast=False)
+# Returns List[Tuple[result, explanation_str]]
+```
+
+### P2P Transport (`mcp_p2p_transport.py`)
+
+PubSub message bus for P2P communication:
+```python
+bus = PubSubBus()
+sid = bus.subscribe("topic", handler)      # → subscription ID
+bus.publish("topic", {"msg": "hello"})
+topics = bus.topics()                      # All active topics
+count = bus.total_subscriptions()          # Total subscription count (SIDs, not unique handlers)
+ranked = bus.topics_with_count()           # [(topic, count), ...] sorted by count desc
+replaced = bus.resubscribe(old_h, new_h, topic=None)  # Replace handler in-place → count
+topic_map = bus.topic_sid_map()            # {topic: sorted_sid_list}
+```
+
+### Compliance Checker (`compliance_checker.py`)
+
+Automated compliance checking with backup management:
+```python
+checker = ComplianceChecker()
+result = checker.check("/path/to/data")
+summary = checker.backup_summary("/path/to/data")
+bak_files = checker.list_bak_files("/path/to/data")
+newest = checker.newest_backup_name("/path/to/data")  # basename or None
+oldest = checker.oldest_backup_name("/path/to/data")  # basename or None
+names = checker.backup_names("/path/to/data")         # list of basenames
+
+# Merge compliance states
+merge = ComplianceMergeResult(added=1, skipped_protected=0, skipped_duplicate=0)
+d = merge.to_dict()                        # {"added", "skipped_protected", "skipped_duplicate", "total"}
+m2 = ComplianceMergeResult.from_dict(d)   # classmethod; missing keys → 0; ignores "total" key
+```
+
+### Policy Audit Log (`policy_audit_log.py`)
+
+Ring-buffer audit log with JSONL persistence:
+```python
+log = PolicyAuditLog(max_entries=1000)
+log.record(policy_cid="Qm...", intent_cid="Qm...", decision="allow", actor="alice")
+recent = log.recent(max_entries=10)
+log.export_jsonl("/path/audit.jsonl")
+total = log.import_jsonl("/path/audit.jsonl")  # Returns total processed (not capped)
+```
+
+### Event DAG (`event_dag.py`)
+
+Content-addressed event lineage:
+```python
+dag = EventDAG()
+cid = dag.add_event({"type": "dataset_load", "source": "...", "timestamp": "..."})
+event = dag.get_event(cid)
+lineage = dag.get_lineage(cid)  # Full ancestor chain
+```
+
+---
+
+## Architecture Integration
+
+```
+MCP Client (Claude, etc.)
+    │
+    ▼ MCP protocol
+FastMCP server (server.py)
+    │
+    ├── HierarchicalToolManager ─→ lazy-load 51 tool categories
+    │
+    ├── RuntimeRouter ──────────→ FastAPI | Trio dual-runtime
+    │
+    ├── UCAN Layer ─────────────→ ucan_delegation.py (access control)
+    │
+    ├── Event DAG ──────────────→ event_dag.py (provenance)
+    │
+    ├── PubSub Bus ─────────────→ mcp_p2p_transport.py (P2P messaging)
+    │
+    ├── Compliance ─────────────→ compliance_checker.py (policy enforcement)
+    │
+    └── Audit Log ──────────────→ policy_audit_log.py (immutable trail)
+```
+
+---
+
+## Implementation Status (2026-02-25)
+
+| Component | Sessions | Status |
+|-----------|----------|--------|
+| UCAN Delegation (DelegationManager) | v1–v39 | ✅ Complete |
+| NL UCAN Policy Compiler | v1–v39 | ✅ Complete |
+| P2P Transport (PubSubBus) | v1–v39 | ✅ Complete |
+| Compliance Checker | v1–v39 | ✅ Complete |
+| Policy Audit Log | v1–v39 | ✅ Complete |
+| Event DAG | v1–v39 | ✅ Complete |
+| I18N Policy Detection | v22–v30 | ✅ 20 languages (fr/es/de/en/pt/nl/it/ja/zh/ko/ar/sv/ru/el/tr/hi/pl/vi/th/id) |
+| Dual-Runtime (FastAPI+Trio) | Phase 2 | ✅ Complete |
+| anyio-first migration | Phase M/N | ✅ Complete |
+
+---
 
 ## Integration with IPFS Kit Python
 
@@ -65,65 +155,45 @@ The server supports two integration methods with IPFS Kit Python:
 1. **Direct Integration**: Import and use IPFS Kit Python functions directly
 2. **MCP Client Integration**: Connect to an existing IPFS Kit Python MCP server
 
-This flexibility allows users to:
-- Use IPFS Datasets and IPFS Kit Python together directly for maximum efficiency
-- Connect to an existing IPFS Kit Python MCP server for distributed deployments
+### Direct Integration
+
+```python
+from ipfs_datasets_py.mcp_server import start_server
+start_server(host="0.0.0.0", port=8000)
+```
+
+### MCP Client Integration
+
+```python
+start_server(host="0.0.0.0", port=8000, ipfs_kit_mcp_url="http://localhost:8001")
+```
+
+---
 
 ## Directory Structure
 
 ```
 ipfs_datasets_py/mcp_server/
-├── __init__.py           # Package initialization and exports
-├── server.py             # Main server implementation
-├── configs.py            # Configuration management
-├── logger.py             # Logging utilities
-├── start_server.sh       # Convenience script for starting the server
-├── README.md             # Documentation
-├── config/               # Configuration files
-│   └── default_config.yaml  # Default configuration
-└── tools/                # Tool implementations
-    ├── __init__.py       # Tool registration
-    ├── dataset_tools/    # Dataset-related tools
-    ├── ipfs_tools/       # IPFS-related tools
-    ├── vector_tools/     # Vector search tools
-    ├── graph_tools/      # Graph processing tools
-    ├── audit_tools/      # Audit logging tools
-    ├── security_tools/   # Security-related tools
-    └── provenance_tools/ # Data provenance tools
-```
-
-## Usage
-
-```python
-# Start the server
-from ipfs_datasets_py.mcp_server import start_server
-start_server(host="0.0.0.0", port=8000)
-
-# Use with an existing IPFS Kit MCP server
-start_server(host="0.0.0.0", port=8000, ipfs_kit_mcp_url="http://localhost:8001")
-
-# Advanced configuration
-from ipfs_datasets_py.mcp_server import IPFSDatasetsMCPServer, load_config_from_yaml
-configs = load_config_from_yaml("/path/to/config.yaml")
-server = IPFSDatasetsMCPServer(configs)
-server.register_tools()
-await server.start()
-```
-
-## Client Usage
-
-```python
-from modelcontextprotocol.client import MCPClient
-
-# Create client
-client = MCPClient("http://localhost:8000")
-
-# Get available tools
-tools = await client.get_tool_list()
-
-# Call a tool
-result = await client.call_tool("load_dataset", {
-    "source": "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
-    "format": "json"
-})
+├── server.py                   # Main FastMCP server
+├── hierarchical_tool_manager.py  # Lazy tool registry (99% context reduction)
+├── fastapi_service.py          # FastAPI REST runtime
+├── trio_adapter.py             # Trio runtime adapter
+├── trio_bridge.py              # Trio/asyncio bridge
+├── runtime_router.py           # Dual-runtime dispatch
+├── p2p_service_manager.py      # P2P integration manager
+├── ucan_delegation.py          # MCP++ UCAN delegation
+├── nl_ucan_policy.py           # MCP++ NL policy compiler
+├── mcp_p2p_transport.py        # MCP++ P2P PubSub transport
+├── compliance_checker.py       # MCP++ compliance checking
+├── policy_audit_log.py         # MCP++ policy audit log
+├── event_dag.py                # MCP++ event DAG provenance
+├── tool_registry.py            # Tool discovery and registration
+├── monitoring.py               # Metrics and observability
+├── validators.py               # Input validation
+├── exceptions.py               # 18 custom exception classes
+└── tools/                      # 51 tool category directories
+    ├── dataset_tools/
+    ├── graph_tools/
+    ├── logic_tools/
+    ├── ... (48 more categories)
 ```

@@ -2,6 +2,46 @@
 
 All notable changes to the IPFS Datasets MCP Server will be documented in this file.
 
+## [2026-02-25] - Documentation Comprehensive Update
+
+### Documentation
+- **51 tool categories** fully documented with accurate function counts (~407 callable functions)
+- Updated all metric references: 1,570+ tests passing through MCP++ v39
+- Created missing READMEs: `legacy_mcp_tools/`, `lizardperson_argparse_programs/`, `lizardpersons_function_tools/`
+- `tools/graph_tools/README.md` — expanded to cover all 19 tools (added visualization, KG completion, explainability, provenance, GraphQL query tools)
+- `tools/logic_tools/README.md` — corrected function names to match actual `__init__.py` exports
+- `docs/architecture/mcp-plus-plus-alignment.md` — full rewrite documenting MCP++ v1–v39 components
+- `docs/api/tool-reference.md` — updated Complete Category Reference table (51 categories), expanded Graph/Logic/Media/Dataset tool sections, added MCP++ Integration Tools section
+- `QUICKSTART.md` — added MCP++ core files table, updated all counts
+- `PHASES_STATUS.md` — added Phase P (MCP++ Alignment v1–v39)
+
+---
+
+## [2026-02-23] - MCP++ Alignment Complete (Phase P, v1–v39)
+
+### Summary
+MCP++ spec alignment complete through v39. 1,570+ tests passing. Graph tools expanded to 24 tools.
+
+### MCP++ v1–v39 Core Modules
+- **`ucan_delegation.py`** — Full UCAN delegation chain: `DelegationManager`, `DelegationToken`, `Capability`, `MergeResult` (full dict protocol), `IPFSReloadResult`
+- **`nl_ucan_policy.py`** — Natural language to UCAN policy: `NLUCANPolicyCompiler.compile_batch_with_explain(fail_fast=False)`
+- **`mcp_p2p_transport.py`** — P2P PubSub: `PubSubBus` with `subscribe`, `publish`, `resubscribe`, `topics_with_count`, `topic_sid_map`
+- **`compliance_checker.py`** — `ComplianceChecker` with backup management (`newest_backup_name`, `oldest_backup_name`, `backup_names`), `ComplianceMergeResult` with dict protocol
+- **`policy_audit_log.py`** — `PolicyAuditLog` with `record`, `recent`, `export_jsonl`, `import_jsonl`
+
+### I18N Policy Detection (20 languages)
+- `nl_policy_conflict_detector.py` — detects deontic clauses in fr/es/de/en/pt/nl/it/ja/zh/ko/ar/sv/ru/el/tr/hi/pl/vi/th/id
+
+### Knowledge Graph Tools (Sessions 80–84)
+- `graph_graphql_query`, `graph_visualize`, `graph_complete_suggestions`, `graph_explain`, `graph_provenance_verify` — advanced query and AI tools
+- `KnowledgeGraphManager` extended with analytics, GNN link prediction, ZK proofs, federated queries
+
+### anyio Migration (Phases M/N)
+- Full anyio-first migration; Flask deprecated
+- No-asyncio CI check enforced
+
+---
+
 ## [2026-02-20] - All 7 Refactoring Phases Complete ✅
 
 ### Summary

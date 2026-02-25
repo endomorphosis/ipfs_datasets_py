@@ -9,17 +9,17 @@ Logic (TDFOL), and DCEC/CEC reasoning. These tools wrap the logic engine in
 | File | Function(s) | Description |
 |------|-------------|-------------|
 | `tdfol_prove_tool.py` | `tdfol_prove()`, `tdfol_batch_prove()` | Prove TDFOL formulas with optional axioms |
-| `tdfol_kb_tool.py` | `tdfol_kb_add()`, `tdfol_kb_query()`, `tdfol_kb_list()` | Manage a TDFOL knowledge base |
+| `tdfol_kb_tool.py` | `tdfol_kb_add_axiom()`, `tdfol_kb_add_theorem()`, `tdfol_kb_query()`, `tdfol_kb_export()` | Manage a TDFOL knowledge base |
 | `tdfol_parse_tool.py` | `tdfol_parse()` | Parse TDFOL formula strings into AST |
 | `tdfol_convert_tool.py` | `tdfol_convert()` | Convert between TDFOL, Prolog, TPTP, SMT-LIB |
 | `tdfol_visualize_tool.py` | `tdfol_visualize()` | Render a TDFOL formula as a proof tree or graph |
 | `cec_prove_tool.py` | `cec_prove()`, `cec_check_theorem()` | Prove DCEC/CEC theorems |
-| `cec_parse_tool.py` | `cec_parse()` | Parse CEC formula strings |
-| `cec_inference_tool.py` | `cec_infer()` | Run CEC forward chaining inference |
-| `cec_analysis_tool.py` | `cec_analyze()` | Analyze CEC formula structure and consistency |
-| `logic_graphrag_tool.py` | `logic_graphrag_query()` | GraphRAG query using logic to extract structured facts |
+| `cec_parse_tool.py` | `cec_parse()`, `cec_validate_formula()` | Parse and validate CEC formula strings |
+| `cec_inference_tool.py` | `cec_list_rules()`, `cec_apply_rule()`, `cec_check_rule()`, `cec_rule_info()` | CEC inference rule management |
+| `cec_analysis_tool.py` | `cec_analyze_formula()`, `cec_formula_complexity()` | Analyze CEC formula structure and complexity |
+| `logic_graphrag_tool.py` | `logic_build_knowledge_graph()`, `logic_verify_rag_output()` | Build knowledge graphs and verify RAG output using logic |
 | `logic_capabilities_tool.py` | `logic_capabilities()`, `logic_health()` | List supported logics, rule counts, system health |
-| `temporal_deontic_logic_tools.py` | Multiple | Legacy RAG system for legal document consistency checking |
+| `temporal_deontic_logic_tools.py` | `check_document_consistency()`, `query_theorems()`, `bulk_process_caselaw()`, `add_theorem()` | Legacy RAG system for legal document consistency checking |
 
 ## Usage
 
@@ -42,20 +42,15 @@ result = await tdfol_prove(
 ### Use the TDFOL knowledge base
 
 ```python
-from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_kb_add, tdfol_kb_query
+from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_kb_add_axiom, tdfol_kb_query
 
 # Add axioms
-await tdfol_kb_add(
-    kb_name="tax_law",
-    axioms=["∀x(person(x) → Obligated(pay_taxes(x)))"]
+await tdfol_kb_add_axiom(
+    formula="∀x(person(x) → Obligated(pay_taxes(x)))"
 )
 
 # Query
-result = await tdfol_kb_query(
-    kb_name="tax_law",
-    query="Obligated(pay_taxes(bob))",
-    additional_facts=["person(bob)"]
-)
+result = await tdfol_kb_query()
 ```
 
 ### Prove a CEC/DCEC theorem
