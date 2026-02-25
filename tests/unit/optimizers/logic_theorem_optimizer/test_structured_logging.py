@@ -63,6 +63,7 @@ class TestLogicTheoremOptimizerStructuredLogging:
         
         # Verify event metadata
         assert payload["event"] == "logic_theorem_optimizer_run_session"
+        assert payload["optimizer_pipeline"] == "logic_theorem"
         assert payload["session_id"] == "test-session-001"
         assert payload["domain"] == "general"
         assert payload["extraction_mode"] == "fol"
@@ -186,6 +187,7 @@ class TestLogicOptimizerStructuredLogging:
         
         # Verify event metadata
         assert payload["event"] == "logic_optimizer_analyze_batch"
+        assert payload["optimizer_pipeline"] == "logic_theorem"
         assert payload["batch_index"] == 1  # First batch
         assert payload["session_count"] == 3
         
@@ -316,6 +318,7 @@ class TestStructuredLoggingSchema:
         
         schemas = set()
         versions = set()
+        pipelines = set()
         
         for msg in log_msgs:
             if "LOGIC_SESSION_RUN:" in msg or "LOGIC_BATCH_ANALYSIS:" in msg:
@@ -323,6 +326,7 @@ class TestStructuredLoggingSchema:
                 payload = json.loads(json_str)
                 schemas.add(payload.get("schema"))
                 versions.add(payload.get("schema_version"))
+                pipelines.add(payload.get("optimizer_pipeline"))
         
         # All logs should use the same schema
         assert len(schemas) == 1
@@ -331,3 +335,6 @@ class TestStructuredLoggingSchema:
         # All logs should use the same version
         assert len(versions) == 1
         assert DEFAULT_SCHEMA_VERSION in versions
+
+        # Logic theorem logs should advertise consistent pipeline identity
+        assert pipelines == {"logic_theorem"}

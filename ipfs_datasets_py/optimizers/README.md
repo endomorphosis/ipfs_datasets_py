@@ -136,6 +136,7 @@ classDiagram
 > - [Sandboxed Prover Policy](../../docs/optimizers/SANDBOXED_PROVER_POLICY.md) - Security baseline for untrusted external prover subprocesses
 > - [Troubleshooting Dashboards](../../docs/optimizers/TROUBLESHOOTING_DASHBOARDS.md) - Metrics/log panels for performance and quality drift triage
 > - [Alerting Examples](../../docs/optimizers/ALERTING_EXAMPLES.md) - Prometheus alert rules for score/error/latency regressions
+> - [Optimizer Contributing Guide](CONTRIBUTING.md) - PR expectations, batch commit conventions, and quality checks
 
 ### Agentic Optimizer CLI
 

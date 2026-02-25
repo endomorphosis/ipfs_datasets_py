@@ -5,6 +5,36 @@ All notable changes to the optimizers module will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## API Compatibility Policy
+
+This section defines compatibility guarantees for optimizer APIs.
+
+- Public API surface:
+  - Symbols exported from `ipfs_datasets_py.optimizers` package `__init__.py` files.
+  - Documented public methods/classes in `optimizers/graphrag`, `optimizers/logic_theorem_optimizer`, and `optimizers/agentic`.
+  - Typed protocols/dataclasses intended for consumer injection (for example `BudgetManagerProtocol`).
+- Versioning:
+  - MAJOR: breaking API changes (signature removals, behavior contract breaks, renamed public modules).
+  - MINOR: backward-compatible features (new methods, optional params, new protocol members with defaults/fallbacks).
+  - PATCH: bug fixes and internal refactors with no intended public contract changes.
+- Deprecation policy:
+  - Public API removals require a deprecation notice in this changelog before removal.
+  - Minimum deprecation window is two minor releases unless security/correctness requires faster removal.
+  - Deprecated APIs should keep runtime behavior stable during the window and include migration guidance.
+- Stability notes:
+  - `tests/unit/optimizers` is the primary contract guardrail for helper methods and documented aliases.
+  - Internal/private names (`_prefixed`) may change without notice.
+
+---
+
+## [Unreleased] — Batch 297 (2026-02-25)
+
+### Changed
+- `OntologyGenerator._infer_type_from_context()` now uses module-level precompiled regex patterns instead of compiling patterns on each call.
+
+### Added
+- `tests/unit/optimizers/graphrag/test_batch_297_infer_type_from_context_regex_cache.py` to verify directional/bidirectional matching and no runtime regex compilation in that path.
+
 ## [Unreleased] — Batch 203 (2026-02-22)
 
 ### Added

@@ -32,10 +32,10 @@ class OptimizedRelationshipInference:
     """Optimized relationship inference with caching and pre-compilation."""
 
     # Class-level cache for compiled patterns (avoid recompilation across instances)
-    _compiled_verb_patterns: Optional[List[Tuple[re.Pattern, str]]] = None
-    _type_inference_rules: Optional[List[Dict]] = None
+    _compiled_verb_patterns: Optional[List[Tuple[re.Pattern[str], str]]] = None
+    _type_inference_rules: Optional[List[Dict[str, Any]]] = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize with pattern and rule caching."""
         self._verb_patterns_cache = None
         self._text_lower_cache = None
@@ -43,7 +43,7 @@ class OptimizedRelationshipInference:
         self._position_index: Dict[str, int] = {}  # Map: entity_text_lower -> position
 
     @classmethod
-    def _get_compiled_verb_patterns(cls) -> List[Tuple[re.Pattern, str]]:
+    def _get_compiled_verb_patterns(cls) -> List[Tuple[re.Pattern[str], str]]:
         """Get class-level compiled verb patterns (compile once per class)."""
         if cls._compiled_verb_patterns is None:
             # Define verb patterns once and compile them at class initialization
@@ -66,7 +66,7 @@ class OptimizedRelationshipInference:
         return cls._compiled_verb_patterns
 
     @classmethod
-    def _get_type_inference_rules(cls) -> List[Dict]:
+    def _get_type_inference_rules(cls) -> List[Dict[str, Any]]:
         """Get class-level type inference rules (compile once per class)."""
         if cls._type_inference_rules is None:
             cls._type_inference_rules = [
@@ -162,7 +162,7 @@ class OptimizedRelationshipInference:
         if not text:
             return []
 
-        relationships = []
+        relationships: List[Dict[str, Any]] = []
         rel_id_counter = [0]
 
         def _make_rel_id() -> str:
@@ -290,7 +290,7 @@ class OptimizedRelationshipInference:
         return confidence_map.get(rel_type, 0.65)
 
 
-def benchmark_optimization():
+def benchmark_optimization() -> None:
     """Benchmark the optimized implementation against a baseline."""
     import time
 

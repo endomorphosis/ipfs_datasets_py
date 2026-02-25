@@ -98,6 +98,48 @@ class IPLDTraversalOptimization(TypedDict, total=False):
     dag_exploration_depth: int
 
 
+class ValidatedQueryParameters(TypedDict, total=False):
+    """Query parameters after validation and normalization."""
+    query_text: str
+    max_vector_results: int
+    min_similarity: float
+    traversal: Dict[str, Any]
+    priority: str
+    graph_type: str
+    entity_ids: List[str]
+    metadata: Dict[str, Any]
+
+
+class FallbackQueryPlan(TypedDict, total=False):
+    """Fallback query plan when optimization fails."""
+    query: Dict[str, Any]
+    weights: Dict[str, float]
+    budget: Dict[str, Any]
+    graph_type: str
+    statistics: Dict[str, Any]
+    caching: Dict[str, Any]
+    traversal_strategy: str
+    fallback: bool
+    error: Optional[str]
+
+
+class EnhancedTraversalParameters(TypedDict, total=False):
+    """Traversal parameters enhanced for specific query types."""
+    strategy: str
+    max_depth: int
+    bidirectional_entity_limit: int
+    path_ranking: str
+    wikidata_fact_verification: bool
+    validation_threshold: float
+    fact_verification: Dict[str, Any]
+    source_entity: str
+    target_entity: str
+    relation_detection: bool
+    expected_relationship: str
+    relationship_priority: str
+    citation_analysis: Dict[str, Any]
+
+
 __all__ = [
     "QueryOptimizationPlanStep",
     "QueryOptimizationPlan",
@@ -108,4 +150,7 @@ __all__ = [
     "ConsumptionReport",
     "WikipediaTraversalOptimization",
     "IPLDTraversalOptimization",
+    "ValidatedQueryParameters",
+    "FallbackQueryPlan",
+    "EnhancedTraversalParameters",
 ]

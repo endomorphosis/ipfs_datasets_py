@@ -40,7 +40,7 @@ Examples:
 """
 
 from typing import Any, Dict, List, Optional, Callable, Set, Tuple, Union
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field as dataclass_field
 from enum import Enum
 import logging
 
@@ -55,16 +55,16 @@ class ValidationError:
     message: str
     error_type: str  # 'type', 'range', 'enum', 'dependency', 'format'
     severity: str = 'error'  # 'error', 'warning'
-    suggestions: List[str] = field(default_factory=list)
+    suggestions: List[str] = dataclass_field(default_factory=list)
 
 
 @dataclass
 class ValidationResult:
     """Result of configuration validation."""
     is_valid: bool
-    errors: List[ValidationError] = field(default_factory=list)
-    warnings: List[ValidationError] = field(default_factory=list)
-    corrected_config: Dict[str, Any] = field(default_factory=dict)
+    errors: List[ValidationError] = dataclass_field(default_factory=list)
+    warnings: List[ValidationError] = dataclass_field(default_factory=list)
+    corrected_config: Dict[str, Any] = dataclass_field(default_factory=dict)
     
     def add_error(
         self, 
@@ -121,7 +121,7 @@ class FieldConstraint:
     
     def type_check(self, expected_type: type) -> 'FieldConstraint':
         """Add type check constraint."""
-        def validate_type(value):
+        def validate_type(value: Any) -> Optional[str]:
             if value is None:
                 return None  # type checks don't validate None
             if not isinstance(value, expected_type):
@@ -132,7 +132,7 @@ class FieldConstraint:
     
     def range_check(self, min_val: Optional[float] = None, max_val: Optional[float] = None) -> 'FieldConstraint':
         """Add numeric range check."""
-        def validate_range(value):
+        def validate_range(value: Any) -> Optional[str]:
             if value is None: 
                 return None
             if not isinstance(value, (int, float)):
@@ -147,7 +147,7 @@ class FieldConstraint:
     
     def enum_check(self, allowed_values: List[Any]) -> 'FieldConstraint':
         """Add enum check constraint."""
-        def validate_enum(value):
+        def validate_enum(value: Any) -> Optional[str]:
             if value is None:
                 return None
             if value not in allowed_values:
@@ -185,9 +185,9 @@ class FieldConstraint:
 class ConfigValidator:
     """Base configuration validator with fluent API."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.constraints: Dict[str, FieldConstraint] = {}
-        self.dependencies: List[Tuple[str, Callable[[Dict], bool], str]] = []
+        self.dependencies: List[Tuple[str, Callable[[Dict[str, Any]], bool], str]] = []
     
     def require_field(self, field: str, field_type: Optional[type] = None) -> FieldConstraint:
         """Require a field in configuration."""
@@ -207,7 +207,7 @@ class ConfigValidator:
         self, 
         dependent_field: str, 
         requires_field: str,
-        condition: Optional[Callable[[Dict], bool]] = None
+        condition: Optional[Callable[[Dict[str, Any]], bool]] = None
     ) -> None:
         """Add field dependency (e.g., max_relationships requires max_entities)."""
         condition = condition or (lambda cfg: requires_field in cfg and cfg[requires_field] is not None)
@@ -245,11 +245,11 @@ class ConfigValidator:
 class ExtractionConfigValidator(ConfigValidator):
     """Validator for ExtractionConfig structures."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._setup_extraction_constraints()
     
-    def _setup_extraction_constraints(self):
+    def _setup_extraction_constraints(self) -> None:
         """Configure constraints for ExtractionConfig fields."""
         # confidence_threshold: float in [0, 1]
         self.optional_field('confidence_threshold') \
@@ -277,7 +277,7 @@ class ExtractionConfigValidator(ConfigValidator):
             .range_check(1, float('inf'))
         
         # stopwords: list of strings
-        def validate_stopwords(value):
+        def validate_stopwords(value: Any) -> Optional[str]:
             if not isinstance(value, list):
                 return f"Must be list, got {type(value).__name__}"
             for item in value:
@@ -287,7 +287,7 @@ class ExtractionConfigValidator(ConfigValidator):
         self.optional_field('stopwords').custom(validate_stopwords)
         
         # allowed_entity_types: list of strings
-        def validate_entity_types(value):
+        def validate_entity_types(value: Any) -> Optional[str]:
             if not isinstance(value, list):
                 return f"Must be list, got {type(value).__name__}"
             for item in value:
@@ -297,7 +297,7 @@ class ExtractionConfigValidator(ConfigValidator):
         self.optional_field('allowed_entity_types').custom(validate_entity_types)
         
         # domain_vocab: dict of str -> list of strings
-        def validate_domain_vocab(value):
+        def validate_domain_vocab(value: Any) -> Optional[str]:
             if not isinstance(value, dict):
                 return f"Must be dict, got {type(value).__name__}"
             for key, val in value.items():
@@ -331,11 +331,11 @@ class ExtractionConfigValidator(ConfigValidator):
 class OptimizerConfigValidator(ConfigValidator):
     """Validator for optimization configuration."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._setup_optimizer_constraints()
     
-    def _setup_optimizer_constraints(self):
+    def _setup_optimizer_constraints(self) -> None:
         """Configure constraints for optimizer configuration."""
         # domain: required string
         self.require_field('domain', str)

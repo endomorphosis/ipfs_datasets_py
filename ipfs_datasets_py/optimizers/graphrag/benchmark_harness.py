@@ -66,7 +66,7 @@ class BenchmarkMetrics:
     # Computed field for overall quality
     overall_quality_score: float = field(default=0.0, init=False)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Compute overall quality score as average of dimension scores"""
         dimension_scores = [
             self.completeness_score,
@@ -170,7 +170,7 @@ class BenchmarkComparison:
 class BenchmarkSuite:
     """Main benchmark suite orchestrator"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize suite"""
         self.datasets: List[BenchmarkDataset] = []
         self.runs: List[BenchmarkRun] = []
@@ -182,8 +182,8 @@ class BenchmarkSuite:
     def run_benchmark(
         self,
         dataset: BenchmarkDataset,
-        extractor: Callable,
-        critic: Callable,
+        extractor: Callable[[List[str]], Dict[str, Any]],
+        critic: Callable[[List[Any], List[Any]], Dict[str, float]],
         strategy: ExtractionStrategy,
     ) -> BenchmarkRun:
         """Run single benchmark"""
@@ -262,9 +262,9 @@ class BenchmarkSuite:
         }
         
         # Convert enums to strings
-        def enum_encoder(obj):
+        def enum_encoder(obj: Any) -> str:
             if isinstance(obj, (ExtractionStrategy, DataDomain)):
-                return obj.value
+                return str(obj.value)
             raise TypeError
         
         return json.dumps(data, default=enum_encoder)

@@ -239,6 +239,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
 
             payload = {
                 "event": "logic_theorem_optimizer_run_session",
+                "optimizer_pipeline": "logic_theorem",
                 "session_id": context.session_id,
                 "domain": context.domain or self.domain,
                 "extraction_mode": self.extraction_mode.value,

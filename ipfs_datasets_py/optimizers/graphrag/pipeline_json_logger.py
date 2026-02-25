@@ -144,6 +144,7 @@ class PipelineJSONLogger:
         payload = {
             "event": event_type,
             "domain": self.domain,
+            "optimizer_pipeline": "graphrag",
             **data,
         }
         

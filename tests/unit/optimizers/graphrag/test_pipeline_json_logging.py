@@ -607,6 +607,7 @@ class TestJSONLogStructure:
             if line:
                 log_obj = json.loads(line)
                 assert log_obj["domain"] == "test"
+                assert log_obj["optimizer_pipeline"] == "graphrag"
     
     def test_log_contains_event_type(self, logger_with_capture):
         """All logs should include event type."""

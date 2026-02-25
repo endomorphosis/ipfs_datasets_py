@@ -94,9 +94,9 @@ class OntologyComparator:
         baseline_overall = getattr(baseline_score, 'overall', 0)
         
         if baseline_overall == 0:
-            improvement_pct = 0
+            improvement_pct = 0.0
         else:
-            improvement_pct = ((target_overall - baseline_overall) / baseline_overall * 100)
+            improvement_pct = float((target_overall - baseline_overall) / baseline_overall * 100)
         
         return {
             'improvement_percent': improvement_pct,
@@ -194,11 +194,11 @@ class OntologyComparator:
     # Custom Scoring
     def reweight_score(self, score: Any, weights: Dict[str, float]) -> float:
         """Reweight score with custom weights."""
-        weighted_sum = 0
-        total_weight = 0
+        weighted_sum = 0.0
+        total_weight = 0.0
         for dim, weight in weights.items():
             if weight > 0:
-                val = getattr(score, dim, 0)
+                val = float(getattr(score, dim, 0.0))
                 weighted_sum += val * weight
                 total_weight += weight
         

@@ -1,0 +1,231 @@
+{
+  "benchmark_name": "ontology_extraction_baseline",
+  "timestamp": "2026-02-24 21:00:36",
+  "results": [
+    {
+      "case_name": "1k_general_rule",
+      "strategy": "rule_based",
+      "domain": "general",
+      "text_size_tokens": 1000,
+      "iterations": 20,
+      "warmups": 3,
+      "performance": {
+        "avg_ms": 10.9889,
+        "median_ms": 10.3402,
+        "p95_ms": 14.9096,
+        "p99_ms": 14.9096,
+        "max_ms": 15.6187,
+        "min_ms": 9.4331,
+        "stddev_ms": 1.6641
+      },
+      "quality": {
+        "avg_entities": 38,
+        "avg_relationships": 158,
+        "avg_confidence": 0.7
+      },
+      "memory": {
+        "peak_memory_mb": 0.0
+      }
+    },
+    {
+      "case_name": "1k_legal_rule",
+      "strategy": "rule_based",
+      "domain": "legal",
+      "text_size_tokens": 1000,
+      "iterations": 20,
+      "warmups": 3,
+      "performance": {
+        "avg_ms": 11.5102,
+        "median_ms": 11.4813,
+        "p95_ms": 13.2715,
+        "p99_ms": 13.2715,
+        "max_ms": 13.4393,
+        "min_ms": 9.918,
+        "stddev_ms": 1.2617
+      },
+      "quality": {
+        "avg_entities": 40,
+        "avg_relationships": 179,
+        "avg_confidence": 0.7
+      },
+      "memory": {
+        "peak_memory_mb": 0.0
+      }
+    },
+    {
+      "case_name": "5k_general_rule",
+      "strategy": "rule_based",
+      "domain": "general",
+      "text_size_tokens": 5000,
+      "iterations": 15,
+      "warmups": 2,
+      "performance": {
+        "avg_ms": 28.079,
+        "median_ms": 27.0261,
+        "p95_ms": 30.4703,
+        "p99_ms": 30.4703,
+        "max_ms": 37.6385,
+        "min_ms": 26.2991,
+        "stddev_ms": 2.8609
+      },
+      "quality": {
+        "avg_entities": 38,
+        "avg_relationships": 158,
+        "avg_confidence": 0.7
+      },
+      "memory": {
+        "peak_memory_mb": 0.0
+      }
+    },
+    {
+      "case_name": "5k_legal_rule",
+      "strategy": "rule_based",
+      "domain": "legal",
+      "text_size_tokens": 5000,
+      "iterations": 15,
+      "warmups": 2,
+      "performance": {
+        "avg_ms": 31.1194,
+        "median_ms": 30.7806,
+        "p95_ms": 35.5243,
+        "p99_ms": 35.5243,
+        "max_ms": 37.6313,
+        "min_ms": 27.7946,
+        "stddev_ms": 2.5266
+      },
+      "quality": {
+        "avg_entities": 40,
+        "avg_relationships": 179,
+        "avg_confidence": 0.7
+      },
+      "memory": {
+        "peak_memory_mb": 0.0
+      }
+    },
+    {
+      "case_name": "5k_business_rule",
+      "strategy": "rule_based",
+      "domain": "business",
+      "text_size_tokens": 5000,
+      "iterations": 15,
+      "warmups": 2,
+      "performance": {
+        "avg_ms": 28.9341,
+        "median_ms": 28.2051,
+        "p95_ms": 31.6975,
+        "p99_ms": 31.6975,
+        "max_ms": 34.7572,
+        "min_ms": 26.1974,
+        "stddev_ms": 2.2479
+      },
+      "quality": {
+        "avg_entities": 38,
+        "avg_relationships": 158,
+        "avg_confidence": 0.7
+      },
+      "memory": {
+        "peak_memory_mb": 0.0
+      }
+    },
+    {
+      "case_name": "10k_general_rule",
+      "strategy": "rule_based",
+      "domain": "general",
+      "text_size_tokens": 10000,
+      "iterations": 10,
+      "warmups": 2,
+      "performance": {
+        "avg_ms": 67.7038,
+        "median_ms": 70.7773,
+        "p95_ms": 73.743,
+        "p99_ms": 73.743,
+        "max_ms": 75.7173,
+        "min_ms": 50.116,
+        "stddev_ms": 8.6317
+      },
+      "quality": {
+        "avg_entities": 38,
+        "avg_relationships": 158,
+        "avg_confidence": 0.7
+      },
+      "memory": {
+        "peak_memory_mb": 0.0
+      }
+    },
+    {
+      "case_name": "10k_legal_rule",
+      "strategy": "rule_based",
+      "domain": "legal",
+      "text_size_tokens": 10000,
+      "iterations": 10,
+      "warmups": 2,
+      "performance": {
+        "avg_ms": 61.7529,
+        "median_ms": 59.1671,
+        "p95_ms": 66.5177,
+        "p99_ms": 66.5177,
+        "max_ms": 72.9864,
+        "min_ms": 57.0848,
+        "stddev_ms": 5.2867
+      },
+      "quality": {
+        "avg_entities": 40,
+        "avg_relationships": 179,
+        "avg_confidence": 0.7
+      },
+      "memory": {
+        "peak_memory_mb": 0.0
+      }
+    },
+    {
+      "case_name": "10k_medical_rule",
+      "strategy": "rule_based",
+      "domain": "medical",
+      "text_size_tokens": 10000,
+      "iterations": 10,
+      "warmups": 2,
+      "performance": {
+        "avg_ms": 59.2539,
+        "median_ms": 57.108,
+        "p95_ms": 65.1822,
+        "p99_ms": 65.1822,
+        "max_ms": 76.22,
+        "min_ms": 51.3041,
+        "stddev_ms": 7.3743
+      },
+      "quality": {
+        "avg_entities": 38,
+        "avg_relationships": 158,
+        "avg_confidence": 0.7
+      },
+      "memory": {
+        "peak_memory_mb": 0.0
+      }
+    },
+    {
+      "case_name": "20k_general_rule",
+      "strategy": "rule_based",
+      "domain": "general",
+      "text_size_tokens": 20000,
+      "iterations": 5,
+      "warmups": 1,
+      "performance": {
+        "avg_ms": 107.4916,
+        "median_ms": 104.0322,
+        "p95_ms": 110.1513,
+        "p99_ms": 110.1513,
+        "max_ms": 120.8161,
+        "min_ms": 100.5839,
+        "stddev_ms": 8.3044
+      },
+      "quality": {
+        "avg_entities": 38,
+        "avg_relationships": 158,
+        "avg_confidence": 0.7
+      },
+      "memory": {
+        "peak_memory_mb": 0.0
+      }
+    }
+  ]
+}

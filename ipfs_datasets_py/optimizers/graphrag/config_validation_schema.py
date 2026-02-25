@@ -10,10 +10,14 @@ Centralized configuration validation infrastructure providing:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import re
 
-from ipfs_datasets_py.optimizers.common.exceptions import ConfigurationError
+if TYPE_CHECKING:
+    class ConfigurationError(Exception):
+        pass
+else:
+    from ipfs_datasets_py.optimizers.common.exceptions import ConfigurationError
 
 
 # ============================================================================
@@ -41,7 +45,7 @@ class ValidationRule:
 class ValidationRuleSet:
     """Collection of validation rules for a field."""
     
-    def __init__(self, field_name: str, field_type: type):
+    def __init__(self, field_name: str, field_type: type[Any]) -> None:
         self.field_name = field_name
         self.field_type = field_type
         self.rules: List[ValidationRule] = []
@@ -63,9 +67,11 @@ class ValidationRuleSet:
         )
         return self.add_rule(rule)
     
-    def add_range(self, min_val: float = None, max_val: float = None) -> ValidationRuleSet:
+    def add_range(
+        self, min_val: Optional[float] = None, max_val: Optional[float] = None
+    ) -> ValidationRuleSet:
         """Add numeric range validation."""
-        def check_range(x):
+        def check_range(x: Any) -> bool:
             if x is None:
                 return True
             try:
@@ -100,7 +106,9 @@ class ValidationRuleSet:
         )
         return self.add_rule(rule)
     
-    def add_custom(self, name: str, condition: Callable, message: str) -> ValidationRuleSet:
+    def add_custom(
+        self, name: str, condition: Callable[[Any], bool], message: str
+    ) -> ValidationRuleSet:
         """Add custom validation rule."""
         rule = ValidationRule(name=name, condition=condition, message=message)
         return self.add_rule(rule)
@@ -134,11 +142,11 @@ class ValidationRuleSet:
 class ExtractionConfigSchema:
     """Schema for validating ExtractionConfig fields."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.fields: Dict[str, ValidationRuleSet] = {}
         self._setup_rules()
     
-    def _setup_rules(self):
+    def _setup_rules(self) -> None:
         """Setup validation rules for all ExtractionConfig fields."""
         
         # confidence: float [0, 1]
@@ -285,13 +293,18 @@ class ConfigValidationError(ConfigurationError):
         self.field_name = field_name
         self.errors = errors
         message = f"Validation error in {field_name}: {'; '.join(errors)}"
-        super().__init__(message, details={"field_name": field_name, "errors": list(errors)})
+        super().__init__(message)
+        details = {"field_name": field_name, "errors": list(errors)}
+        try:
+            setattr(self, "details", details)
+        except (AttributeError, TypeError):
+            pass
 
 
 class ConfigValidator:
     """High-level configuration validator with error recovery."""
     
-    def __init__(self, schema: Optional[ExtractionConfigSchema] = None):
+    def __init__(self, schema: Optional[ExtractionConfigSchema] = None) -> None:
         self.schema = schema or ExtractionConfigSchema()
     
     def validate_and_fix(self, config_dict: Dict[str, Any]) -> Dict[str, Any]:

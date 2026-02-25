@@ -44,7 +44,7 @@ Examples:
 
 from typing import (
     Any, Dict, List, Optional, Callable, Type, TypeVar, Union, 
-    Tuple, Generic, Protocol
+    Tuple, Generic, Protocol, TYPE_CHECKING, Literal
 )
 from datetime import datetime
 from abc import abstractmethod, ABC
@@ -56,7 +56,11 @@ from dataclasses import dataclass, field, asdict
 import functools
 import time
 
-from ipfs_datasets_py.optimizers.graphrag.exceptions import GraphRAGError
+if TYPE_CHECKING:
+    class GraphRAGError(Exception):
+        pass
+else:
+    from ipfs_datasets_py.optimizers.graphrag.exceptions import GraphRAGError
 
 
 logger = logging.getLogger(__name__)
@@ -80,7 +84,7 @@ class RecoveryStrategy(Enum):
 
 
 @dataclass
-class ErrorContext:
+class ErrorContextData:
     """Context information for an error."""
     operation: str
     component: str = ""
@@ -129,7 +133,7 @@ class GraphRAGException(GraphRAGError):
         message: str,
         source: Optional[str] = None,
         severity: ErrorSeverity = ErrorSeverity.ERROR,
-        context: Optional[ErrorContext] = None,
+        context: Optional[ErrorContextData] = None,
         suggestions: Optional[List[str]] = None,
         details: Optional[Dict[str, Any]] = None,
         original_exception: Optional[Exception] = None,
@@ -138,7 +142,7 @@ class GraphRAGException(GraphRAGError):
         self.message = message
         self.source = source
         self.severity = severity
-        self.context = context or ErrorContext(operation="unknown")
+        self.context = context or ErrorContextData(operation="unknown")
         self.suggestions = suggestions or []
         self.details = details or {}
         self.original_exception = original_exception
@@ -199,7 +203,7 @@ class GraphRAGConfigError(GraphRAGException):
         message: str,
         invalid_field: Optional[str] = None,
         valid_range: Optional[Tuple[Any, Any]] = None,
-        **kwargs
+        **kwargs: Any
     ):
         self.invalid_field = invalid_field
         self.valid_range = valid_range
@@ -224,7 +228,7 @@ class GraphRAGExtractionError(GraphRAGException):
         message: str,
         failed_extractions: Optional[List[str]] = None,
         partial_result: Optional[Dict[str, Any]] = None,
-        **kwargs
+        **kwargs: Any
     ):
         self.failed_extractions = failed_extractions or []
         self.partial_result = partial_result
@@ -248,7 +252,7 @@ class GraphRAGOptimizationError(GraphRAGException):
         message: str,
         iteration: Optional[int] = None,
         best_score: Optional[float] = None,
-        **kwargs
+        **kwargs: Any
     ):
         self.iteration = iteration
         self.best_score = best_score
@@ -283,7 +287,7 @@ class GraphRAGResourceError(GraphRAGOptimizationError):
         resource_type: str,
         limit: Optional[float] = None,
         used: Optional[float] = None,
-        **kwargs
+        **kwargs: Any
     ):
         self.resource_type = resource_type
         self.limit = limit
@@ -309,7 +313,7 @@ class GraphRAGQueryError(GraphRAGException):
         message: str,
         query: Optional[str] = None,
         execution_plan: Optional[str] = None,
-        **kwargs
+        **kwargs: Any
     ):
         self.query = query
         self.execution_plan = execution_plan
@@ -332,7 +336,7 @@ class GraphRAGValidationError(GraphRAGException):
         self,
         message: str,
         validation_errors: Optional[List[str]] = None,
-        **kwargs
+        **kwargs: Any
     ):
         self.validation_errors = validation_errors or []
         details = kwargs.get('details', {})
@@ -353,7 +357,7 @@ class GraphRAGIntegrationError(GraphRAGException):
         message: str,
         external_system: str,
         http_status: Optional[int] = None,
-        **kwargs
+        **kwargs: Any
     ):
         self.external_system = external_system
         self.http_status = http_status
@@ -368,20 +372,25 @@ class GraphRAGIntegrationError(GraphRAGException):
 class ErrorContext:
     """Context manager for tracking error context during operations."""
     
-    _stack: List[ErrorContext] = []
+    _stack: List["ErrorContext"] = []
     
-    def __init__(self, operation: str, **kwargs):
+    def __init__(self, operation: str, **kwargs: Any) -> None:
         self.operation = operation
         self.component = kwargs.pop('component', '')
         self.entity_id = kwargs.pop('entity_id', None)
         self.additional_info = kwargs
         self.timestamp = datetime.now().isoformat()
     
-    def __enter__(self):
+    def __enter__(self) -> "ErrorContext":
         ErrorContext._stack.append(self)
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Any,
+    ) -> Literal[False]:
         if ErrorContext._stack and ErrorContext._stack[-1] is self:
             ErrorContext._stack.pop()
         return False
@@ -402,7 +411,7 @@ class ErrorContext:
         }
 
 
-def error_context(operation: str, **kwargs) -> ErrorContext:
+def error_context(operation: str, **kwargs: Any) -> ErrorContext:
     """Create an error context.
     
     Usage:
@@ -416,7 +425,7 @@ def wrap_exception(
     exception: Exception,
     error_class: Type[GraphRAGException] = GraphRAGException,
     message: Optional[str] = None,
-    **kwargs
+    **kwargs: Any
 ) -> GraphRAGException:
     """Wrap an exception with GraphRAG exception.
     
@@ -449,7 +458,7 @@ def retry_with_backoff(
         Decorated function with retry logic
     """
     @functools.wraps(func)
-    def wrapper(*args, **kwargs) -> T:
+    def wrapper(*args: Any, **kwargs: Any) -> T:
         delay = initial_delay
         last_exception = None
         func_name = getattr(func, '__name__', 'unknown_function')
@@ -471,6 +480,8 @@ def retry_with_backoff(
                         f"All {max_attempts} attempts failed for {func_name}"
                     )
         
+        if last_exception is None:
+            last_exception = Exception("Unknown failure in retry_with_backoff")
         raise wrap_exception(
             last_exception,
             GraphRAGException,
@@ -498,7 +509,7 @@ def safe_operation(
         Decorated function that handles errors gracefully
     """
     @functools.wraps(func)
-    def wrapper(*args, **kwargs) -> Optional[T]:
+    def wrapper(*args: Any, **kwargs: Any) -> Optional[T]:
         func_name = getattr(func, '__name__', 'unknown_function')
         try:
             return func(*args, **kwargs)

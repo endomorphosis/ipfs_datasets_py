@@ -620,7 +620,7 @@ class OntologyLearningAdapter:
         self._feedback.clear()
         return n
 
-    def feedback_summary_dict(self) -> dict:
+    def feedback_summary_dict(self) -> dict[str, float | int]:
         """Return a summary dict with count, mean, and variance of feedback scores.
 
         Returns:
@@ -675,7 +675,7 @@ class OntologyLearningAdapter:
         """
         return sorted(self._feedback, key=lambda r: r.final_score, reverse=True)[:k]
 
-    def feedback_score_range(self) -> tuple:
+    def feedback_score_range(self) -> tuple[float, float]:
         """Return the ``(min, max)`` range of ``final_score`` across all feedback.
 
         Returns:
@@ -706,7 +706,7 @@ class OntologyLearningAdapter:
         """
         return sum(1 for r in self._feedback if r.final_score > threshold)
 
-    def feedback_below(self, threshold: float = 0.5) -> list:
+    def feedback_below(self, threshold: float = 0.5) -> list["FeedbackRecord"]:
         """Return feedback records with ``final_score < threshold``.
 
         Args:
@@ -721,7 +721,7 @@ class OntologyLearningAdapter:
         """
         return [r for r in self._feedback if r.final_score < threshold]
 
-    def feedback_above(self, threshold: float = 0.6) -> list:
+    def feedback_above(self, threshold: float = 0.6) -> list["FeedbackRecord"]:
         """Return feedback records with ``final_score > threshold``.
 
         Args:
@@ -758,7 +758,7 @@ class OntologyLearningAdapter:
         """
         return len(self._feedback) > 0
 
-    def recent_feedback(self, n: int = 5) -> list:
+    def recent_feedback(self, n: int = 5) -> list["FeedbackRecord"]:
         """Return the last *n* feedback records in order of application.
 
         Args:
@@ -769,7 +769,7 @@ class OntologyLearningAdapter:
         """
         return list(self._feedback[-n:]) if n > 0 else []
 
-    def feedback_score_stats(self) -> dict:
+    def feedback_score_stats(self) -> dict[str, float | int]:
         """Return descriptive statistics for all recorded final scores.
 
         Returns:
@@ -841,7 +841,7 @@ class OntologyLearningAdapter:
         """
         return self.passing_feedback_fraction(threshold)
 
-    def reset_and_load(self, records: list) -> int:
+    def reset_and_load(self, records: list["FeedbackRecord"]) -> int:
         """Clear all existing feedback and load *records* as the new history.
 
         Equivalent to calling :meth:`clear_feedback` followed by
@@ -856,7 +856,7 @@ class OntologyLearningAdapter:
         self.clear_feedback()
         return self.load_feedback_from_list(records)
 
-    def score_range(self) -> tuple:
+    def score_range(self) -> tuple[float, float]:
         """Alias for :meth:`feedback_score_range`.
 
         Returns:
@@ -865,7 +865,7 @@ class OntologyLearningAdapter:
         """
         return self.feedback_score_range()
 
-    def feedback_count_above(self, threshold: float = 0.6) -> int:
+    def feedback_count_above(self, threshold: float = 0.6) -> int:  # type: ignore[no-redef]
         """Return the number of feedback records whose score is above *threshold*.
 
         Args:
@@ -887,7 +887,7 @@ class OntologyLearningAdapter:
         """
         return all(r.final_score > threshold for r in self._feedback)
 
-    def feedback_scores(self) -> list:
+    def feedback_scores(self) -> list[float]:
         """Return a plain list of all feedback final scores in insertion order.
 
         Returns:
@@ -1036,7 +1036,7 @@ class OntologyLearningAdapter:
         diffs = [abs(scores[i + 1] - scores[i]) for i in range(len(scores) - 1)]
         return sum(diffs) / len(diffs)
 
-    def worst_n_feedback(self, n: int = 3) -> list:
+    def worst_n_feedback(self, n: int = 3) -> list["FeedbackRecord"]:
         """Return the *n* feedback records with the lowest ``final_score``.
 
         Args:
@@ -1071,7 +1071,7 @@ class OntologyLearningAdapter:
         std = math.sqrt(variance)
         return (value - mean) / std
 
-    def best_n_feedback(self, n: int) -> list:
+    def best_n_feedback(self, n: int) -> list["FeedbackRecord"]:
         """Return the top-*n* feedback records by ``final_score`` (highest first).
 
         Args:
@@ -1083,7 +1083,7 @@ class OntologyLearningAdapter:
         """
         return sorted(self._feedback, key=lambda r: r.final_score, reverse=True)[:n]
 
-    def feedback_above_mean(self) -> list:
+    def feedback_above_mean(self) -> list["FeedbackRecord"]:
         """Return feedback records whose ``final_score`` exceeds the mean.
 
         Returns:
@@ -1137,7 +1137,7 @@ class OntologyLearningAdapter:
         std = math.sqrt(variance)
         return sum(((v - mean) / std) ** 4 for v in vals) / n - 3.0
 
-    def feedback_rolling_average(self, window: int = 5) -> list:
+    def feedback_rolling_average(self, window: int = 5) -> list[float]:
         """Return a rolling average of ``final_score`` over a sliding window.
 
         Args:
@@ -1215,8 +1215,8 @@ class OntologyLearningAdapter:
         """
         if not self._feedback:
             return ""
-        domain_totals: dict = {}
-        domain_counts: dict = {}
+        domain_totals: dict[str, float] = {}
+        domain_counts: dict[str, int] = {}
         for r in self._feedback:
             domain = getattr(r, "domain", None) or "unknown"
             domain_totals[domain] = domain_totals.get(domain, 0.0) + r.final_score
@@ -1224,7 +1224,7 @@ class OntologyLearningAdapter:
         if not domain_totals:
             return ""
         averages = {d: domain_totals[d] / domain_counts[d] for d in domain_totals}
-        return min(averages, key=averages.get)
+        return min(averages, key=lambda d: averages[d])
 
     def best_domain(self) -> str:
         """Return the domain with the highest average ``final_score`` in feedback.
@@ -1234,8 +1234,8 @@ class OntologyLearningAdapter:
         """
         if not self._feedback:
             return ""
-        domain_totals: dict = {}
-        domain_counts: dict = {}
+        domain_totals: dict[str, float] = {}
+        domain_counts: dict[str, int] = {}
         for r in self._feedback:
             domain = getattr(r, "domain", None) or "unknown"
             domain_totals[domain] = domain_totals.get(domain, 0.0) + r.final_score
@@ -1243,7 +1243,7 @@ class OntologyLearningAdapter:
         if not domain_totals:
             return ""
         averages = {d: domain_totals[d] / domain_counts[d] for d in domain_totals}
-        return max(averages, key=averages.get)
+        return max(averages, key=lambda d: averages[d])
 
     def feedback_trend_direction(self) -> str:
         """Return the overall trend direction of feedback scores.
@@ -1266,7 +1266,7 @@ class OntologyLearningAdapter:
             return "declining"
         return "stable"
 
-    def feedback_in_range(self, lo: float, hi: float) -> list:
+    def feedback_in_range(self, lo: float, hi: float) -> list["FeedbackRecord"]:
         """Return feedback records whose ``final_score`` falls in [lo, hi].
 
         Args:
@@ -1301,7 +1301,7 @@ class OntologyLearningAdapter:
         improvements = sum(1 for a, b in zip(scores, scores[1:]) if b > a)
         return improvements / (len(scores) - 1)
 
-    def feedback_last_n(self, n: int = 5) -> list:
+    def feedback_last_n(self, n: int = 5) -> list["FeedbackRecord"]:
         """Return the last *n* feedback records.
 
         Args:
@@ -1312,7 +1312,7 @@ class OntologyLearningAdapter:
         """
         return self._feedback[-n:] if n > 0 else []
 
-    def feedback_top_n(self, n: int = 5) -> list:
+    def feedback_top_n(self, n: int = 5) -> list["FeedbackRecord"]:
         """Return the *n* feedback records with the highest ``final_score``.
 
         Args:
@@ -1323,7 +1323,7 @@ class OntologyLearningAdapter:
         """
         return sorted(self._feedback, key=lambda r: r.final_score, reverse=True)[:n]
 
-    def feedback_above_median(self) -> list:
+    def feedback_above_median(self) -> list["FeedbackRecord"]:
         """Return feedback records whose final_score is above the median.
 
         Returns:
@@ -1420,7 +1420,7 @@ class OntologyLearningAdapter:
             ewma = alpha * r.final_score + (1.0 - alpha) * ewma
         return ewma
 
-    def feedback_normalized(self) -> list:
+    def feedback_normalized(self) -> list[float]:
         """Return feedback scores scaled to [0, 1] using min-max normalisation.
 
         Returns:
@@ -1446,7 +1446,7 @@ class OntologyLearningAdapter:
         scores = [r.final_score for r in self._feedback]
         mean = sum(scores) / len(scores)
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        return variance ** 0.5
+        return float(variance ** 0.5)
 
     def feedback_last_improvement(self) -> float:
         """Return the score delta at the last improving transition.
@@ -1480,7 +1480,7 @@ class OntologyLearningAdapter:
         scores = [r.final_score for r in self._feedback]
         return sum(abs(scores[i] - scores[i - 1]) for i in range(1, len(scores))) / (len(scores) - 1)
 
-    def feedback_trend_direction(self) -> str:
+    def feedback_trend_direction(self) -> str:  # type: ignore[no-redef]
         """Return the overall trend direction of feedback scores.
 
         Fits a simple linear slope to feedback scores in chronological order.
@@ -1522,7 +1522,7 @@ class OntologyLearningAdapter:
             return 0.0
         return max(r.final_score for r in self._feedback)
 
-    def feedback_cumulative_sum(self) -> list:
+    def feedback_cumulative_sum(self) -> list[float]:
         """Return the running cumulative sum of feedback scores.
 
         Returns:
@@ -1732,7 +1732,7 @@ class OntologyLearningAdapter:
             return 0.0
         return min(scores) / mx
 
-    def feedback_count(self) -> int:
+    def feedback_count(self) -> int:  # type: ignore[no-redef]
         """Return the total number of feedback records.
 
         Returns:
@@ -1760,7 +1760,7 @@ class OntologyLearningAdapter:
                 current = 0
         return best
 
-    def feedback_weighted_mean(self, weights: "list | None" = None) -> float:
+    def feedback_weighted_mean(self, weights: Optional[list[float]] = None) -> float:
         """Return a positionally weighted mean of feedback scores.
 
         Weights are applied in order (index 0 = oldest record).  If *weights*
@@ -1782,7 +1782,7 @@ class OntologyLearningAdapter:
         total_w = sum(weights)
         if total_w == 0.0:
             return 0.0
-        return sum(w * s for w, s in zip(weights, scores)) / total_w
+        return float(sum(w * s for w, s in zip(weights, scores)) / total_w)
 
     def feedback_last_score(self) -> float:
         """Return the most recent feedback score.
@@ -1955,7 +1955,7 @@ class OntologyLearningAdapter:
                 current = 0
         return max_streak
 
-    def feedback_trimmed_mean(self, trim: float = 0.1) -> float:
+    def feedback_trimmed_mean(self, trim: float = 0.1) -> float:  # type: ignore[no-redef]
         """Return the mean after trimming the top and bottom *trim* fraction of scores.
 
         Args:
@@ -2112,7 +2112,7 @@ class OntologyLearningAdapter:
             return 0.0
         mean = sum(tail) / len(tail)
         var = sum((v - mean) ** 2 for v in tail) / len(tail)
-        return var ** 0.5
+        return float(var ** 0.5)
 
     def feedback_recovery_count(self, threshold: float = 0.5) -> int:
         """Count recoveries: steps where score was below then above *threshold*.
@@ -2148,7 +2148,7 @@ class OntologyLearningAdapter:
         std = var ** 0.5
         if std == 0:
             return 0.0
-        return (vals[-1] - mean) / std
+        return float((vals[-1] - mean) / std)
 
     def feedback_half_above_threshold(self, threshold: float = 0.5) -> bool:
         """Return True if at least half of feedback records are at or above *threshold*.
@@ -2229,7 +2229,7 @@ class OntologyLearningAdapter:
         product = 1.0
         for s in scores:
             product *= s
-        return product ** (1.0 / len(scores))
+        return float(product ** (1.0 / len(scores)))
 
     def feedback_harmonic_mean(self) -> float:
         """Return the harmonic mean of all feedback ``final_score`` values.
@@ -2256,7 +2256,7 @@ class OntologyLearningAdapter:
         scores = [r.final_score for r in self._feedback]
         mean = sum(scores) / len(scores)
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        return variance ** 0.5
+        return float(variance ** 0.5)
 
     def feedback_coefficient_of_variation(self) -> float:
         """Return the coefficient of variation (std / mean) of feedback scores.
@@ -2271,7 +2271,7 @@ class OntologyLearningAdapter:
         if mean == 0.0:
             return 0.0
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        return variance ** 0.5 / mean
+        return float((variance ** 0.5) / mean)
 
     def feedback_relative_std(self) -> float:
         """Alias for :meth:`feedback_coefficient_of_variation`.
@@ -2296,7 +2296,7 @@ class OntologyLearningAdapter:
         q3_idx = (3 * n) // 4
         return scores[q3_idx] - scores[q1_idx]
 
-    def feedback_rolling_mean(self, window: int = 3) -> list:
+    def feedback_rolling_mean(self, window: int = 3) -> list[float]:
         """Return a list of rolling means over ``window``-sized windows of feedback scores.
 
         Args:
@@ -2316,7 +2316,7 @@ class OntologyLearningAdapter:
             for i in range(len(scores) - window + 1)
         ]
 
-    def feedback_rolling_std(self, window: int = 3) -> list:
+    def feedback_rolling_std(self, window: int = 3) -> list[float]:
         """Return a list of rolling standard deviations over ``window``-sized windows.
 
         Args:
@@ -2377,7 +2377,7 @@ class OntologyLearningAdapter:
         above = sum(1 for s in scores if s > mean)
         return above / len(scores)
 
-    def feedback_z_scores(self) -> list:
+    def feedback_z_scores(self) -> list[float]:
         """Return the z-score for each feedback record's *final_score*.
 
         Z-scores are calculated using the population mean and standard
@@ -2405,7 +2405,7 @@ class OntologyLearningAdapter:
         std = variance ** 0.5
         return [(s - mean) / std for s in scores]
 
-    def feedback_percentile(self, p: float) -> float:
+    def feedback_percentile(self, p: float) -> float:  # type: ignore[no-redef]
         """Return the *p*-th percentile of feedback final scores.
 
         Uses nearest-rank method: index = ``floor(p / 100 * n)``, clamped

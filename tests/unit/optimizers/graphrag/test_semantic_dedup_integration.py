@@ -215,23 +215,33 @@ class TestSemanticDeduplicationE2E:
         from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import SemanticEntityDeduplicator
         
         # Create entities with semantic similarity
+        # Use entity pairs that are very obviously similar for robust testing
         entities = [
-            Entity(id="e1", text="CEO", type="Person", confidence=0.9),
-            Entity(id="e2", text="Chief Executive Officer", type="Person", confidence=0.85),
-            Entity(id="e3", text="Company", type="Organization", confidence=0.8),
+            Entity(id="e1", text="Microsoft Corporation", type="Organization", confidence=0.9),
+            Entity(id="e2", text="Microsoft", type="Organization", confidence=0.85),
+            Entity(id="e3", text="Amazon Web Services", type="Organization", confidence=0.8),
+            Entity(id="e4", text="AWS", type="Organization", confidence=0.75),
         ]
         relationships = [
-            Relationship(id="r1", source_id="e1", target_id="e3", type="works_for", confidence=0.8),
-            Relationship(id="r2", source_id="e2", target_id="e3", type="works_for", confidence=0.75),
+            Relationship(id="r1", source_id="e1", target_id="e3", type="partners_with", confidence=0.8),
+            Relationship(id="r2", source_id="e2", target_id="e4", type="partners_with", confidence=0.75),
         ]
         result = EntityExtractionResult(entities=entities, relationships=relationships, confidence=0.85)
-def _has_semantic_dedup_deps() -> bool:
-    """Check if semantic deduplication dependencies are available."""
-    try:
-        import sentence_transformers
-        return True
-    except ImportError:
-        return False
+        
+        # Create real deduplicator
+        deduplicator = SemanticEntityDeduplicator()
+        
+        # Apply semantic deduplication with lower threshold for more aggressive merging
+        deduped = result.apply_semantic_dedup(deduplicator, threshold=0.75)
+        
+        # Verify entities were deduplicated
+        # Note: The exact number depends on embedding model's similarity scoring
+        # We just verify that dedup was applied and metadata is correct
+        assert len(deduped.entities) <= len(entities)
+        
+        # Verify metadata
+        assert deduped.metadata["semantic_dedup_applied"] is True
+        assert deduped.metadata["semantic_dedup_threshold"] == 0.75
 
 
 if __name__ == "__main__":

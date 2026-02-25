@@ -144,6 +144,7 @@ class LogicOptimizer:
 
             payload = {
                 "event": "logic_optimizer_analyze_batch",
+                "optimizer_pipeline": "logic_theorem",
                 "batch_index": len(self.batch_history),
                 "session_count": len(session_results),
                 "average_score": round(avg_score, 6),

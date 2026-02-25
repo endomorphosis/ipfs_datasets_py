@@ -139,21 +139,19 @@ class OntologyValidator:
             List of MergeSuggestion objects sorted by similarity_score (descending)
         
         Raises:
-            OntologyValidationError: If ontology is invalid or threshold out of range
+            ValueError: If ontology is invalid or threshold out of range
         """
-        from .exceptions import OntologyValidationError
-        
         if not isinstance(ontology, dict):
-            raise OntologyValidationError("ontology must be a dictionary")
+            raise ValueError("ontology must be a dictionary")
         
         if not 0.0 <= threshold <= 1.0:
-            raise OntologyValidationError("threshold must be between 0.0 and 1.0")
+            raise ValueError("threshold must be between 0.0 and 1.0")
         
         entities = ontology.get("entities", [])
         relationships = ontology.get("relationships", [])
         
         if not isinstance(entities, list):
-            raise OntologyValidationError("ontology['entities'] must be a list")
+            raise ValueError("ontology['entities'] must be a list")
         
         # Find entity IDs that are involved in relationships
         entity_ids_in_relationships = self._get_entity_ids_in_relationships(relationships)
@@ -220,6 +218,9 @@ class OntologyValidator:
         type2 = entity2.get("type") or entity2.get("Type") or "Unknown"
         conf1 = float(entity1.get("confidence") or entity1.get("Confidence") or 0.5)
         conf2 = float(entity2.get("confidence") or entity2.get("Confidence") or 0.5)
+
+        if not isinstance(id1, str) or not isinstance(id2, str):
+            return None
         
         # Calculate similarity components
         name_similarity = self._calculate_string_similarity(text1, text2)
@@ -300,7 +301,7 @@ class OntologyValidator:
     def _get_entity_ids_in_relationships(
         self,
         relationships: List[Dict[str, Any]],
-    ) -> set:
+    ) -> set[str]:
         """Get all entity IDs that are involved in any relationship.
         
         Args:
@@ -309,15 +310,15 @@ class OntologyValidator:
         Returns:
             Set of entity IDs
         """
-        entity_ids = set()
+        entity_ids: set[str] = set()
         
         for rel in relationships:
             source_id = rel.get("source_id") or rel.get("SourceId")
             target_id = rel.get("target_id") or rel.get("TargetId")
             
-            if source_id:
+            if isinstance(source_id, str) and source_id:
                 entity_ids.add(source_id)
-            if target_id:
+            if isinstance(target_id, str) and target_id:
                 entity_ids.add(target_id)
         
         return entity_ids

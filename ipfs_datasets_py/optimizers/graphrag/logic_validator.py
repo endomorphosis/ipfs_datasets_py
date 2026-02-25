@@ -189,9 +189,11 @@ class LogicValidator:
         else:
             self.prover_config = ProverConfig()
         self.use_cache = use_cache
-        self._cache = {} if use_cache else None
-        self._incremental_cache = {} if use_cache else None
-        self._incremental_cache_stats = {"hits": 0, "misses": 0}
+        self._cache: Optional[Dict[str, Any]] = {} if use_cache else None
+        self._incremental_cache: Optional[Dict[str, ValidationResult]] = (
+            {} if use_cache else None
+        )
+        self._incremental_cache_stats: Dict[str, int] = {"hits": 0, "misses": 0}
         
         # Try to import TDFOL infrastructure
         try:
@@ -416,8 +418,10 @@ class LogicValidator:
         if self.use_cache and self._cache is not None:
             cache_key = f"consistency:{self._get_cache_key(ontology)}"
             if cache_key in self._cache:
-                logger.info("Using cached validation result")
-                return self._cache[cache_key]
+                cached_result = self._cache[cache_key]
+                if isinstance(cached_result, ValidationResult):
+                    logger.info("Using cached validation result")
+                    return cached_result
         
         import time
         start_time = time.time()
@@ -519,8 +523,11 @@ class LogicValidator:
         relationships = ontology.get('relationships', [])
         entity_ids = {e.get('id') for e in entities if isinstance(e, dict) and e.get('id')}
         entity_id_to_text: dict[str, str] = {
-            e['id']: e.get('text', e['id'])
-            for e in entities if isinstance(e, dict) and e.get('id')
+            e["id"]: e.get("text", e["id"])
+            for e in entities
+            if isinstance(e, dict)
+            and isinstance(e.get("id"), str)
+            and isinstance(e.get("text", e["id"]), str)
         }
 
         for contradiction in contradictions:
@@ -650,7 +657,7 @@ class LogicValidator:
         entity_ids = {e.get('id') for e in entities if isinstance(e, dict)}
         
         # Check relationships reference valid entities
-        invalid_ids: list = []
+        invalid_ids: List[str] = []
         for rel in relationships:
             if not isinstance(rel, dict):
                 continue
@@ -704,9 +711,9 @@ class LogicValidator:
         # and trivial is_a cycles (A is_a B, B is_a A).
         import re
 
-        entity_ids: set = set()
-        rel_triples: list = []  # (rel_type, source_id, target_id)
-        duplicate_ids: list = []
+        entity_ids: set[str] = set()
+        rel_triples: List[tuple[str, str, str]] = []  # (rel_type, source_id, target_id)
+        duplicate_ids: List[str] = []
 
         for formula in formulas:
             if not isinstance(formula, str):
@@ -724,7 +731,7 @@ class LogicValidator:
             if m_rel:
                 rel_triples.append((m_rel.group(1), m_rel.group(2), m_rel.group(3)))
 
-        contradictions: list = []
+        contradictions: List[str] = []
 
         # Duplicate entity IDs
         for eid in duplicate_ids:
@@ -996,7 +1003,7 @@ class LogicValidator:
         """
         return self.count_contradictions(ontology) == 0
 
-    def hub_nodes(self, ontology: Dict[str, Any], min_degree: int = 2) -> list:
+    def hub_nodes(self, ontology: Dict[str, Any], min_degree: int = 2) -> List[str]:
         """Return a list of entity IDs that act as hubs (high degree nodes).
 
         A hub node is an entity that appears in many relationships, either
@@ -1033,7 +1040,7 @@ class LogicValidator:
         relationships = ontology.get("relationships", [])
         
         # Count degree for each entity ID
-        degree = {}
+        degree: Dict[str, int] = {}
         for rel in relationships:
             source_id = rel.get("source_id")
             target_id = rel.get("target_id")
@@ -1459,7 +1466,7 @@ class LogicValidator:
                     ids.append(rid)
         return ids
 
-    def entity_type_set(self, ontology: Dict[str, Any]) -> set:
+    def entity_type_set(self, ontology: Dict[str, Any]) -> set[str]:
         """Return the set of distinct entity type strings in *ontology*.
 
         Args:
@@ -1471,7 +1478,7 @@ class LogicValidator:
         entities = ontology.get("entities", ontology.get("nodes", []))
         if not isinstance(entities, (list, tuple)):
             return set()
-        types = set()
+        types: set[str] = set()
         for ent in entities:
             if isinstance(ent, dict):
                 t = ent.get("type")
@@ -1495,7 +1502,7 @@ class LogicValidator:
         rels = ontology.get("relationships", ontology.get("edges", []))
         if not isinstance(rels, (list, tuple)):
             return []
-        dangling: set = set()
+        dangling: set[str] = set()
         for rel in rels:
             if not isinstance(rel, dict):
                 continue
@@ -1552,7 +1559,7 @@ class LogicValidator:
         rels = ontology.get("relationships", ontology.get("edges", []))
         if not isinstance(rels, (list, tuple)):
             return sorted(entity_ids)
-        connected: set = set()
+        connected: set[str] = set()
         for rel in rels:
             if isinstance(rel, dict):
                 src = rel.get("source_id")
@@ -1602,7 +1609,7 @@ class LogicValidator:
             Sorted list of isolated entity ids.
         """
         entity_ids = set(self.all_entity_ids(ontology))
-        connected: set = set()
+        connected: set[str] = set()
         rels = ontology.get("relationships", ontology.get("edges", []))
         if isinstance(rels, (list, tuple)):
             for rel in rels:
@@ -1654,10 +1661,11 @@ class LogicValidator:
         for ent in entities:
             if isinstance(ent, dict):
                 t = ent.get("type", ent.get("entity_type", "unknown"))
-                counts[t] = counts.get(t, 0) + 1
+                if isinstance(t, str):
+                    counts[t] = counts.get(t, 0) + 1
         return counts
 
-    def relationship_type_set(self, ontology: Dict[str, Any]) -> set:
+    def relationship_type_set(self, ontology: Dict[str, Any]) -> set[str]:
         """Return the set of distinct relationship type strings.
 
         Args:
@@ -1693,7 +1701,7 @@ class LogicValidator:
         if len(entity_ids) <= 1:
             return True
         rels = ontology.get("relationships", ontology.get("edges", []))
-        adj: Dict[str, set] = {eid: set() for eid in entity_ids}
+        adj: Dict[str, set[str]] = {eid: set() for eid in entity_ids}
         for rel in (rels if isinstance(rels, (list, tuple)) else []):
             if isinstance(rel, dict):
                 src = rel.get("source_id")
@@ -1701,7 +1709,7 @@ class LogicValidator:
                 if isinstance(src, str) and isinstance(tgt, str):
                     adj.setdefault(src, set()).add(tgt)
                     adj.setdefault(tgt, set()).add(src)
-        visited: set = set()
+        visited: set[str] = set()
         queue = [entity_ids[0]]
         while queue:
             node = queue.pop()
@@ -1726,7 +1734,7 @@ class LogicValidator:
         rels = ontology.get("relationships", ontology.get("edges", []))
         if not isinstance(rels, (list, tuple)):
             return 0
-        seen: dict = {}
+        seen: Dict[tuple[Any, Any, Any], int] = {}
         duplicates = 0
         for rel in rels:
             if not isinstance(rel, dict):
@@ -1841,7 +1849,7 @@ class LogicValidator:
         """
         return self.shortest_path_length(ontology, source, target)
 
-    def reachable_from(self, ontology: Dict[str, Any], source: str) -> list:
+    def reachable_from(self, ontology: Dict[str, Any], source: str) -> List[str]:
         """Return all entity ids reachable from *source* via BFS.
 
         Treats all relationships as undirected edges.  The *source* itself is
@@ -1855,7 +1863,7 @@ class LogicValidator:
             Sorted list of reachable entity ids (excluding *source*).
         """
         rels = ontology.get("relationships", ontology.get("edges", []))
-        adj: Dict[str, set] = {}
+        adj: Dict[str, set[str]] = {}
         for rel in (rels if isinstance(rels, (list, tuple)) else []):
             if isinstance(rel, dict):
                 src = rel.get("source_id")
@@ -1863,7 +1871,7 @@ class LogicValidator:
                 if isinstance(src, str) and isinstance(tgt, str):
                     adj.setdefault(src, set()).add(tgt)
                     adj.setdefault(tgt, set()).add(src)
-        visited: set = {source}
+        visited: set[str] = {source}
         queue = [source]
         while queue:
             node = queue.pop(0)
@@ -1886,7 +1894,7 @@ class LogicValidator:
             ``True`` when at least one directed cycle exists.
         """
         rels = ontology.get("relationships", ontology.get("edges", []))
-        adj: Dict[str, list] = {}
+        adj: Dict[str, List[str]] = {}
         for rel in (rels if isinstance(rels, (list, tuple)) else []):
             if isinstance(rel, dict):
                 src = rel.get("source_id")
@@ -1936,7 +1944,7 @@ class LogicValidator:
             Returns 0 when there are no cycles.
         """
         rels = ontology.get("relationships", ontology.get("edges", []))
-        adj: Dict[str, list] = {}
+        adj: Dict[str, List[str]] = {}
         for rel in (rels if isinstance(rels, (list, tuple)) else []):
             if isinstance(rel, dict):
                 src = rel.get("source_id")
@@ -1946,10 +1954,10 @@ class LogicValidator:
 
         WHITE, GREY, BLACK = 0, 1, 2
         color: Dict[str, int] = {}
-        in_cycle: set = set()
-        stack: list = []
+        in_cycle: set[str] = set()
+        stack: List[str] = []
 
-        def dfs(node: str) -> bool:
+        def dfs(node: str) -> None:
             color[node] = GREY
             stack.append(node)
             for neighbour in adj.get(node, []):
@@ -2002,7 +2010,7 @@ class LogicValidator:
             if isinstance(r, dict) and r.get("source_id") == entity_id
         )
 
-    def top_k_entities_by_degree(self, ontology: Dict[str, Any], k: int = 5) -> list:
+    def top_k_entities_by_degree(self, ontology: Dict[str, Any], k: int = 5) -> List[str]:
         """Return the *k* entity ids with the highest total degree (in + out).
 
         Args:

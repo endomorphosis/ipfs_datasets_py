@@ -29,13 +29,21 @@ Usage::
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
 
-from .exceptions import OntologyValidationError
+if TYPE_CHECKING:
+    class OntologyValidationError(Exception):
+        pass
+else:
+    from .exceptions import OntologyValidationError
 
 
 class OntologySchemaError(OntologyValidationError):
     """Raised when ontology schema validation fails."""
+
+    def __init__(self, message: str, errors: Optional[List[str]] = None) -> None:
+        super().__init__(message)
+        self.errors: List[str] = list(errors or [])
 
 
 def validate_ontology_schema(
