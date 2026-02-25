@@ -164,6 +164,16 @@ class TestPrometheusMetricsRecording:
         assert metrics.stage_durations[1].labels["stage"] == "refining"
         assert metrics.stage_durations[1].labels["domain"] == "legal"
 
+    def test_record_stage_duration_negative_is_clamped(self):
+        """Negative stage durations should be clamped to zero."""
+        metrics = PrometheusMetrics(enabled=True)
+
+        metrics.record_stage_duration("extracting", -0.25)
+
+        assert len(metrics.stage_durations) == 1
+        assert metrics.stage_durations[0].value == 0.0
+        assert metrics.stage_durations[0].labels["stage"] == "extracting"
+
     def test_record_score_delta(self):
         """Test recording score delta values."""
         metrics = PrometheusMetrics(enabled=True)
@@ -245,6 +255,18 @@ class TestPrometheusMetricsCollection:
         assert 'stage="extracting"' in output
         assert 'stage="refining"' in output
         assert 'domain="general"' in output
+
+    def test_collect_metrics_stage_histogram_without_extra_labels(self):
+        """Stage histogram should render valid labels even with only stage label."""
+        metrics = PrometheusMetrics(enabled=True)
+
+        metrics.record_stage_duration("extracting", 0.07)
+
+        output = metrics.collect_metrics()
+
+        assert "optimizer_stage_duration_seconds_bucket" in output
+        assert 'stage="extracting",le="0.1"' in output
+        assert "optimizer_stage_duration_seconds_count" in output
 
     def test_collect_metrics_score_delta(self):
         """Test score delta gauge in output."""
@@ -342,3 +364,13 @@ class TestPrometheusMetricsGlobal:
         second = get_global_prometheus_metrics(enabled=False)
 
         assert first is second
+
+    def test_global_metrics_reset_honors_new_enablement(self):
+        """After reset, the first call should determine enablement for singleton."""
+        metrics_prometheus_module._GLOBAL_PROMETHEUS_METRICS = None
+        first = get_global_prometheus_metrics(enabled=False)
+        assert first.enabled is False
+
+        metrics_prometheus_module._GLOBAL_PROMETHEUS_METRICS = None
+        second = get_global_prometheus_metrics(enabled=True)
+        assert second.enabled is True
