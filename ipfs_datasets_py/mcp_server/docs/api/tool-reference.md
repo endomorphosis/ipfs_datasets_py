@@ -848,7 +848,8 @@ Apply a named quantitative theorem (e.g. Black-Scholes, CAPM) to market data.
 
 ## Functions
 
-Execute Python code snippets in a sandboxed environment.
+Utility infrastructure for exposing arbitrary functions as MCP tools. See also
+`lizardpersons_function_tools/meta_tools/` for runtime introspection helpers.
 
 ### execute_python_snippet
 **Parameters:**
@@ -1756,3 +1757,262 @@ Content-addressed event provenance tracking.
 | `EventDAG.add_event(event)` → `cid` | Add an event, returns CID |
 | `EventDAG.get_event(cid)` | Retrieve event by CID |
 | `EventDAG.get_lineage(cid)` | Get full lineage of an event |
+
+---
+
+## Discord Tools
+
+MCP tools for exporting and analysing Discord data (guilds, channels, DMs).
+
+### discord_export_channel
+
+Export the message history of a single Discord channel.
+
+```python
+result = await discord_export_channel(
+    channel_id="123456789",
+    output_path="/data/exports/channel.json",
+    limit=1000
+)
+```
+
+**Parameters:**
+- `channel_id` (str) — Discord channel ID
+- `output_path` (str) — Destination file path
+- `limit` (int, optional) — Maximum messages to export (default: all)
+
+**Returns:** `{"status": "success", "channel_id": str, "message_count": int, "output_path": str}`
+
+### discord_export_guild
+
+Export all channels in a Discord guild/server.
+
+```python
+result = await discord_export_guild(
+    guild_id="987654321",
+    output_dir="/data/exports/guild/"
+)
+```
+
+**Returns:** `{"status": "success", "guild_id": str, "channels_exported": int}`
+
+### discord_export_all_channels
+
+Export all accessible channels across all guilds the bot belongs to.
+
+### discord_export_dm_channels
+
+Export direct message channels.
+
+### discord_export_dm_channels_individual
+
+Export each DM channel to a separate file.
+
+### discord_list_guilds
+
+List all guilds the bot/token has access to.
+
+```python
+result = await discord_list_guilds()
+# Returns: {"guilds": [{"id": str, "name": str, "member_count": int}, ...]}
+```
+
+### discord_list_channels
+
+List channels in a specific guild.
+
+```python
+result = await discord_list_channels(guild_id="987654321")
+# Returns: {"channels": [{"id": str, "name": str, "type": str}, ...]}
+```
+
+### discord_list_dm_channels
+
+List available direct message channels.
+
+### discord_analyze_channel
+
+Analyse message patterns, user activity, and content in a channel.
+
+### discord_analyze_guild
+
+Analyse guild-wide activity and engagement statistics.
+
+### discord_analyze_export
+
+Analyse a previously-exported Discord JSON file.
+
+### discord_convert_export
+
+Convert a Discord export file to a different format (JSON, CSV, Parquet).
+
+### discord_batch_convert_exports
+
+Batch-convert multiple Discord export files.
+
+---
+
+## Email Tools
+
+MCP tools for connecting to, exporting, and analysing email accounts via IMAP/SMTP.
+
+### email_test_connection
+
+Test IMAP connection credentials.
+
+```python
+result = await email_test_connection(
+    host="imap.gmail.com",
+    port=993,
+    username="user@example.com",
+    password="secret",
+    use_ssl=True
+)
+# Returns: {"status": "success", "connected": True, "server_info": {...}}
+```
+
+**Parameters:**
+- `host` (str) — IMAP server hostname
+- `port` (int) — IMAP port (993 for SSL)
+- `username` (str) — Email address / username
+- `password` (str) — Password or app-specific token
+- `use_ssl` (bool) — Whether to use SSL (default: True)
+
+### email_list_folders
+
+List all folders / mailboxes in the account.
+
+```python
+result = await email_list_folders(
+    host="imap.gmail.com", port=993,
+    username="user@example.com", password="secret"
+)
+# Returns: {"folders": ["INBOX", "Sent", "Trash", ...]}
+```
+
+### email_export_folder
+
+Export all messages in a folder to a JSON or MBOX file.
+
+```python
+result = await email_export_folder(
+    host="imap.gmail.com", port=993,
+    username="user@example.com", password="secret",
+    folder="INBOX",
+    output_path="/data/inbox.json",
+    limit=500
+)
+```
+
+**Returns:** `{"status": "success", "folder": str, "message_count": int, "output_path": str}`
+
+### email_parse_eml
+
+Parse a raw `.eml` file and return structured message data.
+
+```python
+result = await email_parse_eml(eml_path="/data/message.eml")
+# Returns: {"from": str, "to": list, "subject": str, "body": str, "attachments": list}
+```
+
+### email_fetch_emails
+
+Fetch emails matching IMAP search criteria.
+
+```python
+result = await email_fetch_emails(
+    host="imap.gmail.com", port=993,
+    username="user@example.com", password="secret",
+    folder="INBOX",
+    search_criteria="FROM user@domain.com SINCE 01-Jan-2024",
+    limit=100
+)
+```
+
+### email_analyze_export
+
+Analyse a previously-exported email JSON file (sender stats, time patterns).
+
+### email_search_export
+
+Search inside an exported email archive file.
+
+---
+
+## Bespoke Tools
+
+Custom one-off tools providing system-level utilities and thin wrappers for
+bespoke workflow and infrastructure management.
+
+### system_health
+
+Check overall MCP server and backend health.
+
+```python
+result = await system_health()
+# Returns: {"status": "healthy", "components": {"ipfs": "ok", "vector_store": "ok", ...}}
+```
+
+### system_status
+
+Return detailed system status including resource usage.
+
+```python
+result = await system_status()
+# Returns: {"cpu": float, "memory": {...}, "disk": {...}, "active_jobs": int}
+```
+
+### cache_stats
+
+Return cache hit/miss statistics and size information.
+
+```python
+result = await cache_stats()
+# Returns: {"hit_rate": float, "miss_rate": float, "size_bytes": int, "item_count": int}
+```
+
+### execute_workflow
+
+Execute a named bespoke workflow by ID.
+
+```python
+result = await execute_workflow(
+    workflow_id="my_custom_pipeline",
+    params={"input": "/data/source"}
+)
+```
+
+**Parameters:**
+- `workflow_id` (str) — Name of the registered workflow
+- `params` (dict) — Workflow parameters
+
+**Returns:** `{"status": "success", "workflow_id": str, "result": dict}`
+
+### list_indices
+
+List all vector/graph indices currently registered in the system.
+
+```python
+result = await list_indices()
+# Returns: {"indices": [{"name": str, "type": str, "size": int}, ...]}
+```
+
+### delete_index
+
+Delete a named index from the system.
+
+```python
+result = await delete_index(index_name="my_faiss_index")
+```
+
+### create_vector_store
+
+Create a new named vector store with the specified backend.
+
+```python
+result = await create_vector_store(
+    name="product_vectors",
+    backend="faiss",          # "faiss" | "qdrant" | "elasticsearch"
+    dimension=768
+)
+```

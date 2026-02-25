@@ -213,7 +213,8 @@ class TestProcessJobWebhookPaths:
         assert mgr.jobs[job_id]["status"] == "completed"
         assert mgr.job_results[job_id] is mock_result
 
-
+    @pytest.mark.asyncio
+    async def test_tool_execution_error_no_webhook(self):
         """
         GIVEN: process_job raises ToolExecutionError but no webhook configured
         WHEN: process_job() runs
