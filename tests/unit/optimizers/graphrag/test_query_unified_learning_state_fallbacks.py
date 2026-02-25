@@ -13,8 +13,6 @@ def test_save_learning_state_serialization_error_writes_partial_state(tmp_path, 
     optimizer._learning_enabled = True
     optimizer._learning_cycle = 10
     optimizer._numpy_json_serializable = lambda value: value
-    optimizer._learning_cycle = 10
-    optimizer._learning_cycle = 10
 
     def _raise_serialization_error(_value):
         raise TypeError("serialization failed")
@@ -29,6 +27,8 @@ def test_save_learning_state_serialization_error_writes_partial_state(tmp_path, 
     assert saved_path == str(target)
     payload = json.loads(target.read_text(encoding="utf-8"))
     assert payload["partial_state"] is True
+    assert payload["learning_cycle"] == 10
+    assert payload["learning_cycles_completed"] == 10
     assert "Error serializing learning state to JSON" in payload["error"]
 
 

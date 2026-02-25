@@ -68,7 +68,7 @@ class PromptTemplate:
     examples: List[Dict[str, Any]] = field(default_factory=list)
     parameters: Dict[str, Any] = field(default_factory=dict)
     
-    def format(self, **kwargs) -> str:
+    def format(self, **kwargs: Any) -> str:
         """
         Format the template with provided values.
         
@@ -419,7 +419,7 @@ class PromptGenerator:
         """
         # Built-in example store: curated few-shot examples keyed by domain.
         # Callers can extend this via ``add_examples()``.
-        _BUILTIN_EXAMPLES: dict[str, list[dict]] = {
+        _BUILTIN_EXAMPLES: dict[str, list[dict[str, Any]]] = {
             'legal': [
                 {
                     'input': 'Alice must pay Bob USD 500 by 2025-01-01.',
@@ -482,7 +482,7 @@ class PromptGenerator:
         """
         return self.template_library.get(domain, self.template_library['general'])
     
-    def add_template(self, domain: str, template: PromptTemplate):
+    def add_template(self, domain: str, template: PromptTemplate) -> None:
         """
         Add or update a prompt template for a domain.
         

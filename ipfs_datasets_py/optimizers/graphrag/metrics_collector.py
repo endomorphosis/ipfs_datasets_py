@@ -100,7 +100,7 @@ class MetricsCollector:
         >>> csv_str = collector.export_metrics(format='csv')
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the metrics collector."""
         self._metrics: List[SessionMetrics] = []
         self._batch_metrics: List[Dict[str, Any]] = []
@@ -231,7 +231,7 @@ class MetricsCollector:
         avg_relationships = sum(m.num_relationships for m in self._metrics) / total_sessions
         
         # Domain breakdown
-        domain_counts = defaultdict(int)
+        domain_counts: defaultdict[str, int] = defaultdict(int)
         for m in self._metrics:
             domain_counts[m.domain] += 1
         
@@ -256,7 +256,7 @@ class MetricsCollector:
             'total_batches': len(self._batch_metrics),
         }
     
-    def get_time_series(self, metric_name: str) -> List[tuple]:
+    def get_time_series(self, metric_name: str) -> List[tuple[float, Any]]:
         """
         Get time series data for a specific metric.
         

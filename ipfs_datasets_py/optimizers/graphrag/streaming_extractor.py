@@ -43,7 +43,7 @@ class StreamingEntity:
     start_pos: int  # Position in original text
     end_pos: int
     confidence: float
-    metadata: dict = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -77,7 +77,7 @@ class StreamingEntityExtractor:
     
     def __init__(
         self,
-        extractor_func: Callable[[str], List[dict]],
+        extractor_func: Callable[[str], List[dict[str, Any]]],
         chunk_size: int = 1024,
         chunk_strategy: ChunkStrategy = ChunkStrategy.FIXED_SIZE,
         overlap: int = 256,
@@ -195,7 +195,7 @@ class StreamingEntityExtractor:
             )
             yield batch
     
-    def _chunk_text(self, text: str) -> List[tuple]:
+    def _chunk_text(self, text: str) -> List[tuple[int, int]]:
         """Split text into (start, end) position pairs.
         
         Args:
@@ -213,7 +213,7 @@ class StreamingEntityExtractor:
         else:  # ADAPTIVE
             return self._chunk_adaptive(text)
     
-    def _chunk_fixed_size(self, text: str) -> List[tuple]:
+    def _chunk_fixed_size(self, text: str) -> List[tuple[int, int]]:
         """Chunk text into fixed-size chunks with overlap."""
         chunks = []
         pos = 0
@@ -226,7 +226,7 @@ class StreamingEntityExtractor:
         
         return chunks
     
-    def _chunk_by_paragraph(self, text: str) -> List[tuple]:
+    def _chunk_by_paragraph(self, text: str) -> List[tuple[int, int]]:
         """Chunk text by paragraphs (double newlines)."""
         chunks = []
         paragraphs = text.split('\n\n')
@@ -240,7 +240,7 @@ class StreamingEntityExtractor:
         
         return chunks if chunks else [(0, len(text))]
     
-    def _chunk_by_sentence(self, text: str) -> List[tuple]:
+    def _chunk_by_sentence(self, text: str) -> List[tuple[int, int]]:
         """Chunk text by sentences (simple heuristic)."""
         # Simple regex-based approach (not dependency-heavy)
         import re
@@ -257,7 +257,7 @@ class StreamingEntityExtractor:
         
         return chunks if chunks else [(0, len(text))]
     
-    def _chunk_adaptive(self, text: str) -> List[tuple]:
+    def _chunk_adaptive(self, text: str) -> List[tuple[int, int]]:
         """Adaptively chunk based on entity density (fallback to fixed for now)."""
         # Simplified adaptive: use fixed-size for now
         # In production, could track entity density and adjust chunk size

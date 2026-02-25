@@ -173,7 +173,7 @@ class AuditLogger:
             logger: Optional Python logger for debug messages
         """
         self.session_id = session_id or self._generate_session_id()
-        self.output_dir = Path(output_dir) if output_dir else None
+        self.output_dir: Optional[Path] = Path(output_dir) if output_dir else None
         self.enable_file_logging = enable_file_logging and (output_dir is not None)
         self._log = logger or logging.getLogger(__name__)
         
@@ -181,7 +181,7 @@ class AuditLogger:
         self.events: List[AuditEvent] = []
         
         # Create output directory if needed
-        if self.enable_file_logging:
+        if self.enable_file_logging and self.output_dir is not None:
             self.output_dir.mkdir(parents=True, exist_ok=True)
             self._log.info(f"Audit logger initialized: session_id={self.session_id}, output_dir={self.output_dir}")
         else:
@@ -205,6 +205,8 @@ class AuditLogger:
     
     def _write_event_to_file(self, event: AuditEvent) -> None:
         """Append event to incremental log file (JSONL format)."""
+        if self.output_dir is None:
+            return
         log_file = self.output_dir / f"audit_{self.session_id}.jsonl"
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(event.to_dict()) + "\n")

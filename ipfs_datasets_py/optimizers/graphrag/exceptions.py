@@ -2,16 +2,35 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
-from ..common.exceptions import (
-    OptimizerError,
-    ExtractionError,
-    ValidationError,
-    ProvingError,
-    RefinementError,
-    ConfigurationError,
-)
+if TYPE_CHECKING:
+    class OptimizerError(Exception):
+        pass
+
+    class ExtractionError(OptimizerError):
+        pass
+
+    class ValidationError(OptimizerError):
+        pass
+
+    class ProvingError(OptimizerError):
+        pass
+
+    class RefinementError(OptimizerError):
+        pass
+
+    class ConfigurationError(OptimizerError):
+        pass
+else:
+    from ..common.exceptions import (
+        OptimizerError,
+        ExtractionError,
+        ValidationError,
+        ProvingError,
+        RefinementError,
+        ConfigurationError,
+    )
 
 
 class GraphRAGError(OptimizerError):

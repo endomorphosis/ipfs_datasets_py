@@ -142,13 +142,13 @@ class OntologyTemplateLibrary:
         >>> print(f"Available: {domains}")
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the template library with default templates."""
         self._templates: Dict[str, OntologyTemplate] = {}
         self._initialize_default_templates()
         logger.info(f"Initialized OntologyTemplateLibrary with {len(self._templates)} templates")
     
-    def _initialize_default_templates(self):
+    def _initialize_default_templates(self) -> None:
         """Create default templates for common domains."""
         # Legal domain template
         self._templates['legal'] = OntologyTemplate(
@@ -352,7 +352,7 @@ class OntologyTemplateLibrary:
     def generate_from_template(
         self,
         domain: str,
-        **kwargs
+        **kwargs: Any
     ) -> Dict[str, Any]:
         """
         Generate base ontology from template with provided parameters.
@@ -423,7 +423,7 @@ class OntologyTemplateLibrary:
         
         return ontology
     
-    def add_template(self, template: OntologyTemplate):
+    def add_template(self, template: OntologyTemplate) -> None:
         """
         Add a new template to the library.
         

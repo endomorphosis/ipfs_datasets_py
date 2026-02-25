@@ -80,7 +80,7 @@ class ScoreAnalyzer:
     scores passed as arguments with no internal state modification.
     """
     
-    DIMENSIONS = STANDARD_DIMENSIONS
+    DIMENSIONS: Tuple[str, ...] = STANDARD_DIMENSIONS
     
     def __init__(self, dimensions: Optional[Tuple[str, ...]] = None):
         """Initialize analyzer with optional custom dimension set.
@@ -91,6 +91,23 @@ class ScoreAnalyzer:
         """
         self.DIMENSIONS = dimensions or STANDARD_DIMENSIONS
         self._log = logging.getLogger(self.__class__.__name__)
+
+    @staticmethod
+    def _safe_float(value: Any) -> float:
+        """Normalize arbitrary numeric-ish values to float."""
+        if isinstance(value, bool):
+            return 0.0
+        if isinstance(value, (int, float)):
+            return float(value)
+        return 0.0
+
+    def _dimension_value(self, score: Any, dimension: str) -> float:
+        """Read a dimension value as float with safe fallback."""
+        return self._safe_float(getattr(score, dimension, 0.0))
+
+    def _overall_value(self, score: Any) -> float:
+        """Read overall score as float with safe fallback."""
+        return self._safe_float(getattr(score, "overall", 0.0))
     
     # =========================================================================
     # Single Score Analysis Methods
@@ -139,7 +156,7 @@ class ScoreAnalyzer:
             >>> analyzer.dimension_range(score)
             0.45  # max dim is 0.95, min dim is 0.50
         """
-        vals = [getattr(score, d, 0.0) for d in self.DIMENSIONS]
+        vals = [self._dimension_value(score, d) for d in self.DIMENSIONS]
         return max(vals) - min(vals) if vals else 0.0
     
     def score_balance_ratio(self, score: Any) -> float:
@@ -154,7 +171,7 @@ class ScoreAnalyzer:
         Raises:
             ValueError: If any dimension is zero.
         """
-        vals = [getattr(score, d, 0.0) for d in self.DIMENSIONS]
+        vals = [self._dimension_value(score, d) for d in self.DIMENSIONS]
         min_val = min(vals) if vals else 1.0
         max_val = max(vals) if vals else 1.0
         if min_val <= 0.0:
@@ -217,7 +234,7 @@ class ScoreAnalyzer:
             Float in [0.0, 1.0]; 0 = all dimensions equal,
             1.0 = maximally varied (one dim highly different from others).
         """
-        vals = [getattr(score, d, 0.0) for d in self.DIMENSIONS]
+        vals = [self._dimension_value(score, d) for d in self.DIMENSIONS]
         total = sum(vals)
         if total == 0.0:
             return 0.0
@@ -227,7 +244,7 @@ class ScoreAnalyzer:
         # Compute standard deviation of proportions as a simple entropy proxy
         mean_p = sum(probs) / len(probs)
         variance = sum((p - mean_p) ** 2 for p in probs) / len(probs)
-        return min(1.0, variance ** 0.5)  # Normalized to [0, 1]
+        return float(min(1.0, variance ** 0.5))  # Normalized to [0, 1]
     
     def score_dimension_variance(self, score: Any) -> float:
         """Return population variance of dimensions.
@@ -238,7 +255,7 @@ class ScoreAnalyzer:
         Returns:
             Float variance (zero when all dimensions equal).
         """
-        vals = [getattr(score, d, 0.0) for d in self.DIMENSIONS]
+        vals = [self._dimension_value(score, d) for d in self.DIMENSIONS]
         n = len(vals)
         if n < 2:
             return 0.0
@@ -255,7 +272,7 @@ class ScoreAnalyzer:
             Float std dev (zero when all dimensions equal).
         """
         variance = self.score_dimension_variance(score)
-        return variance ** 0.5
+        return float(variance ** 0.5)
     
     def score_dimension_mean_abs_deviation(self, score: Any) -> float:
         """Return Mean Absolute Deviation of dimensions.
@@ -268,7 +285,7 @@ class ScoreAnalyzer:
         Returns:
             Float ≥ 0.0; 0.0 when all dimensions equal.
         """
-        vals = [getattr(score, d, 0.0) for d in self.DIMENSIONS]
+        vals = [self._dimension_value(score, d) for d in self.DIMENSIONS]
         n = len(vals)
         if n < 1:
             return 0.0
@@ -287,14 +304,14 @@ class ScoreAnalyzer:
         Returns:
             Float z-score; 0.0 when all dimensions equal.
         """
-        vals = [getattr(score, d, 0.0) for d in self.DIMENSIONS]
+        vals = [self._dimension_value(score, d) for d in self.DIMENSIONS]
         n = len(vals)
         mean = sum(vals) / n
         variance = sum((v - mean) ** 2 for v in vals) / n
         if variance == 0.0:
             return 0.0
         std = variance ** 0.5
-        return max(abs((v - mean) / std) for v in vals)
+        return float(max(abs((v - mean) / std) for v in vals))
     
     def score_dimension_min_z(self, score: Any) -> float:
         """Return minimum absolute z-score of dimensions.
@@ -308,14 +325,14 @@ class ScoreAnalyzer:
         Returns:
             Float z-score; 0.0 when all dimensions equal.
         """
-        vals = [getattr(score, d, 0.0) for d in self.DIMENSIONS]
+        vals = [self._dimension_value(score, d) for d in self.DIMENSIONS]
         n = len(vals)
         mean = sum(vals) / n
         variance = sum((v - mean) ** 2 for v in vals) / n
         if variance == 0.0:
             return 0.0
         std = variance ** 0.5
-        return min(abs((v - mean) / std) for v in vals)
+        return float(min(abs((v - mean) / std) for v in vals))
     
     # =========================================================================
     # Batch Analysis Methods
@@ -332,7 +349,7 @@ class ScoreAnalyzer:
         """
         if not scores:
             return 0.0
-        overalls = [s.overall for s in scores]
+        overalls = [self._overall_value(s) for s in scores]
         return sum(overalls) / len(overalls)
     
     def dimension_mean(self, scores: List[Any], dimension: str) -> float:
@@ -347,7 +364,7 @@ class ScoreAnalyzer:
         """
         if not scores:
             return 0.0
-        vals = [getattr(s, dimension, 0.0) for s in scores]
+        vals = [self._dimension_value(s, dimension) for s in scores]
         return sum(vals) / len(vals)
     
     def percentile_overall(
@@ -372,7 +389,7 @@ class ScoreAnalyzer:
         if not (0 <= percentile <= 100):
             raise ValueError(f"Percentile must be in [0, 100]; got {percentile}")
         
-        sorted_overalls = sorted(s.overall for s in scores)
+        sorted_overalls = sorted(self._overall_value(s) for s in scores)
         idx = (percentile / 100) * (len(sorted_overalls) - 1)
         lo, hi = int(idx), min(int(idx) + 1, len(sorted_overalls) - 1)
         frac = idx - lo
@@ -392,7 +409,7 @@ class ScoreAnalyzer:
         """
         if not scores:
             return 0.0, 0.0
-        overalls = [s.overall for s in scores]
+        overalls = [self._overall_value(s) for s in scores]
         return min(overalls), max(overalls)
     
     def batch_dimension_stats(
@@ -412,7 +429,7 @@ class ScoreAnalyzer:
         
         stats = {}
         for dim in self.DIMENSIONS:
-            values = [getattr(s, dim, 0.0) for s in scores]
+            values = [self._dimension_value(s, dim) for s in scores]
             sorted_vals = sorted(values)
             n = len(sorted_vals)
             
@@ -448,7 +465,7 @@ class ScoreAnalyzer:
             return 0.0
         
         mean_overall = self.mean_overall(scores)
-        distances = sum(abs(s.overall - mean_overall) for s in scores)
+        distances = sum(abs(self._overall_value(s) - mean_overall) for s in scores)
         return distances / (len(scores) * 1.0)  # Normalize
     
     # =========================================================================
@@ -470,9 +487,11 @@ class ScoreAnalyzer:
             Float percent change (-100 to +100);
             Positive = improvement.
         """
-        if before.overall == 0:
+        before_overall = self._overall_value(before)
+        after_overall = self._overall_value(after)
+        if before_overall == 0:
             return 0.0
-        return ((after.overall - before.overall) / before.overall) * 100
+        return ((after_overall - before_overall) / before_overall) * 100
     
     def dimension_improvement_count(
         self, 

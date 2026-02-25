@@ -1639,12 +1639,12 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         """
         increment_failure_counter(self, error_message, is_critical=is_critical)
 
-    def save_learning_state(self, filepath=None) -> None:
+    def save_learning_state(self, filepath: Optional[str] = None) -> Optional[str]:
         """
         Save the current learning state to disk.
     
         Args:
-            filepath (str, optional): Path to save the state file. If None, uses default location.
+            filepath: Path to save the state file. If None, uses default location.
         
         Returns:
             str: Path where the state was saved, or None if not saved
@@ -1678,7 +1678,7 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
             serializable_state = self._numpy_json_serializable(state)
         
             # Save state to file
-            with open(filepath, 'w') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(serializable_state, f, indent=2)
             
             return filepath
@@ -1699,12 +1699,14 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
                 "partial_state": True,
                 # Include some minimal state information
                 "learning_enabled": state.get("learning_enabled", False),
-                "learning_cycles_completed": state.get("learning_cycles_completed", 0)
+                "learning_cycle": state.get("learning_cycle", 0),
+                # Keep legacy key for backward compatibility with older tooling.
+                "learning_cycles_completed": state.get("learning_cycle", 0),
             }
         
             # Try to save the fallback state
             try:
-                with open(filepath, 'w') as f:
+                with open(filepath, "w", encoding="utf-8") as f:
                     json.dump(fallback_state, f, indent=2)
                 return filepath
             except (TypeError, ValueError, RuntimeError, OSError):
@@ -1717,12 +1719,12 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
                     )
                 return None
         
-    def load_learning_state(self, filepath=None) -> None:
+    def load_learning_state(self, filepath: Optional[str] = None) -> bool:
         """
         Load learning state from disk.
     
         Args:
-            filepath (str, optional): Path to the state file. If None, uses default location.
+            filepath: Path to the state file. If None, uses default location.
         
         Returns:
             bool: True if state was loaded successfully, False otherwise
@@ -1741,7 +1743,7 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         
         try:
             # Load state from file
-            with open(filepath, 'r') as f:
+            with open(filepath, "r", encoding="utf-8") as f:
                 state = json.load(f)
             
             # Set learning parameters
@@ -1774,21 +1776,6 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
             if hasattr(self, 'logger'):
                 self.logger.error(f"Error loading learning state: {str(e)}")
             return False
-        
-        # Initialize default parameters if not exists
-        if not hasattr(self, '_default_max_depth'):
-            self._default_max_depth = 2
-        if not hasattr(self, '_default_vector_top_k'):
-            self._default_vector_top_k = 5
-        if not hasattr(self, '_default_min_similarity'):
-            self._default_min_similarity = 0.7
-        if not hasattr(self, '_default_traversal_strategy'):
-            self._default_traversal_strategy = "breadth_first"
-        
-        # Log status of statistical learning
-        print(f"Statistical learning for query optimization: {'enabled' if enabled else 'disabled'}")
-        if enabled:
-            print(f"Learning from {learning_cycle} most recent queries")
     
     def record_path_performance(self, 
                                 path: List[str], 

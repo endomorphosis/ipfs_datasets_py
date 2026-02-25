@@ -187,7 +187,7 @@ class OntologyLearningAdapter:
         scores = [r.final_score for r in self._feedback]
         mean_score = sum(scores) / len(scores) if scores else 0.0
 
-        def _percentile(data: list, pct: float) -> float:
+        def _percentile(data: list[float], pct: float) -> float:
             """Return the *pct*-th percentile of *data* (0–100)."""
             if not data:
                 return 0.0
@@ -233,7 +233,7 @@ class OntologyLearningAdapter:
             - ``count``: number of times applied
             - ``mean_success``: mean critic score when this action was applied
         """
-        results = []
+        results: List[Dict[str, Any]] = []
         for action, count in self._action_count.items():
             if count > 0:
                 mean_success = self._action_success[action] / count
@@ -242,7 +242,7 @@ class OntologyLearningAdapter:
                     "count": count,
                     "mean_success": round(mean_success, 4),
                 })
-        results.sort(key=lambda x: x["mean_success"], reverse=True)
+        results.sort(key=lambda x: float(x["mean_success"]), reverse=True)
         return results[:max(1, n)]
 
     # ------------------------------------------------------------------ #
@@ -443,7 +443,7 @@ class OntologyLearningAdapter:
             _json.dump(payload, fh, indent=2)
 
     @classmethod
-    def from_file(cls, path: str, **init_kwargs) -> "OntologyLearningAdapter":
+    def from_file(cls, path: str, **init_kwargs: Any) -> "OntologyLearningAdapter":
         """Restore an adapter previously saved with :meth:`serialize_to_file`.
 
         Args:
@@ -560,7 +560,7 @@ class OntologyLearningAdapter:
             Square root of :meth:`score_variance`, or ``0.0`` when fewer than
             two feedback records exist.
         """
-        return self.score_variance() ** 0.5
+        return float(self.score_variance() ** 0.5)
 
     def feedback_median(self) -> float:
         """Return median ``final_score`` across feedback records."""

@@ -174,14 +174,16 @@ class OntologyRefinementAgent:
             return {}
 
         try:
-            return json.loads(response)
+            parsed = json.loads(response)
+            return parsed if isinstance(parsed, dict) else {}
         except json.JSONDecodeError:
             # Attempt to extract JSON object from text
             start = response.find("{")
             end = response.rfind("}")
             if start != -1 and end != -1 and end > start:
                 try:
-                    return json.loads(response[start : end + 1])
+                    parsed = json.loads(response[start : end + 1])
+                    return parsed if isinstance(parsed, dict) else {}
                 except json.JSONDecodeError:
                     return {}
             return {}
