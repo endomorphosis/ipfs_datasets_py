@@ -3242,7 +3242,7 @@ class OntologyGenerator:
                 result.confidence,
             )
             import json as _json
-            from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
+            from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
             payload = {
                 "event": "extract_entities",
                 "optimizer_pipeline": "graphrag",
@@ -3254,7 +3254,11 @@ class OntologyGenerator:
             }
             self._log.info(
                 "EXTRACT_ENTITIES: %s",
-                _json.dumps(with_schema(payload), separators=(",", ":"), sort_keys=True),
+                _json.dumps(
+                    with_schema(redact_payload(payload)),
+                    separators=(",", ":"),
+                    sort_keys=True,
+                ),
             )
             return result
         elif context_for_run.extraction_strategy == ExtractionStrategy.LLM_BASED:
@@ -3275,7 +3279,7 @@ class OntologyGenerator:
             result.confidence,
         )
         import json as _json
-        from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
+        from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
         payload = {
             "event": "extract_entities",
             "optimizer_pipeline": "graphrag",
@@ -3287,7 +3291,11 @@ class OntologyGenerator:
         }
         self._log.info(
             "EXTRACT_ENTITIES: %s",
-            _json.dumps(with_schema(payload), separators=(",", ":"), sort_keys=True),
+            _json.dumps(
+                with_schema(redact_payload(payload)),
+                separators=(",", ":"),
+                sort_keys=True,
+            ),
         )
         return result
 

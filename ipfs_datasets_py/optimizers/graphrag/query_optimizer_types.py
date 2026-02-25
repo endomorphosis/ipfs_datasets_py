@@ -255,6 +255,24 @@ ResultSummaryDict = TypedDict(
 # Structured summary of extraction result metrics
 
 
+# TIER 5: Validator and Quality Assessment Contracts
+
+MergeEvidenceDict = TypedDict(
+    "MergeEvidenceDict",
+    {
+        "name_similarity": float,
+        "type_match": bool,
+        "type1": str,
+        "type2": str,
+        "confidence1": float,
+        "confidence2": float,
+        "confidence_difference": float,
+    },
+    total=False
+)
+# Example: {"name_similarity": 0.85, "type_match": True, "type1": "Organization", ...}
+# Evidence dictionary for entity merge suggestions
+
 __all__ = [
     "QueryOptimizationPlanStep",
     "QueryOptimizationPlan",
@@ -284,4 +302,6 @@ __all__ = [
     "EntityIDPrefixGroups",
     "RelationshipSourceDegreeDistribution",
     "ResultSummaryDict",
+    "MergeEvidenceDict",
+    "MergeEvidenceDict",
 ]

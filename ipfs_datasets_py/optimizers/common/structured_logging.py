@@ -133,6 +133,11 @@ def _redact_string_values(value: Any) -> Any:
     return value
 
 
+def redact_payload(payload: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return payload with sensitive keys and token-like strings redacted."""
+    return _redact_string_values(redact_dict(dict(payload)))
+
+
 def log_event(
     logger: logging.Logger,
     event: EventType,
@@ -165,8 +170,7 @@ def log_event(
     }
     
     if data:
-        payload.update(redact_dict(data))
-        payload = _redact_string_values(payload)
+        payload.update(redact_payload(data))
     
     if include_timestamp:
         payload = enrich_with_timestamp(payload)

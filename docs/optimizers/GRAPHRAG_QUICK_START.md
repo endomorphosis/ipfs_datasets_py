@@ -257,6 +257,7 @@ context = OntologyGenerationContext(
 ## Next Steps
 
 - **API Reference**: See [API_REFERENCE_GRAPHRAG.md](../../docs/API_REFERENCE_GRAPHRAG.md) for complete API docs
-- **Configuration**: See [EXTRACTION_CONFIG_GUIDE.md](../../docs/EXTRACTION_CONFIG_GUIDE.md) for ExtractionConfig details
+- **Configuration**: See [EXTRACTION_CONFIG_GUIDE.md](./EXTRACTION_CONFIG_GUIDE.md) for ExtractionConfig details
+- **Architecture**: See [ONTOLOGY_PIPELINE_ARCHITECTURE_ASCII.md](./ONTOLOGY_PIPELINE_ARCHITECTURE_ASCII.md) for pipeline flow and component wiring
 - **Selection Guide**: See [SELECTION_GUIDE.md](SELECTION_GUIDE.md) to choose between GraphRAG/Logic/Agentic optimizers
 - **Examples**: Check `tests/unit/optimizers/graphrag/` for working test examples

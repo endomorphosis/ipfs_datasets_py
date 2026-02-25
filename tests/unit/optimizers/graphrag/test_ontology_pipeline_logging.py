@@ -95,3 +95,21 @@ def test_pipeline_batch_emits_json_log(caplog, capsys):
         assert 0.0 <= payload["max_score"] <= 1.0
 
     assert len(results) == 2
+
+
+def test_pipeline_run_redacts_sensitive_data_source(caplog, capsys):
+    """Pipeline run log should redact sensitive token-like values."""
+    pipeline = OntologyPipeline(domain="general", use_llm=False, max_rounds=1)
+
+    with caplog.at_level(logging.INFO):
+        pipeline.run(
+            "Alice works at Acme.",
+            data_source="authorization=Bearer token1234567890",
+            refine=False,
+        )
+
+    captured = (caplog.text or "") + "\n" + capsys.readouterr().err
+    payload = _extract_json_payload(captured, "PIPELINE_RUN:")
+
+    assert "token1234567890" not in payload["data_source"]
+    assert "***REDACTED***" in payload["data_source"]

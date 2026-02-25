@@ -32,7 +32,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 _logger = logging.getLogger(__name__)
 
-from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
+from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
 
 from ..common.base_optimizer import (
     BaseOptimizer,
@@ -253,7 +253,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             }
             self._log.info(
                 "LOGIC_SESSION_RUN: %s",
-                _json.dumps(with_schema(payload), default=str),
+                _json.dumps(with_schema(redact_payload(payload)), default=str),
             )
         except (
             AttributeError,

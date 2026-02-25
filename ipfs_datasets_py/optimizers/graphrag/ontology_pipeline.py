@@ -394,7 +394,7 @@ class OntologyPipeline:
                 import json as _json
                 from datetime import datetime as _datetime
 
-                from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
+                from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
 
                 duration_ms = (time.time() - start_time) * 1000.0
                 stage_durations_ms = {name: duration * 1000.0 for name, duration in stage_timings.items()}
@@ -416,7 +416,10 @@ class OntologyPipeline:
                     "stage_durations_ms": stage_durations_ms,
                     "timestamp": _datetime.now().isoformat(),
                 }
-                self._log.info("PIPELINE_RUN: %s", _json.dumps(with_schema(payload), default=str))
+                self._log.info(
+                    "PIPELINE_RUN: %s",
+                    _json.dumps(with_schema(redact_payload(payload)), default=str),
+                )
             except (
                 AttributeError,
                 ImportError,
@@ -895,7 +898,7 @@ class OntologyPipeline:
             import json as _json
             from datetime import datetime as _datetime
 
-            from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
+            from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
 
             scores: List[float] = []
             for res in results:
@@ -924,7 +927,7 @@ class OntologyPipeline:
 
             self._log.info(
                 "PIPELINE_BATCH: %s",
-                _json.dumps(with_schema(payload), default=str),
+                _json.dumps(with_schema(redact_payload(payload)), default=str),
             )
         except (
             AttributeError,

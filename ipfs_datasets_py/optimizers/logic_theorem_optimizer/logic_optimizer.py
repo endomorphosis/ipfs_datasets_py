@@ -140,7 +140,7 @@ class LogicOptimizer:
         try:
             import json as _json
             from datetime import datetime as _datetime
-            from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
+            from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
 
             payload = {
                 "event": "logic_optimizer_analyze_batch",
@@ -155,7 +155,10 @@ class LogicOptimizer:
                 "dimension_count": len(dimension_metrics),
                 "timestamp": _datetime.now().isoformat(),
             }
-            logger.info("LOGIC_BATCH_ANALYSIS: %s", _json.dumps(with_schema(payload), default=str))
+            logger.info(
+                "LOGIC_BATCH_ANALYSIS: %s",
+                _json.dumps(with_schema(redact_payload(payload)), default=str),
+            )
         except (
             AttributeError,
             ImportError,

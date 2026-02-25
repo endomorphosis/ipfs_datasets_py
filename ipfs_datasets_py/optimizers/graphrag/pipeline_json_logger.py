@@ -35,13 +35,39 @@ from contextlib import contextmanager
 from dataclasses import dataclass, asdict, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Dict, List, Optional, Callable, TypedDict
 
 from ipfs_datasets_py.optimizers.common.structured_logging import (
     EventType,
     with_schema,
     enrich_with_timestamp,
 )
+
+
+class PipelineErrorDict(TypedDict, total=False):
+    """Structure for pipeline error entries.
+    
+    Fields:
+        stage: Pipeline stage where error occurred
+        type: Error type (exception class name)
+        message: Human-readable error message
+    """
+    stage: str
+    type: str
+    message: str
+
+
+class PipelineMetricsDict(TypedDict, total=False):
+    """Structure for pipeline execution metrics.
+    
+    Fields:
+        entity_count: Number of entities extracted
+        relationship_count: Number of relationships extracted
+        overall_score: Overall quality/confidence score (0-1)
+    """
+    entity_count: int
+    relationship_count: int
+    overall_score: float
 
 
 class PipelineStage(Enum):
@@ -67,8 +93,8 @@ class LogContext:
     timestamp_started: float = field(default_factory=time.time)
     stages: Dict[str, float] = field(default_factory=dict)
     stage_timings: Dict[str, float] = field(default_factory=dict)
-    metrics: Dict[str, Any] = field(default_factory=dict)
-    errors: List[Dict[str, Any]] = field(default_factory=list)
+    metrics: PipelineMetricsDict = field(default_factory=dict)
+    errors: List[PipelineErrorDict] = field(default_factory=list)
     
     def elapsed_ms(self) -> float:
         """Get elapsed time since run start in milliseconds."""

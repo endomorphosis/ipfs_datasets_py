@@ -47,6 +47,20 @@ class ValidationSeverity(Enum):
     INFO = "info"
 
 
+
+class ValidationErrorDetail(TypedDict, total=False):
+    """Detailed validation error structure.
+    
+    Fields:
+        severity: Error severity level ("error", "warning", or "info")
+        field: Optional field name where the error occurred
+        message: Human-readable error message
+        code: Optional error code for programmatic handling
+    """
+    severity: str
+    field: Optional[str]
+    message: str
+    code: Optional[str]
 @dataclass
 class ValidationResult:
     """Result of a validation operation."""
@@ -54,7 +68,7 @@ class ValidationResult:
     data: Optional[Any] = None
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
-    detailed_errors: List[Dict[str, Any]] = field(default_factory=list)
+    detailed_errors: List[ValidationErrorDetail] = field(default_factory=list)
     
     def add_error(self, message: str, field: Optional[str] = None, code: Optional[str] = None) -> None:
         """Add an error to validation result."""

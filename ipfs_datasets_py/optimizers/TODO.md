@@ -898,9 +898,11 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] Testing: Property-based tests (Hypothesis), snapshot tests
 - [ ] Observability: Prometheus metrics, structured JSON logging audit
 - [ ] Performance: Profile generate() hot paths, LLM backend lazy loading
-- [ ] (P2) `ExtractionConfig` Configuration Guide (1.0–1.5 hours)
+- [x] (P2) `ExtractionConfig` Configuration Guide (1.0–1.5 hours)
+  - Done 2026-02-25: added `docs/optimizers/EXTRACTION_CONFIG_GUIDE.md` with field-by-field tuning guidance, presets, and usage examples; linked from `docs/optimizers/GRAPHRAG_QUICK_START.md`.
 - [ ] (P3) GraphRAG Quick-Start Notebook (1.5–2 hours)
-- [ ] (P2) OntologyPipeline Architecture Diagram as ASCII (30–45 min)
+- [x] (P2) OntologyPipeline Architecture Diagram as ASCII (30–45 min)
+  - Done 2026-02-25: added `docs/optimizers/ONTOLOGY_PIPELINE_ARCHITECTURE_ASCII.md` with component topology and run-sequence diagrams; linked from `docs/optimizers/GRAPHRAG_QUICK_START.md`.
 - [ ] (P1) Define `OptimizerConfig` dataclass (base for all options) (1.0 hours)
 - [ ] (P1) Wire `BaseOptimizer` to accept `OptimizerConfig` (45 min)
 - [ ] (P2) Define unified `IOptimizer` Protocol (30 min)

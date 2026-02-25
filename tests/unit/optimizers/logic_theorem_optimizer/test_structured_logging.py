@@ -147,6 +147,33 @@ class TestLogicTheoremOptimizerStructuredLogging:
         assert payload["statement_count"] >= 0
         assert isinstance(payload["statement_count"], int)
 
+    def test_run_session_redacts_sensitive_domain_tokens(self, caplog):
+        """LOGIC_SESSION_RUN redacts bearer tokens in string fields."""
+        caplog.set_level(logging.INFO)
+
+        optimizer = LogicTheoremOptimizer(
+            config=OptimizerConfig(max_iterations=1),
+            extraction_mode=ExtractionMode.FOL,
+        )
+
+        context = OptimizationContext(
+            session_id="test-session-redact",
+            input_data="All humans are mortal. Socrates is human.",
+            domain="authorization=Bearer token1234567890",
+        )
+
+        optimizer.run_session(
+            input_data="All humans are mortal. Socrates is human.",
+            context=context,
+        )
+
+        log_records = [r for r in caplog.records if "LOGIC_SESSION_RUN:" in r.message]
+        assert len(log_records) == 1
+
+        payload = json.loads(log_records[0].message.split("LOGIC_SESSION_RUN: ")[1])
+        assert "token1234567890" not in payload["domain"]
+        assert "***REDACTED***" in payload["domain"]
+
 
 class TestLogicOptimizerStructuredLogging:
     """Tests for LogicOptimizer.analyze_batch() JSON logging."""
