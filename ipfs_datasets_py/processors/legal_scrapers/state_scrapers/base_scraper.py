@@ -12,6 +12,8 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 import logging
 
+from .citation_history import extract_trailing_history_citations
+
 logger = logging.getLogger(__name__)
 
 
@@ -283,6 +285,18 @@ class BaseStateScraper(ABC):
                 return match.group(1)
         
         return None
+
+    def _extract_legislative_history(self, text: str) -> Dict[str, Any]:
+        """Extract trailing legislative history citations from statute text.
+
+        Returns a dictionary containing cleaned text and structured citation data.
+        """
+        cleaned_text, raw_blocks, citations = extract_trailing_history_citations(text)
+        return {
+            "cleaned_text": cleaned_text,
+            "history_citation_blocks": raw_blocks,
+            "history_citations": citations,
+        }
     
     async def _generic_scrape(
         self,

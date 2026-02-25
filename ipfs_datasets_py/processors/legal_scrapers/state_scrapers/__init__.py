@@ -7,6 +7,7 @@ All 51 US jurisdictions (50 states + DC) have individual scraper files.
 """
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
+from .citation_history import extract_trailing_history_citations, parse_history_citation
 from .registry import StateScraperRegistry, get_scraper_for_state
 from .generic import GenericStateScraper
 
@@ -120,6 +121,8 @@ __all__ = [
     'BaseStateScraper',
     'NormalizedStatute',
     'StatuteMetadata',
+    'extract_trailing_history_citations',
+    'parse_history_citation',
     'StateScraperRegistry',
     'get_scraper_for_state',
     'GenericStateScraper',
