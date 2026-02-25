@@ -630,13 +630,26 @@ class OntologyMediator:
         try:
             import json as _json
             from datetime import datetime as _datetime
+            from ipfs_datasets_py.optimizers.common.structured_logging import (
+                redact_payload,
+                with_schema,
+            )
             
             round_number = len(self._undo_stack)
             entity_delta = len(refined.get('entities', [])) - len(ontology.get('entities', []))
             relationship_delta = len(refined.get('relationships', [])) - len(ontology.get('relationships', []))
+
+            def _safe_float(value: Any, default: float = 0.0) -> float:
+                try:
+                    if isinstance(value, bool):
+                        return default
+                    return float(value)
+                except (TypeError, ValueError):
+                    return default
             
             round_metrics = {
                 'event': 'ontology_refinement_round',
+                'optimizer_pipeline': 'graphrag',
                 'round': round_number,
                 'recommendations_count': len(feedback.recommendations),
                 'actions_applied': actions_applied,
@@ -645,20 +658,23 @@ class OntologyMediator:
                 'relationship_delta': relationship_delta,
                 'final_entity_count': len(refined.get('entities', [])),
                 'final_relationship_count': len(refined.get('relationships', [])),
-                'feedback_score': feedback.overall,
+                'feedback_score': _safe_float(getattr(feedback, 'overall', 0.0)),
                 'feedback_dimensions': {
-                    'completeness': feedback.completeness,
-                    'consistency': feedback.consistency,
-                    'clarity': feedback.clarity,
-                    'granularity': getattr(feedback, 'granularity', 0.0),
-                    'relationship_coherence': getattr(feedback, 'relationship_coherence', 0.0),
-                    'domain_alignment': getattr(feedback, 'domain_alignment', 0.0),
+                    'completeness': _safe_float(getattr(feedback, 'completeness', 0.0)),
+                    'consistency': _safe_float(getattr(feedback, 'consistency', 0.0)),
+                    'clarity': _safe_float(getattr(feedback, 'clarity', 0.0)),
+                    'granularity': _safe_float(getattr(feedback, 'granularity', 0.0)),
+                    'relationship_coherence': _safe_float(getattr(feedback, 'relationship_coherence', 0.0)),
+                    'domain_alignment': _safe_float(getattr(feedback, 'domain_alignment', 0.0)),
                 },
                 'timestamp': _datetime.now().isoformat()
             }
             
             # Log as structured JSON
-            self._log.info(f"REFINEMENT_ROUND: {_json.dumps(round_metrics)}")
+            self._log.info(
+                "REFINEMENT_ROUND: %s",
+                _json.dumps(with_schema(redact_payload(round_metrics)), default=str),
+            )
         except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as e:
             self._log.debug(f"Could not log structured metrics: {e}")
         

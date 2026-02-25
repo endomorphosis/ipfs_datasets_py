@@ -12,6 +12,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
     OntologyOptimizer,
     OptimizationReport,
 )
+from ipfs_datasets_py.optimizers.common.structured_logging import DEFAULT_SCHEMA_VERSION
 
 
 def _make_result(score: float):
@@ -123,6 +124,9 @@ class TestMetricsCollectorWiring:
         assert payloads, "Expected structured analyze_batch summary JSON log"
         summary = payloads[-1]
         assert summary["status"] == "ok"
+        assert summary["optimizer_pipeline"] == "graphrag"
+        assert summary["schema"] == "ipfs_datasets_py.optimizer_log"
+        assert summary["schema_version"] == DEFAULT_SCHEMA_VERSION
         assert summary["session_count"] == 2
         assert summary["trend"] in {"baseline", "improving", "stable", "degrading"}
         assert summary["average_score"] == pytest.approx(0.7)
@@ -148,4 +152,34 @@ class TestMetricsCollectorWiring:
         assert payloads, "Expected structured analyze_batch summary JSON log"
         summary = payloads[-1]
         assert summary["status"] == "insufficient_data"
+        assert summary["optimizer_pipeline"] == "graphrag"
+        assert summary["schema"] == "ipfs_datasets_py.optimizer_log"
+        assert summary["schema_version"] == DEFAULT_SCHEMA_VERSION
         assert summary["session_count"] == 0
+
+    def test_analyze_batch_summary_log_redacts_sensitive_values(self, caplog):
+        """Summary log should redact token-like sensitive values."""
+        opt = OntologyOptimizer()
+
+        with caplog.at_level("INFO"):
+            opt._emit_analyze_batch_summary(
+                {
+                    "status": "ok",
+                    "session_count": 1,
+                    "message": "authorization=Bearer token1234567890",
+                }
+            )
+
+        payloads = []
+        for rec in caplog.records:
+            try:
+                msg = json.loads(rec.message)
+            except Exception:
+                continue
+            if msg.get("event") == "ontology_optimizer.analyze_batch.summary":
+                payloads.append(msg)
+
+        assert payloads, "Expected summary JSON payload"
+        summary = payloads[-1]
+        assert "token1234567890" not in summary["message"]
+        assert "***REDACTED***" in summary["message"]

@@ -26,6 +26,26 @@ from typing import Any, Dict, List, Optional
 from .interface_descriptor import _canonicalize, compute_cid
 
 
+def _utcnow() -> str:
+    """Return current UTC time in ISO-8601 format."""
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def artifact_cid(obj: Dict[str, Any]) -> str:
+    """Compute a content-addressed CID for an artifact dictionary.
+    
+    Canonicalizes the object and computes its SHA-256 hash as a CID string.
+    
+    Args:
+        obj: Dictionary representing an artifact to hash.
+        
+    Returns:
+        CID string (Qm... format).
+    """
+    canonical = _canonicalize(obj)
+    return compute_cid(canonical)
+
+
 # ─── intent ──────────────────────────────────────────────────────────────────
 
 

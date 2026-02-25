@@ -128,6 +128,41 @@ def test_error_log_structure(caplog):
     assert log_data["iteration"] == 1
 
 
+def test_error_log_redacts_sensitive_key_fields(caplog):
+    """Sensitive key fields should be redacted in schema-v3 logs."""
+    logger = logging.getLogger("test")
+
+    with caplog.at_level(logging.WARNING):
+        log_error(
+            logger,
+            error_type="auth",
+            error_msg="api_key=sk-live-123",
+            session_id="sess-redact",
+            retryable=True,
+        )
+
+    log_data = json.loads(caplog.records[0].message)
+    assert log_data["error_msg"] == "api_key=***REDACTED***"
+
+
+def test_error_log_redacts_bearer_token_substrings(caplog):
+    """Bearer-token substrings should be redacted in schema-v3 logs."""
+    logger = logging.getLogger("test")
+
+    with caplog.at_level(logging.WARNING):
+        log_error(
+            logger,
+            error_type="auth",
+            error_msg="Authorization: Bearer token1234567890",
+            session_id="sess-redact-2",
+            retryable=True,
+        )
+
+    log_data = json.loads(caplog.records[0].message)
+    assert "token1234567890" not in log_data["error_msg"]
+    assert "***REDACTED***" in log_data["error_msg"]
+
+
 def test_convergence_detected_log(caplog):
     """Verify convergence detection logs."""
     logger = logging.getLogger("test")

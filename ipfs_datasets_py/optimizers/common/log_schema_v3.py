@@ -43,6 +43,8 @@ import time
 from enum import Enum
 from typing import Any, Dict, Literal, Optional
 
+from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload
+
 SCHEMA_NAME = "ipfs_datasets_py.optimizer_log"
 SCHEMA_VERSION = 3
 
@@ -125,7 +127,7 @@ def _build_base_payload(
 def _safe_log(logger: logging.Logger, level: int, payload: Dict[str, Any]) -> None:
     """Safely emit JSON log with fallback for serialization errors."""
     try:
-        logger.log(level, json.dumps(payload, default=str))
+        logger.log(level, json.dumps(redact_payload(payload), default=str))
     except (TypeError, ValueError, RuntimeError) as exc:
         # Fallback: emit minimal error log
         logger.debug(

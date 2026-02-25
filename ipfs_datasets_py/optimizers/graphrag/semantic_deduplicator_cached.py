@@ -14,11 +14,28 @@ Usage:
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Dict, List, Optional, Callable, TypedDict
 from functools import lru_cache
 from hashlib import md5
 import numpy as np
 
+
+
+class DeduplicatorCacheStatsDict(TypedDict, total=False):
+    """Type contract for deduplicator cache stats.
+    
+    Fields:
+        hits: Number of cache hits
+        misses: Number of cache misses
+        hit_rate: Cache hit rate (0.0-1.0)
+        size: Current cache size (number of entries)
+        capacity: Maximum cache capacity
+    """
+    hits: int
+    misses: int
+    hit_rate: float
+    size: int
+    capacity: int
 from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import (
     SemanticEntityDeduplicator,
     SemanticMergeSuggestion,

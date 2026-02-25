@@ -839,6 +839,55 @@ class ComplianceChecker:
         return files[-1] if files else None
 
     @staticmethod
+    def backup_summary(path: str) -> Dict[str, Any]:
+        """Return a comprehensive summary of backups for a given path.
+
+        Aggregates all backup-related metadata into a single dict, useful for
+        health checks and monitoring dashboards::
+
+            summary = ComplianceChecker.backup_summary("/data/policies.yaml")
+            if summary["count"] > 0:
+                logger.info(
+                    "Backups: %d total, newest=%s",
+                    summary["count"],
+                    summary["newest"]
+                )
+
+        Args:
+            path: File path for which to gather backup metadata.
+
+        Returns:
+            Dict with keys:
+            - ``count`` (int): Total number of backup files.
+            - ``newest`` (str or None): Path to newest backup, or None if none exist.
+            - ``oldest`` (str or None): Path to oldest backup, or None if none exist.
+            - ``newest_age`` (float or None): Unix timestamp of newest backup mtime, or None.
+            - ``oldest_age`` (float or None): Unix timestamp of oldest backup mtime, or None.
+
+        Example::
+
+            {
+                "count": 3,
+                "newest": "/data/policies.yaml.bak",
+                "oldest": "/data/policies.yaml.bak.2",
+                "newest_age": 1708675200.0,
+                "oldest_age": 1708500000.0
+            }
+        """
+        count = ComplianceChecker.backup_count(path)
+        newest = ComplianceChecker.newest_backup_path(path)
+        oldest = ComplianceChecker.oldest_backup_path(path)
+        newest_age = ComplianceChecker.backup_age(path)
+        oldest_age = ComplianceChecker.oldest_backup_age(path)
+        return {
+            "count": count,
+            "newest": newest,
+            "oldest": oldest,
+            "newest_age": newest_age,
+            "oldest_age": oldest_age,
+        }
+
+    @staticmethod
     def _get_field(intent: Any, field: str, default: Any = None) -> Any:
         if isinstance(intent, dict):
             return intent.get(field, default)

@@ -1142,6 +1142,23 @@ class MergeResult:
         """
         return self.added_count
 
+    def __iter__(self):
+        """Iterate over field-value pairs for easy dict packing.
+
+        Yields (field_name, value) tuples for all three counts, making this
+        result compatible with ``dict(result)`` construction::
+
+            result = manager.merge(other)
+            info = dict(result)  # {"added_count": 3, "conflict_count": 1, ...}
+
+        Yields:
+            Tuples of (field_name: str, value: int) in order:
+            ``("added_count", ...), ("conflict_count", ...), ("revocations_copied", ...)``.
+        """
+        yield ("added_count", self.added_count)
+        yield ("conflict_count", self.conflict_count)
+        yield ("revocations_copied", self.revocations_copied)
+
 
 class DelegationManager:
     """Bundles :class:`DelegationStore`, :class:`RevocationList`, and

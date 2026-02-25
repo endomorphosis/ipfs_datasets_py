@@ -52,6 +52,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence
 
+from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
+
 try:
     from opentelemetry import trace
     HAVE_OPENTELEMETRY = True
@@ -219,9 +221,12 @@ class OntologyOptimizer:
         """Emit one structured JSON INFO log for ``analyze_batch`` observability."""
         summary = {
             "event": "ontology_optimizer.analyze_batch.summary",
+            "optimizer_pipeline": "graphrag",
             **payload,
         }
-        self._log.info(json.dumps(summary, sort_keys=True))
+        self._log.info(
+            json.dumps(with_schema(redact_payload(summary)), sort_keys=True, default=str)
+        )
     
     def analyze_batch(
         self,

@@ -16,6 +16,7 @@ from ipfs_datasets_py.optimizers.graphrag import (
     OntologyGenerator,
     OntologyCritic,
 )
+from ipfs_datasets_py.optimizers.common.structured_logging import DEFAULT_SCHEMA_VERSION
 
 
 class TestOntologyMediatorJsonLogging:
@@ -78,6 +79,9 @@ class TestOntologyMediatorJsonLogging:
 
         # Verify expected fields are present
         assert metrics["event"] == "ontology_refinement_round"
+        assert metrics["optimizer_pipeline"] == "graphrag"
+        assert metrics["schema"] == "ipfs_datasets_py.optimizer_log"
+        assert metrics["schema_version"] == DEFAULT_SCHEMA_VERSION
         assert "round" in metrics
         assert "recommendations_count" in metrics
         assert "actions_applied" in metrics

@@ -344,6 +344,8 @@ Rotation rules:
   - Progress 2026-02-25: extended `optimizer_pipeline` tagging to GraphRAG legacy structured emitters in `graphrag/ontology_pipeline.py` (`PIPELINE_RUN`, `PIPELINE_BATCH`) and `graphrag/ontology_generator.py` (`EXTRACT_ENTITIES`); validated with `tests/unit/optimizers/graphrag/test_ontology_pipeline_logging.py` and `tests/unit/optimizers/graphrag/test_ontology_generator_extract_entities_logging.py` (`3 passed`).
   - Progress 2026-02-25: added `optimizer_pipeline: "common"` to profiling structured logs in `common/profiling.py::_emit_profiling_log` and updated schema assertion coverage in `tests/unit/optimizers/common/test_profiling.py` (`5 selected tests passed`).
   - Progress 2026-02-25: standardized `common/structured_logging.py::log_event` to emit `optimizer_pipeline` (default `"common"`, overrideable) and added coverage in `tests/unit/optimizers/common/test_structured_logging.py` (`19 passed`).
+  - Progress 2026-02-25: standardized `graphrag/ontology_optimizer.py::_emit_analyze_batch_summary` to emit schema-wrapped/redacted JSON with `optimizer_pipeline: "graphrag"` and added schema+redaction regression coverage in `tests/unit/optimizers/graphrag/test_ontology_optimizer_metrics.py` (`10 passed`).
+  - Progress 2026-02-25: standardized `graphrag/ontology_mediator.py` round metrics logs (`REFINEMENT_ROUND`) to use `with_schema(...)`, `optimizer_pipeline: "graphrag"`, and shared payload redaction via `redact_payload(...)`; extended schema assertions in `tests/unit/optimizers/graphrag/test_ontology_mediator_json_logging.py` (`8 passed`).
 - [x] (P2) [obs] Ensure metrics include run duration, score deltas, failure counts, and stage timings.
   - Done 2026-02-24: added `optimizer_score_delta` metric, wired duration/score-delta/validation-failure recording in `BaseOptimizer`, and stage timing histogram in pipeline metrics.
 - [ ] (P3) [obs] Add tracing spans for cross-optimizer workflows with low overhead defaults.
@@ -365,6 +367,7 @@ Rotation rules:
   - Progress 2026-02-25: added structured-log redaction checks in `common/structured_logging.py::log_event` by applying `redact_dict` on sensitive key/value maps and recursive string redaction for bearer/token patterns before JSON emission; expanded regression coverage in `tests/unit/optimizers/common/test_structured_logging.py` (`21 passed`).
   - Progress 2026-02-25: added profiling-log redaction checks in `common/profiling.py::_emit_profiling_log` (key-based and bearer-pattern redaction before schema emission) and regression coverage in `tests/unit/optimizers/common/test_profiling.py::test_profile_section_redacts_sensitive_metadata` (`2 selected tests passed`).
   - Progress 2026-02-25: hardened `graphrag/pipeline_json_logger.py::_emit_log` by applying shared `redact_payload(...)` to event payloads before schema/timestamp emission; added targeted regression coverage in `tests/unit/optimizers/graphrag/test_pipeline_json_logging.py` for sensitive key redaction and bearer-token substring redaction (`4 selected tests passed`).
+  - Progress 2026-02-25: hardened schema-v3 utility logs in `common/log_schema_v3.py::_safe_log` by applying shared `redact_payload(...)` before JSON emission; added regression coverage in `tests/unit/optimizers/common/test_log_schema_v3.py` for key-based and bearer-token substring redaction (`13 passed`).
   - Progress 2026-02-25: added pipeline JSON redaction checks in `graphrag/pipeline_json_logger.py::_emit_log` (key-based secret redaction + bearer-token substring redaction) and regression coverage in `tests/unit/optimizers/graphrag/test_pipeline_json_logging.py` (`4 selected tests passed`).
   - Progress 2026-02-25: added audit-trail redaction checks in `graphrag/audit_logger.py` (`AuditEvent.create`) so event payload/metadata redact sensitive keys and bearer-token strings before in-memory storage and JSONL export; added regression coverage in `tests/unit/optimizers/graphrag/test_audit_logger.py` (`29 passed`).
   - Progress 2026-02-25: introduced reusable `common/structured_logging.py::redact_payload` and applied it to remaining manual `with_schema(...)` emitters in `graphrag/ontology_pipeline.py`, `graphrag/ontology_generator.py`, `logic_theorem_optimizer/unified_optimizer.py`, and `logic_theorem_optimizer/logic_optimizer.py`; added redaction regression coverage for pipeline run logs in `tests/unit/optimizers/graphrag/test_ontology_pipeline_logging.py`.
@@ -723,7 +726,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P3) [obs] Expose Prometheus-compatible metrics for optimizer scores
 - [x] (P2) [perf] Add `@functools.lru_cache` to `ExtractionConfig.is_default()` (hashable dataclass)
   - Done 2026-02-25: added hashable fingerprint caching path for default checks in `graphrag/ontology_generator.py` (`_freeze_for_cache`, `_default_fingerprint`, `_is_default_fingerprint`); added regression cache-hit coverage in `tests/unit/optimizers/graphrag/test_batch94_features.py`.
-- [ ] (P2) [perf] Benchmark sentence-window limiting impact on realistic documents
+- [x] (P2) [perf] Benchmark sentence-window limiting impact on realistic documents
+  - Done 2026-02-25: added runnable benchmark script `benchmarks/bench_sentence_window_scaling.py` and documented it in `benchmarks/README.md`; local run captured domain-level `sentence_window=0/1/2` timing + relationship-count deltas for legal/technical/financial corpora.
 - [ ] (P2) [docs] Write architecture diagram for the generate → critique → optimize → validate loop
 - [x] (P2) [docs] Add `CONTRIBUTING.md` with PR guidelines and batch-commit conventions
   - Done 2026-02-25: added `optimizers/CONTRIBUTING.md` with scope, PR checklist, batch naming/commit conventions, and required test/type checks; linked from `optimizers/README.md`.
@@ -865,7 +869,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P3) [tests] **Mutation testing** — Run `mutmut` on `ontology_critic.py` and fix surviving mutants.
 - [ ] (P3) [tests] **Benchmark tests** — Add `pytest-benchmark` tests for `generate()`, `evaluate_ontology()`, `optimize()` to track performance over time.
 - [ ] (P1) [obs] **Structured logging** — Replace all `print()` / bare `logging.info(f"...")` with structured log records (`logging.getLogger(__name__).info("...", extra={...})`). Use `structlog` or stdlib extras.
-- [ ] (P2) [obs] **Metrics hook in `OntologyPipeline`** — Emit timing + score metrics after every round via a pluggable `MetricSink` protocol.
+- [x] (P2) [obs] **Metrics hook in `OntologyPipeline`** — Emit timing + score metrics after every round via a pluggable `MetricSink` protocol.
+  - Done 2026-02-25: added `MetricSink` protocol and `metric_sink` injection in `graphrag/ontology_pipeline.py`, emitting per-run timing/score/count payloads with safe error handling; validated via `tests/unit/optimizers/graphrag/test_batch_300_pipeline_metric_sink.py` and `test_batch_301_pipeline_prometheus_hooks.py`.
 - [ ] (P3) [obs] **Distributed tracing stubs** — Add OpenTelemetry span creation in `generate()` and `optimize()` so long multi-round pipelines are traceable.
 - [ ] (P1) [perf] **Profile `OntologyGenerator.generate()` on 10 kB input** — Identify top-3 hotspots, document findings, and implement at least one optimization (target ≥ 20% speedup).
 - [ ] (P2) [perf] **Lazy entity deduplication** — Defer deduplication to a post-pass rather than inline in every extraction loop.
@@ -877,7 +882,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P1) [docs] **Module-level docstrings** — `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py` all lack a module-level docstring explaining purpose, usage, and key classes.
 - [x] (P2) [docs] **`README.md` for optimizers/** — Add a short `README.md` covering: what the optimizer does, quick-start code, and class diagram (ASCII or Mermaid).
   - Done 2026-02-25: verified `optimizers/README.md` includes overview, quick-start CLI/Python examples, and Mermaid architecture/class diagrams; added contributing-guide link for maintenance workflow.
-- [ ] (P2) [docs] **Deprecation notices** — Any method marked `# TODO: remove` needs a `@deprecated` decorator with migration path documented in docstring.
+- [x] (P2) [docs] **Deprecation notices** — Any method marked `# TODO: remove` needs a `@deprecated` decorator with migration path documented in docstring.
+  - Done 2026-02-25: completed optimizer-wide removal-marker audit and found no current `# TODO: remove` methods; recorded audit in `docs/optimizers/DEPRECATION_AUDIT_REPORT.md` for recurring checks.
 - [ ] (P3) [docs] **API changelog** — Keep a running `CHANGELOG.md` in `optimizers/` noting added, changed, deprecated, removed items per batch.
 - [ ] (P2) [agentic] **Wire `LogicTheoremOptimizer` to use the same `FeedbackRecord` class** — Currently uses a different feedback struct; unify for cross-optimizer analytics.
 - [ ] (P2) [agentic] **Add `AgenticOptimizer.explain_action(action_name)` method** — Return a human-readable explanation of why the action was recommended.
@@ -918,12 +924,15 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P2) Property tests for `ExtractionConfig` (45 min)
 - [ ] (P2) Property tests for `CriticScore` statistical invariants (1.0 hours)
 - [ ] (P2) Structured JSON logging audit (1.0 hours)
-- [ ] (P2) Prometheus metrics hooks (1.0–1.5 hours)
+- [x] (P2) Prometheus metrics hooks (1.0–1.5 hours)
+  - Done 2026-02-25: extended `graphrag/ontology_pipeline.py` Prometheus hooks to record per-run score, round completion, score delta, and stage durations; added regression coverage in `tests/unit/optimizers/graphrag/test_batch_301_pipeline_prometheus_hooks.py`.
 - [x] (P2) Audit llm_integration.py for API key logging (30 min)
   - Done 2026-02-25: audited `agentic/llm_integration.py` and added secret-redaction guard for failure details + regression test (`tests/unit/optimizers/agentic/test_llm_integration.py`) to prevent API key/token leakage in raised error metadata.
-- [ ] (P2) Profile `OntologyGenerator.generate()` on 10kB input (1.0 hours)
+- [x] (P2) Profile `OntologyGenerator.generate()` on 10kB input (1.0 hours)
+  - Done 2026-02-25: added profiler script `benchmarks/profile_ontology_generator_generate_10kb.py` and captured baseline/hotspots in `docs/optimizers/ONTOLOGY_GENERATOR_10KB_PROFILE_REPORT.md` (avg `8.04ms`, p95 `9.93ms`; primary hotspots in extraction + language detection + regex search paths).
 - [ ] (P2) Optimize identified hotspot (1.0–1.5 hours)
-- [ ] (P2) Lazy-load domain-specific rule sets (45 min)
+- [x] (P2) Lazy-load domain-specific rule sets (45 min)
+  - Done 2026-02-25: verified `ExtractionConfig._get_domain_rule_patterns()` lazy cached loader in `graphrag/ontology_generator.py` and reran dedicated cache/domain behavior suite `tests/unit/optimizers/graphrag/test_domain_rule_patterns_lazy_loading.py` (`31 passed`).
 - [ ] (P2) Audit existing exception usage (1.0 hours)
 - [ ] (P2) Define unified exception hierarchy (1.0 hours)
 - [ ] (P2) Migrate graphrag exceptions to new hierarchy (45 min)
