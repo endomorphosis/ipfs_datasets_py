@@ -52,6 +52,27 @@ def test_execute_with_resilience_exhausts_retries() -> None:
     assert "backend-a failed after 2 attempts" in str(exc_info.value)
 
 
+def test_execute_with_resilience_redacts_sensitive_last_error() -> None:
+    policy = BackendCallPolicy(
+        service_name="backend-sensitive",
+        max_retries=0,
+        initial_backoff_seconds=0.0,
+    )
+
+    with pytest.raises(RetryableBackendError) as exc_info:
+        execute_with_resilience(
+            lambda: (_ for _ in ()).throw(ValueError("api_key=sk-1234567890abcdef password=hunter2")),
+            policy,
+            sleep_fn=lambda _: None,
+        )
+
+    details = exc_info.value.details if isinstance(exc_info.value.details, dict) else {}
+    last_error = str(details.get("last_error", ""))
+    assert "***REDACTED***" in last_error
+    assert "sk-1234567890abcdef" not in last_error
+    assert "hunter2" not in last_error
+
+
 def test_execute_with_resilience_maps_timeout_error() -> None:
     policy = BackendCallPolicy(timeout_seconds=0.01, max_retries=0, initial_backoff_seconds=0.0)
 
@@ -113,4 +134,3 @@ def test_execute_with_resilience_maps_circuit_open() -> None:
 def test_backend_call_policy_validation(kwargs: dict[str, object]) -> None:
     with pytest.raises(ValueError):
         BackendCallPolicy(**kwargs).validate()
-

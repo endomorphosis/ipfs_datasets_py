@@ -9,11 +9,15 @@ from __future__ import annotations
 import json
 import logging
 import re
+from unittest.mock import patch
 
 from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
+    Entity,
+    EntityExtractionResult,
     ExtractionStrategy,
     OntologyGenerationContext,
     OntologyGenerator,
+    Relationship,
 )
 
 
@@ -27,7 +31,26 @@ def test_extract_entities_emits_structured_json_log(capsys, caplog):
         extraction_strategy=ExtractionStrategy.RULE_BASED,
     )
 
-    result = gen.extract_entities("Alice met Bob.", ctx)
+    stub_result = EntityExtractionResult(
+        entities=[
+            Entity(id="e1", type="person", text="Alice", confidence=0.9),
+            Entity(id="e2", type="person", text="Bob", confidence=0.8),
+        ],
+        relationships=[
+            Relationship(
+                id="r1",
+                source_id="e1",
+                target_id="e2",
+                type="met",
+                confidence=0.75,
+            )
+        ],
+        confidence=0.82,
+        metadata={},
+        errors=[],
+    )
+    with patch.object(gen, "_extract_with_llm_fallback", return_value=stub_result):
+        result = gen.extract_entities("Alice met Bob.", ctx)
 
     captured = capsys.readouterr()
     payload = None

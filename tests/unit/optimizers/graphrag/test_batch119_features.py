@@ -39,23 +39,17 @@ def _score(overall):
 # ---------------------------------------------------------------------------
 
 class TestScoreDeltaBetween:
-    def test_improvement(self):
+    @pytest.mark.parametrize(
+        "a,b,expected",
+        [
+            (0.5, 0.8, 0.3),
+            (0.8, 0.5, -0.3),
+            (0.6, 0.6, 0.0),
+        ],
+    )
+    def test_delta_scenarios(self, a, b, expected):
         c = _make_critic()
-        a = _score(0.5)
-        b = _score(0.8)
-        assert c.score_delta_between(a, b) == pytest.approx(0.3)
-
-    def test_decline(self):
-        c = _make_critic()
-        a = _score(0.8)
-        b = _score(0.5)
-        assert c.score_delta_between(a, b) == pytest.approx(-0.3)
-
-    def test_equal(self):
-        c = _make_critic()
-        a = _score(0.6)
-        b = _score(0.6)
-        assert c.score_delta_between(a, b) == pytest.approx(0.0)
+        assert c.score_delta_between(_score(a), _score(b)) == pytest.approx(expected)
 
 
 # ---------------------------------------------------------------------------
@@ -67,21 +61,18 @@ class TestAllPass:
         c = _make_critic()
         assert c.all_pass([]) is True
 
-    def test_all_above_threshold(self):
+    @pytest.mark.parametrize(
+        "values,threshold,expected",
+        [
+            ([0.7, 0.8, 0.9], 0.6, True),
+            ([0.7, 0.4, 0.9], 0.6, False),
+            ([0.6, 0.7], 0.6, False),  # Exactly at threshold does NOT pass (strict >)
+        ],
+    )
+    def test_threshold_scenarios(self, values, threshold, expected):
         c = _make_critic()
-        scores = [_score(0.7), _score(0.8), _score(0.9)]
-        assert c.all_pass(scores, threshold=0.6) is True
-
-    def test_one_below_threshold(self):
-        c = _make_critic()
-        scores = [_score(0.7), _score(0.4), _score(0.9)]
-        assert c.all_pass(scores, threshold=0.6) is False
-
-    def test_exactly_at_threshold(self):
-        c = _make_critic()
-        scores = [_score(0.6), _score(0.7)]
-        # Exactly at threshold does NOT pass (strict >)
-        assert c.all_pass(scores, threshold=0.6) is False
+        scores = [_score(v) for v in values]
+        assert c.all_pass(scores, threshold=threshold) is expected
 
 
 # ---------------------------------------------------------------------------
@@ -89,23 +80,19 @@ class TestAllPass:
 # ---------------------------------------------------------------------------
 
 class TestScoreVariance:
-    def test_empty(self):
+    @pytest.mark.parametrize(
+        "values,expected",
+        [
+            ([], 0.0),
+            ([0.7], 0.0),
+            ([0.5, 0.5, 0.5], 0.0),
+            ([0.0, 1.0], 0.25),
+        ],
+    )
+    def test_variance_scenarios(self, values, expected):
         c = _make_critic()
-        assert c.score_variance([]) == pytest.approx(0.0)
-
-    def test_single(self):
-        c = _make_critic()
-        assert c.score_variance([_score(0.7)]) == pytest.approx(0.0)
-
-    def test_equal_scores(self):
-        c = _make_critic()
-        scores = [_score(0.5), _score(0.5), _score(0.5)]
-        assert c.score_variance(scores) == pytest.approx(0.0)
-
-    def test_varied_scores(self):
-        c = _make_critic()
-        scores = [_score(0.0), _score(1.0)]
-        assert c.score_variance(scores) == pytest.approx(0.25)
+        scores = [_score(v) for v in values]
+        assert c.score_variance(scores) == pytest.approx(expected)
 
     def test_positive(self):
         c = _make_critic()

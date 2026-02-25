@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 from dataclasses import dataclass
-from typing import Callable, Optional, TypeVar
+from typing import Callable, Optional, TypeVar, cast
 
 from .circuit_breaker import CircuitBreaker, CircuitBreakerOpen
 from .exceptions import (
@@ -75,7 +75,7 @@ def _backoff_seconds(policy: BackendCallPolicy, attempt: int) -> float:
 
 def _safe_error_text(error: Exception) -> str:
     """Render exception text with sensitive fragments redacted."""
-    return redact_sensitive(str(error))
+    return cast(str, redact_sensitive(str(error)))
 
 
 def execute_with_resilience(
@@ -99,7 +99,7 @@ def execute_with_resilience(
 
     for attempt in range(attempts):
         try:
-            return guarded()
+            return cast(T, guarded())
         except CircuitBreakerOpen as exc:
             raise CircuitBreakerOpenError(
                 f"Circuit is open for {policy.service_name}",
