@@ -703,7 +703,7 @@ class OntologyMediator:
         context: Any,
         max_workers: Optional[int] = None,
         track_changes: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> Ontology:
         """
         Apply refinement strategies to multiple ontologies in parallel.
 

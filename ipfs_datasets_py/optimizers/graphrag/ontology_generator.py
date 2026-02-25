@@ -75,6 +75,7 @@ _DIRECTIONAL_RELATIONSHIP_PATTERNS: tuple[tuple[re.Pattern[str], str, float], ..
     (re.compile(r"\b(founded?|established?)\b"), "founded", 0.72),
     (re.compile(r"\b(leads?|directs?|heads?)\b"), "leads", 0.68),
 )
+from ipfs_datasets_py.optimizers.graphrag.ontology_types import Ontology
 
 _BIDIRECTIONAL_RELATIONSHIP_PATTERNS: tuple[tuple[re.Pattern[str], str, float], ...] = (
     (re.compile(r"\b(partners?\s+with|collabor\w+\s+with)\b"), "partners_with", 0.70),
@@ -4651,7 +4652,7 @@ class OntologyGenerator:
         self,
         data: Any,
         context: OntologyGenerationContext
-    ) -> Dict[str, Any]:
+    ) -> Ontology:
         """
         Generate complete ontology from data.
         
