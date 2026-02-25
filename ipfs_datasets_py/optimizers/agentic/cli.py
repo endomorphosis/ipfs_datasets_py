@@ -13,7 +13,7 @@ import anyio
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from .base import (
     ChangeControlMethod,
@@ -38,7 +38,7 @@ from .production_hardening import (
 class OptimizerArgparseCLI:
     """Command-line interface for agentic optimizer."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize CLI."""
         self.coordinator: Optional[AgentCoordinator] = None
         self.config_path = Path(".optimizer-config.json")
@@ -58,7 +58,8 @@ class OptimizerArgparseCLI:
         """
         if self.config_path.exists():
             with open(self.config_path, 'r') as f:
-                return json.load(f)
+                loaded = json.load(f)
+                return cast(Dict[str, Any], loaded)
         
         # Default configuration
         return {
@@ -70,7 +71,7 @@ class OptimizerArgparseCLI:
             "github_token": None,
         }
     
-    def _save_config(self):
+    def _save_config(self) -> None:
         """Save configuration to file."""
         with open(self.config_path, 'w') as f:
             json.dump(self.config, f, indent=2)
@@ -641,6 +642,8 @@ class OptimizerArgparseCLI:
                     return self.cmd_agents_list(args)
                 elif args.agents_command == 'status':
                     return self.cmd_agents_status(args)
+                parser.print_help()
+                return 1
             elif args.command == 'queue':
                 return self.cmd_queue_process(args)
             elif args.command == 'stats':
@@ -665,7 +668,7 @@ class OptimizerArgparseCLI:
             return 1
 
 
-def main(args: Optional[List[str]] = None):
+def main(args: Optional[List[str]] = None) -> int:
     """Main entry point.
     
     Args:

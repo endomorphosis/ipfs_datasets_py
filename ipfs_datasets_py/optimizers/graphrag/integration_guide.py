@@ -101,14 +101,28 @@ class BasicOntologyExtraction:
         Returns:
             Extraction results or empty dict on failure
         """
-        @retry_with_backoff(max_attempts=max_attempts, backoff_base=2)
         def _extract():
             return self.extract_and_validate(text)
-        
+
+        extract_with_retry = retry_with_backoff(
+            _extract,
+            max_attempts=max_attempts,
+            backoff_factor=2.0,
+        )
+
         try:
-            return _extract()
-        except Exception as e:
-            self.logger.error(f"Extraction failed after {max_attempts} attempts: {e}")
+            return extract_with_retry()
+        except (
+            GraphRAGException,
+            AttributeError,
+            KeyError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
+            if self.logger and hasattr(self.logger, "error"):
+                self.logger.error(f"Extraction failed after {max_attempts} attempts: {e}")
             return {}
 
 
@@ -267,7 +281,6 @@ class ErrorHandlingPatterns:
                 self.logger.error(f"GraphRAG error: {e}. Suggestions: {e.suggestions}")
                 return {}
     
-    @safe_operation(fallback_value={})
     def safe_extraction(self, text: str) -> Dict[str, Any]:
         """
         Safe extraction that never throws exceptions to caller.
@@ -281,9 +294,9 @@ class ErrorHandlingPatterns:
         Returns:
             Extraction results or empty dict on error
         """
-        return self._primary_extraction(text)
-    
-    @retry_with_backoff(max_attempts=3, backoff_base=2)
+        safe_extract = safe_operation(self._primary_extraction, default={})
+        return safe_extract(text) or {}
+
     def extraction_with_retry(self, text: str) -> Dict[str, Any]:
         """
         Extraction with automatic retry on transient failures.
@@ -297,7 +310,12 @@ class ErrorHandlingPatterns:
         Returns:
             Extraction results
         """
-        return self._primary_extraction(text)
+        extract_with_retry = retry_with_backoff(
+            self._primary_extraction,
+            max_attempts=3,
+            backoff_factor=2.0,
+        )
+        return extract_with_retry(text)
     
     def _primary_extraction(self, text: str) -> Dict[str, Any]:
         """Placeholder for primary extraction."""
@@ -585,7 +603,15 @@ class AdvancedScenarios:
                 'language': language_code,
             }
             
-        except Exception as e:
+        except (
+            GraphRAGException,
+            AttributeError,
+            KeyError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             results['errors'].append(str(e))
         
         return results

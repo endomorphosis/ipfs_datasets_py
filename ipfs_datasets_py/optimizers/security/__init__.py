@@ -1,5 +1,7 @@
 """Security components for complaint generator optimizers."""
 
+from typing import Any
+
 # Import modules to make them available without causing circular imports
 # Use lazy imports or direct module imports instead of importing specific classes
 
@@ -33,7 +35,7 @@ __all__ = [
     "InsufficientPermissionsError",
 ]
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     """Lazy import to avoid circular import issues."""
     if name in ["InputValidator", "EntityValidator", "RelationshipValidator", 
                 "ValidationError", "ValidationLevel", "ValidationResult"]:

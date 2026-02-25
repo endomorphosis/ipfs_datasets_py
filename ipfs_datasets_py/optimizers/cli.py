@@ -28,7 +28,7 @@ class UnifiedOptimizerCLI:
     
     OPTIMIZER_TYPES = ['agentic', 'logic', 'graphrag']
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize unified CLI."""
         self.parser = self._create_parser()
     
@@ -136,7 +136,7 @@ See docs/optimizers/SELECTION_GUIDE.md for choosing the right optimizer.
                 traceback.print_exc()
             return 1
     
-    def _show_version(self):
+    def _show_version(self) -> None:
         """Show version information for all optimizers."""
         print("IPFS Datasets Optimizers")
         print("=" * 50)
@@ -180,7 +180,7 @@ See docs/optimizers/SELECTION_GUIDE.md for choosing the right optimizer.
             if verbose:
                 print("→ Routing to Agentic Optimizer CLI\n")
             
-            return agentic_main(args)
+            return int(agentic_main(args))
         except ImportError as e:
             print(f"Error: Agentic optimizer not available: {e}")
             print("Install with: pip install -e '.[agentic]'")
@@ -205,7 +205,7 @@ See docs/optimizers/SELECTION_GUIDE.md for choosing the right optimizer.
                 print("→ Routing to Logic Theorem Optimizer CLI\n")
             
             cli = LogicOptimizerCLI()
-            return cli.run(args)
+            return int(cli.run(args))
         except ImportError as e:
             print(f"Error: Logic theorem optimizer not available: {e}")
             print("Install with: pip install -e '.[logic]'")
@@ -230,7 +230,7 @@ See docs/optimizers/SELECTION_GUIDE.md for choosing the right optimizer.
                 print("→ Routing to GraphRAG Optimizer CLI\n")
             
             cli = GraphRAGOptimizerCLI()
-            return cli.run(args)
+            return int(cli.run(args))
         except ImportError as e:
             print(f"Error: GraphRAG optimizer not available: {e}")
             print("Install with: pip install -e '.[graphrag]'")

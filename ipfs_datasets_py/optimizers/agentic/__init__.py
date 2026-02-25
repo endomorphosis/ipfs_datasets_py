@@ -9,6 +9,8 @@ The framework supports two change control methods:
 2. Patch-based system with git worktrees and IPFS CIDs
 """
 
+__version__ = "0.2.0"
+
 from .base import (
     AgenticOptimizer,
     ChangeController,

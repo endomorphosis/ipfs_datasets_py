@@ -657,6 +657,100 @@ class OntologyCritic(BaseCritic):
         """Return the number of entries in the shared evaluation cache."""
         return len(cls._SHARED_EVAL_CACHE)
 
+    @classmethod
+    def save_shared_cache(cls, filepath: str) -> None:
+        """Save the shared evaluation cache to disk.
+
+        The cache is serialized to JSON format with each CriticScore converted
+        to its dict representation.  This allows the cache to persist across
+        Python process restarts.
+
+        Args:
+            filepath: Path where the cache should be saved (e.g., "cache.json")
+
+        Raises:
+            IOError: If the file cannot be written
+            TypeError: If cache contains non-serializable objects
+
+        Example:
+            >>> OntologyCritic.save_shared_cache("critic_cache.json")
+            >>> # Later, in a new process:
+            >>> OntologyCritic.load_shared_cache("critic_cache.json")
+        """
+        import json as _json
+        import os as _os
+
+        # Convert cache to serializable format
+        serializable_cache = {}
+        for key, score in cls._SHARED_EVAL_CACHE.items():
+            serializable_cache[key] = score.to_dict()
+
+        # Ensure directory exists
+        directory = _os.path.dirname(_os.path.abspath(filepath))
+        if directory:
+            _os.makedirs(directory, exist_ok=True)
+
+        # Write to file
+        with open(filepath, 'w', encoding='utf-8') as f:
+            _json.dump(serializable_cache, f, indent=2, sort_keys=True)
+
+    @classmethod
+    def load_shared_cache(cls, filepath: str, merge: bool = False) -> int:
+        """Load the shared evaluation cache from disk.
+
+        Deserializes cached CriticScore objects from JSON and populates the
+        class-level ``_SHARED_EVAL_CACHE``.
+
+        Args:
+            filepath: Path to the cache file (e.g., "cache.json")
+            merge: If True, merge with existing cache entries. If False (default),
+                clear existing cache before loading.
+
+        Returns:
+            Number of cache entries loaded
+
+        Raises:
+            FileNotFoundError: If the cache file doesn't exist
+            JSONDecodeError: If the file contains invalid JSON
+            ValueError: If the cache format is invalid
+
+        Example:
+            >>> count = OntologyCritic.load_shared_cache("critic_cache.json")
+            >>> print(f"Loaded {count} cache entries")
+        """
+        import json as _json
+        import os as _os
+
+        if not _os.path.exists(filepath):
+            raise FileNotFoundError(f"Cache file not found: {filepath}")
+
+        # Load cache data
+        with open(filepath, 'r', encoding='utf-8') as f:
+            cache_data = _json.load(f)
+
+        if not isinstance(cache_data, dict):
+            raise ValueError("Cache file must contain a JSON object")
+
+        # Clear existing cache if not merging
+        if not merge:
+            cls._SHARED_EVAL_CACHE.clear()
+
+        # Deserialize scores
+        loaded_count = 0
+        for key, score_dict in cache_data.items():
+            try:
+                score = CriticScore.from_dict(score_dict)
+                cls._SHARED_EVAL_CACHE[key] = score
+                loaded_count += 1
+            except (TypeError, ValueError, KeyError, AttributeError) as e:
+                # Skip invalid entries but log the error if logger available
+                import logging as _logging
+                _logging.getLogger(__name__).warning(
+                    f"Skipping invalid cache entry {key}: {e}"
+                )
+
+        return loaded_count
+
     def explain_score(self, score: "CriticScore") -> Dict[str, str]:
         """Return human-readable explanations for each dimension score.
 
