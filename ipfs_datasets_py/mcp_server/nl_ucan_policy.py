@@ -1366,6 +1366,79 @@ class IPFSReloadResult(NamedTuple):
         """
         return self.count
 
+    def iter_failed(self):
+        """Yield ``(name, error)`` pairs for all failed pin operations.
+
+        Iterates :attr:`pin_results` and yields an entry for every policy
+        whose CID is ``None``, pairing the policy name with the human-readable
+        error reason from :attr:`pin_errors` (falling back to
+        ``"unknown error"`` when no error detail was captured)::
+
+            for name, reason in result.iter_failed():
+                log.error("Pin failed for %s: %s", name, reason)
+
+        Yields:
+            Two-element ``(str, str)`` tuples — policy name and error reason.
+            Nothing is yielded when all pins succeeded.
+        """
+        errors = self.pin_errors or {}
+        for name, cid in self.pin_results.items():
+            if cid is None:
+                yield (name, errors.get(name, "unknown error"))
+
+    def iter_succeeded(self):
+        """Yield ``(name, cid)`` pairs for all successful pin operations.
+
+        Iterates :attr:`pin_results` and yields an entry for every policy
+        whose CID is not ``None``.  This is the complement of
+        :meth:`iter_failed`::
+
+            for name, cid in result.iter_succeeded():
+                log.info("Pinned %s at %s", name, cid)
+
+        Yields:
+            Two-element ``(str, str)`` tuples — policy name and CID string.
+            Nothing is yielded when all pins failed.
+        """
+        for name, cid in self.pin_results.items():
+            if cid is not None:
+                yield (name, cid)
+
+    def iter_all(self):
+        """Yield ``(name, cid_or_none)`` pairs for *all* pin operations.
+
+        Iterates :attr:`pin_results` unconditionally, yielding an entry for
+        every policy regardless of whether its pin succeeded or failed.
+        Useful for unified reporting and audit logs::
+
+            for name, cid in result.iter_all():
+                status = "ok" if cid else "FAILED"
+                log.info("[%s] %s %s", status, name, cid or "—")
+
+        Yields:
+            Two-element tuples — ``(str, str)`` when the pin succeeded, or
+            ``(str, None)`` when it failed.
+        """
+        for name, cid in self.pin_results.items():
+            yield (name, cid)
+
+    def as_dict(self) -> dict:
+        """Return a flat ``{name: cid_or_none}`` dict for all pin entries.
+
+        A convenience accessor that exposes :attr:`pin_results` as a plain
+        ``dict`` without the NamedTuple wrapping, making it safe to pass to
+        JSON serialisers and other dict-consuming APIs::
+
+            d = result.as_dict()
+            # {"policy_a": "QmABC...", "policy_b": None, ...}
+
+        Equivalent to ``dict(result.iter_all())``, but more readable.
+
+        Returns:
+            ``Dict[str, str | None]`` — ``{policy_name: cid_or_none}``.
+        """
+        return dict(self.pin_results)
+
 
 class IPFSPolicyStore(FilePolicyStore):
     """IPFS-backed :class:`PolicyRegistry` store (Phase G).

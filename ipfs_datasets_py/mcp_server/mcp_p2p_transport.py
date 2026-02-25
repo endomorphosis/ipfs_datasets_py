@@ -803,6 +803,89 @@ class PubSubBus:
 
         return replaced
 
+    def subscriber_ids(self, topic: Union[str, "PubSubEventType"]) -> List[int]:
+        """Return a sorted list of subscription IDs (SIDs) for *topic*.
+
+        Queries ``_sid_map`` for every SID registered against the given topic
+        key, enabling targeted :meth:`unsubscribe_by_id` calls::
+
+            sids = bus.subscriber_ids("receipts")
+            for sid in sids:
+                bus.unsubscribe_by_id(sid)
+
+        Args:
+            topic: Topic string or :class:`PubSubEventType` enum member.
+
+        Returns:
+            Sorted list of integer SIDs subscribed to *topic*.  Empty list
+            when no subscriptions exist for that topic.
+        """
+        key = topic.value if hasattr(topic, "value") else str(topic)
+        return sorted(
+            sid for sid, (k, _h) in self._sid_map.items() if k == key
+        )
+
+    def topic_sid_map(self) -> Dict[str, List[int]]:
+        """Return a mapping of topic key → sorted list of SIDs.
+
+        The SID-based analogue of :meth:`topic_handler_map`.  Useful for
+        auditing which subscriptions are active per topic without exposing
+        handler callables directly::
+
+            m = bus.topic_sid_map()
+            # {"receipts": [1, 3], "audit": [2]}
+
+        Only topics with at least one subscriber are included.
+
+        Returns:
+            ``Dict[str, List[int]]`` — ``{topic_key: sorted_sid_list}``.
+        """
+        result: Dict[str, List[int]] = {}
+        for sid, (k, _h) in self._sid_map.items():
+            result.setdefault(k, [])
+            result[k].append(sid)
+        # Sort each SID list and drop empty topics
+        return {k: sorted(v) for k, v in result.items() if v}
+
+    def total_subscriptions(self) -> int:
+        """Return the total number of active subscription IDs (SIDs).
+
+        Counts every entry in ``_sid_map``, so a single handler subscribed to
+        three topics is counted three times.  This is the registration-level
+        count, complementing :meth:`handler_count` which deduplicates by
+        handler identity::
+
+            bus.subscribe("a", cb)
+            bus.subscribe("b", cb)
+            assert bus.total_subscriptions() == 2  # 2 registrations
+            assert bus.handler_count() == 1        # 1 unique handler
+
+        Returns:
+            Non-negative integer — 0 when no subscriptions are active.
+        """
+        return len(self._sid_map)
+
+    def topics_with_count(self) -> List[tuple]:
+        """Return ``(topic, count)`` tuples sorted by subscription count descending.
+
+        Useful for dashboards and monitoring that want to highlight the most
+        subscribed topics first::
+
+            for topic, count in bus.topics_with_count():
+                print(f"{topic}: {count} subscribers")
+            # receipts: 5
+            # audit:    2
+
+        Topics with equal counts appear in arbitrary order (dict insertion
+        order of ``_subscribers``).
+
+        Returns:
+            Sorted ``List[Tuple[str, int]]`` — highest count first.
+            Empty list when no subscriptions are active.
+        """
+        pairs = [(t, self.subscription_count(t)) for t in self.topics()]
+        return sorted(pairs, key=lambda tc: tc[1], reverse=True)
+
     async def publish_async(
         self,
         topic: Union[str, "PubSubEventType"],
