@@ -181,7 +181,15 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 agent_id=self.agent_id,
             )
             
-        except Exception as e:
+        except (
+            AttributeError,
+            KeyError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+            subprocess.SubprocessError,
+        ) as e:
             execution_time = time.time() - start_time
             self._log.error("Optimization failed", extra={
                 'task_id': task.task_id,
@@ -291,7 +299,14 @@ class TestDrivenOptimizer(AgenticOptimizer):
                             'file': str(file_path),
                             'lineno': node.lineno,
                         })
-            except Exception as e:
+            except (
+                OSError,
+                SyntaxError,
+                TypeError,
+                ValueError,
+                UnicodeDecodeError,
+                RecursionError,
+            ) as e:
                 self._log.error("Error analyzing file", extra={
                     'file': str(file_path),
                     'error_type': type(e).__name__,
@@ -320,7 +335,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 'success': True,
                 'tests_generated': response,
             }
-        except Exception as e:
+        except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as e:
             return {
                 'success': False,
                 'error': str(e),
@@ -377,7 +392,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 })
                 
                 optimizations[str(target_file)] = response
-            except Exception as e:
+            except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as e:
                 self._log.error("Error generating optimization", extra={
                     'file': str(target_file),
                     'error_type': type(e).__name__,

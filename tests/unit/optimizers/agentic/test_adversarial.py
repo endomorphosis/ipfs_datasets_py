@@ -130,7 +130,7 @@ class TestAdversarialOptimizer:
     
     def test_generate_solutions_error_handling(self, optimizer, sample_task):
         """Test error handling in solution generation."""
-        optimizer.llm_router.generate.side_effect = Exception("LLM error")
+        optimizer.llm_router.generate.side_effect = ValueError("LLM error")
         code = "def test(): pass"
         
         solutions = optimizer.generate_solutions(
@@ -141,6 +141,16 @@ class TestAdversarialOptimizer:
         
         # Should return empty list on error
         assert len(solutions) == 0 or all(s.code for s in solutions)
+
+    def test_generate_solutions_propagates_base_exceptions(self, optimizer, sample_task):
+        """Base exceptions should not be swallowed by fallback handling."""
+        optimizer.llm_router.generate.side_effect = KeyboardInterrupt()
+        with pytest.raises(KeyboardInterrupt):
+            optimizer.generate_solutions(
+                task=sample_task,
+                code="def test(): pass",
+                baseline_metrics={},
+            )
     
     def test_benchmark_solution(self, optimizer):
         """Test benchmarking a solution."""

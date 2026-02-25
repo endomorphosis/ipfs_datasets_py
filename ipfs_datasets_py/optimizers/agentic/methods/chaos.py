@@ -307,7 +307,15 @@ class ChaosEngineeringOptimizer(AgenticOptimizer):
                 agent_id=self.agent_id,
             )
             
-        except Exception as e:
+        except (
+            AttributeError,
+            KeyError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+            subprocess.SubprocessError,
+        ) as e:
             execution_time = time.time() - start_time
             self._log.error("Optimization failed", extra={
                 'task_id': task.task_id,
@@ -385,7 +393,14 @@ class ChaosEngineeringOptimizer(AgenticOptimizer):
                                     f"{file_path}:{node.lineno}:{node.name}"
                                 )
                         
-            except Exception as e:
+            except (
+                OSError,
+                SyntaxError,
+                TypeError,
+                ValueError,
+                UnicodeDecodeError,
+                RecursionError,
+            ) as e:
                 print(f"Error analyzing {file_path}: {e}")
         
         return vulnerabilities
@@ -669,7 +684,7 @@ except OSError as e:
 try:
     # Original code here
     pass
-except Exception as e:
+except (RuntimeError, ValueError, OSError, TypeError) as e:
     logger.error(f"Unexpected error: {e}")
     # Error handling here
 """
@@ -757,7 +772,7 @@ except Exception as e:
             # Actual patch creation would go here
             return None, None
             
-        except Exception as e:
+        except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
             print(f"Error creating patch: {e}")
             return None, None
 
@@ -902,7 +917,7 @@ class ChaosOptimizer(AgenticOptimizer):
                 "error": "timeout",
                 "execution_time": float(max(0.0, time.time() - start)),
             }
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError) as e:
             return {
                 "success": False,
                 "error": str(e),
@@ -924,9 +939,9 @@ class ChaosOptimizer(AgenticOptimizer):
             )
             extractor = getattr(self.llm_router, "extract_code", None)
             return extractor(raw) if callable(extractor) else str(raw)
-        except Exception as e:
+        except (AttributeError, RuntimeError, TypeError, ValueError) as e:
             # LLM generation failed - return original code unchanged
-            self._log.warning(f"Auto-repair failed for vulnerability '{vulnerability.vulnerability_type}': {e}")
+            self._log.warning(f"Auto-repair failed for vulnerability '{vulnerability.type.value}': {e}")
             return code
 
     def verify_resilience(self, code: str) -> ResilienceReport:

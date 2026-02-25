@@ -231,6 +231,14 @@ while True:
         
         assert result["success"] is False
         assert "timeout" in result["error"].lower() or "time" in result["error"].lower()
+
+    def test_execute_with_fault_propagates_base_exceptions(self, optimizer):
+        with patch(
+            "ipfs_datasets_py.optimizers.agentic.methods.chaos.subprocess.run",
+            side_effect=KeyboardInterrupt(),
+        ):
+            with pytest.raises(KeyboardInterrupt):
+                optimizer.execute_with_fault("print('x')", FaultType.CPU_SPIKE, timeout=1)
     
     def test_generate_fix(self, optimizer):
         """Test generating fix for vulnerability."""
@@ -248,6 +256,34 @@ while True:
         assert isinstance(fixed_code, str)
         assert len(fixed_code) > 0
         assert optimizer.llm_router.generate.called
+
+    def test_generate_fix_typed_error_fallback_returns_original_code(self, optimizer):
+        vulnerability = Vulnerability(
+            type=FaultType.NETWORK_TIMEOUT,
+            location="line 10",
+            description="Missing timeout in network call",
+            severity="high",
+            suggested_fix="Add timeout parameter",
+        )
+        code = "response = requests.get(url)"
+        optimizer.llm_router.generate.side_effect = ValueError("LLM failed")
+
+        fixed_code = optimizer.generate_fix(code, vulnerability)
+
+        assert fixed_code == code
+
+    def test_generate_fix_propagates_base_exceptions(self, optimizer):
+        vulnerability = Vulnerability(
+            type=FaultType.NETWORK_TIMEOUT,
+            location="line 10",
+            description="Missing timeout in network call",
+            severity="high",
+            suggested_fix="Add timeout parameter",
+        )
+        optimizer.llm_router.generate.side_effect = KeyboardInterrupt()
+
+        with pytest.raises(KeyboardInterrupt):
+            optimizer.generate_fix("response = requests.get(url)", vulnerability)
     
     def test_generate_fix_multiple_vulnerabilities(self, optimizer):
         """Test generating fixes for multiple vulnerabilities."""

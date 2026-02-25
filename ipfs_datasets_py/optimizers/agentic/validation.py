@@ -849,6 +849,8 @@ class _AsyncOptimizationValidator:
         Returns:
             Dictionary of validation results
         """
+        import anyio
+
         # Use enhanced parallel validator if available (40-60% speedup)
         if self.parallel_validator:
             try:
@@ -882,7 +884,13 @@ class _AsyncOptimizationValidator:
                         }
 
                 return result_dict
-            except Exception as e:
+            except (
+                AttributeError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as e:
                 self._log.warning(
                     "Enhanced parallel validation failed; falling back to standard path: %s",
                     e,
@@ -896,7 +904,6 @@ class _AsyncOptimizationValidator:
             }
             
             # Use anyio task group to run all tasks concurrently
-            import anyio
             task_names = list(tasks.keys())
             task_coros = list(tasks.values())
 
@@ -905,21 +912,39 @@ class _AsyncOptimizationValidator:
             async def _run_one(idx: int, coro) -> None:  # type: ignore[type-arg]
                 try:
                     results_list[idx] = await coro
-                except Exception as task_err:
+                except (
+                    AttributeError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ) as task_err:
                     results_list[idx] = {"passed": False, "errors": [str(task_err)]}
 
             try:
                 async with anyio.create_task_group() as tg:
                     for i, coro in enumerate(task_coros):
                         tg.start_soon(_run_one, i, coro)
-            except Exception as e:
+            except (
+                AttributeError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as e:
                 # Fallback if task group itself fails (rare)
                 self._log.warning(f"anyio task group failed, falling back to sequential: {e}")
                 results_list = []
                 for coro in task_coros:
                     try:
                         results_list.append(await coro)
-                    except Exception as task_err:
+                    except (
+                        AttributeError,
+                        OSError,
+                        RuntimeError,
+                        TypeError,
+                        ValueError,
+                    ) as task_err:
                         results_list.append({"passed": False, "errors": [str(task_err)]})
             
             return {
@@ -943,20 +968,38 @@ class _AsyncOptimizationValidator:
         async def _run_one(idx: int, coro) -> None:  # type: ignore[type-arg]
             try:
                 results_list[idx] = await coro
-            except Exception as task_err:
+            except (
+                AttributeError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as task_err:
                 results_list[idx] = {"passed": False, "errors": [str(task_err)]}
 
         try:
             async with anyio.create_task_group() as tg:
                 for i, coro in enumerate(task_coros):
                     tg.start_soon(_run_one, i, coro)
-        except Exception as e:
+        except (
+            AttributeError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self._log.warning("anyio task group failed, falling back to sequential: %s", e)
             results_list = []
             for coro in task_coros:
                 try:
                     results_list.append(await coro)
-                except Exception as task_err:
+                except (
+                    AttributeError,
+                    OSError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ) as task_err:
                     results_list.append({"passed": False, "errors": [str(task_err)]})
 
         return {
@@ -989,7 +1032,13 @@ class _AsyncOptimizationValidator:
             try:
                 result = await validator.validate(code, target_files, context)
                 results[name] = result
-            except Exception as e:
+            except (
+                AttributeError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as e:
                 results[name] = {
                     "passed": False,
                     "errors": [str(e)],

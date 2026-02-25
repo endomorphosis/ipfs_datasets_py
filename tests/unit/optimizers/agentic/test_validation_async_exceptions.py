@@ -8,6 +8,8 @@ from unittest.mock import Mock
 import pytest
 
 from ipfs_datasets_py.optimizers.agentic.validation import (
+    ValidationLevel,
+    _AsyncOptimizationValidator,
     _AsyncPerformanceValidator,
     _AsyncSyntaxValidator,
     _AsyncTestValidator,
@@ -145,3 +147,86 @@ async def test_async_performance_validator_propagates_base_exception(monkeypatch
     monkeypatch.setattr("tempfile.NamedTemporaryFile", _InterruptingTempFile)
     with pytest.raises(KeyboardInterrupt):
         await validator._benchmark_code("x = 1")
+
+
+@pytest.mark.anyio
+async def test_async_optimization_validator_enhanced_path_typed_fallback(monkeypatch):
+    validator = _AsyncOptimizationValidator(
+        level=ValidationLevel.BASIC,
+        parallel=True,
+        use_enhanced_parallel=True,
+    )
+
+    class _GoodValidator:
+        async def validate(self, *_args, **_kwargs):
+            return {"passed": True, "errors": [], "warnings": []}
+
+    validator.validators = {"syntax": _GoodValidator()}  # type: ignore[assignment]
+
+    class _FailingParallel:
+        async def run_async(self, *_args, **_kwargs):
+            raise ValueError("parallel backend failed")
+
+    validator.parallel_validator = _FailingParallel()  # type: ignore[assignment]
+    results = await validator._validate_parallel("x = 1", [], {})
+    assert results["syntax"]["passed"] is True
+
+
+@pytest.mark.anyio
+async def test_async_optimization_validator_enhanced_path_propagates_base_exception(
+    monkeypatch,
+):
+    validator = _AsyncOptimizationValidator(
+        level=ValidationLevel.BASIC,
+        parallel=True,
+        use_enhanced_parallel=True,
+    )
+
+    class _GoodValidator:
+        async def validate(self, *_args, **_kwargs):
+            return {"passed": True, "errors": [], "warnings": []}
+
+    validator.validators = {"syntax": _GoodValidator()}  # type: ignore[assignment]
+
+    class _InterruptingParallel:
+        async def run_async(self, *_args, **_kwargs):
+            raise KeyboardInterrupt("stop")
+
+    validator.parallel_validator = _InterruptingParallel()  # type: ignore[assignment]
+    with pytest.raises(KeyboardInterrupt):
+        await validator._validate_parallel("x = 1", [], {})
+
+
+@pytest.mark.anyio
+async def test_async_optimization_validator_sequential_typed_fallback():
+    validator = _AsyncOptimizationValidator(
+        level=ValidationLevel.BASIC,
+        parallel=False,
+        use_enhanced_parallel=False,
+    )
+
+    class _FailingValidator:
+        async def validate(self, *_args, **_kwargs):
+            raise ValueError("validator failed")
+
+    validator.validators = {"syntax": _FailingValidator()}  # type: ignore[assignment]
+    results = await validator._validate_sequential("x = 1", [], {})
+    assert results["syntax"]["passed"] is False
+    assert "validator failed" in results["syntax"]["errors"][0]
+
+
+@pytest.mark.anyio
+async def test_async_optimization_validator_sequential_propagates_base_exception():
+    validator = _AsyncOptimizationValidator(
+        level=ValidationLevel.BASIC,
+        parallel=False,
+        use_enhanced_parallel=False,
+    )
+
+    class _InterruptingValidator:
+        async def validate(self, *_args, **_kwargs):
+            raise KeyboardInterrupt("stop")
+
+    validator.validators = {"syntax": _InterruptingValidator()}  # type: ignore[assignment]
+    with pytest.raises(KeyboardInterrupt):
+        await validator._validate_sequential("x = 1", [], {})

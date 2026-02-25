@@ -276,7 +276,14 @@ class ActorCriticOptimizer(AgenticOptimizer):
                 error_message="Proposal did not meet quality threshold",
             )
             
-        except Exception as e:
+        except (
+            AttributeError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+            KeyError,
+        ) as e:
             execution_time = time.time() - start_time
             self._log.error("Optimization failed", extra={
                 'task_id': task.task_id,
@@ -361,7 +368,13 @@ Generate optimized code with explanation."""
                 "pattern_id": None,  # New pattern
             }
             
-        except Exception as e:
+        except (
+            AttributeError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             return {
                 "id": f"proposal-{int(time.time())}",
                 "code": "",
@@ -412,7 +425,13 @@ Generate adapted code that follows this pattern."""
                 "pattern_id": pattern_id,
             }
             
-        except Exception as e:
+        except (
+            AttributeError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             return {
                 "id": f"proposal-{int(time.time())}",
                 "code": pattern_code,
@@ -585,7 +604,13 @@ Generate adapted code that follows this pattern."""
         """Save current policy to disk."""
         try:
             self.policy.save(self.policy_path)
-        except Exception as e:
+        except (
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+            json.JSONDecodeError,
+        ) as e:
             print(f"Warning: Failed to save policy: {e}")
     
     def _extract_code(self, response: str) -> str:
@@ -665,7 +690,14 @@ Generate adapted code that follows this pattern."""
             # Actual patch creation would go here
             return None, None
             
-        except Exception as e:
+        except (
+            AttributeError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+            KeyError,
+        ) as e:
             print(f"Error creating patch: {e}")
             return None, None
 

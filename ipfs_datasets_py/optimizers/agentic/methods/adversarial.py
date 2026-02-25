@@ -269,7 +269,14 @@ class AdversarialOptimizer(AgenticOptimizer):
                 agent_id=self.agent_id,
             )
             
-        except Exception as e:
+        except (
+            AttributeError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+            KeyError,
+        ) as e:
             execution_time = time.time() - start_time
             self._log.error("Optimization failed", extra={
                 'task_id': task.task_id,
@@ -340,7 +347,14 @@ class AdversarialOptimizer(AgenticOptimizer):
                     
                     analysis["files"].append(file_analysis)
                     
-            except Exception as e:
+            except (
+                AttributeError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+                SyntaxError,
+            ) as e:
                 analysis["files"].append({
                     "path": str(file_path),
                     "error": str(e),
@@ -394,7 +408,13 @@ class AdversarialOptimizer(AgenticOptimizer):
                 
                 solutions.append(solution)
                 
-            except Exception as e:
+            except (
+                AttributeError,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as e:
                 # Log error but continue with other solutions
                 self._log.error("Error generating solution", extra={
                     'solution_index': i,
@@ -521,7 +541,13 @@ Generate the optimized code with explanation."""
                 # Clean up
                 temp_path.unlink(missing_ok=True)
                 
-            except Exception as e:
+            except (
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+                subprocess.SubprocessError,
+            ) as e:
                 benchmark = {
                     "compile_time": float('inf'),
                     "compile_success": False,
@@ -781,7 +807,14 @@ Generate the optimized code with explanation."""
             # For now, return None - actual patch creation would go here
             return None, None
             
-        except Exception as e:
+        except (
+            AttributeError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+            KeyError,
+        ) as e:
             print(f"Error creating patch: {e}")
             return None, None
 
@@ -861,7 +894,7 @@ class AdversarialOptimizer(AgenticOptimizer):
                     )
                 )
             return solutions
-        except Exception as e:
+        except (AttributeError, RuntimeError, TypeError, ValueError) as e:
             # LLM generation or parsing failed - return empty list
             self._log.warning(f"Failed to generate solutions for task '{task.description}': {e}")
             return []
