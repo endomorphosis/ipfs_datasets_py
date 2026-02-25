@@ -217,7 +217,7 @@ class LearningStateManager:
             if success_score > 0.7:
                 self._failure_count = 0
         
-        except Exception as e:
+        except (AttributeError, KeyError, TypeError, ValueError, RuntimeError) as e:
             logging.debug(f"Error recording query performance: {e}")
 
     def record_path_performance(
@@ -253,7 +253,7 @@ class LearningStateManager:
                     new_score = alpha * success_score + (1 - alpha) * current
                     self._traversal_stats["relation_usefulness"][rel_type] = new_score
         
-        except Exception as e:
+        except (AttributeError, KeyError, TypeError, ValueError, RuntimeError) as e:
             logging.debug(f"Error recording path performance: {e}")
 
     def create_query_fingerprint(self, query: Dict[str, Any]) -> str:

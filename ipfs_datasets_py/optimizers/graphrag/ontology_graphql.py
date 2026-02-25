@@ -191,7 +191,7 @@ class OntologyGraphQLExecutor:
             key = sel.alias or sel.name
             try:
                 data[key] = self._resolve_selection(sel)
-            except Exception as exc:  # noqa: BLE001 — surface as GraphQL error
+            except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as exc:
                 logger.debug(
                     "GraphQL resolution error for field %r (%s): %s",
                     sel.name,

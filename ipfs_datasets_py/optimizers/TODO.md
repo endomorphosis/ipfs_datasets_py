@@ -67,10 +67,16 @@ Rotate these while also advancing the plan above. When one completes, replace it
 with a new item from a different track.
 
 **Active picks (rotate on completion)**
-- [ ] (P3) [obs] Add OpenTelemetry span hooks (behind a feature flag) for distributed tracing
-- [ ] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
-- [ ] (P3) [tests] test_cache_invalidation.py - Cache consistency during refinement
+- [x] (P3) [tests] test_cache_invalidation.py - Cache consistency during refinement
+  - Done 2026-02-25: Batch 274 - Verified existing cache invalidation coverage in both general and GraphRAG-specific suites. Validation: tests/unit/optimizers/test_cache_invalidation.py (29/29) and tests/unit/optimizers/graphrag/test_cache_invalidation.py (20/20).
 - [ ] (P3) [docs] Add per-method doctest examples to all public `OntologyGenerator` methods
+- [x] (P3) [arch] Add circuit-breaker for LLM backend calls (retry with exponential backoff)
+  - Done 2026-02-25: Batch 277 - Verified shared `BackendCallPolicy` + `execute_with_resilience` + `CircuitBreaker` wiring across GraphRAG, logic theorem optimizer, agentic LLM integration, and lazy loader backends, including typed error mapping (`RetryableBackendError`, `CircuitBreakerOpenError`) and exponential backoff defaults. Validation: test_backend_resilience.py (14/14), test_backend_resilience_conformance.py (7/7), test_circuit_breaker_logging.py (1/1), test_learning_adapter_circuit_breaker.py (5/5), test_backend_resilience_doc_conformance.py (3/3), test_llm_lazy_loader_exceptions.py (6/6).
+- [x] (P3) [tests] test_relationship_inference_accuracy.py - Validate relationship inference patterns
+  - Done 2026-02-25: Batch 275 - Fixed relationship inference consistency for co-occurrence metadata and employment phrase mapping (`started at`/`joined`/`works at` → `works_for` context inference). Validation: test_relationship_inference_accuracy.py (13/13), test_relationship_type_confidence.py (50/50), test_ontology_generator_helpers.py (90/90).
+- [x] (P3) [tests] test_contextual_entity_disambiguation.py - Test entity type disambiguation
+  - Done 2026-02-25: Batch 276 - Updated contextual disambiguation coverage to current `OntologyGenerationContext` config API and stabilized relationship assertions against extraction variability while preserving disambiguation/relationship integrity checks. Validation: test_contextual_entity_disambiguation.py (21/21).
+- [ ] (P3) [arch] Remove deprecated `TheoremSession` and `LogicExtractor` after 2 minor versions (add version gate)
 
 ---
 
@@ -99,7 +105,8 @@ This plan is intentionally evergreen. It balances refactors, feature growth, tes
 - Provide examples that mirror real usage patterns.
 
 ### Random Work Rotation (Active Picks)
-- [ ] (P2) [docs] Configuration Guide for `ExtractionConfig` fields (see Medium Tasks)
+- [x] (P2) [docs] Configuration Guide for `ExtractionConfig` fields (see Medium Tasks)
+  - Done 2026-02-23: Created CONFIGURATION_REFERENCE.md with comprehensive field-by-field documentation covering all 12 dataclass fields.
 - [x] (P2) [arch] Extract `QueryValidationMixin` for GraphRAG reuse (see Strategic Refactoring)
   - Done 2026-02-23: implemented in optimizers/common/query_validation.py and used by graphrag/query_unified_optimizer.py
 - [x] (P2) [graphrag] Implement `_extract_with_llm_fallback()` wrapper (see GraphRAG backlog)
@@ -414,7 +421,8 @@ Execute these when no rotating work is in progress:
 - [x] (P2) [obs] Add `execution_time_ms` to every result object that doesn't already have it — Done 2026-02-20: BaseOptimizer.run_session() result and metrics dict now include execution_time_ms
 - [x] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `LogicTheoremOptimizer.run_session()` — Done batch 24
 - [x] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `OntologyOptimizer` batch analysis — Done batch 23
-- [ ] (P3) [obs] Add OpenTelemetry span hooks (behind a feature flag) for distributed tracing
+- [x] (P3) [obs] Add OpenTelemetry span hooks (behind a feature flag) for distributed tracing
+  - Done 2026-02-25: Batch 273 - Verified existing feature-flagged OTEL span hooks are active in base optimizer and ontology pipeline (`OTEL_ENABLED` gated tracer creation and span emission paths). Validation: test_base_optimizer_otel_integration.py (2/2), test_ontology_pipeline_otel_spans.py (2/2).
 - [x] (P3) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
   - Done 2026-02-25: Batch 267 - Existing metrics collector integration and pipeline hooks verified via targeted Prometheus integration tests (4/4 passing across base + pipeline suites).
 
@@ -422,10 +430,12 @@ Execute these when no rotating work is in progress:
 
 - [x] (P2) [arch] Define typed exception hierarchy: `OptimizerError`, `ExtractionError`, `ValidationError`, `ProvingError`
   - Done 2026-02-20: common/exceptions.py with full hierarchy
-- [ ] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
+- [x] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
+  - Done 2026-02-25: Batch 272 - Replaced catch-all handlers in `learning_state.py`, `ontology_graphql.py`, `graphrag_repl.py`, and `kafka_ontology_stream.py` with specific exception tuples. Residual `except Exception` sites are intentionally kept at framework/wrapper boundaries (`common/exceptions.py` wrapping helper and pipeline/error-handling boundary wrappers). Validation: test_ontology_graphql.py (35/35), test_learning_state.py + test_query_unified_learning_state_fallbacks.py (38/38), test_graphrag_repl.py (25/25), test_kafka_ontology_stream.py (32/32).
 - [x] (P2) [arch] All CLI commands exit with non-zero on failure — Done: all cmd_* return int, sys.exit(main())
 - [x] (P2) [arch] Add timeout support to `ProverIntegrationAdapter.validate_statement()` — Done: ProverIntegrationAdapter has default_timeout param and per-call timeout override
-- [ ] (P3) [arch] Add circuit-breaker for LLM backend calls (retry with exponential backoff)
+- [x] (P3) [arch] Add circuit-breaker for LLM backend calls (retry with exponential backoff)
+  - Done 2026-02-25: Batch 277 - Circuit-breaker + retry/backoff behavior is implemented and conformance-covered across optimizer LLM backend call sites via shared resilience wrapper and policy defaults. Validation: test_backend_resilience.py (14/14), test_backend_resilience_conformance.py (7/7), test_backend_resilience_doc_conformance.py (3/3), test_llm_lazy_loader_exceptions.py (6/6), test_circuit_breaker_logging.py (1/1), test_learning_adapter_circuit_breaker.py (5/5).
 
 ### R6 — Deprecation cleanup
 

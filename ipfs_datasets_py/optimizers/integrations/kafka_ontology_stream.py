@@ -448,7 +448,15 @@ class KafkaOntologyConsumer:
                         processed += 1
                         self._stats["messages_processed"] += 1
                         self._stats["documents_extracted"] += 1
-                    except Exception as e:
+                    except (
+                        AttributeError,
+                        json.JSONDecodeError,
+                        KeyError,
+                        OSError,
+                        RuntimeError,
+                        TypeError,
+                        ValueError,
+                    ) as e:
                         logger.error(f"Error processing message: {e}")
                         self._handle_error(message, str(e))
                         self._stats["errors"] += 1

@@ -93,7 +93,7 @@ class GraphRAGREPL(cmd.Cmd):
             from ipfs_datasets_py.optimizers.graphrag.cli_wrapper import GraphRAGOptimizerCLI
             self.cli = GraphRAGOptimizerCLI()
             self.cli_available = True
-        except Exception as e:
+        except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as e:
             self.cli = None
             self.cli_available = False
             self.poutput(f"Warning: GraphRAG CLI unavailable: {e}")
@@ -125,7 +125,7 @@ class GraphRAGREPL(cmd.Cmd):
             if history_file.exists():
                 try:
                     readline.read_history_file(str(history_file))
-                except Exception:
+                except (FileNotFoundError, OSError):
                     pass
             
             # Save history on exit
@@ -142,7 +142,7 @@ class GraphRAGREPL(cmd.Cmd):
         if HAS_READLINE:
             try:
                 readline.write_history_file(str(history_file))
-            except Exception:
+            except OSError:
                 pass
     
     def setup_completion(self) -> None:
@@ -288,7 +288,7 @@ class GraphRAGREPL(cmd.Cmd):
         except KeyboardInterrupt:
             self.poutput("\nInterrupted by user")
             self.session_state['error_count'] += 1
-        except Exception as e:
+        except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as e:
             self.poutput(f"Error: {e}")
             self.session_state['error_count'] += 1
             if '--verbose' in args:
@@ -323,7 +323,7 @@ def main() -> int:
     except KeyboardInterrupt:
         print("\n\nInterrupted by user")
         return 130
-    except Exception as e:
+    except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as e:
         print(f"Fatal error: {e}", file=sys.stderr)
         traceback.print_exc()
         return 1

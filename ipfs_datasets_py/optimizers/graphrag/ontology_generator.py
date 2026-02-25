@@ -72,13 +72,14 @@ _DIRECTIONAL_RELATIONSHIP_PATTERNS: tuple[tuple[re.Pattern[str], str, float], ..
     (re.compile(r"\b(manages?|supervises?|oversees?)\b"), "manages", 0.75),
     (re.compile(r"\b(owns?|possesses?)\b"), "owns", 0.70),
     (re.compile(r"\b(creates?|produces?|manufactures?)\b"), "produces", 0.70),
-    (re.compile(r"\b(founded?|established?|started?)\b"), "founded", 0.72),
+    (re.compile(r"\b(founded?|established?)\b"), "founded", 0.72),
     (re.compile(r"\b(leads?|directs?|heads?)\b"), "leads", 0.68),
 )
 
 _BIDIRECTIONAL_RELATIONSHIP_PATTERNS: tuple[tuple[re.Pattern[str], str, float], ...] = (
     (re.compile(r"\b(partners?\s+with|collabor\w+\s+with)\b"), "partners_with", 0.70),
     (re.compile(r"\b(compet\w+\s+with|rivals?)\b"), "competes_with", 0.68),
+    (re.compile(r"\b(joined|started\s+at|works?\s+at)\b"), "works_for", 0.65),
     (re.compile(r"\b(located\s+in|based\s+in)\b"), "located_in", 0.72),
     (re.compile(r"\b(member\s+of|belongs\s+to)\b"), "member_of", 0.75),
 )
@@ -3750,7 +3751,7 @@ class OntologyGenerator:
                         llm_threshold = float(
                             getattr(context.extraction_config, "llm_fallback_threshold", 0.0)
                         )
-                        type_method = "context_window"
+                        type_method = "cooccurrence"
                         if llm_threshold > 0.0 and type_confidence < llm_threshold:
                             inferred_type, type_confidence, type_method = self._refine_relationship_type_with_llm(
                                 context_window=context_window,

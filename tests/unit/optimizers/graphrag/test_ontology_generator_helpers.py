@@ -554,7 +554,7 @@ class TestRelationshipDirectionality:
         rels = generator.infer_relationships([e1, e2], ctx, data="widget and gadget are close")
         co_rels = [
             r for r in rels
-            if (getattr(r, "properties", {}) or {}).get("type_method") == "context_window"
+            if (getattr(r, "properties", {}) or {}).get("type_method") in {"cooccurrence", "context_window"}
         ]
         assert len(co_rels) >= 1
         assert co_rels[0].direction == "undirected"
