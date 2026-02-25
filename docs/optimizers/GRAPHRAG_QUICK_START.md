@@ -2,6 +2,9 @@
 
 This guide provides a quick introduction to using the GraphRAG optimizer for knowledge graph ontology generation and optimization.
 
+For extraction tuning details, see
+[`EXTRACTION_CONFIG_GUIDE.md`](./EXTRACTION_CONFIG_GUIDE.md).
+
 ## What is GraphRAG?
 
 The GraphRAG optimizer automatically generates and refines knowledge graph ontologies from arbitrary data sources. It uses:
