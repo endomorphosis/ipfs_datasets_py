@@ -4,13 +4,14 @@ This package provides a Model Context Protocol (MCP) server implementation for I
 
 ---
 
-## 🎯 Current Status (2026-02-22)
+## 🎯 Current Status (2026-02-25)
 
-**Progress:** ✅ **100% COMPLETE** — All 7 refactoring phases done  
-**Test Coverage:** 85-90% (1457 passing, 29 skipped, 0 failing)  
+**Progress:** ✅ **100% COMPLETE** — All 7 refactoring phases done + MCP++ spec alignment  
+**Test Coverage:** 85-90% (1,570+ passing tests across MCP++ sessions through v39)  
 **Security:** ✅ All 5 critical vulnerabilities fixed  
-**Architecture:** ✅ Thin wrappers, hierarchical tools, dual-runtime, lazy loading  
-**Code Quality:** ✅ 0 bare exceptions · 0 missing docstrings · 0 missing return types
+**Architecture:** ✅ Thin wrappers, hierarchical tools, dual-runtime, lazy loading, MCP++ integration  
+**Code Quality:** ✅ 0 bare exceptions · 0 missing docstrings · 0 missing return types  
+**Tools:** ✅ 51 categories · 292 tool files · ~407 callable tool functions
 
 ---
 
@@ -22,36 +23,33 @@ This package provides a Model Context Protocol (MCP) server implementation for I
 
 ### 📊 **Status & History**
 - **[PHASES_STATUS.md](PHASES_STATUS.md)** — All 7 phases complete with metrics
-- **[MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)** — Completed plan (v4, authoritative)
 - **[CHANGELOG.md](CHANGELOG.md)** — Full change history
-
-### 📖 **Next Steps**
-- **[MASTER_IMPROVEMENT_PLAN_2026_v6.md](MASTER_IMPROVEMENT_PLAN_2026_v6.md)** — Next-generation improvement plan (v6, current)
-- **[MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROVEMENT_PLAN_2026_v5.md)** — v5 plan (all phases A-F complete)
 
 ### 🏗️ **Architecture**
 - **[THIN_TOOL_ARCHITECTURE.md](THIN_TOOL_ARCHITECTURE.md)** — Thin wrapper pattern, core principles
-- **[docs/architecture/](docs/architecture/)** — Dual-runtime design, MCP++ alignment
+- **[docs/architecture/](docs/architecture/)** — Dual-runtime design, MCP++ alignment, ADRs
 
 ### 🔒 **Security**
 - **[SECURITY.md](SECURITY.md)** — Security posture, fixes applied, practices
 
 ### 📋 **Historical Docs** (Reference Only)
-- **[ARCHIVE/](ARCHIVE/)** — 28 archived historical planning documents
+- **[ARCHIVE/](ARCHIVE/)** — Archived historical planning documents
 
 ---
 
-## ✅ All 7 Phases Complete
+## ✅ All 7 Phases + MCP++ Alignment Complete
 
 | Phase | Status | Key Achievement |
 |-------|--------|-----------------|
 | **Phase 1: Security** | ✅ 100% | 5 vulnerabilities fixed |
 | **Phase 2: Architecture** | ✅ 100% | HierarchicalToolManager, thin wrappers, dual-runtime |
-| **Phase 3: Testing** | ✅ 100% | 1457 tests passing, 0 failures |
+| **Phase 3: Testing** | ✅ 100% | 1,570+ tests passing, 0 failures |
 | **Phase 4: Code Quality** | ✅ 100% | 0 bare exceptions, 0 missing types/docstrings |
 | **Phase 5: Thick Tool Refactoring** | ✅ 100% | 15 thick files extracted (avg 70% reduction) |
 | **Phase 6: Consolidation** | ✅ 100% | 28 stale docs archived, 7 authoritative kept |
 | **Phase 7: Performance** | ✅ 100% | Lazy loading, schema caching, P2P connection pool |
+| **Phase M/N: anyio migration** | ✅ 100% | anyio-first, Flask deprecated, no-asyncio CI |
+| **Phase P: MCP++ Alignment** | ✅ 100% | UCAN delegation, event DAG, P2P transport, compliance (v1–v39) |
 
 **See:** [PHASES_STATUS.md](PHASES_STATUS.md) for detailed metrics.
 
@@ -69,16 +67,18 @@ This package provides a Model Context Protocol (MCP) server implementation for I
 - `runtime_router.py` - Dual-runtime dispatch (400 lines)
 
 **Tool Management:**
-- **50 tool categories** with **321 tool files**
+- **51 tool categories** with **292 tool files** (~407 callable functions)
 - **4 meta-tools** expose all functionality
 - Dynamic loading, lazy initialization
 - CLI-style tool naming (category/operation)
 
 **P2P Integration (MCP++):**
+- UCAN delegation, event DAG provenance, P2P transport bindings
 - Workflow scheduler, task queue, peer registry
 - 50-70% latency reduction for P2P operations
 - Graceful degradation when unavailable
 - Native Trio integration
+- Compliance checker, policy audit log, NL UCAN policy compiler
 
 **Configuration & Monitoring:**
 - `server_context.py` - Server state management
@@ -89,8 +89,8 @@ This package provides a Model Context Protocol (MCP) server implementation for I
 
 **1. Hierarchical Tools (99% context reduction)**
 ```python
-# Instead of 321 tools, expose only 4 meta-tools:
-mcp.add_tool(tools_list_categories)  # List all 50 categories
+# Instead of 407 tool functions, expose only 4 meta-tools:
+mcp.add_tool(tools_list_categories)  # List all 51 categories
 mcp.add_tool(tools_list_tools)       # List tools in a category
 mcp.add_tool(tools_get_schema)       # Get tool schema
 mcp.add_tool(tools_dispatch)         # Execute any tool
@@ -138,13 +138,13 @@ except ImportError:
 ## 🧪 Testing
 
 ### Current Status
-- **1457 test functions** passing, 29 skipped, 0 failing
+- **1,570+ test functions** passing (MCP++ sessions v1–v39), 0 failing
 - **Test coverage:** 85-90% across core modules
 
 ### Test Structure
 ```
 tests/mcp/
-├── unit/              # Component unit tests (89 files)
+├── unit/              # Component unit tests (179 files)
 │   ├── test_server_core.py (40 tests)
 │   ├── test_hierarchical_tool_manager.py (26 tests)
 │   ├── test_fastapi_service.py (19 tests)
@@ -154,7 +154,8 @@ tests/mcp/
 │   ├── test_exceptions.py (12 tests)
 │   ├── test_p2p_service_manager.py (15 tests)
 │   ├── test_tool_registry.py, test_tool_registry_session39.py
-│   └── [80 more unit test files covering all 53 tool categories]
+│   ├── test_mcplusplus_v*.py (39 MCP++ spec session files)
+│   └── [100+ more unit test files covering all 51 tool categories]
 ├── integration/       # Integration tests (9 files)
 │   ├── test_exception_integration.py (15 tests)
 │   ├── test_p2p_integration.py (6 tests)
@@ -268,6 +269,8 @@ Phase 4: Quality           █████████████████�
 Phase 5: Tool Cleanup      ████████████████████████ 100% ✅
 Phase 6: Consolidation     ████████████████████████ 100% ✅
 Phase 7: Performance       ████████████████████████ 100% ✅
+Phase M/N: anyio migration ████████████████████████ 100% ✅
+Phase P: MCP++ Alignment   ████████████████████████ 100% ✅ (v1–v39)
 ```
 
 **See:** [PHASES_STATUS.md](PHASES_STATUS.md) for full per-phase metrics.
@@ -277,44 +280,44 @@ Phase 7: Performance       █████████████████�
 ## 📞 Support & Resources
 
 ### Documentation
-- **Completed Plan:** [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)
-- **Next Steps:** [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROVEMENT_PLAN_2026_v5.md)
 - **Architecture:** [THIN_TOOL_ARCHITECTURE.md](THIN_TOOL_ARCHITECTURE.md)
 - **Security:** [SECURITY.md](SECURITY.md)
+- **API Reference:** [docs/api/tool-reference.md](docs/api/tool-reference.md)
+- **Development:** [docs/development/](docs/development/)
 
 ### Key Metrics
-- **Test Functions:** 1457 passing, 29 skipped, 0 failing
+- **Test Functions:** 1,570+ passing, 0 failing
 - **Test Coverage:** 85-90%
-- **Tool Categories:** 60 categories, 382 tools
-- **Context Reduction:** 99% (373→4 meta-tools)
-- **Thin Wrapper Compliance:** 99%+ (382/382 tools)
+- **Tool Categories:** 51 categories · 292 tool files · ~407 callable functions
+- **Context Reduction:** 99% (407 functions → 4 meta-tools)
+- **Thin Wrapper Compliance:** 99%+
 
 ---
 
-## 🎯 Next Steps
+## 🎯 Improvement Areas
 
-Future work is tracked in [MASTER_IMPROVEMENT_PLAN_2026_v6.md](MASTER_IMPROVEMENT_PLAN_2026_v6.md). Key areas:
 1. Coverage improvements: `monitoring.py` → 85%+, `enterprise_api.py` → 80%+
-2. Extend `docs/api/tool-reference.md` to cover all 51 categories (currently ~4/51)
-3. Upgrade 15 minimal-stub tool README files with parameter docs and examples
-4. Clean up `lizardperson_argparse_programs/` empty TODO files
+2. Extend `docs/api/tool-reference.md` to cover all 51 categories
+3. Migrate `legacy_mcp_tools/` to appropriate category directories
+4. Clean up `lizardperson_argparse_programs/` empty placeholder files
 
 ---
 
-**Version:** 5.0  
-**Last Updated:** 2026-02-22  
-**Status:** ✅ Production Ready — All 7 phases complete, v5 A-F complete (1457 tests)
+**Version:** 6.0  
+**Last Updated:** 2026-02-25  
+**Status:** ✅ Production Ready — All phases complete, MCP++ v1–v39 alignment done
 
 ## Features
 
 - **MCP Server**: Full Model Context Protocol server implementation
-- **Comprehensive Tools**: Access to all IPFS Datasets functionality as MCP tools (382 tools, 60 categories)
+- **Comprehensive Tools**: Access to all IPFS Datasets functionality as MCP tools (~407 functions, 51 categories)
 - **Dual Integration**: Support for both direct IPFS Kit usage and MCP-based integration
 - **Enhanced P2P Capabilities** ✅: Advanced P2P features with MCP++ integration
   - Workflow scheduler for distributed task orchestration
   - Advanced task queue with peer-to-peer execution
   - Peer registry with discovery and management
-  - Bootstrap helpers for network initialization
+  - UCAN delegation, event DAG provenance, P2P transport bindings
+  - Compliance checker, policy audit log, NL UCAN policy compiler
   - Dual-runtime architecture (FastAPI + Trio) for optimal performance
   - Graceful degradation when MCP++ unavailable
 - **Configuration Options**: Flexible configuration via command line, YAML files, or Python
@@ -542,34 +545,28 @@ ipfs_kit:
 
 ## Available Tools
 
-The server exposes the following tools:
+The server exposes ~407 callable tool functions across 51 categories. Use the hierarchical meta-tools
+to discover and call them at runtime, or see [docs/api/tool-reference.md](docs/api/tool-reference.md)
+for the full reference.
 
-### Dataset Tools
-- `load_dataset`: Load a dataset from a source
-- `save_dataset`: Save a dataset to a destination
-- `process_dataset`: Process a dataset with transformations
-- `convert_dataset_format`: Convert a dataset to a different format
+### Core Tool Categories
 
-### IPFS Tools
-- `pin_to_ipfs`: Pin content to IPFS
-- `get_from_ipfs`: Get content from IPFS
-- `convert_to_car`: Convert content to a CAR file
-- `unixfs_operations`: Perform UnixFS operations on IPFS content
+| Category | Functions | Description |
+|----------|-----------|-------------|
+| `dataset_tools` | 6 | Load, save, convert, process datasets; text-to-FOL, legal-to-deontic |
+| `graph_tools` | 19 | Knowledge graphs: Cypher/GraphQL, visualization, KG completion, explainability |
+| `logic_tools` | 27 | FOL, TDFOL, CEC/DCEC theorem proving, deontic and temporal reasoning |
+| `pdf_tools` | 8 | PDF GraphRAG, OCR, entity extraction, cross-document analysis |
+| `media_tools` | 17 | FFmpeg convert/mux/stream/edit/batch, yt-dlp download |
+| `web_archive_tools` | 59 | Common Crawl, Wayback Machine, Brave/Google/GitHub/HuggingFace search |
+| `legal_dataset_tools` | 50 | US Code, Federal Register, RECAP, CourtListener, municipal codes |
+| `embedding_tools` | 2 | Embedding generation and batching |
+| `ipfs_tools` | 2 | IPFS pin and get |
+| `vector_tools` | 2 | Vector index creation and search |
+| `storage_tools` | 9 | Multi-backend storage management |
+| `workflow_tools` | 17 | DAG workflow orchestration, scheduling, batch processing |
 
-### Vector Tools
-- (Vector tools will be documented here)
-
-### Graph Tools
-- (Graph tools will be documented here)
-
-### Audit Tools
-- (Audit tools will be documented here)
-
-### Security Tools
-- (Security tools will be documented here)
-
-### Provenance Tools
-- (Provenance tools will be documented here)
+See [tools/README.md](tools/README.md) for the full 51-category listing.
 
 ## Custom Server Configuration
 

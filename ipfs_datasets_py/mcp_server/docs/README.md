@@ -7,21 +7,29 @@ Welcome to the MCP Server documentation. This directory contains comprehensive d
 ### [architecture/](./architecture/)
 Technical design documentation and architecture decisions:
 - **dual-runtime.md** — FastAPI + Trio dual-runtime design
-- **mcp-plus-plus-alignment.md** — MCP++ architecture alignment
+- **mcp-plus-plus-alignment.md** — MCP++ architecture alignment (UCAN, event DAG, P2P transport)
+- **DUAL_RUNTIME_ARCHITECTURE.md** — Detailed dual-runtime architecture
+- **adr/** — Architecture Decision Records (ADR-001 through ADR-006)
 
 ### [api/](./api/)
 API reference documentation:
-- **tool-reference.md** — Complete tool API reference
+- **tool-reference.md** — Complete tool API reference covering all 51 categories
 
 ### [guides/](./guides/)
 User guides and how-to documentation:
 - **p2p-migration.md** — Migrating to P2P infrastructure
 - **performance-tuning.md** — Performance optimization guide
+- **performance-profiling.md** — Performance profiling guide
+- **cookbook.md** — Common usage patterns and recipes
 
 ### [development/](./development/)
 Developer documentation:
 - **tool-patterns.md** — Standard tool patterns (function-based, class-based, stateful)
 - **tool-templates/** — Ready-to-use tool templates
+
+### [testing/](./testing/)
+Testing documentation:
+- **DUAL_RUNTIME_TESTING_STRATEGY.md** — Testing strategy for dual-runtime architecture
 
 ### [history/](./history/)
 Historical documentation and archived reports:
