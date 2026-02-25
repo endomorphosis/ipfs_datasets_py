@@ -3326,6 +3326,7 @@ class OntologyGenerator:
         
         if context_for_run.extraction_strategy == ExtractionStrategy.RULE_BASED:
             result = self._extract_with_llm_fallback(data, context_for_run)
+            result = self._apply_semantic_dedup_with_fallback(result)
             result.metadata.setdefault("language_metadata", language_meta)
             self._log.info(
                 "extract_entities complete: entity_count=%d strategy=%s confidence=%.3f",
@@ -3373,6 +3374,7 @@ class OntologyGenerator:
             raise ValueError(
                 f"Unknown extraction strategy: {context_for_run.extraction_strategy}"
             )
+        result = self._apply_semantic_dedup_with_fallback(result)
         result.metadata.setdefault("language_metadata", language_meta)
         self._log.info(
             "extract_entities complete: entity_count=%d strategy=%s confidence=%.3f",
@@ -3410,6 +3412,44 @@ class OntologyGenerator:
             ),
         )
         return result
+
+    def _apply_semantic_dedup_with_fallback(
+        self,
+        result: EntityExtractionResult,
+    ) -> EntityExtractionResult:
+        """Apply semantic deduplication when enabled, with safe text-dedup fallback."""
+        if not self.enable_semantic_dedup:
+            return result
+
+        semantic_deduplicator = self._semantic_deduplicator
+        if semantic_deduplicator is None:
+            deduped = self.deduplicate_entities(result, key="text")
+            deduped.metadata["semantic_dedup_applied"] = False
+            deduped.metadata["semantic_dedup_fallback"] = "text"
+            return deduped
+
+        try:
+            return result.apply_semantic_dedup(
+                semantic_deduplicator,
+                threshold=0.85,
+            )
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+            RuntimeError,
+            ImportError,
+            OSError,
+            KeyError,
+        ) as exc:
+            self._log.warning(
+                "Semantic dedup failed; falling back to text dedup: %s",
+                exc,
+            )
+            deduped = self.deduplicate_entities(result, key="text")
+            deduped.metadata["semantic_dedup_applied"] = False
+            deduped.metadata["semantic_dedup_fallback"] = "text"
+            return deduped
 
     def _extract_with_llm_fallback(
         self,

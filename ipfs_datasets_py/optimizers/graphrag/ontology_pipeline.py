@@ -567,7 +567,14 @@ class OntologyPipeline:
                         self._log.debug("Failed to set final pipeline span attributes: %s", exc)
 
                 return result
-            except Exception as exc:
+            except (
+                AttributeError,
+                KeyError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+                OSError,
+            ) as exc:
                 try:
                     import json as _json
                     from datetime import datetime as _datetime, timezone as _timezone

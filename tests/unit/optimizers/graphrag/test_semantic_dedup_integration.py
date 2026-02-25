@@ -10,6 +10,8 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
     Entity,
     Relationship,
     EntityExtractionResult,
+    ExtractionStrategy,
+    OntologyGenerationContext,
     OntologyGenerator,
 )
 
@@ -201,6 +203,67 @@ class TestSemanticDeduplicationIntegration:
         
         assert call_args[1]["threshold"] == 0.88
         assert call_args[1]["max_suggestions"] == 10
+
+    def test_extract_entities_applies_semantic_dedup_when_enabled(self):
+        """extract_entities() should run semantic dedup when feature is enabled."""
+        generator = OntologyGenerator(enable_semantic_dedup=False)
+        generator.enable_semantic_dedup = True
+
+        mock_suggestion = Mock()
+        mock_suggestion.entity1_id = "e1"
+        mock_suggestion.entity2_id = "e2"
+        generator._semantic_deduplicator = Mock()
+        generator._semantic_deduplicator.suggest_merges.return_value = [mock_suggestion]
+
+        entities = [
+            Entity(id="e1", text="CEO", type="Person", confidence=0.9),
+            Entity(id="e2", text="Chief Executive Officer", type="Person", confidence=0.85),
+        ]
+        base_result = EntityExtractionResult(entities=entities, relationships=[], confidence=0.82)
+        generator._extract_with_llm_fallback = Mock(return_value=base_result)
+
+        context = OntologyGenerationContext(
+            data_source="test",
+            data_type="text",
+            domain="general",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+        )
+
+        deduped = generator.extract_entities("sample text", context)
+
+        assert len(deduped.entities) == 1
+        assert deduped.metadata["semantic_dedup_applied"] is True
+        assert deduped.metadata["semantic_dedup_merged_count"] == 1
+
+    def test_extract_entities_semantic_dedup_failure_falls_back_to_text_dedup(self):
+        """Semantic dedup runtime failure should fall back to deterministic text dedup."""
+        generator = OntologyGenerator(enable_semantic_dedup=False)
+        generator.enable_semantic_dedup = True
+
+        broken_dedup = Mock()
+        broken_dedup.suggest_merges.side_effect = RuntimeError("embedding backend down")
+        generator._semantic_deduplicator = broken_dedup
+
+        entities = [
+            Entity(id="e1", text="Alice", type="Person", confidence=0.9),
+            Entity(id="e2", text="alice", type="Person", confidence=0.7),
+        ]
+        base_result = EntityExtractionResult(entities=entities, relationships=[], confidence=0.77)
+        generator._extract_with_llm_fallback = Mock(return_value=base_result)
+
+        context = OntologyGenerationContext(
+            data_source="test",
+            data_type="text",
+            domain="general",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+        )
+
+        deduped = generator.extract_entities("sample text", context)
+
+        assert len(deduped.entities) == 1
+        assert deduped.metadata.get("semantic_dedup_applied") is False
+        assert deduped.metadata.get("semantic_dedup_fallback") == "text"
+        assert deduped.metadata.get("deduplication_count") == 1
 
 
 class TestSemanticDeduplicationE2E:

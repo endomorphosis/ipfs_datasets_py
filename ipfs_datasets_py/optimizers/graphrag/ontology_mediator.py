@@ -46,8 +46,10 @@ References:
 from __future__ import annotations
 
 import logging
+import os
+from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterator, List, Optional
 import uuid
 
 from ipfs_datasets_py.optimizers.common.base_session import BaseSession
@@ -58,6 +60,13 @@ from ipfs_datasets_py.optimizers.common.profiling_decorators import profile_meth
 from ipfs_datasets_py.optimizers.graphrag.ontology_types import (
     Ontology,
 )
+
+try:
+    from opentelemetry import trace  # type: ignore[import-not-found]
+    HAVE_OPENTELEMETRY = True
+except ImportError:  # pragma: no cover
+    trace = None
+    HAVE_OPENTELEMETRY = False
 
 logger = logging.getLogger(__name__)
 
@@ -342,11 +351,24 @@ class OntologyMediator:
         # Ordered log of (action_name, round_index) entries for action_log()
         self._action_entries: list = []
         self._prometheus_metrics: Optional[Any] = None
+        self._otel_enabled = os.environ.get("OTEL_ENABLED", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        self._tracer = None
 
         try:
             self._prometheus_metrics = get_global_prometheus_metrics()
         except (AttributeError, ImportError, RuntimeError, TypeError, ValueError):
             self._prometheus_metrics = None
+
+        if self._otel_enabled and HAVE_OPENTELEMETRY and trace is not None:
+            try:
+                self._tracer = trace.get_tracer(__name__)
+            except (AttributeError, ImportError, RuntimeError, TypeError, ValueError):
+                self._tracer = None
 
         self._log.info(
             f"Initialized mediator: max_rounds={max_rounds}, "
@@ -396,6 +418,36 @@ class OntologyMediator:
                 )
         except (AttributeError, RuntimeError, TypeError, ValueError):
             self._log.debug("Skipping Prometheus session metrics emission", exc_info=True)
+
+    @contextmanager
+    def _start_otel_span(
+        self,
+        operation: str,
+        attributes: Dict[str, Any],
+    ) -> Iterator[Optional[Any]]:
+        """Start a best-effort OpenTelemetry span or yield ``None`` when disabled."""
+        if not self._otel_enabled or self._tracer is None:
+            yield None
+            return
+
+        try:
+            span_cm = self._tracer.start_as_current_span(operation)
+        except (AttributeError, RuntimeError, TypeError, ValueError):
+            yield None
+            return
+
+        with span_cm as span:
+            for key, value in attributes.items():
+                if value is None:
+                    continue
+                try:
+                    if isinstance(value, (str, bool, int, float)):
+                        span.set_attribute(key, value)
+                    else:
+                        span.set_attribute(key, str(value))
+                except (AttributeError, RuntimeError, TypeError, ValueError):
+                    self._log.debug("Failed to set span attribute %s", key, exc_info=True)
+            yield span
     
     def generate_prompt(
         self,
@@ -1789,8 +1841,17 @@ class OntologyMediator:
         self._log.info(f"Starting refinement cycle (max {self.max_rounds} rounds)")
         
         # Generate initial ontology
-        initial_ontology = self.generator.generate_ontology(data, context)
-        initial_score = self.critic.evaluate_ontology(initial_ontology, context, data)
+        domain = str(getattr(context, "domain", "unknown"))
+        with self._start_otel_span(
+            "ontology_mediator.initial_generation",
+            {
+                "optimizer.type": "ontology_mediator",
+                "refinement.mode": "standard",
+                "domain": domain,
+            },
+        ):
+            initial_ontology = self.generator.generate_ontology(data, context)
+            initial_score = self.critic.evaluate_ontology(initial_ontology, context, data)
         
         # Initialize state
         state = MediatorState(
@@ -1815,18 +1876,27 @@ class OntologyMediator:
             prompt = self.generate_prompt(context, initial_score)
             
             # Refine ontology
-            refined_ontology = self.refine_ontology(
-                state.current_ontology,
-                initial_score,
-                context
-            )
-            
-            # Evaluate refined version
-            refined_score = self.critic.evaluate_ontology(
-                refined_ontology,
-                context,
-                data
-            )
+            with self._start_otel_span(
+                "ontology_mediator.round",
+                {
+                    "optimizer.type": "ontology_mediator",
+                    "refinement.mode": "standard",
+                    "domain": domain,
+                    "round": round_num,
+                },
+            ):
+                refined_ontology = self.refine_ontology(
+                    state.current_ontology,
+                    initial_score,
+                    context
+                )
+                
+                # Evaluate refined version
+                refined_score = self.critic.evaluate_ontology(
+                    refined_ontology,
+                    context,
+                    data
+                )
             
             # Update state
             state.add_round(
@@ -1857,6 +1927,18 @@ class OntologyMediator:
             state.critic_scores[-1].overall - state.critic_scores[0].overall
         )
         self._record_prometheus_session_summary(state)
+        with self._start_otel_span(
+            "ontology_mediator.summary",
+            {
+                "optimizer.type": "ontology_mediator",
+                "refinement.mode": "standard",
+                "domain": domain,
+                "rounds": int(state.current_round),
+                "converged": bool(state.converged),
+                "final_score": float(state.metadata.get("final_score", 0.0)),
+            },
+        ):
+            pass
         
         self._log.info(
             f"Refinement cycle complete: {state.current_round} rounds, "
@@ -1894,13 +1976,22 @@ class OntologyMediator:
 
         start_time = time.time()
         round_limit = max_rounds or self.max_rounds
+        domain = str(getattr(context, "domain", "unknown"))
         self._log.info(
             "Starting agentic refinement cycle (max %d rounds)",
             round_limit,
         )
 
-        initial_ontology = self.generator.generate_ontology(data, context)
-        initial_score = self.critic.evaluate_ontology(initial_ontology, context, data)
+        with self._start_otel_span(
+            "ontology_mediator.initial_generation",
+            {
+                "optimizer.type": "ontology_mediator",
+                "refinement.mode": "agentic",
+                "domain": domain,
+            },
+        ):
+            initial_ontology = self.generator.generate_ontology(data, context)
+            initial_score = self.critic.evaluate_ontology(initial_ontology, context, data)
 
         state = MediatorState(
             current_ontology=initial_ontology,
@@ -1940,17 +2031,27 @@ class OntologyMediator:
                 self._log.info("Stopping: strategy priority low and score trend stable")
                 break
 
-            refined_ontology = self.refine_ontology(
-                state.current_ontology,
-                prev_score,
-                context,
-            )
+            with self._start_otel_span(
+                "ontology_mediator.round",
+                {
+                    "optimizer.type": "ontology_mediator",
+                    "refinement.mode": "agentic",
+                    "domain": domain,
+                    "round": round_num,
+                    "strategy": str(strategy.get("action", "unknown")),
+                },
+            ):
+                refined_ontology = self.refine_ontology(
+                    state.current_ontology,
+                    prev_score,
+                    context,
+                )
 
-            refined_score = self.critic.evaluate_ontology(
-                refined_ontology,
-                context,
-                data,
-            )
+                refined_score = self.critic.evaluate_ontology(
+                    refined_ontology,
+                    context,
+                    data,
+                )
 
             state.add_round(
                 refined_ontology,
@@ -1993,6 +2094,18 @@ class OntologyMediator:
             state.critic_scores[-1].overall - state.critic_scores[0].overall
         )
         self._record_prometheus_session_summary(state)
+        with self._start_otel_span(
+            "ontology_mediator.summary",
+            {
+                "optimizer.type": "ontology_mediator",
+                "refinement.mode": "agentic",
+                "domain": domain,
+                "rounds": int(state.current_round),
+                "converged": bool(state.converged),
+                "final_score": float(state.metadata.get("final_score", 0.0)),
+            },
+        ):
+            pass
 
         self._log.info(
             "Agentic refinement complete: %d rounds, final score=%.2f, improvement=%+.2f",
