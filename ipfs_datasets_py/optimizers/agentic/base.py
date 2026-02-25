@@ -14,7 +14,6 @@ from ipfs_datasets_py.optimizers.common.extraction_contexts import (
     OptimizationMethod as UnifiedOptimizationMethod,
 )
 from ipfs_datasets_py.optimizers.common.optimizer_config import OptimizerConfig
-from ipfs_datasets_py.optimizers.common.seed_control import apply_deterministic_seed
 
 
 class ChangeControlMethod(Enum):
@@ -68,6 +67,14 @@ class OptimizationTask:
         """Normalise config to AgenticExtractionConfig if passed as dict."""
         if isinstance(self.config, dict):
             self.config = AgenticExtractionConfig.from_dict(self.config)
+
+    def to_unified_context(self, session_id: Optional[str] = None) -> Any:
+        """Convert this task to a shared ``AgenticContext`` representation."""
+        from ipfs_datasets_py.optimizers.common.unified_config import (
+            context_from_agentic_optimization_task,
+        )
+
+        return context_from_agentic_optimization_task(self, session_id=session_id)
 
 
 @dataclass
@@ -236,7 +243,6 @@ class AgenticOptimizer(ABC):
             raise TypeError(f"config must be OptimizerConfig or dict, got {type(config).__name__}")
         
         self._log = logger or self.config.logger or _logging.getLogger(__name__)
-        self._seed_status = apply_deterministic_seed(self.config.seed)
         
     @abstractmethod
     def _get_method(self) -> OptimizationMethod:

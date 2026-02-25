@@ -36,7 +36,7 @@ import time
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, TypedDict
 from enum import Enum
 
 
@@ -53,6 +53,64 @@ class EventType(str, Enum):
     CONVERGENCE_ACHIEVED = "convergence_achieved"
     MAX_ROUNDS_REACHED = "max_rounds_reached"
     ERROR_OCCURRED = "error_occurred"
+
+
+# ============================================================================
+# TypedDict Definitions for Return Types
+# ============================================================================
+
+class RoundSummaryDict(TypedDict, total=False):
+    """
+    Summary of audit events for a specific refinement round.
+    
+    Fields:
+        round_num: The refinement round number
+        event_count: Total number of events in this round
+        events_by_type: Dictionary mapping event type to count of events
+        events: List of all events in this round as dictionaries
+    """
+    round_num: int
+    event_count: int
+    events_by_type: Dict[str, int]
+    events: List[Dict[str, Any]]
+
+
+class ScoreEvolutionEntryDict(TypedDict, total=False):
+    """
+    Single entry in score evolution history.
+    
+    Tracks how scores changed across refinement rounds.
+    
+    Fields:
+        round: Round number where score update occurred
+        timestamp: ISO 8601 timestamp of score update
+        score: Dictionary with overall, completeness, consistency, clarity scores
+        delta: Dictionary with score deltas for each metric
+    """
+    round: int
+    timestamp: str
+    score: Dict[str, float]
+    delta: Dict[str, float]
+
+
+class ActionHistoryEntryDict(TypedDict, total=False):
+    """
+    Single entry in action application history.
+    
+    Records each action applied during refinement with results.
+    
+    Fields:
+        round: Round number where action was applied
+        timestamp: ISO 8601 timestamp of action application
+        action: Name of the action that was applied
+        delta: Dictionary with entity and relationship count changes
+        execution_time_ms: Time in milliseconds to execute action (optional)
+    """
+    round: int
+    timestamp: str
+    action: str
+    delta: Dict[str, int]
+    execution_time_ms: Optional[float]
 
 
 @dataclass
@@ -484,7 +542,7 @@ class AuditLogger:
         
         self._log.info(f"Exported {len(self.events)} events to {filepath}")
     
-    def get_round_summary(self, round_num: int) -> Dict[str, Any]:
+    def get_round_summary(self, round_num: int) -> RoundSummaryDict:
         """Get summary of events for a specific round."""
         round_events = [e for e in self.events if e.round_num == round_num]
         
@@ -498,7 +556,7 @@ class AuditLogger:
             "events": [e.to_dict() for e in round_events],
         }
     
-    def get_score_evolution(self) -> List[Dict[str, Any]]:
+    def get_score_evolution(self) -> List[ScoreEvolutionEntryDict]:
         """Get score evolution across all rounds."""
         score_events = [e for e in self.events if e.event_type == EventType.SCORE_UPDATE]
         
@@ -513,7 +571,7 @@ class AuditLogger:
         
         return evolution
     
-    def get_action_history(self) -> List[Dict[str, Any]]:
+    def get_action_history(self) -> List[ActionHistoryEntryDict]:
         """Get history of all applied actions."""
         action_events = [e for e in self.events if e.event_type == EventType.ACTION_APPLY]
         

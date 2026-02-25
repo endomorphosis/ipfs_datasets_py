@@ -548,6 +548,95 @@ def context_from_ontology_generation_context(
     )
 
 
+def context_from_logic_extraction_context(
+    context: Any,
+    *,
+    session_id: str = "logic-session",
+) -> LogicContext:
+    """Adapt ``LogicExtractionContext``-like objects into ``LogicContext``."""
+    data_type = getattr(context, "data_type", None)
+    domain = str(getattr(context, "domain", "logic"))
+    ontology = getattr(context, "ontology", None)
+    hints = getattr(context, "hints", None)
+    previous_extractions = getattr(context, "previous_extractions", None)
+    extraction_config = getattr(context, "config", None)
+
+    config_dict: Optional[Dict[str, Any]] = None
+    if extraction_config is not None:
+        if hasattr(extraction_config, "to_dict"):
+            config_dict = extraction_config.to_dict()
+        elif isinstance(extraction_config, dict):
+            config_dict = dict(extraction_config)
+
+    assumptions: Optional[Dict[str, str]] = None
+    data = getattr(context, "data", None)
+    if isinstance(data, dict):
+        assumptions = {str(k): str(v) for k, v in data.items()}
+
+    return LogicContext(
+        session_id=session_id,
+        domain=DomainType.LOGIC,
+        metadata=ensure_shared_context_metadata(
+            {
+                "logic_domain": domain,
+                "data_type": str(data_type) if data_type is not None else None,
+                "has_ontology": isinstance(ontology, dict),
+                "hints_count": len(hints or []),
+                "previous_extractions_count": len(previous_extractions or []),
+                "extraction_config": config_dict,
+            },
+            session_id=session_id,
+            data_source=getattr(context, "data_source", None),
+            data_type=str(data_type) if data_type is not None else None,
+            trace_id=getattr(context, "trace_id", None),
+        ),
+        formulas=assumptions,
+    )
+
+
+def context_from_agentic_optimization_task(
+    task: Any,
+    *,
+    session_id: Optional[str] = None,
+) -> AgenticContext:
+    """Adapt ``OptimizationTask``-like objects into ``AgenticContext``."""
+    task_id = str(getattr(task, "task_id", "agentic-session"))
+    sid = session_id or task_id
+    target_files = getattr(task, "target_files", None)
+    constraints = getattr(task, "constraints", None)
+    metadata = getattr(task, "metadata", None)
+
+    method_raw = getattr(task, "method", None)
+    method_name = getattr(method_raw, "value", method_raw)
+
+    return AgenticContext(
+        session_id=sid,
+        domain=DomainType.AGENTIC,
+        metadata=ensure_shared_context_metadata(
+            {
+                "task_id": task_id,
+                "method": str(method_name or ""),
+                "priority": int(getattr(task, "priority", 0) or 0),
+                "assigned_agent": getattr(task, "assigned_agent", None),
+                "target_files_count": len(target_files or []),
+                "task_metadata": dict(metadata or {}),
+                "description": str(getattr(task, "description", "")),
+            },
+            session_id=sid,
+            data_source="agentic_task",
+            data_type="task",
+            trace_id=None,
+        ),
+        action_history={"target_files": len(target_files or [])},
+        decision_log={
+            "description": str(getattr(task, "description", "")),
+            "method": str(method_name or ""),
+            "constraints": str(dict(constraints or {})),
+        },
+        approval_status={"has_assigned_agent": bool(getattr(task, "assigned_agent", None))},
+    )
+
+
 __all__ = [
     "DomainType",
     "BaseConfig",
@@ -567,4 +656,6 @@ __all__ = [
     "backend_config_from_constructor_kwargs",
     "context_from_optimization_context",
     "context_from_ontology_generation_context",
+    "context_from_logic_extraction_context",
+    "context_from_agentic_optimization_task",
 ]

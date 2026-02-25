@@ -1063,6 +1063,14 @@ class OntologyGenerationContext:
             return self.config
         return ExtractionConfig()  # pragma: no cover — normalised in __post_init__
 
+    def to_unified_context(self, session_id: str = "graphrag-session") -> Any:
+        """Convert this context to a shared ``GraphRAGContext`` representation."""
+        from ipfs_datasets_py.optimizers.common.unified_config import (
+            context_from_ontology_generation_context,
+        )
+
+        return context_from_ontology_generation_context(self, session_id=session_id)
+
 
 @dataclass(slots=True)
 class Entity:

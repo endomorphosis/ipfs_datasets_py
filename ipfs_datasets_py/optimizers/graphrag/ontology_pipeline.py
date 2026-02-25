@@ -22,9 +22,46 @@ from contextlib import contextmanager
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Protocol
+from typing import Any, Callable, Dict, List, Optional, Protocol, TypedDict
 
 _logger = logging.getLogger(__name__)
+
+
+# TypedDict Definitions for Type-Safe Pipeline Serialization
+
+class PipelineResultDict(TypedDict, total=False):
+    """Serialized pipeline result with ontology, scoring, and metadata.
+    
+    Fields:
+        ontology: Extracted ontology structure
+        score: Critic score for the extraction (dict or CriticScore object)
+        entities: List of extracted entities as dictionaries
+        relationships: List of extracted relationships as dictionaries
+        actions_applied: List of actions/refinements applied during processing
+        metadata: Additional metadata from the extraction process
+    """
+    ontology: Dict[str, Any]
+    score: Any  # Dict or CriticScore
+    entities: List[Dict[str, Any]]
+    relationships: List[Dict[str, Any]]
+    actions_applied: List[str]
+    metadata: Dict[str, Any]
+
+
+class PipelineConfigDict(TypedDict, total=False):
+    """Pipeline configuration for serialization and reconstruction.
+    
+    This TypedDict represents the essential configuration needed to
+    recreate an equivalent OntologyPipeline instance.
+    
+    Fields:
+        domain: Domain specification for the pipeline
+        use_llm: Whether language model is enabled for criticism
+        max_rounds: Maximum refinement rounds for the mediator
+    """
+    domain: str
+    use_llm: bool
+    max_rounds: int
 
 try:
     from opentelemetry import trace
@@ -53,7 +90,7 @@ class PipelineResult:
     actions_applied: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> PipelineResultDict:
         """Serialize this result to a plain dictionary."""
         score_data = self.score.to_dict() if hasattr(self.score, "to_dict") else self.score
         return {
@@ -596,7 +633,7 @@ class OntologyPipeline:
             lambda: self.run(data, data_source=data_source, data_type=data_type, refine=refine),
         )
 
-    def as_dict(self) -> Dict[str, Any]:
+    def as_dict(self) -> PipelineConfigDict:
         """Serialize pipeline configuration to a plain dictionary.
 
         Returns a snapshot of the pipeline's constructor-level settings.

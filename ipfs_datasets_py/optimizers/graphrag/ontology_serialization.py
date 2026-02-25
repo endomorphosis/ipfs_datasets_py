@@ -28,7 +28,7 @@ preserved on the dataclass side but are not emitted in the public dicts.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Mapping, Sequence, Tuple, cast
+from typing import Any, Dict, List, Mapping, Sequence, Tuple, TypedDict, cast
 
 from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
     Entity as EntityModel,
@@ -37,7 +37,65 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
 )
 
 
-def entity_model_to_dict(entity: EntityModel) -> Dict[str, Any]:
+# TypedDict Definitions for Type-Safe Ontology Serialization
+
+class EntityDictModel(TypedDict, total=False):
+    """Public schema for entity dictionary representation.
+    
+    This TypedDict defines the canonical public ontology dict schema for entities.
+    Internal-only fields like source_span or last_seen are not included here.
+    
+    Fields:
+        id: Unique identifier for the entity
+        text: Human-readable text representation of the entity
+        type: Entity type (e.g., 'PERSON', 'ORGANIZATION', 'LOCATION')
+        confidence: Confidence score for entity extraction (0.0-1.0)
+        properties: Additional entity properties as key-value pairs
+    """
+    id: str
+    text: str
+    type: str
+    confidence: float
+    properties: Dict[str, Any]
+
+
+class RelationshipDictModel(TypedDict, total=False):
+    """Public schema for relationship dictionary representation.
+    
+    This TypedDict defines the canonical public ontology dict schema for relationships.
+    Internal-only fields like direction or last_seen are not included here.
+    
+    Fields:
+        id: Unique identifier for the relationship
+        source_id: ID of the source entity
+        target_id: ID of the target entity
+        type: Relationship type (e.g., 'IS-A', 'RELATED-TO', 'LOCATED-IN')
+        confidence: Confidence score for relationship extraction (0.0-1.0)
+        properties: Additional relationship properties as key-value pairs
+    """
+    id: str
+    source_id: str
+    target_id: str
+    type: str
+    confidence: float
+    properties: Dict[str, Any]
+
+
+class OntologyDictModel(TypedDict, total=False):
+    """Complete ontology represented as dictionary with entities and relationships.
+    
+    This TypedDict defines the canonical ontology structure containing both
+    entities and relationships extracted from text.
+    
+    Fields:
+        entities: List of entity dictionaries in EntityDictModel format
+        relationships: List of relationship dictionaries in RelationshipDictModel format
+    """
+    entities: List[EntityDictModel]
+    relationships: List[RelationshipDictModel]
+
+
+def entity_model_to_dict(entity: EntityModel) -> EntityDictModel:
     """Convert an :class:`Entity` dataclass to the canonical public dict."""
     return {
         "id": entity.id,
@@ -48,7 +106,7 @@ def entity_model_to_dict(entity: EntityModel) -> Dict[str, Any]:
     }
 
 
-def relationship_model_to_dict(rel: RelationshipModel) -> Dict[str, Any]:
+def relationship_model_to_dict(rel: RelationshipModel) -> RelationshipDictModel:
     """Convert a :class:`Relationship` dataclass to the canonical public dict."""
     return {
         "id": rel.id,
@@ -90,7 +148,7 @@ def build_ontology_dict(
     }
 
 
-def ontology_from_extraction_result(extraction: ExtractionResultModel) -> Dict[str, Any]:
+def ontology_from_extraction_result(extraction: ExtractionResultModel) -> OntologyDictModel:
     """Convert an :class:`EntityExtractionResult` to a canonical ontology dict."""
     return build_ontology_dict(entities=extraction.entities, relationships=extraction.relationships)
 

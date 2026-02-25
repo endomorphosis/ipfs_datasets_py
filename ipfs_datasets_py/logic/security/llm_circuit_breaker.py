@@ -197,6 +197,21 @@ class LLMCircuitBreaker:
         """Check if enough time has passed to attempt recovery."""
         elapsed = time.time() - self._last_state_change
         return elapsed >= self.timeout_seconds
+
+    def refresh_state(self) -> CircuitState:
+        """
+        Check and update circuit breaker state if timeout has been reached.
+        
+        If the circuit is OPEN and the timeout has passed, transition to HALF_OPEN.
+        Useful for testing or explicit state synchronization.
+        
+        Returns:
+            Current circuit state after refresh.
+        """
+        with self._state_lock:
+            if self._state == CircuitState.OPEN and self._should_attempt_reset():
+                self._transition_to(CircuitState.HALF_OPEN)
+            return self._state
     
     def call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """Execute function with circuit breaker protection.

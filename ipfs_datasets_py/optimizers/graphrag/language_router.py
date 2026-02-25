@@ -31,7 +31,7 @@ Classes:
 """
 
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Tuple, Any, cast
+from typing import Callable, Dict, List, Optional, Tuple, Any, TypedDict, cast
 from enum import Enum
 import logging
 from functools import lru_cache
@@ -46,6 +46,39 @@ except ImportError:
     # Fallback if CEC module not available
     Language = None
     LanguageDetector = None
+
+
+# TypedDict Definitions for Type-Safe Language-Aware Extraction
+
+class LanguageMetadataDict(TypedDict, total=False):
+    """Language-specific metadata from extraction processing.
+    
+    Fields:
+        detected_language: Detected language code (e.g., 'en', 'es', 'fr')
+        language_confidence: Confidence of language detection (0.0-1.0)
+        processing_notes: List of notes from language-specific processing
+        confidence_adjustments_applied: Whether language-specific confidence adjustments were applied
+    """
+    detected_language: str
+    language_confidence: float
+    processing_notes: List[str]
+    confidence_adjustments_applied: bool
+
+
+class MultilingualExtractionResultDict(TypedDict, total=False):
+    """Standard extraction result with language metadata.
+    
+    This TypedDict represents extraction results augmented with language detection
+    and processing information for multi-language support.
+    
+    Fields:
+        entities: List of extracted entities as dictionaries
+        relationships: List of extracted relationships as dictionaries
+        language_metadata: Language detection and processing information
+    """
+    entities: List[Dict[str, Any]]
+    relationships: List[Dict[str, Any]]
+    language_metadata: LanguageMetadataDict
 
 
 @dataclass
@@ -139,7 +172,7 @@ class MultilingualExtractionResult:
     confidence_adjustments_applied: bool = False
     extraction_region: Optional[Dict[str, Any]] = None
     
-    def to_standard_result(self) -> Dict[str, Any]:
+    def to_standard_result(self) -> MultilingualExtractionResultDict:
         """Convert to standard extraction result format (without language metadata).
         
         Returns:

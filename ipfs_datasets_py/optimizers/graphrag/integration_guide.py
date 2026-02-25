@@ -23,7 +23,7 @@ Recommended Reading Order:
 """
 
 import logging as _logging
-from typing import Dict, Any, List, Optional, Tuple, cast
+from typing import Dict, Any, List, Optional, Tuple, cast, TypedDict
 from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
 from ipfs_datasets_py.optimizers.graphrag.error_handling import (
     GraphRAGException, GraphRAGConfigError, GraphRAGExtractionError,
@@ -41,6 +41,136 @@ from ipfs_datasets_py.optimizers.graphrag.config_validators import (
 from ipfs_datasets_py.optimizers.graphrag.language_router import (
     LanguageRouter, LanguageConfig,
 )
+
+
+# ============================================================================
+# TypedDict Definitions for Return Types
+# ============================================================================
+
+class ExtractionResultDict(TypedDict, total=False):
+    """
+    Standard extraction result dictionary structure.
+    
+    Contains extracted entities and relationships with validation results.
+    
+    Fields:
+        entities: List of extracted entity dictionaries with text, type, confidence
+        relationships: List of extracted relationship dictionaries  
+        validation: Validation result details from EntityExtractionValidator
+        fallback_language: Language used if fallback extraction was triggered
+        minimal: Boolean flag if minimal extraction without configuration
+        errors: List of error messages encountered during extraction
+        warnings: List of warning messages encountered
+    """
+    entities: List[Dict[str, Any]]
+    relationships: List[Dict[str, Any]]
+    validation: Dict[str, Any]
+    fallback_language: str
+    minimal: bool
+    errors: List[str]
+    warnings: List[str]
+
+
+class MultilingualProcessingResultDict(TypedDict, total=False):
+    """
+    Result dictionary for multi-language text processing.
+    
+    Includes language detection metadata and extracted content with language awareness.
+    
+    Fields:
+        detected_language: ISO language code (e.g., 'es', 'en', 'fr')
+        language_confidence: Confidence score 0.0-1.0 for language detection
+        entities: List of entities extracted for this language
+        relationships: List of relationships extracted
+        domain_vocab_size: Number of domain vocabulary items for detected language
+        processing_notes: String describing any language-specific processing
+    """
+    detected_language: str
+    language_confidence: float
+    entities: List[Dict[str, Any]]
+    relationships: List[Dict[str, Any]]
+    domain_vocab_size: int
+    processing_notes: str
+
+
+class LanguageProcessingBatchDict(TypedDict, total=False):
+    """
+    Individual result from batch language processing.
+    
+    Tracks detection results and language matching for one text item.
+    
+    Fields:
+        text: Preview (first 50 chars) of the input text
+        expected_language: Language code provided by user
+        detected_language: Language code detected by system
+        language_match: Boolean True if detected matches expected
+        config_name: Human-readable name of language configuration
+    """
+    text: str
+    expected_language: str
+    detected_language: str
+    language_match: bool
+    config_name: str
+
+
+class ConfigValidationResultDict(TypedDict, total=False):
+    """
+    Configuration validation results with issue detection.
+    
+    Contains detailed validation reports and optimization suggestions.
+    
+    Fields:
+        is_valid: Boolean True if configuration passes all validations
+        errors: List of validation error messages
+        warnings: List of non-fatal warning messages
+        detected_issues: List of dicts with type, field, message, suggestion
+    """
+    is_valid: bool
+    errors: List[str]
+    warnings: List[str]
+    detected_issues: List[Dict[str, Any]]
+
+
+class MergedConfigDict(TypedDict, total=False):
+    """
+    Merged configuration dictionary with defaults applied.
+    
+    Combines user-provided config with defaults, validated.
+    
+    Fields:
+        confidence_threshold: Minimum confidence score 0.0-1.0 for extraction
+        max_entities: Maximum number of entities to extract
+        max_relationships: Maximum number of relationships to extract
+        window_size: Token window size for context processing
+        allowed_entity_types: List of entity type strings to extract (if defined)
+    """
+    confidence_threshold: float
+    max_entities: int
+    max_relationships: int
+    window_size: int
+    allowed_entity_types: List[str]
+
+
+class CompletePipelineResultDict(TypedDict, total=False):
+    """
+    Complete end-to-end pipeline execution result.
+    
+    Tracks all processing steps, errors, and final outputs with metadata.
+    
+    Fields:
+        steps_completed: List of processing step names that succeeded
+        errors: List of error messages encountered
+        warnings: List of warning messages  
+        detected_language: Detected language code for input text
+        entity_validation: Dict with total_checked and valid_count
+        final_results: Dict with entity_count, relationship_count, language
+    """
+    steps_completed: List[str]
+    errors: List[str]
+    warnings: List[str]
+    detected_language: str
+    entity_validation: Dict[str, Any]
+    final_results: Dict[str, Any]
 
 
 def _safe_error_text(error: Exception) -> str:
@@ -63,7 +193,7 @@ class BasicOntologyExtraction:
         self.validator = EntityExtractionValidator()
         self.logger: Optional[_logging.Logger] = None
     
-    def extract_and_validate(self, text: str) -> Dict[str, Any]:
+    def extract_and_validate(self, text: str) -> ExtractionResultDict:
         """
         Extract entities from text and validate results.
         
@@ -90,14 +220,14 @@ class BasicOntologyExtraction:
         ]
         
         # Validate extracted entities
-        validation_result = self.validator.validate_batch(entities)
+        validation_result = self.validator.validate(entities) if hasattr(self.validator, 'validate') else None
         
         return {
             'entities': entities,
-            'validation': validation_result.to_dict() if hasattr(validation_result, 'to_dict') else {}
+            'validation': validation_result.to_dict() if validation_result and hasattr(validation_result, 'to_dict') else {}
         }
     
-    def extract_with_retry(self, text: str, max_attempts: int = 3) -> Dict[str, Any]:
+    def extract_with_retry(self, text: str, max_attempts: int = 3) -> ExtractionResultDict:
         """
         Extract with automatic retry on failure.
         
@@ -156,7 +286,7 @@ class MultiLanguageWorkflow:
         self,
         text: str,
         domain: str = 'legal'
-    ) -> Dict[str, Any]:
+    ) -> MultilingualProcessingResultDict:
         """
         Process text in any language with automatic routing.
         
@@ -205,7 +335,7 @@ class MultiLanguageWorkflow:
     def batch_process_languages(
         self,
         texts: List[Tuple[str, str]]  # (text, language_code)
-    ) -> List[Dict[str, Any]]:
+    ) -> List[LanguageProcessingBatchDict]:
         """
         Process multiple texts, each in a specific language.
         
@@ -261,7 +391,7 @@ class ErrorHandlingPatterns:
         self,
         text: str,
         fallback_language: str = 'en'
-    ) -> Dict[str, Any]:
+    ) -> ExtractionResultDict:
         """
         Extract with comprehensive error handling.
         
@@ -299,7 +429,7 @@ class ErrorHandlingPatterns:
                 )
                 return {}
     
-    def safe_extraction(self, text: str) -> Dict[str, Any]:
+    def safe_extraction(self, text: str) -> ExtractionResultDict:
         """
         Safe extraction that never throws exceptions to caller.
         
@@ -315,7 +445,7 @@ class ErrorHandlingPatterns:
         safe_extract = safe_operation(self._primary_extraction, default={})
         return safe_extract(text) or {}
 
-    def extraction_with_retry(self, text: str) -> Dict[str, Any]:
+    def extraction_with_retry(self, text: str) -> ExtractionResultDict:
         """
         Extraction with automatic retry on transient failures.
         
@@ -363,7 +493,7 @@ class ConfigurationManagement:
         """Initialize configuration management."""
         self.validator = ExtractionConfigValidator()
     
-    def validate_extraction_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_extraction_config(self, config: Dict[str, Any]) -> ConfigValidationResultDict:
         """
         Validate extraction configuration with detailed reporting.
         
@@ -390,16 +520,18 @@ class ConfigurationManagement:
         # Validate configuration
         validation_result = self.validator.validate(config)
         
-        # Detect common issues
-        issues = self.validator.detect_configuration_issues(config)
+        # Detect common issues (if method exists)
+        issues = []
+        if hasattr(self.validator, 'detect_configuration_issues'):
+            issues = self.validator.detect_configuration_issues(config)
         
         return {
-            'is_valid': validation_result.is_valid,
-            'errors': [e.message for e in validation_result.errors],
-            'warnings': [w.message for w in validation_result.warnings],
+            'is_valid': validation_result.is_valid if hasattr(validation_result, 'is_valid') else True,
+            'errors': [e.message for e in getattr(validation_result, 'errors', [])],
+            'warnings': [w.message for w in getattr(validation_result, 'warnings', [])],
             'detected_issues': [
                 {
-                    'type': issue['type'],
+                    'type': issue.get('type', 'unknown'),
                     'field': issue.get('field'),
                     'message': issue.get('message'),
                     'suggestion': issue.get('suggestion'),
@@ -412,7 +544,7 @@ class ConfigurationManagement:
         self,
         user_config: Dict[str, Any],
         defaults: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+    ) -> MergedConfigDict:
         """
         Merge user configuration with defaults.
         
@@ -552,7 +684,7 @@ class AdvancedScenarios:
         self,
         text: str,
         config: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    ) -> CompletePipelineResultDict:
         """
         Complete end-to-end pipeline with all components.
         
@@ -599,7 +731,7 @@ class AdvancedScenarios:
             results['steps_completed'].append('extraction')
             
             # Step 4: Validate extracted entities
-            validation_result = self.entity_validator.validate_batch(entities)
+            validation_result = self.entity_validator.validate(entities) if hasattr(self.entity_validator, 'validate') else None
             results['entity_validation'] = {
                 'total_checked': len(entities),
                 'valid_count': len([e for e in entities if True]),  # Simplified

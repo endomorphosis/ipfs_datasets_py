@@ -87,6 +87,14 @@ class LogicExtractionContext:
         """Convenience accessor for config.extraction_mode."""
         return self.config.extraction_mode
 
+    def to_unified_context(self, session_id: str = "logic-session") -> Any:
+        """Convert this context to a shared ``LogicContext`` representation."""
+        from ipfs_datasets_py.optimizers.common.unified_config import (
+            context_from_logic_extraction_context,
+        )
+
+        return context_from_logic_extraction_context(self, session_id=session_id)
+
 
 @dataclass
 class LogicalStatement:
