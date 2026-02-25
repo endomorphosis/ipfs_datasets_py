@@ -1,7 +1,8 @@
 """Typed return contracts for GraphRAG query optimizer API.
 
 Provides typed definitions for all public method return values,
-replacing ambiguous `Dict[str, Any]` with structured TypedDict classes.
+replacing ambiguous `Dict[str, Any]` with structured TypedDict classes
+and type aliases.
 """
 
 from typing import Any, Dict, List, Optional, TypedDict
@@ -195,6 +196,26 @@ class RelationshipDictSerialization(TypedDict, total=False):
     direction: str
 
 
+# TIER 3: Metrics and Analysis Contracts
+# These use type aliases instead of TypedDict since they're flexible key-value mappings
+
+# Type alias: confidence histogram mapping bucket labels to entity counts
+# Example: {"0.0-0.2": 5, "0.2-0.4": 3, ...}
+ConfidenceHistogram = Dict[str, int]
+
+# Type alias: entity type distribution mapping type names to relative frequencies
+# Example: {"Person": 0.5, "Organization": 0.3, "Date": 0.2}
+EntityTypeDistribution = Dict[str, float]
+
+# Type alias: entity counts grouped by type
+# Example: {"Person": 5, "Organization": 3, "Date": 2}
+EntityCountByType = Dict[str, int]
+
+# Type alias: relationship type counts
+# Example: {"works_for": 10, "knows": 8, "located_in": 5}
+RelationshipTypeCounts = Dict[str, int]
+
+
 __all__ = [
     "QueryOptimizationPlanStep",
     "QueryOptimizationPlan",
@@ -213,4 +234,9 @@ __all__ = [
     "SyntheticOntologyResult",
     "EntityDictSerialization",
     "RelationshipDictSerialization",
+    # TIER 3 metrics and analysis contracts
+    "ConfidenceHistogram",
+    "EntityTypeDistribution",
+    "EntityCountByType",
+    "RelationshipTypeCounts",
 ]
