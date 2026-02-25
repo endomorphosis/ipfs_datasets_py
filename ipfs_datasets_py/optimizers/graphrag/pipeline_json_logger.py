@@ -39,6 +39,7 @@ from typing import Any, Dict, List, Optional, Callable, TypedDict
 
 from ipfs_datasets_py.optimizers.common.structured_logging import (
     EventType,
+    redact_payload,
     with_schema,
     enrich_with_timestamp,
 )
@@ -176,6 +177,8 @@ class PipelineJSONLogger:
         
         if self._context:
             payload["run_id"] = self._context.run_id
+
+        payload = redact_payload(payload)
         
         if self.include_timestamp:
             payload = enrich_with_timestamp(payload)

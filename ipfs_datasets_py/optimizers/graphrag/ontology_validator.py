@@ -6,6 +6,7 @@ and suggesting improvements such as entity merging candidates.
 
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
+from .query_optimizer_types import MergeEvidenceDict
 import logging
 from difflib import SequenceMatcher
 
@@ -27,7 +28,7 @@ class MergeSuggestion:
     entity2_id: str
     similarity_score: float
     reason: str
-    evidence: Dict[str, Any]
+    evidence: MergeEvidenceDict
     
     def __repr__(self) -> str:
         """Return concise string representation."""

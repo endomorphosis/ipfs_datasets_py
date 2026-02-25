@@ -723,6 +723,46 @@ class ExtractionConfig:
         default = ExtractionConfig()
         return tuple(getattr(default, f.name) for f in _dc.fields(default))
 
+    @staticmethod
+    def _freeze_for_cache(value: Any) -> Any:
+        """Convert nested mutable config values into hashable tuples."""
+        if isinstance(value, dict):
+            return tuple(
+                sorted((k, ExtractionConfig._freeze_for_cache(v)) for k, v in value.items())
+            )
+        if isinstance(value, (list, tuple)):
+            return tuple(ExtractionConfig._freeze_for_cache(v) for v in value)
+        if isinstance(value, set):
+            return tuple(sorted(ExtractionConfig._freeze_for_cache(v) for v in value))
+        return value
+
+    @classmethod
+    @functools.lru_cache(maxsize=1)
+    def _default_fingerprint(cls) -> tuple[Any, ...]:
+        """Return hashable fingerprint of default config values."""
+        import dataclasses as _dc
+
+        default = cls()
+        return tuple(
+            cls._freeze_for_cache(getattr(default, f.name))
+            for f in _dc.fields(default)
+        )
+
+    def _fingerprint(self) -> tuple[Any, ...]:
+        """Return hashable fingerprint of this config's field values."""
+        import dataclasses as _dc
+
+        return tuple(
+            self._freeze_for_cache(getattr(self, f.name))
+            for f in _dc.fields(self)
+        )
+
+    @classmethod
+    @functools.lru_cache(maxsize=1024)
+    def _is_default_fingerprint(cls, fingerprint: tuple[Any, ...]) -> bool:
+        """Cached default-check keyed by config fingerprint."""
+        return fingerprint == cls._default_fingerprint()
+
     def is_default(self) -> bool:
         """Return ``True`` if this config has all default field values.
 
@@ -736,10 +776,7 @@ class ExtractionConfig:
             >>> ExtractionConfig().is_default()
             True
         """
-        import dataclasses as _dc
-        return self._default_values() == tuple(
-            getattr(self, f.name) for f in _dc.fields(self)
-        )
+        return self._is_default_fingerprint(self._fingerprint())
 
     def merge(self, other: "ExtractionConfig") -> "ExtractionConfig":
         """Return a new config merging *self* with *other*, *other* taking priority.

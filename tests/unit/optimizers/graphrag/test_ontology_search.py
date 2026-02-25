@@ -5,6 +5,7 @@ and other search functions.
 """
 
 import pytest
+import ipfs_datasets_py.optimizers.graphrag.ontology_search as ontology_search_module
 from ipfs_datasets_py.optimizers.graphrag.ontology_search import (
     find_entities_by_type,
     find_entities_by_text,
@@ -156,6 +157,26 @@ class TestFindEntitiesByText:
         result = find_entities_by_text(ontology, "[invalid(regex", regex=True)
         
         assert result.count == 0
+
+    def test_regex_compilation_is_cached_for_repeated_pattern(self, monkeypatch):
+        """Regex compile should run once for repeated identical pattern searches."""
+        ontology = {"entities": [{"id": "e1", "text": "Alice"}]}
+        ontology_search_module._compile_text_pattern.cache_clear()
+        original_compile = ontology_search_module.re.compile
+        compile_calls = {"count": 0}
+
+        def _counting_compile(pattern, flags=0):
+            compile_calls["count"] += 1
+            return original_compile(pattern, flags)
+
+        monkeypatch.setattr(ontology_search_module.re, "compile", _counting_compile)
+
+        first = find_entities_by_text(ontology, "^A", regex=True)
+        second = find_entities_by_text(ontology, "^A", regex=True)
+
+        assert first.count == 1
+        assert second.count == 1
+        assert compile_calls["count"] == 1
 
 
 class TestFindEntitiesByProperty:

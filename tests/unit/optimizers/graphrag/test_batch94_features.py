@@ -181,3 +181,15 @@ class TestIsDefault:
     def test_after_with_threshold_not_default(self):
         cfg = ExtractionConfig().with_threshold(0.9)
         assert cfg.is_default() is False
+
+    def test_is_default_uses_cached_fingerprint_lookup(self):
+        ExtractionConfig._is_default_fingerprint.cache_clear()
+        cfg = ExtractionConfig()
+
+        assert cfg.is_default() is True
+        info_after_first = ExtractionConfig._is_default_fingerprint.cache_info()
+
+        assert cfg.is_default() is True
+        info_after_second = ExtractionConfig._is_default_fingerprint.cache_info()
+
+        assert info_after_second.hits == info_after_first.hits + 1

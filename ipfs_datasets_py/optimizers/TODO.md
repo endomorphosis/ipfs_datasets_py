@@ -364,6 +364,9 @@ Rotation rules:
   - Progress 2026-02-25: hardened `agentic/llm_integration.py` error propagation by redacting secret-like substrings (`api_key`, `token`, `sk-*`) before attaching provider failure details; added regression coverage in `tests/unit/optimizers/agentic/test_llm_integration.py`.
   - Progress 2026-02-25: added structured-log redaction checks in `common/structured_logging.py::log_event` by applying `redact_dict` on sensitive key/value maps and recursive string redaction for bearer/token patterns before JSON emission; expanded regression coverage in `tests/unit/optimizers/common/test_structured_logging.py` (`21 passed`).
   - Progress 2026-02-25: added profiling-log redaction checks in `common/profiling.py::_emit_profiling_log` (key-based and bearer-pattern redaction before schema emission) and regression coverage in `tests/unit/optimizers/common/test_profiling.py::test_profile_section_redacts_sensitive_metadata` (`2 selected tests passed`).
+  - Progress 2026-02-25: added pipeline JSON redaction checks in `graphrag/pipeline_json_logger.py::_emit_log` (key-based secret redaction + bearer-token substring redaction) and regression coverage in `tests/unit/optimizers/graphrag/test_pipeline_json_logging.py` (`4 selected tests passed`).
+  - Progress 2026-02-25: added audit-trail redaction checks in `graphrag/audit_logger.py` (`AuditEvent.create`) so event payload/metadata redact sensitive keys and bearer-token strings before in-memory storage and JSONL export; added regression coverage in `tests/unit/optimizers/graphrag/test_audit_logger.py` (`29 passed`).
+  - Progress 2026-02-25: introduced reusable `common/structured_logging.py::redact_payload` and applied it to remaining manual `with_schema(...)` emitters in `graphrag/ontology_pipeline.py`, `graphrag/ontology_generator.py`, `logic_theorem_optimizer/unified_optimizer.py`, and `logic_theorem_optimizer/logic_optimizer.py`; added redaction regression coverage for pipeline run logs in `tests/unit/optimizers/graphrag/test_ontology_pipeline_logging.py`.
 - [ ] (P3) [security] Add hardened execution mode for prover subprocess calls.
 
 ## Candidate Pool for Future Random Picks
@@ -717,7 +720,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Done 2026-02-24: validated structured `PIPELINE_RUN`/`PIPELINE_BATCH` JSON payload fields (including score/domain/duration) and aligned schema-version assertions with `DEFAULT_SCHEMA_VERSION` in `tests/unit/optimizers/graphrag/test_ontology_pipeline_logging.py`.
 - [ ] (P3) [obs] Add OpenTelemetry span hooks (behind `OTEL_ENABLED` env flag)
 - [ ] (P3) [obs] Expose Prometheus-compatible metrics for optimizer scores
-- [ ] (P2) [perf] Add `@functools.lru_cache` to `ExtractionConfig.is_default()` (hashable dataclass)
+- [x] (P2) [perf] Add `@functools.lru_cache` to `ExtractionConfig.is_default()` (hashable dataclass)
+  - Done 2026-02-25: added hashable fingerprint caching path for default checks in `graphrag/ontology_generator.py` (`_freeze_for_cache`, `_default_fingerprint`, `_is_default_fingerprint`); added regression cache-hit coverage in `tests/unit/optimizers/graphrag/test_batch94_features.py`.
 - [ ] (P2) [perf] Benchmark sentence-window limiting impact on realistic documents
 - [ ] (P2) [docs] Write architecture diagram for the generate → critique → optimize → validate loop
 - [x] (P2) [docs] Add `CONTRIBUTING.md` with PR guidelines and batch-commit conventions
@@ -867,6 +871,7 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P2) [perf] **Cache compiled regex patterns** — Scan for `re.compile()` calls inside hot loops; move them to module-level constants.
   - Progress 2026-02-25: moved `_infer_type_from_context()` relationship regex compilation to module-level precompiled constants in `graphrag/ontology_generator.py` and added regression coverage in `tests/unit/optimizers/graphrag/test_batch_297_infer_type_from_context_regex_cache.py` (directional/bidirectional matching + no runtime `re.compile` call path).
   - Progress 2026-02-25: moved `WikipediaGraphRAGQueryRewriter` domain-pattern regex compilation to module-level precompiled constants in `graphrag/wikipedia_optimizer.py` and added regression coverage in `tests/unit/optimizers/graphrag/test_batch_299_wikipedia_rewriter_pattern_cache.py` (init path avoids runtime `re.compile`, pattern detection unchanged).
+  - Progress 2026-02-25: added cached regex compiler (`_compile_text_pattern`) in `graphrag/ontology_search.py::find_entities_by_text` to avoid recompiling identical regex patterns across repeated searches; added cache-behavior regression coverage in `tests/unit/optimizers/graphrag/test_ontology_search.py`.
 - [ ] (P3) [perf] **Async extraction support** — Add `async def generate_async(text)` wrappers so callers using asyncio can parallelize multiple extractions.
 - [ ] (P1) [docs] **Module-level docstrings** — `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py` all lack a module-level docstring explaining purpose, usage, and key classes.
 - [x] (P2) [docs] **`README.md` for optimizers/** — Add a short `README.md` covering: what the optimizer does, quick-start code, and class diagram (ASCII or Mermaid).
@@ -893,7 +898,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Done 2026-02-25: completed strict-mypy cleanup for `graphrag/logic_validator.py` (`--strict --follow-imports=skip --ignore-missing-imports`: `Success: no issues found in 1 source file`).
   - Progress 2026-02-25: regression-checked core logic validator behavior with `tests/unit/optimizers/graphrag/test_logic_validator_dag_fraction.py` and `tests/unit/optimizers/graphrag/test_ontology_validation.py` (`55 passed`).
   - Progress 2026-02-25: reran expanded focused suite including incremental cache behavior (`test_logic_validator_incremental_cache.py`) (`56 passed`).
-- [ ] Documentation: Configuration Guide, Quick-start, Architecture
+- [x] Documentation: Configuration Guide, Quick-start, Architecture
+  - Done 2026-02-25: completed docs set with `docs/optimizers/EXTRACTION_CONFIG_GUIDE.md`, `docs/optimizers/GRAPHRAG_QUICK_START.md`, and `docs/optimizers/ONTOLOGY_PIPELINE_ARCHITECTURE_ASCII.md`.
 - [ ] Architecture: Unify base class hierarchy, cross-track exception hierarchy
 - [ ] Testing: Property-based tests (Hypothesis), snapshot tests
 - [ ] Observability: Prometheus metrics, structured JSON logging audit
@@ -905,7 +911,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Done 2026-02-25: added `docs/optimizers/ONTOLOGY_PIPELINE_ARCHITECTURE_ASCII.md` with component topology and run-sequence diagrams; linked from `docs/optimizers/GRAPHRAG_QUICK_START.md`.
 - [ ] (P1) Define `OptimizerConfig` dataclass (base for all options) (1.0 hours)
 - [ ] (P1) Wire `BaseOptimizer` to accept `OptimizerConfig` (45 min)
-- [ ] (P2) Define unified `IOptimizer` Protocol (30 min)
+- [x] (P2) Define unified `IOptimizer` Protocol (30 min)
+  - Done 2026-02-25: verified existing unified optimizer protocol in `optimizers/common/protocols.py` and runtime conformance coverage in `tests/unit/optimizers/test_optimizer_protocols.py`.
 - [ ] (P2) Property tests for `Entity` and `Relationship` (1.0 hours)
 - [ ] (P2) Property tests for `ExtractionConfig` (45 min)
 - [ ] (P2) Property tests for `CriticScore` statistical invariants (1.0 hours)

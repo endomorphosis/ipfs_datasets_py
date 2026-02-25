@@ -34,9 +34,17 @@ Functions:
     - count_relationships_by_type: Count relationship type distribution
 """
 
+import functools
 import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set, Tuple
+
+
+@functools.lru_cache(maxsize=256)
+def _compile_text_pattern(pattern: str, case_sensitive: bool) -> re.Pattern[str]:
+    """Compile and cache regex patterns used by text search."""
+    flags = 0 if case_sensitive else re.IGNORECASE
+    return re.compile(pattern, flags)
 
 
 @dataclass
@@ -160,8 +168,7 @@ def find_entities_by_text(
     
     try:
         if regex:
-            flags = 0 if case_sensitive else re.IGNORECASE
-            compiled_pattern = re.compile(pattern, flags)
+            compiled_pattern = _compile_text_pattern(pattern, case_sensitive)
             
             for entity in entities:
                 if not isinstance(entity, dict):

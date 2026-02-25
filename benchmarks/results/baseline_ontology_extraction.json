@@ -1,6 +1,6 @@
 {
   "benchmark_name": "ontology_extraction_baseline",
-  "timestamp": "2026-02-24 21:00:36",
+  "timestamp": "2026-02-24 22:23:11",
   "results": [
     {
       "case_name": "1k_general_rule",
@@ -10,13 +10,13 @@
       "iterations": 20,
       "warmups": 3,
       "performance": {
-        "avg_ms": 10.9889,
-        "median_ms": 10.3402,
-        "p95_ms": 14.9096,
-        "p99_ms": 14.9096,
-        "max_ms": 15.6187,
-        "min_ms": 9.4331,
-        "stddev_ms": 1.6641
+        "avg_ms": 8.242,
+        "median_ms": 8.252,
+        "p95_ms": 8.6024,
+        "p99_ms": 8.6024,
+        "max_ms": 8.7577,
+        "min_ms": 7.7912,
+        "stddev_ms": 0.2665
       },
       "quality": {
         "avg_entities": 38,
@@ -35,13 +35,13 @@
       "iterations": 20,
       "warmups": 3,
       "performance": {
-        "avg_ms": 11.5102,
-        "median_ms": 11.4813,
-        "p95_ms": 13.2715,
-        "p99_ms": 13.2715,
-        "max_ms": 13.4393,
-        "min_ms": 9.918,
-        "stddev_ms": 1.2617
+        "avg_ms": 8.2463,
+        "median_ms": 8.1418,
+        "p95_ms": 8.9326,
+        "p99_ms": 8.9326,
+        "max_ms": 9.7382,
+        "min_ms": 7.0906,
+        "stddev_ms": 0.5798
       },
       "quality": {
         "avg_entities": 40,
@@ -60,13 +60,13 @@
       "iterations": 15,
       "warmups": 2,
       "performance": {
-        "avg_ms": 28.079,
-        "median_ms": 27.0261,
-        "p95_ms": 30.4703,
-        "p99_ms": 30.4703,
-        "max_ms": 37.6385,
-        "min_ms": 26.2991,
-        "stddev_ms": 2.8609
+        "avg_ms": 21.7171,
+        "median_ms": 21.7264,
+        "p95_ms": 22.0004,
+        "p99_ms": 22.0004,
+        "max_ms": 22.1095,
+        "min_ms": 21.4014,
+        "stddev_ms": 0.2334
       },
       "quality": {
         "avg_entities": 38,
@@ -85,13 +85,13 @@
       "iterations": 15,
       "warmups": 2,
       "performance": {
-        "avg_ms": 31.1194,
-        "median_ms": 30.7806,
-        "p95_ms": 35.5243,
-        "p99_ms": 35.5243,
-        "max_ms": 37.6313,
-        "min_ms": 27.7946,
-        "stddev_ms": 2.5266
+        "avg_ms": 22.5132,
+        "median_ms": 22.5106,
+        "p95_ms": 22.9798,
+        "p99_ms": 22.9798,
+        "max_ms": 23.048,
+        "min_ms": 22.1098,
+        "stddev_ms": 0.2625
       },
       "quality": {
         "avg_entities": 40,
@@ -110,13 +110,13 @@
       "iterations": 15,
       "warmups": 2,
       "performance": {
-        "avg_ms": 28.9341,
-        "median_ms": 28.2051,
-        "p95_ms": 31.6975,
-        "p99_ms": 31.6975,
-        "max_ms": 34.7572,
-        "min_ms": 26.1974,
-        "stddev_ms": 2.2479
+        "avg_ms": 21.7871,
+        "median_ms": 21.7734,
+        "p95_ms": 22.418,
+        "p99_ms": 22.418,
+        "max_ms": 22.8336,
+        "min_ms": 21.1887,
+        "stddev_ms": 0.4663
       },
       "quality": {
         "avg_entities": 38,
@@ -135,13 +135,13 @@
       "iterations": 10,
       "warmups": 2,
       "performance": {
-        "avg_ms": 67.7038,
-        "median_ms": 70.7773,
-        "p95_ms": 73.743,
-        "p99_ms": 73.743,
-        "max_ms": 75.7173,
-        "min_ms": 50.116,
-        "stddev_ms": 8.6317
+        "avg_ms": 38.9379,
+        "median_ms": 38.7908,
+        "p95_ms": 39.4959,
+        "p99_ms": 39.4959,
+        "max_ms": 40.1387,
+        "min_ms": 38.1317,
+        "stddev_ms": 0.61
       },
       "quality": {
         "avg_entities": 38,
@@ -160,13 +160,13 @@
       "iterations": 10,
       "warmups": 2,
       "performance": {
-        "avg_ms": 61.7529,
-        "median_ms": 59.1671,
-        "p95_ms": 66.5177,
-        "p99_ms": 66.5177,
-        "max_ms": 72.9864,
-        "min_ms": 57.0848,
-        "stddev_ms": 5.2867
+        "avg_ms": 40.6853,
+        "median_ms": 40.7079,
+        "p95_ms": 41.2253,
+        "p99_ms": 41.2253,
+        "max_ms": 41.4151,
+        "min_ms": 39.8309,
+        "stddev_ms": 0.4787
       },
       "quality": {
         "avg_entities": 40,
@@ -185,13 +185,13 @@
       "iterations": 10,
       "warmups": 2,
       "performance": {
-        "avg_ms": 59.2539,
-        "median_ms": 57.108,
-        "p95_ms": 65.1822,
-        "p99_ms": 65.1822,
-        "max_ms": 76.22,
-        "min_ms": 51.3041,
-        "stddev_ms": 7.3743
+        "avg_ms": 39.9528,
+        "median_ms": 40.0975,
+        "p95_ms": 40.7676,
+        "p99_ms": 40.7676,
+        "max_ms": 41.4776,
+        "min_ms": 37.4759,
+        "stddev_ms": 1.0644
       },
       "quality": {
         "avg_entities": 38,
@@ -210,13 +210,13 @@
       "iterations": 5,
       "warmups": 1,
       "performance": {
-        "avg_ms": 107.4916,
-        "median_ms": 104.0322,
-        "p95_ms": 110.1513,
-        "p99_ms": 110.1513,
-        "max_ms": 120.8161,
-        "min_ms": 100.5839,
-        "stddev_ms": 8.3044
+        "avg_ms": 73.4873,
+        "median_ms": 73.9197,
+        "p95_ms": 74.8849,
+        "p99_ms": 74.8849,
+        "max_ms": 75.6493,
+        "min_ms": 70.0309,
+        "stddev_ms": 2.1822
       },
       "quality": {
         "avg_entities": 38,

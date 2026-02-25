@@ -13,10 +13,45 @@ import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
 logger = logging.getLogger(__name__)
 
+
+class CacheStatsDict(TypedDict, total=False):
+    """Statistics dictionary for cache performance.
+    
+    Fields:
+        hits: Number of cache hits
+        misses: Number of cache misses
+        evictions: Number of cache evictions
+        writes: Number of cache writes
+        hit_rate: Cache hit rate (0-1)
+        total_requests: Total number of requests
+        total_size_mb: Total cache size in megabytes
+    """
+    hits: int
+    misses: int
+    evictions: int
+    writes: int
+    hit_rate: float
+    total_requests: int
+    total_size_mb: float
+
+
+class MultiLayerCacheStatsDict(TypedDict, total=False):
+    """Combined statistics for multi-layer cache.
+    
+    Fields:
+        tdfol_cache: Stats dict for TDFOL cache layer
+        consistency_cache: Stats dict for consistency cache layer
+        incremental_cache: Stats dict for incremental cache layer
+        total_hit_rate: Combined hit rate across all layers (0-1)
+    """
+    tdfol_cache: CacheStatsDict
+    consistency_cache: CacheStatsDict
+    incremental_cache: CacheStatsDict
+    total_hit_rate: float
 
 @dataclass
 class CacheStats:
@@ -39,7 +74,7 @@ class CacheStats:
         """Total number of cache requests."""
         return self.hits + self.misses
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> CacheStatsDict:
         """Convert to dictionary for JSON serialization."""
         return {
             "hits": self.hits,
@@ -311,7 +346,7 @@ class ValidationCache:
         id_str = ",".join(sorted_ids)
         return hashlib.sha256(id_str.encode()).hexdigest()
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> MultiLayerCacheStatsDict:
         """Get combined statistics for all cache layers."""
         return {
             "tdfol_cache": self.tdfol_cache.stats.to_dict(),

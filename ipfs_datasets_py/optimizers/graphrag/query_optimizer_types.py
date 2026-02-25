@@ -303,5 +303,4 @@ __all__ = [
     "RelationshipSourceDegreeDistribution",
     "ResultSummaryDict",
     "MergeEvidenceDict",
-    "MergeEvidenceDict",
 ]
