@@ -526,6 +526,25 @@ class TestPipelineJSONLogger:
         with pytest.raises(AbortSignal):
             json_logger._emit_log("test.event", {"k": "v"})
 
+    def test_emit_log_redacts_sensitive_key_fields(self, logger_with_capture):
+        """_emit_log should redact sensitive key/value pairs."""
+        json_logger, log_capture = logger_with_capture
+        json_logger._emit_log("test.event", {"api_key": "sk-live-123"})
+
+        output = log_capture.stream.getvalue().strip().split("\n")
+        payload = json.loads(output[-1])
+        assert payload["api_key"] == "***REDACTED***"
+
+    def test_emit_log_redacts_bearer_token_substrings(self, logger_with_capture):
+        """_emit_log should redact bearer token substrings inside strings."""
+        json_logger, log_capture = logger_with_capture
+        json_logger._emit_log("test.event", {"message": "Authorization: Bearer token1234567890"})
+
+        output = log_capture.stream.getvalue().strip().split("\n")
+        payload = json.loads(output[-1])
+        assert "token1234567890" not in payload["message"]
+        assert "***REDACTED***" in payload["message"]
+
 
 class TestContextManager:
     """Test context manager for pipeline runs."""
