@@ -12,13 +12,60 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple, TypedDict
 from functools import lru_cache
 import time
 
 logger = logging.getLogger(__name__)
 
 
+
+
+class QueryFingerprintCacheStatsDict(TypedDict, total=False):
+    """Type contract for query fingerprint cache stats.
+    
+    Fields:
+        cache_size: Number of cached queries
+        max_size: Maximum cache capacity
+        accesses: Total cache accesses
+        hits: Successful cache hits
+        hit_rate: Hit rate as percentage (0-100)
+    """
+    cache_size: int
+    max_size: int
+    accesses: int
+    hits: int
+    hit_rate: float
+
+
+class GraphTypeDetectionStatsDict(TypedDict, total=False):
+    """Type contract for graph type detection stats.
+    
+    Fields:
+        cache_size: Number of cached detections
+        cache_hits: Successful detection cache hits
+        cache_misses: Detection cache misses
+        hit_rate: Hit rate as percentage (0-100)
+    """
+    cache_size: int
+    cache_hits: int
+    cache_misses: int
+    hit_rate: float
+
+
+class QueryOptimizerStatsDict(TypedDict, total=False):
+    """Type contract for overall query optimizer stats.
+    
+    Fields:
+        fingerprint_cache: Fingerprint cache statistics
+        type_detector: Graph type detection statistics
+        total_calls: Total optimization calls
+        avg_time_ms: Average time per optimization in milliseconds
+    """
+    fingerprint_cache: QueryFingerprintCacheStatsDict
+    type_detector: GraphTypeDetectionStatsDict
+    total_calls: int
+    avg_time_ms: float
 class QueryFingerprintCache:
     """
     Cache query fingerprints to avoid repeated hashing.

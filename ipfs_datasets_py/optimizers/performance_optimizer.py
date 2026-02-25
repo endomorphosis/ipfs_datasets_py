@@ -10,13 +10,153 @@ import os
 import psutil
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, TypedDict, Tuple
 from datetime import datetime, timedelta
 
 from ipfs_datasets_py.content_discovery import ContentManifest
 
 # Set up logging
 logger = logging.getLogger(__name__)
+
+
+# TypedDict Definitions for Type-Safe Return Values
+
+class CachePoliciesDict(TypedDict, total=False):
+    """Cache policies configuration with TTL settings
+    
+    Fields:
+        html_content_ttl: Time-to-live for HTML content in seconds (24 hours default)
+        pdf_content_ttl: Time-to-live for PDF documents in seconds (7 days default)
+        media_transcripts_ttl: Time-to-live for media transcripts in seconds (30 days default)
+        embeddings_ttl: Time-to-live for embeddings cache in seconds (14 days default)
+        max_cache_size_gb: Maximum cache size in gigabytes (default 10GB)
+    """
+    html_content_ttl: int
+    pdf_content_ttl: int
+    media_transcripts_ttl: int
+    embeddings_ttl: int
+    max_cache_size_gb: int
+
+
+class ResourceUtilizationDict(TypedDict, total=False):
+    """Current system resource utilization metrics
+    
+    Fields:
+        cpu_percent: CPU usage percentage (0-100)
+        memory_percent: Memory usage percentage (0-100)
+        available_memory_gb: Available memory in gigabytes
+        memory_available_gb: Alias for available_memory_gb for backwards compatibility
+        disk_usage_percent: Disk usage percentage (0-100)
+        disk_percent: Alias for disk_usage_percent for backwards compatibility
+        disk_free_gb: Free disk space in gigabytes
+        load_average: System load average as (1min, 5min, 15min) tuple
+        timestamp: ISO format timestamp of measurement
+        error: Optional error message if monitoring failed
+    """
+    cpu_percent: float
+    memory_percent: float
+    available_memory_gb: float
+    memory_available_gb: float
+    disk_usage_percent: float
+    disk_percent: float
+    disk_free_gb: float
+    load_average: Tuple[float, float, float]
+    timestamp: str
+    error: str
+
+
+class ResourcePredictionDict(TypedDict, total=False):
+    """Predicted resource requirements for planned operations
+    
+    Fields:
+        cpu_percent: Estimated CPU usage percentage
+        memory_gb: Estimated memory requirement in gigabytes
+        processing_time_minutes: Estimated processing time in minutes
+    """
+    cpu_percent: float
+    memory_gb: float
+    processing_time_minutes: float
+
+
+class ContentComplexityAnalysisDict(TypedDict, total=False):
+    """Analysis of content complexity metrics for optimization
+    
+    Fields:
+        html_complexity: Complexity score for HTML content
+        pdf_complexity: Complexity score for PDF documents
+        media_complexity: Complexity score for media files
+        total_size_mb: Total content size in megabytes
+        estimated_processing_difficulty: Difficulty score (0-1 scale)
+    """
+    html_complexity: float
+    pdf_complexity: float
+    media_complexity: float
+    total_size_mb: float
+    estimated_processing_difficulty: float
+
+
+class CacheOptimizationStrategyDict(TypedDict, total=False):
+    """Cache optimization strategy settings
+    
+    Fields:
+        priorities: Cache priority levels for different content types
+        max_cache_items: Maximum items to cache (content limit)
+        cache_compression: Enable compression for cached content
+        distributed_cache: Use distributed caching for large datasets
+    """
+    priorities: Dict[str, str]
+    max_cache_items: int
+    cache_compression: bool
+    distributed_cache: bool
+
+
+class PerformanceComparisonDict(TypedDict, total=False):
+    """Comparison of estimated vs actual performance metrics
+    
+    Fields:
+        estimated_time: Planned processing time in minutes
+        actual_time: Actual processing time in minutes
+        time_accuracy: Accuracy percentage (0-100)
+        memory_estimate: Planned memory requirement in GB
+        actual_memory: Actual peak memory usage in GB
+        memory_accuracy: Memory accuracy percentage (0-100)
+    """
+    estimated_time: float
+    actual_time: float
+    time_accuracy: float
+    memory_estimate: float
+    actual_memory: float
+    memory_accuracy: float
+
+
+class PerformanceAnalysisDict(TypedDict, total=False):
+    """Analysis of processing performance with recommendations
+    
+    Fields:
+        plan_vs_actual: Comparison of planned vs actual metrics
+        recommendations: List of optimization recommendations
+    """
+    plan_vs_actual: Dict[str, Any]
+    recommendations: List[str]
+
+
+class OptimizationRecommendationsDict(TypedDict, total=False):
+    """Recommendations for optimal processing configuration
+    
+    Fields:
+        strategy: Processing strategy ('fast', 'balanced', or 'comprehensive')
+        batch_size: Recommended batch size for processing
+        parallel_workers: Recommended number of parallel workers
+        cache_policy: Caching policy ('intelligent' recommended)
+        optimization_level: Level of optimization ('low', 'medium', 'high')
+        error: Optional error message if recommendations failed
+    """
+    strategy: str
+    batch_size: int
+    parallel_workers: int
+    cache_policy: str
+    optimization_level: str
+    error: str
 
 
 @dataclass
@@ -48,7 +188,7 @@ class ContentCacheManager:
         self.cache_stats = {}
         self.cache_policies = self._get_default_policies()
     
-    def _get_default_policies(self) -> Dict[str, Any]:
+    def _get_default_policies(self) -> CachePoliciesDict:
         """Get default caching policies"""
         return {
             'html_content_ttl': 3600 * 24,  # 24 hours
@@ -81,7 +221,7 @@ class ResourceMonitor:
         self.cpu_history = []
         self.memory_history = []
     
-    async def get_current_resources(self) -> Dict[str, Any]:
+    async def get_current_resources(self) -> ResourceUtilizationDict:
         """Get current system resource utilization"""
         memory = psutil.virtual_memory()
         disk = psutil.disk_usage('/')
@@ -213,7 +353,7 @@ class WebsiteProcessingOptimizer:
             )
         )
     
-    def _analyze_content_complexity(self, manifest: ContentManifest) -> Dict[str, Any]:
+    def _analyze_content_complexity(self, manifest: ContentManifest) -> ContentComplexityAnalysisDict:
         """Analyze content complexity for optimization planning"""
         total_size = 0
         for asset_list in [manifest.html_pages, manifest.pdf_documents, manifest.media_files]:
@@ -281,7 +421,7 @@ class WebsiteProcessingOptimizer:
         
         return optimized_batches
     
-    def _optimize_cache_usage(self, manifest: ContentManifest) -> Dict[str, Any]:
+    def _optimize_cache_usage(self, manifest: ContentManifest) -> CacheOptimizationStrategyDict:
         """Optimize caching strategy based on content characteristics"""
         
         # Analyze content for caching decisions
@@ -417,7 +557,7 @@ class WebsiteProcessingOptimizer:
         accuracy = max(0, 1 - error)
         return accuracy * 100
     
-    async def get_optimization_recommendations(self) -> Dict[str, Any]:
+    async def get_optimization_recommendations(self) -> OptimizationRecommendationsDict:
         """
         Get optimization recommendations based on current system state.
         
@@ -458,7 +598,7 @@ class WebsiteProcessingOptimizer:
                 'error': str(e)
             }
     
-    async def monitor_resources(self) -> Dict[str, Any]:
+    async def monitor_resources(self) -> ResourceUtilizationDict:
         """
         Monitor current system resources.
         
