@@ -100,11 +100,15 @@ class Ontology(TypedDict):
         entities: List of extracted entities
         relationships: List of inferred relationships
         metadata: Metadata about the ontology
+        domain: Domain of the ontology (duplicated for convenience)
+        version: Ontology schema version
         statistics: Optional statistics about the ontology
     """
     entities: List[Entity]
     relationships: List[Relationship]
     metadata: NotRequired[OntologyMetadata]
+    domain: NotRequired[str]
+    version: NotRequired[str]
     statistics: NotRequired[Dict[str, Any]]
 
 

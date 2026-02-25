@@ -52,6 +52,9 @@ import uuid
 
 from ipfs_datasets_py.optimizers.common.base_session import BaseSession
 from ipfs_datasets_py.optimizers.common.profiling_decorators import profile_method
+from ipfs_datasets_py.optimizers.graphrag.ontology_types import (
+    Ontology,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -446,7 +449,7 @@ class OntologyMediator:
         ontology: Dict[str, Any],
         feedback: Any,  # CriticScore
         context: Any  # OntologyGenerationContext
-    ) -> Dict[str, Any]:
+    ) -> Ontology:
         """
         Refine ontology based on critic feedback.
         
