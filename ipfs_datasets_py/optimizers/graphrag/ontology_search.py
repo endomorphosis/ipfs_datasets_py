@@ -399,7 +399,7 @@ def find_path_between(
     # BFS to find shortest path
     from collections import deque
     
-    queue: deque = deque([(source_id, [source_id], [])])
+    queue: deque[tuple[str, list[str], list[str]]] = deque([(source_id, [source_id], [])])
     visited: Set[str] = {source_id}
     
     while queue and len(visited) <= max_depth:
@@ -507,9 +507,9 @@ def get_related_entities(
         source = rel.get("source_id")
         target = rel.get("target_id")
         
-        if source != entity_id:
+        if isinstance(source, str) and source != entity_id:
             entity_ids.add(source)
-        if target != entity_id:
+        if isinstance(target, str) and target != entity_id:
             entity_ids.add(target)
     
     # Find matching entities

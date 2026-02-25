@@ -38,7 +38,7 @@ class QueryBudgetManager:
     - Timeout management and cost estimation
     """
     
-    def __init__(self, default_budget: Dict[str, float] = None):
+    def __init__(self, default_budget: Dict[str, float] | None = None):
         """
         Initialize the budget manager.
         
@@ -46,17 +46,17 @@ class QueryBudgetManager:
             default_budget (Dict[str, float], optional): Default budget values for
                 different resource types
         """
-        self.default_budget = default_budget or {
+        self.default_budget: Dict[str, float] = default_budget or {
             "vector_search_ms": 500.0,    # Vector search budget in milliseconds
             "graph_traversal_ms": 1000.0, # Graph traversal budget in milliseconds
             "ranking_ms": 200.0,          # Ranking budget in milliseconds
-            "max_nodes": 1000,            # Maximum nodes to visit
-            "max_edges": 5000,            # Maximum edges to traverse
+            "max_nodes": 1000.0,          # Maximum nodes to visit
+            "max_edges": 5000.0,          # Maximum edges to traverse
             "timeout_ms": 2000.0          # Total query timeout in milliseconds
         }
         
         # Track budget consumption history
-        self.budget_history = {
+        self.budget_history: Dict[str, List[float]] = {
             "vector_search_ms": [],
             "graph_traversal_ms": [],
             "ranking_ms": [],
@@ -64,7 +64,7 @@ class QueryBudgetManager:
             "edges_traversed": []
         }
         
-        self.current_consumption = {}
+        self.current_consumption: Dict[str, float] = {}
         logger.debug("QueryBudgetManager initialized with default budget: %s", self.default_budget)
         
     def allocate_budget(self, query: Dict[str, Any], priority: str = "normal") -> Dict[str, float]:
@@ -113,8 +113,8 @@ class QueryBudgetManager:
             "vector_search_ms": 0.0,
             "graph_traversal_ms": 0.0,
             "ranking_ms": 0.0,
-            "nodes_visited": 0,
-            "edges_traversed": 0
+            "nodes_visited": 0.0,
+            "edges_traversed": 0.0,
         }
         
         logger.info(
@@ -342,22 +342,23 @@ class QueryBudgetManager:
         Returns:
             Dict: Resource consumption report
         """
-        report = self.current_consumption.copy()
+        report: Dict[str, Any] = self.current_consumption.copy()
         
         # Add budget info
         report["budget"] = self.default_budget.copy()
         
         # Calculate consumption ratios
-        report["ratios"] = {}
+        ratios: Dict[str, float] = {}
         for resource, consumed in self.current_consumption.items():
             if resource in self.default_budget and self.default_budget[resource] > 0:
-                report["ratios"][resource] = consumed / self.default_budget[resource]
+                ratios[resource] = consumed / self.default_budget[resource]
             else:
-                report["ratios"][resource] = 0.0
+                ratios[resource] = 0.0
+        report["ratios"] = ratios
                 
         # Overall consumption
-        if report["ratios"]:
-            report["overall_consumption_ratio"] = sum(report["ratios"].values()) / len(report["ratios"])
+        if ratios:
+            report["overall_consumption_ratio"] = sum(ratios.values()) / len(ratios)
         else:
             report["overall_consumption_ratio"] = 0.0
             

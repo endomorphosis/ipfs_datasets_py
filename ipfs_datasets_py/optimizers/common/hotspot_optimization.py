@@ -21,9 +21,19 @@ import functools
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Pattern, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Pattern, Protocol, Set, Tuple, cast
 
 logger = logging.getLogger(__name__)
+
+
+class _CachedCallable(Protocol):
+    """Callable protocol exposing functools.lru_cache helper methods."""
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
+
+    def cache_info(self) -> Any: ...
+
+    def cache_clear(self) -> None: ...
 
 
 # ============================================================================
@@ -43,12 +53,12 @@ class RegexPatternCache:
         >>> # Pattern is reused on next call - no recompilation
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize pattern cache."""
-        self._cache: Dict[str, Pattern] = {}
+        self._cache: Dict[str, Pattern[str]] = {}
         self._stats = {"hits": 0, "misses": 0}
     
-    def get_compiled_pattern(self, pattern_str: str, cache_key: Optional[str] = None) -> Pattern:
+    def get_compiled_pattern(self, pattern_str: str, cache_key: Optional[str] = None) -> Pattern[str]:
         """Get compiled regex pattern, compiling if necessary.
         
         Args:
@@ -69,7 +79,10 @@ class RegexPatternCache:
         self._cache[key] = compiled
         return compiled
     
-    def get_compiled_patterns(self, patterns: List[Tuple[str, str]]) -> List[Tuple[Pattern, str]]:
+    def get_compiled_patterns(
+        self,
+        patterns: List[Tuple[str, str]],
+    ) -> List[Tuple[Pattern[str], str]]:
         """Get multiple compiled patterns efficiently.
         
         Args:
@@ -92,7 +105,7 @@ class RegexPatternCache:
         """
         return self._stats.copy()
     
-    def clear(self):
+    def clear(self) -> None:
         """Clear all cached patterns."""
         self._cache.clear()
         self._stats = {"hits": 0, "misses": 0}
@@ -127,14 +140,14 @@ class EntityPair:
     text2: str
     normalize: bool = True
     
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Compute hash for caching purposes."""
         t1 = self.text1.lower().strip() if self.normalize else self.text1
         t2 = self.text2.lower().strip() if self.normalize else self.text2
         # Ensure consistent hash regardless of text order (commutative)
         return hash((min(t1, t2), max(t1, t2)))
     
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Check equality with normalization."""
         if not isinstance(other, EntityPair):
             return False
@@ -243,7 +256,7 @@ class SimilarityScoreCache:
         """
         return self._stats.copy()
     
-    def clear(self):
+    def clear(self) -> None:
         """Clear all cached scores."""
         self._cache.clear()
         self._stats = {"hits": 0, "misses": 0}
@@ -266,12 +279,12 @@ class DomainPatternLoader:
         >>> # Patterns cached; repeated calls reuse loaded set
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize domain pattern loader."""
         self._loaded_patterns: Dict[str, Set[str]] = {}
         self._pattern_cache = RegexPatternCache()
     
-    def get_domain_patterns(self, domain: str) -> Tuple[List[Pattern], List[str]]:
+    def get_domain_patterns(self, domain: str) -> Tuple[List[Pattern[str]], List[str]]:
         """Get compiled patterns for a domain.
         
         Args:
@@ -342,7 +355,7 @@ class DomainPatternLoader:
         
         return patterns.get(domain, set())
     
-    def cache_stats(self) -> Dict[str, Dict]:
+    def cache_stats(self) -> Dict[str, Any]:
         """Get cache statistics.
         
         Returns:
@@ -372,7 +385,7 @@ def get_domain_loader() -> DomainPatternLoader:
 # ============================================================================
 
 
-def memoized_with_cache_stats(func):
+def memoized_with_cache_stats(func: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator combining functools.lru_cache with statistics tracking.
     
     Example:
@@ -384,16 +397,17 @@ def memoized_with_cache_stats(func):
         >>> expensive_function(5)  # Cached
         >>> print(expensive_function.cache_info())  # See hits/misses
     """
-    cached_func = functools.lru_cache(maxsize=1024)(func)
+    cached_func = cast(_CachedCallable, functools.lru_cache(maxsize=1024)(func))
     
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         return cached_func(*args, **kwargs)
     
     # Expose cache_info and cache_clear methods
-    wrapper.cache_info = cached_func.cache_info
-    wrapper.cache_clear = cached_func.cache_clear
+    wrapped = cast(Any, wrapper)
+    wrapped.cache_info = cached_func.cache_info
+    wrapped.cache_clear = cached_func.cache_clear
     
-    return wrapper
+    return cast(Callable[..., Any], wrapped)
 
 
 # ============================================================================

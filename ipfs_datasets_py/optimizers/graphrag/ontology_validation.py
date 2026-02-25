@@ -194,7 +194,7 @@ def find_orphaned_entities(
         >>> find_orphaned_entities(entities, rels)
         ['e2']
     """
-    entity_ids = {e.get("id") for e in entities if "id" in e}
+    entity_ids: Set[str] = {str(e["id"]) for e in entities if "id" in e and e.get("id") is not None}
     referenced_ids: Set[str] = set()
     
     for rel in relationships:

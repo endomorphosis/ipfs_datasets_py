@@ -10,6 +10,8 @@ from ipfs_datasets_py.optimizers.common.exceptions import (
     ProvingError,
     RefinementError,
     ValidationError,
+    safe_error_handler,
+    wrap_exceptions,
 )
 
 
@@ -119,3 +121,41 @@ class TestHierarchyOrdering:
 
     def test_optimizer_is_exception(self):
         assert issubclass(OptimizerError, Exception)
+
+
+class TestWrapExceptions:
+    def test_wraps_typed_exception_and_preserves_cause(self):
+        with pytest.raises(ExtractionError) as exc_info:
+            with wrap_exceptions(ExtractionError, "extract failed"):
+                raise ValueError("bad input")
+        assert exc_info.value.__cause__ is not None
+        assert isinstance(exc_info.value.__cause__, ValueError)
+
+    def test_reraises_optimizer_error_unchanged(self):
+        with pytest.raises(ValidationError) as exc_info:
+            with wrap_exceptions(ExtractionError, "ignored"):
+                raise ValidationError("schema invalid")
+        assert isinstance(exc_info.value, ValidationError)
+        assert not isinstance(exc_info.value, ExtractionError)
+
+    def test_propagates_base_exception(self):
+        with pytest.raises(KeyboardInterrupt):
+            with wrap_exceptions(ExtractionError, "ignored"):
+                raise KeyboardInterrupt("stop")
+
+
+class TestSafeErrorHandler:
+    def test_catches_declared_exceptions_and_returns_default(self):
+        @safe_error_handler(ValueError, default=123)
+        def _fn():
+            raise ValueError("bad")
+
+        assert _fn() == 123
+
+    def test_propagates_base_exception(self):
+        @safe_error_handler(ValueError, default=123)
+        def _fn():
+            raise KeyboardInterrupt("stop")
+
+        with pytest.raises(KeyboardInterrupt):
+            _fn()

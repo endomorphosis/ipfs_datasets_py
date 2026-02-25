@@ -32,6 +32,22 @@ pytest benchmarks/ --benchmark-save=baseline
 | `bench_tool_loading.py` | Lazy vs. eager category startup time |
 | `bench_p2p_connection_pool.py` | P2P connection pool acquire/release latency |
 
+## Utility Micro-Benchmarks
+
+These scripts emit JSON metrics and can be run directly with Python.
+
+| File | What it measures |
+|------|------------------|
+| `bench_query_validation_cache_key.py` | `QueryValidationMixin.generate_cache_key()` timing on nested payloads |
+| `bench_logic_validator_validate_ontology.py` | `LogicValidator.validate_ontology()` timing on synthetic 100-entity ontologies |
+| `bench_ontology_generator_extract_entities_10k.py` | `OntologyGenerator.extract_entities()` timing on ~10k-token text (`sentence_window=0` vs `2`) |
+
+Example:
+
+```bash
+python benchmarks/bench_logic_validator_validate_ontology.py
+```
+
 ## Key targets (Phase E)
 
 | Operation | Target |

@@ -79,7 +79,7 @@ class BaseExtractionConfig:
     max_entities: int = 0
     max_assertions: int = 0
     domain: str = "general"
-    custom_rules: List[tuple] = field(default_factory=list)
+    custom_rules: List[tuple[str, str]] = field(default_factory=list)
     llm_fallback_threshold: float = 0.0
     min_entity_length: int = 2
     stopwords: List[str] = field(default_factory=list)
@@ -109,7 +109,11 @@ class BaseExtractionConfig:
             max_entities=int(d.get("max_entities", 0)),
             max_assertions=int(d.get("max_assertions", 0)),
             domain=str(d.get("domain", "general")),
-            custom_rules=list(d.get("custom_rules", [])),
+            custom_rules=[
+                (str(rule[0]), str(rule[1]))
+                for rule in d.get("custom_rules", [])
+                if isinstance(rule, (list, tuple)) and len(rule) >= 2
+            ],
             llm_fallback_threshold=float(d.get("llm_fallback_threshold", 0.0)),
             min_entity_length=int(d.get("min_entity_length", 2)),
             stopwords=list(d.get("stopwords", [])),

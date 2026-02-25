@@ -313,7 +313,7 @@ class PrometheusMetrics:
             lines.append(f"# HELP {self.STAGE_DURATION_HISTOGRAM} Pipeline stage duration histogram")
             lines.append(f"# TYPE {self.STAGE_DURATION_HISTOGRAM} histogram")
 
-            grouped: Dict[tuple, List[MetricValue]] = {}
+            grouped: Dict[tuple[tuple[str, str], ...], List[MetricValue]] = {}
             for record in self.stage_durations:
                 labels_tuple = tuple(sorted(record.labels.items()))
                 grouped.setdefault(labels_tuple, []).append(record)

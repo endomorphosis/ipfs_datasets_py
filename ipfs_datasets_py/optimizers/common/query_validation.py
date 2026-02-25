@@ -29,7 +29,7 @@ Usage:
 import time
 import hashlib
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 
 class QueryValidationMixin:
@@ -60,7 +60,7 @@ class QueryValidationMixin:
         max_value: Optional[Union[int, float]] = None,
         default: Union[int, float] = 0,
         allow_none: bool = False
-    ) -> Union[int, float]:
+    ) -> Optional[Union[int, float]]:
         """
         Validate a numeric parameter with optional range checking.
         
@@ -87,16 +87,18 @@ class QueryValidationMixin:
         # Handle None
         if value is None:
             if allow_none:
-                return value
+                return None
             self._log_validation_warning(
                 f"{param_name} is None, using default {default}"
             )
             return default
         
         # Check if numeric
-        if not isinstance(value, (int, float)):
+        if isinstance(value, (int, float)):
+            numeric_value: Union[int, float] = value
+        else:
             try:
-                value = float(value)
+                numeric_value = float(value)
             except (ValueError, TypeError):
                 self._log_validation_warning(
                     f"{param_name} is not numeric ({type(value).__name__}), using default {default}"
@@ -104,31 +106,31 @@ class QueryValidationMixin:
                 return default
         
         # Check minimum
-        if min_value is not None and value < min_value:
+        if min_value is not None and numeric_value < min_value:
             self._log_validation_warning(
-                f"{param_name} ({value}) below minimum ({min_value}), clamping to minimum"
+                f"{param_name} ({numeric_value}) below minimum ({min_value}), clamping to minimum"
             )
             return min_value
         
         # Check maximum
-        if max_value is not None and value > max_value:
+        if max_value is not None and numeric_value > max_value:
             self._log_validation_warning(
-                f"{param_name} ({value}) above maximum ({max_value}), clamping to maximum"
+                f"{param_name} ({numeric_value}) above maximum ({max_value}), clamping to maximum"
             )
             return max_value
         
-        return value
+        return numeric_value
     
     def validate_list_param(
         self,
         value: Any,
         param_name: str,
-        element_type: Optional[type] = None,
+        element_type: Optional[type[Any]] = None,
         min_length: Optional[int] = None,
         max_length: Optional[int] = None,
-        default: Optional[List] = None,
+        default: Optional[List[Any]] = None,
         allow_none: bool = False
-    ) -> Optional[List]:
+    ) -> Optional[List[Any]]:
         """
         Validate a list parameter with optional element type and length checking.
         
@@ -158,7 +160,7 @@ class QueryValidationMixin:
         # Handle None
         if value is None:
             if allow_none:
-                return value
+                return None
             return default
         
         # Check if list
@@ -174,7 +176,7 @@ class QueryValidationMixin:
         
         # Check element types
         if element_type is not None:
-            validated_list = []
+            validated_list: List[Any] = []
             for i, elem in enumerate(value):
                 if not isinstance(elem, element_type):
                     try:
@@ -201,7 +203,7 @@ class QueryValidationMixin:
             )
             value = value[:max_length]
         
-        return value
+        return cast(List[Any], value)
     
     def validate_string_param(
         self,
@@ -237,13 +239,15 @@ class QueryValidationMixin:
         # Handle None
         if value is None:
             if allow_none:
-                return value
+                return None
             return default
         
         # Convert to string
-        if not isinstance(value, str):
+        if isinstance(value, str):
+            str_value = value
+        else:
             try:
-                value = str(value)
+                str_value = str(value)
             except (ValueError, TypeError):
                 self._log_validation_warning(
                     f"{param_name} cannot be converted to string, using default"
@@ -253,21 +257,21 @@ class QueryValidationMixin:
         # Check allowed values
         if allowed_values is not None:
             if case_sensitive:
-                if value not in allowed_values:
+                if str_value not in allowed_values:
                     self._log_validation_warning(
-                        f"{param_name} ({value}) not in allowed values {allowed_values}, using default {default}"
+                        f"{param_name} ({str_value}) not in allowed values {allowed_values}, using default {default}"
                     )
                     return default
             else:
-                value_lower = value.lower()
+                value_lower = str_value.lower()
                 allowed_lower = [v.lower() for v in allowed_values]
                 if value_lower not in allowed_lower:
                     self._log_validation_warning(
-                        f"{param_name} ({value}) not in allowed values {allowed_values}, using default {default}"
+                        f"{param_name} ({str_value}) not in allowed values {allowed_values}, using default {default}"
                     )
                     return default
         
-        return value
+        return str_value
     
     # ==================== Cache Validation ====================
     
@@ -360,9 +364,9 @@ class QueryValidationMixin:
     
     def generate_cache_key(
         self,
-        *args,
+        *args: Any,
         include_class_name: bool = False,
-        **kwargs
+        **kwargs: Any
     ) -> str:
         """
         Generate a cache key from arguments.
@@ -480,16 +484,19 @@ class QueryValidationMixin:
             })
         """
         # Handle non-dict queries
-        if not isinstance(query, dict):
-            query = {}
+        query_dict: Dict[str, Any]
+        if isinstance(query, dict):
+            query_dict = cast(Dict[str, Any], query)
+        else:
+            query_dict = {}
         
         # Apply defaults
         if defaults is not None:
             for key, value in defaults.items():
-                if key not in query:
-                    query[key] = value
+                if key not in query_dict:
+                    query_dict[key] = value
         
-        return query
+        return query_dict
     
     def ensure_nested_dict(
         self,

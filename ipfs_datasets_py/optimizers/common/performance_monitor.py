@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import statistics
 
 try:
-    import pandas as pd
+    import pandas as pd  # type: ignore[import-untyped]
     PANDAS_AVAILABLE = True
 except ImportError:
     PANDAS_AVAILABLE = False
@@ -130,7 +130,7 @@ class PerformanceMetricsCollector:
         
         # Active and completed cycles
         self._active_cycles: Dict[str, OptimizationCycleMetrics] = {}
-        self._completed_cycles: deque = deque(maxlen=max_history)
+        self._completed_cycles: deque[OptimizationCycleMetrics] = deque(maxlen=max_history)
         
         # Aggregate statistics
         self._total_llm_calls = 0

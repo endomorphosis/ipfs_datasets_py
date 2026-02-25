@@ -149,7 +149,7 @@ class OntologyVisualizer:
             relationships = relationships[:self.max_edges]
         
         # Create nodes from entities
-        nodes = []
+        nodes: List[Dict[str, Any]] = []
         entity_ids = set()
         
         for entity in entities:
@@ -171,7 +171,7 @@ class OntologyVisualizer:
                 nodes.append(node)
         
         # Create edges from relationships
-        edges = []
+        edges: List[Dict[str, Any]] = []
         for rel in relationships:
             if isinstance(rel, dict):
                 source_id = rel.get('source_id')
@@ -314,12 +314,12 @@ class OntologyVisualizer:
         )
         
         # Type distributions
-        entity_type_counts = {}
+        entity_type_counts: Dict[str, int] = {}
         for node in graph.nodes:
             node_type = node['type']
             entity_type_counts[node_type] = entity_type_counts.get(node_type, 0) + 1
         
-        relationship_type_counts = {}
+        relationship_type_counts: Dict[str, int] = {}
         for edge in graph.edges:
             edge_type = edge['type']
             relationship_type_counts[edge_type] = relationship_type_counts.get(edge_type, 0) + 1
@@ -357,7 +357,7 @@ class MetricsVisualizer:
         >>> print(trend_plot)
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the metrics visualizer."""
         logger.info("Initialized MetricsVisualizer")
     

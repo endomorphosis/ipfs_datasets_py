@@ -320,7 +320,7 @@ class PipelineJSONLogger:
             self._context.metrics["entity_count"] = entity_count
             self._context.metrics["relationship_count"] = relationship_count
         
-        data = {
+        data: Dict[str, Any] = {
             "entity_count": entity_count,
             "relationship_count": relationship_count,
         }
@@ -394,7 +394,7 @@ class PipelineJSONLogger:
             self._context.mark_stage_end("evaluation")
             self._context.metrics["overall_score"] = score
         
-        data = {
+        data: Dict[str, Any] = {
             "score": score,
             "cache_hit": cache_hit,
             "cache_size": cache_size,

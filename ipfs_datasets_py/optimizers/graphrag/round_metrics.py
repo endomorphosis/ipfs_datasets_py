@@ -227,7 +227,7 @@ class RoundMetricsCollector:
         print(f"Most effective actions: {collector.most_effective_actions()}")
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize metrics collector."""
         self.rounds: List[RoundMetrics] = []
         self._log = logging.getLogger(__name__)

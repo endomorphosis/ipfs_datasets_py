@@ -21,10 +21,11 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar
 import threading
 
 logger = logging.getLogger(__name__)
+R = TypeVar("R")
 
 
 @dataclass
@@ -124,7 +125,7 @@ class LLMCache:
         if persistence_path and persistence_path.exists():
             self.load()
     
-    def _compute_key(self, prompt: str, **kwargs) -> str:
+    def _compute_key(self, prompt: str, **kwargs: Any) -> str:
         """Compute cache key from prompt and parameters."""
         # Include kwargs in key for parameter-specific caching
         key_data = {
@@ -153,7 +154,7 @@ class LLMCache:
     def get(
         self,
         prompt: str,
-        **kwargs
+        **kwargs: Any
     ) -> Optional[Any]:
         """Get cached result for prompt.
         
@@ -207,7 +208,7 @@ class LLMCache:
         prompt: str,
         result: Any,
         ttl: Optional[int] = None,
-        **kwargs
+        **kwargs: Any
     ) -> None:
         """Set cached result for prompt.
         
@@ -312,7 +313,7 @@ class LLMCache:
 def cached_llm_call(
     cache: Optional[LLMCache] = None,
     ttl: Optional[int] = None,
-) -> Callable[[Callable], Callable]:
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator to cache LLM function calls.
     
     Args:
@@ -328,9 +329,9 @@ def cached_llm_call(
     if cache is None:
         cache = LLMCache()
     
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)
-        def wrapper(prompt: str, **kwargs):
+        def wrapper(prompt: str, **kwargs: Any) -> Any:
             # Try cache first
             result = cache.get(prompt, **kwargs)
             if result is not None:
@@ -383,9 +384,9 @@ class ParallelValidator:
     
     async def run_async(
         self,
-        validators: List[Callable],
-        *args,
-        **kwargs
+        validators: List[Callable[..., Any]],
+        *args: Any,
+        **kwargs: Any
     ) -> List[Tuple[bool, Any]]:
         """Run validators in parallel (async).
         
@@ -399,7 +400,7 @@ class ParallelValidator:
         """
         results = []
 
-        async def run_one(validator):
+        async def run_one(validator: Callable[..., Any]) -> None:
             try:
                 with anyio.fail_after(self.timeout):
                     result = await validator(*args, **kwargs)
@@ -423,9 +424,9 @@ class ParallelValidator:
     
     def run_sync(
         self,
-        validators: List[Callable],
-        *args,
-        **kwargs
+        validators: List[Callable[..., Any]],
+        *args: Any,
+        **kwargs: Any
     ) -> List[Tuple[bool, Any]]:
         """Run validators in parallel (sync).
         
@@ -437,7 +438,7 @@ class ParallelValidator:
         Returns:
             List of (success, result) tuples
         """
-        def run_validator(validator):
+        def run_validator(validator: Callable[..., Any]) -> Tuple[bool, Any]:
             try:
                 result = validator(*args, **kwargs)
                 return (True, result)
@@ -509,7 +510,7 @@ class PerformanceMetrics:
         }
 
 
-def profile_optimizer(func: Callable) -> Callable:
+def profile_optimizer(func: Callable[..., R]) -> Callable[..., R]:
     """Decorator to profile optimizer operations.
     
     Measures execution time and collects performance metrics.
@@ -520,7 +521,7 @@ def profile_optimizer(func: Callable) -> Callable:
         ...     return improved_code
     """
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> R:
         start_time = time.time()
         
         try:

@@ -38,7 +38,7 @@ class ProfilingConfig:
         if self.memory_profiling:
             # Gracefully degrade if psutil isn't installed.
             try:
-                import psutil  # noqa: F401
+                import psutil  # type: ignore[import-untyped]  # noqa: F401
             except ImportError:
                 object.__setattr__(self, "memory_profiling", False)
 

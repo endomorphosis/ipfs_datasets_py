@@ -31,7 +31,7 @@ Classes:
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Callable, Dict, List, Optional, Tuple, Any, cast
 from enum import Enum
 import logging
 from functools import lru_cache
@@ -44,8 +44,8 @@ try:
     )
 except ImportError:
     # Fallback if CEC module not available
-    Language = None  # type: ignore
-    LanguageDetector = None  # type: ignore
+    Language = None
+    LanguageDetector = None
 
 
 @dataclass
@@ -324,7 +324,7 @@ class LanguageRouter:
         if language.value == 'unknown':
             self._logger.debug(f"Language detection failed for text; using English")
             return 'en'
-        return language.value
+        return cast(str, language.value)
     
     def detect_language_with_confidence(
         self, text: str
@@ -341,7 +341,7 @@ class LanguageRouter:
             return 'en', 1.0
         
         language, confidence = self.detector.detect_with_confidence(text)
-        return language.value, confidence
+        return cast(str, language.value), confidence
     
     def get_language_config(self, language_code: str) -> LanguageConfig:
         """Get language-specific configuration.
@@ -414,7 +414,10 @@ class LanguageRouter:
     def extract_with_language_awareness(
         self,
         text: str,
-        extractor_func,
+        extractor_func: Callable[
+            [str, LanguageConfig],
+            Tuple[List[Dict[str, Any]], List[Dict[str, Any]]],
+        ],
         apply_confidence_adjustment: bool = True,
     ) -> MultilingualExtractionResult:
         """Execute extraction with language awareness.

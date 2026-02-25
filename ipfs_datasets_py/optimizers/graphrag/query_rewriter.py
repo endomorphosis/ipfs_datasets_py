@@ -29,15 +29,7 @@ class QueryRewriter:
         Args:
             traversal_stats: Optional statistics from previous traversals
         """
-        self.optimization_patterns = [
-            self._apply_predicate_pushdown,
-            self._reorder_joins_by_selectivity,
-            self._optimize_traversal_path,
-            self._apply_pattern_specific_optimizations,
-            self._apply_domain_optimizations,
-            self._apply_adaptive_optimizations
-        ]
-        self.query_stats = {}
+        self.query_stats: Dict[str, Any] = {}
         # Reference to traversal statistics for adaptive optimizations
         self.traversal_stats = traversal_stats or {
             "paths_explored": [],
@@ -65,13 +57,17 @@ class QueryRewriter:
         # Start with a copy of the original query
         rewritten_query = query.copy()
         
-        # Apply optimization patterns
-        for optimization_func in self.optimization_patterns:
-            # Pass entity scores to optimization functions
-            if optimization_func == self._apply_adaptive_optimizations:
-                rewritten_query = optimization_func(rewritten_query, graph_info, entity_scores)
-            else:
-                rewritten_query = optimization_func(rewritten_query, graph_info)
+        # Apply optimization patterns in deterministic order.
+        rewritten_query = self._apply_predicate_pushdown(rewritten_query, graph_info)
+        rewritten_query = self._reorder_joins_by_selectivity(rewritten_query, graph_info)
+        rewritten_query = self._optimize_traversal_path(rewritten_query, graph_info)
+        rewritten_query = self._apply_pattern_specific_optimizations(rewritten_query, graph_info)
+        rewritten_query = self._apply_domain_optimizations(rewritten_query, graph_info)
+        rewritten_query = self._apply_adaptive_optimizations(
+            rewritten_query,
+            graph_info,
+            entity_scores,
+        )
             
         # Return the rewritten query
         return rewritten_query
@@ -335,7 +331,7 @@ class QueryRewriter:
             # Wikipedia-specific optimizations
             # Prioritize high-quality relationship types in Wikipedia
             if "edge_types" in result["traversal"]:
-                edge_types = result["traversal"]["edge_types"]
+                edge_types = list(result["traversal"]["edge_types"])
                 # Prioritize more reliable Wikipedia relationships
                 # Used in test_query_rewriter_domain_optimizations - order matters for test
                 priority_edges = ["subclass_of", "instance_of", "part_of", "located_in"]
@@ -390,7 +386,7 @@ class QueryRewriter:
         Returns:
             Dict: Analysis results
         """
-        analysis = {
+        analysis: Dict[str, Any] = {
             "pattern": self._detect_query_pattern(query),
             "complexity": self._estimate_query_complexity(query),
             "optimizations": []

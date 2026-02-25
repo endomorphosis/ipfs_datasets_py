@@ -21,7 +21,7 @@ import threading
 from dataclasses import dataclass, field
 from collections import OrderedDict
 from enum import Enum
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, Optional, List, Tuple, cast
 from pathlib import Path
 
 
@@ -50,7 +50,7 @@ class CacheEntry:
             return False
         return time.time() - self.created_at > self.ttl
     
-    def mark_accessed(self):
+    def mark_accessed(self) -> None:
         """Mark entry as accessed."""
         self.last_accessed = time.time()
         self.access_count += 1
@@ -109,7 +109,7 @@ class CacheL1:
             self.metrics.hits += 1
             return entry.value
     
-    def set(self, key: str, value: Any, ttl: Optional[float] = None):
+    def set(self, key: str, value: Any, ttl: Optional[float] = None) -> None:
         """Set value in cache."""
         with self._lock:
             ttl = ttl or self.default_ttl
@@ -134,7 +134,7 @@ class CacheL1:
                 return True
             return False
     
-    def clear(self):
+    def clear(self) -> None:
         """Clear all cache entries."""
         with self._lock:
             self.cache.clear()
@@ -144,7 +144,7 @@ class CacheL1:
         """Check if eviction is needed."""
         return len(self.cache) >= self.max_size
     
-    def _evict_one(self):
+    def _evict_one(self) -> None:
         """Evict one entry based on policy."""
         if len(self.cache) == 0:
             return
@@ -215,7 +215,7 @@ class CacheL2:
                 self.metrics.misses += 1
                 return None
     
-    def set(self, key: str, value: Any):
+    def set(self, key: str, value: Any) -> None:
         """Set value in L2 cache."""
         with self._lock:
             try:
@@ -255,7 +255,7 @@ class CacheL2:
                 pass
             return False
     
-    def clear(self):
+    def clear(self) -> None:
         """Clear all L2 cache entries."""
         with self._lock:
             for f in self.path.glob("*.pkl"):
@@ -267,12 +267,12 @@ class CacheL2:
         if self.index_path.exists():
             try:
                 with open(self.index_path, 'r') as f:
-                    return json.load(f)
+                    return cast(Dict[str, Any], json.load(f))
             except (OSError, json.JSONDecodeError, ValueError, TypeError):
                 return {}
         return {}
     
-    def _save_index(self, index: Dict[str, Any]):
+    def _save_index(self, index: Dict[str, Any]) -> None:
         """Save index to disk."""
         try:
             with open(self.index_path, 'w') as f:
@@ -310,7 +310,7 @@ class MultiLevelCache:
             
             return None
     
-    def set(self, key: str, value: Any, ttl: Optional[float] = None):
+    def set(self, key: str, value: Any, ttl: Optional[float] = None) -> None:
         """Set value in L1, automatically promote to L2 if no TTL or long TTL."""
         with self._lock:
             self.l1.set(key, value, ttl=ttl)
@@ -318,19 +318,19 @@ class MultiLevelCache:
             if ttl is None or ttl > 30:  # Don't promote short-TTL items (< 30 seconds)
                 self.l2.set(key, value)
     
-    def delete(self, key: str):
+    def delete(self, key: str) -> None:
         """Delete from both levels."""
         with self._lock:
             self.l1.delete(key)
             self.l2.delete(key)
     
-    def clear(self):
+    def clear(self) -> None:
         """Clear both levels."""
         with self._lock:
             self.l1.clear()
             self.l2.clear()
     
-    def warm_from_disk(self, keys: List[str]):
+    def warm_from_disk(self, keys: List[str]) -> None:
         """Load specific keys from L2 to L1."""
         with self._lock:
             for key in keys:

@@ -5,7 +5,7 @@ and the new unified OptimizerConfig. It enables gradual migration without
 breaking existing code.
 """
 
-from typing import Union, Optional, Any
+from typing import Any
 from ipfs_datasets_py.optimizers.common.optimizer_config import OptimizerConfig as UnifiedConfig
 
 
@@ -43,7 +43,7 @@ def convert_to_unified_config(
     raise TypeError(f"Unsupported config type: {type(config)}")
 
 
-def _map_old_strategy_to_new(old_strategy) -> str:
+def _map_old_strategy_to_new(old_strategy: Any) -> str:
     """Map old optimization strategy enum to new one.
     
     Args:
@@ -68,7 +68,7 @@ def _map_old_strategy_to_new(old_strategy) -> str:
         return 'iterative'  # Default fallback
 
 
-def create_unified_config(**kwargs) -> UnifiedConfig:
+def create_unified_config(**kwargs: Any) -> UnifiedConfig:
     """Create unified config from keyword arguments.
     
     Convenience method to create UnifiedConfig with less boilerplate.

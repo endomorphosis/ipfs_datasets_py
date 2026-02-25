@@ -131,7 +131,7 @@ def compute_entity_stats(ontology: Dict[str, Any]) -> EntityStats:
     total = len(entities)
     
     # Type distribution
-    type_dist = Counter()
+    type_dist: Counter[str] = Counter()
     property_coverage = 0
     total_properties = 0
     
@@ -201,7 +201,7 @@ def compute_relationship_stats(ontology: Dict[str, Any]) -> RelationshipStats:
     rel_count = len(relationships)
     
     # Type distribution
-    rel_type_dist = Counter()
+    rel_type_dist: Counter[str] = Counter()
     for rel in relationships:
         if isinstance(rel, dict):
             rel_type = rel.get("type")
@@ -308,7 +308,7 @@ def compute_ontology_stats(ontology: Dict[str, Any]) -> OntologyStats:
     
     # Property analysis
     entities = ontology.get("entities", [])
-    prop_names = set()
+    prop_names: Set[str] = set()
     total_props = 0
     conf_scores = []
     
@@ -456,7 +456,7 @@ def identify_bottlenecks(ontology: Dict[str, Any]) -> Dict[str, Any]:
         return {}
     
     # Count relationships per entity
-    entity_rel_count = Counter()
+    entity_rel_count: Counter[str] = Counter()
     for rel in relationships:
         if isinstance(rel, dict):
             src = rel.get("source_id")
@@ -478,7 +478,7 @@ def identify_bottlenecks(ontology: Dict[str, Any]) -> Dict[str, Any]:
         high_degree_entities = {}
     
     # Count relationship types
-    rel_type_count = Counter()
+    rel_type_count: Counter[str] = Counter()
     for rel in relationships:
         if isinstance(rel, dict):
             rel_type = rel.get("type")

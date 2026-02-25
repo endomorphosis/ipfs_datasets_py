@@ -41,7 +41,7 @@ from __future__ import annotations
 import functools
 import logging
 from contextlib import contextmanager
-from typing import Any, Callable, Optional, Type, TypeVar
+from typing import Any, Callable, Generator, Optional, Type, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +203,7 @@ def wrap_exceptions(
     message: str,
     details: Optional[Any] = None,
     reraise: bool = True,
-):
+) -> Generator[None, None, None]:
     """Context manager that wraps any exception as a typed OptimizerError.
     
     Args:
@@ -228,7 +228,8 @@ def wrap_exceptions(
         # Already an optimizer error, re-raise as-is
         raise
     except Exception as e:
-        # Wrap other exceptions
+        # Intentional broad catch: this helper is specifically for wrapping
+        # arbitrary non-base exceptions into typed OptimizerError classes.
         wrapped = exception_class(message, details=details)
         if reraise:
             raise wrapped from e
@@ -236,7 +237,7 @@ def wrap_exceptions(
             raise wrapped
 
 
-def exception_to_dict(exc: Exception) -> dict[str, Any]:
+def exception_to_dict(exc: BaseException) -> dict[str, Any]:
     """Convert an exception to a dictionary for serialization.
     
     Args:
@@ -253,7 +254,7 @@ def exception_to_dict(exc: Exception) -> dict[str, Any]:
     # Use raw message for OptimizerError (not str() which includes details)
     message = exc.message if isinstance(exc, OptimizerError) else str(exc)
     
-    result = {
+    result: dict[str, Any] = {
         "type": type(exc).__name__,
         "message": message,
     }
@@ -281,7 +282,7 @@ def safe_error_handler(
     *exception_types: Type[Exception],
     default: Any = None,
     log_level: int = logging.WARNING,
-):
+) -> Callable[[F], F]:
     """Decorator that catches specific exceptions and returns a default value.
     
     Useful for making non-critical operations fault-tolerant.
@@ -306,7 +307,7 @@ def safe_error_handler(
     
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 return func(*args, **kwargs)
             except exception_types as e:

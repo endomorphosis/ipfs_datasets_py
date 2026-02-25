@@ -31,7 +31,7 @@ import logging
 import time
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import Callable, Generic, Optional, TypeVar
+from typing import Any, Callable, Generic, Optional, TypeVar
 
 _logger = logging.getLogger(__name__)
 
@@ -110,7 +110,7 @@ class CircuitBreaker(Generic[T]):
         name: str = "circuit_breaker",
         failure_threshold: int = 5,
         recovery_timeout: float = 60.0,
-        expected_exception: type = Exception,
+        expected_exception: type[BaseException] | tuple[type[BaseException], ...] = Exception,
     ):
         """Initialize circuit-breaker.
         
@@ -173,14 +173,19 @@ class CircuitBreaker(Generic[T]):
         Returns:
             Wrapped function that respects circuit state
         """
-        def wrapper(*args, **kwargs) -> T:
+        def wrapper(*args: Any, **kwargs: Any) -> T:
             return self._execute(func, args, kwargs)
         
         wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__
         return wrapper
     
-    def _execute(self, func: Callable[..., T], args: tuple, kwargs: dict) -> T:
+    def _execute(
+        self,
+        func: Callable[..., T],
+        args: tuple[Any, ...],
+        kwargs: dict[str, Any],
+    ) -> T:
         """Execute function with circuit-breaker protection.
         
         Args:
@@ -257,8 +262,8 @@ def circuit_breaker(
     name: str = "circuit_breaker",
     failure_threshold: int = 5,
     recovery_timeout: float = 60.0,
-    expected_exception: type = Exception,
-):
+    expected_exception: type[BaseException] | tuple[type[BaseException], ...] = Exception,
+) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """Decorator factory for circuit-breaker pattern.
     
     Args:
@@ -280,7 +285,7 @@ def circuit_breaker(
         def call_llm_api(prompt: str) -> str:
             return llm_backend.generate(prompt)
     """
-    breaker = CircuitBreaker(
+    breaker: CircuitBreaker[Any] = CircuitBreaker(
         name=name,
         failure_threshold=failure_threshold,
         recovery_timeout=recovery_timeout,

@@ -76,14 +76,15 @@ class RunStatistics:
     overall_score: float = 0.0
     error_count: int = 0
     refinement_rounds: int = 0
-    stage_stats: Dict[str, StageStatistics] = None
+    stage_stats: Optional[Dict[str, StageStatistics]] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.stage_stats is None:
             self.stage_stats = {}
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
+        stage_stats = self.stage_stats or {}
         return {
             "run_id": self.run_id,
             "domain": self.domain,
@@ -95,7 +96,7 @@ class RunStatistics:
             "overall_score": self.overall_score,
             "error_count": self.error_count,
             "refinement_rounds": self.refinement_rounds,
-            "stages": {name: stats.to_dict() for name, stats in self.stage_stats.items()},
+            "stages": {name: stats.to_dict() for name, stats in stage_stats.items()},
         }
 
 

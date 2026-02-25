@@ -42,7 +42,7 @@ def sort_entities(entities: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     if not entities:
         return []
     
-    def entity_sort_key(e: Dict[str, Any]) -> tuple:
+    def entity_sort_key(e: Dict[str, Any]) -> tuple[str, str, str, float]:
         """Generate consistent sort key for an entity."""
         entity_id = str(e.get("id") or e.get("Id") or "")
         entity_type = str(e.get("type") or e.get("Type") or "Unknown")
@@ -75,7 +75,7 @@ def sort_relationships(relationships: List[Dict[str, Any]]) -> List[Dict[str, An
     if not relationships:
         return []
     
-    def relationship_sort_key(r: Dict[str, Any]) -> tuple:
+    def relationship_sort_key(r: Dict[str, Any]) -> tuple[str, str, str, str, float]:
         """Generate consistent sort key for a relationship."""
         source = str(r.get("source") or r.get("Source") or "")
         target = str(r.get("target") or r.get("Target") or "")

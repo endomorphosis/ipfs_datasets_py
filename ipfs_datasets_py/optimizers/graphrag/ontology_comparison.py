@@ -105,7 +105,7 @@ class DistributionStats:
         """Return most common type, or empty string if no items."""
         if not self.type_counts:
             return ""
-        return max(self.type_counts, key=self.type_counts.get)
+        return max(self.type_counts, key=lambda k: self.type_counts[k])
     
     @property
     def dominant_type_percentage(self) -> float:

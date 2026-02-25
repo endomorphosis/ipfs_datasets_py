@@ -132,7 +132,7 @@ class OptimizerConfig:
     # Diagnostics
     verbose: bool = False
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate configuration after initialization."""
         self.validate()
     
@@ -229,7 +229,7 @@ class OptimizerConfig:
         Returns:
             OptimizerConfig with values from environment
         """
-        env_dict = {}
+        env_dict: Dict[str, Any] = {}
         
         # Domain
         if domain := os.environ.get("OPTIMIZER_DOMAIN"):
@@ -319,7 +319,7 @@ class OptimizerConfig:
         """
         return json.dumps(self.to_dict(), indent=2, default=str)
     
-    def copy(self, **overrides) -> "OptimizerConfig":
+    def copy(self, **overrides: Any) -> "OptimizerConfig":
         """Create a copy with optional field overrides.
         
         Args:

@@ -5,7 +5,7 @@ This module provides runtime type validation and IDE support enhancements
 for ExtractionConfig dataclass fields.
 """
 
-from typing import Dict, List, get_type_hints
+from typing import Any, Dict, List, get_type_hints
 from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
 
 
@@ -25,7 +25,7 @@ def get_extraction_config_type_hints() -> Dict[str, type]:
     return get_type_hints(ExtractionConfig)
 
 
-def validate_extraction_config_field(field_name: str, value) -> bool:
+def validate_extraction_config_field(field_name: str, value: Any) -> bool:
     """Validate a single field value against its type.
     
     Args:
@@ -65,7 +65,7 @@ def validate_extraction_config_field(field_name: str, value) -> bool:
     return isinstance(value, expected_type)
 
 
-def create_extraction_config_from_typed_dict(config_dict: dict) -> ExtractionConfig:
+def create_extraction_config_from_typed_dict(config_dict: dict[str, Any]) -> ExtractionConfig:
     """Create ExtractionConfig with strict type validation.
     
     Args:
@@ -104,7 +104,7 @@ def create_extraction_config_from_typed_dict(config_dict: dict) -> ExtractionCon
     return ExtractionConfig.from_dict(config_dict)
 
 
-def get_extraction_config_field_info() -> Dict[str, dict]:
+def get_extraction_config_field_info() -> Dict[str, Dict[str, Any]]:
     """Get information about all ExtractionConfig fields.
     
     Returns:
@@ -168,7 +168,7 @@ def get_extraction_config_field_info() -> Dict[str, dict]:
             'description': 'Domain-specific vocabulary for entity recognition',
         },
         'custom_rules': {
-            'type': List[tuple],
+            'type': List[tuple[str, str]],
             'default': [],
             'description': 'Custom regex patterns for entity extraction',
         },

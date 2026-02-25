@@ -35,7 +35,7 @@ def evaluate_completeness(
     diversity_score = min(len(types) / 3.0, 1.0)
 
     # Sub-score 4: orphan penalty (entities with no relationships)
-    entity_ids_in_rels: set = set()
+    entity_ids_in_rels: set[Any] = set()
     for rel in relationships:
         if isinstance(rel, dict):
             entity_ids_in_rels.add(rel.get("source_id"))

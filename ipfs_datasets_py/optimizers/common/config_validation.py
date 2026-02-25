@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ class ValidationRule:
     """
     
     field_name: str
-    expected_type: Optional[Union[Type, Tuple[Type, ...]]] = None
+    expected_type: Optional[Union[type[Any], Tuple[type[Any], ...]]] = None
     required: bool = True
     min_value: Optional[Union[int, float]] = None
     max_value: Optional[Union[int, float]] = None
@@ -150,7 +150,7 @@ class ValidationRule:
         return errors
     
     @staticmethod
-    def _format_type(expected_type: Union[Type, Tuple[Type, ...]]) -> str:
+    def _format_type(expected_type: Union[type[Any], Tuple[type[Any], ...]]) -> str:
         """Format type for error messages.
         
         Args:
@@ -186,7 +186,7 @@ class ConfigValidator:
         self.rules = {rule.field_name: rule for rule in rules}
         self._validate_rules()
     
-    def _validate_rules(self):
+    def _validate_rules(self) -> None:
         """Validate that rules themselves are consistent."""
         for field_name, rule in self.rules.items():
             # Check for conflicting min/max
@@ -268,7 +268,7 @@ class ConfigValidator:
         """
         return len(self.validate(config)) == 0
     
-    def add_rule(self, rule: ValidationRule):
+    def add_rule(self, rule: ValidationRule) -> None:
         """Add validation rule dynamically.
         
         Args:
@@ -276,7 +276,7 @@ class ConfigValidator:
         """
         self.rules[rule.field_name] = rule
     
-    def remove_rule(self, field_name: str):
+    def remove_rule(self, field_name: str) -> None:
         """Remove validation rule.
         
         Args:
@@ -484,7 +484,7 @@ class CompositeValidator:
     def __init__(
         self,
         field_validator: ConfigValidator,
-        cross_field_validators: Optional[List[Callable[[Dict[str, Any]], List[str]]]] = None,
+        cross_field_validators: Optional[Sequence[Callable[[Dict[str, Any]], List[str]]]] = None,
     ):
         """Initialize composite validator.
         
@@ -493,7 +493,7 @@ class CompositeValidator:
             cross_field_validators: List of cross-field validation functions
         """
         self.field_validator = field_validator
-        self.cross_field_validators = cross_field_validators or []
+        self.cross_field_validators = list(cross_field_validators or [])
     
     def validate(self, config: Dict[str, Any]) -> List[str]:
         """Validate configuration with field and cross-field checks.

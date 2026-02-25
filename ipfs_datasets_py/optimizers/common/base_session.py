@@ -259,7 +259,7 @@ class BaseSession:
             ],
         }
 
-    def to_json(self, **json_kwargs) -> str:
+    def to_json(self, **json_kwargs: Any) -> str:
         """Serialize session state to a JSON string.
 
         Args:
@@ -291,7 +291,7 @@ class BaseSession:
         )
         for r in data.get("rounds", []):
             session.start_round()
-            session.record_round(score=r.get("score", 0.0), feedback={}, metadata={})
+            session.record_round(score=r.get("score", 0.0), feedback=[], metadata={})
         session.metadata.update(data.get("metadata") or {})
         try:
             session.started_at = _dt.datetime.fromisoformat(data["started_at"])

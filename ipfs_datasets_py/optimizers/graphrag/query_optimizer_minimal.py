@@ -10,17 +10,17 @@ from typing import Dict, List, Any, Optional, Tuple, Union, Callable, Set
 class GraphRAGQueryStats:
     """Statistics collector for GraphRAG queries."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the statistics collector."""
-        self.queries = {}
+        self.queries: Dict[str, Dict[str, Any]] = {}
         self.analyzed_queries = 0
         self.learning_enabled = True
         self.learning_counter = 0
         self.learning_interval = 50
-        self.patterns = {}
+        self.patterns: Dict[str, Any] = {}
 
     def record_query(self, query_id: str, params: Dict[str, Any],
-                    results: List[Dict], duration: float, success: bool = True) -> None:
+                    results: List[Dict[str, Any]], duration: float, success: bool = True) -> None:
         """Record a query and its results."""
         self.queries[query_id] = {
             'params': params,
@@ -35,7 +35,7 @@ class GraphRAGQueryStats:
 class GraphRAGQueryOptimizer:
     """Optimizer for GraphRAG queries based on statistical learning."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the optimizer."""
         self.stats = GraphRAGQueryStats()
 
@@ -49,7 +49,7 @@ class GraphRAGQueryOptimizer:
 
     def _derive_rules_from_patterns(self, successful_queries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Derive optimization rules from successful query patterns."""
-        rules = []
+        rules: List[Dict[str, Any]] = []
         return rules
 
     def _derive_wikipedia_specific_rules(self, successful_queries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

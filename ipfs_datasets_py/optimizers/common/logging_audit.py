@@ -208,7 +208,7 @@ class LoggingAuditor:
             "",
         ])
         
-        all_patterns = {}
+        all_patterns: Dict[str, int] = {}
         for result in self.results:
             for pattern, count in result.logging_patterns.items():
                 all_patterns[pattern] = all_patterns.get(pattern, 0) + count
@@ -230,7 +230,7 @@ class LoggingAuditor:
         return "\n".join(report_lines)
 
 
-def main():
+def main() -> List[LoggingAuditResult]:
     """Run logging audit and print report."""
     auditor = LoggingAuditor()
     auditor.audit_directory()

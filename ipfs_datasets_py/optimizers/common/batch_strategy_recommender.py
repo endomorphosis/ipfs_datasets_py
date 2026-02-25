@@ -34,7 +34,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +138,7 @@ class BatchStrategyRecommender:
         self.max_batch_size = max_batch_size
         self.enable_parallel = enable_parallel
         self._processed_count = 0
-        self._stats = {}
+        self._stats: Dict[str, Any] = {}
     
     def recommend_strategies_batch(
         self,
@@ -374,7 +374,7 @@ class BatchStrategyRecommender:
         Returns:
             List of alternative strategies
         """
-        alternatives = []
+        alternatives: List[Dict[str, Any]] = []
         
         # Generate candidates
         candidates = [
@@ -399,7 +399,7 @@ class BatchStrategyRecommender:
         candidates = [
             c for c in candidates if c["type"] != exclude_strategy
         ]
-        candidates.sort(key=lambda x: x["confidence"], reverse=True)
+        candidates.sort(key=lambda x: cast(float, x["confidence"]), reverse=True)
         
         return candidates[:max_count]
     
@@ -433,7 +433,7 @@ class BatchStrategyRecommender:
         }
         
         # Strategy type distribution
-        strategy_counts = {}
+        strategy_counts: Dict[str, int] = {}
         for r in recommendations:
             strategy_counts[r.strategy_type] = strategy_counts.get(r.strategy_type, 0) + 1
         

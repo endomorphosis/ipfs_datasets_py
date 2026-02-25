@@ -12,19 +12,38 @@ from enum import Enum
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Protocol, Tuple
 
-from .lifecycle_hooks import LifecycleHooksMixin
 from .optimizer_result import OptimizerResult
 from .seed_control import apply_deterministic_seed
+
+if TYPE_CHECKING:
+    class _LifecycleHooksBase(Protocol):
+        def on_session_start(self, context: Any, input_data: Any) -> None: ...
+        def on_generate_complete(self, artifact: Any, context: Any) -> None: ...
+        def on_critique_complete(
+            self, artifact: Any, score: float, feedback: List[str], context: Any
+        ) -> None: ...
+        def on_optimize_complete(
+            self,
+            artifact: Any,
+            score: float,
+            feedback: List[str],
+            iteration: int,
+            context: Any,
+        ) -> None: ...
+        def on_validate_complete(self, artifact: Any, valid: bool, context: Any) -> None: ...
+        def on_session_complete(self, result: Dict[str, Any], context: Any) -> None: ...
+else:
+    from .lifecycle_hooks import LifecycleHooksMixin as _LifecycleHooksBase
 
 _logger = logging.getLogger(__name__)
 
 try:
-    from opentelemetry import trace
+    from opentelemetry import trace  # type: ignore[import-not-found]
     HAVE_OPENTELEMETRY = True
 except ImportError:  # pragma: no cover - optional dependency
-    trace = None  # type: ignore[assignment]
+    trace = None
     HAVE_OPENTELEMETRY = False
 
 
@@ -81,7 +100,7 @@ class OptimizationContext:
     created_at: datetime = field(default_factory=datetime.now)
 
 
-class BaseOptimizer(LifecycleHooksMixin, ABC):
+class BaseOptimizer(_LifecycleHooksBase, ABC):
     """Base class for all optimizer types.
     
     This abstract class defines the common interface that all optimizers
@@ -157,7 +176,11 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
             _logger.debug("Prometheus metrics unavailable: %s", exc)
 
     @contextmanager
-    def _start_otel_span(self, operation: str, attributes: Dict[str, Any]):
+    def _start_otel_span(
+        self,
+        operation: str,
+        attributes: Dict[str, Any],
+    ) -> Iterator[Optional[Any]]:
         """Start a best-effort OpenTelemetry span or yield ``None`` when disabled."""
         if not self._otel_enabled or self._otel_tracer is None:
             yield None
@@ -469,7 +492,7 @@ class BaseOptimizer(LifecycleHooksMixin, ABC):
                     _logger.debug("Failed to set final span attributes: %s", exc)
 
             try:
-                self.on_session_complete(result, context)
+                self.on_session_complete(dict(result), context)
             except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover
                 _logger.debug("on_session_complete hook failed: %s", exc)
 

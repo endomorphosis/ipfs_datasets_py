@@ -23,7 +23,7 @@ def apply_deterministic_seed(seed: Optional[int]) -> Dict[str, Any]:
     result["python_random"] = True
 
     try:
-        import numpy as np  # type: ignore
+        import numpy as np
 
         np.random.seed(seed)
         result["numpy_random"] = True

@@ -72,7 +72,7 @@ def evaluate_relationship_coherence(
         distribution_score = min(len(unique_types) / 5.0, 1.0)
 
     # Sub-score 4: Semantic consistency
-    _TYPE_AFFINITY: Dict[str, set] = {
+    _TYPE_AFFINITY: Dict[str, set[str]] = {
         "manages": {"person", "organization", "manager", "team", "department"},
         "located_in": {"location", "place", "address", "city", "region"},
         "has_symptom": {"patient", "person", "condition", "disease"},
@@ -86,7 +86,7 @@ def evaluate_relationship_coherence(
         if isinstance(e, dict) and e.get("id")
     }
 
-    coherent_relationships = 0
+    coherent_relationships = 0.0
     for rel in relationships:
         if not isinstance(rel, dict):
             continue

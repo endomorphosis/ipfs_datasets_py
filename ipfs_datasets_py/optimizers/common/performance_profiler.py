@@ -15,7 +15,7 @@ import cProfile
 import pstats
 import time
 import io
-from typing import Callable, Any, Dict, List, Tuple, Optional
+from typing import Callable, Any, Dict, Iterator, List, Literal, Tuple, Optional, cast
 from dataclasses import dataclass, field
 from contextlib import contextmanager
 import functools
@@ -48,15 +48,15 @@ class PerformanceProfiler:
         >>> hotspots = profiler.get_hotspots(top_n=5)
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.profiler = cProfile.Profile()
         self.results: Dict[str, ProfileResult] = {}
     
     def profile_function(
         self,
-        func: Callable,
-        *args,
-        **kwargs
+        func: Callable[..., Any],
+        *args: Any,
+        **kwargs: Any
     ) -> Any:
         """Profile a function and return its result.
         
@@ -76,7 +76,7 @@ class PerformanceProfiler:
         
         return result
     
-    def profile_code_block(self, code_func: Callable) -> Any:
+    def profile_code_block(self, code_func: Callable[..., Any]) -> Any:
         """Profile a code block (lambda or function).
         
         Args:
@@ -102,7 +102,11 @@ class PerformanceProfiler:
         
         # Extract info
         results = []
-        for func_name, (primitive_calls, num_calls, total_time, cumulative_time, callers) in stats.stats.items():
+        stats_data = cast(
+            Dict[Any, Tuple[int, int, float, float, Dict[Any, Any]]],
+            getattr(stats, "stats", {}),
+        )
+        for func_name, (primitive_calls, num_calls, total_time, cumulative_time, callers) in stats_data.items():
             results.append((
                 self._format_func_name(func_name),
                 cumulative_time,
@@ -128,8 +132,12 @@ class PerformanceProfiler:
         stats.sort_stats('cumulative')
         
         # Calculate total time
+        stats_data = cast(
+            Dict[Any, Tuple[int, int, float, float, Dict[Any, Any]]],
+            getattr(stats, "stats", {}),
+        )
         total_time = sum(
-            stat[3] for stat in stats.stats.values()
+            stat[3] for stat in stats_data.values()
         )
         
         if total_time == 0:
@@ -137,7 +145,7 @@ class PerformanceProfiler:
         
         # Find hotspots
         hotspots = []
-        for func_name, (primitive_calls, num_calls, total, cumulative_time, callers) in stats.stats.items():
+        for func_name, (primitive_calls, num_calls, total, cumulative_time, callers) in stats_data.items():
             percent = (cumulative_time / total_time) * 100
             if percent >= threshold_percent:
                 hotspots.append((
@@ -190,7 +198,7 @@ class PerformanceProfiler:
         return "\n".join(lines)
     
     @staticmethod
-    def _format_func_name(func_info: Tuple) -> str:
+    def _format_func_name(func_info: Tuple[Any, ...]) -> str:
         """Format function name from profiler tuple."""
         if len(func_info) == 3:
             filename, line_num, func_name = func_info
@@ -214,11 +222,11 @@ class BenchmarkTimer:
         self.start_time: Optional[float] = None
         self.end_time: Optional[float] = None
     
-    def __enter__(self):
+    def __enter__(self) -> "BenchmarkTimer":
         self.start_time = time.perf_counter()
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: object, exc_val: object, exc_tb: object) -> Literal[False]:
         self.end_time = time.perf_counter()
         return False
     
@@ -233,7 +241,9 @@ class BenchmarkTimer:
         return f"{self.name}: {self.elapsed:.4f}s"
 
 
-def profile_decorator(profile_func: bool = False):
+def profile_decorator(
+    profile_func: bool = False,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator to optionally profile a function.
     
     Args:
@@ -244,9 +254,9 @@ def profile_decorator(profile_func: bool = False):
         ... def my_function(x):
         ...     return x * 2
     """
-    def decorator(func):
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             if profile_func:
                 profiler = PerformanceProfiler()
                 result = profiler.profile_function(func, *args, **kwargs)
@@ -259,7 +269,7 @@ def profile_decorator(profile_func: bool = False):
 
 
 @contextmanager
-def benchmark(name: str = "operation"):
+def benchmark(name: str = "operation") -> Iterator[BenchmarkTimer]:
     """Context manager for timing code blocks.
     
     Example:

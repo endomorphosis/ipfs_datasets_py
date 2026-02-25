@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PrecompiledPattern:
     """Container for pre-compiled regex patterns."""
-    compiled_pattern: re.Pattern
+    compiled_pattern: re.Pattern[str]
     entity_type: str
     original_pattern: str
 
@@ -176,7 +176,7 @@ class RegexPatternCompiler:
         min_len: int,
         stopwords: Set[str],
         max_confidence: float,
-    ) -> List[dict]:
+    ) -> List[dict[str, Any]]:
         """
         Extract entities using pre-compiled patterns.
         
@@ -241,7 +241,7 @@ class RegexPatternCompiler:
         return entities
 
 
-def benchmark_pre_compilation():
+def benchmark_pre_compilation() -> None:
     """Benchmark pre-compiled patterns vs on-demand compilation."""
     import time
 

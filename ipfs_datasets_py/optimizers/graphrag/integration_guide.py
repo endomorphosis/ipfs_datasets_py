@@ -22,7 +22,8 @@ Recommended Reading Order:
 6. AdvancedScenarios - Combine multiple features for complex use cases
 """
 
-from typing import Dict, Any, List, Optional, Tuple
+import logging as _logging
+from typing import Dict, Any, List, Optional, Tuple, cast
 from ipfs_datasets_py.optimizers.graphrag.error_handling import (
     GraphRAGException, GraphRAGConfigError, GraphRAGExtractionError,
     GraphRAGValidationError, ErrorContext, retry_with_backoff, safe_operation,
@@ -51,10 +52,10 @@ class BasicOntologyExtraction:
     - Error handling with recovery
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize basic extraction workflow."""
         self.validator = EntityExtractionValidator()
-        self.logger = None
+        self.logger: Optional[_logging.Logger] = None
     
     def extract_and_validate(self, text: str) -> Dict[str, Any]:
         """
@@ -101,7 +102,7 @@ class BasicOntologyExtraction:
         Returns:
             Extraction results or empty dict on failure
         """
-        def _extract():
+        def _extract() -> Dict[str, Any]:
             return self.extract_and_validate(text)
 
         extract_with_retry = retry_with_backoff(
@@ -111,7 +112,7 @@ class BasicOntologyExtraction:
         )
 
         try:
-            return extract_with_retry()
+            return cast(Dict[str, Any], extract_with_retry())
         except (
             GraphRAGException,
             AttributeError,
@@ -136,10 +137,10 @@ class MultiLanguageWorkflow:
     - Multi-language extraction
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize multi-language workflow."""
         self.router = LanguageRouter(confidence_threshold=0.6)
-        self.extractor = None  # Would be actual extractor
+        self.extractor: Optional[Any] = None  # Would be actual extractor
     
     def process_multilingual_text(
         self,
@@ -172,7 +173,7 @@ class MultiLanguageWorkflow:
         domain_vocab = config.domain_vocab.get(domain, [])
         
         # Extract with language awareness
-        def extractor(text, cfg):
+        def extractor(text: str, cfg: LanguageConfig) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
             # In real implementation, would use domain_vocab in extraction
             return [], []
         
@@ -242,9 +243,9 @@ class ErrorHandlingPatterns:
     - Exception hierarchy usage
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize error handling patterns."""
-        self.logger = None
+        self.logger = _logging.getLogger(__name__)
     
     def complex_extraction_with_recovery(
         self,
@@ -315,7 +316,7 @@ class ErrorHandlingPatterns:
             max_attempts=3,
             backoff_factor=2.0,
         )
-        return extract_with_retry(text)
+        return cast(Dict[str, Any], extract_with_retry(text))
     
     def _primary_extraction(self, text: str) -> Dict[str, Any]:
         """Placeholder for primary extraction."""
@@ -341,7 +342,7 @@ class ConfigurationManagement:
     - Issue detection and optimization hints
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize configuration management."""
         self.validator = ExtractionConfigValidator()
     
@@ -421,7 +422,7 @@ class ConfigurationManagement:
         merged.update(user_config)
         
         # Validate merged configuration
-        validation = self.validate_extraction_config(merged)
+        self.validate_extraction_config(merged)
         
         return merged
 
@@ -436,7 +437,7 @@ class TransformationPipelines:
     - Batch transformations with error recovery
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize transformation pipelines."""
         self.pipeline = TransformationPipeline()
     
@@ -484,7 +485,7 @@ class TransformationPipelines:
     def build_transformation_chain(
         self,
         operations: List[str]
-    ) -> 'TransformationPipeline':
+    ) -> TransformationPipeline:
         """
         Build a transformation pipeline from operation names.
         
@@ -524,7 +525,7 @@ class AdvancedScenarios:
     - Result normalization and filtering
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize advanced scenario handler."""
         self.language_router = LanguageRouter()
         self.config_validator = ExtractionConfigValidator()
@@ -555,7 +556,7 @@ class AdvancedScenarios:
                 }
             )
         """
-        results = {
+        results: Dict[str, Any] = {
             'steps_completed': [],
             'errors': [],
             'warnings': [],
@@ -576,8 +577,8 @@ class AdvancedScenarios:
             results['steps_completed'].append('language_detection')
             
             # Step 3: Extract (placeholder)
-            entities = []
-            relationships = []
+            entities: List[Dict[str, Any]] = []
+            relationships: List[Dict[str, Any]] = []
             results['steps_completed'].append('extraction')
             
             # Step 4: Validate extracted entities
@@ -621,14 +622,14 @@ class AdvancedScenarios:
 # Integration Tests & Examples
 # ============================================================================
 
-def integration_example_1():
+def integration_example_1() -> None:
     """Basic extraction workflow."""
     workflow = BasicOntologyExtraction()
     result = workflow.extract_and_validate("Some text here")
     print(f"Basic extraction: {len(result.get('entities', []))} entities found")
 
 
-def integration_example_2():
+def integration_example_2() -> None:
     """Multi-language processing."""
     workflow = MultiLanguageWorkflow()
     result = workflow.process_multilingual_text(
@@ -638,7 +639,7 @@ def integration_example_2():
     print(f"Language detected: {result['detected_language']}")
 
 
-def integration_example_3():
+def integration_example_3() -> None:
     """Configuration validation."""
     config_mgmt = ConfigurationManagement()
     config = {
@@ -650,7 +651,7 @@ def integration_example_3():
     print(f"Config valid: {validation['is_valid']}")
 
 
-def integration_example_4():
+def integration_example_4() -> None:
     """Complete advanced pipeline."""
     processor = AdvancedScenarios()
     result = processor.complete_multilingual_pipeline(
