@@ -140,6 +140,61 @@ class EnhancedTraversalParameters(TypedDict, total=False):
     citation_analysis: Dict[str, Any]
 
 
+class ExtractionStatistics(TypedDict, total=False):
+    """Comprehensive extraction statistics and metrics."""
+    total_entities: int
+    total_relationships: int
+    unique_types: int
+    entities_with_properties: int
+    avg_confidence: float
+    min_confidence: float
+    max_confidence: float
+    entities_by_type: Dict[str, int]
+    relationship_types: List[str]
+    dangling_relationships: int
+    avg_text_length: float
+
+
+class RelationshipCoherenceIssues(TypedDict, total=False):
+    """Analysis of relationship quality and coherence issues."""
+    low_confidence_relationships: List[tuple]
+    dangling_relationships: List[tuple]
+    self_relationships: List[tuple]
+    duplicate_relationships: List[List[str]]
+    high_degree_entities: List[tuple]
+    total_issues: int
+
+
+class SyntheticOntologyResult(TypedDict, total=False):
+    """Result from synthetic ontology generation."""
+    entities: List[Dict[str, Any]]
+    relationships: List[Dict[str, Any]]
+    metadata: Dict[str, Any]
+    domain: str
+
+
+class EntityDictSerialization(TypedDict, total=False):
+    """Serialized entity representation."""
+    id: str
+    type: str
+    text: str
+    confidence: float
+    properties: Dict[str, Any]
+    source_span: Optional[List[int]]
+    last_seen: Optional[float]
+
+
+class RelationshipDictSerialization(TypedDict, total=False):
+    """Serialized relationship representation."""
+    id: str
+    source_id: str
+    target_id: str
+    type: str
+    properties: Dict[str, Any]
+    confidence: float
+    direction: str
+
+
 __all__ = [
     "QueryOptimizationPlanStep",
     "QueryOptimizationPlan",
@@ -153,4 +208,9 @@ __all__ = [
     "ValidatedQueryParameters",
     "FallbackQueryPlan",
     "EnhancedTraversalParameters",
+    "ExtractionStatistics",
+    "RelationshipCoherenceIssues",
+    "SyntheticOntologyResult",
+    "EntityDictSerialization",
+    "RelationshipDictSerialization",
 ]

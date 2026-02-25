@@ -10,7 +10,7 @@ import os
 import re
 import time
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 # Optional dependencies with graceful fallbacks.
 try:
@@ -21,14 +21,14 @@ except ImportError:
 
     class _MockNumpy:
         @staticmethod
-        def std(x):
+        def std(x: List[float]) -> float:
             if not x:
-                return 0
+                return 0.0
             mean_val = sum(x) / len(x)
             variance = sum((v - mean_val) ** 2 for v in x) / len(x)
-            return variance ** 0.5
+            return float(variance ** 0.5)
 
-    np = _MockNumpy()
+    np = cast(Any, _MockNumpy())
 
 try:
     import psutil
@@ -38,14 +38,14 @@ except ImportError:
 
     class _MockPsutil:
         @staticmethod
-        def virtual_memory():
+        def virtual_memory() -> Any:
             return type('Memory', (), {'percent': 50, 'available': 1000000000})()
 
         class Process:
-            def memory_info(self):
+            def memory_info(self) -> Any:
                 return type('MemInfo', (), {'rss': 0, 'vms': 0})()
 
-    psutil = _MockPsutil()
+    psutil = cast(Any, _MockPsutil())
 
 from ipfs_datasets_py.optimizers.graphrag.learning_adapter import (
     apply_learning_hook,
@@ -596,7 +596,10 @@ class GraphRAGQueryOptimizer:
                 return str(result)
             elif isinstance(result, (np.bytes_, np.void)):
                 try:
-                    return result.item().decode('utf-8', errors='replace')
+                    item = result.item()
+                    if isinstance(item, (bytes, bytearray)):
+                        return item.decode('utf-8', errors='replace')
+                    return str(item)
                 except (AttributeError, TypeError, ValueError, UnicodeError):
                     return str(result)
             elif isinstance(result, (np.datetime64, np.timedelta64)):

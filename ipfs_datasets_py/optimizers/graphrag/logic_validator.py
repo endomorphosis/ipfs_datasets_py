@@ -522,13 +522,16 @@ class LogicValidator:
         entities = ontology.get('entities', [])
         relationships = ontology.get('relationships', [])
         entity_ids = {e.get('id') for e in entities if isinstance(e, dict) and e.get('id')}
-        entity_id_to_text: dict[str, str] = {
-            e["id"]: e.get("text", e["id"])
-            for e in entities
-            if isinstance(e, dict)
-            and isinstance(e.get("id"), str)
-            and isinstance(e.get("text", e["id"]), str)
-        }
+        entity_id_to_text: dict[str, str] = {}
+        for e in entities:
+            if not isinstance(e, dict):
+                continue
+            raw_id = e.get("id")
+            if not isinstance(raw_id, str):
+                continue
+            raw_text = e.get("text", raw_id)
+            if isinstance(raw_text, str):
+                entity_id_to_text[raw_id] = raw_text
 
         for contradiction in contradictions:
             c_lower = contradiction.lower()
@@ -1678,11 +1681,14 @@ class LogicValidator:
         rels = ontology.get("relationships", ontology.get("edges", []))
         if not isinstance(rels, (list, tuple)):
             return set()
-        return {
-            r.get("type", r.get("label", "unknown"))
-            for r in rels
-            if isinstance(r, dict)
-        }
+        out: set[str] = set()
+        for r in rels:
+            if not isinstance(r, dict):
+                continue
+            rel_type = r.get("type", r.get("label", "unknown"))
+            if isinstance(rel_type, str):
+                out.add(rel_type)
+        return out
 
     def is_connected(self, ontology: Dict[str, Any]) -> bool:
         """Return ``True`` if every entity can reach every other entity.
@@ -1809,7 +1815,7 @@ class LogicValidator:
         if source == target:
             return 0
         rels = ontology.get("relationships", ontology.get("edges", []))
-        adj: Dict[str, set] = {}
+        adj: Dict[str, set[str]] = {}
         for rel in (rels if isinstance(rels, (list, tuple)) else []):
             if isinstance(rel, dict):
                 src = rel.get("source_id")
@@ -1819,8 +1825,8 @@ class LogicValidator:
                     adj.setdefault(tgt, set()).add(src)
         if source not in adj and source not in {e.get("id") for e in ontology.get("entities", []) if isinstance(e, dict)}:
             return -1
-        visited = {source}
-        queue = [(source, 0)]
+        visited: set[str] = {source}
+        queue: List[tuple[str, int]] = [(source, 0)]
         while queue:
             node, dist = queue.pop(0)
             for neighbour in adj.get(node, set()):
@@ -2030,7 +2036,7 @@ class LogicValidator:
                         degree[eid] = degree.get(eid, 0) + 1
         return [n for n, _ in sorted(degree.items(), key=lambda x: -x[1])[:k]]
 
-    def entity_contradiction_count(self, ontology: Dict[str, Any]) -> int:
+    def entity_contradiction_count(self, ontology: Dict[str, Any]) -> int:  # type: ignore[no-redef]
         """Return the number of logical contradictions detected in an ontology.
 
         This is a convenience method that runs consistency checking and returns
@@ -2050,7 +2056,7 @@ class LogicValidator:
         result = self.check_consistency(ontology)
         return len(result.contradictions)
 
-    def entity_count(self, ontology: Dict[str, Any]) -> int:
+    def entity_count(self, ontology: Dict[str, Any]) -> int:  # type: ignore[no-redef]
         """Return the number of entities in *ontology*.
 
         Args:
@@ -2062,7 +2068,7 @@ class LogicValidator:
         ents = ontology.get("entities", ontology.get("nodes", []))
         return len(ents) if isinstance(ents, (list, tuple)) else 0
 
-    def relationship_count(self, ontology: Dict[str, Any]) -> int:
+    def relationship_count(self, ontology: Dict[str, Any]) -> int:  # type: ignore[no-redef]
         """Return the number of relationships in *ontology*.
 
         Args:
@@ -2134,7 +2140,7 @@ class LogicValidator:
         unreachable.discard(source)
         return sorted(unreachable)
 
-    def strongly_connected_components(self, ontology: dict) -> list:
+    def strongly_connected_components(self, ontology: Dict[str, Any]) -> List[List[str]]:
         """Return strongly connected components (SCCs) using Kosaraju's algorithm.
 
         Each SCC is a list of entity IDs that are mutually reachable via
@@ -2149,23 +2155,29 @@ class LogicValidator:
         entities = ontology.get("entities", [])
         relationships = ontology.get("relationships", [])
 
-        all_ids = [e.get("id") for e in entities if e.get("id")]
+        all_ids: List[str] = [
+            entity_id
+            for e in entities
+            if isinstance(e, dict)
+            for entity_id in [e.get("id")]
+            if isinstance(entity_id, str) and entity_id
+        ]
         if not all_ids:
             return []
 
-        adj = {n: [] for n in all_ids}
-        radj = {n: [] for n in all_ids}
+        adj: Dict[str, List[str]] = {n: [] for n in all_ids}
+        radj: Dict[str, List[str]] = {n: [] for n in all_ids}
         for rel in relationships:
             s = rel.get("subject_id") or rel.get("source_id")
             o = rel.get("object_id") or rel.get("target_id")
-            if s and o and s in adj and o in adj:
+            if isinstance(s, str) and isinstance(o, str) and s in adj and o in adj:
                 adj[s].append(o)
                 radj[o].append(s)
 
-        visited = set()
-        order = []
+        visited: set[str] = set()
+        order: List[str] = []
 
-        def dfs1(node):
+        def dfs1(node: str) -> None:
             stack = [(node, iter(adj[node]))]
             visited.add(node)
             while stack:
@@ -2183,11 +2195,11 @@ class LogicValidator:
             if n not in visited:
                 dfs1(n)
 
-        visited2 = set()
-        sccs = []
+        visited2: set[str] = set()
+        sccs: List[List[str]] = []
 
-        def dfs2(node):
-            comp = []
+        def dfs2(node: str) -> List[str]:
+            comp: List[str] = []
             stack = [node]
             visited2.add(node)
             while stack:
@@ -2205,7 +2217,7 @@ class LogicValidator:
 
         return sccs
 
-    def weakly_connected_components(self, ontology: dict) -> list:
+    def weakly_connected_components(self, ontology: Dict[str, Any]) -> List[List[str]]:
         """Return weakly connected components treating all edges as undirected.
 
         Uses union-find (disjoint-set) over entity IDs.  Two entities are in
@@ -2222,20 +2234,26 @@ class LogicValidator:
         entities = ontology.get("entities", [])
         relationships = ontology.get("relationships", [])
 
-        all_ids = [e.get("id") for e in entities if e.get("id")]
+        all_ids: List[str] = [
+            entity_id
+            for e in entities
+            if isinstance(e, dict)
+            for entity_id in [e.get("id")]
+            if isinstance(entity_id, str) and entity_id
+        ]
         if not all_ids:
             return []
 
         # Union-Find
-        parent = {n: n for n in all_ids}
+        parent: Dict[str, str] = {n: n for n in all_ids}
 
-        def find(x):
+        def find(x: str) -> str:
             while parent[x] != x:
                 parent[x] = parent[parent[x]]
                 x = parent[x]
             return x
 
-        def union(a, b):
+        def union(a: str, b: str) -> None:
             ra, rb = find(a), find(b)
             if ra != rb:
                 parent[ra] = rb
@@ -2243,18 +2261,18 @@ class LogicValidator:
         for rel in relationships:
             s = rel.get("subject_id") or rel.get("source_id")
             o = rel.get("object_id") or rel.get("target_id")
-            if s and o and s in parent and o in parent:
+            if isinstance(s, str) and isinstance(o, str) and s in parent and o in parent:
                 union(s, o)
 
         # Group by root
-        groups: dict = {}
+        groups: Dict[str, List[str]] = {}
         for n in all_ids:
             root = find(n)
             groups.setdefault(root, []).append(n)
 
         return [sorted(g) for g in sorted(groups.values())]
 
-    def entity_density(self, ontology: dict) -> float:
+    def entity_density(self, ontology: Dict[str, Any]) -> float:
         """Return the ratio of relationships to entities (graph density proxy).
 
         Measures how connected the ontology is: higher values indicate more
@@ -2272,7 +2290,7 @@ class LogicValidator:
             return 0.0
         return n_relationships / n_entities
 
-    def longest_path(self, ontology: dict, source: str) -> int:
+    def longest_path(self, ontology: Dict[str, Any], source: str) -> int:
         """Return the length of the longest path from *source* in a DAG.
 
         Uses a topological-order BFS/DP approach.  If the graph has cycles
@@ -2289,27 +2307,35 @@ class LogicValidator:
         relationships = ontology.get("relationships", [])
 
         # Build adjacency list
-        adj: dict = {}
-        in_degree: dict = {}
+        adj: Dict[str, List[str]] = {}
+        in_degree: Dict[str, int] = {}
         for rel in relationships:
+            if not isinstance(rel, dict):
+                continue
             s = rel.get("subject_id") or rel.get("source_id")
             o = rel.get("object_id") or rel.get("target_id")
-            if s and o:
+            if isinstance(s, str) and isinstance(o, str):
                 adj.setdefault(s, []).append(o)
                 in_degree.setdefault(o, 0)
                 in_degree[s] = in_degree.get(s, 0)
 
         # Topological sort (Kahn) to detect cycles
         entities = ontology.get("entities", [])
-        all_ids = {e.get("id") for e in entities if e.get("id")}
+        all_ids: set[str] = {
+            entity_id
+            for e in entities
+            if isinstance(e, dict)
+            for entity_id in [e.get("id")]
+            if isinstance(entity_id, str) and entity_id
+        }
         in_deg = {n: 0 for n in all_ids}
         for s, targets in adj.items():
             for t in targets:
                 if t in in_deg:
                     in_deg[t] += 1
 
-        queue = [n for n in all_ids if in_deg[n] == 0]
-        topo = []
+        queue: List[str] = [n for n in all_ids if in_deg[n] == 0]
+        topo: List[str] = []
         while queue:
             node = queue.pop(0)
             topo.append(node)
@@ -2323,7 +2349,7 @@ class LogicValidator:
             return -1  # cycle detected
 
         # DP for longest path from source
-        dist = {n: -1 for n in all_ids}
+        dist: Dict[str, int] = {n: -1 for n in all_ids}
         if source not in dist:
             return 0
         dist[source] = 0
@@ -2336,7 +2362,7 @@ class LogicValidator:
 
         return max((v for v in dist.values() if v >= 0), default=0)
 
-    def relationship_type_distribution(self, ontology: dict) -> dict:
+    def relationship_type_distribution(self, ontology: Dict[str, Any]) -> Dict[str, int]:
         """Return a frequency distribution of relationship types.
 
         Args:
@@ -2347,13 +2373,16 @@ class LogicValidator:
             Dict mapping relationship type string → count.  Relationships
             without a ``"type"`` key are grouped under ``"unknown"``.
         """
-        dist: dict = {}
+        dist: Dict[str, int] = {}
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             rtype = rel.get("type") or "unknown"
-            dist[rtype] = dist.get(rtype, 0) + 1
+            if isinstance(rtype, str):
+                dist[rtype] = dist.get(rtype, 0) + 1
         return dist
 
-    def average_path_length(self, ontology: dict) -> float:
+    def average_path_length(self, ontology: Dict[str, Any]) -> float:
         """Return the mean shortest-path length between all reachable pairs.
 
         Uses BFS from every entity as a source, collecting shortest-path
@@ -2368,21 +2397,29 @@ class LogicValidator:
         """
         entities = ontology.get("entities", [])
         relationships = ontology.get("relationships", [])
-        all_ids = [e.get("id") for e in entities if e.get("id")]
+        all_ids: List[str] = [
+            entity_id
+            for e in entities
+            if isinstance(e, dict)
+            for entity_id in [e.get("id")]
+            if isinstance(entity_id, str) and entity_id
+        ]
         if not all_ids:
             return 0.0
 
-        adj: dict = {n: [] for n in all_ids}
+        adj: Dict[str, List[str]] = {n: [] for n in all_ids}
         for rel in relationships:
+            if not isinstance(rel, dict):
+                continue
             s = rel.get("subject_id") or rel.get("source_id")
             o = rel.get("object_id") or rel.get("target_id")
-            if s and o and s in adj and o in adj:
+            if isinstance(s, str) and isinstance(o, str) and s in adj and o in adj:
                 adj[s].append(o)
 
         total, count = 0, 0
         for src in all_ids:
-            dist: dict = {src: 0}
-            queue = [src]
+            dist: Dict[str, int] = {src: 0}
+            queue: List[str] = [src]
             while queue:
                 node = queue.pop(0)
                 for nbr in adj[node]:
@@ -2396,7 +2433,7 @@ class LogicValidator:
 
         return total / count if count > 0 else 0.0
 
-    def node_degree_histogram(self, ontology: dict) -> dict:
+    def node_degree_histogram(self, ontology: Dict[str, Any]) -> Dict[int, int]:
         """Return a histogram of out-degrees for all entities.
 
         Args:
@@ -2409,20 +2446,28 @@ class LogicValidator:
         """
         entities = ontology.get("entities", [])
         relationships = ontology.get("relationships", [])
-        all_ids = [e.get("id") for e in entities if e.get("id")]
+        all_ids: List[str] = [
+            entity_id
+            for e in entities
+            if isinstance(e, dict)
+            for entity_id in [e.get("id")]
+            if isinstance(entity_id, str) and entity_id
+        ]
 
-        out_degree = {eid: 0 for eid in all_ids}
+        out_degree: Dict[str, int] = {eid: 0 for eid in all_ids}
         for rel in relationships:
+            if not isinstance(rel, dict):
+                continue
             s = rel.get("subject_id") or rel.get("source_id")
-            if s and s in out_degree:
+            if isinstance(s, str) and s in out_degree:
                 out_degree[s] += 1
 
-        histogram: dict = {}
+        histogram: Dict[int, int] = {}
         for deg in out_degree.values():
             histogram[deg] = histogram.get(deg, 0) + 1
         return histogram
 
-    def leaf_entities(self, ontology: dict) -> list:
+    def leaf_entities(self, ontology: Dict[str, Any]) -> List[str]:
         """Return entity IDs that have no outgoing relationships (leaf nodes).
 
         A leaf has zero out-degree in the directed graph.
@@ -2435,15 +2480,23 @@ class LogicValidator:
         """
         entities = ontology.get("entities", [])
         relationships = ontology.get("relationships", [])
-        all_ids = {e.get("id") for e in entities if e.get("id")}
-        has_outgoing = set()
+        all_ids: set[str] = {
+            entity_id
+            for e in entities
+            if isinstance(e, dict)
+            for entity_id in [e.get("id")]
+            if isinstance(entity_id, str) and entity_id
+        }
+        has_outgoing: set[str] = set()
         for rel in relationships:
+            if not isinstance(rel, dict):
+                continue
             s = rel.get("subject_id") or rel.get("source_id")
-            if s and s in all_ids:
+            if isinstance(s, str) and s in all_ids:
                 has_outgoing.add(s)
         return sorted(all_ids - has_outgoing)
 
-    def source_entities(self, ontology: dict) -> list:
+    def source_entities(self, ontology: Dict[str, Any]) -> List[str]:
         """Return entity IDs that have no incoming relationships (source nodes).
 
         A source has zero in-degree in the directed graph.
@@ -2456,15 +2509,23 @@ class LogicValidator:
         """
         entities = ontology.get("entities", [])
         relationships = ontology.get("relationships", [])
-        all_ids = {e.get("id") for e in entities if e.get("id")}
-        has_incoming = set()
+        all_ids: set[str] = {
+            entity_id
+            for e in entities
+            if isinstance(e, dict)
+            for entity_id in [e.get("id")]
+            if isinstance(entity_id, str) and entity_id
+        }
+        has_incoming: set[str] = set()
         for rel in relationships:
+            if not isinstance(rel, dict):
+                continue
             o = rel.get("object_id") or rel.get("target_id")
-            if o and o in all_ids:
+            if isinstance(o, str) and o in all_ids:
                 has_incoming.add(o)
         return sorted(all_ids - has_incoming)
 
-    def max_in_degree(self, ontology: dict) -> dict:
+    def max_in_degree(self, ontology: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Return the entity with the most incoming relationships.
 
         Args:
@@ -2476,15 +2537,25 @@ class LogicValidator:
         entities = ontology.get("entities", [])
         if not entities:
             return None
-        in_counts: dict = {e.get("id", e) if isinstance(e, dict) else e: 0 for e in entities}
+        in_counts: Dict[str, int] = {
+            entity_id: 0
+            for e in entities
+            if isinstance(e, dict)
+            for entity_id in [e.get("id")]
+            if isinstance(entity_id, str)
+        }
+        if not in_counts:
+            return None
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             target = rel.get("target") or rel.get("target_id")
-            if target in in_counts:
+            if isinstance(target, str) and target in in_counts:
                 in_counts[target] += 1
         best = max(in_counts, key=lambda k: in_counts[k])
         return {"entity": best, "count": in_counts[best]}
 
-    def max_out_degree(self, ontology: dict) -> dict:
+    def max_out_degree(self, ontology: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Return the entity with the most outgoing relationships.
 
         Args:
@@ -2496,15 +2567,25 @@ class LogicValidator:
         entities = ontology.get("entities", [])
         if not entities:
             return None
-        out_counts: dict = {e.get("id", e) if isinstance(e, dict) else e: 0 for e in entities}
+        out_counts: Dict[str, int] = {
+            entity_id: 0
+            for e in entities
+            if isinstance(e, dict)
+            for entity_id in [e.get("id")]
+            if isinstance(entity_id, str)
+        }
+        if not out_counts:
+            return None
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             source = rel.get("source") or rel.get("source_id")
-            if source in out_counts:
+            if isinstance(source, str) and source in out_counts:
                 out_counts[source] += 1
         best = max(out_counts, key=lambda k: out_counts[k])
         return {"entity": best, "count": out_counts[best]}
 
-    def path_exists(self, ontology: dict, source: str, target: str) -> bool:
+    def path_exists(self, ontology: Dict[str, Any], source: str, target: str) -> bool:
         """Return True if *target* is reachable from *source*.
 
         Uses BFS over directed relationships.
@@ -2519,14 +2600,16 @@ class LogicValidator:
         """
         if source == target:
             return True
-        adjacency: dict = {}
+        adjacency: Dict[str, List[str]] = {}
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             s = rel.get("source") or rel.get("source_id")
             t = rel.get("target") or rel.get("target_id")
-            if s and t:
+            if isinstance(s, str) and isinstance(t, str):
                 adjacency.setdefault(s, []).append(t)
-        visited = set()
-        queue = [source]
+        visited: set[str] = set()
+        queue: List[str] = [source]
         while queue:
             current = queue.pop(0)
             if current == target:
@@ -2537,7 +2620,7 @@ class LogicValidator:
             queue.extend(adjacency.get(current, []))
         return False
 
-    def cycle_count(self, ontology: dict) -> int:
+    def cycle_count(self, ontology: Dict[str, Any]) -> int:
         """Count the number of simple cycles in the directed relationship graph.
 
         Uses iterative DFS with a recursion stack to detect back-edges.
@@ -2548,23 +2631,28 @@ class LogicValidator:
         Returns:
             Integer count of back-edges (proxy for cycle count).
         """
-        adjacency: dict = {}
+        adjacency: Dict[str, List[str]] = {}
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             s = rel.get("source") or rel.get("source_id")
             t = rel.get("target") or rel.get("target_id")
-            if s and t:
+            if isinstance(s, str) and isinstance(t, str):
                 adjacency.setdefault(s, []).append(t)
 
-        entities = [
-            e.get("id", e) if isinstance(e, dict) else e
+        entities: List[str] = [
+            entity_id
             for e in ontology.get("entities", [])
+            if isinstance(e, dict)
+            for entity_id in [e.get("id")]
+            if isinstance(entity_id, str)
         ]
 
-        visited: set = set()
-        rec_stack: set = set()
+        visited: set[str] = set()
+        rec_stack: set[str] = set()
         count = [0]
 
-        def dfs(node):
+        def dfs(node: str) -> None:
             visited.add(node)
             rec_stack.add(node)
             for neighbor in adjacency.get(node, []):
@@ -2579,7 +2667,7 @@ class LogicValidator:
                 dfs(entity)
         return count[0]
 
-    def relationship_diversity(self, ontology: dict) -> float:
+    def relationship_diversity(self, ontology: Dict[str, Any]) -> float:
         """Return Shannon entropy of the relationship type distribution.
 
         Higher values indicate more evenly distributed relationship types.
@@ -2594,10 +2682,13 @@ class LogicValidator:
         rels = ontology.get("relationships", [])
         if not rels:
             return 0.0
-        counts: dict = {}
+        counts: Dict[str, int] = {}
         for rel in rels:
+            if not isinstance(rel, dict):
+                continue
             t = rel.get("type", "unknown")
-            counts[t] = counts.get(t, 0) + 1
+            if isinstance(t, str):
+                counts[t] = counts.get(t, 0) + 1
         total = len(rels)
         entropy = 0.0
         for c in counts.values():
@@ -2606,7 +2697,7 @@ class LogicValidator:
                 entropy -= p * math.log2(p)
         return entropy
 
-    def entity_pair_count(self, ontology: dict) -> int:
+    def entity_pair_count(self, ontology: Dict[str, Any]) -> int:
         """Return the number of unique (source, target) pairs in relationships.
 
         Args:
@@ -2615,15 +2706,17 @@ class LogicValidator:
         Returns:
             Integer count of distinct directed pairs.
         """
-        pairs = set()
+        pairs: set[tuple[str, str]] = set()
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             s = rel.get("source") or rel.get("source_id")
             t = rel.get("target") or rel.get("target_id")
-            if s and t:
+            if isinstance(s, str) and isinstance(t, str):
                 pairs.add((s, t))
         return len(pairs)
 
-    def multi_hop_count(self, ontology: dict, src: str, max_hops: int = 2) -> int:
+    def multi_hop_count(self, ontology: Dict[str, Any], src: str, max_hops: int = 2) -> int:
         """Return the number of entities reachable from *src* in at most *max_hops* steps.
 
         Args:
@@ -2634,17 +2727,19 @@ class LogicValidator:
         Returns:
             Integer count of reachable entities (not counting *src* itself).
         """
-        adjacency: dict = {}
+        adjacency: Dict[str, List[str]] = {}
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             s = rel.get("source") or rel.get("source_id")
             t = rel.get("target") or rel.get("target_id")
-            if s and t:
+            if isinstance(s, str) and isinstance(t, str):
                 adjacency.setdefault(s, []).append(t)
 
-        visited = {src}
-        frontier = {src}
+        visited: set[str] = {src}
+        frontier: set[str] = {src}
         for _ in range(max_hops):
-            next_frontier = set()
+            next_frontier: set[str] = set()
             for node in frontier:
                 for neighbor in adjacency.get(node, []):
                     if neighbor not in visited:
@@ -2653,7 +2748,7 @@ class LogicValidator:
             frontier = next_frontier
         return len(visited) - 1  # exclude src itself
 
-    def graph_diameter(self, ontology: dict) -> int:
+    def graph_diameter(self, ontology: Dict[str, Any]) -> int:
         """Return the diameter of the directed graph (longest shortest path).
 
         Runs BFS from every entity and takes the maximum shortest-path length
@@ -2665,24 +2760,29 @@ class LogicValidator:
         Returns:
             Integer diameter; ``0`` when fewer than 2 entities or no edges.
         """
-        entities = [
-            e.get("id", e) if isinstance(e, dict) else e
+        entities: List[str] = [
+            entity_id
             for e in ontology.get("entities", [])
+            if isinstance(e, dict)
+            for entity_id in [e.get("id")]
+            if isinstance(entity_id, str)
         ]
         if len(entities) < 2:
             return 0
 
-        adjacency: dict = {}
+        adjacency: Dict[str, List[str]] = {}
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             s = rel.get("source") or rel.get("source_id")
             t = rel.get("target") or rel.get("target_id")
-            if s and t:
+            if isinstance(s, str) and isinstance(t, str):
                 adjacency.setdefault(s, []).append(t)
 
         max_dist = 0
         for src in entities:
-            dist = {src: 0}
-            queue = [src]
+            dist: Dict[str, int] = {src: 0}
+            queue: List[str] = [src]
             while queue:
                 current = queue.pop(0)
                 for neighbor in adjacency.get(current, []):
@@ -2725,7 +2825,7 @@ class LogicValidator:
             Integer count of symmetric pairs (each pair counted once).
         """
         rels = getattr(ontology, "relationships", [])
-        edges: set = set()
+        edges: set[tuple[Any, Any, Any]] = set()
         count = 0
         for r in rels:
             src = getattr(r, "source_id", None)
@@ -2753,7 +2853,7 @@ class LogicValidator:
         """
         rels = getattr(ontology, "relationships", [])
         # Build adjacency set for O(1) edge lookup
-        edge_set: set = set()
+        edge_set: set[tuple[Any, Any]] = set()
         for r in rels:
             src = getattr(r, "source_id", None)
             tgt = getattr(r, "target_id", None)
@@ -2762,7 +2862,7 @@ class LogicValidator:
 
         # Build adjacency list
         from collections import defaultdict as _dd
-        adj: dict = _dd(set)
+        adj: Dict[Any, set[Any]] = _dd(set)
         for (src, tgt) in edge_set:
             adj[src].add(tgt)
 
@@ -2787,8 +2887,8 @@ class LogicValidator:
             sources) or isolated nodes with no relationships at all.
         """
         rels = getattr(ontology, "relationships", [])
-        all_nodes: set = set()
-        source_nodes: set = set()
+        all_nodes: set[Any] = set()
+        source_nodes: set[Any] = set()
         for r in rels:
             src = getattr(r, "source_id", None)
             tgt = getattr(r, "target_id", None)
@@ -2812,8 +2912,8 @@ class LogicValidator:
             targets).
         """
         rels = getattr(ontology, "relationships", [])
-        all_nodes: set = set()
-        target_nodes: set = set()
+        all_nodes: set[Any] = set()
+        target_nodes: set[Any] = set()
         for r in rels:
             src = getattr(r, "source_id", None)
             tgt = getattr(r, "target_id", None)
@@ -2839,7 +2939,7 @@ class LogicValidator:
             ``target_id`` of any relationship.
         """
         rels = getattr(ontology, "relationships", [])
-        connected: set = set()
+        connected: set[Any] = set()
         for r in rels:
             src = getattr(r, "source_id", None)
             tgt = getattr(r, "target_id", None)
@@ -2852,7 +2952,7 @@ class LogicValidator:
             return 0
         return sum(1 for e in entities if getattr(e, "id", None) not in connected)
 
-    def in_degree_distribution(self, ontology: Any) -> dict:
+    def in_degree_distribution(self, ontology: Any) -> Dict[Any, int]:
         """Return a dict mapping each node to its in-degree (incoming relationship count).
 
         Args:
@@ -2862,7 +2962,7 @@ class LogicValidator:
             Dict ``{node_id: int}``; empty dict when no relationships.
         """
         rels = getattr(ontology, "relationships", [])
-        distribution: dict = {}
+        distribution: Dict[Any, int] = {}
         for r in rels:
             src = getattr(r, "source_id", None)
             tgt = getattr(r, "target_id", None)
@@ -2872,7 +2972,7 @@ class LogicValidator:
                 distribution[tgt] = distribution.get(tgt, 0) + 1
         return distribution
 
-    def out_degree_distribution(self, ontology: Any) -> dict:
+    def out_degree_distribution(self, ontology: Any) -> Dict[Any, int]:
         """Return a dict mapping each node to its out-degree (outgoing relationship count).
 
         Args:
@@ -2882,7 +2982,7 @@ class LogicValidator:
             Dict ``{node_id: int}``; empty dict when no relationships.
         """
         rels = getattr(ontology, "relationships", [])
-        distribution: dict = {}
+        distribution: Dict[Any, int] = {}
         for r in rels:
             src = getattr(r, "source_id", None)
             tgt = getattr(r, "target_id", None)
@@ -2909,9 +3009,9 @@ class LogicValidator:
         rels = getattr(ontology, "relationships", [])
         if not rels:
             return 0
-        adj: dict = _dd(list)
-        in_deg: dict = _dd(int)
-        nodes: set = set()
+        adj: Dict[Any, List[Any]] = _dd(list)
+        in_deg: Dict[Any, int] = _dd(int)
+        nodes: set[Any] = set()
         for r in rels:
             src = getattr(r, "source_id", None)
             tgt = getattr(r, "target_id", None)
@@ -2924,7 +3024,7 @@ class LogicValidator:
         if not roots:
             roots = list(nodes)[:1]
         max_depth = 0
-        queue: _deque = _deque()
+        queue: _deque[tuple[Any, int, set[Any]]] = _deque()
         for root in roots:
             queue.append((root, 0, {root}))
         while queue:
@@ -2951,9 +3051,9 @@ class LogicValidator:
         rels = getattr(ontology, "relationships", [])
         if not rels:
             return 0
-        adj: dict = _dd(list)
-        radj: dict = _dd(list)
-        nodes: set = set()
+        adj: Dict[Any, List[Any]] = _dd(list)
+        radj: Dict[Any, List[Any]] = _dd(list)
+        nodes: set[Any] = set()
         for r in rels:
             src = getattr(r, "source_id", None)
             tgt = getattr(r, "target_id", None)
@@ -2965,8 +3065,8 @@ class LogicValidator:
         if not nodes:
             return 0
         # First pass: DFS on original graph to get finish order
-        visited: set = set()
-        finish_order: list = []
+        visited: set[Any] = set()
+        finish_order: List[Any] = []
 
         def _dfs1(node: str) -> None:
             stack = [(node, iter(adj[node]))]
@@ -2986,7 +3086,7 @@ class LogicValidator:
             if node not in visited:
                 _dfs1(node)
         # Second pass: DFS on reversed graph in reverse finish order
-        visited2: set = set()
+        visited2: set[Any] = set()
         scc_count = 0
 
         def _dfs2(node: str) -> None:
@@ -3022,8 +3122,8 @@ class LogicValidator:
             return 0
         # Build undirected adjacency
         from collections import defaultdict as _dd
-        adj: dict = _dd(set)
-        nodes: set = set()
+        adj: Dict[Any, set[Any]] = _dd(set)
+        nodes: set[Any] = set()
         for r in rels:
             src = getattr(r, "source_id", None)
             tgt = getattr(r, "target_id", None)
@@ -3034,7 +3134,7 @@ class LogicValidator:
                 nodes.add(tgt)
         if not nodes:
             return 0
-        visited: set = set()
+        visited: set[Any] = set()
         count = 0
         for node in nodes:
             if node not in visited:
@@ -3061,7 +3161,7 @@ class LogicValidator:
             return 0.0
         from collections import Counter as _Counter
         in_deg = _Counter(getattr(r, "target_id", None) for r in rels if getattr(r, "target_id", None))
-        nodes: set = set()
+        nodes: set[Any] = set()
         for r in rels:
             src = getattr(r, "source_id", None)
             tgt = getattr(r, "target_id", None)
@@ -3087,7 +3187,7 @@ class LogicValidator:
             return 0.0
         from collections import Counter as _Counter
         out_deg = _Counter(getattr(r, "source_id", None) for r in rels if getattr(r, "source_id", None))
-        nodes: set = set()
+        nodes: set[Any] = set()
         for r in rels:
             src = getattr(r, "source_id", None)
             tgt = getattr(r, "target_id", None)
@@ -3109,7 +3209,7 @@ class LogicValidator:
             Integer count; 0 when no relationships.
         """
         rels = getattr(ontology, "relationships", [])
-        nodes: set = set()
+        nodes: set[Any] = set()
         for r in rels:
             src = getattr(r, "source_id", None)
             tgt = getattr(r, "target_id", None)
@@ -3119,7 +3219,7 @@ class LogicValidator:
                 nodes.add(tgt)
         return len(nodes)
 
-    def edge_count(self, ontology: dict) -> int:
+    def edge_count(self, ontology: Dict[str, Any]) -> int:
         """Return the total number of relationships (edges) in the ontology.
 
         Args:
@@ -3130,7 +3230,7 @@ class LogicValidator:
         """
         return len(ontology.get("relationships", []))
 
-    def hub_nodes(self, ontology: dict, min_degree: int = 3) -> list:
+    def hub_nodes(self, ontology: Dict[str, Any], min_degree: int = 3) -> List[str]:  # type: ignore[no-redef]
         """Return nodes whose combined degree (in + out) is >= min_degree.
 
         Args:
@@ -3140,17 +3240,19 @@ class LogicValidator:
         Returns:
             Sorted list of node ID strings; empty list when no relationships.
         """
-        degree: dict = {}
+        degree: Dict[str, int] = {}
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src:
+            if isinstance(src, str) and src:
                 degree[src] = degree.get(src, 0) + 1
-            if tgt:
+            if isinstance(tgt, str) and tgt:
                 degree[tgt] = degree.get(tgt, 0) + 1
         return sorted(node for node, deg in degree.items() if deg >= min_degree)
 
-    def orphan_nodes(self, ontology: dict) -> list:
+    def orphan_nodes(self, ontology: Dict[str, Any]) -> List[str]:
         """Return entity IDs that appear in no relationship as source or target.
 
         Args:
@@ -3160,18 +3262,26 @@ class LogicValidator:
             Sorted list of orphan entity ID strings.
         """
         entities = ontology.get("entities", [])
-        entity_ids = {e.get("id", "") for e in entities if e.get("id")}
-        connected: set = set()
+        entity_ids = {
+            entity_id
+            for e in entities
+            if isinstance(e, dict)
+            for entity_id in [e.get("id")]
+            if isinstance(entity_id, str) and entity_id
+        }
+        connected: set[str] = set()
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src:
+            if isinstance(src, str) and src:
                 connected.add(src)
-            if tgt:
+            if isinstance(tgt, str) and tgt:
                 connected.add(tgt)
         return sorted(entity_ids - connected)
 
-    def node_in_degree(self, ontology: dict) -> dict:
+    def node_in_degree(self, ontology: Dict[str, Any]) -> Dict[str, int]:
         """Return a mapping of each node to its in-degree (incoming relationships).
 
         Args:
@@ -3180,14 +3290,16 @@ class LogicValidator:
         Returns:
             Dict of {node_id: in_degree_count}; empty dict when no relationships.
         """
-        degree: dict = {}
+        degree: Dict[str, int] = {}
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             tgt = rel.get("target") or rel.get("target_id", "")
-            if tgt:
+            if isinstance(tgt, str) and tgt:
                 degree[tgt] = degree.get(tgt, 0) + 1
         return degree
 
-    def node_out_degree(self, ontology: dict) -> dict:
+    def node_out_degree(self, ontology: Dict[str, Any]) -> Dict[str, int]:
         """Return a mapping of each node to its out-degree (outgoing relationships).
 
         Args:
@@ -3196,14 +3308,16 @@ class LogicValidator:
         Returns:
             Dict of {node_id: out_degree_count}; empty dict when no relationships.
         """
-        degree: dict = {}
+        degree: Dict[str, int] = {}
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
-            if src:
+            if isinstance(src, str) and src:
                 degree[src] = degree.get(src, 0) + 1
         return degree
 
-    def bridge_nodes(self, ontology: dict) -> list:
+    def bridge_nodes(self, ontology: Dict[str, Any]) -> List[str]:
         """Return nodes that are both a source and a target in the relationship graph.
 
         These nodes act as "bridges" connecting two sides of the graph.
@@ -3214,18 +3328,20 @@ class LogicValidator:
         Returns:
             Sorted list of bridge node ID strings.
         """
-        sources: set = set()
-        targets: set = set()
+        sources: set[str] = set()
+        targets: set[str] = set()
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src:
+            if isinstance(src, str) and src:
                 sources.add(src)
-            if tgt:
+            if isinstance(tgt, str) and tgt:
                 targets.add(tgt)
         return sorted(sources & targets)
 
-    def leaf_nodes(self, ontology: dict) -> list:
+    def leaf_nodes(self, ontology: Dict[str, Any]) -> List[str]:
         """Return nodes that appear only as targets (no outgoing relationships).
 
         Args:
@@ -3234,18 +3350,20 @@ class LogicValidator:
         Returns:
             Sorted list of leaf node ID strings.
         """
-        sources: set = set()
-        targets: set = set()
+        sources: set[str] = set()
+        targets: set[str] = set()
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src:
+            if isinstance(src, str) and src:
                 sources.add(src)
-            if tgt:
+            if isinstance(tgt, str) and tgt:
                 targets.add(tgt)
         return sorted(targets - sources)
 
-    def root_nodes(self, ontology: dict) -> list:
+    def root_nodes(self, ontology: Dict[str, Any]) -> List[str]:
         """Return nodes that appear only as sources (no incoming relationships).
 
         Args:
@@ -3254,18 +3372,20 @@ class LogicValidator:
         Returns:
             Sorted list of root node ID strings.
         """
-        sources: set = set()
-        targets: set = set()
+        sources: set[str] = set()
+        targets: set[str] = set()
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src:
+            if isinstance(src, str) and src:
                 sources.add(src)
-            if tgt:
+            if isinstance(tgt, str) and tgt:
                 targets.add(tgt)
         return sorted(sources - targets)
 
-    def relationship_loop_count(self, ontology: dict) -> int:
+    def relationship_loop_count(self, ontology: Dict[str, Any]) -> int:
         """Count relationships where source and target are the same node.
 
         Args:
@@ -3276,13 +3396,15 @@ class LogicValidator:
         """
         count = 0
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src and tgt and src == tgt:
+            if isinstance(src, str) and isinstance(tgt, str) and src and tgt and src == tgt:
                 count += 1
         return count
 
-    def max_path_length_estimate(self, ontology: dict) -> int:
+    def max_path_length_estimate(self, ontology: Dict[str, Any]) -> int:
         """Estimate the maximum path length using the longest chain heuristic.
 
         Performs a simplified BFS from each root node and returns the maximum
@@ -3298,20 +3420,22 @@ class LogicValidator:
         rels = ontology.get("relationships", [])
         if not rels:
             return 0
-        adj: dict = defaultdict(list)
-        all_nodes: set = set()
+        adj: Dict[str, List[str]] = defaultdict(list)
+        all_nodes: set[str] = set()
         for rel in rels:
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src and tgt:
+            if isinstance(src, str) and isinstance(tgt, str) and src and tgt:
                 adj[src].append(tgt)
                 all_nodes.add(src)
                 all_nodes.add(tgt)
-        targets = {tgt for nbrs in adj.values() for tgt in nbrs}
+        targets: set[str] = {tgt for nbrs in adj.values() for tgt in nbrs}
         roots = all_nodes - targets or all_nodes
         max_depth = 0
         for root in roots:
-            queue: deque = deque([(root, 0, {root})])
+            queue: deque[tuple[str, int, set[str]]] = deque([(root, 0, {root})])
             while queue:
                 node, depth, visited = queue.popleft()
                 max_depth = max(max_depth, depth)
@@ -3320,7 +3444,7 @@ class LogicValidator:
                         queue.append((nbr, depth + 1, visited | {nbr}))
         return max_depth
 
-    def connected_components_count(self, ontology: dict) -> int:
+    def connected_components_count(self, ontology: Dict[str, Any]) -> int:
         """Count the number of weakly connected components in the relationship graph.
 
         Treats all edges as undirected for component detection.
@@ -3331,16 +3455,18 @@ class LogicValidator:
         Returns:
             Integer count; 0 when no nodes.
         """
-        adj: dict = {}
+        adj: Dict[str, set[str]] = {}
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src and tgt:
+            if isinstance(src, str) and isinstance(tgt, str) and src and tgt:
                 adj.setdefault(src, set()).add(tgt)
                 adj.setdefault(tgt, set()).add(src)
         if not adj:
             return 0
-        visited: set = set()
+        visited: set[str] = set()
         components = 0
         for start in adj:
             if start not in visited:
@@ -3353,7 +3479,7 @@ class LogicValidator:
                         stack.extend(adj.get(node, set()) - visited)
         return components
 
-    def cycle_count_estimate(self, ontology: dict) -> int:
+    def cycle_count_estimate(self, ontology: Dict[str, Any]) -> int:
         """Estimate the number of cycles using Euler's formula: E - V + C.
 
         For directed graphs, cycles ≥ E - V + C where C is connected components.
@@ -3368,20 +3494,22 @@ class LogicValidator:
         rels = ontology.get("relationships", [])
         if not rels:
             return 0
-        nodes: set = set()
+        nodes: set[str] = set()
         for rel in rels:
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src:
+            if isinstance(src, str) and src:
                 nodes.add(src)
-            if tgt:
+            if isinstance(tgt, str) and tgt:
                 nodes.add(tgt)
         v = len(nodes)
         e = len(rels)
         c = self.connected_components_count(ontology)
         return max(0, e - v + c)
 
-    def acyclic_check(self, ontology: dict) -> bool:
+    def acyclic_check(self, ontology: Dict[str, Any]) -> bool:
         """Return True if the directed relationship graph is acyclic (a DAG).
 
         Uses DFS cycle detection with a "currently in stack" set.
@@ -3393,20 +3521,22 @@ class LogicValidator:
             True when the graph has no directed cycles; False otherwise.
         """
         from collections import defaultdict
-        adj: dict = defaultdict(list)
+        adj: Dict[str, List[str]] = defaultdict(list)
         for rel in ontology.get("relationships", []):
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src and tgt:
+            if isinstance(src, str) and isinstance(tgt, str) and src and tgt:
                 adj[src].append(tgt)
-        all_nodes = set(adj.keys())
+        all_nodes: set[str] = set(adj.keys())
         for v in list(adj.values()):
             all_nodes.update(v)
 
-        visited: set = set()
-        in_stack: set = set()
+        visited: set[str] = set()
+        in_stack: set[str] = set()
 
-        def dfs(node):
+        def dfs(node: str) -> bool:
             visited.add(node)
             in_stack.add(node)
             for nbr in adj.get(node, []):
@@ -3424,7 +3554,7 @@ class LogicValidator:
                     return False
         return True
 
-    def has_disconnected_subgraphs(self, ontology: dict) -> bool:
+    def has_disconnected_subgraphs(self, ontology: Dict[str, Any]) -> bool:
         """Return True if the relationship graph has more than one connected component.
 
         Args:
@@ -3435,7 +3565,7 @@ class LogicValidator:
         """
         return self.connected_components_count(ontology) > 1
 
-    def density_comparison(self, ontology: dict) -> dict:
+    def density_comparison(self, ontology: Dict[str, Any]) -> Dict[str, float | int]:
         """Compare the actual edge density to the maximum possible density.
 
         For a directed graph with V nodes, max edges = V*(V-1).
@@ -3451,13 +3581,15 @@ class LogicValidator:
         rels = ontology.get("relationships", [])
         if not rels:
             return {"actual_density": 0.0, "max_density": 1.0, "edges": 0, "nodes": 0}
-        nodes: set = set()
+        nodes: set[str] = set()
         for rel in rels:
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src:
+            if isinstance(src, str) and src:
                 nodes.add(src)
-            if tgt:
+            if isinstance(tgt, str) and tgt:
                 nodes.add(tgt)
         v = len(nodes)
         e = len(rels)
@@ -3465,7 +3597,7 @@ class LogicValidator:
         density = e / max_edges if max_edges > 0 else 0.0
         return {"actual_density": density, "max_density": 1.0, "edges": e, "nodes": v}
 
-    def articulation_point_count(self, ontology: dict) -> int:
+    def articulation_point_count(self, ontology: Dict[str, Any]) -> int:
         """Return a rough count of articulation-point candidates.
 
         An articulation point (cut vertex) is a node whose removal would
@@ -3484,11 +3616,11 @@ class LogicValidator:
         """
         import collections
         rels = ontology.get("relationships", []) if ontology else []
-        adj: dict = collections.defaultdict(set)
+        adj: Dict[str, set[str]] = collections.defaultdict(set)
         for rel in rels:
             src = rel.get("source") if isinstance(rel, dict) else getattr(rel, "source", None)
             tgt = rel.get("target") if isinstance(rel, dict) else getattr(rel, "target", None)
-            if src and tgt:
+            if isinstance(src, str) and isinstance(tgt, str):
                 adj[src].add(tgt)
                 adj[tgt].add(src)
         count = 0
@@ -3506,7 +3638,7 @@ class LogicValidator:
                 count += 1
         return count
 
-    def redundancy_score(self, ontology: dict) -> float:
+    def redundancy_score(self, ontology: Dict[str, Any]) -> float:
         """Return the fraction of relationships that are duplicates.
 
         A duplicate is a (source, target) pair that appears more than once.
@@ -3520,7 +3652,7 @@ class LogicValidator:
         rels = ontology.get("relationships", []) if ontology else []
         if len(rels) < 2:
             return 0.0
-        pairs: dict = {}
+        pairs: Dict[tuple[Any, Any], int] = {}
         for rel in rels:
             src = rel.get("source") if isinstance(rel, dict) else getattr(rel, "source", None)
             tgt = rel.get("target") if isinstance(rel, dict) else getattr(rel, "target", None)
@@ -3529,7 +3661,7 @@ class LogicValidator:
         duplicates = sum(v - 1 for v in pairs.values() if v > 1)
         return duplicates / len(rels)
 
-    def singleton_entity_count(self, ontology: dict) -> int:
+    def singleton_entity_count(self, ontology: Dict[str, Any]) -> int:
         """Return the number of entities that appear in no relationships.
 
         Args:
@@ -3542,7 +3674,7 @@ class LogicValidator:
         """
         entities = ontology.get("entities", []) if ontology else []
         rels = ontology.get("relationships", []) if ontology else []
-        connected: set = set()
+        connected: set[Any] = set()
         for rel in rels:
             src = rel.get("source") if isinstance(rel, dict) else getattr(rel, "source", None)
             tgt = rel.get("target") if isinstance(rel, dict) else getattr(rel, "target", None)
@@ -3557,7 +3689,7 @@ class LogicValidator:
                 count += 1
         return count
 
-    def avg_path_length(self, ontology: dict) -> float:
+    def avg_path_length(self, ontology: Dict[str, Any]) -> float:
         """Alias for :meth:`average_path_length`.
 
         Returns the mean shortest-path length between all reachable node pairs.
@@ -3570,7 +3702,7 @@ class LogicValidator:
         """
         return self.average_path_length(ontology)
 
-    def node_density(self, ontology: dict) -> float:
+    def node_density(self, ontology: Dict[str, Any]) -> float:
         """Return the graph density: ratio of actual edges to maximum possible edges.
 
         For a directed graph with *n* nodes the maximum possible edges is
@@ -3687,7 +3819,7 @@ class LogicValidator:
             return 0.0
         return formula_count / result.time_ms
 
-    def result_consistency_ratio(self, results: list) -> float:
+    def result_consistency_ratio(self, results: List[ValidationResult]) -> float:
         """Calculate ratio of consistent results.
 
         Args:
@@ -3701,7 +3833,7 @@ class LogicValidator:
         consistent_count = sum(1 for r in results if r.is_consistent)
         return consistent_count / len(results)
 
-    def average_validation_time(self, results: list) -> float:
+    def average_validation_time(self, results: List[ValidationResult]) -> float:
         """Calculate average validation time across results.
 
         Args:
@@ -3715,7 +3847,7 @@ class LogicValidator:
         total_time = sum(r.time_ms for r in results)
         return total_time / len(results)
 
-    def most_connected_node(self, ontology: dict) -> str:
+    def most_connected_node(self, ontology: Dict[str, Any]) -> str:
         """Return the node with the highest total degree (in + out) in the ontology.
 
         Args:
@@ -3728,19 +3860,21 @@ class LogicValidator:
         relationships = ontology.get("relationships", []) or []
         if not relationships:
             return ""
-        degree: dict = {}
+        degree: Dict[str, int] = {}
         for rel in relationships:
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src:
+            if isinstance(src, str) and src:
                 degree[src] = degree.get(src, 0) + 1
-            if tgt:
+            if isinstance(tgt, str) and tgt:
                 degree[tgt] = degree.get(tgt, 0) + 1
         if not degree:
             return ""
         return max(degree.items(), key=lambda x: x[1])[0]
 
-    def avg_in_degree(self, ontology: dict) -> float:
+    def avg_in_degree(self, ontology: Dict[str, Any]) -> float:
         """Return the average in-degree across all nodes in the ontology.
 
         Alias for :meth:`average_in_degree`.
@@ -3753,7 +3887,7 @@ class LogicValidator:
         """
         return self.average_in_degree(ontology)
 
-    def avg_out_degree(self, ontology: dict) -> float:
+    def avg_out_degree(self, ontology: Dict[str, Any]) -> float:
         """Return the average out-degree across all nodes in the ontology.
 
         Alias for :meth:`average_out_degree`.
@@ -3766,7 +3900,7 @@ class LogicValidator:
         """
         return self.average_out_degree(ontology)
 
-    def avg_degree(self, ontology: dict) -> float:
+    def avg_degree(self, ontology: Dict[str, Any]) -> float:
         """Return the average total degree (in-degree + out-degree) per node.
 
         Args:
@@ -3778,19 +3912,21 @@ class LogicValidator:
         relationships = ontology.get("relationships", []) or []
         if not relationships:
             return 0.0
-        degree: dict = {}
+        degree: Dict[str, int] = {}
         for rel in relationships:
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src:
+            if isinstance(src, str) and src:
                 degree[src] = degree.get(src, 0) + 1
-            if tgt:
+            if isinstance(tgt, str) and tgt:
                 degree[tgt] = degree.get(tgt, 0) + 1
         if not degree:
             return 0.0
         return sum(degree.values()) / len(degree)
 
-    def degree_centrality(self, ontology: dict) -> dict:
+    def degree_centrality(self, ontology: Dict[str, Any]) -> Dict[str, float]:
         """Return a dict mapping each node to its degree centrality.
 
         Degree centrality = ``total_degree(node) / (n_nodes - 1)`` where
@@ -3806,20 +3942,22 @@ class LogicValidator:
         relationships = ontology.get("relationships", []) or []
         if not relationships:
             return {}
-        degree: dict = {}
+        degree: Dict[str, int] = {}
         for rel in relationships:
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src:
+            if isinstance(src, str) and src:
                 degree[src] = degree.get(src, 0) + 1
-            if tgt:
+            if isinstance(tgt, str) and tgt:
                 degree[tgt] = degree.get(tgt, 0) + 1
         n = len(degree)
         if n < 2:
             return {node: 0.0 for node in degree}
         return {node: deg / (n - 1) for node, deg in degree.items()}
 
-    def max_degree_node_count(self, ontology: dict) -> int:
+    def max_degree_node_count(self, ontology: Dict[str, Any]) -> int:
         """Return the count of nodes that share the maximum total degree.
 
         Args:
@@ -3831,20 +3969,22 @@ class LogicValidator:
         relationships = ontology.get("relationships", []) or []
         if not relationships:
             return 0
-        degree: dict = {}
+        degree: Dict[str, int] = {}
         for rel in relationships:
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src:
+            if isinstance(src, str) and src:
                 degree[src] = degree.get(src, 0) + 1
-            if tgt:
+            if isinstance(tgt, str) and tgt:
                 degree[tgt] = degree.get(tgt, 0) + 1
         if not degree:
             return 0
         max_deg = max(degree.values())
         return sum(1 for d in degree.values() if d == max_deg)
 
-    def closeness_centrality_approx(self, ontology: dict) -> dict:
+    def closeness_centrality_approx(self, ontology: Dict[str, Any]) -> Dict[str, float]:
         """Return approximate closeness centrality for each node.
 
         Uses a BFS-based shortest-path approximation. For each node, the
@@ -3866,11 +4006,13 @@ class LogicValidator:
             return {}
 
         # Build adjacency (directed → treat as undirected for BFS)
-        adj: dict[str, set] = {}
+        adj: dict[str, set[str]] = {}
         for rel in relationships:
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src and tgt:
+            if isinstance(src, str) and isinstance(tgt, str) and src and tgt:
                 adj.setdefault(src, set()).add(tgt)
                 adj.setdefault(tgt, set()).add(src)
 
@@ -3898,7 +4040,7 @@ class LogicValidator:
                 centrality[start] = reachable / total_dist
         return centrality
 
-    def reciprocal_edge_count(self, ontology: dict) -> int:
+    def reciprocal_edge_count(self, ontology: Dict[str, Any]) -> int:
         """Return the count of bidirectional edge pairs.
 
         A bidirectional pair exists when both ``a → b`` and ``b → a``
@@ -3915,9 +4057,11 @@ class LogicValidator:
             return 0
         edges: set[tuple[str, str]] = set()
         for rel in relationships:
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src and tgt:
+            if isinstance(src, str) and isinstance(tgt, str) and src and tgt:
                 edges.add((src, tgt))
         count = 0
         seen: set[tuple[str, str]] = set()
@@ -3927,7 +4071,7 @@ class LogicValidator:
                 seen.add((src, tgt))
         return count
 
-    def betweenness_centrality_approx(self, ontology: dict) -> dict:
+    def betweenness_centrality_approx(self, ontology: Dict[str, Any]) -> Dict[str, float]:
         """Return approximate betweenness centrality for each node.
 
         Uses a BFS-based shortest-path approach: for each source node *s*,
@@ -3950,11 +4094,13 @@ class LogicValidator:
             return {}
 
         # Build undirected adjacency
-        adj: dict[str, set] = {}
+        adj: dict[str, set[str]] = {}
         for rel in relationships:
+            if not isinstance(rel, dict):
+                continue
             src = rel.get("source") or rel.get("source_id", "")
             tgt = rel.get("target") or rel.get("target_id", "")
-            if src and tgt:
+            if isinstance(src, str) and isinstance(tgt, str) and src and tgt:
                 adj.setdefault(src, set()).add(tgt)
                 adj.setdefault(tgt, set()).add(src)
 
@@ -3968,7 +4114,7 @@ class LogicValidator:
         for source in nodes:
             # BFS to find shortest paths from source
             dist: dict[str, int] = {source: 0}
-            predecessors: dict[str, list] = {nd: [] for nd in nodes}
+            predecessors: dict[str, List[str]] = {nd: [] for nd in nodes}
             sigma: dict[str, int] = {nd: 0 for nd in nodes}
             sigma[source] = 1
             queue: deque[str] = deque([source])
@@ -4060,7 +4206,7 @@ class LogicValidator:
         rels = ontology.get("relationships", ontology.get("edges", []))
         if not isinstance(rels, list):
             return 0
-        seen: dict = {}
+        seen: Dict[tuple[Any, Any], bool] = {}
         multi = 0
         for r in rels:
             if not isinstance(r, dict):
@@ -4076,7 +4222,7 @@ class LogicValidator:
                 seen[key] = True
         return multi
 
-    def clustering_coefficient_approx(self, ontology: dict) -> float:
+    def clustering_coefficient_approx(self, ontology: Dict[str, Any]) -> float:
         """Return the approximate average undirected clustering coefficient.
 
         For each node *v* with degree ≥ 2, the local clustering coefficient
@@ -4108,13 +4254,13 @@ class LogicValidator:
             return 0.0
 
         # Build undirected adjacency sets
-        adj: dict[str, set] = {}
+        adj: dict[str, set[str]] = {}
         for e in entities:
             node_id = (e.get("id") or e.get("name", "")) if isinstance(e, dict) else str(e)
             if node_id:
                 adj.setdefault(node_id, set())
 
-        edge_set: set[tuple] = set()
+        edge_set: set[tuple[str, str]] = set()
         for r in rels:
             if not isinstance(r, dict):
                 continue
@@ -4126,7 +4272,7 @@ class LogicValidator:
             adj.setdefault(tgt, set()).add(src)
             edge_set.add((min(src, tgt), max(src, tgt)))
 
-        coeffs = []
+        coeffs: List[float] = []
         for node, neighbours in adj.items():
             k = len(neighbours)
             if k < 2:
@@ -4145,7 +4291,7 @@ class LogicValidator:
             return 0.0
         return sum(coeffs) / len(coeffs)
 
-    def diameter_approx(self, ontology: dict) -> int:
+    def diameter_approx(self, ontology: Dict[str, Any]) -> int:
         """Return the approximate diameter of the directed graph via BFS.
 
         Performs a BFS from every node and returns the maximum shortest-path
@@ -4169,19 +4315,19 @@ class LogicValidator:
         entities = ontology.get("entities", []) or []
         rels = ontology.get("relationships", []) or []
 
-        nodes: set = set()
+        nodes: set[str] = set()
         for e in entities:
             node_id = (e.get("id") or e.get("name", "")) if isinstance(e, dict) else str(e)
             if node_id:
                 nodes.add(node_id)
 
-        adj: dict = {}
+        adj: Dict[str, List[str]] = {}
         for r in rels:
             if not isinstance(r, dict):
                 continue
             src = r.get("source")
             tgt = r.get("target")
-            if not src or not tgt or src == tgt:
+            if not isinstance(src, str) or not isinstance(tgt, str) or src == tgt:
                 continue
             nodes.add(src)
             nodes.add(tgt)
@@ -4193,8 +4339,8 @@ class LogicValidator:
 
         max_dist = 0
         for start in nodes:
-            dist: dict = {start: 0}
-            queue: deque = deque([start])
+            dist: Dict[str, int] = {start: 0}
+            queue: deque[str] = deque([start])
             while queue:
                 node = queue.popleft()
                 for nb in adj.get(node, []):
@@ -4206,7 +4352,7 @@ class LogicValidator:
 
         return max_dist
 
-    def eccentricity_distribution(self, ontology: dict) -> list:
+    def eccentricity_distribution(self, ontology: Dict[str, Any]) -> List[int]:
         """Return the eccentricity of every node in the directed graph.
 
         The eccentricity of a node is the maximum shortest-path distance from
@@ -4233,19 +4379,19 @@ class LogicValidator:
         entities = ontology.get("entities", []) or []
         rels = ontology.get("relationships", []) or []
 
-        nodes: set = set()
+        nodes: set[str] = set()
         for e in entities:
             node_id = (e.get("id") or e.get("name", "")) if isinstance(e, dict) else str(e)
             if node_id:
                 nodes.add(node_id)
 
-        adj: dict = {}
+        adj: Dict[str, List[str]] = {}
         for r in rels:
             if not isinstance(r, dict):
                 continue
             src = r.get("source")
             tgt = r.get("target")
-            if not src or not tgt or src == tgt:
+            if not isinstance(src, str) or not isinstance(tgt, str) or src == tgt:
                 continue
             nodes.add(src)
             nodes.add(tgt)
@@ -4255,10 +4401,10 @@ class LogicValidator:
         if not nodes:
             return []
 
-        result = []
+        result: List[int] = []
         for start in sorted(nodes):
-            dist: dict = {start: 0}
-            queue: deque = deque([start])
+            dist: Dict[str, int] = {start: 0}
+            queue: deque[str] = deque([start])
             while queue:
                 node = queue.popleft()
                 for nb in adj.get(node, []):
@@ -4270,7 +4416,7 @@ class LogicValidator:
 
         return result
 
-    def radius_approx(self, ontology: dict) -> int:
+    def radius_approx(self, ontology: Dict[str, Any]) -> int:
         """Return the radius of the directed graph using BFS eccentricities.
 
         The radius is the **minimum** eccentricity across all nodes that can
@@ -4299,7 +4445,7 @@ class LogicValidator:
         positive = [e for e in eccs if e > 0]
         return min(positive) if positive else 0
 
-    def periphery_size(self, ontology: dict) -> int:
+    def periphery_size(self, ontology: Dict[str, Any]) -> int:
         """Count the number of nodes in the *periphery* of the directed graph.
 
         The periphery consists of all nodes whose eccentricity equals the
@@ -4332,7 +4478,7 @@ class LogicValidator:
             return 0
         return sum(1 for e in eccs if e == diameter)
 
-    def center_size(self, ontology: dict) -> int:
+    def center_size(self, ontology: Dict[str, Any]) -> int:
         """Count the number of nodes in the *center* of the directed graph.
 
         The center consists of all nodes whose eccentricity equals the graph's
@@ -4399,13 +4545,13 @@ class LogicValidator:
         if rels is None:
             rels = ontology.get("relationships", []) if isinstance(ontology, dict) else []
         # Collect all node IDs
-        all_ids: set = set()
+        all_ids: set[Any] = set()
         for e in entities:
             eid = getattr(e, "id", None) or (e.get("id") if isinstance(e, dict) else None)
             if eid:
                 all_ids.add(eid)
         # Collect IDs that appear as targets (have incoming edges)
-        has_incoming: set = set()
+        has_incoming: set[Any] = set()
         for r in rels:
             tgt = getattr(r, "target_id", None) or (r.get("target_id") if isinstance(r, dict) else None)
             if tgt is None:
@@ -4463,7 +4609,7 @@ class LogicValidator:
                 has_outgoing.add(src)
         return sum(1 for nid in all_ids if nid not in has_outgoing)
 
-    def strongly_connected_component_sizes(self, ontology: Any) -> list:
+    def strongly_connected_component_sizes(self, ontology: Any) -> List[int]:
         """Return a sorted list of SCC sizes using Kosaraju's algorithm.
 
         Each element of the returned list is the *number of nodes* in one

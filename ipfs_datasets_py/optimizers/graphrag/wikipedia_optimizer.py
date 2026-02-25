@@ -31,6 +31,24 @@ from ipfs_datasets_py.optimizers.graphrag.query_optimizer import (
 )
 from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 
+_WIKIPEDIA_QUERY_DOMAIN_PATTERNS: Dict[str, re.Pattern[str]] = {
+    "topic_lookup": re.compile(
+        r"(?:about|information|details)\s+(?:on|about)\s+([a-zA-Z0-9\s]+)"
+    ),
+    "comparison": re.compile(
+        r"(?:compare|comparison|differences?|similarities?)\s+(?:between|of)\s+([a-zA-Z0-9\s]+)\s+(?:and|vs\.?|versus)\s+([a-zA-Z0-9\s]+)"
+    ),
+    "definition": re.compile(
+        r"(?:what\s+is|define|definition\s+of|meaning\s+of)\s+([a-zA-Z0-9\s]+)"
+    ),
+    "cause_effect": re.compile(
+        r"(?:causes?|effects?|impact|influence|results?)\s+of\s+([a-zA-Z0-9\s]+)"
+    ),
+    "list": re.compile(
+        r"(?:list|enumerate|types|kinds|categories|examples)\s+of\s+([a-zA-Z0-9\s]+)"
+    ),
+}
+
 
 class WikipediaRelationshipWeightCalculator:
     """
@@ -1995,14 +2013,8 @@ class WikipediaGraphRAGQueryRewriter(QueryRewriter):
         # Initialize relationship weight calculator
         self.relationship_calculator = WikipediaRelationshipWeightCalculator()
 
-        # Initialize domain-specific rewriting patterns
-        self.domain_patterns = {
-            "topic_lookup": re.compile(r'(?:about|information|details)\s+(?:on|about)\s+([a-zA-Z0-9\s]+)'),
-            "comparison": re.compile(r'(?:compare|comparison|differences?|similarities?)\s+(?:between|of)\s+([a-zA-Z0-9\s]+)\s+(?:and|vs\.?|versus)\s+([a-zA-Z0-9\s]+)'),
-            "definition": re.compile(r'(?:what\s+is|define|definition\s+of|meaning\s+of)\s+([a-zA-Z0-9\s]+)'),
-            "cause_effect": re.compile(r'(?:causes?|effects?|impact|influence|results?)\s+of\s+([a-zA-Z0-9\s]+)'),
-            "list": re.compile(r'(?:list|enumerate|types|kinds|categories|examples)\s+of\s+([a-zA-Z0-9\s]+)')
-        }
+        # Reuse precompiled patterns across instances to avoid repeat compilation.
+        self.domain_patterns = dict(_WIKIPEDIA_QUERY_DOMAIN_PATTERNS)
 
     def rewrite_query(self, query: Dict[str, Any], graph_info: Dict[str, Any] = None) -> Dict[str, Any]:
         """

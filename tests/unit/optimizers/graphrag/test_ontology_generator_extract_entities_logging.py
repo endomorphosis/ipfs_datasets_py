@@ -42,6 +42,7 @@ def test_extract_entities_emits_structured_json_log(capsys, caplog):
         assert matches, "Expected an EXTRACT_ENTITIES JSON payload in logs"
         payload = json.loads(matches[-1])
     assert payload["event"] == "extract_entities"
+    assert payload["optimizer_pipeline"] == "graphrag"
     assert payload["strategy"] == ExtractionStrategy.RULE_BASED.value
     assert payload["entity_count"] == len(result.entities)
     assert payload["relationship_count"] == len(result.relationships)

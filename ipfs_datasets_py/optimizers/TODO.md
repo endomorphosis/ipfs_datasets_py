@@ -341,6 +341,7 @@ Rotation rules:
 ### 6) Observability and Operations
 - [ ] (P2) [obs] Standardize structured JSON log schema across all optimizer pipelines.
   - Progress 2026-02-25: added explicit pipeline identity field (`optimizer_pipeline`) to structured payloads emitted by `graphrag/pipeline_json_logger.py` (`graphrag`) and logic theorem optimizer JSON logs (`logic_theorem_optimizer/unified_optimizer.py`, `logic_theorem_optimizer/logic_optimizer.py` set to `logic_theorem`); updated schema-contract tests in `tests/unit/optimizers/graphrag/test_pipeline_json_logging.py` and `tests/unit/optimizers/logic_theorem_optimizer/test_structured_logging.py`.
+  - Progress 2026-02-25: extended `optimizer_pipeline` tagging to GraphRAG legacy structured emitters in `graphrag/ontology_pipeline.py` (`PIPELINE_RUN`, `PIPELINE_BATCH`) and `graphrag/ontology_generator.py` (`EXTRACT_ENTITIES`); validated with `tests/unit/optimizers/graphrag/test_ontology_pipeline_logging.py` and `tests/unit/optimizers/graphrag/test_ontology_generator_extract_entities_logging.py` (`3 passed`).
 - [x] (P2) [obs] Ensure metrics include run duration, score deltas, failure counts, and stage timings.
   - Done 2026-02-24: added `optimizer_score_delta` metric, wired duration/score-delta/validation-failure recording in `BaseOptimizer`, and stage timing histogram in pipeline metrics.
 - [ ] (P3) [obs] Add tracing spans for cross-optimizer workflows with low overhead defaults.
@@ -701,7 +702,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P2) [api] Standardize "context" objects across GraphRAG / logic / agentic (dataclasses with typed fields)
 - [ ] (P3) [api] Add `__eq__` and `__hash__` to `Entity`, `Relationship`, `CriticScore` for set membership
 - [ ] (P2) [tests] Add property-based tests (Hypothesis) for `Entity`, `ExtractionConfig`, `CriticScore`
-- [ ] (P2) [tests] Add round-trip tests: `entity.to_dict()` → `Entity(**d)` identity
+- [x] (P2) [tests] Add round-trip tests: `entity.to_dict()` → `Entity(**d)` identity
+  - Done 2026-02-25: added constructor-level round-trip regression coverage in `tests/unit/optimizers/graphrag/test_batch_298_entity_constructor_roundtrip.py`; normalized `Entity.source_span`/`properties` input shape in `ontology_generator.py` to keep `Entity(**entity.to_dict())` stable.
 - [ ] (P2) [tests] Add mutation tests for `EntityExtractionResult.merge()`
 - [ ] (P2) [tests] Parametrize existing batch tests to reduce boilerplate
 - [ ] (P3) [tests] Add fuzz tests for `LogicValidator.check_consistency`
@@ -858,6 +860,7 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P2) [perf] **Lazy entity deduplication** — Defer deduplication to a post-pass rather than inline in every extraction loop.
 - [ ] (P2) [perf] **Cache compiled regex patterns** — Scan for `re.compile()` calls inside hot loops; move them to module-level constants.
   - Progress 2026-02-25: moved `_infer_type_from_context()` relationship regex compilation to module-level precompiled constants in `graphrag/ontology_generator.py` and added regression coverage in `tests/unit/optimizers/graphrag/test_batch_297_infer_type_from_context_regex_cache.py` (directional/bidirectional matching + no runtime `re.compile` call path).
+  - Progress 2026-02-25: moved `WikipediaGraphRAGQueryRewriter` domain-pattern regex compilation to module-level precompiled constants in `graphrag/wikipedia_optimizer.py` and added regression coverage in `tests/unit/optimizers/graphrag/test_batch_299_wikipedia_rewriter_pattern_cache.py` (init path avoids runtime `re.compile`, pattern detection unchanged).
 - [ ] (P3) [perf] **Async extraction support** — Add `async def generate_async(text)` wrappers so callers using asyncio can parallelize multiple extractions.
 - [ ] (P1) [docs] **Module-level docstrings** — `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py` all lack a module-level docstring explaining purpose, usage, and key classes.
 - [ ] (P2) [docs] **`README.md` for optimizers/** — Add a short `README.md` covering: what the optimizer does, quick-start code, and class diagram (ASCII or Mermaid).
@@ -878,6 +881,11 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Done 2026-02-25: added focused regression coverage in `tests/unit/optimizers/graphrag/test_batch_296_helper_stats_energy_skewness.py` (short-history guard, zero-variance guard, positive-skew case).
 - [x] (P2) [graphrag] `LogicValidator.dag_fraction(ontology)` — fraction of nodes NOT in any cycle (complement of node_in_cycle_fraction); 0.0 for empty
   - Done 2026-02-25: verified DAG/cycle boundary behavior in `tests/unit/optimizers/graphrag/test_logic_validator_dag_fraction.py`.
+  - Progress 2026-02-25: began strict-mypy cleanup pass on `graphrag/logic_validator.py`; reduced file-local strict errors to 126 after typing cache fields, cache-return narrowing, SCC/WCC helpers, and multiple graph metric signatures.
+  - Progress 2026-02-25: continued strict cleanup in graph helper metrics (`fanout/triangle/degree/SCC/WCC` helpers), reducing file-local strict errors from 126 to 90.
+  - Done 2026-02-25: completed strict-mypy cleanup for `graphrag/logic_validator.py` (`--strict --follow-imports=skip --ignore-missing-imports`: `Success: no issues found in 1 source file`).
+  - Progress 2026-02-25: regression-checked core logic validator behavior with `tests/unit/optimizers/graphrag/test_logic_validator_dag_fraction.py` and `tests/unit/optimizers/graphrag/test_ontology_validation.py` (`55 passed`).
+  - Progress 2026-02-25: reran expanded focused suite including incremental cache behavior (`test_logic_validator_incremental_cache.py`) (`56 passed`).
 - [ ] Documentation: Configuration Guide, Quick-start, Architecture
 - [ ] Architecture: Unify base class hierarchy, cross-track exception hierarchy
 - [ ] Testing: Property-based tests (Hypothesis), snapshot tests
@@ -901,3 +909,9 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P2) Audit existing exception usage (1.0 hours)
 - [ ] (P2) Define unified exception hierarchy (1.0 hours)
 - [ ] (P2) Migrate graphrag exceptions to new hierarchy (45 min)
+- [x] (P2) [graphrag] strict-mypy cleanup for `query_planner.py`
+  - Done 2026-02-25: cleaned numpy/psutil fallback typing and numpy-scalar bytes decode narrowing; `mypy --strict --follow-imports=skip --ignore-missing-imports` now passes for `graphrag/query_planner.py`.
+  - Done 2026-02-25: verified query planner behavior with `test_query_budget_protocol.py` + `test_query_optimizer_example_usage.py` (`9 passed`).
+- [ ] (P2) [graphrag] strict-mypy cleanup for `ontology_optimizer.py` (slice-by-slice)
+  - Progress 2026-02-25: completed initial strict-typing slice (imports/fallbacks, metrics collector wiring, Counter generics, weakest-dimension numeric narrowing, typed score distribution helpers); file-local strict errors reduced to `82`.
+  - Progress 2026-02-25: regression-checked optimizer metric helpers via `tests/unit/optimizers/graphrag/test_ontology_optimizer_metrics.py` (`9 passed`).

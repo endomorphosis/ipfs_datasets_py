@@ -400,6 +400,7 @@ class OntologyPipeline:
                 stage_durations_ms = {name: duration * 1000.0 for name, duration in stage_timings.items()}
                 payload = {
                     "event": "ontology_pipeline_run",
+                    "optimizer_pipeline": "graphrag",
                     "run_index": len(self._run_history),
                     "domain": self.domain,
                     "data_source": data_source,
@@ -906,6 +907,7 @@ class OntologyPipeline:
             duration_ms = (time.time() - start_time) * 1000.0
             payload = {
                 "event": "ontology_pipeline_batch",
+                "optimizer_pipeline": "graphrag",
                 "domain": self.domain,
                 "data_source": data_source,
                 "data_type": data_type

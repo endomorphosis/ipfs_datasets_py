@@ -39,6 +39,7 @@ def test_pipeline_run_emits_json_log(caplog, capsys):
     payload = _extract_json_payload(captured, "PIPELINE_RUN:")
 
     assert payload["event"] == "ontology_pipeline_run"
+    assert payload["optimizer_pipeline"] == "graphrag"
     assert payload["schema"] == "ipfs_datasets_py.optimizer_log"
     assert payload["schema_version"] == DEFAULT_SCHEMA_VERSION
     assert payload["domain"] == "general"
@@ -76,6 +77,7 @@ def test_pipeline_batch_emits_json_log(caplog, capsys):
     assert payload is not None, "Expected at least one full PIPELINE_BATCH payload with domain"
 
     assert payload["event"] == "ontology_pipeline_batch"
+    assert payload["optimizer_pipeline"] == "graphrag"
     assert payload["schema"] == "ipfs_datasets_py.optimizer_log"
     assert payload["schema_version"] == DEFAULT_SCHEMA_VERSION
     assert payload["domain"] == "general"

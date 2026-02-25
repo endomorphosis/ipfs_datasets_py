@@ -50,13 +50,13 @@ import csv
 from io import StringIO
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 try:
     from opentelemetry import trace
     HAVE_OPENTELEMETRY = True
 except ImportError:  # pragma: no cover
-    trace = None  # type: ignore[assignment]
+    trace = None
     HAVE_OPENTELEMETRY = False
 
 try:
@@ -65,7 +65,7 @@ try:
     )
     HAVE_LEARNING_METRICS = True
 except ImportError:  # pragma: no cover
-    OptimizerLearningMetricsCollector = None  # type: ignore[assignment,misc]
+    OptimizerLearningMetricsCollector = None
     HAVE_LEARNING_METRICS = False
 
 logger = logging.getLogger(__name__)
@@ -181,12 +181,11 @@ class OntologyOptimizer:
         if enable_tracing and HAVE_OPENTELEMETRY and trace is not None:
             self._tracer = trace.get_tracer(__name__)
         # Wire learning-metrics collector
+        self._metrics: Any = None
         if metrics_collector is not None:
             self._metrics = metrics_collector
         elif HAVE_LEARNING_METRICS and OptimizerLearningMetricsCollector is not None:
-            self._metrics: Any = OptimizerLearningMetricsCollector()
-        else:
-            self._metrics = None
+            self._metrics = OptimizerLearningMetricsCollector()
         self._log.info("Initialized OntologyOptimizer")
 
     def __repr__(self) -> str:
@@ -941,11 +940,11 @@ class OntologyOptimizer:
         """Identify patterns across session results using counter-based analysis."""
         from collections import Counter
 
-        entity_types: Counter = Counter()
-        rel_types: Counter = Counter()
+        entity_types: Counter[str] = Counter()
+        rel_types: Counter[str] = Counter()
         convergence_rounds: list[int] = []
         final_scores: list[float] = []
-        weakest_dims: Counter = Counter()
+        weakest_dims: Counter[str] = Counter()
 
         for result in session_results:
             # Score data
@@ -954,11 +953,11 @@ class OntologyOptimizer:
                 if hasattr(latest, 'overall'):
                     final_scores.append(latest.overall)
                 # Track weakest dimension per session
-                dim_scores = {
-                    d: getattr(latest, d, None)
-                    for d in ('completeness', 'consistency', 'clarity', 'granularity', 'domain_alignment')
-                    if getattr(latest, d, None) is not None
-                }
+                dim_scores: Dict[str, float] = {}
+                for d in ("completeness", "consistency", "clarity", "granularity", "domain_alignment"):
+                    raw_val = getattr(latest, d, None)
+                    if isinstance(raw_val, (int, float)):
+                        dim_scores[d] = float(raw_val)
                 if dim_scores:
                     weakest = min(dim_scores, key=lambda k: dim_scores[k])
                     weakest_dims[weakest] += 1
@@ -976,8 +975,8 @@ class OntologyOptimizer:
                 if isinstance(rel, dict) and rel.get('type'):
                     rel_types[rel['type']] += 1
 
-        def _avg(lst: list) -> float:
-            return sum(lst) / len(lst) if lst else 0.0
+        def _avg(lst: Sequence[float | int]) -> float:
+            return float(sum(lst) / len(lst)) if lst else 0.0
 
         return {
             'avg_final_score': round(_avg(final_scores), 4),
@@ -1023,7 +1022,7 @@ class OntologyOptimizer:
         session_results: List[Any]
     ) -> Dict[str, float]:
         """Compute distribution of scores across dimensions."""
-        distribution = {
+        distribution: Dict[str, List[float]] = {
             'completeness': [],
             'consistency': [],
             'clarity': [],
@@ -1066,7 +1065,7 @@ class OntologyOptimizer:
         
         mean = sum(scores) / len(scores)
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        return variance ** 0.5
+        return float(variance ** 0.5)
 
     def get_history_summary(self) -> Dict[str, Any]:
         """Return descriptive statistics over all historical batch reports.

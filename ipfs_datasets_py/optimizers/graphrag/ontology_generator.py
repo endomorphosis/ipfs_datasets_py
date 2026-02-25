@@ -1047,6 +1047,14 @@ class Entity:
     source_span: Optional[tuple[int, int]] = None
     last_seen: Optional[float] = None
 
+    def __post_init__(self) -> None:
+        """Normalize incoming constructor values for stable round-trips."""
+        self.properties = dict(self.properties or {})
+        if self.source_span is not None:
+            self.source_span = tuple(self.source_span)  # type: ignore[assignment,arg-type]
+        if self.last_seen is not None:
+            self.last_seen = float(self.last_seen)
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialise this entity to a plain dictionary.
 
@@ -3237,6 +3245,7 @@ class OntologyGenerator:
             from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
             payload = {
                 "event": "extract_entities",
+                "optimizer_pipeline": "graphrag",
                 "strategy": context_for_run.extraction_strategy.value,
                 "entity_count": len(result.entities),
                 "relationship_count": len(result.relationships),
@@ -3269,6 +3278,7 @@ class OntologyGenerator:
         from ipfs_datasets_py.optimizers.common.structured_logging import with_schema
         payload = {
             "event": "extract_entities",
+            "optimizer_pipeline": "graphrag",
             "strategy": context_for_run.extraction_strategy.value,
             "entity_count": len(result.entities),
             "relationship_count": len(result.relationships),
