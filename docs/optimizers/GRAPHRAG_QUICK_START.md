@@ -158,6 +158,34 @@ for chunk_ontology in extractor.stream_extract(large_document, context):
     merged_ontology = extractor.merge_ontologies([merged_ontology, chunk_ontology])
 ```
 
+### Deterministic Parallel Batch Runs
+
+`OntologyPipeline.run_batch(...)` supports optional parallel execution while
+preserving input order.
+
+```python
+from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
+pipeline = OntologyPipeline(domain="legal", use_llm=False)
+docs = ["doc one", "doc two", "doc three"]
+
+results = pipeline.run_batch(
+    docs,
+    refine=False,
+    parallel=True,   # enable parallel execution
+    max_workers=4,   # optional; defaults based on batch size
+)
+
+# result order matches input order
+assert len(results) == len(docs)
+```
+
+Notes:
+- `parallel` defaults to `False`.
+- `max_workers` must be an integer >= 1 when provided.
+- `parallel` and `max_workers` are consumed by `run_batch` and are not passed
+  to per-document `run(...)` calls.
+
 ## Configuration Reference
 
 ### Key OntologyGenerator Parameters

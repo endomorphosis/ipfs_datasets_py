@@ -123,7 +123,22 @@ class TestMetricsCollectorWiring:
 
         assert payloads, "Expected structured analyze_batch summary JSON log"
         summary = payloads[-1]
+        for key in (
+            "timestamp",
+            "level",
+            "event",
+            "module",
+            "component",
+            "optimizer_type",
+            "run_id",
+            "schema_version",
+            "message",
+        ):
+            assert key in summary
         assert summary["status"] == "ok"
+        assert summary["level"] == "INFO"
+        assert summary["component"] == "ontology_optimizer"
+        assert summary["optimizer_type"] == "graphrag"
         assert summary["optimizer_pipeline"] == "graphrag"
         assert summary["schema"] == "ipfs_datasets_py.optimizer_log"
         assert summary["schema_version"] == DEFAULT_SCHEMA_VERSION
@@ -151,7 +166,22 @@ class TestMetricsCollectorWiring:
 
         assert payloads, "Expected structured analyze_batch summary JSON log"
         summary = payloads[-1]
+        for key in (
+            "timestamp",
+            "level",
+            "event",
+            "module",
+            "component",
+            "optimizer_type",
+            "run_id",
+            "schema_version",
+            "message",
+        ):
+            assert key in summary
         assert summary["status"] == "insufficient_data"
+        assert summary["level"] == "INFO"
+        assert summary["component"] == "ontology_optimizer"
+        assert summary["optimizer_type"] == "graphrag"
         assert summary["optimizer_pipeline"] == "graphrag"
         assert summary["schema"] == "ipfs_datasets_py.optimizer_log"
         assert summary["schema_version"] == DEFAULT_SCHEMA_VERSION

@@ -30,4 +30,4 @@ def test_lazy_loader_retains_circuit_breaker_protection() -> None:
     src = _source("llm_lazy_loader.py")
     assert "CircuitBreaker(" in src
     assert "CircuitBreakerOpen" in src
-
+    assert "execute_with_resilience(" in src

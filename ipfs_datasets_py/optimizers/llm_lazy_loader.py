@@ -21,9 +21,17 @@ import logging
 from typing import Any, Optional, Callable
 from functools import lru_cache
 
+from ipfs_datasets_py.optimizers.common.backend_resilience import (
+    BackendCallPolicy,
+    execute_with_resilience,
+)
 from ipfs_datasets_py.optimizers.common.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
+)
+from ipfs_datasets_py.optimizers.common.exceptions import (
+    CircuitBreakerOpenError,
+    RetryableBackendError,
 )
 
 logger = logging.getLogger(__name__)
@@ -81,6 +89,16 @@ class LazyLLMBackend:
                 recovery_timeout=recovery_timeout,
                 expected_exception=Exception,
             )
+        self._backend_call_policy = BackendCallPolicy(
+            service_name=f"lazy_llm_backend_{backend_type}",
+            timeout_seconds=30.0,
+            max_retries=2,
+            initial_backoff_seconds=0.1,
+            backoff_multiplier=2.0,
+            max_backoff_seconds=1.0,
+            circuit_failure_threshold=max(1, int(failure_threshold)),
+            circuit_recovery_timeout=float(recovery_timeout),
+        )
     
     def is_enabled(self) -> bool:
         """Check if LLM backend is enabled.
@@ -241,10 +259,15 @@ class LazyLLMBackend:
         # If circuit-breaker is enabled, protect the call
         if self._circuit_breaker is not None:
             try:
-                return self._circuit_breaker._execute(backend.__call__, args, kwargs)
-            except CircuitBreakerOpen as e:
+                return self._execute_with_optional_resilience(backend.__call__, args, kwargs)
+            except (CircuitBreakerOpen, CircuitBreakerOpenError) as e:
                 logger.warning("Circuit-breaker is open: %s", e)
                 raise RuntimeError(f"LLM backend temporarily unavailable: {e}") from e
+            except RetryableBackendError as e:
+                details = e.details if isinstance(e.details, dict) else {}
+                last_error = details.get("last_error", str(e))
+                logger.warning("LLM backend call failed: %s", last_error)
+                raise RuntimeError(f"LLM backend error: {last_error}") from e
             except (
                 RuntimeError,
                 ValueError,
@@ -275,12 +298,17 @@ class LazyLLMBackend:
         if callable(attr) and self._circuit_breaker is not None:
             def wrapped_method(*args, **kwargs) -> Any:
                 try:
-                    return self._circuit_breaker._execute(attr, args, kwargs)
-                except CircuitBreakerOpen as e:
+                    return self._execute_with_optional_resilience(attr, args, kwargs)
+                except (CircuitBreakerOpen, CircuitBreakerOpenError) as e:
                     logger.warning("Circuit-breaker is open during %s call: %s", name, e)
                     raise RuntimeError(
                         f"LLM backend temporarily unavailable during {name}: {e}"
                     ) from e
+                except RetryableBackendError as e:
+                    details = e.details if isinstance(e.details, dict) else {}
+                    last_error = details.get("last_error", str(e))
+                    logger.warning("LLM backend method '%s' failed: %s", name, last_error)
+                    raise RuntimeError(f"LLM backend error during {name}: {last_error}") from e
                 except (
                     RuntimeError,
                     ValueError,
@@ -294,6 +322,26 @@ class LazyLLMBackend:
             return wrapped_method
         
         return attr
+
+    def _execute_with_optional_resilience(
+        self,
+        fn: Callable[..., Any],
+        args: tuple[Any, ...],
+        kwargs: dict[str, Any],
+    ) -> Any:
+        """Execute through shared resilience wrapper when breaker supports it."""
+        if self._circuit_breaker is None:
+            return fn(*args, **kwargs)
+
+        # Compatibility path for tests/stubs that expose only `_execute`.
+        if not hasattr(self._circuit_breaker, "call"):
+            return self._circuit_breaker._execute(fn, args, kwargs)
+
+        return execute_with_resilience(
+            lambda: self._circuit_breaker._execute(fn, args, kwargs),
+            self._backend_call_policy,
+            circuit_breaker=self._circuit_breaker,
+        )
 
 
 class MockBackendClient:

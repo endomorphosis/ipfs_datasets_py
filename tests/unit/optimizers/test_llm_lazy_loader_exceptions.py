@@ -50,3 +50,33 @@ def test_lazy_loader_wrapped_method_wraps_typed_runtime_error(monkeypatch) -> No
 
     with pytest.raises(RuntimeError, match="LLM backend error during generate: method failed"):
         wrapped("prompt")
+
+
+def test_lazy_loader_call_uses_common_resilience_wrapper(monkeypatch) -> None:
+    backend = LazyLLMBackend(backend_type="mock", enabled=True, circuit_breaker_enabled=False)
+    from ipfs_datasets_py.optimizers.common.circuit_breaker import CircuitBreaker
+
+    backend._circuit_breaker = CircuitBreaker(
+        name="test_lazy_loader",
+        failure_threshold=5,
+        recovery_timeout=60.0,
+        expected_exception=Exception,
+    )
+    captured = {"service_name": None}
+
+    def _fake_execute(operation, policy, *, circuit_breaker, sleep_fn=None):
+        captured["service_name"] = policy.service_name
+        return operation()
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.optimizers.llm_lazy_loader.execute_with_resilience",
+        _fake_execute,
+    )
+    monkeypatch.setattr(
+        backend,
+        "get_backend",
+        lambda: type("_B", (), {"__call__": staticmethod(lambda *a, **k: "ok")})(),
+    )
+
+    assert backend("prompt") == "ok"
+    assert captured["service_name"] == "lazy_llm_backend_mock"

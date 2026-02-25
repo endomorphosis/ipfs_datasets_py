@@ -254,6 +254,16 @@ def _is_json_serializable(obj: Any, _depth: int = 0) -> bool:
 class ComplianceChecker:
     """Manages compliance rules and runs them against intents."""
 
+    # Class-level lifecycle hooks for backup operations.
+    # These are invoked by static methods (rotate_bak, purge_bak_files).
+    # Each hook is a Callable[[str], None] receiving the file path as argument.
+    lifecycle_hooks: Dict[str, List[Any]] = {
+        "before_rotate": [],
+        "after_rotate": [],
+        "before_purge": [],
+        "after_purge": [],
+    }
+
     def __init__(
         self,
         deny_list: Optional[Set[str]] = None,
@@ -268,6 +278,112 @@ class ComplianceChecker:
         self.fail_fast = fail_fast
         for rule in rules or []:
             self.add_rule(rule)
+
+    @classmethod
+    def add_lifecycle_hook(
+        cls,
+        hook_type: str,
+        callback: Any,  # Callable[[str], None]
+    ) -> None:
+        """Register a lifecycle hook for backup operations.
+
+        Lifecycle hooks are invoked at key points during backup rotation and
+        purging operations. Supported hook types:
+        
+        - ``before_rotate``: Called before rotating backup files
+        - ``after_rotate``: Called after rotating backup files
+        - ``before_purge``: Called before purging backup files
+        - ``after_purge``: Called after purging backup files
+
+        All hooks receive the file path as their sole argument::
+
+            def audit_rotation(path: str) -> None:
+                logger.info("Rotating backups for: %s", path)
+            
+            ComplianceChecker.add_lifecycle_hook("before_rotate", audit_rotation)
+
+        Args:
+            hook_type: One of "before_rotate", "after_rotate", 
+                "before_purge", "after_purge".
+            callback: Callable receiving file path (str) as argument.
+
+        Raises:
+            ValueError: If hook_type is not recognized.
+        """
+        if hook_type not in cls.lifecycle_hooks:
+            raise ValueError(
+                f"Unknown hook type {hook_type!r}. "
+                f"Valid types: {list(cls.lifecycle_hooks.keys())}"
+            )
+        if callback not in cls.lifecycle_hooks[hook_type]:
+            cls.lifecycle_hooks[hook_type].append(callback)
+
+    @classmethod
+    def remove_lifecycle_hook(cls, hook_type: str, callback: Any) -> bool:
+        """Remove a previously registered lifecycle hook.
+
+        Args:
+            hook_type: One of "before_rotate", "after_rotate", 
+                "before_purge", "after_purge".
+            callback: The exact callable previously registered.
+
+        Returns:
+            True if the hook was found and removed, False otherwise.
+
+        Raises:
+            ValueError: If hook_type is not recognized.
+        """
+        if hook_type not in cls.lifecycle_hooks:
+            raise ValueError(
+                f"Unknown hook type {hook_type!r}. "
+                f"Valid types: {list(cls.lifecycle_hooks.keys())}"
+            )
+        try:
+            cls.lifecycle_hooks[hook_type].remove(callback)
+            return True
+        except ValueError:
+            return False
+
+    @classmethod
+    def clear_lifecycle_hooks(cls, hook_type: Optional[str] = None) -> int:
+        """Clear all lifecycle hooks, optionally for a specific hook type.
+
+        Args:
+            hook_type: If provided, clear only hooks of this type.
+                If None, clear all hooks across all types.
+
+        Returns:
+            Number of hooks removed.
+        """
+        if hook_type is not None:
+            if hook_type not in cls.lifecycle_hooks:
+                raise ValueError(
+                    f"Unknown hook type {hook_type!r}. "
+                    f"Valid types: {list(cls.lifecycle_hooks.keys())}"
+                )
+            count = len(cls.lifecycle_hooks[hook_type])
+            cls.lifecycle_hooks[hook_type].clear()
+            return count
+        else:
+            total = sum(len(hooks) for hooks in cls.lifecycle_hooks.values())
+            for hooks in cls.lifecycle_hooks.values():
+                hooks.clear()
+            return total
+
+    @classmethod
+    def _invoke_hooks(cls, hook_type: str, path: str) -> None:
+        """Invoke all registered hooks of the specified type.
+
+        Args:
+            hook_type: The hook type to invoke.
+            path: The file path to pass to each hook.
+        """
+        for callback in cls.lifecycle_hooks.get(hook_type, []):
+            try:
+                callback(path)
+            except Exception:  # pragma: no cover
+                # Hooks should not break backup operations
+                pass
 
     def add_rule(
         self,

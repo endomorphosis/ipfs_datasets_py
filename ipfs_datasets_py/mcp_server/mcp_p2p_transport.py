@@ -824,6 +824,25 @@ class PubSubBus:
         sids = [sid for sid, (k, _h) in self._sid_map.items() if k == key]
         return sorted(sids)
 
+    def publish_stats(self) -> Dict[str, int]:
+        """Return observability statistics mapping topics to subscriber counts.
+
+        Provides monitoring/dashboard-friendly view of bus health.
+        Functionally equivalent to :meth:`snapshot` but named explicitly
+        for observability integrations::
+
+            stats = bus.publish_stats()
+            # {"receipt_disseminate": 2, "delegation_add": 1}
+            metrics.gauge("pubsub.topics.active", len(stats))
+            for topic, count in stats.items():
+                metrics.gauge(f"pubsub.subscribers.{topic}", count)
+
+        Returns:
+            Dict mapping topic key string → subscriber count (≥ 1).
+            Topics with zero subscribers are excluded.
+        """
+        return self.snapshot()
+
     async def publish_async(
         self,
         topic: Union[str, "PubSubEventType"],
