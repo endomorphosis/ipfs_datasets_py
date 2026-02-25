@@ -4,7 +4,13 @@ Uses Hypothesis to generate random ontology stats and verify invariants.
 """
 
 import pytest
-from hypothesis import given, strategies as st, assume, settings
+
+hypothesis = pytest.importorskip("hypothesis")
+given = hypothesis.given
+st = hypothesis.strategies
+assume = hypothesis.assume
+settings = hypothesis.settings
+
 from ipfs_datasets_py.optimizers.graphrag.ontology_stats import (
     EntityStats,
     RelationshipStats,

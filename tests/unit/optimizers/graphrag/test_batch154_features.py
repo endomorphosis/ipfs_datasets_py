@@ -62,29 +62,21 @@ def _make_validator():
 # ---------------------------------------------------------------------------
 
 class TestWorstDomain:
-    def test_empty_returns_empty_string(self):
+    @pytest.mark.parametrize(
+        "records,predicate",
+        [
+            ([], lambda value: value == ""),
+            ([(0.5, "science")], lambda value: value == "science"),
+            # law avg=0.8, medicine avg=0.25 -> worst is medicine
+            ([(0.8, "law"), (0.2, "medicine"), (0.3, "medicine")], lambda value: value == "medicine"),
+            ([(0.9, None)], lambda value: isinstance(value, str)),
+        ],
+    )
+    def test_worst_domain_scenarios(self, records, predicate):
         a = _make_adapter()
-        assert a.worst_domain() == ""
-
-    def test_single_domain(self):
-        a = _make_adapter()
-        _push_feedback(a, 0.5, domain="science")
-        result = a.worst_domain()
-        assert result == "science"
-
-    def test_returns_lowest_avg_domain(self):
-        a = _make_adapter()
-        _push_feedback(a, 0.8, domain="law")
-        _push_feedback(a, 0.2, domain="medicine")
-        _push_feedback(a, 0.3, domain="medicine")
-        # law avg=0.8, medicine avg=0.25 → worst is medicine
-        assert a.worst_domain() == "medicine"
-
-    def test_no_domain_grouped_as_unknown(self):
-        a = _make_adapter()
-        _push_feedback(a, 0.9, domain=None)  # no domain
-        result = a.worst_domain()
-        assert isinstance(result, str)
+        for score, domain in records:
+            _push_feedback(a, score, domain=domain)
+        assert predicate(a.worst_domain())
 
 
 # ---------------------------------------------------------------------------
@@ -92,34 +84,22 @@ class TestWorstDomain:
 # ---------------------------------------------------------------------------
 
 class TestScoreAboveThreshold:
-    def test_empty_returns_empty(self):
+    @pytest.mark.parametrize(
+        "scores,threshold,expected_len",
+        [
+            ([], 0.7, 0),
+            ([0.2, 0.4, 0.6], 0.9, 0),
+            ([0.8, 0.9], 0.7, 2),
+            ([0.3, 0.7, 0.9], 0.6, 2),
+            ([0.7], 0.7, 0),
+        ],
+    )
+    def test_score_above_threshold_scenarios(self, scores, threshold, expected_len):
         o = _make_optimizer()
-        assert o.score_above_threshold() == []
-
-    def test_all_below_threshold(self):
-        o = _make_optimizer()
-        for v in [0.2, 0.4, 0.6]:
+        for v in scores:
             _push_opt(o, v)
-        assert o.score_above_threshold(threshold=0.9) == []
-
-    def test_all_above_threshold(self):
-        o = _make_optimizer()
-        for v in [0.8, 0.9]:
-            _push_opt(o, v)
-        result = o.score_above_threshold(threshold=0.7)
-        assert len(result) == 2
-
-    def test_mixed(self):
-        o = _make_optimizer()
-        for v in [0.3, 0.7, 0.9]:
-            _push_opt(o, v)
-        result = o.score_above_threshold(threshold=0.6)
-        assert len(result) == 2
-
-    def test_exclusive_threshold(self):
-        o = _make_optimizer()
-        _push_opt(o, 0.7)
-        assert o.score_above_threshold(threshold=0.7) == []
+        result = o.score_above_threshold(threshold=threshold)
+        assert len(result) == expected_len
 
 
 # ---------------------------------------------------------------------------
@@ -127,27 +107,22 @@ class TestScoreAboveThreshold:
 # ---------------------------------------------------------------------------
 
 class TestWeakestDimension:
-    def test_returns_lowest_dimension(self):
+    @pytest.mark.parametrize(
+        "score,predicate",
+        [
+            (_make_score(completeness=0.1, consistency=0.9), lambda value: value == "completeness"),
+            (_make_score(granularity=0.05), lambda value: value == "granularity"),
+            (
+                _make_score(),
+                lambda value: value
+                in {"completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"},
+            ),
+            (_make_score(domain_alignment=0.01), lambda value: value == "domain_alignment"),
+        ],
+    )
+    def test_weakest_dimension_scenarios(self, score, predicate):
         critic = _make_critic()
-        score = _make_score(completeness=0.1, consistency=0.9)
-        assert critic.weakest_dimension(score) == "completeness"
-
-    def test_granularity_is_weakest(self):
-        critic = _make_critic()
-        score = _make_score(granularity=0.05)
-        assert critic.weakest_dimension(score) == "granularity"
-
-    def test_all_equal_returns_a_dimension(self):
-        critic = _make_critic()
-        score = _make_score()  # all 0.5
-        result = critic.weakest_dimension(score)
-        assert result in {"completeness", "consistency", "clarity",
-                          "granularity", "relationship_coherence", "domain_alignment"}
-
-    def test_domain_alignment_weakest(self):
-        critic = _make_critic()
-        score = _make_score(domain_alignment=0.01)
-        assert critic.weakest_dimension(score) == "domain_alignment"
+        assert predicate(critic.weakest_dimension(score))
 
 
 # ---------------------------------------------------------------------------
@@ -155,36 +130,31 @@ class TestWeakestDimension:
 # ---------------------------------------------------------------------------
 
 class TestNodeDegreeHistogram:
-    def test_empty_returns_empty(self):
+    @pytest.mark.parametrize(
+        "ontology,predicate",
+        [
+            ({}, lambda hist: hist == {}),
+            (
+                {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}], "relationships": []},
+                lambda hist: hist == {0: 3},
+            ),
+            (
+                {"entities": [{"id": "A"}, {"id": "B"}], "relationships": [{"subject_id": "A", "object_id": "B"}]},
+                lambda hist: hist[1] == 1 and hist[0] == 1,
+            ),
+            (
+                {
+                    "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}, {"id": "D"}],
+                    "relationships": [
+                        {"subject_id": "A", "object_id": "B"},
+                        {"subject_id": "A", "object_id": "C"},
+                        {"subject_id": "A", "object_id": "D"},
+                    ],
+                },
+                lambda hist: hist[3] == 1 and hist[0] == 3,
+            ),
+        ],
+    )
+    def test_node_degree_histogram_scenarios(self, ontology, predicate):
         v = _make_validator()
-        assert v.node_degree_histogram({}) == {}
-
-    def test_no_edges_all_degree_zero(self):
-        v = _make_validator()
-        ont = {"entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}], "relationships": []}
-        hist = v.node_degree_histogram(ont)
-        assert hist == {0: 3}
-
-    def test_one_edge(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}, {"id": "B"}],
-            "relationships": [{"subject_id": "A", "object_id": "B"}],
-        }
-        hist = v.node_degree_histogram(ont)
-        assert hist[1] == 1  # A has out-degree 1
-        assert hist[0] == 1  # B has out-degree 0
-
-    def test_hub_node(self):
-        v = _make_validator()
-        ont = {
-            "entities": [{"id": "A"}, {"id": "B"}, {"id": "C"}, {"id": "D"}],
-            "relationships": [
-                {"subject_id": "A", "object_id": "B"},
-                {"subject_id": "A", "object_id": "C"},
-                {"subject_id": "A", "object_id": "D"},
-            ],
-        }
-        hist = v.node_degree_histogram(ont)
-        assert hist[3] == 1  # A has degree 3
-        assert hist[0] == 3  # B, C, D have degree 0
+        assert predicate(v.node_degree_histogram(ontology))

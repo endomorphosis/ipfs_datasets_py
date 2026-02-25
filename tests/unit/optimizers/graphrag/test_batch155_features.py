@@ -72,31 +72,21 @@ def _push_opt(o, avg):
 # ---------------------------------------------------------------------------
 
 class TestScoresAboveMean:
-    def test_empty_returns_empty(self):
+    @pytest.mark.parametrize(
+        "scores,predicate",
+        [
+            ([], lambda result: result == []),
+            ([0.5, 0.5, 0.5], lambda result: result == []),
+            # mean=0.575; above: 0.8, 0.9
+            ([0.2, 0.4, 0.8, 0.9], lambda result: len(result) == 2),
+            ([0.2, 0.8], lambda result: all(r.score.overall > 0.5 for r in result)),
+        ],
+    )
+    def test_scores_above_mean_scenarios(self, scores, predicate):
         p = _make_pipeline()
-        assert p.scores_above_mean() == []
-
-    def test_all_equal_returns_empty(self):
-        p = _make_pipeline()
-        for _ in range(3):
-            _push_run(p, 0.5)
-        assert p.scores_above_mean() == []
-
-    def test_above_mean_count(self):
-        p = _make_pipeline()
-        for v in [0.2, 0.4, 0.8, 0.9]:
+        for v in scores:
             _push_run(p, v)
-        # mean = 0.575; above: 0.8, 0.9
-        result = p.scores_above_mean()
-        assert len(result) == 2
-
-    def test_all_scores_are_above_mean(self):
-        p = _make_pipeline()
-        for v in [0.2, 0.8]:
-            _push_run(p, v)
-        result = p.scores_above_mean()
-        scores = [r.score.overall for r in result]
-        assert all(s > 0.5 for s in scores)
+        assert predicate(p.scores_above_mean())
 
 
 # ---------------------------------------------------------------------------
@@ -104,36 +94,28 @@ class TestScoresAboveMean:
 # ---------------------------------------------------------------------------
 
 class TestEntityCountByType:
-    def test_empty_returns_empty(self):
+    @pytest.mark.parametrize(
+        "entities,predicate",
+        [
+            ([], lambda counts: counts == {}),
+            (
+                [_make_entity("e1", "Person"), _make_entity("e2", "Person")],
+                lambda counts: counts == {"Person": 2},
+            ),
+            (
+                [_make_entity("e1", "Person"), _make_entity("e2", "Org"), _make_entity("e3", "Person")],
+                lambda counts: counts["Person"] == 2 and counts["Org"] == 1,
+            ),
+            (
+                [_make_entity(f"e{i}", f"T{i % 3}") for i in range(9)],
+                lambda counts: sum(counts.values()) == 9,
+            ),
+        ],
+    )
+    def test_entity_count_by_type_scenarios(self, entities, predicate):
         gen = _make_generator()
-        result = _make_result([])
-        assert gen.entity_count_by_type(result) == {}
-
-    def test_single_type(self):
-        gen = _make_generator()
-        entities = [_make_entity("e1", "Person"), _make_entity("e2", "Person")]
         result = _make_result(entities)
-        counts = gen.entity_count_by_type(result)
-        assert counts == {"Person": 2}
-
-    def test_multiple_types(self):
-        gen = _make_generator()
-        entities = [
-            _make_entity("e1", "Person"),
-            _make_entity("e2", "Org"),
-            _make_entity("e3", "Person"),
-        ]
-        result = _make_result(entities)
-        counts = gen.entity_count_by_type(result)
-        assert counts["Person"] == 2
-        assert counts["Org"] == 1
-
-    def test_total_equals_entity_count(self):
-        gen = _make_generator()
-        entities = [_make_entity(f"e{i}", f"T{i % 3}") for i in range(9)]
-        result = _make_result(entities)
-        counts = gen.entity_count_by_type(result)
-        assert sum(counts.values()) == 9
+        assert predicate(gen.entity_count_by_type(result))
 
 
 # ---------------------------------------------------------------------------
@@ -141,22 +123,20 @@ class TestEntityCountByType:
 # ---------------------------------------------------------------------------
 
 class TestBestDomain:
-    def test_empty_returns_empty_string(self):
+    @pytest.mark.parametrize(
+        "records,expected",
+        [
+            ([], ""),
+            ([(0.7, "tech")], "tech"),
+            # law avg=0.85, medicine avg=0.3 -> best is law
+            ([(0.3, "medicine"), (0.9, "law"), (0.8, "law")], "law"),
+        ],
+    )
+    def test_best_domain_scenarios(self, records, expected):
         a = _make_adapter()
-        assert a.best_domain() == ""
-
-    def test_single_domain(self):
-        a = _make_adapter()
-        _push_feedback(a, 0.7, domain="tech")
-        assert a.best_domain() == "tech"
-
-    def test_returns_highest_avg_domain(self):
-        a = _make_adapter()
-        _push_feedback(a, 0.3, domain="medicine")
-        _push_feedback(a, 0.9, domain="law")
-        _push_feedback(a, 0.8, domain="law")
-        # law avg=0.85, medicine avg=0.3 → best is law
-        assert a.best_domain() == "law"
+        for score, domain in records:
+            _push_feedback(a, score, domain=domain)
+        assert a.best_domain() == expected
 
 
 # ---------------------------------------------------------------------------
@@ -164,30 +144,18 @@ class TestBestDomain:
 # ---------------------------------------------------------------------------
 
 class TestScoreMomentumDelta:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,window,predicate",
+        [
+            ([], 3, lambda value: value == pytest.approx(0.0)),
+            ([0.5, 0.6, 0.7], 3, lambda value: value == pytest.approx(0.0)),
+            ([0.1, 0.2, 0.3, 0.7, 0.8, 0.9], 3, lambda value: value > 0),
+            ([0.8, 0.9, 1.0, 0.1, 0.2, 0.3], 3, lambda value: value < 0),
+            ([0.5, 0.5, 0.5, 0.5, 0.5, 0.5], 3, lambda value: value == pytest.approx(0.0)),
+        ],
+    )
+    def test_score_momentum_delta_scenarios(self, scores, window, predicate):
         o = _make_optimizer()
-        assert o.score_momentum_delta() == pytest.approx(0.0)
-
-    def test_too_few_returns_zero(self):
-        o = _make_optimizer()
-        for v in [0.5, 0.6, 0.7]:
+        for v in scores:
             _push_opt(o, v)
-        assert o.score_momentum_delta(window=3) == pytest.approx(0.0)
-
-    def test_positive_momentum(self):
-        o = _make_optimizer()
-        for v in [0.1, 0.2, 0.3, 0.7, 0.8, 0.9]:
-            _push_opt(o, v)
-        assert o.score_momentum_delta(window=3) > 0
-
-    def test_negative_momentum(self):
-        o = _make_optimizer()
-        for v in [0.8, 0.9, 1.0, 0.1, 0.2, 0.3]:
-            _push_opt(o, v)
-        assert o.score_momentum_delta(window=3) < 0
-
-    def test_flat_returns_zero(self):
-        o = _make_optimizer()
-        for _ in range(6):
-            _push_opt(o, 0.5)
-        assert o.score_momentum_delta(window=3) == pytest.approx(0.0)
+        assert predicate(o.score_momentum_delta(window=window))

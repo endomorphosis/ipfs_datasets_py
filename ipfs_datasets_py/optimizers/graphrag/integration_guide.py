@@ -24,6 +24,7 @@ Recommended Reading Order:
 
 import logging as _logging
 from typing import Dict, Any, List, Optional, Tuple, cast
+from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
 from ipfs_datasets_py.optimizers.graphrag.error_handling import (
     GraphRAGException, GraphRAGConfigError, GraphRAGExtractionError,
     GraphRAGValidationError, ErrorContext, retry_with_backoff, safe_operation,
@@ -40,6 +41,11 @@ from ipfs_datasets_py.optimizers.graphrag.config_validators import (
 from ipfs_datasets_py.optimizers.graphrag.language_router import (
     LanguageRouter, LanguageConfig,
 )
+
+
+def _safe_error_text(error: Exception) -> str:
+    """Return redacted exception text for logs and fallback payloads."""
+    return redact_sensitive(str(error))
 
 
 class BasicOntologyExtraction:
@@ -123,7 +129,11 @@ class BasicOntologyExtraction:
             ValueError,
         ) as e:
             if self.logger and hasattr(self.logger, "error"):
-                self.logger.error(f"Extraction failed after {max_attempts} attempts: {e}")
+                self.logger.error(
+                    "Extraction failed after %s attempts: %s",
+                    max_attempts,
+                    _safe_error_text(e),
+                )
             return {}
 
 
@@ -269,17 +279,24 @@ class ErrorHandlingPatterns:
             
             except GraphRAGExtractionError as e:
                 # Handle extraction-specific errors
-                self.logger.warning(f"Extraction failed: {e}. Attempting fallback...")
+                self.logger.warning(
+                    "Extraction failed: %s. Attempting fallback...",
+                    _safe_error_text(e),
+                )
                 return self._fallback_extraction(text, fallback_language)
             
             except GraphRAGConfigError as e:
                 # Handle configuration errors
-                self.logger.error(f"Configuration error: {e}")
+                self.logger.error("Configuration error: %s", _safe_error_text(e))
                 return self._minimal_extraction(text)
             
             except GraphRAGException as e:
                 # Handle any other GraphRAG exceptions
-                self.logger.error(f"GraphRAG error: {e}. Suggestions: {e.suggestions}")
+                self.logger.error(
+                    "GraphRAG error: %s. Suggestions: %s",
+                    _safe_error_text(e),
+                    redact_sensitive(str(e.suggestions)),
+                )
                 return {}
     
     def safe_extraction(self, text: str) -> Dict[str, Any]:
@@ -613,7 +630,7 @@ class AdvancedScenarios:
             TypeError,
             ValueError,
         ) as e:
-            results['errors'].append(str(e))
+            results['errors'].append(_safe_error_text(e))
         
         return results
 

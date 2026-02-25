@@ -2,9 +2,17 @@
 
 from __future__ import annotations
 
+import logging
 import re
 import time
 from typing import Any, Dict, Optional
+
+from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
+
+
+def _safe_error_text(error: Exception) -> str:
+    """Return redacted exception text for warning output."""
+    return redact_sensitive(str(error))
 
 
 class QueryRewriter:
@@ -232,7 +240,10 @@ class QueryRewriter:
                     result["traversal"]["reordered_by_selectivity"] = True
                 except TypeError as e:
                     # Handle potential errors if selectivity values are not comparable
-                    print(f"Warning: Could not reorder edges by selectivity due to error: {e}")
+                    logging.warning(
+                        "Could not reorder edges by selectivity due to error: %s",
+                        _safe_error_text(e),
+                    )
 
         return result
     
