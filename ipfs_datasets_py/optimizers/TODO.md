@@ -48,12 +48,14 @@ test hardening, and documentation clarity while keeping progress measurable.
   - Done 2026-02-23: Batch 265 - Integrated OptimizerConfig dataclass with AgenticOptimizer. Now accepts Union[OptimizerConfig, Dict] with automatic normalization. Added helper methods (get_config_value, domain/max_rounds/verbose properties). Full backward compatibility maintained (dict configs auto-converted). 24/24 tests passing. Achieves consistent configuration across GraphRAG, logic, and agentic optimizers.
 - [x] (P2) [api] Standardize context objects across GraphRAG/logic/agentic
   - Done 2026-02-25: Batch 266 - Added unified context adapters and class-level conversion helpers. New functions in common/unified_config.py: context_from_logic_extraction_context() and context_from_agentic_optimization_task(); existing GraphRAG adapter reused. Added to_unified_context() methods on OntologyGenerationContext, LogicExtractionContext, and OptimizationTask for direct conversion to GraphRAGContext/LogicContext/AgenticContext. Added test_batch_266_context_standardization.py with 7/7 passing tests.
-- [ ] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
+- [x] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
+  - Done 2026-02-25: Batch 269 - `OntologyGenerator` resolves and invokes injected or accelerate-backed LLM backends (`generate`/`complete`/`infer`/`run`) with fallback support. Validation: test_ontology_generator_llm_extraction.py (7/7), test_llm_fallback_extraction.py (11/11).
 - [x] (P2) [tests] Add property-based tests for Entity/CriticScore/FeedbackRecord
   - Done 2026-02-23: test_ontology_types_properties.py with 19 passing property-based tests (Entity, Relationship, CriticScore, FeedbackRecord, collections). Uses Hypothesis strategies.
 - [x] (P2) [perf] Profile OntologyGenerator.generate() on 10k-token input
   - Done 2026-02-23: Batch 262 - Created profile_batch_262_generate_10k.py (390 LOC), test_batch_262_profiling.py (22/22 tests), PROFILING_BATCH_262_ANALYSIS.md. Identified key bottlenecks: regex operations (54% time), _promote_person_entities (70%), with optimization recommendations for 70-80% potential speedup.
-- [ ] (P2) [obs] Structured JSON logging for every pipeline run
+- [x] (P2) [obs] Structured JSON logging for every pipeline run
+  - Done 2026-02-25: Batch 281 - Verified pipeline run lifecycle structured logs (`PIPELINE_RUN_START` + terminal `PIPELINE_RUN`) and shared structured logging helpers remain test-validated. Validation: test_ontology_pipeline_logging.py (5/5), common/test_structured_logging.py (21/21), logic_theorem_optimizer/test_structured_logging.py (9/9).
 - [x] (P2) [docs] Optimizers README with quick-start +  class diagram + comprehensive guides
   - Done 2026-02-23: Batch 263 - Created PERFORMANCE_TUNING_GUIDE.md (18KB), TROUBLESHOOTING_GUIDE.md (28KB), INTEGRATION_EXAMPLES.md (18KB, 8 real-world scenarios). Updated README.md with guide references. Comprehensive documentation for performance optimization (70-80% potential speedup), 30+ troubleshooting solutions, and production integration patterns (FastAPI, Flask, CLI, CI/CD, batch processing, streaming, multi-domain).
 
@@ -221,7 +223,17 @@ These should be started immediately when available:
   - Done 2026-02-23: Created ontology_types.py with 14+ TypedDict definitions (Entity, Relationship, Ontology, CriticScore, SessionRound, OntologySession, PerformanceMetrics, QualityMetrics, etc.). 19 property-based tests passing.
 - [x] (P2) [tests] Migrate all mock ontology creation to factory fixtures in `conftest.py`
   - Done 2026-02-23: Added 6 TypedDict factory fixtures (entity, relationship, critic_score, ontology_session, feedback_record) in conftest.py. Extends existing fixtures by 213 lines.
-- [ ] (P2) [graphrag] Split `ontology_critic.py` into `..._completeness.py`, `..._connectivity.py`, `..._consistency.py`
+- [x] (P2) [graphrag] Split `ontology_critic.py` into `..._completeness.py`, `..._connectivity.py`, `..._consistency.py`
+  - Done 2026-02-25: ontology_critic.py (4,715 lines) split into 6 focused modules:
+    - ontology_critic_completeness.py: CompletenessEvaluator with entity type coverage, orphan detection
+    - ontology_critic_consistency.py: ConsistencyEvaluator with circular dependency detection, dangling reference checks
+    - ontology_critic_clarity.py: ClarityEvaluator with naming conventions, property completeness
+    - ontology_critic_granularity.py: GranularityEvaluator with entity depth and relationship density scoring
+    - ontology_critic_domain_alignment.py: DomainAlignmentEvaluator with vocabulary matching
+    - ontology_critic_connectivity.py: ConnectivityEvaluator with relationship coherence scoring
+    - ontology_critic_insight_generation.py: InsightGenerator for actionable recommendations
+  - Main ontology_critic.py now serves as unified wrapper importing from all modules
+  - All imports and APIs remain backward compatible
 - [x] (P2) [perf] Implement lazy loading for domain-specific rule sets in `ExtractionConfig`
   - Done 2026-02-23: Verified existing lazy-loading via lru_cache(maxsize=16) in _get_domain_rule_patterns(). Created comprehensive test suite (31 tests, all passing) validating: pattern caching behavior, domain pattern completeness/accuracy, cache hit/miss tracking, performance characteristics, immutability guarantees, regex validation, robustness to edge cases. Tests cover legal/medical/technical/financial domains. File: tests/unit/optimizers/graphrag/test_domain_rule_patterns_lazy_loading.py
 - [ ] (P3) [arch] Create `ontology_serialization.py` with unified dict ↔ dataclass converters
