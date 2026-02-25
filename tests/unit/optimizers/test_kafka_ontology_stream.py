@@ -284,7 +284,7 @@ class TestKafkaOntologyConsumer:
         result = results[0]
         assert result["document_id"] == "doc1"
         assert "ontology" in result
-        assert len(result["ontology"]["entities"]) == 3  # Alice, Bob
+        assert len(result["ontology"]["entities"]) == 2  # Alice, Bob
         assert "processing_time_ms" in result
     
     def test_consume_batch(self, kafka_config: KafkaConfig, mock_generator):

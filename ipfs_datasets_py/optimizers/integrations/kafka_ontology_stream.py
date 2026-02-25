@@ -438,6 +438,10 @@ class KafkaOntologyConsumer:
             # Process messages
             for topic_partition, messages in msg_batch.items():
                 for message in messages:
+                    # Check if we've hit the limit
+                    if max_messages and processed >= max_messages:
+                        break
+                    
                     try:
                         result = self._process_message(message)
                         yield result
@@ -448,6 +452,10 @@ class KafkaOntologyConsumer:
                         logger.error(f"Error processing message: {e}")
                         self._handle_error(message, str(e))
                         self._stats["errors"] += 1
+                
+                # Break outer loop too if limit reached
+                if max_messages and processed >= max_messages:
+                    break
             
             # Commit offsets after processing batch
             if not self.config.enable_auto_commit:

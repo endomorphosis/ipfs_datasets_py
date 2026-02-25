@@ -52,7 +52,7 @@ class TestEmbeddingCacheIntegration:
         
         # Perform some cache operations
         cache.get("key1")  # Miss
-        cache.set("key1", [0.1, 0.2, 0.3])
+        cache.put("key1", [0.1, 0.2, 0.3])
         cache.get("key1")  # Hit
         
         result = cache.stats()
@@ -71,8 +71,8 @@ class TestEmbeddingCacheIntegration:
         # 2 misses, 0 hits
         cache.get("key1")
         cache.get("key2")
-        cache.set("key1", [0.1, 0.2])
-        cache.set("key2", [0.3, 0.4])
+        cache.put("key1", [0.1, 0.2])
+        cache.put("key2", [0.3, 0.4])
         
         # 2 hits
         cache.get("key1")
@@ -137,7 +137,7 @@ class TestDeduplicatorCacheStatsRealWorldScenarios:
         
         # Load cache with embeddings
         for i in range(10):
-            cache.set(f"entity_{i}", [float(i)] * 384)
+            cache.put(f"entity_{i}", [float(i)] * 384)
         
         # Many hits, few misses
         for _ in range(100):
@@ -156,7 +156,7 @@ class TestDeduplicatorCacheStatsRealWorldScenarios:
         
         # Fill cache to capacity
         for i in range(10):
-            cache.set(f"entity_{i}", [float(i)] * 384)
+            cache.put(f"entity_{i}", [float(i)] * 384)
         
         result = cache.stats()
         
@@ -170,10 +170,10 @@ class TestDeduplicatorCacheStatsRealWorldScenarios:
         
         # Pattern: miss, set, hit, miss, set, hit
         cache.get("key1")  # miss
-        cache.set("key1", [0.1])
+        cache.put("key1", [0.1])
         cache.get("key1")  # hit
         cache.get("key2")  # miss
-        cache.set("key2", [0.2])
+        cache.put("key2", [0.2])
         cache.get("key2")  # hit
         
         result = cache.stats()
@@ -192,7 +192,7 @@ class TestCacheStatsDictStructure:
         
         # Perform operations
         cache.get("test")
-        cache.set("test", [1.0, 2.0])
+        cache.put("test", [1.0, 2.0])
         cache.get("test")
         
         result = cache.stats()
@@ -221,7 +221,7 @@ class TestCacheStatsDictStructure:
         
         # Add some hits
         for i in range(5):
-            cache.set(f"miss_{i}", [float(i)])
+            cache.put(f"miss_{i}", [float(i)])
         for i in range(5):
             cache.get(f"miss_{i}")
         
@@ -235,7 +235,7 @@ class TestCacheStatsDictStructure:
         
         # Try to overfill cache
         for i in range(50):
-            cache.set(f"entity_{i}", [float(i)])
+            cache.put(f"entity_{i}", [float(i)])
         
         result = cache.stats()
         
@@ -256,7 +256,7 @@ class TestCacheStatsConsistency:
         
         cache.get("key1")  # miss
         request_count += 1
-        cache.set("key1", [0.1])
+        cache.put("key1", [0.1])
         cache.get("key1")  # hit
         request_count += 1
         cache.get("key2")  # miss
@@ -273,7 +273,7 @@ class TestCacheStatsConsistency:
         
         # Generate some activity
         for i in range(10):
-            cache.set(f"key_{i}", [float(i)])
+            cache.put(f"key_{i}", [float(i)])
             cache.get(f"key_{i}")
         
         result_before = cache.stats()
@@ -296,7 +296,7 @@ class TestCacheStatsConsistency:
         
         # Perform various operations
         for i in range(100):
-            cache.set(f"key_{i}", [float(i)])
+            cache.put(f"key_{i}", [float(i)])
         for i in range(50):
             cache.get(f"key_{i}")
         
