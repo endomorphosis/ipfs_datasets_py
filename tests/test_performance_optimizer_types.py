@@ -220,6 +220,7 @@ class TestCacheOptimizationStrategyDictType:
                        for i in range(50)],
             pdf_documents=[ContentAsset("https://example.com/doc1.pdf", "doc", "application/pdf", 1024 * 1024)],
             media_files=[ContentAsset("https://example.com/video1.mp4", "video", "video/mp4", 50 * 1024 * 1024)],
+            structured_data=[],
             total_assets=52,
             discovery_timestamp=datetime.now()
         )
@@ -407,6 +408,7 @@ class TestOptimizerIntegration:
             html_pages=[ContentAsset("https://example.com/page1", "page", "text/html", 10 * 1024)],
             pdf_documents=[ContentAsset("https://example.com/doc1.pdf", "doc", "application/pdf", 1024 * 1024)],
             media_files=[],
+            structured_data=[],
             total_assets=2,
             discovery_timestamp=datetime.now()
         )
@@ -445,6 +447,7 @@ class TestTypeContractDataFlow:
             html_pages=[ContentAsset("https://example.com/page1", "page", "text/html", 10 * 1024)],
             pdf_documents=[],
             media_files=[],
+            structured_data=[],
             total_assets=1,
             discovery_timestamp=datetime.now()
         )

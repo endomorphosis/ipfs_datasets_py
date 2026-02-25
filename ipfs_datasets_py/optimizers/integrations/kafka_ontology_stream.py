@@ -118,12 +118,20 @@ class MockKafkaProducer:
         self.config = kwargs
         self.sent_messages = []
         self.closed = False
+        self.value_serializer = kwargs.get('value_serializer')
+        self.key_serializer = kwargs.get('key_serializer')
         logger.info(f"MockKafkaProducer initialized with config: {list(kwargs.keys())}")
     
     def send(self, topic: str, value: bytes, key: Optional[bytes] = None):
         """Send message (mock)."""
         if self.closed:
             raise RuntimeError("Producer is closed")
+        
+        # Apply serializers if provided
+        if self.value_serializer:
+            value = self.value_serializer(value)
+        if self.key_serializer and key is not None:
+            key = self.key_serializer(key)
         
         # Handle key as either bytes or str
         if key is not None:
