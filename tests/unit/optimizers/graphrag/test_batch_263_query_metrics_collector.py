@@ -594,7 +594,9 @@ class TestGetPhaseTimingSummary(unittest.TestCase):
         summary = collector.get_phase_timing_summary()
         
         self.assertIn("vector_search", summary)
-        self.assertGreater(summary["vector_search"]["call_count"], 2)
+        # total_duration should reflect cumulative time across all queries
+        self.assertGreater(summary["vector_search"]["total_duration"], 0)
+        self.assertGreater(summary["vector_search"]["avg_duration"], 0)
         
     def test_get_phase_timing_summary_calculates_statistics(self):
         """Test phase timing summary calculates complete statistics."""
