@@ -46,6 +46,7 @@ from __future__ import annotations
 import functools
 import logging
 import re
+import time
 import weakref
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
@@ -3164,8 +3165,8 @@ class OntologyGenerator:
         self._semantic_deduplicator = None
         if self.enable_semantic_dedup:
             try:
-                from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import SemanticEntityDeduplicator
-                self._semantic_deduplicator = SemanticEntityDeduplicator()
+                from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import create_semantic_deduplicator
+                self._semantic_deduplicator = create_semantic_deduplicator()
                 self._log.info("Semantic deduplication enabled")
             except ImportError as e:
                 self._log.warning(f"Semantic deduplication requested but dependencies unavailable: {e}")
@@ -3323,15 +3324,25 @@ class OntologyGenerator:
                 result.confidence,
             )
             import json as _json
+            from datetime import datetime as _datetime, timezone as _timezone
             from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
+            _ts = _datetime.now(_timezone.utc)
             payload = {
+                "timestamp": _ts.isoformat(),
+                "level": "INFO",
+                "message": "Ontology entity extraction completed",
                 "event": "extract_entities",
+                "module": __name__,
+                "component": "ontology_generator",
+                "optimizer_type": "graphrag",
                 "optimizer_pipeline": "graphrag",
+                "run_id": f"extract-entities-{_ts.strftime('%Y%m%d%H%M%S%f')}",
                 "strategy": context_for_run.extraction_strategy.value,
                 "entity_count": len(result.entities),
                 "relationship_count": len(result.relationships),
                 "confidence": result.confidence,
                 "language_metadata": language_meta,
+                "status": "success",
             }
             self._log.info(
                 "EXTRACT_ENTITIES: %s",
@@ -3360,15 +3371,25 @@ class OntologyGenerator:
             result.confidence,
         )
         import json as _json
+        from datetime import datetime as _datetime, timezone as _timezone
         from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
+        _ts = _datetime.now(_timezone.utc)
         payload = {
+            "timestamp": _ts.isoformat(),
+            "level": "INFO",
+            "message": "Ontology entity extraction completed",
             "event": "extract_entities",
+            "module": __name__,
+            "component": "ontology_generator",
+            "optimizer_type": "graphrag",
             "optimizer_pipeline": "graphrag",
+            "run_id": f"extract-entities-{_ts.strftime('%Y%m%d%H%M%S%f')}",
             "strategy": context_for_run.extraction_strategy.value,
             "entity_count": len(result.entities),
             "relationship_count": len(result.relationships),
             "confidence": result.confidence,
             "language_metadata": language_meta,
+            "status": "success",
         }
         self._log.info(
             "EXTRACT_ENTITIES: %s",

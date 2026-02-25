@@ -31,4 +31,12 @@ def test_lazy_loader_retains_circuit_breaker_protection() -> None:
     src = _source("llm_lazy_loader.py")
     assert "CircuitBreaker(" in src
     assert "CircuitBreakerOpen" in src
+    assert "BackendCallPolicy(" in src
     assert "execute_with_resilience(" in src
+
+
+def test_lazy_loader_uses_shared_resilience_wrapper_with_policy_and_breaker() -> None:
+    src = _source("llm_lazy_loader.py")
+    assert "_backend_call_policy = BackendCallPolicy(" in src
+    assert "circuit_breaker=self._circuit_breaker" in src
+    assert "if not hasattr(self._circuit_breaker, \"call\")" in src

@@ -80,3 +80,54 @@ def test_lazy_loader_call_uses_common_resilience_wrapper(monkeypatch) -> None:
 
     assert backend("prompt") == "ok"
     assert captured["service_name"] == "lazy_llm_backend_mock"
+
+
+def test_lazy_loader_call_redacts_sensitive_error_text(monkeypatch) -> None:
+    backend = LazyLLMBackend(backend_type="mock", enabled=True, circuit_breaker_enabled=False)
+    backend._circuit_breaker = type(
+        "_CB",
+        (),
+        {
+            "_execute": staticmethod(
+                lambda fn, args, kwargs: (_ for _ in ()).throw(
+                    RuntimeError("api_key=sk-1234567890abcdef")
+                )
+            )
+        },
+    )()
+    monkeypatch.setattr(backend, "get_backend", lambda: type("_B", (), {"__call__": staticmethod(lambda *a, **k: "ok")})())
+
+    with pytest.raises(RuntimeError) as exc_info:
+        backend("prompt")
+
+    message = str(exc_info.value)
+    assert "***REDACTED***" in message
+    assert "sk-1234567890abcdef" not in message
+
+
+def test_lazy_loader_wrapped_method_redacts_sensitive_error_text(monkeypatch) -> None:
+    backend = LazyLLMBackend(backend_type="mock", enabled=True, circuit_breaker_enabled=False)
+    backend._circuit_breaker = type(
+        "_CB",
+        (),
+        {
+            "_execute": staticmethod(
+                lambda fn, args, kwargs: (_ for _ in ()).throw(
+                    RuntimeError("password=hunter2")
+                )
+            )
+        },
+    )()
+
+    class _B:
+        def generate(self, prompt: str):
+            return "ok"
+
+    monkeypatch.setattr(backend, "get_backend", lambda: _B())
+
+    with pytest.raises(RuntimeError) as exc_info:
+        backend.generate("prompt")
+
+    message = str(exc_info.value)
+    assert "***REDACTED***" in message
+    assert "hunter2" not in message

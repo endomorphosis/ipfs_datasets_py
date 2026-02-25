@@ -24,6 +24,24 @@ from ipfs_datasets_py.optimizers.common.base_optimizer import (
 from ipfs_datasets_py.optimizers.common.structured_logging import DEFAULT_SCHEMA_VERSION
 
 
+def _assert_canonical_log_fields(payload: dict, *, component: str) -> None:
+    required = {
+        "timestamp",
+        "level",
+        "message",
+        "module",
+        "component",
+        "optimizer_type",
+        "run_id",
+        "status",
+    }
+    assert required.issubset(payload.keys())
+    assert payload["level"] == "INFO"
+    assert payload["component"] == component
+    assert payload["optimizer_type"] == "logic_theorem"
+    assert payload["status"] == "completed"
+
+
 
 class TestLogicTheoremOptimizerStructuredLogging:
     """Tests for LogicTheoremOptimizer.run_session() JSON logging."""
@@ -68,6 +86,8 @@ class TestLogicTheoremOptimizerStructuredLogging:
         assert payload["domain"] == "general"
         assert payload["extraction_mode"] == "fol"
         assert payload["provers"] == ['z3']
+        _assert_canonical_log_fields(payload, component="unified_optimizer")
+        assert payload["run_id"] == "test-session-001"
         
         # Verify result metrics
         assert "score" in payload
@@ -217,6 +237,8 @@ class TestLogicOptimizerStructuredLogging:
         assert payload["optimizer_pipeline"] == "logic_theorem"
         assert payload["batch_index"] == 1  # First batch
         assert payload["session_count"] == 3
+        _assert_canonical_log_fields(payload, component="logic_optimizer")
+        assert payload["run_id"] == "logic-batch-1"
         
         # Verify metrics
         assert "average_score" in payload

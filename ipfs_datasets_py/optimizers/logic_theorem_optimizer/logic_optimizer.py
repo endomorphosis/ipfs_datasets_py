@@ -143,7 +143,15 @@ class LogicOptimizer:
             from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
 
             payload = {
+                "timestamp": f"{_datetime.utcnow().isoformat()}Z",
+                "level": "INFO",
+                "message": "logic batch analysis summary",
                 "event": "logic_optimizer_analyze_batch",
+                "module": __name__,
+                "component": "logic_optimizer",
+                "optimizer_type": "logic_theorem",
+                "run_id": f"logic-batch-{len(self.batch_history)}",
+                "status": "completed",
                 "optimizer_pipeline": "logic_theorem",
                 "batch_index": len(self.batch_history),
                 "session_count": len(session_results),
@@ -153,7 +161,6 @@ class LogicOptimizer:
                 "recommendation_count": len(recommendations),
                 "insight_count": len(insights),
                 "dimension_count": len(dimension_metrics),
-                "timestamp": _datetime.now().isoformat(),
             }
             logger.info(
                 "LOGIC_BATCH_ANALYSIS: %s",

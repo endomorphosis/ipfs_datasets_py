@@ -55,7 +55,7 @@ class GraphRAGConfig(BaseConfig):
     enable_semantic_deduplication: bool = False
     deduplication_threshold: float = 0.8
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.domain_specific_rules is None:
             self.domain_specific_rules = set()
     
@@ -140,7 +140,7 @@ class UnifiedOptimizerConfig(BaseConfig):
     enable_caching: bool = True
     cache_size_mb: int = 100
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize domain-specific configs if not provided."""
         if self.graphrag_config is None:
             self.graphrag_config = GraphRAGConfig()
@@ -152,10 +152,13 @@ class UnifiedOptimizerConfig(BaseConfig):
     def get_domain_config(self, domain: DomainType) -> BaseConfig:
         """Get the configuration for a specific domain."""
         if domain == DomainType.GRAPHRAG:
+            assert self.graphrag_config is not None
             return self.graphrag_config
         elif domain == DomainType.LOGIC:
+            assert self.logic_config is not None
             return self.logic_config
         elif domain == DomainType.AGENTIC:
+            assert self.agentic_config is not None
             return self.agentic_config
         else:
             raise ValueError(f"Unknown domain: {domain}")
@@ -257,7 +260,7 @@ class AgenticContext(BaseContext):
 def create_context(
     session_id: str,
     domain: DomainType,
-    **kwargs
+    **kwargs: Any
 ) -> BaseContext:
     """Factory function to create appropriate context based on domain."""
     if domain == DomainType.GRAPHRAG:

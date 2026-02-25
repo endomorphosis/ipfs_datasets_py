@@ -165,13 +165,17 @@ class TestEntityTypeCounts:
 # ---------------------------------------------------------------------------
 
 class TestHistoryLength:
-    def test_zero_initially(self):
-        assert OntologyOptimizer().history_length == 0
-
-    def test_increments(self):
+    @pytest.mark.parametrize(
+        "seed_reports,expected",
+        [
+            ([], 0),
+            ([_report()], 1),
+        ],
+    )
+    def test_history_length_scenarios(self, seed_reports, expected):
         opt = OntologyOptimizer()
-        opt._history.append(_report())
-        assert opt.history_length == 1
+        opt._history.extend(seed_reports)
+        assert opt.history_length == expected
 
     def test_returns_int(self):
         assert isinstance(OntologyOptimizer().history_length, int)
@@ -194,11 +198,9 @@ class TestDomainList:
     def test_nonempty(self):
         assert len(OntologyPipeline().domain_list) > 0
 
-    def test_contains_general(self):
-        assert "general" in OntologyPipeline().domain_list
-
-    def test_contains_legal(self):
-        assert "legal" in OntologyPipeline().domain_list
+    @pytest.mark.parametrize("domain", ["general", "legal"])
+    def test_contains_expected_domains(self, domain):
+        assert domain in OntologyPipeline().domain_list
 
     def test_all_strings(self):
         for d in OntologyPipeline().domain_list:

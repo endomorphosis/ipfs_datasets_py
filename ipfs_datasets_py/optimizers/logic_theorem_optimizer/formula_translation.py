@@ -12,7 +12,7 @@ Integrates with:
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 from dataclasses import dataclass
 from enum import Enum
 
@@ -48,10 +48,10 @@ class TranslationResult:
     formalism: FormulaFormalism
     original_text: str
     success: bool
-    errors: List[str] = None
-    metadata: Dict[str, Any] = None
+    errors: Optional[List[str]] = None
+    metadata: Optional[Dict[str, Any]] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.errors is None:
             self.errors = []
         if self.metadata is None:
@@ -72,7 +72,7 @@ class TDFOLFormulaTranslator:
         >>> print(result.formula)
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the TDFOL translator."""
         self._parse_policy = BackendCallPolicy(
             service_name="tdfol_reasoner_parse",
@@ -124,7 +124,9 @@ class TDFOLFormulaTranslator:
     def _init_neurosymbolic(self) -> None:
         """Initialize neurosymbolic reasoner."""
         try:
-            from ipfs_datasets_py.logic.integration.neurosymbolic_api import NeurosymbolicReasoner
+            from ipfs_datasets_py.logic.integration.neurosymbolic_api import (  # type: ignore[import-untyped]
+                NeurosymbolicReasoner,
+            )
             self.reasoner = NeurosymbolicReasoner(
                 use_cec=True,
                 use_modal=True,
@@ -348,7 +350,7 @@ class TDFOLFormulaTranslator:
                 self._nl_generate_policy,
                 circuit_breaker=self._nl_generate_circuit_breaker,
             )
-            return nl_text
+            return cast(str, nl_text)
             
         except (
             AttributeError,
@@ -374,7 +376,7 @@ class CECFormulaTranslator:
         ... )
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the CEC translator."""
         self._init_cec()
     
@@ -463,7 +465,7 @@ class UnifiedFormulaTranslator:
         ... )
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the unified translator."""
         self.tdfol_translator = TDFOLFormulaTranslator()
         self.cec_translator = CECFormulaTranslator()

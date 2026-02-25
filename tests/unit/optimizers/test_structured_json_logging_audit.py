@@ -34,6 +34,20 @@ def _assert_common_schema_fields(payload: dict, expected_pipeline: str) -> None:
     assert "timestamp" in payload
 
 
+def _assert_canonical_fields(payload: dict) -> None:
+    required = {
+        "timestamp",
+        "level",
+        "message",
+        "module",
+        "component",
+        "optimizer_type",
+        "run_id",
+        "status",
+    }
+    assert required.issubset(payload.keys())
+
+
 def test_common_log_event_emits_schema_contract(caplog) -> None:
     logger = logging.getLogger("test.structured.audit.common")
     caplog.set_level(logging.INFO, logger=logger.name)
@@ -99,9 +113,11 @@ def test_cross_pipeline_optimizer_logs_emit_schema_contract(caplog) -> None:
 
     graphrag_payload = _find_record_payload(caplog, "json")
     _assert_common_schema_fields(graphrag_payload, expected_pipeline="graphrag")
+    _assert_canonical_fields(graphrag_payload)
     assert graphrag_payload["event"] == "ontology_optimizer.analyze_batch.summary"
     assert graphrag_payload["token"] == "Bearer ***REDACTED***"
 
     logic_payload = _find_record_payload(caplog, "LOGIC_BATCH_ANALYSIS: ")
     _assert_common_schema_fields(logic_payload, expected_pipeline="logic_theorem")
+    _assert_canonical_fields(logic_payload)
     assert logic_payload["event"] == "logic_optimizer_analyze_batch"

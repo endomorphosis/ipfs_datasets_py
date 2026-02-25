@@ -642,3 +642,30 @@ class TestJSONLogStructure:
             if line:
                 log_obj = json.loads(line)
                 assert "event" in log_obj
+
+    def test_logs_include_canonical_fields(self, logger_with_capture):
+        """Structured logs should include canonical envelope fields."""
+        json_logger, log_capture = logger_with_capture
+        json_logger.start_run("run_123", "test")
+        json_logger.log_extraction_started(1000)
+
+        output = log_capture.stream.getvalue()
+        lines = output.strip().split("\n")
+
+        for line in lines:
+            if not line:
+                continue
+            log_obj = json.loads(line)
+            for key in (
+                "timestamp",
+                "level",
+                "event",
+                "module",
+                "component",
+                "optimizer_type",
+                "schema_version",
+                "message",
+            ):
+                assert key in log_obj
+            assert log_obj["component"] == "pipeline_json_logger"
+            assert log_obj["optimizer_type"] == "graphrag"

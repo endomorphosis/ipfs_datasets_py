@@ -416,6 +416,9 @@ class OptimizerArgparseCLI:
         
         # Read code
         target_path = Path(args.target)
+        if not self._sanitizer.validate_file_path(str(target_path)):
+            print(f"❌ Security validation failed for path: {args.target}")
+            return 1
         if not target_path.exists():
             print(f"❌ File not found: {args.target}")
             return 1

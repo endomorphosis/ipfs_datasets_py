@@ -61,20 +61,19 @@ def _make_report(score: float) -> OptimizationReport:
 
 
 class TestAverageScore:
-    def test_empty_history_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,expected",
+        [
+            ([], 0.0),
+            ([0.6], 0.6),
+            ([0.4, 0.6, 0.8], 0.6),
+        ],
+    )
+    def test_average_score_scenarios(self, scores, expected):
         opt = OntologyOptimizer()
-        assert opt.average_score() == pytest.approx(0.0)
-
-    def test_single_entry(self):
-        opt = OntologyOptimizer()
-        opt._history.append(_make_report(0.6))
-        assert opt.average_score() == pytest.approx(0.6)
-
-    def test_mean_of_multiple(self):
-        opt = OntologyOptimizer()
-        for v in [0.4, 0.6, 0.8]:
-            opt._history.append(_make_report(v))
-        assert opt.average_score() == pytest.approx(0.6, abs=1e-5)
+        for value in scores:
+            opt._history.append(_make_report(value))
+        assert opt.average_score() == pytest.approx(expected, abs=1e-5)
 
     def test_returns_float(self):
         opt = OntologyOptimizer()
@@ -97,14 +96,16 @@ class TestScoreRange:
     def setup_method(self):
         self.critic = OntologyCritic()
 
-    def test_empty_returns_zeros(self):
-        lo, hi = self.critic.score_range([])
-        assert lo == 0.0 and hi == 0.0
-
-    def test_single_score(self):
-        s = _make_score()
-        lo, hi = self.critic.score_range([s])
-        assert lo == pytest.approx(hi, abs=1e-6)
+    @pytest.mark.parametrize(
+        "scores,assertion",
+        [
+            ([], lambda lo, hi: lo == 0.0 and hi == 0.0),
+            ([_make_score()], lambda lo, hi: lo == pytest.approx(hi, abs=1e-6)),
+        ],
+    )
+    def test_basic_range_scenarios(self, scores, assertion):
+        lo, hi = self.critic.score_range(scores)
+        assert assertion(lo, hi)
 
     def test_range_across_multiple(self):
         s1 = _make_score(c=0.1, con=0.1, cl=0.1, g=0.1, da=0.1)
@@ -208,14 +209,16 @@ class TestTopRecommendedAction:
 
 
 class TestUniqueTypes:
-    def test_empty_result(self):
-        r = _make_result()
-        assert r.unique_types() == []
-
-    def test_single_type(self):
-        e1 = _make_entity("1", "Alice", "Person")
-        r = _make_result(e1)
-        assert r.unique_types() == ["Person"]
+    @pytest.mark.parametrize(
+        "entities,expected",
+        [
+            ([], []),
+            ([_make_entity("1", "Alice", "Person")], ["Person"]),
+        ],
+    )
+    def test_basic_unique_type_scenarios(self, entities, expected):
+        r = _make_result(*entities)
+        assert r.unique_types() == expected
 
     def test_multiple_unique_types_sorted(self):
         e1 = _make_entity("1", "Alice", "Person")

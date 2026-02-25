@@ -95,31 +95,24 @@ class TestScoreTrend:
         result = critic.score_trend([_score(0.5), _score(0.7)])
         assert isinstance(result, str)
 
-    def test_improving(self):
+    @pytest.mark.parametrize(
+        "scores,expected",
+        [
+            ([0.3, 0.5, 0.7, 0.9], "improving"),
+            ([0.9, 0.7, 0.5, 0.3], "degrading"),
+            ([0.7, 0.7, 0.7], "stable"),  # All same — slope = 0
+        ],
+    )
+    def test_trend_labels(self, scores, expected):
         critic = _critic()
-        result = critic.score_trend([_score(0.3), _score(0.5), _score(0.7), _score(0.9)])
-        assert result == "improving"
+        result = critic.score_trend([_score(v) for v in scores])
+        assert result == expected
 
-    def test_degrading(self):
-        critic = _critic()
-        result = critic.score_trend([_score(0.9), _score(0.7), _score(0.5), _score(0.3)])
-        assert result == "degrading"
-
-    def test_stable(self):
-        critic = _critic()
-        # All same — slope = 0
-        result = critic.score_trend([_score(0.7), _score(0.7), _score(0.7)])
-        assert result == "stable"
-
-    def test_single_score_raises(self):
+    @pytest.mark.parametrize("scores", [[], [0.5]])
+    def test_invalid_inputs_raise(self, scores):
         critic = _critic()
         with pytest.raises(ValueError):
-            critic.score_trend([_score(0.5)])
-
-    def test_empty_raises(self):
-        critic = _critic()
-        with pytest.raises(ValueError):
-            critic.score_trend([])
+            critic.score_trend([_score(v) for v in scores])
 
     def test_valid_labels(self):
         critic = _critic()
@@ -172,20 +165,18 @@ class TestRunWithMetrics:
         result = p.run_with_metrics("Alice works at ACME.")
         assert isinstance(result, dict)
 
-    def test_result_key_present(self):
+    @pytest.mark.parametrize(
+        "key,validator",
+        [
+            ("result", lambda m: "result" in m),
+            ("latency_seconds", lambda m: m["latency_seconds"] >= 0),
+            ("score", lambda m: 0.0 <= m["score"] <= 1.0),
+        ],
+    )
+    def test_core_metric_fields(self, key, validator):
         p = OntologyPipeline(domain="test")
         metrics = p.run_with_metrics("Alice.")
-        assert "result" in metrics
-
-    def test_latency_non_negative(self):
-        p = OntologyPipeline(domain="test")
-        metrics = p.run_with_metrics("Alice.")
-        assert metrics["latency_seconds"] >= 0
-
-    def test_score_in_range(self):
-        p = OntologyPipeline(domain="test")
-        metrics = p.run_with_metrics("Alice.")
-        assert 0.0 <= metrics["score"] <= 1.0
+        assert validator(metrics), f"failed metric assertion for {key}"
 
     def test_entity_count_int(self):
         p = OntologyPipeline(domain="test")

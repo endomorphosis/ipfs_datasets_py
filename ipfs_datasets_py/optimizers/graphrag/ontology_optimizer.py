@@ -232,6 +232,7 @@ class OntologyOptimizer:
             "optimizer_type": "graphrag",
             "optimizer_pipeline": "graphrag",
             "run_id": f"ontology-optimizer-batch-{int(time.time() * 1000)}",
+            "status": "completed",
             **payload,
         }
         self._log.info(

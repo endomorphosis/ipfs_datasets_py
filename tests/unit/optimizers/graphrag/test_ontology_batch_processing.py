@@ -276,6 +276,10 @@ class TestBatchParallelExecution:
         with pytest.raises(ValueError, match="max_workers must be >= 1"):
             pipeline.run_batch(["doc"], parallel=True, max_workers=0)
 
+    def test_parallel_batch_rejects_non_integer_max_workers(self, pipeline):
+        with pytest.raises(ValueError, match="max_workers must be an integer"):
+            pipeline.run_batch(["doc"], parallel=True, max_workers="4")
+
 
 class TestBatchWithCacheWarming:
     """Tests for batch processing with cache warming."""

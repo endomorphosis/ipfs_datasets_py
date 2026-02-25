@@ -129,6 +129,16 @@ from .audit_log import (
     log_security_event
 )
 
+from .llm_circuit_breaker import (
+    LLMCircuitBreaker,
+    CircuitState,
+    CircuitBreakerOpenError,
+    CircuitBreakerMetrics,
+    get_circuit_breaker,
+    reset_all_circuit_breakers,
+    get_all_circuit_breaker_stats,
+)
+
 __all__ = [
     # Input validation
     'InputValidator',
@@ -145,5 +155,14 @@ __all__ = [
     # Audit logging
     'AuditLogger',
     'log_proof_attempt',
-    'log_security_event'
+    'log_security_event',
+    
+    # Circuit breaker
+    'LLMCircuitBreaker',
+    'CircuitState',
+    'CircuitBreakerOpenError',
+    'CircuitBreakerMetrics',
+    'get_circuit_breaker',
+    'reset_all_circuit_breakers',
+    'get_all_circuit_breaker_stats',
 ]

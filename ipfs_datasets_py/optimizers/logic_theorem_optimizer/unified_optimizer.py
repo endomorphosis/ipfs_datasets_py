@@ -238,7 +238,15 @@ class LogicTheoremOptimizer(BaseOptimizer):
                 statement_count = 0
 
             payload = {
+                "timestamp": f"{_datetime.utcnow().isoformat()}Z",
+                "level": "INFO",
+                "message": "logic theorem run session completed",
                 "event": "logic_theorem_optimizer_run_session",
+                "module": __name__,
+                "component": "unified_optimizer",
+                "optimizer_type": "logic_theorem",
+                "run_id": context.session_id,
+                "status": "completed",
                 "optimizer_pipeline": "logic_theorem",
                 "session_id": context.session_id,
                 "domain": context.domain or self.domain,
@@ -249,7 +257,6 @@ class LogicTheoremOptimizer(BaseOptimizer):
                 "iterations": int(result.get("iterations", 0) or 0),
                 "statement_count": int(statement_count),
                 "duration_ms": round(duration_ms, 2),
-                "timestamp": _datetime.now().isoformat(),
             }
             self._log.info(
                 "LOGIC_SESSION_RUN: %s",

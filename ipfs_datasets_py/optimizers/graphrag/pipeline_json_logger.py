@@ -35,7 +35,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, asdict, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Callable, TypedDict
+from typing import Any, Dict, List, Optional, Callable, TypedDict, cast
 
 from ipfs_datasets_py.optimizers.common.structured_logging import (
     EventType,
@@ -94,7 +94,7 @@ class LogContext:
     timestamp_started: float = field(default_factory=time.time)
     stages: Dict[str, float] = field(default_factory=dict)
     stage_timings: Dict[str, float] = field(default_factory=dict)
-    metrics: PipelineMetricsDict = field(default_factory=dict)
+    metrics: PipelineMetricsDict = field(default_factory=lambda: cast(PipelineMetricsDict, {}))
     errors: List[PipelineErrorDict] = field(default_factory=list)
     
     def elapsed_ms(self) -> float:
@@ -169,7 +169,13 @@ class PipelineJSONLogger:
             level: Logging level
         """
         payload = {
+            "timestamp": f"{datetime.utcnow().isoformat()}Z",
+            "level": str(logging.getLevelName(level)),
+            "message": event_type,
             "event": event_type,
+            "module": __name__,
+            "component": "pipeline_json_logger",
+            "optimizer_type": "graphrag",
             "domain": self.domain,
             "optimizer_pipeline": "graphrag",
             **data,

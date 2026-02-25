@@ -41,6 +41,7 @@ These scripts emit JSON metrics and can be run directly with Python.
 | `bench_query_validation_cache_key.py` | `QueryValidationMixin.generate_cache_key()` timing on nested payloads |
 | `bench_logic_validator_validate_ontology.py` | `LogicValidator.validate_ontology()` timing on synthetic 100-entity ontologies |
 | `bench_ontology_generator_extract_entities_10k.py` | `OntologyGenerator.extract_entities()` timing on ~10k-token text (`sentence_window=0` vs `2`) |
+| `bench_ontology_pipeline_run_batch_parallel.py` | `OntologyPipeline.run_batch()` serial vs deterministic parallel timing (`parallel=True`, `max_workers=4`) |
 | `bench_sentence_window_scaling.py` | `OntologyGenerator.generate_ontology()` timing/relationship-count impact across domains for `sentence_window=0/1/2` |
 | `profile_ontology_generator_generate_10kb.py` | cProfile + latency summary for `OntologyGenerator.generate_ontology()` on ~10kB text |
 | `bench_query_optimizer_under_load.py` | `GraphRAGQueryOptimizer.optimize_query()` latency/throughput under small/medium/large query payloads |

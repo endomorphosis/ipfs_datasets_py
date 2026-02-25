@@ -33,8 +33,14 @@ from ipfs_datasets_py.optimizers.common.exceptions import (
     CircuitBreakerOpenError,
     RetryableBackendError,
 )
+from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_error_text(error: Exception) -> str:
+    """Render exception text with sensitive fragments redacted."""
+    return redact_sensitive(str(error))
 
 
 class LazyLLMBackend:
@@ -265,7 +271,7 @@ class LazyLLMBackend:
                 raise RuntimeError(f"LLM backend temporarily unavailable: {e}") from e
             except RetryableBackendError as e:
                 details = e.details if isinstance(e.details, dict) else {}
-                last_error = details.get("last_error", str(e))
+                last_error = _safe_error_text(Exception(str(details.get("last_error", str(e)))))
                 logger.warning("LLM backend call failed: %s", last_error)
                 raise RuntimeError(f"LLM backend error: {last_error}") from e
             except (
@@ -276,8 +282,9 @@ class LazyLLMBackend:
                 OSError,
                 TimeoutError,
             ) as e:
-                logger.warning("LLM backend call failed: %s", e)
-                raise RuntimeError(f"LLM backend error: {e}") from e
+                safe_error = _safe_error_text(e)
+                logger.warning("LLM backend call failed: %s", safe_error)
+                raise RuntimeError(f"LLM backend error: {safe_error}") from e
         
         return backend(*args, **kwargs)
     
@@ -306,7 +313,7 @@ class LazyLLMBackend:
                     ) from e
                 except RetryableBackendError as e:
                     details = e.details if isinstance(e.details, dict) else {}
-                    last_error = details.get("last_error", str(e))
+                    last_error = _safe_error_text(Exception(str(details.get("last_error", str(e)))))
                     logger.warning("LLM backend method '%s' failed: %s", name, last_error)
                     raise RuntimeError(f"LLM backend error during {name}: {last_error}") from e
                 except (
@@ -317,8 +324,9 @@ class LazyLLMBackend:
                     OSError,
                     TimeoutError,
                 ) as e:
-                    logger.warning("LLM backend method '%s' failed: %s", name, e)
-                    raise RuntimeError(f"LLM backend error during {name}: {e}") from e
+                    safe_error = _safe_error_text(e)
+                    logger.warning("LLM backend method '%s' failed: %s", name, safe_error)
+                    raise RuntimeError(f"LLM backend error during {name}: {safe_error}") from e
             return wrapped_method
         
         return attr
