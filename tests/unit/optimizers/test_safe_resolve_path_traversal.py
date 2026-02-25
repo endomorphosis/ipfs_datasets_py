@@ -39,7 +39,7 @@ class TestSafeResolveGraphRAG:
         "/dev/null",
     ])
     def test_forbidden_path_raises_value_error(self, path):
-        with pytest.raises(PathResolutionError, match="restricted area"):
+        with pytest.raises(PathResolutionError, match="system path not allowed|escape base directory"):
             _safe_resolve(path)
 
     def test_safe_path_returns_resolved(self, tmp_path):
@@ -66,10 +66,8 @@ class TestSafeResolveLogic:
         "/proc/self/status",
     ])
     def test_forbidden_path_raises_value_error(self, path):
-        with pytest.raises((ValueError, FileNotFoundError)):
-            # logic CLI may raise FileNotFoundError OR ValueError depending on impl
-            result = _logic_safe_resolve(path, must_exist=True)
-            # If no exception raised, the path must be valid (shouldn't happen for /etc/passwd)
+        with pytest.raises(ValueError, match="system path not allowed|escape base directory"):
+            _logic_safe_resolve(path, must_exist=True)
 
     def test_safe_tmp_path_accepted(self, tmp_path):
         p = tmp_path / "logic.json"

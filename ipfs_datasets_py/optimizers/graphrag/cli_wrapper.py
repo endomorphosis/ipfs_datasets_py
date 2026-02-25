@@ -43,10 +43,14 @@ def _safe_resolve(path_str: str, *, must_exist: bool = False) -> Path:
     if not path_str.strip():
         raise ValueError("path_str must be a non-empty string")
 
+    base_dir = None
+    if Path(path_str).is_absolute():
+        base_dir = Path(path_str).parent
+
     try:
         if must_exist:
-            return validate_input_path(path_str, must_exist=True)
-        return validate_output_path(path_str, allow_overwrite=True)
+            return validate_input_path(path_str, must_exist=True, base_dir=base_dir)
+        return validate_output_path(path_str, allow_overwrite=True, base_dir=base_dir)
     except PathValidationError as exc:
         raise PathResolutionError(
             str(exc),
