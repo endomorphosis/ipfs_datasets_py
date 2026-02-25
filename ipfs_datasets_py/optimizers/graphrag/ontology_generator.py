@@ -3149,7 +3149,7 @@ class OntologyGenerator:
         self.backend_provider = resolved_backend.provider
         self.ipfs_accelerate_config.setdefault("provider", resolved_backend.provider)
         self.ipfs_accelerate_config.setdefault("model", resolved_backend.model)
-        self._accelerate_client = None
+        self._accelerate_client = self.ipfs_accelerate_config.get("client")
         self.llm_backend = llm_backend
         self._llm_call_policy = BackendCallPolicy(
             service_name="graphrag_ontology_generator_llm",
@@ -3182,10 +3182,10 @@ class OntologyGenerator:
         
         if self.use_ipfs_accelerate:
             try:
-                # Import ipfs_accelerate_py integration
-                from ipfs_datasets_py.processors.file_converter import (
-                    ipfs_accelerate_converter
-                )
+                if self._accelerate_client is None:
+                    import ipfs_accelerate_py as _ipfs_accelerate_py
+
+                    self._accelerate_client = _ipfs_accelerate_py
                 self._accelerate_available = True
                 self._log.info("ipfs_accelerate_py integration available")
             except ImportError as e:
@@ -5220,7 +5220,7 @@ class OntologyGenerator:
         # Prefer explicit llm_backend when provided. This supports direct
         # dependency injection in tests and production wrappers, independent
         # of accelerator availability.
-        if self.llm_backend is None and (not self.use_ipfs_accelerate or not self._accelerate_available):
+        if self.llm_backend is None and self._accelerate_client is None:
             self._log.warning("LLM extraction not available, falling back to rule-based")
             return self._extract_rule_based(data, context)
 
@@ -5256,7 +5256,7 @@ class OntologyGenerator:
 
     def _invoke_llm_extraction_backend(self, prompt: str) -> Any:
         """Invoke configured LLM backend and return raw response payload."""
-        backend = self.llm_backend
+        backend = self.llm_backend if self.llm_backend is not None else self._accelerate_client
         if backend is None:
             raise RuntimeError("No llm_backend configured for LLM extraction")
 
@@ -5266,6 +5266,10 @@ class OntologyGenerator:
             operation = lambda: backend.generate(prompt)
         elif hasattr(backend, "complete"):
             operation = lambda: backend.complete(prompt)
+        elif hasattr(backend, "infer"):
+            operation = lambda: backend.infer(prompt)
+        elif hasattr(backend, "run"):
+            operation = lambda: backend.run(prompt)
         else:
             raise TypeError(f"Unsupported llm_backend type: {type(backend).__name__}")
 
@@ -5413,7 +5417,7 @@ class OntologyGenerator:
         rule_result = self._extract_rule_based(data, context)
 
         # Augment with LLM if available
-        if self.use_ipfs_accelerate and self._accelerate_available:
+        if self.llm_backend is not None or (self.use_ipfs_accelerate and self._accelerate_available):
             llm_result = self._extract_llm_based(data, context)
         else:
             # No LLM — augment rule-based with relationship inference.

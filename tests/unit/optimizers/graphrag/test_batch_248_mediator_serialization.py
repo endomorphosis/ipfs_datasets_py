@@ -527,6 +527,25 @@ class TestIntegrationWithRefinementCycle:
         assert len(deserialized.refinement_history) > 0
         assert len(deserialized.critic_scores) > 0
         assert deserialized.total_time_ms > 0
+
+    def test_refinement_cycle_state_round_trip_integrity(self, mediator, context):
+        """run_refinement_cycle() state survives full dict round-trip with key fields intact."""
+        text = "Alice manages Bob. Bob works with Charlie."
+
+        state = mediator.run_refinement_cycle(text, context)
+        serialized = state.to_dict()
+        deserialized = MediatorState.from_dict(serialized)
+        reserialized = deserialized.to_dict()
+
+        assert reserialized["session_id"] == serialized["session_id"]
+        assert reserialized["max_rounds"] == serialized["max_rounds"]
+        assert reserialized["target_score"] == serialized["target_score"]
+        assert reserialized["current_ontology"] == serialized["current_ontology"]
+        assert reserialized["refinement_history"] == serialized["refinement_history"]
+        assert len(reserialized["critic_scores"]) == len(serialized["critic_scores"])
+        assert len(reserialized["rounds"]) == len(serialized["rounds"])
+        assert [r["round"] for r in reserialized["rounds"]] == [r["round"] for r in serialized["rounds"]]
+        assert [r["score"] for r in reserialized["rounds"]] == [r["score"] for r in serialized["rounds"]]
     
     def test_agentic_refinement_cycle_serialization(self, mediator, context):
         """State from run_agentic_refinement_cycle() can be serialized."""

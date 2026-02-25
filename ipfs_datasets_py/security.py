@@ -27,7 +27,7 @@ import base64
 import hashlib
 import logging
 import datetime
-from typing import Dict, List, Any, Optional, Union, Callable, Tuple, BinaryIO
+from typing import Dict, List, Any, Optional, Union, Callable, Tuple, BinaryIO, TypedDict
 from dataclasses import dataclass, field, asdict
 from functools import wraps
 import contextlib
@@ -1043,6 +1043,116 @@ class AuditLogEntry:
     success: bool = True
 
 
+# ===== TypedDict Definitions for Return Types =====
+
+class EncryptFileDict(TypedDict, total=False):
+    """Result of encrypt_file() operation."""
+    
+    file_hash: str
+    encrypted_path: str
+    encryption_algorithm: str
+    key_id: str
+    timestamp: str
+    bytes_encrypted: int
+    checksum: str
+
+
+class LineageGraphDict(TypedDict, total=False):
+    """Data lineage graph structure from get_data_lineage_graph()."""
+    
+    nodes: List[Dict[str, Any]]
+    edges: List[Dict[str, Any]]
+    node_count: int
+    edge_count: int
+    graph_format: str
+    timestamp: str
+    depth: int
+
+
+class ProvenanceReportDict(TypedDict, total=False):
+    """Provenance report from generate_provenance_report()."""
+    
+    lineage: Dict[str, Any]
+    data_sources: List[str]
+    processing_steps: List[Dict[str, Any]]
+    access_history: List[Dict[str, Any]]
+    checksums: Dict[str, str]
+    timestamp: str
+    report_format: str
+
+
+class FormattedReportTextDict(TypedDict, total=False):
+    """Text formatted report from _format_report_as_text()."""
+    
+    formatted_text: str
+    text_format: str
+    line_count: int
+    character_count: int
+    timestamp: str
+
+
+class FormattedReportHtmlDict(TypedDict, total=False):
+    """HTML formatted report from _format_report_as_html()."""
+    
+    html_content: str
+    html_format: str
+    has_styles: bool
+    has_scripts: bool
+    timestamp: str
+
+
+class FormattedReportMarkdownDict(TypedDict, total=False):
+    """Markdown formatted report from _format_report_as_markdown()."""
+    
+    markdown_content: str
+    markdown_format: str
+    section_count: int
+    code_block_count: int
+    timestamp: str
+
+
+class LineageVisualizationDict(TypedDict, total=False):
+    """Lineage visualization data from generate_lineage_visualization()."""
+    
+    nodes: List[Dict[str, Any]]
+    edges: List[Dict[str, Any]]
+    visualization_formats: List[str]
+    graph_metrics: Dict[str, Any]
+    timestamp: str
+
+
+class FormattedLineageDotDict(TypedDict, total=False):
+    """DOT format lineage from _format_lineage_as_dot()."""
+    
+    dot_content: str
+    dot_format: str
+    node_count: int
+    edge_count: int
+    timestamp: str
+
+
+class FormattedLineageMermaidDict(TypedDict, total=False):
+    """Mermaid format lineage from _format_lineage_as_mermaid()."""
+    
+    mermaid_content: str
+    mermaid_format: str
+    diagram_type: str
+    node_count: int
+    edge_count: int
+    timestamp: str
+
+
+class FormattedLineageD3Dict(TypedDict, total=False):
+    """D3.js format lineage from _format_lineage_as_d3()."""
+    
+    d3_json: Dict[str, Any]
+    d3_format: str
+    layout_type: str
+    node_count: int
+    edge_count: int
+    timestamp: str
+
+
 class SecurityManager:
     """Main class for security and governance features."""
 
@@ -1786,7 +1896,7 @@ class SecurityManager:
             return data
 
     def encrypt_file(self, input_file: Union[str, BinaryIO], output_file: Union[str, BinaryIO],
-                   key_id: Optional[str] = None, requestor_did: Optional[str] = None) -> Dict[str, Any]:
+                   key_id: Optional[str] = None, requestor_did: Optional[str] = None) -> EncryptFileDict:
         """
         Encrypt a file using a specified key or a new key.
 
@@ -2626,7 +2736,7 @@ class SecurityManager:
             return []
 
     def get_data_lineage_graph(self, data_id: str, max_depth: int = 3,
-                              direction: str = "both") -> Dict[str, Any]:
+                              direction: str = "both") -> LineageGraphDict:
         """
         Generate a lineage graph for a specific data item.
 
@@ -3363,7 +3473,7 @@ class SecurityManager:
 
     def generate_provenance_report(self, data_id: str, report_type: str = "detailed",
                                  format: str = "json", include_lineage: bool = True,
-                                 include_access_history: bool = True) -> Dict[str, Any]:
+                                 include_access_history: bool = True) -> ProvenanceReportDict:
         """
         Generate a comprehensive report of a data item's provenance information.
 
@@ -3549,7 +3659,7 @@ class SecurityManager:
 
         return derived_ids
 
-    def _format_report_as_text(self, report: Dict[str, Any]) -> Dict[str, Any]:
+    def _format_report_as_text(self, report: Dict[str, Any]) -> FormattedReportTextDict:
         """Format the provenance report as human-readable text."""
         text_report = report.copy()
         text_content = []
@@ -3616,7 +3726,7 @@ class SecurityManager:
         text_report["text_content"] = "\n".join(text_content)
         return text_report
 
-    def _format_report_as_html(self, report: Dict[str, Any]) -> Dict[str, Any]:
+    def _format_report_as_html(self, report: Dict[str, Any]) -> FormattedReportHtmlDict:
         """Format the provenance report as HTML."""
         html_report = report.copy()
         html_content = []
@@ -3731,7 +3841,7 @@ class SecurityManager:
         html_report["html_content"] = "\n".join(html_content)
         return html_report
 
-    def _format_report_as_markdown(self, report: Dict[str, Any]) -> Dict[str, Any]:
+    def _format_report_as_markdown(self, report: Dict[str, Any]) -> FormattedReportMarkdownDict:
         """Format the provenance report as Markdown."""
         md_report = report.copy()
         md_content = []
@@ -3823,7 +3933,7 @@ class SecurityManager:
 
     def generate_lineage_visualization(self, data_id: str, format: str = "dot",
                                      max_depth: int = 3, direction: str = "both",
-                                     include_attributes: bool = False) -> Dict[str, Any]:
+                                     include_attributes: bool = False) -> LineageVisualizationDict:
         """
         Generate a visualization of data lineage for a specific data item.
 
@@ -3927,7 +4037,7 @@ class SecurityManager:
         creation_date = datetime.datetime.fromisoformat(provenance.creation_time).strftime("%Y-%m-%d")
         return f"{provenance.data_type} ({creation_date})"
 
-    def _format_lineage_as_dot(self, visualization: Dict[str, Any]) -> Dict[str, Any]:
+    def _format_lineage_as_dot(self, visualization: Dict[str, Any]) -> FormattedLineageDotDict:
         """Format lineage visualization as DOT format for GraphViz."""
         dot_visualization = visualization.copy()
         dot_lines = []
@@ -3965,7 +4075,7 @@ class SecurityManager:
         dot_visualization["dot_content"] = "\n".join(dot_lines)
         return dot_visualization
 
-    def _format_lineage_as_mermaid(self, visualization: Dict[str, Any]) -> Dict[str, Any]:
+    def _format_lineage_as_mermaid(self, visualization: Dict[str, Any]) -> FormattedLineageMermaidDict:
         """Format lineage visualization as Mermaid flowchart."""
         mermaid_visualization = visualization.copy()
         mermaid_lines = []
@@ -4003,7 +4113,7 @@ class SecurityManager:
         mermaid_visualization["mermaid_content"] = "\n".join(mermaid_lines)
         return mermaid_visualization
 
-    def _format_lineage_as_d3(self, visualization: Dict[str, Any]) -> Dict[str, Any]:
+    def _format_lineage_as_d3(self, visualization: Dict[str, Any]) -> FormattedLineageD3Dict:
         """Format lineage visualization for D3.js force-directed graph."""
         d3_visualization = visualization.copy()
 

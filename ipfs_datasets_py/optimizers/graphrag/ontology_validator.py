@@ -7,6 +7,7 @@ and suggesting improvements such as entity merging candidates.
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 from .query_optimizer_types import MergeEvidenceDict
+from .exceptions import OntologyValidationError
 import logging
 from difflib import SequenceMatcher
 
@@ -140,19 +141,19 @@ class OntologyValidator:
             List of MergeSuggestion objects sorted by similarity_score (descending)
         
         Raises:
-            ValueError: If ontology is invalid or threshold out of range
+            OntologyValidationError: If ontology is invalid or threshold out of range
         """
         if not isinstance(ontology, dict):
-            raise ValueError("ontology must be a dictionary")
+            raise OntologyValidationError("ontology must be a dictionary")
         
         if not 0.0 <= threshold <= 1.0:
-            raise ValueError("threshold must be between 0.0 and 1.0")
+            raise OntologyValidationError("threshold must be between 0.0 and 1.0")
         
         entities = ontology.get("entities", [])
         relationships = ontology.get("relationships", [])
         
         if not isinstance(entities, list):
-            raise ValueError("ontology['entities'] must be a list")
+            raise OntologyValidationError("ontology['entities'] must be a list")
         
         # Find entity IDs that are involved in relationships
         entity_ids_in_relationships = self._get_entity_ids_in_relationships(relationships)

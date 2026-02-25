@@ -48,12 +48,16 @@ test hardening, and documentation clarity while keeping progress measurable.
   - Done 2026-02-23: Batch 265 - Integrated OptimizerConfig dataclass with AgenticOptimizer. Now accepts Union[OptimizerConfig, Dict] with automatic normalization. Added helper methods (get_config_value, domain/max_rounds/verbose properties). Full backward compatibility maintained (dict configs auto-converted). 24/24 tests passing. Achieves consistent configuration across GraphRAG, logic, and agentic optimizers.
 - [x] (P2) [api] Standardize context objects across GraphRAG/logic/agentic
   - Done 2026-02-25: Batch 266 - Added unified context adapters and class-level conversion helpers. New functions in common/unified_config.py: context_from_logic_extraction_context() and context_from_agentic_optimization_task(); existing GraphRAG adapter reused. Added to_unified_context() methods on OntologyGenerationContext, LogicExtractionContext, and OptimizationTask for direct conversion to GraphRAGContext/LogicContext/AgenticContext. Added test_batch_266_context_standardization.py with 7/7 passing tests.
-- [ ] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
+- [x] (P2) [arch] Unify exception hierarchy across `[graphrag]`, `[logic]`, `[agentic]` packages
+  - Done 2026-02-25: Batch 271 - Added cross-package hierarchy conformance tests (common + agentic + logic + logic_theorem + graphrag) and fixed `OntologyValidator.suggest_entity_merges()` to raise `OntologyValidationError` instead of raw `ValueError` for invalid inputs. Validation: test_batch_271_exception_hierarchy_unification.py (7/7), graphrag/test_exception_hierarchy.py (16/16).
+- [x] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
+  - Done 2026-02-25: Batch 269 - Wired `OntologyGenerator` LLM extraction to use an active backend from either injected `llm_backend` or configured `ipfs_accelerate_config["client"]`/`ipfs_accelerate_py` client. Added support for `infer`/`run` backend methods in addition to callable/`generate`/`complete`, and ensured hybrid extraction uses available LLM backend paths consistently. Validation: test_ontology_generator_llm_extraction.py (7/7), test_llm_fallback_extraction.py (11/11).
 - [x] (P2) [tests] Add property-based tests for Entity/CriticScore/FeedbackRecord
   - Done 2026-02-23: test_ontology_types_properties.py with 19 passing property-based tests (Entity, Relationship, CriticScore, FeedbackRecord, collections). Uses Hypothesis strategies.
 - [x] (P2) [perf] Profile OntologyGenerator.generate() on 10k-token input
   - Done 2026-02-23: Batch 262 - Created profile_batch_262_generate_10k.py (390 LOC), test_batch_262_profiling.py (22/22 tests), PROFILING_BATCH_262_ANALYSIS.md. Identified key bottlenecks: regex operations (54% time), _promote_person_entities (70%), with optimization recommendations for 70-80% potential speedup.
-- [ ] (P2) [obs] Structured JSON logging for every pipeline run
+- [x] (P2) [obs] Structured JSON logging for every pipeline run
+  - Done 2026-02-25: Batch 268 - Added explicit structured run lifecycle events for `OntologyPipeline.run()` with `PIPELINE_RUN_START` at run entry and `PIPELINE_RUN` failure payloads on exceptions (while preserving existing success payloads). Added coverage in test_ontology_pipeline_logging.py for start-event and failure-event JSON schema/fields; suite now 5/5 passing.
 - [x] (P2) [docs] Optimizers README with quick-start +  class diagram + comprehensive guides
   - Done 2026-02-23: Batch 263 - Created PERFORMANCE_TUNING_GUIDE.md (18KB), TROUBLESHOOTING_GUIDE.md (28KB), INTEGRATION_EXAMPLES.md (18KB, 8 real-world scenarios). Updated README.md with guide references. Comprehensive documentation for performance optimization (70-80% potential speedup), 30+ troubleshooting solutions, and production integration patterns (FastAPI, Flask, CLI, CI/CD, batch processing, streaming, multi-domain).
 
@@ -63,11 +67,9 @@ Rotate these while also advancing the plan above. When one completes, replace it
 with a new item from a different track.
 
 **Active picks (rotate on completion)**
-- [x] (P2) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
-  - Done 2026-02-25: Batch 267 - Confirmed Prometheus metrics are emitted for optimizer score and iteration/round flows via existing hooks (`record_score`, `record_round_completion`, `record_score_delta`, `record_stage_duration`) across base optimizer and GraphRAG pipeline paths. Validation: test_base_optimizer_prometheus_integration.py (2/2 passing), test_batch_301_pipeline_prometheus_hooks.py (2/2 passing).
-- [ ] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
-- [ ] (P2) [tests] Add round-trip test for `OntologyMediator.run_refinement_cycle()` state serialization
-- [ ] (P2) [arch] Unify exception hierarchy across `[graphrag]`, `[logic]`, `[agentic]` packages
+- [ ] (P3) [obs] Add OpenTelemetry span hooks (behind a feature flag) for distributed tracing
+- [ ] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
+- [ ] (P3) [tests] test_cache_invalidation.py - Cache consistency during refinement
 - [ ] (P3) [docs] Add per-method doctest examples to all public `OntologyGenerator` methods
 
 ---
