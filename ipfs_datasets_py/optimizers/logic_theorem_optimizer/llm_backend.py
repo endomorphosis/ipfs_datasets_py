@@ -420,7 +420,7 @@ class AccelerateBackend:
             )
             
         except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
-            logger.error(f"Accelerate generation error: {e}")
+            logger.error("Accelerate generation error: %s", _safe_error_text(e))
             raise
     
     def generate_batch(

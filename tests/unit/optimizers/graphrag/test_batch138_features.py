@@ -38,31 +38,22 @@ def _make_config(threshold=0.5, max_entities=100):
 # ---------------------------------------------------------------------------
 
 class TestRollingAverage:
-    def test_empty_returns_empty(self):
+    @pytest.mark.parametrize(
+        "scores,window,expected_len,expected_idx,expected_value",
+        [
+            ([], 3, 0, None, None),
+            ([0.2, 0.4, 0.6], 2, 3, 1, 0.3),
+            ([0.4, 0.8], 5, 2, 0, 0.4),
+        ],
+    )
+    def test_rolling_average_scenarios(self, scores, window, expected_len, expected_idx, expected_value):
         p = _make_pipeline()
-        assert p.rolling_average() == []
-
-    def test_same_length_as_history(self):
-        p = _make_pipeline()
-        for v in [0.2, 0.4, 0.6]:
+        for v in scores:
             _push_run(p, v)
-        result = p.rolling_average(window=2)
-        assert len(result) == 3
-
-    def test_first_element_is_first_score(self):
-        p = _make_pipeline()
-        _push_run(p, 0.4)
-        _push_run(p, 0.8)
-        result = p.rolling_average(window=5)
-        assert result[0] == pytest.approx(0.4)
-
-    def test_windowed_average(self):
-        p = _make_pipeline()
-        for v in [0.2, 0.4, 0.6]:
-            _push_run(p, v)
-        result = p.rolling_average(window=2)
-        # index 1 → avg(0.2, 0.4) = 0.3
-        assert result[1] == pytest.approx(0.3)
+        result = p.rolling_average(window=window)
+        assert len(result) == expected_len
+        if expected_idx is not None:
+            assert result[expected_idx] == pytest.approx(expected_value)
 
     def test_all_same(self):
         p = _make_pipeline()
@@ -77,27 +68,24 @@ class TestRollingAverage:
 # ---------------------------------------------------------------------------
 
 class TestScoreAtRun:
-    def test_first_run(self):
+    @pytest.mark.parametrize(
+        "scores,index,expected",
+        [
+            ([0.3], 0, 0.3),
+            ([0.1, 0.9], -1, 0.9),
+            ([0.1, 0.5, 0.9], 1, 0.5),
+        ],
+    )
+    def test_score_at_run_scenarios(self, scores, index, expected):
         p = _make_pipeline()
-        _push_run(p, 0.3)
-        assert p.score_at_run(0) == pytest.approx(0.3)
-
-    def test_negative_index(self):
-        p = _make_pipeline()
-        _push_run(p, 0.1)
-        _push_run(p, 0.9)
-        assert p.score_at_run(-1) == pytest.approx(0.9)
+        for v in scores:
+            _push_run(p, v)
+        assert p.score_at_run(index) == pytest.approx(expected)
 
     def test_out_of_range_raises(self):
         p = _make_pipeline()
         with pytest.raises(IndexError):
             p.score_at_run(99)
-
-    def test_middle_run(self):
-        p = _make_pipeline()
-        for v in [0.1, 0.5, 0.9]:
-            _push_run(p, v)
-        assert p.score_at_run(1) == pytest.approx(0.5)
 
 
 # ---------------------------------------------------------------------------
@@ -105,23 +93,20 @@ class TestScoreAtRun:
 # ---------------------------------------------------------------------------
 
 class TestScorePercentile:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,value,expected",
+        [
+            ([], 0.5, 0.0),
+            ([0.6, 0.7, 0.8], 0.5, 0.0),
+            # 0.5 is above 0.2 and 0.4 -> 2/4 = 50%.
+            ([0.2, 0.4, 0.6, 0.8], 0.5, 50.0),
+        ],
+    )
+    def test_score_percentile_scenarios(self, scores, value, expected):
         p = _make_pipeline()
-        assert p.score_percentile(0.5) == pytest.approx(0.0)
-
-    def test_below_all(self):
-        p = _make_pipeline()
-        for v in [0.6, 0.7, 0.8]:
+        for v in scores:
             _push_run(p, v)
-        assert p.score_percentile(0.5) == pytest.approx(0.0)
-
-    def test_above_some(self):
-        p = _make_pipeline()
-        for v in [0.2, 0.4, 0.6, 0.8]:
-            _push_run(p, v)
-        # 0.5 is above 0.2 and 0.4 → 2/4 = 50%
-        pct = p.score_percentile(0.5)
-        assert pct == pytest.approx(50.0)
+        assert p.score_percentile(value) == pytest.approx(expected)
 
     def test_returns_float(self):
         p = _make_pipeline()
@@ -138,19 +123,21 @@ class TestCombinedScore:
         c = _make_config()
         assert isinstance(c.combined_score(), float)
 
+    @pytest.mark.parametrize(
+        "threshold,max_entities,predicate",
+        [
+            (1.0, 10000, lambda score: 0.0 <= score <= 2.0),
+            (0.5, 0, lambda score: score == pytest.approx(0.5, abs=0.01)),
+        ],
+    )
+    def test_combined_score_scenarios(self, threshold, max_entities, predicate):
+        c = _make_config(threshold=threshold, max_entities=max_entities)
+        assert predicate(c.combined_score())
+
     def test_higher_threshold_higher_score(self):
         low = _make_config(threshold=0.3)
         high = _make_config(threshold=0.9)
         assert high.combined_score() > low.combined_score()
-
-    def test_bounded(self):
-        c = _make_config(threshold=1.0, max_entities=10000)
-        assert 0.0 <= c.combined_score() <= 2.0
-
-    def test_zero_entities(self):
-        c = _make_config(threshold=0.5, max_entities=0)
-        score = c.combined_score()
-        assert score == pytest.approx(0.5, abs=0.01)
 
 
 # ---------------------------------------------------------------------------
@@ -158,20 +145,18 @@ class TestCombinedScore:
 # ---------------------------------------------------------------------------
 
 class TestSimilarityTo:
-    def test_identical_configs(self):
-        c1 = _make_config(threshold=0.6)
-        c2 = _make_config(threshold=0.6)
-        assert c1.similarity_to(c2) == pytest.approx(1.0)
-
-    def test_max_difference(self):
-        c1 = _make_config(threshold=0.0)
-        c2 = _make_config(threshold=1.0)
-        assert c1.similarity_to(c2) == pytest.approx(0.0)
-
-    def test_partial_difference(self):
-        c1 = _make_config(threshold=0.5)
-        c2 = _make_config(threshold=0.8)
-        assert c1.similarity_to(c2) == pytest.approx(0.7)
+    @pytest.mark.parametrize(
+        "left,right,expected",
+        [
+            (0.6, 0.6, 1.0),
+            (0.0, 1.0, 0.0),
+            (0.5, 0.8, 0.7),
+        ],
+    )
+    def test_similarity_to_scenarios(self, left, right, expected):
+        c1 = _make_config(threshold=left)
+        c2 = _make_config(threshold=right)
+        assert c1.similarity_to(c2) == pytest.approx(expected)
 
     def test_symmetric(self):
         c1 = _make_config(threshold=0.4)

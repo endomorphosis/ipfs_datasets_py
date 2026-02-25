@@ -22,6 +22,8 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
+from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
+
 
 class UnifiedOptimizerCLI:
     """Unified command-line interface for all optimizers."""
@@ -130,7 +132,7 @@ See docs/optimizers/SELECTION_GUIDE.md for choosing the right optimizer.
             print("\n\nInterrupted by user")
             return 130
         except (ValueError, TypeError, AttributeError, RuntimeError, OSError, ImportError) as e:
-            print(f"Error: {e}")
+            print(f"Error: {redact_sensitive(str(e))}")
             if parsed_args.verbose:
                 import traceback
                 traceback.print_exc()
@@ -182,7 +184,7 @@ See docs/optimizers/SELECTION_GUIDE.md for choosing the right optimizer.
             
             return int(agentic_main(args))
         except ImportError as e:
-            print(f"Error: Agentic optimizer not available: {e}")
+            print(f"Error: Agentic optimizer not available: {redact_sensitive(str(e))}")
             print("Install with: pip install -e '.[agentic]'")
             return 1
     
@@ -207,7 +209,7 @@ See docs/optimizers/SELECTION_GUIDE.md for choosing the right optimizer.
             cli = LogicOptimizerCLI()
             return int(cli.run(args))
         except ImportError as e:
-            print(f"Error: Logic theorem optimizer not available: {e}")
+            print(f"Error: Logic theorem optimizer not available: {redact_sensitive(str(e))}")
             print("Install with: pip install -e '.[logic]'")
             return 1
     
@@ -232,7 +234,7 @@ See docs/optimizers/SELECTION_GUIDE.md for choosing the right optimizer.
             cli = GraphRAGOptimizerCLI()
             return int(cli.run(args))
         except ImportError as e:
-            print(f"Error: GraphRAG optimizer not available: {e}")
+            print(f"Error: GraphRAG optimizer not available: {redact_sensitive(str(e))}")
             print("Install with: pip install -e '.[graphrag]'")
             return 1
 

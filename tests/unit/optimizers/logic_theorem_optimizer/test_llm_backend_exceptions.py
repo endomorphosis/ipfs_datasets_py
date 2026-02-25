@@ -31,6 +31,11 @@ class _ManagerTypeError:
         raise TypeError("bad manager call")
 
 
+class _ManagerSensitiveError:
+    def run_inference(self, **kwargs):
+        raise ValueError("api_key=sk-1234567890abcdef password=hunter2")
+
+
 def test_adapter_generate_falls_back_to_mock_on_typed_backend_error() -> None:
     adapter = LLMBackendAdapter(preferred_backend="mock", fallback_to_mock=True, enable_caching=False)
     adapter.backends = {
@@ -50,6 +55,21 @@ def test_accelerate_backend_generate_reraises_typed_errors() -> None:
 
     with pytest.raises(TypeError, match="bad manager call"):
         backend.generate(LLMRequest(prompt="x"))
+
+
+def test_accelerate_backend_redacts_sensitive_error_text_in_logs(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    backend = AccelerateBackend(_ManagerSensitiveError())
+
+    with caplog.at_level("ERROR"):
+        with pytest.raises(ValueError):
+            backend.generate(LLMRequest(prompt="x"))
+
+    messages = " ".join(record.getMessage() for record in caplog.records)
+    assert "***REDACTED***" in messages
+    assert "sk-1234567890abcdef" not in messages
+    assert "hunter2" not in messages
 
 
 def test_adapter_generate_uses_common_backend_resilience_wrapper(monkeypatch: pytest.MonkeyPatch) -> None:

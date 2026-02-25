@@ -31,11 +31,18 @@ import logging
 import time
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import Any, Callable, Generic, Optional, TypeVar
+from typing import Any, Callable, Generic, Optional, TypeVar, cast
+
+from .log_redaction import redact_sensitive
 
 _logger = logging.getLogger(__name__)
 
 T = TypeVar('T')
+
+
+def _safe_error_text(error: BaseException) -> str:
+    """Render exception text with sensitive fragments redacted."""
+    return cast(str, redact_sensitive(str(error)))
 
 
 class CircuitState(str, Enum):
@@ -242,7 +249,7 @@ class CircuitBreaker(Generic[T]):
             
             _logger.warning(
                 f"Circuit '{self.name}' call failed "
-                f"({self._failure_count}/{self.failure_threshold}): {e}"
+                f"({self._failure_count}/{self.failure_threshold}): {_safe_error_text(e)}"
             )
             
             if self._failure_count >= self.failure_threshold:

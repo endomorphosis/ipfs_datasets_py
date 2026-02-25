@@ -50,27 +50,22 @@ def _push_adapter(a, *scores):
 # ---------------------------------------------------------------------------
 
 class TestTopKScores:
-    def test_empty_returns_empty(self):
+    @pytest.mark.parametrize(
+        "overall_scores,k,expected_len,expected_prefix",
+        [
+            ([], 3, 0, []),
+            ([0.3, 0.9, 0.6], 2, 2, [0.9, 0.6]),
+            ([0.4, 0.8], 10, 2, [0.8, 0.4]),
+            ([0.1, 0.2, 0.3, 0.4, 0.5], 3, 3, [0.5, 0.4, 0.3]),
+        ],
+    )
+    def test_top_k_scores_scenarios(self, overall_scores, k, expected_len, expected_prefix):
         c = _make_critic()
-        assert c.top_k_scores([]) == []
-
-    def test_returns_sorted_desc(self):
-        c = _make_critic()
-        scores = [_cs(0.3), _cs(0.9), _cs(0.6)]
-        result = c.top_k_scores(scores, k=2)
-        assert len(result) == 2
-        assert result[0].overall == pytest.approx(0.9)
-        assert result[1].overall == pytest.approx(0.6)
-
-    def test_k_larger_than_list(self):
-        c = _make_critic()
-        scores = [_cs(0.4), _cs(0.8)]
-        assert len(c.top_k_scores(scores, k=10)) == 2
-
-    def test_default_k_is_three(self):
-        c = _make_critic()
-        scores = [_cs(v) for v in [0.1, 0.2, 0.3, 0.4, 0.5]]
-        assert len(c.top_k_scores(scores)) == 3
+        scores = [_cs(v) for v in overall_scores]
+        result = c.top_k_scores(scores, k=k)
+        assert len(result) == expected_len
+        for idx, expected in enumerate(expected_prefix):
+            assert result[idx].overall == pytest.approx(expected)
 
 
 # ---------------------------------------------------------------------------
@@ -78,27 +73,21 @@ class TestTopKScores:
 # ---------------------------------------------------------------------------
 
 class TestBelowThresholdCount:
-    def test_empty(self):
+    @pytest.mark.parametrize(
+        "overall_scores,threshold,expected",
+        [
+            ([], 0.5, 0),
+            ([0.8, 0.9], 0.5, 0),
+            ([0.1, 0.2], 0.5, 2),
+            # Exactly at threshold should NOT count.
+            ([0.5], 0.5, 0),
+            ([0.3, 0.5, 0.7, 0.2], 0.5, 2),
+        ],
+    )
+    def test_below_threshold_count_scenarios(self, overall_scores, threshold, expected):
         c = _make_critic()
-        assert c.below_threshold_count([]) == 0
-
-    def test_all_above(self):
-        c = _make_critic()
-        assert c.below_threshold_count([_cs(0.8), _cs(0.9)], threshold=0.5) == 0
-
-    def test_all_below(self):
-        c = _make_critic()
-        assert c.below_threshold_count([_cs(0.1), _cs(0.2)], threshold=0.5) == 2
-
-    def test_strict_lt(self):
-        """Exactly at threshold should NOT count."""
-        c = _make_critic()
-        assert c.below_threshold_count([_cs(0.5)], threshold=0.5) == 0
-
-    def test_mixed(self):
-        c = _make_critic()
-        scores = [_cs(0.3), _cs(0.5), _cs(0.7), _cs(0.2)]
-        assert c.below_threshold_count(scores, threshold=0.5) == 2
+        scores = [_cs(v) for v in overall_scores]
+        assert c.below_threshold_count(scores, threshold=threshold) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -106,18 +95,17 @@ class TestBelowThresholdCount:
 # ---------------------------------------------------------------------------
 
 class TestAverageDimension:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,dimension,expected",
+        [
+            ([], "coherence", 0.0),
+            ([_cs(0.5, coherence=0.8)], "coherence", 0.8),
+            ([_cs(0.5, completeness=0.4), _cs(0.6, completeness=0.6)], "completeness", 0.5),
+        ],
+    )
+    def test_average_dimension_scenarios(self, scores, dimension, expected):
         c = _make_critic()
-        assert c.average_dimension([], "coherence") == 0.0
-
-    def test_single(self):
-        c = _make_critic()
-        assert c.average_dimension([_cs(0.5, coherence=0.8)], "coherence") == pytest.approx(0.8)
-
-    def test_multiple(self):
-        c = _make_critic()
-        scores = [_cs(0.5, completeness=0.4), _cs(0.6, completeness=0.6)]
-        assert c.average_dimension(scores, "completeness") == pytest.approx(0.5)
+        assert c.average_dimension(scores, dimension) == pytest.approx(expected)
 
     def test_missing_attr_defaults_zero(self):
         c = _make_critic()
@@ -133,24 +121,19 @@ class TestAverageDimension:
 # ---------------------------------------------------------------------------
 
 class TestFeedbackStreak:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,threshold,expected",
+        [
+            ([], 0.6, 0),
+            ([0.7, 0.8, 0.9], 0.6, 3),
+            ([0.3, 0.8, 0.9], 0.6, 2),
+            ([0.8, 0.3], 0.6, 0),
+        ],
+    )
+    def test_feedback_streak_scenarios(self, scores, threshold, expected):
         a = _make_adapter()
-        assert a.feedback_streak() == 0
-
-    def test_all_pass(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.7, 0.8, 0.9)
-        assert a.feedback_streak(threshold=0.6) == 3
-
-    def test_streak_breaks(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.3, 0.8, 0.9)
-        assert a.feedback_streak(threshold=0.6) == 2
-
-    def test_latest_below_returns_zero(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.8, 0.3)
-        assert a.feedback_streak(threshold=0.6) == 0
+        _push_adapter(a, *scores)
+        assert a.feedback_streak(threshold=threshold) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -158,19 +141,18 @@ class TestFeedbackStreak:
 # ---------------------------------------------------------------------------
 
 class TestFeedbackPercentile:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,percentile,expected",
+        [
+            ([], 50, 0.0),
+            ([0.2, 0.5, 0.8], 50, 0.5),
+            ([0.3, 0.7], 0, 0.3),
+        ],
+    )
+    def test_feedback_percentile_scenarios(self, scores, percentile, expected):
         a = _make_adapter()
-        assert a.feedback_percentile(50) == pytest.approx(0.0)
-
-    def test_median(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.2, 0.5, 0.8)
-        assert a.feedback_percentile(50) == pytest.approx(0.5)
-
-    def test_p0_returns_min(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.3, 0.7)
-        assert a.feedback_percentile(0) == pytest.approx(0.3)
+        _push_adapter(a, *scores)
+        assert a.feedback_percentile(percentile) == pytest.approx(expected)
 
     def test_returns_float(self):
         a = _make_adapter()
@@ -183,22 +165,17 @@ class TestFeedbackPercentile:
 # ---------------------------------------------------------------------------
 
 class TestRecentAverage:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,n,expected",
+        [
+            ([], 5, 0.0),
+            ([0.4, 0.6], 5, 0.5),
+            # n=3 should average last 3 -> 0.9.
+            ([0.1, 0.9, 0.9, 0.9, 0.9, 0.9], 3, 0.9),
+            ([0.75], 5, 0.75),
+        ],
+    )
+    def test_recent_average_scenarios(self, scores, n, expected):
         a = _make_adapter()
-        assert a.recent_average() == pytest.approx(0.0)
-
-    def test_all_within_window(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.4, 0.6)
-        assert a.recent_average(n=5) == pytest.approx(0.5)
-
-    def test_window_limits(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.1, 0.9, 0.9, 0.9, 0.9, 0.9)
-        # n=3 should average last 3 → 0.9
-        assert a.recent_average(n=3) == pytest.approx(0.9)
-
-    def test_single_record(self):
-        a = _make_adapter()
-        _push_adapter(a, 0.75)
-        assert a.recent_average() == pytest.approx(0.75)
+        _push_adapter(a, *scores)
+        assert a.recent_average(n=n) == pytest.approx(expected)

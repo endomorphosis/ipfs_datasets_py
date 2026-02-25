@@ -160,7 +160,9 @@ Best batch size: 100+ entities (amortizes init overhead)
 
 **For balanced performance:**
 ```python
-deduplicator = SemanticEntityDeduplicator()
+from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import create_semantic_deduplicator
+
+deduplicator = create_semantic_deduplicator()
 suggestions = deduplicator.suggest_merges(
     ontology,
     threshold=0.85,          # Balanced suggestion rate

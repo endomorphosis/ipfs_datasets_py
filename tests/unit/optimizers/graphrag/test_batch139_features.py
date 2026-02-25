@@ -41,24 +41,18 @@ def _cs(overall):
 # ---------------------------------------------------------------------------
 
 class TestInDegree:
-    def test_no_relationships(self):
+    @pytest.mark.parametrize(
+        "ontology,entity_id,expected",
+        [
+            ({}, "A", 0),
+            (_ont_rels(("A", "B"), ("C", "B")), "B", 2),
+            (_ont_rels(("A", "B")), "A", 0),
+            (_ont_rels(("A", "B")), "Z", 0),
+        ],
+    )
+    def test_in_degree_scenarios(self, ontology, entity_id, expected):
         v = _make_validator()
-        assert v.in_degree({}, "A") == 0
-
-    def test_entity_is_target(self):
-        v = _make_validator()
-        ont = _ont_rels(("A", "B"), ("C", "B"))
-        assert v.in_degree(ont, "B") == 2
-
-    def test_entity_is_source_only(self):
-        v = _make_validator()
-        ont = _ont_rels(("A", "B"))
-        assert v.in_degree(ont, "A") == 0
-
-    def test_unknown_entity(self):
-        v = _make_validator()
-        ont = _ont_rels(("A", "B"))
-        assert v.in_degree(ont, "Z") == 0
+        assert v.in_degree(ontology, entity_id) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -66,24 +60,18 @@ class TestInDegree:
 # ---------------------------------------------------------------------------
 
 class TestOutDegree:
-    def test_no_relationships(self):
+    @pytest.mark.parametrize(
+        "ontology,entity_id,expected",
+        [
+            ({}, "A", 0),
+            (_ont_rels(("A", "B"), ("A", "C")), "A", 2),
+            (_ont_rels(("A", "B")), "B", 0),
+            (_ont_rels(("A", "B")), "Z", 0),
+        ],
+    )
+    def test_out_degree_scenarios(self, ontology, entity_id, expected):
         v = _make_validator()
-        assert v.out_degree({}, "A") == 0
-
-    def test_entity_is_source(self):
-        v = _make_validator()
-        ont = _ont_rels(("A", "B"), ("A", "C"))
-        assert v.out_degree(ont, "A") == 2
-
-    def test_entity_is_target_only(self):
-        v = _make_validator()
-        ont = _ont_rels(("A", "B"))
-        assert v.out_degree(ont, "B") == 0
-
-    def test_unknown_entity(self):
-        v = _make_validator()
-        ont = _ont_rels(("A", "B"))
-        assert v.out_degree(ont, "Z") == 0
+        assert v.out_degree(ontology, entity_id) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -91,26 +79,21 @@ class TestOutDegree:
 # ---------------------------------------------------------------------------
 
 class TestTopKEntitiesByDegree:
-    def test_empty_ontology(self):
+    @pytest.mark.parametrize(
+        "ontology,k,expected_prefix,max_len",
+        [
+            ({}, 3, [], 0),
+            (_ont_rels(("A", "B"), ("A", "C"), ("A", "D"), ("B", "E")), 1, ["A"], 1),
+            (_ont_rels(("A", "B"), ("C", "D"), ("E", "F")), 2, None, 2),
+        ],
+    )
+    def test_top_k_entities_by_degree_scenarios(self, ontology, k, expected_prefix, max_len):
         v = _make_validator()
-        assert v.top_k_entities_by_degree({}) == []
-
-    def test_highest_degree_first(self):
-        v = _make_validator()
-        ont = _ont_rels(("A", "B"), ("A", "C"), ("A", "D"), ("B", "E"))
-        top = v.top_k_entities_by_degree(ont, k=1)
-        assert top[0] == "A"
-
-    def test_k_limits_result(self):
-        v = _make_validator()
-        ont = _ont_rels(("A", "B"), ("C", "D"), ("E", "F"))
-        result = v.top_k_entities_by_degree(ont, k=2)
-        assert len(result) <= 2
-
-    def test_returns_list(self):
-        v = _make_validator()
-        ont = _ont_rels(("X", "Y"))
-        assert isinstance(v.top_k_entities_by_degree(ont, k=3), list)
+        result = v.top_k_entities_by_degree(ontology, k=k)
+        assert isinstance(result, list)
+        assert len(result) <= max_len
+        if expected_prefix:
+            assert result[0] == expected_prefix[0]
 
 
 # ---------------------------------------------------------------------------
@@ -118,21 +101,20 @@ class TestTopKEntitiesByDegree:
 # ---------------------------------------------------------------------------
 
 class TestBucketScores:
-    def test_empty_all_zero(self):
+    @pytest.mark.parametrize(
+        "values,buckets,expected_len,expected_total",
+        [
+            ([], 4, 4, 0),
+            ([0.5], 5, 5, 1),
+            ([0.1, 0.3, 0.6, 0.9], 4, 4, 4),
+        ],
+    )
+    def test_bucket_scores_scenarios(self, values, buckets, expected_len, expected_total):
         c = _make_critic()
-        result = c.bucket_scores([], buckets=4)
-        assert all(v == 0 for v in result.values())
-
-    def test_bucket_count(self):
-        c = _make_critic()
-        result = c.bucket_scores([_cs(0.5)], buckets=5)
-        assert len(result) == 5
-
-    def test_total_equals_input(self):
-        c = _make_critic()
-        scores = [_cs(v) for v in [0.1, 0.3, 0.6, 0.9]]
-        result = c.bucket_scores(scores, buckets=4)
-        assert sum(result.values()) == 4
+        scores = [_cs(v) for v in values]
+        result = c.bucket_scores(scores, buckets=buckets)
+        assert len(result) == expected_len
+        assert sum(result.values()) == expected_total
 
     def test_score_one_in_last_bucket(self):
         c = _make_critic()
@@ -147,23 +129,19 @@ class TestBucketScores:
 # ---------------------------------------------------------------------------
 
 class TestMedianScore:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "values,expected",
+        [
+            ([], 0.0),
+            ([0.7], 0.7),
+            ([0.2, 0.6, 0.9], 0.6),
+            ([0.2, 0.4, 0.6, 0.8], 0.5),
+        ],
+    )
+    def test_median_score_scenarios(self, values, expected):
         c = _make_critic()
-        assert c.median_score([]) == pytest.approx(0.0)
-
-    def test_single(self):
-        c = _make_critic()
-        assert c.median_score([_cs(0.7)]) == pytest.approx(0.7)
-
-    def test_odd_count(self):
-        c = _make_critic()
-        scores = [_cs(0.2), _cs(0.6), _cs(0.9)]
-        assert c.median_score(scores) == pytest.approx(0.6)
-
-    def test_even_count(self):
-        c = _make_critic()
-        scores = [_cs(0.2), _cs(0.4), _cs(0.6), _cs(0.8)]
-        assert c.median_score(scores) == pytest.approx(0.5)
+        scores = [_cs(v) for v in values]
+        assert c.median_score(scores) == pytest.approx(expected)
 
     def test_returns_float(self):
         c = _make_critic()

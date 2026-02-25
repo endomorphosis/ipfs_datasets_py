@@ -15,6 +15,7 @@ from ipfs_datasets_py.optimizers.common.structured_logging import (
     log_event,
 )
 from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+from ipfs_datasets_py.optimizers.graphrag.pipeline_json_logger import PipelineJSONLogger
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_optimizer import LogicOptimizer
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer import (
     LogicTheoremOptimizer,
@@ -57,6 +58,17 @@ def _assert_canonical_fields(payload: dict) -> None:
         "status",
     }
     assert required.issubset(payload.keys())
+
+
+def _find_payload_by_event(caplog, event_name: str) -> dict:
+    for record in caplog.records:
+        message = record.getMessage()
+        if not message.startswith("{"):
+            continue
+        payload = json.loads(message)
+        if payload.get("event") == event_name:
+            return payload
+    raise AssertionError(f"No payload found for event: {event_name}")
 
 
 def test_common_log_event_emits_schema_contract(caplog) -> None:
@@ -169,3 +181,18 @@ def test_logic_run_session_log_emits_schema_and_canonical_fields(caplog) -> None
     _assert_canonical_fields(payload)
     assert payload["event"] == "logic_theorem_optimizer_run_session"
     assert payload["run_id"] == "audit-session-001"
+
+
+def test_pipeline_json_logger_emits_schema_and_canonical_fields(caplog) -> None:
+    logger = logging.getLogger("test.structured.audit.pipeline_json_logger")
+    caplog.set_level(logging.INFO, logger=logger.name)
+
+    pipeline_logger = PipelineJSONLogger(domain="audit", logger=logger)
+    pipeline_logger.start_run(run_id="audit-run-001", data_source="unit")
+    pipeline_logger.end_run(success=True)
+
+    payload = _find_payload_by_event(caplog, "pipeline.run.started")
+    _assert_common_schema_fields(payload, expected_pipeline="graphrag")
+    _assert_canonical_fields(payload)
+    assert payload["component"] == "pipeline_json_logger"
+    assert payload["optimizer_type"] == "graphrag"

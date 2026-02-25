@@ -28,7 +28,7 @@ from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import (
 )
 from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
 from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import (
-    SemanticEntityDeduplicator,
+    create_semantic_deduplicator,
 )
 
 
@@ -60,7 +60,7 @@ class MockExtractionPipeline:
     def __init__(self):
         self.query_optimizer = UnifiedGraphRAGQueryOptimizer()
         self.logic_validator = LogicValidator()
-        self.deduplicator = SemanticEntityDeduplicator(model_name="all-MiniLM-L6-v2")
+        self.deduplicator = create_semantic_deduplicator()
         
     def create_simulated_entities(self, count: int) -> List[Dict[str, Any]]:
         """Create simulated entities for deduplication."""

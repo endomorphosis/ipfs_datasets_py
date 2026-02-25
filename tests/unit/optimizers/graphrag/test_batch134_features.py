@@ -122,26 +122,20 @@ class TestHistoryAsDicts:
 # ---------------------------------------------------------------------------
 
 class TestStabilizationIndex:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,assertion",
+        [
+            ([], lambda idx: idx == pytest.approx(0.0)),
+            ([0.5], lambda idx: idx == pytest.approx(0.0)),
+            ([0.8, 0.8, 0.8], lambda idx: idx == pytest.approx(1.0)),
+            ([0.0, 1.0, 0.0, 1.0], lambda idx: idx < 0.5),
+        ],
+    )
+    def test_stabilization_index_scenarios(self, scores, assertion):
         p = _make_pipeline()
-        assert p.stabilization_index() == 0.0
-
-    def test_single_run_returns_zero(self):
-        p = _make_pipeline()
-        _push_run(p, 0.5)
-        assert p.stabilization_index() == 0.0
-
-    def test_stable_runs_near_one(self):
-        p = _make_pipeline()
-        for v in [0.8, 0.8, 0.8]:
+        for v in scores:
             _push_run(p, v)
-        assert p.stabilization_index() == pytest.approx(1.0)
-
-    def test_volatile_runs_lower(self):
-        p = _make_pipeline()
-        for v in [0.0, 1.0, 0.0, 1.0]:
-            _push_run(p, v)
-        assert p.stabilization_index() < 0.5
+        assert assertion(p.stabilization_index())
 
     def test_bounded_zero_to_one(self):
         p = _make_pipeline()
@@ -156,23 +150,17 @@ class TestStabilizationIndex:
 # ---------------------------------------------------------------------------
 
 class TestRunImprovement:
-    def test_empty_returns_zero(self):
+    @pytest.mark.parametrize(
+        "scores,expected",
+        [
+            ([], 0.0),
+            ([0.5], 0.0),
+            ([0.3, 0.7], 0.4),
+            ([0.9, 0.5], -0.4),
+        ],
+    )
+    def test_run_improvement_scenarios(self, scores, expected):
         p = _make_pipeline()
-        assert p.run_improvement() == 0.0
-
-    def test_single_run_returns_zero(self):
-        p = _make_pipeline()
-        _push_run(p, 0.5)
-        assert p.run_improvement() == 0.0
-
-    def test_positive_improvement(self):
-        p = _make_pipeline()
-        _push_run(p, 0.3)
-        _push_run(p, 0.7)
-        assert p.run_improvement() == pytest.approx(0.4)
-
-    def test_negative_improvement(self):
-        p = _make_pipeline()
-        _push_run(p, 0.9)
-        _push_run(p, 0.5)
-        assert p.run_improvement() == pytest.approx(-0.4)
+        for v in scores:
+            _push_run(p, v)
+        assert p.run_improvement() == pytest.approx(expected)

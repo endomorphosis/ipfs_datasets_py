@@ -168,6 +168,17 @@ class PipelineJSONLogger:
             data: Event data
             level: Logging level
         """
+        status = data.get("status")
+        if not isinstance(status, str) or not status.strip():
+            if event_type.endswith(".started"):
+                status = "started"
+            elif event_type.endswith(".completed"):
+                status = "completed"
+            elif event_type.endswith(".failed"):
+                status = "failed"
+            else:
+                status = "info"
+
         payload = {
             "timestamp": f"{datetime.utcnow().isoformat()}Z",
             "level": str(logging.getLevelName(level)),
@@ -178,6 +189,7 @@ class PipelineJSONLogger:
             "optimizer_type": "graphrag",
             "domain": self.domain,
             "optimizer_pipeline": "graphrag",
+            "status": status,
             **data,
         }
         

@@ -49,7 +49,10 @@ def test_extract_entities_emits_structured_json_log(capsys, caplog):
         metadata={},
         errors=[],
     )
-    with patch.object(gen, "_extract_with_llm_fallback", return_value=stub_result):
+    with (
+        patch.object(gen, "_build_language_aware_context", return_value=(ctx, {"language_aware": False})),
+        patch.object(gen, "_extract_with_llm_fallback", return_value=stub_result),
+    ):
         result = gen.extract_entities("Alice met Bob.", ctx)
 
     captured = capsys.readouterr()
