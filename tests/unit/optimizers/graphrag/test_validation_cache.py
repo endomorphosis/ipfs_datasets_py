@@ -251,6 +251,40 @@ class TestCachePersistence:
         result = cache2.get("key1")
         assert result == {"value": "data1"}
 
+    def test_load_from_disk_invalid_json_warns(self, tmp_path, caplog):
+        """Invalid JSON cache files should be ignored with warning."""
+        cache_path = tmp_path / "bad_cache.json"
+        cache_path.write_text("{invalid json", encoding="utf-8")
+
+        caplog.set_level("WARNING")
+        cache = LRUCache(
+            max_size=10,
+            enable_persistence=True,
+            persistence_path=cache_path,
+        )
+
+        assert len(cache._cache) == 0
+        assert "Failed to load cache from disk" in caplog.text
+
+    def test_save_to_disk_oserror_warns(self, tmp_path, monkeypatch, caplog):
+        """Filesystem write errors should log warning and not raise."""
+        cache_path = tmp_path / "cache.json"
+        cache = LRUCache(
+            max_size=10,
+            enable_persistence=True,
+            persistence_path=cache_path,
+        )
+        cache.set("k1", {"value": "d1"})
+
+        def _raise_oserror(*args, **kwargs):
+            raise OSError("disk unavailable")
+
+        monkeypatch.setattr(Path, "mkdir", _raise_oserror)
+        caplog.set_level("WARNING")
+
+        cache._save_to_disk()
+        assert "Failed to save cache to disk" in caplog.text
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

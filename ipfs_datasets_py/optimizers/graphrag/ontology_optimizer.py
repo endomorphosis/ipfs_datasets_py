@@ -222,6 +222,7 @@ class OntologyOptimizer:
         summary = {
             "event": "ontology_optimizer.analyze_batch.summary",
             "optimizer_pipeline": "graphrag",
+            "timestamp": time.time(),
             **payload,
         }
         self._log.info(
@@ -1339,7 +1340,7 @@ class OntologyOptimizer:
 
         return output.getvalue()
 
-    def best_ontology(self) -> Optional[Dict[str, Any]]:
+    def _best_ontology_from_history(self) -> Optional[Dict[str, Any]]:
         """Return the ontology from the history entry with the highest average score.
 
         Iterates over all :class:`OptimizationReport` objects in ``_history``
@@ -1427,7 +1428,7 @@ class OntologyOptimizer:
             >>> std >= 0.0
             True
         """
-        return self.score_variance() ** 0.5
+        return float(math.sqrt(self.score_variance()))
 
     def score_peak_ratio(self) -> float:
         """Return the fraction of history scores that are local maxima (peaks).
@@ -1468,7 +1469,7 @@ class OntologyOptimizer:
         recent = self._history[-n:]
         return sum(r.average_score for r in recent) / len(recent)
 
-    def score_range(self) -> tuple:
+    def score_range(self) -> tuple[float, float]:
         """Return the ``(min, max)`` range of average scores in history.
 
         Returns:
@@ -1524,7 +1525,7 @@ class OntologyOptimizer:
         )
         return converged / (len(scores) - 1)
 
-    def history_as_list(self) -> list:
+    def history_as_list(self) -> list[float]:
         """Return a plain list of ``average_score`` floats from history.
 
         Returns:
@@ -1689,10 +1690,7 @@ class OntologyOptimizer:
             >>> ont is None or isinstance(ont, dict)
             True
         """
-        if not self._history:
-            return None
-        best_report = max(self._history, key=lambda r: r.average_score)
-        return best_report.best_ontology
+        return self._best_ontology_from_history()
 
     def worst_ontology(self) -> Optional[Dict[str, Any]]:
         """Return the ontology from the lowest-scoring :class:`OptimizationReport`.
@@ -1727,7 +1725,12 @@ class OntologyOptimizer:
         if not self._history:
             return []
         sorted_history = sorted(self._history, key=lambda r: r.average_score, reverse=True)
-        return [r.best_ontology for r in sorted_history[:n]]
+        return [
+            ontology
+            for r in sorted_history[:n]
+            for ontology in [r.best_ontology]
+            if ontology is not None
+        ]
 
     def worst_n_ontologies(self, n: int = 5) -> List[Dict[str, Any]]:
         """Return ontologies from the bottom *n* history entries by ``average_score``.
@@ -1748,7 +1751,12 @@ class OntologyOptimizer:
         if not self._history:
             return []
         sorted_history = sorted(self._history, key=lambda r: r.average_score)
-        return [r.worst_ontology for r in sorted_history[:n]]
+        return [
+            ontology
+            for r in sorted_history[:n]
+            for ontology in [r.worst_ontology]
+            if ontology is not None
+        ]
 
     def score_delta(self, i: int, j: int) -> float:
         """Return the score difference between history entries at indices *i* and *j*.
@@ -1969,7 +1977,11 @@ class OntologyOptimizer:
         """
         if not self._history:
             return 0
-        return self._history[-1].metadata.get("batch_size", 0)
+        batch_size = self._history[-1].metadata.get("batch_size", 0)
+        try:
+            return int(batch_size)
+        except (TypeError, ValueError):
+            return 0
 
     def export_score_chart(self, filepath: Optional[str] = None) -> Optional[str]:
         """Produce a matplotlib line chart of average score across history batches.
@@ -2092,7 +2104,7 @@ class OntologyOptimizer:
                     URIRef(ONT[tgt]),
                 ))
 
-        serialized = g.serialize(format=format)
+        serialized = str(g.serialize(format=format))
         if filepath:
             with open(filepath, "w", encoding="utf-8") as fh:
                 fh.write(serialized)
@@ -2129,9 +2141,21 @@ class OntologyOptimizer:
             xmlns="http://graphml.graphstruct.org/graphml",
         )
         # Key declarations
-        ET.SubElement(graphml, "key", id="label", **{"for": "node", "attr.name": "label", "attr.type": "string"})
-        ET.SubElement(graphml, "key", id="etype", **{"for": "node", "attr.name": "entityType", "attr.type": "string"})
-        ET.SubElement(graphml, "key", id="rtype", **{"for": "edge", "attr.name": "relationshipType", "attr.type": "string"})
+        ET.SubElement(
+            graphml,
+            "key",
+            {"id": "label", "for": "node", "attr.name": "label", "attr.type": "string"},
+        )
+        ET.SubElement(
+            graphml,
+            "key",
+            {"id": "etype", "for": "node", "attr.name": "entityType", "attr.type": "string"},
+        )
+        ET.SubElement(
+            graphml,
+            "key",
+            {"id": "rtype", "for": "edge", "attr.name": "relationshipType", "attr.type": "string"},
+        )
 
         graph_el = ET.SubElement(graphml, "graph", id="G", edgedefault="directed")
 
@@ -2200,7 +2224,7 @@ class OntologyOptimizer:
             return "declining"
         return "flat"
 
-    def entries_above_score(self, threshold: float) -> list:
+    def entries_above_score(self, threshold: float) -> list[OptimizationReport]:
         """Return history entries whose ``average_score`` exceeds *threshold*.
 
         Args:
@@ -2211,7 +2235,7 @@ class OntologyOptimizer:
         """
         return [e for e in self._history if e.average_score > threshold]
 
-    def running_average(self, window: int) -> list:
+    def running_average(self, window: int) -> list[float]:
         """Return a list of window-averaged scores over history.
 
         Each element is the mean of ``window`` consecutive history entries.
@@ -2237,7 +2261,7 @@ class OntologyOptimizer:
             for i in range(len(scores) - window + 1)
         ]
 
-    def score_quartiles(self) -> tuple:
+    def score_quartiles(self) -> tuple[float, float, float]:
         """Return (Q1, Q2, Q3) of history average_scores.
 
         Uses linear interpolation.  Returns ``(0.0, 0.0, 0.0)`` when history
@@ -2251,13 +2275,13 @@ class OntologyOptimizer:
         if n == 0:
             return (0.0, 0.0, 0.0)
 
-        def _percentile(data, pct):
+        def _percentile(data: list[float], pct: float) -> float:
             idx = (len(data) - 1) * pct / 100.0
             lo = int(idx)
             hi = lo + 1
             if hi >= len(data):
-                return data[-1]
-            return data[lo] + (data[hi] - data[lo]) * (idx - lo)
+                return float(data[-1])
+            return float(data[lo] + (data[hi] - data[lo]) * (idx - lo))
 
         return (_percentile(scores, 25), _percentile(scores, 50), _percentile(scores, 75))
 
@@ -2402,7 +2426,7 @@ class OntologyOptimizer:
         ]
         return sum(diffs) / len(diffs)
 
-    def history_slice(self, start: int, end: int) -> list:
+    def history_slice(self, start: int, end: int) -> list[OptimizationReport]:
         """Return a slice of the history list from *start* to *end*.
 
         Args:
@@ -2495,7 +2519,7 @@ class OntologyOptimizer:
             return False
         return self._history[-1].average_score > self._history[0].average_score
 
-    def history_as_dicts(self) -> list:
+    def history_as_dicts(self) -> list[dict[str, Any]]:
         """Return the history as a list of plain dicts for easy serialization.
 
         Each dict has keys ``index``, ``average_score``, and ``trend``.
@@ -2512,7 +2536,7 @@ class OntologyOptimizer:
             for i, entry in enumerate(self._history)
         ]
 
-    def top_k_history(self, k: int = 3) -> list:
+    def top_k_history(self, k: int = 3) -> list[OptimizationReport]:
         """Return the *k* history entries with the highest ``average_score``.
 
         Args:
@@ -2536,7 +2560,7 @@ class OntologyOptimizer:
         scores = [e.average_score for e in self._history]
         mean = sum(scores) / len(scores)
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        return variance ** 0.5
+        return float(variance ** 0.5)
 
     def count_entries_with_trend(self, trend: str) -> int:
         """Count history entries matching a specific *trend* label.
@@ -2624,9 +2648,9 @@ class OntologyOptimizer:
         first_half = scores[: n // 2]
         second_half = scores[n // 2 :]
 
-        def _std(vals):
+        def _std(vals: list[float]) -> float:
             m = sum(vals) / len(vals)
-            return (sum((v - m) ** 2 for v in vals) / len(vals)) ** 0.5
+            return float((sum((v - m) ** 2 for v in vals) / len(vals)) ** 0.5)
 
         std_first = _std(first_half)
         if std_first == 0:
@@ -2742,7 +2766,7 @@ class OntologyOptimizer:
         recent = self._history[-window:]
         return sum(e.average_score for e in recent) / len(recent)
 
-    def first_n_history(self, n: int) -> list:
+    def first_n_history(self, n: int) -> list[OptimizationReport]:
         """Return the first *n* history entries.
 
         Args:
@@ -2753,7 +2777,7 @@ class OntologyOptimizer:
         """
         return self._history[:n]
 
-    def score_above_threshold(self, threshold: float = 0.7) -> list:
+    def score_above_threshold(self, threshold: float = 0.7) -> list[OptimizationReport]:
         """Return history entries whose ``average_score`` exceeds *threshold*.
 
         Args:
@@ -2783,7 +2807,7 @@ class OntologyOptimizer:
         prior = scores[-(2 * window):-window]
         return sum(recent) / len(recent) - sum(prior) / len(prior)
 
-    def score_below_threshold(self, threshold: float = 0.5) -> list:
+    def score_below_threshold(self, threshold: float = 0.5) -> list[OptimizationReport]:
         """Return history entries whose ``average_score`` is below *threshold*.
 
         Args:
@@ -2794,7 +2818,7 @@ class OntologyOptimizer:
         """
         return [e for e in self._history if e.average_score < threshold]
 
-    def best_history_entry(self):
+    def best_history_entry(self) -> Optional[OptimizationReport]:
         """Return the history entry with the highest ``average_score``.
 
         Returns:
@@ -2831,7 +2855,7 @@ class OntologyOptimizer:
         q3 = scores[(3 * n) // 4]
         return q3 - q1
 
-    def top_n_history(self, n: int = 3) -> list:
+    def top_n_history(self, n: int = 3) -> list[OptimizationReport]:
         """Return the top-n history entries ordered by ``average_score`` desc.
 
         Args:
@@ -2936,7 +2960,7 @@ class OntologyOptimizer:
         g1 = third_moment / (std ** 3)
         # Adjusted Fisher-Pearson correction
         adj = (n * (n - 1)) ** 0.5 / (n - 2)
-        return adj * g1
+        return float(adj * g1)
 
 
     def score_plateau_length(self, tolerance: float = 0.005) -> int:
@@ -3023,7 +3047,7 @@ class OntologyOptimizer:
             return sum(scores) / n
         return sum(trimmed) / len(trimmed)
 
-    def score_z_scores(self) -> list:
+    def score_z_scores(self) -> list[float]:
         """Return a list of z-scores for each history entry's ``average_score``.
 
         Returns:
@@ -3040,7 +3064,7 @@ class OntologyOptimizer:
         std = variance ** 0.5
         return [(s - mean) / std for s in scores]
 
-    def score_cumulative_max(self) -> list:
+    def score_cumulative_max(self) -> list[float]:
         """Return the running maximum of average_score across history.
 
         Each position *i* in the returned list is the maximum ``average_score``
@@ -3059,7 +3083,7 @@ class OntologyOptimizer:
             result.append(current_max)
         return result
 
-    def score_cumulative_min(self) -> list:
+    def score_cumulative_min(self) -> list[float]:
         """Return the running minimum of average_score across history.
 
         Each position *i* in the returned list is the minimum ``average_score``
@@ -3153,7 +3177,7 @@ class OntologyOptimizer:
             ewma = alpha * entry.average_score + (1.0 - alpha) * ewma
         return ewma
 
-    def history_second_derivative(self) -> list:
+    def history_second_derivative(self) -> list[float]:
         """Return the second derivative (acceleration) of average_score over history.
 
         The first derivative is the list of consecutive differences; the second
@@ -3169,7 +3193,7 @@ class OntologyOptimizer:
         first_deriv = [scores[i + 1] - scores[i] for i in range(len(scores) - 1)]
         return [first_deriv[i + 1] - first_deriv[i] for i in range(len(first_deriv) - 1)]
 
-    def history_first_derivative(self) -> list:
+    def history_first_derivative(self) -> list[float]:
         """Return the first derivative of ``average_score`` over history.
 
         The first derivative is the list of consecutive differences between
@@ -3248,7 +3272,7 @@ class OntologyOptimizer:
         if n < 4:
             return 0.0
 
-        def _entropy(vals: list) -> float:
+        def _entropy(vals: list[float]) -> float:
             if not vals:
                 return 0.0
             mn, mx = min(vals), max(vals)
@@ -3278,11 +3302,11 @@ class OntologyOptimizer:
         if n < 4:
             return 0.0
 
-        def _var(vals: list) -> float:
+        def _var(vals: list[float]) -> float:
             if len(vals) < 2:
                 return 0.0
             mean = sum(vals) / len(vals)
-            return sum((v - mean) ** 2 for v in vals) / len(vals)
+            return float(sum((v - mean) ** 2 for v in vals) / len(vals))
 
         mid = n // 2
         return _var(scores[mid:]) - _var(scores[:mid])
@@ -3362,7 +3386,7 @@ class OntologyOptimizer:
         dy = sum((yi - my) ** 2 for yi in y) ** 0.5
         if dx == 0.0 or dy == 0.0:
             return 0.0
-        return num / (dx * dy)
+        return float(num / (dx * dy))
 
     def history_cross_mean_count(self) -> int:
         """Return the number of times scores cross the historical mean.
@@ -3428,11 +3452,11 @@ class OntologyOptimizer:
         if len(scores) < 4:
             return 0.0
 
-        def _std(vals: list) -> float:
+        def _std(vals: list[float]) -> float:
             if len(vals) < 2:
                 return 0.0
             mean = sum(vals) / len(vals)
-            return (sum((v - mean) ** 2 for v in vals) / len(vals)) ** 0.5
+            return float((sum((v - mean) ** 2 for v in vals) / len(vals)) ** 0.5)
 
         global_std = _std(scores)
         if global_std == 0.0:
@@ -3531,7 +3555,7 @@ class OntologyOptimizer:
         variance = sum((d - mean) ** 2 for d in diffs) / len(diffs)
         if variance == 0.0:
             return 0.0
-        return variance ** 0.5
+        return float(variance ** 0.5)
 
 
     def history_peak_count(self) -> int:
@@ -3583,10 +3607,10 @@ class OntologyOptimizer:
         ds = sum((s - my) ** 2 for s in scores) ** 0.5
         if di == 0.0 or ds == 0.0:
             return 0.0
-        return num / (di * ds)
+        return float(num / (di * ds))
 
 
-    def history_weighted_mean(self, weights: list | None = None) -> float:
+    def history_weighted_mean(self, weights: list[float] | None = None) -> float:
         """Return weighted mean of average_score over history.
 
         Args:
@@ -3789,7 +3813,7 @@ class OntologyOptimizer:
         n = len(deltas)
         mean = sum(deltas) / n
         variance = sum((d - mean) ** 2 for d in deltas) / n
-        return variance ** 0.5
+        return float(variance ** 0.5)
 
     def history_percentile_rank(self, value: float) -> float:
         """Return the percentile rank of *value* within history scores.
@@ -3895,9 +3919,9 @@ class OntologyOptimizer:
         std = variance ** 0.5
         if std == 0.0:
             return 0.0
-        return (scores[-1] - mean) / std
+        return float((scores[-1] - mean) / std)
 
-    def history_trimmed_mean(self, trim_fraction: float = 0.1, trim: Optional[float] = None) -> float:
+    def history_trimmed_mean(self, trim_fraction: float = 0.1, trim: Optional[float] = None) -> float:  # type: ignore[no-redef]
         """Return trimmed mean of history scores, ignoring extremes.
 
         The trim removes a fraction of scores from both ends of the sorted list.
@@ -3969,7 +3993,7 @@ class OntologyOptimizer:
         n = len(deltas)
         mean = sum(deltas) / n
         variance = sum((d - mean) ** 2 for d in deltas) / n
-        return variance ** 0.5
+        return float(variance ** 0.5)
 
     def history_coefficient_of_variation(self) -> float:
         """Return the coefficient of variation (std / mean) of history scores.
@@ -3984,7 +4008,7 @@ class OntologyOptimizer:
         if mean == 0:
             return 0.0
         variance = sum((v - mean) ** 2 for v in vals) / len(vals)
-        return variance ** 0.5 / mean
+        return float(variance ** 0.5 / mean)
 
 
     def history_above_threshold_rate(self, threshold: float = 0.7) -> float:
@@ -4026,7 +4050,7 @@ class OntologyOptimizer:
         return self.history_percentile_rank(last)
 
 
-    def score_z_score(self) -> float:
+    def score_z_score(self) -> float:  # type: ignore[no-redef]
         """Return the z-score of the most recent average_score relative to history.
 
         z = (last - mean) / std
@@ -4042,7 +4066,7 @@ class OntologyOptimizer:
         std = variance ** 0.5
         if std == 0:
             return 0.0
-        return (vals[-1] - mean) / std
+        return float((vals[-1] - mean) / std)
 
     def score_mad(self) -> float:
         """Return the median absolute deviation (MAD) of history scores.
@@ -4325,7 +4349,7 @@ class OntologyOptimizer:
         if mean == 0:
             return 0.0
         var = sum((v - mean) ** 2 for v in vals) / len(vals)
-        return (var ** 0.5) / mean
+        return float((var ** 0.5) / mean)
 
     def score_relative_to_best(self) -> float:
         """Return the latest score as a fraction of the all-time best score.
@@ -4395,7 +4419,7 @@ class OntologyOptimizer:
         std = var ** 0.5
         if std == 0:
             return 0.0
-        return (vals[-1] - mean) / std
+        return float((vals[-1] - mean) / std)
 
     def history_top_k_mean(self, k: int = 3) -> float:
         """Return the mean of the top *k* history scores.
@@ -4584,10 +4608,10 @@ class OntologyOptimizer:
         positives = [e.average_score for e in self._history if e.average_score > 0]
         if not positives:
             return 0.0
-        log_sum = sum(__import__("math").log(s) for s in positives)
-        return __import__("math").exp(log_sum / len(positives))
+        log_sum = sum(math.log(s) for s in positives)
+        return float(math.exp(log_sum / len(positives)))
 
-    def score_at_index(self, index: int) -> float:
+    def score_at_index(self, index: int) -> float:  # type: ignore[no-redef]
         """Get the score at a specific index in history.
 
         Args:
@@ -4603,7 +4627,7 @@ class OntologyOptimizer:
         except IndexError:
             return 0.0
 
-    @property
+    @property  # type: ignore[no-redef]
     def history_length(self) -> int:
         """Return the number of entries in the history.
 
@@ -4782,7 +4806,7 @@ class OntologyOptimizer:
         product = 1.0
         for s in scores:
             product *= s
-        return product ** (1.0 / len(scores))
+        return float(product ** (1.0 / len(scores)))
 
     def score_harmonic_mean(self) -> float:
         """Return the harmonic mean of all history ``average_score`` values.
@@ -4796,7 +4820,7 @@ class OntologyOptimizer:
         scores = [e.average_score for e in self._history]
         if any(s <= 0.0 for s in scores):
             return 0.0
-        return len(scores) / sum(1.0 / s for s in scores)
+        return float(len(scores) / sum(1.0 / s for s in scores))
 
     def score_coefficient_of_variation(self) -> float:
         """Return the coefficient of variation (std / mean) of history scores.
@@ -4811,7 +4835,7 @@ class OntologyOptimizer:
         if mean == 0.0:
             return 0.0
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        return variance ** 0.5 / mean
+        return float(variance ** 0.5 / mean)
 
     def score_relative_improvement(self) -> float:
         """Return the relative improvement from first to last score.
@@ -4844,7 +4868,7 @@ class OntologyOptimizer:
             return 0.0
         return self._history[-1].average_score / mean
 
-    def score_iqr(self) -> float:
+    def score_iqr(self) -> float:  # type: ignore[no-redef]
         """Return the interquartile range (IQR) of history ``average_score`` values.
 
         IQR is the difference between the 75th and 25th percentile.
@@ -4858,7 +4882,7 @@ class OntologyOptimizer:
         q3 = self.score_percentile(75.0)
         return max(0.0, q3 - q1)
 
-    def history_rolling_std(self, window: int = 3) -> list:
+    def history_rolling_std(self, window: int = 3) -> list[float]:
         """Return a list of rolling standard deviations over ``window``-sized windows.
 
         Args:
@@ -4900,7 +4924,7 @@ class OntologyOptimizer:
         if variance == 0.0:
             return 0.0
         std = variance ** 0.5
-        return sum((s - mean) ** 3 for s in scores) / (n * std ** 3)
+        return float(sum((s - mean) ** 3 for s in scores) / (n * std ** 3))
 
     def score_entropy(self) -> float:
         """Return the Shannon entropy of history ``average_score`` values.
@@ -5053,7 +5077,7 @@ class OntologyOptimizer:
         """
         return self.above_target_rate(target)
 
-    def score_momentum(self, window: int = 5) -> float:
+    def score_momentum(self, window: int = 5) -> float:  # type: ignore[no-redef]
         """Return rolling average of score first differences over last *window* entries.
 
         Computes the mean of the most recent ``window`` score deltas (velocity).
@@ -5095,7 +5119,7 @@ class OntologyOptimizer:
         return sum(recent_deltas) / len(recent_deltas)
 
 
-    def score_mad(self) -> float:
+    def score_mad(self) -> float:  # type: ignore[no-redef]
         """Return the Mean Absolute Deviation (MAD) of history scores.
 
         MAD measures the average absolute distance of each score from the
@@ -5114,7 +5138,7 @@ class OntologyOptimizer:
         mean = sum(scores) / len(scores)
         return sum(abs(s - mean) for s in scores) / len(scores)
 
-    def score_zscore_outliers(self, threshold: float = 2.0) -> list:
+    def score_zscore_outliers(self, threshold: float = 2.0) -> list[int]:
         """Return the indices of history scores whose |z-score| exceeds *threshold*.
 
         Uses population standard deviation.  Scores with ``|z| > threshold``
@@ -5208,9 +5232,9 @@ class OntologyOptimizer:
         lower = scores[:mid]
         upper = scores[mid:]
 
-        def _var(xs: list) -> float:
+        def _var(xs: list[float]) -> float:
             m = sum(xs) / len(xs)
-            return sum((x - m) ** 2 for x in xs) / len(xs)
+            return float(sum((x - m) ** 2 for x in xs) / len(xs))
 
         var_lower = _var(lower) if lower else 0.0
         var_upper = _var(upper) if upper else 0.0
@@ -5448,7 +5472,7 @@ class OntologyOptimizer:
         scores = [e.average_score for e in self._history]
         n_total = len(scores)
 
-        def _entropy(subset: list) -> float:
+        def _entropy(subset: list[float]) -> float:
             n = len(subset)
             if n == 0:
                 return 0.0
@@ -5622,7 +5646,7 @@ class OntologyOptimizer:
         
         return min(1.0, seasonal_var / total_var)
 
-    def score_entropy(self) -> float:
+    def score_entropy(self) -> float:  # type: ignore[no-redef]
         """Return Shannon entropy of score distribution.
 
         Entropy measures randomness/disorder in score history. Higher entropy means
@@ -5649,7 +5673,7 @@ class OntologyOptimizer:
 
         # Round to reasonable precision to group near-equal scores
         rounded = [round(s, 10) for s in scores]
-        unique = {}
+        unique: dict[float, int] = {}
         for s in rounded:
             unique[s] = unique.get(s, 0) + 1
 
@@ -5692,7 +5716,7 @@ class OntologyOptimizer:
 
         # Round to reasonable precision
         rounded = [round(s, 10) for s in scores]
-        unique = {}
+        unique: dict[float, int] = {}
         for s in rounded:
             unique[s] = unique.get(s, 0) + 1
 
@@ -5828,7 +5852,7 @@ class OntologyOptimizer:
 
         mean = sum(recent_scores) / len(recent_scores)
         variance = sum((s - mean) ** 2 for s in recent_scores) / len(recent_scores)
-        return variance ** 0.5
+        return float(variance ** 0.5)
 
     def score_relationship_density(self) -> float:
         """Return the signal-to-noise ratio in recent score trends.

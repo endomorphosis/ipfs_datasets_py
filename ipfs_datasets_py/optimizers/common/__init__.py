@@ -89,6 +89,12 @@ from .exceptions import (
     ProvingError,
     RefinementError,
     ConfigurationError,
+    ExternalServiceError,
+    OptimizerTimeoutError,
+    RetryableBackendError,
+    CircuitBreakerOpenError,
+    RateLimitError,
+    AuthenticationError,
 )
 
 from .performance import (
@@ -129,6 +135,10 @@ from .backend_selection import (
     default_model_for_provider,
     resolve_backend_settings,
 )
+from .backend_resilience import (
+    BackendCallPolicy,
+    execute_with_resilience,
+)
 from .seed_control import (
     apply_deterministic_seed,
 )
@@ -163,6 +173,12 @@ __all__ = [
     "ProvingError",
     "RefinementError",
     "ConfigurationError",
+    "ExternalServiceError",
+    "OptimizerTimeoutError",
+    "RetryableBackendError",
+    "CircuitBreakerOpenError",
+    "RateLimitError",
+    "AuthenticationError",
     # Performance utilities
     "CacheEntry",
     "LLMCache",
@@ -193,6 +209,8 @@ __all__ = [
     "detect_provider_from_environment",
     "default_model_for_provider",
     "resolve_backend_settings",
+    "BackendCallPolicy",
+    "execute_with_resilience",
     # Seed control
     "apply_deterministic_seed",
     "get_global_prometheus_metrics",

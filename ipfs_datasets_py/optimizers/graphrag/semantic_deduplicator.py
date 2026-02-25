@@ -9,6 +9,10 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Callable
 import logging
 import numpy as np
+from ipfs_datasets_py.optimizers.common.exceptions import (
+    ConfigurationError,
+    ExtractionError,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -89,7 +93,7 @@ class SemanticEntityDeduplicator:
         
         Raises:
             ValueError: If ontology invalid or threshold out of range
-            RuntimeError: If embedding generation fails
+            ExtractionError: If embedding generation fails
         """
         if not isinstance(ontology, dict):
             raise ValueError("ontology must be a dictionary")
@@ -124,11 +128,20 @@ class SemanticEntityDeduplicator:
             embeddings = self._batch_embed(texts, embedding_fn, batch_size)
             
             if embeddings is None or len(embeddings) != len(texts):
-                raise RuntimeError("Embedding generation failed")
+                raise ExtractionError("Embedding generation failed")
                 
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError, ImportError, OSError) as e:
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+            RuntimeError,
+            KeyError,
+            ImportError,
+            OSError,
+            ExtractionError,
+        ) as e:
             _logger.error(f"Failed to generate embeddings: {e}")
-            raise RuntimeError(f"Embedding generation failed: {e}")
+            raise ExtractionError(f"Embedding generation failed: {e}")
         
         # Normalize for cosine similarity
         embeddings_norm = embeddings / (np.linalg.norm(embeddings, axis=1, keepdims=True) + 1e-9)
@@ -337,7 +350,7 @@ class SemanticEntityDeduplicator:
         try:
             from sentence_transformers import SentenceTransformer
         except ImportError:
-            raise RuntimeError(
+            raise ConfigurationError(
                 "sentence-transformers not available. Install with: "
                 "pip install sentence-transformers"
             )

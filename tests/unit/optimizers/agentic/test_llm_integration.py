@@ -100,6 +100,27 @@ class TestOptimizerLLMRouter:
         mock_retry.assert_called_once()
         assert mock_retry.call_args.kwargs == {}
 
+    def test_generate_uses_common_backend_resilience_wrapper(self):
+        """generate() should route backend calls through execute_with_resilience()."""
+        router = OptimizerLLMRouter(enable_caching=False)
+        router._retry_handler.retry = lambda func, max_retries=2: func()
+
+        with patch(
+            "ipfs_datasets_py.optimizers.agentic.llm_integration.execute_with_resilience",
+            side_effect=lambda operation, policy, circuit_breaker=None, sleep_fn=None: operation(),
+        ) as mocked_resilience, patch(
+            "ipfs_datasets_py.optimizers.agentic.llm_integration.router_generate",
+            return_value="ok",
+        ):
+            response = router.generate(
+                prompt="test prompt",
+                method=OptimizationMethod.TEST_DRIVEN,
+            )
+
+        assert response == "ok"
+        mocked_resilience.assert_called()
+        assert mocked_resilience.call_args.args[1].service_name.startswith("agentic_")
+
     def test_generate_redacts_secret_like_error_text_in_failure_details(self):
         """Failure details should not leak API keys/tokens."""
         router = OptimizerLLMRouter(enable_caching=False)

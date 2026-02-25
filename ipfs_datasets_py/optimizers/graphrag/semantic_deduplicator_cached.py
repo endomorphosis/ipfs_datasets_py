@@ -192,7 +192,13 @@ class CachedSemanticEntityDeduplicator(SemanticEntityDeduplicator):
                     self.cache.put(text, embedding)
                     embeddings_list.append((idx, embedding))
                     
-            except Exception as e:
+            except (
+                AttributeError,
+                MemoryError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as e:
                 _logger.error(f"Failed to generate embeddings: {e}")
                 raise
         
@@ -280,7 +286,7 @@ class CachedSemanticDedupWithPersistence(CachedSemanticEntityDeduplicator):
             # Would implement SQLite or pickle loading here
             _logger.debug(f"Loading cache from {self.persist_path}")
             # Cache loading logic would go here
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError) as e:
             _logger.warning(f"Failed to load persistent cache: {e}")
     
     def save_cache(self) -> None:
@@ -297,7 +303,7 @@ class CachedSemanticDedupWithPersistence(CachedSemanticEntityDeduplicator):
             _logger.info(f"Saving cache to {self.persist_path}")
             # Cache saving logic would go here
             _logger.info("Cache saved successfully")
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError) as e:
             _logger.error(f"Failed to save cache: {e}")
 
 

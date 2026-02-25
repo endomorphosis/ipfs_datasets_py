@@ -363,6 +363,8 @@ Rotation rules:
 ### 8) Security and Reliability
 - [ ] (P1) [security] Ensure all CLI file inputs are resolved/validated against traversal and unsafe paths.
 - [ ] (P2) [security] Add strict timeout + retry + circuit-breaker policy for all external backend calls.
+  - Progress 2026-02-25: added shared resilience utility `common/backend_resilience.py` with typed `BackendCallPolicy` and `execute_with_resilience(...)` (timeout + exponential backoff retry + circuit-breaker integration), exported via `common/__init__.py`; added focused contract coverage in `tests/unit/optimizers/common/test_backend_resilience.py` (`48 passed` with `test_exceptions.py`).
+  - Progress 2026-02-25: integrated shared resilience policy into agentic LLM routing path (`agentic/llm_integration.py::OptimizerLLMRouter.generate`) by wrapping provider calls with `execute_with_resilience(...)` + provider-specific `BackendCallPolicy`; preserved existing retry-wrapper behavior and added integration assertion coverage in `tests/unit/optimizers/agentic/test_llm_integration.py` (`8 passed`).
 - [ ] (P2) [security] Add redaction checks in logs for credentials/tokens across optimizer modules.
   - Progress 2026-02-25: hardened `agentic/llm_integration.py` error propagation by redacting secret-like substrings (`api_key`, `token`, `sk-*`) before attaching provider failure details; added regression coverage in `tests/unit/optimizers/agentic/test_llm_integration.py`.
   - Progress 2026-02-25: added structured-log redaction checks in `common/structured_logging.py::log_event` by applying `redact_dict` on sensitive key/value maps and recursive string redaction for bearer/token patterns before JSON emission; expanded regression coverage in `tests/unit/optimizers/common/test_structured_logging.py` (`21 passed`).
@@ -719,6 +721,7 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Done 2026-02-25: added constructor-level round-trip regression coverage in `tests/unit/optimizers/graphrag/test_batch_298_entity_constructor_roundtrip.py`; normalized `Entity.source_span`/`properties` input shape in `ontology_generator.py` to keep `Entity(**entity.to_dict())` stable.
 - [ ] (P2) [tests] Add mutation tests for `EntityExtractionResult.merge()`
 - [ ] (P2) [tests] Parametrize existing batch tests to reduce boilerplate
+  - Progress 2026-02-25: reduced duplication in `tests/unit/optimizers/test_batch_260_critic_score_distribution.py` by converting domain-specific and dimension-specific distribution checks to `@pytest.mark.parametrize` (`test_domain_scores` and `test_dimension_score_distribution`), preserving prior assertions while cutting repetitive test bodies; focused suite remains green (`26 passed`).
 - [ ] (P3) [tests] Add fuzz tests for `LogicValidator.check_consistency`
 - [ ] (P2) [obs] Wire `OntologyOptimizer` score history to `profile_time` decorator
 - [x] (P2) [obs] Emit structured log entry (JSON) for each pipeline run with score/domain/duration
@@ -865,6 +868,7 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [x] (P2) [tests] **Integration test: full round-trip** — `text → generate → validate → optimize → score` without mocking anything.
   - Done 2026-02-25: verified existing unmocked end-to-end coverage in `tests/unit/optimizers/graphrag/test_ontology_pipeline_e2e.py` and `tests/unit/optimizers/graphrag/test_integration_generator_critic_mediator_loop.py` (`12 passed`).
 - [ ] (P2) [tests] **Parametrize existing batch tests** — Convert repeated test classes into `@pytest.mark.parametrize` to reduce LOC by ~30%.
+  - Progress 2026-02-25: applied targeted parametrize refactor to batch distribution suite in `tests/unit/optimizers/test_batch_260_critic_score_distribution.py` (domain and dimension variants consolidated); regression run `26 passed`.
 - [x] (P2) [tests] **Fix `test_end_to_end_pipeline.py`** — The externally-committed E2E tests fail because `OntologyGenerator.__init__` rejects `ExtractionConfig` objects. Fix the `ipfs_accelerate_config.get()` call to handle dataclass configs.
   - Done 2026-02-24: added explicit dataclass-config regression case in `tests/unit/optimizers/graphrag/test_end_to_end_pipeline.py` and re-ran full E2E suite (`25 passed` including new batch-extract tests).
 - [ ] (P3) [tests] **Mutation testing** — Run `mutmut` on `ontology_critic.py` and fix surviving mutants.
@@ -923,9 +927,12 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Done 2026-02-25: verified existing unified optimizer protocol in `optimizers/common/protocols.py` and runtime conformance coverage in `tests/unit/optimizers/test_optimizer_protocols.py`.
 - [x] (P2) Property tests for `Entity` and `Relationship` (1.0 hours)
   - Done 2026-02-25: added randomized property-style invariant tests in `tests/unit/optimizers/graphrag/test_batch_302_entity_relationship_property_loops.py` covering dict/json round-trip equality and hash/id invariants for both `Entity` and `Relationship`.
-- [ ] (P2) Property tests for `ExtractionConfig` (45 min)
-- [ ] (P2) Property tests for `CriticScore` statistical invariants (1.0 hours)
-- [ ] (P2) Structured JSON logging audit (1.0 hours)
+- [x] (P2) Property tests for `ExtractionConfig` (45 min)
+  - Done 2026-02-25: added randomized property-style config round-trip/clone invariants in `tests/unit/optimizers/graphrag/test_batch_303_extraction_config_critic_score_property_loops.py` (dict/json reconstruction and validation-safe random generation).
+- [x] (P2) Property tests for `CriticScore` statistical invariants (1.0 hours)
+  - Done 2026-02-25: added randomized `CriticScore` invariants in `tests/unit/optimizers/graphrag/test_batch_303_extraction_config_critic_score_property_loops.py` (weighted overall equality, convex-bound check, to_list length, and dict round-trip stability).
+- [x] (P2) Structured JSON logging audit (1.0 hours)
+  - Done 2026-02-25: completed cross-pipeline structured logging audit for `common`, `graphrag`, and `logic_theorem` emitters; fixed missing `timestamp` in `graphrag/ontology_optimizer.py::_emit_analyze_batch_summary`, added audit regression suite `tests/unit/optimizers/test_structured_json_logging_audit.py`, and documented findings in `docs/optimizers/STRUCTURED_JSON_LOGGING_AUDIT.md`.
 - [x] (P2) Prometheus metrics hooks (1.0–1.5 hours)
   - Done 2026-02-25: extended `graphrag/ontology_pipeline.py` Prometheus hooks to record per-run score, round completion, score delta, and stage durations; added regression coverage in `tests/unit/optimizers/graphrag/test_batch_301_pipeline_prometheus_hooks.py`.
 - [x] (P2) Audit llm_integration.py for API key logging (30 min)
@@ -936,13 +943,21 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Done 2026-02-25: optimized repeated language-detection hotspot in `graphrag/ontology_generator.py` by adding per-instance cached detection in `_detect_language_with_cache()` and wiring `_build_language_aware_context()` through it; added regression coverage in `tests/unit/optimizers/graphrag/test_ontology_generator_multilingual.py` (`test_language_detection_result_is_cached_for_repeated_text`).
 - [x] (P2) Lazy-load domain-specific rule sets (45 min)
   - Done 2026-02-25: verified `ExtractionConfig._get_domain_rule_patterns()` lazy cached loader in `graphrag/ontology_generator.py` and reran dedicated cache/domain behavior suite `tests/unit/optimizers/graphrag/test_domain_rule_patterns_lazy_loading.py` (`31 passed`).
-- [ ] (P2) Audit existing exception usage (1.0 hours)
-- [ ] (P2) Define unified exception hierarchy (1.0 hours)
-- [ ] (P2) Migrate graphrag exceptions to new hierarchy (45 min)
+- [x] (P2) Audit existing exception usage (1.0 hours)
+  - Done 2026-02-25: completed optimizer-wide exception-handler audit (`185` files scanned, `537` handlers total) and documented results in `docs/optimizers/EXCEPTION_USAGE_AUDIT.md`; narrowed remaining broad catches in `graphrag/semantic_deduplicator_cached.py` and `graphrag/validation_cache.py`, with regression coverage added in `tests/unit/optimizers/graphrag/test_validation_cache.py` (`20 passed`).
+- [x] (P2) Define unified exception hierarchy (1.0 hours)
+  - Done 2026-02-25: verified shared typed hierarchy in `optimizers/common/exceptions.py` (`OptimizerError`, `ExtractionError`, `ValidationError`, `ProvingError`, `RefinementError`, `ConfigurationError`) and confirmed contract coverage via `tests/unit/optimizers/test_unified_exception_hierarchy.py` + `tests/unit/optimizers/common/test_exceptions.py` (`31 passed`).
+  - Progress 2026-02-25: expanded unified hierarchy with backend-resilience classes in `optimizers/common/exceptions.py` (`ExternalServiceError`, `OptimizerTimeoutError`, `RetryableBackendError`, `CircuitBreakerOpenError`, `RateLimitError`, `AuthenticationError`), exported via `optimizers/common/__init__.py`, and added hierarchy/serialization coverage in `tests/unit/optimizers/common/test_exceptions.py`; regression suites `test_exceptions.py`, `test_exception_utilities.py`, and `test_unified_exception_hierarchy.py` are green (`57 passed` combined).
+- [x] (P2) Migrate graphrag exceptions to new hierarchy (45 min)
+  - Done 2026-02-25: verified and locked GraphRAG exception mapping to unified common bases in `optimizers/graphrag/exceptions.py` (extraction/validation/proving/config/refinement/cache paths) with contract coverage in `tests/unit/optimizers/test_unified_exception_hierarchy.py` (`test_graphrag_specific_exceptions_map_to_unified_bases`) and `tests/unit/optimizers/common/test_exceptions.py` (`39 passed` combined in focused run).
+  - Progress 2026-02-25: migrated runtime/config error signaling in `graphrag/semantic_deduplicator.py` to unified exceptions (`ExtractionError` for embedding failures, `ConfigurationError` for missing embedding backend) and expanded regression coverage in `tests/unit/optimizers/graphrag/test_semantic_entity_deduplication.py` (`25 passed`).
 - [x] (P2) [graphrag] strict-mypy cleanup for `query_planner.py`
   - Done 2026-02-25: cleaned numpy/psutil fallback typing and numpy-scalar bytes decode narrowing; `mypy --strict --follow-imports=skip --ignore-missing-imports` now passes for `graphrag/query_planner.py`.
   - Done 2026-02-25: verified query planner behavior with `test_query_budget_protocol.py` + `test_query_optimizer_example_usage.py` (`9 passed`).
-- [ ] (P2) [graphrag] strict-mypy cleanup for `ontology_optimizer.py` (slice-by-slice)
+- [x] (P2) [graphrag] strict-mypy cleanup for `ontology_optimizer.py` (slice-by-slice)
   - Progress 2026-02-25: completed initial strict-typing slice (imports/fallbacks, metrics collector wiring, Counter generics, weakest-dimension numeric narrowing, typed score distribution helpers); file-local strict errors reduced to `82`.
   - Progress 2026-02-25: regression-checked optimizer metric helpers via `tests/unit/optimizers/graphrag/test_ontology_optimizer_metrics.py` (`10 passed`).
   - Progress 2026-02-25: narrowed strict-typing import diagnostics by switching optional imports to explicit `import-not-found` typing guards (`opentelemetry` and optional `rdflib` export path); file-local strict errors reduced from `77` to `74` (`mypy --strict --follow-imports=skip ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/ontology_optimizer.py`).
+  - Progress 2026-02-25: tightened helper return/container typing in history/stat/export helpers (`score_stddev`, `score_range`, `history_as_list`, `best_n_ontologies`, `worst_n_ontologies`, `latest_batch_size`, RDF/GraphML export serializers), reducing file-local strict errors from `74` to `64`; regression suites remain green via `tests/unit/optimizers/graphrag/test_ontology_optimizer_metrics.py` + `tests/unit/optimizers/graphrag/test_ontology_optimizer_helpers.py` (`34 passed`).
+  - Progress 2026-02-25: eliminated duplicate public-helper redefinition and added explicit generic/return typing for additional stats/history helpers (`best_ontology` duplicate collapsed via private helper, `entries_above_score`, `running_average`, `score_quartiles` percentile helper, convergence std helper, `score_below_threshold`, `best_history_entry`), reducing file-local strict errors from `64` to `51`; focused optimizer helper/metrics suites remain green (`34 passed`).
+  - Done 2026-02-25: completed final strict-typing cleanup for duplicated helper aliases and remaining typed-return/list-generic issues across late helper blocks (`history_slice`, rolling stats, z-score/outlier helpers, concentration/entropy maps, and deterministic float return coercions); `mypy --strict --follow-imports=skip ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/ontology_optimizer.py` now passes (`Success: no issues found in 1 source file`) and focused regression suites remain green via `tests/unit/optimizers/graphrag/test_ontology_optimizer_metrics.py` + `tests/unit/optimizers/graphrag/test_ontology_optimizer_helpers.py` (`34 passed`).

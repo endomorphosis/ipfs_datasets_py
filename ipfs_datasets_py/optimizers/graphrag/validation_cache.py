@@ -226,7 +226,7 @@ class LRUCache:
                 self.stats.total_size_bytes += size
             
             logger.info(f"Loaded {len(self._cache)} entries from cache file")
-        except Exception as e:
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as e:
             logger.warning(f"Failed to load cache from disk: {e}")
     
     def _save_to_disk(self) -> None:
@@ -254,7 +254,7 @@ class LRUCache:
                 json.dump(data, f, indent=2)
             
             logger.debug(f"Saved cache to {self.persistence_path}")
-        except Exception as e:
+        except (OSError, TypeError, ValueError) as e:
             logger.warning(f"Failed to save cache to disk: {e}")
     
     def __del__(self):

@@ -6,6 +6,7 @@ embedding-based similarity to find semantically duplicate entities.
 
 import pytest
 import numpy as np
+from ipfs_datasets_py.optimizers.common.exceptions import ConfigurationError, ExtractionError
 from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator import (
     SemanticEntityDeduplicator,
     SemanticMergeSuggestion,
@@ -402,16 +403,29 @@ class TestSemanticDeduplicationErrorHandling:
             )
 
     def test_embedding_function_failure_is_wrapped(self, deduplicator, simple_ontology):
-        """Embedding callback errors should be wrapped as RuntimeError."""
+        """Embedding callback errors should be wrapped as ExtractionError."""
         def failing_embedding_fn(_texts):
             raise ValueError("vectorizer failed")
 
-        with pytest.raises(RuntimeError, match="Embedding generation failed: vectorizer failed"):
+        with pytest.raises(ExtractionError, match="Embedding generation failed: vectorizer failed"):
             deduplicator.suggest_merges(
                 simple_ontology,
                 threshold=0.8,
                 embedding_fn=failing_embedding_fn,
             )
+
+    def test_default_embedding_backend_missing_raises_configuration_error(
+        self, deduplicator, simple_ontology, monkeypatch
+    ):
+        """Missing default embedding backend should raise ConfigurationError."""
+
+        def _raise_backend_missing():
+            raise ConfigurationError("sentence-transformers not available")
+
+        monkeypatch.setattr(deduplicator, "_get_default_embedding_fn", _raise_backend_missing)
+
+        with pytest.raises(ConfigurationError, match="sentence-transformers not available"):
+            deduplicator.suggest_merges(simple_ontology, threshold=0.8, embedding_fn=None)
 
 
 class TestSemanticDeduplicationBatching:

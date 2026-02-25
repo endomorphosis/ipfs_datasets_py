@@ -158,6 +158,49 @@ class ConfigurationError(OptimizerError):
     """
 
 
+class ExternalServiceError(OptimizerError):
+    """Raised when an external backend or network service fails."""
+
+    def __init__(
+        self,
+        message: str,
+        service: Optional[str] = None,
+        details: Optional[Any] = None,
+    ) -> None:
+        super().__init__(message, details=details)
+        self.service = service
+
+
+class OptimizerTimeoutError(ExternalServiceError):
+    """Raised when an optimizer external call exceeds a strict timeout."""
+
+
+class RetryableBackendError(ExternalServiceError):
+    """Raised when backend failure is transient and retry is appropriate."""
+
+
+class CircuitBreakerOpenError(ExternalServiceError):
+    """Raised when circuit breaker blocks calls due to repeated failures."""
+
+
+class RateLimitError(ExternalServiceError):
+    """Raised when an external backend applies request-rate limiting."""
+
+    def __init__(
+        self,
+        message: str,
+        service: Optional[str] = None,
+        retry_after_seconds: Optional[float] = None,
+        details: Optional[Any] = None,
+    ) -> None:
+        super().__init__(message, service=service, details=details)
+        self.retry_after_seconds = retry_after_seconds
+
+
+class AuthenticationError(ExternalServiceError):
+    """Raised when backend authentication/authorization fails."""
+
+
 # ============================================================================
 # Exception Handling Utilities
 # ============================================================================
@@ -270,6 +313,10 @@ def exception_to_dict(exc: BaseException) -> dict[str, Any]:
                 result["prover"] = exc.prover
             if exc.formula:
                 result["formula"] = exc.formula
+        if isinstance(exc, ExternalServiceError) and exc.service:
+            result["service"] = exc.service
+        if isinstance(exc, RateLimitError) and exc.retry_after_seconds is not None:
+            result["retry_after_seconds"] = exc.retry_after_seconds
     
     # Include cause chain if present
     if exc.__cause__:
@@ -327,6 +374,12 @@ __all__ = [
     "ProvingError",
     "RefinementError",
     "ConfigurationError",
+    "ExternalServiceError",
+    "OptimizerTimeoutError",
+    "RetryableBackendError",
+    "CircuitBreakerOpenError",
+    "RateLimitError",
+    "AuthenticationError",
     # Utilities
     "format_validation_errors",
     "wrap_exceptions",

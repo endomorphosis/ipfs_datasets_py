@@ -16,6 +16,13 @@ from .production_hardening import CircuitBreaker, RetryHandler
 from ..common.performance import LLMCache, get_global_cache
 from .exceptions import ExtractionError
 from ..common.backend_selection import detect_provider_from_environment
+from ..common.backend_resilience import BackendCallPolicy, execute_with_resilience
+from ..common.circuit_breaker import CircuitBreaker as ResilienceCircuitBreaker
+from ..common.exceptions import (
+    CircuitBreakerOpenError,
+    OptimizerTimeoutError,
+    RetryableBackendError,
+)
 
 _SECRET_KV_PATTERN = re.compile(
     r"(?i)\b(api[_-]?key|access[_-]?token|token|secret|password)\b\s*[:=]\s*([^\s,;]+)"
@@ -183,6 +190,29 @@ class OptimizerLLMRouter:
         
         # Production hardening: Retry handler with exponential backoff
         self._retry_handler = RetryHandler(max_retries=3, base_delay=1.0, max_delay=30.0)
+        self._resilience_breakers: Dict[LLMProvider, ResilienceCircuitBreaker[str]] = {
+            provider: ResilienceCircuitBreaker[str](
+                name=f"agentic_llm_{provider.value}",
+                failure_threshold=3,
+                recovery_timeout=30.0,
+                expected_exception=Exception,
+            )
+            for provider in LLMProvider
+            if provider != LLMProvider.AUTO
+        }
+
+    def _policy_for_provider(self, provider: LLMProvider) -> BackendCallPolicy:
+        """Return strict backend resilience policy for a provider."""
+        return BackendCallPolicy(
+            service_name=f"agentic_{provider.value}",
+            timeout_seconds=30.0,
+            max_retries=0,
+            initial_backoff_seconds=0.0,
+            backoff_multiplier=2.0,
+            max_backoff_seconds=0.0,
+            circuit_failure_threshold=3,
+            circuit_recovery_timeout=30.0,
+        )
     
     def _detect_provider(self) -> LLMProvider:
         """Auto-detect best available provider.
@@ -322,14 +352,18 @@ class OptimizerLLMRouter:
                 
                 # Production hardening: Use circuit breaker + retry logic
                 def _make_llm_call():
-                    return self._breakers[current_provider].call(
-                        router_generate,
-                        call_kwargs={
-                            "prompt": prompt,
-                            "max_tokens": max_tokens,
-                            "temperature": temperature,
-                            **resolved_router_kwargs,
-                        },
+                    return execute_with_resilience(
+                        lambda: self._breakers[current_provider].call(
+                            router_generate,
+                            call_kwargs={
+                                "prompt": prompt,
+                                "max_tokens": max_tokens,
+                                "temperature": temperature,
+                                **resolved_router_kwargs,
+                            },
+                        ),
+                        self._policy_for_provider(current_provider),
+                        circuit_breaker=self._resilience_breakers[current_provider],
                     )
                 
                 response = self._retry_handler.retry(_make_llm_call)
@@ -359,6 +393,9 @@ class OptimizerLLMRouter:
                 RuntimeError,
                 OSError,
                 TimeoutError,
+                CircuitBreakerOpenError,
+                OptimizerTimeoutError,
+                RetryableBackendError,
             ) as e:
                 last_error = e
                 if self.enable_tracking:

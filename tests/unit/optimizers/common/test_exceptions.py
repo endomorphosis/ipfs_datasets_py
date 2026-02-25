@@ -4,12 +4,19 @@ from __future__ import annotations
 import pytest
 
 from ipfs_datasets_py.optimizers.common.exceptions import (
+    AuthenticationError,
+    CircuitBreakerOpenError,
     ConfigurationError,
+    ExternalServiceError,
     ExtractionError,
     OptimizerError,
+    OptimizerTimeoutError,
     ProvingError,
+    RateLimitError,
     RefinementError,
+    RetryableBackendError,
     ValidationError,
+    exception_to_dict,
     safe_error_handler,
     wrap_exceptions,
 )
@@ -99,6 +106,39 @@ class TestConfigurationError:
     def test_details(self):
         e = ConfigurationError("bad", details={"field": "strategy"})
         assert "strategy" in str(e)
+
+
+class TestExternalServiceErrors:
+    def test_external_service_error_inherits_optimizer_error(self):
+        assert issubclass(ExternalServiceError, OptimizerError)
+
+    def test_timeout_error_inherits_external_service_error(self):
+        assert issubclass(OptimizerTimeoutError, ExternalServiceError)
+
+    def test_retryable_error_inherits_external_service_error(self):
+        assert issubclass(RetryableBackendError, ExternalServiceError)
+
+    def test_circuit_breaker_error_inherits_external_service_error(self):
+        assert issubclass(CircuitBreakerOpenError, ExternalServiceError)
+
+    def test_rate_limit_error_inherits_external_service_error(self):
+        assert issubclass(RateLimitError, ExternalServiceError)
+
+    def test_authentication_error_inherits_external_service_error(self):
+        assert issubclass(AuthenticationError, ExternalServiceError)
+
+    def test_exception_to_dict_includes_external_service_fields(self):
+        err = RateLimitError(
+            "Too many requests",
+            service="provider-x",
+            retry_after_seconds=15.0,
+            details={"status": 429},
+        )
+        payload = exception_to_dict(err)
+        assert payload["type"] == "RateLimitError"
+        assert payload["service"] == "provider-x"
+        assert payload["retry_after_seconds"] == 15.0
+        assert payload["details"] == {"status": 429}
 
 
 class TestHierarchyOrdering:

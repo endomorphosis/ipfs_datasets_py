@@ -5,7 +5,7 @@ objects with expected properties.
 """
 
 import pytest
-from ipfs_datasets_py.tests.fixtures.graphrag.ontology_factories import (
+from tests.fixtures.graphrag.ontology_factories import (
     EntityFactory,
     RelationshipFactory,
     OntologyFactory,

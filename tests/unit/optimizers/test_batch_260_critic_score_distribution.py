@@ -223,58 +223,40 @@ class TestCriticScoreDistributionStatistics:
 
 class TestDomainSpecificScoreDistribution:
     """Test score distributions across different domains."""
-    
-    def test_legal_domain_scores(self, critic, context):
-        """Test score distribution for legal domain ontologies."""
+
+    @pytest.mark.parametrize(
+        "domain,entity_start,entity_mod,rel_start,rel_mod",
+        [
+            ("legal", 15, 20, 10, 15),
+            ("medical", 20, 25, 15, 20),
+            ("technical", 12, 18, 8, 12),
+        ],
+    )
+    def test_domain_scores(
+        self,
+        critic,
+        context,
+        domain: str,
+        entity_start: int,
+        entity_mod: int,
+        rel_start: int,
+        rel_mod: int,
+    ):
+        """Test score distribution for each supported domain shape."""
         scores = []
         for i in range(50):
             ontology = create_sample_ontology(
-                entity_count=15 + (i % 20),
-                relationship_count=10 + (i % 15),
+                entity_count=entity_start + (i % entity_mod),
+                relationship_count=rel_start + (i % rel_mod),
             )
             if "metadata" in ontology:
-                ontology["metadata"]["domain"] = "legal"
+                ontology["metadata"]["domain"] = domain
             score = critic.evaluate_ontology(ontology, context)
             scores.append(score.overall)
-        
+
         assert len(scores) == 50
         assert all(0.0 <= s <= 1.0 for s in scores)
-        legal_mean = statistics.mean(scores)
-        assert 0.0 < legal_mean < 1.0
-    
-    def test_medical_domain_scores(self, critic, context):
-        """Test score distribution for medical domain ontologies."""
-        scores = []
-        for i in range(50):
-            ontology = create_sample_ontology(
-                entity_count=20 + (i % 25),
-                relationship_count=15 + (i % 20),
-            )
-            if "metadata" in ontology:
-                ontology["metadata"]["domain"] = "medical"
-            score = critic.evaluate_ontology(ontology, context)
-            scores.append(score.overall)
-        
-        assert len(scores) == 50
-        medical_mean = statistics.mean(scores)
-        assert 0.0 < medical_mean < 1.0
-    
-    def test_technical_domain_scores(self, critic, context):
-        """Test score distribution for technical domain ontologies."""
-        scores = []
-        for i in range(50):
-            ontology = create_sample_ontology(
-                entity_count=12 + (i % 18),
-                relationship_count=8 + (i % 12),
-            )
-            if "metadata" in ontology:
-                ontology["metadata"]["domain"] = "technical"
-            score = critic.evaluate_ontology(ontology, context)
-            scores.append(score.overall)
-        
-        assert len(scores) == 50
-        tech_mean = statistics.mean(scores)
-        assert 0.0 < tech_mean < 1.0
+        assert 0.0 < statistics.mean(scores) < 1.0
     
     def test_cross_domain_score_comparison(self, critic, context):
         """Compare score distributions across domains."""
@@ -425,44 +407,25 @@ class TestOutlierDetection:
 
 class TestDimensionScoreDistribution:
     """Test distribution of individual critic dimensions."""
-    
-    def test_completeness_score_distribution(self, critic, context):
-        """Test completeness dimension score distribution."""
-        completeness_scores = []
-        
+
+    @pytest.mark.parametrize(
+        "dimension_name",
+        ["completeness", "consistency", "clarity"],
+    )
+    def test_dimension_score_distribution(self, critic, context, dimension_name: str):
+        """Test score distribution for selected dimensions."""
+        dimension_scores = []
+
         for i in range(100):
             ontology = create_sample_ontology(
                 entity_count=5 + (i % 25),
                 relationship_count=3 + (i % 15),
             )
             score = critic.evaluate_ontology(ontology, context)
-            completeness_scores.append(score.completeness)
-        
-        assert all(0.0 <= s <= 1.0 for s in completeness_scores)
-        mean_completeness = statistics.mean(completeness_scores)
-        assert 0.0 < mean_completeness < 1.0
-    
-    def test_consistency_score_distribution(self, critic, context):
-        """Test consistency dimension score distribution."""
-        consistency_scores = []
-        
-        for i in range(100):
-            ontology = create_sample_ontology(entity_count=10 + (i % 20))
-            score = critic.evaluate_ontology(ontology, context)
-            consistency_scores.append(score.consistency)
-        
-        assert all(0.0 <= s <= 1.0 for s in consistency_scores)
-    
-    def test_clarity_score_distribution(self, critic, context):
-        """Test clarity dimension score distribution."""
-        clarity_scores = []
-        
-        for i in range(100):
-            ontology = create_sample_ontology(entity_count=10 + (i % 20))
-            score = critic.evaluate_ontology(ontology, context)
-            clarity_scores.append(score.clarity)
-        
-        assert all(0.0 <= s <= 1.0 for s in clarity_scores)
+            dimension_scores.append(getattr(score, dimension_name))
+
+        assert all(0.0 <= s <= 1.0 for s in dimension_scores)
+        assert 0.0 < statistics.mean(dimension_scores) <= 1.0
     
     def test_dimension_correlation(self, critic, context):
         """Test correlation between different dimensions."""
