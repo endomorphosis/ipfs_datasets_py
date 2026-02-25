@@ -58,6 +58,14 @@ class GraphRAGConfig(BaseConfig):
     def __post_init__(self):
         if self.domain_specific_rules is None:
             self.domain_specific_rules = set()
+    
+    def __repr__(self) -> str:
+        """Return concise string representation."""
+        return (
+            f"GraphRAGConfig(strategy={self.extraction_strategy}, "
+            f"confidence={self.confidence_threshold}, "
+            f"semantic_dedup={self.enable_semantic_deduplication})"
+        )
 
 
 @dataclass
@@ -72,6 +80,15 @@ class LogicConfig(BaseConfig):
     enable_conflict_resolution: bool = True
     enable_knowledge_graph_integration: bool = True
     enable_rag_integration: bool = True
+    
+    def __repr__(self) -> str:
+        """Return concise string representation."""
+        return (
+            f"LogicConfig(backend={self.prover_backend}, "
+            f"format={self.formula_format}, "
+            f"timeout_ms={self.proof_timeout_ms}, "
+            f"neural_symbolic={self.enable_neural_symbolic})"
+        )
 
 
 @dataclass
@@ -85,6 +102,15 @@ class AgenticConfig(BaseConfig):
     required_approvals: int = 1
     enable_logging: bool = True
     log_level: str = "INFO"
+    
+    def __repr__(self) -> str:
+        """Return concise string representation."""
+        return (
+            f"AgenticConfig(mode={self.mode}, "
+            f"threshold={self.decision_threshold}, "
+            f"parallel_actions={self.max_parallel_actions}, "
+            f"github_integration={self.enable_github_integration})"
+        )
 
 
 @dataclass
@@ -133,6 +159,15 @@ class UnifiedOptimizerConfig(BaseConfig):
             return self.agentic_config
         else:
             raise ValueError(f"Unknown domain: {domain}")
+    
+    def __repr__(self) -> str:
+        """Return concise string representation."""
+        return (
+            f"UnifiedOptimizerConfig(domain={self.domain.value}, "
+            f"strategy={self.strategy}, "
+            f"target_score={self.target_score}, "
+            f"max_iterations={self.max_iterations})"
+        )
 
 
 @dataclass
@@ -156,6 +191,14 @@ class BaseContext:
     def set_metadata(self, key: str, value: Any) -> None:
         """Set metadata value."""
         self.metadata[key] = value
+    
+    def __repr__(self) -> str:
+        """Return concise string representation."""
+        return (
+            f"BaseContext(session_id={self.session_id}, "
+            f"domain={self.domain.value}, "
+            f"metadata_keys={len(self.metadata)})"
+        )
 
 
 @dataclass
@@ -165,6 +208,16 @@ class GraphRAGContext(BaseContext):
     input_documents: Optional[Dict[str, Any]] = None
     extraction_context: Optional[Dict[str, Any]] = None
     ontology_domain: Optional[str] = None
+    
+    def __repr__(self) -> str:
+        """Return concise string representation."""
+        doc_count = len(self.input_documents) if self.input_documents else 0
+        text_len = len(self.input_text) if self.input_text else 0
+        return (
+            f"GraphRAGContext(session_id={self.session_id}, "
+            f"docs={doc_count}, text_len={text_len}, "
+            f"domain={self.ontology_domain})"
+        )
 
 
 @dataclass
@@ -173,6 +226,15 @@ class LogicContext(BaseContext):
     formulas: Optional[Dict[str, str]] = None
     theory: Optional[Dict[str, Any]] = None
     proof_objectives: Optional[Dict[str, str]] = None
+    
+    def __repr__(self) -> str:
+        """Return concise string representation."""
+        formula_count = len(self.formulas) if self.formulas else 0
+        objective_count = len(self.proof_objectives) if self.proof_objectives else 0
+        return (
+            f"LogicContext(session_id={self.session_id}, "
+            f"formulas={formula_count}, objectives={objective_count})"
+        )
 
 
 @dataclass
@@ -181,6 +243,15 @@ class AgenticContext(BaseContext):
     action_history: Dict[str, int] = field(default_factory=dict)
     decision_log: Dict[str, str] = field(default_factory=dict)
     approval_status: Dict[str, bool] = field(default_factory=dict)
+    
+    def __repr__(self) -> str:
+        """Return concise string representation."""
+        action_count = sum(self.action_history.values()) if self.action_history else 0
+        approved = sum(1 for v in self.approval_status.values() if v) if self.approval_status else 0
+        return (
+            f"AgenticContext(session_id={self.session_id}, "
+            f"actions={action_count}, approved={approved})"
+        )
 
 
 def create_context(

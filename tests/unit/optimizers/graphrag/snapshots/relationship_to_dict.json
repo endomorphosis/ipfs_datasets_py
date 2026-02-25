@@ -1,0 +1,13 @@
+{
+  "dict_keys": [
+    "confidence",
+    "direction",
+    "id",
+    "properties",
+    "source_id",
+    "target_id",
+    "type"
+  ],
+  "has_all_fields": true,
+  "properties_preserved": true
+}
