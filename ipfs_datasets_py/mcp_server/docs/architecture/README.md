@@ -12,12 +12,26 @@ Technical documentation for the dual-runtime architecture combining FastAPI (for
 - Integration patterns
 
 ### [mcp-plus-plus-alignment.md](./mcp-plus-plus-alignment.md)
-Documentation on how this implementation aligns with MCP++ architecture principles. Covers:
-- Profile negotiation
-- CID-addressed tool contracts
+Documentation on MCP++ alignment (v1–v39 complete). Covers:
+- UCAN delegation implementation
 - Event DAG provenance
-- UCAN delegation
-- Transport bindings
+- P2P PubSub transport bindings
+- Compliance checker
+- Policy audit log
+- NL UCAN policy compiler
+- I18N policy detection (20 languages)
+
+### [DUAL_RUNTIME_ARCHITECTURE.md](./DUAL_RUNTIME_ARCHITECTURE.md)
+Detailed dual-runtime architecture document.
+
+### [adr/](./adr/)
+Architecture Decision Records:
+- **ADR-001** — Thin wrapper pattern
+- **ADR-002** — Dual-runtime design
+- **ADR-003** — Hierarchical tool system
+- **ADR-004** — Engine extraction pattern
+- **ADR-005** — v6 coverage hardening
+- **ADR-006** — MCP++ alignment
 
 ## Related Documentation
 

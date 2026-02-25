@@ -5,20 +5,23 @@ API reference documentation for MCP server tools and interfaces.
 ## Documents
 
 ### [tool-reference.md](./tool-reference.md)
-Complete API reference for all MCP server tools. Includes:
+Complete API reference for all MCP server tools (~407 callable functions across 51 categories). Includes:
 - Tool categories and organization
 - Tool schemas and parameters
 - Return value specifications
 - Usage examples
+- MCP++ integration components (UCAN, Event DAG, PubSub, Compliance)
 
 ## Tool Categories
 
-The MCP server provides 321+ tools across 49+ categories:
-- Dataset tools (loading, saving, processing)
-- Search tools (semantic, similarity, faceted)
-- Logic tools (FOL, deontic, temporal-deontic)
-- Processor tools (data transformation, multimedia)
-- And many more...
+The MCP server provides ~407 tool functions across 51 categories:
+- Dataset tools (loading, saving, processing, text-to-FOL, legal-to-deontic)
+- Graph tools (knowledge graphs, Cypher, GraphQL, visualization, KG completion, explainability)
+- Logic tools (FOL, TDFOL, CEC/DCEC theorem proving, deontic, temporal-deontic)
+- Media tools (FFmpeg convert/mux/stream/edit/batch, yt-dlp)
+- Web archive tools (Common Crawl, Wayback Machine, Brave/Google/GitHub/HuggingFace search)
+- Legal dataset tools (US Code, Federal Register, RECAP, CourtListener, municipal codes)
+- And 45 more categories...
 
 ## Core Module APIs
 
