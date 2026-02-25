@@ -14,6 +14,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    PathValidationError,
+    validate_input_path,
+    validate_output_path,
+)
 
 
 def _safe_error_text(error: Exception) -> str:
@@ -25,20 +30,20 @@ def _safe_resolve(path_str: str, *, must_exist: bool = False) -> Path:
     """Resolve a user-supplied path, guarding against path-traversal.
 
     Raises:
-        ValueError: If path escapes a restricted system directory.
+        ValueError: If path is unsafe or invalid.
         FileNotFoundError: If *must_exist* and path does not exist.
     """
-    resolved = Path(path_str).resolve()
-    for forbidden in (Path('/proc'), Path('/sys'), Path('/dev'), Path('/etc')):
-        try:
-            resolved.relative_to(forbidden)
-            raise ValueError(f"Path '{path_str}' resolves into restricted area: {forbidden}")
-        except ValueError as exc:
-            if 'restricted area' in str(exc):
-                raise
-    if must_exist and not resolved.exists():
-        raise FileNotFoundError(f"Path not found: {resolved}")
-    return resolved
+    if not isinstance(path_str, str):
+        raise ValueError("path_str must be a string")
+    if not path_str.strip():
+        raise ValueError("path_str must be a non-empty string")
+
+    try:
+        if must_exist:
+            return validate_input_path(path_str, must_exist=True)
+        return validate_output_path(path_str, allow_overwrite=True)
+    except PathValidationError as exc:
+        raise ValueError(str(exc)) from exc
 
 
 _DOMAIN_KEYWORDS: Dict[str, List[str]] = {

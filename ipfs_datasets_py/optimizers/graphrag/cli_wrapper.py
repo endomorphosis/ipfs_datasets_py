@@ -14,6 +14,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    PathValidationError,
+    validate_input_path,
+    validate_output_path,
+)
 
 from .exceptions import ConfigurationError
 
@@ -23,13 +28,13 @@ def _safe_resolve(path_str: str, *, must_exist: bool = False) -> Path:
 
     Args:
         path_str: Raw path string from CLI args.
-        must_exist: If True, raise ``PathResolutionError`` when the path does not exist.
+        must_exist: If True, treat as input path and require existence.
 
     Returns:
         Resolved absolute :class:`~pathlib.Path`.
 
     Raises:
-        PathResolutionError: If the resolved path escapes a safe root or doesn't exist.
+        PathResolutionError: If the resolved path is unsafe or doesn't exist.
     """
     from .exceptions import PathResolutionError
 
@@ -37,27 +42,16 @@ def _safe_resolve(path_str: str, *, must_exist: bool = False) -> Path:
         raise TypeError("path_str must be a string")
     if not path_str.strip():
         raise ValueError("path_str must be a non-empty string")
-    
-    resolved = Path(path_str).resolve()
-    _FORBIDDEN_PREFIXES = (Path('/proc'), Path('/sys'), Path('/dev'), Path('/etc'))
-    for forbidden in _FORBIDDEN_PREFIXES:
-        try:
-            resolved.relative_to(forbidden)
-            raise PathResolutionError(
-                f"Path '{path_str}' resolves into restricted area: {forbidden}",
-                details={"path": path_str, "resolved": str(resolved), "forbidden": str(forbidden)}
-            )
-        except ValueError as exc:
-            # relative_to raises ValueError when path is not relative to base
-            if 'restricted area' not in str(exc):
-                continue
-            raise
-    if must_exist and not resolved.exists():
+
+    try:
+        if must_exist:
+            return validate_input_path(path_str, must_exist=True)
+        return validate_output_path(path_str, allow_overwrite=True)
+    except PathValidationError as exc:
         raise PathResolutionError(
-            f"Path not found: {resolved}",
-            details={"path": path_str, "resolved": str(resolved)}
-        )
-    return resolved
+            str(exc),
+            details={"path": path_str},
+        ) from exc
 
 try:
     from ipfs_datasets_py.optimizers.graphrag import (

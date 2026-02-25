@@ -16,6 +16,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
 
 from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    PathValidationError,
+    validate_input_path,
+    validate_output_path,
+)
 
 from .base import (
     ChangeControlMethod,
@@ -64,9 +69,14 @@ class OptimizerArgparseCLI:
             Configuration dictionary
         """
         if self.config_path.exists():
-            with open(self.config_path, 'r') as f:
-                loaded = json.load(f)
-                return cast(Dict[str, Any], loaded)
+            try:
+                config_path = validate_input_path(self.config_path, must_exist=True)
+            except PathValidationError:
+                config_path = None
+            if config_path is not None:
+                with open(config_path, 'r') as f:
+                    loaded = json.load(f)
+                    return cast(Dict[str, Any], loaded)
         
         # Default configuration
         return {
@@ -80,7 +90,11 @@ class OptimizerArgparseCLI:
     
     def _save_config(self) -> None:
         """Save configuration to file."""
-        with open(self.config_path, 'w') as f:
+        try:
+            config_path = validate_output_path(self.config_path, allow_overwrite=True)
+        except PathValidationError:
+            return
+        with open(config_path, 'w') as f:
             json.dump(self.config, f, indent=2)
     
     def cmd_optimize(self, args: argparse.Namespace) -> int:
@@ -422,7 +436,11 @@ class OptimizerArgparseCLI:
         print(f"   Target: {args.target}")
         
         # Read code
-        target_path = Path(args.target)
+        try:
+            target_path = validate_input_path(args.target, must_exist=True)
+        except (PathValidationError, ValueError, TypeError) as exc:
+            print(f"❌ Security validation failed for path: {self._safe_error_text(exc)}")
+            return 1
         if not self._sanitizer.validate_file_path(str(target_path)):
             print(f"❌ Security validation failed for path: {args.target}")
             return 1
@@ -713,10 +731,11 @@ class OptimizerCLI:
         config_path = Path(self.config_file)
         if config_path.exists():
             try:
-                with open(config_path, "r") as f:
+                safe_path = validate_input_path(config_path, must_exist=True)
+                with open(safe_path, "r") as f:
                     self.config = json.load(f)
                     return
-            except (OSError, IOError, ValueError):
+            except (OSError, IOError, ValueError, PathValidationError):
                 pass
 
         # Defaults
@@ -729,7 +748,11 @@ class OptimizerCLI:
     def save_config(self) -> None:
         config_path = Path(self.config_file)
         config_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(config_path, "w") as f:
+        try:
+            safe_path = validate_output_path(config_path, allow_overwrite=True)
+        except PathValidationError:
+            return
+        with open(safe_path, "w") as f:
             json.dump(self.config, f, indent=2)
 
     # ---------------------------- Commands ----------------------------
