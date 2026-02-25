@@ -77,6 +77,71 @@ def test_pipeline_run_emits_json_log(caplog, capsys):
     assert result is not None
 
 
+def test_pipeline_run_emits_start_json_log(caplog, capsys):
+    """Pipeline run should emit structured JSON start payload."""
+    pipeline = OntologyPipeline(domain="general", use_llm=False, max_rounds=1)
+
+    with caplog.at_level(logging.INFO):
+        pipeline.run("Alice works at Acme.", data_source="test", refine=False)
+
+    captured = (caplog.text or "") + "\n" + capsys.readouterr().err
+    payload = _extract_json_payload(captured, "PIPELINE_RUN_START:")
+    _assert_canonical_log_fields(payload)
+
+    assert payload["event"] == "ontology_pipeline_run_start"
+    assert payload["level"] == "INFO"
+    assert payload["component"] == "ontology_pipeline"
+    assert payload["optimizer_type"] == "graphrag"
+    assert payload["optimizer_pipeline"] == "graphrag"
+    assert payload["schema"] == "ipfs_datasets_py.optimizer_log"
+    assert payload["schema_version"] == DEFAULT_SCHEMA_VERSION
+    assert payload["domain"] == "general"
+    assert payload["data_source"] == "test"
+    assert payload["data_type"] == "text"
+    assert payload["refine"] is False
+    assert payload["status"] == "started"
+
+
+def test_pipeline_run_failure_emits_json_log(caplog, capsys, monkeypatch):
+    """Pipeline run failure should emit structured JSON failure payload."""
+    pipeline = OntologyPipeline(domain="general", use_llm=False, max_rounds=1)
+
+    def _boom(*args, **kwargs):
+        raise RuntimeError("forced extraction failure")
+
+    monkeypatch.setattr(pipeline._generator, "extract_entities", _boom)
+
+    with caplog.at_level(logging.INFO):
+        try:
+            pipeline.run("Alice works at Acme.", data_source="test", refine=False)
+        except RuntimeError:
+            pass
+        else:  # pragma: no cover - defensive: expected RuntimeError path
+            assert False, "Expected RuntimeError"
+
+    captured = (caplog.text or "") + "\n" + capsys.readouterr().err
+    payloads = _extract_json_payloads(captured, "PIPELINE_RUN:")
+    payload = next((p for p in payloads if p.get("status") == "failure"), None)
+    assert payload is not None
+    _assert_canonical_log_fields(payload)
+
+    assert payload["event"] == "ontology_pipeline_run"
+    assert payload["level"] == "ERROR"
+    assert payload["component"] == "ontology_pipeline"
+    assert payload["optimizer_type"] == "graphrag"
+    assert payload["optimizer_pipeline"] == "graphrag"
+    assert payload["schema"] == "ipfs_datasets_py.optimizer_log"
+    assert payload["schema_version"] == DEFAULT_SCHEMA_VERSION
+    assert payload["domain"] == "general"
+    assert payload["data_source"] == "test"
+    assert payload["data_type"] == "text"
+    assert payload["refine"] is False
+    assert payload["status"] == "failure"
+    assert payload["error_type"] == "RuntimeError"
+    assert "forced extraction failure" in payload["error"]
+    assert payload["duration_ms"] >= 0.0
+
+
 def test_pipeline_batch_emits_json_log(caplog, capsys):
     """Pipeline batch run should emit structured JSON log payload."""
     pipeline = OntologyPipeline(domain="general", use_llm=False, max_rounds=1)

@@ -11,7 +11,7 @@ MCP tool classes (EnhancedHealthCheckTool etc.) live in enhanced_monitoring_tool
 import logging
 import time
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, TypedDict
 from dataclasses import dataclass, asdict
 from enum import Enum
 
@@ -85,6 +85,188 @@ class Alert:
     source: str
     resolved: bool = False
     resolution_time: Optional[datetime] = None
+
+
+class SystemHealthDict(TypedDict, total=False):
+    """System health check result (uptime, process count)."""
+    
+    status: str
+    uptime_hours: float
+    boot_time: str
+    process_count: int
+    note: str
+    error: str
+
+
+class MemoryHealthDict(TypedDict, total=False):
+    """Memory health check result (usage %, available GB, total GB)."""
+    
+    status: str
+    usage_percent: float
+    available_gb: float
+    total_gb: float
+    note: str
+    error: str
+
+
+class CPUHealthDict(TypedDict, total=False):
+    """CPU health check result (usage %, count, load average)."""
+    
+    status: str
+    usage_percent: float
+    count: int
+    load_average: Optional[tuple]
+    note: str
+    error: str
+
+
+class DiskHealthDict(TypedDict, total=False):
+    """Disk health check result (usage %, free GB, total GB)."""
+    
+    status: str
+    usage_percent: float
+    free_gb: float
+    total_gb: float
+    note: str
+    error: str
+
+
+class NetworkHealthDict(TypedDict, total=False):
+    """Network I/O counters.
+    
+    Fields:
+        status: Health status (healthy/warning/critical)
+        bytes_sent: Bytes sent over network
+        bytes_recv: Bytes received over network
+        packets_sent: Packets sent
+        packets_recv: Packets received
+        note: Optional note when unavailable
+        error: Error message if check failed
+    """
+    
+    status: str
+    bytes_sent: int
+    bytes_recv: int
+    packets_sent: int
+    packets_recv: int
+    note: str
+    error: str
+
+
+class ServicesHealthDict(TypedDict, total=False):
+    """Services health aggregation result.
+    
+    Fields:
+        status: Overall health status
+        services: Dict mapping service names to health status
+        healthy_services: Count of healthy services
+        total_services: Total service count
+        error: Error message if check failed
+    """
+    
+    status: str
+    services: Dict[str, str]
+    healthy_services: int
+    total_services: int
+    error: str
+
+
+class EmbeddingsHealthDict(TypedDict, total=False):
+    """Embeddings service health status.
+    
+    Fields:
+        status: Health status
+        active_models: Number of active embedding models
+        endpoints_available: Number of available endpoints
+        last_embedding_time: ISO timestamp of last embedding
+        cache_hit_rate: Cache hit rate percentage
+        error: Error message if check failed
+    """
+    
+    status: str
+    active_models: int
+    endpoints_available: int
+    last_embedding_time: str
+    cache_hit_rate: float
+    error: str
+
+
+class VectorStoresHealthDict(TypedDict, total=False):
+    """Vector store health status.
+    
+    Fields:
+        status: Overall health status
+        stores: Dict of vector store health info
+        total_stores: Total number of stores
+        healthy_stores: Count of healthy stores
+        error: Error message if check failed
+    """
+    
+    status: str
+    stores: Dict[str, Any]
+    total_stores: int
+    healthy_stores: int
+    error: str
+
+
+class ServiceStatusDict(TypedDict, total=False):
+    """Individual service status check result.
+    
+    Fields:
+        status: Service health status
+        response_time: Response time in milliseconds
+        message: Status message
+        last_check: ISO timestamp of last check
+        error: Error message if check failed
+    """
+    
+    status: str
+    response_time: float
+    message: str
+    last_check: str
+    error: str
+
+
+class PerformanceMetricsDict(TypedDict, total=False):
+    """Current performance metrics snapshot.
+    
+    Fields:
+        cpu_usage: CPU usage percentage
+        memory_usage: Memory usage percentage
+        disk_usage: Disk usage percentage
+        process_count: Number of processes
+        network_connections: Network connection count
+        note: Note when unavailable
+        error: Error message if retrieval failed
+    """
+    
+    cpu_usage: float
+    memory_usage: float
+    disk_usage: float
+    process_count: int
+    network_connections: int
+    note: str
+    error: str
+
+
+class HealthCheckResultDict(TypedDict, total=False):
+    """Comprehensive health check result.
+    
+    Fields:
+        overall_status: Overall system health status
+        timestamp: Check timestamp in ISO format
+        system_metrics: System metrics dict
+        issues: List of identified issues
+        checks_performed: List of checks that were performed
+        service_health: List of service health dicts
+    """
+    
+    overall_status: str
+    timestamp: str
+    system_metrics: Dict[str, Any]
+    issues: List[str]
+    checks_performed: List[str]
+    service_health: List[Dict[str, Any]]
 
 
 class MockMonitoringService:
@@ -162,7 +344,7 @@ class MockMonitoringService:
 
         return metrics
 
-    async def check_health(self, include_services: bool = True) -> Dict[str, Any]:
+    async def check_health(self, include_services: bool = True) -> HealthCheckResultDict:
         """Perform comprehensive health check."""
         system_metrics = await self.get_system_metrics()
         health_status = HealthStatus.HEALTHY
@@ -348,7 +530,7 @@ class MockMonitoringService:
 # Psutil-based health-check helpers — shared with monitoring_tools.py
 # ---------------------------------------------------------------------------
 
-async def _check_system_health() -> Dict[str, Any]:
+async def _check_system_health() -> SystemHealthDict:
     """Return overall system health (uptime, process count)."""
     if not HAVE_PSUTIL:
         return {"status": "healthy", "note": "psutil not available"}
@@ -365,7 +547,7 @@ async def _check_system_health() -> Dict[str, Any]:
         return {"status": "error", "error": str(exc)}
 
 
-async def _check_memory_health() -> Dict[str, Any]:
+async def _check_memory_health() -> MemoryHealthDict:
     """Return memory health (usage %, available GB, total GB)."""
     if not HAVE_PSUTIL:
         return {"status": "healthy", "note": "psutil not available"}
@@ -387,7 +569,7 @@ async def _check_memory_health() -> Dict[str, Any]:
         return {"status": "error", "error": str(exc)}
 
 
-async def _check_cpu_health() -> Dict[str, Any]:
+async def _check_cpu_health() -> CPUHealthDict:
     """Return CPU health (usage %, count, load average)."""
     if not HAVE_PSUTIL:
         return {"status": "healthy", "note": "psutil not available"}
@@ -409,7 +591,7 @@ async def _check_cpu_health() -> Dict[str, Any]:
         return {"status": "error", "error": str(exc)}
 
 
-async def _check_disk_health() -> Dict[str, Any]:
+async def _check_disk_health() -> DiskHealthDict:
     """Return disk health (usage %, free GB, total GB)."""
     if not HAVE_PSUTIL:
         return {"status": "healthy", "note": "psutil not available"}
@@ -432,7 +614,7 @@ async def _check_disk_health() -> Dict[str, Any]:
         return {"status": "error", "error": str(exc)}
 
 
-async def _check_network_health() -> Dict[str, Any]:
+async def _check_network_health() -> NetworkHealthDict:
     """Return basic network I/O counters."""
     if not HAVE_PSUTIL:
         return {"status": "healthy", "note": "psutil not available"}
@@ -449,7 +631,7 @@ async def _check_network_health() -> Dict[str, Any]:
         return {"status": "error", "error": str(exc)}
 
 
-async def _check_services_health() -> Dict[str, Any]:
+async def _check_services_health() -> ServicesHealthDict:
     """Return mock health status for key services."""
     try:
         services = {
@@ -476,7 +658,7 @@ async def _check_services_health() -> Dict[str, Any]:
         return {"status": "error", "error": str(exc)}
 
 
-async def _check_embeddings_health() -> Dict[str, Any]:
+async def _check_embeddings_health() -> EmbeddingsHealthDict:
     """Return mock embeddings service health."""
     try:
         return {
@@ -490,7 +672,7 @@ async def _check_embeddings_health() -> Dict[str, Any]:
         return {"status": "error", "error": str(exc)}
 
 
-async def _check_vector_stores_health() -> Dict[str, Any]:
+async def _check_vector_stores_health() -> VectorStoresHealthDict:
     """Return mock vector-store health."""
     try:
         stores = {
@@ -508,7 +690,7 @@ async def _check_vector_stores_health() -> Dict[str, Any]:
         return {"status": "error", "error": str(exc)}
 
 
-async def _check_service_status(service_name: str) -> Dict[str, Any]:
+async def _check_service_status(service_name: str) -> ServiceStatusDict:
     """Return mock status for a named service."""
     try:
         import anyio
@@ -532,7 +714,7 @@ async def _check_service_status(service_name: str) -> Dict[str, Any]:
         return {"status": "error", "error": str(exc)}
 
 
-async def _get_performance_metrics() -> Dict[str, Any]:
+async def _get_performance_metrics() -> PerformanceMetricsDict:
     """Return current performance metrics snapshot."""
     if not HAVE_PSUTIL:
         return {"note": "psutil not available", "cpu_usage": 0.0, "memory_usage": 0.0}

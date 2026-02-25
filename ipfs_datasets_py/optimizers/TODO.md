@@ -63,7 +63,8 @@ Rotate these while also advancing the plan above. When one completes, replace it
 with a new item from a different track.
 
 **Active picks (rotate on completion)**
-- [ ] (P2) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
+- [x] (P2) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
+  - Done 2026-02-25: Batch 267 - Confirmed Prometheus metrics are emitted for optimizer score and iteration/round flows via existing hooks (`record_score`, `record_round_completion`, `record_score_delta`, `record_stage_duration`) across base optimizer and GraphRAG pipeline paths. Validation: test_base_optimizer_prometheus_integration.py (2/2 passing), test_batch_301_pipeline_prometheus_hooks.py (2/2 passing).
 - [ ] (P2) [graphrag] Finish LLM-based extraction via ipfs_accelerate_py
 - [ ] (P2) [tests] Add round-trip test for `OntologyMediator.run_refinement_cycle()` state serialization
 - [ ] (P2) [arch] Unify exception hierarchy across `[graphrag]`, `[logic]`, `[agentic]` packages
@@ -207,7 +208,8 @@ These should be started immediately when available:
 - [x] (P2) [arch] Extract `QueryValidationMixin` from query optimizer for reuse in GraphRAG
   - Done 2026-02-23: implemented in optimizers/common/query_validation.py and used by graphrag/query_unified_optimizer.py
 - [ ] (P2) [arch] Unify exception hierarchy across `[graphrag]`, `[logic]`, `[agentic]` packages
-- [ ] (P2) [api] Create `ontology_types.py` with TypedDict definitions for all ontology structures
+- [x] (P2) [api] Create `ontology_types.py` with TypedDict definitions for all ontology structures
+  - Done 2026-02-23: Created ontology_types.py with 14+ TypedDict definitions (Entity, Relationship, Ontology, CriticScore, SessionRound, OntologySession, PerformanceMetrics, QualityMetrics, etc.). 19 property-based tests passing.
 - [x] (P2) [tests] Migrate all mock ontology creation to factory fixtures in `conftest.py`
   - Done 2026-02-23: Added 6 TypedDict factory fixtures (entity, relationship, critic_score, ontology_session, feedback_record) in conftest.py. Extends existing fixtures by 213 lines.
 - [ ] (P2) [graphrag] Split `ontology_critic.py` into `..._completeness.py`, `..._connectivity.py`, `..._consistency.py`
@@ -411,7 +413,8 @@ Execute these when no rotating work is in progress:
 - [x] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `LogicTheoremOptimizer.run_session()` — Done batch 24
 - [x] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `OntologyOptimizer` batch analysis — Done batch 23
 - [ ] (P3) [obs] Add OpenTelemetry span hooks (behind a feature flag) for distributed tracing
-- [ ] (P3) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
+- [x] (P3) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
+  - Done 2026-02-25: Batch 267 - Existing metrics collector integration and pipeline hooks verified via targeted Prometheus integration tests (4/4 passing across base + pipeline suites).
 
 ### R5 — Error handling & resilience
 

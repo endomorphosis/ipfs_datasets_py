@@ -40,7 +40,7 @@ Transformation Stages:
 4. Filtering → Output (serialize/export)
 """
 
-from typing import Any, Dict, List, Optional, Callable, TypeVar, Generic, Protocol
+from typing import Any, Dict, List, Optional, Callable, TypeVar, Generic, Protocol, TypedDict
 from dataclasses import dataclass, field, asdict, fields as dataclass_fields
 from enum import Enum
 import functools
@@ -66,6 +66,123 @@ class TransformationDirection(Enum):
     BIDIRECTIONAL = "bidirectional"
 
 
+# ============================================================================
+# TypedDict Definitions for Return Types
+# ============================================================================
+
+class NormalizedEntityDict(TypedDict, total=False):
+    """
+    Normalized entity dictionary after cleanup and validation.
+    
+    Fields:
+        id: Unique entity identifier
+        name: Entity name (normalized/trimmed)
+        text: Alternative text representation
+        type: Entity type (lowercase)
+        description: Entity description
+        confidence: Confidence score 0.0-1.0
+        properties: Additional properties dictionary (empty properties removed)
+    """
+    id: str
+    name: Optional[str]
+    text: Optional[str]
+    type: str
+    description: Optional[str]
+    confidence: float
+    properties: Dict[str, Any]
+
+
+class NormalizedRelationshipDict(TypedDict, total=False):
+    """
+    Normalized relationship dictionary after cleanup and validation.
+    
+    Fields:
+        id: Relationship identifier
+        source: Source entity ID
+        target: Target entity ID
+        type: Relationship type (lowercase)
+        evidence: Evidence for relationship
+        description: Relationship description
+        confidence: Confidence score 0.0-1.0
+        type_confidence: Confidence in type classification
+    """
+    id: str
+    source: str
+    target: str
+    type: str
+    evidence: Optional[str]
+    description: Optional[str]
+    confidence: float
+    type_confidence: float
+
+
+class NormalizedExtractionResultDict(TypedDict, total=False):
+    """
+    Complete normalized extraction result with all data cleaned.
+    
+    Fields:
+        entities: List of normalized entity dictionaries
+        relationships: List of normalized relationship dictionaries
+        metadata: Optional metadata dictionaryNormalizedEntityDict
+    """
+    entities: List[NormalizedEntityDict]
+    relationships: List[NormalizedRelationshipDict]
+    metadata: Dict[str, Any]
+
+
+class EnrichedEntityDict(TypedDict, total=False):
+    """
+    Entity dictionary enriched with additional metadata.
+    
+    Includes all normalized fields plus additional enrichment fields.
+    
+    Fields:
+        (all from NormalizedEntityDict plus any enrichment fields)
+    """
+    # All normalized fields are inherited
+    id: str
+    name: Optional[str]
+    text: Optional[str]
+    type: str
+    confidence: float
+
+
+class MergedEntitiesDict(TypedDict, total=False):
+    """
+    Dictionary mapping entity IDs to merged entity dictionaries.
+    
+    Structure: {entity_id: {entity_data}}
+    
+    Fields:
+        (entity_id as key maps to entity dictionaries)
+    """
+
+
+class FilteredEntitiesListDict(TypedDict, total=False):
+    """
+    List result structure for filtered entities/relationships.
+    
+    Fields:
+        filtered_count: Number of items after filtering
+        original_count: Number of items before filtering
+        threshold_applied: Confidence threshold used
+    """
+    filtered_count: int
+    original_count: int
+    threshold_applied: float
+
+
+class DataclassDictRepDict(TypedDict, total=False):
+    """
+    Dictionary representation of a dataclass instance.
+    
+    Contains all dataclass fields converted to dictionary format.
+    
+    Fields:
+        (any fields from the source dataclass)
+    """
+
+
 class Transformation(ABC, Generic[T, U]):
     """Abstract base for data transformations."""
     
@@ -89,7 +206,7 @@ class Transformation(ABC, Generic[T, U]):
         """
         results = []
         errors = []
-        
+        NormalizedExtractionResultDict
         for i, item in enumerate(data_items):
             try:
                 results.append(self.transform(item))
@@ -105,7 +222,6 @@ class Transformation(ABC, Generic[T, U]):
             logger.warning(f"Skipped {len(errors)} items during batch transformation")
         
         return results
-
 
 def normalize_string(text: Optional[str]) -> Optional[str]:
     """Normalize string by trimming and deduplicating whitespace.
@@ -179,7 +295,7 @@ def normalize_relationship(rel: Dict[str, Any]) -> Dict[str, Any]:
         rel: Relationship dictionary
         
     Returns:
-        Normalized relationship
+        NormaliNormalizedEntityDict relationship
     """
     normalized = dict(rel)
     
@@ -373,7 +489,7 @@ class TransformationPipeline:
             Self for chaining
         """
         self.transformations.append(transform)
-        return self
+        return selfataclassDictRepDict
     
     def transform(self, data: Any) -> Any:
         """Apply all transformations in sequence.

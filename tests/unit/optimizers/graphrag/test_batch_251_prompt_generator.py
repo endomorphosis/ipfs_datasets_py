@@ -166,7 +166,7 @@ class TestTemplateInitialization:
     
     def test_init_with_custom_templates(self, custom_generator, custom_templates):
         """Generator initializes with custom templates."""
-        assert generator.template_library == custom_templates
+        assert custom_generator.template_library == custom_templates
         for domain in custom_templates:
             assert domain in custom_generator.template_library
     
