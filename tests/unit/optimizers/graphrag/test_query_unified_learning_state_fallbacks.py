@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from unittest.mock import Mock
 
+import pytest
+
 
 def test_save_learning_state_serialization_error_writes_partial_state(tmp_path, monkeypatch):
     from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import (
@@ -119,43 +121,32 @@ def test_load_learning_state_success_restores_fields(tmp_path):
     assert optimizer._entity_importance_cache["e1"] == 0.75
 
 
-def test_save_learning_state_does_not_swallow_keyboard_interrupt(tmp_path, monkeypatch):
+@pytest.mark.parametrize("operation", ["save", "load"])
+def test_learning_state_io_does_not_swallow_keyboard_interrupt(
+    tmp_path, monkeypatch, operation: str
+):
     from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import (
         UnifiedGraphRAGQueryOptimizer,
     )
 
     optimizer = UnifiedGraphRAGQueryOptimizer(metrics_dir=str(tmp_path))
-    optimizer._learning_enabled = True
-    optimizer._learning_cycle = 10
-    optimizer._numpy_json_serializable = lambda value: value
-
-    monkeypatch.setattr(
-        "builtins.open",
-        lambda *args, **kwargs: (_ for _ in ()).throw(KeyboardInterrupt()),
-    )
-
-    import pytest
-
-    with pytest.raises(KeyboardInterrupt):
-        optimizer.save_learning_state(str(tmp_path / "learning_state.json"))
-
-
-def test_load_learning_state_does_not_swallow_keyboard_interrupt(tmp_path, monkeypatch):
-    from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import (
-        UnifiedGraphRAGQueryOptimizer,
-    )
-
     target = tmp_path / "learning_state.json"
-    target.write_text("{}", encoding="utf-8")
-    optimizer = UnifiedGraphRAGQueryOptimizer(metrics_dir=str(tmp_path))
-    optimizer.logger = Mock()
+
+    if operation == "save":
+        optimizer._learning_enabled = True
+        optimizer._learning_cycle = 10
+        optimizer._numpy_json_serializable = lambda value: value
+    else:
+        target.write_text("{}", encoding="utf-8")
+        optimizer.logger = Mock()
 
     monkeypatch.setattr(
         "builtins.open",
         lambda *args, **kwargs: (_ for _ in ()).throw(KeyboardInterrupt()),
     )
 
-    import pytest
-
     with pytest.raises(KeyboardInterrupt):
-        optimizer.load_learning_state(str(target))
+        if operation == "save":
+            optimizer.save_learning_state(str(target))
+        else:
+            optimizer.load_learning_state(str(target))

@@ -52,6 +52,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence
 
+from ipfs_datasets_py.optimizers.common.profiling_decorators import profile_time
 from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
 
 try:
@@ -1397,6 +1398,7 @@ class OntologyOptimizer:
                 break
         return result
 
+    @profile_time(slow_threshold_s=0.0)
     def score_variance(self) -> float:
         """Return the variance of average scores across all history batches.
 
@@ -1416,6 +1418,7 @@ class OntologyOptimizer:
         mean = sum(scores) / len(scores)
         return sum((s - mean) ** 2 for s in scores) / len(scores)
 
+    @profile_time(slow_threshold_s=0.0)
     def score_stddev(self) -> float:
         """Return the population standard deviation of average scores in history.
 
@@ -1469,6 +1472,7 @@ class OntologyOptimizer:
         recent = self._history[-n:]
         return sum(r.average_score for r in recent) / len(recent)
 
+    @profile_time(slow_threshold_s=0.0)
     def score_range(self) -> tuple[float, float]:
         """Return the ``(min, max)`` range of average scores in history.
 
@@ -1525,6 +1529,7 @@ class OntologyOptimizer:
         )
         return converged / (len(scores) - 1)
 
+    @profile_time(slow_threshold_s=0.0)
     def history_as_list(self) -> list[float]:
         """Return a plain list of ``average_score`` floats from history.
 

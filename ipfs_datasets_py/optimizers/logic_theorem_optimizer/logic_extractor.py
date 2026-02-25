@@ -16,10 +16,13 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 # Import unified extraction config from common module
+from ipfs_datasets_py.optimizers.common.backend_resilience import BackendCallPolicy, execute_with_resilience
+from ipfs_datasets_py.optimizers.common.circuit_breaker import CircuitBreaker
 from ipfs_datasets_py.optimizers.common.extraction_contexts import (
     LogicExtractionConfig,
     ExtractionMode,
 )
+from ipfs_datasets_py.optimizers.common.exceptions import CircuitBreakerOpenError, RetryableBackendError
 
 logger = logging.getLogger(__name__)
 
@@ -164,6 +167,22 @@ class LogicExtractor:
         self.enable_formula_translation = enable_formula_translation
         self.enable_kg_integration = enable_kg_integration
         self.enable_rag_integration = enable_rag_integration
+        self._llm_call_policy = BackendCallPolicy(
+            service_name="logic_extractor_llm",
+            timeout_seconds=20.0,
+            max_retries=2,
+            initial_backoff_seconds=0.1,
+            backoff_multiplier=2.0,
+            max_backoff_seconds=1.0,
+            circuit_failure_threshold=5,
+            circuit_recovery_timeout=60.0,
+        )
+        self._llm_call_circuit_breaker = CircuitBreaker(
+            name=self._llm_call_policy.service_name,
+            failure_threshold=self._llm_call_policy.circuit_failure_threshold,
+            recovery_timeout=self._llm_call_policy.circuit_recovery_timeout,
+            expected_exception=Exception,
+        )
         self._init_backend()
         
         # Track extraction history for improvement
@@ -546,11 +565,17 @@ class LogicExtractor:
                     metadata={'context': context.domain}
                 )
                 
-                response = self.backend.generate(request)
+                response = execute_with_resilience(
+                    lambda: self.backend.generate(request),
+                    self._llm_call_policy,
+                    circuit_breaker=self._llm_call_circuit_breaker,
+                )
                 logger.info(f"Generated response using {response.backend} backend")
                 return response.text
                 
             except (
+                CircuitBreakerOpenError,
+                RetryableBackendError,
                 ImportError,
                 AttributeError,
                 TypeError,

@@ -93,3 +93,30 @@ def test_extract_auto_mode_updates_config_instead_of_property_assignment() -> No
 
     assert result.success is True
     assert context.extraction_mode == le.ExtractionMode.TDFOL
+
+
+def test_query_llm_uses_common_backend_resilience_wrapper(monkeypatch: pytest.MonkeyPatch) -> None:
+    extractor = _build_extractor()
+    context = _build_context()
+    captured = {"service_name": None, "breaker_name": None}
+
+    class SimpleBackend:
+        def generate(self, request):
+            return type("Resp", (), {"backend": "test", "text": "Formula: P(a)\nConfidence: 0.9"})()
+
+    def _fake_execute_with_resilience(operation, policy, *, circuit_breaker, sleep_fn=None):
+        captured["service_name"] = policy.service_name
+        captured["breaker_name"] = getattr(circuit_breaker, "name", None)
+        return operation()
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor.execute_with_resilience",
+        _fake_execute_with_resilience,
+    )
+    extractor.backend = SimpleBackend()
+
+    response = extractor._query_llm("prompt", context)
+
+    assert "Formula:" in response
+    assert captured["service_name"] == "logic_extractor_llm"
+    assert captured["breaker_name"] == "logic_extractor_llm"

@@ -35,7 +35,7 @@ except Exception:  # pragma: no cover
     FLASK_AVAILABLE = False
     render_template = jsonify = request = send_from_directory = url_for = None  # type: ignore
 
-from ipfs_datasets_py.admin_dashboard import AdminDashboard, DashboardConfig
+from ipfs_datasets_py.dashboards.admin_dashboard import AdminDashboard, DashboardConfig
 
 
 # Optional feature flags (fallbacks if integrations are unavailable)

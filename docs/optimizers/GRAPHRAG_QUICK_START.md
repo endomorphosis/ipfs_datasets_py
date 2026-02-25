@@ -256,7 +256,7 @@ context = OntologyGenerationContext(
 
 ## Next Steps
 
-- **API Reference**: See [API_REFERENCE_GRAPHRAG.md](../../docs/API_REFERENCE_GRAPHRAG.md) for complete API docs
+- **API Surface**: See [optimizers/README.md](../../ipfs_datasets_py/optimizers/README.md) for current GraphRAG classes, import paths, and architecture overview
 - **Configuration**: See [EXTRACTION_CONFIG_GUIDE.md](./EXTRACTION_CONFIG_GUIDE.md) for ExtractionConfig details
 - **Architecture**: See [ONTOLOGY_PIPELINE_ARCHITECTURE_ASCII.md](./ONTOLOGY_PIPELINE_ARCHITECTURE_ASCII.md) for pipeline flow and component wiring
 - **Selection Guide**: See [SELECTION_GUIDE.md](SELECTION_GUIDE.md) to choose between GraphRAG/Logic/Agentic optimizers

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ipfs_datasets_py.optimizers.common.exceptions import RetryableBackendError
 from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
     ExtractionStrategy,
     OntologyGenerationContext,
@@ -61,3 +62,52 @@ def test_llm_based_extraction_falls_back_on_backend_parse_error() -> None:
 
     assert result.metadata.get("method") == "llm_fallback_rule_based"
     assert len(result.entities) >= 1
+
+
+def test_llm_backend_invocation_uses_common_resilience_wrapper(monkeypatch) -> None:
+    captured = {"service_name": None, "breaker_name": None}
+
+    def _fake_resilience_call(operation, policy, *, circuit_breaker, sleep_fn=None):
+        captured["service_name"] = policy.service_name
+        captured["breaker_name"] = getattr(circuit_breaker, "name", None)
+        return operation()
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.optimizers.graphrag.ontology_generator.execute_with_resilience",
+        _fake_resilience_call,
+    )
+
+    def llm_backend(_prompt: str):
+        return {"entities": [], "relationships": [], "confidence": 0.8}
+
+    generator = OntologyGenerator(use_ipfs_accelerate=False, llm_backend=llm_backend)
+    raw = generator._invoke_llm_extraction_backend("prompt")
+
+    assert isinstance(raw, dict)
+    assert captured["service_name"] == "graphrag_ontology_generator_llm"
+    assert captured["breaker_name"] == "graphrag_ontology_generator_llm"
+
+
+def test_llm_based_extraction_falls_back_on_resilience_error(monkeypatch) -> None:
+    def _raise_retryable(operation, policy, *, circuit_breaker, sleep_fn=None):
+        raise RetryableBackendError("llm unavailable", service=policy.service_name)
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.optimizers.graphrag.ontology_generator.execute_with_resilience",
+        _raise_retryable,
+    )
+
+    def llm_backend(_prompt: str):
+        return {"entities": [], "relationships": [], "confidence": 0.9}
+
+    generator = OntologyGenerator(use_ipfs_accelerate=False, llm_backend=llm_backend)
+    context = OntologyGenerationContext(
+        data_source="unit-test",
+        data_type="text",
+        domain="general",
+        extraction_strategy=ExtractionStrategy.LLM_BASED,
+    )
+
+    result = generator.extract_entities("Alice met Bob in Seattle.", context)
+
+    assert result.metadata.get("method") == "llm_fallback_rule_based"

@@ -54,9 +54,12 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 
 # Import unified extraction config from common module
+from ipfs_datasets_py.optimizers.common.backend_resilience import BackendCallPolicy, execute_with_resilience
 from ipfs_datasets_py.optimizers.common.extraction_contexts import (
     GraphRAGExtractionConfig,
 )
+from ipfs_datasets_py.optimizers.common.circuit_breaker import CircuitBreaker
+from ipfs_datasets_py.optimizers.common.exceptions import CircuitBreakerOpenError, RetryableBackendError
 from ipfs_datasets_py.optimizers.common.backend_selection import resolve_backend_settings
 
 logger = logging.getLogger(__name__)
@@ -2199,14 +2202,21 @@ class EntityExtractionResult:
             >>> len(merged.entities) >= len(result_a.entities)
             True
         """
-        seen_texts: set = {e.text.lower() for e in self.entities}
-        new_entities = list(self.entities) + [
-            e for e in other.entities if e.text.lower() not in seen_texts
-        ]
-        seen_rel_ids: set = {r.id for r in self.relationships}
-        new_rels = list(self.relationships) + [
-            r for r in other.relationships if r.id not in seen_rel_ids
-        ]
+        seen_texts: set[str] = {e.text.lower() for e in self.entities}
+        new_entities = list(self.entities)
+        for entity in other.entities:
+            normalized = entity.text.lower()
+            if normalized not in seen_texts:
+                seen_texts.add(normalized)
+                new_entities.append(entity)
+
+        seen_rel_ids: set[str] = {r.id for r in self.relationships}
+        new_rels = list(self.relationships)
+        for relationship in other.relationships:
+            if relationship.id not in seen_rel_ids:
+                seen_rel_ids.add(relationship.id)
+                new_rels.append(relationship)
+
         merged_confidence = (self.confidence + other.confidence) / 2.0
         merged_meta = {**other.metadata, **self.metadata}
         merged_errors = list(self.errors) + [e for e in other.errors if e not in self.errors]
@@ -3132,6 +3142,22 @@ class OntologyGenerator:
         self.ipfs_accelerate_config.setdefault("model", resolved_backend.model)
         self._accelerate_client = None
         self.llm_backend = llm_backend
+        self._llm_call_policy = BackendCallPolicy(
+            service_name="graphrag_ontology_generator_llm",
+            timeout_seconds=20.0,
+            max_retries=2,
+            initial_backoff_seconds=0.1,
+            backoff_multiplier=2.0,
+            max_backoff_seconds=1.0,
+            circuit_failure_threshold=5,
+            circuit_recovery_timeout=60.0,
+        )
+        self._llm_call_circuit_breaker: CircuitBreaker[Any] = CircuitBreaker(
+            name=self._llm_call_policy.service_name,
+            failure_threshold=self._llm_call_policy.circuit_failure_threshold,
+            recovery_timeout=self._llm_call_policy.circuit_recovery_timeout,
+            expected_exception=Exception,
+        )
         
         # Semantic deduplication support (feature-flagged)
         self.enable_semantic_dedup = enable_semantic_dedup or _os.environ.get("ENABLE_SEMANTIC_DEDUP", "").lower() in ("1", "true", "yes")
@@ -5186,7 +5212,14 @@ class OntologyGenerator:
                 parsed.relationships = self.infer_relationships(parsed.entities, context, data=data)
             parsed.metadata.setdefault("method", "llm_based")
             return parsed
-        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
+        except (
+            AttributeError,
+            CircuitBreakerOpenError,
+            RetryableBackendError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:
             self._log.warning("LLM extraction failed, falling back to rule-based: %s", exc)
             fallback = self._extract_rule_based(data, context)
             fallback.metadata["method"] = "llm_fallback_rule_based"
@@ -5199,13 +5232,19 @@ class OntologyGenerator:
             raise RuntimeError("No llm_backend configured for LLM extraction")
 
         if callable(backend):
-            return backend(prompt)
-        if hasattr(backend, "generate"):
-            return backend.generate(prompt)
-        if hasattr(backend, "complete"):
-            return backend.complete(prompt)
+            operation = lambda: backend(prompt)
+        elif hasattr(backend, "generate"):
+            operation = lambda: backend.generate(prompt)
+        elif hasattr(backend, "complete"):
+            operation = lambda: backend.complete(prompt)
+        else:
+            raise TypeError(f"Unsupported llm_backend type: {type(backend).__name__}")
 
-        raise TypeError(f"Unsupported llm_backend type: {type(backend).__name__}")
+        return execute_with_resilience(
+            operation,
+            self._llm_call_policy,
+            circuit_breaker=self._llm_call_circuit_breaker,
+        )
 
     def _parse_llm_extraction_response(self, response: Any) -> EntityExtractionResult:
         """Parse backend response into EntityExtractionResult."""
@@ -5319,7 +5358,9 @@ class OntologyGenerator:
                 return llm_type, llm_conf, "llm_refined"
         except (
             AttributeError,
+            CircuitBreakerOpenError,
             KeyError,
+            RetryableBackendError,
             RuntimeError,
             TypeError,
             ValueError,

@@ -4,6 +4,8 @@ from ipfs_datasets_py.optimizers.common.exceptions import ConfigurationError
 from ipfs_datasets_py.optimizers.graphrag.config_validation_schema import (
     ConfigValidationError,
     ConfigValidator,
+    ValidationRuleSet,
+    _compile_pattern,
 )
 
 
@@ -32,3 +34,25 @@ def test_validate_strict_raises_unified_config_error() -> None:
     except ConfigValidationError as err:
         assert err.field_name == "confidence"
         assert isinstance(err, ConfigurationError)
+
+
+def test_compile_pattern_is_cached_for_identical_input() -> None:
+    """Pattern compiler should return shared compiled object for same pattern."""
+    _compile_pattern.cache_clear()
+    first = _compile_pattern(r"^[a-z]+$")
+    second = _compile_pattern(r"^[a-z]+$")
+    assert first is second
+
+
+def test_validation_rule_set_uses_compiled_pattern_cache() -> None:
+    """Pattern rules should work with cached compilation and still validate."""
+    _compile_pattern.cache_clear()
+    rules = ValidationRuleSet("name", str).add_pattern(r"^[A-Z][a-z]+$")
+
+    valid, errors = rules.validate("Alice")
+    assert valid is True
+    assert errors == []
+
+    valid, errors = rules.validate("alice")
+    assert valid is False
+    assert errors

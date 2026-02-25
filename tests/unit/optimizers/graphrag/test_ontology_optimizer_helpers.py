@@ -162,3 +162,23 @@ class TestIdentifyPatterns:
         sessions = [_make_session(0.7)] * 2  # each has current_round=2
         patterns = opt._identify_patterns(sessions)
         assert patterns["avg_convergence_rounds"] == pytest.approx(2.0)
+
+
+class TestProfiledScoreHistoryHelpers:
+    def test_history_score_helpers_are_profile_wrapped(self, opt):
+        for helper_name in (
+            "history_as_list",
+            "score_variance",
+            "score_stddev",
+            "score_range",
+        ):
+            helper = getattr(opt, helper_name)
+            assert hasattr(helper, "__wrapped__")
+
+    def test_profile_wrapped_helpers_return_expected_values(self, opt):
+        opt._history.extend([_make_report(0.5), _make_report(0.75), _make_report(1.0)])
+
+        assert opt.history_as_list() == [0.5, 0.75, 1.0]
+        assert opt.score_variance() == pytest.approx(0.041666666666666664)
+        assert opt.score_stddev() == pytest.approx(0.2041241452319315)
+        assert opt.score_range() == (0.5, 1.0)

@@ -10,6 +10,7 @@ Centralized configuration validation infrastructure providing:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import re
 
@@ -23,6 +24,12 @@ else:
 # ============================================================================
 # Validation Rules
 # ============================================================================
+
+
+@lru_cache(maxsize=128)
+def _compile_pattern(pattern: str) -> re.Pattern[str]:
+    """Compile regex patterns with memoization for repeated schema builds."""
+    return re.compile(pattern)
 
 
 @dataclass
@@ -98,7 +105,7 @@ class ValidationRuleSet:
     
     def add_pattern(self, pattern: str) -> ValidationRuleSet:
         """Add regex pattern validation."""
-        regex = re.compile(pattern)
+        regex = _compile_pattern(pattern)
         rule = ValidationRule(
             name="pattern",
             condition=lambda x: x is None or bool(regex.match(str(x))),

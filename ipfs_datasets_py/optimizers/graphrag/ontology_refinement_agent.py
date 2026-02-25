@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List, Optional, Protocol, Tuple, runtime_checkable
+from typing import Any, Callable, Dict, List, Optional, Protocol, Tuple, cast, runtime_checkable
+
+from ..common.backend_resilience import BackendCallPolicy, execute_with_resilience
+from ..common.circuit_breaker import CircuitBreaker
+from ..common.exceptions import CircuitBreakerOpenError, RetryableBackendError
 
 
 @runtime_checkable
@@ -137,12 +141,29 @@ class OntologyRefinementAgent:
         logger: Optional[Any] = None,
         *,
         strict_validation: bool = False,
+        backend_call_policy: Optional[BackendCallPolicy] = None,
     ) -> None:
         import logging as _logging
 
         self._log = logger or _logging.getLogger(__name__)
         self._llm_backend = llm_backend
         self._strict_validation = strict_validation
+        self._backend_call_policy = backend_call_policy or BackendCallPolicy(
+            service_name="graphrag_refinement_llm",
+            timeout_seconds=15.0,
+            max_retries=2,
+            initial_backoff_seconds=0.1,
+            backoff_multiplier=2.0,
+            max_backoff_seconds=1.0,
+            circuit_failure_threshold=5,
+            circuit_recovery_timeout=60.0,
+        )
+        self._backend_circuit_breaker: CircuitBreaker[Any] = CircuitBreaker(
+            name=self._backend_call_policy.service_name,
+            failure_threshold=self._backend_call_policy.circuit_failure_threshold,
+            recovery_timeout=self._backend_call_policy.circuit_recovery_timeout,
+            expected_exception=Exception,
+        )
 
     def build_prompt(self, ontology: Dict[str, Any], score: Any, context: Any) -> str:
         """Create a prompt asking for structured feedback as JSON."""
@@ -197,20 +218,17 @@ class OntologyRefinementAgent:
         """Call the LLM backend to propose structured feedback."""
         prompt = self.build_prompt(ontology, score, context)
 
-        if self._llm_backend is None:
+        backend_call = self._resolve_backend_call()
+        if backend_call is None:
             return {}
 
         try:
-            if callable(self._llm_backend):
-                response = self._llm_backend(prompt)
-            elif hasattr(self._llm_backend, "generate"):
-                response = self._llm_backend.generate(prompt)
-            elif hasattr(self._llm_backend, "complete"):
-                response = self._llm_backend.complete(prompt)
-            else:
-                self._log.warning("Unsupported LLM backend interface")
-                return {}
-        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError, OSError, ImportError) as exc:
+            response = execute_with_resilience(
+                lambda: backend_call(prompt),
+                self._backend_call_policy,
+                circuit_breaker=self._backend_circuit_breaker,
+            )
+        except (CircuitBreakerOpenError, RetryableBackendError) as exc:
             self._log.warning("LLM backend invocation failed: %s", exc)
             return {}
 
@@ -219,6 +237,24 @@ class OntologyRefinementAgent:
         if errors:
             self._log.warning("Invalid feedback schema: %s", errors)
         return cleaned
+
+    def _resolve_backend_call(self) -> Optional[Callable[[str], Any]]:
+        """Resolve supported backend interfaces to a single callable."""
+        if self._llm_backend is None:
+            return None
+        if callable(self._llm_backend):
+            return cast(Callable[[str], Any], self._llm_backend)
+
+        generate_method = getattr(self._llm_backend, "generate", None)
+        if callable(generate_method):
+            return cast(Callable[[str], Any], generate_method)
+
+        complete_method = getattr(self._llm_backend, "complete", None)
+        if callable(complete_method):
+            return cast(Callable[[str], Any], complete_method)
+
+        self._log.warning("Unsupported LLM backend interface")
+        return None
 
 
 class NoOpRefinementAgent:

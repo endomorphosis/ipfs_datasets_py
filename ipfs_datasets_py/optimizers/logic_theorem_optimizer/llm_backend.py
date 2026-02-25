@@ -15,8 +15,12 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Dict, List, Optional, Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
+
+from ipfs_datasets_py.optimizers.common.backend_resilience import BackendCallPolicy, execute_with_resilience
+from ipfs_datasets_py.optimizers.common.circuit_breaker import CircuitBreaker
+from ipfs_datasets_py.optimizers.common.exceptions import CircuitBreakerOpenError, RetryableBackendError
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +109,17 @@ class LLMBackendAdapter:
         self.preferred_backend = preferred_backend or "accelerate"
         self.fallback_to_mock = fallback_to_mock
         self.enable_caching = enable_caching
+        self._backend_call_policy = BackendCallPolicy(
+            service_name="logic_theorem_optimizer_backend",
+            timeout_seconds=30.0,
+            max_retries=2,
+            initial_backoff_seconds=0.1,
+            backoff_multiplier=2.0,
+            max_backoff_seconds=1.0,
+            circuit_failure_threshold=5,
+            circuit_recovery_timeout=60.0,
+        )
+        self._backend_circuit_breakers: Dict[str, CircuitBreaker[LLMResponse]] = {}
         
         # Initialize backends
         self.backends = {}
@@ -181,9 +196,28 @@ class LLMBackendAdapter:
         
         # Generate response
         try:
-            backend = self.backends[self.active_backend]
-            response = backend.generate(request)
-            response.backend = self.active_backend
+            backend_name = self.active_backend
+            backend = self.backends[backend_name]
+            backend_policy = replace(
+                self._backend_call_policy,
+                service_name=f"{self._backend_call_policy.service_name}_{backend_name}",
+            )
+            circuit_breaker = self._backend_circuit_breakers.get(backend_name)
+            if circuit_breaker is None:
+                circuit_breaker = CircuitBreaker(
+                    name=backend_policy.service_name,
+                    failure_threshold=backend_policy.circuit_failure_threshold,
+                    recovery_timeout=backend_policy.circuit_recovery_timeout,
+                    expected_exception=Exception,
+                )
+                self._backend_circuit_breakers[backend_name] = circuit_breaker
+
+            response = execute_with_resilience(
+                lambda: backend.generate(request),
+                backend_policy,
+                circuit_breaker=circuit_breaker,
+            )
+            response.backend = backend_name
             
             # Update stats
             self.stats['tokens_used'] += response.tokens_used
@@ -194,7 +228,15 @@ class LLMBackendAdapter:
             
             return response
             
-        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            CircuitBreakerOpenError,
+            KeyError,
+            RetryableBackendError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             self.stats['errors'] += 1
             logger.error(f"Generation error: {e}")
             

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from ipfs_datasets_py.optimizers.common.backend_resilience import BackendCallPolicy
+from ipfs_datasets_py.optimizers.common.exceptions import RetryableBackendError
 from ipfs_datasets_py.optimizers.graphrag.ontology_refinement_agent import (
     OntologyRefinementAgent,
     NoOpRefinementAgent,
@@ -110,5 +112,49 @@ def test_agent_strict_validation_drops_invalid_feedback():
         return {"relationships_to_add": [{"source_id": "e1", "target_id": "e2"}]}
 
     agent = OntologyRefinementAgent(llm_backend=_backend, strict_validation=True)
+    feedback = agent.propose_feedback(ontology={}, score=None, context=None)
+    assert feedback == {}
+
+
+def test_propose_feedback_uses_common_backend_resilience_wrapper(monkeypatch):
+    captured = {"service_name": None, "breaker_name": None}
+
+    def _fake_resilience_call(operation, policy, *, circuit_breaker, sleep_fn=None):
+        captured["service_name"] = policy.service_name
+        captured["breaker_name"] = getattr(circuit_breaker, "name", None)
+        return operation()
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.optimizers.graphrag.ontology_refinement_agent.execute_with_resilience",
+        _fake_resilience_call,
+    )
+
+    def _backend(prompt: str):
+        return {"entities_to_remove": ["e2"]}
+
+    agent = OntologyRefinementAgent(
+        llm_backend=_backend,
+        backend_call_policy=BackendCallPolicy(service_name="test_refinement_policy"),
+    )
+
+    feedback = agent.propose_feedback(ontology={}, score=None, context=None)
+    assert feedback == {"entities_to_remove": ["e2"]}
+    assert captured["service_name"] == "test_refinement_policy"
+    assert captured["breaker_name"] == "test_refinement_policy"
+
+
+def test_propose_feedback_resilience_error_returns_empty(monkeypatch):
+    def _raise_resilience_error(operation, policy, *, circuit_breaker, sleep_fn=None):
+        raise RetryableBackendError("backend unavailable", service=policy.service_name)
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.optimizers.graphrag.ontology_refinement_agent.execute_with_resilience",
+        _raise_resilience_error,
+    )
+
+    def _backend(prompt: str):
+        return {"entities_to_remove": ["e2"]}
+
+    agent = OntologyRefinementAgent(llm_backend=_backend)
     feedback = agent.propose_feedback(ontology={}, score=None, context=None)
     assert feedback == {}
