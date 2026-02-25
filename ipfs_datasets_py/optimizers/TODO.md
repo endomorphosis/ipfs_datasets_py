@@ -65,11 +65,15 @@ Rotate these while also advancing the plan above. When one completes, replace it
 with a new item from a different track.
 
 **Active picks (rotate on completion)**
-- [ ] (P2) [api] Create `ontology_types.py` with TypedDict definitions for all ontology structures
+- [x] (P2) [api] Create `ontology_types.py` with TypedDict definitions for all ontology structures
+  - Done 2026-02-25: `ontology_types.py` exists with 512 lines of TypedDict definitions (Entity, Relationship, Ontology, CriticScore, etc.)
 - [ ] (P2) [perf] Benchmark sentence-window limiting impact on realistic documents
-- [ ] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
-- [ ] (P2) [docs] Add `CONTRIBUTING.md` with PR guidelines and batch-commit conventions
-- [ ] (P2) [tests] Add round-trip test: Entity -> to_dict -> from_dict (Entity.from_dict classmethod)
+- [x] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
+  - Done 2026-02-25: All bare `except Exception:` blocks in optimizers replaced with typed exceptions per `EXCEPTION_HANDLING_IMPROVEMENTS.md`
+- [x] (P2) [docs] Add `CONTRIBUTING.md` with PR guidelines and batch-commit conventions
+  - Done 2026-02-25: `CONTRIBUTING.md` exists with PR guidelines, batch conventions, and quality checks (72 lines)
+- [x] (P2) [tests] Add round-trip test: Entity -> to_dict -> from_dict (Entity.from_dict classmethod)
+  - Done 2026-02-25: Validated in `test_batch_293_stale_todo_cleanup.py` (4/4 tests) and `test_batch_302_entity_relationship_property_loops.py`
 
 ---
 
