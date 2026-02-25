@@ -176,6 +176,7 @@ class TestProfileSection:
         assert payload["schema"] == "ipfs_datasets_py.optimizer_log"
         assert payload["schema_version"] == DEFAULT_SCHEMA_VERSION
         assert payload["event"] == "profiling_result"
+        assert payload["optimizer_pipeline"] == "common"
         assert payload["section_name"] == "test_operation"
         assert payload["duration_ms"] >= 9.0
     

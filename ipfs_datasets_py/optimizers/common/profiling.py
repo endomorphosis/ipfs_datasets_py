@@ -124,6 +124,7 @@ def _emit_profiling_log(result: ProfileResult, *, config: ProfilingConfig) -> No
 
     payload: Dict[str, Any] = {
         "event": "profiling_result",
+        "optimizer_pipeline": "common",
         **result.to_dict(),
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()),
     }

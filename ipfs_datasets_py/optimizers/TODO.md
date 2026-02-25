@@ -342,6 +342,7 @@ Rotation rules:
 - [ ] (P2) [obs] Standardize structured JSON log schema across all optimizer pipelines.
   - Progress 2026-02-25: added explicit pipeline identity field (`optimizer_pipeline`) to structured payloads emitted by `graphrag/pipeline_json_logger.py` (`graphrag`) and logic theorem optimizer JSON logs (`logic_theorem_optimizer/unified_optimizer.py`, `logic_theorem_optimizer/logic_optimizer.py` set to `logic_theorem`); updated schema-contract tests in `tests/unit/optimizers/graphrag/test_pipeline_json_logging.py` and `tests/unit/optimizers/logic_theorem_optimizer/test_structured_logging.py`.
   - Progress 2026-02-25: extended `optimizer_pipeline` tagging to GraphRAG legacy structured emitters in `graphrag/ontology_pipeline.py` (`PIPELINE_RUN`, `PIPELINE_BATCH`) and `graphrag/ontology_generator.py` (`EXTRACT_ENTITIES`); validated with `tests/unit/optimizers/graphrag/test_ontology_pipeline_logging.py` and `tests/unit/optimizers/graphrag/test_ontology_generator_extract_entities_logging.py` (`3 passed`).
+  - Progress 2026-02-25: added `optimizer_pipeline: "common"` to profiling structured logs in `common/profiling.py::_emit_profiling_log` and updated schema assertion coverage in `tests/unit/optimizers/common/test_profiling.py` (`5 selected tests passed`).
 - [x] (P2) [obs] Ensure metrics include run duration, score deltas, failure counts, and stage timings.
   - Done 2026-02-24: added `optimizer_score_delta` metric, wired duration/score-delta/validation-failure recording in `BaseOptimizer`, and stage timing histogram in pipeline metrics.
 - [ ] (P3) [obs] Add tracing spans for cross-optimizer workflows with low overhead defaults.
@@ -847,7 +848,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P1) [tests] **Property-based tests with Hypothesis** — Add Hypothesis strategies for `Entity`, `CriticScore`, `FeedbackRecord` and use them in at least 5 property tests per class.
 - [ ] (P1) [tests] **Snapshot tests for `OntologyGenerator.generate()`** — Compare full pipeline output against JSON snapshots to catch regressions.
 - [ ] (P2) [tests] **Coverage enforcement** — Add `pytest-cov` with `--cov-fail-under=85` to CI. Currently no minimum enforced.
-- [ ] (P2) [tests] **Integration test: full round-trip** — `text → generate → validate → optimize → score` without mocking anything.
+- [x] (P2) [tests] **Integration test: full round-trip** — `text → generate → validate → optimize → score` without mocking anything.
+  - Done 2026-02-25: verified existing unmocked end-to-end coverage in `tests/unit/optimizers/graphrag/test_ontology_pipeline_e2e.py` and `tests/unit/optimizers/graphrag/test_integration_generator_critic_mediator_loop.py` (`12 passed`).
 - [ ] (P2) [tests] **Parametrize existing batch tests** — Convert repeated test classes into `@pytest.mark.parametrize` to reduce LOC by ~30%.
 - [x] (P2) [tests] **Fix `test_end_to_end_pipeline.py`** — The externally-committed E2E tests fail because `OntologyGenerator.__init__` rejects `ExtractionConfig` objects. Fix the `ipfs_accelerate_config.get()` call to handle dataclass configs.
   - Done 2026-02-24: added explicit dataclass-config regression case in `tests/unit/optimizers/graphrag/test_end_to_end_pipeline.py` and re-ran full E2E suite (`25 passed` including new batch-extract tests).
@@ -863,7 +865,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
   - Progress 2026-02-25: moved `WikipediaGraphRAGQueryRewriter` domain-pattern regex compilation to module-level precompiled constants in `graphrag/wikipedia_optimizer.py` and added regression coverage in `tests/unit/optimizers/graphrag/test_batch_299_wikipedia_rewriter_pattern_cache.py` (init path avoids runtime `re.compile`, pattern detection unchanged).
 - [ ] (P3) [perf] **Async extraction support** — Add `async def generate_async(text)` wrappers so callers using asyncio can parallelize multiple extractions.
 - [ ] (P1) [docs] **Module-level docstrings** — `ontology_generator.py`, `ontology_critic.py`, `ontology_optimizer.py` all lack a module-level docstring explaining purpose, usage, and key classes.
-- [ ] (P2) [docs] **`README.md` for optimizers/** — Add a short `README.md` covering: what the optimizer does, quick-start code, and class diagram (ASCII or Mermaid).
+- [x] (P2) [docs] **`README.md` for optimizers/** — Add a short `README.md` covering: what the optimizer does, quick-start code, and class diagram (ASCII or Mermaid).
+  - Done 2026-02-25: verified `optimizers/README.md` includes overview, quick-start CLI/Python examples, and Mermaid architecture/class diagrams; added contributing-guide link for maintenance workflow.
 - [ ] (P2) [docs] **Deprecation notices** — Any method marked `# TODO: remove` needs a `@deprecated` decorator with migration path documented in docstring.
 - [ ] (P3) [docs] **API changelog** — Keep a running `CHANGELOG.md` in `optimizers/` noting added, changed, deprecated, removed items per batch.
 - [ ] (P2) [agentic] **Wire `LogicTheoremOptimizer` to use the same `FeedbackRecord` class** — Currently uses a different feedback struct; unify for cross-optimizer analytics.
