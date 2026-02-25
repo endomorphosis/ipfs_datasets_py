@@ -22,7 +22,7 @@ from contextlib import contextmanager
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Protocol
 
 _logger = logging.getLogger(__name__)
 
@@ -129,6 +129,14 @@ class PipelineResult:
         return cls.from_dict(json.loads(payload))
 
 
+class MetricSink(Protocol):
+    """Pluggable sink for per-run pipeline metrics."""
+
+    def emit_run_metrics(self, metrics: Dict[str, Any]) -> None:
+        """Consume one run-level metrics payload."""
+        ...
+
+
 class OntologyPipeline:
     """Facade that runs the full ontology workflow in a single call.
 
@@ -145,6 +153,7 @@ class OntologyPipeline:
         use_llm: bool = False,
         max_rounds: int = 3,
         logger: Optional[logging.Logger] = None,
+        metric_sink: Optional[MetricSink] = None,
     ) -> None:
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
             OntologyGenerator,
@@ -167,6 +176,7 @@ class OntologyPipeline:
         self._adapter = OntologyLearningAdapter(domain=domain)
         self._run_history: List["PipelineResult"] = []
         self._last_refinement_state: Optional[Any] = None
+        self._metric_sink = metric_sink
         self._otel_enabled = os.environ.get("OTEL_ENABLED", "").strip().lower() in {
             "1",
             "true",
@@ -404,6 +414,22 @@ class OntologyPipeline:
                         duration,
                         labels=metric_labels,
                     )
+            if self._metric_sink is not None:
+                try:
+                    self._metric_sink.emit_run_metrics(
+                        {
+                            "domain": self.domain,
+                            "data_source": data_source,
+                            "data_type": data_type,
+                            "score": float(getattr(score, "overall", 0.0)),
+                            "entity_count": len(ontology.get("entities", [])),
+                            "relationship_count": len(ontology.get("relationships", [])),
+                            "actions_count": len(actions_applied),
+                            "stage_durations_s": dict(stage_timings),
+                        }
+                    )
+                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
+                    self._log.debug("metric_sink.emit_run_metrics failed: %s", exc)
             try:
                 import json as _json
                 from datetime import datetime as _datetime
