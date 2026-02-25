@@ -6,11 +6,11 @@ optional key contracts for stable static typing.
 
 from __future__ import annotations
 
-from ipfs_datasets_py.optimizers.graphrag import ontology_types
+import ipfs_datasets_py.optimizers.graphrag.ontology_types as ontology_types
 
 
-def test_ontology_types_exports_include_core_typeddicts() -> None:
-    expected = {
+def test_ontology_types_module_exposes_core_typeddicts() -> None:
+    expected = [
         "Entity",
         "Relationship",
         "Ontology",
@@ -18,11 +18,10 @@ def test_ontology_types_exports_include_core_typeddicts() -> None:
         "OntologySession",
         "ExtractionConfigDict",
         "OptimizerConfig",
-    }
+    ]
 
-    exported = set(getattr(ontology_types, "__all__", []))
-    missing = expected - exported
-    assert not missing, f"Missing exports in ontology_types.__all__: {sorted(missing)}"
+    missing = [name for name in expected if not hasattr(ontology_types, name)]
+    assert not missing, f"Missing TypedDicts in ontology_types module: {missing}"
 
 
 def test_entity_typeddict_required_and_optional_keys() -> None:

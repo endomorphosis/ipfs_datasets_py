@@ -65,15 +65,11 @@ Rotate these while also advancing the plan above. When one completes, replace it
 with a new item from a different track.
 
 **Active picks (rotate on completion)**
-- [x] (P2) [api] Create `ontology_types.py` with TypedDict definitions for all ontology structures
-  - Done 2026-02-25: `ontology_types.py` exists with 512 lines of TypedDict definitions (Entity, Relationship, Ontology, CriticScore, etc.)
 - [ ] (P2) [perf] Benchmark sentence-window limiting impact on realistic documents
-- [x] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
-  - Done 2026-02-25: All bare `except Exception:` blocks in optimizers replaced with typed exceptions per `EXCEPTION_HANDLING_IMPROVEMENTS.md`
-- [x] (P2) [docs] Add `CONTRIBUTING.md` with PR guidelines and batch-commit conventions
-  - Done 2026-02-25: `CONTRIBUTING.md` exists with PR guidelines, batch conventions, and quality checks (72 lines)
-- [x] (P2) [tests] Add round-trip test: Entity -> to_dict -> from_dict (Entity.from_dict classmethod)
-  - Done 2026-02-25: Validated in `test_batch_293_stale_todo_cleanup.py` (4/4 tests) and `test_batch_302_entity_relationship_property_loops.py`
+- [ ] (P2) [api] Audit all `**kwargs`-accepting methods in `agentic/` and replace with typed optional parameters
+- [ ] (P2) [tests] Add snapshot tests for `OntologyGenerator.generate()`
+- [ ] (P2) [arch] Add circuit-breaker for LLM backend calls (retry with exponential backoff)
+- [ ] (P2) [docs] Write architecture diagram for the `generate → critique → optimize → validate` loop
 
 ---
 
@@ -220,6 +216,7 @@ These should be started immediately when available:
     - All import from `common.exceptions` and define package-specific exception classes with proper `__all__` exports
 - [x] (P2) [api] Create `ontology_types.py` with TypedDict definitions for all ontology structures
   - Done 2026-02-23: Created ontology_types.py with 14+ TypedDict definitions (Entity, Relationship, Ontology, CriticScore, SessionRound, OntologySession, PerformanceMetrics, QualityMetrics, etc.). 19 property-based tests passing.
+  - Done 2026-02-25: Added TypedDict contract tests in `tests/unit/optimizers/graphrag/test_batch_303_ontology_types_typeddict_contract.py` (5/5 passing).
 - [x] (P2) [tests] Migrate all mock ontology creation to factory fixtures in `conftest.py`
   - Done 2026-02-23: Added 6 TypedDict factory fixtures (entity, relationship, critic_score, ontology_session, feedback_record) in conftest.py. Extends existing fixtures by 213 lines.
 - [x] (P2) [graphrag] Split `ontology_critic.py` into `..._completeness.py`, `..._connectivity.py`, `..._consistency.py`
@@ -235,7 +232,7 @@ These should be started immediately when available:
   - All imports and APIs remain backward compatible
 - [x] (P2) [perf] Implement lazy loading for domain-specific rule sets in `ExtractionConfig`
   - Done 2026-02-23: Verified existing lazy-loading via lru_cache(maxsize=16) in _get_domain_rule_patterns(). Created comprehensive test suite (31 tests, all passing) validating: pattern caching behavior, domain pattern completeness/accuracy, cache hit/miss tracking, performance characteristics, immutability guarantees, regex validation, robustness to edge cases. Tests cover legal/medical/technical/financial domains. File: tests/unit/optimizers/graphrag/test_domain_rule_patterns_lazy_loading.py
-- [ ] (P3) [arch] Create `ontology_serialization.py` with unified dict ↔ dataclass converters
+- [x] (P3) [arch] Create `ontology_serialization.py` with unified dict ↔ dataclass converters -- Done 2026-02-25: validated via test_ontology_serialization.py + test_schema_regression_json.py (27/27)
 
 #### Complex Features (4+ hours)
 - [ ] (P2) [graphrag] Implement LLM-based relationship inference with fallback to heuristics
@@ -726,8 +723,8 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] `LogicValidator.validate_ontology()` — add `ValidationResult.invalid_entity_ids` list — Done 2026-02-23: validate_ontology wrapper added; tests updated
 - [x] (P3) [graphrag] `OntologyOptimizer.compare_history()` — Done batch 50: returns list of dicts with batch_from/to, score_from/to, delta, direction; 7 tests
 - [x] (P2) [tests] Add round-trip test for `OntologyMediator.run_refinement_cycle()` state serialization -- Done 2026-02-25: validated in batch-282 via test_batch_265_mediator_roundtrip.py (15/15)
-- [ ] (P3) [tests] Snapshot tests: freeze known-good critic scores for a reference ontology
-- [ ] (P2) [api] Add `OntologyGenerator.batch_extract(docs, context)` for multi-doc parallel extraction
+- [x] (P3) [tests] Snapshot tests: freeze known-good critic scores for a reference ontology -- Done 2026-02-25: validated via test_ontology_critic_snapshots.py (31/31)
+- [x] (P2) [api] Add `OntologyGenerator.batch_extract(docs, context)` for multi-doc parallel extraction -- Done 2026-02-25: validated via test_batch_extract.py + test_batch_292_batch_extract_api.py (19 passed, 2 skipped)
 - [x] (P3) [api] Add `OntologyOptimizer.prune_history(keep_last_n)` — Done batch 50: discards oldest entries, raises ValueError on n<1; 7 tests
 - [x] (P3) [arch] Add `OntologyCritic.evaluate_ontology()` timeout guard -- Done batch-63: ThreadPoolExecutor with TimeoutError; 6 tests
 - [x] (P2) [docs] Add per-method doctest examples to all public `OntologyGenerator` methods -- Done 2026-02-25: validated via test_ontology_generator_doctest_conformance.py (2/2)
@@ -968,7 +965,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [graphrag] Add `OntologyPipeline.history` property -- Done batch-79: -- return list of PipelineResult from past runs
 - [x] (P3) [graphrag] Add `ExtractionConfig.apply_defaults_for_domain(domain)` -- Done batch-79: -- mutate thresholds in-place for domain
 - [x] (P2) [graphrag] Add `OntologyCritic.critical_weaknesses(score)` -- Done batch-78: -- return only weaknesses below 0.5 threshold
-- [ ] (P3) [graphrag] Add `OntologyMediator.peek_undo()` -- return top of undo stack without popping
+- [x] (P3) [graphrag] Add `OntologyMediator.peek_undo()` -- return top of undo stack without popping -- Done 2026-02-25: validated via test_batch78_features.py (35/35) + test_batch_293_stale_todo_cleanup.py (1/1 selected)
 - [x] (P2) [graphrag] Add `OntologyLearningAdapter.serialize_to_file(path)` and `from_file(path)` -- Done batch-78: -- file-based persistence
 - [x] (P3) [graphrag] Add `EntityExtractionResult.random_sample(n)` -- Done batch-78: -- return result with n random entities
 
