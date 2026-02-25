@@ -17,9 +17,23 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Generator, Mapping, Optional
 
+from .log_redaction import redact_dict, redact_sensitive
 from .structured_logging import with_schema
 
 logger = logging.getLogger(__name__)
+
+
+def _redact_string_values(value: Any) -> Any:
+    """Recursively redact sensitive substrings in string values."""
+    if isinstance(value, str):
+        return redact_sensitive(value)
+    if isinstance(value, dict):
+        return {k: _redact_string_values(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_redact_string_values(v) for v in value]
+    if isinstance(value, tuple):
+        return tuple(_redact_string_values(v) for v in value)
+    return value
 
 
 @dataclass(frozen=True)
@@ -130,7 +144,8 @@ def _emit_profiling_log(result: ProfileResult, *, config: ProfilingConfig) -> No
     }
 
     try:
-        enriched = with_schema(payload)
+        redacted = _redact_string_values(redact_dict(payload))
+        enriched = with_schema(redacted)
         logger.info("PROFILING: %s", json.dumps(enriched, default=str))
     except (TypeError, ValueError, RuntimeError) as exc:  # pragma: no cover
         logger.debug("Failed to emit profiling log: %s", exc)

@@ -216,6 +216,45 @@ EntityCountByType = Dict[str, int]
 RelationshipTypeCounts = Dict[str, int]
 
 
+# TIER 4: Advanced Analysis and Summary Contracts
+ConfidenceQuartiles = TypedDict(
+    "ConfidenceQuartiles",
+    {"q1": float, "q2": float, "q3": float},
+    total=False
+)
+# Example: {"q1": 0.45, "q2": 0.72, "q3": 0.88}
+# Maps quartile names (25th, 50th, 75th percentile) to confidence scores
+
+RelationshipDensityByType = Dict[str, float]
+# Example: {"works_for": 0.35, "knows": 0.25, "located_in": 0.40}
+# Maps relationship types to their fraction of total relationships
+
+EntityIDPrefixGroups = Dict[str, list]
+# Example: {"a": ["alice", "alex"], "b": ["bob", "bert"], "c": ["charlie"]}
+# Groups entity IDs by their first N characters (prefix_len parameter)
+
+RelationshipSourceDegreeDistribution = Dict[str, int]
+# Example: {"e1": 3, "e2": 1, "e3": 2}
+# Maps each source entity ID to how many relationships it originates from (out-degree)
+
+ResultSummaryDict = TypedDict(
+    "ResultSummaryDict",
+    {
+        "entity_count": int,
+        "relationship_count": int,
+        "unique_types": int,
+        "mean_confidence": float,
+        "min_confidence": float,
+        "max_confidence": float,
+        "has_errors": bool,
+        "error_count": int,
+    },
+    total=False
+)
+# Example: {"entity_count": 42, "relationship_count": 68, "unique_types": 5, ...}
+# Structured summary of extraction result metrics
+
+
 __all__ = [
     "QueryOptimizationPlanStep",
     "QueryOptimizationPlan",
@@ -239,4 +278,10 @@ __all__ = [
     "EntityTypeDistribution",
     "EntityCountByType",
     "RelationshipTypeCounts",
+    # TIER 4 advanced analysis and summary contracts
+    "ConfidenceQuartiles",
+    "RelationshipDensityByType",
+    "EntityIDPrefixGroups",
+    "RelationshipSourceDegreeDistribution",
+    "ResultSummaryDict",
 ]

@@ -343,6 +343,7 @@ Rotation rules:
   - Progress 2026-02-25: added explicit pipeline identity field (`optimizer_pipeline`) to structured payloads emitted by `graphrag/pipeline_json_logger.py` (`graphrag`) and logic theorem optimizer JSON logs (`logic_theorem_optimizer/unified_optimizer.py`, `logic_theorem_optimizer/logic_optimizer.py` set to `logic_theorem`); updated schema-contract tests in `tests/unit/optimizers/graphrag/test_pipeline_json_logging.py` and `tests/unit/optimizers/logic_theorem_optimizer/test_structured_logging.py`.
   - Progress 2026-02-25: extended `optimizer_pipeline` tagging to GraphRAG legacy structured emitters in `graphrag/ontology_pipeline.py` (`PIPELINE_RUN`, `PIPELINE_BATCH`) and `graphrag/ontology_generator.py` (`EXTRACT_ENTITIES`); validated with `tests/unit/optimizers/graphrag/test_ontology_pipeline_logging.py` and `tests/unit/optimizers/graphrag/test_ontology_generator_extract_entities_logging.py` (`3 passed`).
   - Progress 2026-02-25: added `optimizer_pipeline: "common"` to profiling structured logs in `common/profiling.py::_emit_profiling_log` and updated schema assertion coverage in `tests/unit/optimizers/common/test_profiling.py` (`5 selected tests passed`).
+  - Progress 2026-02-25: standardized `common/structured_logging.py::log_event` to emit `optimizer_pipeline` (default `"common"`, overrideable) and added coverage in `tests/unit/optimizers/common/test_structured_logging.py` (`19 passed`).
 - [x] (P2) [obs] Ensure metrics include run duration, score deltas, failure counts, and stage timings.
   - Done 2026-02-24: added `optimizer_score_delta` metric, wired duration/score-delta/validation-failure recording in `BaseOptimizer`, and stage timing histogram in pipeline metrics.
 - [ ] (P3) [obs] Add tracing spans for cross-optimizer workflows with low overhead defaults.
@@ -360,6 +361,9 @@ Rotation rules:
 - [ ] (P1) [security] Ensure all CLI file inputs are resolved/validated against traversal and unsafe paths.
 - [ ] (P2) [security] Add strict timeout + retry + circuit-breaker policy for all external backend calls.
 - [ ] (P2) [security] Add redaction checks in logs for credentials/tokens across optimizer modules.
+  - Progress 2026-02-25: hardened `agentic/llm_integration.py` error propagation by redacting secret-like substrings (`api_key`, `token`, `sk-*`) before attaching provider failure details; added regression coverage in `tests/unit/optimizers/agentic/test_llm_integration.py`.
+  - Progress 2026-02-25: added structured-log redaction checks in `common/structured_logging.py::log_event` by applying `redact_dict` on sensitive key/value maps and recursive string redaction for bearer/token patterns before JSON emission; expanded regression coverage in `tests/unit/optimizers/common/test_structured_logging.py` (`21 passed`).
+  - Progress 2026-02-25: added profiling-log redaction checks in `common/profiling.py::_emit_profiling_log` (key-based and bearer-pattern redaction before schema emission) and regression coverage in `tests/unit/optimizers/common/test_profiling.py::test_profile_section_redacts_sensitive_metadata` (`2 selected tests passed`).
 - [ ] (P3) [security] Add hardened execution mode for prover subprocess calls.
 
 ## Candidate Pool for Future Random Picks
@@ -905,7 +909,8 @@ Post-import cleanup: removed 6 canonical duplicates already present earlier in t
 - [ ] (P2) Property tests for `CriticScore` statistical invariants (1.0 hours)
 - [ ] (P2) Structured JSON logging audit (1.0 hours)
 - [ ] (P2) Prometheus metrics hooks (1.0–1.5 hours)
-- [ ] (P2) Audit llm_integration.py for API key logging (30 min)
+- [x] (P2) Audit llm_integration.py for API key logging (30 min)
+  - Done 2026-02-25: audited `agentic/llm_integration.py` and added secret-redaction guard for failure details + regression test (`tests/unit/optimizers/agentic/test_llm_integration.py`) to prevent API key/token leakage in raised error metadata.
 - [ ] (P2) Profile `OntologyGenerator.generate()` on 10kB input (1.0 hours)
 - [ ] (P2) Optimize identified hotspot (1.0–1.5 hours)
 - [ ] (P2) Lazy-load domain-specific rule sets (45 min)

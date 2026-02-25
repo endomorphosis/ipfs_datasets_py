@@ -162,6 +162,7 @@ class TestLogEvent:
         # Parse JSON message
         data = json.loads(message)
         assert data["event"] == "extraction.started"
+        assert data["optimizer_pipeline"] == "common"
         assert data["schema"] == DEFAULT_SCHEMA
         assert data["schema_version"] == DEFAULT_SCHEMA_VERSION
         assert "timestamp" in data
@@ -179,8 +180,61 @@ class TestLogEvent:
         data = json.loads(message)
         
         assert data["event"] == "extraction.completed"
+        assert data["optimizer_pipeline"] == "common"
         assert data["entities"] == 42
         assert data["duration"] == 1.5
+
+    def test_redacts_sensitive_fields_in_data(self):
+        """Sensitive key-based fields should be redacted before logging."""
+        logger = MagicMock(spec=logging.Logger)
+
+        log_event(
+            logger,
+            EventType.EXTRACTION_COMPLETED,
+            {
+                "api_key": "sk-1234567890abcdef",
+                "nested": {"password": "hunter2"},
+                "max_tokens": 512,
+            },
+        )
+
+        message = logger.log.call_args[0][1]
+        data = json.loads(message)
+        assert data["api_key"] == "***REDACTED***"
+        assert data["nested"]["password"] == "***REDACTED***"
+        assert data["max_tokens"] == 512
+
+    def test_redacts_bearer_token_in_string_values(self):
+        """Pattern-based redaction should scrub bearer tokens in string payload values."""
+        logger = MagicMock(spec=logging.Logger)
+        token = "abcDEF1234567890.token"
+
+        log_event(
+            logger,
+            EventType.EXTRACTION_COMPLETED,
+            {"auth_header": f"Bearer {token}"},
+        )
+
+        message = logger.log.call_args[0][1]
+        data = json.loads(message)
+        assert data["auth_header"] == "Bearer ***REDACTED***"
+
+    def test_custom_optimizer_pipeline(self):
+        """GIVEN: custom optimizer_pipeline
+        WHEN: log_event called
+        THEN: payload carries the explicit pipeline id
+        """
+        logger = MagicMock(spec=logging.Logger)
+
+        log_event(
+            logger,
+            EventType.EXTRACTION_STARTED,
+            optimizer_pipeline="graphrag",
+        )
+
+        message = logger.log.call_args[0][1]
+        data = json.loads(message)
+        assert data["optimizer_pipeline"] == "graphrag"
     
     def test_logs_at_custom_level(self):
         """GIVEN: Custom log level

@@ -10,6 +10,7 @@ from ipfs_datasets_py.optimizers.agentic.llm_integration import (
     ProviderCapability,
     PROVIDER_CAPABILITIES,
 )
+from ipfs_datasets_py.optimizers.agentic.exceptions import ExtractionError
 from ipfs_datasets_py.optimizers.agentic.base import OptimizationMethod
 
 
@@ -98,6 +99,30 @@ class TestOptimizerLLMRouter:
         assert response == "ok"
         mock_retry.assert_called_once()
         assert mock_retry.call_args.kwargs == {}
+
+    def test_generate_redacts_secret_like_error_text_in_failure_details(self):
+        """Failure details should not leak API keys/tokens."""
+        router = OptimizerLLMRouter(enable_caching=False)
+        router._retry_handler.retry = lambda func, max_retries=2: func()
+
+        with patch(
+            "ipfs_datasets_py.optimizers.agentic.llm_integration.router_generate",
+            side_effect=RuntimeError(
+                "provider failed api_key=secret123 token:abcxyz sk-testsecret987654"
+            ),
+        ):
+            with pytest.raises(ExtractionError) as exc_info:
+                router.generate(
+                    prompt="test prompt",
+                    method=OptimizationMethod.TEST_DRIVEN,
+                )
+
+        details = exc_info.value.details or {}
+        last_error = str(details.get("last_error", ""))
+        assert "secret123" not in last_error
+        assert "abcxyz" not in last_error
+        assert "sk-testsecret987654" not in last_error
+        assert "[REDACTED]" in last_error
 
 
 if __name__ == "__main__":

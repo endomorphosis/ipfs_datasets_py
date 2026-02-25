@@ -20,6 +20,8 @@ import time
 from enum import Enum
 from typing import Any, Dict, Mapping, Optional
 
+from .log_redaction import redact_dict, redact_sensitive
+
 DEFAULT_SCHEMA = "ipfs_datasets_py.optimizer_log"
 DEFAULT_SCHEMA_VERSION = 2  # Bumped from 1 to 2 for new event/timestamp fields
 
@@ -115,6 +117,22 @@ def enrich_with_timestamp(
     return result
 
 
+def _redact_string_values(value: Any) -> Any:
+    """Recursively redact sensitive substrings in string values.
+
+    This preserves container structure and JSON serializability.
+    """
+    if isinstance(value, str):
+        return redact_sensitive(value)
+    if isinstance(value, dict):
+        return {k: _redact_string_values(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_redact_string_values(v) for v in value]
+    if isinstance(value, tuple):
+        return tuple(_redact_string_values(v) for v in value)
+    return value
+
+
 def log_event(
     logger: logging.Logger,
     event: EventType,
@@ -123,6 +141,7 @@ def log_event(
     level: int = logging.INFO,
     include_schema: bool = True,
     include_timestamp: bool = True,
+    optimizer_pipeline: str = "common",
 ) -> None:
     """Log a structured event with standard schema envelope.
 
@@ -133,16 +152,21 @@ def log_event(
         level: Log level (default: INFO)
         include_schema: Whether to add schema metadata (default: True)
         include_timestamp: Whether to add timestamp (default: True)
+        optimizer_pipeline: Pipeline identifier for schema standardization.
 
     Example:
         >>> log_event(logger, EventType.EXTRACTION_STARTED, {"entities": 5})
     """
     import json
     
-    payload = {"event": event.value}
+    payload = {
+        "event": event.value,
+        "optimizer_pipeline": optimizer_pipeline,
+    }
     
     if data:
-        payload.update(data)
+        payload.update(redact_dict(data))
+        payload = _redact_string_values(payload)
     
     if include_timestamp:
         payload = enrich_with_timestamp(payload)

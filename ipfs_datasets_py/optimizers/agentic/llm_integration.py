@@ -17,6 +17,19 @@ from ..common.performance import LLMCache, get_global_cache
 from .exceptions import ExtractionError
 from ..common.backend_selection import detect_provider_from_environment
 
+_SECRET_KV_PATTERN = re.compile(
+    r"(?i)\b(api[_-]?key|access[_-]?token|token|secret|password)\b\s*[:=]\s*([^\s,;]+)"
+)
+_OPENAI_STYLE_KEY_PATTERN = re.compile(r"\bsk-[A-Za-z0-9_-]{8,}\b")
+
+
+def _redact_sensitive_text(message: str) -> str:
+    """Redact common secret-like substrings from error text."""
+
+    redacted = _SECRET_KV_PATTERN.sub(r"\1=[REDACTED]", message)
+    redacted = _OPENAI_STYLE_KEY_PATTERN.sub("[REDACTED]", redacted)
+    return redacted
+
 
 class LLMProvider(Enum):
     """Supported LLM providers."""
@@ -356,9 +369,10 @@ class OptimizerLLMRouter:
                 continue
         
         # All providers failed
+        safe_last_error = _redact_sensitive_text(str(last_error))
         raise ExtractionError(
             "All LLM providers failed",
-            details={"last_error": str(last_error)},
+            details={"last_error": safe_last_error},
         )
     
     def get_prompt_template(

@@ -179,6 +179,31 @@ class TestProfileSection:
         assert payload["optimizer_pipeline"] == "common"
         assert payload["section_name"] == "test_operation"
         assert payload["duration_ms"] >= 9.0
+
+    def test_profile_section_redacts_sensitive_metadata(self, caplog):
+        """Sensitive metadata values should be redacted in profiling logs."""
+        caplog.set_level(logging.INFO)
+        config = ProfilingConfig(enabled=True, emit_logs=True)
+
+        with profile_section(
+            "test_operation",
+            metadata={
+                "api_key": "sk-1234567890abcdef",
+                "auth_header": "Bearer abcDEF1234567890.token",
+                "max_tokens": 512,
+            },
+            config=config,
+        ):
+            pass
+
+        log_records = [r for r in caplog.records if "PROFILING:" in r.message]
+        assert len(log_records) == 1
+
+        payload = json.loads(log_records[0].message.split("PROFILING: ")[1])
+        metadata = payload["metadata"]
+        assert metadata["api_key"] == "***REDACTED***"
+        assert metadata["auth_header"] == "Bearer ***REDACTED***"
+        assert metadata["max_tokens"] == 512
     
     def test_profile_section_respects_min_duration(self, caplog):
         """profile_section only logs if duration exceeds threshold."""
