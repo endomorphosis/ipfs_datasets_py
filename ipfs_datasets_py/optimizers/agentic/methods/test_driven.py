@@ -12,6 +12,10 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_input_path,
+    validate_output_path,
+)
 from ..base import (
     AgenticOptimizer,
     ChangeControlMethod,
@@ -282,7 +286,11 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 continue
             
             try:
-                with open(file_path, 'r') as f:
+                # Validate input path
+                base_dir = file_path.parent if file_path.is_absolute() else None
+                safe_path = validate_input_path(str(file_path), must_exist=True, base_dir=base_dir)
+                
+                with open(safe_path, 'r') as f:
                     tree = ast.parse(f.read())
                 
                 # Extract functions
@@ -367,7 +375,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 continue
             
             # Read current code
-            with open(target_file, 'r') as f:
+            base_dir = target_file.parent if target_file.is_absolute() else None
+            safe_path = validate_input_path(str(target_file), must_exist=True, base_dir=base_dir)
+            with open(safe_path, 'r') as f:
                 current_code = f.read()
             
             # Generate optimization prompt
@@ -413,7 +423,10 @@ class TestDrivenOptimizer(AgenticOptimizer):
         # Copy and apply optimizations
         for file_path_str, optimized_content in optimizations.items():
             target_path = temp_dir / Path(file_path_str).name
-            target_path.write_text(optimized_content)
+            # Validate output path
+            base_dir = target_path.parent if target_path.is_absolute() else None
+            safe_path = validate_output_path(str(target_path), allow_overwrite=True, base_dir=base_dir)
+            Path(safe_path).write_text(optimized_content)
         
         # Run tests in temporary location
         test_results = self._run_tests_in_worktree(temp_dir)

@@ -13,6 +13,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_input_path,
+)
 from ..base import (
     AgenticOptimizer,
     ChangeControlMethod,
@@ -318,7 +321,11 @@ class AdversarialOptimizer(AgenticOptimizer):
                 continue
                 
             try:
-                with open(file_path, 'r') as f:
+                # Validate input path
+                base_dir = file_path.parent if file_path.is_absolute() else None
+                safe_path = validate_input_path(str(file_path), must_exist=True, base_dir=base_dir)
+                
+                with open(safe_path, 'r') as f:
                     content = f.read()
                     tree = ast.parse(content)
                     
