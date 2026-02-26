@@ -214,6 +214,37 @@ class PaginationParams(BaseModel):
         return self.limit
 
 
+class RefinementPreviewRequest(BaseModel):
+    """Request model for refinement strategy preview."""
+
+    ontology: Dict[str, Any] = Field(default_factory=dict)
+    recommendations: List[str] = Field(default_factory=list)
+    score: Optional[Dict[str, float]] = None
+    context: Optional[Dict[str, Any]] = None
+
+
+class RefinementPreviewResponse(BaseModel):
+    """Response model for refinement strategy preview."""
+
+    recommendations: List[str]
+    strategy: Dict[str, Any]
+    timestamp: str
+
+
+class GraphQLQueryRequest(BaseModel):
+    """Request model for ontology GraphQL query execution."""
+
+    ontology: Dict[str, Any] = Field(default_factory=dict)
+    query: str = Field(..., min_length=1)
+
+
+class GraphQLQueryResponse(BaseModel):
+    """Response model for ontology GraphQL query execution."""
+
+    result: Dict[str, Any]
+    timestamp: str
+
+
 class EntityStore:
     """In-memory entity storage for API."""
     
@@ -581,6 +612,59 @@ class APIServer:
                 "total_relationships": self.relationship_store.count(),
                 "timestamp": datetime.utcnow().isoformat()
             }
+
+        @self.app.post("/refinement/preview", response_model=RefinementPreviewResponse, tags=["Refinement"])
+        def preview_refinement(request: RefinementPreviewRequest):
+            """Preview recommended refinement strategy for interactive UI workflows."""
+            from types import SimpleNamespace
+            from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
+            try:
+                score_payload = request.score or {}
+                score_obj = SimpleNamespace(
+                    completeness=float(score_payload.get("completeness", 0.5)),
+                    consistency=float(score_payload.get("consistency", 0.5)),
+                    clarity=float(score_payload.get("clarity", 0.5)),
+                    overall=float(score_payload.get("overall", 0.5)),
+                    recommendations=list(request.recommendations or []),
+                )
+                context_obj = SimpleNamespace(**(request.context or {}))
+
+                mediator = OntologyMediator(generator=object(), critic=object())
+                preview = mediator.preview_recommendations(
+                    ontology=request.ontology,
+                    score=score_obj,
+                    context=context_obj,
+                )
+                strategy = mediator.suggest_refinement_strategy(
+                    ontology=request.ontology,
+                    score=score_obj,
+                    context=context_obj,
+                )
+                return {
+                    "recommendations": preview,
+                    "strategy": strategy,
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
+                logger.error(f"Error previewing refinement strategy: {e}")
+                raise HTTPException(status_code=400, detail=str(e))
+
+        @self.app.post("/integrations/graphql", response_model=GraphQLQueryResponse, tags=["Integrations"])
+        def execute_graphql_query(request: GraphQLQueryRequest):
+            """Execute a GraphQL query against an ontology payload."""
+            from ipfs_datasets_py.optimizers.graphrag.ontology_graphql import OntologyGraphQLExecutor
+
+            try:
+                executor = OntologyGraphQLExecutor(request.ontology)
+                result = executor.execute(request.query)
+                return {
+                    "result": result,
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
+                logger.error(f"Error executing GraphQL integration endpoint: {e}")
+                raise HTTPException(status_code=400, detail=str(e))
     
     def get_app(self) -> FastAPI:
         """Get FastAPI application instance."""

@@ -14,7 +14,7 @@ import anyio
 import logging
 import hashlib
 import json
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, TypedDict
 from types import ModuleType
 from dataclasses import dataclass
 from datetime import datetime
@@ -205,6 +205,30 @@ if HAVE_NLTK:
                 nltk.data.find(corpus)
             except Exception as e:
                 logger.warning(f"NLTK data not found for {corpus}: {e}")
+
+
+# ===== TypedDict Definitions for Return Types =====
+
+class QueryAnalyticsDict(TypedDict, total=False):
+    """Query analytics data structure.
+    
+    Fields:
+        total_queries: Total number of queries processed
+        avg_response_time: Average query response time in milliseconds
+        unique_entities: Count of unique entities found
+        total_relationships: Total relationships traversed
+        query_types: Dict mapping query type to count
+        performance_metrics: Performance data
+        timestamp: Timestamp of analytics collection
+    """
+    
+    total_queries: int
+    avg_response_time: float
+    unique_entities: int
+    total_relationships: int
+    query_types: Dict[str, int]
+    performance_metrics: Dict[str, Any]
+    timestamp: str
 
 
 @dataclass
@@ -603,7 +627,7 @@ class QueryEngine:
             Process a natural language query and return structured results.
             Supports automatic query type detection, filtering, result limiting,
             and comprehensive response metadata.
-        get_query_analytics() -> Dict[str, Any]:
+        get_query_analytics() -> QueryAnalyticsDict:
             Retrieve analytics about query patterns, performance metrics, and cache utilization.
             Provides insights into query distribution, processing times, and system usage.
 
@@ -2917,7 +2941,7 @@ class QueryEngine:
         
         return suggestions[:topk]  # Limit to 5 suggestions
     
-    async def get_query_analytics(self) -> Dict[str, Any]:
+    async def get_query_analytics(self) -> QueryAnalyticsDict:
         """
         Retrieve comprehensive analytics about query patterns, performance, and system usage.
 

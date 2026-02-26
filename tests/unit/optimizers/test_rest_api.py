@@ -569,6 +569,105 @@ class TestStatisticsEndpoint:
         assert data["total_relationships"] == 2
 
 
+class TestRefinementPreviewEndpoint:
+    """Tests for interactive refinement preview endpoint."""
+
+    def test_refinement_preview_success(self, client):
+        payload = {
+            "ontology": {
+                "entities": [
+                    {"id": "e1", "type": "concept", "text": "alpha"},
+                    {"id": "e2", "type": "concept", "text": "beta"},
+                ],
+                "relationships": [],
+            },
+            "recommendations": [
+                "Improve clarity and add property definitions",
+                "Normalize naming conventions",
+            ],
+            "score": {
+                "completeness": 0.52,
+                "consistency": 0.55,
+                "clarity": 0.41,
+                "overall": 0.50,
+            },
+            "context": {
+                "domain": "legal",
+            },
+        }
+
+        response = client.post("/refinement/preview", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert "recommendations" in data
+        assert "strategy" in data
+        assert "timestamp" in data
+        assert data["strategy"]["action"] in {
+            "add_missing_properties",
+            "normalize_names",
+            "add_missing_relationships",
+            "merge_duplicates",
+            "prune_orphans",
+            "split_entity",
+            "converged",
+            "no_action_needed",
+        }
+
+    def test_refinement_preview_defaults(self, client):
+        payload = {
+            "ontology": {
+                "entities": [],
+                "relationships": [],
+            }
+        }
+
+        response = client.post("/refinement/preview", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["recommendations"] == []
+        assert data["strategy"]["action"] in {"converged", "no_action_needed"}
+
+
+class TestGraphQLIntegrationEndpoint:
+    """Tests for GraphQL integration endpoint."""
+
+    def test_graphql_endpoint_success(self, client):
+        payload = {
+            "ontology": {
+                "entities": [
+                    {"id": "e1", "type": "Person", "text": "Alice", "confidence": 0.9},
+                    {"id": "e2", "type": "Person", "text": "Bob", "confidence": 0.8},
+                ],
+                "relationships": [],
+            },
+            "query": "{ Person { id text confidence } }",
+        }
+
+        response = client.post("/integrations/graphql", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert "result" in data
+        assert "timestamp" in data
+        assert "data" in data["result"]
+        assert "Person" in data["result"]["data"]
+        assert len(data["result"]["data"]["Person"]) == 2
+
+    def test_graphql_endpoint_parse_error_surface(self, client):
+        payload = {
+            "ontology": {
+                "entities": [],
+                "relationships": [],
+            },
+            "query": "{ Person { id text ",
+        }
+
+        response = client.post("/integrations/graphql", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert "result" in data
+        assert "errors" in data["result"]
+
+
 class TestOpenAPIDocumentation:
     """Tests for OpenAPI documentation."""
     

@@ -46,6 +46,21 @@ def _make_document(n_tokens: int = 1000) -> str:
     return " ".join(next(cycle) for _ in range(n_tokens))
 
 
+def _make_traversal_query(max_depth: int = 4):
+    return {
+        "query_text": "Find organizations related to Acme via ownership and location paths",
+        "entity_ids": ["acme", "subsidiary_a", "region_west"],
+        "traversal": {
+            "max_depth": max_depth,
+            "edge_types": ["owns", "located_in", "member_of", "created_by"],
+        },
+        "vector_params": {
+            "top_k": 25,
+            "min_similarity": 0.45,
+        },
+    }
+
+
 # ---------------------------------------------------------------------------
 # OntologyGenerator benchmarks
 # ---------------------------------------------------------------------------
@@ -201,3 +216,32 @@ class TestOntologyMergeBenchmarks:
         }
 
         benchmark(self.generator._merge_ontologies, base, extension)
+
+
+# ---------------------------------------------------------------------------
+# Query traversal benchmarks
+# ---------------------------------------------------------------------------
+
+class TestQueryTraversalBenchmarks:
+    """Benchmark query optimization paths for graph traversal queries."""
+
+    @pytest.fixture(autouse=True)
+    def _setup(self):
+        from ipfs_datasets_py.optimizers.graphrag.query_unified_optimizer import (
+            UnifiedGraphRAGQueryOptimizer,
+        )
+        self.optimizer = UnifiedGraphRAGQueryOptimizer()
+        self.entity_scores = {
+            "acme": 0.92,
+            "subsidiary_a": 0.81,
+            "region_west": 0.74,
+            "supplier_node": 0.63,
+        }
+
+    def test_optimize_wikipedia_traversal_depth4(self, benchmark):
+        query = _make_traversal_query(max_depth=4)
+        benchmark(self.optimizer.optimize_wikipedia_traversal, query, self.entity_scores)
+
+    def test_optimize_ipld_traversal_depth5(self, benchmark):
+        query = _make_traversal_query(max_depth=5)
+        benchmark(self.optimizer.optimize_ipld_traversal, query, self.entity_scores)

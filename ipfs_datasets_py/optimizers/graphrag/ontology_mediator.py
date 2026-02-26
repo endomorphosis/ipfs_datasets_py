@@ -49,6 +49,7 @@ import logging
 import os
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 from typing import Any, Dict, Iterator, List, Optional
 import uuid
 
@@ -310,6 +311,40 @@ class OntologyMediator:
         "split_entity",
         "rename_entity",
     )
+
+    DEFAULT_REFINEMENT_PLAYBOOKS: Dict[str, Dict[str, Any]] = {
+        "clarity_first": {
+            "description": "Improve ontology readability and naming clarity first.",
+            "actions": [
+                "add_missing_properties",
+                "normalize_names",
+            ],
+        },
+        "consistency_first": {
+            "description": "Deduplicate entities and normalize naming conventions.",
+            "actions": [
+                "merge_duplicates",
+                "normalize_names",
+            ],
+        },
+        "coverage_first": {
+            "description": "Expand connectivity and remove low-value disconnected nodes.",
+            "actions": [
+                "add_missing_relationships",
+                "prune_orphans",
+            ],
+        },
+    }
+
+    _ACTION_TO_RECOMMENDATION: Dict[str, str] = {
+        "add_missing_properties": "Improve clarity and add property definitions",
+        "normalize_names": "Normalize naming conventions",
+        "prune_orphans": "Prune orphan entities with no coverage",
+        "merge_duplicates": "Remove duplicate entities for consistency",
+        "add_missing_relationships": "Add missing relationships for unlinked entities",
+        "split_entity": "Split broad entities into granular parts",
+        "rename_entity": "Normalize naming conventions",
+    }
     
     def __init__(
         self,
@@ -350,6 +385,13 @@ class OntologyMediator:
         self._recommendation_counts: Dict[str, int] = {}
         # Ordered log of (action_name, round_index) entries for action_log()
         self._action_entries: list = []
+        self._playbooks: Dict[str, Dict[str, Any]] = {
+            name: {
+                "description": str(payload.get("description", "")).strip(),
+                "actions": list(payload.get("actions", [])),
+            }
+            for name, payload in self.DEFAULT_REFINEMENT_PLAYBOOKS.items()
+        }
         self._prometheus_metrics: Optional[Any] = None
         self._otel_enabled = os.environ.get("OTEL_ENABLED", "").strip().lower() in {
             "1",
@@ -374,6 +416,98 @@ class OntologyMediator:
             f"Initialized mediator: max_rounds={max_rounds}, "
             f"threshold={convergence_threshold}"
         )
+
+    def register_refinement_playbook(
+        self,
+        name: str,
+        actions: List[str],
+        description: str = "",
+    ) -> None:
+        """Register or overwrite a named refinement playbook.
+
+        Args:
+            name: Playbook identifier.
+            actions: Ordered list of known refinement action types.
+            description: Human-readable summary.
+
+        Raises:
+            TypeError: If ``name``/``actions`` types are invalid.
+            ValueError: If ``name`` is empty, actions are empty, or action names are unknown.
+        """
+        if not isinstance(name, str):
+            raise TypeError("name must be a string")
+        playbook_name = name.strip()
+        if not playbook_name:
+            raise ValueError("name must not be empty")
+        if not isinstance(actions, list):
+            raise TypeError("actions must be a list of action names")
+        if not actions:
+            raise ValueError("actions must contain at least one action")
+
+        normalized_actions: List[str] = []
+        for action_name in actions:
+            if not isinstance(action_name, str):
+                raise TypeError("each action must be a string")
+            normalized_action = action_name.strip()
+            if normalized_action not in self.KNOWN_REFINEMENT_ACTION_TYPES:
+                raise ValueError(f"unknown refinement action: {normalized_action}")
+            normalized_actions.append(normalized_action)
+
+        self._playbooks[playbook_name] = {
+            "description": description.strip(),
+            "actions": normalized_actions,
+        }
+
+    def list_refinement_playbooks(self) -> Dict[str, Dict[str, Any]]:
+        """Return registered refinement playbooks.
+
+        Returns:
+            Dict mapping playbook name to ``{"description", "actions"}``.
+        """
+        return {
+            name: {
+                "description": str(payload.get("description", "")),
+                "actions": list(payload.get("actions", [])),
+            }
+            for name, payload in self._playbooks.items()
+        }
+
+    def run_refinement_playbook(
+        self,
+        name: str,
+        ontology: Dict[str, Any],
+        context: Any,
+    ) -> Ontology:
+        """Execute a predefined refinement playbook against an ontology.
+
+        Each playbook step maps to a recommendation phrase and is applied through
+        :meth:`refine_ontology` so all existing mediator behavior and metrics are reused.
+
+        Args:
+            name: Playbook name.
+            ontology: Input ontology.
+            context: Ontology generation context.
+
+        Returns:
+            Refined ontology after all playbook steps.
+
+        Raises:
+            KeyError: If ``name`` is unknown.
+        """
+        if name not in self._playbooks:
+            raise KeyError(f"unknown playbook: {name}")
+
+        refined_ontology: Ontology = ontology
+        actions = self._playbooks[name].get("actions", [])
+        for action_name in actions:
+            recommendation = self._ACTION_TO_RECOMMENDATION.get(
+                action_name,
+                "Improve ontology quality",
+            )
+            playbook_feedback = SimpleNamespace(recommendations=[recommendation])
+            refined_ontology = self.refine_ontology(refined_ontology, playbook_feedback, context)
+
+        return refined_ontology
 
     def _record_prometheus_round(
         self,
@@ -1318,6 +1452,62 @@ class OntologyMediator:
             "ranked_strategies": ranked,
             "summary": {"count": len(ranked)},
         }
+
+    def render_refinement_strategy_tree(self, format: str = "mermaid") -> str:
+        """Render the strategy decision flow used by ``suggest_refinement_strategy``.
+
+        This provides a lightweight visualization of the high-level branching
+        rules used when choosing a refinement action.
+
+        Args:
+            format: Output format. Supported values: ``"mermaid"`` or ``"ascii"``.
+
+        Returns:
+            Rendered decision tree as a string.
+
+        Raises:
+            ValueError: If *format* is not supported.
+        """
+        fmt = (format or "").strip().lower()
+
+        if fmt == "mermaid":
+            return "\n".join([
+                "flowchart TD",
+                "    A[Start: score + recommendations] --> B{overall >= 0.85?}",
+                "    B -- yes --> C[converged]",
+                "    B -- no --> D{clarity < 0.50 & property recs >= 2?}",
+                "    D -- yes --> E[add_missing_properties]",
+                "    D -- no --> F{consistency < 0.55 & duplicate recs >= 2?}",
+                "    F -- yes --> G[merge_duplicates]",
+                "    F -- no --> H{completeness < 0.55 & relationship recs >= 2?}",
+                "    H -- yes --> I[add_missing_relationships]",
+                "    H -- no --> J{orphan recs >= 1?}",
+                "    J -- yes --> K[prune_orphans]",
+                "    J -- no --> L{granular recs >= 1 & entities < 50?}",
+                "    L -- yes --> M[split_entity]",
+                "    L -- no --> N{naming recs >= 2?}",
+                "    N -- yes --> O[normalize_names]",
+                "    N -- no --> P{clarity < 0.65?}",
+                "    P -- yes --> Q[add_missing_properties]",
+                "    P -- no --> R[converged/no-op]",
+            ])
+
+        if fmt == "ascii":
+            return "\n".join([
+                "Start: score + recommendations",
+                "├─ overall >= 0.85                     -> converged",
+                "└─ otherwise",
+                "   ├─ clarity < 0.50 & property recs>=2 -> add_missing_properties",
+                "   ├─ consistency < 0.55 & dup recs>=2  -> merge_duplicates",
+                "   ├─ completeness < 0.55 & rel recs>=2 -> add_missing_relationships",
+                "   ├─ orphan recs>=1                    -> prune_orphans",
+                "   ├─ granular recs>=1 & entities<50    -> split_entity",
+                "   ├─ naming recs>=2                    -> normalize_names",
+                "   ├─ clarity < 0.65                    -> add_missing_properties",
+                "   └─ else                              -> converged/no-op",
+            ])
+
+        raise ValueError(f"Unsupported format: {format!r}. Use 'mermaid' or 'ascii'.")
 
     def undo_all(self) -> Optional[Dict[str, Any]]:
         """Undo all refinements and return the oldest ontology snapshot.
