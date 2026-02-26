@@ -49,7 +49,7 @@ import re
 import time
 import weakref
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, Union
+from typing import Any, Dict, List, Optional, Union
 from enum import Enum
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -76,9 +76,6 @@ _DIRECTIONAL_RELATIONSHIP_PATTERNS: tuple[tuple[re.Pattern[str], str, float], ..
     (re.compile(r"\b(leads?|directs?|heads?)\b"), "leads", 0.68),
 )
 from ipfs_datasets_py.optimizers.graphrag.ontology_types import Ontology
-
-if TYPE_CHECKING:
-    from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
 
 _BIDIRECTIONAL_RELATIONSHIP_PATTERNS: tuple[tuple[re.Pattern[str], str, float], ...] = (
     (re.compile(r"\b(partners?\s+with|collabor\w+\s+with)\b"), "partners_with", 0.70),
@@ -3904,7 +3901,6 @@ class OntologyGenerator:
         sentence_window: int,
         sentence_spans: List[tuple],
         entity_sentence_index: Dict[str, int],
-        llm_threshold: float,
     ) -> List[Any]:
         """Process a batch of entity pairs and return inferred relationships.
 
@@ -3919,7 +3915,6 @@ class OntologyGenerator:
             sentence_window: Sentence window size for filtering
             sentence_spans: List of (start, end) tuples for sentences
             entity_sentence_index: Dict mapping entity IDs to sentence indices
-            llm_threshold: LLM fallback threshold for low-confidence heuristic types
 
         Returns:
             List of Relationship objects inferred from this batch
@@ -3977,6 +3972,9 @@ class OntologyGenerator:
                 if distance > 150:
                     type_confidence *= 0.8
 
+                llm_threshold = float(
+                    getattr(context.extraction_config, "llm_fallback_threshold", 0.0)
+                )
                 type_method = "context_window"
                 if llm_threshold > 0.0 and type_confidence < llm_threshold:
                     inferred_type, type_confidence, type_method = self._refine_relationship_type_with_llm(
@@ -4031,9 +4029,6 @@ class OntologyGenerator:
             List of inferred co-occurrence relationships
         """
         sentence_window = getattr(context.extraction_config, "sentence_window", 0)
-        llm_threshold = float(
-            getattr(context.extraction_config, "llm_fallback_threshold", 0.0)
-        )
         sentence_spans = self._get_sentence_spans(text) if sentence_window > 0 else []
         
         # Pre-compute sentence indices for all entities (thread-safe, done once)
@@ -4091,7 +4086,6 @@ class OntologyGenerator:
                     sentence_window,
                     sentence_spans,
                     entity_sentence_index,
-                    llm_threshold,
                 )
                 futures.append(future)
 
