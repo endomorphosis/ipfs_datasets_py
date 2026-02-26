@@ -17,7 +17,7 @@ import time
 import psutil
 import threading
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, TypedDict
 from dataclasses import dataclass, field
 from datetime import datetime
 from collections import deque
@@ -70,6 +70,44 @@ class OptimizationRecommendation:
     action: str
     impact_estimate: str
     implementation_difficulty: str
+
+
+class OptimizationStateDict(TypedDict, total=False):
+    """TypedDict for current optimization state representation.
+    
+    Fields:
+        current_metrics: System resource metrics (CPU, memory, disk)
+        adaptive_parameters: Current parameter adjustments
+        target_profile: Target processing profile
+        recommendations: List of optimization recommendations
+        processing_history_length: Number of operations tracked
+        resource_history_length: Number of resource measurements tracked
+        monitoring_active: Whether monitoring is currently active
+    """
+    current_metrics: Dict[str, Any]
+    adaptive_parameters: Dict[str, Any]
+    target_profile: Dict[str, Any]
+    recommendations: List[Dict[str, Any]]
+    processing_history_length: int
+    resource_history_length: int
+    monitoring_active: bool
+
+
+class PerformanceReportDict(TypedDict, total=False):
+    """TypedDict for comprehensive performance report.
+    
+    Fields:
+        summary: Summary statistics (operations count, items processed, duration)
+        performance: Performance metrics (throughput, success rates)
+        resource_usage: Resource utilization analysis
+        bottlenecks: Identified performance bottlenecks and recommendations
+        error: Error message if report generation failed
+    """
+    summary: Dict[str, Any]
+    performance: Dict[str, Any]
+    resource_usage: Dict[str, Any]
+    bottlenecks: List[Dict[str, Any]]
+    error: str
 
 
 class AdvancedPerformanceOptimizer:
@@ -621,7 +659,7 @@ class AdvancedPerformanceOptimizer:
         # Brief pause to let CPU recover
         time.sleep(2)
     
-    def get_current_optimization_state(self) -> Dict[str, Any]:
+    def get_current_optimization_state(self) -> OptimizationStateDict:
         """Get current optimization state and recommendations"""
         
         current_metrics = self._collect_resource_metrics()
@@ -636,7 +674,7 @@ class AdvancedPerformanceOptimizer:
             'monitoring_active': self.monitoring_active
         }
     
-    def get_performance_report(self) -> Dict[str, Any]:
+    def get_performance_report(self) -> PerformanceReportDict:
         """Generate comprehensive performance report"""
         
         if not self.processing_history:

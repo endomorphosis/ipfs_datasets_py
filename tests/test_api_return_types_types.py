@@ -83,18 +83,18 @@ class TestSerializedResultDict:
     def test_to_dict_critic_result(self):
         """Verify to_dict() works with CriticResult dataclass."""
         result = CriticResult(
-            critic_id="critic1",
+            dimension_name="extraction_quality",
             score=0.85,
-            comment="Good extraction",
-            entities_validated=5,
-            relationships_validated=3
+            max_score=1.0,
+            issues=["missing_context"],
+            recommendations=["add_context"]
         )
         serialized = to_dict(result)
         
         assert isinstance(serialized, dict)
-        assert "critic_id" in serialized
+        assert "dimension_name" in serialized
         assert "score" in serialized
-        assert "comment" in serialized
+        assert "max_score" in serialized
         
     def test_to_dict_empty_input(self):
         """Verify to_dict() handles edge cases gracefully."""
@@ -177,16 +177,16 @@ class TestJsonSerializableDict:
     def test_to_json_serializable_with_critic_result(self):
         """Verify to_json_serializable works with different result types."""
         result = CriticResult(
-            critic_id="critic_123",
+            dimension_name="validation_score",
             score=0.75,
-            comment="Partial validation",
-            entities_validated=3,
-            relationships_validated=1
+            max_score=1.0,
+            issues=["incomplete"],
+            recommendations=["review"]
         )
         serialized = to_json_serializable(result)
         
         assert isinstance(serialized, dict)
-        assert serialized["critic_id"] == "critic_123"
+        assert serialized["dimension_name"] == "validation_score"
         assert serialized["score"] == 0.75
 
 

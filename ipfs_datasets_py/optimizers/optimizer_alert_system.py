@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 import threading
 import time
-from typing import Dict, List, Any, Optional, Callable
+from typing import Dict, List, Any, Optional, Callable, TypedDict
 
 
 from ipfs_datasets_py.optimizers.optimizer_learning_metrics import OptimizerLearningMetricsCollector
@@ -25,6 +25,27 @@ from ipfs_datasets_py.optimizers.common.path_validator import (
 
 # Setup logging
 logger = logging.getLogger(__name__)
+
+
+class LearningAnomalyDict(TypedDict, total=False):
+    """TypedDict for serialized learning anomaly representation.
+    
+    Fields:
+        id: Unique identifier for the anomaly
+        anomaly_type: Type of anomaly detected
+        severity: Severity level (info, warning, critical)
+        description: Human-readable description
+        affected_parameters: List of affected parameters
+        timestamp: ISO format timestamp string
+        metric_values: Relevant metric values
+    """
+    id: str
+    anomaly_type: str
+    severity: str
+    description: str
+    affected_parameters: List[str]
+    timestamp: str
+    metric_values: Dict[str, Any]
 
 
 @dataclass
@@ -54,7 +75,7 @@ class LearningAnomaly:
         if not self.id:
             self.id = f"{int(time.time())}_{self.anomaly_type}"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> LearningAnomalyDict:
         """Convert the anomaly to a dictionary."""
         return {
             'id': self.id,

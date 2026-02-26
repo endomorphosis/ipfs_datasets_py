@@ -29,7 +29,7 @@ Usage Example:
 """
 
 import time
-from typing import Callable, List, Dict, Any, Optional, Tuple
+from typing import Callable, List, Dict, Any, Optional, Tuple, TypedDict
 from dataclasses import dataclass, field
 from enum import Enum
 from abc import ABC, abstractmethod
@@ -43,6 +43,21 @@ class LifecycleEventType(Enum):
     ON_ERROR = "on_error"
     ON_COMPLETE = "on_complete"
     ON_TIMEOUT = "on_timeout"
+
+
+class LifecycleEventDict(TypedDict, total=False):
+    """TypedDict for serialized lifecycle event representation.
+    
+    Fields:
+        event_type: String representation of the event type
+        operation_name: Name/identifier of the operation
+        timestamp: Unix timestamp when event occurred
+        data: Event-specific data (errors, metrics, context)
+    """
+    event_type: str
+    operation_name: str
+    timestamp: float
+    data: Dict[str, Any]
 
 
 @dataclass
@@ -60,7 +75,7 @@ class LifecycleEvent:
     timestamp: float
     data: Dict[str, Any] = field(default_factory=dict)
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> LifecycleEventDict:
         """Serialize event to dictionary for logging/export."""
         return {
             "event_type": self.event_type.value,
