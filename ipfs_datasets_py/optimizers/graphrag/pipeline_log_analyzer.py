@@ -30,7 +30,13 @@ import json
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path as _Path
 from typing import Any, Dict, List, Optional, Tuple
+
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_input_path,
+    validate_output_path,
+)
 
 
 @dataclass
@@ -383,7 +389,11 @@ def load_log_file(filepath: str) -> List[Dict[str, Any]]:
     """
     logs: List[Dict[str, Any]] = []
     
-    with open(filepath, 'r') as f:
+    # Validate input path
+    base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
+    safe_filepath = validate_input_path(filepath, must_exist=True, base_dir=base_dir)
+    
+    with open(safe_filepath, 'r') as f:
         for line in f:
             line = line.strip()
             if not line:
@@ -404,6 +414,10 @@ def save_log_file(filepath: str, logs: List[Dict[str, Any]]) -> None:
         filepath: Path to log file
         logs: List of log dictionaries
     """
-    with open(filepath, 'w') as f:
+    # Validate output path
+    base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
+    safe_filepath = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+    
+    with open(safe_filepath, 'w') as f:
         for log in logs:
             f.write(json.dumps(log, default=str) + '\n')
