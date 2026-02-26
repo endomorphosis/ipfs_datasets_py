@@ -1,71 +1,16 @@
-"""
-Query Optimization Module for GraphRAG operations.
+"""Compatibility entrypoint for GraphRAG query optimizer components.
 
-This module provides a comprehensive framework for optimizing GraphRAG (Graph Retrieval
-Augmented Generation) queries across different knowledge graph types. The optimization
-strategies are tailored to the specific characteristics of Wikipedia-derived knowledge
-graphs, IPLD-based knowledge graphs, and mixed environments containing both types.
+Historically this module hosted the full query optimizer implementation. After
+the modular split, core responsibilities now live in dedicated files:
 
-Key features:
-- Query statistics collection and analysis for adaptive optimization
-- Intelligent caching of frequently executed queries
-- Query plan generation and execution with content-type awareness
-- Vector index partitioning for improved search performance across large datasets
-- Specialized optimizations for Wikipedia-derived knowledge graphs
-- IPLD-specific optimizations leveraging content-addressed data structures
-- Cross-document reasoning query planning with entity-based traversal
-- Content-addressed graph traversal strategies for IPLD DAGs
-- Multi-graph query optimization for mixed environments
-- Performance analysis and recommendations
-- Adaptive parameter tuning based on query patterns
-- Query rewriting for improved traversal paths
-- Advanced caching mechanisms for frequently accessed paths
-- Hierarchical traversal planning with hop-limited paths
-- Query cost estimation and budget-aware execution
-- Enhanced metrics collection and visualization for query performance analysis
-- Resource utilization tracking and bottleneck identification
-- Query execution plan visualization with detailed timing breakdowns
-- Historical performance analysis for optimization suggestions
-- Interactive dashboard support with exportable metrics
+- ``query_planner.py``: base planning, cache behavior, and plan generation.
+- ``query_unified_optimizer.py``: orchestration across graph types.
+- ``traversal_heuristics.py``: traversal scoring and query heuristics.
+- ``learning_adapter.py``: learning-cycle hooks and adaptation helpers.
+- ``serialization.py``: learning-state save/load helpers.
 
-Advanced Optimization Components:
-- QueryRewriter: Analyzes and rewrites queries for better performance using:
-  - Predicate pushdown for early filtering
-  - Join reordering based on edge selectivity
-  - Traversal path optimization based on graph characteristics
-  - Pattern-specific optimizations for common query types
-  - Domain-specific query transformations
-
-- QueryBudgetManager: Manages query execution resources through:
-  - Dynamic resource allocation based on query priority and complexity
-  - Early stopping based on result quality and diminishing returns
-  - Adaptive computation budgeting based on query history
-  - Progressive query expansion driven by initial results
-  - Timeout management and cost estimation
-
-- UnifiedGraphRAGQueryOptimizer: Combines optimization strategies for different graph types:
-  - Auto-detection of graph type from query parameters
-  - Wikipedia-specific and IPLD-specific optimizations
-  - Cross-graph query planning for heterogeneous environments
-  - Comprehensive performance analysis and recommendation generation
-  - Integration with advanced rewriting and budget management
-
-- QueryMetricsCollector: Gathers detailed metrics on query execution:
-  - Fine-grained timing measurements for each query phase
-  - Resource utilization tracking (memory, computation)
-  - Query plan effectiveness scoring
-  - Pattern recognition across query executions
-  - Integration with monitoring systems
-
-- QueryVisualizer: Provides visualization capabilities for query analysis:
-  - Query execution plan visual representation
-  - Performance breakdown charts and timelines
-  - Comparative analysis between query strategies
-  - Graph traversal pattern visualization
-  - Optimization opportunity highlighting
-
-This module integrates with the llm_graphrag module to provide optimized graph
-traversal strategies that enhance cross-document reasoning capabilities with LLMs.
+This module remains as a stable import surface and example runner for legacy
+call sites while delegating real behavior to the specialized modules above.
 """
 
 from __future__ import annotations

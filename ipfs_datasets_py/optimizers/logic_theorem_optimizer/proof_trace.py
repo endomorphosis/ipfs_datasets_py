@@ -12,6 +12,9 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_output_path,
+)
 from .additional_provers import ProverResult
 from .prover_integration import AggregatedProverResult, ProverVerificationResult
 
@@ -113,9 +116,15 @@ def proof_trace_to_json(trace: Dict[str, Any], *, indent: int = 2) -> str:
 def write_proof_trace_json(trace: Dict[str, Any], output_path: str | Path) -> Path:
     """Write proof trace JSON to disk and return resolved path."""
     path = Path(output_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(proof_trace_to_json(trace) + "\n", encoding="utf-8")
-    return path.resolve()
+    
+    # Validate output path
+    base_dir = path.parent if path.is_absolute() else None
+    safe_path = validate_output_path(str(path), allow_overwrite=True, base_dir=base_dir)
+    
+    # Ensure directory exists
+    Path(safe_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(safe_path).write_text(proof_trace_to_json(trace) + "\n", encoding="utf-8")
+    return Path(safe_path).resolve()
 
 
 def serialize_dataclass_like(obj: Any) -> Dict[str, Any]:

@@ -55,6 +55,10 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 from ipfs_datasets_py.optimizers.common.base_critic import BaseCritic, CriticResult
 from ipfs_datasets_py.optimizers.common.backend_selection import resolve_backend_settings
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_input_path,
+    validate_output_path,
+)
 from ipfs_datasets_py.optimizers.graphrag.ontology_critic_completeness import (
     evaluate_completeness,
 )
@@ -715,13 +719,18 @@ class OntologyCritic(BaseCritic):
         for key, score in cls._SHARED_EVAL_CACHE.items():
             serializable_cache[key] = score.to_dict()
 
+        # Validate output path
+        from pathlib import Path as _Path
+        base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
+        safe_filepath = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+
         # Ensure directory exists
-        directory = _os.path.dirname(_os.path.abspath(filepath))
+        directory = _os.path.dirname(_os.path.abspath(safe_filepath))
         if directory:
             _os.makedirs(directory, exist_ok=True)
 
         # Write to file
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(safe_filepath, 'w', encoding='utf-8') as f:
             _json.dump(serializable_cache, f, indent=2, sort_keys=True)
 
     @classmethod
@@ -750,12 +759,14 @@ class OntologyCritic(BaseCritic):
         """
         import json as _json
         import os as _os
+        from pathlib import Path as _Path
 
-        if not _os.path.exists(filepath):
-            raise FileNotFoundError(f"Cache file not found: {filepath}")
+        # Validate input path
+        base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
+        safe_filepath = validate_input_path(filepath, must_exist=True, base_dir=base_dir)
 
         # Load cache data
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(safe_filepath, 'r', encoding='utf-8') as f:
             cache_data = _json.load(f)
 
         if not isinstance(cache_data, dict):

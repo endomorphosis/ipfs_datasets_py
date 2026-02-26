@@ -27,6 +27,11 @@ import json
 import hashlib
 from collections import defaultdict
 from copy import deepcopy
+from pathlib import Path as _Path
+
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_output_path,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -591,10 +596,14 @@ class OntologyEvolution:
         Args:
             filepath: Path to export file
         """
-        with open(filepath, 'w') as f:
+        # Validate output path
+        base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
+        safe_filepath = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+        
+        with open(safe_filepath, 'w') as f:
             json.dump(self.current_ontology, f, indent=2)
         
-        logger.info(f"Exported ontology to {filepath}")
+        logger.info(f"Exported ontology to {safe_filepath}")
     
     def export_version_history(self, filepath: str) -> None:
         """Export version history to file.
@@ -613,10 +622,14 @@ class OntologyEvolution:
                 'hash': v.hash
             })
         
-        with open(filepath, 'w') as f:
+        # Validate output path
+        base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
+        safe_filepath = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+        
+        with open(safe_filepath, 'w') as f:
             json.dump(history, f, indent=2)
         
-        logger.info(f"Exported version history to {filepath}")
+        logger.info(f"Exported version history to {safe_filepath}")
     
     def get_statistics(self) -> Dict[str, Any]:
         """Get detailed statistics.

@@ -134,3 +134,7 @@ class TestLogicValidatorBenchmarks:
     def test_ontology_to_tdfol_medium_no_cache(self, benchmark):
         ontology = _make_medium_ontology(50, 25)
         benchmark(self.validator_no_cache.ontology_to_tdfol, ontology)
+
+    def test_validate_ontology_100_entities(self, benchmark):
+        ontology = _make_medium_ontology(100, 50)
+        benchmark(self.validator.validate_ontology, ontology)

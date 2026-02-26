@@ -1,4 +1,11 @@
-"""Heuristic helpers for GraphRAG traversal optimization."""
+"""Heuristic helpers for GraphRAG traversal optimization.
+
+Extracted from the historical query optimizer mega-file to keep traversal
+signal detection and complexity scoring isolated from orchestration logic.
+In the split layout this module is used by ``query_unified_optimizer.py`` and
+complements ``query_planner.py``, ``learning_adapter.py``, and
+``serialization.py``.
+"""
 
 from __future__ import annotations
 

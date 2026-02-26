@@ -24,6 +24,11 @@ from enum import Enum
 from typing import Dict, Any, Optional, List, Tuple, cast
 from pathlib import Path
 
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_input_path,
+    validate_output_path,
+)
+
 
 class EvictionPolicy(Enum):
     """Cache eviction policy enumeration."""
@@ -220,7 +225,12 @@ class CacheL2:
         with self._lock:
             try:
                 file_path = self.path / f"{key}.pkl"
-                with open(file_path, 'wb') as f:
+                
+                # Validate output path
+                base_dir = file_path.parent if file_path.is_absolute() else None
+                safe_path = validate_output_path(str(file_path), allow_overwrite=True, base_dir=base_dir)
+                
+                with open(safe_path, 'wb') as f:
                     pickle.dump(value, f)
                 
                 index = self._load_index()
@@ -266,7 +276,11 @@ class CacheL2:
         """Load index from disk."""
         if self.index_path.exists():
             try:
-                with open(self.index_path, 'r') as f:
+                # Validate input path
+                base_dir = self.index_path.parent if self.index_path.is_absolute() else None
+                safe_path = validate_input_path(str(self.index_path), must_exist=True, base_dir=base_dir)
+                
+                with open(safe_path, 'r') as f:
                     return cast(Dict[str, Any], json.load(f))
             except (OSError, json.JSONDecodeError, ValueError, TypeError):
                 return {}
@@ -275,7 +289,11 @@ class CacheL2:
     def _save_index(self, index: Dict[str, Any]) -> None:
         """Save index to disk."""
         try:
-            with open(self.index_path, 'w') as f:
+            # Validate output path
+            base_dir = self.index_path.parent if self.index_path.is_absolute() else None
+            safe_path = validate_output_path(str(self.index_path), allow_overwrite=True, base_dir=base_dir)
+            
+            with open(safe_path, 'w') as f:
                 json.dump(index, f)
         except (OSError, TypeError, ValueError):
             pass

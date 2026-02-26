@@ -19,6 +19,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import json
 
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_output_path,
+)
+
 try:
     import graphviz
     HAS_GRAPHVIZ = True
@@ -371,12 +375,16 @@ class RefinementVisualizer:
             "actions_summary": self._summarize_actions(),
         }
         
+        # Validate output path
         output_path = self.output_dir / filename
-        with open(output_path, 'w') as f:
+        base_dir = output_path.parent if output_path.is_absolute() else None
+        safe_path = validate_output_path(str(output_path), allow_overwrite=True, base_dir=base_dir)
+        
+        with open(safe_path, 'w') as f:
             json.dump(report, f, indent=2)
         
-        logger.info(f"Summary report saved to {output_path}")
-        return output_path
+        logger.info(f"Summary report saved to {safe_path}")
+        return Path(safe_path)
     
     def _calculate_score_improvement(self) -> Dict[str, float]:
         """Calculate aggregate score improvement metrics."""
