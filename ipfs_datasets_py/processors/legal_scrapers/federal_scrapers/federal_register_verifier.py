@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 try:
-    from ipfs_datasets_py.processors.legal_scrapers.federal_register_scraper import (
+    from ipfs_datasets_py.processors.legal_scrapers.federal_scrapers.federal_register_scraper import (
         scrape_federal_register,
         search_federal_register,
     )

@@ -155,13 +155,21 @@ async def scrape_us_code_from_parameters(
     tool_version: str = "1.0.0",
 ) -> Dict[str, Any]:
     try:
-        from .us_code_scraper import scrape_us_code
+        from .federal_scrapers.us_code_scraper import scrape_us_code
+
+        titles = parameters.get("titles")
+        if titles is None and parameters.get("title"):
+            titles = [str(parameters.get("title"))]
 
         return await scrape_us_code(
-            titles=parameters.get("titles"),
+            titles=titles,
             output_format=parameters.get("output_format", "json"),
             include_metadata=parameters.get("include_metadata", True),
             rate_limit_delay=parameters.get("rate_limit_delay", 1.0),
+            max_sections=parameters.get("max_sections"),
+            year=parameters.get("year"),
+            cache_dir=parameters.get("cache_dir"),
+            force_download=parameters.get("force_download", False),
         )
 
     except Exception as e:
