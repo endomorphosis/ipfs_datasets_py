@@ -160,8 +160,8 @@ def generate_10k_medical_document() -> str:
     ]
     
     # Repeat sections to reach approximately 10k tokens
-    # Each section is roughly 100 tokens, so need ~100 copies
-    repeated = sections * 20  # 5 * 20 = 100 sections
+    # Currently getting ~3.7k with 20 reps, so need ~50 reps for 10k
+    repeated = sections * 50  # 5 * 50 = 250 sections
     return "\n\n".join(repeated)
 
 
