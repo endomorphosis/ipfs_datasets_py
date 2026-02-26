@@ -39,6 +39,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, TypedDict
 from enum import Enum
 
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_input_path,
+    validate_output_path,
+)
+
 
 class EventType(str, Enum):
     """Types of auditable events in the refinement process."""
@@ -266,7 +271,12 @@ class AuditLogger:
         if self.output_dir is None:
             return
         log_file = self.output_dir / f"audit_{self.session_id}.jsonl"
-        with open(log_file, "a", encoding="utf-8") as f:
+        
+        # Validate output path
+        base_dir = Path(log_file).parent if Path(log_file).is_absolute() else None
+        safe_log_file = validate_output_path(str(log_file), allow_overwrite=True, base_dir=base_dir)
+        
+        with open(safe_log_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(event.to_dict()) + "\n")
     
     # Event logging methods
@@ -534,7 +544,11 @@ class AuditLogger:
             "events": [event.to_dict() for event in self.events],
         }
         
-        with open(filepath, "w", encoding="utf-8") as f:
+        # Validate output path
+        base_dir = filepath.parent if filepath.is_absolute() else None
+        safe_filepath = validate_output_path(str(filepath), allow_overwrite=True, base_dir=base_dir)
+        
+        with open(safe_filepath, "w", encoding="utf-8") as f:
             if pretty:
                 json.dump(data, f, indent=2, sort_keys=True)
             else:
@@ -667,7 +681,11 @@ def create_audit_logger(
 
 def load_audit_trail(filepath: Union[str, Path]) -> List[AuditEvent]:
     """Load audit trail from JSON file."""
-    with open(filepath, "r", encoding="utf-8") as f:
+    # Validate input path
+    base_dir = Path(filepath).parent if Path(filepath).is_absolute() else None
+    safe_filepath = validate_input_path(str(filepath), must_exist=True, base_dir=base_dir)
+    
+    with open(safe_filepath, "r", encoding="utf-8") as f:
         data = json.load(f)
     
     return [AuditEvent.from_dict(event_dict) for event_dict in data["events"]]

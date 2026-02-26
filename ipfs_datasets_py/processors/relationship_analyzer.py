@@ -3,7 +3,54 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TypedDict
+
+
+# ===== TypedDict Definitions for Return Types =====
+
+class EntityRelationshipsDict(TypedDict, total=False):
+    """Result of entity relationship analysis."""
+    
+    entities: List[Dict[str, Any]]
+    relationships: List[Dict[str, Any]]
+    total_relationships: int
+    processing_time: float
+    confidence_scores: Dict[str, float]
+
+
+class CrossDocRelationshipsDict(TypedDict, total=False):
+    """Cross-document relationship analysis result."""
+    
+    relationships: List[Dict[str, Any]]
+    document_pairs: List[Tuple[str, str]]
+    relationship_count: int
+    processing_time: float
+
+
+class EntityPropertiesDict(TypedDict, total=False):
+    """Entity properties extraction result."""
+    
+    properties: Dict[str, Any]
+    confidence: float
+    data_types: Dict[str, str]
+    property_count: int
+
+
+class RelationshipTypesDict(TypedDict, total=False):
+    """Relationship type classification result."""
+    
+    classifications: List[Dict[str, Any]]
+    type_distribution: Dict[str, int]
+    confidence_metrics: Dict[str, float]
+
+
+class GraphVisualizationDict(TypedDict, total=False):
+    """Graph visualization data structure."""
+    
+    nodes: List[Dict[str, Any]]
+    edges: List[Dict[str, Any]]
+    metadata: Dict[str, Any]
+    graph_metrics: Dict[str, Any]
 
 
 class RelationshipAnalyzer:
@@ -19,10 +66,7 @@ class RelationshipAnalyzer:
         min_confidence: float = 0.6,
         max_relationships: int = 100,
         relationship_types: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
-        start = time.monotonic()
-        entities = self._collect_entities(documents)
-        relationships = self._collect_relationships(documents)
+    ) -> EntityRelationshipsDict:
 
         if relationship_types:
             rel_types = {str(t).lower() for t in relationship_types}
@@ -51,7 +95,7 @@ class RelationshipAnalyzer:
         documents: List[Dict[str, Any]],
         include_cross_document: bool = True,
         min_confidence: float = 0.6,
-    ) -> Dict[str, Any]:
+    ) -> CrossDocRelationshipsDict:
         start = time.monotonic()
         citations: List[Dict[str, Any]] = []
         for doc in documents or []:
@@ -82,7 +126,7 @@ class RelationshipAnalyzer:
         documents: List[Dict[str, Any]],
         include_cross_document: bool = True,
         min_confidence: float = 0.6,
-    ) -> Dict[str, Any]:
+    ) -> CrossDocRelationshipsDict:
         start = time.monotonic()
         themes: List[Dict[str, Any]] = []
         relationships: List[Dict[str, Any]] = []
@@ -120,7 +164,7 @@ class RelationshipAnalyzer:
         source_document_id: str,
         min_confidence: float = 0.6,
         max_relationships: int = 100,
-    ) -> Dict[str, Any]:
+    ) -> CrossDocRelationshipsDict:
         start = time.monotonic()
         relationships: List[Dict[str, Any]] = []
         if source_document_id:
@@ -144,7 +188,7 @@ class RelationshipAnalyzer:
         results: Dict[str, Any],
         *,
         include_cross_document: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> GraphVisualizationDict:
         nodes: Dict[str, Dict[str, Any]] = {}
         edges: List[Dict[str, Any]] = []
 

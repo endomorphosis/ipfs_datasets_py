@@ -39,13 +39,25 @@ Examples:
     ...     corrected = result.corrected_config
 """
 
-from typing import Any, Dict, List, Optional, Callable, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Callable, Set, Tuple, Union, TypedDict
 from dataclasses import dataclass, field as dataclass_field
 from enum import Enum
 import logging
 
 
 logger = logging.getLogger(__name__)
+
+
+# ===== TypedDict Definitions for Return Types =====
+
+class MergedConfigDict(TypedDict, total=False):
+    """Result of merging config with defaults.
+    
+    Fields:
+        All fields from merged configuration dictionary
+        (dynamic structure based on input configs)
+    """
+    pass
 
 
 @dataclass
@@ -411,7 +423,7 @@ def detect_configuration_issues(config: Dict[str, Any]) -> List[Dict[str, Any]]:
 def merge_config_with_defaults(
     config: Dict[str, Any],
     defaults: Dict[str, Any]
-) -> Dict[str, Any]:
+) -> MergedConfigDict:
     """Merge config with default values.
     
     Args:

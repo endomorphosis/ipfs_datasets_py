@@ -39,7 +39,13 @@ import logging
 import math
 from collections import defaultdict
 from dataclasses import dataclass, field
+from pathlib import Path as _Path
 from typing import Any, Dict, List, Optional, Sequence
+
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_input_path,
+    validate_output_path,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -426,6 +432,10 @@ class OntologyLearningAdapter:
             >>> adapter.serialize_to_file("/tmp/adapter.json")
         """
         import json as _json
+        # Validate output path
+        base_dir = _Path(path).parent if _Path(path).is_absolute() else None
+        safe_path = validate_output_path(path, allow_overwrite=True, base_dir=base_dir)
+        
         payload = {
             "current_threshold": self._current_threshold,
             "action_count": dict(self._action_count),
@@ -439,7 +449,7 @@ class OntologyLearningAdapter:
                 for r in self._feedback
             ],
         }
-        with open(path, "w", encoding="utf-8") as fh:
+        with open(safe_path, "w", encoding="utf-8") as fh:
             _json.dump(payload, fh, indent=2)
 
     @classmethod
@@ -458,7 +468,11 @@ class OntologyLearningAdapter:
             >>> adapter2 = OntologyLearningAdapter.from_file("/tmp/adapter.json")
         """
         import json as _json
-        with open(path, "r", encoding="utf-8") as fh:
+        # Validate input path
+        base_dir = _Path(path).parent if _Path(path).is_absolute() else None
+        safe_path = validate_input_path(path, must_exist=True, base_dir=base_dir)
+        
+        with open(safe_path, "r", encoding="utf-8") as fh:
             payload = _json.load(fh)
         instance = cls(**init_kwargs)
         instance._current_threshold = payload.get("current_threshold", instance._current_threshold)

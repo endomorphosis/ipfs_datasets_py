@@ -23,7 +23,7 @@ import inspect
 import threading
 import contextlib
 from enum import Enum
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, TypedDict
 from dataclasses import dataclass, field
 import functools
 import traceback
@@ -51,6 +51,35 @@ DEFAULT_METRICS_FILE = "ipfs_datasets_metrics.json"
 DEFAULT_METRICS_PORT = 8889  # for Prometheus exporter
 DEFAULT_LOG_ROTATION_SIZE = 10_485_760  # 10MB
 DEFAULT_LOG_ROTATION_COUNT = 5
+
+
+# ===== TypedDict Definitions for Return Types =====
+
+class MetricsDictRepr(TypedDict, total=False):
+    """Dictionary representation of metrics object."""
+    
+    name: str
+    timestamp: float
+    value: Any
+    unit: Optional[str]
+    tags: Dict[str, str]
+
+
+class HealthCheckDict(TypedDict, total=False):
+    """Health check result structure."""
+    
+    status: str
+    timestamp: float
+    checks: Dict[str, Any]
+    message: str
+
+
+class MetricsExportDict(TypedDict, total=False):
+    """Exported metrics structure."""
+    
+    metrics: List[Dict[str, Any]]
+    timestamp: float
+    export_format: str
 
 
 class LogLevel(Enum):
@@ -188,7 +217,7 @@ class LogContext:
     _context_data = threading.local()
 
     @classmethod
-    def get_current(cls) -> Dict[str, Any]:
+    def get_current(cls) -> HealthCheckDict:
         """Get the current context data."""
         if not hasattr(cls._context_data, "data"):
             cls._context_data.data = {}
@@ -1024,9 +1053,9 @@ class MonitoringSystem:
             Begin distributed operation tracing with correlation ID
         end_operation_trace(trace_id: str, **kwargs) -> None:
             Complete operation tracing with performance metrics
-        check_health() -> Dict[str, Any]:
+        check_health() -> HealthCheckDict:
             Perform comprehensive health check across all components
-        export_metrics() -> Dict[str, Any]:
+        export_metrics() -> MetricsExportDict:
             Export current metrics for external monitoring systems
 
     Usage Examples:

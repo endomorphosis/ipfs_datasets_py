@@ -2,7 +2,7 @@ import os
 import multiprocessing
 import random
 import numpy as np
-from typing import Any, Dict, List, Optional, Union, Tuple
+from typing import Any, Dict, List, Optional, Union, Tuple, TypedDict
 
 try:
     import datasets  # type: ignore
@@ -323,6 +323,30 @@ def process_index_shard(shard: Union[str, List[Any], Dict[str, Any]], datatype: 
 
     return [ cids , items, schema ]
 
+
+# ===== TypedDict Definitions for Return Types =====
+
+class ClustersResultDict(TypedDict, total=False):
+    """Result of cluster generation operation."""
+    
+    clusters: List[Dict[str, Any]]
+    cluster_count: int
+    model_used: str
+    similarity_scores: List[float]
+    processing_time: float
+
+
+class HashedShardResultDict(TypedDict, total=False):
+    """Result of hashed dataset shard processing."""
+    
+    cids: List[str]
+    items: List[Dict[str, Any]]
+    schema: Dict[str, Any]
+    shard_id: str
+    hashes: Dict[str, str]
+    processing_time: float
+
+
 class ipfs_datasets_py:
     """
     Comprehensive IPFS-Based Dataset Management and Distributed Computing Platform
@@ -425,11 +449,11 @@ class ipfs_datasets_py:
             Merge multiple checkpoint files into unified dataset
         load_checkpoints(checkpoint_path: str) -> Dataset:
             Load dataset from checkpoint with schema validation
-        generate_clusters(dataset: Dataset, model: str, **kwargs) -> Dict[str, Any]:
+        generate_clusters(dataset: Dataset, model: str, **kwargs) -> ClustersResultDict:
             Create content clusters using embedding-based similarity analysis
         load_clusters(cluster_path: str) -> Dataset:
             Load pre-computed cluster assignments and metadata
-        process_hashed_dataset_shard(shard: Any, datatype: str, split: str) -> Dict[str, Any]:
+        process_hashed_dataset_shard(shard: Any, datatype: str, split: str) -> HashedShardResultDict:
             Process individual dataset shards with content hashing
 
     Usage Examples:

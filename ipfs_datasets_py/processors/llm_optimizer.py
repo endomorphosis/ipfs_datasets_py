@@ -12,7 +12,7 @@ Optimizes extracted content for LLM consumption by:
 import anyio
 import logging
 import hashlib
-from typing import Any, Optional, Annotated, Callable
+from typing import Any, Optional, Annotated, Callable, Dict, TypedDict
 import re
 import gc
 from enum import StrEnum
@@ -122,6 +122,26 @@ if missing_deps:
     logger.warning(f"LLM optimizer dependencies partially available. Missing: {', '.join(missing_deps)}")
 else:
     logger.info("✅ All LLM optimizer dependencies successfully installed and available")
+
+
+# ===== TypedDict Definitions for Return Types =====
+
+class ClassifiedContentDict(TypedDict, total=False):
+    """Result of content classification operation.
+    
+    Fields:
+        classification: Primary content classification label
+        confidence: Confidence score for classification (0-1)
+        sub_classifications: List of secondary classifications
+        metadata: Additional classification metadata
+        processing_time: Time taken for classification
+    """
+    
+    classification: str
+    confidence: float
+    sub_classifications: list
+    metadata: Dict[str, Any]
+    processing_time: float
 
 
 class _FallbackEmbeddingModel:
@@ -2459,7 +2479,7 @@ class LLMOptimizer:
                 classification_results.sort(key=lambda x: x.confidence, reverse=True)
                 return classification_results[0]
 
-    async def classify_content(self, text: str) -> Dict[str, Any]:
+    async def classify_content(self, text: str) -> ClassifiedContentDict:
         """
         Classify text content using a Hugging Face transformer pipeline.
 

@@ -26,11 +26,15 @@ import datetime
 import copy
 import math
 from io import StringIO
+from pathlib import Path as _Path
 from typing import Dict, List, Any, Optional, Tuple, Iterator
 from collections import defaultdict, deque
 from contextlib import contextmanager
 
 from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_output_path,
+)
 
 QUERY_METRICS_PERSIST_SERIALIZATION_ERROR = "QMETRICS_SERIALIZATION_ERROR"
 QUERY_METRICS_PERSIST_FALLBACK_WRITE_ERROR = "QMETRICS_FALLBACK_WRITE_ERROR"
@@ -665,7 +669,11 @@ class QueryMetricsCollector:
             
         # Return CSV content or save to file
         if filepath:
-            with open(filepath, 'w', newline='') as f:
+            # Validate output path
+            base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
+            safe_filepath = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+            
+            with open(safe_filepath, 'w', newline='') as f:
                 f.write(output.getvalue())
             return None
         return output.getvalue()
@@ -689,7 +697,11 @@ class QueryMetricsCollector:
             
             # Export to file or return as string
             if filepath:
-                with open(filepath, 'w') as f:
+                # Validate output path
+                base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
+                safe_filepath = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+                
+                with open(safe_filepath, 'w') as f:
                     # Use standard json.dump without custom encoder since data is already processed
                     json.dump(metrics_list, f, indent=2)
                 return None
@@ -711,7 +723,11 @@ class QueryMetricsCollector:
             }
             
             if filepath:
-                with open(filepath, 'w') as f:
+                # Validate output path
+                base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
+                safe_filepath = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+                
+                with open(safe_filepath, 'w') as f:
                     json.dump(fallback_metrics, f, indent=2)
                 return None
                 
@@ -891,8 +907,12 @@ class QueryMetricsCollector:
             # First apply numpy handling
             serializable_metrics = self._numpy_json_serializable(metrics)
             
+            # Validate output path
+            base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
+            safe_filepath = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+            
             # Write metrics to file
-            with open(filepath, 'w') as f:
+            with open(safe_filepath, 'w') as f:
                 json.dump(serializable_metrics, f, indent=2)
         except (TypeError, ValueError, OverflowError, OSError, RuntimeError, AttributeError) as e:
             # Handle serialization errors gracefully
@@ -911,7 +931,11 @@ class QueryMetricsCollector:
             
             # Try to save the fallback metrics
             try:
-                with open(filepath, 'w') as f:
+                # Validate output path
+                base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
+                safe_filepath = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+                
+                with open(safe_filepath, 'w') as f:
                     json.dump(fallback_metrics, f, indent=2)
             except (TypeError, ValueError, OSError):
                 # Last resort: just log the error

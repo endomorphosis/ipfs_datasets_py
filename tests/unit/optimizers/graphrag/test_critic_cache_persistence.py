@@ -13,6 +13,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_critic import (
     OntologyCritic,
     CriticScore,
 )
+from ipfs_datasets_py.optimizers.common.path_validator import PathValidationError
 
 
 class TestOntologyCriticCachePersistence:
@@ -188,8 +189,8 @@ class TestOntologyCriticCachePersistence:
                 os.unlink(filepath)
 
     def test_load_nonexistent_file(self):
-        """Test loading from nonexistent file raises FileNotFoundError."""
-        with pytest.raises(FileNotFoundError):
+        """Test loading from nonexistent file raises path/file-not-found error."""
+        with pytest.raises((FileNotFoundError, PathValidationError)):
             OntologyCritic.load_shared_cache("/nonexistent/path/cache.json")
 
     def test_load_invalid_json(self):
