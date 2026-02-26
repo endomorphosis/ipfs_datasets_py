@@ -31,6 +31,11 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
 
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_input_path,
+    validate_output_path,
+)
+
 
 # Constants
 DEFAULT_SECRET_EXPIRY_DAYS = 90
@@ -558,11 +563,13 @@ class SecretsManager:
         }
 
         # Write to file
-        with open(self.storage_path, 'w') as f:
+        base_dir = self.storage_path.parent if self.storage_path.is_absolute() else None
+        safe_path = validate_output_path(str(self.storage_path), allow_overwrite=True, base_dir=base_dir)
+        with open(safe_path, 'w') as f:
             json.dump(data, f, indent=2)
 
         # Set restrictive file permissions (owner read/write only)
-        self.storage_path.chmod(0o600)
+        Path(safe_path).chmod(0o600)
 
     def _load_secrets(self) -> None:
         """Load secrets and metadata from persistent storage."""
@@ -570,7 +577,9 @@ class SecretsManager:
             return
 
         try:
-            with open(self.storage_path, 'r') as f:
+            base_dir = self.storage_path.parent if self.storage_path.is_absolute() else None
+            safe_path = validate_input_path(str(self.storage_path), must_exist=True, base_dir=base_dir)
+            with open(safe_path, 'r') as f:
                 data = json.load(f)
 
             # Load secrets

@@ -660,6 +660,7 @@ Execute these when no rotating work is in progress:
 
 - [x] (P3) [perf] Profile `graphrag/query_optimizer.py` under load — identify hotspots before the file split
   - Done 2026-02-25: item superseded by query-optimizer modular split plus regression/performance validation suites; revalidated with `tests/unit/optimizers/graphrag/test_query_optimizer_integration.py` and modular parity coverage.
+  - Revalidated 2026-02-26: profiling harness still passes in `tests/performance/optimizers/test_batch_266_query_optimizer_profiling.py`.
 - [x] (P3) [perf] Add LRU caching to `OntologyCritic.evaluate_ontology()` for repeated evaluations of same hash
   - Done 2026-02-20: 128-entry SHA-256 keyed cache
 - [x] (P3) [perf] Parallelize `OntologyOptimizer.analyze_batch()` across sessions using `concurrent.futures`
@@ -742,6 +743,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [tests] Fuzz tests for _extract_rule_based() — Done batch 28 (9 edge-case tests: Unicode, binary, very long, regex special chars)
 - [x] (P3) [perf] Benchmark _merge_ontologies() on 1000-entity ontologies
   - Done 2026-02-25: benchmark test exists and passes in `tests/unit/optimizers/graphrag/test_batch_327_merge_ontologies_benchmark.py`.
+  - Revalidated 2026-02-26: added/ran `tests/performance/optimizers/test_optimizer_benchmarks.py::TestOntologyMergeBenchmarks::test_merge_ontologies_1000_entities`.
 - [x] (P2) [graphrag] Add confidence decay for co-occurrence distance — Done batch 28 (steeper decay >100 chars, floor 0.2)
 - [x] (P2) [tests] Unit tests for `OntologyGenerator._extract_rule_based()` — fixture texts → expected entity list
   - Done 2026-02-20: test_new_implementations.py
