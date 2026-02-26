@@ -24,6 +24,11 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar
 import threading
 
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_input_path,
+    validate_output_path,
+)
+
 logger = logging.getLogger(__name__)
 R = TypeVar("R")
 
@@ -283,7 +288,11 @@ class LLMCache:
             }
             
             save_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(save_path, "w") as f:
+            # Validate output path
+            base_dir = save_path.parent if save_path.is_absolute() else None
+            safe_path = validate_output_path(str(save_path), allow_overwrite=True, base_dir=base_dir)
+            
+            with open(safe_path, "w") as f:
                 json.dump(data, f, indent=2)
     
     def load(self, path: Optional[Path] = None) -> None:
@@ -297,7 +306,11 @@ class LLMCache:
             return
         
         with self._lock:
-            with open(load_path, "r") as f:
+            # Validate input path
+            base_dir = load_path.parent if load_path.is_absolute() else None
+            safe_path = validate_input_path(str(load_path), must_exist=True, base_dir=base_dir)
+            
+            with open(safe_path, "r") as f:
                 data = json.load(f)
             
             self._cache.clear()
@@ -587,24 +600,26 @@ class BatchFileProcessor:
             
             for path in batch:
                 try:
-                    with open(path, "r") as f:
+                    # Validate input path
+                    base_dir = path.parent if path.is_absolute() else None
+                    safe_path = validate_input_path(str(path), must_exist=True, base_dir=base_dir)
+                    
+                    with open(safe_path, "r") as f:
                         results.append(f.read())
                 except (OSError, UnicodeDecodeError) as e:
-                    results.append(f"Error: {e}")
-        
+                    # File read failed - record empty content
+                    logger.debug(f"Failed to read cache file {path}: {e}")
+                    results.append("")
+
         return results
-    
-    def write_batch(
-        self,
-        paths: List[Path],
-        contents: List[str]
-    ) -> List[bool]:
+
+    def write_batch(self, paths: List[Path], contents: List[str]) -> List[bool]:
         """Write multiple files in batch.
-        
+
         Args:
             paths: List of file paths
-            contents: List of file contents
-            
+            contents: List of content strings
+
         Returns:
             List of success flags
         """
@@ -620,7 +635,11 @@ class BatchFileProcessor:
             for path, content in zip(batch_paths, batch_contents):
                 try:
                     path.parent.mkdir(parents=True, exist_ok=True)
-                    with open(path, "w") as f:
+                    # Validate output path
+                    base_dir = path.parent if path.is_absolute() else None
+                    safe_path = validate_output_path(str(path), allow_overwrite=True, base_dir=base_dir)
+                    
+                    with open(safe_path, "w") as f:
                         f.write(content)
                     results.append(True)
                 except (OSError, UnicodeEncodeError) as e:

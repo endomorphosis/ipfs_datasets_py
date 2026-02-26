@@ -21,6 +21,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_input_path,
+    validate_output_path,
+)
 from .base import ChangeController, OptimizationResult
 from ...utils.cache import LocalCache
 
@@ -174,11 +178,15 @@ class PatchManager:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
         # Write patch file
-        output_path.write_text(patch.diff_content)
+        base_dir = output_path.parent if output_path.is_absolute() else None
+        safe_patch = validate_output_path(str(output_path), allow_overwrite=True, base_dir=base_dir)
+        Path(safe_patch).write_text(patch.diff_content)
         
         # Write metadata
         metadata_path = output_path.with_suffix('.json')
-        metadata_path.write_text(json.dumps(patch.to_dict(), indent=2))
+        base_dir = metadata_path.parent if metadata_path.is_absolute() else None
+        safe_metadata = validate_output_path(str(metadata_path), allow_overwrite=True, base_dir=base_dir)
+        Path(safe_metadata).write_text(json.dumps(patch.to_dict(), indent=2))
         
         # Update history
         self.history.append(patch.to_dict())
@@ -213,11 +221,15 @@ class PatchManager:
         # Load metadata
         metadata_path = patch_path.with_suffix('.json')
         if metadata_path.exists():
-            metadata = json.loads(metadata_path.read_text())
+            base_dir = metadata_path.parent if metadata_path.is_absolute() else None
+            safe_metadata = validate_input_path(str(metadata_path), must_exist=True, base_dir=base_dir)
+            metadata = json.loads(Path(safe_metadata).read_text())
             patch = Patch.from_dict(metadata)
         else:
             # Fallback: create basic patch from diff content
-            diff_content = patch_path.read_text()
+            base_dir = patch_path.parent if patch_path.is_absolute() else None
+            safe_patch = validate_input_path(str(patch_path), must_exist=True, base_dir=base_dir)
+            diff_content = Path(safe_patch).read_text()
             patch = Patch(
                 patch_id=patch_path.stem,
                 agent_id="unknown",
@@ -417,12 +429,16 @@ class PatchManager:
     def _load_history(self) -> List[Dict[str, Any]]:
         """Load patch history from file."""
         if self.history_file.exists():
-            return json.loads(self.history_file.read_text())
+            base_dir = self.history_file.parent if self.history_file.is_absolute() else None
+            safe_history = validate_input_path(str(self.history_file), must_exist=True, base_dir=base_dir)
+            return json.loads(Path(safe_history).read_text())
         return []
     
     def _save_history(self) -> None:
         """Save patch history to file."""
-        self.history_file.write_text(json.dumps(self.history, indent=2))
+        base_dir = self.history_file.parent if self.history_file.is_absolute() else None
+        safe_history = validate_output_path(str(self.history_file), allow_overwrite=True, base_dir=base_dir)
+        Path(safe_history).write_text(json.dumps(self.history, indent=2))
 
 
 class WorktreeManager:

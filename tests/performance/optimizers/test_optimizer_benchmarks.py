@@ -138,3 +138,66 @@ class TestLogicValidatorBenchmarks:
     def test_validate_ontology_100_entities(self, benchmark):
         ontology = _make_medium_ontology(100, 50)
         benchmark(self.validator.validate_ontology, ontology)
+
+
+# ---------------------------------------------------------------------------
+# Ontology merge benchmarks
+# ---------------------------------------------------------------------------
+
+class TestOntologyMergeBenchmarks:
+    """Benchmark ontology merge behavior on large ontologies."""
+
+    @pytest.fixture(autouse=True)
+    def _setup(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+        self.generator = OntologyGenerator()
+
+    def test_merge_ontologies_1000_entities(self, benchmark):
+        base = {
+            "entities": [
+                {
+                    "id": f"e{i}",
+                    "type": "Person",
+                    "text": f"Entity {i}",
+                    "properties": {"source": "base"},
+                    "confidence": 0.75,
+                }
+                for i in range(1_000)
+            ],
+            "relationships": [
+                {
+                    "id": f"r{i}",
+                    "source_id": f"e{i}",
+                    "target_id": f"e{(i + 1) % 1_000}",
+                    "type": "related_to",
+                    "confidence": 0.65,
+                }
+                for i in range(500)
+            ],
+            "metadata": {"source": "base"},
+        }
+        extension = {
+            "entities": [
+                {
+                    "id": f"e{i}",
+                    "type": "Person" if i % 3 else "Organization",
+                    "text": f"Entity {i}",
+                    "properties": {"source": "ext", "batch": 2},
+                    "confidence": 0.80,
+                }
+                for i in range(500, 1_500)
+            ],
+            "relationships": [
+                {
+                    "id": f"rx{i}",
+                    "source_id": f"e{i}",
+                    "target_id": f"e{(i + 2) % 1_500}",
+                    "type": "related_to" if i % 2 else "depends_on",
+                    "confidence": 0.70,
+                }
+                for i in range(750)
+            ],
+            "metadata": {"source": "extension"},
+        }
+
+        benchmark(self.generator._merge_ontologies, base, extension)

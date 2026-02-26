@@ -200,7 +200,11 @@ class CacheL2:
                     self.metrics.misses += 1
                     return None
                 
-                with open(file_path, 'rb') as f:
+                # Validate input path
+                base_dir = file_path.parent if file_path.is_absolute() else None
+                safe_path = validate_input_path(str(file_path), must_exist=True, base_dir=base_dir)
+                
+                with open(safe_path, 'rb') as f:
                     value = pickle.load(f)
                 
                 self.metrics.hits += 1

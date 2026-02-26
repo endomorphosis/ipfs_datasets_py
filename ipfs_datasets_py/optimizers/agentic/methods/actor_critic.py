@@ -11,6 +11,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_input_path,
+    validate_output_path,
+)
 from ..base import (
     AgenticOptimizer,
     ChangeControlMethod,
@@ -86,13 +90,17 @@ class Policy:
             "usage_count": self.usage_count,
             "success_rate": self.success_rate,
         }
-        with open(path, 'w') as f:
+        base_dir = path.parent if path.is_absolute() else None
+        safe_path = validate_output_path(str(path), allow_overwrite=True, base_dir=base_dir)
+        with open(safe_path, 'w') as f:
             json.dump(data, f, indent=2)
     
     @classmethod
     def load(cls, path: Path) -> 'Policy':
         """Load policy from file."""
-        with open(path, 'r') as f:
+        base_dir = path.parent if path.is_absolute() else None
+        safe_path = validate_input_path(str(path), must_exist=True, base_dir=base_dir)
+        with open(safe_path, 'r') as f:
             data = json.load(f)
         
         policy = cls()
@@ -813,7 +821,10 @@ class ActorCriticOptimizer(AgenticOptimizer):
             return
 
         try:
-            data = json.loads(path.read_text())
+            path = Path(self.policy_file)
+            base_dir = path.parent if path.is_absolute() else None
+            safe_path = validate_input_path(str(path), must_exist=True, base_dir=base_dir)
+            data = json.loads(Path(safe_path).read_text())
             self.policies = {key: Policy.from_dict(value) for key, value in (data or {}).items()}
             self._success_counts = {
                 key: int(round(pol.success_rate * max(pol.usage_count, 0)))
@@ -836,8 +847,10 @@ class ActorCriticOptimizer(AgenticOptimizer):
             >>> optimizer.save_policies()  # Saves to policy_file
         """
         path = Path(self.policy_file)
+        base_dir = path.parent if path.is_absolute() else None
+        safe_path = validate_output_path(str(path), allow_overwrite=True, base_dir=base_dir)
         payload = {key: pol.to_dict() for key, pol in self.policies.items()}
-        path.write_text(json.dumps(payload, indent=2))
+        Path(safe_path).write_text(json.dumps(payload, indent=2))
 
     def get_best_policy(self) -> Optional[Policy]:
         """Retrieve the best-performing policy based on success rate.
