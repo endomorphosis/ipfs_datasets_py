@@ -11,7 +11,13 @@ from __future__ import annotations
 import datetime
 import json
 import os
+from pathlib import Path as _Path
 from typing import Any, Callable, Dict, Optional, Tuple
+
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_input_path,
+    validate_output_path,
+)
 
 
 def resolve_learning_state_filepath(
@@ -56,7 +62,12 @@ def save_learning_state_payload(
 
     try:
         serializable_state = numpy_json_serializable(state)
-        with open(filepath, "w", encoding="utf-8") as f:
+        
+        # Validate output path
+        base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
+        safe_filepath = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+        
+        with open(safe_filepath, "w", encoding="utf-8") as f:
             json.dump(serializable_state, f, indent=2)
         return filepath
     except (TypeError, ValueError, RuntimeError, OSError, json.JSONDecodeError) as error:
@@ -75,7 +86,11 @@ def save_learning_state_payload(
         }
 
         try:
-            with open(filepath, "w", encoding="utf-8") as f:
+            # Validate output path
+            base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
+            safe_filepath = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+            
+            with open(safe_filepath, "w", encoding="utf-8") as f:
                 json.dump(fallback_state, f, indent=2)
             return filepath
         except (TypeError, ValueError, RuntimeError, OSError):
@@ -98,7 +113,11 @@ def load_learning_state_payload(
         return False, {}
 
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
+        # Validate input path
+        base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
+        safe_filepath = validate_input_path(filepath, must_exist=True, base_dir=base_dir)
+        
+        with open(safe_filepath, "r", encoding="utf-8") as f:
             state = json.load(f)
         return True, state
     except (OSError, json.JSONDecodeError, ValueError, TypeError, KeyError, AttributeError) as error:

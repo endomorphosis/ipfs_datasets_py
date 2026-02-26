@@ -159,7 +159,7 @@ class MetricValue:
     labels: Dict[str, str] = field(default_factory=dict)
     description: Optional[str] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> MetricsDictRepr:
         """Convert to dictionary for serialization."""
         return {
             "name": self.name,
@@ -195,7 +195,7 @@ class OperationMetrics:
         self.error = error
         return self
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> MetricsDictRepr:
         """Convert to dictionary for serialization."""
         return {
             "operation_id": self.operation_id,

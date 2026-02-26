@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import datetime
+from pathlib import Path as _Path
 from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+
+from ipfs_datasets_py.optimizers.common.path_validator import validate_output_path
 
 # Optional numpy dependency used for chart positioning and color spacing.
 try:
@@ -932,7 +935,11 @@ class QueryVisualizer:
         """
         
         # Write to file
-        with open(output_file, 'w') as f:
+        # Validate output path
+        base_dir = _Path(output_file).parent if _Path(output_file).is_absolute() else None
+        safe_output_file = validate_output_path(output_file, allow_overwrite=True, base_dir=base_dir)
+        
+        with open(safe_output_file, 'w') as f:
             f.write(html_content)
             
         print(f"Dashboard exported to {output_file}")
