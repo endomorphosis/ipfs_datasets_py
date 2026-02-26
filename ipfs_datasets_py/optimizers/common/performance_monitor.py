@@ -18,6 +18,12 @@ import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timedelta
+from pathlib import Path as _Path
+
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_input_path,
+    validate_output_path,
+)
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import statistics
@@ -358,7 +364,12 @@ class PerformanceMetricsCollector:
         }
         
         self.persistence_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.persistence_path, 'w') as f:
+        
+        # Validate output path
+        base_dir = _Path(self.persistence_path).parent if _Path(self.persistence_path).is_absolute() else None
+        safe_path = validate_output_path(str(self.persistence_path), allow_overwrite=True, base_dir=base_dir)
+        
+        with open(safe_path, 'w') as f:
             json.dump(data, f, indent=2)
     
     def _load_from_disk(self) -> None:
@@ -367,7 +378,11 @@ class PerformanceMetricsCollector:
             return
         
         try:
-            with open(self.persistence_path, 'r') as f:
+            # Validate input path
+            base_dir = _Path(self.persistence_path).parent if _Path(self.persistence_path).is_absolute() else None
+            safe_path = validate_input_path(str(self.persistence_path), must_exist=True, base_dir=base_dir)
+            
+            with open(safe_path, 'r') as f:
                 data = json.load(f)
             
             # Load cycles
@@ -576,7 +591,12 @@ class PerformanceDashboard:
         }
         
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_path, 'w') as f:
+        
+        # Validate output path
+        base_dir = output_path.parent if output_path.is_absolute() else None
+        safe_path = validate_output_path(str(output_path), allow_overwrite=True, base_dir=base_dir)
+        
+        with open(safe_path, 'w') as f:
             json.dump(data, f, indent=2)
     
     def export_csv(self, output_path: Path) -> None:

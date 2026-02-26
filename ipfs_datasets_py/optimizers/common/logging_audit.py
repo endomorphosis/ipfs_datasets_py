@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 from dataclasses import dataclass, field
 
+from ipfs_datasets_py.optimizers.common.path_validator import validate_input_path
+
 
 @dataclass
 class LoggingAuditResult:
@@ -69,7 +71,11 @@ class LoggingAuditor:
         result = LoggingAuditResult(file_path=str(file_path))
         
         try:
-            with open(file_path, 'r') as f:
+            # Validate input path
+            base_dir = Path(file_path).parent if Path(file_path).is_absolute() else None
+            safe_path = validate_input_path(str(file_path), must_exist=True, base_dir=base_dir)
+            
+            with open(safe_path, 'r') as f:
                 content = f.read()
         except (OSError, UnicodeDecodeError, ValueError) as e:
             result.issues.append(f"Could not read file: {e}")

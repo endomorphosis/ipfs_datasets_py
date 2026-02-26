@@ -12,7 +12,7 @@ Usage:
 """
 
 from dataclasses import dataclass, field, asdict
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, Optional, List, TypedDict
 from enum import Enum
 
 
@@ -22,6 +22,24 @@ class OperationStatus(Enum):
     PARTIAL = "partial"
     FAILED = "failed"
     TIMEOUT = "timeout"
+
+
+class SerializedResultDict(TypedDict, total=False):
+    """TypedDict for serialized dataclass result representation.
+    
+    Fields:
+        (dynamic): Any serialized fields from source dataclass
+    """
+    pass
+
+
+class JsonSerializableDict(TypedDict, total=False):
+    """TypedDict for JSON-serializable result representation.
+    
+    Fields:
+        (dynamic): Serialized fields with primitive types (no Enum)
+    """
+    pass
 
 
 @dataclass
@@ -310,7 +328,7 @@ class ComparisonResult:
         return self.similarity_score >= 0.99
 
 
-def to_dict(result: Any) -> Dict[str, Any]:
+def to_dict(result: Any) -> SerializedResultDict:
     """Convert any result dataclass to dict.
     
     Args:
@@ -324,7 +342,7 @@ def to_dict(result: Any) -> Dict[str, Any]:
     return dict(result) if isinstance(result, dict) else {}
 
 
-def to_json_serializable(result: Any) -> Dict[str, Any]:
+def to_json_serializable(result: Any) -> JsonSerializableDict:
     """Convert result to JSON-serializable dict.
     
     Args:
