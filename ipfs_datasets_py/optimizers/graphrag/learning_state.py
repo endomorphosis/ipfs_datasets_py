@@ -8,7 +8,14 @@ import json
 import os
 import datetime
 import logging
+from pathlib import Path
 from typing import Dict, Any, List, Optional
+
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    PathValidationError,
+    validate_input_path,
+    validate_output_path,
+)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -129,14 +136,20 @@ class LearningStateManager:
             # Make state serializable (handle numpy arrays if present)
             serializable_state = self._make_json_serializable(state)
             
+            base_dir = Path(filepath).parent if Path(filepath).is_absolute() else None
+            safe_path = validate_output_path(
+                filepath,
+                allow_overwrite=True,
+                base_dir=base_dir,
+            )
             # Save state to file
-            with open(filepath, 'w') as f:
+            with open(safe_path, 'w') as f:
                 json.dump(serializable_state, f, indent=2)
             
             logging.info(f"Learning state saved to {filepath}")
             return filepath
         
-        except (TypeError, ValueError, RuntimeError, OSError, json.JSONDecodeError) as e:
+        except (TypeError, ValueError, RuntimeError, OSError, json.JSONDecodeError, PathValidationError) as e:
             # Handle serialization errors gracefully
             logging.error(f"Error saving learning state: {e}")
             return None
@@ -158,8 +171,14 @@ class LearningStateManager:
             return False
         
         try:
+            base_dir = Path(filepath).parent if Path(filepath).is_absolute() else None
+            safe_path = validate_input_path(
+                filepath,
+                must_exist=True,
+                base_dir=base_dir,
+            )
             # Load state from file
-            with open(filepath, 'r') as f:
+            with open(safe_path, 'r') as f:
                 state = json.load(f)
             
             # Set learning parameters
@@ -184,7 +203,7 @@ class LearningStateManager:
             logging.info(f"Learning state loaded from {filepath}")
             return True
         
-        except (OSError, json.JSONDecodeError, ValueError, TypeError, KeyError) as e:
+        except (OSError, json.JSONDecodeError, ValueError, TypeError, KeyError, PathValidationError) as e:
             logging.error(f"Error loading learning state: {e}")
             return False
 

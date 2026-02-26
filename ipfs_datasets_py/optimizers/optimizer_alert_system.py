@@ -10,12 +10,17 @@ import datetime
 import json
 import logging
 import os
+from pathlib import Path
 import threading
 import time
 from typing import Dict, List, Any, Optional, Callable
 
 
 from ipfs_datasets_py.optimizers.optimizer_learning_metrics import OptimizerLearningMetricsCollector
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    PathValidationError,
+    validate_output_path,
+)
 
 
 # Setup logging
@@ -302,11 +307,13 @@ class LearningAlertSystem:
             filepath = os.path.join(self.alerts_dir, filename)
 
             # Save as JSON
-            with open(filepath, 'w') as f:
+            base_dir = Path(filepath).parent if Path(filepath).is_absolute() else None
+            safe_path = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+            with open(safe_path, 'w') as f:
                 json.dump(anomaly.to_dict(), f, indent=2)
 
             logger.info(f"Saved anomaly record to {filepath}")
-        except (OSError, TypeError, ValueError, AttributeError) as e:
+        except (OSError, TypeError, ValueError, AttributeError, PathValidationError) as e:
             logger.error(f"Error saving anomaly record: {e}")
 
     def _detect_parameter_oscillations(self) -> List[LearningAnomaly]:

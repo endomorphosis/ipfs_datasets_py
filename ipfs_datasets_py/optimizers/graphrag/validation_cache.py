@@ -15,6 +15,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    PathValidationError,
+    validate_input_path,
+    validate_output_path,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -214,7 +220,13 @@ class LRUCache:
             return
         
         try:
-            with open(self.persistence_path, 'r') as f:
+            base_dir = self.persistence_path.parent if self.persistence_path.is_absolute() else None
+            safe_path = validate_input_path(
+                self.persistence_path,
+                must_exist=True,
+                base_dir=base_dir,
+            )
+            with open(safe_path, 'r') as f:
                 data = json.load(f)
             
             # Restore cache entries
@@ -226,7 +238,7 @@ class LRUCache:
                 self.stats.total_size_bytes += size
             
             logger.info(f"Loaded {len(self._cache)} entries from cache file")
-        except (OSError, json.JSONDecodeError, TypeError, ValueError) as e:
+        except (OSError, json.JSONDecodeError, TypeError, ValueError, PathValidationError) as e:
             logger.warning(f"Failed to load cache from disk: {e}")
     
     def _save_to_disk(self) -> None:
@@ -250,11 +262,17 @@ class LRUCache:
                 "stats": self.stats.to_dict(),
             }
             
-            with open(self.persistence_path, 'w') as f:
+            base_dir = self.persistence_path.parent if self.persistence_path.is_absolute() else None
+            safe_path = validate_output_path(
+                self.persistence_path,
+                allow_overwrite=True,
+                base_dir=base_dir,
+            )
+            with open(safe_path, 'w') as f:
                 json.dump(data, f, indent=2)
             
             logger.debug(f"Saved cache to {self.persistence_path}")
-        except (OSError, TypeError, ValueError) as e:
+        except (OSError, TypeError, ValueError, PathValidationError) as e:
             logger.warning(f"Failed to save cache to disk: {e}")
     
     def __del__(self):

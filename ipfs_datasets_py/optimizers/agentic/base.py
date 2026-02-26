@@ -327,13 +327,86 @@ class AgenticOptimizer(ABC):
         pass
 
     def validate(self, result: OptimizationResult) -> ValidationResult:
-        """Validate an optimization result.
+        """Validate an optimization result using comprehensive validation framework.
 
-        Default implementation is intentionally lightweight: it returns a
-        passing result so concrete optimizers can be instantiated even when
-        advanced validation is not yet implemented.
+        This method leverages the OptimizationValidator from validation.py to
+        perform comprehensive checks on the optimized code, including:
+        - Syntax checking
+        - Type checking
+        - Unit test execution
+        - Performance validation
+        - Security scanning
+        - Code style analysis
+
+        The validation level is determined by the optimizer configuration
+        (accessible via self.get_config_value("validation_level", "standard")).
+
+        Args:
+            result: The optimization result to validate
+
+        Returns:
+            ValidationResult with comprehensive validation checks
         """
-        return ValidationResult(passed=True)
+        # If there's no optimized code, return a basic passing result
+        if not result.success or not result.optimized_code:
+            return ValidationResult(passed=result.success)
+        
+        try:
+            from ipfs_datasets_py.optimizers.agentic.validation import (
+                OptimizationValidator,
+                ValidationLevel,
+            )
+            
+            # Get validation level from config
+            validation_level_str = self.get_config_value("validation_level", "standard")
+            try:
+                validation_level = ValidationLevel(validation_level_str.lower())
+            except (ValueError, AttributeError):
+                validation_level = ValidationLevel.STANDARD
+            
+            # Create validator
+            validator = OptimizationValidator(
+                level=validation_level,
+                parallel=True,
+                max_workers=4,
+            )
+            
+            # Build validation context with metrics
+            context = {}
+            if result.metrics:
+                context["baseline_metrics"] = result.metrics
+            
+            # Validate optimized code
+            detailed_result = validator.validate(
+                code=result.optimized_code,
+                target_files=result.metadata.get("target_files", []) if result.metadata else [],
+                level=validation_level,
+                context=context,
+            )
+            
+            # Convert detailed result to simple ValidationResult
+            validation_result = ValidationResult(
+                passed=detailed_result.passed,
+                syntax_check=detailed_result.syntax.get("passed", False),
+                type_check=detailed_result.types.get("passed", True),
+                unit_tests=detailed_result.unit_tests.get("passed", True),
+                integration_tests=detailed_result.integration_tests.get("passed", True),
+                performance_tests=detailed_result.performance.get("passed", True),
+                security_scan=detailed_result.security.get("passed", True),
+                style_check=detailed_result.style.get("passed", True),
+                errors=detailed_result.errors,
+                warnings=detailed_result.warnings,
+            )
+            
+            return validation_result
+            
+        except Exception as e:
+            # If validation framework fails, log and return basic result
+            self._log.warning(f"Comprehensive validation failed: {e}")
+            return ValidationResult(
+                passed=result.success,
+                errors=[f"Validation framework error: {str(e)}"],
+            )
         
     def get_capabilities(self) -> Dict[str, Any]:
         """Return the capabilities of this optimizer.

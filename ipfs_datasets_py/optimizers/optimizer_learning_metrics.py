@@ -7,12 +7,18 @@ related to the statistical learning process of the RAG query optimizer.
 
 import os
 import json
+from pathlib import Path
 import time
 import logging
 import datetime
 import threading
 from collections import defaultdict, namedtuple
 from typing import Dict, List, Any, Optional, Tuple, Union, Set
+
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    PathValidationError,
+    validate_output_path,
+)
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -1162,11 +1168,13 @@ class OptimizerLearningMetricsCollector:
 
         try:
             metrics_file = os.path.join(self.metrics_dir, "learning_metrics.json")
-            with open(metrics_file, 'w') as f:
+            base_dir = Path(metrics_file).parent if Path(metrics_file).is_absolute() else None
+            safe_path = validate_output_path(metrics_file, allow_overwrite=True, base_dir=base_dir)
+            with open(safe_path, 'w') as f:
                 f.write(self.to_json())
 
             logger.debug(f"Learning metrics saved to {metrics_file}")
-        except (OSError, TypeError, ValueError) as e:
+        except (OSError, TypeError, ValueError, PathValidationError) as e:
             logger.error(f"Error saving learning metrics: {str(e)}")
 
     def to_json(self):

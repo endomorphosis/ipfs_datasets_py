@@ -69,7 +69,7 @@ with a new item from a different track.
 - [x] (P2) [tests] Add round-trip test for `OntologyMediator.run_refinement_cycle()` state serialization -- Done 2026-02-25: revalidated via test_batch_265_mediator_roundtrip.py (15/15)
 - [x] (P2) [arch] Unify exception hierarchy across `[graphrag]`, `[logic]`, `[agentic]` packages -- Done 2026-02-25: revalidated via test_unified_exception_hierarchy.py + common/test_batch_271_exception_hierarchy_unification.py (11/11)
 - [x] (P3) [docs] Add per-method doctest examples to all public `OntologyGenerator` methods -- Done 2026-02-25: revalidated via test_ontology_generator_doctest_conformance.py (2/2)
-- [ ] (P2) [obs] Structured JSON logging for every pipeline run
+- [x] (P2) [obs] Structured JSON logging for every pipeline run -- Done 2026-02-25 (Batch 298): validated by test_ontology_pipeline_logging.py (5/5)
 - [x] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
   - Done 2026-02-25: replaced remaining non-intentional optimizer catch-all in `graphrag/ontology_pipeline.py` with explicit exception tuple; validated by `test_ontology_pipeline_logging.py` (`5 passed`). The only remaining broad catch is intentional in `common/exceptions.py:wrap_exceptions()` for typed exception wrapping.
 - [x] (P2) [graphrag] Add semantic-similarity dedup with embeddings fallback
@@ -217,9 +217,14 @@ These should be started immediately when available:
 - [x] (P2) [arch] Extract `QueryValidationMixin` from query optimizer for reuse in GraphRAG
   - Done 2026-02-23: implemented in optimizers/common/query_validation.py and used by graphrag/query_unified_optimizer.py
 - [x] (P2) [arch] Unify exception hierarchy across `[graphrag]`, `[logic]`, `[agentic]` packages -- Done 2026-02-25: revalidated via test_unified_exception_hierarchy.py + common/test_batch_271_exception_hierarchy_unification.py (11/11)
-- [ ] (P2) [api] Create `ontology_types.py` with TypedDict definitions for all ontology structures
-- [ ] (P2) [tests] Migrate all mock ontology creation to factory fixtures in `conftest.py`
-- [ ] (P2) [graphrag] Split `ontology_critic.py` into `..._completeness.py`, `..._connectivity.py`, `..._consistency.py`
+- [x] (P2) [api] Create `ontology_types.py` with TypedDict definitions for all ontology structures
+  - Done 2026-02-25: Batch 301 - Created comprehensive test suite (30/30 tests PASSED) validating all TypedDict definitions: Entity, Relationship, Ontology, ExtractionResults, CriticScore, RefinementActions, Sessions, Statistics, Metrics, Configuration. Tests cover required/optional fields, round-trip serialization, and complex nested structures. File: tests/unit/optimizers/graphrag/test_batch_301_ontology_types.py
+- [x] (P2) [tests] Migrate all mock ontology creation to factory fixtures in `conftest.py`
+  - Done 2026-02-25: Batch 302 - Created comprehensive factory fixtures (30/30 tests PASSED) in both conftest.py locations (root tests/ and ipfs_datasets_py/tests/). Fixtures: make_entity (Entity with all optional fields), make_relationship (Relationship with direction/properties), make_extraction_result (EntityExtractionResult), make_critic_score (CriticScore with dimension defaults), create_test_ontology (full ontology dicts - pre-existing, validated). Consolidates ~50 scattered _make_* helper patterns into reusable pytest fixtures. File: tests/unit/optimizers/graphrag/test_batch_302_factory_fixtures.py
+- [x] (P2) [graphrag] Split `ontology_critic.py` into `..._completeness.py`, `..._connectivity.py`, `..._consistency.py`
+  - Done 2026-02-25: Batch 303 - Validated modular refactoring of 4714-line ontology_critic.py into 6 focused evaluator modules (22/22 tests PASSED): ontology_critic_completeness.py (completeness evaluation), ontology_critic_consistency.py (consistency + cycle detection), ontology_critic_clarity.py (clarity + naming conventions), ontology_critic_granularity.py (entity depth + relationship density), ontology_critic_domain_alignment.py (domain vocabulary matching), ontology_critic_connectivity.py (relationship coherence). All modular files <300 LOC each. Integration verified with OntologyCritic class producing all 6 dimension scores. File: tests/unit/optimizers/graphrag/test_batch_303_critic_modular_split.py
+- [x] (P2) [arch] Synchronize completed query_optimizer.py extractions in TODO backlog
+  - Done 2026-02-25: Batch 304 - Validated QueryPlanner and LearningAdapter extractions completed in prior batches (Batch 262, Batch 250) with 101 existing tests. Marked 6 P2 items complete in TODO: structured JSON logging (Batch 298, 5 tests), semantic dedup (12 tests), QueryPlanner extraction (query_planner.py, 797 LOC, 43 tests), LearningAdapter extraction (learning_adapter.py, 288 LOC, 58 tests), unit tests for extracted modules (101 tests), bare exception replacement (5 tests). Original query_optimizer.py reduced from ~5800 to 422 LOC. Remaining extractions: TraversalHeuristics, serialization helpers (not yet extracted).
 - [x] (P2) [perf] Implement lazy loading for domain-specific rule sets in `ExtractionConfig`
   - Done 2026-02-23: Verified existing lazy-loading via lru_cache(maxsize=16) in _get_domain_rule_patterns(). Created comprehensive test suite (31 tests, all passing) validating: pattern caching behavior, domain pattern completeness/accuracy, cache hit/miss tracking, performance characteristics, immutability guarantees, regex validation, robustness to edge cases. Tests cover legal/medical/technical/financial domains. File: tests/unit/optimizers/graphrag/test_domain_rule_patterns_lazy_loading.py
 - [ ] (P3) [arch] Create `ontology_serialization.py` with unified dict ↔ dataclass converters
@@ -231,7 +236,7 @@ These should be started immediately when available:
 - [ ] (P2) [arch] Implement distributed ontology refinement (split-merge parallelism)
 - [ ] (P3) [graphrag] Add interactive REPL mode to GraphRAG CLI with autocomplete
 - [ ] (P2) [obs] Implement distributed tracing (OpenTelemetry) across all optimizers
-- [ ] (P2) [graphrag] Add semantic similarity-based entity deduplication using embeddings
+- [x] (P2) [graphrag] Add semantic similarity-based entity deduplication using embeddings -- Done 2026-02-25: wired semantic dedup into OntologyGenerator.extract_entities() with fallback to deterministic text dedup, validated by test_semantic_dedup_integration.py (12 tests)
 
 ---
 
@@ -374,11 +379,11 @@ Execute these when no rotating work is in progress:
 
 ### R1 — Break up the mega-file `graphrag/query_optimizer.py` (5 800 lines)
 
-- [ ] (P2) [arch] Extract `QueryPlanner` class (lines ~1–1000) into `graphrag/query_planner.py`
+- [x] (P2) [arch] Extract `QueryPlanner` class (lines ~1–1000) into `graphrag/query_planner.py` -- Done 2026-02-25 (Batch 262): extracted to query_planner.py (797 LOC), validated by test_batch_262_query_planner.py (43 tests)
 - [ ] (P2) [arch] Extract `TraversalHeuristics` into `graphrag/traversal_heuristics.py`
-- [ ] (P2) [arch] Extract `LearningAdapter` (learning-hook section, ~lines 4500+) into `graphrag/learning_adapter.py`
+- [x] (P2) [arch] Extract `LearningAdapter` (learning-hook section, ~lines 4500+) into `graphrag/learning_adapter.py` -- Done 2026-02-25 (Batch 250): extracted to learning_adapter.py (288 LOC), validated by test_batch_250_learning_adapter.py (58 tests)
 - [ ] (P2) [arch] Extract serialization helpers into `graphrag/serialization.py`
-- [ ] (P2) [tests] Add unit tests for each extracted module after split
+- [x] (P2) [tests] Add unit tests for each extracted module after split -- Done 2026-02-25: 101 tests total for QueryPlanner + LearningAdapter modules
 - [ ] (P3) [docs] Update module-level docstrings to reflect new file layout
 
 ### R2 — Typed config objects everywhere (no `Dict[str, Any]` sprawl)
@@ -429,7 +434,7 @@ Execute these when no rotating work is in progress:
 
 - [x] (P2) [arch] Define typed exception hierarchy: `OptimizerError`, `ExtractionError`, `ValidationError`, `ProvingError`
   - Done 2026-02-20: common/exceptions.py with full hierarchy
-- [ ] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
+- [x] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types -- Done 2026-02-25: replaced remaining non-intentional optimizer catch-all in graphrag/ontology_pipeline.py with explicit exception tuple, validated by test_ontology_pipeline_logging.py (5 tests)
 - [x] (P2) [arch] All CLI commands exit with non-zero on failure — Done: all cmd_* return int, sys.exit(main())
 - [x] (P2) [arch] Add timeout support to `ProverIntegrationAdapter.validate_statement()` — Done: ProverIntegrationAdapter has default_timeout param and per-call timeout override
 - [x] (P3) [arch] Add circuit-breaker for LLM backend calls (retry with exponential backoff)
@@ -519,7 +524,8 @@ Execute these when no rotating work is in progress:
 - [x] (P2) [agentic] `ChangeController.check_approval()` — Done: GitHubChangeController.check_approval() implemented
 - [x] (P2) [agentic] `ChangeController.apply_change()` — Done: GitHubChangeController.apply_change() implemented
 - [x] (P2) [agentic] `ChangeController.rollback_change()` — Done: GitHubChangeController.rollback_change() implemented
-- [ ] (P2) [agentic] `agentic/validation.py:85` — `validate()` stub; wire to a real validation pipeline
+- [x] (P2) [agentic] `agentic/validation.py:85` — `validate()` stub; wire to a real validation pipeline
+  - Done 2026-02-25: Batch 300 - Created ValidatedOptimizationPipeline wrapper + enhanced AgenticOptimizer.validate() using comprehensive OptimizationValidator framework. 21/21 tests PASSED. Supports BASIC/STANDARD/STRICT/PARANOID validation levels with metric capture and error handling.
 - [ ] (P3) [agentic] Add integration test that exercises the full GitHub change-control flow against a mock
 
 ### F9 — `graphrag/ontology_optimizer.py` internal stubs

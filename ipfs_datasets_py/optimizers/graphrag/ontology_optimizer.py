@@ -50,10 +50,15 @@ import csv
 from io import StringIO
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
 from ipfs_datasets_py.optimizers.common.profiling_decorators import profile_time
 from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    PathValidationError,
+    validate_output_path,
+)
 
 try:
     from opentelemetry import trace  # type: ignore[import-not-found]
@@ -645,10 +650,16 @@ class OntologyOptimizer:
                 "duration_ms": round((time.time() - operation_start) * 1000.0, 3),
             }
             try:
-                with open(json_log_path, "w", encoding="utf-8") as _fh:
+                base_dir = Path(json_log_path).parent if Path(json_log_path).is_absolute() else None
+                safe_path = validate_output_path(
+                    json_log_path,
+                    allow_overwrite=True,
+                    base_dir=base_dir,
+                )
+                with open(safe_path, "w", encoding="utf-8") as _fh:
                     json.dump(_summary, _fh, indent=2)
                 self._log.debug("Wrote batch parallel JSON log to %s", json_log_path)
-            except OSError as _exc:
+            except (OSError, PathValidationError) as _exc:
                 self._log.warning(
                     "Failed to write json_log_path=%s: %s", json_log_path, _exc
                 )
@@ -1303,7 +1314,9 @@ class OntologyOptimizer:
         writer.writerows(rows)
         csv_str = output.getvalue()
         if filepath:
-            with open(filepath, "w", newline="") as fh:
+            base_dir = Path(filepath).parent if Path(filepath).is_absolute() else None
+            safe_path = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+            with open(safe_path, "w", newline="") as fh:
                 fh.write(csv_str)
             return None
         return csv_str
@@ -1344,7 +1357,9 @@ class OntologyOptimizer:
             )
 
         if filepath:
-            with open(filepath, 'w', newline='') as file_obj:
+            base_dir = Path(filepath).parent if Path(filepath).is_absolute() else None
+            safe_path = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+            with open(safe_path, 'w', newline='') as file_obj:
                 file_obj.write(output.getvalue())
             return None
 
@@ -2120,7 +2135,9 @@ class OntologyOptimizer:
 
         serialized = str(g.serialize(format=format))
         if filepath:
-            with open(filepath, "w", encoding="utf-8") as fh:
+            base_dir = Path(filepath).parent if Path(filepath).is_absolute() else None
+            safe_path = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+            with open(safe_path, "w", encoding="utf-8") as fh:
                 fh.write(serialized)
             return None
         return serialized
@@ -2203,7 +2220,9 @@ class OntologyOptimizer:
         result = '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_str
 
         if filepath:
-            with open(filepath, "w", encoding="utf-8") as fh:
+            base_dir = Path(filepath).parent if Path(filepath).is_absolute() else None
+            safe_path = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+            with open(safe_path, "w", encoding="utf-8") as fh:
                 fh.write(result)
             return None
         return result

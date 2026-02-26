@@ -19,6 +19,7 @@ Integration:
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -26,6 +27,11 @@ import time
 import json
 import hashlib
 from collections import defaultdict
+
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    validate_input_path,
+    validate_output_path,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -571,7 +577,9 @@ class PromptOptimizer:
             }
         }
         
-        with open(filepath, 'w') as f:
+        base_dir = Path(filepath).parent if Path(filepath).is_absolute() else None
+        safe_path = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+        with open(safe_path, 'w') as f:
             json.dump(data, f, indent=2)
         
         logger.info(f"Exported prompt library to {filepath}")
@@ -582,7 +590,9 @@ class PromptOptimizer:
         Args:
             filepath: Path to import file
         """
-        with open(filepath, 'r') as f:
+        base_dir = Path(filepath).parent if Path(filepath).is_absolute() else None
+        safe_path = validate_input_path(filepath, must_exist=True, base_dir=base_dir)
+        with open(safe_path, 'r') as f:
             data = json.load(f)
         
         # Import prompts

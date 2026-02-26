@@ -8,9 +8,14 @@ with the GraphRAGQueryOptimizer to track, visualize, and analyze learning metric
 import time
 import logging
 import contextlib
+from pathlib import Path
 from typing import Dict, List, Any, Optional, Generator
 
 from ipfs_datasets_py.optimizers.optimizer_learning_metrics import OptimizerLearningMetricsCollector
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    PathValidationError,
+    validate_output_path,
+)
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -241,7 +246,9 @@ class MetricsCollectorAdapter:
         output_file = output_file or f"query_metrics_{int(time.time())}.csv"
 
         try:
-            with open(output_file, 'w', newline='') as csvfile:
+            base_dir = Path(output_file).parent if Path(output_file).is_absolute() else None
+            safe_path = validate_output_path(output_file, allow_overwrite=True, base_dir=base_dir)
+            with open(safe_path, 'w', newline='') as csvfile:
                 fieldnames = ['query_id', 'start_time', 'duration', 'status', 'results_count', 'quality_score']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
@@ -257,7 +264,7 @@ class MetricsCollectorAdapter:
                     })
 
             return output_file
-        except (OSError, ValueError, TypeError, csv.Error) as e:
+        except (OSError, ValueError, TypeError, csv.Error, PathValidationError) as e:
             logger.error(f"Error exporting metrics to CSV: {str(e)}")
             return None
 
@@ -278,7 +285,9 @@ class MetricsCollectorAdapter:
         output_file = output_file or f"performance_report_{int(time.time())}.txt"
 
         try:
-            with open(output_file, 'w') as f:
+            base_dir = Path(output_file).parent if Path(output_file).is_absolute() else None
+            safe_path = validate_output_path(output_file, allow_overwrite=True, base_dir=base_dir)
+            with open(safe_path, 'w') as f:
                 f.write("Performance Report\n")
                 f.write("=================\n\n")
 
@@ -310,7 +319,7 @@ class MetricsCollectorAdapter:
                         f.write(f"  {phase}: {avg_timing:.3f} seconds (avg)\n")
 
             return output_file
-        except (OSError, ValueError, TypeError) as e:
+        except (OSError, ValueError, TypeError, PathValidationError) as e:
             logger.error(f"Error generating performance report: {str(e)}")
             return None
 

@@ -16,12 +16,18 @@ import gc
 import time
 import psutil
 import threading
+from pathlib import Path
 from typing import Dict, List, Any
 from dataclasses import dataclass, field
 from datetime import datetime
 from collections import deque
 import logging
 import json
+
+from ipfs_datasets_py.optimizers.common.path_validator import (
+    PathValidationError,
+    validate_output_path,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -723,13 +729,15 @@ class AdvancedPerformanceOptimizer:
         }
         
         try:
-            with open(filepath, 'w') as f:
+            base_dir = Path(filepath).parent if Path(filepath).is_absolute() else None
+            safe_path = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
+            with open(safe_path, 'w') as f:
                 json.dump(data, f, indent=2, default=str)
             
             logger.info(f"Performance data exported to: {filepath}")
             return filepath
             
-        except (OSError, TypeError, ValueError, RuntimeError) as e:
+        except (OSError, TypeError, ValueError, RuntimeError, PathValidationError) as e:
             logger.error(f"Failed to export performance data: {e}")
             raise
 
