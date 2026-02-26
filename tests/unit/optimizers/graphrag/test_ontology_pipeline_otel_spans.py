@@ -103,3 +103,43 @@ def test_pipeline_run_skips_otel_span_when_disabled(monkeypatch) -> None:
     pipeline.run("Alice signed contract", data_source="unit-test", data_type="text", refine=False)
 
     assert tracer.spans == []
+
+
+def test_pipeline_run_batch_records_otel_span_when_enabled(monkeypatch) -> None:
+    monkeypatch.setenv("OTEL_ENABLED", "1")
+    pipeline = _make_pipeline_with_mocks()
+    tracer = _TracerRecorder()
+    pipeline._otel_tracer = tracer
+    pipeline._otel_enabled = True
+
+    result = pipeline.run_batch(
+        ["Alice signed contract", "Bob signed agreement"],
+        data_source="unit-test-batch",
+        data_type="text",
+        refine=False,
+        parallel=False,
+    )
+
+    assert len(result) == 2
+    assert len(tracer.spans) >= 1
+    matching = [entry for entry in tracer.spans if entry[0] == "graphrag.pipeline.run_batch"]
+    assert len(matching) == 1
+    span_name, attrs = matching[0]
+    assert span_name == "graphrag.pipeline.run_batch"
+    assert attrs["pipeline.domain"] == "legal"
+    assert attrs["pipeline.data_source"] == "unit-test-batch"
+    assert attrs["pipeline.refine"] is False
+    assert attrs["pipeline.doc_count"] == 2
+    assert attrs["pipeline.result_count"] == 2
+
+
+def test_pipeline_run_batch_skips_otel_span_when_disabled(monkeypatch) -> None:
+    monkeypatch.delenv("OTEL_ENABLED", raising=False)
+    pipeline = _make_pipeline_with_mocks()
+    tracer = _TracerRecorder()
+    pipeline._otel_tracer = tracer
+    pipeline._otel_enabled = False
+
+    pipeline.run_batch(["Alice signed contract"], data_source="unit-test", refine=True)
+
+    assert tracer.spans == []

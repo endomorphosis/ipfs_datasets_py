@@ -433,6 +433,71 @@ print(f'Key: {key}')
         assert "password=***REDACTED***" in stderr
         assert "hunter2" not in stderr
 
+    def test_execute_code_uses_firejail_when_seccomp_profile_available(self, tmp_path):
+        """When seccomp profile is configured and firejail exists, command is sandboxed."""
+        profile = tmp_path / "seccomp.profile"
+        profile.write_text("allow default")
+        config = SecurityConfig(seccomp_profile=str(profile), seccomp_tool="firejail")
+        executor = SandboxExecutor(config)
+
+        captured = {}
+
+        def _fake_run(cmd, **kwargs):
+            captured["cmd"] = cmd
+
+            class _Result:
+                returncode = 0
+                stdout = "ok\n"
+                stderr = ""
+
+            return _Result()
+
+        with patch(
+            "ipfs_datasets_py.optimizers.agentic.production_hardening.shutil.which",
+            return_value="/usr/bin/firejail",
+        ), patch(
+            "ipfs_datasets_py.optimizers.agentic.production_hardening.subprocess.run",
+            side_effect=_fake_run,
+        ):
+            success, stdout, stderr = executor.execute_code("print('ok')")
+
+        assert success is True
+        assert "ok" in stdout
+        assert captured["cmd"][0] == "/usr/bin/firejail"
+        assert any(arg.startswith("--seccomp=") for arg in captured["cmd"])
+        assert captured["cmd"][-3:] == ["python", "-c", "print('ok')"]
+
+    def test_execute_code_falls_back_when_seccomp_tool_missing(self, tmp_path):
+        """Missing seccomp runtime should gracefully fall back to plain python execution."""
+        profile = tmp_path / "seccomp.profile"
+        profile.write_text("allow default")
+        config = SecurityConfig(seccomp_profile=str(profile), seccomp_tool="firejail")
+        executor = SandboxExecutor(config)
+
+        captured = {}
+
+        def _fake_run(cmd, **kwargs):
+            captured["cmd"] = cmd
+
+            class _Result:
+                returncode = 0
+                stdout = "ok\n"
+                stderr = ""
+
+            return _Result()
+
+        with patch(
+            "ipfs_datasets_py.optimizers.agentic.production_hardening.shutil.which",
+            return_value=None,
+        ), patch(
+            "ipfs_datasets_py.optimizers.agentic.production_hardening.subprocess.run",
+            side_effect=_fake_run,
+        ):
+            success, stdout, stderr = executor.execute_code("print('ok')")
+
+        assert success is True
+        assert captured["cmd"] == ["python", "-c", "print('ok')"]
+
 
 class TestCircuitBreaker:
     """Test CircuitBreaker pattern implementation."""

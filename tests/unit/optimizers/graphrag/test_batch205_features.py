@@ -186,6 +186,12 @@ class TestRelationshipWeightEntropy:
         # two equal buckets → H = ln(2)
         assert g.relationship_weight_entropy(r) == pytest.approx(math.log(2))
 
+    def test_negative_weights_are_clamped_to_zero_bucket(self):
+        g = _make_generator()
+        rels = [_make_rel_mock(weight=-0.2), _make_rel_mock(weight=-0.7)]
+        r = _make_result(relationships=rels)
+        assert g.relationship_weight_entropy(r) == pytest.approx(0.0)
+
 
 # ── LogicValidator.max_path_length_estimate ──────────────────────────────────
 

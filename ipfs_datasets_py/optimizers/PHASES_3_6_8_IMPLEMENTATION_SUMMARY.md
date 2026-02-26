@@ -109,17 +109,23 @@ stats = router.get_statistics()
 
 ---
 
-## Phase 6: Testing Infrastructure 🚧 STARTED
+## Phase 6: Testing Infrastructure ✅ ALIGNED
 
-### Created
+### Current Structure
 
 **Directories:**
 - `tests/unit/optimizers/agentic/` - Unit test directory
 - `tests/integration/optimizers/agentic/` - Integration test directory
 
-**Files:**
+**Representative Files (current):**
 - `tests/unit/optimizers/agentic/__init__.py` - Test module init
 - `tests/unit/optimizers/agentic/test_llm_integration.py` - LLM router tests
+- `tests/unit/optimizers/agentic/test_cli.py` - CLI command tests
+- `tests/unit/optimizers/agentic/test_cli_argparse_smoke.py` - argparse smoke coverage
+- `tests/unit/optimizers/agentic/test_chaos.py` - chaos engineering tests
+- `tests/unit/optimizers/agentic/test_validation.py` - validation framework tests
+- `tests/unit/optimizers/agentic/test_github_change_control_flow.py` - end-to-end mocked GitHub flow
+- `tests/unit/optimizers/agentic/test_production_hardening.py` - production hardening coverage
 
 ### Test Coverage (So Far)
 
@@ -135,28 +141,11 @@ stats = router.get_statistics()
 - Code/description extraction
 - Statistics tracking
 
-### Remaining Work
+### Status Notes
 
-**Unit Tests (Est. ~1,000 lines):**
-- test_adversarial.py - Adversarial optimizer tests
-- test_actor_critic.py - Actor-critic tests
-- test_chaos.py - Chaos engineering tests
-- test_validation.py - Validation framework tests
-- test_cli.py - CLI command tests
-- test_patch_control.py - Patch management tests
-- test_github_control.py - GitHub integration tests
-- test_coordinator.py - Agent coordination tests
-
-**Integration Tests (Est. ~500 lines):**
-- test_e2e_optimization.py - End-to-end workflows
-- test_multi_agent.py - Multi-agent coordination
-- test_conflict_resolution.py - Conflict handling
-- test_validation_integration.py - Validation in pipeline
-
-**Test Fixtures:**
-- Mock LLM router
-- Sample code for testing
-- Test helpers and utilities
+This section previously listed planned test files that no longer match the repository naming/layout.
+Current coverage is maintained in `tests/unit/optimizers/agentic/` with focused modules for CLI,
+LLM integration, validation, chaos, adversarial, actor-critic, GitHub change-control, and exception paths.
 
 ---
 

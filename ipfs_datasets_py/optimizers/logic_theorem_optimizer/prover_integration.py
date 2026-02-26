@@ -16,6 +16,7 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
+import hashlib
 import time
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ class ProverStatus(Enum):
     UNAVAILABLE = "unavailable"
 
 
-@dataclass
+@dataclass(slots=True)
 class ProverVerificationResult:
     """Result of verification by a single prover.
     
@@ -52,7 +53,7 @@ class ProverVerificationResult:
     error_message: Optional[str] = None
 
 
-@dataclass
+@dataclass(slots=True)
 class AggregatedProverResult:
     """Aggregated result from multiple provers.
     
@@ -118,8 +119,17 @@ class ProverIntegrationAdapter:
             'cache_hits': 0,
             'cache_misses': 0,
             'timeouts': 0,
-            'errors': 0
+            'errors': 0,
+            'round_trip_count': 0,
+            'round_trip_total_ms': 0.0,
+            'round_trip_max_ms': 0.0,
         }
+
+    def _get_formula_cache_key(self, statement: Any) -> str:
+        """Return a deterministic cache key based on SHA-256(formula)."""
+        formula_str = statement.formula if hasattr(statement, 'formula') else str(statement)
+        formula_hash = hashlib.sha256(formula_str.encode('utf-8')).hexdigest()
+        return f"sha256:{formula_hash}"
     
     def _init_provers(self) -> None:
         """Initialize theorem provers."""
@@ -180,6 +190,7 @@ class ProverIntegrationAdapter:
             AggregatedProverResult with verification results
         """
         self.stats['verifications'] += 1
+        round_trip_start = time.time()
         timeout = timeout or self.default_timeout
         
         # Check cache first
@@ -197,14 +208,19 @@ class ProverIntegrationAdapter:
                 statement, prover_name, prover, timeout
             )
             prover_results.append(result)
-        
+
         # Aggregate results
         aggregated = self._aggregate_results(prover_results)
-        
+
         # Cache the result
         if self.cache:
             self._cache_result(statement, aggregated)
-        
+
+        elapsed_ms = (time.time() - round_trip_start) * 1000.0
+        self.stats['round_trip_count'] += 1
+        self.stats['round_trip_total_ms'] += elapsed_ms
+        self.stats['round_trip_max_ms'] = max(self.stats['round_trip_max_ms'], elapsed_ms)
+
         return aggregated
     
     def _verify_with_prover(
@@ -417,8 +433,8 @@ class ProverIntegrationAdapter:
         # Try to get from cache
         # (Cache implementation will handle the lookup)
         try:
-            formula_str = statement.formula if hasattr(statement, 'formula') else str(statement)
-            cached = self.cache.get(formula_str, prover_name="aggregated")
+            cache_key = self._get_formula_cache_key(statement)
+            cached = self.cache.get(cache_key, prover_name="aggregated")
             if cached:
                 return cached.result
         except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
@@ -441,8 +457,8 @@ class ProverIntegrationAdapter:
             return
         
         try:
-            formula_str = statement.formula if hasattr(statement, 'formula') else str(statement)
-            self.cache.set(formula_str, result, prover_name="aggregated")
+            cache_key = self._get_formula_cache_key(statement)
+            self.cache.set(cache_key, result, prover_name="aggregated")
         except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
             logger.debug(f"Cache write error: {e}")
     
@@ -464,6 +480,10 @@ class ProverIntegrationAdapter:
         # Add prover info
         stats['available_provers'] = list(self.provers.keys())
         stats['num_provers'] = len(self.provers)
+        if stats.get('round_trip_count', 0) > 0:
+            stats['round_trip_avg_ms'] = stats['round_trip_total_ms'] / stats['round_trip_count']
+        else:
+            stats['round_trip_avg_ms'] = 0.0
         
         return stats
     

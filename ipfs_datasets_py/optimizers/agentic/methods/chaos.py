@@ -809,6 +809,17 @@ class ChaosOptimizer(AgenticOptimizer):
     def _get_method(self) -> OptimizationMethod:
         return OptimizationMethod.CHAOS
 
+    def inject_cpu_spike(self, duration_seconds: float = 0.25, intensity: int = 20_000) -> str:
+        duration = max(0.01, float(duration_seconds))
+        work_scale = max(100, int(intensity))
+        return (
+            "import time\n"
+            "_cpu_spike_start = time.perf_counter()\n"
+            f"while time.perf_counter() - _cpu_spike_start < {duration:.6f}:\n"
+            f"    for _i in range({work_scale}):\n"
+            "        _ = (_i * _i) % 97\n"
+        )
+
     def analyze_vulnerabilities(self, code: Optional[str]) -> List[Vulnerability]:
         if not code:
             return []
@@ -889,7 +900,7 @@ class ChaosOptimizer(AgenticOptimizer):
             return "# injected malformed input\nvalue = '}{'\n" + base
 
         if fault_type == FaultType.CPU_SPIKE:
-            return base + "\n# injected cpu spike\nfor _ in range(10_000_0):\n    pass\n"
+            return base + "\n# injected cpu spike\n" + self.inject_cpu_spike()
 
         # Default: annotate code so the injection is visible.
         return base + f"\n# injected fault: {fault_type.value}\n"

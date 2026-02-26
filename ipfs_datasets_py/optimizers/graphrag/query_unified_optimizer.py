@@ -1,4 +1,16 @@
-"""Unified GraphRAG query optimizer orchestration layer."""
+"""Unified GraphRAG query optimizer orchestration layer.
+
+Current layout after the query optimizer split:
+- ``query_unified_optimizer.py``: high-level orchestration, execution flow,
+  and integration glue.
+- ``query_planner.py``: core planning and cache heuristics.
+- ``traversal_heuristics.py``: traversal scoring/selection logic.
+- ``learning_adapter.py``: learning-cycle hook and parameter adaptation.
+- ``serialization.py``: learning-state save/load helpers.
+
+This module intentionally remains the integration surface that coordinates the
+specialized components above.
+"""
 
 from __future__ import annotations
 
@@ -111,6 +123,11 @@ except ImportError:
     WIKIPEDIA_OPTIMIZER_AVAILABLE = False
 
 from ipfs_datasets_py.optimizers.graphrag.query_metrics import QueryMetricsCollector
+from ipfs_datasets_py.optimizers.graphrag.learning_adapter import (
+    apply_learning_hook,
+    check_learning_cycle,
+    increment_failure_counter,
+)
 from ipfs_datasets_py.optimizers.graphrag.query_stats import GraphRAGQueryStats
 from ipfs_datasets_py.optimizers.graphrag.query_planner import GraphRAGQueryOptimizer
 from ipfs_datasets_py.optimizers.graphrag.query_rewriter import QueryRewriter
@@ -119,6 +136,12 @@ from ipfs_datasets_py.optimizers.graphrag.query_budget import (
     QueryBudgetManager,
 )
 from ipfs_datasets_py.optimizers.graphrag.query_visualizer import QueryVisualizer
+from ipfs_datasets_py.optimizers.graphrag.serialization import (
+    build_learning_state,
+    load_learning_state_payload,
+    resolve_learning_state_filepath,
+    save_learning_state_payload,
+)
 from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
 from ipfs_datasets_py.optimizers.common.query_validation import QueryValidationMixin
 
@@ -126,6 +149,14 @@ from ipfs_datasets_py.optimizers.common.query_validation import QueryValidationM
 def _safe_error_text(error: Exception) -> str:
     """Return redacted exception text for logs and metrics."""
     return redact_sensitive(str(error))
+
+
+def _get_traversal_heuristics_cls():
+    """Lazy-import traversal heuristics to keep import resolution robust."""
+    from importlib import import_module
+
+    module = import_module("ipfs_datasets_py.optimizers.graphrag.traversal_heuristics")
+    return module.TraversalHeuristics
 
 
 class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
@@ -216,6 +247,12 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
             )
         else:
             self.metrics_collector = metrics_collector
+
+        # Keep serializer overrideable for tests and custom integrations.
+        if hasattr(self.metrics_collector, "_numpy_json_serializable"):
+            self._numpy_json_serializable = self.metrics_collector._numpy_json_serializable
+        else:
+            self._numpy_json_serializable = lambda value: value
             
         # Initialize visualizer if visualization is available
         self.visualizer = visualizer
@@ -583,82 +620,11 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         query_text = query.get("query_text", "")
         query_complexity = self._estimate_query_complexity(optimized_query)
         
-        # Enhanced Wikipedia relation hierarchy with importance scores
-        relation_importance = {
-            # Taxonomic relationships - highest value (0.9+)
-            "instance_of": 0.95,
-            "subclass_of": 0.92,
-            "type_of": 0.90,
-            "category": 0.90,
-            
-            # Compositional relationships - high value (0.8+)
-            "part_of": 0.88,
-            "has_part": 0.85,
-            "contains": 0.85,
-            "component_of": 0.83,
-            "member_of": 0.82,
-            "has_member": 0.82,
-            
-            # Spatial relationships - high value (0.7+)
-            "located_in": 0.79,
-            "capital_of": 0.78,
-            "headquarters_in": 0.78,
-            "geographical_location": 0.75,
-            "neighbor_of": 0.72,
-            
-            # Causal and temporal relationships - medium-high value (0.6+)
-            "created_by": 0.69,
-            "developer": 0.68,
-            "author": 0.67,
-            "invented_by": 0.65,
-            "founder": 0.65,
-            "preceded_by": 0.62,
-            "followed_by": 0.62,
-            "influenced": 0.60,
-            
-            # Functional relationships - medium value (0.5+)
-            "function": 0.58,
-            "used_for": 0.57,
-            "works_on": 0.55,
-            "employed_by": 0.55,
-            "opposite_of": 0.53,
-            "similar_to": 0.52,
-            
-            # General associative relationships - lower value (0.4+)
-            "related_to": 0.45,
-            "associated_with": 0.42,
-            "see_also": 0.40,
-            
-            # Weak relationships - lowest value (<0.4)
-            "different_from": 0.35,
-            "same_as": 0.35,
-            "externally_linked": 0.32,
-            "link": 0.30,
-            "described_by": 0.30
-        }
-        
+        traversal_heuristics = _get_traversal_heuristics_cls()
+        relation_importance = traversal_heuristics.WIKIPEDIA_RELATION_IMPORTANCE
+
         # Extract relation types from user query when possible
-        query_relations = []
-        
-        # Look for relationship indicators in query
-        if query_text:
-            query_text_lower = query_text.lower()
-            
-            # Example relation detection patterns
-            if any(term in query_text_lower for term in ["type", "instance", "is a", "example of"]):
-                query_relations.append("instance_of")
-                
-            if any(term in query_text_lower for term in ["part", "component", "contain", "within", "inside"]):
-                query_relations.append("part_of")
-                
-            if any(term in query_text_lower for term in ["located", "where", "place", "location"]):
-                query_relations.append("located_in")
-                
-            if any(term in query_text_lower for term in ["created", "made", "developed", "authored", "wrote"]):
-                query_relations.append("created_by")
-                
-            if any(term in query_text_lower for term in ["similar", "like", "analogous"]):
-                query_relations.append("similar_to")
+        query_relations = traversal_heuristics.detect_query_relations(query_text)
         
         # Add detected relations to traversal for prioritization
         if query_relations:
@@ -1148,40 +1114,7 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         Returns:
             bool: Whether this is a fact verification query
         """
-        query_blob = str(query).lower()
-
-        # Check for fact verification signals
-        if "verification" in query_blob:
-            return True
-            
-        # Check for source and target entities (common in fact verification)
-        if "source_entity" in query and "target_entity" in query:
-            return True
-            
-        # Check for fact verification language in query text
-        if "query_text" in query:
-            query_text = query["query_text"].lower()
-            fact_patterns = [
-                "is it true that", "verify if", "check if", "is there a connection between",
-                "are", "is", "did", "was", "were", "do", "does", "has", "have",
-                "connected to", "related to", "linked to", "correct that", "accurate that",
-                "prove", "disprove", "evidence for", "support for", "refute"
-            ]
-            
-            # Check for question format typical in fact verification
-            if any(query_text.startswith(word) for word in ["is", "are", "was", "were", "do", "does", "did", "has", "have", "can", "could", "should", "would"]):
-                return True
-                
-            # Check for fact verification keywords
-            if any(pattern in query_text for pattern in fact_patterns):
-                return True
-                
-            # Check for comparison patterns
-            comparison_patterns = ["same as", "different from", "equivalent to", "similar to", "unlike"]
-            if any(pattern in query_text for pattern in comparison_patterns):
-                return True
-                
-        return False
+        return _get_traversal_heuristics_cls().detect_fact_verification_query(query)
                 
     def _detect_exploratory_query(self, query: Dict[str, Any]) -> bool:
         """
@@ -1197,42 +1130,7 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         Returns:
             bool: Whether this is an exploratory query
         """
-        query_blob = str(query).lower()
-
-        # Check for explicit exploration signals in query parameters
-        if any(term in query_blob for term in ["exploration", "discover", "survey", "overview"]):
-            return True
-            
-        # Check for exploratory language in query text
-        if "query_text" in query:
-            query_text = query["query_text"].lower()
-            exploratory_patterns = [
-                "what are", "tell me about", "explain", "describe", "overview of",
-                "introduction to", "discover", "explore", "information about",
-                "learn about", "show me", "find", "search for", "list", "examples of",
-                "types of", "kinds of", "ways to", "methods of", "approaches to"
-            ]
-            
-            if any(pattern in query_text for pattern in exploratory_patterns):
-                return True
-            
-            # Check for broad topic indicators
-            if query_text.startswith(("what", "how", "why")) and len(query_text.split()) < 6:
-                # Short, open-ended questions are often exploratory
-                return True
-                
-        # Check for high max_depth without specific target constraints
-        if "traversal" in query and query["traversal"].get("max_depth", 0) > 3:
-            # Deep traversal without specific target constraints often indicates exploration
-            if "target_entity" not in query and "entity_ids" not in query:
-                return True
-                
-        # Check for broad vector search parameters
-        if "vector_params" in query and query["vector_params"].get("top_k", 0) > 10:
-            # Retrieving many vector matches suggests exploration rather than specific lookup
-            return True
-                
-        return False
+        return _get_traversal_heuristics_cls().detect_exploratory_query(query)
         
     def _detect_entity_types(self, query_text: str, predefined_types: List[str] = None) -> List[str]:
         """
@@ -1248,85 +1146,7 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         Returns:
             List[str]: Detected entity types
         """
-        # If predefined types are provided, use those
-        if predefined_types:
-            return predefined_types
-            
-        # Default to empty list if no query text
-        if not query_text:
-            return []
-            
-        # Normalize query text
-        text = query_text.lower()
-        detected_types = []
-        
-        # Person detection patterns
-        person_patterns = [
-            "who", "person", "people", "author", "writer", "creator", "founder",
-            "born", "died", "age", "biography", "invented", "discovered",
-            "president", "king", "queen", "actor", "actress", "director",
-            "scientist", "artist", "musician", "politician", "athlete"
-        ]
-        
-        # Organization detection patterns
-        organization_patterns = [
-            "company", "organization", "corporation", "business", "firm", "agency", 
-            "university", "school", "college", "institution", "government", "team",
-            "founded", "headquarters", "ceo", "employees", "products", "services"
-        ]
-        
-        # Location detection patterns
-        location_patterns = [
-            "where", "place", "location", "country", "city", "state", "region", 
-            "continent", "area", "located", "capital", "geography", "landmark",
-            "mountain", "river", "ocean", "lake", "island", "territory", "border"
-        ]
-        
-        # Concept detection patterns
-        concept_patterns = [
-            "what", "concept", "theory", "idea", "principle", "definition",
-            "meaning", "philosophy", "method", "system", "field", "discipline",
-            "explain", "describe", "define", "understand", "how does", "how is"
-        ]
-        
-        # Event detection patterns
-        event_patterns = [
-            "when", "event", "happened", "occurred", "took place", "date",
-            "history", "war", "battle", "conference", "meeting", "election",
-            "ceremony", "festival", "disaster", "revolution", "movement"
-        ]
-        
-        # Product detection patterns
-        product_patterns = [
-            "product", "device", "technology", "tool", "software", "hardware",
-            "machine", "vehicle", "book", "album", "movie", "film", "game",
-            "service", "brand", "model", "version", "release", "launched"
-        ]
-        
-        # Check for patterns in query
-        if any(pattern in text for pattern in person_patterns):
-            detected_types.append("person")
-            
-        if any(pattern in text for pattern in organization_patterns):
-            detected_types.append("organization")
-            
-        if any(pattern in text for pattern in location_patterns):
-            detected_types.append("location")
-            
-        if any(pattern in text for pattern in concept_patterns):
-            detected_types.append("concept")
-            
-        if any(pattern in text for pattern in event_patterns):
-            detected_types.append("event")
-            
-        if any(pattern in text for pattern in product_patterns):
-            detected_types.append("product")
-            
-        # If no types detected, default to concept (most general)
-        if not detected_types:
-            detected_types.append("concept")
-            
-        return detected_types
+        return _get_traversal_heuristics_cls().detect_entity_types(query_text, predefined_types)
     
     def _estimate_query_complexity(self, query: Dict[str, Any]) -> str:
         """
@@ -1338,41 +1158,7 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         Returns:
             str: Complexity level ("low", "medium", "high")
         """
-        complexity_score = 0
-        
-        # Check vector query complexity
-        if "vector_params" in query:
-            vector_params = query["vector_params"]
-            complexity_score += min(5, vector_params.get("top_k", 5) * 0.5)
-            
-        # Check traversal complexity
-        if "traversal" in query:
-            traversal = query["traversal"]
-            # Depth has exponential impact on complexity
-            max_depth = traversal.get("max_depth", 2)
-            complexity_score += max_depth * 2
-            
-            # Edge types increases complexity
-            edge_types = traversal.get("edge_types", [])
-            complexity_score += min(5, len(edge_types) * 0.5)
-            
-        # Query text complexity (if present)
-        if "query_text" in query:
-            query_text = query["query_text"]
-            # Longer queries are more complex
-            complexity_score += min(3, len(query_text.split()) / 10)
-            
-            # Multiple entity references increase complexity
-            entity_count = len(query.get("entity_ids", []))
-            complexity_score += min(3, entity_count * 0.5)
-            
-        # Determine complexity level
-        if complexity_score < 5:
-            return "low"
-        elif complexity_score < 10:
-            return "medium"
-        else:
-            return "high"
+        return _get_traversal_heuristics_cls().estimate_query_complexity(query)
     
 
 
@@ -1853,76 +1639,29 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         """
         if not hasattr(self, '_learning_enabled') or not self._learning_enabled:
             return None
-        
-        # Use default path if none provided
+
+        filepath = resolve_learning_state_filepath(
+            filepath=filepath,
+            metrics_dir=getattr(self, "metrics_dir", None),
+        )
         if filepath is None:
-            if hasattr(self, 'metrics_dir') and self.metrics_dir:
-                filepath = os.path.join(self.metrics_dir, "learning_state.json")
-            else:
-                # No valid filepath, can't save
-                return None
-            
-        # Create state object
-        state = {
-            "learning_enabled": self._learning_enabled,
-            "learning_cycle": self._learning_cycle,
-            "learning_parameters": getattr(self, "_learning_parameters", {}),
-            "traversal_stats": getattr(self, "_traversal_stats", {}),
-            "entity_importance_cache": getattr(self, "_entity_importance_cache", {}),
-            "timestamp": datetime.datetime.now().isoformat()
-        }
-    
-        # Ensure directory exists
-        os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=True)
-    
-        try:
-            # First apply numpy handling
-            serializable_state = self._numpy_json_serializable(state)
-        
-            # Save state to file
-            with open(filepath, "w", encoding="utf-8") as f:
-                json.dump(serializable_state, f, indent=2)
-            
-            return filepath
-        except (
-            TypeError,
-            ValueError,
-            RuntimeError,
-            OSError,
-            json.JSONDecodeError,
-        ) as e:
-            # Handle serialization errors gracefully
-            error_message = (
-                "Error serializing learning state to JSON: "
-                f"{_safe_error_text(e)}"
-            )
-        
-            # Create a simplified version with just error information
-            fallback_state = {
-                "error": error_message,
-                "timestamp": datetime.datetime.now().isoformat(),
-                "partial_state": True,
-                # Include some minimal state information
-                "learning_enabled": state.get("learning_enabled", False),
-                "learning_cycle": state.get("learning_cycle", 0),
-                # Keep legacy key for backward compatibility with older tooling.
-                "learning_cycles_completed": state.get("learning_cycle", 0),
-            }
-        
-            # Try to save the fallback state
-            try:
-                with open(filepath, "w", encoding="utf-8") as f:
-                    json.dump(fallback_state, f, indent=2)
-                return filepath
-            except (TypeError, ValueError, RuntimeError, OSError):
-                # If that also fails, log error and return None
-                if hasattr(self, "metrics_collector") and self.metrics_collector is not None:
-                    self.metrics_collector.record_additional_metric(
-                        name="serialization_error",
-                        value=f"Failed to save learning state: {error_message}",
-                        category="error"
-                    )
-                return None
+            return None
+
+        state = build_learning_state(
+            learning_enabled=self._learning_enabled,
+            learning_cycle=self._learning_cycle,
+            learning_parameters=getattr(self, "_learning_parameters", {}),
+            traversal_stats=getattr(self, "_traversal_stats", {}),
+            entity_importance_cache=getattr(self, "_entity_importance_cache", {}),
+        )
+
+        return save_learning_state_payload(
+            filepath=filepath,
+            state=state,
+            numpy_json_serializable=self._numpy_json_serializable,
+            safe_error_text=_safe_error_text,
+            metrics_collector=self.metrics_collector if hasattr(self, "metrics_collector") else None,
+        )
         
     def load_learning_state(self, filepath: Optional[str] = None) -> bool:
         """
@@ -1934,55 +1673,34 @@ class UnifiedGraphRAGQueryOptimizer(QueryValidationMixin):
         Returns:
             bool: True if state was loaded successfully, False otherwise
         """
-        # Use default path if none provided
+        filepath = resolve_learning_state_filepath(
+            filepath=filepath,
+            metrics_dir=getattr(self, "metrics_dir", None),
+        )
         if filepath is None:
-            if hasattr(self, 'metrics_dir') and self.metrics_dir:
-                filepath = os.path.join(self.metrics_dir, "learning_state.json")
-            else:
-                # No valid filepath, can't load
-                return False
-            
-        # Check if file exists
-        if not os.path.exists(filepath):
             return False
-        
-        try:
-            # Load state from file
-            with open(filepath, "r", encoding="utf-8") as f:
-                state = json.load(f)
-            
-            # Set learning parameters
-            self._learning_enabled = state.get("learning_enabled", False)
-            self._learning_cycle = state.get("learning_cycle", 10)
-        
-            # Set learning parameters if present
-            if "learning_parameters" in state:
-                self._learning_parameters = state["learning_parameters"]
-            
-            # Set traversal stats if present
-            if "traversal_stats" in state:
-                self._traversal_stats = state["traversal_stats"]
-            
-            # Set entity importance cache if present
-            if "entity_importance_cache" in state:
-                self._entity_importance_cache = state["entity_importance_cache"]
-            
-            return True
-        
-        except (
-            OSError,
-            json.JSONDecodeError,
-            ValueError,
-            TypeError,
-            KeyError,
-            AttributeError,
-        ) as e:
-            # Handle load errors
-            if hasattr(self, 'logger'):
-                self.logger.error(
-                    f"Error loading learning state: {_safe_error_text(e)}"
-                )
+
+        loaded, state = load_learning_state_payload(
+            filepath=filepath,
+            safe_error_text=_safe_error_text,
+            logger=self.logger if hasattr(self, "logger") else None,
+        )
+        if not loaded:
             return False
+
+        self._learning_enabled = state.get("learning_enabled", False)
+        self._learning_cycle = state.get("learning_cycle", 10)
+
+        if "learning_parameters" in state:
+            self._learning_parameters = state["learning_parameters"]
+
+        if "traversal_stats" in state:
+            self._traversal_stats = state["traversal_stats"]
+
+        if "entity_importance_cache" in state:
+            self._entity_importance_cache = state["entity_importance_cache"]
+
+        return True
     
     def record_path_performance(self, 
                                 path: List[str], 

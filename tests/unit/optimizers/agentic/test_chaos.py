@@ -198,6 +198,23 @@ def sum_list(items):
         
         assert isinstance(faulty_code, str)
         assert "[]" in faulty_code or "empty" in faulty_code.lower()
+
+    def test_inject_cpu_spike_snippet(self, optimizer):
+        """Test dedicated CPU spike snippet generation."""
+        spike = optimizer.inject_cpu_spike(duration_seconds=0.1, intensity=500)
+
+        assert isinstance(spike, str)
+        assert "time.perf_counter" in spike
+        assert "range(500)" in spike
+
+    def test_inject_fault_cpu_spike_uses_helper(self, optimizer):
+        """Test CPU spike fault injection routes through helper."""
+        code = "def run():\n    return 1\n"
+        faulty_code = optimizer.inject_fault(code, FaultType.CPU_SPIKE)
+
+        assert isinstance(faulty_code, str)
+        assert "injected cpu spike" in faulty_code
+        assert "time.perf_counter" in faulty_code
     
     def test_execute_with_fault(self, optimizer):
         """Test executing code with injected fault."""

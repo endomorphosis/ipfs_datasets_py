@@ -172,6 +172,13 @@ from .visualization import (
 from .ontology_learning_adapter import OntologyLearningAdapter, FeedbackRecord
 
 from .ontology_refinement_agent import OntologyRefinementAgent, NoOpRefinementAgent
+from .traversal_heuristics import TraversalHeuristics
+from .serialization import (
+    resolve_learning_state_filepath,
+    build_learning_state,
+    save_learning_state_payload,
+    load_learning_state_payload,
+)
 
 from .exceptions import (
     GraphRAGError,

@@ -1,8 +1,10 @@
 """Learning hook adapter for GraphRAG query optimizer.
 
-This module isolates statistical learning cycle logic from the monolithic
-query_optimizer module. It operates on a host optimizer instance to preserve
-behavior without changing existing data structures.
+This module isolates statistical learning-cycle logic from
+``query_unified_optimizer.py``. It operates on a host optimizer instance to
+preserve behavior without changing existing data structures, and is part of
+the split layout with ``query_planner.py``, ``traversal_heuristics.py``, and
+``serialization.py``.
 """
 
 from __future__ import annotations

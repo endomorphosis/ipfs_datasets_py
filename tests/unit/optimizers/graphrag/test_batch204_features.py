@@ -12,6 +12,7 @@ Methods under test:
 """
 import math
 import pytest
+import threading
 from unittest.mock import MagicMock
 
 
@@ -161,6 +162,40 @@ class TestEntityConfidenceEntropy:
         g = _make_generator()
         r = _make_result([_make_entity(f"e{i}", i * 0.1) for i in range(5)])
         assert g.entity_confidence_entropy(r) >= 0.0
+
+    def test_negative_confidences_are_clamped_to_zero_bucket(self):
+        g = _make_generator()
+        r = _make_result([_make_entity("a", -0.2), _make_entity("b", -0.8)])
+        assert g.entity_confidence_entropy(r) == pytest.approx(0.0)
+
+
+class TestParallelRelationshipBatchProcessing:
+    def test_process_entity_pairs_batch_uses_passed_threshold_without_context_nameerror(self):
+        g = _make_generator()
+        e1 = _make_entity("e1", confidence=0.9)
+        e1.text = "Alice"
+        e2 = _make_entity("e2", confidence=0.9)
+        e2.text = "Bob"
+
+        g._is_impossible_type_pair = lambda *_args, **_kwargs: False
+        g._infer_type_from_context = lambda *_args, **_kwargs: ("RELATED_TO", 0.6)
+
+        rels = g._process_entity_pairs_batch(
+            batch=[(0, 1)],
+            entities=[e1, e2],
+            text="Alice collaborated with Bob on a project.",
+            text_lower="alice collaborated with bob on a project.",
+            linked=set(),
+            rel_id_counter=[0],
+            rel_id_lock=threading.Lock(),
+            sentence_window=0,
+            sentence_spans=[],
+            entity_sentence_index={},
+            llm_threshold=0.0,
+        )
+
+        assert len(rels) == 1
+        assert rels[0].type == "RELATED_TO"
 
 
 # ── LogicValidator.root_nodes ─────────────────────────────────────────────────

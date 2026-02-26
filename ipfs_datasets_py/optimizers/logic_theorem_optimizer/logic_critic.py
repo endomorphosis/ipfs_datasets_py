@@ -29,7 +29,7 @@ class CriticDimensions(Enum):
     EXPRESSIVENESS = "expressiveness"  # Captures nuance
 
 
-@dataclass
+@dataclass(slots=True)
 class DimensionScore:
     """Score for a single evaluation dimension.
     
@@ -45,7 +45,7 @@ class DimensionScore:
     details: Dict[str, Any] = field(default_factory=dict)
 
 
-@dataclass
+@dataclass(slots=True)
 class CriticScore:
     """Complete critic evaluation score.
     

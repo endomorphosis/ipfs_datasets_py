@@ -137,6 +137,7 @@ classDiagram
 > - [Troubleshooting Dashboards](../../docs/optimizers/TROUBLESHOOTING_DASHBOARDS.md) - Metrics/log panels for performance and quality drift triage
 > - [Alerting Examples](../../docs/optimizers/ALERTING_EXAMPLES.md) - Prometheus alert rules for score/error/latency regressions
 > - [Optimizer Contributing Guide](CONTRIBUTING.md) - PR expectations, batch commit conventions, and quality checks
+> - [How to Add a New Optimizer](../../docs/optimizers/HOW_TO_ADD_NEW_OPTIMIZER.md) - Integration checklist for new optimizer packages
 
 ### Agentic Optimizer CLI
 

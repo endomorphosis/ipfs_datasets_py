@@ -6,7 +6,7 @@ proof traces can be exported, diffed, and consumed by downstream tooling.
 
 from __future__ import annotations
 
-from dataclasses import is_dataclass
+from dataclasses import fields, is_dataclass
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -122,8 +122,12 @@ def serialize_dataclass_like(obj: Any) -> Dict[str, Any]:
     """Best-effort serialization helper for dataclass-based proof artifacts."""
     if is_dataclass(obj):
         return {
-            key: value.value if hasattr(value, "value") else value
-            for key, value in obj.__dict__.items()
+            field.name: (
+                getattr(obj, field.name).value
+                if hasattr(getattr(obj, field.name), "value")
+                else getattr(obj, field.name)
+            )
+            for field in fields(obj)
         }
     if isinstance(obj, dict):
         return dict(obj)

@@ -138,6 +138,15 @@ Direct links to module documentation:
 5. **Update Guides**: Keep permanent guides in `guides/` up to date
 6. **Index Files**: Each subdirectory should include a README.md or index file
 
+### Build and publish docs site
+
+This repository now includes a root-level `mkdocs.yml` configured to publish docs from `docs/`, including generated API pages in `docs/api/`.
+
+- Build site locally: `mkdocs build`
+- Serve docs locally: `mkdocs serve`
+
+If MkDocs is not installed in your environment, install it with `pip install mkdocs`.
+
 ### Recent Reorganization (February 2026)
 
 The documentation was comprehensively reorganized to improve navigation:

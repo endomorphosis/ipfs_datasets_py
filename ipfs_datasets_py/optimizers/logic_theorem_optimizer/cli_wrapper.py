@@ -306,6 +306,12 @@ Examples:
             'status',
             help='Show optimizer status and capabilities'
         )
+
+        # interactive command
+        subparsers.add_parser(
+            'interactive',
+            help='Launch interactive logic theorem optimizer REPL'
+        )
         
         return parser
     
@@ -687,6 +693,20 @@ Examples:
         print("  • Deontic Logic\n")
         
         return 0
+
+    def cmd_interactive(self, args: argparse.Namespace) -> int:
+        """Launch interactive logic theorem optimizer REPL."""
+        try:
+            import importlib
+
+            repl_mod = importlib.import_module(
+                "ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_repl"
+            )
+            repl_main = getattr(repl_mod, "main")
+            return int(repl_main())
+        except (OSError, IOError, ValueError, TypeError, AttributeError, RuntimeError) as e:
+            print(f"❌ Error: {_safe_error_text(e)}")
+            return 1
     
     def run(self, args: Optional[List[str]] = None) -> int:
         """Run CLI.
@@ -712,6 +732,8 @@ Examples:
                 return self.cmd_optimize(parsed_args)
             elif parsed_args.command == 'status':
                 return self.cmd_status(parsed_args)
+            elif parsed_args.command == 'interactive':
+                return self.cmd_interactive(parsed_args)
             else:
                 parser.print_help()
                 return 1

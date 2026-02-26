@@ -276,6 +276,12 @@ Examples:
             '--output', '-o',
             help='Optional output JSON file path'
         )
+
+        # interactive command
+        subparsers.add_parser(
+            'interactive',
+            help='Launch interactive GraphRAG REPL with history and completion'
+        )
         
         return parser
 
@@ -779,6 +785,32 @@ Examples:
         ) as e:
             print(f"❌ Error: {self._safe_error_text(e)}")
             return 1
+
+    def cmd_interactive(self, args: argparse.Namespace) -> int:
+        """Launch interactive GraphRAG REPL mode.
+
+        Args:
+            args: Command arguments
+
+        Returns:
+            Exit code
+        """
+        try:
+            from ipfs_datasets_py.optimizers.graphrag_repl import main as repl_main
+
+            return int(repl_main())
+        except (
+            ImportError,
+            ConfigurationError,
+            OSError,
+            ValueError,
+            TypeError,
+            AttributeError,
+            RuntimeError,
+            KeyError,
+        ) as e:
+            print(f"❌ Error: {self._safe_error_text(e)}")
+            return 1
     
     def run(self, args: Optional[List[str]] = None) -> int:
         """Run CLI.
@@ -806,6 +838,8 @@ Examples:
                 return self.cmd_status(parsed_args)
             elif parsed_args.command == 'health':
                 return self.cmd_health(parsed_args)
+            elif parsed_args.command == 'interactive':
+                return self.cmd_interactive(parsed_args)
             else:
                 parser.print_help()
                 return 1

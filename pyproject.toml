@@ -51,3 +51,17 @@ ipfs_datasets_py = ["py.typed"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.mutmut]
+paths_to_mutate = [
+    "ipfs_datasets_py/optimizers/graphrag/ontology_critic.py",
+]
+also_copy = [
+    "ipfs_datasets_py/optimizers/common",
+    "ipfs_datasets_py/optimizers/graphrag",
+]
+pytest_add_cli_args_test_selection = [
+    "tests/unit/optimizers/graphrag/test_ontology_critic_dimensions.py",
+    "tests/unit/optimizers/graphrag/test_ontology_critic_snapshots.py",
+    "tests/unit/optimizers/graphrag/test_ontology_critic_evaluate_batch.py",
+]

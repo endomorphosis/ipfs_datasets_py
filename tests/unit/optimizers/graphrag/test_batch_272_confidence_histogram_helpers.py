@@ -4,6 +4,11 @@ from __future__ import annotations
 
 import pytest
 
+hypothesis = pytest.importorskip("hypothesis")
+given = hypothesis.given
+settings = hypothesis.settings
+st = hypothesis.strategies
+
 from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
     Entity,
     EntityExtractionResult,
@@ -48,3 +53,42 @@ def test_ontology_generator_confidence_histogram_labelled_buckets() -> None:
         "0.75-1.00": 2,
     }
     assert sum(hist.values()) == len(result.entities)
+
+
+@given(
+    values=st.lists(
+        st.floats(min_value=-5.0, max_value=5.0, allow_nan=False, allow_infinity=False),
+        min_size=0,
+        max_size=100,
+    ),
+    bins=st.integers(min_value=1, max_value=25),
+)
+@settings(max_examples=80)
+def test_entity_extraction_result_confidence_histogram_properties(
+    values: list[float], bins: int
+) -> None:
+    result = _result_with_confidences(values)
+
+    hist = result.confidence_histogram(bins=bins)
+
+    assert len(hist) == bins
+    assert all(isinstance(count, int) and count >= 0 for count in hist)
+    assert sum(hist) == len(values)
+
+
+@given(
+    values=st.lists(
+        st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False),
+        min_size=0,
+        max_size=100,
+    )
+)
+@settings(max_examples=80)
+def test_entity_extraction_result_confidence_histogram_single_bin_property(
+    values: list[float],
+) -> None:
+    result = _result_with_confidences(values)
+
+    hist = result.confidence_histogram(bins=1)
+
+    assert hist == [len(values)]

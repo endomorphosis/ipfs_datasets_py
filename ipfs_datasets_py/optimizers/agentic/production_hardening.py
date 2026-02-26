@@ -6,6 +6,7 @@ for production deployment.
 
 import os
 import re
+import shutil
 import subprocess
 import threading
 import time
@@ -37,6 +38,8 @@ class SecurityConfig:
     sandbox_timeout: int = 60
     max_memory_mb: int = 512
     max_cpu_percent: int = 80
+    seccomp_profile: Optional[str] = None
+    seccomp_tool: str = "auto"
     
     # Input validation
     allowed_file_extensions: List[str] = None
@@ -159,6 +162,41 @@ class SandboxExecutor:
     def __init__(self, config: SecurityConfig):
         """Initialize sandbox executor."""
         self.config = config
+
+    def _build_command(self, code: str) -> List[str]:
+        """Build execution command with optional seccomp profile support."""
+        base_cmd = ['python', '-c', code]
+
+        profile = (self.config.seccomp_profile or "").strip()
+        if not profile:
+            return base_cmd
+
+        if os.name != "posix":
+            logger.warning("seccomp profile requested but unsupported on this platform")
+            return base_cmd
+
+        profile_path = Path(profile)
+        if not profile_path.exists():
+            logger.warning("seccomp profile not found: %s", profile)
+            return base_cmd
+
+        seccomp_tool = (self.config.seccomp_tool or "auto").strip().lower()
+        if seccomp_tool in ("auto", "firejail"):
+            firejail = shutil.which("firejail")
+            if firejail:
+                return [
+                    firejail,
+                    "--quiet",
+                    f"--seccomp={str(profile_path)}",
+                    "--private",
+                    "python",
+                    "-c",
+                    code,
+                ]
+            if seccomp_tool == "firejail":
+                logger.warning("seccomp tool 'firejail' requested but not installed")
+
+        return base_cmd
     
     def execute_code(
         self,
@@ -190,9 +228,10 @@ class SandboxExecutor:
                 safe_env.pop(key)
         
         try:
+            cmd = self._build_command(code)
             # Execute in subprocess with timeout
             result = subprocess.run(
-                ['python', '-c', code],
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=timeout,

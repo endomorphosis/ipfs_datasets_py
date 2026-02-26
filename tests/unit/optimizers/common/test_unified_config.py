@@ -15,6 +15,8 @@ from ipfs_datasets_py.optimizers.common.unified_config import (
     create_context,
     context_from_optimization_context,
     context_from_ontology_generation_context,
+    context_from_logic_extraction_context,
+    context_from_agentic_optimization_task,
     backend_config_from_constructor_kwargs,
     domain_type_from_value,
     ensure_shared_backend_config,
@@ -252,6 +254,34 @@ class TestContextAdapters:
         assert "data_type" in adapted.metadata
         assert "trace_id" in adapted.metadata
 
+    def test_context_from_optimization_context_logic(self):
+        legacy = OptimizationContext(
+            session_id="logic-1",
+            input_data={"p": "q"},
+            domain="logic",
+            metadata={"source": "logic-test"},
+        )
+        adapted = context_from_optimization_context(legacy)
+
+        assert isinstance(adapted, LogicContext)
+        assert adapted.session_id == "logic-1"
+        assert adapted.metadata["source"] == "logic-test"
+        assert adapted.metadata["session_id"] == "logic-1"
+
+    def test_context_from_optimization_context_agentic(self):
+        legacy = OptimizationContext(
+            session_id="agent-1",
+            input_data="optimize this",
+            domain="agentic",
+            metadata={"priority": "high"},
+        )
+        adapted = context_from_optimization_context(legacy)
+
+        assert isinstance(adapted, AgenticContext)
+        assert adapted.session_id == "agent-1"
+        assert adapted.metadata["priority"] == "high"
+        assert adapted.metadata["session_id"] == "agent-1"
+
     def test_context_from_ontology_generation_context(self):
         fake_context = SimpleNamespace(
             data_source="doc.txt",
@@ -276,6 +306,50 @@ class TestContextAdapters:
         assert adapted.metadata["trace_id"] == "trace-123"
         assert adapted.extraction_context == {"confidence_threshold": 0.7}
 
+    def test_context_from_logic_extraction_context(self):
+        fake_context = SimpleNamespace(
+            data={"employee": "must train"},
+            data_type="text",
+            domain="legal",
+            ontology={"entities": []},
+            hints=["deontic"],
+            previous_extractions=[{"id": 1}],
+            config={"extraction_mode": "tdfol"},
+            trace_id="trace-logic-1",
+        )
+        adapted = context_from_logic_extraction_context(
+            fake_context,
+            session_id="l1",
+        )
+
+        assert isinstance(adapted, LogicContext)
+        assert adapted.session_id == "l1"
+        assert adapted.formulas == {"employee": "must train"}
+        assert adapted.metadata["logic_domain"] == "legal"
+        assert adapted.metadata["session_id"] == "l1"
+        assert adapted.metadata["trace_id"] == "trace-logic-1"
+
+    def test_context_from_agentic_optimization_task(self):
+        fake_task = SimpleNamespace(
+            task_id="task-7",
+            method=SimpleNamespace(value="test_driven"),
+            priority=90,
+            assigned_agent="agent-alpha",
+            target_files=["a.py", "b.py"],
+            metadata={"ticket": "JIRA-7"},
+            description="Improve validation",
+            constraints={"max_runtime": "30s"},
+        )
+        adapted = context_from_agentic_optimization_task(fake_task)
+
+        assert isinstance(adapted, AgenticContext)
+        assert adapted.session_id == "task-7"
+        assert adapted.metadata["task_id"] == "task-7"
+        assert adapted.metadata["method"] == "test_driven"
+        assert adapted.metadata["target_files_count"] == 2
+        assert adapted.decision_log["method"] == "test_driven"
+        assert adapted.approval_status["has_assigned_agent"] is True
+
     def test_context_adapters_exported_from_common_namespace(self):
         from ipfs_datasets_py.optimizers import common
 
@@ -285,6 +359,8 @@ class TestContextAdapters:
         assert hasattr(common, "ensure_shared_context_metadata")
         assert hasattr(common, "context_from_optimization_context")
         assert hasattr(common, "context_from_ontology_generation_context")
+        assert hasattr(common, "context_from_logic_extraction_context")
+        assert hasattr(common, "context_from_agentic_optimization_task")
 
     def test_ensure_shared_context_metadata_preserves_existing_values(self):
         result = ensure_shared_context_metadata(

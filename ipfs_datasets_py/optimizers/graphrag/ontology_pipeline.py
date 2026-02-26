@@ -1077,34 +1077,54 @@ class OntologyPipeline:
         if max_workers is not None and max_workers < 1:
             raise ValueError("max_workers must be >= 1")
 
-        if parallel and len(texts) > 1:
-            from concurrent.futures import ThreadPoolExecutor
-
-            worker_count = max_workers if max_workers is not None else min(32, len(texts))
-            with ThreadPoolExecutor(max_workers=worker_count) as executor:
-                # executor.map preserves input order while parallelizing execution.
-                results = list(executor.map(lambda text: self.run(text, **kwargs), texts))
-        else:
-            results = [self.run(text, **kwargs) for text in texts]
-
         data_source = kwargs.get("data_source", "pipeline")
         data_type = kwargs.get("data_type", "text")
         refine = kwargs.get("refine", True)
+
+        with self._start_otel_span(
+            "graphrag.pipeline.run_batch",
+            {
+                "pipeline.domain": self.domain,
+                "pipeline.data_source": data_source,
+                "pipeline.data_type": data_type
+                if isinstance(data_type, str)
+                else getattr(data_type, "value", str(data_type)),
+                "pipeline.refine": bool(refine),
+                "pipeline.doc_count": len(texts),
+                "pipeline.parallel": parallel,
+                "pipeline.max_workers": max_workers,
+            },
+        ) as _span:
+            if parallel and len(texts) > 1:
+                from concurrent.futures import ThreadPoolExecutor
+
+                worker_count = max_workers if max_workers is not None else min(32, len(texts))
+                with ThreadPoolExecutor(max_workers=worker_count) as executor:
+                    # executor.map preserves input order while parallelizing execution.
+                    results = list(executor.map(lambda text: self.run(text, **kwargs), texts))
+            else:
+                results = [self.run(text, **kwargs) for text in texts]
+
+            # Set completion attributes before span context closes.
+            if _span is not None:
+                try:
+                    _span.set_attribute("pipeline.result_count", len(results))
+                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
+                    self._log.debug("Failed to set run_batch completion attributes: %s", exc)
+
+        duration_ms = (time.time() - start_time) * 1000.0
+        scores: List[float] = []
+        for res in results:
+            score = getattr(res, "score", None)
+            overall = getattr(score, "overall", None)
+            if isinstance(overall, (int, float)):
+                scores.append(float(overall))
 
         try:
             import json as _json
             from datetime import datetime as _datetime, timezone as _timezone
 
             from ipfs_datasets_py.optimizers.common.structured_logging import redact_payload, with_schema
-
-            scores: List[float] = []
-            for res in results:
-                score = getattr(res, "score", None)
-                overall = getattr(score, "overall", None)
-                if isinstance(overall, (int, float)):
-                    scores.append(float(overall))
-
-            duration_ms = (time.time() - start_time) * 1000.0
             payload = {
                 "timestamp": _datetime.now(_timezone.utc).isoformat(),
                 "level": "INFO",

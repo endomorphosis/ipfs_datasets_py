@@ -1,4 +1,10 @@
-"""Core query planning and execution optimizer for GraphRAG."""
+"""Core query planning and execution optimizer for GraphRAG.
+
+This module contains the extracted planning subsystem from the former
+monolithic query optimizer implementation. It focuses on plan construction,
+cache keying, and adaptive parameter defaults, while orchestration stays in
+``query_unified_optimizer.py``.
+"""
 
 from __future__ import annotations
 

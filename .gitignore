@@ -32,7 +32,7 @@ bin/
 sql_configs.yaml
 *.log
 *.db
-
+mutants/
 # Proof and logic caching
 proof_cache/
 *.proof_cache
@@ -74,7 +74,7 @@ sql_configs.yaml
 # Demo and debug output directories
 unified_deontic_logic_system_demo/
 unified_deontic_logic_system/
-
+**ipfs_datasets_py/mutants
 # Root directory artifacts (prevent future clutter)
 # Session status reports should go directly to docs/archive/root_status_reports/
 /*SESSION*.md

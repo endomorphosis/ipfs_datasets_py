@@ -49,7 +49,7 @@ import re
 import time
 import weakref
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, Union
 from enum import Enum
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -76,6 +76,9 @@ _DIRECTIONAL_RELATIONSHIP_PATTERNS: tuple[tuple[re.Pattern[str], str, float], ..
     (re.compile(r"\b(leads?|directs?|heads?)\b"), "leads", 0.68),
 )
 from ipfs_datasets_py.optimizers.graphrag.ontology_types import Ontology
+
+if TYPE_CHECKING:
+    from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
 
 _BIDIRECTIONAL_RELATIONSHIP_PATTERNS: tuple[tuple[re.Pattern[str], str, float], ...] = (
     (re.compile(r"\b(partners?\s+with|collabor\w+\s+with)\b"), "partners_with", 0.70),
@@ -1755,6 +1758,73 @@ class EntityExtractionResult:
             errors=list(self.errors),
         )
 
+    def apply_confidence_decay(
+        self,
+        current_time: Optional[float] = None,
+        half_life_days: float = 30.0,
+        min_confidence: float = 0.1,
+        drop_below: Optional[float] = None,
+    ) -> "EntityExtractionResult":
+        """Apply time-based confidence decay across all entities.
+
+        Each entity is decayed via :meth:`Entity.apply_confidence_decay` using
+        its ``last_seen`` timestamp. Optionally, entities below ``drop_below``
+        are removed and relationships are pruned to keep only valid endpoints.
+
+        Args:
+            current_time: Reference Unix timestamp; defaults to ``time.time()``.
+            half_life_days: Half-life in days for exponential decay. Must be > 0.
+            min_confidence: Confidence floor applied per entity.
+            drop_below: Optional post-decay confidence threshold for pruning.
+
+        Returns:
+            A new :class:`EntityExtractionResult` with decayed entities.
+        """
+        if half_life_days <= 0:
+            raise ValueError(f"half_life_days must be > 0; got {half_life_days}")
+
+        decayed_entities = [
+            entity.apply_confidence_decay(
+                current_time=current_time,
+                half_life_days=half_life_days,
+                min_confidence=min_confidence,
+            )
+            for entity in self.entities
+        ]
+
+        if drop_below is not None:
+            kept_entities = [e for e in decayed_entities if e.confidence >= drop_below]
+        else:
+            kept_entities = decayed_entities
+
+        kept_ids = {e.id for e in kept_entities}
+        kept_relationships = [
+            rel for rel in self.relationships
+            if rel.source_id in kept_ids and rel.target_id in kept_ids
+        ]
+
+        avg_confidence = (
+            sum(e.confidence for e in kept_entities) / len(kept_entities)
+            if kept_entities
+            else self.confidence
+        )
+
+        metadata = dict(self.metadata)
+        metadata["confidence_decay_applied"] = True
+        metadata["confidence_decay_half_life_days"] = float(half_life_days)
+        metadata["confidence_decay_min_confidence"] = float(min_confidence)
+        metadata["confidence_decay_drop_below"] = drop_below
+        metadata["confidence_decay_entities_before"] = len(self.entities)
+        metadata["confidence_decay_entities_after"] = len(kept_entities)
+
+        return EntityExtractionResult(
+            entities=kept_entities,
+            relationships=kept_relationships,
+            confidence=avg_confidence,
+            metadata=metadata,
+            errors=list(self.errors),
+        )
+
     def to_csv(self) -> str:
         """Return a flat CSV representation of the extracted entities.
 
@@ -2274,7 +2344,8 @@ class EntityExtractionResult:
         width = 1.0 / bins
         counts = [0] * bins
         for e in self.entities:
-            bucket = min(int(e.confidence / width), bins - 1)
+            confidence = max(0.0, min(1.0, float(e.confidence)))
+            bucket = min(int(confidence / width), bins - 1)
             counts[bucket] += 1
         return counts
 
@@ -3833,6 +3904,7 @@ class OntologyGenerator:
         sentence_window: int,
         sentence_spans: List[tuple],
         entity_sentence_index: Dict[str, int],
+        llm_threshold: float,
     ) -> List[Any]:
         """Process a batch of entity pairs and return inferred relationships.
 
@@ -3847,6 +3919,7 @@ class OntologyGenerator:
             sentence_window: Sentence window size for filtering
             sentence_spans: List of (start, end) tuples for sentences
             entity_sentence_index: Dict mapping entity IDs to sentence indices
+            llm_threshold: LLM fallback threshold for low-confidence heuristic types
 
         Returns:
             List of Relationship objects inferred from this batch
@@ -3904,9 +3977,6 @@ class OntologyGenerator:
                 if distance > 150:
                     type_confidence *= 0.8
 
-                llm_threshold = float(
-                    getattr(context.extraction_config, "llm_fallback_threshold", 0.0)
-                )
                 type_method = "context_window"
                 if llm_threshold > 0.0 and type_confidence < llm_threshold:
                     inferred_type, type_confidence, type_method = self._refine_relationship_type_with_llm(
@@ -3961,6 +4031,9 @@ class OntologyGenerator:
             List of inferred co-occurrence relationships
         """
         sentence_window = getattr(context.extraction_config, "sentence_window", 0)
+        llm_threshold = float(
+            getattr(context.extraction_config, "llm_fallback_threshold", 0.0)
+        )
         sentence_spans = self._get_sentence_spans(text) if sentence_window > 0 else []
         
         # Pre-compute sentence indices for all entities (thread-safe, done once)
@@ -4018,6 +4091,7 @@ class OntologyGenerator:
                     sentence_window,
                     sentence_spans,
                     entity_sentence_index,
+                    llm_threshold,
                 )
                 futures.append(future)
 
@@ -8654,6 +8728,7 @@ class OntologyGenerator:
         buckets: dict = {}
         for e in entities:
             conf = float(getattr(e, "confidence", 0.0) or 0.0)
+            conf = max(0.0, min(1.0, conf))
             bucket = min(int(conf * 10), 9)
             buckets[bucket] = buckets.get(bucket, 0) + 1
         entropy = 0.0
@@ -8739,6 +8814,7 @@ class OntologyGenerator:
         buckets: dict = {}
         for r in rels:
             w = float(getattr(r, "weight", 1.0) or 1.0)
+            w = max(0.0, min(1.0, w))
             bucket = min(int(w * 10), 9)
             buckets[bucket] = buckets.get(bucket, 0) + 1
         entropy = 0.0

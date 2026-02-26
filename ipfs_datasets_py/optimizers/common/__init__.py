@@ -160,6 +160,8 @@ from .unified_config import (
     backend_config_from_constructor_kwargs,
     context_from_optimization_context,
     context_from_ontology_generation_context,
+    context_from_logic_extraction_context,
+    context_from_agentic_optimization_task,
 )
 
 __all__ = [
@@ -243,6 +245,8 @@ __all__ = [
     "backend_config_from_constructor_kwargs",
     "context_from_optimization_context",
     "context_from_ontology_generation_context",
+    "context_from_logic_extraction_context",
+    "context_from_agentic_optimization_task",
 ]
 
 __version__ = "0.1.0"

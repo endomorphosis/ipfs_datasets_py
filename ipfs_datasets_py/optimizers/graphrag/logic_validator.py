@@ -210,6 +210,30 @@ class LogicValidator:
             )
             self._tdfol_available = False
             self._reasoner = None
+
+    def proving_scope(self) -> Dict[str, Any]:
+        """Return the current proving scope and effective backend behavior.
+
+        This validator currently performs deterministic structural checks over
+        TDFOL-style facts and does not claim full theorem-prover completeness.
+        The scope is explicit so callers can make policy decisions.
+        """
+        if not self._tdfol_available:
+            return {
+                "scope": "basic_structural_fallback",
+                "full_tdfol_proving": False,
+                "backend": "basic_structural",
+                "strategy": self.prover_config.strategy,
+                "provers_requested": list(self.prover_config.provers),
+            }
+
+        return {
+            "scope": "structural_tdfol_subset",
+            "full_tdfol_proving": False,
+            "backend": "structural_checker",
+            "strategy": self.prover_config.strategy,
+            "provers_requested": list(self.prover_config.provers),
+        }
     
 
     def ontology_to_tdfol(
@@ -441,7 +465,8 @@ class LogicValidator:
                     is_consistent=False,
                     contradictions=[f"Validation error: {str(e)}"],
                     confidence=0.0,
-                    prover_used="error"
+                    prover_used="error",
+                    metadata=self.proving_scope() | {"error": str(e)},
                 )
         
         # Update timing
@@ -688,6 +713,7 @@ class LogicValidator:
             contradictions=contradictions,
             confidence=0.7,  # Lower confidence for basic check
             prover_used="basic_structural",
+            metadata=self.proving_scope(),
             invalid_entity_ids=invalid_ids,
         )
     
@@ -770,6 +796,7 @@ class LogicValidator:
             contradictions=contradictions,
             confidence=confidence,
             prover_used=f"structural:{self.prover_config.strategy}",
+            metadata=self.proving_scope(),
         )
     
     def batch_validate(
