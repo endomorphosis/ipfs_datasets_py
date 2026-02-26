@@ -1081,6 +1081,9 @@ class OntologyCritic(BaseCritic):
                 'timing_ms': round((_time.perf_counter() * 1000.0) - _start_ms, 2),
             }
         )
+
+        # Optional LLM fallback for ambiguous rule-based evaluations.
+        score = self._apply_llm_fallback_if_ambiguous(ontology, context, score)
         
         self._log.info(f"Evaluation complete. Overall score: {score.overall:.2f}")
         if _cache_key is not None:
@@ -1099,6 +1102,104 @@ class OntologyCritic(BaseCritic):
                 self._log.warning(f"on_evaluation_complete callback raised: {_e}")
         
         return score
+
+    def _is_score_ambiguous(self, score: CriticScore) -> bool:
+        """Return True when rule-based dimensions are clustered near indecisive mid-range."""
+        dims = [
+            float(score.completeness),
+            float(score.consistency),
+            float(score.clarity),
+            float(score.granularity),
+            float(score.relationship_coherence),
+            float(score.domain_alignment),
+        ]
+        spread = max(dims) - min(dims)
+        return spread <= 0.18 and 0.45 <= float(score.overall) <= 0.65
+
+    def _apply_llm_fallback_if_ambiguous(
+        self,
+        ontology: Dict[str, Any],
+        context: Any,
+        score: CriticScore,
+    ) -> CriticScore:
+        """Optionally refine ambiguous rule-based scores using an LLM fallback client.
+
+        The fallback is best-effort and never raises to callers. It accepts either:
+        - a callable ``self._llm_client(ontology, context, score)``, or
+        - an object implementing ``evaluate_ontology(...)``.
+
+        Expected response shape (dict-like, all keys optional):
+        - ``dimensions``: mapping of dimension name -> float in [0, 1]
+        - ``recommendations``: list of recommendation strings
+        - ``confidence``: float confidence for fallback signal
+        """
+        if not self.use_llm or not getattr(self, "_llm_available", False):
+            score.metadata["llm_fallback_used"] = False
+            return score
+        if self._llm_client is None:
+            score.metadata["llm_fallback_used"] = False
+            return score
+        if not self._is_score_ambiguous(score):
+            score.metadata["llm_fallback_used"] = False
+            return score
+
+        try:
+            if callable(self._llm_client):
+                response = self._llm_client(ontology, context, score)
+            else:
+                evaluate = getattr(self._llm_client, "evaluate_ontology", None)
+                if not callable(evaluate):
+                    score.metadata["llm_fallback_used"] = False
+                    score.metadata["llm_fallback_skipped_reason"] = "missing_evaluate_ontology"
+                    return score
+                response = evaluate(
+                    ontology=ontology,
+                    context=context,
+                    base_score=score.to_dict(),
+                )
+
+            if not isinstance(response, dict):
+                score.metadata["llm_fallback_used"] = False
+                score.metadata["llm_fallback_skipped_reason"] = "invalid_response"
+                return score
+
+            dims = response.get("dimensions") or {}
+            if isinstance(dims, dict):
+                for field_name in (
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                ):
+                    if field_name in dims:
+                        try:
+                            clamped = max(0.0, min(1.0, float(dims[field_name])))
+                            setattr(score, field_name, clamped)
+                        except (TypeError, ValueError):
+                            continue
+
+            recs = response.get("recommendations")
+            if isinstance(recs, list):
+                for rec in recs:
+                    if isinstance(rec, str) and rec.strip():
+                        score.recommendations.append(rec)
+
+            confidence_raw = response.get("confidence", 0.0)
+            try:
+                confidence = max(0.0, min(1.0, float(confidence_raw)))
+            except (TypeError, ValueError):
+                confidence = 0.0
+
+            score.metadata["llm_fallback_used"] = True
+            score.metadata["llm_fallback_confidence"] = confidence
+            score.metadata["llm_fallback_response_keys"] = sorted(response.keys())
+            return score
+        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
+            score.metadata["llm_fallback_used"] = False
+            score.metadata["llm_fallback_error"] = type(exc).__name__
+            return score
 
     def evaluate_batch(
         self,
