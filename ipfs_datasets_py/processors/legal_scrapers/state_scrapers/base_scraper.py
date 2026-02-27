@@ -71,6 +71,7 @@ class NormalizedStatute:
     
     # Metadata
     metadata: Optional[StatuteMetadata] = None
+    structured_data: Dict[str, Any] = field(default_factory=dict)
     
     # Scraping metadata
     scraped_at: str = field(default_factory=lambda: datetime.now().isoformat())
@@ -98,6 +99,7 @@ class NormalizedStatute:
             "url": "source_url",
             "text": "full_text",
             "summary": "summary",
+            "jsonld": "structured_data",
         }
         mapped = legacy_key_map.get(key)
         if mapped and hasattr(self, mapped):
@@ -110,6 +112,8 @@ class NormalizedStatute:
             return self.short_title or self.section_name or self.statute_id
         if key == "url":
             return self.source_url
+        if key in {"subsections", "preamble", "citations", "legislative_history", "parser_warnings"}:
+            return (self.structured_data or {}).get(key)
 
         raise KeyError(key)
     
