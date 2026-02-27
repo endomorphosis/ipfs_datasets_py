@@ -245,6 +245,31 @@ def _extract_section_number_from_filename(file_name: str) -> str:
     return Path(file_name).stem
 
 
+def _extract_section_heading(text: str, section_number: str, fallback_heading: str) -> str:
+    source = _norm_space(str(text or ""))
+    sec_no = re.escape(str(section_number or "").strip())
+    if not source or not sec_no:
+        return _norm_space(fallback_heading)[:500]
+
+    sec_pattern = re.compile(
+        rf"Sec\.\s*{sec_no}\s*-\s*(.+?)(?=\s+From\s+the\s+U\.S\.\s+Government\s+Publishing\s+Office|\s+§\s*{sec_no}\.?|\s+Editorial\s+Notes|\s+Statutory\s+Notes|$)",
+        re.IGNORECASE,
+    )
+    sec_match = sec_pattern.search(source)
+    if sec_match:
+        return _norm_space(sec_match.group(1))[:500]
+
+    section_symbol_pattern = re.compile(
+        rf"§\s*{sec_no}\.?\s*(.+?)(?=\s+\([a-zA-Z0-9]{{1,4}}\)\s|\s+\([A-Z][a-z]{{2,9}}\.?\s+\d{{1,2}},\s+\d{{4}}|\s+Editorial\s+Notes|\s+Statutory\s+Notes|$)",
+        re.IGNORECASE,
+    )
+    section_symbol_match = section_symbol_pattern.search(source)
+    if section_symbol_match:
+        return _norm_space(section_symbol_match.group(1))[:500]
+
+    return _norm_space(fallback_heading)[:500]
+
+
 def _extract_sections_from_zip(
     zip_path: Path,
     *,
@@ -267,11 +292,12 @@ def _extract_sections_from_zip(
             raw = archive.read(entry_name)
             soup = BeautifulSoup(raw, "html.parser")
 
-            heading_node = soup.find(["h1", "h2", "h3", "h4", "title"])
-            heading = heading_node.get_text(" ", strip=True) if heading_node else html_name
             text = soup.get_text(" ", strip=True)
             subsection_text = _trim_nonstatutory_tail(text)
             section_number = _extract_section_number_from_filename(html_name)
+            heading_node = soup.find(["h1", "h2", "h3", "h4", "title"])
+            fallback_heading = heading_node.get_text(" ", strip=True) if heading_node else html_name
+            heading = _extract_section_heading(text, section_number, fallback_heading)
             chapter_info = _extract_chapter_info(
                 subsection_text,
                 title_num=title_num,
@@ -291,7 +317,7 @@ def _extract_sections_from_zip(
                 "preamble": preamble,
                 "citations": citations,
                 "legislative_history": legislative_history,
-                "subsections": _parse_subsections(subsection_text),
+                "subsections": _parse_subsections(section_body),
             }
             record["parser_warnings"] = _validate_subsection_tree(record.get("subsections") or [])
             if include_metadata:
