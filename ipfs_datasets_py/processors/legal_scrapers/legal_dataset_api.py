@@ -170,6 +170,8 @@ async def scrape_us_code_from_parameters(
             year=parameters.get("year"),
             cache_dir=parameters.get("cache_dir"),
             force_download=parameters.get("force_download", False),
+            output_dir=parameters.get("output_dir"),
+            keep_zip_cache=parameters.get("keep_zip_cache", False),
         )
 
     except Exception as e:
