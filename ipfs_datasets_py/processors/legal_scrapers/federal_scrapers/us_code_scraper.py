@@ -247,9 +247,15 @@ def _extract_section_number_from_filename(file_name: str) -> str:
 
 def _extract_section_heading(text: str, section_number: str, fallback_heading: str) -> str:
     source = _norm_space(str(text or ""))
-    sec_no = re.escape(str(section_number or "").strip())
+    sec_raw = str(section_number or "").strip()
+    sec_no = re.escape(sec_raw)
     if not source or not sec_no:
         return _norm_space(fallback_heading)[:500]
+
+    def _normalize_ref(value: str) -> str:
+        return re.sub(r"\s+", "", str(value or "").replace("–", "-").replace("—", "-").lower())
+
+    sec_norm = _normalize_ref(sec_raw)
 
     sec_pattern = re.compile(
         rf"Sec\.\s*{sec_no}\s*-\s*(.+?)(?=\s+From\s+the\s+U\.S\.\s+Government\s+Publishing\s+Office|\s+§\s*{sec_no}\.?|\s+Editorial\s+Notes|\s+Statutory\s+Notes|$)",
@@ -259,6 +265,15 @@ def _extract_section_heading(text: str, section_number: str, fallback_heading: s
     if sec_match:
         return _norm_space(sec_match.group(1))[:500]
 
+    secs_pattern = re.compile(
+        r"Secs?\.\s*([^\-]{1,140})\s*-\s*(.+?)(?=\s+From\s+the\s+U\.S\.\s+Government\s+Publishing\s+Office|\s+§{1,2}\s|\s+Editorial\s+Notes|\s+Statutory\s+Notes|$)",
+        re.IGNORECASE,
+    )
+    for match in secs_pattern.finditer(source):
+        refs = _normalize_ref(match.group(1))
+        if sec_norm and sec_norm in refs:
+            return _norm_space(match.group(2))[:500]
+
     section_symbol_pattern = re.compile(
         rf"§\s*{sec_no}\.?\s*(.+?)(?=\s+\([a-zA-Z0-9]{{1,4}}\)\s|\s+\([A-Z][a-z]{{2,9}}\.?\s+\d{{1,2}},\s+\d{{4}}|\s+Editorial\s+Notes|\s+Statutory\s+Notes|$)",
         re.IGNORECASE,
@@ -266,6 +281,15 @@ def _extract_section_heading(text: str, section_number: str, fallback_heading: s
     section_symbol_match = section_symbol_pattern.search(source)
     if section_symbol_match:
         return _norm_space(section_symbol_match.group(1))[:500]
+
+    section_symbols_pattern = re.compile(
+        r"§{2}\s*([^\.]{1,140})\.\s*(.+?)(?=\s+Editorial\s+Notes|\s+Statutory\s+Notes|$)",
+        re.IGNORECASE,
+    )
+    for match in section_symbols_pattern.finditer(source):
+        refs = _normalize_ref(match.group(1))
+        if sec_norm and sec_norm in refs:
+            return _norm_space(match.group(2))[:500]
 
     return _norm_space(fallback_heading)[:500]
 
@@ -306,6 +330,8 @@ def _extract_sections_from_zip(
             )
             section_body = _extract_section_body(subsection_text, section_number, heading)
             preamble = _extract_preamble(section_body)
+            if not preamble:
+                preamble = _norm_space(heading)
             citations = _extract_citations(text, subsection_text)
             legislative_history = _extract_legislative_history(text, subsection_text)
 
