@@ -7,6 +7,8 @@ import logging
 import time
 from typing import Dict, List, Optional, Any
 from datetime import datetime
+import json
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +64,11 @@ async def scrape_state_laws(
     include_metadata: bool = True,
     rate_limit_delay: float = 2.0,
     max_statutes: Optional[int] = None,
-    use_state_specific_scrapers: bool = True
+    use_state_specific_scrapers: bool = True,
+    output_dir: Optional[str] = None,
+    write_jsonld: bool = True,
+    strict_full_text: bool = False,
+    min_full_text_chars: int = 300,
 ) -> Dict[str, Any]:
     """Scrape state statutes and build a structured dataset.
     
@@ -146,8 +152,16 @@ async def scrape_state_laws(
                         normalized_statutes = await scraper.scrape_all(
                             legal_areas=legal_areas,
                             max_statutes=remaining_statutes,
-                            rate_limit_delay=rate_limit_delay
+                            rate_limit_delay=rate_limit_delay,
+                            hydrate_statute_text=True,
                         )
+
+                        strict_removed_count = 0
+                        if strict_full_text:
+                            normalized_statutes, strict_removed_count = _filter_strict_full_text_statutes(
+                                normalized_statutes,
+                                min_full_text_chars=min_full_text_chars,
+                            )
                         
                         # Convert normalized statutes to output format
                         statute_data = {
@@ -160,7 +174,9 @@ async def scrape_state_laws(
                             "scraped_at": datetime.now().isoformat(),
                             "statutes": [statute.to_dict() for statute in normalized_statutes],
                             "schema_version": "1.0",
-                            "normalized": True
+                            "normalized": True,
+                            "strict_full_text": strict_full_text,
+                            "strict_removed_count": strict_removed_count,
                         }
                         
                         scraped_statutes.append(statute_data)
@@ -308,6 +324,18 @@ async def scrape_state_laws(
         
         scraper_info = "State-specific scrapers" if use_state_specific_scrapers else "Justia fallback scraper"
         
+        jsonld_paths: List[str] = []
+        if use_state_specific_scrapers and write_jsonld:
+            output_root = _resolve_state_output_dir(output_dir)
+            jsonld_dir = output_root / "state_laws_jsonld"
+            jsonld_dir.mkdir(parents=True, exist_ok=True)
+            jsonld_paths = _write_state_jsonld_files(scraped_statutes, jsonld_dir)
+
+        strict_removed_total = 0
+        for block in scraped_statutes:
+            if isinstance(block, dict):
+                strict_removed_total += int(block.get("strict_removed_count") or 0)
+
         metadata = {
             "states_scraped": selected_states,
             "states_count": len(selected_states),
@@ -320,7 +348,12 @@ async def scrape_state_laws(
             "rate_limit_delay": rate_limit_delay,
             "include_metadata": include_metadata,
             "errors": errors if errors else None,
-            "schema_normalized": use_state_specific_scrapers
+            "schema_normalized": use_state_specific_scrapers,
+            "jsonld_dir": str((_resolve_state_output_dir(output_dir) / "state_laws_jsonld")) if (use_state_specific_scrapers and write_jsonld) else None,
+            "jsonld_files": jsonld_paths if jsonld_paths else None,
+            "strict_full_text": strict_full_text,
+            "min_full_text_chars": int(min_full_text_chars),
+            "strict_removed_total": strict_removed_total,
         }
         
         logger.info(f"Completed state laws scraping: {statutes_count} statutes in {elapsed_time:.2f}s using {scraper_info}")
@@ -359,6 +392,85 @@ def _get_official_state_url(state_code: str) -> str:
     }
     
     return official_urls.get(state_code, f"https://legislature.{state_code.lower()}.gov/")
+
+
+def _resolve_state_output_dir(output_dir: Optional[str] = None) -> Path:
+    if output_dir:
+        return Path(output_dir).expanduser().resolve()
+    return (Path.home() / ".ipfs_datasets" / "state_laws").resolve()
+
+
+def _write_state_jsonld_files(scraped_statutes: List[Dict[str, Any]], jsonld_dir: Path) -> List[str]:
+    written: List[str] = []
+    for state_block in scraped_statutes:
+        state_code = str(state_block.get("state_code") or "").strip().upper()
+        statutes = state_block.get("statutes") or []
+        if not state_code or not isinstance(statutes, list):
+            continue
+
+        out_path = jsonld_dir / f"STATE-{state_code}.jsonld"
+        lines_written = 0
+        with out_path.open("w", encoding="utf-8") as handle:
+            for statute in statutes:
+                if not isinstance(statute, dict):
+                    continue
+                structured_data = statute.get("structured_data") or {}
+                if not isinstance(structured_data, dict):
+                    continue
+                payload = structured_data.get("jsonld")
+                if not isinstance(payload, dict):
+                    continue
+                handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
+                lines_written += 1
+
+        if lines_written > 0:
+            written.append(str(out_path))
+        else:
+            out_path.unlink(missing_ok=True)
+
+    return written
+
+
+def _has_sufficient_full_text(statute: Any, *, min_full_text_chars: int) -> bool:
+    if hasattr(statute, "full_text"):
+        full_text = str(getattr(statute, "full_text", "") or "")
+    elif isinstance(statute, dict):
+        full_text = str(statute.get("full_text") or "")
+    else:
+        full_text = ""
+
+    if len(full_text.strip()) < int(min_full_text_chars):
+        return False
+
+    structured_data = getattr(statute, "structured_data", None)
+    if structured_data is None and isinstance(statute, dict):
+        structured_data = statute.get("structured_data") or {}
+
+    if isinstance(structured_data, dict):
+        subsections = structured_data.get("subsections") or []
+        citations = structured_data.get("citations") or {}
+        if isinstance(subsections, list) and len(subsections) > 0:
+            return True
+        if isinstance(citations, dict):
+            total_cites = sum(
+                len(v) for v in citations.values() if isinstance(v, list)
+            )
+            if total_cites > 0:
+                return True
+
+    # If text length threshold passes, allow even without parsed structure.
+    return True
+
+
+def _filter_strict_full_text_statutes(statutes: List[Any], *, min_full_text_chars: int) -> tuple[List[Any], int]:
+    kept: List[Any] = []
+    removed = 0
+    for statute in statutes:
+        if _has_sufficient_full_text(statute, min_full_text_chars=min_full_text_chars):
+            kept.append(statute)
+        else:
+            removed += 1
+    return kept, removed
 
 
 def _identify_legal_area(text: str, legal_areas: Optional[List[str]] = None) -> str:

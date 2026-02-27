@@ -66,6 +66,11 @@ from .state_laws_scraper import (
     scrape_state_laws,
 )
 
+from .state_laws_verifier import (
+    StateLawsVerifier,
+    verify_state_laws_scraper,
+)
+
 from .municipal_laws_scraper import (
     search_municipal_codes,
     scrape_municipal_laws,

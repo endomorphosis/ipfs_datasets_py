@@ -12,6 +12,7 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 import logging
 import re
+from urllib.parse import urlparse
 
 from .citation_history import extract_trailing_history_citations
 
@@ -196,7 +197,8 @@ class BaseStateScraper(ABC):
         self,
         legal_areas: Optional[List[str]] = None,
         max_statutes: Optional[int] = None,
-        rate_limit_delay: float = 2.0
+        rate_limit_delay: float = 2.0,
+        hydrate_statute_text: bool = True,
     ) -> List[NormalizedStatute]:
         """Scrape all available codes for this state.
         
@@ -234,6 +236,8 @@ class BaseStateScraper(ABC):
                 enriched_statutes: List[NormalizedStatute] = []
                 for statute in statutes:
                     if isinstance(statute, NormalizedStatute):
+                        if hydrate_statute_text:
+                            self._hydrate_statute_text_if_needed(statute)
                         enriched_statutes.append(self._enrich_statute_structure(statute))
                 statutes = enriched_statutes
                 
@@ -320,6 +324,103 @@ class BaseStateScraper(ABC):
             "history_citation_blocks": raw_blocks,
             "history_citations": citations,
         }
+
+    def _looks_like_shallow_stub_text(self, text: str) -> bool:
+        normalized = self._normalize_legal_text(text)
+        if not normalized:
+            return True
+
+        if len(normalized) < 220:
+            return True
+
+        # Many state scrapers currently seed text as "Section X: <link text>".
+        if re.match(r"^(section|sec\.?|title|chapter)\s+[\w\-.]+\s*:\s*", normalized, flags=re.IGNORECASE):
+            return True
+
+        return False
+
+    def _extract_best_content_text(self, html_text: str) -> str:
+        try:
+            from bs4 import BeautifulSoup
+        except Exception:
+            return self._normalize_legal_text(html_text)
+
+        soup = BeautifulSoup(html_text, "html.parser")
+        for tag in soup(["script", "style", "noscript", "svg", "canvas", "iframe"]):
+            tag.decompose()
+
+        candidates = []
+        selectors = [
+            "main",
+            "article",
+            "section",
+            "div#content",
+            "div.content",
+            "div#main-content",
+            "div.main-content",
+            "div.statute",
+            "div.law-content",
+        ]
+
+        for selector in selectors:
+            for node in soup.select(selector):
+                text = self._normalize_legal_text(node.get_text(" ", strip=True))
+                if len(text) >= 200:
+                    candidates.append(text)
+
+        if not candidates:
+            body = soup.find("body")
+            if body is not None:
+                text = self._normalize_legal_text(body.get_text(" ", strip=True))
+                if text:
+                    candidates.append(text)
+
+        if not candidates:
+            fallback = self._normalize_legal_text(soup.get_text(" ", strip=True))
+            return fallback
+
+        # Prefer the longest candidate as a simple heuristic for statute body text.
+        return max(candidates, key=len)
+
+    def _fetch_statute_text(self, url: str, timeout_seconds: int = 25) -> str:
+        try:
+            import requests
+        except Exception:
+            return ""
+
+        try:
+            headers = {
+                "User-Agent": "ipfs-datasets-state-scraper/2.0",
+                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            }
+            response = requests.get(url, headers=headers, timeout=timeout_seconds)
+            if int(response.status_code) != 200:
+                return ""
+            return self._extract_best_content_text(response.text)
+        except Exception:
+            return ""
+
+    def _hydrate_statute_text_if_needed(self, statute: NormalizedStatute) -> None:
+        source_url = str(statute.source_url or "").strip()
+        if not source_url:
+            return
+
+        parsed = urlparse(source_url)
+        if parsed.scheme not in {"http", "https"}:
+            return
+
+        base_text = str(statute.full_text or statute.summary or "")
+        if not self._looks_like_shallow_stub_text(base_text):
+            return
+
+        fetched_text = self._fetch_statute_text(source_url)
+        fetched_text = self._normalize_legal_text(fetched_text)
+        if len(fetched_text) < 160:
+            return
+
+        statute.full_text = fetched_text
+        if not statute.section_name:
+            statute.section_name = fetched_text[:200]
 
     def _normalize_legal_text(self, text: str) -> str:
         """Normalize whitespace and punctuation for legal-text parsing."""
@@ -560,6 +661,11 @@ class BaseStateScraper(ABC):
         chapter_number = str(statute.chapter_number or "")
         section_number = str(statute.section_number or "")
         year_value = getattr(statute.metadata, "enacted_year", None) if statute.metadata else None
+        chapter_obj = {
+            "chapter_label": statute.chapter_number or statute.title_number or statute.code_name or "",
+            "chapter_name": statute.chapter_name or statute.title_name or statute.code_name or "",
+            "chapter_inferred": True,
+        }
 
         return {
             "@context": {
@@ -588,6 +694,7 @@ class BaseStateScraper(ABC):
             "sectionName": statute.section_name,
             "dateModified": str(year_value) if year_value is not None else None,
             "sourceUrl": statute.source_url,
+            "chapter": chapter_obj,
             "preamble": preamble,
             "citations": citations,
             "legislativeHistory": legislative_history,
@@ -1152,5 +1259,5 @@ class BaseStateScraper(ABC):
         )
         
         self.logger.info(f"Scraped statute using {method_used}: {statute.statute_id}")
-        
-        return statute
+
+        return self._enrich_statute_structure(statute)

@@ -92,6 +92,10 @@ async def scrape_state_laws_from_parameters(
             include_metadata=parameters.get("include_metadata", True),
             rate_limit_delay=parameters.get("rate_limit_delay", 2.0),
             max_statutes=parameters.get("max_statutes"),
+            output_dir=parameters.get("output_dir"),
+            write_jsonld=parameters.get("write_jsonld", True),
+            strict_full_text=parameters.get("strict_full_text", False),
+            min_full_text_chars=parameters.get("min_full_text_chars", 300),
         )
 
         # For forward compatibility with resumable orchestration, include job_id when provided.
