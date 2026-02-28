@@ -131,20 +131,44 @@ print(f"Scrapers available for: {states}")
 ### Through the Main API
 
 ```python
-from state_laws_scraper import scrape_state_laws
+import asyncio
+from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import scrape_state_laws
 
-# Uses state-specific scrapers by default
-result = await scrape_state_laws(
-    states=["CA", "NY", "TX"],
-    use_state_specific_scrapers=True  # Default
-)
 
-# Fallback to Justia aggregator
-result = await scrape_state_laws(
-    states=["CA"],
-    use_state_specific_scrapers=False
-)
+async def main():
+    # Strict mode keeps only statutes with sufficiently large full-text payloads.
+    result = await scrape_state_laws(
+        states=["CA", "NY", "TX"],
+        max_statutes=2000,
+        strict_full_text=True,
+        min_full_text_chars=500,
+        write_jsonld=True,
+    )
+    print(result["status"])
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
+
+```python
+import asyncio
+from ipfs_datasets_py.processors.legal_scrapers.state_laws_verifier import verify_state_laws_scraper
+
+
+async def main():
+    report = await verify_state_laws_scraper(states=["CA", "NY", "TX"], max_statutes=1200)
+    print(report["summary"])
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Notes:
+- `strict_full_text=True` removes records that do not meet the minimum full-text threshold.
+- `min_full_text_chars` controls that threshold (default is `300`).
+- Verification output is also written to `~/.ipfs_datasets/state_laws/verification_results.json`.
 
 ## Adding New State Scrapers
 
