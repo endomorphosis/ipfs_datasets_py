@@ -73,10 +73,33 @@ class NewYorkScraper(BaseStateScraper):
         
         try:
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'User-Agent': (
+                    'Mozilla/5.0 (X11; Linux x86_64) '
+                    'AppleWebKit/537.36 (KHTML, like Gecko) '
+                    'Chrome/124.0.0.0 Safari/537.36'
+                ),
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Referer': self.get_base_url(),
+                'Connection': 'keep-alive',
             }
-            
-            response = requests.get(code_url, headers=headers, timeout=30)
+
+            session = requests.Session()
+            session.headers.update(headers)
+            response = session.get(code_url, timeout=30, allow_redirects=True)
+
+            if int(response.status_code) in {401, 403}:
+                self.logger.warning(
+                    f"NY direct request blocked ({response.status_code}) for {code_name}; using Playwright fallback"
+                )
+                return await self._playwright_scrape(
+                    code_name,
+                    code_url,
+                    citation_format=f"NY {code_name}",
+                    max_sections=100,
+                    wait_for_selector="a[href*='/legislation/laws/']",
+                )
+
             response.raise_for_status()
             
             soup = BeautifulSoup(response.content, 'html.parser')
@@ -129,7 +152,14 @@ class NewYorkScraper(BaseStateScraper):
             
         except Exception as e:
             self.logger.error(f"Failed to scrape {code_name}: {e}")
-        
+            return await self._playwright_scrape(
+                code_name,
+                code_url,
+                citation_format=f"NY {code_name}",
+                max_sections=100,
+                wait_for_selector="a[href*='/legislation/laws/']",
+            )
+
         return statutes
 
 

@@ -350,18 +350,38 @@ class OregonScraper(BaseStateScraper):
 
         try:
             session = self._make_session()
-            chapter_urls = self._discover_chapter_urls(session, code_url)
+            chapter_urls: List[str] = []
+
+            seed_bytes = await self._fetch_page_content_with_archival_fallback(code_url, timeout_seconds=90)
+            if seed_bytes:
+                try:
+                    soup = BeautifulSoup(seed_bytes, "html.parser")
+                    discovered: List[str] = []
+                    for anchor in soup.find_all("a", href=True):
+                        href = str(anchor.get("href") or "")
+                        absolute = urljoin(code_url, href)
+                        if ORS_LINK_RE.search(absolute):
+                            discovered.append(absolute)
+                    chapter_urls = _dedupe_keep_order(discovered)
+                except Exception:
+                    chapter_urls = []
+
+            if not chapter_urls:
+                chapter_urls = self._discover_chapter_urls(session, code_url)
+
             self.logger.info(f"Oregon: discovered {len(chapter_urls)} ORS chapter pages")
 
             for chapter_url in chapter_urls:
                 try:
-                    response = session.get(chapter_url, timeout=90)
-                    if int(response.status_code) != 200:
-                        self.logger.warning(f"Oregon chapter fetch failed ({response.status_code}): {chapter_url}")
+                    chapter_bytes = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=90)
+                    if not chapter_bytes:
+                        self.logger.warning(f"Oregon chapter fetch failed (no content): {chapter_url}")
                         continue
+
+                    chapter_html = chapter_bytes.decode("utf-8", errors="replace")
                     statutes.extend(
                         self._parse_chapter_html(
-                            html=response.text,
+                            html=chapter_html,
                             chapter_url=chapter_url,
                             code_name=code_name,
                             citation_format=citation_format,

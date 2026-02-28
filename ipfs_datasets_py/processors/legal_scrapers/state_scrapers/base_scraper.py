@@ -237,7 +237,7 @@ class BaseStateScraper(ABC):
                 for statute in statutes:
                     if isinstance(statute, NormalizedStatute):
                         if hydrate_statute_text:
-                            self._hydrate_statute_text_if_needed(statute)
+                            await self._hydrate_statute_text_if_needed(statute)
                         enriched_statutes.append(self._enrich_statute_structure(statute))
                 statutes = enriched_statutes
                 
@@ -382,11 +382,28 @@ class BaseStateScraper(ABC):
         # Prefer the longest candidate as a simple heuristic for statute body text.
         return max(candidates, key=len)
 
-    def _fetch_statute_text(self, url: str, timeout_seconds: int = 25) -> str:
+    async def _fetch_page_content_with_archival_fallback(self, url: str, timeout_seconds: int = 25) -> bytes:
+        """Fetch HTML bytes using direct + archival fallback chain.
+
+        This keeps Common Crawl/Wayback/Archive.is logic inside state scrapers,
+        mirroring Oregon archival workflow for all states.
+        """
+        try:
+            from .state_archival_fetch import ArchivalFetchClient
+
+            client = ArchivalFetchClient(
+                request_timeout_seconds=timeout_seconds,
+                delay_seconds=0.0,
+            )
+            fetched = await client.fetch_with_fallback(url)
+            return bytes(fetched.content or b"")
+        except Exception:
+            pass
+
         try:
             import requests
         except Exception:
-            return ""
+            return b""
 
         try:
             headers = {
@@ -395,12 +412,12 @@ class BaseStateScraper(ABC):
             }
             response = requests.get(url, headers=headers, timeout=timeout_seconds)
             if int(response.status_code) != 200:
-                return ""
-            return self._extract_best_content_text(response.text)
+                return b""
+            return bytes(response.content or b"")
         except Exception:
-            return ""
+            return b""
 
-    def _hydrate_statute_text_if_needed(self, statute: NormalizedStatute) -> None:
+    async def _hydrate_statute_text_if_needed(self, statute: NormalizedStatute) -> None:
         source_url = str(statute.source_url or "").strip()
         if not source_url:
             return
@@ -413,7 +430,16 @@ class BaseStateScraper(ABC):
         if not self._looks_like_shallow_stub_text(base_text):
             return
 
-        fetched_text = self._fetch_statute_text(source_url)
+        raw_bytes = await self._fetch_page_content_with_archival_fallback(source_url)
+        if not raw_bytes:
+            return
+
+        try:
+            html_text = raw_bytes.decode("utf-8", errors="replace")
+        except Exception:
+            return
+
+        fetched_text = self._extract_best_content_text(html_text)
         fetched_text = self._normalize_legal_text(fetched_text)
         if len(fetched_text) < 160:
             return
@@ -827,7 +853,6 @@ class BaseStateScraper(ABC):
             List of NormalizedStatute objects
         """
         try:
-            import requests
             from bs4 import BeautifulSoup
         except ImportError as e:
             self.logger.error(f"Required library not available: {e}")
@@ -836,14 +861,11 @@ class BaseStateScraper(ABC):
         statutes = []
         
         try:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-            
-            response = requests.get(code_url, headers=headers, timeout=30)
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
+            page_bytes = await self._fetch_page_content_with_archival_fallback(code_url, timeout_seconds=45)
+            if not page_bytes:
+                raise RuntimeError(f"Failed to retrieve code page: {code_url}")
+
+            soup = BeautifulSoup(page_bytes, 'html.parser')
             
             # Extract legal area from code name
             legal_area = self._identify_legal_area(code_name)
