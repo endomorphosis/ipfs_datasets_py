@@ -34,7 +34,7 @@ if BeartypeDecorHintPep585DeprecationWarning is not None:
         category=BeartypeDecorHintPep585DeprecationWarning,  # type: ignore[arg-type]
     )
 
-__all__ = ["api", "integrations", "tools", "integration", "cli"]
+__all__ = ["api", "integrations", "tools", "integration", "cli", "flogic"]
 
 
 def __getattr__(name):
