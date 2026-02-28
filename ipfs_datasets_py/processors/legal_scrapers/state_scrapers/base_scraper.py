@@ -571,6 +571,51 @@ class BaseStateScraper(ABC):
 
         return roots
 
+    def _fallback_subsections_from_text(self, text: str, *, max_nodes: int = 8) -> List[Dict[str, Any]]:
+        """Build coarse subsection nodes when marker parsing yields nothing.
+
+        Some state sources flatten formatting and omit explicit `(a)`/`(1)` labels.
+        This fallback preserves useful structure by chunking long clause-like text.
+        """
+        normalized = self._normalize_legal_text(text)
+        if len(normalized) < 120:
+            return []
+
+        # Prefer semicolon-delimited legal clauses.
+        clauses = [self._normalize_legal_text(part) for part in re.split(r";\s+", normalized)]
+        clauses = [part for part in clauses if len(part) >= 40]
+
+        # If semicolon clauses are sparse, split on sentence boundaries.
+        if len(clauses) < 2:
+            clauses = [
+                self._normalize_legal_text(part)
+                for part in re.split(r"(?<=[\.!?])\s+(?=[A-Z0-9])", normalized)
+            ]
+            clauses = [part for part in clauses if len(part) >= 60]
+
+        if not clauses:
+            # Last resort: represent long narrative text as a single subsection.
+            return [{
+                "label": "(1)",
+                "token": "1",
+                "kind": "numeric",
+                "text": normalized,
+                "subsections": [],
+            }]
+
+        nodes: List[Dict[str, Any]] = []
+        for index, clause in enumerate(clauses[:max_nodes], start=1):
+            nodes.append(
+                {
+                    "label": f"({index})",
+                    "token": str(index),
+                    "kind": "numeric",
+                    "text": clause,
+                    "subsections": [],
+                }
+            )
+        return nodes
+
     def _extract_preamble(self, text: str, max_chars: int = 500) -> str:
         source = self._normalize_legal_text(text)
         if not source:
@@ -725,6 +770,8 @@ class BaseStateScraper(ABC):
         subsections = existing.get("subsections")
         if not isinstance(subsections, list):
             subsections = self._parse_subsections(cleaned_text)
+        if isinstance(subsections, list) and not subsections:
+            subsections = self._fallback_subsections_from_text(cleaned_text)
 
         parser_warnings = existing.get("parser_warnings")
         if not isinstance(parser_warnings, list):
