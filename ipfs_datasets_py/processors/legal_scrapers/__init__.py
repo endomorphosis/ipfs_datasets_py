@@ -20,10 +20,15 @@ New Features:
 - Intelligent search term generation from queries
 """
 
-# Import main scraper modules using relative imports
+# Import main scraper modules using relative imports.
+# Federal modules were moved under federal_scrapers/ in some layouts, so
+# keep a fallback for compatibility.
+try:
+    from . import federal_register_scraper, us_code_scraper
+except ImportError:
+    from .federal_scrapers import federal_register_scraper, us_code_scraper
+
 from . import (
-    federal_register_scraper,
-    us_code_scraper,
     state_laws_scraper,
     municipal_laws_scraper,
     recap_archive_scraper,
@@ -48,18 +53,32 @@ from .legal_dataset_api import (
     scrape_municipal_codes_from_parameters,
 )
 
-# Re-export key functions from scrapers for direct access
-from .federal_register_scraper import (
-    search_federal_register,
-    scrape_federal_register,
-)
+# Re-export key functions from scrapers for direct access.
+try:
+    from .federal_register_scraper import (
+        search_federal_register,
+        scrape_federal_register,
+    )
+except ImportError:
+    from .federal_scrapers.federal_register_scraper import (
+        search_federal_register,
+        scrape_federal_register,
+    )
 
-from .us_code_scraper import (
-    get_us_code_titles,
-    scrape_us_code,
-    search_us_code,
-    fetch_us_code_title,
-)
+try:
+    from .us_code_scraper import (
+        get_us_code_titles,
+        scrape_us_code,
+        search_us_code,
+        fetch_us_code_title,
+    )
+except ImportError:
+    from .federal_scrapers.us_code_scraper import (
+        get_us_code_titles,
+        scrape_us_code,
+        search_us_code,
+        fetch_us_code_title,
+    )
 
 from .state_laws_scraper import (
     list_state_jurisdictions,
@@ -318,15 +337,23 @@ try:
     from .federal_register_verifier import FederalRegisterVerifier
     HAVE_FEDERAL_REGISTER_VERIFIER = True
 except Exception:
-    FederalRegisterVerifier = None  # type: ignore[assignment]
-    HAVE_FEDERAL_REGISTER_VERIFIER = False
+    try:
+        from .federal_scrapers.federal_register_verifier import FederalRegisterVerifier
+        HAVE_FEDERAL_REGISTER_VERIFIER = True
+    except Exception:
+        FederalRegisterVerifier = None  # type: ignore[assignment]
+        HAVE_FEDERAL_REGISTER_VERIFIER = False
 
 try:
     from .us_code_verifier import USCodeVerifier
     HAVE_US_CODE_VERIFIER = True
 except Exception:
-    USCodeVerifier = None  # type: ignore[assignment]
-    HAVE_US_CODE_VERIFIER = False
+    try:
+        from .federal_scrapers.us_code_verifier import USCodeVerifier
+        HAVE_US_CODE_VERIFIER = True
+    except Exception:
+        USCodeVerifier = None  # type: ignore[assignment]
+        HAVE_US_CODE_VERIFIER = False
 
 # Parallel web archiver (Enhancement 11 Part 2)
 try:
