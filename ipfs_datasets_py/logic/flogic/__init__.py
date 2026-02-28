@@ -9,17 +9,27 @@ stack.  It provides:
 * A wrapper (:mod:`ergoai_wrapper`) for the ErgoAI/ErgoEngine theorem prover
   (submodule at ``ipfs_datasets_py/logic/ErgoAI``).  The wrapper degrades
   gracefully when the binary is absent.
+* A proof cache (:mod:`flogic_proof_cache`) using the shared
+  :class:`~ipfs_datasets_py.logic.common.proof_cache.ProofCache` so that
+  repeated identical queries are never recomputed.
+* A ZKP bridge (:mod:`flogic_zkp_integration`) that optionally attests
+  F-logic query results with zero-knowledge proofs.
 
 Quick start::
 
-    from ipfs_datasets_py.logic.flogic import ErgoAIWrapper, FLogicClass, FLogicFrame
+    from ipfs_datasets_py.logic.flogic import (
+        CachedErgoAIWrapper, FLogicClass, FLogicFrame,
+    )
 
-    ergo = ErgoAIWrapper()
+    ergo = CachedErgoAIWrapper()
     ergo.add_class(FLogicClass("Animal"))
     ergo.add_class(FLogicClass("Dog", superclasses=["Animal"]))
     ergo.add_frame(FLogicFrame("rex", scalar_methods={"name": '"Rex"'}, isa="Dog"))
+
+    # First call — evaluated; subsequent calls with identical goal+ontology
+    # are served from the proof cache.
     result = ergo.query("?X : Dog")
-    print(result.status, result.bindings)
+    print(result.status, result.from_cache, result.bindings)
 
 See :doc:`README` for full documentation and the ErgoAI tutorial at
 https://sites.google.com/coherentknowledge.com/ergoai-tutorial/ergoai-tutorial.
@@ -39,6 +49,16 @@ if TYPE_CHECKING:
         FLogicQuery,
         FLogicOntology,
     )
+    from .flogic_proof_cache import (
+        FLogicCachedQueryResult,
+        CachedErgoAIWrapper,
+        get_global_cached_wrapper,
+    )
+    from .flogic_zkp_integration import (
+        FLogicProvingMethod,
+        ZKPFLogicResult,
+        ZKPFLogicProver,
+    )
 
 __all__ = [
     # ErgoAI wrapper
@@ -51,6 +71,14 @@ __all__ = [
     "FLogicClass",
     "FLogicQuery",
     "FLogicOntology",
+    # Proof cache
+    "FLogicCachedQueryResult",
+    "CachedErgoAIWrapper",
+    "get_global_cached_wrapper",
+    # ZKP integration
+    "FLogicProvingMethod",
+    "ZKPFLogicResult",
+    "ZKPFLogicProver",
 ]
 
 _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
@@ -62,6 +90,12 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "FLogicClass": (".flogic_types", "FLogicClass"),
     "FLogicQuery": (".flogic_types", "FLogicQuery"),
     "FLogicOntology": (".flogic_types", "FLogicOntology"),
+    "FLogicCachedQueryResult": (".flogic_proof_cache", "FLogicCachedQueryResult"),
+    "CachedErgoAIWrapper": (".flogic_proof_cache", "CachedErgoAIWrapper"),
+    "get_global_cached_wrapper": (".flogic_proof_cache", "get_global_cached_wrapper"),
+    "FLogicProvingMethod": (".flogic_zkp_integration", "FLogicProvingMethod"),
+    "ZKPFLogicResult": (".flogic_zkp_integration", "ZKPFLogicResult"),
+    "ZKPFLogicProver": (".flogic_zkp_integration", "ZKPFLogicProver"),
 }
 
 
