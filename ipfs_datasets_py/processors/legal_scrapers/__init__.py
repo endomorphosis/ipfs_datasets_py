@@ -34,6 +34,8 @@ from . import (
     recap_archive_scraper,
 )
 
+from .federal_scrapers import federal_register_scraper, us_code_scraper
+
 # Import utility modules
 from . import (
     citation_extraction,
