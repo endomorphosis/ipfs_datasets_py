@@ -5,6 +5,7 @@ structure quality across jurisdictions.
 """
 
 import json
+import argparse
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -13,6 +14,11 @@ try:
     from .state_laws_scraper import scrape_state_laws
 except Exception:
     scrape_state_laws = None  # type: ignore[assignment]
+
+try:
+    from .state_laws_scraper import US_STATES
+except Exception:
+    US_STATES = {}
 
 
 class StateLawsVerifier:
@@ -166,13 +172,124 @@ class StateLawsVerifier:
 
         return self.results
 
+    async def verify_state_smoke_coverage(
+        self,
+        *,
+        states: Optional[List[str]] = None,
+        per_state_max_statutes: int = 20,
+        min_full_text_chars: int = 300,
+        rate_limit_delay: float = 0.2,
+    ) -> Dict[str, Any]:
+        if scrape_state_laws is None:
+            self.log_test(
+                "State Smoke Coverage",
+                "FAIL",
+                "state_laws_scraper could not be imported",
+            )
+            return self.results
+
+        selected_states = states or sorted(list(US_STATES.keys()))
+        if not selected_states:
+            self.log_test("State Smoke Coverage", "FAIL", "No states available for smoke coverage")
+            return self.results
+
+        state_results: List[Dict[str, Any]] = []
+        failed_states: List[str] = []
+        empty_states: List[str] = []
+
+        for state_code in selected_states:
+            state_code = str(state_code).upper()
+            try:
+                result = await scrape_state_laws(
+                    states=[state_code],
+                    max_statutes=per_state_max_statutes,
+                    rate_limit_delay=rate_limit_delay,
+                    write_jsonld=True,
+                    strict_full_text=True,
+                    min_full_text_chars=min_full_text_chars,
+                )
+            except Exception as exc:
+                failed_states.append(state_code)
+                state_results.append(
+                    {
+                        "state": state_code,
+                        "status": "exception",
+                        "error": str(exc),
+                    }
+                )
+                continue
+
+            status = str(result.get("status") or "unknown")
+            data_blocks = result.get("data") or []
+            statutes_count = 0
+            strict_removed_total = int((result.get("metadata") or {}).get("strict_removed_total") or 0)
+            for block in data_blocks:
+                statutes = block.get("statutes") if isinstance(block, dict) else []
+                if isinstance(statutes, list):
+                    statutes_count += len(statutes)
+
+            if status not in {"success", "partial_success"}:
+                failed_states.append(state_code)
+            elif statutes_count == 0:
+                empty_states.append(state_code)
+
+            state_results.append(
+                {
+                    "state": state_code,
+                    "status": status,
+                    "statutes": statutes_count,
+                    "strict_removed_total": strict_removed_total,
+                    "error": result.get("error"),
+                }
+            )
+
+        total_states = len(selected_states)
+        passed_states = total_states - len(failed_states) - len(empty_states)
+        pass_ratio = self._coverage_ratio(total_states, passed_states)
+
+        details = {
+            "total_states": total_states,
+            "passed_states": passed_states,
+            "empty_states": empty_states,
+            "failed_states": failed_states,
+            "pass_ratio": pass_ratio,
+            "per_state_max_statutes": per_state_max_statutes,
+            "state_results": state_results,
+        }
+
+        if pass_ratio >= 0.95:
+            self.log_test(
+                "State Smoke Coverage",
+                "PASS",
+                f"{passed_states}/{total_states} states returned statutes",
+                details,
+            )
+        elif pass_ratio >= 0.75:
+            self.log_test(
+                "State Smoke Coverage",
+                "WARN",
+                f"Partial state coverage: {passed_states}/{total_states} states",
+                details,
+            )
+        else:
+            self.log_test(
+                "State Smoke Coverage",
+                "FAIL",
+                f"Low state coverage: {passed_states}/{total_states} states",
+                details,
+            )
+
+        return self.results
+
     async def run_all_tests(
         self,
         *,
         states: Optional[List[str]] = None,
         max_statutes: int = 400,
+        per_state_max_statutes: int = 20,
     ) -> int:
         await self.verify_jsonld_completeness(states=states, max_statutes=max_statutes)
+        await self.verify_state_smoke_coverage(states=states, per_state_max_statutes=per_state_max_statutes)
 
         output_file = Path.home() / ".ipfs_datasets" / "state_laws" / "verification_results.json"
         output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -184,10 +301,58 @@ class StateLawsVerifier:
 async def verify_state_laws_scraper(
     states: Optional[List[str]] = None,
     max_statutes: int = 400,
+    per_state_max_statutes: int = 20,
 ) -> Dict[str, Any]:
     verifier = StateLawsVerifier()
-    await verifier.run_all_tests(states=states, max_statutes=max_statutes)
+    await verifier.run_all_tests(
+        states=states,
+        max_statutes=max_statutes,
+        per_state_max_statutes=per_state_max_statutes,
+    )
     return verifier.results
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Verify state law scraper quality and coverage.")
+    parser.add_argument(
+        "--states",
+        type=str,
+        default="all",
+        help="Comma-separated state codes (e.g., CA,NY,TX) or 'all'.",
+    )
+    parser.add_argument(
+        "--max-statutes",
+        type=int,
+        default=400,
+        help="Max statutes for aggregate completeness run.",
+    )
+    parser.add_argument(
+        "--per-state-max-statutes",
+        type=int,
+        default=20,
+        help="Per-state max statutes for smoke coverage run.",
+    )
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    args = _parse_args()
+    if str(args.states).strip().lower() == "all":
+        state_list = None
+    else:
+        state_list = [item.strip().upper() for item in str(args.states).split(",") if item.strip()]
+
+    verifier = StateLawsVerifier()
+    exit_code = asyncio.run(
+        verifier.run_all_tests(
+            states=state_list,
+            max_statutes=int(args.max_statutes),
+            per_state_max_statutes=int(args.per_state_max_statutes),
+        )
+    )
+    raise SystemExit(exit_code)
 
 
 __all__ = [
