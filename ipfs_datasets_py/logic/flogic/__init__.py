@@ -59,6 +59,11 @@ if TYPE_CHECKING:
         ZKPFLogicResult,
         ZKPFLogicProver,
     )
+    from .semantic_normalizer import (
+        SemanticNormalizer,
+        get_global_normalizer,
+        DEFAULT_SYNONYM_MAP,
+    )
 
 __all__ = [
     # ErgoAI wrapper
@@ -79,6 +84,10 @@ __all__ = [
     "FLogicProvingMethod",
     "ZKPFLogicResult",
     "ZKPFLogicProver",
+    # Semantic normalization
+    "SemanticNormalizer",
+    "get_global_normalizer",
+    "DEFAULT_SYNONYM_MAP",
 ]
 
 _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
@@ -96,6 +105,9 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "FLogicProvingMethod": (".flogic_zkp_integration", "FLogicProvingMethod"),
     "ZKPFLogicResult": (".flogic_zkp_integration", "ZKPFLogicResult"),
     "ZKPFLogicProver": (".flogic_zkp_integration", "ZKPFLogicProver"),
+    "SemanticNormalizer": (".semantic_normalizer", "SemanticNormalizer"),
+    "get_global_normalizer": (".semantic_normalizer", "get_global_normalizer"),
+    "DEFAULT_SYNONYM_MAP": (".semantic_normalizer", "DEFAULT_SYNONYM_MAP"),
 }
 
 

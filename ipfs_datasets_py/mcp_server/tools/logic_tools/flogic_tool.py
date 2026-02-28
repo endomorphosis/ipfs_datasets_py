@@ -9,6 +9,9 @@ flogic_query
     Execute an Ergo query against the current ontology, with caching.
 flogic_check_consistency
     Check whether a set of KG triples is consistent with F-logic constraints.
+flogic_normalize_term
+    Resolve a term (or list of terms) to its canonical form via the
+    SemanticNormalizer (SymAI when available, dictionary fallback otherwise).
 """
 
 from __future__ import annotations
@@ -242,4 +245,67 @@ __all__ = [
     "flogic_assert",
     "flogic_query",
     "flogic_check_consistency",
+    "flogic_normalize_term",
 ]
+
+
+async def flogic_normalize_term(
+    terms: List[str],
+    normalize_goals: bool = False,
+) -> Dict[str, Any]:
+    """
+    Resolve terms or query goals to their canonical semantic forms.
+
+    Uses the :class:`~ipfs_datasets_py.logic.flogic.semantic_normalizer.SemanticNormalizer`
+    (SymAI-powered when available, falling back to a built-in synonym map).
+    The result can be used to pre-canonicalize queries before caching so
+    that semantic synonyms (e.g. ``"canine"`` and ``"dog"``) share the
+    same proof-cache entry.
+
+    Args:
+        terms: List of term strings or full Ergo goal strings (max 200).
+        normalize_goals: When ``True``, treat each entry as a full Ergo
+            query goal and apply goal-level normalization (identifiers
+            replaced in-place); when ``False``, normalize each entry as
+            a single identifier.
+
+    Returns:
+        Dict with ``success`` (bool), ``normalized`` (list of
+        ``{"input": …, "canonical": …, "changed": bool}`` dicts),
+        ``symai_active`` (bool).
+    """
+    if not _FLOGIC_AVAILABLE:
+        return _unavailable("flogic_normalize_term")
+    if not terms:
+        return {"success": True, "normalized": [], "symai_active": False}
+
+    try:
+        from ipfs_datasets_py.logic.flogic.semantic_normalizer import (
+            SemanticNormalizer,
+            get_global_normalizer,
+            _SYMAI_AVAILABLE,
+        )
+        norm = get_global_normalizer()
+    except Exception as exc:
+        logger.warning("SemanticNormalizer unavailable: %s", exc)
+        return {"success": False, "error": str(exc), "normalized": []}
+
+    results = []
+    for t in terms[:200]:
+        if not isinstance(t, str):
+            continue
+        if normalize_goals:
+            canonical = norm.normalize_goal(t)
+        else:
+            canonical = norm.normalize_term(t)
+        results.append({
+            "input": t,
+            "canonical": canonical,
+            "changed": canonical != t,
+        })
+
+    return {
+        "success": True,
+        "normalized": results,
+        "symai_active": norm.symai_available,
+    }

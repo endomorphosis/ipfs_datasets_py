@@ -205,10 +205,20 @@ class TestZKPFLogicProver:
         import warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            return self.ZKPFLogicProver(
-                enable_zkp=False,  # keep tests deterministic
+            # Use a private, non-global cache so tests are isolated
+            from ipfs_datasets_py.logic.flogic.flogic_proof_cache import CachedErgoAIWrapper
+            ergo = CachedErgoAIWrapper(
                 enable_caching=True,
+                use_global_cache=False,
+                cache_size=50,
+                enable_normalization=False,  # disable for deterministic counter tests
             )
+            prover = self.ZKPFLogicProver(
+                enable_zkp=False,
+                enable_caching=False,  # disable inner caching; inject our own ergo
+            )
+            prover._ergo = ergo
+            return prover
 
     def test_first_query_is_standard(self):
         prover = self._make()
@@ -228,9 +238,10 @@ class TestZKPFLogicProver:
     def test_standard_queries_counter(self):
         prover = self._make()
         prover.add_class(self.FLogicClass("Dog"))
-        prover.query("?X : Dog")
-        prover.query("?Y : Dog")  # same goal → cached
-        prover.query("?Z : Animal")  # different → standard
+        prover.query("?X : Dog")          # standard (cache miss)
+        prover.query("?X : Dog")          # cached (same goal, same normalised key)
+        prover.query("?Z : Animal")       # standard (different goal)
+        # Only the two cache-miss calls should increment the counter
         assert prover._standard_queries == 2
 
     def test_add_frame_class_rule_delegated(self):
