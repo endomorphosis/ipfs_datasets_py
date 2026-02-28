@@ -68,6 +68,17 @@ from .legal_web_archive_tools import (
     legal_archive_results_tool,
     legal_get_archive_stats_tool
 )
+from .mcp_tools import (
+    setup_legal_tools_venv,
+    ingest_caselaw_access_vectors,
+    search_caselaw_access_vectors,
+    list_caselaw_access_vector_files,
+    search_caselaw_access_vectors_with_centroids,
+    ingest_caselaw_access_vector_bundle,
+    CAP_LEGAL_DATASET_TOOL_SPECS,
+    get_cap_legal_dataset_tool_specs,
+    register_cap_legal_dataset_tools,
+)
 
 __all__ = [
     # US Code tools
@@ -145,4 +156,15 @@ __all__ = [
     "legal_search_archives_only_tool",
     "legal_archive_results_tool",
     "legal_get_archive_stats_tool",
+
+    # CAP vector dataset integration
+    "setup_legal_tools_venv",
+    "ingest_caselaw_access_vectors",
+    "search_caselaw_access_vectors",
+    "list_caselaw_access_vector_files",
+    "search_caselaw_access_vectors_with_centroids",
+    "ingest_caselaw_access_vector_bundle",
+    "CAP_LEGAL_DATASET_TOOL_SPECS",
+    "get_cap_legal_dataset_tool_specs",
+    "register_cap_legal_dataset_tools",
 ]

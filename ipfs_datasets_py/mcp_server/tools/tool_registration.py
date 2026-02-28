@@ -520,6 +520,42 @@ TOOL_MAPPINGS = {
                 "category": "legal_datasets",
                 "description": "Delete a saved scraping job state",
                 "tags": ["legal", "jobs", "state", "cleanup"]
+            },
+            "setup_legal_tools_venv": {
+                "name": "setup_legal_tools_venv",
+                "category": "legal_datasets",
+                "description": "Create or update project .venv and install dependencies for CAP vector operations",
+                "tags": ["legal", "venv", "dependencies", "setup"]
+            },
+            "list_caselaw_access_vector_files": {
+                "name": "list_caselaw_access_vector_files",
+                "category": "legal_datasets",
+                "description": "List CAP embedding parquet files and available embedding models",
+                "tags": ["legal", "cap", "embeddings", "discovery"]
+            },
+            "ingest_caselaw_access_vectors": {
+                "name": "ingest_caselaw_access_vectors",
+                "category": "legal_datasets",
+                "description": "Ingest Caselaw Access Project embeddings into a vector store collection",
+                "tags": ["legal", "cap", "embeddings", "ingestion"]
+            },
+            "ingest_caselaw_access_vector_bundle": {
+                "name": "ingest_caselaw_access_vector_bundle",
+                "category": "legal_datasets",
+                "description": "Ingest both target and centroid CAP collections in one call",
+                "tags": ["legal", "cap", "centroids", "ingestion"]
+            },
+            "search_caselaw_access_vectors": {
+                "name": "search_caselaw_access_vectors",
+                "category": "legal_datasets",
+                "description": "Search a CAP vector collection using a precomputed query vector",
+                "tags": ["legal", "cap", "vector-search", "retrieval"]
+            },
+            "search_caselaw_access_vectors_with_centroids": {
+                "name": "search_caselaw_access_vectors_with_centroids",
+                "category": "legal_datasets",
+                "description": "Run centroid-first two-stage retrieval for CAP embeddings",
+                "tags": ["legal", "cap", "centroids", "vector-search", "rerouting"]
             }
         }
     }

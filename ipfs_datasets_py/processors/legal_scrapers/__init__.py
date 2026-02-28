@@ -53,6 +53,12 @@ from .legal_dataset_api import (
     list_scraping_jobs_from_parameters,
     scrape_us_code_from_parameters,
     scrape_municipal_codes_from_parameters,
+    setup_legal_tools_venv_from_parameters,
+    ingest_caselaw_access_vectors_from_parameters,
+    search_caselaw_access_vectors_from_parameters,
+    list_caselaw_access_vector_files_from_parameters,
+    search_caselaw_access_vectors_with_centroids_from_parameters,
+    ingest_caselaw_access_vector_bundle_from_parameters,
 )
 
 # Re-export key functions from scrapers for direct access.
@@ -433,6 +439,12 @@ __all__ = [
     "list_scraping_jobs_from_parameters",
     "scrape_us_code_from_parameters",
     "scrape_municipal_codes_from_parameters",
+    "setup_legal_tools_venv_from_parameters",
+    "ingest_caselaw_access_vectors_from_parameters",
+    "search_caselaw_access_vectors_from_parameters",
+    "list_caselaw_access_vector_files_from_parameters",
+    "search_caselaw_access_vectors_with_centroids_from_parameters",
+    "ingest_caselaw_access_vector_bundle_from_parameters",
     
     # Patent Engine
     "Patent",
