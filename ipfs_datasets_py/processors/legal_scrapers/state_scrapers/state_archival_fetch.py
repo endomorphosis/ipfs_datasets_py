@@ -1,8 +1,8 @@
 """Shared archival fetch client for state law scrapers.
 
 Implements resilient URL retrieval with fallback order:
-1. direct fetch
-2. Common Crawl index/WARC recovery
+1. Common Crawl index/WARC recovery
+2. direct fetch
 3. Wayback Machine
 4. Archive.is
 """
@@ -57,13 +57,13 @@ class ArchivalFetchClient:
         self._session.headers.update({"User-Agent": self.user_agent})
 
     async def fetch_with_fallback(self, url: str) -> FetchResult:
-        direct = await asyncio.to_thread(self._fetch_direct, url)
-        if direct is not None:
-            return direct
-
         common_crawl = await asyncio.to_thread(self._fetch_from_common_crawl, url)
         if common_crawl is not None:
             return common_crawl
+
+        direct = await asyncio.to_thread(self._fetch_direct, url)
+        if direct is not None:
+            return direct
 
         wayback = await self._fetch_from_wayback(url)
         if wayback is not None:

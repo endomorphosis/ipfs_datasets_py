@@ -69,6 +69,7 @@ async def scrape_state_laws(
     write_jsonld: bool = True,
     strict_full_text: bool = False,
     min_full_text_chars: int = 300,
+    hydrate_statute_text: bool = True,
 ) -> Dict[str, Any]:
     """Scrape state statutes and build a structured dataset.
     
@@ -126,6 +127,8 @@ async def scrape_state_laws(
         scraped_statutes = []
         statutes_count = 0
         errors = []
+        warnings = []
+        zero_statute_states = []
         
         # Try to use state-specific scrapers if enabled
         if use_state_specific_scrapers:
@@ -153,7 +156,7 @@ async def scrape_state_laws(
                             legal_areas=legal_areas,
                             max_statutes=remaining_statutes,
                             rate_limit_delay=rate_limit_delay,
-                            hydrate_statute_text=True,
+                            hydrate_statute_text=hydrate_statute_text,
                         )
 
                         strict_removed_count = 0
@@ -181,6 +184,10 @@ async def scrape_state_laws(
                         
                         scraped_statutes.append(statute_data)
                         statutes_count += len(normalized_statutes)
+                        if len(normalized_statutes) == 0:
+                            warn_msg = f"{state_code} returned zero statutes"
+                            warnings.append(warn_msg)
+                            zero_statute_states.append(state_code)
                         logger.info(f"Successfully scraped {len(normalized_statutes)} statutes for {state_name}")
                         
                     except Exception as e:
@@ -348,18 +355,21 @@ async def scrape_state_laws(
             "rate_limit_delay": rate_limit_delay,
             "include_metadata": include_metadata,
             "errors": errors if errors else None,
+            "warnings": warnings if warnings else None,
+            "zero_statute_states": zero_statute_states if zero_statute_states else None,
             "schema_normalized": use_state_specific_scrapers,
             "jsonld_dir": str((_resolve_state_output_dir(output_dir) / "state_laws_jsonld")) if (use_state_specific_scrapers and write_jsonld) else None,
             "jsonld_files": jsonld_paths if jsonld_paths else None,
             "strict_full_text": strict_full_text,
             "min_full_text_chars": int(min_full_text_chars),
             "strict_removed_total": strict_removed_total,
+            "hydrate_statute_text": hydrate_statute_text,
         }
         
         logger.info(f"Completed state laws scraping: {statutes_count} statutes in {elapsed_time:.2f}s using {scraper_info}")
         
         return {
-            "status": "success" if not errors else "partial_success",
+            "status": "success" if (not errors and not warnings) else "partial_success",
             "data": scraped_statutes,
             "metadata": metadata,
             "output_format": output_format,
