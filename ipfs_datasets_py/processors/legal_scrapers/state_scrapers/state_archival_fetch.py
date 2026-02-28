@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 import requests
+from requests.exceptions import SSLError
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,18 @@ class ArchivalFetchClient:
         self._session = requests.Session()
         self._session.headers.update({"User-Agent": self.user_agent})
 
+    def _request_with_retries(self, url: str, *, timeout: int, verify: bool = True) -> Optional[requests.Response]:
+        # A small retry loop helps with transient 403/429/503 and edge rate limiting.
+        retry_statuses = {403, 429, 500, 502, 503, 504}
+        for _attempt in range(3):
+            try:
+                response = self._session.get(url, timeout=timeout, verify=verify)
+            except Exception:
+                continue
+            if int(response.status_code) not in retry_statuses:
+                return response
+        return None
+
     async def fetch_with_fallback(self, url: str) -> FetchResult:
         common_crawl = await asyncio.to_thread(self._fetch_from_common_crawl, url)
         if common_crawl is not None:
@@ -77,7 +90,9 @@ class ArchivalFetchClient:
 
     def _fetch_direct(self, url: str) -> Optional[FetchResult]:
         try:
-            response = self._session.get(url, timeout=self.request_timeout_seconds)
+            response = self._request_with_retries(url, timeout=self.request_timeout_seconds, verify=True)
+            if response is None:
+                return None
             if response.status_code == 200 and self._looks_like_html(response.content):
                 return FetchResult(
                     url=url,
@@ -86,6 +101,24 @@ class ArchivalFetchClient:
                     fetched_at=datetime.now(timezone.utc).isoformat(),
                     status_code=response.status_code,
                 )
+            return None
+        except SSLError:
+            # Some state sites present a broken chain from this host; fall back to
+            # insecure TLS only as a last resort so archives can still be queried.
+            try:
+                response = self._request_with_retries(url, timeout=self.request_timeout_seconds, verify=False)
+                if response is None:
+                    return None
+                if response.status_code == 200 and self._looks_like_html(response.content):
+                    return FetchResult(
+                        url=url,
+                        content=response.content,
+                        source="direct_insecure_tls",
+                        fetched_at=datetime.now(timezone.utc).isoformat(),
+                        status_code=response.status_code,
+                    )
+            except Exception:
+                return None
             return None
         except Exception:
             return None
@@ -161,7 +194,9 @@ class ArchivalFetchClient:
         record: Dict[str, Any],
     ) -> Optional[FetchResult]:
         try:
-            response = self._session.get(candidate_url, timeout=self.request_timeout_seconds)
+            response = self._request_with_retries(candidate_url, timeout=self.request_timeout_seconds, verify=True)
+            if response is None:
+                return None
             if response.status_code != 200:
                 return None
             if not self._looks_like_html(response.content):
@@ -175,6 +210,24 @@ class ArchivalFetchClient:
                 archive_url=candidate_url,
                 archive_timestamp=str(record.get("timestamp") or "") or None,
             )
+        except SSLError:
+            try:
+                response = self._request_with_retries(candidate_url, timeout=self.request_timeout_seconds, verify=False)
+                if response is None or int(response.status_code) != 200:
+                    return None
+                if not self._looks_like_html(response.content):
+                    return None
+                return FetchResult(
+                    url=original_url,
+                    content=response.content,
+                    source="common_crawl_insecure_tls",
+                    fetched_at=datetime.now(timezone.utc).isoformat(),
+                    status_code=response.status_code,
+                    archive_url=candidate_url,
+                    archive_timestamp=str(record.get("timestamp") or "") or None,
+                )
+            except Exception:
+                return None
         except Exception:
             return None
 

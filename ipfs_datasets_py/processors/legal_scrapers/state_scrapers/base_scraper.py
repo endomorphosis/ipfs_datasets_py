@@ -885,11 +885,11 @@ class BaseStateScraper(ABC):
                 if not link_text or len(link_text) < 3:
                     continue
                 
-                # Make URL absolute if needed
-                if link_url.startswith('/'):
+                # Make URL absolute if needed (handles '/x' and 'x/y').
+                if not link_url.startswith('http'):
                     from urllib.parse import urljoin
                     link_url = urljoin(code_url, link_url)
-                elif not link_url.startswith('http'):
+                if not link_url.startswith('http'):
                     continue
                 
                 # Extract section number
@@ -1010,10 +1010,10 @@ class BaseStateScraper(ABC):
                         if not link_text or len(link_text) < 3:
                             continue
                         
-                        # Make URL absolute
-                        if link_url.startswith('/'):
+                        # Make URL absolute (handles '/x' and 'x/y').
+                        if not link_url.startswith('http'):
                             link_url = urljoin(code_url, link_url)
-                        elif not link_url.startswith('http'):
+                        if not link_url.startswith('http'):
                             continue
                         
                         # Extract section number

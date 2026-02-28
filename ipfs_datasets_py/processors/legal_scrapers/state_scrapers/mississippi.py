@@ -19,7 +19,7 @@ class MississippiScraper(BaseStateScraper):
         """Return list of available codes/statutes for Mississippi."""
         return [{
             "name": "Mississippi Code",
-            "url": f"{self.get_base_url()}/",
+            "url": "https://www.legislature.ms.gov/legislation/statutes/",
             "type": "Code"
         }]
     
