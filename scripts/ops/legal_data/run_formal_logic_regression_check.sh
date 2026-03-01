@@ -18,6 +18,9 @@ ENABLE_POST_PARSE_OPTIMIZERS="${ENABLE_POST_PARSE_OPTIMIZERS:-1}"
 ENABLE_POST_COMPILE_OPTIMIZERS="${ENABLE_POST_COMPILE_OPTIMIZERS:-1}"
 LLM_KG_ENRICHMENT_MAX_RECORDS="${LLM_KG_ENRICHMENT_MAX_RECORDS:-5}"
 OPTIMIZER_CHAIN_PLAN="${OPTIMIZER_CHAIN_PLAN:-}"
+RUN_PROOF_CERT_AUDIT_AFTER_RUN="${RUN_PROOF_CERT_AUDIT_AFTER_RUN:-0}"
+PROOF_STORE_PATH="${PROOF_STORE_PATH:-artifacts/formal_logic_tmp_verify/federal/proofs.json}"
+PROOF_CERT_AUDIT_PATH="${PROOF_CERT_AUDIT_PATH:-artifacts/formal_logic_tmp_verify/federal/proof_certificate_audit.json}"
 
 if [[ $# -ge 1 ]]; then
   BASELINE_PATH="$1"
@@ -88,6 +91,7 @@ echo "[config] HYBRID_IR_CANONICAL_PREDICATES=$HYBRID_IR_CANONICAL_PREDICATES"
 echo "[config] LIMIT_SEGMENTS=$LIMIT_SEGMENTS"
 echo "[config] ALLOW_SOURCE_CONDITIONED_ROUNDTRIP=$ALLOW_SOURCE_CONDITIONED_ROUNDTRIP ENABLE_LLM_DECODER_PASS=$ENABLE_LLM_DECODER_PASS"
 echo "[config] ENABLE_POST_PARSE_OPTIMIZERS=$ENABLE_POST_PARSE_OPTIMIZERS ENABLE_POST_COMPILE_OPTIMIZERS=$ENABLE_POST_COMPILE_OPTIMIZERS"
+echo "[config] RUN_PROOF_CERT_AUDIT_AFTER_RUN=$RUN_PROOF_CERT_AUDIT_AFTER_RUN"
 PYTHONPATH=src:ipfs_datasets_py .venv/bin/python ipfs_datasets_py/scripts/ops/legal_data/convert_legal_corpus_to_formal_logic.py \
   --input data/federal_laws/us_constitution.jsonld \
   --limit-segments "$LIMIT_SEGMENTS" \
@@ -132,3 +136,15 @@ python3 ipfs_datasets_py/scripts/ops/legal_data/generate_decoder_preview.py \
   --mode "$PREVIEW_MODE" \
   --max-rows 50 \
   --output "$PREVIEW_PATH"
+
+if [[ "$RUN_PROOF_CERT_AUDIT_AFTER_RUN" == "1" ]]; then
+  if [[ -f "$PROOF_STORE_PATH" ]]; then
+    echo "[post] Exporting proof certificate audit artifact..."
+    PROOF_STORE_PATH="$PROOF_STORE_PATH" \
+      PROOF_CERT_AUDIT_PATH="$PROOF_CERT_AUDIT_PATH" \
+      bash ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_proof_certificate_audit.sh
+  else
+    echo "[warn] RUN_PROOF_CERT_AUDIT_AFTER_RUN=1 but proof store not found: $PROOF_STORE_PATH"
+    echo "[warn] Skipping proof certificate audit export."
+  fi
+fi

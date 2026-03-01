@@ -8,6 +8,10 @@ Related scripts:
 - `ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_ga_gate.sh`
 - `ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_optimizer_benchmark.sh`
 - `ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_proof_certificate_audit.sh`
+- `ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_canary_proof_audit_smoke.sh`
+- `ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_regression_proof_audit_smoke.sh`
+- `ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_proof_audit_integration_smoke.sh`
+- `ipfs_datasets_py/scripts/ops/legal_data/assess_formal_logic_proof_audit_integration_summary.py`
 - `ipfs_datasets_py/scripts/ops/legal_data/build_shadow_mode_audit.py`
 - `ipfs_datasets_py/scripts/ops/legal_data/select_formal_logic_canary_mode.py`
 - `ipfs_datasets_py/scripts/ops/legal_data/assess_formal_logic_ga_gate.py`
@@ -96,6 +100,58 @@ Interpretation:
 - `summary.duplicate_certificate_id_count=0` indicates no certificate ID collisions in the store.
 - `summary.missing_trace_map_count=0` indicates all exported certificates map to at least one IR reference.
 
+### Canary proof-audit smoke mode
+Purpose:
+- Validate canary decision contract (`route=hybrid`, `proof_audit_required=true`) and proof-audit export path without running full shadow/canary/regression workloads.
+
+Command:
+```bash
+bash ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_canary_proof_audit_smoke.sh
+```
+
+Primary artifact:
+- `/tmp/formal_logic_canary_proof_audit_smoke/proof_certificate_audit.smoke.json`
+
+### Regression proof-audit smoke mode
+Purpose:
+- Validate regression hook contract (`RUN_PROOF_CERT_AUDIT_AFTER_RUN=1`) and proof-audit export path without running full conversion/regression workloads.
+
+Command:
+```bash
+bash ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_regression_proof_audit_smoke.sh
+```
+
+Primary artifact:
+- `/tmp/formal_logic_regression_proof_audit_smoke/proof_certificate_audit.smoke.json`
+
+### Proof-audit integration smoke mode
+Purpose:
+- Run both proof-audit smoke paths (canary + regression hook) and publish a consolidated summary artifact for CI checks.
+
+Command:
+```bash
+bash ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_proof_audit_integration_smoke.sh
+```
+
+Primary artifact:
+- `/tmp/formal_logic_proof_audit_integration_smoke/summary.json`
+
+Summary contract:
+- `overall_passed=true` and `error_code="OK"` indicate full pass.
+- `error_code="INTEGRATION_SMOKE_FAILED"` indicates at least one failure.
+- `failure_reasons` enumerates machine-readable causes (for example `canary_exit_nonzero`, `regression_artifact_missing`).
+
+Triage command:
+```bash
+PYTHONPATH=src:ipfs_datasets_py .venv/bin/python \
+  ipfs_datasets_py/scripts/ops/legal_data/assess_formal_logic_proof_audit_integration_summary.py \
+  --summary /tmp/formal_logic_proof_audit_integration_smoke/summary.json \
+  --output /tmp/formal_logic_proof_audit_integration_smoke/triage.json
+```
+
+Triage artifact:
+- `/tmp/formal_logic_proof_audit_integration_smoke/triage.json`
+
 ## 2) Required Environment Toggles
 
 Shared toggles:
@@ -105,6 +161,7 @@ Canary toggles:
 - `RISK_LEVEL=low|medium|high`
 - `REQUIRE_SHADOW_READY=1|0`
 - `RUN_SHADOW_FIRST=1|0`
+- `RUN_PROOF_AUDIT_IF_REQUIRED=1|0` (default `1`; when decision says `proof_audit_required=true`, export proof-certificate audit artifact)
 
 GA toggles:
 - `RUN_CANARY_FIRST=1|0`
@@ -117,6 +174,7 @@ Core conversion toggles (from regression runner):
 - `HYBRID_IR_CANONICAL_PREDICATES=1|0`
 - `ALLOW_SOURCE_CONDITIONED_ROUNDTRIP=1|0`
 - `ENABLE_LLM_DECODER_PASS=1|0`
+- `RUN_PROOF_CERT_AUDIT_AFTER_RUN=1|0` (default `0`; run proof-certificate audit at end of regression run)
 
 Proof certificate audit toggles:
 - `PROOF_STORE_PATH=<path>`
@@ -180,3 +238,48 @@ After rollout:
 - [ ] Archive artifacts for traceability.
 - [ ] Record promotion/rollback decision and reason.
 - [ ] Update TODO status and execution notes when behavior changes.
+
+## 7) VS Code Task Usage
+
+Use `Tasks: Run Task` in VS Code and select one of the following labels:
+
+- `Legal smoke: proof-audit canary`
+  - Runs: `scripts/ops/run_formal_logic_canary_proof_audit_smoke.sh`
+  - Expected artifact: `/tmp/formal_logic_canary_proof_audit_smoke/proof_certificate_audit.smoke.json`
+
+- `Legal smoke: proof-audit regression`
+  - Runs: `scripts/ops/run_formal_logic_regression_proof_audit_smoke.sh`
+  - Expected artifact: `/tmp/formal_logic_regression_proof_audit_smoke/proof_certificate_audit.smoke.json`
+
+- `Legal smoke: proof-audit integration`
+  - Runs: `scripts/ops/run_formal_logic_proof_audit_integration_smoke.sh`
+  - Expected artifact: `/tmp/formal_logic_proof_audit_integration_smoke/summary.json`
+  - Pass condition: `overall_passed=true` in summary JSON
+
+## 8) Smoke Troubleshooting
+
+When `Legal smoke: proof-audit integration` fails:
+
+Step 1:
+- Open `/tmp/formal_logic_proof_audit_integration_smoke/summary.json`.
+
+Step 2:
+- Check `error_code` and `failure_reasons` first.
+
+Step 3:
+- Then inspect `checks.canary_smoke.exit_code` and `checks.regression_smoke.exit_code`.
+
+Step 4:
+- If either exit code is non-zero, inspect:
+  - `checks.canary_smoke.log_path`
+  - `checks.regression_smoke.log_path`
+
+Step 5:
+- If exit codes are zero but `artifact_exists=false`, verify artifact paths:
+  - `checks.canary_smoke.artifact_path`
+  - `checks.regression_smoke.artifact_path`
+
+Step 6:
+- Re-run single-path smoke to isolate failures quickly:
+  - `bash ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_canary_proof_audit_smoke.sh`
+  - `bash ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_regression_proof_audit_smoke.sh`

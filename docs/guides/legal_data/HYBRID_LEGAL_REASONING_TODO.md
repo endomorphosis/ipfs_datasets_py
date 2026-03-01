@@ -176,6 +176,16 @@ Use this section for short dated notes while executing TODO items.
 - 2026-03-01: Integrated deterministic proof certificate generation into reasoner proof storage, added normalized certificate payload/hash fields, and persisted certificate-to-IR trace mapping through serialization.
 - 2026-03-01: Added jurisdiction normalization policy in `normalize_ir` (`Federal`, `State:<code>`, `Agency:<name>`) and expanded normalization tests for canonical predicate mode plus parse-normalize ID stability.
 - 2026-03-01: Added ops exporter (`export_proof_certificates_audit.py`) plus runner (`run_formal_logic_proof_certificate_audit.sh`) to emit standalone proof certificate/trace-map audit artifacts.
+- 2026-03-01: Added optional regression-run hook (`RUN_PROOF_CERT_AUDIT_AFTER_RUN=1`) in `run_formal_logic_regression_check.sh` to auto-export proof-certificate audit artifacts when a proof store is present.
+- 2026-03-01: Updated canary runner to execute proof-certificate audit export when canary decision requires proof audit (`proof_audit_required=true`, toggle `RUN_PROOF_AUDIT_IF_REQUIRED=1`).
+- 2026-03-01: Added fast smoke script (`run_formal_logic_canary_proof_audit_smoke.sh`) to validate canary proof-audit contract + export path with synthetic artifacts.
+- 2026-03-01: Added fast smoke script (`run_formal_logic_regression_proof_audit_smoke.sh`) to validate regression proof-audit hook contract + export path with synthetic artifacts.
+- 2026-03-01: Added aggregate smoke script (`run_formal_logic_proof_audit_integration_smoke.sh`) to run both proof-audit smoke paths and emit consolidated summary artifact output.
+- 2026-03-01: Added workspace VS Code tasks for proof-audit smokes (`Legal smoke: proof-audit canary|regression|integration`) in `.vscode/tasks.json`.
+- 2026-03-01: Added runbook section documenting VS Code task usage for proof-audit smoke labels plus expected artifacts and pass condition.
+- 2026-03-01: Hardened integration smoke failure diagnostics (summary path + per-log tails) and documented smoke troubleshooting flow in operations runbook.
+- 2026-03-01: Added machine-readable `error_code` and `failure_reasons` fields to proof-audit integration smoke summary for CI/alert routing.
+- 2026-03-01: Added triage helper (`assess_formal_logic_proof_audit_integration_summary.py`) that maps `failure_reasons` to remediation commands and emits `triage.json`.
 
 ## Definition of Ready (per TODO item)
 

@@ -17,3 +17,27 @@ Copied from workspace-level `scripts/ops/`:
 - `run_formal_logic_optimizer_benchmark.sh`
 - `export_proof_certificates_audit.py`
 - `run_formal_logic_proof_certificate_audit.sh`
+- `run_formal_logic_canary_proof_audit_smoke.sh`
+- `run_formal_logic_regression_proof_audit_smoke.sh`
+- `run_formal_logic_proof_audit_integration_smoke.sh`
+- `assess_formal_logic_proof_audit_integration_summary.py`
+
+Notes:
+- Set `RUN_PROOF_CERT_AUDIT_AFTER_RUN=1` when invoking
+	`run_formal_logic_regression_check.sh` to auto-export
+	`proof_certificate_audit.json` after conversion/analysis complete.
+- `run_formal_logic_canary_mode.sh` now auto-runs proof-certificate audit export
+	when the canary decision includes `proof_audit_required=true`
+	(toggle with `RUN_PROOF_AUDIT_IF_REQUIRED=1|0`).
+- Run `run_formal_logic_canary_proof_audit_smoke.sh` for a fast synthetic
+	validation of the canary proof-audit contract and export path.
+- Run `run_formal_logic_regression_proof_audit_smoke.sh` for a fast synthetic
+	validation of the regression proof-audit hook contract and export path.
+- Run `run_formal_logic_proof_audit_integration_smoke.sh` to execute both
+	proof-audit smoke paths and emit a consolidated pass/fail summary JSON.
+- Run `assess_formal_logic_proof_audit_integration_summary.py` to map
+	integration-smoke `failure_reasons` to actionable remediation commands.
+- VS Code tasks are available in workspace root `.vscode/tasks.json`:
+	`Legal smoke: proof-audit canary`,
+	`Legal smoke: proof-audit regression`,
+	`Legal smoke: proof-audit integration`.
