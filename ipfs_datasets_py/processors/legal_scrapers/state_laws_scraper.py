@@ -14,11 +14,14 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 _QUALITY_NAV_RE = re.compile(
-    r"skip to|session:|all rights reserved|committee|legislature|bill status|meeting|calendar|login|contact",
+    r"skip navigation|skip to content|all rights reserved|bill status|meeting schedule|calendar|login|contact us|docs options help|home documents",
     re.IGNORECASE,
 )
 _QUALITY_SECTION_FALLBACK_RE = re.compile(r"^Section-\d+$", re.IGNORECASE)
-_QUALITY_SECTION_SIGNAL_RE = re.compile(r"\b\d{1,2}-\d{3,5}(?:\.\d+)?\b")
+_QUALITY_SECTION_SIGNAL_RE = re.compile(
+    r"(?:\b\d{1,4}[A-Za-z]?(?:[.\-]\d+[A-Za-z]*)+\b|§\s*\d+[A-Za-z]?(?:[.\-]\d+[A-Za-z]*)+)",
+    re.IGNORECASE,
+)
 
 # US States and territories
 US_STATES = {

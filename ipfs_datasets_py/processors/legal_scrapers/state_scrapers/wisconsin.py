@@ -4,12 +4,23 @@ This module contains the scraper for Wisconsin statutes from the official state 
 """
 
 from typing import List, Dict
+import re
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
 
 
 class WisconsinScraper(BaseStateScraper):
     """Scraper for Wisconsin state laws from https://docs.legis.wisconsin.gov"""
+
+    _WI_SECTION_URL_RE = re.compile(r"/document/statutes/[0-9]+(?:\.[0-9A-Za-z]+)+$", re.IGNORECASE)
+
+    def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
+        filtered: List[NormalizedStatute] = []
+        for statute in statutes:
+            source = str(statute.source_url or "")
+            if self._WI_SECTION_URL_RE.search(source):
+                filtered.append(statute)
+        return filtered
     
     def get_base_url(self) -> str:
         """Return the base URL for Wisconsin's legislative website."""
@@ -41,6 +52,7 @@ class WisconsinScraper(BaseStateScraper):
         ]
 
         seen = set()
+        best_statutes: List[NormalizedStatute] = []
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
@@ -56,16 +68,22 @@ class WisconsinScraper(BaseStateScraper):
                         wait_for_selector="a[href*='/document/statutes/'], a[href*='/statutes/statutes']",
                         timeout=45000,
                     )
-                    if statutes:
+                    statutes = self._filter_section_level(statutes)
+                    if len(statutes) > len(best_statutes):
+                        best_statutes = statutes
+                    if len(statutes) >= 40:
                         return statutes
                 except Exception:
                     pass
 
             statutes = await self._generic_scrape(code_name, candidate, "Wis. Stat.", max_sections=250)
-            if statutes:
+            statutes = self._filter_section_level(statutes)
+            if len(statutes) > len(best_statutes):
+                best_statutes = statutes
+            if len(statutes) >= 40:
                 return statutes
 
-        return []
+        return best_statutes
 
 
 # Register this scraper with the registry

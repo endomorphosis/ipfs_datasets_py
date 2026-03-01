@@ -523,6 +523,28 @@ class BaseStateScraper(ABC):
             if candidate:
                 return candidate
 
+        cite_values = query.get("cite")
+        if cite_values:
+            candidate = self._normalize_legal_text(str(cite_values[0]))
+            if re.match(r"^\d+[A-Za-z]?\.\d+\.\d+[A-Za-z]?$", candidate):
+                return candidate
+
+        wi_match = re.search(r"/document/statutes/([0-9]+(?:\.[0-9A-Za-z]+)+)$", parsed.path, flags=re.IGNORECASE)
+        if wi_match:
+            return wi_match.group(1)
+
+        mn_match = re.search(r"/statutes/cite/([0-9A-Za-z]+(?:\.[0-9A-Za-z]+)+)$", parsed.path, flags=re.IGNORECASE)
+        if mn_match:
+            return mn_match.group(1)
+
+        wv_match = re.search(r"/(\d+[A-Za-z]?(?:-\d+[A-Za-z]?){2,})/?$", parsed.path)
+        if wv_match:
+            return wv_match.group(1)
+
+        mt_match = re.search(r"/(\d{4}-\d{4}-\d{4}-\d{4})\.html$", parsed.path, flags=re.IGNORECASE)
+        if mt_match:
+            return mt_match.group(1)
+
         return None
 
     def _extract_best_content_text(self, html_text: str) -> str:
@@ -567,6 +589,39 @@ class BaseStateScraper(ABC):
 
         # Prefer the longest candidate as a simple heuristic for statute body text.
         return max(candidates, key=len)
+
+    def _trim_to_section_context(self, text: str, statute: NormalizedStatute) -> str:
+        value = self._normalize_legal_text(text)
+        if not value:
+            return value
+
+        section_number = self._normalize_legal_text(str(statute.section_number or ""))
+        section_name = self._normalize_legal_text(str(statute.section_name or ""))
+
+        anchors: List[str] = []
+        if section_number:
+            anchors.extend([
+                f"section {section_number}",
+                f"§ {section_number}",
+                section_number,
+            ])
+        if section_name and section_name != section_number and len(section_name) >= 6:
+            anchors.append(section_name)
+
+        lower_value = value.lower()
+        best_idx: Optional[int] = None
+        for anchor in anchors:
+            idx = lower_value.find(anchor.lower())
+            if idx >= 0:
+                best_idx = idx if best_idx is None else min(best_idx, idx)
+
+        if best_idx is None:
+            return value
+
+        # Keep a little left context for headings, but drop bulky site navigation.
+        start = max(0, best_idx - 24)
+        trimmed = self._normalize_legal_text(value[start:])
+        return trimmed or value
 
     async def _fetch_page_content_with_archival_fallback(self, url: str, timeout_seconds: int = 25) -> bytes:
         """Fetch HTML bytes using direct + archival fallback chain.
@@ -629,6 +684,7 @@ class BaseStateScraper(ABC):
 
         fetched_text = self._extract_best_content_text(html_text)
         fetched_text = self._normalize_legal_text(fetched_text)
+        fetched_text = self._trim_to_section_context(fetched_text, statute)
         if len(fetched_text) < 160:
             return
 
