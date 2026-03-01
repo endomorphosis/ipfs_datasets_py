@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 cd "$ROOT_DIR"
 
 REPORT_PATH="${REPORT_PATH:-artifacts/formal_logic_tmp_verify/federal/report.json}"
@@ -49,7 +49,7 @@ echo "[config] ENABLE_HYBRID_IR=$ENABLE_HYBRID_IR HYBRID_IR_JURISDICTION_FALLBAC
 echo "[config] HYBRID_IR_CANONICAL_PREDICATES=$HYBRID_IR_CANONICAL_PREDICATES"
 echo "[config] LIMIT_SEGMENTS=$LIMIT_SEGMENTS"
 echo "[config] ALLOW_SOURCE_CONDITIONED_ROUNDTRIP=$ALLOW_SOURCE_CONDITIONED_ROUNDTRIP ENABLE_LLM_DECODER_PASS=$ENABLE_LLM_DECODER_PASS"
-PYTHONPATH=src:ipfs_datasets_py .venv/bin/python scripts/ops/convert_legal_corpus_to_formal_logic.py \
+PYTHONPATH=src:ipfs_datasets_py .venv/bin/python ipfs_datasets_py/scripts/ops/legal_data/convert_legal_corpus_to_formal_logic.py \
   --input data/federal_laws/us_constitution.jsonld \
   --limit-segments "$LIMIT_SEGMENTS" \
   --enable-clause-decomposition \
@@ -72,14 +72,14 @@ PYTHONPATH=src:ipfs_datasets_py .venv/bin/python scripts/ops/convert_legal_corpu
 
 echo "[2/2] Running low-tail delta analysis..."
 if [[ -f "$BASELINE_PATH" ]]; then
-  .venv/bin/python scripts/ops/analyze_formal_logic_low_tail.py \
+  .venv/bin/python ipfs_datasets_py/scripts/ops/legal_data/analyze_formal_logic_low_tail.py \
     --report "$REPORT_PATH" \
     --baseline "$BASELINE_PATH" \
     --top-k 12 \
     --show-worst 8
 else
   echo "Baseline not found at: $BASELINE_PATH"
-  .venv/bin/python scripts/ops/analyze_formal_logic_low_tail.py \
+  .venv/bin/python ipfs_datasets_py/scripts/ops/legal_data/analyze_formal_logic_low_tail.py \
     --report "$REPORT_PATH" \
     --top-k 12 \
     --show-worst 8
@@ -91,7 +91,7 @@ if [[ "$ENABLE_HYBRID_IR" == "1" ]]; then
 fi
 PREVIEW_PATH="$(dirname "$REPORT_PATH")/constitution_final_decoder_preview.md"
 echo "[post] Generating decoder preview (mode=$PREVIEW_MODE) at $PREVIEW_PATH"
-python3 scripts/ops/generate_decoder_preview.py \
+python3 ipfs_datasets_py/scripts/ops/legal_data/generate_decoder_preview.py \
   --records "$RECORDS_PATH" \
   --report "$REPORT_PATH" \
   --mode "$PREVIEW_MODE" \

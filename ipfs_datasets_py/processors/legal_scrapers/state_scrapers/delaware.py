@@ -4,6 +4,7 @@ Delaware Code Online uses heavy JavaScript rendering.
 """
 
 from typing import List, Dict
+import re
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -20,6 +21,24 @@ class DelawareScraper(BaseStateScraper):
     NOTE: Delaware's website is heavily JavaScript-rendered.
     This scraper requires Playwright or returns limited results.
     """
+
+    _DE_CHAPTER_URL_RE = re.compile(r"/title\d+/c\d+/index\.html$", re.IGNORECASE)
+
+    def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
+        filtered: List[NormalizedStatute] = []
+        for statute in statutes:
+            name = str(statute.section_name or "")
+            source = str(statute.source_url or "")
+            if source.lower().endswith('.pdf'):
+                continue
+            # Accept real section captures and skip title-level landing pages.
+            if re.search(r"§\s*\d", name, re.IGNORECASE) or re.search(r"\b\d+\.[0-9A-Za-z\-]*", name):
+                filtered.append(statute)
+                continue
+            if re.search(r"^#\d+[A-Za-z\-]*$", source):
+                filtered.append(statute)
+                continue
+        return filtered
     
     def get_base_url(self) -> str:
         """Return the base URL for Delaware's legislative website."""
@@ -29,7 +48,7 @@ class DelawareScraper(BaseStateScraper):
         """Return list of available codes/statutes for Delaware."""
         return [{
             "name": "Delaware Code",
-            "url": f"{self.get_base_url()}/index.html",
+            "url": f"{self.get_base_url()}/title1/c001/index.html",
             "type": "Code"
         }]
     
@@ -43,12 +62,39 @@ class DelawareScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        if PLAYWRIGHT_AVAILABLE:
-            self.logger.info("Delaware: Using Playwright for JavaScript rendering")
-            return await self._scrape_with_playwright(code_name, code_url, "Del. Code")
-        else:
+        candidate_urls = [
+            f"{self.get_base_url()}/title1/c001/index.html",
+            f"{self.get_base_url()}/title11/c005/index.html",
+            f"{self.get_base_url()}/title6/c001/index.html",
+            f"{self.get_base_url()}/index.html",
+            code_url,
+        ]
+
+        best_statutes: List[NormalizedStatute] = []
+        seen = set()
+        for candidate in candidate_urls:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+
+            if PLAYWRIGHT_AVAILABLE:
+                self.logger.info("Delaware: Using Playwright for JavaScript rendering")
+                statutes = await self._scrape_with_playwright(code_name, candidate, "Del. Code")
+                statutes = self._filter_section_level(statutes)
+                if len(statutes) > len(best_statutes):
+                    best_statutes = statutes
+                if len(statutes) >= 20:
+                    return statutes
+
             self.logger.warning("Delaware requires Playwright for JavaScript rendering - using fallback")
-            return await self._custom_scrape_delaware(code_name, code_url, "Del. Code")
+            statutes = await self._custom_scrape_delaware(code_name, candidate, "Del. Code")
+            statutes = self._filter_section_level(statutes)
+            if len(statutes) > len(best_statutes):
+                best_statutes = statutes
+            if len(statutes) >= 20:
+                return statutes
+
+        return best_statutes
     
     async def _scrape_with_playwright(
         self,
@@ -80,7 +126,15 @@ class DelawareScraper(BaseStateScraper):
                 soup = BeautifulSoup(content, 'html.parser')
                 
                 links = soup.find_all('a', href=True)
-                title_links = [l for l in links if 'title' in l.get('href', '').lower() and not l.get('href', '').endswith('.pdf')][:10]
+                title_links = [
+                    l for l in links
+                    if not l.get('href', '').lower().endswith('.pdf')
+                    and (
+                        self._DE_CHAPTER_URL_RE.search(l.get('href', ''))
+                        or '§' in l.get_text(strip=True)
+                        or re.search(r"\b\d+\.[0-9A-Za-z\-]*", l.get_text(strip=True))
+                    )
+                ][:40]
                 
                 self.logger.info(f"Delaware: Found {len(title_links)} title links")
                 
@@ -96,7 +150,7 @@ class DelawareScraper(BaseStateScraper):
                         continue
                     
                     full_url = urljoin(code_url, link_href)
-                    section_number = self._extract_section_number(link_text) or f"Title-{section_count + 1}"
+                    section_number = self._extract_section_number(link_text) or f"Section-{section_count + 1}"
                     legal_area = self._identify_legal_area(link_text)
                     
                     statute = NormalizedStatute(
@@ -166,8 +220,11 @@ class DelawareScraper(BaseStateScraper):
                 if not link_text or len(link_text) < 5 or link_href.endswith('.pdf'):
                     continue
                 
-                # Accept links with 'title' or numbers
-                if 'title' not in link_href.lower() and not any(char.isdigit() for char in link_text):
+                # Accept chapter/index and section-like entries, but skip PDFs.
+                if link_href.lower().endswith('.pdf'):
+                    continue
+                is_candidate = bool(self._DE_CHAPTER_URL_RE.search(link_href)) or ('§' in link_text) or bool(re.search(r"\b\d+\.[0-9A-Za-z\-]*", link_text))
+                if not is_candidate:
                     continue
                 
                 full_url = urljoin(code_url, link_href)

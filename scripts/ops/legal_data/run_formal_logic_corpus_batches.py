@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run federal/state formal-logic conversion batches with separate metadata outputs.
 
-This orchestrator runs `convert_legal_corpus_to_formal_logic.py` twice:
+This orchestrator runs `ipfs_datasets_py/scripts/ops/legal_data/convert_legal_corpus_to_formal_logic.py` twice:
 - Federal corpus profile
 - State corpus profile
 
@@ -35,7 +35,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--converter-script",
-        default="scripts/ops/convert_legal_corpus_to_formal_logic.py",
+        default="ipfs_datasets_py/scripts/ops/legal_data/convert_legal_corpus_to_formal_logic.py",
         help="Path to converter script.",
     )
     parser.add_argument(
@@ -238,7 +238,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--drift-dashboard-script",
-        default="scripts/ops/build_semantic_drift_dashboard.py",
+        default="ipfs_datasets_py/scripts/ops/legal_data/build_semantic_drift_dashboard.py",
         help="Path to drift dashboard generator script.",
     )
     parser.add_argument(

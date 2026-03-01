@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 cd "$ROOT_DIR"
 
 # Keep hybrid regression artifacts isolated from default runs.
@@ -13,4 +13,4 @@ export RECORDS_PATH="${RECORDS_PATH:-artifacts/formal_logic_tmp_verify/federal/r
 export LOGIC_PATH="${LOGIC_PATH:-artifacts/formal_logic_tmp_verify/federal/logic.hybrid.jsonld}"
 
 # Optional positional baseline override remains supported by delegated script.
-bash scripts/ops/run_formal_logic_regression_check.sh "$@"
+bash ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_regression_check.sh "$@"
