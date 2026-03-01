@@ -87,6 +87,14 @@ async def search_caselaw_access_vectors(parameters: Dict[str, Any]) -> Dict[str,
     return await search_caselaw_access_vectors_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
+async def search_caselaw_access_cases(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Search CAP vectors and enrich results with caselaw metadata/snippets by CID."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        search_caselaw_access_cases_from_parameters,
+    )
+    return await search_caselaw_access_cases_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
 async def list_caselaw_access_vector_files(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """List CAP parquet/model files available for ingestion."""
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
@@ -129,6 +137,7 @@ LEGAL_DATASET_MCP_TOOLS: List[Any] = [
     setup_legal_tools_venv,
     ingest_caselaw_access_vectors,
     search_caselaw_access_vectors,
+    search_caselaw_access_cases,
     list_caselaw_access_vector_files,
     search_caselaw_access_vectors_with_centroids,
     ingest_caselaw_access_vector_bundle,
@@ -206,6 +215,31 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
         "category": "legal_dataset_tools",
     },
     {
+        "name": "search_caselaw_access_cases",
+        "description": "Search vectors and return caselaw details plus optional sparse chunk snippets.",
+        "function": search_caselaw_access_cases,
+        "parameters": {
+            "collection_name": {"type": "string", "required": True},
+            "query_vector": {"type": "array", "required": True},
+            "store_type": {"type": "string", "default": "faiss"},
+            "top_k": {"type": "integer", "default": 10},
+            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_caselaw_access_project"},
+            "hf_parquet_file": {"type": "string", "default": "embeddings/ipfs_TeraflopAI___Caselaw_Access_Project.parquet"},
+            "cid_metadata_field": {"type": "string", "default": "cid"},
+            "cid_column": {"type": "string", "default": "cid"},
+            "text_field_candidates": {"type": "array", "required": False},
+            "snippet_chars": {"type": "integer", "default": 320},
+            "local_case_parquet_file": {"type": "string", "required": False},
+            "chunk_lookup_enabled": {"type": "boolean", "default": True},
+            "chunk_hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_caselaw_access_project"},
+            "chunk_hf_parquet_file": {"type": "string", "default": "embeddings/sparse_chunks.parquet"},
+            "local_chunk_parquet_file": {"type": "string", "required": False},
+            "chunk_snippet_chars": {"type": "integer", "default": 1000},
+            "auto_setup_venv": {"type": "boolean", "default": True},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
         "name": "search_caselaw_access_vectors_with_centroids",
         "description": "Two-stage retrieval: centroid routing followed by filtered target search.",
         "function": search_caselaw_access_vectors_with_centroids,
@@ -259,6 +293,7 @@ __all__ = [
     "setup_legal_tools_venv",
     "ingest_caselaw_access_vectors",
     "search_caselaw_access_vectors",
+    "search_caselaw_access_cases",
     "list_caselaw_access_vector_files",
     "search_caselaw_access_vectors_with_centroids",
     "ingest_caselaw_access_vector_bundle",

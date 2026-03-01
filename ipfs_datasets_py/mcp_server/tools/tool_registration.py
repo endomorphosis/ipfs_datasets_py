@@ -551,6 +551,12 @@ TOOL_MAPPINGS = {
                 "description": "Search a CAP vector collection using a precomputed query vector",
                 "tags": ["legal", "cap", "vector-search", "retrieval"]
             },
+            "search_caselaw_access_cases": {
+                "name": "search_caselaw_access_cases",
+                "category": "legal_datasets",
+                "description": "Search CAP vectors and enrich matches with caselaw snippets resolved by CID",
+                "tags": ["legal", "cap", "vector-search", "cid", "caselaw", "retrieval"]
+            },
             "search_caselaw_access_vectors_with_centroids": {
                 "name": "search_caselaw_access_vectors_with_centroids",
                 "category": "legal_datasets",

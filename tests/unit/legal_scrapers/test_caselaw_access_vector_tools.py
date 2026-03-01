@@ -105,6 +105,7 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
     for required_name in (
         "list_caselaw_access_vector_files",
         "ingest_caselaw_access_vector_bundle",
+        "search_caselaw_access_cases",
         "search_caselaw_access_vectors_with_centroids",
     ):
         assert required_name in by_name
@@ -119,6 +120,11 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
     assert bundle_params["target_collection_name"].get("required") is True
     assert bundle_params["centroid_collection_name"].get("required") is True
 
+    case_search_params = by_name["search_caselaw_access_cases"]["parameters"]
+    assert "local_case_parquet_file" in case_search_params
+    assert "chunk_hf_parquet_file" in case_search_params
+    assert "chunk_lookup_enabled" in case_search_params
+
 
 def test_tool_registration_mapping_includes_cap_entries() -> None:
     """Central migrated tool mapping should expose CAP entries for auto registration."""
@@ -130,6 +136,7 @@ def test_tool_registration_mapping_includes_cap_entries() -> None:
         "ingest_caselaw_access_vectors",
         "ingest_caselaw_access_vector_bundle",
         "search_caselaw_access_vectors",
+        "search_caselaw_access_cases",
         "search_caselaw_access_vectors_with_centroids",
     ):
         assert func_name in legal_mapping
@@ -183,6 +190,77 @@ async def test_search_uses_runner_with_search_operation(monkeypatch: pytest.Monk
     assert captured["operation"] == "search"
     assert captured["payload"]["collection_name"] == "cap_docs"
     assert captured["payload"]["top_k"] == 7
+
+
+@pytest.mark.anyio
+async def test_case_search_requires_query_vector() -> None:
+    """CAP case-search endpoint should enforce query_vector."""
+    result = await legal_dataset_api.search_caselaw_access_cases_from_parameters(
+        {"collection_name": "cap_docs", "auto_setup_venv": False}
+    )
+
+    assert result["status"] == "error"
+    assert result["operation"] == "search_cases"
+    assert "query_vector is required" in result["error"]
+
+
+@pytest.mark.anyio
+async def test_case_search_uses_runner_with_search_cases_operation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """CAP case-search endpoint should invoke subprocess runner with search_cases payload."""
+    captured = {}
+
+    def _fake_runner(*, operation, payload, venv_dir=".venv"):
+        captured["operation"] = operation
+        captured["payload"] = payload
+        captured["venv_dir"] = venv_dir
+        return {
+            "status": "success",
+            "operation": "search_cases",
+            "results": [
+                {
+                    "chunk_id": "x",
+                    "score": 0.9,
+                    "content": "demo",
+                    "metadata": {"cid": "abc"},
+                    "cid": "abc",
+                    "case": {"cid": "abc", "name": "Case A", "snippet": "..."},
+                }
+            ],
+        }
+
+    monkeypatch.setattr(legal_dataset_api, "_run_cap_vector_operation_in_venv", _fake_runner)
+
+    result = await legal_dataset_api.search_caselaw_access_cases_from_parameters(
+        {
+            "collection_name": "cap_docs",
+            "query_vector": [0.1, 0.2, 0.3],
+            "top_k": 7,
+            "auto_setup_venv": False,
+            "venv_dir": ".venv",
+            "hf_dataset_id": "justicedao/ipfs_caselaw_access_project",
+            "local_case_parquet_file": "/tmp/caselaw.parquet",
+            "chunk_lookup_enabled": True,
+            "chunk_hf_parquet_file": "embeddings/sparse_chunks.parquet",
+            "local_chunk_parquet_file": "/tmp/sparse_chunks.parquet",
+            "chunk_snippet_chars": 750,
+        },
+        tool_version="2.2.0",
+    )
+
+    assert result["status"] == "success"
+    assert result["operation"] == "search_cases"
+    assert result["tool_version"] == "2.2.0"
+    assert captured["operation"] == "search_cases"
+    assert captured["payload"]["collection_name"] == "cap_docs"
+    assert captured["payload"]["top_k"] == 7
+    assert captured["payload"]["hf_dataset_id"] == "justicedao/ipfs_caselaw_access_project"
+    assert captured["payload"]["local_case_parquet_file"] == "/tmp/caselaw.parquet"
+    assert captured["payload"]["chunk_lookup_enabled"] is True
+    assert captured["payload"]["chunk_hf_parquet_file"] == "embeddings/sparse_chunks.parquet"
+    assert captured["payload"]["local_chunk_parquet_file"] == "/tmp/sparse_chunks.parquet"
+    assert captured["payload"]["chunk_snippet_chars"] == 750
 
 
 @pytest.mark.anyio

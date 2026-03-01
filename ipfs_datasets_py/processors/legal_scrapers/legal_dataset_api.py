@@ -108,6 +108,7 @@ import importlib.util
 import json
 import os
 import sys
+import time
 
 module_path = os.environ["CAP_VECTOR_MODULE_PATH"]
 spec = importlib.util.spec_from_file_location("cap_vector_search_integration", module_path)
@@ -166,6 +167,246 @@ async def _main() -> None:
                 }
             )
         print(json.dumps({"status": "success", "operation": op, "results": output}))
+        return
+
+    if op == "search_cases":
+        from huggingface_hub import hf_hub_url
+        import duckdb
+
+        results = await cap.search_by_vector(
+            collection_name=payload["collection_name"],
+            query_vector=payload["query_vector"],
+            store_type=payload.get("store_type", "faiss"),
+            top_k=int(payload.get("top_k", 10)),
+            filter_dict=payload.get("filter_dict"),
+        )
+
+        cid_field = payload.get("cid_metadata_field", "cid")
+        cid_column = payload.get("cid_column", "cid")
+        text_candidates = payload.get("text_field_candidates") or ["head_matter", "text"]
+        snippet_chars = int(payload.get("snippet_chars", 320))
+        chunk_lookup_enabled = bool(payload.get("chunk_lookup_enabled", True))
+
+        cid_order = []
+        for hit in results:
+            metadata = hit.metadata or {}
+            cid = metadata.get(cid_field) or hit.chunk_id
+            cid_str = str(cid).strip() if cid is not None else ""
+            if cid_str and cid_str not in cid_order:
+                cid_order.append(cid_str)
+
+        case_rows = {}
+        case_source = None
+        chunk_source = None
+        chunk_lookup_error = None
+        chunk_rows_by_chunk_cid = {}
+        chunk_rows_by_source_cid = {}
+        if cid_order:
+            dataset_id = payload.get("hf_dataset_id", "justicedao/ipfs_caselaw_access_project")
+            parquet_file = payload.get(
+                "hf_parquet_file",
+                "embeddings/ipfs_TeraflopAI___Caselaw_Access_Project.parquet",
+            )
+            hf_url = hf_hub_url(repo_id=dataset_id, repo_type="dataset", filename=parquet_file)
+            local_parquet = payload.get("local_case_parquet_file")
+            con = duckdb.connect()
+
+            def _execute_with_retries(query_text, params=None, retries=4):
+                last_exc = None
+                for attempt in range(retries):
+                    try:
+                        if params is None:
+                            return con.execute(query_text)
+                        return con.execute(query_text, params)
+                    except Exception as exc:
+                        last_exc = exc
+                        message = str(exc)
+                        if "HTTP 429" in message and attempt < retries - 1:
+                            # Simple exponential backoff for transient HF rate limits.
+                            time.sleep(1.5 * (2 ** attempt))
+                            continue
+                        raise
+                if last_exc is not None:
+                    raise last_exc
+
+            sources = [("hf", hf_url)]
+            if local_parquet and os.path.exists(local_parquet):
+                sources.append(("local", local_parquet))
+
+            last_exc = None
+            for source_name, source_ref in sources:
+                try:
+                    schema_rows = _execute_with_retries(
+                        f"DESCRIBE SELECT * FROM read_parquet('{source_ref}')"
+                    ).fetchall()
+                    schema_cols = {row[0] for row in schema_rows}
+
+                    selected_text_field = None
+                    for candidate in text_candidates:
+                        if candidate in schema_cols:
+                            selected_text_field = candidate
+                            break
+
+                    optional_fields = [
+                        "name",
+                        "court",
+                        "decision_date",
+                        "jurisdiction",
+                        "docket_number",
+                        "citations",
+                    ]
+                    present_optionals = [f for f in optional_fields if f in schema_cols]
+
+                    select_parts = [f"{cid_column} AS cid"]
+                    for field in present_optionals:
+                        select_parts.append(field)
+                    if selected_text_field:
+                        select_parts.append(
+                            f"substr({selected_text_field}, 1, {snippet_chars}) AS snippet"
+                        )
+
+                    placeholders = ", ".join(["?"] * len(cid_order))
+                    query = (
+                        f"SELECT {', '.join(select_parts)} "
+                        f"FROM read_parquet('{source_ref}') "
+                        f"WHERE {cid_column} IN ({placeholders})"
+                    )
+                    rows = _execute_with_retries(query, cid_order).fetchall()
+                    col_names = [p.split(" AS ")[-1] for p in select_parts]
+                    for row in rows:
+                        row_obj = dict(zip(col_names, row))
+                        case_rows[str(row_obj.get("cid"))] = row_obj
+                    case_source = source_name
+                    break
+                except Exception as exc:
+                    last_exc = exc
+                    continue
+
+            if not case_rows and last_exc is not None:
+                raise last_exc
+
+            if chunk_lookup_enabled:
+                chunk_dataset_id = payload.get("chunk_hf_dataset_id", dataset_id)
+                chunk_parquet_file = payload.get(
+                    "chunk_hf_parquet_file",
+                    "embeddings/sparse_chunks.parquet",
+                )
+                chunk_hf_url = hf_hub_url(
+                    repo_id=chunk_dataset_id,
+                    repo_type="dataset",
+                    filename=chunk_parquet_file,
+                )
+                local_chunk_parquet = payload.get("local_chunk_parquet_file")
+                chunk_snippet_chars = int(payload.get("chunk_snippet_chars", 1000))
+
+                chunk_sources = [("hf", chunk_hf_url)]
+                if local_chunk_parquet and os.path.exists(local_chunk_parquet):
+                    chunk_sources.append(("local", local_chunk_parquet))
+
+                last_chunk_exc = None
+                for source_name, source_ref in chunk_sources:
+                    try:
+                        chunk_schema_rows = _execute_with_retries(
+                            f"DESCRIBE SELECT * FROM read_parquet('{source_ref}')"
+                        ).fetchall()
+                        chunk_schema_cols = {row[0] for row in chunk_schema_rows}
+
+                        where_clauses = []
+                        if "items" in chunk_schema_cols:
+                            where_clauses.append("items.cid")
+                        if "source_file_cid" in chunk_schema_cols:
+                            where_clauses.append("source_file_cid")
+
+                        if not where_clauses:
+                            continue
+
+                        placeholders = ", ".join(["?"] * len(cid_order))
+                        where_sql = " OR ".join(
+                            [f"{field} IN ({placeholders})" for field in where_clauses]
+                        )
+                        query = (
+                            "SELECT "
+                            "source_file_cid, "
+                            "source_filename, "
+                            "items.cid AS chunk_cid, "
+                            f"substr(items.content, 1, {chunk_snippet_chars}) AS chunk_snippet "
+                            f"FROM read_parquet('{source_ref}') "
+                            f"WHERE {where_sql}"
+                        )
+
+                        params = []
+                        for _ in where_clauses:
+                            params.extend(cid_order)
+
+                        rows = _execute_with_retries(query, params).fetchall()
+                        for row in rows:
+                            source_file_cid, source_filename, chunk_cid, chunk_snippet = row
+                            source_file_cid_str = (
+                                str(source_file_cid).strip() if source_file_cid is not None else ""
+                            )
+                            chunk_cid_str = str(chunk_cid).strip() if chunk_cid is not None else ""
+                            chunk_obj = {
+                                "chunk_cid": chunk_cid_str,
+                                "source_file_cid": source_file_cid_str,
+                                "source_filename": source_filename,
+                                "snippet": chunk_snippet,
+                            }
+                            if chunk_cid_str and chunk_cid_str not in chunk_rows_by_chunk_cid:
+                                chunk_rows_by_chunk_cid[chunk_cid_str] = chunk_obj
+                            if (
+                                source_file_cid_str
+                                and source_file_cid_str not in chunk_rows_by_source_cid
+                            ):
+                                chunk_rows_by_source_cid[source_file_cid_str] = chunk_obj
+
+                        chunk_source = source_name
+                        break
+                    except Exception as exc:
+                        last_chunk_exc = exc
+                        continue
+                if chunk_source is None and last_chunk_exc is not None:
+                    chunk_lookup_error = str(last_chunk_exc)
+
+        output = []
+        for hit in results:
+            metadata = hit.metadata or {}
+            cid = metadata.get(cid_field) or hit.chunk_id
+            cid_str = str(cid).strip() if cid is not None else ""
+            hit_chunk_id = str(hit.chunk_id).strip() if hit.chunk_id is not None else ""
+            file_chunk = None
+            for candidate in (hit_chunk_id, cid_str):
+                if candidate and candidate in chunk_rows_by_chunk_cid:
+                    file_chunk = chunk_rows_by_chunk_cid[candidate]
+                    break
+            if file_chunk is None:
+                for candidate in (cid_str, hit_chunk_id):
+                    if candidate and candidate in chunk_rows_by_source_cid:
+                        file_chunk = chunk_rows_by_source_cid[candidate]
+                        break
+            output.append(
+                {
+                    "chunk_id": hit.chunk_id,
+                    "content": hit.content,
+                    "score": hit.score,
+                    "metadata": metadata,
+                    "cid": cid_str,
+                    "case": case_rows.get(cid_str),
+                    "file_chunk": file_chunk,
+                }
+            )
+
+        print(
+            json.dumps(
+                {
+                    "status": "success",
+                    "operation": op,
+                    "results": output,
+                    "case_source": case_source,
+                    "chunk_source": chunk_source,
+                    "chunk_lookup_error": chunk_lookup_error,
+                }
+            )
+        )
         return
 
     if op == "list_files":
@@ -653,6 +894,99 @@ async def search_caselaw_access_vectors_from_parameters(
             "status": "error",
             "error": str(e),
             "operation": "search",
+            "tool_version": tool_version,
+        }
+
+
+async def search_caselaw_access_cases_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    """Search CAP vectors and enrich matches with caselaw fields by CID from HF parquet."""
+    try:
+        if "query_vector" not in parameters:
+            return {
+                "status": "error",
+                "error": "query_vector is required",
+                "operation": "search_cases",
+                "tool_version": tool_version,
+            }
+        if not parameters.get("collection_name"):
+            return {
+                "status": "error",
+                "error": "collection_name is required",
+                "operation": "search_cases",
+                "tool_version": tool_version,
+            }
+
+        auto_setup_venv = bool(parameters.get("auto_setup_venv", True))
+        venv_dir = parameters.get("venv_dir", ".venv")
+        if auto_setup_venv:
+            await setup_legal_tools_venv_from_parameters(
+                {
+                    "venv_dir": venv_dir,
+                    "packages": parameters.get(
+                        "venv_packages",
+                        [
+                            "datasets",
+                            "huggingface_hub",
+                            "pyarrow",
+                            "numpy",
+                            "faiss-cpu",
+                            "duckdb",
+                            "anyio",
+                        ],
+                    ),
+                    "upgrade_pip": parameters.get("upgrade_pip", True),
+                },
+                tool_version=tool_version,
+            )
+
+        operation_payload = {
+            "operation": "search_cases",
+            "collection_name": parameters["collection_name"],
+            "store_type": parameters.get("store_type", "faiss"),
+            "query_vector": parameters["query_vector"],
+            "top_k": int(parameters.get("top_k", 10)),
+            "filter_dict": parameters.get("filter_dict"),
+            "hf_dataset_id": parameters.get("hf_dataset_id", "justicedao/ipfs_caselaw_access_project"),
+            "hf_parquet_file": parameters.get(
+                "hf_parquet_file",
+                "embeddings/ipfs_TeraflopAI___Caselaw_Access_Project.parquet",
+            ),
+            "cid_metadata_field": parameters.get("cid_metadata_field", "cid"),
+            "cid_column": parameters.get("cid_column", "cid"),
+            "text_field_candidates": parameters.get("text_field_candidates", ["head_matter", "text"]),
+            "snippet_chars": int(parameters.get("snippet_chars", 320)),
+            "local_case_parquet_file": parameters.get("local_case_parquet_file"),
+            "chunk_lookup_enabled": bool(parameters.get("chunk_lookup_enabled", True)),
+            "chunk_hf_dataset_id": parameters.get(
+                "chunk_hf_dataset_id",
+                parameters.get("hf_dataset_id", "justicedao/ipfs_caselaw_access_project"),
+            ),
+            "chunk_hf_parquet_file": parameters.get(
+                "chunk_hf_parquet_file",
+                "embeddings/sparse_chunks.parquet",
+            ),
+            "local_chunk_parquet_file": parameters.get("local_chunk_parquet_file"),
+            "chunk_snippet_chars": int(parameters.get("chunk_snippet_chars", 1000)),
+        }
+        result = await anyio.to_thread.run_sync(
+            lambda: _run_cap_vector_operation_in_venv(
+                operation="search_cases",
+                payload=operation_payload,
+                venv_dir=venv_dir,
+            )
+        )
+        result["tool_version"] = tool_version
+        return result
+    except Exception as e:
+        logger.error("CAP caselaw-enriched vector search failed: %s", e)
+        return {
+            "status": "error",
+            "error": str(e),
+            "operation": "search_cases",
             "tool_version": tool_version,
         }
 

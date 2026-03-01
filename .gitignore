@@ -24,6 +24,8 @@ test_outputs/
 *.env
 *.env.*
 *.DS_Store
+*.parquet
+outputs/
 venv/
 ipfs_datasets_py/processors/groth16_backend/target/
 deprecated/
