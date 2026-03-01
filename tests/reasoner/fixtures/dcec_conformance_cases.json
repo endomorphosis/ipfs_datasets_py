@@ -1,0 +1,34 @@
+[
+  {
+    "id": "obligation_with_window",
+    "sentence": "Company A shall file report within 30 days.",
+    "jurisdiction": "us/federal",
+    "expected_formulas": [
+      "HoldsAt(Obligated(frm:4d3e2159b5894389), t) :- true, not(false), TemporalGuard(tmp:d0f22920d2410c6f, t)."
+    ]
+  },
+  {
+    "id": "prohibition_simple",
+    "sentence": "Company A shall not dump waste.",
+    "jurisdiction": "us/federal",
+    "expected_formulas": [
+      "HoldsAt(Forbidden(frm:27713db0965aa97d), t) :- true, not(false), true."
+    ]
+  },
+  {
+    "id": "exception_with_window",
+    "sentence": "Company A shall submit backup report within 10 days unless emergency.",
+    "jurisdiction": "us/federal",
+    "expected_formulas": [
+      "HoldsAt(Obligated(frm:5045ad91c14d9ab7), t) :- true, not(exception_clause(unless emergency.)), TemporalGuard(tmp:8eda31331c259801, t)."
+    ]
+  },
+  {
+    "id": "permission_with_activation",
+    "sentence": "Agency may disclose notice when authorized.",
+    "jurisdiction": "us/federal",
+    "expected_formulas": [
+      "HoldsAt(Permitted(frm:fba70b3b15d66a32), t) :- activation_clause(when authorized.), not(false), true."
+    ]
+  }
+]

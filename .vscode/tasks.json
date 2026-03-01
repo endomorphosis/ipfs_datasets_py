@@ -894,6 +894,140 @@
 			"options": {
 				"cwd": "${workspaceFolder}"
 			}
+		},
+		{
+			"label": "Legal smoke: proof-audit canary",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"./scripts/ops/legal_data/run_formal_logic_canary_proof_audit_smoke.sh"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Legal smoke: proof-audit regression",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"./scripts/ops/legal_data/run_formal_logic_regression_proof_audit_smoke.sh"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Legal smoke: proof-audit integration",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"./scripts/ops/legal_data/run_formal_logic_proof_audit_integration_smoke.sh"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Legal smoke: proof-audit integration (json triage only)",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"RUN_TRIAGE_MARKDOWN=0 ./scripts/ops/legal_data/run_formal_logic_proof_audit_integration_smoke.sh"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Legal smoke: proof-audit integration (summary only)",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"RUN_TRIAGE_AFTER_SUMMARY=0 ./scripts/ops/legal_data/run_formal_logic_proof_audit_integration_smoke.sh"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Legal smoke: proof-audit integration matrix",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"./scripts/ops/legal_data/run_formal_logic_proof_audit_integration_matrix_smoke.sh"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Legal smoke: proof-audit triage",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
+			"args": [
+				"./scripts/ops/legal_data/assess_formal_logic_proof_audit_integration_summary.py",
+				"--summary",
+				"/tmp/formal_logic_proof_audit_integration_smoke/summary.json",
+				"--output",
+				"/tmp/formal_logic_proof_audit_integration_smoke/triage.json"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Legal smoke: proof-audit triage (markdown)",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
+			"args": [
+				"./scripts/ops/legal_data/assess_formal_logic_proof_audit_integration_summary.py",
+				"--summary",
+				"/tmp/formal_logic_proof_audit_integration_smoke/summary.json",
+				"--format",
+				"markdown",
+				"--output",
+				"/tmp/formal_logic_proof_audit_integration_smoke/triage.md"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		}
 	],
 	"inputs": [

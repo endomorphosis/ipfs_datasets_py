@@ -10,6 +10,7 @@ Copied from workspace-level `scripts/ops/`:
 - `run_formal_logic_corpus_batches.py`
 - `compare_formal_logic_reports.py`
 - `build_semantic_drift_dashboard.py`
+- `analyze_formal_logic_entropy.py`
 - `run_formal_logic_regression_check.sh`
 - `run_formal_logic_regression_check_baseline.sh`
 - `run_formal_logic_regression_check_hybrid.sh`
@@ -45,7 +46,7 @@ Notes:
 - Run `assess_formal_logic_proof_audit_integration_summary.py` to map
 	integration-smoke `failure_reasons` to actionable remediation commands.
 	Use `--format markdown` to emit a human-readable incident report.
-- VS Code tasks are available in workspace root `.vscode/tasks.json`:
+- VS Code tasks are canonical in `ipfs_datasets_py/.vscode/tasks.json`:
 	`Legal smoke: proof-audit canary`,
 	`Legal smoke: proof-audit regression`,
 	`Legal smoke: proof-audit integration`,
@@ -54,3 +55,4 @@ Notes:
 	`Legal smoke: proof-audit integration matrix`,
 	`Legal smoke: proof-audit triage`,
 	`Legal smoke: proof-audit triage (markdown)`.
+	Workspace-root `scripts/ops/*` wrappers remain compatibility entrypoints.

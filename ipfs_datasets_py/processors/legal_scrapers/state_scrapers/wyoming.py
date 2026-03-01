@@ -3,6 +3,10 @@
 This module contains the scraper for Wyoming statutes from the official state legislative website.
 """
 
+import re
+import subprocess
+import tempfile
+from pathlib import Path
 from typing import List, Dict
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -25,7 +29,7 @@ class WyomingScraper(BaseStateScraper):
         """Return list of available codes/statutes for Wyoming."""
         return [{
             "name": "Wyoming Statutes",
-            "url": f"{self.get_base_url()}/statutes/statutesintro.aspx",
+            "url": f"{self.get_base_url()}/stateStatutes/StatutesDownload",
             "type": "Code"
         }]
     
@@ -55,7 +59,7 @@ class WyomingScraper(BaseStateScraper):
         code_name: str,
         code_url: str,
         citation_format: str,
-        max_sections: int = 30
+        max_sections: int = 60
     ) -> List[NormalizedStatute]:
         """Scrape Wyoming using Playwright for JavaScript rendering."""
         try:
@@ -79,6 +83,7 @@ class WyomingScraper(BaseStateScraper):
                 links = soup.find_all('a', href=True)
                 
                 section_count = 0
+                seen_urls = set()
                 for link in links:
                     if section_count >= max_sections:
                         break
@@ -88,13 +93,26 @@ class WyomingScraper(BaseStateScraper):
                     
                     if len(link_text) < 5:
                         continue
-                    
-                    keywords = ['title', 'chapter', 'statute', 'code']
-                    if not any(k in link_text.lower() for k in keywords):
-                        continue
-                    
                     full_url = urljoin(code_url, link_href)
+                    full_url_l = full_url.lower()
+                    # Focus on authoritative downloadable title PDFs instead of nav links.
+                    if not (full_url_l.endswith('.pdf') and '/statutes/compress/title' in full_url_l):
+                        continue
+                    if full_url in seen_urls:
+                        continue
+                    seen_urls.add(full_url)
+
                     section_number = self._extract_section_number(link_text) or f"Section-{section_count + 1}"
+                    m = re.search(r"\btitle\s+(\d+(?:\.\d+)?)", link_text, re.IGNORECASE)
+                    if m:
+                        section_number = m.group(1)
+
+                    full_text = self._extract_pdf_text_summary(full_url)
+                    if len(full_text.strip()) < 80:
+                        full_text = (
+                            f"Wyoming Statutes Title {section_number}: {link_text}. "
+                            f"Official source PDF: {full_url}."
+                        )
                     
                     statute = NormalizedStatute(
                         state_code=self.state_code,
@@ -103,7 +121,7 @@ class WyomingScraper(BaseStateScraper):
                         code_name=code_name,
                         section_number=section_number,
                         section_name=link_text[:200],
-                        full_text=f"Section {section_number}: {link_text}",
+                        full_text=full_text,
                         legal_area=self._identify_legal_area(link_text),
                         source_url=full_url,
                         official_cite=f"{citation_format} § {section_number}",
@@ -119,6 +137,44 @@ class WyomingScraper(BaseStateScraper):
                 await browser.close()
         
         return statutes
+
+    def _extract_pdf_text_summary(self, pdf_url: str, max_chars: int = 6000) -> str:
+        """Extract statute text from a PDF using system `pdftotext`.
+
+        This keeps Wyoming strict-mode scraping resilient without adding heavy PDF
+        parser dependencies to the Python environment.
+        """
+        try:
+            import requests
+
+            response = requests.get(
+                pdf_url,
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=45,
+            )
+            response.raise_for_status()
+
+            with tempfile.TemporaryDirectory(prefix="wy_statute_pdf_") as td:
+                pdf_path = Path(td) / "input.pdf"
+                txt_path = Path(td) / "output.txt"
+                pdf_path.write_bytes(response.content)
+
+                proc = subprocess.run(
+                    ["pdftotext", "-f", "1", "-l", "3", str(pdf_path), str(txt_path)],
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                    check=False,
+                )
+                if proc.returncode != 0 or not txt_path.exists():
+                    return ""
+
+                raw = txt_path.read_text(encoding="utf-8", errors="ignore")
+                text = re.sub(r"\s+", " ", raw).strip()
+                return text[:max_chars]
+        except Exception as e:
+            self.logger.debug(f"Wyoming PDF text extraction failed for {pdf_url}: {e}")
+            return ""
     
     async def _custom_scrape_wyoming(
         self,
@@ -195,6 +251,16 @@ class WyomingScraper(BaseStateScraper):
             # Fallback to generic scraper if no data found
             if not statutes:
                 self.logger.warning("Wyoming custom scraper found no data - site uses JavaScript")
+                if PLAYWRIGHT_AVAILABLE:
+                    self.logger.info("Wyoming custom scraper retrying with Playwright StatutesDownload page")
+                    pw_statutes = await self._scrape_with_playwright(
+                        code_name,
+                        f"{self.get_base_url()}/stateStatutes/StatutesDownload",
+                        citation_format,
+                        max_sections=max_sections,
+                    )
+                    if pw_statutes:
+                        return pw_statutes
                 self.logger.info("For Wyoming, consider using:")
                 self.logger.info("  1. Playwright for JavaScript rendering")
                 self.logger.info("  2. Alternative URL: https://wyoleg.gov/statutes/compress/")

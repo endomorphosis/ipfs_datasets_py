@@ -261,7 +261,8 @@ After rollout:
 
 ## 7) VS Code Task Usage
 
-Use `Tasks: Run Task` in VS Code and select one of the following labels:
+Use `Tasks: Run Task` in VS Code from the `ipfs_datasets_py` workspace
+(`ipfs_datasets_py/.vscode/tasks.json`) and select one of the following labels:
 
 - `Legal smoke: proof-audit canary`
   - Runs: `scripts/ops/run_formal_logic_canary_proof_audit_smoke.sh`

@@ -1216,7 +1216,8 @@ class BaseStateScraper(ABC):
         citation_format: str,
         max_sections: int = 100,
         wait_for_selector: str = "a",
-        timeout: int = 30000
+        timeout: int = 30000,
+        wait_until: str = "networkidle",
     ) -> List[NormalizedStatute]:
         """Scrape using Playwright for JavaScript-rendered content.
         
@@ -1230,6 +1231,8 @@ class BaseStateScraper(ABC):
             max_sections: Maximum number of sections to scrape
             wait_for_selector: CSS selector to wait for before scraping
             timeout: Timeout in milliseconds (default: 30000)
+            wait_until: Playwright navigation completion mode (e.g.,
+                "networkidle", "domcontentloaded", "load")
             
         Returns:
             List of NormalizedStatute objects
@@ -1257,7 +1260,7 @@ class BaseStateScraper(ABC):
                 
                 try:
                     # Navigate to page
-                    await page.goto(code_url, wait_until="networkidle", timeout=timeout)
+                    await page.goto(code_url, wait_until=wait_until, timeout=timeout)
                     
                     # Wait for specific content
                     try:

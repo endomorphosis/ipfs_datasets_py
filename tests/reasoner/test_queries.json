@@ -1,0 +1,59 @@
+[
+  {
+    "id": "q1_compliance_deadline_met",
+    "api": "check_compliance",
+    "query": {"actor_ref": "ent:company_a", "frame_key": "file_report", "events_case": "report_on_time", "facts_case": "default"},
+    "time_context": {"start": "2026-03-01T00:00:00Z", "end": "2026-03-30T00:00:00Z", "at_time": "2026-03-30T00:00:00Z"},
+    "expected_status": "compliant"
+  },
+  {
+    "id": "q2_compliance_deadline_missed",
+    "api": "check_compliance",
+    "query": {"actor_ref": "ent:company_a", "frame_key": "file_report", "events_case": "none", "facts_case": "default"},
+    "time_context": {"start": "2026-03-01T00:00:00Z", "end": "2026-03-31T00:00:00Z", "at_time": "2026-03-31T00:00:00Z"},
+    "expected_status": "non_compliant"
+  },
+  {
+    "id": "q3_exception_applies",
+    "api": "check_compliance",
+    "query": {"actor_ref": "ent:company_a", "frame_key": "submit_backup_report", "events_case": "none", "facts_case": "emergency"},
+    "time_context": {"start": "2026-04-01T00:00:00Z", "end": "2026-04-08T00:00:00Z", "at_time": "2026-04-08T00:00:00Z"},
+    "expected_status": "compliant"
+  },
+  {
+    "id": "q4_forbidden_action",
+    "api": "check_compliance",
+    "query": {"actor_ref": "ent:company_a", "frame_key": "dump_waste", "events_case": "dump_happened", "facts_case": "default"},
+    "time_context": {"start": "2026-04-10T00:00:00Z", "end": "2026-04-10T23:59:59Z", "at_time": "2026-04-10T23:59:59Z"},
+    "expected_status": "non_compliant"
+  },
+  {
+    "id": "q5_conflicting_obligations",
+    "api": "check_compliance",
+    "query": {"actor_ref": "ent:company_a", "frame_key": "file_report", "events_case": "report_on_time", "facts_case": "conflict"},
+    "time_context": {"start": "2026-03-01T00:00:00Z", "end": "2026-03-15T00:00:00Z", "at_time": "2026-03-15T00:00:00Z"},
+    "expected_conflict": true
+  },
+  {
+    "id": "q6_find_violations_range",
+    "api": "find_violations",
+    "state": {"events_case": "mixed", "facts_case": "default"},
+    "time_range": ["2026-03-01T00:00:00Z", "2026-04-30T23:59:59Z"],
+    "expected_min_violations": 1
+  },
+  {
+    "id": "q7_explain_proof_nl",
+    "api": "explain_proof",
+    "from_query_id": "q2_compliance_deadline_missed",
+    "format": "nl",
+    "expect_reconstructed_nl": true
+  },
+  {
+    "id": "q8_explain_proof_json",
+    "api": "explain_proof",
+    "from_query_id": "q4_forbidden_action",
+    "format": "json",
+    "expect_ir_refs": true,
+    "expect_provenance": true
+  }
+]

@@ -190,6 +190,11 @@ Use this section for short dated notes while executing TODO items.
 - 2026-03-01: Updated integration smoke runner to auto-generate triage artifacts (`triage.json`, `triage.md`) after `summary.json` with env toggles for enable/disable and output paths.
 - 2026-03-01: Added VS Code integration-smoke task variants for triage control (`json triage only`, `summary only`) to reduce manual env editing during CI/operator runs.
 - 2026-03-01: Added matrix smoke orchestrator (`run_formal_logic_proof_audit_integration_matrix_smoke.sh`) and task to run all integration modes in one command and emit consolidated matrix report JSON.
+- 2026-03-01: Completed scope-1 root->submodule task ownership migration: legal smoke tasks are canonical in `ipfs_datasets_py/.vscode/tasks.json`, root `.vscode/tasks.json` now excludes legal smoke ownership, and migration mapping was recorded in `ROOT_TO_SUBMODULE_SCOPE1_MANIFEST_2026-03-01.tsv`.
+- 2026-03-01: Completed scope-2 reasoner migration: moved `src/municipal_scrape_workspace/hybrid_legal_ir.py` and `tests/reasoner/*` into canonical submodule locations (`ipfs_datasets_py/ipfs_datasets_py/processors/legal_data/reasoner/`, `ipfs_datasets_py/tests/reasoner/`), added a root compatibility shim, and recorded mapping in `ROOT_TO_SUBMODULE_SCOPE2_MANIFEST_2026-03-01.tsv`.
+- 2026-03-01: Scope-3 progress: migrated remaining unmoved root ops analyzer (`analyze_formal_logic_entropy.py`) into canonical submodule scripts with root wrapper compatibility, and created `ROOT_TO_SUBMODULE_SCOPE3_MANIFEST_2026-03-01.tsv` documenting pointer docs plus deferred generated `data/state_laws/*/parsed/jsonld` artifact migration pending storage-policy decision.
+- 2026-03-01: User decision: do not migrate `data/state_laws/*/parsed/jsonld` artifacts yet because state-law extraction/parsing is still actively being worked; keep this dataset in root workspace until that workstream stabilizes.
+- 2026-03-01: Migrated canonical legal smoke task ownership from workspace root `.vscode/tasks.json` to `ipfs_datasets_py/.vscode/tasks.json`; root wrappers remain compatibility-only.
 
 ## Definition of Ready (per TODO item)
 

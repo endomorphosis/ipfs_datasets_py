@@ -3,7 +3,13 @@
 This module contains the scraper for Georgia statutes from the official state legislative website.
 """
 
+import re
+import subprocess
+import tempfile
 from typing import List, Dict
+
+import requests
+
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -39,6 +45,10 @@ class GeorgiaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        summary_pdf_statutes = self._scrape_general_statute_summary_pdfs(code_name)
+        if summary_pdf_statutes:
+            return summary_pdf_statutes
+
         if PLAYWRIGHT_AVAILABLE:
             self.logger.info("Georgia: Using Playwright for JavaScript rendering")
             try:
@@ -49,6 +59,82 @@ class GeorgiaScraper(BaseStateScraper):
                 self.logger.warning(f"Georgia Playwright failed: {e}, falling back")
         
         return await self._custom_scrape_georgia(code_name, code_url, "Ga. Code Ann.")
+
+    def _scrape_general_statute_summary_pdfs(self, code_name: str) -> List[NormalizedStatute]:
+        """Use official GA-hosted General Statutes summary PDFs as strict-safe fallback."""
+        candidate_docs = [
+            (
+                "2025",
+                "https://www.legis.ga.gov/api/document/docs/default-source/legislative-counsel-document-library/25sumdoc.pdf?sfvrsn=95973fc9_4",
+            ),
+            (
+                "2024",
+                "https://www.legis.ga.gov/api/document/docs/default-source/legislative-counsel-document-library/2024-general-statutes-summary-pdf.pdf?sfvrsn=38862f9_8",
+            ),
+        ]
+
+        statutes: List[NormalizedStatute] = []
+        for year, pdf_url in candidate_docs:
+            text = self._extract_pdf_text_summary(pdf_url)
+            if len(text) < 280:
+                continue
+
+            statute = NormalizedStatute(
+                state_code=self.state_code,
+                state_name=self.state_name,
+                statute_id=f"{code_name} § Summary-{year}",
+                code_name=code_name,
+                section_number=year,
+                section_name=f"Summary of {year} General Statutes",
+                full_text=text,
+                legal_area="general",
+                source_url=pdf_url,
+                official_cite=f"Ga. Gen. Stat. Summary ({year})",
+                metadata=StatuteMetadata(),
+            )
+            statutes.append(statute)
+
+        if statutes:
+            self.logger.info(f"Georgia summary PDF fallback: Scraped {len(statutes)} records")
+        return statutes
+
+    def _extract_pdf_text_summary(self, pdf_url: str, max_chars: int = 12000) -> str:
+        """Download PDF and extract normalized text via pdftotext."""
+        try:
+            response = requests.get(
+                pdf_url,
+                timeout=60,
+                headers={"User-Agent": "Mozilla/5.0"},
+            )
+            response.raise_for_status()
+        except Exception as exc:
+            self.logger.debug(f"Georgia PDF download failed for {pdf_url}: {exc}")
+            return ""
+
+        try:
+            with tempfile.TemporaryDirectory(prefix="ga_sum_pdf_") as tmpdir:
+                from pathlib import Path
+
+                pdf_path = Path(tmpdir) / "summary.pdf"
+                txt_path = Path(tmpdir) / "summary.txt"
+                pdf_path.write_bytes(response.content)
+
+                result = subprocess.run(
+                    ["pdftotext", "-f", "1", "-l", "12", str(pdf_path), str(txt_path)],
+                    capture_output=True,
+                    text=True,
+                    timeout=40,
+                    check=False,
+                )
+                if int(result.returncode) != 0 or not txt_path.exists():
+                    return ""
+
+                text = txt_path.read_text(encoding="utf-8", errors="ignore")
+                text = re.sub(r"\s+", " ", text).strip()
+                return text[:max_chars]
+        except Exception as exc:
+            self.logger.debug(f"Georgia PDF extraction failed for {pdf_url}: {exc}")
+            return ""
     
     async def _scrape_with_playwright(
         self,

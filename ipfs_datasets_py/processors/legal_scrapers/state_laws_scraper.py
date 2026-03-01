@@ -210,11 +210,12 @@ async def scrape_state_laws(
                         numeric_q = float(quality_metrics.get("numeric_section_name_ratio", 0.0) or 0.0)
 
                         quality_flag = False
-                        fallback_problem = (fallback_q >= 0.7 and numeric_q <= 0.2)
-                        fallback_problem_small = (fallback_q >= 0.8 and numeric_q == 0.0)
+                        # For very small samples, fallback/numeric heuristics are noisy; require
+                        # meaningful sample sizes before treating them as quality failures.
+                        fallback_problem = (total_q >= 10 and fallback_q >= 0.7 and numeric_q <= 0.2)
                         if total_q >= 10 and (nav_q >= 0.2 or fallback_problem or numeric_q <= 0.2):
                             quality_flag = True
-                        elif 1 <= total_q < 10 and (nav_q >= 0.5 or fallback_problem_small or numeric_q == 0.0):
+                        elif 1 <= total_q < 10 and nav_q >= 0.5:
                             quality_flag = True
 
                         if quality_flag:
