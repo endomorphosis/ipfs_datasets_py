@@ -871,8 +871,13 @@ class LogicProcessor:
                     "available": _check_module_available("ipfs_datasets_py.logic.zkp"),
                     "features": ["prove", "verify"],
                 },
+                "flogic": {
+                    "name": "F-logic (Frame Logic / ErgoAI)",
+                    "available": _check_module_available("ipfs_datasets_py.logic.flogic"),
+                    "features": ["assert", "query", "check_consistency", "proof_cache", "zkp_attest"],
+                },
             },
-            "conversions": ["tdfol→fol", "tdfol→tptp", "tdfol→smt2", "tdfol↔dcec", "nl→tdfol", "nl→dcec"],
+            "conversions": ["tdfol→fol", "tdfol→tptp", "tdfol→smt2", "tdfol↔dcec", "nl→tdfol", "nl→dcec", "kg→flogic"],
             "nl_languages": _SUPPORTED_NL_LANGUAGES,
             "elapsed_ms": (time.monotonic() - start) * 1000,
         }
@@ -887,6 +892,7 @@ class LogicProcessor:
             "fol": "ipfs_datasets_py.logic.fol",
             "zkp": "ipfs_datasets_py.logic.zkp",
             "validators": "ipfs_datasets_py.logic.common.validators",
+            "flogic": "ipfs_datasets_py.logic.flogic",
         }
         statuses = {name: _check_module_available(path) for name, path in modules.items()}
         healthy = sum(statuses.values())

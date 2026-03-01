@@ -22,3 +22,7 @@
 [submodule "ipfs_datasets_py/logic/CEC/ShadowProver"]
 	path = ipfs_datasets_py/logic/CEC/ShadowProver
 	url = https://github.com/endomorphosis/ShadowProver.git
+[submodule "ipfs_datasets_py/logic/ErgoAI"]
+	path = ipfs_datasets_py/logic/ErgoAI
+	url = https://github.com/ErgoAI/ErgoEngine.git
+	branch = master

@@ -12,7 +12,7 @@ Business logic lives in
 :class:`~ipfs_datasets_py.core_operations.LogicProcessor`; the functions
 here are thin wrappers that delegate to it.
 
-Tools (24 functions across 10 modules)
+Tools (27 functions across 11 modules)
 ---------------------------------------
 temporal_deontic_logic_tools  check_document_consistency, query_theorems,
                               bulk_process_caselaw, add_theorem
@@ -29,6 +29,8 @@ cec_parse_tool                cec_parse, cec_validate_formula
 cec_analysis_tool             cec_analyze_formula, cec_formula_complexity
 logic_capabilities_tool       logic_capabilities, logic_health
 logic_graphrag_tool           logic_build_knowledge_graph, logic_verify_rag_output
+flogic_tool                   flogic_assert, flogic_query, flogic_check_consistency,
+                              flogic_normalize_term
 """
 
 from .temporal_deontic_logic_tools import (
@@ -58,6 +60,7 @@ from .cec_parse_tool import cec_parse, cec_validate_formula
 from .cec_analysis_tool import cec_analyze_formula, cec_formula_complexity
 from .logic_capabilities_tool import logic_capabilities, logic_health
 from .logic_graphrag_tool import logic_build_knowledge_graph, logic_verify_rag_output
+from .flogic_tool import flogic_assert, flogic_query, flogic_check_consistency, flogic_normalize_term
 
 __all__ = [
     # temporal deontic logic
@@ -97,4 +100,9 @@ __all__ = [
     # graphrag
     "logic_build_knowledge_graph",
     "logic_verify_rag_output",
+    # flogic (Frame Logic / ErgoAI)
+    "flogic_assert",
+    "flogic_query",
+    "flogic_check_consistency",
+    "flogic_normalize_term",
 ]
