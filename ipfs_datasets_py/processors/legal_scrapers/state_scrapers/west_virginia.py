@@ -13,13 +13,13 @@ class WestVirginiaScraper(BaseStateScraper):
     
     def get_base_url(self) -> str:
         """Return the base URL for West Virginia's legislative website."""
-        return "http://www.wvlegislature.gov"
+        return "https://code.wvlegislature.gov"
     
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for West Virginia."""
         return [{
             "name": "West Virginia Code",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/11-8-12/",
             "type": "Code"
         }]
     
@@ -33,7 +33,39 @@ class WestVirginiaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._generic_scrape(code_name, code_url, "W. Va. Code")
+        candidate_urls = [
+            code_url,
+            f"{self.get_base_url()}/11-8-12/",
+            f"{self.get_base_url()}/1-1/",
+            f"{self.get_base_url()}/",
+        ]
+
+        seen = set()
+        for candidate in candidate_urls:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+
+            if self.has_playwright():
+                try:
+                    statutes = await self._playwright_scrape(
+                        code_name,
+                        candidate,
+                        "W. Va. Code",
+                        max_sections=220,
+                        wait_for_selector="a[href*='wvlegislature.gov/'][href*='-'], a[href*='/code/'], a[href*='/article/']",
+                        timeout=45000,
+                    )
+                    if statutes:
+                        return statutes
+                except Exception:
+                    pass
+
+            statutes = await self._generic_scrape(code_name, candidate, "W. Va. Code", max_sections=220)
+            if statutes:
+                return statutes
+
+        return []
 
 
 # Register this scraper with the registry

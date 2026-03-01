@@ -12,7 +12,7 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 import logging
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs, unquote
 
 from .citation_history import extract_trailing_history_citations
 
@@ -30,6 +30,56 @@ USC_CITATION_RE = re.compile(r"\b\d+\s+U\.?\s*S\.?\s*C\.?\s*(?:§+\s*|sec(?:tion
 PUBLIC_LAW_CITATION_RE = re.compile(r"Pub\.?\s*L\.?\s*(?:No\.?\s*)?\d+\s*[–—−‑-]\s*\d+", re.IGNORECASE)
 STAT_CITATION_RE = re.compile(r"\b\d+\s+Stat\.?\s+\d+\b", re.IGNORECASE)
 SECTION_REF_RE = re.compile(r"\b(?:section|sec\.?|§{1,2})\s+[\w\-.(),\sand]+\b", re.IGNORECASE)
+
+# Generic quality filters to reduce navigation/event link pollution.
+_NAV_LABEL_HINTS = (
+    "home",
+    "about",
+    "contact",
+    "staff",
+    "members",
+    "member roster",
+    "committee",
+    "committees",
+    "senate",
+    "house",
+    "legislature",
+    "legislative council",
+    "agencies",
+    "agency",
+    "session",
+    "calendar",
+    "schedule",
+    "events",
+    "live proceedings",
+    "archived meetings",
+    "search",
+    "login",
+    "portal",
+    "news",
+    "media",
+    "press",
+    "privacy",
+    "accessibility",
+    "skip to",
+    "footer",
+)
+
+_STATUTE_URL_HINTS = (
+    "/statute",
+    "/statutes",
+    "/code",
+    "/codes",
+    "/laws",
+    "/law",
+    "/chapter",
+    "/title",
+    "/article",
+    "docname=",
+    "section=",
+)
+
+_NON_HTML_DOC_RE = re.compile(r"\.(?:pdf|docx?|xlsx?|pptx?)(?:$|[?#])", re.IGNORECASE)
 
 
 @dataclass
@@ -238,6 +288,8 @@ class BaseStateScraper(ABC):
                     if isinstance(statute, NormalizedStatute):
                         if hydrate_statute_text:
                             await self._hydrate_statute_text_if_needed(statute)
+                        if self._is_low_quality_statute_record(statute):
+                            continue
                         enriched_statutes.append(self._enrich_statute_structure(statute))
                 statutes = enriched_statutes
                 
@@ -339,6 +391,140 @@ class BaseStateScraper(ABC):
 
         return False
 
+    def _contains_statute_signals(self, text: str) -> bool:
+        value = self._normalize_legal_text(text).lower()
+        if not value:
+            return False
+
+        patterns = [
+            r"\b§\s*\d",
+            r"\bsec(?:tion)?\.?\s+\d",
+            r"\btitle\s+\d",
+            r"\bchapter\s+\d",
+            r"\barticle\s+\d",
+            r"\b\d+[\-\.]\d+[a-z]?\b",
+        ]
+        return any(re.search(pattern, value, flags=re.IGNORECASE) for pattern in patterns)
+
+    def _looks_like_navigation_text(self, text: str) -> bool:
+        value = self._normalize_legal_text(text).lower()
+        if not value:
+            return True
+
+        return any(hint in value for hint in _NAV_LABEL_HINTS)
+
+    def _is_probable_statute_link(self, link_text: str, link_url: str, code_url: str = "") -> bool:
+        text = self._normalize_legal_text(link_text)
+        if len(text) < 3:
+            return False
+
+        url_value = str(link_url or "").strip().lower()
+        parsed = urlparse(url_value) if url_value else None
+        path = (parsed.path if parsed else "") or ""
+
+        if url_value.startswith(("mailto:", "tel:", "javascript:")):
+            return False
+
+        # Skip obvious binary/document links that cannot hydrate into statute text.
+        if _NON_HTML_DOC_RE.search(url_value):
+            return False
+
+        if self._looks_like_navigation_text(text) and not self._contains_statute_signals(text):
+            return False
+
+        if parsed and path in {"", "/"} and not parsed.query:
+            return False
+
+        if code_url:
+            base = urlparse(str(code_url).strip())
+            same_target = (
+                parsed is not None
+                and parsed.scheme == base.scheme
+                and parsed.netloc == base.netloc
+                and parsed.path == base.path
+                and parsed.query == base.query
+            )
+            if same_target and not self._contains_statute_signals(text):
+                return False
+
+        if self._contains_statute_signals(text):
+            return True
+
+        if any(hint in url_value for hint in _STATUTE_URL_HINTS):
+            return True
+
+        return False
+
+    def _is_low_quality_statute_record(self, statute: NormalizedStatute) -> bool:
+        if not isinstance(statute, NormalizedStatute):
+            return False
+
+        section_name = self._normalize_legal_text(str(statute.section_name or ""))
+        full_text = self._normalize_legal_text(str(statute.full_text or ""))
+        source_url = str(statute.source_url or "").strip()
+        section_number = str(statute.section_number or "").strip()
+
+        fallback_section = bool(re.match(r"^Section-\d+$", section_number, flags=re.IGNORECASE))
+        has_statute_signal = (
+            self._contains_statute_signals(section_name)
+            or self._contains_statute_signals(full_text)
+            or any(hint in source_url.lower() for hint in _STATUTE_URL_HINTS)
+        )
+        nav_like = self._looks_like_navigation_text(section_name) or self._looks_like_navigation_text(full_text)
+
+        if fallback_section and nav_like and not has_statute_signal:
+            return True
+
+        if nav_like and not has_statute_signal and len(full_text) < 400:
+            return True
+
+        return False
+
+    def _canonicalize_statute_url(self, link_url: str) -> str:
+        """Normalize wrapped document links to direct statute URLs when possible."""
+        raw = str(link_url or "").strip()
+        if not raw:
+            return raw
+
+        try:
+            parsed = urlparse(raw)
+            query = parse_qs(parsed.query or "")
+            doc_name_values = query.get("docName") or query.get("docname")
+            if doc_name_values:
+                candidate = unquote(str(doc_name_values[0] or "")).strip()
+                if candidate.startswith(("http://", "https://")):
+                    return candidate
+        except Exception:
+            return raw
+
+        return raw
+
+    def _derive_section_number_from_url(self, link_url: str) -> Optional[str]:
+        """Best-effort section number extraction from statute URL patterns."""
+        url_value = str(link_url or "").strip()
+        if not url_value:
+            return None
+
+        lowered = url_value.lower()
+        az_match = re.search(r"/ars/(\d+)/(\d{5})(?:-(\d{2}))?\.htm", lowered)
+        if az_match:
+            title_num = str(int(az_match.group(1)))
+            base_num = str(int(az_match.group(2)))
+            suffix = az_match.group(3)
+            if suffix:
+                return f"{title_num}-{base_num}.{suffix}"
+            return f"{title_num}-{base_num}"
+
+        parsed = urlparse(url_value)
+        query = parse_qs(parsed.query or "")
+        section_values = query.get("section") or query.get("sec")
+        if section_values:
+            candidate = self._normalize_legal_text(str(section_values[0]))
+            if candidate:
+                return candidate
+
+        return None
+
     def _extract_best_content_text(self, html_text: str) -> str:
         try:
             from bs4 import BeautifulSoup
@@ -418,7 +604,9 @@ class BaseStateScraper(ABC):
             return b""
 
     async def _hydrate_statute_text_if_needed(self, statute: NormalizedStatute) -> None:
-        source_url = str(statute.source_url or "").strip()
+        source_url = self._canonicalize_statute_url(str(statute.source_url or "").strip())
+        if source_url and source_url != str(statute.source_url or "").strip():
+            statute.source_url = source_url
         if not source_url:
             return
 
@@ -442,6 +630,10 @@ class BaseStateScraper(ABC):
         fetched_text = self._extract_best_content_text(html_text)
         fetched_text = self._normalize_legal_text(fetched_text)
         if len(fetched_text) < 160:
+            return
+
+        # Avoid replacing stub text with navigation/event boilerplate content.
+        if self._looks_like_navigation_text(fetched_text) and not self._contains_statute_signals(fetched_text):
             return
 
         statute.full_text = fetched_text
@@ -870,8 +1062,8 @@ class BaseStateScraper(ABC):
             # Extract legal area from code name
             legal_area = self._identify_legal_area(code_name)
             
-            # Try to find section links (common patterns across many state websites)
-            section_links = soup.find_all('a', href=True, limit=max_sections)
+            # Scan all anchors, then stop once enough probable statute links are collected.
+            section_links = soup.find_all('a', href=True)
             
             section_count = 0
             for link in section_links:
@@ -891,9 +1083,16 @@ class BaseStateScraper(ABC):
                     link_url = urljoin(code_url, link_url)
                 if not link_url.startswith('http'):
                     continue
+
+                link_url = self._canonicalize_statute_url(link_url)
+
+                if not self._is_probable_statute_link(link_text, link_url, code_url):
+                    continue
                 
                 # Extract section number
                 section_number = self._extract_section_number(link_text)
+                if not section_number:
+                    section_number = self._derive_section_number_from_url(link_url)
                 if not section_number:
                     section_number = f"Section-{section_count + 1}"
                 
@@ -995,8 +1194,8 @@ class BaseStateScraper(ABC):
                     # Extract legal area
                     legal_area = self._identify_legal_area(code_name)
                     
-                    # Find statute links
-                    section_links = soup.find_all('a', href=True, limit=max_sections)
+                    # Scan all anchors, then stop once enough probable statute links are collected.
+                    section_links = soup.find_all('a', href=True)
                     
                     section_count = 0
                     for link in section_links:
@@ -1015,9 +1214,16 @@ class BaseStateScraper(ABC):
                             link_url = urljoin(code_url, link_url)
                         if not link_url.startswith('http'):
                             continue
+
+                        link_url = self._canonicalize_statute_url(link_url)
+
+                        if not self._is_probable_statute_link(link_text, link_url, code_url):
+                            continue
                         
                         # Extract section number
                         section_number = self._extract_section_number(link_text)
+                        if not section_number:
+                            section_number = self._derive_section_number_from_url(link_url)
                         if not section_number:
                             section_number = f"Section-{section_count + 1}"
                         

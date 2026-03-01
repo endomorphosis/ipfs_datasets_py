@@ -8,9 +8,17 @@ import time
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 import json
+import re
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+_QUALITY_NAV_RE = re.compile(
+    r"skip to|session:|all rights reserved|committee|legislature|bill status|meeting|calendar|login|contact",
+    re.IGNORECASE,
+)
+_QUALITY_SECTION_FALLBACK_RE = re.compile(r"^Section-\d+$", re.IGNORECASE)
+_QUALITY_SECTION_SIGNAL_RE = re.compile(r"\b\d{1,2}-\d{3,5}(?:\.\d+)?\b")
 
 # US States and territories
 US_STATES = {
@@ -129,6 +137,8 @@ async def scrape_state_laws(
         errors = []
         warnings = []
         zero_statute_states = []
+        quality_by_state: Dict[str, Dict[str, Any]] = {}
+        low_quality_states: List[str] = []
         
         # Try to use state-specific scrapers if enabled
         if use_state_specific_scrapers:
@@ -181,6 +191,29 @@ async def scrape_state_laws(
                             "strict_full_text": strict_full_text,
                             "strict_removed_count": strict_removed_count,
                         }
+
+                        quality_metrics = _compute_state_quality_metrics(statute_data["statutes"])
+                        statute_data["quality_metrics"] = quality_metrics
+                        quality_by_state[state_code] = quality_metrics
+
+                        # Gate states that are likely link/navigation contamination.
+                        total_q = int(quality_metrics.get("total", 0) or 0)
+                        nav_q = float(quality_metrics.get("nav_like_ratio", 0.0) or 0.0)
+                        fallback_q = float(quality_metrics.get("fallback_section_ratio", 0.0) or 0.0)
+                        numeric_q = float(quality_metrics.get("numeric_section_name_ratio", 0.0) or 0.0)
+
+                        quality_flag = False
+                        if total_q >= 10 and (nav_q >= 0.2 or fallback_q >= 0.7 or numeric_q <= 0.2):
+                            quality_flag = True
+                        elif 1 <= total_q < 10 and (nav_q >= 0.5 or fallback_q >= 0.8 or numeric_q == 0.0):
+                            quality_flag = True
+
+                        if quality_flag:
+                            low_quality_states.append(state_code)
+                            warnings.append(
+                                f"{state_code} quality gate triggered "
+                                f"(total={total_q}, nav={nav_q}, fallback={fallback_q}, numeric={numeric_q})"
+                            )
                         
                         scraped_statutes.append(statute_data)
                         statutes_count += len(normalized_statutes)
@@ -357,6 +390,8 @@ async def scrape_state_laws(
             "errors": errors if errors else None,
             "warnings": warnings if warnings else None,
             "zero_statute_states": zero_statute_states if zero_statute_states else None,
+            "low_quality_states": low_quality_states if low_quality_states else None,
+            "quality_by_state": quality_by_state if quality_by_state else None,
             "schema_normalized": use_state_specific_scrapers,
             "jsonld_dir": str((_resolve_state_output_dir(output_dir) / "state_laws_jsonld")) if (use_state_specific_scrapers and write_jsonld) else None,
             "jsonld_files": jsonld_paths if jsonld_paths else None,
@@ -408,6 +443,43 @@ def _resolve_state_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
     return (Path.home() / ".ipfs_datasets" / "state_laws").resolve()
+
+
+def _compute_state_quality_metrics(statutes: List[Dict[str, Any]]) -> Dict[str, Any]:
+    total = len(statutes)
+    if total <= 0:
+        return {
+            "total": 0,
+            "nav_like_ratio": 0.0,
+            "fallback_section_ratio": 0.0,
+            "numeric_section_name_ratio": 0.0,
+        }
+
+    nav_like = 0
+    fallback_section = 0
+    numeric_section_name = 0
+
+    for statute in statutes:
+        if not isinstance(statute, dict):
+            continue
+
+        text = str(statute.get("full_text") or statute.get("text") or "")
+        section_number = str(statute.get("section_number") or statute.get("sectionNumber") or "")
+        section_name = str(statute.get("section_name") or statute.get("sectionName") or "")
+
+        if _QUALITY_NAV_RE.search(text):
+            nav_like += 1
+        if _QUALITY_SECTION_FALLBACK_RE.match(section_number):
+            fallback_section += 1
+        if _QUALITY_SECTION_SIGNAL_RE.search(section_name):
+            numeric_section_name += 1
+
+    return {
+        "total": total,
+        "nav_like_ratio": round(nav_like / total, 3),
+        "fallback_section_ratio": round(fallback_section / total, 3),
+        "numeric_section_name_ratio": round(numeric_section_name / total, 3),
+    }
 
 
 def _write_state_jsonld_files(scraped_statutes: List[Dict[str, Any]], jsonld_dir: Path) -> List[str]:

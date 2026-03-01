@@ -19,7 +19,7 @@ class MinnesotaScraper(BaseStateScraper):
         """Return list of available codes/statutes for Minnesota."""
         return [{
             "name": "Minnesota Statutes",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/statutes/cite/609.02",
             "type": "Code"
         }]
     
@@ -33,7 +33,39 @@ class MinnesotaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._generic_scrape(code_name, code_url, "Minn. Stat.")
+        candidate_urls = [
+            code_url,
+            f"{self.get_base_url()}/statutes/cite/609.02",
+            f"{self.get_base_url()}/statutes/",
+            f"{self.get_base_url()}/statutes/cite/645.44",
+        ]
+
+        seen = set()
+        for candidate in candidate_urls:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+
+            if self.has_playwright():
+                try:
+                    statutes = await self._playwright_scrape(
+                        code_name,
+                        candidate,
+                        "Minn. Stat.",
+                        max_sections=220,
+                        wait_for_selector="a[href*='/statutes/cite/'], a[href*='/statutes/']",
+                        timeout=45000,
+                    )
+                    if statutes:
+                        return statutes
+                except Exception:
+                    pass
+
+            statutes = await self._generic_scrape(code_name, candidate, "Minn. Stat.", max_sections=220)
+            if statutes:
+                return statutes
+
+        return []
 
 
 # Register this scraper with the registry

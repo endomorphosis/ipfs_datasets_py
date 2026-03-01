@@ -19,7 +19,7 @@ class NorthCarolinaScraper(BaseStateScraper):
         """Return list of available codes/statutes for North Carolina."""
         return [{
             "name": "North Carolina General Statutes",
-            "url": f"{self.get_base_url()}/Laws/GeneralStatuteTOC",
+            "url": f"{self.get_base_url()}/Laws/GeneralStatutes",
             "type": "Code"
         }]
     
@@ -33,7 +33,40 @@ class NorthCarolinaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._generic_scrape(code_name, code_url, "N.C. Gen. Stat.")
+        candidate_urls = [
+            code_url,
+            f"{self.get_base_url()}/Laws/GeneralStatutes",
+            f"{self.get_base_url()}/Laws",
+            # Archive fallback candidate when live endpoints fluctuate.
+            "https://web.archive.org/web/20251017000000/https://www.ncleg.gov/Laws/GeneralStatutes",
+        ]
+
+        seen = set()
+        for candidate in candidate_urls:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+
+            if self.has_playwright():
+                try:
+                    statutes = await self._playwright_scrape(
+                        code_name,
+                        candidate,
+                        "N.C. Gen. Stat.",
+                        max_sections=160,
+                        wait_for_selector="a[href*='GeneralStatutes'], a[href*='Chapter'], a[href*='Statute'], a[href*='Laws']",
+                        timeout=45000,
+                    )
+                    if statutes:
+                        return statutes
+                except Exception:
+                    pass
+
+            statutes = await self._generic_scrape(code_name, candidate, "N.C. Gen. Stat.", max_sections=160)
+            if statutes:
+                return statutes
+
+        return []
 
 
 # Register this scraper with the registry

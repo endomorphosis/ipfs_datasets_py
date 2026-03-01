@@ -19,7 +19,7 @@ class MontanaScraper(BaseStateScraper):
         """Return list of available codes/statutes for Montana."""
         return [{
             "name": "Montana Code Annotated",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/bills/mca/title_0450/chapter_0050/part_0010/section_0020/0450-0050-0010-0020.html",
             "type": "Code"
         }]
     
@@ -33,7 +33,39 @@ class MontanaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._generic_scrape(code_name, code_url, "Mont. Code Ann.")
+        candidate_urls = [
+            code_url,
+            f"{self.get_base_url()}/bills/mca/",
+            f"{self.get_base_url()}/bills/mca/title_0450/chapter_0050/part_0010/section_0020/0450-0050-0010-0020.html",
+            "https://archive.legmt.gov/bills/mca/title_0450/chapter_0050/part_0010/section_0020/0450-0050-0010-0020.html",
+        ]
+
+        seen = set()
+        for candidate in candidate_urls:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+
+            if self.has_playwright():
+                try:
+                    statutes = await self._playwright_scrape(
+                        code_name,
+                        candidate,
+                        "Mont. Code Ann.",
+                        max_sections=220,
+                        wait_for_selector="a[href*='/bills/mca/'], a[href*='/section_'], a[href*='chapters_index']",
+                        timeout=45000,
+                    )
+                    if statutes:
+                        return statutes
+                except Exception:
+                    pass
+
+            statutes = await self._generic_scrape(code_name, candidate, "Mont. Code Ann.", max_sections=220)
+            if statutes:
+                return statutes
+
+        return []
 
 
 # Register this scraper with the registry

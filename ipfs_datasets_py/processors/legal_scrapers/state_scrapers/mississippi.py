@@ -19,7 +19,7 @@ class MississippiScraper(BaseStateScraper):
         """Return list of available codes/statutes for Mississippi."""
         return [{
             "name": "Mississippi Code",
-            "url": "https://www.legislature.ms.gov/legislation/statutes/",
+            "url": "https://www.legislature.ms.gov/legislation/",
             "type": "Code"
         }]
     
@@ -33,7 +33,40 @@ class MississippiScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._generic_scrape(code_name, code_url, "Miss. Code Ann.")
+        candidate_urls = [
+            code_url,
+            "https://www.legislature.ms.gov/legislation/",
+            "http://www.legislature.ms.gov/legislation/",
+            # Archive fallback candidate when live pathing changes.
+            "https://web.archive.org/web/20251017000000/https://www.legislature.ms.gov/legislation/",
+        ]
+
+        seen = set()
+        for candidate in candidate_urls:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+
+            if self.has_playwright():
+                try:
+                    statutes = await self._playwright_scrape(
+                        code_name,
+                        candidate,
+                        "Miss. Code Ann.",
+                        max_sections=150,
+                        wait_for_selector="a[href*='statute'], a[href*='code'], a[href*='title'], a[href*='chapter']",
+                        timeout=45000,
+                    )
+                    if statutes:
+                        return statutes
+                except Exception:
+                    pass
+
+            statutes = await self._generic_scrape(code_name, candidate, "Miss. Code Ann.", max_sections=150)
+            if statutes:
+                return statutes
+
+        return []
 
 
 # Register this scraper with the registry

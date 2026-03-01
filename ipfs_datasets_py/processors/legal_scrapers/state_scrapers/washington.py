@@ -19,7 +19,7 @@ class WashingtonScraper(BaseStateScraper):
         """Return list of available codes/statutes for Washington."""
         return [{
             "name": "Revised Code of Washington",
-            "url": f"{self.get_base_url()}/RCW/",
+            "url": f"{self.get_base_url()}/RCW/default.aspx?cite=9A.32.030",
             "type": "Code"
         }]
     
@@ -35,13 +35,40 @@ class WashingtonScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._playwright_scrape(
-            code_name, 
-            code_url, 
-            "Wash. Rev. Code",
-            wait_for_selector="a[href*='RCW'], .rcw-link",
-            timeout=45000
-        )
+        candidate_urls = [
+            code_url,
+            f"{self.get_base_url()}/RCW/default.aspx?cite=9A.32.030",
+            f"{self.get_base_url()}/RCW/default.aspx?cite=9A.04",
+            f"{self.get_base_url()}/RCW/default.aspx",
+            f"{self.get_base_url()}/RCW/",
+        ]
+
+        seen = set()
+        for candidate in candidate_urls:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+
+            if self.has_playwright():
+                try:
+                    statutes = await self._playwright_scrape(
+                        code_name,
+                        candidate,
+                        "Wash. Rev. Code",
+                        max_sections=220,
+                        wait_for_selector="a[href*='default.aspx?cite='], a[href*='/RCW/']",
+                        timeout=45000,
+                    )
+                    if statutes:
+                        return statutes
+                except Exception:
+                    pass
+
+            statutes = await self._generic_scrape(code_name, candidate, "Wash. Rev. Code", max_sections=220)
+            if statutes:
+                return statutes
+
+        return []
 
 
 # Register this scraper with the registry

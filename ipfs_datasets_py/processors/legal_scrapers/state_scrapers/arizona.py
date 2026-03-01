@@ -19,7 +19,7 @@ class ArizonaScraper(BaseStateScraper):
         """Return list of available codes/statutes for Arizona."""
         return [{
             "name": "Arizona Revised Statutes",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/arsDetail/?title=13",
             "type": "Code"
         }]
     
@@ -33,7 +33,41 @@ class ArizonaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._generic_scrape(code_name, code_url, "Ariz. Rev. Stat.")
+        candidate_urls = [
+            code_url,
+            f"{self.get_base_url()}/arsDetail/?title=13",
+            f"{self.get_base_url()}/arsDetail/?title=1",
+            f"{self.get_base_url()}/arsDetail/?title=28",
+            # Archive fallback candidate when live endpoints are template-heavy.
+            "https://web.archive.org/web/20251017000000/https://www.azleg.gov/arsDetail/?title=13",
+        ]
+
+        seen = set()
+        for candidate in candidate_urls:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+
+            if self.has_playwright():
+                try:
+                    statutes = await self._playwright_scrape(
+                        code_name,
+                        candidate,
+                        "Ariz. Rev. Stat.",
+                        max_sections=180,
+                        wait_for_selector="a[href*='ars'], a[href*='statute'], a[href*='title'], a[href*='chapter']",
+                        timeout=45000,
+                    )
+                    if statutes:
+                        return statutes
+                except Exception:
+                    pass
+
+            statutes = await self._generic_scrape(code_name, candidate, "Ariz. Rev. Stat.", max_sections=180)
+            if statutes:
+                return statutes
+
+        return []
 
 
 # Register this scraper with the registry
