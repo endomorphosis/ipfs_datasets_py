@@ -54,6 +54,15 @@ from .shadow_mode import (
     build_ga_gate_assessment,
     build_shadow_mode_audit,
 )
+from .hybrid_v2_blueprint import (
+    LegalIRV2,
+    parse_cnl_to_ir,
+    normalize_ir,
+    compile_ir_to_dcec,
+    compile_ir_to_temporal_deontic_fol,
+    generate_cnl_from_ir,
+    run_v2_pipeline,
+)
 
 __all__ = [
     "HybridLawReasoner",
@@ -92,4 +101,11 @@ __all__ = [
     "MockFOLBackend",
     "create_default_prover_registry",
     "build_shadow_mode_audit",
+    "LegalIRV2",
+    "parse_cnl_to_ir",
+    "normalize_ir",
+    "compile_ir_to_dcec",
+    "compile_ir_to_temporal_deontic_fol",
+    "generate_cnl_from_ir",
+    "run_v2_pipeline",
 ]

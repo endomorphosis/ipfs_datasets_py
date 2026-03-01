@@ -1,227 +1,170 @@
 """Scraper for Indiana state laws.
 
-This module contains the scraper for Indiana statutes from the official state legislative website.
+This module contains the scraper for Indiana statutes from archived official
+Indiana General Assembly static-document chapter PDFs.
 """
 
-from typing import List, Dict
+import re
+import subprocess
+import time
+from typing import Dict, List
+
+import requests
+
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
-try:
-    from playwright.async_api import async_playwright
-    PLAYWRIGHT_AVAILABLE = True
-except ImportError:
-    PLAYWRIGHT_AVAILABLE = False
-
 
 class IndianaScraper(BaseStateScraper):
-    """Scraper for Indiana state laws from http://iga.in.gov"""
-    
+    """Scraper for Indiana state laws from archived iga.in.gov sources."""
+
+    _ARCHIVE_CHAPTER_PDFS = [
+        "http://web.archive.org/web/20170215063144/http://iga.in.gov/static-documents/0/0/5/2/005284ae/TITLE6_AR1.1_ch15.pdf",
+        "http://web.archive.org/web/20170127104730/http://iga.in.gov/static-documents/0/0/b/3/00b3e7df/TITLE32_AR28_ch3.pdf",
+        "http://web.archive.org/web/20200213045523/http://iga.in.gov/static-documents/0/0/b/3/00b3e7df/TITLE32_AR28_ch3.pdf",
+        "http://web.archive.org/web/20201111174818/http://iga.in.gov/static-documents/0/0/b/3/00b3e7df/TITLE32_AR28_ch3.pdf",
+        "http://web.archive.org/web/20170125194211/http://iga.in.gov/static-documents/0/0/6/f/006f3b19/SB0465.05.ENRS.pdf",
+        "http://web.archive.org/web/20161229103815/http://iga.in.gov/static-documents/0/0/7/3/0073b205/SB0374.03.ENGS.pdf",
+    ]
+    _TITLE_ARTICLE_CHAPTER_RE = re.compile(
+        r"TITLE(?P<title>\d+)_AR(?P<article>[0-9.]+)_ch(?P<chapter>\d+)\.pdf$",
+        re.IGNORECASE,
+    )
+
     def get_base_url(self) -> str:
         """Return the base URL for Indiana's legislative website."""
         return "http://iga.in.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Indiana."""
-        return [{
-            "name": "Indiana Code",
-            "url": "http://web.archive.org/web/20231201000000/http://iga.in.gov/legislative/laws/2023/ic/titles/",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "Indiana Code",
+                "url": "http://web.archive.org/web/20231201000000/http://iga.in.gov/legislative/laws/2023/ic/titles/",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
-        """Scrape a specific code from Indiana's legislative website.
-        
-        Args:
-            code_name: Name of the code to scrape
-            code_url: URL of the code
-            
-        Returns:
-            List of NormalizedStatute objects
+        """Scrape Indiana code statutes.
+
+        Indiana's live site is currently SPA-only in headless contexts.
+        We prefer stable Wayback chapter PDFs that contain substantial text.
         """
-        if PLAYWRIGHT_AVAILABLE:
-            self.logger.info("Indiana: Using Playwright for JavaScript rendering")
-            try:
-                result = await self._scrape_with_playwright(code_name, code_url, "Ind. Code")
-                if result:
-                    return result
-            except Exception as e:
-                self.logger.warning(f"Indiana Playwright failed: {e}, falling back")
-        
-        return await self._custom_scrape_indiana(code_name, code_url, "Ind. Code")
-    
-    async def _scrape_with_playwright(
+        archival = self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=20)
+        if archival:
+            self.logger.info(f"Indiana archival fallback: Scraped {len(archival)} sections")
+            return archival
+
+        # Keep a final generic fallback for resilience.
+        return await self._generic_scrape(code_name, code_url, "Ind. Code")
+
+    def _scrape_archived_chapter_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        headers = {"User-Agent": "Mozilla/5.0"}
+        statutes: List[NormalizedStatute] = []
+        seen_ids = set()
+
+        for pdf_url in self._ARCHIVE_CHAPTER_PDFS:
+            if len(statutes) >= max_statutes:
+                break
+
+            statute = self._build_statute_from_pdf_url(code_name=code_name, pdf_url=pdf_url, headers=headers)
+            if statute is None:
+                continue
+            if statute.statute_id in seen_ids:
+                continue
+
+            seen_ids.add(statute.statute_id)
+            statutes.append(statute)
+
+        return statutes
+
+    def _build_statute_from_pdf_url(
         self,
         code_name: str,
-        code_url: str,
-        citation_format: str,
-        max_sections: int = 50
-    ) -> List[NormalizedStatute]:
-        """Scrape Indiana using Playwright for JavaScript rendering."""
-        try:
-            from bs4 import BeautifulSoup
-            from urllib.parse import urljoin
-        except ImportError:
-            return []
-        
-        statutes = []
-        
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            page = await browser.new_page()
-            
-            try:
-                self.logger.info(f"Indiana: Loading {code_url}")
-                await page.goto(code_url, wait_until='networkidle', timeout=90000)
-                
-                # Wait for content - try multiple approaches
+        pdf_url: str,
+        headers: Dict[str, str],
+    ) -> NormalizedStatute | None:
+        doc_id = self._extract_doc_id(pdf_url)
+        if not doc_id:
+            return None
+
+        pdf_bytes = self._request_bytes(pdf_url=pdf_url, headers=headers, timeout=45)
+        if not pdf_bytes:
+            return None
+
+        full_text = self._extract_pdf_text(pdf_bytes, max_chars=14000)
+        if len(full_text) < 280:
+            return None
+
+        section_name = f"Indiana Code {doc_id}"
+        return NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=f"{code_name} § {doc_id}",
+            code_name=code_name,
+            section_number=doc_id,
+            section_name=section_name,
+            full_text=full_text,
+            legal_area=self._identify_legal_area(full_text),
+            source_url=pdf_url,
+            official_cite=f"Ind. Code {doc_id}",
+            metadata=StatuteMetadata(),
+        )
+
+    def _extract_doc_id(self, pdf_url: str) -> str:
+        match = self._TITLE_ARTICLE_CHAPTER_RE.search(str(pdf_url or ""))
+        if match:
+            title = str(int(match.group("title")))
+            article = match.group("article")
+            chapter = str(int(match.group("chapter")))
+            return f"tit. {title}, art. {article}, ch. {chapter}"
+
+        filename = str(pdf_url or "").rsplit("/", 1)[-1]
+        filename = re.sub(r"\.pdf$", "", filename, flags=re.IGNORECASE)
+        filename = re.sub(r"[^A-Za-z0-9._-]+", " ", filename).strip()
+        return filename[:80] if filename else "archived-pdf"
+
+    def _request_bytes(self, pdf_url: str, headers: Dict[str, str], timeout: int) -> bytes:
+        candidates = [str(pdf_url or "")]
+        if candidates[0].startswith("https://"):
+            candidates.append("http://" + candidates[0][8:])
+        elif candidates[0].startswith("http://"):
+            candidates.append("https://" + candidates[0][7:])
+
+        for candidate in candidates:
+            for _ in range(3):
                 try:
-                    await page.wait_for_selector('a[href*="title"]', timeout=10000)
-                except:
-                    try:
-                        await page.wait_for_selector('a', timeout=10000)
-                    except:
-                        self.logger.warning("Indiana: No links found, continuing anyway")
-                
-                # Give JavaScript time to render
-                await page.wait_for_timeout(2000)
-                
-                content = await page.content()
-                soup = BeautifulSoup(content, 'html.parser')
-                links = soup.find_all('a', href=True)
-                
-                self.logger.info(f"Indiana: Found {len(links)} total links")
-                
-                section_count = 0
-                for link in links:
-                    if section_count >= max_sections:
-                        break
-                    
-                    link_text = link.get_text(strip=True)
-                    link_href = link.get('href', '')
-                    
-                    if len(link_text) < 3:
+                    response = requests.get(candidate, headers=headers, timeout=timeout)
+                    response.raise_for_status()
+                    if not response.content:
                         continue
-                    
-                    # Very permissive keyword matching for Indiana
-                    keywords = ['title', 'article', 'chapter', 'ic', 'code', 'pdf', 'indiana', 'statute']
-                    if not any(k in link_text.lower() or k in link_href.lower() for k in keywords):
-                        continue
-                    
-                    full_url = urljoin(code_url, link_href)
-                    section_number = self._extract_section_number(link_text) or f"Doc-{section_count + 1}"
-                    
-                    statute = NormalizedStatute(
-                        state_code=self.state_code,
-                        state_name=self.state_name,
-                        statute_id=f"{code_name} § {section_number}",
-                        code_name=code_name,
-                        section_number=section_number,
-                        section_name=link_text[:200],
-                        full_text=f"Document {section_number}: {link_text}",
-                        legal_area=self._identify_legal_area(link_text),
-                        source_url=full_url,
-                        official_cite=f"{citation_format} § {section_number}",
-                        metadata=StatuteMetadata()
-                    )
-                    
-                    statutes.append(statute)
-                    section_count += 1
-                
-                self.logger.info(f"Indiana Playwright: Scraped {len(statutes)} sections")
-                
-            finally:
-                await browser.close()
-        
-        return statutes
-    
-    async def _custom_scrape_indiana(
-        self,
-        code_name: str,
-        code_url: str,
-        citation_format: str,
-        max_sections: int = 100
-    ) -> List[NormalizedStatute]:
-        """Custom scraper for Indiana's legislative website.
-        
-        Indiana's website is a JavaScript SPA (Single Page Application).
-        For better results, consider:
-        1. Using Playwright to render JavaScript
-        2. Accessing alternative API endpoints
-        3. Using Internet Archive snapshots
-        """
-        try:
-            import requests
-            from bs4 import BeautifulSoup
-            from urllib.parse import urljoin
-        except ImportError as e:
-            self.logger.error(f"Required library not available: {e}")
-            return []
-        
-        statutes = []
-        
-        try:
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-            response = requests.get(code_url, headers=headers, timeout=30)
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
-            links = soup.find_all('a', href=True)
-            
-            section_count = 0
-            for link in links:
-                if section_count >= max_sections:
-                    break
-                
-                link_text = link.get_text(strip=True)
-                link_href = link.get('href', '')
-                
-                if not link_text or len(link_text) < 5:
+                    return response.content
+                except Exception:
+                    time.sleep(0.5)
                     continue
-                
-                # Indiana Code patterns - relaxed matching
-                keywords_in = ['title', 'article', 'chapter', 'ic', '§', 'section', 'part', 'code', 'ind.']
-                if not any(keyword in link_text.lower() for keyword in keywords_in):
-                    continue
-                
-                full_url = urljoin(code_url, link_href)
-                section_number = self._extract_section_number(link_text) or f"Section-{section_count + 1}"
-                legal_area = self._identify_legal_area(link_text)
-                
-                statute = NormalizedStatute(
-                    state_code=self.state_code,
-                    state_name=self.state_name,
-                    statute_id=f"{code_name} § {section_number}",
-                    code_name=code_name,
-                    section_number=section_number,
-                    section_name=link_text[:200],
-                    full_text=f"Section {section_number}: {link_text}",
-                    legal_area=legal_area,
-                    source_url=full_url,
-                    official_cite=f"{citation_format} § {section_number}",
-                    metadata=StatuteMetadata()
-                )
-                
-                statutes.append(statute)
-                section_count += 1
-            
-            self.logger.info(f"Indiana custom scraper: Scraped {len(statutes)} sections")
-            
-            # Fallback to generic scraper if no data found
-            if not statutes:
-                self.logger.warning("Indiana custom scraper found no data - site uses JavaScript")
-                self.logger.info("For Indiana, consider using:")
-                self.logger.info("  1. Playwright for JavaScript rendering")
-                self.logger.info("  2. Alternative URL: http://iga.in.gov/static-documents/")
-                self.logger.info("  3. Internet Archive snapshots")
-                return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
-            
-        except Exception as e:
-            self.logger.error(f"Indiana custom scraper failed: {e}")
-            self.logger.info("Note: Indiana's site requires JavaScript. Consider using Playwright.")
-            return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
-        
-        return statutes
+
+        return b""
+
+    def _extract_pdf_text(self, pdf_bytes: bytes, max_chars: int) -> str:
+        """Extract text using pdftotext if available in the runtime."""
+        try:
+            proc = subprocess.run(
+                ["pdftotext", "-layout", "-q", "-", "-"],
+                input=pdf_bytes,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+        except Exception:
+            return ""
+
+        if proc.returncode != 0 or not proc.stdout:
+            return ""
+
+        text = proc.stdout.decode("utf-8", errors="ignore")
+        text = re.sub(r"\s+", " ", text).strip()
+        return text[:max_chars]
 
 
 # Register this scraper with the registry

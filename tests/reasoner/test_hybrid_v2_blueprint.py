@@ -1,0 +1,159 @@
+from __future__ import annotations
+
+from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_v2_blueprint import (
+    DeonticOpV2,
+    compile_ir_to_dcec,
+    compile_ir_to_temporal_deontic_fol,
+    explain_proof,
+    find_violations,
+    generate_cnl_from_ir,
+    normalize_ir,
+    parse_cnl_to_ir,
+    run_v2_pipeline,
+    check_compliance,
+)
+
+
+def _first_norm_ref(ir) -> str:
+    return next(iter(ir.norms.keys()))
+
+
+def test_parse_cnl_to_ir_obligation_with_temporal() -> None:
+    ir = parse_cnl_to_ir("Data controller shall report breach within 72 hours.", jurisdiction="us/federal")
+
+    assert len(ir.norms) == 1
+    norm = next(iter(ir.norms.values()))
+    assert norm.op == DeonticOpV2.O
+    assert norm.temporal_ref is not None
+
+
+def test_parse_cnl_to_ir_rejects_multiple_activation_markers() -> None:
+    try:
+        parse_cnl_to_ir("Agency shall inspect records when notified if approved.")
+    except ValueError as exc:
+        assert "multiple_activation_markers" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for ambiguous activation markers")
+
+
+def test_normalize_ir_maps_roles_and_duration() -> None:
+    ir = parse_cnl_to_ir("Agency shall inspect records within 3 days.")
+    frame = next(iter(ir.frames.values()))
+    frame.roles["subject"] = frame.roles.pop("agent")
+
+    normalized = normalize_ir(ir)
+    nframe = next(iter(normalized.frames.values()))
+    t = next(iter(normalized.temporals.values()))
+
+    assert "agent" in nframe.roles
+    assert "subject" not in nframe.roles
+    assert t.expr.duration == "P3D"
+
+
+def test_compilers_keep_deontic_wrapper_over_frame_ref() -> None:
+    ir = parse_cnl_to_ir("Employer shall pay wages by 2026-12-31.")
+    dcec = "\n".join(compile_ir_to_dcec(ir))
+    tdfol = "\n".join(compile_ir_to_temporal_deontic_fol(ir))
+    frame_ref = next(iter(ir.frames.keys()))
+
+    assert f"O({frame_ref})" in dcec
+    assert f"O({frame_ref},t)" in tdfol
+
+
+def test_roundtrip_cnl_generation() -> None:
+    ir = parse_cnl_to_ir("Processor may transfer data to regulator after authorization.")
+    norm_ref = _first_norm_ref(ir)
+    text = generate_cnl_from_ir(norm_ref, ir)
+
+    assert "may" in text
+    assert text.endswith(".")
+
+
+def test_reasoner_api_produces_explainable_proof() -> None:
+    ir = parse_cnl_to_ir("Controller shall file report within 2 days.")
+    out = check_compliance({"ir": ir, "events": []}, {"at": "2026-03-01"})
+
+    assert out["status"] == "non_compliant"
+    assert out["proof_id"]
+
+    explanation = explain_proof(out["proof_id"], format="nl")
+    assert "Proof" in explanation["text"]
+    assert explanation["steps"]
+
+
+def test_find_violations_uses_same_reasoning_contract() -> None:
+    ir = parse_cnl_to_ir("Vendor shall not disclose personal data.")
+    frame_ref = next(iter(ir.frames.keys()))
+
+    out = find_violations(
+        {
+            "ir": ir,
+            "events": [frame_ref],
+            "facts": {},
+        },
+        ("2026-01-01", "2026-01-31"),
+    )
+
+    assert out["violations"]
+    assert out["proof_id"]
+
+
+def test_parse_cnl_to_ir_means_template_emits_definition_rule() -> None:
+    ir = parse_cnl_to_ir("Personal data means information identifying a person.")
+
+    assert len(ir.rules) == 1
+    rule = next(iter(ir.rules.values()))
+    assert rule.mode == "definition"
+    assert rule.consequent.pred == "definition_of"
+    assert rule.consequent.args[0] == "Personal data"
+
+
+def test_parse_cnl_to_ir_includes_template_emits_member_rules() -> None:
+    ir = parse_cnl_to_ir("Sensitive data includes health records, financial records, and biometrics.")
+
+    members = sorted(r.consequent.args[1] for r in ir.rules.values() if r.consequent.pred == "includes_member")
+    assert members == ["biometrics", "financial records", "health records"]
+
+
+def test_run_v2_pipeline_applies_hooks_and_prover() -> None:
+    class _Optimizer:
+        def optimize_ir(self, ir):
+            return ir, {"semantic_equivalence_assertion": True, "drift_score": 0.0, "optimizer": "noop"}
+
+    class _KG:
+        def enrich_ir(self, ir):
+            for frame in ir.frames.values():
+                frame.attrs["kg_enriched"] = True
+            return ir, {"kg": "noop-enrichment"}
+
+    class _Prover:
+        def prove(self, formulas, assumptions=None):
+            return {"ok": True, "formula_count": len(formulas), "assumptions": assumptions or []}
+
+    out = run_v2_pipeline(
+        "Controller shall report breach within 48 hours.",
+        jurisdiction="us/federal",
+        optimizer_hook=_Optimizer(),
+        kg_hook=_KG(),
+        prover_hook=_Prover(),
+    )
+
+    assert out["optimizer_report"]["applied"] is True
+    assert out["kg_report"]["applied"] is True
+    assert out["prover_report"]["applied"] is True
+    assert out["dcec"]
+    assert out["tdfol"]
+
+
+def test_run_v2_pipeline_rejects_optimizer_on_high_drift() -> None:
+    class _BadOptimizer:
+        def optimize_ir(self, ir):
+            return ir, {"semantic_equivalence_assertion": False, "drift_score": 0.75, "optimizer": "bad"}
+
+    out = run_v2_pipeline(
+        "Controller shall report breach within 48 hours.",
+        optimizer_hook=_BadOptimizer(),
+    )
+
+    assert out["optimizer_report"]["applied"] is False
+    assert out["optimizer_report"]["rejected"] is True

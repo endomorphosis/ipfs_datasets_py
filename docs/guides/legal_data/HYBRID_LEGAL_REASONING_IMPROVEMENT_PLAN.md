@@ -1,5 +1,8 @@
 # Hybrid Legal Reasoning Improvement Plan
 
+For the comprehensive V2 integration blueprint (IR/CNL/optimizers/KG/provers/reasoner), see:
+- `HYBRID_LEGAL_V2_OPTIMIZER_KG_PROVER_INTEGRATION_PLAN.md`
+
 ## 1) Goal and Scope
 
 This plan defines how to integrate:

@@ -5,6 +5,7 @@ This directory consolidates legal-data documentation in `ipfs_datasets_py`.
 Included documents:
 - `REASONER_ARCHITECTURE.md`
 - `HYBRID_LEGAL_IR_SPEC.md`
+- `HYBRID_LEGAL_V2_OPTIMIZER_KG_PROVER_INTEGRATION_PLAN.md`
 - `HYBRID_LEGAL_REASONER_API_AND_PROOF_SCHEMA.md`
 - `HYBRID_LEGAL_REASONING_IMPROVEMENT_PLAN.md`
 - `HYBRID_LEGAL_REASONING_TODO.md`
