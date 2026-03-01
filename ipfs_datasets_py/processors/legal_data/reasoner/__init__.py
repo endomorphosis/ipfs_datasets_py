@@ -55,14 +55,19 @@ from .shadow_mode import (
     build_shadow_mode_audit,
 )
 from .hybrid_v2_blueprint import (
+    DefaultKGHookV2,
+    DefaultOptimizerHookV2,
     LegalIRV2,
+    RegistryProverHookV2,
     parse_cnl_to_ir,
     normalize_ir,
     compile_ir_to_dcec,
     compile_ir_to_temporal_deontic_fol,
     generate_cnl_from_ir,
     run_v2_pipeline,
+    run_v2_pipeline_with_defaults,
 )
+from .v2_cli import run_v2_cli
 
 __all__ = [
     "HybridLawReasoner",
@@ -101,6 +106,9 @@ __all__ = [
     "MockFOLBackend",
     "create_default_prover_registry",
     "build_shadow_mode_audit",
+    "DefaultOptimizerHookV2",
+    "DefaultKGHookV2",
+    "RegistryProverHookV2",
     "LegalIRV2",
     "parse_cnl_to_ir",
     "normalize_ir",
@@ -108,4 +116,6 @@ __all__ = [
     "compile_ir_to_temporal_deontic_fol",
     "generate_cnl_from_ir",
     "run_v2_pipeline",
+    "run_v2_pipeline_with_defaults",
+    "run_v2_cli",
 ]

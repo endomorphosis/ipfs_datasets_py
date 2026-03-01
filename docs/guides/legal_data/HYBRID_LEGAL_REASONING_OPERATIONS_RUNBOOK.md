@@ -17,6 +17,54 @@ Related scripts:
 - `ipfs_datasets_py/scripts/ops/legal_data/assess_formal_logic_ga_gate.py`
 - `ipfs_datasets_py/scripts/ops/legal_data/assess_formal_logic_optimizer_benchmark.py`
 - `ipfs_datasets_py/scripts/ops/legal_data/export_proof_certificates_audit.py`
+- `ipfs_datasets_py/scripts/ops/legal_data/run_hybrid_v2_pipeline.py`
+- `ipfs_datasets_py/scripts/ops/legal_data/run_hybrid_v2_pipeline.sh`
+
+## 0) Hybrid V2 Pipeline CLI
+
+Purpose:
+- Execute package-native V2 parse/normalize/compile/reasoning pipeline with default optimizer/KG/prover adapters.
+
+Python entrypoint:
+```bash
+PYTHONPATH=src:ipfs_datasets_py \
+  /home/barberb/municipal_scrape_workspace/.venv/bin/python \
+  ipfs_datasets_py/scripts/ops/legal_data/run_hybrid_v2_pipeline.py \
+  --sentence "Controller shall report breach within 48 hours." \
+  --jurisdiction us/federal \
+  --output-json artifacts/formal_logic_tmp_verify/federal/hybrid_v2_run.json \
+  --pretty
+```
+
+Shell wrapper:
+```bash
+bash ipfs_datasets_py/scripts/ops/legal_data/run_hybrid_v2_pipeline.sh \
+  --sentence "Vendor shall not disclose personal data unless consent recorded." \
+  --jurisdiction us/federal
+```
+
+JSONL batch mode:
+```bash
+bash ipfs_datasets_py/scripts/ops/legal_data/run_hybrid_v2_pipeline.sh \
+  --input-jsonl /tmp/v2_sentences.jsonl \
+  --sentence-field sentence \
+  --output-json /tmp/v2_batch_result.json
+```
+
+Repository fixture batch mode:
+```bash
+bash ipfs_datasets_py/scripts/ops/legal_data/run_hybrid_v2_pipeline.sh \
+  --input-jsonl ipfs_datasets_py/tests/reasoner/fixtures/hybrid_v2_cli_batch_sentences.jsonl \
+  --sentence-field sentence \
+  --output-json /tmp/hybrid_v2_pipeline_fixture_batch.json \
+  --pretty
+```
+
+Hook toggles:
+- `--disable-optimizer`
+- `--disable-kg`
+- `--disable-prover`
+- `--prover-backend-id mock_smt|mock_fol|smt_style|first_order`
 
 ## 1) Rollout Modes
 

@@ -14,6 +14,18 @@ import hashlib
 import re
 from typing import Any, Dict, List, Optional, Protocol, Tuple
 
+from .kg_enrichment import (
+    apply_kg_enrichment,
+    build_entity_link_adapter,
+    build_kg_drift_assessment,
+    build_relation_enrichment_adapter,
+)
+from .optimizer_policy import (
+    build_optimizer_acceptance_decision,
+    build_optimizer_chain_plan,
+)
+from .prover_backends import create_default_prover_registry
+
 
 class DeonticOpV2(str, Enum):
     """Deontic operators that wrap frame references."""
@@ -171,6 +183,145 @@ class ProverHook(Protocol):
 
     def prove(self, formulas: List[str], assumptions: Optional[List[str]] = None) -> Dict[str, Any]:
         ...
+
+
+class DefaultOptimizerHookV2:
+    """Default optimizer adapter backed by optimizer policy utilities."""
+
+    def __init__(
+        self,
+        *,
+        min_gain_threshold: float = 0.0,
+        max_modality_regression: float = 0.0,
+        default_modality_floor: float = 0.85,
+    ) -> None:
+        self.min_gain_threshold = float(min_gain_threshold)
+        self.max_modality_regression = float(max_modality_regression)
+        self.default_modality_floor = float(default_modality_floor)
+
+    def _score_report(self, ir: LegalIRV2) -> Dict[str, Any]:
+        frame_count = float(len(ir.frames) or 1)
+        norm_count = float(len(ir.norms) or 1)
+        temporal_count = float(len(ir.temporals) or 0)
+
+        # Deterministic quality heuristic to feed acceptance policy.
+        deontic_score = min(1.0, 0.80 + 0.03 * norm_count + 0.01 * temporal_count)
+        fol_score = min(1.0, 0.79 + 0.02 * frame_count + 0.01 * temporal_count)
+        global_score = round((deontic_score + fol_score) / 2.0, 4)
+        return {
+            "summary": {
+                "semantic_similarity_final_decoded_mean": global_score,
+                "semantic_similarity_by_modality": {
+                    "deontic": round(deontic_score, 4),
+                    "fol": round(fol_score, 4),
+                },
+                "semantic_similarity_floors": {
+                    "deontic": self.default_modality_floor,
+                    "fol": self.default_modality_floor,
+                },
+            }
+        }
+
+    def optimize_ir(self, ir: LegalIRV2) -> Tuple[LegalIRV2, Dict[str, Any]]:
+        baseline = self._score_report(ir)
+        candidate_ir = deepcopy(ir)
+
+        # Safe no-op canonical mutation: enforce priority >= 0.
+        for norm in candidate_ir.norms.values():
+            norm.priority = max(0, int(norm.priority))
+
+        candidate = self._score_report(candidate_ir)
+        decision = build_optimizer_acceptance_decision(
+            baseline,
+            candidate,
+            min_gain_threshold=self.min_gain_threshold,
+            max_modality_regression=self.max_modality_regression,
+            default_modality_floor=self.default_modality_floor,
+        )
+        chain = build_optimizer_chain_plan(decision)
+        accepted = bool((decision.get("summary") or {}).get("accepted"))
+
+        report: Dict[str, Any] = {
+            "optimizer": "default_optimizer_hook_v2",
+            "semantic_equivalence_assertion": True,
+            "drift_score": 0.0,
+            "acceptance_decision": decision,
+            "chain_plan": chain,
+        }
+        return (candidate_ir if accepted else ir), report
+
+
+class DefaultKGHookV2:
+    """Default KG adapter backed by KG enrichment utilities."""
+
+    def __init__(
+        self,
+        *,
+        kg_namespace: str = "kgv2",
+        confidence_floor: float = 0.0,
+        max_relation_growth_factor: float = 3.0,
+        max_relations_per_frame: int = 12,
+    ) -> None:
+        self.kg_namespace = kg_namespace
+        self.confidence_floor = float(confidence_floor)
+        self.max_relation_growth_factor = float(max_relation_growth_factor)
+        self.max_relations_per_frame = int(max_relations_per_frame)
+
+    def enrich_ir(self, ir: LegalIRV2) -> Tuple[LegalIRV2, Dict[str, Any]]:
+        entity_adapter = build_entity_link_adapter(
+            ir,
+            kg_namespace=self.kg_namespace,
+            confidence_floor=self.confidence_floor,
+        )
+        relation_adapter = build_relation_enrichment_adapter(
+            ir,
+            entity_adapter,
+            confidence_floor=self.confidence_floor,
+        )
+        drift = build_kg_drift_assessment(
+            baseline_relation_count=0,
+            baseline_frame_count=max(1, len(ir.frames)),
+            candidate_relation_adapter=relation_adapter,
+            max_relation_growth_factor=self.max_relation_growth_factor,
+            max_relations_per_frame=self.max_relations_per_frame,
+        )
+        accepted = bool((drift.get("summary") or {}).get("accepted"))
+        if not accepted:
+            return ir, {
+                "kg": "default_kg_hook_v2",
+                "accepted": False,
+                "drift_assessment": drift,
+            }
+
+        enriched = apply_kg_enrichment(ir, entity_adapter, relation_adapter, enable_writes=True)
+        return enriched["ir"], {
+            "kg": "default_kg_hook_v2",
+            "accepted": True,
+            "entity_adapter": entity_adapter.get("summary"),
+            "relation_adapter": relation_adapter.get("summary"),
+            "drift_assessment": drift,
+            "write_summary": (enriched.get("summary") or {}),
+        }
+
+
+class RegistryProverHookV2:
+    """Default prover adapter backed by the prover backend registry."""
+
+    def __init__(self, *, backend_id: str = "mock_smt") -> None:
+        self.backend_id = backend_id
+        self.registry = create_default_prover_registry()
+
+    def prove(self, formulas: List[str], assumptions: Optional[List[str]] = None) -> Dict[str, Any]:
+        backend = self.registry.get(self.backend_id)
+        joined = " and ".join(formulas) if formulas else "true"
+        result = backend.prove(joined, list(assumptions or []))
+        return {
+            "backend": result.backend,
+            "status": result.status,
+            "certificate": result.certificate,
+            "theorem": result.theorem,
+            "assumptions": result.assumptions,
+        }
 
 
 def _norm_space(text: str) -> str:
@@ -721,3 +872,25 @@ def run_v2_pipeline(
         "kg_report": kg_report,
         "prover_report": prover_report,
     }
+
+
+def run_v2_pipeline_with_defaults(
+    sentence: str,
+    *,
+    jurisdiction: str = "default",
+    enable_optimizer: bool = True,
+    enable_kg: bool = True,
+    enable_prover: bool = True,
+    prover_backend_id: str = "mock_smt",
+) -> Dict[str, Any]:
+    """Run V2 pipeline using concrete adapters from existing reasoner modules."""
+    optimizer = DefaultOptimizerHookV2() if enable_optimizer else None
+    kg = DefaultKGHookV2() if enable_kg else None
+    prover = RegistryProverHookV2(backend_id=prover_backend_id) if enable_prover else None
+    return run_v2_pipeline(
+        sentence,
+        jurisdiction=jurisdiction,
+        optimizer_hook=optimizer,
+        kg_hook=kg,
+        prover_hook=prover,
+    )

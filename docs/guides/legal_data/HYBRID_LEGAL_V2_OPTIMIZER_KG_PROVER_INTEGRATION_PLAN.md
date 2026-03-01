@@ -574,3 +574,27 @@ Required explanation fields:
 5. Optimizer changes are accepted only under semantic drift threshold.
 6. KG enrichment remains additive and ID-preserving.
 7. DCEC and TDFOL compilers pass parity/conformance fixtures.
+
+## 20. Implementation Status (2026-03-01)
+
+- Phase A: implemented
+  - Executable V2 parser/normalizer/compiler/reasoner API scaffold in
+    `ipfs_datasets_py/processors/legal_data/reasoner/hybrid_v2_blueprint.py`.
+  - V2 focused test suite added in `tests/reasoner/test_hybrid_v2_blueprint.py`.
+- Phase B: implemented
+  - Default optimizer hook wired to `optimizer_policy` acceptance + chain-plan utilities.
+  - Default KG hook wired to `kg_enrichment` entity/relation/drift/apply pipeline.
+  - Default prover hook wired to `prover_backends` registry.
+- Phase C: implemented
+  - V2 query API matrix test added in `tests/reasoner/test_hybrid_v2_query_api_matrix.py`.
+  - Proof explanation pathways validated for `nl` and `json` formats.
+- Phase D: implemented (targeted conformance)
+  - New V2 tests and existing adjacent reasoner suites pass in local execution.
+  - Existing strict parser and DCEC/TDFOL conformance tests pass after integration.
+- Phase E: implemented (operationalization)
+  - Package-native CLI module added: `ipfs_datasets_py/processors/legal_data/reasoner/v2_cli.py`.
+  - Ops wrappers added:
+    - `scripts/ops/legal_data/run_hybrid_v2_pipeline.py`
+    - `scripts/ops/legal_data/run_hybrid_v2_pipeline.sh`
+  - CLI tests added: `tests/reasoner/test_hybrid_v2_cli.py`.
+  - Runbook updated with command examples and hook toggles.

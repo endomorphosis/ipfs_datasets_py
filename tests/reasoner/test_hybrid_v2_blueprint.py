@@ -10,6 +10,7 @@ from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_v2_blueprint import 
     normalize_ir,
     parse_cnl_to_ir,
     run_v2_pipeline,
+    run_v2_pipeline_with_defaults,
     check_compliance,
 )
 
@@ -157,3 +158,19 @@ def test_run_v2_pipeline_rejects_optimizer_on_high_drift() -> None:
 
     assert out["optimizer_report"]["applied"] is False
     assert out["optimizer_report"]["rejected"] is True
+
+
+def test_run_v2_pipeline_with_defaults_wires_existing_modules() -> None:
+    out = run_v2_pipeline_with_defaults(
+        "Controller shall report breach within 48 hours.",
+        jurisdiction="us/federal",
+        enable_optimizer=True,
+        enable_kg=True,
+        enable_prover=True,
+        prover_backend_id="mock_smt",
+    )
+
+    assert out["optimizer_report"]["applied"] is True
+    assert out["kg_report"]["applied"] is True
+    assert out["prover_report"]["applied"] is True
+    assert out["prover_report"]["dcec"]["backend"] == "mock_smt"

@@ -6,6 +6,7 @@ Scrapes laws from the Texas Legislature Online website
 
 from typing import List, Dict, Optional
 import re
+from html import unescape
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -93,8 +94,11 @@ class TexasScraper(BaseStateScraper):
             if not section_links:
                 # Try finding any links
                 section_links = soup.find_all('a', href=True, limit=100)
+
+            page_full_text = self._extract_text_from_html(response.text)
+            seen_section_numbers = set()
             
-            for i, link in enumerate(section_links[:100]):  # Limit for demo
+            for i, link in enumerate(section_links[:120]):
                 section_text = link.get_text(strip=True)
                 section_url = link.get('href', '')
                 
@@ -109,6 +113,15 @@ class TexasScraper(BaseStateScraper):
                 section_number = self._extract_section_number(section_text)
                 if not section_number:
                     section_number = f"{i+1}"
+
+                if section_number in seen_section_numbers:
+                    continue
+
+                section_full_text = self._fetch_section_text(section_url=section_url, fallback_text=page_full_text)
+                if len(section_full_text) < 280:
+                    continue
+
+                seen_section_numbers.add(section_number)
                 
                 statute = NormalizedStatute(
                     state_code=self.state_code,
@@ -117,7 +130,7 @@ class TexasScraper(BaseStateScraper):
                     code_name=code_name,
                     section_number=section_number,
                     section_name=section_text[:200],
-                    full_text=f"Section {section_number}: {section_text}",  # Added full_text
+                    full_text=section_full_text,
                     source_url=section_url,
                     legal_area=legal_area,
                     official_cite=f"Tex. {code_name} § {section_number}",
@@ -125,6 +138,24 @@ class TexasScraper(BaseStateScraper):
                 )
                 
                 statutes.append(statute)
+
+            # Fallback: emit a code-level record if section links are sparse.
+            if not statutes and len(page_full_text) >= 280:
+                statutes.append(
+                    NormalizedStatute(
+                        state_code=self.state_code,
+                        state_name=self.state_name,
+                        statute_id=f"{code_name} § 1",
+                        code_name=code_name,
+                        section_number="1",
+                        section_name=f"{code_name} (code-level)",
+                        full_text=page_full_text,
+                        source_url=code_url,
+                        legal_area=legal_area,
+                        official_cite=f"Tex. {code_name}",
+                        metadata=StatuteMetadata(),
+                    )
+                )
             
             self.logger.info(f"Scraped {len(statutes)} sections from {code_name}")
             
@@ -132,6 +163,39 @@ class TexasScraper(BaseStateScraper):
             self.logger.error(f"Failed to scrape {code_name}: {e}")
         
         return statutes
+
+    def _fetch_section_text(self, section_url: str, fallback_text: str) -> str:
+        try:
+            import requests
+        except ImportError:
+            return fallback_text
+
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            response = requests.get(section_url, headers=headers, timeout=25)
+            response.raise_for_status()
+            text = self._extract_text_from_html(response.text)
+            if len(text) >= 280:
+                return text
+        except Exception:
+            pass
+
+        return fallback_text
+
+    def _extract_text_from_html(self, html: str, max_chars: int = 14000) -> str:
+        value = str(html or "")
+        value = re.sub(r'(?is)<script[^>]*>.*?</script>', ' ', value)
+        value = re.sub(r'(?is)<style[^>]*>.*?</style>', ' ', value)
+        value = re.sub(r'(?is)<br\s*/?>', '\n', value)
+        value = re.sub(r'(?is)</p>', '\n', value)
+        value = re.sub(r'(?is)<[^>]+>', ' ', value)
+        value = unescape(value).replace('\xa0', ' ')
+        value = re.sub(r'[ \t]+', ' ', value)
+        value = re.sub(r'\s*\n\s*', '\n', value)
+        value = re.sub(r'\n{3,}', '\n\n', value)
+        return value.strip()[:max_chars]
 
 
 # Register the scraper
