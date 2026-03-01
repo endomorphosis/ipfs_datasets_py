@@ -19,7 +19,11 @@ _QUALITY_NAV_RE = re.compile(
 )
 _QUALITY_SECTION_FALLBACK_RE = re.compile(r"^Section-\d+$", re.IGNORECASE)
 _QUALITY_SECTION_SIGNAL_RE = re.compile(
-    r"(?:\b\d{1,4}[A-Za-z]?(?:[.\-]\d+[A-Za-z]*)+\b|§\s*\d+[A-Za-z]?(?:[.\-]\d+[A-Za-z]*)+)",
+    r"(?:\b\d{1,4}[A-Za-z]?(?:[.\-]\d+[A-Za-z]*)+\b|§\s*\d+[A-Za-z]?(?:[.\-]\d+[A-Za-z]*)+|\b(?:section|sec\.?|s\.)\s*\d+[A-Za-z]?(?:[.\-]\d+[A-Za-z]*)*\b)",
+    re.IGNORECASE,
+)
+_QUALITY_SECTION_NUMBER_RE = re.compile(
+    r"^\d+[A-Za-z]?(?:[.\-]\d+[A-Za-z]*)*$",
     re.IGNORECASE,
 )
 
@@ -206,9 +210,11 @@ async def scrape_state_laws(
                         numeric_q = float(quality_metrics.get("numeric_section_name_ratio", 0.0) or 0.0)
 
                         quality_flag = False
-                        if total_q >= 10 and (nav_q >= 0.2 or fallback_q >= 0.7 or numeric_q <= 0.2):
+                        fallback_problem = (fallback_q >= 0.7 and numeric_q <= 0.2)
+                        fallback_problem_small = (fallback_q >= 0.8 and numeric_q == 0.0)
+                        if total_q >= 10 and (nav_q >= 0.2 or fallback_problem or numeric_q <= 0.2):
                             quality_flag = True
-                        elif 1 <= total_q < 10 and (nav_q >= 0.5 or fallback_q >= 0.8 or numeric_q == 0.0):
+                        elif 1 <= total_q < 10 and (nav_q >= 0.5 or fallback_problem_small or numeric_q == 0.0):
                             quality_flag = True
 
                         if quality_flag:
@@ -470,11 +476,12 @@ def _compute_state_quality_metrics(statutes: List[Dict[str, Any]]) -> Dict[str, 
         section_number = str(statute.get("section_number") or statute.get("sectionNumber") or "")
         section_name = str(statute.get("section_name") or statute.get("sectionName") or "")
 
-        if _QUALITY_NAV_RE.search(text):
+        # Treat nav markers as quality failures only when the text is mostly chrome/boilerplate.
+        if _QUALITY_NAV_RE.search(text) and len(text) < 2000:
             nav_like += 1
         if _QUALITY_SECTION_FALLBACK_RE.match(section_number):
             fallback_section += 1
-        if _QUALITY_SECTION_SIGNAL_RE.search(section_name):
+        if _QUALITY_SECTION_SIGNAL_RE.search(section_name) or _QUALITY_SECTION_NUMBER_RE.match(section_number):
             numeric_section_name += 1
 
     return {

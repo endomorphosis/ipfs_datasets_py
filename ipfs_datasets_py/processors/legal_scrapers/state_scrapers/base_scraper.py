@@ -616,11 +616,30 @@ class BaseStateScraper(ABC):
                 best_idx = idx if best_idx is None else min(best_idx, idx)
 
         if best_idx is None:
-            return value
+            trimmed = value
+        else:
+            # Keep a little left context for headings, but drop bulky site navigation.
+            start = max(0, best_idx - 24)
+            trimmed = self._normalize_legal_text(value[start:]) or value
 
-        # Keep a little left context for headings, but drop bulky site navigation.
-        start = max(0, best_idx - 24)
-        trimmed = self._normalize_legal_text(value[start:])
+        # Drop trailing site chrome/footer content that often follows statutes.
+        footer_markers = [
+            "Legislative questions or comments",
+            "Call the Legislative Hotline",
+            "TTY for deaf/hard of hearing",
+            "Back to top",
+            "Privacy notice",
+        ]
+        lowered = trimmed.lower()
+        cut_index: Optional[int] = None
+        for marker in footer_markers:
+            idx = lowered.find(marker.lower())
+            if idx >= 0:
+                cut_index = idx if cut_index is None else min(cut_index, idx)
+
+        if cut_index is not None and cut_index > 80:
+            trimmed = self._normalize_legal_text(trimmed[:cut_index])
+
         return trimmed or value
 
     async def _fetch_page_content_with_archival_fallback(self, url: str, timeout_seconds: int = 25) -> bytes:
