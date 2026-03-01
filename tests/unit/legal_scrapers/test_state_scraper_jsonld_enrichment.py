@@ -7,7 +7,9 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper impo
     StatuteMetadata,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import (
+    _compute_coverage_summary,
     _filter_strict_full_text_statutes,
+    _trim_scraped_statutes_to_max,
     _write_state_jsonld_files,
 )
 
@@ -123,3 +125,51 @@ def test_filter_strict_full_text_statutes_removes_short_records():
     assert removed == 1
     assert len(kept) == 1
     assert kept[0].statute_id == "Code § 11-1"
+
+
+def test_trim_scraped_statutes_to_max_truncates_in_state_order():
+    scraped = [
+        {
+            "state_code": "AA",
+            "statutes": [
+                {"section_number": "1", "section_name": "Section 1", "full_text": "A" * 500},
+                {"section_number": "2", "section_name": "Section 2", "full_text": "B" * 500},
+            ],
+        },
+        {
+            "state_code": "BB",
+            "statutes": [
+                {"section_number": "1", "section_name": "Section 1", "full_text": "C" * 500},
+            ],
+        },
+    ]
+
+    trimmed, total = _trim_scraped_statutes_to_max(scraped, max_statutes=2)
+
+    assert total == 2
+    assert len(trimmed) == 1
+    assert trimmed[0]["state_code"] == "AA"
+    assert len(trimmed[0]["statutes"]) == 2
+
+
+def test_compute_coverage_summary_detects_zero_and_missing_states():
+    selected_states = ["AA", "BB", "CC"]
+    scraped_statutes = [
+        {"state_code": "AA", "statutes": [{"section_number": "1"}]},
+        {"state_code": "BB", "statutes": [], "error": "failed"},
+    ]
+
+    summary = _compute_coverage_summary(
+        selected_states=selected_states,
+        scraped_statutes=scraped_statutes,
+        errors=["BB failed"],
+    )
+
+    assert summary["states_targeted"] == 3
+    assert summary["states_returned"] == 2
+    assert summary["states_with_nonzero_statutes"] == 1
+    assert summary["zero_statute_states"] == ["BB"]
+    assert summary["error_states"] == ["BB"]
+    assert summary["missing_states"] == ["CC"]
+    assert summary["coverage_gap_states"] == ["BB", "CC"]
+    assert summary["full_coverage"] is False
