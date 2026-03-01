@@ -136,6 +136,10 @@ bash ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_proof_audit_integr
 Primary artifact:
 - `/tmp/formal_logic_proof_audit_integration_smoke/summary.json`
 
+Default companion artifacts:
+- `/tmp/formal_logic_proof_audit_integration_smoke/triage.json`
+- `/tmp/formal_logic_proof_audit_integration_smoke/triage.md`
+
 Summary contract:
 - `overall_passed=true` and `error_code="OK"` indicate full pass.
 - `error_code="INTEGRATION_SMOKE_FAILED"` indicates at least one failure.
@@ -149,8 +153,24 @@ PYTHONPATH=src:ipfs_datasets_py .venv/bin/python \
   --output /tmp/formal_logic_proof_audit_integration_smoke/triage.json
 ```
 
+Markdown triage command:
+```bash
+PYTHONPATH=src:ipfs_datasets_py .venv/bin/python \
+  ipfs_datasets_py/scripts/ops/legal_data/assess_formal_logic_proof_audit_integration_summary.py \
+  --summary /tmp/formal_logic_proof_audit_integration_smoke/summary.json \
+  --format markdown \
+  --output /tmp/formal_logic_proof_audit_integration_smoke/triage.md
+```
+
 Triage artifact:
 - `/tmp/formal_logic_proof_audit_integration_smoke/triage.json`
+- `/tmp/formal_logic_proof_audit_integration_smoke/triage.md`
+
+Integration smoke triage controls:
+- `RUN_TRIAGE_AFTER_SUMMARY=1|0` (default `1`)
+- `RUN_TRIAGE_MARKDOWN=1|0` (default `1`; ignored when triage generation is disabled)
+- `TRIAGE_JSON_PATH=<path>`
+- `TRIAGE_MARKDOWN_PATH=<path>`
 
 ## 2) Required Environment Toggles
 
@@ -254,7 +274,23 @@ Use `Tasks: Run Task` in VS Code and select one of the following labels:
 - `Legal smoke: proof-audit integration`
   - Runs: `scripts/ops/run_formal_logic_proof_audit_integration_smoke.sh`
   - Expected artifact: `/tmp/formal_logic_proof_audit_integration_smoke/summary.json`
+  - Also emits: `/tmp/formal_logic_proof_audit_integration_smoke/triage.json`, `/tmp/formal_logic_proof_audit_integration_smoke/triage.md`
   - Pass condition: `overall_passed=true` in summary JSON
+
+- `Legal smoke: proof-audit integration (json triage only)`
+  - Runs: `RUN_TRIAGE_MARKDOWN=0 scripts/ops/run_formal_logic_proof_audit_integration_smoke.sh`
+  - Expected artifact: `/tmp/formal_logic_proof_audit_integration_smoke/summary.json`
+  - Also emits: `/tmp/formal_logic_proof_audit_integration_smoke/triage.json`
+
+- `Legal smoke: proof-audit integration (summary only)`
+  - Runs: `RUN_TRIAGE_AFTER_SUMMARY=0 scripts/ops/run_formal_logic_proof_audit_integration_smoke.sh`
+  - Expected artifact: `/tmp/formal_logic_proof_audit_integration_smoke/summary.json`
+  - Does not emit triage artifacts
+
+- `Legal smoke: proof-audit integration matrix`
+  - Runs: `scripts/ops/run_formal_logic_proof_audit_integration_matrix_smoke.sh`
+  - Expected artifact: `/tmp/formal_logic_proof_audit_integration_matrix_smoke/matrix_report.json`
+  - Pass condition: `overall_passed=true` in matrix report JSON
 
 ## 8) Smoke Troubleshooting
 

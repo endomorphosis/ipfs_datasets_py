@@ -8,8 +8,13 @@ TMP_DIR="${TMP_DIR:-/tmp/formal_logic_proof_audit_integration_smoke}"
 mkdir -p "$TMP_DIR"
 
 SUMMARY_PATH="${SUMMARY_PATH:-$TMP_DIR/summary.json}"
+TRIAGE_JSON_PATH="${TRIAGE_JSON_PATH:-$TMP_DIR/triage.json}"
+TRIAGE_MARKDOWN_PATH="${TRIAGE_MARKDOWN_PATH:-$TMP_DIR/triage.md}"
 CANARY_LOG_PATH="${CANARY_LOG_PATH:-$TMP_DIR/canary_smoke.log}"
 REGRESSION_LOG_PATH="${REGRESSION_LOG_PATH:-$TMP_DIR/regression_smoke.log}"
+
+RUN_TRIAGE_AFTER_SUMMARY="${RUN_TRIAGE_AFTER_SUMMARY:-1}"
+RUN_TRIAGE_MARKDOWN="${RUN_TRIAGE_MARKDOWN:-1}"
 
 CANARY_ARTIFACT="${CANARY_ARTIFACT:-/tmp/formal_logic_canary_proof_audit_smoke/proof_certificate_audit.smoke.json}"
 REGRESSION_ARTIFACT="${REGRESSION_ARTIFACT:-/tmp/formal_logic_regression_proof_audit_smoke/proof_certificate_audit.smoke.json}"
@@ -107,13 +112,47 @@ print(summary_path)
 PY
 
 echo "[integration-smoke 3/3] Wrote summary: $SUMMARY_PATH"
+
+if [[ "$RUN_TRIAGE_AFTER_SUMMARY" == "1" ]]; then
+  echo "[integration-smoke] Generating triage JSON: $TRIAGE_JSON_PATH"
+  if ! PYTHONPATH=src:ipfs_datasets_py .venv/bin/python \
+    ipfs_datasets_py/scripts/ops/legal_data/assess_formal_logic_proof_audit_integration_summary.py \
+    --summary "$SUMMARY_PATH" \
+    --output "$TRIAGE_JSON_PATH"; then
+    echo "[integration-smoke] WARNING: triage JSON generation failed"
+  fi
+
+  if [[ "$RUN_TRIAGE_MARKDOWN" == "1" ]]; then
+    echo "[integration-smoke] Generating triage markdown: $TRIAGE_MARKDOWN_PATH"
+    if ! PYTHONPATH=src:ipfs_datasets_py .venv/bin/python \
+      ipfs_datasets_py/scripts/ops/legal_data/assess_formal_logic_proof_audit_integration_summary.py \
+      --summary "$SUMMARY_PATH" \
+      --format markdown \
+      --output "$TRIAGE_MARKDOWN_PATH"; then
+      echo "[integration-smoke] WARNING: triage markdown generation failed"
+    fi
+  fi
+fi
+
 if [[ "$CANARY_STATUS" -eq 0 && "$REGRESSION_STATUS" -eq 0 && "$CANARY_ARTIFACT_EXISTS" -eq 1 && "$REGRESSION_ARTIFACT_EXISTS" -eq 1 ]]; then
   echo "[integration-smoke] PASS"
+  if [[ "$RUN_TRIAGE_AFTER_SUMMARY" == "1" ]]; then
+    echo "[integration-smoke] Triage JSON: $TRIAGE_JSON_PATH"
+    if [[ "$RUN_TRIAGE_MARKDOWN" == "1" ]]; then
+      echo "[integration-smoke] Triage markdown: $TRIAGE_MARKDOWN_PATH"
+    fi
+  fi
   exit 0
 fi
 
 echo "[integration-smoke] FAIL"
 echo "[integration-smoke] Summary: $SUMMARY_PATH"
+if [[ "$RUN_TRIAGE_AFTER_SUMMARY" == "1" ]]; then
+  echo "[integration-smoke] Triage JSON: $TRIAGE_JSON_PATH"
+  if [[ "$RUN_TRIAGE_MARKDOWN" == "1" ]]; then
+    echo "[integration-smoke] Triage markdown: $TRIAGE_MARKDOWN_PATH"
+  fi
+fi
 echo "[integration-smoke] Canary log: $CANARY_LOG_PATH"
 echo "[integration-smoke] Regression log: $REGRESSION_LOG_PATH"
 echo "[integration-smoke] --- canary log tail ---"

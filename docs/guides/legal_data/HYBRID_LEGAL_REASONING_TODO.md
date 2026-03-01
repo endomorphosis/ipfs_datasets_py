@@ -186,6 +186,10 @@ Use this section for short dated notes while executing TODO items.
 - 2026-03-01: Hardened integration smoke failure diagnostics (summary path + per-log tails) and documented smoke troubleshooting flow in operations runbook.
 - 2026-03-01: Added machine-readable `error_code` and `failure_reasons` fields to proof-audit integration smoke summary for CI/alert routing.
 - 2026-03-01: Added triage helper (`assess_formal_logic_proof_audit_integration_summary.py`) that maps `failure_reasons` to remediation commands and emits `triage.json`.
+- 2026-03-01: Extended triage helper with `--format markdown` support to emit human-readable incident reports (`triage.md`), documented markdown invocation in runbook/README, and added VS Code task `Legal smoke: proof-audit triage (markdown)`.
+- 2026-03-01: Updated integration smoke runner to auto-generate triage artifacts (`triage.json`, `triage.md`) after `summary.json` with env toggles for enable/disable and output paths.
+- 2026-03-01: Added VS Code integration-smoke task variants for triage control (`json triage only`, `summary only`) to reduce manual env editing during CI/operator runs.
+- 2026-03-01: Added matrix smoke orchestrator (`run_formal_logic_proof_audit_integration_matrix_smoke.sh`) and task to run all integration modes in one command and emit consolidated matrix report JSON.
 
 ## Definition of Ready (per TODO item)
 

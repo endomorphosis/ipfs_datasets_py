@@ -49,6 +49,12 @@ def _write_json(path: str, payload: Dict[str, Any]) -> None:
     p.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def _write_text(path: str, text: str) -> None:
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(text, encoding="utf-8")
+
+
 def _dedupe_keep_order(items: List[str]) -> List[str]:
     seen = set()
     out: List[str] = []
@@ -108,7 +114,55 @@ def build_triage(summary: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def render_triage_markdown(triage: Dict[str, Any]) -> str:
+    lines: List[str] = []
+    lines.append("# Proof-Audit Integration Triage")
+    lines.append("")
+    lines.append(f"- status: `{triage['status']}`")
+    lines.append(f"- error_code: `{triage['error_code']}`")
+    lines.append(f"- overall_passed: `{str(triage['overall_passed']).lower()}`")
+    lines.append("")
+    lines.append("## Summary")
+    lines.append("")
+    lines.append(triage["top_message"])
+    lines.append("")
+
+    failure_reasons = list(triage.get("failure_reasons") or [])
+    lines.append("## Failure Reasons")
+    lines.append("")
+    if failure_reasons:
+        for reason in failure_reasons:
+            lines.append(f"- `{reason}`")
+    else:
+        lines.append("- none")
+    lines.append("")
+
+    lines.append("## Recommended Commands")
+    lines.append("")
+    commands = list(triage.get("recommended_commands") or [])
+    if commands:
+        for command in commands:
+            lines.append(f"- `{command}`")
+    else:
+        lines.append("- none")
+    lines.append("")
+
+    checks = (triage.get("summary_ref") or {}).get("checks") or {}
+    canary = checks.get("canary_smoke") or {}
+    regression = checks.get("regression_smoke") or {}
+
+    lines.append("## Paths")
+    lines.append("")
+    lines.append(f"- canary_log: `{canary.get('log_path', '')}`")
+    lines.append(f"- regression_log: `{regression.get('log_path', '')}`")
+    lines.append(f"- canary_artifact: `{canary.get('artifact_path', '')}`")
+    lines.append(f"- regression_artifact: `{regression.get('artifact_path', '')}`")
+    lines.append("")
+    return "\n".join(lines) + "\n"
+
+
 def main() -> None:
+    default_output_json = "/tmp/formal_logic_proof_audit_integration_smoke/triage.json"
     ap = argparse.ArgumentParser(description="Assess proof-audit integration smoke summary and emit remediation hints")
     ap.add_argument(
         "--summary",
@@ -117,8 +171,14 @@ def main() -> None:
     )
     ap.add_argument(
         "--output",
-        default="/tmp/formal_logic_proof_audit_integration_smoke/triage.json",
-        help="Path to output triage JSON",
+        default=default_output_json,
+        help="Path to output artifact (JSON by default, markdown when --format=markdown)",
+    )
+    ap.add_argument(
+        "--format",
+        choices=["json", "markdown"],
+        default="json",
+        help="Output format",
     )
     ap.add_argument(
         "--fail-on-needs-action",
@@ -129,13 +189,22 @@ def main() -> None:
 
     summary = _load_json(args.summary)
     triage = build_triage(summary)
-    _write_json(args.output, triage)
+
+    output_path = args.output
+    if args.format == "markdown" and args.output == default_output_json:
+        output_path = "/tmp/formal_logic_proof_audit_integration_smoke/triage.md"
+
+    if args.format == "json":
+        _write_json(output_path, triage)
+    else:
+        _write_text(output_path, render_triage_markdown(triage))
 
     print(f"status={triage['status']}")
     print(f"error_code={triage['error_code']}")
     print(f"failure_reason_count={len(triage['failure_reasons'])}")
     print(f"recommended_command_count={len(triage['recommended_commands'])}")
-    print(f"output={args.output}")
+    print(f"output_format={args.format}")
+    print(f"output={output_path}")
 
     for command in triage["recommended_commands"]:
         print(f"recommended_command={command}")

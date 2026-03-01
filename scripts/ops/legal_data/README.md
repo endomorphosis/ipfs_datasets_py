@@ -20,6 +20,7 @@ Copied from workspace-level `scripts/ops/`:
 - `run_formal_logic_canary_proof_audit_smoke.sh`
 - `run_formal_logic_regression_proof_audit_smoke.sh`
 - `run_formal_logic_proof_audit_integration_smoke.sh`
+- `run_formal_logic_proof_audit_integration_matrix_smoke.sh`
 - `assess_formal_logic_proof_audit_integration_summary.py`
 
 Notes:
@@ -35,9 +36,21 @@ Notes:
 	validation of the regression proof-audit hook contract and export path.
 - Run `run_formal_logic_proof_audit_integration_smoke.sh` to execute both
 	proof-audit smoke paths and emit a consolidated pass/fail summary JSON.
+	By default it also emits `triage.json` and `triage.md` in the same temp dir;
+	set `RUN_TRIAGE_AFTER_SUMMARY=0` to skip triage generation.
+- Run `run_formal_logic_proof_audit_integration_matrix_smoke.sh` to execute
+	all integration modes (`full`, `json_only`, `summary_only`) and emit a
+	single matrix report at
+	`/tmp/formal_logic_proof_audit_integration_matrix_smoke/matrix_report.json`.
 - Run `assess_formal_logic_proof_audit_integration_summary.py` to map
 	integration-smoke `failure_reasons` to actionable remediation commands.
+	Use `--format markdown` to emit a human-readable incident report.
 - VS Code tasks are available in workspace root `.vscode/tasks.json`:
 	`Legal smoke: proof-audit canary`,
 	`Legal smoke: proof-audit regression`,
-	`Legal smoke: proof-audit integration`.
+	`Legal smoke: proof-audit integration`,
+	`Legal smoke: proof-audit integration (json triage only)`,
+	`Legal smoke: proof-audit integration (summary only)`,
+	`Legal smoke: proof-audit integration matrix`,
+	`Legal smoke: proof-audit triage`,
+	`Legal smoke: proof-audit triage (markdown)`.
