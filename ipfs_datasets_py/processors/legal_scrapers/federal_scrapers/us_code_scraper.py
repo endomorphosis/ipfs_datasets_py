@@ -31,6 +31,8 @@ DEFAULT_USCODE_INDEX_PATH = DEFAULT_USCODE_INDEX_DIR / "uscode_index_latest.json
 DEFAULT_USCODE_JSONLD_DIRNAME = "uscode_jsonld"
 MIN_USCODE_YEAR = 1994
 USER_AGENT = "ipfs-datasets-uscode-scraper/2.0"
+DEFAULT_USCODE_DOWNLOAD_RETRIES = 4
+DEFAULT_USCODE_YEAR_FALLBACKS = 8
 SUBSEC_TOKEN_RE = re.compile(r"\(([0-9]+|[A-Za-z]{1,6})\)")
 ROMAN_LOWER_RE = re.compile(r"^[ivxlcdm]+$")
 ROMAN_UPPER_RE = re.compile(r"^[IVXLCDM]+$")
@@ -191,6 +193,7 @@ def _download_title_zip(
     title_num: str,
     cache_dir: Path,
     force_download: bool,
+    max_attempts: int = DEFAULT_USCODE_DOWNLOAD_RETRIES,
 ) -> Path:
     cache_dir.mkdir(parents=True, exist_ok=True)
     out_path = cache_dir / f"USCODE-{int(year)}-title{title_num}.zip"
@@ -203,39 +206,78 @@ def _download_title_zip(
             pass
 
     url = _govinfo_zip_url(year, title_num)
-    response = session.get(url, timeout=60, stream=True)
-    if int(response.status_code) != 200:
-        raise RuntimeError(f"Failed to download title zip: HTTP {response.status_code} ({url})")
+    last_error: Optional[Exception] = None
 
-    tmp_path = out_path.with_suffix(out_path.suffix + ".part")
-    try:
-        tmp_path.unlink(missing_ok=True)
-    except Exception:
-        pass
-
-    with tmp_path.open("wb") as handle:
-        for chunk in response.iter_content(chunk_size=1024 * 1024):
-            if not chunk:
-                continue
-            handle.write(chunk)
-
-    if tmp_path.stat().st_size <= 0:
+    for attempt in range(1, max(1, int(max_attempts)) + 1):
+        tmp_path = out_path.with_suffix(out_path.suffix + ".part")
         try:
-            tmp_path.unlink(missing_ok=True)
-        except Exception:
-            pass
-        raise RuntimeError(f"Downloaded empty zip for title {title_num} year {year}")
+            try:
+                tmp_path.unlink(missing_ok=True)
+            except Exception:
+                pass
 
-    if not _is_valid_zip_file(tmp_path):
-        try:
-            tmp_path.unlink(missing_ok=True)
-        except Exception:
-            pass
-        raise RuntimeError(f"Downloaded invalid zip for title {title_num} year {year}")
+            response = session.get(url, timeout=90, stream=True)
+            status_code = int(response.status_code)
+            if status_code != 200:
+                if status_code == 404:
+                    raise RuntimeError(f"Title zip not found (HTTP 404) for title {title_num} year {year}")
+                raise RuntimeError(f"Failed to download title zip: HTTP {status_code} ({url})")
 
-    tmp_path.replace(out_path)
+            with tmp_path.open("wb") as handle:
+                for chunk in response.iter_content(chunk_size=1024 * 1024):
+                    if not chunk:
+                        continue
+                    handle.write(chunk)
 
-    return out_path
+            if tmp_path.stat().st_size <= 0:
+                raise RuntimeError(f"Downloaded empty zip for title {title_num} year {year}")
+
+            if not _is_valid_zip_file(tmp_path):
+                raise RuntimeError(f"Downloaded invalid zip for title {title_num} year {year}")
+
+            tmp_path.replace(out_path)
+            return out_path
+        except Exception as exc:
+            last_error = exc if isinstance(exc, Exception) else Exception(str(exc))
+            try:
+                tmp_path.unlink(missing_ok=True)
+            except Exception:
+                pass
+
+            # 404 means this title-year package likely does not exist; fail fast for this year.
+            if "HTTP 404" in str(exc):
+                break
+
+            if attempt < max(1, int(max_attempts)):
+                time.sleep(min(8.0, float(attempt)))
+
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError(f"Failed to download title zip for title {title_num} year {year}")
+
+
+def _candidate_years_for_title(
+    session: "requests.Session",
+    *,
+    title_num: str,
+    year: Optional[int],
+    max_year_fallbacks: int,
+) -> List[int]:
+    """Build candidate package years for a title, newest-first."""
+    if year is not None:
+        return [int(year)]
+
+    latest = _discover_latest_year(session)
+    if latest is None:
+        return []
+
+    window = max(1, int(max_year_fallbacks))
+    out: List[int] = []
+    for y in range(int(latest), MIN_USCODE_YEAR - 1, -1):
+        out.append(y)
+        if len(out) >= window:
+            break
+    return out
 
 
 def _extract_section_number_from_filename(file_name: str) -> str:
@@ -853,6 +895,8 @@ async def fetch_us_code_title(
     cache_dir: Optional[Path] = None,
     force_download: bool = False,
     keep_zip_cache: bool = False,
+    max_year_fallbacks: int = DEFAULT_USCODE_YEAR_FALLBACKS,
+    download_retries: int = DEFAULT_USCODE_DOWNLOAD_RETRIES,
 ) -> Dict[str, Any]:
     """Fetch a US Code title from GovInfo package ZIP content.
     
@@ -879,42 +923,62 @@ async def fetch_us_code_title(
     cache_root = Path(cache_dir) if cache_dir is not None else DEFAULT_USCODE_CACHE_DIR
     try:
         session = _make_session()
-        selected_year = int(year) if year is not None else _discover_latest_year(session)
-        if selected_year is None:
+        candidate_years = _candidate_years_for_title(
+            session,
+            title_num=title_num,
+            year=year,
+            max_year_fallbacks=max_year_fallbacks,
+        )
+        if not candidate_years:
             raise RuntimeError("Unable to discover an available USCODE package year")
 
-        zip_path = _download_title_zip(
-            session,
-            year=selected_year,
-            title_num=title_num,
-            cache_dir=cache_root / str(selected_year),
-            force_download=bool(force_download),
-        )
-        sections = _extract_sections_from_zip(
-            zip_path,
-            year=selected_year,
-            title_num=title_num,
-            title_name=title_name,
-            include_metadata=include_metadata,
-        )
-
-        if not keep_zip_cache:
+        last_error = None
+        tried_years: List[int] = []
+        for selected_year in candidate_years:
+            tried_years.append(int(selected_year))
             try:
-                zip_path.unlink(missing_ok=True)
-            except Exception:
-                pass
+                zip_path = _download_title_zip(
+                    session,
+                    year=selected_year,
+                    title_num=title_num,
+                    cache_dir=cache_root / str(selected_year),
+                    force_download=bool(force_download),
+                    max_attempts=download_retries,
+                )
+                sections = _extract_sections_from_zip(
+                    zip_path,
+                    year=selected_year,
+                    title_num=title_num,
+                    title_name=title_name,
+                    include_metadata=include_metadata,
+                )
 
-        await anyio.sleep(max(0.0, float(rate_limit_delay)))
-        return {
-            "title_number": title_num,
-            "title_name": title_name,
-            "source": "US Code (GovInfo package ZIP)",
-            "source_url": _govinfo_zip_url(selected_year, title_num),
-            "scraped_at": datetime.now().isoformat(),
-            "year": selected_year,
-            "zip_path": str(zip_path),
-            "sections": sections,
-        }
+                if not keep_zip_cache:
+                    try:
+                        zip_path.unlink(missing_ok=True)
+                    except Exception:
+                        pass
+
+                await anyio.sleep(max(0.0, float(rate_limit_delay)))
+                return {
+                    "title_number": title_num,
+                    "title_name": title_name,
+                    "source": "US Code (GovInfo package ZIP)",
+                    "source_url": _govinfo_zip_url(selected_year, title_num),
+                    "scraped_at": datetime.now().isoformat(),
+                    "year": selected_year,
+                    "zip_path": str(zip_path),
+                    "candidate_years": candidate_years,
+                    "tried_years": tried_years,
+                    "sections": sections,
+                }
+            except Exception as year_exc:
+                last_error = year_exc
+                continue
+
+        raise RuntimeError(
+            f"Failed to fetch title {title_num} after trying years {tried_years}: {last_error}"
+        )
     except Exception as e:
         logger.error("Failed to fetch title %s: %s", title_num, e)
         return {
@@ -924,6 +988,8 @@ async def fetch_us_code_title(
             "source_url": "https://www.govinfo.gov/",
             "scraped_at": datetime.now().isoformat(),
             "error": str(e),
+            "candidate_years": [],
+            "tried_years": [],
             "sections": [],
         }
 
@@ -1053,6 +1119,9 @@ async def scrape_us_code(
     force_download: bool = False,
     output_dir: Optional[str] = None,
     keep_zip_cache: bool = False,
+    max_year_fallbacks: int = DEFAULT_USCODE_YEAR_FALLBACKS,
+    download_retries: int = DEFAULT_USCODE_DOWNLOAD_RETRIES,
+    continue_on_error: bool = True,
 ) -> Dict[str, Any]:
     """Scrape US Code sections and build a structured dataset.
     
@@ -1099,6 +1168,7 @@ async def scrape_us_code(
         index_path = output_root / "uscode_index_latest.jsonl"
         jsonld_paths: List[str] = []
         scraped_titles: List[Dict[str, Any]] = []
+        failed_titles: List[Dict[str, Any]] = []
         sections_count = 0
 
         for title_num in selected_titles:
@@ -1118,7 +1188,24 @@ async def scrape_us_code(
                 cache_dir=cache_root,
                 force_download=force_download,
                 keep_zip_cache=keep_zip_cache,
+                max_year_fallbacks=max_year_fallbacks,
+                download_retries=download_retries,
             )
+
+            title_error = str(title_data.get("error") or "").strip()
+            if title_error:
+                failed_titles.append(
+                    {
+                        "title_number": title_num,
+                        "title_name": title_name,
+                        "error": title_error,
+                        "candidate_years": title_data.get("candidate_years", []),
+                        "tried_years": title_data.get("tried_years", []),
+                    }
+                )
+                if not continue_on_error:
+                    break
+                continue
 
             sections = list(title_data.get("sections") or []) if isinstance(title_data, dict) else []
             if max_sections is not None and sections:
@@ -1140,6 +1227,18 @@ async def scrape_us_code(
                 jsonld_paths.append(str(jsonld_path))
                 scraped_titles.append(title_data)
                 sections_count += len(sections)
+            else:
+                failed_titles.append(
+                    {
+                        "title_number": title_num,
+                        "title_name": title_name,
+                        "error": "No sections extracted",
+                        "candidate_years": title_data.get("candidate_years", []),
+                        "tried_years": title_data.get("tried_years", []),
+                    }
+                )
+                if not continue_on_error:
+                    break
 
         elapsed_time = time.time() - start_time
 
@@ -1164,8 +1263,12 @@ async def scrape_us_code(
             effective_year = scraped_titles[0].get("year")
 
         metadata = {
-            "titles_scraped": selected_titles,
+            "titles_requested": selected_titles,
+            "titles_requested_count": len(selected_titles),
+            "titles_scraped": [str(t.get("title_number")) for t in scraped_titles],
             "titles_count": len(scraped_titles),
+            "failed_titles": failed_titles,
+            "failed_titles_count": len(failed_titles),
             "sections_count": sections_count,
             "elapsed_time_seconds": elapsed_time,
             "scraped_at": datetime.now().isoformat(),
@@ -1178,11 +1281,24 @@ async def scrape_us_code(
             "output_dir": str(output_root),
             "force_download": bool(force_download),
             "keep_zip_cache": bool(keep_zip_cache),
+            "max_year_fallbacks": int(max_year_fallbacks),
+            "download_retries": int(download_retries),
+            "continue_on_error": bool(continue_on_error),
             "jsonld_dir": str(output_root / DEFAULT_USCODE_JSONLD_DIRNAME),
             "jsonld_files": jsonld_paths,
         }
 
         logger.info("Completed US Code scraping: %s sections in %.2fs", sections_count, elapsed_time)
+
+        if not scraped_titles:
+            return {
+                "status": "error",
+                "error": "No US Code titles were successfully scraped",
+                "data": scraped_titles,
+                "metadata": metadata,
+                "output_format": output_format,
+                "note": "Comprehensive title-package ingestion from GovInfo USCODE ZIP sources.",
+            }
 
         return {
             "status": "success",

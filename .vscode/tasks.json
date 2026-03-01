@@ -1043,6 +1043,21 @@
 			"options": {
 				"cwd": "${workspaceFolder}"
 			}
+		},
+		{
+			"label": "Legal V2: reasoner test suite",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"PYTHONPATH=src:${workspaceFolder} /home/barberb/municipal_scrape_workspace/.venv/bin/python -m pytest tests/reasoner/test_hybrid_v2_blueprint.py tests/reasoner/test_hybrid_v2_query_api_matrix.py tests/reasoner/test_hybrid_v2_cli.py -q"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		}
 	],
 	"inputs": [

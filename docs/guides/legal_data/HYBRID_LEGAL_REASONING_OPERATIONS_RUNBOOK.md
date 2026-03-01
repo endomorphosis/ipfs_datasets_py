@@ -66,6 +66,15 @@ Hook toggles:
 - `--disable-prover`
 - `--prover-backend-id mock_smt|mock_fol|smt_style|first_order`
 
+V2 reasoner test suite:
+```bash
+PYTHONPATH=src:ipfs_datasets_py \
+  /home/barberb/municipal_scrape_workspace/.venv/bin/python -m pytest \
+  ipfs_datasets_py/tests/reasoner/test_hybrid_v2_blueprint.py \
+  ipfs_datasets_py/tests/reasoner/test_hybrid_v2_query_api_matrix.py \
+  ipfs_datasets_py/tests/reasoner/test_hybrid_v2_cli.py -q
+```
+
 ## 1) Rollout Modes
 
 ### Shadow mode

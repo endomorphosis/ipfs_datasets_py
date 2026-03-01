@@ -11,8 +11,13 @@ from urllib.parse import urlparse
 import ipaddress
 import socket
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 logger = logging.getLogger(__name__)
+
+FEDERAL_REGISTER_API_URL = "https://www.federalregister.gov/api/v1/documents.json"
+FEDERAL_REGISTER_MAX_PER_PAGE = 1000
 
 # Federal agencies commonly tracked in Federal Register
 FEDERAL_AGENCIES = {
@@ -139,13 +144,65 @@ def _safe_get_federal_register_url(url: str) -> Optional[requests.Response]:
         return None
 
 
+def _make_retry_session() -> requests.Session:
+    """Create a requests session with conservative retry/backoff behavior."""
+    session = requests.Session()
+    retry_strategy = Retry(
+        total=5,
+        connect=5,
+        read=5,
+        status=5,
+        backoff_factor=1.0,
+        status_forcelist=[408, 429, 500, 502, 503, 504],
+        allowed_methods=["GET"],
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
+
+
+def _normalize_document(result: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize Federal Register API result objects to scraper output schema."""
+    agencies = result.get("agencies") or []
+    agency_names = [a.get("name", "") for a in agencies if isinstance(a, dict)]
+    agency_slugs = [str(a.get("slug", "")).upper() for a in agencies if isinstance(a, dict)]
+
+    return {
+        "document_number": result.get("document_number", ""),
+        "title": result.get("title", ""),
+        "agency": agency_names[0] if agency_names else "",
+        "agencies": agency_names,
+        "agency_abbr": agency_slugs[0] if agency_slugs else "",
+        "agency_abbrs": agency_slugs,
+        "document_type": result.get("type", ""),
+        "publication_date": result.get("publication_date", ""),
+        "abstract": result.get("abstract", "")[:500] if result.get("abstract") else "",
+        "citation": result.get("citation", ""),
+        "fr_url": result.get("html_url", ""),
+        "pdf_url": result.get("pdf_url", ""),
+        "raw_text_url": result.get("raw_text_url", ""),
+        "signing_date": result.get("signing_date", ""),
+        "effective_date": result.get("effective_on") or result.get("effective_date") or "",
+        "docket_ids": result.get("docket_ids", []),
+        "regulation_id_numbers": result.get("regulation_id_numbers", []),
+        "topics": result.get("topics", []),
+        "significant": result.get("significant", False),
+    }
+
+
 async def search_federal_register(
     agencies: Optional[List[str]] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     document_types: Optional[List[str]] = None,
     keywords: Optional[str] = None,
-    limit: int = 100
+    limit: int = 100,
+    fetch_all: bool = False,
+    page_size: int = 1000,
+    max_pages: Optional[int] = None,
+    request_timeout: float = 30.0,
 ) -> Dict[str, Any]:
     """Search Federal Register documents.
     
@@ -155,7 +212,11 @@ async def search_federal_register(
         end_date: End date in YYYY-MM-DD format
         document_types: Types of documents (e.g., ["RULE", "NOTICE", "PRORULE"])
         keywords: Search keywords
-        limit: Maximum number of results
+        limit: Maximum number of results. Use 0 for unbounded (fetch all).
+        fetch_all: If True, page through the full result set.
+        page_size: Per-page API size (capped at 1000 by Federal Register).
+        max_pages: Optional upper bound on pages when fetch_all=True.
+        request_timeout: Timeout for each page request in seconds.
     
     Returns:
         Dict containing:
@@ -179,6 +240,12 @@ async def search_federal_register(
                 "count": 0
             }
         
+        normalized_limit = int(limit) if int(limit) >= 0 else 0
+        if normalized_limit == 0:
+            fetch_all = True
+
+        effective_page_size = max(1, min(int(page_size), FEDERAL_REGISTER_MAX_PER_PAGE))
+
         # Build search parameters
         search_params = {
             "agencies": agencies or [],
@@ -186,7 +253,10 @@ async def search_federal_register(
             "end_date": end_date,
             "document_types": document_types or ["RULE", "NOTICE", "PRORULE"],
             "keywords": keywords,
-            "limit": limit
+            "limit": normalized_limit,
+            "fetch_all": bool(fetch_all),
+            "page_size": effective_page_size,
+            "max_pages": max_pages,
         }
         
         # Query the Federal Register API
@@ -194,84 +264,109 @@ async def search_federal_register(
         # Documentation: https://www.federalregister.gov/developers/documentation/api/v1
         
         try:
-            # Build API query parameters
-            api_params = {
-                "per_page": min(limit, 1000),  # API max is 1000
-                "order": "newest"
+            api_base_params = {
+                "per_page": effective_page_size,
+                "order": "newest",
             }
             
             # Add date filters
             if start_date:
-                api_params["conditions[publication_date][gte]"] = start_date
+                api_base_params["conditions[publication_date][gte]"] = start_date
             if end_date:
-                api_params["conditions[publication_date][lte]"] = end_date
+                api_base_params["conditions[publication_date][lte]"] = end_date
             
             # Add agency filter
             if agencies:
-                # Federal Register uses agency slugs
-                api_params["conditions[agencies][]"] = agencies
+                # Federal Register API expects agency slugs. Allow pre-normalized values.
+                api_base_params["conditions[agencies][]"] = [str(a).strip().lower() for a in agencies if str(a).strip()]
             
             # Add document type filter
             if document_types:
-                api_params["conditions[type][]"] = document_types
+                api_base_params["conditions[type][]"] = document_types
             
             # Add keyword search
             if keywords:
-                api_params["conditions[term]"] = keywords
+                api_base_params["conditions[term]"] = keywords
             
-            # Make API request
-            api_url = "https://www.federalregister.gov/api/v1/documents.json"
-            logger.info(f"Querying Federal Register API: {api_url}")
-            
-            response = requests.get(api_url, params=api_params, timeout=30)
-            
-            if response.status_code == 200:
-                data = response.json()
-                results = data.get('results', [])
-                
-                # Transform results to our standardized format
-                documents = []
-                for result in results:
-                    doc = {
-                        "document_number": result.get('document_number', ''),
-                        "title": result.get('title', ''),
-                        "agency": result.get('agencies', [{}])[0].get('name', '') if result.get('agencies') else '',
-                        "agency_abbr": result.get('agencies', [{}])[0].get('slug', '').upper() if result.get('agencies') else '',
-                        "document_type": result.get('type', ''),
-                        "publication_date": result.get('publication_date', ''),
-                        "abstract": result.get('abstract', '')[:500] if result.get('abstract') else '',
-                        "citation": result.get('citation', ''),
-                        "fr_url": result.get('html_url', ''),
-                        "pdf_url": result.get('pdf_url', ''),
-                        "raw_text_url": result.get('raw_text_url', ''),
-                        "signing_date": result.get('signing_date', ''),
-                        "docket_ids": result.get('docket_ids', []),
-                        "regulation_id_numbers": result.get('regulation_id_numbers', []),
-                        "topics": result.get('topics', []),
-                        "significant": result.get('significant', False)
-                    }
-                    documents.append(doc)
-                
-                return {
-                    "status": "success",
-                    "documents": documents,
-                    "count": len(documents),
-                    "total_available": data.get('count', len(documents)),
-                    "search_params": search_params,
-                    "api_endpoint": api_url,
-                    "note": "Results from Federal Register API at federalregister.gov"
-                }
-            else:
-                # API request failed
-                logger.warning(f"Federal Register API returned status {response.status_code}")
-                return {
-                    "status": "error",
-                    "error": f"API request failed with status {response.status_code}: {response.text[:200]}",
-                    "documents": [],
-                    "count": 0,
-                    "search_params": search_params,
-                    "api_endpoint": api_url
-                }
+            logger.info("Querying Federal Register API: %s", FEDERAL_REGISTER_API_URL)
+
+            documents: List[Dict[str, Any]] = []
+            seen_doc_numbers = set()
+            current_page = 1
+            total_available = None
+            pages_fetched = 0
+
+            with _make_retry_session() as session:
+                while True:
+                    if max_pages is not None and pages_fetched >= int(max_pages):
+                        break
+                    if not fetch_all and normalized_limit > 0 and len(documents) >= normalized_limit:
+                        break
+
+                    api_params = dict(api_base_params)
+                    api_params["page"] = current_page
+
+                    response = session.get(
+                        FEDERAL_REGISTER_API_URL,
+                        params=api_params,
+                        timeout=float(request_timeout),
+                    )
+
+                    if int(response.status_code) != 200:
+                        logger.warning("Federal Register API returned status %s on page %s", response.status_code, current_page)
+                        return {
+                            "status": "error",
+                            "error": f"API request failed with status {response.status_code}: {response.text[:200]}",
+                            "documents": documents,
+                            "count": len(documents),
+                            "total_available": total_available if total_available is not None else len(documents),
+                            "pages_fetched": pages_fetched,
+                            "search_params": search_params,
+                            "api_endpoint": FEDERAL_REGISTER_API_URL,
+                        }
+
+                    data = response.json()
+                    results = data.get("results", [])
+                    pages_fetched += 1
+
+                    if total_available is None:
+                        total_available = int(data.get("count", 0))
+
+                    if not results:
+                        break
+
+                    for result in results:
+                        normalized = _normalize_document(result)
+                        doc_number = str(normalized.get("document_number") or "")
+                        if doc_number and doc_number in seen_doc_numbers:
+                            continue
+                        if doc_number:
+                            seen_doc_numbers.add(doc_number)
+                        documents.append(normalized)
+
+                        if not fetch_all and normalized_limit > 0 and len(documents) >= normalized_limit:
+                            break
+
+                    if not fetch_all and normalized_limit > 0 and len(documents) >= normalized_limit:
+                        break
+                    if len(results) < effective_page_size:
+                        break
+
+                    current_page += 1
+
+            if not fetch_all and normalized_limit > 0:
+                documents = documents[:normalized_limit]
+
+            return {
+                "status": "success",
+                "documents": documents,
+                "count": len(documents),
+                "total_available": total_available if total_available is not None else len(documents),
+                "pages_fetched": pages_fetched,
+                "search_params": search_params,
+                "api_endpoint": FEDERAL_REGISTER_API_URL,
+                "note": "Results from Federal Register API at federalregister.gov",
+            }
                 
         except requests.exceptions.Timeout:
             logger.error("Federal Register API request timed out")
@@ -305,6 +400,7 @@ async def scrape_federal_register(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     document_types: Optional[List[str]] = None,
+    keywords: Optional[str] = None,
     output_format: str = "json",
     include_full_text: bool = False,
     rate_limit_delay: float = 1.0,
@@ -317,6 +413,7 @@ async def scrape_federal_register(
         start_date: Start date in YYYY-MM-DD format (default: 30 days ago)
         end_date: End date in YYYY-MM-DD format (default: today)
         document_types: Types of documents to scrape (default: ["RULE", "NOTICE", "PRORULE"])
+        keywords: Optional Federal Register term query
         output_format: Output format - "json" or "parquet"
         include_full_text: Include full document text (increases scraping time)
         rate_limit_delay: Delay between requests in seconds (default 1.0)
@@ -337,9 +434,9 @@ async def scrape_federal_register(
         if not start_date:
             start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
         
-        # Validate and process agencies
+        # Validate and process agencies. For comprehensive ingest, agencies=None scrapes globally.
         if agencies is None or "all" in agencies:
-            selected_agencies = list(FEDERAL_AGENCIES.keys())
+            selected_agencies = []
         else:
             selected_agencies = [a for a in agencies if a in FEDERAL_AGENCIES]
             if not selected_agencies:
@@ -350,7 +447,10 @@ async def scrape_federal_register(
                     "metadata": {}
                 }
         
-        logger.info(f"Starting Federal Register scraping: {len(selected_agencies)} agencies, {start_date} to {end_date}")
+        if selected_agencies:
+            logger.info("Starting Federal Register scraping: %s agencies, %s to %s", len(selected_agencies), start_date, end_date)
+        else:
+            logger.info("Starting Federal Register scraping: all agencies, %s to %s", start_date, end_date)
         start_time = time.time()
         
         # Import required libraries
@@ -366,74 +466,120 @@ async def scrape_federal_register(
         
         scraped_documents = []
         documents_count = 0
+        seen_doc_numbers = set()
+        failed_agencies: List[Dict[str, Any]] = []
         
-        # Use the search function to get documents from all agencies
-        for agency in selected_agencies:
+        scrape_targets = selected_agencies if selected_agencies else [None]
+
+        # Use either per-agency fetches or one global fetch.
+        for agency in scrape_targets:
             if max_documents and documents_count >= max_documents:
-                logger.info(f"Reached max_documents limit of {max_documents}")
+                logger.info("Reached max_documents limit of %s", max_documents)
                 break
-            
-            agency_name = FEDERAL_AGENCIES[agency]
-            logger.info(f"Scraping {agency}: {agency_name}")
-            
-            # Use search function to query Federal Register API
-            search_result = await search_federal_register(
-                agencies=[agency],
-                start_date=start_date,
-                end_date=end_date,
-                document_types=document_types,
-                limit=min(100, max_documents - documents_count if max_documents else 100)
-            )
-            
-            if search_result['status'] == 'success' and search_result['documents']:
-                for doc in search_result['documents']:
-                    if max_documents and documents_count >= max_documents:
-                        break
-                    
-                    # Optionally fetch full text
-                    if include_full_text and doc.get('raw_text_url'):
-                        raw_url = doc.get('raw_text_url')
-                        # Ensure the URL is both generally safe and restricted to federalregister.gov
-                        parsed_url = urlparse(str(raw_url))
-                        is_allowed_scheme = parsed_url.scheme in ("http", "https")
-                        hostname = parsed_url.hostname or ""
-                        is_federalregister_host = bool(hostname) and (
-                            hostname == "federalregister.gov" or hostname.endswith(".federalregister.gov")
+
+            agency_name = FEDERAL_AGENCIES.get(agency, "ALL") if agency else "ALL"
+            logger.info("Scraping Federal Register target: %s", agency_name)
+
+            if agency:
+                agency_keywords = FEDERAL_AGENCIES.get(agency, agency)
+                search_result = await search_federal_register(
+                    agencies=None,
+                    start_date=start_date,
+                    end_date=end_date,
+                    document_types=document_types,
+                    keywords=agency_keywords,
+                    limit=max_documents if max_documents else 0,
+                    fetch_all=not bool(max_documents),
+                    page_size=1000,
+                )
+            else:
+                search_result = await search_federal_register(
+                    agencies=None,
+                    start_date=start_date,
+                    end_date=end_date,
+                    document_types=document_types,
+                    keywords=keywords,
+                    limit=max_documents if max_documents else 0,
+                    fetch_all=not bool(max_documents),
+                    page_size=1000,
+                )
+
+            if search_result.get("status") != "success":
+                failed_agencies.append(
+                    {
+                        "agency": agency,
+                        "agency_name": agency_name,
+                        "error": search_result.get("error", "unknown error"),
+                    }
+                )
+                continue
+
+            for doc in search_result.get("documents", []):
+                if max_documents and documents_count >= max_documents:
+                    break
+
+                doc_number = str(doc.get("document_number") or "")
+                if doc_number and doc_number in seen_doc_numbers:
+                    continue
+                if doc_number:
+                    seen_doc_numbers.add(doc_number)
+
+                # For agency-specific scraping, apply an explicit client-side filter.
+                if agency:
+                    agency_match = False
+                    for doc_agency in doc.get("agency_abbrs", []):
+                        if str(doc_agency).upper() == str(agency).upper():
+                            agency_match = True
+                            break
+                    if not agency_match:
+                        continue
+
+                # Optionally fetch full text
+                if include_full_text and doc.get("raw_text_url"):
+                    raw_url = doc.get("raw_text_url")
+                    parsed_url = urlparse(str(raw_url))
+                    is_allowed_scheme = parsed_url.scheme in ("http", "https")
+                    hostname = parsed_url.hostname or ""
+                    is_federalregister_host = bool(hostname) and (
+                        hostname == "federalregister.gov" or hostname.endswith(".federalregister.gov")
+                    )
+                    if _is_safe_federal_register_url(str(raw_url)) and is_allowed_scheme and is_federalregister_host:
+                        try:
+                            text_response = _safe_get_federal_register_url(str(raw_url))
+                            if text_response is not None and text_response.status_code == 200:
+                                doc["full_text"] = text_response.text
+                            else:
+                                if text_response is not None:
+                                    logger.warning(
+                                        "Full text fetch for %s returned status %s",
+                                        doc.get("document_number"),
+                                        text_response.status_code,
+                                    )
+                                doc["full_text"] = None
+                        except Exception as e:
+                            logger.warning("Failed to fetch full text for %s: %s", doc.get("document_number"), e)
+                            doc["full_text"] = None
+                    else:
+                        logger.warning(
+                            "Skipping full text fetch for %s: unsafe raw_text_url=%r",
+                            doc.get("document_number"),
+                            raw_url,
                         )
-                        if _is_safe_federal_register_url(str(raw_url)) and is_allowed_scheme and is_federalregister_host:
-                            try:
-                                text_response = _safe_get_federal_register_url(str(raw_url))
-                                if text_response is not None and text_response.status_code == 200:
-                                    doc['full_text'] = text_response.text
-                                else:
-                                    if text_response is not None:
-                                        logger.warning(
-                                            f"Full text fetch for {doc.get('document_number')} "
-                                            f"returned status {text_response.status_code}"
-                                        )
-                                    doc['full_text'] = None
-                            except Exception as e:
-                                logger.warning(f"Failed to fetch full text for {doc.get('document_number')}: {e}")
-                                doc['full_text'] = None
-                        else:
-                            logger.warning(
-                                f"Skipping full text fetch for {doc.get('document_number')}: "
-                                f"unsafe raw_text_url={raw_url!r}"
-                            )
-                    
-                    doc['scraped_at'] = datetime.now().isoformat()
-                    scraped_documents.append(doc)
-                    documents_count += 1
-            
-            # Rate limiting between agency requests
-            time.sleep(rate_limit_delay)
+
+                doc["scraped_at"] = datetime.now().isoformat()
+                scraped_documents.append(doc)
+                documents_count += 1
+
+            if rate_limit_delay > 0:
+                time.sleep(rate_limit_delay)
         
         elapsed_time = time.time() - start_time
         
         metadata = {
-            "agencies_scraped": selected_agencies,
-            "agencies_count": len(selected_agencies),
+            "agencies_scraped": selected_agencies if selected_agencies else ["all"],
+            "agencies_count": len(selected_agencies) if selected_agencies else 0,
             "documents_count": documents_count,
+            "deduplicated_documents": len(seen_doc_numbers),
             "date_range": {
                 "start_date": start_date,
                 "end_date": end_date
@@ -441,9 +587,10 @@ async def scrape_federal_register(
             "elapsed_time_seconds": elapsed_time,
             "scraped_at": datetime.now().isoformat(),
             "source": "Federal Register API (federalregister.gov)",
-            "api_endpoint": "https://www.federalregister.gov/api/v1/documents.json",
+            "api_endpoint": FEDERAL_REGISTER_API_URL,
             "rate_limit_delay": rate_limit_delay,
-            "include_full_text": include_full_text
+            "include_full_text": include_full_text,
+            "failed_agencies": failed_agencies,
         }
         
         logger.info(f"Completed Federal Register scraping: {documents_count} documents in {elapsed_time:.2f}s")

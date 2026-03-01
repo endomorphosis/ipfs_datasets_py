@@ -4,6 +4,7 @@ This tool scrapes state statutes and regulations from various state
 legislative websites and legal databases.
 """
 import logging
+import asyncio
 import time
 from typing import Dict, List, Optional, Any
 from datetime import datetime
@@ -85,6 +86,9 @@ async def scrape_state_laws(
     strict_full_text: bool = False,
     min_full_text_chars: int = 300,
     hydrate_statute_text: bool = True,
+    parallel_workers: int = 6,
+    per_state_retry_attempts: int = 1,
+    retry_zero_statute_states: bool = True,
 ) -> Dict[str, Any]:
     """Scrape state statutes and build a structured dataset.
     
@@ -146,112 +150,98 @@ async def scrape_state_laws(
         zero_statute_states = []
         quality_by_state: Dict[str, Dict[str, Any]] = {}
         low_quality_states: List[str] = []
+
+        parallel_workers = max(1, int(parallel_workers or 1))
+        per_state_retry_attempts = max(0, int(per_state_retry_attempts or 0))
         
         # Try to use state-specific scrapers if enabled
         if use_state_specific_scrapers:
             try:
-                from .state_scrapers import get_scraper_for_state, GenericStateScraper, StateScraperRegistry
-                
+                async def _run_state(state_code: str) -> Dict[str, Any]:
+                    return await _scrape_state_with_retries(
+                        state_code=state_code,
+                        legal_areas=legal_areas,
+                        rate_limit_delay=rate_limit_delay,
+                        max_statutes=max_statutes,
+                        strict_full_text=strict_full_text,
+                        min_full_text_chars=min_full_text_chars,
+                        hydrate_statute_text=hydrate_statute_text,
+                        retry_attempts=per_state_retry_attempts,
+                        retry_zero_statute_states=retry_zero_statute_states,
+                    )
+
+                if parallel_workers <= 1:
+                    state_results = []
+                    for state_code in selected_states:
+                        state_results.append(await _run_state(state_code))
+                        if rate_limit_delay > 0:
+                            await asyncio.sleep(rate_limit_delay)
+                else:
+                    semaphore = asyncio.Semaphore(parallel_workers)
+
+                    async def _guarded_run(state_code: str) -> Dict[str, Any]:
+                        async with semaphore:
+                            return await _run_state(state_code)
+
+                    state_results = await asyncio.gather(*[_guarded_run(code) for code in selected_states])
+
+                result_by_state = {str(item.get("state_code") or ""): item for item in state_results}
                 for state_code in selected_states:
-                    if max_statutes and statutes_count >= max_statutes:
-                        logger.info(f"Reached max_statutes limit of {max_statutes}")
-                        break
-                    
-                    state_name = US_STATES[state_code]
-                    logger.info(f"Scraping {state_code}: {state_name}")
-                    
-                    try:
-                        # Get state-specific scraper or fallback to generic
-                        scraper = get_scraper_for_state(state_code, state_name)
-                        if not scraper:
-                            logger.info(f"No specific scraper for {state_code}, using generic scraper")
-                            scraper = GenericStateScraper(state_code, state_name)
-                        
-                        # Scrape using the state-specific scraper
-                        remaining_statutes = max_statutes - statutes_count if max_statutes else None
-                        normalized_statutes = await scraper.scrape_all(
-                            legal_areas=legal_areas,
-                            max_statutes=remaining_statutes,
-                            rate_limit_delay=rate_limit_delay,
-                            hydrate_statute_text=hydrate_statute_text,
-                        )
-
-                        strict_removed_count = 0
-                        if strict_full_text:
-                            normalized_statutes, strict_removed_count = _filter_strict_full_text_statutes(
-                                normalized_statutes,
-                                min_full_text_chars=min_full_text_chars,
-                            )
-                        
-                        # Convert normalized statutes to output format
-                        statute_data = {
+                    item = result_by_state.get(state_code) or {
+                        "state_code": state_code,
+                        "state_name": US_STATES[state_code],
+                        "error": "missing-state-result",
+                        "statute_data": {
                             "state_code": state_code,
-                            "state_name": state_name,
-                            "title": f"{state_name} Laws",
+                            "state_name": US_STATES[state_code],
+                            "title": f"{US_STATES[state_code]} Laws",
                             "source": "Official State Legislative Website",
-                            "source_url": scraper.get_base_url(),
-                            "official_url": scraper.get_base_url(),
+                            "error": "missing-state-result",
                             "scraped_at": datetime.now().isoformat(),
-                            "statutes": [statute.to_dict() for statute in normalized_statutes],
-                            "schema_version": "1.0",
-                            "normalized": True,
-                            "strict_full_text": strict_full_text,
-                            "strict_removed_count": strict_removed_count,
-                        }
+                            "statutes": [],
+                        },
+                    }
 
-                        quality_metrics = _compute_state_quality_metrics(statute_data["statutes"])
-                        statute_data["quality_metrics"] = quality_metrics
-                        quality_by_state[state_code] = quality_metrics
+                    statute_data = item.get("statute_data") or {}
+                    scraped_statutes.append(statute_data)
+                    statutes_count += int(item.get("statutes_count") or 0)
 
-                        # Gate states that are likely link/navigation contamination.
-                        total_q = int(quality_metrics.get("total", 0) or 0)
-                        nav_q = float(quality_metrics.get("nav_like_ratio", 0.0) or 0.0)
-                        fallback_q = float(quality_metrics.get("fallback_section_ratio", 0.0) or 0.0)
-                        numeric_q = float(quality_metrics.get("numeric_section_name_ratio", 0.0) or 0.0)
+                    state_error = item.get("error")
+                    if state_error:
+                        errors.append(str(state_error))
 
-                        quality_flag = False
-                        # For very small samples, fallback/numeric heuristics are noisy; require
-                        # meaningful sample sizes before treating them as quality failures.
-                        fallback_problem = (total_q >= 10 and fallback_q >= 0.7 and numeric_q <= 0.2)
-                        if total_q >= 10 and (nav_q >= 0.2 or fallback_problem or numeric_q <= 0.2):
-                            quality_flag = True
-                        elif 1 <= total_q < 10 and nav_q >= 0.5:
-                            quality_flag = True
+                    quality = item.get("quality_metrics") or {}
+                    if quality:
+                        quality_by_state[state_code] = quality
 
-                        if quality_flag:
-                            low_quality_states.append(state_code)
-                            warnings.append(
-                                f"{state_code} quality gate triggered "
-                                f"(total={total_q}, nav={nav_q}, fallback={fallback_q}, numeric={numeric_q})"
-                            )
-                        
-                        scraped_statutes.append(statute_data)
-                        statutes_count += len(normalized_statutes)
-                        if len(normalized_statutes) == 0:
-                            warn_msg = f"{state_code} returned zero statutes"
-                            warnings.append(warn_msg)
-                            zero_statute_states.append(state_code)
-                        logger.info(f"Successfully scraped {len(normalized_statutes)} statutes for {state_name}")
-                        
-                    except Exception as e:
-                        error_msg = f"Failed to scrape {state_name} using state-specific scraper: {str(e)}"
-                        logger.error(error_msg)
-                        errors.append(error_msg)
-                        
-                        # Add minimal data even on error
-                        statute_data = {
-                            "state_code": state_code,
-                            "state_name": state_name,
-                            "title": f"{state_name} Laws",
-                            "source": "Official State Legislative Website",
-                            "error": str(e),
-                            "scraped_at": datetime.now().isoformat(),
-                            "statutes": []
-                        }
-                        scraped_statutes.append(statute_data)
-                    
-                    # Rate limiting
-                    time.sleep(rate_limit_delay)
+                    for warning in item.get("warnings") or []:
+                        warnings.append(str(warning))
+
+                    if bool(item.get("zero_statute")):
+                        zero_statute_states.append(state_code)
+                    if bool(item.get("low_quality")):
+                        low_quality_states.append(state_code)
+
+                if max_statutes and max_statutes > 0:
+                    scraped_statutes, statutes_count = _trim_scraped_statutes_to_max(
+                        scraped_statutes,
+                        int(max_statutes),
+                    )
+                    quality_by_state = {
+                        str(block.get("state_code") or ""): block.get("quality_metrics") or {}
+                        for block in scraped_statutes
+                        if isinstance(block, dict)
+                    }
+                    zero_statute_states = [
+                        str(block.get("state_code") or "")
+                        for block in scraped_statutes
+                        if isinstance(block, dict) and len(block.get("statutes") or []) == 0
+                    ]
+                    low_quality_states = [
+                        str(block.get("state_code") or "")
+                        for block in scraped_statutes
+                        if isinstance(block, dict) and bool(block.get("quality_flag"))
+                    ]
                 
             except ImportError as e:
                 logger.warning(f"State-specific scrapers not available: {e}, falling back to Justia")
@@ -396,12 +386,20 @@ async def scrape_state_laws(
             "scraper_type": scraper_info,
             "sources": "Official State Legislative Websites" if use_state_specific_scrapers else "Justia Legal Database (https://law.justia.com)",
             "rate_limit_delay": rate_limit_delay,
+            "parallel_workers": parallel_workers,
+            "per_state_retry_attempts": per_state_retry_attempts,
+            "retry_zero_statute_states": retry_zero_statute_states,
             "include_metadata": include_metadata,
             "errors": errors if errors else None,
             "warnings": warnings if warnings else None,
             "zero_statute_states": zero_statute_states if zero_statute_states else None,
             "low_quality_states": low_quality_states if low_quality_states else None,
             "quality_by_state": quality_by_state if quality_by_state else None,
+            "coverage_summary": _compute_coverage_summary(
+                selected_states=selected_states,
+                scraped_statutes=scraped_statutes,
+                errors=errors,
+            ),
             "schema_normalized": use_state_specific_scrapers,
             "jsonld_dir": str((_resolve_state_output_dir(output_dir) / "state_laws_jsonld")) if (use_state_specific_scrapers and write_jsonld) else None,
             "jsonld_files": jsonld_paths if jsonld_paths else None,
@@ -490,6 +488,264 @@ def _compute_state_quality_metrics(statutes: List[Dict[str, Any]]) -> Dict[str, 
         "nav_like_ratio": round(nav_like / total, 3),
         "fallback_section_ratio": round(fallback_section / total, 3),
         "numeric_section_name_ratio": round(numeric_section_name / total, 3),
+    }
+
+
+def _should_flag_quality(quality_metrics: Dict[str, Any]) -> bool:
+    total_q = int(quality_metrics.get("total", 0) or 0)
+    nav_q = float(quality_metrics.get("nav_like_ratio", 0.0) or 0.0)
+    fallback_q = float(quality_metrics.get("fallback_section_ratio", 0.0) or 0.0)
+    numeric_q = float(quality_metrics.get("numeric_section_name_ratio", 0.0) or 0.0)
+
+    fallback_problem = (total_q >= 10 and fallback_q >= 0.7 and numeric_q <= 0.2)
+    if total_q >= 10 and (nav_q >= 0.2 or fallback_problem or numeric_q <= 0.2):
+        return True
+    if 1 <= total_q < 10 and nav_q >= 0.5:
+        return True
+    return False
+
+
+def _format_quality_warning(state_code: str, quality_metrics: Dict[str, Any]) -> str:
+    total_q = int(quality_metrics.get("total", 0) or 0)
+    nav_q = float(quality_metrics.get("nav_like_ratio", 0.0) or 0.0)
+    fallback_q = float(quality_metrics.get("fallback_section_ratio", 0.0) or 0.0)
+    numeric_q = float(quality_metrics.get("numeric_section_name_ratio", 0.0) or 0.0)
+    return (
+        f"{state_code} quality gate triggered "
+        f"(total={total_q}, nav={nav_q}, fallback={fallback_q}, numeric={numeric_q})"
+    )
+
+
+def _scrape_state_once_sync(
+    *,
+    state_code: str,
+    legal_areas: Optional[List[str]],
+    rate_limit_delay: float,
+    max_statutes: Optional[int],
+    strict_full_text: bool,
+    min_full_text_chars: int,
+    hydrate_statute_text: bool,
+) -> Dict[str, Any]:
+    from .state_scrapers import get_scraper_for_state, GenericStateScraper
+
+    state_name = US_STATES[state_code]
+    scraper = get_scraper_for_state(state_code, state_name)
+    if not scraper:
+        logger.info(f"No specific scraper for {state_code}, using generic scraper")
+        scraper = GenericStateScraper(state_code, state_name)
+
+    normalized_statutes = asyncio.run(
+        scraper.scrape_all(
+            legal_areas=legal_areas,
+            max_statutes=max_statutes,
+            rate_limit_delay=rate_limit_delay,
+            hydrate_statute_text=hydrate_statute_text,
+        )
+    )
+
+    strict_removed_count = 0
+    if strict_full_text:
+        normalized_statutes, strict_removed_count = _filter_strict_full_text_statutes(
+            normalized_statutes,
+            min_full_text_chars=min_full_text_chars,
+        )
+
+    statute_data = {
+        "state_code": state_code,
+        "state_name": state_name,
+        "title": f"{state_name} Laws",
+        "source": "Official State Legislative Website",
+        "source_url": scraper.get_base_url(),
+        "official_url": scraper.get_base_url(),
+        "scraped_at": datetime.now().isoformat(),
+        "statutes": [statute.to_dict() for statute in normalized_statutes],
+        "schema_version": "1.0",
+        "normalized": True,
+        "strict_full_text": strict_full_text,
+        "strict_removed_count": strict_removed_count,
+    }
+    quality_metrics = _compute_state_quality_metrics(statute_data["statutes"])
+    quality_flag = _should_flag_quality(quality_metrics)
+    statute_data["quality_metrics"] = quality_metrics
+    statute_data["quality_flag"] = quality_flag
+
+    warnings: List[str] = []
+    if quality_flag:
+        warnings.append(_format_quality_warning(state_code, quality_metrics))
+    if len(normalized_statutes) == 0:
+        warnings.append(f"{state_code} returned zero statutes")
+
+    return {
+        "state_code": state_code,
+        "state_name": state_name,
+        "error": None,
+        "statutes_count": len(normalized_statutes),
+        "zero_statute": len(normalized_statutes) == 0,
+        "low_quality": quality_flag,
+        "quality_metrics": quality_metrics,
+        "warnings": warnings,
+        "statute_data": statute_data,
+    }
+
+
+async def _scrape_state_with_retries(
+    *,
+    state_code: str,
+    legal_areas: Optional[List[str]],
+    rate_limit_delay: float,
+    max_statutes: Optional[int],
+    strict_full_text: bool,
+    min_full_text_chars: int,
+    hydrate_statute_text: bool,
+    retry_attempts: int,
+    retry_zero_statute_states: bool,
+) -> Dict[str, Any]:
+    attempts = 1 + max(0, int(retry_attempts or 0))
+    best: Optional[Dict[str, Any]] = None
+
+    for attempt_idx in range(attempts):
+        try:
+            result = await asyncio.to_thread(
+                _scrape_state_once_sync,
+                state_code=state_code,
+                legal_areas=legal_areas,
+                rate_limit_delay=rate_limit_delay,
+                max_statutes=max_statutes,
+                strict_full_text=strict_full_text,
+                min_full_text_chars=min_full_text_chars,
+                hydrate_statute_text=hydrate_statute_text,
+            )
+        except Exception as e:
+            state_name = US_STATES[state_code]
+            error_msg = f"Failed to scrape {state_name} using state-specific scraper: {str(e)}"
+            logger.error(error_msg)
+            result = {
+                "state_code": state_code,
+                "state_name": state_name,
+                "error": error_msg,
+                "statutes_count": 0,
+                "zero_statute": True,
+                "low_quality": False,
+                "quality_metrics": {"total": 0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0},
+                "warnings": [f"{state_code} returned zero statutes"],
+                "statute_data": {
+                    "state_code": state_code,
+                    "state_name": state_name,
+                    "title": f"{state_name} Laws",
+                    "source": "Official State Legislative Website",
+                    "error": str(e),
+                    "scraped_at": datetime.now().isoformat(),
+                    "statutes": [],
+                },
+            }
+
+        if best is None:
+            best = result
+        else:
+            prior_count = int(best.get("statutes_count") or 0)
+            current_count = int(result.get("statutes_count") or 0)
+            if current_count > prior_count:
+                best = result
+            elif current_count == prior_count and best.get("error") and not result.get("error"):
+                best = result
+
+        if attempt_idx >= attempts - 1:
+            break
+
+        should_retry = bool(result.get("error"))
+        if retry_zero_statute_states and int(result.get("statutes_count") or 0) == 0:
+            should_retry = True
+        if not should_retry:
+            break
+
+        await asyncio.sleep(max(0.0, rate_limit_delay) + (attempt_idx + 1) * 0.5)
+
+    return best or {
+        "state_code": state_code,
+        "state_name": US_STATES[state_code],
+        "error": "missing-state-result",
+        "statutes_count": 0,
+        "zero_statute": True,
+        "low_quality": False,
+        "quality_metrics": {"total": 0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0},
+        "warnings": [f"{state_code} returned zero statutes"],
+        "statute_data": {
+            "state_code": state_code,
+            "state_name": US_STATES[state_code],
+            "title": f"{US_STATES[state_code]} Laws",
+            "source": "Official State Legislative Website",
+            "error": "missing-state-result",
+            "scraped_at": datetime.now().isoformat(),
+            "statutes": [],
+        },
+    }
+
+
+def _trim_scraped_statutes_to_max(
+    scraped_statutes: List[Dict[str, Any]],
+    max_statutes: int,
+) -> tuple[List[Dict[str, Any]], int]:
+    if max_statutes <= 0:
+        return scraped_statutes, sum(len((block or {}).get("statutes") or []) for block in scraped_statutes)
+
+    trimmed: List[Dict[str, Any]] = []
+    remaining = max_statutes
+    for block in scraped_statutes:
+        if remaining <= 0:
+            break
+        if not isinstance(block, dict):
+            continue
+
+        statutes = list(block.get("statutes") or [])
+        kept = statutes[:remaining]
+        remaining -= len(kept)
+
+        out_block = dict(block)
+        out_block["statutes"] = kept
+        out_block["quality_metrics"] = _compute_state_quality_metrics(kept)
+        out_block["quality_flag"] = _should_flag_quality(out_block["quality_metrics"])
+        trimmed.append(out_block)
+
+    total = sum(len((block or {}).get("statutes") or []) for block in trimmed)
+    return trimmed, total
+
+
+def _compute_coverage_summary(
+    *,
+    selected_states: List[str],
+    scraped_statutes: List[Dict[str, Any]],
+    errors: List[str],
+) -> Dict[str, Any]:
+    states_targeted = len(selected_states)
+    present_states = set()
+    zero_states: List[str] = []
+    error_states: List[str] = []
+
+    for block in scraped_statutes:
+        if not isinstance(block, dict):
+            continue
+        state_code = str(block.get("state_code") or "").upper()
+        if not state_code:
+            continue
+        present_states.add(state_code)
+        statutes = block.get("statutes") or []
+        if len(statutes) == 0:
+            zero_states.append(state_code)
+        if block.get("error"):
+            error_states.append(state_code)
+
+    missing_states = [code for code in selected_states if code not in present_states]
+    coverage_gap_states = sorted(set(zero_states + error_states + missing_states))
+
+    return {
+        "states_targeted": states_targeted,
+        "states_returned": len(present_states),
+        "states_with_nonzero_statutes": max(0, len(present_states) - len(set(zero_states))),
+        "zero_statute_states": sorted(set(zero_states)),
+        "error_states": sorted(set(error_states)),
+        "missing_states": missing_states,
+        "coverage_gap_states": coverage_gap_states,
+        "full_coverage": len(coverage_gap_states) == 0 and not errors,
     }
 
 
