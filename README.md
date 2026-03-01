@@ -16,6 +16,7 @@
 - [Key Features](#-key-features)
 - [Quick Start](#-quick-start)
 - [CLI Tools](#-cli-tools)
+- [Hybrid Legal V2 Ops](#-hybrid-legal-v2-ops)
 - [MCP Server](#-mcp-server)
 - [MCP Dashboard](#-mcp-dashboard)
 - [Core Modules](#-core-modules)
@@ -157,6 +158,21 @@ ipfs-datasets github auth login
 ipfs-datasets github execute issue list
 ipfs-datasets github execute pr create
 ```
+
+## ⚖️ Hybrid Legal V2 Ops
+
+Run the package-native V2 legal pipeline using the committed batch fixture:
+
+```bash
+bash scripts/ops/legal_data/run_hybrid_v2_pipeline.sh \
+    --input-jsonl ipfs_datasets_py/tests/reasoner/fixtures/hybrid_v2_cli_batch_sentences.jsonl \
+    --sentence-field sentence \
+    --output-json /tmp/hybrid_v2_pipeline_fixture_batch.json \
+    --pretty
+```
+
+Reference runbook:
+- `docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md`
 
 ### Discord Integration
 

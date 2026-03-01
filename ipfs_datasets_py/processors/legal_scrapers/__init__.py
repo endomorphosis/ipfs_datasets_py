@@ -134,7 +134,7 @@ from .ipfs_storage_integration import (
 )
 
 # Patent Engine — USPTO patent scraper domain classes
-from .patent_engine import (
+from .federal_scrapers.patent_engine import (
     Patent,
     PatentDatasetBuilder,
     PatentSearchCriteria,
