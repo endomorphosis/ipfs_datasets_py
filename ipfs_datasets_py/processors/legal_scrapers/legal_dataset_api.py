@@ -635,6 +635,10 @@ async def scrape_state_laws_from_parameters(
             write_jsonld=parameters.get("write_jsonld", True),
             strict_full_text=parameters.get("strict_full_text", False),
             min_full_text_chars=parameters.get("min_full_text_chars", 300),
+            hydrate_statute_text=parameters.get("hydrate_statute_text", True),
+            parallel_workers=parameters.get("parallel_workers", 6),
+            per_state_retry_attempts=parameters.get("per_state_retry_attempts", 1),
+            retry_zero_statute_states=parameters.get("retry_zero_statute_states", True),
         )
 
         # For forward compatibility with resumable orchestration, include job_id when provided.
