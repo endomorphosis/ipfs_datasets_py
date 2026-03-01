@@ -144,6 +144,11 @@ class AlabamaScraper(BaseStateScraper):
                     # Extract section number
                     section_number = self._extract_section_number(link_text)
                     if not section_number:
+                        import re
+                        m = re.search(r"\bTitle\s+([0-9A-Za-z\-]+)\b", link_text, re.IGNORECASE)
+                        if m:
+                            section_number = m.group(1)
+                    if not section_number:
                         section_number = f"Section-{section_count + 1}"
                     
                     # Identify legal area from link text

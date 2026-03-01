@@ -13,12 +13,17 @@ class MaineScraper(BaseStateScraper):
     """Scraper for Maine state laws from http://legislature.maine.gov"""
 
     _ME_SECTION_URL_RE = re.compile(r"/statutes/[0-9A-Za-z\-]+/title[0-9A-Za-z\-]+sec[0-9A-Za-z\-]+\.html$", re.IGNORECASE)
+    _ME_CHAPTER_INDEX_RE = re.compile(r"/title[0-9A-Za-z\-]+ch[0-9A-Za-z\-]+sec0\.html$", re.IGNORECASE)
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
         for statute in statutes:
             source = str(statute.source_url or "")
-            if self._ME_SECTION_URL_RE.search(source):
+            if self._ME_SECTION_URL_RE.search(source) and not self._ME_CHAPTER_INDEX_RE.search(source):
+                if str(statute.section_number or "").startswith("Section-"):
+                    m = re.search(r"title[0-9A-Za-z\-]+sec([0-9A-Za-z\-]+)\.html$", source, re.IGNORECASE)
+                    if m:
+                        statute.section_number = m.group(1)
                 filtered.append(statute)
         return filtered
     

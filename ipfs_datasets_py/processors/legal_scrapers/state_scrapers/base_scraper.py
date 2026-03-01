@@ -352,16 +352,21 @@ class BaseStateScraper(ABC):
         import re
         
         # Common patterns: "Section 123", "§ 123", "§123", "Sec. 123"
+        # Also support chapter/title labels and dot-prefixed identifiers (e.g., ".010").
         patterns = [
             r'§\s*(\d+[\.\-\w]*)',
             r'Section\s+(\d+[\.\-\w]*)',
             r'Sec\.\s*(\d+[\.\-\w]*)',
+            r'^\s*\.(\d+[\.\-\w]*)\b',
+            r'\b(\d+\-\d+[A-Za-z]?(?:\.\d+)*)\b',
+            r'Title\s+(\d+[A-Za-z]?(?:\.\d+)?)\b',
+            r'Chapter\s+(\d+[A-Za-z]?(?:\.\d+)?)\b',
         ]
         
         for pattern in patterns:
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
-                return match.group(1)
+                return str(match.group(1)).strip().rstrip('.')
         
         return None
 

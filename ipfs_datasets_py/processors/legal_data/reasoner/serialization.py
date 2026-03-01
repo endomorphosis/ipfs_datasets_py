@@ -23,7 +23,105 @@ from municipal_scrape_workspace.hybrid_legal_ir import (
     TemporalRelation,
 )
 
-from .models import IRReference, ProofObject, ProofStep, SourceProvenance
+from .models import IRReference, PROOF_SCHEMA_VERSION, ProofObject, ProofStep, SourceProvenance
+
+
+SUPPORTED_IR_VERSION = "1.0"
+SUPPORTED_CNL_VERSION = "1.0"
+
+
+def _stringify_version(value: Any) -> str:
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
+def validate_contract_versions(
+    *,
+    ir_version: str,
+    cnl_version: str,
+    source_label: str,
+) -> None:
+    if ir_version != SUPPORTED_IR_VERSION:
+        raise ValueError(
+            f"{source_label}: unsupported ir_version '{ir_version}' "
+            f"(expected '{SUPPORTED_IR_VERSION}')"
+        )
+    if cnl_version != SUPPORTED_CNL_VERSION:
+        raise ValueError(
+            f"{source_label}: unsupported cnl_version '{cnl_version}' "
+            f"(expected '{SUPPORTED_CNL_VERSION}')"
+        )
+
+
+def _upgrade_legacy_contract_versions(payload: Dict[str, Any]) -> Dict[str, Any]:
+    upgraded = dict(payload)
+    upgraded["version"] = SUPPORTED_IR_VERSION
+    upgraded["ir_version"] = SUPPORTED_IR_VERSION
+    upgraded["cnl_version"] = SUPPORTED_CNL_VERSION
+    return upgraded
+
+
+def _find_embedded_hybrid_ir_json(payload: Any) -> Optional[Dict[str, Any]]:
+    queue: List[Any] = [payload]
+    while queue:
+        current = queue.pop(0)
+        if isinstance(current, dict):
+            embedded = current.get("hybridIRJson")
+            if isinstance(embedded, str):
+                try:
+                    candidate = json.loads(embedded)
+                except json.JSONDecodeError:
+                    candidate = None
+                if isinstance(candidate, dict):
+                    return candidate
+            queue.extend(v for v in current.values() if isinstance(v, (dict, list)))
+            continue
+        if isinstance(current, list):
+            queue.extend(current)
+    return None
+
+
+def _looks_like_legacy_logic_hybrid_fixture(payload: Dict[str, Any], source_label: str) -> bool:
+    is_logic_hybrid_name = Path(source_label).name == "logic.hybrid.jsonld"
+    has_embedded_ir = _find_embedded_hybrid_ir_json(payload) is not None
+    return is_logic_hybrid_name or has_embedded_ir
+
+
+def _extract_ir_payload(payload: Dict[str, Any], source_label: str) -> Dict[str, Any]:
+    if "norms" in payload and "frames" in payload:
+        return payload
+    embedded = _find_embedded_hybrid_ir_json(payload)
+    if embedded is not None:
+        return embedded
+    raise ValueError(f"{source_label}: could not locate LegalIR payload in JSON")
+
+
+def _normalize_and_validate_contract(
+    payload: Dict[str, Any],
+    *,
+    source_label: str,
+    allow_legacy_versions: bool,
+) -> Dict[str, Any]:
+    ir_version = _stringify_version(payload.get("ir_version") or payload.get("version"))
+    cnl_version = _stringify_version(payload.get("cnl_version"))
+
+    if allow_legacy_versions:
+        if ir_version in {"", "0.1"}:
+            ir_version = SUPPORTED_IR_VERSION
+        if cnl_version in {"", "0.1"}:
+            cnl_version = SUPPORTED_CNL_VERSION
+        payload = dict(payload)
+        payload["version"] = ir_version
+        payload["ir_version"] = ir_version
+        payload["cnl_version"] = cnl_version
+
+    validate_contract_versions(
+        ir_version=ir_version,
+        cnl_version=cnl_version,
+        source_label=source_label,
+    )
+    return payload
 
 
 def _load_json(path: str | Path) -> Dict[str, Any]:
@@ -77,12 +175,30 @@ def _frame_from_dict(data: Dict[str, Any]):
 def load_legal_ir_from_json(path: str | Path) -> LegalIR:
     """Load LegalIR from a JSON snapshot produced by `hybrid_legal_ir.to_json`.
 
-    This loader is intentionally permissive and supports id refs serialized either
-    as `{namespace,value}` objects or `namespace:value` strings.
+    Runtime contract:
+    - `ir_version` must be `1.0`
+    - `cnl_version` must be `1.0`
+
+    Existing `logic.hybrid.jsonld` fixtures are supported through automatic
+    backward-compat extraction/upgrading of embedded `hybridIRJson` payloads.
     """
-    data = _load_json(path)
+    path_obj = Path(path)
+    data = _load_json(path_obj)
+    source_label = str(path_obj)
+
+    allow_legacy_versions = False
+    if isinstance(data, dict) and _looks_like_legacy_logic_hybrid_fixture(data, source_label):
+        data = _extract_ir_payload(data, source_label)
+        allow_legacy_versions = True
+
+    data = _normalize_and_validate_contract(
+        data,
+        source_label=source_label,
+        allow_legacy_versions=allow_legacy_versions,
+    )
+
     ir = LegalIR(
-        version=str(data.get("version") or "0.1"),
+        version=str(data.get("ir_version") or data.get("version") or SUPPORTED_IR_VERSION),
         jurisdiction=str(data.get("jurisdiction") or "default"),
         clock=str(data.get("clock") or "discrete"),
     )
@@ -184,9 +300,42 @@ def load_legal_ir_from_json(path: str | Path) -> LegalIR:
     return ir
 
 
+def load_legacy_logic_hybrid_fixture(path: str | Path) -> LegalIR:
+    """Load `logic.hybrid.jsonld` fixtures produced by older conversion runs.
+
+    The legacy fixture embeds one or more `hybridIRJson` snapshots (typically
+    with `version=0.1`) inside report-like JSON. This loader extracts the first
+    embedded IR payload and upgrades contract fields to runtime `1.0` versions.
+    """
+    source_label = str(path)
+    payload = _load_json(path)
+    if not isinstance(payload, dict):
+        raise ValueError(f"{source_label}: expected object payload")
+    embedded = _extract_ir_payload(payload, source_label)
+    upgraded = _upgrade_legacy_contract_versions(embedded)
+    tmp_path = Path(path)
+    # Reuse canonical loader behavior by materializing an in-memory payload path contract.
+    # The write/read round-trip is avoided by directly applying the same parse path.
+    data = _normalize_and_validate_contract(
+        upgraded,
+        source_label=f"{tmp_path}#legacy",
+        allow_legacy_versions=False,
+    )
+    scratch = tmp_path.parent / f".{tmp_path.stem}.contract.v1.tmp.json"
+    write_json(scratch, data)
+    try:
+        return load_legal_ir_from_json(scratch)
+    finally:
+        if scratch.exists():
+            scratch.unlink()
+
+
 def proof_to_dict(proof: ProofObject) -> Dict[str, Any]:
     return {
         "proof_id": proof.proof_id,
+        "schema_version": proof.schema_version,
+        "proof_hash": proof.proof_hash,
+        "created_at": proof.created_at,
         "query": proof.query,
         "root_conclusion": proof.root_conclusion,
         "status": proof.status,
@@ -247,6 +396,9 @@ def proof_from_dict(data: Dict[str, Any]) -> ProofObject:
         root_conclusion=str(data.get("root_conclusion") or ""),
         steps=steps,
         status=str(data.get("status") or "inconclusive"),
+        schema_version=str(data.get("schema_version") or PROOF_SCHEMA_VERSION),
+        proof_hash=str(data.get("proof_hash") or ""),
+        created_at=(str(data.get("created_at")) if data.get("created_at") is not None else None),
     )
 
 

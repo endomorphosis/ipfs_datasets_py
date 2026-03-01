@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 import hashlib
+import json
 from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple
 
 from municipal_scrape_workspace.hybrid_legal_ir import (
@@ -13,7 +14,7 @@ from municipal_scrape_workspace.hybrid_legal_ir import (
     generate_cnl,
 )
 
-from .models import IRReference, ProofObject, ProofStep, SourceProvenance
+from .models import IRReference, PROOF_SCHEMA_VERSION, ProofObject, ProofStep, SourceProvenance
 
 
 TimeRange = Tuple[str, str]
@@ -49,7 +50,41 @@ class HybridLawReasoner:
         return self._proof_store[proof_id]
 
     def register_proof(self, proof: ProofObject) -> None:
+        if not proof.schema_version:
+            proof.schema_version = PROOF_SCHEMA_VERSION
+        canonical_payload = self._canonical_proof_payload(
+            query=proof.query,
+            root_conclusion=proof.root_conclusion,
+            steps=proof.steps,
+            status=proof.status,
+        )
+        canonical_json = json.dumps(canonical_payload, sort_keys=True, separators=(",", ":"))
+        expected_hash = hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
+        expected_id = f"pf_{expected_hash[:12]}"
+        if not proof.proof_hash:
+            proof.proof_hash = expected_hash
+        if not proof.proof_id:
+            proof.proof_id = expected_id
         self._proof_store[proof.proof_id] = proof
+
+    def validate_proof_replay(self, proof_id: str) -> Dict[str, Any]:
+        proof = self.get_proof(proof_id)
+        canonical_payload = self._canonical_proof_payload(
+            query=proof.query,
+            root_conclusion=proof.root_conclusion,
+            steps=proof.steps,
+            status=proof.status,
+        )
+        canonical_json = json.dumps(canonical_payload, sort_keys=True, separators=(",", ":"))
+        expected_hash = hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
+        expected_proof_id = f"pf_{expected_hash[:12]}"
+        return {
+            "proof_id": proof.proof_id,
+            "expected_proof_id": expected_proof_id,
+            "proof_hash": proof.proof_hash,
+            "expected_proof_hash": expected_hash,
+            "replay_match": bool(proof.proof_id == expected_proof_id and proof.proof_hash == expected_hash),
+        }
 
     def check_compliance(
         self,
@@ -448,8 +483,16 @@ class HybridLawReasoner:
             p = self.provenance_by_norm.get(norm.id.ref())
             if p:
                 prov.append(p)
+            else:
+                prov.append(self._fallback_provenance_for_frame(norm.target_frame_ref))
         elif frame_id:
             refs.append(IRReference(kind="frame", id=frame_id))
+            prov.append(self._fallback_provenance_for_frame(frame_id))
+
+        if not refs:
+            refs.append(IRReference(kind="derived", id=f"derived:{rule_id.lower()}"))
+        if not prov:
+            prov.append(SourceProvenance(source_path="unknown", source_id="unknown", source_span=None))
 
         step = ProofStep(
             step_id=step_id,
@@ -472,17 +515,79 @@ class HybridLawReasoner:
         steps: List[ProofStep],
         status: Literal["proved", "refuted", "inconclusive"],
     ) -> ProofObject:
-        payload = f"{root_conclusion}|{len(self._proof_store)}|{len(steps)}"
-        proof_id = f"pf_{hashlib.sha1(payload.encode('utf-8')).hexdigest()[:12]}"
+        canonical_payload = self._canonical_proof_payload(
+            query=query,
+            root_conclusion=root_conclusion,
+            steps=steps,
+            status=status,
+        )
+        canonical_json = json.dumps(canonical_payload, sort_keys=True, separators=(",", ":"))
+        proof_hash = hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
+        proof_id = f"pf_{proof_hash[:12]}"
         po = ProofObject(
             proof_id=proof_id,
             query=query,
             root_conclusion=root_conclusion,
             steps=steps,
             status=status,
+            schema_version=PROOF_SCHEMA_VERSION,
+            proof_hash=proof_hash,
+            created_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         )
         self._proof_store[proof_id] = po
         return po
+
+    def _canonical_proof_payload(
+        self,
+        *,
+        query: Dict[str, Any],
+        root_conclusion: str,
+        steps: List[ProofStep],
+        status: Literal["proved", "refuted", "inconclusive"],
+    ) -> Dict[str, Any]:
+        normalized_steps: List[Dict[str, Any]] = []
+        for step in steps:
+            normalized_steps.append(
+                {
+                    "step_id": step.step_id,
+                    "rule_id": step.rule_id,
+                    "premises": list(step.premises),
+                    "conclusion": step.conclusion,
+                    "ir_refs": [{"kind": r.kind, "id": r.id} for r in step.ir_refs],
+                    "provenance": [
+                        {
+                            "source_path": p.source_path,
+                            "source_id": p.source_id,
+                            "source_span": p.source_span,
+                        }
+                        for p in step.provenance
+                    ],
+                    "timestamp": step.timestamp,
+                    "confidence": float(step.confidence),
+                }
+            )
+
+        return {
+            "schema_version": PROOF_SCHEMA_VERSION,
+            "query": query,
+            "root_conclusion": root_conclusion,
+            "status": status,
+            "steps": normalized_steps,
+        }
+
+    def _fallback_provenance_for_frame(self, frame_id: str) -> SourceProvenance:
+        frame = self.kb.frames.get(frame_id)
+        if frame is None:
+            return SourceProvenance(source_path="unknown", source_id=frame_id or "unknown", source_span=None)
+        attrs = getattr(frame, "attrs", {}) or {}
+        source_path = str(attrs.get("source_path") or "kb://frame")
+        source_id = str(attrs.get("source_id") or frame_id)
+        source_span = frame.source_span or attrs.get("source_span")
+        return SourceProvenance(
+            source_path=source_path,
+            source_id=source_id,
+            source_span=(str(source_span) if source_span is not None else None),
+        )
 
     def _reconstruct_nl_lines(self, proof: ProofObject) -> List[str]:
         lines: List[str] = []

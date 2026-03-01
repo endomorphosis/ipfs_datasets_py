@@ -4,6 +4,9 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Literal, Optional
 
 
+PROOF_SCHEMA_VERSION = "1.0"
+
+
 @dataclass(frozen=True)
 class SourceProvenance:
     source_path: str
@@ -36,3 +39,6 @@ class ProofObject:
     root_conclusion: str
     steps: List[ProofStep]
     status: Literal["proved", "refuted", "inconclusive"]
+    schema_version: str = PROOF_SCHEMA_VERSION
+    proof_hash: str = ""
+    created_at: Optional[str] = None

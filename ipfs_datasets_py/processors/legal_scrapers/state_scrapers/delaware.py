@@ -35,7 +35,14 @@ class DelawareScraper(BaseStateScraper):
             if re.search(r"§\s*\d", name, re.IGNORECASE) or re.search(r"\b\d+\.[0-9A-Za-z\-]*", name):
                 filtered.append(statute)
                 continue
-            if re.search(r"^#\d+[A-Za-z\-]*$", source):
+            if re.search(r"#\d+[A-Za-z\-]*$", source):
+                filtered.append(statute)
+                continue
+            if self._DE_CHAPTER_URL_RE.search(source) and re.search(r"^Chapter\s+\d+", name, re.IGNORECASE):
+                if str(statute.section_number or "").startswith("Section-"):
+                    m = re.search(r"Chapter\s+(\d+[A-Za-z\-]*)", name, re.IGNORECASE)
+                    if m:
+                        statute.section_number = m.group(1)
                 filtered.append(statute)
                 continue
         return filtered
@@ -78,13 +85,16 @@ class DelawareScraper(BaseStateScraper):
             seen.add(candidate)
 
             if PLAYWRIGHT_AVAILABLE:
-                self.logger.info("Delaware: Using Playwright for JavaScript rendering")
-                statutes = await self._scrape_with_playwright(code_name, candidate, "Del. Code")
-                statutes = self._filter_section_level(statutes)
-                if len(statutes) > len(best_statutes):
-                    best_statutes = statutes
-                if len(statutes) >= 20:
-                    return statutes
+                try:
+                    self.logger.info("Delaware: Using Playwright for JavaScript rendering")
+                    statutes = await self._scrape_with_playwright(code_name, candidate, "Del. Code")
+                    statutes = self._filter_section_level(statutes)
+                    if len(statutes) > len(best_statutes):
+                        best_statutes = statutes
+                    if len(statutes) >= 20:
+                        return statutes
+                except Exception as e:
+                    self.logger.warning(f"Delaware Playwright scrape failed for {candidate}: {e}")
 
             self.logger.warning("Delaware requires Playwright for JavaScript rendering - using fallback")
             statutes = await self._custom_scrape_delaware(code_name, candidate, "Del. Code")

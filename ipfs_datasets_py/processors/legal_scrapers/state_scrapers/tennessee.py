@@ -3,6 +3,7 @@
 This module contains the scraper for Tennessee statutes from the official state legislative website.
 """
 
+import re
 import warnings
 from typing import List, Dict
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -119,6 +120,17 @@ class TennesseeScraper(BaseStateScraper):
             links = soup.find_all('a', href=True)
             
             section_count = 0
+            statute_number_re = re.compile(r"\b\d{1,2}-\d{1,3}-\d+[A-Za-z-]*\b")
+            chapter_re = re.compile(r"\b(?:chapter|ch\.?|title|section|sec\.?)\s*\d+", re.IGNORECASE)
+            ga_re = re.compile(r"\b\d{2,3}(?:st|nd|rd|th)?\b", re.IGNORECASE)
+            nav_terms = {
+                "my bills",
+                "browse bills",
+                "bills and resolutions",
+                "subject index",
+                "bill information",
+            }
+
             for link in links:
                 if section_count >= max_sections:
                     break
@@ -129,18 +141,35 @@ class TennesseeScraper(BaseStateScraper):
                 if not link_text or len(link_text) < 3:
                     continue
                 
-                # Tennessee patterns - very permissive to catch Bills, Resolutions, Acts, etc.
-                keywords_tn = ['bill', 'resolution', 'act', 'session', 'code', 'statute', 'title', 'chapter', 'tenn.', 'ga']
-                # Accept anything with numbers AND keywords, or links to archive/wapp
-                has_keyword = any(keyword in link_text.lower() or keyword in link_href.lower() for keyword in keywords_tn)
-                has_number = any(char.isdigit() for char in link_text)
-                is_legislative = 'wapp.capitol' in link_href or 'archive' in link_href.lower()
-                
-                if not (has_keyword or (has_number and is_legislative)):
+                lower_text = link_text.lower()
+                lower_href = link_href.lower()
+                if any(term in lower_text for term in nav_terms):
+                    continue
+
+                has_statute_pattern = bool(statute_number_re.search(link_text) or statute_number_re.search(link_href))
+                has_chapter_pattern = bool(chapter_re.search(link_text) or chapter_re.search(link_href))
+                has_session_pattern = ("special session" in lower_text) and bool(ga_re.search(link_text))
+                has_legislative_doc_path = (
+                    "archives/joint/publications" in lower_href
+                    or "acts-and-resolutions" in lower_href
+                    or "archives/" in lower_href and "specialsession" in lower_href
+                )
+
+                if not (has_statute_pattern or has_chapter_pattern or has_session_pattern or has_legislative_doc_path):
                     continue
                 
                 full_url = urljoin(code_url, link_href)
-                section_number = self._extract_section_number(link_text) or f"Section-{section_count + 1}"
+
+                section_number = self._extract_section_number(link_text)
+                if not section_number:
+                    # Derive a stable numeric identifier from URL/query text when possible.
+                    href_match = statute_number_re.search(link_href) or ga_re.search(link_text)
+                    if href_match:
+                        section_number = href_match.group(0)
+
+                if not section_number:
+                    continue
+
                 legal_area = self._identify_legal_area(link_text)
                 
                 statute = NormalizedStatute(

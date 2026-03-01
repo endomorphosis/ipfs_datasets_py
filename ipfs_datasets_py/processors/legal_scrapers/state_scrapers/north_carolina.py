@@ -13,12 +13,13 @@ class NorthCarolinaScraper(BaseStateScraper):
     """Scraper for North Carolina state laws from https://www.ncleg.gov"""
 
     _NC_SECTION_URL_RE = re.compile(r"/enactedlegislation/statutes/html/bysection/chapter_[0-9A-Za-z]+/gs_[0-9A-Za-z\-\.]+\.html$", re.IGNORECASE)
+    _NC_CHAPTER_URL_RE = re.compile(r"/laws/generalstatutesections/chapter[0-9A-Za-z]+$", re.IGNORECASE)
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
         for statute in statutes:
             source = str(statute.source_url or "")
-            if self._NC_SECTION_URL_RE.search(source):
+            if self._NC_SECTION_URL_RE.search(source) or self._NC_CHAPTER_URL_RE.search(source):
                 filtered.append(statute)
         return filtered
     

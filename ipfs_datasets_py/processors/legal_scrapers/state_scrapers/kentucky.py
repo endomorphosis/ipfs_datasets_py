@@ -19,6 +19,12 @@ class KentuckyScraper(BaseStateScraper):
         for statute in statutes:
             source = str(statute.source_url or "")
             if self._KY_SECTION_URL_RE.search(source):
+                section_name = str(statute.section_name or "")
+                if str(statute.section_number or "").startswith("Section-"):
+                    # KRS section rows often start with ".010" style identifiers.
+                    m = re.search(r"^\.(\d+[A-Za-z0-9\.-]*)\b", section_name)
+                    if m:
+                        statute.section_number = m.group(1)
                 filtered.append(statute)
         return filtered
     

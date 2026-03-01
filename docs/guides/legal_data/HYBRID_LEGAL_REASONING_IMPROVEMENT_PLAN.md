@@ -675,3 +675,198 @@ Example proof summary record:
 - [ ] Add proof-to-NL reconstruction tests.
 
 This plan provides the implementation contract for hooking optimizers, knowledge graph modules, and theorem provers into IR, CNL, and the hybrid reasoner architecture while preserving traceability and composability.
+
+Working tracker:
+- `ipfs_datasets_py/docs/guides/legal_data/HYBRID_LEGAL_REASONING_TODO.md`
+
+Document usage:
+- This file defines architecture, milestones, quality gates, and rollout governance.
+- The TODO file defines sprint-executable work items and current status.
+
+---
+
+## 18) Repository and Module Mapping
+
+Use this mapping to implement the plan without creating duplicate logic paths.
+
+Core package targets:
+- `ipfs_datasets_py/ipfs_datasets_py/processors/legal_data/reasoner/`
+  - IR dataclasses and serialization contracts,
+  - parser/normalizer/compiler modules,
+  - proof object model,
+  - reasoner query orchestration.
+- `ipfs_datasets_py/scripts/ops/legal_data/`
+  - integration benchmarks,
+  - optimizer toggles,
+  - report generation and diagnostics.
+- `ipfs_datasets_py/tests/`
+  - parser determinism,
+  - compiler parity,
+  - proof replay,
+  - query API contracts.
+
+Compatibility surface (kept thin, no core logic):
+- `scripts/ops/*.py` and `scripts/ops/*.sh` wrappers in workspace root.
+- `docs/*.md` pointer stubs in workspace root.
+
+Non-goal:
+- Reintroducing legal-reasoner implementation in `src/municipal_scrape_workspace/reasoner`.
+
+---
+
+## 19) Milestones and Timeboxes
+
+Assume two-week iterations.
+
+M1 (Weeks 1-2): Contract Freeze
+- Deliverables:
+  - IR schema version lock,
+  - CNL grammar lock,
+  - migration and backward-compat fixtures.
+- Exit gate:
+  - 100% passing schema compatibility tests.
+
+M2 (Weeks 3-4): Parser and Normalizer Hardening
+- Deliverables:
+  - strict CNL parse mode,
+  - ambiguity ranking,
+  - deterministic canonical ID behavior.
+- Exit gate:
+  - parser determinism >= 95% on curated CNL corpus.
+
+M3 (Weeks 5-6): Compiler and Proof Trace
+- Deliverables:
+  - DCEC compiler + TDFOL compiler,
+  - formula-to-IR and IR-to-source provenance links.
+- Exit gate:
+  - every compiled formula has traceable IR references.
+
+M4 (Weeks 7-8): Optimizer + KG Integration
+- Deliverables:
+  - optimizer acceptance policy,
+  - KG enrichment adapters,
+  - semantic floor guard enforcement.
+- Exit gate:
+  - quality gains with zero floor regressions on benchmark set.
+
+M5 (Weeks 9-10): Prover Backends + Query APIs
+- Deliverables:
+  - theorem backend adapter and at least two backends,
+  - compliance/violation/explain endpoints,
+  - proof replay and explainability tests.
+- Exit gate:
+  - deterministic proof IDs on replay for fixed snapshots.
+
+---
+
+## 20) Engineering Backlog (Issue-Ready)
+
+EPIC A: IR and CNL Contracts
+1. Add `ir_version` and `cnl_version` validators.
+2. Add deterministic canonical ID utility shared across parser/compiler.
+3. Add CNL parse tree serializer for reproducibility.
+
+EPIC B: Compiler and Logic Output
+4. Implement DCEC compiler with EC primitive emission policy.
+5. Implement Temporal Deontic FOL compiler with quantifier normalization.
+6. Add compiler parity tests with golden fixtures.
+
+EPIC C: Proof and Explainability
+7. Introduce `ProofObject` schema with provenance references.
+8. Add proof replay endpoint and deterministic hash policy.
+9. Add NL explanation renderer from proof + IR references.
+
+EPIC D: Optimizers and KG
+10. Add optimizer chain orchestration and acceptance policy.
+11. Add KG enricher adapter with confidence annotations.
+12. Add semantic drift guard and modality-specific floor checks.
+
+EPIC E: Reasoner APIs
+13. Implement `check_compliance` with conflict handling.
+14. Implement `find_violations` with time-window filters.
+15. Implement `explain_proof` with `nl` and `json` formats.
+
+---
+
+## 21) Acceptance Metrics and Quality Gates
+
+Functional gates:
+- CNL determinism: >= 95%.
+- Canonical ID stability: 100% across repeated runs.
+- Formula traceability: 100% of formulas reference IR IDs.
+- Proof provenance completeness: 100% of proof steps include source references.
+
+Reasoning quality gates:
+- Compliance/violation API pass rate on gold test set: >= 98%.
+- Conflict detection precision: >= 95%.
+- Deadline reasoning accuracy: >= 97%.
+
+Optimization safety gates:
+- Semantic floor regression count: 0 on release candidates.
+- Accepted optimizer proposals must improve configured objective or tie with lower complexity.
+
+Operational gates:
+- P95 query latency target (snapshot-local): <= 500 ms for medium-sized legal KB.
+- Proof explain generation latency target: <= 800 ms for typical proofs.
+
+---
+
+## 22) Risks and Mitigations
+
+Risk: CNL ambiguity causes non-deterministic parse trees.
+- Mitigation: strict grammar mode, ranked alternatives, confidence thresholds, and fail-closed policy for low confidence.
+
+Risk: Optimizers overfit lexical overlap and degrade legal semantics.
+- Mitigation: modality-aware semantic floors, theorem consistency checks, and provenance-preserving acceptance policy.
+
+Risk: KG enrichment introduces noisy entities/relations.
+- Mitigation: confidence-scored insertion, reversible enrichment layer, and audit logs of injected triples.
+
+Risk: Proof IDs drift after minor refactors.
+- Mitigation: stable canonical hashing over normalized proof steps and versioned hash policy.
+
+Risk: Divergence between DCEC and TDFOL compilers.
+- Mitigation: parity fixtures, dual-compiler consistency checks, and differential test reports.
+
+---
+
+## 23) Detailed 8-Query Test Matrix
+
+| Query ID | API | Scenario | Expected Status | Required Proof Steps |
+|---|---|---|---|---|
+| Q1 | `check_compliance` | wages paid day 20 within 30-day window | `compliant` | activation, temporal_guard_pass, event_observed |
+| Q2 | `check_compliance` | wages unpaid day 40 | `violation` | activation, deadline_passed, required_event_missing |
+| Q3 | `check_compliance` | medical disclosure without court order | `violation` | activation, exception_not_satisfied, forbidden_event_observed |
+| Q4 | `check_compliance` | medical disclosure with court order | `exception_applied` | activation, exception_satisfied, prohibition_discharged |
+| Q5 | `find_violations` | breach notified after 96h | `violation_found` | activation, within_window_failed, event_late |
+| Q6 | `find_violations` | report filed before deadline | `no_violation` | activation, deadline_guard_pass, event_observed |
+| Q7 | `check_compliance` | simultaneous O/F on same frame and interval | `conflict_detected` | obligation_active, prohibition_active, scope_overlap |
+| Q8 | `explain_proof` | explain Q2 proof | `explanation_ready` | proof_load, provenance_expand, nl_regeneration |
+
+Required output fields for all query responses:
+- `status`
+- `proof_id`
+- `ir_refs`
+- `source_refs`
+- `time_context`
+- `conflicts` (possibly empty)
+
+---
+
+## 24) Rollout and Governance
+
+Rollout strategy:
+1. Shadow mode: run hybrid reasoner in parallel with current pipeline and compare outputs.
+2. Canary mode: route low-risk query classes to hybrid APIs.
+3. General availability: expand to all supported legal query classes after gates pass.
+
+Governance:
+- Versioning: semantic versioning for IR and CNL specs.
+- Change control: RFC required for grammar or proof schema changes.
+- Auditability: immutable run manifests for benchmark and release candidates.
+
+Definition of done for this program:
+- All milestones completed,
+- All quality gates green,
+- Query API docs and proof schema published,
+- On-call runbook updated for optimizer/KG/prover toggles.
