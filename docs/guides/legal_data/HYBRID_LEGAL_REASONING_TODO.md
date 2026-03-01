@@ -24,9 +24,9 @@ Status legend:
 ## Phase C: Normalization
 - [x] Implement role alias normalization (`subject->agent`, `object->patient`). (2026-03-01)
 - [x] Normalize verb/action lexical forms and temporal units. (2026-03-01)
-- [ ] Add jurisdiction normalization policy (`Federal`, `State:<code>`, `Agency:<name>`).
-- [ ] Add canonical predicate naming mode (`Act_<hash>`).
-- [ ] Add ID-stability tests across repeated parse-normalize runs.
+- [x] Add jurisdiction normalization policy (`Federal`, `State:<code>`, `Agency:<name>`). (2026-03-01)
+- [x] Add canonical predicate naming mode (`Act_<hash>`). (2026-03-01)
+- [x] Add ID-stability tests across repeated parse-normalize runs. (2026-03-01)
 
 ## Phase D: Compilers
 - [ ] Implement DCEC compiler module with EC primitives (`Happens`, `Initiates`, `Terminates`, `HoldsAt`).
@@ -43,49 +43,49 @@ Status legend:
 - [ ] Ensure all proof steps include `ir_refs` and source provenance.
 
 ## Phase F: Optimizers
-- [ ] Add optimizer chain orchestration (`post_parse`, `post_compile`).
-- [ ] Add semantic floor guards per modality.
-- [ ] Add acceptance policy (`gain >= threshold`, no floor regressions).
-- [ ] Add optimizer audit log records for accepted/rejected candidates.
-- [ ] Add benchmark suite for optimizer on/off comparisons.
+- [x] Add optimizer chain orchestration (`post_parse`, `post_compile`). (2026-03-01)
+- [x] Add semantic floor guards per modality. (2026-03-01)
+- [x] Add acceptance policy (`gain >= threshold`, no floor regressions). (2026-03-01)
+- [x] Add optimizer audit log records for accepted/rejected candidates. (2026-03-01)
+- [x] Add benchmark suite for optimizer on/off comparisons. (2026-03-01)
 
 ## Phase G: Knowledge Graph Integration
-- [ ] Implement entity-linking adapter from IR entities to KG IDs.
-- [ ] Implement relation enrichment adapter for frame roles.
-- [ ] Implement confidence-scored enrichment writes.
-- [ ] Add reversible enrichment layer (can disable/remove KG additions).
-- [ ] Add KG drift tests to prevent noisy relation explosion.
+- [x] Implement entity-linking adapter from IR entities to KG IDs. (2026-03-01)
+- [x] Implement relation enrichment adapter for frame roles. (2026-03-01)
+- [x] Implement confidence-scored enrichment writes. (2026-03-01)
+- [x] Add reversible enrichment layer (can disable/remove KG additions). (2026-03-01)
+- [x] Add KG drift tests to prevent noisy relation explosion. (2026-03-01)
 
 ## Phase H: Theorem Provers
-- [ ] Define `ProverBackend` interface and backend registry.
-- [ ] Implement backend adapter #1 (SMT style).
-- [ ] Implement backend adapter #2 (first-order prover style).
-- [ ] Implement proof certificate normalization and storage.
-- [ ] Implement certificate-to-IR trace mapping.
+- [x] Define `ProverBackend` interface and backend registry. (2026-03-01)
+- [x] Implement backend adapter #1 (SMT style). (2026-03-01)
+- [x] Implement backend adapter #2 (first-order prover style). (2026-03-01)
+- [x] Implement proof certificate normalization and storage. (2026-03-01)
+- [x] Implement certificate-to-IR trace mapping. (2026-03-01)
 
 ## Phase I: Query APIs
-- [ ] Implement `check_compliance(query, time_context)` end-to-end.
-- [ ] Implement `find_violations(state, time_range)` end-to-end.
-- [ ] Implement `explain_proof(proof_id, format="nl")` end-to-end.
-- [ ] Add conflict detection (`O` vs `F` overlap) in compliance flow.
-- [ ] Add deadline and interval reasoning checks in violation flow.
+- [x] Implement `check_compliance(query, time_context)` end-to-end. (2026-03-01)
+- [x] Implement `find_violations(state, time_range)` end-to-end. (2026-03-01)
+- [x] Implement `explain_proof(proof_id, format="nl")` end-to-end. (2026-03-01)
+- [x] Add conflict detection (`O` vs `F` overlap) in compliance flow. (2026-03-01)
+- [x] Add deadline and interval reasoning checks in violation flow. (2026-03-01)
 
 ## Phase J: Test Matrix (8 Queries)
-- [ ] Q1 compliant wages-within-window.
-- [ ] Q2 wages deadline violation.
-- [ ] Q3 prohibited disclosure violation.
-- [ ] Q4 exception-applied disclosure.
-- [ ] Q5 late breach-notification violation.
-- [ ] Q6 no violation when filed before deadline.
-- [ ] Q7 modal conflict detection (`O` and `F` overlap).
-- [ ] Q8 proof explanation reconstruction checks.
+- [x] Q1 compliant wages-within-window. (2026-03-01)
+- [x] Q2 wages deadline violation. (2026-03-01)
+- [x] Q3 prohibited disclosure violation. (2026-03-01)
+- [x] Q4 exception-applied disclosure. (2026-03-01)
+- [x] Q5 late breach-notification violation. (2026-03-01)
+- [x] Q6 no violation when filed before deadline. (2026-03-01)
+- [x] Q7 modal conflict detection (`O` and `F` overlap). (2026-03-01)
+- [x] Q8 proof explanation reconstruction checks. (2026-03-01)
 
 ## Phase K: Rollout
-- [ ] Shadow mode: run hybrid reasoner in parallel and compare outputs.
-- [ ] Canary mode: low-risk query routing with proof audits.
-- [ ] GA gate: pass quality, safety, and latency thresholds.
-- [ ] Publish API + proof schema docs.
-- [ ] Update operations runbook for optimizer/KG/prover toggles.
+- [x] Shadow mode: run hybrid reasoner in parallel and compare outputs. (2026-03-01)
+- [x] Canary mode: low-risk query routing with proof audits. (2026-03-01)
+- [x] GA gate: pass quality, safety, and latency thresholds. (2026-03-01)
+- [x] Publish API + proof schema docs. (2026-03-01)
+- [x] Update operations runbook for optimizer/KG/prover toggles. (2026-03-01)
 
 ## Current Focus
 - [-] Keep docs and implementation aligned while migration routes through `ipfs_datasets_py`.
@@ -122,15 +122,17 @@ Blocking dependencies:
 - [x] D2 Temporal Deontic FOL compiler conformance fixture set. (2026-03-01)
 - [x] D3 Compiler provenance index (`formula_ref -> ir_refs -> source`). (2026-03-01)
 - [x] D4 Compiler parity fixture tests (`IR -> DCEC/TDFOL`). (2026-03-01)
+- [x] D5 Differential report tool for DCEC vs TDFOL inconsistencies. (2026-03-01)
 - [x] E1 Normalized `ProofObject` schema. (2026-03-01)
 - [x] E2 Deterministic proof hash/ID policy. (2026-03-01)
 - [x] E3 Proof replay validation (`proof_id` reproducibility). (2026-03-01)
+- [x] E4 `explain_proof(..., format="nl")` renderer. (2026-03-01)
 - [x] E5 Ensure all proof steps include `ir_refs` and source provenance. (2026-03-01)
 
 ### Later (after baseline green)
-- [ ] F1 Optimizer acceptance policy and semantic floor gate.
-- [ ] G1 KG linker/enricher adapter with reversible writes.
-- [ ] H1 Prover backend adapters and certificate mapping.
+- [x] F1 Optimizer acceptance policy and semantic floor gate. (2026-03-01)
+- [x] G1 KG linker/enricher adapter with reversible writes. (2026-03-01)
+- [x] H1 Prover backend adapters and certificate mapping. (2026-03-01)
 
 ## Sprint Cadence
 
@@ -156,7 +158,24 @@ Use this section for short dated notes while executing TODO items.
 - 2026-03-01: Added Temporal Deontic FOL conformance fixture corpus and golden-output tests for representative obligation/prohibition/exception/permission cases.
 - 2026-03-01: Implemented deterministic compiler provenance index for DCEC/TDFOL outputs and added provenance shape/determinism tests.
 - 2026-03-01: Added compiler parity fixtures asserting shared IR inputs compile to expected DCEC and TDFOL formulas, including replay-stability checks.
+- 2026-03-01: Added deterministic compiler differential report (`compile_differential_report`) with per-norm consistency checks and mismatch diagnostics/tests.
 - 2026-03-01: Implemented normalized proof schema fields (`schema_version`, `proof_hash`, `created_at`), deterministic proof IDs/hashes, replay validation API, and fallback step provenance/IR refs with coverage tests.
+- 2026-03-01: Implemented deterministic NL proof renderer contract (`renderer_version`, `query_summary`, structured step narratives) with fixture-backed renderer tests.
+- 2026-03-01: Added a dedicated Phase I/J 8-query fixture matrix (`wages`, `disclosure`, `breach`, conflict, and proof explanation) with end-to-end reasoner assertions for compliance, violations, and explainability.
+- 2026-03-01: Added shadow-mode rollout harness (`run_formal_logic_shadow_mode.sh`) and machine-readable audit builder (`build_shadow_mode_audit.py` + `build_shadow_mode_audit(...)`) with gate checks and origin-count reporting; current sample audit reports one failing floor (`final_decoded_enumeration_integrity_mean`).
+- 2026-03-01: Added canary routing policy (`build_canary_mode_decision`) and ops entrypoints (`select_formal_logic_canary_mode.py`, `run_formal_logic_canary_mode.sh`) to select baseline/hybrid route by risk level with proof-audit requirements.
+- 2026-03-01: Added GA gate assessment policy (`build_ga_gate_assessment`) and ops entrypoints (`assess_formal_logic_ga_gate.py`, `run_formal_logic_ga_gate.sh`) for quality/safety/latency thresholds with optional runtime-latency stats mode.
+- 2026-03-01: Published API/proof schema documentation and operations runbook for shadow/canary/GA controls, artifact interpretation, and rollout/rollback actions.
+- 2026-03-01: Implemented optimizer acceptance policy with per-modality semantic floors, no-regression gain checks, and deterministic audit decisions (`build_optimizer_acceptance_decision`) plus ops assessment script.
+- 2026-03-01: Added stage orchestration plan (`build_optimizer_chain_plan`) and chain runner scripts to apply `post_parse`/`post_compile` optimizer toggles in `run_formal_logic_regression_check.sh` via plan-driven env settings.
+- 2026-03-01: Added optimizer on/off benchmark suite (`build_optimizer_onoff_benchmark`, benchmark assessment script, and `run_formal_logic_optimizer_benchmark.sh`) with deterministic comparison artifact output.
+- 2026-03-01: Implemented KG entity-linking and role-relation enrichment adapters with confidence scoring plus reversible apply/rollback writes (`build_entity_link_adapter`, `build_relation_enrichment_adapter`, `apply_kg_enrichment`, `rollback_kg_enrichment`) and dedicated adapter tests.
+- 2026-03-01: Added KG drift assessment guard (`build_kg_drift_assessment`) and tests to detect relation growth/relations-per-frame explosion.
+- 2026-03-01: Added `ProverBackend` interface and `ProverBackendRegistry` with reference SMT/FOL mock backends plus registry tests (`create_default_prover_registry`).
+- 2026-03-01: Implemented concrete theorem-prover adapters (`SMTStyleProverAdapter`, `FirstOrderProverAdapter`) with backend-specific certificate payload fields and registry coverage tests.
+- 2026-03-01: Integrated deterministic proof certificate generation into reasoner proof storage, added normalized certificate payload/hash fields, and persisted certificate-to-IR trace mapping through serialization.
+- 2026-03-01: Added jurisdiction normalization policy in `normalize_ir` (`Federal`, `State:<code>`, `Agency:<name>`) and expanded normalization tests for canonical predicate mode plus parse-normalize ID stability.
+- 2026-03-01: Added ops exporter (`export_proof_certificates_audit.py`) plus runner (`run_formal_logic_proof_certificate_audit.sh`) to emit standalone proof certificate/trace-map audit artifacts.
 
 ## Definition of Ready (per TODO item)
 

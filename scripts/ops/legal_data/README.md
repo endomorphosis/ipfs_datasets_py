@@ -13,3 +13,7 @@ Copied from workspace-level `scripts/ops/`:
 - `run_formal_logic_regression_check.sh`
 - `run_formal_logic_regression_check_baseline.sh`
 - `run_formal_logic_regression_check_hybrid.sh`
+- `assess_formal_logic_optimizer_benchmark.py`
+- `run_formal_logic_optimizer_benchmark.sh`
+- `export_proof_certificates_audit.py`
+- `run_formal_logic_proof_certificate_audit.sh`

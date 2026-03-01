@@ -33,6 +33,17 @@ class ProofStep:
 
 
 @dataclass
+class ProofCertificate:
+    certificate_id: str
+    backend: str
+    format: str
+    theorem: str
+    assumptions: List[str] = field(default_factory=list)
+    payload: Dict[str, Any] = field(default_factory=dict)
+    normalized_hash: str = ""
+
+
+@dataclass
 class ProofObject:
     proof_id: str
     query: Dict[str, Any]
@@ -42,3 +53,5 @@ class ProofObject:
     schema_version: str = PROOF_SCHEMA_VERSION
     proof_hash: str = ""
     created_at: Optional[str] = None
+    certificates: List[ProofCertificate] = field(default_factory=list)
+    certificate_trace_map: Dict[str, List[IRReference]] = field(default_factory=dict)

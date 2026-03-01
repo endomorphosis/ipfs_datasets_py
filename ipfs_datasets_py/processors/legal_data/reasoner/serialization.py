@@ -23,7 +23,14 @@ from municipal_scrape_workspace.hybrid_legal_ir import (
     TemporalRelation,
 )
 
-from .models import IRReference, PROOF_SCHEMA_VERSION, ProofObject, ProofStep, SourceProvenance
+from .models import (
+    IRReference,
+    PROOF_SCHEMA_VERSION,
+    ProofCertificate,
+    ProofObject,
+    ProofStep,
+    SourceProvenance,
+)
 
 
 SUPPORTED_IR_VERSION = "1.0"
@@ -339,6 +346,22 @@ def proof_to_dict(proof: ProofObject) -> Dict[str, Any]:
         "query": proof.query,
         "root_conclusion": proof.root_conclusion,
         "status": proof.status,
+        "certificates": [
+            {
+                "certificate_id": c.certificate_id,
+                "backend": c.backend,
+                "format": c.format,
+                "theorem": c.theorem,
+                "assumptions": list(c.assumptions),
+                "payload": dict(c.payload),
+                "normalized_hash": c.normalized_hash,
+            }
+            for c in proof.certificates
+        ],
+        "certificate_trace_map": {
+            cid: [{"kind": r.kind, "id": r.id} for r in refs]
+            for cid, refs in sorted(proof.certificate_trace_map.items(), key=lambda kv: kv[0])
+        },
         "steps": [
             {
                 "step_id": s.step_id,
@@ -363,6 +386,34 @@ def proof_to_dict(proof: ProofObject) -> Dict[str, Any]:
 
 
 def proof_from_dict(data: Dict[str, Any]) -> ProofObject:
+    certificates: List[ProofCertificate] = []
+    for c in (data.get("certificates") or []):
+        if not isinstance(c, dict):
+            continue
+        certificates.append(
+            ProofCertificate(
+                certificate_id=str(c.get("certificate_id") or ""),
+                backend=str(c.get("backend") or ""),
+                format=str(c.get("format") or ""),
+                theorem=str(c.get("theorem") or ""),
+                assumptions=[str(x) for x in (c.get("assumptions") or [])],
+                payload=dict(c.get("payload") or {}),
+                normalized_hash=str(c.get("normalized_hash") or ""),
+            )
+        )
+
+    certificate_trace_map: Dict[str, List[IRReference]] = {}
+    trace_map_raw = data.get("certificate_trace_map") or {}
+    if isinstance(trace_map_raw, dict):
+        for cid, refs in trace_map_raw.items():
+            if not isinstance(refs, list):
+                continue
+            certificate_trace_map[str(cid)] = [
+                IRReference(kind=str(r.get("kind") or "derived"), id=str(r.get("id") or ""))
+                for r in refs
+                if isinstance(r, dict)
+            ]
+
     steps: List[ProofStep] = []
     for s in (data.get("steps") or []):
         ir_refs = [
@@ -399,6 +450,8 @@ def proof_from_dict(data: Dict[str, Any]) -> ProofObject:
         schema_version=str(data.get("schema_version") or PROOF_SCHEMA_VERSION),
         proof_hash=str(data.get("proof_hash") or ""),
         created_at=(str(data.get("created_at")) if data.get("created_at") is not None else None),
+        certificates=certificates,
+        certificate_trace_map=certificate_trace_map,
     )
 
 

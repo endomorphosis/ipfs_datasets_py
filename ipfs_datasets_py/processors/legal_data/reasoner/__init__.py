@@ -10,6 +10,7 @@ from .engine import HybridLawReasoner
 from .models import (
     IRReference,
     PROOF_SCHEMA_VERSION,
+    ProofCertificate,
     ProofObject,
     ProofStep,
     SourceProvenance,
@@ -26,10 +27,38 @@ from .serialization import (
     validate_contract_versions,
     write_proof_store,
 )
+from .optimizer_policy import (
+    build_optimizer_acceptance_decision,
+    build_optimizer_chain_plan,
+    build_optimizer_onoff_benchmark,
+)
+from .kg_enrichment import (
+    apply_kg_enrichment,
+    build_kg_drift_assessment,
+    build_entity_link_adapter,
+    build_relation_enrichment_adapter,
+    rollback_kg_enrichment,
+)
+from .prover_backends import (
+    FirstOrderProverAdapter,
+    MockFOLBackend,
+    MockSMTBackend,
+    ProverBackend,
+    ProverBackendRegistry,
+    ProverResult,
+    SMTStyleProverAdapter,
+    create_default_prover_registry,
+)
+from .shadow_mode import (
+    build_canary_mode_decision,
+    build_ga_gate_assessment,
+    build_shadow_mode_audit,
+)
 
 __all__ = [
     "HybridLawReasoner",
     "IRReference",
+    "ProofCertificate",
     "ProofObject",
     "ProofStep",
     "SourceProvenance",
@@ -44,4 +73,23 @@ __all__ = [
     "append_proof_to_store",
     "proof_from_dict",
     "proof_to_dict",
+    "build_canary_mode_decision",
+    "build_ga_gate_assessment",
+    "build_optimizer_acceptance_decision",
+    "build_optimizer_chain_plan",
+    "build_optimizer_onoff_benchmark",
+    "build_entity_link_adapter",
+    "build_relation_enrichment_adapter",
+    "build_kg_drift_assessment",
+    "apply_kg_enrichment",
+    "rollback_kg_enrichment",
+    "ProverResult",
+    "ProverBackend",
+    "ProverBackendRegistry",
+    "SMTStyleProverAdapter",
+    "FirstOrderProverAdapter",
+    "MockSMTBackend",
+    "MockFOLBackend",
+    "create_default_prover_registry",
+    "build_shadow_mode_audit",
 ]

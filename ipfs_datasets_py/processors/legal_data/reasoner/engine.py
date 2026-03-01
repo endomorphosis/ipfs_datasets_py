@@ -14,7 +14,15 @@ from municipal_scrape_workspace.hybrid_legal_ir import (
     generate_cnl,
 )
 
-from .models import IRReference, PROOF_SCHEMA_VERSION, ProofObject, ProofStep, SourceProvenance
+from .models import (
+    IRReference,
+    PROOF_SCHEMA_VERSION,
+    ProofCertificate,
+    ProofObject,
+    ProofStep,
+    SourceProvenance,
+)
+from .prover_backends import ProverBackendRegistry, create_default_prover_registry
 
 
 TimeRange = Tuple[str, str]
@@ -35,10 +43,12 @@ class HybridLawReasoner:
         *,
         provenance_by_norm: Optional[Dict[str, SourceProvenance]] = None,
         definitions: Optional[Dict[str, Any]] = None,
+        prover_registry: Optional[ProverBackendRegistry] = None,
     ) -> None:
         self.kb = kb
         self.definitions = definitions or {}
         self.provenance_by_norm = provenance_by_norm or {}
+        self._prover_registry = prover_registry or create_default_prover_registry()
         self._proof_store: Dict[str, ProofObject] = {}
 
     def list_proof_ids(self) -> List[str]:
@@ -57,6 +67,8 @@ class HybridLawReasoner:
             root_conclusion=proof.root_conclusion,
             steps=proof.steps,
             status=proof.status,
+            certificates=proof.certificates,
+            certificate_trace_map=proof.certificate_trace_map,
         )
         canonical_json = json.dumps(canonical_payload, sort_keys=True, separators=(",", ":"))
         expected_hash = hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
@@ -74,6 +86,8 @@ class HybridLawReasoner:
             root_conclusion=proof.root_conclusion,
             steps=proof.steps,
             status=proof.status,
+            certificates=proof.certificates,
+            certificate_trace_map=proof.certificate_trace_map,
         )
         canonical_json = json.dumps(canonical_payload, sort_keys=True, separators=(",", ":"))
         expected_hash = hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
@@ -359,10 +373,15 @@ class HybridLawReasoner:
             }
 
         nl_lines = self._reconstruct_nl_lines(proof)
+        query_kind = str(proof.query.get("kind") or "unknown")
+        query_summary = f"query_kind={query_kind}; steps={len(proof.steps)}"
         return {
             "proof_id": proof.proof_id,
             "format": "nl",
             "status": proof.status,
+            "root_conclusion": proof.root_conclusion,
+            "query_summary": query_summary,
+            "renderer_version": "1.0",
             "explanation": " ".join(nl_lines),
             "steps": [asdict(s) for s in proof.steps],
             "reconstructed_nl": nl_lines,
@@ -515,11 +534,18 @@ class HybridLawReasoner:
         steps: List[ProofStep],
         status: Literal["proved", "refuted", "inconclusive"],
     ) -> ProofObject:
+        certificates, certificate_trace_map = self._build_certificates_and_traces(
+            query=query,
+            root_conclusion=root_conclusion,
+            steps=steps,
+        )
         canonical_payload = self._canonical_proof_payload(
             query=query,
             root_conclusion=root_conclusion,
             steps=steps,
             status=status,
+            certificates=certificates,
+            certificate_trace_map=certificate_trace_map,
         )
         canonical_json = json.dumps(canonical_payload, sort_keys=True, separators=(",", ":"))
         proof_hash = hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
@@ -533,6 +559,8 @@ class HybridLawReasoner:
             schema_version=PROOF_SCHEMA_VERSION,
             proof_hash=proof_hash,
             created_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            certificates=certificates,
+            certificate_trace_map=certificate_trace_map,
         )
         self._proof_store[proof_id] = po
         return po
@@ -544,6 +572,8 @@ class HybridLawReasoner:
         root_conclusion: str,
         steps: List[ProofStep],
         status: Literal["proved", "refuted", "inconclusive"],
+        certificates: Optional[List[ProofCertificate]] = None,
+        certificate_trace_map: Optional[Dict[str, List[IRReference]]] = None,
     ) -> Dict[str, Any]:
         normalized_steps: List[Dict[str, Any]] = []
         for step in steps:
@@ -573,7 +603,86 @@ class HybridLawReasoner:
             "root_conclusion": root_conclusion,
             "status": status,
             "steps": normalized_steps,
+            "certificates": [
+                {
+                    "certificate_id": c.certificate_id,
+                    "backend": c.backend,
+                    "format": c.format,
+                    "theorem": c.theorem,
+                    "assumptions": list(c.assumptions),
+                    "payload": self._normalize_certificate_payload(c.payload),
+                    "normalized_hash": c.normalized_hash,
+                }
+                for c in (certificates or [])
+            ],
+            "certificate_trace_map": {
+                cid: [{"kind": r.kind, "id": r.id} for r in refs]
+                for cid, refs in sorted((certificate_trace_map or {}).items(), key=lambda kv: kv[0])
+            },
         }
+
+    @staticmethod
+    def _normalize_certificate_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
+        normalized_json = json.dumps(dict(payload or {}), sort_keys=True, separators=(",", ":"))
+        return json.loads(normalized_json)
+
+    def _build_certificates_and_traces(
+        self,
+        *,
+        query: Dict[str, Any],
+        root_conclusion: str,
+        steps: List[ProofStep],
+    ) -> Tuple[List[ProofCertificate], Dict[str, List[IRReference]]]:
+        theorem = str(root_conclusion)
+        assumptions = [str(step.conclusion) for step in steps]
+
+        ref_pairs = sorted(
+            {
+                (ref.kind, ref.id)
+                for step in steps
+                for ref in step.ir_refs
+            },
+            key=lambda kv: (kv[0], kv[1]),
+        )
+        trace_refs = [IRReference(kind=kind, id=rid) for kind, rid in ref_pairs]
+
+        certificates: List[ProofCertificate] = []
+        trace_map: Dict[str, List[IRReference]] = {}
+
+        preferred_backends = ["smt_style", "first_order"]
+        for backend_id in preferred_backends:
+            try:
+                backend = self._prover_registry.get(backend_id)
+            except KeyError:
+                continue
+            result = backend.prove(theorem, assumptions)
+            payload = self._normalize_certificate_payload(result.certificate)
+            normalized = {
+                "backend": result.backend,
+                "status": result.status,
+                "theorem": result.theorem,
+                "assumptions": list(result.assumptions),
+                "payload": payload,
+                "query": query,
+            }
+            normalized_json = json.dumps(normalized, sort_keys=True, separators=(",", ":"))
+            normalized_hash = hashlib.sha256(normalized_json.encode("utf-8")).hexdigest()
+            certificate_id = f"cert_{normalized_hash[:12]}"
+
+            certificates.append(
+                ProofCertificate(
+                    certificate_id=certificate_id,
+                    backend=result.backend,
+                    format=str(payload.get("format") or "unknown"),
+                    theorem=result.theorem,
+                    assumptions=list(result.assumptions),
+                    payload=payload,
+                    normalized_hash=normalized_hash,
+                )
+            )
+            trace_map[certificate_id] = list(trace_refs)
+
+        return certificates, trace_map
 
     def _fallback_provenance_for_frame(self, frame_id: str) -> SourceProvenance:
         frame = self.kb.frames.get(frame_id)
@@ -593,7 +702,15 @@ class HybridLawReasoner:
         lines: List[str] = []
         seen_norms = set()
 
-        for step in proof.steps:
+        lines.append(
+            f"Proof {proof.proof_id} concludes {proof.root_conclusion} ({proof.status})."
+        )
+
+        for idx, step in enumerate(proof.steps, start=1):
+            lines.append(f"Step {idx}: {step.rule_id} infers {step.conclusion}.")
+            if step.premises:
+                lines.append(f"Premises: {', '.join(step.premises)}.")
+
             norm_ids = [r.id for r in step.ir_refs if r.kind == "norm"]
             for norm_id in norm_ids:
                 if norm_id in seen_norms:
@@ -601,16 +718,22 @@ class HybridLawReasoner:
                 seen_norms.add(norm_id)
                 norm = self.kb.norms.get(norm_id)
                 if norm is not None:
-                    lines.append(generate_cnl(norm, self.kb))
+                    lines.append(f"Norm context: {generate_cnl(norm, self.kb)}")
+
+            if step.ir_refs:
+                ref_tokens = [f"{r.kind}:{r.id}" for r in step.ir_refs]
+                lines.append(f"IR refs: {', '.join(ref_tokens)}.")
+
             if step.provenance:
                 p = step.provenance[0]
+                span = f" [{p.source_span}]" if p.source_span else ""
                 lines.append(
-                    f"Evidence from {p.source_path}:{p.source_id} supports {step.conclusion}."
+                    f"Evidence from {p.source_path}:{p.source_id}{span} supports {step.conclusion}."
                 )
             else:
                 lines.append(f"Rule {step.rule_id} derives {step.conclusion}.")
 
-        if not lines:
+        if len(lines) == 1:
             lines.append(f"No proof steps found for {proof.proof_id}.")
         return lines
 
