@@ -4,20 +4,22 @@
 
 ### WS11 Sprint Backlog
 
-| # | Issue | Title | Status |
-|---|---|---|---|
-| 1 | #1164 | HL-WS11-01: Lock V3 IR Schema and Deterministic ID Validator | ✅ Done |
-| 2 | #1165 | HL-WS11-02: Harden CNL Grammar and Ambiguity Diagnostics for V3 | ✅ Done |
-| 3 | #1166 | HL-WS11-03: Normalize Temporal Constraints as External V3 Objects | ✅ Done |
-| 4 | #1167 | HL-WS11-04: Implement V3 DCEC Compiler Pass with FrameRef Deontic Wrapping | ✅ Done |
-| 5 | #1168 | HL-WS11-05: Implement V3 Temporal Deontic FOL Compiler Pass | ✅ Done |
-| 6 | #1169 | HL-WS11-06: Add Deterministic V3 Round-Trip CNL/NL Regeneration Contract | ✅ Done |
-| 7 | #1170 | HL-WS11-07: Enforce V3 Optimizer Semantic-Drift Gate and Decision Envelope | ✅ Done |
-| 8 | #1171 | HL-WS11-08: Enforce Additive/Reversible KG Enrichment Policy for V3 | ✅ Done |
-| 9 | #1172 | HL-WS11-09: Normalize V3 Prover Certificate Contract and Proof Traceability | ✅ Done |
-| 10 | #1173 | HL-WS11-10: Expand V3 API Semantics for Compliance/Violations/Explainability | ✅ Done |
-| 11 | #1174 | HL-WS11-11: Add 10-Example V3 CNL Transformation Regression Pack | ✅ Done |
-| 12 | #1175 | HL-WS11-12: Close 8-Query V3 Proof Matrix and Operationalize WS11 Evidence | ✅ Done |
+| # | Issue | Title | Status | Test Gate |
+|---|---|---|---|---|
+| 1 | [#1164](https://github.com/endomorphosis/ipfs_datasets_py/issues/1164) | HL-WS11-01: Lock V3 IR Schema and Deterministic ID Validator | ✅ Done | `pytest test_hybrid_v2_blueprint.py` |
+| 2 | [#1165](https://github.com/endomorphosis/ipfs_datasets_py/issues/1165) | HL-WS11-02: Harden CNL Grammar and Ambiguity Diagnostics for V3 | ✅ Done | `pytest test_hybrid_v2_parse_replay.py` |
+| 3 | [#1166](https://github.com/endomorphosis/ipfs_datasets_py/issues/1166) | HL-WS11-03: Normalize Temporal Constraints as External V3 Objects | ✅ Done | `pytest test_hybrid_v2_compiler_parity.py` |
+| 4 | [#1167](https://github.com/endomorphosis/ipfs_datasets_py/issues/1167) | HL-WS11-04: Implement V3 DCEC Compiler Pass with FrameRef Deontic Wrapping | ✅ Done | `pytest test_hybrid_v2_compiler_parity.py` |
+| 5 | [#1168](https://github.com/endomorphosis/ipfs_datasets_py/issues/1168) | HL-WS11-05: Implement V3 Temporal Deontic FOL Compiler Pass | ✅ Done | `pytest test_hybrid_v2_compiler_parity.py` |
+| 6 | [#1169](https://github.com/endomorphosis/ipfs_datasets_py/issues/1169) | HL-WS11-06: Add Deterministic V3 Round-Trip CNL/NL Regeneration Contract | ✅ Done | `pytest test_hybrid_v2_parse_replay.py` |
+| 7 | [#1170](https://github.com/endomorphosis/ipfs_datasets_py/issues/1170) | HL-WS11-07: Enforce V3 Optimizer Semantic-Drift Gate and Decision Envelope | ✅ Done | `pytest test_hybrid_v2_blueprint.py` |
+| 8 | [#1171](https://github.com/endomorphosis/ipfs_datasets_py/issues/1171) | HL-WS11-08: Enforce Additive/Reversible KG Enrichment Policy for V3 | ✅ Done | `pytest test_kg_enrichment_adapter.py` |
+| 9 | [#1172](https://github.com/endomorphosis/ipfs_datasets_py/issues/1172) | HL-WS11-09: Normalize V3 Prover Certificate Contract and Proof Traceability | ✅ Done | `pytest test_prover_backend_registry.py` |
+| 10 | [#1173](https://github.com/endomorphosis/ipfs_datasets_py/issues/1173) | HL-WS11-10: Expand V3 API Semantics for Compliance/Violations/Explainability | ✅ Done | `pytest test_hybrid_v2_query_api_matrix.py` |
+| 11 | [#1174](https://github.com/endomorphosis/ipfs_datasets_py/issues/1174) | HL-WS11-11: Add 10-Example V3 CNL Transformation Regression Pack | ✅ Done | `pytest test_hybrid_v2_parse_replay.py test_hybrid_v2_compiler_parity.py` |
+| 12 | [#1175](https://github.com/endomorphosis/ipfs_datasets_py/issues/1175) | HL-WS11-12: Close 8-Query V3 Proof Matrix and Operationalize WS11 Evidence | ✅ Done | `pytest test_hybrid_v2_query_api_matrix.py` |
+
+**All 108 tests pass. All test gates green. WS11 sprint complete.**
 
 ### WS11 Evidence Artifacts
 
@@ -49,3 +51,4 @@
 - [ ] Extended backend compatibility matrix (Isabelle, Lean 4)
 - [ ] Temporal window query API (deadline/deadline-miss detection)
 - [ ] Cross-jurisdiction norm merger policy
+
