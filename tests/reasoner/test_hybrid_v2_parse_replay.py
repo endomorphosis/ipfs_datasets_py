@@ -150,12 +150,16 @@ def test_v2_parse_strict_ambiguity_codes_are_stable(sentence: str, expected_code
     with pytest.raises(CNLParseError, match=expected_code) as exc:
         parse_cnl_to_ir_with_diagnostics(sentence, jurisdiction="us/federal")
     assert exc.value.error_code == "V2_CNL_PARSE_AMBIGUOUS_MARKERS"
+    assert isinstance(exc.value.parse_candidates, list)
+    assert len(exc.value.parse_candidates) >= 3
+    assert exc.value.parse_candidates[0].startswith("modal_split:")
 
 
 def test_v2_parse_empty_sentence_has_stable_error_code() -> None:
     with pytest.raises(CNLParseError) as exc:
         parse_cnl_to_ir_with_diagnostics("   ", jurisdiction="us/federal")
     assert exc.value.error_code == "V2_CNL_PARSE_EMPTY_SENTENCE"
+    assert exc.value.parse_candidates == ["empty_input"]
 
 
 def test_v2_parse_supports_prefix_if_clause_template() -> None:
@@ -209,6 +213,8 @@ def test_v2_parse_diagnostics_include_confidence_and_markers() -> None:
     assert diagnostics["parse_confidence"] >= 0.9
     assert diagnostics["temporal_detected"] is True
     assert diagnostics["ambiguity_flags"] == []
+    assert diagnostics["parse_candidates"][0].startswith("modal_split:")
+    assert diagnostics["marker_counts"] == {"activation": 0, "exception": 0}
     assert norm.attrs.get("parse_confidence") == diagnostics["parse_confidence"]
     assert isinstance(norm.attrs.get("parse_alternatives"), list)
 

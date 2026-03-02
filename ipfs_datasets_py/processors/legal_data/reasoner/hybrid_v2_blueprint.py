@@ -228,14 +228,18 @@ class CNLParseError(ValueError):
         error_code: str,
         message: str,
         ambiguity_flags: Optional[List[str]] = None,
+        parse_candidates: Optional[List[str]] = None,
     ) -> None:
         self.error_code = error_code
         self.ambiguity_flags = list(ambiguity_flags or [])
+        self.parse_candidates = list(parse_candidates or [])
         if self.ambiguity_flags:
             flags = ",".join(self.ambiguity_flags)
             full = f"{message}: {flags} [code={error_code}]"
         else:
             full = f"{message} [code={error_code}]"
+        if self.parse_candidates:
+            full = full + f" [candidates={'|'.join(self.parse_candidates)}]"
         super().__init__(full)
 
 
@@ -995,6 +999,26 @@ def _extract_suffix_clause(text: str, markers: List[str]) -> Tuple[str, Optional
     return head, best_marker, tail
 
 
+def _build_parse_candidates(
+    *,
+    sentence: str,
+    activation_marker_count: int,
+    exception_marker_count: int,
+    has_prefix_activation: bool,
+) -> List[str]:
+    normalized = _norm_space(sentence).lower()
+    candidates: List[str] = [
+        f"modal_split:{normalized}",
+        f"suffix_activation_count:{activation_marker_count}",
+        f"suffix_exception_count:{exception_marker_count}",
+    ]
+    if has_prefix_activation:
+        candidates.append("prefix_activation:present")
+    else:
+        candidates.append("prefix_activation:absent")
+    return candidates
+
+
 def _extract_temporal(text: str) -> Tuple[str, Optional[TemporalRelationV2], Optional[TemporalExprV2]]:
     t = _norm_space(text)
     m = re.search(
@@ -1112,6 +1136,7 @@ def parse_cnl_to_ir_with_diagnostics(sentence: str, jurisdiction: str = "default
         raise CNLParseError(
             error_code=_cnl_parse_error_code("empty_sentence"),
             message="Empty CNL sentence",
+            parse_candidates=["empty_input"],
         )
 
     definition_ir = _parse_definition_sentence(clean, jurisdiction)
@@ -1135,6 +1160,12 @@ def parse_cnl_to_ir_with_diagnostics(sentence: str, jurisdiction: str = "default
 
     activation_markers = _collect_markers(remainder, ["if", "when"])
     exception_markers = _collect_markers(remainder, ["unless", "except"])
+    parse_candidates = _build_parse_candidates(
+        sentence=clean,
+        activation_marker_count=len(activation_markers),
+        exception_marker_count=len(exception_markers),
+        has_prefix_activation=bool(prefix_act_tail),
+    )
     ambiguity_flags: List[str] = []
     if len(activation_markers) > 1:
         ambiguity_flags.append("multiple_activation_markers")
@@ -1147,6 +1178,7 @@ def parse_cnl_to_ir_with_diagnostics(sentence: str, jurisdiction: str = "default
             error_code=_cnl_parse_error_code("ambiguous_markers"),
             message="Ambiguous CNL parse",
             ambiguity_flags=ambiguity_flags,
+            parse_candidates=parse_candidates,
         )
 
     body, ex_marker, ex_tail = _extract_suffix_clause(remainder, ["unless", "except"])
@@ -1216,6 +1248,11 @@ def parse_cnl_to_ir_with_diagnostics(sentence: str, jurisdiction: str = "default
         "parse_confidence": parse_confidence,
         "parse_alternatives": parse_alternatives,
         "ambiguity_flags": [],
+        "parse_candidates": parse_candidates,
+        "marker_counts": {
+            "activation": len(activation_markers),
+            "exception": len(exception_markers),
+        },
         "temporal_detected": temporal_ref is not None,
         "activation_marker": act_marker,
         "exception_marker": ex_marker,

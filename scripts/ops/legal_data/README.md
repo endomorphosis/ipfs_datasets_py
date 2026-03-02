@@ -25,6 +25,8 @@ Copied from workspace-level `scripts/ops/`:
 - `assess_formal_logic_proof_audit_integration_summary.py`
 - `collect_legal_v2_ci_soak_snapshot.py`
 - `run_legal_v2_ci_soak_snapshot.sh`
+- `create_ws11_github_issues.py`
+- `create_ws11_github_issues.sh`
 
 Notes:
 - Set `RUN_PROOF_CERT_AUDIT_AFTER_RUN=1` when invoking
@@ -51,6 +53,8 @@ Notes:
 - Run `run_legal_v2_ci_soak_snapshot.sh` to collect Legal V2 workflow runs,
 	compute consecutive green-day streak, and emit JSON/markdown soak summaries
 	under `artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/`.
+- Run `create_ws11_github_issues.sh` to open WS11 GitHub issues from template
+	bodies (dry-run by default; pass `--create` to create issues).
 - VS Code tasks are canonical in `ipfs_datasets_py/.vscode/tasks.json`:
 	`Legal smoke: proof-audit canary`,
 	`Legal smoke: proof-audit regression`,

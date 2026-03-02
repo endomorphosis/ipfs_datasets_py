@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -37,6 +38,199 @@ SUPPORTED_IR_VERSION = "1.0"
 SUPPORTED_CNL_VERSION = "1.0"
 SUPPORTED_V2_IR_VERSION = "2.0"
 SUPPORTED_V2_CNL_VERSION = "2.0"
+SUPPORTED_V3_IR_VERSION = "3.0"
+SUPPORTED_V3_CNL_VERSION = "3.0"
+
+V3_ID_NAMESPACES = {"ent", "frm", "tmp", "nrm", "src"}
+V3_SCHEMA_ERROR_CODES: Dict[str, str] = {
+    "unsupported_ir_version": "V3_SCHEMA_UNSUPPORTED_IR_VERSION",
+    "unsupported_cnl_version": "V3_SCHEMA_UNSUPPORTED_CNL_VERSION",
+    "invalid_namespace": "V3_SCHEMA_INVALID_NAMESPACE",
+    "id_key_mismatch": "V3_SCHEMA_ID_KEY_MISMATCH",
+    "unknown_target_frame_ref": "V3_SCHEMA_UNKNOWN_TARGET_FRAME_REF",
+    "unknown_temporal_ref": "V3_SCHEMA_UNKNOWN_TEMPORAL_REF",
+    "unknown_source_ref": "V3_SCHEMA_UNKNOWN_SOURCE_REF",
+    "unknown_role_entity_ref": "V3_SCHEMA_UNKNOWN_ROLE_ENTITY_REF",
+    "orphan_frame_id": "V3_SCHEMA_ORPHAN_FRAME_ID",
+    "orphan_temporal_id": "V3_SCHEMA_ORPHAN_TEMPORAL_ID",
+}
+
+
+def deterministic_v3_canonical_id(namespace: str, parts: List[str]) -> str:
+    ns = str(namespace or "").strip().lower()
+    if ns not in V3_ID_NAMESPACES:
+        raise ValueError(f"invalid_namespace:{ns}: code={V3_SCHEMA_ERROR_CODES['invalid_namespace']}")
+    normalized_parts = [str(p).strip().lower() for p in parts]
+    payload = "|".join(normalized_parts)
+    digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+    return f"{ns}:{digest}"
+
+
+def _normalize_ref(ref_or_id: Any, fallback_namespace: str, fallback_key: str) -> str:
+    if isinstance(ref_or_id, str) and ":" in ref_or_id:
+        return ref_or_id
+    if isinstance(ref_or_id, dict):
+        ns = str(ref_or_id.get("namespace") or fallback_namespace)
+        value = str(ref_or_id.get("value") or "")
+        if value:
+            return f"{ns}:{value}"
+    return str(fallback_key)
+
+
+def map_v2_payload_to_v3(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Map a V2 payload dict to a V3-compatible payload shape.
+
+    The mapper preserves stable IDs and cross-reference fields while normalizing
+    top-level version fields and source collection naming.
+    """
+    entities = dict(payload.get("entities") or {})
+    frames = dict(payload.get("frames") or {})
+    temporals = dict(payload.get("temporals") or payload.get("temporal") or {})
+    norms = dict(payload.get("norms") or {})
+    rules = dict(payload.get("rules") or {})
+    provenance = dict(payload.get("provenance") or {})
+
+    v3_sources: Dict[str, Dict[str, Any]] = {}
+    for key, src in provenance.items():
+        source_ref = _normalize_ref(key, "src", str(key))
+        src_obj = dict(src or {})
+        v3_sources[source_ref] = {
+            "source_id": source_ref,
+            "sentence_text": str(src_obj.get("sentence_text") or ""),
+            "sentence_span": src_obj.get("sentence_span"),
+        }
+
+    def _normalize_id_table(items: Dict[str, Any], namespace: str) -> Dict[str, Dict[str, Any]]:
+        out: Dict[str, Dict[str, Any]] = {}
+        for key, item in items.items():
+            obj = dict(item or {})
+            ref = _normalize_ref(obj.get("id"), namespace, str(key))
+            obj["id"] = ref
+            out[ref] = obj
+        return out
+
+    v3 = {
+        "ir_version": SUPPORTED_V3_IR_VERSION,
+        "cnl_version": SUPPORTED_V3_CNL_VERSION,
+        "jurisdiction": str(payload.get("jurisdiction") or "default"),
+        "entities": _normalize_id_table(entities, "ent"),
+        "frames": _normalize_id_table(frames, "frm"),
+        "temporals": _normalize_id_table(temporals, "tmp"),
+        "norms": _normalize_id_table(norms, "nrm"),
+        "definitions": _normalize_id_table({
+            k: v for k, v in rules.items() if str((v or {}).get("mode") or "") == "definition"
+        }, "rul"),
+        "sources": v3_sources,
+    }
+    return v3
+
+
+def validate_v3_ir_payload(payload: Dict[str, Any], *, strict: bool = True) -> Dict[str, Any]:
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    ir_version = _stringify_version(payload.get("ir_version") or payload.get("version"))
+    cnl_version = _stringify_version(payload.get("cnl_version"))
+    if ir_version != SUPPORTED_V3_IR_VERSION:
+        errors.append(
+            f"unsupported_ir_version:{ir_version}: code={V3_SCHEMA_ERROR_CODES['unsupported_ir_version']}"
+        )
+    if cnl_version != SUPPORTED_V3_CNL_VERSION:
+        errors.append(
+            f"unsupported_cnl_version:{cnl_version}: code={V3_SCHEMA_ERROR_CODES['unsupported_cnl_version']}"
+        )
+
+    entities = dict(payload.get("entities") or {})
+    frames = dict(payload.get("frames") or {})
+    temporals = dict(payload.get("temporals") or {})
+    norms = dict(payload.get("norms") or {})
+    sources = dict(payload.get("sources") or {})
+
+    def _check_table(table: Dict[str, Any], namespace: str, kind: str) -> None:
+        for key, item in table.items():
+            ref = _normalize_ref((item or {}).get("id") if isinstance(item, dict) else None, namespace, str(key))
+            if not ref.startswith(f"{namespace}:"):
+                errors.append(
+                    f"invalid_namespace:{kind}:{ref}: code={V3_SCHEMA_ERROR_CODES['invalid_namespace']}"
+                )
+            if str(key) != ref:
+                errors.append(
+                    f"id_key_mismatch:{kind}:{key}->{ref}: code={V3_SCHEMA_ERROR_CODES['id_key_mismatch']}"
+                )
+
+    _check_table(entities, "ent", "entity")
+    _check_table(frames, "frm", "frame")
+    _check_table(temporals, "tmp", "temporal")
+    _check_table(norms, "nrm", "norm")
+    _check_table(sources, "src", "source")
+
+    referenced_frames = set()
+    referenced_temporals = set()
+
+    for key, norm in norms.items():
+        norm_obj = dict(norm or {})
+        target_frame_ref = str(norm_obj.get("target_frame_ref") or "")
+        if target_frame_ref:
+            referenced_frames.add(target_frame_ref)
+            if target_frame_ref not in frames:
+                errors.append(
+                    "unknown_target_frame_ref:"
+                    f"{key}->{target_frame_ref}: code={V3_SCHEMA_ERROR_CODES['unknown_target_frame_ref']}"
+                )
+
+        temporal_ref = norm_obj.get("temporal_ref")
+        if temporal_ref:
+            temporal_ref = str(temporal_ref)
+            referenced_temporals.add(temporal_ref)
+            if temporal_ref not in temporals:
+                errors.append(
+                    "unknown_temporal_ref:"
+                    f"{key}->{temporal_ref}: code={V3_SCHEMA_ERROR_CODES['unknown_temporal_ref']}"
+                )
+
+        source_ref = norm_obj.get("source_ref")
+        if source_ref:
+            source_ref = str(source_ref)
+            if source_ref not in sources:
+                errors.append(
+                    "unknown_source_ref:"
+                    f"{key}->{source_ref}: code={V3_SCHEMA_ERROR_CODES['unknown_source_ref']}"
+                )
+
+    for frame_key, frame in frames.items():
+        frame_obj = dict(frame or {})
+        for role_ref in (frame_obj.get("roles") or {}).values():
+            role_ref = str(role_ref)
+            if role_ref.startswith("ent:") and role_ref not in entities:
+                errors.append(
+                    "unknown_role_entity_ref:"
+                    f"{frame_key}->{role_ref}: code={V3_SCHEMA_ERROR_CODES['unknown_role_entity_ref']}"
+                )
+
+    for frame_ref in frames.keys():
+        if frame_ref not in referenced_frames:
+            warnings.append(
+                f"orphan_frame_id:{frame_ref}: code={V3_SCHEMA_ERROR_CODES['orphan_frame_id']}"
+            )
+    for temporal_ref in temporals.keys():
+        if temporal_ref not in referenced_temporals:
+            warnings.append(
+                f"orphan_temporal_id:{temporal_ref}: code={V3_SCHEMA_ERROR_CODES['orphan_temporal_id']}"
+            )
+
+    if strict and warnings:
+        errors.extend(warnings)
+
+    if errors:
+        raise ValueError("invalid_v3_ir_payload: " + "; ".join(errors))
+
+    return {
+        "ok": True,
+        "warnings": warnings,
+        "warning_codes": [
+            str(w.split("code=", 1)[1]) for w in warnings if "code=" in str(w)
+        ],
+    }
 
 
 def _stringify_version(value: Any) -> str:

@@ -610,3 +610,28 @@ Latest local pack (2026-03-02):
 - Batch smoke: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_release_20260302/hybrid_v2_cli_batch_smoke.json` (`total=4`, `ok=4`, `error=0`)
 - Canonical checklist template: `/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/docs/guides/legal_data/templates/HYBRID_LEGAL_RELEASE_CHECKLIST_TEMPLATE.md`
 - WS10 checklist artifact: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_release_20260302/WS10_RELEASE_CHECKLIST_20260302.md`
+
+## 14) WS11 Bulk Issue Kickoff
+
+Purpose:
+- Create all WS11 implementation issues from canonical template docs with duplicate detection.
+
+Dry-run (default):
+```bash
+bash ipfs_datasets_py/scripts/ops/legal_data/create_ws11_github_issues.sh
+```
+
+Create issues:
+```bash
+bash ipfs_datasets_py/scripts/ops/legal_data/create_ws11_github_issues.sh --create
+```
+
+Optional parameters:
+- `REPO=<owner/name>` (default `endomorphosis/ipfs_datasets_py`)
+- `PYTHON_BIN=<python executable path>`
+- `--label <label>` (repeatable)
+- `--allow-duplicates` (disable ticket-ID duplicate check)
+
+Template sources:
+- `ipfs_datasets_py/docs/guides/legal_data/templates/HYBRID_LEGAL_WS11_ISSUE_BODIES_01_06.md`
+- `ipfs_datasets_py/docs/guides/legal_data/templates/HYBRID_LEGAL_WS11_ISSUE_BODIES_07_12.md`

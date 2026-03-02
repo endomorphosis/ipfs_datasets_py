@@ -19,6 +19,83 @@ from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_v2_blueprint import 
     configure_v2_proof_store_max_entries,
     validate_v2_canonical_id_registry,
 )
+from ipfs_datasets_py.processors.legal_data.reasoner.serialization import (
+    SUPPORTED_V3_CNL_VERSION,
+    SUPPORTED_V3_IR_VERSION,
+    deterministic_v3_canonical_id,
+    map_v2_payload_to_v3,
+    validate_v3_ir_payload,
+)
+
+
+def _ir_v2_to_payload(ir) -> dict:
+    return {
+        "ir_version": ir.ir_version,
+        "cnl_version": ir.cnl_version,
+        "jurisdiction": ir.jurisdiction,
+        "entities": {
+            k: {
+                "id": v.id.ref(),
+                "type_name": v.type_name,
+                "attrs": dict(v.attrs),
+            }
+            for k, v in ir.entities.items()
+        },
+        "frames": {
+            k: {
+                "id": v.id.ref(),
+                "kind": v.kind.value,
+                "predicate": v.predicate,
+                "roles": dict(v.roles),
+                "attrs": dict(v.attrs),
+            }
+            for k, v in ir.frames.items()
+        },
+        "temporals": {
+            k: {
+                "id": v.id.ref(),
+                "relation": v.relation.value,
+                "expr": {
+                    "kind": v.expr.kind,
+                    "start": v.expr.start,
+                    "end": v.expr.end,
+                    "duration": v.expr.duration,
+                },
+                "anchor_ref": v.anchor_ref,
+            }
+            for k, v in ir.temporals.items()
+        },
+        "norms": {
+            k: {
+                "id": v.id.ref(),
+                "op": v.op.value,
+                "target_frame_ref": v.target_frame_ref,
+                "activation": {"op": v.activation.op},
+                "exceptions": [{"op": e.op} for e in v.exceptions],
+                "temporal_ref": v.temporal_ref,
+                "priority": v.priority,
+                "source_ref": v.source_ref,
+                "attrs": dict(v.attrs),
+            }
+            for k, v in ir.norms.items()
+        },
+        "rules": {
+            k: {
+                "id": v.id.ref(),
+                "mode": v.mode,
+                "source_ref": v.source_ref,
+            }
+            for k, v in ir.rules.items()
+        },
+        "provenance": {
+            k: {
+                "source_id": v.source_id,
+                "sentence_text": v.sentence_text,
+                "sentence_span": v.sentence_span,
+            }
+            for k, v in ir.provenance.items()
+        },
+    }
 
 
 def _first_norm_ref(ir) -> str:
@@ -32,6 +109,66 @@ def test_parse_cnl_to_ir_obligation_with_temporal() -> None:
     norm = next(iter(ir.norms.values()))
     assert norm.op == DeonticOpV2.O
     assert norm.temporal_ref is not None
+
+
+def test_v3_deterministic_canonical_id_is_stable() -> None:
+    left = deterministic_v3_canonical_id("ent", ["Controller", "US/Federal"])
+    right = deterministic_v3_canonical_id("ent", ["controller", "us/federal"])
+    assert left == right
+    assert left.startswith("ent:")
+
+
+def test_v3_deterministic_canonical_id_rejects_unknown_namespace() -> None:
+    try:
+        deterministic_v3_canonical_id("foo", ["x"])
+    except ValueError as exc:
+        assert "V3_SCHEMA_INVALID_NAMESPACE" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for invalid v3 namespace")
+
+
+def test_map_v2_payload_to_v3_and_validate_strict_contract() -> None:
+    ir = parse_cnl_to_ir("Controller shall report breach within 48 hours.")
+    v2_payload = _ir_v2_to_payload(ir)
+    v3_payload = map_v2_payload_to_v3(v2_payload)
+
+    assert v3_payload["ir_version"] == SUPPORTED_V3_IR_VERSION
+    assert v3_payload["cnl_version"] == SUPPORTED_V3_CNL_VERSION
+    assert "sources" in v3_payload
+    assert "provenance" not in v3_payload
+
+    report = validate_v3_ir_payload(v3_payload, strict=True)
+    assert report["ok"] is True
+
+
+def test_validate_v3_ir_payload_rejects_unknown_target_frame_ref() -> None:
+    ir = parse_cnl_to_ir("Controller shall report breach within 48 hours.")
+    v3_payload = map_v2_payload_to_v3(_ir_v2_to_payload(ir))
+
+    norm_key = next(iter(v3_payload["norms"].keys()))
+    v3_payload["norms"][norm_key]["target_frame_ref"] = "frm:missing"
+
+    try:
+        validate_v3_ir_payload(v3_payload, strict=True)
+    except ValueError as exc:
+        assert "V3_SCHEMA_UNKNOWN_TARGET_FRAME_REF" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for unknown v3 target_frame_ref")
+
+
+def test_validate_v3_ir_payload_rejects_orphan_frame_id_in_strict_mode() -> None:
+    ir = parse_cnl_to_ir("Controller shall report breach within 48 hours.")
+    v3_payload = map_v2_payload_to_v3(_ir_v2_to_payload(ir))
+
+    norm_key = next(iter(v3_payload["norms"].keys()))
+    del v3_payload["norms"][norm_key]
+
+    try:
+        validate_v3_ir_payload(v3_payload, strict=True)
+    except ValueError as exc:
+        assert "V3_SCHEMA_ORPHAN_FRAME_ID" in str(exc)
+    else:
+        raise AssertionError("Expected strict orphan frame rejection")
 
 
 def test_parse_cnl_to_ir_rejects_multiple_activation_markers() -> None:
