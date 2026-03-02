@@ -19,6 +19,7 @@ Related scripts:
 - `ipfs_datasets_py/scripts/ops/legal_data/export_proof_certificates_audit.py`
 - `ipfs_datasets_py/scripts/ops/legal_data/run_hybrid_v2_pipeline.py`
 - `ipfs_datasets_py/scripts/ops/legal_data/run_hybrid_v2_pipeline.sh`
+- `ipfs_datasets_py/scripts/ops/legal_data/run_hybrid_v2_release_evidence_pack.sh`
 
 ## 0) Hybrid V2 Pipeline CLI
 
@@ -560,3 +561,45 @@ Tracking rule:
 Current seed snapshot:
 - `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/CI_SOAK_SNAPSHOT_20260302.md`
 - `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/ci_soak_runs_20260302.json`
+
+## 12) WS10 Schema Drift Sentinel
+
+Purpose:
+- Run a focused regression gate for query/proof schema snapshot drift before broader suite execution.
+
+Local parity command:
+```bash
+PYTHONPATH=src:ipfs_datasets_py \
+  /home/barberb/municipal_scrape_workspace/.venv/bin/python -m pytest \
+  ipfs_datasets_py/tests/reasoner/test_hybrid_v2_query_api_matrix.py::test_v2_query_api_schema_snapshot_lockfile \
+  ipfs_datasets_py/tests/reasoner/test_hybrid_v2_query_api_matrix.py::test_v2_query_api_json_schemas_match_runtime_required_keys \
+  -q
+```
+
+CI mapping:
+- `.github/workflows/legal-v2-reasoner-ci.yml` job: `legal-v2-schema-drift-sentinel`
+
+Recommended evidence artifact:
+- `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/pytest_schema_drift_sentinel_20260302.txt`
+
+## 13) WS10 Release Evidence Pack Automation
+
+Purpose:
+- Generate a one-command local evidence bundle for release checks.
+
+Command:
+```bash
+bash ipfs_datasets_py/scripts/ops/legal_data/run_hybrid_v2_release_evidence_pack.sh
+```
+
+Optional parameters:
+- `RELEASE_LABEL=<label>` (default `ws10_release_$(date +%Y%m%d)`)
+- `OUTPUT_DIR=<absolute path>`
+- `PYTHON_BIN=<python executable path>`
+
+Latest local pack (2026-03-02):
+- Output directory: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_release_20260302`
+- Manifest: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_release_20260302/EVIDENCE_PACK_MANIFEST.txt`
+- Pytest gate: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_release_20260302/pytest_reasoner_release_gate.txt` (`68 passed`)
+- Backend smokes: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_release_20260302/backend_smoke_mock_smt.json`, `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_release_20260302/backend_smoke_mock_fol.json` (both `passed=true`)
+- Batch smoke: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_release_20260302/hybrid_v2_cli_batch_smoke.json` (`total=4`, `ok=4`, `error=0`)

@@ -97,6 +97,52 @@ jobs:
           echo "Hybrid V2 reasoner suite failed. See uploaded log artifact."
           exit 1
 
+  legal-v2-schema-drift-sentinel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e .
+
+      - name: Run schema drift sentinel tests
+        id: schemasentinel
+        shell: bash
+        run: |
+          set +e
+          PYTHONPATH=src:${GITHUB_WORKSPACE} python -m pytest \
+            tests/reasoner/test_hybrid_v2_query_api_matrix.py::test_v2_query_api_schema_snapshot_lockfile \
+            tests/reasoner/test_hybrid_v2_query_api_matrix.py::test_v2_query_api_json_schemas_match_runtime_required_keys \
+            -q 2>&1 | tee legal-v2-schema-drift-sentinel.log
+          status=${PIPESTATUS[0]}
+          echo "exit_code=${status}" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload schema sentinel failure artifact
+        if: steps.schemasentinel.outputs.exit_code != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: legal-v2-schema-drift-sentinel-log
+          path: legal-v2-schema-drift-sentinel.log
+          retention-days: 7
+
+      - name: Fail schema sentinel on error
+        if: steps.schemasentinel.outputs.exit_code != '0'
+        run: |
+          echo "Schema drift sentinel failed. See uploaded log artifact."
+          exit 1
+
   legal-v2-prover-backend-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 10

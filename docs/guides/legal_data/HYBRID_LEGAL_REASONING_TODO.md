@@ -109,7 +109,7 @@ Post-WS9 stabilization backlog (WS10):
 
 Current sprint (2026-03-02):
 - [-] `HL-WS10-01` CI Soak Tracking for Release Gate. (started 2026-03-02)
-- [ ] `HL-WS10-02` Schema Drift Sentinel Regression Gate.
+- [x] `HL-WS10-02` Schema Drift Sentinel Regression Gate. (2026-03-02)
 - [ ] `HL-WS10-03` Release Evidence Pack Automation.
 - [ ] `HL-WS10-04` Release Checklist Canonical Template.
 
@@ -117,7 +117,9 @@ WS10 local evidence (2026-03-02):
 - CI soak seed snapshot: `artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/CI_SOAK_SNAPSHOT_20260302.md`.
 - CI soak runs JSON: `artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/ci_soak_runs_20260302.json`.
 - Current streak state: `0` consecutive green days (latest recorded run conclusion: `failure`).
+- Schema sentinel local gate: `artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/pytest_schema_drift_sentinel_20260302.txt` (`2 passed`).
 - Runbook tracking procedure: `ipfs_datasets_py/docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md` (section `11) WS10 CI Soak Tracking`).
+- Runbook schema sentinel procedure: `ipfs_datasets_py/docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md` (section `12) WS10 Schema Drift Sentinel`).
 
 ## WS9 Execution Board (Active)
 
@@ -207,6 +209,7 @@ WS8 done definition:
 Immediate next action:
 - [x] Define next-program sprint backlog (post-WS9) and acceptance gates. (2026-03-02)
 - [x] Start `HL-WS10-01` CI soak tracking workflow and add first evidence snapshot link. (2026-03-02)
+- [ ] Start `HL-WS10-03` release evidence pack automation entrypoint.
 
 ## Execution Order (Dependency-Aware)
 

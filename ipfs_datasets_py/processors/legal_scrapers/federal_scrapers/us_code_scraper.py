@@ -11,7 +11,7 @@ import time
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterator, List, Optional
 from urllib.parse import urljoin
 
 import anyio
@@ -55,6 +55,8 @@ THIS_TITLE_SECTION_CITATION_RE = re.compile(r"\bsection\s+[\w\-.(),\sand]+\s+of\
 THIS_CHAPTER_SECTION_CITATION_RE = re.compile(r"\bsection\s+[\w\-.(),\sand]+\s+of\s+this\s+chapter\b", re.IGNORECASE)
 ACT_CITATION_RE = re.compile(r"\bAct\s+[A-Z][a-z]{2,9}\.?\s+\d{1,2},\s+\d{4}\b", re.IGNORECASE)
 CHAPTER_STAT_CITATION_RE = re.compile(r"\bch\.?\s*\d+[A-Za-z\-]*,\s*\d+\s+Stat\.?\s+\d+\b", re.IGNORECASE)
+DOCID_COMMENT_RE = re.compile(r"<!--\s*documentid:[^>]*-->", re.IGNORECASE)
+DOCID_SECTION_KEY_RE = re.compile(r"documentid:\s*[0-9A-Za-z]+_([0-9A-Za-z._\-]+)", re.IGNORECASE)
 USHOUSE_RELEASE_LINK_RE = re.compile(
     r"releasepoints/us/pl/(?P<congress>\d+)/(?P<release>[A-Za-z0-9]+)/"
     r"htm_usc(?P<title_code>[0-9]{2}[a-z]?)@(?P<tag>[0-9]+-[A-Za-z0-9]+)\\.zip",
@@ -529,6 +531,26 @@ def _extract_section_heading(text: str, section_number: str, fallback_heading: s
     return _norm_space(fallback_heading)[:500]
 
 
+def _extract_section_number_and_heading(heading_text: str) -> tuple[str, str]:
+    text = _norm_space(heading_text)
+    if not text:
+        return "", ""
+
+    m = re.match(r"^§+\s*([0-9A-Za-z.\-]+(?:\s+to\s+[0-9A-Za-z.\-]+)?)\.?\s*(.*)$", text, re.IGNORECASE)
+    if m:
+        section_number = _norm_space(m.group(1)).strip()
+        heading = _norm_space(m.group(2)).strip(" .")
+        return section_number, heading or text
+
+    m = re.match(r"^(?:Sec\.|SEC\.)\s*([0-9A-Za-z.\-]+)\.?\s*(.*)$", text)
+    if m:
+        section_number = _norm_space(m.group(1)).strip()
+        heading = _norm_space(m.group(2)).strip(" .")
+        return section_number, heading or text
+
+    return "", text
+
+
 def _extract_sections_from_zip(
     zip_path: Path,
     *,
@@ -539,6 +561,63 @@ def _extract_sections_from_zip(
     source_package: Optional[str] = None,
     section_url_base: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
+    def _iter_documentid_chunks(html_text: str) -> Iterator[str]:
+        markers = list(DOCID_COMMENT_RE.finditer(html_text))
+        for idx, marker in enumerate(markers):
+            start = marker.start()
+            end = markers[idx + 1].start() if idx + 1 < len(markers) else len(html_text)
+            if end > start:
+                yield html_text[start:end]
+
+    def _source_url_for_entry(html_name: str) -> str:
+        if section_url_base:
+            return f"{str(section_url_base).rstrip('/')}/{html_name}"
+        return _govinfo_section_url(year, title_num, html_name)
+
+    def _extract_consolidated_sections(html_text: str, html_name: str) -> List[Dict[str, Any]]:
+        consolidated: List[Dict[str, Any]] = []
+        for chunk in _iter_documentid_chunks(html_text):
+            if "section-head" not in chunk:
+                continue
+
+            soup = BeautifulSoup(chunk, "html.parser")
+            head = soup.find(class_=re.compile(r"\bsection-head\b", re.IGNORECASE))
+            if head is None:
+                continue
+
+            heading_text = _norm_space(head.get_text(" ", strip=True))
+            section_number, heading = _extract_section_number_and_heading(heading_text)
+            if not section_number:
+                match = DOCID_SECTION_KEY_RE.search(chunk)
+                if match:
+                    section_number = _norm_space(match.group(1)).strip("._-")
+            if not section_number:
+                continue
+
+            body_text = _norm_space(soup.get_text(" ", strip=True))
+            if not body_text:
+                continue
+
+            record: Dict[str, Any] = {
+                "section_number": section_number,
+                "heading": heading,
+                "text": body_text,
+                "body_text": body_text,
+                "citations": _extract_citations(body_text),
+            }
+            if include_metadata:
+                record.update(
+                    {
+                        "title_number": title_num,
+                        "title_name": title_name,
+                        "year": int(year),
+                        "package": source_package or f"USCODE-{int(year)}-title{title_num}",
+                        "source_url": _source_url_for_entry(html_name),
+                    }
+                )
+            consolidated.append(record)
+        return consolidated
+
     sections: List[Dict[str, Any]] = []
     with zipfile.ZipFile(zip_path) as archive:
         names = sorted(archive.namelist())
@@ -547,10 +626,21 @@ def _extract_sections_from_zip(
             for name in names
             if name.lower().endswith((".htm", ".html")) and "-sec" in name.lower()
         ]
+        if not html_entries:
+            html_entries = [name for name in names if name.lower().endswith((".htm", ".html"))]
 
         for entry_name in html_entries:
             html_name = Path(entry_name).name
             raw = archive.read(entry_name)
+            try:
+                html_text = raw.decode("utf-8", errors="ignore")
+            except Exception:
+                html_text = str(raw)
+
+            if "documentid:" in html_text and "section-head" in html_text and "-sec" not in html_name.lower():
+                sections.extend(_extract_consolidated_sections(html_text, html_name))
+                continue
+
             soup = BeautifulSoup(raw, "html.parser")
 
             text = soup.get_text(" ", strip=True)
@@ -584,16 +674,13 @@ def _extract_sections_from_zip(
             }
             record["parser_warnings"] = _validate_subsection_tree(record.get("subsections") or [])
             if include_metadata:
-                resolved_source_url = _govinfo_section_url(year, title_num, html_name)
-                if section_url_base:
-                    resolved_source_url = f"{str(section_url_base).rstrip('/')}/{html_name}"
                 record.update(
                     {
                         "title_number": title_num,
                         "title_name": title_name,
                         "year": int(year),
                         "package": source_package or f"USCODE-{int(year)}-title{title_num}",
-                        "source_url": resolved_source_url,
+                        "source_url": _source_url_for_entry(html_name),
                     }
                 )
             sections.append(record)
