@@ -1015,7 +1015,7 @@ async def search_caselaw_access_cases_from_parameters(
             "top_k": int(parameters.get("top_k", 10)),
             "filter_dict": parameters.get("filter_dict"),
             "hf_dataset_id": parameters.get("hf_dataset_id", DEFAULT_CAP_HF_DATASET_ID),
-            "hf_parquet_file": parameters.get("hf_parquet_file"),
+            "hf_parquet_file": parameters.get("hf_parquet_file", DEFAULT_CAP_HF_PARQUET_FILE),
             "hf_parquet_prefix": parameters.get("hf_parquet_prefix"),
             "cid_metadata_field": parameters.get("cid_metadata_field", "cid"),
             "cid_column": parameters.get("cid_column", "cid"),

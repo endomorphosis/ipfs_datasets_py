@@ -3,13 +3,9 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import subprocess
 import sys
-import urllib.error
-import urllib.parse
-import urllib.request
 from pathlib import Path
 from typing import Iterable
 
@@ -23,45 +19,6 @@ DEFAULT_LABELS = ["hybrid-legal", "ws11"]
 
 def run_cmd(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProcess[str]:
     return subprocess.run(cmd, check=check, capture_output=True, text=True)
-
-
-def parse_repo(repo: str) -> tuple[str, str]:
-    owner, sep, name = repo.partition("/")
-    if not sep or not owner or not name:
-        raise ValueError(f"invalid repo format '{repo}', expected owner/name")
-    return owner, name
-
-
-def github_api_request(
-    method: str,
-    url: str,
-    token: str,
-    payload: dict | None = None,
-) -> dict:
-    data = None
-    if payload is not None:
-        data = json.dumps(payload).encode("utf-8")
-
-    request = urllib.request.Request(url=url, method=method, data=data)
-    request.add_header("Accept", "application/vnd.github+json")
-    request.add_header("Authorization", f"Bearer {token}")
-    request.add_header("X-GitHub-Api-Version", "2022-11-28")
-    if data is not None:
-        request.add_header("Content-Type", "application/json")
-
-    try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            return json.loads(response.read().decode("utf-8") or "{}")
-    except urllib.error.HTTPError as exc:
-        message = f"GitHub API HTTP {exc.code}"
-        try:
-            error_payload = json.loads((exc.read() or b"").decode("utf-8") or "{}")
-            api_message = str(error_payload.get("message") or "").strip()
-            if api_message:
-                message = f"{message}: {api_message}"
-        except Exception:
-            pass
-        raise RuntimeError(message) from exc
 
 
 def parse_ws11_issues(markdown_text: str) -> list[dict[str, str]]:
@@ -142,42 +99,12 @@ def issue_exists(repo: str, ticket_id: str) -> bool:
     return False
 
 
-def issue_exists_api(repo: str, ticket_id: str, token: str) -> bool:
-    query = f"repo:{repo} in:title {ticket_id} type:issue"
-    encoded_query = urllib.parse.quote(query)
-    url = f"https://api.github.com/search/issues?q={encoded_query}&per_page=5"
-    payload = github_api_request("GET", url, token)
-    for row in payload.get("items", []):
-        title = str(row.get("title") or "")
-        if ticket_id in title:
-            return True
-    return False
-
-
 def create_issue(repo: str, title: str, body: str, labels: list[str]) -> str:
     cmd = ["gh", "issue", "create", "--repo", repo, "--title", title, "--body", body]
     for label in labels:
         cmd.extend(["--label", label])
     result = run_cmd(cmd)
     return result.stdout.strip()
-
-
-def create_issue_api(repo: str, title: str, body: str, labels: list[str], token: str) -> str:
-    owner, name = parse_repo(repo)
-    url = f"https://api.github.com/repos/{owner}/{name}/issues"
-    payload = github_api_request(
-        "POST",
-        url,
-        token,
-        payload={"title": title, "body": body, "labels": labels},
-    )
-    html_url = str(payload.get("html_url") or "").strip()
-    if not html_url:
-        issue_number = payload.get("number")
-        if issue_number is not None:
-            return f"https://github.com/{owner}/{name}/issues/{issue_number}"
-        raise RuntimeError("GitHub API response did not include issue URL")
-    return html_url
 
 
 def main() -> int:
@@ -213,19 +140,14 @@ def main() -> int:
         return 2
 
     labels = args.label if args.label else DEFAULT_LABELS
-    github_token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
-
     gh_available = True
     try:
         run_cmd(["gh", "--version"])
     except Exception:
         gh_available = False
 
-    if not gh_available and not github_token and args.create:
-        print(
-            "Neither `gh` CLI nor GH_TOKEN/GITHUB_TOKEN is available; cannot create issues.",
-            file=sys.stderr,
-        )
+    if not gh_available and args.create:
+        print("`gh` CLI is required for --create mode. Install/authenticate `gh` first.", file=sys.stderr)
         return 2
 
     if gh_available:
@@ -233,8 +155,6 @@ def main() -> int:
             run_cmd(["gh", "auth", "status"], check=False)
         except Exception:
             pass
-    elif github_token:
-        print("[info] `gh` CLI not found; using GitHub REST API mode via GH_TOKEN/GITHUB_TOKEN")
     else:
         print("[warn] `gh` CLI not found; running template-only dry-run without duplicate checks")
 
@@ -253,8 +173,6 @@ def main() -> int:
     print(f"Tickets parsed: {len(issues)}")
     if gh_available:
         print("Create backend: gh")
-    elif github_token:
-        print("Create backend: github_api_token")
     else:
         print("Create backend: none (plan only)")
 
@@ -269,11 +187,6 @@ def main() -> int:
                     exists = issue_exists(args.repo, ticket_id)
                 except Exception as exc:
                     print(f"[warn] could not check existing for {ticket_id}: {exc}")
-            elif github_token:
-                try:
-                    exists = issue_exists_api(args.repo, ticket_id, github_token)
-                except Exception as exc:
-                    print(f"[warn] could not check existing for {ticket_id} via API: {exc}")
 
         if exists:
             skipped += 1
@@ -285,18 +198,13 @@ def main() -> int:
             continue
 
         try:
-            if gh_available:
-                url = create_issue(args.repo, title, issue["body"], labels)
-            elif github_token:
-                url = create_issue_api(args.repo, title, issue["body"], labels, github_token)
-            else:
-                raise RuntimeError("no available backend for issue creation")
+            url = create_issue(args.repo, title, issue["body"], labels)
             created += 1
             print(f"[ok] {ticket_id} {url}")
         except Exception as exc:
             failed += 1
             print(f"[error] {ticket_id}: {exc}", file=sys.stderr)
-            if github_token and ("HTTP 401" in str(exc) or "HTTP 403" in str(exc)):
+            if "HTTP 401" in str(exc) or "HTTP 403" in str(exc):
                 print("[error] stopping early due to authentication/permission failure", file=sys.stderr)
                 break
 

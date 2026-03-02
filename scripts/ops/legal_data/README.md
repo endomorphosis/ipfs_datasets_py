@@ -55,9 +55,8 @@ Notes:
 	under `artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/`.
 - Run `create_ws11_github_issues.sh` to open WS11 GitHub issues from template
 	bodies (dry-run by default; pass `--create` to create issues).
-	If `gh` is unavailable, set `GH_TOKEN` (or `GITHUB_TOKEN`) and the script
-	will use GitHub REST API fallback mode.
-	Example: `GH_TOKEN=<token> bash scripts/ops/legal_data/create_ws11_github_issues.sh --create`.
+	`--create` requires GitHub CLI (`gh`) installed and authenticated.
+	Example: `gh auth status && bash scripts/ops/legal_data/create_ws11_github_issues.sh --create`.
 - VS Code tasks are canonical in `ipfs_datasets_py/.vscode/tasks.json`:
 	`Legal smoke: proof-audit canary`,
 	`Legal smoke: proof-audit regression`,
