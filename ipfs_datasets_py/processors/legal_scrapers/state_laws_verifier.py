@@ -29,6 +29,98 @@ _VERIFY_STATUTE_SIGNAL_RE = re.compile(
 )
 
 
+def _safe_ratio(numerator: int, denominator: int) -> float:
+    if denominator <= 0:
+        return 0.0
+    return float(numerator) / float(denominator)
+
+
+def _build_operational_diagnostics(metadata: Dict[str, Any], *, top_n: int = 8) -> Dict[str, Any]:
+    coverage = metadata.get("coverage_summary") or {}
+    etl = metadata.get("etl_readiness") or {}
+    fetch = metadata.get("fetch_analytics") or {}
+    fetch_by_state = metadata.get("fetch_analytics_by_state") or {}
+    quality_by_state = metadata.get("quality_by_state") or {}
+
+    coverage_gap_states = list(coverage.get("coverage_gap_states") or [])
+
+    weak_fetch_states: List[Dict[str, Any]] = []
+    if isinstance(fetch_by_state, dict):
+        for state_code, metrics in fetch_by_state.items():
+            if not isinstance(metrics, dict):
+                continue
+            attempted = int(metrics.get("attempted", 0) or 0)
+            success = int(metrics.get("success", 0) or 0)
+            fallback_count = int(metrics.get("fallback_count", 0) or 0)
+            success_ratio = _safe_ratio(success, attempted)
+            fallback_ratio = _safe_ratio(fallback_count, attempted)
+            weak_fetch_states.append(
+                {
+                    "state": str(state_code),
+                    "attempted": attempted,
+                    "success": success,
+                    "success_ratio": round(success_ratio, 3),
+                    "fallback_count": fallback_count,
+                    "fallback_ratio": round(fallback_ratio, 3),
+                    "last_error": metrics.get("last_error"),
+                }
+            )
+
+    weak_fetch_states.sort(key=lambda row: (row.get("success_ratio", 1.0), -int(row.get("attempted", 0) or 0)))
+
+    weak_quality_states: List[Dict[str, Any]] = []
+    if isinstance(quality_by_state, dict):
+        for state_code, metrics in quality_by_state.items():
+            if not isinstance(metrics, dict):
+                continue
+            weak_quality_states.append(
+                {
+                    "state": str(state_code),
+                    "total": int(metrics.get("total", 0) or 0),
+                    "scaffold_ratio": float(metrics.get("scaffold_ratio", 0.0) or 0.0),
+                    "nav_like_ratio": float(metrics.get("nav_like_ratio", 0.0) or 0.0),
+                    "fallback_section_ratio": float(metrics.get("fallback_section_ratio", 0.0) or 0.0),
+                    "numeric_section_name_ratio": float(metrics.get("numeric_section_name_ratio", 0.0) or 0.0),
+                }
+            )
+
+    weak_quality_states.sort(
+        key=lambda row: (
+            -float(row.get("scaffold_ratio", 0.0) or 0.0),
+            -float(row.get("nav_like_ratio", 0.0) or 0.0),
+            -float(row.get("fallback_section_ratio", 0.0) or 0.0),
+        )
+    )
+
+    return {
+        "coverage": {
+            "states_targeted": int(coverage.get("states_targeted", 0) or 0),
+            "states_returned": int(coverage.get("states_returned", 0) or 0),
+            "states_with_nonzero_statutes": int(coverage.get("states_with_nonzero_statutes", 0) or 0),
+            "coverage_gap_states": coverage_gap_states,
+        },
+        "fetch": {
+            "attempted": int(fetch.get("attempted", 0) or 0),
+            "success": int(fetch.get("success", 0) or 0),
+            "success_ratio": float(fetch.get("success_ratio", 0.0) or 0.0),
+            "fallback_count": int(fetch.get("fallback_count", 0) or 0),
+            "providers": fetch.get("providers") if isinstance(fetch.get("providers"), dict) else {},
+            "weak_states": weak_fetch_states[: max(1, int(top_n or 1))],
+        },
+        "etl_readiness": {
+            "ready_for_kg_etl": bool(etl.get("ready_for_kg_etl")),
+            "total_statutes": int(etl.get("total_statutes", 0) or 0),
+            "full_text_ratio": float(etl.get("full_text_ratio", 0.0) or 0.0),
+            "jsonld_ratio": float(etl.get("jsonld_ratio", 0.0) or 0.0),
+            "citation_ratio": float(etl.get("citation_ratio", 0.0) or 0.0),
+            "states_with_zero_statutes": int(etl.get("states_with_zero_statutes", 0) or 0),
+        },
+        "quality": {
+            "weak_states": weak_quality_states[: max(1, int(top_n or 1))],
+        },
+    }
+
+
 class StateLawsVerifier:
     """Verification suite for state law scraper output quality."""
 
@@ -43,6 +135,7 @@ class StateLawsVerifier:
                 "warnings": 0,
             },
         }
+        self._last_scrape_metadata: Dict[str, Any] = {}
 
     def log_test(self, name: str, status: str, message: str, details: Optional[Dict[str, Any]] = None) -> None:
         test_result = {
@@ -176,6 +269,7 @@ class StateLawsVerifier:
             "legal_signal_rate": legal_signal_rate,
             "source_metadata": result.get("metadata") or {},
         }
+        self._last_scrape_metadata = result.get("metadata") or {}
 
         if scaffold_rate > 0.15 or title_without_body_rate > 0.30 or legal_signal_rate < 0.60:
             self.log_test(
@@ -206,6 +300,89 @@ class StateLawsVerifier:
                 details,
             )
 
+        return self.results
+
+    def verify_operational_readiness(
+        self,
+        *,
+        require_kg_ready: bool = False,
+        min_fetch_success_ratio: Optional[float] = None,
+        max_fetch_fallback_ratio: Optional[float] = None,
+        max_coverage_gap_states: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        metadata = self._last_scrape_metadata or {}
+        if not metadata:
+            self.log_test(
+                "Operational Readiness",
+                "WARN",
+                "No scrape metadata available for operational diagnostics",
+            )
+            return self.results
+
+        diagnostics = _build_operational_diagnostics(metadata)
+        reasons: List[str] = []
+
+        fetch_block = diagnostics.get("fetch") or {}
+        coverage_block = diagnostics.get("coverage") or {}
+        etl_block = diagnostics.get("etl_readiness") or {}
+
+        fetch_success_ratio = float(fetch_block.get("success_ratio", 0.0) or 0.0)
+        fetch_attempted = int(fetch_block.get("attempted", 0) or 0)
+        fetch_fallback_count = int(fetch_block.get("fallback_count", 0) or 0)
+        fetch_fallback_ratio = _safe_ratio(fetch_fallback_count, fetch_attempted)
+        coverage_gap_states = list(coverage_block.get("coverage_gap_states") or [])
+        is_kg_ready = bool(etl_block.get("ready_for_kg_etl"))
+
+        if require_kg_ready and not is_kg_ready:
+            reasons.append("kg-etl-not-ready")
+        if min_fetch_success_ratio is not None and fetch_success_ratio < float(min_fetch_success_ratio):
+            reasons.append("fetch-success-ratio-below-threshold")
+        if max_fetch_fallback_ratio is not None and fetch_fallback_ratio > float(max_fetch_fallback_ratio):
+            reasons.append("fetch-fallback-ratio-above-threshold")
+        if max_coverage_gap_states is not None and len(coverage_gap_states) > int(max_coverage_gap_states):
+            reasons.append("too-many-coverage-gap-states")
+
+        details = {
+            "thresholds": {
+                "require_kg_ready": bool(require_kg_ready),
+                "min_fetch_success_ratio": min_fetch_success_ratio,
+                "max_fetch_fallback_ratio": max_fetch_fallback_ratio,
+                "max_coverage_gap_states": max_coverage_gap_states,
+            },
+            "diagnostics": diagnostics,
+            "computed": {
+                "fetch_success_ratio": round(fetch_success_ratio, 3),
+                "fetch_fallback_ratio": round(fetch_fallback_ratio, 3),
+                "coverage_gap_state_count": len(coverage_gap_states),
+                "kg_ready": is_kg_ready,
+            },
+            "reasons": reasons,
+        }
+
+        if reasons:
+            self.log_test(
+                "Operational Readiness",
+                "FAIL",
+                "Operational thresholds failed",
+                details,
+            )
+            return self.results
+
+        if not is_kg_ready or len(coverage_gap_states) > 0:
+            self.log_test(
+                "Operational Readiness",
+                "WARN",
+                "Operational diagnostics detected residual risk",
+                details,
+            )
+            return self.results
+
+        self.log_test(
+            "Operational Readiness",
+            "PASS",
+            "Operational readiness metrics are healthy",
+            details,
+        )
         return self.results
 
     async def verify_state_smoke_coverage(
@@ -323,8 +500,18 @@ class StateLawsVerifier:
         states: Optional[List[str]] = None,
         max_statutes: int = 400,
         per_state_max_statutes: int = 20,
+        require_kg_ready: bool = False,
+        min_fetch_success_ratio: Optional[float] = None,
+        max_fetch_fallback_ratio: Optional[float] = None,
+        max_coverage_gap_states: Optional[int] = None,
     ) -> int:
         await self.verify_jsonld_completeness(states=states, max_statutes=max_statutes)
+        self.verify_operational_readiness(
+            require_kg_ready=require_kg_ready,
+            min_fetch_success_ratio=min_fetch_success_ratio,
+            max_fetch_fallback_ratio=max_fetch_fallback_ratio,
+            max_coverage_gap_states=max_coverage_gap_states,
+        )
         await self.verify_state_smoke_coverage(states=states, per_state_max_statutes=per_state_max_statutes)
 
         output_file = Path.home() / ".ipfs_datasets" / "state_laws" / "verification_results.json"
@@ -368,6 +555,29 @@ def _parse_args() -> argparse.Namespace:
         default=20,
         help="Per-state max statutes for smoke coverage run.",
     )
+    parser.add_argument(
+        "--require-kg-ready",
+        action="store_true",
+        help="Fail verification when ETL readiness is not marked ready_for_kg_etl.",
+    )
+    parser.add_argument(
+        "--min-fetch-success-ratio",
+        type=float,
+        default=None,
+        help="Optional fail threshold for aggregate fetch success ratio (0.0-1.0).",
+    )
+    parser.add_argument(
+        "--max-fetch-fallback-ratio",
+        type=float,
+        default=None,
+        help="Optional fail threshold for aggregate fetch fallback ratio (0.0-1.0).",
+    )
+    parser.add_argument(
+        "--max-coverage-gap-states",
+        type=int,
+        default=None,
+        help="Optional fail threshold for number of coverage gap states.",
+    )
     return parser.parse_args()
 
 
@@ -386,6 +596,10 @@ if __name__ == "__main__":
             states=state_list,
             max_statutes=int(args.max_statutes),
             per_state_max_statutes=int(args.per_state_max_statutes),
+            require_kg_ready=bool(args.require_kg_ready),
+            min_fetch_success_ratio=args.min_fetch_success_ratio,
+            max_fetch_fallback_ratio=args.max_fetch_fallback_ratio,
+            max_coverage_gap_states=args.max_coverage_gap_states,
         )
     )
     raise SystemExit(exit_code)
@@ -393,5 +607,6 @@ if __name__ == "__main__":
 
 __all__ = [
     "StateLawsVerifier",
+    "_build_operational_diagnostics",
     "verify_state_laws_scraper",
 ]
