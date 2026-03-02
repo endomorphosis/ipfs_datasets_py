@@ -1,0 +1,52 @@
+[
+  {
+    "id": "obligation_within",
+    "sentence": "Controller shall report breach within 24 hours.",
+    "jurisdiction": "us/federal"
+  },
+  {
+    "id": "permission_condition",
+    "sentence": "Agency may inspect records if complaint is filed.",
+    "jurisdiction": "us/federal"
+  },
+  {
+    "id": "prohibition_exception",
+    "sentence": "Vendor shall not disclose personal data unless consent is recorded.",
+    "jurisdiction": "us/federal"
+  },
+  {
+    "id": "obligation_by_date",
+    "sentence": "Employer shall pay wages by 2026-12-31.",
+    "jurisdiction": "us/federal"
+  },
+  {
+    "id": "permission_after",
+    "sentence": "Processor may transfer data to regulator after authorization.",
+    "jurisdiction": "us/federal"
+  },
+  {
+    "id": "obligation_before",
+    "sentence": "Regulator shall notify entity before sanction.",
+    "jurisdiction": "us/federal"
+  },
+  {
+    "id": "obligation_during",
+    "sentence": "Operator shall log access during maintenance window.",
+    "jurisdiction": "us/federal"
+  },
+  {
+    "id": "means_definition",
+    "sentence": "Personal data means information identifying a person.",
+    "jurisdiction": "us/federal"
+  },
+  {
+    "id": "includes_definition",
+    "sentence": "Sensitive data includes health records, financial records, and biometrics.",
+    "jurisdiction": "us/federal"
+  },
+  {
+    "id": "simple_obligation",
+    "sentence": "Officer shall submit notice.",
+    "jurisdiction": "us/federal"
+  }
+]
