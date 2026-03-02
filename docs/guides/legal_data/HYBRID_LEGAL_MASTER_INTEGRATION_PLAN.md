@@ -45,6 +45,18 @@ The architecture is centered on a typed IR that compiles to both DCEC and Tempor
 3. Prover contract:
 - Must return normalized proof envelope with deterministic `certificate_id` and hash.
 
+4. IR contract error-code registry (stable machine-readable codes):
+- `V2_CONTRACT_UNSUPPORTED_IR_VERSION`
+- `V2_CONTRACT_UNSUPPORTED_CNL_VERSION`
+- `V2_CONTRACT_PROVENANCE_KEY_MISMATCH`
+- `V2_CONTRACT_FRAME_ID_KEY_MISMATCH`
+- `V2_CONTRACT_NORM_ID_KEY_MISMATCH`
+- `V2_CONTRACT_RULE_ID_KEY_MISMATCH`
+- `V2_CONTRACT_UNKNOWN_TARGET_FRAME_REF`
+- `V2_CONTRACT_UNKNOWN_TEMPORAL_REF`
+- `V2_CONTRACT_MISSING_SOURCE_REF`
+- `V2_CONTRACT_UNKNOWN_SOURCE_REF`
+
 ## 3. IR Schema (Near-EBNF)
 
 ```ebnf

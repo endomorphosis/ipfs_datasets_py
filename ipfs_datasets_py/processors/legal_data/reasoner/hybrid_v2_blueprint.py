@@ -170,6 +170,30 @@ _PROOF_STORE_V2: Dict[str, ProofObjectV2] = {}
 SUPPORTED_V2_IR_VERSION = "2.0"
 SUPPORTED_V2_CNL_VERSION = "2.0"
 V2_QUERY_API_SCHEMA_VERSION = "1.0"
+V2_IR_CONTRACT_ERROR_CODES: Dict[str, str] = {
+    "unsupported_ir_version": "V2_CONTRACT_UNSUPPORTED_IR_VERSION",
+    "unsupported_cnl_version": "V2_CONTRACT_UNSUPPORTED_CNL_VERSION",
+    "provenance_key_mismatch": "V2_CONTRACT_PROVENANCE_KEY_MISMATCH",
+    "frame_id_key_mismatch": "V2_CONTRACT_FRAME_ID_KEY_MISMATCH",
+    "norm_id_key_mismatch": "V2_CONTRACT_NORM_ID_KEY_MISMATCH",
+    "rule_id_key_mismatch": "V2_CONTRACT_RULE_ID_KEY_MISMATCH",
+    "unknown_target_frame_ref": "V2_CONTRACT_UNKNOWN_TARGET_FRAME_REF",
+    "unknown_temporal_ref": "V2_CONTRACT_UNKNOWN_TEMPORAL_REF",
+    "missing_source_ref": "V2_CONTRACT_MISSING_SOURCE_REF",
+    "unknown_source_ref": "V2_CONTRACT_UNKNOWN_SOURCE_REF",
+}
+
+
+class IRContractValidationError(ValueError):
+    """Structured contract validation error with stable machine-readable codes."""
+
+    def __init__(self, errors: List[str]) -> None:
+        details = [_contract_error_detail(msg) for msg in errors]
+        self.error_details = details
+        self.error_codes = list(dict.fromkeys(d["code"] for d in details))
+        human = "; ".join(d["message"] for d in details)
+        coded = ",".join(self.error_codes)
+        super().__init__(f"invalid_v2_ir_contract: codes=[{coded}] details={human}")
 
 
 class OptimizerHook(Protocol):
@@ -489,6 +513,18 @@ def _failure_codes_from_checks(checks: List[Dict[str, Any]]) -> List[str]:
     return list(dict.fromkeys(codes))
 
 
+def _contract_error_code(message: str) -> str:
+    prefix = str(message).split(":", 1)[0]
+    return V2_IR_CONTRACT_ERROR_CODES.get(prefix, "V2_CONTRACT_UNKNOWN")
+
+
+def _contract_error_detail(message: str) -> Dict[str, str]:
+    return {
+        "code": _contract_error_code(message),
+        "message": str(message),
+    }
+
+
 def validate_ir_v2_contract(ir: LegalIRV2, *, strict: bool = True) -> Dict[str, Any]:
     """Validate runtime invariants for V2 IR/provenance contract enforcement."""
     if not isinstance(ir, LegalIRV2):
@@ -544,12 +580,17 @@ def validate_ir_v2_contract(ir: LegalIRV2, *, strict: bool = True) -> Dict[str, 
             errors.append(f"unknown_source_ref:rule:{rule.id.ref()}->{rule.source_ref}")
 
     if errors:
-        raise ValueError("invalid_v2_ir_contract: " + "; ".join(errors))
+        raise IRContractValidationError(errors)
+
+    warning_details = [_contract_error_detail(msg) for msg in warnings]
+    warning_codes = list(dict.fromkeys(d["code"] for d in warning_details))
 
     return {
         "ok": True,
         "strict": bool(strict),
         "warnings": warnings,
+        "warning_codes": warning_codes,
+        "warning_details": warning_details,
         "counts": {
             "provenance": len(ir.provenance),
             "frames": len(ir.frames),

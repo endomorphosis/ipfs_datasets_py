@@ -100,7 +100,7 @@ Source of truth for WS8 scope:
 
 Current sprint (2026-03-02):
 - [-] `HL-WS8-01` Contract Snapshot Lockfile.
-- [ ] `HL-WS8-02` IR Contract Error Code Registry.
+- [-] `HL-WS8-02` IR Contract Error Code Registry.
 - [ ] `HL-WS8-04` Temporal Guard Conformance Expansion.
 - [ ] `HL-WS8-05` Optimizer Rejection Telemetry Envelope.
 - [ ] `HL-WS8-06` KG Enrichment Explainability Summary.
@@ -229,8 +229,9 @@ Use this section for short dated notes while executing TODO items.
 - 2026-03-01: Scope-3 progress: migrated remaining unmoved root ops analyzer (`analyze_formal_logic_entropy.py`) into canonical submodule scripts with root wrapper compatibility, and created `ROOT_TO_SUBMODULE_SCOPE3_MANIFEST_2026-03-01.tsv` documenting pointer docs plus deferred generated `data/state_laws/*/parsed/jsonld` artifact migration pending storage-policy decision.
 - 2026-03-01: User decision: do not migrate `data/state_laws/*/parsed/jsonld` artifacts yet because state-law extraction/parsing is still actively being worked; keep this dataset in root workspace until that workstream stabilizes.
 - 2026-03-01: Migrated canonical legal smoke task ownership from workspace root `.vscode/tasks.json` to `ipfs_datasets_py/.vscode/tasks.json`; root wrappers remain compatibility-only.
-- 2026-03-02: Started `HL-WS8-01`; added fixture-backed query API schema snapshot lock test in `tests/reasoner/test_hybrid_v2_query_api_matrix.py` and created `tests/reasoner/fixtures/hybrid_v2_api_schema_snapshot.json`.
+- 2026-03-02: Reviewed `HL-WS8-01` artifacts; confirmed fixture-backed query API schema snapshot lock test and snapshot fixture are present (`tests/reasoner/test_hybrid_v2_query_api_matrix.py`, `tests/reasoner/fixtures/hybrid_v2_api_schema_snapshot.json`).
 - 2026-03-02: Local shell could not execute pytest (`pytest` unavailable in current PATH/interpreter); validation pending run in the project test environment.
+- 2026-03-02: Started `HL-WS8-02`; added stable contract error-code registry + structured `IRContractValidationError` details/codes in `hybrid_v2_blueprint.py`, updated contract tests, and documented code set in the master integration plan.
 
 ## Definition of Ready (per TODO item)
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_v2_blueprint import (
     DeonticOpV2,
+    IRContractValidationError,
     compile_ir_to_dcec,
     compile_ir_to_temporal_deontic_fol,
     explain_proof,
@@ -135,6 +136,9 @@ def test_validate_ir_v2_contract_missing_source_ref_strict_rejected() -> None:
         validate_ir_v2_contract(ir, strict=True)
     except ValueError as exc:
         assert "missing_source_ref:norm" in str(exc)
+        assert "V2_CONTRACT_MISSING_SOURCE_REF" in str(exc)
+        assert isinstance(exc, IRContractValidationError)
+        assert "V2_CONTRACT_MISSING_SOURCE_REF" in exc.error_codes
     else:
         raise AssertionError("Expected strict contract validation failure")
 
@@ -148,6 +152,8 @@ def test_validate_ir_v2_contract_missing_source_ref_non_strict_warns() -> None:
 
     assert report["ok"] is True
     assert any("missing_source_ref:norm" in w for w in report["warnings"])
+    assert "V2_CONTRACT_MISSING_SOURCE_REF" in report["warning_codes"]
+    assert any(d["code"] == "V2_CONTRACT_MISSING_SOURCE_REF" for d in report["warning_details"])
 
 
 def test_check_compliance_rejects_invalid_frame_reference() -> None:
