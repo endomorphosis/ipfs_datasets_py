@@ -12,9 +12,14 @@ import json
 import os
 import shutil
 import subprocess
+import threading
 from typing import Any, Iterable, List, Optional
 
 from ipfs_datasets_py.deps_resolver import resolve_module
+
+
+_HF_RUNTIME_CACHE: dict[tuple[str, str, int, int], tuple[Any, Any]] = {}
+_HF_RUNTIME_CACHE_LOCK = threading.Lock()
 
 
 def _truthy(value: Optional[str]) -> bool:
@@ -94,10 +99,23 @@ def _hf_embed(
     if AutoTokenizer is None or AutoModel is None:
         raise RuntimeError("transformers missing AutoTokenizer/AutoModel")
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModel.from_pretrained(model_name)
-    model.to(device)
-    model.eval()
+    cache_key = (model_name, device, id(transformers), id(torch))
+    with _HF_RUNTIME_CACHE_LOCK:
+        cached = _HF_RUNTIME_CACHE.get(cache_key)
+
+    if cached is not None:
+        tokenizer, model = cached
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModel.from_pretrained(model_name)
+        model.to(device)
+        model.eval()
+        with _HF_RUNTIME_CACHE_LOCK:
+            _HF_RUNTIME_CACHE[cache_key] = (tokenizer, model)
+
+    model_max_length = getattr(tokenizer, "model_max_length", None)
+    if not isinstance(model_max_length, int) or model_max_length <= 0 or model_max_length > 32768:
+        model_max_length = 512
 
     embeddings: List[List[float]] = []
     with torch.no_grad():
@@ -106,6 +124,7 @@ def _hf_embed(
                 text,
                 padding=True,
                 truncation=True,
+                max_length=model_max_length,
                 return_tensors="pt",
             )
             inputs = {k: v.to(device) for k, v in inputs.items()}
