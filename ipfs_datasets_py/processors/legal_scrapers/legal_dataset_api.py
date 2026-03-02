@@ -21,6 +21,14 @@ import anyio
 logger = logging.getLogger(__name__)
 
 
+DEFAULT_CAP_HF_DATASET_ID = "justicedao/ipfs_caselaw_access_project"
+DEFAULT_CAP_HF_PARQUET_FILE = "embeddings/ipfs_TeraflopAI___Caselaw_Access_Project.parquet"
+DEFAULT_CAP_CHUNK_HF_PARQUET_FILE = "embeddings/sparse_chunks.parquet"
+
+DEFAULT_USCODE_HF_DATASET_ID = "justicedao/ipfs_uscode"
+DEFAULT_USCODE_HF_PARQUET_PREFIX = "uscode_parquet"
+
+
 def _get_repo_root() -> Path:
     """Resolve repository root from this module path."""
     return Path(__file__).resolve().parents[3]
@@ -170,8 +178,44 @@ async def _main() -> None:
         return
 
     if op == "search_cases":
-        from huggingface_hub import hf_hub_url
+        from huggingface_hub import hf_hub_url, list_repo_files
         import duckdb
+
+        def _resolve_hf_parquet_file(
+            *,
+            dataset_id: str,
+            explicit_file: str | None = None,
+            parquet_prefix: str | None = None,
+            preferred_names: list[str] | None = None,
+        ) -> str:
+            if explicit_file:
+                return explicit_file
+
+            repo_files = list_repo_files(repo_id=dataset_id, repo_type="dataset")
+            parquet_files = [f for f in repo_files if f.endswith(".parquet")]
+
+            if parquet_prefix:
+                normalized = parquet_prefix.strip("/")
+                parquet_files = [
+                    f
+                    for f in parquet_files
+                    if f == normalized or f.startswith(f"{normalized}/")
+                ]
+
+            if preferred_names:
+                preferred = {name.lower() for name in preferred_names if name}
+                for candidate in sorted(parquet_files):
+                    lowered = candidate.lower()
+                    if any(pref in lowered for pref in preferred):
+                        return candidate
+
+            if parquet_files:
+                return sorted(parquet_files)[0]
+
+            raise ValueError(
+                f"No parquet file found in dataset '{dataset_id}'"
+                + (f" under prefix '{parquet_prefix}'" if parquet_prefix else "")
+            )
 
         results = await cap.search_by_vector(
             collection_name=payload["collection_name"],
@@ -203,9 +247,11 @@ async def _main() -> None:
         chunk_rows_by_source_cid = {}
         if cid_order:
             dataset_id = payload.get("hf_dataset_id", "justicedao/ipfs_caselaw_access_project")
-            parquet_file = payload.get(
-                "hf_parquet_file",
-                "embeddings/ipfs_TeraflopAI___Caselaw_Access_Project.parquet",
+            parquet_file = _resolve_hf_parquet_file(
+                dataset_id=dataset_id,
+                explicit_file=payload.get("hf_parquet_file"),
+                parquet_prefix=payload.get("hf_parquet_prefix"),
+                preferred_names=payload.get("preferred_case_parquet_names"),
             )
             hf_url = hf_hub_url(repo_id=dataset_id, repo_type="dataset", filename=parquet_file)
             local_parquet = payload.get("local_case_parquet_file")
@@ -287,21 +333,35 @@ async def _main() -> None:
 
             if chunk_lookup_enabled:
                 chunk_dataset_id = payload.get("chunk_hf_dataset_id", dataset_id)
-                chunk_parquet_file = payload.get(
-                    "chunk_hf_parquet_file",
-                    "embeddings/sparse_chunks.parquet",
-                )
-                chunk_hf_url = hf_hub_url(
-                    repo_id=chunk_dataset_id,
-                    repo_type="dataset",
-                    filename=chunk_parquet_file,
-                )
+                chunk_parquet_file = payload.get("chunk_hf_parquet_file")
+                if not chunk_parquet_file:
+                    try:
+                        chunk_parquet_file = _resolve_hf_parquet_file(
+                            dataset_id=chunk_dataset_id,
+                            explicit_file=None,
+                            parquet_prefix=payload.get("chunk_hf_parquet_prefix"),
+                            preferred_names=payload.get("preferred_chunk_parquet_names"),
+                        )
+                    except Exception:
+                        chunk_parquet_file = None
+
                 local_chunk_parquet = payload.get("local_chunk_parquet_file")
                 chunk_snippet_chars = int(payload.get("chunk_snippet_chars", 1000))
 
-                chunk_sources = [("hf", chunk_hf_url)]
+                chunk_sources = []
                 if local_chunk_parquet and os.path.exists(local_chunk_parquet):
                     chunk_sources.append(("local", local_chunk_parquet))
+                if chunk_parquet_file:
+                    chunk_hf_url = hf_hub_url(
+                        repo_id=chunk_dataset_id,
+                        repo_type="dataset",
+                        filename=chunk_parquet_file,
+                    )
+                    chunk_sources.append(("hf", chunk_hf_url))
+
+                if not chunk_sources:
+                    chunk_lookup_error = "No chunk parquet source available"
+                    chunk_lookup_enabled = False
 
                 last_chunk_exc = None
                 for source_name, source_ref in chunk_sources:
@@ -954,11 +1014,9 @@ async def search_caselaw_access_cases_from_parameters(
             "query_vector": parameters["query_vector"],
             "top_k": int(parameters.get("top_k", 10)),
             "filter_dict": parameters.get("filter_dict"),
-            "hf_dataset_id": parameters.get("hf_dataset_id", "justicedao/ipfs_caselaw_access_project"),
-            "hf_parquet_file": parameters.get(
-                "hf_parquet_file",
-                "embeddings/ipfs_TeraflopAI___Caselaw_Access_Project.parquet",
-            ),
+            "hf_dataset_id": parameters.get("hf_dataset_id", DEFAULT_CAP_HF_DATASET_ID),
+            "hf_parquet_file": parameters.get("hf_parquet_file"),
+            "hf_parquet_prefix": parameters.get("hf_parquet_prefix"),
             "cid_metadata_field": parameters.get("cid_metadata_field", "cid"),
             "cid_column": parameters.get("cid_column", "cid"),
             "text_field_candidates": parameters.get("text_field_candidates", ["head_matter", "text"]),
@@ -967,14 +1025,17 @@ async def search_caselaw_access_cases_from_parameters(
             "chunk_lookup_enabled": bool(parameters.get("chunk_lookup_enabled", True)),
             "chunk_hf_dataset_id": parameters.get(
                 "chunk_hf_dataset_id",
-                parameters.get("hf_dataset_id", "justicedao/ipfs_caselaw_access_project"),
+                parameters.get("hf_dataset_id", DEFAULT_CAP_HF_DATASET_ID),
             ),
             "chunk_hf_parquet_file": parameters.get(
                 "chunk_hf_parquet_file",
-                "embeddings/sparse_chunks.parquet",
+                DEFAULT_CAP_CHUNK_HF_PARQUET_FILE,
             ),
+            "chunk_hf_parquet_prefix": parameters.get("chunk_hf_parquet_prefix"),
             "local_chunk_parquet_file": parameters.get("local_chunk_parquet_file"),
             "chunk_snippet_chars": int(parameters.get("chunk_snippet_chars", 1000)),
+            "preferred_case_parquet_names": parameters.get("preferred_case_parquet_names"),
+            "preferred_chunk_parquet_names": parameters.get("preferred_chunk_parquet_names"),
         }
         result = await anyio.to_thread.run_sync(
             lambda: _run_cap_vector_operation_in_venv(
@@ -993,6 +1054,34 @@ async def search_caselaw_access_cases_from_parameters(
             "operation": "search_cases",
             "tool_version": tool_version,
         }
+
+
+async def search_us_code_corpus_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    """Search US Code corpus vectors and enrich matches with section metadata/snippets."""
+    uscode_params = dict(parameters)
+
+    uscode_params.setdefault("hf_dataset_id", DEFAULT_USCODE_HF_DATASET_ID)
+    uscode_params.setdefault("hf_parquet_prefix", DEFAULT_USCODE_HF_PARQUET_PREFIX)
+    uscode_params.setdefault("hf_parquet_file", None)
+    uscode_params.setdefault("cid_metadata_field", "cid")
+    uscode_params.setdefault("cid_column", "cid")
+    uscode_params.setdefault(
+        "text_field_candidates",
+        ["text", "section_text", "content", "heading", "title"],
+    )
+    uscode_params.setdefault("chunk_lookup_enabled", False)
+    uscode_params.setdefault("chunk_hf_parquet_file", None)
+    uscode_params.setdefault("chunk_hf_parquet_prefix", None)
+    uscode_params.setdefault("preferred_case_parquet_names", ["uscode", "sections", "title"])
+
+    return await search_caselaw_access_cases_from_parameters(
+        uscode_params,
+        tool_version=tool_version,
+    )
 
 
 async def list_caselaw_access_vector_files_from_parameters(
