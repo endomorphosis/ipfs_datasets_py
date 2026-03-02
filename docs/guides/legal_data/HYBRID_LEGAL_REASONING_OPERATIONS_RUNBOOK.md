@@ -538,10 +538,15 @@ Purpose:
 
 Suggested daily snapshot command (GitHub CLI):
 ```bash
-mkdir -p /home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302
+mkdir -p /home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_$(date +%Y%m%d)
 
 bash ipfs_datasets_py/scripts/ops/legal_data/run_legal_v2_ci_soak_snapshot.sh
 ```
+
+Optional parameters:
+- `DATE_TAG=<YYYYMMDD>`
+- `SOAK_DIR=<absolute path>`
+- `PYTHON_BIN=<python executable path>`
 
 Manual fallback when snapshot script is unavailable:
 ```bash
@@ -560,6 +565,7 @@ Current seed snapshot:
 Automated summary artifacts (current day):
 - `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/ci_soak_summary_20260302.json`
 - `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/CI_SOAK_SUMMARY_20260302.md`
+- `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/CI_SOAK_SNAPSHOT_20260302.md`
 
 ## 12) WS10 Schema Drift Sentinel
 

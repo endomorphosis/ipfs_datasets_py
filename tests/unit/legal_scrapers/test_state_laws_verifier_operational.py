@@ -209,3 +209,23 @@ def test_write_operational_report_outputs_json_and_csv(tmp_path: Path):
     assert quality_csv.exists()
     assert "AA" in fetch_csv.read_text(encoding="utf-8")
     assert "scaffold_ratio" in quality_csv.read_text(encoding="utf-8")
+
+
+def test_build_operational_diagnostics_separates_no_attempt_states():
+    metadata = {
+        "coverage_summary": {"coverage_gap_states": []},
+        "fetch_analytics": {"attempted": 10, "success": 4, "success_ratio": 0.4, "fallback_count": 1, "providers": {}},
+        "fetch_analytics_by_state": {
+            "IN": {"attempted": 0, "success": 0, "fallback_count": 0},
+            "LA": {"attempted": 0, "success": 0, "fallback_count": 0},
+            "OK": {"attempted": 10, "success": 4, "fallback_count": 1, "last_error": "timeout"},
+        },
+        "etl_readiness": {"ready_for_kg_etl": True, "total_statutes": 10},
+        "quality_by_state": {},
+    }
+
+    diagnostics = _build_operational_diagnostics(metadata)
+
+    assert diagnostics["fetch"]["no_attempt_states"] == ["IN", "LA"]
+    assert len(diagnostics["fetch"]["weak_states"]) == 1
+    assert diagnostics["fetch"]["weak_states"][0]["state"] == "OK"

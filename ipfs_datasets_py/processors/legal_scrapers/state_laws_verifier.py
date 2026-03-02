@@ -46,11 +46,15 @@ def _build_operational_diagnostics(metadata: Dict[str, Any], *, top_n: int = 8) 
     coverage_gap_states = list(coverage.get("coverage_gap_states") or [])
 
     weak_fetch_states: List[Dict[str, Any]] = []
+    no_attempt_states: List[str] = []
     if isinstance(fetch_by_state, dict):
         for state_code, metrics in fetch_by_state.items():
             if not isinstance(metrics, dict):
                 continue
             attempted = int(metrics.get("attempted", 0) or 0)
+            if attempted <= 0:
+                no_attempt_states.append(str(state_code))
+                continue
             success = int(metrics.get("success", 0) or 0)
             fallback_count = int(metrics.get("fallback_count", 0) or 0)
             success_ratio = _safe_ratio(success, attempted)
@@ -106,6 +110,7 @@ def _build_operational_diagnostics(metadata: Dict[str, Any], *, top_n: int = 8) 
             "success_ratio": float(fetch.get("success_ratio", 0.0) or 0.0),
             "fallback_count": int(fetch.get("fallback_count", 0) or 0),
             "providers": fetch.get("providers") if isinstance(fetch.get("providers"), dict) else {},
+            "no_attempt_states": sorted(no_attempt_states),
             "weak_states": weak_fetch_states[: max(1, int(top_n or 1))],
         },
         "etl_readiness": {
