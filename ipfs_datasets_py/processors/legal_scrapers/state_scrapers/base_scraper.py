@@ -6,6 +6,7 @@ This module provides:
 3. Common utilities for parsing and normalizing state law data
 """
 
+import asyncio
 from dataclasses import dataclass, field, asdict
 from typing import Dict, List, Optional, Any
 from datetime import datetime
@@ -224,6 +225,13 @@ class BaseStateScraper(ABC):
         self.state_code = state_code
         self.state_name = state_name
         self.logger = logging.getLogger(f"{__name__}.{state_code}")
+        self._fetch_analytics: Dict[str, Any] = {
+            "attempted": 0,
+            "success": 0,
+            "providers": {},
+            "fallback_count": 0,
+            "last_error": None,
+        }
     
     @abstractmethod
     def get_base_url(self) -> str:
@@ -673,6 +681,13 @@ class BaseStateScraper(ABC):
         This keeps Common Crawl/Wayback/Archive.is logic inside state scrapers,
         mirroring Oregon archival workflow for all states.
         """
+        unified_bytes = await self._fetch_page_content_with_unified_api(
+            url=url,
+            timeout_seconds=timeout_seconds,
+        )
+        if unified_bytes:
+            return unified_bytes
+
         try:
             from .state_archival_fetch import ArchivalFetchClient
 
@@ -681,8 +696,13 @@ class BaseStateScraper(ABC):
                 delay_seconds=0.0,
             )
             fetched = await client.fetch_with_fallback(url)
+            self._record_fetch_event(
+                provider=str(getattr(fetched, "source", "archival_fallback") or "archival_fallback"),
+                success=bool(getattr(fetched, "content", b"")),
+            )
             return bytes(fetched.content or b"")
-        except Exception:
+        except Exception as exc:
+            self._record_fetch_event(provider="archival_fallback", success=False, error=str(exc))
             pass
 
         try:
@@ -697,10 +717,107 @@ class BaseStateScraper(ABC):
             }
             response = requests.get(url, headers=headers, timeout=timeout_seconds)
             if int(response.status_code) != 200:
+                self._record_fetch_event(provider="requests_direct", success=False)
                 return b""
+            self._record_fetch_event(provider="requests_direct", success=True)
             return bytes(response.content or b"")
+        except Exception as exc:
+            self._record_fetch_event(provider="requests_direct", success=False, error=str(exc))
+            return b""
+
+    async def _fetch_page_content_with_unified_api(self, url: str, timeout_seconds: int = 25) -> bytes:
+        try:
+            from ipfs_datasets_py.processors.web_archiving.contracts import (
+                OperationMode,
+                UnifiedFetchRequest,
+            )
+            from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI
         except Exception:
             return b""
+
+        try:
+            api = UnifiedWebArchivingAPI()
+            request = UnifiedFetchRequest(
+                url=url,
+                mode=OperationMode.MAX_QUALITY,
+                timeout_seconds=max(1, int(timeout_seconds or 25)),
+                domain="legal",
+                metadata={"pipeline": "state_laws"},
+            )
+            response = await asyncio.to_thread(api.fetch, request)
+        except Exception as exc:
+            self._record_fetch_event(provider="unified_api", success=False, error=str(exc))
+            return b""
+
+        trace = getattr(response, "trace", None)
+        provider = str(getattr(trace, "provider_selected", None) or "unified_api")
+        if trace is not None:
+            try:
+                self._fetch_analytics["fallback_count"] = int(self._fetch_analytics.get("fallback_count", 0) or 0) + int(
+                    getattr(trace, "fallback_count", 0) or 0
+                )
+            except Exception:
+                pass
+
+        if not bool(getattr(response, "success", False)):
+            message = None
+            errors = getattr(response, "errors", []) or []
+            if errors:
+                message = str(getattr(errors[0], "message", "")) or "unified_api_fetch_failed"
+            self._record_fetch_event(provider=provider, success=False, error=message)
+            return b""
+
+        document = getattr(response, "document", None)
+        if document is None:
+            self._record_fetch_event(provider=provider, success=False)
+            return b""
+
+        metadata = getattr(document, "metadata", {}) or {}
+        raw_bytes = metadata.get("raw_bytes") if isinstance(metadata, dict) else None
+        if isinstance(raw_bytes, bytes) and raw_bytes:
+            self._record_fetch_event(provider=provider, success=True)
+            return raw_bytes
+
+        html = str(getattr(document, "html", "") or "")
+        if html.strip():
+            self._record_fetch_event(provider=provider, success=True)
+            return html.encode("utf-8", errors="replace")
+
+        text = str(getattr(document, "text", "") or "")
+        if text.strip():
+            self._record_fetch_event(provider=provider, success=True)
+            return text.encode("utf-8", errors="replace")
+
+        self._record_fetch_event(provider=provider, success=False)
+        return b""
+
+    def _record_fetch_event(self, *, provider: str, success: bool, error: Optional[str] = None) -> None:
+        self._fetch_analytics["attempted"] = int(self._fetch_analytics.get("attempted", 0) or 0) + 1
+        if success:
+            self._fetch_analytics["success"] = int(self._fetch_analytics.get("success", 0) or 0) + 1
+
+        providers = self._fetch_analytics.get("providers")
+        if not isinstance(providers, dict):
+            providers = {}
+            self._fetch_analytics["providers"] = providers
+        providers[provider] = int(providers.get(provider, 0) or 0) + 1
+
+        if error:
+            self._fetch_analytics["last_error"] = str(error)
+
+    def get_fetch_analytics_snapshot(self) -> Dict[str, Any]:
+        providers = self._fetch_analytics.get("providers")
+        attempted = int(self._fetch_analytics.get("attempted", 0) or 0)
+        success = int(self._fetch_analytics.get("success", 0) or 0)
+        fallback_count = int(self._fetch_analytics.get("fallback_count", 0) or 0)
+        return {
+            "attempted": attempted,
+            "success": success,
+            "success_ratio": round((success / attempted), 3) if attempted > 0 else 0.0,
+            "providers": dict(providers) if isinstance(providers, dict) else {},
+            "fallback_count": fallback_count,
+            "last_error": self._fetch_analytics.get("last_error"),
+        }
 
     async def _hydrate_statute_text_if_needed(self, statute: NormalizedStatute) -> None:
         source_url = self._canonicalize_statute_url(str(statute.source_url or "").strip())

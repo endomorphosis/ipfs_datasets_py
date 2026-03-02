@@ -113,6 +113,8 @@ Current sprint (2026-03-02):
 - [x] `HL-WS9-06` Optimizer Hook Governance and Telemetry Hardening. (2026-03-02)
 - [x] `HL-WS9-07` KG Enrichment Hook with Reversible Frame Augmentation. (2026-03-02)
 - [x] `HL-WS9-08` Prover Backend Unification and Certificate Contract. (2026-03-02)
+- [x] `HL-WS9-09` Reasoner Query API Obligations and Proof Trace Completeness. (2026-03-02)
+- [x] `HL-WS9-10` CNL Round-Trip Regeneration Quality Pack. (2026-03-02)
 
 Ready queue:
 
@@ -308,6 +310,7 @@ Use this section for short dated notes while executing TODO items.
 - 2026-03-02: Completed `HL-WS9-04` and `HL-WS9-05`; preserved frame-ref deontic wrapping invariants in both compilers and fixed temporal guard fidelity by carrying `within` anchor semantics into compiler output (`Within(t,PT24H,incident_discovery)`), expanded compiler parity fixture corpus, and validated compiler gate (`tests/reasoner/test_hybrid_v2_compiler_parity.py`: `6 passed`).
 - 2026-03-02: Completed `HL-WS9-06`; added optimizer semantic invariants rejecting candidate IR mutation of norm modality/target frame identity (`modality_changed`, `target_frame_changed`, `norm_set_changed`), included invariant failures in optimizer telemetry, and added regression tests proving mutation rejection (`tests/reasoner/test_hybrid_v2_blueprint.py`: `25 passed`).
 - 2026-03-02: Completed `HL-WS9-07` and `HL-WS9-08`; applied the same semantic invariant guardrail to KG hook acceptance (rejecting frame/norm semantic mutations with machine-readable `invariant_failures`) and added strict normalized prover-envelope validation (schema/required fields/backend payload-key matrix) with backward-compatible coercion for legacy prover hooks, then validated blueprint + prover registry gates (`31 passed`).
+- 2026-03-02: Completed `HL-WS9-09` and `HL-WS9-10`; enforced proof-store trace completeness (`steps`, `ir_refs`, `source_refs`) before persistence, added query-matrix checks for explain-proof trace/provenance presence and deterministic repeated explain outputs, and improved CNL round-trip quality by rendering parseable natural durations (`PT24H -> 24 hours`, `P7D -> 1 week`) with optional `within ... of <anchor>` regeneration; parser/query gates passed (`20 passed`).
 
 ## Definition of Ready (per TODO item)
 

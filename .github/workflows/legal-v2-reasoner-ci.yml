@@ -11,9 +11,12 @@ on:
     paths:
       - "ipfs_datasets_py/processors/legal_data/reasoner/**"
       - "tests/reasoner/test_hybrid_v2_*.py"
+      - "tests/reasoner/test_kg_enrichment_adapter.py"
       - "tests/reasoner/test_prover_backend_registry.py"
       - "tests/reasoner/fixtures/cnl_parse_replay_v2_corpus.json"
+      - "tests/reasoner/fixtures/cnl_parse_paraphrase_equivalence_v2.json"
       - "tests/reasoner/fixtures/compiler_parity_v2_cases.json"
+      - "tests/reasoner/fixtures/hybrid_v2_api_schema_snapshot.json"
       - "docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md"
       - ".vscode/tasks.json"
       - ".github/workflows/legal-v2-reasoner-ci.yml"
@@ -24,9 +27,12 @@ on:
     paths:
       - "ipfs_datasets_py/processors/legal_data/reasoner/**"
       - "tests/reasoner/test_hybrid_v2_*.py"
+      - "tests/reasoner/test_kg_enrichment_adapter.py"
       - "tests/reasoner/test_prover_backend_registry.py"
       - "tests/reasoner/fixtures/cnl_parse_replay_v2_corpus.json"
+      - "tests/reasoner/fixtures/cnl_parse_paraphrase_equivalence_v2.json"
       - "tests/reasoner/fixtures/compiler_parity_v2_cases.json"
+      - "tests/reasoner/fixtures/hybrid_v2_api_schema_snapshot.json"
       - "docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md"
       - ".vscode/tasks.json"
       - ".github/workflows/legal-v2-reasoner-ci.yml"
@@ -70,6 +76,7 @@ jobs:
             tests/reasoner/test_hybrid_v2_parse_replay.py \
             tests/reasoner/test_hybrid_v2_compiler_parity.py \
             tests/reasoner/test_hybrid_v2_query_api_matrix.py \
+            tests/reasoner/test_kg_enrichment_adapter.py \
             tests/reasoner/test_prover_backend_registry.py -q \
             2>&1 | tee legal-v2-reasoner-suite.log
           status=${PIPESTATUS[0]}

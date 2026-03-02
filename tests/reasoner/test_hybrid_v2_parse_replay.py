@@ -297,3 +297,22 @@ def test_v2_definition_templates_map_to_explicit_definition_objects() -> None:
 
     include_preds = {rule.consequent.pred for rule in includes_ir.rules.values()}
     assert include_preds == {"includes_member"}
+
+
+def test_v2_roundtrip_cnl_generation_preserves_semantics_for_norm_templates() -> None:
+    for case in _load_corpus():
+        ir, _ = parse_cnl_to_ir_with_diagnostics(
+            case["sentence"],
+            jurisdiction=case.get("jurisdiction", "us/federal"),
+        )
+        if not ir.norms:
+            continue
+
+        norm_ref = next(iter(ir.norms.keys()))
+        regenerated = generate_cnl_from_ir(norm_ref, ir)
+        ir_roundtrip, _ = parse_cnl_to_ir_with_diagnostics(
+            regenerated,
+            jurisdiction=case.get("jurisdiction", "us/federal"),
+        )
+
+        assert _semantic_signature(ir_roundtrip) == _semantic_signature(ir), (case["id"], regenerated)

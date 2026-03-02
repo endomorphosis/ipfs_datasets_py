@@ -7,8 +7,10 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper impo
     StatuteMetadata,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import (
+    _aggregate_fetch_analytics,
     _compute_state_quality_metrics,
     _compute_coverage_summary,
+    _compute_etl_readiness_summary,
     _filter_strict_full_text_statutes,
     _trim_scraped_statutes_to_max,
     _write_state_jsonld_files,
@@ -217,3 +219,69 @@ def test_compute_coverage_summary_detects_zero_and_missing_states():
     assert summary["missing_states"] == ["CC"]
     assert summary["coverage_gap_states"] == ["BB", "CC"]
     assert summary["full_coverage"] is False
+
+
+def test_aggregate_fetch_analytics_combines_provider_counts():
+    metrics = _aggregate_fetch_analytics(
+        {
+            "OK": {
+                "attempted": 5,
+                "success": 3,
+                "fallback_count": 2,
+                "providers": {"unified_scraper": 3, "requests_direct": 2},
+            },
+            "SC": {
+                "attempted": 4,
+                "success": 4,
+                "fallback_count": 1,
+                "providers": {"unified_scraper": 4},
+            },
+        }
+    )
+
+    assert metrics["states_with_fetch_analytics"] == 2
+    assert metrics["attempted"] == 9
+    assert metrics["success"] == 7
+    assert metrics["fallback_count"] == 3
+    assert metrics["success_ratio"] == 0.778
+    assert metrics["providers"]["unified_scraper"] == 7
+    assert metrics["providers"]["requests_direct"] == 2
+
+
+def test_compute_etl_readiness_summary_reports_kg_thresholds():
+    scraped_statutes = [
+        {
+            "state_code": "AA",
+            "statutes": [
+                {
+                    "full_text": "Section 1. " + ("valid law text " * 40),
+                    "structured_data": {
+                        "jsonld": {"@type": "Legislation"},
+                        "citations": {"usc_citations": ["18 U.S.C. 1001"]},
+                    },
+                },
+                {
+                    "full_text": "Section 2. " + ("valid law text " * 40),
+                    "structured_data": {
+                        "jsonld": {"@type": "Legislation"},
+                        "citations": {"public_laws": ["Pub. L. 117-58"]},
+                    },
+                },
+            ],
+        },
+        {
+            "state_code": "BB",
+            "statutes": [],
+        },
+    ]
+
+    summary = _compute_etl_readiness_summary(scraped_statutes)
+
+    assert summary["states_processed"] == 2
+    assert summary["states_with_zero_statutes"] == 1
+    assert summary["states_with_jsonld"] == 1
+    assert summary["total_statutes"] == 2
+    assert summary["full_text_ratio"] == 1.0
+    assert summary["jsonld_ratio"] == 1.0
+    assert summary["citation_ratio"] == 1.0
+    assert summary["ready_for_kg_etl"] is True

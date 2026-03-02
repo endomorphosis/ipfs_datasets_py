@@ -571,6 +571,11 @@ For each query result, the proof object must satisfy:
 | Q7 | simultaneous O and F on same frame | inconclusive/conflict | `Conflict: obligation/prohibition overlap` |
 | Q8 | explain proof for Q2 | proved | `Proof reconstruction available in NL` |
 
+Locked regression semantics (WS9-11):
+- Root conclusion contract: `compliance=compliant|non_compliant` remains deterministic per query outcome.
+- Machine-readable violation signature contract: each violation record must include stable tuple keys (`norm_id`, `frame_id`, `type`) and repeat calls must produce equal sorted signatures.
+- Conflict-like overlap case (`O` + `F` on same frame) must preserve deterministic violation signature output and proof-root consistency.
+
 ## 15) Improvement Roadmap
 
 Phase 1 (Schema + CNL hardening):

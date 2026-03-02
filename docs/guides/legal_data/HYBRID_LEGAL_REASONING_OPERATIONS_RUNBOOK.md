@@ -461,3 +461,65 @@ Latest local dry-run evidence (2026-03-02):
 - Tests: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws8_release_20260302/pytest_reasoner_ws8.txt` (`52 passed`)
 - Backend matrix parity: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws8_release_20260302/backend_smoke_mock_smt.json`, `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws8_release_20260302/backend_smoke_mock_fol.json` (both `passed=true`)
 - Observability baseline: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws8_release_20260302/hybrid_v2_perf_baseline.json`
+
+## 10) WS9 Local Evidence Pack
+
+Purpose:
+- Produce repeatable local artifacts proving WS9 regression gates and backend parity.
+
+Commands:
+```bash
+mkdir -p /home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302
+
+cd /home/barberb/municipal_scrape_workspace/ipfs_datasets_py
+PYTHONPATH=src:/home/barberb/municipal_scrape_workspace/ipfs_datasets_py \
+  /home/barberb/municipal_scrape_workspace/.venv/bin/python -m pytest \
+  tests/reasoner/test_hybrid_v2_blueprint.py \
+  tests/reasoner/test_hybrid_v2_cli.py \
+  tests/reasoner/test_hybrid_v2_parse_replay.py \
+  tests/reasoner/test_hybrid_v2_compiler_parity.py \
+  tests/reasoner/test_hybrid_v2_query_api_matrix.py \
+  tests/reasoner/test_kg_enrichment_adapter.py \
+  tests/reasoner/test_prover_backend_registry.py -q \
+  > /home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/pytest_reasoner_ws9.txt
+
+for backend in mock_smt mock_fol; do
+  BACKEND="$backend" PYTHONPATH=src:/home/barberb/municipal_scrape_workspace/ipfs_datasets_py \
+  /home/barberb/municipal_scrape_workspace/.venv/bin/python - <<'PY' \
+  > /home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/backend_smoke_${BACKEND}.json
+import json
+import os
+from ipfs_datasets_py.processors.legal_data.reasoner.v2_cli import run_v2_cli
+
+backend = os.environ["BACKEND"]
+payload = run_v2_cli(
+  sentences=["Controller shall report breach within 24 hours."],
+  jurisdiction="us/federal",
+  enable_optimizer=True,
+  enable_kg=True,
+  enable_prover=True,
+  prover_backend_id=backend,
+)
+summary = payload.get("summary") or {}
+result = {
+  "backend": backend,
+  "summary": summary,
+  "passed": (
+    summary.get("total") == 1
+    and summary.get("ok") == 1
+    and summary.get("error") == 0
+    and summary.get("prover_backend_id") == backend
+    and summary.get("schema_version") == "1.0"
+  ),
+}
+print(json.dumps(result, indent=2, sort_keys=True))
+if not result["passed"]:
+  raise SystemExit(1)
+PY
+done
+```
+
+Expected artifact paths:
+- `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/pytest_reasoner_ws9.txt`
+- `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/backend_smoke_mock_smt.json`
+- `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/backend_smoke_mock_fol.json`

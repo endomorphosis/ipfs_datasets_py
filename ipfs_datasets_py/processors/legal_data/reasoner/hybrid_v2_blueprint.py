@@ -545,7 +545,18 @@ def clear_v2_proof_store() -> None:
     _EVICTED_PROOF_IDS_V2.clear()
 
 
+def _validate_proof_object_v2(proof: ProofObjectV2) -> None:
+    if not proof.steps:
+        raise ValueError("invalid_proof_trace:empty_steps")
+    for step in proof.steps:
+        if not list(step.ir_refs or []):
+            raise ValueError(f"invalid_proof_trace:missing_ir_refs:{step.step_id}")
+        if not list(step.source_refs or []):
+            raise ValueError(f"invalid_proof_trace:missing_source_refs:{step.step_id}")
+
+
 def _store_proof_v2(proof: ProofObjectV2) -> None:
+    _validate_proof_object_v2(proof)
     if proof.proof_id in _PROOF_STORE_V2:
         _PROOF_STORE_V2.pop(proof.proof_id, None)
 
@@ -1424,6 +1435,26 @@ def _lexicon_lookup(overrides: Dict[str, str], key: str, fallback: str) -> str:
     return text if text else fallback
 
 
+def _duration_to_cnl(duration: str) -> str:
+    text = _norm_space(duration)
+    m = re.match(r"^PT(\d+)H$", text, flags=re.IGNORECASE)
+    if m:
+        n = int(m.group(1))
+        return f"{n} hour" + ("s" if n != 1 else "")
+    m = re.match(r"^P(\d+)D$", text, flags=re.IGNORECASE)
+    if m:
+        n = int(m.group(1))
+        if n % 7 == 0 and n >= 7:
+            w = n // 7
+            return f"{w} week" + ("s" if w != 1 else "")
+        return f"{n} day" + ("s" if n != 1 else "")
+    return text
+
+
+def _render_anchor_text(text: str) -> str:
+    return _norm_space(str(text or "").replace("_", " "))
+
+
 def generate_cnl_from_ir(
     norm_ref: str,
     ir: LegalIRV2,
@@ -1467,7 +1498,10 @@ def generate_cnl_from_ir(
         temporal = ir.temporals[norm.temporal_ref]
         if temporal.relation == TemporalRelationV2.WITHIN and temporal.expr.duration:
             within_word = _lexicon_lookup(overrides, "temporal:within", "within")
-            phrase += f" {within_word} {temporal.expr.duration}"
+            phrase += f" {within_word} {_duration_to_cnl(temporal.expr.duration)}"
+            if temporal.expr.start:
+                of_word = _lexicon_lookup(overrides, "prep:of", "of")
+                phrase += f" {of_word} {_render_anchor_text(temporal.expr.start)}"
         elif temporal.relation == TemporalRelationV2.BY and temporal.expr.start:
             by_word = _lexicon_lookup(overrides, "temporal:by", "by")
             phrase += f" {by_word} {temporal.expr.start}"

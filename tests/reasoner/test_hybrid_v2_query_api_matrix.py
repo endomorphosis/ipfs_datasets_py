@@ -236,3 +236,119 @@ def test_v2_query_api_json_schemas_match_runtime_required_keys() -> None:
         schema_path = schema_dir / schema_name
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
         _assert_schema_required_types(sample, schema)
+
+
+def test_v2_explain_proof_steps_include_trace_refs_and_provenance() -> None:
+    ir = _one_norm_ir("Controller shall report breach within 72 hours.")
+    out = check_compliance({"ir": ir, "events": []}, {"at": "2026-03-01"})
+    exp = explain_proof(out["proof_id"], format="json")
+
+    assert exp["steps"]
+    for step in exp["steps"]:
+        assert isinstance(step.get("ir_refs"), list)
+        assert len(step["ir_refs"]) >= 1
+        assert isinstance(step.get("source_refs"), list)
+        assert len(step["source_refs"]) >= 1
+
+
+def test_v2_explain_proof_is_deterministic_for_repeated_calls() -> None:
+    ir = _one_norm_ir("Controller shall report breach within 72 hours.")
+    out = check_compliance({"ir": ir, "events": []}, {"at": "2026-03-01"})
+
+    nl_a = explain_proof(out["proof_id"], format="nl")
+    nl_b = explain_proof(out["proof_id"], format="nl")
+    js_a = explain_proof(out["proof_id"], format="json")
+    js_b = explain_proof(out["proof_id"], format="json")
+
+    assert nl_a == nl_b
+    assert js_a == js_b
+
+
+def _violation_signature(payload: dict) -> list[tuple[str, str, str]]:
+    return sorted(
+        (
+            str(v.get("norm_id") or ""),
+            str(v.get("frame_id") or ""),
+            str(v.get("type") or ""),
+        )
+        for v in (payload.get("violations") or [])
+    )
+
+
+def test_v2_query_matrix_root_conclusions_are_semantically_stable() -> None:
+    # Q1: compliant obligation (event happened)
+    ir_q1 = _one_norm_ir("Controller shall report breach within 72 hours.")
+    frame_q1 = next(iter(ir_q1.frames.keys()))
+    out_q1 = check_compliance({"ir": ir_q1, "events": [frame_q1]}, {"at": "2026-03-01"})
+    exp_q1 = explain_proof(out_q1["proof_id"], format="json")
+    assert exp_q1["root_conclusion"] == "compliance=compliant"
+
+    # Q2: non-compliant obligation (event missing)
+    ir_q2 = _one_norm_ir("Controller shall report breach within 72 hours.")
+    out_q2 = check_compliance({"ir": ir_q2, "events": []}, {"at": "2026-03-01"})
+    exp_q2 = explain_proof(out_q2["proof_id"], format="json")
+    assert exp_q2["root_conclusion"] == "compliance=non_compliant"
+
+    # Q3: prohibition violated
+    ir_q3 = _one_norm_ir("Vendor shall not disclose personal data.")
+    frame_q3 = next(iter(ir_q3.frames.keys()))
+    out_q3 = check_compliance({"ir": ir_q3, "events": [frame_q3]}, {"at": "2026-03-01"})
+    exp_q3 = explain_proof(out_q3["proof_id"], format="json")
+    assert exp_q3["root_conclusion"] == "compliance=non_compliant"
+
+    # Q4: exception applied
+    ir_q4 = _one_norm_ir("Vendor shall not disclose personal data unless consent recorded.")
+    frame_q4 = next(iter(ir_q4.frames.keys()))
+    out_q4 = check_compliance(
+        {
+            "ir": ir_q4,
+            "events": [frame_q4],
+            "facts": {"unless_consent_recorded": True},
+        },
+        {"at": "2026-03-01"},
+    )
+    exp_q4 = explain_proof(out_q4["proof_id"], format="json")
+    assert exp_q4["root_conclusion"] == "compliance=compliant"
+
+    # Q5: permission flow
+    ir_q5 = _one_norm_ir("Agency may inspect records if complaint filed.")
+    out_q5 = check_compliance(
+        {"ir": ir_q5, "events": [], "facts": {"if_complaint_filed": True}},
+        {"at": "2026-03-01"},
+    )
+    exp_q5 = explain_proof(out_q5["proof_id"], format="json")
+    assert exp_q5["root_conclusion"] == "compliance=compliant"
+
+    # Q6: violation scan
+    ir_q6 = _one_norm_ir("Employer shall pay wages by 2026-12-31.")
+    out_q6 = find_violations({"ir": ir_q6, "events": []}, ("2026-01-01", "2026-12-31"))
+    exp_q6 = explain_proof(out_q6["proof_id"], format="json")
+    assert exp_q6["root_conclusion"] == "compliance=non_compliant"
+
+    # Q7/Q8 explain paths should preserve same root conclusion deterministically.
+    exp_q7 = explain_proof(out_q6["proof_id"], format="nl")
+    exp_q8 = explain_proof(out_q6["proof_id"], format="json")
+    assert "compliance=non_compliant" in exp_q7["text"]
+    assert exp_q8["root_conclusion"] == "compliance=non_compliant"
+
+
+def test_v2_machine_readable_violations_are_deterministic_for_conflict_like_case() -> None:
+    # Conflict-like case for this API: same frame has O and F and event occurs.
+    ir_o = _one_norm_ir("Vendor shall disclose records.")
+    ir_f = _one_norm_ir("Vendor shall not disclose records.")
+
+    merged = ir_o
+    merged.entities.update(ir_f.entities)
+    merged.frames.update(ir_f.frames)
+    merged.temporals.update(ir_f.temporals)
+    merged.provenance.update(ir_f.provenance)
+    merged.norms.update(ir_f.norms)
+    frame_ref = next(iter(merged.frames.keys()))
+
+    out_a = check_compliance({"ir": merged, "events": [frame_ref]}, {"at": "2026-03-01"})
+    out_b = check_compliance({"ir": merged, "events": [frame_ref]}, {"at": "2026-03-01"})
+
+    sig_a = _violation_signature(out_a)
+    sig_b = _violation_signature(out_b)
+    assert sig_a == sig_b
+    assert all(len(item) == 3 and all(item) for item in sig_a)

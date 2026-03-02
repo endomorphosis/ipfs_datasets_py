@@ -203,6 +203,7 @@ async def scrape_state_laws(
         zero_statute_states = []
         quality_by_state: Dict[str, Dict[str, Any]] = {}
         low_quality_states: List[str] = []
+        fetch_analytics_by_state: Dict[str, Dict[str, Any]] = {}
 
         parallel_workers = max(1, int(parallel_workers or 1))
         per_state_retry_attempts = max(0, int(per_state_retry_attempts or 0))
@@ -266,6 +267,10 @@ async def scrape_state_laws(
                     quality = item.get("quality_metrics") or {}
                     if quality:
                         quality_by_state[state_code] = quality
+
+                    fetch_analytics = item.get("fetch_analytics") or {}
+                    if fetch_analytics:
+                        fetch_analytics_by_state[state_code] = fetch_analytics
 
                     for warning in item.get("warnings") or []:
                         warnings.append(str(warning))
@@ -453,6 +458,9 @@ async def scrape_state_laws(
                 scraped_statutes=scraped_statutes,
                 errors=errors,
             ),
+            "fetch_analytics": _aggregate_fetch_analytics(fetch_analytics_by_state),
+            "fetch_analytics_by_state": fetch_analytics_by_state if fetch_analytics_by_state else None,
+            "etl_readiness": _compute_etl_readiness_summary(scraped_statutes),
             "schema_normalized": use_state_specific_scrapers,
             "jsonld_dir": str((_resolve_state_output_dir(output_dir) / "state_laws_jsonld")) if (use_state_specific_scrapers and write_jsonld) else None,
             "jsonld_files": jsonld_paths if jsonld_paths else None,
@@ -626,8 +634,16 @@ def _scrape_state_once_sync(
     }
     quality_metrics = _compute_state_quality_metrics(statute_data["statutes"])
     quality_flag = _should_flag_quality(quality_metrics)
+    fetch_analytics = {}
+    if hasattr(scraper, "get_fetch_analytics_snapshot"):
+        try:
+            fetch_analytics = scraper.get_fetch_analytics_snapshot()
+        except Exception:
+            fetch_analytics = {}
     statute_data["quality_metrics"] = quality_metrics
     statute_data["quality_flag"] = quality_flag
+    if fetch_analytics:
+        statute_data["fetch_analytics"] = fetch_analytics
 
     warnings: List[str] = []
     if quality_flag:
@@ -643,6 +659,7 @@ def _scrape_state_once_sync(
         "zero_statute": len(normalized_statutes) == 0,
         "low_quality": quality_flag,
         "quality_metrics": quality_metrics,
+        "fetch_analytics": fetch_analytics,
         "warnings": warnings,
         "statute_data": statute_data,
     }
@@ -806,6 +823,110 @@ def _compute_coverage_summary(
         "missing_states": missing_states,
         "coverage_gap_states": coverage_gap_states,
         "full_coverage": len(coverage_gap_states) == 0 and not errors,
+    }
+
+
+def _aggregate_fetch_analytics(fetch_analytics_by_state: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+    if not fetch_analytics_by_state:
+        return {
+            "states_with_fetch_analytics": 0,
+            "attempted": 0,
+            "success": 0,
+            "success_ratio": 0.0,
+            "fallback_count": 0,
+            "providers": {},
+        }
+
+    attempted = 0
+    success = 0
+    fallback_count = 0
+    providers: Dict[str, int] = {}
+
+    for state_metrics in fetch_analytics_by_state.values():
+        if not isinstance(state_metrics, dict):
+            continue
+        attempted += int(state_metrics.get("attempted", 0) or 0)
+        success += int(state_metrics.get("success", 0) or 0)
+        fallback_count += int(state_metrics.get("fallback_count", 0) or 0)
+
+        provider_counts = state_metrics.get("providers") or {}
+        if isinstance(provider_counts, dict):
+            for provider, count in provider_counts.items():
+                providers[str(provider)] = int(providers.get(str(provider), 0) or 0) + int(count or 0)
+
+    return {
+        "states_with_fetch_analytics": len(fetch_analytics_by_state),
+        "attempted": attempted,
+        "success": success,
+        "success_ratio": round((success / attempted), 3) if attempted > 0 else 0.0,
+        "fallback_count": fallback_count,
+        "providers": providers,
+    }
+
+
+def _compute_etl_readiness_summary(scraped_statutes: List[Dict[str, Any]]) -> Dict[str, Any]:
+    state_count = 0
+    total_statutes = 0
+    statutes_with_text = 0
+    statutes_with_jsonld = 0
+    statutes_with_citations = 0
+    states_with_zero = 0
+    states_with_jsonld = 0
+
+    for state_block in scraped_statutes:
+        if not isinstance(state_block, dict):
+            continue
+        state_count += 1
+        statutes = state_block.get("statutes") or []
+        if not statutes:
+            states_with_zero += 1
+
+        state_jsonld_hits = 0
+        for statute in statutes:
+            if not isinstance(statute, dict):
+                continue
+            total_statutes += 1
+
+            full_text = str(statute.get("full_text") or statute.get("text") or "").strip()
+            if len(full_text) >= 120:
+                statutes_with_text += 1
+
+            structured_data = statute.get("structured_data") or {}
+            if isinstance(structured_data, dict):
+                jsonld = structured_data.get("jsonld")
+                if isinstance(jsonld, dict):
+                    statutes_with_jsonld += 1
+                    state_jsonld_hits += 1
+
+                citations = structured_data.get("citations") or {}
+                if isinstance(citations, dict):
+                    citation_items = 0
+                    for value in citations.values():
+                        if isinstance(value, list):
+                            citation_items += len(value)
+                    if citation_items > 0:
+                        statutes_with_citations += 1
+
+        if state_jsonld_hits > 0:
+            states_with_jsonld += 1
+
+    full_text_ratio = round((statutes_with_text / total_statutes), 3) if total_statutes > 0 else 0.0
+    jsonld_ratio = round((statutes_with_jsonld / total_statutes), 3) if total_statutes > 0 else 0.0
+    citation_ratio = round((statutes_with_citations / total_statutes), 3) if total_statutes > 0 else 0.0
+
+    return {
+        "states_processed": state_count,
+        "states_with_zero_statutes": states_with_zero,
+        "states_with_jsonld": states_with_jsonld,
+        "total_statutes": total_statutes,
+        "full_text_ratio": full_text_ratio,
+        "jsonld_ratio": jsonld_ratio,
+        "citation_ratio": citation_ratio,
+        "ready_for_kg_etl": bool(
+            total_statutes > 0
+            and full_text_ratio >= 0.85
+            and jsonld_ratio >= 0.75
+        ),
     }
 
 
