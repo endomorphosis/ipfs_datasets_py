@@ -138,6 +138,7 @@ class UnifiedWebArchivingAPI:
                 metadata={
                     "engines_used": trace.providers_attempted,
                     "requested_mode": search_request.mode.value,
+                    "requested_domain": search_request.domain,
                     "planned_provider_order": list(plan.providers_ordered),
                     "provider_scores": [
                         {
@@ -196,6 +197,7 @@ class UnifiedWebArchivingAPI:
                 metadata={
                     "engines_used": trace.providers_attempted,
                     "requested_mode": search_request.mode.value,
+                    "requested_domain": search_request.domain,
                     "planned_provider_order": list(plan.providers_ordered),
                 },
             )
@@ -266,6 +268,7 @@ class UnifiedWebArchivingAPI:
                 text=getattr(scraper_result, "text", "") or "",
                 html=getattr(scraper_result, "html", "") or "",
                 metadata=getattr(scraper_result, "metadata", {}) or {},
+                domain=fetch_request.domain,
             )
             trace.total_latency_ms = (time.time() - start_time) * 1000.0
             trace.finished_at = datetime.utcnow().isoformat()
@@ -296,7 +299,10 @@ class UnifiedWebArchivingAPI:
                     errors=errors,
                     success=False,
                     quality_score=0.0,
-                    metadata={"requested_mode": fetch_request.mode.value},
+                    metadata={
+                        "requested_mode": fetch_request.mode.value,
+                        "requested_domain": fetch_request.domain,
+                    },
                 )
 
             text = getattr(scraper_result, "text", "") or ""
@@ -311,6 +317,7 @@ class UnifiedWebArchivingAPI:
                 metadata={
                     **(getattr(scraper_result, "metadata", {}) or {}),
                     "source_type": parsed.source_type,
+                    "domain": fetch_request.domain,
                     "entities": parsed.entities,
                     "structured_fields": parsed.structured_fields,
                     "structured_fields_version": parsed.structured_fields.get("schema", "general_v1"),
@@ -337,7 +344,10 @@ class UnifiedWebArchivingAPI:
                 errors=[],
                 success=True,
                 quality_score=quality_score,
-                metadata={"requested_mode": fetch_request.mode.value},
+                metadata={
+                    "requested_mode": fetch_request.mode.value,
+                    "requested_domain": fetch_request.domain,
+                },
             )
 
         except Exception as exc:
@@ -368,7 +378,10 @@ class UnifiedWebArchivingAPI:
                 ],
                 success=False,
                 quality_score=0.0,
-                metadata={"requested_mode": fetch_request.mode.value},
+                metadata={
+                    "requested_mode": fetch_request.mode.value,
+                    "requested_domain": fetch_request.domain,
+                },
             )
 
     def search_and_fetch(
@@ -393,6 +406,7 @@ class UnifiedWebArchivingAPI:
                         UnifiedFetchRequest(
                             url=hit.url,
                             mode=search_response.trace.mode if search_response.trace else OperationMode.BALANCED,
+                            domain=search_response.metadata.get("requested_domain", "general"),
                         )
                     )
                 )

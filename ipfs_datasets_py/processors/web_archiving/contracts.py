@@ -134,6 +134,7 @@ class UnifiedSearchRequest:
     provider_denylist: Optional[List[str]] = None
     timeout_seconds: int = 30
     min_quality: float = 0.0
+    domain: str = "general"
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -147,6 +148,8 @@ class UnifiedSearchRequest:
             raise ValueError("UnifiedSearchRequest.timeout_seconds must be > 0")
         if not 0.0 <= self.min_quality <= 1.0:
             raise ValueError("UnifiedSearchRequest.min_quality must be in [0.0, 1.0]")
+        if not self.domain or not self.domain.strip():
+            raise ValueError("UnifiedSearchRequest.domain must be non-empty")
 
     def to_dict(self) -> Dict[str, Any]:
         payload = asdict(self)
@@ -180,6 +183,7 @@ class UnifiedFetchRequest:
     min_quality: float = 0.0
     provider_allowlist: Optional[List[str]] = None
     provider_denylist: Optional[List[str]] = None
+    domain: str = "general"
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -189,6 +193,8 @@ class UnifiedFetchRequest:
             raise ValueError("UnifiedFetchRequest.timeout_seconds must be > 0")
         if not 0.0 <= self.min_quality <= 1.0:
             raise ValueError("UnifiedFetchRequest.min_quality must be in [0.0, 1.0]")
+        if not self.domain or not self.domain.strip():
+            raise ValueError("UnifiedFetchRequest.domain must be non-empty")
 
     def to_dict(self) -> Dict[str, Any]:
         payload = asdict(self)

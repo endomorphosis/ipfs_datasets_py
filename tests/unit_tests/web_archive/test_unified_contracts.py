@@ -24,6 +24,7 @@ def test_unified_search_request_json_roundtrip() -> None:
         offset=10,
         timeout_seconds=45,
         min_quality=0.4,
+        domain="legal",
         provider_allowlist=["common_crawl", "brave"],
         metadata={"source": "unit-test"},
     )
@@ -35,6 +36,7 @@ def test_unified_search_request_json_roundtrip() -> None:
     assert restored.mode == OperationMode.MAX_THROUGHPUT
     assert restored.max_results == 50
     assert restored.offset == 10
+    assert restored.domain == "legal"
     assert restored.provider_allowlist == ["common_crawl", "brave"]
 
 
@@ -46,6 +48,7 @@ def test_unified_search_request_json_roundtrip() -> None:
         {"query": "valid", "offset": -1},
         {"query": "valid", "timeout_seconds": 0},
         {"query": "valid", "min_quality": 1.2},
+        {"query": "valid", "domain": ""},
     ],
 )
 def test_unified_search_request_validation(bad_kwargs) -> None:
@@ -60,6 +63,7 @@ def test_unified_fetch_request_json_roundtrip() -> None:
         timeout_seconds=20,
         fallback_enabled=True,
         min_quality=0.5,
+        domain="finance",
         provider_denylist=["archive_is"],
     )
 
@@ -68,6 +72,7 @@ def test_unified_fetch_request_json_roundtrip() -> None:
 
     assert restored.url == "https://example.com/page"
     assert restored.mode == OperationMode.BALANCED
+    assert restored.domain == "finance"
     assert restored.provider_denylist == ["archive_is"]
 
 
@@ -78,6 +83,7 @@ def test_unified_fetch_request_json_roundtrip() -> None:
         {"url": "ftp://example.com"},
         {"url": "https://example.com", "timeout_seconds": 0},
         {"url": "https://example.com", "min_quality": -0.1},
+        {"url": "https://example.com", "domain": ""},
     ],
 )
 def test_unified_fetch_request_validation(bad_kwargs) -> None:

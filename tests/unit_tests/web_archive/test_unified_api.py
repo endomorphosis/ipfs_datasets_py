@@ -196,6 +196,24 @@ def test_unified_api_fetch_success_with_injected_scraper() -> None:
     assert isinstance(response.document.metadata.get("entities"), list)
     assert isinstance(response.document.metadata.get("structured_fields"), dict)
     assert response.document.metadata.get("structured_fields_version")
+    assert response.document.metadata.get("domain") == "general"
+    assert response.metadata.get("requested_domain") == "general"
+
+
+def test_unified_api_fetch_respects_domain_for_structured_schema() -> None:
+    api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess(), scraper=FakeScraper())
+
+    response = api.fetch(
+        "https://example.com/law",
+        domain="legal",
+    )
+
+    assert response.success is True
+    assert response.document is not None
+    assert response.document.metadata.get("structured_fields", {}).get("schema") == "legal_v1"
+    assert response.document.metadata.get("structured_fields_version") == "legal_v1"
+    assert response.document.metadata.get("domain") == "legal"
+    assert response.metadata.get("requested_domain") == "legal"
 
 
 def test_unified_api_search_and_fetch_returns_document_envelope() -> None:
@@ -212,6 +230,26 @@ def test_unified_api_search_and_fetch_returns_document_envelope() -> None:
 
     assert result["status"] == "success"
     assert result["documents_count"] == 1
+
+
+def test_unified_api_search_and_fetch_propagates_domain_to_fetch() -> None:
+    api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess(), scraper=FakeScraper())
+
+    result = api.search_and_fetch(
+        UnifiedSearchRequest(
+            query="indiana code",
+            max_results=5,
+            provider_allowlist=["brave", "duckduckgo"],
+            domain="legal",
+        ),
+        max_documents=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["documents_count"] == 1
+    doc_meta = result["documents"][0]["document"]["metadata"]
+    assert doc_meta["domain"] == "legal"
+    assert doc_meta["structured_fields"]["schema"] == "legal_v1"
 
 
 def test_unified_api_agentic_discover_and_fetch() -> None:

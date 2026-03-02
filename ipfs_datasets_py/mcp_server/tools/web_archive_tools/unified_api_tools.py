@@ -23,6 +23,7 @@ async def unified_search(
     provider_allowlist: Optional[List[str]] = None,
     provider_denylist: Optional[List[str]] = None,
     offset: int = 0,
+    domain: str = "general",
 ) -> Dict[str, Any]:
     """Run unified search across configured providers.
 
@@ -45,6 +46,7 @@ async def unified_search(
             provider_allowlist=provider_allowlist,
             provider_denylist=provider_denylist,
             offset=offset,
+            domain=domain,
         )
         response = await anyio.to_thread.run_sync(api.search, request)
         return {
@@ -58,13 +60,14 @@ async def unified_search(
 async def unified_fetch(
     url: str,
     mode: str = "balanced",
+    domain: str = "general",
 ) -> Dict[str, Any]:
     """Fetch content for a URL using unified scraper fallback."""
     try:
         from ipfs_datasets_py.processors.web_archiving.contracts import OperationMode, UnifiedFetchRequest
 
         api = _get_api()
-        request = UnifiedFetchRequest(url=url, mode=OperationMode(mode))
+        request = UnifiedFetchRequest(url=url, mode=OperationMode(mode), domain=domain)
         response = await anyio.to_thread.run_sync(api.fetch, request)
         return {
             "status": "success" if response.success else "error",
@@ -80,6 +83,7 @@ async def unified_search_and_fetch(
     max_documents: int = 5,
     mode: str = "max_throughput",
     provider_allowlist: Optional[List[str]] = None,
+    domain: str = "general",
 ) -> Dict[str, Any]:
     """Run unified search then fetch top document URLs."""
     try:
@@ -91,6 +95,7 @@ async def unified_search_and_fetch(
             max_results=max_results,
             mode=OperationMode(mode),
             provider_allowlist=provider_allowlist,
+            domain=domain,
         )
         result = await anyio.to_thread.run_sync(
             lambda: api.search_and_fetch(request, max_documents=max_documents)

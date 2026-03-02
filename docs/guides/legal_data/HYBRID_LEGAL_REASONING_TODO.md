@@ -112,10 +112,10 @@ Backlog (ready queue):
 - [x] `HL-WS8-09` Batch CLI Summary Contract. (2026-03-02)
 - [x] `HL-WS8-10` Proof Store Retention Policy. (2026-03-02)
 - [x] `HL-WS8-11` CNL Lexicon Extension Hooks. (2026-03-02)
-- [-] `HL-WS8-12` CI Workflow Matrix for Prover Backends.
+- [x] `HL-WS8-12` CI Workflow Matrix for Prover Backends. (2026-03-02)
 - [x] `HL-WS8-13` Performance Baseline Snapshot. (2026-03-02)
 - [x] `HL-WS8-14` Ticket-to-Test Traceability Table. (2026-03-02)
-- [-] `HL-WS8-15` Release Readiness Checklist v2.
+- [x] `HL-WS8-15` Release Readiness Checklist v2. (2026-03-02)
 
 ## WS8 Release Readiness Checklist v2
 
@@ -145,6 +145,13 @@ Rollback:
 - [ ] Rollback path for optimizer/KG/prover toggles is documented.
 - [ ] Incident response conditions reviewed with release owner.
 - Artifact link: 
+
+WS8 local dry-run evidence (2026-03-02):
+- Contracts: `ipfs_datasets_py/tests/reasoner/fixtures/hybrid_v2_api_schema_snapshot.json`, `ipfs_datasets_py/docs/guides/legal_data/schemas/v2_check_compliance.schema.json`, `ipfs_datasets_py/docs/guides/legal_data/schemas/v2_find_violations.schema.json`, `ipfs_datasets_py/docs/guides/legal_data/schemas/v2_explain_proof.schema.json`.
+- Tests: `artifacts/formal_logic_tmp_verify/federal/ws8_release_20260302/pytest_reasoner_ws8.txt` (`52 passed`, no schema-drift failures).
+- CI parity: `artifacts/formal_logic_tmp_verify/federal/ws8_release_20260302/backend_smoke_mock_smt.json`, `artifacts/formal_logic_tmp_verify/federal/ws8_release_20260302/backend_smoke_mock_fol.json` (both `passed=true`), plus workflow matrix in `ipfs_datasets_py/.github/workflows/legal-v2-reasoner-ci.yml`.
+- Observability: `artifacts/formal_logic_tmp_verify/federal/ws8_release_20260302/hybrid_v2_perf_baseline.json`.
+- Rollback references: `ipfs_datasets_py/docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md` (section `0) Hybrid V2 Pipeline CLI`, hook toggles and run commands).
 
 WS8 done definition:
 - [ ] High-priority tickets (`01`, `02`, `04`, `05`, `06`, `08`, `09`, `10`, `12`) completed.
@@ -275,6 +282,8 @@ Use this section for short dated notes while executing TODO items.
 - 2026-03-02: Started `HL-WS8-14`; added copy/paste-ready WS8 ticket-to-test traceability matrices to execution workstreams and implementation tickets docs with explicit CI/gate mapping.
 - 2026-03-02: Started `HL-WS8-15`; added release readiness checklist v2 with required artifact-link fields for contracts/tests/CI/observability/rollback.
 - 2026-03-02: Validation checkpoint: targeted WS8 pytest suite passed (`52 passed`) across parse replay, prover registry, CLI, blueprint, compiler parity, query matrix, and KG adapter tests.
+- 2026-03-02: Completed `HL-WS8-12`; captured local backend matrix smoke evidence for `mock_smt` and `mock_fol` (`passed=true`) under `artifacts/formal_logic_tmp_verify/federal/ws8_release_20260302/backend_smoke_*.json`.
+- 2026-03-02: Completed `HL-WS8-15`; captured release-checklist dry-run evidence bundle under `artifacts/formal_logic_tmp_verify/federal/ws8_release_20260302/` (`pytest_reasoner_ws8.txt`, `hybrid_v2_perf_baseline.json`) and linked contract/rollback references.
 
 ## Definition of Ready (per TODO item)
 

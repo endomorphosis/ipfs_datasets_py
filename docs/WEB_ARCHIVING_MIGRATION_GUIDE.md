@@ -8,6 +8,7 @@ The unified API provides:
 - Throughput-prioritized provider ordering.
 - Circuit-breaker + retry fallback behavior.
 - Provider-neutral request/response contracts.
+- Per-request parsing domain selection (`general`, `legal`, `finance`, `medical`).
 - Unified observability and execution traces.
 - A single MCP-facing surface for `search`, `fetch`, and `search_and_fetch`.
 
@@ -85,6 +86,11 @@ response = api.fetch(UnifiedFetchRequest(url="https://example.com"))
 
 if response.success and response.document:
     print(response.document.title)
+
+# domain-aware parsing for structured fields
+legal_response = api.fetch(
+    UnifiedFetchRequest(url="https://example.com/law", domain="legal")
+)
 ```
 
 ### 4.3 Search and Fetch Pipeline
@@ -120,6 +126,7 @@ result = await unified_search(
 result = await unified_fetch(
     url="https://example.com/law",
     mode="balanced",
+    domain="legal",
 )
 ```
 
@@ -131,6 +138,7 @@ result = await unified_search_and_fetch(
     max_results=20,
     max_documents=5,
     mode="max_throughput",
+    domain="legal",
 )
 ```
 

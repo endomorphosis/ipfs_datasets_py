@@ -182,6 +182,7 @@ class AgenticScrapeOptimizer:
         text: str = "",
         html: str = "",
         metadata: Optional[Dict[str, Any]] = None,
+        domain: Optional[str] = None,
     ) -> ParsedScrapeResult:
         """Transform raw scrape payload into cleaned + parsed content."""
         meta = dict(metadata or {})
@@ -194,8 +195,12 @@ class AgenticScrapeOptimizer:
 
         candidate_text = text or self._strip_html_to_text(html)
         cleaned_text = self.clean_text(candidate_text)
-        entities = self.extract_entities(cleaned_text)
-        structured_fields = self.parse_structured_fields(cleaned_text, source_type=source_type)
+        entities = self.extract_entities(cleaned_text, domain=domain)
+        structured_fields = self.parse_structured_fields(
+            cleaned_text,
+            source_type=source_type,
+            domain=domain,
+        )
 
         return ParsedScrapeResult(
             url=url,
@@ -233,7 +238,7 @@ class AgenticScrapeOptimizer:
 
         return "\n".join(lines)
 
-    def extract_entities(self, text: str) -> List[Dict[str, Any]]:
+    def extract_entities(self, text: str, domain: Optional[str] = None) -> List[Dict[str, Any]]:
         """Extract domain-aware entities using optimizer extraction methods."""
         if not text:
             return []
@@ -246,9 +251,11 @@ class AgenticScrapeOptimizer:
             StreamingEntityExtractor,
         )
 
+        effective_domain = (domain or self.config.domain or "general").strip().lower()
+
         cfg = BaseExtractionConfig(
             confidence_threshold=self.config.confidence_threshold,
-            domain=self.config.domain,
+            domain=effective_domain,
             custom_rules=list(self.config.custom_rules),
             min_entity_length=self.config.min_entity_length,
             stopwords=list(self.config.stopwords),
@@ -341,7 +348,13 @@ class AgenticScrapeOptimizer:
         scored.sort(key=lambda item: float(item.get("score", 0)), reverse=True)
         return scored
 
-    def parse_structured_fields(self, text: str, *, source_type: str = "html") -> Dict[str, Any]:
+    def parse_structured_fields(
+        self,
+        text: str,
+        *,
+        source_type: str = "html",
+        domain: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Extract higher-level structured fields from cleaned text."""
         if not text:
             return {
@@ -381,12 +394,12 @@ class AgenticScrapeOptimizer:
             "is_pdf_content": source_type == "pdf",
         }
 
-        domain = (self.config.domain or "general").lower()
-        if domain == "legal":
+        effective_domain = (domain or self.config.domain or "general").strip().lower()
+        if effective_domain == "legal":
             return self._parse_legal_fields(text, base_fields)
-        if domain == "finance":
+        if effective_domain == "finance":
             return self._parse_finance_fields(text, base_fields)
-        if domain == "medical":
+        if effective_domain == "medical":
             return self._parse_medical_fields(text, base_fields)
         return {
             "schema": "general_v1",

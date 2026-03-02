@@ -167,3 +167,15 @@ def test_structured_field_schema_contract_keys() -> None:
     assert set(legal.keys()) == legal_keys
     assert set(finance.keys()) == finance_keys
     assert set(medical.keys()) == medical_keys
+
+
+def test_agentic_optimizer_transform_domain_override() -> None:
+    optimizer = AgenticScrapeOptimizer(AgenticExtractionConfig(domain="general"))
+    parsed = optimizer.transform(
+        url="https://example.com/legal",
+        text="Section 15 and 18 U.S.C. 1001 apply.",
+        domain="legal",
+    )
+
+    assert parsed.structured_fields["schema"] == "legal_v1"
+    assert optimizer.config.domain == "general"

@@ -455,3 +455,9 @@ Rollback:
 - [ ] Optimizer/KG/prover rollback toggles validated.
 - [ ] Incident-response conditions reviewed with release owner.
 - Artifact link:
+
+Latest local dry-run evidence (2026-03-02):
+- Contracts: `tests/reasoner/fixtures/hybrid_v2_api_schema_snapshot.json`, `docs/guides/legal_data/schemas/v2_check_compliance.schema.json`, `docs/guides/legal_data/schemas/v2_find_violations.schema.json`, `docs/guides/legal_data/schemas/v2_explain_proof.schema.json`
+- Tests: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws8_release_20260302/pytest_reasoner_ws8.txt` (`52 passed`)
+- Backend matrix parity: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws8_release_20260302/backend_smoke_mock_smt.json`, `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws8_release_20260302/backend_smoke_mock_fol.json` (both `passed=true`)
+- Observability baseline: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws8_release_20260302/hybrid_v2_perf_baseline.json`

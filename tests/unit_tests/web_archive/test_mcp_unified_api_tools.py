@@ -28,26 +28,35 @@ unified_api_tools = _load_unified_api_tools_module()
 
 
 class FakeUnifiedAPI:
+    def __init__(self):
+        self.last_search_request = None
+        self.last_fetch_request = None
+
     def search(self, request):
+        self.last_search_request = request
         return SimpleNamespace(
             success=True,
             to_dict=lambda: {
                 "query": request.query,
+                "domain": request.domain,
                 "success": True,
                 "results": [],
             },
         )
 
     def fetch(self, request):
+        self.last_fetch_request = request
         return SimpleNamespace(
             success=True,
             to_dict=lambda: {
                 "url": request.url,
+                "domain": request.domain,
                 "success": True,
             },
         )
 
     def search_and_fetch(self, request, max_documents=5):
+        self.last_search_request = request
         return {
             "status": "success",
             "search": {"query": request.query},
@@ -77,45 +86,56 @@ def test_unified_mcp_functions_are_async() -> None:
 
 @pytest.mark.anyio
 async def test_unified_search_wrapper(monkeypatch) -> None:
-    monkeypatch.setattr(unified_api_tools, "_get_api", lambda: FakeUnifiedAPI())
+    fake_api = FakeUnifiedAPI()
+    monkeypatch.setattr(unified_api_tools, "_get_api", lambda: fake_api)
 
     result = await unified_api_tools.unified_search(
         query="indiana code",
         max_results=5,
         mode="balanced",
         provider_allowlist=["brave"],
+        domain="legal",
     )
 
     assert result["status"] == "success"
     assert result["data"]["query"] == "indiana code"
+    assert result["data"]["domain"] == "legal"
+    assert fake_api.last_search_request.domain == "legal"
 
 
 @pytest.mark.anyio
 async def test_unified_fetch_wrapper(monkeypatch) -> None:
-    monkeypatch.setattr(unified_api_tools, "_get_api", lambda: FakeUnifiedAPI())
+    fake_api = FakeUnifiedAPI()
+    monkeypatch.setattr(unified_api_tools, "_get_api", lambda: fake_api)
 
     result = await unified_api_tools.unified_fetch(
         url="https://example.com/law",
         mode="balanced",
+        domain="medical",
     )
 
     assert result["status"] == "success"
     assert result["data"]["url"] == "https://example.com/law"
+    assert result["data"]["domain"] == "medical"
+    assert fake_api.last_fetch_request.domain == "medical"
 
 
 @pytest.mark.anyio
 async def test_unified_search_and_fetch_wrapper(monkeypatch) -> None:
-    monkeypatch.setattr(unified_api_tools, "_get_api", lambda: FakeUnifiedAPI())
+    fake_api = FakeUnifiedAPI()
+    monkeypatch.setattr(unified_api_tools, "_get_api", lambda: fake_api)
 
     result = await unified_api_tools.unified_search_and_fetch(
         query="indiana code",
         max_results=5,
         max_documents=2,
         mode="max_throughput",
+        domain="finance",
     )
 
     assert result["status"] == "success"
     assert result["max_documents"] == 2
+    assert fake_api.last_search_request.domain == "finance"
 
 
 @pytest.mark.anyio
