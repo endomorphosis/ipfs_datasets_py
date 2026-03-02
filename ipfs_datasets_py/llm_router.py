@@ -24,6 +24,11 @@ Additional optional providers (opt-in by selecting provider):
     - `HF_TOKEN` / `HUGGINGFACEHUB_API_TOKEN` / `IPFS_DATASETS_PY_HF_API_TOKEN`
     - `IPFS_DATASETS_PY_HF_INFERENCE_MODEL` (default model)
     - `IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL` (default: https://router.huggingface.co/hf-inference/models)
+    - `IPFS_DATASETS_PY_HF_BILL_TO` / `HUGGINGFACE_BILL_TO` / `HF_BILL_TO` (optional org billing scope)
+    - `IPFS_DATASETS_PY_HF_LLM_FALLBACK_MODELS` (optional comma-separated retry models)
+    - `IPFS_DATASETS_PY_HF_DYNAMIC_MODEL_DISCOVERY` (default: 1; discover hf-inference fallback models)
+    - `IPFS_DATASETS_PY_HF_LLM_DISCOVERY_LIMIT` (default: 20)
+    - `IPFS_DATASETS_PY_HF_LLM_DISCOVERY_TAGS` (default: text-generation,text2text-generation,summarization)
 - `codex_cli`: OpenAI Codex CLI via `codex exec`
     - `IPFS_DATASETS_PY_CODEX_CLI_MODEL` / `IPFS_DATASETS_PY_CODEX_MODEL`
 - `copilot_cli`: GitHub Copilot CLI via command template
@@ -1023,6 +1028,138 @@ def _hf_token_fingerprint() -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()[:12]
 
 
+def _resolve_hf_bill_to(*, kwargs: Optional[dict[str, object]] = None) -> str:
+    if kwargs:
+        for key in ("hf_bill_to", "bill_to", "organization", "org"):
+            value = kwargs.get(key)
+            if value is not None and str(value).strip():
+                return str(value).strip()
+    return _coalesce_env(
+        "IPFS_DATASETS_PY_HF_BILL_TO",
+        "HUGGINGFACE_BILL_TO",
+        "HF_BILL_TO",
+        "HF_ORGANIZATION",
+        "HUGGINGFACE_ORG",
+    )
+
+
+def _is_hf_inference_provider_name(name: Optional[str]) -> bool:
+    key = (name or "").strip().lower()
+    return key in {"hf_api", "hf_inference", "hf_inference_api", "huggingface_inference"}
+
+
+def _effective_llm_provider_name(explicit_provider: Optional[str]) -> str:
+    if explicit_provider and explicit_provider.strip():
+        return explicit_provider.strip().lower()
+    return os.getenv("IPFS_DATASETS_PY_LLM_PROVIDER", "").strip().lower()
+
+
+def _is_hf_model_compatibility_error(exc: BaseException) -> bool:
+    message = str(exc or "").lower()
+    return any(
+        token in message
+        for token in (
+            "http 404",
+            "not found",
+            "model",
+            "pipeline",
+            "task",
+            "unsupported",
+            "does not support",
+        )
+    ) and "http 402" not in message
+
+
+def _hf_llm_fallback_models(*, kwargs: dict[str, object]) -> list[str]:
+    raw = kwargs.get("hf_model_fallbacks")
+    if raw is None:
+        raw = os.getenv("IPFS_DATASETS_PY_HF_LLM_FALLBACK_MODELS", "")
+
+    if raw is None:
+        raw = ""
+    text = str(raw).strip()
+    if text:
+        return [item.strip() for item in text.split(",") if item and item.strip()]
+
+    models: list[str] = []
+    if _hf_dynamic_model_discovery_enabled(kwargs=kwargs):
+        tags = _hf_llm_discovery_tags(kwargs=kwargs)
+        limit = _hf_llm_discovery_limit(kwargs=kwargs)
+        for tag in tags:
+            models.extend(_discover_hf_models_for_pipeline(pipeline_tag=tag, limit=limit))
+
+    for candidate in _hf_llm_default_fallback_models():
+        if candidate not in models:
+            models.append(candidate)
+
+    return models
+
+
+def _hf_llm_default_fallback_models() -> list[str]:
+    return [
+        "facebook/bart-large-cnn",
+        "google/flan-t5-small",
+        "HuggingFaceH4/zephyr-7b-beta",
+    ]
+
+
+def _hf_dynamic_model_discovery_enabled(*, kwargs: dict[str, object]) -> bool:
+    raw = kwargs.get("hf_dynamic_model_discovery")
+    if raw is None:
+        raw = os.getenv("IPFS_DATASETS_PY_HF_DYNAMIC_MODEL_DISCOVERY", "1")
+    return str(raw).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _hf_llm_discovery_limit(*, kwargs: dict[str, object]) -> int:
+    raw = kwargs.get("hf_llm_discovery_limit")
+    if raw is None:
+        raw = os.getenv("IPFS_DATASETS_PY_HF_LLM_DISCOVERY_LIMIT", "20")
+    try:
+        return max(1, int(raw))
+    except Exception:
+        return 20
+
+
+def _hf_llm_discovery_tags(*, kwargs: dict[str, object]) -> list[str]:
+    raw = kwargs.get("hf_llm_discovery_tags")
+    if raw is None:
+        raw = os.getenv("IPFS_DATASETS_PY_HF_LLM_DISCOVERY_TAGS", "text-generation,text2text-generation,summarization")
+    text = str(raw or "").strip()
+    if not text:
+        return ["text-generation", "text2text-generation", "summarization"]
+    return [item.strip() for item in text.split(",") if item and item.strip()]
+
+
+@lru_cache(maxsize=32)
+def _discover_hf_models_for_pipeline(*, pipeline_tag: str, limit: int) -> tuple[str, ...]:
+    """Best-effort discovery of hf-inference compatible models for a pipeline tag."""
+
+    try:
+        hub = importlib.import_module("huggingface_hub")
+        api_cls = getattr(hub, "HfApi", None)
+        if api_cls is None:
+            return tuple()
+        api = api_cls()
+        token = _resolve_hf_api_token()
+        models = api.list_models(
+            inference_provider="hf-inference",
+            pipeline_tag=pipeline_tag,
+            limit=max(1, int(limit)),
+            token=token or None,
+        )
+        out: list[str] = []
+        for item in models:
+            model_id = getattr(item, "id", None)
+            if model_id is None:
+                continue
+            text = str(model_id).strip()
+            if text and text not in out:
+                out.append(text)
+        return tuple(out)
+    except Exception:
+        return tuple()
+
+
 _LEADING_MARKER_RE = re.compile(r"^[\s\u2022\u25CF\u25E6\u25AA\u25AB\u2219\u00B7\*\-]+")
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
 
@@ -1256,15 +1393,20 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
                 if optional in kwargs and kwargs.get(optional) is not None:
                     parameters[optional] = kwargs.get(optional)
 
+            bill_to = _resolve_hf_bill_to(kwargs=kwargs)
+            headers = {
+                "Authorization": f"Bearer {api_token}",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            }
+            if bill_to:
+                headers["X-HF-Bill-To"] = bill_to
+
             request = urllib.request.Request(
                 f"{base_url}/{model}",
                 data=json.dumps(payload).encode("utf-8"),
                 method="POST",
-                headers={
-                    "Authorization": f"Bearer {api_token}",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
+                headers=headers,
             )
 
             try:
@@ -1768,6 +1910,11 @@ def _provider_cache_key() -> tuple:
         os.getenv("HF_TOKEN", "").strip(),
         os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_MODEL", "").strip(),
         os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL", "").strip(),
+        os.getenv("IPFS_DATASETS_PY_HF_BILL_TO", "").strip(),
+        os.getenv("HUGGINGFACE_BILL_TO", "").strip(),
+        os.getenv("HF_BILL_TO", "").strip(),
+        os.getenv("HF_ORGANIZATION", "").strip(),
+        os.getenv("HUGGINGFACE_ORG", "").strip(),
         _hf_token_fingerprint(),
         os.getenv("IPFS_DATASETS_PY_CODEX_CLI_MODEL", "").strip(),
         os.getenv("IPFS_DATASETS_PY_CODEX_MODEL", "").strip(),
@@ -2118,38 +2265,56 @@ def generate_text(
             pass
 
     backend = provider_instance or get_llm_provider(provider, deps=resolved_deps)
+    effective_provider_name = _effective_llm_provider_name(provider)
+
+    def _cache_result(value: str, *, used_model_name: Optional[str]) -> None:
+        if not _response_cache_enabled():
+            return
+        try:
+            cache_key = _response_cache_key(provider=provider, model_name=used_model_name, prompt=prompt, kwargs=dict(kwargs))
+            setter = getattr(resolved_deps, "set_cached_and_remote", None)
+            if callable(setter):
+                setter(cache_key, str(value))
+            else:
+                resolved_deps.set_cached(cache_key, str(value))
+        except Exception:
+            pass
+
     try:
         result = backend.generate(prompt, model_name=model_name, **kwargs)
-        if _response_cache_enabled():
-            try:
-                cache_key = _response_cache_key(provider=provider, model_name=model_name, prompt=prompt, kwargs=dict(kwargs))
-                setter = getattr(resolved_deps, "set_cached_and_remote", None)
-                if callable(setter):
-                    setter(cache_key, str(result))
-                else:
-                    resolved_deps.set_cached(cache_key, str(result))
-            except Exception:
-                pass
+        _cache_result(str(result), used_model_name=model_name)
         return result
-    except Exception:
+    except Exception as initial_exc:
         # If a specific model was requested but isn't available for this provider,
         # retry with the provider's default model before other fallbacks.
         if model_name is not None:
             try:
                 result = backend.generate(prompt, model_name=None, **kwargs)
-                if _response_cache_enabled():
-                    try:
-                        cache_key = _response_cache_key(provider=provider, model_name=None, prompt=prompt, kwargs=dict(kwargs))
-                        setter = getattr(resolved_deps, "set_cached_and_remote", None)
-                        if callable(setter):
-                            setter(cache_key, str(result))
-                        else:
-                            resolved_deps.set_cached(cache_key, str(result))
-                    except Exception:
-                        pass
+                _cache_result(str(result), used_model_name=None)
                 return result
             except Exception:
                 pass
+
+        # For HF Inference API, retry with a vetted candidate model list when the
+        # failure looks like model/task compatibility.
+        if _is_hf_inference_provider_name(effective_provider_name) and _is_hf_model_compatibility_error(initial_exc):
+            attempted = set()
+            if model_name is not None and str(model_name).strip():
+                attempted.add(str(model_name).strip())
+            env_default = (os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_MODEL") or "").strip()
+            if env_default:
+                attempted.add(env_default)
+
+            for fallback_model in _hf_llm_fallback_models(kwargs=dict(kwargs)):
+                if fallback_model in attempted:
+                    continue
+                attempted.add(fallback_model)
+                try:
+                    result = backend.generate(prompt, model_name=fallback_model, **kwargs)
+                    _cache_result(str(result), used_model_name=fallback_model)
+                    return result
+                except Exception:
+                    continue
 
         # Fall back to local HF provider if optional provider fails.
         if provider is None:
@@ -2157,30 +2322,12 @@ def generate_text(
             if local_hf is not None and backend is not local_hf:
                 try:
                     result = local_hf.generate(prompt, model_name=model_name, **kwargs)
-                    if _response_cache_enabled():
-                        try:
-                            cache_key = _response_cache_key(provider=provider, model_name=model_name, prompt=prompt, kwargs=dict(kwargs))
-                            setter = getattr(resolved_deps, "set_cached_and_remote", None)
-                            if callable(setter):
-                                setter(cache_key, str(result))
-                            else:
-                                resolved_deps.set_cached(cache_key, str(result))
-                        except Exception:
-                            pass
+                    _cache_result(str(result), used_model_name=model_name)
                     return result
                 except Exception:
                     if model_name is not None:
                         result = local_hf.generate(prompt, model_name=None, **kwargs)
-                        if _response_cache_enabled():
-                            try:
-                                cache_key = _response_cache_key(provider=provider, model_name=None, prompt=prompt, kwargs=dict(kwargs))
-                                setter = getattr(resolved_deps, "set_cached_and_remote", None)
-                                if callable(setter):
-                                    setter(cache_key, str(result))
-                                else:
-                                    resolved_deps.set_cached(cache_key, str(result))
-                            except Exception:
-                                pass
+                        _cache_result(str(result), used_model_name=None)
                         return result
         raise
 
@@ -2189,6 +2336,7 @@ def clear_llm_router_caches() -> None:
     """Clear internal provider caches (useful for tests)."""
 
     _resolve_provider_cached.cache_clear()
+    _discover_hf_models_for_pipeline.cache_clear()
 
 
 def _messages_to_prompt(messages: Sequence[ChatMessage]) -> str:

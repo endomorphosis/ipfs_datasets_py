@@ -28,6 +28,8 @@ Additional optional providers (opt-in by selecting provider):
     - `HF_TOKEN` / `HUGGINGFACEHUB_API_TOKEN` / `IPFS_DATASETS_PY_HF_API_TOKEN`
     - `IPFS_DATASETS_PY_HF_EMBEDDINGS_MODEL` (default model)
     - `IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL` (default: https://router.huggingface.co/hf-inference/models)
+    - `IPFS_DATASETS_PY_HF_BILL_TO` / `HUGGINGFACE_BILL_TO` / `HF_BILL_TO` (optional org billing scope)
+    - `IPFS_DATASETS_PY_HF_EMBEDDINGS_FALLBACK_MODELS` (optional comma-separated retry models)
 """
 
 from __future__ import annotations
@@ -276,6 +278,69 @@ def _hf_token_fingerprint() -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()[:12]
 
 
+def _resolve_hf_bill_to(*, kwargs: Optional[dict[str, object]] = None) -> str:
+    if kwargs:
+        for key in ("hf_bill_to", "bill_to", "organization", "org"):
+            value = kwargs.get(key)
+            if value is not None and str(value).strip():
+                return str(value).strip()
+    return _coalesce_env(
+        "IPFS_DATASETS_PY_HF_BILL_TO",
+        "HUGGINGFACE_BILL_TO",
+        "HF_BILL_TO",
+        "HF_ORGANIZATION",
+        "HUGGINGFACE_ORG",
+    )
+
+
+def _is_hf_inference_provider_name(name: Optional[str]) -> bool:
+    key = (name or "").strip().lower()
+    return key in {"hf_api", "hf_inference", "hf_inference_api", "huggingface_inference"}
+
+
+def _effective_embeddings_provider_name(explicit_provider: Optional[str]) -> str:
+    if explicit_provider and explicit_provider.strip():
+        return explicit_provider.strip().lower()
+    return os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_PROVIDER", "").strip().lower()
+
+
+def _is_hf_embedding_compatibility_error(exc: BaseException) -> bool:
+    message = str(exc or "").lower()
+    if "http 402" in message:
+        return False
+    return any(
+        token in message
+        for token in (
+            "http 404",
+            "not found",
+            "missing 1 required positional argument: 'sentences'",
+            "pipeline",
+            "task",
+            "unsupported",
+            "does not support",
+        )
+    )
+
+
+def _hf_embeddings_fallback_models(*, kwargs: dict[str, object]) -> list[str]:
+    raw = kwargs.get("hf_model_fallbacks")
+    if raw is None:
+        raw = os.getenv("IPFS_DATASETS_PY_HF_EMBEDDINGS_FALLBACK_MODELS", "")
+
+    if raw is None:
+        raw = ""
+    text = str(raw).strip()
+    if text:
+        return [item.strip() for item in text.split(",") if item and item.strip()]
+
+    # Defaults chosen from broadly compatible feature-extraction models.
+    return [
+        "BAAI/bge-small-en-v1.5",
+        "sentence-transformers/all-MiniLM-L6-v2",
+        "thenlper/gte-small",
+    ]
+
+
 def _get_openrouter_provider() -> Optional[EmbeddingsProvider]:
     api_key = _coalesce_env("IPFS_DATASETS_PY_OPENROUTER_API_KEY", "OPENROUTER_API_KEY")
     if not api_key:
@@ -428,15 +493,20 @@ def _get_hf_inference_api_provider() -> Optional[EmbeddingsProvider]:
                 if optional in kwargs and kwargs.get(optional) is not None:
                     payload[optional] = kwargs.get(optional)
 
+            bill_to = _resolve_hf_bill_to(kwargs=kwargs)
+            headers = {
+                "Authorization": f"Bearer {api_token}",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            }
+            if bill_to:
+                headers["X-HF-Bill-To"] = bill_to
+
             request = urllib.request.Request(
                 f"{base_url}/{model}",
                 data=json.dumps(payload).encode("utf-8"),
                 method="POST",
-                headers={
-                    "Authorization": f"Bearer {api_token}",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
+                headers=headers,
             )
 
             try:
@@ -597,6 +667,11 @@ def _provider_cache_key() -> tuple:
         os.getenv("IPFS_DATASETS_PY_HF_EMBEDDINGS_MODEL", "").strip(),
         os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_MODEL", "").strip(),
         os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL", "").strip(),
+        os.getenv("IPFS_DATASETS_PY_HF_BILL_TO", "").strip(),
+        os.getenv("HUGGINGFACE_BILL_TO", "").strip(),
+        os.getenv("HF_BILL_TO", "").strip(),
+        os.getenv("HF_ORGANIZATION", "").strip(),
+        os.getenv("HUGGINGFACE_ORG", "").strip(),
         _hf_token_fingerprint(),
         os.getenv("IPFS_DATASETS_PY_GEMINI_EMBEDDINGS_CMD", "").strip(),
         os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_BACKEND", "").strip(),
@@ -760,47 +835,56 @@ def embed_texts(
             pass
 
     backend = provider_instance or get_embeddings_provider(provider, deps=resolved_deps)
+    effective_provider_name = _effective_embeddings_provider_name(provider)
+
+    def _cache_vectors(texts_for_cache: list[str], vectors_for_cache: list[list[float]], *, used_model_name: Optional[str]) -> None:
+        if not (_response_cache_enabled() and texts_for_cache):
+            return
+        for text, vec in zip(texts_for_cache, vectors_for_cache):
+            try:
+                cache_key = _response_cache_key(
+                    provider=provider,
+                    model_name=used_model_name,
+                    device=device,
+                    text=text,
+                    kwargs=dict(kwargs),
+                )
+                setter = getattr(resolved_deps, "set_cached_and_remote", None)
+                if callable(setter):
+                    setter(cache_key, vec)
+                else:
+                    resolved_deps.set_cached(cache_key, vec)
+            except Exception:
+                pass
+
     try:
         result = backend.embed_texts(inputs, model_name=model_name, device=device, **kwargs)
-        if _response_cache_enabled() and inputs:
-            for text, vec in zip(inputs, result):
-                try:
-                    cache_key = _response_cache_key(
-                        provider=provider,
-                        model_name=model_name,
-                        device=device,
-                        text=text,
-                        kwargs=dict(kwargs),
-                    )
-                    setter = getattr(resolved_deps, "set_cached_and_remote", None)
-                    if callable(setter):
-                        setter(cache_key, vec)
-                    else:
-                        resolved_deps.set_cached(cache_key, vec)
-                except Exception:
-                    pass
+        _cache_vectors(inputs, result, used_model_name=model_name)
         return result
-    except Exception:
+    except Exception as initial_exc:
+        if _is_hf_inference_provider_name(effective_provider_name) and _is_hf_embedding_compatibility_error(initial_exc):
+            attempted = set()
+            if model_name is not None and str(model_name).strip():
+                attempted.add(str(model_name).strip())
+            env_default = (os.getenv("IPFS_DATASETS_PY_HF_EMBEDDINGS_MODEL") or "").strip()
+            if env_default:
+                attempted.add(env_default)
+
+            for fallback_model in _hf_embeddings_fallback_models(kwargs=dict(kwargs)):
+                if fallback_model in attempted:
+                    continue
+                attempted.add(fallback_model)
+                try:
+                    result = backend.embed_texts(inputs, model_name=fallback_model, device=device, **kwargs)
+                    _cache_vectors(inputs, result, used_model_name=fallback_model)
+                    return result
+                except Exception:
+                    continue
+
         # If an optional provider fails, fall back to local adapter.
         if provider is None and backend is not _get_local_adapter_provider(deps=resolved_deps):
             result = _get_local_adapter_provider(deps=resolved_deps).embed_texts(inputs, model_name=model_name, device=device)
-            if _response_cache_enabled() and inputs:
-                for text, vec in zip(inputs, result):
-                    try:
-                        cache_key = _response_cache_key(
-                            provider=provider,
-                            model_name=model_name,
-                            device=device,
-                            text=text,
-                            kwargs=dict(kwargs),
-                        )
-                        setter = getattr(resolved_deps, "set_cached_and_remote", None)
-                        if callable(setter):
-                            setter(cache_key, vec)
-                        else:
-                            resolved_deps.set_cached(cache_key, vec)
-                    except Exception:
-                        pass
+            _cache_vectors(inputs, result, used_model_name=model_name)
             return result
         raise
 

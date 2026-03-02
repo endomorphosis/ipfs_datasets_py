@@ -63,6 +63,42 @@ def test_hf_inference_api_generate_builds_expected_request(monkeypatch) -> None:
     assert body["parameters"]["top_p"] == 0.9
 
 
+def test_hf_inference_api_sets_bill_to_header_from_env(monkeypatch) -> None:
+    llm_router.clear_llm_router_caches()
+    monkeypatch.setenv("HF_TOKEN", "test-token")
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_BILL_TO", "Publicus")
+
+    captured: dict[str, object] = {}
+
+    def fake_urlopen(req, timeout=0):
+        _ = timeout
+        captured["bill_to"] = req.get_header("X-hf-bill-to")
+        return _FakeHTTPResponse({"generated_text": "ok"})
+
+    monkeypatch.setattr(llm_router.urllib.request, "urlopen", fake_urlopen)
+
+    _ = llm_router.generate_text("hello", provider="hf_inference_api")
+    assert captured["bill_to"] == "Publicus"
+
+
+def test_hf_inference_api_kwargs_bill_to_overrides_env(monkeypatch) -> None:
+    llm_router.clear_llm_router_caches()
+    monkeypatch.setenv("HF_TOKEN", "test-token")
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_BILL_TO", "Personal")
+
+    captured: dict[str, object] = {}
+
+    def fake_urlopen(req, timeout=0):
+        _ = timeout
+        captured["bill_to"] = req.get_header("X-hf-bill-to")
+        return _FakeHTTPResponse({"generated_text": "ok"})
+
+    monkeypatch.setattr(llm_router.urllib.request, "urlopen", fake_urlopen)
+
+    _ = llm_router.generate_text("hello", provider="hf_inference_api", hf_bill_to="Publicus")
+    assert captured["bill_to"] == "Publicus"
+
+
 def test_hf_inference_api_alias_uses_env_default_model(monkeypatch) -> None:
     llm_router.clear_llm_router_caches()
     monkeypatch.setenv("IPFS_DATASETS_PY_HF_API_TOKEN", "token-2")
@@ -113,3 +149,70 @@ def test_hf_inference_api_uses_hub_cached_token(monkeypatch) -> None:
 
     assert text == "from cache"
     assert captured["auth"] == "Bearer cached-token"
+
+
+def test_hf_inference_api_retries_with_fallback_models(monkeypatch) -> None:
+    llm_router.clear_llm_router_caches()
+
+    calls: list[str | None] = []
+
+    class _FakeHFProvider:
+        def generate(self, prompt: str, *, model_name=None, **kwargs):
+            _ = (prompt, kwargs)
+            calls.append(model_name)
+            if model_name == "fallback-llm":
+                return "ok via fallback"
+            raise RuntimeError("HF Inference API HTTP 404: Not Found")
+
+    text = llm_router.generate_text(
+        "hello",
+        provider="hf_inference_api",
+        provider_instance=_FakeHFProvider(),
+        model_name="bad-model",
+        hf_model_fallbacks="fallback-llm",
+    )
+
+    assert text == "ok via fallback"
+    assert calls == ["bad-model", None, "fallback-llm"]
+
+
+def test_hf_inference_api_retries_with_discovered_models(monkeypatch) -> None:
+    llm_router.clear_llm_router_caches()
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_DYNAMIC_MODEL_DISCOVERY", "1")
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_LLM_DISCOVERY_TAGS", "text-generation")
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_LLM_DISCOVERY_LIMIT", "5")
+
+    class _FakeHfApi:
+        def list_models(self, **kwargs):
+            _ = kwargs
+            return [types.SimpleNamespace(id="discovered-llm")]
+
+    fake_hub = types.SimpleNamespace(HfApi=_FakeHfApi, get_token=lambda: None)
+    original_import_module = llm_router.importlib.import_module
+
+    def fake_import_module(name: str, package=None):
+        if name == "huggingface_hub":
+            return fake_hub
+        return original_import_module(name, package)
+
+    monkeypatch.setattr(llm_router.importlib, "import_module", fake_import_module)
+
+    calls: list[str | None] = []
+
+    class _FakeHFProvider:
+        def generate(self, prompt: str, *, model_name=None, **kwargs):
+            _ = (prompt, kwargs)
+            calls.append(model_name)
+            if model_name == "discovered-llm":
+                return "ok via discovered"
+            raise RuntimeError("HF Inference API HTTP 404: Not Found")
+
+    text = llm_router.generate_text(
+        "hello",
+        provider="hf_inference_api",
+        provider_instance=_FakeHFProvider(),
+        model_name="bad-model",
+    )
+
+    assert text == "ok via discovered"
+    assert calls == ["bad-model", None, "discovered-llm"]
