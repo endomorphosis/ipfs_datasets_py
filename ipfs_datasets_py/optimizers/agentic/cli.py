@@ -569,6 +569,9 @@ class OptimizerArgparseCLI:
         if output_dir:
             forwarded_args.extend(["--output-dir", output_dir])
 
+        if bool(args.emit_patch_plan):
+            forwarded_args.append("--emit-patch-plan")
+
         return int(state_laws_loop_main(forwarded_args))
     
     def _format_duration(self, seconds: float) -> str:
@@ -740,6 +743,11 @@ class OptimizerArgparseCLI:
             type=str,
             default='',
             help='Optional output directory for round artifacts',
+        )
+        state_laws_parser.add_argument(
+            '--emit-patch-plan',
+            action='store_true',
+            help='Emit ranked round/final patch-plan artifacts',
         )
         
         # Parse arguments

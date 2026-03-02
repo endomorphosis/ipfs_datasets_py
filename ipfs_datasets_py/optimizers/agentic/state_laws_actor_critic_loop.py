@@ -62,6 +62,7 @@ class LoopConfig:
     actor_concurrency: int = 2
     max_statutes: int = 0
     top_n_diagnostics: int = 8
+    emit_patch_plan: bool = False
 
 
 class StateLawsActorCriticLoop:
@@ -85,6 +86,7 @@ class StateLawsActorCriticLoop:
 
         self.round_history: List[Dict[str, Any]] = []
         self.best_outcome: Optional[TrialOutcome] = None
+        self._all_outcomes: List[TrialOutcome] = []
 
     async def run(self) -> Dict[str, Any]:
         """Execute optimization rounds and return final summary."""
@@ -96,9 +98,29 @@ class StateLawsActorCriticLoop:
                 break
 
             outcomes_sorted = sorted(outcomes, key=lambda item: item.critic_score, reverse=True)
+            self._all_outcomes.extend(outcomes_sorted)
             best = outcomes_sorted[0]
             if self.best_outcome is None or best.critic_score > self.best_outcome.critic_score:
                 self.best_outcome = best
+
+            patch_plan_file: Optional[str] = None
+            patch_plan_top: Optional[List[Dict[str, Any]]] = None
+            if bool(self.loop_config.emit_patch_plan):
+                round_patch_plan = self._build_patch_plan(outcomes_sorted)
+                patch_plan_file = f"round_patch_plan_{round_index:02d}.json"
+                (self.run_dir / patch_plan_file).write_text(
+                    json.dumps(
+                        {
+                            "round": round_index,
+                            "states": self.states,
+                            "generated_at": datetime.now().isoformat(),
+                            "patch_plan": round_patch_plan,
+                        },
+                        indent=2,
+                    ),
+                    encoding="utf-8",
+                )
+                patch_plan_top = round_patch_plan[:5]
 
             round_payload = {
                 "round": round_index,
@@ -107,6 +129,8 @@ class StateLawsActorCriticLoop:
                 "best_score": round(best.critic_score, 4),
                 "best_passed": bool(best.passed),
                 "outcomes": [asdict(outcome) for outcome in outcomes_sorted],
+                "patch_plan_file": patch_plan_file,
+                "patch_plan_top": patch_plan_top,
             }
             self.round_history.append(round_payload)
             (self.run_dir / f"round_{round_index:02d}.json").write_text(
@@ -118,6 +142,23 @@ class StateLawsActorCriticLoop:
 
             actor_pool = self._mutate_from_best(best)
 
+        final_patch_plan_file: Optional[str] = None
+        if bool(self.loop_config.emit_patch_plan):
+            final_patch_plan = self._build_patch_plan(self._all_outcomes)
+            final_patch_plan_file = "final_patch_plan.json"
+            (self.run_dir / final_patch_plan_file).write_text(
+                json.dumps(
+                    {
+                        "states": self.states,
+                        "generated_at": datetime.now().isoformat(),
+                        "rounds_executed": len(self.round_history),
+                        "patch_plan": final_patch_plan,
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
         final_summary = {
             "run_dir": str(self.run_dir),
             "states": self.states,
@@ -126,9 +167,86 @@ class StateLawsActorCriticLoop:
             "best": asdict(self.best_outcome) if self.best_outcome else None,
             "converged": bool(self.best_outcome and self.best_outcome.passed),
             "history_files": [f"round_{idx + 1:02d}.json" for idx in range(len(self.round_history))],
+            "patch_plan_file": final_patch_plan_file,
         }
         (self.run_dir / "final_summary.json").write_text(json.dumps(final_summary, indent=2), encoding="utf-8")
         return final_summary
+
+    def _build_patch_plan(self, outcomes: List[TrialOutcome]) -> List[Dict[str, Any]]:
+        file_scores: Dict[str, float] = {}
+        file_reasons: Dict[str, set[str]] = {}
+        file_states: Dict[str, set[str]] = {}
+
+        core_files = {
+            "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py",
+            "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/base_scraper.py",
+            "ipfs_datasets_py/processors/legal_scrapers/state_laws_verifier.py",
+        }
+
+        for outcome in outcomes:
+            score_deficit = max(0.0, 1.0 - float(outcome.critic_score or 0.0))
+            diagnostics = outcome.diagnostics or {}
+            coverage = diagnostics.get("coverage") or {}
+            fetch = diagnostics.get("fetch") or {}
+            etl = diagnostics.get("etl_readiness") or {}
+            quality = diagnostics.get("quality") or {}
+
+            reason_states: Dict[str, set[str]] = {}
+
+            for state in coverage.get("coverage_gap_states") or []:
+                state_code = str(state).upper()
+                reason_states.setdefault(state_code, set()).add("coverage_gap")
+            for state in fetch.get("no_attempt_states") or []:
+                state_code = str(state).upper()
+                reason_states.setdefault(state_code, set()).add("fetch_no_attempt")
+            for row in fetch.get("weak_states") or []:
+                if isinstance(row, dict):
+                    state_code = str(row.get("state") or "").upper()
+                    if state_code:
+                        reason_states.setdefault(state_code, set()).add("fetch_weak")
+            for row in quality.get("weak_states") or []:
+                if isinstance(row, dict):
+                    state_code = str(row.get("state") or "").upper()
+                    if state_code:
+                        reason_states.setdefault(state_code, set()).add("quality_weak")
+
+            global_reasons: set[str] = set()
+            if not bool(etl.get("ready_for_kg_etl")):
+                global_reasons.add("etl_not_ready")
+            if coverage.get("coverage_gap_states"):
+                global_reasons.add("coverage_gaps_present")
+            if fetch.get("no_attempt_states"):
+                global_reasons.add("no_attempt_states_present")
+
+            candidate_files = set(outcome.recommended_patch_targets or [])
+            for state_code, reasons in reason_states.items():
+                scraper_file = self._state_code_to_scraper_file(state_code)
+                if scraper_file:
+                    candidate_files.add(scraper_file)
+                    file_states.setdefault(scraper_file, set()).add(state_code)
+                    file_reasons.setdefault(scraper_file, set()).update(reasons)
+
+            for file_path in candidate_files:
+                file_scores[file_path] = float(file_scores.get(file_path, 0.0) or 0.0) + score_deficit
+                file_reasons.setdefault(file_path, set())
+                if file_path in core_files:
+                    file_reasons[file_path].update(global_reasons)
+
+        ranked = sorted(file_scores.items(), key=lambda item: item[1], reverse=True)
+        plan: List[Dict[str, Any]] = []
+        for file_path, score in ranked:
+            reasons = sorted(file_reasons.get(file_path, set()))
+            states = sorted(file_states.get(file_path, set()))
+            plan.append(
+                {
+                    "path": file_path,
+                    "priority_score": round(float(score), 4),
+                    "reasons": reasons,
+                    "states": states,
+                }
+            )
+
+        return plan
 
     async def _evaluate_round(self, round_index: int, actor_pool: List[ActorPolicyConfig]) -> List[TrialOutcome]:
         semaphore = asyncio.Semaphore(max(1, int(self.loop_config.actor_concurrency or 1)))
@@ -403,6 +521,11 @@ def _parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--max-statutes", type=int, default=0, help="Cap statutes per actor trial (0 = unlimited).")
     parser.add_argument("--top-n-diagnostics", type=int, default=8, help="Top-N weak states tracked in diagnostics.")
     parser.add_argument(
+        "--emit-patch-plan",
+        action="store_true",
+        help="Emit ranked round/final patch-plan artifacts with file priorities and reasons.",
+    )
+    parser.add_argument(
         "--output-dir",
         type=str,
         default="",
@@ -427,6 +550,7 @@ async def _main_async(args: argparse.Namespace) -> int:
             actor_concurrency=max(1, int(args.actor_concurrency)),
             max_statutes=max(0, int(args.max_statutes)),
             top_n_diagnostics=max(1, int(args.top_n_diagnostics)),
+            emit_patch_plan=bool(args.emit_patch_plan),
         ),
         output_dir=Path(args.output_dir).expanduser().resolve() if str(args.output_dir).strip() else None,
     )

@@ -57,6 +57,7 @@ Notes:
 	bodies (dry-run by default; pass `--create` to create issues).
 	If `gh` is unavailable, set `GH_TOKEN` (or `GITHUB_TOKEN`) and the script
 	will use GitHub REST API fallback mode.
+	Example: `GH_TOKEN=<token> bash scripts/ops/legal_data/create_ws11_github_issues.sh --create`.
 - VS Code tasks are canonical in `ipfs_datasets_py/.vscode/tasks.json`:
 	`Legal smoke: proof-audit canary`,
 	`Legal smoke: proof-audit regression`,

@@ -49,8 +49,19 @@ def github_api_request(
     if data is not None:
         request.add_header("Content-Type", "application/json")
 
-    with urllib.request.urlopen(request, timeout=30) as response:
-        return json.loads(response.read().decode("utf-8") or "{}")
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return json.loads(response.read().decode("utf-8") or "{}")
+    except urllib.error.HTTPError as exc:
+        message = f"GitHub API HTTP {exc.code}"
+        try:
+            error_payload = json.loads((exc.read() or b"").decode("utf-8") or "{}")
+            api_message = str(error_payload.get("message") or "").strip()
+            if api_message:
+                message = f"{message}: {api_message}"
+        except Exception:
+            pass
+        raise RuntimeError(message) from exc
 
 
 def parse_ws11_issues(markdown_text: str) -> list[dict[str, str]]:
@@ -234,6 +245,7 @@ def main() -> int:
 
     created = 0
     skipped = 0
+    failed = 0
 
     print(f"Repo: {args.repo}")
     print(f"Mode: {'CREATE' if args.create else 'DRY-RUN'}")
@@ -282,10 +294,14 @@ def main() -> int:
             created += 1
             print(f"[ok] {ticket_id} {url}")
         except Exception as exc:
+            failed += 1
             print(f"[error] {ticket_id}: {exc}", file=sys.stderr)
+            if github_token and ("HTTP 401" in str(exc) or "HTTP 403" in str(exc)):
+                print("[error] stopping early due to authentication/permission failure", file=sys.stderr)
+                break
 
-    print(f"Summary: created={created} skipped={skipped} parsed={len(issues)}")
-    return 0
+    print(f"Summary: created={created} skipped={skipped} failed={failed} parsed={len(issues)}")
+    return 1 if args.create and failed > 0 else 0
 
 
 if __name__ == "__main__":

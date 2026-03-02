@@ -157,6 +157,7 @@ def test_argparse_cli_state_laws_optimize_routes(monkeypatch: pytest.MonkeyPatch
         captured["states"] = args.states
         captured["max_rounds"] = args.max_rounds
         captured["target_score"] = args.target_score
+        captured["emit_patch_plan"] = bool(args.emit_patch_plan)
         return 0
 
     monkeypatch.setattr(cli, "cmd_state_laws_optimize", _fake_cmd)
@@ -170,6 +171,7 @@ def test_argparse_cli_state_laws_optimize_routes(monkeypatch: pytest.MonkeyPatch
             "3",
             "--target-score",
             "0.9",
+            "--emit-patch-plan",
         ]
     )
 
@@ -177,3 +179,4 @@ def test_argparse_cli_state_laws_optimize_routes(monkeypatch: pytest.MonkeyPatch
     assert captured["states"] == "OK,IN,LA"
     assert captured["max_rounds"] == 3
     assert captured["target_score"] == 0.9
+    assert captured["emit_patch_plan"] is True

@@ -111,3 +111,46 @@ def test_mutation_prioritizes_resilience_when_no_attempt_states():
     resilience = [cfg for cfg in mutated if cfg.name == "resilience_retry"][0]
     assert isinstance(resilience, ActorPolicyConfig)
     assert resilience.per_state_retry_attempts >= 2
+
+
+def test_build_patch_plan_ranks_state_files_with_reasons():
+    loop = _make_loop()
+
+    outcomes = [
+        TrialOutcome(
+            round_index=1,
+            actor_name="a1",
+            config={
+                "name": "a1",
+                "parallel_workers": 6,
+                "per_state_retry_attempts": 1,
+                "rate_limit_delay": 1.0,
+                "min_full_text_chars": 300,
+                "hydrate_statute_text": True,
+            },
+            status="partial_success",
+            critic_score=0.35,
+            diagnostics={
+                "coverage": {"coverage_gap_states": ["OK"]},
+                "fetch": {"no_attempt_states": ["IN"], "weak_states": [{"state": "LA"}]},
+                "quality": {"weak_states": [{"state": "OK"}]},
+                "etl_readiness": {"ready_for_kg_etl": False},
+            },
+            passed=False,
+            recommended_patch_targets=[
+                "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py",
+                "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/base_scraper.py",
+                "ipfs_datasets_py/processors/legal_scrapers/state_laws_verifier.py",
+                "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/oklahoma.py",
+            ],
+        )
+    ]
+
+    plan = loop._build_patch_plan(outcomes)
+
+    assert len(plan) > 0
+    paths = [item["path"] for item in plan]
+    assert "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/oklahoma.py" in paths
+    ok_entry = [item for item in plan if item["path"].endswith("oklahoma.py")][0]
+    assert "OK" in ok_entry["states"]
+    assert "coverage_gap" in ok_entry["reasons"] or "quality_weak" in ok_entry["reasons"]
