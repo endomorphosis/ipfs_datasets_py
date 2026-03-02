@@ -19,3 +19,7 @@ Templates:
 - `templates/reasoner_query_testset_template.json`
 - `templates/HYBRID_LEGAL_WS11_ISSUE_BODIES_01_06.md`
 - `templates/HYBRID_LEGAL_WS11_ISSUE_BODIES_07_12.md`
+
+WS11 automation:
+- `scripts/ops/legal_data/create_ws11_github_issues.py`
+- `scripts/ops/legal_data/create_ws11_github_issues.sh`

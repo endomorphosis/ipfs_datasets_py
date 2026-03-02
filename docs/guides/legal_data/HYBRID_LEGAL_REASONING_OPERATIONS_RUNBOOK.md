@@ -635,3 +635,46 @@ Optional parameters:
 Template sources:
 - `ipfs_datasets_py/docs/guides/legal_data/templates/HYBRID_LEGAL_WS11_ISSUE_BODIES_01_06.md`
 - `ipfs_datasets_py/docs/guides/legal_data/templates/HYBRID_LEGAL_WS11_ISSUE_BODIES_07_12.md`
+
+## 15) WS11 Local Parity Evidence
+
+Purpose:
+- Produce a single local parity gate covering WS11 implementation test surfaces.
+
+Command:
+```bash
+cd /home/barberb/municipal_scrape_workspace/ipfs_datasets_py
+PYTHONPATH=src:. /home/barberb/municipal_scrape_workspace/.venv/bin/python -m pytest \
+  tests/reasoner/test_hybrid_v2_blueprint.py \
+  tests/reasoner/test_kg_enrichment_adapter.py \
+  tests/reasoner/test_prover_backend_registry.py \
+  tests/reasoner/test_hybrid_v2_query_api_matrix.py \
+  tests/reasoner/test_hybrid_v2_parse_replay.py \
+  tests/reasoner/test_hybrid_v2_compiler_parity.py -q
+```
+
+Expected outcome:
+- All selected suites pass with deterministic outputs (current local baseline: `69 passed`).
+
+Recommended artifact capture:
+```bash
+mkdir -p /home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws11_release_$(date +%Y%m%d)
+cd /home/barberb/municipal_scrape_workspace/ipfs_datasets_py
+PYTHONPATH=src:. /home/barberb/municipal_scrape_workspace/.venv/bin/python -m pytest \
+  tests/reasoner/test_hybrid_v2_blueprint.py \
+  tests/reasoner/test_kg_enrichment_adapter.py \
+  tests/reasoner/test_prover_backend_registry.py \
+  tests/reasoner/test_hybrid_v2_query_api_matrix.py \
+  tests/reasoner/test_hybrid_v2_parse_replay.py \
+  tests/reasoner/test_hybrid_v2_compiler_parity.py -q \
+  > /home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws11_release_$(date +%Y%m%d)/pytest_reasoner_ws11.txt
+```
+
+Latest local WS11 pack (2026-03-02):
+- Output directory: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws11_release_20260302`
+- Manifest: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws11_release_20260302/EVIDENCE_PACK_MANIFEST.txt`
+- WS11 full-parity gate artifact: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws11_release_20260302/pytest_reasoner_ws11.txt` (`69 passed`)
+- Pytest gate: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws11_release_20260302/pytest_reasoner_release_gate.txt` (`73 passed`)
+- Backend smoke: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws11_release_20260302/backend_smoke_mock_smt.json`, `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws11_release_20260302/backend_smoke_mock_fol.json` (both `passed=true`)
+- Batch smoke: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws11_release_20260302/hybrid_v2_cli_batch_smoke.json` (`total=4`, `ok=4`, `error=0`)
+- Checklist artifact: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws11_release_20260302/WS11_RELEASE_CHECKLIST_20260302.md`

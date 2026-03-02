@@ -146,6 +146,13 @@ Current sprint seed (2026-03-02):
 - [x] `HL-WS11-03` Temporal Constraint Normalization Pack. (2026-03-02)
 - [x] `HL-WS11-04` Compiler V3 Pass (IR -> DCEC). (2026-03-02)
 - [x] `HL-WS11-05` Compiler V3 Pass (IR -> Temporal Deontic FOL). (2026-03-02)
+- [x] `HL-WS11-06` Round-Trip CNL/NL Regeneration Contract. (2026-03-02)
+- [x] `HL-WS11-07` Optimizer Hook Semantic-Drift Gate v3. (2026-03-02)
+- [x] `HL-WS11-08` KG Hook Additive Enrichment Policy v3. (2026-03-02)
+- [x] `HL-WS11-09` Prover Certificate Contract v3. (2026-03-02)
+- [x] `HL-WS11-10` API Semantics Expansion (Compliance + Violations + Explain). (2026-03-02)
+- [x] `HL-WS11-11` 10-Example CNL Transformation Regression Pack. (2026-03-02)
+- [x] `HL-WS11-12` 8-Query Proof Matrix Closure + Ops Runbook Update. (2026-03-02)
 
 WS11 local evidence (2026-03-02):
 - WS11-01 gate: `PYTHONPATH=src:/home/barberb/municipal_scrape_workspace/ipfs_datasets_py /home/barberb/municipal_scrape_workspace/.venv/bin/python -m pytest tests/reasoner/test_hybrid_v2_blueprint.py -q`.
@@ -154,6 +161,14 @@ WS11 local evidence (2026-03-02):
 - WS11-02 result: `13 passed`.
 - WS11-03/04/05 gate: `PYTHONPATH=src:. ../.venv/bin/python -m pytest tests/reasoner/test_hybrid_v2_compiler_parity.py -q`.
 - WS11-03/04/05 result: `6 passed`.
+- WS11-06..12 gate: `PYTHONPATH=src:. ../.venv/bin/python -m pytest tests/reasoner/test_hybrid_v2_blueprint.py tests/reasoner/test_kg_enrichment_adapter.py tests/reasoner/test_prover_backend_registry.py tests/reasoner/test_hybrid_v2_query_api_matrix.py tests/reasoner/test_hybrid_v2_parse_replay.py tests/reasoner/test_hybrid_v2_compiler_parity.py -q`.
+- WS11-06..12 result: `69 passed`.
+- WS11-06..12 artifact: `artifacts/formal_logic_tmp_verify/federal/ws11_release_20260302/pytest_reasoner_ws11.txt` (`69 passed`).
+- WS11 release evidence manifest: `artifacts/formal_logic_tmp_verify/federal/ws11_release_20260302/EVIDENCE_PACK_MANIFEST.txt`.
+- WS11 release pytest gate: `artifacts/formal_logic_tmp_verify/federal/ws11_release_20260302/pytest_reasoner_release_gate.txt` (`73 passed`).
+- WS11 release backend smoke: `artifacts/formal_logic_tmp_verify/federal/ws11_release_20260302/backend_smoke_mock_smt.json`, `artifacts/formal_logic_tmp_verify/federal/ws11_release_20260302/backend_smoke_mock_fol.json` (both `passed=true`).
+- WS11 release batch smoke: `artifacts/formal_logic_tmp_verify/federal/ws11_release_20260302/hybrid_v2_cli_batch_smoke.json` (`total=4`, `ok=4`, `error=0`).
+- WS11 checklist artifact: `artifacts/formal_logic_tmp_verify/federal/ws11_release_20260302/WS11_RELEASE_CHECKLIST_20260302.md`.
 - V3 schema utilities: `ipfs_datasets_py/ipfs_datasets_py/processors/legal_data/reasoner/serialization.py` (`SUPPORTED_V3_*`, `deterministic_v3_canonical_id`, `map_v2_payload_to_v3`, `validate_v3_ir_payload`).
 - Package exports: `ipfs_datasets_py/ipfs_datasets_py/processors/legal_data/reasoner/__init__.py`.
 
