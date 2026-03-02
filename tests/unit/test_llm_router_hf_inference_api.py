@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import types
 
 from ipfs_datasets_py import llm_router
 
@@ -78,4 +79,37 @@ def test_hf_inference_api_alias_uses_env_default_model(monkeypatch) -> None:
     text = llm_router.generate_text("hi", provider="hf_api")
 
     assert text == "alias path"
-    assert captured["url"] == "https://api-inference.huggingface.co/models/google/flan-t5-small"
+    assert captured["url"] == "https://router.huggingface.co/hf-inference/models/google/flan-t5-small"
+
+
+def test_hf_inference_api_uses_hub_cached_token(monkeypatch) -> None:
+    llm_router.clear_llm_router_caches()
+    monkeypatch.delenv("IPFS_DATASETS_PY_HF_API_TOKEN", raising=False)
+    monkeypatch.delenv("HUGGINGFACEHUB_API_TOKEN", raising=False)
+    monkeypatch.delenv("HUGGINGFACE_API_TOKEN", raising=False)
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+
+    fake_hub = types.SimpleNamespace(get_token=lambda: "cached-token")
+
+    original_import_module = llm_router.importlib.import_module
+
+    def fake_import_module(name: str, package=None):
+        if name == "huggingface_hub":
+            return fake_hub
+        return original_import_module(name, package)
+
+    monkeypatch.setattr(llm_router.importlib, "import_module", fake_import_module)
+
+    captured: dict[str, object] = {}
+
+    def fake_urlopen(req, timeout=0):
+        _ = timeout
+        captured["auth"] = req.get_header("Authorization")
+        return _FakeHTTPResponse({"generated_text": "from cache"})
+
+    monkeypatch.setattr(llm_router.urllib.request, "urlopen", fake_urlopen)
+
+    text = llm_router.generate_text("hello", provider="hf_inference_api")
+
+    assert text == "from cache"
+    assert captured["auth"] == "Bearer cached-token"

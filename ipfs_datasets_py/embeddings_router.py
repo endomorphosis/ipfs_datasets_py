@@ -24,11 +24,16 @@ Additional optional providers (opt-in by selecting provider):
     - `IPFS_DATASETS_PY_OPENROUTER_BASE_URL` (default: https://openrouter.ai/api/v1)
 - `gemini_cli`: Gemini CLI embeddings command (same as embedding_adapter)
     - `IPFS_DATASETS_PY_GEMINI_EMBEDDINGS_CMD` (default: "gemini embeddings --json")
+- `hf_inference_api`: Hugging Face hosted Inference API (feature extraction)
+    - `HF_TOKEN` / `HUGGINGFACEHUB_API_TOKEN` / `IPFS_DATASETS_PY_HF_API_TOKEN`
+    - `IPFS_DATASETS_PY_HF_EMBEDDINGS_MODEL` (default model)
+    - `IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL` (default: https://router.huggingface.co/hf-inference/models)
 """
 
 from __future__ import annotations
 
 import json
+import importlib
 import os
 import shlex
 import shutil
@@ -158,6 +163,13 @@ def _effective_model_key(*, provider_key: str, model_name: Optional[str], kwargs
             or os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_MODEL")
             or ""
         ).strip()
+    if pk in {"hf_api", "hf_inference", "hf_inference_api", "huggingface_inference"}:
+        return (
+            os.getenv("IPFS_DATASETS_PY_HF_EMBEDDINGS_MODEL")
+            or os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_MODEL")
+            or os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_MODEL")
+            or ""
+        ).strip()
 
     # Local adapter / default.
     return (os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_MODEL", "") or "").strip()
@@ -236,6 +248,34 @@ def _coalesce_env(*names: str) -> str:
     return ""
 
 
+def _resolve_hf_api_token() -> str:
+    token = _coalesce_env(
+        "IPFS_DATASETS_PY_HF_API_TOKEN",
+        "HUGGINGFACEHUB_API_TOKEN",
+        "HUGGINGFACE_API_TOKEN",
+        "HF_TOKEN",
+    )
+    if token:
+        return token
+
+    try:
+        hub = importlib.import_module("huggingface_hub")
+        getter = getattr(hub, "get_token", None)
+        resolved = getter() if callable(getter) else ""
+        if resolved is not None and str(resolved).strip():
+            return str(resolved).strip()
+    except Exception:
+        return ""
+    return ""
+
+
+def _hf_token_fingerprint() -> str:
+    token = _resolve_hf_api_token()
+    if not token:
+        return ""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()[:12]
+
+
 def _get_openrouter_provider() -> Optional[EmbeddingsProvider]:
     api_key = _coalesce_env("IPFS_DATASETS_PY_OPENROUTER_API_KEY", "OPENROUTER_API_KEY")
     if not api_key:
@@ -310,6 +350,119 @@ def _get_openrouter_provider() -> Optional[EmbeddingsProvider]:
     return _OpenRouterEmbeddingsProvider()
 
 
+def _normalize_hf_embedding_payload(data: object) -> List[List[float]]:
+    """Normalize common HF embeddings payload shapes to list[list[float]]."""
+
+    if isinstance(data, dict):
+        if isinstance(data.get("error"), str):
+            raise RuntimeError(f"HF Inference API error: {data.get('error')}")
+        if isinstance(data.get("embeddings"), list):
+            data = data.get("embeddings")
+
+    if not isinstance(data, list) or not data:
+        raise RuntimeError("HF Inference API embeddings response missing vectors")
+
+    first = data[0]
+    if isinstance(first, (int, float)):
+        return [[float(x) for x in data]]
+
+    vectors: List[List[float]] = []
+    for item in data:
+        if isinstance(item, list):
+            vectors.append([float(x) for x in item])
+            continue
+        if isinstance(item, dict) and isinstance(item.get("embedding"), list):
+            vectors.append([float(x) for x in item["embedding"]])
+            continue
+        raise RuntimeError("HF Inference API returned malformed embedding vector")
+    return vectors
+
+
+def _get_hf_inference_api_provider() -> Optional[EmbeddingsProvider]:
+    api_token = _resolve_hf_api_token()
+    if not api_token:
+        return None
+
+    base_url = os.getenv(
+        "IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL",
+        "https://router.huggingface.co/hf-inference/models",
+    ).rstrip("/")
+
+    class _HFInferenceAPIEmbeddingsProvider:
+        def embed_texts(
+            self,
+            texts: Iterable[str],
+            *,
+            model_name: Optional[str] = None,
+            device: Optional[str] = None,
+            **kwargs: object,
+        ) -> List[List[float]]:
+            _ = device
+            model = (
+                model_name
+                or os.getenv("IPFS_DATASETS_PY_HF_EMBEDDINGS_MODEL")
+                or os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_MODEL")
+                or os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_MODEL")
+                or "sentence-transformers/all-MiniLM-L6-v2"
+            ).strip()
+
+            inputs = list(texts)
+            if not inputs:
+                return []
+
+            timeout = float(kwargs.get("timeout", 120))
+            wait_for_model_raw = kwargs.get("wait_for_model", True)
+            use_cache_raw = kwargs.get("use_cache", True)
+            wait_for_model = _truthy(wait_for_model_raw) if isinstance(wait_for_model_raw, str) else bool(wait_for_model_raw)
+            use_cache = _truthy(use_cache_raw) if isinstance(use_cache_raw, str) else bool(use_cache_raw)
+
+            payload: dict[str, object] = {
+                "inputs": inputs,
+                "options": {
+                    "wait_for_model": wait_for_model,
+                    "use_cache": use_cache,
+                },
+            }
+
+            for optional in ("truncate", "truncation", "normalize"):
+                if optional in kwargs and kwargs.get(optional) is not None:
+                    payload[optional] = kwargs.get(optional)
+
+            request = urllib.request.Request(
+                f"{base_url}/{model}",
+                data=json.dumps(payload).encode("utf-8"),
+                method="POST",
+                headers={
+                    "Authorization": f"Bearer {api_token}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+
+            try:
+                with urllib.request.urlopen(request, timeout=timeout) as response:
+                    raw = response.read().decode("utf-8", errors="replace")
+            except urllib.error.HTTPError as exc:
+                detail = exc.read().decode("utf-8", errors="replace") if exc.fp else ""
+                raise RuntimeError(f"HF Inference API HTTP {exc.code}: {detail or exc.reason}") from exc
+            except Exception as exc:
+                raise RuntimeError(f"HF Inference API request failed: {exc}") from exc
+
+            try:
+                data = json.loads(raw)
+            except Exception as exc:
+                raise RuntimeError("HF Inference API returned invalid JSON") from exc
+
+            vectors = _normalize_hf_embedding_payload(data)
+            if len(vectors) != len(inputs):
+                if vectors:
+                    return vectors
+                raise RuntimeError("HF Inference API returned no embeddings")
+            return vectors
+
+    return _HFInferenceAPIEmbeddingsProvider()
+
+
 def _get_gemini_cli_provider() -> Optional[EmbeddingsProvider]:
     command = os.getenv("IPFS_DATASETS_PY_GEMINI_EMBEDDINGS_CMD", "gemini embeddings --json")
     parts = shlex.split(command)
@@ -369,6 +522,8 @@ def _builtin_provider_by_name(name: str, *, deps: RouterDeps) -> Optional[Embedd
         return None
     if key == "openrouter":
         return _get_openrouter_provider()
+    if key in {"hf_api", "hf_inference", "hf_inference_api", "huggingface_inference"}:
+        return _get_hf_inference_api_provider()
     if key in {"gemini", "gemini_cli"}:
         return _get_gemini_cli_provider()
     if key in {"adapter", "local", "local_adapter"}:
@@ -435,6 +590,14 @@ def _provider_cache_key() -> tuple:
         os.getenv("OPENROUTER_API_KEY", "").strip(),
         os.getenv("IPFS_DATASETS_PY_OPENROUTER_EMBEDDINGS_MODEL", "").strip(),
         os.getenv("IPFS_DATASETS_PY_OPENROUTER_BASE_URL", "").strip(),
+        os.getenv("IPFS_DATASETS_PY_HF_API_TOKEN", "").strip(),
+        os.getenv("HUGGINGFACEHUB_API_TOKEN", "").strip(),
+        os.getenv("HUGGINGFACE_API_TOKEN", "").strip(),
+        os.getenv("HF_TOKEN", "").strip(),
+        os.getenv("IPFS_DATASETS_PY_HF_EMBEDDINGS_MODEL", "").strip(),
+        os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_MODEL", "").strip(),
+        os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL", "").strip(),
+        _hf_token_fingerprint(),
         os.getenv("IPFS_DATASETS_PY_GEMINI_EMBEDDINGS_CMD", "").strip(),
         os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_BACKEND", "").strip(),
         os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_MODEL", "").strip(),

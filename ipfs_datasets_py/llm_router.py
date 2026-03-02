@@ -23,7 +23,7 @@ Additional optional providers (opt-in by selecting provider):
 - `hf_inference_api`: Hugging Face hosted Inference API (text-generation)
     - `HF_TOKEN` / `HUGGINGFACEHUB_API_TOKEN` / `IPFS_DATASETS_PY_HF_API_TOKEN`
     - `IPFS_DATASETS_PY_HF_INFERENCE_MODEL` (default model)
-    - `IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL` (default: https://api-inference.huggingface.co/models)
+    - `IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL` (default: https://router.huggingface.co/hf-inference/models)
 - `codex_cli`: OpenAI Codex CLI via `codex exec`
     - `IPFS_DATASETS_PY_CODEX_CLI_MODEL` / `IPFS_DATASETS_PY_CODEX_MODEL`
 - `copilot_cli`: GitHub Copilot CLI via command template
@@ -995,6 +995,34 @@ def _coalesce_env(*names: str) -> str:
     return ""
 
 
+def _resolve_hf_api_token() -> str:
+    token = _coalesce_env(
+        "IPFS_DATASETS_PY_HF_API_TOKEN",
+        "HUGGINGFACEHUB_API_TOKEN",
+        "HUGGINGFACE_API_TOKEN",
+        "HF_TOKEN",
+    )
+    if token:
+        return token
+
+    try:
+        hub = importlib.import_module("huggingface_hub")
+        getter = getattr(hub, "get_token", None)
+        resolved = getter() if callable(getter) else ""
+        if resolved is not None and str(resolved).strip():
+            return str(resolved).strip()
+    except Exception:
+        return ""
+    return ""
+
+
+def _hf_token_fingerprint() -> str:
+    token = _resolve_hf_api_token()
+    if not token:
+        return ""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()[:12]
+
+
 _LEADING_MARKER_RE = re.compile(r"^[\s\u2022\u25CF\u25E6\u25AA\u25AB\u2219\u00B7\*\-]+")
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
 
@@ -1184,16 +1212,14 @@ def _get_openrouter_provider() -> Optional[LLMProvider]:
 
 
 def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
-    api_token = _coalesce_env(
-        "IPFS_DATASETS_PY_HF_API_TOKEN",
-        "HUGGINGFACEHUB_API_TOKEN",
-        "HUGGINGFACE_API_TOKEN",
-        "HF_TOKEN",
-    )
+    api_token = _resolve_hf_api_token()
     if not api_token:
         return None
 
-    base_url = os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL", "https://api-inference.huggingface.co/models").rstrip("/")
+    base_url = os.getenv(
+        "IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL",
+        "https://router.huggingface.co/hf-inference/models",
+    ).rstrip("/")
 
     class _HFInferenceAPIProvider:
         def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
@@ -1742,6 +1768,7 @@ def _provider_cache_key() -> tuple:
         os.getenv("HF_TOKEN", "").strip(),
         os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_MODEL", "").strip(),
         os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL", "").strip(),
+        _hf_token_fingerprint(),
         os.getenv("IPFS_DATASETS_PY_CODEX_CLI_MODEL", "").strip(),
         os.getenv("IPFS_DATASETS_PY_CODEX_MODEL", "").strip(),
         os.getenv("IPFS_DATASETS_PY_COPILOT_CLI_CMD", "").strip(),
