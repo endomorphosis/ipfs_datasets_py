@@ -19,6 +19,8 @@ def test_canonicalize_provider_aliases() -> None:
     assert canonicalize_provider("anthropic") == "anthropic"
     assert canonicalize_provider("claude") == "anthropic"
     assert canonicalize_provider("ipfs_accelerate") == "accelerate"
+    assert canonicalize_provider("hf_api") == "hf_inference_api"
+    assert canonicalize_provider("hf_inference") == "hf_inference_api"
 
 
 def test_detect_provider_from_environment_var(monkeypatch) -> None:
@@ -27,6 +29,14 @@ def test_detect_provider_from_environment_var(monkeypatch) -> None:
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     assert detect_provider_from_environment(prefer_accelerate=False) == "anthropic"
+
+
+def test_detect_provider_from_environment_var_hf_inference(monkeypatch) -> None:
+    monkeypatch.setenv("IPFS_DATASETS_PY_LLM_PROVIDER", "hf_inference_api")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    assert detect_provider_from_environment(prefer_accelerate=False) == "hf_inference_api"
 
 
 def test_detect_provider_from_api_key(monkeypatch) -> None:

@@ -20,6 +20,10 @@ Additional optional providers (opt-in by selecting provider):
     - `OPENROUTER_API_KEY` or `IPFS_DATASETS_PY_OPENROUTER_API_KEY`
     - `IPFS_DATASETS_PY_OPENROUTER_MODEL` (default model)
     - `IPFS_DATASETS_PY_OPENROUTER_BASE_URL` (default: https://openrouter.ai/api/v1)
+- `hf_inference_api`: Hugging Face hosted Inference API (text-generation)
+    - `HF_TOKEN` / `HUGGINGFACEHUB_API_TOKEN` / `IPFS_DATASETS_PY_HF_API_TOKEN`
+    - `IPFS_DATASETS_PY_HF_INFERENCE_MODEL` (default model)
+    - `IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL` (default: https://api-inference.huggingface.co/models)
 - `codex_cli`: OpenAI Codex CLI via `codex exec`
     - `IPFS_DATASETS_PY_CODEX_CLI_MODEL` / `IPFS_DATASETS_PY_CODEX_MODEL`
 - `copilot_cli`: GitHub Copilot CLI via command template
@@ -878,6 +882,12 @@ def _effective_model_key(*, provider_key: str, model_name: Optional[str], kwargs
         return (os.environ.get("IPFS_DATASETS_PY_COPILOT_SDK_MODEL", "") or "").strip()
     if pk in {"hf", "huggingface", "local_hf"}:
         return (os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "gpt2") or "gpt2").strip()
+    if pk in {"hf_api", "hf_inference", "hf_inference_api", "huggingface_inference"}:
+        return (
+            os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_MODEL")
+            or os.getenv("IPFS_DATASETS_PY_LLM_MODEL")
+            or "gpt2"
+        ).strip()
 
     # Provider unknown/auto: include the most common default.
     return (os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "") or "").strip()
@@ -1171,6 +1181,98 @@ def _get_openrouter_provider() -> Optional[LLMProvider]:
             raise RuntimeError("OpenRouter response missing choices")
 
     return _OpenRouterProvider()
+
+
+def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
+    api_token = _coalesce_env(
+        "IPFS_DATASETS_PY_HF_API_TOKEN",
+        "HUGGINGFACEHUB_API_TOKEN",
+        "HUGGINGFACE_API_TOKEN",
+        "HF_TOKEN",
+    )
+    if not api_token:
+        return None
+
+    base_url = os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL", "https://api-inference.huggingface.co/models").rstrip("/")
+
+    class _HFInferenceAPIProvider:
+        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+            model = (
+                model_name
+                or os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_MODEL")
+                or os.getenv("IPFS_DATASETS_PY_LLM_MODEL")
+                or "gpt2"
+            ).strip()
+
+            max_new_tokens = int(kwargs.get("max_new_tokens", kwargs.get("max_tokens", 128)))
+            temperature = float(kwargs.get("temperature", 0.2))
+            timeout = float(kwargs.get("timeout", 120))
+            wait_for_model_raw = kwargs.get("wait_for_model", True)
+            use_cache_raw = kwargs.get("use_cache", True)
+            wait_for_model = _truthy(wait_for_model_raw) if isinstance(wait_for_model_raw, str) else bool(wait_for_model_raw)
+            use_cache = _truthy(use_cache_raw) if isinstance(use_cache_raw, str) else bool(use_cache_raw)
+
+            parameters: dict[str, object] = {
+                "max_new_tokens": max_new_tokens,
+                "temperature": temperature,
+            }
+
+            payload: dict[str, object] = {
+                "inputs": prompt,
+                "parameters": parameters,
+                "options": {
+                    "wait_for_model": wait_for_model,
+                    "use_cache": use_cache,
+                },
+            }
+
+            for optional in ("top_p", "top_k", "repetition_penalty", "do_sample", "return_full_text"):
+                if optional in kwargs and kwargs.get(optional) is not None:
+                    parameters[optional] = kwargs.get(optional)
+
+            request = urllib.request.Request(
+                f"{base_url}/{model}",
+                data=json.dumps(payload).encode("utf-8"),
+                method="POST",
+                headers={
+                    "Authorization": f"Bearer {api_token}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+
+            try:
+                with urllib.request.urlopen(request, timeout=timeout) as response:
+                    raw = response.read().decode("utf-8", errors="replace")
+            except urllib.error.HTTPError as exc:
+                detail = exc.read().decode("utf-8", errors="replace") if exc.fp else ""
+                raise RuntimeError(f"HF Inference API HTTP {exc.code}: {detail or exc.reason}") from exc
+            except Exception as exc:
+                raise RuntimeError(f"HF Inference API request failed: {exc}") from exc
+
+            try:
+                data = json.loads(raw)
+            except Exception as exc:
+                raise RuntimeError("HF Inference API returned invalid JSON") from exc
+
+            if isinstance(data, dict) and isinstance(data.get("error"), str):
+                raise RuntimeError(f"HF Inference API error: {data.get('error')}")
+
+            if isinstance(data, list) and data:
+                first = data[0]
+                if isinstance(first, dict):
+                    generated = first.get("generated_text")
+                    if isinstance(generated, str):
+                        return generated
+
+            if isinstance(data, dict):
+                generated = data.get("generated_text")
+                if isinstance(generated, str):
+                    return generated
+
+            raise RuntimeError("HF Inference API response missing generated text")
+
+    return _HFInferenceAPIProvider()
 
 
 def _get_codex_cli_provider() -> Optional[LLMProvider]:
@@ -1634,6 +1736,12 @@ def _provider_cache_key() -> tuple:
         os.getenv("OPENROUTER_API_KEY", "").strip(),
         os.getenv("IPFS_DATASETS_PY_OPENROUTER_MODEL", "").strip(),
         os.getenv("IPFS_DATASETS_PY_OPENROUTER_BASE_URL", "").strip(),
+        os.getenv("IPFS_DATASETS_PY_HF_API_TOKEN", "").strip(),
+        os.getenv("HUGGINGFACEHUB_API_TOKEN", "").strip(),
+        os.getenv("HUGGINGFACE_API_TOKEN", "").strip(),
+        os.getenv("HF_TOKEN", "").strip(),
+        os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_MODEL", "").strip(),
+        os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL", "").strip(),
         os.getenv("IPFS_DATASETS_PY_CODEX_CLI_MODEL", "").strip(),
         os.getenv("IPFS_DATASETS_PY_CODEX_MODEL", "").strip(),
         os.getenv("IPFS_DATASETS_PY_COPILOT_CLI_CMD", "").strip(),
@@ -1693,6 +1801,8 @@ def _builtin_provider_by_name(name: str) -> Optional[LLMProvider]:
         return _get_mock_provider()
     if key == "openrouter":
         return _get_openrouter_provider()
+    if key in {"hf_api", "hf_inference", "hf_inference_api", "huggingface_inference"}:
+        return _get_hf_inference_api_provider()
     if key in {"codex", "codex_cli"}:
         return _get_codex_cli_provider()
     if key in {"copilot_cli"}:
@@ -1909,7 +2019,7 @@ def _resolve_provider_uncached(preferred: Optional[str], *, deps: RouterDeps) ->
         return accelerate_provider
 
     # Try common optional CLI/API providers if available.
-    for name in ["openrouter", "codex_cli", "copilot_cli", "gemini_cli", "claude_code", "claude_py", "gemini_py", "copilot_sdk"]:
+    for name in ["openrouter", "hf_inference_api", "codex_cli", "copilot_cli", "gemini_cli", "claude_code", "claude_py", "gemini_py", "copilot_sdk"]:
         candidate = _builtin_provider_by_name(name)
         if candidate is not None:
             return candidate
