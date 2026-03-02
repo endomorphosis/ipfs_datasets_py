@@ -164,7 +164,7 @@ class TestV2ContractValidation:
 # ---------------------------------------------------------------------------
 
 class ModalityMutatingOptimizer:
-    """Test optimizer that changes O→P on all norms (should be rejected)."""
+    """Test optimizer that changes O->P on all norms (should be rejected)."""
 
     def optimize_ir(self, ir):
         mutated = copy.deepcopy(ir)
@@ -211,7 +211,7 @@ class TestOptimizerDriftGate:
         assert opt["rejected"] is False
 
     def test_optimizer_rejects_modality_change(self):
-        # GIVEN an optimizer that changes O→P
+        # GIVEN an optimizer that changes O->P
         # WHEN run_v2_pipeline is called with that optimizer
         result = run_v2_pipeline(
             "Contractor shall submit the report",

@@ -7,7 +7,7 @@ import json
 from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple
 
 try:
-    from municipal_scrape_workspace.hybrid_legal_ir import (
+    from .hybrid_legal_ir import (
         ActionFrame,
         DeonticOp,
         LegalIR,
@@ -15,8 +15,9 @@ try:
         generate_cnl,
     )
 except ImportError:
-    # Legacy V1 types unavailable; engine's V1 API won't work but import succeeds.
-    ActionFrame = DeonticOp = LegalIR = Norm = generate_cnl = None  # type: ignore[assignment]
+    from municipal_scrape_workspace.hybrid_legal_ir import (  # type: ignore[no-redef]
+        ActionFrame, DeonticOp, LegalIR, Norm, generate_cnl,
+    )
 
 from .models import (
     IRReference,

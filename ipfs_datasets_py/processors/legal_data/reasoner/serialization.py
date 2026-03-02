@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 try:
-    from municipal_scrape_workspace.hybrid_legal_ir import (
+    from .hybrid_legal_ir import (
         ActionFrame,
         Atom,
         CanonicalId,
@@ -25,10 +25,11 @@ try:
         TemporalRelation,
     )
 except ImportError:
-    # Legacy V1 types unavailable; V2/V3 API functions still work.
-    ActionFrame = Atom = CanonicalId = Condition = DeonticOp = Entity = None  # type: ignore[assignment]
-    EventFrame = FrameKind = LegalIR = Norm = Query = Rule = StateFrame = None  # type: ignore[assignment]
-    TemporalConstraint = TemporalExpr = TemporalRelation = None  # type: ignore[assignment]
+    from municipal_scrape_workspace.hybrid_legal_ir import (  # type: ignore[no-redef]
+        ActionFrame, Atom, CanonicalId, Condition, DeonticOp, Entity,
+        EventFrame, FrameKind, LegalIR, Norm, Query, Rule, StateFrame,
+        TemporalConstraint, TemporalExpr, TemporalRelation,
+    )
 
 from .models import (
     IRReference,

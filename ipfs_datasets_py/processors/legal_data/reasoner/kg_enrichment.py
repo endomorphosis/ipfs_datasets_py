@@ -5,9 +5,9 @@ import hashlib
 from typing import Any, Dict, List
 
 try:
-    from municipal_scrape_workspace.hybrid_legal_ir import LegalIR
+    from .hybrid_legal_ir import LegalIR
 except ImportError:
-    LegalIR = Any  # type: ignore[assignment,misc]
+    from municipal_scrape_workspace.hybrid_legal_ir import LegalIR  # type: ignore[no-redef]
 
 
 def _norm_label(value: Any) -> str:
