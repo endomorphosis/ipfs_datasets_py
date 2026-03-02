@@ -523,3 +523,7 @@ Expected artifact paths:
 - `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/pytest_reasoner_ws9.txt`
 - `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/backend_smoke_mock_smt.json`
 - `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/backend_smoke_mock_fol.json`
+
+Latest local dry-run evidence (2026-03-02):
+- Tests: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/pytest_reasoner_ws9.txt` (`68 passed`).
+- Backend matrix parity: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/backend_smoke_mock_smt.json`, `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/backend_smoke_mock_fol.json` (both `passed=true`).

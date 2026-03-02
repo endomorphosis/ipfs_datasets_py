@@ -115,6 +115,13 @@ Current sprint (2026-03-02):
 - [x] `HL-WS9-08` Prover Backend Unification and Certificate Contract. (2026-03-02)
 - [x] `HL-WS9-09` Reasoner Query API Obligations and Proof Trace Completeness. (2026-03-02)
 - [x] `HL-WS9-10` CNL Round-Trip Regeneration Quality Pack. (2026-03-02)
+- [x] `HL-WS9-11` Query API Matrix Closure and Determinism Sweep. (2026-03-02)
+- [x] `HL-WS9-12` CI/Runbook Operationalization and Evidence Pack. (2026-03-02)
+
+WS9 local dry-run evidence (2026-03-02):
+- Tests: `artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/pytest_reasoner_ws9.txt` (`68 passed`).
+- Backend matrix parity: `artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/backend_smoke_mock_smt.json`, `artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/backend_smoke_mock_fol.json` (both `passed=true`).
+- CI gate updates: `ipfs_datasets_py/.github/workflows/legal-v2-reasoner-ci.yml` (added WS9 trigger paths and `test_kg_enrichment_adapter.py` to required suite).
 
 Ready queue:
 
@@ -258,6 +265,8 @@ Use this section for short dated notes while executing TODO items.
 - 2026-03-01: Published API/proof schema documentation and operations runbook for shadow/canary/GA controls, artifact interpretation, and rollout/rollback actions.
 - 2026-03-01: Implemented optimizer acceptance policy with per-modality semantic floors, no-regression gain checks, and deterministic audit decisions (`build_optimizer_acceptance_decision`) plus ops assessment script.
 - 2026-03-01: Added stage orchestration plan (`build_optimizer_chain_plan`) and chain runner scripts to apply `post_parse`/`post_compile` optimizer toggles in `run_formal_logic_regression_check.sh` via plan-driven env settings.
+- 2026-03-02: Closed `HL-WS9-11` by extending query API determinism checks and preserving stable proof-trace behavior in matrix coverage (`tests/reasoner/test_hybrid_v2_query_api_matrix.py`).
+- 2026-03-02: Closed `HL-WS9-12` by operationalizing WS9 evidence workflow in runbook, expanding `Legal V2 Reasoner CI` trigger/suite coverage, and generating local artifacts under `artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/`.
 - 2026-03-01: Added optimizer on/off benchmark suite (`build_optimizer_onoff_benchmark`, benchmark assessment script, and `run_formal_logic_optimizer_benchmark.sh`) with deterministic comparison artifact output.
 - 2026-03-01: Implemented KG entity-linking and role-relation enrichment adapters with confidence scoring plus reversible apply/rollback writes (`build_entity_link_adapter`, `build_relation_enrichment_adapter`, `apply_kg_enrichment`, `rollback_kg_enrichment`) and dedicated adapter tests.
 - 2026-03-01: Added KG drift assessment guard (`build_kg_drift_assessment`) and tests to detect relation growth/relations-per-frame explosion.
