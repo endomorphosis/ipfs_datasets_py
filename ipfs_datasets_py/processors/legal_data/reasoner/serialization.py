@@ -5,24 +5,30 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from municipal_scrape_workspace.hybrid_legal_ir import (
-    ActionFrame,
-    Atom,
-    CanonicalId,
-    Condition,
-    DeonticOp,
-    Entity,
-    EventFrame,
-    FrameKind,
-    LegalIR,
-    Norm,
-    Query,
-    Rule,
-    StateFrame,
-    TemporalConstraint,
-    TemporalExpr,
-    TemporalRelation,
-)
+try:
+    from municipal_scrape_workspace.hybrid_legal_ir import (
+        ActionFrame,
+        Atom,
+        CanonicalId,
+        Condition,
+        DeonticOp,
+        Entity,
+        EventFrame,
+        FrameKind,
+        LegalIR,
+        Norm,
+        Query,
+        Rule,
+        StateFrame,
+        TemporalConstraint,
+        TemporalExpr,
+        TemporalRelation,
+    )
+except ImportError:
+    # Legacy V1 types unavailable; V2/V3 API functions still work.
+    ActionFrame = Atom = CanonicalId = Condition = DeonticOp = Entity = None  # type: ignore[assignment]
+    EventFrame = FrameKind = LegalIR = Norm = Query = Rule = StateFrame = None  # type: ignore[assignment]
+    TemporalConstraint = TemporalExpr = TemporalRelation = None  # type: ignore[assignment]
 
 from .models import (
     IRReference,

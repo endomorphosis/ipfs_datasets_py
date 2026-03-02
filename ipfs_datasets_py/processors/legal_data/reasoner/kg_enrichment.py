@@ -4,7 +4,10 @@ from copy import deepcopy
 import hashlib
 from typing import Any, Dict, List
 
-from municipal_scrape_workspace.hybrid_legal_ir import LegalIR
+try:
+    from municipal_scrape_workspace.hybrid_legal_ir import LegalIR
+except ImportError:
+    LegalIR = Any  # type: ignore[assignment,misc]
 
 
 def _norm_label(value: Any) -> str:
