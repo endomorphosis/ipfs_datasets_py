@@ -123,7 +123,7 @@ WS8 done definition:
 - [ ] No unresolved schema drift in query/proof envelopes.
 
 Immediate next action:
-- [ ] Implement `HL-WS8-01` snapshot fixture + schema-drift assertion test.
+- [ ] Validate `HL-WS8-01` in project pytest environment and mark done.
 
 ## Execution Order (Dependency-Aware)
 
@@ -229,6 +229,8 @@ Use this section for short dated notes while executing TODO items.
 - 2026-03-01: Scope-3 progress: migrated remaining unmoved root ops analyzer (`analyze_formal_logic_entropy.py`) into canonical submodule scripts with root wrapper compatibility, and created `ROOT_TO_SUBMODULE_SCOPE3_MANIFEST_2026-03-01.tsv` documenting pointer docs plus deferred generated `data/state_laws/*/parsed/jsonld` artifact migration pending storage-policy decision.
 - 2026-03-01: User decision: do not migrate `data/state_laws/*/parsed/jsonld` artifacts yet because state-law extraction/parsing is still actively being worked; keep this dataset in root workspace until that workstream stabilizes.
 - 2026-03-01: Migrated canonical legal smoke task ownership from workspace root `.vscode/tasks.json` to `ipfs_datasets_py/.vscode/tasks.json`; root wrappers remain compatibility-only.
+- 2026-03-02: Started `HL-WS8-01`; added fixture-backed query API schema snapshot lock test in `tests/reasoner/test_hybrid_v2_query_api_matrix.py` and created `tests/reasoner/fixtures/hybrid_v2_api_schema_snapshot.json`.
+- 2026-03-02: Local shell could not execute pytest (`pytest` unavailable in current PATH/interpreter); validation pending run in the project test environment.
 
 ## Definition of Ready (per TODO item)
 
