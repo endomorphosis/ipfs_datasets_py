@@ -52,6 +52,7 @@ from .unified_api_tools import (
     unified_fetch,
     unified_search_and_fetch,
     unified_health,
+    unified_agentic_discover_and_fetch,
 )
 
 # Search API classes
@@ -150,4 +151,5 @@ __all__ = [
     "unified_fetch",
     "unified_search_and_fetch",
     "unified_health",
+    "unified_agentic_discover_and_fetch",
 ]

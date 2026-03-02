@@ -66,6 +66,7 @@ class FakeScraper:
             metadata={"content_type": "text/html"},
             method_used=SimpleNamespace(value="beautifulsoup"),
             extraction_time=0.1,
+            links=[{"url": "https://example.com/law-2", "text": "Law 2"}],
             errors=[],
         )
 
@@ -191,6 +192,8 @@ def test_unified_api_fetch_success_with_injected_scraper() -> None:
     assert response.document is not None
     assert response.document.title == "Fetched Title"
     assert response.quality_score > 0
+    assert response.document.metadata.get("source_type") in {"html", "pdf"}
+    assert isinstance(response.document.metadata.get("entities"), list)
 
 
 def test_unified_api_search_and_fetch_returns_document_envelope() -> None:
@@ -207,3 +210,18 @@ def test_unified_api_search_and_fetch_returns_document_envelope() -> None:
 
     assert result["status"] == "success"
     assert result["documents_count"] == 1
+
+
+def test_unified_api_agentic_discover_and_fetch() -> None:
+    api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess(), scraper=FakeScraper())
+
+    result = api.agentic_discover_and_fetch(
+        seed_urls=["https://example.com/law"],
+        target_terms=["law"],
+        max_hops=1,
+        max_pages=2,
+    )
+
+    assert result["status"] == "success"
+    assert result["visited_count"] >= 1
+    assert isinstance(result["results"], list)

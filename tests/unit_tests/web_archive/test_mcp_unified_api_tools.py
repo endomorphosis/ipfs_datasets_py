@@ -59,6 +59,14 @@ class FakeUnifiedAPI:
     def health(self):
         return {"orchestrator": {}, "metrics_5m": {}}
 
+    def agentic_discover_and_fetch(self, **kwargs):
+        return {
+            "status": "success",
+            "visited_count": 1,
+            "results": [],
+            "kwargs": kwargs,
+        }
+
 
 def test_unified_mcp_functions_are_async() -> None:
     assert inspect.iscoroutinefunction(unified_api_tools.unified_search)
@@ -118,3 +126,19 @@ async def test_unified_health_wrapper(monkeypatch) -> None:
 
     assert result["status"] == "success"
     assert "orchestrator" in result["data"]
+
+
+@pytest.mark.anyio
+async def test_unified_agentic_discover_wrapper(monkeypatch) -> None:
+    monkeypatch.setattr(unified_api_tools, "_get_api", lambda: FakeUnifiedAPI())
+
+    result = await unified_api_tools.unified_agentic_discover_and_fetch(
+        seed_urls=["https://example.com"],
+        target_terms=["statute"],
+        max_hops=1,
+        max_pages=3,
+        mode="balanced",
+    )
+
+    assert result["status"] == "success"
+    assert result["visited_count"] == 1

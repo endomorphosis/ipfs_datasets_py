@@ -62,6 +62,11 @@ from .orchestration import (
     execute_with_retry,
 )
 from .unified_api import UnifiedWebArchivingAPI, UnifiedAPIConfig
+from .agentic_scrape_optimizer import (
+    AgenticExtractionConfig,
+    AgenticScrapeOptimizer,
+    ParsedScrapeResult,
+)
 from .compat import legacy_search_web, legacy_fetch_url, legacy_search_and_fetch
 from .brave_search_client import (
     BraveSearchClient,
@@ -264,6 +269,9 @@ __all__ = [
     'execute_with_retry',
     'UnifiedWebArchivingAPI',
     'UnifiedAPIConfig',
+    'AgenticExtractionConfig',
+    'AgenticScrapeOptimizer',
+    'ParsedScrapeResult',
     'legacy_search_web',
     'legacy_fetch_url',
     'legacy_search_and_fetch',

@@ -12,6 +12,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional, Union
+from urllib.parse import urlparse
 
 from .contracts import (
     ErrorSeverity,
@@ -25,6 +26,7 @@ from .contracts import (
     UnifiedSearchRequest,
     UnifiedSearchResponse,
 )
+from .agentic_scrape_optimizer import AgenticScrapeOptimizer, ParsedScrapeResult
 from .metrics.registry import MetricsRegistry
 from .orchestration.executor import SearchExecutor
 from .orchestration.planner import SearchPlanner
@@ -57,6 +59,7 @@ class UnifiedWebArchivingAPI:
         search_planner: Optional[SearchPlanner] = None,
         search_executor: Optional[SearchExecutor] = None,
         scraper: Optional[Any] = None,
+        agentic_optimizer: Optional[AgenticScrapeOptimizer] = None,
     ):
         self.config = config or UnifiedAPIConfig(default_search_engines=list(DEFAULT_SEARCH_ENGINES))
         self.metrics_registry = metrics_registry or MetricsRegistry()
@@ -68,6 +71,7 @@ class UnifiedWebArchivingAPI:
         )
         self.search_executor = search_executor or SearchExecutor(orchestrator=self.orchestrator)
         self.scraper = scraper
+        self.agentic_optimizer = agentic_optimizer or AgenticScrapeOptimizer()
 
     def _build_orchestrator(self) -> MultiEngineOrchestrator:
         orchestrator_config = OrchestratorConfig(
@@ -246,6 +250,23 @@ class UnifiedWebArchivingAPI:
         try:
             scraper = self._get_scraper()
             scraper_result = scraper.scrape_sync(fetch_request.url)
+
+            # Best-effort PDF bytes fetch for document-style links.
+            if fetch_request.url.lower().endswith(".pdf"):
+                raw_bytes = self._fetch_raw_bytes(fetch_request.url)
+                if raw_bytes:
+                    if not isinstance(getattr(scraper_result, "metadata", None), dict):
+                        scraper_result.metadata = {}
+                    scraper_result.metadata["raw_bytes"] = raw_bytes
+                    scraper_result.metadata.setdefault("content_type", "application/pdf")
+
+            parsed: ParsedScrapeResult = self.agentic_optimizer.transform(
+                url=fetch_request.url,
+                title=getattr(scraper_result, "title", "") or "",
+                text=getattr(scraper_result, "text", "") or "",
+                html=getattr(scraper_result, "html", "") or "",
+                metadata=getattr(scraper_result, "metadata", {}) or {},
+            )
             trace.total_latency_ms = (time.time() - start_time) * 1000.0
             trace.finished_at = datetime.utcnow().isoformat()
 
@@ -280,14 +301,19 @@ class UnifiedWebArchivingAPI:
 
             text = getattr(scraper_result, "text", "") or ""
             html = getattr(scraper_result, "html", "") or ""
-            quality_score = 1.0 if text else (0.4 if html else 0.0)
+            quality_score = 1.0 if parsed.cleaned_text else (0.4 if (text or html) else 0.0)
             doc = UnifiedDocument(
                 url=fetch_request.url,
-                title=getattr(scraper_result, "title", "") or "",
-                text=text,
+                title=parsed.title,
+                text=parsed.cleaned_text,
                 html=html,
                 content_type=(getattr(scraper_result, "metadata", {}) or {}).get("content_type", ""),
-                metadata=getattr(scraper_result, "metadata", {}) or {},
+                metadata={
+                    **(getattr(scraper_result, "metadata", {}) or {}),
+                    "source_type": parsed.source_type,
+                    "entities": parsed.entities,
+                    "links": getattr(scraper_result, "links", []) or [],
+                },
                 extraction_provenance={
                     "method": getattr(getattr(scraper_result, "method_used", None), "value", None),
                     "extraction_time": getattr(scraper_result, "extraction_time", 0.0),
@@ -376,6 +402,60 @@ class UnifiedWebArchivingAPI:
             "documents_count": len(documents),
         }
 
+    def agentic_discover_and_fetch(
+        self,
+        *,
+        seed_urls: List[str],
+        target_terms: List[str],
+        max_hops: int = 2,
+        max_pages: int = 10,
+        mode: OperationMode = OperationMode.BALANCED,
+    ) -> Dict[str, Any]:
+        """Agentically discover and fetch pages when data location is unknown.
+
+        The loop fetches seed pages, ranks outgoing links against target terms,
+        and follows the most promising links up to hop/page limits.
+        """
+        visited = set()
+        frontier = list(seed_urls)
+        collected: List[Dict[str, Any]] = []
+
+        for _hop in range(max(0, int(max_hops)) + 1):
+            if not frontier or len(visited) >= max_pages:
+                break
+
+            next_frontier: List[str] = []
+            for url in frontier:
+                if url in visited or len(visited) >= max_pages:
+                    continue
+                visited.add(url)
+
+                response = self.fetch(UnifiedFetchRequest(url=url, mode=mode))
+                collected.append(response.to_dict())
+
+                if not response.success or not response.document:
+                    continue
+
+                links = response.document.metadata.get("links") or []
+                if not isinstance(links, list):
+                    links = []
+                ranked = self.agentic_optimizer.rank_links(links, target_terms)
+
+                for item in ranked[:5]:
+                    link_url = str(item.get("url") or "")
+                    if self._is_http_url(link_url) and link_url not in visited:
+                        # Keep crawl scoped to same host by default.
+                        if self._same_host(url, link_url):
+                            next_frontier.append(link_url)
+
+            frontier = next_frontier
+
+        return {
+            "status": "success",
+            "visited_count": len(visited),
+            "results": collected,
+        }
+
     def _get_scraper(self) -> Any:
         if self.scraper is not None:
             return self.scraper
@@ -384,6 +464,33 @@ class UnifiedWebArchivingAPI:
 
         self.scraper = UnifiedWebScraper()
         return self.scraper
+
+    @staticmethod
+    def _fetch_raw_bytes(url: str) -> bytes:
+        try:
+            import requests
+
+            resp = requests.get(url, timeout=30)
+            if resp.ok:
+                return resp.content
+        except Exception:
+            return b""
+        return b""
+
+    @staticmethod
+    def _is_http_url(value: str) -> bool:
+        try:
+            parsed = urlparse(value)
+            return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+        except Exception:
+            return False
+
+    @staticmethod
+    def _same_host(base_url: str, candidate_url: str) -> bool:
+        try:
+            return urlparse(base_url).netloc == urlparse(candidate_url).netloc
+        except Exception:
+            return False
 
     @staticmethod
     def _to_unified_hit(item: Any) -> UnifiedSearchHit:

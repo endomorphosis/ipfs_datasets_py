@@ -3,6 +3,9 @@
 MCP tools for web search, archiving, and data discovery. Provides integration with major
 search APIs, the Wayback Machine, Common Crawl, GitHub, HuggingFace Hub, and more.
 
+The module also includes unified API wrappers that provide a single surface for
+throughput-aware provider routing and fallback behavior.
+
 ## Tools
 
 | File | Function(s) | Description |
@@ -25,6 +28,69 @@ search APIs, the Wayback Machine, Common Crawl, GitHub, HuggingFace Hub, and mor
 | `extract_dataset_from_cdxj.py` | `extract_dataset_from_cdxj()` | Build a dataset from a CDX-J index |
 | `index_warc.py` | `index_warc()` | Index a WARC file for fast lookup |
 | `ipwb_integration.py` | `ipwb_index()`, `ipwb_replay()` | InterPlanetary Wayback (IPWB) operations |
+| `unified_api_tools.py` | `unified_search()`, `unified_fetch()`, `unified_search_and_fetch()`, `unified_health()` | Unified orchestration wrappers for search and scraping |
+
+## Unified Endpoints
+
+Use these for new integrations.
+
+### Unified Search
+
+```python
+from ipfs_datasets_py.mcp_server.tools.web_archive_tools import unified_search
+
+result = await unified_search(
+    query="indiana statutes title 35",
+    max_results=25,
+    mode="max_throughput",  # max_throughput | balanced | max_quality | low_cost
+    provider_allowlist=["brave", "duckduckgo"],
+)
+```
+
+### Unified Fetch
+
+```python
+from ipfs_datasets_py.mcp_server.tools.web_archive_tools import unified_fetch
+
+result = await unified_fetch(
+    url="https://example.com/law",
+    mode="balanced",
+)
+```
+
+### Unified Search and Fetch
+
+```python
+from ipfs_datasets_py.mcp_server.tools.web_archive_tools import unified_search_and_fetch
+
+result = await unified_search_and_fetch(
+    query="site:iga.in.gov title 35",
+    max_results=20,
+    max_documents=5,
+    mode="max_throughput",
+)
+```
+
+### Unified Health
+
+```python
+from ipfs_datasets_py.mcp_server.tools.web_archive_tools import unified_health
+
+status = await unified_health()
+```
+
+## Migration Notes
+
+For a full migration path from legacy search/scrape patterns to unified APIs,
+see `docs/WEB_ARCHIVING_MIGRATION_GUIDE.md`.
+
+Quick mapping:
+
+| Legacy pattern | Unified replacement |
+|---|---|
+| Ad hoc multi-engine search calls | `unified_search()` |
+| Direct scraper-specific URL fetches | `unified_fetch()` |
+| Custom search-then-fetch loops | `unified_search_and_fetch()` |
 
 ## Usage
 
