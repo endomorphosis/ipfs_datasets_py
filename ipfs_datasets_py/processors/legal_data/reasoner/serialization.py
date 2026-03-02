@@ -35,6 +35,8 @@ from .models import (
 
 SUPPORTED_IR_VERSION = "1.0"
 SUPPORTED_CNL_VERSION = "1.0"
+SUPPORTED_V2_IR_VERSION = "2.0"
+SUPPORTED_V2_CNL_VERSION = "2.0"
 
 
 def _stringify_version(value: Any) -> str:
@@ -58,6 +60,25 @@ def validate_contract_versions(
         raise ValueError(
             f"{source_label}: unsupported cnl_version '{cnl_version}' "
             f"(expected '{SUPPORTED_CNL_VERSION}')"
+        )
+
+
+def validate_v2_contract_versions(
+    *,
+    ir_version: str,
+    cnl_version: str,
+    source_label: str,
+) -> None:
+    """Validate version fields for the V2 IR/CNL contract."""
+    if ir_version != SUPPORTED_V2_IR_VERSION:
+        raise ValueError(
+            f"{source_label}: unsupported v2 ir_version '{ir_version}' "
+            f"(expected '{SUPPORTED_V2_IR_VERSION}')"
+        )
+    if cnl_version != SUPPORTED_V2_CNL_VERSION:
+        raise ValueError(
+            f"{source_label}: unsupported v2 cnl_version '{cnl_version}' "
+            f"(expected '{SUPPORTED_V2_CNL_VERSION}')"
         )
 
 

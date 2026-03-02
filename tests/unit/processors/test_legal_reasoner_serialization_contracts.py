@@ -7,8 +7,11 @@ import pytest
 from ipfs_datasets_py.processors.legal_data.reasoner.serialization import (
     SUPPORTED_CNL_VERSION,
     SUPPORTED_IR_VERSION,
+    SUPPORTED_V2_CNL_VERSION,
+    SUPPORTED_V2_IR_VERSION,
     load_legal_ir_from_json,
     load_legacy_logic_hybrid_fixture,
+    validate_v2_contract_versions,
 )
 
 
@@ -95,3 +98,20 @@ def test_load_legacy_logic_hybrid_fixture_upgrades_embedded_payload(tmp_path):
 
     assert ir.version == SUPPORTED_IR_VERSION
     assert "nrm:one" in ir.norms
+
+
+def test_validate_v2_contract_versions_accepts_v2() -> None:
+    validate_v2_contract_versions(
+        ir_version=SUPPORTED_V2_IR_VERSION,
+        cnl_version=SUPPORTED_V2_CNL_VERSION,
+        source_label="v2_fixture.json",
+    )
+
+
+def test_validate_v2_contract_versions_rejects_non_v2() -> None:
+    with pytest.raises(ValueError, match="unsupported v2 ir_version"):
+        validate_v2_contract_versions(
+            ir_version=SUPPORTED_IR_VERSION,
+            cnl_version=SUPPORTED_V2_CNL_VERSION,
+            source_label="v2_fixture.json",
+        )

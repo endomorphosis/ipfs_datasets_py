@@ -3,6 +3,9 @@
 For the comprehensive V2 integration blueprint (IR/CNL/optimizers/KG/provers/reasoner), see:
 - `HYBRID_LEGAL_V2_OPTIMIZER_KG_PROVER_INTEGRATION_PLAN.md`
 
+For the expanded comprehensive architecture plan (IR grammar, CNL templates, dual compilers, reasoner APIs, workflow diagram, and example query/proof sets), see:
+- `HYBRID_LEGAL_COMPREHENSIVE_IMPROVEMENT_PLAN.md`
+
 ## 1) Goal and Scope
 
 This plan defines how to integrate:

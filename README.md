@@ -174,6 +174,12 @@ bash scripts/ops/legal_data/run_hybrid_v2_pipeline.sh \
 Reference runbook:
 - `docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md`
 
+Comprehensive architecture plan:
+- `docs/guides/legal_data/HYBRID_LEGAL_COMPREHENSIVE_IMPROVEMENT_PLAN.md`
+
+Execution workstreams:
+- `docs/guides/legal_data/HYBRID_LEGAL_EXECUTION_WORKSTREAMS.md`
+
 ### Discord Integration
 
 ```bash

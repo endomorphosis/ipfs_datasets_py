@@ -121,6 +121,8 @@ class NormV2:
     exceptions: List[ConditionNodeV2] = field(default_factory=list)
     temporal_ref: Optional[str] = None
     priority: int = 0
+    source_ref: Optional[str] = None
+    attrs: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -129,6 +131,8 @@ class RuleV2:
     antecedent: ConditionNodeV2
     consequent: AtomV2
     mode: str = "strict"
+    source_ref: Optional[str] = None
+    attrs: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -162,6 +166,8 @@ class ProofObjectV2:
 
 
 _PROOF_STORE_V2: Dict[str, ProofObjectV2] = {}
+SUPPORTED_V2_IR_VERSION = "2.0"
+SUPPORTED_V2_CNL_VERSION = "2.0"
 
 
 class OptimizerHook(Protocol):
@@ -419,6 +425,120 @@ def _proof_id(root_conclusion: str, steps: List[ProofStepV2]) -> str:
     return "pf2_" + hashlib.sha1(payload.encode("utf-8")).hexdigest()[:12]
 
 
+def _collect_markers(text: str, markers: List[str]) -> List[str]:
+    hits: List[str] = []
+    for marker in markers:
+        pattern = rf"\b{re.escape(marker)}\b"
+        hit_count = len(re.findall(pattern, text, flags=re.IGNORECASE))
+        hits.extend([marker] * hit_count)
+    return hits
+
+
+def _parse_confidence(
+    *,
+    modal: DeonticOpV2,
+    has_temporal: bool,
+    has_activation: bool,
+    has_exception: bool,
+    is_definition: bool,
+) -> float:
+    if is_definition:
+        return 0.99
+
+    score = 0.90
+    if has_temporal:
+        score += 0.03
+    if has_activation:
+        score += 0.03
+    if has_exception:
+        score += 0.02
+    if modal == DeonticOpV2.F:
+        score += 0.01
+    return round(min(0.99, score), 3)
+
+
+def _parse_alternatives(modal: DeonticOpV2) -> List[Dict[str, Any]]:
+    ranked = [
+        DeonticOpV2.O,
+        DeonticOpV2.P,
+        DeonticOpV2.F,
+    ]
+    if modal in ranked:
+        ranked.remove(modal)
+        ranked.insert(0, modal)
+    return [{"operator": op.value, "rank": idx + 1} for idx, op in enumerate(ranked)]
+
+
+def validate_ir_v2_contract(ir: LegalIRV2, *, strict: bool = True) -> Dict[str, Any]:
+    """Validate runtime invariants for V2 IR/provenance contract enforcement."""
+    if not isinstance(ir, LegalIRV2):
+        raise ValueError("invalid_v2_ir_contract: value is not LegalIRV2")
+
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    if ir.ir_version != SUPPORTED_V2_IR_VERSION:
+        errors.append(
+            f"unsupported_ir_version:{ir.ir_version} expected:{SUPPORTED_V2_IR_VERSION}"
+        )
+    if ir.cnl_version != SUPPORTED_V2_CNL_VERSION:
+        errors.append(
+            f"unsupported_cnl_version:{ir.cnl_version} expected:{SUPPORTED_V2_CNL_VERSION}"
+        )
+
+    for key, source in ir.provenance.items():
+        if source.source_id != key:
+            errors.append(f"provenance_key_mismatch:{key}->{source.source_id}")
+
+    for key, frame in ir.frames.items():
+        if frame.id.ref() != key:
+            errors.append(f"frame_id_key_mismatch:{key}->{frame.id.ref()}")
+
+    for key, norm in ir.norms.items():
+        if norm.id.ref() != key:
+            errors.append(f"norm_id_key_mismatch:{key}->{norm.id.ref()}")
+        if norm.target_frame_ref not in ir.frames:
+            errors.append(f"unknown_target_frame_ref:{norm.id.ref()}->{norm.target_frame_ref}")
+        if norm.temporal_ref and norm.temporal_ref not in ir.temporals:
+            errors.append(f"unknown_temporal_ref:{norm.id.ref()}->{norm.temporal_ref}")
+
+        if not norm.source_ref:
+            msg = f"missing_source_ref:norm:{norm.id.ref()}"
+            if strict:
+                errors.append(msg)
+            else:
+                warnings.append(msg)
+        elif norm.source_ref not in ir.provenance:
+            errors.append(f"unknown_source_ref:norm:{norm.id.ref()}->{norm.source_ref}")
+
+    for key, rule in ir.rules.items():
+        if rule.id.ref() != key:
+            errors.append(f"rule_id_key_mismatch:{key}->{rule.id.ref()}")
+        if not rule.source_ref:
+            msg = f"missing_source_ref:rule:{rule.id.ref()}"
+            if strict:
+                errors.append(msg)
+            else:
+                warnings.append(msg)
+        elif rule.source_ref not in ir.provenance:
+            errors.append(f"unknown_source_ref:rule:{rule.id.ref()}->{rule.source_ref}")
+
+    if errors:
+        raise ValueError("invalid_v2_ir_contract: " + "; ".join(errors))
+
+    return {
+        "ok": True,
+        "strict": bool(strict),
+        "warnings": warnings,
+        "counts": {
+            "provenance": len(ir.provenance),
+            "frames": len(ir.frames),
+            "norms": len(ir.norms),
+            "rules": len(ir.rules),
+        },
+    }
+
+
 def _split_modal(sentence: str) -> Tuple[str, DeonticOpV2, str]:
     low = sentence.lower()
     if " shall not " in low:
@@ -490,6 +610,19 @@ def _parse_definition_sentence(clean: str, jurisdiction: str) -> Optional[LegalI
             antecedent=ConditionNodeV2(op="atom", atom=AtomV2(pred="defined_term", args=[term])),
             consequent=AtomV2(pred="definition_of", args=[term, definition]),
             mode="definition",
+            source_ref=src_id.ref(),
+            attrs={
+                "parse_mode": "definition",
+                "parse_confidence": _parse_confidence(
+                    modal=DeonticOpV2.O,
+                    has_temporal=False,
+                    has_activation=False,
+                    has_exception=False,
+                    is_definition=True,
+                ),
+                "parse_alternatives": [{"operator": "definition", "rank": 1}],
+                "ambiguity_flags": [],
+            },
         )
         return ir
 
@@ -508,13 +641,26 @@ def _parse_definition_sentence(clean: str, jurisdiction: str) -> Optional[LegalI
                 antecedent=ConditionNodeV2(op="atom", atom=AtomV2(pred="defined_term", args=[term])),
                 consequent=AtomV2(pred="includes_member", args=[term, member]),
                 mode="definition",
+                source_ref=src_id.ref(),
+                attrs={
+                    "parse_mode": "definition",
+                    "parse_confidence": _parse_confidence(
+                        modal=DeonticOpV2.O,
+                        has_temporal=False,
+                        has_activation=False,
+                        has_exception=False,
+                        is_definition=True,
+                    ),
+                    "parse_alternatives": [{"operator": "definition", "rank": 1}],
+                    "ambiguity_flags": [],
+                },
             )
         return ir
 
     return None
 
 
-def parse_cnl_to_ir(sentence: str, jurisdiction: str = "default") -> LegalIRV2:
+def parse_cnl_to_ir_with_diagnostics(sentence: str, jurisdiction: str = "default") -> Tuple[LegalIRV2, Dict[str, Any]]:
     """Parse supported CNL templates into V2 IR.
 
     Supported templates:
@@ -528,16 +674,30 @@ def parse_cnl_to_ir(sentence: str, jurisdiction: str = "default") -> LegalIRV2:
 
     definition_ir = _parse_definition_sentence(clean, jurisdiction)
     if definition_ir is not None:
-        return definition_ir
+        diagnostics = {
+            "parse_mode": "definition",
+            "parse_confidence": 0.99,
+            "parse_alternatives": [{"operator": "definition", "rank": 1}],
+            "ambiguity_flags": [],
+            "temporal_detected": False,
+            "activation_marker": None,
+            "exception_marker": None,
+        }
+        return definition_ir, diagnostics
 
     actor_text, modal, remainder = _split_modal(clean)
     actor_text = _norm_space(actor_text)
     remainder = _norm_space(remainder)
 
-    # Enforce single activation marker for deterministic strict parsing.
-    activation_markers = re.findall(r"\b(if|when)\b", remainder, flags=re.IGNORECASE)
+    activation_markers = _collect_markers(remainder, ["if", "when"])
+    exception_markers = _collect_markers(remainder, ["unless", "except"])
+    ambiguity_flags: List[str] = []
     if len(activation_markers) > 1:
-        raise ValueError("Ambiguous CNL parse: multiple_activation_markers")
+        ambiguity_flags.append("multiple_activation_markers")
+    if len(exception_markers) > 1:
+        ambiguity_flags.append("multiple_exception_markers")
+    if ambiguity_flags:
+        raise ValueError("Ambiguous CNL parse: " + ",".join(ambiguity_flags))
 
     body, ex_marker, ex_tail = _extract_suffix_clause(remainder, ["unless", "except"])
     body, act_marker, act_tail = _extract_suffix_clause(body, ["if", "when"])
@@ -590,6 +750,24 @@ def parse_cnl_to_ir(sentence: str, jurisdiction: str = "default") -> LegalIRV2:
     if ex_tail:
         exceptions.append(_cond_from_phrase(ex_marker or "except", ex_tail))
 
+    parse_confidence = _parse_confidence(
+        modal=modal,
+        has_temporal=temporal_ref is not None,
+        has_activation=bool(act_tail),
+        has_exception=bool(ex_tail),
+        is_definition=False,
+    )
+    parse_alternatives = _parse_alternatives(modal)
+    diagnostics = {
+        "parse_mode": "norm",
+        "parse_confidence": parse_confidence,
+        "parse_alternatives": parse_alternatives,
+        "ambiguity_flags": [],
+        "temporal_detected": temporal_ref is not None,
+        "activation_marker": act_marker,
+        "exception_marker": ex_marker,
+    }
+
     norm_id = _det_id(
         "nrm",
         [
@@ -608,7 +786,18 @@ def parse_cnl_to_ir(sentence: str, jurisdiction: str = "default") -> LegalIRV2:
         activation=activation,
         exceptions=exceptions,
         temporal_ref=temporal_ref,
+        source_ref=src_id.ref(),
+        attrs={
+            "parse_confidence": parse_confidence,
+            "parse_alternatives": parse_alternatives,
+            "ambiguity_flags": [],
+        },
     )
+    return ir, diagnostics
+
+
+def parse_cnl_to_ir(sentence: str, jurisdiction: str = "default") -> LegalIRV2:
+    ir, _diagnostics = parse_cnl_to_ir_with_diagnostics(sentence, jurisdiction=jurisdiction)
     return ir
 
 
@@ -733,6 +922,7 @@ def check_compliance(query: dict, time_context: dict) -> dict:
     ir = query.get("ir")
     if not isinstance(ir, LegalIRV2):
         raise ValueError("query['ir'] must be a LegalIRV2 instance")
+    validate_ir_v2_contract(ir, strict=True)
 
     facts = query.get("facts") or {}
     events = [str(e) for e in (query.get("events") or [])]
@@ -753,6 +943,7 @@ def check_compliance(query: dict, time_context: dict) -> dict:
                 premises=[],
                 conclusion=f"in_force({norm.id.ref()})={str(in_force).lower()}",
                 ir_refs=[norm.id.ref(), norm.target_frame_ref],
+                source_refs=[norm.source_ref] if norm.source_ref else [],
             )
         )
         step_idx += 1
@@ -785,6 +976,7 @@ def find_violations(state: dict, time_range: Tuple[str, str]) -> dict:
     ir = state.get("ir")
     if not isinstance(ir, LegalIRV2):
         raise ValueError("state['ir'] must be a LegalIRV2 instance")
+    validate_ir_v2_contract(ir, strict=True)
 
     result = check_compliance({"ir": ir, "facts": state.get("facts", {}), "events": state.get("events", [])}, {"range": time_range})
     return {
@@ -827,6 +1019,7 @@ def run_v2_pipeline(
     kg_hook: Optional[KGHook] = None,
     prover_hook: Optional[ProverHook] = None,
     drift_threshold: float = 0.05,
+    strict_contract: bool = True,
 ) -> Dict[str, Any]:
     """Run the V2 parse-normalize-compile pipeline with optional hooks.
 
@@ -836,6 +1029,7 @@ def run_v2_pipeline(
     - prover is used to evaluate compiled formula bundles
     """
     ir = normalize_ir(parse_cnl_to_ir(sentence, jurisdiction=jurisdiction))
+    contract_report = validate_ir_v2_contract(ir, strict=strict_contract)
 
     optimizer_report: Dict[str, Any] = {"applied": False}
     if optimizer_hook is not None:
@@ -866,6 +1060,7 @@ def run_v2_pipeline(
 
     return {
         "ir": ir,
+        "contract_report": contract_report,
         "dcec": dcec,
         "tdfol": tdfol,
         "optimizer_report": optimizer_report,

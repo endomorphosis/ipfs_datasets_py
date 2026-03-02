@@ -75,6 +75,18 @@ PYTHONPATH=src:ipfs_datasets_py \
   ipfs_datasets_py/tests/reasoner/test_hybrid_v2_cli.py -q
 ```
 
+GitHub Actions parity snippet:
+```yaml
+- name: Run Hybrid V2 reasoner suite
+  run: |
+    python -m pytest \
+      tests/reasoner/test_hybrid_v2_blueprint.py \
+      tests/reasoner/test_hybrid_v2_query_api_matrix.py \
+      tests/reasoner/test_hybrid_v2_cli.py -q
+  env:
+    PYTHONPATH: src:${{ github.workspace }}
+```
+
 ## 1) Rollout Modes
 
 ### Shadow mode

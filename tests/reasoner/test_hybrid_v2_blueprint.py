@@ -7,6 +7,7 @@ from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_v2_blueprint import 
     explain_proof,
     find_violations,
     generate_cnl_from_ir,
+    validate_ir_v2_contract,
     normalize_ir,
     parse_cnl_to_ir,
     run_v2_pipeline,
@@ -116,6 +117,52 @@ def test_parse_cnl_to_ir_includes_template_emits_member_rules() -> None:
     assert members == ["biometrics", "financial records", "health records"]
 
 
+def test_validate_ir_v2_contract_accepts_parser_output_strict() -> None:
+    ir = parse_cnl_to_ir("Controller shall report breach within 48 hours.")
+
+    report = validate_ir_v2_contract(ir, strict=True)
+
+    assert report["ok"] is True
+    assert report["warnings"] == []
+
+
+def test_validate_ir_v2_contract_missing_source_ref_strict_rejected() -> None:
+    ir = parse_cnl_to_ir("Controller shall report breach within 48 hours.")
+    norm = next(iter(ir.norms.values()))
+    norm.source_ref = None
+
+    try:
+        validate_ir_v2_contract(ir, strict=True)
+    except ValueError as exc:
+        assert "missing_source_ref:norm" in str(exc)
+    else:
+        raise AssertionError("Expected strict contract validation failure")
+
+
+def test_validate_ir_v2_contract_missing_source_ref_non_strict_warns() -> None:
+    ir = parse_cnl_to_ir("Controller shall report breach within 48 hours.")
+    norm = next(iter(ir.norms.values()))
+    norm.source_ref = None
+
+    report = validate_ir_v2_contract(ir, strict=False)
+
+    assert report["ok"] is True
+    assert any("missing_source_ref:norm" in w for w in report["warnings"])
+
+
+def test_check_compliance_rejects_invalid_frame_reference() -> None:
+    ir = parse_cnl_to_ir("Controller shall report breach within 48 hours.")
+    frame_ref = next(iter(ir.frames.keys()))
+    del ir.frames[frame_ref]
+
+    try:
+        check_compliance({"ir": ir, "events": []}, {"at": "2026-03-01"})
+    except ValueError as exc:
+        assert "unknown_target_frame_ref" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for invalid contract")
+
+
 def test_run_v2_pipeline_applies_hooks_and_prover() -> None:
     class _Optimizer:
         def optimize_ir(self, ir):
@@ -142,6 +189,7 @@ def test_run_v2_pipeline_applies_hooks_and_prover() -> None:
     assert out["optimizer_report"]["applied"] is True
     assert out["kg_report"]["applied"] is True
     assert out["prover_report"]["applied"] is True
+    assert out["contract_report"]["ok"] is True
     assert out["dcec"]
     assert out["tdfol"]
 

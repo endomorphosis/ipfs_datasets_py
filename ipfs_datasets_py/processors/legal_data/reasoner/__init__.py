@@ -18,6 +18,8 @@ from .models import (
 from .serialization import (
     SUPPORTED_CNL_VERSION,
     SUPPORTED_IR_VERSION,
+    SUPPORTED_V2_CNL_VERSION,
+    SUPPORTED_V2_IR_VERSION,
     append_proof_to_store,
     load_legal_ir_from_json,
     load_legacy_logic_hybrid_fixture,
@@ -25,6 +27,7 @@ from .serialization import (
     proof_from_dict,
     proof_to_dict,
     validate_contract_versions,
+    validate_v2_contract_versions,
     write_proof_store,
 )
 from .optimizer_policy import (
@@ -64,6 +67,7 @@ from .hybrid_v2_blueprint import (
     compile_ir_to_dcec,
     compile_ir_to_temporal_deontic_fol,
     generate_cnl_from_ir,
+    validate_ir_v2_contract,
     run_v2_pipeline,
     run_v2_pipeline_with_defaults,
 )
@@ -79,7 +83,10 @@ __all__ = [
     "PROOF_SCHEMA_VERSION",
     "SUPPORTED_IR_VERSION",
     "SUPPORTED_CNL_VERSION",
+    "SUPPORTED_V2_IR_VERSION",
+    "SUPPORTED_V2_CNL_VERSION",
     "validate_contract_versions",
+    "validate_v2_contract_versions",
     "load_legal_ir_from_json",
     "load_legacy_logic_hybrid_fixture",
     "load_proof_store",
@@ -115,6 +122,7 @@ __all__ = [
     "compile_ir_to_dcec",
     "compile_ir_to_temporal_deontic_fol",
     "generate_cnl_from_ir",
+    "validate_ir_v2_contract",
     "run_v2_pipeline",
     "run_v2_pipeline_with_defaults",
     "run_v2_cli",
