@@ -27,11 +27,30 @@ class PipelineIntent:
     params: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        payload = json.dumps(
-            {"tool": self.tool_name, "actor": self.actor, "params": self.params},
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
+        try:
+            payload_obj = {
+                "tool": self.tool_name,
+                "actor": self.actor,
+                "params": self.params,
+            }
+            payload = json.dumps(
+                payload_obj,
+                sort_keys=True,
+                separators=(",", ":"),
+                default=repr,
+            ).encode("utf-8")
+        except Exception:
+            # Last-resort fallback for circular/self-referential params.
+            fallback_obj = {
+                "tool": self.tool_name,
+                "actor": self.actor,
+                "params_repr": repr(self.params),
+            }
+            payload = json.dumps(
+                fallback_obj,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
         digest = hashlib.sha256(payload).hexdigest()
         self.intent_cid: str = f"bafy-mock-intent-{digest[:20]}"
 

@@ -84,7 +84,7 @@ class DynamicToolRunner:
             # Import the module
             module = importlib.import_module(module_path)
             
-            # Find callable functions in the module
+            # Find callable functions in the module.
             functions = []
             for name, obj in inspect.getmembers(module):
                 if inspect.isfunction(obj) and not name.startswith('_'):
@@ -93,25 +93,76 @@ class DynamicToolRunner:
             if not functions:
                 return {"status": "error", "error": f"No callable functions found in {module_path}"}
             
-            # Try to find a function that matches the tool name or use the first one
-            target_function = None
-            for func_name, func_obj in functions:
-                if func_name == tool or func_name == f"{tool}_tool" or tool in func_name:
-                    target_function = func_obj
-                    break
-            
-            if not target_function:
-                # Use the first function
-                target_function = functions[0][1]
+            # Resolve deterministically: exact match first, then <tool>_tool.
+            functions_by_name = {name: fn for name, fn in functions}
+            target_name = None
+            if tool in functions_by_name:
+                target_name = tool
+            elif f"{tool}_tool" in functions_by_name:
+                target_name = f"{tool}_tool"
+            elif len(functions) == 1:
+                # Backward-compatible fallback for single-function modules only.
+                target_name = functions[0][0]
+            else:
+                available = sorted(functions_by_name.keys())
+                return {
+                    "status": "error",
+                    "error": (
+                        f"Ambiguous callable selection for tool '{tool}' in {module_path}. "
+                        f"Available callables: {available}. "
+                        "Expected an exact callable named '<tool>' or '<tool>_tool'."
+                    ),
+                }
+
+            target_function = functions_by_name[target_name]
             
             # Get function signature
             sig = inspect.signature(target_function)
             
-            # Filter kwargs to match function parameters
-            filtered_kwargs = {}
-            for param_name in sig.parameters:
-                if param_name in kwargs:
-                    filtered_kwargs[param_name] = kwargs[param_name]
+            # Validate kwargs before invocation to avoid silent argument drops.
+            supports_var_kwargs = any(
+                p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
+            )
+
+            if supports_var_kwargs:
+                filtered_kwargs = dict(kwargs)
+            else:
+                allowed = {
+                    name
+                    for name, p in sig.parameters.items()
+                    if p.kind in (
+                        inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                        inspect.Parameter.KEYWORD_ONLY,
+                    )
+                }
+                unknown = sorted(set(kwargs.keys()) - allowed)
+                if unknown:
+                    return {
+                        "status": "error",
+                        "error": (
+                            f"Unexpected arguments for callable '{target_name}': {unknown}. "
+                            f"Allowed arguments: {sorted(allowed)}"
+                        ),
+                    }
+                filtered_kwargs = {k: v for k, v in kwargs.items() if k in allowed}
+
+            missing_required = []
+            for name, p in sig.parameters.items():
+                if p.kind not in (
+                    inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                    inspect.Parameter.KEYWORD_ONLY,
+                ):
+                    continue
+                if p.default is inspect.Parameter.empty and name not in filtered_kwargs:
+                    missing_required.append(name)
+            if missing_required:
+                return {
+                    "status": "error",
+                    "error": (
+                        f"Missing required arguments for callable '{target_name}': "
+                        f"{sorted(missing_required)}"
+                    ),
+                }
             
             # Call the function
             import asyncio
