@@ -508,9 +508,10 @@ class StateLawsActorCriticLoop:
 
     def _auto_patch_single(self, rel_path: str, *, dry_run: bool) -> Dict[str, Any]:
         # Guarded strategy registry: only explicit safe transformations are applied.
+        policy_debug = self._evaluate_auto_patch_policy(rel_path)
         strategy = self._resolve_auto_patch_strategy(rel_path)
         if strategy is None:
-            if not self._is_path_allowed_by_auto_patch_policy(rel_path):
+            if not bool(policy_debug.get("allowed")):
                 reason = "blocked-by-auto-patch-policy"
             else:
                 reason = "no-registered-strategy"
@@ -518,6 +519,7 @@ class StateLawsActorCriticLoop:
                 "path": rel_path,
                 "status": "skipped",
                 "reason": reason,
+                "policy": policy_debug,
             }
 
         if dry_run:
@@ -525,6 +527,7 @@ class StateLawsActorCriticLoop:
                 "path": rel_path,
                 "status": "skipped",
                 "reason": f"dry-run:{strategy}",
+                "policy": policy_debug,
             }
 
         repo_root = Path(__file__).resolve().parents[3]
@@ -534,6 +537,7 @@ class StateLawsActorCriticLoop:
                 "path": rel_path,
                 "status": "error",
                 "reason": "target-file-missing",
+                "policy": policy_debug,
             }
 
         original = abs_path.read_text(encoding="utf-8")
@@ -543,18 +547,21 @@ class StateLawsActorCriticLoop:
                 "path": rel_path,
                 "status": "skipped",
                 "reason": "no-op",
+                "policy": policy_debug,
             }
         abs_path.write_text(updated, encoding="utf-8")
         return {
             "path": rel_path,
             "status": "applied",
             "reason": strategy,
+            "policy": policy_debug,
         }
 
         return {
             "path": rel_path,
             "status": "skipped",
             "reason": f"unknown-strategy:{strategy}",
+            "policy": policy_debug,
         }
 
     def _resolve_auto_patch_strategy(self, rel_path: str) -> Optional[str]:
@@ -581,6 +588,24 @@ class StateLawsActorCriticLoop:
             allow_globs=list(self.loop_config.auto_patch_allow_globs or []),
             deny_globs=list(self.loop_config.auto_patch_deny_globs or []),
         )
+
+    def _evaluate_auto_patch_policy(self, rel_path: str) -> Dict[str, Any]:
+        path = str(rel_path or "")
+        allow_globs = [str(item).strip() for item in (self.loop_config.auto_patch_allow_globs or []) if str(item).strip()]
+        deny_globs = [str(item).strip() for item in (self.loop_config.auto_patch_deny_globs or []) if str(item).strip()]
+
+        matched_allow = [pattern for pattern in allow_globs if fnmatch.fnmatch(path, pattern)]
+        matched_deny = [pattern for pattern in deny_globs if fnmatch.fnmatch(path, pattern)]
+
+        allow_ok = (not allow_globs) or bool(matched_allow)
+        deny_ok = not bool(matched_deny)
+        return {
+            "allowed": bool(allow_ok and deny_ok),
+            "allow_globs": allow_globs,
+            "deny_globs": deny_globs,
+            "matched_allow_globs": matched_allow,
+            "matched_deny_globs": matched_deny,
+        }
 
     @staticmethod
     def _path_allowed_by_patterns(rel_path: str, *, allow_globs: List[str], deny_globs: List[str]) -> bool:

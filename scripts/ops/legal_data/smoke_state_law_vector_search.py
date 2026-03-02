@@ -32,6 +32,8 @@ def _normalize_states(raw: str) -> List[str]:
     for token in (part.strip().upper() for part in raw.split(",")):
         if not token:
             continue
+        if token == "ALL":
+            return ["ALL"]
         if len(token) != 2 or not token.isalpha():
             raise ValueError(f"Invalid state code '{token}'. Use two-letter codes like OR, CA, NY.")
         states.append(token)
@@ -54,6 +56,20 @@ def _pick_embeddings_file(dataset_id: str, state: str) -> str:
         if "embedding" in lowered or "vector" in lowered:
             return candidate
     return parquet_files[0]
+
+
+def _discover_states_with_parsed_parquet(dataset_id: str) -> List[str]:
+    files = list_repo_files(repo_id=dataset_id, repo_type="dataset")
+    states = sorted(
+        {
+            f.split("/", 1)[0]
+            for f in files
+            if "/parsed/parquet/" in f
+            and len(f.split("/", 1)[0]) == 2
+            and f.split("/", 1)[0].isalpha()
+        }
+    )
+    return states
 
 
 def _extract_query_vector(dataset_id: str, parquet_file: str) -> List[float]:
@@ -139,7 +155,23 @@ async def _main(args: argparse.Namespace) -> int:
     results: List[Dict[str, Any]] = []
     failed = False
 
-    for state in args.states:
+    states = args.states
+    if states == ["ALL"]:
+        states = _discover_states_with_parsed_parquet(args.dataset_id)
+        if not states:
+            print(
+                json.dumps(
+                    {
+                        "dataset_id": args.dataset_id,
+                        "states": [],
+                        "results": [],
+                        "error": "No states with /parsed/parquet/ found",
+                    }
+                )
+            )
+            return 1
+
+    for state in states:
         try:
             state_result = await _run_for_state(args, state)
         except Exception as exc:
@@ -158,7 +190,7 @@ async def _main(args: argparse.Namespace) -> int:
     summary = {
         "dataset_id": args.dataset_id,
         "store_type": args.store_type,
-        "states": args.states,
+        "states": states,
         "enrich_with_cases": args.enrich_with_cases,
         "results": results,
     }
@@ -168,7 +200,11 @@ async def _main(args: argparse.Namespace) -> int:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Smoke-test state-law embedding search by state")
-    parser.add_argument("--states", default="OR", help="Comma-separated two-letter states (default: OR)")
+    parser.add_argument(
+        "--states",
+        default="OR",
+        help="Comma-separated two-letter states (default: OR) or ALL for auto-discovery",
+    )
     parser.add_argument("--dataset-id", default="justicedao/ipfs_state_laws")
     parser.add_argument("--store-type", default="faiss")
     parser.add_argument("--max-rows", type=int, default=512)

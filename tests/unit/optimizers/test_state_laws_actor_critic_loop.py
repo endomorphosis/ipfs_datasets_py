@@ -300,3 +300,24 @@ def test_auto_patch_reports_policy_block_reason():
 
     assert result["status"] == "skipped"
     assert result["reason"] == "blocked-by-auto-patch-policy"
+    policy = result.get("policy") or {}
+    assert policy.get("allowed") is False
+    assert policy.get("matched_allow_globs") == []
+
+
+def test_auto_patch_includes_policy_preview_on_dry_run():
+    loop = StateLawsActorCriticLoop(
+        states=["OK"],
+        loop_config=LoopConfig(max_rounds=1, auto_patch_allow_globs=["*oklahoma.py"]),
+    )
+
+    result = loop._auto_patch_single(
+        "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/oklahoma.py",
+        dry_run=True,
+    )
+
+    assert result["status"] == "skipped"
+    assert str(result["reason"]).startswith("dry-run:")
+    policy = result.get("policy") or {}
+    assert policy.get("allowed") is True
+    assert policy.get("matched_allow_globs") == ["*oklahoma.py"]
