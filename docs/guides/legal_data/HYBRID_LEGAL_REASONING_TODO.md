@@ -98,6 +98,24 @@ Source of truth for WS8 scope:
 - `docs/guides/legal_data/templates/HYBRID_LEGAL_WS8_ISSUE_BODIES_01_05.md`
 - `docs/guides/legal_data/templates/HYBRID_LEGAL_WS8_ISSUE_BODIES_06_15.md`
 
+Next program backlog (WS9 IR/CNL/Reasoner integration):
+- `docs/guides/legal_data/HYBRID_LEGAL_IR_CNL_REASONER_INTEGRATION_IMPROVEMENT_PLAN.md`
+- `docs/guides/legal_data/HYBRID_LEGAL_WS9_IR_CNL_REASONER_IMPLEMENTATION_TICKETS.md`
+
+## WS9 Execution Board (Active)
+
+Current sprint (2026-03-02):
+- [x] `HL-WS9-01` IR Grammar Lock and Parser Contract. (2026-03-02)
+- [x] `HL-WS9-02` Typed IR Dataclass and Canonical ID Registry v2.1. (2026-03-02)
+- [x] `HL-WS9-03` CNL Template Expansion and Deterministic Temporal Parsing. (2026-03-02)
+- [x] `HL-WS9-04` Compiler Fidelity Pass (IR -> DCEC). (2026-03-02)
+- [x] `HL-WS9-05` Compiler Fidelity Pass (IR -> Temporal Deontic FOL). (2026-03-02)
+- [x] `HL-WS9-06` Optimizer Hook Governance and Telemetry Hardening. (2026-03-02)
+- [x] `HL-WS9-07` KG Enrichment Hook with Reversible Frame Augmentation. (2026-03-02)
+- [x] `HL-WS9-08` Prover Backend Unification and Certificate Contract. (2026-03-02)
+
+Ready queue:
+
 Current sprint (2026-03-02):
 - [x] `HL-WS8-01` Contract Snapshot Lockfile. (2026-03-02)
 - [x] `HL-WS8-02` IR Contract Error Code Registry. (2026-03-02)
@@ -284,6 +302,12 @@ Use this section for short dated notes while executing TODO items.
 - 2026-03-02: Validation checkpoint: targeted WS8 pytest suite passed (`52 passed`) across parse replay, prover registry, CLI, blueprint, compiler parity, query matrix, and KG adapter tests.
 - 2026-03-02: Completed `HL-WS8-12`; captured local backend matrix smoke evidence for `mock_smt` and `mock_fol` (`passed=true`) under `artifacts/formal_logic_tmp_verify/federal/ws8_release_20260302/backend_smoke_*.json`.
 - 2026-03-02: Completed `HL-WS8-15`; captured release-checklist dry-run evidence bundle under `artifacts/formal_logic_tmp_verify/federal/ws8_release_20260302/` (`pytest_reasoner_ws8.txt`, `hybrid_v2_perf_baseline.json`) and linked contract/rollback references.
+- 2026-03-02: Completed `HL-WS9-01`; added structured `CNLParseError` with stable parse error codes (`V2_CNL_PARSE_EMPTY_SENTENCE`, `V2_CNL_PARSE_UNSUPPORTED_MODAL`, `V2_CNL_PARSE_AMBIGUOUS_MARKERS`), added prefix activation-clause support (`if/when ... , <normative clause>`), and validated parser gate (`tests/reasoner/test_hybrid_v2_parse_replay.py`: `9 passed`).
+- 2026-03-02: Completed `HL-WS9-02`; added canonical ID registry validator (`validate_v2_canonical_id_registry`) + structured `IDRegistryValidationError` and stable ID-registry code set (`V2_IDREG_*`) for namespace/ref integrity checks, exported new contracts in package `__init__`, and validated parser/blueprint gates (`32 passed`).
+- 2026-03-02: Completed `HL-WS9-03`; extended temporal parser with normalized `within <duration> of <anchor>` support, expanded replay corpus to 12 canonical templates, added paraphrase-equivalence cases for within-anchor and prefix-when forms, and added explicit tests for template coverage + definition object mapping + temporal normalization (`tests/reasoner/test_hybrid_v2_parse_replay.py`: `12 passed`).
+- 2026-03-02: Completed `HL-WS9-04` and `HL-WS9-05`; preserved frame-ref deontic wrapping invariants in both compilers and fixed temporal guard fidelity by carrying `within` anchor semantics into compiler output (`Within(t,PT24H,incident_discovery)`), expanded compiler parity fixture corpus, and validated compiler gate (`tests/reasoner/test_hybrid_v2_compiler_parity.py`: `6 passed`).
+- 2026-03-02: Completed `HL-WS9-06`; added optimizer semantic invariants rejecting candidate IR mutation of norm modality/target frame identity (`modality_changed`, `target_frame_changed`, `norm_set_changed`), included invariant failures in optimizer telemetry, and added regression tests proving mutation rejection (`tests/reasoner/test_hybrid_v2_blueprint.py`: `25 passed`).
+- 2026-03-02: Completed `HL-WS9-07` and `HL-WS9-08`; applied the same semantic invariant guardrail to KG hook acceptance (rejecting frame/norm semantic mutations with machine-readable `invariant_failures`) and added strict normalized prover-envelope validation (schema/required fields/backend payload-key matrix) with backward-compatible coercion for legacy prover hooks, then validated blueprint + prover registry gates (`31 passed`).
 
 ## Definition of Ready (per TODO item)
 

@@ -82,5 +82,12 @@
     "jurisdiction": "us/federal",
     "expected_operator": "O",
     "expect_temporal_guard": true
+  },
+  {
+    "id": "obligation_within_anchor",
+    "sentence": "Controller shall report breach within 24 hours of incident discovery.",
+    "jurisdiction": "us/federal",
+    "expected_operator": "O",
+    "expect_temporal_guard": true
   }
 ]

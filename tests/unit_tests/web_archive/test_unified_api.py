@@ -216,6 +216,24 @@ def test_unified_api_fetch_respects_domain_for_structured_schema() -> None:
     assert response.metadata.get("requested_domain") == "legal"
 
 
+def test_unified_api_fetch_normalizes_domain_alias_and_migration_meta() -> None:
+    api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess(), scraper=FakeScraper())
+
+    response = api.fetch(
+        "https://example.com/law",
+        domain="laws",
+    )
+
+    assert response.success is True
+    assert response.document is not None
+    assert response.document.metadata.get("domain") == "legal"
+    assert response.document.metadata.get("structured_fields_version") == "legal_v1"
+    assert response.document.metadata.get("structured_fields_contract") == "v1"
+    assert response.document.metadata.get("requested_domain") == "legal"
+    assert response.document.metadata.get("schema_migration_applied") in {True, False}
+    assert response.metadata.get("requested_domain") == "legal"
+
+
 def test_unified_api_search_and_fetch_returns_document_envelope() -> None:
     api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess(), scraper=FakeScraper())
 

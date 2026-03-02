@@ -173,6 +173,14 @@ def test_unified_fetch_response_json_roundtrip() -> None:
     assert restored.quality_score == pytest.approx(0.87)
 
 
+def test_domain_alias_normalization_in_requests() -> None:
+    search_request = UnifiedSearchRequest(query="x", domain="laws")
+    fetch_request = UnifiedFetchRequest(url="https://example.com", domain="financial")
+
+    assert search_request.domain == "legal"
+    assert fetch_request.domain == "finance"
+
+
 def test_execution_trace_validation() -> None:
     with pytest.raises(ValueError):
         ExecutionTrace(request_id="", operation="search", mode=OperationMode.BALANCED)

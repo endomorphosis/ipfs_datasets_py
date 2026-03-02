@@ -70,6 +70,11 @@ from .agentic_scrape_optimizer import (
     AgenticScrapeOptimizer,
     ParsedScrapeResult,
 )
+from .structured_schema_compat import (
+    normalize_domain,
+    normalize_structured_fields,
+    validate_structured_fields_contract,
+)
 from .compat import legacy_search_web, legacy_fetch_url, legacy_search_and_fetch
 from .brave_search_client import (
     BraveSearchClient,
@@ -278,6 +283,9 @@ __all__ = [
     'MedicalStructuredFields',
     'AgenticScrapeOptimizer',
     'ParsedScrapeResult',
+    'normalize_domain',
+    'normalize_structured_fields',
+    'validate_structured_fields_contract',
     'legacy_search_web',
     'legacy_fetch_url',
     'legacy_search_and_fetch',

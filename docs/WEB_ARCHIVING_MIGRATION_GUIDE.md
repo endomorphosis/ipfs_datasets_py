@@ -12,6 +12,10 @@ The unified API provides:
 - Unified observability and execution traces.
 - A single MCP-facing surface for `search`, `fetch`, and `search_and_fetch`.
 
+Notes:
+- Domain aliases are normalized automatically (for example `laws` -> `legal`, `financial` -> `finance`, `clinical` -> `medical`).
+- Fetch metadata includes `structured_fields_contract=v1`, `source_schema`, and `schema_migration_applied` for forward-compatible parsing.
+
 ## 2. New Canonical Entry Points
 
 Python API:

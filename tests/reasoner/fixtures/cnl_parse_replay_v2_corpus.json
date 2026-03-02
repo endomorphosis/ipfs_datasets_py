@@ -48,5 +48,15 @@
     "id": "simple_obligation",
     "sentence": "Officer shall submit notice.",
     "jurisdiction": "us/federal"
+  },
+  {
+    "id": "prefix_when_obligation",
+    "sentence": "When incident is confirmed, operator shall notify authority within 2 hours.",
+    "jurisdiction": "us/federal"
+  },
+  {
+    "id": "within_with_anchor",
+    "sentence": "Controller shall report breach within 24 hours of incident discovery.",
+    "jurisdiction": "us/federal"
   }
 ]

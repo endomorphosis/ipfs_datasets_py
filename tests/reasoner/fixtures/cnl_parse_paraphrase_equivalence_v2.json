@@ -34,5 +34,17 @@
     "sentence_a": "Agency may inspect records if complaint filed.",
     "sentence_b": "Agency shall not inspect records if complaint filed.",
     "equivalent": false
+  },
+  {
+    "id": "eq_within_anchor_case_spacing",
+    "sentence_a": "Controller shall report breach within 24 hours of incident discovery.",
+    "sentence_b": "controller shall report breach within 24 hours of   incident discovery",
+    "equivalent": true
+  },
+  {
+    "id": "eq_prefix_when_case",
+    "sentence_a": "When incident is confirmed, operator shall notify authority within 2 hours.",
+    "sentence_b": "when incident is confirmed, operator shall notify authority within 2 hours",
+    "equivalent": true
   }
 ]

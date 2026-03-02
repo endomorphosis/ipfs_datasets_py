@@ -7,6 +7,7 @@ from typing import Any, Dict
 import pytest
 
 from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_v2_blueprint import (
+    CNLParseError,
     LegalIRV2,
     generate_cnl_from_ir,
     parse_cnl_to_ir_with_diagnostics,
@@ -120,6 +121,18 @@ def test_v2_parse_replay_is_deterministic_across_fixed_corpus() -> None:
             assert replay_diag == first_diag
 
 
+def test_v2_replay_corpus_has_minimum_canonical_template_coverage() -> None:
+    corpus = _load_corpus()
+    assert len(corpus) >= 10
+
+    seen_ids = set()
+    for case in corpus:
+        cid = str(case.get("id") or "")
+        assert cid
+        assert cid not in seen_ids
+        seen_ids.add(cid)
+
+
 @pytest.mark.parametrize(
     "sentence,expected_code",
     [
@@ -134,8 +147,54 @@ def test_v2_parse_replay_is_deterministic_across_fixed_corpus() -> None:
     ],
 )
 def test_v2_parse_strict_ambiguity_codes_are_stable(sentence: str, expected_code: str) -> None:
-    with pytest.raises(ValueError, match=expected_code):
+    with pytest.raises(CNLParseError, match=expected_code) as exc:
         parse_cnl_to_ir_with_diagnostics(sentence, jurisdiction="us/federal")
+    assert exc.value.error_code == "V2_CNL_PARSE_AMBIGUOUS_MARKERS"
+
+
+def test_v2_parse_empty_sentence_has_stable_error_code() -> None:
+    with pytest.raises(CNLParseError) as exc:
+        parse_cnl_to_ir_with_diagnostics("   ", jurisdiction="us/federal")
+    assert exc.value.error_code == "V2_CNL_PARSE_EMPTY_SENTENCE"
+
+
+def test_v2_parse_supports_prefix_if_clause_template() -> None:
+    ir, diagnostics = parse_cnl_to_ir_with_diagnostics(
+        "If wages are due, employer shall pay wages by 2026-01-05.",
+        jurisdiction="us/federal",
+    )
+    norm = next(iter(ir.norms.values()))
+
+    assert diagnostics["activation_marker"] == "if"
+    assert diagnostics["temporal_detected"] is True
+    assert norm.activation.atom is not None
+    assert norm.activation.atom.pred.startswith("if_")
+    assert norm.temporal_ref is not None
+
+
+def test_v2_parse_within_of_anchor_is_normalized() -> None:
+    ir_a, _ = parse_cnl_to_ir_with_diagnostics(
+        "Controller shall report breach within 24 hours of incident discovery.",
+        jurisdiction="us/federal",
+    )
+    ir_b, _ = parse_cnl_to_ir_with_diagnostics(
+        "controller shall report breach within 24 hours of   incident discovery",
+        jurisdiction="us/federal",
+    )
+
+    norm_a = next(iter(ir_a.norms.values()))
+    norm_b = next(iter(ir_b.norms.values()))
+    assert norm_a.temporal_ref is not None
+    assert norm_b.temporal_ref is not None
+
+    tmp_a = ir_a.temporals[norm_a.temporal_ref]
+    tmp_b = ir_b.temporals[norm_b.temporal_ref]
+    assert tmp_a.relation.value == "within"
+    assert tmp_b.relation.value == "within"
+    assert tmp_a.expr.duration == "PT24H"
+    assert tmp_b.expr.duration == "PT24H"
+    assert tmp_a.expr.start == "incident_discovery"
+    assert tmp_b.expr.start == "incident_discovery"
 
 
 def test_v2_parse_diagnostics_include_confidence_and_markers() -> None:
@@ -217,3 +276,24 @@ def test_v2_paraphrase_equivalence_corpus_semantics() -> None:
             assert sig_a == sig_b, case["id"]
         else:
             assert sig_a != sig_b, case["id"]
+
+
+def test_v2_definition_templates_map_to_explicit_definition_objects() -> None:
+    means_ir, means_diag = parse_cnl_to_ir_with_diagnostics(
+        "Personal data means information identifying a person.",
+        jurisdiction="us/federal",
+    )
+    includes_ir, includes_diag = parse_cnl_to_ir_with_diagnostics(
+        "Sensitive data includes health records and biometrics.",
+        jurisdiction="us/federal",
+    )
+
+    assert means_diag["parse_mode"] == "definition"
+    assert includes_diag["parse_mode"] == "definition"
+
+    means_rule = next(iter(means_ir.rules.values()))
+    assert means_rule.mode == "definition"
+    assert means_rule.consequent.pred == "definition_of"
+
+    include_preds = {rule.consequent.pred for rule in includes_ir.rules.values()}
+    assert include_preds == {"includes_member"}

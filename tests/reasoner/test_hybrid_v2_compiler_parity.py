@@ -88,3 +88,30 @@ def test_v2_compiler_parity_fixture_temporal_relation_coverage() -> None:
 
     for relation in ("within", "by", "before", "after", "during"):
         assert temporal_counts[relation] >= 2, (relation, dict(temporal_counts))
+
+
+def test_v2_compilers_keep_deontic_wrapping_at_frame_ref_boundary() -> None:
+    ir = parse_cnl_to_ir(
+        "Controller shall report breach within 24 hours.",
+        jurisdiction="us/federal",
+    )
+    frame_ref = next(iter(ir.frames.keys()))
+
+    dcec = "\n".join(compile_ir_to_dcec(ir))
+    tdfol = "\n".join(compile_ir_to_temporal_deontic_fol(ir))
+
+    assert f"O({frame_ref})" in dcec
+    assert f"O({frame_ref},t)" in tdfol
+
+
+def test_v2_compiler_parity_preserves_within_anchor_temporal_guard() -> None:
+    ir = parse_cnl_to_ir(
+        "Controller shall report breach within 24 hours of incident discovery.",
+        jurisdiction="us/federal",
+    )
+    report = build_v2_compiler_parity_report(ir)
+    entry = report["entries"][0]
+
+    assert report["summary"]["has_inconsistencies"] is False
+    assert "Within(t,PT24H,incident_discovery)" in entry["dcec"]["formula"]
+    assert "Within(t,PT24H,incident_discovery)" in entry["tdfol"]["formula"]

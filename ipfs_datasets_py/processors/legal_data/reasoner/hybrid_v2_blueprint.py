@@ -24,6 +24,7 @@ from .optimizer_policy import (
     build_optimizer_acceptance_decision,
     build_optimizer_chain_plan,
 )
+from .prover_backends import PROVER_ENVELOPE_SCHEMA_VERSION
 from .prover_backends import create_default_prover_registry
 from .prover_backends import normalize_prover_result
 
@@ -185,6 +186,25 @@ V2_IR_CONTRACT_ERROR_CODES: Dict[str, str] = {
     "missing_source_ref": "V2_CONTRACT_MISSING_SOURCE_REF",
     "unknown_source_ref": "V2_CONTRACT_UNKNOWN_SOURCE_REF",
 }
+V2_CNL_PARSE_ERROR_CODES: Dict[str, str] = {
+    "empty_sentence": "V2_CNL_PARSE_EMPTY_SENTENCE",
+    "unsupported_modal": "V2_CNL_PARSE_UNSUPPORTED_MODAL",
+    "ambiguous_markers": "V2_CNL_PARSE_AMBIGUOUS_MARKERS",
+}
+V2_ID_REGISTRY_ERROR_CODES: Dict[str, str] = {
+    "entity_id_key_mismatch": "V2_IDREG_ENTITY_ID_KEY_MISMATCH",
+    "entity_namespace_mismatch": "V2_IDREG_ENTITY_NAMESPACE_MISMATCH",
+    "frame_namespace_mismatch": "V2_IDREG_FRAME_NAMESPACE_MISMATCH",
+    "temporal_namespace_mismatch": "V2_IDREG_TEMPORAL_NAMESPACE_MISMATCH",
+    "norm_namespace_mismatch": "V2_IDREG_NORM_NAMESPACE_MISMATCH",
+    "rule_namespace_mismatch": "V2_IDREG_RULE_NAMESPACE_MISMATCH",
+    "unknown_role_entity_ref": "V2_IDREG_UNKNOWN_ROLE_ENTITY_REF",
+    "unknown_target_frame_ref": "V2_IDREG_UNKNOWN_TARGET_FRAME_REF",
+    "unknown_temporal_ref": "V2_IDREG_UNKNOWN_TEMPORAL_REF",
+    "unknown_source_ref": "V2_IDREG_UNKNOWN_SOURCE_REF",
+    "orphan_frame_id": "V2_IDREG_ORPHAN_FRAME_ID",
+    "orphan_temporal_id": "V2_IDREG_ORPHAN_TEMPORAL_ID",
+}
 
 
 class IRContractValidationError(ValueError):
@@ -197,6 +217,54 @@ class IRContractValidationError(ValueError):
         human = "; ".join(d["message"] for d in details)
         coded = ",".join(self.error_codes)
         super().__init__(f"invalid_v2_ir_contract: codes=[{coded}] details={human}")
+
+
+class CNLParseError(ValueError):
+    """Structured parser error with stable machine-readable code and details."""
+
+    def __init__(
+        self,
+        *,
+        error_code: str,
+        message: str,
+        ambiguity_flags: Optional[List[str]] = None,
+    ) -> None:
+        self.error_code = error_code
+        self.ambiguity_flags = list(ambiguity_flags or [])
+        if self.ambiguity_flags:
+            flags = ",".join(self.ambiguity_flags)
+            full = f"{message}: {flags} [code={error_code}]"
+        else:
+            full = f"{message} [code={error_code}]"
+        super().__init__(full)
+
+
+class IDRegistryValidationError(ValueError):
+    """Structured canonical-ID registry validation error for IR references."""
+
+    def __init__(self, errors: List[str]) -> None:
+        self.errors = list(errors)
+        self.error_details = [_id_registry_error_detail(msg) for msg in self.errors]
+        self.error_codes = list(dict.fromkeys(d["code"] for d in self.error_details))
+        human = "; ".join(d["message"] for d in self.error_details)
+        coded = ",".join(self.error_codes)
+        super().__init__(f"invalid_v2_id_registry: codes=[{coded}] details={human}")
+
+
+def _cnl_parse_error_code(key: str) -> str:
+    return V2_CNL_PARSE_ERROR_CODES.get(key, "V2_CNL_PARSE_UNKNOWN")
+
+
+def _id_registry_error_code(message: str) -> str:
+    prefix = str(message).split(":", 1)[0]
+    return V2_ID_REGISTRY_ERROR_CODES.get(prefix, "V2_IDREG_UNKNOWN")
+
+
+def _id_registry_error_detail(message: str) -> Dict[str, str]:
+    return {
+        "code": _id_registry_error_code(message),
+        "message": str(message),
+    }
 
 
 class OptimizerHook(Protocol):
@@ -437,6 +505,8 @@ def _temporal_guard(norm: NormV2, ir: LegalIRV2) -> str:
     temporal = ir.temporals[norm.temporal_ref]
     expr = temporal.expr
     if temporal.relation == TemporalRelationV2.WITHIN and expr.duration:
+        if expr.start:
+            return f"Within(t,{expr.duration},{expr.start})"
         return f"Within(t,{expr.duration})"
     if temporal.relation == TemporalRelationV2.BY and expr.start:
         return f"By(t,{expr.start})"
@@ -495,6 +565,119 @@ def _store_proof_v2(proof: ProofObjectV2) -> None:
 def _decision_id(prefix: str, parts: List[str]) -> str:
     payload = "|".join(str(p) for p in parts)
     return f"{prefix}_" + hashlib.sha1(payload.encode("utf-8")).hexdigest()[:12]
+
+
+def _semantic_invariant_failures(base_ir: LegalIRV2, candidate_ir: LegalIRV2) -> List[str]:
+    """Detect IR mutations that violate semantic identity invariants."""
+    failures: List[str] = []
+    base_norm_refs = set(base_ir.norms.keys())
+    cand_norm_refs = set(candidate_ir.norms.keys())
+    base_frame_refs = set(base_ir.frames.keys())
+    cand_frame_refs = set(candidate_ir.frames.keys())
+
+    if base_norm_refs != cand_norm_refs:
+        failures.append("norm_set_changed")
+    if base_frame_refs != cand_frame_refs:
+        failures.append("frame_set_changed")
+
+    for norm_ref in sorted(base_norm_refs & cand_norm_refs):
+        base_norm = base_ir.norms[norm_ref]
+        cand_norm = candidate_ir.norms[norm_ref]
+        if base_norm.op != cand_norm.op:
+            failures.append("modality_changed")
+        if base_norm.target_frame_ref != cand_norm.target_frame_ref:
+            failures.append("target_frame_changed")
+
+    for frame_ref in sorted(base_frame_refs & cand_frame_refs):
+        base_frame = base_ir.frames[frame_ref]
+        cand_frame = candidate_ir.frames[frame_ref]
+        if base_frame.predicate != cand_frame.predicate:
+            failures.append("frame_predicate_changed")
+        if dict(base_frame.roles or {}) != dict(cand_frame.roles or {}):
+            failures.append("frame_roles_changed")
+
+    return list(dict.fromkeys(failures))
+
+
+def _validate_normalized_prover_envelope(envelope: Dict[str, Any], *, expected_backend: str) -> List[str]:
+    errors: List[str] = []
+    env = dict(envelope or {})
+
+    if str(env.get("schema_version") or "") != PROVER_ENVELOPE_SCHEMA_VERSION:
+        errors.append("prover_schema_version_mismatch")
+
+    required_top = ("backend", "status", "theorem", "assumptions", "certificate")
+    for key in required_top:
+        if key not in env:
+            errors.append(f"prover_missing_required_field:{key}")
+
+    backend = str(env.get("backend") or "")
+    if backend and backend != expected_backend:
+        errors.append("prover_backend_mismatch")
+
+    cert = env.get("certificate") or {}
+    if not isinstance(cert, dict):
+        errors.append("prover_certificate_invalid")
+        return list(dict.fromkeys(errors))
+
+    for key in ("certificate_id", "format", "normalized_hash", "payload"):
+        if key not in cert:
+            errors.append(f"prover_missing_required_field:certificate.{key}")
+
+    payload = cert.get("payload") or {}
+    if not isinstance(payload, dict):
+        errors.append("prover_certificate_payload_invalid")
+        return list(dict.fromkeys(errors))
+
+    required_payload = {
+        "mock_smt": {"backend", "format", "solver", "theorem_hash_hint"},
+        "smt_style": {"backend", "format", "solver", "theorem_hash_hint"},
+        "mock_fol": {"backend", "format", "prover", "assumption_count"},
+        "first_order": {"backend", "format", "prover", "assumption_count"},
+    }.get(expected_backend, {"backend", "format"})
+    for key in sorted(required_payload):
+        if key not in payload:
+            errors.append(f"prover_certificate_payload_missing_key:{key}")
+
+    return list(dict.fromkeys(errors))
+
+
+def _coerce_prover_envelope(raw: Dict[str, Any], *, theorem: str, assumptions: Optional[List[str]] = None) -> Dict[str, Any]:
+    """Coerce legacy/non-normalized prover outputs into normalized envelope shape."""
+    env = dict(raw or {})
+    if "schema_version" in env and "certificate" in env and isinstance(env.get("certificate"), dict):
+        return env
+
+    backend = str(env.get("backend") or env.get("prover") or "custom")
+    status = str(env.get("status") or ("ok" if bool(env.get("ok", True)) else "error"))
+    payload = dict(env)
+    payload.setdefault("backend", backend)
+    payload.setdefault("format", "legacy-prover-payload-v1")
+
+    stable_payload = {
+        "backend": backend,
+        "status": status,
+        "theorem": theorem,
+        "assumptions": list(assumptions or []),
+        "payload": payload,
+    }
+    normalized_hash = hashlib.sha256(
+        str(stable_payload).encode("utf-8")
+    ).hexdigest()
+
+    return {
+        "schema_version": PROVER_ENVELOPE_SCHEMA_VERSION,
+        "backend": backend,
+        "status": status,
+        "theorem": theorem,
+        "assumptions": list(assumptions or []),
+        "certificate": {
+            "certificate_id": "cert_" + normalized_hash[:12],
+            "format": str(payload.get("format") or "legacy-prover-payload-v1"),
+            "normalized_hash": normalized_hash,
+            "payload": payload,
+        },
+    }
 
 
 def _kg_summary(report: Dict[str, Any], *, accepted: bool) -> Dict[str, int]:
@@ -664,6 +847,99 @@ def validate_ir_v2_contract(ir: LegalIRV2, *, strict: bool = True) -> Dict[str, 
     }
 
 
+def validate_v2_canonical_id_registry(ir: LegalIRV2, *, strict: bool = True) -> Dict[str, Any]:
+    """Validate canonical ID namespaces and cross-reference integrity.
+
+    This validator is stricter about namespace/ref integrity than runtime parsing,
+    and is intended for CI contract checks.
+    """
+    if not isinstance(ir, LegalIRV2):
+        raise ValueError("invalid_v2_id_registry: value is not LegalIRV2")
+
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    for key, ent in ir.entities.items():
+        if ent.id.ref() != key:
+            errors.append(f"entity_id_key_mismatch:{key}->{ent.id.ref()}")
+        if ent.id.namespace != "ent":
+            errors.append(f"entity_namespace_mismatch:{key}->{ent.id.namespace}")
+
+    for key, frame in ir.frames.items():
+        if frame.id.namespace != "frm":
+            errors.append(f"frame_namespace_mismatch:{key}->{frame.id.namespace}")
+        for role_name, role_ref in (frame.roles or {}).items():
+            if role_name == "jurisdiction":
+                continue
+            if isinstance(role_ref, str) and role_ref.startswith("ent:") and role_ref not in ir.entities:
+                errors.append(f"unknown_role_entity_ref:{key}:{role_name}->{role_ref}")
+
+    for key, temporal in ir.temporals.items():
+        if temporal.id.namespace != "tmp":
+            errors.append(f"temporal_namespace_mismatch:{key}->{temporal.id.namespace}")
+
+    used_frames: set[str] = set()
+    used_temporals: set[str] = set()
+    for key, norm in ir.norms.items():
+        if norm.id.namespace != "nrm":
+            errors.append(f"norm_namespace_mismatch:{key}->{norm.id.namespace}")
+        if norm.target_frame_ref not in ir.frames:
+            errors.append(f"unknown_target_frame_ref:{norm.id.ref()}->{norm.target_frame_ref}")
+        else:
+            used_frames.add(norm.target_frame_ref)
+        if norm.temporal_ref:
+            if norm.temporal_ref not in ir.temporals:
+                errors.append(f"unknown_temporal_ref:{norm.id.ref()}->{norm.temporal_ref}")
+            else:
+                used_temporals.add(norm.temporal_ref)
+        if norm.source_ref and norm.source_ref not in ir.provenance:
+            errors.append(f"unknown_source_ref:norm:{norm.id.ref()}->{norm.source_ref}")
+
+    for key, rule in ir.rules.items():
+        if rule.id.namespace != "rul":
+            errors.append(f"rule_namespace_mismatch:{key}->{rule.id.namespace}")
+        if rule.source_ref and rule.source_ref not in ir.provenance:
+            errors.append(f"unknown_source_ref:rule:{rule.id.ref()}->{rule.source_ref}")
+
+    for frame_ref in sorted(ir.frames.keys()):
+        if frame_ref not in used_frames:
+            msg = f"orphan_frame_id:{frame_ref}"
+            if strict:
+                errors.append(msg)
+            else:
+                warnings.append(msg)
+
+    for temporal_ref in sorted(ir.temporals.keys()):
+        if temporal_ref not in used_temporals:
+            msg = f"orphan_temporal_id:{temporal_ref}"
+            if strict:
+                errors.append(msg)
+            else:
+                warnings.append(msg)
+
+    if errors:
+        raise IDRegistryValidationError(errors)
+
+    warning_details = [_id_registry_error_detail(msg) for msg in warnings]
+    warning_codes = list(dict.fromkeys(d["code"] for d in warning_details))
+
+    return {
+        "ok": True,
+        "strict": bool(strict),
+        "warnings": warnings,
+        "warning_codes": warning_codes,
+        "warning_details": warning_details,
+        "counts": {
+            "entities": len(ir.entities),
+            "frames": len(ir.frames),
+            "temporals": len(ir.temporals),
+            "norms": len(ir.norms),
+            "rules": len(ir.rules),
+            "provenance": len(ir.provenance),
+        },
+    }
+
+
 def _split_modal(sentence: str) -> Tuple[str, DeonticOpV2, str]:
     low = sentence.lower()
     if " shall not " in low:
@@ -675,7 +951,20 @@ def _split_modal(sentence: str) -> Tuple[str, DeonticOpV2, str]:
     if " may " in low:
         i = low.index(" may ")
         return sentence[:i], DeonticOpV2.P, sentence[i + len(" may ") :]
-    raise ValueError("Unsupported CNL template: missing modal operator (shall/may/shall not)")
+    raise CNLParseError(
+        error_code=_cnl_parse_error_code("unsupported_modal"),
+        message="Unsupported CNL template: missing modal operator (shall/may/shall not)",
+    )
+
+
+def _extract_prefix_activation_clause(text: str) -> Tuple[Optional[str], Optional[str], str]:
+    m = re.match(r"^(if|when)\s+(.+?),\s*(.+)$", text, flags=re.IGNORECASE)
+    if not m:
+        return None, None, text
+    marker = _norm_space(m.group(1)).lower()
+    clause = _norm_space(m.group(2))
+    remainder = _norm_space(m.group(3))
+    return marker, clause, remainder
 
 
 def _extract_suffix_clause(text: str, markers: List[str]) -> Tuple[str, Optional[str], Optional[str]]:
@@ -697,11 +986,16 @@ def _extract_suffix_clause(text: str, markers: List[str]) -> Tuple[str, Optional
 
 def _extract_temporal(text: str) -> Tuple[str, Optional[TemporalRelationV2], Optional[TemporalExprV2]]:
     t = _norm_space(text)
-    m = re.search(r"\bwithin\s+(\d+\s+(?:day|days|hour|hours|week|weeks))$", t, flags=re.IGNORECASE)
+    m = re.search(
+        r"\bwithin\s+(\d+\s+(?:day|days|hour|hours|week|weeks))(?:\s+of\s+(.+))?$",
+        t,
+        flags=re.IGNORECASE,
+    )
     if m:
         head = _norm_space(t[: m.start()])
         duration = _normalize_duration(m.group(1))
-        return head, TemporalRelationV2.WITHIN, TemporalExprV2(kind="deadline", duration=duration)
+        anchor = _norm_token(_norm_space(m.group(2))) if m.group(2) else None
+        return head, TemporalRelationV2.WITHIN, TemporalExprV2(kind="deadline", duration=duration, start=anchor)
 
     m = re.search(r"\bby\s+([0-9]{4}-[0-9]{2}-[0-9]{2})$", t, flags=re.IGNORECASE)
     if m:
@@ -804,7 +1098,10 @@ def parse_cnl_to_ir_with_diagnostics(sentence: str, jurisdiction: str = "default
     """
     clean = _norm_space(sentence).rstrip(".;")
     if not clean:
-        raise ValueError("Empty CNL sentence")
+        raise CNLParseError(
+            error_code=_cnl_parse_error_code("empty_sentence"),
+            message="Empty CNL sentence",
+        )
 
     definition_ir = _parse_definition_sentence(clean, jurisdiction)
     if definition_ir is not None:
@@ -819,7 +1116,9 @@ def parse_cnl_to_ir_with_diagnostics(sentence: str, jurisdiction: str = "default
         }
         return definition_ir, diagnostics
 
-    actor_text, modal, remainder = _split_modal(clean)
+    prefix_act_marker, prefix_act_tail, modal_sentence = _extract_prefix_activation_clause(clean)
+
+    actor_text, modal, remainder = _split_modal(modal_sentence)
     actor_text = _norm_space(actor_text)
     remainder = _norm_space(remainder)
 
@@ -830,11 +1129,20 @@ def parse_cnl_to_ir_with_diagnostics(sentence: str, jurisdiction: str = "default
         ambiguity_flags.append("multiple_activation_markers")
     if len(exception_markers) > 1:
         ambiguity_flags.append("multiple_exception_markers")
+    if prefix_act_tail and activation_markers:
+        ambiguity_flags.append("multiple_activation_markers")
     if ambiguity_flags:
-        raise ValueError("Ambiguous CNL parse: " + ",".join(ambiguity_flags))
+        raise CNLParseError(
+            error_code=_cnl_parse_error_code("ambiguous_markers"),
+            message="Ambiguous CNL parse",
+            ambiguity_flags=ambiguity_flags,
+        )
 
     body, ex_marker, ex_tail = _extract_suffix_clause(remainder, ["unless", "except"])
     body, act_marker, act_tail = _extract_suffix_clause(body, ["if", "when"])
+    if prefix_act_tail:
+        act_marker = prefix_act_marker
+        act_tail = prefix_act_tail
     body, rel, expr = _extract_temporal(body)
 
     parts = body.split(" ", 1)
@@ -1341,6 +1649,8 @@ def run_v2_pipeline(
         drift = float(report.get("drift_score", 0.0))
         sem_ok = bool(report.get("semantic_equivalence_assertion", False))
         policy_ok = bool(report.get("accepted", True))
+        invariant_failures = _semantic_invariant_failures(ir, proposed_ir)
+        invariants_ok = not invariant_failures
         rejected_reason_codes = list(report.get("rejection_reasons") or [])
         if drift > drift_threshold:
             rejected_reason_codes.append("drift_threshold_exceeded")
@@ -1348,11 +1658,12 @@ def run_v2_pipeline(
             rejected_reason_codes.append("semantic_equivalence_assertion")
         if not policy_ok:
             rejected_reason_codes.append("optimizer_policy_rejected")
+        rejected_reason_codes.extend(invariant_failures)
 
         deduped_reasons = list(dict.fromkeys(rejected_reason_codes))
         failure_count = len(deduped_reasons)
 
-        if drift <= drift_threshold and sem_ok and policy_ok:
+        if drift <= drift_threshold and sem_ok and policy_ok and invariants_ok:
             ir = proposed_ir
             optimizer_report = {
                 **report,
@@ -1360,6 +1671,7 @@ def run_v2_pipeline(
                 "rejected": False,
                 "rejected_reason_codes": [],
                 "failure_count": 0,
+                "invariant_failures": [],
                 "decision_id": _decision_id(
                     "opt",
                     [
@@ -1369,6 +1681,7 @@ def run_v2_pipeline(
                         f"threshold={drift_threshold:.6f}",
                         f"sem_ok={sem_ok}",
                         f"policy_ok={policy_ok}",
+                        f"invariants_ok={invariants_ok}",
                     ],
                 ),
             }
@@ -1379,6 +1692,7 @@ def run_v2_pipeline(
                 "rejected": True,
                 "rejected_reason_codes": deduped_reasons,
                 "failure_count": failure_count,
+                "invariant_failures": invariant_failures,
                 "decision_id": _decision_id(
                     "opt",
                     [
@@ -1388,6 +1702,7 @@ def run_v2_pipeline(
                         f"threshold={drift_threshold:.6f}",
                         f"sem_ok={sem_ok}",
                         f"policy_ok={policy_ok}",
+                        f"invariants_ok={invariants_ok}",
                         ",".join(deduped_reasons),
                     ],
                 ),
@@ -1407,14 +1722,17 @@ def run_v2_pipeline(
     if kg_hook is not None:
         proposed_ir, report = kg_hook.enrich_ir(deepcopy(ir))
         kg_ok = bool(report.get("accepted", True))
-        rejected_reason_codes = list(report.get("rejection_reasons") or [])
-        if kg_ok:
+        invariant_failures = _semantic_invariant_failures(ir, proposed_ir)
+        invariants_ok = not invariant_failures
+        rejected_reason_codes = list(report.get("rejection_reasons") or []) + list(invariant_failures)
+        if kg_ok and invariants_ok:
             ir = proposed_ir
             kg_report = {
                 **report,
                 "applied": True,
                 "rejected": False,
                 "rejected_reason_codes": [],
+                "invariant_failures": [],
                 "summary": _kg_summary(report, accepted=True),
             }
         else:
@@ -1423,6 +1741,7 @@ def run_v2_pipeline(
                 "applied": False,
                 "rejected": True,
                 "rejected_reason_codes": list(dict.fromkeys(rejected_reason_codes + ["kg_drift_policy_rejected"])),
+                "invariant_failures": list(invariant_failures),
                 "summary": _kg_summary(report, accepted=False),
             }
 
@@ -1431,11 +1750,34 @@ def run_v2_pipeline(
 
     prover_report: Dict[str, Any] = {"applied": False}
     if prover_hook is not None:
+        dcec_env = _coerce_prover_envelope(
+            prover_hook.prove(dcec),
+            theorem=" and ".join(dcec) if dcec else "true",
+            assumptions=[],
+        )
+        tdfol_env = _coerce_prover_envelope(
+            prover_hook.prove(tdfol),
+            theorem=" and ".join(tdfol) if tdfol else "true",
+            assumptions=[],
+        )
+        dcec_errors = _validate_normalized_prover_envelope(
+            dcec_env,
+            expected_backend=str(dcec_env.get("backend") or ""),
+        )
+        tdfol_errors = _validate_normalized_prover_envelope(
+            tdfol_env,
+            expected_backend=str(tdfol_env.get("backend") or ""),
+        )
+        errors = list(dict.fromkeys(dcec_errors + tdfol_errors))
         prover_report = {
             "applied": True,
-            "dcec": prover_hook.prove(dcec),
-            "tdfol": prover_hook.prove(tdfol),
+            "valid": len(errors) == 0,
+            "error_codes": errors,
+            "dcec": dcec_env,
+            "tdfol": tdfol_env,
         }
+        if errors:
+            raise ValueError("invalid_prover_envelope:" + ",".join(errors))
 
     return {
         "ir": ir,

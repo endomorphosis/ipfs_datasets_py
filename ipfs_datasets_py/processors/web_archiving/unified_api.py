@@ -31,6 +31,7 @@ from .metrics.registry import MetricsRegistry
 from .orchestration.executor import SearchExecutor
 from .orchestration.planner import SearchPlanner
 from .orchestration.scoring import ProviderScorer
+from .structured_schema_compat import normalize_structured_fields
 from .search_engines.orchestrator import MultiEngineOrchestrator, OrchestratorConfig
 
 
@@ -270,6 +271,11 @@ class UnifiedWebArchivingAPI:
                 metadata=getattr(scraper_result, "metadata", {}) or {},
                 domain=fetch_request.domain,
             )
+            normalized_fields, migration_meta = normalize_structured_fields(
+                fields=parsed.structured_fields,
+                requested_domain=fetch_request.domain,
+                source_type=parsed.source_type,
+            )
             trace.total_latency_ms = (time.time() - start_time) * 1000.0
             trace.finished_at = datetime.utcnow().isoformat()
 
@@ -319,9 +325,10 @@ class UnifiedWebArchivingAPI:
                     "source_type": parsed.source_type,
                     "domain": fetch_request.domain,
                     "entities": parsed.entities,
-                    "structured_fields": parsed.structured_fields,
-                    "structured_fields_version": parsed.structured_fields.get("schema", "general_v1"),
+                    "structured_fields": normalized_fields,
+                    "structured_fields_version": normalized_fields.get("schema", "general_v1"),
                     "links": getattr(scraper_result, "links", []) or [],
+                    **migration_meta,
                 },
                 extraction_provenance={
                     "method": getattr(getattr(scraper_result, "method_used", None), "value", None),

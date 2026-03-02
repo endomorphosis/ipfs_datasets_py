@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_v2_blueprint import (
+    IDRegistryValidationError,
     DeonticOpV2,
     IRContractValidationError,
     clear_v2_proof_store,
@@ -16,6 +17,7 @@ from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_v2_blueprint import 
     run_v2_pipeline_with_defaults,
     check_compliance,
     configure_v2_proof_store_max_entries,
+    validate_v2_canonical_id_registry,
 )
 
 
@@ -185,6 +187,31 @@ def test_validate_ir_v2_contract_missing_source_ref_non_strict_warns() -> None:
     assert any(d["code"] == "V2_CONTRACT_MISSING_SOURCE_REF" for d in report["warning_details"])
 
 
+def test_validate_v2_canonical_id_registry_accepts_parser_output() -> None:
+    ir = parse_cnl_to_ir("Controller shall report breach within 48 hours.")
+
+    report = validate_v2_canonical_id_registry(ir, strict=True)
+
+    assert report["ok"] is True
+    assert report["warnings"] == []
+
+
+def test_validate_v2_canonical_id_registry_rejects_unknown_role_entity_ref() -> None:
+    ir = parse_cnl_to_ir("Controller shall report breach within 48 hours.")
+    frame = next(iter(ir.frames.values()))
+    frame.roles["agent"] = "ent:missing"
+
+    try:
+        validate_v2_canonical_id_registry(ir, strict=True)
+    except ValueError as exc:
+        assert "unknown_role_entity_ref" in str(exc)
+        assert "V2_IDREG_UNKNOWN_ROLE_ENTITY_REF" in str(exc)
+        assert isinstance(exc, IDRegistryValidationError)
+        assert "V2_IDREG_UNKNOWN_ROLE_ENTITY_REF" in exc.error_codes
+    else:
+        raise AssertionError("Expected ID registry validation failure")
+
+
 def test_check_compliance_rejects_invalid_frame_reference() -> None:
     ir = parse_cnl_to_ir("Controller shall report breach within 48 hours.")
     frame_ref = next(iter(ir.frames.keys()))
@@ -247,6 +274,59 @@ def test_run_v2_pipeline_rejects_optimizer_on_high_drift() -> None:
     assert out["optimizer_report"]["decision_id"].startswith("opt_")
 
 
+
+    def test_run_v2_pipeline_rejects_kg_semantic_mutation() -> None:
+        class _MutatingKG:
+            def enrich_ir(self, ir):
+                frame = next(iter(ir.frames.values()))
+                frame.predicate = "mutated_predicate"
+                return ir, {"kg": "mutating", "accepted": True, "rejection_reasons": []}
+
+        out = run_v2_pipeline(
+            "Controller shall report breach within 48 hours.",
+            kg_hook=_MutatingKG(),
+        )
+
+        assert out["kg_report"]["applied"] is False
+        assert out["kg_report"]["rejected"] is True
+        assert "frame_predicate_changed" in out["kg_report"]["rejected_reason_codes"]
+        assert "frame_predicate_changed" in out["kg_report"]["invariant_failures"]
+
+
+    def test_run_v2_pipeline_rejects_invalid_prover_envelope_payload() -> None:
+        class _BadProver:
+            def prove(self, formulas, assumptions=None):
+                return {
+                    "schema_version": "1.0",
+                    "backend": "mock_smt",
+                    "status": "ok",
+                    "theorem": " and ".join(formulas),
+                    "assumptions": list(assumptions or []),
+                    "certificate": {
+                        "certificate_id": "cert_bad",
+                        "format": "smt-certificate-v1",
+                        "normalized_hash": "0" * 64,
+                        "payload": {
+                            "backend": "mock_smt",
+                            "format": "smt-certificate-v1",
+                            # Intentionally omit required keys: solver, theorem_hash_hint
+                        },
+                    },
+                }
+
+        try:
+            run_v2_pipeline(
+                "Controller shall report breach within 48 hours.",
+                prover_hook=_BadProver(),
+            )
+        except ValueError as exc:
+            msg = str(exc)
+            assert "invalid_prover_envelope:" in msg
+            assert "prover_certificate_payload_missing_key:solver" in msg
+            assert "prover_certificate_payload_missing_key:theorem_hash_hint" in msg
+        else:
+            raise AssertionError("Expected prover envelope validation failure")
+
 def test_run_v2_pipeline_accepts_optimizer_on_drift_threshold_boundary() -> None:
     class _EdgeOptimizer:
         def optimize_ir(self, ir):
@@ -282,6 +362,42 @@ def test_run_v2_pipeline_optimizer_decision_id_is_deterministic() -> None:
     )
 
     assert out_a["optimizer_report"]["decision_id"] == out_b["optimizer_report"]["decision_id"]
+
+
+def test_run_v2_pipeline_rejects_optimizer_modality_mutation() -> None:
+    class _MutatingOptimizer:
+        def optimize_ir(self, ir):
+            norm = next(iter(ir.norms.values()))
+            norm.op = DeonticOpV2.P
+            return ir, {"semantic_equivalence_assertion": True, "drift_score": 0.0, "optimizer": "mutating"}
+
+    out = run_v2_pipeline(
+        "Controller shall report breach within 48 hours.",
+        optimizer_hook=_MutatingOptimizer(),
+    )
+
+    assert out["optimizer_report"]["applied"] is False
+    assert out["optimizer_report"]["rejected"] is True
+    assert "modality_changed" in out["optimizer_report"]["rejected_reason_codes"]
+    assert "modality_changed" in out["optimizer_report"]["invariant_failures"]
+
+
+def test_run_v2_pipeline_rejects_optimizer_target_frame_mutation() -> None:
+    class _MutatingOptimizer:
+        def optimize_ir(self, ir):
+            norm = next(iter(ir.norms.values()))
+            norm.target_frame_ref = "frm:mutated"
+            return ir, {"semantic_equivalence_assertion": True, "drift_score": 0.0, "optimizer": "mutating"}
+
+    out = run_v2_pipeline(
+        "Controller shall report breach within 48 hours.",
+        optimizer_hook=_MutatingOptimizer(),
+    )
+
+    assert out["optimizer_report"]["applied"] is False
+    assert out["optimizer_report"]["rejected"] is True
+    assert "target_frame_changed" in out["optimizer_report"]["rejected_reason_codes"]
+    assert "target_frame_changed" in out["optimizer_report"]["invariant_failures"]
 
 
 def test_run_v2_pipeline_rejects_kg_and_preserves_ir_when_kg_not_accepted() -> None:

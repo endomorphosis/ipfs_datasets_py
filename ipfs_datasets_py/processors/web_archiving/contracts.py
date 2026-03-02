@@ -13,6 +13,8 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
+from .structured_schema_compat import normalize_domain
+
 
 class OperationMode(str, Enum):
     """Execution profile for provider selection and fallback behavior."""
@@ -150,6 +152,7 @@ class UnifiedSearchRequest:
             raise ValueError("UnifiedSearchRequest.min_quality must be in [0.0, 1.0]")
         if not self.domain or not self.domain.strip():
             raise ValueError("UnifiedSearchRequest.domain must be non-empty")
+        self.domain = normalize_domain(self.domain)
 
     def to_dict(self) -> Dict[str, Any]:
         payload = asdict(self)
@@ -195,6 +198,7 @@ class UnifiedFetchRequest:
             raise ValueError("UnifiedFetchRequest.min_quality must be in [0.0, 1.0]")
         if not self.domain or not self.domain.strip():
             raise ValueError("UnifiedFetchRequest.domain must be non-empty")
+        self.domain = normalize_domain(self.domain)
 
     def to_dict(self) -> Dict[str, Any]:
         payload = asdict(self)
