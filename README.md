@@ -7,6 +7,7 @@
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple)](https://modelcontextprotocol.io)
 [![Tests](https://img.shields.io/badge/tests-4500%2B-brightgreen)](./tests/)
 [![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](#)
+[![Legal V2 Reasoner CI](https://github.com/endomorphosis/ipfs_datasets_py/actions/workflows/legal-v2-reasoner-ci.yml/badge.svg)](https://github.com/endomorphosis/ipfs_datasets_py/actions/workflows/legal-v2-reasoner-ci.yml)
 
 
 **IPFS Datasets Python** is a comprehensive platform for decentralized AI data processing, combining mathematical theorem proving, AI-powered document intelligence, multimedia processing, and knowledge graph operations—all on decentralized IPFS infrastructure.
@@ -174,8 +175,15 @@ bash scripts/ops/legal_data/run_hybrid_v2_pipeline.sh \
 Reference runbook:
 - `docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md`
 
+Dedicated CI workflow (local/CI parity for V2 suite):
+- `.github/workflows/legal-v2-reasoner-ci.yml`
+- `https://github.com/endomorphosis/ipfs_datasets_py/actions/workflows/legal-v2-reasoner-ci.yml`
+
 Comprehensive architecture plan:
 - `docs/guides/legal_data/HYBRID_LEGAL_COMPREHENSIVE_IMPROVEMENT_PLAN.md`
+
+Master integration plan (IR/CNL/compilers/reasoner with examples):
+- `docs/guides/legal_data/HYBRID_LEGAL_MASTER_INTEGRATION_PLAN.md`
 
 Execution workstreams:
 - `docs/guides/legal_data/HYBRID_LEGAL_EXECUTION_WORKSTREAMS.md`
