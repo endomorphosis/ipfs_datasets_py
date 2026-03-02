@@ -27,6 +27,59 @@ _QUALITY_SECTION_NUMBER_RE = re.compile(
     r"^\d+[A-Za-z]?(?:[.\-]\d+[A-Za-z]*)*$",
     re.IGNORECASE,
 )
+_QUALITY_SCAFFOLD_TEXT_RE = re.compile(r"^\s*Section\s+Section-\d+\s*:", re.IGNORECASE)
+_QUALITY_NAV_URL_RE = re.compile(
+    r"/(?:calendar|meeting|roster|blog|news|jobs|photo|links?|home|bulletin|live|staff|contact|interim|committee|reports?|member|media)\b",
+    re.IGNORECASE,
+)
+
+
+def _extract_statute_quality_fields(statute: Any) -> Dict[str, str]:
+    if isinstance(statute, dict):
+        return {
+            "full_text": str(statute.get("full_text") or statute.get("text") or ""),
+            "section_number": str(statute.get("section_number") or statute.get("sectionNumber") or ""),
+            "section_name": str(statute.get("section_name") or statute.get("sectionName") or ""),
+            "source_url": str(statute.get("source_url") or statute.get("sourceUrl") or ""),
+        }
+
+    return {
+        "full_text": str(getattr(statute, "full_text", "") or ""),
+        "section_number": str(getattr(statute, "section_number", "") or ""),
+        "section_name": str(getattr(statute, "section_name", "") or ""),
+        "source_url": str(getattr(statute, "source_url", "") or ""),
+    }
+
+
+def _is_scaffold_or_navigation_record(statute: Any) -> bool:
+    fields = _extract_statute_quality_fields(statute)
+    text = fields["full_text"].strip()
+    section_number = fields["section_number"].strip()
+    section_name = fields["section_name"].strip()
+    source_url = fields["source_url"].strip().lower()
+
+    fallback_section = bool(_QUALITY_SECTION_FALLBACK_RE.match(section_number))
+    has_statute_signal = bool(
+        _QUALITY_SECTION_SIGNAL_RE.search(text)
+        or _QUALITY_SECTION_SIGNAL_RE.search(section_name)
+        or _QUALITY_SECTION_NUMBER_RE.match(section_number)
+    )
+    nav_like_text = bool(_QUALITY_NAV_RE.search(text) or _QUALITY_NAV_RE.search(section_name))
+    nav_like_url = bool(_QUALITY_NAV_URL_RE.search(source_url))
+
+    if _QUALITY_SCAFFOLD_TEXT_RE.match(text):
+        return True
+
+    if fallback_section and nav_like_text and not has_statute_signal:
+        return True
+
+    if nav_like_url and not has_statute_signal:
+        return True
+
+    if nav_like_text and not has_statute_signal and len(text) < 1200:
+        return True
+
+    return False
 
 # US States and territories
 US_STATES = {
@@ -461,11 +514,13 @@ def _compute_state_quality_metrics(statutes: List[Dict[str, Any]]) -> Dict[str, 
             "nav_like_ratio": 0.0,
             "fallback_section_ratio": 0.0,
             "numeric_section_name_ratio": 0.0,
+            "scaffold_ratio": 0.0,
         }
 
     nav_like = 0
     fallback_section = 0
     numeric_section_name = 0
+    scaffold = 0
 
     for statute in statutes:
         if not isinstance(statute, dict):
@@ -482,12 +537,15 @@ def _compute_state_quality_metrics(statutes: List[Dict[str, Any]]) -> Dict[str, 
             fallback_section += 1
         if _QUALITY_SECTION_SIGNAL_RE.search(section_name) or _QUALITY_SECTION_NUMBER_RE.match(section_number):
             numeric_section_name += 1
+        if _is_scaffold_or_navigation_record(statute):
+            scaffold += 1
 
     return {
         "total": total,
         "nav_like_ratio": round(nav_like / total, 3),
         "fallback_section_ratio": round(fallback_section / total, 3),
         "numeric_section_name_ratio": round(numeric_section_name / total, 3),
+        "scaffold_ratio": round(scaffold / total, 3),
     }
 
 
@@ -496,9 +554,10 @@ def _should_flag_quality(quality_metrics: Dict[str, Any]) -> bool:
     nav_q = float(quality_metrics.get("nav_like_ratio", 0.0) or 0.0)
     fallback_q = float(quality_metrics.get("fallback_section_ratio", 0.0) or 0.0)
     numeric_q = float(quality_metrics.get("numeric_section_name_ratio", 0.0) or 0.0)
+    scaffold_q = float(quality_metrics.get("scaffold_ratio", 0.0) or 0.0)
 
     fallback_problem = (total_q >= 10 and fallback_q >= 0.7 and numeric_q <= 0.2)
-    if total_q >= 10 and (nav_q >= 0.2 or fallback_problem or numeric_q <= 0.2):
+    if total_q >= 10 and (nav_q >= 0.2 or fallback_problem or numeric_q <= 0.2 or scaffold_q >= 0.2):
         return True
     if 1 <= total_q < 10 and nav_q >= 0.5:
         return True
@@ -510,9 +569,10 @@ def _format_quality_warning(state_code: str, quality_metrics: Dict[str, Any]) ->
     nav_q = float(quality_metrics.get("nav_like_ratio", 0.0) or 0.0)
     fallback_q = float(quality_metrics.get("fallback_section_ratio", 0.0) or 0.0)
     numeric_q = float(quality_metrics.get("numeric_section_name_ratio", 0.0) or 0.0)
+    scaffold_q = float(quality_metrics.get("scaffold_ratio", 0.0) or 0.0)
     return (
         f"{state_code} quality gate triggered "
-        f"(total={total_q}, nav={nav_q}, fallback={fallback_q}, numeric={numeric_q})"
+        f"(total={total_q}, nav={nav_q}, fallback={fallback_q}, numeric={numeric_q}, scaffold={scaffold_q})"
     )
 
 
@@ -626,7 +686,7 @@ async def _scrape_state_with_retries(
                 "statutes_count": 0,
                 "zero_statute": True,
                 "low_quality": False,
-                "quality_metrics": {"total": 0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0},
+                "quality_metrics": {"total": 0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0, "scaffold_ratio": 0.0},
                 "warnings": [f"{state_code} returned zero statutes"],
                 "statute_data": {
                     "state_code": state_code,
@@ -667,7 +727,7 @@ async def _scrape_state_with_retries(
         "statutes_count": 0,
         "zero_statute": True,
         "low_quality": False,
-        "quality_metrics": {"total": 0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0},
+        "quality_metrics": {"total": 0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0, "scaffold_ratio": 0.0},
         "warnings": [f"{state_code} returned zero statutes"],
         "statute_data": {
             "state_code": state_code,
@@ -781,12 +841,11 @@ def _write_state_jsonld_files(scraped_statutes: List[Dict[str, Any]], jsonld_dir
 
 
 def _has_sufficient_full_text(statute: Any, *, min_full_text_chars: int) -> bool:
-    if hasattr(statute, "full_text"):
-        full_text = str(getattr(statute, "full_text", "") or "")
-    elif isinstance(statute, dict):
-        full_text = str(statute.get("full_text") or "")
-    else:
-        full_text = ""
+    if _is_scaffold_or_navigation_record(statute):
+        return False
+
+    fields = _extract_statute_quality_fields(statute)
+    full_text = fields["full_text"]
 
     if len(full_text.strip()) < int(min_full_text_chars):
         return False
@@ -807,7 +866,7 @@ def _has_sufficient_full_text(statute: Any, *, min_full_text_chars: int) -> bool
             if total_cites > 0:
                 return True
 
-    # If text length threshold passes, allow even without parsed structure.
+    # If text length threshold passes and it is not navigation/scaffold content, allow it.
     return True
 
 

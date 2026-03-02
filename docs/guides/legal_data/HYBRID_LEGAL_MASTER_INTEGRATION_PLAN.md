@@ -426,3 +426,6 @@ This master document integrates and supersedes design details scattered across:
 - `HYBRID_LEGAL_IR_SPEC.md`
 - `HYBRID_LEGAL_REASONER_API_AND_PROOF_SCHEMA.md`
 - `HYBRID_LEGAL_EXECUTION_WORKSTREAMS.md`
+- `HYBRID_LEGAL_WS8_IMPLEMENTATION_TICKETS.md`
+- `templates/HYBRID_LEGAL_WS8_ISSUE_BODIES_01_05.md`
+- `templates/HYBRID_LEGAL_WS8_ISSUE_BODIES_06_15.md`

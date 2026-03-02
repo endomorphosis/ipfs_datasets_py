@@ -188,6 +188,15 @@ Master integration plan (IR/CNL/compilers/reasoner with examples):
 Execution workstreams:
 - `docs/guides/legal_data/HYBRID_LEGAL_EXECUTION_WORKSTREAMS.md`
 
+Implementation ticket backlog (issue-ready WS8 plan):
+- `docs/guides/legal_data/HYBRID_LEGAL_WS8_IMPLEMENTATION_TICKETS.md`
+
+Copy/paste GitHub issue bodies (WS8 tickets 01-05):
+- `docs/guides/legal_data/templates/HYBRID_LEGAL_WS8_ISSUE_BODIES_01_05.md`
+
+Copy/paste GitHub issue bodies (WS8 tickets 06-15):
+- `docs/guides/legal_data/templates/HYBRID_LEGAL_WS8_ISSUE_BODIES_06_15.md`
+
 ### Discord Integration
 
 ```bash

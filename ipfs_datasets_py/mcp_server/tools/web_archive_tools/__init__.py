@@ -47,6 +47,12 @@ from .openverse_search import search_openverse_images, search_openverse_audio, b
 
 # SerpStack Search tools
 from .serpstack_search import search_serpstack, search_serpstack_images, batch_search_serpstack, SerpStackSearchAPI
+from .unified_api_tools import (
+    unified_search,
+    unified_fetch,
+    unified_search_and_fetch,
+    unified_health,
+)
 
 # Search API classes
 from .brave_search import BraveSearchAPI
@@ -137,5 +143,11 @@ __all__ = [
     "SerpStackSearchAPI",
     
     # Search API Classes
-    "BraveSearchAPI"
+    "BraveSearchAPI",
+
+    # Unified API tools
+    "unified_search",
+    "unified_fetch",
+    "unified_search_and_fetch",
+    "unified_health",
 ]

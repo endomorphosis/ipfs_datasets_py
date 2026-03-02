@@ -7,6 +7,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper impo
     StatuteMetadata,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import (
+    _compute_state_quality_metrics,
     _compute_coverage_summary,
     _filter_strict_full_text_statutes,
     _trim_scraped_statutes_to_max,
@@ -125,6 +126,49 @@ def test_filter_strict_full_text_statutes_removes_short_records():
     assert removed == 1
     assert len(kept) == 1
     assert kept[0].statute_id == "Code § 11-1"
+
+
+def test_filter_strict_full_text_statutes_removes_scaffold_navigation_records():
+    scaffold = {
+        "section_number": "Section-23",
+        "section_name": "POST AUDIT DIVISION",
+        "full_text": "Section Section-23: POST AUDIT DIVISION",
+        "source_url": "http://www.wvlegislature.gov/Joint/postaudit.cfm",
+    }
+    valid = {
+        "section_number": "9A.32.030",
+        "section_name": "Murder in the first degree",
+        "full_text": "Section 9A.32.030. A person is guilty of murder in the first degree when... " + ("x" * 500),
+        "source_url": "https://app.leg.wa.gov/RCW/default.aspx?cite=9A.32.030",
+    }
+
+    kept, removed = _filter_strict_full_text_statutes([scaffold, valid], min_full_text_chars=280)
+
+    assert removed == 1
+    assert len(kept) == 1
+    assert kept[0]["section_number"] == "9A.32.030"
+
+
+def test_compute_state_quality_metrics_tracks_scaffold_ratio():
+    statutes = [
+        {
+            "section_number": "Section-1",
+            "section_name": "Home",
+            "full_text": "Section Section-1: Home",
+            "source_url": "https://example.gov/news",
+        },
+        {
+            "section_number": "10-1",
+            "section_name": "Definitions",
+            "full_text": "Section 10-1. Definitions. " + ("valid body text " * 40),
+            "source_url": "https://example.gov/code/10-1",
+        },
+    ]
+
+    metrics = _compute_state_quality_metrics(statutes)
+
+    assert metrics["total"] == 2
+    assert metrics["scaffold_ratio"] == 0.5
 
 
 def test_trim_scraped_statutes_to_max_truncates_in_state_order():

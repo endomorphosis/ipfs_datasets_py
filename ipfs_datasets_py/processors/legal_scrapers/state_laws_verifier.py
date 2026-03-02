@@ -6,6 +6,7 @@ structure quality across jurisdictions.
 
 import json
 import argparse
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -19,6 +20,13 @@ try:
     from .state_laws_scraper import US_STATES
 except Exception:
     US_STATES = {}
+
+
+_VERIFY_SCAFFOLD_RE = re.compile(r"^\s*Section\s+Section-\d+\s*:", re.IGNORECASE)
+_VERIFY_STATUTE_SIGNAL_RE = re.compile(
+    r"(?:\b\d{1,4}[A-Za-z]?(?:[.\-]\d+[A-Za-z]*)+\b|§\s*\d+[A-Za-z]?(?:[.\-]\d+[A-Za-z]*)+|\b(?:section|sec\.?|s\.)\s*\d+[A-Za-z]?(?:[.\-]\d+[A-Za-z]*)*\b)",
+    re.IGNORECASE,
+)
 
 
 class StateLawsVerifier:
@@ -110,11 +118,26 @@ class StateLawsVerifier:
         subsections_count = 0
         citations_count = 0
         jsonld_count = 0
+        scaffold_count = 0
+        weak_text_count = 0
+        legal_signal_count = 0
 
         for statute in records:
             structured = statute.get("structured_data") or {}
             if not isinstance(structured, dict):
                 continue
+
+            full_text = str(statute.get("full_text") or statute.get("text") or "")
+            section_name = str(statute.get("section_name") or statute.get("sectionName") or "")
+            source_url = str(statute.get("source_url") or statute.get("sourceUrl") or "")
+
+            if _VERIFY_SCAFFOLD_RE.match(full_text):
+                scaffold_count += 1
+            nav_url = any(tok in source_url.lower() for tok in ("/calendar", "/meeting", "/roster", "/blog", "/news", "/jobs", "/contact"))
+            if len(full_text.strip()) < int(min_full_text_chars) or nav_url:
+                weak_text_count += 1
+            if _VERIFY_STATUTE_SIGNAL_RE.search(full_text) or _VERIFY_STATUTE_SIGNAL_RE.search(section_name):
+                legal_signal_count += 1
 
             preamble = structured.get("preamble")
             if isinstance(preamble, str) and preamble.strip():
@@ -138,6 +161,9 @@ class StateLawsVerifier:
         subsections_cov = self._coverage_ratio(total, subsections_count)
         citations_cov = self._coverage_ratio(total, citations_count)
         jsonld_cov = self._coverage_ratio(total, jsonld_count)
+        scaffold_rate = self._coverage_ratio(total, scaffold_count)
+        title_without_body_rate = self._coverage_ratio(total, weak_text_count)
+        legal_signal_rate = self._coverage_ratio(total, legal_signal_count)
 
         details = {
             "total_statutes": total,
@@ -145,10 +171,20 @@ class StateLawsVerifier:
             "subsections_coverage": subsections_cov,
             "citations_coverage": citations_cov,
             "jsonld_coverage": jsonld_cov,
+            "scaffold_rate": scaffold_rate,
+            "title_without_body_rate": title_without_body_rate,
+            "legal_signal_rate": legal_signal_rate,
             "source_metadata": result.get("metadata") or {},
         }
 
-        if jsonld_cov >= 0.95 and preamble_cov >= 0.80 and subsections_cov >= 0.50:
+        if scaffold_rate > 0.15 or title_without_body_rate > 0.30 or legal_signal_rate < 0.60:
+            self.log_test(
+                "JSON-LD Completeness",
+                "FAIL",
+                "Statute quality thresholds failed (scaffold/title-only contamination)",
+                details,
+            )
+        elif jsonld_cov >= 0.95 and preamble_cov >= 0.80 and subsections_cov >= 0.50:
             self.log_test(
                 "JSON-LD Completeness",
                 "PASS",

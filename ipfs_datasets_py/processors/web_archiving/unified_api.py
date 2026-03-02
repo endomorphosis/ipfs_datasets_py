@@ -17,7 +17,10 @@ from .contracts import (
     ErrorSeverity,
     ExecutionTrace,
     OperationMode,
+    UnifiedDocument,
     UnifiedError,
+    UnifiedFetchRequest,
+    UnifiedFetchResponse,
     UnifiedSearchHit,
     UnifiedSearchRequest,
     UnifiedSearchResponse,
@@ -53,6 +56,7 @@ class UnifiedWebArchivingAPI:
         scorer: Optional[ProviderScorer] = None,
         search_planner: Optional[SearchPlanner] = None,
         search_executor: Optional[SearchExecutor] = None,
+        scraper: Optional[Any] = None,
     ):
         self.config = config or UnifiedAPIConfig(default_search_engines=list(DEFAULT_SEARCH_ENGINES))
         self.metrics_registry = metrics_registry or MetricsRegistry()
@@ -63,6 +67,7 @@ class UnifiedWebArchivingAPI:
             default_search_engines=self.config.default_search_engines,
         )
         self.search_executor = search_executor or SearchExecutor(orchestrator=self.orchestrator)
+        self.scraper = scraper
 
     def _build_orchestrator(self) -> MultiEngineOrchestrator:
         orchestrator_config = OrchestratorConfig(
@@ -212,6 +217,173 @@ class UnifiedWebArchivingAPI:
             "orchestrator": stats,
             "metrics_5m": metrics_summary,
         }
+
+    def fetch(
+        self,
+        request: Union[UnifiedFetchRequest, str],
+        **kwargs: Any,
+    ) -> UnifiedFetchResponse:
+        """Execute a unified fetch request via the configured scraper backend."""
+        if isinstance(request, str):
+            fetch_request = UnifiedFetchRequest(url=request, **kwargs)
+        else:
+            fetch_request = request
+
+        start_time = time.time()
+        request_id = str(uuid.uuid4())
+        provider = "unified_scraper"
+        trace = ExecutionTrace(
+            request_id=request_id,
+            operation="fetch",
+            mode=fetch_request.mode,
+            providers_attempted=[provider],
+            provider_selected=provider,
+            fallback_count=0,
+            total_latency_ms=0.0,
+            retries=0,
+        )
+
+        try:
+            scraper = self._get_scraper()
+            scraper_result = scraper.scrape_sync(fetch_request.url)
+            trace.total_latency_ms = (time.time() - start_time) * 1000.0
+            trace.finished_at = datetime.utcnow().isoformat()
+
+            if not getattr(scraper_result, "success", False):
+                errors = [
+                    UnifiedError(
+                        code="fetch_failed",
+                        message="; ".join(getattr(scraper_result, "errors", []) or ["fetch failed"]),
+                        provider=provider,
+                        retryable=True,
+                        severity=ErrorSeverity.ERROR,
+                        context={"request_id": request_id},
+                    )
+                ]
+                self.metrics_registry.record_event(
+                    provider=provider,
+                    operation="fetch",
+                    success=False,
+                    latency_ms=trace.total_latency_ms,
+                    items_processed=0,
+                    error_type="scrape_failed",
+                )
+                return UnifiedFetchResponse(
+                    url=fetch_request.url,
+                    document=None,
+                    trace=trace,
+                    errors=errors,
+                    success=False,
+                    quality_score=0.0,
+                    metadata={"requested_mode": fetch_request.mode.value},
+                )
+
+            text = getattr(scraper_result, "text", "") or ""
+            html = getattr(scraper_result, "html", "") or ""
+            quality_score = 1.0 if text else (0.4 if html else 0.0)
+            doc = UnifiedDocument(
+                url=fetch_request.url,
+                title=getattr(scraper_result, "title", "") or "",
+                text=text,
+                html=html,
+                content_type=(getattr(scraper_result, "metadata", {}) or {}).get("content_type", ""),
+                metadata=getattr(scraper_result, "metadata", {}) or {},
+                extraction_provenance={
+                    "method": getattr(getattr(scraper_result, "method_used", None), "value", None),
+                    "extraction_time": getattr(scraper_result, "extraction_time", 0.0),
+                },
+            )
+
+            self.metrics_registry.record_event(
+                provider=provider,
+                operation="fetch",
+                success=True,
+                latency_ms=trace.total_latency_ms,
+                items_processed=1,
+                quality_score=quality_score,
+            )
+            return UnifiedFetchResponse(
+                url=fetch_request.url,
+                document=doc,
+                trace=trace,
+                errors=[],
+                success=True,
+                quality_score=quality_score,
+                metadata={"requested_mode": fetch_request.mode.value},
+            )
+
+        except Exception as exc:
+            elapsed_ms = (time.time() - start_time) * 1000.0
+            trace.total_latency_ms = elapsed_ms
+            trace.finished_at = datetime.utcnow().isoformat()
+            self.metrics_registry.record_event(
+                provider=provider,
+                operation="fetch",
+                success=False,
+                latency_ms=elapsed_ms,
+                items_processed=0,
+                error_type=type(exc).__name__,
+            )
+            return UnifiedFetchResponse(
+                url=fetch_request.url,
+                document=None,
+                trace=trace,
+                errors=[
+                    UnifiedError(
+                        code="fetch_exception",
+                        message=str(exc),
+                        provider=provider,
+                        retryable=True,
+                        severity=ErrorSeverity.ERROR,
+                        context={"request_id": request_id},
+                    )
+                ],
+                success=False,
+                quality_score=0.0,
+                metadata={"requested_mode": fetch_request.mode.value},
+            )
+
+    def search_and_fetch(
+        self,
+        request: Union[UnifiedSearchRequest, str],
+        *,
+        max_documents: int = 5,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Run unified search then fetch top results.
+
+        Returns a simple envelope that includes the search response and fetch
+        responses to keep MCP integration straightforward.
+        """
+        search_response = self.search(request, **kwargs)
+        documents: List[UnifiedFetchResponse] = []
+
+        if search_response.success:
+            for hit in search_response.results[: max(0, int(max_documents))]:
+                documents.append(
+                    self.fetch(
+                        UnifiedFetchRequest(
+                            url=hit.url,
+                            mode=search_response.trace.mode if search_response.trace else OperationMode.BALANCED,
+                        )
+                    )
+                )
+
+        return {
+            "status": "success" if search_response.success else "error",
+            "search": search_response.to_dict(),
+            "documents": [doc.to_dict() for doc in documents],
+            "documents_count": len(documents),
+        }
+
+    def _get_scraper(self) -> Any:
+        if self.scraper is not None:
+            return self.scraper
+        # Lazy import to reduce startup dependency load.
+        from .unified_web_scraper import UnifiedWebScraper
+
+        self.scraper = UnifiedWebScraper()
+        return self.scraper
 
     @staticmethod
     def _to_unified_hit(item: Any) -> UnifiedSearchHit:

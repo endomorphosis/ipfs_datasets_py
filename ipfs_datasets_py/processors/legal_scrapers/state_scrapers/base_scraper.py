@@ -80,6 +80,19 @@ _STATUTE_URL_HINTS = (
 )
 
 _NON_HTML_DOC_RE = re.compile(r"\.(?:pdf|docx?|xlsx?|pptx?)(?:$|[?#])", re.IGNORECASE)
+_SCAFFOLD_SECTION_TEXT_RE = re.compile(r"^\s*section\s+section-\d+\s*:", re.IGNORECASE)
+_NAV_URL_HINTS = (
+    "/calendar",
+    "/meeting",
+    "/roster",
+    "/blog",
+    "/news",
+    "/jobs",
+    "/photos",
+    "/contact",
+    "/bulletin",
+    "/live",
+)
 
 
 @dataclass
@@ -476,8 +489,15 @@ class BaseStateScraper(ABC):
             or any(hint in source_url.lower() for hint in _STATUTE_URL_HINTS)
         )
         nav_like = self._looks_like_navigation_text(section_name) or self._looks_like_navigation_text(full_text)
+        nav_url_like = any(hint in source_url.lower() for hint in _NAV_URL_HINTS)
+
+        if _SCAFFOLD_SECTION_TEXT_RE.match(full_text):
+            return True
 
         if fallback_section and nav_like and not has_statute_signal:
+            return True
+
+        if nav_url_like and not has_statute_signal:
             return True
 
         if nav_like and not has_statute_signal and len(full_text) < 400:

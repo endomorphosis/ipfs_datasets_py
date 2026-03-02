@@ -55,6 +55,20 @@ class FakeOrchestratorCapture:
         return {"engines": {}}
 
 
+class FakeScraper:
+    def scrape_sync(self, url):
+        return SimpleNamespace(
+            success=True,
+            title="Fetched Title",
+            text="Fetched Text",
+            html="<html></html>",
+            metadata={"content_type": "text/html"},
+            method_used=SimpleNamespace(value="beautifulsoup"),
+            extraction_time=0.1,
+            errors=[],
+        )
+
+
 def test_unified_api_search_success_maps_results() -> None:
     api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess())
     request = UnifiedSearchRequest(
@@ -164,3 +178,30 @@ def test_unified_api_search_uses_throughput_ranked_provider_order() -> None:
     assert response.metadata["planned_provider_order"][0] == "duckduckgo"
     assert response.trace is not None
     assert response.trace.providers_attempted == ["duckduckgo"]
+
+
+def test_unified_api_fetch_success_with_injected_scraper() -> None:
+    api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess(), scraper=FakeScraper())
+
+    response = api.fetch("https://example.com/law")
+
+    assert response.success is True
+    assert response.document is not None
+    assert response.document.title == "Fetched Title"
+    assert response.quality_score > 0
+
+
+def test_unified_api_search_and_fetch_returns_document_envelope() -> None:
+    api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess(), scraper=FakeScraper())
+
+    result = api.search_and_fetch(
+        UnifiedSearchRequest(
+            query="indiana code",
+            max_results=5,
+            provider_allowlist=["brave", "duckduckgo"],
+        ),
+        max_documents=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["documents_count"] == 1
