@@ -636,6 +636,20 @@ Template sources:
 - `ipfs_datasets_py/docs/guides/legal_data/templates/HYBRID_LEGAL_WS11_ISSUE_BODIES_01_06.md`
 - `ipfs_datasets_py/docs/guides/legal_data/templates/HYBRID_LEGAL_WS11_ISSUE_BODIES_07_12.md`
 
+Latest issue creation result (2026-03-02):
+- `HL-WS11-01`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1164
+- `HL-WS11-02`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1165
+- `HL-WS11-03`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1166
+- `HL-WS11-04`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1167
+- `HL-WS11-05`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1168
+- `HL-WS11-06`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1169
+- `HL-WS11-07`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1170
+- `HL-WS11-08`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1171
+- `HL-WS11-09`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1172
+- `HL-WS11-10`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1173
+- `HL-WS11-11`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1174
+- `HL-WS11-12`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1175
+
 ## 15) WS11 Local Parity Evidence
 
 Purpose:

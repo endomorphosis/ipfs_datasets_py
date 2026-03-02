@@ -18,7 +18,13 @@ DEFAULT_LABELS = ["hybrid-legal", "ws11"]
 
 
 def run_cmd(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(cmd, check=check, capture_output=True, text=True)
+    result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+    if check and result.returncode != 0:
+        stderr = (result.stderr or "").strip()
+        stdout = (result.stdout or "").strip()
+        detail = stderr or stdout or f"exit {result.returncode}"
+        raise RuntimeError(f"command failed ({' '.join(cmd)}): {detail}")
+    return result
 
 
 def gh_auth_ok() -> bool:
