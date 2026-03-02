@@ -21,6 +21,11 @@ def run_cmd(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProces
     return subprocess.run(cmd, check=check, capture_output=True, text=True)
 
 
+def gh_auth_ok() -> bool:
+    result = run_cmd(["gh", "auth", "status"], check=False)
+    return result.returncode == 0
+
+
 def parse_ws11_issues(markdown_text: str) -> list[dict[str, str]]:
     pattern = re.compile(r"^##\s+(HL-WS11-\d{2}:[^\n]+)$", flags=re.MULTILINE)
     matches = list(pattern.finditer(markdown_text))
@@ -148,6 +153,10 @@ def main() -> int:
 
     if not gh_available and args.create:
         print("`gh` CLI is required for --create mode. Install/authenticate `gh` first.", file=sys.stderr)
+        return 2
+
+    if gh_available and args.create and not gh_auth_ok():
+        print("`gh` is installed but not authenticated. Run `gh auth login` first.", file=sys.stderr)
         return 2
 
     if gh_available:
