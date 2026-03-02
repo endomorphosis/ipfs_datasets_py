@@ -504,6 +504,50 @@ class StateLawsActorCriticLoop:
             "skipped_count": skipped_count,
             "error_count": error_count,
             "attempts": attempts,
+            "policy_summary": self._summarize_auto_patch_policy(attempts),
+        }
+
+    @staticmethod
+    def _summarize_auto_patch_policy(attempts: List[Dict[str, Any]]) -> Dict[str, Any]:
+        matched_allow_glob_counts: Dict[str, int] = {}
+        matched_deny_glob_counts: Dict[str, int] = {}
+        blocked_reason_counts: Dict[str, int] = {}
+
+        attempts_with_policy = 0
+        missing_policy_count = 0
+        allowed_count = 0
+        blocked_count = 0
+
+        for attempt in attempts:
+            policy = attempt.get("policy")
+            if not isinstance(policy, dict):
+                missing_policy_count += 1
+                continue
+
+            attempts_with_policy += 1
+            allowed = bool(policy.get("allowed"))
+            if allowed:
+                allowed_count += 1
+            else:
+                blocked_count += 1
+                reason = str(attempt.get("reason") or "blocked-unspecified")
+                blocked_reason_counts[reason] = blocked_reason_counts.get(reason, 0) + 1
+
+            for pattern in list(policy.get("matched_allow_globs") or []):
+                key = str(pattern)
+                matched_allow_glob_counts[key] = matched_allow_glob_counts.get(key, 0) + 1
+            for pattern in list(policy.get("matched_deny_globs") or []):
+                key = str(pattern)
+                matched_deny_glob_counts[key] = matched_deny_glob_counts.get(key, 0) + 1
+
+        return {
+            "attempts_with_policy": attempts_with_policy,
+            "missing_policy_count": missing_policy_count,
+            "allowed_count": allowed_count,
+            "blocked_count": blocked_count,
+            "blocked_reason_counts": blocked_reason_counts,
+            "matched_allow_glob_counts": matched_allow_glob_counts,
+            "matched_deny_glob_counts": matched_deny_glob_counts,
         }
 
     def _auto_patch_single(self, rel_path: str, *, dry_run: bool) -> Dict[str, Any]:

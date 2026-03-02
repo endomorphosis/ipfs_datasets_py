@@ -175,23 +175,40 @@ async def _main(args: argparse.Namespace) -> int:
         try:
             state_result = await _run_for_state(args, state)
         except Exception as exc:
-            failed = True
+            message = str(exc)
+            is_missing = "No parquet files found under" in message
+            if not (args.skip_missing and is_missing):
+                failed = True
             state_result = {
                 "state": state,
                 "ingest_status": "error",
                 "search_status": "error",
                 "result_count": 0,
-                "error": str(exc),
+                "error": message,
             }
+            if is_missing:
+                state_result["skipped_missing"] = True
         if state_result.get("search_status") != "success":
-            failed = True
+            if not (args.skip_missing and state_result.get("skipped_missing")):
+                failed = True
         results.append(state_result)
+
+    success_count = sum(1 for item in results if item.get("search_status") == "success")
+    skipped_count = sum(1 for item in results if item.get("skipped_missing"))
+    failure_count = len(results) - success_count - skipped_count
 
     summary = {
         "dataset_id": args.dataset_id,
         "store_type": args.store_type,
         "states": states,
         "enrich_with_cases": args.enrich_with_cases,
+        "skip_missing": args.skip_missing,
+        "counts": {
+            "success": success_count,
+            "skipped_missing": skipped_count,
+            "failure": failure_count,
+            "total": len(results),
+        },
         "results": results,
     }
     print(json.dumps(summary))
@@ -214,6 +231,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--auto-setup-venv", action="store_true", help="Install deps in tool venv before run")
     parser.add_argument("--enrich-with-cases", action="store_true", help="Use case/statute enrichment mode")
     parser.add_argument("--cleanup-faiss", action="store_true", help="Delete generated FAISS files after each state")
+    parser.add_argument(
+        "--skip-missing",
+        action="store_true",
+        help="Do not fail when a requested state has no parsed parquet files yet",
+    )
     args = parser.parse_args()
     args.states = _normalize_states(args.states)
     return args

@@ -230,6 +230,10 @@ def test_run_auto_patch_dry_run_skips_with_reason():
     assert report["skipped_count"] == 1
     assert report["attempts"][0]["status"] == "skipped"
     assert str(report["attempts"][0]["reason"]).startswith("dry-run:")
+    summary = report.get("policy_summary") or {}
+    assert summary.get("attempts_with_policy") == 1
+    assert summary.get("allowed_count") == 1
+    assert summary.get("blocked_count") == 0
 
 
 def test_apply_text_strategy_normalizes_wayback_scheme_to_http():
@@ -321,3 +325,37 @@ def test_auto_patch_includes_policy_preview_on_dry_run():
     policy = result.get("policy") or {}
     assert policy.get("allowed") is True
     assert policy.get("matched_allow_globs") == ["*oklahoma.py"]
+
+
+def test_run_auto_patch_includes_policy_summary_counts():
+    loop = StateLawsActorCriticLoop(
+        states=["OK", "IN"],
+        loop_config=LoopConfig(
+            max_rounds=1,
+            auto_patch_allow_globs=["*oklahoma.py", "*indiana.py"],
+            auto_patch_deny_globs=["*indiana.py"],
+        ),
+    )
+    execution_report = {
+        "items": [
+            {
+                "status": "ready_for_patch",
+                "path": "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/oklahoma.py",
+            },
+            {
+                "status": "ready_for_patch",
+                "path": "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/indiana.py",
+            },
+        ]
+    }
+
+    report = loop._run_auto_patch(execution_report, max_tasks=2, dry_run=True)
+    summary = report.get("policy_summary") or {}
+
+    assert summary.get("attempts_with_policy") == 2
+    assert summary.get("missing_policy_count") == 0
+    assert summary.get("allowed_count") == 1
+    assert summary.get("blocked_count") == 1
+    assert summary.get("blocked_reason_counts") == {"blocked-by-auto-patch-policy": 1}
+    assert summary.get("matched_allow_glob_counts") == {"*oklahoma.py": 1, "*indiana.py": 1}
+    assert summary.get("matched_deny_glob_counts") == {"*indiana.py": 1}

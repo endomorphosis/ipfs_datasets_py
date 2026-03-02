@@ -68,3 +68,15 @@ Notes:
 	`Legal smoke: proof-audit triage`,
 	`Legal smoke: proof-audit triage (markdown)`.
 	Workspace-root `scripts/ops/*` wrappers remain compatibility entrypoints.
+
+State-law embedding smoke workflow:
+- Run `python scripts/ops/legal_data/smoke_state_law_vector_search.py --states OR --cleanup-faiss`
+	to validate Oregon vector ingest+search against
+	`datasets/justicedao/ipfs_state_laws` under `OR/parsed/parquet`.
+- Run `python scripts/ops/legal_data/smoke_state_law_vector_search.py --states ALL --skip-missing --cleanup-faiss`
+	to auto-discover all currently published states with `/parsed/parquet/`
+	and continue past states that are not uploaded yet.
+- Run `python scripts/ops/legal_data/smoke_state_law_vector_search.py --states OR,CA,WA,NY --skip-missing --cleanup-faiss`
+	for explicit OR-first rollout plus best-effort checks on additional states.
+- Add `--enrich-with-cases` to switch from vector-only retrieval to
+	case/statute enrichment mode when parquet schema supports CID joins.
