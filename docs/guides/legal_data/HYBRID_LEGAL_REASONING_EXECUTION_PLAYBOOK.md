@@ -171,3 +171,41 @@ Before GA:
 3. No optimizer rollout without semantic guard metrics.
 4. No proof format change without replay compatibility strategy.
 5. Keep root workspace wrappers as thin delegates only.
+
+## 11) Performance Baseline Snapshot
+
+Use a stable fixture corpus and emit JSON stage timings for parse/compile/reason:
+
+```bash
+PYTHONPATH=src:ipfs_datasets_py \
+	/home/barberb/municipal_scrape_workspace/.venv/bin/python \
+	ipfs_datasets_py/scripts/ops/legal_data/benchmark_hybrid_v2_reasoner.py \
+	--input-jsonl ipfs_datasets_py/tests/reasoner/fixtures/hybrid_v2_cli_batch_sentences.jsonl \
+	--sentence-field sentence \
+	--iterations 3 \
+	--jurisdiction us/federal \
+	--output-json /tmp/hybrid_v2_perf_baseline.json \
+	--pretty
+```
+
+Expected artifact:
+- `/tmp/hybrid_v2_perf_baseline.json`
+
+Artifact sections:
+- `metadata`: run timestamp, platform, processor, sentence count, iterations.
+- `stage_timings.parse`: `mean_ms`, `p50_ms`, `p95_ms`, min/max.
+- `stage_timings.compile_dcec`: DCEC compile timings.
+- `stage_timings.compile_tdfol`: TDFOL compile timings.
+- `stage_timings.reason_check_compliance`: compliance reasoning timings.
+- `cases`: per-sentence timing rows.
+
+Interpretation guidance:
+- Compare new baselines against last accepted baseline on the same machine class.
+- Prioritize `p95_ms` over `mean_ms` for release gating.
+- Treat one-off spikes as noise unless repeated over at least 3 runs.
+
+Threshold guidance (initial):
+- `parse.p95_ms` regression > 20%: investigate parser changes before merge.
+- `compile_dcec.p95_ms` or `compile_tdfol.p95_ms` regression > 20%: inspect compiler path and parity fixtures.
+- `reason_check_compliance.p95_ms` regression > 25%: inspect proof store, optimizer/KG/prover toggles.
+- If two or more stages regress above threshold in the same PR, block promotion pending triage.

@@ -112,3 +112,58 @@ def test_agentic_optimizer_medical_schema_fields() -> None:
     assert any("hypertension" in line.lower() for line in sf["diagnoses"])
     assert any("10 mg" in d.lower() for d in sf["dosages"])
     assert any("procedure" in line.lower() or "therapy" in line.lower() for line in sf["procedures"])
+
+
+def test_structured_field_schema_contract_keys() -> None:
+    legal = AgenticScrapeOptimizer(AgenticExtractionConfig(domain="legal")).transform(
+        url="https://example.com/legal",
+        text="TITLE 12\nSection 12-1\n18 U.S.C. 1001\nEffective date: 01/01/2025",
+    ).structured_fields
+
+    finance = AgenticScrapeOptimizer(AgenticExtractionConfig(domain="finance")).transform(
+        url="https://example.com/finance",
+        text="Revenue increased 7.5% and ticker MSFT reported USD 500,000.",
+    ).structured_fields
+
+    medical = AgenticScrapeOptimizer(AgenticExtractionConfig(domain="medical")).transform(
+        url="https://example.com/medical",
+        text="Diagnosis: diabetes. Medication prescribed: insulin 5 mg. Procedure: therapy.",
+    ).structured_fields
+
+    legal_keys = {
+        "schema",
+        "section_headers",
+        "dates",
+        "legal_citations",
+        "statute_identifiers",
+        "monetary_amounts",
+        "case_citations",
+        "effective_dates",
+        "parties",
+        "is_pdf_content",
+    }
+    finance_keys = {
+        "schema",
+        "dates",
+        "monetary_amounts",
+        "percentages",
+        "ticker_symbols",
+        "accounting_terms",
+        "is_pdf_content",
+    }
+    medical_keys = {
+        "schema",
+        "dates",
+        "diagnoses",
+        "medications",
+        "dosages",
+        "procedures",
+        "is_pdf_content",
+    }
+
+    assert legal["schema"] == "legal_v1"
+    assert finance["schema"] == "finance_v1"
+    assert medical["schema"] == "medical_v1"
+    assert set(legal.keys()) == legal_keys
+    assert set(finance.keys()) == finance_keys
+    assert set(medical.keys()) == medical_keys

@@ -313,6 +313,7 @@ class UnifiedWebArchivingAPI:
                     "source_type": parsed.source_type,
                     "entities": parsed.entities,
                     "structured_fields": parsed.structured_fields,
+                    "structured_fields_version": parsed.structured_fields.get("schema", "general_v1"),
                     "links": getattr(scraper_result, "links", []) or [],
                 },
                 extraction_provenance={

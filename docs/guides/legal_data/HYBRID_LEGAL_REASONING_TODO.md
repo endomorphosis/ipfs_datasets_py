@@ -99,23 +99,52 @@ Source of truth for WS8 scope:
 - `docs/guides/legal_data/templates/HYBRID_LEGAL_WS8_ISSUE_BODIES_06_15.md`
 
 Current sprint (2026-03-02):
-- [-] `HL-WS8-01` Contract Snapshot Lockfile.
-- [-] `HL-WS8-02` IR Contract Error Code Registry.
-- [-] `HL-WS8-04` Temporal Guard Conformance Expansion.
-- [-] `HL-WS8-05` Optimizer Rejection Telemetry Envelope.
-- [-] `HL-WS8-06` KG Enrichment Explainability Summary.
-- [-] `HL-WS8-08` Query API JSON Schema Export.
+- [x] `HL-WS8-01` Contract Snapshot Lockfile. (2026-03-02)
+- [x] `HL-WS8-02` IR Contract Error Code Registry. (2026-03-02)
+- [x] `HL-WS8-04` Temporal Guard Conformance Expansion. (2026-03-02)
+- [x] `HL-WS8-05` Optimizer Rejection Telemetry Envelope. (2026-03-02)
+- [x] `HL-WS8-06` KG Enrichment Explainability Summary. (2026-03-02)
+- [x] `HL-WS8-08` Query API JSON Schema Export. (2026-03-02)
 
 Backlog (ready queue):
-- [-] `HL-WS8-03` Parser Paraphrase Equivalence Corpus.
-- [-] `HL-WS8-07` Prover Envelope Compatibility Table.
-- [-] `HL-WS8-09` Batch CLI Summary Contract.
-- [-] `HL-WS8-10` Proof Store Retention Policy.
-- [-] `HL-WS8-11` CNL Lexicon Extension Hooks.
+- [x] `HL-WS8-03` Parser Paraphrase Equivalence Corpus. (2026-03-02)
+- [x] `HL-WS8-07` Prover Envelope Compatibility Table. (2026-03-02)
+- [x] `HL-WS8-09` Batch CLI Summary Contract. (2026-03-02)
+- [x] `HL-WS8-10` Proof Store Retention Policy. (2026-03-02)
+- [x] `HL-WS8-11` CNL Lexicon Extension Hooks. (2026-03-02)
 - [-] `HL-WS8-12` CI Workflow Matrix for Prover Backends.
-- [ ] `HL-WS8-13` Performance Baseline Snapshot.
-- [ ] `HL-WS8-14` Ticket-to-Test Traceability Table.
-- [ ] `HL-WS8-15` Release Readiness Checklist v2.
+- [x] `HL-WS8-13` Performance Baseline Snapshot. (2026-03-02)
+- [x] `HL-WS8-14` Ticket-to-Test Traceability Table. (2026-03-02)
+- [-] `HL-WS8-15` Release Readiness Checklist v2.
+
+## WS8 Release Readiness Checklist v2
+
+Use this checklist in PR descriptions before release/canary promotion.
+
+Contracts:
+- [ ] V2 query/proof contract snapshots are current.
+- [ ] Contract error-code registry changes (if any) are documented.
+- Artifact link: 
+
+Tests:
+- [ ] Required WS8 ticket test gates are green.
+- [ ] No unresolved schema-drift failures.
+- Artifact link: 
+
+CI:
+- [ ] `Legal V2 Reasoner CI` full suite is green.
+- [ ] Prover backend smoke matrix (`mock_smt`, `mock_fol`) is green.
+- Artifact link: 
+
+Observability:
+- [ ] Baseline timing artifact captured (`benchmark_hybrid_v2_reasoner.py`).
+- [ ] Any performance regressions above threshold are triaged.
+- Artifact link: 
+
+Rollback:
+- [ ] Rollback path for optimizer/KG/prover toggles is documented.
+- [ ] Incident response conditions reviewed with release owner.
+- Artifact link: 
 
 WS8 done definition:
 - [ ] High-priority tickets (`01`, `02`, `04`, `05`, `06`, `08`, `09`, `10`, `12`) completed.
@@ -242,6 +271,10 @@ Use this section for short dated notes while executing TODO items.
 - 2026-03-02: Started `HL-WS8-12`; expanded `.github/workflows/legal-v2-reasoner-ci.yml` with `mock_smt/mock_fol` backend smoke matrix (primary full suite preserved) and added matching local parity smoke commands in the operations runbook.
 - 2026-03-02: Started `HL-WS8-07`; documented prover backend compatibility matrix (payload key requirements per backend family) and added mandatory certificate payload key assertions in `test_prover_backend_registry.py`.
 - 2026-03-02: Started `HL-WS8-03`; added `cnl_parse_paraphrase_equivalence_v2.json` and semantic signature assertions ensuring equivalent paraphrases match on norm operator + target-frame semantics + temporal relation, while non-equivalent pairs are explicitly asserted as non-equivalent.
+- 2026-03-02: Started `HL-WS8-13`; added `scripts/ops/legal_data/benchmark_hybrid_v2_reasoner.py` to emit per-stage timing baseline artifacts and documented interpretation/threshold guidance in the execution playbook.
+- 2026-03-02: Started `HL-WS8-14`; added copy/paste-ready WS8 ticket-to-test traceability matrices to execution workstreams and implementation tickets docs with explicit CI/gate mapping.
+- 2026-03-02: Started `HL-WS8-15`; added release readiness checklist v2 with required artifact-link fields for contracts/tests/CI/observability/rollback.
+- 2026-03-02: Validation checkpoint: targeted WS8 pytest suite passed (`52 passed`) across parse replay, prover registry, CLI, blueprint, compiler parity, query matrix, and KG adapter tests.
 
 ## Definition of Ready (per TODO item)
 

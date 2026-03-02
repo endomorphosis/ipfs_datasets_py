@@ -426,3 +426,32 @@ Step 6:
 - Re-run single-path smoke to isolate failures quickly:
   - `bash ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_canary_proof_audit_smoke.sh`
   - `bash ipfs_datasets_py/scripts/ops/legal_data/run_formal_logic_regression_proof_audit_smoke.sh`
+
+## 9) Release Readiness Checklist v2
+
+Use this checklist in PR descriptions before canary/GA promotion.
+
+Contracts:
+- [ ] Query/proof contract snapshots are current and reviewed.
+- [ ] IR contract error-code changes are documented when applicable.
+- Artifact link:
+
+Tests:
+- [ ] WS8 ticket test gates passed for changed scope.
+- [ ] No unresolved schema-drift failures.
+- Artifact link:
+
+CI:
+- [ ] `Legal V2 Reasoner CI` full suite is green.
+- [ ] Backend smoke matrix (`mock_smt`, `mock_fol`) is green.
+- Artifact link:
+
+Observability:
+- [ ] Benchmark baseline artifact generated.
+- [ ] Any threshold regressions have a mitigation note.
+- Artifact link:
+
+Rollback:
+- [ ] Optimizer/KG/prover rollback toggles validated.
+- [ ] Incident-response conditions reviewed with release owner.
+- Artifact link:

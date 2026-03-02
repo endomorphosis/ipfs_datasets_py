@@ -264,3 +264,23 @@ Program is complete when:
 - V2 suite is green locally and in CI,
 - Proof objects are reproducible and source-traceable,
 - CNL -> IR -> Logic -> Proof -> NL loop is stable for canonical scenarios.
+
+## 14. WS8 Ticket-to-Test Traceability Matrix
+
+| Ticket | Primary tests | CI / gate |
+|---|---|---|
+| `HL-WS8-01` | `tests/reasoner/test_hybrid_v2_query_api_matrix.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-02` | `tests/reasoner/test_hybrid_v2_blueprint.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-03` | `tests/reasoner/test_hybrid_v2_parse_replay.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-04` | `tests/reasoner/test_hybrid_v2_compiler_parity.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-05` | `tests/reasoner/test_hybrid_v2_blueprint.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-06` | `tests/reasoner/test_kg_enrichment_adapter.py`, `tests/reasoner/test_hybrid_v2_blueprint.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-07` | `tests/reasoner/test_prover_backend_registry.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-08` | `tests/reasoner/test_hybrid_v2_query_api_matrix.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-09` | `tests/reasoner/test_hybrid_v2_cli.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-10` | `tests/reasoner/test_hybrid_v2_blueprint.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-11` | `tests/reasoner/test_hybrid_v2_parse_replay.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-12` | `.github/workflows/legal-v2-reasoner-ci.yml` backend smoke matrix | workflow dispatch run + CI logs |
+| `HL-WS8-13` | `scripts/ops/legal_data/benchmark_hybrid_v2_reasoner.py` smoke run | local ops task or CI smoke |
+| `HL-WS8-14` | documentation diagnostics clean | docs review + diagnostics |
+| `HL-WS8-15` | checklist dry-run in PR description | release review gate |

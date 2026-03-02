@@ -282,3 +282,23 @@ WS8 is complete when:
 1. All high-priority tickets (`01`, `02`, `04`, `05`, `06`, `08`, `09`, `10`, `12`) are closed.
 2. `Legal V2 Reasoner CI` is green on `main` for 7 consecutive days.
 3. No unresolved schema drift in query/proof envelopes.
+
+## 6. Ticket-to-Test Traceability Matrix
+
+| Ticket | Primary tests | CI / gate |
+|---|---|---|
+| `HL-WS8-01` | `tests/reasoner/test_hybrid_v2_query_api_matrix.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-02` | `tests/reasoner/test_hybrid_v2_blueprint.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-03` | `tests/reasoner/test_hybrid_v2_parse_replay.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-04` | `tests/reasoner/test_hybrid_v2_compiler_parity.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-05` | `tests/reasoner/test_hybrid_v2_blueprint.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-06` | `tests/reasoner/test_kg_enrichment_adapter.py`, `tests/reasoner/test_hybrid_v2_blueprint.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-07` | `tests/reasoner/test_prover_backend_registry.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-08` | `tests/reasoner/test_hybrid_v2_query_api_matrix.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-09` | `tests/reasoner/test_hybrid_v2_cli.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-10` | `tests/reasoner/test_hybrid_v2_blueprint.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-11` | `tests/reasoner/test_hybrid_v2_parse_replay.py` | `Legal V2 Reasoner CI` suite |
+| `HL-WS8-12` | `.github/workflows/legal-v2-reasoner-ci.yml` backend smoke matrix | workflow dispatch run + CI logs |
+| `HL-WS8-13` | `scripts/ops/legal_data/benchmark_hybrid_v2_reasoner.py` smoke run | local ops task or CI smoke |
+| `HL-WS8-14` | documentation diagnostics clean | docs review + diagnostics |
+| `HL-WS8-15` | checklist dry-run in PR description | release review gate |
