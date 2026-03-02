@@ -199,7 +199,7 @@ class DefaultOptimizerHookV2:
         *,
         min_gain_threshold: float = 0.0,
         max_modality_regression: float = 0.0,
-        default_modality_floor: float = 0.85,
+        default_modality_floor: float = 0.80,
     ) -> None:
         self.min_gain_threshold = float(min_gain_threshold)
         self.max_modality_regression = float(max_modality_regression)
@@ -246,13 +246,17 @@ class DefaultOptimizerHookV2:
         )
         chain = build_optimizer_chain_plan(decision)
         accepted = bool((decision.get("summary") or {}).get("accepted"))
+        failed_checks = [c for c in (decision.get("checks") or []) if not c.get("passed")]
+        rejection_reasons = _failure_codes_from_checks(failed_checks)
 
         report: Dict[str, Any] = {
             "optimizer": "default_optimizer_hook_v2",
-            "semantic_equivalence_assertion": True,
+            "accepted": accepted,
+            "semantic_equivalence_assertion": accepted,
             "drift_score": 0.0,
             "acceptance_decision": decision,
             "chain_plan": chain,
+            "rejection_reasons": rejection_reasons,
         }
         return (candidate_ir if accepted else ir), report
 
@@ -285,17 +289,21 @@ class DefaultKGHookV2:
             confidence_floor=self.confidence_floor,
         )
         drift = build_kg_drift_assessment(
-            baseline_relation_count=0,
+            baseline_relation_count=max(1, len(ir.frames)),
             baseline_frame_count=max(1, len(ir.frames)),
             candidate_relation_adapter=relation_adapter,
             max_relation_growth_factor=self.max_relation_growth_factor,
             max_relations_per_frame=self.max_relations_per_frame,
         )
-        accepted = bool((drift.get("summary") or {}).get("accepted"))
+        accepted = bool((drift.get("summary") or {}).get("drift_safe"))
+        failed_checks = [c for c in (drift.get("checks") or []) if not c.get("passed")]
+        rejection_reasons = _failure_codes_from_checks(failed_checks)
         if not accepted:
             return ir, {
                 "kg": "default_kg_hook_v2",
                 "accepted": False,
+                "rejected": True,
+                "rejection_reasons": rejection_reasons,
                 "drift_assessment": drift,
             }
 
@@ -303,6 +311,8 @@ class DefaultKGHookV2:
         return enriched["ir"], {
             "kg": "default_kg_hook_v2",
             "accepted": True,
+            "rejected": False,
+            "rejection_reasons": [],
             "entity_adapter": entity_adapter.get("summary"),
             "relation_adapter": relation_adapter.get("summary"),
             "drift_assessment": drift,
@@ -467,6 +477,20 @@ def _parse_alternatives(modal: DeonticOpV2) -> List[Dict[str, Any]]:
         ranked.remove(modal)
         ranked.insert(0, modal)
     return [{"operator": op.value, "rank": idx + 1} for idx, op in enumerate(ranked)]
+
+
+def _failure_codes_from_checks(checks: List[Dict[str, Any]]) -> List[str]:
+    codes: List[str] = []
+    for check in checks:
+        if check.get("passed"):
+            continue
+        ctype = str(check.get("type") or "unknown")
+        modality = check.get("modality")
+        if modality is None:
+            codes.append(ctype)
+        else:
+            codes.append(f"{ctype}:{modality}")
+    return list(dict.fromkeys(codes))
 
 
 def validate_ir_v2_contract(ir: LegalIRV2, *, strict: bool = True) -> Dict[str, Any]:
@@ -872,6 +896,108 @@ def compile_ir_to_temporal_deontic_fol(ir: LegalIRV2) -> List[str]:
     return formulas
 
 
+def _extract_compiler_deontic_target(formula: str, *, temporal: bool) -> Tuple[Optional[str], Optional[str]]:
+    if temporal:
+        m = re.search(r"->\s*([OPF])\(([^,\)]+),t\)", formula)
+    else:
+        m = re.search(r"->\s*([OPF])\(([^\)]+)\)", formula)
+    if not m:
+        return None, None
+    return m.group(1), m.group(2)
+
+
+def _extract_activation_text(formula: str) -> Optional[str]:
+    m = re.search(r"forall t \((.+?) and (?:Within\(|By\(|After\(|Before\(|During\(|true and )", formula)
+    if not m:
+        return None
+    return m.group(1).strip()
+
+
+def _has_temporal_guard(formula: str) -> bool:
+    guards = ("Within(t,", "By(t,", "After(t,", "Before(t,", "During(t,")
+    return any(token in formula for token in guards)
+
+
+def build_v2_compiler_parity_report(
+    ir: LegalIRV2,
+    *,
+    dcec_formulas: Optional[List[str]] = None,
+    tdfol_formulas: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Compare DCEC and TDFOL compiler outputs for semantic parity signals."""
+    dcec_all = list(dcec_formulas if dcec_formulas is not None else compile_ir_to_dcec(ir))
+    tdfol_all = list(tdfol_formulas if tdfol_formulas is not None else compile_ir_to_temporal_deontic_fol(ir))
+    dcec = [f for f in dcec_all if str(f).startswith("forall t ")]
+    tdfol = [f for f in tdfol_all if str(f).startswith("forall t ")]
+    norms = list(ir.norms.values())
+
+    entries: List[Dict[str, Any]] = []
+    inconsistencies: List[Dict[str, Any]] = []
+
+    if len(dcec) < len(norms) or len(tdfol) < len(norms):
+        inconsistencies.append(
+            {
+                "type": "count_mismatch",
+                "expected_norm_count": len(norms),
+                "dcec_count": len(dcec),
+                "tdfol_count": len(tdfol),
+            }
+        )
+
+    for idx, norm in enumerate(norms):
+        d_formula = dcec[idx] if idx < len(dcec) else ""
+        t_formula = tdfol[idx] if idx < len(tdfol) else ""
+
+        d_op, d_target = _extract_compiler_deontic_target(d_formula, temporal=False)
+        t_op, t_target = _extract_compiler_deontic_target(t_formula, temporal=True)
+        d_temporal = _has_temporal_guard(d_formula)
+        t_temporal = _has_temporal_guard(t_formula)
+        d_activation = _extract_activation_text(d_formula)
+        t_activation = _extract_activation_text(t_formula)
+
+        checks = {
+            "modal_consistent": d_op == t_op == norm.op.value,
+            "target_ref_consistent": d_target == t_target == norm.target_frame_ref,
+            "temporal_guard_consistent": d_temporal == t_temporal,
+            "activation_consistent": d_activation == t_activation,
+        }
+        entry = {
+            "norm_ref": norm.id.ref(),
+            "target_frame_ref": norm.target_frame_ref,
+            "dcec": {
+                "formula": d_formula,
+                "operator": d_op,
+                "target_ref": d_target,
+                "has_temporal_guard": d_temporal,
+                "activation": d_activation,
+            },
+            "tdfol": {
+                "formula": t_formula,
+                "operator": t_op,
+                "target_ref": t_target,
+                "has_temporal_guard": t_temporal,
+                "activation": t_activation,
+            },
+            "checks": checks,
+        }
+        entries.append(entry)
+
+        if not all(checks.values()):
+            inconsistencies.append(entry)
+
+    return {
+        "summary": {
+            "norm_count": len(norms),
+            "dcec_count": len(dcec),
+            "tdfol_count": len(tdfol),
+            "inconsistency_count": len(inconsistencies),
+            "has_inconsistencies": len(inconsistencies) > 0,
+        },
+        "entries": entries,
+        "inconsistencies": inconsistencies,
+    }
+
+
 def generate_cnl_from_ir(norm_ref: str, ir: LegalIRV2) -> str:
     """Deterministically regenerate controlled natural language for one norm."""
     norm = ir.norms[norm_ref]
@@ -1033,19 +1159,54 @@ def run_v2_pipeline(
 
     optimizer_report: Dict[str, Any] = {"applied": False}
     if optimizer_hook is not None:
-        proposed_ir, report = optimizer_hook.optimize_ir(ir)
+        proposed_ir, report = optimizer_hook.optimize_ir(deepcopy(ir))
         drift = float(report.get("drift_score", 0.0))
         sem_ok = bool(report.get("semantic_equivalence_assertion", False))
-        if drift <= drift_threshold and sem_ok:
+        policy_ok = bool(report.get("accepted", True))
+        rejected_reason_codes = list(report.get("rejection_reasons") or [])
+        if drift > drift_threshold:
+            rejected_reason_codes.append("drift_threshold_exceeded")
+        if not sem_ok:
+            rejected_reason_codes.append("semantic_equivalence_assertion")
+        if not policy_ok:
+            rejected_reason_codes.append("optimizer_policy_rejected")
+
+        if drift <= drift_threshold and sem_ok and policy_ok:
             ir = proposed_ir
-            optimizer_report = {"applied": True, **report}
+            optimizer_report = {
+                "applied": True,
+                "rejected": False,
+                "rejected_reason_codes": [],
+                **report,
+            }
         else:
-            optimizer_report = {"applied": False, "rejected": True, **report}
+            optimizer_report = {
+                "applied": False,
+                "rejected": True,
+                "rejected_reason_codes": list(dict.fromkeys(rejected_reason_codes)),
+                **report,
+            }
 
     kg_report: Dict[str, Any] = {"applied": False}
     if kg_hook is not None:
-        ir, report = kg_hook.enrich_ir(ir)
-        kg_report = {"applied": True, **report}
+        proposed_ir, report = kg_hook.enrich_ir(deepcopy(ir))
+        kg_ok = bool(report.get("accepted", True))
+        rejected_reason_codes = list(report.get("rejection_reasons") or [])
+        if kg_ok:
+            ir = proposed_ir
+            kg_report = {
+                "applied": True,
+                "rejected": False,
+                "rejected_reason_codes": [],
+                **report,
+            }
+        else:
+            kg_report = {
+                "applied": False,
+                "rejected": True,
+                "rejected_reason_codes": list(dict.fromkeys(rejected_reason_codes + ["kg_drift_policy_rejected"])),
+                **report,
+            }
 
     dcec = compile_ir_to_dcec(ir)
     tdfol = compile_ir_to_temporal_deontic_fol(ir)

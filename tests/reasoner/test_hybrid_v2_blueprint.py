@@ -206,6 +206,44 @@ def test_run_v2_pipeline_rejects_optimizer_on_high_drift() -> None:
 
     assert out["optimizer_report"]["applied"] is False
     assert out["optimizer_report"]["rejected"] is True
+    assert "drift_threshold_exceeded" in out["optimizer_report"]["rejected_reason_codes"]
+    assert "semantic_equivalence_assertion" in out["optimizer_report"]["rejected_reason_codes"]
+
+
+def test_run_v2_pipeline_accepts_optimizer_on_drift_threshold_boundary() -> None:
+    class _EdgeOptimizer:
+        def optimize_ir(self, ir):
+            return ir, {"semantic_equivalence_assertion": True, "drift_score": 0.05, "optimizer": "edge"}
+
+    out = run_v2_pipeline(
+        "Controller shall report breach within 48 hours.",
+        optimizer_hook=_EdgeOptimizer(),
+        drift_threshold=0.05,
+    )
+
+    assert out["optimizer_report"]["applied"] is True
+    assert out["optimizer_report"]["rejected"] is False
+    assert out["optimizer_report"]["rejected_reason_codes"] == []
+
+
+def test_run_v2_pipeline_rejects_kg_and_preserves_ir_when_kg_not_accepted() -> None:
+    class _RejectKG:
+        def enrich_ir(self, ir):
+            for frame in ir.frames.values():
+                frame.attrs["kg_enriched"] = True
+            return ir, {"accepted": False, "rejection_reasons": ["relation_growth_factor"]}
+
+    out = run_v2_pipeline(
+        "Controller shall report breach within 48 hours.",
+        kg_hook=_RejectKG(),
+    )
+
+    assert out["kg_report"]["applied"] is False
+    assert out["kg_report"]["rejected"] is True
+    assert "relation_growth_factor" in out["kg_report"]["rejected_reason_codes"]
+    assert "kg_drift_policy_rejected" in out["kg_report"]["rejected_reason_codes"]
+    frame = next(iter(out["ir"].frames.values()))
+    assert "kg_enriched" not in frame.attrs
 
 
 def test_run_v2_pipeline_with_defaults_wires_existing_modules() -> None:

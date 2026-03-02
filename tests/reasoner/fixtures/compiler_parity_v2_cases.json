@@ -1,0 +1,37 @@
+[
+  {
+    "id": "obligation_within",
+    "sentence": "Controller shall report breach within 24 hours.",
+    "jurisdiction": "us/federal",
+    "expected_operator": "O",
+    "expect_temporal_guard": true
+  },
+  {
+    "id": "permission_with_if",
+    "sentence": "Agency may inspect records if complaint is filed.",
+    "jurisdiction": "us/federal",
+    "expected_operator": "P",
+    "expect_temporal_guard": false
+  },
+  {
+    "id": "prohibition_with_exception",
+    "sentence": "Vendor shall not disclose personal data unless consent is recorded.",
+    "jurisdiction": "us/federal",
+    "expected_operator": "F",
+    "expect_temporal_guard": false
+  },
+  {
+    "id": "obligation_by_date",
+    "sentence": "Employer shall pay wages by 2026-12-31.",
+    "jurisdiction": "us/federal",
+    "expected_operator": "O",
+    "expect_temporal_guard": true
+  },
+  {
+    "id": "permission_after",
+    "sentence": "Processor may transfer data to regulator after authorization.",
+    "jurisdiction": "us/federal",
+    "expected_operator": "P",
+    "expect_temporal_guard": true
+  }
+]

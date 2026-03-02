@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import json
 from typing import Any, Dict, List, Protocol, runtime_checkable
+
+
+PROVER_ENVELOPE_SCHEMA_VERSION = "1.0"
 
 
 @dataclass
@@ -121,3 +125,32 @@ def create_default_prover_registry() -> ProverBackendRegistry:
     registry.register(MockSMTBackend())
     registry.register(MockFOLBackend())
     return registry
+
+
+def normalize_prover_result(result: ProverResult) -> Dict[str, Any]:
+    """Normalize backend-specific prover output into a stable envelope."""
+    payload = {
+        "backend": str(result.backend),
+        "status": str(result.status),
+        "theorem": str(result.theorem),
+        "assumptions": [str(a) for a in list(result.assumptions or [])],
+        "certificate": dict(result.certificate or {}),
+    }
+    normalized_hash = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    certificate_id = "cert_" + normalized_hash[:12]
+
+    return {
+        "schema_version": PROVER_ENVELOPE_SCHEMA_VERSION,
+        "backend": payload["backend"],
+        "status": payload["status"],
+        "theorem": payload["theorem"],
+        "assumptions": payload["assumptions"],
+        "certificate": {
+            "certificate_id": certificate_id,
+            "format": str(payload["certificate"].get("format") or "unknown"),
+            "normalized_hash": normalized_hash,
+            "payload": payload["certificate"],
+        },
+    }
