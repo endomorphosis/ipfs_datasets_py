@@ -540,15 +540,10 @@ Suggested daily snapshot command (GitHub CLI):
 ```bash
 mkdir -p /home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302
 
-gh run list \
-  --repo endomorphosis/ipfs_datasets_py \
-  --workflow legal-v2-reasoner-ci.yml \
-  --limit 30 \
-  --json databaseId,displayTitle,conclusion,createdAt,updatedAt,url \
-  > /home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/ci_soak_runs_$(date +%Y%m%d).json
+bash ipfs_datasets_py/scripts/ops/legal_data/run_legal_v2_ci_soak_snapshot.sh
 ```
 
-Fallback when `gh` is unavailable:
+Manual fallback when snapshot script is unavailable:
 ```bash
 curl -L --max-time 40 -sS \
   "https://api.github.com/repos/endomorphosis/ipfs_datasets_py/actions/workflows/legal-v2-reasoner-ci.yml/runs?per_page=30" \
@@ -561,6 +556,10 @@ Tracking rule:
 Current seed snapshot:
 - `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/CI_SOAK_SNAPSHOT_20260302.md`
 - `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/ci_soak_runs_20260302.json`
+
+Automated summary artifacts (current day):
+- `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/ci_soak_summary_20260302.json`
+- `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/CI_SOAK_SUMMARY_20260302.md`
 
 ## 12) WS10 Schema Drift Sentinel
 
@@ -603,3 +602,5 @@ Latest local pack (2026-03-02):
 - Pytest gate: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_release_20260302/pytest_reasoner_release_gate.txt` (`68 passed`)
 - Backend smokes: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_release_20260302/backend_smoke_mock_smt.json`, `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_release_20260302/backend_smoke_mock_fol.json` (both `passed=true`)
 - Batch smoke: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_release_20260302/hybrid_v2_cli_batch_smoke.json` (`total=4`, `ok=4`, `error=0`)
+- Canonical checklist template: `/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/docs/guides/legal_data/templates/HYBRID_LEGAL_RELEASE_CHECKLIST_TEMPLATE.md`
+- WS10 checklist artifact: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_release_20260302/WS10_RELEASE_CHECKLIST_20260302.md`

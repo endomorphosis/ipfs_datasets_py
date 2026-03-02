@@ -23,6 +23,8 @@ Copied from workspace-level `scripts/ops/`:
 - `run_formal_logic_proof_audit_integration_smoke.sh`
 - `run_formal_logic_proof_audit_integration_matrix_smoke.sh`
 - `assess_formal_logic_proof_audit_integration_summary.py`
+- `collect_legal_v2_ci_soak_snapshot.py`
+- `run_legal_v2_ci_soak_snapshot.sh`
 
 Notes:
 - Set `RUN_PROOF_CERT_AUDIT_AFTER_RUN=1` when invoking
@@ -46,6 +48,9 @@ Notes:
 - Run `assess_formal_logic_proof_audit_integration_summary.py` to map
 	integration-smoke `failure_reasons` to actionable remediation commands.
 	Use `--format markdown` to emit a human-readable incident report.
+- Run `run_legal_v2_ci_soak_snapshot.sh` to collect Legal V2 workflow runs,
+	compute consecutive green-day streak, and emit JSON/markdown soak summaries
+	under `artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/`.
 - VS Code tasks are canonical in `ipfs_datasets_py/.vscode/tasks.json`:
 	`Legal smoke: proof-audit canary`,
 	`Legal smoke: proof-audit regression`,
