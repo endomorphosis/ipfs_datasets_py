@@ -585,6 +585,14 @@ class OptimizerArgparseCLI:
         forwarded_args.extend(["--auto-patch-max-tasks", str(int(args.auto_patch_max_tasks))])
         if bool(args.auto_patch_no_dry_run):
             forwarded_args.append("--auto-patch-no-dry-run")
+        for pattern in list(args.auto_patch_allow_glob or []):
+            forwarded_args.extend(["--auto-patch-allow-glob", str(pattern)])
+        for pattern in list(args.auto_patch_deny_glob or []):
+            forwarded_args.extend(["--auto-patch-deny-glob", str(pattern)])
+        for pattern in list(args.wayback_allow_glob or []):
+            forwarded_args.extend(["--wayback-allow-glob", str(pattern)])
+        for pattern in list(args.wayback_deny_glob or []):
+            forwarded_args.extend(["--wayback-deny-glob", str(pattern)])
 
         return int(state_laws_loop_main(forwarded_args))
     
@@ -806,6 +814,30 @@ class OptimizerArgparseCLI:
             '--auto-patch-no-dry-run',
             action='store_true',
             help='Disable dry-run and apply registered auto-patch transformations',
+        )
+        state_laws_parser.add_argument(
+            '--auto-patch-allow-glob',
+            action='append',
+            default=[],
+            help='Glob allowlist for auto-patch target paths (repeatable)',
+        )
+        state_laws_parser.add_argument(
+            '--auto-patch-deny-glob',
+            action='append',
+            default=[],
+            help='Glob denylist for auto-patch target paths (repeatable)',
+        )
+        state_laws_parser.add_argument(
+            '--wayback-allow-glob',
+            action='append',
+            default=[],
+            help='Wayback strategy allowlist globs (repeatable)',
+        )
+        state_laws_parser.add_argument(
+            '--wayback-deny-glob',
+            action='append',
+            default=[],
+            help='Wayback strategy denylist globs (repeatable)',
         )
         
         # Parse arguments

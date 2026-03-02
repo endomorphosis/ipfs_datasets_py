@@ -230,3 +230,73 @@ def test_run_auto_patch_dry_run_skips_with_reason():
     assert report["skipped_count"] == 1
     assert report["attempts"][0]["status"] == "skipped"
     assert str(report["attempts"][0]["reason"]).startswith("dry-run:")
+
+
+def test_apply_text_strategy_normalizes_wayback_scheme_to_http():
+    loop = _make_loop()
+    original = (
+        "seed = 'https://web.archive.org/web/20200101010101/https://example.gov/path'\n"
+        "other = 'https://example.org/no-change'\n"
+    )
+
+    updated = loop._apply_text_strategy(original, "normalize-wayback-scheme-http")
+
+    assert "http://web.archive.org/web/20200101010101/https://example.gov/path" in updated
+    assert "https://example.org/no-change" in updated
+
+
+def test_resolve_auto_patch_strategy_prefers_wayback_for_state_scrapers():
+    loop = _make_loop()
+
+    strategy = loop._resolve_auto_patch_strategy(
+        "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/oklahoma.py"
+    )
+
+    assert strategy == "normalize-wayback-scheme-http"
+
+
+def test_resolve_auto_patch_strategy_respects_allow_and_deny_policies():
+    loop = StateLawsActorCriticLoop(
+        states=["OK"],
+        loop_config=LoopConfig(
+            max_rounds=1,
+            auto_patch_allow_globs=["ipfs_datasets_py/processors/legal_scrapers/state_scrapers/oklahoma.py"],
+            auto_patch_deny_globs=["*state_laws_scraper.py"],
+            wayback_allow_globs=["*oklahoma.py"],
+            wayback_deny_globs=["*hawaii.py"],
+        ),
+    )
+
+    assert (
+        loop._resolve_auto_patch_strategy(
+            "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/oklahoma.py"
+        )
+        == "normalize-wayback-scheme-http"
+    )
+    assert (
+        loop._resolve_auto_patch_strategy(
+            "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py"
+        )
+        is None
+    )
+    assert (
+        loop._resolve_auto_patch_strategy(
+            "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/hawaii.py"
+        )
+        is None
+    )
+
+
+def test_auto_patch_reports_policy_block_reason():
+    loop = StateLawsActorCriticLoop(
+        states=["OK"],
+        loop_config=LoopConfig(max_rounds=1, auto_patch_allow_globs=["*oklahoma.py"]),
+    )
+
+    result = loop._auto_patch_single(
+        "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/indiana.py",
+        dry_run=True,
+    )
+
+    assert result["status"] == "skipped"
+    assert result["reason"] == "blocked-by-auto-patch-policy"

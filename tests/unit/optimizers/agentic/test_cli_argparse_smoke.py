@@ -166,6 +166,10 @@ def test_argparse_cli_state_laws_optimize_routes(monkeypatch: pytest.MonkeyPatch
         captured["auto_patch"] = bool(args.auto_patch)
         captured["auto_patch_max_tasks"] = int(args.auto_patch_max_tasks)
         captured["auto_patch_no_dry_run"] = bool(args.auto_patch_no_dry_run)
+        captured["auto_patch_allow_glob"] = list(args.auto_patch_allow_glob)
+        captured["auto_patch_deny_glob"] = list(args.auto_patch_deny_glob)
+        captured["wayback_allow_glob"] = list(args.wayback_allow_glob)
+        captured["wayback_deny_glob"] = list(args.wayback_deny_glob)
         return 0
 
     monkeypatch.setattr(cli, "cmd_state_laws_optimize", _fake_cmd)
@@ -192,6 +196,14 @@ def test_argparse_cli_state_laws_optimize_routes(monkeypatch: pytest.MonkeyPatch
             "--auto-patch-max-tasks",
             "2",
             "--auto-patch-no-dry-run",
+            "--auto-patch-allow-glob",
+            "*oklahoma.py",
+            "--auto-patch-deny-glob",
+            "*indiana.py",
+            "--wayback-allow-glob",
+            "*state_scrapers/*.py",
+            "--wayback-deny-glob",
+            "*hawaii.py",
         ]
     )
 
@@ -208,3 +220,7 @@ def test_argparse_cli_state_laws_optimize_routes(monkeypatch: pytest.MonkeyPatch
     assert captured["auto_patch"] is True
     assert captured["auto_patch_max_tasks"] == 2
     assert captured["auto_patch_no_dry_run"] is True
+    assert captured["auto_patch_allow_glob"] == ["*oklahoma.py"]
+    assert captured["auto_patch_deny_glob"] == ["*indiana.py"]
+    assert captured["wayback_allow_glob"] == ["*state_scrapers/*.py"]
+    assert captured["wayback_deny_glob"] == ["*hawaii.py"]

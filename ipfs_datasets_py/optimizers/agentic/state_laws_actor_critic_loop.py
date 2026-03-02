@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import fnmatch
 import json
 import py_compile
 from dataclasses import asdict, dataclass, field
@@ -72,6 +73,10 @@ class LoopConfig:
     auto_patch: bool = False
     auto_patch_max_tasks: int = 3
     auto_patch_dry_run: bool = True
+    auto_patch_allow_globs: List[str] = field(default_factory=list)
+    auto_patch_deny_globs: List[str] = field(default_factory=list)
+    wayback_allow_globs: List[str] = field(default_factory=list)
+    wayback_deny_globs: List[str] = field(default_factory=list)
 
 
 class StateLawsActorCriticLoop:
@@ -505,10 +510,14 @@ class StateLawsActorCriticLoop:
         # Guarded strategy registry: only explicit safe transformations are applied.
         strategy = self._resolve_auto_patch_strategy(rel_path)
         if strategy is None:
+            if not self._is_path_allowed_by_auto_patch_policy(rel_path):
+                reason = "blocked-by-auto-patch-policy"
+            else:
+                reason = "no-registered-strategy"
             return {
                 "path": rel_path,
                 "status": "skipped",
-                "reason": "no-registered-strategy",
+                "reason": reason,
             }
 
         if dry_run:
@@ -548,13 +557,42 @@ class StateLawsActorCriticLoop:
             "reason": f"unknown-strategy:{strategy}",
         }
 
-    @staticmethod
-    def _resolve_auto_patch_strategy(rel_path: str) -> Optional[str]:
-        if rel_path.endswith(".py") and "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/" in rel_path:
+    def _resolve_auto_patch_strategy(self, rel_path: str) -> Optional[str]:
+        if not self._is_path_allowed_by_auto_patch_policy(rel_path):
+            return None
+
+        if (
+            rel_path.endswith(".py")
+            and "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/" in rel_path
+            and self._path_allowed_by_patterns(
+                rel_path,
+                allow_globs=list(self.loop_config.wayback_allow_globs or []),
+                deny_globs=list(self.loop_config.wayback_deny_globs or []),
+            )
+        ):
             return "normalize-wayback-scheme-http"
         if rel_path.endswith(".py") and "ipfs_datasets_py/processors/legal_scrapers/" in rel_path:
             return "normalize-trailing-whitespace"
         return None
+
+    def _is_path_allowed_by_auto_patch_policy(self, rel_path: str) -> bool:
+        return self._path_allowed_by_patterns(
+            rel_path,
+            allow_globs=list(self.loop_config.auto_patch_allow_globs or []),
+            deny_globs=list(self.loop_config.auto_patch_deny_globs or []),
+        )
+
+    @staticmethod
+    def _path_allowed_by_patterns(rel_path: str, *, allow_globs: List[str], deny_globs: List[str]) -> bool:
+        path = str(rel_path or "")
+        allow = [str(item).strip() for item in (allow_globs or []) if str(item).strip()]
+        deny = [str(item).strip() for item in (deny_globs or []) if str(item).strip()]
+
+        if allow and not any(fnmatch.fnmatch(path, pattern) for pattern in allow):
+            return False
+        if any(fnmatch.fnmatch(path, pattern) for pattern in deny):
+            return False
+        return True
 
     @staticmethod
     def _apply_text_strategy(original: str, strategy: str) -> str:
@@ -920,6 +958,30 @@ def _parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help="Disable dry-run for auto-patch mode and apply registered transformations.",
     )
     parser.add_argument(
+        "--auto-patch-allow-glob",
+        action="append",
+        default=[],
+        help="Glob allowlist for auto-patch target paths (repeatable).",
+    )
+    parser.add_argument(
+        "--auto-patch-deny-glob",
+        action="append",
+        default=[],
+        help="Glob denylist for auto-patch target paths (repeatable).",
+    )
+    parser.add_argument(
+        "--wayback-allow-glob",
+        action="append",
+        default=[],
+        help="Strategy-specific allowlist globs for Wayback scheme normalization (repeatable).",
+    )
+    parser.add_argument(
+        "--wayback-deny-glob",
+        action="append",
+        default=[],
+        help="Strategy-specific denylist globs for Wayback scheme normalization (repeatable).",
+    )
+    parser.add_argument(
         "--output-dir",
         type=str,
         default="",
@@ -953,6 +1015,10 @@ async def _main_async(args: argparse.Namespace) -> int:
             auto_patch=bool(args.auto_patch),
             auto_patch_max_tasks=max(1, int(args.auto_patch_max_tasks)),
             auto_patch_dry_run=not bool(args.auto_patch_no_dry_run),
+            auto_patch_allow_globs=[str(item) for item in (args.auto_patch_allow_glob or [])],
+            auto_patch_deny_globs=[str(item) for item in (args.auto_patch_deny_glob or [])],
+            wayback_allow_globs=[str(item) for item in (args.wayback_allow_glob or [])],
+            wayback_deny_globs=[str(item) for item in (args.wayback_deny_glob or [])],
         ),
         output_dir=Path(args.output_dir).expanduser().resolve() if str(args.output_dir).strip() else None,
     )
