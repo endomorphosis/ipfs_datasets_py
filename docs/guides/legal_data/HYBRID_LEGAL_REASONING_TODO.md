@@ -115,6 +115,8 @@ Current sprint (2026-03-02):
 
 WS10 local evidence (2026-03-02):
 - CI soak seed snapshot: `artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/CI_SOAK_SNAPSHOT_20260302.md`.
+- CI soak runs JSON: `artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/ci_soak_runs_20260302.json`.
+- Current streak state: `0` consecutive green days (latest recorded run conclusion: `failure`).
 - Runbook tracking procedure: `ipfs_datasets_py/docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md` (section `11) WS10 CI Soak Tracking`).
 
 ## WS9 Execution Board (Active)
