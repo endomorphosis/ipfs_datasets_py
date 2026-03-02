@@ -7,6 +7,25 @@ import os
 from pathlib import Path
 from typing import Dict, List, Any
 
+
+# Curated models that are known to be exposed via Hugging Face Inference Providers.
+_HF_INFERENCE_PROVIDER_LLM_MODELS: List[str] = [
+    "katanemo/Arch-Router-1.5B",
+    "facebook/bart-large-cnn",
+    "google/pegasus-xsum",
+    "sshleifer/distilbart-cnn-12-6",
+]
+
+_HF_INFERENCE_PROVIDER_EMBEDDING_MODELS: List[str] = [
+    "BAAI/bge-small-en-v1.5",
+    "sentence-transformers/all-MiniLM-L6-v2",
+    "thenlper/gte-small",
+]
+
+_HF_INFERENCE_PROVIDER_MODELS: List[str] = list(
+    dict.fromkeys(_HF_INFERENCE_PROVIDER_LLM_MODELS + _HF_INFERENCE_PROVIDER_EMBEDDING_MODELS)
+)
+
 _DEFAULT_CONFIG: Dict[str, Any] = {
     "copilot_cli_models": [
         "gpt-5-mini",
@@ -41,7 +60,17 @@ _DEFAULT_CONFIG: Dict[str, Any] = {
         "claude-sonnet-4",
     ],
     "hf_models": [
+        *_HF_INFERENCE_PROVIDER_MODELS,
         "Qwen/Qwen3-1.7B-Thinker",
+    ],
+    "hf_inference_provider_llm_models": [
+        *_HF_INFERENCE_PROVIDER_LLM_MODELS,
+    ],
+    "hf_inference_provider_embedding_models": [
+        *_HF_INFERENCE_PROVIDER_EMBEDDING_MODELS,
+    ],
+    "hf_inference_provider_models": [
+        *_HF_INFERENCE_PROVIDER_MODELS,
     ],
     "codex_models": [
         "gpt-5.2-codex",
