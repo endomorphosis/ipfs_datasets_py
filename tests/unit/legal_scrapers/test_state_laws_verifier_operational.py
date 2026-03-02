@@ -1,6 +1,10 @@
+import json
+from pathlib import Path
+
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_verifier import (
     StateLawsVerifier,
     _build_operational_diagnostics,
+    _write_operational_report,
 )
 
 
@@ -124,3 +128,84 @@ def test_verify_operational_readiness_warns_without_threshold_failure():
     last = verifier.results["tests"][-1]
     assert last["name"] == "Operational Readiness"
     assert last["status"] == "WARN"
+
+
+def test_build_operational_diagnostics_respects_top_n_limit():
+    metadata = {
+        "coverage_summary": {"coverage_gap_states": []},
+        "fetch_analytics": {"attempted": 9, "success": 6, "success_ratio": 0.667, "fallback_count": 2, "providers": {}},
+        "fetch_analytics_by_state": {
+            "AA": {"attempted": 3, "success": 1, "fallback_count": 2},
+            "BB": {"attempted": 3, "success": 2, "fallback_count": 0},
+            "CC": {"attempted": 3, "success": 3, "fallback_count": 0},
+        },
+        "etl_readiness": {"ready_for_kg_etl": True, "total_statutes": 3},
+        "quality_by_state": {
+            "AA": {"total": 3, "scaffold_ratio": 0.4, "nav_like_ratio": 0.2, "fallback_section_ratio": 0.1, "numeric_section_name_ratio": 0.1},
+            "BB": {"total": 3, "scaffold_ratio": 0.1, "nav_like_ratio": 0.1, "fallback_section_ratio": 0.1, "numeric_section_name_ratio": 0.7},
+            "CC": {"total": 3, "scaffold_ratio": 0.0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.9},
+        },
+    }
+
+    diagnostics = _build_operational_diagnostics(metadata, top_n=2)
+
+    assert len(diagnostics["fetch"]["weak_states"]) == 2
+    assert diagnostics["fetch"]["weak_states"][0]["state"] == "AA"
+    assert len(diagnostics["quality"]["weak_states"]) == 2
+    assert diagnostics["quality"]["weak_states"][0]["state"] == "AA"
+
+
+def test_write_operational_report_outputs_json_and_csv(tmp_path: Path):
+    diagnostics = {
+        "coverage": {"coverage_gap_states": ["AA"]},
+        "fetch": {
+            "attempted": 4,
+            "success": 2,
+            "success_ratio": 0.5,
+            "fallback_count": 2,
+            "providers": {"unified_scraper": 2},
+            "weak_states": [
+                {
+                    "state": "AA",
+                    "attempted": 4,
+                    "success": 2,
+                    "success_ratio": 0.5,
+                    "fallback_count": 2,
+                    "fallback_ratio": 0.5,
+                    "last_error": "timeout",
+                }
+            ],
+        },
+        "etl_readiness": {"ready_for_kg_etl": False, "total_statutes": 10},
+        "quality": {
+            "weak_states": [
+                {
+                    "state": "AA",
+                    "total": 5,
+                    "scaffold_ratio": 0.4,
+                    "nav_like_ratio": 0.3,
+                    "fallback_section_ratio": 0.2,
+                    "numeric_section_name_ratio": 0.1,
+                }
+            ]
+        },
+    }
+
+    result = _write_operational_report(output_dir=tmp_path, diagnostics=diagnostics, report_format="both")
+
+    assert result["format"] == "both"
+    assert "json" in result["paths"]
+    assert "fetch_csv" in result["paths"]
+    assert "quality_csv" in result["paths"]
+
+    json_path = Path(result["paths"]["json"])
+    assert json_path.exists()
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    assert payload["diagnostics"]["fetch"]["success_ratio"] == 0.5
+
+    fetch_csv = Path(result["paths"]["fetch_csv"])
+    quality_csv = Path(result["paths"]["quality_csv"])
+    assert fetch_csv.exists()
+    assert quality_csv.exists()
+    assert "AA" in fetch_csv.read_text(encoding="utf-8")
+    assert "scaffold_ratio" in quality_csv.read_text(encoding="utf-8")

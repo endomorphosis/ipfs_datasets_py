@@ -6,6 +6,7 @@ structure quality across jurisdictions.
 
 import json
 import argparse
+import csv
 import re
 from datetime import datetime
 from pathlib import Path
@@ -119,6 +120,117 @@ def _build_operational_diagnostics(metadata: Dict[str, Any], *, top_n: int = 8) 
             "weak_states": weak_quality_states[: max(1, int(top_n or 1))],
         },
     }
+
+
+def _build_triage_rows(diagnostics: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
+    fetch_rows: List[Dict[str, Any]] = []
+    quality_rows: List[Dict[str, Any]] = []
+
+    fetch_block = diagnostics.get("fetch") or {}
+    for row in fetch_block.get("weak_states") or []:
+        if not isinstance(row, dict):
+            continue
+        fetch_rows.append(
+            {
+                "state": str(row.get("state") or ""),
+                "attempted": int(row.get("attempted", 0) or 0),
+                "success": int(row.get("success", 0) or 0),
+                "success_ratio": float(row.get("success_ratio", 0.0) or 0.0),
+                "fallback_count": int(row.get("fallback_count", 0) or 0),
+                "fallback_ratio": float(row.get("fallback_ratio", 0.0) or 0.0),
+                "last_error": str(row.get("last_error") or ""),
+            }
+        )
+
+    quality_block = diagnostics.get("quality") or {}
+    for row in quality_block.get("weak_states") or []:
+        if not isinstance(row, dict):
+            continue
+        quality_rows.append(
+            {
+                "state": str(row.get("state") or ""),
+                "total": int(row.get("total", 0) or 0),
+                "scaffold_ratio": float(row.get("scaffold_ratio", 0.0) or 0.0),
+                "nav_like_ratio": float(row.get("nav_like_ratio", 0.0) or 0.0),
+                "fallback_section_ratio": float(row.get("fallback_section_ratio", 0.0) or 0.0),
+                "numeric_section_name_ratio": float(row.get("numeric_section_name_ratio", 0.0) or 0.0),
+            }
+        )
+
+    return {
+        "fetch_weak_states": fetch_rows,
+        "quality_weak_states": quality_rows,
+    }
+
+
+def _write_operational_report(
+    *,
+    output_dir: Path,
+    diagnostics: Dict[str, Any],
+    report_format: str = "json",
+) -> Dict[str, Any]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_format = str(report_format or "json").strip().lower()
+    if report_format not in {"none", "json", "csv", "both"}:
+        report_format = "json"
+
+    triage = _build_triage_rows(diagnostics)
+    written: Dict[str, Any] = {
+        "format": report_format,
+        "paths": {},
+        "row_counts": {
+            "fetch_weak_states": len(triage["fetch_weak_states"]),
+            "quality_weak_states": len(triage["quality_weak_states"]),
+        },
+    }
+
+    if report_format in {"json", "both"}:
+        json_path = output_dir / "operational_diagnostics.json"
+        json_payload = {
+            "generated_at": datetime.now().isoformat(),
+            "diagnostics": diagnostics,
+            "triage": triage,
+        }
+        json_path.write_text(json.dumps(json_payload, indent=2), encoding="utf-8")
+        written["paths"]["json"] = str(json_path)
+
+    if report_format in {"csv", "both"}:
+        fetch_csv_path = output_dir / "operational_fetch_weak_states.csv"
+        quality_csv_path = output_dir / "operational_quality_weak_states.csv"
+
+        fetch_fields = [
+            "state",
+            "attempted",
+            "success",
+            "success_ratio",
+            "fallback_count",
+            "fallback_ratio",
+            "last_error",
+        ]
+        with fetch_csv_path.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=fetch_fields)
+            writer.writeheader()
+            for row in triage["fetch_weak_states"]:
+                writer.writerow(row)
+
+        quality_fields = [
+            "state",
+            "total",
+            "scaffold_ratio",
+            "nav_like_ratio",
+            "fallback_section_ratio",
+            "numeric_section_name_ratio",
+        ]
+        with quality_csv_path.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=quality_fields)
+            writer.writeheader()
+            for row in triage["quality_weak_states"]:
+                writer.writerow(row)
+
+        written["paths"]["fetch_csv"] = str(fetch_csv_path)
+        written["paths"]["quality_csv"] = str(quality_csv_path)
+
+    return written
 
 
 class StateLawsVerifier:
@@ -309,6 +421,7 @@ class StateLawsVerifier:
         min_fetch_success_ratio: Optional[float] = None,
         max_fetch_fallback_ratio: Optional[float] = None,
         max_coverage_gap_states: Optional[int] = None,
+        top_n: int = 8,
     ) -> Dict[str, Any]:
         metadata = self._last_scrape_metadata or {}
         if not metadata:
@@ -319,7 +432,7 @@ class StateLawsVerifier:
             )
             return self.results
 
-        diagnostics = _build_operational_diagnostics(metadata)
+        diagnostics = _build_operational_diagnostics(metadata, top_n=max(1, int(top_n or 1)))
         reasons: List[str] = []
 
         fetch_block = diagnostics.get("fetch") or {}
@@ -504,6 +617,8 @@ class StateLawsVerifier:
         min_fetch_success_ratio: Optional[float] = None,
         max_fetch_fallback_ratio: Optional[float] = None,
         max_coverage_gap_states: Optional[int] = None,
+        operational_report_format: str = "json",
+        operational_report_top_n: int = 8,
     ) -> int:
         await self.verify_jsonld_completeness(states=states, max_statutes=max_statutes)
         self.verify_operational_readiness(
@@ -511,11 +626,23 @@ class StateLawsVerifier:
             min_fetch_success_ratio=min_fetch_success_ratio,
             max_fetch_fallback_ratio=max_fetch_fallback_ratio,
             max_coverage_gap_states=max_coverage_gap_states,
+            top_n=max(1, int(operational_report_top_n or 1)),
         )
         await self.verify_state_smoke_coverage(states=states, per_state_max_statutes=per_state_max_statutes)
 
-        output_file = Path.home() / ".ipfs_datasets" / "state_laws" / "verification_results.json"
+        output_dir = Path.home() / ".ipfs_datasets" / "state_laws"
+        output_file = output_dir / "verification_results.json"
         output_file.parent.mkdir(parents=True, exist_ok=True)
+
+        diagnostics = _build_operational_diagnostics(
+            self._last_scrape_metadata or {},
+            top_n=max(1, int(operational_report_top_n or 1)),
+        )
+        self.results["operational_report"] = _write_operational_report(
+            output_dir=output_dir,
+            diagnostics=diagnostics,
+            report_format=operational_report_format,
+        )
         output_file.write_text(json.dumps(self.results, indent=2), encoding="utf-8")
 
         return 0 if int(self.results["summary"].get("failed", 0)) == 0 else 1
@@ -578,6 +705,19 @@ def _parse_args() -> argparse.Namespace:
         default=None,
         help="Optional fail threshold for number of coverage gap states.",
     )
+    parser.add_argument(
+        "--operational-report-format",
+        type=str,
+        default="json",
+        choices=["none", "json", "csv", "both"],
+        help="Operational diagnostics report output format.",
+    )
+    parser.add_argument(
+        "--operational-report-top-n",
+        type=int,
+        default=8,
+        help="Top-N weakest states to include in operational diagnostics.",
+    )
     return parser.parse_args()
 
 
@@ -600,6 +740,8 @@ if __name__ == "__main__":
             min_fetch_success_ratio=args.min_fetch_success_ratio,
             max_fetch_fallback_ratio=args.max_fetch_fallback_ratio,
             max_coverage_gap_states=args.max_coverage_gap_states,
+            operational_report_format=args.operational_report_format,
+            operational_report_top_n=int(args.operational_report_top_n),
         )
     )
     raise SystemExit(exit_code)
@@ -608,5 +750,7 @@ if __name__ == "__main__":
 __all__ = [
     "StateLawsVerifier",
     "_build_operational_diagnostics",
+    "_build_triage_rows",
+    "_write_operational_report",
     "verify_state_laws_scraper",
 ]
