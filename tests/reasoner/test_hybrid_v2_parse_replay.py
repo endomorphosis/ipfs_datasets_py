@@ -8,6 +8,7 @@ import pytest
 
 from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_v2_blueprint import (
     LegalIRV2,
+    generate_cnl_from_ir,
     parse_cnl_to_ir_with_diagnostics,
 )
 
@@ -15,6 +16,47 @@ from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_v2_blueprint import 
 def _load_corpus() -> list[dict[str, Any]]:
     path = Path(__file__).with_name("fixtures") / "cnl_parse_replay_v2_corpus.json"
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _load_paraphrase_equivalence_corpus() -> list[dict[str, Any]]:
+    path = Path(__file__).with_name("fixtures") / "cnl_parse_paraphrase_equivalence_v2.json"
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _semantic_signature(ir: LegalIRV2) -> Dict[str, Any]:
+    norm = next(iter(ir.norms.values()))
+    frame = ir.frames[norm.target_frame_ref]
+
+    temporal_relation = None
+    temporal_kind = None
+    temporal_start = None
+    temporal_end = None
+    temporal_duration = None
+    if norm.temporal_ref and norm.temporal_ref in ir.temporals:
+        temporal = ir.temporals[norm.temporal_ref]
+        temporal_relation = temporal.relation.value
+        temporal_kind = temporal.expr.kind
+        temporal_start = temporal.expr.start
+        temporal_end = temporal.expr.end
+        temporal_duration = temporal.expr.duration
+
+    role_labels: Dict[str, str] = {}
+    for role_name, ent_ref in sorted((frame.roles or {}).items()):
+        ent = ir.entities.get(ent_ref)
+        raw = str((ent.attrs or {}).get("label") if ent else ent_ref)
+        role_labels[role_name] = " ".join(raw.lower().split())
+
+    return {
+        "norm_op": norm.op.value,
+        "frame_predicate": frame.predicate,
+        "frame_kind": frame.kind.value,
+        "role_labels": role_labels,
+        "temporal_relation": temporal_relation,
+        "temporal_kind": temporal_kind,
+        "temporal_start": temporal_start,
+        "temporal_end": temporal_end,
+        "temporal_duration": temporal_duration,
+    }
 
 
 def _snapshot_ir(ir: LegalIRV2) -> Dict[str, Any]:
@@ -110,3 +152,68 @@ def test_v2_parse_diagnostics_include_confidence_and_markers() -> None:
     assert diagnostics["ambiguity_flags"] == []
     assert norm.attrs.get("parse_confidence") == diagnostics["parse_confidence"]
     assert isinstance(norm.attrs.get("parse_alternatives"), list)
+
+
+def test_v2_lexicon_overrides_affect_rendering_not_canonical_ids() -> None:
+    ir, _ = parse_cnl_to_ir_with_diagnostics(
+        "Controller shall report breach within 24 hours.",
+        jurisdiction="us/federal",
+    )
+    norm = next(iter(ir.norms.values()))
+    frame = ir.frames[norm.target_frame_ref]
+    agent_ref = frame.roles.get("agent", "")
+    predicate_key = frame.predicate
+
+    baseline = generate_cnl_from_ir(norm.id.ref(), ir)
+    custom = generate_cnl_from_ir(
+        norm.id.ref(),
+        ir,
+        lexicon_overrides={
+            "modal:shall": "must",
+            f"predicate:{predicate_key}": "notify",
+            "temporal:within": "inside",
+            "entity:" + agent_ref: "Data Controller",
+        },
+    )
+
+    assert baseline != custom
+    assert " must " in custom
+    assert " notify " in custom
+    assert " inside " in custom
+    assert custom.startswith("Data Controller")
+
+    # Lexicon overrides must not mutate semantic IDs or references.
+    assert norm.id.ref().startswith("nrm:")
+    assert frame.id.ref() == norm.target_frame_ref
+
+
+def test_v2_lexicon_overrides_rendering_is_deterministic() -> None:
+    ir, _ = parse_cnl_to_ir_with_diagnostics(
+        "Vendor shall not disclose personal data unless consent is recorded.",
+        jurisdiction="us/federal",
+    )
+    norm_ref = next(iter(ir.norms.keys()))
+    overrides = {
+        "modal:shall not": "must not",
+        "clause:unless": "except when",
+    }
+
+    first = generate_cnl_from_ir(norm_ref, ir, lexicon_overrides=overrides)
+    for _ in range(4):
+        assert generate_cnl_from_ir(norm_ref, ir, lexicon_overrides=overrides) == first
+
+
+def test_v2_paraphrase_equivalence_corpus_semantics() -> None:
+    for case in _load_paraphrase_equivalence_corpus():
+        ir_a, _ = parse_cnl_to_ir_with_diagnostics(case["sentence_a"], jurisdiction="us/federal")
+        ir_b, _ = parse_cnl_to_ir_with_diagnostics(case["sentence_b"], jurisdiction="us/federal")
+
+        sig_a = _semantic_signature(ir_a)
+        sig_b = _semantic_signature(ir_b)
+
+        equivalent = bool(case.get("equivalent"))
+        assert "equivalent" in case, case["id"]
+        if equivalent:
+            assert sig_a == sig_b, case["id"]
+        else:
+            assert sig_a != sig_b, case["id"]

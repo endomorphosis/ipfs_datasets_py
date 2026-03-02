@@ -1,0 +1,38 @@
+[
+  {
+    "id": "eq_obligation_within_case_punct",
+    "sentence_a": "Controller shall report breach within 24 hours.",
+    "sentence_b": "controller shall report breach within 24 hours",
+    "equivalent": true
+  },
+  {
+    "id": "eq_permission_if_spacing",
+    "sentence_a": "Agency may inspect records if complaint filed.",
+    "sentence_b": "Agency   may   inspect records if complaint filed.",
+    "equivalent": true
+  },
+  {
+    "id": "eq_prohibition_case",
+    "sentence_a": "Vendor shall not disclose personal data.",
+    "sentence_b": "vendor shall not disclose personal data",
+    "equivalent": true
+  },
+  {
+    "id": "neq_obligation_vs_permission",
+    "sentence_a": "Controller shall report breach within 24 hours.",
+    "sentence_b": "Controller may report breach within 24 hours.",
+    "equivalent": false
+  },
+  {
+    "id": "neq_temporal_within_vs_by",
+    "sentence_a": "Controller shall report breach within 24 hours.",
+    "sentence_b": "Controller shall report breach by 2026-12-31.",
+    "equivalent": false
+  },
+  {
+    "id": "neq_permission_vs_prohibition",
+    "sentence_a": "Agency may inspect records if complaint filed.",
+    "sentence_b": "Agency shall not inspect records if complaint filed.",
+    "equivalent": false
+  }
+]

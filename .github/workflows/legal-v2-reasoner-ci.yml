@@ -89,3 +89,70 @@ jobs:
         run: |
           echo "Hybrid V2 reasoner suite failed. See uploaded log artifact."
           exit 1
+
+  legal-v2-prover-backend-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        backend_id:
+          - mock_smt
+          - mock_fol
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e .
+
+      - name: Run backend smoke (${{ matrix.backend_id }})
+        id: backendsmoke
+        shell: bash
+        run: |
+          set +e
+          PYTHONPATH=src:${GITHUB_WORKSPACE} python - <<'PY' 2>&1 | tee legal-v2-backend-smoke-${{ matrix.backend_id }}.log
+from ipfs_datasets_py.processors.legal_data.reasoner.v2_cli import run_v2_cli
+
+payload = run_v2_cli(
+    sentences=["Controller shall report breach within 24 hours."],
+    jurisdiction="us/federal",
+    enable_optimizer=True,
+    enable_kg=True,
+    enable_prover=True,
+    prover_backend_id="${{ matrix.backend_id }}",
+)
+
+summary = payload.get("summary") or {}
+assert summary.get("total") == 1, summary
+assert summary.get("ok") == 1, summary
+assert summary.get("error") == 0, summary
+assert summary.get("prover_backend_id") == "${{ matrix.backend_id }}", summary
+assert summary.get("schema_version") == "1.0", summary
+PY
+          status=${PIPESTATUS[0]}
+          echo "exit_code=${status}" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload backend smoke failure artifact
+        if: steps.backendsmoke.outputs.exit_code != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: legal-v2-backend-smoke-${{ matrix.backend_id }}-log
+          path: legal-v2-backend-smoke-${{ matrix.backend_id }}.log
+          retention-days: 7
+
+      - name: Fail backend smoke on error
+        if: steps.backendsmoke.outputs.exit_code != '0'
+        run: |
+          echo "Backend smoke failed for ${{ matrix.backend_id }}. See uploaded log artifact."
+          exit 1

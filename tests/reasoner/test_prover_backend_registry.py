@@ -81,3 +81,21 @@ def test_normalize_prover_result_produces_deterministic_envelope() -> None:
     assert env_a["certificate"]["certificate_id"].startswith("cert_")
     assert len(env_a["certificate"]["normalized_hash"]) == 64
     assert env_a["certificate"]["format"] == "smt-certificate-v1"
+
+
+def test_backend_certificate_payload_required_keys_matrix() -> None:
+    registry = create_default_prover_registry()
+    theorem = "forall x. Person(x) -> Mortal(x)"
+    assumptions = ["Person(socrates)"]
+
+    required = {
+        "mock_smt": {"backend", "format", "solver", "theorem_hash_hint"},
+        "smt_style": {"backend", "format", "solver", "theorem_hash_hint"},
+        "mock_fol": {"backend", "format", "prover", "assumption_count"},
+        "first_order": {"backend", "format", "prover", "assumption_count"},
+    }
+
+    for backend_id, required_keys in required.items():
+        result = registry.get(backend_id).prove(theorem, assumptions)
+        payload = result.certificate
+        assert required_keys.issubset(set(payload.keys())), (backend_id, payload)

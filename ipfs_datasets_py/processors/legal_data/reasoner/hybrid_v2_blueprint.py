@@ -1108,43 +1108,75 @@ def build_v2_compiler_parity_report(
     }
 
 
-def generate_cnl_from_ir(norm_ref: str, ir: LegalIRV2) -> str:
+def _lexicon_lookup(overrides: Dict[str, str], key: str, fallback: str) -> str:
+    value = overrides.get(key)
+    if value is None:
+        return fallback
+    text = str(value).strip()
+    return text if text else fallback
+
+
+def generate_cnl_from_ir(
+    norm_ref: str,
+    ir: LegalIRV2,
+    *,
+    lexicon_overrides: Optional[Dict[str, str]] = None,
+) -> str:
     """Deterministically regenerate controlled natural language for one norm."""
+    overrides = dict(lexicon_overrides or {})
     norm = ir.norms[norm_ref]
     frame = ir.frames[norm.target_frame_ref]
 
-    agent_label = ir.entities.get(frame.roles.get("agent", ""), EntityV2(id=CanonicalIdV2("ent", "x"), type_name="Agent", attrs={"label": "Agent"})).attrs.get("label", "Agent")
+    agent_ref = frame.roles.get("agent", "")
+    agent_label = ir.entities.get(agent_ref, EntityV2(id=CanonicalIdV2("ent", "x"), type_name="Agent", attrs={"label": "Agent"})).attrs.get("label", "Agent")
     patient_ref = frame.roles.get("patient")
     recipient_ref = frame.roles.get("recipient")
     patient_label = ir.entities.get(patient_ref, EntityV2(id=CanonicalIdV2("ent", "x"), type_name="Thing", attrs={"label": ""})).attrs.get("label", "") if patient_ref else ""
     recipient_label = ir.entities.get(recipient_ref, EntityV2(id=CanonicalIdV2("ent", "x"), type_name="Party", attrs={"label": ""})).attrs.get("label", "") if recipient_ref else ""
+
+    agent_label = _lexicon_lookup(overrides, f"entity:{agent_ref}", agent_label)
+    if patient_ref:
+        patient_label = _lexicon_lookup(overrides, f"entity:{patient_ref}", patient_label)
+    if recipient_ref:
+        recipient_label = _lexicon_lookup(overrides, f"entity:{recipient_ref}", recipient_label)
+
+    predicate = _lexicon_lookup(overrides, f"predicate:{frame.predicate}", frame.predicate)
 
     modal = {
         DeonticOpV2.O: "shall",
         DeonticOpV2.P: "may",
         DeonticOpV2.F: "shall not",
     }[norm.op]
-    phrase = f"{agent_label} {modal} {frame.predicate}"
+    modal = _lexicon_lookup(overrides, f"modal:{modal}", modal)
+    phrase = f"{agent_label} {modal} {predicate}"
     if patient_label:
         phrase += f" {patient_label}"
     if recipient_label:
-        phrase += f" to {recipient_label}"
+        to_word = _lexicon_lookup(overrides, "prep:to", "to")
+        phrase += f" {to_word} {recipient_label}"
 
     if norm.temporal_ref and norm.temporal_ref in ir.temporals:
         temporal = ir.temporals[norm.temporal_ref]
         if temporal.relation == TemporalRelationV2.WITHIN and temporal.expr.duration:
-            phrase += f" within {temporal.expr.duration}"
+            within_word = _lexicon_lookup(overrides, "temporal:within", "within")
+            phrase += f" {within_word} {temporal.expr.duration}"
         elif temporal.relation == TemporalRelationV2.BY and temporal.expr.start:
-            phrase += f" by {temporal.expr.start}"
+            by_word = _lexicon_lookup(overrides, "temporal:by", "by")
+            phrase += f" {by_word} {temporal.expr.start}"
         elif temporal.relation == TemporalRelationV2.DURING and temporal.expr.start and temporal.expr.end:
-            phrase += f" during {temporal.expr.start} to {temporal.expr.end}"
+            during_word = _lexicon_lookup(overrides, "temporal:during", "during")
+            to_word = _lexicon_lookup(overrides, "prep:to", "to")
+            phrase += f" {during_word} {temporal.expr.start} {to_word} {temporal.expr.end}"
         elif temporal.relation in {TemporalRelationV2.AFTER, TemporalRelationV2.BEFORE, TemporalRelationV2.DURING} and temporal.expr.start:
-            phrase += f" {temporal.relation.value} {temporal.expr.start}"
+            rel_word = _lexicon_lookup(overrides, f"temporal:{temporal.relation.value}", temporal.relation.value)
+            phrase += f" {rel_word} {temporal.expr.start}"
 
     if norm.activation.atom is not None and norm.activation.atom.pred != "true":
-        phrase += f" if {norm.activation.atom.pred}"
+        if_word = _lexicon_lookup(overrides, "clause:if", "if")
+        phrase += f" {if_word} {norm.activation.atom.pred}"
     if norm.exceptions:
-        phrase += f" unless {_render_condition(norm.exceptions[0])}"
+        unless_word = _lexicon_lookup(overrides, "clause:unless", "unless")
+        phrase += f" {unless_word} {_render_condition(norm.exceptions[0])}"
 
     return phrase.strip() + "."
 

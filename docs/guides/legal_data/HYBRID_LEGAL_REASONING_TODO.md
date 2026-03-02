@@ -107,12 +107,12 @@ Current sprint (2026-03-02):
 - [-] `HL-WS8-08` Query API JSON Schema Export.
 
 Backlog (ready queue):
-- [ ] `HL-WS8-03` Parser Paraphrase Equivalence Corpus.
-- [ ] `HL-WS8-07` Prover Envelope Compatibility Table.
+- [-] `HL-WS8-03` Parser Paraphrase Equivalence Corpus.
+- [-] `HL-WS8-07` Prover Envelope Compatibility Table.
 - [-] `HL-WS8-09` Batch CLI Summary Contract.
 - [-] `HL-WS8-10` Proof Store Retention Policy.
-- [ ] `HL-WS8-11` CNL Lexicon Extension Hooks.
-- [ ] `HL-WS8-12` CI Workflow Matrix for Prover Backends.
+- [-] `HL-WS8-11` CNL Lexicon Extension Hooks.
+- [-] `HL-WS8-12` CI Workflow Matrix for Prover Backends.
 - [ ] `HL-WS8-13` Performance Baseline Snapshot.
 - [ ] `HL-WS8-14` Ticket-to-Test Traceability Table.
 - [ ] `HL-WS8-15` Release Readiness Checklist v2.
@@ -238,6 +238,10 @@ Use this section for short dated notes while executing TODO items.
 - 2026-03-02: Started `HL-WS8-08`; added V2 query API schema artifacts under `docs/guides/legal_data/schemas/`, linked schema paths in API/proof docs, and added runtime required-key/type schema assertions in `test_hybrid_v2_query_api_matrix.py`.
 - 2026-03-02: Started `HL-WS8-09`; stabilized CLI summary with `schema_version` + deterministic toggle/backend fields and added machine-readable `error_code` for error rows in `v2_cli.py` with coverage in `test_hybrid_v2_cli.py`.
 - 2026-03-02: Started `HL-WS8-10`; implemented bounded in-memory V2 proof store with configurable capacity, deterministic oldest-first eviction, and explicit `explain_proof` behavior for evicted proof IDs (`evicted proof_id: ...`) plus retention tests.
+- 2026-03-02: Started `HL-WS8-11`; added optional `lexicon_overrides` input for `generate_cnl_from_ir` (modal/predicate/entity/clause/temporal tokens) and tests showing rendering customization does not change canonical IDs and remains deterministic.
+- 2026-03-02: Started `HL-WS8-12`; expanded `.github/workflows/legal-v2-reasoner-ci.yml` with `mock_smt/mock_fol` backend smoke matrix (primary full suite preserved) and added matching local parity smoke commands in the operations runbook.
+- 2026-03-02: Started `HL-WS8-07`; documented prover backend compatibility matrix (payload key requirements per backend family) and added mandatory certificate payload key assertions in `test_prover_backend_registry.py`.
+- 2026-03-02: Started `HL-WS8-03`; added `cnl_parse_paraphrase_equivalence_v2.json` and semantic signature assertions ensuring equivalent paraphrases match on norm operator + target-frame semantics + temporal relation, while non-equivalent pairs are explicitly asserted as non-equivalent.
 
 ## Definition of Ready (per TODO item)
 

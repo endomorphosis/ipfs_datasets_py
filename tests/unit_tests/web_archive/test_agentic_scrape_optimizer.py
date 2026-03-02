@@ -76,3 +76,39 @@ def test_agentic_optimizer_extracts_structured_fields() -> None:
     assert any("18 U.S.C." in c for c in sf["legal_citations"])
     assert any("35-42-1" in s for s in sf["statute_identifiers"])
     assert "$5,000.00" in sf["monetary_amounts"]
+
+
+def test_agentic_optimizer_finance_schema_fields() -> None:
+    optimizer = AgenticScrapeOptimizer(AgenticExtractionConfig(domain="finance"))
+    parsed = optimizer.transform(
+        url="https://example.com/earnings",
+        text=(
+            "Revenue grew 12.5% in Q4 2024.\n"
+            "Ticker AAPL reported EBITDA improvements.\n"
+            "Net cash flow was USD 2,000,000.\n"
+        ),
+    )
+
+    sf = parsed.structured_fields
+    assert sf["schema"] == "finance_v1"
+    assert "12.5%" in sf["percentages"]
+    assert "AAPL" in sf["ticker_symbols"]
+    assert any("USD" in val for val in sf["monetary_amounts"])
+
+
+def test_agentic_optimizer_medical_schema_fields() -> None:
+    optimizer = AgenticScrapeOptimizer(AgenticExtractionConfig(domain="medical"))
+    parsed = optimizer.transform(
+        url="https://example.com/clinical",
+        text=(
+            "Diagnosis: hypertension.\n"
+            "Medication prescribed: Lisinopril tablet 10 mg daily.\n"
+            "Procedure: physical therapy and treatment plan updated.\n"
+        ),
+    )
+
+    sf = parsed.structured_fields
+    assert sf["schema"] == "medical_v1"
+    assert any("hypertension" in line.lower() for line in sf["diagnoses"])
+    assert any("10 mg" in d.lower() for d in sf["dosages"])
+    assert any("procedure" in line.lower() or "therapy" in line.lower() for line in sf["procedures"])

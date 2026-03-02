@@ -54,6 +54,81 @@ class ParsedScrapeResult:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass
+class LegalStructuredFields:
+    """Typed structured fields for legal-domain scrape outputs."""
+
+    section_headers: List[str] = field(default_factory=list)
+    dates: List[str] = field(default_factory=list)
+    legal_citations: List[str] = field(default_factory=list)
+    statute_identifiers: List[str] = field(default_factory=list)
+    monetary_amounts: List[str] = field(default_factory=list)
+    case_citations: List[str] = field(default_factory=list)
+    effective_dates: List[str] = field(default_factory=list)
+    parties: List[str] = field(default_factory=list)
+    is_pdf_content: bool = False
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "schema": "legal_v1",
+            "section_headers": self.section_headers,
+            "dates": self.dates,
+            "legal_citations": self.legal_citations,
+            "statute_identifiers": self.statute_identifiers,
+            "monetary_amounts": self.monetary_amounts,
+            "case_citations": self.case_citations,
+            "effective_dates": self.effective_dates,
+            "parties": self.parties,
+            "is_pdf_content": self.is_pdf_content,
+        }
+
+
+@dataclass
+class FinanceStructuredFields:
+    """Typed structured fields for finance-domain scrape outputs."""
+
+    dates: List[str] = field(default_factory=list)
+    monetary_amounts: List[str] = field(default_factory=list)
+    percentages: List[str] = field(default_factory=list)
+    ticker_symbols: List[str] = field(default_factory=list)
+    accounting_terms: List[str] = field(default_factory=list)
+    is_pdf_content: bool = False
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "schema": "finance_v1",
+            "dates": self.dates,
+            "monetary_amounts": self.monetary_amounts,
+            "percentages": self.percentages,
+            "ticker_symbols": self.ticker_symbols,
+            "accounting_terms": self.accounting_terms,
+            "is_pdf_content": self.is_pdf_content,
+        }
+
+
+@dataclass
+class MedicalStructuredFields:
+    """Typed structured fields for medical-domain scrape outputs."""
+
+    dates: List[str] = field(default_factory=list)
+    diagnoses: List[str] = field(default_factory=list)
+    medications: List[str] = field(default_factory=list)
+    dosages: List[str] = field(default_factory=list)
+    procedures: List[str] = field(default_factory=list)
+    is_pdf_content: bool = False
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "schema": "medical_v1",
+            "dates": self.dates,
+            "diagnoses": self.diagnoses,
+            "medications": self.medications,
+            "dosages": self.dosages,
+            "procedures": self.procedures,
+            "is_pdf_content": self.is_pdf_content,
+        }
+
+
 class AgenticScrapeOptimizer:
     """Optimizer-backed transformation pipeline for scraped web content."""
 
@@ -81,6 +156,19 @@ class AgenticScrapeOptimizer:
     _MONEY_PATTERNS = [
         re.compile(r"\$\s?\d{1,3}(?:,\d{3})*(?:\.\d{2})?\b"),
         re.compile(r"\b(?:USD|EUR|GBP)\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?\b", re.IGNORECASE),
+    ]
+    _CASE_CITATION_PATTERNS = [
+        re.compile(r"\b[A-Z][A-Za-z\.'\-]+\s+v\.\s+[A-Z][A-Za-z\.'\-]+\b"),
+        re.compile(r"\b\d+\s+[A-Z][A-Za-z\.]+\s+\d+\b"),
+    ]
+    _PERCENT_PATTERNS = [
+        re.compile(r"\b\d+(?:\.\d+)?%"),
+    ]
+    _TICKER_PATTERNS = [
+        re.compile(r"\b[A-Z]{1,5}\b"),
+    ]
+    _DOSAGE_PATTERNS = [
+        re.compile(r"\b\d+(?:\.\d+)?\s*(?:mg|mcg|g|ml|IU|units?)\b", re.IGNORECASE),
     ]
 
     def __init__(self, config: Optional[AgenticExtractionConfig] = None):
@@ -284,7 +372,7 @@ class AgenticScrapeOptimizer:
         statute_ids = self._collect_pattern_matches(text, self._STATUTE_ID_PATTERNS)
         monetary_amounts = self._collect_pattern_matches(text, self._MONEY_PATTERNS)
 
-        return {
+        base_fields = {
             "section_headers": section_headers[:50],
             "dates": dates[:100],
             "legal_citations": legal_citations[:200],
@@ -292,6 +380,90 @@ class AgenticScrapeOptimizer:
             "monetary_amounts": monetary_amounts[:100],
             "is_pdf_content": source_type == "pdf",
         }
+
+        domain = (self.config.domain or "general").lower()
+        if domain == "legal":
+            return self._parse_legal_fields(text, base_fields)
+        if domain == "finance":
+            return self._parse_finance_fields(text, base_fields)
+        if domain == "medical":
+            return self._parse_medical_fields(text, base_fields)
+        return {
+            "schema": "general_v1",
+            **base_fields,
+        }
+
+    def _parse_legal_fields(self, text: str, base_fields: Dict[str, Any]) -> Dict[str, Any]:
+        case_citations = self._collect_pattern_matches(text, self._CASE_CITATION_PATTERNS)
+
+        effective_dates: List[str] = []
+        for line in text.splitlines():
+            if "effective" in line.lower() and self._collect_pattern_matches(line, self._DATE_PATTERNS):
+                effective_dates.extend(self._collect_pattern_matches(line, self._DATE_PATTERNS))
+
+        parties: List[str] = []
+        for line in text.splitlines():
+            lowered = line.lower()
+            if any(token in lowered for token in ("plaintiff", "defendant", "petitioner", "respondent")):
+                parties.append(line.strip())
+
+        fields = LegalStructuredFields(
+            section_headers=list(base_fields.get("section_headers", [])),
+            dates=list(base_fields.get("dates", [])),
+            legal_citations=list(base_fields.get("legal_citations", [])),
+            statute_identifiers=list(base_fields.get("statute_identifiers", [])),
+            monetary_amounts=list(base_fields.get("monetary_amounts", [])),
+            case_citations=case_citations[:200],
+            effective_dates=self._dedupe_strings(effective_dates)[:50],
+            parties=self._dedupe_strings(parties)[:100],
+            is_pdf_content=bool(base_fields.get("is_pdf_content", False)),
+        )
+        return fields.to_dict()
+
+    def _parse_finance_fields(self, text: str, base_fields: Dict[str, Any]) -> Dict[str, Any]:
+        percentages = self._collect_pattern_matches(text, self._PERCENT_PATTERNS)
+        raw_tickers = self._collect_pattern_matches(text, self._TICKER_PATTERNS)
+        ticker_symbols = [sym for sym in raw_tickers if 1 <= len(sym) <= 5 and sym.isupper()]
+
+        accounting_terms: List[str] = []
+        for token in ["revenue", "ebitda", "earnings", "balance sheet", "cash flow", "assets", "liabilities"]:
+            if token in text.lower():
+                accounting_terms.append(token)
+
+        fields = FinanceStructuredFields(
+            dates=list(base_fields.get("dates", [])),
+            monetary_amounts=list(base_fields.get("monetary_amounts", [])),
+            percentages=percentages[:200],
+            ticker_symbols=self._dedupe_strings(ticker_symbols)[:200],
+            accounting_terms=self._dedupe_strings(accounting_terms),
+            is_pdf_content=bool(base_fields.get("is_pdf_content", False)),
+        )
+        return fields.to_dict()
+
+    def _parse_medical_fields(self, text: str, base_fields: Dict[str, Any]) -> Dict[str, Any]:
+        dosages = self._collect_pattern_matches(text, self._DOSAGE_PATTERNS)
+
+        diagnoses: List[str] = []
+        medications: List[str] = []
+        procedures: List[str] = []
+        for line in text.splitlines():
+            lowered = line.lower()
+            if any(k in lowered for k in ("diagnosis", "diagnosed", "condition", "disease", "syndrome")):
+                diagnoses.append(line.strip())
+            if any(k in lowered for k in ("medication", "prescribed", "tablet", "capsule", "drug")):
+                medications.append(line.strip())
+            if any(k in lowered for k in ("procedure", "surgery", "operation", "therapy", "treatment")):
+                procedures.append(line.strip())
+
+        fields = MedicalStructuredFields(
+            dates=list(base_fields.get("dates", [])),
+            diagnoses=self._dedupe_strings(diagnoses)[:200],
+            medications=self._dedupe_strings(medications)[:200],
+            dosages=dosages[:200],
+            procedures=self._dedupe_strings(procedures)[:200],
+            is_pdf_content=bool(base_fields.get("is_pdf_content", False)),
+        )
+        return fields.to_dict()
 
     @staticmethod
     def _strip_html_to_text(html: str) -> str:
@@ -337,9 +509,24 @@ class AgenticScrapeOptimizer:
                 out.append(value)
         return out
 
+    @staticmethod
+    def _dedupe_strings(values: Sequence[str]) -> List[str]:
+        seen = set()
+        out: List[str] = []
+        for value in values:
+            key = value.strip().lower()
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            out.append(value.strip())
+        return out
+
 
 __all__ = [
     "AgenticExtractionConfig",
+    "LegalStructuredFields",
+    "FinanceStructuredFields",
+    "MedicalStructuredFields",
     "ParsedScrapeResult",
     "AgenticScrapeOptimizer",
 ]

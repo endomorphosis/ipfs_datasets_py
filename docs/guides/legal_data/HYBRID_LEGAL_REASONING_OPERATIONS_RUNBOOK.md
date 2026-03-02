@@ -96,6 +96,34 @@ GitHub Actions parity snippet:
 Dedicated workflow:
 - `.github/workflows/legal-v2-reasoner-ci.yml`
 
+Prover backend matrix smoke (local parity):
+```bash
+for backend in mock_smt mock_fol; do
+  BACKEND="$backend" PYTHONPATH=src:ipfs_datasets_py \
+    /home/barberb/municipal_scrape_workspace/.venv/bin/python - <<'PY'
+import os
+from ipfs_datasets_py.processors.legal_data.reasoner.v2_cli import run_v2_cli
+
+backend_id = os.environ["BACKEND"]
+payload = run_v2_cli(
+    sentences=["Controller shall report breach within 24 hours."],
+    jurisdiction="us/federal",
+    enable_optimizer=True,
+    enable_kg=True,
+    enable_prover=True,
+    prover_backend_id=backend_id,
+)
+summary = payload.get("summary") or {}
+assert summary.get("total") == 1, summary
+assert summary.get("ok") == 1, summary
+assert summary.get("error") == 0, summary
+assert summary.get("prover_backend_id") == backend_id, summary
+assert summary.get("schema_version") == "1.0", summary
+print("backend smoke passed", backend_id)
+PY
+done
+```
+
 ## 1) Rollout Modes
 
 ### Shadow mode

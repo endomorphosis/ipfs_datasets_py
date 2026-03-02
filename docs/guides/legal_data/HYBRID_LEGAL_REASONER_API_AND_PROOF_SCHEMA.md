@@ -125,3 +125,15 @@ Recommended checks for consumers:
 - reject proofs where `schema_version` is unsupported
 - require non-empty `ir_refs` and provenance in every proof step
 - run replay validation before accepting imported proofs
+
+## 6) Prover Backend Compatibility Matrix
+
+Normalized envelope is stable (`schema_version`, `backend`, `status`, `theorem`, `assumptions`, `certificate`),
+while backend-specific certificate payload fields vary by backend family:
+
+| Backend ID | Certificate `format` | Required payload keys |
+|---|---|---|
+| `mock_smt` | `smt-certificate-v1` | `backend`, `format`, `solver`, `theorem_hash_hint` |
+| `smt_style` | `smt-certificate-v1` | `backend`, `format`, `solver`, `theorem_hash_hint` |
+| `mock_fol` | `first-order-certificate-v1` | `backend`, `format`, `prover`, `assumption_count` |
+| `first_order` | `first-order-certificate-v1` | `backend`, `format`, `prover`, `assumption_count` |

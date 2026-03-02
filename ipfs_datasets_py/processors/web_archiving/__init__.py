@@ -64,6 +64,9 @@ from .orchestration import (
 from .unified_api import UnifiedWebArchivingAPI, UnifiedAPIConfig
 from .agentic_scrape_optimizer import (
     AgenticExtractionConfig,
+    LegalStructuredFields,
+    FinanceStructuredFields,
+    MedicalStructuredFields,
     AgenticScrapeOptimizer,
     ParsedScrapeResult,
 )
@@ -270,6 +273,9 @@ __all__ = [
     'UnifiedWebArchivingAPI',
     'UnifiedAPIConfig',
     'AgenticExtractionConfig',
+    'LegalStructuredFields',
+    'FinanceStructuredFields',
+    'MedicalStructuredFields',
     'AgenticScrapeOptimizer',
     'ParsedScrapeResult',
     'legacy_search_web',
