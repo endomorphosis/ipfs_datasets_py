@@ -12,9 +12,41 @@ import json
 import os
 import shutil
 import subprocess
+import threading
 from typing import Any, Iterable, List, Optional
 
 from ipfs_datasets_py.deps_resolver import resolve_module
+
+
+_HF_RUNTIME_CACHE: dict[tuple[str, str, int, int], tuple[Any, Any, Any]] = {}
+_HF_RUNTIME_CACHE_LOCK = threading.Lock()
+
+
+def _get_or_create_hf_runtime(
+    *,
+    model_name: str,
+    device: str,
+    torch: Any,
+    transformers: Any,
+) -> tuple[Any, Any, Any]:
+    """Return cached (torch, tokenizer, model) runtime for HF embeddings."""
+
+    AutoTokenizer = getattr(transformers, "AutoTokenizer", None)
+    AutoModel = getattr(transformers, "AutoModel", None)
+    if AutoTokenizer is None or AutoModel is None:
+        raise RuntimeError("transformers missing AutoTokenizer/AutoModel")
+
+    cache_key = (str(model_name), str(device), id(torch), id(transformers))
+    with _HF_RUNTIME_CACHE_LOCK:
+        cached = _HF_RUNTIME_CACHE.get(cache_key)
+        if cached is None:
+            tokenizer = AutoTokenizer.from_pretrained(model_name)
+            model = AutoModel.from_pretrained(model_name)
+            model.to(device)
+            model.eval()
+            cached = (torch, tokenizer, model)
+            _HF_RUNTIME_CACHE[cache_key] = cached
+    return cached
 
 
 def _truthy(value: Optional[str]) -> bool:
@@ -89,23 +121,34 @@ def _hf_embed(
     if torch is None or transformers is None:
         raise RuntimeError("transformers/torch not available for HF embeddings")
 
-    AutoTokenizer = getattr(transformers, "AutoTokenizer", None)
-    AutoModel = getattr(transformers, "AutoModel", None)
-    if AutoTokenizer is None or AutoModel is None:
-        raise RuntimeError("transformers missing AutoTokenizer/AutoModel")
-
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModel.from_pretrained(model_name)
-    model.to(device)
-    model.eval()
+    torch, tokenizer, model = _get_or_create_hf_runtime(
+        model_name=model_name,
+        device=device,
+        torch=torch,
+        transformers=transformers,
+    )
 
     embeddings: List[List[float]] = []
     with torch.no_grad():
+        tokenizer_limit = getattr(tokenizer, "model_max_length", None)
+        model_limit = getattr(getattr(model, "config", None), "max_position_embeddings", None)
+
+        candidate_limits = []
+        for lim in (tokenizer_limit, model_limit, 512):
+            try:
+                v = int(lim)
+            except Exception:
+                continue
+            if v > 0 and v < 1_000_000:
+                candidate_limits.append(v)
+        max_len = min(candidate_limits) if candidate_limits else 512
+
         for text in texts:
             inputs = tokenizer(
                 text,
                 padding=True,
                 truncation=True,
+                max_length=max_len,
                 return_tensors="pt",
             )
             inputs = {k: v.to(device) for k, v in inputs.items()}
