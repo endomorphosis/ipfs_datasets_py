@@ -102,6 +102,21 @@ Next program backlog (WS9 IR/CNL/Reasoner integration):
 - `docs/guides/legal_data/HYBRID_LEGAL_IR_CNL_REASONER_INTEGRATION_IMPROVEMENT_PLAN.md`
 - `docs/guides/legal_data/HYBRID_LEGAL_WS9_IR_CNL_REASONER_IMPLEMENTATION_TICKETS.md`
 
+Post-WS9 stabilization backlog (WS10):
+- `docs/guides/legal_data/HYBRID_LEGAL_WS10_POST_WS9_STABILIZATION_TICKETS.md`
+
+## WS10 Execution Board (Active)
+
+Current sprint (2026-03-02):
+- [-] `HL-WS10-01` CI Soak Tracking for Release Gate. (started 2026-03-02)
+- [ ] `HL-WS10-02` Schema Drift Sentinel Regression Gate.
+- [ ] `HL-WS10-03` Release Evidence Pack Automation.
+- [ ] `HL-WS10-04` Release Checklist Canonical Template.
+
+WS10 local evidence (2026-03-02):
+- CI soak seed snapshot: `artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/CI_SOAK_SNAPSHOT_20260302.md`.
+- Runbook tracking procedure: `ipfs_datasets_py/docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md` (section `11) WS10 CI Soak Tracking`).
+
 ## WS9 Execution Board (Active)
 
 Current sprint (2026-03-02):
@@ -121,6 +136,8 @@ Current sprint (2026-03-02):
 WS9 local dry-run evidence (2026-03-02):
 - Tests: `artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/pytest_reasoner_ws9.txt` (`68 passed`).
 - Backend matrix parity: `artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/backend_smoke_mock_smt.json`, `artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/backend_smoke_mock_fol.json` (both `passed=true`).
+- E2E fixture batch smoke: `artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/hybrid_v2_cli_batch_smoke.json` (`total=4`, `ok=4`, `error=0`).
+- Standalone checklist: `artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/WS9_RELEASE_CHECKLIST_20260302.md`.
 - CI gate updates: `ipfs_datasets_py/.github/workflows/legal-v2-reasoner-ci.yml` (added WS9 trigger paths and `test_kg_enrichment_adapter.py` to required suite).
 
 Ready queue:
@@ -181,12 +198,13 @@ WS8 local dry-run evidence (2026-03-02):
 - Rollback references: `ipfs_datasets_py/docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md` (section `0) Hybrid V2 Pipeline CLI`, hook toggles and run commands).
 
 WS8 done definition:
-- [ ] High-priority tickets (`01`, `02`, `04`, `05`, `06`, `08`, `09`, `10`, `12`) completed.
+- [x] High-priority tickets (`01`, `02`, `04`, `05`, `06`, `08`, `09`, `10`, `12`) completed. (2026-03-02)
 - [ ] `Legal V2 Reasoner CI` green on `main` for 7 consecutive days.
 - [ ] No unresolved schema drift in query/proof envelopes.
 
 Immediate next action:
-- [ ] Validate `HL-WS8-01` in project pytest environment and mark done.
+- [x] Define next-program sprint backlog (post-WS9) and acceptance gates. (2026-03-02)
+- [x] Start `HL-WS10-01` CI soak tracking workflow and add first evidence snapshot link. (2026-03-02)
 
 ## Execution Order (Dependency-Aware)
 

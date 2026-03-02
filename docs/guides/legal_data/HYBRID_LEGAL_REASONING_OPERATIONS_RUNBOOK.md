@@ -527,3 +527,36 @@ Expected artifact paths:
 Latest local dry-run evidence (2026-03-02):
 - Tests: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/pytest_reasoner_ws9.txt` (`68 passed`).
 - Backend matrix parity: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/backend_smoke_mock_smt.json`, `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/backend_smoke_mock_fol.json` (both `passed=true`).
+- E2E fixture batch smoke: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/hybrid_v2_cli_batch_smoke.json` (`total=4`, `ok=4`, `error=0`).
+- Standalone checklist artifact: `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws9_release_20260302/WS9_RELEASE_CHECKLIST_20260302.md`.
+
+## 11) WS10 CI Soak Tracking
+
+Purpose:
+- Track and evidence the `7 consecutive days green` gate for `Legal V2 Reasoner CI`.
+
+Suggested daily snapshot command (GitHub CLI):
+```bash
+mkdir -p /home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302
+
+gh run list \
+  --repo endomorphosis/ipfs_datasets_py \
+  --workflow legal-v2-reasoner-ci.yml \
+  --limit 30 \
+  --json databaseId,displayTitle,conclusion,createdAt,updatedAt,url \
+  > /home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/ci_soak_runs_$(date +%Y%m%d).json
+```
+
+Fallback when `gh` is unavailable:
+```bash
+curl -L --max-time 40 -sS \
+  "https://api.github.com/repos/endomorphosis/ipfs_datasets_py/actions/workflows/legal-v2-reasoner-ci.yml/runs?per_page=30" \
+  > /home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/ci_soak_runs_$(date +%Y%m%d).json
+```
+
+Tracking rule:
+- Count one day as green only if at least one run for that day has `conclusion=success` and there are no failed required runs for the same day.
+
+Current seed snapshot:
+- `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/CI_SOAK_SNAPSHOT_20260302.md`
+- `/home/barberb/municipal_scrape_workspace/artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/ci_soak_runs_20260302.json`
