@@ -129,7 +129,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    repo_root = Path(__file__).resolve().parents[4]
+    repo_root = Path(__file__).resolve().parents[3]
     template_paths = [repo_root / p for p in args.templates]
 
     missing = [str(p) for p in template_paths if not p.exists()]
@@ -141,16 +141,23 @@ def main() -> int:
 
     labels = args.label if args.label else DEFAULT_LABELS
 
+    gh_available = True
     try:
         run_cmd(["gh", "--version"])
     except Exception:
-        print("`gh` CLI is not available in PATH.", file=sys.stderr)
+        gh_available = False
+
+    if not gh_available and args.create:
+        print("`gh` CLI is not available in PATH; cannot create issues.", file=sys.stderr)
         return 2
 
-    try:
-        run_cmd(["gh", "auth", "status"], check=False)
-    except Exception:
-        pass
+    if gh_available:
+        try:
+            run_cmd(["gh", "auth", "status"], check=False)
+        except Exception:
+            pass
+    else:
+        print("[warn] `gh` CLI not found; running template-only dry-run without duplicate checks")
 
     issues = load_issues_from_templates(template_paths)
     if not issues:
@@ -170,7 +177,7 @@ def main() -> int:
         title = issue["title"]
 
         exists = False
-        if not args.allow_duplicates:
+        if not args.allow_duplicates and gh_available:
             try:
                 exists = issue_exists(args.repo, ticket_id)
             except Exception as exc:

@@ -142,14 +142,18 @@ WS10 local evidence (2026-03-02):
 
 Current sprint seed (2026-03-02):
 - [x] `HL-WS11-01` V3 IR Schema Lock + Validator. (2026-03-02)
-- [ ] `HL-WS11-02` CNL Grammar Hardening + Ambiguity Diagnostics.
-- [ ] `HL-WS11-03` Temporal Constraint Normalization Pack.
-- [ ] `HL-WS11-04` Compiler V3 Pass (IR -> DCEC).
-- [ ] `HL-WS11-05` Compiler V3 Pass (IR -> Temporal Deontic FOL).
+- [x] `HL-WS11-02` CNL Grammar Hardening + Ambiguity Diagnostics. (2026-03-02)
+- [x] `HL-WS11-03` Temporal Constraint Normalization Pack. (2026-03-02)
+- [x] `HL-WS11-04` Compiler V3 Pass (IR -> DCEC). (2026-03-02)
+- [x] `HL-WS11-05` Compiler V3 Pass (IR -> Temporal Deontic FOL). (2026-03-02)
 
 WS11 local evidence (2026-03-02):
 - WS11-01 gate: `PYTHONPATH=src:/home/barberb/municipal_scrape_workspace/ipfs_datasets_py /home/barberb/municipal_scrape_workspace/.venv/bin/python -m pytest tests/reasoner/test_hybrid_v2_blueprint.py -q`.
 - WS11-01 result: `30 passed`.
+- WS11-02 gate: `PYTHONPATH=src:. ../.venv/bin/python -m pytest tests/reasoner/test_hybrid_v2_parse_replay.py -q`.
+- WS11-02 result: `13 passed`.
+- WS11-03/04/05 gate: `PYTHONPATH=src:. ../.venv/bin/python -m pytest tests/reasoner/test_hybrid_v2_compiler_parity.py -q`.
+- WS11-03/04/05 result: `6 passed`.
 - V3 schema utilities: `ipfs_datasets_py/ipfs_datasets_py/processors/legal_data/reasoner/serialization.py` (`SUPPORTED_V3_*`, `deterministic_v3_canonical_id`, `map_v2_payload_to_v3`, `validate_v3_ir_payload`).
 - Package exports: `ipfs_datasets_py/ipfs_datasets_py/processors/legal_data/reasoner/__init__.py`.
 
