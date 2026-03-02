@@ -209,3 +209,24 @@ def test_execute_apply_plan_builds_queue_and_prechecks(tmp_path: Path):
     assert Path(report["execution_queue_jsonl"]).exists()
     assert any(item["status"] == "ready_for_patch" for item in report["items"])
     assert any(item["status"] == "blocked" for item in report["items"])
+
+
+def test_run_auto_patch_dry_run_skips_with_reason():
+    loop = _make_loop()
+    execution_report = {
+        "items": [
+            {
+                "status": "ready_for_patch",
+                "path": "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py",
+            }
+        ]
+    }
+
+    report = loop._run_auto_patch(execution_report, max_tasks=1, dry_run=True)
+
+    assert report["dry_run"] is True
+    assert report["selected_ready_tasks"] == 1
+    assert report["applied_count"] == 0
+    assert report["skipped_count"] == 1
+    assert report["attempts"][0]["status"] == "skipped"
+    assert str(report["attempts"][0]["reason"]).startswith("dry-run:")

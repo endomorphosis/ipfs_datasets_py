@@ -69,6 +69,9 @@ class LoopConfig:
     execute_apply_plan: bool = False
     apply_plan_file: str = ""
     execution_max_tasks: int = 5
+    auto_patch: bool = False
+    auto_patch_max_tasks: int = 3
+    auto_patch_dry_run: bool = True
 
 
 class StateLawsActorCriticLoop:
@@ -168,6 +171,7 @@ class StateLawsActorCriticLoop:
 
         apply_patch_plan_files: Optional[Dict[str, str]] = None
         execution_report_file: Optional[str] = None
+        auto_patch_report_file: Optional[str] = None
         if bool(self.loop_config.apply_patch_plan):
             apply_tasks = self._build_apply_patch_tasks(
                 final_patch_plan,
@@ -194,6 +198,18 @@ class StateLawsActorCriticLoop:
                 encoding="utf-8",
             )
 
+            if bool(self.loop_config.auto_patch):
+                auto_patch_report = self._run_auto_patch(
+                    execution_report,
+                    max_tasks=max(1, int(self.loop_config.auto_patch_max_tasks or 1)),
+                    dry_run=bool(self.loop_config.auto_patch_dry_run),
+                )
+                auto_patch_report_file = "auto_patch_report.json"
+                (self.run_dir / auto_patch_report_file).write_text(
+                    json.dumps(auto_patch_report, indent=2),
+                    encoding="utf-8",
+                )
+
         final_summary = {
             "run_dir": str(self.run_dir),
             "states": self.states,
@@ -205,6 +221,7 @@ class StateLawsActorCriticLoop:
             "patch_plan_file": final_patch_plan_file,
             "apply_patch_plan_files": apply_patch_plan_files,
             "execution_report_file": execution_report_file,
+            "auto_patch_report_file": auto_patch_report_file,
         }
         (self.run_dir / "final_summary.json").write_text(json.dumps(final_summary, indent=2), encoding="utf-8")
         return final_summary
@@ -443,6 +460,115 @@ class StateLawsActorCriticLoop:
             commands.append("python -m pytest -q " + " ".join(tests))
         commands.append(f"git --no-pager diff -- {path}")
         return commands
+
+    def _run_auto_patch(self, execution_report: Dict[str, Any], *, max_tasks: int, dry_run: bool) -> Dict[str, Any]:
+        items = list(execution_report.get("items") or [])
+        ready_items = [item for item in items if isinstance(item, dict) and item.get("status") == "ready_for_patch"]
+        selected = ready_items[: max(1, int(max_tasks or 1))]
+
+        attempts: List[Dict[str, Any]] = []
+        applied_count = 0
+        skipped_count = 0
+        error_count = 0
+
+        for item in selected:
+            rel_path = str(item.get("path") or "")
+            try:
+                result = self._auto_patch_single(rel_path, dry_run=dry_run)
+                attempts.append(result)
+                if result.get("status") == "applied":
+                    applied_count += 1
+                elif result.get("status") == "skipped":
+                    skipped_count += 1
+                else:
+                    error_count += 1
+            except Exception as exc:  # pragma: no cover - defensive
+                attempts.append(
+                    {
+                        "path": rel_path,
+                        "status": "error",
+                        "reason": f"auto-patch-exception: {exc}",
+                    }
+                )
+                error_count += 1
+
+        return {
+            "dry_run": bool(dry_run),
+            "selected_ready_tasks": len(selected),
+            "applied_count": applied_count,
+            "skipped_count": skipped_count,
+            "error_count": error_count,
+            "attempts": attempts,
+        }
+
+    def _auto_patch_single(self, rel_path: str, *, dry_run: bool) -> Dict[str, Any]:
+        # Guarded strategy registry: only explicit safe transformations are applied.
+        strategy = self._resolve_auto_patch_strategy(rel_path)
+        if strategy is None:
+            return {
+                "path": rel_path,
+                "status": "skipped",
+                "reason": "no-registered-strategy",
+            }
+
+        if dry_run:
+            return {
+                "path": rel_path,
+                "status": "skipped",
+                "reason": f"dry-run:{strategy}",
+            }
+
+        repo_root = Path(__file__).resolve().parents[3]
+        abs_path = repo_root / rel_path
+        if not abs_path.exists():
+            return {
+                "path": rel_path,
+                "status": "error",
+                "reason": "target-file-missing",
+            }
+
+        original = abs_path.read_text(encoding="utf-8")
+        updated = self._apply_text_strategy(original, strategy)
+        if updated == original:
+            return {
+                "path": rel_path,
+                "status": "skipped",
+                "reason": "no-op",
+            }
+        abs_path.write_text(updated, encoding="utf-8")
+        return {
+            "path": rel_path,
+            "status": "applied",
+            "reason": strategy,
+        }
+
+        return {
+            "path": rel_path,
+            "status": "skipped",
+            "reason": f"unknown-strategy:{strategy}",
+        }
+
+    @staticmethod
+    def _resolve_auto_patch_strategy(rel_path: str) -> Optional[str]:
+        if rel_path.endswith(".py") and "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/" in rel_path:
+            return "normalize-wayback-scheme-http"
+        if rel_path.endswith(".py") and "ipfs_datasets_py/processors/legal_scrapers/" in rel_path:
+            return "normalize-trailing-whitespace"
+        return None
+
+    @staticmethod
+    def _apply_text_strategy(original: str, strategy: str) -> str:
+        if strategy == "normalize-trailing-whitespace":
+            normalized_lines = [line.rstrip() for line in original.splitlines()]
+            updated = "\n".join(normalized_lines)
+            if original.endswith("\n"):
+                updated += "\n"
+            return updated
+
+        if strategy == "normalize-wayback-scheme-http":
+            return original.replace("https://web.archive.org/", "http://web.archive.org/")
+
+        return original
 
     @staticmethod
     def _suggest_actions_for_path(path: str, reasons: List[str], states: List[str]) -> List[str]:
@@ -778,6 +904,22 @@ def _parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help="Max tasks to include in execution queue/report when execute mode is enabled.",
     )
     parser.add_argument(
+        "--auto-patch",
+        action="store_true",
+        help="Attempt guarded auto-patching for top ready tasks from execution report.",
+    )
+    parser.add_argument(
+        "--auto-patch-max-tasks",
+        type=int,
+        default=3,
+        help="Max number of ready tasks to attempt in auto-patch mode.",
+    )
+    parser.add_argument(
+        "--auto-patch-no-dry-run",
+        action="store_true",
+        help="Disable dry-run for auto-patch mode and apply registered transformations.",
+    )
+    parser.add_argument(
         "--output-dir",
         type=str,
         default="",
@@ -808,6 +950,9 @@ async def _main_async(args: argparse.Namespace) -> int:
             execute_apply_plan=bool(args.execute_apply_plan),
             apply_plan_file=str(args.apply_plan_file or ""),
             execution_max_tasks=max(1, int(args.execution_max_tasks)),
+            auto_patch=bool(args.auto_patch),
+            auto_patch_max_tasks=max(1, int(args.auto_patch_max_tasks)),
+            auto_patch_dry_run=not bool(args.auto_patch_no_dry_run),
         ),
         output_dir=Path(args.output_dir).expanduser().resolve() if str(args.output_dir).strip() else None,
     )

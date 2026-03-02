@@ -163,6 +163,9 @@ def test_argparse_cli_state_laws_optimize_routes(monkeypatch: pytest.MonkeyPatch
         captured["execute_apply_plan"] = bool(args.execute_apply_plan)
         captured["apply_plan_file"] = args.apply_plan_file
         captured["execution_max_tasks"] = int(args.execution_max_tasks)
+        captured["auto_patch"] = bool(args.auto_patch)
+        captured["auto_patch_max_tasks"] = int(args.auto_patch_max_tasks)
+        captured["auto_patch_no_dry_run"] = bool(args.auto_patch_no_dry_run)
         return 0
 
     monkeypatch.setattr(cli, "cmd_state_laws_optimize", _fake_cmd)
@@ -185,6 +188,10 @@ def test_argparse_cli_state_laws_optimize_routes(monkeypatch: pytest.MonkeyPatch
             "tmp/tasks.jsonl",
             "--execution-max-tasks",
             "4",
+            "--auto-patch",
+            "--auto-patch-max-tasks",
+            "2",
+            "--auto-patch-no-dry-run",
         ]
     )
 
@@ -198,3 +205,6 @@ def test_argparse_cli_state_laws_optimize_routes(monkeypatch: pytest.MonkeyPatch
     assert captured["execute_apply_plan"] is True
     assert captured["apply_plan_file"] == "tmp/tasks.jsonl"
     assert captured["execution_max_tasks"] == 4
+    assert captured["auto_patch"] is True
+    assert captured["auto_patch_max_tasks"] == 2
+    assert captured["auto_patch_no_dry_run"] is True

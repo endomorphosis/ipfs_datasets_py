@@ -56,6 +56,7 @@ Notes:
 - Run `create_ws11_github_issues.sh` to open WS11 GitHub issues from template
 	bodies (dry-run by default; pass `--create` to create issues).
 	`--create` requires GitHub CLI (`gh`) installed and authenticated.
+	The wrapper auto-includes `~/.local/bin` in `PATH` for user-space `gh` installs.
 	Example: `gh auth status && bash scripts/ops/legal_data/create_ws11_github_issues.sh --create`.
 - VS Code tasks are canonical in `ipfs_datasets_py/.vscode/tasks.json`:
 	`Legal smoke: proof-audit canary`,

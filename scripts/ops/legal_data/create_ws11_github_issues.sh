@@ -4,6 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$ROOT_DIR"
 
+# Ensure user-space GitHub CLI install is discoverable.
+export PATH="$HOME/.local/bin:$PATH"
+
 if [[ -z "${PYTHON_BIN:-}" ]]; then
   if [[ -x "$ROOT_DIR/.venv/bin/python" ]]; then
     PYTHON_BIN="$ROOT_DIR/.venv/bin/python"

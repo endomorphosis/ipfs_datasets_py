@@ -580,6 +580,11 @@ class OptimizerArgparseCLI:
         if apply_plan_file:
             forwarded_args.extend(["--apply-plan-file", apply_plan_file])
         forwarded_args.extend(["--execution-max-tasks", str(int(args.execution_max_tasks))])
+        if bool(args.auto_patch):
+            forwarded_args.append("--auto-patch")
+        forwarded_args.extend(["--auto-patch-max-tasks", str(int(args.auto_patch_max_tasks))])
+        if bool(args.auto_patch_no_dry_run):
+            forwarded_args.append("--auto-patch-no-dry-run")
 
         return int(state_laws_loop_main(forwarded_args))
     
@@ -785,6 +790,22 @@ class OptimizerArgparseCLI:
             type=int,
             default=5,
             help='Max tasks to include in execution report',
+        )
+        state_laws_parser.add_argument(
+            '--auto-patch',
+            action='store_true',
+            help='Attempt guarded auto-patch stage from execution queue',
+        )
+        state_laws_parser.add_argument(
+            '--auto-patch-max-tasks',
+            type=int,
+            default=3,
+            help='Max ready tasks attempted by auto-patch stage',
+        )
+        state_laws_parser.add_argument(
+            '--auto-patch-no-dry-run',
+            action='store_true',
+            help='Disable dry-run and apply registered auto-patch transformations',
         )
         
         # Parse arguments
