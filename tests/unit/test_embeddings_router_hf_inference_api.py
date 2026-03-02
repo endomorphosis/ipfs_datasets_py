@@ -173,3 +173,45 @@ def test_hf_embeddings_retries_with_fallback_models(monkeypatch) -> None:
 
     assert vector == [0.11, 0.22]
     assert calls == ["bad-embed-model", "fallback-embed"]
+
+
+def test_hf_embeddings_retries_with_discovered_models(monkeypatch) -> None:
+    embeddings_router.clear_embeddings_router_caches()
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_DYNAMIC_MODEL_DISCOVERY", "1")
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_EMBEDDINGS_DISCOVERY_TAGS", "feature-extraction")
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_EMBEDDINGS_DISCOVERY_LIMIT", "5")
+
+    class _FakeHfApi:
+        def list_models(self, **kwargs):
+            _ = kwargs
+            return [types.SimpleNamespace(id="discovered-embed")]
+
+    fake_hub = types.SimpleNamespace(HfApi=_FakeHfApi, get_token=lambda: None)
+    original_import_module = embeddings_router.importlib.import_module
+
+    def fake_import_module(name: str, package=None):
+        if name == "huggingface_hub":
+            return fake_hub
+        return original_import_module(name, package)
+
+    monkeypatch.setattr(embeddings_router.importlib, "import_module", fake_import_module)
+
+    calls: list[str | None] = []
+
+    class _FakeHFEmbeddingsProvider:
+        def embed_texts(self, texts, *, model_name=None, device=None, **kwargs):
+            _ = (texts, device, kwargs)
+            calls.append(model_name)
+            if model_name == "discovered-embed":
+                return [[0.31, 0.41]]
+            raise RuntimeError("HF Inference API HTTP 404: Not Found")
+
+    vector = embeddings_router.embed_text(
+        "hello",
+        provider="hf_inference_api",
+        provider_instance=_FakeHFEmbeddingsProvider(),
+        model_name="bad-embed-model",
+    )
+
+    assert vector == [0.31, 0.41]
+    assert calls == ["bad-embed-model", "discovered-embed"]

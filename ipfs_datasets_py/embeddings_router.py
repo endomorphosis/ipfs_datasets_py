@@ -30,6 +30,9 @@ Additional optional providers (opt-in by selecting provider):
     - `IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL` (default: https://router.huggingface.co/hf-inference/models)
     - `IPFS_DATASETS_PY_HF_BILL_TO` / `HUGGINGFACE_BILL_TO` / `HF_BILL_TO` (optional org billing scope)
     - `IPFS_DATASETS_PY_HF_EMBEDDINGS_FALLBACK_MODELS` (optional comma-separated retry models)
+    - `IPFS_DATASETS_PY_HF_DYNAMIC_MODEL_DISCOVERY` (default: 1; discover hf-inference fallback models)
+    - `IPFS_DATASETS_PY_HF_EMBEDDINGS_DISCOVERY_LIMIT` (default: 20)
+    - `IPFS_DATASETS_PY_HF_EMBEDDINGS_DISCOVERY_TAGS` (default: feature-extraction,sentence-similarity)
 """
 
 from __future__ import annotations
@@ -333,12 +336,84 @@ def _hf_embeddings_fallback_models(*, kwargs: dict[str, object]) -> list[str]:
     if text:
         return [item.strip() for item in text.split(",") if item and item.strip()]
 
+    models: list[str] = []
+    if _hf_dynamic_model_discovery_enabled(kwargs=kwargs):
+        tags = _hf_embeddings_discovery_tags(kwargs=kwargs)
+        limit = _hf_embeddings_discovery_limit(kwargs=kwargs)
+        for tag in tags:
+            models.extend(_discover_hf_models_for_pipeline(pipeline_tag=tag, limit=limit))
+
+    for candidate in _hf_embeddings_default_fallback_models():
+        if candidate not in models:
+            models.append(candidate)
+
+    return models
+
+
+def _hf_embeddings_default_fallback_models() -> list[str]:
     # Defaults chosen from broadly compatible feature-extraction models.
     return [
         "BAAI/bge-small-en-v1.5",
         "sentence-transformers/all-MiniLM-L6-v2",
         "thenlper/gte-small",
     ]
+
+
+def _hf_dynamic_model_discovery_enabled(*, kwargs: dict[str, object]) -> bool:
+    raw = kwargs.get("hf_dynamic_model_discovery")
+    if raw is None:
+        raw = os.getenv("IPFS_DATASETS_PY_HF_DYNAMIC_MODEL_DISCOVERY", "1")
+    return str(raw).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _hf_embeddings_discovery_limit(*, kwargs: dict[str, object]) -> int:
+    raw = kwargs.get("hf_embeddings_discovery_limit")
+    if raw is None:
+        raw = os.getenv("IPFS_DATASETS_PY_HF_EMBEDDINGS_DISCOVERY_LIMIT", "20")
+    try:
+        return max(1, int(raw))
+    except Exception:
+        return 20
+
+
+def _hf_embeddings_discovery_tags(*, kwargs: dict[str, object]) -> list[str]:
+    raw = kwargs.get("hf_embeddings_discovery_tags")
+    if raw is None:
+        raw = os.getenv("IPFS_DATASETS_PY_HF_EMBEDDINGS_DISCOVERY_TAGS", "feature-extraction,sentence-similarity")
+    text = str(raw or "").strip()
+    if not text:
+        return ["feature-extraction", "sentence-similarity"]
+    return [item.strip() for item in text.split(",") if item and item.strip()]
+
+
+@lru_cache(maxsize=32)
+def _discover_hf_models_for_pipeline(*, pipeline_tag: str, limit: int) -> tuple[str, ...]:
+    """Best-effort discovery of hf-inference compatible models for a pipeline tag."""
+
+    try:
+        hub = importlib.import_module("huggingface_hub")
+        api_cls = getattr(hub, "HfApi", None)
+        if api_cls is None:
+            return tuple()
+        api = api_cls()
+        token = _resolve_hf_api_token()
+        models = api.list_models(
+            inference_provider="hf-inference",
+            pipeline_tag=pipeline_tag,
+            limit=max(1, int(limit)),
+            token=token or None,
+        )
+        out: list[str] = []
+        for item in models:
+            model_id = getattr(item, "id", None)
+            if model_id is None:
+                continue
+            text = str(model_id).strip()
+            if text and text not in out:
+                out.append(text)
+        return tuple(out)
+    except Exception:
+        return tuple()
 
 
 def _get_openrouter_provider() -> Optional[EmbeddingsProvider]:
@@ -936,6 +1011,7 @@ def embed_texts_batched(
 
 def clear_embeddings_router_caches() -> None:
     _resolve_provider_cached.cache_clear()
+    _discover_hf_models_for_pipeline.cache_clear()
 
 
 def embed_text(
