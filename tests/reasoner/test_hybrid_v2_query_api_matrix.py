@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_v2_blueprint import (
     V2_QUERY_API_SCHEMA_VERSION,
     check_compliance,
@@ -12,6 +15,40 @@ from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_v2_blueprint import 
 
 def _one_norm_ir(sentence: str):
     return parse_cnl_to_ir(sentence, jurisdiction="us/federal")
+
+
+def _shape(value):
+    if isinstance(value, dict):
+        return {k: _shape(value[k]) for k in sorted(value.keys())}
+    if isinstance(value, tuple):
+        return {"__type__": "tuple", "items": [_shape(item) for item in value]}
+    if isinstance(value, list):
+        if not value:
+            return {"__type__": "list", "items": "empty"}
+        return {"__type__": "list", "items": _shape(value[0])}
+    if isinstance(value, bool):
+        return "bool"
+    if isinstance(value, int):
+        return "int"
+    if isinstance(value, float):
+        return "float"
+    if isinstance(value, str):
+        return "str"
+    if value is None:
+        return "none"
+    return type(value).__name__
+
+
+def _build_query_api_schema_snapshot():
+    ir = _one_norm_ir("Controller shall report breach within 72 hours.")
+    compliance = check_compliance({"ir": ir, "events": []}, {"at": "2026-03-01"})
+    violations = find_violations({"ir": ir, "events": []}, ("2026-01-01", "2026-12-31"))
+    explanation = explain_proof(compliance["proof_id"], format="json")
+    return {
+        "check_compliance": _shape(compliance),
+        "find_violations": _shape(violations),
+        "explain_proof": _shape(explanation),
+    }
 
 
 def test_v2_query_matrix_eight_cases() -> None:
@@ -130,3 +167,14 @@ def test_v2_query_matrix_prover_envelopes_are_normalized_and_backend_specific() 
     assert len(fol_env["certificate"]["normalized_hash"]) == 64
     assert smt_env["certificate"]["format"] == "smt-certificate-v1"
     assert fol_env["certificate"]["format"] == "first-order-certificate-v1"
+
+
+def test_v2_query_api_schema_snapshot_lockfile() -> None:
+    fixture_path = Path(__file__).resolve().parent / "fixtures" / "hybrid_v2_api_schema_snapshot.json"
+    expected = json.loads(fixture_path.read_text(encoding="utf-8"))
+    actual = _build_query_api_schema_snapshot()
+    assert actual == expected, (
+        "V2 query API schema snapshot drift detected.\n"
+        f"Expected: {json.dumps(expected, indent=2, sort_keys=True)}\n"
+        f"Actual: {json.dumps(actual, indent=2, sort_keys=True)}"
+    )
