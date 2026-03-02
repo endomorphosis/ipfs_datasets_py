@@ -6,7 +6,7 @@ and provides structured access to federal regulations and notices.
 import logging
 import time
 from typing import Dict, List, Optional, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from urllib.parse import urlparse
 import ipaddress
 import socket
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 FEDERAL_REGISTER_API_URL = "https://www.federalregister.gov/api/v1/documents.json"
 FEDERAL_REGISTER_MAX_PER_PAGE = 1000
+FEDERAL_REGISTER_COUNT_CAP = 10000
 
 # Federal agencies commonly tracked in Federal Register
 FEDERAL_AGENCIES = {
@@ -189,6 +190,108 @@ def _normalize_document(result: Dict[str, Any]) -> Dict[str, Any]:
         "regulation_id_numbers": result.get("regulation_id_numbers", []),
         "topics": result.get("topics", []),
         "significant": result.get("significant", False),
+    }
+
+
+def _parse_iso_date(value: str) -> date:
+    return datetime.strptime(str(value), "%Y-%m-%d").date()
+
+
+def _midpoint_date(start: date, end: date) -> date:
+    delta_days = (end - start).days
+    return start + timedelta(days=max(0, delta_days // 2))
+
+
+async def _search_with_date_partitioning(
+    *,
+    agencies: Optional[List[str]],
+    start_date: str,
+    end_date: str,
+    document_types: Optional[List[str]],
+    keywords: Optional[str],
+    page_size: int = 1000,
+) -> Dict[str, Any]:
+    """Collect documents by recursively splitting date ranges that hit API count caps."""
+    ranges_to_query: List[tuple[date, date]] = [(_parse_iso_date(start_date), _parse_iso_date(end_date))]
+    queried_ranges = 0
+    split_ranges = 0
+    documents: List[Dict[str, Any]] = []
+    seen_doc_numbers = set()
+    failed_ranges: List[Dict[str, Any]] = []
+
+    while ranges_to_query:
+        range_start, range_end = ranges_to_query.pop(0)
+        queried_ranges += 1
+
+        result = await search_federal_register(
+            agencies=agencies,
+            start_date=range_start.isoformat(),
+            end_date=range_end.isoformat(),
+            document_types=document_types,
+            keywords=keywords,
+            limit=0,
+            fetch_all=True,
+            page_size=page_size,
+        )
+
+        total_available = int(result.get("total_available") or 0)
+        result_documents = list(result.get("documents") or [])
+        result_count = int(result.get("count") or len(result_documents))
+        range_is_splittable = range_start < range_end
+
+        if result.get("status") != "success":
+            should_split = range_is_splittable and (
+                total_available >= FEDERAL_REGISTER_COUNT_CAP
+                or result_count >= FEDERAL_REGISTER_COUNT_CAP
+                or len(result_documents) >= FEDERAL_REGISTER_COUNT_CAP
+            )
+            if should_split:
+                split_point = _midpoint_date(range_start, range_end)
+                left_end = split_point
+                right_start = split_point + timedelta(days=1)
+                if left_end >= range_start and right_start <= range_end:
+                    split_ranges += 1
+                    ranges_to_query.insert(0, (right_start, range_end))
+                    ranges_to_query.insert(0, (range_start, left_end))
+                    continue
+
+            failed_ranges.append(
+                {
+                    "start_date": range_start.isoformat(),
+                    "end_date": range_end.isoformat(),
+                    "error": result.get("error", "unknown error"),
+                }
+            )
+            continue
+
+        if total_available >= FEDERAL_REGISTER_COUNT_CAP and range_is_splittable:
+            split_point = _midpoint_date(range_start, range_end)
+            left_end = split_point
+            right_start = split_point + timedelta(days=1)
+            if left_end < range_start or right_start > range_end:
+                # Defensive fallback, keep current results if split boundaries degrade.
+                pass
+            else:
+                split_ranges += 1
+                ranges_to_query.insert(0, (right_start, range_end))
+                ranges_to_query.insert(0, (range_start, left_end))
+                continue
+
+        for doc in result_documents:
+            doc_number = str(doc.get("document_number") or "")
+            if doc_number and doc_number in seen_doc_numbers:
+                continue
+            if doc_number:
+                seen_doc_numbers.add(doc_number)
+            documents.append(doc)
+
+    return {
+        "status": "success" if not failed_ranges else "partial_success",
+        "documents": documents,
+        "count": len(documents),
+        "queried_ranges": queried_ranges,
+        "split_ranges": split_ranges,
+        "failed_ranges": failed_ranges,
     }
 
 
@@ -470,6 +573,12 @@ async def scrape_federal_register(
         failed_agencies: List[Dict[str, Any]] = []
         
         scrape_targets = selected_agencies if selected_agencies else [None]
+        partition_stats: Dict[str, Any] = {
+            "enabled": False,
+            "queried_ranges": 0,
+            "split_ranges": 0,
+            "failed_ranges": 0,
+        }
 
         # Use either per-agency fetches or one global fetch.
         for agency in scrape_targets:
@@ -480,7 +589,32 @@ async def scrape_federal_register(
             agency_name = FEDERAL_AGENCIES.get(agency, "ALL") if agency else "ALL"
             logger.info("Scraping Federal Register target: %s", agency_name)
 
-            if agency:
+            use_partitioning = (
+                agency is None
+                and not max_documents
+                and bool(start_date)
+                and bool(end_date)
+            )
+
+            if use_partitioning:
+                partition_stats["enabled"] = True
+                partitioned = await _search_with_date_partitioning(
+                    agencies=None,
+                    start_date=start_date,
+                    end_date=end_date,
+                    document_types=document_types,
+                    keywords=keywords,
+                    page_size=1000,
+                )
+                search_result = {
+                    "status": "success" if partitioned.get("status") == "success" else "partial_success",
+                    "documents": partitioned.get("documents", []),
+                }
+                partition_stats["queried_ranges"] = int(partitioned.get("queried_ranges") or 0)
+                partition_stats["split_ranges"] = int(partitioned.get("split_ranges") or 0)
+                partition_stats["failed_ranges"] = len(partitioned.get("failed_ranges") or [])
+                partition_stats["failed_range_details"] = partitioned.get("failed_ranges", [])[:20]
+            elif agency:
                 agency_keywords = FEDERAL_AGENCIES.get(agency, agency)
                 search_result = await search_federal_register(
                     agencies=None,
@@ -591,6 +725,7 @@ async def scrape_federal_register(
             "rate_limit_delay": rate_limit_delay,
             "include_full_text": include_full_text,
             "failed_agencies": failed_agencies,
+            "partitioning": partition_stats,
         }
         
         logger.info(f"Completed Federal Register scraping: {documents_count} documents in {elapsed_time:.2f}s")

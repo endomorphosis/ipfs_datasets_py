@@ -66,6 +66,54 @@ def test_critic_score_prefers_healthy_diagnostics():
     assert loop._critic_score(healthy) > loop._critic_score(weak)
 
 
+def test_critic_score_penalizes_zero_fetch_attempts():
+    loop = _make_loop()
+
+    with_attempts = {
+        "coverage": {
+            "states_targeted": 3,
+            "states_with_nonzero_statutes": 3,
+            "coverage_gap_states": [],
+        },
+        "fetch": {
+            "attempted": 12,
+            "success_ratio": 0.8,
+            "no_attempt_states": [],
+            "weak_states": [],
+        },
+        "etl_readiness": {
+            "ready_for_kg_etl": True,
+            "full_text_ratio": 1.0,
+            "jsonld_ratio": 1.0,
+            "citation_ratio": 0.8,
+        },
+        "quality": {"weak_states": []},
+    }
+
+    zero_attempts = {
+        "coverage": {
+            "states_targeted": 3,
+            "states_with_nonzero_statutes": 3,
+            "coverage_gap_states": [],
+        },
+        "fetch": {
+            "attempted": 0,
+            "success_ratio": 0.8,
+            "no_attempt_states": [],
+            "weak_states": [],
+        },
+        "etl_readiness": {
+            "ready_for_kg_etl": True,
+            "full_text_ratio": 1.0,
+            "jsonld_ratio": 1.0,
+            "citation_ratio": 0.8,
+        },
+        "quality": {"weak_states": []},
+    }
+
+    assert loop._critic_score(with_attempts) > loop._critic_score(zero_attempts)
+
+
 def test_recommend_patch_targets_includes_state_specific_scrapers():
     loop = _make_loop()
     diagnostics = {

@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 from urllib.parse import urljoin
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
+from .oregon_admin_rules import OregonAdministrativeRulesScraper
 from .registry import StateScraperRegistry
 
 try:
@@ -132,11 +133,18 @@ class OregonScraper(BaseStateScraper):
     
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Oregon."""
-        return [{
-            "name": "Oregon Revised Statutes",
-            "url": f"{self.get_base_url()}/bills_laws/ors/ors001.html",
-            "type": "Code"
-        }]
+        return [
+            {
+                "name": "Oregon Revised Statutes",
+                "url": f"{self.get_base_url()}/bills_laws/ors/ors001.html",
+                "type": "Code",
+            },
+            {
+                "name": "Oregon Administrative Rules",
+                "url": OregonAdministrativeRulesScraper.seed_chapter_url(),
+                "type": "Regulation",
+            },
+        ]
 
     def _make_session(self) -> "requests.Session":
         session = requests.Session()
@@ -333,6 +341,16 @@ class OregonScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        if "administrative" in str(code_name or "").lower() or "displayChapterRules.action" in str(code_url or ""):
+            self.logger.info("Oregon: using dedicated OAR scraper")
+            oar_scraper = OregonAdministrativeRulesScraper(self)
+            oar_statutes = await oar_scraper.scrape(code_name=code_name, code_url=code_url)
+            if oar_statutes:
+                self.logger.info(f"Oregon OAR: parsed {len(oar_statutes)} rules")
+                return oar_statutes
+            self.logger.warning("Oregon OAR scraper produced no rules; falling back to generic parser")
+            return await self._generic_scrape(code_name, code_url, "OAR", max_sections=400)
+
         citation_format = "Or. Rev. Stat."
         if not REQUESTS_AVAILABLE:
             self.logger.warning("requests/bs4 unavailable for Oregon parser; falling back to Playwright link scrape")

@@ -45,7 +45,6 @@ class NewYorkScraper(BaseStateScraper):
             List of normalized statutes
         """
         try:
-            import requests
             from bs4 import BeautifulSoup
         except ImportError as e:
             self.logger.error(f"Required library not available: {e}")
@@ -54,31 +53,15 @@ class NewYorkScraper(BaseStateScraper):
         statutes = []
         
         try:
-            headers = {
-                'User-Agent': (
-                    'Mozilla/5.0 (X11; Linux x86_64) '
-                    'AppleWebKit/537.36 (KHTML, like Gecko) '
-                    'Chrome/124.0.0.0 Safari/537.36'
-                ),
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Referer': self.get_base_url(),
-                'Connection': 'keep-alive',
-            }
-
-            session = requests.Session()
-            session.headers.update(headers)
-            response = session.get(code_url, timeout=30, allow_redirects=True)
-
-            if int(response.status_code) in {401, 403}:
-                self.logger.warning(
-                    f"NY direct request blocked ({response.status_code}) for {code_name}; using public.law fallback"
-                )
+            page_bytes = await self._fetch_page_content_with_archival_fallback(
+                code_url,
+                timeout_seconds=30,
+            )
+            if not page_bytes:
+                self.logger.warning(f"NY direct request returned empty content for {code_name}; using public.law fallback")
                 return await self._scrape_public_law_updates(code_name)
 
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
+            soup = BeautifulSoup(page_bytes, 'html.parser')
             
             # Extract legal area
             legal_area = self._identify_legal_area(code_name)
@@ -147,19 +130,10 @@ class NewYorkScraper(BaseStateScraper):
         This source is accessible in environments where NY Senate pages are blocked.
         """
         try:
-            import requests
             from bs4 import BeautifulSoup
         except ImportError as e:
             self.logger.error(f"Required library not available: {e}")
             return []
-
-        headers = {
-            'User-Agent': (
-                'Mozilla/5.0 (X11; Linux x86_64) '
-                'AppleWebKit/537.36 (KHTML, like Gecko) '
-                'Chrome/124.0.0.0 Safari/537.36'
-            ),
-        }
 
         base = "https://newyork.public.law"
         seed_pages = [
@@ -178,13 +152,17 @@ class NewYorkScraper(BaseStateScraper):
             if len(statutes) >= max_sections:
                 break
             try:
-                response = requests.get(page_url, headers=headers, timeout=30, allow_redirects=True)
-                response.raise_for_status()
+                page_bytes = await self._fetch_page_content_with_archival_fallback(
+                    page_url,
+                    timeout_seconds=30,
+                )
+                if not page_bytes:
+                    raise RuntimeError("empty response")
             except Exception as exc:
                 self.logger.warning(f"NY fallback page failed {page_url}: {exc}")
                 continue
 
-            soup = BeautifulSoup(response.content, 'html.parser')
+            soup = BeautifulSoup(page_bytes, 'html.parser')
             for link in soup.find_all('a', href=True):
                 if len(statutes) >= max_sections:
                     break

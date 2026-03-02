@@ -7,7 +7,6 @@ DeliverDocument statute pages.
 import json
 import asyncio
 import re
-import time
 from typing import Dict, List, Set
 from urllib.parse import quote, urljoin
 
@@ -16,7 +15,6 @@ from bs4 import BeautifulSoup
 
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
-from .state_archival_fetch import ArchivalFetchClient
 
 
 class OklahomaScraper(BaseStateScraper):
@@ -325,30 +323,13 @@ class OklahomaScraper(BaseStateScraper):
         match = re.search(r"[?&]CiteID=(\d+)", str(url or ""), flags=re.IGNORECASE)
         return match.group(1) if match else ""
 
-    def _request_text_direct(self, url: str, headers: Dict[str, str], timeout: int) -> str:
-        request_url = self._normalize_wayback_url(url)
-        for _ in range(3):
-            try:
-                response = requests.get(request_url, headers=headers, timeout=timeout)
-                response.raise_for_status()
-                text = response.text
-                if self._ANTI_BOT_RE.search(str(text or "")):
-                    return ""
-                return text
-            except Exception:
-                time.sleep(0.6)
-                continue
-        return ""
-
     async def _request_text(self, url: str, headers: Dict[str, str], timeout: int) -> str:
-        text = await asyncio.to_thread(self._request_text_direct, url, headers, timeout)
-        if text:
-            return text
-
         try:
-            fetch_client = ArchivalFetchClient(request_timeout_seconds=max(20, int(timeout)))
-            fetched = await fetch_client.fetch_with_fallback(url)
-            content = bytes(getattr(fetched, "content", b"") or b"")
+            request_url = self._normalize_wayback_url(url)
+            content = await self._fetch_page_content_with_archival_fallback(
+                request_url,
+                timeout_seconds=max(20, int(timeout)),
+            )
             if not content:
                 return ""
             text = content.decode("utf-8", errors="replace")

@@ -8,8 +8,6 @@ import subprocess
 import tempfile
 from typing import List, Dict
 
-import requests
-
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -45,7 +43,7 @@ class GeorgiaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        summary_pdf_statutes = self._scrape_general_statute_summary_pdfs(code_name)
+        summary_pdf_statutes = await self._scrape_general_statute_summary_pdfs(code_name)
         if summary_pdf_statutes:
             return summary_pdf_statutes
 
@@ -60,7 +58,7 @@ class GeorgiaScraper(BaseStateScraper):
         
         return await self._custom_scrape_georgia(code_name, code_url, "Ga. Code Ann.")
 
-    def _scrape_general_statute_summary_pdfs(self, code_name: str) -> List[NormalizedStatute]:
+    async def _scrape_general_statute_summary_pdfs(self, code_name: str) -> List[NormalizedStatute]:
         """Use official GA-hosted General Statutes summary PDFs as strict-safe fallback."""
         candidate_docs = [
             (
@@ -75,7 +73,7 @@ class GeorgiaScraper(BaseStateScraper):
 
         statutes: List[NormalizedStatute] = []
         for year, pdf_url in candidate_docs:
-            text = self._extract_pdf_text_summary(pdf_url)
+            text = await self._extract_pdf_text_summary(pdf_url)
             if len(text) < 280:
                 continue
 
@@ -98,15 +96,15 @@ class GeorgiaScraper(BaseStateScraper):
             self.logger.info(f"Georgia summary PDF fallback: Scraped {len(statutes)} records")
         return statutes
 
-    def _extract_pdf_text_summary(self, pdf_url: str, max_chars: int = 12000) -> str:
+    async def _extract_pdf_text_summary(self, pdf_url: str, max_chars: int = 12000) -> str:
         """Download PDF and extract normalized text via pdftotext."""
         try:
-            response = requests.get(
+            payload = await self._fetch_page_content_with_archival_fallback(
                 pdf_url,
-                timeout=60,
-                headers={"User-Agent": "Mozilla/5.0"},
+                timeout_seconds=60,
             )
-            response.raise_for_status()
+            if not payload:
+                return ""
         except Exception as exc:
             self.logger.debug(f"Georgia PDF download failed for {pdf_url}: {exc}")
             return ""
@@ -117,7 +115,7 @@ class GeorgiaScraper(BaseStateScraper):
 
                 pdf_path = Path(tmpdir) / "summary.pdf"
                 txt_path = Path(tmpdir) / "summary.txt"
-                pdf_path.write_bytes(response.content)
+                pdf_path.write_bytes(payload)
 
                 result = subprocess.run(
                     ["pdftotext", "-f", "1", "-l", "12", str(pdf_path), str(txt_path)],
@@ -228,7 +226,6 @@ class GeorgiaScraper(BaseStateScraper):
         ]
         
         try:
-            import requests
             from bs4 import BeautifulSoup
             from urllib.parse import urljoin
         except ImportError as e:
@@ -238,11 +235,14 @@ class GeorgiaScraper(BaseStateScraper):
         statutes = []
         
         try:
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-            response = requests.get(code_url, headers=headers, timeout=30)
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
+            page_bytes = await self._fetch_page_content_with_archival_fallback(
+                code_url,
+                timeout_seconds=30,
+            )
+            if not page_bytes:
+                raise RuntimeError(f"empty response for {code_url}")
+
+            soup = BeautifulSoup(page_bytes, 'html.parser')
             links = soup.find_all('a', href=True)
             
             section_count = 0

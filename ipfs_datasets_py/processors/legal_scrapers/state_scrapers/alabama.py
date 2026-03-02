@@ -55,12 +55,11 @@ class AlabamaScraper(BaseStateScraper):
         self.logger.info(f"Alabama: Accessing URL: {code_url}")
         
         try:
-            import requests
             from bs4 import BeautifulSoup
             from urllib.parse import urljoin
         except ImportError as e:
             self.logger.error(f"Alabama: Required library not available: {e}")
-            self.logger.error("Alabama: Install required packages: pip install requests beautifulsoup4")
+            self.logger.error("Alabama: Install required packages: pip install beautifulsoup4")
             return []
         
         statutes = []
@@ -73,20 +72,20 @@ class AlabamaScraper(BaseStateScraper):
             code_url  # Try original as last resort
         ]
         
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        
         # Try each URL until one works
         for attempt_url in archive_urls_to_try:
             try:
                 self.logger.info(f"Alabama: Attempting to fetch from: {attempt_url}")
-                response = requests.get(attempt_url, headers=headers, timeout=30)
-                response.raise_for_status()
-                self.logger.info(f"Alabama: Success! Status code: {response.status_code}")
-                self.logger.info(f"Alabama: Content length: {len(response.content)} bytes")
-                
-                soup = BeautifulSoup(response.content, 'html.parser')
+                page_bytes = await self._fetch_page_content_with_archival_fallback(
+                    attempt_url,
+                    timeout_seconds=30,
+                )
+                if not page_bytes:
+                    raise RuntimeError("empty response")
+
+                self.logger.info(f"Alabama: Success! Content length: {len(page_bytes)} bytes")
+
+                soup = BeautifulSoup(page_bytes, 'html.parser')
                 
                 # Check if this is a frameset page
                 frames = soup.find_all('frame', src=True)
@@ -99,9 +98,12 @@ class AlabamaScraper(BaseStateScraper):
                             frame_url = urljoin(attempt_url, frame_src)
                             self.logger.info(f"Alabama: Fetching TOC frame: {frame_url}")
                             try:
-                                frame_response = requests.get(frame_url, headers=headers, timeout=30)
-                                if frame_response.status_code == 200:
-                                    soup = BeautifulSoup(frame_response.content, 'html.parser')
+                                frame_bytes = await self._fetch_page_content_with_archival_fallback(
+                                    frame_url,
+                                    timeout_seconds=30,
+                                )
+                                if frame_bytes:
+                                    soup = BeautifulSoup(frame_bytes, 'html.parser')
                                     self.logger.info(f"Alabama: Successfully loaded TOC frame")
                                     break
                             except Exception as frame_error:
@@ -181,15 +183,6 @@ class AlabamaScraper(BaseStateScraper):
                 else:
                     self.logger.warning(f"Alabama: No statutes found with {attempt_url}, trying next URL")
                     
-            except requests.exceptions.Timeout as e:
-                self.logger.warning(f"Alabama: Timeout for {attempt_url}: {e}")
-                continue
-            except requests.exceptions.HTTPError as e:
-                self.logger.warning(f"Alabama: HTTP error for {attempt_url}: {e}")
-                continue
-            except requests.exceptions.RequestException as e:
-                self.logger.warning(f"Alabama: Request failed for {attempt_url}: {e}")
-                continue
             except Exception as e:
                 self.logger.warning(f"Alabama: Error with {attempt_url}: {type(e).__name__}: {e}")
                 continue

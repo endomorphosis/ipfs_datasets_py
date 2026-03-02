@@ -27,6 +27,9 @@ Copied from workspace-level `scripts/ops/`:
 - `run_legal_v2_ci_soak_snapshot.sh`
 - `create_ws11_github_issues.py`
 - `create_ws11_github_issues.sh`
+- `build_oregon_admin_rules_dataset.py`
+- `publish_oregon_admin_rules_to_hf.py`
+- `smoke_oregon_admin_rules_dataset.py`
 
 Notes:
 - Set `RUN_PROOF_CERT_AUDIT_AFTER_RUN=1` when invoking
@@ -80,3 +83,18 @@ State-law embedding smoke workflow:
 	for explicit OR-first rollout plus best-effort checks on additional states.
 - Add `--enrich-with-cases` to switch from vector-only retrieval to
 	case/statute enrichment mode when parquet schema supports CID joins.
+
+Oregon administrative rules dataset workflow:
+- Run `python scripts/ops/legal_data/build_oregon_admin_rules_dataset.py`
+	to scrape OAR content and write a dedicated dataset under
+	`data/state_administrative_rules/OR/parsed/`.
+- Optional debug bounds:
+	set `OREGON_OAR_MAX_CHAPTERS=<n>` and/or `OREGON_OAR_MAX_RULES=<n>`
+	to constrain scraping during validation runs.
+- Run `python scripts/ops/legal_data/smoke_oregon_admin_rules_dataset.py --mode local`
+	to validate local OAR dataset artifacts (`parquet/json/jsonl`) and schema coverage.
+- Run `python scripts/ops/legal_data/publish_oregon_admin_rules_to_hf.py --verify`
+	to upload OAR artifacts to HF (default repo `justicedao/ipfs_state_admin_rules`, path `OR/parsed`).
+	Use `--dry-run` first to print the planned upload and detected artifacts without pushing.
+- Run `python scripts/ops/legal_data/smoke_oregon_admin_rules_dataset.py --mode hf --repo-id justicedao/ipfs_state_admin_rules --path-prefix OR/parsed`
+	to validate the published remote parquet payload.

@@ -765,9 +765,14 @@ class StateLawsActorCriticLoop:
         etl_score = (0.4 * full_text_ratio) + (0.4 * jsonld_ratio) + (0.2 * citation_ratio)
 
         fetch_success_ratio = float(fetch.get("success_ratio", 0.0) or 0.0)
+        fetch_attempted = int(fetch.get("attempted", 0) or 0)
         no_attempt_states = list(fetch.get("no_attempt_states") or [])
         no_attempt_penalty = (len(no_attempt_states) / max(1, len(self.states))) * 0.25
         fetch_score = max(0.0, fetch_success_ratio - no_attempt_penalty)
+
+        # Guard against false-positive fetch health when no fetch telemetry was recorded.
+        if targeted > 0 and fetch_attempted <= 0:
+            fetch_score = max(0.0, fetch_score - 0.35)
 
         weak_quality = list((quality.get("weak_states") or []))
         if weak_quality:

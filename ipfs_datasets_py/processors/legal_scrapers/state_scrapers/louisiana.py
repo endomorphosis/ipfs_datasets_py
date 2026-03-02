@@ -4,11 +4,8 @@ This module contains the scraper for Louisiana statutes from the official state 
 """
 
 import re
-import time
 from html import unescape
 from typing import List, Dict
-
-import requests
 
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
@@ -44,7 +41,7 @@ class LouisianaScraper(BaseStateScraper):
         Louisiana live endpoints can be brittle in automation contexts.
         Prefer archived Law.aspx pages with direct statute body HTML.
         """
-        archival = self._scrape_archived_law_pages(code_name=code_name, max_statutes=20)
+        archival = await self._scrape_archived_law_pages(code_name=code_name, max_statutes=20)
         if archival:
             self.logger.info(f"Louisiana archival fallback: Scraped {len(archival)} sections")
             return archival
@@ -57,7 +54,7 @@ class LouisianaScraper(BaseStateScraper):
             timeout=45000,
         )
 
-    def _scrape_archived_law_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_archived_law_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}
         statutes: List[NormalizedStatute] = []
         seen_sections = set()
@@ -66,7 +63,7 @@ class LouisianaScraper(BaseStateScraper):
             if len(statutes) >= max_statutes:
                 break
 
-            law_html = self._request_text(law_url=law_url, headers=headers, timeout=45)
+            law_html = await self._request_text(law_url=law_url, headers=headers, timeout=45)
             if not law_html:
                 continue
 
@@ -135,7 +132,7 @@ class LouisianaScraper(BaseStateScraper):
         text = re.sub(r"\n{3,}", "\n\n", text)
         return text.strip()[:max_chars]
 
-    def _request_text(self, law_url: str, headers: Dict[str, str], timeout: int) -> str:
+    async def _request_text(self, law_url: str, headers: Dict[str, str], timeout: int) -> str:
         candidates = [str(law_url or "")]
         if candidates[0].startswith("https://"):
             candidates.append("http://" + candidates[0][8:])
@@ -143,14 +140,16 @@ class LouisianaScraper(BaseStateScraper):
             candidates.append("https://" + candidates[0][7:])
 
         for candidate in candidates:
-            for _ in range(3):
-                try:
-                    response = requests.get(candidate, headers=headers, timeout=timeout)
-                    response.raise_for_status()
-                    return response.text
-                except Exception:
-                    time.sleep(0.6)
+            try:
+                payload = await self._fetch_page_content_with_archival_fallback(
+                    candidate,
+                    timeout_seconds=timeout,
+                )
+                if not payload:
                     continue
+                return payload.decode("utf-8", errors="replace")
+            except Exception:
+                continue
         return ""
 
 
