@@ -1,11 +1,30 @@
 #!/usr/bin/env python3
 
+import importlib.util
 import inspect
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
-from ipfs_datasets_py.mcp_server.tools.web_archive_tools import unified_api_tools
+
+def _load_unified_api_tools_module():
+    module_path = (
+        Path(__file__).resolve().parents[3]
+        / "ipfs_datasets_py"
+        / "mcp_server"
+        / "tools"
+        / "web_archive_tools"
+        / "unified_api_tools.py"
+    )
+    spec = importlib.util.spec_from_file_location("web_archive_unified_api_tools", module_path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+unified_api_tools = _load_unified_api_tools_module()
 
 
 class FakeUnifiedAPI:

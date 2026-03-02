@@ -91,6 +91,40 @@ Status legend:
 - [-] Keep docs and implementation aligned while migration routes through `ipfs_datasets_py`.
 - [x] Phase A baseline completed (`A1`-`A4`) with tests/docs. (2026-03-01)
 
+## WS8 Execution Board (Active)
+
+Source of truth for WS8 scope:
+- `docs/guides/legal_data/HYBRID_LEGAL_WS8_IMPLEMENTATION_TICKETS.md`
+- `docs/guides/legal_data/templates/HYBRID_LEGAL_WS8_ISSUE_BODIES_01_05.md`
+- `docs/guides/legal_data/templates/HYBRID_LEGAL_WS8_ISSUE_BODIES_06_15.md`
+
+Current sprint (2026-03-02):
+- [-] `HL-WS8-01` Contract Snapshot Lockfile.
+- [ ] `HL-WS8-02` IR Contract Error Code Registry.
+- [ ] `HL-WS8-04` Temporal Guard Conformance Expansion.
+- [ ] `HL-WS8-05` Optimizer Rejection Telemetry Envelope.
+- [ ] `HL-WS8-06` KG Enrichment Explainability Summary.
+- [ ] `HL-WS8-08` Query API JSON Schema Export.
+
+Backlog (ready queue):
+- [ ] `HL-WS8-03` Parser Paraphrase Equivalence Corpus.
+- [ ] `HL-WS8-07` Prover Envelope Compatibility Table.
+- [ ] `HL-WS8-09` Batch CLI Summary Contract.
+- [ ] `HL-WS8-10` Proof Store Retention Policy.
+- [ ] `HL-WS8-11` CNL Lexicon Extension Hooks.
+- [ ] `HL-WS8-12` CI Workflow Matrix for Prover Backends.
+- [ ] `HL-WS8-13` Performance Baseline Snapshot.
+- [ ] `HL-WS8-14` Ticket-to-Test Traceability Table.
+- [ ] `HL-WS8-15` Release Readiness Checklist v2.
+
+WS8 done definition:
+- [ ] High-priority tickets (`01`, `02`, `04`, `05`, `06`, `08`, `09`, `10`, `12`) completed.
+- [ ] `Legal V2 Reasoner CI` green on `main` for 7 consecutive days.
+- [ ] No unresolved schema drift in query/proof envelopes.
+
+Immediate next action:
+- [ ] Implement `HL-WS8-01` snapshot fixture + schema-drift assertion test.
+
 ## Execution Order (Dependency-Aware)
 
 Follow this order to avoid rework:

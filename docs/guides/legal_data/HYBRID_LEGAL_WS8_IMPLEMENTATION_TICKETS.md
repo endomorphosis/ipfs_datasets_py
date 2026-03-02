@@ -16,7 +16,7 @@ Scope assumptions:
 2. Keep PRs single-ticket when possible.
 3. Require green result for `Legal V2 Reasoner CI` before merge.
 
-Issue body templates:
+Issue body templates for first-wave tickets:
 - `templates/HYBRID_LEGAL_WS8_ISSUE_BODIES_01_05.md`
 - `templates/HYBRID_LEGAL_WS8_ISSUE_BODIES_06_15.md`
 

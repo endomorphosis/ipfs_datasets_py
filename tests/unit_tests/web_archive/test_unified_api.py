@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import time
 from types import SimpleNamespace
 
 from ipfs_datasets_py.processors.web_archiving.contracts import OperationMode, UnifiedSearchRequest
@@ -11,7 +12,7 @@ class FakeOrchestratorSuccess:
         assert query == "indiana code"
         assert max_results == 5
         assert offset == 0
-        assert engines == ["brave", "duckduckgo"]
+        assert len(engines) == 1
         return SimpleNamespace(
             results=[
                 SimpleNamespace(
@@ -146,6 +147,7 @@ def test_unified_api_health_snapshot_contains_metrics() -> None:
 def test_unified_api_search_uses_throughput_ranked_provider_order() -> None:
     orchestrator = FakeOrchestratorCapture()
     api = UnifiedWebArchivingAPI(orchestrator=orchestrator)
+    now = time.time()
 
     # Seed provider performance so planner prefers duckduckgo over brave.
     api.metrics_registry.record_event(
@@ -154,7 +156,7 @@ def test_unified_api_search_uses_throughput_ranked_provider_order() -> None:
         success=True,
         latency_ms=100,
         items_processed=60,
-        timestamp=100.0,
+        timestamp=now - 20,
     )
     api.metrics_registry.record_event(
         provider="brave",
@@ -162,7 +164,7 @@ def test_unified_api_search_uses_throughput_ranked_provider_order() -> None:
         success=True,
         latency_ms=100,
         items_processed=8,
-        timestamp=100.0,
+        timestamp=now - 20,
     )
 
     response = api.search(

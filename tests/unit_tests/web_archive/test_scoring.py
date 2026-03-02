@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import time
+
 import pytest
 
 from ipfs_datasets_py.processors.web_archiving.contracts import OperationMode
@@ -8,6 +10,7 @@ from ipfs_datasets_py.processors.web_archiving.orchestration.scoring import Prov
 
 
 def _seed_metrics(registry: MetricsRegistry) -> None:
+    now = time.time()
     # Fast and reliable provider.
     registry.record_event(
         provider="common_crawl",
@@ -16,7 +19,7 @@ def _seed_metrics(registry: MetricsRegistry) -> None:
         latency_ms=120,
         items_processed=20,
         quality_score=0.8,
-        timestamp=100.0,
+        timestamp=now - 30,
     )
     registry.record_event(
         provider="common_crawl",
@@ -25,7 +28,7 @@ def _seed_metrics(registry: MetricsRegistry) -> None:
         latency_ms=150,
         items_processed=18,
         quality_score=0.85,
-        timestamp=120.0,
+        timestamp=now - 20,
     )
 
     # Slower provider with lower throughput.
@@ -36,7 +39,7 @@ def _seed_metrics(registry: MetricsRegistry) -> None:
         latency_ms=700,
         items_processed=4,
         quality_score=0.75,
-        timestamp=110.0,
+        timestamp=now - 25,
     )
     registry.record_event(
         provider="wayback",
@@ -44,7 +47,7 @@ def _seed_metrics(registry: MetricsRegistry) -> None:
         success=False,
         latency_ms=900,
         items_processed=0,
-        timestamp=130.0,
+        timestamp=now - 10,
     )
 
 
