@@ -1,0 +1,91 @@
+name: Legal V2 Reasoner CI
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "ipfs_datasets_py/processors/legal_data/reasoner/**"
+      - "tests/reasoner/test_hybrid_v2_*.py"
+      - "tests/reasoner/test_prover_backend_registry.py"
+      - "tests/reasoner/fixtures/cnl_parse_replay_v2_corpus.json"
+      - "tests/reasoner/fixtures/compiler_parity_v2_cases.json"
+      - "docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md"
+      - ".vscode/tasks.json"
+      - ".github/workflows/legal-v2-reasoner-ci.yml"
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - "ipfs_datasets_py/processors/legal_data/reasoner/**"
+      - "tests/reasoner/test_hybrid_v2_*.py"
+      - "tests/reasoner/test_prover_backend_registry.py"
+      - "tests/reasoner/fixtures/cnl_parse_replay_v2_corpus.json"
+      - "tests/reasoner/fixtures/compiler_parity_v2_cases.json"
+      - "docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md"
+      - ".vscode/tasks.json"
+      - ".github/workflows/legal-v2-reasoner-ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  legal-v2-reasoner-suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e .
+
+      - name: Run Hybrid V2 reasoner suite
+        id: v2suite
+        shell: bash
+        run: |
+          set +e
+          PYTHONPATH=src:${GITHUB_WORKSPACE} python -m pytest \
+            tests/reasoner/test_hybrid_v2_blueprint.py \
+            tests/reasoner/test_hybrid_v2_cli.py \
+            tests/reasoner/test_hybrid_v2_parse_replay.py \
+            tests/reasoner/test_hybrid_v2_compiler_parity.py \
+            tests/reasoner/test_hybrid_v2_query_api_matrix.py \
+            tests/reasoner/test_prover_backend_registry.py -q \
+            2>&1 | tee legal-v2-reasoner-suite.log
+          status=${PIPESTATUS[0]}
+          echo "exit_code=${status}" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload failure log artifact
+        if: steps.v2suite.outputs.exit_code != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: legal-v2-reasoner-suite-log
+          path: legal-v2-reasoner-suite.log
+          retention-days: 7
+
+      - name: Fail workflow on test failure
+        if: steps.v2suite.outputs.exit_code != '0'
+        run: |
+          echo "Hybrid V2 reasoner suite failed. See uploaded log artifact."
+          exit 1

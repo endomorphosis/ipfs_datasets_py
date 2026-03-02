@@ -4,9 +4,11 @@ from ipfs_datasets_py.processors.legal_data.reasoner.prover_backends import (
     FirstOrderProverAdapter,
     MockFOLBackend,
     MockSMTBackend,
+    PROVER_ENVELOPE_SCHEMA_VERSION,
     ProverBackendRegistry,
     SMTStyleProverAdapter,
     create_default_prover_registry,
+    normalize_prover_result,
 )
 
 
@@ -62,3 +64,20 @@ def test_concrete_adapters_emit_backend_specific_certificate_fields() -> None:
 
     assert smt.certificate["solver"] == "z3"
     assert fol.certificate["prover"] == "eprover"
+
+
+def test_normalize_prover_result_produces_deterministic_envelope() -> None:
+    registry = create_default_prover_registry()
+    theorem = "forall x. Person(x) -> Mortal(x)"
+    assumptions = ["Person(socrates)"]
+
+    raw_a = registry.get("mock_smt").prove(theorem, assumptions)
+    raw_b = registry.get("mock_smt").prove(theorem, assumptions)
+    env_a = normalize_prover_result(raw_a)
+    env_b = normalize_prover_result(raw_b)
+
+    assert env_a["schema_version"] == PROVER_ENVELOPE_SCHEMA_VERSION
+    assert env_a == env_b
+    assert env_a["certificate"]["certificate_id"].startswith("cert_")
+    assert len(env_a["certificate"]["normalized_hash"]) == 64
+    assert env_a["certificate"]["format"] == "smt-certificate-v1"

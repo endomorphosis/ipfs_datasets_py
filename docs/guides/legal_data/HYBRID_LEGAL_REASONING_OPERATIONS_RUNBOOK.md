@@ -71,8 +71,11 @@ V2 reasoner test suite:
 PYTHONPATH=src:ipfs_datasets_py \
   /home/barberb/municipal_scrape_workspace/.venv/bin/python -m pytest \
   ipfs_datasets_py/tests/reasoner/test_hybrid_v2_blueprint.py \
+  ipfs_datasets_py/tests/reasoner/test_hybrid_v2_cli.py \
+  ipfs_datasets_py/tests/reasoner/test_hybrid_v2_parse_replay.py \
+  ipfs_datasets_py/tests/reasoner/test_hybrid_v2_compiler_parity.py \
   ipfs_datasets_py/tests/reasoner/test_hybrid_v2_query_api_matrix.py \
-  ipfs_datasets_py/tests/reasoner/test_hybrid_v2_cli.py -q
+  ipfs_datasets_py/tests/reasoner/test_prover_backend_registry.py -q
 ```
 
 GitHub Actions parity snippet:
@@ -81,11 +84,17 @@ GitHub Actions parity snippet:
   run: |
     python -m pytest \
       tests/reasoner/test_hybrid_v2_blueprint.py \
+      tests/reasoner/test_hybrid_v2_cli.py \
+      tests/reasoner/test_hybrid_v2_parse_replay.py \
+      tests/reasoner/test_hybrid_v2_compiler_parity.py \
       tests/reasoner/test_hybrid_v2_query_api_matrix.py \
-      tests/reasoner/test_hybrid_v2_cli.py -q
+      tests/reasoner/test_prover_backend_registry.py -q
   env:
     PYTHONPATH: src:${{ github.workspace }}
 ```
+
+Dedicated workflow:
+- `.github/workflows/legal-v2-reasoner-ci.yml`
 
 ## 1) Rollout Modes
 

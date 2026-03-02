@@ -46,11 +46,13 @@ from .prover_backends import (
     FirstOrderProverAdapter,
     MockFOLBackend,
     MockSMTBackend,
+    PROVER_ENVELOPE_SCHEMA_VERSION,
     ProverBackend,
     ProverBackendRegistry,
     ProverResult,
     SMTStyleProverAdapter,
     create_default_prover_registry,
+    normalize_prover_result,
 )
 from .shadow_mode import (
     build_canary_mode_decision,
@@ -70,6 +72,7 @@ from .hybrid_v2_blueprint import (
     build_v2_compiler_parity_report,
     generate_cnl_from_ir,
     validate_ir_v2_contract,
+    V2_QUERY_API_SCHEMA_VERSION,
     run_v2_pipeline,
     run_v2_pipeline_with_defaults,
 )
@@ -114,6 +117,8 @@ __all__ = [
     "MockSMTBackend",
     "MockFOLBackend",
     "create_default_prover_registry",
+    "PROVER_ENVELOPE_SCHEMA_VERSION",
+    "normalize_prover_result",
     "build_shadow_mode_audit",
     "DefaultOptimizerHookV2",
     "DefaultKGHookV2",
@@ -127,6 +132,7 @@ __all__ = [
     "build_v2_compiler_parity_report",
     "generate_cnl_from_ir",
     "validate_ir_v2_contract",
+    "V2_QUERY_API_SCHEMA_VERSION",
     "run_v2_pipeline",
     "run_v2_pipeline_with_defaults",
     "run_v2_cli",

@@ -25,6 +25,7 @@ from .optimizer_policy import (
     build_optimizer_chain_plan,
 )
 from .prover_backends import create_default_prover_registry
+from .prover_backends import normalize_prover_result
 
 
 class DeonticOpV2(str, Enum):
@@ -168,6 +169,7 @@ class ProofObjectV2:
 _PROOF_STORE_V2: Dict[str, ProofObjectV2] = {}
 SUPPORTED_V2_IR_VERSION = "2.0"
 SUPPORTED_V2_CNL_VERSION = "2.0"
+V2_QUERY_API_SCHEMA_VERSION = "1.0"
 
 
 class OptimizerHook(Protocol):
@@ -331,13 +333,7 @@ class RegistryProverHookV2:
         backend = self.registry.get(self.backend_id)
         joined = " and ".join(formulas) if formulas else "true"
         result = backend.prove(joined, list(assumptions or []))
-        return {
-            "backend": result.backend,
-            "status": result.status,
-            "certificate": result.certificate,
-            "theorem": result.theorem,
-            "assumptions": result.assumptions,
-        }
+        return normalize_prover_result(result)
 
 
 def _norm_space(text: str) -> str:
@@ -1079,9 +1075,21 @@ def check_compliance(query: dict, time_context: dict) -> dict:
 
         happened = _event_match(norm, events)
         if norm.op == DeonticOpV2.O and not happened:
-            violations.append({"norm_id": norm.id.ref(), "type": "omission", "frame_id": norm.target_frame_ref})
+            violations.append(
+                {
+                    "norm_id": norm.id.ref(),
+                    "frame_id": norm.target_frame_ref,
+                    "type": "omission",
+                }
+            )
         if norm.op == DeonticOpV2.F and happened:
-            violations.append({"norm_id": norm.id.ref(), "type": "forbidden_action", "frame_id": norm.target_frame_ref})
+            violations.append(
+                {
+                    "norm_id": norm.id.ref(),
+                    "frame_id": norm.target_frame_ref,
+                    "type": "forbidden_action",
+                }
+            )
 
     status = "non_compliant" if violations else "compliant"
     root = f"compliance={status}"
@@ -1089,11 +1097,14 @@ def check_compliance(query: dict, time_context: dict) -> dict:
     _PROOF_STORE_V2[proof_id] = ProofObjectV2(proof_id=proof_id, root_conclusion=root, steps=steps)
 
     return {
+        "api": "check_compliance",
+        "schema_version": V2_QUERY_API_SCHEMA_VERSION,
         "status": status,
+        "violation_count": len(violations),
         "violations": violations,
         "proof_id": proof_id,
         "checked_norms": sorted(ir.norms.keys()),
-        "time_context": time_context,
+        "time_context": dict(time_context or {}),
     }
 
 
@@ -1106,7 +1117,10 @@ def find_violations(state: dict, time_range: Tuple[str, str]) -> dict:
 
     result = check_compliance({"ir": ir, "facts": state.get("facts", {}), "events": state.get("events", [])}, {"range": time_range})
     return {
+        "api": "find_violations",
+        "schema_version": V2_QUERY_API_SCHEMA_VERSION,
         "time_range": time_range,
+        "violation_count": len(result["violations"]),
         "violations": result["violations"],
         "proof_id": result["proof_id"],
     }
@@ -1118,18 +1132,26 @@ def explain_proof(proof_id: str, format: str = "nl") -> dict:
     if proof is None:
         raise KeyError(f"unknown proof_id: {proof_id}")
 
+    if format not in {"nl", "json"}:
+        raise ValueError(f"unsupported format: {format}")
+
     if format == "nl":
         lines = [f"Proof {proof.proof_id}: {proof.root_conclusion}"]
         for step in proof.steps:
             lines.append(f"- {step.rule_id}: {step.conclusion}")
         return {
+            "api": "explain_proof",
+            "schema_version": V2_QUERY_API_SCHEMA_VERSION,
             "proof_id": proof.proof_id,
             "format": "nl",
+            "root_conclusion": proof.root_conclusion,
             "text": "\n".join(lines),
             "steps": [s.__dict__ for s in proof.steps],
         }
 
     return {
+        "api": "explain_proof",
+        "schema_version": V2_QUERY_API_SCHEMA_VERSION,
         "proof_id": proof.proof_id,
         "format": "json",
         "root_conclusion": proof.root_conclusion,

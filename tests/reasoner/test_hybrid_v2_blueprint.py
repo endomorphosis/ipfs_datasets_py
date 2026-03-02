@@ -260,3 +260,6 @@ def test_run_v2_pipeline_with_defaults_wires_existing_modules() -> None:
     assert out["kg_report"]["applied"] is True
     assert out["prover_report"]["applied"] is True
     assert out["prover_report"]["dcec"]["backend"] == "mock_smt"
+    assert out["prover_report"]["dcec"]["schema_version"] == "1.0"
+    assert out["prover_report"]["dcec"]["certificate"]["certificate_id"].startswith("cert_")
+    assert len(out["prover_report"]["dcec"]["certificate"]["normalized_hash"]) == 64
