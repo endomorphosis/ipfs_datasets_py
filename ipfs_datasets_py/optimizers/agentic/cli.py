@@ -536,6 +536,40 @@ class OptimizerArgparseCLI:
         except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
             print(f"\n❌ Validation error: {self._safe_error_text(e)}")
             return 1
+
+    def cmd_state_laws_optimize(self, args: argparse.Namespace) -> int:
+        """Run state-law actor/critic optimization loop.
+
+        Args:
+            args: Command arguments
+
+        Returns:
+            Exit code
+        """
+        from .state_laws_actor_critic_loop import main as state_laws_loop_main
+
+        forwarded_args = [
+            "--states",
+            str(args.states),
+            "--max-rounds",
+            str(int(args.max_rounds)),
+            "--actors-per-round",
+            str(int(args.actors_per_round)),
+            "--actor-concurrency",
+            str(int(args.actor_concurrency)),
+            "--target-score",
+            str(float(args.target_score)),
+            "--max-statutes",
+            str(int(args.max_statutes)),
+            "--top-n-diagnostics",
+            str(int(args.top_n_diagnostics)),
+        ]
+
+        output_dir = str(args.output_dir or "").strip()
+        if output_dir:
+            forwarded_args.extend(["--output-dir", output_dir])
+
+        return int(state_laws_loop_main(forwarded_args))
     
     def _format_duration(self, seconds: float) -> str:
         """Format duration in human-readable format.
@@ -653,6 +687,60 @@ class OptimizerArgparseCLI:
             action='store_true',
             help='Run validators sequentially',
         )
+
+        # state-laws-optimize command
+        state_laws_parser = subparsers.add_parser(
+            'state-laws-optimize',
+            help='Run actor/critic optimization loop for state law scrapers/parsers',
+        )
+        state_laws_parser.add_argument(
+            '--states',
+            type=str,
+            default='all',
+            help="Comma-separated state codes or 'all'",
+        )
+        state_laws_parser.add_argument(
+            '--max-rounds',
+            type=int,
+            default=6,
+            help='Maximum actor/critic rounds',
+        )
+        state_laws_parser.add_argument(
+            '--actors-per-round',
+            type=int,
+            default=3,
+            help='Actor policies evaluated per round',
+        )
+        state_laws_parser.add_argument(
+            '--actor-concurrency',
+            type=int,
+            default=2,
+            help='Concurrent actor trials',
+        )
+        state_laws_parser.add_argument(
+            '--target-score',
+            type=float,
+            default=0.92,
+            help='Convergence target score',
+        )
+        state_laws_parser.add_argument(
+            '--max-statutes',
+            type=int,
+            default=0,
+            help='Cap statutes per actor trial (0 = unlimited)',
+        )
+        state_laws_parser.add_argument(
+            '--top-n-diagnostics',
+            type=int,
+            default=8,
+            help='Top-N weak states retained in diagnostics',
+        )
+        state_laws_parser.add_argument(
+            '--output-dir',
+            type=str,
+            default='',
+            help='Optional output directory for round artifacts',
+        )
         
         # Parse arguments
         args = parser.parse_args(argv)
@@ -682,6 +770,8 @@ class OptimizerArgparseCLI:
                 return self.cmd_config(args)
             elif args.command == 'validate':
                 return self.cmd_validate(args)
+            elif args.command == 'state-laws-optimize':
+                return self.cmd_state_laws_optimize(args)
             else:
                 parser.print_help()
                 return 1

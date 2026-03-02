@@ -39,3 +39,30 @@ def test_unified_cli_redacts_sensitive_error_text(monkeypatch, capsys) -> None:
     assert "***REDACTED***" in out
     assert "sk-1234567890abcdef" not in out
     assert "hunter2" not in out
+
+
+def test_unified_cli_help_without_type_stays_top_level(capsys) -> None:
+    cli = UnifiedOptimizerCLI()
+
+    code = cli.run(["--help"])
+
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "Unified CLI for IPFS Datasets Optimizers" in out
+
+
+def test_unified_cli_help_with_type_is_passed_to_agentic(monkeypatch) -> None:
+    cli = UnifiedOptimizerCLI()
+    captured = {}
+
+    def _fake_run_agentic(args, verbose):
+        captured["args"] = list(args)
+        captured["verbose"] = bool(verbose)
+        return 0
+
+    monkeypatch.setattr(cli, "_run_agentic", _fake_run_agentic)
+
+    code = cli.run(["--type", "agentic", "state-laws-optimize", "--help"])
+
+    assert code == 0
+    assert captured["args"] == ["state-laws-optimize", "--help"]

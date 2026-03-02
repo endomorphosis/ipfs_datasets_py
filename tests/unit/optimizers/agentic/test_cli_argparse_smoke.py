@@ -147,3 +147,33 @@ def test_argparse_cli_run_propagates_non_keyboard_base_exception(
                 "--dry-run",
             ]
         )
+
+
+def test_argparse_cli_state_laws_optimize_routes(monkeypatch: pytest.MonkeyPatch) -> None:
+    cli = OptimizerArgparseCLI()
+    captured = {}
+
+    def _fake_cmd(args):
+        captured["states"] = args.states
+        captured["max_rounds"] = args.max_rounds
+        captured["target_score"] = args.target_score
+        return 0
+
+    monkeypatch.setattr(cli, "cmd_state_laws_optimize", _fake_cmd)
+
+    code = cli.run(
+        [
+            "state-laws-optimize",
+            "--states",
+            "OK,IN,LA",
+            "--max-rounds",
+            "3",
+            "--target-score",
+            "0.9",
+        ]
+    )
+
+    assert code == 0
+    assert captured["states"] == "OK,IN,LA"
+    assert captured["max_rounds"] == 3
+    assert captured["target_score"] == 0.9
