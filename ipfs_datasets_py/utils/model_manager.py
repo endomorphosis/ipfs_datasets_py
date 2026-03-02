@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from functools import lru_cache
@@ -290,3 +291,89 @@ def get_hf_inference_model_metadata(model_id: str) -> Optional[Dict[str, Any]]:
         "source_url": getattr(metadata, "source_url", None),
         "description": getattr(metadata, "description", ""),
     }
+
+
+def build_hf_inference_ipld_document(
+    *,
+    model_kind: Optional[str] = None,
+    include_generated_at: bool = True,
+) -> Dict[str, Any]:
+    """Build an IPLD-friendly model registry document for HF Inference models.
+
+    The returned object is deterministic JSON-compatible data and can be stored
+    in IPFS as raw bytes or an IPLD block.
+    """
+
+    records = list_hf_inference_models(model_kind=model_kind)
+    doc = {
+        "kind": "ipfs_datasets_py.hf_inference_model_registry",
+        "schema_version": "1.0",
+        "model_kind": model_kind,
+        "models": records,
+        "count": len(records),
+    }
+    if include_generated_at:
+        doc["generated_at"] = datetime.now(timezone.utc).isoformat()
+    return doc
+
+
+def get_hf_inference_ipld_cid(
+    *,
+    model_kind: Optional[str] = None,
+    base: str = "base32",
+    codec: str = "raw",
+    mh_type: str = "sha2-256",
+) -> str:
+    """Compute a deterministic CID for the current HF inference IPLD document."""
+
+    from ipfs_datasets_py.utils.cid_utils import cid_for_obj
+
+    doc = build_hf_inference_ipld_document(model_kind=model_kind, include_generated_at=False)
+    return cid_for_obj(doc, base=base, codec=codec, mh_type=mh_type)
+
+
+def publish_hf_inference_ipld_to_ipfs(
+    *,
+    model_kind: Optional[str] = None,
+    pin: bool = True,
+    backend: Optional[str] = None,
+    backend_instance: Optional[object] = None,
+) -> Dict[str, Any]:
+    """Publish HF inference model registry IPLD document to IPFS.
+
+    Returns publication metadata including locally computed CID and backend CID.
+    """
+
+    from ipfs_datasets_py.ipfs_backend_router import add_bytes
+    from ipfs_datasets_py.utils.cid_utils import canonical_json_bytes, cid_for_bytes
+
+    doc = build_hf_inference_ipld_document(model_kind=model_kind)
+    payload = canonical_json_bytes(doc)
+    local_cid = cid_for_bytes(payload)
+    ipfs_cid = add_bytes(payload, pin=pin, backend=backend, backend_instance=backend_instance)
+
+    return {
+        "status": "success",
+        "local_cid": local_cid,
+        "ipfs_cid": ipfs_cid,
+        "bytes": len(payload),
+        "model_kind": model_kind,
+        "count": doc.get("count", 0),
+    }
+
+
+def load_hf_inference_ipld_from_ipfs(
+    cid: str,
+    *,
+    backend: Optional[str] = None,
+    backend_instance: Optional[object] = None,
+) -> Dict[str, Any]:
+    """Load and validate an HF inference model registry IPLD document from IPFS."""
+
+    from ipfs_datasets_py.ipfs_backend_router import cat
+
+    raw = cat(cid, backend=backend, backend_instance=backend_instance)
+    doc = json.loads(raw.decode("utf-8"))
+    if not isinstance(doc, dict) or doc.get("kind") != "ipfs_datasets_py.hf_inference_model_registry":
+        raise ValueError("IPFS object is not an HF inference model registry IPLD document")
+    return doc

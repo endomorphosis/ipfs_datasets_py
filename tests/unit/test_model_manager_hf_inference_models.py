@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from ipfs_datasets_py.utils import model_manager
 
 
@@ -87,3 +89,65 @@ def test_rich_model_manager_does_not_persist_by_default(monkeypatch, tmp_path) -
     _ = model_manager.get_hf_inference_model_manager(use_cache=False, persist=False)
 
     assert not runtime_path.exists()
+
+
+def test_build_hf_inference_ipld_document_contains_expected_shape() -> None:
+    doc = model_manager.build_hf_inference_ipld_document()
+
+    assert doc["kind"] == "ipfs_datasets_py.hf_inference_model_registry"
+    assert doc["schema_version"] == "1.0"
+    assert isinstance(doc["models"], list)
+    assert doc["count"] == len(doc["models"])
+
+
+def test_get_hf_inference_ipld_cid_is_deterministic_for_same_data() -> None:
+    cid1 = model_manager.get_hf_inference_ipld_cid(model_kind="embedding")
+    cid2 = model_manager.get_hf_inference_ipld_cid(model_kind="embedding")
+
+    assert isinstance(cid1, str)
+    assert cid1 == cid2
+
+
+def test_publish_and_load_hf_inference_ipld_via_ipfs_backend_instance() -> None:
+    store = {}
+
+    class _FakeBackend:
+        def add_bytes(self, data: bytes, *, pin: bool = True) -> str:
+            _ = pin
+            cid = f"fakecid-{len(store) + 1}"
+            store[cid] = bytes(data)
+            return cid
+
+        def cat(self, cid: str) -> bytes:
+            return store[cid]
+
+    backend = _FakeBackend()
+
+    published = model_manager.publish_hf_inference_ipld_to_ipfs(
+        model_kind="llm",
+        backend_instance=backend,
+    )
+    assert published["status"] == "success"
+    assert published["ipfs_cid"].startswith("fakecid-")
+    assert isinstance(published["local_cid"], str)
+
+    loaded = model_manager.load_hf_inference_ipld_from_ipfs(
+        published["ipfs_cid"],
+        backend_instance=backend,
+    )
+    assert loaded["kind"] == "ipfs_datasets_py.hf_inference_model_registry"
+    assert loaded["model_kind"] == "llm"
+    assert loaded["count"] == len(loaded["models"])
+
+
+def test_load_hf_inference_ipld_rejects_wrong_document_kind() -> None:
+    class _FakeBackend:
+        def cat(self, cid: str) -> bytes:
+            _ = cid
+            return json.dumps({"kind": "other"}).encode("utf-8")
+
+    try:
+        _ = model_manager.load_hf_inference_ipld_from_ipfs("fakecid", backend_instance=_FakeBackend())
+        assert False, "Expected ValueError for invalid kind"
+    except ValueError:
+        pass
