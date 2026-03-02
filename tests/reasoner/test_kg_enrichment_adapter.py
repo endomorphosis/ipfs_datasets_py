@@ -43,6 +43,7 @@ def test_apply_and_rollback_kg_enrichment_is_reversible() -> None:
     applied = apply_kg_enrichment(ir, entity_adapter, rel_adapter, enable_writes=True)
     enriched_ir = applied["ir"]
 
+    assert set(applied["summary"].keys()) == {"writes_enabled", "entity_writes", "frame_writes"}
     assert applied["summary"]["writes_enabled"] is True
     assert applied["summary"]["entity_writes"] >= 1
     assert applied["summary"]["frame_writes"] >= 1

@@ -3,6 +3,7 @@ from __future__ import annotations
 from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_v2_blueprint import (
     DeonticOpV2,
     IRContractValidationError,
+    clear_v2_proof_store,
     compile_ir_to_dcec,
     compile_ir_to_temporal_deontic_fol,
     explain_proof,
@@ -14,6 +15,7 @@ from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_v2_blueprint import 
     run_v2_pipeline,
     run_v2_pipeline_with_defaults,
     check_compliance,
+    configure_v2_proof_store_max_entries,
 )
 
 
@@ -82,6 +84,33 @@ def test_reasoner_api_produces_explainable_proof() -> None:
     explanation = explain_proof(out["proof_id"], format="nl")
     assert "Proof" in explanation["text"]
     assert explanation["steps"]
+
+
+def test_proof_store_eviction_is_deterministic_and_explicit() -> None:
+    previous = configure_v2_proof_store_max_entries(1)
+    clear_v2_proof_store()
+    try:
+        out_a = check_compliance(
+            {"ir": parse_cnl_to_ir("Controller shall report breach within 24 hours."), "events": []},
+            {"at": "2026-03-01"},
+        )
+        out_b = check_compliance(
+            {"ir": parse_cnl_to_ir("Vendor shall not disclose personal data."), "events": []},
+            {"at": "2026-03-01"},
+        )
+
+        try:
+            explain_proof(out_a["proof_id"], format="json")
+        except KeyError as exc:
+            assert "evicted proof_id" in str(exc)
+        else:
+            raise AssertionError("Expected evicted proof_id behavior")
+
+        latest = explain_proof(out_b["proof_id"], format="json")
+        assert latest["proof_id"] == out_b["proof_id"]
+    finally:
+        configure_v2_proof_store_max_entries(previous)
+        clear_v2_proof_store()
 
 
 def test_find_violations_uses_same_reasoning_contract() -> None:
@@ -214,6 +243,8 @@ def test_run_v2_pipeline_rejects_optimizer_on_high_drift() -> None:
     assert out["optimizer_report"]["rejected"] is True
     assert "drift_threshold_exceeded" in out["optimizer_report"]["rejected_reason_codes"]
     assert "semantic_equivalence_assertion" in out["optimizer_report"]["rejected_reason_codes"]
+    assert out["optimizer_report"]["failure_count"] == len(out["optimizer_report"]["rejected_reason_codes"])
+    assert out["optimizer_report"]["decision_id"].startswith("opt_")
 
 
 def test_run_v2_pipeline_accepts_optimizer_on_drift_threshold_boundary() -> None:
@@ -230,6 +261,27 @@ def test_run_v2_pipeline_accepts_optimizer_on_drift_threshold_boundary() -> None
     assert out["optimizer_report"]["applied"] is True
     assert out["optimizer_report"]["rejected"] is False
     assert out["optimizer_report"]["rejected_reason_codes"] == []
+    assert out["optimizer_report"]["failure_count"] == 0
+    assert out["optimizer_report"]["decision_id"].startswith("opt_")
+
+
+def test_run_v2_pipeline_optimizer_decision_id_is_deterministic() -> None:
+    class _EdgeOptimizer:
+        def optimize_ir(self, ir):
+            return ir, {"semantic_equivalence_assertion": True, "drift_score": 0.05, "optimizer": "edge"}
+
+    out_a = run_v2_pipeline(
+        "Controller shall report breach within 48 hours.",
+        optimizer_hook=_EdgeOptimizer(),
+        drift_threshold=0.05,
+    )
+    out_b = run_v2_pipeline(
+        "Controller shall report breach within 48 hours.",
+        optimizer_hook=_EdgeOptimizer(),
+        drift_threshold=0.05,
+    )
+
+    assert out_a["optimizer_report"]["decision_id"] == out_b["optimizer_report"]["decision_id"]
 
 
 def test_run_v2_pipeline_rejects_kg_and_preserves_ir_when_kg_not_accepted() -> None:
@@ -248,6 +300,8 @@ def test_run_v2_pipeline_rejects_kg_and_preserves_ir_when_kg_not_accepted() -> N
     assert out["kg_report"]["rejected"] is True
     assert "relation_growth_factor" in out["kg_report"]["rejected_reason_codes"]
     assert "kg_drift_policy_rejected" in out["kg_report"]["rejected_reason_codes"]
+    assert out["kg_report"]["summary"]["entity_write_count"] == 0
+    assert out["kg_report"]["summary"]["relation_write_count"] == 0
     frame = next(iter(out["ir"].frames.values()))
     assert "kg_enriched" not in frame.attrs
 
@@ -264,8 +318,28 @@ def test_run_v2_pipeline_with_defaults_wires_existing_modules() -> None:
 
     assert out["optimizer_report"]["applied"] is True
     assert out["kg_report"]["applied"] is True
+    assert out["kg_report"]["summary"]["entity_link_count"] >= 0
+    assert out["kg_report"]["summary"]["relation_write_count"] >= 0
     assert out["prover_report"]["applied"] is True
     assert out["prover_report"]["dcec"]["backend"] == "mock_smt"
     assert out["prover_report"]["dcec"]["schema_version"] == "1.0"
     assert out["prover_report"]["dcec"]["certificate"]["certificate_id"].startswith("cert_")
     assert len(out["prover_report"]["dcec"]["certificate"]["normalized_hash"]) == 64
+
+
+def test_run_v2_pipeline_without_kg_hook_has_stable_kg_summary_shape() -> None:
+    out = run_v2_pipeline(
+        "Controller shall report breach within 48 hours.",
+        jurisdiction="us/federal",
+        kg_hook=None,
+    )
+
+    assert out["kg_report"]["applied"] is False
+    assert out["kg_report"]["rejected"] is False
+    assert out["kg_report"]["rejected_reason_codes"] == []
+    assert out["kg_report"]["summary"] == {
+        "entity_link_count": 0,
+        "relation_candidate_count": 0,
+        "entity_write_count": 0,
+        "relation_write_count": 0,
+    }

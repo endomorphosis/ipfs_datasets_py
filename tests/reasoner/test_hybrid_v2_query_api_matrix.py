@@ -51,6 +51,55 @@ def _build_query_api_schema_snapshot():
     }
 
 
+def _build_query_api_samples():
+    ir = _one_norm_ir("Controller shall report breach within 72 hours.")
+    compliance = check_compliance({"ir": ir, "events": []}, {"at": "2026-03-01"})
+    violations = find_violations({"ir": ir, "events": []}, ("2026-01-01", "2026-12-31"))
+    explanation = explain_proof(compliance["proof_id"], format="json")
+    return {
+        "v2_check_compliance.schema.json": compliance,
+        "v2_find_violations.schema.json": violations,
+        "v2_explain_proof.schema.json": explanation,
+    }
+
+
+def _is_valid_type(value, type_name: str) -> bool:
+    if type_name == "string":
+        return isinstance(value, str)
+    if type_name == "integer":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if type_name == "number":
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if type_name == "boolean":
+        return isinstance(value, bool)
+    if type_name == "array":
+        return isinstance(value, (list, tuple))
+    if type_name == "object":
+        return isinstance(value, dict)
+    return True
+
+
+def _assert_schema_required_types(sample: dict, schema: dict) -> None:
+    required = list(schema.get("required") or [])
+    properties = dict(schema.get("properties") or {})
+    for key in required:
+        assert key in sample, f"missing required key: {key}"
+        declared = properties.get(key, {})
+        declared_type = declared.get("type")
+        if isinstance(declared_type, list):
+            assert any(_is_valid_type(sample[key], t) for t in declared_type), (
+                key,
+                declared_type,
+                type(sample[key]).__name__,
+            )
+        elif isinstance(declared_type, str):
+            assert _is_valid_type(sample[key], declared_type), (
+                key,
+                declared_type,
+                type(sample[key]).__name__,
+            )
+
+
 def test_v2_query_matrix_eight_cases() -> None:
     # Q1 compliant obligation (event happened)
     ir_q1 = _one_norm_ir("Controller shall report breach within 72 hours.")
@@ -178,3 +227,12 @@ def test_v2_query_api_schema_snapshot_lockfile() -> None:
         f"Expected: {json.dumps(expected, indent=2, sort_keys=True)}\n"
         f"Actual: {json.dumps(actual, indent=2, sort_keys=True)}"
     )
+
+
+def test_v2_query_api_json_schemas_match_runtime_required_keys() -> None:
+    schema_dir = Path(__file__).resolve().parents[2] / "docs" / "guides" / "legal_data" / "schemas"
+    samples = _build_query_api_samples()
+    for schema_name, sample in samples.items():
+        schema_path = schema_dir / schema_name
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        _assert_schema_required_types(sample, schema)

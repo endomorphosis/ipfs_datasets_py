@@ -7,6 +7,13 @@
     "expect_temporal_guard": true
   },
   {
+    "id": "obligation_within_days",
+    "sentence": "Controller shall report breach within 2 days.",
+    "jurisdiction": "us/federal",
+    "expected_operator": "O",
+    "expect_temporal_guard": true
+  },
+  {
     "id": "permission_with_if",
     "sentence": "Agency may inspect records if complaint is filed.",
     "jurisdiction": "us/federal",
@@ -28,10 +35,52 @@
     "expect_temporal_guard": true
   },
   {
+    "id": "permission_by_date",
+    "sentence": "Agency may inspect records by 2026-06-01.",
+    "jurisdiction": "us/federal",
+    "expected_operator": "P",
+    "expect_temporal_guard": true
+  },
+  {
     "id": "permission_after",
     "sentence": "Processor may transfer data to regulator after authorization.",
     "jurisdiction": "us/federal",
     "expected_operator": "P",
+    "expect_temporal_guard": true
+  },
+  {
+    "id": "obligation_after_notice",
+    "sentence": "Controller shall report breach after notice received.",
+    "jurisdiction": "us/federal",
+    "expected_operator": "O",
+    "expect_temporal_guard": true
+  },
+  {
+    "id": "prohibition_before_authorization",
+    "sentence": "Vendor shall not disclose personal data before authorization.",
+    "jurisdiction": "us/federal",
+    "expected_operator": "F",
+    "expect_temporal_guard": true
+  },
+  {
+    "id": "obligation_before_date",
+    "sentence": "Controller shall report breach before 2026-03-01.",
+    "jurisdiction": "us/federal",
+    "expected_operator": "O",
+    "expect_temporal_guard": true
+  },
+  {
+    "id": "permission_during_interval",
+    "sentence": "Agency may inspect records during 2026-01-01 to 2026-03-31.",
+    "jurisdiction": "us/federal",
+    "expected_operator": "P",
+    "expect_temporal_guard": true
+  },
+  {
+    "id": "obligation_during_quarter",
+    "sentence": "Processor shall archive logs during Q1-2026 to Q2-2026.",
+    "jurisdiction": "us/federal",
+    "expected_operator": "O",
     "expect_temporal_guard": true
   }
 ]

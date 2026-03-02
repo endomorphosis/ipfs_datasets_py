@@ -101,16 +101,16 @@ Source of truth for WS8 scope:
 Current sprint (2026-03-02):
 - [-] `HL-WS8-01` Contract Snapshot Lockfile.
 - [-] `HL-WS8-02` IR Contract Error Code Registry.
-- [ ] `HL-WS8-04` Temporal Guard Conformance Expansion.
-- [ ] `HL-WS8-05` Optimizer Rejection Telemetry Envelope.
-- [ ] `HL-WS8-06` KG Enrichment Explainability Summary.
-- [ ] `HL-WS8-08` Query API JSON Schema Export.
+- [-] `HL-WS8-04` Temporal Guard Conformance Expansion.
+- [-] `HL-WS8-05` Optimizer Rejection Telemetry Envelope.
+- [-] `HL-WS8-06` KG Enrichment Explainability Summary.
+- [-] `HL-WS8-08` Query API JSON Schema Export.
 
 Backlog (ready queue):
 - [ ] `HL-WS8-03` Parser Paraphrase Equivalence Corpus.
 - [ ] `HL-WS8-07` Prover Envelope Compatibility Table.
-- [ ] `HL-WS8-09` Batch CLI Summary Contract.
-- [ ] `HL-WS8-10` Proof Store Retention Policy.
+- [-] `HL-WS8-09` Batch CLI Summary Contract.
+- [-] `HL-WS8-10` Proof Store Retention Policy.
 - [ ] `HL-WS8-11` CNL Lexicon Extension Hooks.
 - [ ] `HL-WS8-12` CI Workflow Matrix for Prover Backends.
 - [ ] `HL-WS8-13` Performance Baseline Snapshot.
@@ -232,6 +232,12 @@ Use this section for short dated notes while executing TODO items.
 - 2026-03-02: Reviewed `HL-WS8-01` artifacts; confirmed fixture-backed query API schema snapshot lock test and snapshot fixture are present (`tests/reasoner/test_hybrid_v2_query_api_matrix.py`, `tests/reasoner/fixtures/hybrid_v2_api_schema_snapshot.json`).
 - 2026-03-02: Local shell could not execute pytest (`pytest` unavailable in current PATH/interpreter); validation pending run in the project test environment.
 - 2026-03-02: Started `HL-WS8-02`; added stable contract error-code registry + structured `IRContractValidationError` details/codes in `hybrid_v2_blueprint.py`, updated contract tests, and documented code set in the master integration plan.
+- 2026-03-02: Started `HL-WS8-04`; expanded `compiler_parity_v2_cases.json` to 12 cases with temporal coverage counts `within/by/before/after/during = 2 each`, added fixture-coverage assertion test, and added `during X to Y` temporal extraction for interval guards.
+- 2026-03-02: Started `HL-WS8-05`; normalized optimizer telemetry envelope in `run_v2_pipeline` with deterministic `decision_id`, explicit `rejected_reason_codes`, and `failure_count`, and added determinism/shape assertions in blueprint tests.
+- 2026-03-02: Started `HL-WS8-06`; normalized `kg_report` summary counts (`entity_link_count`, `relation_candidate_count`, `entity_write_count`, `relation_write_count`) for accepted/rejected/no-hook paths and added assertions in blueprint/KG adapter tests.
+- 2026-03-02: Started `HL-WS8-08`; added V2 query API schema artifacts under `docs/guides/legal_data/schemas/`, linked schema paths in API/proof docs, and added runtime required-key/type schema assertions in `test_hybrid_v2_query_api_matrix.py`.
+- 2026-03-02: Started `HL-WS8-09`; stabilized CLI summary with `schema_version` + deterministic toggle/backend fields and added machine-readable `error_code` for error rows in `v2_cli.py` with coverage in `test_hybrid_v2_cli.py`.
+- 2026-03-02: Started `HL-WS8-10`; implemented bounded in-memory V2 proof store with configurable capacity, deterministic oldest-first eviction, and explicit `explain_proof` behavior for evicted proof IDs (`evicted proof_id: ...`) plus retention tests.
 
 ## Definition of Ready (per TODO item)
 

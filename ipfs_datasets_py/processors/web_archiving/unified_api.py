@@ -312,6 +312,7 @@ class UnifiedWebArchivingAPI:
                     **(getattr(scraper_result, "metadata", {}) or {}),
                     "source_type": parsed.source_type,
                     "entities": parsed.entities,
+                    "structured_fields": parsed.structured_fields,
                     "links": getattr(scraper_result, "links", []) or [],
                 },
                 extraction_provenance={

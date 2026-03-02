@@ -10,6 +10,11 @@ Related implementation modules:
 
 ## 1) Query APIs
 
+V2 query response schema artifacts:
+- `docs/guides/legal_data/schemas/v2_check_compliance.schema.json`
+- `docs/guides/legal_data/schemas/v2_find_violations.schema.json`
+- `docs/guides/legal_data/schemas/v2_explain_proof.schema.json`
+
 ### `check_compliance(query, time_context) -> result`
 
 Input `query`:

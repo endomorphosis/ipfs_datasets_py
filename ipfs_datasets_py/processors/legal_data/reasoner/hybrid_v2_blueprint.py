@@ -167,6 +167,9 @@ class ProofObjectV2:
 
 
 _PROOF_STORE_V2: Dict[str, ProofObjectV2] = {}
+_EVICTED_PROOF_IDS_V2: Dict[str, str] = {}
+DEFAULT_V2_PROOF_STORE_MAX_ENTRIES = 1000
+_PROOF_STORE_MAX_ENTRIES_V2 = DEFAULT_V2_PROOF_STORE_MAX_ENTRIES
 SUPPORTED_V2_IR_VERSION = "2.0"
 SUPPORTED_V2_CNL_VERSION = "2.0"
 V2_QUERY_API_SCHEMA_VERSION = "1.0"
@@ -455,6 +458,67 @@ def _proof_id(root_conclusion: str, steps: List[ProofStepV2]) -> str:
     return "pf2_" + hashlib.sha1(payload.encode("utf-8")).hexdigest()[:12]
 
 
+def configure_v2_proof_store_max_entries(max_entries: int) -> int:
+    """Configure bounded proof store capacity used by V2 query APIs."""
+    global _PROOF_STORE_MAX_ENTRIES_V2
+    value = int(max_entries)
+    if value <= 0:
+        raise ValueError("max_entries must be > 0")
+    previous = _PROOF_STORE_MAX_ENTRIES_V2
+    _PROOF_STORE_MAX_ENTRIES_V2 = value
+    return previous
+
+
+def clear_v2_proof_store() -> None:
+    """Clear in-memory proof state used by V2 query APIs."""
+    _PROOF_STORE_V2.clear()
+    _EVICTED_PROOF_IDS_V2.clear()
+
+
+def _store_proof_v2(proof: ProofObjectV2) -> None:
+    if proof.proof_id in _PROOF_STORE_V2:
+        _PROOF_STORE_V2.pop(proof.proof_id, None)
+
+    while len(_PROOF_STORE_V2) >= _PROOF_STORE_MAX_ENTRIES_V2:
+        oldest = next(iter(_PROOF_STORE_V2.keys()))
+        _PROOF_STORE_V2.pop(oldest, None)
+        _EVICTED_PROOF_IDS_V2[oldest] = "evicted_by_capacity"
+
+    _PROOF_STORE_V2[proof.proof_id] = proof
+    _EVICTED_PROOF_IDS_V2.pop(proof.proof_id, None)
+
+    while len(_EVICTED_PROOF_IDS_V2) > 10000:
+        oldest_evicted = next(iter(_EVICTED_PROOF_IDS_V2.keys()))
+        _EVICTED_PROOF_IDS_V2.pop(oldest_evicted, None)
+
+
+def _decision_id(prefix: str, parts: List[str]) -> str:
+    payload = "|".join(str(p) for p in parts)
+    return f"{prefix}_" + hashlib.sha1(payload.encode("utf-8")).hexdigest()[:12]
+
+
+def _kg_summary(report: Dict[str, Any], *, accepted: bool) -> Dict[str, int]:
+    entity_adapter = report.get("entity_adapter") or {}
+    relation_adapter = report.get("relation_adapter") or {}
+    write_summary = report.get("write_summary") or {}
+
+    entity_links = int(entity_adapter.get("linked_count") or 0)
+    relation_candidates = int(relation_adapter.get("enriched_frame_count") or 0)
+    entity_writes = int(write_summary.get("entity_writes") or 0)
+    relation_writes = int(write_summary.get("frame_writes") or 0)
+
+    if not accepted:
+        entity_writes = 0
+        relation_writes = 0
+
+    return {
+        "entity_link_count": entity_links,
+        "relation_candidate_count": relation_candidates,
+        "entity_write_count": entity_writes,
+        "relation_write_count": relation_writes,
+    }
+
+
 def _collect_markers(text: str, markers: List[str]) -> List[str]:
     hits: List[str] = []
     for marker in markers:
@@ -643,6 +707,15 @@ def _extract_temporal(text: str) -> Tuple[str, Optional[TemporalRelationV2], Opt
     if m:
         head = _norm_space(t[: m.start()])
         return head, TemporalRelationV2.BY, TemporalExprV2(kind="point", start=m.group(1))
+
+    m = re.search(r"\bduring\s+(.+?)\s+to\s+(.+)$", t, flags=re.IGNORECASE)
+    if m:
+        head = _norm_space(t[: m.start()])
+        return head, TemporalRelationV2.DURING, TemporalExprV2(
+            kind="interval",
+            start=_norm_space(m.group(1)),
+            end=_norm_space(m.group(2)),
+        )
 
     for rel, marker in [
         (TemporalRelationV2.AFTER, "after"),
@@ -1063,6 +1136,8 @@ def generate_cnl_from_ir(norm_ref: str, ir: LegalIRV2) -> str:
             phrase += f" within {temporal.expr.duration}"
         elif temporal.relation == TemporalRelationV2.BY and temporal.expr.start:
             phrase += f" by {temporal.expr.start}"
+        elif temporal.relation == TemporalRelationV2.DURING and temporal.expr.start and temporal.expr.end:
+            phrase += f" during {temporal.expr.start} to {temporal.expr.end}"
         elif temporal.relation in {TemporalRelationV2.AFTER, TemporalRelationV2.BEFORE, TemporalRelationV2.DURING} and temporal.expr.start:
             phrase += f" {temporal.relation.value} {temporal.expr.start}"
 
@@ -1135,7 +1210,7 @@ def check_compliance(query: dict, time_context: dict) -> dict:
     status = "non_compliant" if violations else "compliant"
     root = f"compliance={status}"
     proof_id = _proof_id(root, steps)
-    _PROOF_STORE_V2[proof_id] = ProofObjectV2(proof_id=proof_id, root_conclusion=root, steps=steps)
+    _store_proof_v2(ProofObjectV2(proof_id=proof_id, root_conclusion=root, steps=steps))
 
     return {
         "api": "check_compliance",
@@ -1171,6 +1246,8 @@ def explain_proof(proof_id: str, format: str = "nl") -> dict:
     """Reasoner API for proof explanation output."""
     proof = _PROOF_STORE_V2.get(proof_id)
     if proof is None:
+        if proof_id in _EVICTED_PROOF_IDS_V2:
+            raise KeyError(f"evicted proof_id: {proof_id}")
         raise KeyError(f"unknown proof_id: {proof_id}")
 
     if format not in {"nl", "json"}:
@@ -1220,7 +1297,13 @@ def run_v2_pipeline(
     ir = normalize_ir(parse_cnl_to_ir(sentence, jurisdiction=jurisdiction))
     contract_report = validate_ir_v2_contract(ir, strict=strict_contract)
 
-    optimizer_report: Dict[str, Any] = {"applied": False}
+    optimizer_report: Dict[str, Any] = {
+        "applied": False,
+        "rejected": False,
+        "rejected_reason_codes": [],
+        "failure_count": 0,
+        "decision_id": "opt_none",
+    }
     if optimizer_hook is not None:
         proposed_ir, report = optimizer_hook.optimize_ir(deepcopy(ir))
         drift = float(report.get("drift_score", 0.0))
@@ -1234,23 +1317,61 @@ def run_v2_pipeline(
         if not policy_ok:
             rejected_reason_codes.append("optimizer_policy_rejected")
 
+        deduped_reasons = list(dict.fromkeys(rejected_reason_codes))
+        failure_count = len(deduped_reasons)
+
         if drift <= drift_threshold and sem_ok and policy_ok:
             ir = proposed_ir
             optimizer_report = {
+                **report,
                 "applied": True,
                 "rejected": False,
                 "rejected_reason_codes": [],
-                **report,
+                "failure_count": 0,
+                "decision_id": _decision_id(
+                    "opt",
+                    [
+                        "accepted",
+                        report.get("optimizer", "unknown"),
+                        f"drift={drift:.6f}",
+                        f"threshold={drift_threshold:.6f}",
+                        f"sem_ok={sem_ok}",
+                        f"policy_ok={policy_ok}",
+                    ],
+                ),
             }
         else:
             optimizer_report = {
+                **report,
                 "applied": False,
                 "rejected": True,
-                "rejected_reason_codes": list(dict.fromkeys(rejected_reason_codes)),
-                **report,
+                "rejected_reason_codes": deduped_reasons,
+                "failure_count": failure_count,
+                "decision_id": _decision_id(
+                    "opt",
+                    [
+                        "rejected",
+                        report.get("optimizer", "unknown"),
+                        f"drift={drift:.6f}",
+                        f"threshold={drift_threshold:.6f}",
+                        f"sem_ok={sem_ok}",
+                        f"policy_ok={policy_ok}",
+                        ",".join(deduped_reasons),
+                    ],
+                ),
             }
 
-    kg_report: Dict[str, Any] = {"applied": False}
+    kg_report: Dict[str, Any] = {
+        "applied": False,
+        "rejected": False,
+        "rejected_reason_codes": [],
+        "summary": {
+            "entity_link_count": 0,
+            "relation_candidate_count": 0,
+            "entity_write_count": 0,
+            "relation_write_count": 0,
+        },
+    }
     if kg_hook is not None:
         proposed_ir, report = kg_hook.enrich_ir(deepcopy(ir))
         kg_ok = bool(report.get("accepted", True))
@@ -1258,17 +1379,19 @@ def run_v2_pipeline(
         if kg_ok:
             ir = proposed_ir
             kg_report = {
+                **report,
                 "applied": True,
                 "rejected": False,
                 "rejected_reason_codes": [],
-                **report,
+                "summary": _kg_summary(report, accepted=True),
             }
         else:
             kg_report = {
+                **report,
                 "applied": False,
                 "rejected": True,
                 "rejected_reason_codes": list(dict.fromkeys(rejected_reason_codes + ["kg_drift_policy_rejected"])),
-                **report,
+                "summary": _kg_summary(report, accepted=False),
             }
 
     dcec = compile_ir_to_dcec(ir)

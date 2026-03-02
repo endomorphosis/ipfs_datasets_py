@@ -49,6 +49,7 @@ class ParsedScrapeResult:
     title: str
     cleaned_text: str
     entities: List[Dict[str, Any]] = field(default_factory=list)
+    structured_fields: Dict[str, Any] = field(default_factory=dict)
     source_type: str = "html"
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -60,6 +61,26 @@ class AgenticScrapeOptimizer:
         re.compile(r"\b(cookie|privacy policy|terms of use|all rights reserved)\b", re.IGNORECASE),
         re.compile(r"\b(sign in|sign up|subscribe|newsletter)\b", re.IGNORECASE),
         re.compile(r"\b(skip to content|back to top|menu|navigation)\b", re.IGNORECASE),
+    ]
+    _DATE_PATTERNS = [
+        re.compile(r"\b\d{1,2}/\d{1,2}/\d{2,4}\b"),
+        re.compile(
+            r"\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b",
+            re.IGNORECASE,
+        ),
+    ]
+    _LEGAL_CITATION_PATTERNS = [
+        re.compile(r"\b\d+\s+U\.S\.C\.\s+§?\s*\d+[\w\-\.]*\b", re.IGNORECASE),
+        re.compile(r"\b(?:Section|Sec\.)\s+\d+[\w\-\.]*\b", re.IGNORECASE),
+        re.compile(r"\b(?:Article|Title)\s+\d+[\w\-\.]*\b", re.IGNORECASE),
+    ]
+    _STATUTE_ID_PATTERNS = [
+        re.compile(r"\b\d{1,3}-\d{1,3}-\d{1,4}\b"),
+        re.compile(r"\b\d+\.\d+[\w\-]*\b"),
+    ]
+    _MONEY_PATTERNS = [
+        re.compile(r"\$\s?\d{1,3}(?:,\d{3})*(?:\.\d{2})?\b"),
+        re.compile(r"\b(?:USD|EUR|GBP)\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?\b", re.IGNORECASE),
     ]
 
     def __init__(self, config: Optional[AgenticExtractionConfig] = None):
@@ -86,12 +107,14 @@ class AgenticScrapeOptimizer:
         candidate_text = text or self._strip_html_to_text(html)
         cleaned_text = self.clean_text(candidate_text)
         entities = self.extract_entities(cleaned_text)
+        structured_fields = self.parse_structured_fields(cleaned_text, source_type=source_type)
 
         return ParsedScrapeResult(
             url=url,
             title=title,
             cleaned_text=cleaned_text,
             entities=entities,
+            structured_fields=structured_fields,
             source_type=source_type,
             metadata={
                 **meta,
@@ -230,6 +253,46 @@ class AgenticScrapeOptimizer:
         scored.sort(key=lambda item: float(item.get("score", 0)), reverse=True)
         return scored
 
+    def parse_structured_fields(self, text: str, *, source_type: str = "html") -> Dict[str, Any]:
+        """Extract higher-level structured fields from cleaned text."""
+        if not text:
+            return {
+                "section_headers": [],
+                "dates": [],
+                "legal_citations": [],
+                "statute_identifiers": [],
+                "monetary_amounts": [],
+                "is_pdf_content": source_type == "pdf",
+            }
+
+        lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+        section_headers = []
+        for line in lines:
+            if len(line) > 120:
+                continue
+            if re.match(r"^(?:SECTION|ARTICLE|TITLE|CHAPTER)\b", line, re.IGNORECASE):
+                section_headers.append(line)
+                continue
+            if re.match(r"^\d+(?:\.\d+)*\s+[A-Z]", line):
+                section_headers.append(line)
+                continue
+            if line.isupper() and len(line.split()) <= 12:
+                section_headers.append(line)
+
+        dates = self._collect_pattern_matches(text, self._DATE_PATTERNS)
+        legal_citations = self._collect_pattern_matches(text, self._LEGAL_CITATION_PATTERNS)
+        statute_ids = self._collect_pattern_matches(text, self._STATUTE_ID_PATTERNS)
+        monetary_amounts = self._collect_pattern_matches(text, self._MONEY_PATTERNS)
+
+        return {
+            "section_headers": section_headers[:50],
+            "dates": dates[:100],
+            "legal_citations": legal_citations[:200],
+            "statute_identifiers": statute_ids[:200],
+            "monetary_amounts": monetary_amounts[:100],
+            "is_pdf_content": source_type == "pdf",
+        }
+
     @staticmethod
     def _strip_html_to_text(html: str) -> str:
         if not html:
@@ -258,6 +321,20 @@ class AgenticScrapeOptimizer:
                 continue
             seen.add(key)
             out.append(ent)
+        return out
+
+    @staticmethod
+    def _collect_pattern_matches(text: str, patterns: Sequence[re.Pattern[str]]) -> List[str]:
+        seen = set()
+        out: List[str] = []
+        for pattern in patterns:
+            for match in pattern.findall(text):
+                value = str(match).strip()
+                key = value.lower()
+                if not value or key in seen:
+                    continue
+                seen.add(key)
+                out.append(value)
         return out
 
 

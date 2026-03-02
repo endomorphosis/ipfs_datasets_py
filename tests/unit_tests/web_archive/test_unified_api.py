@@ -194,6 +194,7 @@ def test_unified_api_fetch_success_with_injected_scraper() -> None:
     assert response.quality_score > 0
     assert response.document.metadata.get("source_type") in {"html", "pdf"}
     assert isinstance(response.document.metadata.get("entities"), list)
+    assert isinstance(response.document.metadata.get("structured_fields"), dict)
 
 
 def test_unified_api_search_and_fetch_returns_document_envelope() -> None:

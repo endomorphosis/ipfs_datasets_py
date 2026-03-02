@@ -60,6 +60,7 @@ from .shadow_mode import (
     build_shadow_mode_audit,
 )
 from .hybrid_v2_blueprint import (
+    DEFAULT_V2_PROOF_STORE_MAX_ENTRIES,
     DefaultKGHookV2,
     DefaultOptimizerHookV2,
     IRContractValidationError,
@@ -77,6 +78,8 @@ from .hybrid_v2_blueprint import (
     V2_QUERY_API_SCHEMA_VERSION,
     run_v2_pipeline,
     run_v2_pipeline_with_defaults,
+    clear_v2_proof_store,
+    configure_v2_proof_store_max_entries,
 )
 from .v2_cli import run_v2_cli
 
@@ -122,6 +125,7 @@ __all__ = [
     "PROVER_ENVELOPE_SCHEMA_VERSION",
     "normalize_prover_result",
     "build_shadow_mode_audit",
+    "DEFAULT_V2_PROOF_STORE_MAX_ENTRIES",
     "DefaultOptimizerHookV2",
     "DefaultKGHookV2",
     "IRContractValidationError",
@@ -139,5 +143,7 @@ __all__ = [
     "V2_QUERY_API_SCHEMA_VERSION",
     "run_v2_pipeline",
     "run_v2_pipeline_with_defaults",
+    "clear_v2_proof_store",
+    "configure_v2_proof_store_max_entries",
     "run_v2_cli",
 ]

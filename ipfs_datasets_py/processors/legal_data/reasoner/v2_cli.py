@@ -14,6 +14,16 @@ from typing import Any, Dict, Iterable, List
 from .hybrid_v2_blueprint import run_v2_pipeline_with_defaults
 
 
+V2_CLI_SUMMARY_SCHEMA_VERSION = "1.0"
+
+
+def _error_code(exc: Exception) -> str:
+    name = exc.__class__.__name__
+    token = "".join(ch if ch.isalnum() else "_" for ch in name).upper()
+    token = "_".join(part for part in token.split("_") if part)
+    return f"V2_CLI_{token or 'ERROR'}"
+
+
 def _load_sentences_from_jsonl(path: Path, sentence_field: str) -> List[str]:
     sentences: List[str] = []
     with path.open("r", encoding="utf-8") as f:
@@ -71,12 +81,14 @@ def run_v2_cli(
                 {
                     "sentence": text,
                     "status": "error",
+                    "error_code": _error_code(exc),
                     "error": str(exc),
                 }
             )
 
     return {
         "summary": {
+            "schema_version": V2_CLI_SUMMARY_SCHEMA_VERSION,
             "total": len(rows),
             "ok": sum(1 for r in rows if r.get("status") == "ok"),
             "error": failures,

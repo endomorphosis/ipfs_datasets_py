@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
+from collections import Counter
 
 from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_v2_blueprint import (
     build_v2_compiler_parity_report,
@@ -73,3 +74,17 @@ def test_v2_compiler_parity_detects_target_ref_mismatch() -> None:
         and item.get("checks", {}).get("target_ref_consistent") is False
         for item in report["inconsistencies"]
     )
+
+
+def test_v2_compiler_parity_fixture_temporal_relation_coverage() -> None:
+    temporal_counts: Counter[str] = Counter()
+    for case in _load_cases():
+        ir = parse_cnl_to_ir(case["sentence"], jurisdiction=case.get("jurisdiction", "us/federal"))
+        norm = next(iter(ir.norms.values()))
+        if not norm.temporal_ref:
+            continue
+        temporal = ir.temporals[norm.temporal_ref]
+        temporal_counts[temporal.relation.value] += 1
+
+    for relation in ("within", "by", "before", "after", "during"):
+        assert temporal_counts[relation] >= 2, (relation, dict(temporal_counts))

@@ -55,3 +55,24 @@ def test_agentic_optimizer_rank_links_prefers_target_and_pdf() -> None:
     ranked = optimizer.rank_links(links, target_terms=["title", "statutes"])
 
     assert ranked[0]["url"].endswith("title-35.pdf")
+
+
+def test_agentic_optimizer_extracts_structured_fields() -> None:
+    optimizer = AgenticScrapeOptimizer(AgenticExtractionConfig(domain="legal"))
+    parsed = optimizer.transform(
+        url="https://example.com/uscode",
+        text=(
+            "TITLE 35 CRIMES\n"
+            "Section 35-42-1 Homicide\n"
+            "18 U.S.C. 924 applies here.\n"
+            "Effective date: 12/15/2024\n"
+            "Civil penalty is $5,000.00\n"
+        ),
+    )
+
+    sf = parsed.structured_fields
+    assert "TITLE 35 CRIMES" in sf["section_headers"]
+    assert "12/15/2024" in sf["dates"]
+    assert any("18 U.S.C." in c for c in sf["legal_citations"])
+    assert any("35-42-1" in s for s in sf["statute_identifiers"])
+    assert "$5,000.00" in sf["monetary_amounts"]
