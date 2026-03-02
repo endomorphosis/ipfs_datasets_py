@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import py_compile
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -63,6 +64,11 @@ class LoopConfig:
     max_statutes: int = 0
     top_n_diagnostics: int = 8
     emit_patch_plan: bool = False
+    apply_patch_plan: bool = False
+    patch_plan_limit: int = 20
+    execute_apply_plan: bool = False
+    apply_plan_file: str = ""
+    execution_max_tasks: int = 5
 
 
 class StateLawsActorCriticLoop:
@@ -143,7 +149,8 @@ class StateLawsActorCriticLoop:
             actor_pool = self._mutate_from_best(best)
 
         final_patch_plan_file: Optional[str] = None
-        if bool(self.loop_config.emit_patch_plan):
+        final_patch_plan: List[Dict[str, Any]] = []
+        if bool(self.loop_config.emit_patch_plan) or bool(self.loop_config.apply_patch_plan):
             final_patch_plan = self._build_patch_plan(self._all_outcomes)
             final_patch_plan_file = "final_patch_plan.json"
             (self.run_dir / final_patch_plan_file).write_text(
@@ -159,6 +166,34 @@ class StateLawsActorCriticLoop:
                 encoding="utf-8",
             )
 
+        apply_patch_plan_files: Optional[Dict[str, str]] = None
+        execution_report_file: Optional[str] = None
+        if bool(self.loop_config.apply_patch_plan):
+            apply_tasks = self._build_apply_patch_tasks(
+                final_patch_plan,
+                limit=max(1, int(self.loop_config.patch_plan_limit or 1)),
+            )
+            apply_patch_plan_files = self._write_apply_patch_artifacts(apply_tasks)
+
+        if bool(self.loop_config.execute_apply_plan):
+            preferred_plan_file = str(self.loop_config.apply_plan_file or "").strip()
+            if preferred_plan_file:
+                plan_path = Path(preferred_plan_file).expanduser().resolve()
+            elif apply_patch_plan_files and apply_patch_plan_files.get("tasks_jsonl"):
+                plan_path = Path(str(apply_patch_plan_files["tasks_jsonl"]))
+            else:
+                plan_path = self.run_dir / "apply_patch_plan_tasks.jsonl"
+
+            execution_report = self._execute_apply_plan(
+                plan_path,
+                max_tasks=max(1, int(self.loop_config.execution_max_tasks or 1)),
+            )
+            execution_report_file = "apply_patch_execution_report.json"
+            (self.run_dir / execution_report_file).write_text(
+                json.dumps(execution_report, indent=2),
+                encoding="utf-8",
+            )
+
         final_summary = {
             "run_dir": str(self.run_dir),
             "states": self.states,
@@ -168,6 +203,8 @@ class StateLawsActorCriticLoop:
             "converged": bool(self.best_outcome and self.best_outcome.passed),
             "history_files": [f"round_{idx + 1:02d}.json" for idx in range(len(self.round_history))],
             "patch_plan_file": final_patch_plan_file,
+            "apply_patch_plan_files": apply_patch_plan_files,
+            "execution_report_file": execution_report_file,
         }
         (self.run_dir / "final_summary.json").write_text(json.dumps(final_summary, indent=2), encoding="utf-8")
         return final_summary
@@ -247,6 +284,193 @@ class StateLawsActorCriticLoop:
             )
 
         return plan
+
+    def _build_apply_patch_tasks(self, patch_plan: List[Dict[str, Any]], *, limit: int = 20) -> List[Dict[str, Any]]:
+        tasks: List[Dict[str, Any]] = []
+        top_items = list(patch_plan)[: max(1, int(limit or 1))]
+
+        for idx, item in enumerate(top_items, start=1):
+            if not isinstance(item, dict):
+                continue
+
+            path = str(item.get("path") or "")
+            reasons = list(item.get("reasons") or [])
+            states = list(item.get("states") or [])
+            priority_score = float(item.get("priority_score", 0.0) or 0.0)
+
+            task = {
+                "task_id": f"patch-task-{idx:03d}",
+                "path": path,
+                "priority_score": round(priority_score, 4),
+                "reasons": reasons,
+                "states": states,
+                "suggested_actions": self._suggest_actions_for_path(path, reasons, states),
+            }
+            tasks.append(task)
+
+        return tasks
+
+    def _write_apply_patch_artifacts(self, tasks: List[Dict[str, Any]]) -> Dict[str, str]:
+        jsonl_file = self.run_dir / "apply_patch_plan_tasks.jsonl"
+        md_file = self.run_dir / "apply_patch_plan_todo.md"
+
+        with jsonl_file.open("w", encoding="utf-8") as handle:
+            for row in tasks:
+                handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+        lines: List[str] = [
+            "# Apply Patch Plan TODO",
+            "",
+            f"Generated at: {datetime.now().isoformat()}",
+            "",
+        ]
+        for idx, task in enumerate(tasks, start=1):
+            lines.append(f"## {idx}. `{task.get('path', '')}`")
+            lines.append(f"- Priority Score: {task.get('priority_score', 0.0)}")
+            lines.append(f"- Reasons: {', '.join(task.get('reasons') or [])}")
+            states = task.get("states") or []
+            lines.append(f"- States: {', '.join(states) if states else 'n/a'}")
+            lines.append("- Suggested Actions:")
+            for action in task.get("suggested_actions") or []:
+                lines.append(f"  - {action}")
+            lines.append("")
+
+        md_file.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+        return {
+            "tasks_jsonl": str(jsonl_file),
+            "todo_markdown": str(md_file),
+        }
+
+    def _execute_apply_plan(self, tasks_file: Path, *, max_tasks: int = 5) -> Dict[str, Any]:
+        tasks = self._load_apply_tasks(tasks_file)
+        selected = tasks[: max(1, int(max_tasks or 1))]
+
+        execution_items: List[Dict[str, Any]] = []
+        ready_count = 0
+        repo_root = Path(__file__).resolve().parents[3]
+
+        for idx, task in enumerate(selected, start=1):
+            rel_path = str(task.get("path") or "")
+            abs_path = repo_root / rel_path
+            exists = abs_path.exists()
+            compile_ok = None
+            compile_error = None
+
+            if exists and abs_path.suffix == ".py":
+                try:
+                    py_compile.compile(str(abs_path), doraise=True)
+                    compile_ok = True
+                except Exception as exc:  # pragma: no cover - defensive
+                    compile_ok = False
+                    compile_error = str(exc)
+
+            tests = self._suggest_tests_for_path(rel_path)
+            next_commands = self._suggest_execution_commands(rel_path, tests)
+            status = "ready_for_patch" if exists and (compile_ok in {True, None}) else "blocked"
+            if status == "ready_for_patch":
+                ready_count += 1
+
+            execution_items.append(
+                {
+                    "rank": idx,
+                    "task_id": str(task.get("task_id") or f"patch-task-{idx:03d}"),
+                    "path": rel_path,
+                    "abs_path": str(abs_path),
+                    "exists": exists,
+                    "compile_ok": compile_ok,
+                    "compile_error": compile_error,
+                    "reasons": list(task.get("reasons") or []),
+                    "states": list(task.get("states") or []),
+                    "status": status,
+                    "suggested_tests": tests,
+                    "next_commands": next_commands,
+                }
+            )
+
+        queue_jsonl = self.run_dir / "apply_patch_execution_queue.jsonl"
+        with queue_jsonl.open("w", encoding="utf-8") as handle:
+            for item in execution_items:
+                handle.write(json.dumps(item, ensure_ascii=False) + "\n")
+
+        return {
+            "tasks_file": str(tasks_file),
+            "selected_count": len(selected),
+            "ready_count": ready_count,
+            "blocked_count": max(0, len(selected) - ready_count),
+            "execution_queue_jsonl": str(queue_jsonl),
+            "items": execution_items,
+        }
+
+    @staticmethod
+    def _load_apply_tasks(tasks_file: Path) -> List[Dict[str, Any]]:
+        if not tasks_file.exists():
+            return []
+        out: List[Dict[str, Any]] = []
+        for line in tasks_file.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                payload = json.loads(line)
+            except Exception:
+                continue
+            if isinstance(payload, dict):
+                out.append(payload)
+        return out
+
+    @staticmethod
+    def _suggest_tests_for_path(path: str) -> List[str]:
+        if path.endswith("state_laws_verifier.py"):
+            return [
+                "tests/unit/legal_scrapers/test_state_laws_verifier_operational.py",
+            ]
+        if path.endswith("state_laws_scraper.py"):
+            return [
+                "tests/unit/legal_scrapers/test_state_scraper_jsonld_enrichment.py",
+            ]
+        if "state_scrapers/" in path:
+            return [
+                "tests/unit/legal_scrapers/test_state_scraper_jsonld_enrichment.py",
+            ]
+        return []
+
+    @staticmethod
+    def _suggest_execution_commands(path: str, tests: List[str]) -> List[str]:
+        commands = [
+            f"python -m py_compile {path}",
+        ]
+        if tests:
+            commands.append("python -m pytest -q " + " ".join(tests))
+        commands.append(f"git --no-pager diff -- {path}")
+        return commands
+
+    @staticmethod
+    def _suggest_actions_for_path(path: str, reasons: List[str], states: List[str]) -> List[str]:
+        actions: List[str] = []
+        if "state_scrapers" in path:
+            actions.append("Review state-specific link discovery and archival fallback seeds.")
+            actions.append("Harden anti-bot/challenge rejection and statute-only extraction filters.")
+        if path.endswith("state_laws_scraper.py"):
+            actions.append("Tune strict filtering thresholds and retry orchestration for low-coverage states.")
+        if path.endswith("base_scraper.py"):
+            actions.append("Adjust unified fetch fallback order and provider telemetry on no-attempt states.")
+        if path.endswith("state_laws_verifier.py"):
+            actions.append("Tighten operational thresholds and ensure diagnostics cover observed failure modes.")
+
+        if "fetch_no_attempt" in reasons:
+            actions.append("Add deterministic source URL seeds for states with zero hydration attempts.")
+        if "coverage_gap" in reasons:
+            actions.append("Add fallback index/source discovery to close coverage gaps.")
+        if "quality_weak" in reasons:
+            actions.append("Improve semantic quality gating to reject scaffold/nav contamination.")
+        if "etl_not_ready" in reasons:
+            actions.append("Improve structured extraction completeness for JSON-LD and citation fields.")
+        if states:
+            actions.append(f"Prioritize validation for states: {', '.join(states)}.")
+
+        if not actions:
+            actions.append("Inspect diagnostics and add targeted scraper/parser hardening for this file.")
+        return actions
 
     async def _evaluate_round(self, round_index: int, actor_pool: List[ActorPolicyConfig]) -> List[TrialOutcome]:
         semaphore = asyncio.Semaphore(max(1, int(self.loop_config.actor_concurrency or 1)))
@@ -526,6 +750,34 @@ def _parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help="Emit ranked round/final patch-plan artifacts with file priorities and reasons.",
     )
     parser.add_argument(
+        "--apply-patch-plan",
+        action="store_true",
+        help="Emit actionable patch-task artifacts (JSONL + TODO markdown) from final patch plan.",
+    )
+    parser.add_argument(
+        "--patch-plan-limit",
+        type=int,
+        default=20,
+        help="Max number of top-ranked files to include in apply-patch artifacts.",
+    )
+    parser.add_argument(
+        "--execute-apply-plan",
+        action="store_true",
+        help="Build execution queue/report from apply-patch tasks with precheck results.",
+    )
+    parser.add_argument(
+        "--apply-plan-file",
+        type=str,
+        default="",
+        help="Optional path to an existing apply_patch_plan_tasks.jsonl to execute.",
+    )
+    parser.add_argument(
+        "--execution-max-tasks",
+        type=int,
+        default=5,
+        help="Max tasks to include in execution queue/report when execute mode is enabled.",
+    )
+    parser.add_argument(
         "--output-dir",
         type=str,
         default="",
@@ -551,6 +803,11 @@ async def _main_async(args: argparse.Namespace) -> int:
             max_statutes=max(0, int(args.max_statutes)),
             top_n_diagnostics=max(1, int(args.top_n_diagnostics)),
             emit_patch_plan=bool(args.emit_patch_plan),
+            apply_patch_plan=bool(args.apply_patch_plan),
+            patch_plan_limit=max(1, int(args.patch_plan_limit)),
+            execute_apply_plan=bool(args.execute_apply_plan),
+            apply_plan_file=str(args.apply_plan_file or ""),
+            execution_max_tasks=max(1, int(args.execution_max_tasks)),
         ),
         output_dir=Path(args.output_dir).expanduser().resolve() if str(args.output_dir).strip() else None,
     )

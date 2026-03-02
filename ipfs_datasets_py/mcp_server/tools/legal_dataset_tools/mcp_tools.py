@@ -103,6 +103,14 @@ async def search_us_code_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
     return await search_us_code_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
+async def search_state_law_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Search a state-law corpus vectors with optional statute metadata enrichment."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        search_state_law_corpus_from_parameters,
+    )
+    return await search_state_law_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
 async def list_caselaw_access_vector_files(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """List CAP parquet/model files available for ingestion."""
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
@@ -147,6 +155,7 @@ LEGAL_DATASET_MCP_TOOLS: List[Any] = [
     search_caselaw_access_vectors,
     search_caselaw_access_cases,
     search_us_code_corpus,
+    search_state_law_corpus,
     list_caselaw_access_vector_files,
     search_caselaw_access_vectors_with_centroids,
     ingest_caselaw_access_vector_bundle,
@@ -271,6 +280,30 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
         "category": "legal_dataset_tools",
     },
     {
+        "name": "search_state_law_corpus",
+        "description": "Search state-law vector corpus (vector-first) with optional statute metadata enrichment.",
+        "function": search_state_law_corpus,
+        "parameters": {
+            "collection_name": {"type": "string", "required": True},
+            "query_vector": {"type": "array", "required": True},
+            "state": {"type": "string", "default": "OR"},
+            "store_type": {"type": "string", "default": "faiss"},
+            "top_k": {"type": "integer", "default": 10},
+            "enrich_with_cases": {"type": "boolean", "default": False},
+            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_state_laws"},
+            "hf_parquet_prefix": {"type": "string", "required": False},
+            "hf_parquet_file": {"type": "string", "required": False},
+            "cid_metadata_field": {"type": "string", "default": "cid"},
+            "cid_column": {"type": "string", "default": "cid"},
+            "text_field_candidates": {"type": "array", "required": False},
+            "snippet_chars": {"type": "integer", "default": 320},
+            "local_case_parquet_file": {"type": "string", "required": False},
+            "chunk_lookup_enabled": {"type": "boolean", "default": False},
+            "auto_setup_venv": {"type": "boolean", "default": True},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
         "name": "search_caselaw_access_vectors_with_centroids",
         "description": "Two-stage retrieval: centroid routing followed by filtered target search.",
         "function": search_caselaw_access_vectors_with_centroids,
@@ -326,6 +359,7 @@ __all__ = [
     "search_caselaw_access_vectors",
     "search_caselaw_access_cases",
     "search_us_code_corpus",
+    "search_state_law_corpus",
     "list_caselaw_access_vector_files",
     "search_caselaw_access_vectors_with_centroids",
     "ingest_caselaw_access_vector_bundle",

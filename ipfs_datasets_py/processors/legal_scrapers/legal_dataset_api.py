@@ -27,6 +27,15 @@ DEFAULT_CAP_CHUNK_HF_PARQUET_FILE = "embeddings/sparse_chunks.parquet"
 
 DEFAULT_USCODE_HF_DATASET_ID = "justicedao/ipfs_uscode"
 DEFAULT_USCODE_HF_PARQUET_PREFIX = "uscode_parquet"
+DEFAULT_STATE_LAWS_HF_DATASET_ID = "justicedao/ipfs_state_laws"
+
+
+def _normalize_state_code(value: Any, *, default: str = "OR") -> str:
+    """Normalize state input to a two-letter uppercase code."""
+    state = str(value or default).strip().upper()
+    if len(state) != 2 or not state.isalpha():
+        raise ValueError("state must be a two-letter code (e.g., OR, CA, NY)")
+    return state
 
 
 def _get_repo_root() -> Path:
@@ -126,11 +135,22 @@ module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = module
 spec.loader.exec_module(module)
 create_caselaw_access_vector_search = module.create_caselaw_access_vector_search
+CAPVectorSearchConfig = module.CAPVectorSearchConfig
 
 
 async def _main() -> None:
     payload = json.loads(os.environ.get("CAP_VECTOR_PAYLOAD", "{}"))
-    cap = create_caselaw_access_vector_search()
+    dataset_id = payload.get("hf_dataset_id")
+    cache_dir = payload.get("hf_cache_dir")
+    if dataset_id or cache_dir:
+        cap = create_caselaw_access_vector_search(
+            CAPVectorSearchConfig(
+                dataset_id=dataset_id or CAPVectorSearchConfig().dataset_id,
+                cache_dir=cache_dir,
+            )
+        )
+    else:
+        cap = create_caselaw_access_vector_search()
     op = payload.get("operation")
 
     if op == "ingest":
@@ -881,6 +901,8 @@ async def ingest_caselaw_access_vectors_from_parameters(
             "collection_name": parameters["collection_name"],
             "store_type": parameters.get("store_type", "faiss"),
             "parquet_file": parameters.get("parquet_file"),
+            "hf_dataset_id": parameters.get("hf_dataset_id"),
+            "hf_cache_dir": parameters.get("hf_cache_dir"),
             "model_hint": parameters.get("model_hint"),
             "max_rows": int(parameters.get("max_rows", 10000)),
             "batch_size": int(parameters.get("batch_size", 512)),
@@ -939,6 +961,8 @@ async def search_caselaw_access_vectors_from_parameters(
             "operation": "search",
             "collection_name": parameters["collection_name"],
             "store_type": parameters.get("store_type", "faiss"),
+            "hf_dataset_id": parameters.get("hf_dataset_id"),
+            "hf_cache_dir": parameters.get("hf_cache_dir"),
             "query_vector": parameters["query_vector"],
             "top_k": int(parameters.get("top_k", 10)),
             "filter_dict": parameters.get("filter_dict"),
@@ -1084,6 +1108,61 @@ async def search_us_code_corpus_from_parameters(
     )
 
 
+async def search_state_law_corpus_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    """Search a state-law corpus vectors with optional statute metadata enrichment.
+
+    Defaults are oriented to the state-law HF dataset layout:
+    `justicedao/ipfs_state_laws/<STATE>/parsed/parquet`.
+    """
+    state_params = dict(parameters)
+    try:
+        state_code = _normalize_state_code(state_params.get("state", "OR"))
+    except ValueError as exc:
+        return {
+            "status": "error",
+            "error": str(exc),
+            "operation": "search_cases",
+            "tool_version": tool_version,
+        }
+
+    state_params.setdefault("hf_dataset_id", DEFAULT_STATE_LAWS_HF_DATASET_ID)
+    state_params.setdefault("hf_parquet_prefix", f"{state_code}/parsed/parquet")
+    state_params.setdefault("hf_parquet_file", None)
+    state_params.setdefault("cid_metadata_field", "cid")
+    state_params.setdefault("cid_column", "cid")
+    state_params.setdefault(
+        "text_field_candidates",
+        ["text", "content", "section_text", "body", "title", "heading"],
+    )
+    state_params.setdefault("chunk_lookup_enabled", False)
+    state_params.setdefault("chunk_hf_parquet_file", None)
+    state_params.setdefault("chunk_hf_parquet_prefix", None)
+    enrich_with_cases = bool(state_params.get("enrich_with_cases", False))
+
+    if enrich_with_cases:
+        state_params.setdefault(
+            "preferred_case_parquet_names",
+            ["by_cid", "laws_by_cid", "parsed", "law", state_code.lower()],
+        )
+        result = await search_caselaw_access_cases_from_parameters(
+            state_params,
+            tool_version=tool_version,
+        )
+    else:
+        result = await search_caselaw_access_vectors_from_parameters(
+            state_params,
+            tool_version=tool_version,
+        )
+
+    if isinstance(result, dict):
+        result.setdefault("state", state_code)
+    return result
+
+
 async def list_caselaw_access_vector_files_from_parameters(
     parameters: Dict[str, Any],
     *,
@@ -1108,6 +1187,8 @@ async def list_caselaw_access_vector_files_from_parameters(
 
         operation_payload = {
             "operation": "list_files",
+            "hf_dataset_id": parameters.get("hf_dataset_id"),
+            "hf_cache_dir": parameters.get("hf_cache_dir"),
             "model_hint": parameters.get("model_hint"),
         }
         result = await anyio.to_thread.run_sync(
@@ -1176,6 +1257,8 @@ async def search_caselaw_access_vectors_with_centroids_from_parameters(
             "operation": "centroid_search",
             "target_collection_name": parameters["target_collection_name"],
             "centroid_collection_name": parameters["centroid_collection_name"],
+            "hf_dataset_id": parameters.get("hf_dataset_id"),
+            "hf_cache_dir": parameters.get("hf_cache_dir"),
             "query_vector": parameters["query_vector"],
             "store_type": parameters.get("store_type", "faiss"),
             "centroid_top_k": int(parameters.get("centroid_top_k", 5)),
@@ -1247,6 +1330,8 @@ async def ingest_caselaw_access_vector_bundle_from_parameters(
             "operation": "ingest_bundle",
             "target_collection_name": parameters["target_collection_name"],
             "centroid_collection_name": parameters["centroid_collection_name"],
+            "hf_dataset_id": parameters.get("hf_dataset_id"),
+            "hf_cache_dir": parameters.get("hf_cache_dir"),
             "store_type": parameters.get("store_type", "faiss"),
             "target_parquet_file": parameters.get("target_parquet_file"),
             "target_model_hint": parameters.get("target_model_hint"),

@@ -563,6 +563,12 @@ TOOL_MAPPINGS = {
                 "description": "Search US Code vector corpus and enrich matches with section metadata/snippets",
                 "tags": ["legal", "uscode", "vector-search", "cid", "retrieval"]
             },
+            "search_state_law_corpus": {
+                "name": "search_state_law_corpus",
+                "category": "legal_datasets",
+                "description": "Search state-law vector corpus (e.g. OR/parsed/parquet) and enrich matches",
+                "tags": ["legal", "state_laws", "vector-search", "cid", "retrieval"]
+            },
             "search_caselaw_access_vectors_with_centroids": {
                 "name": "search_caselaw_access_vectors_with_centroids",
                 "category": "legal_datasets",

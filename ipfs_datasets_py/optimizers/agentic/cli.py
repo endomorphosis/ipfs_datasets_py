@@ -571,6 +571,15 @@ class OptimizerArgparseCLI:
 
         if bool(args.emit_patch_plan):
             forwarded_args.append("--emit-patch-plan")
+        if bool(args.apply_patch_plan):
+            forwarded_args.append("--apply-patch-plan")
+        forwarded_args.extend(["--patch-plan-limit", str(int(args.patch_plan_limit))])
+        if bool(args.execute_apply_plan):
+            forwarded_args.append("--execute-apply-plan")
+        apply_plan_file = str(args.apply_plan_file or "").strip()
+        if apply_plan_file:
+            forwarded_args.extend(["--apply-plan-file", apply_plan_file])
+        forwarded_args.extend(["--execution-max-tasks", str(int(args.execution_max_tasks))])
 
         return int(state_laws_loop_main(forwarded_args))
     
@@ -748,6 +757,34 @@ class OptimizerArgparseCLI:
             '--emit-patch-plan',
             action='store_true',
             help='Emit ranked round/final patch-plan artifacts',
+        )
+        state_laws_parser.add_argument(
+            '--apply-patch-plan',
+            action='store_true',
+            help='Emit actionable patch-task JSONL/TODO artifacts',
+        )
+        state_laws_parser.add_argument(
+            '--patch-plan-limit',
+            type=int,
+            default=20,
+            help='Top-N patch-plan entries to include in apply artifacts',
+        )
+        state_laws_parser.add_argument(
+            '--execute-apply-plan',
+            action='store_true',
+            help='Build execution queue/report from apply tasks',
+        )
+        state_laws_parser.add_argument(
+            '--apply-plan-file',
+            type=str,
+            default='',
+            help='Optional existing apply tasks JSONL file to execute',
+        )
+        state_laws_parser.add_argument(
+            '--execution-max-tasks',
+            type=int,
+            default=5,
+            help='Max tasks to include in execution report',
         )
         
         # Parse arguments

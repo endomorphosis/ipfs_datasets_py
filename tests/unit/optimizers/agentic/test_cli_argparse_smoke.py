@@ -158,6 +158,11 @@ def test_argparse_cli_state_laws_optimize_routes(monkeypatch: pytest.MonkeyPatch
         captured["max_rounds"] = args.max_rounds
         captured["target_score"] = args.target_score
         captured["emit_patch_plan"] = bool(args.emit_patch_plan)
+        captured["apply_patch_plan"] = bool(args.apply_patch_plan)
+        captured["patch_plan_limit"] = int(args.patch_plan_limit)
+        captured["execute_apply_plan"] = bool(args.execute_apply_plan)
+        captured["apply_plan_file"] = args.apply_plan_file
+        captured["execution_max_tasks"] = int(args.execution_max_tasks)
         return 0
 
     monkeypatch.setattr(cli, "cmd_state_laws_optimize", _fake_cmd)
@@ -172,6 +177,14 @@ def test_argparse_cli_state_laws_optimize_routes(monkeypatch: pytest.MonkeyPatch
             "--target-score",
             "0.9",
             "--emit-patch-plan",
+            "--apply-patch-plan",
+            "--patch-plan-limit",
+            "7",
+            "--execute-apply-plan",
+            "--apply-plan-file",
+            "tmp/tasks.jsonl",
+            "--execution-max-tasks",
+            "4",
         ]
     )
 
@@ -180,3 +193,8 @@ def test_argparse_cli_state_laws_optimize_routes(monkeypatch: pytest.MonkeyPatch
     assert captured["max_rounds"] == 3
     assert captured["target_score"] == 0.9
     assert captured["emit_patch_plan"] is True
+    assert captured["apply_patch_plan"] is True
+    assert captured["patch_plan_limit"] == 7
+    assert captured["execute_apply_plan"] is True
+    assert captured["apply_plan_file"] == "tmp/tasks.jsonl"
+    assert captured["execution_max_tasks"] == 4

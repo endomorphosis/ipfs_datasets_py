@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from ipfs_datasets_py.optimizers.agentic.state_laws_actor_critic_loop import (
     ActorPolicyConfig,
     LoopConfig,
@@ -154,3 +157,55 @@ def test_build_patch_plan_ranks_state_files_with_reasons():
     ok_entry = [item for item in plan if item["path"].endswith("oklahoma.py")][0]
     assert "OK" in ok_entry["states"]
     assert "coverage_gap" in ok_entry["reasons"] or "quality_weak" in ok_entry["reasons"]
+
+
+def test_build_apply_patch_tasks_respects_limit_and_actions():
+    loop = _make_loop()
+    patch_plan = [
+        {
+            "path": "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/oklahoma.py",
+            "priority_score": 0.9,
+            "reasons": ["fetch_no_attempt", "quality_weak"],
+            "states": ["OK"],
+        },
+        {
+            "path": "ipfs_datasets_py/processors/legal_scrapers/state_laws_verifier.py",
+            "priority_score": 0.7,
+            "reasons": ["etl_not_ready"],
+            "states": [],
+        },
+    ]
+
+    tasks = loop._build_apply_patch_tasks(patch_plan, limit=1)
+
+    assert len(tasks) == 1
+    assert tasks[0]["task_id"] == "patch-task-001"
+    assert tasks[0]["path"].endswith("oklahoma.py")
+    joined_actions = " ".join(tasks[0]["suggested_actions"])
+    assert "zero hydration attempts" in joined_actions or "no hydration attempts" in joined_actions
+
+
+def test_execute_apply_plan_builds_queue_and_prechecks(tmp_path: Path):
+    loop = _make_loop()
+    loop.run_dir = tmp_path
+
+    target_file = Path("ipfs_datasets_py/processors/legal_scrapers/state_laws_verifier.py")
+    tasks_file = tmp_path / "tasks.jsonl"
+    tasks_file.write_text(
+        "\n".join(
+            [
+                json.dumps({"task_id": "patch-task-001", "path": str(target_file), "reasons": ["etl_not_ready"], "states": []}),
+                json.dumps({"task_id": "patch-task-002", "path": "ipfs_datasets_py/does_not_exist.py", "reasons": [], "states": []}),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = loop._execute_apply_plan(tasks_file, max_tasks=2)
+
+    assert report["selected_count"] == 2
+    assert "execution_queue_jsonl" in report
+    assert Path(report["execution_queue_jsonl"]).exists()
+    assert any(item["status"] == "ready_for_patch" for item in report["items"])
+    assert any(item["status"] == "blocked" for item in report["items"])
