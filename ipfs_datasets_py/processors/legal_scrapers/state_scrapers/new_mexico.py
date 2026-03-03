@@ -61,13 +61,13 @@ class NewMexicoScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         seen = set()
 
-        archive_candidates = await self._discover_archived_document_urls(limit=80)
+        archive_candidates = await self._discover_archived_document_urls(limit=24)
         candidate_urls = list(self._ARCHIVE_DOCUMENT_PDFS)
         for url in archive_candidates:
             if url not in candidate_urls:
                 candidate_urls.append(url)
 
-        for pdf_url in candidate_urls:
+        for pdf_url in candidate_urls[:32]:
             if len(statutes) >= max_statutes:
                 break
 
@@ -165,16 +165,16 @@ class NewMexicoScraper(BaseStateScraper):
                 seen.add(candidate)
 
         for candidate in candidates:
-            for _ in range(3):
+            for _ in range(2):
                 try:
                     payload = await self._fetch_page_content_with_archival_fallback(
                         candidate,
-                        timeout_seconds=timeout,
+                        timeout_seconds=max(8, min(int(timeout), 20)),
                     )
                     if payload:
                         return payload
                 except Exception:
-                    await asyncio.sleep(0.6)
+                    await asyncio.sleep(0.25)
                     continue
 
         return b""
