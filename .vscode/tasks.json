@@ -195,7 +195,11 @@
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
 			"args": [
-				"archive/validation/validate_fastapi.py"
+				"-m",
+				"pytest",
+				"tests/mcp/unit/test_fastapi_service.py",
+				"tests/mcp/unit/test_fastapi_additional_session64.py",
+				"-q"
 			],
 			"group": "test",
 			"isBackground": false,
@@ -583,7 +587,9 @@
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
 			"args": [
-				"scripts/cli/mcp_cli.py",
+				"ipfs_datasets_cli.py",
+				"tools",
+				"run",
 				"${input:mcp_category}",
 				"${input:mcp_tool}",
 				"${input:mcp_args}"
@@ -603,8 +609,9 @@
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
 			"args": [
-				"scripts/cli/mcp_cli.py",
-				"--list-categories"
+				"ipfs_datasets_cli.py",
+				"tools",
+				"categories"
 			],
 			"group": "test",
 			"isBackground": false,
