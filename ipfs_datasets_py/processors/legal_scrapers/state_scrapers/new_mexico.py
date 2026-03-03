@@ -138,11 +138,31 @@ class NewMexicoScraper(BaseStateScraper):
         return match.group(1) if match else ""
 
     async def _request_bytes(self, pdf_url: str, headers: Dict[str, str], timeout: int) -> bytes:
-        candidates = [str(pdf_url or "")]
-        if candidates[0].startswith("https://"):
-            candidates.append("http://" + candidates[0][8:])
-        elif candidates[0].startswith("http://"):
-            candidates.append("https://" + candidates[0][7:])
+        first = str(pdf_url or "")
+        candidates: List[str] = [first]
+
+        # If this is a Wayback URL, also try the original source URL directly.
+        m = re.search(r"/web/\d+/(https?://.+)$", first, flags=re.IGNORECASE)
+        if m:
+            original_url = urllib.parse.unquote(m.group(1))
+            if original_url and original_url not in candidates:
+                candidates.append(original_url)
+
+        expanded: List[str] = []
+        for candidate in candidates:
+            expanded.append(candidate)
+            if candidate.startswith("https://"):
+                expanded.append("http://" + candidate[8:])
+            elif candidate.startswith("http://"):
+                expanded.append("https://" + candidate[7:])
+
+        # Stable dedupe
+        seen = set()
+        candidates = []
+        for candidate in expanded:
+            if candidate and candidate not in seen:
+                candidates.append(candidate)
+                seen.add(candidate)
 
         for candidate in candidates:
             for _ in range(3):
