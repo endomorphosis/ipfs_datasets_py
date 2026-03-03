@@ -273,6 +273,9 @@ def _embed_file(
     queue_remote_penalty_decay_every: int,
     queue_remote_penalty_decay_divisor: int,
     queue_remote_penalty_skip_threshold: int,
+    queue_retry_lightweight_discovery: bool,
+    queue_explicit_addr_cooldown_base_ms: int,
+    queue_explicit_addr_cooldown_max_ms: int,
     queue_inflight_limit: int,
     queue_submit_drop_backoff_base_ms: int,
     queue_submit_drop_backoff_max_ms: int,
@@ -328,6 +331,9 @@ def _embed_file(
             queue_remote_penalty_decay_every=int(queue_remote_penalty_decay_every),
             queue_remote_penalty_decay_divisor=int(queue_remote_penalty_decay_divisor),
             queue_remote_penalty_skip_threshold=int(queue_remote_penalty_skip_threshold),
+            queue_retry_lightweight_discovery=bool(queue_retry_lightweight_discovery),
+            queue_explicit_addr_cooldown_base_ms=int(queue_explicit_addr_cooldown_base_ms),
+            queue_explicit_addr_cooldown_max_ms=int(queue_explicit_addr_cooldown_max_ms),
             queue_inflight_limit=int(queue_inflight_limit),
             queue_submit_drop_backoff_base_ms=int(queue_submit_drop_backoff_base_ms),
             queue_submit_drop_backoff_max_ms=int(queue_submit_drop_backoff_max_ms),
@@ -762,6 +768,12 @@ def _effective_p2p_knobs(args: argparse.Namespace) -> dict[str, Any]:
         "remote_penalty_decay_divisor": max(2, int(args.queue_remote_penalty_decay_divisor)),
         "remote_penalty_decay_every": int(args.queue_remote_penalty_decay_every),
         "remote_penalty_skip_threshold": int(args.queue_remote_penalty_skip_threshold),
+        "retry_lightweight_discovery": bool(args.queue_retry_lightweight_discovery),
+        "explicit_addr_cooldown_base_ms": max(10, int(args.queue_explicit_addr_cooldown_base_ms)),
+        "explicit_addr_cooldown_max_ms": max(
+            int(args.queue_explicit_addr_cooldown_base_ms),
+            int(args.queue_explicit_addr_cooldown_max_ms),
+        ),
         "inflight_limit": max(1, int(args.queue_inflight_limit)),
         "submit_drop_backoff_base_ms": max(0, int(args.queue_submit_drop_backoff_base_ms)),
         "submit_drop_backoff_max_ms": max(
@@ -838,6 +850,9 @@ def _embed_file_via_taskqueue(
     queue_remote_penalty_decay_every: int,
     queue_remote_penalty_decay_divisor: int,
     queue_remote_penalty_skip_threshold: int,
+    queue_retry_lightweight_discovery: bool,
+    queue_explicit_addr_cooldown_base_ms: int,
+    queue_explicit_addr_cooldown_max_ms: int,
     queue_inflight_limit: int,
     queue_submit_drop_backoff_base_ms: int,
     queue_submit_drop_backoff_max_ms: int,
@@ -871,6 +886,15 @@ def _embed_file_via_taskqueue(
     os.environ["IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_COOLDOWN_BASE_MS"] = str(max(10, int(queue_remote_cooldown_base_ms)))
     os.environ["IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_COOLDOWN_MAX_MS"] = str(
         max(int(queue_remote_cooldown_base_ms), int(queue_remote_cooldown_max_ms))
+    )
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_RETRY_LIGHTWEIGHT_DISCOVERY"] = (
+        "1" if bool(queue_retry_lightweight_discovery) else "0"
+    )
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_EXPLICIT_ADDR_COOLDOWN_BASE_MS"] = str(
+        max(10, int(queue_explicit_addr_cooldown_base_ms))
+    )
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_EXPLICIT_ADDR_COOLDOWN_MAX_MS"] = str(
+        max(int(queue_explicit_addr_cooldown_base_ms), int(queue_explicit_addr_cooldown_max_ms))
     )
 
     backend_choice = str(taskqueue_backend).strip().lower()
@@ -1399,6 +1423,31 @@ def _parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--queue-retry-lightweight-discovery",
+        dest="queue_retry_lightweight_discovery",
+        action="store_true",
+        help="Use lightweight dialing on retries (cache + announce) and skip broad discovery fanout",
+    )
+    parser.add_argument(
+        "--queue-no-retry-lightweight-discovery",
+        dest="queue_retry_lightweight_discovery",
+        action="store_false",
+        help="Allow broad discovery fanout during retry attempts",
+    )
+    parser.set_defaults(queue_retry_lightweight_discovery=True)
+    parser.add_argument(
+        "--queue-explicit-addr-cooldown-base-ms",
+        type=int,
+        default=250,
+        help="Base cooldown (ms) for stale explicit/cache/announce multiaddrs after transport failures",
+    )
+    parser.add_argument(
+        "--queue-explicit-addr-cooldown-max-ms",
+        type=int,
+        default=5000,
+        help="Maximum cooldown (ms) for stale explicit/cache/announce multiaddrs",
+    )
+    parser.add_argument(
         "--queue-inflight-limit",
         type=int,
         default=256,
@@ -1512,6 +1561,9 @@ def main() -> int:
             queue_remote_penalty_decay_every=int(args.queue_remote_penalty_decay_every),
             queue_remote_penalty_decay_divisor=int(args.queue_remote_penalty_decay_divisor),
             queue_remote_penalty_skip_threshold=int(args.queue_remote_penalty_skip_threshold),
+            queue_retry_lightweight_discovery=bool(args.queue_retry_lightweight_discovery),
+            queue_explicit_addr_cooldown_base_ms=int(args.queue_explicit_addr_cooldown_base_ms),
+            queue_explicit_addr_cooldown_max_ms=int(args.queue_explicit_addr_cooldown_max_ms),
             queue_inflight_limit=int(args.queue_inflight_limit),
             queue_submit_drop_backoff_base_ms=int(args.queue_submit_drop_backoff_base_ms),
             queue_submit_drop_backoff_max_ms=int(args.queue_submit_drop_backoff_max_ms),
