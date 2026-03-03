@@ -4,12 +4,12 @@
 		{
 			"label": "Run MCP Tools Test",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
 			"args": [
-				"comprehensive_mcp_test.py"
+				"archive/validation/comprehensive_mcp_test.py"
 			],
 			"group": "test",
 			"isBackground": false,
@@ -21,7 +21,7 @@
 		{
 			"label": "Install Dependencies",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/pip",
+			"command": "${workspaceFolder}/../.venv/bin/pip",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\pip.exe"
 			},
@@ -40,7 +40,7 @@
 		{
 			"label": "Test Individual MCP Tool",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -58,7 +58,7 @@
 		{
 			"label": "Start MCP Server",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -77,7 +77,7 @@
 		{
 			"label": "Test Dataset Tools",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -95,7 +95,7 @@
 		{
 			"label": "Test IPFS Tools",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -113,7 +113,7 @@
 		{
 			"label": "Test Vector Tools",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -131,7 +131,7 @@
 		{
 			"label": "Test Audit Tools",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -149,12 +149,12 @@
 		{
 			"label": "Start FastAPI Service",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
 			"args": [
-				"start_fastapi.py",
+				"scripts/start_fastapi.py",
 				"--env",
 				"development",
 				"--debug",
@@ -170,12 +170,15 @@
 		{
 			"label": "Test FastAPI Service",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
 			"args": [
-				"test_fastapi_service.py"
+				"-m",
+				"pytest",
+				"tests/mcp/unit/test_fastapi_service.py",
+				"-q"
 			],
 			"group": "test",
 			"isBackground": false,
@@ -187,12 +190,12 @@
 		{
 			"label": "Validate FastAPI",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
 			"args": [
-				"validate_fastapi.py"
+				"archive/validation/validate_fastapi.py"
 			],
 			"group": "test",
 			"isBackground": false,
@@ -204,12 +207,12 @@
 		{
 			"label": "Simple Integration Test",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
 			"args": [
-				"simple_test.py"
+				"tests/integration/simple_test.py"
 			],
 			"group": "test",
 			"isBackground": false,
@@ -221,7 +224,7 @@
 		{
 			"label": "Start MCP Dashboard",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -236,7 +239,7 @@
 		{
 			"label": "Start MCP Dashboard (8899)",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -289,7 +292,7 @@
 		{
 			"label": "Run MCP Dashboard Tests - Smoke",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -309,7 +312,7 @@
 		{
 			"label": "Run MCP Dashboard Tests - Comprehensive",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -329,7 +332,7 @@
 		{
 			"label": "Run MCP Dashboard Tests - Performance",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -349,7 +352,7 @@
 		{
 			"label": "Run MCP Dashboard Tests - Docker",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -482,7 +485,7 @@
 		{
 			"label": "Test IPFS Datasets CLI Suite",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -507,7 +510,7 @@
 		{
 			"label": "Start MCP Dashboard (8899)",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -575,12 +578,12 @@
 		{
 			"label": "Run MCP CLI Tool",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
 			"args": [
-				"mcp_cli.py",
+				"scripts/cli/mcp_cli.py",
 				"${input:mcp_category}",
 				"${input:mcp_tool}",
 				"${input:mcp_args}"
@@ -595,12 +598,12 @@
 		{
 			"label": "List MCP CLI Categories",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
 			"args": [
-				"mcp_cli.py",
+				"scripts/cli/mcp_cli.py",
 				"--list-categories"
 			],
 			"group": "test",
@@ -613,12 +616,12 @@
 		{
 			"label": "Run MCP Dashboard Playwright Tests",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
 			"args": [
-				"mcp_dashboard_tests.py",
+				"scripts/dashboard/mcp_dashboard_tests.py",
 				"--headless",
 				"--output",
 				"test_results.json"
@@ -674,7 +677,7 @@
 		{
 			"label": "Probe __init__ content",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -689,7 +692,7 @@
 		{
 			"label": "Probe __init__ content 2",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -704,7 +707,7 @@
 		{
 			"label": "Probe __init__ content 3",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -719,7 +722,7 @@
 		{
 			"label": "Dev Tools: Check Python Compilation",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -741,7 +744,7 @@
 		{
 			"label": "Dev Tools: Check Imports",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -764,7 +767,7 @@
 		{
 			"label": "Dev Tools: Python Code Quality Check",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -787,7 +790,7 @@
 		{
 			"label": "Dev Tools: Audit Docstrings",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -812,7 +815,7 @@
 		{
 			"label": "Dev Tools: Find Documentation",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -836,7 +839,7 @@
 		{
 			"label": "Dev Tools: Analyze Stub Coverage",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -858,7 +861,7 @@
 		{
 			"label": "Dev Tools: Split TODO List",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -878,7 +881,7 @@
 		{
 			"label": "Dev Tools: Update TODO Workers",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -988,7 +991,7 @@
 		{
 			"label": "Legal smoke: proof-audit triage",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
@@ -1009,7 +1012,7 @@
 		{
 			"label": "Legal smoke: proof-audit triage (markdown)",
 			"type": "shell",
-			"command": "${workspaceFolder}/.venv/bin/python",
+			"command": "${workspaceFolder}/../.venv/bin/python",
 			"windows": {
 				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 			},
