@@ -351,7 +351,7 @@ async def test_wyoming_custom_scrape_records_fetch_analytics(monkeypatch: pytest
 async def test_california_scrape_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
     html = (
             "<html><body>"
-            "<a href='/faces/codes_displayText.xhtml?lawCode=PEN&sectionNum=187.'>Section 187</a>"
+            "<a href='/faces/codes_displayText.xhtml?lawCode=PEN&amp;sectionNum=187.'>Section 187</a>"
             "</body></html>"
     ).encode("utf-8")
 
