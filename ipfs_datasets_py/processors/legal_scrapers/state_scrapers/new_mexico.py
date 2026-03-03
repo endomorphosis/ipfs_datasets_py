@@ -49,12 +49,14 @@ class NewMexicoScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        archival = await self._scrape_archived_document_pdfs(code_name=code_name, max_statutes=24)
+        index_fallback = await self._scrape_nmonesource_index(code_name=code_name)
+        archival = await self._scrape_archived_document_pdfs(code_name=code_name, max_statutes=8)
         if archival:
+            if index_fallback:
+                archival.extend(index_fallback)
             self.logger.info(f"New Mexico archival fallback: Scraped {len(archival)} sections")
             return archival
 
-        index_fallback = await self._scrape_nmonesource_index(code_name=code_name)
         if index_fallback:
             self.logger.info("New Mexico index fallback: Scraped %s section(s)", len(index_fallback))
             return index_fallback
@@ -103,13 +105,13 @@ class NewMexicoScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         seen = set()
 
-        archive_candidates = await self._discover_archived_document_urls(limit=24)
+        archive_candidates = await self._discover_archived_document_urls(limit=8)
         candidate_urls = list(self._ARCHIVE_DOCUMENT_PDFS)
         for url in archive_candidates:
             if url not in candidate_urls:
                 candidate_urls.append(url)
 
-        for pdf_url in candidate_urls[:32]:
+        for pdf_url in candidate_urls[:12]:
             if len(statutes) >= max_statutes:
                 break
 
@@ -207,16 +209,16 @@ class NewMexicoScraper(BaseStateScraper):
                 seen.add(candidate)
 
         for candidate in candidates:
-            for _ in range(2):
+            for _ in range(1):
                 try:
                     payload = await self._fetch_page_content_with_archival_fallback(
                         candidate,
-                        timeout_seconds=max(8, min(int(timeout), 20)),
+                        timeout_seconds=max(6, min(int(timeout), 12)),
                     )
                     if payload:
                         return payload
                 except Exception:
-                    await asyncio.sleep(0.25)
+                    await asyncio.sleep(0.1)
                     continue
 
         return b""
