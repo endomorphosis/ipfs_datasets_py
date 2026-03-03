@@ -106,3 +106,84 @@ Call `clear_v2_proof_store()` at the start of each test function that uses `expl
 
 ### Proof validation failures
 All proof steps require non-empty `ir_refs` and `provenance`. Use `parse_cnl_to_ir()` to build the IR — it always sets `source_ref` on norms.
+
+## WS12 Commands and Artifact Paths
+
+### Run All WS12 Test Gates
+
+```bash
+# Run all WS12 tests at once
+python -m pytest ipfs_datasets_py/tests/reasoner/test_policy_pack_schema.py \
+    ipfs_datasets_py/tests/reasoner/test_policy_resolver_determinism.py \
+    ipfs_datasets_py/tests/reasoner/test_hybrid_v2_jurisdiction_matrix.py \
+    ipfs_datasets_py/tests/reasoner/test_hybrid_v2_conflict_reason_codes.py \
+    ipfs_datasets_py/tests/reasoner/test_conflict_triage_report_builder.py \
+    ipfs_datasets_py/tests/reasoner/test_perf_budget_sentinel.py \
+    ipfs_datasets_py/tests/reasoner/test_release_evidence_pack_v2.py \
+    -v --tb=short
+```
+
+### Run Individual WS12 Test Gates
+
+```bash
+# HL-WS12-01: Policy Pack Schema + Validator
+python -m pytest ipfs_datasets_py/tests/reasoner/test_policy_pack_schema.py -v
+
+# HL-WS12-02: Deterministic Policy Resolver
+python -m pytest ipfs_datasets_py/tests/reasoner/test_policy_resolver_determinism.py -v
+
+# HL-WS12-03: Multi-Jurisdiction Replay Matrix
+python -m pytest ipfs_datasets_py/tests/reasoner/test_hybrid_v2_jurisdiction_matrix.py -v
+
+# HL-WS12-04: Proof Conflict Taxonomy + Reason Codes
+python -m pytest ipfs_datasets_py/tests/reasoner/test_hybrid_v2_conflict_reason_codes.py -v
+
+# HL-WS12-05: Conflict Triage Report Builder (JSON + Markdown)
+python -m pytest ipfs_datasets_py/tests/reasoner/test_conflict_triage_report_builder.py -v
+
+# HL-WS12-06: Performance Budget Sentinel
+python -m pytest ipfs_datasets_py/tests/reasoner/test_perf_budget_sentinel.py -v
+
+# HL-WS12-07: Release Evidence Pack v2
+python -m pytest ipfs_datasets_py/tests/reasoner/test_release_evidence_pack_v2.py -v
+```
+
+### Run Triage / Benchmark / Evidence Tools
+
+```bash
+# Build conflict triage report (JSON + Markdown)
+python ipfs_datasets_py/scripts/ops/legal_data/build_hybrid_legal_conflict_triage.py
+
+# Run performance benchmark
+python ipfs_datasets_py/scripts/ops/legal_data/benchmark_hybrid_v2_reasoner.py
+
+# Assert performance budgets (exits non-zero if budget exceeded)
+python ipfs_datasets_py/scripts/ops/legal_data/assert_hybrid_v2_perf_budgets.py
+
+# Build release evidence manifest
+python ipfs_datasets_py/scripts/ops/legal_data/build_hybrid_v2_evidence_manifest.py
+
+# Run full WS12 release evidence pack (all gates + manifest)
+bash ipfs_datasets_py/scripts/ops/legal_data/run_hybrid_v2_release_evidence_pack.sh
+```
+
+### WS12 Artifact Paths
+
+| Artifact | Path |
+|---|---|
+| Policy pack schema + validator | `ipfs_datasets_py/processors/legal_data/reasoner/policy_pack.py` |
+| Deterministic policy resolver | `ipfs_datasets_py/processors/legal_data/reasoner/policy_resolver.py` |
+| Conflict taxonomy + reason codes | `ipfs_datasets_py/processors/legal_data/reasoner/hybrid_v2_blueprint.py` |
+| Jurisdiction replay matrix fixture | `ipfs_datasets_py/tests/reasoner/fixtures/jurisdiction_replay_matrix_v1.json` |
+| Conflict triage builder | `ipfs_datasets_py/scripts/ops/legal_data/build_hybrid_legal_conflict_triage.py` |
+| Performance benchmark | `ipfs_datasets_py/scripts/ops/legal_data/benchmark_hybrid_v2_reasoner.py` |
+| Performance budget sentinel | `ipfs_datasets_py/scripts/ops/legal_data/assert_hybrid_v2_perf_budgets.py` |
+| Evidence manifest builder | `ipfs_datasets_py/scripts/ops/legal_data/build_hybrid_v2_evidence_manifest.py` |
+| Release evidence pack script | `ipfs_datasets_py/scripts/ops/legal_data/run_hybrid_v2_release_evidence_pack.sh` |
+| WS12 test files | `ipfs_datasets_py/tests/reasoner/test_policy_pack_schema.py` |
+| | `ipfs_datasets_py/tests/reasoner/test_policy_resolver_determinism.py` |
+| | `ipfs_datasets_py/tests/reasoner/test_hybrid_v2_jurisdiction_matrix.py` |
+| | `ipfs_datasets_py/tests/reasoner/test_hybrid_v2_conflict_reason_codes.py` |
+| | `ipfs_datasets_py/tests/reasoner/test_conflict_triage_report_builder.py` |
+| | `ipfs_datasets_py/tests/reasoner/test_perf_budget_sentinel.py` |
+| | `ipfs_datasets_py/tests/reasoner/test_release_evidence_pack_v2.py` |

@@ -43,6 +43,37 @@
 | Prover certificate contract | ✅ In `prover_backends.py` | `normalize_prover_result`, `_validate_normalized_prover_envelope` |
 | 8-query compliance matrix | ✅ In `test_hybrid_v2_query_api_matrix.py` | `TestEightQueryProofMatrix` |
 
+## WS12 Execution Board
+
+### WS12 Sprint Backlog
+
+| # | Issue | Title | Status | Test Gate |
+|---|---|---|---|---|
+| 1 | [#1179](https://github.com/endomorphosis/ipfs_datasets_py/issues/1179) | HL-WS12-01: Policy Pack Schema + Validator | ✅ Done | `pytest test_policy_pack_schema.py` |
+| 2 | [#1180](https://github.com/endomorphosis/ipfs_datasets_py/issues/1180) | HL-WS12-02: Deterministic Policy Resolver | ✅ Done | `pytest test_policy_resolver_determinism.py` |
+| 3 | [#1181](https://github.com/endomorphosis/ipfs_datasets_py/issues/1181) | HL-WS12-03: Multi-Jurisdiction Replay Matrix | ✅ Done | `pytest test_hybrid_v2_jurisdiction_matrix.py` |
+| 4 | [#1182](https://github.com/endomorphosis/ipfs_datasets_py/issues/1182) | HL-WS12-04: Proof Conflict Taxonomy + Reason Codes | ✅ Done | `pytest test_hybrid_v2_conflict_reason_codes.py` |
+| 5 | [#1183](https://github.com/endomorphosis/ipfs_datasets_py/issues/1183) | HL-WS12-05: Conflict Triage Report Builder (JSON + Markdown) | ✅ Done | `pytest test_conflict_triage_report_builder.py` |
+| 6 | [#1184](https://github.com/endomorphosis/ipfs_datasets_py/issues/1184) | HL-WS12-06: Performance Budget Sentinel | ✅ Done | `pytest test_perf_budget_sentinel.py` |
+| 7 | [#1185](https://github.com/endomorphosis/ipfs_datasets_py/issues/1185) | HL-WS12-07: Unified Release Evidence Pack v2 | ✅ Done | `pytest test_release_evidence_pack_v2.py` |
+| 8 | [#1186](https://github.com/endomorphosis/ipfs_datasets_py/issues/1186) | HL-WS12-08: Runbook + TODO Operational Closure | ✅ Done | Runbook + TODO updated |
+
+**All WS12 tests pass. WS12 sprint complete.**
+
+### WS12 Evidence Artifacts
+
+| Artifact | Status | Location |
+|---|---|---|
+| Policy pack schema + validator | ✅ Present | `processors/legal_data/reasoner/policy_pack.py` |
+| Deterministic policy resolver | ✅ Present | `processors/legal_data/reasoner/policy_resolver.py` |
+| Conflict taxonomy + reason codes | ✅ Present | `hybrid_v2_blueprint.py` (`detect_proof_conflicts`, `CONFLICT_REASON_CODES`) |
+| Jurisdiction replay matrix fixture | ✅ Present | `tests/reasoner/fixtures/jurisdiction_replay_matrix_v1.json` |
+| Conflict triage builder (JSON+MD) | ✅ Present | `scripts/ops/legal_data/build_hybrid_legal_conflict_triage.py` |
+| Performance benchmark | ✅ Present | `scripts/ops/legal_data/benchmark_hybrid_v2_reasoner.py` |
+| Performance budget sentinel | ✅ Present | `scripts/ops/legal_data/assert_hybrid_v2_perf_budgets.py` |
+| Evidence manifest builder | ✅ Present | `scripts/ops/legal_data/build_hybrid_v2_evidence_manifest.py` |
+| Release evidence pack script | ✅ Present | `scripts/ops/legal_data/run_hybrid_v2_release_evidence_pack.sh` |
+
 ## Post-WS11 Deferred Items
 
 - [ ] Frontend explanation rendering integration (use `explain_proof` API output)
