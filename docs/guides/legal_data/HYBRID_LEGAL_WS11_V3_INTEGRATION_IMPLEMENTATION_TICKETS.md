@@ -42,6 +42,14 @@ Created issues (2026-03-02):
 - `HL-WS11-11`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1174
 - `HL-WS11-12`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1175
 
+Dependency linkage status (2026-03-03):
+- All WS11 issues (`1165`-`1176`) include dependency comments tagged `[ws11-dependency-map-v1]`.
+- Milestone `WS11 V3 Integration` and assignee `@endomorphosis` are applied across issues `1164`-`1176`.
+
+Closure status (2026-03-03):
+- Resolution PR: https://github.com/endomorphosis/ipfs_datasets_py/pull/1178 (`MERGED`).
+- All WS11 issues `1164`-`1176` are closed.
+
 ## 3. Ticket Backlog
 
 ## HL-WS11-01: V3 IR Schema Lock + Validator

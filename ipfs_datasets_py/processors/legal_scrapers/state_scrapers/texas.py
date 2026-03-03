@@ -65,7 +65,6 @@ class TexasScraper(BaseStateScraper):
             List of normalized statutes
         """
         try:
-            import requests
             from bs4 import BeautifulSoup
         except ImportError as e:
             self.logger.error(f"Required library not available: {e}")
@@ -74,14 +73,15 @@ class TexasScraper(BaseStateScraper):
         statutes = []
         
         try:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-            
-            response = requests.get(code_url, headers=headers, timeout=30)
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
+            page_bytes = await self._fetch_page_content_with_archival_fallback(
+                code_url,
+                timeout_seconds=30,
+            )
+            if not page_bytes:
+                raise RuntimeError(f"empty response for {code_url}")
+
+            page_html = page_bytes.decode("utf-8", errors="replace")
+            soup = BeautifulSoup(page_bytes, 'html.parser')
             
             # Parse Texas Legislature's structure
             # Texas uses a specific HTML structure for their statutes
@@ -95,7 +95,7 @@ class TexasScraper(BaseStateScraper):
                 # Try finding any links
                 section_links = soup.find_all('a', href=True, limit=100)
 
-            page_full_text = self._extract_text_from_html(response.text)
+            page_full_text = self._extract_text_from_html(page_html)
             seen_section_numbers = set()
             
             for i, link in enumerate(section_links[:120]):
@@ -117,7 +117,7 @@ class TexasScraper(BaseStateScraper):
                 if section_number in seen_section_numbers:
                     continue
 
-                section_full_text = self._fetch_section_text(section_url=section_url, fallback_text=page_full_text)
+                section_full_text = await self._fetch_section_text(section_url=section_url, fallback_text=page_full_text)
                 if len(section_full_text) < 280:
                     continue
 
@@ -164,19 +164,15 @@ class TexasScraper(BaseStateScraper):
         
         return statutes
 
-    def _fetch_section_text(self, section_url: str, fallback_text: str) -> str:
+    async def _fetch_section_text(self, section_url: str, fallback_text: str) -> str:
         try:
-            import requests
-        except ImportError:
-            return fallback_text
-
-        try:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-            response = requests.get(section_url, headers=headers, timeout=25)
-            response.raise_for_status()
-            text = self._extract_text_from_html(response.text)
+            payload = await self._fetch_page_content_with_archival_fallback(
+                section_url,
+                timeout_seconds=25,
+            )
+            if not payload:
+                return fallback_text
+            text = self._extract_text_from_html(payload.decode("utf-8", errors="replace"))
             if len(text) >= 280:
                 return text
         except Exception:

@@ -9,8 +9,6 @@ import tempfile
 from typing import List, Dict
 from urllib.parse import urljoin, unquote
 
-import requests
-
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
 
@@ -40,26 +38,28 @@ class ColoradoScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        statutes = self._scrape_crs_pdfs(code_name)
+        statutes = await self._scrape_crs_pdfs(code_name)
         if statutes:
             return statutes
         return await self._generic_scrape(code_name, f"{self.get_base_url()}/laws/colorado-revised-statutes", "Colo. Rev. Stat.")
 
-    def _scrape_crs_pdfs(self, code_name: str) -> List[NormalizedStatute]:
+    async def _scrape_crs_pdfs(self, code_name: str) -> List[NormalizedStatute]:
         """Scrape CRS section PDFs discoverable from the official publication search."""
         search_url = "https://content.leg.colorado.gov/publication-search?search_api_fulltext=crs"
-        headers = {
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
 
         try:
-            response = requests.get(search_url, headers=headers, timeout=45)
-            response.raise_for_status()
+            page_bytes = await self._fetch_page_content_with_archival_fallback(
+                search_url,
+                timeout_seconds=45,
+            )
+            if not page_bytes:
+                raise RuntimeError("empty response")
         except Exception as exc:
             self.logger.warning(f"Colorado CRS PDF discovery failed: {exc}")
             return []
 
-        pdf_paths = re.findall(r"/sites/default/files/[^\" ]+\.pdf", response.text, flags=re.IGNORECASE)
+        page_text = page_bytes.decode("utf-8", errors="replace")
+        pdf_paths = re.findall(r"/sites/default/files/[^\" ]+\.pdf", page_text, flags=re.IGNORECASE)
         seen: set[str] = set()
         statutes: List[NormalizedStatute] = []
 
@@ -75,7 +75,7 @@ class ColoradoScraper(BaseStateScraper):
             pdf_url = urljoin("https://content.leg.colorado.gov", path)
             section_number = self._extract_section_number_from_pdf_path(path)
             section_name = f"Section {section_number}" if section_number else "Colorado Revised Statutes section"
-            full_text = self._extract_pdf_text_summary(pdf_url)
+            full_text = await self._extract_pdf_text_summary(pdf_url)
 
             statute = NormalizedStatute(
                 state_code=self.state_code,
@@ -103,15 +103,15 @@ class ColoradoScraper(BaseStateScraper):
             return ""
         return match.group(1)
 
-    def _extract_pdf_text_summary(self, pdf_url: str, max_chars: int = 8000) -> str:
+    async def _extract_pdf_text_summary(self, pdf_url: str, max_chars: int = 8000) -> str:
         """Download a PDF and extract a normalized text summary using pdftotext."""
         try:
-            response = requests.get(
+            payload = await self._fetch_page_content_with_archival_fallback(
                 pdf_url,
-                timeout=60,
-                headers={"User-Agent": "Mozilla/5.0"},
+                timeout_seconds=60,
             )
-            response.raise_for_status()
+            if not payload:
+                return ""
         except Exception as exc:
             self.logger.debug(f"Colorado PDF download failed for {pdf_url}: {exc}")
             return ""
@@ -122,7 +122,7 @@ class ColoradoScraper(BaseStateScraper):
 
                 pdf_path = Path(tmpdir) / "section.pdf"
                 txt_path = Path(tmpdir) / "section.txt"
-                pdf_path.write_bytes(response.content)
+                pdf_path.write_bytes(payload)
 
                 result = subprocess.run(
                     ["pdftotext", "-f", "1", "-l", "3", str(pdf_path), str(txt_path)],

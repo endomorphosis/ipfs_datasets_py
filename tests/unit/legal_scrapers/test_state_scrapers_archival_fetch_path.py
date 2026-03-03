@@ -2,11 +2,15 @@ import pytest
 
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alabama import AlabamaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import BaseStateScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.colorado import ColoradoScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.connecticut import ConnecticutScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.florida import FloridaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia import GeorgiaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.indiana import IndianaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.louisiana import LouisianaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_york import NewYorkScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oklahoma import OklahomaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.texas import TexasScraper
 
 
 class _FakeResponse:
@@ -152,6 +156,92 @@ async def test_new_york_fallback_records_fetch_analytics(monkeypatch: pytest.Mon
 
     scraper = NewYorkScraper("NY", "New York")
     statutes = await scraper._scrape_public_law_updates("New York Consolidated Laws", max_sections=5)
+
+    assert len(statutes) >= 1
+    analytics = scraper.get_fetch_analytics_snapshot()
+    assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_texas_section_fetch_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_unified_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        return b""
+
+    def _fake_get(url: str, *args, **kwargs):
+        body = ("Texas section body content with legal text. " * 20).encode("utf-8")
+        return _FakeResponse(b"<html><body><div>" + body + b"</div></body></html>")
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
+    monkeypatch.setattr("requests.get", _fake_get)
+
+    scraper = TexasScraper("TX", "Texas")
+    text = await scraper._fetch_section_text("https://example.tx/section", fallback_text="fallback")
+
+    assert "Texas section body" in text
+    analytics = scraper.get_fetch_analytics_snapshot()
+    assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_florida_scrape_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_unified_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        return b""
+
+    def _fake_get(url: str, *args, **kwargs):
+        html = (
+            "<html><body>"
+            "<a href='/statutes/title1'>Florida statute title 1</a>"
+            "</body></html>"
+        ).encode("utf-8")
+        return _FakeResponse(html)
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
+    monkeypatch.setattr("requests.get", _fake_get)
+
+    scraper = FloridaScraper("FL", "Florida")
+    statutes = await scraper.scrape_code("Florida Statutes", "http://example.fl/statutes")
+
+    assert len(statutes) >= 1
+    analytics = scraper.get_fetch_analytics_snapshot()
+    assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_colorado_pdf_summary_fetch_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_unified_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        return b""
+
+    def _fake_get(url: str, *args, **kwargs):
+        return _FakeResponse(b"%PDF-1.4 fake colorado pdf")
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
+    monkeypatch.setattr("requests.get", _fake_get)
+
+    scraper = ColoradoScraper("CO", "Colorado")
+    _ = await scraper._extract_pdf_text_summary("https://example.co/doc.pdf")
+
+    analytics = scraper.get_fetch_analytics_snapshot()
+    assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_connecticut_custom_scrape_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_unified_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        return b""
+
+    def _fake_get(url: str, *args, **kwargs):
+        html = (
+            "<html><body>"
+            "<a href='/current/pub/chap001.htm'>Chapter 001 General Provisions</a>"
+            "</body></html>"
+        ).encode("utf-8")
+        return _FakeResponse(html)
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
+    monkeypatch.setattr("requests.get", _fake_get)
+
+    scraper = ConnecticutScraper("CT", "Connecticut")
+    statutes = await scraper._custom_scrape_connecticut("Connecticut General Statutes", "https://example.ct/titles", "Conn. Gen. Stat.")
 
     assert len(statutes) >= 1
     analytics = scraper.get_fetch_analytics_snapshot()

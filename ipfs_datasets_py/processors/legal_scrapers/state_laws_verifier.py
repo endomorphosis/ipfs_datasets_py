@@ -470,6 +470,7 @@ class StateLawsVerifier:
             "diagnostics": diagnostics,
             "computed": {
                 "fetch_success_ratio": round(fetch_success_ratio, 3),
+                "fetch_attempted": fetch_attempted,
                 "fetch_fallback_ratio": round(fetch_fallback_ratio, 3),
                 "coverage_gap_state_count": len(coverage_gap_states),
                 "kg_ready": is_kg_ready,
@@ -486,7 +487,13 @@ class StateLawsVerifier:
             )
             return self.results
 
-        if not is_kg_ready or len(coverage_gap_states) > 0:
+        targeted_states = int(coverage_block.get("states_targeted", 0) or 0)
+        zero_fetch_attempts = targeted_states > 0 and fetch_attempted <= 0
+
+        if zero_fetch_attempts:
+            details["reasons"] = list(details.get("reasons") or []) + ["no-fetch-attempt-telemetry"]
+
+        if zero_fetch_attempts or (not is_kg_ready) or len(coverage_gap_states) > 0:
             self.log_test(
                 "Operational Readiness",
                 "WARN",

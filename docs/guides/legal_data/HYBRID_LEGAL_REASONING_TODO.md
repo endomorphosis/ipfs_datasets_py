@@ -138,7 +138,7 @@ WS10 local evidence (2026-03-02):
 - Runbook schema sentinel procedure: `ipfs_datasets_py/docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md` (section `12) WS10 Schema Drift Sentinel`).
 - Runbook evidence-pack procedure: `ipfs_datasets_py/docs/guides/legal_data/HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md` (section `13) WS10 Release Evidence Pack Automation`).
 
-## WS11 Execution Board (Planned)
+## WS11 Execution Board (Completed)
 
 Current sprint seed (2026-03-02):
 - [x] `HL-WS11-01` V3 IR Schema Lock + Validator. (2026-03-02)
@@ -193,6 +193,10 @@ WS11 GitHub issues (created 2026-03-02):
 - `HL-WS11-10`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1173
 - `HL-WS11-11`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1174
 - `HL-WS11-12`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1175
+- Dependency comment marker: `[ws11-dependency-map-v1]` posted on issues `1165`-`1176` (2026-03-03).
+- Issue metadata normalization: milestone `WS11 V3 Integration` and assignee `@endomorphosis` applied on `1164`-`1176`.
+- Resolution PR: https://github.com/endomorphosis/ipfs_datasets_py/pull/1178 (`MERGED`, 2026-03-03).
+- Final status: all WS11 issues `1164`-`1176` are `CLOSED`.
 
 ## WS9 Execution Board (Active)
 

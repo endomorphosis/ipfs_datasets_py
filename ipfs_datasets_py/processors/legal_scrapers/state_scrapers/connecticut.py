@@ -47,7 +47,6 @@ class ConnecticutScraper(BaseStateScraper):
         Connecticut organizes statutes by titles with chapters underneath.
         """
         try:
-            import requests
             from bs4 import BeautifulSoup
             from urllib.parse import urljoin
         except ImportError as e:
@@ -57,14 +56,14 @@ class ConnecticutScraper(BaseStateScraper):
         statutes = []
         
         try:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-            
-            response = requests.get(code_url, headers=headers, timeout=30)
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
+            page_bytes = await self._fetch_page_content_with_archival_fallback(
+                code_url,
+                timeout_seconds=30,
+            )
+            if not page_bytes:
+                raise RuntimeError(f"empty response for {code_url}")
+
+            soup = BeautifulSoup(page_bytes, 'html.parser')
             
             # Find all links to titles/chapters
             links = soup.find_all('a', href=True)

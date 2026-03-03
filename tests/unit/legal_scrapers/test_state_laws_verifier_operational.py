@@ -130,6 +130,46 @@ def test_verify_operational_readiness_warns_without_threshold_failure():
     assert last["status"] == "WARN"
 
 
+def test_verify_operational_readiness_warns_on_zero_fetch_attempts():
+    verifier = StateLawsVerifier()
+    verifier._last_scrape_metadata = {
+        "coverage_summary": {
+            "coverage_gap_states": [],
+            "states_targeted": 3,
+            "states_returned": 3,
+            "states_with_nonzero_statutes": 3,
+        },
+        "fetch_analytics": {
+            "attempted": 0,
+            "success": 0,
+            "success_ratio": 0.0,
+            "fallback_count": 0,
+            "providers": {},
+        },
+        "fetch_analytics_by_state": {
+            "AA": {"attempted": 0, "success": 0, "fallback_count": 0},
+            "BB": {"attempted": 0, "success": 0, "fallback_count": 0},
+            "CC": {"attempted": 0, "success": 0, "fallback_count": 0},
+        },
+        "etl_readiness": {
+            "ready_for_kg_etl": True,
+            "total_statutes": 9,
+            "full_text_ratio": 1.0,
+            "jsonld_ratio": 1.0,
+            "citation_ratio": 1.0,
+            "states_with_zero_statutes": 0,
+        },
+        "quality_by_state": {},
+    }
+
+    verifier.verify_operational_readiness()
+
+    last = verifier.results["tests"][-1]
+    assert last["name"] == "Operational Readiness"
+    assert last["status"] == "WARN"
+    assert "no-fetch-attempt-telemetry" in (last["details"].get("reasons") or [])
+
+
 def test_build_operational_diagnostics_respects_top_n_limit():
     metadata = {
         "coverage_summary": {"coverage_gap_states": []},
