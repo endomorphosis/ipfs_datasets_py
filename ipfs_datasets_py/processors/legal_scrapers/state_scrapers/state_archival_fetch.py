@@ -14,13 +14,13 @@ import gzip
 import importlib
 import logging
 import os
+import ssl
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
-
-import requests
-from requests.exceptions import SSLError
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +34,12 @@ class FetchResult:
     status_code: Optional[int] = None
     archive_url: Optional[str] = None
     archive_timestamp: Optional[str] = None
+
+
+@dataclass
+class _HttpResponse:
+    status_code: int
+    content: bytes
 
 
 class ArchivalFetchClient:
@@ -54,20 +60,57 @@ class ArchivalFetchClient:
         self.delay_seconds = delay_seconds
         self.user_agent = user_agent
 
-        self._session = requests.Session()
-        self._session.headers.update({"User-Agent": self.user_agent})
-
-    def _request_with_retries(self, url: str, *, timeout: int, verify: bool = True) -> Optional[requests.Response]:
+    def _request_with_retries(
+        self,
+        url: str,
+        *,
+        timeout: int,
+        verify: bool = True,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> Optional[_HttpResponse]:
         # A small retry loop helps with transient 403/429/503 and edge rate limiting.
         retry_statuses = {403, 429, 500, 502, 503, 504}
+        last_ssl_error: Optional[ssl.SSLError] = None
         for _attempt in range(3):
             try:
-                response = self._session.get(url, timeout=timeout, verify=verify)
+                response = self._http_get(url, timeout=timeout, verify=verify, headers=headers)
+                last_ssl_error = None
+            except ssl.SSLError as exc:
+                last_ssl_error = exc
+                continue
             except Exception:
                 continue
             if int(response.status_code) not in retry_statuses:
                 return response
+        if last_ssl_error is not None:
+            raise last_ssl_error
         return None
+
+    def _http_get(
+        self,
+        url: str,
+        *,
+        timeout: int,
+        verify: bool,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> _HttpResponse:
+        request_headers = {"User-Agent": self.user_agent}
+        if headers:
+            request_headers.update(headers)
+        req = Request(url, headers=request_headers)
+        context = None if verify else ssl._create_unverified_context()
+        try:
+            with urlopen(req, timeout=max(1, int(timeout or self.request_timeout_seconds)), context=context) as response:
+                status_code = int(getattr(response, "status", 200) or 200)
+                content = response.read()
+                return _HttpResponse(status_code=status_code, content=bytes(content or b""))
+        except HTTPError as exc:
+            payload = b""
+            try:
+                payload = bytes(exc.read() or b"")
+            except Exception:
+                payload = b""
+            return _HttpResponse(status_code=int(getattr(exc, "code", 0) or 0), content=payload)
 
     async def fetch_with_fallback(self, url: str) -> FetchResult:
         common_crawl = await asyncio.to_thread(self._fetch_from_common_crawl, url)
@@ -102,7 +145,7 @@ class ArchivalFetchClient:
                     status_code=response.status_code,
                 )
             return None
-        except SSLError:
+        except ssl.SSLError:
             # Some state sites present a broken chain from this host; fall back to
             # insecure TLS only as a last resort so archives can still be queried.
             try:
@@ -255,11 +298,14 @@ class ArchivalFetchClient:
         warc_url = f"https://data.commoncrawl.org/{warc_filename}"
 
         try:
-            response = self._session.get(
+            response = self._request_with_retries(
                 warc_url,
                 headers={"Range": f"bytes={offset}-{range_end}"},
                 timeout=max(self.request_timeout_seconds, 45),
+                verify=True,
             )
+            if response is None:
+                return None
             if response.status_code not in (200, 206):
                 return None
 
