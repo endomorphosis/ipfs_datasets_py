@@ -207,6 +207,151 @@ V2_ID_REGISTRY_ERROR_CODES: Dict[str, str] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Proof Conflict Taxonomy (WS12-04)
+# ---------------------------------------------------------------------------
+
+CONFLICT_TAXONOMY_VERSION = "1.0"
+
+CONFLICT_CLASSES = {
+    "modal_conflict",
+    "temporal_conflict",
+    "exception_precedence_conflict",
+}
+
+CONFLICT_REASON_CODES: Dict[str, str] = {
+    "modal_conflict": "PC_CONFLICT_MODAL",
+    "temporal_conflict": "PC_CONFLICT_TEMPORAL",
+    "exception_precedence_conflict": "PC_CONFLICT_EXCEPTION_PRECEDENCE",
+    "unknown_conflict_class": "PC_CONFLICT_UNKNOWN_CLASS",
+}
+
+
+def classify_conflict_class(conflict_class: str) -> str:
+    """Return the reason code for *conflict_class*.
+
+    Contract-safe: unknown classes return ``PC_CONFLICT_UNKNOWN_CLASS`` and
+    never raise.
+    """
+    if conflict_class in CONFLICT_CLASSES:
+        return CONFLICT_REASON_CODES[conflict_class]
+    return CONFLICT_REASON_CODES["unknown_conflict_class"]
+
+
+def detect_proof_conflicts(ir: "LegalIRV2") -> Dict[str, Any]:
+    """Inspect *ir* norms for modal, temporal, and exception-precedence conflicts.
+
+    Returns::
+
+        {
+            "taxonomy_version": str,
+            "conflicts": [
+                {
+                    "class": str,
+                    "reason_code": str,
+                    "norm_ids": [str, str],
+                    "frame_ref": str,
+                    "description": str,
+                },
+                ...
+            ],
+            "conflict_count": int,
+        }
+    """
+    conflicts: List[Dict[str, Any]] = []
+
+    norms = list(ir.norms.values())
+
+    # Build index: target_frame_ref → list of norms
+    by_frame: Dict[str, List[Any]] = {}
+    for norm in norms:
+        by_frame.setdefault(norm.target_frame_ref, []).append(norm)
+
+    # Build index of frames that are themselves obligation targets
+    obligation_targets = {
+        norm.target_frame_ref
+        for norm in norms
+        if norm.op.value == "O"
+    }
+
+    for frame_ref, frame_norms in by_frame.items():
+        for i in range(len(frame_norms)):
+            for j in range(i + 1, len(frame_norms)):
+                a, b = frame_norms[i], frame_norms[j]
+                # Modal conflict: same frame, different deontic ops (O vs F)
+                ops = {a.op.value, b.op.value}
+                if ops == {"O", "F"}:
+                    conflicts.append(
+                        {
+                            "class": "modal_conflict",
+                            "reason_code": CONFLICT_REASON_CODES["modal_conflict"],
+                            "norm_ids": [a.id.ref(), b.id.ref()],
+                            "frame_ref": frame_ref,
+                            "description": (
+                                f"Norms {a.id.ref()} and {b.id.ref()} impose "
+                                f"conflicting deontic operators O and F on frame {frame_ref}"
+                            ),
+                        }
+                    )
+                # Temporal conflict: same frame, same op, different temporal_refs
+                elif (
+                    a.op == b.op
+                    and a.temporal_ref is not None
+                    and b.temporal_ref is not None
+                    and a.temporal_ref != b.temporal_ref
+                ):
+                    conflicts.append(
+                        {
+                            "class": "temporal_conflict",
+                            "reason_code": CONFLICT_REASON_CODES["temporal_conflict"],
+                            "norm_ids": [a.id.ref(), b.id.ref()],
+                            "frame_ref": frame_ref,
+                            "description": (
+                                f"Norms {a.id.ref()} and {b.id.ref()} have the same op "
+                                f"but conflicting temporal refs "
+                                f"({a.temporal_ref!r} vs {b.temporal_ref!r}) "
+                                f"on frame {frame_ref}"
+                            ),
+                        }
+                    )
+
+    # Exception-precedence conflict: norm has exception referencing an obligation target
+    # Build reverse map: frame_ref → obligation norm id
+    obligation_norm_by_frame: Dict[str, str] = {
+        norm.target_frame_ref: norm.id.ref()
+        for norm in norms
+        if norm.op.value == "O"
+    }
+    for norm in norms:
+        for ex_cond in norm.exceptions:
+            # Inspect the atom's args for any frame_ref that is an obligation target
+            atom = ex_cond.atom
+            if atom is None:
+                continue
+            for arg in atom.args:
+                if arg in obligation_targets and arg != norm.target_frame_ref:
+                    obligating_norm_id = obligation_norm_by_frame.get(arg, norm.id.ref())
+                    conflicts.append(
+                        {
+                            "class": "exception_precedence_conflict",
+                            "reason_code": CONFLICT_REASON_CODES["exception_precedence_conflict"],
+                            "norm_ids": [norm.id.ref(), obligating_norm_id],
+                            "frame_ref": arg,
+                            "description": (
+                                f"Norm {norm.id.ref()} has an exception that references "
+                                f"frame {arg!r}, which is itself an obligation target"
+                            ),
+                        }
+                    )
+                    break
+
+    return {
+        "taxonomy_version": CONFLICT_TAXONOMY_VERSION,
+        "conflicts": conflicts,
+        "conflict_count": len(conflicts),
+    }
+
+
 class IRContractValidationError(ValueError):
     """Structured contract validation error with stable machine-readable codes."""
 
