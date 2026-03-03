@@ -114,6 +114,90 @@ def test_critic_score_penalizes_zero_fetch_attempts():
     assert loop._critic_score(with_attempts) > loop._critic_score(zero_attempts)
 
 
+def test_critic_score_penalizes_low_kg_content_quality():
+    loop = _make_loop()
+
+    strong_kg = {
+        "coverage": {
+            "states_targeted": 3,
+            "states_with_nonzero_statutes": 3,
+            "coverage_gap_states": [],
+        },
+        "fetch": {
+            "attempted": 12,
+            "success_ratio": 0.9,
+            "no_attempt_states": [],
+            "weak_states": [],
+        },
+        "etl_readiness": {
+            "ready_for_kg_etl": True,
+            "full_text_ratio": 0.95,
+            "jsonld_ratio": 0.92,
+            "jsonld_legislation_ratio": 0.9,
+            "kg_payload_ratio": 0.9,
+            "citation_ratio": 0.7,
+            "statute_signal_ratio": 0.9,
+            "non_scaffold_ratio": 0.92,
+        },
+        "quality": {"weak_states": []},
+    }
+
+    weak_kg = {
+        "coverage": {
+            "states_targeted": 3,
+            "states_with_nonzero_statutes": 3,
+            "coverage_gap_states": [],
+        },
+        "fetch": {
+            "attempted": 12,
+            "success_ratio": 0.9,
+            "no_attempt_states": [],
+            "weak_states": [],
+        },
+        "etl_readiness": {
+            "ready_for_kg_etl": True,
+            "full_text_ratio": 0.95,
+            "jsonld_ratio": 0.92,
+            "jsonld_legislation_ratio": 0.6,
+            "kg_payload_ratio": 0.58,
+            "citation_ratio": 0.7,
+            "statute_signal_ratio": 0.55,
+            "non_scaffold_ratio": 0.7,
+        },
+        "quality": {"weak_states": []},
+    }
+
+    assert loop._critic_score(strong_kg) > loop._critic_score(weak_kg)
+
+
+def test_is_success_requires_kg_content_thresholds():
+    loop = _make_loop()
+
+    score = 0.99
+    diagnostics = {
+        "coverage": {
+            "coverage_gap_states": [],
+        },
+        "fetch": {
+            "no_attempt_states": [],
+        },
+        "etl_readiness": {
+            "ready_for_kg_etl": True,
+            "full_text_ratio": 0.9,
+            "jsonld_ratio": 0.9,
+            "jsonld_legislation_ratio": 0.65,
+            "kg_payload_ratio": 0.8,
+            "statute_signal_ratio": 0.9,
+            "non_scaffold_ratio": 0.9,
+        },
+    }
+
+    assert loop._is_success(diagnostics, score) is False
+
+    diagnostics["etl_readiness"]["jsonld_legislation_ratio"] = 0.9
+    assert loop._is_success(diagnostics, score) is True
+
+
 def test_recommend_patch_targets_includes_state_specific_scrapers():
     loop = _make_loop()
     diagnostics = {

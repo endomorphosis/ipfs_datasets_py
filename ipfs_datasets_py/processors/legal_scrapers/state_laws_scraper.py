@@ -869,7 +869,11 @@ def _compute_etl_readiness_summary(scraped_statutes: List[Dict[str, Any]]) -> Di
     total_statutes = 0
     statutes_with_text = 0
     statutes_with_jsonld = 0
+    statutes_with_jsonld_legislation = 0
+    statutes_with_kg_payload = 0
     statutes_with_citations = 0
+    statutes_with_statute_signals = 0
+    non_scaffold_statutes = 0
     states_with_zero = 0
     states_with_jsonld = 0
 
@@ -888,8 +892,20 @@ def _compute_etl_readiness_summary(scraped_statutes: List[Dict[str, Any]]) -> Di
             total_statutes += 1
 
             full_text = str(statute.get("full_text") or statute.get("text") or "").strip()
+            section_name = str(statute.get("section_name") or statute.get("sectionName") or "")
+            section_number = str(statute.get("section_number") or statute.get("sectionNumber") or "")
             if len(full_text) >= 120:
                 statutes_with_text += 1
+
+            if not _is_scaffold_or_navigation_record(statute):
+                non_scaffold_statutes += 1
+
+            if (
+                _QUALITY_SECTION_SIGNAL_RE.search(full_text)
+                or _QUALITY_SECTION_SIGNAL_RE.search(section_name)
+                or _QUALITY_SECTION_NUMBER_RE.match(section_number)
+            ):
+                statutes_with_statute_signals += 1
 
             structured_data = statute.get("structured_data") or {}
             if isinstance(structured_data, dict):
@@ -897,6 +913,16 @@ def _compute_etl_readiness_summary(scraped_statutes: List[Dict[str, Any]]) -> Di
                 if isinstance(jsonld, dict):
                     statutes_with_jsonld += 1
                     state_jsonld_hits += 1
+
+                    if str(jsonld.get("@type") or "").strip().lower() == "legislation":
+                        statutes_with_jsonld_legislation += 1
+
+                    # Require core fields used by downstream KG ETL transforms.
+                    if all(
+                        str(jsonld.get(key) or "").strip()
+                        for key in ("identifier", "name", "text")
+                    ):
+                        statutes_with_kg_payload += 1
 
                 citations = structured_data.get("citations") or {}
                 if isinstance(citations, dict):
@@ -912,7 +938,15 @@ def _compute_etl_readiness_summary(scraped_statutes: List[Dict[str, Any]]) -> Di
 
     full_text_ratio = round((statutes_with_text / total_statutes), 3) if total_statutes > 0 else 0.0
     jsonld_ratio = round((statutes_with_jsonld / total_statutes), 3) if total_statutes > 0 else 0.0
+    jsonld_legislation_ratio = (
+        round((statutes_with_jsonld_legislation / total_statutes), 3) if total_statutes > 0 else 0.0
+    )
+    kg_payload_ratio = round((statutes_with_kg_payload / total_statutes), 3) if total_statutes > 0 else 0.0
     citation_ratio = round((statutes_with_citations / total_statutes), 3) if total_statutes > 0 else 0.0
+    statute_signal_ratio = (
+        round((statutes_with_statute_signals / total_statutes), 3) if total_statutes > 0 else 0.0
+    )
+    non_scaffold_ratio = round((non_scaffold_statutes / total_statutes), 3) if total_statutes > 0 else 0.0
 
     return {
         "states_processed": state_count,
@@ -921,11 +955,19 @@ def _compute_etl_readiness_summary(scraped_statutes: List[Dict[str, Any]]) -> Di
         "total_statutes": total_statutes,
         "full_text_ratio": full_text_ratio,
         "jsonld_ratio": jsonld_ratio,
+        "jsonld_legislation_ratio": jsonld_legislation_ratio,
+        "kg_payload_ratio": kg_payload_ratio,
         "citation_ratio": citation_ratio,
+        "statute_signal_ratio": statute_signal_ratio,
+        "non_scaffold_ratio": non_scaffold_ratio,
         "ready_for_kg_etl": bool(
             total_statutes > 0
             and full_text_ratio >= 0.85
             and jsonld_ratio >= 0.75
+            and jsonld_legislation_ratio >= 0.70
+            and kg_payload_ratio >= 0.70
+            and statute_signal_ratio >= 0.70
+            and non_scaffold_ratio >= 0.85
         ),
     }
 

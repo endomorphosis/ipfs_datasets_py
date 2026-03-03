@@ -272,6 +272,14 @@ class StateLawsActorCriticLoop:
             global_reasons: set[str] = set()
             if not bool(etl.get("ready_for_kg_etl")):
                 global_reasons.add("etl_not_ready")
+            if float(etl.get("statute_signal_ratio", 0.0) or 0.0) < 0.70:
+                global_reasons.add("low_statute_signal_ratio")
+            if float(etl.get("non_scaffold_ratio", 0.0) or 0.0) < 0.85:
+                global_reasons.add("high_scaffold_or_navigation_ratio")
+            if float(etl.get("kg_payload_ratio", 0.0) or 0.0) < 0.70:
+                global_reasons.add("kg_payload_ratio_low")
+            if float(etl.get("jsonld_legislation_ratio", 0.0) or 0.0) < 0.70:
+                global_reasons.add("jsonld_legislation_ratio_low")
             if coverage.get("coverage_gap_states"):
                 global_reasons.add("coverage_gaps_present")
             if fetch.get("no_attempt_states"):
@@ -761,8 +769,20 @@ class StateLawsActorCriticLoop:
 
         full_text_ratio = float(etl.get("full_text_ratio", 0.0) or 0.0)
         jsonld_ratio = float(etl.get("jsonld_ratio", 0.0) or 0.0)
+        jsonld_legislation_ratio = float(etl.get("jsonld_legislation_ratio", 0.0) or 0.0)
+        kg_payload_ratio = float(etl.get("kg_payload_ratio", 0.0) or 0.0)
         citation_ratio = float(etl.get("citation_ratio", 0.0) or 0.0)
-        etl_score = (0.4 * full_text_ratio) + (0.4 * jsonld_ratio) + (0.2 * citation_ratio)
+        statute_signal_ratio = float(etl.get("statute_signal_ratio", 0.0) or 0.0)
+        non_scaffold_ratio = float(etl.get("non_scaffold_ratio", 0.0) or 0.0)
+        etl_score = (
+            (0.20 * full_text_ratio)
+            + (0.20 * jsonld_ratio)
+            + (0.15 * jsonld_legislation_ratio)
+            + (0.15 * kg_payload_ratio)
+            + (0.15 * statute_signal_ratio)
+            + (0.10 * non_scaffold_ratio)
+            + (0.05 * citation_ratio)
+        )
 
         fetch_success_ratio = float(fetch.get("success_ratio", 0.0) or 0.0)
         fetch_attempted = int(fetch.get("attempted", 0) or 0)
@@ -788,9 +808,16 @@ class StateLawsActorCriticLoop:
         else:
             quality_score = 1.0
 
-        score = (0.40 * coverage_score) + (0.35 * etl_score) + (0.15 * fetch_score) + (0.10 * quality_score)
+        score = (0.35 * coverage_score) + (0.40 * etl_score) + (0.15 * fetch_score) + (0.10 * quality_score)
         if bool(etl.get("ready_for_kg_etl")):
             score += 0.05
+
+        if statute_signal_ratio > 0.0 and statute_signal_ratio < 0.65:
+            score -= 0.08
+        if non_scaffold_ratio > 0.0 and non_scaffold_ratio < 0.80:
+            score -= 0.08
+        if kg_payload_ratio > 0.0 and kg_payload_ratio < 0.65:
+            score -= 0.06
 
         return round(max(0.0, min(1.0, score)), 4)
 
@@ -802,9 +829,22 @@ class StateLawsActorCriticLoop:
         coverage_gaps = list(coverage.get("coverage_gap_states") or [])
         no_attempt_states = list(fetch.get("no_attempt_states") or [])
 
+        full_text_ratio = float(etl.get("full_text_ratio", 0.0) or 0.0)
+        jsonld_ratio = float(etl.get("jsonld_ratio", 0.0) or 0.0)
+        jsonld_legislation_ratio = float(etl.get("jsonld_legislation_ratio", 0.0) or 0.0)
+        kg_payload_ratio = float(etl.get("kg_payload_ratio", 0.0) or 0.0)
+        statute_signal_ratio = float(etl.get("statute_signal_ratio", 0.0) or 0.0)
+        non_scaffold_ratio = float(etl.get("non_scaffold_ratio", 0.0) or 0.0)
+
         return bool(
             score >= float(self.loop_config.target_score)
             and bool(etl.get("ready_for_kg_etl"))
+            and full_text_ratio >= 0.85
+            and jsonld_ratio >= 0.75
+            and jsonld_legislation_ratio >= 0.70
+            and kg_payload_ratio >= 0.70
+            and statute_signal_ratio >= 0.70
+            and non_scaffold_ratio >= 0.85
             and len(coverage_gaps) == 0
             and len(no_attempt_states) == 0
         )
@@ -820,6 +860,9 @@ class StateLawsActorCriticLoop:
         weak_fetch = len(list(fetch.get("weak_states") or [])) > 0
         weak_quality = len(list(quality.get("weak_states") or [])) > 0
         etl_ready = bool(etl.get("ready_for_kg_etl"))
+        statute_signal_ratio = float(etl.get("statute_signal_ratio", 0.0) or 0.0)
+        non_scaffold_ratio = float(etl.get("non_scaffold_ratio", 0.0) or 0.0)
+        kg_payload_ratio = float(etl.get("kg_payload_ratio", 0.0) or 0.0)
 
         candidates: List[ActorPolicyConfig] = []
 
@@ -879,6 +922,42 @@ class StateLawsActorCriticLoop:
                     per_state_retry_attempts=base.per_state_retry_attempts,
                     rate_limit_delay=base.rate_limit_delay,
                     min_full_text_chars=min(500, base.min_full_text_chars + 50),
+                    hydrate_statute_text=True,
+                )
+            )
+
+        if statute_signal_ratio > 0.0 and statute_signal_ratio < 0.70:
+            _add(
+                ActorPolicyConfig(
+                    name="statute_signal_recall",
+                    parallel_workers=max(2, base.parallel_workers - 1),
+                    per_state_retry_attempts=min(6, base.per_state_retry_attempts + 1),
+                    rate_limit_delay=min(3.0, base.rate_limit_delay + 0.2),
+                    min_full_text_chars=max(180, base.min_full_text_chars - 30),
+                    hydrate_statute_text=True,
+                )
+            )
+
+        if non_scaffold_ratio > 0.0 and non_scaffold_ratio < 0.85:
+            _add(
+                ActorPolicyConfig(
+                    name="anti_scaffold_precision",
+                    parallel_workers=base.parallel_workers,
+                    per_state_retry_attempts=base.per_state_retry_attempts,
+                    rate_limit_delay=min(3.0, base.rate_limit_delay + 0.2),
+                    min_full_text_chars=min(550, base.min_full_text_chars + 60),
+                    hydrate_statute_text=True,
+                )
+            )
+
+        if kg_payload_ratio > 0.0 and kg_payload_ratio < 0.70:
+            _add(
+                ActorPolicyConfig(
+                    name="kg_payload_enrichment",
+                    parallel_workers=max(2, base.parallel_workers - 1),
+                    per_state_retry_attempts=min(6, base.per_state_retry_attempts + 1),
+                    rate_limit_delay=min(3.0, base.rate_limit_delay + 0.15),
+                    min_full_text_chars=max(220, base.min_full_text_chars),
                     hydrate_statute_text=True,
                 )
             )
