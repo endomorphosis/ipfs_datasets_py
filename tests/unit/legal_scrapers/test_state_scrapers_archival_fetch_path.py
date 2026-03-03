@@ -36,6 +36,15 @@ class _FakeResponse:
         return None
 
 
+def _make_fake_archival_fetch(fake_get):
+    async def _fake_fetch_with_archival(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        response = fake_get(url)
+        return bytes(getattr(response, "content", b""))
+
+    return _fake_fetch_with_archival
+
+
 @pytest.mark.anyio
 async def test_oklahoma_request_text_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
     async def _fake_unified_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
@@ -44,8 +53,7 @@ async def test_oklahoma_request_text_records_fetch_analytics(monkeypatch: pytest
     def _fake_get(url: str, *args, **kwargs):
         return _FakeResponse(b"<html><body><div>Oklahoma statute body text section 1.2.3.</div></body></html>")
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr("requests.get", _fake_get)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
 
     scraper = OklahomaScraper("OK", "Oklahoma")
     text = await scraper._request_text("https://example.ok/statute", headers={}, timeout=20)
@@ -68,8 +76,7 @@ async def test_alabama_scrape_uses_archival_fetch_path(monkeypatch: pytest.Monke
         ).encode("utf-8")
         return _FakeResponse(html)
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr("requests.get", _fake_get)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
 
     scraper = AlabamaScraper("AL", "Alabama")
     statutes = await scraper.scrape_code("Alabama Code", "http://example.al/code")
@@ -88,8 +95,7 @@ async def test_indiana_pdf_fetch_records_fetch_analytics(monkeypatch: pytest.Mon
         # Minimal payload is enough for fetch analytics validation.
         return _FakeResponse(b"%PDF-1.4 fake pdf bytes")
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr("requests.get", _fake_get)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
 
     scraper = IndianaScraper("IN", "Indiana")
     _ = await scraper._request_bytes(
@@ -115,8 +121,7 @@ async def test_georgia_custom_scrape_records_fetch_analytics(monkeypatch: pytest
         ).encode("utf-8")
         return _FakeResponse(html)
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr("requests.get", _fake_get)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
 
     scraper = GeorgiaScraper("GA", "Georgia")
     statutes = await scraper._custom_scrape_georgia("Official Code of Georgia", "http://example.ga/laws", "Ga. Code Ann.")
@@ -140,8 +145,7 @@ async def test_louisiana_archival_request_records_fetch_analytics(monkeypatch: p
         ).encode("utf-8")
         return _FakeResponse(html)
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr("requests.get", _fake_get)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
 
     scraper = LouisianaScraper("LA", "Louisiana")
     text = await scraper._request_text("http://example.la/law", headers={}, timeout=20)
@@ -164,8 +168,7 @@ async def test_new_york_fallback_records_fetch_analytics(monkeypatch: pytest.Mon
         ).encode("utf-8")
         return _FakeResponse(html)
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr("requests.get", _fake_get)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
 
     scraper = NewYorkScraper("NY", "New York")
     statutes = await scraper._scrape_public_law_updates("New York Consolidated Laws", max_sections=5)
@@ -184,8 +187,7 @@ async def test_texas_section_fetch_records_fetch_analytics(monkeypatch: pytest.M
         body = ("Texas section body content with legal text. " * 20).encode("utf-8")
         return _FakeResponse(b"<html><body><div>" + body + b"</div></body></html>")
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr("requests.get", _fake_get)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
 
     scraper = TexasScraper("TX", "Texas")
     text = await scraper._fetch_section_text("https://example.tx/section", fallback_text="fallback")
@@ -208,8 +210,7 @@ async def test_florida_scrape_records_fetch_analytics(monkeypatch: pytest.Monkey
         ).encode("utf-8")
         return _FakeResponse(html)
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr("requests.get", _fake_get)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
 
     scraper = FloridaScraper("FL", "Florida")
     statutes = await scraper.scrape_code("Florida Statutes", "http://example.fl/statutes")
@@ -227,8 +228,7 @@ async def test_colorado_pdf_summary_fetch_records_fetch_analytics(monkeypatch: p
     def _fake_get(url: str, *args, **kwargs):
         return _FakeResponse(b"%PDF-1.4 fake colorado pdf")
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr("requests.get", _fake_get)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
 
     scraper = ColoradoScraper("CO", "Colorado")
     _ = await scraper._extract_pdf_text_summary("https://example.co/doc.pdf")
@@ -250,8 +250,7 @@ async def test_connecticut_custom_scrape_records_fetch_analytics(monkeypatch: py
         ).encode("utf-8")
         return _FakeResponse(html)
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr("requests.get", _fake_get)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
 
     scraper = ConnecticutScraper("CT", "Connecticut")
     statutes = await scraper._custom_scrape_connecticut("Connecticut General Statutes", "https://example.ct/titles", "Conn. Gen. Stat.")
@@ -274,8 +273,7 @@ async def test_rhode_island_custom_scrape_records_fetch_analytics(monkeypatch: p
         ).encode("utf-8")
         return _FakeResponse(html)
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr("requests.get", _fake_get)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
 
     scraper = RhodeIslandScraper("RI", "Rhode Island")
     statutes = await scraper._custom_scrape_rhode_island("Rhode Island General Laws", "http://example.ri/statutes", "R.I. Gen. Laws")
@@ -294,8 +292,7 @@ async def test_south_dakota_request_json_records_fetch_analytics(monkeypatch: py
         payload = b'{"Statute":"1-1-1","CatchLine":"General law","Html":"<p>Long legal text</p>"}'
         return _FakeResponse(payload)
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr("requests.get", _fake_get)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
 
     scraper = SouthDakotaScraper("SD", "South Dakota")
     data = await scraper._request_json("https://example.sd/api", headers={}, timeout=20)
@@ -318,8 +315,7 @@ async def test_delaware_custom_scrape_records_fetch_analytics(monkeypatch: pytes
         ).encode("utf-8")
         return _FakeResponse(html)
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr("requests.get", _fake_get)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
 
     scraper = DelawareScraper("DE", "Delaware")
     statutes = await scraper._custom_scrape_delaware("Delaware Code", "https://example.de/title1", "Del. Code")
@@ -342,8 +338,7 @@ async def test_wyoming_custom_scrape_records_fetch_analytics(monkeypatch: pytest
         ).encode("utf-8")
         return _FakeResponse(html)
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr("requests.get", _fake_get)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
 
     scraper = WyomingScraper("WY", "Wyoming")
     statutes = await scraper._custom_scrape_wyoming("Wyoming Statutes", "https://example.wy/statutes", "Wyo. Stat.")
@@ -383,8 +378,7 @@ async def test_new_mexico_request_bytes_records_fetch_analytics(monkeypatch: pyt
     def _fake_get(url: str, *args, **kwargs):
         return _FakeResponse(b"%PDF-1.4 fake new mexico statute")
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr("requests.get", _fake_get)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
 
     scraper = NewMexicoScraper("NM", "New Mexico")
     payload = await scraper._request_bytes("https://example.nm/statute.pdf", headers={}, timeout=20)
@@ -403,8 +397,7 @@ async def test_mississippi_request_text_records_fetch_analytics(monkeypatch: pyt
         html = "<html><body><h1>History of Actions</h1><p>House Bill 1234</p></body></html>".encode("utf-8")
         return _FakeResponse(html)
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
-    monkeypatch.setattr("requests.get", _fake_get)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
 
     scraper = MississippiScraper("MS", "Mississippi")
     text = await scraper._request_text("https://example.ms/history/HB1234.htm", headers={}, timeout=20)

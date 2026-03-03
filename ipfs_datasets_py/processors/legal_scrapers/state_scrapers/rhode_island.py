@@ -44,7 +44,6 @@ class RhodeIslandScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         """Custom scraper for Rhode Island's legislative website."""
         try:
-            import requests
             from bs4 import BeautifulSoup
             from urllib.parse import urljoin
         except ImportError as e:
