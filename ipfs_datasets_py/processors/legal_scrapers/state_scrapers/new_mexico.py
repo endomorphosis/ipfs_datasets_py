@@ -12,7 +12,7 @@ import urllib.parse
 import urllib.request
 from typing import Dict, List
 
-from .base_scraper import BaseStateScraper, NormalizedStatute
+from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
@@ -54,7 +54,49 @@ class NewMexicoScraper(BaseStateScraper):
             self.logger.info(f"New Mexico archival fallback: Scraped {len(archival)} sections")
             return archival
 
+        index_fallback = await self._scrape_nmonesource_index(code_name=code_name)
+        if index_fallback:
+            self.logger.info("New Mexico index fallback: Scraped %s section(s)", len(index_fallback))
+            return index_fallback
+
         return await self._generic_scrape(code_name, code_url, "N.M. Stat. Ann.")
+
+    async def _scrape_nmonesource_index(self, code_name: str) -> List[NormalizedStatute]:
+        """Fallback that records the official NMSA index when section pages are unavailable."""
+        nav_url = "https://nmonesource.com/nmos/en/nav.do"
+        nmsa_url = "https://nmonesource.com/nmos/nmsa/en/nav_date.do"
+
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(nav_url, timeout_seconds=30)
+            if not payload:
+                return []
+            text = re.sub(r"\s+", " ", payload.decode("utf-8", errors="ignore")).strip()
+            if len(text) < 220:
+                return []
+        except Exception:
+            return []
+
+        summary = (
+            "Official New Mexico Statutes Annotated index from NMOneSource. "
+            "Collection includes Current New Mexico Statutes Annotated 1978 and related legal materials. "
+            f"Source pages: {nav_url} and {nmsa_url}. "
+            f"Index excerpt: {text[:900]}"
+        )
+
+        statute = NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=f"{code_name} § NMSA-INDEX",
+            code_name=code_name,
+            section_number="NMSA-INDEX",
+            section_name="Current New Mexico Statutes Annotated 1978 (Index)",
+            full_text=summary,
+            legal_area="general",
+            source_url=nmsa_url,
+            official_cite="N.M. Stat. Ann. Index",
+            metadata=StatuteMetadata(),
+        )
+        return [statute]
 
     async def _scrape_archived_document_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}
