@@ -209,6 +209,7 @@ async def _main() -> None:
             parquet_prefix: str | None = None,
             preferred_names: list[str] | None = None,
             max_files: int = 0,
+            exclude_name_tokens: list[str] | None = None,
         ) -> list[str]:
             if explicit_file:
                 return [explicit_file]
@@ -226,6 +227,14 @@ async def _main() -> None:
                     f
                     for f in parquet_files
                     if f == normalized or f.startswith(f"{normalized}/")
+                ]
+
+            if exclude_name_tokens:
+                lowered_tokens = [str(tok).lower() for tok in exclude_name_tokens if str(tok).strip()]
+                parquet_files = [
+                    f
+                    for f in parquet_files
+                    if not any(tok in f.lower() for tok in lowered_tokens)
                 ]
 
             if preferred_names:
@@ -283,6 +292,7 @@ async def _main() -> None:
                 parquet_prefix=payload.get("hf_parquet_prefix"),
                 preferred_names=payload.get("preferred_case_parquet_names"),
                 max_files=int(payload.get("max_case_parquet_files", 0)),
+                exclude_name_tokens=["embedding", "_cid_index", "_vector_index"],
             )
             local_parquet = payload.get("local_case_parquet_file")
             con = duckdb.connect()
