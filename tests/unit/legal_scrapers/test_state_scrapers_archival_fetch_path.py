@@ -15,6 +15,8 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.louisiana import 
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.missouri import MissouriScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_york import NewYorkScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oklahoma import OklahomaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon import OregonScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon_admin_rules import OregonAdministrativeRulesScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.rhode_island import RhodeIslandScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.south_dakota import SouthDakotaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.tennessee import TennesseeScraper
@@ -497,5 +499,86 @@ async def test_generic_scrape_records_fetch_analytics(monkeypatch: pytest.Monkey
     statutes = await scraper.scrape_code("Test Code", "https://example.zz/code")
 
     assert len(statutes) >= 1
+    analytics = scraper.get_fetch_analytics_snapshot()
+    assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_oklahoma_cdx_discovery_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
+    cdx_json = b'[["urlkey","timestamp","original"],["u","20200101120000","https://www.oscn.net/applications/oscn/DeliverDocument.asp?CiteID=12345"]]'
+
+    async def _fake_fetch_with_archival(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        return cdx_json
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch_with_archival)
+
+    scraper = OklahomaScraper("OK", "Oklahoma")
+    urls = await scraper._discover_oscn_document_urls_via_cdx(headers={})
+
+    assert any("CiteID=12345" in url for url in urls)
+    analytics = scraper.get_fetch_analytics_snapshot()
+    assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_oregon_discover_chapter_urls_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
+    html = (
+        "<html><body>"
+        "<a href='/bills_laws/ors/ors001.html'>Chapter 1</a>"
+        "<a href='/bills_laws/ors/ors002.html'>Chapter 2</a>"
+        "</body></html>"
+    ).encode("utf-8")
+
+    async def _fake_fetch_with_archival(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        return html
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch_with_archival)
+
+    scraper = OregonScraper("OR", "Oregon")
+    urls = await scraper._discover_chapter_urls("https://www.oregonlegislature.gov/bills_laws/ors/ors001.html")
+
+    assert len(urls) >= 1
+    analytics = scraper.get_fetch_analytics_snapshot()
+    assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_oregon_admin_rules_cdx_discovery_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
+    cdx_json = b'[["original"],["https://secure.sos.state.or.us/oard/displayChapterRules.action?selectedChapter=137"]]'
+
+    async def _fake_fetch_with_archival(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        return cdx_json
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch_with_archival)
+
+    scraper = OregonScraper("OR", "Oregon")
+    helper = OregonAdministrativeRulesScraper(scraper)
+    urls = await helper._discover_chapter_urls_from_cdx()
+
+    assert any("selectedChapter=137" in url for url in urls)
+    analytics = scraper.get_fetch_analytics_snapshot()
+    assert int(analytics.get("attempted") or 0) > 0
+
+
+def test_generic_get_code_list_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
+    html = (
+        "<html><body>"
+        "<a href='/codes/title-1'>Title 1 General Code</a>"
+        "</body></html>"
+    ).encode("utf-8")
+
+    def _fake_fetch_sync(self, url: str, timeout_seconds: int = 30) -> bytes:
+        self._record_fetch_event(provider="test_fake_sync", success=True)
+        return html
+
+    monkeypatch.setattr(GenericStateScraper, "_fetch_url_bytes_sync", _fake_fetch_sync)
+
+    scraper = GenericStateScraper("ZZ", "Test State")
+    codes = scraper.get_code_list()
+
+    assert len(codes) >= 1
     analytics = scraper.get_fetch_analytics_snapshot()
     assert int(analytics.get("attempted") or 0) > 0

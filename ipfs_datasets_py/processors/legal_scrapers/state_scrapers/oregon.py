@@ -20,7 +20,6 @@ from .oregon_admin_rules import OregonAdministrativeRulesScraper
 from .registry import StateScraperRegistry
 
 try:
-    import requests
     from bs4 import BeautifulSoup
 
     REQUESTS_AVAILABLE = True
@@ -146,23 +145,13 @@ class OregonScraper(BaseStateScraper):
             },
         ]
 
-    def _make_session(self) -> "requests.Session":
-        session = requests.Session()
-        session.headers.update(
-            {
-                "User-Agent": "ipfs-datasets-oregon-scraper/2.0",
-                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
-            }
-        )
-        return session
-
-    def _discover_chapter_urls(self, session: "requests.Session", seed_url: str) -> List[str]:
+    async def _discover_chapter_urls(self, seed_url: str) -> List[str]:
         try:
-            response = session.get(seed_url, timeout=60)
-            if int(response.status_code) != 200:
-                self.logger.warning(f"Oregon seed request failed ({response.status_code}): {seed_url}")
+            seed_bytes = await self._fetch_page_content_with_archival_fallback(seed_url, timeout_seconds=60)
+            if not seed_bytes:
+                self.logger.warning(f"Oregon seed request failed (no content): {seed_url}")
                 return [seed_url]
-            soup = BeautifulSoup(response.text, "html.parser")
+            soup = BeautifulSoup(seed_bytes, "html.parser")
         except Exception as exc:
             self.logger.warning(f"Oregon chapter discovery failed: {exc}")
             return [seed_url]
@@ -367,7 +356,6 @@ class OregonScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
 
         try:
-            session = self._make_session()
             chapter_urls: List[str] = []
 
             seed_bytes = await self._fetch_page_content_with_archival_fallback(code_url, timeout_seconds=90)
@@ -385,7 +373,7 @@ class OregonScraper(BaseStateScraper):
                     chapter_urls = []
 
             if not chapter_urls:
-                chapter_urls = self._discover_chapter_urls(session, code_url)
+                chapter_urls = await self._discover_chapter_urls(code_url)
 
             self.logger.info(f"Oregon: discovered {len(chapter_urls)} ORS chapter pages")
 

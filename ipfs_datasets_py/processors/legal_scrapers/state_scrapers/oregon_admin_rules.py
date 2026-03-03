@@ -14,7 +14,6 @@ from urllib.parse import urljoin
 from .base_scraper import NormalizedStatute, StatuteMetadata
 
 try:
-    import requests
     from bs4 import BeautifulSoup
 
     REQUESTS_AVAILABLE = True
@@ -91,17 +90,28 @@ class OregonAdministrativeRulesScraper:
 
         return sorted(set(ids))
 
-    def _discover_chapter_urls_from_cdx(self) -> List[str]:
+    async def _discover_chapter_urls_from_cdx(self) -> List[str]:
         if not REQUESTS_AVAILABLE:
             return []
 
         try:
-            response = requests.get(self.CDX_CHAPTER_QUERY, timeout=45)
-            if int(response.status_code) != 200:
+            payload_bytes = await self.parent._fetch_page_content_with_archival_fallback(
+                self.CDX_CHAPTER_QUERY,
+                timeout_seconds=45,
+            )
+            if not payload_bytes:
                 return []
-            payload = response.json()
+            payload = self._decode_json(payload_bytes)
             chapter_ids = self.extract_chapter_ids_from_cdx(payload)
             return [f"{self.OARD_BASE}/displayChapterRules.action?selectedChapter={cid}" for cid in chapter_ids]
+        except Exception:
+            return []
+
+    def _decode_json(self, payload: bytes) -> Any:
+        import json
+
+        try:
+            return json.loads(payload.decode("utf-8", errors="replace"))
         except Exception:
             return []
 
@@ -139,7 +149,7 @@ class OregonAdministrativeRulesScraper:
         for seed in seed_urls:
             urls.extend(await self._discover_chapter_urls_from_seed(seed))
 
-        urls.extend(self._discover_chapter_urls_from_cdx())
+        urls.extend(await self._discover_chapter_urls_from_cdx())
         urls = _dedupe_keep_order(self._normalize_oard_url(url) for url in urls)
 
         # Optional limit for faster debug/iteration.

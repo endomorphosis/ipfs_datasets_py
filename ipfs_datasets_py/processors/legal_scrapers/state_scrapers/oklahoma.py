@@ -10,7 +10,6 @@ import re
 from typing import Dict, List, Set
 from urllib.parse import quote, urljoin
 
-import requests
 from bs4 import BeautifulSoup
 
 from .base_scraper import BaseStateScraper, NormalizedStatute
@@ -150,7 +149,7 @@ class OklahomaScraper(BaseStateScraper):
                 _add(live_link)
 
         # Archive-driven URL discovery helps when live index pages are sparse.
-        for archive_url in self._discover_oscn_document_urls_via_cdx(headers=headers):
+        for archive_url in await self._discover_oscn_document_urls_via_cdx(headers=headers):
             _add(archive_url)
 
         return candidates
@@ -178,9 +177,13 @@ class OklahomaScraper(BaseStateScraper):
             "&fl=timestamp,original,statuscode&filter=statuscode:200&limit=8"
         )
         try:
-            response = requests.get(cdx_url, headers=headers, timeout=30)
-            response.raise_for_status()
-            rows = json.loads(response.text)
+            payload = await self._fetch_page_content_with_archival_fallback(
+                cdx_url,
+                timeout_seconds=30,
+            )
+            if not payload:
+                return []
+            rows = json.loads(payload.decode("utf-8", errors="replace"))
         except Exception:
             return []
 
@@ -207,11 +210,15 @@ class OklahomaScraper(BaseStateScraper):
 
         return discovered
 
-    def _discover_oscn_document_urls_via_cdx(self, headers: Dict[str, str]) -> List[str]:
+    async def _discover_oscn_document_urls_via_cdx(self, headers: Dict[str, str]) -> List[str]:
         try:
-            response = requests.get(self._CDX_DISCOVERY_URL, headers=headers, timeout=35)
-            response.raise_for_status()
-            payload = json.loads(response.text)
+            raw = await self._fetch_page_content_with_archival_fallback(
+                self._CDX_DISCOVERY_URL,
+                timeout_seconds=35,
+            )
+            if not raw:
+                return []
+            payload = json.loads(raw.decode("utf-8", errors="replace"))
         except Exception:
             return []
 

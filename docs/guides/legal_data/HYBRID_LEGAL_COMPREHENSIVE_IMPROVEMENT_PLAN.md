@@ -779,3 +779,94 @@ Phase F: Validation and rollout
 - Reasoner returns proof objects with IR/source references.
 - Round-trip CNL/NL generation reconstructs normative sentences deterministically.
 - Hooking optimizer/KG/prover does not mutate normative semantics beyond configured drift policy.
+
+## 12. Post-WS11 Comprehensive Improvement Plan (WS12)
+
+WS11 closure baseline:
+- Resolution PR merged: `https://github.com/endomorphosis/ipfs_datasets_py/pull/1178`.
+- WS11 issue set `1164`-`1176` is closed.
+
+WS12 objective:
+- Convert WS11 feature completion into production-grade operational maturity with stronger contracts for policy packs, cross-jurisdiction replay, benchmark governance, and regression triage automation.
+
+### 12.1 WS12 Workstreams
+
+1. **Policy-pack contract and deterministic selection**
+- Define explicit policy-pack schema (`jurisdiction`, `effective_date`, `priority_policy`, `exception_policy`, `temporal_policy`).
+- Require deterministic policy-pack resolution for every query path.
+
+2. **Cross-jurisdiction replay suite**
+- Add replay corpus covering at least Federal + two State policy profiles.
+- Validate deterministic outputs (`status`, `proof_id`, `reason_code`) for each profile.
+
+3. **Proof conflict triage automation**
+- Emit machine-readable conflict diagnostics (`modal_conflict`, `temporal_conflict`, `exception_precedence_conflict`).
+- Add triage report generator with remediation hints.
+
+4. **Latency/quality budget gates**
+- Introduce fixed budget gates for parse, compile, prover, and explanation phases.
+- Fail release gate when percentile thresholds regress beyond configured tolerance.
+
+5. **Evidence-pack unification**
+- Consolidate WS10/WS11 evidence generation into one canonical release command.
+- Emit manifest with contract/hash snapshots for traceability.
+
+### 12.2 WS12 Execution Tickets (proposed)
+
+1. `HL-WS12-01` Policy Pack Schema + Validator
+- Acceptance: invalid/missing policy-pack fields fail with stable error codes.
+- Gate: policy-pack schema tests green.
+
+2. `HL-WS12-02` Deterministic Policy Resolver
+- Acceptance: same `(jurisdiction, date, query)` selects same policy-pack ID across replay.
+- Gate: replay determinism tests green.
+
+3. `HL-WS12-03` Multi-Jurisdiction Replay Matrix
+- Acceptance: Federal + 2 State profiles pass replay matrix with stable proof IDs.
+- Gate: query matrix + replay suite green.
+
+4. `HL-WS12-04` Proof Conflict Taxonomy + Codes
+- Acceptance: every conflict path emits one of the registered conflict reason codes.
+- Gate: conflict regression tests green.
+
+5. `HL-WS12-05` Triage Report Builder (JSON + Markdown)
+- Acceptance: conflict summaries produce deterministic JSON and markdown artifacts.
+- Gate: triage artifact contract tests green.
+
+6. `HL-WS12-06` Performance Budget Sentinel
+- Acceptance: parse/compile/prover/explain p95 budgets enforced in CI gate.
+- Gate: benchmark sentinel script + threshold tests green.
+
+7. `HL-WS12-07` Unified Release Evidence Pack v2
+- Acceptance: single command emits manifest, test gate logs, backend matrix, replay matrix, triage outputs.
+- Gate: evidence-pack smoke green.
+
+8. `HL-WS12-08` Runbook + TODO Operational Closure
+- Acceptance: runbook and TODO updated with WS12 commands, artifacts, and promotion/rollback checks.
+- Gate: docs link-check + command smoke green.
+
+### 12.3 Dependency Order
+
+Recommended sequence:
+1. `HL-WS12-01` -> `HL-WS12-02`
+2. `HL-WS12-03` and `HL-WS12-04`
+3. `HL-WS12-05`
+4. `HL-WS12-06` and `HL-WS12-07`
+5. `HL-WS12-08`
+
+Parallel-safe lanes:
+- `HL-WS12-03` and `HL-WS12-04` after resolver lock (`WS12-02`).
+- `HL-WS12-06` can run in parallel with `HL-WS12-05` once replay matrix is stable.
+
+### 12.4 WS12 Exit Criteria
+
+- Deterministic policy-pack resolution verified across all supported jurisdictions.
+- Conflict reason-code taxonomy fully covered by tests.
+- Unified evidence-pack command produces complete release artifact set.
+- CI gates enforce both quality and latency budgets.
+- Runbook/TODO fully reflect WS12 operational procedures.
+
+### 12.5 Execution Mapping
+
+Detailed ticket breakdown:
+- `HYBRID_LEGAL_WS12_POST_WS11_IMPLEMENTATION_TICKETS.md`

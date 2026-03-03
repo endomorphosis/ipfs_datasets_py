@@ -109,6 +109,10 @@ Next program backlog (WS11 V3 integration execution):
 - `docs/guides/legal_data/HYBRID_LEGAL_V3_IR_CNL_REASONER_OPTIMIZER_KG_PROVER_PLAN.md`
 - `docs/guides/legal_data/HYBRID_LEGAL_WS11_V3_INTEGRATION_IMPLEMENTATION_TICKETS.md`
 
+Next program backlog (WS12 post-WS11 comprehensive hardening):
+- `docs/guides/legal_data/HYBRID_LEGAL_COMPREHENSIVE_IMPROVEMENT_PLAN.md` (section `12. Post-WS11 Comprehensive Improvement Plan (WS12)`)
+- `docs/guides/legal_data/HYBRID_LEGAL_WS12_POST_WS11_IMPLEMENTATION_TICKETS.md`
+
 ## WS10 Execution Board (Active)
 
 Current sprint (2026-03-02):
@@ -197,6 +201,38 @@ WS11 GitHub issues (created 2026-03-02):
 - Issue metadata normalization: milestone `WS11 V3 Integration` and assignee `@endomorphosis` applied on `1164`-`1176`.
 - Resolution PR: https://github.com/endomorphosis/ipfs_datasets_py/pull/1178 (`MERGED`, 2026-03-03).
 - Final status: all WS11 issues `1164`-`1176` are `CLOSED`.
+
+## WS12 Execution Board (Planned)
+
+Current sprint seed (2026-03-03):
+- [ ] `HL-WS12-01` Policy Pack Schema + Validator.
+- [ ] `HL-WS12-02` Deterministic Policy Resolver.
+- [ ] `HL-WS12-03` Multi-Jurisdiction Replay Matrix.
+- [ ] `HL-WS12-04` Proof Conflict Taxonomy + Reason Codes.
+- [ ] `HL-WS12-05` Conflict Triage Report Builder (JSON + Markdown).
+- [ ] `HL-WS12-06` Performance Budget Sentinel.
+- [ ] `HL-WS12-07` Unified Release Evidence Pack v2.
+- [ ] `HL-WS12-08` Runbook + TODO Operational Closure.
+
+WS12 source-of-truth backlog:
+- `docs/guides/legal_data/HYBRID_LEGAL_WS12_POST_WS11_IMPLEMENTATION_TICKETS.md`
+
+WS12 issue kickoff command:
+- Dry-run: `bash ipfs_datasets_py/scripts/ops/legal_data/create_ws12_github_issues.sh`
+- Create: `bash ipfs_datasets_py/scripts/ops/legal_data/create_ws12_github_issues.sh --create`
+
+WS12 GitHub issues (created 2026-03-03):
+- Meta tracker: https://github.com/endomorphosis/ipfs_datasets_py/issues/1187
+- `HL-WS12-01`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1179
+- `HL-WS12-02`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1180
+- `HL-WS12-03`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1181
+- `HL-WS12-04`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1182
+- `HL-WS12-05`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1183
+- `HL-WS12-06`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1184
+- `HL-WS12-07`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1185
+- `HL-WS12-08`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1186
+- Governance: milestone `WS12 Post-WS11 Hardening` + assignee `@endomorphosis` on issues `1179`-`1187`.
+- Dependency comment marker: `[ws12-dependency-map-v1]` posted on issues `1180`-`1187` (2026-03-03).
 
 ## WS9 Execution Board (Active)
 

@@ -27,6 +27,8 @@ Copied from workspace-level `scripts/ops/`:
 - `run_legal_v2_ci_soak_snapshot.sh`
 - `create_ws11_github_issues.py`
 - `create_ws11_github_issues.sh`
+- `create_ws12_github_issues.py`
+- `create_ws12_github_issues.sh`
 - `build_oregon_admin_rules_dataset.py`
 - `publish_oregon_admin_rules_to_hf.py`
 - `smoke_oregon_admin_rules_dataset.py`
@@ -61,6 +63,10 @@ Notes:
 	`--create` requires GitHub CLI (`gh`) installed and authenticated.
 	The wrapper auto-includes `~/.local/bin` in `PATH` for user-space `gh` installs.
 	Example: `gh auth status && bash scripts/ops/legal_data/create_ws11_github_issues.sh --create`.
+- Run `create_ws12_github_issues.sh` to open WS12 GitHub issues from template
+	bodies (dry-run by default; pass `--create` to create issues).
+	`--create` requires GitHub CLI (`gh`) installed and authenticated.
+	Example: `gh auth status && bash scripts/ops/legal_data/create_ws12_github_issues.sh --create`.
 - VS Code tasks are canonical in `ipfs_datasets_py/.vscode/tasks.json`:
 	`Legal smoke: proof-audit canary`,
 	`Legal smoke: proof-audit regression`,

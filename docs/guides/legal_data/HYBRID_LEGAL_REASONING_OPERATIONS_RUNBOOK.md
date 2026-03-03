@@ -651,6 +651,42 @@ Latest issue creation result (2026-03-02):
 - `HL-WS11-11`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1174
 - `HL-WS11-12`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1175
 
+## 16) WS12 Bulk Issue Kickoff
+
+Purpose:
+- Create all WS12 implementation issues from canonical template docs with duplicate detection.
+
+Dry-run (default):
+```bash
+bash ipfs_datasets_py/scripts/ops/legal_data/create_ws12_github_issues.sh
+```
+
+Create issues:
+```bash
+bash ipfs_datasets_py/scripts/ops/legal_data/create_ws12_github_issues.sh --create
+```
+
+Optional parameters:
+- `REPO=<owner/name>` (default `endomorphosis/ipfs_datasets_py`)
+- `PYTHON_BIN=<python executable path>`
+- `--label <label>` (repeatable)
+- `--allow-duplicates` (disable ticket-ID duplicate check)
+
+Template sources:
+- `ipfs_datasets_py/docs/guides/legal_data/templates/HYBRID_LEGAL_WS12_ISSUE_BODIES_01_04.md`
+- `ipfs_datasets_py/docs/guides/legal_data/templates/HYBRID_LEGAL_WS12_ISSUE_BODIES_05_08.md`
+
+Latest issue creation result (2026-03-03):
+- Meta tracker: https://github.com/endomorphosis/ipfs_datasets_py/issues/1187
+- `HL-WS12-01`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1179
+- `HL-WS12-02`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1180
+- `HL-WS12-03`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1181
+- `HL-WS12-04`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1182
+- `HL-WS12-05`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1183
+- `HL-WS12-06`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1184
+- `HL-WS12-07`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1185
+- `HL-WS12-08`: https://github.com/endomorphosis/ipfs_datasets_py/issues/1186
+
 ## 15) WS11 Local Parity Evidence
 
 Purpose:

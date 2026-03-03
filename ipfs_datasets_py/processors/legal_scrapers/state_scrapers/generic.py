@@ -7,6 +7,7 @@ state laws from various sources.
 
 from typing import List, Dict, Optional
 import re
+from urllib.parse import urljoin
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 
 
@@ -69,20 +70,16 @@ class GenericStateScraper(BaseStateScraper):
         codes = []
         
         try:
-            import requests
             from bs4 import BeautifulSoup
             
             for source in self.sources:
                 try:
                     url = source['base_url']
-                    headers = {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                    }
-                    
-                    response = requests.get(url, headers=headers, timeout=30)
-                    response.raise_for_status()
-                    
-                    soup = BeautifulSoup(response.content, 'html.parser')
+                    page_bytes = self._fetch_url_bytes_sync(url=url, timeout_seconds=30)
+                    if not page_bytes:
+                        continue
+
+                    soup = BeautifulSoup(page_bytes, 'html.parser')
                     
                     # Look for code/title links
                     for link in soup.find_all('a', href=True):
@@ -94,7 +91,7 @@ class GenericStateScraper(BaseStateScraper):
                             if len(text) > 5 and len(text) < 100:
                                 codes.append({
                                     "name": text,
-                                    "url": href if href.startswith('http') else f"{url}{href}",
+                                    "url": href if href.startswith('http') else urljoin(url, href),
                                     "source": source['name']
                                 })
                     
@@ -111,6 +108,62 @@ class GenericStateScraper(BaseStateScraper):
             self.logger.error("Required libraries not available")
         
         return codes[:50]  # Limit to 50 codes
+
+    def _fetch_url_bytes_sync(self, url: str, timeout_seconds: int = 30) -> bytes:
+        """Fetch URL bytes synchronously while preserving fetch telemetry."""
+        try:
+            from ipfs_datasets_py.processors.web_archiving.contracts import (
+                OperationMode,
+                UnifiedFetchRequest,
+            )
+            from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI
+
+            api = UnifiedWebArchivingAPI()
+            request = UnifiedFetchRequest(
+                url=url,
+                mode=OperationMode.MAX_QUALITY,
+                timeout_seconds=max(1, int(timeout_seconds or 30)),
+                domain="legal",
+                metadata={"pipeline": "state_laws", "path": "generic_code_list"},
+            )
+            response = api.fetch(request)
+            trace = getattr(response, "trace", None)
+            provider = str(getattr(trace, "provider_selected", None) or "unified_api")
+            if bool(getattr(response, "success", False)):
+                document = getattr(response, "document", None)
+                metadata = getattr(document, "metadata", {}) if document is not None else {}
+                raw_bytes = metadata.get("raw_bytes") if isinstance(metadata, dict) else None
+                if isinstance(raw_bytes, bytes) and raw_bytes:
+                    self._record_fetch_event(provider=provider, success=True)
+                    return raw_bytes
+                content = str(getattr(document, "content", "") or "") if document is not None else ""
+                if content:
+                    self._record_fetch_event(provider=provider, success=True)
+                    return content.encode("utf-8", errors="replace")
+            self._record_fetch_event(provider=provider, success=False)
+        except Exception as exc:
+            self._record_fetch_event(provider="unified_api", success=False, error=str(exc))
+
+        try:
+            from urllib.request import Request, urlopen
+
+            request = Request(
+                url,
+                headers={
+                    "User-Agent": "ipfs-datasets-state-scraper/2.0",
+                    "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                },
+            )
+            with urlopen(request, timeout=max(1, int(timeout_seconds or 30))) as response:
+                payload = response.read()
+                if payload:
+                    self._record_fetch_event(provider="urllib_direct", success=True)
+                    return bytes(payload)
+            self._record_fetch_event(provider="urllib_direct", success=False)
+        except Exception as exc:
+            self._record_fetch_event(provider="urllib_direct", success=False, error=str(exc))
+
+        return b""
     
     async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
         """Scrape a specific code using generic parsing.

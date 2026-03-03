@@ -7,6 +7,7 @@ Included documents:
 - `HYBRID_LEGAL_IR_SPEC.md`
 - `HYBRID_LEGAL_V3_IR_CNL_REASONER_OPTIMIZER_KG_PROVER_PLAN.md`
 - `HYBRID_LEGAL_WS11_V3_INTEGRATION_IMPLEMENTATION_TICKETS.md`
+- `HYBRID_LEGAL_WS12_POST_WS11_IMPLEMENTATION_TICKETS.md`
 - `HYBRID_LEGAL_V2_OPTIMIZER_KG_PROVER_INTEGRATION_PLAN.md`
 - `HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md` (includes Hybrid V2 CLI operation)
 - `HYBRID_LEGAL_REASONER_API_AND_PROOF_SCHEMA.md`
@@ -19,7 +20,13 @@ Templates:
 - `templates/reasoner_query_testset_template.json`
 - `templates/HYBRID_LEGAL_WS11_ISSUE_BODIES_01_06.md`
 - `templates/HYBRID_LEGAL_WS11_ISSUE_BODIES_07_12.md`
+- `templates/HYBRID_LEGAL_WS12_ISSUE_BODIES_01_04.md`
+- `templates/HYBRID_LEGAL_WS12_ISSUE_BODIES_05_08.md`
 
 WS11 automation:
 - `scripts/ops/legal_data/create_ws11_github_issues.py`
 - `scripts/ops/legal_data/create_ws11_github_issues.sh`
+
+WS12 automation:
+- `scripts/ops/legal_data/create_ws12_github_issues.py`
+- `scripts/ops/legal_data/create_ws12_github_issues.sh`
