@@ -69,11 +69,23 @@ class GeorgiaScraper(BaseStateScraper):
                 "2024",
                 "https://www.legis.ga.gov/api/document/docs/default-source/legislative-counsel-document-library/2024-general-statutes-summary-pdf.pdf?sfvrsn=38862f9_8",
             ),
+            (
+                "2025-alt",
+                "https://www.legis.ga.gov/api/document/docs/default-source/legislative-counsel-document-library/25sumdoc.pdf",
+            ),
+            (
+                "2024-alt",
+                "https://www.legis.ga.gov/api/document/docs/default-source/legislative-counsel-document-library/2024-general-statutes-summary-pdf.pdf",
+            ),
         ]
 
         statutes: List[NormalizedStatute] = []
         for year, pdf_url in candidate_docs:
-            text = await self._extract_pdf_text_summary(pdf_url)
+            text = ""
+            for _ in range(2):
+                text = await self._extract_pdf_text_summary(pdf_url)
+                if len(text) >= 280:
+                    break
             if len(text) < 280:
                 continue
 

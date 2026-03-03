@@ -141,7 +141,10 @@ class AlabamaScraper(BaseStateScraper):
                         continue
                     
                     # Make URL absolute
-                    full_url = urljoin(code_url, link_href)
+                    # When scraping archived pages, preserve the archive host as
+                    # the join base; joining against the live host produces dead
+                    # links and strict hydration drops all records.
+                    full_url = urljoin(attempt_url, link_href)
                     
                     # Extract section number
                     section_number = self._extract_section_number(link_text)

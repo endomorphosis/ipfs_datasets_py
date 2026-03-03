@@ -5,8 +5,11 @@ NMOneSource statute PDFs.
 """
 
 import asyncio
+import json
 import re
 import subprocess
+import urllib.parse
+import urllib.request
 from typing import Dict, List
 
 from .base_scraper import BaseStateScraper, NormalizedStatute
@@ -46,7 +49,7 @@ class NewMexicoScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        archival = await self._scrape_archived_document_pdfs(code_name=code_name, max_statutes=12)
+        archival = await self._scrape_archived_document_pdfs(code_name=code_name, max_statutes=24)
         if archival:
             self.logger.info(f"New Mexico archival fallback: Scraped {len(archival)} sections")
             return archival
@@ -58,7 +61,13 @@ class NewMexicoScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         seen = set()
 
-        for pdf_url in self._ARCHIVE_DOCUMENT_PDFS:
+        archive_candidates = await self._discover_archived_document_urls(limit=80)
+        candidate_urls = list(self._ARCHIVE_DOCUMENT_PDFS)
+        for url in archive_candidates:
+            if url not in candidate_urls:
+                candidate_urls.append(url)
+
+        for pdf_url in candidate_urls:
             if len(statutes) >= max_statutes:
                 break
 
@@ -90,6 +99,39 @@ class NewMexicoScraper(BaseStateScraper):
             seen.add(section_number)
 
         return statutes
+
+    async def _discover_archived_document_urls(self, limit: int = 80) -> List[str]:
+        """Discover archived NMOneSource statute documents via Wayback CDX."""
+        cdx_url = (
+            "http://web.archive.org/cdx/search/cdx?url=nmonesource.com/nmos/nmsa/en/*/1/document.do"
+            "&output=json&filter=statuscode:200&collapse=digest"
+            f"&limit={max(1, int(limit))}"
+        )
+
+        try:
+            req = urllib.request.Request(cdx_url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=45) as resp:
+                payload = resp.read().decode("utf-8", errors="ignore")
+            rows = json.loads(payload)
+            if not isinstance(rows, list) or len(rows) < 2:
+                return []
+
+            discovered: List[str] = []
+            for row in rows[1:]:
+                if not isinstance(row, list) or len(row) < 3:
+                    continue
+                ts = str(row[1]).strip()
+                original = str(row[2]).strip()
+                if not ts or not original:
+                    continue
+                encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
+                archive_url = f"http://web.archive.org/web/{ts}/{encoded}"
+                discovered.append(archive_url)
+
+            return discovered
+        except Exception as exc:
+            self.logger.debug(f"New Mexico CDX discovery failed: {exc}")
+            return []
 
     def _extract_item_id(self, pdf_url: str) -> str:
         match = re.search(r"/en/(\d+)/1/document\.do", str(pdf_url or ""), flags=re.IGNORECASE)

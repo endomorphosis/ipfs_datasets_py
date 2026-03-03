@@ -19,7 +19,9 @@ class ConnecticutScraper(BaseStateScraper):
         """Return list of available codes/statutes for Connecticut."""
         return [{
             "name": "Connecticut General Statutes",
-            "url": f"{self.get_base_url()}/current/pub/titles.htm",
+            # Live endpoint currently fails SSL verification in several runtime
+            # environments; seed from a stable archive snapshot instead.
+            "url": "http://web.archive.org/web/20250101000000/http://www.cga.ct.gov/current/pub/titles.htm",
             "type": "Code"
         }]
     
