@@ -461,6 +461,12 @@ TOOL_MAPPINGS = {
                 "description": "Scrape United States Code titles",
                 "tags": ["legal", "uscode", "federal", "scraping"]
             },
+            "scrape_federal_laws": {
+                "name": "scrape_federal_laws",
+                "category": "legal_datasets",
+                "description": "Scrape federal procedural rules and local court rules",
+                "tags": ["legal", "federal_rules", "civil_procedure", "criminal_procedure", "local_rules"]
+            },
             "get_us_code_titles": {
                 "name": "get_us_code_titles",
                 "category": "legal_datasets",

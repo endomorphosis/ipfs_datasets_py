@@ -52,6 +52,7 @@ from .legal_dataset_api import (
     scrape_state_laws_from_parameters,
     list_scraping_jobs_from_parameters,
     scrape_us_code_from_parameters,
+    scrape_federal_laws_from_parameters,
     scrape_municipal_codes_from_parameters,
     setup_legal_tools_venv_from_parameters,
     ingest_caselaw_access_vectors_from_parameters,
@@ -89,6 +90,19 @@ except ImportError:
         scrape_us_code,
         search_us_code,
         fetch_us_code_title,
+    )
+
+try:
+    from .federal_law_scraper import (
+        FederalLawScraper,
+        list_federal_law_sources,
+        scrape_federal_laws,
+    )
+except ImportError:
+    from .federal_scrapers.federal_law_scraper import (
+        FederalLawScraper,
+        list_federal_law_sources,
+        scrape_federal_laws,
     )
 
 from .state_laws_scraper import (
@@ -400,6 +414,10 @@ __all__ = [
     "scrape_us_code",
     "search_us_code",
     "fetch_us_code_title",
+    # Federal rules + local rules functions
+    "FederalLawScraper",
+    "list_federal_law_sources",
+    "scrape_federal_laws",
     # State Laws functions
     "list_state_jurisdictions",
     "scrape_state_laws",
@@ -441,6 +459,7 @@ __all__ = [
     "scrape_state_laws_from_parameters",
     "list_scraping_jobs_from_parameters",
     "scrape_us_code_from_parameters",
+    "scrape_federal_laws_from_parameters",
     "scrape_municipal_codes_from_parameters",
     "setup_legal_tools_venv_from_parameters",
     "ingest_caselaw_access_vectors_from_parameters",

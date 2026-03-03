@@ -150,7 +150,6 @@ class NewJerseyScraper(BaseStateScraper):
         raw = await self._fetch_page_content_with_archival_fallback(
             request_url,
             timeout_seconds=45,
-            candidate_urls=[request_url],
         )
         if not raw:
             return ""

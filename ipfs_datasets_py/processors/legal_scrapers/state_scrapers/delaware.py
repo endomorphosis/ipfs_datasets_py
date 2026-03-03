@@ -71,8 +71,15 @@ class DelawareScraper(BaseStateScraper):
         """
         candidate_urls = [
             f"{self.get_base_url()}/title1/c001/index.html",
+            f"{self.get_base_url()}/title2/c001/index.html",
+            f"{self.get_base_url()}/title3/c001/index.html",
+            f"{self.get_base_url()}/title4/c001/index.html",
+            f"{self.get_base_url()}/title5/c001/index.html",
             f"{self.get_base_url()}/title11/c005/index.html",
             f"{self.get_base_url()}/title6/c001/index.html",
+            f"{self.get_base_url()}/title16/c001/index.html",
+            f"{self.get_base_url()}/title21/c001/index.html",
+            f"{self.get_base_url()}/title24/c001/index.html",
             f"{self.get_base_url()}/index.html",
             code_url,
         ]
@@ -111,7 +118,7 @@ class DelawareScraper(BaseStateScraper):
         code_name: str,
         code_url: str,
         citation_format: str,
-        max_sections: int = 30
+        max_sections: int = 120
     ) -> List[NormalizedStatute]:
         """Scrape Delaware using Playwright for JavaScript rendering."""
         try:

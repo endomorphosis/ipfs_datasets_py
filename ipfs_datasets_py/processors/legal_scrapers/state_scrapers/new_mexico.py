@@ -11,6 +11,7 @@ import subprocess
 import urllib.parse
 import urllib.request
 from typing import Dict, List
+from urllib.parse import urljoin
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -49,6 +50,11 @@ class NewMexicoScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        nav_sections = await self._scrape_nmonesource_nav_sections(code_name=code_name, max_statutes=120)
+        if nav_sections:
+            self.logger.info("New Mexico nav-date fallback: Scraped %s section(s)", len(nav_sections))
+            return nav_sections
+
         index_fallback = await self._scrape_nmonesource_index(code_name=code_name)
         archival = await self._scrape_archived_document_pdfs(code_name=code_name, max_statutes=8)
         if archival:
@@ -62,6 +68,81 @@ class NewMexicoScraper(BaseStateScraper):
             return index_fallback
 
         return await self._generic_scrape(code_name, code_url, "N.M. Stat. Ann.")
+
+    async def _scrape_nmonesource_nav_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        """Parse NMOneSource nav-by-date pages that expose chapter/item links."""
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        seed = "https://nmonesource.com/nmos/nmsa/en/nav_date.do?iframe=true"
+        payload = await self._fetch_page_content_with_archival_fallback(seed, timeout_seconds=35)
+        if not payload:
+            return []
+
+        soup = BeautifulSoup(payload, "html.parser")
+        page_urls = [seed]
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href", ""))
+            if "nav_date.do?page=" not in href:
+                continue
+            full = urljoin(seed, href)
+            if full not in page_urls:
+                page_urls.append(full)
+
+        statutes: List[NormalizedStatute] = []
+        seen = set()
+
+        for page_url in page_urls[:8]:
+            if len(statutes) >= max_statutes:
+                break
+            page_bytes = await self._fetch_page_content_with_archival_fallback(page_url, timeout_seconds=35)
+            if not page_bytes:
+                continue
+            page_soup = BeautifulSoup(page_bytes, "html.parser")
+
+            for link in page_soup.find_all("a", href=True):
+                if len(statutes) >= max_statutes:
+                    break
+
+                text = re.sub(r"\s+", " ", link.get_text(" ", strip=True)).strip()
+                href = str(link.get("href", "")).strip()
+                if not text or not href:
+                    continue
+
+                if "/item/" not in href and "/document.do" not in href:
+                    continue
+                if not re.search(r"\bchapter\b", text, flags=re.IGNORECASE):
+                    continue
+
+                source_url = urljoin(page_url, href)
+                if source_url in seen:
+                    continue
+                seen.add(source_url)
+
+                chapter_match = re.search(r"chapter\s+([\dA-Za-z.-]+)", text, flags=re.IGNORECASE)
+                chapter_no = chapter_match.group(1) if chapter_match else None
+                section_number = chapter_no or self._extract_section_number(text) or f"Section-{len(statutes)+1}"
+
+                statutes.append(
+                    NormalizedStatute(
+                        state_code=self.state_code,
+                        state_name=self.state_name,
+                        statute_id=f"{code_name} § {section_number}",
+                        code_name=code_name,
+                        chapter_number=chapter_no,
+                        section_number=section_number,
+                        section_name=text[:220],
+                        full_text=f"Section {section_number}: {text}",
+                        legal_area=self._identify_legal_area(text),
+                        source_url=source_url,
+                        official_cite=f"N.M. Stat. Ann. § {section_number}",
+                        metadata=StatuteMetadata(),
+                    )
+                )
+
+        return statutes
 
     async def _scrape_nmonesource_index(self, code_name: str) -> List[NormalizedStatute]:
         """Fallback that records the official NMSA index when section pages are unavailable."""

@@ -55,6 +55,14 @@ async def scrape_us_code(parameters: Dict[str, Any]) -> Dict[str, Any]:
     return await scrape_us_code_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
+async def scrape_federal_laws(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Scrape federal procedural rules and local court rules."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        scrape_federal_laws_from_parameters,
+    )
+    return await scrape_federal_laws_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
 async def scrape_municipal_codes(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """Scrape US municipal codes using scrape_the_law_mk3."""
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
@@ -154,6 +162,7 @@ LEGAL_DATASET_MCP_TOOLS: List[Any] = [
     scrape_state_laws,
     list_scraping_jobs,
     scrape_us_code,
+    scrape_federal_laws,
     scrape_municipal_codes,
     setup_legal_tools_venv,
     ingest_caselaw_access_vectors,
@@ -361,6 +370,7 @@ __all__ = [
     "scrape_state_laws",
     "list_scraping_jobs",
     "scrape_us_code",
+    "scrape_federal_laws",
     "scrape_municipal_codes",
     "setup_legal_tools_venv",
     "ingest_caselaw_access_vectors",

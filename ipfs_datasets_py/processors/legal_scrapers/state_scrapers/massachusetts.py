@@ -19,7 +19,7 @@ class MassachusettsScraper(BaseStateScraper):
         """Return list of available codes/statutes for Massachusetts."""
         return [{
             "name": "Massachusetts General Laws",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/Laws/GeneralLaws",
             "type": "Code"
         }]
     

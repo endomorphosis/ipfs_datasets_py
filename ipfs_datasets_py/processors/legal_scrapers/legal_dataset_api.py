@@ -856,6 +856,34 @@ async def scrape_us_code_from_parameters(
         }
 
 
+async def scrape_federal_laws_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    try:
+        from .federal_scrapers.federal_law_scraper import scrape_federal_laws
+
+        return await scrape_federal_laws(
+            rulesets=parameters.get("rulesets"),
+            include_local_rules=parameters.get("include_local_rules", True),
+            output_format=parameters.get("output_format", "json"),
+            output_dir=parameters.get("output_dir"),
+            rate_limit_delay=parameters.get("rate_limit_delay", 0.4),
+            max_rules_per_ruleset=parameters.get("max_rules_per_ruleset"),
+            custom_sources=parameters.get("custom_sources"),
+        )
+
+    except Exception as e:
+        logger.error("Federal laws scraping failed: %s", e)
+        return {
+            "status": "error",
+            "error": str(e),
+            "data": [],
+            "metadata": {},
+        }
+
+
 async def scrape_municipal_codes_from_parameters(
     parameters: Dict[str, Any],
     *,

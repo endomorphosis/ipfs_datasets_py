@@ -4,6 +4,9 @@ This module contains the scraper for Louisiana statutes from the official state 
 """
 
 import re
+import json
+import urllib.request
+import urllib.parse
 from html import unescape
 from typing import List, Dict
 
@@ -41,7 +44,7 @@ class LouisianaScraper(BaseStateScraper):
         Louisiana live endpoints can be brittle in automation contexts.
         Prefer archived Law.aspx pages with direct statute body HTML.
         """
-        archival = await self._scrape_archived_law_pages(code_name=code_name, max_statutes=20)
+        archival = await self._scrape_archived_law_pages(code_name=code_name, max_statutes=120)
         if archival:
             self.logger.info(f"Louisiana archival fallback: Scraped {len(archival)} sections")
             return archival
@@ -59,7 +62,13 @@ class LouisianaScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         seen_sections = set()
 
-        for law_url in self._ARCHIVE_LAW_URLS:
+        candidate_urls = list(self._ARCHIVE_LAW_URLS)
+        discovered = await self._discover_archived_law_urls(limit=160)
+        for url in discovered:
+            if url not in candidate_urls:
+                candidate_urls.append(url)
+
+        for law_url in candidate_urls:
             if len(statutes) >= max_statutes:
                 break
 
@@ -95,6 +104,37 @@ class LouisianaScraper(BaseStateScraper):
             seen_sections.add(section_number)
 
         return statutes
+
+    async def _discover_archived_law_urls(self, limit: int = 120) -> List[str]:
+        """Discover additional archived Law.aspx pages via Wayback CDX."""
+        cdx_url = (
+            "http://web.archive.org/cdx/search/cdx?url=legis.la.gov/Legis/Law.aspx?d=*"
+            "&output=json&filter=statuscode:200&collapse=digest"
+            f"&limit={max(1, int(limit))}"
+        )
+
+        try:
+            req = urllib.request.Request(cdx_url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=45) as resp:
+                payload = resp.read().decode("utf-8", errors="ignore")
+            rows = json.loads(payload)
+            if not isinstance(rows, list) or len(rows) < 2:
+                return []
+
+            discovered: List[str] = []
+            for row in rows[1:]:
+                if not isinstance(row, list) or len(row) < 3:
+                    continue
+                ts = str(row[1]).strip()
+                original = str(row[2]).strip()
+                if not ts or not original:
+                    continue
+                encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
+                discovered.append(f"http://web.archive.org/web/{ts}/{encoded}")
+            return discovered
+        except Exception as exc:
+            self.logger.debug(f"Louisiana CDX discovery failed: {exc}")
+            return []
 
     def _extract_law_body_html(self, html: str) -> str:
         marker = re.search(

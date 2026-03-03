@@ -477,6 +477,19 @@ class BaseStateScraper(ABC):
             return True
 
         if any(hint in url_value for hint in _STATUTE_URL_HINTS):
+            # Avoid broad index/category links (e.g., /laws, /statutes, /code)
+            # unless they contain section-like signals in URL structure.
+            tail = path.rstrip("/").split("/")[-1] if path else ""
+            generic_tails = {
+                "law", "laws", "statute", "statutes", "code", "codes",
+                "constitution", "rules", "home", "index", "default.aspx",
+            }
+            has_structured_query = any(token in url_value for token in ("section=", "sec=", "cite=", "docname=", "law.aspx?d="))
+            has_numeric_path = bool(re.search(r"\d", path or ""))
+            path_depth = len([part for part in (path or "").split("/") if part])
+
+            if (tail in generic_tails) and not (has_structured_query or has_numeric_path or path_depth >= 4):
+                return False
             return True
 
         return False
@@ -1268,6 +1281,62 @@ class BaseStateScraper(ABC):
             return []
         
         statutes = []
+        seen_source_urls = set()
+
+        def _extract_statutes_from_soup(soup, page_url: str) -> int:
+            """Extract probable statute anchors from one page soup into `statutes`."""
+            section_links = soup.find_all('a', href=True)
+            section_count = 0
+
+            for link in section_links:
+                if len(statutes) >= max_sections:
+                    break
+
+                link_text = link.get_text(strip=True)
+                link_url = link.get('href', '')
+
+                if not link_text or len(link_text) < 3:
+                    continue
+
+                if not link_url.startswith('http'):
+                    from urllib.parse import urljoin
+                    link_url = urljoin(page_url, link_url)
+                if not link_url.startswith('http'):
+                    continue
+
+                link_url = self._canonicalize_statute_url(link_url)
+
+                if not self._is_probable_statute_link(link_text, link_url, page_url):
+                    continue
+
+                if link_url in seen_source_urls:
+                    continue
+
+                section_number = self._extract_section_number(link_text)
+                if not section_number:
+                    section_number = self._derive_section_number_from_url(link_url)
+                if not section_number:
+                    section_number = f"Section-{len(statutes) + 1}"
+
+                statute = NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=link_text[:200],
+                    full_text=f"Section {section_number}: {link_text}",
+                    legal_area=legal_area,
+                    source_url=link_url,
+                    official_cite=f"{citation_format} § {section_number}",
+                    metadata=StatuteMetadata()
+                )
+
+                statutes.append(statute)
+                seen_source_urls.add(link_url)
+                section_count += 1
+
+            return section_count
         
         try:
             page_bytes = await self._fetch_page_content_with_archival_fallback(code_url, timeout_seconds=45)
@@ -1275,61 +1344,54 @@ class BaseStateScraper(ABC):
                 raise RuntimeError(f"Failed to retrieve code page: {code_url}")
 
             soup = BeautifulSoup(page_bytes, 'html.parser')
-            
+
             # Extract legal area from code name
             legal_area = self._identify_legal_area(code_name)
-            
-            # Scan all anchors, then stop once enough probable statute links are collected.
-            section_links = soup.find_all('a', href=True)
-            
-            section_count = 0
-            for link in section_links:
-                if section_count >= max_sections:
-                    break
-                
-                link_text = link.get_text(strip=True)
-                link_url = link.get('href', '')
-                
-                # Skip if link doesn't look like a section reference
-                if not link_text or len(link_text) < 3:
-                    continue
-                
-                # Make URL absolute if needed (handles '/x' and 'x/y').
-                if not link_url.startswith('http'):
-                    from urllib.parse import urljoin
-                    link_url = urljoin(code_url, link_url)
-                if not link_url.startswith('http'):
-                    continue
 
-                link_url = self._canonicalize_statute_url(link_url)
+            section_count = _extract_statutes_from_soup(soup, code_url)
 
-                if not self._is_probable_statute_link(link_text, link_url, code_url):
-                    continue
-                
-                # Extract section number
-                section_number = self._extract_section_number(link_text)
-                if not section_number:
-                    section_number = self._derive_section_number_from_url(link_url)
-                if not section_number:
-                    section_number = f"Section-{section_count + 1}"
-                
-                # Create normalized statute
-                statute = NormalizedStatute(
-                    state_code=self.state_code,
-                    state_name=self.state_name,
-                    statute_id=f"{code_name} § {section_number}",
-                    code_name=code_name,
-                    section_number=section_number,
-                    section_name=link_text[:200],  # Limit length
-                    full_text=f"Section {section_number}: {link_text}",
-                    legal_area=legal_area,
-                    source_url=link_url,
-                    official_cite=f"{citation_format} § {section_number}",
-                    metadata=StatuteMetadata()
+            # If the landing page yields very few statute links, try one-hop discovery
+            # pages that look like code/statute indexes.
+            if len(statutes) < min(10, max_sections):
+                discovery_urls = []
+                discovery_seen = set()
+                discovery_keywords = (
+                    "statute", "statutes", "code", "codes", "law", "laws",
+                    "title", "chapter", "revised", "consolidated", "constitution"
                 )
-                
-                statutes.append(statute)
-                section_count += 1
+
+                for link in soup.find_all('a', href=True):
+                    if len(discovery_urls) >= 8:
+                        break
+                    link_text = (link.get_text(" ", strip=True) or "").lower()
+                    href = str(link.get('href', '') or '')
+                    href_l = href.lower()
+                    if not any(k in link_text or k in href_l for k in discovery_keywords):
+                        continue
+                    from urllib.parse import urljoin
+                    abs_url = urljoin(code_url, href)
+                    abs_url = self._canonicalize_statute_url(abs_url)
+                    if not abs_url.startswith("http"):
+                        continue
+                    if abs_url in discovery_seen:
+                        continue
+                    discovery_seen.add(abs_url)
+                    discovery_urls.append(abs_url)
+
+                for discovery_url in discovery_urls:
+                    if len(statutes) >= max_sections:
+                        break
+                    try:
+                        discovery_bytes = await self._fetch_page_content_with_archival_fallback(
+                            discovery_url,
+                            timeout_seconds=35,
+                        )
+                        if not discovery_bytes:
+                            continue
+                        discovery_soup = BeautifulSoup(discovery_bytes, 'html.parser')
+                        section_count += _extract_statutes_from_soup(discovery_soup, discovery_url)
+                    except Exception:
+                        continue
             
             self.logger.info(f"Scraped {len(statutes)} sections from {code_name}")
             
