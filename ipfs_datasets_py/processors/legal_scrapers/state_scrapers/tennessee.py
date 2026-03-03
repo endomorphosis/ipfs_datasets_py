@@ -99,11 +99,8 @@ class TennesseeScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         """Custom scraper for Tennessee with SSL bypass."""
         try:
-            import requests
             from bs4 import BeautifulSoup
             from urllib.parse import urljoin
-            import urllib3
-            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         except ImportError as e:
             self.logger.error(f"Required library not available: {e}")
             return []
@@ -111,12 +108,14 @@ class TennesseeScraper(BaseStateScraper):
         statutes = []
         
         try:
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-            # SSL verification disabled for Tennessee's certificate issues
-            response = requests.get(code_url, headers=headers, timeout=45, verify=False, allow_redirects=True)
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
+            page_bytes = await self._fetch_page_content_with_archival_fallback(
+                code_url,
+                timeout_seconds=45,
+            )
+            if not page_bytes:
+                return []
+
+            soup = BeautifulSoup(page_bytes, 'html.parser')
             links = soup.find_all('a', href=True)
             
             section_count = 0

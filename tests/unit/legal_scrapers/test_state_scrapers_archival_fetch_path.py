@@ -8,12 +8,16 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.connecticut impor
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.mississippi import MississippiScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.florida import FloridaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia import GeorgiaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.generic import GenericStateScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.hawaii import HawaiiScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.indiana import IndianaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.louisiana import LouisianaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.missouri import MissouriScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_york import NewYorkScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oklahoma import OklahomaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.rhode_island import RhodeIslandScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.south_dakota import SouthDakotaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.tennessee import TennesseeScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.texas import TexasScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.delaware import DelawareScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_mexico import NewMexicoScraper
@@ -404,5 +408,94 @@ async def test_mississippi_request_text_records_fetch_analytics(monkeypatch: pyt
     text = await scraper._request_text("https://example.ms/history/HB1234.htm", headers={}, timeout=20)
 
     assert "History of Actions" in text
+    analytics = scraper.get_fetch_analytics_snapshot()
+    assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_hawaii_request_text_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_fetch_with_archival(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        return b"<html><body>Hawaii statute archive text</body></html>"
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch_with_archival)
+
+    scraper = HawaiiScraper("HI", "Hawaii")
+    text = await scraper._request_text("https://example.hi/archive", headers={}, timeout=20)
+
+    assert "Hawaii statute" in text
+    analytics = scraper.get_fetch_analytics_snapshot()
+    assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_tennessee_custom_scrape_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
+    html = (
+        "<html><body>"
+        "<a href='/acts/title10'>Title 10 criminal code</a>"
+        "</body></html>"
+    ).encode("utf-8")
+
+    async def _fake_fetch_with_archival(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        return html
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch_with_archival)
+
+    scraper = TennesseeScraper("TN", "Tennessee")
+    statutes = await scraper._custom_scrape_tennessee("Tennessee Code Annotated", "https://example.tn/archives", "Tenn. Code Ann.")
+
+    assert len(statutes) >= 1
+    analytics = scraper.get_fetch_analytics_snapshot()
+    assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_missouri_custom_scrape_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
+    home_html = (
+        "<html><body>"
+        "<a href='/main/OneChapter.aspx?chapter=1'>Chapter 1</a>"
+        "</body></html>"
+    ).encode("utf-8")
+    chapter_html = (
+        "<html><body>"
+        "<a href='/main/OneSection.aspx?section=1.010'>Section 1.010</a>"
+        "</body></html>"
+    ).encode("utf-8")
+
+    async def _fake_fetch_with_archival(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        if "OneChapter.aspx" in url:
+            return chapter_html
+        return home_html
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch_with_archival)
+
+    scraper = MissouriScraper("MO", "Missouri")
+    statutes = await scraper._custom_scrape_missouri("Missouri Revised Statutes", "https://example.mo/home", "Mo. Rev. Stat.")
+
+    assert len(statutes) >= 1
+    analytics = scraper.get_fetch_analytics_snapshot()
+    assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_generic_scrape_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
+    html = (
+        "<html><body>"
+        "<a href='/code/section-1'>Section 1.010 definitions</a>"
+        "</body></html>"
+    ).encode("utf-8")
+
+    async def _fake_fetch_with_archival(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        return html
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch_with_archival)
+
+    scraper = GenericStateScraper("ZZ", "Test State")
+    statutes = await scraper.scrape_code("Test Code", "https://example.zz/code")
+
+    assert len(statutes) >= 1
     analytics = scraper.get_fetch_analytics_snapshot()
     assert int(analytics.get("attempted") or 0) > 0

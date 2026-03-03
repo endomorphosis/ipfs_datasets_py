@@ -3,13 +3,11 @@
 This module contains the scraper for Hawaii statutes from the official state legislative website.
 """
 
+import asyncio
 import re
-import time
 from typing import Dict, List
 from urllib.parse import unquote, urljoin
 from html import unescape
-
-import requests
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -57,7 +55,7 @@ class HawaiiScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        archival = self._scrape_archived_hrscurrent(code_name, max_statutes=20)
+        archival = await self._scrape_archived_hrscurrent(code_name, max_statutes=20)
         if archival:
             self.logger.info(f"Hawaii archival fallback: Scraped {len(archival)} sections")
             return archival
@@ -78,7 +76,7 @@ class HawaiiScraper(BaseStateScraper):
         self.logger.info("Hawaii: Using fallback HTTP scraper")
         return await self._generic_scrape(code_name, code_url, "Haw. Rev. Stat.")
 
-    def _scrape_archived_hrscurrent(self, code_name: str, max_statutes: int = 20) -> List[NormalizedStatute]:
+    async def _scrape_archived_hrscurrent(self, code_name: str, max_statutes: int = 20) -> List[NormalizedStatute]:
         """Scrape archived HRS section pages from Wayback when live site is blocked."""
         headers = {"User-Agent": "Mozilla/5.0"}
         statutes: List[NormalizedStatute] = []
@@ -86,7 +84,7 @@ class HawaiiScraper(BaseStateScraper):
         seen_sections = set()
 
         for section_url in self._SEED_SECTION_URLS:
-            statute = self._build_statute_from_section_url(code_name, section_url, headers)
+            statute = await self._build_statute_from_section_url(code_name, section_url, headers)
             if statute is None:
                 continue
             statutes.append(statute)
@@ -97,7 +95,7 @@ class HawaiiScraper(BaseStateScraper):
             return statutes
 
         for root_url in self._WAYBACK_ROOTS:
-            root_html = self._request_text(root_url, headers=headers, timeout=45)
+            root_html = await self._request_text(root_url, headers=headers, timeout=45)
             if not root_html:
                 self.logger.debug(f"Hawaii archive root failed {root_url}")
                 continue
@@ -117,7 +115,7 @@ class HawaiiScraper(BaseStateScraper):
 
             chapter_dirs: List[str] = []
             for volume_url in volume_dirs:
-                volume_html = self._request_text(volume_url, headers=headers, timeout=45)
+                volume_html = await self._request_text(volume_url, headers=headers, timeout=45)
                 if not volume_html:
                     self.logger.debug(f"Hawaii archive volume failed {volume_url}")
                     continue
@@ -138,7 +136,7 @@ class HawaiiScraper(BaseStateScraper):
                 if len(statutes) >= max_statutes:
                     break
 
-                chapter_html = self._request_text(chapter_url, headers=headers, timeout=45)
+                chapter_html = await self._request_text(chapter_url, headers=headers, timeout=45)
                 if not chapter_html:
                     self.logger.debug(f"Hawaii archive chapter failed {chapter_url}")
                     continue
@@ -158,7 +156,7 @@ class HawaiiScraper(BaseStateScraper):
                 for section_url in section_urls:
                     if len(statutes) >= max_statutes:
                         break
-                    statute = self._build_statute_from_section_url(code_name, section_url, headers)
+                    statute = await self._build_statute_from_section_url(code_name, section_url, headers)
                     if statute is None:
                         continue
                     statutes.append(statute)
@@ -209,7 +207,7 @@ class HawaiiScraper(BaseStateScraper):
             out.append(value)
         return out
 
-    def _request_text(self, url: str, headers: Dict[str, str], timeout: int) -> str:
+    async def _request_text(self, url: str, headers: Dict[str, str], timeout: int) -> str:
         candidates = [str(url or "")]
         if candidates[0].startswith("https://"):
             candidates.append("http://" + candidates[0][8:])
@@ -219,15 +217,18 @@ class HawaiiScraper(BaseStateScraper):
         for candidate in candidates:
             for _ in range(4):
                 try:
-                    response = requests.get(candidate, headers=headers, timeout=timeout)
-                    response.raise_for_status()
-                    return response.text
+                    payload = await self._fetch_page_content_with_archival_fallback(
+                        candidate,
+                        timeout_seconds=timeout,
+                    )
+                    if payload:
+                        return payload.decode("utf-8", errors="replace")
                 except Exception:
-                    time.sleep(0.6)
+                    await asyncio.sleep(0.6)
                     continue
         return ""
 
-    def _build_statute_from_section_url(
+    async def _build_statute_from_section_url(
         self,
         code_name: str,
         section_url: str,
@@ -237,7 +238,7 @@ class HawaiiScraper(BaseStateScraper):
         if not section_number:
             return None
 
-        section_html = self._request_text(section_url, headers=headers, timeout=45)
+        section_html = await self._request_text(section_url, headers=headers, timeout=45)
         if not section_html:
             return None
 

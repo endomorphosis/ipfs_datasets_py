@@ -50,7 +50,6 @@ class MissouriScraper(BaseStateScraper):
         This avoids very slow fallback URL chains that can cause global timeout.
         """
         try:
-            import requests
             from bs4 import BeautifulSoup
         except ImportError as e:
             self.logger.error(f"Required library not available: {e}")
@@ -64,9 +63,13 @@ class MissouriScraper(BaseStateScraper):
 
         try:
             home_url = f"{self.get_base_url()}/main/Home.aspx"
-            home = requests.get(home_url, headers=headers, timeout=20, allow_redirects=True)
-            home.raise_for_status()
-            soup = BeautifulSoup(home.content, 'html.parser')
+            home_bytes = await self._fetch_page_content_with_archival_fallback(
+                home_url,
+                timeout_seconds=20,
+            )
+            if not home_bytes:
+                return []
+            soup = BeautifulSoup(home_bytes, 'html.parser')
         except Exception as e:
             self.logger.warning(f"Missouri: failed to load home page: {e}")
             return []
@@ -90,9 +93,13 @@ class MissouriScraper(BaseStateScraper):
             chapter_vals = parse_qs(urlparse(chapter_url).query).get('chapter') or []
             chapter_number = (chapter_vals[0].strip() if chapter_vals else '')
             try:
-                chap = requests.get(chapter_url, headers=headers, timeout=20, allow_redirects=True)
-                chap.raise_for_status()
-                chap_soup = BeautifulSoup(chap.content, 'html.parser')
+                chapter_bytes = await self._fetch_page_content_with_archival_fallback(
+                    chapter_url,
+                    timeout_seconds=20,
+                )
+                if not chapter_bytes:
+                    continue
+                chap_soup = BeautifulSoup(chapter_bytes, 'html.parser')
             except Exception:
                 continue
 
