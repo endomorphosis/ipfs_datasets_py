@@ -706,21 +706,21 @@ class BaseStateScraper(ABC):
             pass
 
         try:
-            from urllib.request import Request, urlopen
+            import requests
+        except Exception:
+            return b""
 
+        try:
             headers = {
                 "User-Agent": "ipfs-datasets-state-scraper/2.0",
                 "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
             }
-            request = Request(url, headers=headers)
-            with urlopen(request, timeout=max(1, int(timeout_seconds or 25))) as response:
-                status_code = int(getattr(response, "status", 0) or 0)
-                content = response.read()
-            if status_code != 200 or not content:
+            response = requests.get(url, headers=headers, timeout=timeout_seconds)
+            if int(response.status_code) != 200:
                 self._record_fetch_event(provider="requests_direct", success=False)
                 return b""
             self._record_fetch_event(provider="requests_direct", success=True)
-            return bytes(content)
+            return bytes(response.content or b"")
         except Exception as exc:
             self._record_fetch_event(provider="requests_direct", success=False, error=str(exc))
             return b""
