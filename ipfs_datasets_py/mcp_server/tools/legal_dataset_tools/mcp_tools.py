@@ -104,7 +104,12 @@ async def search_us_code_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def search_state_law_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """Search a state-law corpus vectors with optional statute metadata enrichment."""
+    """Search a state-law corpus vectors with optional statute metadata enrichment.
+
+    Oregon enrichment defaults include both Oregon Revised Statutes (ORS) and
+    Oregon Administrative Rules (OAR) parquet sources under
+    ``justicedao/ipfs_state_laws/OR/parsed/parquet``.
+    """
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         search_state_law_corpus_from_parameters,
     )
@@ -281,7 +286,7 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
     },
     {
         "name": "search_state_law_corpus",
-        "description": "Search state-law vector corpus (vector-first) with optional statute metadata enrichment.",
+        "description": "Search state-law vector corpus (vector-first) with optional statute metadata enrichment; Oregon defaults cover both ORS and OAR under OR/parsed/parquet.",
         "function": search_state_law_corpus,
         "parameters": {
             "collection_name": {"type": "string", "required": True},
@@ -293,11 +298,14 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_state_laws"},
             "hf_parquet_prefix": {"type": "string", "required": False},
             "hf_parquet_file": {"type": "string", "required": False},
+            "hf_parquet_files": {"type": "array", "required": False},
+            "max_case_parquet_files": {"type": "integer", "default": 0},
             "cid_metadata_field": {"type": "string", "default": "cid"},
             "cid_column": {"type": "string", "default": "cid"},
             "text_field_candidates": {"type": "array", "required": False},
             "snippet_chars": {"type": "integer", "default": 320},
             "local_case_parquet_file": {"type": "string", "required": False},
+            "preferred_case_parquet_names": {"type": "array", "required": False},
             "chunk_lookup_enabled": {"type": "boolean", "default": False},
             "auto_setup_venv": {"type": "boolean", "default": True},
         },

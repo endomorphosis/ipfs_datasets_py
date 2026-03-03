@@ -134,6 +134,9 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
     state_params = by_name["search_state_law_corpus"]["parameters"]
     assert state_params["state"]["default"] == "OR"
     assert state_params["hf_dataset_id"]["default"] == "justicedao/ipfs_state_laws"
+    assert "preferred_case_parquet_names" in state_params
+    assert "hf_parquet_files" in state_params
+    assert state_params["max_case_parquet_files"]["default"] == 0
 
 
 def test_tool_registration_mapping_includes_cap_entries() -> None:
@@ -384,6 +387,10 @@ async def test_state_case_search_can_enable_enrichment(
     assert result["operation"] == "search_cases"
     assert captured["operation"] == "search_cases"
     assert captured["payload"]["hf_parquet_prefix"] == "OR/parsed/parquet"
+    preferred_names = captured["payload"]["preferred_case_parquet_names"]
+    assert "oregon_revised_statutes" in preferred_names
+    assert "oregon_administrative_rules" in preferred_names
+    assert captured["payload"]["max_case_parquet_files"] == 8
     assert captured["payload"]["chunk_lookup_enabled"] is False
 
 

@@ -566,7 +566,7 @@ TOOL_MAPPINGS = {
             "search_state_law_corpus": {
                 "name": "search_state_law_corpus",
                 "category": "legal_datasets",
-                "description": "Search state-law vector corpus (e.g. OR/parsed/parquet) and enrich matches",
+                "description": "Search state-law vector corpus (e.g. OR/parsed/parquet) and enrich matches; Oregon defaults include both ORS and OAR corpora",
                 "tags": ["legal", "state_laws", "vector-search", "cid", "retrieval"]
             },
             "search_caselaw_access_vectors_with_centroids": {
