@@ -51,14 +51,11 @@ def resolve_policy_pack(
     1. Filter packs by exact jurisdiction match.
     2. Filter packs where effective_date <= date.
     3. Select the pack with the most recent effective_date.
-    4. Tie-break deterministically: lexicographic by pack_id (if present on
-       all tied packs), otherwise by original index position (lowest wins first,
-       then highest index for most-recent—see note below).
-
-    Tie-break detail: among packs with the same effective_date, if every
-    tied pack has a non-empty pack_id, sort ascending by pack_id and pick
-    the first. Otherwise sort ascending by original index and pick the first
-    (lowest index) for a stable "first-wins" positional rule.
+    4. Tie-break deterministically: when multiple packs share the same
+       effective_date, if every tied pack has a non-empty pack_id, sort
+       ascending by pack_id and select the first (lexicographically smallest).
+       Otherwise sort ascending by original list index and select the first
+       (lowest index) for a stable "first-wins" positional rule.
 
     Args:
         packs: List of raw policy pack dicts.
