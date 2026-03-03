@@ -19,7 +19,7 @@ class NebraskaScraper(BaseStateScraper):
         """Return list of available codes/statutes for Nebraska."""
         return [{
             "name": "Nebraska Revised Statutes",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/laws/browse-statutes.php",
             "type": "Code"
         }]
     

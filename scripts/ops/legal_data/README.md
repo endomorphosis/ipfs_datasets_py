@@ -29,6 +29,12 @@ Copied from workspace-level `scripts/ops/`:
 - `create_ws11_github_issues.sh`
 
 Notes:
+- Run `check_state_law_coverage.py` to enforce state-law file completeness and
+	minimum per-state depth from local JSON-LD outputs.
+	Examples:
+	`python scripts/ops/legal_data/check_state_law_coverage.py`
+	`python scripts/ops/legal_data/check_state_law_coverage.py --min-records 20`
+	`python scripts/ops/legal_data/check_state_law_coverage.py --states AL,CT,GA,NM --min-records 5`
 - Set `RUN_PROOF_CERT_AUDIT_AFTER_RUN=1` when invoking
 	`run_formal_logic_regression_check.sh` to auto-export
 	`proof_certificate_audit.json` after conversion/analysis complete.

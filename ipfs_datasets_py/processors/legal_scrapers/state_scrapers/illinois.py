@@ -19,7 +19,7 @@ class IllinoisScraper(BaseStateScraper):
         """Return list of available codes/statutes for Illinois."""
         return [{
             "name": "Illinois Compiled Statutes",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/Legislation/ILCS/Chapters",
             "type": "Code"
         }]
     
