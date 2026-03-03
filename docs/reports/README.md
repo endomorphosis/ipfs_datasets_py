@@ -41,6 +41,7 @@ Reports are organized chronologically and by feature area. File naming follows t
 ## Latest Report
 
 The most recent comprehensive report is:
+- **STATE_SCRAPER_TRANSPORT_CLEANUP_AND_BENCHMARK_2026_03_03.md** - March 3, 2026
 - **DOCUMENTATION_REFACTORING_2026_01_31.md** - January 31, 2026
 - **infrastructure_validation_report.json** - February 10, 2026 (validation status)
 - **production_readiness_report.json** - February 10, 2026 (readiness assessment)

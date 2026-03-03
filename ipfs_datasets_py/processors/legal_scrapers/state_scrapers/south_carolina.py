@@ -19,7 +19,9 @@ class SouthCarolinaScraper(BaseStateScraper):
         """Return list of available codes/statutes for South Carolina."""
         return [{
             "name": "South Carolina Code of Laws",
-            "url": f"{self.get_base_url()}/",
+            # Use the statute master page directly; home page navigation is noisy
+            # and often yields zero probable statute links.
+            "url": f"{self.get_base_url()}/code/statmast.php",
             "type": "Code"
         }]
     

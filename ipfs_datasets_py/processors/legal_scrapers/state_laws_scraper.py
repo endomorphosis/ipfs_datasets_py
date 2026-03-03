@@ -918,10 +918,19 @@ def _compute_etl_readiness_summary(scraped_statutes: List[Dict[str, Any]]) -> Di
                         statutes_with_jsonld_legislation += 1
 
                     # Require core fields used by downstream KG ETL transforms.
-                    if all(
-                        str(jsonld.get(key) or "").strip()
-                        for key in ("identifier", "name", "text")
-                    ):
+                    has_identity = bool(
+                        str(jsonld.get("identifier") or "").strip()
+                        or str(jsonld.get("@id") or "").strip()
+                        or str(jsonld.get("sourceUrl") or "").strip()
+                    )
+                    has_name = bool(
+                        str(jsonld.get("name") or "").strip()
+                        or str(jsonld.get("sectionName") or "").strip()
+                    )
+                    has_locator = bool(str(jsonld.get("sectionNumber") or "").strip())
+                    has_text = bool(str(jsonld.get("text") or "").strip())
+
+                    if has_identity and has_name and has_locator and has_text:
                         statutes_with_kg_payload += 1
 
                 citations = structured_data.get("citations") or {}

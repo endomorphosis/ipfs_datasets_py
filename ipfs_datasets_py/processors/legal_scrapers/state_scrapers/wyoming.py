@@ -197,6 +197,37 @@ class WyomingScraper(BaseStateScraper):
             return []
         
         statutes = []
+
+        # Wyoming's statutes download page is JS-rendered, but title PDFs are
+        # stable and predictable. Build that catalog directly as a non-JS fallback.
+        deterministic_catalog = self._build_deterministic_title_catalog()
+        if deterministic_catalog:
+            for section_number, section_name, full_url in deterministic_catalog[:max_sections]:
+                full_text = await self._extract_pdf_text_summary(full_url)
+                if len(full_text.strip()) < 80:
+                    continue
+
+                statute = NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=section_name[:200],
+                    full_text=full_text,
+                    legal_area=self._identify_legal_area(section_name),
+                    source_url=full_url,
+                    official_cite=f"{citation_format} § {section_number}",
+                    metadata=StatuteMetadata()
+                )
+                statutes.append(statute)
+
+            if statutes:
+                self.logger.info(
+                    "Wyoming deterministic catalog scraper: Scraped %s title PDFs",
+                    len(statutes),
+                )
+                return statutes
         
         try:
             page_bytes = await self._fetch_page_content_with_archival_fallback(
@@ -273,6 +304,22 @@ class WyomingScraper(BaseStateScraper):
             return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
         
         return statutes
+
+    def _build_deterministic_title_catalog(self) -> List[tuple[str, str, str]]:
+        """Build stable Wyoming statutes title PDF URLs when JS links are unavailable."""
+        catalog: List[tuple[str, str, str]] = []
+        for title_num in range(1, 43):
+            title_code = f"{title_num:02d}"
+            section_number = str(title_num)
+            section_name = f"Title {section_number}"
+            pdf_url = f"{self.get_base_url()}/statutes/compress/title{title_code}.pdf"
+            catalog.append((section_number, section_name, pdf_url))
+
+        # Extra Wyoming title IDs exposed by the official download page.
+        catalog.append(("34.1", "Title 34.1", f"{self.get_base_url()}/statutes/compress/title34.1.pdf"))
+        catalog.append(("97", "Wyoming Constitution", f"{self.get_base_url()}/statutes/compress/title97.pdf"))
+        catalog.append(("99", "Title 99", f"{self.get_base_url()}/statutes/compress/title99.pdf"))
+        return catalog
 
 
 # Register this scraper with the registry
