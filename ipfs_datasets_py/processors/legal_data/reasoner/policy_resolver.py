@@ -57,8 +57,8 @@ def resolve_policy_pack(
 
     Tie-break detail: among packs with the same effective_date, if every
     tied pack has a non-empty pack_id, sort ascending by pack_id and pick
-    the first. Otherwise sort ascending by original index and pick the last
-    (highest index) to stay consistent with a "last-wins" positional rule.
+    the first. Otherwise sort ascending by original index and pick the first
+    (lowest index) for a stable "first-wins" positional rule.
 
     Args:
         packs: List of raw policy pack dicts.
@@ -138,7 +138,7 @@ def resolve_policy_pack(
             candidates.sort(key=lambda t: t[1]["pack_id"])
             trace.append({"step": "tie_break", "method": "pack_id_lexicographic"})
         else:
-            # Ascending by original index (pick the last = highest index)
+            # Ascending by original index (pick the first = lowest index)
             candidates.sort(key=lambda t: t[0])
             trace.append({"step": "tie_break", "method": "index_ascending"})
 
