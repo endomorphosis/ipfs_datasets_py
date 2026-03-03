@@ -119,11 +119,24 @@ def _iter_parquet_files(base: Path, pattern: str, recursive: bool) -> Iterable[P
 
 
 def _build_semantic_text(row: pd.Series, min_text_chars: int, min_words: int) -> str:
+    def _is_missing_value(value: Any) -> bool:
+        """Return True for scalar/array-like NA values without ambiguous truth errors."""
+        try:
+            missing = pd.isna(value)
+        except Exception:
+            return False
+        if isinstance(missing, bool):
+            return missing
+        try:
+            return bool(missing.all())
+        except Exception:
+            return False
+
     parts: list[str] = []
     used = set()
 
     for key in PREFERRED_FIELDS:
-        if key in row and pd.notna(row[key]):
+        if key in row and not _is_missing_value(row[key]):
             value = str(row[key]).strip()
             if value and len(value) >= min_text_chars:
                 parts.append(value)
@@ -135,7 +148,7 @@ def _build_semantic_text(row: pd.Series, min_text_chars: int, min_words: int) ->
             continue
         if any(marker in key_l for marker in SKIP_MARKERS):
             continue
-        if pd.isna(raw_value):
+        if _is_missing_value(raw_value):
             continue
 
         value = str(raw_value).strip()
@@ -261,7 +274,10 @@ def _embed_file(
     queue_remote_penalty_decay_divisor: int,
     queue_remote_penalty_skip_threshold: int,
     queue_inflight_limit: int,
+    queue_submit_drop_backoff_base_ms: int,
+    queue_submit_drop_backoff_max_ms: int,
     queue_verbose: bool,
+    queue_submit_fail_hard: bool,
     max_rows: int,
 ) -> tuple[int, int]:
     df = pd.read_parquet(parquet_path)
@@ -313,7 +329,10 @@ def _embed_file(
             queue_remote_penalty_decay_divisor=int(queue_remote_penalty_decay_divisor),
             queue_remote_penalty_skip_threshold=int(queue_remote_penalty_skip_threshold),
             queue_inflight_limit=int(queue_inflight_limit),
+            queue_submit_drop_backoff_base_ms=int(queue_submit_drop_backoff_base_ms),
+            queue_submit_drop_backoff_max_ms=int(queue_submit_drop_backoff_max_ms),
             queue_verbose=bool(queue_verbose),
+            queue_submit_fail_hard=bool(queue_submit_fail_hard),
         )
 
     return _embed_file_inline(
@@ -744,6 +763,11 @@ def _effective_p2p_knobs(args: argparse.Namespace) -> dict[str, Any]:
         "remote_penalty_decay_every": int(args.queue_remote_penalty_decay_every),
         "remote_penalty_skip_threshold": int(args.queue_remote_penalty_skip_threshold),
         "inflight_limit": max(1, int(args.queue_inflight_limit)),
+        "submit_drop_backoff_base_ms": max(0, int(args.queue_submit_drop_backoff_base_ms)),
+        "submit_drop_backoff_max_ms": max(
+            int(args.queue_submit_drop_backoff_base_ms),
+            int(args.queue_submit_drop_backoff_max_ms),
+        ),
     }
 
 
@@ -815,7 +839,10 @@ def _embed_file_via_taskqueue(
     queue_remote_penalty_decay_divisor: int,
     queue_remote_penalty_skip_threshold: int,
     queue_inflight_limit: int,
+    queue_submit_drop_backoff_base_ms: int,
+    queue_submit_drop_backoff_max_ms: int,
     queue_verbose: bool,
+    queue_submit_fail_hard: bool,
 ) -> tuple[int, int]:
     _ensure_ipfs_accelerate_path()
     from ipfs_accelerate_py.p2p_tasks.task_queue import TaskQueue  # type: ignore
@@ -902,6 +929,8 @@ def _embed_file_via_taskqueue(
     vectors_by_row: dict[int, list[float]] = {}
     failed = 0
     completed = 0
+    submit_failed = 0
+    submit_failure_streak = 0
     submit_count = 0
     decay_every_raw = int(queue_remote_penalty_decay_every)
     if decay_every_raw < 0:
@@ -1067,31 +1096,61 @@ def _embed_file_via_taskqueue(
             payload["sticky_worker_id"] = str(queue_sticky_worker_id).strip()
 
         if use_remote:
-            task_id, remote, remote_index = _submit_remote_with_retries(
-                remotes=remotes,
-                preferred_remote_index=(remote_start_offset + idx - 1) % len(remotes),
-                task_type=str(task_type),
-                model=str(model),
-                payload=payload,
-                submit_retries=int(queue_submit_retries),
-                submit_retry_base_ms=int(queue_submit_retry_base_ms),
-                remote_cooldown_base_ms=int(queue_remote_cooldown_base_ms),
-                remote_cooldown_max_ms=int(queue_remote_cooldown_max_ms),
-                remote_penalties=remote_penalties,
-                remote_failure_streaks=remote_failure_streaks,
-                remote_unavailable_until=remote_unavailable_until,
-                remote_penalty_skip_threshold=int(queue_remote_penalty_skip_threshold),
-                verbose=bool(queue_verbose),
-            )
-            pending.append(
-                {
-                    "row_index": int(row_index),
-                    "task_id": str(task_id),
-                    "remote": remote,
-                    "remote_index": int(remote_index),
-                    "backend": "remote",
-                }
-            )
+            try:
+                task_id, remote, remote_index = _submit_remote_with_retries(
+                    remotes=remotes,
+                    preferred_remote_index=(remote_start_offset + idx - 1) % len(remotes),
+                    task_type=str(task_type),
+                    model=str(model),
+                    payload=payload,
+                    submit_retries=int(queue_submit_retries),
+                    submit_retry_base_ms=int(queue_submit_retry_base_ms),
+                    remote_cooldown_base_ms=int(queue_remote_cooldown_base_ms),
+                    remote_cooldown_max_ms=int(queue_remote_cooldown_max_ms),
+                    remote_penalties=remote_penalties,
+                    remote_failure_streaks=remote_failure_streaks,
+                    remote_unavailable_until=remote_unavailable_until,
+                    remote_penalty_skip_threshold=int(queue_remote_penalty_skip_threshold),
+                    verbose=bool(queue_verbose),
+                )
+                pending.append(
+                    {
+                        "row_index": int(row_index),
+                        "task_id": str(task_id),
+                        "remote": remote,
+                        "remote_index": int(remote_index),
+                        "backend": "remote",
+                    }
+                )
+                submit_failure_streak = 0
+            except Exception as exc:
+                submit_failure_streak += 1
+                submit_failed += 1
+                failed += 1
+                completed += 1
+                if bool(queue_verbose):
+                    print(
+                        "[queue:submit] "
+                        f"dropped row_index={int(row_index)} error={type(exc).__name__}: {exc}"
+                    )
+                backoff_base_ms = max(0, int(queue_submit_drop_backoff_base_ms))
+                backoff_cap_ms = max(backoff_base_ms, int(queue_submit_drop_backoff_max_ms))
+                if backoff_base_ms > 0:
+                    exp = min(10, max(0, submit_failure_streak - 1))
+                    delay_ms = min(backoff_cap_ms, backoff_base_ms * (2**exp))
+                    delay_ms += random.uniform(0.0, float(backoff_base_ms))
+                    if bool(queue_verbose):
+                        print(
+                            "[queue:submit] "
+                            f"global_backoff_s={delay_ms / 1000.0:.3f} "
+                            f"submit_failure_streak={submit_failure_streak}"
+                        )
+                    time.sleep(delay_ms / 1000.0)
+                if bool(queue_submit_fail_hard):
+                    raise
+                if completed % log_every == 0:
+                    print(f"[queue] completed={completed}/{len(texts)} failures={failed}")
+                continue
         else:
             task_id = queue.submit(
                 task_type=str(task_type),
@@ -1130,7 +1189,10 @@ def _embed_file_via_taskqueue(
     out_df.to_parquet(output_path, index=False)
 
     if failed:
-        print(f"[queue] warning: failed_or_empty={failed} successful={len(out_rows)}")
+        print(
+            "[queue] warning: "
+            f"failed_or_empty={failed} submit_failed={submit_failed} successful={len(out_rows)}"
+        )
 
     if use_remote and remote_penalties:
         nonzero = sum(1 for p in remote_penalties if int(p) > 0)
@@ -1343,6 +1405,23 @@ def _parse_args() -> argparse.Namespace:
         help="Maximum number of outstanding taskqueue jobs before draining results",
     )
     parser.add_argument(
+        "--queue-submit-drop-backoff-base-ms",
+        type=int,
+        default=100,
+        help="Global backoff base (ms) applied after each dropped submit while fail-soft mode continues",
+    )
+    parser.add_argument(
+        "--queue-submit-drop-backoff-max-ms",
+        type=int,
+        default=5000,
+        help="Maximum global backoff (ms) applied after consecutive dropped submits",
+    )
+    parser.add_argument(
+        "--queue-submit-fail-hard",
+        action="store_true",
+        help="Abort immediately when a remote submit exhausts retries (default: fail soft and continue)",
+    )
+    parser.add_argument(
         "--queue-verbose",
         action="store_true",
         help="Print detailed per-task queue submit/wait diagnostics",
@@ -1434,7 +1513,10 @@ def main() -> int:
             queue_remote_penalty_decay_divisor=int(args.queue_remote_penalty_decay_divisor),
             queue_remote_penalty_skip_threshold=int(args.queue_remote_penalty_skip_threshold),
             queue_inflight_limit=int(args.queue_inflight_limit),
+            queue_submit_drop_backoff_base_ms=int(args.queue_submit_drop_backoff_base_ms),
+            queue_submit_drop_backoff_max_ms=int(args.queue_submit_drop_backoff_max_ms),
             queue_verbose=bool(args.queue_verbose),
+            queue_submit_fail_hard=bool(args.queue_submit_fail_hard),
             max_rows=int(args.max_rows),
         )
         total_rows += source_rows
