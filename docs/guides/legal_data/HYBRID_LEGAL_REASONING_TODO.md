@@ -109,6 +109,9 @@ Next program backlog (WS11 V3 integration execution):
 - `docs/guides/legal_data/HYBRID_LEGAL_V3_IR_CNL_REASONER_OPTIMIZER_KG_PROVER_PLAN.md`
 - `docs/guides/legal_data/HYBRID_LEGAL_WS11_V3_INTEGRATION_IMPLEMENTATION_TICKETS.md`
 
+Next program backlog (WS12 post-WS11 hardening):
+- `docs/guides/legal_data/HYBRID_LEGAL_COMPREHENSIVE_IMPROVEMENT_PLAN.md` (section `0. Program Status Snapshot` + `1.1 Next-Cycle Focus`)
+
 ## WS10 Execution Board (Active)
 
 Current sprint (2026-03-02):
@@ -197,6 +200,24 @@ WS11 GitHub issues (created 2026-03-02):
 - Issue metadata normalization: milestone `WS11 V3 Integration` and assignee `@endomorphosis` applied on `1164`-`1176`.
 - Resolution PR: https://github.com/endomorphosis/ipfs_datasets_py/pull/1178 (`MERGED`, 2026-03-03).
 - Final status: all WS11 issues `1164`-`1176` are `CLOSED`.
+
+## WS12 Execution Board (Active)
+
+Current sprint seed (2026-03-03):
+- [ ] `HL-WS12-01` Policy Pack Schema + Validator. https://github.com/endomorphosis/ipfs_datasets_py/issues/1179
+- [ ] `HL-WS12-02` Deterministic Policy Resolver. https://github.com/endomorphosis/ipfs_datasets_py/issues/1180
+- [ ] `HL-WS12-03` Multi-Jurisdiction Replay Matrix. https://github.com/endomorphosis/ipfs_datasets_py/issues/1181
+- [ ] `HL-WS12-04` Proof Conflict Taxonomy + Reason Codes. https://github.com/endomorphosis/ipfs_datasets_py/issues/1182
+- [ ] `HL-WS12-05` Conflict Triage Report Builder (JSON + Markdown). https://github.com/endomorphosis/ipfs_datasets_py/issues/1183
+- [ ] `HL-WS12-06` Performance Budget Sentinel. https://github.com/endomorphosis/ipfs_datasets_py/issues/1184
+- [ ] `HL-WS12-07` Unified Release Evidence Pack v2. https://github.com/endomorphosis/ipfs_datasets_py/issues/1185
+- [ ] `HL-WS12-08` Runbook + TODO Operational Closure. https://github.com/endomorphosis/ipfs_datasets_py/issues/1186
+- [ ] `HL-WS12-META` Post-WS11 Execution Tracker and Ownership. https://github.com/endomorphosis/ipfs_datasets_py/issues/1187
+
+WS12 issue metadata status (2026-03-03):
+- Milestone: `WS12 Post-WS11 Hardening`.
+- Assignee: `@endomorphosis` applied across issues `1179`-`1187`.
+- Dependency comment marker: `[ws12-dependency-map-v1]` posted on issues `1180`-`1187`.
 
 ## WS9 Execution Board (Active)
 

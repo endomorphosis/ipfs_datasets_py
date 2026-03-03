@@ -1,5 +1,31 @@
 # Hybrid Legal Knowledge Representation Comprehensive Improvement Plan
 
+## 0. Program Status Snapshot (2026-03-03)
+
+Current program state:
+- WS11 integration wave is complete and merged via PR `#1178`.
+- WS11 issues `#1164`-`#1176` are closed.
+- WS12 post-WS11 hardening wave is active under milestone `WS12 Post-WS11 Hardening`.
+
+WS12 active issue map:
+1. `#1179` HL-WS12-01: Policy Pack Schema + Validator
+2. `#1180` HL-WS12-02: Deterministic Policy Resolver
+3. `#1181` HL-WS12-03: Multi-Jurisdiction Replay Matrix
+4. `#1182` HL-WS12-04: Proof Conflict Taxonomy + Reason Codes
+5. `#1183` HL-WS12-05: Conflict Triage Report Builder (JSON + Markdown)
+6. `#1184` HL-WS12-06: Performance Budget Sentinel
+7. `#1185` HL-WS12-07: Unified Release Evidence Pack v2
+8. `#1186` HL-WS12-08: Runbook + TODO Operational Closure
+9. `#1187` HL-WS12-META: Post-WS11 Execution Tracker and Ownership
+
+WS12 dependency spine:
+- Foundation: `#1179` -> `#1180`
+- Parallel lane: `#1181` + `#1182`
+- Mid lane: `#1183` + `#1184`
+- Evidence lock: `#1185`
+- Ops closure: `#1186`
+- Meta close: `#1187`
+
 ## 1. Purpose and Outcomes
 
 This plan defines how to integrate optimizers, knowledge graphs, and theorem provers into a hybrid legal reasoning stack that is centered on:
@@ -19,6 +45,16 @@ Primary architecture constraints:
 
 Execution mapping:
 - `HYBRID_LEGAL_EXECUTION_WORKSTREAMS.md` (file/function-level workstreams and DoD gates)
+
+## 1.1 Next-Cycle Focus (WS12)
+
+The immediate post-WS11 objective is hardening for repeatability, policy determinism,
+and release governance:
+- Introduce policy-pack contracts and deterministic policy resolution.
+- Expand replay coverage across jurisdictional variants.
+- Standardize proof conflict taxonomy and machine-readable reason codes.
+- Add triage reports and performance budget sentinel checks.
+- Consolidate into a unified evidence pack v2 and close runbook/TODO operational gaps.
 
 ## 2. Integration Plan: Optimizers, KG, Provers
 
