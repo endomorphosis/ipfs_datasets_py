@@ -196,7 +196,6 @@ class DelawareScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         """Custom scraper for Delaware (basic fallback without Playwright)."""
         try:
-            import requests
             from bs4 import BeautifulSoup
             from urllib.parse import urljoin
         except ImportError as e:
@@ -206,14 +205,14 @@ class DelawareScraper(BaseStateScraper):
         statutes = []
         
         try:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-            
-            response = requests.get(code_url, headers=headers, timeout=30)
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
+            page_bytes = await self._fetch_page_content_with_archival_fallback(
+                code_url,
+                timeout_seconds=30,
+            )
+            if not page_bytes:
+                return []
+
+            soup = BeautifulSoup(page_bytes, 'html.parser')
             
             # Delaware uses JavaScript rendering, so this will find few/no links
             links = soup.find_all('a', href=True)

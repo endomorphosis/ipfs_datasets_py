@@ -9,8 +9,6 @@ import time
 from html import unescape
 from typing import Dict, List
 
-import requests
-
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
 
@@ -51,14 +49,14 @@ class SouthDakotaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        api_statutes = self._scrape_statutes_api(code_name=code_name, max_statutes=20)
+        api_statutes = await self._scrape_statutes_api(code_name=code_name, max_statutes=20)
         if api_statutes:
             self.logger.info(f"South Dakota API fallback: Scraped {len(api_statutes)} sections")
             return api_statutes
 
         return await self._generic_scrape(code_name, code_url, "S.D. Codified Laws")
 
-    def _scrape_statutes_api(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_statutes_api(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
         statutes: List[NormalizedStatute] = []
         seen = set()
@@ -69,7 +67,7 @@ class SouthDakotaScraper(BaseStateScraper):
             if section in seen:
                 continue
 
-            data = self._request_json(
+            data = await self._request_json(
                 f"https://sdlegislature.gov/api/Statutes/Statute/{section}",
                 headers=headers,
                 timeout=35,
@@ -103,17 +101,32 @@ class SouthDakotaScraper(BaseStateScraper):
 
         return statutes
 
-    def _request_json(self, url: str, headers: Dict[str, str], timeout: int) -> Dict:
+    async def _request_json(self, url: str, headers: Dict[str, str], timeout: int) -> Dict:
         for _ in range(3):
             try:
-                response = requests.get(url, headers=headers, timeout=timeout)
-                response.raise_for_status()
-                data = response.json()
+                payload = await self._fetch_page_content_with_archival_fallback(
+                    url,
+                    timeout_seconds=timeout,
+                )
+                if not payload:
+                    raise ValueError("empty response")
+                data = self._parse_json_payload(payload)
                 if isinstance(data, dict):
                     return data
             except Exception:
                 time.sleep(0.5)
                 continue
+        return {}
+
+    def _parse_json_payload(self, payload: bytes) -> Dict:
+        try:
+            import json
+
+            parsed = json.loads(payload.decode("utf-8", errors="replace"))
+            if isinstance(parsed, dict):
+                return parsed
+        except Exception:
+            return {}
         return {}
 
     def _clean_html_text(self, html: str, max_chars: int = 14000) -> str:

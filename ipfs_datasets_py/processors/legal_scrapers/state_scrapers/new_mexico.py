@@ -4,12 +4,10 @@ This module contains the scraper for New Mexico statutes from archived
 NMOneSource statute PDFs.
 """
 
+import asyncio
 import re
 import subprocess
-import time
 from typing import Dict, List
-
-import requests
 
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
@@ -48,14 +46,14 @@ class NewMexicoScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        archival = self._scrape_archived_document_pdfs(code_name=code_name, max_statutes=12)
+        archival = await self._scrape_archived_document_pdfs(code_name=code_name, max_statutes=12)
         if archival:
             self.logger.info(f"New Mexico archival fallback: Scraped {len(archival)} sections")
             return archival
 
         return await self._generic_scrape(code_name, code_url, "N.M. Stat. Ann.")
 
-    def _scrape_archived_document_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_archived_document_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}
         statutes: List[NormalizedStatute] = []
         seen = set()
@@ -68,7 +66,7 @@ class NewMexicoScraper(BaseStateScraper):
             if not section_number or section_number in seen:
                 continue
 
-            pdf_bytes = self._request_bytes(pdf_url=pdf_url, headers=headers, timeout=50)
+            pdf_bytes = await self._request_bytes(pdf_url=pdf_url, headers=headers, timeout=50)
             if not pdf_bytes:
                 continue
 
@@ -97,7 +95,7 @@ class NewMexicoScraper(BaseStateScraper):
         match = re.search(r"/en/(\d+)/1/document\.do", str(pdf_url or ""), flags=re.IGNORECASE)
         return match.group(1) if match else ""
 
-    def _request_bytes(self, pdf_url: str, headers: Dict[str, str], timeout: int) -> bytes:
+    async def _request_bytes(self, pdf_url: str, headers: Dict[str, str], timeout: int) -> bytes:
         candidates = [str(pdf_url or "")]
         if candidates[0].startswith("https://"):
             candidates.append("http://" + candidates[0][8:])
@@ -107,12 +105,14 @@ class NewMexicoScraper(BaseStateScraper):
         for candidate in candidates:
             for _ in range(3):
                 try:
-                    response = requests.get(candidate, headers=headers, timeout=timeout)
-                    response.raise_for_status()
-                    if response.content:
-                        return response.content
+                    payload = await self._fetch_page_content_with_archival_fallback(
+                        candidate,
+                        timeout_seconds=timeout,
+                    )
+                    if payload:
+                        return payload
                 except Exception:
-                    time.sleep(0.6)
+                    await asyncio.sleep(0.6)
                     continue
 
         return b""

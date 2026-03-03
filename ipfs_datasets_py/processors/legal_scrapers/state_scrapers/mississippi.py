@@ -3,13 +3,12 @@
 This module contains the scraper for Mississippi statutes from the official state legislative website.
 """
 
+import asyncio
 import re
-import time
 from html import unescape
 from typing import Dict, List, Optional
 from urllib.parse import urljoin
 
-import requests
 from bs4 import BeautifulSoup
 
 from .base_scraper import BaseStateScraper, NormalizedStatute
@@ -47,7 +46,7 @@ class MississippiScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        archival = self._scrape_archived_bill_history(code_name=code_name, max_statutes=40)
+        archival = await self._scrape_archived_bill_history(code_name=code_name, max_statutes=40)
         if archival:
             self.logger.info(f"Mississippi archive history fallback: Scraped {len(archival)} records")
             return archival
@@ -87,7 +86,7 @@ class MississippiScraper(BaseStateScraper):
 
         return []
 
-    def _scrape_archived_bill_history(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_archived_bill_history(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}
         statutes: List[NormalizedStatute] = []
         seen_history_urls = set()
@@ -96,7 +95,7 @@ class MississippiScraper(BaseStateScraper):
             if len(statutes) >= max_statutes:
                 break
 
-            html = self._request_text(index_url, headers=headers, timeout=60)
+            html = await self._request_text(index_url, headers=headers, timeout=60)
             if not html:
                 continue
 
@@ -115,7 +114,7 @@ class MississippiScraper(BaseStateScraper):
                     continue
                 seen_history_urls.add(history_url)
 
-                statute = self._build_statute_from_history_url(
+                statute = await self._build_statute_from_history_url(
                     code_name=code_name,
                     history_url=history_url,
                     headers=headers,
@@ -129,13 +128,13 @@ class MississippiScraper(BaseStateScraper):
 
         return statutes
 
-    def _build_statute_from_history_url(
+    async def _build_statute_from_history_url(
         self,
         code_name: str,
         history_url: str,
         headers: Dict[str, str],
     ) -> Optional[NormalizedStatute]:
-        html = self._request_text(history_url, headers=headers, timeout=60)
+        html = await self._request_text(history_url, headers=headers, timeout=60)
         if not html:
             return None
 
@@ -202,14 +201,17 @@ class MississippiScraper(BaseStateScraper):
         text = re.sub(r"\n{3,}", "\n\n", text)
         return text.strip()
 
-    def _request_text(self, url: str, headers: Dict[str, str], timeout: int) -> str:
+    async def _request_text(self, url: str, headers: Dict[str, str], timeout: int) -> str:
         for _ in range(3):
             try:
-                response = requests.get(url, headers=headers, timeout=timeout)
-                response.raise_for_status()
-                return response.text
+                payload = await self._fetch_page_content_with_archival_fallback(
+                    url,
+                    timeout_seconds=timeout,
+                )
+                if payload:
+                    return payload.decode("utf-8", errors="replace")
             except Exception:
-                time.sleep(0.7)
+                await asyncio.sleep(0.7)
                 continue
         return ""
 
