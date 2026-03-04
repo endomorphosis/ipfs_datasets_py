@@ -17,7 +17,6 @@ from typing import Any, Iterable, List, Optional
 
 from ipfs_datasets_py.deps_resolver import resolve_module
 
-
 _HF_RUNTIME_CACHE: dict[tuple[str, str, int, int], tuple[Any, Any, Any]] = {}
 _HF_RUNTIME_CACHE_LOCK = threading.Lock()
 
@@ -47,8 +46,6 @@ def _get_or_create_hf_runtime(
             cached = (torch, tokenizer, model)
             _HF_RUNTIME_CACHE[cache_key] = cached
     return cached
-
-
 def _truthy(value: Optional[str]) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
 
