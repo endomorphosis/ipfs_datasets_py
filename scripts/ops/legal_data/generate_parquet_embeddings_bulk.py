@@ -310,6 +310,7 @@ def _embed_file(
             row_ids=pending_row_ids,
             texts=pending_texts,
             model=model,
+            device=device,
             task_type=task_type,
             taskqueue_backend=taskqueue_backend,
             taskqueue_targets=taskqueue_targets,
@@ -922,6 +923,34 @@ def _group_retry_metrics(metrics: dict[str, int]) -> dict[str, int]:
     return grouped
 
 
+def _build_embedding_task_payload(
+    *,
+    text: str,
+    queue_session_id: str,
+    queue_sticky_worker_id: str,
+    device: str,
+) -> dict[str, Any]:
+    """Build a queue payload for embedding tasks.
+
+    In taskqueue mode, this explicitly forwards device preference so remote
+    workers can honor `--device` via accelerator endpoint routing or worker
+    device selection logic.
+    """
+
+    payload: dict[str, Any] = {"text": str(text)}
+    if str(queue_session_id).strip():
+        payload["session_id"] = str(queue_session_id).strip()
+    if str(queue_sticky_worker_id).strip():
+        payload["sticky_worker_id"] = str(queue_sticky_worker_id).strip()
+
+    device_text = str(device or "").strip()
+    if device_text:
+        payload["device"] = device_text
+        payload["endpoint_type"] = device_text
+
+    return payload
+
+
 def _embed_file_via_taskqueue(
     *,
     parquet_path: Path,
@@ -930,6 +959,7 @@ def _embed_file_via_taskqueue(
     row_ids: list[int],
     texts: list[str],
     model: str,
+    device: str,
     task_type: str,
     taskqueue_backend: str,
     taskqueue_targets: list[str],
@@ -1307,11 +1337,12 @@ def _embed_file_via_taskqueue(
                     resubmit_count = _int_field(ref, "resubmit_count", 0)
                     max_resubmits = max(0, min(2, int(queue_wait_retries)))
                     if resubmit_count < max_resubmits and row_index in text_by_row_index:
-                        payload: dict[str, Any] = {"text": text_by_row_index[row_index]}
-                        if str(queue_session_id).strip():
-                            payload["session_id"] = str(queue_session_id).strip()
-                        if str(queue_sticky_worker_id).strip():
-                            payload["sticky_worker_id"] = str(queue_sticky_worker_id).strip()
+                        payload = _build_embedding_task_payload(
+                            text=text_by_row_index[row_index],
+                            queue_session_id=queue_session_id,
+                            queue_sticky_worker_id=queue_sticky_worker_id,
+                            device=device,
+                        )
                         try:
                             preferred_remote_index = int(next_preferred_remote_index) % len(remotes)
                             new_task_id, new_remote, new_remote_index = _submit_remote_with_retries(
@@ -1407,11 +1438,12 @@ def _embed_file_via_taskqueue(
             if penalty_decay_every > 0 and submit_count % penalty_decay_every == 0:
                 _decay_remote_penalties()
 
-        payload: dict[str, Any] = {"text": str(text)}
-        if str(queue_session_id).strip():
-            payload["session_id"] = str(queue_session_id).strip()
-        if str(queue_sticky_worker_id).strip():
-            payload["sticky_worker_id"] = str(queue_sticky_worker_id).strip()
+        payload = _build_embedding_task_payload(
+            text=str(text),
+            queue_session_id=queue_session_id,
+            queue_sticky_worker_id=queue_sticky_worker_id,
+            device=device,
+        )
 
         if use_remote:
             try:
