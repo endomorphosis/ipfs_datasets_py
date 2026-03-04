@@ -564,6 +564,7 @@ def _submit_remote_with_retries(
     payload: dict[str, Any],
     submit_retries: int,
     submit_retry_base_ms: int,
+    retry_delay_max_ms: int = 5000,
     remote_cooldown_base_ms: int = 25,
     remote_cooldown_max_ms: int = 1000,
     remote_penalties: list[int] | None = None,
@@ -580,6 +581,7 @@ def _submit_remote_with_retries(
 
     retries = max(0, int(submit_retries))
     base_ms = max(10, int(submit_retry_base_ms))
+    delay_cap_ms = max(base_ms, int(retry_delay_max_ms))
     cooldown_base_ms = max(10, int(remote_cooldown_base_ms))
     cooldown_max_ms = max(cooldown_base_ms, int(remote_cooldown_max_ms))
     n_remotes = len(remotes)
@@ -697,7 +699,9 @@ def _submit_remote_with_retries(
             # Backoff growth is capped by configured retry depth so expanded
             # remote sweeps do not introduce runaway sleep times.
             backoff_stage = max(0, min(int(attempt), int(retries)))
-            delay_s = ((base_ms * (2**backoff_stage)) / 1000.0) + (random.uniform(0.0, float(base_ms)) / 1000.0)
+            stage_delay_ms = min(delay_cap_ms, base_ms * (2**backoff_stage))
+            jitter_cap_ms = max(1.0, min(float(base_ms), float(stage_delay_ms)))
+            delay_s = (stage_delay_ms / 1000.0) + (random.uniform(0.0, jitter_cap_ms) / 1000.0)
             time.sleep(delay_s)
 
     detail = f"remote submit failed after {total_attempts} attempts"
@@ -715,9 +719,11 @@ def _wait_remote_with_retries(
     timeout_s: float,
     wait_retries: int,
     wait_retry_base_ms: int,
+    retry_delay_max_ms: int = 5000,
 ) -> dict[str, Any] | None:
     retries = max(0, int(wait_retries))
     base_ms = max(10, int(wait_retry_base_ms))
+    delay_cap_ms = max(base_ms, int(retry_delay_max_ms))
     total_attempts = retries + 1
 
     # Split long waits into attempt windows so transient transport failures can
@@ -737,7 +743,9 @@ def _wait_remote_with_retries(
             pass
         if attempt >= retries:
             break
-        delay_s = ((base_ms * (2**attempt)) / 1000.0) + (float(base_ms) / 1000.0)
+        stage_delay_ms = min(delay_cap_ms, base_ms * (2**max(0, int(attempt))))
+        jitter_cap_ms = max(1.0, min(float(base_ms), float(stage_delay_ms)))
+        delay_s = (stage_delay_ms / 1000.0) + (random.uniform(0.0, jitter_cap_ms) / 1000.0)
         time.sleep(delay_s)
     return None
 
@@ -748,6 +756,7 @@ def _get_remote_task_with_retries(
     task_id: str,
     get_retries: int,
     get_retry_base_ms: int,
+    retry_delay_max_ms: int = 5000,
 ) -> dict[str, Any] | None:
     _ensure_ipfs_accelerate_path()
     from ipfs_accelerate_py.p2p_tasks.client import get_task  # type: ignore
@@ -760,6 +769,7 @@ def _get_remote_task_with_retries(
 
     retries = max(0, int(get_retries))
     base_ms = max(10, int(get_retry_base_ms))
+    delay_cap_ms = max(base_ms, int(retry_delay_max_ms))
     total_attempts = retries + 1
 
     for attempt in range(total_attempts):
@@ -771,7 +781,9 @@ def _get_remote_task_with_retries(
             pass
         if attempt >= retries:
             break
-        delay_s = ((base_ms * (2**attempt)) / 1000.0) + (random.uniform(0.0, float(base_ms)) / 1000.0)
+        stage_delay_ms = min(delay_cap_ms, base_ms * (2**max(0, int(attempt))))
+        jitter_cap_ms = max(1.0, min(float(base_ms), float(stage_delay_ms)))
+        delay_s = (stage_delay_ms / 1000.0) + (random.uniform(0.0, jitter_cap_ms) / 1000.0)
         time.sleep(delay_s)
     return None
 
@@ -991,12 +1003,14 @@ def _embed_file_via_taskqueue(
     remotes.extend(explicit_targets)
     remotes.extend(discovered_targets)
 
+    healthy_count = 0
     if remotes:
         remotes, probe_results = _probe_taskqueue_remotes(
             remotes=remotes,
             timeout_s=float(queue_remote_probe_timeout_s),
             verbose=bool(queue_verbose),
         )
+        healthy_remotes = [remote for _, remote, ok in probe_results if bool(ok)]
         healthy_count = sum(1 for _, _, ok in probe_results if bool(ok))
         required_healthy = max(0, int(queue_remote_min_healthy))
         if required_healthy > 0 and healthy_count < required_healthy:
@@ -1004,6 +1018,22 @@ def _embed_file_via_taskqueue(
                 "Insufficient healthy remote TaskQueue peers: "
                 f"healthy={healthy_count} required={required_healthy}"
             )
+
+        # In auto backend, avoid retry storms against clearly unhealthy peers
+        # discovered on the LAN: use only probe-healthy remotes when possible,
+        # and cleanly fall back to local queue when none are healthy.
+        if backend_choice == "auto":
+            if healthy_remotes:
+                remotes = list(healthy_remotes)
+                if bool(queue_verbose):
+                    print(
+                        "[queue:probe] "
+                        f"auto backend using healthy remotes only: {len(remotes)}"
+                    )
+            else:
+                remotes = []
+                if bool(queue_verbose):
+                    print("[queue:probe] auto backend found no healthy remotes; falling back to local queue")
 
         max_active = max(0, int(queue_remote_max_active))
         if max_active > 0 and len(remotes) > max_active:
@@ -1036,6 +1066,7 @@ def _embed_file_via_taskqueue(
     log_every = max(1, int(queue_submit_log_every))
     inflight_limit = max(1, int(queue_inflight_limit))
     remote_start_offset = 0
+    last_success_remote_index = -1
     remote_penalties: list[int] = []
     remote_failure_streaks: list[int] = []
     remote_unavailable_until: list[float] = []
@@ -1046,6 +1077,11 @@ def _embed_file_via_taskqueue(
         remote_penalties = [0 for _ in remotes]
         remote_failure_streaks = [0 for _ in remotes]
         remote_unavailable_until = [0.0 for _ in remotes]
+        # Healthy remotes are ordered first after probing; assign a startup
+        # penalty to unhealthy remotes so high-throughput submit loops do not
+        # keep revisiting endpoints that already failed a status probe.
+        for i in range(max(0, healthy_count), len(remote_penalties)):
+            remote_penalties[i] = 64
 
     vectors_by_row: dict[int, list[float]] = {}
     failed = 0
@@ -1099,9 +1135,11 @@ def _embed_file_via_taskqueue(
                 remote_unavailable_until[idx] = time.monotonic() + (float(cooldown_ms) / 1000.0)
 
     def _mark_remote_success(remote_index: int) -> None:
+        nonlocal last_success_remote_index
         if not (0 <= int(remote_index) < len(remote_penalties)):
             return
         idx = int(remote_index)
+        last_success_remote_index = idx
         remote_penalties[idx] = max(0, int(remote_penalties[idx]) - 1)
         if 0 <= idx < len(remote_failure_streaks):
             remote_failure_streaks[idx] = 0
@@ -1129,6 +1167,7 @@ def _embed_file_via_taskqueue(
                 timeout_s=float(task_timeout_s),
                 wait_retries=int(queue_wait_retries),
                 wait_retry_base_ms=int(queue_wait_retry_base_ms),
+                retry_delay_max_ms=int(queue_retry_delay_max_ms),
             )
         else:
             task = _wait_local_task_sync(
@@ -1146,6 +1185,7 @@ def _embed_file_via_taskqueue(
                 task_id=str(ref.get("task_id") or ""),
                 get_retries=1,
                 get_retry_base_ms=max(10, int(queue_wait_retry_base_ms)),
+                retry_delay_max_ms=int(queue_retry_delay_max_ms),
             )
 
         if not isinstance(task, dict):
@@ -1218,14 +1258,20 @@ def _embed_file_via_taskqueue(
 
         if use_remote:
             try:
+                preferred_remote_index = (
+                    int(last_success_remote_index)
+                    if int(last_success_remote_index) >= 0
+                    else (remote_start_offset + idx - 1) % len(remotes)
+                )
                 task_id, remote, remote_index = _submit_remote_with_retries(
                     remotes=remotes,
-                    preferred_remote_index=(remote_start_offset + idx - 1) % len(remotes),
+                    preferred_remote_index=int(preferred_remote_index),
                     task_type=str(task_type),
                     model=str(model),
                     payload=payload,
                     submit_retries=int(queue_submit_retries),
                     submit_retry_base_ms=int(queue_submit_retry_base_ms),
+                    retry_delay_max_ms=int(queue_retry_delay_max_ms),
                     remote_cooldown_base_ms=int(queue_remote_cooldown_base_ms),
                     remote_cooldown_max_ms=int(queue_remote_cooldown_max_ms),
                     remote_penalties=remote_penalties,
