@@ -262,6 +262,7 @@ def _embed_file(
     queue_wait_retry_base_ms: int,
     queue_retry_dial_timeout_scale: float,
     queue_retry_dial_timeout_max_s: float,
+    queue_retry_delay_max_ms: int,
     queue_max_concurrent_dials: int,
     queue_max_concurrent_wait_dials: int,
     queue_dial_slot_timeout_s: float,
@@ -320,6 +321,7 @@ def _embed_file(
             queue_wait_retry_base_ms=int(queue_wait_retry_base_ms),
             queue_retry_dial_timeout_scale=float(queue_retry_dial_timeout_scale),
             queue_retry_dial_timeout_max_s=float(queue_retry_dial_timeout_max_s),
+            queue_retry_delay_max_ms=int(queue_retry_delay_max_ms),
             queue_max_concurrent_dials=int(queue_max_concurrent_dials),
             queue_max_concurrent_wait_dials=int(queue_max_concurrent_wait_dials),
             queue_dial_slot_timeout_s=float(queue_dial_slot_timeout_s),
@@ -754,6 +756,7 @@ def _effective_p2p_knobs(args: argparse.Namespace) -> dict[str, Any]:
         "wait_retry_base_ms": max(10, int(args.queue_wait_retry_base_ms)),
         "retry_dial_timeout_scale": max(1.0, float(args.queue_retry_dial_timeout_scale)),
         "retry_dial_timeout_max_s": max(1.0, float(args.queue_retry_dial_timeout_max_s)),
+        "retry_delay_max_ms": max(10, int(args.queue_retry_delay_max_ms)),
         "max_concurrent_dials": max(1, int(args.queue_max_concurrent_dials)),
         "max_concurrent_wait_dials": max(1, int(args.queue_max_concurrent_wait_dials)),
         "dial_slot_timeout_s": max(0.1, float(args.queue_dial_slot_timeout_s)),
@@ -839,6 +842,7 @@ def _embed_file_via_taskqueue(
     queue_wait_retry_base_ms: int,
     queue_retry_dial_timeout_scale: float,
     queue_retry_dial_timeout_max_s: float,
+    queue_retry_delay_max_ms: int,
     queue_max_concurrent_dials: int,
     queue_max_concurrent_wait_dials: int,
     queue_dial_slot_timeout_s: float,
@@ -875,6 +879,7 @@ def _embed_file_via_taskqueue(
     )
     os.environ["IPFS_ACCELERATE_PY_TASK_P2P_RETRY_DIAL_TIMEOUT_SCALE"] = str(max(1.0, float(queue_retry_dial_timeout_scale)))
     os.environ["IPFS_ACCELERATE_PY_TASK_P2P_RETRY_DIAL_TIMEOUT_MAX_S"] = str(max(1.0, float(queue_retry_dial_timeout_max_s)))
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_RETRY_DELAY_MAX_MS"] = str(max(10, int(queue_retry_delay_max_ms)))
     os.environ["IPFS_ACCELERATE_PY_TASK_P2P_MAX_CONCURRENT_DIALS"] = str(max(1, int(queue_max_concurrent_dials)))
     os.environ["IPFS_ACCELERATE_PY_TASK_P2P_MAX_CONCURRENT_WAIT_DIALS"] = str(max(1, int(queue_max_concurrent_wait_dials)))
     os.environ["IPFS_ACCELERATE_PY_TASK_P2P_DIAL_SLOT_TIMEOUT_S"] = str(max(0.1, float(queue_dial_slot_timeout_s)))
@@ -1351,6 +1356,12 @@ def _parse_args() -> argparse.Namespace:
         help="Maximum dial timeout (seconds) allowed for retry attempts",
     )
     parser.add_argument(
+        "--queue-retry-delay-max-ms",
+        type=int,
+        default=5000,
+        help="Maximum retry backoff delay (ms) before jitter for transport retries",
+    )
+    parser.add_argument(
         "--queue-max-concurrent-dials",
         type=int,
         default=32,
@@ -1550,6 +1561,7 @@ def main() -> int:
             queue_wait_retry_base_ms=int(args.queue_wait_retry_base_ms),
             queue_retry_dial_timeout_scale=float(args.queue_retry_dial_timeout_scale),
             queue_retry_dial_timeout_max_s=float(args.queue_retry_dial_timeout_max_s),
+            queue_retry_delay_max_ms=int(args.queue_retry_delay_max_ms),
             queue_max_concurrent_dials=int(args.queue_max_concurrent_dials),
             queue_max_concurrent_wait_dials=int(args.queue_max_concurrent_wait_dials),
             queue_dial_slot_timeout_s=float(args.queue_dial_slot_timeout_s),
