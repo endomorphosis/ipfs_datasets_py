@@ -1067,20 +1067,8 @@ def _embed_file_via_taskqueue(
     if not use_remote:
         queue = TaskQueue()
 
-    if bool(queue_verbose):
-        print(
-            "[queue:config] "
-            f"use_remote={use_remote} remotes={len(remotes)} inflight_limit={max(1, int(queue_inflight_limit))} "
-            f"submit_retries={max(0, int(queue_submit_retries))} wait_retries={max(0, int(queue_wait_retries))}"
-        )
-        for idx, remote in enumerate(remotes):
-            print(
-                "[queue:remote] "
-                f"index={idx} peer_id={getattr(remote, 'peer_id', '')} "
-                f"multiaddr={getattr(remote, 'multiaddr', '')}"
-            )
-
     pending: deque[dict[str, Any]] = deque()
+    text_by_row_index: dict[int, str] = {int(r): str(t) for r, t in zip(row_ids, texts)}
     log_every = max(1, int(queue_submit_log_every))
     inflight_limit = max(1, int(queue_inflight_limit))
     # Avoid overfilling a single remote with very large in-flight windows.
@@ -1089,6 +1077,19 @@ def _embed_file_via_taskqueue(
         per_remote_cap = 64
         adaptive_cap = max(16, len(remotes) * per_remote_cap)
         inflight_limit = min(inflight_limit, adaptive_cap)
+
+    if bool(queue_verbose):
+        print(
+            "[queue:config] "
+            f"use_remote={use_remote} remotes={len(remotes)} inflight_limit={inflight_limit} "
+            f"submit_retries={max(0, int(queue_submit_retries))} wait_retries={max(0, int(queue_wait_retries))}"
+        )
+        for idx, remote in enumerate(remotes):
+            print(
+                "[queue:remote] "
+                f"index={idx} peer_id={getattr(remote, 'peer_id', '')} "
+                f"multiaddr={getattr(remote, 'multiaddr', '')}"
+            )
     remote_start_offset = 0
     next_preferred_remote_index = 0
     remote_penalties: list[int] = []
@@ -1174,7 +1175,7 @@ def _embed_file_via_taskqueue(
             remote_unavailable_until[idx] = 0.0
 
     def _consume_one(ref: dict[str, Any]) -> None:
-        nonlocal failed, completed
+        nonlocal failed, completed, next_preferred_remote_index
         t0 = time.monotonic()
         task = None
         remote_index = _int_field(ref, "remote_index", -1)
@@ -1226,6 +1227,7 @@ def _embed_file_via_taskqueue(
                 )
         else:
             status = str(task.get("status") or "")
+            deferred_wait = False
             if status != "completed":
                 # Remote long-poll wait can return a still-running snapshot near
                 # timeout boundaries; do a short follow-up get_task probe before
@@ -1268,6 +1270,79 @@ def _embed_file_via_taskqueue(
                             f"grace_exhausted row_index={row_index} remote_index={remote_index} "
                             f"status={status} grace_s={grace_s:.2f}"
                         )
+                    if status in {"running", "queued", "claimed", "assigned"}:
+                        defer_count = _int_field(ref, "wait_defer_count", 0)
+                        max_defer = max(0, int(queue_wait_retries))
+                        if defer_count < max_defer:
+                            deferred_wait = True
+                            deferred_ref = dict(ref)
+                            deferred_ref["wait_defer_count"] = defer_count + 1
+                            pending.append(deferred_ref)
+                            if bool(queue_verbose):
+                                print(
+                                    "[queue:wait] "
+                                    f"deferred row_index={row_index} remote_index={remote_index} "
+                                    f"status={status} defer={defer_count + 1}/{max_defer}"
+                                )
+                if deferred_wait:
+                    return
+
+                # If a task remains non-terminal after deferred waits, issue a
+                # bounded resubmit for this row to recover from stuck task IDs.
+                if is_remote_backend and use_remote and remotes:
+                    resubmit_count = _int_field(ref, "resubmit_count", 0)
+                    max_resubmits = max(0, min(2, int(queue_wait_retries)))
+                    if resubmit_count < max_resubmits and row_index in text_by_row_index:
+                        payload: dict[str, Any] = {"text": text_by_row_index[row_index]}
+                        if str(queue_session_id).strip():
+                            payload["session_id"] = str(queue_session_id).strip()
+                        if str(queue_sticky_worker_id).strip():
+                            payload["sticky_worker_id"] = str(queue_sticky_worker_id).strip()
+                        try:
+                            preferred_remote_index = int(next_preferred_remote_index) % len(remotes)
+                            new_task_id, new_remote, new_remote_index = _submit_remote_with_retries(
+                                remotes=remotes,
+                                preferred_remote_index=int(preferred_remote_index),
+                                task_type=str(task_type),
+                                model=str(model),
+                                payload=payload,
+                                submit_retries=int(queue_submit_retries),
+                                submit_retry_base_ms=int(queue_submit_retry_base_ms),
+                                retry_delay_max_ms=int(queue_retry_delay_max_ms),
+                                remote_cooldown_base_ms=int(queue_remote_cooldown_base_ms),
+                                remote_cooldown_max_ms=int(queue_remote_cooldown_max_ms),
+                                remote_penalties=remote_penalties,
+                                remote_failure_streaks=remote_failure_streaks,
+                                remote_unavailable_until=remote_unavailable_until,
+                                remote_penalty_skip_threshold=int(queue_remote_penalty_skip_threshold),
+                                verbose=bool(queue_verbose),
+                            )
+                            next_preferred_remote_index = (int(new_remote_index) + 1) % max(1, len(remotes))
+                            pending.append(
+                                {
+                                    "row_index": int(row_index),
+                                    "task_id": str(new_task_id),
+                                    "remote": new_remote,
+                                    "remote_index": int(new_remote_index),
+                                    "backend": "remote",
+                                    "resubmit_count": resubmit_count + 1,
+                                    "wait_defer_count": 0,
+                                }
+                            )
+                            if bool(queue_verbose):
+                                print(
+                                    "[queue:wait] "
+                                    f"resubmitted row_index={row_index} old_remote_index={remote_index} "
+                                    f"new_remote_index={int(new_remote_index)} resubmit={resubmit_count + 1}/{max_resubmits}"
+                                )
+                            return
+                        except Exception as resubmit_exc:
+                            if bool(queue_verbose):
+                                print(
+                                    "[queue:wait] "
+                                    f"resubmit_failed row_index={row_index} remote_index={remote_index} "
+                                    f"error={type(resubmit_exc).__name__}: {resubmit_exc}"
+                                )
                 failed += 1
                 _mark_remote_failure(remote_index)
                 if bool(queue_verbose):
