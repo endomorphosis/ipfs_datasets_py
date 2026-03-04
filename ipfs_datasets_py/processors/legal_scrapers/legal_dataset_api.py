@@ -28,6 +28,7 @@ DEFAULT_CAP_CHUNK_HF_PARQUET_FILE = "embeddings/sparse_chunks.parquet"
 DEFAULT_USCODE_HF_DATASET_ID = "justicedao/ipfs_uscode"
 DEFAULT_USCODE_HF_PARQUET_PREFIX = "uscode_parquet"
 DEFAULT_STATE_LAWS_HF_DATASET_ID = "justicedao/ipfs_state_laws"
+DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID = "justicedao/ipfs_federal_register"
 
 
 def _normalize_state_code(value: Any, *, default: str = "OR") -> str:
@@ -680,6 +681,105 @@ asyncio.run(_main())
     }
 
 
+def _search_federal_register_hf_index_sync(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Search HF-hosted Federal Register FAISS + metadata directly by query text."""
+    import faiss
+    import numpy as np
+    import pyarrow.parquet as pq
+    from huggingface_hub import hf_hub_download
+    from sentence_transformers import SentenceTransformer
+
+    dataset_id = str(payload.get("hf_dataset_id") or DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID)
+    index_file = str(payload.get("hf_index_file") or "federal_register_gte_small.faiss")
+    metadata_file = str(
+        payload.get("hf_metadata_file") or "federal_register_gte_small_metadata.parquet"
+    )
+    model_name = str(payload.get("model_name") or "thenlper/gte-small")
+    query_text = str(payload.get("query_text") or "").strip()
+    if not query_text:
+        raise ValueError("query_text is required")
+
+    top_k = int(payload.get("top_k", 10))
+    snippet_chars = int(payload.get("snippet_chars", 320))
+    cache_dir = payload.get("hf_cache_dir")
+
+    local_index = hf_hub_download(
+        repo_id=dataset_id,
+        repo_type="dataset",
+        filename=index_file,
+        cache_dir=cache_dir,
+    )
+    local_meta = hf_hub_download(
+        repo_id=dataset_id,
+        repo_type="dataset",
+        filename=metadata_file,
+        cache_dir=cache_dir,
+    )
+
+    index = faiss.read_index(local_index)
+    model = SentenceTransformer(model_name)
+    query_vec = model.encode(
+        [query_text],
+        normalize_embeddings=True,
+        convert_to_numpy=True,
+    ).astype(np.float32)
+
+    distances, neighbors = index.search(query_vec, top_k)
+    vector_ids = [int(v) for v in neighbors[0].tolist() if int(v) >= 0]
+
+    metadata_table = pq.read_table(
+        local_meta,
+        columns=[
+            "vector_id",
+            "cid",
+            "identifier",
+            "name",
+            "agency",
+            "legislation_type",
+            "date_published",
+            "semantic_text",
+        ],
+    )
+    metadata_rows = metadata_table.to_pylist()
+    metadata_by_vid = {
+        int(row.get("vector_id")): row
+        for row in metadata_rows
+        if row.get("vector_id") is not None
+    }
+
+    hits: List[Dict[str, Any]] = []
+    for rank, vid in enumerate(vector_ids, start=1):
+        row = metadata_by_vid.get(vid, {})
+        semantic_text = str(row.get("semantic_text") or "")
+        hits.append(
+            {
+                "rank": rank,
+                "vector_id": vid,
+                "score": float(distances[0][rank - 1]),
+                "cid": str(row.get("cid") or ""),
+                "identifier": str(row.get("identifier") or ""),
+                "name": str(row.get("name") or ""),
+                "agency": str(row.get("agency") or ""),
+                "legislation_type": str(row.get("legislation_type") or ""),
+                "date_published": str(row.get("date_published") or ""),
+                "snippet": semantic_text[:snippet_chars],
+            }
+        )
+
+    return {
+        "status": "success",
+        "operation": "search_federal_register_hf_index",
+        "dataset_id": dataset_id,
+        "index_file": index_file,
+        "metadata_file": metadata_file,
+        "model_name": model_name,
+        "query_text": query_text,
+        "top_k": top_k,
+        "count": len(hits),
+        "hits": hits,
+    }
+
+
 async def scrape_recap_archive_from_parameters(
     parameters: Dict[str, Any],
     *,
@@ -1256,6 +1356,109 @@ async def search_state_law_corpus_from_parameters(
     if isinstance(result, dict):
         result.setdefault("state", state_code)
     return result
+
+
+async def search_federal_register_corpus_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    """Search Federal Register vector corpus and enrich matches with metadata/snippets.
+
+    Defaults target the published Federal Register dataset:
+    `justicedao/ipfs_federal_register`.
+    """
+    fr_params = dict(parameters)
+
+    fr_params.setdefault("hf_dataset_id", DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID)
+    fr_params.setdefault("hf_parquet_file", "federal_register.parquet")
+    fr_params.setdefault("hf_parquet_prefix", None)
+    fr_params.setdefault("cid_metadata_field", "cid")
+    fr_params.setdefault("cid_column", "cid")
+    fr_params.setdefault(
+        "text_field_candidates",
+        [
+            "name",
+            "title",
+            "text",
+            "description",
+            "summary",
+            "abstract",
+            "agency",
+            "legislation_type",
+            "jsonld",
+        ],
+    )
+    fr_params.setdefault("chunk_lookup_enabled", False)
+    fr_params.setdefault("chunk_hf_parquet_file", None)
+    fr_params.setdefault("chunk_hf_parquet_prefix", None)
+    fr_params.setdefault(
+        "preferred_case_parquet_names",
+        ["federal_register.parquet", "federal_register", "laws"],
+    )
+
+    return await search_caselaw_access_cases_from_parameters(
+        fr_params,
+        tool_version=tool_version,
+    )
+
+
+async def search_federal_register_hf_index_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    """Search Federal Register directly from HF-hosted FAISS and metadata files."""
+    try:
+        auto_setup_venv = bool(parameters.get("auto_setup_venv", True))
+        venv_dir = parameters.get("venv_dir", ".venv")
+        if auto_setup_venv:
+            await setup_legal_tools_venv_from_parameters(
+                {
+                    "venv_dir": venv_dir,
+                    "packages": parameters.get(
+                        "venv_packages",
+                        [
+                            "huggingface_hub",
+                            "sentence-transformers",
+                            "pyarrow",
+                            "numpy",
+                            "faiss-cpu",
+                            "anyio",
+                        ],
+                    ),
+                    "upgrade_pip": parameters.get("upgrade_pip", True),
+                },
+                tool_version=tool_version,
+            )
+
+        payload = {
+            "hf_dataset_id": parameters.get("hf_dataset_id", DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID),
+            "hf_index_file": parameters.get("hf_index_file", "federal_register_gte_small.faiss"),
+            "hf_metadata_file": parameters.get(
+                "hf_metadata_file",
+                "federal_register_gte_small_metadata.parquet",
+            ),
+            "model_name": parameters.get("model_name", "thenlper/gte-small"),
+            "query_text": parameters.get("query_text"),
+            "top_k": int(parameters.get("top_k", 10)),
+            "snippet_chars": int(parameters.get("snippet_chars", 320)),
+            "hf_cache_dir": parameters.get("hf_cache_dir"),
+        }
+
+        result = await anyio.to_thread.run_sync(
+            lambda: _search_federal_register_hf_index_sync(payload)
+        )
+        result["tool_version"] = tool_version
+        return result
+    except Exception as e:
+        logger.error("Federal Register HF index search failed: %s", e)
+        return {
+            "status": "error",
+            "error": str(e),
+            "operation": "search_federal_register_hf_index",
+            "tool_version": tool_version,
+        }
 
 
 async def list_caselaw_access_vector_files_from_parameters(

@@ -8,7 +8,7 @@ Business logic is in ipfs_datasets_py.processors.legal_scrapers.legal_dataset_ap
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +124,22 @@ async def search_state_law_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
     return await search_state_law_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
+async def search_federal_register_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Search Federal Register corpus vectors with metadata enrichment."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        search_federal_register_corpus_from_parameters,
+    )
+    return await search_federal_register_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def search_federal_register_hf_index(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Search Federal Register directly from HF-hosted FAISS + metadata files."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        search_federal_register_hf_index_from_parameters,
+    )
+    return await search_federal_register_hf_index_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
 async def list_caselaw_access_vector_files(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """List CAP parquet/model files available for ingestion."""
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
@@ -148,6 +164,175 @@ async def ingest_caselaw_access_vector_bundle(parameters: Dict[str, Any]) -> Dic
     return await ingest_caselaw_access_vector_bundle_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
+async def legal_search_brave(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Unified Brave legal search wrapper with dataset-style parameters."""
+    try:
+        from ipfs_datasets_py.processors.legal_scrapers import BraveLegalSearch
+
+        query = str(parameters.get("query") or "").strip()
+        if not query:
+            return {"status": "error", "error": "Missing required parameter: query"}
+
+        max_results = int(parameters.get("max_results", 20))
+        country = str(parameters.get("country", "US"))
+        lang = str(parameters.get("lang", "en"))
+
+        results = BraveLegalSearch().search(
+            query=query,
+            max_results=max_results,
+            country=country,
+            lang=lang,
+        )
+        return {"status": "success", **results}
+    except Exception as exc:
+        logger.error("legal_search_brave error: %s", exc)
+        return {"status": "error", "error": str(exc)}
+
+
+async def legal_search_brave_terms(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Generate optimized legal search terms from natural language query."""
+    try:
+        from ipfs_datasets_py.processors.legal_scrapers import BraveLegalSearch
+
+        query = str(parameters.get("query") or "").strip()
+        if not query:
+            return {"status": "error", "error": "Missing required parameter: query"}
+
+        terms = BraveLegalSearch().generate_search_terms(query)
+        return {"status": "success", "query": query, "search_terms": terms}
+    except Exception as exc:
+        logger.error("legal_search_brave_terms error: %s", exc)
+        return {"status": "error", "error": str(exc)}
+
+
+async def legal_search_brave_explain(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Explain legal query parsing and search-term generation."""
+    try:
+        from ipfs_datasets_py.processors.legal_scrapers import BraveLegalSearch
+
+        query = str(parameters.get("query") or "").strip()
+        if not query:
+            return {"status": "error", "error": "Missing required parameter: query"}
+
+        details = BraveLegalSearch().explain_query(query)
+        return {"status": "success", **details}
+    except Exception as exc:
+        logger.error("legal_search_brave_explain error: %s", exc)
+        return {"status": "error", "error": str(exc)}
+
+
+async def legal_search_entities(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Search legal knowledge-base entities using dataset-style args."""
+    try:
+        from ipfs_datasets_py.processors.legal_scrapers import BraveLegalSearch
+
+        query = str(parameters.get("query") or "").strip()
+        if not query:
+            return {"status": "error", "error": "Missing required parameter: query"}
+
+        entity_type = str(parameters.get("entity_type", "all"))
+        searcher = BraveLegalSearch()
+        if entity_type == "all":
+            results = searcher.search_entities(query)
+        else:
+            results = searcher.search_entities(query, entity_type=entity_type)
+
+        return {
+            "status": "success",
+            "query": query,
+            "entity_type": entity_type,
+            "results": results,
+            "total_found": sum(len(v) for v in results.values()),
+        }
+    except Exception as exc:
+        logger.error("legal_search_entities error: %s", exc)
+        return {"status": "error", "error": str(exc)}
+
+
+async def legal_search_web_archive(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Unified legal search across current web + archives."""
+    try:
+        from ipfs_datasets_py.processors.legal_scrapers import LegalWebArchiveSearch
+
+        query = str(parameters.get("query") or "").strip()
+        if not query:
+            return {"status": "error", "error": "Missing required parameter: query"}
+
+        max_results = int(parameters.get("max_results", 20))
+        include_archives = bool(parameters.get("include_archives", False))
+        archive_results = bool(parameters.get("archive_results", False))
+        archive_dir: Optional[str] = parameters.get("archive_dir")
+
+        searcher = LegalWebArchiveSearch(archive_dir=archive_dir, auto_archive=archive_results)
+        results = searcher.unified_search(
+            query=query,
+            max_results=max_results,
+            include_archives=include_archives,
+            archive_results=archive_results,
+        )
+        return {"status": "success", **results}
+    except Exception as exc:
+        logger.error("legal_search_web_archive error: %s", exc)
+        return {"status": "error", "error": str(exc)}
+
+
+async def legal_search_archives_only(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Search archived legal documents only."""
+    try:
+        from ipfs_datasets_py.processors.legal_scrapers import LegalWebArchiveSearch
+
+        query = str(parameters.get("query") or "").strip()
+        if not query:
+            return {"status": "error", "error": "Missing required parameter: query"}
+
+        results = LegalWebArchiveSearch().search_archives(
+            query=query,
+            from_date=parameters.get("from_date"),
+            to_date=parameters.get("to_date"),
+            domains=parameters.get("domains"),
+            max_results=int(parameters.get("max_results", 50)),
+        )
+        return {"status": "success", **results}
+    except Exception as exc:
+        logger.error("legal_search_archives_only error: %s", exc)
+        return {"status": "error", "error": str(exc)}
+
+
+async def legal_archive_results(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Archive legal search results for preservation."""
+    try:
+        from ipfs_datasets_py.processors.legal_scrapers import LegalWebArchiveSearch
+
+        query = str(parameters.get("query") or "").strip()
+        results = parameters.get("results") or []
+        if not query or not isinstance(results, list) or not results:
+            return {"status": "error", "error": "Missing required parameters: query and results"}
+
+        archive_dir: Optional[str] = parameters.get("archive_dir")
+        info = LegalWebArchiveSearch(archive_dir=archive_dir)._archive_search_results(
+            query=query,
+            results=results,
+            intent=None,
+        )
+        return {"status": "success", **info}
+    except Exception as exc:
+        logger.error("legal_archive_results error: %s", exc)
+        return {"status": "error", "error": str(exc)}
+
+
+async def legal_get_archive_stats(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Get archived legal-content statistics."""
+    try:
+        from ipfs_datasets_py.processors.legal_scrapers import LegalWebArchiveSearch
+
+        archive_dir: Optional[str] = parameters.get("archive_dir")
+        stats = LegalWebArchiveSearch(archive_dir=archive_dir).get_archive_stats()
+        return {"status": "success", **stats}
+    except Exception as exc:
+        logger.error("legal_get_archive_stats error: %s", exc)
+        return {"status": "error", "error": str(exc)}
+
+
 # Import patent tools for backward compatibility
 try:
     from .patent_dataset_mcp_tools import PATENT_DATASET_MCP_TOOLS
@@ -170,6 +355,16 @@ LEGAL_DATASET_MCP_TOOLS: List[Any] = [
     search_caselaw_access_cases,
     search_us_code_corpus,
     search_state_law_corpus,
+    search_federal_register_corpus,
+    search_federal_register_hf_index,
+    legal_search_brave,
+    legal_search_brave_terms,
+    legal_search_brave_explain,
+    legal_search_entities,
+    legal_search_web_archive,
+    legal_search_archives_only,
+    legal_archive_results,
+    legal_get_archive_stats,
     list_caselaw_access_vector_files,
     search_caselaw_access_vectors_with_centroids,
     ingest_caselaw_access_vector_bundle,
@@ -321,6 +516,47 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
         "category": "legal_dataset_tools",
     },
     {
+        "name": "search_federal_register_corpus",
+        "description": "Search Federal Register vector corpus and enrich matches with document metadata/snippets.",
+        "function": search_federal_register_corpus,
+        "parameters": {
+            "collection_name": {"type": "string", "required": True},
+            "query_vector": {"type": "array", "required": True},
+            "store_type": {"type": "string", "default": "faiss"},
+            "top_k": {"type": "integer", "default": 10},
+            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_federal_register"},
+            "hf_parquet_file": {"type": "string", "default": "federal_register.parquet"},
+            "hf_parquet_prefix": {"type": "string", "required": False},
+            "cid_metadata_field": {"type": "string", "default": "cid"},
+            "cid_column": {"type": "string", "default": "cid"},
+            "text_field_candidates": {"type": "array", "required": False},
+            "snippet_chars": {"type": "integer", "default": 320},
+            "local_case_parquet_file": {"type": "string", "required": False},
+            "preferred_case_parquet_names": {"type": "array", "required": False},
+            "max_case_parquet_files": {"type": "integer", "default": 0},
+            "chunk_lookup_enabled": {"type": "boolean", "default": False},
+            "auto_setup_venv": {"type": "boolean", "default": True},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "search_federal_register_hf_index",
+        "description": "Search Federal Register directly from HF-hosted FAISS index + metadata using query text.",
+        "function": search_federal_register_hf_index,
+        "parameters": {
+            "query_text": {"type": "string", "required": True},
+            "top_k": {"type": "integer", "default": 10},
+            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_federal_register"},
+            "hf_index_file": {"type": "string", "default": "federal_register_gte_small.faiss"},
+            "hf_metadata_file": {"type": "string", "default": "federal_register_gte_small_metadata.parquet"},
+            "model_name": {"type": "string", "default": "thenlper/gte-small"},
+            "snippet_chars": {"type": "integer", "default": 320},
+            "hf_cache_dir": {"type": "string", "required": False},
+            "auto_setup_venv": {"type": "boolean", "default": True},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
         "name": "search_caselaw_access_vectors_with_centroids",
         "description": "Two-stage retrieval: centroid routing followed by filtered target search.",
         "function": search_caselaw_access_vectors_with_centroids,
@@ -343,6 +579,98 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
         "category": "legal_dataset_tools",
     },
 ]
+
+
+LEGAL_SEARCH_TOOL_SPECS: List[Dict[str, Any]] = [
+    {
+        "name": "legal_search_brave",
+        "description": "Search legal web sources with Brave using natural-language query.",
+        "function": legal_search_brave,
+        "parameters": {
+            "query": {"type": "string", "required": True},
+            "max_results": {"type": "integer", "default": 20},
+            "country": {"type": "string", "default": "US"},
+            "lang": {"type": "string", "default": "en"},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "legal_search_brave_terms",
+        "description": "Generate optimized legal search terms from natural-language query.",
+        "function": legal_search_brave_terms,
+        "parameters": {
+            "query": {"type": "string", "required": True},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "legal_search_brave_explain",
+        "description": "Explain how a legal query is parsed and translated into search terms.",
+        "function": legal_search_brave_explain,
+        "parameters": {
+            "query": {"type": "string", "required": True},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "legal_search_entities",
+        "description": "Search legal knowledge-base entities.",
+        "function": legal_search_entities,
+        "parameters": {
+            "query": {"type": "string", "required": True},
+            "entity_type": {"type": "string", "default": "all"},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "legal_search_web_archive",
+        "description": "Unified search across current legal web and archive snapshots.",
+        "function": legal_search_web_archive,
+        "parameters": {
+            "query": {"type": "string", "required": True},
+            "max_results": {"type": "integer", "default": 20},
+            "include_archives": {"type": "boolean", "default": False},
+            "archive_results": {"type": "boolean", "default": False},
+            "archive_dir": {"type": "string", "required": False},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "legal_search_archives_only",
+        "description": "Search archived legal documents only, with optional date/domain filters.",
+        "function": legal_search_archives_only,
+        "parameters": {
+            "query": {"type": "string", "required": True},
+            "from_date": {"type": "string", "required": False},
+            "to_date": {"type": "string", "required": False},
+            "domains": {"type": "array", "required": False},
+            "max_results": {"type": "integer", "default": 50},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "legal_archive_results",
+        "description": "Archive legal search result records for future retrieval.",
+        "function": legal_archive_results,
+        "parameters": {
+            "query": {"type": "string", "required": True},
+            "results": {"type": "array", "required": True},
+            "archive_dir": {"type": "string", "required": False},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "legal_get_archive_stats",
+        "description": "Get statistics for archived legal search data.",
+        "function": legal_get_archive_stats,
+        "parameters": {
+            "archive_dir": {"type": "string", "required": False},
+        },
+        "category": "legal_dataset_tools",
+    },
+]
+
+CAP_LEGAL_DATASET_TOOL_SPECS.extend(LEGAL_SEARCH_TOOL_SPECS)
 
 
 def get_cap_legal_dataset_tool_specs() -> List[Dict[str, Any]]:
@@ -378,10 +706,21 @@ __all__ = [
     "search_caselaw_access_cases",
     "search_us_code_corpus",
     "search_state_law_corpus",
+    "search_federal_register_corpus",
+    "search_federal_register_hf_index",
+    "legal_search_brave",
+    "legal_search_brave_terms",
+    "legal_search_brave_explain",
+    "legal_search_entities",
+    "legal_search_web_archive",
+    "legal_search_archives_only",
+    "legal_archive_results",
+    "legal_get_archive_stats",
     "list_caselaw_access_vector_files",
     "search_caselaw_access_vectors_with_centroids",
     "ingest_caselaw_access_vector_bundle",
     "CAP_LEGAL_DATASET_TOOL_SPECS",
+    "LEGAL_SEARCH_TOOL_SPECS",
     "get_cap_legal_dataset_tool_specs",
     "register_cap_legal_dataset_tools",
     "LEGAL_DATASET_MCP_TOOLS",

@@ -124,6 +124,11 @@ class IndianaScraper(BaseStateScraper):
 
     async def _request_bytes(self, pdf_url: str, headers: Dict[str, str], timeout: int) -> bytes:
         candidates = [str(pdf_url or "")]
+        # Wayback often serves an HTML shell unless we request iframe/raw replay.
+        wayback_iframe = self._to_wayback_iframe_url(candidates[0])
+        if wayback_iframe and wayback_iframe not in candidates:
+            candidates.insert(0, wayback_iframe)
+
         if candidates[0].startswith("https://"):
             candidates.append("http://" + candidates[0][8:])
         elif candidates[0].startswith("http://"):
@@ -141,6 +146,15 @@ class IndianaScraper(BaseStateScraper):
                 continue
 
         return b""
+
+    def _to_wayback_iframe_url(self, url: str) -> str:
+        if not url or "web.archive.org/web/" not in url:
+            return ""
+
+        if "/if_/" in url:
+            return url
+
+        return re.sub(r"(web\.archive\.org/web/\d+)/(https?://)", r"\1if_/\2", url, count=1)
 
     def _extract_pdf_text(self, pdf_bytes: bytes, max_chars: int) -> str:
         """Extract text using pdftotext if available in the runtime."""

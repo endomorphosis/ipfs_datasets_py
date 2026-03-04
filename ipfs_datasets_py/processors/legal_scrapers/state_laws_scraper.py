@@ -99,6 +99,15 @@ US_STATES = {
 }
 
 
+def _get_justia_state_slug(state_code: str) -> str:
+    """Build the Justia state slug from canonical state name."""
+    state_name = US_STATES.get(state_code.upper(), state_code)
+    slug = state_name.strip().lower().replace("&", "and")
+    slug = re.sub(r"[^a-z0-9]+", "-", slug)
+    slug = re.sub(r"-+", "-", slug).strip("-")
+    return slug
+
+
 async def list_state_jurisdictions() -> Dict[str, Any]:
     """Get list of all US state jurisdictions.
     
@@ -315,7 +324,7 @@ async def scrape_state_laws(
             state_sources = {
                 state_code: {
                     "name": US_STATES[state_code],
-                    "justia_url": f"https://law.justia.com/codes/{state_code.lower()}/",
+                    "justia_url": f"https://law.justia.com/codes/{_get_justia_state_slug(state_code)}/",
                     "official_url": _get_official_state_url(state_code)
                 }
                 for state_code in US_STATES.keys()
@@ -1019,6 +1028,7 @@ def _write_state_jsonld_files(scraped_statutes: List[Dict[str, Any]], jsonld_dir
     written: List[str] = []
     for state_block in scraped_statutes:
         state_code = str(state_block.get("state_code") or "").strip().upper()
+        state_name = str(state_block.get("state_name") or "").strip()
         statutes = state_block.get("statutes") or []
         if not state_code or not isinstance(statutes, list):
             continue
@@ -1031,8 +1041,15 @@ def _write_state_jsonld_files(scraped_statutes: List[Dict[str, Any]], jsonld_dir
                     continue
                 structured_data = statute.get("structured_data") or {}
                 if not isinstance(structured_data, dict):
-                    continue
+                    structured_data = {}
+
                 payload = structured_data.get("jsonld")
+                if not isinstance(payload, dict):
+                    payload = _build_fallback_jsonld_payload(
+                        state_code=state_code,
+                        state_name=state_name,
+                        statute=statute,
+                    )
                 if not isinstance(payload, dict):
                     continue
                 handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
@@ -1044,6 +1061,41 @@ def _write_state_jsonld_files(scraped_statutes: List[Dict[str, Any]], jsonld_dir
             out_path.unlink(missing_ok=True)
 
     return written
+
+
+def _build_fallback_jsonld_payload(*, state_code: str, state_name: str, statute: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    full_text = str(statute.get("full_text") or "").strip()
+    section_number = str(statute.get("section_number") or "").strip()
+    section_name = str(statute.get("section_name") or "").strip()
+    code_name = str(statute.get("code_name") or "").strip()
+    source_url = str(statute.get("source_url") or "").strip()
+    statute_id = str(statute.get("statute_id") or "").strip() or section_number or section_name
+
+    if not (full_text or section_name or section_number or statute_id):
+        return None
+
+    title_parts = [part for part in [state_name or state_code, code_name, section_number] if part]
+    title = " - ".join(title_parts) or f"{state_code} statute"
+    legislation_id = statute_id or title
+
+    payload: Dict[str, Any] = {
+        "@context": "https://schema.org",
+        "@type": "Legislation",
+        "legislationType": "StateStatute",
+        "legislationJurisdiction": f"US-{state_code}",
+        "name": title,
+        "identifier": legislation_id,
+        "description": section_name or full_text[:500],
+        "text": full_text or section_name,
+        "url": source_url,
+    }
+
+    if source_url:
+        payload["sameAs"] = source_url
+    if code_name:
+        payload["legislationIdentifier"] = code_name
+
+    return payload
 
 
 def _has_sufficient_full_text(statute: Any, *, min_full_text_chars: int) -> bool:
