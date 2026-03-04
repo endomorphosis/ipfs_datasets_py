@@ -420,22 +420,46 @@ def _discover_taskqueue_targets(
 ) -> list[Any]:
     _ensure_ipfs_accelerate_path()
     from ipfs_accelerate_py.p2p_tasks.client import (  # type: ignore
+        RemoteQueue,
         discover_peers_via_dht_sync,
         discover_peers_via_mdns_sync,
         discover_peers_via_rendezvous_sync,
     )
+
+    def _configured_bootstrap_multiaddrs() -> list[str]:
+        raw = os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_BOOTSTRAP_PEERS")
+        if raw is None:
+            raw = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_BOOTSTRAP_PEERS", "")
+        parts = [segment.strip() for segment in str(raw).split(",") if str(segment).strip()]
+        return parts
+
+    def _bootstrap_targets_from_env() -> list[Any]:
+        targets: list[Any] = []
+        for addr in _configured_bootstrap_multiaddrs():
+            marker = "/p2p/"
+            if marker not in addr:
+                continue
+            peer_id = addr.rsplit(marker, 1)[-1].strip()
+            if not peer_id:
+                continue
+            targets.append(RemoteQueue(peer_id=peer_id, multiaddr=addr))
+        return targets
 
     mode = str(discovery_mode).strip().lower()
     out: list[Any] = []
 
     if mode in {"none", ""}:
         return out
-    if mode in {"mdns", "all"}:
+    # "auto" prioritizes the common mesh channels: mdns + dht + configured
+    # bootstrap peers.
+    if mode in {"mdns", "auto", "all"}:
         out.extend(discover_peers_via_mdns_sync(timeout_s=timeout_s, limit=limit, exclude_self=True))
-    if mode in {"dht", "all"}:
+    if mode in {"dht", "auto", "all"}:
         out.extend(discover_peers_via_dht_sync(timeout_s=timeout_s, limit=limit, exclude_self=True, namespace=""))
     if mode in {"rendezvous", "all"}:
         out.extend(discover_peers_via_rendezvous_sync(timeout_s=timeout_s, limit=limit, exclude_self=True, namespace=""))
+    if mode in {"bootstrap", "auto", "all"}:
+        out.extend(_bootstrap_targets_from_env())
 
     # Deduplicate by (peer_id, multiaddr)
     deduped: list[Any] = []
@@ -1281,9 +1305,12 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--taskqueue-discovery",
-        choices=["none", "mdns", "dht", "rendezvous", "all"],
+        choices=["none", "mdns", "dht", "rendezvous", "bootstrap", "auto", "all"],
         default="all",
-        help="Peer discovery mode for remote taskqueue submission",
+        help=(
+            "Peer discovery mode for remote taskqueue submission "
+            "(auto=mdns+dht+bootstrap env peers, all=auto+rendezvous)"
+        ),
     )
     parser.add_argument(
         "--taskqueue-discovery-timeout-s",
