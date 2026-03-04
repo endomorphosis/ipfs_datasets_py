@@ -337,6 +337,9 @@ Commands:
       tx-rollback Rollback a transaction
       index      Create an index
       constraint Add a constraint
+
+        legal        Legal dataset search shortcuts
+            search-court-rules  Search federal/state court rules via legal dataset tools
       
     finance      Financial analysis and data pipelines
       stock      Fetch stock market data
@@ -405,6 +408,8 @@ Examples:
     ipfs-datasets graph create --driver-url ipfs://localhost:5001
     ipfs-datasets graph add-entity --id person1 --type Person --props '{"name":"Alice"}'
     ipfs-datasets graph query --cypher "MATCH (n) RETURN n LIMIT 10"
+    ipfs-datasets legal search-court-rules --collection_name court_rules --query_vector "[0.1,0.2,0.3]" --jurisdiction both
+    ipfs-datasets legal search-court-rules --collection_name court_rules --query_text "rules for filing motions" --jurisdiction federal
     
 For detailed help on a specific command:
     ipfs-datasets [command] --help
@@ -533,6 +538,71 @@ def execute_heavy_command(args):
             if json_output:
                 logic_args = ["--json", *logic_args]
             sys.exit(logic_main(logic_args))
+
+        if command == "legal":
+            subcommand = args[1] if len(args) > 1 else None
+            if subcommand in ("search-court-rules", "court-rules-search", "search_court_rules"):
+                tool_args = args[2:]
+                parameters = parse_tool_args(tool_args)
+                parameters = {str(k).replace("-", "_"): v for k, v in parameters.items()}
+
+                if not parameters.get("collection_name"):
+                    print("Usage: ipfs-datasets legal search-court-rules --collection_name NAME (--query_vector '[...]' | --query_text '...') [--jurisdiction federal|state|both] [--state OR]")
+                    return
+
+                if "query_vector" not in parameters:
+                    query_text = str(parameters.get("query_text") or "").strip()
+                    if not query_text:
+                        print("Usage: ipfs-datasets legal search-court-rules --collection_name NAME (--query_vector '[...]' | --query_text '...') [--jurisdiction federal|state|both] [--state OR]")
+                        return
+
+                    try:
+                        from ipfs_datasets_py.embeddings_router import embed_text
+
+                        embedding_model = (
+                            str(parameters.get("embedding_model") or parameters.get("model_name") or "").strip()
+                            or "thenlper/gte-small"
+                        )
+                        embedding_provider = str(parameters.get("embedding_provider") or "").strip() or None
+                        query_vector = embed_text(
+                            query_text,
+                            model_name=embedding_model,
+                            provider=embedding_provider,
+                        )
+                        parameters["query_vector"] = query_vector
+                    except Exception as e:
+                        err = {
+                            "status": "error",
+                            "error": f"Failed to generate query embedding from query_text: {e}",
+                        }
+                        if json_output:
+                            print(json.dumps(err))
+                        else:
+                            print(json.dumps(err, indent=2))
+                        return
+
+                if not parameters.get("jurisdiction"):
+                    parameters["jurisdiction"] = "both"
+
+                try:
+                    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+                        search_court_rules_corpus_from_parameters,
+                    )
+                    result = anyio.run(search_court_rules_corpus_from_parameters, parameters)
+                    if json_output:
+                        print(json.dumps(result))
+                    else:
+                        print(json.dumps(result, indent=2))
+                except Exception as e:
+                    err = {"status": "error", "error": str(e)}
+                    if json_output:
+                        print(json.dumps(err))
+                    else:
+                        print(json.dumps(err, indent=2))
+                return
+
+            print("Usage: ipfs-datasets legal search-court-rules --collection_name NAME (--query_vector '[...]' | --query_text '...') [--jurisdiction federal|state|both] [--state OR]")
+            return
         
         if command == "tools":
             subcommand = args[1] if len(args) > 1 else None
@@ -3590,7 +3660,7 @@ def main():
                 return
     
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'workflow-automation', 'p2p-networking', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'copilot', 'common-crawl', 'cc']:
+    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'legal', 'workflow-automation', 'p2p-networking', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'copilot', 'common-crawl', 'cc']:
         heavy_args = list(args)
         if json_output and '--json' not in heavy_args:
             heavy_args = ['--json', *heavy_args]

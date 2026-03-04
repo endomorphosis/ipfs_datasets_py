@@ -572,8 +572,14 @@ TOOL_MAPPINGS = {
             "search_state_law_corpus": {
                 "name": "search_state_law_corpus",
                 "category": "legal_datasets",
-                "description": "Search state-law vector corpus (e.g. OR/parsed/parquet) and enrich matches; Oregon defaults include both ORS and OAR corpora",
-                "tags": ["legal", "state_laws", "vector-search", "cid", "retrieval"]
+                "description": "Search state-law vector corpus (e.g. OR/parsed/parquet) with enrichment across legislative, judicial, and administrative sources",
+                "tags": ["legal", "state_laws", "state_admin_rules", "vector-search", "cid", "retrieval"]
+            },
+            "search_court_rules_corpus": {
+                "name": "search_court_rules_corpus",
+                "category": "legal_datasets",
+                "description": "Search federal and state court-rules corpus with jurisdiction filtering from justicedao/ipfs_court_rules",
+                "tags": ["legal", "court_rules", "federal_rules", "state_rules", "vector-search", "cid", "retrieval"]
             },
             "search_caselaw_access_vectors_with_centroids": {
                 "name": "search_caselaw_access_vectors_with_centroids",

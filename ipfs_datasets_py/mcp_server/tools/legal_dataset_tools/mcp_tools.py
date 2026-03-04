@@ -114,14 +114,23 @@ async def search_us_code_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
 async def search_state_law_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """Search a state-law corpus vectors with optional statute metadata enrichment.
 
-    Oregon enrichment defaults include both Oregon Revised Statutes (ORS) and
-    Oregon Administrative Rules (OAR) parquet sources under
-    ``justicedao/ipfs_state_laws/OR/parsed/parquet``.
+    Defaults combine legislative/judicial and executive sources under
+    ``<STATE>/parsed/parquet`` from:
+    - ``justicedao/ipfs_state_laws``
+    - ``justicedao/ipfs_state_admin_rules``
     """
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         search_state_law_corpus_from_parameters,
     )
     return await search_state_law_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def search_court_rules_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Search federal/state court-rules corpus vectors with optional metadata enrichment."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        search_court_rules_corpus_from_parameters,
+    )
+    return await search_court_rules_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
 async def search_federal_register_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -355,6 +364,7 @@ LEGAL_DATASET_MCP_TOOLS: List[Any] = [
     search_caselaw_access_cases,
     search_us_code_corpus,
     search_state_law_corpus,
+    search_court_rules_corpus,
     search_federal_register_corpus,
     search_federal_register_hf_index,
     legal_search_brave,
@@ -490,7 +500,7 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
     },
     {
         "name": "search_state_law_corpus",
-        "description": "Search state-law vector corpus (vector-first) with optional statute metadata enrichment; Oregon defaults cover both ORS and OAR under OR/parsed/parquet.",
+        "description": "Search state-law vector corpus (vector-first) with optional metadata enrichment; defaults combine justicedao/ipfs_state_laws and justicedao/ipfs_state_admin_rules under <STATE>/parsed/parquet.",
         "function": search_state_law_corpus,
         "parameters": {
             "collection_name": {"type": "string", "required": True},
@@ -500,10 +510,40 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "top_k": {"type": "integer", "default": 10},
             "enrich_with_cases": {"type": "boolean", "default": False},
             "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_state_laws"},
+            "hf_dataset_ids": {"type": "array", "required": False},
             "hf_parquet_prefix": {"type": "string", "required": False},
             "hf_parquet_file": {"type": "string", "required": False},
             "hf_parquet_files": {"type": "array", "required": False},
             "max_case_parquet_files": {"type": "integer", "default": 0},
+            "cid_metadata_field": {"type": "string", "default": "cid"},
+            "cid_column": {"type": "string", "default": "cid"},
+            "text_field_candidates": {"type": "array", "required": False},
+            "snippet_chars": {"type": "integer", "default": 320},
+            "local_case_parquet_file": {"type": "string", "required": False},
+            "preferred_case_parquet_names": {"type": "array", "required": False},
+            "chunk_lookup_enabled": {"type": "boolean", "default": False},
+            "auto_setup_venv": {"type": "boolean", "default": True},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "search_court_rules_corpus",
+        "description": "Search court-rules vector corpus with federal/state jurisdiction filtering from justicedao/ipfs_court_rules.",
+        "function": search_court_rules_corpus,
+        "parameters": {
+            "collection_name": {"type": "string", "required": True},
+            "query_vector": {"type": "array", "required": True},
+            "jurisdiction": {"type": "string", "default": "both"},
+            "state": {"type": "string", "required": False},
+            "store_type": {"type": "string", "default": "faiss"},
+            "top_k": {"type": "integer", "default": 10},
+            "enrich_with_cases": {"type": "boolean", "default": True},
+            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_court_rules"},
+            "hf_dataset_ids": {"type": "array", "required": False},
+            "hf_parquet_prefix": {"type": "string", "required": False},
+            "hf_parquet_file": {"type": "string", "required": False},
+            "hf_parquet_files": {"type": "array", "required": False},
+            "max_case_parquet_files": {"type": "integer", "default": 24},
             "cid_metadata_field": {"type": "string", "default": "cid"},
             "cid_column": {"type": "string", "default": "cid"},
             "text_field_candidates": {"type": "array", "required": False},
@@ -706,6 +746,7 @@ __all__ = [
     "search_caselaw_access_cases",
     "search_us_code_corpus",
     "search_state_law_corpus",
+    "search_court_rules_corpus",
     "search_federal_register_corpus",
     "search_federal_register_hf_index",
     "legal_search_brave",

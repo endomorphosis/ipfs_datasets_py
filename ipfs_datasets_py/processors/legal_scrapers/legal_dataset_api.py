@@ -28,6 +28,8 @@ DEFAULT_CAP_CHUNK_HF_PARQUET_FILE = "embeddings/sparse_chunks.parquet"
 DEFAULT_USCODE_HF_DATASET_ID = "justicedao/ipfs_uscode"
 DEFAULT_USCODE_HF_PARQUET_PREFIX = "uscode_parquet"
 DEFAULT_STATE_LAWS_HF_DATASET_ID = "justicedao/ipfs_state_laws"
+DEFAULT_STATE_ADMIN_RULES_HF_DATASET_ID = "justicedao/ipfs_state_admin_rules"
+DEFAULT_COURT_RULES_HF_DATASET_ID = "justicedao/ipfs_court_rules"
 DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID = "justicedao/ipfs_federal_register"
 
 
@@ -285,16 +287,18 @@ async def _main() -> None:
         chunk_rows_by_chunk_cid = {}
         chunk_rows_by_source_cid = {}
         if cid_order:
-            dataset_id = payload.get("hf_dataset_id", "justicedao/ipfs_caselaw_access_project")
-            parquet_files = _resolve_hf_parquet_files(
-                dataset_id=dataset_id,
-                explicit_file=payload.get("hf_parquet_file"),
-                explicit_files=payload.get("hf_parquet_files"),
-                parquet_prefix=payload.get("hf_parquet_prefix"),
-                preferred_names=payload.get("preferred_case_parquet_names"),
-                max_files=int(payload.get("max_case_parquet_files", 0)),
-                exclude_name_tokens=["embedding", "_cid_index", "_vector_index"],
-            )
+            dataset_ids_raw = payload.get("hf_dataset_ids")
+            if isinstance(dataset_ids_raw, list):
+                dataset_ids = [str(value).strip() for value in dataset_ids_raw if str(value).strip()]
+            elif dataset_ids_raw is not None:
+                dataset_ids = [str(dataset_ids_raw).strip()] if str(dataset_ids_raw).strip() else []
+            else:
+                dataset_ids = [
+                    str(payload.get("hf_dataset_id", "justicedao/ipfs_caselaw_access_project")).strip()
+                ]
+            if not dataset_ids:
+                dataset_ids = ["justicedao/ipfs_caselaw_access_project"]
+
             local_parquet = payload.get("local_case_parquet_file")
             con = duckdb.connect()
 
@@ -318,73 +322,87 @@ async def _main() -> None:
 
             last_exc = None
             case_sources: list[str] = []
-            for parquet_file in parquet_files:
-                hf_url = hf_hub_url(repo_id=dataset_id, repo_type="dataset", filename=parquet_file)
-                sources = [("hf", hf_url, parquet_file)]
-                if local_parquet and os.path.exists(local_parquet):
-                    sources.append(("local", local_parquet, local_parquet))
+            for dataset_index, dataset_id in enumerate(dataset_ids):
+                parquet_files = _resolve_hf_parquet_files(
+                    dataset_id=dataset_id,
+                    explicit_file=payload.get("hf_parquet_file"),
+                    explicit_files=payload.get("hf_parquet_files"),
+                    parquet_prefix=payload.get("hf_parquet_prefix"),
+                    preferred_names=payload.get("preferred_case_parquet_names"),
+                    max_files=int(payload.get("max_case_parquet_files", 0)),
+                    exclude_name_tokens=["embedding", "_cid_index", "_vector_index"],
+                )
 
-                for source_name, source_ref, source_label in sources:
-                    try:
-                        schema_rows = _execute_with_retries(
-                            f"DESCRIBE SELECT * FROM read_parquet('{source_ref}')"
-                        ).fetchall()
-                        schema_cols = {row[0] for row in schema_rows}
+                for parquet_file in parquet_files:
+                    hf_url = hf_hub_url(repo_id=dataset_id, repo_type="dataset", filename=parquet_file)
+                    sources = [("hf", hf_url, f"{dataset_id}:{parquet_file}")]
+                    if dataset_index == 0 and local_parquet and os.path.exists(local_parquet):
+                        sources.append(("local", local_parquet, local_parquet))
 
-                        selected_text_field = None
-                        for candidate in text_candidates:
-                            if candidate in schema_cols:
-                                selected_text_field = candidate
+                    for source_name, source_ref, source_label in sources:
+                        try:
+                            schema_rows = _execute_with_retries(
+                                f"DESCRIBE SELECT * FROM read_parquet('{source_ref}')"
+                            ).fetchall()
+                            schema_cols = {row[0] for row in schema_rows}
+
+                            selected_text_field = None
+                            for candidate in text_candidates:
+                                if candidate in schema_cols:
+                                    selected_text_field = candidate
+                                    break
+
+                            optional_fields = [
+                                "name",
+                                "court",
+                                "decision_date",
+                                "jurisdiction",
+                                "docket_number",
+                                "citations",
+                            ]
+                            present_optionals = [f for f in optional_fields if f in schema_cols]
+
+                            select_parts = [f"{cid_column} AS cid"]
+                            for field in present_optionals:
+                                select_parts.append(field)
+                            if selected_text_field:
+                                select_parts.append(
+                                    f"substr({selected_text_field}, 1, {snippet_chars}) AS snippet"
+                                )
+
+                            missing_cids = [cid for cid in cid_order if cid not in case_rows]
+                            if not missing_cids:
+                                if source_name == "hf":
+                                    case_sources.append(source_label)
+                                else:
+                                    case_sources.append(source_name)
                                 break
 
-                        optional_fields = [
-                            "name",
-                            "court",
-                            "decision_date",
-                            "jurisdiction",
-                            "docket_number",
-                            "citations",
-                        ]
-                        present_optionals = [f for f in optional_fields if f in schema_cols]
-
-                        select_parts = [f"{cid_column} AS cid"]
-                        for field in present_optionals:
-                            select_parts.append(field)
-                        if selected_text_field:
-                            select_parts.append(
-                                f"substr({selected_text_field}, 1, {snippet_chars}) AS snippet"
+                            placeholders = ", ".join(["?"] * len(missing_cids))
+                            query = (
+                                f"SELECT {', '.join(select_parts)} "
+                                f"FROM read_parquet('{source_ref}') "
+                                f"WHERE {cid_column} IN ({placeholders})"
                             )
+                            rows = _execute_with_retries(query, missing_cids).fetchall()
+                            col_names = [p.split(" AS ")[-1] for p in select_parts]
+                            for row in rows:
+                                row_obj = dict(zip(col_names, row))
+                                cid_key = str(row_obj.get("cid"))
+                                if cid_key not in case_rows:
+                                    case_rows[cid_key] = row_obj
 
-                        missing_cids = [cid for cid in cid_order if cid not in case_rows]
-                        if not missing_cids:
                             if source_name == "hf":
                                 case_sources.append(source_label)
                             else:
                                 case_sources.append(source_name)
                             break
+                        except Exception as exc:
+                            last_exc = exc
+                            continue
 
-                        placeholders = ", ".join(["?"] * len(missing_cids))
-                        query = (
-                            f"SELECT {', '.join(select_parts)} "
-                            f"FROM read_parquet('{source_ref}') "
-                            f"WHERE {cid_column} IN ({placeholders})"
-                        )
-                        rows = _execute_with_retries(query, missing_cids).fetchall()
-                        col_names = [p.split(" AS ")[-1] for p in select_parts]
-                        for row in rows:
-                            row_obj = dict(zip(col_names, row))
-                            cid_key = str(row_obj.get("cid"))
-                            if cid_key not in case_rows:
-                                case_rows[cid_key] = row_obj
-
-                        if source_name == "hf":
-                            case_sources.append(source_label)
-                        else:
-                            case_sources.append(source_name)
+                    if len(case_rows) >= len(cid_order):
                         break
-                    except Exception as exc:
-                        last_exc = exc
-                        continue
 
                 if len(case_rows) >= len(cid_order):
                     break
@@ -396,7 +414,7 @@ async def _main() -> None:
                 raise last_exc
 
             if chunk_lookup_enabled:
-                chunk_dataset_id = payload.get("chunk_hf_dataset_id", dataset_id)
+                chunk_dataset_id = payload.get("chunk_hf_dataset_id", dataset_ids[0])
                 chunk_parquet_file = payload.get("chunk_hf_parquet_file")
                 if not chunk_parquet_file:
                     try:
@@ -1212,6 +1230,7 @@ async def search_caselaw_access_cases_from_parameters(
             "top_k": int(parameters.get("top_k", 10)),
             "filter_dict": parameters.get("filter_dict"),
             "hf_dataset_id": parameters.get("hf_dataset_id", DEFAULT_CAP_HF_DATASET_ID),
+            "hf_dataset_ids": parameters.get("hf_dataset_ids"),
             "hf_parquet_file": parameters.get("hf_parquet_file", DEFAULT_CAP_HF_PARQUET_FILE),
             "hf_parquet_prefix": parameters.get("hf_parquet_prefix"),
             "cid_metadata_field": parameters.get("cid_metadata_field", "cid"),
@@ -1290,11 +1309,10 @@ async def search_state_law_corpus_from_parameters(
 ) -> Dict[str, Any]:
     """Search a state-law corpus vectors with optional statute metadata enrichment.
 
-    Defaults are oriented to the state-law HF dataset layout:
-    `justicedao/ipfs_state_laws/<STATE>/parsed/parquet`.
-
-    For Oregon (`OR`) with metadata enrichment enabled, defaults include both
-    Oregon Revised Statutes and Oregon Administrative Rules parquet matches.
+    Defaults are oriented to combined state-law sources and use `<STATE>/parsed/parquet`
+    paths. By default this includes both:
+    - `justicedao/ipfs_state_laws` (legislative + judicial sources)
+    - `justicedao/ipfs_state_admin_rules` (executive admin rules)
     """
     state_params = dict(parameters)
     try:
@@ -1308,6 +1326,10 @@ async def search_state_law_corpus_from_parameters(
         }
 
     state_params.setdefault("hf_dataset_id", DEFAULT_STATE_LAWS_HF_DATASET_ID)
+    state_params.setdefault(
+        "hf_dataset_ids",
+        [DEFAULT_STATE_LAWS_HF_DATASET_ID, DEFAULT_STATE_ADMIN_RULES_HF_DATASET_ID],
+    )
     state_params.setdefault("hf_parquet_prefix", f"{state_code}/parsed/parquet")
     state_params.setdefault("hf_parquet_file", None)
     state_params.setdefault("cid_metadata_field", "cid")
@@ -1401,6 +1423,114 @@ async def search_federal_register_corpus_from_parameters(
         fr_params,
         tool_version=tool_version,
     )
+
+
+async def search_court_rules_corpus_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    """Search court-rules corpus vectors with federal/state jurisdiction filtering.
+
+    Defaults target: `justicedao/ipfs_court_rules`.
+    Supported jurisdiction values:
+    - `federal`: federal court rules
+    - `state`: state court rules (optionally narrowed by `state`)
+    - `both`: search both federal + state court rules
+    """
+    court_params = dict(parameters)
+
+    jurisdiction = str(court_params.get("jurisdiction", "both")).strip().lower()
+    if jurisdiction not in {"federal", "state", "both"}:
+        return {
+            "status": "error",
+            "error": "jurisdiction must be one of: federal, state, both",
+            "operation": "search_cases",
+            "tool_version": tool_version,
+        }
+
+    state_code = None
+    if jurisdiction == "state":
+        try:
+            state_code = _normalize_state_code(court_params.get("state", "OR"))
+        except ValueError as exc:
+            return {
+                "status": "error",
+                "error": str(exc),
+                "operation": "search_cases",
+                "tool_version": tool_version,
+            }
+
+    court_params.setdefault("hf_dataset_id", DEFAULT_COURT_RULES_HF_DATASET_ID)
+    court_params.setdefault("hf_dataset_ids", [DEFAULT_COURT_RULES_HF_DATASET_ID])
+
+    if "hf_parquet_prefix" not in court_params:
+        if jurisdiction == "state" and state_code:
+            court_params["hf_parquet_prefix"] = f"{state_code}/parsed/parquet"
+        else:
+            court_params["hf_parquet_prefix"] = None
+
+    court_params.setdefault("hf_parquet_file", None)
+    court_params.setdefault("cid_metadata_field", "cid")
+    court_params.setdefault("cid_column", "cid")
+    court_params.setdefault(
+        "text_field_candidates",
+        ["text", "content", "section_text", "body", "title", "heading", "semantic_text"],
+    )
+    court_params.setdefault("chunk_lookup_enabled", False)
+    court_params.setdefault("chunk_hf_parquet_file", None)
+    court_params.setdefault("chunk_hf_parquet_prefix", None)
+
+    if "preferred_case_parquet_names" not in court_params:
+        common_terms = ["court_rules", "rules_of_civil_procedure", "rules_of_criminal_procedure"]
+        if jurisdiction == "federal":
+            preferred = [
+                "federal_rules",
+                "federal_court_rules",
+                "local_court_rules",
+                "federal",
+                *common_terms,
+            ]
+        elif jurisdiction == "state":
+            preferred = [
+                "state_court_rules",
+                "state_rules",
+                "local_court_rules",
+                "state",
+                state_code.lower() if state_code else "",
+                *common_terms,
+            ]
+        else:
+            preferred = [
+                "federal_rules",
+                "state_court_rules",
+                "state_rules",
+                "local_court_rules",
+                "federal",
+                "state",
+                *common_terms,
+            ]
+        court_params["preferred_case_parquet_names"] = [term for term in preferred if term]
+
+    court_params.setdefault("max_case_parquet_files", 24)
+    enrich_with_cases = bool(court_params.get("enrich_with_cases", True))
+
+    if enrich_with_cases:
+        result = await search_caselaw_access_cases_from_parameters(
+            court_params,
+            tool_version=tool_version,
+        )
+    else:
+        result = await search_caselaw_access_vectors_from_parameters(
+            court_params,
+            tool_version=tool_version,
+        )
+
+    if isinstance(result, dict):
+        result.setdefault("jurisdiction", jurisdiction)
+        if state_code is not None:
+            result.setdefault("state", state_code)
+    return result
 
 
 async def search_federal_register_hf_index_from_parameters(
