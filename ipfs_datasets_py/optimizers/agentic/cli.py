@@ -536,6 +536,65 @@ class OptimizerArgparseCLI:
         except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as e:
             print(f"\n❌ Validation error: {self._safe_error_text(e)}")
             return 1
+
+    def cmd_state_laws_optimize(self, args: argparse.Namespace) -> int:
+        """Run state-law actor/critic optimization loop.
+
+        Args:
+            args: Command arguments
+
+        Returns:
+            Exit code
+        """
+        from .state_laws_actor_critic_loop import main as state_laws_loop_main
+
+        forwarded_args = [
+            "--states",
+            str(args.states),
+            "--max-rounds",
+            str(int(args.max_rounds)),
+            "--actors-per-round",
+            str(int(args.actors_per_round)),
+            "--actor-concurrency",
+            str(int(args.actor_concurrency)),
+            "--target-score",
+            str(float(args.target_score)),
+            "--max-statutes",
+            str(int(args.max_statutes)),
+            "--top-n-diagnostics",
+            str(int(args.top_n_diagnostics)),
+        ]
+
+        output_dir = str(args.output_dir or "").strip()
+        if output_dir:
+            forwarded_args.extend(["--output-dir", output_dir])
+
+        if bool(args.emit_patch_plan):
+            forwarded_args.append("--emit-patch-plan")
+        if bool(args.apply_patch_plan):
+            forwarded_args.append("--apply-patch-plan")
+        forwarded_args.extend(["--patch-plan-limit", str(int(args.patch_plan_limit))])
+        if bool(args.execute_apply_plan):
+            forwarded_args.append("--execute-apply-plan")
+        apply_plan_file = str(args.apply_plan_file or "").strip()
+        if apply_plan_file:
+            forwarded_args.extend(["--apply-plan-file", apply_plan_file])
+        forwarded_args.extend(["--execution-max-tasks", str(int(args.execution_max_tasks))])
+        if bool(args.auto_patch):
+            forwarded_args.append("--auto-patch")
+        forwarded_args.extend(["--auto-patch-max-tasks", str(int(args.auto_patch_max_tasks))])
+        if bool(args.auto_patch_no_dry_run):
+            forwarded_args.append("--auto-patch-no-dry-run")
+        for pattern in list(args.auto_patch_allow_glob or []):
+            forwarded_args.extend(["--auto-patch-allow-glob", str(pattern)])
+        for pattern in list(args.auto_patch_deny_glob or []):
+            forwarded_args.extend(["--auto-patch-deny-glob", str(pattern)])
+        for pattern in list(args.wayback_allow_glob or []):
+            forwarded_args.extend(["--wayback-allow-glob", str(pattern)])
+        for pattern in list(args.wayback_deny_glob or []):
+            forwarded_args.extend(["--wayback-deny-glob", str(pattern)])
+
+        return int(state_laws_loop_main(forwarded_args))
     
     def _format_duration(self, seconds: float) -> str:
         """Format duration in human-readable format.
@@ -653,6 +712,133 @@ class OptimizerArgparseCLI:
             action='store_true',
             help='Run validators sequentially',
         )
+
+        # state-laws-optimize command
+        state_laws_parser = subparsers.add_parser(
+            'state-laws-optimize',
+            help='Run actor/critic optimization loop for state law scrapers/parsers',
+        )
+        state_laws_parser.add_argument(
+            '--states',
+            type=str,
+            default='all',
+            help="Comma-separated state codes or 'all'",
+        )
+        state_laws_parser.add_argument(
+            '--max-rounds',
+            type=int,
+            default=6,
+            help='Maximum actor/critic rounds',
+        )
+        state_laws_parser.add_argument(
+            '--actors-per-round',
+            type=int,
+            default=3,
+            help='Actor policies evaluated per round',
+        )
+        state_laws_parser.add_argument(
+            '--actor-concurrency',
+            type=int,
+            default=2,
+            help='Concurrent actor trials',
+        )
+        state_laws_parser.add_argument(
+            '--target-score',
+            type=float,
+            default=0.92,
+            help='Convergence target score',
+        )
+        state_laws_parser.add_argument(
+            '--max-statutes',
+            type=int,
+            default=0,
+            help='Cap statutes per actor trial (0 = unlimited)',
+        )
+        state_laws_parser.add_argument(
+            '--top-n-diagnostics',
+            type=int,
+            default=8,
+            help='Top-N weak states retained in diagnostics',
+        )
+        state_laws_parser.add_argument(
+            '--output-dir',
+            type=str,
+            default='',
+            help='Optional output directory for round artifacts',
+        )
+        state_laws_parser.add_argument(
+            '--emit-patch-plan',
+            action='store_true',
+            help='Emit ranked round/final patch-plan artifacts',
+        )
+        state_laws_parser.add_argument(
+            '--apply-patch-plan',
+            action='store_true',
+            help='Emit actionable patch-task JSONL/TODO artifacts',
+        )
+        state_laws_parser.add_argument(
+            '--patch-plan-limit',
+            type=int,
+            default=20,
+            help='Top-N patch-plan entries to include in apply artifacts',
+        )
+        state_laws_parser.add_argument(
+            '--execute-apply-plan',
+            action='store_true',
+            help='Build execution queue/report from apply tasks',
+        )
+        state_laws_parser.add_argument(
+            '--apply-plan-file',
+            type=str,
+            default='',
+            help='Optional existing apply tasks JSONL file to execute',
+        )
+        state_laws_parser.add_argument(
+            '--execution-max-tasks',
+            type=int,
+            default=5,
+            help='Max tasks to include in execution report',
+        )
+        state_laws_parser.add_argument(
+            '--auto-patch',
+            action='store_true',
+            help='Attempt guarded auto-patch stage from execution queue',
+        )
+        state_laws_parser.add_argument(
+            '--auto-patch-max-tasks',
+            type=int,
+            default=3,
+            help='Max ready tasks attempted by auto-patch stage',
+        )
+        state_laws_parser.add_argument(
+            '--auto-patch-no-dry-run',
+            action='store_true',
+            help='Disable dry-run and apply registered auto-patch transformations',
+        )
+        state_laws_parser.add_argument(
+            '--auto-patch-allow-glob',
+            action='append',
+            default=[],
+            help='Glob allowlist for auto-patch target paths (repeatable)',
+        )
+        state_laws_parser.add_argument(
+            '--auto-patch-deny-glob',
+            action='append',
+            default=[],
+            help='Glob denylist for auto-patch target paths (repeatable)',
+        )
+        state_laws_parser.add_argument(
+            '--wayback-allow-glob',
+            action='append',
+            default=[],
+            help='Wayback strategy allowlist globs (repeatable)',
+        )
+        state_laws_parser.add_argument(
+            '--wayback-deny-glob',
+            action='append',
+            default=[],
+            help='Wayback strategy denylist globs (repeatable)',
+        )
         
         # Parse arguments
         args = parser.parse_args(argv)
@@ -682,6 +868,8 @@ class OptimizerArgparseCLI:
                 return self.cmd_config(args)
             elif args.command == 'validate':
                 return self.cmd_validate(args)
+            elif args.command == 'state-laws-optimize':
+                return self.cmd_state_laws_optimize(args)
             else:
                 parser.print_help()
                 return 1

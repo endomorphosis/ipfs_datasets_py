@@ -461,6 +461,12 @@ TOOL_MAPPINGS = {
                 "description": "Scrape United States Code titles",
                 "tags": ["legal", "uscode", "federal", "scraping"]
             },
+            "scrape_federal_laws": {
+                "name": "scrape_federal_laws",
+                "category": "legal_datasets",
+                "description": "Scrape federal procedural rules and local court rules",
+                "tags": ["legal", "federal_rules", "civil_procedure", "criminal_procedure", "local_rules"]
+            },
             "get_us_code_titles": {
                 "name": "get_us_code_titles",
                 "category": "legal_datasets",
@@ -556,6 +562,18 @@ TOOL_MAPPINGS = {
                 "category": "legal_datasets",
                 "description": "Search CAP vectors and enrich matches with caselaw snippets resolved by CID",
                 "tags": ["legal", "cap", "vector-search", "cid", "caselaw", "retrieval"]
+            },
+            "search_us_code_corpus": {
+                "name": "search_us_code_corpus",
+                "category": "legal_datasets",
+                "description": "Search US Code vector corpus and enrich matches with section metadata/snippets",
+                "tags": ["legal", "uscode", "vector-search", "cid", "retrieval"]
+            },
+            "search_state_law_corpus": {
+                "name": "search_state_law_corpus",
+                "category": "legal_datasets",
+                "description": "Search state-law vector corpus (e.g. OR/parsed/parquet) and enrich matches; Oregon defaults include both ORS and OAR corpora",
+                "tags": ["legal", "state_laws", "vector-search", "cid", "retrieval"]
             },
             "search_caselaw_access_vectors_with_centroids": {
                 "name": "search_caselaw_access_vectors_with_centroids",

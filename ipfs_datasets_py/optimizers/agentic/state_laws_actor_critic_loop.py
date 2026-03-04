@@ -10,7 +10,9 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import fnmatch
 import json
+import py_compile
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -62,6 +64,19 @@ class LoopConfig:
     actor_concurrency: int = 2
     max_statutes: int = 0
     top_n_diagnostics: int = 8
+    emit_patch_plan: bool = False
+    apply_patch_plan: bool = False
+    patch_plan_limit: int = 20
+    execute_apply_plan: bool = False
+    apply_plan_file: str = ""
+    execution_max_tasks: int = 5
+    auto_patch: bool = False
+    auto_patch_max_tasks: int = 3
+    auto_patch_dry_run: bool = True
+    auto_patch_allow_globs: List[str] = field(default_factory=list)
+    auto_patch_deny_globs: List[str] = field(default_factory=list)
+    wayback_allow_globs: List[str] = field(default_factory=list)
+    wayback_deny_globs: List[str] = field(default_factory=list)
 
 
 class StateLawsActorCriticLoop:
@@ -85,6 +100,7 @@ class StateLawsActorCriticLoop:
 
         self.round_history: List[Dict[str, Any]] = []
         self.best_outcome: Optional[TrialOutcome] = None
+        self._all_outcomes: List[TrialOutcome] = []
 
     async def run(self) -> Dict[str, Any]:
         """Execute optimization rounds and return final summary."""
@@ -96,9 +112,29 @@ class StateLawsActorCriticLoop:
                 break
 
             outcomes_sorted = sorted(outcomes, key=lambda item: item.critic_score, reverse=True)
+            self._all_outcomes.extend(outcomes_sorted)
             best = outcomes_sorted[0]
             if self.best_outcome is None or best.critic_score > self.best_outcome.critic_score:
                 self.best_outcome = best
+
+            patch_plan_file: Optional[str] = None
+            patch_plan_top: Optional[List[Dict[str, Any]]] = None
+            if bool(self.loop_config.emit_patch_plan):
+                round_patch_plan = self._build_patch_plan(outcomes_sorted)
+                patch_plan_file = f"round_patch_plan_{round_index:02d}.json"
+                (self.run_dir / patch_plan_file).write_text(
+                    json.dumps(
+                        {
+                            "round": round_index,
+                            "states": self.states,
+                            "generated_at": datetime.now().isoformat(),
+                            "patch_plan": round_patch_plan,
+                        },
+                        indent=2,
+                    ),
+                    encoding="utf-8",
+                )
+                patch_plan_top = round_patch_plan[:5]
 
             round_payload = {
                 "round": round_index,
@@ -107,6 +143,8 @@ class StateLawsActorCriticLoop:
                 "best_score": round(best.critic_score, 4),
                 "best_passed": bool(best.passed),
                 "outcomes": [asdict(outcome) for outcome in outcomes_sorted],
+                "patch_plan_file": patch_plan_file,
+                "patch_plan_top": patch_plan_top,
             }
             self.round_history.append(round_payload)
             (self.run_dir / f"round_{round_index:02d}.json").write_text(
@@ -118,6 +156,65 @@ class StateLawsActorCriticLoop:
 
             actor_pool = self._mutate_from_best(best)
 
+        final_patch_plan_file: Optional[str] = None
+        final_patch_plan: List[Dict[str, Any]] = []
+        if bool(self.loop_config.emit_patch_plan) or bool(self.loop_config.apply_patch_plan):
+            final_patch_plan = self._build_patch_plan(self._all_outcomes)
+            final_patch_plan_file = "final_patch_plan.json"
+            (self.run_dir / final_patch_plan_file).write_text(
+                json.dumps(
+                    {
+                        "states": self.states,
+                        "generated_at": datetime.now().isoformat(),
+                        "rounds_executed": len(self.round_history),
+                        "patch_plan": final_patch_plan,
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+        apply_patch_plan_files: Optional[Dict[str, str]] = None
+        execution_report_file: Optional[str] = None
+        auto_patch_report_file: Optional[str] = None
+        if bool(self.loop_config.apply_patch_plan):
+            apply_tasks = self._build_apply_patch_tasks(
+                final_patch_plan,
+                limit=max(1, int(self.loop_config.patch_plan_limit or 1)),
+            )
+            apply_patch_plan_files = self._write_apply_patch_artifacts(apply_tasks)
+
+        if bool(self.loop_config.execute_apply_plan):
+            preferred_plan_file = str(self.loop_config.apply_plan_file or "").strip()
+            if preferred_plan_file:
+                plan_path = Path(preferred_plan_file).expanduser().resolve()
+            elif apply_patch_plan_files and apply_patch_plan_files.get("tasks_jsonl"):
+                plan_path = Path(str(apply_patch_plan_files["tasks_jsonl"]))
+            else:
+                plan_path = self.run_dir / "apply_patch_plan_tasks.jsonl"
+
+            execution_report = self._execute_apply_plan(
+                plan_path,
+                max_tasks=max(1, int(self.loop_config.execution_max_tasks or 1)),
+            )
+            execution_report_file = "apply_patch_execution_report.json"
+            (self.run_dir / execution_report_file).write_text(
+                json.dumps(execution_report, indent=2),
+                encoding="utf-8",
+            )
+
+            if bool(self.loop_config.auto_patch):
+                auto_patch_report = self._run_auto_patch(
+                    execution_report,
+                    max_tasks=max(1, int(self.loop_config.auto_patch_max_tasks or 1)),
+                    dry_run=bool(self.loop_config.auto_patch_dry_run),
+                )
+                auto_patch_report_file = "auto_patch_report.json"
+                (self.run_dir / auto_patch_report_file).write_text(
+                    json.dumps(auto_patch_report, indent=2),
+                    encoding="utf-8",
+                )
+
         final_summary = {
             "run_dir": str(self.run_dir),
             "states": self.states,
@@ -126,9 +223,495 @@ class StateLawsActorCriticLoop:
             "best": asdict(self.best_outcome) if self.best_outcome else None,
             "converged": bool(self.best_outcome and self.best_outcome.passed),
             "history_files": [f"round_{idx + 1:02d}.json" for idx in range(len(self.round_history))],
+            "patch_plan_file": final_patch_plan_file,
+            "apply_patch_plan_files": apply_patch_plan_files,
+            "execution_report_file": execution_report_file,
+            "auto_patch_report_file": auto_patch_report_file,
         }
         (self.run_dir / "final_summary.json").write_text(json.dumps(final_summary, indent=2), encoding="utf-8")
         return final_summary
+
+    def _build_patch_plan(self, outcomes: List[TrialOutcome]) -> List[Dict[str, Any]]:
+        file_scores: Dict[str, float] = {}
+        file_reasons: Dict[str, set[str]] = {}
+        file_states: Dict[str, set[str]] = {}
+
+        core_files = {
+            "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py",
+            "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/base_scraper.py",
+            "ipfs_datasets_py/processors/legal_scrapers/state_laws_verifier.py",
+        }
+
+        for outcome in outcomes:
+            score_deficit = max(0.0, 1.0 - float(outcome.critic_score or 0.0))
+            diagnostics = outcome.diagnostics or {}
+            coverage = diagnostics.get("coverage") or {}
+            fetch = diagnostics.get("fetch") or {}
+            etl = diagnostics.get("etl_readiness") or {}
+            quality = diagnostics.get("quality") or {}
+
+            reason_states: Dict[str, set[str]] = {}
+
+            for state in coverage.get("coverage_gap_states") or []:
+                state_code = str(state).upper()
+                reason_states.setdefault(state_code, set()).add("coverage_gap")
+            for state in fetch.get("no_attempt_states") or []:
+                state_code = str(state).upper()
+                reason_states.setdefault(state_code, set()).add("fetch_no_attempt")
+            for row in fetch.get("weak_states") or []:
+                if isinstance(row, dict):
+                    state_code = str(row.get("state") or "").upper()
+                    if state_code:
+                        reason_states.setdefault(state_code, set()).add("fetch_weak")
+            for row in quality.get("weak_states") or []:
+                if isinstance(row, dict):
+                    state_code = str(row.get("state") or "").upper()
+                    if state_code:
+                        reason_states.setdefault(state_code, set()).add("quality_weak")
+
+            global_reasons: set[str] = set()
+            if not bool(etl.get("ready_for_kg_etl")):
+                global_reasons.add("etl_not_ready")
+            if float(etl.get("statute_signal_ratio", 0.0) or 0.0) < 0.70:
+                global_reasons.add("low_statute_signal_ratio")
+            if float(etl.get("non_scaffold_ratio", 0.0) or 0.0) < 0.85:
+                global_reasons.add("high_scaffold_or_navigation_ratio")
+            if float(etl.get("kg_payload_ratio", 0.0) or 0.0) < 0.70:
+                global_reasons.add("kg_payload_ratio_low")
+            if float(etl.get("jsonld_legislation_ratio", 0.0) or 0.0) < 0.70:
+                global_reasons.add("jsonld_legislation_ratio_low")
+            if coverage.get("coverage_gap_states"):
+                global_reasons.add("coverage_gaps_present")
+            if fetch.get("no_attempt_states"):
+                global_reasons.add("no_attempt_states_present")
+
+            candidate_files = set(outcome.recommended_patch_targets or [])
+            for state_code, reasons in reason_states.items():
+                scraper_file = self._state_code_to_scraper_file(state_code)
+                if scraper_file:
+                    candidate_files.add(scraper_file)
+                    file_states.setdefault(scraper_file, set()).add(state_code)
+                    file_reasons.setdefault(scraper_file, set()).update(reasons)
+
+            for file_path in candidate_files:
+                file_scores[file_path] = float(file_scores.get(file_path, 0.0) or 0.0) + score_deficit
+                file_reasons.setdefault(file_path, set())
+                if file_path in core_files:
+                    file_reasons[file_path].update(global_reasons)
+
+        ranked = sorted(file_scores.items(), key=lambda item: item[1], reverse=True)
+        plan: List[Dict[str, Any]] = []
+        for file_path, score in ranked:
+            reasons = sorted(file_reasons.get(file_path, set()))
+            states = sorted(file_states.get(file_path, set()))
+            plan.append(
+                {
+                    "path": file_path,
+                    "priority_score": round(float(score), 4),
+                    "reasons": reasons,
+                    "states": states,
+                }
+            )
+
+        return plan
+
+    def _build_apply_patch_tasks(self, patch_plan: List[Dict[str, Any]], *, limit: int = 20) -> List[Dict[str, Any]]:
+        tasks: List[Dict[str, Any]] = []
+        top_items = list(patch_plan)[: max(1, int(limit or 1))]
+
+        for idx, item in enumerate(top_items, start=1):
+            if not isinstance(item, dict):
+                continue
+
+            path = str(item.get("path") or "")
+            reasons = list(item.get("reasons") or [])
+            states = list(item.get("states") or [])
+            priority_score = float(item.get("priority_score", 0.0) or 0.0)
+
+            task = {
+                "task_id": f"patch-task-{idx:03d}",
+                "path": path,
+                "priority_score": round(priority_score, 4),
+                "reasons": reasons,
+                "states": states,
+                "suggested_actions": self._suggest_actions_for_path(path, reasons, states),
+            }
+            tasks.append(task)
+
+        return tasks
+
+    def _write_apply_patch_artifacts(self, tasks: List[Dict[str, Any]]) -> Dict[str, str]:
+        jsonl_file = self.run_dir / "apply_patch_plan_tasks.jsonl"
+        md_file = self.run_dir / "apply_patch_plan_todo.md"
+
+        with jsonl_file.open("w", encoding="utf-8") as handle:
+            for row in tasks:
+                handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+        lines: List[str] = [
+            "# Apply Patch Plan TODO",
+            "",
+            f"Generated at: {datetime.now().isoformat()}",
+            "",
+        ]
+        for idx, task in enumerate(tasks, start=1):
+            lines.append(f"## {idx}. `{task.get('path', '')}`")
+            lines.append(f"- Priority Score: {task.get('priority_score', 0.0)}")
+            lines.append(f"- Reasons: {', '.join(task.get('reasons') or [])}")
+            states = task.get("states") or []
+            lines.append(f"- States: {', '.join(states) if states else 'n/a'}")
+            lines.append("- Suggested Actions:")
+            for action in task.get("suggested_actions") or []:
+                lines.append(f"  - {action}")
+            lines.append("")
+
+        md_file.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+        return {
+            "tasks_jsonl": str(jsonl_file),
+            "todo_markdown": str(md_file),
+        }
+
+    def _execute_apply_plan(self, tasks_file: Path, *, max_tasks: int = 5) -> Dict[str, Any]:
+        tasks = self._load_apply_tasks(tasks_file)
+        selected = tasks[: max(1, int(max_tasks or 1))]
+
+        execution_items: List[Dict[str, Any]] = []
+        ready_count = 0
+        repo_root = Path(__file__).resolve().parents[3]
+
+        for idx, task in enumerate(selected, start=1):
+            rel_path = str(task.get("path") or "")
+            abs_path = repo_root / rel_path
+            exists = abs_path.exists()
+            compile_ok = None
+            compile_error = None
+
+            if exists and abs_path.suffix == ".py":
+                try:
+                    py_compile.compile(str(abs_path), doraise=True)
+                    compile_ok = True
+                except Exception as exc:  # pragma: no cover - defensive
+                    compile_ok = False
+                    compile_error = str(exc)
+
+            tests = self._suggest_tests_for_path(rel_path)
+            next_commands = self._suggest_execution_commands(rel_path, tests)
+            status = "ready_for_patch" if exists and (compile_ok in {True, None}) else "blocked"
+            if status == "ready_for_patch":
+                ready_count += 1
+
+            execution_items.append(
+                {
+                    "rank": idx,
+                    "task_id": str(task.get("task_id") or f"patch-task-{idx:03d}"),
+                    "path": rel_path,
+                    "abs_path": str(abs_path),
+                    "exists": exists,
+                    "compile_ok": compile_ok,
+                    "compile_error": compile_error,
+                    "reasons": list(task.get("reasons") or []),
+                    "states": list(task.get("states") or []),
+                    "status": status,
+                    "suggested_tests": tests,
+                    "next_commands": next_commands,
+                }
+            )
+
+        queue_jsonl = self.run_dir / "apply_patch_execution_queue.jsonl"
+        with queue_jsonl.open("w", encoding="utf-8") as handle:
+            for item in execution_items:
+                handle.write(json.dumps(item, ensure_ascii=False) + "\n")
+
+        return {
+            "tasks_file": str(tasks_file),
+            "selected_count": len(selected),
+            "ready_count": ready_count,
+            "blocked_count": max(0, len(selected) - ready_count),
+            "execution_queue_jsonl": str(queue_jsonl),
+            "items": execution_items,
+        }
+
+    @staticmethod
+    def _load_apply_tasks(tasks_file: Path) -> List[Dict[str, Any]]:
+        if not tasks_file.exists():
+            return []
+        out: List[Dict[str, Any]] = []
+        for line in tasks_file.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                payload = json.loads(line)
+            except Exception:
+                continue
+            if isinstance(payload, dict):
+                out.append(payload)
+        return out
+
+    @staticmethod
+    def _suggest_tests_for_path(path: str) -> List[str]:
+        if path.endswith("state_laws_verifier.py"):
+            return [
+                "tests/unit/legal_scrapers/test_state_laws_verifier_operational.py",
+            ]
+        if path.endswith("state_laws_scraper.py"):
+            return [
+                "tests/unit/legal_scrapers/test_state_scraper_jsonld_enrichment.py",
+            ]
+        if "state_scrapers/" in path:
+            return [
+                "tests/unit/legal_scrapers/test_state_scraper_jsonld_enrichment.py",
+            ]
+        return []
+
+    @staticmethod
+    def _suggest_execution_commands(path: str, tests: List[str]) -> List[str]:
+        commands = [
+            f"python -m py_compile {path}",
+        ]
+        if tests:
+            commands.append("python -m pytest -q " + " ".join(tests))
+        commands.append(f"git --no-pager diff -- {path}")
+        return commands
+
+    def _run_auto_patch(self, execution_report: Dict[str, Any], *, max_tasks: int, dry_run: bool) -> Dict[str, Any]:
+        items = list(execution_report.get("items") or [])
+        ready_items = [item for item in items if isinstance(item, dict) and item.get("status") == "ready_for_patch"]
+        selected = ready_items[: max(1, int(max_tasks or 1))]
+
+        attempts: List[Dict[str, Any]] = []
+        applied_count = 0
+        skipped_count = 0
+        error_count = 0
+
+        for item in selected:
+            rel_path = str(item.get("path") or "")
+            try:
+                result = self._auto_patch_single(rel_path, dry_run=dry_run)
+                attempts.append(result)
+                if result.get("status") == "applied":
+                    applied_count += 1
+                elif result.get("status") == "skipped":
+                    skipped_count += 1
+                else:
+                    error_count += 1
+            except Exception as exc:  # pragma: no cover - defensive
+                attempts.append(
+                    {
+                        "path": rel_path,
+                        "status": "error",
+                        "reason": f"auto-patch-exception: {exc}",
+                    }
+                )
+                error_count += 1
+
+        return {
+            "dry_run": bool(dry_run),
+            "selected_ready_tasks": len(selected),
+            "applied_count": applied_count,
+            "skipped_count": skipped_count,
+            "error_count": error_count,
+            "attempts": attempts,
+            "policy_summary": self._summarize_auto_patch_policy(attempts),
+        }
+
+    @staticmethod
+    def _summarize_auto_patch_policy(attempts: List[Dict[str, Any]]) -> Dict[str, Any]:
+        matched_allow_glob_counts: Dict[str, int] = {}
+        matched_deny_glob_counts: Dict[str, int] = {}
+        blocked_reason_counts: Dict[str, int] = {}
+
+        attempts_with_policy = 0
+        missing_policy_count = 0
+        allowed_count = 0
+        blocked_count = 0
+
+        for attempt in attempts:
+            policy = attempt.get("policy")
+            if not isinstance(policy, dict):
+                missing_policy_count += 1
+                continue
+
+            attempts_with_policy += 1
+            allowed = bool(policy.get("allowed"))
+            if allowed:
+                allowed_count += 1
+            else:
+                blocked_count += 1
+                reason = str(attempt.get("reason") or "blocked-unspecified")
+                blocked_reason_counts[reason] = blocked_reason_counts.get(reason, 0) + 1
+
+            for pattern in list(policy.get("matched_allow_globs") or []):
+                key = str(pattern)
+                matched_allow_glob_counts[key] = matched_allow_glob_counts.get(key, 0) + 1
+            for pattern in list(policy.get("matched_deny_globs") or []):
+                key = str(pattern)
+                matched_deny_glob_counts[key] = matched_deny_glob_counts.get(key, 0) + 1
+
+        return {
+            "attempts_with_policy": attempts_with_policy,
+            "missing_policy_count": missing_policy_count,
+            "allowed_count": allowed_count,
+            "blocked_count": blocked_count,
+            "blocked_reason_counts": blocked_reason_counts,
+            "matched_allow_glob_counts": matched_allow_glob_counts,
+            "matched_deny_glob_counts": matched_deny_glob_counts,
+        }
+
+    def _auto_patch_single(self, rel_path: str, *, dry_run: bool) -> Dict[str, Any]:
+        # Guarded strategy registry: only explicit safe transformations are applied.
+        policy_debug = self._evaluate_auto_patch_policy(rel_path)
+        strategy = self._resolve_auto_patch_strategy(rel_path)
+        if strategy is None:
+            if not bool(policy_debug.get("allowed")):
+                reason = "blocked-by-auto-patch-policy"
+            else:
+                reason = "no-registered-strategy"
+            return {
+                "path": rel_path,
+                "status": "skipped",
+                "reason": reason,
+                "policy": policy_debug,
+            }
+
+        if dry_run:
+            return {
+                "path": rel_path,
+                "status": "skipped",
+                "reason": f"dry-run:{strategy}",
+                "policy": policy_debug,
+            }
+
+        repo_root = Path(__file__).resolve().parents[3]
+        abs_path = repo_root / rel_path
+        if not abs_path.exists():
+            return {
+                "path": rel_path,
+                "status": "error",
+                "reason": "target-file-missing",
+                "policy": policy_debug,
+            }
+
+        original = abs_path.read_text(encoding="utf-8")
+        updated = self._apply_text_strategy(original, strategy)
+        if updated == original:
+            return {
+                "path": rel_path,
+                "status": "skipped",
+                "reason": "no-op",
+                "policy": policy_debug,
+            }
+        abs_path.write_text(updated, encoding="utf-8")
+        return {
+            "path": rel_path,
+            "status": "applied",
+            "reason": strategy,
+            "policy": policy_debug,
+        }
+
+        return {
+            "path": rel_path,
+            "status": "skipped",
+            "reason": f"unknown-strategy:{strategy}",
+            "policy": policy_debug,
+        }
+
+    def _resolve_auto_patch_strategy(self, rel_path: str) -> Optional[str]:
+        if not self._is_path_allowed_by_auto_patch_policy(rel_path):
+            return None
+
+        if (
+            rel_path.endswith(".py")
+            and "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/" in rel_path
+            and self._path_allowed_by_patterns(
+                rel_path,
+                allow_globs=list(self.loop_config.wayback_allow_globs or []),
+                deny_globs=list(self.loop_config.wayback_deny_globs or []),
+            )
+        ):
+            return "normalize-wayback-scheme-http"
+        if rel_path.endswith(".py") and "ipfs_datasets_py/processors/legal_scrapers/" in rel_path:
+            return "normalize-trailing-whitespace"
+        return None
+
+    def _is_path_allowed_by_auto_patch_policy(self, rel_path: str) -> bool:
+        return self._path_allowed_by_patterns(
+            rel_path,
+            allow_globs=list(self.loop_config.auto_patch_allow_globs or []),
+            deny_globs=list(self.loop_config.auto_patch_deny_globs or []),
+        )
+
+    def _evaluate_auto_patch_policy(self, rel_path: str) -> Dict[str, Any]:
+        path = str(rel_path or "")
+        allow_globs = [str(item).strip() for item in (self.loop_config.auto_patch_allow_globs or []) if str(item).strip()]
+        deny_globs = [str(item).strip() for item in (self.loop_config.auto_patch_deny_globs or []) if str(item).strip()]
+
+        matched_allow = [pattern for pattern in allow_globs if fnmatch.fnmatch(path, pattern)]
+        matched_deny = [pattern for pattern in deny_globs if fnmatch.fnmatch(path, pattern)]
+
+        allow_ok = (not allow_globs) or bool(matched_allow)
+        deny_ok = not bool(matched_deny)
+        return {
+            "allowed": bool(allow_ok and deny_ok),
+            "allow_globs": allow_globs,
+            "deny_globs": deny_globs,
+            "matched_allow_globs": matched_allow,
+            "matched_deny_globs": matched_deny,
+        }
+
+    @staticmethod
+    def _path_allowed_by_patterns(rel_path: str, *, allow_globs: List[str], deny_globs: List[str]) -> bool:
+        path = str(rel_path or "")
+        allow = [str(item).strip() for item in (allow_globs or []) if str(item).strip()]
+        deny = [str(item).strip() for item in (deny_globs or []) if str(item).strip()]
+
+        if allow and not any(fnmatch.fnmatch(path, pattern) for pattern in allow):
+            return False
+        if any(fnmatch.fnmatch(path, pattern) for pattern in deny):
+            return False
+        return True
+
+    @staticmethod
+    def _apply_text_strategy(original: str, strategy: str) -> str:
+        if strategy == "normalize-trailing-whitespace":
+            normalized_lines = [line.rstrip() for line in original.splitlines()]
+            updated = "\n".join(normalized_lines)
+            if original.endswith("\n"):
+                updated += "\n"
+            return updated
+
+        if strategy == "normalize-wayback-scheme-http":
+            return original.replace("https://web.archive.org/", "http://web.archive.org/")
+
+        return original
+
+    @staticmethod
+    def _suggest_actions_for_path(path: str, reasons: List[str], states: List[str]) -> List[str]:
+        actions: List[str] = []
+        if "state_scrapers" in path:
+            actions.append("Review state-specific link discovery and archival fallback seeds.")
+            actions.append("Harden anti-bot/challenge rejection and statute-only extraction filters.")
+        if path.endswith("state_laws_scraper.py"):
+            actions.append("Tune strict filtering thresholds and retry orchestration for low-coverage states.")
+        if path.endswith("base_scraper.py"):
+            actions.append("Adjust unified fetch fallback order and provider telemetry on no-attempt states.")
+        if path.endswith("state_laws_verifier.py"):
+            actions.append("Tighten operational thresholds and ensure diagnostics cover observed failure modes.")
+
+        if "fetch_no_attempt" in reasons:
+            actions.append("Add deterministic source URL seeds for states with zero hydration attempts.")
+        if "coverage_gap" in reasons:
+            actions.append("Add fallback index/source discovery to close coverage gaps.")
+        if "quality_weak" in reasons:
+            actions.append("Improve semantic quality gating to reject scaffold/nav contamination.")
+        if "etl_not_ready" in reasons:
+            actions.append("Improve structured extraction completeness for JSON-LD and citation fields.")
+        if states:
+            actions.append(f"Prioritize validation for states: {', '.join(states)}.")
+
+        if not actions:
+            actions.append("Inspect diagnostics and add targeted scraper/parser hardening for this file.")
+        return actions
 
     async def _evaluate_round(self, round_index: int, actor_pool: List[ActorPolicyConfig]) -> List[TrialOutcome]:
         semaphore = asyncio.Semaphore(max(1, int(self.loop_config.actor_concurrency or 1)))
@@ -186,13 +769,30 @@ class StateLawsActorCriticLoop:
 
         full_text_ratio = float(etl.get("full_text_ratio", 0.0) or 0.0)
         jsonld_ratio = float(etl.get("jsonld_ratio", 0.0) or 0.0)
+        jsonld_legislation_ratio = float(etl.get("jsonld_legislation_ratio", 0.0) or 0.0)
+        kg_payload_ratio = float(etl.get("kg_payload_ratio", 0.0) or 0.0)
         citation_ratio = float(etl.get("citation_ratio", 0.0) or 0.0)
-        etl_score = (0.4 * full_text_ratio) + (0.4 * jsonld_ratio) + (0.2 * citation_ratio)
+        statute_signal_ratio = float(etl.get("statute_signal_ratio", 0.0) or 0.0)
+        non_scaffold_ratio = float(etl.get("non_scaffold_ratio", 0.0) or 0.0)
+        etl_score = (
+            (0.20 * full_text_ratio)
+            + (0.20 * jsonld_ratio)
+            + (0.15 * jsonld_legislation_ratio)
+            + (0.15 * kg_payload_ratio)
+            + (0.15 * statute_signal_ratio)
+            + (0.10 * non_scaffold_ratio)
+            + (0.05 * citation_ratio)
+        )
 
         fetch_success_ratio = float(fetch.get("success_ratio", 0.0) or 0.0)
+        fetch_attempted = int(fetch.get("attempted", 0) or 0)
         no_attempt_states = list(fetch.get("no_attempt_states") or [])
         no_attempt_penalty = (len(no_attempt_states) / max(1, len(self.states))) * 0.25
         fetch_score = max(0.0, fetch_success_ratio - no_attempt_penalty)
+
+        # Guard against false-positive fetch health when no fetch telemetry was recorded.
+        if targeted > 0 and fetch_attempted <= 0:
+            fetch_score = max(0.0, fetch_score - 0.35)
 
         weak_quality = list((quality.get("weak_states") or []))
         if weak_quality:
@@ -208,9 +808,16 @@ class StateLawsActorCriticLoop:
         else:
             quality_score = 1.0
 
-        score = (0.40 * coverage_score) + (0.35 * etl_score) + (0.15 * fetch_score) + (0.10 * quality_score)
+        score = (0.35 * coverage_score) + (0.40 * etl_score) + (0.15 * fetch_score) + (0.10 * quality_score)
         if bool(etl.get("ready_for_kg_etl")):
             score += 0.05
+
+        if statute_signal_ratio > 0.0 and statute_signal_ratio < 0.65:
+            score -= 0.08
+        if non_scaffold_ratio > 0.0 and non_scaffold_ratio < 0.80:
+            score -= 0.08
+        if kg_payload_ratio > 0.0 and kg_payload_ratio < 0.65:
+            score -= 0.06
 
         return round(max(0.0, min(1.0, score)), 4)
 
@@ -222,9 +829,22 @@ class StateLawsActorCriticLoop:
         coverage_gaps = list(coverage.get("coverage_gap_states") or [])
         no_attempt_states = list(fetch.get("no_attempt_states") or [])
 
+        full_text_ratio = float(etl.get("full_text_ratio", 0.0) or 0.0)
+        jsonld_ratio = float(etl.get("jsonld_ratio", 0.0) or 0.0)
+        jsonld_legislation_ratio = float(etl.get("jsonld_legislation_ratio", 0.0) or 0.0)
+        kg_payload_ratio = float(etl.get("kg_payload_ratio", 0.0) or 0.0)
+        statute_signal_ratio = float(etl.get("statute_signal_ratio", 0.0) or 0.0)
+        non_scaffold_ratio = float(etl.get("non_scaffold_ratio", 0.0) or 0.0)
+
         return bool(
             score >= float(self.loop_config.target_score)
             and bool(etl.get("ready_for_kg_etl"))
+            and full_text_ratio >= 0.85
+            and jsonld_ratio >= 0.75
+            and jsonld_legislation_ratio >= 0.70
+            and kg_payload_ratio >= 0.70
+            and statute_signal_ratio >= 0.70
+            and non_scaffold_ratio >= 0.85
             and len(coverage_gaps) == 0
             and len(no_attempt_states) == 0
         )
@@ -240,6 +860,9 @@ class StateLawsActorCriticLoop:
         weak_fetch = len(list(fetch.get("weak_states") or [])) > 0
         weak_quality = len(list(quality.get("weak_states") or [])) > 0
         etl_ready = bool(etl.get("ready_for_kg_etl"))
+        statute_signal_ratio = float(etl.get("statute_signal_ratio", 0.0) or 0.0)
+        non_scaffold_ratio = float(etl.get("non_scaffold_ratio", 0.0) or 0.0)
+        kg_payload_ratio = float(etl.get("kg_payload_ratio", 0.0) or 0.0)
 
         candidates: List[ActorPolicyConfig] = []
 
@@ -299,6 +922,42 @@ class StateLawsActorCriticLoop:
                     per_state_retry_attempts=base.per_state_retry_attempts,
                     rate_limit_delay=base.rate_limit_delay,
                     min_full_text_chars=min(500, base.min_full_text_chars + 50),
+                    hydrate_statute_text=True,
+                )
+            )
+
+        if statute_signal_ratio > 0.0 and statute_signal_ratio < 0.70:
+            _add(
+                ActorPolicyConfig(
+                    name="statute_signal_recall",
+                    parallel_workers=max(2, base.parallel_workers - 1),
+                    per_state_retry_attempts=min(6, base.per_state_retry_attempts + 1),
+                    rate_limit_delay=min(3.0, base.rate_limit_delay + 0.2),
+                    min_full_text_chars=max(180, base.min_full_text_chars - 30),
+                    hydrate_statute_text=True,
+                )
+            )
+
+        if non_scaffold_ratio > 0.0 and non_scaffold_ratio < 0.85:
+            _add(
+                ActorPolicyConfig(
+                    name="anti_scaffold_precision",
+                    parallel_workers=base.parallel_workers,
+                    per_state_retry_attempts=base.per_state_retry_attempts,
+                    rate_limit_delay=min(3.0, base.rate_limit_delay + 0.2),
+                    min_full_text_chars=min(550, base.min_full_text_chars + 60),
+                    hydrate_statute_text=True,
+                )
+            )
+
+        if kg_payload_ratio > 0.0 and kg_payload_ratio < 0.70:
+            _add(
+                ActorPolicyConfig(
+                    name="kg_payload_enrichment",
+                    parallel_workers=max(2, base.parallel_workers - 1),
+                    per_state_retry_attempts=min(6, base.per_state_retry_attempts + 1),
+                    rate_limit_delay=min(3.0, base.rate_limit_delay + 0.15),
+                    min_full_text_chars=max(220, base.min_full_text_chars),
                     hydrate_statute_text=True,
                 )
             )
@@ -403,6 +1062,79 @@ def _parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--max-statutes", type=int, default=0, help="Cap statutes per actor trial (0 = unlimited).")
     parser.add_argument("--top-n-diagnostics", type=int, default=8, help="Top-N weak states tracked in diagnostics.")
     parser.add_argument(
+        "--emit-patch-plan",
+        action="store_true",
+        help="Emit ranked round/final patch-plan artifacts with file priorities and reasons.",
+    )
+    parser.add_argument(
+        "--apply-patch-plan",
+        action="store_true",
+        help="Emit actionable patch-task artifacts (JSONL + TODO markdown) from final patch plan.",
+    )
+    parser.add_argument(
+        "--patch-plan-limit",
+        type=int,
+        default=20,
+        help="Max number of top-ranked files to include in apply-patch artifacts.",
+    )
+    parser.add_argument(
+        "--execute-apply-plan",
+        action="store_true",
+        help="Build execution queue/report from apply-patch tasks with precheck results.",
+    )
+    parser.add_argument(
+        "--apply-plan-file",
+        type=str,
+        default="",
+        help="Optional path to an existing apply_patch_plan_tasks.jsonl to execute.",
+    )
+    parser.add_argument(
+        "--execution-max-tasks",
+        type=int,
+        default=5,
+        help="Max tasks to include in execution queue/report when execute mode is enabled.",
+    )
+    parser.add_argument(
+        "--auto-patch",
+        action="store_true",
+        help="Attempt guarded auto-patching for top ready tasks from execution report.",
+    )
+    parser.add_argument(
+        "--auto-patch-max-tasks",
+        type=int,
+        default=3,
+        help="Max number of ready tasks to attempt in auto-patch mode.",
+    )
+    parser.add_argument(
+        "--auto-patch-no-dry-run",
+        action="store_true",
+        help="Disable dry-run for auto-patch mode and apply registered transformations.",
+    )
+    parser.add_argument(
+        "--auto-patch-allow-glob",
+        action="append",
+        default=[],
+        help="Glob allowlist for auto-patch target paths (repeatable).",
+    )
+    parser.add_argument(
+        "--auto-patch-deny-glob",
+        action="append",
+        default=[],
+        help="Glob denylist for auto-patch target paths (repeatable).",
+    )
+    parser.add_argument(
+        "--wayback-allow-glob",
+        action="append",
+        default=[],
+        help="Strategy-specific allowlist globs for Wayback scheme normalization (repeatable).",
+    )
+    parser.add_argument(
+        "--wayback-deny-glob",
+        action="append",
+        default=[],
+        help="Strategy-specific denylist globs for Wayback scheme normalization (repeatable).",
+    )
+    parser.add_argument(
         "--output-dir",
         type=str,
         default="",
@@ -427,6 +1159,19 @@ async def _main_async(args: argparse.Namespace) -> int:
             actor_concurrency=max(1, int(args.actor_concurrency)),
             max_statutes=max(0, int(args.max_statutes)),
             top_n_diagnostics=max(1, int(args.top_n_diagnostics)),
+            emit_patch_plan=bool(args.emit_patch_plan),
+            apply_patch_plan=bool(args.apply_patch_plan),
+            patch_plan_limit=max(1, int(args.patch_plan_limit)),
+            execute_apply_plan=bool(args.execute_apply_plan),
+            apply_plan_file=str(args.apply_plan_file or ""),
+            execution_max_tasks=max(1, int(args.execution_max_tasks)),
+            auto_patch=bool(args.auto_patch),
+            auto_patch_max_tasks=max(1, int(args.auto_patch_max_tasks)),
+            auto_patch_dry_run=not bool(args.auto_patch_no_dry_run),
+            auto_patch_allow_globs=[str(item) for item in (args.auto_patch_allow_glob or [])],
+            auto_patch_deny_globs=[str(item) for item in (args.auto_patch_deny_glob or [])],
+            wayback_allow_globs=[str(item) for item in (args.wayback_allow_glob or [])],
+            wayback_deny_globs=[str(item) for item in (args.wayback_deny_glob or [])],
         ),
         output_dir=Path(args.output_dir).expanduser().resolve() if str(args.output_dir).strip() else None,
     )

@@ -106,6 +106,8 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
         "list_caselaw_access_vector_files",
         "ingest_caselaw_access_vector_bundle",
         "search_caselaw_access_cases",
+        "search_us_code_corpus",
+        "search_state_law_corpus",
         "search_caselaw_access_vectors_with_centroids",
     ):
         assert required_name in by_name
@@ -125,6 +127,17 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
     assert "chunk_hf_parquet_file" in case_search_params
     assert "chunk_lookup_enabled" in case_search_params
 
+    uscode_params = by_name["search_us_code_corpus"]["parameters"]
+    assert uscode_params["hf_dataset_id"]["default"] == "justicedao/ipfs_uscode"
+    assert uscode_params["hf_parquet_prefix"]["default"] == "uscode_parquet"
+
+    state_params = by_name["search_state_law_corpus"]["parameters"]
+    assert state_params["state"]["default"] == "OR"
+    assert state_params["hf_dataset_id"]["default"] == "justicedao/ipfs_state_laws"
+    assert "preferred_case_parquet_names" in state_params
+    assert "hf_parquet_files" in state_params
+    assert state_params["max_case_parquet_files"]["default"] == 0
+
 
 def test_tool_registration_mapping_includes_cap_entries() -> None:
     """Central migrated tool mapping should expose CAP entries for auto registration."""
@@ -137,6 +150,8 @@ def test_tool_registration_mapping_includes_cap_entries() -> None:
         "ingest_caselaw_access_vector_bundle",
         "search_caselaw_access_vectors",
         "search_caselaw_access_cases",
+        "search_us_code_corpus",
+        "search_state_law_corpus",
         "search_caselaw_access_vectors_with_centroids",
     ):
         assert func_name in legal_mapping
@@ -261,6 +276,138 @@ async def test_case_search_uses_runner_with_search_cases_operation(
     assert captured["payload"]["chunk_hf_parquet_file"] == "embeddings/sparse_chunks.parquet"
     assert captured["payload"]["local_chunk_parquet_file"] == "/tmp/sparse_chunks.parquet"
     assert captured["payload"]["chunk_snippet_chars"] == 750
+
+
+@pytest.mark.anyio
+async def test_uscode_case_search_applies_dataset_defaults(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """US Code wrapper should set corpus defaults while reusing CAP search pipeline."""
+    captured = {}
+
+    def _fake_runner(*, operation, payload, venv_dir=".venv"):
+        captured["operation"] = operation
+        captured["payload"] = payload
+        captured["venv_dir"] = venv_dir
+        return {
+            "status": "success",
+            "operation": "search_cases",
+            "results": [],
+        }
+
+    monkeypatch.setattr(legal_dataset_api, "_run_cap_vector_operation_in_venv", _fake_runner)
+
+    result = await legal_dataset_api.search_us_code_corpus_from_parameters(
+        {
+            "collection_name": "uscode_docs",
+            "query_vector": [0.9, 0.1, 0.0],
+            "auto_setup_venv": False,
+        },
+        tool_version="3.0.0",
+    )
+
+    assert result["status"] == "success"
+    assert result["operation"] == "search_cases"
+    assert result["tool_version"] == "3.0.0"
+    assert captured["operation"] == "search_cases"
+    assert captured["payload"]["hf_dataset_id"] == "justicedao/ipfs_uscode"
+    assert captured["payload"]["hf_parquet_prefix"] == "uscode_parquet"
+    assert captured["payload"]["hf_parquet_file"] is None
+    assert captured["payload"]["chunk_lookup_enabled"] is False
+
+
+@pytest.mark.anyio
+async def test_state_case_search_applies_oregon_defaults(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """State-law wrapper should default to OR prefix and disable chunk lookup."""
+    captured = {}
+
+    def _fake_runner(*, operation, payload, venv_dir=".venv"):
+        captured["operation"] = operation
+        captured["payload"] = payload
+        captured["venv_dir"] = venv_dir
+        return {
+            "status": "success",
+            "operation": operation,
+            "results": [],
+        }
+
+    monkeypatch.setattr(legal_dataset_api, "_run_cap_vector_operation_in_venv", _fake_runner)
+
+    result = await legal_dataset_api.search_state_law_corpus_from_parameters(
+        {
+            "collection_name": "or_docs",
+            "query_vector": [0.2, 0.3, 0.4],
+            "auto_setup_venv": False,
+        },
+        tool_version="3.1.0",
+    )
+
+    assert result["status"] == "success"
+    assert result["operation"] == "search"
+    assert result["tool_version"] == "3.1.0"
+    assert result["state"] == "OR"
+    assert captured["operation"] == "search"
+    assert captured["payload"]["hf_dataset_id"] == "justicedao/ipfs_state_laws"
+    assert captured["payload"]["collection_name"] == "or_docs"
+    assert captured["payload"]["top_k"] == 10
+
+
+@pytest.mark.anyio
+async def test_state_case_search_can_enable_enrichment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """State-law wrapper should delegate to search_cases when enrichment is requested."""
+    captured = {}
+
+    def _fake_runner(*, operation, payload, venv_dir=".venv"):
+        captured["operation"] = operation
+        captured["payload"] = payload
+        captured["venv_dir"] = venv_dir
+        return {
+            "status": "success",
+            "operation": operation,
+            "results": [],
+        }
+
+    monkeypatch.setattr(legal_dataset_api, "_run_cap_vector_operation_in_venv", _fake_runner)
+
+    result = await legal_dataset_api.search_state_law_corpus_from_parameters(
+        {
+            "collection_name": "or_docs",
+            "query_vector": [0.2, 0.3, 0.4],
+            "state": "OR",
+            "enrich_with_cases": True,
+            "auto_setup_venv": False,
+        },
+    )
+
+    assert result["status"] == "success"
+    assert result["operation"] == "search_cases"
+    assert captured["operation"] == "search_cases"
+    assert captured["payload"]["hf_parquet_prefix"] == "OR/parsed/parquet"
+    preferred_names = captured["payload"]["preferred_case_parquet_names"]
+    assert "oregon_revised_statutes" in preferred_names
+    assert "oregon_administrative_rules" in preferred_names
+    assert captured["payload"]["max_case_parquet_files"] == 8
+    assert captured["payload"]["chunk_lookup_enabled"] is False
+
+
+@pytest.mark.anyio
+async def test_state_case_search_rejects_invalid_state() -> None:
+    """State-law wrapper should validate state code shape."""
+    result = await legal_dataset_api.search_state_law_corpus_from_parameters(
+        {
+            "collection_name": "or_docs",
+            "query_vector": [0.2, 0.3, 0.4],
+            "state": "Oregon",
+            "auto_setup_venv": False,
+        },
+    )
+
+    assert result["status"] == "error"
+    assert "two-letter" in result["error"]
 
 
 @pytest.mark.anyio

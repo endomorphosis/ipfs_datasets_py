@@ -23,10 +23,11 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 from urllib.parse import urlsplit
 
 import duckdb
-import requests
 
 logger = logging.getLogger(__name__)
 
@@ -283,13 +284,26 @@ def _download_ranges_for_warc(
 
     url = "https://data.commoncrawl.org/" + warc_filename.lstrip("/")
 
-    session = requests.Session()
-    session.headers.update(
-        {
+    def _http_get_range(range_start: int, range_end: int) -> tuple[int, bytes]:
+        headers = {
+            "Range": f"bytes={int(range_start)}-{int(range_end)}",
             "User-Agent": "municipal-scrape/1.0 (+https://commoncrawl.org)",
             "Accept-Encoding": "identity",
         }
-    )
+        req = Request(url, headers=headers)
+        try:
+            with urlopen(req, timeout=max(1, int(timeout_seconds))) as response:
+                status = int(getattr(response, "status", 200) or 200)
+                payload = bytes(response.read() or b"")
+                return status, payload
+        except HTTPError as exc:
+            payload = b""
+            try:
+                payload = bytes(exc.read() or b"")
+            except Exception:
+                payload = b""
+            return int(getattr(exc, "code", 0) or 0), payload
+
     index_entries: List[Dict[str, Any]] = []
 
     def _playwright_range_get(range_start: int, range_end: int) -> tuple[Optional[int], Optional[bytes], Optional[str]]:
@@ -325,18 +339,18 @@ def _download_ranges_for_warc(
             start = int(range_slice.start)
             end = int(range_slice.end)
             expected_size = (end - start) + 1
-            headers = {"Range": f"bytes={start}-{end}"}
             logger.info("Downloading %s bytes=%s-%s", warc_filename, start, end)
-            resp: Optional[requests.Response] = None
+            status_code: Optional[int] = None
             raw_payload: Optional[bytes] = None
             last_error: Optional[str] = None
             for attempt in range(max(1, int(max_retries))):
                 try:
-                    resp = session.get(url, headers=headers, timeout=timeout_seconds, stream=True)
-                    if resp.status_code in (200, 206):
+                    status_code, candidate_payload = _http_get_range(start, end)
+                    if status_code in (200, 206):
+                        raw_payload = candidate_payload
                         break
-                    if resp.status_code in (403, 429, 500, 502, 503, 504):
-                        last_error = f"transient_status={resp.status_code}"
+                    if status_code in (403, 429, 500, 502, 503, 504):
+                        last_error = f"transient_status={status_code}"
                         if attempt + 1 < max_retries:
                             sleep_seconds = retry_backoff_seconds * (2 ** attempt)
                             logger.warning(
@@ -344,14 +358,14 @@ def _download_ranges_for_warc(
                                 warc_filename,
                                 start,
                                 end,
-                                resp.status_code,
+                                status_code,
                                 attempt + 1,
                                 max_retries,
                                 sleep_seconds,
                             )
                             time.sleep(max(0.0, sleep_seconds))
                             continue
-                    if resp.status_code == 403 and playwright_fallback_on_403:
+                    if status_code == 403 and playwright_fallback_on_403:
                         logger.warning(
                             "Requests got 403 for %s bytes=%s-%s; trying Playwright fallback",
                             warc_filename,
@@ -366,14 +380,14 @@ def _download_ranges_for_warc(
                                 )
                             else:
                                 raw_payload = pw_data
-                                resp = None
+                                status_code = int(pw_status)
                                 break
                         last_error = pw_err or f"playwright_status={pw_status}"
-                    if resp.status_code in (400, 401, 404, 410, 416):
+                    if status_code in (400, 401, 404, 410, 416):
                         raise NonRetryableDownloadError(
-                            f"Non-retryable status {resp.status_code} for {warc_filename} bytes={start}-{end}"
+                            f"Non-retryable status {status_code} for {warc_filename} bytes={start}-{end}"
                         )
-                    raise RuntimeError(f"Expected 200/206 for range GET, got {resp.status_code}")
+                    raise RuntimeError(f"Expected 200/206 for range GET, got {status_code}")
                 except NonRetryableDownloadError:
                     raise
                 except Exception as exc:
@@ -394,7 +408,7 @@ def _download_ranges_for_warc(
                         continue
                     raise
 
-            if resp is None or resp.status_code not in (200, 206):
+            if status_code not in (200, 206):
                 if raw_payload is None:
                     raise RuntimeError(
                         f"Failed range GET after retries for {warc_filename} bytes={start}-{end}: {last_error}"
@@ -402,18 +416,10 @@ def _download_ranges_for_warc(
 
             file_offset = handle.tell()
             sha256 = hashlib.sha256()
-            size = 0
-            if raw_payload is not None:
-                handle.write(raw_payload)
-                sha256.update(raw_payload)
-                size = len(raw_payload)
-            else:
-                for chunk in resp.iter_content(chunk_size=1024 * 1024):
-                    if not chunk:
-                        continue
-                    handle.write(chunk)
-                    sha256.update(chunk)
-                    size += len(chunk)
+            payload = bytes(raw_payload or b"")
+            handle.write(payload)
+            sha256.update(payload)
+            size = len(payload)
 
             index_entries.append(
                 {

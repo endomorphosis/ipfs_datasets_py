@@ -26,10 +26,11 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
-from urllib.parse import urlparse
+from urllib.error import HTTPError
+from urllib.parse import urlencode, urlparse
+from urllib.request import Request, urlopen
 
 import duckdb
-import requests
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +46,12 @@ class FetchResult:
     status_code: Optional[int] = None
     archive_url: Optional[str] = None
     archive_timestamp: Optional[str] = None
+
+
+@dataclass
+class _HttpResponse:
+    status_code: int
+    content: bytes
 
 
 class ArchivalFetchClient:
@@ -67,8 +74,38 @@ class ArchivalFetchClient:
         self.user_agent = user_agent
         self._content_validator = content_validator or self._looks_like_html
 
-        self._session = requests.Session()
-        self._session.headers.update({"User-Agent": self.user_agent})
+    def _http_get(
+        self,
+        url: str,
+        *,
+        timeout: int,
+        headers: Optional[Dict[str, str]] = None,
+        params: Optional[Dict[str, Any]] = None,
+    ) -> _HttpResponse:
+        target_url = str(url or "")
+        if params:
+            query = urlencode({k: v for k, v in params.items() if v is not None})
+            if query:
+                joiner = "&" if "?" in target_url else "?"
+                target_url = f"{target_url}{joiner}{query}"
+
+        request_headers = {"User-Agent": self.user_agent}
+        if headers:
+            request_headers.update(headers)
+
+        req = Request(target_url, headers=request_headers)
+        try:
+            with urlopen(req, timeout=max(1, int(timeout or self.request_timeout_seconds))) as response:
+                status_code = int(getattr(response, "status", 200) or 200)
+                content = bytes(response.read() or b"")
+                return _HttpResponse(status_code=status_code, content=content)
+        except HTTPError as exc:
+            payload = b""
+            try:
+                payload = bytes(exc.read() or b"")
+            except Exception:
+                payload = b""
+            return _HttpResponse(status_code=int(getattr(exc, "code", 0) or 0), content=payload)
 
     async def fetch_with_fallback(self, url: str) -> FetchResult:
         """Fetch URL directly; fallback to web-archiving sources when blocked."""
@@ -93,7 +130,7 @@ class ArchivalFetchClient:
 
     def _fetch_direct(self, url: str) -> Optional[FetchResult]:
         try:
-            response = self._session.get(url, timeout=self.request_timeout_seconds)
+            response = self._http_get(url, timeout=self.request_timeout_seconds)
             if response.status_code == 200 and self._content_validator(response.content):
                 return FetchResult(
                     url=url,
@@ -183,7 +220,7 @@ class ArchivalFetchClient:
         record: Dict[str, Any],
     ) -> Optional[FetchResult]:
         try:
-            response = self._session.get(candidate_url, timeout=self.request_timeout_seconds)
+            response = self._http_get(candidate_url, timeout=self.request_timeout_seconds)
             if response.status_code != 200:
                 return None
             if not self._content_validator(response.content):
@@ -224,7 +261,7 @@ class ArchivalFetchClient:
         warc_url = f"https://data.commoncrawl.org/{warc_filename}"
 
         try:
-            response = self._session.get(
+            response = self._http_get(
                 warc_url,
                 headers={"Range": f"bytes={offset}-{range_end}"},
                 timeout=max(self.request_timeout_seconds, 45),
@@ -398,9 +435,10 @@ class ArchivalFetchClient:
         }
 
         try:
-            response = self._session.get(cdx_url, params=params, timeout=self.request_timeout_seconds)
-            response.raise_for_status()
-            rows = response.json()
+            response = self._http_get(cdx_url, params=params, timeout=self.request_timeout_seconds)
+            if int(response.status_code) != 200 or not response.content:
+                return None
+            rows = json.loads(response.content.decode("utf-8", errors="replace"))
             if not isinstance(rows, list) or len(rows) <= 1:
                 return None
 
@@ -410,7 +448,7 @@ class ArchivalFetchClient:
                     continue
                 timestamp = record[0]
                 archive_url = f"https://web.archive.org/web/{timestamp}id_/{url}"
-                archive_response = self._session.get(archive_url, timeout=self.request_timeout_seconds)
+                archive_response = self._http_get(archive_url, timeout=self.request_timeout_seconds)
                 if archive_response.status_code != 200:
                     continue
                 if not self._content_validator(archive_response.content):

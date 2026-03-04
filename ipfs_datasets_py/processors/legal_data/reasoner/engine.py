@@ -6,13 +6,18 @@ import hashlib
 import json
 from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple
 
-from municipal_scrape_workspace.hybrid_legal_ir import (
-    ActionFrame,
-    DeonticOp,
-    LegalIR,
-    Norm,
-    generate_cnl,
-)
+try:
+    from .hybrid_legal_ir import (
+        ActionFrame,
+        DeonticOp,
+        LegalIR,
+        Norm,
+        generate_cnl,
+    )
+except ImportError:
+    from municipal_scrape_workspace.hybrid_legal_ir import (  # type: ignore[no-redef]
+        ActionFrame, DeonticOp, LegalIR, Norm, generate_cnl,
+    )
 
 from .models import (
     IRReference,

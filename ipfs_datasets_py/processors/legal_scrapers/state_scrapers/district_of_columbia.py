@@ -12,7 +12,10 @@ from .registry import StateScraperRegistry
 class DistrictOfColumbiaScraper(BaseStateScraper):
     """Scraper for District of Columbia state laws from https://code.dccouncil.us"""
 
-    _DC_SECTION_URL_RE = re.compile(r"/us/dc/council/code/sections/[0-9A-Za-z\-]+$", re.IGNORECASE)
+    _DC_SECTION_URL_RE = re.compile(
+        r"/us/dc/council/code/(?:sections/[0-9A-Za-z\-]+|titles/\d+/chapters/\d+(?:/subchapters/[IVXLC]+)?)$",
+        re.IGNORECASE,
+    )
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -49,7 +52,12 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/us/dc/council/code/titles/1",
+            f"{self.get_base_url()}/us/dc/council/code/titles/2",
+            f"{self.get_base_url()}/us/dc/council/code/titles/3",
+            f"{self.get_base_url()}/us/dc/council/code/titles/4",
+            f"{self.get_base_url()}/us/dc/council/code/titles/5",
             f"{self.get_base_url()}/us/dc/council/code/titles/1/chapters/1",
+            f"{self.get_base_url()}/us/dc/council/code/titles/2/chapters/1",
             f"{self.get_base_url()}/us/dc/council/code/titles/1/chapters/1/subchapters/I",
         ]
 

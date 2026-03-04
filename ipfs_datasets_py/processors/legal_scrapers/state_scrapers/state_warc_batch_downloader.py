@@ -17,10 +17,11 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 from urllib.parse import urlsplit
 
 import duckdb
-import requests
 
 from .state_archival_pointer_downloader import STATE_CONFIGS, _resolve_parquet_paths
 
@@ -189,28 +190,41 @@ def _download_ranges_for_warc(
 
     url = prefix.rstrip("/") + "/" + warc_filename.lstrip("/")
 
-    session = requests.Session()
+    def _http_get_range(target_url: str, range_start: int, range_end: int, timeout: int) -> tuple[int, bytes]:
+        headers = {
+            "Range": f"bytes={int(range_start)}-{int(range_end)}",
+            "User-Agent": "municipal-scrape/1.0 (+https://commoncrawl.org)",
+            "Accept-Encoding": "identity",
+        }
+        req = Request(target_url, headers=headers)
+        try:
+            with urlopen(req, timeout=max(1, int(timeout))) as response:
+                status = int(getattr(response, "status", 200) or 200)
+                return status, bytes(response.read() or b"")
+        except HTTPError as exc:
+            payload = b""
+            try:
+                payload = bytes(exc.read() or b"")
+            except Exception:
+                payload = b""
+            return int(getattr(exc, "code", 0) or 0), payload
+
     index_entries: List[Dict[str, Any]] = []
 
     with combined_path.open("wb") as handle:
         for range_slice in ranges:
             start = int(range_slice.start)
             end = int(range_slice.end)
-            headers = {"Range": f"bytes={start}-{end}"}
             logger.info("Downloading %s bytes=%s-%s", warc_filename, start, end)
-            resp = session.get(url, headers=headers, timeout=timeout_seconds, stream=True)
-            if resp.status_code != 206:
-                raise RuntimeError(f"Expected 206 for range GET, got {resp.status_code}")
+            status_code, payload = _http_get_range(url, start, end, timeout_seconds)
+            if status_code != 206:
+                raise RuntimeError(f"Expected 206 for range GET, got {status_code}")
 
             file_offset = handle.tell()
             sha256 = hashlib.sha256()
-            size = 0
-            for chunk in resp.iter_content(chunk_size=1024 * 1024):
-                if not chunk:
-                    continue
-                handle.write(chunk)
-                sha256.update(chunk)
-                size += len(chunk)
+            handle.write(payload)
+            sha256.update(payload)
+            size = len(payload)
 
             index_entries.append(
                 {

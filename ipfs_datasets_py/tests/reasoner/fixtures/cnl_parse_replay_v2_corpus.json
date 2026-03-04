@@ -1,0 +1,110 @@
+[
+  {
+    "id": "cpr_01",
+    "sentence": "The vendor shall provide the service",
+    "jurisdiction": "default",
+    "expected_parse_mode": "norm",
+    "expected_modal": "O",
+    "expected_temporal_detected": false,
+    "expect_ambiguity_error": false
+  },
+  {
+    "id": "cpr_02",
+    "sentence": "The vendor shall not disclose confidential information",
+    "jurisdiction": "default",
+    "expected_parse_mode": "norm",
+    "expected_modal": "F",
+    "expected_temporal_detected": false,
+    "expect_ambiguity_error": false
+  },
+  {
+    "id": "cpr_03",
+    "sentence": "The contractor may terminate the agreement",
+    "jurisdiction": "default",
+    "expected_parse_mode": "norm",
+    "expected_modal": "P",
+    "expected_temporal_detected": false,
+    "expect_ambiguity_error": false
+  },
+  {
+    "id": "cpr_04",
+    "sentence": "Vendor shall deliver the goods within 7 days",
+    "jurisdiction": "default",
+    "expected_parse_mode": "norm",
+    "expected_modal": "O",
+    "expected_temporal_detected": true,
+    "expect_ambiguity_error": false
+  },
+  {
+    "id": "cpr_05",
+    "sentence": "Contractor shall submit the report by 2024-12-31",
+    "jurisdiction": "default",
+    "expected_parse_mode": "norm",
+    "expected_modal": "O",
+    "expected_temporal_detected": true,
+    "expect_ambiguity_error": false
+  },
+  {
+    "id": "cpr_06",
+    "sentence": "Force Majeure means events beyond reasonable control",
+    "jurisdiction": "default",
+    "expected_parse_mode": "definition",
+    "expected_modal": "O",
+    "expected_temporal_detected": false,
+    "expect_ambiguity_error": false
+  },
+  {
+    "id": "cpr_07",
+    "sentence": "Party includes natural persons and legal entities",
+    "jurisdiction": "default",
+    "expected_parse_mode": "definition",
+    "expected_modal": "O",
+    "expected_temporal_detected": false,
+    "expect_ambiguity_error": false
+  },
+  {
+    "id": "cpr_08",
+    "sentence": "Contractor shall file the form if approval_granted",
+    "jurisdiction": "default",
+    "expected_parse_mode": "norm",
+    "expected_modal": "O",
+    "expected_temporal_detected": false,
+    "expect_ambiguity_error": false
+  },
+  {
+    "id": "cpr_09",
+    "sentence": "Vendor shall perform the service unless force_majeure",
+    "jurisdiction": "default",
+    "expected_parse_mode": "norm",
+    "expected_modal": "O",
+    "expected_temporal_detected": false,
+    "expect_ambiguity_error": false
+  },
+  {
+    "id": "cpr_10",
+    "sentence": "The vendor shall provide if approved when ready",
+    "jurisdiction": "default",
+    "expected_parse_mode": "norm",
+    "expected_modal": "O",
+    "expected_temporal_detected": false,
+    "expect_ambiguity_error": true
+  },
+  {
+    "id": "cpr_11",
+    "sentence": "The party shall notify within 30 days",
+    "jurisdiction": "eu",
+    "expected_parse_mode": "norm",
+    "expected_modal": "O",
+    "expected_temporal_detected": true,
+    "expect_ambiguity_error": false
+  },
+  {
+    "id": "cpr_12",
+    "sentence": "Service provider shall not store personal data",
+    "jurisdiction": "gdpr",
+    "expected_parse_mode": "norm",
+    "expected_modal": "F",
+    "expected_temporal_detected": false,
+    "expect_ambiguity_error": false
+  }
+]

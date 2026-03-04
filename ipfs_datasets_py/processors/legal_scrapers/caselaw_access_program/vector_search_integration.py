@@ -546,7 +546,7 @@ class CaselawAccessVectorSearch:
 
     def _rows_to_embeddings(self, rows: Iterable[Dict[str, Any]]) -> List["EmbeddingResult"]:
         """Convert raw parquet rows into EmbeddingResult objects."""
-        from ipfs_datasets_py.ml.embeddings.schema import EmbeddingResult
+        from ipfs_datasets_py.embeddings.schema import EmbeddingResult
 
         embeddings: List[EmbeddingResult] = []
 

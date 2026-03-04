@@ -7,16 +7,13 @@ DeliverDocument statute pages.
 import json
 import asyncio
 import re
-import time
 from typing import Dict, List, Set
 from urllib.parse import quote, urljoin
 
-import requests
 from bs4 import BeautifulSoup
 
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
-from .state_archival_fetch import ArchivalFetchClient
 
 
 class OklahomaScraper(BaseStateScraper):
@@ -152,7 +149,7 @@ class OklahomaScraper(BaseStateScraper):
                 _add(live_link)
 
         # Archive-driven URL discovery helps when live index pages are sparse.
-        for archive_url in self._discover_oscn_document_urls_via_cdx(headers=headers):
+        for archive_url in await self._discover_oscn_document_urls_via_cdx(headers=headers):
             _add(archive_url)
 
         return candidates
@@ -180,9 +177,13 @@ class OklahomaScraper(BaseStateScraper):
             "&fl=timestamp,original,statuscode&filter=statuscode:200&limit=8"
         )
         try:
-            response = requests.get(cdx_url, headers=headers, timeout=30)
-            response.raise_for_status()
-            rows = json.loads(response.text)
+            payload = await self._fetch_page_content_with_archival_fallback(
+                cdx_url,
+                timeout_seconds=30,
+            )
+            if not payload:
+                return []
+            rows = json.loads(payload.decode("utf-8", errors="replace"))
         except Exception:
             return []
 
@@ -209,11 +210,15 @@ class OklahomaScraper(BaseStateScraper):
 
         return discovered
 
-    def _discover_oscn_document_urls_via_cdx(self, headers: Dict[str, str]) -> List[str]:
+    async def _discover_oscn_document_urls_via_cdx(self, headers: Dict[str, str]) -> List[str]:
         try:
-            response = requests.get(self._CDX_DISCOVERY_URL, headers=headers, timeout=35)
-            response.raise_for_status()
-            payload = json.loads(response.text)
+            raw = await self._fetch_page_content_with_archival_fallback(
+                self._CDX_DISCOVERY_URL,
+                timeout_seconds=35,
+            )
+            if not raw:
+                return []
+            payload = json.loads(raw.decode("utf-8", errors="replace"))
         except Exception:
             return []
 
@@ -325,30 +330,13 @@ class OklahomaScraper(BaseStateScraper):
         match = re.search(r"[?&]CiteID=(\d+)", str(url or ""), flags=re.IGNORECASE)
         return match.group(1) if match else ""
 
-    def _request_text_direct(self, url: str, headers: Dict[str, str], timeout: int) -> str:
-        request_url = self._normalize_wayback_url(url)
-        for _ in range(3):
-            try:
-                response = requests.get(request_url, headers=headers, timeout=timeout)
-                response.raise_for_status()
-                text = response.text
-                if self._ANTI_BOT_RE.search(str(text or "")):
-                    return ""
-                return text
-            except Exception:
-                time.sleep(0.6)
-                continue
-        return ""
-
     async def _request_text(self, url: str, headers: Dict[str, str], timeout: int) -> str:
-        text = await asyncio.to_thread(self._request_text_direct, url, headers, timeout)
-        if text:
-            return text
-
         try:
-            fetch_client = ArchivalFetchClient(request_timeout_seconds=max(20, int(timeout)))
-            fetched = await fetch_client.fetch_with_fallback(url)
-            content = bytes(getattr(fetched, "content", b"") or b"")
+            request_url = self._normalize_wayback_url(url)
+            content = await self._fetch_page_content_with_archival_fallback(
+                request_url,
+                timeout_seconds=max(20, int(timeout)),
+            )
             if not content:
                 return ""
             text = content.decode("utf-8", errors="replace")

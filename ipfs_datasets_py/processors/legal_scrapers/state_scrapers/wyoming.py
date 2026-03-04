@@ -107,7 +107,7 @@ class WyomingScraper(BaseStateScraper):
                     if m:
                         section_number = m.group(1)
 
-                    full_text = self._extract_pdf_text_summary(full_url)
+                    full_text = await self._extract_pdf_text_summary(full_url)
                     if len(full_text.strip()) < 80:
                         full_text = (
                             f"Wyoming Statutes Title {section_number}: {link_text}. "
@@ -138,26 +138,24 @@ class WyomingScraper(BaseStateScraper):
         
         return statutes
 
-    def _extract_pdf_text_summary(self, pdf_url: str, max_chars: int = 6000) -> str:
+    async def _extract_pdf_text_summary(self, pdf_url: str, max_chars: int = 6000) -> str:
         """Extract statute text from a PDF using system `pdftotext`.
 
         This keeps Wyoming strict-mode scraping resilient without adding heavy PDF
         parser dependencies to the Python environment.
         """
         try:
-            import requests
-
-            response = requests.get(
+            payload = await self._fetch_page_content_with_archival_fallback(
                 pdf_url,
-                headers={"User-Agent": "Mozilla/5.0"},
-                timeout=45,
+                timeout_seconds=45,
             )
-            response.raise_for_status()
+            if not payload:
+                return ""
 
             with tempfile.TemporaryDirectory(prefix="wy_statute_pdf_") as td:
                 pdf_path = Path(td) / "input.pdf"
                 txt_path = Path(td) / "output.txt"
-                pdf_path.write_bytes(response.content)
+                pdf_path.write_bytes(payload)
 
                 proc = subprocess.run(
                     ["pdftotext", "-f", "1", "-l", "3", str(pdf_path), str(txt_path)],
@@ -192,7 +190,6 @@ class WyomingScraper(BaseStateScraper):
         3. Using Internet Archive snapshots
         """
         try:
-            import requests
             from bs4 import BeautifulSoup
             from urllib.parse import urljoin
         except ImportError as e:
@@ -200,13 +197,47 @@ class WyomingScraper(BaseStateScraper):
             return []
         
         statutes = []
+
+        # Wyoming's statutes download page is JS-rendered, but title PDFs are
+        # stable and predictable. Build that catalog directly as a non-JS fallback.
+        deterministic_catalog = self._build_deterministic_title_catalog()
+        if deterministic_catalog:
+            for section_number, section_name, full_url in deterministic_catalog[:max_sections]:
+                full_text = await self._extract_pdf_text_summary(full_url)
+                if len(full_text.strip()) < 80:
+                    continue
+
+                statute = NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=section_name[:200],
+                    full_text=full_text,
+                    legal_area=self._identify_legal_area(section_name),
+                    source_url=full_url,
+                    official_cite=f"{citation_format} § {section_number}",
+                    metadata=StatuteMetadata()
+                )
+                statutes.append(statute)
+
+            if statutes:
+                self.logger.info(
+                    "Wyoming deterministic catalog scraper: Scraped %s title PDFs",
+                    len(statutes),
+                )
+                return statutes
         
         try:
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-            response = requests.get(code_url, headers=headers, timeout=30)
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
+            page_bytes = await self._fetch_page_content_with_archival_fallback(
+                code_url,
+                timeout_seconds=30,
+            )
+            if not page_bytes:
+                return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
+
+            soup = BeautifulSoup(page_bytes, 'html.parser')
             links = soup.find_all('a', href=True)
             
             section_count = 0
@@ -273,6 +304,22 @@ class WyomingScraper(BaseStateScraper):
             return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
         
         return statutes
+
+    def _build_deterministic_title_catalog(self) -> List[tuple[str, str, str]]:
+        """Build stable Wyoming statutes title PDF URLs when JS links are unavailable."""
+        catalog: List[tuple[str, str, str]] = []
+        for title_num in range(1, 43):
+            title_code = f"{title_num:02d}"
+            section_number = str(title_num)
+            section_name = f"Title {section_number}"
+            pdf_url = f"{self.get_base_url()}/statutes/compress/title{title_code}.pdf"
+            catalog.append((section_number, section_name, pdf_url))
+
+        # Extra Wyoming title IDs exposed by the official download page.
+        catalog.append(("34.1", "Title 34.1", f"{self.get_base_url()}/statutes/compress/title34.1.pdf"))
+        catalog.append(("97", "Wyoming Constitution", f"{self.get_base_url()}/statutes/compress/title97.pdf"))
+        catalog.append(("99", "Title 99", f"{self.get_base_url()}/statutes/compress/title99.pdf"))
+        return catalog
 
 
 # Register this scraper with the registry

@@ -1,0 +1,52 @@
+[
+  {
+    "id": "peq_01",
+    "canonical_sentence": "Contractor shall submit the report",
+    "paraphrases": [
+      "The contractor shall submit the report",
+      "Contractor shall deliver the report"
+    ],
+    "expected_modal": "O",
+    "expected_norm_count": 1
+  },
+  {
+    "id": "peq_02",
+    "canonical_sentence": "Vendor shall not disclose confidential data",
+    "paraphrases": [
+      "The vendor shall not disclose confidential data",
+      "Vendor shall not share confidential data"
+    ],
+    "expected_modal": "F",
+    "expected_norm_count": 1
+  },
+  {
+    "id": "peq_03",
+    "canonical_sentence": "The party may terminate the agreement",
+    "paraphrases": [
+      "Party may terminate the agreement",
+      "The party may cancel the agreement"
+    ],
+    "expected_modal": "P",
+    "expected_norm_count": 1
+  },
+  {
+    "id": "peq_04",
+    "canonical_sentence": "Supplier shall deliver within 7 days",
+    "paraphrases": [
+      "The supplier shall deliver within 7 days",
+      "Supplier shall provide delivery within 7 days"
+    ],
+    "expected_modal": "O",
+    "expected_norm_count": 1
+  },
+  {
+    "id": "peq_05",
+    "canonical_sentence": "Service provider shall not store personal data",
+    "paraphrases": [
+      "The service provider shall not store personal data",
+      "Service provider shall not retain personal data"
+    ],
+    "expected_modal": "F",
+    "expected_norm_count": 1
+  }
+]

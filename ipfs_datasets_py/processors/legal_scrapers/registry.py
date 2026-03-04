@@ -179,6 +179,15 @@ class LegalScraperRegistry:
                 "capabilities": [ScraperCapability.ASYNC_BATCH]
             },
             {
+                "name": "federal_law",
+                "module": "federal_scrapers.federal_law_scraper",
+                "class_name": "FederalLawScraper",
+                "type": ScraperType.FEDERAL,
+                "priority": 12,
+                "sources": ["law.cornell.edu/rules", "uscourts.gov", "ca9.uscourts.gov"],
+                "capabilities": [ScraperCapability.ASYNC_BATCH]
+            },
+            {
                 "name": "recap_archive",
                 "module": "recap_archive_scraper",
                 "class_name": None,

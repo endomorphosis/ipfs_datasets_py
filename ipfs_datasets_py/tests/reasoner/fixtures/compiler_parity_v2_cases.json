@@ -1,0 +1,58 @@
+[
+  {
+    "id": "cp_01",
+    "sentence": "Contractor shall submit the report",
+    "jurisdiction": "default",
+    "expected_norm_count": 1,
+    "expected_dcec_wraps_frame_ref": true,
+    "expected_temporal_in_tdfol": false
+  },
+  {
+    "id": "cp_02",
+    "sentence": "Vendor shall deliver the goods within 7 days",
+    "jurisdiction": "default",
+    "expected_norm_count": 1,
+    "expected_dcec_wraps_frame_ref": true,
+    "expected_temporal_in_tdfol": true
+  },
+  {
+    "id": "cp_03",
+    "sentence": "The party shall not disclose confidential data",
+    "jurisdiction": "default",
+    "expected_norm_count": 1,
+    "expected_dcec_wraps_frame_ref": true,
+    "expected_temporal_in_tdfol": false
+  },
+  {
+    "id": "cp_04",
+    "sentence": "The contractor may extend the deadline",
+    "jurisdiction": "default",
+    "expected_norm_count": 1,
+    "expected_dcec_wraps_frame_ref": true,
+    "expected_temporal_in_tdfol": false
+  },
+  {
+    "id": "cp_05",
+    "sentence": "Supplier shall provide the invoice by 2024-12-31",
+    "jurisdiction": "default",
+    "expected_norm_count": 1,
+    "expected_dcec_wraps_frame_ref": true,
+    "expected_temporal_in_tdfol": true
+  },
+  {
+    "id": "cp_06",
+    "sentence": "The vendor shall notify within 14 days",
+    "jurisdiction": "default",
+    "expected_norm_count": 1,
+    "expected_dcec_wraps_frame_ref": true,
+    "expected_temporal_in_tdfol": true
+  },
+  {
+    "id": "cp_07",
+    "sentence": "Party shall not transfer personal data",
+    "jurisdiction": "default",
+    "expected_norm_count": 1,
+    "expected_dcec_wraps_frame_ref": true,
+    "expected_temporal_in_tdfol": false
+  }
+]

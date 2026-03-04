@@ -32,7 +32,11 @@ def test_build_operational_diagnostics_sorts_weak_states():
             "total_statutes": 12,
             "full_text_ratio": 0.8,
             "jsonld_ratio": 0.74,
+            "jsonld_legislation_ratio": 0.6,
+            "kg_payload_ratio": 0.62,
             "citation_ratio": 0.41,
+            "statute_signal_ratio": 0.58,
+            "non_scaffold_ratio": 0.77,
             "states_with_zero_statutes": 1,
         },
         "quality_by_state": {
@@ -48,6 +52,10 @@ def test_build_operational_diagnostics_sorts_weak_states():
     assert diagnostics["fetch"]["weak_states"][0]["state"] == "AA"
     assert diagnostics["quality"]["weak_states"][0]["state"] == "AA"
     assert diagnostics["etl_readiness"]["ready_for_kg_etl"] is False
+    assert diagnostics["etl_readiness"]["jsonld_legislation_ratio"] == 0.6
+    assert diagnostics["etl_readiness"]["kg_payload_ratio"] == 0.62
+    assert diagnostics["etl_readiness"]["statute_signal_ratio"] == 0.58
+    assert diagnostics["etl_readiness"]["non_scaffold_ratio"] == 0.77
 
 
 def test_verify_operational_readiness_fails_on_thresholds():
@@ -95,6 +103,49 @@ def test_verify_operational_readiness_fails_on_thresholds():
     assert "too-many-coverage-gap-states" in reasons
 
 
+def test_verify_operational_readiness_fails_on_low_statute_signal_metrics():
+    verifier = StateLawsVerifier()
+    verifier._last_scrape_metadata = {
+        "coverage_summary": {
+            "coverage_gap_states": [],
+            "states_targeted": 3,
+            "states_returned": 3,
+            "states_with_nonzero_statutes": 3,
+        },
+        "fetch_analytics": {
+            "attempted": 8,
+            "success": 8,
+            "success_ratio": 1.0,
+            "fallback_count": 0,
+            "providers": {"unified_scraper": 8},
+        },
+        "fetch_analytics_by_state": {},
+        "etl_readiness": {
+            "ready_for_kg_etl": True,
+            "total_statutes": 12,
+            "full_text_ratio": 0.95,
+            "jsonld_ratio": 0.95,
+            "jsonld_legislation_ratio": 0.92,
+            "kg_payload_ratio": 0.65,
+            "citation_ratio": 0.6,
+            "statute_signal_ratio": 0.6,
+            "non_scaffold_ratio": 0.82,
+            "states_with_zero_statutes": 0,
+        },
+        "quality_by_state": {},
+    }
+
+    verifier.verify_operational_readiness()
+
+    last = verifier.results["tests"][-1]
+    assert last["name"] == "Operational Readiness"
+    assert last["status"] == "FAIL"
+    reasons = set(last["details"]["reasons"])
+    assert "low-statute-signal-ratio" in reasons
+    assert "high-scaffold-or-navigation-ratio" in reasons
+    assert "kg-payload-coverage-low" in reasons
+
+
 def test_verify_operational_readiness_warns_without_threshold_failure():
     verifier = StateLawsVerifier()
     verifier._last_scrape_metadata = {
@@ -128,6 +179,46 @@ def test_verify_operational_readiness_warns_without_threshold_failure():
     last = verifier.results["tests"][-1]
     assert last["name"] == "Operational Readiness"
     assert last["status"] == "WARN"
+
+
+def test_verify_operational_readiness_warns_on_zero_fetch_attempts():
+    verifier = StateLawsVerifier()
+    verifier._last_scrape_metadata = {
+        "coverage_summary": {
+            "coverage_gap_states": [],
+            "states_targeted": 3,
+            "states_returned": 3,
+            "states_with_nonzero_statutes": 3,
+        },
+        "fetch_analytics": {
+            "attempted": 0,
+            "success": 0,
+            "success_ratio": 0.0,
+            "fallback_count": 0,
+            "providers": {},
+        },
+        "fetch_analytics_by_state": {
+            "AA": {"attempted": 0, "success": 0, "fallback_count": 0},
+            "BB": {"attempted": 0, "success": 0, "fallback_count": 0},
+            "CC": {"attempted": 0, "success": 0, "fallback_count": 0},
+        },
+        "etl_readiness": {
+            "ready_for_kg_etl": True,
+            "total_statutes": 9,
+            "full_text_ratio": 1.0,
+            "jsonld_ratio": 1.0,
+            "citation_ratio": 1.0,
+            "states_with_zero_statutes": 0,
+        },
+        "quality_by_state": {},
+    }
+
+    verifier.verify_operational_readiness()
+
+    last = verifier.results["tests"][-1]
+    assert last["name"] == "Operational Readiness"
+    assert last["status"] == "WARN"
+    assert "no-fetch-attempt-telemetry" in (last["details"].get("reasons") or [])
 
 
 def test_build_operational_diagnostics_respects_top_n_limit():

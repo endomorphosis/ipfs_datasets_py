@@ -147,3 +147,80 @@ def test_argparse_cli_run_propagates_non_keyboard_base_exception(
                 "--dry-run",
             ]
         )
+
+
+def test_argparse_cli_state_laws_optimize_routes(monkeypatch: pytest.MonkeyPatch) -> None:
+    cli = OptimizerArgparseCLI()
+    captured = {}
+
+    def _fake_cmd(args):
+        captured["states"] = args.states
+        captured["max_rounds"] = args.max_rounds
+        captured["target_score"] = args.target_score
+        captured["emit_patch_plan"] = bool(args.emit_patch_plan)
+        captured["apply_patch_plan"] = bool(args.apply_patch_plan)
+        captured["patch_plan_limit"] = int(args.patch_plan_limit)
+        captured["execute_apply_plan"] = bool(args.execute_apply_plan)
+        captured["apply_plan_file"] = args.apply_plan_file
+        captured["execution_max_tasks"] = int(args.execution_max_tasks)
+        captured["auto_patch"] = bool(args.auto_patch)
+        captured["auto_patch_max_tasks"] = int(args.auto_patch_max_tasks)
+        captured["auto_patch_no_dry_run"] = bool(args.auto_patch_no_dry_run)
+        captured["auto_patch_allow_glob"] = list(args.auto_patch_allow_glob)
+        captured["auto_patch_deny_glob"] = list(args.auto_patch_deny_glob)
+        captured["wayback_allow_glob"] = list(args.wayback_allow_glob)
+        captured["wayback_deny_glob"] = list(args.wayback_deny_glob)
+        return 0
+
+    monkeypatch.setattr(cli, "cmd_state_laws_optimize", _fake_cmd)
+
+    code = cli.run(
+        [
+            "state-laws-optimize",
+            "--states",
+            "OK,IN,LA",
+            "--max-rounds",
+            "3",
+            "--target-score",
+            "0.9",
+            "--emit-patch-plan",
+            "--apply-patch-plan",
+            "--patch-plan-limit",
+            "7",
+            "--execute-apply-plan",
+            "--apply-plan-file",
+            "tmp/tasks.jsonl",
+            "--execution-max-tasks",
+            "4",
+            "--auto-patch",
+            "--auto-patch-max-tasks",
+            "2",
+            "--auto-patch-no-dry-run",
+            "--auto-patch-allow-glob",
+            "*oklahoma.py",
+            "--auto-patch-deny-glob",
+            "*indiana.py",
+            "--wayback-allow-glob",
+            "*state_scrapers/*.py",
+            "--wayback-deny-glob",
+            "*hawaii.py",
+        ]
+    )
+
+    assert code == 0
+    assert captured["states"] == "OK,IN,LA"
+    assert captured["max_rounds"] == 3
+    assert captured["target_score"] == 0.9
+    assert captured["emit_patch_plan"] is True
+    assert captured["apply_patch_plan"] is True
+    assert captured["patch_plan_limit"] == 7
+    assert captured["execute_apply_plan"] is True
+    assert captured["apply_plan_file"] == "tmp/tasks.jsonl"
+    assert captured["execution_max_tasks"] == 4
+    assert captured["auto_patch"] is True
+    assert captured["auto_patch_max_tasks"] == 2
+    assert captured["auto_patch_no_dry_run"] is True
+    assert captured["auto_patch_allow_glob"] == ["*oklahoma.py"]
+    assert captured["auto_patch_deny_glob"] == ["*indiana.py"]
+    assert captured["wayback_allow_glob"] == ["*state_scrapers/*.py"]
+    assert captured["wayback_deny_glob"] == ["*hawaii.py"]

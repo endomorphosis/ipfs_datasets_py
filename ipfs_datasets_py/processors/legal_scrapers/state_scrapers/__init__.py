@@ -50,6 +50,7 @@ from . import north_dakota
 from . import ohio
 from . import oklahoma
 from . import oregon
+from . import oregon_admin_rules
 from . import pennsylvania
 from . import rhode_island
 from . import south_carolina
@@ -103,6 +104,7 @@ from .north_dakota import NorthDakotaScraper
 from .ohio import OhioScraper
 from .oklahoma import OklahomaScraper
 from .oregon import OregonScraper
+from .oregon_admin_rules import OregonAdministrativeRulesScraper
 from .pennsylvania import PennsylvaniaScraper
 from .rhode_island import RhodeIslandScraper
 from .south_carolina import SouthCarolinaScraper
@@ -165,6 +167,7 @@ __all__ = [
     'OhioScraper',
     'OklahomaScraper',
     'OregonScraper',
+    'OregonAdministrativeRulesScraper',
     'PennsylvaniaScraper',
     'RhodeIslandScraper',
     'SouthCarolinaScraper',

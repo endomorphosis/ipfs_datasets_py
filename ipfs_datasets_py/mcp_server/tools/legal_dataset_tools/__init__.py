@@ -19,6 +19,7 @@ Also includes:
 """
 
 from .us_code_scraper import scrape_us_code, get_us_code_titles, search_us_code
+from .mcp_tools import scrape_federal_laws
 from .federal_register_scraper import scrape_federal_register, search_federal_register
 from .state_laws_scraper import scrape_state_laws, list_state_jurisdictions
 from .municipal_laws_scraper import scrape_municipal_laws, search_municipal_codes
@@ -73,6 +74,8 @@ from .mcp_tools import (
     ingest_caselaw_access_vectors,
     search_caselaw_access_vectors,
     search_caselaw_access_cases,
+    search_us_code_corpus,
+    search_state_law_corpus,
     list_caselaw_access_vector_files,
     search_caselaw_access_vectors_with_centroids,
     ingest_caselaw_access_vector_bundle,
@@ -90,6 +93,9 @@ __all__ = [
     # Federal Register tools
     "scrape_federal_register",
     "search_federal_register",
+
+    # Federal rules + local rules tools
+    "scrape_federal_laws",
     
     # State Laws tools
     "scrape_state_laws",
@@ -163,6 +169,8 @@ __all__ = [
     "ingest_caselaw_access_vectors",
     "search_caselaw_access_vectors",
     "search_caselaw_access_cases",
+    "search_us_code_corpus",
+    "search_state_law_corpus",
     "list_caselaw_access_vector_files",
     "search_caselaw_access_vectors_with_centroids",
     "ingest_caselaw_access_vector_bundle",

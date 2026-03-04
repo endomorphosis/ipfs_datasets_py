@@ -118,7 +118,11 @@ def _build_operational_diagnostics(metadata: Dict[str, Any], *, top_n: int = 8) 
             "total_statutes": int(etl.get("total_statutes", 0) or 0),
             "full_text_ratio": float(etl.get("full_text_ratio", 0.0) or 0.0),
             "jsonld_ratio": float(etl.get("jsonld_ratio", 0.0) or 0.0),
+            "jsonld_legislation_ratio": float(etl.get("jsonld_legislation_ratio", 0.0) or 0.0),
+            "kg_payload_ratio": float(etl.get("kg_payload_ratio", 0.0) or 0.0),
             "citation_ratio": float(etl.get("citation_ratio", 0.0) or 0.0),
+            "statute_signal_ratio": float(etl.get("statute_signal_ratio", 0.0) or 0.0),
+            "non_scaffold_ratio": float(etl.get("non_scaffold_ratio", 0.0) or 0.0),
             "states_with_zero_statutes": int(etl.get("states_with_zero_statutes", 0) or 0),
         },
         "quality": {
@@ -450,6 +454,9 @@ class StateLawsVerifier:
         fetch_fallback_ratio = _safe_ratio(fetch_fallback_count, fetch_attempted)
         coverage_gap_states = list(coverage_block.get("coverage_gap_states") or [])
         is_kg_ready = bool(etl_block.get("ready_for_kg_etl"))
+        statute_signal_ratio = float(etl_block.get("statute_signal_ratio", 0.0) or 0.0)
+        non_scaffold_ratio = float(etl_block.get("non_scaffold_ratio", 0.0) or 0.0)
+        kg_payload_ratio = float(etl_block.get("kg_payload_ratio", 0.0) or 0.0)
 
         if require_kg_ready and not is_kg_ready:
             reasons.append("kg-etl-not-ready")
@@ -459,6 +466,14 @@ class StateLawsVerifier:
             reasons.append("fetch-fallback-ratio-above-threshold")
         if max_coverage_gap_states is not None and len(coverage_gap_states) > int(max_coverage_gap_states):
             reasons.append("too-many-coverage-gap-states")
+
+        # Always surface high-signal warnings for likely non-statutory payloads.
+        if statute_signal_ratio > 0.0 and statute_signal_ratio < 0.65:
+            reasons.append("low-statute-signal-ratio")
+        if non_scaffold_ratio > 0.0 and non_scaffold_ratio < 0.85:
+            reasons.append("high-scaffold-or-navigation-ratio")
+        if kg_payload_ratio > 0.0 and kg_payload_ratio < 0.70:
+            reasons.append("kg-payload-coverage-low")
 
         details = {
             "thresholds": {
@@ -470,9 +485,13 @@ class StateLawsVerifier:
             "diagnostics": diagnostics,
             "computed": {
                 "fetch_success_ratio": round(fetch_success_ratio, 3),
+                "fetch_attempted": fetch_attempted,
                 "fetch_fallback_ratio": round(fetch_fallback_ratio, 3),
                 "coverage_gap_state_count": len(coverage_gap_states),
                 "kg_ready": is_kg_ready,
+                "statute_signal_ratio": round(statute_signal_ratio, 3),
+                "non_scaffold_ratio": round(non_scaffold_ratio, 3),
+                "kg_payload_ratio": round(kg_payload_ratio, 3),
             },
             "reasons": reasons,
         }
@@ -486,7 +505,13 @@ class StateLawsVerifier:
             )
             return self.results
 
-        if not is_kg_ready or len(coverage_gap_states) > 0:
+        targeted_states = int(coverage_block.get("states_targeted", 0) or 0)
+        zero_fetch_attempts = targeted_states > 0 and fetch_attempted <= 0
+
+        if zero_fetch_attempts:
+            details["reasons"] = list(details.get("reasons") or []) + ["no-fetch-attempt-telemetry"]
+
+        if zero_fetch_attempts or (not is_kg_ready) or len(coverage_gap_states) > 0:
             self.log_test(
                 "Operational Readiness",
                 "WARN",

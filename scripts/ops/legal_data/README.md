@@ -29,6 +29,22 @@ Copied from workspace-level `scripts/ops/`:
 - `create_ws11_github_issues.sh`
 
 Notes:
+- Run `run_state_laws_agentic_full.sh` for end-to-end autonomous state-law
+	collection via the actor/critic loop.
+	Examples:
+	`bash scripts/ops/legal_data/run_state_laws_agentic_full.sh`
+	`STATES=OR MAX_ROUNDS=1 ACTORS_PER_ROUND=1 ACTOR_CONCURRENCY=1 MAX_STATUTES=0 bash scripts/ops/legal_data/run_state_laws_agentic_full.sh`
+	`STATES=all MAX_ROUNDS=1 ACTORS_PER_ROUND=2 ACTOR_CONCURRENCY=2 bash scripts/ops/legal_data/run_state_laws_agentic_full.sh`
+- Oregon-specific procedural/local-rules controls (used by OR scraper):
+	`OREGON_CRIMINAL_PROCEDURE_CHAPTERS=131-136`
+	`OREGON_LOCAL_RULE_COUNTIES=Multnomah,Washington,Lane`
+	`OREGON_LOCAL_RULE_MAX_COUNTIES=10`
+- Run `check_state_law_coverage.py` to enforce state-law file completeness and
+	minimum per-state depth from local JSON-LD outputs.
+	Examples:
+	`python scripts/ops/legal_data/check_state_law_coverage.py`
+	`python scripts/ops/legal_data/check_state_law_coverage.py --min-records 20`
+	`python scripts/ops/legal_data/check_state_law_coverage.py --states AL,CT,GA,NM --min-records 5`
 - Set `RUN_PROOF_CERT_AUDIT_AFTER_RUN=1` when invoking
 	`run_formal_logic_regression_check.sh` to auto-export
 	`proof_certificate_audit.json` after conversion/analysis complete.
@@ -55,6 +71,9 @@ Notes:
 	under `artifacts/formal_logic_tmp_verify/federal/ws10_ci_soak_20260302/`.
 - Run `create_ws11_github_issues.sh` to open WS11 GitHub issues from template
 	bodies (dry-run by default; pass `--create` to create issues).
+	`--create` requires GitHub CLI (`gh`) installed and authenticated.
+	The wrapper auto-includes `~/.local/bin` in `PATH` for user-space `gh` installs.
+	Example: `gh auth status && bash scripts/ops/legal_data/create_ws11_github_issues.sh --create`.
 - VS Code tasks are canonical in `ipfs_datasets_py/.vscode/tasks.json`:
 	`Legal smoke: proof-audit canary`,
 	`Legal smoke: proof-audit regression`,

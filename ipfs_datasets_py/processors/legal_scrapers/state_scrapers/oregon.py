@@ -11,15 +11,17 @@ builds section-level records with rich structure, including:
 
 from __future__ import annotations
 
+import json
+import os
 import re
 from typing import Any, Dict, List, Optional, Sequence, Tuple
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
+from .oregon_admin_rules import OregonAdministrativeRulesScraper
 from .registry import StateScraperRegistry
 
 try:
-    import requests
     from bs4 import BeautifulSoup
 
     REQUESTS_AVAILABLE = True
@@ -35,6 +37,18 @@ SECTION_REF_RE = re.compile(
     r"\b(?:section|sec\.?|§{1,2})\s+[\w\-.(),\sand]+(?:\s+of\s+(?:this\s+chapter|ORS\s+chapter\s+\d+))?\b",
     re.IGNORECASE,
 )
+COURT_RULES_LIST_API_URL = (
+    "https://www.courts.oregon.gov/rules/_api/web/lists/"
+    "getbytitle(%27Other%20Rules%27)/items"
+    "?$top=5000&$select=Title,EncodedAbsUrl"
+)
+LOCAL_RULES_INDEX_URL = "https://www.courts.oregon.gov/rules/Pages/slr.aspx"
+ORCP_PRIMARY_URL = "https://www.oregonlegislature.gov/bills_laws/Pages/orcp.aspx"
+ORCP_EXPANDED_URL = "https://www.oregonlegislature.gov/bills_laws/SiteAssets/ORCP.html"
+LOCAL_RULE_LINK_RE = re.compile(r"/courts/.+/Pages/(?:rules|Rules|CourtRules|Court-Rules)\.aspx", re.IGNORECASE)
+ORCP_RULE_HEADING_RE = re.compile(r"\bRule\s+([0-9]{1,3}[A-Za-z]?)\s*[-:]\s*(.+)", re.IGNORECASE)
+LOCAL_RULE_DOC_PATH_RE = re.compile(r"\.(?:pdf|doc|docx)(?:$|[?#])|/documents/|/documentlibrary/", re.IGNORECASE)
+LOCAL_RULE_TEXT_RE = re.compile(r"\brules?\b|\bslr\b|supplementary local", re.IGNORECASE)
 
 
 def _norm_space(text: str) -> str:
@@ -132,29 +146,452 @@ class OregonScraper(BaseStateScraper):
     
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Oregon."""
-        return [{
-            "name": "Oregon Revised Statutes",
-            "url": f"{self.get_base_url()}/bills_laws/ors/ors001.html",
-            "type": "Code"
-        }]
-
-    def _make_session(self) -> "requests.Session":
-        session = requests.Session()
-        session.headers.update(
+        return [
             {
-                "User-Agent": "ipfs-datasets-oregon-scraper/2.0",
-                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
-            }
-        )
-        return session
+                "name": "Oregon Revised Statutes",
+                "url": f"{self.get_base_url()}/bills_laws/ors/ors001.html",
+                "type": "Code",
+            },
+            {
+                "name": "Oregon Administrative Rules",
+                "url": OregonAdministrativeRulesScraper.seed_chapter_url(),
+                "type": "Regulation",
+            },
+            {
+                "name": "Oregon Rules of Civil Procedure",
+                "url": ORCP_PRIMARY_URL,
+                "type": "CourtRule",
+            },
+            {
+                "name": "Oregon Rules of Criminal Procedure",
+                "url": f"{self.get_base_url()}/bills_laws/ors/ors131.html",
+                "type": "CourtRule",
+            },
+            {
+                "name": "Oregon Local Court Rules",
+                "url": LOCAL_RULES_INDEX_URL,
+                "type": "CourtRule",
+            },
+        ]
 
-    def _discover_chapter_urls(self, session: "requests.Session", seed_url: str) -> List[str]:
+    async def _discover_other_rules_entries(self, title_terms: Sequence[str]) -> List[Dict[str, str]]:
+        if not title_terms:
+            return []
+
+        payload = await self._fetch_page_content_with_archival_fallback(COURT_RULES_LIST_API_URL, timeout_seconds=45)
+        if not payload:
+            return []
+
         try:
-            response = session.get(seed_url, timeout=60)
-            if int(response.status_code) != 200:
-                self.logger.warning(f"Oregon seed request failed ({response.status_code}): {seed_url}")
+            decoded = json.loads(payload.decode("utf-8", errors="replace"))
+            rows = decoded.get("value") or []
+        except Exception:
+            return []
+
+        lowered_terms = [_norm_space(term).lower() for term in title_terms if _norm_space(term)]
+        out: List[Dict[str, str]] = []
+        for row in rows:
+            title = _norm_space(str((row or {}).get("Title") or ""))
+            url = _norm_space(str((row or {}).get("EncodedAbsUrl") or ""))
+            if not title or not url:
+                continue
+            title_lower = title.lower()
+            if any(term in title_lower for term in lowered_terms):
+                out.append({"title": title, "url": url})
+
+        deduped: List[Dict[str, str]] = []
+        seen_urls = set()
+        for row in out:
+            key = row["url"].lower()
+            if key in seen_urls:
+                continue
+            seen_urls.add(key)
+            deduped.append(row)
+        return deduped
+
+    def _finalize_rule_statutes(
+        self,
+        statutes: Sequence[NormalizedStatute],
+        *,
+        code_name: str,
+        citation_prefix: str,
+        legal_area: str,
+        county_name: Optional[str] = None,
+    ) -> List[NormalizedStatute]:
+        out: List[NormalizedStatute] = []
+        seen = set()
+        for statute in statutes:
+            section_number = _norm_space(str(statute.section_number or ""))
+            section_name = _norm_space(str(statute.section_name or statute.short_title or ""))
+            key = (str(statute.source_url or "").lower(), section_number.lower(), section_name.lower())
+            if key in seen:
+                continue
+            seen.add(key)
+
+            statute.code_name = code_name
+            statute.legal_area = legal_area
+            statute.section_name = section_name or statute.section_name
+            statute.short_title = section_name or statute.short_title
+            statute.section_number = section_number or statute.section_number
+
+            if county_name:
+                statute.title_name = f"{county_name} County Circuit Court"
+                statute.chapter_name = f"{county_name} County"
+                statute.structured_data = {**(statute.structured_data or {}), "county": county_name}
+
+            cite_number = _norm_space(str(statute.section_number or ""))
+            if cite_number and cite_number.lower() != "section":
+                statute.official_cite = f"{citation_prefix} {cite_number}"
+            else:
+                statute.official_cite = citation_prefix
+
+            suffix = cite_number or section_name or str(len(out) + 1)
+            statute.statute_id = f"{citation_prefix} {suffix}".strip()
+            out.append(statute)
+
+        return out
+
+    def _build_rule_stub_statute(
+        self,
+        *,
+        code_name: str,
+        legal_area: str,
+        citation_prefix: str,
+        section_number: str,
+        section_name: str,
+        source_url: str,
+        county_name: Optional[str] = None,
+    ) -> NormalizedStatute:
+        cleaned_number = _norm_space(section_number)
+        cleaned_name = _norm_space(section_name) or f"{citation_prefix} {cleaned_number}"
+        text = f"{citation_prefix} {cleaned_number}: {cleaned_name}".strip()
+        cite = f"{citation_prefix} {cleaned_number}".strip()
+
+        statute = NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=cite,
+            code_name=code_name,
+            section_number=cleaned_number,
+            section_name=cleaned_name,
+            short_title=cleaned_name,
+            full_text=text,
+            summary=cleaned_name,
+            legal_area=legal_area,
+            source_url=str(source_url or ""),
+            official_cite=cite,
+            metadata=StatuteMetadata(),
+            structured_data={"citations": {}, "source_kind": "document_link"},
+        )
+
+        if county_name:
+            statute.title_name = f"{county_name} County Circuit Court"
+            statute.chapter_name = f"{county_name} County"
+            statute.structured_data = {**(statute.structured_data or {}), "county": county_name}
+
+        statute.structured_data["jsonld"] = self._build_state_jsonld(
+            statute,
+            text=text,
+            preamble=cleaned_name,
+            citations={},
+            legislative_history={},
+            subsections=[],
+            parser_warnings=[],
+        )
+        return statute
+
+    def _extract_orcp_rules_from_html(self, html: str, source_url: str, code_name: str) -> List[NormalizedStatute]:
+        statutes: List[NormalizedStatute] = []
+        seen = set()
+        for line in _lineify(html):
+            match = ORCP_RULE_HEADING_RE.search(line)
+            if not match:
+                continue
+            rule_number = _norm_space(match.group(1))
+            rule_title = _norm_space(match.group(2))
+            if not rule_number or not rule_title:
+                continue
+
+            key = f"{rule_number.lower()}::{rule_title.lower()}"
+            if key in seen:
+                continue
+            seen.add(key)
+
+            rule_url = f"{source_url}#rule-{rule_number.lower()}"
+            statutes.append(
+                self._build_rule_stub_statute(
+                    code_name=code_name,
+                    legal_area="civil_procedure",
+                    citation_prefix="ORCP",
+                    section_number=rule_number,
+                    section_name=rule_title,
+                    source_url=rule_url,
+                )
+            )
+        return statutes
+
+    def _extract_local_rule_documents_from_html(
+        self,
+        *,
+        county_name: str,
+        county_url: str,
+        html: str,
+        code_name: str,
+    ) -> List[NormalizedStatute]:
+        try:
+            soup = BeautifulSoup(html, "html.parser")
+        except Exception:
+            return []
+
+        statutes: List[NormalizedStatute] = []
+        county_path_hint = ""
+        try:
+            county_path_hint = "/" + str(urlparse(county_url).path or "").strip("/").split("/Pages/")[0].lower() + "/"
+        except Exception:
+            county_path_hint = ""
+
+        seen = set()
+        index = 0
+        for anchor in soup.find_all("a", href=True):
+            href = _norm_space(str(anchor.get("href") or ""))
+            text = _norm_space(anchor.get_text(" ", strip=True))
+            if not href:
+                continue
+            absolute = urljoin(county_url, href)
+            lower_abs = absolute.lower()
+            lower_text = text.lower()
+
+            if not lower_abs.startswith("https://www.courts.oregon.gov/"):
+                continue
+            if county_path_hint and county_path_hint not in lower_abs:
+                continue
+
+            looks_like_rule_doc = bool(LOCAL_RULE_DOC_PATH_RE.search(lower_abs) or LOCAL_RULE_TEXT_RE.search(lower_text))
+            if not looks_like_rule_doc:
+                continue
+
+            label = text or Path(urlparse(absolute).path).name or "Local Rule Document"
+            key = f"{lower_abs}::{label.lower()}"
+            if key in seen:
+                continue
+            seen.add(key)
+            index += 1
+
+            statutes.append(
+                self._build_rule_stub_statute(
+                    code_name=code_name,
+                    legal_area="court_rules",
+                    citation_prefix=f"{county_name} County Local Rule",
+                    section_number=f"doc-{index}",
+                    section_name=label,
+                    source_url=absolute,
+                    county_name=county_name,
+                )
+            )
+
+        return statutes
+
+    async def _scrape_civil_procedure_rules(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        candidate_urls = [code_url, ORCP_PRIMARY_URL, ORCP_EXPANDED_URL]
+        discovered = await self._discover_other_rules_entries(["civil procedure", "orcp"])
+        candidate_urls.extend(row["url"] for row in discovered)
+        candidate_urls = _dedupe_keep_order(candidate_urls)
+
+        statutes: List[NormalizedStatute] = []
+        for candidate in candidate_urls:
+            parsed = await self._generic_scrape(code_name, candidate, "ORCP", max_sections=700)
+            statutes.extend(parsed)
+
+            page_bytes = await self._fetch_page_content_with_archival_fallback(candidate, timeout_seconds=90)
+            if page_bytes:
+                html = page_bytes.decode("utf-8", errors="replace")
+                statutes.extend(self._extract_orcp_rules_from_html(html, candidate, code_name))
+
+        if not statutes:
+            statutes = await self._playwright_scrape(
+                code_name,
+                ORCP_PRIMARY_URL,
+                "ORCP",
+                wait_for_selector="a[href*='ORCP'], a[href*='orcp'], a[href*='.pdf']",
+                timeout=50000,
+                max_sections=700,
+            )
+
+        return self._finalize_rule_statutes(
+            statutes,
+            code_name=code_name,
+            citation_prefix="ORCP",
+            legal_area="civil_procedure",
+        )
+
+    def _parse_chapter_selection(self) -> List[str]:
+        raw = os.getenv("OREGON_CRIMINAL_PROCEDURE_CHAPTERS", "131-136").strip()
+        if not raw:
+            raw = "131-136"
+
+        chapters: List[int] = []
+        for part in raw.split(","):
+            token = part.strip()
+            if not token:
+                continue
+            if "-" in token:
+                left, right = token.split("-", 1)
+                try:
+                    lo = int(left.strip())
+                    hi = int(right.strip())
+                except Exception:
+                    continue
+                if hi < lo:
+                    lo, hi = hi, lo
+                chapters.extend(range(lo, hi + 1))
+                continue
+            try:
+                chapters.append(int(token))
+            except Exception:
+                continue
+
+        if not chapters:
+            chapters = list(range(131, 137))
+        return [f"{value:03d}" for value in sorted(set(chapters))]
+
+    async def _scrape_criminal_procedure_rules(self, code_name: str) -> List[NormalizedStatute]:
+        # Prefer court-rules entries when available, then fall back to ORS criminal-procedure chapters.
+        discovered = await self._discover_other_rules_entries(["criminal procedure", "orcrp", "rules of procedure"])
+        statutes: List[NormalizedStatute] = []
+
+        for row in discovered:
+            parsed = await self._generic_scrape(code_name, row["url"], "ORCrP", max_sections=500)
+            statutes.extend(parsed)
+
+        if not statutes:
+            for chapter in self._parse_chapter_selection():
+                chapter_url = f"{self.get_base_url()}/bills_laws/ors/ors{chapter}.html"
+                chapter_bytes = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=90)
+                if not chapter_bytes:
+                    continue
+                chapter_html = chapter_bytes.decode("utf-8", errors="replace")
+                statutes.extend(
+                    self._parse_chapter_html(
+                        html=chapter_html,
+                        chapter_url=chapter_url,
+                        code_name=code_name,
+                        citation_format="ORCrP",
+                        legal_area="criminal_procedure",
+                    )
+                )
+
+        return self._finalize_rule_statutes(
+            statutes,
+            code_name=code_name,
+            citation_prefix="ORCrP",
+            legal_area="criminal_procedure",
+        )
+
+    async def _discover_local_court_rule_targets(self, index_url: str) -> List[Tuple[str, str]]:
+        if not REQUESTS_AVAILABLE:
+            return []
+
+        payload = await self._fetch_page_content_with_archival_fallback(index_url, timeout_seconds=60)
+        if not payload:
+            return []
+
+        try:
+            soup = BeautifulSoup(payload, "html.parser")
+        except Exception:
+            return []
+
+        targets: List[Tuple[str, str]] = []
+        for anchor in soup.find_all("a", href=True):
+            href = str(anchor.get("href") or "")
+            if not LOCAL_RULE_LINK_RE.search(href):
+                continue
+            county_name = _norm_space(anchor.get_text(" ", strip=True))
+            if not county_name:
+                continue
+            targets.append((county_name, urljoin(index_url, href)))
+
+        # Optional county allow-list for faster focused runs.
+        counties_raw = os.getenv("OREGON_LOCAL_RULE_COUNTIES", "").strip()
+        if counties_raw:
+            allowed = {part.strip().lower() for part in counties_raw.split(",") if part.strip()}
+            targets = [row for row in targets if row[0].lower() in allowed]
+
+        max_counties_raw = os.getenv("OREGON_LOCAL_RULE_MAX_COUNTIES", "").strip()
+        if max_counties_raw:
+            try:
+                max_counties = max(1, int(max_counties_raw))
+                targets = targets[:max_counties]
+            except Exception:
+                pass
+
+        deduped: List[Tuple[str, str]] = []
+        seen = set()
+        for county_name, county_url in targets:
+            key = county_url.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append((county_name, county_url))
+        return deduped
+
+    async def _scrape_local_court_rules(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        targets = await self._discover_local_court_rule_targets(code_url)
+        statutes: List[NormalizedStatute] = []
+
+        for county_name, county_url in targets:
+            county_code_name = f"{code_name} ({county_name} County)"
+            parsed = await self._generic_scrape(
+                county_code_name,
+                county_url,
+                "OR Local Rule",
+                max_sections=240,
+            )
+            page_bytes = await self._fetch_page_content_with_archival_fallback(county_url, timeout_seconds=90)
+            if page_bytes:
+                county_html = page_bytes.decode("utf-8", errors="replace")
+                parsed.extend(
+                    self._extract_local_rule_documents_from_html(
+                        county_name=county_name,
+                        county_url=county_url,
+                        html=county_html,
+                        code_name=code_name,
+                    )
+                )
+            statutes.extend(
+                self._finalize_rule_statutes(
+                    parsed,
+                    code_name=code_name,
+                    citation_prefix=f"{county_name} County Local Rule",
+                    legal_area="court_rules",
+                    county_name=county_name,
+                )
+            )
+
+        if statutes:
+            return statutes
+
+        fallback = await self._playwright_scrape(
+            code_name,
+            code_url,
+            "OR Local Rule",
+            wait_for_selector="a[href*='/courts/'][href*='rules']",
+            timeout=50000,
+            max_sections=500,
+        )
+        return self._finalize_rule_statutes(
+            fallback,
+            code_name=code_name,
+            citation_prefix="OR Local Rule",
+            legal_area="court_rules",
+        )
+
+    async def _discover_chapter_urls(self, seed_url: str) -> List[str]:
+        try:
+            seed_bytes = await self._fetch_page_content_with_archival_fallback(seed_url, timeout_seconds=60)
+            if not seed_bytes:
+                self.logger.warning(f"Oregon seed request failed (no content): {seed_url}")
                 return [seed_url]
-            soup = BeautifulSoup(response.text, "html.parser")
+            soup = BeautifulSoup(seed_bytes, "html.parser")
         except Exception as exc:
             self.logger.warning(f"Oregon chapter discovery failed: {exc}")
             return [seed_url]
@@ -333,6 +770,31 @@ class OregonScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        lower_name = str(code_name or "").lower()
+        lower_url = str(code_url or "").lower()
+
+        if "local court rules" in lower_name or "/rules/pages/slr.aspx" in lower_url:
+            self.logger.info("Oregon: using dedicated local-court-rules scraper path")
+            return await self._scrape_local_court_rules(code_name, code_url or LOCAL_RULES_INDEX_URL)
+
+        if "civil procedure" in lower_name or lower_url.endswith("/pages/orcp.aspx") or lower_url.endswith("/siteassets/orcp.html"):
+            self.logger.info("Oregon: using dedicated ORCP scraper path")
+            return await self._scrape_civil_procedure_rules(code_name, code_url or ORCP_PRIMARY_URL)
+
+        if "criminal procedure" in lower_name:
+            self.logger.info("Oregon: using dedicated ORCrP scraper path")
+            return await self._scrape_criminal_procedure_rules(code_name)
+
+        if "administrative" in lower_name or "displaychapterrules.action" in lower_url:
+            self.logger.info("Oregon: using dedicated OAR scraper")
+            oar_scraper = OregonAdministrativeRulesScraper(self)
+            oar_statutes = await oar_scraper.scrape(code_name=code_name, code_url=code_url)
+            if oar_statutes:
+                self.logger.info(f"Oregon OAR: parsed {len(oar_statutes)} rules")
+                return oar_statutes
+            self.logger.warning("Oregon OAR scraper produced no rules; falling back to generic parser")
+            return await self._generic_scrape(code_name, code_url, "OAR", max_sections=400)
+
         citation_format = "Or. Rev. Stat."
         if not REQUESTS_AVAILABLE:
             self.logger.warning("requests/bs4 unavailable for Oregon parser; falling back to Playwright link scrape")
@@ -349,7 +811,6 @@ class OregonScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
 
         try:
-            session = self._make_session()
             chapter_urls: List[str] = []
 
             seed_bytes = await self._fetch_page_content_with_archival_fallback(code_url, timeout_seconds=90)
@@ -367,7 +828,7 @@ class OregonScraper(BaseStateScraper):
                     chapter_urls = []
 
             if not chapter_urls:
-                chapter_urls = self._discover_chapter_urls(session, code_url)
+                chapter_urls = await self._discover_chapter_urls(code_url)
 
             self.logger.info(f"Oregon: discovered {len(chapter_urls)} ORS chapter pages")
 

@@ -18,7 +18,18 @@ DEFAULT_LABELS = ["hybrid-legal", "ws11"]
 
 
 def run_cmd(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(cmd, check=check, capture_output=True, text=True)
+    result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+    if check and result.returncode != 0:
+        stderr = (result.stderr or "").strip()
+        stdout = (result.stdout or "").strip()
+        detail = stderr or stdout or f"exit {result.returncode}"
+        raise RuntimeError(f"command failed ({' '.join(cmd)}): {detail}")
+    return result
+
+
+def gh_auth_ok() -> bool:
+    result = run_cmd(["gh", "auth", "status"], check=False)
+    return result.returncode == 0
 
 
 def parse_ws11_issues(markdown_text: str) -> list[dict[str, str]]:
@@ -140,7 +151,6 @@ def main() -> int:
         return 2
 
     labels = args.label if args.label else DEFAULT_LABELS
-
     gh_available = True
     try:
         run_cmd(["gh", "--version"])
@@ -148,7 +158,11 @@ def main() -> int:
         gh_available = False
 
     if not gh_available and args.create:
-        print("`gh` CLI is not available in PATH; cannot create issues.", file=sys.stderr)
+        print("`gh` CLI is required for --create mode. Install/authenticate `gh` first.", file=sys.stderr)
+        return 2
+
+    if gh_available and args.create and not gh_auth_ok():
+        print("`gh` is installed but not authenticated. Run `gh auth login` first.", file=sys.stderr)
         return 2
 
     if gh_available:
@@ -166,22 +180,28 @@ def main() -> int:
 
     created = 0
     skipped = 0
+    failed = 0
 
     print(f"Repo: {args.repo}")
     print(f"Mode: {'CREATE' if args.create else 'DRY-RUN'}")
     print(f"Labels: {', '.join(labels)}")
     print(f"Tickets parsed: {len(issues)}")
+    if gh_available:
+        print("Create backend: gh")
+    else:
+        print("Create backend: none (plan only)")
 
     for issue in issues:
         ticket_id = issue["ticket_id"]
         title = issue["title"]
 
         exists = False
-        if not args.allow_duplicates and gh_available:
-            try:
-                exists = issue_exists(args.repo, ticket_id)
-            except Exception as exc:
-                print(f"[warn] could not check existing for {ticket_id}: {exc}")
+        if not args.allow_duplicates:
+            if gh_available:
+                try:
+                    exists = issue_exists(args.repo, ticket_id)
+                except Exception as exc:
+                    print(f"[warn] could not check existing for {ticket_id}: {exc}")
 
         if exists:
             skipped += 1
@@ -197,10 +217,14 @@ def main() -> int:
             created += 1
             print(f"[ok] {ticket_id} {url}")
         except Exception as exc:
+            failed += 1
             print(f"[error] {ticket_id}: {exc}", file=sys.stderr)
+            if "HTTP 401" in str(exc) or "HTTP 403" in str(exc):
+                print("[error] stopping early due to authentication/permission failure", file=sys.stderr)
+                break
 
-    print(f"Summary: created={created} skipped={skipped} parsed={len(issues)}")
-    return 0
+    print(f"Summary: created={created} skipped={skipped} failed={failed} parsed={len(issues)}")
+    return 1 if args.create and failed > 0 else 0
 
 
 if __name__ == "__main__":

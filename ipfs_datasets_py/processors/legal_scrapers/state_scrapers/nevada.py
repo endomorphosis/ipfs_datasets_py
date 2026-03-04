@@ -19,7 +19,7 @@ class NevadaScraper(BaseStateScraper):
         """Return list of available codes/statutes for Nevada."""
         return [{
             "name": "Nevada Revised Statutes",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/NRS/",
             "type": "Code"
         }]
     

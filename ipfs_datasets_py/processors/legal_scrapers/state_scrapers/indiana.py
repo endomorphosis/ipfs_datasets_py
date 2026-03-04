@@ -6,10 +6,7 @@ Indiana General Assembly static-document chapter PDFs.
 
 import re
 import subprocess
-import time
 from typing import Dict, List
-
-import requests
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -51,7 +48,7 @@ class IndianaScraper(BaseStateScraper):
         Indiana's live site is currently SPA-only in headless contexts.
         We prefer stable Wayback chapter PDFs that contain substantial text.
         """
-        archival = self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=20)
+        archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=20)
         if archival:
             self.logger.info(f"Indiana archival fallback: Scraped {len(archival)} sections")
             return archival
@@ -59,7 +56,7 @@ class IndianaScraper(BaseStateScraper):
         # Keep a final generic fallback for resilience.
         return await self._generic_scrape(code_name, code_url, "Ind. Code")
 
-    def _scrape_archived_chapter_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_archived_chapter_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}
         statutes: List[NormalizedStatute] = []
         seen_ids = set()
@@ -68,7 +65,7 @@ class IndianaScraper(BaseStateScraper):
             if len(statutes) >= max_statutes:
                 break
 
-            statute = self._build_statute_from_pdf_url(code_name=code_name, pdf_url=pdf_url, headers=headers)
+            statute = await self._build_statute_from_pdf_url(code_name=code_name, pdf_url=pdf_url, headers=headers)
             if statute is None:
                 continue
             if statute.statute_id in seen_ids:
@@ -79,7 +76,7 @@ class IndianaScraper(BaseStateScraper):
 
         return statutes
 
-    def _build_statute_from_pdf_url(
+    async def _build_statute_from_pdf_url(
         self,
         code_name: str,
         pdf_url: str,
@@ -89,7 +86,7 @@ class IndianaScraper(BaseStateScraper):
         if not doc_id:
             return None
 
-        pdf_bytes = self._request_bytes(pdf_url=pdf_url, headers=headers, timeout=45)
+        pdf_bytes = await self._request_bytes(pdf_url=pdf_url, headers=headers, timeout=45)
         if not pdf_bytes:
             return None
 
@@ -125,7 +122,7 @@ class IndianaScraper(BaseStateScraper):
         filename = re.sub(r"[^A-Za-z0-9._-]+", " ", filename).strip()
         return filename[:80] if filename else "archived-pdf"
 
-    def _request_bytes(self, pdf_url: str, headers: Dict[str, str], timeout: int) -> bytes:
+    async def _request_bytes(self, pdf_url: str, headers: Dict[str, str], timeout: int) -> bytes:
         candidates = [str(pdf_url or "")]
         if candidates[0].startswith("https://"):
             candidates.append("http://" + candidates[0][8:])
@@ -133,16 +130,15 @@ class IndianaScraper(BaseStateScraper):
             candidates.append("https://" + candidates[0][7:])
 
         for candidate in candidates:
-            for _ in range(3):
-                try:
-                    response = requests.get(candidate, headers=headers, timeout=timeout)
-                    response.raise_for_status()
-                    if not response.content:
-                        continue
-                    return response.content
-                except Exception:
-                    time.sleep(0.5)
-                    continue
+            try:
+                payload = await self._fetch_page_content_with_archival_fallback(
+                    candidate,
+                    timeout_seconds=timeout,
+                )
+                if payload:
+                    return payload
+            except Exception:
+                continue
 
         return b""
 

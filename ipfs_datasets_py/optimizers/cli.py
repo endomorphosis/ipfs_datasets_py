@@ -99,6 +99,9 @@ See docs/optimizers/SELECTION_GUIDE.md for choosing the right optimizer.
         Returns:
             Exit code (0 for success, non-zero for error)
         """
+        if args is None:
+            args = sys.argv[1:]
+
         # Check for version flag first
         if args and '--version' in args:
             self._show_version()
@@ -106,9 +109,43 @@ See docs/optimizers/SELECTION_GUIDE.md for choosing the right optimizer.
         
         # Parse just the type to route appropriately
         # This allows --help to be passed through to the specific optimizer
-        if not args or '--help' in args or '-h' in args:
-            # If no args or just help, show our help
-            if not args or len(args) == 0 or (len(args) == 1 and args[0] in ['--help', '-h']):
+        has_type = bool(args and '--type' in args)
+
+        # If optimizer type is explicitly provided and help is requested,
+        # bypass top-level argparse (which would exit immediately on --help)
+        # and forward the remaining args to the selected optimizer CLI.
+        if args and has_type and ('--help' in args or '-h' in args):
+            optimizer_type = None
+            if '--type' in args:
+                idx = args.index('--type')
+                if idx + 1 < len(args):
+                    optimizer_type = args[idx + 1]
+
+            if optimizer_type in self.OPTIMIZER_TYPES:
+                verbose = ('--verbose' in args) or ('-v' in args)
+                filtered: List[str] = []
+                skip_next = False
+                for i, token in enumerate(args):
+                    if skip_next:
+                        skip_next = False
+                        continue
+                    if token == '--type':
+                        skip_next = True
+                        continue
+                    if token in ('--verbose', '-v'):
+                        continue
+                    filtered.append(token)
+
+                if optimizer_type == 'agentic':
+                    return self._run_agentic(filtered, verbose)
+                if optimizer_type == 'logic':
+                    return self._run_logic(filtered, verbose)
+                if optimizer_type == 'graphrag':
+                    return self._run_graphrag(filtered, verbose)
+
+        if not args or ('--help' in args or '-h' in args):
+            # If no args or generic help without an optimizer type, show top-level help.
+            if (not args or len(args) == 0 or (len(args) == 1 and args[0] in ['--help', '-h']) or not has_type):
                 self.parser.print_help()
                 return 0
         

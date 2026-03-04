@@ -142,6 +142,7 @@ async def scrape_state_laws(
     parallel_workers: int = 6,
     per_state_retry_attempts: int = 1,
     retry_zero_statute_states: bool = True,
+    per_state_timeout_seconds: float = 480.0,
 ) -> Dict[str, Any]:
     """Scrape state statutes and build a structured dataset.
     
@@ -222,6 +223,7 @@ async def scrape_state_laws(
                         hydrate_statute_text=hydrate_statute_text,
                         retry_attempts=per_state_retry_attempts,
                         retry_zero_statute_states=retry_zero_statute_states,
+                        per_state_timeout_seconds=per_state_timeout_seconds,
                     )
 
                 if parallel_workers <= 1:
@@ -676,13 +678,15 @@ async def _scrape_state_with_retries(
     hydrate_statute_text: bool,
     retry_attempts: int,
     retry_zero_statute_states: bool,
+    per_state_timeout_seconds: float,
 ) -> Dict[str, Any]:
     attempts = 1 + max(0, int(retry_attempts or 0))
     best: Optional[Dict[str, Any]] = None
 
     for attempt_idx in range(attempts):
         try:
-            result = await asyncio.to_thread(
+            timeout_seconds = float(per_state_timeout_seconds or 0.0)
+            scrape_task = asyncio.to_thread(
                 _scrape_state_once_sync,
                 state_code=state_code,
                 legal_areas=legal_areas,
@@ -692,6 +696,36 @@ async def _scrape_state_with_retries(
                 min_full_text_chars=min_full_text_chars,
                 hydrate_statute_text=hydrate_statute_text,
             )
+            if timeout_seconds > 0:
+                result = await asyncio.wait_for(scrape_task, timeout=timeout_seconds)
+            else:
+                result = await scrape_task
+        except asyncio.TimeoutError:
+            state_name = US_STATES[state_code]
+            error_msg = (
+                f"Failed to scrape {state_name} using state-specific scraper: "
+                f"timed out after {per_state_timeout_seconds} seconds"
+            )
+            logger.error(error_msg)
+            result = {
+                "state_code": state_code,
+                "state_name": state_name,
+                "error": error_msg,
+                "statutes_count": 0,
+                "zero_statute": True,
+                "low_quality": False,
+                "quality_metrics": {"total": 0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0, "scaffold_ratio": 0.0},
+                "warnings": [f"{state_code} timed out while scraping"],
+                "statute_data": {
+                    "state_code": state_code,
+                    "state_name": state_name,
+                    "title": f"{state_name} Laws",
+                    "source": "Official State Legislative Website",
+                    "error": error_msg,
+                    "scraped_at": datetime.now().isoformat(),
+                    "statutes": [],
+                },
+            }
         except Exception as e:
             state_name = US_STATES[state_code]
             error_msg = f"Failed to scrape {state_name} using state-specific scraper: {str(e)}"
@@ -869,7 +903,11 @@ def _compute_etl_readiness_summary(scraped_statutes: List[Dict[str, Any]]) -> Di
     total_statutes = 0
     statutes_with_text = 0
     statutes_with_jsonld = 0
+    statutes_with_jsonld_legislation = 0
+    statutes_with_kg_payload = 0
     statutes_with_citations = 0
+    statutes_with_statute_signals = 0
+    non_scaffold_statutes = 0
     states_with_zero = 0
     states_with_jsonld = 0
 
@@ -888,8 +926,20 @@ def _compute_etl_readiness_summary(scraped_statutes: List[Dict[str, Any]]) -> Di
             total_statutes += 1
 
             full_text = str(statute.get("full_text") or statute.get("text") or "").strip()
+            section_name = str(statute.get("section_name") or statute.get("sectionName") or "")
+            section_number = str(statute.get("section_number") or statute.get("sectionNumber") or "")
             if len(full_text) >= 120:
                 statutes_with_text += 1
+
+            if not _is_scaffold_or_navigation_record(statute):
+                non_scaffold_statutes += 1
+
+            if (
+                _QUALITY_SECTION_SIGNAL_RE.search(full_text)
+                or _QUALITY_SECTION_SIGNAL_RE.search(section_name)
+                or _QUALITY_SECTION_NUMBER_RE.match(section_number)
+            ):
+                statutes_with_statute_signals += 1
 
             structured_data = statute.get("structured_data") or {}
             if isinstance(structured_data, dict):
@@ -897,6 +947,25 @@ def _compute_etl_readiness_summary(scraped_statutes: List[Dict[str, Any]]) -> Di
                 if isinstance(jsonld, dict):
                     statutes_with_jsonld += 1
                     state_jsonld_hits += 1
+
+                    if str(jsonld.get("@type") or "").strip().lower() == "legislation":
+                        statutes_with_jsonld_legislation += 1
+
+                    # Require core fields used by downstream KG ETL transforms.
+                    has_identity = bool(
+                        str(jsonld.get("identifier") or "").strip()
+                        or str(jsonld.get("@id") or "").strip()
+                        or str(jsonld.get("sourceUrl") or "").strip()
+                    )
+                    has_name = bool(
+                        str(jsonld.get("name") or "").strip()
+                        or str(jsonld.get("sectionName") or "").strip()
+                    )
+                    has_locator = bool(str(jsonld.get("sectionNumber") or "").strip())
+                    has_text = bool(str(jsonld.get("text") or "").strip())
+
+                    if has_identity and has_name and has_locator and has_text:
+                        statutes_with_kg_payload += 1
 
                 citations = structured_data.get("citations") or {}
                 if isinstance(citations, dict):
@@ -912,7 +981,15 @@ def _compute_etl_readiness_summary(scraped_statutes: List[Dict[str, Any]]) -> Di
 
     full_text_ratio = round((statutes_with_text / total_statutes), 3) if total_statutes > 0 else 0.0
     jsonld_ratio = round((statutes_with_jsonld / total_statutes), 3) if total_statutes > 0 else 0.0
+    jsonld_legislation_ratio = (
+        round((statutes_with_jsonld_legislation / total_statutes), 3) if total_statutes > 0 else 0.0
+    )
+    kg_payload_ratio = round((statutes_with_kg_payload / total_statutes), 3) if total_statutes > 0 else 0.0
     citation_ratio = round((statutes_with_citations / total_statutes), 3) if total_statutes > 0 else 0.0
+    statute_signal_ratio = (
+        round((statutes_with_statute_signals / total_statutes), 3) if total_statutes > 0 else 0.0
+    )
+    non_scaffold_ratio = round((non_scaffold_statutes / total_statutes), 3) if total_statutes > 0 else 0.0
 
     return {
         "states_processed": state_count,
@@ -921,11 +998,19 @@ def _compute_etl_readiness_summary(scraped_statutes: List[Dict[str, Any]]) -> Di
         "total_statutes": total_statutes,
         "full_text_ratio": full_text_ratio,
         "jsonld_ratio": jsonld_ratio,
+        "jsonld_legislation_ratio": jsonld_legislation_ratio,
+        "kg_payload_ratio": kg_payload_ratio,
         "citation_ratio": citation_ratio,
+        "statute_signal_ratio": statute_signal_ratio,
+        "non_scaffold_ratio": non_scaffold_ratio,
         "ready_for_kg_etl": bool(
             total_statutes > 0
             and full_text_ratio >= 0.85
             and jsonld_ratio >= 0.75
+            and jsonld_legislation_ratio >= 0.70
+            and kg_payload_ratio >= 0.70
+            and statute_signal_ratio >= 0.70
+            and non_scaffold_ratio >= 0.85
         ),
     }
 

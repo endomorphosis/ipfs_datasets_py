@@ -5,24 +5,31 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from municipal_scrape_workspace.hybrid_legal_ir import (
-    ActionFrame,
-    Atom,
-    CanonicalId,
-    Condition,
-    DeonticOp,
-    Entity,
-    EventFrame,
-    FrameKind,
-    LegalIR,
-    Norm,
-    Query,
-    Rule,
-    StateFrame,
-    TemporalConstraint,
-    TemporalExpr,
-    TemporalRelation,
-)
+try:
+    from .hybrid_legal_ir import (
+        ActionFrame,
+        Atom,
+        CanonicalId,
+        Condition,
+        DeonticOp,
+        Entity,
+        EventFrame,
+        FrameKind,
+        LegalIR,
+        Norm,
+        Query,
+        Rule,
+        StateFrame,
+        TemporalConstraint,
+        TemporalExpr,
+        TemporalRelation,
+    )
+except ImportError:
+    from municipal_scrape_workspace.hybrid_legal_ir import (  # type: ignore[no-redef]
+        ActionFrame, Atom, CanonicalId, Condition, DeonticOp, Entity,
+        EventFrame, FrameKind, LegalIR, Norm, Query, Rule, StateFrame,
+        TemporalConstraint, TemporalExpr, TemporalRelation,
+    )
 
 from .models import (
     IRReference,

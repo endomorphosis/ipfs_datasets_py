@@ -21,6 +21,23 @@ import anyio
 logger = logging.getLogger(__name__)
 
 
+DEFAULT_CAP_HF_DATASET_ID = "justicedao/ipfs_caselaw_access_project"
+DEFAULT_CAP_HF_PARQUET_FILE = "embeddings/ipfs_TeraflopAI___Caselaw_Access_Project.parquet"
+DEFAULT_CAP_CHUNK_HF_PARQUET_FILE = "embeddings/sparse_chunks.parquet"
+
+DEFAULT_USCODE_HF_DATASET_ID = "justicedao/ipfs_uscode"
+DEFAULT_USCODE_HF_PARQUET_PREFIX = "uscode_parquet"
+DEFAULT_STATE_LAWS_HF_DATASET_ID = "justicedao/ipfs_state_laws"
+
+
+def _normalize_state_code(value: Any, *, default: str = "OR") -> str:
+    """Normalize state input to a two-letter uppercase code."""
+    state = str(value or default).strip().upper()
+    if len(state) != 2 or not state.isalpha():
+        raise ValueError("state must be a two-letter code (e.g., OR, CA, NY)")
+    return state
+
+
 def _get_repo_root() -> Path:
     """Resolve repository root from this module path."""
     return Path(__file__).resolve().parents[3]
@@ -118,11 +135,22 @@ module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = module
 spec.loader.exec_module(module)
 create_caselaw_access_vector_search = module.create_caselaw_access_vector_search
+CAPVectorSearchConfig = module.CAPVectorSearchConfig
 
 
 async def _main() -> None:
     payload = json.loads(os.environ.get("CAP_VECTOR_PAYLOAD", "{}"))
-    cap = create_caselaw_access_vector_search()
+    dataset_id = payload.get("hf_dataset_id")
+    cache_dir = payload.get("hf_cache_dir")
+    if dataset_id or cache_dir:
+        cap = create_caselaw_access_vector_search(
+            CAPVectorSearchConfig(
+                dataset_id=dataset_id or CAPVectorSearchConfig().dataset_id,
+                cache_dir=cache_dir,
+            )
+        )
+    else:
+        cap = create_caselaw_access_vector_search()
     op = payload.get("operation")
 
     if op == "ingest":
@@ -170,8 +198,62 @@ async def _main() -> None:
         return
 
     if op == "search_cases":
-        from huggingface_hub import hf_hub_url
+        from huggingface_hub import hf_hub_url, list_repo_files
         import duckdb
+
+        def _resolve_hf_parquet_files(
+            *,
+            dataset_id: str,
+            explicit_file: str | None = None,
+            explicit_files: list[str] | None = None,
+            parquet_prefix: str | None = None,
+            preferred_names: list[str] | None = None,
+            max_files: int = 0,
+            exclude_name_tokens: list[str] | None = None,
+        ) -> list[str]:
+            if explicit_file:
+                return [explicit_file]
+
+            explicit_files = [str(f).strip() for f in (explicit_files or []) if str(f).strip()]
+            if explicit_files:
+                return explicit_files[:max_files] if max_files > 0 else explicit_files
+
+            repo_files = list_repo_files(repo_id=dataset_id, repo_type="dataset")
+            parquet_files = [f for f in repo_files if f.endswith(".parquet")]
+
+            if parquet_prefix:
+                normalized = parquet_prefix.strip("/")
+                parquet_files = [
+                    f
+                    for f in parquet_files
+                    if f == normalized or f.startswith(f"{normalized}/")
+                ]
+
+            if exclude_name_tokens:
+                lowered_tokens = [str(tok).lower() for tok in exclude_name_tokens if str(tok).strip()]
+                parquet_files = [
+                    f
+                    for f in parquet_files
+                    if not any(tok in f.lower() for tok in lowered_tokens)
+                ]
+
+            if preferred_names:
+                preferred = {name.lower() for name in preferred_names if name}
+                preferred_matches = []
+                for candidate in sorted(parquet_files):
+                    lowered = candidate.lower()
+                    if any(pref in lowered for pref in preferred):
+                        preferred_matches.append(candidate)
+                if preferred_matches:
+                    return preferred_matches[:max_files] if max_files > 0 else preferred_matches
+
+            if parquet_files:
+                return [sorted(parquet_files)[0]]
+
+            raise ValueError(
+                f"No parquet file found in dataset '{dataset_id}'"
+                + (f" under prefix '{parquet_prefix}'" if parquet_prefix else "")
+            )
 
         results = await cap.search_by_vector(
             collection_name=payload["collection_name"],
@@ -203,11 +285,15 @@ async def _main() -> None:
         chunk_rows_by_source_cid = {}
         if cid_order:
             dataset_id = payload.get("hf_dataset_id", "justicedao/ipfs_caselaw_access_project")
-            parquet_file = payload.get(
-                "hf_parquet_file",
-                "embeddings/ipfs_TeraflopAI___Caselaw_Access_Project.parquet",
+            parquet_files = _resolve_hf_parquet_files(
+                dataset_id=dataset_id,
+                explicit_file=payload.get("hf_parquet_file"),
+                explicit_files=payload.get("hf_parquet_files"),
+                parquet_prefix=payload.get("hf_parquet_prefix"),
+                preferred_names=payload.get("preferred_case_parquet_names"),
+                max_files=int(payload.get("max_case_parquet_files", 0)),
+                exclude_name_tokens=["embedding", "_cid_index", "_vector_index"],
             )
-            hf_url = hf_hub_url(repo_id=dataset_id, repo_type="dataset", filename=parquet_file)
             local_parquet = payload.get("local_case_parquet_file")
             con = duckdb.connect()
 
@@ -229,79 +315,118 @@ async def _main() -> None:
                 if last_exc is not None:
                     raise last_exc
 
-            sources = [("hf", hf_url)]
-            if local_parquet and os.path.exists(local_parquet):
-                sources.append(("local", local_parquet))
-
             last_exc = None
-            for source_name, source_ref in sources:
-                try:
-                    schema_rows = _execute_with_retries(
-                        f"DESCRIBE SELECT * FROM read_parquet('{source_ref}')"
-                    ).fetchall()
-                    schema_cols = {row[0] for row in schema_rows}
+            case_sources: list[str] = []
+            for parquet_file in parquet_files:
+                hf_url = hf_hub_url(repo_id=dataset_id, repo_type="dataset", filename=parquet_file)
+                sources = [("hf", hf_url, parquet_file)]
+                if local_parquet and os.path.exists(local_parquet):
+                    sources.append(("local", local_parquet, local_parquet))
 
-                    selected_text_field = None
-                    for candidate in text_candidates:
-                        if candidate in schema_cols:
-                            selected_text_field = candidate
+                for source_name, source_ref, source_label in sources:
+                    try:
+                        schema_rows = _execute_with_retries(
+                            f"DESCRIBE SELECT * FROM read_parquet('{source_ref}')"
+                        ).fetchall()
+                        schema_cols = {row[0] for row in schema_rows}
+
+                        selected_text_field = None
+                        for candidate in text_candidates:
+                            if candidate in schema_cols:
+                                selected_text_field = candidate
+                                break
+
+                        optional_fields = [
+                            "name",
+                            "court",
+                            "decision_date",
+                            "jurisdiction",
+                            "docket_number",
+                            "citations",
+                        ]
+                        present_optionals = [f for f in optional_fields if f in schema_cols]
+
+                        select_parts = [f"{cid_column} AS cid"]
+                        for field in present_optionals:
+                            select_parts.append(field)
+                        if selected_text_field:
+                            select_parts.append(
+                                f"substr({selected_text_field}, 1, {snippet_chars}) AS snippet"
+                            )
+
+                        missing_cids = [cid for cid in cid_order if cid not in case_rows]
+                        if not missing_cids:
+                            if source_name == "hf":
+                                case_sources.append(source_label)
+                            else:
+                                case_sources.append(source_name)
                             break
 
-                    optional_fields = [
-                        "name",
-                        "court",
-                        "decision_date",
-                        "jurisdiction",
-                        "docket_number",
-                        "citations",
-                    ]
-                    present_optionals = [f for f in optional_fields if f in schema_cols]
-
-                    select_parts = [f"{cid_column} AS cid"]
-                    for field in present_optionals:
-                        select_parts.append(field)
-                    if selected_text_field:
-                        select_parts.append(
-                            f"substr({selected_text_field}, 1, {snippet_chars}) AS snippet"
+                        placeholders = ", ".join(["?"] * len(missing_cids))
+                        query = (
+                            f"SELECT {', '.join(select_parts)} "
+                            f"FROM read_parquet('{source_ref}') "
+                            f"WHERE {cid_column} IN ({placeholders})"
                         )
+                        rows = _execute_with_retries(query, missing_cids).fetchall()
+                        col_names = [p.split(" AS ")[-1] for p in select_parts]
+                        for row in rows:
+                            row_obj = dict(zip(col_names, row))
+                            cid_key = str(row_obj.get("cid"))
+                            if cid_key not in case_rows:
+                                case_rows[cid_key] = row_obj
 
-                    placeholders = ", ".join(["?"] * len(cid_order))
-                    query = (
-                        f"SELECT {', '.join(select_parts)} "
-                        f"FROM read_parquet('{source_ref}') "
-                        f"WHERE {cid_column} IN ({placeholders})"
-                    )
-                    rows = _execute_with_retries(query, cid_order).fetchall()
-                    col_names = [p.split(" AS ")[-1] for p in select_parts]
-                    for row in rows:
-                        row_obj = dict(zip(col_names, row))
-                        case_rows[str(row_obj.get("cid"))] = row_obj
-                    case_source = source_name
+                        if source_name == "hf":
+                            case_sources.append(source_label)
+                        else:
+                            case_sources.append(source_name)
+                        break
+                    except Exception as exc:
+                        last_exc = exc
+                        continue
+
+                if len(case_rows) >= len(cid_order):
                     break
-                except Exception as exc:
-                    last_exc = exc
-                    continue
+
+            if case_sources:
+                case_source = sorted(set(case_sources))
 
             if not case_rows and last_exc is not None:
                 raise last_exc
 
             if chunk_lookup_enabled:
                 chunk_dataset_id = payload.get("chunk_hf_dataset_id", dataset_id)
-                chunk_parquet_file = payload.get(
-                    "chunk_hf_parquet_file",
-                    "embeddings/sparse_chunks.parquet",
-                )
-                chunk_hf_url = hf_hub_url(
-                    repo_id=chunk_dataset_id,
-                    repo_type="dataset",
-                    filename=chunk_parquet_file,
-                )
+                chunk_parquet_file = payload.get("chunk_hf_parquet_file")
+                if not chunk_parquet_file:
+                    try:
+                        chunk_parquet_file = _resolve_hf_parquet_files(
+                            dataset_id=chunk_dataset_id,
+                            explicit_file=None,
+                            explicit_files=None,
+                            parquet_prefix=payload.get("chunk_hf_parquet_prefix"),
+                            preferred_names=payload.get("preferred_chunk_parquet_names"),
+                            max_files=1,
+                        )[0]
+                    except Exception:
+                        chunk_parquet_file = None
+
                 local_chunk_parquet = payload.get("local_chunk_parquet_file")
                 chunk_snippet_chars = int(payload.get("chunk_snippet_chars", 1000))
 
-                chunk_sources = [("hf", chunk_hf_url)]
+                chunk_sources = []
                 if local_chunk_parquet and os.path.exists(local_chunk_parquet):
                     chunk_sources.append(("local", local_chunk_parquet))
+                if chunk_parquet_file:
+                    chunk_hf_url = hf_hub_url(
+                        repo_id=chunk_dataset_id,
+                        repo_type="dataset",
+                        filename=chunk_parquet_file,
+                    )
+                    chunk_sources.append(("hf", chunk_hf_url))
+
+                if not chunk_sources:
+                    chunk_lookup_error = "No chunk parquet source available"
+                    chunk_lookup_enabled = False
 
                 last_chunk_exc = None
                 for source_name, source_ref in chunk_sources:
@@ -731,6 +856,34 @@ async def scrape_us_code_from_parameters(
         }
 
 
+async def scrape_federal_laws_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    try:
+        from .federal_scrapers.federal_law_scraper import scrape_federal_laws
+
+        return await scrape_federal_laws(
+            rulesets=parameters.get("rulesets"),
+            include_local_rules=parameters.get("include_local_rules", True),
+            output_format=parameters.get("output_format", "json"),
+            output_dir=parameters.get("output_dir"),
+            rate_limit_delay=parameters.get("rate_limit_delay", 0.4),
+            max_rules_per_ruleset=parameters.get("max_rules_per_ruleset"),
+            custom_sources=parameters.get("custom_sources"),
+        )
+
+    except Exception as e:
+        logger.error("Federal laws scraping failed: %s", e)
+        return {
+            "status": "error",
+            "error": str(e),
+            "data": [],
+            "metadata": {},
+        }
+
+
 async def scrape_municipal_codes_from_parameters(
     parameters: Dict[str, Any],
     *,
@@ -821,6 +974,8 @@ async def ingest_caselaw_access_vectors_from_parameters(
             "collection_name": parameters["collection_name"],
             "store_type": parameters.get("store_type", "faiss"),
             "parquet_file": parameters.get("parquet_file"),
+            "hf_dataset_id": parameters.get("hf_dataset_id"),
+            "hf_cache_dir": parameters.get("hf_cache_dir"),
             "model_hint": parameters.get("model_hint"),
             "max_rows": int(parameters.get("max_rows", 10000)),
             "batch_size": int(parameters.get("batch_size", 512)),
@@ -879,6 +1034,8 @@ async def search_caselaw_access_vectors_from_parameters(
             "operation": "search",
             "collection_name": parameters["collection_name"],
             "store_type": parameters.get("store_type", "faiss"),
+            "hf_dataset_id": parameters.get("hf_dataset_id"),
+            "hf_cache_dir": parameters.get("hf_cache_dir"),
             "query_vector": parameters["query_vector"],
             "top_k": int(parameters.get("top_k", 10)),
             "filter_dict": parameters.get("filter_dict"),
@@ -954,11 +1111,9 @@ async def search_caselaw_access_cases_from_parameters(
             "query_vector": parameters["query_vector"],
             "top_k": int(parameters.get("top_k", 10)),
             "filter_dict": parameters.get("filter_dict"),
-            "hf_dataset_id": parameters.get("hf_dataset_id", "justicedao/ipfs_caselaw_access_project"),
-            "hf_parquet_file": parameters.get(
-                "hf_parquet_file",
-                "embeddings/ipfs_TeraflopAI___Caselaw_Access_Project.parquet",
-            ),
+            "hf_dataset_id": parameters.get("hf_dataset_id", DEFAULT_CAP_HF_DATASET_ID),
+            "hf_parquet_file": parameters.get("hf_parquet_file", DEFAULT_CAP_HF_PARQUET_FILE),
+            "hf_parquet_prefix": parameters.get("hf_parquet_prefix"),
             "cid_metadata_field": parameters.get("cid_metadata_field", "cid"),
             "cid_column": parameters.get("cid_column", "cid"),
             "text_field_candidates": parameters.get("text_field_candidates", ["head_matter", "text"]),
@@ -967,14 +1122,19 @@ async def search_caselaw_access_cases_from_parameters(
             "chunk_lookup_enabled": bool(parameters.get("chunk_lookup_enabled", True)),
             "chunk_hf_dataset_id": parameters.get(
                 "chunk_hf_dataset_id",
-                parameters.get("hf_dataset_id", "justicedao/ipfs_caselaw_access_project"),
+                parameters.get("hf_dataset_id", DEFAULT_CAP_HF_DATASET_ID),
             ),
             "chunk_hf_parquet_file": parameters.get(
                 "chunk_hf_parquet_file",
-                "embeddings/sparse_chunks.parquet",
+                DEFAULT_CAP_CHUNK_HF_PARQUET_FILE,
             ),
+            "chunk_hf_parquet_prefix": parameters.get("chunk_hf_parquet_prefix"),
             "local_chunk_parquet_file": parameters.get("local_chunk_parquet_file"),
             "chunk_snippet_chars": int(parameters.get("chunk_snippet_chars", 1000)),
+            "preferred_case_parquet_names": parameters.get("preferred_case_parquet_names"),
+            "hf_parquet_files": parameters.get("hf_parquet_files"),
+            "max_case_parquet_files": int(parameters.get("max_case_parquet_files", 0)),
+            "preferred_chunk_parquet_names": parameters.get("preferred_chunk_parquet_names"),
         }
         result = await anyio.to_thread.run_sync(
             lambda: _run_cap_vector_operation_in_venv(
@@ -993,6 +1153,109 @@ async def search_caselaw_access_cases_from_parameters(
             "operation": "search_cases",
             "tool_version": tool_version,
         }
+
+
+async def search_us_code_corpus_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    """Search US Code corpus vectors and enrich matches with section metadata/snippets."""
+    uscode_params = dict(parameters)
+
+    uscode_params.setdefault("hf_dataset_id", DEFAULT_USCODE_HF_DATASET_ID)
+    uscode_params.setdefault("hf_parquet_prefix", DEFAULT_USCODE_HF_PARQUET_PREFIX)
+    uscode_params.setdefault("hf_parquet_file", None)
+    uscode_params.setdefault("cid_metadata_field", "cid")
+    uscode_params.setdefault("cid_column", "cid")
+    uscode_params.setdefault(
+        "text_field_candidates",
+        ["text", "section_text", "content", "heading", "title"],
+    )
+    uscode_params.setdefault("chunk_lookup_enabled", False)
+    uscode_params.setdefault("chunk_hf_parquet_file", None)
+    uscode_params.setdefault("chunk_hf_parquet_prefix", None)
+    uscode_params.setdefault("preferred_case_parquet_names", ["uscode", "sections", "title"])
+
+    return await search_caselaw_access_cases_from_parameters(
+        uscode_params,
+        tool_version=tool_version,
+    )
+
+
+async def search_state_law_corpus_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    """Search a state-law corpus vectors with optional statute metadata enrichment.
+
+    Defaults are oriented to the state-law HF dataset layout:
+    `justicedao/ipfs_state_laws/<STATE>/parsed/parquet`.
+
+    For Oregon (`OR`) with metadata enrichment enabled, defaults include both
+    Oregon Revised Statutes and Oregon Administrative Rules parquet matches.
+    """
+    state_params = dict(parameters)
+    try:
+        state_code = _normalize_state_code(state_params.get("state", "OR"))
+    except ValueError as exc:
+        return {
+            "status": "error",
+            "error": str(exc),
+            "operation": "search_cases",
+            "tool_version": tool_version,
+        }
+
+    state_params.setdefault("hf_dataset_id", DEFAULT_STATE_LAWS_HF_DATASET_ID)
+    state_params.setdefault("hf_parquet_prefix", f"{state_code}/parsed/parquet")
+    state_params.setdefault("hf_parquet_file", None)
+    state_params.setdefault("cid_metadata_field", "cid")
+    state_params.setdefault("cid_column", "cid")
+    state_params.setdefault(
+        "text_field_candidates",
+        ["text", "content", "section_text", "body", "title", "heading"],
+    )
+    state_params.setdefault("chunk_lookup_enabled", False)
+    state_params.setdefault("chunk_hf_parquet_file", None)
+    state_params.setdefault("chunk_hf_parquet_prefix", None)
+    enrich_with_cases = bool(state_params.get("enrich_with_cases", False))
+
+    if enrich_with_cases:
+        if state_code == "OR":
+            state_params.setdefault(
+                "preferred_case_parquet_names",
+                [
+                    "oregon_revised_statutes",
+                    "oregon_administrative_rules",
+                    "ors",
+                    "oar",
+                    "by_cid",
+                    "laws_by_cid",
+                    "parsed",
+                    "law",
+                    state_code.lower(),
+                ],
+            )
+            state_params.setdefault("max_case_parquet_files", 8)
+        else:
+            state_params.setdefault(
+                "preferred_case_parquet_names",
+                ["by_cid", "laws_by_cid", "parsed", "law", state_code.lower()],
+            )
+        result = await search_caselaw_access_cases_from_parameters(
+            state_params,
+            tool_version=tool_version,
+        )
+    else:
+        result = await search_caselaw_access_vectors_from_parameters(
+            state_params,
+            tool_version=tool_version,
+        )
+
+    if isinstance(result, dict):
+        result.setdefault("state", state_code)
+    return result
 
 
 async def list_caselaw_access_vector_files_from_parameters(
@@ -1019,6 +1282,8 @@ async def list_caselaw_access_vector_files_from_parameters(
 
         operation_payload = {
             "operation": "list_files",
+            "hf_dataset_id": parameters.get("hf_dataset_id"),
+            "hf_cache_dir": parameters.get("hf_cache_dir"),
             "model_hint": parameters.get("model_hint"),
         }
         result = await anyio.to_thread.run_sync(
@@ -1087,6 +1352,8 @@ async def search_caselaw_access_vectors_with_centroids_from_parameters(
             "operation": "centroid_search",
             "target_collection_name": parameters["target_collection_name"],
             "centroid_collection_name": parameters["centroid_collection_name"],
+            "hf_dataset_id": parameters.get("hf_dataset_id"),
+            "hf_cache_dir": parameters.get("hf_cache_dir"),
             "query_vector": parameters["query_vector"],
             "store_type": parameters.get("store_type", "faiss"),
             "centroid_top_k": int(parameters.get("centroid_top_k", 5)),
@@ -1158,6 +1425,8 @@ async def ingest_caselaw_access_vector_bundle_from_parameters(
             "operation": "ingest_bundle",
             "target_collection_name": parameters["target_collection_name"],
             "centroid_collection_name": parameters["centroid_collection_name"],
+            "hf_dataset_id": parameters.get("hf_dataset_id"),
+            "hf_cache_dir": parameters.get("hf_cache_dir"),
             "store_type": parameters.get("store_type", "faiss"),
             "target_parquet_file": parameters.get("target_parquet_file"),
             "target_model_hint": parameters.get("target_model_hint"),

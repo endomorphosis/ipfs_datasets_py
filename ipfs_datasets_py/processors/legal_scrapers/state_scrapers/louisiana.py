@@ -4,11 +4,11 @@ This module contains the scraper for Louisiana statutes from the official state 
 """
 
 import re
-import time
+import json
+import urllib.request
+import urllib.parse
 from html import unescape
 from typing import List, Dict
-
-import requests
 
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
@@ -44,7 +44,7 @@ class LouisianaScraper(BaseStateScraper):
         Louisiana live endpoints can be brittle in automation contexts.
         Prefer archived Law.aspx pages with direct statute body HTML.
         """
-        archival = self._scrape_archived_law_pages(code_name=code_name, max_statutes=20)
+        archival = await self._scrape_archived_law_pages(code_name=code_name, max_statutes=120)
         if archival:
             self.logger.info(f"Louisiana archival fallback: Scraped {len(archival)} sections")
             return archival
@@ -57,16 +57,22 @@ class LouisianaScraper(BaseStateScraper):
             timeout=45000,
         )
 
-    def _scrape_archived_law_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_archived_law_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}
         statutes: List[NormalizedStatute] = []
         seen_sections = set()
 
-        for law_url in self._ARCHIVE_LAW_URLS:
+        candidate_urls = list(self._ARCHIVE_LAW_URLS)
+        discovered = await self._discover_archived_law_urls(limit=160)
+        for url in discovered:
+            if url not in candidate_urls:
+                candidate_urls.append(url)
+
+        for law_url in candidate_urls:
             if len(statutes) >= max_statutes:
                 break
 
-            law_html = self._request_text(law_url=law_url, headers=headers, timeout=45)
+            law_html = await self._request_text(law_url=law_url, headers=headers, timeout=45)
             if not law_html:
                 continue
 
@@ -98,6 +104,37 @@ class LouisianaScraper(BaseStateScraper):
             seen_sections.add(section_number)
 
         return statutes
+
+    async def _discover_archived_law_urls(self, limit: int = 120) -> List[str]:
+        """Discover additional archived Law.aspx pages via Wayback CDX."""
+        cdx_url = (
+            "http://web.archive.org/cdx/search/cdx?url=legis.la.gov/Legis/Law.aspx?d=*"
+            "&output=json&filter=statuscode:200&collapse=digest"
+            f"&limit={max(1, int(limit))}"
+        )
+
+        try:
+            req = urllib.request.Request(cdx_url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=45) as resp:
+                payload = resp.read().decode("utf-8", errors="ignore")
+            rows = json.loads(payload)
+            if not isinstance(rows, list) or len(rows) < 2:
+                return []
+
+            discovered: List[str] = []
+            for row in rows[1:]:
+                if not isinstance(row, list) or len(row) < 3:
+                    continue
+                ts = str(row[1]).strip()
+                original = str(row[2]).strip()
+                if not ts or not original:
+                    continue
+                encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
+                discovered.append(f"http://web.archive.org/web/{ts}/{encoded}")
+            return discovered
+        except Exception as exc:
+            self.logger.debug(f"Louisiana CDX discovery failed: {exc}")
+            return []
 
     def _extract_law_body_html(self, html: str) -> str:
         marker = re.search(
@@ -135,7 +172,7 @@ class LouisianaScraper(BaseStateScraper):
         text = re.sub(r"\n{3,}", "\n\n", text)
         return text.strip()[:max_chars]
 
-    def _request_text(self, law_url: str, headers: Dict[str, str], timeout: int) -> str:
+    async def _request_text(self, law_url: str, headers: Dict[str, str], timeout: int) -> str:
         candidates = [str(law_url or "")]
         if candidates[0].startswith("https://"):
             candidates.append("http://" + candidates[0][8:])
@@ -143,14 +180,16 @@ class LouisianaScraper(BaseStateScraper):
             candidates.append("https://" + candidates[0][7:])
 
         for candidate in candidates:
-            for _ in range(3):
-                try:
-                    response = requests.get(candidate, headers=headers, timeout=timeout)
-                    response.raise_for_status()
-                    return response.text
-                except Exception:
-                    time.sleep(0.6)
+            try:
+                payload = await self._fetch_page_content_with_archival_fallback(
+                    candidate,
+                    timeout_seconds=timeout,
+                )
+                if not payload:
                     continue
+                return payload.decode("utf-8", errors="replace")
+            except Exception:
+                continue
         return ""
 
 
