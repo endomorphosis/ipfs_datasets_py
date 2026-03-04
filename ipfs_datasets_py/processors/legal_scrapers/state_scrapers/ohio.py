@@ -19,7 +19,7 @@ class OhioScraper(BaseStateScraper):
         """Return list of available codes/statutes for Ohio."""
         return [{
             "name": "Ohio Revised Code",
-            "url": f"{self.get_base_url()}/",
+            "url": f"{self.get_base_url()}/ohio-revised-code",
             "type": "Code"
         }]
     

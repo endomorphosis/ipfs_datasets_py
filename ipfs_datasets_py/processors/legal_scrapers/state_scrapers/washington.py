@@ -12,7 +12,7 @@ from .registry import StateScraperRegistry
 class WashingtonScraper(BaseStateScraper):
     """Scraper for Washington state laws from https://app.leg.wa.gov"""
 
-    _SECTION_CITE_RE = re.compile(r"^\d+[A-Za-z]?\.\d+\.\d+[A-Za-z]?$")
+    _SECTION_CITE_RE = re.compile(r"^\d+[A-Za-z]?\.\d+(?:\.\d+)?[A-Za-z]?$")
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []

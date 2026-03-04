@@ -26,6 +26,8 @@ class SouthDakotaScraper(BaseStateScraper):
         "1-1-6",
         "1-1-7",
     ]
+
+    _TITLE_START_SECTIONS = [f"{title}-1-1" for title in range(1, 75)]
     
     def get_base_url(self) -> str:
         """Return the base URL for South Dakota's legislative website."""
@@ -61,7 +63,7 @@ class SouthDakotaScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         seen = set()
 
-        for section in self._SEED_SECTIONS:
+        for section in (self._SEED_SECTIONS + self._TITLE_START_SECTIONS):
             if len(statutes) >= max_statutes:
                 break
             if section in seen:

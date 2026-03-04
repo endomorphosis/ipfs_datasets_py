@@ -66,3 +66,47 @@ def test_oregon_code_list_includes_procedural_and_local_rules() -> None:
     assert "Oregon Rules of Civil Procedure" in names
     assert "Oregon Rules of Criminal Procedure" in names
     assert "Oregon Local Court Rules" in names
+
+
+def test_extract_orcp_rules_from_html_parses_rule_headings() -> None:
+        scraper = OregonScraper("OR", "Oregon")
+        html = """
+        <html><body>
+            <div>Rule 01 - Scope; Construction; Application; Rule; Citation</div>
+            <div>Rule 12 - Pleadings; Motions; Defenses</div>
+            <div>Rule 12 - Pleadings; Motions; Defenses</div>
+        </body></html>
+        """
+
+        rows = scraper._extract_orcp_rules_from_html(
+                html,
+                "https://www.oregonlegislature.gov/bills_laws/Pages/orcp.aspx",
+                "Oregon Rules of Civil Procedure",
+        )
+
+        assert len(rows) == 2
+        assert rows[0].official_cite == "ORCP 01"
+        assert "Scope" in str(rows[0].section_name)
+        assert rows[1].official_cite == "ORCP 12"
+
+
+def test_extract_local_rule_documents_from_html_filters_county_links() -> None:
+        scraper = OregonScraper("OR", "Oregon")
+        html = """
+        <html><body>
+            <a href="/courts/multnomah/go/Documents/SLR_2026.pdf">Supplementary Local Rules 2026</a>
+            <a href="/courts/multnomah/go/Pages/rules.aspx">Rules page</a>
+            <a href="/rules/Pages/default.aspx">Rules Center</a>
+        </body></html>
+        """
+
+        rows = scraper._extract_local_rule_documents_from_html(
+                county_name="Multnomah",
+                county_url="https://www.courts.oregon.gov/courts/multnomah/go/Pages/rules.aspx",
+                html=html,
+                code_name="Oregon Local Court Rules",
+        )
+
+        assert len(rows) == 2
+        assert all("Multnomah County" in str(row.official_cite) for row in rows)
+        assert any("SLR_2026" in str(row.source_url) for row in rows)
