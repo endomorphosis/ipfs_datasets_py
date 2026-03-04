@@ -280,6 +280,9 @@ def _embed_file(
     queue_inflight_limit: int,
     queue_submit_drop_backoff_base_ms: int,
     queue_submit_drop_backoff_max_ms: int,
+    queue_remote_probe_timeout_s: float,
+    queue_remote_min_healthy: int,
+    queue_remote_max_active: int,
     queue_verbose: bool,
     queue_submit_fail_hard: bool,
     max_rows: int,
@@ -339,6 +342,9 @@ def _embed_file(
             queue_inflight_limit=int(queue_inflight_limit),
             queue_submit_drop_backoff_base_ms=int(queue_submit_drop_backoff_base_ms),
             queue_submit_drop_backoff_max_ms=int(queue_submit_drop_backoff_max_ms),
+            queue_remote_probe_timeout_s=float(queue_remote_probe_timeout_s),
+            queue_remote_min_healthy=int(queue_remote_min_healthy),
+            queue_remote_max_active=int(queue_remote_max_active),
             queue_verbose=bool(queue_verbose),
             queue_submit_fail_hard=bool(queue_submit_fail_hard),
         )
@@ -461,18 +467,54 @@ def _discover_taskqueue_targets(
     if mode in {"bootstrap", "auto", "all"}:
         out.extend(_bootstrap_targets_from_env())
 
-    # Deduplicate by (peer_id, multiaddr)
+    # Deduplicate by peer_id and keep the first dialable address observed for
+    # that peer to avoid retry storms against duplicate stale addresses.
     deduped: list[Any] = []
-    seen: set[tuple[str, str]] = set()
+    seen_peers: set[str] = set()
     for remote in out:
         peer = str(getattr(remote, "peer_id", "") or "").strip()
         addr = str(getattr(remote, "multiaddr", "") or "").strip()
-        key = (peer, addr)
-        if not peer or not addr or key in seen:
+        if not peer or not addr or peer in seen_peers:
             continue
-        seen.add(key)
+        seen_peers.add(peer)
         deduped.append(remote)
     return deduped
+
+
+def _probe_taskqueue_remotes(
+    *,
+    remotes: list[Any],
+    timeout_s: float,
+    verbose: bool,
+) -> tuple[list[Any], list[tuple[int, Any, bool]]]:
+    """Probe remotes and return healthy-first ordering with probe metadata."""
+    _ensure_ipfs_accelerate_path()
+    from ipfs_accelerate_py.p2p_tasks.client import request_status_sync  # type: ignore
+
+    if not remotes:
+        return [], []
+
+    results: list[tuple[int, Any, bool]] = []
+    for idx, remote in enumerate(remotes):
+        ok = False
+        try:
+            status = request_status_sync(remote=remote, timeout_s=max(0.1, float(timeout_s)), detail=False)
+            ok = bool(isinstance(status, dict) and status.get("ok"))
+        except Exception:
+            ok = False
+        results.append((int(idx), remote, bool(ok)))
+
+    healthy = [entry[1] for entry in results if bool(entry[2])]
+    unhealthy = [entry[1] for entry in results if not bool(entry[2])]
+    ordered = healthy + unhealthy
+
+    if bool(verbose):
+        print(
+            "[queue:probe] "
+            f"healthy={len(healthy)}/{len(remotes)} timeout_s={max(0.1, float(timeout_s)):.2f}"
+        )
+
+    return ordered, results
 
 
 def _parse_target_specs(target_specs: list[str]) -> list[Any]:
@@ -807,6 +849,9 @@ def _effective_p2p_knobs(args: argparse.Namespace) -> dict[str, Any]:
             int(args.queue_submit_drop_backoff_base_ms),
             int(args.queue_submit_drop_backoff_max_ms),
         ),
+        "remote_probe_timeout_s": max(0.1, float(args.queue_remote_probe_timeout_s)),
+        "remote_min_healthy": max(0, int(args.queue_remote_min_healthy)),
+        "remote_max_active": max(0, int(args.queue_remote_max_active)),
     }
 
 
@@ -884,6 +929,9 @@ def _embed_file_via_taskqueue(
     queue_inflight_limit: int,
     queue_submit_drop_backoff_base_ms: int,
     queue_submit_drop_backoff_max_ms: int,
+    queue_remote_probe_timeout_s: float,
+    queue_remote_min_healthy: int,
+    queue_remote_max_active: int,
     queue_verbose: bool,
     queue_submit_fail_hard: bool,
 ) -> tuple[int, int]:
@@ -942,6 +990,26 @@ def _embed_file_via_taskqueue(
     remotes: list[Any] = []
     remotes.extend(explicit_targets)
     remotes.extend(discovered_targets)
+
+    if remotes:
+        remotes, probe_results = _probe_taskqueue_remotes(
+            remotes=remotes,
+            timeout_s=float(queue_remote_probe_timeout_s),
+            verbose=bool(queue_verbose),
+        )
+        healthy_count = sum(1 for _, _, ok in probe_results if bool(ok))
+        required_healthy = max(0, int(queue_remote_min_healthy))
+        if required_healthy > 0 and healthy_count < required_healthy:
+            raise RuntimeError(
+                "Insufficient healthy remote TaskQueue peers: "
+                f"healthy={healthy_count} required={required_healthy}"
+            )
+
+        max_active = max(0, int(queue_remote_max_active))
+        if max_active > 0 and len(remotes) > max_active:
+            remotes = remotes[:max_active]
+            if bool(queue_verbose):
+                print(f"[queue:probe] limiting active remotes to {len(remotes)}")
 
     if backend_choice == "remote" and not remotes:
         raise RuntimeError("No remote TaskQueue peers resolved for --taskqueue-backend remote")
@@ -1504,6 +1572,24 @@ def _parse_args() -> argparse.Namespace:
         help="Maximum global backoff (ms) applied after consecutive dropped submits",
     )
     parser.add_argument(
+        "--queue-remote-probe-timeout-s",
+        type=float,
+        default=1.5,
+        help="Per-remote status probe timeout (seconds) used to prioritize healthy remotes",
+    )
+    parser.add_argument(
+        "--queue-remote-min-healthy",
+        type=int,
+        default=0,
+        help="Require at least this many healthy remotes before starting (0 disables requirement)",
+    )
+    parser.add_argument(
+        "--queue-remote-max-active",
+        type=int,
+        default=8,
+        help="Maximum active remotes after probing (0 keeps all)",
+    )
+    parser.add_argument(
         "--queue-submit-fail-hard",
         action="store_true",
         help="Abort immediately when a remote submit exhausts retries (default: fail soft and continue)",
@@ -1606,6 +1692,9 @@ def main() -> int:
             queue_inflight_limit=int(args.queue_inflight_limit),
             queue_submit_drop_backoff_base_ms=int(args.queue_submit_drop_backoff_base_ms),
             queue_submit_drop_backoff_max_ms=int(args.queue_submit_drop_backoff_max_ms),
+            queue_remote_probe_timeout_s=float(args.queue_remote_probe_timeout_s),
+            queue_remote_min_healthy=int(args.queue_remote_min_healthy),
+            queue_remote_max_active=int(args.queue_remote_max_active),
             queue_verbose=bool(args.queue_verbose),
             queue_submit_fail_hard=bool(args.queue_submit_fail_hard),
             max_rows=int(args.max_rows),
