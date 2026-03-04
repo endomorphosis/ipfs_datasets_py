@@ -12,7 +12,10 @@ from .registry import StateScraperRegistry
 class NewHampshireScraper(BaseStateScraper):
     """Scraper for New Hampshire state laws from http://www.gencourt.state.nh.us"""
 
-    _NH_STATUTE_URL_RE = re.compile(r"/rsa/html/(?:[^/?#]+/)+[^/?#]+\.htm$", re.IGNORECASE)
+    _NH_STATUTE_URL_RE = re.compile(
+        r"/rsa/html/(?:NHTOC/[^/?#]+\.htm|(?:[^/?#]+/)+[^/?#]+\.htm)$",
+        re.IGNORECASE,
+    )
     
     def get_base_url(self) -> str:
         """Return the base URL for New Hampshire's legislative website."""

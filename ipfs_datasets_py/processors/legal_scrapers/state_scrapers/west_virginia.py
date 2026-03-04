@@ -12,7 +12,7 @@ from .registry import StateScraperRegistry
 class WestVirginiaScraper(BaseStateScraper):
     """Scraper for West Virginia state laws from http://www.wvlegislature.gov"""
 
-    _WV_SECTION_URL_RE = re.compile(r"/\d+[A-Za-z]?(?:-\d+[A-Za-z]?){2,}/?$")
+    _WV_SECTION_URL_RE = re.compile(r"/\d+[A-Za-z]?(?:-\d+[A-Za-z]?){1,2}/?$")
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -46,6 +46,8 @@ class WestVirginiaScraper(BaseStateScraper):
         """
         candidate_urls = [
             code_url,
+            f"{self.get_base_url()}/1/",
+            f"{self.get_base_url()}/11/",
             f"{self.get_base_url()}/11-8-12/",
             f"{self.get_base_url()}/1-1/",
             f"{self.get_base_url()}/",

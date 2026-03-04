@@ -12,7 +12,10 @@ from .registry import StateScraperRegistry
 class DistrictOfColumbiaScraper(BaseStateScraper):
     """Scraper for District of Columbia state laws from https://code.dccouncil.us"""
 
-    _DC_SECTION_URL_RE = re.compile(r"/us/dc/council/code/sections/[0-9A-Za-z\-]+$", re.IGNORECASE)
+    _DC_SECTION_URL_RE = re.compile(
+        r"/us/dc/council/code/(?:sections/[0-9A-Za-z\-]+|titles/\d+/chapters/\d+(?:/subchapters/[IVXLC]+)?)$",
+        re.IGNORECASE,
+    )
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
