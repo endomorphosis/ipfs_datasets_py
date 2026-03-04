@@ -486,6 +486,7 @@ def _probe_taskqueue_remotes(
     remotes: list[Any],
     timeout_s: float,
     verbose: bool,
+    status_retries: int = 0,
 ) -> tuple[list[Any], list[tuple[int, Any, bool]]]:
     """Probe remotes and return healthy-first ordering with probe metadata."""
     _ensure_ipfs_accelerate_path()
@@ -495,14 +496,30 @@ def _probe_taskqueue_remotes(
         return [], []
 
     results: list[tuple[int, Any, bool]] = []
-    for idx, remote in enumerate(remotes):
-        ok = False
-        try:
-            status = request_status_sync(remote=remote, timeout_s=max(0.1, float(timeout_s)), detail=False)
-            ok = bool(isinstance(status, dict) and status.get("ok"))
-        except Exception:
+    primary_retry_env = "IPFS_ACCELERATE_PY_TASK_P2P_STATUS_RETRIES"
+    compat_retry_env = "IPFS_DATASETS_PY_TASK_P2P_STATUS_RETRIES"
+    prev_primary = os.environ.get(primary_retry_env)
+    prev_compat = os.environ.get(compat_retry_env)
+    try:
+        os.environ[primary_retry_env] = str(max(0, int(status_retries)))
+        os.environ[compat_retry_env] = str(max(0, int(status_retries)))
+        for idx, remote in enumerate(remotes):
             ok = False
-        results.append((int(idx), remote, bool(ok)))
+            try:
+                status = request_status_sync(remote=remote, timeout_s=max(0.1, float(timeout_s)), detail=False)
+                ok = bool(isinstance(status, dict) and status.get("ok"))
+            except Exception:
+                ok = False
+            results.append((int(idx), remote, bool(ok)))
+    finally:
+        if prev_primary is None:
+            os.environ.pop(primary_retry_env, None)
+        else:
+            os.environ[primary_retry_env] = prev_primary
+        if prev_compat is None:
+            os.environ.pop(compat_retry_env, None)
+        else:
+            os.environ[compat_retry_env] = prev_compat
 
     healthy = [entry[1] for entry in results if bool(entry[2])]
     unhealthy = [entry[1] for entry in results if not bool(entry[2])]
@@ -1009,6 +1026,7 @@ def _embed_file_via_taskqueue(
             remotes=remotes,
             timeout_s=float(queue_remote_probe_timeout_s),
             verbose=bool(queue_verbose),
+            status_retries=0,
         )
         healthy_remotes = [remote for _, remote, ok in probe_results if bool(ok)]
         healthy_count = sum(1 for _, _, ok in probe_results if bool(ok))
@@ -1065,8 +1083,14 @@ def _embed_file_via_taskqueue(
     pending: deque[dict[str, Any]] = deque()
     log_every = max(1, int(queue_submit_log_every))
     inflight_limit = max(1, int(queue_inflight_limit))
+    # Avoid overfilling a single remote with very large in-flight windows.
+    # This keeps burst pressure proportional to healthy peer count.
+    if use_remote and remotes:
+        per_remote_cap = 64
+        adaptive_cap = max(16, len(remotes) * per_remote_cap)
+        inflight_limit = min(inflight_limit, adaptive_cap)
     remote_start_offset = 0
-    last_success_remote_index = -1
+    next_preferred_remote_index = 0
     remote_penalties: list[int] = []
     remote_failure_streaks: list[int] = []
     remote_unavailable_until: list[float] = []
@@ -1074,6 +1098,7 @@ def _embed_file_via_taskqueue(
         # Desynchronize first-choice remote across multiprocess runs to reduce
         # connection bursts against the same endpoint.
         remote_start_offset = (abs(hash(parquet_path.name)) + os.getpid()) % len(remotes)
+        next_preferred_remote_index = int(remote_start_offset)
         remote_penalties = [0 for _ in remotes]
         remote_failure_streaks = [0 for _ in remotes]
         remote_unavailable_until = [0.0 for _ in remotes]
@@ -1135,11 +1160,13 @@ def _embed_file_via_taskqueue(
                 remote_unavailable_until[idx] = time.monotonic() + (float(cooldown_ms) / 1000.0)
 
     def _mark_remote_success(remote_index: int) -> None:
-        nonlocal last_success_remote_index
+        nonlocal next_preferred_remote_index
         if not (0 <= int(remote_index) < len(remote_penalties)):
             return
         idx = int(remote_index)
-        last_success_remote_index = idx
+        # Rotate preferred target after success to distribute load across
+        # healthy peers instead of sticking indefinitely to one endpoint.
+        next_preferred_remote_index = (idx + 1) % max(1, len(remotes))
         remote_penalties[idx] = max(0, int(remote_penalties[idx]) - 1)
         if 0 <= idx < len(remote_failure_streaks):
             remote_failure_streaks[idx] = 0
@@ -1200,6 +1227,47 @@ def _embed_file_via_taskqueue(
         else:
             status = str(task.get("status") or "")
             if status != "completed":
+                # Remote long-poll wait can return a still-running snapshot near
+                # timeout boundaries; do a short follow-up get_task probe before
+                # counting this as a hard failure.
+                if is_remote_backend and status in {"running", "queued", "claimed", "assigned"}:
+                    grace_s = min(max(1.0, float(task_timeout_s) * 0.10), 5.0)
+                    grace_deadline = time.monotonic() + grace_s
+                    while time.monotonic() < grace_deadline:
+                        task_probe = _get_remote_task_with_retries(
+                            remote=ref.get("remote"),
+                            task_id=str(ref.get("task_id") or ""),
+                            get_retries=max(1, int(queue_wait_retries)),
+                            get_retry_base_ms=max(10, int(queue_wait_retry_base_ms)),
+                            retry_delay_max_ms=int(queue_retry_delay_max_ms),
+                        )
+                        if isinstance(task_probe, dict):
+                            task = task_probe
+                            status = str(task.get("status") or "")
+                            if status == "completed":
+                                emb = _extract_embedding_from_task(task)
+                                if emb:
+                                    vectors_by_row[row_index] = emb
+                                    _mark_remote_success(remote_index)
+                                    if bool(queue_verbose):
+                                        print(
+                                            "[queue:wait] "
+                                            f"completed_after_probe row_index={row_index} remote_index={remote_index} "
+                                            f"embedding_dim={len(emb)} elapsed_s={(time.monotonic() - t0):.3f}"
+                                        )
+                                    completed += 1
+                                    if completed % log_every == 0:
+                                        print(f"[queue] completed={completed}/{len(texts)} failures={failed}")
+                                    return
+                            if status in {"failed", "cancelled", "error"}:
+                                break
+                        time.sleep(0.2)
+                    if bool(queue_verbose):
+                        print(
+                            "[queue:wait] "
+                            f"grace_exhausted row_index={row_index} remote_index={remote_index} "
+                            f"status={status} grace_s={grace_s:.2f}"
+                        )
                 failed += 1
                 _mark_remote_failure(remote_index)
                 if bool(queue_verbose):
@@ -1258,11 +1326,7 @@ def _embed_file_via_taskqueue(
 
         if use_remote:
             try:
-                preferred_remote_index = (
-                    int(last_success_remote_index)
-                    if int(last_success_remote_index) >= 0
-                    else (remote_start_offset + idx - 1) % len(remotes)
-                )
+                preferred_remote_index = int(next_preferred_remote_index) % len(remotes)
                 task_id, remote, remote_index = _submit_remote_with_retries(
                     remotes=remotes,
                     preferred_remote_index=int(preferred_remote_index),
@@ -1289,6 +1353,9 @@ def _embed_file_via_taskqueue(
                         "backend": "remote",
                     }
                 )
+                # Advance submit preference immediately so bursty submit loops
+                # spread requests across healthy remotes before wait handling.
+                next_preferred_remote_index = (int(remote_index) + 1) % max(1, len(remotes))
                 submit_failure_streak = 0
             except Exception as exc:
                 submit_failure_streak += 1
