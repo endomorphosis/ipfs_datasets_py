@@ -283,6 +283,8 @@ def _embed_file(
     queue_remote_probe_timeout_s: float,
     queue_remote_min_healthy: int,
     queue_remote_max_active: int,
+    queue_bootstrap_max_attempts: int,
+    queue_bootstrap_seed_max_connects: int,
     queue_verbose: bool,
     queue_submit_fail_hard: bool,
     max_rows: int,
@@ -345,6 +347,8 @@ def _embed_file(
             queue_remote_probe_timeout_s=float(queue_remote_probe_timeout_s),
             queue_remote_min_healthy=int(queue_remote_min_healthy),
             queue_remote_max_active=int(queue_remote_max_active),
+            queue_bootstrap_max_attempts=int(queue_bootstrap_max_attempts),
+            queue_bootstrap_seed_max_connects=int(queue_bootstrap_seed_max_connects),
             queue_verbose=bool(queue_verbose),
             queue_submit_fail_hard=bool(queue_submit_fail_hard),
         )
@@ -881,6 +885,8 @@ def _effective_p2p_knobs(args: argparse.Namespace) -> dict[str, Any]:
         "remote_probe_timeout_s": max(0.1, float(args.queue_remote_probe_timeout_s)),
         "remote_min_healthy": max(0, int(args.queue_remote_min_healthy)),
         "remote_max_active": max(0, int(args.queue_remote_max_active)),
+        "bootstrap_max_attempts": max(1, int(args.queue_bootstrap_max_attempts)),
+        "bootstrap_seed_max_connects": max(1, int(args.queue_bootstrap_seed_max_connects)),
     }
 
 
@@ -961,6 +967,8 @@ def _embed_file_via_taskqueue(
     queue_remote_probe_timeout_s: float,
     queue_remote_min_healthy: int,
     queue_remote_max_active: int,
+    queue_bootstrap_max_attempts: int,
+    queue_bootstrap_seed_max_connects: int,
     queue_verbose: bool,
     queue_submit_fail_hard: bool,
 ) -> tuple[int, int]:
@@ -1001,6 +1009,12 @@ def _embed_file_via_taskqueue(
     )
     os.environ["IPFS_ACCELERATE_PY_TASK_P2P_EXPLICIT_ADDR_COOLDOWN_MAX_MS"] = str(
         max(int(queue_explicit_addr_cooldown_base_ms), int(queue_explicit_addr_cooldown_max_ms))
+    )
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_BOOTSTRAP_MAX_ATTEMPTS"] = str(
+        max(1, int(queue_bootstrap_max_attempts))
+    )
+    os.environ["IPFS_ACCELERATE_PY_TASK_P2P_BOOTSTRAP_SEED_MAX_CONNECTS"] = str(
+        max(1, int(queue_bootstrap_seed_max_connects))
     )
 
     backend_choice = str(taskqueue_backend).strip().lower()
@@ -1778,6 +1792,18 @@ def _parse_args() -> argparse.Namespace:
         help="Maximum active remotes after probing (0 keeps all)",
     )
     parser.add_argument(
+        "--queue-bootstrap-max-attempts",
+        type=int,
+        default=4,
+        help="Maximum direct bootstrap dial attempts per discovery pass",
+    )
+    parser.add_argument(
+        "--queue-bootstrap-seed-max-connects",
+        type=int,
+        default=8,
+        help="Maximum bootstrap connects when seeding DHT routing tables",
+    )
+    parser.add_argument(
         "--queue-submit-fail-hard",
         action="store_true",
         help="Abort immediately when a remote submit exhausts retries (default: fail soft and continue)",
@@ -1883,6 +1909,8 @@ def main() -> int:
             queue_remote_probe_timeout_s=float(args.queue_remote_probe_timeout_s),
             queue_remote_min_healthy=int(args.queue_remote_min_healthy),
             queue_remote_max_active=int(args.queue_remote_max_active),
+            queue_bootstrap_max_attempts=int(args.queue_bootstrap_max_attempts),
+            queue_bootstrap_seed_max_connects=int(args.queue_bootstrap_seed_max_connects),
             queue_verbose=bool(args.queue_verbose),
             queue_submit_fail_hard=bool(args.queue_submit_fail_hard),
             max_rows=int(args.max_rows),
