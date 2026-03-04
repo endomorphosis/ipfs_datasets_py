@@ -12,7 +12,7 @@ from .registry import StateScraperRegistry
 class MinnesotaScraper(BaseStateScraper):
     """Scraper for Minnesota state laws from https://www.revisor.mn.gov"""
 
-    _MN_SECTION_URL_RE = re.compile(r"/statutes/cite/[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)+$", re.IGNORECASE)
+    _MN_SECTION_URL_RE = re.compile(r"/statutes/cite/[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*$", re.IGNORECASE)
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -49,6 +49,7 @@ class MinnesotaScraper(BaseStateScraper):
             f"{self.get_base_url()}/statutes/cite/609.02",
             f"{self.get_base_url()}/statutes/",
             f"{self.get_base_url()}/statutes/cite/645.44",
+            "https://law.justia.com/codes/minnesota/",
         ]
 
         seen = set()

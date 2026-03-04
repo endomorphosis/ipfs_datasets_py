@@ -4,6 +4,9 @@ This module contains the scraper for North Dakota statutes from the official sta
 """
 
 from typing import List, Dict
+import json
+import urllib.request
+import urllib.parse
 import re
 from urllib.parse import urljoin
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -73,10 +76,16 @@ class NorthDakotaScraper(BaseStateScraper):
         soup = BeautifulSoup(payload, "html.parser")
         statutes: List[NormalizedStatute] = []
         seen = set()
+        candidate_links = []
         for link in soup.find_all("a", href=True):
+            candidate_links.append(str(link.get("href", "")).strip())
+
+        discovered = await self._discover_archived_cencode_pdfs(limit=180)
+        candidate_links.extend(discovered)
+
+        for href in candidate_links:
             if len(statutes) >= max_statutes:
                 break
-            href = str(link.get("href", "")).strip()
             if not href:
                 continue
             abs_url = urljoin(homepage, href)
@@ -110,6 +119,35 @@ class NorthDakotaScraper(BaseStateScraper):
             )
 
         return statutes
+
+    async def _discover_archived_cencode_pdfs(self, limit: int = 120) -> List[str]:
+        """Discover archived ND Century Code chapter PDFs from Wayback CDX."""
+        cdx_url = (
+            "http://web.archive.org/cdx/search/cdx?url=legis.nd.gov/cencode/t*c*.pdf"
+            "&output=json&filter=statuscode:200&collapse=digest"
+            f"&limit={max(1, int(limit))}"
+        )
+        try:
+            req = urllib.request.Request(cdx_url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=45) as resp:
+                payload = resp.read().decode("utf-8", errors="ignore")
+            rows = json.loads(payload)
+            if not isinstance(rows, list) or len(rows) < 2:
+                return []
+
+            out: List[str] = []
+            for row in rows[1:]:
+                if not isinstance(row, list) or len(row) < 3:
+                    continue
+                ts = str(row[1]).strip()
+                original = str(row[2]).strip()
+                if not ts or not original:
+                    continue
+                encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
+                out.append(f"http://web.archive.org/web/{ts}/{encoded}")
+            return out
+        except Exception:
+            return []
 
 
 # Register this scraper with the registry

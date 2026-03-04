@@ -43,20 +43,45 @@ class GeorgiaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        candidate_urls = [
+            code_url,
+            "https://www.legis.ga.gov/legislation/georgia-code",
+            "https://law.justia.com/codes/georgia/",
+        ]
+
+        best_statutes: List[NormalizedStatute] = []
+        seen = set()
+        for candidate in candidate_urls:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+
+            if PLAYWRIGHT_AVAILABLE:
+                self.logger.info("Georgia: Using Playwright for JavaScript rendering")
+                try:
+                    result = await self._scrape_with_playwright(code_name, candidate, "Ga. Code Ann.")
+                    if len(result) > len(best_statutes):
+                        best_statutes = result
+                    if len(result) >= 30:
+                        return result
+                except Exception as e:
+                    self.logger.warning(f"Georgia Playwright failed: {e}, falling back")
+
+            generic = await self._custom_scrape_georgia(code_name, candidate, "Ga. Code Ann.")
+            if len(generic) > len(best_statutes):
+                best_statutes = generic
+            if len(generic) >= 30:
+                return generic
+
+        if best_statutes:
+            return best_statutes
+
+        # Last resort: return summary records so the state is at least represented.
         summary_pdf_statutes = await self._scrape_general_statute_summary_pdfs(code_name)
         if summary_pdf_statutes:
             return summary_pdf_statutes
 
-        if PLAYWRIGHT_AVAILABLE:
-            self.logger.info("Georgia: Using Playwright for JavaScript rendering")
-            try:
-                result = await self._scrape_with_playwright(code_name, code_url, "Ga. Code Ann.")
-                if result:
-                    return result
-            except Exception as e:
-                self.logger.warning(f"Georgia Playwright failed: {e}, falling back")
-        
-        return await self._custom_scrape_georgia(code_name, code_url, "Ga. Code Ann.")
+        return []
 
     async def _scrape_general_statute_summary_pdfs(self, code_name: str) -> List[NormalizedStatute]:
         """Use official GA-hosted General Statutes summary PDFs as strict-safe fallback."""

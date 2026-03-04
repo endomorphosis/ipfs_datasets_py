@@ -51,10 +51,13 @@ class WashingtonScraper(BaseStateScraper):
         """
         candidate_urls = [
             code_url,
-            f"{self.get_base_url()}/RCW/default.aspx?cite=9A.32.030",
-            f"{self.get_base_url()}/RCW/default.aspx?cite=9A.04",
             f"{self.get_base_url()}/RCW/default.aspx",
             f"{self.get_base_url()}/RCW/",
+            f"{self.get_base_url()}/RCW/default.aspx?cite=1",
+            f"{self.get_base_url()}/RCW/default.aspx?cite=9A.32.030",
+            f"{self.get_base_url()}/RCW/default.aspx?cite=9A.04",
+            f"{self.get_base_url()}/RCW/default.aspx?cite=4.24",
+            f"{self.get_base_url()}/RCW/default.aspx?cite=7.28",
         ]
 
         seen = set()

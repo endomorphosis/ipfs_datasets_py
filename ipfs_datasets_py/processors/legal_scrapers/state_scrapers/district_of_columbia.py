@@ -52,7 +52,12 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/us/dc/council/code/titles/1",
+            f"{self.get_base_url()}/us/dc/council/code/titles/2",
+            f"{self.get_base_url()}/us/dc/council/code/titles/3",
+            f"{self.get_base_url()}/us/dc/council/code/titles/4",
+            f"{self.get_base_url()}/us/dc/council/code/titles/5",
             f"{self.get_base_url()}/us/dc/council/code/titles/1/chapters/1",
+            f"{self.get_base_url()}/us/dc/council/code/titles/2/chapters/1",
             f"{self.get_base_url()}/us/dc/council/code/titles/1/chapters/1/subchapters/I",
         ]
 
