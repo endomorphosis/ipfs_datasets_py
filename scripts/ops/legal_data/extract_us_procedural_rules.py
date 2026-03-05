@@ -13,7 +13,7 @@ import re
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional
 
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import US_STATES
 
@@ -28,12 +28,21 @@ TERRITORIES: Dict[str, str] = {
 CIVIL_PATTERNS = [
     re.compile(r"\brules?\s+of\s+civil\s+procedure\b", re.IGNORECASE),
     re.compile(r"\bcivil\s+procedure\s+rules?\b", re.IGNORECASE),
+    re.compile(r"\bcode\s+of\s+civil\s+procedure\b", re.IGNORECASE),
+    re.compile(r"\bcivil\s+practice\b", re.IGNORECASE),
+    re.compile(r"\bcivil\s+actions?\b", re.IGNORECASE),
+    re.compile(r"\bcplr\b", re.IGNORECASE),
+    re.compile(r"\bccp\b", re.IGNORECASE),
     re.compile(r"\b(?:state\s+)?r(?:ule)?\.?\s*c(?:iv)?\.?\s*p(?:roc)?\b", re.IGNORECASE),
 ]
 
 CRIMINAL_PATTERNS = [
     re.compile(r"\brules?\s+of\s+criminal\s+procedure\b", re.IGNORECASE),
     re.compile(r"\bcriminal\s+procedure\s+rules?\b", re.IGNORECASE),
+    re.compile(r"\bcode\s+of\s+criminal\s+procedure\b", re.IGNORECASE),
+    re.compile(r"\bcriminal\s+practice\b", re.IGNORECASE),
+    re.compile(r"\bcriminal\s+actions?\b", re.IGNORECASE),
+    re.compile(r"\bcourt\s+rules?\b", re.IGNORECASE),
     re.compile(r"\b(?:state\s+)?r(?:ule)?\.?\s*cr(?:im)?\.?\s*p(?:roc)?\b", re.IGNORECASE),
 ]
 
@@ -69,9 +78,20 @@ def _joined_signal_text(record: Dict[str, Any]) -> str:
 
 def _classify_procedure_family(record: Dict[str, Any]) -> Optional[str]:
     signal = _joined_signal_text(record)
-    if any(pattern.search(signal) for pattern in CIVIL_PATTERNS):
+    lower_signal = signal.lower()
+
+    civil = any(pattern.search(signal) for pattern in CIVIL_PATTERNS) and (
+        "civil" in lower_signal or "civ" in lower_signal or "ccp" in lower_signal or "cplr" in lower_signal
+    )
+    criminal = any(pattern.search(signal) for pattern in CRIMINAL_PATTERNS) and (
+        "criminal" in lower_signal or "crim" in lower_signal or "crp" in lower_signal
+    )
+
+    if civil and criminal:
+        return "civil_and_criminal_procedure"
+    if civil:
         return "civil_procedure"
-    if any(pattern.search(signal) for pattern in CRIMINAL_PATTERNS):
+    if criminal:
         return "criminal_procedure"
     return None
 

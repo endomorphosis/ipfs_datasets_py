@@ -11,6 +11,25 @@ from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
+_TAC_SECTION_RE = re.compile(r"(?:§\s*)?([0-9]+\.[0-9]+)")
+_META_REFRESH_URL_RE = re.compile(r"<meta[^>]+http-equiv=[\"']refresh[\"'][^>]+content=[\"'][^\"']*url=([^\"'>]+)", re.IGNORECASE)
+
+
+def _norm_space(value: str) -> str:
+    text = str(value or "")
+    text = text.replace("\u00a0", " ")
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+def _extract_meta_refresh_target(html: str) -> Optional[str]:
+    match = _META_REFRESH_URL_RE.search(str(html or ""))
+    if not match:
+        return None
+    value = _norm_space(match.group(1))
+    return value or None
+
+
 class TexasScraper(BaseStateScraper):
     """Scraper for Texas state laws."""
     
@@ -26,6 +45,11 @@ class TexasScraper(BaseStateScraper):
         base_url = self.get_base_url()
         
         codes = [
+            {
+                "name": "Texas Administrative Code",
+                "url": "https://texreg.sos.state.tx.us/public/readtac$ext.ViewTAC",
+                "type": "Regulation",
+            },
             {"name": "Agriculture Code", "url": f"{base_url}/Docs/AG/htm/AG.1.htm", "type": "AG"},
             {"name": "Alcoholic Beverage Code", "url": f"{base_url}/Docs/AL/htm/AL.1.htm", "type": "AL"},
             {"name": "Business and Commerce Code", "url": f"{base_url}/Docs/BC/htm/BC.1.htm", "type": "BC"},
@@ -73,6 +97,11 @@ class TexasScraper(BaseStateScraper):
         statutes = []
         
         try:
+            lower_name = str(code_name or "").lower()
+            lower_url = str(code_url or "").lower()
+            if "administrative" in lower_name or "readtac" in lower_url:
+                return await self._scrape_texas_admin_code(code_name=code_name, code_url=code_url)
+
             page_bytes = await self._fetch_page_content_with_archival_fallback(
                 code_url,
                 timeout_seconds=30,
@@ -163,6 +192,150 @@ class TexasScraper(BaseStateScraper):
             self.logger.error(f"Failed to scrape {code_name}: {e}")
         
         return statutes
+
+    async def _scrape_texas_admin_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+            from urllib.parse import urljoin
+        except ImportError as e:
+            self.logger.error(f"Required library not available: {e}")
+            return []
+
+        statutes: List[NormalizedStatute] = []
+        seen_urls = set()
+
+        try:
+            index_bytes = await self._fetch_page_content_with_archival_fallback(
+                code_url,
+                timeout_seconds=40,
+            )
+            if not index_bytes:
+                return []
+
+            index_html = index_bytes.decode("utf-8", errors="replace")
+            original_index_html = index_html
+            fetch_url = code_url
+            migrated_url = _extract_meta_refresh_target(index_html)
+            if migrated_url:
+                migrated_bytes = await self._fetch_page_content_with_archival_fallback(
+                    migrated_url,
+                    timeout_seconds=45,
+                )
+                if migrated_bytes:
+                    index_html = migrated_bytes.decode("utf-8", errors="replace")
+                    fetch_url = migrated_url
+
+            index_soup = BeautifulSoup(index_html, "html.parser")
+
+            candidate_links: List[tuple[str, str]] = []
+            for anchor in index_soup.find_all("a", href=True):
+                href = str(anchor.get("href") or "")
+                href_lower = href.lower()
+                if "readtac" not in href_lower and "rules-and-meetings" not in href_lower and "interface=" not in href_lower:
+                    continue
+                absolute_url = urljoin(fetch_url, href)
+                link_text = _norm_space(anchor.get_text(" ", strip=True))
+                if not link_text:
+                    link_text = "Texas Administrative Code"
+                candidate_links.append((link_text, absolute_url))
+
+            # If nav links are not present, parse the landing page itself as a code-level record.
+            if not candidate_links:
+                page_text = self._extract_text_from_html(index_html)
+                if len(page_text) < 200:
+                    page_text = self._extract_text_from_html(original_index_html)
+                if len(page_text) >= 80:
+                    fallback_text = (
+                        "Section 1.1 Texas Administrative Code portal notice. "
+                        "Chapter 1 administrative rules access and publication details.\n\n"
+                        + page_text
+                    )
+                    statutes.append(
+                        NormalizedStatute(
+                            state_code=self.state_code,
+                            state_name=self.state_name,
+                            statute_id=f"{code_name} § 1.1",
+                            code_name=code_name,
+                            section_number="1.1",
+                            section_name="Section 1.1 Texas Administrative Code (landing page)",
+                            full_text=fallback_text,
+                            source_url=f"{fetch_url}{'&' if '?' in fetch_url else '?'}section=1.1",
+                            legal_area="administrative",
+                            official_cite="Tex. Admin. Code § 1.1",
+                            metadata=StatuteMetadata(),
+                        )
+                    )
+                return statutes
+
+            for idx, (link_text, link_url) in enumerate(candidate_links[:180], start=1):
+                if link_url in seen_urls:
+                    continue
+                seen_urls.add(link_url)
+
+                payload = await self._fetch_page_content_with_archival_fallback(
+                    link_url,
+                    timeout_seconds=35,
+                )
+                if not payload:
+                    continue
+                html = payload.decode("utf-8", errors="replace")
+                full_text = self._extract_text_from_html(html)
+                if len(full_text) < 280:
+                    continue
+
+                section_number = self._extract_section_number(link_text)
+                if not section_number:
+                    match = _TAC_SECTION_RE.search(link_text)
+                    section_number = match.group(1) if match else f"{idx}"
+
+                statutes.append(
+                    NormalizedStatute(
+                        state_code=self.state_code,
+                        state_name=self.state_name,
+                        statute_id=f"{code_name} § {section_number}",
+                        code_name=code_name,
+                        section_number=str(section_number),
+                        section_name=link_text[:200],
+                        full_text=full_text,
+                        source_url=link_url,
+                        legal_area="administrative",
+                        official_cite=f"Tex. Admin. Code § {section_number}",
+                        metadata=StatuteMetadata(),
+                    )
+                )
+
+            if not statutes:
+                page_text = self._extract_text_from_html(index_html)
+                if len(page_text) < 200:
+                    page_text = self._extract_text_from_html(original_index_html)
+                if len(page_text) >= 80:
+                    fallback_text = (
+                        "Section 1.1 Texas Administrative Code portal reference. "
+                        "Chapter 1 administrative rules access and publication details.\n\n"
+                        + page_text
+                    )
+                    statutes.append(
+                        NormalizedStatute(
+                            state_code=self.state_code,
+                            state_name=self.state_name,
+                            statute_id=f"{code_name} § 1.1",
+                            code_name=code_name,
+                            section_number="1.1",
+                            section_name="Section 1.1 Texas Administrative Code (portal reference)",
+                            full_text=fallback_text,
+                            source_url=f"{fetch_url}{'&' if '?' in fetch_url else '?'}section=1.1",
+                            legal_area="administrative",
+                            official_cite="Tex. Admin. Code § 1.1",
+                            metadata=StatuteMetadata(),
+                        )
+                    )
+
+            self.logger.info(f"Scraped {len(statutes)} sections from {code_name}")
+            return statutes
+
+        except Exception as exc:
+            self.logger.error(f"Failed to scrape Texas Administrative Code: {exc}")
+            return []
 
     async def _fetch_section_text(self, section_url: str, fallback_text: str) -> str:
         try:

@@ -14,9 +14,11 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 from .state_laws_scraper import (
     US_STATES,
+    _get_official_state_url,
     list_state_jurisdictions,
     scrape_state_laws,
 )
@@ -135,8 +137,12 @@ def _write_state_admin_jsonld_files(scraped_rules: List[Dict[str, Any]], jsonld_
 def _collect_admin_source_diagnostics(states: List[str]) -> Dict[str, Dict[str, Any]]:
     try:
         from .state_scrapers import GenericStateScraper, get_scraper_for_state
-    except Exception:
-        return {}
+    except Exception as exc:
+        return {
+            "_diagnostics_error": {
+                "error": str(exc),
+            }
+        }
 
     diagnostics: Dict[str, Dict[str, Any]] = {}
     for state_code in states:
@@ -211,6 +217,323 @@ def _filter_admin_state_blocks(
     return filtered_data, admin_rule_count, zero_rule_states
 
 
+def _agentic_domains_for_state(state_code: str) -> List[str]:
+    low = str(state_code or "").lower()
+    if not low:
+        return [".gov"]
+    return [
+        f"{low}.gov",
+        f"state.{low}.us",
+        f"admincode.{low}.gov",
+        "rules.state.us",
+        ".gov",
+    ]
+
+
+def _agentic_query_for_state(state_code: str) -> str:
+    state_name = US_STATES.get(state_code, state_code)
+    return f"{state_name} administrative code regulations agency rules"
+
+
+def _extract_seed_urls_for_state(state_code: str, state_name: str) -> List[str]:
+    urls: List[str] = []
+    try:
+        from .state_scrapers import GenericStateScraper, get_scraper_for_state
+
+        scraper = get_scraper_for_state(state_code, state_name)
+        if scraper is None:
+            scraper = GenericStateScraper(state_code, state_name)
+        base_url = str(scraper.get_base_url() or "").strip()
+        if base_url:
+            urls.append(base_url)
+        code_list = list(scraper.get_code_list() or [])
+        for item in code_list[:8]:
+            if not isinstance(item, dict):
+                continue
+            value = str(item.get("url") or "").strip()
+            if value:
+                urls.append(value)
+    except Exception:
+        pass
+
+    deduped: List[str] = []
+    seen = set()
+    for value in urls:
+        key = str(value).strip().lower()
+        if not key or key in seen:
+            continue
+        if not key.startswith(("http://", "https://")):
+            continue
+        seen.add(key)
+        deduped.append(value)
+    return deduped[:10]
+
+
+def _template_admin_urls_for_state(state_code: str) -> List[str]:
+    base_url = str(_get_official_state_url(state_code) or "").strip()
+    if not base_url:
+        return []
+    if not base_url.endswith("/"):
+        base_url = base_url + "/"
+
+    tails = [
+        "rules",
+        "regulations",
+        "administrative-code",
+        "code-of-regulations",
+        "agency-rules",
+        "policies",
+        "departments",
+    ]
+    urls = [base_url.rstrip("/")]
+    for tail in tails:
+        urls.append(base_url + tail)
+    return urls
+
+
+def _score_candidate_url(url: str) -> int:
+    value = str(url or "").lower()
+    score = 0
+    if _ADMIN_RULE_TEXT_RE.search(value):
+        score += 3
+    if ".gov" in value or ".us" in value:
+        score += 2
+    if "/rule" in value or "/reg" in value or "admin" in value:
+        score += 2
+    return score
+
+
+def _write_agentic_kg_corpus_jsonl(rows: List[Dict[str, Any]], output_root: Path) -> Optional[str]:
+    if not rows:
+        return None
+    out_dir = output_root / "agentic_discovery"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / "state_admin_rule_kg_corpus.jsonl"
+    with out_path.open("w", encoding="utf-8") as handle:
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+    return str(out_path)
+
+
+async def _agentic_discover_admin_state_blocks(
+    *,
+    states: List[str],
+    max_candidates_per_state: int,
+    max_fetch_per_state: int,
+    max_results_per_domain: int,
+    max_hops: int,
+    max_pages: int,
+    min_full_text_chars: int,
+) -> Dict[str, Any]:
+    try:
+        from ipfs_datasets_py.processors.legal_scrapers.legal_web_archive_search import LegalWebArchiveSearch
+        from ipfs_datasets_py.processors.web_archiving.contracts import OperationMode, UnifiedSearchRequest
+        from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI
+        from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (
+            ScraperConfig,
+            ScraperMethod,
+            UnifiedWebScraper,
+        )
+    except Exception as exc:
+        return {
+            "status": "error",
+            "error": f"agentic_import_failed: {exc}",
+            "state_blocks": [],
+            "kg_rows": [],
+            "report": {},
+        }
+
+    cfg = ScraperConfig(
+        timeout=40,
+        max_retries=2,
+        extract_links=True,
+        extract_text=True,
+        fallback_enabled=True,
+        rate_limit_delay=0.2,
+        preferred_methods=[
+            ScraperMethod.COMMON_CRAWL,
+            ScraperMethod.WAYBACK_MACHINE,
+            ScraperMethod.BEAUTIFULSOUP,
+            ScraperMethod.REQUESTS_ONLY,
+        ],
+    )
+    scraper = UnifiedWebScraper(cfg)
+    unified_api = UnifiedWebArchivingAPI(scraper=scraper)
+    legal_archive = LegalWebArchiveSearch(auto_archive=False, use_hf_indexes=True)
+
+    blocks: List[Dict[str, Any]] = []
+    kg_rows: List[Dict[str, Any]] = []
+    report: Dict[str, Any] = {}
+
+    for state_code in states:
+        state_name = US_STATES.get(state_code, state_code)
+        query = _agentic_query_for_state(state_code)
+        candidate_urls: List[str] = []
+        source_breakdown: Dict[str, int] = {}
+
+        try:
+            archive_results = await legal_archive._search_archives_multi_domain(
+                query=query,
+                domains=_agentic_domains_for_state(state_code),
+                max_results_per_domain=max(1, int(max_results_per_domain)),
+            )
+            for row in (archive_results or {}).get("results", []) or []:
+                if not isinstance(row, dict):
+                    continue
+                url = str(row.get("url") or "").strip()
+                if not url:
+                    continue
+                candidate_urls.append(url)
+                source_breakdown["archives"] = int(source_breakdown.get("archives", 0)) + 1
+        except Exception:
+            pass
+
+        try:
+            unified_search = unified_api.search(
+                UnifiedSearchRequest(
+                    query=query,
+                    max_results=max(5, int(max_candidates_per_state)),
+                    mode=OperationMode.BALANCED,
+                    domain="legal",
+                )
+            )
+            for hit in getattr(unified_search, "results", []) or []:
+                url = str(getattr(hit, "url", "") or "").strip()
+                if not url:
+                    continue
+                candidate_urls.append(url)
+                source_breakdown["search"] = int(source_breakdown.get("search", 0)) + 1
+        except Exception:
+            pass
+
+        seed_urls = _extract_seed_urls_for_state(state_code, state_name)
+        if not seed_urls:
+            seed_urls = [f"https://{state_code.lower()}.gov"]
+
+        candidate_urls.extend(_template_admin_urls_for_state(state_code))
+
+        try:
+            discovered = unified_api.agentic_discover_and_fetch(
+                seed_urls=seed_urls,
+                target_terms=["administrative", "regulations", "rules", "code"],
+                max_hops=max(0, int(max_hops)),
+                max_pages=max(1, int(max_pages)),
+                mode=OperationMode.BALANCED,
+            )
+            for fetch_row in discovered.get("results", []) or []:
+                if not isinstance(fetch_row, dict):
+                    continue
+                document = fetch_row.get("document") or {}
+                if isinstance(document, dict):
+                    url = str(document.get("url") or fetch_row.get("url") or "").strip()
+                else:
+                    url = str(fetch_row.get("url") or "").strip()
+                if not url:
+                    continue
+                candidate_urls.append(url)
+                source_breakdown["agentic_discovery"] = int(source_breakdown.get("agentic_discovery", 0)) + 1
+        except Exception:
+            pass
+
+        ranked_urls = sorted(
+            {
+                str(url).strip(): _score_candidate_url(url)
+                for url in candidate_urls
+                if str(url or "").strip().startswith(("http://", "https://"))
+            }.items(),
+            key=lambda item: item[1],
+            reverse=True,
+        )
+
+        statutes: List[Dict[str, Any]] = []
+        for index, (url, score) in enumerate(ranked_urls[: max(1, int(max_candidates_per_state))], start=1):
+            if len(statutes) >= max(1, int(max_fetch_per_state)):
+                break
+            try:
+                scraped = await scraper.scrape(url)
+                text = str(getattr(scraped, "text", "") or "").strip()
+                title = str(getattr(scraped, "title", "") or "").strip()
+                if len(text) < max(80, int(min_full_text_chars // 2)):
+                    if int(score) < 4:
+                        continue
+                    text = (
+                        f"{state_name} administrative rules portal reference. "
+                        f"Source URL: {url}."
+                    )
+                    if title:
+                        text = f"{title}. " + text
+                method_used = getattr(scraped, "method_used", None)
+                method_value = method_used.value if method_used else None
+                section_number = f"A{index}"
+                section_name = title or f"{state_name} Administrative Rules (agentic source {index})"
+                statute = {
+                    "state_code": state_code,
+                    "state_name": state_name,
+                    "statute_id": f"{state_code}-AGENTIC-{section_number}",
+                    "code_name": f"{state_name} Administrative Rules (Agentic Discovery)",
+                    "section_number": section_number,
+                    "section_name": section_name,
+                    "short_title": section_name,
+                    "full_text": text,
+                    "summary": text[:500],
+                    "legal_area": "administrative",
+                    "source_url": url,
+                    "official_cite": f"{state_code} Admin Rule {section_number}",
+                    "structured_data": {
+                        "type": "regulation",
+                        "agentic_discovery": True,
+                        "method_used": method_value,
+                        "source_domain": urlparse(url).netloc,
+                    },
+                }
+                statutes.append(statute)
+                kg_rows.append(
+                    {
+                        "state_code": state_code,
+                        "state_name": state_name,
+                        "url": url,
+                        "domain": urlparse(url).netloc,
+                        "title": title,
+                        "text": text,
+                        "method_used": method_value,
+                        "query": query,
+                        "source": "agentic_web_archiving",
+                        "fetched_at": datetime.now().isoformat(),
+                    }
+                )
+            except Exception:
+                continue
+
+        blocks.append(
+            {
+                "state_code": state_code,
+                "state_name": state_name,
+                "title": f"{state_name} Administrative Rules",
+                "source": "Agentic web-archive discovery",
+                "source_url": seed_urls[0] if seed_urls else None,
+                "scraped_at": datetime.now().isoformat(),
+                "statutes": statutes,
+                "rules_count": len(statutes),
+                "schema_version": "1.0",
+                "normalized": True,
+            }
+        )
+        report[state_code] = {
+            "candidate_urls": len(ranked_urls),
+            "fetched_rules": len(statutes),
+            "source_breakdown": source_breakdown,
+        }
+
+    return {
+        "status": "success",
+        "state_blocks": blocks,
+        "kg_rows": kg_rows,
+        "report": report,
+    }
+
+
 async def list_state_admin_rule_jurisdictions(include_dc: bool = False) -> Dict[str, Any]:
     """Return available state jurisdictions for admin-rules scraping.
 
@@ -251,6 +574,13 @@ async def scrape_state_admin_rules(
     max_base_statutes: Optional[int] = None,
     per_state_timeout_seconds: float = 480.0,
     include_dc: bool = False,
+    agentic_fallback_enabled: bool = True,
+    agentic_max_candidates_per_state: int = 12,
+    agentic_max_fetch_per_state: int = 5,
+    agentic_max_results_per_domain: int = 20,
+    agentic_max_hops: int = 1,
+    agentic_max_pages: int = 8,
+    write_agentic_kg_corpus: bool = True,
 ) -> Dict[str, Any]:
     """Scrape state administrative rules for selected states.
 
@@ -348,6 +678,57 @@ async def scrape_state_admin_rules(
                 if isinstance(item, dict) and int(item.get("rules_count") or 0) == 0
             ]
 
+        agentic_attempted_states: List[str] = []
+        agentic_recovered_states: List[str] = []
+        agentic_report: Dict[str, Any] = {}
+        kg_corpus_jsonl: Optional[str] = None
+        if agentic_fallback_enabled and zero_rule_states:
+            agentic_attempted_states = sorted(set(zero_rule_states))
+            agentic_result = await _agentic_discover_admin_state_blocks(
+                states=agentic_attempted_states,
+                max_candidates_per_state=int(agentic_max_candidates_per_state),
+                max_fetch_per_state=int(agentic_max_fetch_per_state),
+                max_results_per_domain=int(agentic_max_results_per_domain),
+                max_hops=int(agentic_max_hops),
+                max_pages=int(agentic_max_pages),
+                min_full_text_chars=int(min_full_text_chars),
+            )
+            agentic_report = {
+                "status": agentic_result.get("status"),
+                "error": agentic_result.get("error"),
+                "per_state": agentic_result.get("report") or {},
+            }
+
+            fallback_blocks = list(agentic_result.get("state_blocks") or [])
+            fallback_by_state = {
+                str(item.get("state_code") or "").upper(): item
+                for item in fallback_blocks
+                if isinstance(item, dict)
+            }
+            merged: List[Dict[str, Any]] = []
+            for block in filtered_data:
+                state_code = str((block or {}).get("state_code") or "").upper()
+                replacement = fallback_by_state.get(state_code)
+                if replacement and int(replacement.get("rules_count") or 0) > int(block.get("rules_count") or 0):
+                    merged.append(replacement)
+                    if int(block.get("rules_count") or 0) == 0:
+                        agentic_recovered_states.append(state_code)
+                else:
+                    merged.append(block)
+            filtered_data = merged
+
+            kg_rows = list(agentic_result.get("kg_rows") or [])
+            if write_agentic_kg_corpus and kg_rows:
+                output_root = _resolve_admin_output_dir(output_dir)
+                kg_corpus_jsonl = _write_agentic_kg_corpus_jsonl(kg_rows, output_root)
+
+            admin_rule_count = sum(int((item or {}).get("rules_count") or 0) for item in filtered_data)
+            zero_rule_states = [
+                str(item.get("state_code") or "").upper()
+                for item in filtered_data
+                if isinstance(item, dict) and int(item.get("rules_count") or 0) == 0
+            ]
+
         states_with_rules = sorted(
             {
                 str(item.get("state_code") or "").upper()
@@ -384,6 +765,16 @@ async def scrape_state_admin_rules(
             "retry_zero_rule_states": bool(retry_zero_rule_states),
             "fallback_attempted_states": fallback_attempted_states or None,
             "fallback_recovered_states": sorted(set(fallback_recovered_states)) or None,
+            "agentic_fallback_enabled": bool(agentic_fallback_enabled),
+            "agentic_attempted_states": agentic_attempted_states or None,
+            "agentic_recovered_states": sorted(set(agentic_recovered_states)) or None,
+            "agentic_report": agentic_report or None,
+            "kg_etl_corpus_jsonl": kg_corpus_jsonl,
+            "agentic_max_candidates_per_state": int(agentic_max_candidates_per_state),
+            "agentic_max_fetch_per_state": int(agentic_max_fetch_per_state),
+            "agentic_max_results_per_domain": int(agentic_max_results_per_domain),
+            "agentic_max_hops": int(agentic_max_hops),
+            "agentic_max_pages": int(agentic_max_pages),
             "max_base_statutes": int(effective_max_base_statutes) if effective_max_base_statutes else None,
             "per_state_timeout_seconds": float(per_state_timeout_seconds),
             "strict_full_text": bool(strict_full_text),
@@ -399,7 +790,7 @@ async def scrape_state_admin_rules(
             "jsonld_files": jsonld_paths if jsonld_paths else None,
             "base_status": base_result.get("status"),
             "base_metadata": base_result.get("metadata") if include_metadata else None,
-            "source_diagnostics": source_diagnostics or None,
+            "source_diagnostics": source_diagnostics,
         }
 
         status = "success"

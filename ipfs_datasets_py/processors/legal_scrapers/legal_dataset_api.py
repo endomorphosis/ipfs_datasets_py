@@ -926,6 +926,13 @@ async def scrape_state_admin_rules_from_parameters(
             retry_zero_rule_states=parameters.get("retry_zero_rule_states", True),
             per_state_timeout_seconds=parameters.get("per_state_timeout_seconds", 480.0),
             include_dc=parameters.get("include_dc", False),
+            agentic_fallback_enabled=parameters.get("agentic_fallback_enabled", True),
+            agentic_max_candidates_per_state=parameters.get("agentic_max_candidates_per_state", 12),
+            agentic_max_fetch_per_state=parameters.get("agentic_max_fetch_per_state", 5),
+            agentic_max_results_per_domain=parameters.get("agentic_max_results_per_domain", 20),
+            agentic_max_hops=parameters.get("agentic_max_hops", 1),
+            agentic_max_pages=parameters.get("agentic_max_pages", 8),
+            write_agentic_kg_corpus=parameters.get("write_agentic_kg_corpus", True),
         )
 
         job_id = parameters.get("job_id")

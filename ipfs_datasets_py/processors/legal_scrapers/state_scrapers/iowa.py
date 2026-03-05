@@ -37,6 +37,10 @@ class IowaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        live_stubs = await self._scrape_live_code_stubs(code_name, max_statutes=220)
+
+        archival_stubs = await self._scrape_archived_code_stubs(code_name, max_statutes=140)
+
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/docs/code//",
@@ -58,15 +62,74 @@ class IowaScraper(BaseStateScraper):
             if len(statutes) >= 30:
                 return statutes
 
-        archival_stubs = await self._scrape_archived_code_stubs(code_name, max_statutes=140)
+        if len(live_stubs) > len(best_statutes):
+            best_statutes = live_stubs
         if len(archival_stubs) > len(best_statutes):
             best_statutes = archival_stubs
 
         return best_statutes
 
+    async def _scrape_live_code_stubs(self, code_name: str, max_statutes: int = 160) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+            from urllib.parse import urljoin
+        except ImportError:
+            return []
+
+        url = "https://www.legis.iowa.gov/docs/code/"
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=35)
+            if not payload:
+                return []
+        except Exception:
+            return []
+
+        soup = BeautifulSoup(payload, "html.parser")
+        out: List[NormalizedStatute] = []
+        seen = set()
+        for a in soup.find_all("a", href=True):
+            if len(out) >= max_statutes:
+                break
+            href = str(a.get("href") or "").strip()
+            text = str(a.get_text(" ", strip=True) or "").strip()
+            if not href:
+                continue
+            full_url = urljoin(url, href)
+            if "/docs/code/" not in full_url.lower():
+                continue
+            if not any(ch.isdigit() for ch in text + href):
+                continue
+
+            section_number = self._extract_section_number(text) or re.sub(r"[^0-9A-Za-z.-]+", "-", href).strip("-/")
+            if not section_number:
+                continue
+            key = section_number.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            section_name = text[:200] if text else f"Iowa Code {section_number}"
+
+            out.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=section_name,
+                    full_text=f"Iowa Code {section_name}: {full_url}",
+                    source_url=full_url,
+                    legal_area=self._identify_legal_area(section_name),
+                    official_cite=f"Iowa Code {section_number}",
+                    metadata=StatuteMetadata(),
+                )
+            )
+
+        return out
+
     async def _scrape_archived_code_stubs(self, code_name: str, max_statutes: int = 120) -> List[NormalizedStatute]:
         cdx_url = (
-            "http://web.archive.org/cdx/search/cdx?url=www.legis.iowa.gov/docs/code/*"
+            "https://web.archive.org/cdx/search/cdx?url=www.legis.iowa.gov/docs/code/*"
             "&output=json&filter=statuscode:200&collapse=digest"
             f"&limit={max(1, int(max_statutes) * 8)}"
         )
@@ -109,7 +172,7 @@ class IowaScraper(BaseStateScraper):
             seen.add(key)
 
             encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
-            source_url = f"http://web.archive.org/web/{ts}/{encoded}"
+            source_url = f"https://web.archive.org/web/{ts}/{encoded}"
             out.append(
                 NormalizedStatute(
                     state_code=self.state_code,

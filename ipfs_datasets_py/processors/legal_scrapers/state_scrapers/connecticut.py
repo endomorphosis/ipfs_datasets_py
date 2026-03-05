@@ -39,6 +39,10 @@ class ConnecticutScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        live_stubs = await self._scrape_live_title_stubs(code_name, max_statutes=180)
+
+        archival_stubs = await self._scrape_archived_chapter_stubs(code_name, max_statutes=140)
+
         candidate_urls = [
             code_url,
             "https://www.cga.ct.gov/current/pub/titles.htm",
@@ -65,15 +69,68 @@ class ConnecticutScraper(BaseStateScraper):
             if len(generic) >= 30:
                 return generic
 
-        archival_stubs = await self._scrape_archived_chapter_stubs(code_name, max_statutes=140)
+        if len(live_stubs) > len(best):
+            best = live_stubs
+
         if len(archival_stubs) > len(best):
             best = archival_stubs
 
         return best
 
+    async def _scrape_live_title_stubs(self, code_name: str, max_statutes: int = 120) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+            from urllib.parse import urljoin
+        except ImportError:
+            return []
+
+        url = "https://www.cga.ct.gov/current/pub/titles.htm"
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=35)
+            if not payload:
+                return []
+        except Exception:
+            return []
+
+        soup = BeautifulSoup(payload, "html.parser")
+        out: List[NormalizedStatute] = []
+        seen = set()
+        for a in soup.find_all("a", href=True):
+            if len(out) >= max_statutes:
+                break
+            href = str(a.get("href") or "").strip()
+            text = str(a.get_text(" ", strip=True) or "").strip()
+            if not href or not text:
+                continue
+            if "chap" not in href.lower() and "title" not in text.lower() and "chapter" not in text.lower():
+                continue
+            full_url = urljoin(url, href)
+            section_number = self._extract_section_number(text) or str(len(out) + 1)
+            key = section_number.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+
+            out.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=text[:200],
+                    full_text=f"Connecticut General Statutes {text}: {full_url}",
+                    source_url=full_url,
+                    legal_area=self._identify_legal_area(text),
+                    official_cite=f"Conn. Gen. Stat. {section_number}",
+                    metadata=StatuteMetadata(),
+                )
+            )
+        return out
+
     async def _scrape_archived_chapter_stubs(self, code_name: str, max_statutes: int = 120) -> List[NormalizedStatute]:
         cdx_url = (
-            "http://web.archive.org/cdx/search/cdx?url=www.cga.ct.gov/current/pub/chap*.htm"
+            "https://web.archive.org/cdx/search/cdx?url=www.cga.ct.gov/current/pub/*"
             "&output=json&filter=statuscode:200&collapse=digest"
             f"&limit={max(1, int(max_statutes) * 6)}"
         )
@@ -99,7 +156,7 @@ class ConnecticutScraper(BaseStateScraper):
             if not ts or not original:
                 continue
 
-            m = re.search(r"/chap([0-9A-Za-z]+)\.htm$", original, flags=re.IGNORECASE)
+            m = re.search(r"/(?:chap|chapter)([0-9A-Za-z]+)\.(?:htm|html)$", original, flags=re.IGNORECASE)
             chapter = m.group(1) if m else ""
             if not chapter:
                 continue
@@ -109,7 +166,7 @@ class ConnecticutScraper(BaseStateScraper):
             seen.add(key)
 
             encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
-            source_url = f"http://web.archive.org/web/{ts}/{encoded}"
+            source_url = f"https://web.archive.org/web/{ts}/{encoded}"
             title = f"Chapter {chapter}"
             out.append(
                 NormalizedStatute(

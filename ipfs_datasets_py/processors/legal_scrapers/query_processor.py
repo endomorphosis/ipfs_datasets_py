@@ -51,6 +51,9 @@ if not HAVE_SHARED_COMPONENTS:
     except ImportError:
         logger.error("Neither common/ nor complaint_analysis available")
 
+# Backward-compatible alias used throughout this module.
+HAVE_COMPLAINT_ANALYSIS = HAVE_SHARED_COMPONENTS
+
 
 # US state codes and names
 US_STATES = {
