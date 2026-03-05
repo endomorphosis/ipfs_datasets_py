@@ -1,12 +1,15 @@
 # ipfs_datasets_py/search/__init__.py
+import logging
+
+logger = logging.getLogger(__name__)
+
 try:
     from .search_embeddings import search_embeddings
     __all__ = ['search_embeddings']
 except ImportError as e:
     from .search_embeddings_mock import search_embeddings
     __all__ = ['search_embeddings']
-    import warnings
-    warnings.warn(f"search_embeddings using mock implementation due to missing dependencies: {e}")
+    logger.warning("search_embeddings using mock implementation due to missing dependencies: %s", e)
 
 # Also make the module available for patching
 try:

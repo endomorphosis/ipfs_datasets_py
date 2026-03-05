@@ -21,11 +21,16 @@ from .exceptions import HealthCheckError, MonitoringError, MetricsCollectionErro
 
 logger = logging.getLogger(__name__)
 
+
+def _utcnow() -> datetime:
+    """Return naive UTC datetime without using deprecated datetime.utcnow()."""
+    return datetime.now(datetime.UTC).replace(tzinfo=None)
+
 @dataclass
 class MetricData:
     """Container for metric data with timestamp and labels."""
     value: Union[float, int]
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=_utcnow)
     labels: Dict[str, str] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -35,7 +40,7 @@ class HealthCheckResult:
     component: str
     status: str  # 'healthy', 'warning', 'critical', 'unknown'
     message: str
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=_utcnow)
     details: Dict[str, Any] = field(default_factory=dict)
     response_time_ms: Optional[float] = None
 
@@ -67,7 +72,7 @@ class EnhancedMetricsCollector:
         """
         self.enabled = enabled
         self.retention_hours = retention_hours
-        self.start_time = datetime.utcnow()
+        self.start_time = _utcnow()
         
         # Core metric storage
         self.counters: Dict[str, float] = defaultdict(float)
@@ -201,7 +206,7 @@ class EnhancedMetricsCollector:
                 # Fallback when psutil is not installed
                 cpu_percent = 0.0
                 snapshot = PerformanceSnapshot(
-                    timestamp=datetime.utcnow(),
+                    timestamp=_utcnow(),
                     cpu_percent=0.0,
                     memory_percent=0.0,
                     memory_used_mb=0.0,
@@ -248,7 +253,7 @@ class EnhancedMetricsCollector:
             
             # Create performance snapshot
             snapshot = PerformanceSnapshot(
-                timestamp=datetime.utcnow(),
+                timestamp=_utcnow(),
                 cpu_percent=cpu_percent,
                 memory_percent=memory.percent,
                 memory_used_mb=memory.used / 1024 / 1024,
@@ -327,7 +332,7 @@ class EnhancedMetricsCollector:
         
         try:
             with self._lock:
-                self.active_requests[request_id] = datetime.utcnow()
+                self.active_requests[request_id] = _utcnow()
                 self.request_count += 1
             
             yield
@@ -415,7 +420,7 @@ class EnhancedMetricsCollector:
         with self._lock:
             self.tool_metrics['call_counts'][tool_name] += 1
             self.tool_metrics['execution_times'][tool_name].append(execution_time_ms)
-            self.tool_metrics['last_called'][tool_name] = datetime.utcnow()
+            self.tool_metrics['last_called'][tool_name] = _utcnow()
             
             if not success:
                 self.tool_metrics['error_counts'][tool_name] += 1
@@ -452,7 +457,7 @@ class EnhancedMetricsCollector:
                         component=name,
                         status="healthy" | "warning" | "critical" | "unknown",
                         message="Description of health status",
-                        timestamp=datetime.utcnow(),
+                        timestamp=_utcnow(),
                         details={...},  # Optional diagnostic data
                         response_time_ms=Optional[float]  # Check execution time
                     )
@@ -624,7 +629,7 @@ class EnhancedMetricsCollector:
         
         # Store alerts
         for alert in alerts_triggered:
-            alert['timestamp'] = datetime.utcnow()
+            alert['timestamp'] = _utcnow()
             with self._lock:
                 self.alerts.append(alert)
     
@@ -633,7 +638,7 @@ class EnhancedMetricsCollector:
         if not self.request_times:
             return 0.0
         
-        now = datetime.utcnow()
+        now = _utcnow()
         minute_ago = now - timedelta(minutes=1)
         
         recent_requests = sum(1 for ts in self.performance_snapshots 
@@ -659,7 +664,7 @@ class EnhancedMetricsCollector:
     
     async def _cleanup_old_data(self) -> None:
         """Clean up old metric data based on retention policy."""
-        cutoff_time = datetime.utcnow() - timedelta(hours=self.retention_hours)
+        cutoff_time = _utcnow() - timedelta(hours=self.retention_hours)
         
         with self._lock:
             # Clean up performance snapshots
@@ -772,7 +777,7 @@ class EnhancedMetricsCollector:
         """
         with self._lock:
             return {
-                'uptime_seconds': (datetime.utcnow() - self.start_time).total_seconds(),
+                'uptime_seconds': (_utcnow() - self.start_time).total_seconds(),
                 'system_metrics': self.system_metrics.copy(),
                 'request_metrics': {
                     'total_requests': self.request_count,
@@ -942,7 +947,7 @@ class EnhancedMetricsCollector:
         Note:
             - **Data Resolution**: Snapshots are typically collected every 30-60 seconds
             - **Thread-Safe**: Snapshot filtering done under lock
-            - **Time Zone**: All timestamps are UTC (datetime.utcnow())
+            - **Time Zone**: All timestamps are UTC (`_utcnow()` helper)
             - **Sparse Data**: May return fewer points than expected if snapshots were skipped
             - **Memory**: Snapshot history is bounded (typically 1000-2000 points max)
             - **Garbage Collection**: Old snapshots are automatically purged
@@ -975,7 +980,7 @@ class EnhancedMetricsCollector:
             - **request_rate_trend**: Requests per second (float)
             - **response_time_trend**: Average response time in milliseconds (float)
         """
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = _utcnow() - timedelta(hours=hours)
         
         with self._lock:
             relevant_snapshots = [
@@ -1174,7 +1179,7 @@ class P2PMetricsCollector:
         if duration_ms is not None:
             self.peer_discovery_metrics['discovery_times'].append(duration_ms)
         
-        self.peer_discovery_metrics['last_discovery'] = datetime.utcnow()
+        self.peer_discovery_metrics['last_discovery'] = _utcnow()
         
         # Update base collector
         self.base_collector.increment_counter(f'p2p.peer_discovery.{source}', peers_found)
@@ -1298,7 +1303,7 @@ class P2PMetricsCollector:
         if execution_time_ms is not None:
             self.workflow_metrics['workflow_durations'].append(execution_time_ms)
         
-        self.workflow_metrics['last_workflow'] = datetime.utcnow()
+        self.workflow_metrics['last_workflow'] = _utcnow()
         
         # Update base collector
         self.base_collector.increment_counter(f'p2p.workflow.{status}')
@@ -1432,7 +1437,7 @@ class P2PMetricsCollector:
         if duration_ms is not None:
             self.bootstrap_metrics['bootstrap_times'].append(duration_ms)
         
-        self.bootstrap_metrics['last_bootstrap'] = datetime.utcnow()
+        self.bootstrap_metrics['last_bootstrap'] = _utcnow()
         
         # Update base collector
         self.base_collector.increment_counter(f'p2p.bootstrap.{method}')
@@ -1644,7 +1649,7 @@ class P2PMetricsCollector:
             - SLA compliance verification
             - Debugging network connectivity issues
         """
-        now = datetime.utcnow()
+        now = _utcnow()
         
         # Return cached data if available and fresh
         if (not force_refresh and 
@@ -1830,7 +1835,7 @@ class P2PMetricsCollector:
             'type': 'warning',
             'component': 'peer_discovery',
             'message': f'High peer discovery failure rate: {failure_rate * 100:.1f}%',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': _utcnow().isoformat(),
         }]
 
     def _check_workflow_alerts(self) -> List[Dict[str, Any]]:
@@ -1848,7 +1853,7 @@ class P2PMetricsCollector:
             'type': 'warning',
             'component': 'workflows',
             'message': f'High workflow failure rate: {failure_rate * 100:.1f}%',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': _utcnow().isoformat(),
         }]
 
     def _check_bootstrap_alerts(self) -> List[Dict[str, Any]]:
@@ -1865,7 +1870,7 @@ class P2PMetricsCollector:
             'type': 'critical',
             'component': 'bootstrap',
             'message': f'High bootstrap failure rate: {failure_rate * 100:.1f}%',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': _utcnow().isoformat(),
         }]
 
 
