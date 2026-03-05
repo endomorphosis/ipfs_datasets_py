@@ -901,6 +901,46 @@ async def scrape_state_laws_from_parameters(
         }
 
 
+async def scrape_state_admin_rules_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    try:
+        from .state_admin_rules_scraper import scrape_state_admin_rules
+
+        result = await scrape_state_admin_rules(
+            states=parameters.get("states"),
+            output_format=parameters.get("output_format", "json"),
+            include_metadata=parameters.get("include_metadata", True),
+            rate_limit_delay=parameters.get("rate_limit_delay", 2.0),
+            max_rules=parameters.get("max_rules"),
+            output_dir=parameters.get("output_dir"),
+            write_jsonld=parameters.get("write_jsonld", True),
+            strict_full_text=parameters.get("strict_full_text", False),
+            min_full_text_chars=parameters.get("min_full_text_chars", 300),
+            hydrate_rule_text=parameters.get("hydrate_rule_text", True),
+            parallel_workers=parameters.get("parallel_workers", 6),
+            per_state_retry_attempts=parameters.get("per_state_retry_attempts", 1),
+            retry_zero_rule_states=parameters.get("retry_zero_rule_states", True),
+        )
+
+        job_id = parameters.get("job_id")
+        if job_id:
+            result["job_id"] = job_id
+
+        return result
+
+    except Exception as e:
+        logger.error("State administrative-rules scraping failed: %s", e)
+        return {
+            "status": "error",
+            "error": str(e),
+            "data": [],
+            "metadata": {},
+        }
+
+
 async def list_scraping_jobs_from_parameters(
     parameters: Dict[str, Any],
     *,

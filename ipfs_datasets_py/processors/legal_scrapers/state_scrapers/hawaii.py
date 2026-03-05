@@ -55,7 +55,7 @@ class HawaiiScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        archival = await self._scrape_archived_hrscurrent(code_name, max_statutes=20)
+        archival = await self._scrape_archived_hrscurrent(code_name, max_statutes=120)
         if archival:
             self.logger.info(f"Hawaii archival fallback: Scraped {len(archival)} sections")
             return archival
@@ -90,9 +90,6 @@ class HawaiiScraper(BaseStateScraper):
             statutes.append(statute)
             if len(statutes) >= max_statutes:
                 return statutes
-
-        if statutes:
-            return statutes
 
         for root_url in self._WAYBACK_ROOTS:
             root_html = await self._request_text(root_url, headers=headers, timeout=45)

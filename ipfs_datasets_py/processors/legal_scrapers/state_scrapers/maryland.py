@@ -35,13 +35,48 @@ class MarylandScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._playwright_scrape(
-            code_name, 
-            code_url, 
-            "Md. Code Ann.",
-            wait_for_selector="a[href*='statute'], .article-link",
-            timeout=45000
-        )
+        candidate_urls = [
+            code_url,
+            f"{self.get_base_url()}/mgawebsite/Laws/StatuteText",
+            f"{self.get_base_url()}/mgawebsite/Laws/Code",
+            "https://law.justia.com/codes/maryland/",
+        ]
+
+        seen = set()
+        best: List[NormalizedStatute] = []
+        for candidate in candidate_urls:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+
+            try:
+                statutes = await self._playwright_scrape(
+                    code_name,
+                    candidate,
+                    "Md. Code Ann.",
+                    wait_for_selector="a[href*='statute'], a[href*='laws'], .article-link",
+                    timeout=45000,
+                    max_sections=260,
+                )
+            except Exception:
+                statutes = []
+
+            if len(statutes) > len(best):
+                best = statutes
+            if len(statutes) >= 30:
+                return statutes
+
+            try:
+                generic = await self._generic_scrape(code_name, candidate, "Md. Code Ann.", max_sections=260)
+            except Exception:
+                generic = []
+
+            if len(generic) > len(best):
+                best = generic
+            if len(generic) >= 30:
+                return generic
+
+        return best
 
 
 # Register this scraper with the registry

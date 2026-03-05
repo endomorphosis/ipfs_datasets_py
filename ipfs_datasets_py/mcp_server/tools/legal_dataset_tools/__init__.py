@@ -22,6 +22,7 @@ from .us_code_scraper import scrape_us_code, get_us_code_titles, search_us_code
 from .mcp_tools import scrape_federal_laws
 from .federal_register_scraper import scrape_federal_register, search_federal_register
 from .state_laws_scraper import scrape_state_laws, list_state_jurisdictions
+from .state_admin_rules_scraper import scrape_state_admin_rules, list_state_admin_rule_jurisdictions
 from .municipal_laws_scraper import scrape_municipal_laws, search_municipal_codes
 from .recap_archive_scraper import scrape_recap_archive, search_recap_documents, get_recap_document
 from .export_utils import export_dataset, export_to_json, export_to_parquet, export_to_csv
@@ -111,6 +112,8 @@ __all__ = [
     # State Laws tools
     "scrape_state_laws",
     "list_state_jurisdictions",
+    "scrape_state_admin_rules",
+    "list_state_admin_rule_jurisdictions",
     
     # Municipal Laws tools
     "scrape_municipal_laws",

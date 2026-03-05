@@ -206,6 +206,15 @@ class LegalScraperRegistry:
                 "sources": ["state", "legislature"],
                 "capabilities": [ScraperCapability.ASYNC_BATCH]
             },
+            {
+                "name": "state_admin_rules",
+                "module": "state_admin_rules_scraper",
+                "class_name": None,
+                "type": ScraperType.STATE,
+                "priority": 22,
+                "sources": ["administrative", "regulation", "state"],
+                "capabilities": [ScraperCapability.ASYNC_BATCH]
+            },
             # Municipal scrapers
             {
                 "name": "municode",

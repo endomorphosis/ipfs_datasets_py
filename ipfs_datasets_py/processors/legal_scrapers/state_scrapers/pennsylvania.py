@@ -33,7 +33,27 @@ class PennsylvaniaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._generic_scrape(code_name, code_url, "Pa. Cons. Stat.")
+        candidate_urls = [
+            code_url,
+            f"{self.get_base_url()}/cfdocs/legis/LI/Public/li_index.cfm",
+            f"{self.get_base_url()}/WU01/LI/LI/CT/HTM/",
+            "https://law.justia.com/codes/pennsylvania/",
+        ]
+
+        seen = set()
+        best_statutes: List[NormalizedStatute] = []
+        for candidate in candidate_urls:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+
+            statutes = await self._generic_scrape(code_name, candidate, "Pa. Cons. Stat.", max_sections=280)
+            if len(statutes) > len(best_statutes):
+                best_statutes = statutes
+            if len(statutes) >= 30:
+                return statutes
+
+        return best_statutes
 
 
 # Register this scraper with the registry

@@ -30,6 +30,7 @@ except ImportError:
 
 from . import (
     state_laws_scraper,
+    state_admin_rules_scraper,
     municipal_laws_scraper,
     recap_archive_scraper,
 )
@@ -50,6 +51,7 @@ from .legal_dataset_api import (
     scrape_recap_archive_from_parameters,
     search_recap_documents_from_parameters,
     scrape_state_laws_from_parameters,
+    scrape_state_admin_rules_from_parameters,
     list_scraping_jobs_from_parameters,
     scrape_us_code_from_parameters,
     scrape_federal_laws_from_parameters,
@@ -111,6 +113,11 @@ except ImportError:
 from .state_laws_scraper import (
     list_state_jurisdictions,
     scrape_state_laws,
+)
+
+from .state_admin_rules_scraper import (
+    list_state_admin_rule_jurisdictions,
+    scrape_state_admin_rules,
 )
 
 from .state_laws_verifier import (
@@ -404,6 +411,7 @@ __all__ = [
     "federal_register_scraper",
     "us_code_scraper",
     "state_laws_scraper",
+    "state_admin_rules_scraper",
     "municipal_laws_scraper",
     "recap_archive_scraper",
     "citation_extraction",
@@ -424,6 +432,8 @@ __all__ = [
     # State Laws functions
     "list_state_jurisdictions",
     "scrape_state_laws",
+    "list_state_admin_rule_jurisdictions",
+    "scrape_state_admin_rules",
     # Municipal Laws functions
     "search_municipal_codes",
     "scrape_municipal_laws",
@@ -460,6 +470,7 @@ __all__ = [
     "scrape_recap_archive_from_parameters",
     "search_recap_documents_from_parameters",
     "scrape_state_laws_from_parameters",
+    "scrape_state_admin_rules_from_parameters",
     "list_scraping_jobs_from_parameters",
     "scrape_us_code_from_parameters",
     "scrape_federal_laws_from_parameters",

@@ -491,11 +491,23 @@ TOOL_MAPPINGS = {
                 "description": "Scrape state statutes and regulations",
                 "tags": ["legal", "state_laws", "statutes", "scraping"]
             },
+            "scrape_state_admin_rules": {
+                "name": "scrape_state_admin_rules",
+                "category": "legal_datasets",
+                "description": "Scrape state administrative rules and regulations",
+                "tags": ["legal", "state_admin_rules", "regulations", "scraping"]
+            },
             "list_state_jurisdictions": {
                 "name": "list_state_jurisdictions",
                 "category": "legal_datasets",
                 "description": "List available state jurisdictions for scraping",
                 "tags": ["legal", "state_laws", "metadata"]
+            },
+            "list_state_admin_rule_jurisdictions": {
+                "name": "list_state_admin_rule_jurisdictions",
+                "category": "legal_datasets",
+                "description": "List available state jurisdictions for admin-rules scraping",
+                "tags": ["legal", "state_admin_rules", "metadata"]
             },
             "scrape_municipal_laws": {
                 "name": "scrape_municipal_laws",

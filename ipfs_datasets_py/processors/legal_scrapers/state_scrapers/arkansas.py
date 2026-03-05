@@ -33,7 +33,27 @@ class ArkansasScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._generic_scrape(code_name, code_url, "Ark. Code Ann.")
+        candidate_urls = [
+            code_url,
+            "https://law.justia.com/codes/arkansas/",
+            "https://web.archive.org/web/20231201000000/https://law.justia.com/codes/arkansas/",
+            "https://www.arkleg.state.ar.us/",
+        ]
+
+        seen = set()
+        best_statutes: List[NormalizedStatute] = []
+        for candidate in candidate_urls:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+
+            statutes = await self._generic_scrape(code_name, candidate, "Ark. Code Ann.", max_sections=260)
+            if len(statutes) > len(best_statutes):
+                best_statutes = statutes
+            if len(statutes) >= 30:
+                return statutes
+
+        return best_statutes
 
 
 # Register this scraper with the registry

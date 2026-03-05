@@ -39,6 +39,14 @@ async def scrape_state_laws(parameters: Dict[str, Any]) -> Dict[str, Any]:
     return await scrape_state_laws_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
+async def scrape_state_admin_rules(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Scrape state administrative rules and regulations."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        scrape_state_admin_rules_from_parameters,
+    )
+    return await scrape_state_admin_rules_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
 async def list_scraping_jobs(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """List all scraping jobs with resume capability."""
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
@@ -354,6 +362,7 @@ LEGAL_DATASET_MCP_TOOLS: List[Any] = [
     scrape_recap_archive,
     search_recap_documents,
     scrape_state_laws,
+    scrape_state_admin_rules,
     list_scraping_jobs,
     scrape_us_code,
     scrape_federal_laws,
@@ -736,6 +745,7 @@ __all__ = [
     "scrape_recap_archive",
     "search_recap_documents",
     "scrape_state_laws",
+    "scrape_state_admin_rules",
     "list_scraping_jobs",
     "scrape_us_code",
     "scrape_federal_laws",

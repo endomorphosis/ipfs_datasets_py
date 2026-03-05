@@ -74,7 +74,7 @@ class OklahomaScraper(BaseStateScraper):
         """
         best_archival: List[NormalizedStatute] = []
         for attempt in range(3):
-            archival = await self._scrape_oscn_documents(code_name=code_name, max_statutes=30)
+            archival = await self._scrape_oscn_documents(code_name=code_name, max_statutes=140)
             if len(archival) > len(best_archival):
                 best_archival = archival
             if best_archival:
