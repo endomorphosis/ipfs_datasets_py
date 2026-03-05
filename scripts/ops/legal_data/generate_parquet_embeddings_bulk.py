@@ -261,6 +261,8 @@ def _embed_file(
     queue_wait_retries: int,
     queue_wait_retry_base_ms: int,
     queue_wait_slice_timeout_s: float,
+    queue_wait_probe_interval_cycles: int,
+    queue_wait_probe_near_deadline_s: float,
     queue_retry_dial_timeout_scale: float,
     queue_retry_dial_timeout_max_s: float,
     queue_retry_delay_max_ms: int,
@@ -327,6 +329,8 @@ def _embed_file(
             queue_wait_retries=int(queue_wait_retries),
             queue_wait_retry_base_ms=int(queue_wait_retry_base_ms),
             queue_wait_slice_timeout_s=float(queue_wait_slice_timeout_s),
+            queue_wait_probe_interval_cycles=int(queue_wait_probe_interval_cycles),
+            queue_wait_probe_near_deadline_s=float(queue_wait_probe_near_deadline_s),
             queue_retry_dial_timeout_scale=float(queue_retry_dial_timeout_scale),
             queue_retry_dial_timeout_max_s=float(queue_retry_dial_timeout_max_s),
             queue_retry_delay_max_ms=int(queue_retry_delay_max_ms),
@@ -761,6 +765,11 @@ def _wait_remote_with_retries(
                 task_id=str(task_id),
                 timeout_s=float(per_attempt_timeout_s),
             )
+            # `wait_task` returning None usually means "not ready yet" (long-poll
+            # timeout), not a transport fault. Return early so callers can
+            # requeue/drain other in-flight work without extra retry delays.
+            if task is None:
+                return None
             if isinstance(task, dict):
                 return task
         except Exception:
@@ -857,6 +866,8 @@ def _effective_p2p_knobs(args: argparse.Namespace) -> dict[str, Any]:
         "wait_retries": max(0, int(args.queue_wait_retries)),
         "wait_retry_base_ms": max(10, int(args.queue_wait_retry_base_ms)),
         "wait_slice_timeout_s": max(1.0, float(args.queue_wait_slice_timeout_s)),
+        "wait_probe_interval_cycles": max(0, int(args.queue_wait_probe_interval_cycles)),
+        "wait_probe_near_deadline_s": max(1.0, float(args.queue_wait_probe_near_deadline_s)),
         "retry_dial_timeout_scale": max(1.0, float(args.queue_retry_dial_timeout_scale)),
         "retry_dial_timeout_max_s": max(1.0, float(args.queue_retry_dial_timeout_max_s)),
         "retry_delay_max_ms": max(10, int(args.queue_retry_delay_max_ms)),
@@ -978,6 +989,8 @@ def _embed_file_via_taskqueue(
     queue_wait_retries: int,
     queue_wait_retry_base_ms: int,
     queue_wait_slice_timeout_s: float,
+    queue_wait_probe_interval_cycles: int,
+    queue_wait_probe_near_deadline_s: float,
     queue_retry_dial_timeout_scale: float,
     queue_retry_dial_timeout_max_s: float,
     queue_retry_delay_max_ms: int,
@@ -1131,7 +1144,9 @@ def _embed_file_via_taskqueue(
             "[queue:config] "
             f"use_remote={use_remote} remotes={len(remotes)} inflight_limit={inflight_limit} "
             f"submit_retries={max(0, int(queue_submit_retries))} wait_retries={max(0, int(queue_wait_retries))} "
-            f"wait_slice_timeout_s={max(1.0, float(queue_wait_slice_timeout_s)):.1f}"
+            f"wait_slice_timeout_s={max(1.0, float(queue_wait_slice_timeout_s)):.1f} "
+            f"wait_probe_interval_cycles={max(0, int(queue_wait_probe_interval_cycles))} "
+            f"wait_probe_near_deadline_s={max(1.0, float(queue_wait_probe_near_deadline_s)):.1f}"
         )
         for idx, remote in enumerate(remotes):
             print(
@@ -1162,6 +1177,7 @@ def _embed_file_via_taskqueue(
     failed = 0
     completed = 0
     submit_failed = 0
+    wait_requeued = 0
     submit_failure_streak = 0
     submit_count = 0
     decay_every_raw = int(queue_remote_penalty_decay_every)
@@ -1224,7 +1240,7 @@ def _embed_file_via_taskqueue(
             remote_unavailable_until[idx] = 0.0
 
     def _consume_one(ref: dict[str, Any]) -> None:
-        nonlocal failed, completed, next_preferred_remote_index
+        nonlocal failed, completed, next_preferred_remote_index, wait_requeued
         t0 = time.monotonic()
         task = None
         remote_index = _int_field(ref, "remote_index", -1)
@@ -1233,6 +1249,7 @@ def _embed_file_via_taskqueue(
         submitted_at_monotonic = float(ref.get("submitted_at_monotonic") or 0.0)
         if submitted_at_monotonic <= 0.0:
             submitted_at_monotonic = float(t0)
+        wait_cycle = _int_field(ref, "wait_cycle", 0)
         task_age_s = max(0.0, float(t0) - float(submitted_at_monotonic))
         wait_remaining_s = max(0.0, float(task_timeout_s) - float(task_age_s))
         wait_slice_timeout_s = max(1.0, float(queue_wait_slice_timeout_s))
@@ -1243,7 +1260,7 @@ def _embed_file_via_taskqueue(
                 f"start row_index={row_index} "
                 f"task_id={str(ref.get('task_id') or '')} "
                 f"remote_index={remote_index} backend={str(ref.get('backend') or '')} "
-                f"task_age_s={task_age_s:.2f} wait_remaining_s={wait_remaining_s:.2f} "
+                f"wait_cycle={wait_cycle} task_age_s={task_age_s:.2f} wait_remaining_s={wait_remaining_s:.2f} "
                 f"wait_timeout_s={per_call_wait_timeout_s:.2f}"
             )
         if ref.get("backend") == "remote":
@@ -1262,10 +1279,19 @@ def _embed_file_via_taskqueue(
                 timeout_s=float(task_timeout_s),
             )
 
-        # Under mixed remote health, wait can occasionally return no task even
-        # though the task exists/finishes shortly after; probe get_task before
-        # treating it as a hard failure.
+        # Under heavy load, probing get_task after every wait timeout can
+        # amplify control-RPC traffic. Probe sparingly: periodically while the
+        # task is still young, and always near timeout budget exhaustion.
+        should_probe_get = False
         if not isinstance(task, dict) and is_remote_backend:
+            near_deadline_s = max(1.0, float(queue_wait_probe_near_deadline_s))
+            probe_interval = max(0, int(queue_wait_probe_interval_cycles))
+            if wait_remaining_s <= near_deadline_s:
+                should_probe_get = True
+            elif probe_interval > 0 and wait_cycle > 0 and (wait_cycle % probe_interval == 0):
+                should_probe_get = True
+
+        if should_probe_get:
             task = _get_remote_task_with_retries(
                 remote=ref.get("remote"),
                 task_id=str(ref.get("task_id") or ""),
@@ -1273,6 +1299,12 @@ def _embed_file_via_taskqueue(
                 get_retry_base_ms=max(10, int(queue_wait_retry_base_ms)),
                 retry_delay_max_ms=int(queue_retry_delay_max_ms),
             )
+            if bool(queue_verbose) and not isinstance(task, dict):
+                print(
+                    "[queue:wait] "
+                    f"probe_empty row_index={row_index} remote_index={remote_index} "
+                    f"wait_cycle={wait_cycle} wait_remaining_s={wait_remaining_s:.2f}"
+                )
 
         if not isinstance(task, dict):
             # Avoid head-of-line blocking and false negatives under high queue
@@ -1281,8 +1313,9 @@ def _embed_file_via_taskqueue(
             if is_remote_backend and wait_remaining_s > 0.0:
                 deferred_ref = dict(ref)
                 deferred_ref["submitted_at_monotonic"] = float(submitted_at_monotonic)
-                deferred_ref["wait_cycle"] = _int_field(ref, "wait_cycle", 0) + 1
+                deferred_ref["wait_cycle"] = int(wait_cycle) + 1
                 pending.append(deferred_ref)
+                wait_requeued += 1
                 if bool(queue_verbose):
                     print(
                         "[queue:wait] "
@@ -1579,6 +1612,8 @@ def _embed_file_via_taskqueue(
             "[queue] warning: "
             f"failed_or_empty={failed} submit_failed={submit_failed} successful={len(out_rows)}"
         )
+    if wait_requeued:
+        print(f"[queue] wait_requeued={wait_requeued}")
 
     if use_remote and remote_penalties:
         nonzero = sum(1 for p in remote_penalties if int(p) > 0)
@@ -1711,6 +1746,21 @@ def _parse_args() -> argparse.Namespace:
             "Bounded timeout (seconds) used per remote wait call before requeuing "
             "in-flight tasks; reduces head-of-line blocking under high throughput"
         ),
+    )
+    parser.add_argument(
+        "--queue-wait-probe-interval-cycles",
+        type=int,
+        default=4,
+        help=(
+            "Run get_task probe every N wait requeue cycles (0 disables periodic probes; "
+            "near-deadline probes still apply)"
+        ),
+    )
+    parser.add_argument(
+        "--queue-wait-probe-near-deadline-s",
+        type=float,
+        default=5.0,
+        help="Force get_task probing when remaining task timeout budget is below this threshold",
     )
     parser.add_argument(
         "--queue-retry-dial-timeout-scale",
@@ -1959,6 +2009,8 @@ def main() -> int:
             queue_wait_retries=int(args.queue_wait_retries),
             queue_wait_retry_base_ms=int(args.queue_wait_retry_base_ms),
             queue_wait_slice_timeout_s=float(args.queue_wait_slice_timeout_s),
+            queue_wait_probe_interval_cycles=int(args.queue_wait_probe_interval_cycles),
+            queue_wait_probe_near_deadline_s=float(args.queue_wait_probe_near_deadline_s),
             queue_retry_dial_timeout_scale=float(args.queue_retry_dial_timeout_scale),
             queue_retry_dial_timeout_max_s=float(args.queue_retry_dial_timeout_max_s),
             queue_retry_delay_max_ms=int(args.queue_retry_delay_max_ms),
