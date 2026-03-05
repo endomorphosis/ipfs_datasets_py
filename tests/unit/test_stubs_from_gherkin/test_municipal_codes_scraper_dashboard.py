@@ -9,7 +9,8 @@ import sys
 from typing import Dict, Any
 import requests
 
-from conftest import FixtureError
+class FixtureError(Exception):
+    """Local fixture error used by stub test templates."""
 
 
 # Tab Navigation

@@ -34,24 +34,26 @@ def pytest_collection_modifyitems(config, items):
     if _RUN_STUBS:
         return
 
-    # Remove only collected items from this stub/template directory.
-    # This conftest is imported for the whole run, so we must not clear
+    # Skip only collected items from this stub/template directory.
+    # This conftest is imported for the whole run, so we must not mutate
     # unrelated tests from other directories.
     stubs_root = Path(__file__).resolve().parent
 
-    kept_items = []
+    skip_marker = pytest.mark.skip(
+        reason=(
+            "Stub/template test file. Enable execution with "
+            "IPFS_DATASETS_PY_RUN_TEST_STUBS=1."
+        )
+    )
+
     for item in items:
         try:
             item_path = Path(str(item.fspath)).resolve()
         except Exception:
-            kept_items.append(item)
             continue
 
         if item_path.is_relative_to(stubs_root):
-            continue
-        kept_items.append(item)
-
-    items[:] = kept_items
+            item.add_marker(skip_marker)
 
 
 def pytest_configure(config):

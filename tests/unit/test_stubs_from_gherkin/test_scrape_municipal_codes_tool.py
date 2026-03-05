@@ -9,7 +9,8 @@ import pytest
 import sys
 from typing import Dict, Any, Optional, Type
 
-from conftest import FixtureError
+class FixtureError(Exception):
+    """Local fixture error used by stub test templates."""
 
 
 # Fixtures from Background

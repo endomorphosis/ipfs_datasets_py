@@ -11,7 +11,8 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 import requests
 
-from conftest import FixtureError
+class FixtureError(Exception):
+    """Local fixture error used by stub test templates."""
 
 
 # Fixtures from Background
