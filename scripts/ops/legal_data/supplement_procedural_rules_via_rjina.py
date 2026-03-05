@@ -24,6 +24,7 @@ LINK_RE = re.compile(r"\[(?P<label>[^\]]+)\]\((?P<url>https?://[^)]+)\)")
 
 CIVIL_RE = re.compile(r"civil\s+procedure|code\s+of\s+civil\s+procedure|cplr|ccp", re.IGNORECASE)
 CRIMINAL_RE = re.compile(r"criminal\s+procedure|code\s+of\s+criminal\s+procedure|crim", re.IGNORECASE)
+FALLBACK_LINK_RE = re.compile(r"rule|rules|form|forms|procedure|court|civil|criminal", re.IGNORECASE)
 
 
 def _page_context_family(seed_url: str, markdown_text: str) -> Optional[str]:
@@ -97,7 +98,10 @@ def _extract_matches(markdown_text: str, seed_url: str) -> List[Tuple[str, str, 
                 family = "civil_procedure"
             elif ".chapter.2." in url.lower():
                 family = "criminal_procedure"
-        if not family and fallback_family and url.lower().endswith(".pdf"):
+        if not family and fallback_family and (
+            url.lower().endswith(".pdf")
+            or FALLBACK_LINK_RE.search(f"{label}\n{url}") is not None
+        ):
             family = fallback_family
         if family:
             out.append((family, label, url))
@@ -116,12 +120,32 @@ def _state_seed_urls(state_code: str, state_name: str) -> List[str]:
         )
     if state_code == "NJ":
         seeds.append("https://www.njcourts.gov/attorneys/rules-of-court")
+    if state_code == "MN":
+        seeds.extend(
+            [
+                "https://www.revisor.mn.gov/court_rules/",
+            ]
+        )
+    if state_code == "MO":
+        seeds.extend(
+            [
+                "https://www.courts.mo.gov/page.jsp?id=46",
+            ]
+        )
     if state_code == "NM":
         seeds.extend(
             [
                 "https://nmcourts.gov/forms-files/civil",
                 "https://nmcourts.gov/forms-files/criminal",
                 "https://nmcourts.gov/rules-forms-filing/",
+            ]
+        )
+    if state_code == "NH":
+        seeds.extend(
+            [
+                "https://www.courts.nh.gov/self-help/civil",
+                "https://www.courts.nh.gov/self-help/criminal",
+                "https://www.courts.nh.gov/media/rules-governing-media-court",
             ]
         )
     if state_code == "DC":
