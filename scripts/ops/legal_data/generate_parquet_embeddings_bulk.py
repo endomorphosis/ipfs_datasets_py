@@ -263,6 +263,7 @@ def _embed_file(
     queue_wait_slice_timeout_s: float,
     queue_wait_probe_interval_cycles: int,
     queue_wait_probe_near_deadline_s: float,
+    queue_wait_probe_get_retries: int,
     queue_retry_dial_timeout_scale: float,
     queue_retry_dial_timeout_max_s: float,
     queue_retry_delay_max_ms: int,
@@ -331,6 +332,7 @@ def _embed_file(
             queue_wait_slice_timeout_s=float(queue_wait_slice_timeout_s),
             queue_wait_probe_interval_cycles=int(queue_wait_probe_interval_cycles),
             queue_wait_probe_near_deadline_s=float(queue_wait_probe_near_deadline_s),
+            queue_wait_probe_get_retries=int(queue_wait_probe_get_retries),
             queue_retry_dial_timeout_scale=float(queue_retry_dial_timeout_scale),
             queue_retry_dial_timeout_max_s=float(queue_retry_dial_timeout_max_s),
             queue_retry_delay_max_ms=int(queue_retry_delay_max_ms),
@@ -868,6 +870,7 @@ def _effective_p2p_knobs(args: argparse.Namespace) -> dict[str, Any]:
         "wait_slice_timeout_s": max(1.0, float(args.queue_wait_slice_timeout_s)),
         "wait_probe_interval_cycles": max(0, int(args.queue_wait_probe_interval_cycles)),
         "wait_probe_near_deadline_s": max(1.0, float(args.queue_wait_probe_near_deadline_s)),
+        "wait_probe_get_retries": max(0, int(args.queue_wait_probe_get_retries)),
         "retry_dial_timeout_scale": max(1.0, float(args.queue_retry_dial_timeout_scale)),
         "retry_dial_timeout_max_s": max(1.0, float(args.queue_retry_dial_timeout_max_s)),
         "retry_delay_max_ms": max(10, int(args.queue_retry_delay_max_ms)),
@@ -991,6 +994,7 @@ def _embed_file_via_taskqueue(
     queue_wait_slice_timeout_s: float,
     queue_wait_probe_interval_cycles: int,
     queue_wait_probe_near_deadline_s: float,
+    queue_wait_probe_get_retries: int,
     queue_retry_dial_timeout_scale: float,
     queue_retry_dial_timeout_max_s: float,
     queue_retry_delay_max_ms: int,
@@ -1146,7 +1150,8 @@ def _embed_file_via_taskqueue(
             f"submit_retries={max(0, int(queue_submit_retries))} wait_retries={max(0, int(queue_wait_retries))} "
             f"wait_slice_timeout_s={max(1.0, float(queue_wait_slice_timeout_s)):.1f} "
             f"wait_probe_interval_cycles={max(0, int(queue_wait_probe_interval_cycles))} "
-            f"wait_probe_near_deadline_s={max(1.0, float(queue_wait_probe_near_deadline_s)):.1f}"
+            f"wait_probe_near_deadline_s={max(1.0, float(queue_wait_probe_near_deadline_s)):.1f} "
+            f"wait_probe_get_retries={max(0, int(queue_wait_probe_get_retries))}"
         )
         for idx, remote in enumerate(remotes):
             print(
@@ -1295,7 +1300,7 @@ def _embed_file_via_taskqueue(
             task = _get_remote_task_with_retries(
                 remote=ref.get("remote"),
                 task_id=str(ref.get("task_id") or ""),
-                get_retries=1,
+                get_retries=max(0, int(queue_wait_probe_get_retries)),
                 get_retry_base_ms=max(10, int(queue_wait_retry_base_ms)),
                 retry_delay_max_ms=int(queue_retry_delay_max_ms),
             )
@@ -1763,6 +1768,12 @@ def _parse_args() -> argparse.Namespace:
         help="Force get_task probing when remaining task timeout budget is below this threshold",
     )
     parser.add_argument(
+        "--queue-wait-probe-get-retries",
+        type=int,
+        default=0,
+        help="Retry attempts for each wait-loop get_task probe (0 keeps probe to a single control RPC)",
+    )
+    parser.add_argument(
         "--queue-retry-dial-timeout-scale",
         type=float,
         default=1.25,
@@ -2011,6 +2022,7 @@ def main() -> int:
             queue_wait_slice_timeout_s=float(args.queue_wait_slice_timeout_s),
             queue_wait_probe_interval_cycles=int(args.queue_wait_probe_interval_cycles),
             queue_wait_probe_near_deadline_s=float(args.queue_wait_probe_near_deadline_s),
+            queue_wait_probe_get_retries=int(args.queue_wait_probe_get_retries),
             queue_retry_dial_timeout_scale=float(args.queue_retry_dial_timeout_scale),
             queue_retry_dial_timeout_max_s=float(args.queue_retry_dial_timeout_max_s),
             queue_retry_delay_max_ms=int(args.queue_retry_delay_max_ms),
