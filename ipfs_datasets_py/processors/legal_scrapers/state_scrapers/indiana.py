@@ -6,9 +6,6 @@ Indiana General Assembly static-document chapter PDFs.
 
 import re
 import subprocess
-import json
-import urllib.request
-import urllib.parse
 from typing import Dict, List
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -51,7 +48,7 @@ class IndianaScraper(BaseStateScraper):
         Indiana's live site is currently SPA-only in headless contexts.
         We prefer stable Wayback chapter PDFs that contain substantial text.
         """
-        archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=140)
+        archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=20)
         if archival:
             self.logger.info(f"Indiana archival fallback: Scraped {len(archival)} sections")
             return archival
@@ -63,12 +60,8 @@ class IndianaScraper(BaseStateScraper):
         headers = {"User-Agent": "Mozilla/5.0"}
         statutes: List[NormalizedStatute] = []
         seen_ids = set()
-        candidate_urls = list(self._ARCHIVE_CHAPTER_PDFS)
-        for discovered in await self._discover_archived_chapter_pdfs(limit=260):
-            if discovered not in candidate_urls:
-                candidate_urls.append(discovered)
 
-        for pdf_url in candidate_urls:
+        for pdf_url in self._ARCHIVE_CHAPTER_PDFS:
             if len(statutes) >= max_statutes:
                 break
 
@@ -82,34 +75,6 @@ class IndianaScraper(BaseStateScraper):
             statutes.append(statute)
 
         return statutes
-
-    async def _discover_archived_chapter_pdfs(self, limit: int = 200) -> List[str]:
-        cdx_url = (
-            "http://web.archive.org/cdx/search/cdx?url=iga.in.gov/static-documents/*/TITLE*_AR*_ch*.pdf"
-            "&output=json&filter=statuscode:200&collapse=digest"
-            f"&limit={max(1, int(limit))}"
-        )
-        try:
-            req = urllib.request.Request(cdx_url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=45) as resp:
-                payload = resp.read().decode("utf-8", errors="ignore")
-            rows = json.loads(payload)
-            if not isinstance(rows, list) or len(rows) < 2:
-                return []
-
-            out: List[str] = []
-            for row in rows[1:]:
-                if not isinstance(row, list) or len(row) < 3:
-                    continue
-                ts = str(row[1]).strip()
-                original = str(row[2]).strip()
-                if not ts or not original:
-                    continue
-                encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
-                out.append(f"http://web.archive.org/web/{ts}/{encoded}")
-            return out
-        except Exception:
-            return []
 
     async def _build_statute_from_pdf_url(
         self,

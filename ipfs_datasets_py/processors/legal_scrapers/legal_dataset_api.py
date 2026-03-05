@@ -915,6 +915,7 @@ async def scrape_state_admin_rules_from_parameters(
             include_metadata=parameters.get("include_metadata", True),
             rate_limit_delay=parameters.get("rate_limit_delay", 2.0),
             max_rules=parameters.get("max_rules"),
+            max_base_statutes=parameters.get("max_base_statutes"),
             output_dir=parameters.get("output_dir"),
             write_jsonld=parameters.get("write_jsonld", True),
             strict_full_text=parameters.get("strict_full_text", False),
@@ -923,6 +924,8 @@ async def scrape_state_admin_rules_from_parameters(
             parallel_workers=parameters.get("parallel_workers", 6),
             per_state_retry_attempts=parameters.get("per_state_retry_attempts", 1),
             retry_zero_rule_states=parameters.get("retry_zero_rule_states", True),
+            per_state_timeout_seconds=parameters.get("per_state_timeout_seconds", 480.0),
+            include_dc=parameters.get("include_dc", False),
         )
 
         job_id = parameters.get("job_id")

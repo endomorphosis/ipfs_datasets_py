@@ -341,6 +341,18 @@ class BaseStateScraper(ABC):
         text_lower = text.lower()
         
         area_keywords = {
+            "administrative": [
+                "administrative",
+                "regulation",
+                "regulatory",
+                "code of regulations",
+                "admin code",
+                "agency rule",
+                "oar",
+                "aac",
+                "arc",
+                "nmac",
+            ],
             "criminal": ["criminal", "penal", "crime", "felony", "misdemeanor"],
             "civil": ["civil", "tort", "liability", "damages"],
             "family": ["family", "marriage", "divorce", "custody", "child"],

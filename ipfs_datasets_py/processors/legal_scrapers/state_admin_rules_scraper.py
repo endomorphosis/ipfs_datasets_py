@@ -23,6 +23,8 @@ from .state_laws_scraper import (
 
 logger = logging.getLogger(__name__)
 
+US_50_STATE_CODES: List[str] = [code for code in US_STATES.keys() if code != "DC"]
+
 _ADMIN_RULE_TEXT_RE = re.compile(
     r"administrative|admin\.?\s+code|code\s+of\s+regulations|regulation|agency\s+rule|oar\b|aac\b|arc\b|nmac\b",
     re.IGNORECASE,
@@ -130,9 +132,27 @@ def _write_state_admin_jsonld_files(scraped_rules: List[Dict[str, Any]], jsonld_
     return written
 
 
-async def list_state_admin_rule_jurisdictions() -> Dict[str, Any]:
-    """Return available US state jurisdictions for admin-rules scraping."""
-    return await list_state_jurisdictions()
+async def list_state_admin_rule_jurisdictions(include_dc: bool = False) -> Dict[str, Any]:
+    """Return available state jurisdictions for admin-rules scraping.
+
+    By default this returns the 50 US states only (excluding DC).
+    Set ``include_dc=True`` to include District of Columbia.
+    """
+    base = await list_state_jurisdictions()
+    if base.get("status") != "success":
+        return base
+
+    states = dict(base.get("states") or {})
+    if not include_dc:
+        states.pop("DC", None)
+
+    return {
+        "status": "success",
+        "states": states,
+        "count": len(states),
+        "include_dc": bool(include_dc),
+        "note": "Includes all 50 US states" + (" plus DC" if include_dc else ""),
+    }
 
 
 async def scrape_state_admin_rules(
@@ -149,6 +169,9 @@ async def scrape_state_admin_rules(
     parallel_workers: int = 6,
     per_state_retry_attempts: int = 1,
     retry_zero_rule_states: bool = True,
+    max_base_statutes: Optional[int] = None,
+    per_state_timeout_seconds: float = 480.0,
+    include_dc: bool = False,
 ) -> Dict[str, Any]:
     """Scrape state administrative rules for selected states.
 
@@ -156,18 +179,27 @@ async def scrape_state_admin_rules(
     filters the normalized output to administrative-rule records only.
     """
     try:
-        selected_states = [s.upper() for s in (states or []) if s and str(s).upper() in US_STATES]
+        allowed_state_codes = set(US_STATES.keys() if include_dc else US_50_STATE_CODES)
+        selected_states = [
+            s.upper()
+            for s in (states or [])
+            if s and str(s).upper() in allowed_state_codes
+        ]
         if not selected_states or "ALL" in selected_states:
-            selected_states = list(US_STATES.keys())
+            selected_states = list(US_STATES.keys() if include_dc else US_50_STATE_CODES)
 
         start = time.time()
+        effective_max_base_statutes = max_base_statutes
+        if effective_max_base_statutes is None and max_rules and int(max_rules) > 0:
+            effective_max_base_statutes = int(max_rules)
+
         base_result = await scrape_state_laws(
             states=selected_states,
-            legal_areas=None,
+            legal_areas=["administrative"],
             output_format=output_format,
             include_metadata=include_metadata,
             rate_limit_delay=rate_limit_delay,
-            max_statutes=None,
+            max_statutes=effective_max_base_statutes,
             output_dir=None,  # Keep separate admin-rules output root.
             write_jsonld=False,
             strict_full_text=strict_full_text,
@@ -176,6 +208,7 @@ async def scrape_state_admin_rules(
             parallel_workers=parallel_workers,
             per_state_retry_attempts=per_state_retry_attempts,
             retry_zero_statute_states=retry_zero_rule_states,
+            per_state_timeout_seconds=per_state_timeout_seconds,
         )
 
         raw_data = list(base_result.get("data") or [])
@@ -206,6 +239,16 @@ async def scrape_state_admin_rules(
             if len(admin_statutes) == 0 and state_code:
                 zero_rule_states.append(state_code)
 
+        states_with_rules = sorted(
+            {
+                str(item.get("state_code") or "").upper()
+                for item in filtered_data
+                if isinstance(item, dict) and int(item.get("rules_count") or 0) > 0
+            }
+        )
+        target_state_set = set(selected_states)
+        missing_rule_states = sorted(target_state_set - set(states_with_rules))
+
         jsonld_paths: List[str] = []
         jsonld_dir: Optional[str] = None
         if write_jsonld:
@@ -219,18 +262,28 @@ async def scrape_state_admin_rules(
         metadata = {
             "states_scraped": selected_states,
             "states_count": len(selected_states),
+            "target_jurisdictions": "50_states" + ("+DC" if include_dc else ""),
+            "include_dc": bool(include_dc),
             "rules_count": admin_rule_count,
             "elapsed_time_seconds": elapsed,
             "scraped_at": datetime.now().isoformat(),
             "scraper_type": "State admin-rules via state-specific/fallback pipeline",
+            "delegated_legal_areas": ["administrative"],
             "rate_limit_delay": rate_limit_delay,
             "parallel_workers": int(parallel_workers),
             "per_state_retry_attempts": int(per_state_retry_attempts),
             "retry_zero_rule_states": bool(retry_zero_rule_states),
+            "max_base_statutes": int(effective_max_base_statutes) if effective_max_base_statutes else None,
+            "per_state_timeout_seconds": float(per_state_timeout_seconds),
             "strict_full_text": bool(strict_full_text),
             "min_full_text_chars": int(min_full_text_chars),
             "hydrate_rule_text": bool(hydrate_rule_text),
             "zero_rule_states": sorted(set(zero_rule_states)) if zero_rule_states else None,
+            "states_with_rules_count": len(states_with_rules),
+            "states_with_rules": states_with_rules,
+            "missing_rule_states_count": len(missing_rule_states),
+            "missing_rule_states": missing_rule_states,
+            "coverage_ratio": (len(states_with_rules) / float(len(selected_states))) if selected_states else 0.0,
             "jsonld_dir": jsonld_dir,
             "jsonld_files": jsonld_paths if jsonld_paths else None,
             "base_status": base_result.get("status"),
