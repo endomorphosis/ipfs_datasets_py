@@ -1057,8 +1057,9 @@ def _write_state_jsonld_files(scraped_statutes: List[Dict[str, Any]], jsonld_dir
 
         if lines_written > 0:
             written.append(str(out_path))
-        else:
-            out_path.unlink(missing_ok=True)
+        elif out_path.exists() and out_path.stat().st_size > 0:
+            # Preserve prior non-empty state output if this run yielded zero records.
+            written.append(str(out_path))
 
     return written
 
