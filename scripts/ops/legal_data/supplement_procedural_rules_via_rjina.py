@@ -26,6 +26,17 @@ CIVIL_RE = re.compile(r"civil\s+procedure|code\s+of\s+civil\s+procedure|cplr|ccp
 CRIMINAL_RE = re.compile(r"criminal\s+procedure|code\s+of\s+criminal\s+procedure|crim", re.IGNORECASE)
 
 
+def _page_context_family(seed_url: str, markdown_text: str) -> Optional[str]:
+    seed_lower = seed_url.lower()
+    text_head = "\n".join(markdown_text.splitlines()[:80]).lower()
+    context = f"{seed_lower}\n{text_head}"
+    if "forms-files/civil" in seed_lower or "title: civil" in context:
+        return "civil_procedure"
+    if "forms-files/criminal" in seed_lower or "title: criminal" in context:
+        return "criminal_procedure"
+    return None
+
+
 def _justia_slug(state_name: str) -> str:
     slug = state_name.lower().strip().replace("&", "and")
     slug = re.sub(r"[^a-z0-9]+", "-", slug)
@@ -33,11 +44,26 @@ def _justia_slug(state_name: str) -> str:
     return slug
 
 
-def _rjina_fetch(url: str, timeout: int = 45) -> str:
+def _rjina_fetch(url: str, timeout: int = 45, retries: int = 4, backoff_s: float = 1.5) -> str:
     mirror = f"https://r.jina.ai/http://{url.replace('https://', '').replace('http://', '')}"
-    resp = requests.get(mirror, timeout=timeout, headers={"User-Agent": "Mozilla/5.0"})
-    resp.raise_for_status()
-    return resp.text
+    last_exc: Optional[Exception] = None
+    for attempt in range(1, retries + 1):
+        try:
+            resp = requests.get(mirror, timeout=timeout, headers={"User-Agent": "Mozilla/5.0"})
+            if resp.status_code == 429 and attempt < retries:
+                time.sleep(backoff_s * attempt)
+                continue
+            resp.raise_for_status()
+            return resp.text
+        except Exception as exc:  # pragma: no cover - network dependent
+            last_exc = exc
+            if attempt < retries:
+                time.sleep(backoff_s * attempt)
+                continue
+            raise
+    if last_exc:
+        raise last_exc
+    raise RuntimeError(f"Failed to fetch mirrored URL: {url}")
 
 
 def _classify(label: str, url: str) -> Optional[str]:
@@ -53,12 +79,26 @@ def _classify(label: str, url: str) -> Optional[str]:
     return None
 
 
-def _extract_matches(markdown_text: str) -> List[Tuple[str, str, str]]:
+def _extract_matches(markdown_text: str, seed_url: str) -> List[Tuple[str, str, str]]:
     out: List[Tuple[str, str, str]] = []
+    fallback_family = _page_context_family(seed_url, markdown_text)
     for m in LINK_RE.finditer(markdown_text):
         label = m.group("label").strip()
         url = m.group("url").strip()
         family = _classify(label, url)
+        if not family:
+            start = max(0, m.start() - 220)
+            end = min(len(markdown_text), m.end() + 220)
+            nearby = markdown_text[start:end]
+            family = _classify(nearby, url)
+        # Iowa court rules listing often uses image labels for PDF links; infer chapter family.
+        if not family and "legis.iowa.gov" in url.lower() and "chapter." in url.lower():
+            if ".chapter.1." in url.lower():
+                family = "civil_procedure"
+            elif ".chapter.2." in url.lower():
+                family = "criminal_procedure"
+        if not family and fallback_family and url.lower().endswith(".pdf"):
+            family = fallback_family
         if family:
             out.append((family, label, url))
     return out
@@ -67,8 +107,23 @@ def _extract_matches(markdown_text: str) -> List[Tuple[str, str, str]]:
 def _state_seed_urls(state_code: str, state_name: str) -> List[str]:
     slug = _justia_slug(state_name)
     seeds = [f"https://law.justia.com/codes/{slug}/"]
+    if state_code == "IA":
+        seeds.extend(
+            [
+                "https://www.legis.iowa.gov/law/courtRules/courtRulesListings",
+                "https://www.legis.iowa.gov/law/courtRules",
+            ]
+        )
     if state_code == "NJ":
         seeds.append("https://www.njcourts.gov/attorneys/rules-of-court")
+    if state_code == "NM":
+        seeds.extend(
+            [
+                "https://nmcourts.gov/forms-files/civil",
+                "https://nmcourts.gov/forms-files/criminal",
+                "https://nmcourts.gov/rules-forms-filing/",
+            ]
+        )
     if state_code == "DC":
         seeds.extend([
             "https://www.dccourts.gov/superior-court/rules",
@@ -90,8 +145,12 @@ def run(
     merged_output_jsonl: Optional[Path],
     base_jsonl: Optional[Path],
     sleep_s: float,
+    target_states: Optional[List[str]],
 ) -> Dict[str, Any]:
     targets = _load_no_match_states(summary_path)
+    if target_states:
+        allowed = {s.upper() for s in target_states if s.upper() in US_STATES}
+        targets = [s for s in targets if s in allowed]
     supplemental: List[Dict[str, Any]] = []
     states_with_hits: Dict[str, int] = {}
     errors: Dict[str, str] = {}
@@ -106,7 +165,7 @@ def run(
                 errors[f"{state_code}:{seed}"] = str(exc)
                 continue
 
-            for family, label, url in _extract_matches(markdown):
+            for family, label, url in _extract_matches(markdown, seed):
                 supplemental.append(
                     {
                         "jurisdiction_code": state_code,
@@ -204,6 +263,12 @@ def parse_args() -> argparse.Namespace:
         default=str(Path.home() / ".ipfs_datasets" / "state_laws" / "procedural_rules" / "us_state_procedural_rules_merged_with_rjina.jsonl"),
     )
     parser.add_argument("--sleep-s", type=float, default=0.1)
+    parser.add_argument(
+        "--states",
+        nargs="*",
+        default=None,
+        help="Optional state code list (e.g. IA NM) to limit supplementation",
+    )
     return parser.parse_args()
 
 
@@ -215,6 +280,7 @@ def main() -> int:
         merged_output_jsonl=Path(args.merged_output_jsonl).expanduser().resolve(),
         base_jsonl=Path(args.base_jsonl).expanduser().resolve(),
         sleep_s=float(args.sleep_s),
+        target_states=args.states,
     )
     print(json.dumps(report, indent=2))
     return 0
