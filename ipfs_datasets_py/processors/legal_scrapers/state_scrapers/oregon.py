@@ -157,21 +157,6 @@ class OregonScraper(BaseStateScraper):
                 "url": OregonAdministrativeRulesScraper.seed_chapter_url(),
                 "type": "Regulation",
             },
-            {
-                "name": "Oregon Rules of Civil Procedure",
-                "url": ORCP_PRIMARY_URL,
-                "type": "CourtRule",
-            },
-            {
-                "name": "Oregon Rules of Criminal Procedure",
-                "url": f"{self.get_base_url()}/bills_laws/ors/ors131.html",
-                "type": "CourtRule",
-            },
-            {
-                "name": "Oregon Local Court Rules",
-                "url": LOCAL_RULES_INDEX_URL,
-                "type": "CourtRule",
-            },
         ]
 
     async def _discover_other_rules_entries(self, title_terms: Sequence[str]) -> List[Dict[str, str]]:

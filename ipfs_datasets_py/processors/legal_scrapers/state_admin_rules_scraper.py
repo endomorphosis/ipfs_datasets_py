@@ -132,6 +132,85 @@ def _write_state_admin_jsonld_files(scraped_rules: List[Dict[str, Any]], jsonld_
     return written
 
 
+def _collect_admin_source_diagnostics(states: List[str]) -> Dict[str, Dict[str, Any]]:
+    try:
+        from .state_scrapers import GenericStateScraper, get_scraper_for_state
+    except Exception:
+        return {}
+
+    diagnostics: Dict[str, Dict[str, Any]] = {}
+    for state_code in states:
+        state_name = US_STATES.get(state_code, state_code)
+        try:
+            scraper = get_scraper_for_state(state_code, state_name)
+            if not scraper:
+                scraper = GenericStateScraper(state_code, state_name)
+
+            code_list = list(scraper.get_code_list() or [])
+            admin_candidates: List[str] = []
+            for item in code_list:
+                if not isinstance(item, dict):
+                    continue
+                code_name = str(item.get("name") or "")
+                code_url = str(item.get("url") or "")
+                code_type = str(item.get("type") or "")
+                text = " ".join([code_name, code_url, code_type])
+                if _ADMIN_RULE_TEXT_RE.search(text):
+                    admin_candidates.append(code_name or code_url)
+                    continue
+                identify = getattr(scraper, "_identify_legal_area", None)
+                if callable(identify) and str(identify(code_name)).strip().lower() == "administrative":
+                    admin_candidates.append(code_name or code_url)
+
+            admin_candidates = [value for value in admin_candidates if str(value or "").strip()]
+            diagnostics[state_code] = {
+                "total_code_sources": len(code_list),
+                "admin_candidate_sources": len(admin_candidates),
+                "admin_candidate_examples": admin_candidates[:5] or None,
+            }
+        except Exception as exc:
+            diagnostics[state_code] = {
+                "error": str(exc),
+            }
+
+    return diagnostics
+
+
+def _filter_admin_state_blocks(
+    raw_data: List[Dict[str, Any]],
+    *,
+    max_rules: Optional[int],
+) -> tuple[List[Dict[str, Any]], int, List[str]]:
+    filtered_data: List[Dict[str, Any]] = []
+    admin_rule_count = 0
+    zero_rule_states: List[str] = []
+
+    for state_block in raw_data:
+        if not isinstance(state_block, dict):
+            continue
+        state_code = str(state_block.get("state_code") or "").upper()
+        statutes = list(state_block.get("statutes") or [])
+        admin_statutes = [
+            statute for statute in statutes
+            if isinstance(statute, dict) and _is_admin_rule_statute(statute)
+        ]
+        if max_rules and max_rules > 0:
+            admin_statutes = admin_statutes[: int(max_rules)]
+
+        out_block = dict(state_block)
+        out_block["title"] = f"{US_STATES.get(state_code, state_code)} Administrative Rules"
+        out_block["source"] = "Official State Administrative Rule Sources"
+        out_block["statutes"] = admin_statutes
+        out_block["rules_count"] = len(admin_statutes)
+        filtered_data.append(out_block)
+
+        admin_rule_count += len(admin_statutes)
+        if len(admin_statutes) == 0 and state_code:
+            zero_rule_states.append(state_code)
+
+    return filtered_data, admin_rule_count, zero_rule_states
+
+
 async def list_state_admin_rule_jurisdictions(include_dc: bool = False) -> Dict[str, Any]:
     """Return available state jurisdictions for admin-rules scraping.
 
@@ -188,6 +267,8 @@ async def scrape_state_admin_rules(
         if not selected_states or "ALL" in selected_states:
             selected_states = list(US_STATES.keys() if include_dc else US_50_STATE_CODES)
 
+        source_diagnostics = _collect_admin_source_diagnostics(selected_states)
+
         start = time.time()
         effective_max_base_statutes = max_base_statutes
         if effective_max_base_statutes is None and max_rules and int(max_rules) > 0:
@@ -212,32 +293,60 @@ async def scrape_state_admin_rules(
         )
 
         raw_data = list(base_result.get("data") or [])
-        filtered_data: List[Dict[str, Any]] = []
-        admin_rule_count = 0
-        zero_rule_states: List[str] = []
+        filtered_data, admin_rule_count, zero_rule_states = _filter_admin_state_blocks(
+            raw_data,
+            max_rules=max_rules,
+        )
 
-        for state_block in raw_data:
-            if not isinstance(state_block, dict):
-                continue
-            state_code = str(state_block.get("state_code") or "").upper()
-            statutes = list(state_block.get("statutes") or [])
-            admin_statutes = [
-                statute for statute in statutes
-                if isinstance(statute, dict) and _is_admin_rule_statute(statute)
+        fallback_attempted_states: List[str] = []
+        fallback_recovered_states: List[str] = []
+        if retry_zero_rule_states and zero_rule_states:
+            fallback_attempted_states = sorted(set(zero_rule_states))
+            fallback_result = await scrape_state_laws(
+                states=fallback_attempted_states,
+                legal_areas=None,
+                output_format=output_format,
+                include_metadata=include_metadata,
+                rate_limit_delay=rate_limit_delay,
+                max_statutes=effective_max_base_statutes,
+                output_dir=None,
+                write_jsonld=False,
+                strict_full_text=strict_full_text,
+                min_full_text_chars=min_full_text_chars,
+                hydrate_statute_text=hydrate_rule_text,
+                parallel_workers=parallel_workers,
+                per_state_retry_attempts=per_state_retry_attempts,
+                retry_zero_statute_states=False,
+                per_state_timeout_seconds=per_state_timeout_seconds,
+            )
+
+            fallback_filtered, _, _ = _filter_admin_state_blocks(
+                list(fallback_result.get("data") or []),
+                max_rules=max_rules,
+            )
+            fallback_by_state = {
+                str(item.get("state_code") or "").upper(): item
+                for item in fallback_filtered
+                if isinstance(item, dict)
+            }
+
+            merged: List[Dict[str, Any]] = []
+            for block in filtered_data:
+                state_code = str((block or {}).get("state_code") or "").upper()
+                replacement = fallback_by_state.get(state_code)
+                if replacement and int(replacement.get("rules_count") or 0) > int(block.get("rules_count") or 0):
+                    merged.append(replacement)
+                    if int(block.get("rules_count") or 0) == 0:
+                        fallback_recovered_states.append(state_code)
+                else:
+                    merged.append(block)
+            filtered_data = merged
+            admin_rule_count = sum(int((item or {}).get("rules_count") or 0) for item in filtered_data)
+            zero_rule_states = [
+                str(item.get("state_code") or "").upper()
+                for item in filtered_data
+                if isinstance(item, dict) and int(item.get("rules_count") or 0) == 0
             ]
-            if max_rules and max_rules > 0:
-                admin_statutes = admin_statutes[: int(max_rules)]
-
-            out_block = dict(state_block)
-            out_block["title"] = f"{US_STATES.get(state_code, state_code)} Administrative Rules"
-            out_block["source"] = "Official State Administrative Rule Sources"
-            out_block["statutes"] = admin_statutes
-            out_block["rules_count"] = len(admin_statutes)
-            filtered_data.append(out_block)
-
-            admin_rule_count += len(admin_statutes)
-            if len(admin_statutes) == 0 and state_code:
-                zero_rule_states.append(state_code)
 
         states_with_rules = sorted(
             {
@@ -273,6 +382,8 @@ async def scrape_state_admin_rules(
             "parallel_workers": int(parallel_workers),
             "per_state_retry_attempts": int(per_state_retry_attempts),
             "retry_zero_rule_states": bool(retry_zero_rule_states),
+            "fallback_attempted_states": fallback_attempted_states or None,
+            "fallback_recovered_states": sorted(set(fallback_recovered_states)) or None,
             "max_base_statutes": int(effective_max_base_statutes) if effective_max_base_statutes else None,
             "per_state_timeout_seconds": float(per_state_timeout_seconds),
             "strict_full_text": bool(strict_full_text),
@@ -288,6 +399,7 @@ async def scrape_state_admin_rules(
             "jsonld_files": jsonld_paths if jsonld_paths else None,
             "base_status": base_result.get("status"),
             "base_metadata": base_result.get("metadata") if include_metadata else None,
+            "source_diagnostics": source_diagnostics or None,
         }
 
         status = "success"

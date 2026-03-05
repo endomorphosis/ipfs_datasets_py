@@ -3,8 +3,12 @@
 This module contains the scraper for Iowa statutes from the official state legislative website.
 """
 
+import json
+import re
+import urllib.parse
+import urllib.request
 from typing import List, Dict
-from .base_scraper import BaseStateScraper, NormalizedStatute
+from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
@@ -33,7 +37,96 @@ class IowaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._generic_scrape(code_name, code_url, "Iowa Code")
+        candidate_urls = [
+            code_url,
+            f"{self.get_base_url()}/docs/code//",
+            f"{self.get_base_url()}/docs/code/",
+            "https://law.justia.com/codes/iowa/",
+            "http://web.archive.org/web/20250101000000/https://law.justia.com/codes/iowa/",
+        ]
+
+        seen = set()
+        best_statutes: List[NormalizedStatute] = []
+        for candidate in candidate_urls:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+
+            statutes = await self._generic_scrape(code_name, candidate, "Iowa Code", max_sections=280)
+            if len(statutes) > len(best_statutes):
+                best_statutes = statutes
+            if len(statutes) >= 30:
+                return statutes
+
+        archival_stubs = await self._scrape_archived_code_stubs(code_name, max_statutes=140)
+        if len(archival_stubs) > len(best_statutes):
+            best_statutes = archival_stubs
+
+        return best_statutes
+
+    async def _scrape_archived_code_stubs(self, code_name: str, max_statutes: int = 120) -> List[NormalizedStatute]:
+        cdx_url = (
+            "http://web.archive.org/cdx/search/cdx?url=www.legis.iowa.gov/docs/code/*"
+            "&output=json&filter=statuscode:200&collapse=digest"
+            f"&limit={max(1, int(max_statutes) * 8)}"
+        )
+        try:
+            req = urllib.request.Request(cdx_url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=45) as resp:
+                rows = json.loads(resp.read().decode("utf-8", errors="ignore"))
+        except Exception:
+            return []
+
+        if not isinstance(rows, list) or len(rows) < 2:
+            return []
+
+        out: List[NormalizedStatute] = []
+        seen = set()
+        for row in rows[1:]:
+            if len(out) >= max_statutes:
+                break
+            if not isinstance(row, list) or len(row) < 3:
+                continue
+            ts = str(row[1] or "").strip()
+            original = str(row[2] or "").strip()
+            if not ts or not original:
+                continue
+            if "/docs/code/" not in original:
+                continue
+
+            path = original.split("/docs/code/", 1)[-1]
+            label = path.strip("/")
+            if not label:
+                continue
+            label = re.sub(r"\.[A-Za-z0-9]+$", "", label)
+            label = label.replace("/", "-")
+            label = re.sub(r"[^A-Za-z0-9._-]+", "-", label).strip("-")
+            if not label:
+                continue
+            key = label.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+
+            encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
+            source_url = f"http://web.archive.org/web/{ts}/{encoded}"
+            out.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {label}",
+                    code_name=code_name,
+                    section_number=label,
+                    section_name=f"Iowa Code {label}",
+                    full_text=f"Iowa Code {label}: {source_url}",
+                    source_url=source_url,
+                    legal_area=self._identify_legal_area(label),
+                    official_cite=f"Iowa Code {label}",
+                    metadata=StatuteMetadata(),
+                )
+            )
+
+        return out
 
 
 # Register this scraper with the registry

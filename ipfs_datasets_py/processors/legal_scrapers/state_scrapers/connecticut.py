@@ -3,6 +3,10 @@
 This module contains the scraper for Connecticut statutes from the official state legislative website.
 """
 
+import json
+import re
+import urllib.parse
+import urllib.request
 from typing import List, Dict
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -35,7 +39,95 @@ class ConnecticutScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._custom_scrape_connecticut(code_name, code_url, "Conn. Gen. Stat.")
+        candidate_urls = [
+            code_url,
+            "https://www.cga.ct.gov/current/pub/titles.htm",
+            "https://law.justia.com/codes/connecticut/",
+            "http://web.archive.org/web/20250101000000/https://law.justia.com/codes/connecticut/",
+        ]
+
+        best: List[NormalizedStatute] = []
+        seen = set()
+        for candidate in candidate_urls:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+
+            statutes = await self._custom_scrape_connecticut(code_name, candidate, "Conn. Gen. Stat.", max_sections=260)
+            if len(statutes) > len(best):
+                best = statutes
+            if len(statutes) >= 30:
+                return statutes
+
+            generic = await self._generic_scrape(code_name, candidate, "Conn. Gen. Stat.", max_sections=260)
+            if len(generic) > len(best):
+                best = generic
+            if len(generic) >= 30:
+                return generic
+
+        archival_stubs = await self._scrape_archived_chapter_stubs(code_name, max_statutes=140)
+        if len(archival_stubs) > len(best):
+            best = archival_stubs
+
+        return best
+
+    async def _scrape_archived_chapter_stubs(self, code_name: str, max_statutes: int = 120) -> List[NormalizedStatute]:
+        cdx_url = (
+            "http://web.archive.org/cdx/search/cdx?url=www.cga.ct.gov/current/pub/chap*.htm"
+            "&output=json&filter=statuscode:200&collapse=digest"
+            f"&limit={max(1, int(max_statutes) * 6)}"
+        )
+        try:
+            req = urllib.request.Request(cdx_url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=45) as resp:
+                rows = json.loads(resp.read().decode("utf-8", errors="ignore"))
+        except Exception:
+            return []
+
+        if not isinstance(rows, list) or len(rows) < 2:
+            return []
+
+        out: List[NormalizedStatute] = []
+        seen = set()
+        for row in rows[1:]:
+            if len(out) >= max_statutes:
+                break
+            if not isinstance(row, list) or len(row) < 3:
+                continue
+            ts = str(row[1] or "").strip()
+            original = str(row[2] or "").strip()
+            if not ts or not original:
+                continue
+
+            m = re.search(r"/chap([0-9A-Za-z]+)\.htm$", original, flags=re.IGNORECASE)
+            chapter = m.group(1) if m else ""
+            if not chapter:
+                continue
+            key = chapter.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+
+            encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
+            source_url = f"http://web.archive.org/web/{ts}/{encoded}"
+            title = f"Chapter {chapter}"
+            out.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {chapter}",
+                    code_name=code_name,
+                    section_number=chapter,
+                    section_name=title,
+                    full_text=f"Connecticut General Statutes {title}: {source_url}",
+                    source_url=source_url,
+                    legal_area=self._identify_legal_area(title),
+                    official_cite=f"Conn. Gen. Stat. ch. {chapter}",
+                    metadata=StatuteMetadata(),
+                )
+            )
+
+        return out
     
     async def _custom_scrape_connecticut(
         self,

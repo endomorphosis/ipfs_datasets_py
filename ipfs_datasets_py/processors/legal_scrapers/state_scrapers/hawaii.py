@@ -5,6 +5,9 @@ This module contains the scraper for Hawaii statutes from the official state leg
 
 import asyncio
 import re
+import json
+import urllib.parse
+import urllib.request
 from typing import Dict, List
 from urllib.parse import unquote, urljoin
 from html import unescape
@@ -55,7 +58,13 @@ class HawaiiScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        archival = await self._scrape_archived_hrscurrent(code_name, max_statutes=120)
+        try:
+            archival = await asyncio.wait_for(
+                self._scrape_archived_hrscurrent(code_name, max_statutes=80),
+                timeout=220,
+            )
+        except asyncio.TimeoutError:
+            archival = []
         if archival:
             self.logger.info(f"Hawaii archival fallback: Scraped {len(archival)} sections")
             return archival
@@ -74,7 +83,83 @@ class HawaiiScraper(BaseStateScraper):
                 self.logger.warning(f"Hawaii Playwright scraping failed: {e}, falling back to HTTP")
 
         self.logger.info("Hawaii: Using fallback HTTP scraper")
-        return await self._generic_scrape(code_name, code_url, "Haw. Rev. Stat.")
+        candidate_urls = [
+            code_url,
+            "https://law.justia.com/codes/hawaii/",
+            "http://web.archive.org/web/20250101000000/https://law.justia.com/codes/hawaii/",
+        ]
+        best: List[NormalizedStatute] = []
+        seen = set()
+        for candidate in candidate_urls:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+            statutes = await self._generic_scrape(code_name, candidate, "Haw. Rev. Stat.", max_sections=260)
+            if len(statutes) > len(best):
+                best = statutes
+            if len(statutes) >= 30:
+                return statutes
+
+        archival_stubs = await self._scrape_archived_section_stubs(code_name, max_statutes=140)
+        if len(archival_stubs) > len(best):
+            best = archival_stubs
+        return best
+
+    async def _scrape_archived_section_stubs(self, code_name: str, max_statutes: int = 120) -> List[NormalizedStatute]:
+        cdx_url = (
+            "http://web.archive.org/cdx/search/cdx?url=www.capitol.hawaii.gov/hrscurrent/*/HRS_*.HTM"
+            "&output=json&filter=statuscode:200&collapse=digest"
+            f"&limit={max(1, int(max_statutes) * 8)}"
+        )
+        try:
+            req = urllib.request.Request(cdx_url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=45) as resp:
+                rows = json.loads(resp.read().decode("utf-8", errors="ignore"))
+        except Exception:
+            return []
+
+        if not isinstance(rows, list) or len(rows) < 2:
+            return []
+
+        out: List[NormalizedStatute] = []
+        seen = set()
+        for row in rows[1:]:
+            if len(out) >= max_statutes:
+                break
+            if not isinstance(row, list) or len(row) < 3:
+                continue
+            ts = str(row[1] or "").strip()
+            original = str(row[2] or "").strip()
+            if not ts or not original:
+                continue
+
+            section_number = self._extract_section_number_from_wayback_url(original)
+            if not section_number:
+                continue
+            key = section_number.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+
+            encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
+            source_url = f"http://web.archive.org/web/{ts}/{encoded}"
+            out.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=f"Section {section_number}",
+                    full_text=f"Hawaii Revised Statutes Section {section_number}: {source_url}",
+                    source_url=source_url,
+                    legal_area=self._identify_legal_area(section_number),
+                    official_cite=f"Haw. Rev. Stat. § {section_number}",
+                    metadata=StatuteMetadata(),
+                )
+            )
+
+        return out
 
     async def _scrape_archived_hrscurrent(self, code_name: str, max_statutes: int = 20) -> List[NormalizedStatute]:
         """Scrape archived HRS section pages from Wayback when live site is blocked."""
