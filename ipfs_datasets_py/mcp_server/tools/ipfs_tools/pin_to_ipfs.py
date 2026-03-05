@@ -18,13 +18,23 @@ try:
 except (ImportError, ModuleNotFoundError):
     ipfs_datasets = None  # type: ignore
 
-from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
-    mcp_error_response,
-    mcp_text_response,
-    parse_json_object,
-)
+try:
+    from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
+        mcp_error_response,
+        mcp_text_response,
+        parse_json_object,
+    )
+except (ImportError, ModuleNotFoundError):
+    from ipfs_datasets_py.ipfs_datasets_py.mcp_server.tools.mcp_helpers import (  # type: ignore
+        mcp_error_response,
+        mcp_text_response,
+        parse_json_object,
+    )
 
-from ipfs_datasets_py.core_operations import IPFSPinner
+try:
+    from ipfs_datasets_py.core_operations import IPFSPinner
+except (ImportError, ModuleNotFoundError):
+    from ipfs_datasets_py.ipfs_datasets_py.core_operations import IPFSPinner  # type: ignore
 
 async def pin_to_ipfs(
     content_source: Union[str, Dict[str, Any]],

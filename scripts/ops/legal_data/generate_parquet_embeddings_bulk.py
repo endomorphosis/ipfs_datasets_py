@@ -260,6 +260,7 @@ def _embed_file(
     queue_submit_retry_base_ms: int,
     queue_wait_retries: int,
     queue_wait_retry_base_ms: int,
+    queue_wait_slice_timeout_s: float,
     queue_retry_dial_timeout_scale: float,
     queue_retry_dial_timeout_max_s: float,
     queue_retry_delay_max_ms: int,
@@ -325,6 +326,7 @@ def _embed_file(
             queue_submit_retry_base_ms=int(queue_submit_retry_base_ms),
             queue_wait_retries=int(queue_wait_retries),
             queue_wait_retry_base_ms=int(queue_wait_retry_base_ms),
+            queue_wait_slice_timeout_s=float(queue_wait_slice_timeout_s),
             queue_retry_dial_timeout_scale=float(queue_retry_dial_timeout_scale),
             queue_retry_dial_timeout_max_s=float(queue_retry_dial_timeout_max_s),
             queue_retry_delay_max_ms=int(queue_retry_delay_max_ms),
@@ -854,6 +856,7 @@ def _effective_p2p_knobs(args: argparse.Namespace) -> dict[str, Any]:
         "submit_retry_base_ms": max(10, int(args.queue_submit_retry_base_ms)),
         "wait_retries": max(0, int(args.queue_wait_retries)),
         "wait_retry_base_ms": max(10, int(args.queue_wait_retry_base_ms)),
+        "wait_slice_timeout_s": max(1.0, float(args.queue_wait_slice_timeout_s)),
         "retry_dial_timeout_scale": max(1.0, float(args.queue_retry_dial_timeout_scale)),
         "retry_dial_timeout_max_s": max(1.0, float(args.queue_retry_dial_timeout_max_s)),
         "retry_delay_max_ms": max(10, int(args.queue_retry_delay_max_ms)),
@@ -974,6 +977,7 @@ def _embed_file_via_taskqueue(
     queue_submit_retry_base_ms: int,
     queue_wait_retries: int,
     queue_wait_retry_base_ms: int,
+    queue_wait_slice_timeout_s: float,
     queue_retry_dial_timeout_scale: float,
     queue_retry_dial_timeout_max_s: float,
     queue_retry_delay_max_ms: int,
@@ -1126,7 +1130,8 @@ def _embed_file_via_taskqueue(
         print(
             "[queue:config] "
             f"use_remote={use_remote} remotes={len(remotes)} inflight_limit={inflight_limit} "
-            f"submit_retries={max(0, int(queue_submit_retries))} wait_retries={max(0, int(queue_wait_retries))}"
+            f"submit_retries={max(0, int(queue_submit_retries))} wait_retries={max(0, int(queue_wait_retries))} "
+            f"wait_slice_timeout_s={max(1.0, float(queue_wait_slice_timeout_s)):.1f}"
         )
         for idx, remote in enumerate(remotes):
             print(
@@ -1225,18 +1230,27 @@ def _embed_file_via_taskqueue(
         remote_index = _int_field(ref, "remote_index", -1)
         is_remote_backend = ref.get("backend") == "remote"
         row_index = _int_field(ref, "row_index", -1)
+        submitted_at_monotonic = float(ref.get("submitted_at_monotonic") or 0.0)
+        if submitted_at_monotonic <= 0.0:
+            submitted_at_monotonic = float(t0)
+        task_age_s = max(0.0, float(t0) - float(submitted_at_monotonic))
+        wait_remaining_s = max(0.0, float(task_timeout_s) - float(task_age_s))
+        wait_slice_timeout_s = max(1.0, float(queue_wait_slice_timeout_s))
+        per_call_wait_timeout_s = max(1.0, min(wait_slice_timeout_s, wait_remaining_s or wait_slice_timeout_s))
         if bool(queue_verbose):
             print(
                 "[queue:wait] "
                 f"start row_index={row_index} "
                 f"task_id={str(ref.get('task_id') or '')} "
-                f"remote_index={remote_index} backend={str(ref.get('backend') or '')}"
+                f"remote_index={remote_index} backend={str(ref.get('backend') or '')} "
+                f"task_age_s={task_age_s:.2f} wait_remaining_s={wait_remaining_s:.2f} "
+                f"wait_timeout_s={per_call_wait_timeout_s:.2f}"
             )
         if ref.get("backend") == "remote":
             task = _wait_remote_with_retries(
                 remote=ref.get("remote"),
                 task_id=str(ref.get("task_id") or ""),
-                timeout_s=float(task_timeout_s),
+                timeout_s=float(per_call_wait_timeout_s),
                 wait_retries=int(queue_wait_retries),
                 wait_retry_base_ms=int(queue_wait_retry_base_ms),
                 retry_delay_max_ms=int(queue_retry_delay_max_ms),
@@ -1261,6 +1275,21 @@ def _embed_file_via_taskqueue(
             )
 
         if not isinstance(task, dict):
+            # Avoid head-of-line blocking and false negatives under high queue
+            # pressure: if the task still has overall timeout budget remaining,
+            # requeue and let other in-flight tasks make progress.
+            if is_remote_backend and wait_remaining_s > 0.0:
+                deferred_ref = dict(ref)
+                deferred_ref["submitted_at_monotonic"] = float(submitted_at_monotonic)
+                deferred_ref["wait_cycle"] = _int_field(ref, "wait_cycle", 0) + 1
+                pending.append(deferred_ref)
+                if bool(queue_verbose):
+                    print(
+                        "[queue:wait] "
+                        f"requeued_no_task row_index={row_index} remote_index={remote_index} "
+                        f"wait_cycle={deferred_ref['wait_cycle']} wait_remaining_s={wait_remaining_s:.2f}"
+                    )
+                return
             failed += 1
             _mark_remote_failure(remote_index)
             if bool(queue_verbose):
@@ -1472,6 +1501,8 @@ def _embed_file_via_taskqueue(
                         "remote": remote,
                         "remote_index": int(remote_index),
                         "backend": "remote",
+                        "submitted_at_monotonic": float(time.monotonic()),
+                        "wait_cycle": 0,
                     }
                 )
                 # Advance submit preference immediately so bursty submit loops
@@ -1671,6 +1702,15 @@ def _parse_args() -> argparse.Namespace:
         type=int,
         default=100,
         help="Base backoff (ms) for remote wait_task retries",
+    )
+    parser.add_argument(
+        "--queue-wait-slice-timeout-s",
+        type=float,
+        default=30.0,
+        help=(
+            "Bounded timeout (seconds) used per remote wait call before requeuing "
+            "in-flight tasks; reduces head-of-line blocking under high throughput"
+        ),
     )
     parser.add_argument(
         "--queue-retry-dial-timeout-scale",
@@ -1918,6 +1958,7 @@ def main() -> int:
             queue_submit_retry_base_ms=int(args.queue_submit_retry_base_ms),
             queue_wait_retries=int(args.queue_wait_retries),
             queue_wait_retry_base_ms=int(args.queue_wait_retry_base_ms),
+            queue_wait_slice_timeout_s=float(args.queue_wait_slice_timeout_s),
             queue_retry_dial_timeout_scale=float(args.queue_retry_dial_timeout_scale),
             queue_retry_dial_timeout_max_s=float(args.queue_retry_dial_timeout_max_s),
             queue_retry_delay_max_ms=int(args.queue_retry_delay_max_ms),
