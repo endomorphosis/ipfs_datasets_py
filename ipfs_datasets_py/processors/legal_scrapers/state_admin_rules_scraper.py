@@ -7,6 +7,7 @@ administrative rules/codes.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import re
@@ -29,6 +30,11 @@ US_50_STATE_CODES: List[str] = [code for code in US_STATES.keys() if code != "DC
 
 _ADMIN_RULE_TEXT_RE = re.compile(
     r"administrative|admin\.?\s+code|code\s+of\s+regulations|regulation|agency\s+rule|oar\b|aac\b|arc\b|nmac\b",
+    re.IGNORECASE,
+)
+
+_ADMIN_LINK_HINT_RE = re.compile(
+    r"administrative|admin\.?\s+code|regulation|rules?|code|statute|chapter|title|agency|board|commission",
     re.IGNORECASE,
 )
 
@@ -303,6 +309,36 @@ def _score_candidate_url(url: str) -> int:
     return score
 
 
+def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
+    hay = " ".join([str(text or ""), str(title or ""), str(url or "")])
+    return bool(_ADMIN_RULE_TEXT_RE.search(hay))
+
+
+def _candidate_links_from_scrape(scraped: Any, base_host: str, limit: int = 10) -> List[str]:
+    out: List[str] = []
+    seen = set()
+    for item in list(getattr(scraped, "links", []) or []):
+        if not isinstance(item, dict):
+            continue
+        link_url = str(item.get("url") or "").strip()
+        link_text = str(item.get("text") or "").strip()
+        if not link_url.startswith(("http://", "https://")):
+            continue
+        host = urlparse(link_url).netloc
+        if base_host and host and host != base_host:
+            continue
+        if not _ADMIN_LINK_HINT_RE.search(" ".join([link_url, link_text])):
+            continue
+        key = link_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(link_url)
+        if len(out) >= max(1, int(limit)):
+            break
+    return out
+
+
 def _write_agentic_kg_corpus_jsonl(rows: List[Dict[str, Any]], output_root: Path) -> Optional[str]:
     if not rows:
         return None
@@ -368,6 +404,9 @@ async def _agentic_discover_admin_state_blocks(
     report: Dict[str, Any] = {}
 
     for state_code in states:
+        state_start = time.monotonic()
+        # Keep agentic fallback bounded per state so staged runs keep moving.
+        per_state_budget_s = 120.0
         state_name = US_STATES.get(state_code, state_code)
         query = _agentic_query_for_state(state_code)
         candidate_urls: List[str] = []
@@ -391,13 +430,17 @@ async def _agentic_discover_admin_state_blocks(
             pass
 
         try:
-            unified_search = unified_api.search(
-                UnifiedSearchRequest(
-                    query=query,
-                    max_results=max(5, int(max_candidates_per_state)),
-                    mode=OperationMode.BALANCED,
-                    domain="legal",
-                )
+            unified_search = await asyncio.wait_for(
+                asyncio.to_thread(
+                    unified_api.search,
+                    UnifiedSearchRequest(
+                        query=query,
+                        max_results=max(5, int(max_candidates_per_state)),
+                        mode=OperationMode.BALANCED,
+                        domain="legal",
+                    ),
+                ),
+                timeout=40.0,
             )
             for hit in getattr(unified_search, "results", []) or []:
                 url = str(getattr(hit, "url", "") or "").strip()
@@ -408,6 +451,31 @@ async def _agentic_discover_admin_state_blocks(
         except Exception:
             pass
 
+        if (time.monotonic() - state_start) >= per_state_budget_s:
+            report[state_code] = {
+                "candidate_urls": 0,
+                "inspected_urls": 0,
+                "expanded_urls": 0,
+                "fetched_rules": 0,
+                "source_breakdown": source_breakdown,
+                "timed_out": True,
+            }
+            blocks.append(
+                {
+                    "state_code": state_code,
+                    "state_name": state_name,
+                    "title": f"{state_name} Administrative Rules",
+                    "source": "Agentic web-archive discovery",
+                    "source_url": None,
+                    "scraped_at": datetime.now().isoformat(),
+                    "statutes": [],
+                    "rules_count": 0,
+                    "schema_version": "1.0",
+                    "normalized": True,
+                }
+            )
+            continue
+
         seed_urls = _extract_seed_urls_for_state(state_code, state_name)
         if not seed_urls:
             seed_urls = [f"https://{state_code.lower()}.gov"]
@@ -415,12 +483,17 @@ async def _agentic_discover_admin_state_blocks(
         candidate_urls.extend(_template_admin_urls_for_state(state_code))
 
         try:
-            discovered = unified_api.agentic_discover_and_fetch(
-                seed_urls=seed_urls,
-                target_terms=["administrative", "regulations", "rules", "code"],
-                max_hops=max(0, int(max_hops)),
-                max_pages=max(1, int(max_pages)),
-                mode=OperationMode.BALANCED,
+            discovered = await asyncio.wait_for(
+                asyncio.to_thread(
+                    lambda: unified_api.agentic_discover_and_fetch(
+                        seed_urls=seed_urls,
+                        target_terms=["administrative", "regulations", "rules", "code"],
+                        max_hops=max(0, int(max_hops)),
+                        max_pages=max(1, int(max_pages)),
+                        mode=OperationMode.BALANCED,
+                    ),
+                ),
+                timeout=70.0,
             )
             for fetch_row in discovered.get("results", []) or []:
                 if not isinstance(fetch_row, dict):
@@ -448,26 +521,47 @@ async def _agentic_discover_admin_state_blocks(
         )
 
         statutes: List[Dict[str, Any]] = []
-        for index, (url, score) in enumerate(ranked_urls[: max(1, int(max_candidates_per_state))], start=1):
-            if len(statutes) >= max(1, int(max_fetch_per_state)):
+        max_candidates = max(1, int(max_candidates_per_state))
+        max_fetch = max(1, int(max_fetch_per_state))
+        pending: List[tuple[str, int]] = list(ranked_urls[:max_candidates])
+        seen_urls = set()
+        inspected_urls = 0
+        expanded_urls = 0
+        base_hosts = {
+            urlparse(str(seed).strip()).netloc
+            for seed in seed_urls
+            if str(seed).strip().startswith(("http://", "https://"))
+        }
+
+        while pending and len(statutes) < max_fetch and inspected_urls < max(4, max_candidates * 4):
+            if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
+            url, score = pending.pop(0)
+            key = str(url).strip().lower()
+            if not key or key in seen_urls:
+                continue
+            seen_urls.add(key)
+            inspected_urls += 1
             try:
-                scraped = await scraper.scrape(url)
+                scraped = await asyncio.wait_for(scraper.scrape(url), timeout=25.0)
                 text = str(getattr(scraped, "text", "") or "").strip()
                 title = str(getattr(scraped, "title", "") or "").strip()
-                if len(text) < max(80, int(min_full_text_chars // 2)):
-                    if int(score) < 4:
-                        continue
-                    text = (
-                        f"{state_name} administrative rules portal reference. "
-                        f"Source URL: {url}."
-                    )
-                    if title:
-                        text = f"{title}. " + text
+                min_text_chars = max(120, int(min_full_text_chars // 2))
+                if len(text) < min_text_chars or not _has_admin_signal(text=text, title=title, url=url):
+                    host = urlparse(url).netloc
+                    same_host = host if host in base_hosts else ""
+                    for link_url in _candidate_links_from_scrape(scraped, base_host=same_host, limit=8):
+                        link_score = _score_candidate_url(link_url)
+                        if link_score <= 0:
+                            continue
+                        pending.append((link_url, link_score))
+                        expanded_urls += 1
+                    pending = sorted(pending, key=lambda item: item[1], reverse=True)
+                    continue
                 method_used = getattr(scraped, "method_used", None)
                 method_value = method_used.value if method_used else None
-                section_number = f"A{index}"
-                section_name = title or f"{state_name} Administrative Rules (agentic source {index})"
+                section_number = f"A{len(statutes) + 1}"
+                section_name = title or f"{state_name} Administrative Rules (agentic source {len(statutes) + 1})"
                 statute = {
                     "state_code": state_code,
                     "state_name": state_name,
@@ -522,8 +616,11 @@ async def _agentic_discover_admin_state_blocks(
         )
         report[state_code] = {
             "candidate_urls": len(ranked_urls),
+            "inspected_urls": int(inspected_urls),
+            "expanded_urls": int(expanded_urls),
             "fetched_rules": len(statutes),
             "source_breakdown": source_breakdown,
+            "timed_out": bool((time.monotonic() - state_start) >= per_state_budget_s),
         }
 
     return {

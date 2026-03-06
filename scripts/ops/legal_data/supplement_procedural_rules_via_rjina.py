@@ -10,30 +10,84 @@ JSONL for downstream use.
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import re
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urljoin, urlparse
 
 import requests
 
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import US_STATES
 
-LINK_RE = re.compile(r"\[(?P<label>[^\]]+)\]\((?P<url>https?://[^)]+)\)")
+LINK_RE = re.compile(r"\[(?P<label>[^\]]+)\]\((?P<url>[^)]+)\)")
+HTML_LINK_RE = re.compile(r"<a\s+[^>]*href=[\"'](?P<url>[^\"']+)[\"'][^>]*>(?P<label>.*?)</a>", re.IGNORECASE | re.DOTALL)
 
-CIVIL_RE = re.compile(r"civil\s+procedure|code\s+of\s+civil\s+procedure|cplr|ccp", re.IGNORECASE)
-CRIMINAL_RE = re.compile(r"criminal\s+procedure|code\s+of\s+criminal\s+procedure|crim", re.IGNORECASE)
-FALLBACK_LINK_RE = re.compile(r"rule|rules|form|forms|procedure|court|civil|criminal", re.IGNORECASE)
+CIVIL_RE = re.compile(
+    r"rules?\s+of\s+civil\s+procedure|civil\s+procedure|code\s+of\s+civil\s+procedure|civil\s+practice|special\s+civil|\bcplr\b|\bccp\b|\bciv\.?\s*p(?:roc)?\b|\br\.?civ\.?\s*p\.?\b",
+    re.IGNORECASE,
+)
+CRIMINAL_RE = re.compile(
+    r"rules?\s+of\s+criminal\s+procedure|criminal\s+procedure|code\s+of\s+criminal\s+procedure|criminal\s+practice|\bcrim\.?\s*p(?:roc)?\b|\br\.?crim\.?\s*p\.?\b",
+    re.IGNORECASE,
+)
+FALLBACK_LINK_RE = re.compile(
+    r"rule|rules|form|forms|procedure|court|civil|criminal|chapter|article|section|subtitle|part|title",
+    re.IGNORECASE,
+)
+
+
+def _same_domain(seed_url: str, target_url: str) -> bool:
+    seed_host = (urlparse(seed_url).hostname or "").lower()
+    target_host = (urlparse(target_url).hostname or "").lower()
+    if not seed_host or not target_host:
+        return False
+    if seed_host == target_host:
+        return True
+    return target_host.endswith(f".{seed_host}") or seed_host.endswith(f".{target_host}")
 
 
 def _page_context_family(seed_url: str, markdown_text: str) -> Optional[str]:
     seed_lower = seed_url.lower()
     text_head = "\n".join(markdown_text.splitlines()[:80]).lower()
     context = f"{seed_lower}\n{text_head}"
+    if "district-of-columbia/title-13" in seed_lower:
+        return "civil_procedure"
     if "forms-files/civil" in seed_lower or "title: civil" in context:
         return "civil_procedure"
     if "forms-files/criminal" in seed_lower or "title: criminal" in context:
+        return "criminal_procedure"
+    if "maryland/courts-and-judicial-proceedings/title-6" in seed_lower:
+        return "civil_procedure"
+    if "louisiana/code-of-civil-procedure" in seed_lower:
+        return "civil_procedure"
+    # Justia and similar title pages often contain the family signal in page title
+    # while individual link labels are generic (e.g., chapter/article names).
+    if any(
+        token in context
+        for token in [
+            "civil law and procedure",
+            "civil practice",
+            "civil actions",
+            "civil remedies and procedure",
+            "courts and civil procedure",
+            "courts and court procedure",
+            "proceedings in civil actions",
+            "pleading and practice",
+            "code of civil procedure",
+        ]
+    ):
+        return "civil_procedure"
+    if any(
+        token in context
+        for token in [
+            "criminal procedure",
+            "criminal procedures",
+            "court procedure -- criminal",
+        ]
+    ):
         return "criminal_procedure"
     return None
 
@@ -46,11 +100,13 @@ def _justia_slug(state_name: str) -> str:
 
 
 def _rjina_fetch(url: str, timeout: int = 45, retries: int = 4, backoff_s: float = 1.5) -> str:
+    direct_archive = "web.archive.org" in url.lower()
     mirror = f"https://r.jina.ai/http://{url.replace('https://', '').replace('http://', '')}"
     last_exc: Optional[Exception] = None
     for attempt in range(1, retries + 1):
         try:
-            resp = requests.get(mirror, timeout=timeout, headers={"User-Agent": "Mozilla/5.0"})
+            target_url = url if direct_archive else mirror
+            resp = requests.get(target_url, timeout=timeout, headers={"User-Agent": "Mozilla/5.0"})
             if resp.status_code == 429 and attempt < retries:
                 time.sleep(backoff_s * attempt)
                 continue
@@ -85,9 +141,18 @@ def _extract_matches(markdown_text: str, seed_url: str) -> List[Tuple[str, str, 
     fallback_family = _page_context_family(seed_url, markdown_text)
     for m in LINK_RE.finditer(markdown_text):
         label = m.group("label").strip()
-        url = m.group("url").strip()
+        raw_url = html.unescape(m.group("url")).strip()
+        url = urljoin(seed_url, raw_url)
+        if not url.lower().startswith(("http://", "https://")):
+            continue
         family = _classify(label, url)
-        if not family:
+        generic_label = (
+            len(label) <= 10
+            or label.lower().startswith("image")
+            or "click to view" in label.lower()
+            or label.strip() in {"More...", "View More"}
+        )
+        if not family and generic_label:
             start = max(0, m.start() - 220)
             end = min(len(markdown_text), m.end() + 220)
             nearby = markdown_text[start:end]
@@ -101,10 +166,28 @@ def _extract_matches(markdown_text: str, seed_url: str) -> List[Tuple[str, str, 
         if not family and fallback_family and (
             url.lower().endswith(".pdf")
             or FALLBACK_LINK_RE.search(f"{label}\n{url}") is not None
-        ):
+        ) and _same_domain(seed_url, url):
             family = fallback_family
         if family:
             out.append((family, label, url))
+
+    if not out and "<a " in markdown_text.lower():
+        for m in HTML_LINK_RE.finditer(markdown_text):
+            raw_label = re.sub(r"<[^>]+>", " ", m.group("label"))
+            label = html.unescape(raw_label).strip()
+            raw_url = html.unescape(m.group("url")).strip()
+            url = urljoin(seed_url, raw_url)
+            if not url.lower().startswith(("http://", "https://")):
+                continue
+            family = _classify(label, url)
+            if not family and fallback_family and (
+                url.lower().endswith(".pdf")
+                or FALLBACK_LINK_RE.search(f"{label}\n{url}") is not None
+            ) and _same_domain(seed_url, url):
+                family = fallback_family
+            if family:
+                out.append((family, label, url))
+
     return out
 
 
@@ -120,6 +203,79 @@ def _state_seed_urls(state_code: str, state_name: str) -> List[str]:
         )
     if state_code == "NJ":
         seeds.append("https://www.njcourts.gov/attorneys/rules-of-court")
+    if state_code == "FL":
+        seeds.append("https://www.floridabar.org/rules/ctproc/")
+    if state_code == "CT":
+        seeds.append("https://law.justia.com/codes/connecticut/title-54/")
+    if state_code == "GA":
+        seeds.append("https://law.justia.com/codes/georgia/title-17/")
+    if state_code == "KS":
+        seeds.append("https://law.justia.com/codes/kansas/chapter-22/")
+    if state_code == "ME":
+        seeds.append("https://law.justia.com/codes/maine/title-15/")
+    if state_code == "SD":
+        seeds.append("https://law.justia.com/codes/south-dakota/title-23a/")
+    if state_code == "SC":
+        seeds.append("https://law.justia.com/codes/south-carolina/title-17/")
+    if state_code == "TN":
+        seeds.append("https://law.justia.com/codes/tennessee/title-40/")
+    if state_code == "IN":
+        seeds.append("https://law.justia.com/codes/indiana/title-34/")
+    if state_code == "MT":
+        seeds.append("https://law.justia.com/codes/montana/title-25/")
+    if state_code == "OK":
+        seeds.append("https://law.justia.com/codes/oklahoma/title-12/")
+    if state_code == "MS":
+        seeds.append("https://law.justia.com/codes/mississippi/title-11/")
+    if state_code == "RI":
+        seeds.append("https://law.justia.com/codes/rhode-island/title-9/")
+    if state_code == "AL":
+        seeds.append("https://law.justia.com/codes/alabama/title-6/")
+    if state_code == "AR":
+        seeds.append("https://law.justia.com/codes/arkansas/title-16/")
+    if state_code == "DE":
+        seeds.append("https://law.justia.com/codes/delaware/title-10/")
+        seeds.append("https://law.justia.com/codes/delaware/title-10/chapter-39/")
+    if state_code == "CO":
+        seeds.append("https://law.justia.com/codes/colorado/2024/title-13/")
+    if state_code == "ID":
+        seeds.append("https://law.justia.com/codes/idaho/title-5/")
+    if state_code == "LA":
+        seeds.append("https://law.justia.com/codes/louisiana/code-of-civil-procedure/")
+    if state_code == "MD":
+        seeds.append("https://law.justia.com/codes/maryland/courts-and-judicial-proceedings/title-6/")
+    if state_code == "UT":
+        seeds.extend(
+            [
+                "https://law.justia.com/codes/utah/title-78b/chapter-3/",
+                "https://law.justia.com/codes/utah/title-78b/chapter-3a/",
+            ]
+        )
+    if state_code == "VA":
+        seeds.append("https://law.justia.com/codes/virginia/title-8-01/")
+    if state_code == "WV":
+        seeds.append("https://law.justia.com/codes/west-virginia/chapter-56/")
+    if state_code == "DC":
+        seeds.append("https://law.justia.com/codes/district-of-columbia/title-13/")
+        seeds.append("https://law.justia.com/codes/district-of-columbia/title-13/chapter-1/")
+    if state_code == "OH":
+        seeds.extend(
+            [
+                "https://www.supremecourt.ohio.gov/laws-rules/ohio-rules-of-court/",
+                "http://www.supremecourt.ohio.gov/docs/LegalResources/Rules/civil/CivilProcedure.pdf",
+                "http://www.supremecourt.ohio.gov/docs/LegalResources/Rules/criminal/CriminalProcedure.pdf",
+            ]
+        )
+    if state_code == "PA":
+        seeds.extend(
+            [
+                "https://www.pacourts.us/courts/supreme-court/committees/rules-committees",
+                "https://www.pacourts.us/courts/supreme-court/committees/rules-committees/civil-procedural-rules-committee",
+                "https://www.pacourts.us/courts/supreme-court/committees/rules-committees/criminal-procedural-rules-committee",
+            ]
+        )
+    if state_code == "WY":
+        seeds.append("https://www.courts.state.wy.us/court-rules/")
     if state_code == "MN":
         seeds.extend(
             [
@@ -130,6 +286,12 @@ def _state_seed_urls(state_code: str, state_name: str) -> List[str]:
         seeds.extend(
             [
                 "https://www.courts.mo.gov/page.jsp?id=46",
+                "https://web.archive.org/web/20161115161825/https://www.courts.mo.gov/page.jsp?id=46",
+                "https://web.archive.org/web/20161115161825/https://www.courts.mo.gov/page.jsp?id=671",
+                "https://web.archive.org/web/20161115161825/https://www.courts.mo.gov/page.jsp?id=674",
+                "https://web.archive.org/web/20161115161825/https://www.courts.mo.gov/page.jsp?id=676",
+                "https://web.archive.org/web/20161115161825/https://www.courts.mo.gov/page.jsp?id=677",
+                "https://web.archive.org/web/20161115161825/https://www.courts.mo.gov/page.jsp?id=679",
             ]
         )
     if state_code == "NM":
@@ -138,6 +300,14 @@ def _state_seed_urls(state_code: str, state_name: str) -> List[str]:
                 "https://nmcourts.gov/forms-files/civil",
                 "https://nmcourts.gov/forms-files/criminal",
                 "https://nmcourts.gov/rules-forms-filing/",
+            ]
+        )
+    if state_code == "ND":
+        seeds.extend(
+            [
+                "https://www.ndcourts.gov/legal-resources/rules",
+                "https://www.ndcourts.gov/legal-resources/rules/ndrcivp",
+                "https://www.ndcourts.gov/legal-resources/rules/ndrcrimp",
             ]
         )
     if state_code == "NH":
@@ -171,10 +341,10 @@ def run(
     sleep_s: float,
     target_states: Optional[List[str]],
 ) -> Dict[str, Any]:
-    targets = _load_no_match_states(summary_path)
     if target_states:
-        allowed = {s.upper() for s in target_states if s.upper() in US_STATES}
-        targets = [s for s in targets if s in allowed]
+        targets = sorted({s.upper() for s in target_states if s.upper() in US_STATES})
+    else:
+        targets = _load_no_match_states(summary_path)
     supplemental: List[Dict[str, Any]] = []
     states_with_hits: Dict[str, int] = {}
     errors: Dict[str, str] = {}
