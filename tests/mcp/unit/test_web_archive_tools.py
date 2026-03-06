@@ -119,6 +119,16 @@ class TestSearchCommonCrawlAdvanced:
 class TestSearchWrappers:
     """Smoke tests for thin search wrapper modules."""
 
+    def test_web_archive_tools_package_importable(self):
+        import ipfs_datasets_py.mcp_server.tools.web_archive_tools as web_archive_tools
+
+        assert hasattr(web_archive_tools, "search_brave")
+        assert hasattr(web_archive_tools, "search_google")
+        assert hasattr(web_archive_tools, "search_wayback_machine")
+        assert hasattr(web_archive_tools, "index_warc_to_ipwb")
+        assert hasattr(web_archive_tools, "archive_to_archive_is")
+        assert hasattr(web_archive_tools, "create_autoscraper_model")
+
     def test_google_search_importable(self):
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools import google_search  # noqa: F401
 
